@@ -1,0 +1,1 @@
+Test to make sure that comments are stripped out.

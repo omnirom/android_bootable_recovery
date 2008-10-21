@@ -1,0 +1,1 @@
+Test to make sure that an empty file is accepted properly.

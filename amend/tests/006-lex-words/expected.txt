@@ -1,0 +1,6 @@
+ IDENTIFIER<test> WORD<this> WORD<has> WORD<a> WORD<bunch> WORD<of> WORD<BARE> WORD<ALPHA> WORD<WORDS> EOL
+ IDENTIFIER<test> WORD<12> WORD<this> WORD<has(some> WORD<)> WORD<ALPHANUMER1C> WORD<and> WORD<\\> WORD<whatever> WORD<characters> EOL
+ IDENTIFIER<test> WORD<this> WORD<has> WORD<mixed> WORD<bare> WORD<and quoted> WORD<words> EOL
+ IDENTIFIER<test> WORD<what> WORD<about> WORD<quotesin the middle?> EOL
+ IDENTIFIER<test> WORD<"""shouldn't> WORD<be> WORD<a> WORD<quoted> WORD<string> EOL
+ EOF

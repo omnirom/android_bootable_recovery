@@ -1,0 +1,225 @@
+#!/bin/bash
+#
+# Copyright (C) 2007 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+PROGNAME=`basename "$0"`
+
+INSTALL_SCRIPT_NAME=META-INF/com/android/update-script
+
+function cleantmp
+{
+    if [ ! -z "$TMPDIR" ]
+    then
+        rm -rf "$TMPDIR"
+        TMPDIR=
+    fi
+}
+
+function println
+{
+    if [ $# -gt 0 ]
+    then
+        echo "$PROGNAME: $@"
+    fi
+}
+
+function fail
+{
+    println "$@"
+    cleantmp
+    exit 1
+}
+
+function usage
+{
+    println "$@"
+    echo "Usage: $PROGNAME <command> [command-options] <ota-file>"
+    echo "       Where <command> is one of:"
+    echo "           --dump"
+    echo "               Dump a description of the ota file"
+    echo "           --dump-script"
+    echo "               Dumps the install script to standard out"
+    echo "           --append-script <file> -o|--output <outfile>"
+    echo "               Append the contents of <file> to the install script"
+    echo "           --replace-script <file> -o|--output <outfile>"
+    echo "               Replace the install script with the contents of <file>"
+    fail
+}
+
+if [ $# -lt 2 ]
+then
+    usage
+fi
+CMD="$1"
+shift
+if [ "$CMD" = --dump ]
+then
+    CMD_DUMP=1
+    UNPACK_FILE=1
+elif [ "$CMD" = --dump-script ]
+then
+    CMD_DUMP_SCRIPT=1
+elif [ "$CMD" = --append-script ]
+then
+    CMD_APPEND_SCRIPT=1
+    SCRIPT_FILE=$1
+    shift
+    NEEDS_SCRIPT_FILE=1
+    NEEDS_OUTPUT=1
+elif [ "$CMD" = --replace-script ]
+then
+    CMD_REPLACE_SCRIPT=1
+    SCRIPT_FILE=$1
+    shift
+    NEEDS_SCRIPT_FILE=1
+    NEEDS_OUTPUT=1
+else
+    usage "Unknown command $CMD"
+fi
+
+if [ ! -z "$NEED_SCRIPT_FILE" ]
+then
+    if [ -z "$SCRIPT_FILE" -o ! -f "$SCRIPT_FILE" ]
+    then
+        usage "$CMD requires a valid script file"
+    fi
+fi
+
+if [ ! -z "$NEEDS_OUTPUT" ]
+then
+    if [ "x$1" != "x-o" -a "x$1" != "x--output" ]
+    then
+        usage "$CMD requires \"-o <file>\" or \"--output <file>\""
+    fi
+    shift
+
+    OUTFILE="$1"
+    shift
+    if [ -z "$OUTFILE" ]
+    then
+        usage "$CMD requires \"-o <file>\" or \"--output <file>\""
+    fi
+    if [ -d "$OUTFILE" ]
+    then
+        fail "Output file \"$OUTFILE\" is a directory"
+    fi
+fi
+
+FILE="$1"
+if [ ! -f "$FILE" ]
+then
+    fail "$FILE doesn't exist or isn't a file"
+fi
+if [ ! -z "$OUTFILE" -a "$FILE" -ef "$OUTFILE" ]
+then
+    fail "Refusing to use the input file as the output file"
+fi
+
+if [ $CMD_DUMP_SCRIPT ]
+then
+    unzip -p "$FILE" "$INSTALL_SCRIPT_NAME"
+    exit 0
+fi
+
+# Create a temporary directory for scratch files.
+#
+TMPDIR=`mktemp -d /tmp/$PROGNAME.XXXXXX`
+if [ $? -ne 0 ]
+then
+    TMPDIR=
+    fail "Can't create temporary directory"
+fi
+
+
+if [ $UNPACK_FILE ]
+then
+    ROOTDIR="$TMPDIR/root"
+    mkdir -p "$ROOTDIR"
+
+    println "Unpacking `basename $FILE`..."
+
+    unzip -q -d "$ROOTDIR" "$FILE"
+    if [ $? -ne 0 ]
+    then
+        fail "Couldn't unpack $FILE"
+    fi
+fi
+
+
+if [ $CMD_DUMP ]
+then
+    function dumpfile
+    {
+        echo "BEGIN `basename $1`"
+        cat "$1" | sed -e 's/^/    /'
+        echo "END `basename $1`"
+    }
+
+    echo Contents of root:
+    ls -1 "$ROOTDIR" | sed -e 's/^/    /'
+    echo
+    echo Contents of META-INF:
+    (cd "$ROOTDIR" && find META-INF -type f) | sed -e 's/^/    /'
+
+    echo
+    dumpfile "$ROOTDIR/META-INF/MANIFEST.MF"
+    echo
+    dumpfile "$ROOTDIR/$INSTALL_SCRIPT_NAME"
+    echo
+    dumpfile "$ROOTDIR/android-product.txt"
+    echo
+    dumpfile "$ROOTDIR/system/build.prop"
+fi
+
+if [ $CMD_APPEND_SCRIPT ]
+then
+    TMPSCRIPT="$TMPDIR/script"
+    NEWSCRIPT="$TMPDIR/$INSTALL_SCRIPT_NAME"
+    unzip -p "$FILE" "$INSTALL_SCRIPT_NAME" > "$TMPSCRIPT"
+    if [ $? -ne 0 ]
+    then
+        fail "Couldn't extract $INSTALL_SCRIPT_NAME from $FILE"
+    fi
+    mkdir -p `dirname "$NEWSCRIPT"`
+    cat "$TMPSCRIPT" "$SCRIPT_FILE" > "$NEWSCRIPT"
+
+    OVERWRITE_SCRIPT=1
+fi
+
+if [ $CMD_REPLACE_SCRIPT ]
+then
+    NEWSCRIPT="$TMPDIR/$INSTALL_SCRIPT_NAME"
+    mkdir -p `dirname "$NEWSCRIPT"`
+    cp "$SCRIPT_FILE" "$NEWSCRIPT"
+
+    OVERWRITE_SCRIPT=1
+fi
+
+if [ $OVERWRITE_SCRIPT ]
+then
+    cp "$FILE" "$TMPDIR/outfile.zip"
+    (cd "$TMPDIR" && zip -qu outfile.zip "$INSTALL_SCRIPT_NAME")
+    if [ $? -ne 0 ]
+    then
+        fail "Couldn't add new $INSTALL_SCRIPT_NAME to output file"
+    fi
+
+    rm -f "$OUTFILE"
+    mkdir -p `dirname "$OUTFILE"`
+    mv "$TMPDIR/outfile.zip" "$OUTFILE"
+fi
+
+cleantmp

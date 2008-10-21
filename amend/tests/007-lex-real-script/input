@@ -1,0 +1,10 @@
+assert hash_dir("SYS:") == "112345oldhashvalue1234123"
+mark SYS: dirty
+copy_dir "PKG:android-files" SYS:
+assert hash_dir("SYS:") == "667890newhashvalue6678909"
+mark SYS: clean
+done
+assert hash_dir("SYS:", "blah") == "112345oldhashvalue1234123"
+assert "true" == "false"
+assert one("abc", two("def")) == "five"
+assert hash_dir("SYS:") == "667890newhashvalue6678909" || hash_dir("SYS:") == "667890newhashvalue6678909"

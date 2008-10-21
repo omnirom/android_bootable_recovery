@@ -1,0 +1,1 @@
+Test to make sure that quoted strings are tokenized properly.
