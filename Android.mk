@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
 commands_recovery_local_path := $(LOCAL_PATH)
 
 ifneq ($(TARGET_SIMULATOR),true)
+ifeq ($(TARGET_ARCH),arm)
 
 LOCAL_SRC_FILES := \
 	recovery.c \
@@ -49,9 +50,11 @@ $(intermediates)/install.o: $(RECOVERY_INSTALL_OTA_KEYS_INC)
 
 include $(commands_recovery_local_path)/minui/Android.mk
 
+endif   # TARGET_ARCH == arm
 endif	# !TARGET_SIMULATOR
 
 include $(commands_recovery_local_path)/amend/Android.mk
 include $(commands_recovery_local_path)/minzip/Android.mk
 include $(commands_recovery_local_path)/mtdutils/Android.mk
+include $(commands_recovery_local_path)/tools/Android.mk
 commands_recovery_local_path :=

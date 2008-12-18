@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
     printf("assert compatible_with(\"0.2\") == \"true\"\n");
 
     // if known, make sure the device name is correct
-    const char *device = getenv("TARGET_PRODUCT");
+    const char *device = getenv("TARGET_DEVICE");
     if (device != NULL) {
         printf("assert getprop(\"ro.product.device\") == \"%s\" || "
                 "getprop(\"ro.build.product\") == \"%s\"\n", device, device);

@@ -57,24 +57,27 @@ static int get_framebuffer(GGLSurface *fb)
     void *bits;
     
     fd = open("/dev/graphics/fb0", O_RDWR);
-    if(fd < 0) {
+    if (fd < 0) {
         perror("cannot open fb0");
         return -1;
     }
 
-    if(ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
+    if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
         perror("failed to get fb0 info");
+        close(fd);
         return -1;
     }
 
-    if(ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
+    if (ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
         perror("failed to get fb0 info");
+        close(fd);
         return -1;
     }
 
     bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if(bits == MAP_FAILED) {
+    if (bits == MAP_FAILED) {
         perror("failed to mmap framebuffer");
+        close(fd);
         return -1;
     }
 
@@ -99,22 +102,12 @@ static int get_framebuffer(GGLSurface *fb)
 
 static void set_active_framebuffer(unsigned n)
 {
-    if(n > 1) return;
+    if (n > 1) return;
     vi.yres_virtual = vi.yres * 2;
     vi.yoffset = n * vi.yres;
-    if(ioctl(gr_fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
-        fprintf(stderr,"active fb swap failed!\n");
+    if (ioctl(gr_fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
+        perror("active fb swap failed");
     }
-}
-
-static void dumpinfo(struct fb_var_screeninfo *vi)
-{
-    fprintf(stderr,"vi.xres = %d\n", vi->xres);
-    fprintf(stderr,"vi.yres = %d\n", vi->yres);
-    fprintf(stderr,"vi.xresv = %d\n", vi->xres_virtual);
-    fprintf(stderr,"vi.yresv = %d\n", vi->yres_virtual);
-    fprintf(stderr,"vi.xoff = %d\n", vi->xoffset);
-    fprintf(stderr,"vi.yoff = %d\n", vi->yoffset);
 }
 
 void gr_flip(void)
@@ -163,7 +156,7 @@ int gr_text(int x, int y, const char *s)
     
     while((off = *s++)) {
         off -= 32;
-        if(off < 96) {
+        if (off < 96) {
             gl->texCoord2i(gl, (off * font->cwidth) - x, 0 - y);
             gl->recti(gl, x, y, x + font->cwidth, y + font->cheight);
         }
@@ -240,31 +233,29 @@ static void gr_init_font(void)
 
 int gr_init(void)
 {
-    GGLContext *gl;
-    int fd;
-
     gglInit(&gr_context);
-    gl = gr_context;
+    GGLContext *gl = gr_context;
 
     gr_init_font();
-
-    fd = open("/dev/tty0", O_RDWR | O_SYNC);
-    if(fd < 0) return -1;
-
-    if(ioctl(fd, KDSETMODE, (void*) KD_GRAPHICS)) {
-        close(fd);
+    gr_vt_fd = open("/dev/tty0", O_RDWR | O_SYNC);
+    if (gr_vt_fd < 0) {
+        // This is non-fatal; post-Cupcake kernels don't have tty0.
+        perror("can't open /dev/tty0");
+    } else if (ioctl(gr_vt_fd, KDSETMODE, (void*) KD_GRAPHICS)) {
+        // However, if we do open tty0, we expect the ioctl to work.
+        perror("failed KDSETMODE to KD_GRAPHICS on tty0");
+        gr_exit();
         return -1;
     }
 
     gr_fb_fd = get_framebuffer(gr_framebuffer);
-    
-    if(gr_fb_fd < 0) {
-        ioctl(fd, KDSETMODE, (void*) KD_TEXT);
-        close(fd);
+    if (gr_fb_fd < 0) {
+        gr_exit();
         return -1;
     }
 
-    gr_vt_fd = fd;
+    fprintf(stderr, "framebuffer: fd %d (%d x %d)\n",
+            gr_fb_fd, gr_framebuffer[0].width, gr_framebuffer[0].height);
 
         /* start with 0 as front (displayed) and 1 as back (drawing) */
     gr_active_fb = 0;

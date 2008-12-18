@@ -126,12 +126,14 @@ static const ZipEntry *verifySignature(const ZipArchive *pArchive,
             strncpy(sfName, rsaName.str, rsaName.len - sizeof(rsa) + 1);
             strcpy(sfName + rsaName.len - sizeof(rsa) + 1, sf);
             const ZipEntry *sfEntry = mzFindZipEntry(pArchive, sfName);
-            free(sfName);
 
             if (sfEntry == NULL) {
                 LOGW("Missing signature file %s\n", sfName);
+                free(sfName);
                 continue;
             }
+
+            free(sfName);
 
             uint8_t sfDigest[SHA_DIGEST_SIZE];
             if (!digestEntry(pArchive, sfEntry, NULL, 0, sfDigest)) continue;
