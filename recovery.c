@@ -22,6 +22,7 @@
 #include <linux/input.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/reboot.h>
 #include <sys/types.h>
 #include <time.h>
@@ -63,6 +64,48 @@ static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
  *   --wipe_cache - wipe cache (but not user data), then reboot
  *
  * After completing, we remove /cache/recovery/command and reboot.
+ * Arguments may also be supplied in the bootloader control block (BCB).
+ * These important scenarios must be safely restartable at any point:
+ *
+ * FACTORY RESET
+ * 1. user selects "factory reset"
+ * 2. main system writes "--wipe_data" to /cache/recovery/command
+ * 3. main system reboots into recovery
+ * 4. get_args() writes BCB with "boot-recovery" and "--wipe_data"
+ *    -- after this, rebooting will restart the erase --
+ * 5. erase_root() reformats /data
+ * 6. erase_root() reformats /cache
+ * 7. finish_recovery() erases BCB
+ *    -- after this, rebooting will restart the main system --
+ * 8. main() calls reboot() to boot main system
+ *
+ * OTA INSTALL
+ * 1. main system downloads OTA package to /cache/some-filename.zip
+ * 2. main system writes "--update_package=CACHE:some-filename.zip"
+ * 3. main system reboots into recovery
+ * 4. get_args() writes BCB with "boot-recovery" and "--update_package=..."
+ *    -- after this, rebooting will attempt to reinstall the update --
+ * 5. install_package() attempts to install the update
+ *    NOTE: the package install must itself be restartable from any point
+ * 6. finish_recovery() erases BCB
+ *    -- after this, rebooting will (try to) restart the main system --
+ * 7. ** if install failed **
+ *    7a. prompt_and_wait() shows an error icon and waits for the user
+ *    7b; the user reboots (pulling the battery, etc) into the main system
+ * 8. main() calls maybe_install_firmware_update()
+ *    ** if the update contained radio/hboot firmware **:
+ *    8a. m_i_f_u() writes BCB with "boot-recovery" and "--wipe_cache"
+ *        -- after this, rebooting will reformat cache & restart main system --
+ *    8b. m_i_f_u() writes firmware image into raw cache partition
+ *    8c. m_i_f_u() writes BCB with "update-radio/hboot" and "--wipe_cache"
+ *        -- after this, rebooting will attempt to reinstall firmware --
+ *    8d. bootloader tries to flash firmware
+ *    8e. bootloader writes BCB with "boot-recovery" (keeping "--wipe_cache")
+ *        -- after this, rebooting will reformat cache & restart main system --
+ *    8f. erase_root() reformats /cache
+ *    8g. finish_recovery() erases BCB
+ *        -- after this, rebooting will (try to) restart the main system --
+ * 9. main() calls reboot() to boot main system
  */
 
 static const int MAX_ARG_LENGTH = 4096;
@@ -105,52 +148,64 @@ check_and_fclose(FILE *fp, const char *name) {
 //   - the contents of COMMAND_FILE (one per line)
 static void
 get_args(int *argc, char ***argv) {
-    if (*argc > 1) return;  // actual command line arguments take priority
-    char *argv0 = (*argv)[0];
-
     struct bootloader_message boot;
-    if (!get_bootloader_message(&boot)) {
-        if (boot.command[0] != 0 && boot.command[0] != 255) {
-            LOGI("Boot command: %.*s\n", sizeof(boot.command), boot.command);
-        }
+    memset(&boot, 0, sizeof(boot));
+    get_bootloader_message(&boot);  // this may fail, leaving a zeroed structure
 
-        if (boot.status[0] != 0 && boot.status[0] != 255) {
-            LOGI("Boot status: %.*s\n", sizeof(boot.status), boot.status);
-        }
+    if (boot.command[0] != 0 && boot.command[0] != 255) {
+        LOGI("Boot command: %.*s\n", sizeof(boot.command), boot.command);
+    }
 
-        // Ensure that from here on, a reboot goes back into recovery
-        strcpy(boot.command, "boot-recovery");
-        set_bootloader_message(&boot);
+    if (boot.status[0] != 0 && boot.status[0] != 255) {
+        LOGI("Boot status: %.*s\n", sizeof(boot.status), boot.status);
+    }
 
+    // --- if arguments weren't supplied, look in the bootloader control block
+    if (*argc <= 1) {
         boot.recovery[sizeof(boot.recovery) - 1] = '\0';  // Ensure termination
         const char *arg = strtok(boot.recovery, "\n");
         if (arg != NULL && !strcmp(arg, "recovery")) {
             *argv = (char **) malloc(sizeof(char *) * MAX_ARGS);
-            (*argv)[0] = argv0;
+            (*argv)[0] = strdup(arg);
             for (*argc = 1; *argc < MAX_ARGS; ++*argc) {
                 if ((arg = strtok(NULL, "\n")) == NULL) break;
                 (*argv)[*argc] = strdup(arg);
             }
             LOGI("Got arguments from boot message\n");
-            return;
         } else if (boot.recovery[0] != 0 && boot.recovery[0] != 255) {
             LOGE("Bad boot message\n\"%.20s\"\n", boot.recovery);
         }
     }
 
-    FILE *fp = fopen_root_path(COMMAND_FILE, "r");
-    if (fp == NULL) return;
+    // --- if that doesn't work, try the command file
+    if (*argc <= 1) {
+        FILE *fp = fopen_root_path(COMMAND_FILE, "r");
+        if (fp != NULL) {
+            char *argv0 = (*argv)[0];
+            *argv = (char **) malloc(sizeof(char *) * MAX_ARGS);
+            (*argv)[0] = argv0;  // use the same program name
 
-    *argv = (char **) malloc(sizeof(char *) * MAX_ARGS);
-    (*argv)[0] = argv0;  // use the same program name
+            char buf[MAX_ARG_LENGTH];
+            for (*argc = 1; *argc < MAX_ARGS; ++*argc) {
+                if (!fgets(buf, sizeof(buf), fp)) break;
+                (*argv)[*argc] = strdup(strtok(buf, "\r\n"));  // Strip newline.
+            }
 
-    char buf[MAX_ARG_LENGTH];
-    for (*argc = 1; *argc < MAX_ARGS && fgets(buf, sizeof(buf), fp); ++*argc) {
-        (*argv)[*argc] = strdup(strtok(buf, "\r\n"));  // Strip newline.
+            check_and_fclose(fp, COMMAND_FILE);
+            LOGI("Got arguments from %s\n", COMMAND_FILE);
+        }
     }
 
-    check_and_fclose(fp, COMMAND_FILE);
-    LOGI("Got arguments from %s\n", COMMAND_FILE);
+    // --> write the arguments we have back into the bootloader control block
+    // always boot into recovery after this (until finish_recovery() is called)
+    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
+    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
+    int i;
+    for (i = 1; i < *argc; ++i) {
+        strlcat(boot.recovery, (*argv)[i], sizeof(boot.recovery));
+        strlcat(boot.recovery, "\n", sizeof(boot.recovery));
+    }
+    set_bootloader_message(&boot);
 }
 
 
