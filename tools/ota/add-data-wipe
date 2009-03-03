@@ -1,0 +1,118 @@
+#!/bin/bash
+#
+# Copyright (C) 2007 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+PROGNAME=`basename $0`
+
+function cleantmp
+{
+    if [ ! -z "$TMPDIR" ]
+    then
+        rm -rf "$TMPDIR"
+        TMPDIR=
+    fi
+}
+
+function println
+{
+    if [ $# -gt 0 ]
+    then
+        echo "$PROGNAME: $@"
+    fi
+}
+
+function fail
+{
+    println "$@"
+    cleantmp
+    exit 1
+}
+
+function usage
+{
+    println "$@"
+    echo "Usage: $PROGNAME <input file> <output file>"
+    fail
+}
+
+OTATOOL=`which otatool`
+if [ -z "$OTATOOL" ]
+then
+    OTATOOL="`dirname $0`/otatool"
+    if [ ! -x "$OTATOOL" ]
+    then
+        fail "Can't find otatool"
+    fi
+fi
+
+
+if [ $# -ne 2 ]
+then
+    usage
+fi
+
+INFILE="$1"
+OUTFILE="$2"
+
+if [ ! -f "$INFILE" ]
+then
+    fail "$INFILE doesn't exist or isn't a file"
+fi
+
+if [ -z "$OUTFILE" ]
+then
+    usage "Output file not specified"
+fi
+
+if [ -d "$OUTFILE" ]
+then
+    usage "Output file may not be a directory"
+fi
+
+if [ "$INFILE" -ef "$OUTFILE" ]
+then
+    fail "Refusing to use the input file as the output file"
+fi
+
+TMPDIR=`mktemp -d "/tmp/$PROGNAME.XXXXXX"`
+if [ $? -ne 0 ]
+then
+    TMPDIR=
+    fail "Can't create temporary directory"
+fi
+
+ORIGSCRIPT="$TMPDIR/orig"
+NEWSCRIPT="$TMPDIR/new"
+
+"$OTATOOL" --dump-script "$INFILE" |
+awk '
+    { print }
+    /^format SYSTEM:$/ {
+        print "delete_recursive DATA:"
+    }
+' > "$NEWSCRIPT"
+if [ $? -ne 0 ]
+then
+    fail "Couldn't modify script"
+fi
+
+"$OTATOOL" --replace-script "$NEWSCRIPT" -o "$OUTFILE" "$INFILE"
+if [ $? -ne 0 ]
+then
+    fail "Couldn't replace script"
+fi
+
+cleantmp
