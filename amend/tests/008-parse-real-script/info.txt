@@ -1,1 +1,0 @@
-An input script similar to one that will actually be used in practice.

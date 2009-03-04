@@ -1,5 +1,0 @@
- IDENTIFIER<comment_on_this_line> EOL
- IDENTIFIER<none_on_this_one> EOL
- EOL
- EOL
- EOF
