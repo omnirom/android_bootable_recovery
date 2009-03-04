@@ -1,0 +1,13 @@
+ IDENTIFIER<this_identifier_is_not_assert> EOL
+ IDENTIFIER<NEITHER_IS_THIS_123> EOL
+ IDENTIFIER<but_the_next_one_is> EOL
+ IDENTIFIER<assert> EOL
+ IDENTIFIER<next_one_is_not_an_identifier> EOL
+line 6: unexpected character at '1'
+ EOF
+line 1: unexpected character at '"'
+ EOF
+line 1: unexpected character at '='
+ EOF
+line 1: unexpected character at '9'
+ EOF

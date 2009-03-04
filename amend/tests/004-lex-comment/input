@@ -1,0 +1,4 @@
+comment_on_this_line # this is a "comment" (with / a bunch) # \\ of stuff \
+none_on_this_one
+# beginning of line
+                         # preceded by whitespace

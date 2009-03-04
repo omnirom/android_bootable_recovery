@@ -1,0 +1,8 @@
+assert compatible_with("0.1") == "true"
+assert file_contains("SYSTEM:build.prop", "ro.product.device=dream") == "true" || file_contains("SYSTEM:build.prop", "ro.build.product=dream") == "true"
+assert file_contains("RECOVERY:default.prop", "ro.product.device=dream") == "true" || file_contains("RECOVERY:default.prop", "ro.build.product=dream") == "true"
+assert getprop("ro.product.device") == "dream"
+format BOOT:
+format SYSTEM:
+copy_dir PACKAGE:system SYSTEM:
+write_raw_image PACKAGE:boot.img BOOT:

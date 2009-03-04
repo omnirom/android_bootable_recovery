@@ -1,0 +1,5 @@
+test this has a bunch of BARE ALPHA WORDS
+test 12 this has(some ) ALPHANUMER1C and \\ whatever characters
+test this has mixed bare "and quoted" words
+test what about quotes"in the middle?"
+test \"\"\"shouldn't be a quoted string

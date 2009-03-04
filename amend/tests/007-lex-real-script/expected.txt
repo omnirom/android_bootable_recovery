@@ -1,0 +1,11 @@
+ IDENTIFIER<assert> IDENTIFIER<hash_dir> ( STRING<SYS:> ) == STRING<112345oldhashvalue1234123> EOL
+ IDENTIFIER<mark> WORD<SYS:> WORD<dirty> EOL
+ IDENTIFIER<copy_dir> WORD<PKG:android-files> WORD<SYS:> EOL
+ IDENTIFIER<assert> IDENTIFIER<hash_dir> ( STRING<SYS:> ) == STRING<667890newhashvalue6678909> EOL
+ IDENTIFIER<mark> WORD<SYS:> WORD<clean> EOL
+ IDENTIFIER<done> EOL
+ IDENTIFIER<assert> IDENTIFIER<hash_dir> ( STRING<SYS:> , STRING<blah> ) == STRING<112345oldhashvalue1234123> EOL
+ IDENTIFIER<assert> STRING<true> == STRING<false> EOL
+ IDENTIFIER<assert> IDENTIFIER<one> ( STRING<abc> , IDENTIFIER<two> ( STRING<def> ) ) == STRING<five> EOL
+ IDENTIFIER<assert> IDENTIFIER<hash_dir> ( STRING<SYS:> ) == STRING<667890newhashvalue6678909> || IDENTIFIER<hash_dir> ( STRING<SYS:> ) == STRING<667890newhashvalue6678909> EOL
+ EOF

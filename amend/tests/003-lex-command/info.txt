@@ -1,0 +1,1 @@
+Test to make sure that simple command names are tokenized properly.

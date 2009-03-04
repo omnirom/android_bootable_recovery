@@ -1,0 +1,74 @@
+command "assert" {
+    STRING EQ {
+        FUNCTION hash_dir (
+            "SYS:"
+        )
+        "112345oldhashvalue1234123"
+    }
+}
+command "mark" {
+    "SYS:"
+    "dirty"
+}
+command "copy_dir" {
+    "PKG:android-files"
+    "SYS:"
+}
+command "assert" {
+    STRING EQ {
+        FUNCTION hash_dir (
+            "SYS:"
+        )
+        "667890newhashvalue6678909"
+    }
+}
+command "mark" {
+    "SYS:"
+    "clean"
+}
+command "done" {
+}
+command "assert" {
+    STRING EQ {
+        FUNCTION hash_dir (
+            "SYS:"
+            "blah"
+        )
+        "112345oldhashvalue1234123"
+    }
+}
+command "assert" {
+    STRING EQ {
+        "true"
+        "false"
+    }
+}
+command "assert" {
+    STRING NE {
+        FUNCTION matches (
+            FUNCTION hash_dir (
+                "SYS:"
+            )
+            "667890newhashvalue6678909"
+            "999999newhashvalue6678909"
+        )
+        ""
+    }
+}
+command "assert" {
+    BOOLEAN OR {
+        STRING EQ {
+            FUNCTION hash_dir (
+                "SYS:"
+            )
+            "667890newhashvalue6678909"
+        }
+        STRING EQ {
+            FUNCTION hash_dir (
+                "SYS:"
+            )
+            "999999newhashvalue6678909"
+        }
+    }
+}
+amend: Parse successful.
