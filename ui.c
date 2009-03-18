@@ -89,6 +89,10 @@ static int text_cols = 0, text_rows = 0;
 static int text_col = 0, text_row = 0, text_top = 0;
 static int show_text = 0;
 
+static char menu[MAX_ROWS][MAX_COLS];
+static int show_menu = 0;
+static int menu_top = 0, menu_items = 0, menu_sel = 0;
+
 // Key event input queue
 static pthread_mutex_t key_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t key_queue_cond = PTHREAD_COND_INITIALIZER;
@@ -154,6 +158,12 @@ static void draw_progress_locked()
     }
 }
 
+static void draw_text_line(int row, const char* t) {
+  if (t[0] != '\0') {
+    gr_text(0, (row+1)*CHAR_HEIGHT-1, t);
+  }
+}
+
 // Redraw everything on the screen.  Does not flip pages.
 // Should only be called with gUpdateMutex locked.
 static void draw_screen_locked(void)
@@ -163,13 +173,32 @@ static void draw_screen_locked(void)
 
     if (show_text) {
         gr_color(0, 0, 0, 160);
-        gr_fill(0, 0, gr_fb_width(), text_rows * CHAR_HEIGHT);
+        gr_fill(0, 0, gr_fb_width(), gr_fb_height());
+
+        int i = 0;
+        if (show_menu) {
+            gr_color(64, 96, 255, 255);
+            gr_fill(0, (menu_top+menu_sel) * CHAR_HEIGHT,
+                    gr_fb_width(), (menu_top+menu_sel+1)*CHAR_HEIGHT+1);
+
+            for (; i < menu_top + menu_items; ++i) {
+                if (i == menu_top + menu_sel) {
+                    gr_color(255, 255, 255, 255);
+                    draw_text_line(i, menu[i]);
+                    gr_color(64, 96, 255, 255);
+                } else {
+                    draw_text_line(i, menu[i]);
+                }
+            }
+            gr_fill(0, i*CHAR_HEIGHT+CHAR_HEIGHT/2-1,
+                    gr_fb_width(), i*CHAR_HEIGHT+CHAR_HEIGHT/2+1);
+            ++i;
+        }
 
         gr_color(255, 255, 0, 255);
-        int i;
-        for (i = 0; i < text_rows; ++i) {
-            const char* line = text[(i + text_top) % text_rows];
-            if (line[0] != '\0') gr_text(0, (i + 1) * CHAR_HEIGHT - 1, line);
+
+        for (; i < text_rows; ++i) {
+            draw_text_line(i, text[(i+text_top) % text_rows]);
         }
     }
 }
@@ -228,13 +257,50 @@ static void *progress_thread(void *cookie)
 // Reads input events, handles special hot keys, and adds to the key queue.
 static void *input_thread(void *cookie)
 {
+    int rel_sum = 0;
+    int fake_key = 0;
     for (;;) {
         // wait for the next key event
         struct input_event ev;
-        do { ev_get(&ev, 0); } while (ev.type != EV_KEY || ev.code > KEY_MAX);
+        do {
+            ev_get(&ev, 0);
+
+            if (ev.type == EV_SYN) {
+                continue;
+            } else if (ev.type == EV_REL) {
+                if (ev.code == REL_Y) {
+                    // accumulate the up or down motion reported by
+                    // the trackball.  When it exceeds a threshold
+                    // (positive or negative), fake an up/down
+                    // key event.
+                    rel_sum += ev.value;
+                    if (rel_sum > 3) {
+                        fake_key = 1;
+                        ev.type = EV_KEY;
+                        ev.code = KEY_DOWN;
+                        ev.value = 1;
+                        rel_sum = 0;
+                    } else if (rel_sum < -3) {
+                        fake_key = 1;
+                        ev.type = EV_KEY;
+                        ev.code = KEY_UP;
+                        ev.value = 1;
+                        rel_sum = 0;
+                    }
+                }
+            } else {
+                rel_sum = 0;
+            }
+        } while (ev.type != EV_KEY || ev.code > KEY_MAX);
 
         pthread_mutex_lock(&key_queue_mutex);
-        key_pressed[ev.code] = ev.value;
+        if (!fake_key) {
+            // our "fake" keys only report a key-down event (no
+            // key-up), so don't record them in the key_pressed
+            // table.
+            key_pressed[ev.code] = ev.value;
+        }
+        fake_key = 0;
         const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
         if (ev.value > 0 && key_queue_len < queue_max) {
             key_queue[key_queue_len++] = ev.code;
@@ -242,9 +308,10 @@ static void *input_thread(void *cookie)
         }
         pthread_mutex_unlock(&key_queue_mutex);
 
-        // Alt+L: toggle log display
+        // Alt+L or Home+End: toggle log display
         int alt = key_pressed[KEY_LEFTALT] || key_pressed[KEY_RIGHTALT];
-        if (alt && ev.code == KEY_L && ev.value > 0) {
+        if ((alt && ev.code == KEY_L && ev.value > 0) ||
+            (key_pressed[KEY_HOME] && ev.code == KEY_END && ev.value > 0)) {
             pthread_mutex_lock(&gUpdateMutex);
             show_text = !show_text;
             update_screen_locked();
@@ -269,6 +336,7 @@ void ui_init(void)
     text_col = text_row = 0;
     text_rows = gr_fb_height() / CHAR_HEIGHT;
     if (text_rows > MAX_ROWS) text_rows = MAX_ROWS;
+    text_top = 1;
 
     text_cols = gr_fb_width() / CHAR_WIDTH;
     if (text_cols > MAX_COLS - 1) text_cols = MAX_COLS - 1;
@@ -392,6 +460,54 @@ void ui_print(const char *fmt, ...)
     pthread_mutex_unlock(&gUpdateMutex);
 }
 
+void ui_start_menu(char** headers, char** items) {
+    int i;
+    pthread_mutex_lock(&gUpdateMutex);
+    if (text_rows > 0 && text_cols > 0) {
+        for (i = 0; i < text_rows; ++i) {
+            if (headers[i] == NULL) break;
+            strncpy(menu[i], headers[i], text_cols-1);
+            menu[i][text_cols-1] = '\0';
+        }
+        menu_top = i;
+        for (; i < text_rows; ++i) {
+            if (items[i-menu_top] == NULL) break;
+            strncpy(menu[i], items[i-menu_top], text_cols-1);
+            menu[i][text_cols-1] = '\0';
+        }
+        menu_items = i - menu_top;
+        show_menu = 1;
+        menu_sel = 0;
+        update_screen_locked();
+    }
+    pthread_mutex_unlock(&gUpdateMutex);
+}
+
+int ui_menu_select(int sel) {
+    int old_sel;
+    pthread_mutex_lock(&gUpdateMutex);
+    if (show_menu > 0) {
+        old_sel = menu_sel;
+        menu_sel = sel;
+        if (menu_sel < 0) menu_sel = 0;
+        if (menu_sel >= menu_items) menu_sel = menu_items-1;
+        sel = menu_sel;
+        if (menu_sel != old_sel) update_screen_locked();
+    }
+    pthread_mutex_unlock(&gUpdateMutex);
+    return sel;
+}
+
+void ui_end_menu() {
+    int i;
+    pthread_mutex_lock(&gUpdateMutex);
+    if (show_menu > 0 && text_rows > 0 && text_cols > 0) {
+        show_menu = 0;
+        update_screen_locked();
+    }
+    pthread_mutex_unlock(&gUpdateMutex);
+}
+
 int ui_text_visible()
 {
     pthread_mutex_lock(&gUpdateMutex);
@@ -417,4 +533,10 @@ int ui_key_pressed(int key)
 {
     // This is a volatile static array, don't bother locking
     return key_pressed[key];
+}
+
+void ui_clear_key_queue() {
+    pthread_mutex_lock(&key_queue_mutex);
+    key_queue_len = 0;
+    pthread_mutex_unlock(&key_queue_mutex);
 }

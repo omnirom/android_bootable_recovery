@@ -43,6 +43,7 @@ static GRFont *gr_font = 0;
 static GGLContext *gr_context = 0;
 static GGLSurface gr_font_texture;
 static GGLSurface gr_framebuffer[2];
+static GGLSurface gr_mem_surface;
 static unsigned gr_active_fb = 0;
 
 static int gr_fb_fd = -1;
@@ -55,7 +56,7 @@ static int get_framebuffer(GGLSurface *fb)
     int fd;
     struct fb_fix_screeninfo fi;
     void *bits;
-    
+
     fd = open("/dev/graphics/fb0", O_RDWR);
     if (fd < 0) {
         perror("cannot open fb0");
@@ -87,9 +88,9 @@ static int get_framebuffer(GGLSurface *fb)
     fb->stride = vi.xres;
     fb->data = bits;
     fb->format = GGL_PIXEL_FORMAT_RGB_565;
-    
+
     fb++;
-    
+
     fb->version = sizeof(*fb);
     fb->width = vi.xres;
     fb->height = vi.yres;
@@ -98,6 +99,15 @@ static int get_framebuffer(GGLSurface *fb)
     fb->format = GGL_PIXEL_FORMAT_RGB_565;
 
     return fd;
+}
+
+static void get_memory_surface(GGLSurface* ms) {
+  ms->version = sizeof(*ms);
+  ms->width = vi.xres;
+  ms->height = vi.yres;
+  ms->stride = vi.xres;
+  ms->data = malloc(vi.xres * vi.yres * 2);
+  ms->format = GGL_PIXEL_FORMAT_RGB_565;
 }
 
 static void set_active_framebuffer(unsigned n)
@@ -113,14 +123,16 @@ static void set_active_framebuffer(unsigned n)
 void gr_flip(void)
 {
     GGLContext *gl = gr_context;
-    
-        /* currently active buffer becomes the backbuffer */
-    gl->colorBuffer(gl, gr_framebuffer + gr_active_fb);
 
-        /* swap front and back buffers */
+    /* swap front and back buffers */
     gr_active_fb = (gr_active_fb + 1) & 1;
 
-        /* inform the display driver */
+    /* copy data from the in-memory surface to the buffer we're about
+     * to make active. */
+    memcpy(gr_framebuffer[gr_active_fb].data, gr_mem_surface.data,
+           vi.xres * vi.yres * 2);
+
+    /* inform the display driver */
     set_active_framebuffer(gr_active_fb);
 }
 
@@ -147,13 +159,13 @@ int gr_text(int x, int y, const char *s)
     unsigned off;
 
     y -= font->ascent;
-  
+
     gl->bindTexture(gl, &font->texture);
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
     gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
     gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
     gl->enable(gl, GGL_TEXTURE_2D);
-    
+
     while((off = *s++)) {
         off -= 32;
         if (off < 96) {
@@ -209,10 +221,10 @@ static void gr_init_font(void)
     unsigned char *in, data;
 
     gr_font = calloc(sizeof(*gr_font), 1);
-    ftex = &gr_font->texture; 
+    ftex = &gr_font->texture;
 
     bits = malloc(font.width * font.height);
-    
+
     ftex->version = sizeof(*ftex);
     ftex->width = font.width;
     ftex->height = font.height;
@@ -225,7 +237,7 @@ static void gr_init_font(void)
         memset(bits, (data & 0x80) ? 255 : 0, data & 0x7f);
         bits += (data & 0x7f);
     }
-    
+
     gr_font->cwidth = font.cwidth;
     gr_font->cheight = font.cheight;
     gr_font->ascent = font.cheight - 2;
@@ -254,13 +266,16 @@ int gr_init(void)
         return -1;
     }
 
+    get_memory_surface(&gr_mem_surface);
+
     fprintf(stderr, "framebuffer: fd %d (%d x %d)\n",
             gr_fb_fd, gr_framebuffer[0].width, gr_framebuffer[0].height);
 
         /* start with 0 as front (displayed) and 1 as back (drawing) */
     gr_active_fb = 0;
     set_active_framebuffer(0);
-    gl->colorBuffer(gl, gr_framebuffer + 1);
+    gl->colorBuffer(gl, &gr_mem_surface);
+
 
     gl->activeTexture(gl, 0);
     gl->enable(gl, GGL_BLEND);
@@ -273,7 +288,9 @@ void gr_exit(void)
 {
     close(gr_fb_fd);
     gr_fb_fd = -1;
-    
+
+    free(gr_mem_surface.data);
+
     ioctl(gr_vt_fd, KDSETMODE, (void*) KD_TEXT);
     close(gr_vt_fd);
     gr_vt_fd = -1;
@@ -291,5 +308,5 @@ int gr_fb_height(void)
 
 gr_pixel *gr_fb_data(void)
 {
-    return (unsigned short *) gr_framebuffer[1 - gr_active_fb].data;
+    return (unsigned short *) gr_mem_surface.data;
 }
