@@ -185,16 +185,21 @@ int main(int argc, char *argv[]) {
     }
 
     // The lines we're looking for look like:
-    //     version-bootloader=x.yy.zzzz
+    //     version-bootloader=x.yy.zzzz|x.yy.zzzz|...
     // or:
-    //     require version-bootloader=x.yy.zzzz
+    //     require version-bootloader=x.yy.zzzz|x.yy.zzzz|...
     char line[256];
     while (fgets(line, sizeof(line), fp)) {
-        const char *name = strtok(line, "="), *value = strtok(NULL, "\n");
+        const char *name = strtok(line, "="), *value = strtok(NULL, "|\n");
         if (value != NULL &&
             (!strcmp(name, "version-bootloader") ||
              !strcmp(name, "require version-bootloader"))) {
-            printf("assert getprop(\"ro.bootloader\") == \"%s\"\n", value);
+            printf("assert getprop(\"ro.bootloader\") == \"%s\"", value);
+
+            while ((value = strtok(NULL, "|\n")) != NULL) {
+              printf(" || getprop(\"ro.bootloader\") == \"%s\"", value);
+            }
+            printf("\n");
         }
         // We also used to check version-baseband, but we update radio.img
         // ourselves, so there's no need.
