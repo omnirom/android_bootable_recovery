@@ -30,7 +30,7 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE_TAGS := eng
 
 LOCAL_STATIC_LIBRARIES := libminzip libunz libamend libmtdutils libmincrypt
-LOCAL_STATIC_LIBRARIES += libminui libpixelflinger_static libcutils
+LOCAL_STATIC_LIBRARIES += libminui libpixelflinger_static libpng libcutils
 LOCAL_STATIC_LIBRARIES += libstdc++ libc
 
 # Specify a C-includable file containing the OTA public keys.
