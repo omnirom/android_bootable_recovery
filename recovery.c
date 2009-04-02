@@ -302,9 +302,11 @@ prompt_and_wait()
 #define ITEM_REBOOT        0
 #define ITEM_APPLY_SDCARD  1
 #define ITEM_WIPE_DATA     2
+#define ITEM_WIPE_CACHE    3
     char* items[] = { "reboot system now [Home+Back]",
                       "apply sdcard:update.zip [Alt+S]",
                       "wipe data/factory reset [Alt+W]",
+                      "wipe cache partition",
                       NULL };
 
     ui_start_menu(headers, items);
@@ -354,6 +356,13 @@ prompt_and_wait()
                     erase_root("DATA:");
                     erase_root("CACHE:");
                     ui_print("Data wipe complete.\n");
+                    if (!ui_text_visible()) return;
+                    break;
+
+                case ITEM_WIPE_CACHE:
+                    ui_print("\n-- Wiping cache...\n");
+                    erase_root("CACHE:");
+                    ui_print("Cache wipe complete.\n");
                     if (!ui_text_visible()) return;
                     break;
 
