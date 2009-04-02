@@ -33,20 +33,7 @@ LOCAL_STATIC_LIBRARIES := libminzip libunz libamend libmtdutils libmincrypt
 LOCAL_STATIC_LIBRARIES += libminui libpixelflinger_static libpng libcutils
 LOCAL_STATIC_LIBRARIES += libstdc++ libc
 
-# Specify a C-includable file containing the OTA public keys.
-# This is built in config/Makefile.
-# *** THIS IS A TOTAL HACK; EXECUTABLES MUST NOT CHANGE BETWEEN DIFFERENT
-#     PRODUCTS/BUILD TYPES. ***
-# TODO: make recovery read the keys from an external file.
-RECOVERY_INSTALL_OTA_KEYS_INC := \
-	$(call intermediates-dir-for,PACKAGING,ota_keys_inc)/keys.inc
-# Let install.c say #include "keys.inc"
-LOCAL_C_INCLUDES += $(dir $(RECOVERY_INSTALL_OTA_KEYS_INC))
-
 include $(BUILD_EXECUTABLE)
-
-# Depend on the generated keys.inc containing the OTA public keys.
-$(intermediates)/install.o: $(RECOVERY_INSTALL_OTA_KEYS_INC)
 
 include $(commands_recovery_local_path)/minui/Android.mk
 
