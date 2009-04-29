@@ -41,7 +41,7 @@ enum {
     CENSIZ = 20,
     CENLEN = 24,
     CENNAM = 28,
-    CENEXT = 30, 
+    CENEXT = 30,
     CENCOM = 32,
     CENDSK = 34,
     CENATT = 36,
@@ -66,13 +66,13 @@ enum {
 
     LOCSIG = 0x04034b50,      // PK34
     LOCHDR = 30,
-        
+
     LOCVER =  4,
     LOCFLG =  6,
     LOCHOW =  8,
     LOCTIM = 10,
     LOCCRC = 14,
-    LOCSIZ = 18, 
+    LOCSIZ = 18,
     LOCLEN = 22,
     LOCNAM = 26,
     LOCEXT = 28,
@@ -757,7 +757,7 @@ bool mzReadZipEntry(const ZipArchive* pArchive, const ZipEntry* pEntry,
 {
     CopyProcessArgs args;
     bool ret;
-    
+
     args.buf = buf;
     args.bufLen = bufLen;
     ret = mzProcessZipEntryContents(pArchive, pEntry, copyProcessFunction,
@@ -772,13 +772,29 @@ bool mzReadZipEntry(const ZipArchive* pArchive, const ZipEntry* pEntry,
 static bool writeProcessFunction(const unsigned char *data, int dataLen,
         void *fd)
 {
-    ssize_t n = write((int)fd, data, dataLen);
-    if (n != dataLen) {
-        LOGE("Can't write %d bytes (only %ld) from zip file: %s\n",
-                dataLen, n, strerror(errno));
-        return false;
-    }
-    return true;
+    int zeroWrites = 0;
+    ssize_t soFar = 0;
+    do {
+        ssize_t n = write((int)fd, data+soFar, dataLen-soFar);
+        if (n < 0) {
+            LOGE("Error writing %ld bytes from zip file: %s\n",
+                 dataLen-soFar, strerror(errno));
+            return false;
+        } else if (n > 0) {
+            soFar += n;
+            if (soFar == dataLen) return true;
+            if (soFar > dataLen) {
+                LOGE("write overrun?  (%ld bytes instead of %d)\n",
+                     soFar, dataLen);
+                return false;
+            }
+            zeroWrites = 0;
+        } else {
+            ++zeroWrites;
+        }
+    } while (zeroWrites < 5);
+    LOGE("too many consecutive zero-length writes\n");
+    return false;
 }
 
 /*
