@@ -56,6 +56,14 @@ typedef struct {
 } UnterminatedString;
 
 /*
+ * The information we pass down to writeProcessFunction.
+ */
+typedef struct {
+    int fd;
+    unsigned char* aligned_buffer;
+} WriteInfo;
+
+/*
  * Open a Zip archive.
  *
  * On success, returns 0 and populates "pArchive".  Returns nonzero errno
@@ -166,7 +174,7 @@ bool mzIsZipEntryIntact(const ZipArchive *pArchive, const ZipEntry *pEntry);
  * Inflate and write an entry to a file.
  */
 bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
-    const ZipEntry *pEntry, int fd);
+    const ZipEntry *pEntry, WriteInfo *wi);
 
 /*
  * Inflate all entries under zipDir to the directory specified by
