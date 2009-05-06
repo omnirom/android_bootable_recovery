@@ -12,6 +12,7 @@
 #include <stdint.h>     // for uintptr_t
 #include <stdlib.h>
 #include <sys/stat.h>   // for S_ISLNK()
+#include <sys/statfs.h>
 #include <unistd.h>
 
 #define LOG_TAG "minzip"
@@ -82,6 +83,12 @@ enum {
 
     CENVEM_UNIX = 3 << 8,   // the high byte of CENVEM
 };
+
+
+/* The maximum zipped file write size we will align. */
+#define WRITE_SIZE  32768
+/* The boundary on which we will align it. */
+#define WRITE_ALIGNMENT 32768
 
 
 /*
@@ -770,17 +777,38 @@ bool mzReadZipEntry(const ZipArchive* pArchive, const ZipEntry* pEntry,
 }
 
 static bool writeProcessFunction(const unsigned char *data, int dataLen,
-        void *fd)
+                                 void *cookie)
 {
-    int zeroWrites = 0;
+    WriteInfo *wi = (WriteInfo*)cookie;
+
+    if (dataLen <= WRITE_SIZE) {
+        memcpy(wi->aligned_buffer, data, dataLen);
+        data = wi->aligned_buffer;
+    }
+
     ssize_t soFar = 0;
-    do {
-        ssize_t n = write((int)fd, data+soFar, dataLen-soFar);
-        if (n < 0) {
-            LOGE("Error writing %ld bytes from zip file: %s\n",
-                 dataLen-soFar, strerror(errno));
+    while (true) {
+        ssize_t n = write(wi->fd, data+soFar, dataLen-soFar);
+        if (n <= 0) {
+            LOGE("Error writing %ld bytes from zip file from %p: %s\n",
+                 dataLen-soFar, data+soFar, strerror(errno));
+            if (errno == ENOSPC) {
+                struct statfs sf;
+                if (statfs("/system", &sf) != 0) {
+                    LOGE("failed to statfs /system: %s\n", strerror(errno));
+                } else {
+                    LOGE("statfs said: %ld * %ld = %ld\n",
+                         (long)sf.f_bsize, (long)sf.f_bfree,
+                         (long)sf.f_bsize * (long)sf.f_bfree);
+                }
+            }
             return false;
         } else if (n > 0) {
+            if (n < dataLen-soFar) {
+                LOGE("short write: %d bytes of %d from %p\n",
+                     (int)n, (int)(dataLen-soFar),
+                     data+soFar);
+            }
             soFar += n;
             if (soFar == dataLen) return true;
             if (soFar > dataLen) {
@@ -788,23 +816,18 @@ static bool writeProcessFunction(const unsigned char *data, int dataLen,
                      soFar, dataLen);
                 return false;
             }
-            zeroWrites = 0;
-        } else {
-            ++zeroWrites;
         }
-    } while (zeroWrites < 5);
-    LOGE("too many consecutive zero-length writes\n");
-    return false;
+    }
 }
 
 /*
  * Uncompress "pEntry" in "pArchive" to "fd" at the current offset.
  */
 bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
-    const ZipEntry *pEntry, int fd)
+    const ZipEntry *pEntry, WriteInfo *wi)
 {
     bool ret = mzProcessZipEntryContents(pArchive, pEntry, writeProcessFunction,
-            (void *)fd);
+                                         wi);
     if (!ret) {
         LOGE("Can't extract entry to file.\n");
         return false;
@@ -905,6 +928,11 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
         LOGE("mzExtractRecursive(): targetDir must be an absolute path.\n");
         return false;
     }
+
+    unsigned char* buffer = malloc(WRITE_SIZE+WRITE_ALIGNMENT);
+    WriteInfo wi;
+    wi.aligned_buffer = buffer + WRITE_ALIGNMENT -
+            ((long)buffer % WRITE_ALIGNMENT);
 
     unsigned int zipDirLen;
     char *zpath;
@@ -1086,7 +1114,8 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
                     break;
                 }
 
-                bool ok = mzExtractZipEntryToFile(pArchive, pEntry, fd);
+                wi.fd = fd;
+                bool ok = mzExtractZipEntryToFile(pArchive, pEntry, &wi);
                 close(fd);
                 if (!ok) {
                     LOGE("Error extracting \"%s\"\n", targetFile);
@@ -1109,6 +1138,7 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
 
     free(helper.buf);
     free(zpath);
+    free(buffer);
 
     return ok;
 }
