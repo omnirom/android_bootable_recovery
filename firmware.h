@@ -23,6 +23,9 @@
  */
 int remember_firmware_update(const char *type, const char *data, int length);
 
+/* Returns true if a firmware update has been saved. */
+int firmware_update_pending();
+
 /* If an update was saved, reboot into the bootloader now to install it.
  * Returns 0 if no radio image was defined, nonzero on error,
  * doesn't return at all on success...

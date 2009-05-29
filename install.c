@@ -105,7 +105,7 @@ handle_update_script(ZipArchive *zip, const ZipEntry *update_script_entry)
         return INSTALL_ERROR;
     }
 
-    ui_print("Installation complete.\n");
+    LOGI("Installation complete.\n");
     return INSTALL_SUCCESS;
 }
 
