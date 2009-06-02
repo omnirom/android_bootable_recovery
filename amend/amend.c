@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include "amend.h"
 #include "lexer.h"
+#include "parser.h"
 
 extern const AmCommandList *gCommands;
 

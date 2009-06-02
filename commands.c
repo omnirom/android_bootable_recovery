@@ -57,39 +57,13 @@ static int gDidShowProgress = 0;
         if (argc < 0) return -1; \
         assert(argc == 0 || argv != NULL); \
         if (argc != 0 && argv == NULL) return -1; \
-        if (permissions != NULL) { \
-            int CW_I_; \
-            for (CW_I_ = 0; CW_I_ < argc; CW_I_++) { \
-                assert(argv[CW_I_] != NULL); \
-                if (argv[CW_I_] == NULL) return -1; \
-            } \
-        } \
     } while (false)
 
 #define CHECK_FN() \
     do { \
         CHECK_WORDS(); \
-        if (permissions != NULL) { \
-            assert(result == NULL); \
-            if (result != NULL) return -1; \
-        } else { \
-            assert(result != NULL); \
-            if (result == NULL) return -1; \
-        } \
-    } while (false)
-
-#define NO_PERMS(perms) \
-    do { \
-        PermissionRequestList *NP_PRL_ = (perms); \
-        if (NP_PRL_ != NULL) { \
-            int NP_RET_ = addPermissionRequestToList(NP_PRL_, \
-                    "", false, PERM_NONE); \
-            if (NP_RET_ < 0) { \
-                /* Returns from the calling function. \
-                 */ \
-                return NP_RET_; \
-            } \
-        } \
+        assert(result != NULL); \
+        if (result == NULL) return -1; \
     } while (false)
 
 /*
@@ -99,13 +73,11 @@ static int gDidShowProgress = 0;
 /* assert <boolexpr>
  */
 static int
-cmd_assert(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_assert(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_BOOL();
-    NO_PERMS(permissions);
 
     /* If our argument is false, return non-zero (failure)
      * If our argument is true, return zero (success)
@@ -120,8 +92,7 @@ cmd_assert(const char *name, void *cookie, int argc, const char *argv[],
 /* format <root>
  */
 static int
-cmd_format(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_format(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(name);
     UNUSED(cookie);
@@ -151,8 +122,7 @@ cmd_format(const char *name, void *cookie, int argc, const char *argv[],
  * give up early.
  */
 static int
-cmd_delete(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_delete(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(cookie);
     CHECK_WORDS();
@@ -166,7 +136,6 @@ cmd_delete(const char *name, void *cookie, int argc, const char *argv[],
 
     recurse = (strcmp(name, "delete_recursive") == 0);
     ui_print("Deleting files...\n");
-//xxx permissions
 
     int i;
     for (i = 0; i < argc; i++) {
@@ -233,13 +202,11 @@ static void extract_cb(const char *fn, void *cookie)
  * or a fixed default timestamp will be supplied otherwise.
  */
 static int
-cmd_copy_dir(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_copy_dir(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_WORDS();
-//xxx permissions
 
     // To create a consistent system image, never use the clock for timestamps.
     struct utimbuf timestamp = { 1217592000, 1217592000 };  // 8/1/2008 default
@@ -331,8 +298,7 @@ cmd_copy_dir(const char *name, void *cookie, int argc, const char *argv[],
  * Run an external program included in the update package.
  */
 static int
-cmd_run_program(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_run_program(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(cookie);
     CHECK_WORDS();
@@ -407,8 +373,7 @@ cmd_run_program(const char *name, void *cookie, int argc, const char *argv[],
  * User, group, and modes must all be integer values (hex or octal OK).
  */
 static int
-cmd_set_perm(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_set_perm(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(cookie);
     CHECK_WORDS();
@@ -461,8 +426,7 @@ cmd_set_perm(const char *name, void *cookie, int argc, const char *argv[],
  * if the actual rate of progress can be determined).
  */
 static int
-cmd_show_progress(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_show_progress(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(cookie);
     CHECK_WORDS();
@@ -499,8 +463,7 @@ cmd_show_progress(const char *name, void *cookie, int argc, const char *argv[],
  * for the target filesystem (and may be relative).
  */
 static int
-cmd_symlink(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_symlink(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(cookie);
     CHECK_WORDS();
@@ -554,7 +517,7 @@ static bool firmware_fn(const unsigned char *data, int data_len, void *cookie)
  */
 static int
 cmd_write_firmware_image(const char *name, void *cookie,
-        int argc, const char *argv[], PermissionRequestList *permissions)
+        int argc, const char *argv[])
 {
     UNUSED(cookie);
     CHECK_WORDS();
@@ -634,11 +597,10 @@ static bool write_raw_image_process_fn(
  */
 static int
 cmd_write_raw_image(const char *name, void *cookie,
-        int argc, const char *argv[], PermissionRequestList *permissions)
+        int argc, const char *argv[])
 {
     UNUSED(cookie);
     CHECK_WORDS();
-//xxx permissions
 
     if (argc != 2) {
         LOGE("Command %s requires exactly two arguments\n", name);
@@ -726,8 +688,7 @@ cmd_write_raw_image(const char *name, void *cookie,
 /* mark <resource> dirty|clean
  */
 static int
-cmd_mark(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_mark(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(name);
     UNUSED(cookie);
@@ -742,8 +703,7 @@ cmd_mark(const char *name, void *cookie, int argc, const char *argv[],
 /* done
  */
 static int
-cmd_done(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_done(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(name);
     UNUSED(cookie);
@@ -764,13 +724,11 @@ cmd_done(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_compatible_with(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     if (argc != 1) {
         fprintf(stderr, "%s: wrong number of arguments (%d)\n",
@@ -796,13 +754,11 @@ fn_compatible_with(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_update_forced(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     if (argc != 0) {
         fprintf(stderr, "%s: wrong number of arguments (%d)\n",
@@ -830,13 +786,11 @@ fn_update_forced(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_get_mark(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     if (argc != 1) {
         fprintf(stderr, "%s: wrong number of arguments (%d)\n",
@@ -857,8 +811,7 @@ fn_get_mark(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_hash_dir(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     int ret = -1;
 
@@ -875,24 +828,6 @@ fn_hash_dir(const char *name, void *cookie, int argc, const char *argv[],
         dir = argv[0];
     }
 
-    if (permissions != NULL) {
-        if (dir == NULL) {
-            /* The argument is the result of another function.
-             * Assume the worst case, where the function returns
-             * the root.
-             */
-            dir = "/";
-        }
-        ret = addPermissionRequestToList(permissions, dir, true, PERM_READ);
-    } else {
-//xxx build and return the string
-        *result = strdup("hashvalue");
-        if (resultLen != NULL) {
-            *resultLen = strlen(*result);
-        }
-        ret = 0;
-    }
-
     return ret;
 }
 
@@ -904,13 +839,11 @@ fn_hash_dir(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_matches(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     if (argc < 2) {
         fprintf(stderr, "%s: not enough arguments (%d < 2)\n",
@@ -941,13 +874,11 @@ fn_matches(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_concat(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     size_t totalLen = 0;
     int i;
@@ -977,12 +908,10 @@ fn_concat(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_getprop(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     if (argc != 1) {
         LOGE("Command %s requires exactly one argument\n", name);
@@ -1005,12 +934,10 @@ fn_getprop(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_file_contains(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     if (argc != 2) {
         LOGE("Command %s requires exactly two arguments\n", name);

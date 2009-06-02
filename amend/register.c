@@ -39,40 +39,15 @@
         if (argc < 0) return -1; \
         assert(argc == 0 || argv != NULL); \
         if (argc != 0 && argv == NULL) return -1; \
-        if (permissions != NULL) { \
-            int CW_I_; \
-            for (CW_I_ = 0; CW_I_ < argc; CW_I_++) { \
-                assert(argv[CW_I_] != NULL); \
-                if (argv[CW_I_] == NULL) return -1; \
-            } \
-        } \
     } while (false)
 
 #define CHECK_FN() \
     do { \
         CHECK_WORDS(); \
-        if (permissions != NULL) { \
-            assert(result == NULL); \
-            if (result != NULL) return -1; \
-        } else { \
-            assert(result != NULL); \
-            if (result == NULL) return -1; \
-        } \
+        assert(result != NULL);            \
+        if (result == NULL) return -1;     \
     } while (false)
 
-#define NO_PERMS(perms) \
-    do { \
-        PermissionRequestList *NP_PRL_ = (perms); \
-        if (NP_PRL_ != NULL) { \
-            int NP_RET_ = addPermissionRequestToList(NP_PRL_, \
-                    "", false, PERM_NONE); \
-            if (NP_RET_ < 0) { \
-                /* Returns from the calling function. \
-                 */ \
-                return NP_RET_; \
-            } \
-        } \
-    } while (false)
 
 /*
  * Command definitions
@@ -81,13 +56,11 @@
 /* assert <boolexpr>
  */
 static int
-cmd_assert(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_assert(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_BOOL();
-    NO_PERMS(permissions);
 
     /* If our argument is false, return non-zero (failure)
      * If our argument is true, return zero (success)
@@ -102,8 +75,7 @@ cmd_assert(const char *name, void *cookie, int argc, const char *argv[],
 /* format <root>
  */
 static int
-cmd_format(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_format(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(name);
     UNUSED(cookie);
@@ -115,8 +87,7 @@ cmd_format(const char *name, void *cookie, int argc, const char *argv[],
 /* copy_dir <srcdir> <dstdir>
  */
 static int
-cmd_copy_dir(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_copy_dir(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(name);
     UNUSED(cookie);
@@ -128,8 +99,7 @@ cmd_copy_dir(const char *name, void *cookie, int argc, const char *argv[],
 /* mark <resource> dirty|clean
  */
 static int
-cmd_mark(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_mark(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(name);
     UNUSED(cookie);
@@ -144,8 +114,7 @@ cmd_mark(const char *name, void *cookie, int argc, const char *argv[],
 /* done
  */
 static int
-cmd_done(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+cmd_done(const char *name, void *cookie, int argc, const char *argv[])
 {
     UNUSED(name);
     UNUSED(cookie);
@@ -174,11 +143,6 @@ registerUpdateCommands()
     ret = registerCommand("done", CMD_ARGS_WORDS, cmd_done, NULL);
     if (ret < 0) return ret;
 
-//xxx some way to fix permissions
-//xxx could have "installperms" commands that build the fs_config list
-//xxx along with a "commitperms", and any copy_dir etc. needs to see
-//    a commitperms before it will work
-
     return 0;
 }
 
@@ -194,13 +158,11 @@ registerUpdateCommands()
  */
 static int
 fn_update_forced(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     if (argc != 0) {
         fprintf(stderr, "%s: wrong number of arguments (%d)\n",
@@ -228,13 +190,11 @@ fn_update_forced(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_get_mark(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     if (argc != 1) {
         fprintf(stderr, "%s: wrong number of arguments (%d)\n",
@@ -255,8 +215,7 @@ fn_get_mark(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_hash_dir(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     int ret = -1;
 
@@ -273,23 +232,12 @@ fn_hash_dir(const char *name, void *cookie, int argc, const char *argv[],
         dir = argv[0];
     }
 
-    if (permissions != NULL) {
-        if (dir == NULL) {
-            /* The argument is the result of another function.
-             * Assume the worst case, where the function returns
-             * the root.
-             */
-            dir = "/";
-        }
-        ret = addPermissionRequestToList(permissions, dir, true, PERM_READ);
-    } else {
 //xxx build and return the string
-        *result = strdup("hashvalue");
-        if (resultLen != NULL) {
-            *resultLen = strlen(*result);
-        }
-        ret = 0;
+    *result = strdup("hashvalue");
+    if (resultLen != NULL) {
+      *resultLen = strlen(*result);
     }
+    ret = 0;
 
     return ret;
 }
@@ -302,13 +250,11 @@ fn_hash_dir(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_matches(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     if (argc < 2) {
         fprintf(stderr, "%s: not enough arguments (%d < 2)\n",
@@ -339,13 +285,11 @@ fn_matches(const char *name, void *cookie, int argc, const char *argv[],
  */
 static int
 fn_concat(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen,
-        PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     UNUSED(name);
     UNUSED(cookie);
     CHECK_FN();
-    NO_PERMS(permissions);
 
     size_t totalLen = 0;
     int i;

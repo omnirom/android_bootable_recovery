@@ -152,37 +152,30 @@ getCommandArgumentType(Command *cmd)
 }
 
 static int
-callCommandInternal(CommandEntry *entry, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+callCommandInternal(CommandEntry *entry, int argc, const char *argv[])
 {
     if (entry != NULL && entry->argType == CMD_ARGS_WORDS &&
             (argc == 0 || (argc > 0 && argv != NULL)))
     {
-        if (permissions == NULL) {
-            int i;
-            for (i = 0; i < argc; i++) {
-                if (argv[i] == NULL) {
-                    goto bail;
-                }
+        int i;
+        for (i = 0; i < argc; i++) {
+            if (argv[i] == NULL) {
+                goto bail;
             }
         }
         TRACE("calling command %s\n", entry->name);
-        return entry->hook(entry->name, entry->cookie, argc, argv, permissions);
-//xxx if permissions, make sure the entry has added at least one element.
+        return entry->hook(entry->name, entry->cookie, argc, argv);
     }
 bail:
     return -1;
 }
 
 static int
-callBooleanCommandInternal(CommandEntry *entry, bool arg,
-        PermissionRequestList *permissions)
+callBooleanCommandInternal(CommandEntry *entry, bool arg)
 {
     if (entry != NULL && entry->argType == CMD_ARGS_BOOLEAN) {
         TRACE("calling boolean command %s\n", entry->name);
-        return entry->hook(entry->name, entry->cookie, arg ? 1 : 0, NULL,
-                permissions);
-//xxx if permissions, make sure the entry has added at least one element.
+        return entry->hook(entry->name, entry->cookie, arg ? 1 : 0, NULL);
     }
     return -1;
 }
@@ -190,63 +183,37 @@ callBooleanCommandInternal(CommandEntry *entry, bool arg,
 int
 callCommand(Command *cmd, int argc, const char *argv[])
 {
-    return callCommandInternal((CommandEntry *)cmd, argc, argv, NULL);
+    return callCommandInternal((CommandEntry *)cmd, argc, argv);
 }
 
 int
 callBooleanCommand(Command *cmd, bool arg)
 {
-    return callBooleanCommandInternal((CommandEntry *)cmd, arg, NULL);
-}
-
-int
-getCommandPermissions(Command *cmd, int argc, const char *argv[],
-        PermissionRequestList *permissions)
-{
-    if (permissions != NULL) {
-        return callCommandInternal((CommandEntry *)cmd, argc, argv,
-                permissions);
-    }
-    return -1;
-}
-
-int
-getBooleanCommandPermissions(Command *cmd, bool arg,
-        PermissionRequestList *permissions)
-{
-    if (permissions != NULL) {
-        return callBooleanCommandInternal((CommandEntry *)cmd, arg,
-                permissions);
-    }
-    return -1;
+    return callBooleanCommandInternal((CommandEntry *)cmd, arg);
 }
 
 int
 callFunctionInternal(CommandEntry *entry, int argc, const char *argv[],
-        char **result, size_t *resultLen, PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     if (entry != NULL && entry->argType == CMD_ARGS_WORDS &&
             (argc == 0 || (argc > 0 && argv != NULL)))
     {
-        if ((permissions == NULL && result != NULL) ||
-                (permissions != NULL && result == NULL))
+        if (result != NULL)
         {
-            if (permissions == NULL) {
-                /* This is the actual invocation of the function,
-                 * which means that none of the arguments are allowed
-                 * to be NULL.
-                 */
-                int i;
-                for (i = 0; i < argc; i++) {
-                    if (argv[i] == NULL) {
-                        goto bail;
-                    }
+            /* This is the actual invocation of the function,
+             * which means that none of the arguments are allowed
+             * to be NULL.
+             */
+            int i;
+            for (i = 0; i < argc; i++) {
+                if (argv[i] == NULL) {
+                    goto bail;
                 }
             }
             TRACE("calling function %s\n", entry->name);
             return ((FunctionHook)entry->hook)(entry->name, entry->cookie,
-                    argc, argv, result, resultLen, permissions);
-//xxx if permissions, make sure the entry has added at least one element.
+                    argc, argv, result, resultLen);
         }
     }
 bail:
@@ -258,16 +225,5 @@ callFunction(Function *fn, int argc, const char *argv[],
         char **result, size_t *resultLen)
 {
     return callFunctionInternal((CommandEntry *)fn, argc, argv,
-            result, resultLen, NULL);
-}
-
-int
-getFunctionPermissions(Function *fn, int argc, const char *argv[],
-        PermissionRequestList *permissions)
-{
-    if (permissions != NULL) {
-        return callFunctionInternal((CommandEntry *)fn, argc, argv,
-                NULL, NULL, permissions);
-    }
-    return -1;
+            result, resultLen);
 }
