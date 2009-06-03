@@ -27,34 +27,30 @@ static struct {
     void *cookie;
     int argc;
     const char **argv;
-    PermissionRequestList *permissions;
     int returnValue;
     char *functionResult;
 } gTestCommandState;
 
 static int
-testCommand(const char *name, void *cookie, int argc, const char *argv[],
-        PermissionRequestList *permissions)
+testCommand(const char *name, void *cookie, int argc, const char *argv[])
 {
     gTestCommandState.called = true;
     gTestCommandState.name = name;
     gTestCommandState.cookie = cookie;
     gTestCommandState.argc = argc;
     gTestCommandState.argv = argv;
-    gTestCommandState.permissions = permissions;
     return gTestCommandState.returnValue;
 }
 
 static int
 testFunction(const char *name, void *cookie, int argc, const char *argv[],
-        char **result, size_t *resultLen, PermissionRequestList *permissions)
+        char **result, size_t *resultLen)
 {
     gTestCommandState.called = true;
     gTestCommandState.name = name;
     gTestCommandState.cookie = cookie;
     gTestCommandState.argc = argc;
     gTestCommandState.argv = argv;
-    gTestCommandState.permissions = permissions;
     if (result != NULL) {
         *result = gTestCommandState.functionResult;
         if (resultLen != NULL) {
@@ -187,7 +183,6 @@ test_commands()
     memset(&gTestCommandState, 0, sizeof(gTestCommandState));
     gTestCommandState.called = false;
     gTestCommandState.returnValue = 25;
-    gTestCommandState.permissions = (PermissionRequestList *)1;
     ret = callCommand(cmd, argc, argv);
 //xxx also try calling with a null argv element (should fail)
     assert(ret == 25);
@@ -196,7 +191,6 @@ test_commands()
     assert(gTestCommandState.cookie == &gTestCommandState);
     assert(gTestCommandState.argc == argc);
     assert(gTestCommandState.argv == argv);
-    assert(gTestCommandState.permissions == NULL);
 
     /* Make a boolean call and make sure that it occurred.
      */
@@ -206,7 +200,6 @@ test_commands()
     memset(&gTestCommandState, 0, sizeof(gTestCommandState));
     gTestCommandState.called = false;
     gTestCommandState.returnValue = 12;
-    gTestCommandState.permissions = (PermissionRequestList *)1;
     ret = callBooleanCommand(cmd, false);
     assert(ret == 12);
     assert(gTestCommandState.called);
@@ -214,12 +207,10 @@ test_commands()
     assert(gTestCommandState.cookie == &gTestCommandState);
     assert(gTestCommandState.argc == 0);
     assert(gTestCommandState.argv == NULL);
-    assert(gTestCommandState.permissions == NULL);
 
     memset(&gTestCommandState, 0, sizeof(gTestCommandState));
     gTestCommandState.called = false;
     gTestCommandState.returnValue = 13;
-    gTestCommandState.permissions = (PermissionRequestList *)1;
     ret = callBooleanCommand(cmd, true);
     assert(ret == 13);
     assert(gTestCommandState.called);
@@ -227,45 +218,6 @@ test_commands()
     assert(gTestCommandState.cookie == &gTestCommandState);
     assert(gTestCommandState.argc == 1);
     assert(gTestCommandState.argv == NULL);
-    assert(gTestCommandState.permissions == NULL);
-
-    /* Try looking up permissions.
-     */
-    PermissionRequestList permissions;
-    cmd = findCommand("one");
-    assert(cmd != NULL);
-    memset(&gTestCommandState, 0, sizeof(gTestCommandState));
-    gTestCommandState.called = false;
-    gTestCommandState.returnValue = 27;
-    gTestCommandState.permissions = (PermissionRequestList *)1;
-    argv[1] = NULL; // null out an arg, which should be ok
-    ret = getCommandPermissions(cmd, argc, argv, &permissions);
-    assert(ret == 27);
-    assert(gTestCommandState.called);
-    assert(strcmp(gTestCommandState.name, "one") == 0);
-    assert(gTestCommandState.cookie == &gTestCommandState);
-    assert(gTestCommandState.argc == argc);
-    assert(gTestCommandState.argv == argv);
-    assert(gTestCommandState.permissions == &permissions);
-
-    /* Boolean command permissions
-     */
-    cmd = findCommand("bool");
-    assert(cmd != NULL);
-    memset(&gTestCommandState, 0, sizeof(gTestCommandState));
-    gTestCommandState.called = false;
-    gTestCommandState.returnValue = 55;
-    gTestCommandState.permissions = (PermissionRequestList *)1;
-    // argv[1] is still NULL
-    ret = getBooleanCommandPermissions(cmd, true, &permissions);
-    assert(ret == 55);
-    assert(gTestCommandState.called);
-    assert(strcmp(gTestCommandState.name, "bool") == 0);
-    assert(gTestCommandState.cookie == &gTestCommandState);
-    assert(gTestCommandState.argc == 1);
-    assert(gTestCommandState.argv == NULL);
-    assert(gTestCommandState.permissions == &permissions);
-
 
     /* Smoke test commandCleanup().
      */
@@ -365,7 +317,6 @@ test_functions()
     gTestCommandState.called = false;
     gTestCommandState.returnValue = 25;
     gTestCommandState.functionResult = "1234";
-    gTestCommandState.permissions = (PermissionRequestList *)1;
     functionResult = NULL;
     functionResultLen = 55;
     ret = callFunction(fn, argc, argv,
@@ -378,28 +329,8 @@ test_functions()
     assert(gTestCommandState.cookie == &gTestCommandState);
     assert(gTestCommandState.argc == argc);
     assert(gTestCommandState.argv == argv);
-    assert(gTestCommandState.permissions == NULL);
     assert(strcmp(functionResult, "1234") == 0);
     assert(functionResultLen == strlen(functionResult));
-
-    /* Try looking up permissions.
-     */
-    PermissionRequestList permissions;
-    fn = findFunction("one");
-    assert(fn != NULL);
-    memset(&gTestCommandState, 0, sizeof(gTestCommandState));
-    gTestCommandState.called = false;
-    gTestCommandState.returnValue = 27;
-    gTestCommandState.permissions = (PermissionRequestList *)1;
-    argv[1] = NULL; // null out an arg, which should be ok
-    ret = getFunctionPermissions(fn, argc, argv, &permissions);
-    assert(ret == 27);
-    assert(gTestCommandState.called);
-    assert(strcmp(gTestCommandState.name, "one") == 0);
-    assert(gTestCommandState.cookie == &gTestCommandState);
-    assert(gTestCommandState.argc == argc);
-    assert(gTestCommandState.argv == argv);
-    assert(gTestCommandState.permissions == &permissions);
 
     /* Smoke test commandCleanup().
      */
@@ -470,7 +401,6 @@ test_interaction()
     memset(&gTestCommandState, 0, sizeof(gTestCommandState));
     gTestCommandState.called = false;
     gTestCommandState.returnValue = 123;
-    gTestCommandState.permissions = (PermissionRequestList *)1;
     ret = callCommand(cmd, argc, argv);
     assert(ret == 123);
     assert(gTestCommandState.called);
@@ -478,7 +408,6 @@ test_interaction()
     assert((int)gTestCommandState.cookie == 0xc1);
     assert(gTestCommandState.argc == argc);
     assert(gTestCommandState.argv == argv);
-    assert(gTestCommandState.permissions == NULL);
 
     /* Call the overlapping function and make sure that the cookie is correct.
      */
@@ -490,7 +419,6 @@ test_interaction()
     gTestCommandState.called = false;
     gTestCommandState.returnValue = 125;
     gTestCommandState.functionResult = "5678";
-    gTestCommandState.permissions = (PermissionRequestList *)2;
     functionResult = NULL;
     functionResultLen = 66;
     ret = callFunction(fn, argc, argv, &functionResult, &functionResultLen);
@@ -500,7 +428,6 @@ test_interaction()
     assert((int)gTestCommandState.cookie == 0xf1);
     assert(gTestCommandState.argc == argc);
     assert(gTestCommandState.argv == argv);
-    assert(gTestCommandState.permissions == NULL);
     assert(strcmp(functionResult, "5678") == 0);
     assert(functionResultLen == strlen(functionResult));
 

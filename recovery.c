@@ -265,16 +265,12 @@ test_amend()
 {
     extern int test_symtab(void);
     extern int test_cmd_fn(void);
-    extern int test_permissions(void);
     int ret;
     LOGD("Testing symtab...\n");
     ret = test_symtab();
     LOGD("  returned %d\n", ret);
     LOGD("Testing cmd_fn...\n");
     ret = test_cmd_fn();
-    LOGD("  returned %d\n", ret);
-    LOGD("Testing permissions...\n");
-    ret = test_permissions();
     LOGD("  returned %d\n", ret);
 }
 #endif  // TEST_AMEND

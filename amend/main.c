@@ -86,12 +86,6 @@ main(int argc, char *argv[])
         fprintf(stderr, "test_cmd_fn() failed: %d\n", ret);
         exit(ret);
     }
-    extern int test_permissions(void);
-    ret = test_permissions();
-    if (ret != 0) {
-        fprintf(stderr, "test_permissions() failed: %d\n", ret);
-        exit(ret);
-    }
 #endif
 
     argc--;
