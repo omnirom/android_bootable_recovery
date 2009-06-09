@@ -1,0 +1,121 @@
+%{
+/*
+ * Copyright (C) 2009 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "expr.h"
+#include "parser.h"
+
+extern int gLine;
+extern int gColumn;
+
+void yyerror(Expr** root, const char* s);
+int yyparse(Expr** root);
+
+%}
+
+%union {
+    char* str;
+    Expr* expr;
+    struct {
+        int argc;
+        Expr** argv;
+    } args;
+}
+
+%token AND OR SUBSTR SUPERSTR EQ NE IF THEN ELSE ENDIF
+%token <str> STRING BAD
+%type <expr> expr
+%type <args> arglist
+
+%parse-param {Expr** root}
+%error-verbose
+
+/* declarations in increasing order of precedence */
+%left ';'
+%left ','
+%left OR
+%left AND
+%left EQ NE
+%left '+'
+%right '!'
+
+%%
+
+input:  expr           { *root = $1; }
+;
+
+expr:  STRING {
+    $$ = malloc(sizeof(Expr));
+    $$->fn = Literal;
+    $$->name = $1;
+    $$->argc = 0;
+    $$->argv = NULL;
+}
+|  '(' expr ')'                      { $$ = $2; }
+|  expr ';'                          { $$ = $1; }
+|  expr ';' expr                     { $$ = Build(SequenceFn, 2, $1, $3); }
+|  error ';' expr                    { $$ = $3; }
+|  expr '+' expr                     { $$ = Build(ConcatFn, 2, $1, $3); }
+|  expr EQ expr                      { $$ = Build(EqualityFn, 2, $1, $3); }
+|  expr NE expr                      { $$ = Build(InequalityFn, 2, $1, $3); }
+|  expr AND expr                     { $$ = Build(LogicalAndFn, 2, $1, $3); }
+|  expr OR expr                      { $$ = Build(LogicalOrFn, 2, $1, $3); }
+|  '!' expr                          { $$ = Build(LogicalNotFn, 1, $2); }
+|  IF expr THEN expr ENDIF           { $$ = Build(IfElseFn, 2, $2, $4); }
+|  IF expr THEN expr ELSE expr ENDIF { $$ = Build(IfElseFn, 3, $2, $4, $6); }
+| STRING '(' arglist ')' {
+    $$ = malloc(sizeof(Expr));
+    $$->fn = FindFunction($1);
+    if ($$->fn == NULL) {
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), "unknown function \"%s\"", $1);
+        yyerror(root, buffer);
+        YYERROR;
+    }
+    $$->name = $1;
+    $$->argc = $3.argc;
+    $$->argv = $3.argv;
+}
+;
+
+arglist:    /* empty */ {
+    $$.argc = 0;
+    $$.argv = NULL;
+}
+| expr {
+    $$.argc = 1;
+    $$.argv = malloc(sizeof(Expr*));
+    $$.argv[0] = $1;
+}
+| arglist ',' expr {
+    $$.argc = $1.argc + 1;
+    $$.argv = realloc($$.argv, $$.argc * sizeof(Expr*));
+    $$.argv[$$.argc-1] = $3;
+}
+;
+
+%%
+
+void yyerror(Expr** root, const char* s) {
+  if (strlen(s) == 0) {
+    s = "syntax error";
+  }
+  printf("line %d col %d: %s\n", gLine, gColumn, s);
+}
