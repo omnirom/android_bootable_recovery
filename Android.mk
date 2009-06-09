@@ -1,10 +1,10 @@
+ifneq ($(TARGET_SIMULATOR),true)
+ifeq ($(TARGET_ARCH),arm)
+
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 commands_recovery_local_path := $(LOCAL_PATH)
-
-ifneq ($(TARGET_SIMULATOR),true)
-ifeq ($(TARGET_ARCH),arm)
 
 LOCAL_SRC_FILES := \
 	recovery.c \
@@ -29,17 +29,22 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 
 LOCAL_MODULE_TAGS := eng
 
-LOCAL_STATIC_LIBRARIES := libminzip libunz libamend libmtdutils libmincrypt
+LOCAL_STATIC_LIBRARIES :=
+ifeq ($(TARGET_RECOVERY_UI_LIB),)
+  LOCAL_SRC_FILES += default_recovery_ui.c
+else
+  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
+endif
+LOCAL_STATIC_LIBRARIES += libminzip libunz libamend libmtdutils libmincrypt
 LOCAL_STATIC_LIBRARIES += libminui libpixelflinger_static libpng libcutils
 LOCAL_STATIC_LIBRARIES += libstdc++ libc
 
 include $(BUILD_EXECUTABLE)
 
-include $(commands_recovery_local_path)/minui/Android.mk
-
 endif   # TARGET_ARCH == arm
 endif	# !TARGET_SIMULATOR
 
+include $(commands_recovery_local_path)/minui/Android.mk
 include $(commands_recovery_local_path)/amend/Android.mk
 include $(commands_recovery_local_path)/minzip/Android.mk
 include $(commands_recovery_local_path)/mtdutils/Android.mk

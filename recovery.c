@@ -37,6 +37,7 @@
 #include "minui/minui.h"
 #include "minzip/DirUtil.h"
 #include "roots.h"
+#include "recovery_ui.h"
 
 static const struct option OPTIONS[] = {
   { "send_intent", required_argument, NULL, 's' },
@@ -287,25 +288,7 @@ erase_root(const char *root)
 static void
 prompt_and_wait()
 {
-    char* headers[] = { "Android system recovery utility",
-                        "",
-                        "Use trackball to highlight;",
-                        "click to select.",
-                        "",
-                        NULL };
-
-    // these constants correspond to elements of the items[] list.
-#define ITEM_REBOOT        0
-#define ITEM_APPLY_SDCARD  1
-#define ITEM_WIPE_DATA     2
-#define ITEM_WIPE_CACHE    3
-    char* items[] = { "reboot system now [Home+Back]",
-                      "apply sdcard:update.zip [Alt+S]",
-                      "wipe data/factory reset [Alt+W]",
-                      "wipe cache partition",
-                      NULL };
-
-    ui_start_menu(headers, items);
+    ui_start_menu(MENU_HEADERS, MENU_ITEMS);
     int selected = 0;
     int chosen_item = -1;
 
@@ -313,35 +296,39 @@ prompt_and_wait()
     ui_reset_progress();
     for (;;) {
         int key = ui_wait_key();
-        int alt = ui_key_pressed(KEY_LEFTALT) || ui_key_pressed(KEY_RIGHTALT);
         int visible = ui_text_visible();
 
-        if (key == KEY_DREAM_BACK && ui_key_pressed(KEY_DREAM_HOME)) {
-            // Wait for the keys to be released, to avoid triggering
-            // special boot modes (like coming back into recovery!).
-            while (ui_key_pressed(KEY_DREAM_BACK) ||
-                   ui_key_pressed(KEY_DREAM_HOME)) {
-                usleep(1000);
+        int action = device_handle_key(key, visible);
+
+        if (action < 0) {
+            switch (action) {
+                case HIGHLIGHT_UP:
+                    --selected;
+                    selected = ui_menu_select(selected);
+                    break;
+                case HIGHLIGHT_DOWN:
+                    ++selected;
+                    selected = ui_menu_select(selected);
+                    break;
+                case SELECT_ITEM:
+                    chosen_item = selected;
+                    break;
+                case NO_ACTION:
+                    break;
             }
-            chosen_item = ITEM_REBOOT;
-        } else if (alt && key == KEY_W) {
-            chosen_item = ITEM_WIPE_DATA;
-        } else if (alt && key == KEY_S) {
-            chosen_item = ITEM_APPLY_SDCARD;
-        } else if ((key == KEY_DOWN || key == KEY_VOLUMEDOWN) && visible) {
-            ++selected;
-            selected = ui_menu_select(selected);
-        } else if ((key == KEY_UP || key == KEY_VOLUMEUP) && visible) {
-            --selected;
-            selected = ui_menu_select(selected);
-        } else if (key == BTN_MOUSE && visible) {
-            chosen_item = selected;
+        } else {
+            chosen_item = action;
         }
 
         if (chosen_item >= 0) {
             // turn off the menu, letting ui_print() to scroll output
             // on the screen.
             ui_end_menu();
+
+            // device-specific code may take some action here.  It may
+            // return one of the core actions handled in the switch
+            // statement below.
+            chosen_item = device_perform_action(chosen_item);
 
             switch (chosen_item) {
                 case ITEM_REBOOT:
@@ -372,8 +359,8 @@ prompt_and_wait()
                         return;  // reboot if logs aren't visible
                     } else {
                       if (firmware_update_pending()) {
-                        ui_print("\nReboot via home+back or menu\n"
-                                 "to complete installation.\n");
+                        ui_print("\nReboot via menu to complete\n"
+                                 "installation.\n");
                       } else {
                         ui_print("\nInstall from sdcard complete.\n");
                       }
@@ -383,7 +370,7 @@ prompt_and_wait()
 
             // if we didn't return from this function to reboot, show
             // the menu again.
-            ui_start_menu(headers, items);
+            ui_start_menu(MENU_HEADERS, MENU_ITEMS);
             selected = 0;
             chosen_item = -1;
 

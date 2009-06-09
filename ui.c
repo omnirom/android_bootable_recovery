@@ -307,20 +307,14 @@ static void *input_thread(void *cookie)
         }
         pthread_mutex_unlock(&key_queue_mutex);
 
-        // Alt+L or Home+End: toggle log display
-        int alt = key_pressed[KEY_LEFTALT] || key_pressed[KEY_RIGHTALT];
-        if ((alt && ev.code == KEY_L && ev.value > 0) ||
-            (key_pressed[KEY_HOME] && ev.code == KEY_END && ev.value > 0)) {
+        if (ev.value > 0 && device_toggle_display(key_pressed, ev.code)) {
             pthread_mutex_lock(&gUpdateMutex);
             show_text = !show_text;
             update_screen_locked();
             pthread_mutex_unlock(&gUpdateMutex);
         }
 
-        // Green+Menu+Red: reboot immediately
-        if (ev.code == KEY_DREAM_RED &&
-            key_pressed[KEY_DREAM_MENU] &&
-            key_pressed[KEY_DREAM_GREEN]) {
+        if (ev.value > 0 && device_reboot_now(key_pressed, ev.code)) {
             reboot(RB_AUTOBOOT);
         }
     }
