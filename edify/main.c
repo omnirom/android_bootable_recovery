@@ -158,7 +158,14 @@ int main(int argc, char** argv) {
   printf("parse returned %d\n", error);
   if (error == 0) {
     char* result = Evaluate(NULL, root);
-    printf("result is [%s]\n", result == NULL ? "(NULL)" : result);
+    if (result == NULL) {
+      char* errmsg = GetError();
+      printf("result was NULL, message is: %s\n",
+             (errmsg == NULL ? "(NULL)" : errmsg));
+      ClearError();
+    } else {
+      printf("result is [%s]\n", result);
+    }
   }
   return 0;
 }

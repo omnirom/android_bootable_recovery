@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "expr.h"
 
@@ -92,6 +93,12 @@ char* IfElseFn(const char* name, void* cookie, int argc, Expr* argv[]) {
 }
 
 char* AbortFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+  char* msg = NULL;
+  if (argc > 0) {
+    msg = Evaluate(cookie, argv[0]);
+  }
+  SetError(msg == NULL ? "called abort()" : msg);
+  free(msg);
   return NULL;
 }
 
@@ -105,10 +112,21 @@ char* AssertFn(const char* name, void* cookie, int argc, Expr* argv[]) {
     int b = BooleanString(v);
     free(v);
     if (!b) {
+      SetError("assert() failed");
       return NULL;
     }
   }
   return strdup("");
+}
+
+char* SleepFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+  char* val = Evaluate(cookie, argv[0]);
+  if (val == NULL) {
+    return NULL;
+  }
+  int v = strtol(val, NULL, 10);
+  sleep(v);
+  return val;
 }
 
 char* PrintFn(const char* name, void* cookie, int argc, Expr* argv[]) {
@@ -234,6 +252,32 @@ Expr* Build(Function fn, int count, ...) {
   return e;
 }
 
+// -----------------------------------------------------------------
+//   error reporting
+// -----------------------------------------------------------------
+
+static char* error_message = NULL;
+
+void SetError(const char* message) {
+  if (error_message) {
+    free(error_message);
+  }
+  error_message = strdup(message);
+}
+
+const char* GetError() {
+  return error_message;
+}
+
+void ClearError() {
+  free(error_message);
+  error_message = NULL;
+}
+
+// -----------------------------------------------------------------
+//   the function table
+// -----------------------------------------------------------------
+
 static int fn_entries = 0;
 static int fn_size = 0;
 NamedFunction* fn_table = NULL;
@@ -276,4 +320,55 @@ void RegisterBuiltins() {
   RegisterFunction("concat", ConcatFn);
   RegisterFunction("is_substring", SubstringFn);
   RegisterFunction("print", PrintFn);
+  RegisterFunction("sleep", SleepFn);
+}
+
+
+// -----------------------------------------------------------------
+//   convenience methods for functions
+// -----------------------------------------------------------------
+
+// Evaluate the expressions in argv, giving 'count' char* (the ... is
+// zero or more char** to put them in).  If any expression evaluates
+// to NULL, free the rest and return -1.  Return 0 on success.
+int ReadArgs(void* cookie, Expr* argv[], int count, ...) {
+  char** args = malloc(count * sizeof(char*));
+  va_list v;
+  va_start(v, count);
+  int i;
+  for (i = 0; i < count; ++i) {
+    args[i] = Evaluate(cookie, argv[i]);
+    if (args[i] == NULL) {
+      va_end(v);
+      int j;
+      for (j = 0; j < i; ++j) {
+        free(args[j]);
+      }
+      return -1;
+    }
+    *(va_arg(v, char**)) = args[i];
+  }
+  va_end(v);
+  return 0;
+}
+
+// Evaluate the expressions in argv, returning an array of char*
+// results.  If any evaluate to NULL, free the rest and return NULL.
+// The caller is responsible for freeing the returned array and the
+// strings it contains.
+char** ReadVarArgs(void* cookie, int argc, Expr* argv[]) {
+  char** args = (char**)malloc(argc * sizeof(char*));
+  int i = 0;
+  for (i = 0; i < argc; ++i) {
+    args[i] = Evaluate(cookie, argv[i]);
+    if (args[i] == NULL) {
+      int j;
+      for (j = 0; j < i; ++j) {
+        free(args[j]);
+      }
+      free(args);
+      return NULL;
+    }
+  }
+  return args;
 }

@@ -77,7 +77,7 @@ then              { gColumn += yyleng; return THEN; }
 else              { gColumn += yyleng; return ELSE; }
 endif             { gColumn += yyleng; return ENDIF; }
 
-[a-zA-Z0-9_:/]+ {
+[a-zA-Z0-9_:/.]+ {
   gColumn += yyleng;
   yylval.str = strdup(yytext);
   return STRING;

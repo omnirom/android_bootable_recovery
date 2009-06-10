@@ -44,4 +44,6 @@ include $(commands_recovery_local_path)/amend/Android.mk
 include $(commands_recovery_local_path)/minzip/Android.mk
 include $(commands_recovery_local_path)/mtdutils/Android.mk
 include $(commands_recovery_local_path)/tools/Android.mk
+include $(commands_recovery_local_path)/edify/Android.mk
+include $(commands_recovery_local_path)/updater/Android.mk
 commands_recovery_local_path :=
