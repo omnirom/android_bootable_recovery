@@ -30,32 +30,32 @@ char* MENU_ITEMS[] = { "reboot system now",
                        NULL };
 
 int device_toggle_display(char* key_pressed, int key_code) {
-  return key_code == KEY_HOME;
+    return key_code == KEY_HOME;
 }
 
 int device_reboot_now(char* key_pressed, int key_code) {
-  return 0;
+    return 0;
 }
 
 int device_handle_key(int key_code, int visible) {
-  if (visible) {
-    switch (key_code) {
-      case KEY_DOWN:
-      case KEY_VOLUMEDOWN:
-        return HIGHLIGHT_DOWN;
+    if (visible) {
+        switch (key_code) {
+            case KEY_DOWN:
+            case KEY_VOLUMEDOWN:
+                return HIGHLIGHT_DOWN;
 
-      case KEY_UP:
-      case KEY_VOLUMEUP:
-        return HIGHLIGHT_UP;
+            case KEY_UP:
+            case KEY_VOLUMEUP:
+                return HIGHLIGHT_UP;
 
-      case KEY_ENTER:
-        return SELECT_ITEM;
+            case KEY_ENTER:
+                return SELECT_ITEM;
+        }
     }
-  }
 
-  return NO_ACTION;
+    return NO_ACTION;
 }
 
-void device_perform_action(int which) {
-  // none defined
+int device_perform_action(int which) {
+    return which;
 }
