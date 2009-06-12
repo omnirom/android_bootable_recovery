@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "expr.h"
+#include "yydefs.h"
 #include "parser.h"
 
 extern int gLine;
@@ -29,6 +30,8 @@ void yyerror(Expr** root, int* error_count, const char* s);
 int yyparse(Expr** root, int* error_count);
 
 %}
+
+%locations
 
 %union {
     char* str;
@@ -68,19 +71,21 @@ expr:  STRING {
     $$->name = $1;
     $$->argc = 0;
     $$->argv = NULL;
+    $$->start = @$.start;
+    $$->end = @$.end;
 }
-|  '(' expr ')'                      { $$ = $2; }
-|  expr ';'                          { $$ = $1; }
-|  expr ';' expr                     { $$ = Build(SequenceFn, 2, $1, $3); }
-|  error ';' expr                    { $$ = $3; }
-|  expr '+' expr                     { $$ = Build(ConcatFn, 2, $1, $3); }
-|  expr EQ expr                      { $$ = Build(EqualityFn, 2, $1, $3); }
-|  expr NE expr                      { $$ = Build(InequalityFn, 2, $1, $3); }
-|  expr AND expr                     { $$ = Build(LogicalAndFn, 2, $1, $3); }
-|  expr OR expr                      { $$ = Build(LogicalOrFn, 2, $1, $3); }
-|  '!' expr                          { $$ = Build(LogicalNotFn, 1, $2); }
-|  IF expr THEN expr ENDIF           { $$ = Build(IfElseFn, 2, $2, $4); }
-|  IF expr THEN expr ELSE expr ENDIF { $$ = Build(IfElseFn, 3, $2, $4, $6); }
+|  '(' expr ')'                      { $$ = $2; $$->start=@$.start; $$->end=@$.end; }
+|  expr ';'                          { $$ = $1; $$->start=@1.start; $$->end=@1.end; }
+|  expr ';' expr                     { $$ = Build(SequenceFn, @$, 2, $1, $3); }
+|  error ';' expr                    { $$ = $3; $$->start=@$.start; $$->end=@$.end; }
+|  expr '+' expr                     { $$ = Build(ConcatFn, @$, 2, $1, $3); }
+|  expr EQ expr                      { $$ = Build(EqualityFn, @$, 2, $1, $3); }
+|  expr NE expr                      { $$ = Build(InequalityFn, @$, 2, $1, $3); }
+|  expr AND expr                     { $$ = Build(LogicalAndFn, @$, 2, $1, $3); }
+|  expr OR expr                      { $$ = Build(LogicalOrFn, @$, 2, $1, $3); }
+|  '!' expr                          { $$ = Build(LogicalNotFn, @$, 1, $2); }
+|  IF expr THEN expr ENDIF           { $$ = Build(IfElseFn, @$, 2, $2, $4); }
+|  IF expr THEN expr ELSE expr ENDIF { $$ = Build(IfElseFn, @$, 3, $2, $4, $6); }
 | STRING '(' arglist ')' {
     $$ = malloc(sizeof(Expr));
     $$->fn = FindFunction($1);
@@ -93,6 +98,8 @@ expr:  STRING {
     $$->name = $1;
     $$->argc = $3.argc;
     $$->argv = $3.argv;
+    $$->start = @$.start;
+    $$->end = @$.end;
 }
 ;
 

@@ -16,14 +16,20 @@
  */
 
 #include "expr.h"
+#include "yydefs.h"
 #include "parser.h"
 
 int gLine = 1;
 int gColumn = 1;
+int gPos = 0;
 
 // TODO: enforce MAX_STRING_LEN during lexing
 char string_buffer[MAX_STRING_LEN];
 char* string_pos;
+
+#define ADVANCE do {yylloc.start=gPos; yylloc.end=gPos+yyleng; \
+                    gColumn+=yyleng; gPos+=yyleng;} while(0)
+
 %}
 
 %x STR
@@ -34,27 +40,32 @@ char* string_pos;
 
 
 \" {
-    ++gColumn;
     BEGIN(STR);
     string_pos = string_buffer;
+    yylloc.start = gPos;
+    ++gColumn;
+    ++gPos;
 }
 
 <STR>{
   \" {
       ++gColumn;
+      ++gPos;
       BEGIN(INITIAL);
       *string_pos = '\0';
       yylval.str = strdup(string_buffer);
+      yylloc.end = gPos;
       return STRING;
   }
 
-  \\n   { gColumn += yyleng; *string_pos++ = '\n'; }
-  \\t   { gColumn += yyleng; *string_pos++ = '\t'; }
-  \\\"  { gColumn += yyleng; *string_pos++ = '\"'; }
-  \\\\  { gColumn += yyleng; *string_pos++ = '\\'; }
+  \\n   { gColumn += yyleng; gPos += yyleng; *string_pos++ = '\n'; }
+  \\t   { gColumn += yyleng; gPos += yyleng;  *string_pos++ = '\t'; }
+  \\\"  { gColumn += yyleng; gPos += yyleng;  *string_pos++ = '\"'; }
+  \\\\  { gColumn += yyleng; gPos += yyleng;  *string_pos++ = '\\'; }
 
   \\x[0-9a-fA-F]{2} {
       gColumn += yyleng;
+      gPos += yyleng;
       int val;
       sscanf(yytext+2, "%x", &val);
       *string_pos++ = val;
@@ -62,36 +73,38 @@ char* string_pos;
 
   \n {
       ++gLine;
+      ++gPos;
       gColumn = 1;
       *string_pos++ = yytext[0];
   }
 
   . {
       ++gColumn;
+      ++gPos;
       *string_pos++ = yytext[0];
   }
 }
 
-if                { gColumn += yyleng; return IF; }
-then              { gColumn += yyleng; return THEN; }
-else              { gColumn += yyleng; return ELSE; }
-endif             { gColumn += yyleng; return ENDIF; }
+if                ADVANCE; return IF;
+then              ADVANCE; return THEN;
+else              ADVANCE; return ELSE;
+endif             ADVANCE; return ENDIF;
 
 [a-zA-Z0-9_:/.]+ {
-  gColumn += yyleng;
+  ADVANCE;
   yylval.str = strdup(yytext);
   return STRING;
 }
 
-\&\&              { gColumn += yyleng; return AND; }
-\|\|              { gColumn += yyleng; return OR; }
-==                { gColumn += yyleng; return EQ; }
-!=                { gColumn += yyleng; return NE; }
+\&\&              ADVANCE; return AND;
+\|\|              ADVANCE; return OR;
+==                ADVANCE; return EQ;
+!=                ADVANCE; return NE;
 
-[+(),!;]          { gColumn += yyleng; return yytext[0]; }
+[+(),!;]          ADVANCE; return yytext[0];
 
-[ \t]+            gColumn += yyleng;
+[ \t]+            ADVANCE;
 
-(#.*)?\n          { ++gLine; gColumn = 1; }
+(#.*)?\n          gPos += yyleng; ++gLine; gColumn = 1;
 
 .                 return BAD;

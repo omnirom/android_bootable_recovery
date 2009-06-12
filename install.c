@@ -196,6 +196,9 @@ try_update_binary(const char *path, ZipArchive *zip) {
     //            arrange to install the contents of <filename> in the
     //            given partition on reboot.
     //
+    //        ui_print <string>
+    //            display <string> on the screen.
+    //
     //   - the name of the package zip file.
     //
 
@@ -247,6 +250,13 @@ try_update_binary(const char *path, ZipArchive *zip) {
                     firmware_type = strdup(type);
                     firmware_filename = strdup(filename);
                 }
+            }
+        } else if (strcmp(command, "ui_print") == 0) {
+            char* str = strtok(NULL, "\n");
+            if (str) {
+                ui_print(str);
+            } else {
+                ui_print("\n");
             }
         } else {
             LOGE("unknown command [%s]\n", command);
