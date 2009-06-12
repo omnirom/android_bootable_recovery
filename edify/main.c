@@ -153,10 +153,11 @@ int main(int argc, char** argv) {
   buffer[size] = '\0';
 
   Expr* root;
+  int error_count = 0;
   yy_scan_bytes(buffer, size);
-  int error = yyparse(&root);
-  printf("parse returned %d\n", error);
-  if (error == 0) {
+  int error = yyparse(&root, &error_count);
+  printf("parse returned %d; %d errors encountered\n", error, error_count);
+  if (error == 0 || error_count > 0) {
     char* result = Evaluate(NULL, root);
     if (result == NULL) {
       char* errmsg = GetError();

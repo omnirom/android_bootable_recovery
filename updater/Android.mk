@@ -13,7 +13,8 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(updater_src_files)
 
-LOCAL_STATIC_LIBRARIES := libedify libmtdutils libminzip libz
+LOCAL_STATIC_LIBRARIES := libapplypatch libedify libmtdutils libminzip libz
+LOCAL_STATIC_LIBRARIES += libmincrypt libbz
 LOCAL_STATIC_LIBRARIES += libcutils libstdc++ libc
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
 

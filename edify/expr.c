@@ -283,7 +283,7 @@ static int fn_size = 0;
 NamedFunction* fn_table = NULL;
 
 void RegisterFunction(const char* name, Function fn) {
-  if (fn_entries <= fn_size) {
+  if (fn_entries >= fn_size) {
     fn_size = fn_size*2 + 1;
     fn_table = realloc(fn_table, fn_size * sizeof(NamedFunction));
   }

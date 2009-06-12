@@ -80,10 +80,11 @@ int main(int argc, char** argv) {
     // Parse the script.
 
     Expr* root;
+    int error_count = 0;
     yy_scan_string(script);
-    int error = yyparse(&root);
-    if (error != 0) {
-        fprintf(stderr, "%d parse errors\n", error);
+    int error = yyparse(&root, &error_count);
+    if (error != 0 || error_count > 0) {
+        fprintf(stderr, "%d parse errors\n", error_count);
         return 6;
     }
 
