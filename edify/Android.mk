@@ -26,15 +26,14 @@ LOCAL_YACCFLAGS := -v
 
 include $(BUILD_HOST_EXECUTABLE)
 
-# #
-# # Build the device-side library
-# #
-# include $(CLEAR_VARS)
+#
+# Build the device-side library
+#
+include $(CLEAR_VARS)
 
-# LOCAL_SRC_FILES := $(edify_src_files)
-# LOCAL_SRC_FILES += $(edify_test_files)
+LOCAL_SRC_FILES := $(edify_src_files)
 
-# LOCAL_CFLAGS := $(edify_cflags)
-# LOCAL_MODULE := libedify
+LOCAL_CFLAGS := $(edify_cflags)
+LOCAL_MODULE := libedify
 
-# include $(BUILD_STATIC_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)

@@ -256,7 +256,7 @@ try_update_binary(const char *path, ZipArchive *zip) {
     int status;
     waitpid(pid, &status, 0);
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        LOGE("Error in %s\n(Status %d)\n", path, status);
+        LOGE("Error in %s\n(Status %d)\n", path, WEXITSTATUS(status));
         return INSTALL_ERROR;
     }
 

@@ -10,7 +10,7 @@ the old one ("amend").  This is a brief overview of the new language.
   understood, as are hexadecimal escapes like \x4a.
 
 - String literals consisting of only letters, numbers, colons,
-  underscores, and slashes don't need to be in double quotes.
+  underscores, slashes, and periods don't need to be in double quotes.
 
 - The following words are reserved:
 
