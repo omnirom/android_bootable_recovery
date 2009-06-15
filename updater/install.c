@@ -32,13 +32,14 @@
 #include "mtdutils/mtdutils.h"
 #include "updater.h"
 
-char* ErrorAbort(void* cookie, char* format, ...) {
+char* ErrorAbort(State* state, char* format, ...) {
     char* buffer = malloc(4096);
     va_list v;
     va_start(v, format);
     vsnprintf(buffer, 4096, format, v);
     va_end(v);
-    SetError(buffer);
+    free(state->errmsg);
+    state->errmsg = buffer;
     return NULL;
 }
 
@@ -47,28 +48,28 @@ char* ErrorAbort(void* cookie, char* format, ...) {
 //
 //   what:  type="MTD"   location="<partition>"            to mount a yaffs2 filesystem
 //          type="vfat"  location="/dev/block/<whatever>"  to mount a device
-char* MountFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 3) {
-        return ErrorAbort(cookie, "%s() expects 3 args, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects 3 args, got %d", name, argc);
     }
     char* type;
     char* location;
     char* mount_point;
-    if (ReadArgs(cookie, argv, 3, &type, &location, &mount_point) < 0) {
+    if (ReadArgs(state, argv, 3, &type, &location, &mount_point) < 0) {
         return NULL;
     }
 
     if (strlen(type) == 0) {
-        ErrorAbort(cookie, "type argument to %s() can't be empty", name);
+        ErrorAbort(state, "type argument to %s() can't be empty", name);
         goto done;
     }
     if (strlen(location) == 0) {
-        ErrorAbort(cookie, "location argument to %s() can't be empty", name);
+        ErrorAbort(state, "location argument to %s() can't be empty", name);
         goto done;
     }
     if (strlen(mount_point) == 0) {
-        ErrorAbort(cookie, "mount_point argument to %s() can't be empty", name);
+        ErrorAbort(state, "mount_point argument to %s() can't be empty", name);
         goto done;
     }
 
@@ -109,17 +110,17 @@ done:
 
 
 // is_mounted(mount_point)
-char* IsMountedFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* IsMountedFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 1) {
-        return ErrorAbort(cookie, "%s() expects 1 arg, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
     }
     char* mount_point;
-    if (ReadArgs(cookie, argv, 1, &mount_point) < 0) {
+    if (ReadArgs(state, argv, 1, &mount_point) < 0) {
         return NULL;
     }
     if (strlen(mount_point) == 0) {
-        ErrorAbort(cookie, "mount_point argument to unmount() can't be empty");
+        ErrorAbort(state, "mount_point argument to unmount() can't be empty");
         goto done;
     }
 
@@ -137,17 +138,17 @@ done:
 }
 
 
-char* UnmountFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* UnmountFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 1) {
-        return ErrorAbort(cookie, "%s() expects 1 arg, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
     }
     char* mount_point;
-    if (ReadArgs(cookie, argv, 1, &mount_point) < 0) {
+    if (ReadArgs(state, argv, 1, &mount_point) < 0) {
         return NULL;
     }
     if (strlen(mount_point) == 0) {
-        ErrorAbort(cookie, "mount_point argument to unmount() can't be empty");
+        ErrorAbort(state, "mount_point argument to unmount() can't be empty");
         goto done;
     }
 
@@ -170,23 +171,23 @@ done:
 // format(type, location)
 //
 //    type="MTD"  location=partition
-char* FormatFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 2) {
-        return ErrorAbort(cookie, "%s() expects 2 args, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
     }
     char* type;
     char* location;
-    if (ReadArgs(cookie, argv, 2, &type, &location) < 0) {
+    if (ReadArgs(state, argv, 2, &type, &location) < 0) {
         return NULL;
     }
 
     if (strlen(type) == 0) {
-        ErrorAbort(cookie, "type argument to %s() can't be empty", name);
+        ErrorAbort(state, "type argument to %s() can't be empty", name);
         goto done;
     }
     if (strlen(location) == 0) {
-        ErrorAbort(cookie, "location argument to %s() can't be empty", name);
+        ErrorAbort(state, "location argument to %s() can't be empty", name);
         goto done;
     }
 
@@ -228,11 +229,11 @@ done:
 }
 
 
-char* DeleteFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
     char** paths = malloc(argc * sizeof(char*));
     int i;
     for (i = 0; i < argc; ++i) {
-        paths[i] = Evaluate(cookie, argv[i]);
+        paths[i] = Evaluate(state, argv[i]);
         if (paths[i] == NULL) {
             int j;
             for (j = 0; j < i; ++i) {
@@ -259,20 +260,20 @@ char* DeleteFn(const char* name, void* cookie, int argc, Expr* argv[]) {
 }
 
 
-char* ShowProgressFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* ShowProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 2) {
-        return ErrorAbort(cookie, "%s() expects 2 args, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
     }
     char* frac_str;
     char* sec_str;
-    if (ReadArgs(cookie, argv, 2, &frac_str, &sec_str) < 0) {
+    if (ReadArgs(state, argv, 2, &frac_str, &sec_str) < 0) {
         return NULL;
     }
 
     double frac = strtod(frac_str, NULL);
     int sec = strtol(sec_str, NULL, 10);
 
-    UpdaterInfo* ui = (UpdaterInfo*)cookie;
+    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
     fprintf(ui->cmd_pipe, "progress %f %d\n", frac, sec);
 
     free(frac_str);
@@ -281,16 +282,16 @@ char* ShowProgressFn(const char* name, void* cookie, int argc, Expr* argv[]) {
 }
 
 // package_extract_dir(package_path, destination_path)
-char* PackageExtractDirFn(const char* name, void* cookie,
+char* PackageExtractDirFn(const char* name, State* state,
                           int argc, Expr* argv[]) {
     if (argc != 2) {
-        return ErrorAbort(cookie, "%s() expects 2 args, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
     }
     char* zip_path;
     char* dest_path;
-    if (ReadArgs(cookie, argv, 2, &zip_path, &dest_path) < 0) return NULL;
+    if (ReadArgs(state, argv, 2, &zip_path, &dest_path) < 0) return NULL;
 
-    ZipArchive* za = ((UpdaterInfo*)cookie)->package_zip;
+    ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
 
     // To create a consistent system image, never use the clock for timestamps.
     struct utimbuf timestamp = { 1217592000, 1217592000 };  // 8/1/2008 default
@@ -305,18 +306,18 @@ char* PackageExtractDirFn(const char* name, void* cookie,
 
 
 // package_extract_file(package_path, destination_path)
-char* PackageExtractFileFn(const char* name, void* cookie,
+char* PackageExtractFileFn(const char* name, State* state,
                            int argc, Expr* argv[]) {
     if (argc != 2) {
-        return ErrorAbort(cookie, "%s() expects 2 args, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
     }
     char* zip_path;
     char* dest_path;
-    if (ReadArgs(cookie, argv, 2, &zip_path, &dest_path) < 0) return NULL;
+    if (ReadArgs(state, argv, 2, &zip_path, &dest_path) < 0) return NULL;
 
     bool success = false;
 
-    ZipArchive* za = ((UpdaterInfo*)cookie)->package_zip;
+    ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
     const ZipEntry* entry = mzFindZipEntry(za, zip_path);
     if (entry == NULL) {
         fprintf(stderr, "%s: no %s in package\n", name, zip_path);
@@ -340,15 +341,15 @@ char* PackageExtractFileFn(const char* name, void* cookie,
 
 
 // symlink target src1 src2 ...
-char* SymlinkFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc == 0) {
-        return ErrorAbort(cookie, "%s() expects 1+ args, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects 1+ args, got %d", name, argc);
     }
     char* target;
-    target = Evaluate(cookie, argv[0]);
+    target = Evaluate(state, argv[0]);
     if (target == NULL) return NULL;
 
-    char** srcs = ReadVarArgs(cookie, argc-1, argv+1);
+    char** srcs = ReadVarArgs(state, argc-1, argv+1);
     if (srcs == NULL) {
         free(target);
         return NULL;
@@ -364,16 +365,16 @@ char* SymlinkFn(const char* name, void* cookie, int argc, Expr* argv[]) {
 }
 
 
-char* SetPermFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     bool recursive = (strcmp(name, "set_perm_recursive") == 0);
 
     int min_args = 4 + (recursive ? 1 : 0);
     if (argc < min_args) {
-        return ErrorAbort(cookie, "%s() expects %d+ args, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects %d+ args, got %d", name, argc);
     }
 
-    char** args = ReadVarArgs(cookie, argc, argv);
+    char** args = ReadVarArgs(state, argc, argv);
     if (args == NULL) return NULL;
 
     char* end;
@@ -381,26 +382,26 @@ char* SetPermFn(const char* name, void* cookie, int argc, Expr* argv[]) {
 
     int uid = strtoul(args[0], &end, 0);
     if (*end != '\0' || args[0][0] == 0) {
-        ErrorAbort(cookie, "%s: \"%s\" not a valid uid", name, args[0]);
+        ErrorAbort(state, "%s: \"%s\" not a valid uid", name, args[0]);
         goto done;
     }
 
     int gid = strtoul(args[1], &end, 0);
     if (*end != '\0' || args[1][0] == 0) {
-        ErrorAbort(cookie, "%s: \"%s\" not a valid gid", name, args[1]);
+        ErrorAbort(state, "%s: \"%s\" not a valid gid", name, args[1]);
         goto done;
     }
 
     if (recursive) {
         int dir_mode = strtoul(args[2], &end, 0);
         if (*end != '\0' || args[2][0] == 0) {
-            ErrorAbort(cookie, "%s: \"%s\" not a valid dirmode", name, args[2]);
+            ErrorAbort(state, "%s: \"%s\" not a valid dirmode", name, args[2]);
             goto done;
         }
 
         int file_mode = strtoul(args[3], &end, 0);
         if (*end != '\0' || args[3][0] == 0) {
-            ErrorAbort(cookie, "%s: \"%s\" not a valid filemode",
+            ErrorAbort(state, "%s: \"%s\" not a valid filemode",
                        name, args[3]);
             goto done;
         }
@@ -411,7 +412,7 @@ char* SetPermFn(const char* name, void* cookie, int argc, Expr* argv[]) {
     } else {
         int mode = strtoul(args[2], &end, 0);
         if (*end != '\0' || args[2][0] == 0) {
-            ErrorAbort(cookie, "%s: \"%s\" not a valid mode", name, args[2]);
+            ErrorAbort(state, "%s: \"%s\" not a valid mode", name, args[2]);
             goto done;
         }
 
@@ -432,12 +433,12 @@ done:
 }
 
 
-char* GetPropFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 1) {
-        return ErrorAbort(cookie, "%s() expects 1 arg, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
     }
     char* key;
-    key = Evaluate(cookie, argv[0]);
+    key = Evaluate(state, argv[0]);
     if (key == NULL) return NULL;
 
     char value[PROPERTY_VALUE_MAX];
@@ -457,21 +458,21 @@ static bool write_raw_image_cb(const unsigned char* data,
 }
 
 // write_raw_image(file, partition)
-char* WriteRawImageFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
 
     char* partition;
     char* filename;
-    if (ReadArgs(cookie, argv, 2, &filename, &partition) < 0) {
+    if (ReadArgs(state, argv, 2, &filename, &partition) < 0) {
         return NULL;
     }
 
     if (strlen(partition) == 0) {
-        ErrorAbort(cookie, "partition argument to %s can't be empty", name);
+        ErrorAbort(state, "partition argument to %s can't be empty", name);
         goto done;
     }
     if (strlen(filename) == 0) {
-        ErrorAbort(cookie, "file argument to %s can't be empty", name);
+        ErrorAbort(state, "file argument to %s can't be empty", name);
         goto done;
     }
 
@@ -515,6 +516,13 @@ char* WriteRawImageFn(const char* name, void* cookie, int argc, Expr* argv[]) {
     free(buffer);
     fclose(f);
 
+    if (mtd_erase_blocks(ctx, -1) == -1) {
+        fprintf(stderr, "%s: error erasing blocks of %s\n", name, partition);
+    }
+    if (mtd_write_close(ctx) != 0) {
+        fprintf(stderr, "%s: error closing write of %s\n", name, partition);
+    }
+
     printf("%s %s partition from %s\n",
            success ? "wrote" : "failed to write", partition, filename);
 
@@ -532,26 +540,26 @@ done:
 //    file is not used until after updater exits
 //
 // TODO: this should live in some HTC-specific library
-char* WriteFirmwareImageFn(const char* name, void* cookie,
+char* WriteFirmwareImageFn(const char* name, State* state,
                            int argc, Expr* argv[]) {
     char* result = NULL;
 
     char* partition;
     char* filename;
-    if (ReadArgs(cookie, argv, 2, &filename, &partition) < 0) {
+    if (ReadArgs(state, argv, 2, &filename, &partition) < 0) {
         return NULL;
     }
 
     if (strlen(partition) == 0) {
-        ErrorAbort(cookie, "partition argument to %s can't be empty", name);
+        ErrorAbort(state, "partition argument to %s can't be empty", name);
         goto done;
     }
     if (strlen(filename) == 0) {
-        ErrorAbort(cookie, "file argument to %s can't be empty", name);
+        ErrorAbort(state, "file argument to %s can't be empty", name);
         goto done;
     }
 
-    FILE* cmd = ((UpdaterInfo*)cookie)->cmd_pipe;
+    FILE* cmd = ((UpdaterInfo*)(state->cookie))->cmd_pipe;
     fprintf(cmd, "firmware %s %s\n", partition, filename);
 
     printf("will write %s firmware from %s\n", partition, filename);
@@ -569,7 +577,7 @@ extern int applypatch(int argc, char** argv);
 // apply_patch(srcfile, tgtfile, tgtsha1, tgtsize, sha1:patch, ...)
 // apply_patch_check(file, sha1, ...)
 // apply_patch_space(bytes)
-char* ApplyPatchFn(const char* name, void* cookie, int argc, Expr* argv[]) {
+char* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
     printf("in applypatchfn (%s)\n", name);
 
     char* prepend = NULL;
@@ -579,7 +587,7 @@ char* ApplyPatchFn(const char* name, void* cookie, int argc, Expr* argv[]) {
         prepend = "-s";
     }
 
-    char** args = ReadVarArgs(cookie, argc, argv);
+    char** args = ReadVarArgs(state, argc, argv);
     if (args == NULL) return NULL;
 
     // insert the "program name" argv[0] and a copy of the "prepend"
@@ -610,8 +618,40 @@ char* ApplyPatchFn(const char* name, void* cookie, int argc, Expr* argv[]) {
     switch (result) {
         case 0:   return strdup("t");
         case 1:   return strdup("");
-        default:  return ErrorAbort(cookie, "applypatch couldn't parse args");
+        default:  return ErrorAbort(state, "applypatch couldn't parse args");
     }
+}
+
+char* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
+    char** args = ReadVarArgs(state, argc, argv);
+    if (args == NULL) {
+        return NULL;
+    }
+
+    int size = 0;
+    int i;
+    for (i = 0; i < argc; ++i) {
+        size += strlen(args[i]);
+    }
+    char* buffer = malloc(size+1);
+    size = 0;
+    for (i = 0; i < argc; ++i) {
+        strcpy(buffer+size, args[i]);
+        size += strlen(args[i]);
+        free(args[i]);
+    }
+    free(args);
+    buffer[size] = '\0';
+
+    char* line = strtok(buffer, "\n");
+    while (line) {
+        fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe,
+                "ui_print %s\n", line);
+        line = strtok(NULL, "\n");
+    }
+    fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe, "ui_print\n");
+
+    return buffer;
 }
 
 
@@ -636,4 +676,6 @@ void RegisterInstallFunctions() {
     RegisterFunction("apply_patch", ApplyPatchFn);
     RegisterFunction("apply_patch_check", ApplyPatchFn);
     RegisterFunction("apply_patch_space", ApplyPatchFn);
+
+    RegisterFunction("ui_print", UIPrintFn);
 }

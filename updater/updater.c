@@ -94,12 +94,26 @@ int main(int argc, char** argv) {
     updater_info.cmd_pipe = cmd_pipe;
     updater_info.package_zip = &za;
 
-    char* result = Evaluate(&updater_info, root);
+    State state;
+    state.cookie = &updater_info;
+    state.script = script;
+    state.errmsg = NULL;
+
+    char* result = Evaluate(&state, root);
     if (result == NULL) {
-        const char* errmsg = GetError();
-        fprintf(stderr, "script aborted with error: %s\n",
-                errmsg == NULL ? "(none)" : errmsg);
-        ClearError();
+        if (state.errmsg == NULL) {
+            fprintf(stderr, "script aborted (no error message)\n");
+            fprintf(cmd_pipe, "ui_print script aborted (no error message)\n");
+        } else {
+            fprintf(stderr, "script aborted: %s\n", state.errmsg);
+            char* line = strtok(state.errmsg, "\n");
+            while (line) {
+                fprintf(cmd_pipe, "ui_print %s\n", line);
+                line = strtok(NULL, "\n");
+            }
+            fprintf(cmd_pipe, "ui_print\n");
+        }
+        free(state.errmsg);
         return 7;
     } else {
         fprintf(stderr, "script result was [%s]\n", result);
@@ -107,6 +121,7 @@ int main(int argc, char** argv) {
     }
 
     mzCloseZipArchive(&za);
+    free(script);
 
     return 0;
 }

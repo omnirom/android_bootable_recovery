@@ -17,45 +17,64 @@
 #ifndef _EXPRESSION_H
 #define _EXPRESSION_H
 
+#include "yydefs.h"
+
 #define MAX_STRING_LEN 1024
 
 typedef struct Expr Expr;
 
-typedef char* (*Function)(const char* name, void* cookie,
+typedef struct {
+    // Optional pointer to app-specific data; the core of edify never
+    // uses this value.
+    void* cookie;
+
+    // The source of the original script.  Must be NULL-terminated,
+    // and in writable memory (Evaluate may make temporary changes to
+    // it but will restore it when done).
+    char* script;
+
+    // The error message (if any) returned if the evaluation aborts.
+    // Should be NULL initially, will be either NULL or a malloc'd
+    // pointer after Evaluate() returns.
+    char* errmsg;
+} State;
+
+typedef char* (*Function)(const char* name, State* state,
                           int argc, Expr* argv[]);
 
 struct Expr {
-  Function fn;
-  char* name;
-  int argc;
-  Expr** argv;
+    Function fn;
+    char* name;
+    int argc;
+    Expr** argv;
+    int start, end;
 };
 
-char* Evaluate(void* cookie, Expr* expr);
+char* Evaluate(State* state, Expr* expr);
 
 // Glue to make an Expr out of a literal.
-char* Literal(const char* name, void* cookie, int argc, Expr* argv[]);
+char* Literal(const char* name, State* state, int argc, Expr* argv[]);
 
 // Functions corresponding to various syntactic sugar operators.
 // ("concat" is also available as a builtin function, to concatenate
 // more than two strings.)
-char* ConcatFn(const char* name, void* cookie, int argc, Expr* argv[]);
-char* LogicalAndFn(const char* name, void* cookie, int argc, Expr* argv[]);
-char* LogicalOrFn(const char* name, void* cookie, int argc, Expr* argv[]);
-char* LogicalNotFn(const char* name, void* cookie, int argc, Expr* argv[]);
-char* SubstringFn(const char* name, void* cookie, int argc, Expr* argv[]);
-char* EqualityFn(const char* name, void* cookie, int argc, Expr* argv[]);
-char* InequalityFn(const char* name, void* cookie, int argc, Expr* argv[]);
-char* SequenceFn(const char* name, void* cookie, int argc, Expr* argv[]);
+char* ConcatFn(const char* name, State* state, int argc, Expr* argv[]);
+char* LogicalAndFn(const char* name, State* state, int argc, Expr* argv[]);
+char* LogicalOrFn(const char* name, State* state, int argc, Expr* argv[]);
+char* LogicalNotFn(const char* name, State* state, int argc, Expr* argv[]);
+char* SubstringFn(const char* name, State* state, int argc, Expr* argv[]);
+char* EqualityFn(const char* name, State* state, int argc, Expr* argv[]);
+char* InequalityFn(const char* name, State* state, int argc, Expr* argv[]);
+char* SequenceFn(const char* name, State* state, int argc, Expr* argv[]);
 
 // Convenience function for building expressions with a fixed number
 // of arguments.
-Expr* Build(Function fn, int count, ...);
+Expr* Build(Function fn, YYLTYPE loc, int count, ...);
 
 // Global builtins, registered by RegisterBuiltins().
-char* IfElseFn(const char* name, void* cookie, int argc, Expr* argv[]);
-char* AssertFn(const char* name, void* cookie, int argc, Expr* argv[]);
-char* AbortFn(const char* name, void* cookie, int argc, Expr* argv[]);
+char* IfElseFn(const char* name, State* state, int argc, Expr* argv[]);
+char* AssertFn(const char* name, State* state, int argc, Expr* argv[]);
+char* AbortFn(const char* name, State* state, int argc, Expr* argv[]);
 
 
 // For setting and getting the global error string (when returning
@@ -91,13 +110,13 @@ Function FindFunction(const char* name);
 // Evaluate the expressions in argv, giving 'count' char* (the ... is
 // zero or more char** to put them in).  If any expression evaluates
 // to NULL, free the rest and return -1.  Return 0 on success.
-int ReadArgs(void* cookie, Expr* argv[], int count, ...);
+int ReadArgs(State* state, Expr* argv[], int count, ...);
 
 // Evaluate the expressions in argv, returning an array of char*
 // results.  If any evaluate to NULL, free the rest and return NULL.
 // The caller is responsible for freeing the returned array and the
 // strings it contains.
-char** ReadVarArgs(void* cookie, int argc, Expr* argv[]);
+char** ReadVarArgs(State* state, int argc, Expr* argv[]);
 
 
 #endif  // _EXPRESSION_H
