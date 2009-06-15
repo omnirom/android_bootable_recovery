@@ -25,8 +25,8 @@
 extern int gLine;
 extern int gColumn;
 
-void yyerror(Expr** root, const char* s);
-int yyparse(Expr** root);
+void yyerror(Expr** root, int* error_count, const char* s);
+int yyparse(Expr** root, int* error_count);
 
 %}
 
@@ -45,6 +45,7 @@ int yyparse(Expr** root);
 %type <args> arglist
 
 %parse-param {Expr** root}
+%parse-param {int* error_count}
 %error-verbose
 
 /* declarations in increasing order of precedence */
@@ -86,7 +87,7 @@ expr:  STRING {
     if ($$->fn == NULL) {
         char buffer[256];
         snprintf(buffer, sizeof(buffer), "unknown function \"%s\"", $1);
-        yyerror(root, buffer);
+        yyerror(root, error_count, buffer);
         YYERROR;
     }
     $$->name = $1;
@@ -113,9 +114,10 @@ arglist:    /* empty */ {
 
 %%
 
-void yyerror(Expr** root, const char* s) {
+void yyerror(Expr** root, int* error_count, const char* s) {
   if (strlen(s) == 0) {
     s = "syntax error";
   }
   printf("line %d col %d: %s\n", gLine, gColumn, s);
+  ++*error_count;
 }

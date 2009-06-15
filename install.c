@@ -124,7 +124,8 @@ handle_firmware_update(char* type, char* filename) {
         return INSTALL_ERROR;
     }
 
-    LOGI("type is [%s]\n", type);
+    LOGI("type is %s; size is %d; file is %s\n",
+         type, (int)st_data.st_size, filename);
 
     char* data = malloc(st_data.st_size);
     if (data == NULL) {
