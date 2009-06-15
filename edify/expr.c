@@ -72,6 +72,8 @@ char* ConcatFn(const char* name, State* state, int argc, Expr* argv[]) {
 
 char* IfElseFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 2 && argc != 3) {
+        free(state->errmsg);
+        state->errmsg = strdup("ifelse expects 2 or 3 arguments");
         return NULL;
     }
     char* cond = Evaluate(state, argv[0]);
@@ -244,6 +246,54 @@ char* SequenceFn(const char* name, State* state, int argc, Expr* argv[]) {
     return Evaluate(state, argv[1]);
 }
 
+char* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 2) {
+        free(state->errmsg);
+        state->errmsg = strdup("less_than_int expects 2 arguments");
+        return NULL;
+    }
+
+    char* left;
+    char* right;
+    if (ReadArgs(state, argv, 2, &left, &right) < 0) return NULL;
+
+    bool result = false;
+    char* end;
+
+    long l_int = strtol(left, &end, 10);
+    if (left[0] == '\0' || *end != '\0') {
+        fprintf(stderr, "[%s] is not an int\n", left);
+        goto done;
+    }
+
+    long r_int = strtol(right, &end, 10);
+    if (right[0] == '\0' || *end != '\0') {
+        fprintf(stderr, "[%s] is not an int\n", right);
+        goto done;
+    }
+
+    result = l_int < r_int;
+
+  done:
+    free(left);
+    free(right);
+    return strdup(result ? "t" : "");
+}
+
+char* GreaterThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 2) {
+        free(state->errmsg);
+        state->errmsg = strdup("greater_than_int expects 2 arguments");
+        return NULL;
+    }
+
+    Expr* temp[2];
+    temp[0] = argv[1];
+    temp[1] = argv[0];
+
+    return LessThanIntFn(name, state, 2, temp);
+}
+
 char* Literal(const char* name, State* state, int argc, Expr* argv[]) {
     return strdup(name);
 }
@@ -313,6 +363,9 @@ void RegisterBuiltins() {
     RegisterFunction("is_substring", SubstringFn);
     RegisterFunction("stdout", StdoutFn);
     RegisterFunction("sleep", SleepFn);
+
+    RegisterFunction("less_than_int", LessThanIntFn);
+    RegisterFunction("greater_than_int", GreaterThanIntFn);
 }
 
 

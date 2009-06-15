@@ -143,6 +143,16 @@ int test() {
     expect("if \"\" then yes endif", "", &errors);
     expect("if \"\"; t then yes endif", "yes", &errors);
 
+    // numeric comparisons
+    expect("less_than_int(3, 14)", "t", &errors);
+    expect("less_than_int(14, 3)", "", &errors);
+    expect("less_than_int(x, 3)", "", &errors);
+    expect("less_than_int(3, x)", "", &errors);
+    expect("greater_than_int(3, 14)", "", &errors);
+    expect("greater_than_int(14, 3)", "t", &errors);
+    expect("greater_than_int(x, 3)", "", &errors);
+    expect("greater_than_int(3, x)", "", &errors);
+
     printf("\n");
 
     return errors;
