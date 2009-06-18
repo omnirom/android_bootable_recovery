@@ -48,6 +48,14 @@ extern int device_handle_key(int key, int visible);
 // information to the screen.
 extern int device_perform_action(int which);
 
+// Called when we do a wipe data/factory reset operation (either via a
+// reboot from the main system with the --wipe_data flag, or when the
+// user boots into recovery manually and selects the option from the
+// menu.)  Can perform whatever device-specific wiping actions are
+// needed.  Return 0 on success.  The userdata and cache partitions
+// are erased after this returns (whether it returns success or not).
+int device_wipe_data();
+
 #define NO_ACTION           -1
 
 #define HIGHLIGHT_UP        -2

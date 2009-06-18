@@ -354,6 +354,7 @@ prompt_and_wait()
 
                 case ITEM_WIPE_DATA:
                     ui_print("\n-- Wiping data...\n");
+                    device_wipe_data();
                     erase_root("DATA:");
                     erase_root("CACHE:");
                     ui_print("Data wipe complete.\n");
@@ -463,10 +464,14 @@ main(int argc, char **argv)
     if (update_package != NULL) {
         status = install_package(update_package);
         if (status != INSTALL_SUCCESS) ui_print("Installation aborted.\n");
-    } else if (wipe_data || wipe_cache) {
-        if (wipe_data && erase_root("DATA:")) status = INSTALL_ERROR;
+    } else if (wipe_data) {
+        if (device_wipe_data()) status = INSTALL_ERROR;
+        if (erase_root("DATA:")) status = INSTALL_ERROR;
         if (wipe_cache && erase_root("CACHE:")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui_print("Data wipe failed.\n");
+    } else if (wipe_cache) {
+        if (wipe_cache && erase_root("CACHE:")) status = INSTALL_ERROR;
+        if (status != INSTALL_SUCCESS) ui_print("Cache wipe failed.\n");
     } else {
         status = INSTALL_ERROR;  // No command specified
     }

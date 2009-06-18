@@ -59,3 +59,7 @@ int device_handle_key(int key_code, int visible) {
 int device_perform_action(int which) {
     return which;
 }
+
+int device_wipe_data() {
+    return 0;
+}
