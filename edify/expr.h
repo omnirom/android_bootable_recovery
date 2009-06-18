@@ -118,5 +118,9 @@ int ReadArgs(State* state, Expr* argv[], int count, ...);
 // strings it contains.
 char** ReadVarArgs(State* state, int argc, Expr* argv[]);
 
+// Use printf-style arguments to compose an error message to put into
+// *state.  Returns NULL.
+char* ErrorAbort(State* state, char* format, ...);
+
 
 #endif  // _EXPRESSION_H
