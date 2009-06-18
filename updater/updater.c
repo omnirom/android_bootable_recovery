@@ -34,9 +34,10 @@ int main(int argc, char** argv) {
     }
 
     char* version = argv[1];
-    if (version[0] != '1' || version[1] != '\0') {
-        fprintf(stderr, "wrong updater binary API; expected 1, got %s\n",
-                version);
+    if ((version[0] != '1' && version[0] != '2') || version[1] != '\0') {
+        // We support version "1" or "2".
+        fprintf(stderr, "wrong updater binary API; expected 1 or 2, got %s\n",
+                argv[1]);
         return 2;
     }
 

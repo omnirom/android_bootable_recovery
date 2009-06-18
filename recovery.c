@@ -287,7 +287,8 @@ erase_root(const char *root)
 static void
 prompt_and_wait()
 {
-    char* headers[] = { "Android system recovery utility",
+    char* headers[] = { "Android system recovery <"
+                          EXPAND(RECOVERY_API_VERSION) ">",
                         "",
                         "Use trackball to highlight;",
                         "click to select.",
