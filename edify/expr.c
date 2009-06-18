@@ -417,3 +417,16 @@ char** ReadVarArgs(State* state, int argc, Expr* argv[]) {
     }
     return args;
 }
+
+// Use printf-style arguments to compose an error message to put into
+// *state.  Returns NULL.
+char* ErrorAbort(State* state, char* format, ...) {
+    char* buffer = malloc(4096);
+    va_list v;
+    va_start(v, format);
+    vsnprintf(buffer, 4096, format, v);
+    va_end(v);
+    free(state->errmsg);
+    state->errmsg = buffer;
+    return NULL;
+}
