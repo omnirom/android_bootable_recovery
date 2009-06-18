@@ -288,7 +288,25 @@ erase_root(const char *root)
 static void
 prompt_and_wait()
 {
-    ui_start_menu(MENU_HEADERS, MENU_ITEMS);
+    char* title[] = { "Android system recovery <"
+                          EXPAND(RECOVERY_API_VERSION) ">",
+                      "",
+                      NULL };
+
+    // count the number of lines in our title, plus the
+    // product-provided headers.
+    int count = 0;
+    char** p;
+    for (p = title; *p; ++p, ++count);
+    for (p = MENU_HEADERS; *p; ++p, ++count);
+
+    char** headers = malloc((count+1) * sizeof(char*));
+    char** h = headers;
+    for (p = title; *p; ++p, ++h) *h = *p;
+    for (p = MENU_HEADERS; *p; ++p, ++h) *h = *p;
+    *h = NULL;
+
+    ui_start_menu(headers, MENU_ITEMS);
     int selected = 0;
     int chosen_item = -1;
 
@@ -370,7 +388,7 @@ prompt_and_wait()
 
             // if we didn't return from this function to reboot, show
             // the menu again.
-            ui_start_menu(MENU_HEADERS, MENU_ITEMS);
+            ui_start_menu(headers, MENU_ITEMS);
             selected = 0;
             chosen_item = -1;
 

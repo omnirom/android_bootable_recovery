@@ -117,34 +117,54 @@ handle_update_script(ZipArchive *zip, const ZipEntry *update_script_entry)
 // The update binary ask us to install a firmware file on reboot.  Set
 // that up.  Takes ownership of type and filename.
 static int
-handle_firmware_update(char* type, char* filename) {
-    struct stat st_data;
-    if (stat(filename, &st_data) < 0) {
-        LOGE("Error stat'ing %s: %s\n", filename, strerror(errno));
-        return INSTALL_ERROR;
+handle_firmware_update(char* type, char* filename, ZipArchive* zip) {
+    unsigned int data_size;
+    const ZipEntry* entry = NULL;
+
+    if (strncmp(filename, "PACKAGE:", 8) == 0) {
+        entry = mzFindZipEntry(zip, filename+8);
+        if (entry == NULL) {
+            LOGE("Failed to find \"%s\" in package", filename+8);
+            return INSTALL_ERROR;
+        }
+        data_size = entry->uncompLen;
+    } else {
+        struct stat st_data;
+        if (stat(filename, &st_data) < 0) {
+            LOGE("Error stat'ing %s: %s\n", filename, strerror(errno));
+            return INSTALL_ERROR;
+        }
+        data_size = st_data.st_size;
     }
 
     LOGI("type is %s; size is %d; file is %s\n",
-         type, (int)st_data.st_size, filename);
+         type, data_size, filename);
 
-    char* data = malloc(st_data.st_size);
+    char* data = malloc(data_size);
     if (data == NULL) {
-        LOGE("Can't allocate %d bytes for firmware data\n", st_data.st_size);
+        LOGI("Can't allocate %d bytes for firmware data\n", data_size);
         return INSTALL_ERROR;
     }
 
-    FILE* f = fopen(filename, "rb");
-    if (f == NULL) {
-        LOGE("Failed to open %s: %s\n", filename, strerror(errno));
-        return INSTALL_ERROR;
+    if (entry) {
+        if (mzReadZipEntry(zip, entry, data, data_size) == false) {
+            LOGE("Failed to read \"%s\" from package", filename+8);
+            return INSTALL_ERROR;
+        }
+    } else {
+        FILE* f = fopen(filename, "rb");
+        if (f == NULL) {
+            LOGE("Failed to open %s: %s\n", filename, strerror(errno));
+            return INSTALL_ERROR;
+        }
+        if (fread(data, 1, data_size, f) != data_size) {
+            LOGE("Failed to read firmware data: %s\n", strerror(errno));
+            return INSTALL_ERROR;
+        }
+        fclose(f);
     }
-    if (fread(data, 1, st_data.st_size, f) != st_data.st_size) {
-        LOGE("Failed to read firmware data: %s\n", strerror(errno));
-        return INSTALL_ERROR;
-    }
-    fclose(f);
 
-    if (remember_firmware_update(type, data, st_data.st_size)) {
+    if (remember_firmware_update(type, data, data_size)) {
         LOGE("Can't store %s image\n", type);
         free(data);
         return INSTALL_ERROR;
@@ -184,7 +204,7 @@ try_update_binary(const char *path, ZipArchive *zip) {
     // When executing the update binary contained in the package, the
     // arguments passed are:
     //
-    //   - the version number for this interface (currently 1)
+    //   - the version number for this interface
     //
     //   - an fd to which the program can write in order to update the
     //     progress bar.  The program can write single-line commands:
@@ -194,7 +214,9 @@ try_update_binary(const char *path, ZipArchive *zip) {
     //
     //        firmware <"hboot"|"radio"> <filename>
     //            arrange to install the contents of <filename> in the
-    //            given partition on reboot.
+    //            given partition on reboot.  (API v2: <filename> may
+    //            start with "PACKAGE:" to indicate taking a file from
+    //            the OTA package.)
     //
     //        ui_print <string>
     //            display <string> on the screen.
@@ -204,7 +226,7 @@ try_update_binary(const char *path, ZipArchive *zip) {
 
     char** args = malloc(sizeof(char*) * 5);
     args[0] = binary;
-    args[1] = "1";
+    args[1] = EXPAND(RECOVERY_API_VERSION);   // defined in Android.mk
     args[2] = malloc(10);
     sprintf(args[2], "%d", pipefd[1]);
     args[3] = (char*)path;
@@ -272,7 +294,7 @@ try_update_binary(const char *path, ZipArchive *zip) {
     }
 
     if (firmware_type != NULL) {
-        return handle_firmware_update(firmware_type, firmware_filename);
+        return handle_firmware_update(firmware_type, firmware_filename, zip);
     } else {
         return INSTALL_SUCCESS;
     }

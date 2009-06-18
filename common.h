@@ -90,4 +90,7 @@ void ui_reset_progress();
 #define LOGD(...) do {} while (0)
 #endif
 
+#define STRINGIFY(x) #x
+#define EXPAND(x) STRINGIFY(x)
+
 #endif  // RECOVERY_COMMON_H
