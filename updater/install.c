@@ -422,7 +422,7 @@ char* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
             goto done;
         }
 
-        for (i = 4; i < argc; ++i) {
+        for (i = 3; i < argc; ++i) {
             chown(args[i], uid, gid);
             chmod(args[i], mode);
         }
