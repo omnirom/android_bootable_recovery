@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mount.h>
@@ -265,9 +266,25 @@ char* ShowProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
     UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
     fprintf(ui->cmd_pipe, "progress %f %d\n", frac, sec);
 
-    free(frac_str);
     free(sec_str);
-    return strdup("");
+    return frac_str;
+}
+
+char* SetProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 1) {
+        return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
+    }
+    char* frac_str;
+    if (ReadArgs(state, argv, 1, &frac_str) < 0) {
+        return NULL;
+    }
+
+    double frac = strtod(frac_str, NULL);
+
+    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
+    fprintf(ui->cmd_pipe, "set_progress %f\n", frac);
+
+    return frac_str;
 }
 
 // package_extract_dir(package_path, destination_path)
@@ -749,6 +766,7 @@ void RegisterInstallFunctions() {
     RegisterFunction("unmount", UnmountFn);
     RegisterFunction("format", FormatFn);
     RegisterFunction("show_progress", ShowProgressFn);
+    RegisterFunction("set_progress", SetProgressFn);
     RegisterFunction("delete", DeleteFn);
     RegisterFunction("delete_recursive", DeleteFn);
     RegisterFunction("package_extract_dir", PackageExtractDirFn);

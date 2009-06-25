@@ -210,7 +210,15 @@ try_update_binary(const char *path, ZipArchive *zip) {
     //     progress bar.  The program can write single-line commands:
     //
     //        progress <frac> <secs>
-    //            fill up <frac> of the progress bar over <secs> seconds.
+    //            fill up the next <frac> part of of the progress bar
+    //            over <secs> seconds.  If <secs> is zero, use
+    //            set_progress commands to manually control the
+    //            progress of this segment of the bar
+    //
+    //        set_progress <frac>
+    //            <frac> should be between 0.0 and 1.0; sets the
+    //            progress bar within the segment defined by the most
+    //            recent progress command.
     //
     //        firmware <"hboot"|"radio"> <filename>
     //            arrange to install the contents of <filename> in the
@@ -261,6 +269,10 @@ try_update_binary(const char *path, ZipArchive *zip) {
 
             ui_show_progress(fraction * (1-VERIFICATION_PROGRESS_FRACTION),
                              seconds);
+        } else if (strcmp(command, "set_progress") == 0) {
+            char* fraction_s = strtok(NULL, " \n");
+            float fraction = strtof(fraction_s, NULL);
+            ui_set_progress(fraction);
         } else if (strcmp(command, "firmware") == 0) {
             char* type = strtok(NULL, " \n");
             char* filename = strtok(NULL, " \n");
