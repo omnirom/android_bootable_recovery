@@ -297,7 +297,14 @@ static int read_block(const MtdPartition *partition, int fd, char *data)
                     after.corrected - before.corrected,
                     after.failed - before.failed, pos);
         } else {
-            return 0;  // Success!
+            int i;
+            for (i = 0; i < size; ++i) {
+                if (data[i] != 0) {
+                    return 0;  // Success!
+                }
+            }
+            fprintf(stderr, "mtd: read all-zero block at 0x%08lx; skipping\n",
+                    pos);
         }
 
         pos += partition->erase_size;
@@ -324,6 +331,10 @@ ssize_t mtd_read_data(MtdReadContext *ctx, char *data, size_t len)
                len - read >= ctx->partition->erase_size) {
             if (read_block(ctx->partition, ctx->fd, data + read)) return -1;
             read += ctx->partition->erase_size;
+        }
+
+        if (read >= len) {
+            return read;
         }
 
         // Read the next block into the buffer
