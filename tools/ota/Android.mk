@@ -14,11 +14,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-include $(CLEAR_VARS)
-LOCAL_MODULE := make-update-script
-LOCAL_SRC_FILES := make-update-script.c
-include $(BUILD_HOST_EXECUTABLE)
-
 ifneq ($(TARGET_SIMULATOR),true)
 
 include $(CLEAR_VARS)
