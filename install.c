@@ -22,7 +22,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "amend/amend.h"
 #include "common.h"
 #include "install.h"
 #include "mincrypt/rsa.h"
@@ -35,84 +34,8 @@
 #include "verifier.h"
 #include "firmware.h"
 
-#define ASSUMED_UPDATE_SCRIPT_NAME  "META-INF/com/google/android/update-script"
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
 #define PUBLIC_KEYS_FILE "/res/keys"
-
-static const ZipEntry *
-find_update_script(ZipArchive *zip)
-{
-//TODO: Get the location of this script from the MANIFEST.MF file
-    return mzFindZipEntry(zip, ASSUMED_UPDATE_SCRIPT_NAME);
-}
-
-static int read_data(ZipArchive *zip, const ZipEntry *entry,
-        char** ppData, int* pLength) {
-    int len = (int)mzGetZipEntryUncompLen(entry);
-    if (len <= 0) {
-        LOGE("Bad data length %d\n", len);
-        return -1;
-    }
-    char *data = malloc(len + 1);
-    if (data == NULL) {
-        LOGE("Can't allocate %d bytes for data\n", len + 1);
-        return -2;
-    }
-    bool ok = mzReadZipEntry(zip, entry, data, len);
-    if (!ok) {
-        LOGE("Error while reading data\n");
-        free(data);
-        return -3;
-    }
-    data[len] = '\0';     // not necessary, but just to be safe
-    *ppData = data;
-    if (pLength) {
-        *pLength = len;
-    }
-    return 0;
-}
-
-static int
-handle_update_script(ZipArchive *zip, const ZipEntry *update_script_entry)
-{
-    /* Read the entire script into a buffer.
-     */
-    int script_len;
-    char* script_data;
-    if (read_data(zip, update_script_entry, &script_data, &script_len) < 0) {
-        LOGE("Can't read update script\n");
-        return INSTALL_ERROR;
-    }
-
-    /* Parse the script.  Note that the script and parse tree are never freed.
-     */
-    const AmCommandList *commands = parseAmendScript(script_data, script_len);
-    if (commands == NULL) {
-        LOGE("Syntax error in update script\n");
-        return INSTALL_ERROR;
-    } else {
-        UnterminatedString name = mzGetZipEntryFileName(update_script_entry);
-        LOGI("Parsed %.*s\n", name.len, name.str);
-    }
-
-    /* Execute the script.
-     */
-    int ret = execCommandList((ExecContext *)1, commands);
-    if (ret != 0) {
-        int num = ret;
-        char *line = NULL, *next = script_data;
-        while (next != NULL && ret-- > 0) {
-            line = next;
-            next = memchr(line, '\n', script_data + script_len - line);
-            if (next != NULL) *next++ = '\0';
-        }
-        LOGE("Failure at line %d:\n%s\n", num, next ? line : "(not found)");
-        return INSTALL_ERROR;
-    }
-
-    LOGI("Installation complete.\n");
-    return INSTALL_SUCCESS;
-}
 
 // The update binary ask us to install a firmware file on reboot.  Set
 // that up.  Takes ownership of type and filename.
@@ -252,11 +175,9 @@ try_update_binary(const char *path, ZipArchive *zip) {
     char* firmware_type = NULL;
     char* firmware_filename = NULL;
 
-    char buffer[81];
+    char buffer[1024];
     FILE* from_child = fdopen(pipefd[0], "r");
     while (fgets(buffer, sizeof(buffer), from_child) != NULL) {
-        LOGI("read: %s", buffer);
-
         char* command = strtok(buffer, " \n");
         if (command == NULL) {
             continue;
@@ -331,30 +252,8 @@ handle_update_package(const char *path, ZipArchive *zip,
     ui_print("Installing update...\n");
 
     int result = try_update_binary(path, zip);
-    if (result == INSTALL_SUCCESS || result == INSTALL_ERROR) {
-        register_package_root(NULL, NULL);  // Unregister package root
-        return result;
-    }
-
-    // if INSTALL_CORRUPT is returned, this package doesn't have an
-    // update binary.  Fall back to the older mechanism of looking for
-    // an update script.
-
-    const ZipEntry *script_entry;
-    script_entry = find_update_script(zip);
-    if (script_entry == NULL) {
-        LOGE("Can't find update script\n");
-        return INSTALL_CORRUPT;
-    }
-
-    if (register_package_root(zip, path) < 0) {
-        LOGE("Can't register package root\n");
-        return INSTALL_ERROR;
-    }
-
-    int ret = handle_update_script(zip, script_entry);
     register_package_root(NULL, NULL);  // Unregister package root
-    return ret;
+    return result;
 }
 
 // Reads a file containing one or more public keys as produced by
