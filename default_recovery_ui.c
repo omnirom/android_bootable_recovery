@@ -29,11 +29,11 @@ char* MENU_ITEMS[] = { "reboot system now",
                        "wipe cache partition",
                        NULL };
 
-int device_toggle_display(char* key_pressed, int key_code) {
+int device_toggle_display(volatile char* key_pressed, int key_code) {
     return key_code == KEY_HOME;
 }
 
-int device_reboot_now(char* key_pressed, int key_code) {
+int device_reboot_now(volatile char* key_pressed, int key_code) {
     return 0;
 }
 

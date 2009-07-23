@@ -27,6 +27,7 @@
 
 #include "common.h"
 #include "minui/minui.h"
+#include "recovery_ui.h"
 
 #define MAX_COLS 64
 #define MAX_ROWS 32

@@ -21,13 +21,13 @@
 // *key_pressed is an array of KEY_MAX+1 bytes indicating which other
 // keys are already pressed.  Return true if the text display should
 // be toggled.
-extern int device_toggle_display(char* key_pressed, int key_code);
+extern int device_toggle_display(volatile char* key_pressed, int key_code);
 
 // Called in the input thread when a new key (key_code) is pressed.
 // *key_pressed is an array of KEY_MAX+1 bytes indicating which other
 // keys are already pressed.  Return true if the device should reboot
 // immediately.
-extern int device_reboot_now(char* key_pressed, int key_code);
+extern int device_reboot_now(volatile char* key_pressed, int key_code);
 
 // Called from the main thread when recovery is waiting for input and
 // a key is pressed.  key is the code of the key pressed; visible is
