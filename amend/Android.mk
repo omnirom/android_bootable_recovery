@@ -10,13 +10,11 @@ amend_src_files := \
 	ast.c \
 	symtab.c \
 	commands.c \
-	permissions.c \
 	execute.c
 
 amend_test_files := \
 	test_symtab.c \
-	test_commands.c \
-	test_permissions.c
+	test_commands.c
 
 # "-x c" forces the lex/yacc files to be compiled as c;
 # the build system otherwise forces them to be c++.

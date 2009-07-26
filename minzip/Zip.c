@@ -41,7 +41,7 @@ enum {
     CENSIZ = 20,
     CENLEN = 24,
     CENNAM = 28,
-    CENEXT = 30, 
+    CENEXT = 30,
     CENCOM = 32,
     CENDSK = 34,
     CENATT = 36,
@@ -66,13 +66,13 @@ enum {
 
     LOCSIG = 0x04034b50,      // PK34
     LOCHDR = 30,
-        
+
     LOCVER =  4,
     LOCFLG =  6,
     LOCHOW =  8,
     LOCTIM = 10,
     LOCCRC = 14,
-    LOCSIZ = 18, 
+    LOCSIZ = 18,
     LOCLEN = 22,
     LOCNAM = 26,
     LOCEXT = 28,
@@ -757,7 +757,7 @@ bool mzReadZipEntry(const ZipArchive* pArchive, const ZipEntry* pEntry,
 {
     CopyProcessArgs args;
     bool ret;
-    
+
     args.buf = buf;
     args.bufLen = bufLen;
     ret = mzProcessZipEntryContents(pArchive, pEntry, copyProcessFunction,
@@ -770,15 +770,29 @@ bool mzReadZipEntry(const ZipArchive* pArchive, const ZipEntry* pEntry,
 }
 
 static bool writeProcessFunction(const unsigned char *data, int dataLen,
-        void *fd)
+                                 void *cookie)
 {
-    ssize_t n = write((int)fd, data, dataLen);
-    if (n != dataLen) {
-        LOGE("Can't write %d bytes (only %ld) from zip file: %s\n",
-                dataLen, n, strerror(errno));
-        return false;
+    int fd = (int)cookie;
+
+    ssize_t soFar = 0;
+    while (true) {
+        ssize_t n = write(fd, data+soFar, dataLen-soFar);
+        if (n <= 0) {
+            LOGE("Error writing %ld bytes from zip file from %p: %s\n",
+                 dataLen-soFar, data+soFar, strerror(errno));
+            if (errno != EINTR) {
+              return false;
+            }
+        } else if (n > 0) {
+            soFar += n;
+            if (soFar == dataLen) return true;
+            if (soFar > dataLen) {
+                LOGE("write overrun?  (%ld bytes instead of %d)\n",
+                     soFar, dataLen);
+                return false;
+            }
+        }
     }
-    return true;
 }
 
 /*
@@ -788,7 +802,7 @@ bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
     const ZipEntry *pEntry, int fd)
 {
     bool ret = mzProcessZipEntryContents(pArchive, pEntry, writeProcessFunction,
-            (void *)fd);
+                                         (void*)fd);
     if (!ret) {
         LOGE("Can't extract entry to file.\n");
         return false;

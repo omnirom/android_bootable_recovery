@@ -39,6 +39,10 @@ int remember_firmware_update(const char *type, const char *data, int length) {
     return 0;
 }
 
+// Return true if there is a firmware update pending.
+int firmware_update_pending() {
+  return update_data != NULL && update_length > 0;
+}
 
 /* Bootloader / Recovery Flow
  *

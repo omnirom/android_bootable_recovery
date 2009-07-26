@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (C) 2009 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
-#include "amend.h"
-#include "lexer.h"
-#include "parser.h"
+#ifndef _UPDATER_UPDATER_H_
+#define _UPDATER_UPDATER_H_
 
-extern const AmCommandList *gCommands;
+#include <stdio.h>
+#include "minzip/Zip.h"
 
-const AmCommandList *
-parseAmendScript(const char *buf, size_t bufLen)
-{
-    setLexerInputBuffer(buf, bufLen);
-    int ret = yyparse();
-    if (ret != 0) {
-        return NULL;
-    }
-    return gCommands;
-}
+typedef struct {
+    FILE* cmd_pipe;
+    ZipArchive* package_zip;
+} UpdaterInfo;
+
+#endif

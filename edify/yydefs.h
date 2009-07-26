@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (C) 2009 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
-#include "amend.h"
-#include "lexer.h"
-#include "parser.h"
+#ifndef _YYDEFS_H_
+#define _YYDEFS_H_
 
-extern const AmCommandList *gCommands;
+#define YYLTYPE YYLTYPE
+typedef struct {
+    int start, end;
+} YYLTYPE;
 
-const AmCommandList *
-parseAmendScript(const char *buf, size_t bufLen)
-{
-    setLexerInputBuffer(buf, bufLen);
-    int ret = yyparse();
-    if (ret != 0) {
-        return NULL;
-    }
-    return gCommands;
-}
+#define YYLLOC_DEFAULT(Current, Rhs, N) \
+    do { \
+        if (N) { \
+            (Current).start = YYRHSLOC(Rhs, 1).start; \
+            (Current).end = YYRHSLOC(Rhs, N).end; \
+        } else { \
+            (Current).start = YYRHSLOC(Rhs, 0).start; \
+            (Current).end = YYRHSLOC(Rhs, 0).end; \
+        } \
+    } while (0)
+
+#endif

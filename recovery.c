@@ -265,16 +265,12 @@ test_amend()
 {
     extern int test_symtab(void);
     extern int test_cmd_fn(void);
-    extern int test_permissions(void);
     int ret;
     LOGD("Testing symtab...\n");
     ret = test_symtab();
     LOGD("  returned %d\n", ret);
     LOGD("Testing cmd_fn...\n");
     ret = test_cmd_fn();
-    LOGD("  returned %d\n", ret);
-    LOGD("Testing permissions...\n");
-    ret = test_permissions();
     LOGD("  returned %d\n", ret);
 }
 #endif  // TEST_AMEND
@@ -291,7 +287,8 @@ erase_root(const char *root)
 static void
 prompt_and_wait()
 {
-    char* headers[] = { "Android system recovery utility",
+    char* headers[] = { "Android system recovery <"
+                          EXPAND(RECOVERY_API_VERSION) ">",
                         "",
                         "Use trackball to highlight;",
                         "click to select.",
@@ -302,9 +299,11 @@ prompt_and_wait()
 #define ITEM_REBOOT        0
 #define ITEM_APPLY_SDCARD  1
 #define ITEM_WIPE_DATA     2
+#define ITEM_WIPE_CACHE    3
     char* items[] = { "reboot system now [Home+Back]",
                       "apply sdcard:update.zip [Alt+S]",
                       "wipe data/factory reset [Alt+W]",
+                      "wipe cache partition",
                       NULL };
 
     ui_start_menu(headers, items);
@@ -357,6 +356,13 @@ prompt_and_wait()
                     if (!ui_text_visible()) return;
                     break;
 
+                case ITEM_WIPE_CACHE:
+                    ui_print("\n-- Wiping cache...\n");
+                    erase_root("CACHE:");
+                    ui_print("Cache wipe complete.\n");
+                    if (!ui_text_visible()) return;
+                    break;
+
                 case ITEM_APPLY_SDCARD:
                     ui_print("\n-- Install from sdcard...\n");
                     int status = install_package(SDCARD_PACKAGE_FILE);
@@ -366,7 +372,12 @@ prompt_and_wait()
                     } else if (!ui_text_visible()) {
                         return;  // reboot if logs aren't visible
                     } else {
-                      ui_print("Install from sdcard complete.\n");
+                      if (firmware_update_pending()) {
+                        ui_print("\nReboot via home+back or menu\n"
+                                 "to complete installation.\n");
+                      } else {
+                        ui_print("\nInstall from sdcard complete.\n");
+                      }
                     }
                     break;
             }
