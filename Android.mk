@@ -9,7 +9,6 @@ ifeq ($(TARGET_ARCH),arm)
 LOCAL_SRC_FILES := \
 	recovery.c \
 	bootloader.c \
-	commands.c \
 	firmware.c \
 	install.c \
 	roots.c \
@@ -32,14 +31,13 @@ LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 
 LOCAL_MODULE_TAGS := eng
 
-LOCAL_STATIC_LIBRARIES := libminzip libunz libamend libmtdutils libmincrypt
+LOCAL_STATIC_LIBRARIES := libminzip libunz libmtdutils libmincrypt
 LOCAL_STATIC_LIBRARIES += libminui libpixelflinger_static libpng libcutils
 LOCAL_STATIC_LIBRARIES += libstdc++ libc
 
 include $(BUILD_EXECUTABLE)
 
 include $(commands_recovery_local_path)/minui/Android.mk
-include $(commands_recovery_local_path)/amend/Android.mk
 include $(commands_recovery_local_path)/minzip/Android.mk
 include $(commands_recovery_local_path)/mtdutils/Android.mk
 include $(commands_recovery_local_path)/tools/Android.mk

@@ -1,5 +1,0 @@
-test "string"
-test "string with spaces"
-test "string with \"escaped\" quotes"
-test "string with \\escaped\\ backslashes"
-test "string with # a comment character"
