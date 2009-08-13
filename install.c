@@ -234,20 +234,8 @@ try_update_binary(const char *path, ZipArchive *zip) {
 }
 
 static int
-handle_update_package(const char *path, ZipArchive *zip,
-                      const RSAPublicKey *keys, int numKeys)
+handle_update_package(const char *path, ZipArchive *zip)
 {
-    // Give verification half the progress bar...
-    ui_print("Verifying update package...\n");
-    ui_show_progress(
-            VERIFICATION_PROGRESS_FRACTION,
-            VERIFICATION_PROGRESS_TIME);
-
-    if (!verify_jar_signature(zip, keys, numKeys)) {
-        LOGE("Verification failed\n");
-        return INSTALL_CORRUPT;
-    }
-
     // Update should take the rest of the progress bar.
     ui_print("Installing update...\n");
 
@@ -360,10 +348,25 @@ install_package(const char *root_path)
     }
     LOGI("%d key(s) loaded from %s\n", numKeys, PUBLIC_KEYS_FILE);
 
+    // Give verification half the progress bar...
+    ui_print("Verifying update package...\n");
+    ui_show_progress(
+            VERIFICATION_PROGRESS_FRACTION,
+            VERIFICATION_PROGRESS_TIME);
+
+    int err;
+    err = verify_file(path, loadedKeys, numKeys);
+    free(loadedKeys);
+    LOGI("verify_file returned %d\n", err);
+    if (err != VERIFY_SUCCESS) {
+        LOGE("signature verification failed\n");
+        return INSTALL_CORRUPT;
+    }
+
     /* Try to open the package.
      */
     ZipArchive zip;
-    int err = mzOpenZipArchive(path, &zip);
+    err = mzOpenZipArchive(path, &zip);
     if (err != 0) {
         LOGE("Can't open %s\n(%s)\n", path, err != -1 ? strerror(err) : "bad");
         return INSTALL_CORRUPT;
@@ -371,8 +374,7 @@ install_package(const char *root_path)
 
     /* Verify and install the contents of the package.
      */
-    int status = handle_update_package(path, &zip, loadedKeys, numKeys);
+    int status = handle_update_package(path, &zip);
     mzCloseZipArchive(&zip);
-    free(loadedKeys);
     return status;
 }
