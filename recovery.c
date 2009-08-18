@@ -208,6 +208,15 @@ get_args(int *argc, char ***argv) {
     set_bootloader_message(&boot);
 }
 
+static void
+set_sdcard_update_bootloader_message()
+{
+    struct bootloader_message boot;
+    memset(&boot, 0, sizeof(boot));
+    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
+    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
+    set_bootloader_message(&boot);
+}
 
 // clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read), and
@@ -352,6 +361,7 @@ prompt_and_wait()
 
                 case ITEM_APPLY_SDCARD:
                     ui_print("\n-- Install from sdcard...\n");
+                    set_sdcard_update_bootloader_message();
                     int status = install_package(SDCARD_PACKAGE_FILE);
                     if (status != INSTALL_SUCCESS) {
                         ui_set_background(BACKGROUND_ICON_ERROR);
