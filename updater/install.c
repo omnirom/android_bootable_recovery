@@ -23,6 +23,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "cutils/misc.h"
@@ -759,6 +760,52 @@ char* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
     return buffer;
 }
 
+char* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc < 1) {
+        return ErrorAbort(state, "%s() expects at least 1 arg", name);
+    }
+    char** args = ReadVarArgs(state, argc, argv);
+    if (args == NULL) {
+        return NULL;
+    }
+
+    char** args2 = malloc(sizeof(char*) * (argc+1));
+    memcpy(args2, args, sizeof(char*) * argc);
+    args2[argc] = NULL;
+
+    fprintf(stderr, "about to run program [%s] with %d args\n", args2[0], argc);
+
+    pid_t child = fork();
+    if (child == 0) {
+        execv(args2[0], args2);
+        fprintf(stderr, "run_program: execv failed: %s\n", strerror(errno));
+        _exit(1);
+    }
+    int status;
+    waitpid(child, &status, 0);
+    if (WIFEXITED(status)) {
+        if (WEXITSTATUS(status) != 0) {
+            fprintf(stderr, "run_program: child exited with status %d\n",
+                    WEXITSTATUS(status));
+        }
+    } else if (WIFSIGNALED(status)) {
+        fprintf(stderr, "run_program: child terminated by signal %d\n",
+                WTERMSIG(status));
+    }
+
+    int i;
+    for (i = 0; i < argc; ++i) {
+        free(args[i]);
+    }
+    free(args);
+    free(args2);
+
+    char buffer[20];
+    sprintf(buffer, "%d", status);
+
+    return strdup(buffer);
+}
+
 
 void RegisterInstallFunctions() {
     RegisterFunction("mount", MountFn);
@@ -785,4 +832,6 @@ void RegisterInstallFunctions() {
     RegisterFunction("apply_patch_space", ApplyPatchFn);
 
     RegisterFunction("ui_print", UIPrintFn);
+
+    RegisterFunction("run_program", RunProgramFn);
 }
