@@ -339,7 +339,11 @@ void ui_init(void)
     for (i = 0; BITMAPS[i].name != NULL; ++i) {
         int result = res_create_surface(BITMAPS[i].name, BITMAPS[i].surface);
         if (result < 0) {
-            LOGE("Missing bitmap %s\n(Code %d)\n", BITMAPS[i].name, result);
+            if (result == -2) {
+                LOGI("Bitmap %s missing header\n", BITMAPS[i].name);
+            } else {
+                LOGE("Missing bitmap %s\n(Code %d)\n", BITMAPS[i].name, result);
+            }
             *BITMAPS[i].surface = NULL;
         }
     }
