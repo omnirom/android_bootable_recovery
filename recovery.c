@@ -276,34 +276,40 @@ erase_root(const char *root)
     return format_root_device(root);
 }
 
-static void
-prompt_and_wait()
-{
+static char**
+prepend_title(char** headers) {
     char* title[] = { "Android system recovery <"
                           EXPAND(RECOVERY_API_VERSION) "e>",
                       "",
                       NULL };
 
     // count the number of lines in our title, plus the
-    // product-provided headers.
+    // caller-provided headers.
     int count = 0;
     char** p;
     for (p = title; *p; ++p, ++count);
-    for (p = MENU_HEADERS; *p; ++p, ++count);
+    for (p = headers; *p; ++p, ++count);
 
-    char** headers = malloc((count+1) * sizeof(char*));
-    char** h = headers;
+    char** new_headers = malloc((count+1) * sizeof(char*));
+    char** h = new_headers;
     for (p = title; *p; ++p, ++h) *h = *p;
-    for (p = MENU_HEADERS; *p; ++p, ++h) *h = *p;
+    for (p = headers; *p; ++p, ++h) *h = *p;
     *h = NULL;
 
-    ui_start_menu(headers, MENU_ITEMS);
+    return new_headers;
+}
+
+static int
+get_menu_selection(char** headers, char** items, int menu_only) {
+    // throw away keys pressed previously, so user doesn't
+    // accidentally trigger menu items.
+    ui_clear_key_queue();
+
+    ui_start_menu(headers, items);
     int selected = 0;
     int chosen_item = -1;
 
-    finish_recovery(NULL);
-    ui_reset_progress();
-    for (;;) {
+    while (chosen_item < 0) {
         int key = ui_wait_key();
         int visible = ui_text_visible();
 
@@ -325,72 +331,104 @@ prompt_and_wait()
                 case NO_ACTION:
                     break;
             }
-        } else {
+        } else if (!menu_only) {
             chosen_item = action;
         }
+    }
 
-        if (chosen_item >= 0) {
-            // turn off the menu, letting ui_print() to scroll output
-            // on the screen.
-            ui_end_menu();
+    ui_end_menu();
+    return chosen_item;
+}
 
-            // device-specific code may take some action here.  It may
-            // return one of the core actions handled in the switch
-            // statement below.
-            chosen_item = device_perform_action(chosen_item);
+static void
+wipe_data(int confirm) {
+    if (confirm) {
+        static char** title_headers = NULL;
 
-            switch (chosen_item) {
-                case ITEM_REBOOT:
-                    return;
+        if (title_headers == NULL) {
+            char* headers[] = { "Confirm wipe of all user data?",
+                                "  THIS CAN NOT BE UNDONE.",
+                                "",
+                                NULL };
+            title_headers = prepend_title(headers);
+        }
 
-                case ITEM_WIPE_DATA:
-                    ui_print("\n-- Wiping data...\n");
-                    device_wipe_data();
-                    erase_root("DATA:");
-                    erase_root("CACHE:");
-                    ui_print("Data wipe complete.\n");
-                    if (!ui_text_visible()) return;
-                    break;
+        char* items[] = { " No",
+                          " No",
+                          " No",
+                          " No",
+                          " No",
+                          " No",
+                          " No",
+                          " Yes -- delete all user data",   // [7]
+                          " No",
+                          " No",
+                          " No",
+                          NULL };
 
-                case ITEM_WIPE_CACHE:
-                    ui_print("\n-- Wiping cache...\n");
-                    erase_root("CACHE:");
-                    ui_print("Cache wipe complete.\n");
-                    if (!ui_text_visible()) return;
-                    break;
+        int chosen_item = get_menu_selection(title_headers, items, 1);
+        if (chosen_item != 7) {
+            return;
+        }
+    }
 
-                case ITEM_APPLY_SDCARD:
-                    ui_print("\n-- Install from sdcard...\n");
-                    set_sdcard_update_bootloader_message();
-                    int status = install_package(SDCARD_PACKAGE_FILE);
-                    if (status != INSTALL_SUCCESS) {
-                        ui_set_background(BACKGROUND_ICON_ERROR);
-                        ui_print("Installation aborted.\n");
-                    } else if (!ui_text_visible()) {
-                        return;  // reboot if logs aren't visible
-                    } else {
-                      if (firmware_update_pending()) {
+    ui_print("\n-- Wiping data...\n");
+    device_wipe_data();
+    erase_root("DATA:");
+    erase_root("CACHE:");
+    ui_print("Data wipe complete.\n");
+}
+
+static void
+prompt_and_wait()
+{
+    char** headers = prepend_title(MENU_HEADERS);
+
+    for (;;) {
+        finish_recovery(NULL);
+        ui_reset_progress();
+
+        int chosen_item = get_menu_selection(headers, MENU_ITEMS, 0);
+
+        // device-specific code may take some action here.  It may
+        // return one of the core actions handled in the switch
+        // statement below.
+        chosen_item = device_perform_action(chosen_item);
+
+        switch (chosen_item) {
+            case ITEM_REBOOT:
+                return;
+
+            case ITEM_WIPE_DATA:
+                wipe_data(ui_text_visible());
+                if (!ui_text_visible()) return;
+                break;
+
+            case ITEM_WIPE_CACHE:
+                ui_print("\n-- Wiping cache...\n");
+                erase_root("CACHE:");
+                ui_print("Cache wipe complete.\n");
+                if (!ui_text_visible()) return;
+                break;
+
+            case ITEM_APPLY_SDCARD:
+                ui_print("\n-- Install from sdcard...\n");
+                set_sdcard_update_bootloader_message();
+                int status = install_package(SDCARD_PACKAGE_FILE);
+                if (status != INSTALL_SUCCESS) {
+                    ui_set_background(BACKGROUND_ICON_ERROR);
+                    ui_print("Installation aborted.\n");
+                } else if (!ui_text_visible()) {
+                    return;  // reboot if logs aren't visible
+                } else {
+                    if (firmware_update_pending()) {
                         ui_print("\nReboot via menu to complete\n"
                                  "installation.\n");
-                      } else {
+                    } else {
                         ui_print("\nInstall from sdcard complete.\n");
-                      }
                     }
-                    break;
-            }
-
-            // if we didn't return from this function to reboot, show
-            // the menu again.
-            ui_start_menu(headers, MENU_ITEMS);
-            selected = 0;
-            chosen_item = -1;
-
-            finish_recovery(NULL);
-            ui_reset_progress();
-
-            // throw away keys pressed while the command was running,
-            // so user doesn't accidentally trigger menu items.
-            ui_clear_key_queue();
+                }
+                break;
         }
     }
 }
