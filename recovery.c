@@ -43,6 +43,7 @@ static const struct option OPTIONS[] = {
   { "update_package", required_argument, NULL, 'u' },
   { "wipe_data", no_argument, NULL, 'w' },
   { "wipe_cache", no_argument, NULL, 'c' },
+  { NULL, 0, NULL, 0 },
 };
 
 static const char *COMMAND_FILE = "CACHE:recovery/command";
