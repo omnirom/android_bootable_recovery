@@ -38,13 +38,11 @@
 #define PROGRESSBAR_INDETERMINATE_STATES 6
 #define PROGRESSBAR_INDETERMINATE_FPS 15
 
-enum { LEFT_SIDE, CENTER_TILE, RIGHT_SIDE, NUM_SIDES };
-
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
 static gr_surface gBackgroundIcon[NUM_BACKGROUND_ICONS];
 static gr_surface gProgressBarIndeterminate[PROGRESSBAR_INDETERMINATE_STATES];
-static gr_surface gProgressBarEmpty[NUM_SIDES];
-static gr_surface gProgressBarFill[NUM_SIDES];
+static gr_surface gProgressBarEmpty;
+static gr_surface gProgressBarFill;
 
 static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
     { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING], "icon_installing" },
@@ -59,12 +57,8 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
     { &gProgressBarIndeterminate[3],    "indeterminate4" },
     { &gProgressBarIndeterminate[4],    "indeterminate5" },
     { &gProgressBarIndeterminate[5],    "indeterminate6" },
-    { &gProgressBarEmpty[LEFT_SIDE],    "progress_bar_empty_left_round" },
-    { &gProgressBarEmpty[CENTER_TILE],  "progress_bar_empty" },
-    { &gProgressBarEmpty[RIGHT_SIDE],   "progress_bar_empty_right_round" },
-    { &gProgressBarFill[LEFT_SIDE],     "progress_bar_left_round" },
-    { &gProgressBarFill[CENTER_TILE],   "progress_bar_fill" },
-    { &gProgressBarFill[RIGHT_SIDE],    "progress_bar_right_round" },
+    { &gProgressBarEmpty,               "progress_empty" },
+    { &gProgressBarFill,                "progress_fill" },
     { NULL,                             NULL },
 };
 
@@ -123,8 +117,8 @@ static void draw_progress_locked()
     if (gProgressBarType == PROGRESSBAR_TYPE_NONE) return;
 
     int iconHeight = gr_get_height(gBackgroundIcon[BACKGROUND_ICON_INSTALLING]);
-    int width = gr_get_width(gProgressBarIndeterminate[0]);
-    int height = gr_get_height(gProgressBarIndeterminate[0]);
+    int width = gr_get_width(gProgressBarEmpty);
+    int height = gr_get_height(gProgressBarEmpty);
 
     int dx = (gr_fb_width() - width)/2;
     int dy = (3*gr_fb_height() + iconHeight - 2*height)/4;
@@ -137,18 +131,12 @@ static void draw_progress_locked()
         float progress = gProgressScopeStart + gProgress * gProgressScopeSize;
         int pos = (int) (progress * width);
 
-        gr_surface s = (pos ? gProgressBarFill : gProgressBarEmpty)[LEFT_SIDE];
-        gr_blit(s, 0, 0, gr_get_width(s), gr_get_height(s), dx, dy);
-
-        int x = gr_get_width(s);
-        while (x + (int) gr_get_width(gProgressBarEmpty[RIGHT_SIDE]) < width) {
-            s = (pos > x ? gProgressBarFill : gProgressBarEmpty)[CENTER_TILE];
-            gr_blit(s, 0, 0, gr_get_width(s), gr_get_height(s), dx + x, dy);
-            x += gr_get_width(s);
+        if (pos > 0) {
+          gr_blit(gProgressBarFill, 0, 0, pos, height, dx, dy);
         }
-
-        s = (pos > x ? gProgressBarFill : gProgressBarEmpty)[RIGHT_SIDE];
-        gr_blit(s, 0, 0, gr_get_width(s), gr_get_height(s), dx + x, dy);
+        if (pos < width-1) {
+          gr_blit(gProgressBarEmpty, pos, 0, width-pos, height, dx+pos, dy);
+        }
     }
 
     if (gProgressBarType == PROGRESSBAR_TYPE_INDETERMINATE) {
