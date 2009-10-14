@@ -131,7 +131,6 @@ fopen_root_path(const char *root_path, const char *mode) {
     if (strchr("wa", mode[0])) dirCreateHierarchy(path, 0777, NULL, 1);
 
     FILE *fp = fopen(path, mode);
-    if (fp == NULL) LOGE("Can't open %s\n", path);
     return fp;
 }
 
@@ -229,7 +228,9 @@ finish_recovery(const char *send_intent)
     // By this point, we're ready to return to the main system...
     if (send_intent != NULL) {
         FILE *fp = fopen_root_path(INTENT_FILE, "w");
-        if (fp != NULL) {
+        if (fp == NULL) {
+            LOGE("Can't open %s\n", INTENT_FILE);
+        } else {
             fputs(send_intent, fp);
             check_and_fclose(fp, INTENT_FILE);
         }
@@ -237,7 +238,9 @@ finish_recovery(const char *send_intent)
 
     // Copy logs to cache so the system can find out what happened.
     FILE *log = fopen_root_path(LOG_FILE, "a");
-    if (log != NULL) {
+    if (log == NULL) {
+        LOGE("Can't open %s\n", LOG_FILE);
+    } else {
         FILE *tmplog = fopen(TEMPORARY_LOG_FILE, "r");
         if (tmplog == NULL) {
             LOGE("Can't open %s\n", TEMPORARY_LOG_FILE);
