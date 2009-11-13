@@ -23,6 +23,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "cutils/misc.h"
@@ -85,6 +86,8 @@ char* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
     } else {
         if (mount(location, mount_point, type,
                   MS_NOATIME | MS_NODEV | MS_NODIRATIME, "") < 0) {
+            fprintf(stderr, "%s: failed to mount %s at %s: %s\n",
+                    name, location, mount_point, strerror(errno));
             result = strdup("");
         } else {
             result = mount_point;
@@ -347,6 +350,7 @@ char* PackageExtractFileFn(const char* name, State* state,
 
 
 // symlink target src1 src2 ...
+//    unlinks any previously existing src1, src2, etc before creating symlinks.
 char* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc == 0) {
         return ErrorAbort(state, "%s() expects 1+ args, got %d", name, argc);
@@ -363,7 +367,16 @@ char* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     int i;
     for (i = 0; i < argc-1; ++i) {
-        symlink(target, srcs[i]);
+        if (unlink(srcs[i]) < 0) {
+            if (errno != ENOENT) {
+                fprintf(stderr, "%s: failed to remove %s: %s\n",
+                        name, srcs[i], strerror(errno));
+            }
+        }
+        if (symlink(target, srcs[i]) < 0) {
+            fprintf(stderr, "%s: failed to symlink %s to %s: %s\n",
+                    name, srcs[i], target, strerror(errno));
+        }
         free(srcs[i]);
     }
     free(srcs);
@@ -423,8 +436,14 @@ char* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
         }
 
         for (i = 3; i < argc; ++i) {
-            chown(args[i], uid, gid);
-            chmod(args[i], mode);
+            if (chown(args[i], uid, gid) < 0) {
+                fprintf(stderr, "%s: chown of %s to %d %d failed: %s\n",
+                        name, args[i], uid, gid, strerror(errno));
+            }
+            if (chmod(args[i], mode) < 0) {
+                fprintf(stderr, "%s: chmod of %s to %o failed: %s\n",
+                        name, args[i], mode, strerror(errno));
+            }
         }
     }
     result = strdup("");
@@ -759,6 +778,52 @@ char* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
     return buffer;
 }
 
+char* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc < 1) {
+        return ErrorAbort(state, "%s() expects at least 1 arg", name);
+    }
+    char** args = ReadVarArgs(state, argc, argv);
+    if (args == NULL) {
+        return NULL;
+    }
+
+    char** args2 = malloc(sizeof(char*) * (argc+1));
+    memcpy(args2, args, sizeof(char*) * argc);
+    args2[argc] = NULL;
+
+    fprintf(stderr, "about to run program [%s] with %d args\n", args2[0], argc);
+
+    pid_t child = fork();
+    if (child == 0) {
+        execv(args2[0], args2);
+        fprintf(stderr, "run_program: execv failed: %s\n", strerror(errno));
+        _exit(1);
+    }
+    int status;
+    waitpid(child, &status, 0);
+    if (WIFEXITED(status)) {
+        if (WEXITSTATUS(status) != 0) {
+            fprintf(stderr, "run_program: child exited with status %d\n",
+                    WEXITSTATUS(status));
+        }
+    } else if (WIFSIGNALED(status)) {
+        fprintf(stderr, "run_program: child terminated by signal %d\n",
+                WTERMSIG(status));
+    }
+
+    int i;
+    for (i = 0; i < argc; ++i) {
+        free(args[i]);
+    }
+    free(args);
+    free(args2);
+
+    char buffer[20];
+    sprintf(buffer, "%d", status);
+
+    return strdup(buffer);
+}
+
 
 void RegisterInstallFunctions() {
     RegisterFunction("mount", MountFn);
@@ -785,4 +850,6 @@ void RegisterInstallFunctions() {
     RegisterFunction("apply_patch_space", ApplyPatchFn);
 
     RegisterFunction("ui_print", UIPrintFn);
+
+    RegisterFunction("run_program", RunProgramFn);
 }
