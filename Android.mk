@@ -7,13 +7,14 @@ include $(CLEAR_VARS)
 commands_recovery_local_path := $(LOCAL_PATH)
 
 LOCAL_SRC_FILES := \
-	recovery.c \
-	bootloader.c \
-	firmware.c \
-	install.c \
-	roots.c \
-	ui.c \
-	verifier.c
+    recovery.c \
+    bootloader.c \
+    firmware.c \
+    install.c \
+    roots.c \
+    ui.c \
+    verifier.c \
+    efs_migration.c
 
 LOCAL_SRC_FILES += test_roots.c
 
@@ -52,5 +53,5 @@ include $(commands_recovery_local_path)/updater/Android.mk
 commands_recovery_local_path :=
 
 endif   # TARGET_ARCH == arm
-endif	# !TARGET_SIMULATOR
+endif    # !TARGET_SIMULATOR
 
