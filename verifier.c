@@ -123,7 +123,7 @@ int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKey
     int i;
     for (i = 4; i < eocd_size-3; ++i) {
         if (eocd[i  ] == 0x50 && eocd[i+1] == 0x4b &&
-            eocd[i+2] == 0x05 && eocd[i+1] == 0x06) {
+            eocd[i+2] == 0x05 && eocd[i+3] == 0x06) {
             // if the sequence $50 $4b $05 $06 appears anywhere after
             // the real one, minzip will find the later (wrong) one,
             // which could be exploitable.  Fail verification if
