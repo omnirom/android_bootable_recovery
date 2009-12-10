@@ -42,7 +42,7 @@ int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKey
 
     // An archive with a whole-file signature will end in six bytes:
     //
-    //   $ff $ff (2-byte comment size) (2-byte signature start)
+    //   (2-byte signature start) $ff $ff (2-byte comment size)
     //
     // (As far as the ZIP format is concerned, these are part of the
     // archive comment.)  We start by reading this footer, this tells
@@ -169,7 +169,7 @@ int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKey
 
     const uint8_t* sha1 = SHA_final(&ctx);
     for (i = 0; i < numKeys; ++i) {
-        // The 6 bytes is the "$ff $ff (signature_start) (comment_size)" that
+        // The 6 bytes is the "(signature_start) $ff $ff (comment_size)" that
         // the signing tool appends after the signature itself.
         if (RSA_verify(pKeys+i, eocd + eocd_size - 6 - RSANUMBYTES,
                        RSANUMBYTES, sha1)) {
