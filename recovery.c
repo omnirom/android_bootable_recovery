@@ -37,12 +37,15 @@
 #include "minzip/DirUtil.h"
 #include "roots.h"
 #include "recovery_ui.h"
+#include "efs_migration.h"
 
 static const struct option OPTIONS[] = {
   { "send_intent", required_argument, NULL, 's' },
   { "update_package", required_argument, NULL, 'u' },
   { "wipe_data", no_argument, NULL, 'w' },
   { "wipe_cache", no_argument, NULL, 'c' },
+  // TODO{oam}: implement improved command line passing key, egnot to review.
+  { "set_encrypted_filesystem", required_argument, NULL, 'e' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -63,6 +66,7 @@ static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
  *   --update_package=root:path - verify install an OTA package file
  *   --wipe_data - erase user data (and cache), then reboot
  *   --wipe_cache - wipe cache (but not user data), then reboot
+ *   --set_encrypted_filesystem=on|off - enables / diasables encrypted fs
  *
  * After completing, we remove /cache/recovery/command and reboot.
  * Arguments may also be supplied in the bootloader control block (BCB).
@@ -107,6 +111,26 @@ static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
  *    8g. finish_recovery() erases BCB
  *        -- after this, rebooting will (try to) restart the main system --
  * 9. main() calls reboot() to boot main system
+ *
+ * ENCRYPTED FILE SYSTEMS ENABLE/DISABLE
+ * 1. user selects "enable encrypted file systems"
+ * 2. main system writes "--set_encrypted_filesystem=on|off" to
+ *    /cache/recovery/command
+ * 3. main system reboots into recovery
+ * 4. get_args() writes BCB with "boot-recovery" and
+ *    "--set_encrypted_filesystems=on|off"
+ *    -- after this, rebooting will restart the transition --
+ * 5. read_encrypted_fs_info() retrieves encrypted file systems settings from /data
+ *    Settings include: property to specify the Encrypted FS istatus and
+ *    FS encryption key if enabled (not yet implemented)
+ * 6. erase_root() reformats /data
+ * 7. erase_root() reformats /cache
+ * 8. restore_encrypted_fs_info() writes required encrypted file systems settings to /data
+ *    Settings include: property to specify the Encrypted FS status and
+ *    FS encryption key if enabled (not yet implemented)
+ * 9. finish_recovery() erases BCB
+ *    -- after this, rebooting will restart the main system --
+ * 10. main() calls reboot() to boot main system
  */
 
 static const int MAX_ARG_LENGTH = 4096;
@@ -209,8 +233,7 @@ get_args(int *argc, char ***argv) {
 }
 
 static void
-set_sdcard_update_bootloader_message()
-{
+set_sdcard_update_bootloader_message() {
     struct bootloader_message boot;
     memset(&boot, 0, sizeof(boot));
     strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
@@ -223,8 +246,7 @@ set_sdcard_update_bootloader_message()
 // record any intent we were asked to communicate back to the system.
 // this function is idempotent: call it as many times as you like.
 static void
-finish_recovery(const char *send_intent)
-{
+finish_recovery(const char *send_intent) {
     // By this point, we're ready to return to the main system...
     if (send_intent != NULL) {
         FILE *fp = fopen_root_path(INTENT_FILE, "w");
@@ -255,7 +277,7 @@ finish_recovery(const char *send_intent)
         check_and_fclose(log, LOG_FILE);
     }
 
-    // Reset the bootloader message to revert to a normal main system boot.
+    // Reset to mormal system boot so recovery won't cycle indefinitely.
     struct bootloader_message boot;
     memset(&boot, 0, sizeof(boot));
     set_bootloader_message(&boot);
@@ -272,8 +294,7 @@ finish_recovery(const char *send_intent)
 }
 
 static int
-erase_root(const char *root)
-{
+erase_root(const char *root) {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     ui_show_indeterminate_progress();
     ui_print("Formatting %s...\n", root);
@@ -384,8 +405,7 @@ wipe_data(int confirm) {
 }
 
 static void
-prompt_and_wait()
-{
+prompt_and_wait() {
     char** headers = prepend_title(MENU_HEADERS);
 
     for (;;) {
@@ -438,14 +458,12 @@ prompt_and_wait()
 }
 
 static void
-print_property(const char *key, const char *name, void *cookie)
-{
+print_property(const char *key, const char *name, void *cookie) {
     fprintf(stderr, "%s=%s\n", key, name);
 }
 
 int
-main(int argc, char **argv)
-{
+main(int argc, char **argv) {
     time_t start = time(NULL);
 
     // If these fail, there's not really anywhere to complain...
@@ -459,7 +477,10 @@ main(int argc, char **argv)
     int previous_runs = 0;
     const char *send_intent = NULL;
     const char *update_package = NULL;
+    const char *efs_mode = NULL;
     int wipe_data = 0, wipe_cache = 0;
+    int toggle_efs = 0;
+    encrypted_fs_info efs_data;
 
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
@@ -469,6 +490,7 @@ main(int argc, char **argv)
         case 'u': update_package = optarg; break;
         case 'w': wipe_data = wipe_cache = 1; break;
         case 'c': wipe_cache = 1; break;
+        case 'e': efs_mode = optarg; toggle_efs = 1; break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -486,7 +508,42 @@ main(int argc, char **argv)
 
     int status = INSTALL_SUCCESS;
 
-    if (update_package != NULL) {
+    if (toggle_efs) {
+        if (strcmp(efs_mode,"on") == 0) {
+            efs_data.encrypted_fs_mode = MODE_ENCRYPTEDFS_ENABLED;
+            ui_print("Enabling Encrypted FS.\n");
+        } else if (strcmp(efs_mode,"off") == 0) {
+            efs_data.encrypted_fs_mode = MODE_ENCRYPTEDFS_DISABLED;
+            ui_print("Disabling Encrypted FS.\n");
+        } else {
+            ui_print("Error: invalid Encrypted FS setting.\n");
+            status = INSTALL_ERROR;
+        }
+
+        // Recovery strategy: if the data partition is damaged, disable encrypted file systems.
+        // This preventsthe device recycling endlessly in recovery mode.
+        // TODO{oam}: implement improved recovery strategy later. egnor to review.
+        if (read_encrypted_fs_info(&efs_data)) {
+            ui_print("Encrypted FS change aborted, resetting to disabled state.\n");
+            efs_data.encrypted_fs_mode = MODE_ENCRYPTEDFS_DISABLED;
+        }
+
+        if (status != INSTALL_ERROR) {
+            if (erase_root("DATA:")) {
+                ui_print("Data wipe failed.\n");
+                status = INSTALL_ERROR;
+            } else if (erase_root("CACHE:")) {
+                ui_print("Cache wipe failed.\n");
+                status = INSTALL_ERROR;
+            } else if (restore_encrypted_fs_info(&efs_data)) {
+                ui_print("Encrypted FS change aborted.\n");
+                status = INSTALL_ERROR;
+            } else {
+                ui_print("Successfully updated Encrypted FS.\n");
+                status = INSTALL_SUCCESS;
+            }
+        }
+    } else if (update_package != NULL) {
         status = install_package(update_package);
         if (status != INSTALL_SUCCESS) ui_print("Installation aborted.\n");
     } else if (wipe_data) {
