@@ -43,6 +43,22 @@ LOCAL_STATIC_LIBRARIES += libstdc++ libc
 
 include $(BUILD_EXECUTABLE)
 
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := verifier_test.c verifier.c
+
+LOCAL_MODULE := verifier_test
+
+LOCAL_FORCE_STATIC_EXECUTABLE := true
+
+LOCAL_MODULE_TAGS := tests
+
+LOCAL_STATIC_LIBRARIES := libmincrypt libcutils libstdc++ libc
+
+include $(BUILD_EXECUTABLE)
+
+
 include $(commands_recovery_local_path)/minui/Android.mk
 include $(commands_recovery_local_path)/minzip/Android.mk
 include $(commands_recovery_local_path)/mtdutils/Android.mk
