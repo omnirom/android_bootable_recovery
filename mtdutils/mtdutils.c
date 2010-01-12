@@ -283,19 +283,26 @@ static int read_block(const MtdPartition *partition, int fd, char *data)
         return -1;
     }
 
-    off_t pos = lseek(fd, 0, SEEK_CUR);
+    loff_t pos = lseek64(fd, 0, SEEK_CUR);
+
     ssize_t size = partition->erase_size;
+    int mgbb;
+
     while (pos + size <= (int) partition->size) {
-        if (lseek(fd, pos, SEEK_SET) != pos || read(fd, data, size) != size) {
-            fprintf(stderr, "mtd: read error at 0x%08lx (%s)\n",
+        if (lseek64(fd, pos, SEEK_SET) != pos || read(fd, data, size) != size) {
+            fprintf(stderr, "mtd: read error at 0x%08llx (%s)\n",
                     pos, strerror(errno));
         } else if (ioctl(fd, ECCGETSTATS, &after)) {
             fprintf(stderr, "mtd: ECCGETSTATS error (%s)\n", strerror(errno));
             return -1;
         } else if (after.failed != before.failed) {
-            fprintf(stderr, "mtd: ECC errors (%d soft, %d hard) at 0x%08lx\n",
+            fprintf(stderr, "mtd: ECC errors (%d soft, %d hard) at 0x%08llx\n",
                     after.corrected - before.corrected,
                     after.failed - before.failed, pos);
+        } else if ((mgbb = ioctl(fd, MEMGETBADBLOCK, &pos))) {
+            fprintf(stderr,
+                    "mtd: MEMGETBADBLOCK returned %d at 0x%08llx (errno=%d)\n",
+                    mgbb, pos, errno);
         } else {
             int i;
             for (i = 0; i < size; ++i) {
@@ -303,7 +310,7 @@ static int read_block(const MtdPartition *partition, int fd, char *data)
                     return 0;  // Success!
                 }
             }
-            fprintf(stderr, "mtd: read all-zero block at 0x%08lx; skipping\n",
+            fprintf(stderr, "mtd: read all-zero block at 0x%08llx; skipping\n",
                     pos);
         }
 
