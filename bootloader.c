@@ -155,10 +155,14 @@ struct update_header {
     unsigned fail_bitmap_length;
 };
 
+#define LOG_MAGIC        "LOGmagic"
+#define LOG_MAGIC_SIZE   8
+
 int write_update_for_bootloader(
         const char *update, int update_length,
         int bitmap_width, int bitmap_height, int bitmap_bpp,
-        const char *busy_bitmap, const char *fail_bitmap) {
+        const char *busy_bitmap, const char *fail_bitmap,
+        const char *log_filename) {
     if (ensure_root_path_unmounted(CACHE_NAME)) {
         LOGE("Can't unmount %s\n", CACHE_NAME);
         return -1;
@@ -197,6 +201,21 @@ int write_update_for_bootloader(
     memcpy(&header.MAGIC, UPDATE_MAGIC, UPDATE_MAGIC_SIZE);
     header.version = UPDATE_VERSION;
     header.size = header_size;
+
+    if (log_filename != NULL) {
+        // Write 1 byte into the following block, then fill to the end
+        // in order to reserve that block.  We'll use the block to
+        // send a copy of the log through to the next invocation of
+        // recovery.  We write the log as late as possible in order to
+        // capture any messages emitted by this function.
+        mtd_erase_blocks(write, 0);
+        if (mtd_write_data(write, (char*) &header, 1) != 1) {
+            LOGE("Can't write log block to %s\n(%s)\n",
+                 CACHE_NAME, strerror(errno));
+            mtd_write_close(write);
+            return -1;
+        }
+    }
 
     off_t image_start_pos = mtd_erase_blocks(write, 0);
     header.image_length = update_length;
@@ -256,6 +275,37 @@ int write_update_for_bootloader(
         return -1;
     }
 
+    if (log_filename != NULL) {
+        size_t erase_size;
+        if (mtd_partition_info(part, NULL, &erase_size, NULL) != 0) {
+            LOGE("Error reading block size\n(%s)\n", strerror(errno));
+            mtd_write_close(write);
+            return -1;
+        }
+        mtd_erase_blocks(write, 0);
+
+        if (erase_size > 0) {
+            char* log = malloc(erase_size);
+            FILE* f = fopen(log_filename, "rb");
+            // The fseek() may fail if it tries to go before the
+            // beginning of the log, but that's okay because we want
+            // to be positioned at the start anyway.
+            fseek(f, -(erase_size-sizeof(size_t)-LOG_MAGIC_SIZE), SEEK_END);
+            memcpy(log, LOG_MAGIC, LOG_MAGIC_SIZE);
+            size_t read = fread(log+sizeof(size_t)+LOG_MAGIC_SIZE,
+                                1, erase_size-sizeof(size_t)-LOG_MAGIC_SIZE, f);
+            LOGI("read %d bytes from log\n", (int)read);
+            *(size_t *)(log + LOG_MAGIC_SIZE) = read;
+            fclose(f);
+            if (mtd_write_data(write, log, erase_size) != erase_size) {
+                LOGE("failed to store log in cache partition\n(%s)\n",
+                     strerror(errno));
+                mtd_write_close(write);
+            }
+            free(log);
+        }
+    }
+
     if (mtd_erase_blocks(write, 0) != image_start_pos) {
         LOGE("Misalignment rewriting %s\n(%s)\n", CACHE_NAME, strerror(errno));
         mtd_write_close(write);
@@ -268,4 +318,53 @@ int write_update_for_bootloader(
     }
 
     return 0;
+}
+
+void recover_firmware_update_log() {
+    printf("recovering log from before firmware update\n");
+
+    const MtdPartition *part = get_root_mtd_partition(CACHE_NAME);
+    if (part == NULL) {
+        LOGE("Can't find %s\n", CACHE_NAME);
+        return;
+    }
+
+    MtdReadContext* read = mtd_read_partition(part);
+
+    size_t erase_size;
+    if (mtd_partition_info(part, NULL, &erase_size, NULL) != 0) {
+        LOGE("Error reading block size\n(%s)\n", strerror(errno));
+        mtd_read_close(read);
+        return;
+    }
+
+    char* buffer = malloc(erase_size);
+    if (mtd_read_data(read, buffer, erase_size) != erase_size) {
+        LOGE("Error reading header block\n(%s)\n", strerror(errno));
+        mtd_read_close(read);
+        free(buffer);
+        return;
+    }
+    if (mtd_read_data(read, buffer, erase_size) != erase_size) {
+        LOGE("Error reading log block\n(%s)\n", strerror(errno));
+        mtd_read_close(read);
+        free(buffer);
+        return;
+    }
+    mtd_read_close(read);
+
+    if (memcmp(buffer, LOG_MAGIC, LOG_MAGIC_SIZE) != 0) {
+        LOGE("No log from before firmware install\n");
+        free(buffer);
+        return;
+    }
+
+    size_t log_size = *(size_t *)(buffer + LOG_MAGIC_SIZE);
+    LOGI("header has %d bytes of log\n", (int)log_size);
+
+    printf("\n###\n### START RECOVERED LOG\n###\n\n");
+    fwrite(buffer + sizeof(size_t) + LOG_MAGIC_SIZE, 1, log_size, stdout);
+    printf("\n\n###\n### END RECOVERED LOG\n###\n\n");
+
+    free(buffer);
 }

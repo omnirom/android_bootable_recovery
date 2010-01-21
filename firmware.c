@@ -76,7 +76,8 @@ int firmware_update_pending() {
  * It is recovery's responsibility to clean up the mess afterwards.
  */
 
-int maybe_install_firmware_update(const char *send_intent) {
+int maybe_install_firmware_update(const char *send_intent,
+                                  const char *log_filename) {
     if (update_data == NULL || update_length == 0) return 0;
 
     /* We destroy the cache partition to pass the update image to the
@@ -104,7 +105,7 @@ int maybe_install_firmware_update(const char *send_intent) {
     ui_print("Writing %s image...\n", update_type);
     if (write_update_for_bootloader(
             update_data, update_length,
-            width, height, bpp, busy_image, fail_image)) {
+            width, height, bpp, busy_image, fail_image, log_filename)) {
         LOGE("Can't write %s image\n(%s)\n", update_type, strerror(errno));
         format_root_device("CACHE:");  // Attempt to clean cache up, at least.
         return -1;
@@ -118,6 +119,7 @@ int maybe_install_firmware_update(const char *send_intent) {
      * wipe the cache and reboot into the system.)
      */
     snprintf(boot.command, sizeof(boot.command), "update-%s", update_type);
+    strlcat(boot.recovery, "--recover_log\n", sizeof(boot.recovery));
     if (set_bootloader_message(&boot)) {
         format_root_device("CACHE:");
         return -1;

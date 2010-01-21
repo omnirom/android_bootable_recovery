@@ -54,6 +54,13 @@ int set_bootloader_message(const struct bootloader_message *in);
 int write_update_for_bootloader(
         const char *update, int update_len,
         int bitmap_width, int bitmap_height, int bitmap_bpp,
-        const char *busy_bitmap, const char *error_bitmap);
+        const char *busy_bitmap, const char *error_bitmap,
+        const char *log_filename);
+
+/* Look for a log stored in the cache partition in the block after the
+ * firmware update header.  If we can read such a log, copy it to
+ * stdout (ie, the current log).
+ */
+void recover_firmware_update_log();
 
 #endif

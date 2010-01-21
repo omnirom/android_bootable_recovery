@@ -30,6 +30,7 @@ int firmware_update_pending();
  * Returns 0 if no radio image was defined, nonzero on error,
  * doesn't return at all on success...
  */
-int maybe_install_firmware_update(const char *send_intent);
+int maybe_install_firmware_update(const char *send_intent,
+                                  const char *log_filename);
 
 #endif

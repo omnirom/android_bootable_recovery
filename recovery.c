@@ -46,6 +46,7 @@ static const struct option OPTIONS[] = {
   { "wipe_cache", no_argument, NULL, 'c' },
   // TODO{oam}: implement improved command line passing key, egnot to review.
   { "set_encrypted_filesystem", required_argument, NULL, 'e' },
+  { "recover_log", no_argument, NULL, 'g' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -491,6 +492,7 @@ main(int argc, char **argv) {
         case 'w': wipe_data = wipe_cache = 1; break;
         case 'c': wipe_cache = 1; break;
         case 'e': efs_mode = optarg; toggle_efs = 1; break;
+        case 'g': recover_firmware_update_log(); break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -562,7 +564,7 @@ main(int argc, char **argv) {
     if (status != INSTALL_SUCCESS || ui_text_visible()) prompt_and_wait();
 
     // If there is a radio image pending, reboot now to install it.
-    maybe_install_firmware_update(send_intent);
+    maybe_install_firmware_update(send_intent, TEMPORARY_LOG_FILE);
 
     // Otherwise, get ready to boot the main system...
     finish_recovery(send_intent);
