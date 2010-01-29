@@ -275,7 +275,7 @@ load_keys(const char* filename, int* numKeys) {
         ++*numKeys;
         out = realloc(out, *numKeys * sizeof(RSAPublicKey));
         RSAPublicKey* key = out + (*numKeys - 1);
-        if (fscanf(f, " { %i , %i , { %i",
+        if (fscanf(f, " { %i , 0x%x , { %u",
                    &(key->len), &(key->n0inv), &(key->n[0])) != 3) {
             goto exit;
         }
@@ -284,11 +284,11 @@ load_keys(const char* filename, int* numKeys) {
             goto exit;
         }
         for (i = 1; i < key->len; ++i) {
-            if (fscanf(f, " , %i", &(key->n[i])) != 1) goto exit;
+            if (fscanf(f, " , %u", &(key->n[i])) != 1) goto exit;
         }
-        if (fscanf(f, " } , { %i", &(key->rr[0])) != 1) goto exit;
+        if (fscanf(f, " } , { %u", &(key->rr[0])) != 1) goto exit;
         for (i = 1; i < key->len; ++i) {
-            if (fscanf(f, " , %i", &(key->rr[i])) != 1) goto exit;
+            if (fscanf(f, " , %u", &(key->rr[i])) != 1) goto exit;
         }
         fscanf(f, " } } ");
 
