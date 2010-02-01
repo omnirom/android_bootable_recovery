@@ -44,9 +44,8 @@ static const struct option OPTIONS[] = {
   { "update_package", required_argument, NULL, 'u' },
   { "wipe_data", no_argument, NULL, 'w' },
   { "wipe_cache", no_argument, NULL, 'c' },
-  // TODO{oam}: implement improved command line passing key, egnot to review.
+  // TODO{oam}: implement improved command line passing key, egnor to review.
   { "set_encrypted_filesystem", required_argument, NULL, 'e' },
-  { "recover_log", no_argument, NULL, 'g' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -492,12 +491,13 @@ main(int argc, char **argv) {
         case 'w': wipe_data = wipe_cache = 1; break;
         case 'c': wipe_cache = 1; break;
         case 'e': efs_mode = optarg; toggle_efs = 1; break;
-        case 'g': recover_firmware_update_log(); break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
         }
     }
+
+    device_recovery_start();
 
     fprintf(stderr, "Command:");
     for (arg = 0; arg < argc; arg++) {
