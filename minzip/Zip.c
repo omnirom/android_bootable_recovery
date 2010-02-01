@@ -810,6 +810,43 @@ bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
     return true;
 }
 
+typedef struct {
+    unsigned char* buffer;
+    long len;
+} BufferExtractCookie;
+
+static bool bufferProcessFunction(const unsigned char *data, int dataLen,
+    void *cookie) {
+    BufferExtractCookie *bec = (BufferExtractCookie*)cookie;
+
+    memmove(bec->buffer, data, dataLen);
+    bec->buffer += dataLen;
+    bec->len -= dataLen;
+
+    return true;
+}
+
+/*
+ * Uncompress "pEntry" in "pArchive" to buffer, which must be large
+ * enough to hold mzGetZipEntryUncomplen(pEntry) bytes.
+ */
+bool mzExtractZipEntryToBuffer(const ZipArchive *pArchive,
+    const ZipEntry *pEntry, unsigned char *buffer)
+{
+    BufferExtractCookie bec;
+    bec.buffer = buffer;
+    bec.len = mzGetZipEntryUncompLen(pEntry);
+
+    bool ret = mzProcessZipEntryContents(pArchive, pEntry,
+        bufferProcessFunction, (void*)&bec);
+    if (!ret || bec.len != 0) {
+        LOGE("Can't extract entry to memory buffer.\n");
+        return false;
+    }
+    return true;
+}
+
+
 /* Helper state to make path translation easier and less malloc-happy.
  */
 typedef struct {

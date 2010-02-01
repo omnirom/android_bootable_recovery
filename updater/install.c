@@ -315,37 +315,82 @@ char* PackageExtractDirFn(const char* name, State* state,
 
 
 // package_extract_file(package_path, destination_path)
+//   or
+// package_extract_file(package_path)
+//   to return the entire contents of the file as the result of this
+//   function (the char* returned points to a long giving the length
+//   followed by that many bytes of data).
 char* PackageExtractFileFn(const char* name, State* state,
                            int argc, Expr* argv[]) {
-    if (argc != 2) {
-        return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
+    if (argc != 1 && argc != 2) {
+        return ErrorAbort(state, "%s() expects 1 or 2 args, got %d",
+                          name, argc);
     }
-    char* zip_path;
-    char* dest_path;
-    if (ReadArgs(state, argv, 2, &zip_path, &dest_path) < 0) return NULL;
-
     bool success = false;
+    if (argc == 2) {
+        // The two-argument version extracts to a file.
 
-    ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
-    const ZipEntry* entry = mzFindZipEntry(za, zip_path);
-    if (entry == NULL) {
-        fprintf(stderr, "%s: no %s in package\n", name, zip_path);
-        goto done;
+        char* zip_path;
+        char* dest_path;
+        if (ReadArgs(state, argv, 2, &zip_path, &dest_path) < 0) return NULL;
+
+        ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
+        const ZipEntry* entry = mzFindZipEntry(za, zip_path);
+        if (entry == NULL) {
+            fprintf(stderr, "%s: no %s in package\n", name, zip_path);
+            goto done2;
+        }
+
+        FILE* f = fopen(dest_path, "wb");
+        if (f == NULL) {
+            fprintf(stderr, "%s: can't open %s for write: %s\n",
+                    name, dest_path, strerror(errno));
+            goto done2;
+        }
+        success = mzExtractZipEntryToFile(za, entry, fileno(f));
+        fclose(f);
+
+      done2:
+        free(zip_path);
+        free(dest_path);
+        return strdup(success ? "t" : "");
+    } else {
+        // The one-argument version returns the contents of the file
+        // as the result.
+
+        char* zip_path;
+        char* buffer = NULL;
+
+        if (ReadArgs(state, argv, 1, &zip_path) < 0) return NULL;
+
+        ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
+        const ZipEntry* entry = mzFindZipEntry(za, zip_path);
+        if (entry == NULL) {
+            fprintf(stderr, "%s: no %s in package\n", name, zip_path);
+            goto done1;
+        }
+
+        long size = mzGetZipEntryUncompLen(entry);
+        buffer = malloc(size + sizeof(long));
+        if (buffer == NULL) {
+            fprintf(stderr, "%s: failed to allocate %ld bytes for %s\n",
+                    name, size+sizeof(long), zip_path);
+            goto done1;
+        }
+
+        *(long *)buffer = size;
+        success = mzExtractZipEntryToBuffer(
+            za, entry, (unsigned char *)(buffer + sizeof(long)));
+
+      done1:
+        free(zip_path);
+        if (!success) {
+            free(buffer);
+            buffer = malloc(sizeof(long));
+            *(long *)buffer = -1L;
+        }
+        return buffer;
     }
-
-    FILE* f = fopen(dest_path, "wb");
-    if (f == NULL) {
-        fprintf(stderr, "%s: can't open %s for write: %s\n",
-                name, dest_path, strerror(errno));
-        goto done;
-    }
-    success = mzExtractZipEntryToFile(za, entry, fileno(f));
-    fclose(f);
-
-  done:
-    free(zip_path);
-    free(dest_path);
-    return strdup(success ? "t" : "");
 }
 
 

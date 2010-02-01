@@ -169,6 +169,13 @@ bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
     const ZipEntry *pEntry, int fd);
 
 /*
+ * Inflate and write an entry to a memory buffer, which must be long
+ * enough to hold mzGetZipEntryUncomplen(pEntry) bytes.
+ */
+bool mzExtractZipEntryToBuffer(const ZipArchive *pArchive,
+    const ZipEntry *pEntry, unsigned char* buffer);
+
+/*
  * Inflate all entries under zipDir to the directory specified by
  * targetDir, which must exist and be a writable directory.
  *
