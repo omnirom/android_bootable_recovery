@@ -47,10 +47,6 @@ static gr_surface gProgressBarFill;
 static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
     { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING], "icon_installing" },
     { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
-    { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_INSTALLING],
-        "icon_firmware_install" },
-    { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR],
-        "icon_firmware_error" },
     { &gProgressBarIndeterminate[0],    "indeterminate1" },
     { &gProgressBarIndeterminate[1],    "indeterminate2" },
     { &gProgressBarIndeterminate[2],    "indeterminate3" },
@@ -339,23 +335,6 @@ void ui_init(void)
     pthread_t t;
     pthread_create(&t, NULL, progress_thread, NULL);
     pthread_create(&t, NULL, input_thread, NULL);
-}
-
-char *ui_copy_image(int icon, int *width, int *height, int *bpp) {
-    pthread_mutex_lock(&gUpdateMutex);
-    draw_background_locked(gBackgroundIcon[icon]);
-    *width = gr_fb_width();
-    *height = gr_fb_height();
-    *bpp = sizeof(gr_pixel) * 8;
-    int size = *width * *height * sizeof(gr_pixel);
-    char *ret = malloc(size);
-    if (ret == NULL) {
-        LOGE("Can't allocate %d bytes for image\n", size);
-    } else {
-        memcpy(ret, gr_fb_data(), size);
-    }
-    pthread_mutex_unlock(&gUpdateMutex);
-    return ret;
 }
 
 void ui_set_background(int icon)

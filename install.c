@@ -32,70 +32,9 @@
 #include "mtdutils/mtdutils.h"
 #include "roots.h"
 #include "verifier.h"
-#include "firmware.h"
 
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
 #define PUBLIC_KEYS_FILE "/res/keys"
-
-// The update binary ask us to install a firmware file on reboot.  Set
-// that up.  Takes ownership of type and filename.
-static int
-handle_firmware_update(char* type, char* filename, ZipArchive* zip) {
-    unsigned int data_size;
-    const ZipEntry* entry = NULL;
-
-    if (strncmp(filename, "PACKAGE:", 8) == 0) {
-        entry = mzFindZipEntry(zip, filename+8);
-        if (entry == NULL) {
-            LOGE("Failed to find \"%s\" in package", filename+8);
-            return INSTALL_ERROR;
-        }
-        data_size = entry->uncompLen;
-    } else {
-        struct stat st_data;
-        if (stat(filename, &st_data) < 0) {
-            LOGE("Error stat'ing %s: %s\n", filename, strerror(errno));
-            return INSTALL_ERROR;
-        }
-        data_size = st_data.st_size;
-    }
-
-    LOGI("type is %s; size is %d; file is %s\n",
-         type, data_size, filename);
-
-    char* data = malloc(data_size);
-    if (data == NULL) {
-        LOGI("Can't allocate %d bytes for firmware data\n", data_size);
-        return INSTALL_ERROR;
-    }
-
-    if (entry) {
-        if (mzReadZipEntry(zip, entry, data, data_size) == false) {
-            LOGE("Failed to read \"%s\" from package", filename+8);
-            return INSTALL_ERROR;
-        }
-    } else {
-        FILE* f = fopen(filename, "rb");
-        if (f == NULL) {
-            LOGE("Failed to open %s: %s\n", filename, strerror(errno));
-            return INSTALL_ERROR;
-        }
-        if (fread(data, 1, data_size, f) != data_size) {
-            LOGE("Failed to read firmware data: %s\n", strerror(errno));
-            return INSTALL_ERROR;
-        }
-        fclose(f);
-    }
-
-    if (remember_firmware_update(type, data, data_size)) {
-        LOGE("Can't store %s image\n", type);
-        free(data);
-        return INSTALL_ERROR;
-    }
-    free(filename);
-
-    return INSTALL_SUCCESS;
-}
 
 // If the package contains an update binary, extract it and run it.
 static int
@@ -145,9 +84,12 @@ try_update_binary(const char *path, ZipArchive *zip) {
     //
     //        firmware <"hboot"|"radio"> <filename>
     //            arrange to install the contents of <filename> in the
-    //            given partition on reboot.  (API v2: <filename> may
-    //            start with "PACKAGE:" to indicate taking a file from
-    //            the OTA package.)
+    //            given partition on reboot.
+    //
+    //            (API v2: <filename> may start with "PACKAGE:" to
+    //            indicate taking a file from the OTA package.)
+    //
+    //            (API v3: this command no longer exists.)
     //
     //        ui_print <string>
     //            display <string> on the screen.
@@ -172,9 +114,6 @@ try_update_binary(const char *path, ZipArchive *zip) {
     }
     close(pipefd[1]);
 
-    char* firmware_type = NULL;
-    char* firmware_filename = NULL;
-
     char buffer[1024];
     FILE* from_child = fdopen(pipefd[0], "r");
     while (fgets(buffer, sizeof(buffer), from_child) != NULL) {
@@ -194,18 +133,6 @@ try_update_binary(const char *path, ZipArchive *zip) {
             char* fraction_s = strtok(NULL, " \n");
             float fraction = strtof(fraction_s, NULL);
             ui_set_progress(fraction);
-        } else if (strcmp(command, "firmware") == 0) {
-            char* type = strtok(NULL, " \n");
-            char* filename = strtok(NULL, " \n");
-
-            if (type != NULL && filename != NULL) {
-                if (firmware_type != NULL) {
-                    LOGE("ignoring attempt to do multiple firmware updates");
-                } else {
-                    firmware_type = strdup(type);
-                    firmware_filename = strdup(filename);
-                }
-            }
         } else if (strcmp(command, "ui_print") == 0) {
             char* str = strtok(NULL, "\n");
             if (str) {
@@ -226,11 +153,7 @@ try_update_binary(const char *path, ZipArchive *zip) {
         return INSTALL_ERROR;
     }
 
-    if (firmware_type != NULL) {
-        return handle_firmware_update(firmware_type, firmware_filename, zip);
-    } else {
-        return INSTALL_SUCCESS;
-    }
+    return INSTALL_SUCCESS;
 }
 
 static int

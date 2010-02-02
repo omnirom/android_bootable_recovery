@@ -23,6 +23,7 @@
 typedef struct {
     FILE* cmd_pipe;
     ZipArchive* package_zip;
+    int version;
 } UpdaterInfo;
 
 #endif

@@ -31,7 +31,6 @@
 #include "bootloader.h"
 #include "common.h"
 #include "cutils/properties.h"
-#include "firmware.h"
 #include "install.h"
 #include "minui/minui.h"
 #include "minzip/DirUtil.h"
@@ -445,12 +444,7 @@ prompt_and_wait() {
                 } else if (!ui_text_visible()) {
                     return;  // reboot if logs aren't visible
                 } else {
-                    if (firmware_update_pending()) {
-                        ui_print("\nReboot via menu to complete\n"
-                                 "installation.\n");
-                    } else {
-                        ui_print("\nInstall from sdcard complete.\n");
-                    }
+                    ui_print("\nInstall from sdcard complete.\n");
                 }
                 break;
         }
@@ -562,9 +556,6 @@ main(int argc, char **argv) {
 
     if (status != INSTALL_SUCCESS) ui_set_background(BACKGROUND_ICON_ERROR);
     if (status != INSTALL_SUCCESS || ui_text_visible()) prompt_and_wait();
-
-    // If there is a radio image pending, reboot now to install it.
-    maybe_install_firmware_update(send_intent, TEMPORARY_LOG_FILE);
 
     // Otherwise, get ready to boot the main system...
     finish_recovery(send_intent);

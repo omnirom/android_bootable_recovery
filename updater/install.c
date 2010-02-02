@@ -703,44 +703,6 @@ done:
     return result;
 }
 
-// write_firmware_image(file, partition)
-//
-//    partition is "radio" or "hboot"
-//    file is not used until after updater exits
-//
-// TODO: this should live in some HTC-specific library
-char* WriteFirmwareImageFn(const char* name, State* state,
-                           int argc, Expr* argv[]) {
-    char* result = NULL;
-
-    char* partition;
-    char* filename;
-    if (ReadArgs(state, argv, 2, &filename, &partition) < 0) {
-        return NULL;
-    }
-
-    if (strlen(partition) == 0) {
-        ErrorAbort(state, "partition argument to %s can't be empty", name);
-        goto done;
-    }
-    if (strlen(filename) == 0) {
-        ErrorAbort(state, "file argument to %s can't be empty", name);
-        goto done;
-    }
-
-    FILE* cmd = ((UpdaterInfo*)(state->cookie))->cmd_pipe;
-    fprintf(cmd, "firmware %s %s\n", partition, filename);
-
-    printf("will write %s firmware from %s\n", partition, filename);
-    result = partition;
-
-done:
-    if (result != partition) free(partition);
-    free(filename);
-    return result;
-}
-
-
 extern int applypatch(int argc, char** argv);
 
 // apply_patch(srcfile, tgtfile, tgtsha1, tgtsize, sha1:patch, ...)
@@ -888,7 +850,6 @@ void RegisterInstallFunctions() {
     RegisterFunction("getprop", GetPropFn);
     RegisterFunction("file_getprop", FileGetPropFn);
     RegisterFunction("write_raw_image", WriteRawImageFn);
-    RegisterFunction("write_firmware_image", WriteFirmwareImageFn);
 
     RegisterFunction("apply_patch", ApplyPatchFn);
     RegisterFunction("apply_patch_check", ApplyPatchFn);
