@@ -119,7 +119,6 @@ int maybe_install_firmware_update(const char *send_intent,
      * wipe the cache and reboot into the system.)
      */
     snprintf(boot.command, sizeof(boot.command), "update-%s", update_type);
-    strlcat(boot.recovery, "--recover_log\n", sizeof(boot.recovery));
     if (set_bootloader_message(&boot)) {
         format_root_device("CACHE:");
         return -1;

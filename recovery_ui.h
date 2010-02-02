@@ -17,6 +17,9 @@
 #ifndef _RECOVERY_UI_H
 #define _RECOVERY_UI_H
 
+// Called when recovery starts up.  Returns 0.
+extern int device_recovery_start();
+
 // Called in the input thread when a new key (key_code) is pressed.
 // *key_pressed is an array of KEY_MAX+1 bytes indicating which other
 // keys are already pressed.  Return true if the text display should
