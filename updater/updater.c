@@ -33,6 +33,12 @@
 #define SCRIPT_NAME "META-INF/com/google/android/updater-script"
 
 int main(int argc, char** argv) {
+    // Various things log information to stdout or stderr more or less
+    // at random.  The log file makes more sense if buffering is
+    // turned off so things appear in the right order.
+    setbuf(stdout, NULL);
+    setbuf(stderr, NULL);
+
     if (argc != 4) {
         fprintf(stderr, "unexpected number of arguments (%d)\n", argc);
         return 1;

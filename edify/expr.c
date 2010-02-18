@@ -33,12 +33,39 @@ int BooleanString(const char* s) {
 }
 
 char* Evaluate(State* state, Expr* expr) {
+    Value* v = expr->fn(expr->name, state, expr->argc, expr->argv);
+    if (v == NULL) return NULL;
+    if (v->type != VAL_STRING) {
+        ErrorAbort(state, "expecting string, got value type %d", v->type);
+        FreeValue(v);
+        return NULL;
+    }
+    char* result = v->data;
+    free(v);
+    return result;
+}
+
+Value* EvaluateValue(State* state, Expr* expr) {
     return expr->fn(expr->name, state, expr->argc, expr->argv);
 }
 
-char* ConcatFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* StringValue(char* str) {
+    Value* v = malloc(sizeof(Value));
+    v->type = VAL_STRING;
+    v->size = strlen(str);
+    v->data = str;
+    return v;
+}
+
+void FreeValue(Value* v) {
+    if (v == NULL) return;
+    free(v->data);
+    free(v);
+}
+
+Value* ConcatFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc == 0) {
-        return strdup("");
+        return StringValue(strdup(""));
     }
     char** strings = malloc(argc * sizeof(char*));
     int i;
@@ -68,10 +95,10 @@ char* ConcatFn(const char* name, State* state, int argc, Expr* argv[]) {
         free(strings[i]);
     }
     free(strings);
-    return result;
+    return StringValue(result);
 }
 
-char* IfElseFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* IfElseFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 2 && argc != 3) {
         free(state->errmsg);
         state->errmsg = strdup("ifelse expects 2 or 3 arguments");
@@ -84,18 +111,18 @@ char* IfElseFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     if (BooleanString(cond) == true) {
         free(cond);
-        return Evaluate(state, argv[1]);
+        return EvaluateValue(state, argv[1]);
     } else {
         if (argc == 3) {
             free(cond);
-            return Evaluate(state, argv[2]);
+            return EvaluateValue(state, argv[2]);
         } else {
-            return cond;
+            return StringValue(cond);
         }
     }
 }
 
-char* AbortFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* AbortFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* msg = NULL;
     if (argc > 0) {
         msg = Evaluate(state, argv[0]);
@@ -109,7 +136,7 @@ char* AbortFn(const char* name, State* state, int argc, Expr* argv[]) {
     return NULL;
 }
 
-char* AssertFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* AssertFn(const char* name, State* state, int argc, Expr* argv[]) {
     int i;
     for (i = 0; i < argc; ++i) {
         char* v = Evaluate(state, argv[i]);
@@ -131,20 +158,20 @@ char* AssertFn(const char* name, State* state, int argc, Expr* argv[]) {
             return NULL;
         }
     }
-    return strdup("");
+    return StringValue(strdup(""));
 }
 
-char* SleepFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* SleepFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* val = Evaluate(state, argv[0]);
     if (val == NULL) {
         return NULL;
     }
     int v = strtol(val, NULL, 10);
     sleep(v);
-    return val;
+    return StringValue(val);
 }
 
-char* StdoutFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* StdoutFn(const char* name, State* state, int argc, Expr* argv[]) {
     int i;
     for (i = 0; i < argc; ++i) {
         char* v = Evaluate(state, argv[i]);
@@ -154,48 +181,44 @@ char* StdoutFn(const char* name, State* state, int argc, Expr* argv[]) {
         fputs(v, stdout);
         free(v);
     }
-    return strdup("");
+    return StringValue(strdup(""));
 }
 
-char* LogicalAndFn(const char* name, State* state,
+Value* LogicalAndFn(const char* name, State* state,
                    int argc, Expr* argv[]) {
     char* left = Evaluate(state, argv[0]);
     if (left == NULL) return NULL;
     if (BooleanString(left) == true) {
         free(left);
-        return Evaluate(state, argv[1]);
+        return EvaluateValue(state, argv[1]);
     } else {
-        return left;
+        return StringValue(left);
     }
 }
 
-char* LogicalOrFn(const char* name, State* state,
-                  int argc, Expr* argv[]) {
+Value* LogicalOrFn(const char* name, State* state,
+                   int argc, Expr* argv[]) {
     char* left = Evaluate(state, argv[0]);
     if (left == NULL) return NULL;
     if (BooleanString(left) == false) {
         free(left);
-        return Evaluate(state, argv[1]);
+        return EvaluateValue(state, argv[1]);
     } else {
-        return left;
+        return StringValue(left);
     }
 }
 
-char* LogicalNotFn(const char* name, State* state,
-                   int argc, Expr* argv[]) {
+Value* LogicalNotFn(const char* name, State* state,
+                    int argc, Expr* argv[]) {
     char* val = Evaluate(state, argv[0]);
     if (val == NULL) return NULL;
     bool bv = BooleanString(val);
     free(val);
-    if (bv) {
-        return strdup("");
-    } else {
-        return strdup("t");
-    }
+    return StringValue(strdup(bv ? "" : "t"));
 }
 
-char* SubstringFn(const char* name, State* state,
-                  int argc, Expr* argv[]) {
+Value* SubstringFn(const char* name, State* state,
+                   int argc, Expr* argv[]) {
     char* needle = Evaluate(state, argv[0]);
     if (needle == NULL) return NULL;
     char* haystack = Evaluate(state, argv[1]);
@@ -207,10 +230,10 @@ char* SubstringFn(const char* name, State* state,
     char* result = strdup(strstr(haystack, needle) ? "t" : "");
     free(needle);
     free(haystack);
-    return result;
+    return StringValue(result);
 }
 
-char* EqualityFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* EqualityFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* left = Evaluate(state, argv[0]);
     if (left == NULL) return NULL;
     char* right = Evaluate(state, argv[1]);
@@ -222,10 +245,10 @@ char* EqualityFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = strdup(strcmp(left, right) == 0 ? "t" : "");
     free(left);
     free(right);
-    return result;
+    return StringValue(result);
 }
 
-char* InequalityFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* InequalityFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* left = Evaluate(state, argv[0]);
     if (left == NULL) return NULL;
     char* right = Evaluate(state, argv[1]);
@@ -237,17 +260,17 @@ char* InequalityFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = strdup(strcmp(left, right) != 0 ? "t" : "");
     free(left);
     free(right);
-    return result;
+    return StringValue(result);
 }
 
-char* SequenceFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* left = Evaluate(state, argv[0]);
+Value* SequenceFn(const char* name, State* state, int argc, Expr* argv[]) {
+    Value* left = EvaluateValue(state, argv[0]);
     if (left == NULL) return NULL;
-    free(left);
-    return Evaluate(state, argv[1]);
+    FreeValue(left);
+    return EvaluateValue(state, argv[1]);
 }
 
-char* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 2) {
         free(state->errmsg);
         state->errmsg = strdup("less_than_int expects 2 arguments");
@@ -278,10 +301,11 @@ char* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
   done:
     free(left);
     free(right);
-    return strdup(result ? "t" : "");
+    return StringValue(strdup(result ? "t" : ""));
 }
 
-char* GreaterThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* GreaterThanIntFn(const char* name, State* state,
+                        int argc, Expr* argv[]) {
     if (argc != 2) {
         free(state->errmsg);
         state->errmsg = strdup("greater_than_int expects 2 arguments");
@@ -295,8 +319,8 @@ char* GreaterThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
     return LessThanIntFn(name, state, 2, temp);
 }
 
-char* Literal(const char* name, State* state, int argc, Expr* argv[]) {
-    return strdup(name);
+Value* Literal(const char* name, State* state, int argc, Expr* argv[]) {
+    return StringValue(strdup(name));
 }
 
 Expr* Build(Function fn, YYLTYPE loc, int count, ...) {
@@ -400,6 +424,32 @@ int ReadArgs(State* state, Expr* argv[], int count, ...) {
     return 0;
 }
 
+// Evaluate the expressions in argv, giving 'count' Value* (the ... is
+// zero or more Value** to put them in).  If any expression evaluates
+// to NULL, free the rest and return -1.  Return 0 on success.
+int ReadValueArgs(State* state, Expr* argv[], int count, ...) {
+    Value** args = malloc(count * sizeof(Value*));
+    va_list v;
+    va_start(v, count);
+    int i;
+    for (i = 0; i < count; ++i) {
+        args[i] = EvaluateValue(state, argv[i]);
+        if (args[i] == NULL) {
+            va_end(v);
+            int j;
+            for (j = 0; j < i; ++j) {
+                FreeValue(args[j]);
+            }
+            free(args);
+            return -1;
+        }
+        *(va_arg(v, Value**)) = args[i];
+    }
+    va_end(v);
+    free(args);
+    return 0;
+}
+
 // Evaluate the expressions in argv, returning an array of char*
 // results.  If any evaluate to NULL, free the rest and return NULL.
 // The caller is responsible for freeing the returned array and the
@@ -421,9 +471,30 @@ char** ReadVarArgs(State* state, int argc, Expr* argv[]) {
     return args;
 }
 
+// Evaluate the expressions in argv, returning an array of Value*
+// results.  If any evaluate to NULL, free the rest and return NULL.
+// The caller is responsible for freeing the returned array and the
+// Values it contains.
+Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]) {
+    Value** args = (Value**)malloc(argc * sizeof(Value*));
+    int i = 0;
+    for (i = 0; i < argc; ++i) {
+        args[i] = EvaluateValue(state, argv[i]);
+        if (args[i] == NULL) {
+            int j;
+            for (j = 0; j < i; ++j) {
+                FreeValue(args[j]);
+            }
+            free(args);
+            return NULL;
+        }
+    }
+    return args;
+}
+
 // Use printf-style arguments to compose an error message to put into
 // *state.  Returns NULL.
-char* ErrorAbort(State* state, char* format, ...) {
+Value* ErrorAbort(State* state, char* format, ...) {
     char* buffer = malloc(4096);
     va_list v;
     va_start(v, format);

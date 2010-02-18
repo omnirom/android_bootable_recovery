@@ -29,17 +29,18 @@
 #include "cutils/misc.h"
 #include "cutils/properties.h"
 #include "edify/expr.h"
+#include "mincrypt/sha.h"
 #include "minzip/DirUtil.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
 #include "updater.h"
-
+#include "applypatch/applypatch.h"
 
 // mount(type, location, mount_point)
 //
 //   what:  type="MTD"   location="<partition>"            to mount a yaffs2 filesystem
 //          type="vfat"  location="/dev/block/<whatever>"  to mount a device
-char* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 3) {
         return ErrorAbort(state, "%s() expects 3 args, got %d", name, argc);
@@ -98,12 +99,12 @@ done:
     free(type);
     free(location);
     if (result != mount_point) free(mount_point);
-    return result;
+    return StringValue(result);
 }
 
 
 // is_mounted(mount_point)
-char* IsMountedFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* IsMountedFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 1) {
         return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
@@ -127,11 +128,11 @@ char* IsMountedFn(const char* name, State* state, int argc, Expr* argv[]) {
 
 done:
     if (result != mount_point) free(mount_point);
-    return result;
+    return StringValue(result);
 }
 
 
-char* UnmountFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* UnmountFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 1) {
         return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
@@ -157,14 +158,14 @@ char* UnmountFn(const char* name, State* state, int argc, Expr* argv[]) {
 
 done:
     if (result != mount_point) free(mount_point);
-    return result;
+    return StringValue(result);
 }
 
 
 // format(type, location)
 //
 //    type="MTD"  location=partition
-char* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 2) {
         return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
@@ -218,11 +219,11 @@ char* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
 done:
     free(type);
     if (result != location) free(location);
-    return result;
+    return StringValue(result);
 }
 
 
-char* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
     char** paths = malloc(argc * sizeof(char*));
     int i;
     for (i = 0; i < argc; ++i) {
@@ -249,11 +250,11 @@ char* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     char buffer[10];
     sprintf(buffer, "%d", success);
-    return strdup(buffer);
+    return StringValue(strdup(buffer));
 }
 
 
-char* ShowProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* ShowProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 2) {
         return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
     }
@@ -270,10 +271,10 @@ char* ShowProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
     fprintf(ui->cmd_pipe, "progress %f %d\n", frac, sec);
 
     free(sec_str);
-    return frac_str;
+    return StringValue(frac_str);
 }
 
-char* SetProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* SetProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 1) {
         return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
     }
@@ -287,11 +288,11 @@ char* SetProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
     UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
     fprintf(ui->cmd_pipe, "set_progress %f\n", frac);
 
-    return frac_str;
+    return StringValue(frac_str);
 }
 
 // package_extract_dir(package_path, destination_path)
-char* PackageExtractDirFn(const char* name, State* state,
+Value* PackageExtractDirFn(const char* name, State* state,
                           int argc, Expr* argv[]) {
     if (argc != 2) {
         return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
@@ -310,7 +311,7 @@ char* PackageExtractDirFn(const char* name, State* state,
                                       NULL, NULL);
     free(zip_path);
     free(dest_path);
-    return strdup(success ? "t" : "");
+    return StringValue(strdup(success ? "t" : ""));
 }
 
 
@@ -318,9 +319,8 @@ char* PackageExtractDirFn(const char* name, State* state,
 //   or
 // package_extract_file(package_path)
 //   to return the entire contents of the file as the result of this
-//   function (the char* returned points to a long giving the length
-//   followed by that many bytes of data).
-char* PackageExtractFileFn(const char* name, State* state,
+//   function (the char* returned is actually a FileContents*).
+Value* PackageExtractFileFn(const char* name, State* state,
                            int argc, Expr* argv[]) {
     if (argc != 1 && argc != 2) {
         return ErrorAbort(state, "%s() expects 1 or 2 args, got %d",
@@ -353,13 +353,16 @@ char* PackageExtractFileFn(const char* name, State* state,
       done2:
         free(zip_path);
         free(dest_path);
-        return strdup(success ? "t" : "");
+        return StringValue(strdup(success ? "t" : ""));
     } else {
         // The one-argument version returns the contents of the file
         // as the result.
 
         char* zip_path;
-        char* buffer = NULL;
+        Value* v = malloc(sizeof(Value));
+        v->type = VAL_BLOB;
+        v->size = -1;
+        v->data = NULL;
 
         if (ReadArgs(state, argv, 1, &zip_path) < 0) return NULL;
 
@@ -370,33 +373,32 @@ char* PackageExtractFileFn(const char* name, State* state,
             goto done1;
         }
 
-        long size = mzGetZipEntryUncompLen(entry);
-        buffer = malloc(size + sizeof(long));
-        if (buffer == NULL) {
+        v->size = mzGetZipEntryUncompLen(entry);
+        v->data = malloc(v->size);
+        if (v->data == NULL) {
             fprintf(stderr, "%s: failed to allocate %ld bytes for %s\n",
-                    name, size+sizeof(long), zip_path);
+                    name, (long)v->size, zip_path);
             goto done1;
         }
 
-        *(long *)buffer = size;
-        success = mzExtractZipEntryToBuffer(
-            za, entry, (unsigned char *)(buffer + sizeof(long)));
+        success = mzExtractZipEntryToBuffer(za, entry,
+                                            (unsigned char *)v->data);
 
       done1:
         free(zip_path);
         if (!success) {
-            free(buffer);
-            buffer = malloc(sizeof(long));
-            *(long *)buffer = -1L;
+            free(v->data);
+            v->data = NULL;
+            v->size = -1;
         }
-        return buffer;
+        return v;
     }
 }
 
 
 // symlink target src1 src2 ...
 //    unlinks any previously existing src1, src2, etc before creating symlinks.
-char* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc == 0) {
         return ErrorAbort(state, "%s() expects 1+ args, got %d", name, argc);
     }
@@ -425,11 +427,11 @@ char* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
         free(srcs[i]);
     }
     free(srcs);
-    return strdup("");
+    return StringValue(strdup(""));
 }
 
 
-char* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     bool recursive = (strcmp(name, "set_perm_recursive") == 0);
 
@@ -499,11 +501,11 @@ done:
     }
     free(args);
 
-    return result;
+    return StringValue(result);
 }
 
 
-char* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 1) {
         return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
     }
@@ -515,7 +517,7 @@ char* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     property_get(key, value, "");
     free(key);
 
-    return strdup(value);
+    return StringValue(strdup(value));
 }
 
 
@@ -524,7 +526,7 @@ char* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 //   interprets 'file' as a getprop-style file (key=value pairs, one
 //   per line, # comment lines and blank lines okay), and returns the value
 //   for 'key' (or "" if it isn't defined).
-char* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     char* buffer = NULL;
     char* filename;
@@ -614,7 +616,7 @@ char* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     free(filename);
     free(key);
     free(buffer);
-    return result;
+    return StringValue(result);
 }
 
 
@@ -627,7 +629,7 @@ static bool write_raw_image_cb(const unsigned char* data,
 }
 
 // write_raw_image(file, partition)
-char* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
 
     char* partition;
@@ -700,15 +702,13 @@ char* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
 done:
     if (result != partition) free(partition);
     free(filename);
-    return result;
+    return StringValue(result);
 }
-
-extern int applypatch(int argc, char** argv);
 
 // apply_patch(srcfile, tgtfile, tgtsha1, tgtsize, sha1:patch, ...)
 // apply_patch_check(file, sha1, ...)
 // apply_patch_space(bytes)
-char* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
     printf("in applypatchfn (%s)\n", name);
 
     char* prepend = NULL;
@@ -747,13 +747,13 @@ char* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
     free(args);
 
     switch (result) {
-        case 0:   return strdup("t");
-        case 1:   return strdup("");
+        case 0:   return StringValue(strdup("t"));
+        case 1:   return StringValue(strdup(""));
         default:  return ErrorAbort(state, "applypatch couldn't parse args");
     }
 }
 
-char* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
     char** args = ReadVarArgs(state, argc, argv);
     if (args == NULL) {
         return NULL;
@@ -782,10 +782,10 @@ char* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
     fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe, "ui_print\n");
 
-    return buffer;
+    return StringValue(buffer);
 }
 
-char* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc < 1) {
         return ErrorAbort(state, "%s() expects at least 1 arg", name);
     }
@@ -828,9 +828,138 @@ char* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
     char buffer[20];
     sprintf(buffer, "%d", status);
 
-    return strdup(buffer);
+    return StringValue(strdup(buffer));
 }
 
+// Take a string 'str' of 40 hex digits and parse it into the 20
+// byte array 'digest'.  'str' may contain only the digest or be of
+// the form "<digest>:<anything>".  Return 0 on success, -1 on any
+// error.
+static int ParseSha1(const char* str, uint8_t* digest) {
+  int i;
+  const char* ps = str;
+  uint8_t* pd = digest;
+  for (i = 0; i < SHA_DIGEST_SIZE * 2; ++i, ++ps) {
+    int digit;
+    if (*ps >= '0' && *ps <= '9') {
+      digit = *ps - '0';
+    } else if (*ps >= 'a' && *ps <= 'f') {
+      digit = *ps - 'a' + 10;
+    } else if (*ps >= 'A' && *ps <= 'F') {
+      digit = *ps - 'A' + 10;
+    } else {
+      return -1;
+    }
+    if (i % 2 == 0) {
+      *pd = digit << 4;
+    } else {
+      *pd |= digit;
+      ++pd;
+    }
+  }
+  if (*ps != '\0') return -1;
+  return 0;
+}
+
+// Take a sha-1 digest and return it as a newly-allocated hex string.
+static char* PrintSha1(uint8_t* digest) {
+    char* buffer = malloc(SHA_DIGEST_SIZE*2 + 1);
+    int i;
+    const char* alphabet = "0123456789abcdef";
+    for (i = 0; i < SHA_DIGEST_SIZE; ++i) {
+        buffer[i*2] = alphabet[(digest[i] >> 4) & 0xf];
+        buffer[i*2+1] = alphabet[digest[i] & 0xf];
+    }
+    buffer[i*2] = '\0';
+    return buffer;
+}
+
+// sha1_check(data)
+//    to return the sha1 of the data (given in the format returned by
+//    read_file).
+//
+// sha1_check(data, sha1_hex, [sha1_hex, ...])
+//    returns the sha1 of the file if it matches any of the hex
+//    strings passed, or "" if it does not equal any of them.
+//
+Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc < 1) {
+        return ErrorAbort(state, "%s() expects at least 1 arg", name);
+    }
+
+    Value** args = ReadValueVarArgs(state, argc, argv);
+    if (args == NULL) {
+        return NULL;
+    }
+
+    if (args[0]->size < 0) {
+        fprintf(stderr, "%s(): no file contents received", name);
+        return StringValue(strdup(""));
+    }
+    uint8_t digest[SHA_DIGEST_SIZE];
+    SHA(args[0]->data, args[0]->size, digest);
+    FreeValue(args[0]);
+
+    if (argc == 1) {
+        return StringValue(PrintSha1(digest));
+    }
+
+    int i;
+    uint8_t* arg_digest = malloc(SHA_DIGEST_SIZE);
+    for (i = 1; i < argc; ++i) {
+        if (args[i]->type != VAL_STRING) {
+            fprintf(stderr, "%s(): arg %d is not a string; skipping",
+                    name, i);
+        } else if (ParseSha1(args[i]->data, arg_digest) != 0) {
+            // Warn about bad args and skip them.
+            fprintf(stderr, "%s(): error parsing \"%s\" as sha-1; skipping",
+                    name, args[i]->data);
+        } else if (memcmp(digest, arg_digest, SHA_DIGEST_SIZE) == 0) {
+            break;
+        }
+        FreeValue(args[i]);
+    }
+    if (i >= argc) {
+        // Didn't match any of the hex strings; return false.
+        return StringValue(strdup(""));
+    }
+    // Found a match; free all the remaining arguments and return the
+    // matched one.
+    int j;
+    for (j = i+1; j < argc; ++j) {
+        FreeValue(args[j]);
+    }
+    return args[i];
+}
+
+// Read a local file and return its contents (the char* returned
+// is actually a FileContents*).
+Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 1) {
+        return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
+    }
+    char* filename;
+    if (ReadArgs(state, argv, 1, &filename) < 0) return NULL;
+
+    Value* v = malloc(sizeof(Value));
+    v->type = VAL_BLOB;
+
+    FileContents fc;
+    if (LoadFileContents(filename, &fc) != 0) {
+        ErrorAbort(state, "%s() loading \"%s\" failed: %s",
+                   name, filename, strerror(errno));
+        free(filename);
+        free(v);
+        free(fc.data);
+        return NULL;
+    }
+
+    v->size = fc.size;
+    v->data = (char*)fc.data;
+
+    free(filename);
+    return v;
+}
 
 void RegisterInstallFunctions() {
     RegisterFunction("mount", MountFn);
@@ -854,6 +983,9 @@ void RegisterInstallFunctions() {
     RegisterFunction("apply_patch", ApplyPatchFn);
     RegisterFunction("apply_patch_check", ApplyPatchFn);
     RegisterFunction("apply_patch_space", ApplyPatchFn);
+
+    RegisterFunction("read_file", ReadFileFn);
+    RegisterFunction("sha1_check", Sha1CheckFn);
 
     RegisterFunction("ui_print", UIPrintFn);
 

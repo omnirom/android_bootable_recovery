@@ -39,8 +39,17 @@ typedef struct {
     char* errmsg;
 } State;
 
-typedef char* (*Function)(const char* name, State* state,
-                          int argc, Expr* argv[]);
+#define VAL_STRING  1  // data will be NULL-terminated; size doesn't count null
+#define VAL_BLOB    2
+
+typedef struct {
+    int type;
+    ssize_t size;
+    char* data;
+} Value;
+
+typedef Value* (*Function)(const char* name, State* state,
+                           int argc, Expr* argv[]);
 
 struct Expr {
     Function fn;
@@ -50,31 +59,41 @@ struct Expr {
     int start, end;
 };
 
+// Take one of the Expr*s passed to the function as an argument,
+// evaluate it, return the resulting Value.  The caller takes
+// ownership of the returned Value.
+Value* EvaluateValue(State* state, Expr* expr);
+
+// Take one of the Expr*s passed to the function as an argument,
+// evaluate it, assert that it is a string, and return the resulting
+// char*.  The caller takes ownership of the returned char*.  This is
+// a convenience function for older functions that want to deal only
+// with strings.
 char* Evaluate(State* state, Expr* expr);
 
 // Glue to make an Expr out of a literal.
-char* Literal(const char* name, State* state, int argc, Expr* argv[]);
+Value* Literal(const char* name, State* state, int argc, Expr* argv[]);
 
 // Functions corresponding to various syntactic sugar operators.
 // ("concat" is also available as a builtin function, to concatenate
 // more than two strings.)
-char* ConcatFn(const char* name, State* state, int argc, Expr* argv[]);
-char* LogicalAndFn(const char* name, State* state, int argc, Expr* argv[]);
-char* LogicalOrFn(const char* name, State* state, int argc, Expr* argv[]);
-char* LogicalNotFn(const char* name, State* state, int argc, Expr* argv[]);
-char* SubstringFn(const char* name, State* state, int argc, Expr* argv[]);
-char* EqualityFn(const char* name, State* state, int argc, Expr* argv[]);
-char* InequalityFn(const char* name, State* state, int argc, Expr* argv[]);
-char* SequenceFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* ConcatFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* LogicalAndFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* LogicalOrFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* LogicalNotFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* SubstringFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* EqualityFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* InequalityFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* SequenceFn(const char* name, State* state, int argc, Expr* argv[]);
 
 // Convenience function for building expressions with a fixed number
 // of arguments.
 Expr* Build(Function fn, YYLTYPE loc, int count, ...);
 
 // Global builtins, registered by RegisterBuiltins().
-char* IfElseFn(const char* name, State* state, int argc, Expr* argv[]);
-char* AssertFn(const char* name, State* state, int argc, Expr* argv[]);
-char* AbortFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* IfElseFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* AssertFn(const char* name, State* state, int argc, Expr* argv[]);
+Value* AbortFn(const char* name, State* state, int argc, Expr* argv[]);
 
 
 // For setting and getting the global error string (when returning
@@ -112,15 +131,31 @@ Function FindFunction(const char* name);
 // to NULL, free the rest and return -1.  Return 0 on success.
 int ReadArgs(State* state, Expr* argv[], int count, ...);
 
+// Evaluate the expressions in argv, giving 'count' Value* (the ... is
+// zero or more Value** to put them in).  If any expression evaluates
+// to NULL, free the rest and return -1.  Return 0 on success.
+int ReadValueArgs(State* state, Expr* argv[], int count, ...);
+
 // Evaluate the expressions in argv, returning an array of char*
 // results.  If any evaluate to NULL, free the rest and return NULL.
 // The caller is responsible for freeing the returned array and the
 // strings it contains.
 char** ReadVarArgs(State* state, int argc, Expr* argv[]);
 
+// Evaluate the expressions in argv, returning an array of Value*
+// results.  If any evaluate to NULL, free the rest and return NULL.
+// The caller is responsible for freeing the returned array and the
+// Values it contains.
+Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]);
+
 // Use printf-style arguments to compose an error message to put into
 // *state.  Returns NULL.
-char* ErrorAbort(State* state, char* format, ...);
+Value* ErrorAbort(State* state, char* format, ...);
 
+// Wrap a string into a Value, taking ownership of the string.
+Value* StringValue(char* str);
+
+// Free a Value object.
+void FreeValue(Value* v);
 
 #endif  // _EXPRESSION_H
