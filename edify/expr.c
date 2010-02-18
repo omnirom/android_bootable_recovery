@@ -67,6 +67,7 @@ char* ConcatFn(const char* name, State* state, int argc, Expr* argv[]) {
     for (i = 0; i < argc; ++i) {
         free(strings[i]);
     }
+    free(strings);
     return result;
 }
 
@@ -389,11 +390,13 @@ int ReadArgs(State* state, Expr* argv[], int count, ...) {
             for (j = 0; j < i; ++j) {
                 free(args[j]);
             }
+            free(args);
             return -1;
         }
         *(va_arg(v, char**)) = args[i];
     }
     va_end(v);
+    free(args);
     return 0;
 }
 
