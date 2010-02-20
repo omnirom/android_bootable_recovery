@@ -17,6 +17,8 @@
 #ifndef _EXPRESSION_H
 #define _EXPRESSION_H
 
+#include <unistd.h>
+
 #include "yydefs.h"
 
 #define MAX_STRING_LEN 1024

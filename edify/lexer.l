@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include <string.h>
+
 #include "expr.h"
 #include "yydefs.h"
 #include "parser.h"
