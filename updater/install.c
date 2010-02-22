@@ -705,52 +705,124 @@ done:
     return StringValue(result);
 }
 
-// apply_patch(srcfile, tgtfile, tgtsha1, tgtsize, sha1:patch, ...)
-// apply_patch_check(file, sha1, ...)
 // apply_patch_space(bytes)
+Value* ApplyPatchSpaceFn(const char* name, State* state,
+                         int argc, Expr* argv[]) {
+    char* bytes_str;
+    if (ReadArgs(state, argv, 1, &bytes_str) < 0) {
+        return NULL;
+    }
+
+    char* endptr;
+    size_t bytes = strtol(bytes_str, &endptr, 10);
+    if (bytes == 0 && endptr == bytes_str) {
+        ErrorAbort(state, "%s(): can't parse \"%s\" as byte count\n\n",
+                   name, bytes_str);
+        free(bytes_str);
+        return NULL;
+    }
+
+    return StringValue(strdup(CacheSizeCheck(bytes) ? "" : "t"));
+}
+
+
+// apply_patch(srcfile, tgtfile, tgtsha1, tgtsize, sha1_1, patch_1, ...)
 Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
-    printf("in applypatchfn (%s)\n", name);
-
-    char* prepend = NULL;
-    if (strstr(name, "check") != NULL) {
-        prepend = "-c";
-    } else if (strstr(name, "space") != NULL) {
-        prepend = "-s";
+    if (argc < 6 || (argc % 2) == 1) {
+        return ErrorAbort(state, "%s(): expected at least 6 args and an "
+                                 "even number, got %d",
+                          name, argc);
     }
 
-    char** args = ReadVarArgs(state, argc, argv);
-    if (args == NULL) return NULL;
-
-    // insert the "program name" argv[0] and a copy of the "prepend"
-    // string (if any) at the start of the args.
-
-    int extra = 1 + (prepend != NULL ? 1 : 0);
-    char** temp = malloc((argc+extra) * sizeof(char*));
-    memcpy(temp+extra, args, argc * sizeof(char*));
-    temp[0] = strdup("updater");
-    if (prepend) {
-        temp[1] = strdup(prepend);
+    char* source_filename;
+    char* target_filename;
+    char* target_sha1;
+    char* target_size_str;
+    if (ReadArgs(state, argv, 4, &source_filename, &target_filename,
+                 &target_sha1, &target_size_str) < 0) {
+        return NULL;
     }
-    free(args);
-    args = temp;
-    argc += extra;
 
-    printf("calling applypatch\n");
-    fflush(stdout);
-    int result = applypatch(argc, args);
-    printf("applypatch returned %d\n", result);
+    char* endptr;
+    size_t target_size = strtol(target_size_str, &endptr, 10);
+    if (target_size == 0 && endptr == target_size_str) {
+        ErrorAbort(state, "%s(): can't parse \"%s\" as byte count",
+                   name, target_size_str);
+        free(source_filename);
+        free(target_filename);
+        free(target_sha1);
+        free(target_size_str);
+        return NULL;
+    }
+
+    int patchcount = (argc-4) / 2;
+    Value** patches = ReadValueVarArgs(state, argc-4, argv+4);
 
     int i;
-    for (i = 0; i < argc; ++i) {
-        free(args[i]);
+    for (i = 0; i < patchcount; ++i) {
+        if (patches[i*2]->type != VAL_STRING) {
+            ErrorAbort(state, "%s(): sha-1 #%d is not string", name, i);
+            break;
+        }
+        if (patches[i*2+1]->type != VAL_BLOB) {
+            ErrorAbort(state, "%s(): patch #%d is not blob", name, i);
+            break;
+        }
     }
-    free(args);
+    if (i != patchcount) {
+        for (i = 0; i < patchcount*2; ++i) {
+            FreeValue(patches[i]);
+        }
+        free(patches);
+        return NULL;
+    }
 
-    switch (result) {
-        case 0:   return StringValue(strdup("t"));
-        case 1:   return StringValue(strdup(""));
-        default:  return ErrorAbort(state, "applypatch couldn't parse args");
+    char** patch_sha_str = malloc(patchcount * sizeof(char*));
+    for (i = 0; i < patchcount; ++i) {
+        patch_sha_str[i] = patches[i*2]->data;
+        patches[i*2]->data = NULL;
+        FreeValue(patches[i*2]);
+        patches[i] = patches[i*2+1];
     }
+
+    int result = applypatch(source_filename, target_filename,
+                            target_sha1, target_size,
+                            patchcount, patch_sha_str, patches);
+
+    for (i = 0; i < patchcount; ++i) {
+        FreeValue(patches[i]);
+    }
+    free(patch_sha_str);
+    free(patches);
+
+    return StringValue(strdup(result == 0 ? "t" : ""));
+}
+
+// apply_patch_check(file, [sha1_1, ...])
+Value* ApplyPatchCheckFn(const char* name, State* state,
+                         int argc, Expr* argv[]) {
+    if (argc < 1) {
+        return ErrorAbort(state, "%s(): expected at least 1 arg, got %d",
+                          name, argc);
+    }
+
+    char* filename;
+    if (ReadArgs(state, argv, 1, &filename) < 0) {
+        return NULL;
+    }
+
+    int patchcount = argc-1;
+    char** sha1s = ReadVarArgs(state, argc-1, argv+1);
+
+    int result = applypatch_check(filename, patchcount, sha1s);
+
+    int i;
+    for (i = 0; i < patchcount; ++i) {
+        free(sha1s[i]);
+    }
+    free(sha1s);
+
+    return StringValue(strdup(result == 0 ? "t" : ""));
 }
 
 Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -829,36 +901,6 @@ Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
     sprintf(buffer, "%d", status);
 
     return StringValue(strdup(buffer));
-}
-
-// Take a string 'str' of 40 hex digits and parse it into the 20
-// byte array 'digest'.  'str' may contain only the digest or be of
-// the form "<digest>:<anything>".  Return 0 on success, -1 on any
-// error.
-static int ParseSha1(const char* str, uint8_t* digest) {
-  int i;
-  const char* ps = str;
-  uint8_t* pd = digest;
-  for (i = 0; i < SHA_DIGEST_SIZE * 2; ++i, ++ps) {
-    int digit;
-    if (*ps >= '0' && *ps <= '9') {
-      digit = *ps - '0';
-    } else if (*ps >= 'a' && *ps <= 'f') {
-      digit = *ps - 'a' + 10;
-    } else if (*ps >= 'A' && *ps <= 'F') {
-      digit = *ps - 'A' + 10;
-    } else {
-      return -1;
-    }
-    if (i % 2 == 0) {
-      *pd = digit << 4;
-    } else {
-      *pd |= digit;
-      ++pd;
-    }
-  }
-  if (*ps != '\0') return -1;
-  return 0;
 }
 
 // Take a sha-1 digest and return it as a newly-allocated hex string.
@@ -981,8 +1023,8 @@ void RegisterInstallFunctions() {
     RegisterFunction("write_raw_image", WriteRawImageFn);
 
     RegisterFunction("apply_patch", ApplyPatchFn);
-    RegisterFunction("apply_patch_check", ApplyPatchFn);
-    RegisterFunction("apply_patch_space", ApplyPatchFn);
+    RegisterFunction("apply_patch_check", ApplyPatchCheckFn);
+    RegisterFunction("apply_patch_space", ApplyPatchSpaceFn);
 
     RegisterFunction("read_file", ReadFileFn);
     RegisterFunction("sha1_check", Sha1CheckFn);

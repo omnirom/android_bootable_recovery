@@ -33,4 +33,6 @@ typedef struct {
         } \
     } while (0)
 
+int yylex();
+
 #endif

@@ -42,11 +42,12 @@ int expect(const char* expr_str, const char* expected, int* errors) {
 
     State state;
     state.cookie = NULL;
-    state.script = expr_str;
+    state.script = strdup(expr_str);
     state.errmsg = NULL;
 
     result = Evaluate(&state, e);
     free(state.errmsg);
+    free(state.script);
     if (result == NULL && expected != NULL) {
         fprintf(stderr, "error evaluating \"%s\"\n", expr_str);
         ++*errors;

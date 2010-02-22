@@ -11,7 +11,7 @@
 # the tests.
 
 EMULATOR_PORT=5580
-DATA_DIR=$ANDROID_BUILD_TOP/build/tools/applypatch/testdata
+DATA_DIR=$ANDROID_BUILD_TOP/bootable/recovery/applypatch/testdata
 
 # This must be the filename that applypatch uses for its copies.
 CACHE_TEMP_SOURCE=/cache/saved.file
@@ -81,6 +81,7 @@ cleanup() {
   testname "removing test files"
   run_command rm $WORK_DIR/bloat.dat
   run_command rm $WORK_DIR/old.file
+  run_command rm $WORK_DIR/foo
   run_command rm $WORK_DIR/patch.bsdiff
   run_command rm $WORK_DIR/applypatch
   run_command rm $CACHE_TEMP_SOURCE
@@ -88,10 +89,12 @@ cleanup() {
 
   [ "$pid_emulator" == "" ] || kill $pid_emulator
 
-  rm -rf $tmpdir
+  if [ $# == 0 ]; then
+    rm -rf $tmpdir
+  fi
 }
 
-cleanup
+cleanup leave_tmp
 
 $ADB push $ANDROID_PRODUCT_OUT/system/bin/applypatch $WORK_DIR/applypatch
 
@@ -153,6 +156,8 @@ run_command $WORK_DIR/applypatch -c $WORK_DIR/old.file $BAD2_SHA1 $BAD1_SHA1 && 
 
 $ADB push $DATA_DIR/old.file $WORK_DIR
 $ADB push $DATA_DIR/patch.bsdiff $WORK_DIR
+echo hello > $tmpdir/foo
+$ADB push $tmpdir/foo $WORK_DIR
 
 # Check that the partition has enough space to apply the patch without
 # copying.  If it doesn't, we'll be testing the low-space condition
