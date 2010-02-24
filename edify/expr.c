@@ -50,6 +50,7 @@ Value* EvaluateValue(State* state, Expr* expr) {
 }
 
 Value* StringValue(char* str) {
+    if (str == NULL) return NULL;
     Value* v = malloc(sizeof(Value));
     v->type = VAL_STRING;
     v->size = strlen(str);
