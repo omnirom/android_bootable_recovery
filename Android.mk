@@ -13,7 +13,7 @@ LOCAL_SRC_FILES := \
     roots.c \
     ui.c \
     verifier.c \
-    efs_migration.c
+    encryptedfs_provisioning.c
 
 LOCAL_SRC_FILES += test_roots.c
 
