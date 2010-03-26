@@ -36,15 +36,12 @@
 #include "minzip/DirUtil.h"
 #include "roots.h"
 #include "recovery_ui.h"
-#include "efs_migration.h"
 
 static const struct option OPTIONS[] = {
   { "send_intent", required_argument, NULL, 's' },
   { "update_package", required_argument, NULL, 'u' },
   { "wipe_data", no_argument, NULL, 'w' },
   { "wipe_cache", no_argument, NULL, 'c' },
-  // TODO{oam}: implement improved command line passing key, egnor to review.
-  { "set_encrypted_filesystem", required_argument, NULL, 'e' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -471,10 +468,7 @@ main(int argc, char **argv) {
     int previous_runs = 0;
     const char *send_intent = NULL;
     const char *update_package = NULL;
-    const char *efs_mode = NULL;
     int wipe_data = 0, wipe_cache = 0;
-    int toggle_efs = 0;
-    encrypted_fs_info efs_data;
 
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
@@ -484,7 +478,6 @@ main(int argc, char **argv) {
         case 'u': update_package = optarg; break;
         case 'w': wipe_data = wipe_cache = 1; break;
         case 'c': wipe_cache = 1; break;
-        case 'e': efs_mode = optarg; toggle_efs = 1; break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -504,42 +497,7 @@ main(int argc, char **argv) {
 
     int status = INSTALL_SUCCESS;
 
-    if (toggle_efs) {
-        if (strcmp(efs_mode,"on") == 0) {
-            efs_data.encrypted_fs_mode = MODE_ENCRYPTEDFS_ENABLED;
-            ui_print("Enabling Encrypted FS.\n");
-        } else if (strcmp(efs_mode,"off") == 0) {
-            efs_data.encrypted_fs_mode = MODE_ENCRYPTEDFS_DISABLED;
-            ui_print("Disabling Encrypted FS.\n");
-        } else {
-            ui_print("Error: invalid Encrypted FS setting.\n");
-            status = INSTALL_ERROR;
-        }
-
-        // Recovery strategy: if the data partition is damaged, disable encrypted file systems.
-        // This preventsthe device recycling endlessly in recovery mode.
-        // TODO{oam}: implement improved recovery strategy later. egnor to review.
-        if (read_encrypted_fs_info(&efs_data)) {
-            ui_print("Encrypted FS change aborted, resetting to disabled state.\n");
-            efs_data.encrypted_fs_mode = MODE_ENCRYPTEDFS_DISABLED;
-        }
-
-        if (status != INSTALL_ERROR) {
-            if (erase_root("DATA:")) {
-                ui_print("Data wipe failed.\n");
-                status = INSTALL_ERROR;
-            } else if (erase_root("CACHE:")) {
-                ui_print("Cache wipe failed.\n");
-                status = INSTALL_ERROR;
-            } else if (restore_encrypted_fs_info(&efs_data)) {
-                ui_print("Encrypted FS change aborted.\n");
-                status = INSTALL_ERROR;
-            } else {
-                ui_print("Successfully updated Encrypted FS.\n");
-                status = INSTALL_SUCCESS;
-            }
-        }
-    } else if (update_package != NULL) {
+    if (update_package != NULL) {
         status = install_package(update_package);
         if (status != INSTALL_SUCCESS) ui_print("Installation aborted.\n");
     } else if (wipe_data) {
