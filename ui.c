@@ -425,7 +425,7 @@ void ui_print(const char *fmt, ...)
     pthread_mutex_unlock(&gUpdateMutex);
 }
 
-void ui_start_menu(char** headers, char** items) {
+void ui_start_menu(char** headers, char** items, int initial_selection) {
     int i;
     pthread_mutex_lock(&gUpdateMutex);
     if (text_rows > 0 && text_cols > 0) {
@@ -442,7 +442,7 @@ void ui_start_menu(char** headers, char** items) {
         }
         menu_items = i - menu_top;
         show_menu = 1;
-        menu_sel = 0;
+        menu_sel = initial_selection;
         update_screen_locked();
     }
     pthread_mutex_unlock(&gUpdateMutex);
