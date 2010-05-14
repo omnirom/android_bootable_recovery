@@ -1,3 +1,5 @@
+on early-init
+    start ueventd
 
 on init
     export PATH /sbin
@@ -21,6 +23,8 @@ on boot
 
     class_start default
 
+service ueventd /sbin/ueventd
+    critical
 
 service recovery /sbin/recovery
 
