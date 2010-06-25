@@ -31,7 +31,7 @@ void ui_clear_key_queue();
 // Write a message to the on-screen log shown with Alt-L (also to stderr).
 // The screen is small, and users may need to report these messages to support,
 // so keep the output short and not too cryptic.
-void ui_print(const char *fmt, ...);
+void ui_print(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 // Display some header text followed by a menu of items, which appears
 // at the top of the screen (in place of any scrolling ui_print()

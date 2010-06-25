@@ -136,7 +136,7 @@ try_update_binary(const char *path, ZipArchive *zip) {
         } else if (strcmp(command, "ui_print") == 0) {
             char* str = strtok(NULL, "\n");
             if (str) {
-                ui_print(str);
+                ui_print("%s", str);
             } else {
                 ui_print("\n");
             }
