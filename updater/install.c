@@ -36,24 +36,35 @@
 #include "updater.h"
 #include "applypatch/applypatch.h"
 
-// mount(type, location, mount_point)
+#ifdef USE_EXT4
+#include "make_ext4fs.h"
+#endif
+
+// mount(fs_type, partition_type, location, mount_point)
 //
-//   what:  type="MTD"   location="<partition>"            to mount a yaffs2 filesystem
-//          type="vfat"  location="/dev/block/<whatever>"  to mount a device
+//    fs_type="yaffs2" partition_type="MTD"     location=partition
+//    fs_type="ext4"   partition_type="EMMC"    location=device
 Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
-    if (argc != 3) {
-        return ErrorAbort(state, "%s() expects 3 args, got %d", name, argc);
+    if (argc != 4) {
+        return ErrorAbort(state, "%s() expects 4 args, got %d", name, argc);
     }
-    char* type;
+    char* fs_type;
+    char* partition_type;
     char* location;
     char* mount_point;
-    if (ReadArgs(state, argv, 3, &type, &location, &mount_point) < 0) {
+    if (ReadArgs(state, argv, 4, &fs_type, &partition_type,
+                 &location, &mount_point) < 0) {
         return NULL;
     }
 
-    if (strlen(type) == 0) {
-        ErrorAbort(state, "type argument to %s() can't be empty", name);
+    if (strlen(fs_type) == 0) {
+        ErrorAbort(state, "fs_type argument to %s() can't be empty", name);
+        goto done;
+    }
+    if (strlen(partition_type) == 0) {
+        ErrorAbort(state, "partition_type argument to %s() can't be empty",
+                   name);
         goto done;
     }
     if (strlen(location) == 0) {
@@ -67,7 +78,7 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     mkdir(mount_point, 0755);
 
-    if (strcmp(type, "MTD") == 0) {
+    if (strcmp(partition_type, "MTD") == 0) {
         mtd_scan_partitions();
         const MtdPartition* mtd;
         mtd = mtd_find_partition_by_name(location);
@@ -77,7 +88,7 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
             result = strdup("");
             goto done;
         }
-        if (mtd_mount_partition(mtd, mount_point, "yaffs2", 0 /* rw */) != 0) {
+        if (mtd_mount_partition(mtd, mount_point, fs_type, 0 /* rw */) != 0) {
             fprintf(stderr, "mtd mount of %s failed: %s\n",
                     location, strerror(errno));
             result = strdup("");
@@ -85,7 +96,7 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
         }
         result = mount_point;
     } else {
-        if (mount(location, mount_point, type,
+        if (mount(location, mount_point, fs_type,
                   MS_NOATIME | MS_NODEV | MS_NODIRATIME, "") < 0) {
             fprintf(stderr, "%s: failed to mount %s at %s: %s\n",
                     name, location, mount_point, strerror(errno));
@@ -96,7 +107,8 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
 done:
-    free(type);
+    free(fs_type);
+    free(partition_type);
     free(location);
     if (result != mount_point) free(mount_point);
     return StringValue(result);
@@ -162,22 +174,29 @@ done:
 }
 
 
-// format(type, location)
+// format(fs_type, partition_type, location)
 //
-//    type="MTD"  location=partition
+//    fs_type="yaffs2" partition_type="MTD"     location=partition
+//    fs_type="ext4"   partition_type="EMMC"    location=device
 Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
-    if (argc != 2) {
-        return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
+    if (argc != 3) {
+        return ErrorAbort(state, "%s() expects 3 args, got %d", name, argc);
     }
-    char* type;
+    char* fs_type;
+    char* partition_type;
     char* location;
-    if (ReadArgs(state, argv, 2, &type, &location) < 0) {
+    if (ReadArgs(state, argv, 3, &fs_type, &partition_type, &location) < 0) {
         return NULL;
     }
 
-    if (strlen(type) == 0) {
-        ErrorAbort(state, "type argument to %s() can't be empty", name);
+    if (strlen(fs_type) == 0) {
+        ErrorAbort(state, "fs_type argument to %s() can't be empty", name);
+        goto done;
+    }
+    if (strlen(partition_type) == 0) {
+        ErrorAbort(state, "partition_type argument to %s() can't be empty",
+                   name);
         goto done;
     }
     if (strlen(location) == 0) {
@@ -185,7 +204,7 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
         goto done;
     }
 
-    if (strcmp(type, "MTD") == 0) {
+    if (strcmp(partition_type, "MTD") == 0) {
         mtd_scan_partitions();
         const MtdPartition* mtd = mtd_find_partition_by_name(location);
         if (mtd == NULL) {
@@ -212,12 +231,26 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
             goto done;
         }
         result = location;
+#ifdef USE_EXT4
+    } else if (strcmp(fs_type, "ext4") == 0) {
+        reset_ext4fs_info();
+        int status = make_ext4fs(location, NULL, NULL, 0, 0);
+        if (status != 0) {
+            fprintf(stderr, "%s: make_ext4fs failed (%d) on %s",
+                    name, status, location);
+            result = strdup("");
+            goto done;
+        }
+        result = location;
+#endif
     } else {
-        fprintf(stderr, "%s: unsupported type \"%s\"", name, type);
+        fprintf(stderr, "%s: unsupported fs_type \"%s\" partition_type \"%s\"",
+                name, fs_type, partition_type);
     }
 
 done:
-    free(type);
+    free(fs_type);
+    free(partition_type);
     if (result != location) free(location);
     return StringValue(result);
 }
