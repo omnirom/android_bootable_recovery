@@ -23,6 +23,11 @@
 
 #include "mtdutils/mtdutils.h"
 #include "mtdutils/mounts.h"
+
+#ifdef USE_EXT4
+#include "make_ext4fs.h"
+#endif
+
 #include "minzip/Zip.h"
 #include "roots.h"
 #include "common.h"
@@ -45,8 +50,6 @@ static const char g_package_file[] = "@\0g_package_file";
 
 static RootInfo g_roots[] = {
     { "BOOT:", g_mtd_device, NULL, "boot", NULL, g_raw },
-    { "CACHE:", g_mtd_device, NULL, "cache", "/cache", "yaffs2" },
-    { "DATA:", g_mtd_device, NULL, "userdata", "/data", "yaffs2" },
     { "MISC:", g_mtd_device, NULL, "misc", NULL, g_raw },
     { "PACKAGE:", NULL, NULL, NULL, NULL, g_package_file },
     { "RECOVERY:", g_mtd_device, NULL, "recovery", "/", g_raw },
@@ -54,6 +57,17 @@ static RootInfo g_roots[] = {
     { "SYSTEM:", g_mtd_device, NULL, "system", "/system", "yaffs2" },
     { "MBM:", g_mtd_device, NULL, "mbm", NULL, g_raw },
     { "TMP:", NULL, NULL, NULL, "/tmp", NULL },
+
+#ifdef USE_EXT4
+    { "CACHE:", "/dev/block/platform/sdhci-tegra.3/by-name/cache", NULL, NULL,
+      "/cache", "ext4" },
+    { "DATA:", "/dev/block/platform/sdhci-tegra.3/by-name/userdata", NULL, NULL,
+      "/data", "ext4" },
+#else
+    { "CACHE:", g_mtd_device, NULL, "cache", "/cache", "yaffs2" },
+    { "DATA:", g_mtd_device, NULL, "userdata", "/data", "yaffs2" },
+#endif
+
 };
 #define NUM_ROOTS (sizeof(g_roots) / sizeof(g_roots[0]))
 
@@ -249,7 +263,7 @@ ensure_root_path_mounted(const char *root_path)
 
     mkdir(info->mount_point, 0755);  // in case it doesn't already exist
     if (mount(info->device, info->mount_point, info->filesystem,
-            MS_NOATIME | MS_NODEV | MS_NODIRATIME, "")) {
+              MS_NOATIME | MS_NODEV | MS_NODIRATIME, "")) {
         if (info->device2 == NULL) {
             LOGE("Can't mount %s\n(%s)\n", info->device, strerror(errno));
             return -1;
@@ -365,7 +379,21 @@ format_root_device(const char *root)
             }
         }
     }
+
+#ifdef USE_EXT4
+    if (strcmp(info->filesystem, "ext4") == 0) {
+        reset_ext4fs_info();
+        int result = make_ext4fs(info->device, NULL, NULL, 0, 0);
+        if (result != 0) {
+            LOGW("make_ext4fs failed: %d\n", result);
+            return -1;
+        }
+        return 0;
+    }
+#endif
+
 //TODO: handle other device types (sdcard, etc.)
-    LOGW("format_root_device: can't handle non-mtd device \"%s\"\n", root);
+
+    LOGW("format_root_device: unknown device \"%s\"\n", root);
     return -1;
 }
