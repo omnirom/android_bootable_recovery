@@ -30,10 +30,10 @@
 #include "mtdutils/mtdutils.h"
 #include "edify/expr.h"
 
-int SaveFileContents(const char* filename, FileContents file);
-int LoadMTDContents(const char* filename, FileContents* file);
+static int SaveFileContents(const char* filename, FileContents file);
+static int LoadPartitionContents(const char* filename, FileContents* file);
 int ParseSha1(const char* str, uint8_t* digest);
-ssize_t FileSink(unsigned char* data, ssize_t len, void* token);
+static ssize_t FileSink(unsigned char* data, ssize_t len, void* token);
 
 static int mtd_partitions_scanned = 0;
 
@@ -42,10 +42,11 @@ static int mtd_partitions_scanned = 0;
 int LoadFileContents(const char* filename, FileContents* file) {
     file->data = NULL;
 
-    // A special 'filename' beginning with "MTD:" means to load the
-    // contents of an MTD partition.
-    if (strncmp(filename, "MTD:", 4) == 0) {
-        return LoadMTDContents(filename, file);
+    // A special 'filename' beginning with "MTD:" or "EMMC:" means to
+    // load the contents of a partition.
+    if (strncmp(filename, "MTD:", 4) == 0 ||
+        strncmp(filename, "EMMC:", 5) == 0) {
+        return LoadPartitionContents(filename, file);
     }
 
     if (stat(filename, &file->st) != 0) {
@@ -98,26 +99,35 @@ void FreeFileContents(FileContents* file) {
     free(file);
 }
 
-// Load the contents of an MTD partition into the provided
+// Load the contents of an MTD or EMMC partition into the provided
 // FileContents.  filename should be a string of the form
-// "MTD:<partition_name>:<size_1>:<sha1_1>:<size_2>:<sha1_2>:...".
-// The smallest size_n bytes for which that prefix of the mtd contents
-// has the corresponding sha1 hash will be loaded.  It is acceptable
-// for a size value to be repeated with different sha1s.  Will return
-// 0 on success.
+// "MTD:<partition_name>:<size_1>:<sha1_1>:<size_2>:<sha1_2>:..."  (or
+// "EMMC:<partition_device>:...").  The smallest size_n bytes for
+// which that prefix of the partition contents has the corresponding
+// sha1 hash will be loaded.  It is acceptable for a size value to be
+// repeated with different sha1s.  Will return 0 on success.
 //
 // This complexity is needed because if an OTA installation is
 // interrupted, the partition might contain either the source or the
 // target data, which might be of different lengths.  We need to know
-// the length in order to read from MTD (there is no "end-of-file"
-// marker), so the caller must specify the possible lengths and the
-// hash of the data, and we'll do the load expecting to find one of
-// those hashes.
-int LoadMTDContents(const char* filename, FileContents* file) {
+// the length in order to read from a partition (there is no
+// "end-of-file" marker), so the caller must specify the possible
+// lengths and the hash of the data, and we'll do the load expecting
+// to find one of those hashes.
+enum PartitionType { MTD, EMMC };
+
+static int LoadPartitionContents(const char* filename, FileContents* file) {
     char* copy = strdup(filename);
     const char* magic = strtok(copy, ":");
-    if (strcmp(magic, "MTD") != 0) {
-        printf("LoadMTDContents called with bad filename (%s)\n",
+
+    enum PartitionType type;
+
+    if (strcmp(magic, "MTD") == 0) {
+        type = MTD;
+    } else if (strcmp(magic, "EMMC") == 0) {
+        type = EMMC;
+    } else {
+        printf("LoadPartitionContents called with bad filename (%s)\n",
                filename);
         return -1;
     }
@@ -131,7 +141,7 @@ int LoadMTDContents(const char* filename, FileContents* file) {
         }
     }
     if (colons < 3 || colons%2 == 0) {
-        printf("LoadMTDContents called with bad filename (%s)\n",
+        printf("LoadPartitionContents called with bad filename (%s)\n",
                filename);
     }
 
@@ -144,7 +154,7 @@ int LoadMTDContents(const char* filename, FileContents* file) {
         const char* size_str = strtok(NULL, ":");
         size[i] = strtol(size_str, NULL, 10);
         if (size[i] == 0) {
-            printf("LoadMTDContents called with bad size (%s)\n", filename);
+            printf("LoadPartitionContents called with bad size (%s)\n", filename);
             return -1;
         }
         sha1sum[i] = strtok(NULL, ":");
@@ -156,23 +166,38 @@ int LoadMTDContents(const char* filename, FileContents* file) {
     size_array = size;
     qsort(index, pairs, sizeof(int), compare_size_indices);
 
-    if (!mtd_partitions_scanned) {
-        mtd_scan_partitions();
-        mtd_partitions_scanned = 1;
-    }
+    MtdReadContext* ctx = NULL;
+    FILE* dev = NULL;
 
-    const MtdPartition* mtd = mtd_find_partition_by_name(partition);
-    if (mtd == NULL) {
-        printf("mtd partition \"%s\" not found (loading %s)\n",
-               partition, filename);
-        return -1;
-    }
+    switch (type) {
+        case MTD:
+            if (!mtd_partitions_scanned) {
+                mtd_scan_partitions();
+                mtd_partitions_scanned = 1;
+            }
 
-    MtdReadContext* ctx = mtd_read_partition(mtd);
-    if (ctx == NULL) {
-        printf("failed to initialize read of mtd partition \"%s\"\n",
-               partition);
-        return -1;
+            const MtdPartition* mtd = mtd_find_partition_by_name(partition);
+            if (mtd == NULL) {
+                printf("mtd partition \"%s\" not found (loading %s)\n",
+                       partition, filename);
+                return -1;
+            }
+
+            ctx = mtd_read_partition(mtd);
+            if (ctx == NULL) {
+                printf("failed to initialize read of mtd partition \"%s\"\n",
+                       partition);
+                return -1;
+            }
+            break;
+
+        case EMMC:
+            dev = fopen(partition, "rb");
+            if (dev == NULL) {
+                printf("failed to open emmc partition \"%s\": %s\n",
+                       partition, strerror(errno));
+                return -1;
+            }
     }
 
     SHA_CTX sha_ctx;
@@ -191,7 +216,15 @@ int LoadMTDContents(const char* filename, FileContents* file) {
         size_t next = size[index[i]] - file->size;
         size_t read = 0;
         if (next > 0) {
-            read = mtd_read_data(ctx, p, next);
+            switch (type) {
+                case MTD:
+                    read = mtd_read_data(ctx, p, next);
+                    break;
+
+                case EMMC:
+                    read = fread(p, 1, next, dev);
+                    break;
+            }
             if (next != read) {
                 printf("short read (%d bytes of %d) for partition \"%s\"\n",
                        read, next, partition);
@@ -220,7 +253,7 @@ int LoadMTDContents(const char* filename, FileContents* file) {
         if (memcmp(sha_so_far, parsed_sha, SHA_DIGEST_SIZE) == 0) {
             // we have a match.  stop reading the partition; we'll return
             // the data we've read so far.
-            printf("mtd read matched size %d sha %s\n",
+            printf("partition read matched size %d sha %s\n",
                    size[index[i]], sha1sum[index[i]]);
             break;
         }
@@ -228,12 +261,21 @@ int LoadMTDContents(const char* filename, FileContents* file) {
         p += read;
     }
 
-    mtd_read_close(ctx);
+    switch (type) {
+        case MTD:
+            mtd_read_close(ctx);
+            break;
+
+        case EMMC:
+            fclose(dev);
+            break;
+    }
+
 
     if (i == pairs) {
         // Ran off the end of the list of (size,sha1) pairs without
         // finding a match.
-        printf("contents of MTD partition \"%s\" didn't match %s\n",
+        printf("contents of partition \"%s\" didn't match %s\n",
                partition, filename);
         free(file->data);
         file->data = NULL;
@@ -261,7 +303,7 @@ int LoadMTDContents(const char* filename, FileContents* file) {
 
 // Save the contents of the given FileContents object under the given
 // filename.  Return 0 on success.
-int SaveFileContents(const char* filename, FileContents file) {
+static int SaveFileContents(const char* filename, FileContents file) {
     int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC);
     if (fd < 0) {
         printf("failed to open \"%s\" for write: %s\n",
@@ -292,61 +334,87 @@ int SaveFileContents(const char* filename, FileContents file) {
     return 0;
 }
 
-// Write a memory buffer to target_mtd partition, a string of the form
-// "MTD:<partition>[:...]".  Return 0 on success.
-int WriteToMTDPartition(unsigned char* data, size_t len,
-                        const char* target_mtd) {
-    char* partition = strchr(target_mtd, ':');
+// Write a memory buffer to 'target' partition, a string of the form
+// "MTD:<partition>[:...]" or "EMMC:<partition_device>:".  Return 0 on
+// success.
+int WriteToPartition(unsigned char* data, size_t len,
+                        const char* target) {
+    char* copy = strdup(target);
+    const char* magic = strtok(copy, ":");
+
+    enum PartitionType type;
+    if (strcmp(magic, "MTD") == 0) {
+        type = MTD;
+    } else if (strcmp(magic, "EMMC") == 0) {
+        type = EMMC;
+    } else {
+        printf("WriteToPartition called with bad target (%s)\n", target);
+        return -1;
+    }
+    const char* partition = strtok(NULL, ":");
+
     if (partition == NULL) {
-        printf("bad MTD target name \"%s\"\n", target_mtd);
-        return -1;
-    }
-    ++partition;
-    // Trim off anything after a colon, eg "MTD:boot:blah:blah:blah...".
-    // We want just the partition name "boot".
-    partition = strdup(partition);
-    char* end = strchr(partition, ':');
-    if (end != NULL)
-        *end = '\0';
-
-    if (!mtd_partitions_scanned) {
-        mtd_scan_partitions();
-        mtd_partitions_scanned = 1;
-    }
-
-    const MtdPartition* mtd = mtd_find_partition_by_name(partition);
-    if (mtd == NULL) {
-        printf("mtd partition \"%s\" not found for writing\n", partition);
+        printf("bad partition target name \"%s\"\n", target);
         return -1;
     }
 
-    MtdWriteContext* ctx = mtd_write_partition(mtd);
-    if (ctx == NULL) {
-        printf("failed to init mtd partition \"%s\" for writing\n",
-               partition);
-        return -1;
+    switch (type) {
+        case MTD:
+            if (!mtd_partitions_scanned) {
+                mtd_scan_partitions();
+                mtd_partitions_scanned = 1;
+            }
+
+            const MtdPartition* mtd = mtd_find_partition_by_name(partition);
+            if (mtd == NULL) {
+                printf("mtd partition \"%s\" not found for writing\n",
+                       partition);
+                return -1;
+            }
+
+            MtdWriteContext* ctx = mtd_write_partition(mtd);
+            if (ctx == NULL) {
+                printf("failed to init mtd partition \"%s\" for writing\n",
+                       partition);
+                return -1;
+            }
+
+            size_t written = mtd_write_data(ctx, (char*)data, len);
+            if (written != len) {
+                printf("only wrote %d of %d bytes to MTD %s\n",
+                       written, len, partition);
+                mtd_write_close(ctx);
+                return -1;
+            }
+
+            if (mtd_erase_blocks(ctx, -1) < 0) {
+                printf("error finishing mtd write of %s\n", partition);
+                mtd_write_close(ctx);
+                return -1;
+            }
+
+            if (mtd_write_close(ctx)) {
+                printf("error closing mtd write of %s\n", partition);
+                return -1;
+            }
+            break;
+
+        case EMMC:
+            ;
+            FILE* f = fopen(partition, "wb");
+            if (fwrite(data, 1, len, f) != len) {
+                printf("short write writing to %s (%s)\n",
+                       partition, strerror(errno));
+                return -1;
+            }
+            if (fclose(f) != 0) {
+                printf("error closing %s (%s)\n", partition, strerror(errno));
+                return -1;
+            }
+            break;
     }
 
-    size_t written = mtd_write_data(ctx, (char*)data, len);
-    if (written != len) {
-        printf("only wrote %d of %d bytes to MTD %s\n",
-               written, len, partition);
-        mtd_write_close(ctx);
-        return -1;
-    }
-
-    if (mtd_erase_blocks(ctx, -1) < 0) {
-        printf("error finishing mtd write of %s\n", partition);
-        mtd_write_close(ctx);
-        return -1;
-    }
-
-    if (mtd_write_close(ctx)) {
-        printf("error closing mtd write of %s\n", partition);
-        return -1;
-    }
-
-    free(partition);
+    free(copy);
     return 0;
 }
 
@@ -406,7 +474,7 @@ int applypatch_check(const char* filename,
     file.data = NULL;
 
     // It's okay to specify no sha1s; the check will pass if the
-    // LoadFileContents is successful.  (Useful for reading MTD
+    // LoadFileContents is successful.  (Useful for reading
     // partitions, where the filename encodes the sha1s; no need to
     // check them twice.)
     if (LoadFileContents(filename, &file) != 0 ||
@@ -518,8 +586,8 @@ int CacheSizeCheck(size_t bytes) {
 // - otherwise, or if any error is encountered, exits with non-zero
 //   status.
 //
-// <source_filename> may refer to an MTD partition to read the source
-// data.  See the comments for the LoadMTDContents() function above
+// <source_filename> may refer to a partition to read the source data.
+// See the comments for the LoadPartition Contents() function above
 // for the format of such a filename.
 
 int applypatch(const char* source_filename,
@@ -623,14 +691,16 @@ int applypatch(const char* source_filename,
         // Is there enough room in the target filesystem to hold the patched
         // file?
 
-        if (strncmp(target_filename, "MTD:", 4) == 0) {
-            // If the target is an MTD partition, we're actually going to
-            // write the output to /tmp and then copy it to the partition.
-            // statfs() always returns 0 blocks free for /tmp, so instead
-            // we'll just assume that /tmp has enough space to hold the file.
+        if (strncmp(target_filename, "MTD:", 4) == 0 ||
+            strncmp(target_filename, "EMMC:", 5) == 0) {
+            // If the target is a partition, we're actually going to
+            // write the output to /tmp and then copy it to the
+            // partition.  statfs() always returns 0 blocks free for
+            // /tmp, so instead we'll just assume that /tmp has enough
+            // space to hold the file.
 
-            // We still write the original source to cache, in case the MTD
-            // write is interrupted.
+            // We still write the original source to cache, in case
+            // the partition write is interrupted.
             if (MakeFreeSpaceOnCache(source_file.size) < 0) {
                 printf("not enough free space on /cache\n");
                 return 1;
@@ -661,11 +731,13 @@ int applypatch(const char* source_filename,
                 // copy the source file to cache, then delete it from the original
                 // location.
 
-                if (strncmp(source_filename, "MTD:", 4) == 0) {
+                if (strncmp(source_filename, "MTD:", 4) == 0 ||
+                    strncmp(source_filename, "EMMC:", 5) == 0) {
                     // It's impossible to free space on the target filesystem by
-                    // deleting the source if the source is an MTD partition.  If
+                    // deleting the source if the source is a partition.  If
                     // we're ever in a state where we need to do this, fail.
-                    printf("not enough free space for target but source is MTD\n");
+                    printf("not enough free space for target but source "
+                           "is partition\n");
                     return 1;
                 }
 
@@ -704,7 +776,8 @@ int applypatch(const char* source_filename,
         void* token = NULL;
         output = -1;
         outname = NULL;
-        if (strncmp(target_filename, "MTD:", 4) == 0) {
+        if (strncmp(target_filename, "MTD:", 4) == 0 ||
+            strncmp(target_filename, "EMMC:", 5) == 0) {
             // We store the decoded output in memory.
             msi.buffer = malloc(target_size);
             if (msi.buffer == NULL) {
@@ -780,8 +853,8 @@ int applypatch(const char* source_filename,
     }
 
     if (output < 0) {
-        // Copy the temp file to the MTD partition.
-        if (WriteToMTDPartition(msi.buffer, msi.pos, target_filename) != 0) {
+        // Copy the temp file to the partition.
+        if (WriteToPartition(msi.buffer, msi.pos, target_filename) != 0) {
             printf("write of patched data to %s failed\n", target_filename);
             return 1;
         }
