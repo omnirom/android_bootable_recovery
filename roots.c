@@ -47,6 +47,7 @@ xxx may just want to use enums
 static const char g_mtd_device[] = "@\0g_mtd_device";
 static const char g_raw[] = "@\0g_raw";
 static const char g_package_file[] = "@\0g_package_file";
+static const char g_ramdisk[] = "@\0g_ramdisk";
 
 static RootInfo g_roots[] = {
     { "BOOT:", g_mtd_device, NULL, "boot", NULL, g_raw },
@@ -56,7 +57,7 @@ static RootInfo g_roots[] = {
     { "SDCARD:", "/dev/block/mmcblk0p1", "/dev/block/mmcblk0", NULL, "/sdcard", "vfat" },
     { "SYSTEM:", g_mtd_device, NULL, "system", "/system", "yaffs2" },
     { "MBM:", g_mtd_device, NULL, "mbm", NULL, g_raw },
-    { "TMP:", NULL, NULL, NULL, "/tmp", NULL },
+    { "TMP:", NULL, NULL, NULL, "/tmp", g_ramdisk },
 
 #ifdef USE_EXT4
     { "CACHE:", "/dev/block/platform/sdhci-tegra.3/by-name/cache", NULL, NULL,
@@ -194,7 +195,9 @@ internal_root_mounted(const RootInfo *info)
     if (info->mount_point == NULL) {
         return -1;
     }
-//xxx if TMP: (or similar) just say "yes"
+    if (info->filesystem == g_ramdisk) {
+      return 0;
+    }
 
     /* See if this root is already mounted.
      */
