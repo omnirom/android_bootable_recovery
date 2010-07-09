@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/reboot.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
@@ -52,6 +53,7 @@ static const char *INTENT_FILE = "CACHE:recovery/intent";
 static const char *LOG_FILE = "CACHE:recovery/log";
 static const char *SDCARD_PACKAGE_FILE = "SDCARD:update.zip";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
+static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -299,6 +301,109 @@ erase_root(const char *root) {
     return format_root_device(root);
 }
 
+static char*
+copy_sideloaded_package(const char* original_root_path) {
+  if (ensure_root_path_mounted(original_root_path) != 0) {
+    LOGE("Can't mount %s\n", original_root_path);
+    return NULL;
+  }
+
+  char original_path[PATH_MAX] = "";
+  if (translate_root_path(original_root_path, original_path,
+                          sizeof(original_path)) == NULL) {
+    LOGE("Bad path %s\n", original_root_path);
+    return NULL;
+  }
+
+  if (ensure_root_path_mounted(SIDELOAD_TEMP_DIR) != 0) {
+    LOGE("Can't mount %s\n", SIDELOAD_TEMP_DIR);
+    return NULL;
+  }
+
+  char copy_path[PATH_MAX] = "";
+  if (translate_root_path(SIDELOAD_TEMP_DIR, copy_path,
+                          sizeof(copy_path)) == NULL) {
+    LOGE("Bad path %s\n", SIDELOAD_TEMP_DIR);
+    return NULL;
+  }
+
+  if (mkdir(copy_path, 0700) != 0) {
+    if (errno != EEXIST) {
+      LOGE("Can't mkdir %s (%s)\n", SIDELOAD_TEMP_DIR, strerror(errno));
+      return NULL;
+    }
+  }
+
+  struct stat st;
+  if (stat(copy_path, &st) != 0) {
+    LOGE("failed to stat %s (%s)\n", copy_path, strerror(errno));
+    return NULL;
+  }
+  if (!S_ISDIR(st.st_mode)) {
+    LOGE("%s isn't a directory\n", copy_path);
+    return NULL;
+  }
+  if ((st.st_mode & 0777) != 0700) {
+    LOGE("%s has perms %o\n", copy_path, st.st_mode);
+    return NULL;
+  }
+  if (st.st_uid != 0) {
+    LOGE("%s owned by %lu; not root\n", copy_path, st.st_uid);
+    return NULL;
+  }
+
+  strcat(copy_path, "/package.zip");
+
+  char* buffer = malloc(BUFSIZ);
+  if (buffer == NULL) {
+    LOGE("Failed to allocate buffer\n");
+    return NULL;
+  }
+
+  size_t read;
+  FILE* fin = fopen(original_path, "rb");
+  if (fin == NULL) {
+    LOGE("Failed to open %s (%s)\n", original_path, strerror(errno));
+    return NULL;
+  }
+  FILE* fout = fopen(copy_path, "wb");
+  if (fout == NULL) {
+    LOGE("Failed to open %s (%s)\n", copy_path, strerror(errno));
+    return NULL;
+  }
+
+  while ((read = fread(buffer, 1, BUFSIZ, fin)) > 0) {
+    if (fwrite(buffer, 1, read, fout) != read) {
+      LOGE("Short write of %s (%s)\n", copy_path, strerror(errno));
+      return NULL;
+    }
+  }
+
+  free(buffer);
+
+  if (fclose(fout) != 0) {
+    LOGE("Failed to close %s (%s)\n", copy_path, strerror(errno));
+    return NULL;
+  }
+
+  if (fclose(fin) != 0) {
+    LOGE("Failed to close %s (%s)\n", original_path, strerror(errno));
+    return NULL;
+  }
+
+  // "adb push" is happy to overwrite read-only files when it's
+  // running as root, but we'll try anyway.
+  if (chmod(copy_path, 0400) != 0) {
+    LOGE("Failed to chmod %s (%s)\n", copy_path, strerror(errno));
+    return NULL;
+  }
+
+  char* copy_root_path = malloc(strlen(SIDELOAD_TEMP_DIR) + 20);
+  strcpy(copy_root_path, SIDELOAD_TEMP_DIR);
+  strcat(copy_root_path, "/package.zip");
+  return copy_root_path;
+}
+
 static char**
 prepend_title(char** headers) {
     char* title[] = { "Android system recovery <"
@@ -435,8 +540,13 @@ prompt_and_wait() {
 
             case ITEM_APPLY_SDCARD:
                 ui_print("\n-- Install from sdcard...\n");
-                set_sdcard_update_bootloader_message();
-                int status = install_package(SDCARD_PACKAGE_FILE);
+                int status = INSTALL_CORRUPT;
+                char* copy = copy_sideloaded_package(SDCARD_PACKAGE_FILE);
+                if (copy != NULL) {
+                  set_sdcard_update_bootloader_message();
+                  status = install_package(copy);
+                  free(copy);
+                }
                 if (status != INSTALL_SUCCESS) {
                     ui_set_background(BACKGROUND_ICON_ERROR);
                     ui_print("Installation aborted.\n");
