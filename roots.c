@@ -54,7 +54,6 @@ static RootInfo g_roots[] = {
     { "MISC:", g_mtd_device, NULL, "misc", NULL, g_raw },
     { "PACKAGE:", NULL, NULL, NULL, NULL, g_package_file },
     { "RECOVERY:", g_mtd_device, NULL, "recovery", "/", g_raw },
-    { "SDCARD:", "/dev/block/mmcblk0p1", "/dev/block/mmcblk0", NULL, "/sdcard", "vfat" },
     { "SYSTEM:", g_mtd_device, NULL, "system", "/system", "yaffs2" },
     { "MBM:", g_mtd_device, NULL, "mbm", NULL, g_raw },
     { "TMP:", NULL, NULL, NULL, "/tmp", g_ramdisk },
@@ -64,15 +63,15 @@ static RootInfo g_roots[] = {
       "/cache", "ext4" },
     { "DATA:", "/dev/block/platform/sdhci-tegra.3/by-name/userdata", NULL, NULL,
       "/data", "ext4" },
+    { "EXT:", "/dev/block/sda1", NULL, NULL, "/sdcard", "vfat" },
 #else
     { "CACHE:", g_mtd_device, NULL, "cache", "/cache", "yaffs2" },
     { "DATA:", g_mtd_device, NULL, "userdata", "/data", "yaffs2" },
+    { "EXT:", "/dev/block/mmcblk0p1", "/dev/block/mmcblk0", NULL, "/sdcard", "vfat" },
 #endif
 
 };
 #define NUM_ROOTS (sizeof(g_roots) / sizeof(g_roots[0]))
-
-// TODO: for SDCARD:, try /dev/block/mmcblk0 if mmcblk0p1 fails
 
 static const RootInfo *
 get_root_info_for_path(const char *root_path)

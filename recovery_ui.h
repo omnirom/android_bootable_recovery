@@ -66,7 +66,8 @@ int device_wipe_data();
 #define SELECT_ITEM         -4
 
 #define ITEM_REBOOT          0
-#define ITEM_APPLY_SDCARD    1
+#define ITEM_APPLY_EXT       1
+#define ITEM_APPLY_SDCARD    1  // historical synonym for ITEM_APPLY_EXT
 #define ITEM_WIPE_DATA       2
 #define ITEM_WIPE_CACHE      3
 

@@ -52,7 +52,7 @@ static const struct option OPTIONS[] = {
 static const char *COMMAND_FILE = "CACHE:recovery/command";
 static const char *INTENT_FILE = "CACHE:recovery/intent";
 static const char *LOG_FILE = "CACHE:recovery/log";
-static const char *SDCARD_ROOT = "SDCARD:";
+static const char *EXT_ROOT = "EXT:";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
 
@@ -479,7 +479,7 @@ sdcard_directory(const char* root_path) {
     // Mount the sdcard when the package selection menu is enabled so
     // you can "adb push" packages to the sdcard and immediately
     // install them.
-    ensure_root_path_mounted(SDCARD_ROOT);
+    ensure_root_path_mounted(EXT_ROOT);
 
     const char* MENU_HEADERS[] = { "Choose a package to install:",
                                    root_path,
@@ -491,6 +491,7 @@ sdcard_directory(const char* root_path) {
     d = opendir(translate_root_path(root_path, path, sizeof(path)));
     if (d == NULL) {
         LOGE("error opening %s: %s\n", path, strerror(errno));
+        ensure_root_path_unmounted(EXT_ROOT);
         return 0;
     }
 
@@ -588,6 +589,7 @@ sdcard_directory(const char* root_path) {
     free(zips);
     free(headers);
 
+    ensure_root_path_unmounted(EXT_ROOT);
     return result;
 }
 
@@ -661,9 +663,9 @@ prompt_and_wait() {
                 if (!ui_text_visible()) return;
                 break;
 
-            case ITEM_APPLY_SDCARD:
+            case ITEM_APPLY_EXT:
                 ;
-                int status = sdcard_directory(SDCARD_ROOT);
+                int status = sdcard_directory(EXT_ROOT);
                 if (status >= 0) {
                     if (status != INSTALL_SUCCESS) {
                         ui_set_background(BACKGROUND_ICON_ERROR);

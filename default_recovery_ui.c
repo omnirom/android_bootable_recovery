@@ -24,7 +24,7 @@ char* MENU_HEADERS[] = { "Android system recovery utility",
                          NULL };
 
 char* MENU_ITEMS[] = { "reboot system now",
-                       "apply update from sdcard",
+                       "apply update from external storage",
                        "wipe data/factory reset",
                        "wipe cache partition",
                        NULL };
