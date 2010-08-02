@@ -479,7 +479,10 @@ sdcard_directory(const char* root_path) {
     // Mount the sdcard when the package selection menu is enabled so
     // you can "adb push" packages to the sdcard and immediately
     // install them.
-    ensure_root_path_mounted(EXT_ROOT);
+    if (ensure_root_path_mounted(EXT_ROOT) < 0) {
+        ui_print("Failed to mount external storage.\n");
+        return INSTALL_ERROR;
+    }
 
     const char* MENU_HEADERS[] = { "Choose a package to install:",
                                    root_path,
