@@ -25,12 +25,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
 
 #include "cutils/misc.h"
 #include "cutils/properties.h"
 #include "edify/expr.h"
 #include "mincrypt/sha.h"
 #include "minzip/DirUtil.h"
+#include "minelf/Retouch.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
 #include "updater.h"
@@ -426,6 +429,121 @@ Value* PackageExtractFileFn(const char* name, State* state,
         }
         return v;
     }
+}
+
+
+// retouch_binaries(lib1, lib2, ...)
+Value* RetouchBinariesFn(const char* name, State* state,
+                         int argc, Expr* argv[]) {
+    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
+
+    char **retouch_entries  = ReadVarArgs(state, argc, argv);
+    if (retouch_entries == NULL) {
+        return StringValue(strdup("t"));
+    }
+
+    // some randomness from the clock
+    int32_t override_base;
+    bool override_set = false;
+    int32_t random_base = time(NULL) % 1024;
+    // some more randomness from /dev/random
+    FILE *f_random = fopen("/dev/random", "rb");
+    uint16_t random_bits = 0;
+    if (f_random != NULL) {
+        fread(&random_bits, 2, 1, f_random);
+        random_bits = random_bits % 1024;
+        fclose(f_random);
+    }
+    random_base = (random_base + random_bits) % 1024;
+    fprintf(ui->cmd_pipe, "ui_print Random offset: 0x%x\n", random_base);
+    fprintf(ui->cmd_pipe, "ui_print\n");
+
+    // make sure we never randomize to zero; this let's us look at a file
+    // and know for sure whether it has been processed; important in the
+    // crash recovery process
+    if (random_base == 0) random_base = 1;
+    // make sure our randomization is page-aligned
+    random_base *= -0x1000;
+    override_base = random_base;
+
+    int i = 0;
+    bool success = true;
+    while (i < (argc - 1)) {
+        success = success && retouch_one_library(retouch_entries[i],
+                                                 retouch_entries[i+1],
+                                                 random_base,
+                                                 override_set ?
+                                                   NULL :
+                                                   &override_base);
+        if (!success)
+            ErrorAbort(state, "Failed to retouch '%s'.", retouch_entries[i]);
+
+        free(retouch_entries[i]);
+        free(retouch_entries[i+1]);
+        i += 2;
+
+        if (success && override_base != 0) {
+            random_base = override_base;
+            override_set = true;
+        }
+    }
+    if (i < argc) {
+        free(retouch_entries[i]);
+        success = false;
+    }
+    free(retouch_entries);
+
+    if (!success) {
+      Value* v = malloc(sizeof(Value));
+      v->type = VAL_STRING;
+      v->data = NULL;
+      v->size = -1;
+      return v;
+    }
+    return StringValue(strdup("t"));
+}
+
+
+// undo_retouch_binaries(lib1, lib2, ...)
+Value* UndoRetouchBinariesFn(const char* name, State* state,
+                             int argc, Expr* argv[]) {
+    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
+
+    char **retouch_entries  = ReadVarArgs(state, argc, argv);
+    if (retouch_entries == NULL) {
+        return StringValue(strdup("t"));
+    }
+
+    int i = 0;
+    bool success = true;
+    int32_t override_base;
+    while (i < (argc-1)) {
+        success = success && retouch_one_library(retouch_entries[i],
+                                                 retouch_entries[i+1],
+                                                 0 /* undo => offset==0 */,
+                                                 NULL);
+        if (!success)
+            ErrorAbort(state, "Failed to unretouch '%s'.",
+                       retouch_entries[i]);
+
+        free(retouch_entries[i]);
+        free(retouch_entries[i+1]);
+        i += 2;
+    }
+    if (i < argc) {
+        free(retouch_entries[i]);
+        success = false;
+    }
+    free(retouch_entries);
+
+    if (!success) {
+      Value* v = malloc(sizeof(Value));
+      v->type = VAL_STRING;
+      v->data = NULL;
+      v->size = -1;
+      return v;
+    }
+    return StringValue(strdup("t"));
 }
 
 
@@ -1007,7 +1125,7 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
     return args[i];
 }
 
-// Read a local file and return its contents (the char* returned
+// Read a local file and return its contents (the Value* returned
 // is actually a FileContents*).
 Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 1) {
@@ -1020,7 +1138,7 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
     v->type = VAL_BLOB;
 
     FileContents fc;
-    if (LoadFileContents(filename, &fc) != 0) {
+    if (LoadFileContents(filename, &fc, RETOUCH_DONT_MASK) != 0) {
         ErrorAbort(state, "%s() loading \"%s\" failed: %s",
                    name, filename, strerror(errno));
         free(filename);
@@ -1047,6 +1165,8 @@ void RegisterInstallFunctions() {
     RegisterFunction("delete_recursive", DeleteFn);
     RegisterFunction("package_extract_dir", PackageExtractDirFn);
     RegisterFunction("package_extract_file", PackageExtractFileFn);
+    RegisterFunction("retouch_binaries", RetouchBinariesFn);
+    RegisterFunction("undo_retouch_binaries", UndoRetouchBinariesFn);
     RegisterFunction("symlink", SymlinkFn);
     RegisterFunction("set_perm", SetPermFn);
     RegisterFunction("set_perm_recursive", SetPermFn);

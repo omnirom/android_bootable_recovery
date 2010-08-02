@@ -74,7 +74,7 @@ static int ParsePatchArgs(int argc, char** argv,
             (*patches)[i] = NULL;
         } else {
             FileContents fc;
-            if (LoadFileContents(colon, &fc) != 0) {
+            if (LoadFileContents(colon, &fc, RETOUCH_DONT_MASK) != 0) {
                 goto abort;
             }
             (*patches)[i] = malloc(sizeof(Value));
