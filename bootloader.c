@@ -25,8 +25,6 @@
 
 static const char *CACHE_NAME = "CACHE:";
 static const char *MISC_NAME = "MISC:";
-static const int MISC_PAGES = 3;         // number of pages to save
-static const int MISC_COMMAND_PAGE = 1;  // bootloader command is this page
 
 #ifdef LOG_VERBOSE
 static void dump_data(const char *data, int len) {
@@ -40,6 +38,57 @@ static void dump_data(const char *data, int len) {
     }
 }
 #endif
+
+#ifdef USE_EXT4
+// Strictly speaking this doesn't have anything to do with ext4; we
+// really just mean "misc is an emmc partition".  We should have a
+// more configurable way have describing partitions, filesystems, etc.
+
+static const char* MISC_PARTITION =
+    "/dev/block/platform/sdhci-tegra.3/by-name/misc";
+
+int get_bootloader_message(struct bootloader_message* out) {
+    FILE* f = fopen(MISC_PARTITION, "rb");
+    if (f == NULL) {
+        LOGE("Can't open %s\n(%s)\n", MISC_PARTITION, strerror(errno));
+        return -1;
+    }
+    struct bootloader_message temp;
+    int count = fread(&temp, sizeof(temp), 1, f);
+    if (count != 1) {
+        LOGE("Failed reading %s\n(%s)\n", MISC_PARTITION, strerror(errno));
+        return -1;
+    }
+    if (fclose(f) != 0) {
+        LOGE("Failed closing %s\n(%s)\n", MISC_PARTITION, strerror(errno));
+        return -1;
+    }
+    memcpy(out, &temp, sizeof(temp));
+    return 0;
+}
+
+int set_bootloader_message(const struct bootloader_message* in) {
+    FILE* f = fopen(MISC_PARTITION, "wb");
+    if (f == NULL) {
+        LOGE("Can't open %s\n(%s)\n", MISC_PARTITION, strerror(errno));
+        return -1;
+    }
+    int count = fwrite(in, sizeof(*in), 1, f);
+    if (count != 1) {
+        LOGE("Failed writing %s\n(%s)\n", MISC_PARTITION, strerror(errno));
+        return -1;
+    }
+    if (fclose(f) != 0) {
+        LOGE("Failed closing %s\n(%s)\n", MISC_PARTITION, strerror(errno));
+        return -1;
+    }
+    return 0;
+}
+
+#else  // MTD partitions
+
+static const int MISC_PAGES = 3;         // number of pages to save
+static const int MISC_COMMAND_PAGE = 1;  // bootloader command is this page
 
 int get_bootloader_message(struct bootloader_message *out) {
     size_t write_size;
@@ -119,3 +168,5 @@ int set_bootloader_message(const struct bootloader_message *in) {
     LOGI("Set boot command \"%s\"\n", in->command[0] != 255 ? in->command : "");
     return 0;
 }
+
+#endif
