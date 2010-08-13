@@ -386,7 +386,7 @@ format_root_device(const char *root)
     if (strcmp(info->filesystem, "ext4") == 0) {
         LOGW("starting to reformat ext4\n");
         reset_ext4fs_info();
-        int result = make_ext4fs(info->device, NULL, NULL, 0, 0);
+        int result = make_ext4fs(info->device, NULL, NULL, 0, 0, 0);
         LOGW("finished reformat ext4: result = %d\n", result);
         if (result != 0) {
             LOGW("make_ext4fs failed: %d\n", result);
