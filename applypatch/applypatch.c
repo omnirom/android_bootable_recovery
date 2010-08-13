@@ -645,7 +645,8 @@ int applypatch(const char* source_filename,
             int enough_space = 0;
             if (retry > 0) {
                 size_t free_space = FreeSpaceForFile(target_fs);
-                int enough_space =
+                enough_space =
+                    (free_space > (256 << 10)) &&          // 256k (two-block) minimum
                     (free_space > (target_size * 3 / 2));  // 50% margin of error
                 printf("target %ld bytes; free space %ld bytes; retry %d; enough %d\n",
                        (long)target_size, (long)free_space, retry, enough_space);
