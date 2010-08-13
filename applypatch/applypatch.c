@@ -678,7 +678,7 @@ int applypatch(const char* source_filename,
 
         int to_use = FindMatchingPatch(copy_file.sha1,
                                        patch_sha1_str, num_patches);
-        if (to_use > 0) {
+        if (to_use >= 0) {
             copy_patch_value = patch_data[to_use];
         }
 
