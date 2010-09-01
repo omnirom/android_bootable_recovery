@@ -51,7 +51,7 @@ static const struct option OPTIONS[] = {
 static const char *COMMAND_FILE = "CACHE:recovery/command";
 static const char *INTENT_FILE = "CACHE:recovery/intent";
 static const char *LOG_FILE = "CACHE:recovery/log";
-static const char *SDCARD_PACKAGE_FILE = "CACHE:update.zip";
+static const char *SDCARD_PACKAGE_FILE = "SDCARD:update.zip";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
 
@@ -577,7 +577,6 @@ main(int argc, char **argv) {
     ui_init();
     get_args(&argc, &argv);
 
-    ui_print("Rebooting started...\n");
     int previous_runs = 0;
     const char *send_intent = NULL;
     const char *update_package = NULL;

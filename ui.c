@@ -77,7 +77,7 @@ static int gPagesIdentical = 0;
 static char text[MAX_ROWS][MAX_COLS];
 static int text_cols = 0, text_rows = 0;
 static int text_col = 0, text_row = 0, text_top = 0;
-static int show_text = 1;
+static int show_text = 0;
 
 static char menu[MAX_ROWS][MAX_COLS];
 static int show_menu = 0;
