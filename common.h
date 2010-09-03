@@ -26,6 +26,7 @@ void ui_init();
 int ui_wait_key();            // waits for a key/button press, returns the code
 int ui_key_pressed(int key);  // returns >0 if the code is currently pressed
 int ui_text_visible();        // returns >0 if text log is currently visible
+void ui_show_text(int visible);
 void ui_clear_key_queue();
 
 // Write a message to the on-screen log shown with Alt-L (also to stderr).

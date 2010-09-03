@@ -46,6 +46,7 @@ static const struct option OPTIONS[] = {
   { "wipe_data", no_argument, NULL, 'w' },
   { "wipe_cache", no_argument, NULL, 'c' },
   { "set_encrypted_filesystems", required_argument, NULL, 'e' },
+  { "show_text", no_argument, NULL, 't' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -718,6 +719,7 @@ main(int argc, char **argv) {
         case 'w': wipe_data = wipe_cache = 1; break;
         case 'c': wipe_cache = 1; break;
         case 'e': encrypted_fs_mode = optarg; toggle_secure_fs = 1; break;
+        case 't': ui_show_text(1); break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
