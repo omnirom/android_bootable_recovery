@@ -481,6 +481,14 @@ int ui_text_visible()
     return visible;
 }
 
+void ui_show_text(int visible)
+{
+    pthread_mutex_lock(&gUpdateMutex);
+    show_text = visible;
+    update_screen_locked();
+    pthread_mutex_unlock(&gUpdateMutex);
+}
+
 int ui_wait_key()
 {
     pthread_mutex_lock(&key_queue_mutex);
