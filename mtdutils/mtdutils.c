@@ -414,9 +414,12 @@ static int write_block(MtdWriteContext *ctx, const char *data)
     ssize_t size = partition->erase_size;
     while (pos + size <= (int) partition->size) {
         loff_t bpos = pos;
-        if (ioctl(fd, MEMGETBADBLOCK, &bpos) > 0) {
+        int ret = ioctl(fd, MEMGETBADBLOCK, &bpos);
+        if (ret != 0 && !(ret == -1 && errno == EOPNOTSUPP)) {
             add_bad_block_offset(ctx, pos);
-            fprintf(stderr, "mtd: not writing bad block at 0x%08lx\n", pos);
+            fprintf(stderr,
+                    "mtd: not writing bad block at 0x%08lx (ret %d errno %d)\n",
+                    pos, ret, errno);
             pos += partition->erase_size;
             continue;  // Don't try to erase known factory-bad blocks.
         }
