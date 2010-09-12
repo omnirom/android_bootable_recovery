@@ -308,14 +308,7 @@ static int read_block(const MtdPartition *partition, int fd, char *data)
                     "mtd: MEMGETBADBLOCK returned %d at 0x%08llx (errno=%d)\n",
                     mgbb, pos, errno);
         } else {
-            int i;
-            for (i = 0; i < size; ++i) {
-                if (data[i] != 0) {
-                    return 0;  // Success!
-                }
-            }
-            fprintf(stderr, "mtd: read all-zero block at 0x%08llx; skipping\n",
-                    pos);
+            return 0;  // Success!
         }
 
         pos += partition->erase_size;
