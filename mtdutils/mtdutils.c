@@ -279,6 +279,12 @@ MtdReadContext *mtd_read_partition(const MtdPartition *partition)
     return ctx;
 }
 
+// Seeks to a location in the partition.  Don't mix with reads of
+// anything other than whole blocks; unpredictable things will result.
+void mtd_read_skip_to(const MtdReadContext* ctx, size_t offset) {
+    lseek64(ctx->fd, offset, SEEK_SET);
+}
+
 static int read_block(const MtdPartition *partition, int fd, char *data)
 {
     struct mtd_ecc_stats before, after;
@@ -449,6 +455,7 @@ static int write_block(MtdWriteContext *ctx, const char *data)
             if (retry > 0) {
                 fprintf(stderr, "mtd: wrote block after %d retries\n", retry);
             }
+            fprintf(stderr, "mtd: successfully wrote block at %x\n", pos);
             return 0;  // Success!
         }
 
