@@ -45,6 +45,7 @@ typedef struct MtdWriteContext MtdWriteContext;
 MtdReadContext *mtd_read_partition(const MtdPartition *);
 ssize_t mtd_read_data(MtdReadContext *, char *data, size_t data_len);
 void mtd_read_close(MtdReadContext *);
+void mtd_read_skip_to(const MtdReadContext *, size_t offset);
 
 MtdWriteContext *mtd_write_partition(const MtdPartition *);
 ssize_t mtd_write_data(MtdWriteContext *, const char *data, size_t data_len);
