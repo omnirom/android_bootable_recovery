@@ -136,7 +136,9 @@ int main(int argc, char** argv) {
         free(result);
     }
 
-    mzCloseZipArchive(&za);
+    if (updater_info.package_zip) {
+        mzCloseZipArchive(updater_info.package_zip);
+    }
     free(script);
 
     return 0;
