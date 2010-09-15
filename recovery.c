@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include "bootloader.h"
 #include "common.h"
@@ -52,7 +53,7 @@ static const struct option OPTIONS[] = {
 static const char *COMMAND_FILE = "CACHE:recovery/command";
 static const char *INTENT_FILE = "CACHE:recovery/intent";
 static const char *LOG_FILE = "CACHE:recovery/log";
-static const char *SDCARD_PACKAGE_FILE = "SDCARD:update.zip";
+static const char *SDCARD_ROOT = "SDCARD:";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
 
@@ -406,7 +407,7 @@ copy_sideloaded_package(const char* original_root_path) {
 }
 
 static char**
-prepend_title(char** headers) {
+prepend_title(const char** headers) {
     char* title[] = { "Android system recovery <"
                           EXPAND(RECOVERY_API_VERSION) "e>",
                       "",
@@ -429,13 +430,14 @@ prepend_title(char** headers) {
 }
 
 static int
-get_menu_selection(char** headers, char** items, int menu_only) {
+get_menu_selection(char** headers, char** items, int menu_only,
+                   int initial_selection) {
     // throw away keys pressed previously, so user doesn't
     // accidentally trigger menu items.
     ui_clear_key_queue();
 
-    ui_start_menu(headers, items);
-    int selected = 0;
+    ui_start_menu(headers, items, initial_selection);
+    int selected = initial_selection;
     int chosen_item = -1;
 
     while (chosen_item < 0) {
@@ -469,6 +471,118 @@ get_menu_selection(char** headers, char** items, int menu_only) {
     return chosen_item;
 }
 
+static int compare_string(const void* a, const void* b) {
+    return strcmp(*(const char**)a, *(const char**)b);
+}
+
+static int
+sdcard_directory(const char* root_path) {
+    const char* MENU_HEADERS[] = { "Choose a package to install:",
+                                   root_path,
+                                   "",
+                                   NULL };
+    DIR* d;
+    struct dirent* de;
+    char path[PATH_MAX];
+    d = opendir(translate_root_path(root_path, path, sizeof(path)));
+    if (d == NULL) {
+        LOGE("error opening %s: %s\n", path, strerror(errno));
+        return 0;
+    }
+
+    char** headers = prepend_title(MENU_HEADERS);
+
+    int d_size = 0;
+    int d_alloc = 10;
+    char** dirs = malloc(d_alloc * sizeof(char*));
+    int z_size = 1;
+    int z_alloc = 10;
+    char** zips = malloc(z_alloc * sizeof(char*));
+    zips[0] = strdup("../");
+
+    while ((de = readdir(d)) != NULL) {
+        int name_len = strlen(de->d_name);
+
+        if (de->d_type == DT_DIR) {
+            // skip "." and ".." entries
+            if (name_len == 1 && de->d_name[0] == '.') continue;
+            if (name_len == 2 && de->d_name[0] == '.' &&
+                de->d_name[1] == '.') continue;
+
+            if (d_size >= d_alloc) {
+                d_alloc *= 2;
+                dirs = realloc(dirs, d_alloc * sizeof(char*));
+            }
+            dirs[d_size] = malloc(name_len + 2);
+            strcpy(dirs[d_size], de->d_name);
+            dirs[d_size][name_len] = '/';
+            dirs[d_size][name_len+1] = '\0';
+            ++d_size;
+        } else if (de->d_type == DT_REG &&
+                   name_len >= 4 &&
+                   strncasecmp(de->d_name + (name_len-4), ".zip", 4) == 0) {
+            if (z_size >= z_alloc) {
+                z_alloc *= 2;
+                zips = realloc(zips, z_alloc * sizeof(char*));
+            }
+            zips[z_size++] = strdup(de->d_name);
+        }
+    }
+    closedir(d);
+
+    qsort(dirs, d_size, sizeof(char*), compare_string);
+    qsort(zips, z_size, sizeof(char*), compare_string);
+
+    // append dirs to the zips list
+    if (d_size + z_size + 1 > z_alloc) {
+        z_alloc = d_size + z_size + 1;
+        zips = realloc(zips, z_alloc * sizeof(char*));
+    }
+    memcpy(zips + z_size, dirs, d_size * sizeof(char*));
+    free(dirs);
+    z_size += d_size;
+    zips[z_size] = NULL;
+
+    int result;
+    int chosen_item = 0;
+    do {
+        chosen_item = get_menu_selection(headers, zips, 1, chosen_item);
+
+        char* item = zips[chosen_item];
+        int item_len = strlen(item);
+        if (chosen_item == 0) {          // item 0 is always "../"
+            // go up but continue browsing (if the caller is sdcard_directory)
+            result = -1;
+            break;
+        } else if (item[item_len-1] == '/') {
+            // recurse down into a subdirectory
+            char new_path[PATH_MAX];
+            strlcpy(new_path, root_path, PATH_MAX);
+            strlcat(new_path, item, PATH_MAX);
+            result = sdcard_directory(new_path);
+            if (result >= 0) break;
+        } else {
+            // selected a zip file:  attempt to install it, and return
+            // the status to the caller.
+            char new_path[PATH_MAX];
+            strlcpy(new_path, root_path, PATH_MAX);
+            strlcat(new_path, item, PATH_MAX);
+
+            ui_print("\n-- Install %s ...\n", new_path);
+            set_sdcard_update_bootloader_message();
+            result = install_package(new_path);
+            break;
+        }
+    } while (true);
+
+    int i;
+    for (i = 0; i < z_size; ++i) free(zips[i]);
+    free(zips);
+    free(headers);
+
+    return result;
+}
+
 static void
 wipe_data(int confirm) {
     if (confirm) {
@@ -479,7 +593,7 @@ wipe_data(int confirm) {
                                 "  THIS CAN NOT BE UNDONE.",
                                 "",
                                 NULL };
-            title_headers = prepend_title(headers);
+            title_headers = prepend_title((const char**)headers);
         }
 
         char* items[] = { " No",
@@ -495,7 +609,7 @@ wipe_data(int confirm) {
                           " No",
                           NULL };
 
-        int chosen_item = get_menu_selection(title_headers, items, 1);
+        int chosen_item = get_menu_selection(title_headers, items, 1, 0);
         if (chosen_item != 7) {
             return;
         }
@@ -510,13 +624,13 @@ wipe_data(int confirm) {
 
 static void
 prompt_and_wait() {
-    char** headers = prepend_title(MENU_HEADERS);
+    char** headers = prepend_title((const char**)MENU_HEADERS);
 
     for (;;) {
         finish_recovery(NULL);
         ui_reset_progress();
 
-        int chosen_item = get_menu_selection(headers, MENU_ITEMS, 0);
+        int chosen_item = get_menu_selection(headers, MENU_ITEMS, 0, 0);
 
         // device-specific code may take some action here.  It may
         // return one of the core actions handled in the switch
@@ -540,21 +654,17 @@ prompt_and_wait() {
                 break;
 
             case ITEM_APPLY_SDCARD:
-                ui_print("\n-- Install from sdcard...\n");
-                int status = INSTALL_CORRUPT;
-                char* copy = copy_sideloaded_package(SDCARD_PACKAGE_FILE);
-                if (copy != NULL) {
-                  set_sdcard_update_bootloader_message();
-                  status = install_package(copy);
-                  free(copy);
-                }
-                if (status != INSTALL_SUCCESS) {
-                    ui_set_background(BACKGROUND_ICON_ERROR);
-                    ui_print("Installation aborted.\n");
-                } else if (!ui_text_visible()) {
-                    return;  // reboot if logs aren't visible
-                } else {
-                    ui_print("\nInstall from sdcard complete.\n");
+                ;
+                int status = sdcard_directory(SDCARD_ROOT);
+                if (status >= 0) {
+                    if (status != INSTALL_SUCCESS) {
+                        ui_set_background(BACKGROUND_ICON_ERROR);
+                        ui_print("Installation aborted.\n");
+                    } else if (!ui_text_visible()) {
+                        return;  // reboot if logs aren't visible
+                    } else {
+                        ui_print("\nInstall from sdcard complete.\n");
+                    }
                 }
                 break;
         }
@@ -667,7 +777,12 @@ main(int argc, char **argv) {
     }
 
     if (status != INSTALL_SUCCESS) ui_set_background(BACKGROUND_ICON_ERROR);
-    if (status != INSTALL_SUCCESS || ui_text_visible()) prompt_and_wait();
+    if (status != INSTALL_SUCCESS || ui_text_visible()) {
+        // Mount the sdcard when the menu is enabled so you can "adb
+        // push" packages to the sdcard and immediately install them.
+        ensure_root_path_mounted(SDCARD_ROOT);
+        prompt_and_wait();
+    }
 
     // Otherwise, get ready to boot the main system...
     finish_recovery(send_intent);
