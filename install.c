@@ -42,6 +42,7 @@ try_update_binary(const char *path, ZipArchive *zip) {
     const ZipEntry* binary_entry =
             mzFindZipEntry(zip, ASSUMED_UPDATE_BINARY_NAME);
     if (binary_entry == NULL) {
+        mzCloseZipArchive(zip);
         return INSTALL_CORRUPT;
     }
 
@@ -49,11 +50,13 @@ try_update_binary(const char *path, ZipArchive *zip) {
     unlink(binary);
     int fd = creat(binary, 0755);
     if (fd < 0) {
+        mzCloseZipArchive(zip);
         LOGE("Can't make %s\n", binary);
         return 1;
     }
     bool ok = mzExtractZipEntryToFile(zip, binary_entry, fd);
     close(fd);
+    mzCloseZipArchive(zip);
 
     if (!ok) {
         LOGE("Can't copy %s\n", ASSUMED_UPDATE_BINARY_NAME);
@@ -298,6 +301,5 @@ install_package(const char *root_path)
     /* Verify and install the contents of the package.
      */
     int status = handle_update_package(path, &zip);
-    mzCloseZipArchive(&zip);
     return status;
 }

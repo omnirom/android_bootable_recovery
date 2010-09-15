@@ -212,3 +212,11 @@ unmount_mounted_volume(const MountedVolume *volume)
     }
     return ret;
 }
+
+int
+remount_read_only(const MountedVolume* volume)
+{
+    return mount(volume->device, volume->mount_point, volume->filesystem,
+                 MS_NOATIME | MS_NODEV | MS_NODIRATIME |
+                 MS_RDONLY | MS_REMOUNT, 0);
+}
