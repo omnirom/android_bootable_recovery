@@ -673,7 +673,7 @@ prompt_and_wait() {
 
 static void
 print_property(const char *key, const char *name, void *cookie) {
-    fprintf(stderr, "%s=%s\n", key, name);
+    printf("%s=%s\n", key, name);
 }
 
 int
@@ -683,7 +683,7 @@ main(int argc, char **argv) {
     // If these fail, there's not really anywhere to complain...
     freopen(TEMPORARY_LOG_FILE, "a", stdout); setbuf(stdout, NULL);
     freopen(TEMPORARY_LOG_FILE, "a", stderr); setbuf(stderr, NULL);
-    fprintf(stderr, "Starting recovery on %s", ctime(&start));
+    printf("Starting recovery on %s", ctime(&start));
 
     ui_init();
     get_args(&argc, &argv);
@@ -714,14 +714,14 @@ main(int argc, char **argv) {
 
     device_recovery_start();
 
-    fprintf(stderr, "Command:");
+    printf("Command:");
     for (arg = 0; arg < argc; arg++) {
-        fprintf(stderr, " \"%s\"", argv[arg]);
+        printf(" \"%s\"", argv[arg]);
     }
-    fprintf(stderr, "\n\n");
+    printf("\n\n");
 
     property_list(print_property, NULL);
-    fprintf(stderr, "\n");
+    printf("\n");
 
     int status = INSTALL_SUCCESS;
 
