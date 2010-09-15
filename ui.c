@@ -29,7 +29,7 @@
 #include "minui/minui.h"
 #include "recovery_ui.h"
 
-#define MAX_COLS 64
+#define MAX_COLS 96
 #define MAX_ROWS 32
 
 #define CHAR_WIDTH 10
