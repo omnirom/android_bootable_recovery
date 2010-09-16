@@ -53,7 +53,7 @@ static const struct option OPTIONS[] = {
 static const char *COMMAND_FILE = "CACHE:recovery/command";
 static const char *INTENT_FILE = "CACHE:recovery/intent";
 static const char *LOG_FILE = "CACHE:recovery/log";
-static const char *EXT_ROOT = "EXT:";
+static const char *SDCARD_ROOT = "SDCARD:";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
 
@@ -477,14 +477,6 @@ static int compare_string(const void* a, const void* b) {
 
 static int
 sdcard_directory(const char* root_path) {
-    // Mount the sdcard when the package selection menu is enabled so
-    // you can "adb push" packages to the sdcard and immediately
-    // install them.
-    if (ensure_root_path_mounted(EXT_ROOT) < 0) {
-        ui_print("Failed to mount external storage.\n");
-        return INSTALL_ERROR;
-    }
-
     const char* MENU_HEADERS[] = { "Choose a package to install:",
                                    root_path,
                                    "",
@@ -495,7 +487,6 @@ sdcard_directory(const char* root_path) {
     d = opendir(translate_root_path(root_path, path, sizeof(path)));
     if (d == NULL) {
         LOGE("error opening %s: %s\n", path, strerror(errno));
-        ensure_root_path_unmounted(EXT_ROOT);
         return 0;
     }
 
@@ -552,7 +543,7 @@ sdcard_directory(const char* root_path) {
     z_size += d_size;
     zips[z_size] = NULL;
 
-    int result = INSTALL_CORRUPT;
+    int result;
     int chosen_item = 0;
     do {
         chosen_item = get_menu_selection(headers, zips, 1, chosen_item);
@@ -578,12 +569,8 @@ sdcard_directory(const char* root_path) {
             strlcat(new_path, item, PATH_MAX);
 
             ui_print("\n-- Install %s ...\n", new_path);
-            char* copy = copy_sideloaded_package(new_path);
-            if (copy != NULL) {
-                set_sdcard_update_bootloader_message();
-                result = install_package(copy);
-                free(copy);
-            }
+            set_sdcard_update_bootloader_message();
+            result = install_package(new_path);
             break;
         }
     } while (true);
@@ -593,7 +580,6 @@ sdcard_directory(const char* root_path) {
     free(zips);
     free(headers);
 
-    ensure_root_path_unmounted(EXT_ROOT);
     return result;
 }
 
@@ -667,9 +653,9 @@ prompt_and_wait() {
                 if (!ui_text_visible()) return;
                 break;
 
-            case ITEM_APPLY_EXT:
+            case ITEM_APPLY_SDCARD:
                 ;
-                int status = sdcard_directory(EXT_ROOT);
+                int status = sdcard_directory(SDCARD_ROOT);
                 if (status >= 0) {
                     if (status != INSTALL_SUCCESS) {
                         ui_set_background(BACKGROUND_ICON_ERROR);
@@ -792,6 +778,9 @@ main(int argc, char **argv) {
 
     if (status != INSTALL_SUCCESS) ui_set_background(BACKGROUND_ICON_ERROR);
     if (status != INSTALL_SUCCESS || ui_text_visible()) {
+        // Mount the sdcard when the menu is enabled so you can "adb
+        // push" packages to the sdcard and immediately install them.
+        ensure_root_path_mounted(SDCARD_ROOT);
         prompt_and_wait();
     }
 
