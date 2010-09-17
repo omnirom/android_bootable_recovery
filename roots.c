@@ -45,15 +45,10 @@ static const char g_package_file[] = "@\0g_package_file";
 static const char g_ramdisk[] = "@\0g_ramdisk";
 
 static RootInfo g_roots[] = {
-    { "BOOT:", g_mtd_device, NULL, "boot", NULL, g_raw },
     { "CACHE:", g_mtd_device, NULL, "cache", "/cache", "yaffs2" },
     { "DATA:", g_mtd_device, NULL, "userdata", "/data", "yaffs2" },
     { "MISC:", g_mtd_device, NULL, "misc", NULL, g_raw },
-    { "PACKAGE:", NULL, NULL, NULL, NULL, g_package_file },
-    { "RECOVERY:", g_mtd_device, NULL, "recovery", "/", g_raw },
     { "SDCARD:", "/dev/block/mmcblk0p1", "/dev/block/mmcblk0", NULL, "/sdcard", "vfat" },
-    { "SYSTEM:", g_mtd_device, NULL, "system", "/system", "yaffs2" },
-    { "MBM:", g_mtd_device, NULL, "mbm", NULL, g_raw },
     { "TMP:", NULL, NULL, NULL, "/tmp", g_ramdisk },
 };
 #define NUM_ROOTS (sizeof(g_roots) / sizeof(g_roots[0]))
@@ -83,56 +78,6 @@ get_root_info_for_path(const char *root_path)
         }
     }
     return NULL;
-}
-
-static const ZipArchive *g_package = NULL;
-static char *g_package_path = NULL;
-
-int
-register_package_root(const ZipArchive *package, const char *package_path)
-{
-    if (package != NULL) {
-        package_path = strdup(package_path);
-        if (package_path == NULL) {
-            return -1;
-        }
-        g_package_path = (char *)package_path;
-    } else {
-        free(g_package_path);
-        g_package_path = NULL;
-    }
-    g_package = package;
-    return 0;
-}
-
-int
-is_package_root_path(const char *root_path)
-{
-    const RootInfo *info = get_root_info_for_path(root_path);
-    return info != NULL && info->filesystem == g_package_file;
-}
-
-const char *
-translate_package_root_path(const char *root_path,
-        char *out_buf, size_t out_buf_len, const ZipArchive **out_package)
-{
-    const RootInfo *info = get_root_info_for_path(root_path);
-    if (info == NULL || info->filesystem != g_package_file) {
-        return NULL;
-    }
-
-    /* Strip the package root off of the path.
-     */
-    size_t root_len = strlen(info->name);
-    root_path += root_len;
-    size_t root_path_len = strlen(root_path);
-
-    if (out_buf_len < root_path_len + 1) {
-        return NULL;
-    }
-    strcpy(out_buf, root_path);
-    *out_package = g_package;
-    return out_buf;
 }
 
 /* Takes a string like "SYSTEM:lib" and turns it into a string
