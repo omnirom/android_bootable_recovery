@@ -159,17 +159,6 @@ try_update_binary(const char *path, ZipArchive *zip) {
     return INSTALL_SUCCESS;
 }
 
-static int
-handle_update_package(const char *path, ZipArchive *zip)
-{
-    // Update should take the rest of the progress bar.
-    ui_print("Installing update...\n");
-
-    int result = try_update_binary(path, zip);
-    register_package_root(NULL, NULL);  // Unregister package root
-    return result;
-}
-
 // Reads a file containing one or more public keys as produced by
 // DumpPublicKey:  this is an RSAPublicKey struct as it would appear
 // as a C source literal, eg:
@@ -300,6 +289,6 @@ install_package(const char *root_path)
 
     /* Verify and install the contents of the package.
      */
-    int status = handle_update_package(path, &zip);
-    return status;
+    ui_print("Installing update...\n");
+    return try_update_binary(path, &zip);
 }

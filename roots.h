@@ -24,26 +24,12 @@
  * components, like "SYSTEM:a/b/c".
  */
 
-/* Associate this package with the package root "PKG:".
- */
-int register_package_root(const ZipArchive *package, const char *package_path);
-
-/* Returns non-zero iff root_path points inside a package.
- */
-int is_package_root_path(const char *root_path);
-
 /* Takes a string like "SYSTEM:lib" and turns it into a string
  * like "/system/lib".  The translated path is put in out_buf,
  * and out_buf is returned if the translation succeeded.
  */
 const char *translate_root_path(const char *root_path,
         char *out_buf, size_t out_buf_len);
-
-/* Takes a string like "PKG:lib/libc.so" and returns a pointer to
- * the containing zip file and a path like "lib/libc.so".
- */
-const char *translate_package_root_path(const char *root_path,
-        char *out_buf, size_t out_buf_len, const ZipArchive **out_package);
 
 /* Returns negative on error, positive if it's mounted, zero if it isn't.
  */
