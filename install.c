@@ -234,26 +234,19 @@ exit:
 }
 
 int
-install_package(const char *root_path)
+install_package(const char *path)
 {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     ui_print("Finding update package...\n");
     ui_show_indeterminate_progress();
-    LOGI("Update location: %s\n", root_path);
+    LOGI("Update location: %s\n", path);
 
-    if (ensure_root_path_mounted(root_path) != 0) {
-        LOGE("Can't mount %s\n", root_path);
-        return INSTALL_CORRUPT;
-    }
-
-    char path[PATH_MAX] = "";
-    if (translate_root_path(root_path, path, sizeof(path)) == NULL) {
-        LOGE("Bad path %s\n", root_path);
+    if (ensure_path_mounted(path) != 0) {
+        LOGE("Can't mount %s\n", path);
         return INSTALL_CORRUPT;
     }
 
     ui_print("Opening update package...\n");
-    LOGI("Update file path: %s\n", path);
 
     int numKeys;
     RSAPublicKey* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);

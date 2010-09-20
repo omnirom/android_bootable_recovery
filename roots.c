@@ -20,330 +20,213 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "mtdutils/mtdutils.h"
 #include "mtdutils/mounts.h"
-
-#ifdef USE_EXT4
-#include "make_ext4fs.h"
-#endif
-
-#include "minzip/Zip.h"
 #include "roots.h"
 #include "common.h"
+#include "make_ext4fs.h"
 
-typedef struct {
-    const char *name;
-    const char *device;
-    const char *device2;  // If the first one doesn't work (may be NULL)
-    const char *partition_name;
-    const char *mount_point;
-    const char *filesystem;
-} RootInfo;
+static int num_volumes = 0;
+static Volume* device_volumes = NULL;
 
-/* Canonical pointers.
-xxx may just want to use enums
- */
-static const char g_mtd_device[] = "@\0g_mtd_device";
-static const char g_raw[] = "@\0g_raw";
-static const char g_package_file[] = "@\0g_package_file";
-static const char g_ramdisk[] = "@\0g_ramdisk";
+void load_volume_table() {
+    int alloc = 2;
+    device_volumes = malloc(alloc * sizeof(Volume));
 
-static RootInfo g_roots[] = {
-    { "SDCARD:", "/dev/block/mmcblk0p1", "/dev/block/mmcblk0", NULL, "/sdcard", "vfat" },
-    { "TMP:", NULL, NULL, NULL, "/tmp", g_ramdisk },
-
-#ifdef USE_EXT4
-    { "CACHE:", "/dev/block/platform/sdhci-tegra.3/by-name/cache", NULL, NULL,
-      "/cache", "ext4" },
-    { "DATA:", "/dev/block/platform/sdhci-tegra.3/by-name/userdata", NULL, NULL,
-      "/data", "ext4" },
-    { "EXT:", "/dev/block/sda1", NULL, NULL, "/sdcard", "vfat" },
-#else
-    { "CACHE:", g_mtd_device, NULL, "cache", "/cache", "yaffs2" },
-    { "DATA:", g_mtd_device, NULL, "userdata", "/data", "yaffs2" },
-    { "EXT:", "/dev/block/mmcblk0p1", "/dev/block/mmcblk0", NULL, "/sdcard", "vfat" },
-    { "MISC:", g_mtd_device, NULL, "misc", NULL, g_raw },
-#endif
-
-};
-#define NUM_ROOTS (sizeof(g_roots) / sizeof(g_roots[0]))
-
-static const RootInfo *
-get_root_info_for_path(const char *root_path)
-{
-    const char *c;
-
-    /* Find the first colon.
-     */
-    c = root_path;
-    while (*c != '\0' && *c != ':') {
-        c++;
+    FILE* fstab = fopen("/etc/recovery.fstab", "r");
+    if (fstab == NULL) {
+        LOGE("failed to open /etc/recovery.fstab (%s)\n", strerror(errno));
+        return;
     }
-    if (*c == '\0') {
-        return NULL;
+
+    char buffer[1024];
+    int i;
+    while (fgets(buffer, sizeof(buffer)-1, fstab)) {
+        for (i = 0; buffer[i] && isspace(buffer[i]); ++i);
+        if (buffer[i] == '\0' || buffer[i] == '#') continue;
+
+        char* original = strdup(buffer);
+
+        char* mount_point = strtok(buffer+i, " \t\n");
+        char* fs_type = strtok(NULL, " \t\n");
+        char* device = strtok(NULL, " \t\n");
+        // lines may optionally have a second device, to use if
+        // mounting the first one fails.
+        char* device2 = strtok(NULL, " \t\n");
+
+        if (mount_point && fs_type && device) {
+            while (num_volumes >= alloc) {
+                alloc *= 2;
+                device_volumes = realloc(device_volumes, alloc*sizeof(Volume));
+            }
+            device_volumes[num_volumes].mount_point = strdup(mount_point);
+            device_volumes[num_volumes].fs_type = strdup(fs_type);
+            device_volumes[num_volumes].device = strdup(device);
+            device_volumes[num_volumes].device2 =
+                device2 ? strdup(device2) : NULL;
+            ++num_volumes;
+        } else {
+            LOGE("skipping malformed recovery.fstab line: %s\n", original);
+        }
+        free(original);
     }
-    size_t len = c - root_path + 1;
-    size_t i;
-    for (i = 0; i < NUM_ROOTS; i++) {
-        RootInfo *info = &g_roots[i];
-        if (strncmp(info->name, root_path, len) == 0) {
-            return info;
+
+    fclose(fstab);
+
+    printf("recovery filesystem table\n");
+    printf("=========================\n");
+    for (i = 0; i < num_volumes; ++i) {
+        Volume* v = &device_volumes[i];
+        printf("  %d %s %s %s %s\n", i, v->mount_point, v->fs_type,
+               v->device, v->device2);
+    }
+    printf("\n");
+}
+
+Volume* volume_for_path(const char* path) {
+    int i;
+    for (i = 0; i < num_volumes; ++i) {
+        Volume* v = device_volumes+i;
+        int len = strlen(v->mount_point);
+        if (strncmp(path, v->mount_point, len) == 0 &&
+            (path[len] == '\0' || path[len] == '/')) {
+            return v;
         }
     }
     return NULL;
 }
 
-/* Takes a string like "SYSTEM:lib" and turns it into a string
- * like "/system/lib".  The translated path is put in out_buf,
- * and out_buf is returned if the translation succeeded.
- */
-const char *
-translate_root_path(const char *root_path, char *out_buf, size_t out_buf_len)
-{
-    if (out_buf_len < 1) {
-        return NULL;
-    }
-
-    const RootInfo *info = get_root_info_for_path(root_path);
-    if (info == NULL || info->mount_point == NULL) {
-        return NULL;
-    }
-
-    /* Find the relative part of the non-root part of the path.
-     */
-    root_path += strlen(info->name);  // strip off the "root:"
-    while (*root_path != '\0' && *root_path == '/') {
-        root_path++;
-    }
-
-    size_t mp_len = strlen(info->mount_point);
-    size_t rp_len = strlen(root_path);
-    if (mp_len + 1 + rp_len + 1 > out_buf_len) {
-        return NULL;
-    }
-
-    /* Glue the mount point to the relative part of the path.
-     */
-    memcpy(out_buf, info->mount_point, mp_len);
-    if (out_buf[mp_len - 1] != '/') out_buf[mp_len++] = '/';
-
-    memcpy(out_buf + mp_len, root_path, rp_len);
-    out_buf[mp_len + rp_len] = '\0';
-
-    return out_buf;
-}
-
-static int
-internal_root_mounted(const RootInfo *info)
-{
-    if (info->mount_point == NULL) {
+int ensure_path_mounted(const char* path) {
+    Volume* v = volume_for_path(path);
+    if (v == NULL) {
+        LOGE("unknown volume for path [%s]\n", path);
         return -1;
     }
-    if (info->filesystem == g_ramdisk) {
-      return 0;
+
+    int result;
+    result = scan_mounted_volumes();
+    if (result < 0) {
+        LOGE("failed to scan mounted volumes\n");
+        return -1;
     }
 
-    /* See if this root is already mounted.
-     */
-    int ret = scan_mounted_volumes();
-    if (ret < 0) {
-        return ret;
-    }
-    const MountedVolume *volume;
-    volume = find_mounted_volume_by_mount_point(info->mount_point);
-    if (volume != NULL) {
-        /* It's already mounted.
-         */
+    const MountedVolume* mv =
+        find_mounted_volume_by_mount_point(v->mount_point);
+    if (mv) {
+        // volume is already mounted
         return 0;
     }
+
+    mkdir(v->mount_point, 0755);  // in case it doesn't already exist
+
+    if (strcmp(v->fs_type, "yaffs2") == 0) {
+        // mount an MTD partition as a YAFFS2 filesystem.
+        mtd_scan_partitions();
+        const MtdPartition* partition;
+        partition = mtd_find_partition_by_name(v->device);
+        if (partition == NULL) {
+            LOGE("failed to find \"%s\" partition to mount at \"%s\"\n",
+                 v->device, v->mount_point);
+            return -1;
+        }
+        return mtd_mount_partition(partition, v->mount_point, v->fs_type, 0);
+    } else if (strcmp(v->fs_type, "ext4") == 0 ||
+               strcmp(v->fs_type, "vfat") == 0) {
+        result = mount(v->device, v->mount_point, v->fs_type,
+                       MS_NOATIME | MS_NODEV | MS_NODIRATIME, "");
+        if (result == 0) return 0;
+
+        if (v->device2) {
+            LOGW("failed to mount %s (%s); trying %s\n",
+                 v->device, strerror(errno), v->device2);
+            result = mount(v->device2, v->mount_point, v->fs_type,
+                           MS_NOATIME | MS_NODEV | MS_NODIRATIME, "");
+            if (result == 0) return 0;
+        }
+
+        LOGE("failed to mount %s (%s)\n", v->mount_point, strerror(errno));
+        return -1;
+    }
+
+    LOGE("unknown fs_type \"%s\" for %s\n", v->fs_type, v->mount_point);
     return -1;
 }
 
-int
-is_root_path_mounted(const char *root_path)
-{
-    const RootInfo *info = get_root_info_for_path(root_path);
-    if (info == NULL) {
-        return -1;
-    }
-    return internal_root_mounted(info) >= 0;
-}
-
-int
-ensure_root_path_mounted(const char *root_path)
-{
-    const RootInfo *info = get_root_info_for_path(root_path);
-    if (info == NULL) {
+int ensure_path_unmounted(const char* path) {
+    Volume* v = volume_for_path(path);
+    if (v == NULL) {
+        LOGE("unknown volume for path [%s]\n", path);
         return -1;
     }
 
-    int ret = internal_root_mounted(info);
-    if (ret >= 0) {
-        /* It's already mounted.
-         */
+    int result;
+    result = scan_mounted_volumes();
+    if (result < 0) {
+        LOGE("failed to scan mounted volumes\n");
+        return -1;
+    }
+
+    const MountedVolume* mv =
+        find_mounted_volume_by_mount_point(v->mount_point);
+    if (mv == NULL) {
+        // volume is already unmounted
         return 0;
     }
 
-    /* It's not mounted.
-     */
-    if (info->device == g_mtd_device) {
-        if (info->partition_name == NULL) {
-            return -1;
-        }
-//TODO: make the mtd stuff scan once when it needs to
+    return unmount_mounted_volume(mv);
+}
+
+int format_volume(const char* volume) {
+    Volume* v = volume_for_path(volume);
+    if (v == NULL) {
+        LOGE("unknown volume \"%s\"\n", volume);
+        return -1;
+    }
+    if (strcmp(v->mount_point, volume) != 0) {
+        LOGE("can't give path \"%s\" to format_volume\n", volume);
+        return -1;
+    }
+
+    if (ensure_path_unmounted(volume) != 0) {
+        LOGE("format_volume failed to unmount \"%s\"\n", v->mount_point);
+        return -1;
+    }
+
+    if (strcmp(v->fs_type, "yaffs2") == 0 || strcmp(v->fs_type, "mtd") == 0) {
         mtd_scan_partitions();
-        const MtdPartition *partition;
-        partition = mtd_find_partition_by_name(info->partition_name);
+        const MtdPartition* partition = mtd_find_partition_by_name(v->device);
         if (partition == NULL) {
+            LOGE("format_volume: no MTD partition \"%s\"\n", v->device);
             return -1;
         }
-        return mtd_mount_partition(partition, info->mount_point,
-                info->filesystem, 0);
-    }
 
-    if (info->device == NULL || info->mount_point == NULL ||
-        info->filesystem == NULL ||
-        info->filesystem == g_raw ||
-        info->filesystem == g_package_file) {
-        return -1;
-    }
-
-    mkdir(info->mount_point, 0755);  // in case it doesn't already exist
-    if (mount(info->device, info->mount_point, info->filesystem,
-              MS_NOATIME | MS_NODEV | MS_NODIRATIME, "")) {
-        if (info->device2 == NULL) {
-            LOGE("Can't mount %s\n(%s)\n", info->device, strerror(errno));
+        MtdWriteContext *write = mtd_write_partition(partition);
+        if (write == NULL) {
+            LOGW("format_volume: can't open MTD \"%s\"\n", v->device);
             return -1;
-        } else if (mount(info->device2, info->mount_point, info->filesystem,
-                MS_NOATIME | MS_NODEV | MS_NODIRATIME, "")) {
-            LOGE("Can't mount %s (or %s)\n(%s)\n",
-                    info->device, info->device2, strerror(errno));
+        } else if (mtd_erase_blocks(write, -1) == (off_t) -1) {
+            LOGW("format_volume: can't erase MTD \"%s\"\n", v->device);
+            mtd_write_close(write);
+            return -1;
+        } else if (mtd_write_close(write)) {
+            LOGW("format_volume: can't close MTD \"%s\"\n", v->device);
             return -1;
         }
-    }
-    return 0;
-}
-
-int
-ensure_root_path_unmounted(const char *root_path)
-{
-    const RootInfo *info = get_root_info_for_path(root_path);
-    if (info == NULL) {
-        return -1;
-    }
-    if (info->mount_point == NULL) {
-        /* This root can't be mounted, so by definition it isn't.
-         */
-        return 0;
-    }
-//xxx if TMP: (or similar) just return error
-
-    /* See if this root is already mounted.
-     */
-    int ret = scan_mounted_volumes();
-    if (ret < 0) {
-        return ret;
-    }
-    const MountedVolume *volume;
-    volume = find_mounted_volume_by_mount_point(info->mount_point);
-    if (volume == NULL) {
-        /* It's not mounted.
-         */
         return 0;
     }
 
-    return unmount_mounted_volume(volume);
-}
-
-const MtdPartition *
-get_root_mtd_partition(const char *root_path)
-{
-    const RootInfo *info = get_root_info_for_path(root_path);
-    if (info == NULL || info->device != g_mtd_device ||
-            info->partition_name == NULL)
-    {
-        return NULL;
-    }
-    mtd_scan_partitions();
-    return mtd_find_partition_by_name(info->partition_name);
-}
-
-int
-format_root_device(const char *root)
-{
-    /* Be a little safer here; require that "root" is just
-     * a device with no relative path after it.
-     */
-    const char *c = root;
-    while (*c != '\0' && *c != ':') {
-        c++;
-    }
-    if (c[0] != ':' || c[1] != '\0') {
-        LOGW("format_root_device: bad root name \"%s\"\n", root);
-        return -1;
-    }
-
-    const RootInfo *info = get_root_info_for_path(root);
-    if (info == NULL || info->device == NULL) {
-        LOGW("format_root_device: can't resolve \"%s\"\n", root);
-        return -1;
-    }
-    if (info->mount_point != NULL) {
-        /* Don't try to format a mounted device.
-         */
-        int ret = ensure_root_path_unmounted(root);
-        if (ret < 0) {
-            LOGW("format_root_device: can't unmount \"%s\"\n", root);
-            return ret;
-        }
-    }
-
-    /* Format the device.
-     */
-    if (info->device == g_mtd_device) {
-        mtd_scan_partitions();
-        const MtdPartition *partition;
-        partition = mtd_find_partition_by_name(info->partition_name);
-        if (partition == NULL) {
-            LOGW("format_root_device: can't find mtd partition \"%s\"\n",
-                    info->partition_name);
-            return -1;
-        }
-        if (info->filesystem == g_raw || !strcmp(info->filesystem, "yaffs2")) {
-            MtdWriteContext *write = mtd_write_partition(partition);
-            if (write == NULL) {
-                LOGW("format_root_device: can't open \"%s\"\n", root);
-                return -1;
-            } else if (mtd_erase_blocks(write, -1) == (off_t) -1) {
-                LOGW("format_root_device: can't erase \"%s\"\n", root);
-                mtd_write_close(write);
-                return -1;
-            } else if (mtd_write_close(write)) {
-                LOGW("format_root_device: can't close \"%s\"\n", root);
-                return -1;
-            } else {
-                return 0;
-            }
-        }
-    }
-
-#ifdef USE_EXT4
-    if (strcmp(info->filesystem, "ext4") == 0) {
-        LOGW("starting to reformat ext4\n");
+    if (strcmp(v->fs_type, "ext4") == 0) {
         reset_ext4fs_info();
-        int result = make_ext4fs(info->device, NULL, NULL, 0, 0, 0);
-        LOGW("finished reformat ext4: result = %d\n", result);
+        int result = make_ext4fs(v->device, NULL, NULL, 0, 0, 0);
         if (result != 0) {
-            LOGW("make_ext4fs failed: %d\n", result);
+            LOGE("format_volume: make_extf4fs failed on %s\n", v->device);
             return -1;
         }
         return 0;
     }
-#endif
 
-//TODO: handle other device types (sdcard, etc.)
-
-    LOGW("format_root_device: unknown device \"%s\"\n", root);
+    LOGE("format_volume: fs_type \"%s\" unsupported\n", v->fs_type);
     return -1;
 }
