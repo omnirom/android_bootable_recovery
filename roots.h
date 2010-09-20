@@ -17,33 +17,25 @@
 #ifndef RECOVERY_ROOTS_H_
 #define RECOVERY_ROOTS_H_
 
-#include "minzip/Zip.h"
-#include "mtdutils/mtdutils.h"
+#include "common.h"
 
-/* Any of the "root_path" arguments can be paths with relative
- * components, like "SYSTEM:a/b/c".
- */
+// Load and parse volume data from /etc/recovery.fstab.
+void load_volume_table();
 
-/* Takes a string like "SYSTEM:lib" and turns it into a string
- * like "/system/lib".  The translated path is put in out_buf,
- * and out_buf is returned if the translation succeeded.
- */
-const char *translate_root_path(const char *root_path,
-        char *out_buf, size_t out_buf_len);
+// Return the Volume* record for this path (or NULL).
+Volume* volume_for_path(const char* path);
 
-/* Returns negative on error, positive if it's mounted, zero if it isn't.
- */
-int is_root_path_mounted(const char *root_path);
+// Make sure that the volume 'path' is on is mounted.  Returns 0 on
+// success (volume is mounted).
+int ensure_path_mounted(const char* path);
 
-int ensure_root_path_mounted(const char *root_path);
+// Make sure that the volume 'path' is on is mounted.  Returns 0 on
+// success (volume is unmounted);
+int ensure_path_unmounted(const char* path);
 
-int ensure_root_path_unmounted(const char *root_path);
-
-const MtdPartition *get_root_mtd_partition(const char *root_path);
-
-/* "root" must be the exact name of the root; no relative path is permitted.
- * If the named root is mounted, this will attempt to unmount it first.
- */
-int format_root_device(const char *root);
+// Reformat the given volume (must be the mount point only, eg
+// "/cache"), no paths permitted.  Attempts to unmount the volume if
+// it is mounted.
+int format_volume(const char* volume);
 
 #endif  // RECOVERY_ROOTS_H_

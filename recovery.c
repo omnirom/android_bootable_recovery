@@ -50,12 +50,12 @@ static const struct option OPTIONS[] = {
   { NULL, 0, NULL, 0 },
 };
 
-static const char *COMMAND_FILE = "CACHE:recovery/command";
-static const char *INTENT_FILE = "CACHE:recovery/intent";
-static const char *LOG_FILE = "CACHE:recovery/log";
-static const char *SDCARD_ROOT = "SDCARD:";
+static const char *COMMAND_FILE = "/cache/recovery/command";
+static const char *INTENT_FILE = "/cache/recovery/intent";
+static const char *LOG_FILE = "/cache/recovery/log";
+static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
-static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
+static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -65,7 +65,7 @@ static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
  *
  * The arguments which may be supplied in the recovery.command file:
  *   --send_intent=anystring - write the text out to recovery.intent
- *   --update_package=root:path - verify install an OTA package file
+ *   --update_package=path - verify install an OTA package file
  *   --wipe_data - erase user data (and cache), then reboot
  *   --wipe_cache - wipe cache (but not user data), then reboot
  *   --set_encrypted_filesystem=on|off - enables / diasables encrypted fs
@@ -80,8 +80,8 @@ static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
  * 3. main system reboots into recovery
  * 4. get_args() writes BCB with "boot-recovery" and "--wipe_data"
  *    -- after this, rebooting will restart the erase --
- * 5. erase_root() reformats /data
- * 6. erase_root() reformats /cache
+ * 5. erase_volume() reformats /data
+ * 6. erase_volume() reformats /cache
  * 7. finish_recovery() erases BCB
  *    -- after this, rebooting will restart the main system --
  * 8. main() calls reboot() to boot main system
@@ -109,7 +109,7 @@ static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
  *    8d. bootloader tries to flash firmware
  *    8e. bootloader writes BCB with "boot-recovery" (keeping "--wipe_cache")
  *        -- after this, rebooting will reformat cache & restart main system --
- *    8f. erase_root() reformats /cache
+ *    8f. erase_volume() reformats /cache
  *    8g. finish_recovery() erases BCB
  *        -- after this, rebooting will (try to) restart the main system --
  * 9. main() calls reboot() to boot main system
@@ -125,8 +125,8 @@ static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
  * 5. read_encrypted_fs_info() retrieves encrypted file systems settings from /data
  *    Settings include: property to specify the Encrypted FS istatus and
  *    FS encryption key if enabled (not yet implemented)
- * 6. erase_root() reformats /data
- * 7. erase_root() reformats /cache
+ * 6. erase_volume() reformats /data
+ * 7. erase_volume() reformats /cache
  * 8. restore_encrypted_fs_info() writes required encrypted file systems settings to /data
  *    Settings include: property to specify the Encrypted FS status and
  *    FS encryption key if enabled (not yet implemented)
@@ -138,17 +138,11 @@ static const char *SIDELOAD_TEMP_DIR = "TMP:sideload";
 static const int MAX_ARG_LENGTH = 4096;
 static const int MAX_ARGS = 100;
 
-// open a file given in root:path format, mounting partitions as necessary
+// open a given path, mounting partitions as necessary
 static FILE*
-fopen_root_path(const char *root_path, const char *mode) {
-    if (ensure_root_path_mounted(root_path) != 0) {
-        LOGE("Can't mount %s\n", root_path);
-        return NULL;
-    }
-
-    char path[PATH_MAX] = "";
-    if (translate_root_path(root_path, path, sizeof(path)) == NULL) {
-        LOGE("Bad path %s\n", root_path);
+fopen_path(const char *path, const char *mode) {
+    if (ensure_path_mounted(path) != 0) {
+        LOGE("Can't mount %s\n", path);
         return NULL;
     }
 
@@ -205,7 +199,7 @@ get_args(int *argc, char ***argv) {
 
     // --- if that doesn't work, try the command file
     if (*argc <= 1) {
-        FILE *fp = fopen_root_path(COMMAND_FILE, "r");
+        FILE *fp = fopen_path(COMMAND_FILE, "r");
         if (fp != NULL) {
             char *argv0 = (*argv)[0];
             *argv = (char **) malloc(sizeof(char *) * MAX_ARGS);
@@ -251,7 +245,7 @@ static void
 finish_recovery(const char *send_intent) {
     // By this point, we're ready to return to the main system...
     if (send_intent != NULL) {
-        FILE *fp = fopen_root_path(INTENT_FILE, "w");
+        FILE *fp = fopen_path(INTENT_FILE, "w");
         if (fp == NULL) {
             LOGE("Can't open %s\n", INTENT_FILE);
         } else {
@@ -261,7 +255,7 @@ finish_recovery(const char *send_intent) {
     }
 
     // Copy logs to cache so the system can find out what happened.
-    FILE *log = fopen_root_path(LOG_FILE, "a");
+    FILE *log = fopen_path(LOG_FILE, "a");
     if (log == NULL) {
         LOGE("Can't open %s\n", LOG_FILE);
     } else {
@@ -285,10 +279,8 @@ finish_recovery(const char *send_intent) {
     set_bootloader_message(&boot);
 
     // Remove the command file, so recovery won't repeat indefinitely.
-    char path[PATH_MAX] = "";
-    if (ensure_root_path_mounted(COMMAND_FILE) != 0 ||
-        translate_root_path(COMMAND_FILE, path, sizeof(path)) == NULL ||
-        (unlink(path) && errno != ENOENT)) {
+    if (ensure_path_mounted(COMMAND_FILE) != 0 ||
+        (unlink(COMMAND_FILE) && errno != ENOENT)) {
         LOGW("Can't unlink %s\n", COMMAND_FILE);
     }
 
@@ -296,64 +288,54 @@ finish_recovery(const char *send_intent) {
 }
 
 static int
-erase_root(const char *root) {
+erase_volume(const char *volume) {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     ui_show_indeterminate_progress();
-    ui_print("Formatting %s...\n", root);
-    return format_root_device(root);
+    ui_print("Formatting %s...\n", volume);
+    return format_volume(volume);
 }
 
 static char*
-copy_sideloaded_package(const char* original_root_path) {
-  if (ensure_root_path_mounted(original_root_path) != 0) {
-    LOGE("Can't mount %s\n", original_root_path);
+copy_sideloaded_package(const char* original_path) {
+  if (ensure_path_mounted(original_path) != 0) {
+    LOGE("Can't mount %s\n", original_path);
     return NULL;
   }
 
-  char original_path[PATH_MAX] = "";
-  if (translate_root_path(original_root_path, original_path,
-                          sizeof(original_path)) == NULL) {
-    LOGE("Bad path %s\n", original_root_path);
-    return NULL;
-  }
-
-  if (ensure_root_path_mounted(SIDELOAD_TEMP_DIR) != 0) {
+  if (ensure_path_mounted(SIDELOAD_TEMP_DIR) != 0) {
     LOGE("Can't mount %s\n", SIDELOAD_TEMP_DIR);
     return NULL;
   }
 
-  char copy_path[PATH_MAX] = "";
-  if (translate_root_path(SIDELOAD_TEMP_DIR, copy_path,
-                          sizeof(copy_path)) == NULL) {
-    LOGE("Bad path %s\n", SIDELOAD_TEMP_DIR);
-    return NULL;
-  }
-
-  if (mkdir(copy_path, 0700) != 0) {
+  if (mkdir(SIDELOAD_TEMP_DIR, 0700) != 0) {
     if (errno != EEXIST) {
       LOGE("Can't mkdir %s (%s)\n", SIDELOAD_TEMP_DIR, strerror(errno));
       return NULL;
     }
   }
 
+  // verify that SIDELOAD_TEMP_DIR is exactly what we expect: a
+  // directory, owned by root, readable and writable only by root.
   struct stat st;
-  if (stat(copy_path, &st) != 0) {
-    LOGE("failed to stat %s (%s)\n", copy_path, strerror(errno));
+  if (stat(SIDELOAD_TEMP_DIR, &st) != 0) {
+    LOGE("failed to stat %s (%s)\n", SIDELOAD_TEMP_DIR, strerror(errno));
     return NULL;
   }
   if (!S_ISDIR(st.st_mode)) {
-    LOGE("%s isn't a directory\n", copy_path);
+    LOGE("%s isn't a directory\n", SIDELOAD_TEMP_DIR);
     return NULL;
   }
   if ((st.st_mode & 0777) != 0700) {
-    LOGE("%s has perms %o\n", copy_path, st.st_mode);
+    LOGE("%s has perms %o\n", SIDELOAD_TEMP_DIR, st.st_mode);
     return NULL;
   }
   if (st.st_uid != 0) {
-    LOGE("%s owned by %lu; not root\n", copy_path, st.st_uid);
+    LOGE("%s owned by %lu; not root\n", SIDELOAD_TEMP_DIR, st.st_uid);
     return NULL;
   }
 
+  char copy_path[PATH_MAX];
+  strcpy(copy_path, SIDELOAD_TEMP_DIR);
   strcat(copy_path, "/package.zip");
 
   char* buffer = malloc(BUFSIZ);
@@ -400,10 +382,7 @@ copy_sideloaded_package(const char* original_root_path) {
     return NULL;
   }
 
-  char* copy_root_path = malloc(strlen(SIDELOAD_TEMP_DIR) + 20);
-  strcpy(copy_root_path, SIDELOAD_TEMP_DIR);
-  strcat(copy_root_path, "/package.zip");
-  return copy_root_path;
+  return strdup(copy_path);
 }
 
 static char**
@@ -476,15 +455,14 @@ static int compare_string(const void* a, const void* b) {
 }
 
 static int
-sdcard_directory(const char* root_path) {
+sdcard_directory(const char* path) {
     const char* MENU_HEADERS[] = { "Choose a package to install:",
-                                   root_path,
+                                   path,
                                    "",
                                    NULL };
     DIR* d;
     struct dirent* de;
-    char path[PATH_MAX];
-    d = opendir(translate_root_path(root_path, path, sizeof(path)));
+    d = opendir(path);
     if (d == NULL) {
         LOGE("error opening %s: %s\n", path, strerror(errno));
         return 0;
@@ -557,20 +535,28 @@ sdcard_directory(const char* root_path) {
         } else if (item[item_len-1] == '/') {
             // recurse down into a subdirectory
             char new_path[PATH_MAX];
-            strlcpy(new_path, root_path, PATH_MAX);
+            strlcpy(new_path, path, PATH_MAX);
+            strlcat(new_path, "/", PATH_MAX);
             strlcat(new_path, item, PATH_MAX);
+            new_path[strlen(new_path)-1] = '\0';  // truncate the trailing '/'
             result = sdcard_directory(new_path);
             if (result >= 0) break;
         } else {
             // selected a zip file:  attempt to install it, and return
             // the status to the caller.
             char new_path[PATH_MAX];
-            strlcpy(new_path, root_path, PATH_MAX);
+            strlcpy(new_path, path, PATH_MAX);
             strlcat(new_path, item, PATH_MAX);
 
-            ui_print("\n-- Install %s ...\n", new_path);
+            ui_print("\n-- Install %s ...\n", path);
             set_sdcard_update_bootloader_message();
-            result = install_package(new_path);
+            char* copy = copy_sideloaded_package(new_path);
+            if (copy) {
+                result = install_package(copy);
+                free(copy);
+            } else {
+                result = INSTALL_ERROR;
+            }
             break;
         }
     } while (true);
@@ -617,8 +603,8 @@ wipe_data(int confirm) {
 
     ui_print("\n-- Wiping data...\n");
     device_wipe_data();
-    erase_root("DATA:");
-    erase_root("CACHE:");
+    erase_volume("/data");
+    erase_volume("/cache");
     ui_print("Data wipe complete.\n");
 }
 
@@ -648,7 +634,7 @@ prompt_and_wait() {
 
             case ITEM_WIPE_CACHE:
                 ui_print("\n-- Wiping cache...\n");
-                erase_root("CACHE:");
+                erase_volume("/cache");
                 ui_print("Cache wipe complete.\n");
                 if (!ui_text_visible()) return;
                 break;
@@ -686,6 +672,7 @@ main(int argc, char **argv) {
     printf("Starting recovery on %s", ctime(&start));
 
     ui_init();
+    load_volume_table();
     get_args(&argc, &argv);
 
     int previous_runs = 0;
@@ -746,10 +733,10 @@ main(int argc, char **argv) {
         }
 
         if (status != INSTALL_ERROR) {
-            if (erase_root("DATA:")) {
+            if (erase_volume("/data")) {
                 ui_print("Data wipe failed.\n");
                 status = INSTALL_ERROR;
-            } else if (erase_root("CACHE:")) {
+            } else if (erase_volume("/cache")) {
                 ui_print("Cache wipe failed.\n");
                 status = INSTALL_ERROR;
             } else if ((encrypted_fs_data.mode == MODE_ENCRYPTED_FS_ENABLED) &&
@@ -766,11 +753,11 @@ main(int argc, char **argv) {
         if (status != INSTALL_SUCCESS) ui_print("Installation aborted.\n");
     } else if (wipe_data) {
         if (device_wipe_data()) status = INSTALL_ERROR;
-        if (erase_root("DATA:")) status = INSTALL_ERROR;
-        if (wipe_cache && erase_root("CACHE:")) status = INSTALL_ERROR;
+        if (erase_volume("/data")) status = INSTALL_ERROR;
+        if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui_print("Data wipe failed.\n");
     } else if (wipe_cache) {
-        if (wipe_cache && erase_root("CACHE:")) status = INSTALL_ERROR;
+        if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui_print("Cache wipe failed.\n");
     } else {
         status = INSTALL_ERROR;  // No command specified
@@ -780,7 +767,7 @@ main(int argc, char **argv) {
     if (status != INSTALL_SUCCESS || ui_text_visible()) {
         // Mount the sdcard when the menu is enabled so you can "adb
         // push" packages to the sdcard and immediately install them.
-        ensure_root_path_mounted(SDCARD_ROOT);
+        ensure_path_mounted(SDCARD_ROOT);
         prompt_and_wait();
     }
 

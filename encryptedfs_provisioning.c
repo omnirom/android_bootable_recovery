@@ -186,7 +186,7 @@ int write_encrypted_fs_boolean_property(const char *prop_name, int value) {
 int read_encrypted_fs_info(encrypted_fs_info *encrypted_fs_data) {
     int result;
     int value;
-    result = ensure_root_path_mounted("DATA:");
+    result = ensure_path_mounted("/data");
     if (result != 0) {
         LOGE("Secure FS: error mounting userdata partition.");
         return ENCRYPTED_FS_ERROR;
@@ -221,7 +221,7 @@ int read_encrypted_fs_info(encrypted_fs_info *encrypted_fs_data) {
         return ENCRYPTED_FS_ERROR;
     }
 
-    result = ensure_root_path_unmounted("DATA:");
+    result = ensure_path_unmounted("/data");
     if (result != 0) {
         LOGE("Secure FS: error unmounting data partition.");
         return ENCRYPTED_FS_ERROR;
@@ -232,7 +232,7 @@ int read_encrypted_fs_info(encrypted_fs_info *encrypted_fs_data) {
 
 int restore_encrypted_fs_info(encrypted_fs_info *encrypted_fs_data) {
     int result;
-    result = ensure_root_path_mounted("DATA:");
+    result = ensure_path_mounted("/data");
     if (result != 0) {
         LOGE("Secure FS: error mounting userdata partition.");
         return ENCRYPTED_FS_ERROR;
@@ -273,7 +273,7 @@ int restore_encrypted_fs_info(encrypted_fs_info *encrypted_fs_data) {
         return result;
     }
 
-    result = ensure_root_path_unmounted("DATA:");
+    result = ensure_path_unmounted("/data");
     if (result != 0) {
         LOGE("Secure FS: error unmounting data partition.");
         return ENCRYPTED_FS_ERROR;
@@ -281,4 +281,3 @@ int restore_encrypted_fs_info(encrypted_fs_info *encrypted_fs_data) {
 
     return ENCRYPTED_FS_OK;
 }
-
