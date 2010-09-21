@@ -456,6 +456,8 @@ static int compare_string(const void* a, const void* b) {
 
 static int
 sdcard_directory(const char* path) {
+    ensure_path_mounted(SDCARD_ROOT);
+
     const char* MENU_HEADERS[] = { "Choose a package to install:",
                                    path,
                                    "",
@@ -465,6 +467,7 @@ sdcard_directory(const char* path) {
     d = opendir(path);
     if (d == NULL) {
         LOGE("error opening %s: %s\n", path, strerror(errno));
+        ensure_path_unmounted(SDCARD_ROOT);
         return 0;
     }
 
@@ -546,11 +549,13 @@ sdcard_directory(const char* path) {
             // the status to the caller.
             char new_path[PATH_MAX];
             strlcpy(new_path, path, PATH_MAX);
+            strlcat(new_path, "/", PATH_MAX);
             strlcat(new_path, item, PATH_MAX);
 
             ui_print("\n-- Install %s ...\n", path);
             set_sdcard_update_bootloader_message();
             char* copy = copy_sideloaded_package(new_path);
+            ensure_path_unmounted(SDCARD_ROOT);
             if (copy) {
                 result = install_package(copy);
                 free(copy);
@@ -566,6 +571,7 @@ sdcard_directory(const char* path) {
     free(zips);
     free(headers);
 
+    ensure_path_unmounted(SDCARD_ROOT);
     return result;
 }
 
@@ -765,9 +771,6 @@ main(int argc, char **argv) {
 
     if (status != INSTALL_SUCCESS) ui_set_background(BACKGROUND_ICON_ERROR);
     if (status != INSTALL_SUCCESS || ui_text_visible()) {
-        // Mount the sdcard when the menu is enabled so you can "adb
-        // push" packages to the sdcard and immediately install them.
-        ensure_path_mounted(SDCARD_ROOT);
         prompt_and_wait();
     }
 
