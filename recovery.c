@@ -88,7 +88,7 @@ static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
  *
  * OTA INSTALL
  * 1. main system downloads OTA package to /cache/some-filename.zip
- * 2. main system writes "--update_package=CACHE:some-filename.zip"
+ * 2. main system writes "--update_package=/cache/some-filename.zip"
  * 3. main system reboots into recovery
  * 4. get_args() writes BCB with "boot-recovery" and "--update_package=..."
  *    -- after this, rebooting will attempt to reinstall the update --
@@ -711,7 +711,23 @@ main(int argc, char **argv) {
     for (arg = 0; arg < argc; arg++) {
         printf(" \"%s\"", argv[arg]);
     }
-    printf("\n\n");
+    printf("\n");
+
+    if (update_package) {
+        // For backwards compatibility on the cache partition only, if
+        // we're given an old 'root' path "CACHE:foo", change it to
+        // "/cache/foo".
+        if (strncmp(update_package, "CACHE:", 6) == 0) {
+            int len = strlen(update_package) + 10;
+            char* modified_path = malloc(len);
+            strlcpy(modified_path, "/cache/", len);
+            strlcat(modified_path, update_package+6, len);
+            printf("(replacing path \"%s\" with \"%s\")\n",
+                   update_package, modified_path);
+            update_package = modified_path;
+        }
+    }
+    printf("\n");
 
     property_list(print_property, NULL);
     printf("\n");
