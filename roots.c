@@ -35,6 +35,13 @@ void load_volume_table() {
     int alloc = 2;
     device_volumes = malloc(alloc * sizeof(Volume));
 
+    // Insert an entry for /tmp, which is the ramdisk and is always mounted.
+    device_volumes[0].mount_point = "/tmp";
+    device_volumes[0].fs_type = "ramdisk";
+    device_volumes[0].device = NULL;
+    device_volumes[0].device2 = NULL;
+    num_volumes = 1;
+
     FILE* fstab = fopen("/etc/recovery.fstab", "r");
     if (fstab == NULL) {
         LOGE("failed to open /etc/recovery.fstab (%s)\n", strerror(errno));
@@ -104,6 +111,10 @@ int ensure_path_mounted(const char* path) {
         LOGE("unknown volume for path [%s]\n", path);
         return -1;
     }
+    if (strcmp(v->fs_type, "ramdisk") == 0) {
+        // the ramdisk is always mounted.
+        return 0;
+    }
 
     int result;
     result = scan_mounted_volumes();
@@ -160,6 +171,10 @@ int ensure_path_unmounted(const char* path) {
         LOGE("unknown volume for path [%s]\n", path);
         return -1;
     }
+    if (strcmp(v->fs_type, "ramdisk") == 0) {
+        // the ramdisk is always mounted; you can't unmount it.
+        return -1;
+    }
 
     int result;
     result = scan_mounted_volumes();
@@ -182,6 +197,11 @@ int format_volume(const char* volume) {
     Volume* v = volume_for_path(volume);
     if (v == NULL) {
         LOGE("unknown volume \"%s\"\n", volume);
+        return -1;
+    }
+    if (strcmp(v->fs_type, "ramdisk") == 0) {
+        // you can't format the ramdisk.
+        LOGE("can't format_volume \"%s\"", volume);
         return -1;
     }
     if (strcmp(v->mount_point, volume) != 0) {
