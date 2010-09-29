@@ -53,6 +53,7 @@ static const struct option OPTIONS[] = {
 static const char *COMMAND_FILE = "/cache/recovery/command";
 static const char *INTENT_FILE = "/cache/recovery/intent";
 static const char *LOG_FILE = "/cache/recovery/log";
+static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
@@ -237,6 +238,34 @@ set_sdcard_update_bootloader_message() {
     set_bootloader_message(&boot);
 }
 
+// How much of the temp log we have copied to the copy in cache.
+static long tmplog_offset = 0;
+
+static void
+copy_log_file(const char* destination, int append) {
+    FILE *log = fopen_path(destination, append ? "a" : "w");
+    if (log == NULL) {
+        LOGE("Can't open %s\n", destination);
+    } else {
+        FILE *tmplog = fopen(TEMPORARY_LOG_FILE, "r");
+        if (tmplog == NULL) {
+            LOGE("Can't open %s\n", TEMPORARY_LOG_FILE);
+        } else {
+            if (append) {
+                fseek(tmplog, tmplog_offset, SEEK_SET);  // Since last write
+            }
+            char buf[4096];
+            while (fgets(buf, sizeof(buf), tmplog)) fputs(buf, log);
+            if (append) {
+                tmplog_offset = ftell(tmplog);
+            }
+            check_and_fclose(tmplog, TEMPORARY_LOG_FILE);
+        }
+        check_and_fclose(log, destination);
+    }
+}
+
+
 // clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read), and
 // record any intent we were asked to communicate back to the system.
@@ -255,23 +284,9 @@ finish_recovery(const char *send_intent) {
     }
 
     // Copy logs to cache so the system can find out what happened.
-    FILE *log = fopen_path(LOG_FILE, "a");
-    if (log == NULL) {
-        LOGE("Can't open %s\n", LOG_FILE);
-    } else {
-        FILE *tmplog = fopen(TEMPORARY_LOG_FILE, "r");
-        if (tmplog == NULL) {
-            LOGE("Can't open %s\n", TEMPORARY_LOG_FILE);
-        } else {
-            static long tmplog_offset = 0;
-            fseek(tmplog, tmplog_offset, SEEK_SET);  // Since last write
-            char buf[4096];
-            while (fgets(buf, sizeof(buf), tmplog)) fputs(buf, log);
-            tmplog_offset = ftell(tmplog);
-            check_and_fclose(tmplog, TEMPORARY_LOG_FILE);
-        }
-        check_and_fclose(log, LOG_FILE);
-    }
+    copy_log_file(LOG_FILE, true);
+    copy_log_file(LAST_LOG_FILE, false);
+    chmod(LAST_LOG_FILE, 0640);
 
     // Reset to mormal system boot so recovery won't cycle indefinitely.
     struct bootloader_message boot;
@@ -292,6 +307,14 @@ erase_volume(const char *volume) {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     ui_show_indeterminate_progress();
     ui_print("Formatting %s...\n", volume);
+
+    if (strcmp(volume, "/cache") == 0) {
+        // Any part of the log we'd copied to cache is now gone.
+        // Reset the pointer so we copy from the beginning of the temp
+        // log.
+        tmplog_offset = 0;
+    }
+
     return format_volume(volume);
 }
 
