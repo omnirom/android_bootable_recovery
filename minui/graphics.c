@@ -88,6 +88,7 @@ static int get_framebuffer(GGLSurface *fb)
     fb->stride = vi.xres;
     fb->data = bits;
     fb->format = GGL_PIXEL_FORMAT_RGB_565;
+    memset(fb->data, 0, vi.yres * vi.xres * 2);
 
     fb++;
 
@@ -97,6 +98,7 @@ static int get_framebuffer(GGLSurface *fb)
     fb->stride = vi.xres;
     fb->data = (void*) (((unsigned) bits) + vi.yres * vi.xres * 2);
     fb->format = GGL_PIXEL_FORMAT_RGB_565;
+    memset(fb->data, 0, vi.yres * vi.xres * 2);
 
     return fd;
 }
@@ -276,7 +278,6 @@ int gr_init(void)
     gr_active_fb = 0;
     set_active_framebuffer(0);
     gl->colorBuffer(gl, &gr_mem_surface);
-
 
     gl->activeTexture(gl, 0);
     gl->enable(gl, GGL_BLEND);
