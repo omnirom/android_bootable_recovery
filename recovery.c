@@ -701,6 +701,7 @@ main(int argc, char **argv) {
     printf("Starting recovery on %s", ctime(&start));
 
     ui_init();
+    ui_set_background(BACKGROUND_ICON_INSTALLING);
     load_volume_table();
     get_args(&argc, &argv);
 
