@@ -32,6 +32,14 @@
 #include "font_10x18.h"
 #include "minui.h"
 
+#ifdef RECOVERY_24_BIT
+#define PIXEL_FORMAT GGL_PIXEL_FORMAT_RGBX_8888
+#define PIXEL_SIZE   4
+#else
+#define PIXEL_FORMAT GGL_PIXEL_FORMAT_RGB_565
+#define PIXEL_SIZE   2
+#endif
+
 typedef struct {
     GGLSurface texture;
     unsigned cwidth;
@@ -87,8 +95,8 @@ static int get_framebuffer(GGLSurface *fb)
     fb->height = vi.yres;
     fb->stride = vi.xres;
     fb->data = bits;
-    fb->format = GGL_PIXEL_FORMAT_RGB_565;
-    memset(fb->data, 0, vi.yres * vi.xres * 2);
+    fb->format = PIXEL_FORMAT;
+    memset(fb->data, 0, vi.yres * vi.xres * PIXEL_SIZE);
 
     fb++;
 
@@ -96,9 +104,9 @@ static int get_framebuffer(GGLSurface *fb)
     fb->width = vi.xres;
     fb->height = vi.yres;
     fb->stride = vi.xres;
-    fb->data = (void*) (((unsigned) bits) + vi.yres * vi.xres * 2);
-    fb->format = GGL_PIXEL_FORMAT_RGB_565;
-    memset(fb->data, 0, vi.yres * vi.xres * 2);
+    fb->data = (void*) (((unsigned) bits) + vi.yres * vi.xres * PIXEL_SIZE);
+    fb->format = PIXEL_FORMAT;
+    memset(fb->data, 0, vi.yres * vi.xres * PIXEL_SIZE);
 
     return fd;
 }
@@ -108,16 +116,16 @@ static void get_memory_surface(GGLSurface* ms) {
   ms->width = vi.xres;
   ms->height = vi.yres;
   ms->stride = vi.xres;
-  ms->data = malloc(vi.xres * vi.yres * 2);
-  ms->format = GGL_PIXEL_FORMAT_RGB_565;
+  ms->data = malloc(vi.xres * vi.yres * PIXEL_SIZE);
+  ms->format = PIXEL_FORMAT;
 }
 
 static void set_active_framebuffer(unsigned n)
 {
     if (n > 1) return;
-    vi.yres_virtual = vi.yres * 2;
+    vi.yres_virtual = vi.yres * PIXEL_SIZE;
     vi.yoffset = n * vi.yres;
-    vi.bits_per_pixel = 16;
+    vi.bits_per_pixel = PIXEL_SIZE * 8;
     if (ioctl(gr_fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
         perror("active fb swap failed");
     }
@@ -133,7 +141,7 @@ void gr_flip(void)
     /* copy data from the in-memory surface to the buffer we're about
      * to make active. */
     memcpy(gr_framebuffer[gr_active_fb].data, gr_mem_surface.data,
-           vi.xres * vi.yres * 2);
+           vi.xres * vi.yres * PIXEL_SIZE);
 
     /* inform the display driver */
     set_active_framebuffer(gr_active_fb);

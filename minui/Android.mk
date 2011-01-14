@@ -9,4 +9,8 @@ LOCAL_C_INCLUDES +=\
 
 LOCAL_MODULE := libminui
 
+ifneq ($(RECOVERY_24_BIT),)
+  LOCAL_CFLAGS += -DRECOVERY_24_BIT
+endif
+
 include $(BUILD_STATIC_LIBRARY)
