@@ -269,8 +269,8 @@ MtdReadContext *mtd_read_partition(const MtdPartition *partition)
     sprintf(mtddevname, "/dev/mtd/mtd%d", partition->device_index);
     ctx->fd = open(mtddevname, O_RDONLY);
     if (ctx->fd < 0) {
-        free(ctx);
         free(ctx->buffer);
+        free(ctx);
         return NULL;
     }
 
