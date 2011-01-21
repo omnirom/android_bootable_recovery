@@ -12,8 +12,7 @@ LOCAL_SRC_FILES := \
     install.c \
     roots.c \
     ui.c \
-    verifier.c \
-    encryptedfs_provisioning.c
+    verifier.c
 
 LOCAL_MODULE := recovery
 
