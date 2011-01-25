@@ -424,6 +424,16 @@ get_menu_selection(char** headers, char** items, int menu_only,
         int key = ui_wait_key();
         int visible = ui_text_visible();
 
+        if (key == -1) {   // ui_wait_key() timed out
+            if (ui_text_ever_visible()) {
+                continue;
+            } else {
+                LOGI("timed out waiting for key input; rebooting.\n");
+                ui_end_menu();
+                return ITEM_REBOOT;
+            }
+        }
+
         int action = device_handle_key(key, visible);
 
         if (action < 0) {

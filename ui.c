@@ -24,6 +24,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "common.h"
 #include "minui/minui.h"
@@ -37,6 +38,8 @@
 
 #define PROGRESSBAR_INDETERMINATE_STATES 6
 #define PROGRESSBAR_INDETERMINATE_FPS 15
+
+#define UI_WAIT_KEY_TIMEOUT_SEC    120
 
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
 static gr_surface gBackgroundIcon[NUM_BACKGROUND_ICONS];
@@ -78,6 +81,7 @@ static char text[MAX_ROWS][MAX_COLS];
 static int text_cols = 0, text_rows = 0;
 static int text_col = 0, text_row = 0, text_top = 0;
 static int show_text = 0;
+static int show_text_ever = 0;   // has show_text ever been 1?
 
 static char menu[MAX_ROWS][MAX_COLS];
 static int show_menu = 0;
@@ -295,6 +299,7 @@ static void *input_thread(void *cookie)
         if (ev.value > 0 && device_toggle_display(key_pressed, ev.code)) {
             pthread_mutex_lock(&gUpdateMutex);
             show_text = !show_text;
+            if (show_text) show_text_ever = 1;
             update_screen_locked();
             pthread_mutex_unlock(&gUpdateMutex);
         }
@@ -481,10 +486,19 @@ int ui_text_visible()
     return visible;
 }
 
+int ui_text_ever_visible()
+{
+    pthread_mutex_lock(&gUpdateMutex);
+    int ever_visible = show_text_ever;
+    pthread_mutex_unlock(&gUpdateMutex);
+    return ever_visible;
+}
+
 void ui_show_text(int visible)
 {
     pthread_mutex_lock(&gUpdateMutex);
     show_text = visible;
+    if (show_text) show_text_ever = 1;
     update_screen_locked();
     pthread_mutex_unlock(&gUpdateMutex);
 }
@@ -492,12 +506,25 @@ void ui_show_text(int visible)
 int ui_wait_key()
 {
     pthread_mutex_lock(&key_queue_mutex);
-    while (key_queue_len == 0) {
-        pthread_cond_wait(&key_queue_cond, &key_queue_mutex);
+
+    struct timeval now;
+    struct timespec timeout;
+    gettimeofday(&now, NULL);
+    timeout.tv_sec = now.tv_sec;
+    timeout.tv_nsec = now.tv_usec * 1000;
+    timeout.tv_sec += UI_WAIT_KEY_TIMEOUT_SEC;
+
+    int rc = 0;
+    while (key_queue_len == 0 && rc != ETIMEDOUT) {
+        rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex,
+                                    &timeout);
     }
 
-    int key = key_queue[0];
-    memcpy(&key_queue[0], &key_queue[1], sizeof(int) * --key_queue_len);
+    int key = -1;
+    if (key_queue_len > 0) {
+        key = key_queue[0];
+        memcpy(&key_queue[0], &key_queue[1], sizeof(int) * --key_queue_len);
+    }
     pthread_mutex_unlock(&key_queue_mutex);
     return key;
 }
