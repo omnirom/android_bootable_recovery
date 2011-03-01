@@ -36,32 +36,32 @@
 #define CHAR_WIDTH 10
 #define CHAR_HEIGHT 18
 
-#define PROGRESSBAR_INDETERMINATE_STATES 6
-#define PROGRESSBAR_INDETERMINATE_FPS 15
-
 #define UI_WAIT_KEY_TIMEOUT_SEC    120
+
+UIParameters ui_parameters = {
+    6,     // indeterminate progress bar frames
+    15,    // fps
+    0,     // installation icon frames (0 == static image)
+    0, 0,  // installation icon overlay offset
+};
 
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
 static gr_surface gBackgroundIcon[NUM_BACKGROUND_ICONS];
-static gr_surface gProgressBarIndeterminate[PROGRESSBAR_INDETERMINATE_STATES];
+static gr_surface *gInstallationOverlay;
+static gr_surface *gProgressBarIndeterminate;
 static gr_surface gProgressBarEmpty;
 static gr_surface gProgressBarFill;
 
 static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
     { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING], "icon_installing" },
     { &gBackgroundIcon[BACKGROUND_ICON_ERROR],      "icon_error" },
-    { &gProgressBarIndeterminate[0],    "indeterminate1" },
-    { &gProgressBarIndeterminate[1],    "indeterminate2" },
-    { &gProgressBarIndeterminate[2],    "indeterminate3" },
-    { &gProgressBarIndeterminate[3],    "indeterminate4" },
-    { &gProgressBarIndeterminate[4],    "indeterminate5" },
-    { &gProgressBarIndeterminate[5],    "indeterminate6" },
     { &gProgressBarEmpty,               "progress_empty" },
     { &gProgressBarFill,                "progress_fill" },
     { NULL,                             NULL },
 };
 
-static gr_surface gCurrentIcon = NULL;
+static int gCurrentIcon = 0;
+static int gInstallingFrame = 0;
 
 static enum ProgressBarType {
     PROGRESSBAR_TYPE_NONE,
@@ -71,7 +71,7 @@ static enum ProgressBarType {
 
 // Progress bar scope of current operation
 static float gProgressScopeStart = 0, gProgressScopeSize = 0, gProgress = 0;
-static time_t gProgressScopeTime, gProgressScopeDuration;
+static double gProgressScopeTime, gProgressScopeDuration;
 
 // Set to 1 when both graphics pages are the same (except for the progress bar)
 static int gPagesIdentical = 0;
@@ -93,20 +93,46 @@ static pthread_cond_t key_queue_cond = PTHREAD_COND_INITIALIZER;
 static int key_queue[256], key_queue_len = 0;
 static volatile char key_pressed[KEY_MAX + 1];
 
+// Return the current time as a double (including fractions of a second).
+static double now() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec / 1000000.0;
+}
+
+// Draw the given frame over the installation overlay animation.  The
+// background is not cleared or draw with the base icon first; we
+// assume that the frame already contains some other frame of the
+// animation.  Does nothing if no overlay animation is defined.
+// Should only be called with gUpdateMutex locked.
+static void draw_install_overlay_locked(int frame) {
+    if (gInstallationOverlay == NULL) return;
+    gr_surface surface = gInstallationOverlay[frame];
+    int iconWidth = gr_get_width(surface);
+    int iconHeight = gr_get_height(surface);
+    gr_blit(surface, 0, 0, iconWidth, iconHeight,
+            ui_parameters.install_overlay_offset_x,
+            ui_parameters.install_overlay_offset_y);
+}
+
 // Clear the screen and draw the currently selected background icon (if any).
 // Should only be called with gUpdateMutex locked.
-static void draw_background_locked(gr_surface icon)
+static void draw_background_locked(int icon)
 {
     gPagesIdentical = 0;
     gr_color(0, 0, 0, 255);
     gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 
     if (icon) {
-        int iconWidth = gr_get_width(icon);
-        int iconHeight = gr_get_height(icon);
+        gr_surface surface = gBackgroundIcon[icon];
+        int iconWidth = gr_get_width(surface);
+        int iconHeight = gr_get_height(surface);
         int iconX = (gr_fb_width() - iconWidth) / 2;
         int iconY = (gr_fb_height() - iconHeight) / 2;
-        gr_blit(icon, 0, 0, iconWidth, iconHeight, iconX, iconY);
+        gr_blit(surface, 0, 0, iconWidth, iconHeight, iconX, iconY);
+        if (icon == BACKGROUND_ICON_INSTALLING) {
+            draw_install_overlay_locked(gInstallingFrame);
+        }
     }
 }
 
@@ -114,35 +140,39 @@ static void draw_background_locked(gr_surface icon)
 // Should only be called with gUpdateMutex locked.
 static void draw_progress_locked()
 {
-    if (gProgressBarType == PROGRESSBAR_TYPE_NONE) return;
-
-    int iconHeight = gr_get_height(gBackgroundIcon[BACKGROUND_ICON_INSTALLING]);
-    int width = gr_get_width(gProgressBarEmpty);
-    int height = gr_get_height(gProgressBarEmpty);
-
-    int dx = (gr_fb_width() - width)/2;
-    int dy = (3*gr_fb_height() + iconHeight - 2*height)/4;
-
-    // Erase behind the progress bar (in case this was a progress-only update)
-    gr_color(0, 0, 0, 255);
-    gr_fill(dx, dy, width, height);
-
-    if (gProgressBarType == PROGRESSBAR_TYPE_NORMAL) {
-        float progress = gProgressScopeStart + gProgress * gProgressScopeSize;
-        int pos = (int) (progress * width);
-
-        if (pos > 0) {
-          gr_blit(gProgressBarFill, 0, 0, pos, height, dx, dy);
-        }
-        if (pos < width-1) {
-          gr_blit(gProgressBarEmpty, pos, 0, width-pos, height, dx+pos, dy);
-        }
+    if (gCurrentIcon == BACKGROUND_ICON_INSTALLING) {
+        draw_install_overlay_locked(gInstallingFrame);
     }
 
-    if (gProgressBarType == PROGRESSBAR_TYPE_INDETERMINATE) {
-        static int frame = 0;
-        gr_blit(gProgressBarIndeterminate[frame], 0, 0, width, height, dx, dy);
-        frame = (frame + 1) % PROGRESSBAR_INDETERMINATE_STATES;
+    if (gProgressBarType != PROGRESSBAR_TYPE_NONE) {
+        int iconHeight = gr_get_height(gBackgroundIcon[BACKGROUND_ICON_INSTALLING]);
+        int width = gr_get_width(gProgressBarEmpty);
+        int height = gr_get_height(gProgressBarEmpty);
+
+        int dx = (gr_fb_width() - width)/2;
+        int dy = (3*gr_fb_height() + iconHeight - 2*height)/4;
+
+        // Erase behind the progress bar (in case this was a progress-only update)
+        gr_color(0, 0, 0, 255);
+        gr_fill(dx, dy, width, height);
+
+        if (gProgressBarType == PROGRESSBAR_TYPE_NORMAL) {
+            float progress = gProgressScopeStart + gProgress * gProgressScopeSize;
+            int pos = (int) (progress * width);
+
+            if (pos > 0) {
+                gr_blit(gProgressBarFill, 0, 0, pos, height, dx, dy);
+            }
+            if (pos < width-1) {
+                gr_blit(gProgressBarEmpty, pos, 0, width-pos, height, dx+pos, dy);
+            }
+        }
+
+        if (gProgressBarType == PROGRESSBAR_TYPE_INDETERMINATE) {
+            static int frame = 0;
+            gr_blit(gProgressBarIndeterminate[frame], 0, 0, width, height, dx, dy);
+            frame = (frame + 1) % ui_parameters.indeterminate_frames;
+        }
     }
 }
 
@@ -207,7 +237,7 @@ static void update_progress_locked(void)
         draw_screen_locked();    // Must redraw the whole screen
         gPagesIdentical = 1;
     } else {
-        draw_progress_locked();  // Draw only the progress bar
+        draw_progress_locked();  // Draw only the progress bar and overlays
     }
     gr_flip();
 }
@@ -215,29 +245,49 @@ static void update_progress_locked(void)
 // Keeps the progress bar updated, even when the process is otherwise busy.
 static void *progress_thread(void *cookie)
 {
+    double interval = 1.0 / ui_parameters.update_fps;
     for (;;) {
-        usleep(1000000 / PROGRESSBAR_INDETERMINATE_FPS);
+        double start = now();
         pthread_mutex_lock(&gUpdateMutex);
+
+        int redraw = 0;
+
+        // update the installation animation, if active
+        // skip this if we have a text overlay (too expensive to update)
+        if (gCurrentIcon == BACKGROUND_ICON_INSTALLING &&
+            ui_parameters.installing_frames > 0 &&
+            !show_text) {
+            gInstallingFrame =
+                (gInstallingFrame + 1) % ui_parameters.installing_frames;
+            redraw = 1;
+        }
 
         // update the progress bar animation, if active
         // skip this if we have a text overlay (too expensive to update)
         if (gProgressBarType == PROGRESSBAR_TYPE_INDETERMINATE && !show_text) {
-            update_progress_locked();
+            redraw = 1;
         }
 
         // move the progress bar forward on timed intervals, if configured
         int duration = gProgressScopeDuration;
         if (gProgressBarType == PROGRESSBAR_TYPE_NORMAL && duration > 0) {
-            int elapsed = time(NULL) - gProgressScopeTime;
+            double elapsed = now() - gProgressScopeTime;
             float progress = 1.0 * elapsed / duration;
             if (progress > 1.0) progress = 1.0;
             if (progress > gProgress) {
                 gProgress = progress;
-                update_progress_locked();
+                redraw = 1;
             }
         }
 
+        if (redraw) update_progress_locked();
+
         pthread_mutex_unlock(&gUpdateMutex);
+        double end = now();
+        // minimum of 20ms delay between frames
+        double delay = interval - (end-start);
+        if (delay < 0.02) delay = 0.02;
+        usleep((long)(delay * 1000000));
     }
     return NULL;
 }
@@ -328,13 +378,49 @@ void ui_init(void)
     for (i = 0; BITMAPS[i].name != NULL; ++i) {
         int result = res_create_surface(BITMAPS[i].name, BITMAPS[i].surface);
         if (result < 0) {
-            if (result == -2) {
-                LOGI("Bitmap %s missing header\n", BITMAPS[i].name);
-            } else {
-                LOGE("Missing bitmap %s\n(Code %d)\n", BITMAPS[i].name, result);
-            }
-            *BITMAPS[i].surface = NULL;
+            LOGE("Missing bitmap %s\n(Code %d)\n", BITMAPS[i].name, result);
         }
+    }
+
+    gProgressBarIndeterminate = malloc(ui_parameters.indeterminate_frames *
+                                       sizeof(gr_surface));
+    for (i = 0; i < ui_parameters.indeterminate_frames; ++i) {
+        char filename[40];
+        // "indeterminateN" if fewer than 10 frames, else "indeterminateNN".
+        sprintf(filename, "indeterminate%0*d",
+                ui_parameters.indeterminate_frames < 10 ? 1 : 2,
+                i+1);
+        int result = res_create_surface(filename, gProgressBarIndeterminate+i);
+        if (result < 0) {
+            LOGE("Missing bitmap %s\n(Code %d)\n", filename, result);
+        }
+    }
+
+    if (ui_parameters.installing_frames > 0) {
+        gInstallationOverlay = malloc(ui_parameters.installing_frames *
+                                      sizeof(gr_surface));
+        for (i = 0; i < ui_parameters.installing_frames; ++i) {
+            char filename[40];
+            sprintf(filename, "icon_installing_overlay%0*d",
+                    ui_parameters.installing_frames < 10 ? 1 : 2,
+                    i+1);
+            int result = res_create_surface(filename, gInstallationOverlay+i);
+            if (result < 0) {
+                LOGE("Missing bitmap %s\n(Code %d)\n", filename, result);
+            }
+        }
+
+        // Adjust the offset to account for the positioning of the
+        // base image on the screen.
+        if (gBackgroundIcon[BACKGROUND_ICON_INSTALLING] != NULL) {
+            gr_surface bg = gBackgroundIcon[BACKGROUND_ICON_INSTALLING];
+            ui_parameters.install_overlay_offset_x +=
+                (gr_fb_width() - gr_get_width(bg)) / 2;
+            ui_parameters.install_overlay_offset_y +=
+                (gr_fb_height() - gr_get_height(bg)) / 2;
+        }
+    } else {
+        gInstallationOverlay = NULL;
     }
 
     pthread_t t;
@@ -345,7 +431,7 @@ void ui_init(void)
 void ui_set_background(int icon)
 {
     pthread_mutex_lock(&gUpdateMutex);
-    gCurrentIcon = gBackgroundIcon[icon];
+    gCurrentIcon = icon;
     update_screen_locked();
     pthread_mutex_unlock(&gUpdateMutex);
 }
@@ -366,7 +452,7 @@ void ui_show_progress(float portion, int seconds)
     gProgressBarType = PROGRESSBAR_TYPE_NORMAL;
     gProgressScopeStart += gProgressScopeSize;
     gProgressScopeSize = portion;
-    gProgressScopeTime = time(NULL);
+    gProgressScopeTime = now();
     gProgressScopeDuration = seconds;
     gProgress = 0;
     update_progress_locked();

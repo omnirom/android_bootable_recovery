@@ -17,6 +17,12 @@
 #ifndef _RECOVERY_UI_H
 #define _RECOVERY_UI_H
 
+#include "common.h"
+
+// Called before UI library is initialized.  Can change things like
+// how many frames are included in various animations, etc.
+extern void device_ui_init(UIParameters* ui_parameters);
+
 // Called when recovery starts up.  Returns 0.
 extern int device_recovery_start();
 

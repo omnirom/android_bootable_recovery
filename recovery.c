@@ -56,6 +56,8 @@ static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
 
+extern UIParameters ui_parameters;    // from ui.c
+
 /*
  * The recovery tool communicates with the main system through /cache files.
  *   /cache/recovery/command - INPUT - command line for tool, one arg per line
@@ -688,6 +690,7 @@ main(int argc, char **argv) {
     freopen(TEMPORARY_LOG_FILE, "a", stderr); setbuf(stderr, NULL);
     printf("Starting recovery on %s", ctime(&start));
 
+    device_ui_init(&ui_parameters);
     ui_init();
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     load_volume_table();
