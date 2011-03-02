@@ -39,10 +39,10 @@
 #define UI_WAIT_KEY_TIMEOUT_SEC    120
 
 UIParameters ui_parameters = {
-    6,     // indeterminate progress bar frames
-    15,    // fps
-    0,     // installation icon frames (0 == static image)
-    0, 0,  // installation icon overlay offset
+    6,       // indeterminate progress bar frames
+    20,      // fps
+    7,       // installation icon frames (0 == static image)
+    23, 83,  // installation icon overlay offset
 };
 
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -386,10 +386,8 @@ void ui_init(void)
                                        sizeof(gr_surface));
     for (i = 0; i < ui_parameters.indeterminate_frames; ++i) {
         char filename[40];
-        // "indeterminateN" if fewer than 10 frames, else "indeterminateNN".
-        sprintf(filename, "indeterminate%0*d",
-                ui_parameters.indeterminate_frames < 10 ? 1 : 2,
-                i+1);
+        // "indeterminate01.png", "indeterminate02.png", ...
+        sprintf(filename, "indeterminate%02d", i+1);
         int result = res_create_surface(filename, gProgressBarIndeterminate+i);
         if (result < 0) {
             LOGE("Missing bitmap %s\n(Code %d)\n", filename, result);
@@ -401,9 +399,9 @@ void ui_init(void)
                                       sizeof(gr_surface));
         for (i = 0; i < ui_parameters.installing_frames; ++i) {
             char filename[40];
-            sprintf(filename, "icon_installing_overlay%0*d",
-                    ui_parameters.installing_frames < 10 ? 1 : 2,
-                    i+1);
+            // "icon_installing_overlay01.png",
+            // "icon_installing_overlay02.png", ...
+            sprintf(filename, "icon_installing_overlay%02d", i+1);
             int result = res_create_surface(filename, gInstallationOverlay+i);
             if (result < 0) {
                 LOGE("Missing bitmap %s\n(Code %d)\n", filename, result);
