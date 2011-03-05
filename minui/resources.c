@@ -121,12 +121,17 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     surface->format = (channels == 3) ?
             GGL_PIXEL_FORMAT_RGBX_8888 : GGL_PIXEL_FORMAT_RGBA_8888;
 
+    int alpha = 0;
     if (color_type == PNG_COLOR_TYPE_PALETTE) {
-      png_set_palette_to_rgb(png_ptr);
+        png_set_palette_to_rgb(png_ptr);
+    }
+    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+        png_set_tRNS_to_alpha(png_ptr);
+        alpha = 1;
     }
 
     int y;
-    if (channels == 3) {
+    if (channels == 3 || (channels == 1 && !alpha)) {
         for (y = 0; y < height; ++y) {
             unsigned char* pRow = pData + y * stride;
             png_read_row(png_ptr, pRow, NULL);
