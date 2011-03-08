@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+#include <fcntl.h>
 #include <linux/input.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -21,10 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/reboot.h>
+#include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <errno.h>
 
 #include "common.h"
 #include "minui/minui.h"
@@ -587,22 +590,44 @@ void ui_show_text(int visible)
     pthread_mutex_unlock(&gUpdateMutex);
 }
 
+// Return true if USB is connected.
+static int usb_connected() {
+    int fd = open("/sys/class/switch/usb_connected/state", O_RDONLY);
+    if (fd < 0) {
+        printf("failed to open /sys/class/switch/usb_connected/state: %s\n",
+               strerror(errno));
+        return 0;
+    }
+
+    char buf;
+    int connected = (read(fd, &buf, 1) == 1) && (buf == '1');
+    if (close(fd) < 0) {
+        printf("failed to close /sys/class/switch/usb_connected/state: %s\n",
+               strerror(errno));
+    }
+    return connected;
+}
+
 int ui_wait_key()
 {
     pthread_mutex_lock(&key_queue_mutex);
 
-    struct timeval now;
-    struct timespec timeout;
-    gettimeofday(&now, NULL);
-    timeout.tv_sec = now.tv_sec;
-    timeout.tv_nsec = now.tv_usec * 1000;
-    timeout.tv_sec += UI_WAIT_KEY_TIMEOUT_SEC;
+    // Time out after UI_WAIT_KEY_TIMEOUT_SEC, unless a USB cable is
+    // plugged in.
+    do {
+        struct timeval now;
+        struct timespec timeout;
+        gettimeofday(&now, NULL);
+        timeout.tv_sec = now.tv_sec;
+        timeout.tv_nsec = now.tv_usec * 1000;
+        timeout.tv_sec += UI_WAIT_KEY_TIMEOUT_SEC;
 
-    int rc = 0;
-    while (key_queue_len == 0 && rc != ETIMEDOUT) {
-        rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex,
-                                    &timeout);
-    }
+        int rc = 0;
+        while (key_queue_len == 0 && rc != ETIMEDOUT) {
+            rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex,
+                                        &timeout);
+        }
+    } while (usb_connected() && key_queue_len == 0);
 
     int key = -1;
     if (key_queue_len > 0) {
