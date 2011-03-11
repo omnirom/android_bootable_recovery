@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/reboot.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -30,6 +29,7 @@
 #include <unistd.h>
 
 #include "common.h"
+#include <cutils/android_reboot.h>
 #include "minui/minui.h"
 #include "recovery_ui.h"
 
@@ -358,7 +358,7 @@ static void *input_thread(void *cookie)
         }
 
         if (ev.value > 0 && device_reboot_now(key_pressed, ev.code)) {
-            reboot(RB_AUTOBOOT);
+            android_reboot(ANDROID_RB_RESTART, 0, 0);
         }
     }
     return NULL;
