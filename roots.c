@@ -177,14 +177,15 @@ int ensure_path_mounted(const char* path) {
     } else if (strcmp(v->fs_type, "ext4") == 0 ||
                strcmp(v->fs_type, "vfat") == 0) {
         result = mount(v->device, v->mount_point, v->fs_type,
-                       MS_NOATIME | MS_NODEV | MS_NODIRATIME, "");
+                       MS_NOATIME | MS_NODEV | MS_NODIRATIME | MS_RDONLY, "");
         if (result == 0) return 0;
 
         if (v->device2) {
             LOGW("failed to mount %s (%s); trying %s\n",
                  v->device, strerror(errno), v->device2);
             result = mount(v->device2, v->mount_point, v->fs_type,
-                           MS_NOATIME | MS_NODEV | MS_NODIRATIME, "");
+                           MS_NOATIME | MS_NODEV |
+                           MS_NODIRATIME | MS_RDONLY, "");
             if (result == 0) return 0;
         }
 
