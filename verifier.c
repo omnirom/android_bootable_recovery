@@ -173,7 +173,7 @@ int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKey
         // the signing tool appends after the signature itself.
         if (RSA_verify(pKeys+i, eocd + eocd_size - 6 - RSANUMBYTES,
                        RSANUMBYTES, sha1)) {
-            LOGI("whole-file signature verified\n");
+            LOGI("whole-file signature verified against key %d\n", i);
             free(eocd);
             return VERIFY_SUCCESS;
         }
