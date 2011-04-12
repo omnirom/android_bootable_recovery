@@ -36,6 +36,8 @@
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
 #define PUBLIC_KEYS_FILE "/res/keys"
 
+static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
+
 // If the package contains an update binary, extract it and run it.
 static int
 try_update_binary(const char *path, ZipArchive *zip) {
@@ -233,8 +235,8 @@ exit:
     return NULL;
 }
 
-int
-install_package(const char *path)
+static int
+really_install_package(const char *path)
 {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     ui_print("Finding update package...\n");
@@ -284,4 +286,24 @@ install_package(const char *path)
      */
     ui_print("Installing update...\n");
     return try_update_binary(path, &zip);
+}
+
+int
+install_package(const char* path)
+{
+    FILE* install_log = fopen_path(LAST_INSTALL_FILE, "w");
+    if (install_log) {
+        fputs(path, install_log);
+        fputc('\n', install_log);
+    } else {
+        LOGE("failed to open last_install: %s\n", strerror(errno));
+    }
+    int result = really_install_package(path);
+    if (install_log) {
+        fputc(result == INSTALL_SUCCESS ? '1' : '0', install_log);
+        fputc('\n', install_log);
+        fclose(install_log);
+        chmod(LAST_INSTALL_FILE, 0644);
+    }
+    return result;
 }

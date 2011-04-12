@@ -120,7 +120,7 @@ static const int MAX_ARG_LENGTH = 4096;
 static const int MAX_ARGS = 100;
 
 // open a given path, mounting partitions as necessary
-static FILE*
+FILE*
 fopen_path(const char *path, const char *mode) {
     if (ensure_path_mounted(path) != 0) {
         LOGE("Can't mount %s\n", path);
