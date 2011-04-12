@@ -782,21 +782,26 @@ static bool write_raw_image_cb(const unsigned char* data,
     return false;
 }
 
-// write_raw_image(file, partition)
+// write_raw_image(filename_or_blob, partition)
 Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
 
-    char* partition;
-    char* filename;
-    if (ReadArgs(state, argv, 2, &filename, &partition) < 0) {
+    Value* partition_value;
+    Value* contents;
+    if (ReadValueArgs(state, argv, 2, &contents, &partition_value) < 0) {
         return NULL;
     }
 
+    if (partition_value->type != VAL_STRING) {
+        ErrorAbort(state, "partition argument to %s must be string", name);
+        goto done;
+    }
+    char* partition = partition_value->data;
     if (strlen(partition) == 0) {
         ErrorAbort(state, "partition argument to %s can't be empty", name);
         goto done;
     }
-    if (strlen(filename) == 0) {
+    if (contents->type == VAL_STRING && strlen((char*) contents->data) == 0) {
         ErrorAbort(state, "file argument to %s can't be empty", name);
         goto done;
     }
@@ -819,27 +824,35 @@ Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     bool success;
 
-    FILE* f = fopen(filename, "rb");
-    if (f == NULL) {
-        fprintf(stderr, "%s: can't open %s: %s\n",
-                name, filename, strerror(errno));
-        result = strdup("");
-        goto done;
-    }
-
-    success = true;
-    char* buffer = malloc(BUFSIZ);
-    int read;
-    while (success && (read = fread(buffer, 1, BUFSIZ, f)) > 0) {
-        int wrote = mtd_write_data(ctx, buffer, read);
-        success = success && (wrote == read);
-        if (!success) {
-            fprintf(stderr, "mtd_write_data to %s failed: %s\n",
-                    partition, strerror(errno));
+    if (contents->type == VAL_STRING) {
+        // we're given a filename as the contents
+        char* filename = contents->data;
+        FILE* f = fopen(filename, "rb");
+        if (f == NULL) {
+            fprintf(stderr, "%s: can't open %s: %s\n",
+                    name, filename, strerror(errno));
+            result = strdup("");
+            goto done;
         }
+
+        success = true;
+        char* buffer = malloc(BUFSIZ);
+        int read;
+        while (success && (read = fread(buffer, 1, BUFSIZ, f)) > 0) {
+            int wrote = mtd_write_data(ctx, buffer, read);
+            success = success && (wrote == read);
+        }
+        free(buffer);
+        fclose(f);
+    } else {
+        // we're given a blob as the contents
+        ssize_t wrote = mtd_write_data(ctx, contents->data, contents->size);
+        success = (wrote == contents->size);
     }
-    free(buffer);
-    fclose(f);
+    if (!success) {
+        fprintf(stderr, "mtd_write_data to %s failed: %s\n",
+                partition, strerror(errno));
+    }
 
     if (mtd_erase_blocks(ctx, -1) == -1) {
         fprintf(stderr, "%s: error erasing blocks of %s\n", name, partition);
@@ -848,14 +861,14 @@ Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
         fprintf(stderr, "%s: error closing write of %s\n", name, partition);
     }
 
-    printf("%s %s partition from %s\n",
-           success ? "wrote" : "failed to write", partition, filename);
+    printf("%s %s partition\n",
+           success ? "wrote" : "failed to write", partition);
 
     result = success ? partition : strdup("");
 
 done:
-    if (result != partition) free(partition);
-    free(filename);
+    if (result != partition) FreeValue(partition_value);
+    FreeValue(contents);
     return StringValue(result);
 }
 
