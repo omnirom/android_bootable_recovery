@@ -51,7 +51,7 @@ inc := $(call intermediates-dir-for,PACKAGING,updater_extensions)/register.inc
 
 junk := $(shell mkdir -p $(dir $(inc));\
 	        echo $(TARGET_RECOVERY_UPDATER_LIBS) > $(inc).temp;\
-	        diff -q $(inc).temp $(inc).list || cp -f $(inc).temp $(inc).list)
+	        diff -q $(inc).temp $(inc).list 2>/dev/null || cp -f $(inc).temp $(inc).list)
 
 $(inc) : libs := $(TARGET_RECOVERY_UPDATER_LIBS)
 $(inc) : $(inc).list
