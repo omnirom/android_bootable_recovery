@@ -27,6 +27,7 @@ char* MENU_ITEMS[] = { "reboot system now",
                        "apply update from external storage",
                        "wipe data/factory reset",
                        "wipe cache partition",
+                       "apply update from cache",
                        NULL };
 
 void device_ui_init(UIParameters* ui_parameters) {

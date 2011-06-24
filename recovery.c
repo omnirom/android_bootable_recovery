@@ -52,6 +52,7 @@ static const char *COMMAND_FILE = "/cache/recovery/command";
 static const char *INTENT_FILE = "/cache/recovery/intent";
 static const char *LOG_FILE = "/cache/recovery/log";
 static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
+static const char *CACHE_ROOT = "/cache";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
@@ -468,8 +469,8 @@ static int compare_string(const void* a, const void* b) {
 }
 
 static int
-sdcard_directory(const char* path) {
-    ensure_path_mounted(SDCARD_ROOT);
+update_directory(const char* path, const char* unmount_when_done) {
+    ensure_path_mounted(path);
 
     const char* MENU_HEADERS[] = { "Choose a package to install:",
                                    path,
@@ -480,7 +481,9 @@ sdcard_directory(const char* path) {
     d = opendir(path);
     if (d == NULL) {
         LOGE("error opening %s: %s\n", path, strerror(errno));
-        ensure_path_unmounted(SDCARD_ROOT);
+        if (unmount_when_done != NULL) {
+            ensure_path_unmounted(unmount_when_done);
+        }
         return 0;
     }
 
@@ -545,7 +548,7 @@ sdcard_directory(const char* path) {
         char* item = zips[chosen_item];
         int item_len = strlen(item);
         if (chosen_item == 0) {          // item 0 is always "../"
-            // go up but continue browsing (if the caller is sdcard_directory)
+            // go up but continue browsing (if the caller is update_directory)
             result = -1;
             break;
         } else if (item[item_len-1] == '/') {
@@ -555,7 +558,7 @@ sdcard_directory(const char* path) {
             strlcat(new_path, "/", PATH_MAX);
             strlcat(new_path, item, PATH_MAX);
             new_path[strlen(new_path)-1] = '\0';  // truncate the trailing '/'
-            result = sdcard_directory(new_path);
+            result = update_directory(new_path, unmount_when_done);
             if (result >= 0) break;
         } else {
             // selected a zip file:  attempt to install it, and return
@@ -568,7 +571,9 @@ sdcard_directory(const char* path) {
             ui_print("\n-- Install %s ...\n", path);
             set_sdcard_update_bootloader_message();
             char* copy = copy_sideloaded_package(new_path);
-            ensure_path_unmounted(SDCARD_ROOT);
+            if (unmount_when_done != NULL) {
+                ensure_path_unmounted(unmount_when_done);
+            }
             if (copy) {
                 result = install_package(copy);
                 free(copy);
@@ -584,7 +589,9 @@ sdcard_directory(const char* path) {
     free(zips);
     free(headers);
 
-    ensure_path_unmounted(SDCARD_ROOT);
+    if (unmount_when_done != NULL) {
+        ensure_path_unmounted(unmount_when_done);
+    }
     return result;
 }
 
@@ -642,6 +649,7 @@ prompt_and_wait() {
         // statement below.
         chosen_item = device_perform_action(chosen_item);
 
+        int status;
         switch (chosen_item) {
             case ITEM_REBOOT:
                 return;
@@ -659,8 +667,7 @@ prompt_and_wait() {
                 break;
 
             case ITEM_APPLY_SDCARD:
-                ;
-                int status = sdcard_directory(SDCARD_ROOT);
+                status = update_directory(SDCARD_ROOT, SDCARD_ROOT);
                 if (status >= 0) {
                     if (status != INSTALL_SUCCESS) {
                         ui_set_background(BACKGROUND_ICON_ERROR);
@@ -672,6 +679,21 @@ prompt_and_wait() {
                     }
                 }
                 break;
+            case ITEM_APPLY_CACHE:
+                // Don't unmount cache at the end of this.
+                status = update_directory(CACHE_ROOT, NULL);
+                if (status >= 0) {
+                    if (status != INSTALL_SUCCESS) {
+                        ui_set_background(BACKGROUND_ICON_ERROR);
+                        ui_print("Installation aborted.\n");
+                    } else if (!ui_text_visible()) {
+                        return;  // reboot if logs aren't visible
+                    } else {
+                        ui_print("\nInstall from cache complete.\n");
+                    }
+                }
+                break;
+
         }
     }
 }
