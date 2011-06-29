@@ -31,35 +31,16 @@ service recovery /sbin/recovery
 service adbd /sbin/adbd recovery
     disabled
 
-on property:persist.sys.usb.config=*
-    setprop sys.usb.config $persist.sys.usb.config
-
-#one of the following property triggers will enable adb if it is enabled in regular operation
-
-on property:sys.usb.config=mass_storage,adb
+# Always start adbd on userdebug and eng builds
+on property:ro.debuggable=1
     write /sys/class/android_usb/android0/enable 0
-    write /sys/class/android_usb/android0/idVendor 18d1
-    write /sys/class/android_usb/android0/idProduct Fec0
-    write /sys/class/android_usb/android0/functions $sys.usb.config
+    write /sys/class/android_usb/android0/idVendor 18D1
+    write /sys/class/android_usb/android0/idProduct D001
+    write /sys/class/android_usb/android0/functions adb
     write /sys/class/android_usb/android0/enable 1
     start adbd
 
-on property:sys.usb.config=mtp,adb
-    write /sys/class/android_usb/android0/enable 0
-    write /sys/class/android_usb/android0/idVendor 18d1
-    write /sys/class/android_usb/android0/idProduct Fec0
-    write /sys/class/android_usb/android0/functions $sys.usb.config
-    write /sys/class/android_usb/android0/enable 1
-    start adbd
-
-on property:sys.usb.config=ptp,adb
-    write /sys/class/android_usb/android0/enable 0
-    write /sys/class/android_usb/android0/idVendor 18d1
-    write /sys/class/android_usb/android0/idProduct Fec0
-    write /sys/class/android_usb/android0/functions $sys.usb.config
-    write /sys/class/android_usb/android0/enable 1
-    start adbd
-
+# Restart adbd so it can run as root
 on property:service.adb.root=1
     write /sys/class/android_usb/android0/enable 0
     restart adbd
