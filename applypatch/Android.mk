@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifneq ($(TARGET_SIMULATOR),true)
-
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -57,5 +55,3 @@ LOCAL_C_INCLUDES += external/zlib external/bzip2
 LOCAL_STATIC_LIBRARIES += libz libbz
 
 include $(BUILD_HOST_EXECUTABLE)
-
-endif  # !TARGET_SIMULATOR
