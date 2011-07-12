@@ -592,17 +592,18 @@ void ui_show_text(int visible)
 
 // Return true if USB is connected.
 static int usb_connected() {
-    int fd = open("/sys/class/switch/usb_connected/state", O_RDONLY);
+    int fd = open("/sys/class/android_usb/android0/state", O_RDONLY);
     if (fd < 0) {
-        printf("failed to open /sys/class/switch/usb_connected/state: %s\n",
+        printf("failed to open /sys/class/android_usb/android0/state: %s\n",
                strerror(errno));
         return 0;
     }
 
     char buf;
-    int connected = (read(fd, &buf, 1) == 1) && (buf == '1');
+    /* USB is connected if android_usb state is CONNECTED or CONFIGURED */
+    int connected = (read(fd, &buf, 1) == 1) && (buf == 'C');
     if (close(fd) < 0) {
-        printf("failed to close /sys/class/switch/usb_connected/state: %s\n",
+        printf("failed to close /sys/class/android_usb/android0/state: %s\n",
                strerror(errno));
     }
     return connected;
