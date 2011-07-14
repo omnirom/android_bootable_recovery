@@ -58,9 +58,9 @@ $(inc) : libs := $(TARGET_RECOVERY_UPDATER_LIBS)
 $(inc) : $(inc).list
 	$(hide) mkdir -p $(dir $@)
 	$(hide) echo "" > $@
-	$(hide) $(foreach lib,$(libs),echo "extern void Register_$(lib)(void);" >> $@)
+	$(hide) $(foreach lib,$(libs),echo "extern void Register_$(lib)(void);" >> $@;)
 	$(hide) echo "void RegisterDeviceExtensions() {" >> $@
-	$(hide) $(foreach lib,$(libs),echo "  Register_$(lib)();" >> $@)
+	$(hide) $(foreach lib,$(libs),echo "  Register_$(lib)();" >> $@;)
 	$(hide) echo "}" >> $@
 
 $(call intermediates-dir-for,EXECUTABLES,updater)/updater.o : $(inc)
