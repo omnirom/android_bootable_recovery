@@ -295,71 +295,83 @@ static void *progress_thread(void *cookie)
     return NULL;
 }
 
+static int rel_sum = 0;
+
+static int input_callback(int fd, short revents, void *data)
+{
+    struct input_event ev;
+    int ret;
+    int fake_key = 0;
+
+    ret = ev_get_input(fd, revents, &ev);
+    if (ret)
+        return -1;
+
+    if (ev.type == EV_SYN) {
+        return 0;
+    } else if (ev.type == EV_REL) {
+        if (ev.code == REL_Y) {
+            // accumulate the up or down motion reported by
+            // the trackball.  When it exceeds a threshold
+            // (positive or negative), fake an up/down
+            // key event.
+            rel_sum += ev.value;
+            if (rel_sum > 3) {
+                fake_key = 1;
+                ev.type = EV_KEY;
+                ev.code = KEY_DOWN;
+                ev.value = 1;
+                rel_sum = 0;
+            } else if (rel_sum < -3) {
+                fake_key = 1;
+                ev.type = EV_KEY;
+                ev.code = KEY_UP;
+                ev.value = 1;
+                rel_sum = 0;
+            }
+        }
+    } else {
+        rel_sum = 0;
+    }
+
+    if (ev.type != EV_KEY || ev.code > KEY_MAX)
+        return 0;
+
+    pthread_mutex_lock(&key_queue_mutex);
+    if (!fake_key) {
+        // our "fake" keys only report a key-down event (no
+        // key-up), so don't record them in the key_pressed
+        // table.
+        key_pressed[ev.code] = ev.value;
+    }
+    const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
+    if (ev.value > 0 && key_queue_len < queue_max) {
+        key_queue[key_queue_len++] = ev.code;
+        pthread_cond_signal(&key_queue_cond);
+    }
+    pthread_mutex_unlock(&key_queue_mutex);
+
+    if (ev.value > 0 && device_toggle_display(key_pressed, ev.code)) {
+        pthread_mutex_lock(&gUpdateMutex);
+        show_text = !show_text;
+        if (show_text) show_text_ever = 1;
+        update_screen_locked();
+        pthread_mutex_unlock(&gUpdateMutex);
+    }
+
+    if (ev.value > 0 && device_reboot_now(key_pressed, ev.code)) {
+        android_reboot(ANDROID_RB_RESTART, 0, 0);
+    }
+
+    return 0;
+}
+
 // Reads input events, handles special hot keys, and adds to the key queue.
 static void *input_thread(void *cookie)
 {
-    int rel_sum = 0;
-    int fake_key = 0;
     for (;;) {
-        // wait for the next key event
-        struct input_event ev;
-        do {
-            ev_get(&ev, 0);
-
-            if (ev.type == EV_SYN) {
-                continue;
-            } else if (ev.type == EV_REL) {
-                if (ev.code == REL_Y) {
-                    // accumulate the up or down motion reported by
-                    // the trackball.  When it exceeds a threshold
-                    // (positive or negative), fake an up/down
-                    // key event.
-                    rel_sum += ev.value;
-                    if (rel_sum > 3) {
-                        fake_key = 1;
-                        ev.type = EV_KEY;
-                        ev.code = KEY_DOWN;
-                        ev.value = 1;
-                        rel_sum = 0;
-                    } else if (rel_sum < -3) {
-                        fake_key = 1;
-                        ev.type = EV_KEY;
-                        ev.code = KEY_UP;
-                        ev.value = 1;
-                        rel_sum = 0;
-                    }
-                }
-            } else {
-                rel_sum = 0;
-            }
-        } while (ev.type != EV_KEY || ev.code > KEY_MAX);
-
-        pthread_mutex_lock(&key_queue_mutex);
-        if (!fake_key) {
-            // our "fake" keys only report a key-down event (no
-            // key-up), so don't record them in the key_pressed
-            // table.
-            key_pressed[ev.code] = ev.value;
-        }
-        fake_key = 0;
-        const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
-        if (ev.value > 0 && key_queue_len < queue_max) {
-            key_queue[key_queue_len++] = ev.code;
-            pthread_cond_signal(&key_queue_cond);
-        }
-        pthread_mutex_unlock(&key_queue_mutex);
-
-        if (ev.value > 0 && device_toggle_display(key_pressed, ev.code)) {
-            pthread_mutex_lock(&gUpdateMutex);
-            show_text = !show_text;
-            if (show_text) show_text_ever = 1;
-            update_screen_locked();
-            pthread_mutex_unlock(&gUpdateMutex);
-        }
-
-        if (ev.value > 0 && device_reboot_now(key_pressed, ev.code)) {
-            android_reboot(ANDROID_RB_RESTART, 0, 0);
-        }
+        if (!ev_wait(-1))
+            ev_dispatch();
     }
     return NULL;
 }
@@ -367,7 +379,7 @@ static void *input_thread(void *cookie)
 void ui_init(void)
 {
     gr_init();
-    ev_init();
+    ev_init(input_callback, NULL);
 
     text_col = text_row = 0;
     text_rows = gr_fb_height() / CHAR_HEIGHT;

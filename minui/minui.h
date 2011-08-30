@@ -45,9 +45,20 @@ unsigned int gr_get_height(gr_surface surface);
 // see http://www.mjmwired.net/kernel/Documentation/input/ for info.
 struct input_event;
 
-int ev_init(void);
+typedef int (*ev_callback)(int fd, short revents, void *data);
+
+int ev_init(ev_callback input_cb, void *data);
 void ev_exit(void);
-int ev_get(struct input_event *ev, unsigned dont_wait);
+
+/* timeout has the same semantics as for poll
+ *    0 : don't block
+ *  < 0 : block forever
+ *  > 0 : block for 'timeout' milliseconds
+ */
+int ev_wait(int timeout);
+
+int ev_get_input(int fd, short revents, struct input_event *ev);
+void ev_dispatch(void);
 
 // Resources
 

@@ -26,10 +26,18 @@
 
 #define MAX_DEVICES 16
 
-static struct pollfd ev_fds[MAX_DEVICES];
-static unsigned ev_count = 0;
+struct fd_info {
+    ev_callback cb;
+    void *data;
+};
 
-int ev_init(void)
+static struct pollfd ev_fds[MAX_DEVICES];
+static struct fd_info ev_fdinfo[MAX_DEVICES];
+
+static unsigned ev_count = 0;
+static unsigned ev_dev_count = 0;
+
+int ev_init(ev_callback input_cb, void *data)
 {
     DIR *dir;
     struct dirent *de;
@@ -45,6 +53,8 @@ int ev_init(void)
 
             ev_fds[ev_count].fd = fd;
             ev_fds[ev_count].events = POLLIN;
+            ev_fdinfo[ev_count].cb = input_cb;
+            ev_fdinfo[ev_count].data = data;
             ev_count++;
             if(ev_count == MAX_DEVICES) break;
         }
@@ -60,23 +70,36 @@ void ev_exit(void)
     }
 }
 
-int ev_get(struct input_event *ev, unsigned dont_wait)
+int ev_wait(int timeout)
 {
     int r;
+
+    r = poll(ev_fds, ev_count, timeout);
+    if (r <= 0)
+        return -1;
+    return 0;
+}
+
+void ev_dispatch(void)
+{
     unsigned n;
+    int ret;
 
-    do {
-        r = poll(ev_fds, ev_count, dont_wait ? 0 : -1);
+    for (n = 0; n < ev_count; n++) {
+        ev_callback cb = ev_fdinfo[n].cb;
+        if (cb && (ev_fds[n].revents & ev_fds[n].events))
+            cb(ev_fds[n].fd, ev_fds[n].revents, ev_fdinfo[n].data);
+    }
+}
 
-        if(r > 0) {
-            for(n = 0; n < ev_count; n++) {
-                if(ev_fds[n].revents & POLLIN) {
-                    r = read(ev_fds[n].fd, ev, sizeof(*ev));
-                    if(r == sizeof(*ev)) return 0;
-                }
-            }
-        }
-    } while(dont_wait == 0);
+int ev_get_input(int fd, short revents, struct input_event *ev)
+{
+    int r;
 
+    if (revents & POLLIN) {
+        r = read(fd, ev, sizeof(*ev));
+        if (r == sizeof(*ev))
+            return 0;
+    }
     return -1;
 }
