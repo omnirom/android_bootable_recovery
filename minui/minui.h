@@ -17,6 +17,8 @@
 #ifndef _MINUI_H_
 #define _MINUI_H_
 
+#include <stdbool.h>
+
 typedef void* gr_surface;
 typedef unsigned short gr_pixel;
 
@@ -27,6 +29,7 @@ int gr_fb_width(void);
 int gr_fb_height(void);
 gr_pixel *gr_fb_data(void);
 void gr_flip(void);
+void gr_fb_blank(bool blank);
 
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 void gr_fill(int x, int y, int w, int h);
