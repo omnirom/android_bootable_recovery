@@ -32,6 +32,7 @@ void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a
 void gr_fill(int x, int y, int w, int h);
 int gr_text(int x, int y, const char *s);
 int gr_measure(const char *s);
+void gr_font_size(int *x, int *y);
 
 void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy);
 unsigned int gr_get_width(gr_surface surface);

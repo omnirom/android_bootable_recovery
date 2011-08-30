@@ -201,6 +201,12 @@ int gr_measure(const char *s)
     return gr_font->cwidth * strlen(s);
 }
 
+void gr_font_size(int *x, int *y)
+{
+    *x = gr_font->cwidth;
+    *y = gr_font->cheight;
+}
+
 int gr_text(int x, int y, const char *s)
 {
     GGLContext *gl = gr_context;
