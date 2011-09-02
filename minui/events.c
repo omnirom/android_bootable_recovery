@@ -25,17 +25,19 @@
 #include "minui.h"
 
 #define MAX_DEVICES 16
+#define MAX_MISC_FDS 16
 
 struct fd_info {
     ev_callback cb;
     void *data;
 };
 
-static struct pollfd ev_fds[MAX_DEVICES];
-static struct fd_info ev_fdinfo[MAX_DEVICES];
+static struct pollfd ev_fds[MAX_DEVICES + MAX_MISC_FDS];
+static struct fd_info ev_fdinfo[MAX_DEVICES + MAX_MISC_FDS];
 
 static unsigned ev_count = 0;
 static unsigned ev_dev_count = 0;
+static unsigned ev_misc_count = 0;
 
 int ev_init(ev_callback input_cb, void *data)
 {
@@ -56,10 +58,25 @@ int ev_init(ev_callback input_cb, void *data)
             ev_fdinfo[ev_count].cb = input_cb;
             ev_fdinfo[ev_count].data = data;
             ev_count++;
-            if(ev_count == MAX_DEVICES) break;
+            ev_dev_count++;
+            if(ev_dev_count == MAX_DEVICES) break;
         }
     }
 
+    return 0;
+}
+
+int ev_add_fd(int fd, ev_callback cb, void *data)
+{
+    if (ev_misc_count == MAX_MISC_FDS || cb == NULL)
+        return -1;
+
+    ev_fds[ev_count].fd = fd;
+    ev_fds[ev_count].events = POLLIN;
+    ev_fdinfo[ev_count].cb = cb;
+    ev_fdinfo[ev_count].data = data;
+    ev_count++;
+    ev_misc_count++;
     return 0;
 }
 
@@ -68,6 +85,8 @@ void ev_exit(void)
     while (ev_count > 0) {
         close(ev_fds[--ev_count].fd);
     }
+    ev_misc_count = 0;
+    ev_dev_count = 0;
 }
 
 int ev_wait(int timeout)

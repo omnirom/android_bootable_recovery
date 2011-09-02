@@ -49,6 +49,7 @@ typedef int (*ev_callback)(int fd, short revents, void *data);
 
 int ev_init(ev_callback input_cb, void *data);
 void ev_exit(void);
+int ev_add_fd(int fd, ev_callback cb, void *data);
 
 /* timeout has the same semantics as for poll
  *    0 : don't block
