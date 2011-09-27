@@ -336,6 +336,9 @@ int gr_init(void)
     gl->enable(gl, GGL_BLEND);
     gl->blendFunc(gl, GGL_SRC_ALPHA, GGL_ONE_MINUS_SRC_ALPHA);
 
+    gr_fb_blank(true);
+    gr_fb_blank(false);
+
     return 0;
 }
 
