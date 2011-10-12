@@ -27,7 +27,11 @@
 #define MAX_DEVICES 16
 #define MAX_MISC_FDS 16
 
-#define test_bit(bit, array)   ((array)[(bit)/8] & (1<<((bit)%8)))
+#define BITS_PER_LONG (sizeof(unsigned long) * 8)
+#define BITS_TO_LONGS(x) (((x) + BITS_PER_LONG - 1) / BITS_PER_LONG)
+
+#define test_bit(bit, array) \
+    ((array)[(bit)/BITS_PER_LONG] & (1 << ((bit) % BITS_PER_LONG)))
 
 struct fd_info {
     ev_callback cb;
@@ -50,7 +54,7 @@ int ev_init(ev_callback input_cb, void *data)
     dir = opendir("/dev/input");
     if(dir != 0) {
         while((de = readdir(dir))) {
-            uint8_t ev_bits[(EV_MAX + 1) / 8];
+            unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];
 
 //            fprintf(stderr,"/dev/input/%s\n", de->d_name);
             if(strncmp(de->d_name,"event",5)) continue;
@@ -138,4 +142,34 @@ int ev_get_input(int fd, short revents, struct input_event *ev)
             return 0;
     }
     return -1;
+}
+
+int ev_sync_key_state(ev_set_key_callback set_key_cb, void *data)
+{
+    unsigned long key_bits[BITS_TO_LONGS(KEY_MAX)];
+    unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];
+    unsigned i;
+    int ret;
+
+    for (i = 0; i < ev_dev_count; i++) {
+        int code;
+
+        memset(key_bits, 0, sizeof(key_bits));
+        memset(ev_bits, 0, sizeof(ev_bits));
+
+        ret = ioctl(ev_fds[i].fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits);
+        if (ret < 0 || !test_bit(EV_KEY, ev_bits))
+            continue;
+
+        ret = ioctl(ev_fds[i].fd, EVIOCGKEY(sizeof(key_bits)), key_bits);
+        if (ret < 0)
+            continue;
+
+        for (code = 0; code <= KEY_MAX; code++) {
+            if (test_bit(code, key_bits))
+                set_key_cb(code, 1, data);
+        }
+    }
+
+    return 0;
 }

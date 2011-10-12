@@ -46,10 +46,12 @@ unsigned int gr_get_height(gr_surface surface);
 struct input_event;
 
 typedef int (*ev_callback)(int fd, short revents, void *data);
+typedef int (*ev_set_key_callback)(int code, int value, void *data);
 
 int ev_init(ev_callback input_cb, void *data);
 void ev_exit(void);
 int ev_add_fd(int fd, ev_callback cb, void *data);
+int ev_sync_key_state(ev_set_key_callback set_key_cb, void *data);
 
 /* timeout has the same semantics as for poll
  *    0 : don't block
