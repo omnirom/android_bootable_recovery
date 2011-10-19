@@ -1024,6 +1024,14 @@ Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
     return StringValue(buffer);
 }
 
+Value* WipeCacheFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 0) {
+        return ErrorAbort(state, "%s() expects no args, got %d", name, argc);
+    }
+    fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe, "wipe_cache\n");
+    return StringValue(strdup("t"));
+}
+
 Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc < 1) {
         return ErrorAbort(state, "%s() expects at least 1 arg", name);
@@ -1197,6 +1205,8 @@ void RegisterInstallFunctions() {
 
     RegisterFunction("read_file", ReadFileFn);
     RegisterFunction("sha1_check", Sha1CheckFn);
+
+    RegisterFunction("wipe_cache", WipeCacheFn);
 
     RegisterFunction("ui_print", UIPrintFn);
 

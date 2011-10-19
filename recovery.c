@@ -52,9 +52,11 @@ static const char *COMMAND_FILE = "/cache/recovery/command";
 static const char *INTENT_FILE = "/cache/recovery/intent";
 static const char *LOG_FILE = "/cache/recovery/log";
 static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
+static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
 static const char *CACHE_ROOT = "/cache";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
+static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
 
 extern UIParameters ui_parameters;    // from ui.c
@@ -223,15 +225,13 @@ set_sdcard_update_bootloader_message() {
 static long tmplog_offset = 0;
 
 static void
-copy_log_file(const char* destination, int append) {
+copy_log_file(const char* source, const char* destination, int append) {
     FILE *log = fopen_path(destination, append ? "a" : "w");
     if (log == NULL) {
         LOGE("Can't open %s\n", destination);
     } else {
-        FILE *tmplog = fopen(TEMPORARY_LOG_FILE, "r");
-        if (tmplog == NULL) {
-            LOGE("Can't open %s\n", TEMPORARY_LOG_FILE);
-        } else {
+        FILE *tmplog = fopen(source, "r");
+        if (tmplog != NULL) {
             if (append) {
                 fseek(tmplog, tmplog_offset, SEEK_SET);  // Since last write
             }
@@ -240,7 +240,7 @@ copy_log_file(const char* destination, int append) {
             if (append) {
                 tmplog_offset = ftell(tmplog);
             }
-            check_and_fclose(tmplog, TEMPORARY_LOG_FILE);
+            check_and_fclose(tmplog, source);
         }
         check_and_fclose(log, destination);
     }
@@ -265,9 +265,13 @@ finish_recovery(const char *send_intent) {
     }
 
     // Copy logs to cache so the system can find out what happened.
-    copy_log_file(LOG_FILE, true);
-    copy_log_file(LAST_LOG_FILE, false);
+    copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
+    copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
+    copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, false);
+    chmod(LOG_FILE, 0600);
+    chown(LOG_FILE, 1000, 1000);   // system user
     chmod(LAST_LOG_FILE, 0640);
+    chmod(LAST_INSTALL_FILE, 0644);
 
     // Reset to mormal system boot so recovery won't cycle indefinitely.
     struct bootloader_message boot;
@@ -280,6 +284,7 @@ finish_recovery(const char *send_intent) {
         LOGW("Can't unlink %s\n", COMMAND_FILE);
     }
 
+    ensure_path_unmounted(CACHE_ROOT);
     sync();  // For good measure.
 }
 
@@ -288,6 +293,8 @@ erase_volume(const char *volume) {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     ui_show_indeterminate_progress();
     ui_print("Formatting %s...\n", volume);
+
+    ensure_path_unmounted(volume);
 
     if (strcmp(volume, "/cache") == 0) {
         // Any part of the log we'd copied to cache is now gone.
@@ -469,7 +476,8 @@ static int compare_string(const void* a, const void* b) {
 }
 
 static int
-update_directory(const char* path, const char* unmount_when_done) {
+update_directory(const char* path, const char* unmount_when_done,
+                 int* wipe_cache) {
     ensure_path_mounted(path);
 
     const char* MENU_HEADERS[] = { "Choose a package to install:",
@@ -558,7 +566,7 @@ update_directory(const char* path, const char* unmount_when_done) {
             strlcat(new_path, "/", PATH_MAX);
             strlcat(new_path, item, PATH_MAX);
             new_path[strlen(new_path)-1] = '\0';  // truncate the trailing '/'
-            result = update_directory(new_path, unmount_when_done);
+            result = update_directory(new_path, unmount_when_done, wipe_cache);
             if (result >= 0) break;
         } else {
             // selected a zip file:  attempt to install it, and return
@@ -575,7 +583,7 @@ update_directory(const char* path, const char* unmount_when_done) {
                 ensure_path_unmounted(unmount_when_done);
             }
             if (copy) {
-                result = install_package(copy);
+                result = install_package(copy, wipe_cache, TEMPORARY_INSTALL_FILE);
                 free(copy);
             } else {
                 result = INSTALL_ERROR;
@@ -650,6 +658,7 @@ prompt_and_wait() {
         chosen_item = device_perform_action(chosen_item);
 
         int status;
+        int wipe_cache;
         switch (chosen_item) {
             case ITEM_REBOOT:
                 return;
@@ -667,7 +676,15 @@ prompt_and_wait() {
                 break;
 
             case ITEM_APPLY_SDCARD:
-                status = update_directory(SDCARD_ROOT, SDCARD_ROOT);
+                status = update_directory(SDCARD_ROOT, SDCARD_ROOT, &wipe_cache);
+                if (status == INSTALL_SUCCESS && wipe_cache) {
+                    ui_print("\n-- Wiping cache (at package request)...\n");
+                    if (erase_volume("/cache")) {
+                        ui_print("Cache wipe failed.\n");
+                    } else {
+                        ui_print("Cache wipe complete.\n");
+                    }
+                }
                 if (status >= 0) {
                     if (status != INSTALL_SUCCESS) {
                         ui_set_background(BACKGROUND_ICON_ERROR);
@@ -681,7 +698,15 @@ prompt_and_wait() {
                 break;
             case ITEM_APPLY_CACHE:
                 // Don't unmount cache at the end of this.
-                status = update_directory(CACHE_ROOT, NULL);
+                status = update_directory(CACHE_ROOT, NULL, &wipe_cache);
+                if (status == INSTALL_SUCCESS && wipe_cache) {
+                    ui_print("\n-- Wiping cache (at package request)...\n");
+                    if (erase_volume("/cache")) {
+                        ui_print("Cache wipe failed.\n");
+                    } else {
+                        ui_print("Cache wipe complete.\n");
+                    }
+                }
                 if (status >= 0) {
                     if (status != INSTALL_SUCCESS) {
                         ui_set_background(BACKGROUND_ICON_ERROR);
@@ -768,7 +793,12 @@ main(int argc, char **argv) {
     int status = INSTALL_SUCCESS;
 
     if (update_package != NULL) {
-        status = install_package(update_package);
+        status = install_package(update_package, &wipe_cache, TEMPORARY_INSTALL_FILE);
+        if (status == INSTALL_SUCCESS && wipe_cache) {
+            if (erase_volume("/cache")) {
+                LOGE("Cache wipe (requested by package) failed.");
+            }
+        }
         if (status != INSTALL_SUCCESS) ui_print("Installation aborted.\n");
     } else if (wipe_data) {
         if (device_wipe_data()) status = INSTALL_ERROR;
