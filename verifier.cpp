@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <errno.h>
 
+extern RecoveryUI* ui;
+
 // Look for an RSA signature embedded in the .ZIP file comment given
 // the path to the zip.  Verify it matches one of the given public
 // keys.
@@ -33,7 +35,7 @@
 // or no key matches the signature).
 
 int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKeys) {
-    ui_set_progress(0.0);
+    ui->SetProgress(0.0);
 
     FILE* f = fopen(path, "rb");
     if (f == NULL) {
@@ -161,7 +163,7 @@ int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKey
         so_far += size;
         double f = so_far / (double)signed_len;
         if (f > frac + 0.02 || size == so_far) {
-            ui_set_progress(f);
+            ui->SetProgress(f);
             frac = f;
         }
     }

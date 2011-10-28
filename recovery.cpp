@@ -39,6 +39,7 @@
 #include "roots.h"
 #include "recovery_ui.h"
 #include "ui.h"
+#include "screen_ui.h"
 
 static const struct option OPTIONS[] = {
   { "send_intent", required_argument, NULL, 's' },
@@ -61,6 +62,8 @@ static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
 
 extern UIParameters ui_parameters;    // from ui.c
+
+RecoveryUI* ui = NULL;
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -291,9 +294,9 @@ finish_recovery(const char *send_intent) {
 
 static int
 erase_volume(const char *volume) {
-    ui_set_background(BACKGROUND_ICON_INSTALLING);
-    ui_show_indeterminate_progress();
-    ui_print("Formatting %s...\n", volume);
+    ui->SetBackground(RecoveryUI::INSTALLING);
+    ui->SetProgressType(RecoveryUI::INDETERMINATE);
+    ui->Print("Formatting %s...\n", volume);
 
     ensure_path_unmounted(volume);
 
@@ -425,22 +428,22 @@ get_menu_selection(const char* const * headers, const char* const * items,
                    int menu_only, int initial_selection) {
     // throw away keys pressed previously, so user doesn't
     // accidentally trigger menu items.
-    ui_clear_key_queue();
+    ui->FlushKeys();
 
-    ui_start_menu(headers, items, initial_selection);
+    ui->StartMenu(headers, items, initial_selection);
     int selected = initial_selection;
     int chosen_item = -1;
 
     while (chosen_item < 0) {
-        int key = ui_wait_key();
-        int visible = ui_text_visible();
+        int key = ui->WaitKey();
+        int visible = ui->IsTextVisible();
 
         if (key == -1) {   // ui_wait_key() timed out
-            if (ui_text_ever_visible()) {
+            if (ui->WasTextEverVisible()) {
                 continue;
             } else {
                 LOGI("timed out waiting for key input; rebooting.\n");
-                ui_end_menu();
+                ui->EndMenu();
                 return ITEM_REBOOT;
             }
         }
@@ -451,11 +454,11 @@ get_menu_selection(const char* const * headers, const char* const * items,
             switch (action) {
                 case HIGHLIGHT_UP:
                     --selected;
-                    selected = ui_menu_select(selected);
+                    selected = ui->SelectMenu(selected);
                     break;
                 case HIGHLIGHT_DOWN:
                     ++selected;
-                    selected = ui_menu_select(selected);
+                    selected = ui->SelectMenu(selected);
                     break;
                 case SELECT_ITEM:
                     chosen_item = selected;
@@ -468,7 +471,7 @@ get_menu_selection(const char* const * headers, const char* const * items,
         }
     }
 
-    ui_end_menu();
+    ui->EndMenu();
     return chosen_item;
 }
 
@@ -577,7 +580,7 @@ update_directory(const char* path, const char* unmount_when_done,
             strlcat(new_path, "/", PATH_MAX);
             strlcat(new_path, item, PATH_MAX);
 
-            ui_print("\n-- Install %s ...\n", path);
+            ui->Print("\n-- Install %s ...\n", path);
             set_sdcard_update_bootloader_message();
             char* copy = copy_sideloaded_package(new_path);
             if (unmount_when_done != NULL) {
@@ -636,11 +639,11 @@ wipe_data(int confirm) {
         }
     }
 
-    ui_print("\n-- Wiping data...\n");
+    ui->Print("\n-- Wiping data...\n");
     device_wipe_data();
     erase_volume("/data");
     erase_volume("/cache");
-    ui_print("Data wipe complete.\n");
+    ui->Print("Data wipe complete.\n");
 }
 
 static void
@@ -649,7 +652,7 @@ prompt_and_wait() {
 
     for (;;) {
         finish_recovery(NULL);
-        ui_reset_progress();
+        ui->SetProgressType(RecoveryUI::EMPTY);
 
         int chosen_item = get_menu_selection(headers, MENU_ITEMS, 0, 0);
 
@@ -665,35 +668,35 @@ prompt_and_wait() {
                 return;
 
             case ITEM_WIPE_DATA:
-                wipe_data(ui_text_visible());
-                if (!ui_text_visible()) return;
+                wipe_data(ui->IsTextVisible());
+                if (!ui->IsTextVisible()) return;
                 break;
 
             case ITEM_WIPE_CACHE:
-                ui_print("\n-- Wiping cache...\n");
+                ui->Print("\n-- Wiping cache...\n");
                 erase_volume("/cache");
-                ui_print("Cache wipe complete.\n");
-                if (!ui_text_visible()) return;
+                ui->Print("Cache wipe complete.\n");
+                if (!ui->IsTextVisible()) return;
                 break;
 
             case ITEM_APPLY_SDCARD:
                 status = update_directory(SDCARD_ROOT, SDCARD_ROOT, &wipe_cache);
                 if (status == INSTALL_SUCCESS && wipe_cache) {
-                    ui_print("\n-- Wiping cache (at package request)...\n");
+                    ui->Print("\n-- Wiping cache (at package request)...\n");
                     if (erase_volume("/cache")) {
-                        ui_print("Cache wipe failed.\n");
+                        ui->Print("Cache wipe failed.\n");
                     } else {
-                        ui_print("Cache wipe complete.\n");
+                        ui->Print("Cache wipe complete.\n");
                     }
                 }
                 if (status >= 0) {
                     if (status != INSTALL_SUCCESS) {
-                        ui_set_background(BACKGROUND_ICON_ERROR);
-                        ui_print("Installation aborted.\n");
-                    } else if (!ui_text_visible()) {
+                        ui->SetBackground(RecoveryUI::ERROR);
+                        ui->Print("Installation aborted.\n");
+                    } else if (!ui->IsTextVisible()) {
                         return;  // reboot if logs aren't visible
                     } else {
-                        ui_print("\nInstall from sdcard complete.\n");
+                        ui->Print("\nInstall from sdcard complete.\n");
                     }
                 }
                 break;
@@ -701,21 +704,21 @@ prompt_and_wait() {
                 // Don't unmount cache at the end of this.
                 status = update_directory(CACHE_ROOT, NULL, &wipe_cache);
                 if (status == INSTALL_SUCCESS && wipe_cache) {
-                    ui_print("\n-- Wiping cache (at package request)...\n");
+                    ui->Print("\n-- Wiping cache (at package request)...\n");
                     if (erase_volume("/cache")) {
-                        ui_print("Cache wipe failed.\n");
+                        ui->Print("Cache wipe failed.\n");
                     } else {
-                        ui_print("Cache wipe complete.\n");
+                        ui->Print("Cache wipe complete.\n");
                     }
                 }
                 if (status >= 0) {
                     if (status != INSTALL_SUCCESS) {
-                        ui_set_background(BACKGROUND_ICON_ERROR);
-                        ui_print("Installation aborted.\n");
-                    } else if (!ui_text_visible()) {
+                        ui->SetBackground(RecoveryUI::ERROR);
+                        ui->Print("Installation aborted.\n");
+                    } else if (!ui->IsTextVisible()) {
                         return;  // reboot if logs aren't visible
                     } else {
-                        ui_print("\nInstall from cache complete.\n");
+                        ui->Print("\nInstall from cache complete.\n");
                     }
                 }
                 break;
@@ -738,9 +741,13 @@ main(int argc, char **argv) {
     freopen(TEMPORARY_LOG_FILE, "a", stderr); setbuf(stderr, NULL);
     printf("Starting recovery on %s", ctime(&start));
 
+    // TODO: device_* should be a C++ class; init should return the
+    // appropriate UI for the device.
     device_ui_init(&ui_parameters);
-    ui_init();
-    ui_set_background(BACKGROUND_ICON_INSTALLING);
+    ui = new ScreenRecoveryUI();
+
+    ui->Init();
+    ui->SetBackground(RecoveryUI::INSTALLING);
     load_volume_table();
     get_args(&argc, &argv);
 
@@ -757,7 +764,7 @@ main(int argc, char **argv) {
         case 'u': update_package = optarg; break;
         case 'w': wipe_data = wipe_cache = 1; break;
         case 'c': wipe_cache = 1; break;
-        case 't': ui_show_text(1); break;
+        case 't': ui->ShowText(true); break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -800,27 +807,27 @@ main(int argc, char **argv) {
                 LOGE("Cache wipe (requested by package) failed.");
             }
         }
-        if (status != INSTALL_SUCCESS) ui_print("Installation aborted.\n");
+        if (status != INSTALL_SUCCESS) ui->Print("Installation aborted.\n");
     } else if (wipe_data) {
         if (device_wipe_data()) status = INSTALL_ERROR;
         if (erase_volume("/data")) status = INSTALL_ERROR;
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
-        if (status != INSTALL_SUCCESS) ui_print("Data wipe failed.\n");
+        if (status != INSTALL_SUCCESS) ui->Print("Data wipe failed.\n");
     } else if (wipe_cache) {
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
-        if (status != INSTALL_SUCCESS) ui_print("Cache wipe failed.\n");
+        if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
     } else {
         status = INSTALL_ERROR;  // No command specified
     }
 
-    if (status != INSTALL_SUCCESS) ui_set_background(BACKGROUND_ICON_ERROR);
-    if (status != INSTALL_SUCCESS || ui_text_visible()) {
+    if (status != INSTALL_SUCCESS) ui->SetBackground(RecoveryUI::ERROR);
+    if (status != INSTALL_SUCCESS || ui->IsTextVisible()) {
         prompt_and_wait();
     }
 
     // Otherwise, get ready to boot the main system...
     finish_recovery(send_intent);
-    ui_print("Rebooting...\n");
+    ui->Print("Rebooting...\n");
     android_reboot(ANDROID_RB_RESTART, 0, 0);
     return EXIT_SUCCESS;
 }

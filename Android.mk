@@ -8,7 +8,7 @@ LOCAL_SRC_FILES := \
     bootloader.cpp \
     install.cpp \
     roots.cpp \
-    ui.cpp \
+    screen_ui.cpp \
     verifier.cpp
 
 LOCAL_MODULE := recovery
