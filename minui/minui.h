@@ -19,6 +19,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void* gr_surface;
 typedef unsigned short gr_pixel;
 
@@ -68,5 +72,9 @@ void ev_dispatch(void);
 // Returns 0 if no error, else negative.
 int res_create_surface(const char* name, gr_surface* pSurface);
 void res_free_surface(gr_surface surface);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

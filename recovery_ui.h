@@ -19,6 +19,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Called before UI library is initialized.  Can change things like
 // how many frames are included in various animations, etc.
 extern void device_ui_init(UIParameters* ui_parameters);
@@ -83,5 +87,9 @@ extern char* MENU_HEADERS[];
 
 // Text of menu items.
 extern char* MENU_ITEMS[];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

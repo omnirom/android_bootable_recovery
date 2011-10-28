@@ -4,12 +4,12 @@ include $(CLEAR_VARS)
 commands_recovery_local_path := $(LOCAL_PATH)
 
 LOCAL_SRC_FILES := \
-    recovery.c \
-    bootloader.c \
-    install.c \
-    roots.c \
-    ui.c \
-    verifier.c
+    recovery.cpp \
+    bootloader.cpp \
+    install.cpp \
+    roots.cpp \
+    ui.cpp \
+    verifier.cpp
 
 LOCAL_MODULE := recovery
 
@@ -50,7 +50,7 @@ include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := verifier_test.c verifier.c
+LOCAL_SRC_FILES := verifier_test.cpp verifier.cpp
 
 LOCAL_MODULE := verifier_test
 
