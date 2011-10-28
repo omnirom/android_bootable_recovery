@@ -17,59 +17,68 @@
 #ifndef RECOVERY_UI_H
 #define RECOVERY_UI_H
 
-// Initialize the graphics system.
-void ui_init();
+// Abstract class for controlling the user interface during recovery.
+class RecoveryUI {
+  public:
+    virtual ~RecoveryUI() { }
 
-// Use KEY_* codes from <linux/input.h> or KEY_DREAM_* from "minui/minui.h".
-int ui_wait_key();            // waits for a key/button press, returns the code
-int ui_key_pressed(int key);  // returns >0 if the code is currently pressed
-int ui_text_visible();        // returns >0 if text log is currently visible
-int ui_text_ever_visible();   // returns >0 if text log was ever visible
-void ui_show_text(int visible);
-void ui_clear_key_queue();
+    // Initialize the object; called before anything else.
+    virtual void Init() = 0;
 
-// Write a message to the on-screen log shown with Alt-L (also to stderr).
-// The screen is small, and users may need to report these messages to support,
-// so keep the output short and not too cryptic.
-void ui_print(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+    // Set the overall recovery state ("background image").
+    enum Icon { NONE, INSTALLING, ERROR };
+    virtual void SetBackground(Icon icon) = 0;
 
-// Display some header text followed by a menu of items, which appears
-// at the top of the screen (in place of any scrolling ui_print()
-// output, if necessary).
-void ui_start_menu(const char* const * headers, const char* const * items,
-                   int initial_selection);
-// Set the menu highlight to the given index, and return it (capped to
-// the range [0..numitems).
-int ui_menu_select(int sel);
-// End menu mode, resetting the text overlay so that ui_print()
-// statements will be displayed.
-void ui_end_menu();
+    // --- progress indicator ---
+    enum ProgressType { EMPTY, INDETERMINATE, DETERMINATE };
+    virtual void SetProgressType(ProgressType determinate) = 0;
 
-// Set the icon (normally the only thing visible besides the progress bar).
-enum {
-  BACKGROUND_ICON_NONE,
-  BACKGROUND_ICON_INSTALLING,
-  BACKGROUND_ICON_ERROR,
-  NUM_BACKGROUND_ICONS
+    // Show a progress bar and define the scope of the next operation:
+    //   portion - fraction of the progress bar the next operation will use
+    //   seconds - expected time interval (progress bar moves at this minimum rate)
+    virtual void ShowProgress(float portion, float seconds) = 0;
+
+    // Set progress bar position (0.0 - 1.0 within the scope defined
+    // by the last call to ShowProgress).
+    virtual void SetProgress(float fraction) = 0;
+
+    // --- text log ---
+
+    virtual void ShowText(bool visible) = 0;
+
+    virtual bool IsTextVisible() = 0;
+
+    virtual bool WasTextEverVisible() = 0;
+
+    // Write a message to the on-screen log (shown if the user has
+    // toggled on the text display).
+    virtual void Print(const char* fmt, ...) = 0; // __attribute__((format(printf, 1, 2))) = 0;
+
+    // --- key handling ---
+
+    // Wait for keypress and return it.  May return -1 after timeout.
+    virtual int WaitKey() = 0;
+
+    virtual bool IsKeyPressed(int key) = 0;
+
+    // Erase any queued-up keys.
+    virtual void FlushKeys() = 0;
+
+    // --- menu display ---
+
+    // Display some header text followed by a menu of items, which appears
+    // at the top of the screen (in place of any scrolling ui_print()
+    // output, if necessary).
+    virtual void StartMenu(const char* const * headers, const char* const * items,
+                           int initial_selection) = 0;
+
+    // Set the menu highlight to the given index, and return it (capped to
+    // the range [0..numitems).
+    virtual int SelectMenu(int sel) = 0;
+
+    // End menu mode, resetting the text overlay so that ui_print()
+    // statements will be displayed.
+    virtual void EndMenu() = 0;
 };
-void ui_set_background(int icon);
-
-// Show a progress bar and define the scope of the next operation:
-//   portion - fraction of the progress bar the next operation will use
-//   seconds - expected time interval (progress bar moves at this minimum rate)
-void ui_show_progress(float portion, int seconds);
-void ui_set_progress(float fraction);  // 0.0 - 1.0 within the defined scope
-
-// Default allocation of progress bar segments to operations
-static const int VERIFICATION_PROGRESS_TIME = 60;
-static const float VERIFICATION_PROGRESS_FRACTION = 0.25;
-static const float DEFAULT_FILES_PROGRESS_FRACTION = 0.4;
-static const float DEFAULT_IMAGE_PROGRESS_FRACTION = 0.1;
-
-// Show a rotating "barberpole" for ongoing operations.  Updates automatically.
-void ui_show_indeterminate_progress();
-
-// Hide and reset the progress bar.
-void ui_reset_progress();
 
 #endif  // RECOVERY_UI_H
