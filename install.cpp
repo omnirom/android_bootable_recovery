@@ -32,6 +32,7 @@
 #include "mtdutils/mtdutils.h"
 #include "roots.h"
 #include "verifier.h"
+#include "ui.h"
 
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
 #define PUBLIC_KEYS_FILE "/res/keys"
@@ -46,7 +47,7 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
         return INSTALL_CORRUPT;
     }
 
-    char* binary = "/tmp/update_binary";
+    const char* binary = "/tmp/update_binary";
     unlink(binary);
     int fd = creat(binary, 0755);
     if (fd < 0) {
@@ -100,18 +101,19 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
     //   - the name of the package zip file.
     //
 
-    char** args = malloc(sizeof(char*) * 5);
+    const char** args = (const char**)malloc(sizeof(char*) * 5);
     args[0] = binary;
     args[1] = EXPAND(RECOVERY_API_VERSION);   // defined in Android.mk
-    args[2] = malloc(10);
-    sprintf(args[2], "%d", pipefd[1]);
+    char* temp = (char*)malloc(10);
+    sprintf(temp, "%d", pipefd[1]);
+    args[2] = temp;
     args[3] = (char*)path;
     args[4] = NULL;
 
     pid_t pid = fork();
     if (pid == 0) {
         close(pipefd[0]);
-        execv(binary, args);
+        execv(binary, (char* const*)args);
         fprintf(stdout, "E:Can't run %s (%s)\n", binary, strerror(errno));
         _exit(-1);
     }
@@ -188,31 +190,32 @@ load_keys(const char* filename, int* numKeys) {
         goto exit;
     }
 
-    int i;
-    bool done = false;
-    while (!done) {
-        ++*numKeys;
-        out = realloc(out, *numKeys * sizeof(RSAPublicKey));
-        RSAPublicKey* key = out + (*numKeys - 1);
-        if (fscanf(f, " { %i , 0x%x , { %u",
-                   &(key->len), &(key->n0inv), &(key->n[0])) != 3) {
-            goto exit;
-        }
-        if (key->len != RSANUMWORDS) {
-            LOGE("key length (%d) does not match expected size\n", key->len);
-            goto exit;
-        }
-        for (i = 1; i < key->len; ++i) {
-            if (fscanf(f, " , %u", &(key->n[i])) != 1) goto exit;
-        }
-        if (fscanf(f, " } , { %u", &(key->rr[0])) != 1) goto exit;
-        for (i = 1; i < key->len; ++i) {
-            if (fscanf(f, " , %u", &(key->rr[i])) != 1) goto exit;
-        }
-        fscanf(f, " } } ");
+    {
+        int i;
+        bool done = false;
+        while (!done) {
+            ++*numKeys;
+            out = (RSAPublicKey*)realloc(out, *numKeys * sizeof(RSAPublicKey));
+            RSAPublicKey* key = out + (*numKeys - 1);
+            if (fscanf(f, " { %i , 0x%x , { %u",
+                       &(key->len), &(key->n0inv), &(key->n[0])) != 3) {
+                goto exit;
+            }
+            if (key->len != RSANUMWORDS) {
+                LOGE("key length (%d) does not match expected size\n", key->len);
+                goto exit;
+            }
+            for (i = 1; i < key->len; ++i) {
+                if (fscanf(f, " , %u", &(key->n[i])) != 1) goto exit;
+            }
+            if (fscanf(f, " } , { %u", &(key->rr[0])) != 1) goto exit;
+            for (i = 1; i < key->len; ++i) {
+                if (fscanf(f, " , %u", &(key->rr[i])) != 1) goto exit;
+            }
+            fscanf(f, " } } ");
 
-        // if the line ends in a comma, this file has more keys.
-        switch (fgetc(f)) {
+            // if the line ends in a comma, this file has more keys.
+            switch (fgetc(f)) {
             case ',':
                 // more keys to come.
                 break;
@@ -224,6 +227,7 @@ load_keys(const char* filename, int* numKeys) {
             default:
                 LOGE("unexpected character between keys\n");
                 goto exit;
+            }
         }
     }
 

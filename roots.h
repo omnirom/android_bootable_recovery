@@ -19,6 +19,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Load and parse volume data from /etc/recovery.fstab.
 void load_volume_table();
 
@@ -37,5 +41,9 @@ int ensure_path_unmounted(const char* path);
 // "/cache"), no paths permitted.  Attempts to unmount the volume if
 // it is mounted.
 int format_volume(const char* volume);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // RECOVERY_ROOTS_H_

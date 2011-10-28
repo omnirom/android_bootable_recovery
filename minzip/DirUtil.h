@@ -20,6 +20,10 @@
 #include <stdbool.h>
 #include <utime.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Like "mkdir -p", try to guarantee that all directories
  * specified in path are present, creating as many directories
  * as necessary.  The specified mode is passed to all mkdir
@@ -47,5 +51,9 @@ int dirUnlinkHierarchy(const char *path);
  */
 int dirSetHierarchyPermissions(const char *path,
          int uid, int gid, int dirMode, int fileMode);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MINZIP_DIRUTIL_H_

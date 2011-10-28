@@ -32,6 +32,7 @@
 #include <cutils/android_reboot.h>
 #include "minui/minui.h"
 #include "recovery_ui.h"
+#include "ui.h"
 
 #define MAX_COLS 96
 #define MAX_ROWS 32
@@ -397,8 +398,8 @@ void ui_init(void)
         }
     }
 
-    gProgressBarIndeterminate = malloc(ui_parameters.indeterminate_frames *
-                                       sizeof(gr_surface));
+    gProgressBarIndeterminate = (gr_surface*)malloc(ui_parameters.indeterminate_frames *
+                                                    sizeof(gr_surface));
     for (i = 0; i < ui_parameters.indeterminate_frames; ++i) {
         char filename[40];
         // "indeterminate01.png", "indeterminate02.png", ...
@@ -410,8 +411,8 @@ void ui_init(void)
     }
 
     if (ui_parameters.installing_frames > 0) {
-        gInstallationOverlay = malloc(ui_parameters.installing_frames *
-                                      sizeof(gr_surface));
+        gInstallationOverlay = (gr_surface*)malloc(ui_parameters.installing_frames *
+                                                   sizeof(gr_surface));
         for (i = 0; i < ui_parameters.installing_frames; ++i) {
             char filename[40];
             // "icon_installing_overlay01.png",
@@ -529,7 +530,8 @@ void ui_print(const char *fmt, ...)
     pthread_mutex_unlock(&gUpdateMutex);
 }
 
-void ui_start_menu(char** headers, char** items, int initial_selection) {
+void ui_start_menu(const char* const * headers, const char* const * items,
+                   int initial_selection) {
     int i;
     pthread_mutex_lock(&gUpdateMutex);
     if (text_rows > 0 && text_cols > 0) {

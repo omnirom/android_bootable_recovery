@@ -19,6 +19,10 @@
 
 #include <sys/types.h>  // for size_t, etc.
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct MtdPartition MtdPartition;
 
 int mtd_scan_partitions(void);
@@ -52,5 +56,9 @@ ssize_t mtd_write_data(MtdWriteContext *, const char *data, size_t data_len);
 off_t mtd_erase_blocks(MtdWriteContext *, int blocks);  /* 0 ok, -1 for all */
 off_t mtd_find_write_start(MtdWriteContext *ctx, off_t pos);
 int mtd_write_close(MtdWriteContext *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MTDUTILS_H_

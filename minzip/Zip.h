@@ -14,6 +14,10 @@
 #include "Hash.h"
 #include "SysUtil.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * One entry in the Zip archive.  Treat this as opaque -- use accessors below.
  *
@@ -209,5 +213,9 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
         const char *zipDir, const char *targetDir,
         int flags, const struct utimbuf *timestamp,
         void (*callback)(const char *fn, void*), void *cookie);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*_MINZIP_ZIP*/
