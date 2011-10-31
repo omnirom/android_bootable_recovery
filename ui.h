@@ -64,6 +64,13 @@ class RecoveryUI {
     // Erase any queued-up keys.
     virtual void FlushKeys() = 0;
 
+    // Called on each keypress, even while operations are in progress.
+    // Return value indicates whether an immediate operation should be
+    // triggered (toggling the display, rebooting the device), or if
+    // the key should be enqueued for use by the main thread.
+    enum KeyAction { ENQUEUE, TOGGLE, REBOOT };
+    virtual KeyAction CheckKey(int key) = 0;
+
     // --- menu display ---
 
     // Display some header text followed by a menu of items, which appears

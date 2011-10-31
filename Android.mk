@@ -34,7 +34,7 @@ endif
 LOCAL_MODULE_TAGS := eng
 
 ifeq ($(TARGET_RECOVERY_UI_LIB),)
-  LOCAL_SRC_FILES += default_recovery_ui.c
+  LOCAL_SRC_FILES += default_device.cpp
 else
   LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
 endif

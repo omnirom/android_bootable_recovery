@@ -31,9 +31,9 @@
 #include "common.h"
 #include <cutils/android_reboot.h>
 #include "minui/minui.h"
-#include "recovery_ui.h"
 #include "ui.h"
 #include "screen_ui.h"
+#include "device.h"
 
 #define CHAR_WIDTH 10
 #define CHAR_HEIGHT 18
@@ -78,7 +78,8 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     menu_top(0),
     menu_items(0),
     menu_sel(0),
-    key_queue_len(0) {
+    key_queue_len(0),
+    key_last_down(-1) {
     pthread_mutex_init(&updateMutex, NULL);
     pthread_mutex_init(&key_queue_mutex, NULL);
     pthread_cond_init(&key_queue_cond, NULL);
@@ -281,7 +282,6 @@ int ScreenRecoveryUI::input_callback(int fd, short revents, void* data)
 {
     struct input_event ev;
     int ret;
-    int fake_key = 0;
 
     ret = ev_get_input(fd, revents, &ev);
     if (ret)
@@ -297,16 +297,12 @@ int ScreenRecoveryUI::input_callback(int fd, short revents, void* data)
             // key event.
             self->rel_sum += ev.value;
             if (self->rel_sum > 3) {
-                fake_key = 1;
-                ev.type = EV_KEY;
-                ev.code = KEY_DOWN;
-                ev.value = 1;
+                self->process_key(KEY_DOWN, 1);   // press down key
+                self->process_key(KEY_DOWN, 0);   // and release it
                 self->rel_sum = 0;
             } else if (self->rel_sum < -3) {
-                fake_key = 1;
-                ev.type = EV_KEY;
-                ev.code = KEY_UP;
-                ev.value = 1;
+                self->process_key(KEY_UP, 1);     // press up key
+                self->process_key(KEY_UP, 0);     // and release it
                 self->rel_sum = 0;
             }
         }
@@ -314,36 +310,63 @@ int ScreenRecoveryUI::input_callback(int fd, short revents, void* data)
         self->rel_sum = 0;
     }
 
-    if (ev.type != EV_KEY || ev.code > KEY_MAX)
-        return 0;
-
-    pthread_mutex_lock(&self->key_queue_mutex);
-    if (!fake_key) {
-        // our "fake" keys only report a key-down event (no
-        // key-up), so don't record them in the key_pressed
-        // table.
-        self->key_pressed[ev.code] = ev.value;
-    }
-    const int queue_max = sizeof(self->key_queue) / sizeof(self->key_queue[0]);
-    if (ev.value > 0 && self->key_queue_len < queue_max) {
-        self->key_queue[self->key_queue_len++] = ev.code;
-        pthread_cond_signal(&self->key_queue_cond);
-    }
-    pthread_mutex_unlock(&self->key_queue_mutex);
-
-    if (ev.value > 0 && device_toggle_display(self->key_pressed, ev.code)) {
-        pthread_mutex_lock(&self->updateMutex);
-        self->show_text = !self->show_text;
-        if (self->show_text) self->show_text_ever = true;
-        self->update_screen_locked();
-        pthread_mutex_unlock(&self->updateMutex);
-    }
-
-    if (ev.value > 0 && device_reboot_now(self->key_pressed, ev.code)) {
-        android_reboot(ANDROID_RB_RESTART, 0, 0);
-    }
+    if (ev.type == EV_KEY && ev.code <= KEY_MAX)
+        self->process_key(ev.code, ev.value);
 
     return 0;
+}
+
+// Process a key-up or -down event.  A key is "registered" when it is
+// pressed and then released, with no other keypresses or releases in
+// between.  Registered keys are passed to CheckKey() to see if it
+// should trigger a visibility toggle, an immediate reboot, or be
+// queued to be processed next time the foreground thread wants a key
+// (eg, for the menu).
+//
+// We also keep track of which keys are currently down so that
+// CheckKey can call IsKeyPressed to see what other keys are held when
+// a key is registered.
+//
+// updown == 1 for key down events; 0 for key up events
+void ScreenRecoveryUI::process_key(int key_code, int updown) {
+    bool register_key = false;
+
+    pthread_mutex_lock(&key_queue_mutex);
+    key_pressed[key_code] = updown;
+    if (updown) {
+        key_last_down = key_code;
+    } else {
+        if (key_last_down == key_code)
+            register_key = true;
+        key_last_down = -1;
+    }
+    pthread_mutex_unlock(&key_queue_mutex);
+
+    if (register_key) {
+        switch (CheckKey(key_code)) {
+          case RecoveryUI::TOGGLE:
+            pthread_mutex_lock(&updateMutex);
+            show_text = !show_text;
+            if (show_text) show_text_ever = true;
+            update_screen_locked();
+            pthread_mutex_unlock(&updateMutex);
+            break;
+
+          case RecoveryUI::REBOOT:
+            android_reboot(ANDROID_RB_RESTART, 0, 0);
+            break;
+
+          case RecoveryUI::ENQUEUE:
+            pthread_mutex_lock(&key_queue_mutex);
+            const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
+            if (key_queue_len < queue_max) {
+                key_queue[key_queue_len++] = key_code;
+                pthread_cond_signal(&key_queue_cond);
+            }
+            pthread_mutex_unlock(&key_queue_mutex);
+            break;
+        }
+    }
 }
 
 // Reads input events, handles special hot keys, and adds to the key queue.
@@ -622,12 +645,18 @@ int ScreenRecoveryUI::WaitKey()
 
 bool ScreenRecoveryUI::IsKeyPressed(int key)
 {
-    // This is a volatile static array, don't bother locking
-    return key_pressed[key];
+    pthread_mutex_lock(&key_queue_mutex);
+    int pressed = key_pressed[key];
+    pthread_mutex_unlock(&key_queue_mutex);
+    return pressed;
 }
 
 void ScreenRecoveryUI::FlushKeys() {
     pthread_mutex_lock(&key_queue_mutex);
     key_queue_len = 0;
     pthread_mutex_unlock(&key_queue_mutex);
+}
+
+RecoveryUI::KeyAction ScreenRecoveryUI::CheckKey(int key) {
+    return RecoveryUI::ENQUEUE;
 }
