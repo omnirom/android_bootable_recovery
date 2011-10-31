@@ -47,6 +47,10 @@ class ScreenRecoveryUI : public RecoveryUI {
     int WaitKey();
     bool IsKeyPressed(int key);
     void FlushKeys();
+    // The default implementation of CheckKey enqueues all keys.
+    // Devices should typically override this to provide some way to
+    // toggle the log/menu display, and to do an immediate reboot.
+    KeyAction CheckKey(int key);
 
     // printing messages
     void Print(const char* fmt, ...); // __attribute__((format(printf, 1, 2)));
@@ -95,7 +99,8 @@ class ScreenRecoveryUI : public RecoveryUI {
     pthread_mutex_t key_queue_mutex;
     pthread_cond_t key_queue_cond;
     int key_queue[256], key_queue_len;
-    volatile char key_pressed[KEY_MAX + 1];
+    char key_pressed[KEY_MAX + 1];     // under key_queue_mutex
+    int key_last_down;                 // under key_queue_mutex
     int rel_sum;
 
     pthread_t progress_t;
@@ -110,6 +115,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     void update_progress_locked();
     static void* progress_thread(void* cookie);
     static int input_callback(int fd, short revents, void* data);
+    void process_key(int key_code, int updown);
     static void* input_thread(void* cookie);
 
     bool usb_connected();

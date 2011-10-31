@@ -792,11 +792,12 @@ Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
         return NULL;
     }
 
+    char* partition = NULL;
     if (partition_value->type != VAL_STRING) {
         ErrorAbort(state, "partition argument to %s must be string", name);
         goto done;
     }
-    char* partition = partition_value->data;
+    partition = partition_value->data;
     if (strlen(partition) == 0) {
         ErrorAbort(state, "partition argument to %s can't be empty", name);
         goto done;
