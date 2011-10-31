@@ -19,6 +19,7 @@
 #include <stdarg.h>
 
 #include "verifier.h"
+#include "ui.h"
 
 // This is build/target/product/security/testkey.x509.pem after being
 // dumped out by dumpkey.jar.
@@ -58,24 +59,49 @@ RSAPublicKey test_key =
         367251975, 810756730, -1941182952, 1175080310 }
     };
 
-void ui_print(const char* fmt, ...) {
-    char buf[256];
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(buf, 256, fmt, ap);
-    va_end(ap);
+RecoveryUI* ui = NULL;
 
-    fputs(buf, stderr);
-}
+// verifier expects to find a UI object; we provide one that does
+// nothing but print.
+class FakeUI : public RecoveryUI {
+    void Init() { }
+    void SetBackground(Icon icon) { }
 
-void ui_set_progress(float fraction) {
-}
+    void SetProgressType(ProgressType determinate) { }
+    void ShowProgress(float portion, float seconds) { }
+    void SetProgress(float fraction) { }
+
+    void ShowText(bool visible) { }
+    bool IsTextVisible() { return false; }
+    bool WasTextEverVisible() { return false; }
+    void Print(const char* fmt, ...) {
+        char buf[256];
+        va_list ap;
+        va_start(ap, fmt);
+        vsnprintf(buf, 256, fmt, ap);
+        va_end(ap);
+
+        fputs(buf, stderr);
+    }
+
+    int WaitKey() { return 0; }
+    bool IsKeyPressed(int key) { return false; }
+    void FlushKeys() { }
+    KeyAction CheckKey(int key) { return ENQUEUE; }
+
+    void StartMenu(const char* const * headers, const char* const * items,
+                           int initial_selection) { }
+    int SelectMenu(int sel) { return 0; }
+    void EndMenu() { }
+};
 
 int main(int argc, char **argv) {
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <package>\n", argv[0]);
         return 2;
     }
+
+    ui = new FakeUI();
 
     int result = verify_file(argv[1], &test_key, 1);
     if (result == VERIFY_SUCCESS) {
