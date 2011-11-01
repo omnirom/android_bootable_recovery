@@ -17,13 +17,18 @@
 #ifndef RECOVERY_UI_H
 #define RECOVERY_UI_H
 
+#include <linux/input.h>
+#include <pthread.h>
+
 // Abstract class for controlling the user interface during recovery.
 class RecoveryUI {
   public:
+    RecoveryUI();
+
     virtual ~RecoveryUI() { }
 
     // Initialize the object; called before anything else.
-    virtual void Init() = 0;
+    virtual void Init();
 
     // Set the overall recovery state ("background image").
     enum Icon { NONE, INSTALLING, ERROR };
@@ -57,19 +62,19 @@ class RecoveryUI {
     // --- key handling ---
 
     // Wait for keypress and return it.  May return -1 after timeout.
-    virtual int WaitKey() = 0;
+    virtual int WaitKey();
 
-    virtual bool IsKeyPressed(int key) = 0;
+    virtual bool IsKeyPressed(int key);
 
     // Erase any queued-up keys.
-    virtual void FlushKeys() = 0;
+    virtual void FlushKeys();
 
     // Called on each keypress, even while operations are in progress.
     // Return value indicates whether an immediate operation should be
     // triggered (toggling the display, rebooting the device), or if
     // the key should be enqueued for use by the main thread.
     enum KeyAction { ENQUEUE, TOGGLE, REBOOT };
-    virtual KeyAction CheckKey(int key) = 0;
+    virtual KeyAction CheckKey(int key);
 
     // --- menu display ---
 
@@ -86,6 +91,22 @@ class RecoveryUI {
     // End menu mode, resetting the text overlay so that ui_print()
     // statements will be displayed.
     virtual void EndMenu() = 0;
+
+private:
+    // Key event input queue
+    pthread_mutex_t key_queue_mutex;
+    pthread_cond_t key_queue_cond;
+    int key_queue[256], key_queue_len;
+    char key_pressed[KEY_MAX + 1];     // under key_queue_mutex
+    int key_last_down;                 // under key_queue_mutex
+    int rel_sum;
+
+    pthread_t input_t;
+
+    static void* input_thread(void* cookie);
+    static int input_callback(int fd, short revents, void* data);
+    void process_key(int key_code, int updown);
+    bool usb_connected();
 };
 
 #endif  // RECOVERY_UI_H

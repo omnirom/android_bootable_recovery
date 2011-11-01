@@ -61,8 +61,6 @@ static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
 
-extern UIParameters ui_parameters;    // from ui.c
-
 RecoveryUI* ui = NULL;
 
 /*
@@ -745,7 +743,7 @@ main(int argc, char **argv) {
     ui = device->GetUI();
 
     ui->Init();
-    ui->SetBackground(RecoveryUI::INSTALLING);
+    ui->SetBackground(RecoveryUI::NONE);
     load_volume_table();
     get_args(&argc, &argv);
 

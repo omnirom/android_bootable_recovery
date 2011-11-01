@@ -29,23 +29,13 @@
 #include <unistd.h>
 
 #include "common.h"
-#include <cutils/android_reboot.h>
-#include "minui/minui.h"
-#include "ui.h"
-#include "screen_ui.h"
 #include "device.h"
+#include "minui/minui.h"
+#include "screen_ui.h"
+#include "ui.h"
 
 #define CHAR_WIDTH 10
 #define CHAR_HEIGHT 18
-
-#define UI_WAIT_KEY_TIMEOUT_SEC    120
-
-UIParameters ui_parameters = {
-    6,       // indeterminate progress bar frames
-    20,      // fps
-    7,       // installation icon frames (0 == static image)
-    13, 190, // installation icon overlay offset
-};
 
 // There's only (at most) one of these objects, and global callbacks
 // (for pthread_create, and the input event system) need to find it,
@@ -78,11 +68,18 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     menu_top(0),
     menu_items(0),
     menu_sel(0),
-    key_queue_len(0),
-    key_last_down(-1) {
+
+    // These values are correct for the default image resources
+    // provided with the android platform.  Devices which use
+    // different resources should have a subclass of ScreenRecoveryUI
+    // that overrides Init() to set these values appropriately and
+    // then call the superclass Init().
+    animation_fps(20),
+    indeterminate_frames(6),
+    installing_frames(7),
+    install_overlay_offset_x(13),
+    install_overlay_offset_y(190) {
     pthread_mutex_init(&updateMutex, NULL);
-    pthread_mutex_init(&key_queue_mutex, NULL);
-    pthread_cond_init(&key_queue_cond, NULL);
     self = this;
 }
 
@@ -97,8 +94,7 @@ void ScreenRecoveryUI::draw_install_overlay_locked(int frame) {
     int iconWidth = gr_get_width(surface);
     int iconHeight = gr_get_height(surface);
     gr_blit(surface, 0, 0, iconWidth, iconHeight,
-            ui_parameters.install_overlay_offset_x,
-            ui_parameters.install_overlay_offset_y);
+            install_overlay_offset_x, install_overlay_offset_y);
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
@@ -157,7 +153,7 @@ void ScreenRecoveryUI::draw_progress_locked()
         if (progressBarType == INDETERMINATE) {
             static int frame = 0;
             gr_blit(progressBarIndeterminate[frame], 0, 0, width, height, dx, dy);
-            frame = (frame + 1) % ui_parameters.indeterminate_frames;
+            frame = (frame + 1) % indeterminate_frames;
         }
     }
 }
@@ -229,35 +225,36 @@ void ScreenRecoveryUI::update_progress_locked()
 }
 
 // Keeps the progress bar updated, even when the process is otherwise busy.
-void* ScreenRecoveryUI::progress_thread(void *cookie)
-{
-    double interval = 1.0 / ui_parameters.update_fps;
+void* ScreenRecoveryUI::progress_thread(void *cookie) {
+    self->progress_loop();
+    return NULL;
+}
+
+void ScreenRecoveryUI::progress_loop() {
+    double interval = 1.0 / animation_fps;
     for (;;) {
         double start = now();
-        pthread_mutex_lock(&self->updateMutex);
+        pthread_mutex_lock(&updateMutex);
 
         int redraw = 0;
 
         // update the installation animation, if active
         // skip this if we have a text overlay (too expensive to update)
-        if (self->currentIcon == INSTALLING &&
-            ui_parameters.installing_frames > 0 &&
-            !self->show_text) {
-            self->installingFrame =
-                (self->installingFrame + 1) % ui_parameters.installing_frames;
+        if (currentIcon == INSTALLING && installing_frames > 0 && !show_text) {
+            installingFrame = (installingFrame + 1) % installing_frames;
             redraw = 1;
         }
 
         // update the progress bar animation, if active
         // skip this if we have a text overlay (too expensive to update)
-        if (self->progressBarType == INDETERMINATE && !self->show_text) {
+        if (progressBarType == INDETERMINATE && !show_text) {
             redraw = 1;
         }
 
         // move the progress bar forward on timed intervals, if configured
-        int duration = self->progressScopeDuration;
-        if (self->progressBarType == DETERMINATE && duration > 0) {
-            double elapsed = now() - self->progressScopeTime;
+        int duration = progressScopeDuration;
+        if (progressBarType == DETERMINATE && duration > 0) {
+            double elapsed = now() - progressScopeTime;
             float progress = 1.0 * elapsed / duration;
             if (progress > 1.0) progress = 1.0;
             if (progress > progress) {
@@ -266,117 +263,15 @@ void* ScreenRecoveryUI::progress_thread(void *cookie)
             }
         }
 
-        if (redraw) self->update_progress_locked();
+        if (redraw) update_progress_locked();
 
-        pthread_mutex_unlock(&self->updateMutex);
+        pthread_mutex_unlock(&updateMutex);
         double end = now();
         // minimum of 20ms delay between frames
         double delay = interval - (end-start);
         if (delay < 0.02) delay = 0.02;
         usleep((long)(delay * 1000000));
     }
-    return NULL;
-}
-
-int ScreenRecoveryUI::input_callback(int fd, short revents, void* data)
-{
-    struct input_event ev;
-    int ret;
-
-    ret = ev_get_input(fd, revents, &ev);
-    if (ret)
-        return -1;
-
-    if (ev.type == EV_SYN) {
-        return 0;
-    } else if (ev.type == EV_REL) {
-        if (ev.code == REL_Y) {
-            // accumulate the up or down motion reported by
-            // the trackball.  When it exceeds a threshold
-            // (positive or negative), fake an up/down
-            // key event.
-            self->rel_sum += ev.value;
-            if (self->rel_sum > 3) {
-                self->process_key(KEY_DOWN, 1);   // press down key
-                self->process_key(KEY_DOWN, 0);   // and release it
-                self->rel_sum = 0;
-            } else if (self->rel_sum < -3) {
-                self->process_key(KEY_UP, 1);     // press up key
-                self->process_key(KEY_UP, 0);     // and release it
-                self->rel_sum = 0;
-            }
-        }
-    } else {
-        self->rel_sum = 0;
-    }
-
-    if (ev.type == EV_KEY && ev.code <= KEY_MAX)
-        self->process_key(ev.code, ev.value);
-
-    return 0;
-}
-
-// Process a key-up or -down event.  A key is "registered" when it is
-// pressed and then released, with no other keypresses or releases in
-// between.  Registered keys are passed to CheckKey() to see if it
-// should trigger a visibility toggle, an immediate reboot, or be
-// queued to be processed next time the foreground thread wants a key
-// (eg, for the menu).
-//
-// We also keep track of which keys are currently down so that
-// CheckKey can call IsKeyPressed to see what other keys are held when
-// a key is registered.
-//
-// updown == 1 for key down events; 0 for key up events
-void ScreenRecoveryUI::process_key(int key_code, int updown) {
-    bool register_key = false;
-
-    pthread_mutex_lock(&key_queue_mutex);
-    key_pressed[key_code] = updown;
-    if (updown) {
-        key_last_down = key_code;
-    } else {
-        if (key_last_down == key_code)
-            register_key = true;
-        key_last_down = -1;
-    }
-    pthread_mutex_unlock(&key_queue_mutex);
-
-    if (register_key) {
-        switch (CheckKey(key_code)) {
-          case RecoveryUI::TOGGLE:
-            pthread_mutex_lock(&updateMutex);
-            show_text = !show_text;
-            if (show_text) show_text_ever = true;
-            update_screen_locked();
-            pthread_mutex_unlock(&updateMutex);
-            break;
-
-          case RecoveryUI::REBOOT:
-            android_reboot(ANDROID_RB_RESTART, 0, 0);
-            break;
-
-          case RecoveryUI::ENQUEUE:
-            pthread_mutex_lock(&key_queue_mutex);
-            const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
-            if (key_queue_len < queue_max) {
-                key_queue[key_queue_len++] = key_code;
-                pthread_cond_signal(&key_queue_cond);
-            }
-            pthread_mutex_unlock(&key_queue_mutex);
-            break;
-        }
-    }
-}
-
-// Reads input events, handles special hot keys, and adds to the key queue.
-void* ScreenRecoveryUI::input_thread(void *cookie)
-{
-    for (;;) {
-        if (!ev_wait(-1))
-            ev_dispatch();
-    }
-    return NULL;
 }
 
 void ScreenRecoveryUI::LoadBitmap(const char* filename, gr_surface* surface) {
@@ -389,7 +284,6 @@ void ScreenRecoveryUI::LoadBitmap(const char* filename, gr_surface* surface) {
 void ScreenRecoveryUI::Init()
 {
     gr_init();
-    ev_init(input_callback, NULL);
 
     text_col = text_row = 0;
     text_rows = gr_fb_height() / CHAR_HEIGHT;
@@ -406,19 +300,19 @@ void ScreenRecoveryUI::Init()
 
     int i;
 
-    progressBarIndeterminate = (gr_surface*)malloc(ui_parameters.indeterminate_frames *
+    progressBarIndeterminate = (gr_surface*)malloc(indeterminate_frames *
                                                     sizeof(gr_surface));
-    for (i = 0; i < ui_parameters.indeterminate_frames; ++i) {
+    for (i = 0; i < indeterminate_frames; ++i) {
         char filename[40];
         // "indeterminate01.png", "indeterminate02.png", ...
         sprintf(filename, "indeterminate%02d", i+1);
         LoadBitmap(filename, progressBarIndeterminate+i);
     }
 
-    if (ui_parameters.installing_frames > 0) {
-        installationOverlay = (gr_surface*)malloc(ui_parameters.installing_frames *
+    if (installing_frames > 0) {
+        installationOverlay = (gr_surface*)malloc(installing_frames *
                                                    sizeof(gr_surface));
-        for (i = 0; i < ui_parameters.installing_frames; ++i) {
+        for (i = 0; i < installing_frames; ++i) {
             char filename[40];
             // "icon_installing_overlay01.png",
             // "icon_installing_overlay02.png", ...
@@ -430,17 +324,16 @@ void ScreenRecoveryUI::Init()
         // base image on the screen.
         if (backgroundIcon[INSTALLING] != NULL) {
             gr_surface bg = backgroundIcon[INSTALLING];
-            ui_parameters.install_overlay_offset_x +=
-                (gr_fb_width() - gr_get_width(bg)) / 2;
-            ui_parameters.install_overlay_offset_y +=
-                (gr_fb_height() - gr_get_height(bg)) / 2;
+            install_overlay_offset_x += (gr_fb_width() - gr_get_width(bg)) / 2;
+            install_overlay_offset_y += (gr_fb_height() - gr_get_height(bg)) / 2;
         }
     } else {
         installationOverlay = NULL;
     }
 
     pthread_create(&progress_t, NULL, progress_thread, NULL);
-    pthread_create(&input_t, NULL, input_thread, NULL);
+
+    RecoveryUI::Init();
 }
 
 void ScreenRecoveryUI::SetBackground(Icon icon)
@@ -592,71 +485,4 @@ void ScreenRecoveryUI::ShowText(bool visible)
     if (show_text) show_text_ever = 1;
     update_screen_locked();
     pthread_mutex_unlock(&updateMutex);
-}
-
-// Return true if USB is connected.
-bool ScreenRecoveryUI::usb_connected() {
-    int fd = open("/sys/class/android_usb/android0/state", O_RDONLY);
-    if (fd < 0) {
-        printf("failed to open /sys/class/android_usb/android0/state: %s\n",
-               strerror(errno));
-        return 0;
-    }
-
-    char buf;
-    /* USB is connected if android_usb state is CONNECTED or CONFIGURED */
-    int connected = (read(fd, &buf, 1) == 1) && (buf == 'C');
-    if (close(fd) < 0) {
-        printf("failed to close /sys/class/android_usb/android0/state: %s\n",
-               strerror(errno));
-    }
-    return connected;
-}
-
-int ScreenRecoveryUI::WaitKey()
-{
-    pthread_mutex_lock(&key_queue_mutex);
-
-    // Time out after UI_WAIT_KEY_TIMEOUT_SEC, unless a USB cable is
-    // plugged in.
-    do {
-        struct timeval now;
-        struct timespec timeout;
-        gettimeofday(&now, NULL);
-        timeout.tv_sec = now.tv_sec;
-        timeout.tv_nsec = now.tv_usec * 1000;
-        timeout.tv_sec += UI_WAIT_KEY_TIMEOUT_SEC;
-
-        int rc = 0;
-        while (key_queue_len == 0 && rc != ETIMEDOUT) {
-            rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex,
-                                        &timeout);
-        }
-    } while (usb_connected() && key_queue_len == 0);
-
-    int key = -1;
-    if (key_queue_len > 0) {
-        key = key_queue[0];
-        memcpy(&key_queue[0], &key_queue[1], sizeof(int) * --key_queue_len);
-    }
-    pthread_mutex_unlock(&key_queue_mutex);
-    return key;
-}
-
-bool ScreenRecoveryUI::IsKeyPressed(int key)
-{
-    pthread_mutex_lock(&key_queue_mutex);
-    int pressed = key_pressed[key];
-    pthread_mutex_unlock(&key_queue_mutex);
-    return pressed;
-}
-
-void ScreenRecoveryUI::FlushKeys() {
-    pthread_mutex_lock(&key_queue_mutex);
-    key_queue_len = 0;
-    pthread_mutex_unlock(&key_queue_mutex);
-}
-
-RecoveryUI::KeyAction ScreenRecoveryUI::CheckKey(int key) {
-    return RecoveryUI::ENQUEUE;
 }
