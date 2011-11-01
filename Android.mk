@@ -51,7 +51,7 @@ include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := verifier_test.cpp verifier.cpp
+LOCAL_SRC_FILES := verifier_test.cpp verifier.cpp ui.cpp
 
 LOCAL_MODULE := verifier_test
 
@@ -59,7 +59,7 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 
 LOCAL_MODULE_TAGS := tests
 
-LOCAL_STATIC_LIBRARIES := libmincrypt libcutils libstdc++ libc
+LOCAL_STATIC_LIBRARIES := libmincrypt libminui libcutils libstdc++ libc
 
 include $(BUILD_EXECUTABLE)
 
