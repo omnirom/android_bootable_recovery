@@ -84,11 +84,6 @@ class FakeUI : public RecoveryUI {
         fputs(buf, stderr);
     }
 
-    int WaitKey() { return 0; }
-    bool IsKeyPressed(int key) { return false; }
-    void FlushKeys() { }
-    KeyAction CheckKey(int key) { return ENQUEUE; }
-
     void StartMenu(const char* const * headers, const char* const * items,
                            int initial_selection) { }
     int SelectMenu(int sel) { return 0; }
