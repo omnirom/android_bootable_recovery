@@ -83,14 +83,14 @@ int main(int argc, char **argv) {
             LOGW("error reading %s: %s\n", argv[1], strerror(errno));
             // just assume it needs re-writing
         } else if (checklen == headerlen && !memcmp(header, check, headerlen)) {
-            LOGI("header is the same, not flashing %s\n", argv[1]);
+            ALOGI("header is the same, not flashing %s\n", argv[1]);
             return 0;
         }
         mtd_read_close(in);
     }
 
     // Skip the header (we'll come back to it), write everything else
-    LOGI("flashing %s from %s\n", argv[1], argv[2]);
+    ALOGI("flashing %s from %s\n", argv[1], argv[2]);
 
     MtdWriteContext *out = mtd_write_partition(partition);
     if (out == NULL) die("error writing %s", argv[1]);
