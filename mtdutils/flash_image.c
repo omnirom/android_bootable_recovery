@@ -74,13 +74,13 @@ int main(int argc, char **argv) {
 
     MtdReadContext *in = mtd_read_partition(partition);
     if (in == NULL) {
-        LOGW("error opening %s: %s\n", argv[1], strerror(errno));
+        ALOGW("error opening %s: %s\n", argv[1], strerror(errno));
         // just assume it needs re-writing
     } else {
         char check[HEADER_SIZE];
         int checklen = mtd_read_data(in, check, sizeof(check));
         if (checklen <= 0) {
-            LOGW("error reading %s: %s\n", argv[1], strerror(errno));
+            ALOGW("error reading %s: %s\n", argv[1], strerror(errno));
             // just assume it needs re-writing
         } else if (checklen == headerlen && !memcmp(header, check, headerlen)) {
             ALOGI("header is the same, not flashing %s\n", argv[1]);
