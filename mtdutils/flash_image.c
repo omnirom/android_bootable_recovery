@@ -42,7 +42,7 @@ void die(const char *msg, ...) {
     }
 
     fprintf(stderr, "%s\n", buf);
-    LOGE("%s\n", buf);
+    ALOGE("%s\n", buf);
     exit(1);
 }
 
