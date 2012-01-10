@@ -40,6 +40,10 @@
 #include "ui.h"
 #include "screen_ui.h"
 #include "device.h"
+#include "adb_install.h"
+extern "C" {
+#include "minadbd/adb.h"
+}
 
 static const struct option OPTIONS[] = {
   { "send_intent", required_argument, NULL, 's' },
@@ -725,6 +729,21 @@ prompt_and_wait(Device* device) {
                     }
                 }
                 break;
+
+            case Device::APPLY_ADB_SIDELOAD:
+                ensure_path_mounted(CACHE_ROOT);
+                status = apply_from_adb(ui, &wipe_cache, TEMPORARY_INSTALL_FILE);
+                if (status >= 0) {
+                    if (status != INSTALL_SUCCESS) {
+                        ui->SetBackground(RecoveryUI::ERROR);
+                        ui->Print("Installation aborted.\n");
+                    } else if (!ui->IsTextVisible()) {
+                        return;  // reboot if logs aren't visible
+                    } else {
+                        ui->Print("\nInstall from ADB complete.\n");
+                    }
+                }
+                break;
         }
     }
 }
@@ -741,6 +760,19 @@ main(int argc, char **argv) {
     // If these fail, there's not really anywhere to complain...
     freopen(TEMPORARY_LOG_FILE, "a", stdout); setbuf(stdout, NULL);
     freopen(TEMPORARY_LOG_FILE, "a", stderr); setbuf(stderr, NULL);
+
+    // If this binary is started with the single argument "--adbd",
+    // instead of being the normal recovery binary, it turns into kind
+    // of a stripped-down version of adbd that only supports the
+    // 'sideload' command.  Note this must be a real argument, not
+    // anything in the command file or bootloader control block; the
+    // only way recovery should be run with this argument is when it
+    // starts a copy of itself from the apply_from_adb() function.
+    if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
+        adb_main();
+        return 0;
+    }
+
     printf("Starting recovery on %s", ctime(&start));
 
     Device* device = make_device();

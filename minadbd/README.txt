@@ -1,0 +1,27 @@
+The contents of this directory are copied from system/core/adb, with
+the following changes:
+
+adb.c
+  - much support for host mode and non-linux OS's stripped out; this
+    version only runs as adbd on the device.
+  - does not setuid/setgid itself (always stays root)
+  - only uses USB transport
+  - references to JDWP removed
+  - main() removed
+
+adb.h
+  - minor changes to match adb.c changes
+
+sockets.c
+  - references to JDWP removed
+
+services.c
+  - all services except echo_service (which is commented out) removed
+  - all host mode support removed
+  - sideload_service() added; this is the only service supported.  It
+    receives a single blob of data, writes it to a fixed filename, and
+    makes the process exit.
+
+Android.mk
+  - only builds in adbd mode; builds as static library instead of a
+    standalone executable.
