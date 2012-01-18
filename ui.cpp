@@ -123,6 +123,9 @@ void RecoveryUI::process_key(int key_code, int updown) {
 
     if (register_key) {
         switch (CheckKey(key_code)) {
+          case RecoveryUI::IGNORE:
+            break;
+
           case RecoveryUI::TOGGLE:
             ShowText(!IsTextVisible());
             break;
