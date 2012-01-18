@@ -73,7 +73,7 @@ class RecoveryUI {
     // Return value indicates whether an immediate operation should be
     // triggered (toggling the display, rebooting the device), or if
     // the key should be enqueued for use by the main thread.
-    enum KeyAction { ENQUEUE, TOGGLE, REBOOT };
+    enum KeyAction { ENQUEUE, TOGGLE, REBOOT, IGNORE };
     virtual KeyAction CheckKey(int key);
 
     // --- menu display ---
