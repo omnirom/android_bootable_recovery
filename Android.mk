@@ -40,8 +40,8 @@ ifeq ($(TARGET_RECOVERY_UI_LIB),)
 else
   LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
 endif
-LOCAL_STATIC_LIBRARIES += libext4_utils libz
-LOCAL_STATIC_LIBRARIES += libminzip libunz libmtdutils libmincrypt libminadbd
+LOCAL_STATIC_LIBRARIES += libext4_utils
+LOCAL_STATIC_LIBRARIES += libminzip libz libmtdutils libmincrypt libminadbd
 LOCAL_STATIC_LIBRARIES += libminui libpixelflinger_static libpng libcutils
 LOCAL_STATIC_LIBRARIES += libstdc++ libc
 
