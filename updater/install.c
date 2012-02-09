@@ -79,7 +79,23 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
         goto done;
     }
 
+#ifdef HAVE_SELINUX
+    char *secontext = NULL;
+
+    if (sehandle) {
+        selabel_lookup(sehandle, &secontext, mount_point, 0755);
+        setfscreatecon(secontext);
+    }
+#endif
+
     mkdir(mount_point, 0755);
+
+#ifdef HAVE_SELINUX
+    if (secontext) {
+        freecon(secontext);
+        setfscreatecon(NULL);
+    }
+#endif
 
     if (strcmp(partition_type, "MTD") == 0) {
         mtd_scan_partitions();
@@ -177,25 +193,34 @@ done:
 }
 
 
-// format(fs_type, partition_type, location, fs_size)
+// format(fs_type, partition_type, location, fs_size, mount_point)
 //
-//    fs_type="yaffs2" partition_type="MTD"     location=partition fs_size=<bytes>
-//    fs_type="ext4"   partition_type="EMMC"    location=device    fs_size=<bytes>
+//    fs_type="yaffs2" partition_type="MTD"     location=partition fs_size=<bytes> mount_point=<location>
+//    fs_type="ext4"   partition_type="EMMC"    location=device    fs_size=<bytes> mount_point=<location>
 //    if fs_size == 0, then make_ext4fs uses the entire partition.
 //    if fs_size > 0, that is the size to use
 //    if fs_size < 0, then reserve that many bytes at the end of the partition
+//    mount_point is used with SELinux as the location of the mount point, absent otherwise
 Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
-    if (argc != 4) {
-        return ErrorAbort(state, "%s() expects 4 args, got %d", name, argc);
+    if (argc != 4 && argc != 5) {
+        return ErrorAbort(state, "%s() expects 4 or 5 args, got %d", name, argc);
     }
     char* fs_type;
     char* partition_type;
     char* location;
     char* fs_size;
+    char* mount_point = NULL;
+
+#ifdef HAVE_SELINUX
+    if (ReadArgs(state, argv, 5, &fs_type, &partition_type, &location, &fs_size, &mount_point) < 0) {
+        return NULL;
+    }
+#else
     if (ReadArgs(state, argv, 4, &fs_type, &partition_type, &location, &fs_size) < 0) {
         return NULL;
     }
+#endif
 
     if (strlen(fs_type) == 0) {
         ErrorAbort(state, "fs_type argument to %s() can't be empty", name);
@@ -210,6 +235,13 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
         ErrorAbort(state, "location argument to %s() can't be empty", name);
         goto done;
     }
+
+#ifdef HAVE_SELINUX
+    if (!mount_point || strlen(mount_point) == 0) {
+        ErrorAbort(state, "mount_point argument to %s() can't be empty", name);
+        goto done;
+    }
+#endif
 
     if (strcmp(partition_type, "MTD") == 0) {
         mtd_scan_partitions();
@@ -240,7 +272,7 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
         result = location;
 #ifdef USE_EXT4
     } else if (strcmp(fs_type, "ext4") == 0) {
-        int status = make_ext4fs(location, atoll(fs_size));
+        int status = make_ext4fs(location, atoll(fs_size), mount_point, sehandle);
         if (status != 0) {
             fprintf(stderr, "%s: make_ext4fs failed (%d) on %s",
                     name, status, location);
@@ -347,7 +379,7 @@ Value* PackageExtractDirFn(const char* name, State* state,
 
     bool success = mzExtractRecursive(za, zip_path, dest_path,
                                       MZ_EXTRACT_FILES_ONLY, &timestamp,
-                                      NULL, NULL);
+                                      NULL, NULL, sehandle);
     free(zip_path);
     free(dest_path);
     return StringValue(strdup(success ? "t" : ""));

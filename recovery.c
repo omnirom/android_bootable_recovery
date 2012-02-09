@@ -39,6 +39,8 @@
 #include "roots.h"
 #include "recovery_ui.h"
 
+struct selabel_handle *sehandle;
+
 static const struct option OPTIONS[] = {
   { "send_intent", required_argument, NULL, 's' },
   { "update_package", required_argument, NULL, 'u' },
@@ -132,7 +134,7 @@ fopen_path(const char *path, const char *mode) {
 
     // When writing, try to create the containing directory, if necessary.
     // Use generous permissions, the system (init.rc) will reset them.
-    if (strchr("wa", mode[0])) dirCreateHierarchy(path, 0777, NULL, 1);
+    if (strchr("wa", mode[0])) dirCreateHierarchy(path, 0777, NULL, 1, sehandle);
 
     FILE *fp = fopen(path, mode);
     return fp;
@@ -762,6 +764,19 @@ main(int argc, char **argv) {
             continue;
         }
     }
+
+#ifdef HAVE_SELINUX
+    struct selinux_opt seopts[] = {
+      { SELABEL_OPT_PATH, "/file_contexts" }
+    };
+
+    sehandle = selabel_open(SELABEL_CTX_FILE, seopts, 1);
+
+    if (!sehandle) {
+        fprintf(stderr, "Warning: No file_contexts\n");
+        ui_print("Warning:  No file_contexts\n");
+    }
+#endif
 
     device_recovery_start();
 
