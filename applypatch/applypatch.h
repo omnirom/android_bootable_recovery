@@ -62,7 +62,7 @@ int applypatch_check(const char* filename,
 
 int LoadFileContents(const char* filename, FileContents* file,
                      int retouch_flag);
-int SaveFileContents(const char* filename, FileContents file);
+int SaveFileContents(const char* filename, const FileContents* file);
 void FreeFileContents(FileContents* file);
 int FindMatchingPatch(uint8_t* sha1, char** const patch_sha1_str,
                       int num_patches);
