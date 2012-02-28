@@ -25,12 +25,6 @@ typedef struct {
   uint32_t blob_size; /* in bytes, located right before this struct */
 } retouch_info_t __attribute__((packed));
 
-// Retouch a file. Use CACHED_SOURCE_TEMP to store a copy.
-bool retouch_one_library(const char *binary_name,
-                         const char *binary_sha1,
-                         int32_t retouch_offset,
-                         int32_t *retouch_offset_override);
-
 #define RETOUCH_DONT_MASK           0
 #define RETOUCH_DO_MASK             1
 
