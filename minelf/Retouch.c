@@ -345,7 +345,7 @@ bool retouch_one_library(const char *binary_name,
                 success = false;
                 goto out;
             }
-            if (SaveFileContents(CACHE_TEMP_SOURCE, file) < 0) {
+            if (SaveFileContents(CACHE_TEMP_SOURCE, &file) < 0) {
                 printf("Failed to back up source file.\n");
                 success = false;
                 goto out;
@@ -357,7 +357,7 @@ bool retouch_one_library(const char *binary_name,
             printf("(now %ld bytes free for target)\n", (long)free_space);
         }
 
-        result = SaveFileContents(binary_name_atomic, file);
+        result = SaveFileContents(binary_name_atomic, &file);
         if (result != 0) {
             // Maybe the filesystem was optimistic: retry.
             enough_space = false;
