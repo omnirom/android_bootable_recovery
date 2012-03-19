@@ -53,6 +53,7 @@ static void sideload_service(int s, void *cookie)
 
     fd = adb_creat(ADB_SIDELOAD_FILENAME, 0644);
     if(fd < 0) {
+        fprintf(stderr, "failed to create %s\n", ADB_SIDELOAD_FILENAME);
         adb_close(s);
         return;
     }

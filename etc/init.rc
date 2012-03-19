@@ -15,6 +15,9 @@ on init
     mkdir /cache
     mount /tmp /tmp tmpfs
 
+    chown root shell /tmp
+    chmod 0775 /tmp
+
     write /sys/class/android_usb/android0/enable 0
     write /sys/class/android_usb/android0/idVendor 18D1
     write /sys/class/android_usb/android0/idProduct D001

@@ -324,6 +324,18 @@ static __inline__ int  adb_open_mode( const char*  pathname, int  options, int  
     return open( pathname, options, mode );
 }
 
+static __inline__  int  adb_creat(const char*  path, int  mode)
+{
+    int  fd = open(path, O_CREAT|O_WRONLY|O_TRUNC|O_NOFOLLOW, mode);
+
+    if ( fd < 0 )
+        return -1;
+
+    close_on_exec(fd);
+    return fd;
+}
+#undef   creat
+#define  creat  ___xxx_creat
 
 static __inline__ int  adb_open( const char*  pathname, int  options )
 {
@@ -379,19 +391,6 @@ static __inline__  int    adb_unlink(const char*  path)
 }
 #undef  unlink
 #define unlink  ___xxx_unlink
-
-static __inline__  int  adb_creat(const char*  path, int  mode)
-{
-    int  fd = creat(path, mode);
-
-    if ( fd < 0 )
-        return -1;
-
-    close_on_exec(fd);
-    return fd;
-}
-#undef   creat
-#define  creat  ___xxx_creat
 
 static __inline__ int  adb_socket_accept(int  serverfd, struct sockaddr*  addr, socklen_t  *addrlen)
 {

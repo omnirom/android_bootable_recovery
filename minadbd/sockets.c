@@ -413,22 +413,6 @@ asocket *create_local_service_socket(const char *name)
     return s;
 }
 
-#if ADB_HOST
-static asocket *create_host_service_socket(const char *name, const char* serial)
-{
-    asocket *s;
-
-    s = host_service_to_socket(name, serial);
-
-    if (s != NULL) {
-        D("LS(%d) bound to '%s'\n", s->id, name);
-        return s;
-    }
-
-    return s;
-}
-#endif /* ADB_HOST */
-
 /* a Remote socket is used to send/receive data to/from a given transport object
 ** it needs to be closed when the transport is forcibly destroyed by the user
 */
@@ -612,11 +596,6 @@ char *skip_host_serial(char *service) {
 static int smart_socket_enqueue(asocket *s, apacket *p)
 {
     unsigned len;
-#if ADB_HOST
-    char *service = NULL;
-    char* serial = NULL;
-    transport_type ttype = kTransportAny;
-#endif
 
     D("SS(%d): enqueue %d\n", s->id, p->len);
 
@@ -658,84 +637,6 @@ static int smart_socket_enqueue(asocket *s, apacket *p)
 
     D("SS(%d): '%s'\n", s->id, (char*) (p->data + 4));
 
-#if ADB_HOST
-    service = (char *)p->data + 4;
-    if(!strncmp(service, "host-serial:", strlen("host-serial:"))) {
-        char* serial_end;
-        service += strlen("host-serial:");
-
-        // serial number should follow "host:" and could be a host:port string.
-        serial_end = skip_host_serial(service);
-        if (serial_end) {
-            *serial_end = 0; // terminate string
-            serial = service;
-            service = serial_end + 1;
-        }
-    } else if (!strncmp(service, "host-usb:", strlen("host-usb:"))) {
-        ttype = kTransportUsb;
-        service += strlen("host-usb:");
-    } else if (!strncmp(service, "host-local:", strlen("host-local:"))) {
-        ttype = kTransportLocal;
-        service += strlen("host-local:");
-    } else if (!strncmp(service, "host:", strlen("host:"))) {
-        ttype = kTransportAny;
-        service += strlen("host:");
-    } else {
-        service = NULL;
-    }
-
-    if (service) {
-        asocket *s2;
-
-            /* some requests are handled immediately -- in that
-            ** case the handle_host_request() routine has sent
-            ** the OKAY or FAIL message and all we have to do
-            ** is clean up.
-            */
-        if(handle_host_request(service, ttype, serial, s->peer->fd, s) == 0) {
-                /* XXX fail message? */
-            D( "SS(%d): handled host service '%s'\n", s->id, service );
-            goto fail;
-        }
-        if (!strncmp(service, "transport", strlen("transport"))) {
-            D( "SS(%d): okay transport\n", s->id );
-            p->len = 0;
-            return 0;
-        }
-
-            /* try to find a local service with this name.
-            ** if no such service exists, we'll fail out
-            ** and tear down here.
-            */
-        s2 = create_host_service_socket(service, serial);
-        if(s2 == 0) {
-            D( "SS(%d): couldn't create host service '%s'\n", s->id, service );
-            sendfailmsg(s->peer->fd, "unknown host service");
-            goto fail;
-        }
-
-            /* we've connected to a local host service,
-            ** so we make our peer back into a regular
-            ** local socket and bind it to the new local
-            ** service socket, acknowledge the successful
-            ** connection, and close this smart socket now
-            ** that its work is done.
-            */
-        adb_write(s->peer->fd, "OKAY", 4);
-
-        s->peer->ready = local_socket_ready;
-        s->peer->close = local_socket_close;
-        s->peer->peer = s2;
-        s2->peer = s->peer;
-        s->peer = 0;
-        D( "SS(%d): okay\n", s->id );
-        s->close(s);
-
-            /* initial state is "ready" */
-        s2->ready(s2);
-        return 0;
-    }
-#else /* !ADB_HOST */
     if (s->transport == NULL) {
         char* error_string = "unknown failure";
         s->transport = acquire_one_transport (CS_ANY,
@@ -746,7 +647,6 @@ static int smart_socket_enqueue(asocket *s, apacket *p)
             goto fail;
         }
     }
-#endif
 
     if(!(s->transport) || (s->transport->connection_state == CS_OFFLINE)) {
            /* if there's no remote we fail the connection
