@@ -858,6 +858,16 @@ int adb_main()
         usb_init();
     }
 
+    if (setgid(AID_SHELL) != 0) {
+        fprintf(stderr, "failed to setgid to shell\n");
+        exit(1);
+    }
+    if (setuid(AID_SHELL) != 0) {
+        fprintf(stderr, "failed to setuid to shell\n");
+        exit(1);
+    }
+    fprintf(stderr, "userid is %d\n", getuid());
+
     D("Event loop starting\n");
 
     fdevent_loop();

@@ -4,7 +4,7 @@ the following changes:
 adb.c
   - much support for host mode and non-linux OS's stripped out; this
     version only runs as adbd on the device.
-  - does not setuid/setgid itself (always stays root)
+  - always setuid/setgid's itself to the shell user
   - only uses USB transport
   - references to JDWP removed
   - main() removed
@@ -25,3 +25,7 @@ services.c
 Android.mk
   - only builds in adbd mode; builds as static library instead of a
     standalone executable.
+
+sysdeps.h
+  - changes adb_creat() to use O_NOFOLLOW
+
