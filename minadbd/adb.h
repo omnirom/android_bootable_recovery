@@ -41,7 +41,6 @@
 typedef struct amessage amessage;
 typedef struct apacket apacket;
 typedef struct asocket asocket;
-typedef struct alistener alistener;
 typedef struct aservice aservice;
 typedef struct atransport atransport;
 typedef struct adisconnect  adisconnect;
@@ -134,7 +133,7 @@ struct asocket {
 /* the adisconnect structure is used to record a callback that
 ** will be called whenever a transport is disconnected (e.g. by the user)
 ** this should be used to cleanup objects that depend on the
-** transport (e.g. remote sockets, listeners, etc...)
+** transport (e.g. remote sockets, etc...)
 */
 struct  adisconnect
 {
@@ -191,30 +190,6 @@ struct atransport
         /* a list of adisconnect callbacks called when the transport is kicked */
     int          kicked;
     adisconnect  disconnects;
-};
-
-
-/* A listener is an entity which binds to a local port
-** and, upon receiving a connection on that port, creates
-** an asocket to connect the new local connection to a
-** specific remote service.
-**
-** TODO: some listeners read from the new connection to
-** determine what exact service to connect to on the far
-** side.
-*/
-struct alistener
-{
-    alistener *next;
-    alistener *prev;
-
-    fdevent fde;
-    int fd;
-
-    const char *local_name;
-    const char *connect_to;
-    atransport *transport;
-    adisconnect  disconnect;
 };
 
 

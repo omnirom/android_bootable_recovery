@@ -23,10 +23,6 @@
 #define  TRACE_TAG  TRACE_TRANSPORT
 #include "adb.h"
 
-#if ADB_HOST
-#include "usb_vendors.h"
-#endif
-
 #ifdef HAVE_BIG_ENDIAN
 #define H4(x)	(((x) & 0xFF000000) >> 24) | (((x) & 0x00FF0000) >> 8) | (((x) & 0x0000FF00) << 8) | (((x) & 0x000000FF) << 24)
 static inline void fix_endians(apacket *p)
@@ -121,28 +117,5 @@ void init_usb_transport(atransport *t, usb_handle *h, int state)
     t->type = kTransportUsb;
     t->usb = h;
 
-#if ADB_HOST
-    HOST = 1;
-#else
     HOST = 0;
-#endif
 }
-
-#if ADB_HOST
-int is_adb_interface(int vid, int pid, int usb_class, int usb_subclass, int usb_protocol)
-{
-    unsigned i;
-    for (i = 0; i < vendorIdCount; i++) {
-        if (vid == vendorIds[i]) {
-            if (usb_class == ADB_CLASS && usb_subclass == ADB_SUBCLASS &&
-                    usb_protocol == ADB_PROTOCOL) {
-                return 1;
-            }
-
-            return 0;
-        }
-    }
-
-    return 0;
-}
-#endif

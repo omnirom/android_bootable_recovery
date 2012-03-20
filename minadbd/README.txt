@@ -8,12 +8,15 @@ adb.c
   - only uses USB transport
   - references to JDWP removed
   - main() removed
+  - all ADB_HOST and win32 code removed
+  - removed listeners, logging code, background server (for host)
 
 adb.h
   - minor changes to match adb.c changes
 
 sockets.c
   - references to JDWP removed
+  - ADB_HOST code removed
 
 services.c
   - all services except echo_service (which is commented out) removed
@@ -29,3 +32,8 @@ Android.mk
 sysdeps.h
   - changes adb_creat() to use O_NOFOLLOW
 
+transport.c
+  - removed ADB_HOST code
+
+transport_usb.c
+  - removed ADB_HOST code
