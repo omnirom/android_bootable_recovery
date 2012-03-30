@@ -32,6 +32,8 @@
 // (Note it's "updateR-script", not the older "update-script".)
 #define SCRIPT_NAME "META-INF/com/google/android/updater-script"
 
+struct selabel_handle *sehandle;
+
 int main(int argc, char** argv) {
     // Various things log information to stdout or stderr more or less
     // at random.  The log file makes more sense if buffering is
@@ -102,6 +104,19 @@ int main(int argc, char** argv) {
         fprintf(stderr, "%d parse errors\n", error_count);
         return 6;
     }
+
+#ifdef HAVE_SELINUX
+    struct selinux_opt seopts[] = {
+      { SELABEL_OPT_PATH, "/file_contexts" }
+    };
+
+    sehandle = selabel_open(SELABEL_CTX_FILE, seopts, 1);
+
+    if (!sehandle) {
+        fprintf(stderr, "Warning:  No file_contexts\n");
+        fprintf(cmd_pipe, "ui_print Warning: No file_contexts\n");
+    }
+#endif
 
     // Evaluate the parsed script.
 
