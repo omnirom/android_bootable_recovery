@@ -11,7 +11,13 @@ LOCAL_SRC_FILES := \
 LOCAL_C_INCLUDES += \
 	external/zlib \
 	external/safe-iop/include
-	
+
+ifeq ($(HAVE_SELINUX),true)
+LOCAL_C_INCLUDES += external/libselinux/include
+LOCAL_STATIC_LIBRARIES += libselinux
+LOCAL_CFLAGS += -DHAVE_SELINUX
+endif
+
 LOCAL_MODULE := libminzip
 
 LOCAL_CFLAGS += -Wall
