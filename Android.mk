@@ -28,6 +28,12 @@ LOCAL_C_INCLUDES += system/extras/ext4_utils
 LOCAL_STATIC_LIBRARIES += libext4_utils libz
 endif
 
+ifeq ($(HAVE_SELINUX), true)
+LOCAL_C_INCLUDES += external/libselinux/include
+LOCAL_STATIC_LIBRARIES += libselinux
+LOCAL_CFLAGS += -DHAVE_SELINUX
+endif # HAVE_SELINUX
+
 # This binary is in the recovery ramdisk, which is otherwise a copy of root.
 # It gets copied there in config/Makefile.  LOCAL_MODULE_TAGS suppresses
 # a (redundant) copy of the binary in /system/bin for user builds.
@@ -44,6 +50,12 @@ LOCAL_STATIC_LIBRARIES += libext4_utils
 LOCAL_STATIC_LIBRARIES += libminzip libz libmtdutils libmincrypt libminadbd
 LOCAL_STATIC_LIBRARIES += libminui libpixelflinger_static libpng libcutils
 LOCAL_STATIC_LIBRARIES += libstdc++ libc
+
+ifeq ($(HAVE_SELINUX),true)
+LOCAL_C_INCLUDES += external/libselinux/include
+LOCAL_STATIC_LIBRARIES += libselinux
+LOCAL_CFLAGS += -DHAVE_SELINUX
+endif # HAVE_SELINUX
 
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
