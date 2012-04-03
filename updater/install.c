@@ -200,27 +200,20 @@ done:
 //    if fs_size == 0, then make_ext4fs uses the entire partition.
 //    if fs_size > 0, that is the size to use
 //    if fs_size < 0, then reserve that many bytes at the end of the partition
-//    mount_point is used with SELinux as the location of the mount point, absent otherwise
 Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
-    if (argc != 4 && argc != 5) {
-        return ErrorAbort(state, "%s() expects 4 or 5 args, got %d", name, argc);
+    if (argc != 5) {
+        return ErrorAbort(state, "%s() expects 5 args, got %d", name, argc);
     }
     char* fs_type;
     char* partition_type;
     char* location;
     char* fs_size;
-    char* mount_point = NULL;
+    char* mount_point;
 
-#ifdef HAVE_SELINUX
     if (ReadArgs(state, argv, 5, &fs_type, &partition_type, &location, &fs_size, &mount_point) < 0) {
         return NULL;
     }
-#else
-    if (ReadArgs(state, argv, 4, &fs_type, &partition_type, &location, &fs_size) < 0) {
-        return NULL;
-    }
-#endif
 
     if (strlen(fs_type) == 0) {
         ErrorAbort(state, "fs_type argument to %s() can't be empty", name);
@@ -236,12 +229,10 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
         goto done;
     }
 
-#ifdef HAVE_SELINUX
-    if (!mount_point || strlen(mount_point) == 0) {
+    if (strlen(mount_point) == 0) {
         ErrorAbort(state, "mount_point argument to %s() can't be empty", name);
         goto done;
     }
-#endif
 
     if (strcmp(partition_type, "MTD") == 0) {
         mtd_scan_partitions();
