@@ -21,6 +21,10 @@
 
 #include "yydefs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_STRING_LEN 1024
 
 typedef struct Expr Expr;
@@ -152,12 +156,16 @@ Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]);
 
 // Use printf-style arguments to compose an error message to put into
 // *state.  Returns NULL.
-Value* ErrorAbort(State* state, char* format, ...);
+Value* ErrorAbort(State* state, const char* format, ...) __attribute__((format(printf, 2, 3)));
 
 // Wrap a string into a Value, taking ownership of the string.
 Value* StringValue(char* str);
 
 // Free a Value object.
 void FreeValue(Value* v);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #endif  // _EXPRESSION_H

@@ -495,7 +495,7 @@ Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]) {
 
 // Use printf-style arguments to compose an error message to put into
 // *state.  Returns NULL.
-Value* ErrorAbort(State* state, char* format, ...) {
+Value* ErrorAbort(State* state, const char* format, ...) {
     char* buffer = malloc(4096);
     va_list v;
     va_start(v, format);

@@ -53,6 +53,7 @@ static const struct option OPTIONS[] = {
   { "wipe_data", no_argument, NULL, 'w' },
   { "wipe_cache", no_argument, NULL, 'c' },
   { "show_text", no_argument, NULL, 't' },
+  { "just_exit", no_argument, NULL, 'x' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -81,6 +82,7 @@ RecoveryUI* ui = NULL;
  *   --wipe_data - erase user data (and cache), then reboot
  *   --wipe_cache - wipe cache (but not user data), then reboot
  *   --set_encrypted_filesystem=on|off - enables / diasables encrypted fs
+ *   --just_exit - do nothing; exit and reboot
  *
  * After completing, we remove /cache/recovery/command and reboot.
  * Arguments may also be supplied in the bootloader control block (BCB).
@@ -281,7 +283,7 @@ finish_recovery(const char *send_intent) {
     chmod(LAST_LOG_FILE, 0640);
     chmod(LAST_INSTALL_FILE, 0644);
 
-    // Reset to mormal system boot so recovery won't cycle indefinitely.
+    // Reset to normal system boot so recovery won't cycle indefinitely.
     struct bootloader_message boot;
     memset(&boot, 0, sizeof(boot));
     set_bootloader_message(&boot);
@@ -789,6 +791,7 @@ main(int argc, char **argv) {
     const char *send_intent = NULL;
     const char *update_package = NULL;
     int wipe_data = 0, wipe_cache = 0;
+    bool just_exit = false;
 
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
@@ -799,6 +802,7 @@ main(int argc, char **argv) {
         case 'w': wipe_data = wipe_cache = 1; break;
         case 'c': wipe_cache = 1; break;
         case 't': ui->ShowText(true); break;
+        case 'x': just_exit = true; break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -863,7 +867,7 @@ main(int argc, char **argv) {
     } else if (wipe_cache) {
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
-    } else {
+    } else if (!just_exit) {
         status = INSTALL_ERROR;  // No command specified
     }
 
