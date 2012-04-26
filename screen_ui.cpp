@@ -122,6 +122,8 @@ void ScreenRecoveryUI::draw_background_locked(Icon icon)
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_progress_locked()
 {
+    if (currentIcon == ERROR) return;
+
     if (currentIcon == INSTALLING) {
         draw_install_overlay_locked(installingFrame);
     }
@@ -255,10 +257,10 @@ void ScreenRecoveryUI::progress_loop() {
         int duration = progressScopeDuration;
         if (progressBarType == DETERMINATE && duration > 0) {
             double elapsed = now() - progressScopeTime;
-            float progress = 1.0 * elapsed / duration;
-            if (progress > 1.0) progress = 1.0;
-            if (progress > progress) {
-                progress = progress;
+            float p = 1.0 * elapsed / duration;
+            if (p > 1.0) p = 1.0;
+            if (p > progress) {
+                progress = p;
                 redraw = 1;
             }
         }
@@ -351,6 +353,8 @@ void ScreenRecoveryUI::SetProgressType(ProgressType type)
         progressBarType = type;
         update_progress_locked();
     }
+    progressScopeStart = 0;
+    progress = 0;
     pthread_mutex_unlock(&updateMutex);
 }
 
