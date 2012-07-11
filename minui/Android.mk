@@ -9,10 +9,14 @@ LOCAL_C_INCLUDES +=\
 
 LOCAL_MODULE := libminui
 
-ifeq ($(TARGET_RECOVERY_PIXEL_FORMAT),"RGBX_8888")
+# This used to compare against values in double-quotes (which are just
+# ordinary characters in this context).  Strip double-quotes from the
+# value so that either will work.
+
+ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),RGBX_8888)
   LOCAL_CFLAGS += -DRECOVERY_RGBX
 endif
-ifeq ($(TARGET_RECOVERY_PIXEL_FORMAT),"BGRA_8888")
+ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),BGRA_8888)
   LOCAL_CFLAGS += -DRECOVERY_BGRA
 endif
 
