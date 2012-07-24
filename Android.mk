@@ -36,7 +36,7 @@ LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 
 LOCAL_STATIC_LIBRARIES := \
     libext4_utils_static \
-    libsparse \
+    libsparse_static \
     libminzip \
     libz \
     libmtdutils \
