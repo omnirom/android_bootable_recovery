@@ -328,8 +328,8 @@ static int read_block(const MtdPartition *partition, int fd, char *data)
 
 ssize_t mtd_read_data(MtdReadContext *ctx, char *data, size_t len)
 {
-    ssize_t read = 0;
-    while (read < (int) len) {
+    size_t read = 0;
+    while (read < len) {
         if (ctx->consumed < ctx->partition->erase_size) {
             size_t avail = ctx->partition->erase_size - ctx->consumed;
             size_t copy = len - read < avail ? len - read : avail;
@@ -350,7 +350,7 @@ ssize_t mtd_read_data(MtdReadContext *ctx, char *data, size_t len)
         }
 
         // Read the next block into the buffer
-        if (ctx->consumed == ctx->partition->erase_size && read < (int) len) {
+        if (ctx->consumed == ctx->partition->erase_size && read < len) {
             if (read_block(ctx->partition, ctx->fd, ctx->buffer)) return -1;
             ctx->consumed = 0;
         }
@@ -457,7 +457,7 @@ static int write_block(MtdWriteContext *ctx, const char *data)
             if (retry > 0) {
                 fprintf(stderr, "mtd: wrote block after %d retries\n", retry);
             }
-            fprintf(stderr, "mtd: successfully wrote block at %llx\n", pos);
+            fprintf(stderr, "mtd: successfully wrote block at %lx\n", pos);
             return 0;  // Success!
         }
 
