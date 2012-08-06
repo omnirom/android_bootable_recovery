@@ -456,6 +456,26 @@ Value* PackageExtractFileFn(const char* name, State* state,
     }
 }
 
+// Create all parent directories of name, if necessary.
+static int make_parents(char* name) {
+    char* p;
+    for (p = name + (strlen(name)-1); p > name; --p) {
+        if (*p != '/') continue;
+        *p = '\0';
+        if (make_parents(name) < 0) return -1;
+        int result = mkdir(name, 0700);
+        if (result == 0) fprintf(stderr, "symlink(): created [%s]\n", name);
+        *p = '/';
+        if (result == 0 || errno == EEXIST) {
+            // successfully created or already existed; we're done
+            return 0;
+        } else {
+            fprintf(stderr, "failed to mkdir %s: %s\n", name, strerror(errno));
+            return -1;
+        }
+    }
+    return 0;
+}
 
 // symlink target src1 src2 ...
 //    unlinks any previously existing src1, src2, etc before creating symlinks.
@@ -483,6 +503,11 @@ Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
                 ++bad;
             }
         }
+        if (make_parents(srcs[i])) {
+            fprintf(stderr, "%s: failed to symlink %s to %s: making parents failed\n",
+                    name, srcs[i], target);
+            ++bad;
+        }
         if (symlink(target, srcs[i]) < 0) {
             fprintf(stderr, "%s: failed to symlink %s to %s: %s\n",
                     name, srcs[i], target, strerror(errno));
@@ -504,7 +529,8 @@ Value* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     int min_args = 4 + (recursive ? 1 : 0);
     if (argc < min_args) {
-        return ErrorAbort(state, "%s() expects %d+ args, got %d", name, argc);
+        return ErrorAbort(state, "%s() expects %d+ args, got %d",
+                          name, min_args, argc);
     }
 
     char** args = ReadVarArgs(state, argc, argv);
@@ -626,7 +652,7 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     buffer = malloc(st.st_size+1);
     if (buffer == NULL) {
-        ErrorAbort(state, "%s: failed to alloc %d bytes", name, st.st_size+1);
+        ErrorAbort(state, "%s: failed to alloc %lld bytes", name, st.st_size+1);
         goto done;
     }
 
@@ -638,7 +664,7 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     if (fread(buffer, 1, st.st_size, f) != st.st_size) {
-        ErrorAbort(state, "%s: failed to read %d bytes from %s",
+        ErrorAbort(state, "%s: failed to read %lld bytes from %s",
                    name, st.st_size+1, filename);
         fclose(f);
         goto done;
