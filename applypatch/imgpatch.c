@@ -37,7 +37,8 @@
  */
 int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                     const Value* patch,
-                    SinkFn sink, void* token, SHA_CTX* ctx) {
+                    SinkFn sink, void* token, SHA_CTX* ctx,
+                    const Value* bonus_data) {
     ssize_t pos = 12;
     char* header = patch->data;
     if (patch->size < 12) {
@@ -123,6 +124,12 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
             // Decompress the source data; the chunk header tells us exactly
             // how big we expect it to be when decompressed.
 
+            // Note: expanded_len will include the bonus data size if
+            // the patch was constructed with bonus data.  The
+            // deflation will come up 'bonus_size' bytes short; these
+            // must be appended from the bonus_data value.
+            size_t bonus_size = (i == 1 && bonus_data != NULL) ? bonus_data->size : 0;
+
             unsigned char* expanded_source = malloc(expanded_len);
             if (expanded_source == NULL) {
                 printf("failed to allocate %d bytes for expanded_source\n",
@@ -153,12 +160,18 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                 printf("source inflation returned %d\n", ret);
                 return -1;
             }
-            // We should have filled the output buffer exactly.
-            if (strm.avail_out != 0) {
-                printf("source inflation short by %d bytes\n", strm.avail_out);
+            // We should have filled the output buffer exactly, except
+            // for the bonus_size.
+            if (strm.avail_out != bonus_size) {
+                printf("source inflation short by %d bytes\n", strm.avail_out-bonus_size);
                 return -1;
             }
             inflateEnd(&strm);
+
+            if (bonus_size) {
+                memcpy(expanded_source + (expanded_len - bonus_size),
+                       bonus_data->data, bonus_size);
+            }
 
             // Next, apply the bsdiff patch (in memory) to the uncompressed
             // data.

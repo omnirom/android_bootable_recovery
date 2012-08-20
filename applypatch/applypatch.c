@@ -39,7 +39,8 @@ static int GenerateTarget(FileContents* source_file,
                           const char* source_filename,
                           const char* target_filename,
                           const uint8_t target_sha1[SHA_DIGEST_SIZE],
-                          size_t target_size);
+                          size_t target_size,
+                          const Value* bonus_data);
 
 static int mtd_partitions_scanned = 0;
 
@@ -617,7 +618,8 @@ int applypatch(const char* source_filename,
                size_t target_size,
                int num_patches,
                char** const patch_sha1_str,
-               Value** patch_data) {
+               Value** patch_data,
+               Value* bonus_data) {
     printf("\napplying patch to %s\n", source_filename);
 
     if (target_filename[0] == '-' &&
@@ -699,7 +701,7 @@ int applypatch(const char* source_filename,
     int result = GenerateTarget(&source_file, source_patch_value,
                                 &copy_file, copy_patch_value,
                                 source_filename, target_filename,
-                                target_sha1, target_size);
+                                target_sha1, target_size, bonus_data);
     free(source_file.data);
     free(copy_file.data);
 
@@ -713,7 +715,8 @@ static int GenerateTarget(FileContents* source_file,
                           const char* source_filename,
                           const char* target_filename,
                           const uint8_t target_sha1[SHA_DIGEST_SIZE],
-                          size_t target_size) {
+                          size_t target_size,
+                          const Value* bonus_data) {
     int retry = 1;
     SHA_CTX ctx;
     int output;
@@ -867,7 +870,7 @@ static int GenerateTarget(FileContents* source_file,
         } else if (header_bytes_read >= 8 &&
                    memcmp(header, "IMGDIFF2", 8) == 0) {
             result = ApplyImagePatch(source_to_use->data, source_to_use->size,
-                                     patch, sink, token, &ctx);
+                                     patch, sink, token, &ctx, bonus_data);
         } else {
             printf("Unknown patch file format\n");
             return 1;
