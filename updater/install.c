@@ -901,7 +901,7 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     int result = applypatch(source_filename, target_filename,
                             target_sha1, target_size,
-                            patchcount, patch_sha_str, patches);
+                            patchcount, patch_sha_str, patches, NULL);
 
     for (i = 0; i < patchcount; ++i) {
         FreeValue(patches[i]);

@@ -100,6 +100,21 @@ static int ParsePatchArgs(int argc, char** argv,
 }
 
 int PatchMode(int argc, char** argv) {
+    Value* bonus = NULL;
+    if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
+        FileContents fc;
+        if (LoadFileContents(argv[2], &fc, RETOUCH_DONT_MASK) != 0) {
+            printf("failed to load bonus file %s\n", argv[2]);
+            return 1;
+        }
+        bonus = malloc(sizeof(Value));
+        bonus->type = VAL_BLOB;
+        bonus->size = fc.size;
+        bonus->data = (char*)fc.data;
+        argc -= 2;
+        argv += 2;
+    }
+
     if (argc < 6) {
         return 2;
     }
@@ -120,7 +135,7 @@ int PatchMode(int argc, char** argv) {
     }
 
     int result = applypatch(argv[1], argv[2], argv[3], target_size,
-                            num_patches, sha1s, patches);
+                            num_patches, sha1s, patches, bonus);
 
     int i;
     for (i = 0; i < num_patches; ++i) {
@@ -129,6 +144,10 @@ int PatchMode(int argc, char** argv) {
             free(p->data);
             free(p);
         }
+    }
+    if (bonus) {
+        free(bonus->data);
+        free(bonus);
     }
     free(sha1s);
     free(patches);
@@ -163,7 +182,7 @@ int main(int argc, char** argv) {
     if (argc < 2) {
       usage:
         printf(
-            "usage: %s <src-file> <tgt-file> <tgt-sha1> <tgt-size> "
+            "usage: %s [-b <bonus-file>] <src-file> <tgt-file> <tgt-sha1> <tgt-size> "
             "[<src-sha1>:<patch> ...]\n"
             "   or  %s -c <file> [<sha1> ...]\n"
             "   or  %s -s <bytes>\n"
