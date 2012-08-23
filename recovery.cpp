@@ -277,6 +277,18 @@ finish_recovery(const char *send_intent) {
         }
     }
 
+    // Save the locale to cache, so if recovery is next started up
+    // without a --locale argument (eg, directly from the bootloader)
+    // it will use the last-known locale.
+    if (locale != NULL) {
+        LOGI("Saving locale \"%s\"\n", locale);
+        FILE* fp = fopen_path(LOCALE_FILE, "w");
+        fwrite(locale, 1, strlen(locale), fp);
+        fflush(fp);
+        fsync(fileno(fp));
+        check_and_fclose(fp, LOCALE_FILE);
+    }
+
     // Copy logs to cache so the system can find out what happened.
     copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
     copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
@@ -285,15 +297,6 @@ finish_recovery(const char *send_intent) {
     chown(LOG_FILE, 1000, 1000);   // system user
     chmod(LAST_LOG_FILE, 0640);
     chmod(LAST_INSTALL_FILE, 0644);
-
-    // Save the locale to cache, so if recovery is next started up
-    // without a --locale argument (eg, directly from the bootloader)
-    // it will use the last-known locale.
-    if (locale != NULL) {
-        FILE* fp = fopen(LOCALE_FILE, "w");
-        fwrite(locale, 1, strlen(locale), fp);
-        fclose(fp);
-    }
 
     // Reset to normal system boot so recovery won't cycle indefinitely.
     struct bootloader_message boot;
