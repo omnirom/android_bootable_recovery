@@ -18,7 +18,7 @@
 #define MINZIP_INLINE_MAGIC_H_
 
 #ifndef MINZIP_GENERATE_INLINES
-#define INLINE extern __inline__
+#define INLINE extern inline __attribute((__gnu_inline__))
 #else
 #define INLINE
 #endif
