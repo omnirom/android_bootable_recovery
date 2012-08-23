@@ -31,7 +31,7 @@ class RecoveryUI {
     virtual void Init();
 
     // Set the overall recovery state ("background image").
-    enum Icon { NONE, INSTALLING, ERROR };
+    enum Icon { NONE, INSTALLING_UPDATE, ERASING, NO_COMMAND, ERROR };
     virtual void SetBackground(Icon icon) = 0;
 
     // --- progress indicator ---

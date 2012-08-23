@@ -54,6 +54,7 @@ static const struct option OPTIONS[] = {
   { "wipe_cache", no_argument, NULL, 'c' },
   { "show_text", no_argument, NULL, 't' },
   { "just_exit", no_argument, NULL, 'x' },
+  { "locale", required_argument, NULL, 'l' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -62,6 +63,7 @@ static const char *INTENT_FILE = "/cache/recovery/intent";
 static const char *LOG_FILE = "/cache/recovery/log";
 static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
 static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
+static const char *LOCALE_FILE = "/cache/recovery/locale";
 static const char *CACHE_ROOT = "/cache";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
@@ -69,6 +71,7 @@ static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
 
 RecoveryUI* ui = NULL;
+char* locale = NULL;
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -283,6 +286,15 @@ finish_recovery(const char *send_intent) {
     chmod(LAST_LOG_FILE, 0640);
     chmod(LAST_INSTALL_FILE, 0644);
 
+    // Save the locale to cache, so if recovery is next started up
+    // without a --locale argument (eg, directly from the bootloader)
+    // it will use the last-known locale.
+    if (locale != NULL) {
+        FILE* fp = fopen(LOCALE_FILE, "w");
+        fwrite(locale, 1, strlen(locale), fp);
+        fclose(fp);
+    }
+
     // Reset to normal system boot so recovery won't cycle indefinitely.
     struct bootloader_message boot;
     memset(&boot, 0, sizeof(boot));
@@ -300,7 +312,7 @@ finish_recovery(const char *send_intent) {
 
 static int
 erase_volume(const char *volume) {
-    ui->SetBackground(RecoveryUI::INSTALLING);
+    ui->SetBackground(RecoveryUI::ERASING);
     ui->SetProgressType(RecoveryUI::INDETERMINATE);
     ui->Print("Formatting %s...\n", volume);
 
@@ -658,6 +670,7 @@ prompt_and_wait(Device* device) {
 
     for (;;) {
         finish_recovery(NULL);
+        ui->SetBackground(RecoveryUI::NO_COMMAND);
         ui->SetProgressType(RecoveryUI::EMPTY);
 
         int chosen_item = get_menu_selection(headers, device->GetMenuItems(), 0, 0, device);
@@ -679,6 +692,7 @@ prompt_and_wait(Device* device) {
                 break;
 
             case Device::WIPE_CACHE:
+                ui->ShowText(false);
                 ui->Print("\n-- Wiping cache...\n");
                 erase_volume("/cache");
                 ui->Print("Cache wipe complete.\n");
@@ -757,6 +771,24 @@ print_property(const char *key, const char *name, void *cookie) {
     printf("%s=%s\n", key, name);
 }
 
+static void
+load_locale_from_cache() {
+    FILE* fp = fopen_path(LOCALE_FILE, "r");
+    char buffer[80];
+    if (fp != NULL) {
+        fgets(buffer, sizeof(buffer), fp);
+        int j = 0;
+        int i;
+        for (i = 0; i < sizeof(buffer) && buffer[i]; ++i) {
+            if (!isspace(buffer[i])) {
+                buffer[j++] = buffer[i];
+            }
+        }
+        buffer[j] = 0;
+        locale = strdup(buffer);
+    }
+}
+
 int
 main(int argc, char **argv) {
     time_t start = time(NULL);
@@ -779,18 +811,13 @@ main(int argc, char **argv) {
 
     printf("Starting recovery on %s", ctime(&start));
 
-    Device* device = make_device();
-    ui = device->GetUI();
-
-    ui->Init();
-    ui->SetBackground(RecoveryUI::NONE);
     load_volume_table();
     get_args(&argc, &argv);
 
     int previous_runs = 0;
     const char *send_intent = NULL;
     const char *update_package = NULL;
-    int wipe_data = 0, wipe_cache = 0;
+    int wipe_data = 0, wipe_cache = 0, show_text = 0;
     bool just_exit = false;
 
     int arg;
@@ -801,13 +828,26 @@ main(int argc, char **argv) {
         case 'u': update_package = optarg; break;
         case 'w': wipe_data = wipe_cache = 1; break;
         case 'c': wipe_cache = 1; break;
-        case 't': ui->ShowText(true); break;
+        case 't': show_text = 1; break;
         case 'x': just_exit = true; break;
+        case 'l': locale = optarg; break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
         }
     }
+
+    if (locale == NULL) {
+        load_locale_from_cache();
+    }
+    printf("locale is [%s]\n", locale);
+
+    Device* device = make_device();
+    ui = device->GetUI();
+
+    ui->Init();
+    ui->SetBackground(RecoveryUI::NONE);
+    if (show_text) ui->ShowText(true);
 
 #ifdef HAVE_SELINUX
     struct selinux_opt seopts[] = {
@@ -868,10 +908,13 @@ main(int argc, char **argv) {
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
     } else if (!just_exit) {
-        status = INSTALL_ERROR;  // No command specified
+        status = INSTALL_NONE;  // No command specified
+        ui->SetBackground(RecoveryUI::NO_COMMAND);
     }
 
-    if (status != INSTALL_SUCCESS) ui->SetBackground(RecoveryUI::ERROR);
+    if (status == INSTALL_ERROR || status == INSTALL_CORRUPT) {
+        ui->SetBackground(RecoveryUI::ERROR);
+    }
     if (status != INSTALL_SUCCESS || ui->IsTextVisible()) {
         prompt_and_wait(device);
     }
