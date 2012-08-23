@@ -33,6 +33,8 @@
 
 #include "minui.h"
 
+extern char* locale;
+
 // libpng gives "undefined reference to 'pow'" errors, and I have no
 // idea how to convince the build system to link with -lm.  We don't
 // need this functionality (it's used for gamma adjustment) so provide
@@ -158,6 +160,154 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     }
 
     *pSurface = (gr_surface) surface;
+
+exit:
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+
+    if (fp != NULL) {
+        fclose(fp);
+    }
+    if (result < 0) {
+        if (surface) {
+            free(surface);
+        }
+    }
+    return result;
+}
+
+static int matches_locale(const char* loc) {
+    if (locale == NULL) return 0;
+
+    printf("matching loc=[%s] vs locale=[%s]\n", loc, locale);
+
+    if (strcmp(loc, locale) == 0) return 1;
+
+    // if loc does *not* have an underscore, and it matches the start
+    // of locale, and the next character in locale *is* an underscore,
+    // that's a match.  For instance, loc == "en" matches locale ==
+    // "en_US".
+
+    int i;
+    for (i = 0; loc[i] != 0 && loc[i] != '_'; ++i);
+    if (loc[i] == '_') return 0;
+    printf("  partial match possible; i = %d\n", i);
+
+    return (strncmp(locale, loc, i) == 0 && locale[i] == '_');
+}
+
+int res_create_localized_surface(const char* name, gr_surface* pSurface) {
+    char resPath[256];
+    GGLSurface* surface = NULL;
+    int result = 0;
+    unsigned char header[8];
+    png_structp png_ptr = NULL;
+    png_infop info_ptr = NULL;
+
+    *pSurface = NULL;
+
+    snprintf(resPath, sizeof(resPath)-1, "/res/images/%s.png", name);
+    resPath[sizeof(resPath)-1] = '\0';
+    FILE* fp = fopen(resPath, "rb");
+    if (fp == NULL) {
+        result = -1;
+        goto exit;
+    }
+
+    size_t bytesRead = fread(header, 1, sizeof(header), fp);
+    if (bytesRead != sizeof(header)) {
+        result = -2;
+        goto exit;
+    }
+
+    if (png_sig_cmp(header, 0, sizeof(header))) {
+        result = -3;
+        goto exit;
+    }
+
+    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_ptr) {
+        result = -4;
+        goto exit;
+    }
+
+    info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr) {
+        result = -5;
+        goto exit;
+    }
+
+    if (setjmp(png_jmpbuf(png_ptr))) {
+        result = -6;
+        goto exit;
+    }
+
+    png_init_io(png_ptr, fp);
+    png_set_sig_bytes(png_ptr, sizeof(header));
+    png_read_info(png_ptr, info_ptr);
+
+    size_t width = info_ptr->width;
+    size_t height = info_ptr->height;
+    size_t stride = 4 * width;
+
+    printf("image size is %d x %d\n", width, height);
+
+    int color_type = info_ptr->color_type;
+    int bit_depth = info_ptr->bit_depth;
+    int channels = info_ptr->channels;
+    printf("color_type %d bit_depth %d channels %d\n",
+           color_type, bit_depth, channels);
+
+    if (!(bit_depth == 8 &&
+          (channels == 1 && color_type == PNG_COLOR_TYPE_GRAY))) {
+        return -7;
+        printf("exiting -7\n");
+        goto exit;
+    }
+
+    unsigned char* row = malloc(width);
+    int y;
+    for (y = 0; y < height; ++y) {
+        png_read_row(png_ptr, row, NULL);
+        int w = (row[1] << 8) | row[0];
+        int h = (row[3] << 8) | row[2];
+        int len = row[4];
+        char* loc = row+5;
+
+        printf("row %d: %s %d x %d\n", y, loc, w, h);
+
+        if (y+1+h >= height || matches_locale(loc)) {
+            printf("  taking this one\n");
+
+            surface = malloc(sizeof(GGLSurface));
+            if (surface == NULL) {
+                result = -8;
+                goto exit;
+            }
+            unsigned char* pData = malloc(w*h);
+
+            surface->version = sizeof(GGLSurface);
+            surface->width = w;
+            surface->height = h;
+            surface->stride = w; /* Yes, pixels, not bytes */
+            surface->data = pData;
+            surface->format = GGL_PIXEL_FORMAT_A_8;
+
+            int i;
+            for (i = 0; i < h; ++i, ++y) {
+                png_read_row(png_ptr, row, NULL);
+                memcpy(pData + i*w, row, w);
+            }
+
+            *pSurface = (gr_surface) surface;
+            break;
+        } else {
+            printf("   skipping\n");
+            int i;
+            for (i = 0; i < h; ++i, ++y) {
+                png_read_row(png_ptr, row, NULL);
+            }
+        }
+    }
 
 exit:
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);

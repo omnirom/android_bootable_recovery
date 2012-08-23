@@ -277,7 +277,7 @@ exit:
 static int
 really_install_package(const char *path, int* wipe_cache)
 {
-    ui->SetBackground(RecoveryUI::INSTALLING);
+    ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
     ui->Print("Finding update package...\n");
     ui->SetProgressType(RecoveryUI::INDETERMINATE);
     LOGI("Update location: %s\n", path);

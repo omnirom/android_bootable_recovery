@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT };
+enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE };
 // Install the package specified by root_path.  If INSTALL_SUCCESS is
 // returned and *wipe_cache is true on exit, caller should wipe the
 // cache partition.

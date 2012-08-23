@@ -94,7 +94,7 @@ void ScreenRecoveryUI::draw_install_overlay_locked(int frame) {
     int iconWidth = gr_get_width(surface);
     int iconHeight = gr_get_height(surface);
     gr_blit(surface, 0, 0, iconWidth, iconHeight,
-            install_overlay_offset_x, install_overlay_offset_y);
+            overlay_offset_x, overlay_offset_y);
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
@@ -107,14 +107,26 @@ void ScreenRecoveryUI::draw_background_locked(Icon icon)
 
     if (icon) {
         gr_surface surface = backgroundIcon[icon];
+        gr_surface text_surface = backgroundText[icon];
+
         int iconWidth = gr_get_width(surface);
         int iconHeight = gr_get_height(surface);
+        int textWidth = gr_get_width(text_surface);
+        int textHeight = gr_get_height(text_surface);
+
         int iconX = (gr_fb_width() - iconWidth) / 2;
-        int iconY = (gr_fb_height() - iconHeight) / 2;
+        int iconY = (gr_fb_height() - (iconHeight+textHeight+40)) / 2;
+
+        int textX = (gr_fb_width() - textWidth) / 2;
+        int textY = ((gr_fb_height() - (iconHeight+textHeight+40)) / 2) + iconHeight + 40;
+
         gr_blit(surface, 0, 0, iconWidth, iconHeight, iconX, iconY);
-        if (icon == INSTALLING) {
+        if (icon == INSTALLING_UPDATE || icon == ERASING) {
             draw_install_overlay_locked(installingFrame);
         }
+
+        gr_color(255, 255, 255, 255);
+        gr_texticon(textX, textY, text_surface);
     }
 }
 
@@ -124,12 +136,12 @@ void ScreenRecoveryUI::draw_progress_locked()
 {
     if (currentIcon == ERROR) return;
 
-    if (currentIcon == INSTALLING) {
+    if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
         draw_install_overlay_locked(installingFrame);
     }
 
     if (progressBarType != EMPTY) {
-        int iconHeight = gr_get_height(backgroundIcon[INSTALLING]);
+        int iconHeight = gr_get_height(backgroundIcon[INSTALLING_UPDATE]);
         int width = gr_get_width(progressBarEmpty);
         int height = gr_get_height(progressBarEmpty);
 
@@ -242,7 +254,8 @@ void ScreenRecoveryUI::progress_loop() {
 
         // update the installation animation, if active
         // skip this if we have a text overlay (too expensive to update)
-        if (currentIcon == INSTALLING && installing_frames > 0 && !show_text) {
+        if ((currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) &&
+            installing_frames > 0 && !show_text) {
             installingFrame = (installingFrame + 1) % installing_frames;
             redraw = 1;
         }
@@ -283,6 +296,13 @@ void ScreenRecoveryUI::LoadBitmap(const char* filename, gr_surface* surface) {
     }
 }
 
+void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, gr_surface* surface) {
+    int result = res_create_localized_surface(filename, surface);
+    if (result < 0) {
+        LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
+    }
+}
+
 void ScreenRecoveryUI::Init()
 {
     gr_init();
@@ -295,10 +315,18 @@ void ScreenRecoveryUI::Init()
     text_cols = gr_fb_width() / CHAR_WIDTH;
     if (text_cols > kMaxCols - 1) text_cols = kMaxCols - 1;
 
-    LoadBitmap("icon_installing", &backgroundIcon[INSTALLING]);
+    LoadBitmap("icon_installing", &backgroundIcon[INSTALLING_UPDATE]);
+    backgroundIcon[ERASING] = backgroundIcon[INSTALLING_UPDATE];
     LoadBitmap("icon_error", &backgroundIcon[ERROR]);
+    backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
+
     LoadBitmap("progress_empty", &progressBarEmpty);
     LoadBitmap("progress_fill", &progressBarFill);
+
+    LoadLocalizedBitmap("installing_text", &backgroundText[INSTALLING_UPDATE]);
+    LoadLocalizedBitmap("erasing_text", &backgroundText[ERASING]);
+    LoadLocalizedBitmap("no_command_text", &backgroundText[NO_COMMAND]);
+    LoadLocalizedBitmap("error_text", &backgroundText[ERROR]);
 
     int i;
 
@@ -321,14 +349,6 @@ void ScreenRecoveryUI::Init()
             sprintf(filename, "icon_installing_overlay%02d", i+1);
             LoadBitmap(filename, installationOverlay+i);
         }
-
-        // Adjust the offset to account for the positioning of the
-        // base image on the screen.
-        if (backgroundIcon[INSTALLING] != NULL) {
-            gr_surface bg = backgroundIcon[INSTALLING];
-            install_overlay_offset_x += (gr_fb_width() - gr_get_width(bg)) / 2;
-            install_overlay_offset_y += (gr_fb_height() - gr_get_height(bg)) / 2;
-        }
     } else {
         installationOverlay = NULL;
     }
@@ -343,6 +363,17 @@ void ScreenRecoveryUI::SetBackground(Icon icon)
     pthread_mutex_lock(&updateMutex);
     currentIcon = icon;
     update_screen_locked();
+
+    // Adjust the offset to account for the positioning of the
+    // base image on the screen.
+    if (backgroundIcon[icon] != NULL) {
+        gr_surface bg = backgroundIcon[icon];
+        gr_surface text = backgroundText[icon];
+        overlay_offset_x = install_overlay_offset_x + (gr_fb_width() - gr_get_width(bg)) / 2;
+        overlay_offset_y = install_overlay_offset_y +
+            (gr_fb_height() - (gr_get_height(bg) + gr_get_height(text) + 40)) / 2;
+    }
+
     pthread_mutex_unlock(&updateMutex);
 }
 
