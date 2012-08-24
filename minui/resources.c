@@ -40,7 +40,7 @@ extern char* locale;
 // need this functionality (it's used for gamma adjustment) so provide
 // a dummy implementation to satisfy the linker.
 double pow(double x, double y) {
-    return x;
+    return x * y;
 }
 
 int res_create_surface(const char* name, gr_surface* pSurface) {
@@ -132,7 +132,7 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
         alpha = 1;
     }
 
-    int y;
+    unsigned int y;
     if (channels == 3 || (channels == 1 && !alpha)) {
         for (y = 0; y < height; ++y) {
             unsigned char* pRow = pData + y * stride;
