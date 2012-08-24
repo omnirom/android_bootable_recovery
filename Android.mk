@@ -47,6 +47,7 @@ LOCAL_STATIC_LIBRARIES := \
     libpng \
     libcutils \
     libstdc++ \
+    libm \
     libc
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
