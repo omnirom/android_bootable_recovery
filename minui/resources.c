@@ -249,18 +249,13 @@ int res_create_localized_surface(const char* name, gr_surface* pSurface) {
     size_t height = info_ptr->height;
     size_t stride = 4 * width;
 
-    printf("image size is %d x %d\n", width, height);
-
     int color_type = info_ptr->color_type;
     int bit_depth = info_ptr->bit_depth;
     int channels = info_ptr->channels;
-    printf("color_type %d bit_depth %d channels %d\n",
-           color_type, bit_depth, channels);
 
     if (!(bit_depth == 8 &&
           (channels == 1 && color_type == PNG_COLOR_TYPE_GRAY))) {
         return -7;
-        printf("exiting -7\n");
         goto exit;
     }
 
@@ -276,8 +271,6 @@ int res_create_localized_surface(const char* name, gr_surface* pSurface) {
         printf("row %d: %s %d x %d\n", y, loc, w, h);
 
         if (y+1+h >= height || matches_locale(loc)) {
-            printf("  taking this one\n");
-
             surface = malloc(sizeof(GGLSurface));
             if (surface == NULL) {
                 result = -8;
@@ -301,7 +294,6 @@ int res_create_localized_surface(const char* name, gr_surface* pSurface) {
             *pSurface = (gr_surface) surface;
             break;
         } else {
-            printf("   skipping\n");
             int i;
             for (i = 0; i < h; ++i, ++y) {
                 png_read_row(png_ptr, row, NULL);
