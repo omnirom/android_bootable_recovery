@@ -178,8 +178,6 @@ exit:
 static int matches_locale(const char* loc) {
     if (locale == NULL) return 0;
 
-    printf("matching loc=[%s] vs locale=[%s]\n", loc, locale);
-
     if (strcmp(loc, locale) == 0) return 1;
 
     // if loc does *not* have an underscore, and it matches the start
@@ -190,7 +188,6 @@ static int matches_locale(const char* loc) {
     int i;
     for (i = 0; loc[i] != 0 && loc[i] != '_'; ++i);
     if (loc[i] == '_') return 0;
-    printf("  partial match possible; i = %d\n", i);
 
     return (strncmp(locale, loc, i) == 0 && locale[i] == '_');
 }
@@ -268,9 +265,9 @@ int res_create_localized_surface(const char* name, gr_surface* pSurface) {
         int len = row[4];
         char* loc = row+5;
 
-        printf("row %d: %s %d x %d\n", y, loc, w, h);
-
         if (y+1+h >= height || matches_locale(loc)) {
+            printf("  %20s: %s (%d x %d @ %d)\n", name, loc, w, h, y);
+
             surface = malloc(sizeof(GGLSurface));
             if (surface == NULL) {
                 result = -8;
