@@ -78,7 +78,9 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     indeterminate_frames(16),
     installing_frames(48),
     install_overlay_offset_x(65),
-    install_overlay_offset_y(106) {
+    install_overlay_offset_y(106),
+    overlay_offset_x(-1),
+    overlay_offset_y(-1) {
     pthread_mutex_init(&updateMutex, NULL);
     self = this;
 }
@@ -89,7 +91,7 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
 // animation.  Does nothing if no overlay animation is defined.
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_install_overlay_locked(int frame) {
-    if (installationOverlay == NULL) return;
+    if (installationOverlay == NULL || overlay_offset_x < 0) return;
     gr_surface surface = installationOverlay[frame];
     int iconWidth = gr_get_width(surface);
     int iconHeight = gr_get_height(surface);
@@ -361,8 +363,6 @@ void ScreenRecoveryUI::Init()
 void ScreenRecoveryUI::SetBackground(Icon icon)
 {
     pthread_mutex_lock(&updateMutex);
-    currentIcon = icon;
-    update_screen_locked();
 
     // Adjust the offset to account for the positioning of the
     // base image on the screen.
@@ -373,6 +373,9 @@ void ScreenRecoveryUI::SetBackground(Icon icon)
         overlay_offset_y = install_overlay_offset_y +
             (gr_fb_height() - (gr_get_height(bg) + gr_get_height(text) + 40)) / 2;
     }
+
+    currentIcon = icon;
+    update_screen_locked();
 
     pthread_mutex_unlock(&updateMutex);
 }
