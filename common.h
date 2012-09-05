@@ -23,6 +23,9 @@
 extern "C" {
 #endif
 
+#define ui_print(...) fprintf(stdout, __VA_ARGS__)
+#define ui_print_overwrite(...) fprintf(stdout, __VA_ARGS__)
+
 // TODO: restore ui_print for LOGE
 #define LOGE(...) fprintf(stdout, "E:" __VA_ARGS__)
 #define LOGW(...) fprintf(stdout, "W:" __VA_ARGS__)

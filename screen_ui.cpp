@@ -33,6 +33,10 @@
 #include "minui/minui.h"
 #include "screen_ui.h"
 #include "ui.h"
+extern "C" {
+#include "minuitwrp/minui.h"
+int twgr_text(int x, int y, const char *s);
+}
 
 #define CHAR_WIDTH 10
 #define CHAR_HEIGHT 18
@@ -162,7 +166,7 @@ void ScreenRecoveryUI::draw_progress_locked()
 
 void ScreenRecoveryUI::draw_text_line(int row, const char* t) {
   if (t[0] != '\0') {
-    gr_text(0, (row+1)*CHAR_HEIGHT-1, t);
+    twgr_text(0, (row+1)*CHAR_HEIGHT-1, t);
   }
 }
 

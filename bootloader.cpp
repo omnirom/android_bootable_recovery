@@ -16,7 +16,9 @@
 
 #include "bootloader.h"
 #include "common.h"
+extern "C" {
 #include "mtdutils/mtdutils.h"
+}
 #include "roots.h"
 
 #include <errno.h>

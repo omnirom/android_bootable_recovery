@@ -1,0 +1,658 @@
+#!/sbin/sh
+
+# do logging, if not excluded with -x
+LOGFILE="/data/sdparted.log"
+[ "$1" != "-x" ] && echo "$0" "$@" >> "$LOGFILE" && "$0" -x "$@" 2>&1 | tee -a "$LOGFILE" && exit
+shift
+
+ShowError() { echo ; echo " err: $1" ; echo ; exit 1 ; }
+
+ShowMessage() { echo ; echo " msg: $1" ; }
+
+ShowHelp() {
+
+cat <<DONEHELP
+
+$SCRIPTNAME v$SCRIPTREV created by $MYNAME
+
+if you use this script in your work, please give some credit. thanks.
+
+requirements: cm-recovery-v1.4
+
+usage: $SCRIPTNAME [options]
+
+
+options:
+
+ --fatsize|-fs SIZE[MG]     set the size of the fat32 partition to <SIZE>.
+                            default=total sdcard size - (ext + swap)
+						
+ --extsize|-es SIZE[MG]     set the size of the ext partition to <SIZE>.
+                            default=$EXTSIZE
+						
+ --swapsize|-ss SIZE[MG]    set the size of the swap partition to <SIZE>.
+                            if set to 0, no swap partition will be created.
+                            default=$SWAPSIZE
+						
+ --extfs|-efs TYPE          set the filesystem of ext partition to <TYPE>.
+                            valid types=ext2, ext3, ext4
+                            default=$EXTFS
+
+
+ --upgradefs|-ufs TYPE      upgrades existing ext partition to <TYPE>.
+                            this operation will NOT wipe your sdcard and
+                            cannot be used with any partition creation options.
+                            valid types=ext3, ext4
+
+ --downgradefs|-dfs TYPE    downgrades existing ext partition to <TYPE>.
+                            this operation will NOT wipe your sdcard and
+                            cannot be used with any partition creation options.
+                            valid types=ext2
+
+							
+ --interactive|-i           interactive mode
+
+ --help|-h                  display this help
+
+ --printonly|-po            display sdcard information
+
+ --silent|-s                do not prompt user, not even initial warning.
+
+
+examples:
+ $SCRIPTNAME                     creates swap=$SWAPSIZE ext2=$EXTSIZE fat32=remaining free space
+ $SCRIPTNAME -efs ext4           creates swap=$SWAPSIZE ext4=$EXTSIZE fat32=remaining free space
+ $SCRIPTNAME -fs 1.5G -efs ext3  creates swap=$SWAPSIZE ext3=$EXTSIZE fat32=1536
+ $SCRIPTNAME -es 256M -ss 0      creates no swap ext2=256 fat32=remaining free space
+ $SCRIPTNAME -ufs ext4           upgrades ext partition to ext4
+
+DONEHELP
+
+}
+
+UserAbort() {
+	
+	WHILEEXIT=
+
+	while [ -z "$WHILEEXIT" ]
+	do
+		echo -n "do you want to continue? (Y/n) "
+		read response
+		echo
+		[ "$response" = "Y" ] || [ "$response" = "n" ] || [ "$response" = "N" ] && WHILEEXIT="$response"
+	done
+	
+	echo "$response" > /dev/null 2>&1 >>"$LOGFILE"
+	
+	[ "$response" != "Y" ]
+	
+}
+
+UnmountAll () {
+
+	# unmount all partitions so we can work with $SDPATH
+	# i'm assuming no more than 3 partitions
+	# maybe make a little more elegant later
+	echo -n "unmounting all partitions..."
+	umount "$FATPATH" > /dev/null 2>&1 >>"$LOGFILE"
+	umount "$EXTPATH" > /dev/null 2>&1 >>"$LOGFILE"
+	umount "$SWAPPATH" > /dev/null 2>&1 >>"$LOGFILE"
+	echo "done"
+	echo
+	
+}
+
+
+CheckReqs() {
+
+	echo -n "checking script requirements..."
+	# check for valid sdcard
+	[ -e $SDPATH ] || ShowError "$SDPATH does not exist!"
+	
+	# look for necessary programs
+	[ -e $CMPARTED ] || ShowError "$CMPARTED does not exist!"
+	[ -e $CMTUNE2FS ] || ShowError "$CMTUNE2FS does not exist!"
+	[ -e $CME2FSCK ] || ShowError "$CME2FSCK does not exist!"
+	
+	# verify cm-v1.4
+	PARTEDREV=`"$CMPARTED" "$SDPATH" version | grep Parted | cut -d" " -f3`
+	[ "$PARTEDREV" == "1.8.8.1.179-aef3" ] || ShowError "you are not using parted v1.8.8.1.179-aef3!"
+	echo "done"
+	echo
+	
+}
+
+CheckTableType() {
+
+	TABLETYPE=`"$CMPARTED" "$SDPATH" print | grep Table: | cut -d" " -f3`
+	
+	[ "$TABLETYPE" == "loop" -o "$TABLETYPE" == "msdos" ] && TTISOK=1 || TTISOK=0
+	[ "$TABLETYPE" == "loop" ] && TTISLOOP=1 || TTISLOOP=0
+	[ "$TABLETYPE" == "msdos" ] && TTISMSDOS=1 || TTISMOSDOS=0
+	
+}
+
+ValidateExtArg() {
+
+	FUNC_RET="nonzero"
+		
+	# validating argument
+	[ "$1" != "ext2" ] && [ "$1" != "ext3" ] && [ "$1" != "ext4" ] && FUNC_RET=
+		
+	[ -z "$FUNC_RET" ] && [ -z "$IMODE" ] && ShowError "$1 is not a valid filesystem."
+	[ -z "$FUNC_RET" ] && [ -n "$IMODE" ] && ShowMessage "$1 is not a valid filesystem."
+	
+	# return valid argument
+	[ -n "$FUNC_RET" ] && FUNC_RET="$1"
+	
+}
+
+ValidateSizeArg() {
+
+	# check for zero-length arg to protect expr length
+	[ -z "$1" ] && ShowError "zero-length argument passed to size-validator"
+		
+	SIZEMB=
+	ARGLEN=`expr length $1`
+	SIZELEN=$(($ARGLEN-1))
+	SIZEARG=`expr substr $1 1 $SIZELEN`
+	SIZEUNIT=`expr substr $1 $ARGLEN 1`
+	
+	# check if SIZEARG is an integer
+	if [ $SIZEARG -eq $SIZEARG 2> /dev/null ] ; then
+		# look for G
+		[ "$SIZEUNIT" == "G" ] && SIZEMB=$(($SIZEARG * 1024))
+		# look for M
+		[ "$SIZEUNIT" == "M" ] && SIZEMB=$SIZEARG
+		# no units on arg AND prevents using bogus size units
+		[ -z "$SIZEMB" ] && [ $SIZEUNIT -eq $SIZEUNIT 2> /dev/null ] && SIZEMB=$1
+	# check if SIZEARG is a floating point number, GB only
+	elif [ `expr index "$SIZEARG" .` != 0 ] && [ "$SIZEUNIT" == "G" ]  ; then
+		INT=`echo "$SIZEARG" | cut -d"." -f1`
+		FRAC=`echo "$SIZEARG" | cut -d"." -f2`
+		SIGDIGITS=`expr length $FRAC`
+		
+		[ -z "$INT" ] && INT=0
+		INTMB=$(($INT * 1024))
+		FRACMB=$((($FRAC * 1024) / (10**$SIGDIGITS)))
+		SIZEMB=$(($INTMB + $FRACMB))
+	# it's not a valid size
+	else
+		[ -z "$IMODE" ] && ShowError "$1 is not a valid size"
+	fi
+	
+	[ -z "$SIZEMB" ] && [ -n "$IMODE" ] && ShowMessage "$1 is not a valid size"
+	
+	# return valid argument in MB
+	FUNC_RET=$SIZEMB
+	
+}
+
+CalculatePartitions() {
+
+	# get size of sdcard in MB & do some math
+	SDSIZEMB=`"$CMPARTED" "$SDPATH" unit MB print | grep $SDPATH | cut -d" " -f3`
+	SDSIZE=${SDSIZEMB%MB}
+	[ -n "$FATSIZE" ] || FATSIZE=$(($SDSIZE - $EXTSIZE - $SWAPSIZE))
+	EXTEND=$(($FATSIZE + $EXTSIZE))
+	SWAPEND=$(($EXTEND + $SWAPSIZE))
+	
+	# check for fatsize of 0
+	[ $FATSIZE -le 0 ] && ShowError "must have a fat32 partition greater than 0MB"
+	
+	# check for zero-length sdsize...
+	# indicative of parted not reporting length 
+	# correctly b/c of error on sdcard
+	[ -z "$SDSIZE" ] && ShowError "zero-length argument passed to partition-calculator"
+	
+	# make sure we're not being asked to do the impossible
+	[ $(($FATSIZE + $EXTSIZE + $SWAPSIZE)) -gt $SDSIZE ] && [ -z "$IMODE" ] && ShowError "sum of requested partitions is greater than sdcard size"
+
+}
+
+
+UpgradeDowngradeOnly() {
+
+	if [ -n "$UEXTFSONLY" ] ; then
+		echo
+		[ -n "$CREATEPART" ] && ShowError "cannot use upgrade option when creating partitions, use -efs instead"
+		[ -n "$DEXTFSONLY" ] && ShowError "cannot upgrade AND downgrade, it just doesn't make sense"
+		echo "you have chosen to upgrade $EXTPATH to $UEXTFSONLY."
+		echo "this action will NOT delete any data from sdcard."
+		echo
+		[ -z "$SILENTRUN" ] &&	UserAbort && ShowError "script canceled by user"
+		echo
+		UpgradeExt "$UEXTFSONLY"
+		ShowCardInfo
+	elif [ -n "$DEXTFSONLY" ] ; then
+		echo
+		[ -n "$CREATEPART" ] && ShowError "cannot use downgrade option when creating partitions."
+		[ -n "$UEXTFSONLY" ] && ShowError "cannot downgrade AND upgrade, it just doesn't make sense."
+		echo "you have chosen to downgrade $EXTPATH to $DEXTFSONLY."
+		echo "this action will NOT delete any data from sdcard."
+		echo
+		[ -z "$SILENTRUN" ] &&	UserAbort && ShowError "script canceled by user"
+		echo
+		DowngradeExt "$DEXTFSONLY"
+		ShowCardInfo
+	fi
+	
+}
+
+PrepareSdCard() {
+
+	echo
+	if [ $TTISOK -eq 0 ] ; then
+		echo "partition 1 may not be aligned to cylinder boundaries."
+		echo "to continue, this must be corrected."
+	elif [ $TTISLOOP -gt 0 ] ; then
+		echo "your sdcard's partition table type is $TABLETYPE."
+		echo "to continue, partition table must be set to 'msdos'."
+	elif [ $TTISMSDOS -gt 0 ] ; then
+		# just a reminder..in a later version, 
+		# i may implement resizing of partitions, 
+		# so this will be unnecessary. but until then...
+		echo "to continue, all existing partitions must be removed."
+	else
+		# this is not good, and should never happen
+		# if it does, there is a serious problem
+		ShowError "sdcard failed table type check."
+	fi
+	
+	echo
+	echo "this action will remove all data from your sdcard."
+	echo
+	[ -z "$SILENTRUN" ] &&	UserAbort && ShowError "script canceled by user"
+	
+	[ $TTISOK -eq 0 ] && echo -n "correcting cylinder boundaries..."
+	[ $TTISLOOP -gt 0 ] && echo -n "setting partition table to msdos..."
+	[ $TTISMSDOS -gt 0 ] && echo -n "removing all partitions..."
+	
+	"$CMPARTED" -s "$SDPATH" mklabel msdos 2>&1 >>"$LOGFILE"
+	echo "done"
+	echo
+	
+}
+
+ShowActions() {
+
+	echo
+	echo "total size of sdcard=$SDSIZEMB"
+	echo
+	echo "the following actions will be performed:"
+	echo " -create $FATSIZE""MB fat32 partition"
+	[ $EXTSIZE -gt 0 ] && echo " -create $EXTSIZE""MB ext2 partition"
+	[ $SWAPSIZE -gt 0 ] && echo " -create $SWAPSIZE""MB swap partition"
+	[ "$EXTFS" != "ext2" ] && echo " -ext2 partition will be upgraded to $EXTFS"
+	echo
+	[ -z "$SILENTRUN" ] &&	UserAbort && ShowError "script canceled by user"
+	echo
+	
+}
+
+ShowCardInfo() {
+
+    echo "sddevice located in /sdcard/sddev.log"
+    echo $SDPATH > /sdcard/sddev.log
+
+	CheckTableType
+	
+	echo
+	echo "retrieving current sdcard information..."
+	
+	if [ $TTISOK -gt 0 ] ; then
+		echo
+		parted "$SDPATH" print
+		echo
+		echo "script log is located @ /data/sdparted.log"
+		exit 0
+	else
+		echo
+		echo "partition 1 may not be aligned to cylinder boundaries."
+		ShowError "cannot complete print operation."
+	fi
+	echo
+	
+}
+
+
+PartitionSdCard() {
+
+	echo "performing selected actions..."
+	echo
+	
+	if [ $FATSIZE -gt 0 ] ; then
+		echo -n "creating fat32 partition..."
+		"$CMPARTED" -s "$SDPATH" mkpartfs primary fat32 0 "$FATSIZE"MB 2>&1 >>"$LOGFILE"
+		echo "done"
+	fi
+	
+	if [ $EXTSIZE -gt 0 ] ; then
+		echo -n "creating ext2 partition..."
+		"$CMPARTED" -s "$SDPATH" mkpartfs primary ext2 "$FATSIZE"MB "$EXTEND"MB 2>&1 >>"$LOGFILE"
+		"$CMTUNE2FS" -L sd-ext "$EXTPATH" 2>&1 >>"$LOGFILE"
+		echo "done"
+	fi
+	
+	if [ $SWAPSIZE -gt 0 ] ; then
+		echo -n "creating swap partition..."
+		"$CMPARTED" -s "$SDPATH" mkpartfs primary linux-swap "$EXTEND"MB "$SWAPEND"MB 2>&1 >>"$LOGFILE"
+		echo "done"
+	fi
+	echo
+	
+}
+
+UpgradeExt() {
+
+	# check for no upgrade
+	[ "$1" == "ext2" ] && return
+	# check for ext partition
+	[ ! -e "$EXTPATH" ] && ShowError "$EXTPATH does not exist"
+
+	# have to use -m switch for this check b/c parted incorrectly
+	# reports all ext partitions as ext2 when running print <number>
+	CHECKEXTFS=`"$CMPARTED" -m "$SDPATH" print | grep ext | cut -d":" -f5`
+	[ "$CHECKEXTFS" == "$1" ] && ShowError "$EXTPATH is already $1"
+
+	# grabbed the code bits for ext3 from upgrade_fs(credit:cyanogen)
+	# check for ext2...must upgrade to ext3 first b4 ext4
+	if [ "$1" == "ext3" -o "$1" == "ext4" ] ; then
+		echo -n "adding journaling to $EXTPATH..."
+		umount /system/sd > /dev/null 2>&1 >>"$LOGFILE"
+		"$CME2FSCK" -p "$EXTPATH" 2>&1 >>"$LOGFILE"
+		"$CMTUNE2FS" -c0 -i0 -j "$EXTPATH" 2>&1 >>"$LOGFILE"
+		echo "done"
+	fi
+
+	# and got convert to ext4 from xda-forum(credit:Denkai)
+	if [ "$1" == "ext4" ] ; then
+		echo -n "converting $EXTPATH to ext4 filesystem..."
+		umount /system/sd > /dev/null 2>&1 >>"$LOGFILE"
+		"$CMTUNE2FS" -O extents,uninit_bg,dir_index "$EXTPATH" 2>&1 >>"$LOGFILE"
+		"$CME2FSCK" -fpDC0 "$EXTPATH" 2>&1 >>"$LOGFILE"
+		echo "done"
+	fi
+	echo
+	
+}
+
+DowngradeExt() {
+
+	# check for ext partition
+	[ ! -e "$EXTPATH" ] && ShowError "$EXTPATH does not exist"
+
+	# have to use print for this check b/c parted incorrectly
+	# reports all ext partitions as ext2 when running print <number>
+	CHECKEXTFS=`"$CMPARTED" -m "$SDPATH" print | grep ext | cut -d":" -f5`
+	[ "$CHECKEXTFS" == "$1" ] && ShowError "$EXTPATH is already $1"
+	
+	if [ "$CHECKEXTFS" == "ext4" -o "$1" == "ext3" ] ; then
+		# interweb says downgrading from ext4 is not possible
+		# without a backup/restore procedure.
+		# if i figure it out, i'll implement it.
+		ShowError "downgrading from ext4 is not currently supported"
+	fi
+	
+	if [ "$1" == "ext2" ] ; then
+		echo -n "removing journaling from $EXTPATH..."
+		umount /system/sd > /dev/null 2>&1 >>"$LOGFILE"
+		"$CMTUNE2FS" -O ^has_journal "$EXTPATH" 2>&1 >>"$LOGFILE"
+		"$CME2FSCK" -fp "$EXTPATH" 2>&1 >>"$LOGFILE"
+		echo "done"
+	fi
+	echo
+	
+}
+
+
+Interactive() {
+
+cat <<DONEINSTRUCT
+
+sdparted interactive mode
+
+rules:
+1. no answer means you accept default value
+2. enter '0' for no partition
+
+DONEINSTRUCT
+
+	UserAbort && ShowError "script canceled by user"
+	
+	CalculatePartitions
+	
+	GetSwapSize
+	
+	FATSIZE=
+	
+	CalculatePartitions
+	
+	GetExtSize
+	
+	GetExtType
+	
+	FATSIZE=
+	
+	CalculatePartitions
+	
+	GetFatSize
+	
+}
+
+GetSwapSize() {
+
+	SWAPTEST=
+	
+	while [ -z "$SWAPTEST" ]
+	do
+		echo
+		echo -n "swap partition size [default=$SWAPSIZE]: "
+		read SWAPRESP
+		
+		[ -z "$SWAPRESP" ] && SWAPRESP="$SWAPSIZE"
+		echo "$SWAPRESP" > /dev/null 2>&1 >>"$LOGFILE"
+		
+		ValidateSizeArg "$SWAPRESP"
+		SWAPTEST="$FUNC_RET"
+		[ -n "$SWAPTEST" ] && [ $SWAPTEST -gt $SDSIZE ] && ShowMessage "$SWAPRESP > available space($(($SDSIZE))M)." && SWAPTEST=
+	done
+	
+	SWAPSIZE=$SWAPTEST
+	
+}
+
+GetExtSize() {
+
+	EXTTEST=
+	
+	while [ -z "$EXTTEST" ]
+	do
+		echo
+		echo -n "ext partition size [default=$EXTSIZE]: "
+		read EXTRESP
+		
+		[ -z "$EXTRESP" ] && EXTRESP="$EXTSIZE"
+		echo "$EXTRESP" > /dev/null 2>&1 >>"$LOGFILE"
+		
+		ValidateSizeArg "$EXTRESP"
+		EXTTEST="$FUNC_RET"
+		
+		[ -n "$EXTTEST" ] && [ $EXTTEST -gt $(($SDSIZE - $SWAPSIZE)) ] && ShowMessage "$EXTRESP > available space($(($SDSIZE - $SWAPSIZE))M)." && EXTTEST=
+	done
+	
+	EXTSIZE=$EXTTEST
+	
+}
+
+GetExtType() {
+
+	FSTEST=
+	
+	while [ -z "$FSTEST" ]
+	do
+		echo
+		echo -n "ext partition type [default=$EXTFS]: "
+		read FSRESP
+		
+		[ -z "$FSRESP" ] && FSRESP="$EXTFS"
+		echo "$FSRESP" > /dev/null 2>&1 >>"$LOGFILE"
+		
+		ValidateExtArg "$FSRESP"
+		FSTEST="$FUNC_RET"
+	done
+	
+	EXTFS="$FSTEST"
+	
+}
+
+GetFatSize() {
+
+	FATTEST=
+	
+	while [ -z "$FATTEST" ]
+	do
+		echo
+		echo -n "fat partition size [default=$FATSIZE]: "
+		read FATRESP
+		
+		[ -z "$FATRESP" ] && FATRESP="$FATSIZE"
+		echo "$FATRESP" > /dev/null 2>&1 >>"$LOGFILE"
+		
+		ValidateSizeArg "$FATRESP"
+		FATTEST="$FUNC_RET"
+		
+		[ -n "$FATTEST" ] && [ $FATTEST -gt $FATSIZE ] && ShowMessage "$FATRESP > available space($(($SDSIZE - $SWAPSIZE - $EXTSIZE))M)." && FATTEST=
+		[ -n "$FATTEST" ] && [ $FATTEST -le 0 ] && ShowMessage "must have a fat32 partition greater than 0MB" && FATTEST=
+	done
+	
+	FATSIZE=$FATTEST
+	
+}
+
+
+SCRIPTNAME="sdparted"
+SCRIPTREV="0.6"
+MYNAME="51dusty"
+
+IMODE=
+SILENTRUN=
+CREATEPART=
+FUNC_RET=
+
+UEXTFSONLY=
+DEXTFSONLY=
+
+TTISOK=
+TTISLOOP=
+TTISMSDOS=
+
+SDSIZE=
+SDSIZEMB=
+SDINFO=$(cat /etc/fstab | grep /sdcard | awk '{print $1}')
+if [ -L "$SDINFO" ]
+then
+	SDPATH=$(ls -l $SDINFO | awk '{print $11}')
+else
+	SDPATH=$SDINFO
+fi
+# we may now have an SDPATH, let's make sure its on mmcblkX or mmcblkXp1
+CHECK_SDPATH1=$(echo $SDPATH | grep mmcblk.$)
+CHECK_SDPATH2=$(echo $SDPATH | grep mmcblk.p1$)
+if [ -z "$CHECK_SDPATH1" ]
+then
+	if [ -z "$CHECK_SDPATH2" ]
+	then
+		echo fail1
+		unset SDPATH
+	else
+		LEN=${#SDPATH}
+		BLKLEN=$(expr $LEN - 2)
+		SDPATH=${SDPATH:0:$BLKLEN}
+	fi
+fi
+
+
+FATSIZE=
+FATTYPE="fat32"
+FATPATH=$SDPATH"p1"
+
+EXTSIZE=512
+EXTFS="ext2"
+EXTPATH=$SDPATH"p2"
+EXTEND=
+
+SWAPSIZE=32
+SWAPTYPE="linux-swap"
+SWAPPATH=$SDPATH"p3"
+SWAPEND=
+
+CMPARTED="/sbin/parted"
+CMTUNE2FS="/sbin/tune2fs"
+CME2FSCK="/sbin/e2fsck"
+
+# give the output some breathing room
+echo "$SCRIPTREV" >> "$LOGFILE" 
+echo
+
+# check for arguments
+while [ $# -gt 0 ] ; do
+  case "$1" in
+
+    -h|--help) ShowHelp ; exit 0 ;;
+    
+    -fs|--fatsize) shift ; ValidateSizeArg "$1" ; FATSIZE="$FUNC_RET" ; CREATEPART="$1" ;;
+    -es|--extsize) shift ; ValidateSizeArg "$1" ; EXTSIZE="$FUNC_RET" ; CREATEPART="$1" ;;
+	-ss|--swapsize) shift ; ValidateSizeArg "$1" ; SWAPSIZE="$FUNC_RET" ; CREATEPART="$1" ;;
+	-efs|--extfs) shift ; ValidateExtArg "$1" ; EXTFS="$FUNC_RET" ; CREATEPART="$1" ;;
+	
+	-ufs|--upgradefs) shift ; ValidateExtArg "$1" ; UEXTFSONLY="$FUNC_RET" ;;
+	-dfs|--downgradefs) shift ; ValidateExtArg "$1" ; DEXTFSONLY="$FUNC_RET" ;;
+	
+	-i|--interactive) IMODE="$1" ;;
+	
+	-s|--silent) SILENTRUN="$1" ;;
+	
+	-po|--printonly) ShowCardInfo ;;
+	
+	*) ShowHelp ; ShowError "unknown argument '$1'" ;;
+
+  esac
+  shift
+done
+
+# can't do silent when in interactive mode
+[ -n "$IMODE" ] && SILENTRUN=
+
+# make sure sdcard exists and all needed files are here
+CheckReqs
+
+# unmount all
+UnmountAll
+
+# upgrade only? downgrade only?
+UpgradeDowngradeOnly
+
+# check table
+CheckTableType
+
+# prep card
+PrepareSdCard
+
+# check for interactive mode
+[ -n "$IMODE" ] && Interactive
+
+# do some math
+CalculatePartitions
+
+# last chance to cancel
+ShowActions
+
+# partition card
+PartitionSdCard
+
+# upgrade fs if necessary
+UpgradeExt "$EXTFS"
+
+# say goodbye and show print output
+ShowCardInfo

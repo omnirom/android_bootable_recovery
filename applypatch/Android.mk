@@ -52,5 +52,6 @@ LOCAL_MODULE := imgdiff
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_C_INCLUDES += external/zlib external/bzip2
 LOCAL_STATIC_LIBRARIES += libz libbz
+LOCAL_MODULE_TAGS := eng
 
 include $(BUILD_HOST_EXECUTABLE)
