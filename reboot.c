@@ -48,7 +48,7 @@ int tw_reboot(RebootCommand command)
     {
     case rb_current:
     case rb_system:
-        finish_recovery("s");
+        twfinish_recovery("s");
 		sync();
 		check_and_run_script("/sbin/rebootsystem.sh", "reboot system");
         return reboot(RB_AUTOBOOT);

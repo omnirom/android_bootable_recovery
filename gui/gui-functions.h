@@ -6,8 +6,8 @@ FILE * __popen(const char *program, const char *type);
 int __pclose(FILE *iop);
 
 // Device ID variable / function
-char device_id[64];
-void get_device_id();
+//char device_id[64];
+//void get_device_id();
 static char* copy_sideloaded_package(const char* original_path);
 int install_zip_package(const char* zip_path_filename);
 
@@ -32,6 +32,5 @@ void htc_dumlock_reflash_recovery_to_boot(void);
 
 void check_and_run_script(const char* script_file, const char* display_name);
 int check_backup_name(int show_error);
-void twfinish_recovery(const char *send_intent);
 
 #endif // _EXTRAFUNCTIONS_HEADER

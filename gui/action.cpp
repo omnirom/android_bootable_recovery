@@ -25,7 +25,7 @@ extern "C" {
 #include "../tw_reboot.h"
 #include "../minuitwrp/minui.h"
 #include "../recovery_ui.h"
-#include "../extra-functions.h"
+#include "gui-functions.h"
 #include "../variables.h"
 
 int install_zip_package(const char* zip_path_filename);
@@ -1007,10 +1007,10 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 					DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 					DataManager::ReadSettingsFile();
-
-					if (check_for_script_file()) {
+LOGE("TODO: Implement ORS support\n");
+					if (0/*check_for_script_file()*/) {
 						ui_print("Processing OpenRecoveryScript file...\n");
-						if (run_script_file() == 0) {
+						if (/*run_script_file() ==*/ 0) {
 							usleep(2000000); // Sleep for 2 seconds before rebooting
 							tw_reboot(rb_system);
 							load_theme = 0;

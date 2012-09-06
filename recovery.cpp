@@ -45,6 +45,18 @@ extern "C" {
 #include "minadbd/adb.h"
 }
 
+extern "C" {
+#include "extra-functions.h"
+#include "data.h"
+#include "gui/gui.h"
+}
+#include "partitions.hpp"
+
+int gui_init(void);
+int gui_loadResources(void);
+int gui_start(void);
+int gui_console_only(void);
+
 struct selabel_handle *sehandle;
 
 static const struct option OPTIONS[] = {
@@ -232,7 +244,7 @@ set_sdcard_update_bootloader_message() {
 }
 
 // How much of the temp log we have copied to the copy in cache.
-static long tmplog_offset = 0;
+//static long tmplog_offset = 0;
 
 static void
 copy_log_file(const char* source, const char* destination, int append) {
@@ -777,14 +789,34 @@ main(int argc, char **argv) {
         return 0;
     }
 
-    printf("Starting recovery on %s", ctime(&start));
+    printf("Starting TWRP %s on %s", EXPAND(TW_VERSION_STR), ctime(&start));
+	// Recovery needs to install world-readable files, so clear umask
+    // set by init
+    umask(0);
 
-    Device* device = make_device();
-    ui = device->GetUI();
+    //Device* device = make_device();
+    //ui = device->GetUI();
 
-    ui->Init();
-    ui->SetBackground(RecoveryUI::NONE);
+	//ui->Init();
+    //ui->SetBackground(RecoveryUI::NONE);
     load_volume_table();
+
+	// Load default values to set DataManager constants and handle ifdefs
+	DataManager_LoadDefaults();
+	printf("Starting the UI...");
+	printf(" result was: %i\n", gui_init());
+	printf("=> Installing busybox into /sbin\n");
+	__system("/sbin/bbinstall.sh"); // Let's install busybox
+	printf("=> Linking mtab\n");
+	__system("ln -s /proc/mounts /etc/mtab"); // And link mtab for mke2fs
+	printf("=> Processing recovery.fstab\n");
+	if (TWPartitionManager::Process_Fstab("/etc/recovery.fstab", 1)) {
+		LOGE("Failing out of recovery due to problem with recovery.fstab.\n");
+		//return -1;
+	}
+	// Load up all the resources
+	gui_loadResources();
+
     get_args(&argc, &argv);
 
     int previous_runs = 0;
@@ -822,7 +854,7 @@ main(int argc, char **argv) {
     }
 #endif
 
-    device->StartRecovery();
+    //device->StartRecovery();
 
     printf("Command:");
     for (arg = 0; arg < argc; arg++) {
@@ -849,9 +881,21 @@ main(int argc, char **argv) {
     property_list(print_property, NULL);
     printf("\n");
 
+	// Check for and run startup script if script exists
+	check_and_run_script("/sbin/runatboot.sh", "boot");
+	check_and_run_script("/sbin/postrecoveryboot.sh", "boot");
+
+#ifdef TW_INCLUDE_INJECTTWRP
+	// Back up TWRP Ramdisk if needed:
+	LOGI("Backing up TWRP ramdisk...\n");
+	__system("injecttwrp --backup /tmp/backup_recovery_ramdisk.img");
+	LOGI("Backup of TWRP ramdisk done.\n");
+#endif
+
     int status = INSTALL_SUCCESS;
 
     if (update_package != NULL) {
+		gui_console_only();
         status = install_package(update_package, &wipe_cache, TEMPORARY_INSTALL_FILE);
         if (status == INSTALL_SUCCESS && wipe_cache) {
             if (erase_volume("/cache")) {
@@ -860,20 +904,28 @@ main(int argc, char **argv) {
         }
         if (status != INSTALL_SUCCESS) ui->Print("Installation aborted.\n");
     } else if (wipe_data) {
-        if (device->WipeData()) status = INSTALL_ERROR;
-        if (erase_volume("/data")) status = INSTALL_ERROR;
-        if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
+		gui_console_only();
+		if (TWPartitionManager::Factory_Reset()) status = INSTALL_ERROR;
+        //if (device->WipeData()) status = INSTALL_ERROR;
+        //if (erase_volume("/data")) status = INSTALL_ERROR;
+        //if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Data wipe failed.\n");
     } else if (wipe_cache) {
+		gui_console_only();
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
     } else if (!just_exit) {
         status = INSTALL_ERROR;  // No command specified
     }
 
-    if (status != INSTALL_SUCCESS) ui->SetBackground(RecoveryUI::ERROR);
-    if (status != INSTALL_SUCCESS || ui->IsTextVisible()) {
-        prompt_and_wait(device);
+    //if (status != INSTALL_SUCCESS) ui->SetBackground(RecoveryUI::ERROR);
+    if (status != INSTALL_SUCCESS /*|| ui->IsTextVisible()*/) {
+		DataManager_ReadSettingsFile();
+
+		// Update some of the main data
+		update_tz_environment_variables();
+        gui_start();
+		//prompt_and_wait(device);
     }
 
     // Otherwise, get ready to boot the main system...

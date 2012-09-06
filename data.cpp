@@ -46,13 +46,14 @@ extern "C"
     #include "data.h"
     #include "tw_reboot.h"
 	#include "roots.h"
+	#include "gui/pages.h"
+
+	void gui_notifyVarChange(const char *name, const char* value);
 
     int get_battery_level(void);
     void get_device_id(void);
 
     extern char device_id[15];
-
-    void gui_notifyVarChange(const char *name, const char* value);
 
 	int __system(const char *command);
 }

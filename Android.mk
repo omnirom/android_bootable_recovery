@@ -65,7 +65,7 @@ LOCAL_SHARED_LIBRARIES :=
 
 LOCAL_STATIC_LIBRARIES += libmtdutils
 LOCAL_STATIC_LIBRARIES += libext4_utils libminadbd libminzip libunz libmincrypt
-LOCAL_STATIC_LIBRARIES += libminuitwrp libpixelflinger_static libpng libjpegtwrp
+LOCAL_STATIC_LIBRARIES += libminuitwrp libpixelflinger_static libpng libjpegtwrp libgui
 LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)

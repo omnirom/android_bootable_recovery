@@ -39,20 +39,19 @@
 #include <time.h>
 #include <sys/vfs.h>
 
-#include "tw_reboot.h"
-#include "bootloader.h"
-#include "common.h"
-#include "extra-functions.h"
+#include "../tw_reboot.h"
+#include "../bootloader.h"
+#include "../common.h"
+#include "gui-functions.h"
 #include "cutils/properties.h"
-#include "install.h"
-#include "minuitwrp/minui.h"
-#include "minzip/DirUtil.h"
-#include "minzip/Zip.h"
-#include "recovery_ui.h"
-#include "roots.h"
-#include "data.h"
-#include "variables.h"
-#include "install.h"
+#include "../install.h"
+#include "../minuitwrp/minui.h"
+#include "../minzip/DirUtil.h"
+#include "../minzip/Zip.h"
+#include "../recovery_ui.h"
+#include "../roots.h"
+#include "../data.h"
+#include "../variables.h"
 
 //kang system() from bionic/libc/unistd and rename it __system() so we can be even more hackish :)
 #undef _PATH_BSHELL
@@ -237,102 +236,6 @@ char* sanitize_device_id(char* id) {
 #define CPUINFO_HARDWARE        "Hardware"
 #define CPUINFO_HARDWARE_LEN    (strlen(CPUINFO_HARDWARE))
 
-void get_device_id() {
-	FILE *fp;
-	char line[2048];
-	char hardware_id[32];
-	char* token;
-	char* new_device_id;
-
-    // Assign a blank device_id to start with
-    device_id[0] = 0;
-
-    // First, try the cmdline to see if the serial number was supplied
-	fp = fopen("/proc/cmdline", "rt");
-	if (fp != NULL)
-    {
-        // First step, read the line. For cmdline, it's one long line
-        fgets(line, sizeof(line), fp);
-        fclose(fp);
-
-        // Now, let's tokenize the string
-        token = strtok(line, " ");
-
-        // Let's walk through the line, looking for the CMDLINE_SERIALNO token
-        while (token)
-        {
-            // We don't need to verify the length of token, because if it's too short, it will mismatch CMDLINE_SERIALNO at the NULL
-            if (memcmp(token, CMDLINE_SERIALNO, CMDLINE_SERIALNO_LEN) == 0)
-            {
-                // We found the serial number!
-                strcpy(device_id, token + CMDLINE_SERIALNO_LEN);
-		new_device_id = sanitize_device_id(device_id);
-		strcpy(device_id, new_device_id);
-		free(new_device_id);
-                return;
-            }
-            token = strtok(NULL, " ");
-        }
-    }
-
-	// Now we'll try cpuinfo for a serial number
-	fp = fopen("/proc/cpuinfo", "rt");
-	if (fp != NULL)
-    {
-		while (fgets(line, sizeof(line), fp) != NULL) { // First step, read the line.
-			if (memcmp(line, CPUINFO_SERIALNO, CPUINFO_SERIALNO_LEN) == 0)  // check the beginning of the line for "Serial"
-			{
-				// We found the serial number!
-				token = line + CPUINFO_SERIALNO_LEN; // skip past "Serial"
-				while ((*token > 0 && *token <= 32 ) || *token == ':') token++; // skip over all spaces and the colon
-				if (*token != 0) {
-                    token[30] = 0;
-					if (token[strlen(token)-1] == 10) { // checking for endline chars and dropping them from the end of the string if needed
-						memset(device_id, 0, sizeof(device_id));
-						strncpy(device_id, token, strlen(token) - 1);
-					} else {
-						strcpy(device_id, token);
-					}
-					LOGI("=> serial from cpuinfo: '%s'\n", device_id);
-					fclose(fp);
-					new_device_id = sanitize_device_id(device_id);
-					strcpy(device_id, new_device_id);
-					free(new_device_id);
-					return;
-				}
-			} else if (memcmp(line, CPUINFO_HARDWARE, CPUINFO_HARDWARE_LEN) == 0) {// We're also going to look for the hardware line in cpuinfo and save it for later in case we don't find the device ID
-				// We found the hardware ID
-				token = line + CPUINFO_HARDWARE_LEN; // skip past "Hardware"
-				while ((*token > 0 && *token <= 32 ) || *token == ':')  token++; // skip over all spaces and the colon
-				if (*token != 0) {
-                    token[30] = 0;
-					if (token[strlen(token)-1] == 10) { // checking for endline chars and dropping them from the end of the string if needed
-                        memset(hardware_id, 0, sizeof(hardware_id));
-						strncpy(hardware_id, token, strlen(token) - 1);
-					} else {
-						strcpy(hardware_id, token);
-					}
-					LOGI("=> hardware id from cpuinfo: '%s'\n", hardware_id);
-				}
-			}
-		}
-		fclose(fp);
-    }
-	
-	if (hardware_id[0] != 0) {
-		LOGW("\nusing hardware id for device id: '%s'\n", hardware_id);
-		strcpy(device_id, hardware_id);
-		new_device_id = sanitize_device_id(device_id);
-		strcpy(device_id, new_device_id);
-		free(new_device_id);
-		return;
-	}
-
-    strcpy(device_id, "serialno");
-	LOGE("=> device id not found, using '%s'.", device_id);
-    return;
-}
-
 char* get_path (char* path) {
         char *s;
 
@@ -412,57 +315,6 @@ int check_md5(char* path) {
     }
 
     return o;
-}
-
-static int really_install_package(const char *path, int* wipe_cache)
-{
-    //ui->SetBackground(RecoveryUI::INSTALLING);
-    LOGI("Finding update package...\n");
-    //ui->SetProgressType(RecoveryUI::INDETERMINATE);
-    LOGI("Update location: %s\n", path);
-
-    if (ensure_path_mounted(path) != 0) {
-        LOGE("Can't mount %s\n", path);
-        return INSTALL_CORRUPT;
-    }
-
-    LOGI("Opening update package...\n");
-
-    int numKeys;
-    /*RSAPublicKey* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
-    if (loadedKeys == NULL) {
-        LOGE("Failed to load keys\n");
-        return INSTALL_CORRUPT;
-    }
-    LOGI("%d key(s) loaded from %s\n", numKeys, PUBLIC_KEYS_FILE);*/
-
-    // Give verification half the progress bar...
-    LOGI("Verifying update package...\n");
-    //ui->SetProgressType(RecoveryUI::DETERMINATE);
-    //ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
-
-    int err;
-    /*err = verify_file(path, loadedKeys, numKeys);
-    free(loadedKeys);
-    LOGI("verify_file returned %d\n", err);
-    if (err != VERIFY_SUCCESS) {
-        LOGE("signature verification failed\n");
-        return INSTALL_CORRUPT;
-    }*/
-
-    /* Try to open the package.
-     */
-    ZipArchive zip;
-    err = mzOpenZipArchive(path, &zip);
-    if (err != 0) {
-        LOGE("Can't open %s\n(%s)\n", path, err != -1 ? strerror(err) : "bad");
-        return INSTALL_CORRUPT;
-    }
-
-    /* Verify and install the contents of the package.
-     */
-    LOGI("Installing update...\n");
-    return try_update_binary(path, &zip, wipe_cache);
 }
 
 static void set_sdcard_update_bootloader_message() {
@@ -1006,82 +858,3 @@ int check_backup_name(int show_error) {
 	// No problems found, return 0
 	return 0;
 }
-
-static const char *COMMAND_FILE = "/cache/recovery/command";
-static const char *INTENT_FILE = "/cache/recovery/intent";
-static const char *LOG_FILE = "/cache/recovery/log";
-static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
-static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
-static const char *CACHE_ROOT = "/cache";
-static const char *SDCARD_ROOT = "/sdcard";
-static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
-static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
-
-// close a file, log an error if the error indicator is set
-static void check_and_fclose(FILE *fp, const char *name) {
-    fflush(fp);
-    if (ferror(fp)) LOGE("Error in %s\n(%s)\n", name, strerror(errno));
-    fclose(fp);
-}
-
-static void copy_log_file(const char* source, const char* destination, int append) {
-    FILE *log = fopen_path(destination, append ? "a" : "w");
-    if (log == NULL) {
-        LOGE("Can't open %s\n", destination);
-    } else {
-        FILE *tmplog = fopen(source, "r");
-        if (tmplog != NULL) {
-            if (append) {
-                fseek(tmplog, tmplog_offset, SEEK_SET);  // Since last write
-            }
-            char buf[4096];
-            while (fgets(buf, sizeof(buf), tmplog)) fputs(buf, log);
-            if (append) {
-                tmplog_offset = ftell(tmplog);
-            }
-            check_and_fclose(tmplog, source);
-        }
-        check_and_fclose(log, destination);
-    }
-}
-
-// clear the recovery command and prepare to boot a (hopefully working) system,
-// copy our log file to cache as well (for the system to read), and
-// record any intent we were asked to communicate back to the system.
-// this function is idempotent: call it as many times as you like.
-void twfinish_recovery(const char *send_intent) {
-    // By this point, we're ready to return to the main system...
-    if (send_intent != NULL) {
-        FILE *fp = fopen_path(INTENT_FILE, "w");
-        if (fp == NULL) {
-            LOGE("Can't open %s\n", INTENT_FILE);
-        } else {
-            fputs(send_intent, fp);
-            check_and_fclose(fp, INTENT_FILE);
-        }
-    }
-
-    // Copy logs to cache so the system can find out what happened.
-    copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
-    copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
-    copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, false);
-    chmod(LOG_FILE, 0600);
-    chown(LOG_FILE, 1000, 1000);   // system user
-    chmod(LAST_LOG_FILE, 0640);
-    chmod(LAST_INSTALL_FILE, 0644);
-
-    // Reset to normal system boot so recovery won't cycle indefinitely.
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
-    set_bootloader_message(&boot);
-
-    // Remove the command file, so recovery won't repeat indefinitely.
-    if (ensure_path_mounted(COMMAND_FILE) != 0 ||
-        (unlink(COMMAND_FILE) && errno != ENOENT)) {
-        LOGW("Can't unlink %s\n", COMMAND_FILE);
-    }
-
-    ensure_path_unmounted(CACHE_ROOT);
-    sync();  // For good measure.
-}
-
