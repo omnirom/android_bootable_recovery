@@ -25,7 +25,7 @@ extern "C" {
 #include "../tw_reboot.h"
 #include "../minuitwrp/minui.h"
 #include "../recovery_ui.h"
-#include "gui-functions.h"
+#include "../extra-functions.h"
 #include "../variables.h"
 
 int install_zip_package(const char* zip_path_filename);
@@ -355,7 +355,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 		operation_start("Reload Theme");
 		theme_path = DataManager::GetSettingsStoragePath();
-		if (TWPartitionManager::Mount_By_Path(theme_path.c_str(), 1) < 0) {
+		if (PartitionManager.Mount_By_Path(theme_path.c_str(), 1) < 0) {
 			LOGE("Unable to mount %s during reload function startup.\n", theme_path.c_str());
 			check = 1;
 		}
@@ -378,7 +378,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
     {
 		string Restore_Name;
 		DataManager::GetValue("tw_restore", Restore_Name);
-		TWPartitionManager::Set_Restore_Files(Restore_Name);
+		PartitionManager.Set_Restore_Files(Restore_Name);
         return 0;
     }
 
@@ -465,8 +465,8 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			ui_print("Simulating actions...\n");
 		else {
 			DataManager::ResetDefaults();
-			TWPartitionManager::Update_System_Details();
-			TWPartitionManager::Mount_Current_Storage();
+			PartitionManager.Update_System_Details();
+			PartitionManager.Mount_Current_Storage(true);
 		}
 		operation_end(0, simulate);
 	}
@@ -478,7 +478,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		{
 			char command[255];
 
-			TWPartitionManager::Mount_Current_Storage();
+			PartitionManager.Mount_Current_Storage(true);
 			sprintf(command, "cp /tmp/recovery.log %s", DataManager::GetCurrentStoragePath().c_str());
 			__system(command);
 			sync();
@@ -549,7 +549,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		} else if (arg == "external") {
 			DataManager::SetValue(TW_USE_EXTERNAL_STORAGE, 1);
 		}
-		if (TWPartitionManager::Mount_Current_Storage() == 0) {
+		if (PartitionManager.Mount_Settings_Storage(true)) {
 			if (arg == "internal") {
 				// Save the current zip location to the external variable
 				DataManager::SetValue(TW_ZIP_EXTERNAL_VAR, DataManager::GetStrValue(TW_ZIP_LOCATION_VAR));
@@ -673,7 +673,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				simulate_progress_bar();
 			} else {
 				if (arg == "data")
-					TWPartitionManager::Factory_Reset();
+					PartitionManager.Factory_Reset();
 				else if (arg == "battery")
 					wipe_battery_stats();
 				else if (arg == "rotate")
@@ -696,7 +696,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 					DataManager::GetValue(TW_HAS_DATA_MEDIA, has_datamedia);
 					if (has_datamedia) {
-						TWPartitionManager::Mount_By_Path("/data", 1);
+						PartitionManager.Mount_By_Path("/data", 1);
 						__system("rm -rf /data/media");
 						__system("cd /data && mkdir media && chmod 775 media");
 						DataManager::GetValue(TW_HAS_DUAL_STORAGE, dual_storage);
@@ -712,15 +712,15 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					ret_val = 0;
 					LOGE("Wipe not implemented yet!\n");
 				} else
-					TWPartitionManager::Wipe_By_Path(arg);
+					PartitionManager.Wipe_By_Path(arg);
 
 				if (arg == "/sdcard") {
-					TWPartitionManager::Mount_By_Path("/sdcard", 1);
+					PartitionManager.Mount_By_Path("/sdcard", 1);
 					mkdir("/sdcard/TWRP", 0777);
 					DataManager::Flush();
 				}
 			}
-			TWPartitionManager::Update_System_Details();
+			PartitionManager.Update_System_Details();
 			if (ret_val != 0)
 				ret_val = 1;
             operation_end(ret_val, simulate);
@@ -732,7 +732,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else
-				TWPartitionManager::Update_System_Details();
+				PartitionManager.Update_System_Details();
 			operation_end(0, simulate);
 		}
         if (function == "nandroid")
@@ -747,14 +747,14 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					string Backup_Name;
 					DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
 					if (Backup_Name == "(Current Date)" || Backup_Name == "0" || Backup_Name == "(" || check_backup_name(1))
-						TWPartitionManager::Run_Backup(Backup_Name);
+						PartitionManager.Run_Backup(Backup_Name);
 					else
 						return -1;
 					DataManager::SetValue(TW_BACKUP_NAME, "(Current Date)");
 				} else if (arg == "restore") {
 					string Restore_Name;
 					DataManager::GetValue("tw_restore", Restore_Name);
-					TWPartitionManager::Run_Restore(Restore_Name);
+					PartitionManager.Run_Restore(Restore_Name);
 				} else {
 					operation_end(1, simulate);
 					return -1;
@@ -828,12 +828,12 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					
 					// recreate TWRP folder and rewrite settings - these will be gone after sdcard is partitioned
 #ifdef TW_EXTERNAL_STORAGE_PATH
-					TWPartitionManager::Mount_By_Path(EXPAND(TW_EXTERNAL_STORAGE_PATH));
+					PartitionManager.Mount_By_Path(EXPAND(TW_EXTERNAL_STORAGE_PATH), 1);
 					DataManager::GetValue(TW_EXTERNAL_PATH, sd_path);
 					memset(mkdir_path, 0, sizeof(mkdir_path));
 					sprintf(mkdir_path, "%s/TWRP", sd_path.c_str());
 #else
-					TWPartitionManager::Mount_By_Path("/sdcard", 1);
+					PartitionManager.Mount_By_Path("/sdcard", 1);
 					strcpy(mkdir_path, "/sdcard/TWRP");
 #endif
 					mkdir(mkdir_path, 0777);
@@ -858,7 +858,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 						ui_print("DONE\n");
 					}
 
-					TWPartitionManager::Update_System_Details();
+					PartitionManager.Update_System_Details();
 				}
 			}
 			operation_end(0, simulate);
@@ -999,7 +999,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			} else {
 				string Password;
 				DataManager::GetValue("tw_crypto_password", Password);
-				op_status = TWPartitionManager::Decrypt_Device(Password);
+				op_status = PartitionManager.Decrypt_Device(Password);
 				if (op_status != 0)
 					op_status = 1;
 				else {
@@ -1028,7 +1028,7 @@ LOGE("TODO: Implement ORS support\n");
 							std::string theme_path;
 
 							theme_path = DataManager::GetSettingsStoragePath();
-							if (TWPartitionManager::Mount_By_Path(theme_path.c_str(), 1) < 0) {
+							if (PartitionManager.Mount_By_Path(theme_path.c_str(), 1) < 0) {
 								LOGE("Unable to mount %s during reload function startup.\n", theme_path.c_str());
 								check = 1;
 							}

@@ -150,7 +150,7 @@ int DataManager::SaveValues()
     if (mBackingFile.empty())       return -1;
 
 	string mount_path = GetSettingsStoragePath();
-	TWPartitionManager::Mount_By_Path(mount_path.c_str(), 1);
+	PartitionManager.Mount_By_Path(mount_path.c_str(), 1);
 
 	FILE* out = fopen(mBackingFile.c_str(), "wb");
     if (!out)                       return -1;
@@ -672,10 +672,10 @@ void DataManager::ReadSettingsFile(void)
 	sprintf(mkdir_path, "%s/TWRP", DataManager_GetSettingsStoragePath());
 	sprintf(settings_file, "%s/.twrps", mkdir_path);
 
-	if (TWPartitionManager::Mount_By_Path(DataManager_GetSettingsStorageMount(), 0) < 0)
+	if (!PartitionManager.Mount_Settings_Storage(false))
 	{
 		usleep(500000);
-		if (TWPartitionManager::Mount_By_Path(DataManager_GetSettingsStorageMount(), 0) < 0)
+		if (!PartitionManager.Mount_Settings_Storage(false))
 			LOGE("Unable to mount %s when trying to read settings file.\n", DataManager_GetSettingsStorageMount());
 	}
 
@@ -688,14 +688,14 @@ void DataManager::ReadSettingsFile(void)
 	GetValue(TW_HAS_EXTERNAL, has_ext);
 	if (has_dual != 0 && use_ext == 1) {
 		// Attempt to sdcard using external storage
-		if (TWPartitionManager::Mount_Current_Storage()) {
+		if (PartitionManager.Mount_Current_Storage(false)) {
 			LOGE("Failed to mount external storage, using internal storage.\n");
 			// Remount failed, default back to internal storage
 			SetValue(TW_USE_EXTERNAL_STORAGE, 0);
-			TWPartitionManager::Mount_Current_Storage();
+			PartitionManager.Mount_Current_Storage(true);
 		}
 	} else {
-		TWPartitionManager::Mount_Current_Storage();
+		PartitionManager.Mount_Current_Storage(true);
 	}
 	if (has_data_media == 1) {
 		if (has_dual == 0) {
@@ -731,7 +731,7 @@ void DataManager::ReadSettingsFile(void)
 		string ext_path;
 
 		GetValue(TW_EXTERNAL_PATH, ext_path);
-		TWPartitionManager::Mount_By_Path(ext_path, 0);
+		PartitionManager.Mount_By_Path(ext_path, 0);
 	}
 }
 

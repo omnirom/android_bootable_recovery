@@ -47,6 +47,7 @@ extern "C" {
 #include "objects.hpp"
 #include "../data.hpp"
 #include "../variables.h"
+#include "../partitions.hpp"
 
 #include "curtain.h"
 
@@ -508,34 +509,26 @@ extern "C" int gui_loadResources()
 //    gRecorder = open("/sdcard/video.bin", O_CREAT | O_WRONLY);
 
 	int check = 0;
-	DataManager::GetValue(TW_HAS_CRYPTO, check);
+	DataManager::GetValue(TW_IS_ENCRYPTED, check);
 	if (check) {
-		if (ensure_path_mounted("/data") < 0) {
-			// Data failed to mount - probably encrypted
-			DataManager::SetValue(TW_IS_ENCRYPTED, 1);
-			DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
-			DataManager::SetValue("tw_crypto_display", "");
-			if (PageManager::LoadPackage("TWRP", "/res/ui.xml", "decrypt"))
-			{
-				LOGE("Failed to load base packages.\n");
-				goto error;
-			} else
-				check = 1;
+		if (PageManager::LoadPackage("TWRP", "/res/ui.xml", "decrypt"))
+		{
+			LOGE("Failed to load base packages.\n");
+			goto error;
 		} else
-			check = 0; // Data mounted, not ecrypted, keep going like normal
+			check = 1;
 	}
 	if (check == 0 && PageManager::LoadPackage("TWRP", "/script/ui.xml", "main")) {
 		std::string theme_path;
 
 		theme_path = DataManager::GetSettingsStoragePath();
-		if (ensure_path_mounted(theme_path.c_str()) < 0) {
+		if (!PartitionManager.Mount_Settings_Storage(false)) {
 			int retry_count = 5;
-			while (retry_count > 0 && (ensure_path_mounted(theme_path.c_str()) < 0)) {
+			while (retry_count > 0 && !PartitionManager.Mount_Settings_Storage(false)) {
 				usleep(500000);
-				ensure_path_mounted(theme_path.c_str());
 				retry_count--;
 			}
-			if (ensure_path_mounted(theme_path.c_str()) < 0) {
+			if (!PartitionManager.Mount_Settings_Storage(false)) {
 				LOGE("Unable to mount %s during GUI startup.\n", theme_path.c_str());
 				check = 1;
 			}

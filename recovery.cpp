@@ -52,10 +52,8 @@ extern "C" {
 }
 #include "partitions.hpp"
 
-int gui_init(void);
-int gui_loadResources(void);
-int gui_start(void);
-int gui_console_only(void);
+TWPartitionManager PartitionManager;
+char device_id[64];
 
 struct selabel_handle *sehandle;
 
@@ -810,7 +808,7 @@ main(int argc, char **argv) {
 	printf("=> Linking mtab\n");
 	__system("ln -s /proc/mounts /etc/mtab"); // And link mtab for mke2fs
 	printf("=> Processing recovery.fstab\n");
-	if (TWPartitionManager::Process_Fstab("/etc/recovery.fstab", 1)) {
+	if (!PartitionManager.Process_Fstab("/etc/recovery.fstab", 1)) {
 		LOGE("Failing out of recovery due to problem with recovery.fstab.\n");
 		//return -1;
 	}
@@ -905,7 +903,7 @@ main(int argc, char **argv) {
         if (status != INSTALL_SUCCESS) ui->Print("Installation aborted.\n");
     } else if (wipe_data) {
 		gui_console_only();
-		if (TWPartitionManager::Factory_Reset()) status = INSTALL_ERROR;
+		if (PartitionManager.Factory_Reset()) status = INSTALL_ERROR;
         //if (device->WipeData()) status = INSTALL_ERROR;
         //if (erase_volume("/data")) status = INSTALL_ERROR;
         //if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;

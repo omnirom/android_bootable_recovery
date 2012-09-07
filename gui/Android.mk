@@ -19,8 +19,7 @@ LOCAL_SRC_FILES := \
     slider.cpp \
     listbox.cpp \
     keyboard.cpp \
-    input.cpp \
-    gui-functions.c
+    input.cpp
 
 ifneq ($(TWRP_CUSTOM_KEYBOARD),)
   LOCAL_SRC_FILES += $(TWRP_CUSTOM_KEYBOARD)
