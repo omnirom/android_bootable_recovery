@@ -10,7 +10,6 @@ on init
 
     symlink /system/etc /etc
 
-    mkdir /emmc
     mkdir /system
     mkdir /data
     mkdir /cache

@@ -51,6 +51,7 @@ extern "C" {
 #include "gui/gui.h"
 }
 #include "partitions.hpp"
+#include "variables.h"
 
 TWPartitionManager PartitionManager;
 char device_id[64];
@@ -787,7 +788,7 @@ main(int argc, char **argv) {
         return 0;
     }
 
-    printf("Starting TWRP %s on %s", EXPAND(TW_VERSION_STR), ctime(&start));
+    printf("Starting TWRP %s on %s", TW_VERSION_STR, ctime(&start));
 	// Recovery needs to install world-readable files, so clear umask
     // set by init
     umask(0);
@@ -802,7 +803,7 @@ main(int argc, char **argv) {
 	// Load default values to set DataManager constants and handle ifdefs
 	DataManager_LoadDefaults();
 	printf("Starting the UI...");
-	printf(" result was: %i\n", gui_init());
+	gui_init();
 	printf("=> Installing busybox into /sbin\n");
 	__system("/sbin/bbinstall.sh"); // Let's install busybox
 	printf("=> Linking mtab\n");

@@ -296,14 +296,8 @@ int DataManager::SetValue(const string varName, int value, int persist /* = 0 */
 		if (GetIntValue(TW_HAS_DUAL_STORAGE) == 1) {
 			if (value == 0) {
 				str = GetStrValue(TW_INTERNAL_PATH);
-				if (GetIntValue(TW_HAS_DATA_MEDIA) == 1) {
-					LOGE("TODO: Fix storage size code!\n"); //SetValue(TW_STORAGE_FREE_SIZE, (int)((dat.sze - dat.used) / 1048576LLU));
-				} else {
-					LOGE("TODO: Fix storage size code!\n"); //SetValue(TW_STORAGE_FREE_SIZE, (int)((sdcint.sze - sdcint.used) / 1048576LLU));
-				}
 			} else {
 				str = GetStrValue(TW_EXTERNAL_PATH);
-				LOGE("TODO: Fix storage size code!\n"); //SetValue(TW_STORAGE_FREE_SIZE, (int)((sdcext.sze - sdcext.used) / 1048576LLU));
 			}
 		} else if (GetIntValue(TW_HAS_INTERNAL) == 1)
 			str = GetStrValue(TW_INTERNAL_PATH);

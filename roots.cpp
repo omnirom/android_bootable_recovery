@@ -40,7 +40,8 @@ static int parse_options(char* options, Volume* volume) {
     while ((option = strtok(options, ","))) {
         options = NULL;
 
-        if (strncmp(option, "length=", 7) == 0) {
+        if (strncmp(option, "flags=", 6) == 0)   continue;
+		if (strncmp(option, "length=", 7) == 0) {
             volume->length = strtoll(option+7, NULL, 10);
         } else {
             LOGE("bad option \"%s\"\n", option);

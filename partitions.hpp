@@ -52,7 +52,7 @@ public:
 	virtual bool Wipe();                                                      // Wipes the partition
 	virtual bool Backup(string backup_folder);                                // Backs up the partition to the folder specified
 	virtual bool Restore(string restore_folder);                              // Restores the partition using the backup folder provided
-	static string Backup_Method_By_Name();                                    // Returns a string of the backup method for human readable output
+	virtual string Backup_Method_By_Name();                                   // Returns a string of the backup method for human readable output
 	virtual bool Decrypt(string Password);                                    // Decrypts the partition, return 0 for failure and -1 for success
 	virtual bool Wipe_Encryption();                                           // Ignores wipe commands for /data/media devices and formats the original block device
 	virtual void Check_FS_Type();                                             // Checks the fs type using blkid, does not do anything on MTD / yaffs2 because this crashes on some devices
@@ -67,6 +67,7 @@ protected:
 	bool Wipe_During_Factory_Reset;                                           // Indicates that this partition is wiped during a factory reset
 	bool Wipe_Available_in_GUI;                                               // Inidcates that the wipe can be user initiated in the GUI system
 	bool Is_SubPartition;                                                     // Indicates that this partition is a sub-partition of another partition (e.g. datadata is a sub-partition of data)
+	bool Has_SubPartition;                                                    // Indicates that this partition has a sub-partition
 	string SubPartition_Of;                                                   // Indicates which partition is the parent partition of this partition (e.g. /data is the parent partition of /datadata)
 	string Symlink_Path;                                                      // Symlink path (e.g. /data/media)
 	string Symlink_Mount_Point;                                               // /sdcard could be the symlink mount point for /data/media
@@ -95,6 +96,7 @@ protected:
 	int Format_Block_Size;                                                    // Block size for formatting
 
 private:
+	bool Process_Flags(string Flags, bool Display_Error);                     // Process custom fstab flags
 	bool Is_File_System(string File_System);                                  // Checks to see if the file system given is considered a file system
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
 	void Setup_File_System(bool Display_Error);                               // Sets defaults for a file system partition
@@ -102,7 +104,6 @@ private:
 	bool Path_Exists(string Path);                                            // Checks to see if the Path exists in the file system
 	void Find_Real_Block_Device(string& Block_Device, bool Display_Error);    // Checks the block device given and follows symlinks until it gets to the real block device
 	bool Find_Partition_Size();                                               // Finds the partition size from /proc/partitions
-	bool Get_Size_Via_df(string Path, bool Display_Error);                    // Uses df to get sizes
 	unsigned long long Get_Size_Via_du(string Path, bool Display_Error);      // Uses du to get sizes
 	void Flip_Block_Device();                                                 // Flips the Block_Device and Alternate_Block_Device
 	bool Wipe_EXT23();                                                        // Formats as ext3 or ext2
@@ -117,6 +118,10 @@ private:
 	bool Restore_Tar(string restore_folder);                                  // Restore using tar for file systems
 	bool Restore_DD(string restore_folder);                                   // Restore using dd for emmc memory types
 	bool Restore_Flash_Image(string restore_folder);                          // Restore using flash_image for MTD memory types
+	bool Get_Size_Via_statfs(bool Display_Error);                             // Get Partition size, used, and free space using statfs
+	bool Get_Size_Via_df(bool Display_Error);                                 // Get Partition size, used, and free space using df command
+	unsigned long long Get_Folder_Size(string Path, bool Display_Error);      // Gets the size of the files in a folder and all of its subfolders
+	bool Make_Dir(string Path, bool Display_Error);                           // Creates a directory if it doesn't already exist
 
 friend class TWPartitionManager;
 };
@@ -154,9 +159,10 @@ public:
 	virtual void Refresh_Sizes();                                             // Refreshes size data of partitions
 	virtual void Update_System_Details();                                     // Updates fstab, file systems, sizes, etc.
 	virtual int Decrypt_Device(string Password);                              // Attempt to decrypt any encrypted partitions
+	virtual string Get_Root_Path(string Path);                                // Trims any trailing folders or filenames from the path, also adds a leading / if not present
 
 private:
-	std::vector<TWPartition*> Partitions;
+	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions
 };
 
 extern TWPartitionManager PartitionManager;

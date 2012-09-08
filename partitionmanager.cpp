@@ -71,6 +71,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		else
 			LOGI("Error creating fstab\n");
 	}
+	Update_System_Details();
 	return true;
 }
 
@@ -85,12 +86,20 @@ int TWPartitionManager::Write_Fstab(void) {
 		return false;
 	}
     for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Can_Be_Mounted && (*iter)->Is_Present) {
+		if ((*iter)->Can_Be_Mounted) {
 			if ((*iter)->Is_Decrypted)
 				Line = (*iter)->Decrypted_Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw\n";
 			else
 				Line = (*iter)->Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw\n";
 			fputs(Line.c_str(), fp);
+			// Handle subpartition tracking
+			if ((*iter)->Is_SubPartition) {
+				TWPartition* ParentPartition = Find_Partition_By_Path((*iter)->SubPartition_Of);
+				if (ParentPartition)
+					ParentPartition->Has_SubPartition = true;
+				else
+					LOGE("Unable to locate parent partition '%s' of '%s'\n", (*iter)->SubPartition_Of.c_str(), (*iter)->Mount_Point.c_str());
+			}
 		}
 	}
 	fclose(fp);
@@ -101,99 +110,180 @@ int TWPartitionManager::Mount_By_Path(string Path, bool Display_Error) {
 	std::vector<TWPartition*>::iterator iter;
 	int ret = false;
 	bool found = false;
-	string Local_Path = Path;
-
-	// Make sure that we have a leading slash
-	if (Local_Path.substr(0, 1) != "/")
-		Local_Path = "/" + Local_Path;
-
-	// Trim the path to get the root path only
-	size_t position = Local_Path.find("/", 2);
-	if (position != string::npos) {
-		Local_Path.resize(position);
-	}
+	string Local_Path = Get_Root_Path(Path);
 
 	// Iterate through all partitions
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Mount_Point == Local_Path) {
 			ret = (*iter)->Mount(Display_Error);
 			found = true;
-		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path)
+		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path) {
 			(*iter)->Mount(Display_Error);
+		}
 	}
 	if (found) {
 		return ret;
 	} else if (Display_Error) {
-		LOGE("Unable to find partition for path '%s'\n", Local_Path.c_str());
+		LOGE("Mount: Unable to find partition for path '%s'\n", Local_Path.c_str());
 	} else {
-		LOGI("Unable to find partition for path '%s'\n", Local_Path.c_str());
+		LOGI("Mount: Unable to find partition for path '%s'\n", Local_Path.c_str());
 	}
 	return false;
 }
 
 int TWPartitionManager::Mount_By_Block(string Block, bool Display_Error) {
-	std::vector<TWPartition*>::iterator iter;
+	TWPartition* Part = Find_Partition_By_Block(Block);
 
-	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Block_Device == Block)
-			return (*iter)->Mount(Display_Error);
-		else if ((*iter)->Alternate_Block_Device == Block)
-			return (*iter)->Mount(Display_Error);
+	if (Part) {
+		if (Part->Has_SubPartition) {
+			std::vector<TWPartition*>::iterator subpart;
+
+			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+				if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point)
+					(*subpart)->Mount(Display_Error);
+			}
+			return Part->Mount(Display_Error);
+		} else
+			return Part->Mount(Display_Error);
 	}
 	if (Display_Error)
-		LOGE("Unable to find partition for block '%s'\n", Block.c_str());
+		LOGE("Mount: Unable to find partition for block '%s'\n", Block.c_str());
 	else
-		LOGI("Unable to find partition for block '%s'\n", Block.c_str());
+		LOGI("Mount: Unable to find partition for block '%s'\n", Block.c_str());
 	return false;
 }
 
 int TWPartitionManager::Mount_By_Name(string Name, bool Display_Error) {
-	std::vector<TWPartition*>::iterator iter;
+	TWPartition* Part = Find_Partition_By_Name(Name);
 
-	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Display_Name == Name)
-			return (*iter)->Mount(Display_Error);
+	if (Part) {
+		if (Part->Has_SubPartition) {
+			std::vector<TWPartition*>::iterator subpart;
+
+			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+				if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point)
+					(*subpart)->Mount(Display_Error);
+			}
+			return Part->Mount(Display_Error);
+		} else
+			return Part->Mount(Display_Error);
 	}
 	if (Display_Error)
-		LOGE("Unable to find partition for name '%s'\n", Name.c_str());
+		LOGE("Mount: Unable to find partition for name '%s'\n", Name.c_str());
 	else
-		LOGI("Unable to find partition for name '%s'\n", Name.c_str());
+		LOGI("Mount: Unable to find partition for name '%s'\n", Name.c_str());
 	return false;
-	return 1;
 }
 
 int TWPartitionManager::UnMount_By_Path(string Path, bool Display_Error) {
-	LOGI("STUB TWPartitionManager::UnMount_By_Path, Path: '%s', Display_Error: %i\n", Path.c_str(), Display_Error);
-	return 1;
+	std::vector<TWPartition*>::iterator iter;
+	int ret = false;
+	bool found = false;
+	string Local_Path = Get_Root_Path(Path);
+
+	// Iterate through all partitions
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Mount_Point == Local_Path) {
+			ret = (*iter)->UnMount(Display_Error);
+			found = true;
+		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path) {
+			(*iter)->UnMount(Display_Error);
+		}
+	}
+	if (found) {
+		return ret;
+	} else if (Display_Error) {
+		LOGE("UnMount: Unable to find partition for path '%s'\n", Local_Path.c_str());
+	} else {
+		LOGI("UnMount: Unable to find partition for path '%s'\n", Local_Path.c_str());
+	}
+	return false;
 }
 
 int TWPartitionManager::UnMount_By_Block(string Block, bool Display_Error) {
-	LOGI("STUB TWPartitionManager::UnMount_By_Block, Block: '%s', Display_Error: %i\n", Block.c_str(), Display_Error);
-	return 1;
+	TWPartition* Part = Find_Partition_By_Block(Block);
+
+	if (Part) {
+		if (Part->Has_SubPartition) {
+			std::vector<TWPartition*>::iterator subpart;
+
+			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+				if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point)
+					(*subpart)->UnMount(Display_Error);
+			}
+			return Part->UnMount(Display_Error);
+		} else
+			return Part->UnMount(Display_Error);
+	}
+	if (Display_Error)
+		LOGE("UnMount: Unable to find partition for block '%s'\n", Block.c_str());
+	else
+		LOGI("UnMount: Unable to find partition for block '%s'\n", Block.c_str());
+	return false;
 }
 
 int TWPartitionManager::UnMount_By_Name(string Name, bool Display_Error) {
-	LOGI("STUB TWPartitionManager::UnMount_By_Name, Name: '%s', Display_Error: %i\n", Name.c_str(), Display_Error);
-	return 1;
+	TWPartition* Part = Find_Partition_By_Name(Name);
+
+	if (Part) {
+		if (Part->Has_SubPartition) {
+			std::vector<TWPartition*>::iterator subpart;
+
+			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+				if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point)
+					(*subpart)->UnMount(Display_Error);
+			}
+			return Part->UnMount(Display_Error);
+		} else
+			return Part->UnMount(Display_Error);
+	}
+	if (Display_Error)
+		LOGE("UnMount: Unable to find partition for name '%s'\n", Name.c_str());
+	else
+		LOGI("UnMount: Unable to find partition for name '%s'\n", Name.c_str());
+	return false;
 }
 
 int TWPartitionManager::Is_Mounted_By_Path(string Path) {
-	LOGI("STUB TWPartitionManager::Is_Mounted_By_Path, Path: '%s'\n", Path.c_str());
-	return 1;
+	TWPartition* Part = Find_Partition_By_Path(Path);
+
+	if (Part)
+		return Part->Is_Mounted();
+	else
+		LOGI("Is_Mounted: Unable to find partition for path '%s'\n", Path.c_str());
+	return false;
 }
 
 int TWPartitionManager::Is_Mounted_By_Block(string Block) {
-	LOGI("STUB TWPartitionManager::Is_Mounted_By_Block, Block: '%s'\n", Block.c_str());
-	return 1;
+	TWPartition* Part = Find_Partition_By_Block(Block);
+
+	if (Part)
+		return Part->Is_Mounted();
+	else
+		LOGI("Is_Mounted: Unable to find partition for block '%s'\n", Block.c_str());
+	return false;
 }
 
 int TWPartitionManager::Is_Mounted_By_Name(string Name) {
-	LOGI("STUB TWPartitionManager::Is_Mounted_By_Name, Name: '%s'\n", Name.c_str());
-	return 1;
+	TWPartition* Part = Find_Partition_By_Name(Name);
+
+	if (Part)
+		return Part->Is_Mounted();
+	else
+		LOGI("Is_Mounted: Unable to find partition for name '%s'\n", Name.c_str());
+	return false;
 }
 
 int TWPartitionManager::Mount_Current_Storage(bool Display_Error) {
-	return Mount_By_Path(DataManager::GetCurrentStoragePath(), Display_Error);
+	string current_storage_path = DataManager::GetCurrentStoragePath();
+
+	if (Mount_By_Path(current_storage_path, Display_Error)) {
+		TWPartition* FreeStorage = Find_Partition_By_Path(current_storage_path);
+		if (FreeStorage)
+			DataManager::SetValue(TW_STORAGE_FREE_SIZE, (int)(FreeStorage->Free / 1048576LLU));
+		return true;
+	}
+	return false;
 }
 
 int TWPartitionManager::Mount_Settings_Storage(bool Display_Error) {
@@ -202,21 +292,32 @@ int TWPartitionManager::Mount_Settings_Storage(bool Display_Error) {
 
 TWPartition* TWPartitionManager::Find_Partition_By_Path(string Path) {
 	std::vector<TWPartition*>::iterator iter;
+	string Local_Path = Get_Root_Path(Path);
 
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Mount_Point == Path)
+		if ((*iter)->Mount_Point == Local_Path)
 			return (*iter);
 	}
 	return NULL;
 }
 
 TWPartition* TWPartitionManager::Find_Partition_By_Block(string Block) {
-	LOGI("STUB TWPartitionManager::Find_Partition_By_Block, Block: '%s'\n", Block.c_str());
+	std::vector<TWPartition*>::iterator iter;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Block_Device == Block || (*iter)->Alternate_Block_Device == Block || ((*iter)->Is_Decrypted && (*iter)->Decrypted_Block_Device == Block))
+			return (*iter);
+	}
 	return NULL;
 }
 
 TWPartition* TWPartitionManager::Find_Partition_By_Name(string Name) {
-	LOGI("STUB TWPartitionManager::Find_Partition_By_Name, Name: '%s'\n", Name.c_str());
+	std::vector<TWPartition*>::iterator iter;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Display_Name == Name)
+			return (*iter);
+	}
 	return NULL;
 }
 
@@ -256,18 +357,44 @@ int TWPartitionManager::Factory_Reset(void) {
 }
 
 void TWPartitionManager::Refresh_Sizes(void) {
-	LOGI("STUB TWPartitionManager::Refresh_Sizes\n");
+	Update_System_Details();
 	return;
 }
 
 void TWPartitionManager::Update_System_Details(void) {
 	std::vector<TWPartition*>::iterator iter;
+	int data_size = 0;
 
 	LOGI("Updating system details...\n");
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		(*iter)->Check_FS_Type();
-		(*iter)->Update_Size(false);
+		if ((*iter)->Can_Be_Mounted) {
+			(*iter)->Update_Size(true);
+			if ((*iter)->Mount_Point == "/system") {
+				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
+				DataManager::SetValue(TW_BACKUP_SYSTEM_SIZE, backup_display_size);
+			} else if ((*iter)->Mount_Point == "/data" || (*iter)->Mount_Point == "/datadata") {
+				data_size += (int)((*iter)->Backup_Size / 1048576LLU);
+			} else if ((*iter)->Mount_Point == "/cache") {
+				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
+				DataManager::SetValue(TW_BACKUP_CACHE_SIZE, backup_display_size);
+			} else if ((*iter)->Mount_Point == "/sd-ext") {
+				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
+				DataManager::SetValue(TW_BACKUP_SDEXT_SIZE, backup_display_size);
+				if ((*iter)->Backup_Size == 0) {
+					DataManager::SetValue(TW_HAS_SDEXT_PARTITION, 0);
+					DataManager::SetValue(TW_BACKUP_SDEXT_VAR, 0);
+				} else
+					DataManager::SetValue(TW_HAS_SDEXT_PARTITION, 1);
+			}
+		}
 	}
+	DataManager::SetValue(TW_BACKUP_DATA_SIZE, data_size);
+	string current_storage_path = DataManager::GetCurrentStoragePath();
+	TWPartition* FreeStorage = Find_Partition_By_Path(current_storage_path);
+	if (FreeStorage)
+		DataManager::SetValue(TW_STORAGE_FREE_SIZE, (int)(FreeStorage->Free / 1048576LLU));
+	else
+		LOGI("Unable to find storage partition '%s'.\n", current_storage_path.c_str());
 	if (!Write_Fstab())
 		LOGE("Error creating fstab\n");
 	return;
@@ -318,4 +445,19 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	return -1;
 #endif
 	return 1;
+}
+
+string TWPartitionManager::Get_Root_Path(string Path) {
+	string Local_Path = Path;
+
+	// Make sure that we have a leading slash
+	if (Local_Path.substr(0, 1) != "/")
+		Local_Path = "/" + Local_Path;
+
+	// Trim the path to get the root path only
+	size_t position = Local_Path.find("/", 2);
+	if (position != string::npos) {
+		Local_Path.resize(position);
+	}
+	return Local_Path;
 }

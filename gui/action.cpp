@@ -416,14 +416,11 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
         {
             string cmd;
 			if (arg == "EXTERNAL")
-				cmd = "mount " + DataManager::GetStrValue(TW_EXTERNAL_MOUNT);
+				PartitionManager.Mount_By_Path(DataManager::GetStrValue(TW_EXTERNAL_MOUNT), true);
 			else if (arg == "INTERNAL")
-				cmd = "mount " + DataManager::GetStrValue(TW_INTERNAL_MOUNT);
+				PartitionManager.Mount_By_Path(DataManager::GetStrValue(TW_INTERNAL_MOUNT), true);
 			else
-				cmd = "mount " + arg;
-            __system(cmd.c_str());
-			if (arg == "/data" && DataManager::GetIntValue(TW_HAS_DATADATA) == 1)
-				__system("mount /datadata");
+				PartitionManager.Mount_By_Path(arg, true);
         } else
 			ui_print("Simulating actions...\n");
         return 0;
@@ -443,16 +440,11 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
         {
             string cmd;
 			if (arg == "EXTERNAL")
-				cmd = "umount " + DataManager::GetStrValue(TW_EXTERNAL_MOUNT);
+				PartitionManager.UnMount_By_Path(DataManager::GetStrValue(TW_EXTERNAL_MOUNT), true);
 			else if (arg == "INTERNAL")
-				cmd = "umount " + DataManager::GetStrValue(TW_INTERNAL_MOUNT);
-			else if (DataManager::GetIntValue(TW_DONT_UNMOUNT_SYSTEM) == 1 && (arg == "system" || arg == "/system"))
-				return 0;
+				PartitionManager.UnMount_By_Path(DataManager::GetStrValue(TW_INTERNAL_MOUNT), true);
 			else
-				cmd = "umount " + arg;
-            __system(cmd.c_str());
-			if (arg == "/data" && DataManager::GetIntValue(TW_HAS_DATADATA) == 1)
-				__system("umount /datadata");
+				PartitionManager.UnMount_By_Path(arg, true);
         } else
 			ui_print("Simulating actions...\n");
         return 0;
@@ -549,7 +541,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		} else if (arg == "external") {
 			DataManager::SetValue(TW_USE_EXTERNAL_STORAGE, 1);
 		}
-		if (PartitionManager.Mount_Settings_Storage(true)) {
+		if (PartitionManager.Mount_Current_Storage(true)) {
 			if (arg == "internal") {
 				// Save the current zip location to the external variable
 				DataManager::SetValue(TW_ZIP_EXTERNAL_VAR, DataManager::GetStrValue(TW_ZIP_LOCATION_VAR));
