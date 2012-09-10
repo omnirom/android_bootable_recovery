@@ -87,6 +87,7 @@ protected:
 	string Decrypted_Block_Device;                                            // Decrypted block device available after decryption
 	string Display_Name;                                                      // Display name for the GUI
 	string Backup_Name;                                                       // Backup name -- used for backup filenames
+	string Backup_FileName;                                                   // Actual backup filename
 	Backup_Method_enum Backup_Method;                                         // Method used for backup
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
 	bool Is_Storage;                                                          // Indicates if this partition is used for storage for backup, restore, and installing zips

@@ -27,6 +27,8 @@
 #include <sys/vfs.h>
 #include <unistd.h>
 #include <vector>
+#include <dirent.h>
+#include <time.h>
 
 #include "variables.h"
 #include "common.h"
@@ -82,10 +84,10 @@ int TWPartitionManager::Write_Fstab(void) {
 
 	fp = fopen("/etc/fstab", "w");
 	if (fp == NULL) {
-        LOGI("Can not open /etc/fstab.\n");
+		LOGI("Can not open /etc/fstab.\n");
 		return false;
 	}
-    for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Can_Be_Mounted) {
 			if ((*iter)->Is_Decrypted)
 				Line = (*iter)->Decrypted_Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw\n";
@@ -327,33 +329,295 @@ int TWPartitionManager::Run_Backup(string Backup_Name) {
 }
 
 int TWPartitionManager::Run_Restore(string Restore_Name) {
-	LOGI("STUB TWPartitionManager::Run_Restore, Restore_Name: '%s'\n", Restore_Name.c_str());
-	return 1;
+	int check;
+	TWPartition* Part;
+
+	DataManager::GetValue(TW_RESTORE_SYSTEM_VAR, check);
+	if (check > 0) {
+		Part = Find_Partition_By_Path("/system");
+		if (Part) {
+			if (!Part->Restore(Restore_Name))
+				return false;
+		} else
+			LOGE("Restore: Unable to locate system partition.\n");
+	}
+	DataManager::GetValue(TW_RESTORE_DATA_VAR, check);
+	if (check > 0) {
+		Part = Find_Partition_By_Path("/data");
+		if (Part) {
+			if (!Part->Restore(Restore_Name))
+				return false;
+		} else
+			LOGE("Restore: Unable to locate data partition.\n");
+	}
+	DataManager::GetValue(TW_RESTORE_CACHE_VAR, check);
+	if (check > 0) {
+		Part = Find_Partition_By_Path("/cache");
+		if (Part) {
+			if (!Part->Restore(Restore_Name))
+				return false;
+		} else
+			LOGE("Restore: Unable to locate cache partition.\n");
+	}
+	DataManager::GetValue(TW_RESTORE_BOOT_VAR, check);
+	if (check > 0) {
+		Part = Find_Partition_By_Path("/boot");
+		if (Part) {
+			if (!Part->Restore(Restore_Name))
+				return false;
+		} else
+			LOGE("Restore: Unable to locate boot partition.\n");
+	}
+	DataManager::GetValue(TW_RESTORE_ANDSEC_VAR, check);
+	if (check > 0) {
+		Part = Find_Partition_By_Path("/.android_secure");
+		if (Part) {
+			if (!Part->Restore(Restore_Name))
+				return false;
+		} else
+			LOGE("Restore: Unable to locate android_secure partition.\n");
+	}
+	DataManager::GetValue(TW_RESTORE_SDEXT_VAR, check);
+	if (check > 0) {
+		Part = Find_Partition_By_Path("/sd-ext");
+		if (Part) {
+			if (!Part->Restore(Restore_Name))
+				return false;
+		} else
+			LOGE("Restore: Unable to locate sd-ext partition.\n");
+	}
+#ifdef SP1_NAME
+	DataManager::GetValue(TW_RESTORE_SP1_VAR, check);
+	if (check > 0) {
+		Part = Find_Partition_By_Path(Get_Root_Path(SP1_NAME));
+		if (Part) {
+			if (!Part->Restore(Restore_Name))
+				return false;
+		} else
+			LOGE("Restore: Unable to locate %s partition.\n", SP1_NAME);
+	}
+#endif
+#ifdef SP2_NAME
+	DataManager::GetValue(TW_RESTORE_SP2_VAR, check);
+	if (check > 0) {
+		Part = Find_Partition_By_Path(Get_Root_Path(SP2_NAME));
+		if (Part) {
+			if (!Part->Restore(Restore_Name))
+				return false;
+		} else
+			LOGE("Restore: Unable to locate %s partition.\n", SP2_NAME);
+	}
+#endif
+#ifdef SP3_NAME
+	DataManager::GetValue(TW_RESTORE_SP3_VAR, check);
+	if (check > 0) {
+		Part = Find_Partition_By_Path(Get_Root_Path(SP3_NAME));
+		if (Part) {
+			if (!Part->Restore(Restore_Name))
+				return false;
+		} else
+			LOGE("Restore: Unable to locate %s partition.\n", SP3_NAME);
+	}
+#endif
+	return true;
 }
 
 void TWPartitionManager::Set_Restore_Files(string Restore_Name) {
-	LOGI("STUB TWPartitionManager::Set_Restore_Files\n");
+	// Start with the default values
+	int tw_restore_system = -1;
+	int tw_restore_data = -1;
+	int tw_restore_cache = -1;
+	int tw_restore_recovery = -1;
+	int tw_restore_boot = -1;
+	int tw_restore_andsec = -1;
+	int tw_restore_sdext = -1;
+	int tw_restore_sp1 = -1;
+	int tw_restore_sp2 = -1;
+	int tw_restore_sp3 = -1;
+	bool get_date = true;
+
+	DIR* d;
+	d = opendir(Restore_Name.c_str());
+	if (d == NULL)
+	{
+		LOGE("Error opening %s\n", Restore_Name.c_str());
+		return;
+	}
+
+	struct dirent* de;
+	while ((de = readdir(d)) != NULL)
+	{
+		// Strip off three components
+		char str[256];
+		char* label;
+		char* fstype = NULL;
+		char* extn = NULL;
+		char* ptr;
+
+		strcpy(str, de->d_name);
+		if (strlen(str) <= 2)
+			continue;
+
+		if (get_date) {
+			char file_path[255];
+			struct stat st;
+
+			strcpy(file_path, Restore_Name.c_str());
+			strcat(file_path, "/");
+			strcat(file_path, str);
+			stat(file_path, &st);
+			string backup_date = ctime((const time_t*)(&st.st_mtime));
+			DataManager::SetValue(TW_RESTORE_FILE_DATE, backup_date);
+			get_date = false;
+		}
+
+		label = str;
+		ptr = label;
+		while (*ptr && *ptr != '.')	 ptr++;
+		if (*ptr == '.')
+		{
+			*ptr = 0x00;
+			ptr++;
+			fstype = ptr;
+		}
+		while (*ptr && *ptr != '.')	 ptr++;
+		if (*ptr == '.')
+		{
+			*ptr = 0x00;
+			ptr++;
+			extn = ptr;
+		}
+
+		if (extn == NULL || (strlen(extn) >= 3 && strncmp(extn, "win", 3) != 0))   continue;
+
+		TWPartition* Part = Find_Partition_By_Path(label);
+		if (Part == NULL)
+		{
+			LOGE(" Unable to locate partition by backup name: '%s'\n", label);
+			continue;
+		}
+
+		Part->Backup_FileName = de->d_name;
+		if (strlen(extn) > 3) {
+			Part->Backup_FileName.resize(Part->Backup_FileName.size() - strlen(extn) + 3);
+		}
+
+		// Now, we just need to find the correct label
+		if (Part->Mount_Point == "/system")
+			tw_restore_system = 1;
+		if (Part->Mount_Point == "/data")
+			tw_restore_data = 1;
+		if (Part->Mount_Point == "/cache")
+			tw_restore_cache = 1;
+		if (Part->Mount_Point == "/recovery")
+			tw_restore_recovery = 1;
+		if (Part->Mount_Point == "/boot")
+			tw_restore_boot = 1;
+		if (Part->Mount_Point == "/.android_secure")
+			tw_restore_andsec = 1;
+		if (Part->Mount_Point == "/sd-ext")
+			tw_restore_sdext = 1;
+#ifdef SP1_NAME
+		if (Part->Mount_Point == Get_Root_Path(SP1_Name))
+			tw_restore_sp1 = 1;
+#endif
+#ifdef SP2_NAME
+		if (Part->Mount_Point == Get_Root_Path(SP2_Name))
+			tw_restore_sp2 = 1;
+#endif
+#ifdef SP3_NAME
+		if (Part->Mount_Point == Get_Root_Path(SP3_Name))
+			tw_restore_sp3 = 1;
+#endif
+	}
+	closedir(d);
+
+	// Set the final values
+	DataManager::SetValue(TW_RESTORE_SYSTEM_VAR, tw_restore_system);
+	DataManager::SetValue(TW_RESTORE_DATA_VAR, tw_restore_data);
+	DataManager::SetValue(TW_RESTORE_CACHE_VAR, tw_restore_cache);
+	DataManager::SetValue(TW_RESTORE_RECOVERY_VAR, tw_restore_recovery);
+	DataManager::SetValue(TW_RESTORE_BOOT_VAR, tw_restore_boot);
+	DataManager::SetValue(TW_RESTORE_ANDSEC_VAR, tw_restore_andsec);
+	DataManager::SetValue(TW_RESTORE_SDEXT_VAR, tw_restore_sdext);
+	DataManager::SetValue(TW_RESTORE_SP1_VAR, tw_restore_sp1);
+	DataManager::SetValue(TW_RESTORE_SP2_VAR, tw_restore_sp2);
+	DataManager::SetValue(TW_RESTORE_SP3_VAR, tw_restore_sp3);
+
 	return;
 }
 
 int TWPartitionManager::Wipe_By_Path(string Path) {
-	LOGI("STUB TWPartitionManager::Wipe_By_Path, Path: '%s'\n", Path.c_str());
-	return 1;
+	std::vector<TWPartition*>::iterator iter;
+	int ret = false;
+	bool found = false;
+	string Local_Path = Get_Root_Path(Path);
+
+	// Iterate through all partitions
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Mount_Point == Local_Path) {
+			ret = (*iter)->Wipe();
+			found = true;
+		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path) {
+			(*iter)->Wipe();
+		}
+	}
+	if (found) {
+		return ret;
+	} else
+		LOGE("Wipe: Unable to find partition for path '%s'\n", Local_Path.c_str());
+	return false;
 }
 
 int TWPartitionManager::Wipe_By_Block(string Block) {
-	LOGI("STUB TWPartitionManager::Wipe_By_Block, Block: '%s'\n", Block.c_str());
-	return 1;
+	TWPartition* Part = Find_Partition_By_Block(Block);
+
+	if (Part) {
+		if (Part->Has_SubPartition) {
+			std::vector<TWPartition*>::iterator subpart;
+
+			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+				if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point)
+					(*subpart)->Wipe();
+			}
+			return Part->Wipe();
+		} else
+			return Part->Wipe();
+	}
+	LOGE("Wipe: Unable to find partition for block '%s'\n", Block.c_str());
+	return false;
 }
 
 int TWPartitionManager::Wipe_By_Name(string Name) {
-	LOGI("STUB TWPartitionManager::Wipe_By_Name, Name: '%s'\n", Name.c_str());
-	return 1;
+	TWPartition* Part = Find_Partition_By_Name(Name);
+
+	if (Part) {
+		if (Part->Has_SubPartition) {
+			std::vector<TWPartition*>::iterator subpart;
+
+			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+				if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point)
+					(*subpart)->Wipe();
+			}
+			return Part->Wipe();
+		} else
+			return Part->Wipe();
+	}
+	LOGE("Wipe: Unable to find partition for name '%s'\n", Name.c_str());
+	return false;
 }
 
 int TWPartitionManager::Factory_Reset(void) {
-	LOGI("STUB TWPartitionManager::Factory_Reset\n");
-	return 1;
+	std::vector<TWPartition*>::iterator iter;
+	int ret = true;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Wipe_During_Factory_Reset) {
+			if (!(*iter)->Wipe())
+				ret = false;
+		}
+	}
+	return ret;
 }
 
 void TWPartitionManager::Refresh_Sizes(void) {

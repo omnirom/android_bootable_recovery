@@ -63,6 +63,7 @@ TWPartition::TWPartition(void) {
 	Decrypted_Block_Device = "";
 	Display_Name = "";
 	Backup_Name = "";
+	Backup_FileName = "";
 	Backup_Method = NONE;
 	Has_Data_Media = false;
 	Is_Storage = false;
@@ -236,6 +237,15 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			Removable = true;
 		} else if (strcmp(ptr, "storage") == 0) {
 			Is_Storage = true;
+		} else if (strcmp(ptr, "canbewiped") == 0) {
+			Can_Be_Wiped = true;
+		} else if (strcmp(ptr, "wipeingui") == 0) {
+			Can_Be_Wiped = true;
+			Wipe_Available_in_GUI = true;
+		} else if (strcmp(ptr, "wipeduringfactoryreset") == 0) {
+			Can_Be_Wiped = true;
+			Wipe_Available_in_GUI = true;
+			Wipe_During_Factory_Reset = true;
 		} else if (strlen(ptr) > 15 && strncmp(ptr, "subpartitionof=", 15) == 0) {
 			ptr += 13;
 			Is_SubPartition = true;
@@ -266,7 +276,7 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 
 bool TWPartition::Is_File_System(string File_System) {
 	if (File_System == "ext2" ||
-	    File_System == "ext3" ||
+		File_System == "ext3" ||
 		File_System == "ext4" ||
 		File_System == "vfat" ||
 		File_System == "ntfs" ||
@@ -279,7 +289,7 @@ bool TWPartition::Is_File_System(string File_System) {
 
 bool TWPartition::Is_Image(string File_System) {
 	if (File_System == "emmc" ||
-	    File_System == "mtd")
+		File_System == "mtd")
 		return true;
 	else
 		return false;
@@ -480,7 +490,7 @@ unsigned long long TWPartition::Get_Folder_Size(string Path, bool Display_Error)
 	}
 	closedir(d);
 
-    return dusize;
+	return dusize;
 }
 
 bool TWPartition::Find_Partition_Size(void) {
@@ -499,7 +509,7 @@ bool TWPartition::Find_Partition_Size(void) {
 		char device[512];
 		char tmpString[64];
 
-		if (strlen(line) < 7 || line[0] == 'm')     continue;
+		if (strlen(line) < 7 || line[0] == 'm')	 continue;
 		sscanf(line + 1, "%lu %lu %lu %s", &major, &minor, &blocks, device);
 
 		tmpdevice = "/dev/block/";
@@ -685,19 +695,19 @@ void TWPartition::Check_FS_Type() {
 	{
 		blk = blkOutput;
 		ptr = blkOutput;
-		while (*ptr > 32 && *ptr != ':')        ptr++;
-		if (*ptr == 0)                          continue;
+		while (*ptr > 32 && *ptr != ':')		ptr++;
+		if (*ptr == 0)						  continue;
 		*ptr = 0;
 
 		// Increment by two, but verify that we don't hit a NULL
 		ptr++;
-		if (*ptr != 0)      ptr++;
+		if (*ptr != 0)	  ptr++;
 
 		// Now, find the TYPE field
 		while (1)
 		{
 			arg = ptr;
-			while (*ptr > 32)       ptr++;
+			while (*ptr > 32)	   ptr++;
 			if (*ptr != 0)
 			{
 				*ptr = 0;
@@ -724,7 +734,7 @@ void TWPartition::Check_FS_Type() {
 		else
 			continue;
 
-        if (strcmp(Current_File_System.c_str(), arg) != 0) {
+		if (strcmp(Current_File_System.c_str(), arg) != 0) {
 			LOGI("'%s' was '%s' now set to '%s'\n", Mount_Point.c_str(), Current_File_System.c_str(), arg);
 			Current_File_System = arg;
 		}
