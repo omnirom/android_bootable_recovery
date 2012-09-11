@@ -303,14 +303,6 @@ int check_md5(char* path) {
     return o;
 }
 
-static void set_sdcard_update_bootloader_message() {
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
-    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
-    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
-    set_bootloader_message(&boot);
-}
-
 int TWtry_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
 	const ZipEntry* binary_entry =
             mzFindZipEntry(zip, ASSUMED_UPDATE_BINARY_NAME);
@@ -922,30 +914,6 @@ int get_battery_level(void)
         nextSecCheck = curTime.tv_sec + 60;
     }
     return lastVal;
-}
-
-char* 
-print_batt_cap()  {
-	char* full_cap_s = (char*)malloc(30);
-	char full_cap_a[30];
-	
-	int cap_i = get_battery_level();
-    
-    //int len = strlen(cap_s);
-	//if (cap_s[len-1] == '\n') {
-	//	cap_s[len-1] = 0;
-	//}
-	
-	// Get a usable time
-	struct tm *current;
-	time_t now;
-	now = time(0);
-	current = localtime(&now);
-	
-	sprintf(full_cap_a, "Battery Level: %i%% @ %02D:%02D", cap_i, current->tm_hour, current->tm_min);
-	strcpy(full_cap_s, full_cap_a);
-	
-	return full_cap_s;
 }
 
 void update_tz_environment_variables() {

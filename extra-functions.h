@@ -20,9 +20,6 @@ void wipe_rotate_data();
 
 static long tmplog_offset = 0;
 
-// Battery level
-char* print_batt_cap();
-
 void update_tz_environment_variables();
 
 void fix_perms();
