@@ -251,7 +251,7 @@ protected:
     virtual int doAction(Action action, int isThreaded = 0);
     static void* thread_start(void *cookie);
 	void simulate_progress_bar(void);
-    int flash_zip(std::string filename, std::string pageName, const int simulate);
+    int flash_zip(std::string filename, std::string pageName, const int simulate, int* wipe_cache);
 	void operation_start(const string operation_name);
 	void operation_end(const int operation_status, const int simulate);
 	static void* command_thread(void *cookie);

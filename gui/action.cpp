@@ -14,6 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 
 #include <string>
 #include <sstream>
@@ -28,7 +29,6 @@ extern "C" {
 #include "../extra-functions.h"
 #include "../variables.h"
 
-int install_zip_package(const char* zip_path_filename);
 void fix_perms();
 void wipe_dalvik_cache(void);
 int check_backup_name(int show_error);
@@ -52,7 +52,6 @@ int gui_start();
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
-
 
 void curtainClose(void);
 
@@ -159,7 +158,7 @@ void GUIAction::simulate_progress_bar(void)
 	}
 }
 
-int GUIAction::flash_zip(std::string filename, std::string pageName, const int simulate)
+int GUIAction::flash_zip(std::string filename, std::string pageName, const int simulate, int* wipe_cache)
 {
     int ret_val = 0;
 
@@ -177,7 +176,10 @@ int GUIAction::flash_zip(std::string filename, std::string pageName, const int s
     int fd = -1;
     ZipArchive zip;
 
-    if (mzOpenZipArchive(filename.c_str(), &zip))
+    if (!PartitionManager.Mount_By_Path(filename, true))
+		return -1;
+
+	if (mzOpenZipArchive(filename.c_str(), &zip))
     {
         LOGE("Unable to open zip file.\n");
         return -1;
@@ -195,14 +197,14 @@ int GUIAction::flash_zip(std::string filename, std::string pageName, const int s
         !PageManager::LoadPackage("install", "/tmp/twrp.zip", "main"))
     {
         mzCloseZipArchive(&zip);
-        PageManager::SelectPackage("install");
+		PageManager::SelectPackage("install");
         gui_changePage("main");
     }
     else
     {
         // In this case, we just use the default page
         mzCloseZipArchive(&zip);
-        gui_changePage(pageName);
+		gui_changePage(pageName);
     }
     if (fd >= 0)
         close(fd);
@@ -210,7 +212,7 @@ int GUIAction::flash_zip(std::string filename, std::string pageName, const int s
 	if (simulate) {
 		simulate_progress_bar();
 	} else {
-		ret_val = install_zip_package(filename.c_str());
+		ret_val = TWinstall_zip(filename.c_str(), wipe_cache);
 
 		// Now, check if we need to ensure TWRP remains installed...
 		struct stat st;
@@ -624,14 +626,14 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 		if (function == "flash")
         {
-			int i, ret_val = 0;
+			int i, ret_val = 0, wipe_cache = 0;
 
 			for (i=0; i<zip_queue_index; i++) {
 				operation_start("Flashing");
 		        DataManager::SetValue("tw_filename", zip_queue[i]);
 		        DataManager::SetValue(TW_ZIP_INDEX, (i + 1));
 
-				ret_val = flash_zip(zip_queue[i], arg, simulate);
+				ret_val = flash_zip(zip_queue[i], arg, simulate, &wipe_cache);
 				if (ret_val != 0) {
 					ui_print("Error flashing zip '%s'\n", zip_queue[i].c_str());
 					i = 10; // Error flashing zip - exit queue
@@ -640,6 +642,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			}
 			zip_queue_index = 0;
 			DataManager::SetValue(TW_ZIP_QUEUE_COUNT, zip_queue_index);
+
+			if (wipe_cache)
+				PartitionManager.Wipe_By_Path("/cache");
 
 			if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
 				operation_start("ReinjectTWRP");

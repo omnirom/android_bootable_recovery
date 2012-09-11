@@ -116,7 +116,7 @@ int TWPartitionManager::Mount_By_Path(string Path, bool Display_Error) {
 
 	// Iterate through all partitions
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Mount_Point == Local_Path) {
+		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path)) {
 			ret = (*iter)->Mount(Display_Error);
 			found = true;
 		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path) {
@@ -185,7 +185,7 @@ int TWPartitionManager::UnMount_By_Path(string Path, bool Display_Error) {
 
 	// Iterate through all partitions
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Mount_Point == Local_Path) {
+		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path)) {
 			ret = (*iter)->UnMount(Display_Error);
 			found = true;
 		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path) {
@@ -297,7 +297,7 @@ TWPartition* TWPartitionManager::Find_Partition_By_Path(string Path) {
 	string Local_Path = Get_Root_Path(Path);
 
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Mount_Point == Local_Path)
+		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path))
 			return (*iter);
 	}
 	return NULL;
@@ -555,7 +555,7 @@ int TWPartitionManager::Wipe_By_Path(string Path) {
 
 	// Iterate through all partitions
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Mount_Point == Local_Path) {
+		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path)) {
 			ret = (*iter)->Wipe();
 			found = true;
 		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path) {

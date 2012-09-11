@@ -1,15 +1,22 @@
 #ifndef _EXTRAFUNCTIONS_HEADER
 #define _EXTRAFUNCTIONS_HEADER
 
+#include "mincrypt/rsa.h"
+#include "minzip/Zip.h"
+
 int __system(const char *command);
 FILE * __popen(const char *program, const char *type);
 int __pclose(FILE *iop);
 
+// Install Zip functions
+int TWtry_update_binary(const char *path, ZipArchive *zip, int* wipe_cache);
+static RSAPublicKey* TWload_keys(const char* filename, int* numKeys);
+int TWverify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKeys);
+int TWinstall_zip(const char* path, int* wipe_cache);
+
 // Device ID variable / function
 extern char device_id[64];
 void get_device_id();
-static char* copy_sideloaded_package(const char* original_path);
-int install_zip_package(const char* zip_path_filename);
 
 void wipe_dalvik_cache();
 void wipe_battery_stats();

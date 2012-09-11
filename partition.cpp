@@ -29,6 +29,10 @@
 #include <unistd.h>
 #include <dirent.h>
 
+#ifdef TW_INCLUDE_CRYPTO
+	#include "cutils/properties.h"
+#endif
+
 #include "variables.h"
 #include "common.h"
 #include "partitions.hpp"
@@ -156,12 +160,28 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Has_Data_Media = true;
 			Is_Storage = true;
 			Storage_Path = "/data/media";
-			Make_Dir("/sdcard", Display_Error);
-			Make_Dir("/emmc", Display_Error);
+			if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
+				Make_Dir("/emmc", Display_Error);
+				Symlink_Path = "/data/media";
+				Symlink_Mount_Point = "/emmc";
+			} else {
+				Make_Dir("/sdcard", Display_Error);
+				Symlink_Path = "/data/media";
+				Symlink_Mount_Point = "/sdcard";
+			}
 #endif
 #ifdef TW_INCLUDE_CRYPTO
 			Can_Be_Encrypted = true;
-			if (!Mount(false)) {
+			char crypto_blkdev[255];
+			property_get("ro.crypto.fs_crypto_blkdev", crypto_blkdev, "error");
+			if (strcmp(crypto_blkdev, "error") != 0) {
+				DataManager::SetValue(TW_DATA_BLK_DEVICE, Block_Device);
+				DataManager::SetValue(TW_IS_DECRYPTED, 1);
+				Is_Encrypted = true;
+				Is_Decrypted = true;
+				Decrypted_Block_Device = crypto_blkdev;
+				LOGI("Data already decrypted, new block device: '%s'\n", crypto_blkdev);
+			} else if (!Mount(false)) {
 				Is_Encrypted = true;
 				Is_Decrypted = false;
 				DataManager::SetValue(TW_IS_ENCRYPTED, 1);
@@ -320,7 +340,7 @@ void TWPartition::Setup_File_System(bool Display_Error) {
 	// Check to see if the block device exists
 	if (Path_Exists(Block_Device)) {
 		Is_Present = true;
-	} else if (Alternate_Block_Device != "" && Path_Exists(Alternate_Block_Device)) {
+	} else if (!Alternate_Block_Device.empty() && Path_Exists(Alternate_Block_Device)) {
 		Flip_Block_Device();
 		Is_Present = true;
 	}
@@ -334,7 +354,7 @@ void TWPartition::Setup_File_System(bool Display_Error) {
 void TWPartition::Setup_Image(bool Display_Error) {
 	if (Path_Exists(Block_Device)) {
 		Is_Present = true;
-	} else if (Alternate_Block_Device != "" && Path_Exists(Alternate_Block_Device)) {
+	} else if (!Alternate_Block_Device.empty() && Path_Exists(Alternate_Block_Device)) {
 		Flip_Block_Device();
 		Is_Present = true;
 	}
@@ -595,7 +615,7 @@ bool TWPartition::Mount(bool Display_Error) {
 	if (mount(Block_Device.c_str(), Mount_Point.c_str(), Current_File_System.c_str(), 0, NULL) != 0) {
 		Check_FS_Type();
 		if (mount(Block_Device.c_str(), Mount_Point.c_str(), Current_File_System.c_str(), 0, NULL) != 0) {
-			if (Alternate_Block_Device != "" && Path_Exists(Alternate_Block_Device)) {
+			if (!Alternate_Block_Device.empty() && Path_Exists(Alternate_Block_Device)) {
 				Flip_Block_Device();
 				Check_FS_Type();
 				if (mount(Block_Device.c_str(), Mount_Point.c_str(), Current_File_System.c_str(), 0, NULL) != 0) {

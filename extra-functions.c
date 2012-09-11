@@ -43,8 +43,6 @@
 #include "bootloader.h"
 #include "common.h"
 #include "extra-functions.h"
-#include "cutils/properties.h"
-#include "install.h"
 #include "minuitwrp/minui.h"
 #include "minzip/DirUtil.h"
 #include "minzip/Zip.h"
@@ -52,13 +50,22 @@
 #include "roots.h"
 #include "data.h"
 #include "variables.h"
-#include "install.h"
+#include "mincrypt/rsa.h"
+#include "verifier.h"
+#include "mincrypt/sha.h"
+
+#ifndef PUBLIC_KEYS_FILE
+#define PUBLIC_KEYS_FILE "/res/keys"
+#endif
+#ifndef ASSUMED_UPDATE_BINARY_NAME
+#define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
+#endif
+enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT };
 
 //kang system() from bionic/libc/unistd and rename it __system() so we can be even more hackish :)
 #undef _PATH_BSHELL
 #define _PATH_BSHELL "/sbin/sh"
 
-static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
 extern char **environ;
 
 int __system(const char *command) {
@@ -414,43 +421,400 @@ int check_md5(char* path) {
     return o;
 }
 
-static int really_install_package(const char *path, int* wipe_cache)
-{
-    //ui->SetBackground(RecoveryUI::INSTALLING);
-    LOGI("Finding update package...\n");
-    //ui->SetProgressType(RecoveryUI::INDETERMINATE);
-    LOGI("Update location: %s\n", path);
+static void set_sdcard_update_bootloader_message() {
+    struct bootloader_message boot;
+    memset(&boot, 0, sizeof(boot));
+    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
+    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
+    set_bootloader_message(&boot);
+}
 
-    if (ensure_path_mounted(path) != 0) {
-        LOGE("Can't mount %s\n", path);
+int TWtry_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
+	const ZipEntry* binary_entry =
+            mzFindZipEntry(zip, ASSUMED_UPDATE_BINARY_NAME);
+    if (binary_entry == NULL) {
+        mzCloseZipArchive(zip);
         return INSTALL_CORRUPT;
     }
-
-    LOGI("Opening update package...\n");
-
-    int numKeys;
-    /*RSAPublicKey* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
-    if (loadedKeys == NULL) {
-        LOGE("Failed to load keys\n");
-        return INSTALL_CORRUPT;
+    const char* binary = "/tmp/update_binary";
+    unlink(binary);
+    int fd = creat(binary, 0755);
+    if (fd < 0) {
+        mzCloseZipArchive(zip);
+        LOGE("Can't make %s\n", binary);
+        return INSTALL_ERROR;
     }
-    LOGI("%d key(s) loaded from %s\n", numKeys, PUBLIC_KEYS_FILE);*/
+    bool ok = mzExtractZipEntryToFile(zip, binary_entry, fd);
+    close(fd);
+    mzCloseZipArchive(zip);
 
-    // Give verification half the progress bar...
-    LOGI("Verifying update package...\n");
-    //ui->SetProgressType(RecoveryUI::DETERMINATE);
-    //ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
+    if (!ok) {
+        LOGE("Can't copy %s\n", ASSUMED_UPDATE_BINARY_NAME);
+        return INSTALL_ERROR;
+    }
 
-    int err;
-    /*err = verify_file(path, loadedKeys, numKeys);
-    free(loadedKeys);
-    LOGI("verify_file returned %d\n", err);
-    if (err != VERIFY_SUCCESS) {
-        LOGE("signature verification failed\n");
-        return INSTALL_CORRUPT;
-    }*/
+    int pipefd[2];
+    pipe(pipefd);
 
-    /* Try to open the package.
+    // When executing the update binary contained in the package, the
+    // arguments passed are:
+    //
+    //   - the version number for this interface
+    //
+    //   - an fd to which the program can write in order to update the
+    //     progress bar.  The program can write single-line commands:
+    //
+    //        progress <frac> <secs>
+    //            fill up the next <frac> part of of the progress bar
+    //            over <secs> seconds.  If <secs> is zero, use
+    //            set_progress commands to manually control the
+    //            progress of this segment of the bar
+    //
+    //        set_progress <frac>
+    //            <frac> should be between 0.0 and 1.0; sets the
+    //            progress bar within the segment defined by the most
+    //            recent progress command.
+    //
+    //        firmware <"hboot"|"radio"> <filename>
+    //            arrange to install the contents of <filename> in the
+    //            given partition on reboot.
+    //
+    //            (API v2: <filename> may start with "PACKAGE:" to
+    //            indicate taking a file from the OTA package.)
+    //
+    //            (API v3: this command no longer exists.)
+    //
+    //        ui_print <string>
+    //            display <string> on the screen.
+    //
+    //   - the name of the package zip file.
+    //
+
+    const char** args = (const char**)malloc(sizeof(char*) * 5);
+    args[0] = binary;
+    args[1] = EXPAND(RECOVERY_API_VERSION);   // defined in Android.mk
+    char* temp = (char*)malloc(10);
+    sprintf(temp, "%d", pipefd[1]);
+    args[2] = temp;
+    args[3] = (char*)path;
+    args[4] = NULL;
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        close(pipefd[0]);
+        execv(binary, (char* const*)args);
+        fprintf(stdout, "E:Can't run %s (error)\n", binary);
+        _exit(-1);
+    }
+    close(pipefd[1]);
+    *wipe_cache = 0;
+
+    char buffer[1024];
+    FILE* from_child = fdopen(pipefd[0], "r");
+	LOGI("8\n");
+    while (fgets(buffer, sizeof(buffer), from_child) != NULL) {
+        char* command = strtok(buffer, " \n");
+        if (command == NULL) {
+            continue;
+        } else if (strcmp(command, "progress") == 0) {
+            char* fraction_s = strtok(NULL, " \n");
+            char* seconds_s = strtok(NULL, " \n");
+
+            float fraction = strtof(fraction_s, NULL);
+            int seconds = strtol(seconds_s, NULL, 10);
+
+            //ui->ShowProgress(fraction * (1-VERIFICATION_PROGRESS_FRACTION), seconds);
+        } else if (strcmp(command, "set_progress") == 0) {
+            char* fraction_s = strtok(NULL, " \n");
+            float fraction = strtof(fraction_s, NULL);
+            //ui->SetProgress(fraction);
+        } else if (strcmp(command, "ui_print") == 0) {
+            char* str = strtok(NULL, "\n");
+            if (str) {
+                //ui->Print("%s", str);
+            } else {
+                //ui->Print("\n");
+            }
+        } else if (strcmp(command, "wipe_cache") == 0) {
+            *wipe_cache = 1;
+        } else if (strcmp(command, "clear_display") == 0) {
+            //ui->SetBackground(RecoveryUI::NONE);
+        } else {
+            LOGE("unknown command [%s]\n", command);
+        }
+    }
+    fclose(from_child);
+
+    int status;
+    waitpid(pid, &status, 0);
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        LOGE("Error in %s\n(Status %d)\n", path, WEXITSTATUS(status));
+        return INSTALL_ERROR;
+    }
+    return INSTALL_SUCCESS;
+}
+
+// Look for an RSA signature embedded in the .ZIP file comment given
+// the path to the zip.  Verify it matches one of the given public
+// keys.
+//
+// Return VERIFY_SUCCESS, VERIFY_FAILURE (if any error is encountered
+// or no key matches the signature).
+
+int TWverify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKeys) {
+    //ui->SetProgress(0.0);
+
+    FILE* f = fopen(path, "rb");
+    if (f == NULL) {
+        LOGE("failed to open %s (%s)\n", path, strerror(errno));
+        return VERIFY_FAILURE;
+    }
+
+    // An archive with a whole-file signature will end in six bytes:
+    //
+    //   (2-byte signature start) $ff $ff (2-byte comment size)
+    //
+    // (As far as the ZIP format is concerned, these are part of the
+    // archive comment.)  We start by reading this footer, this tells
+    // us how far back from the end we have to start reading to find
+    // the whole comment.
+
+#define FOOTER_SIZE 6
+
+    if (fseek(f, -FOOTER_SIZE, SEEK_END) != 0) {
+        LOGE("failed to seek in %s (%s)\n", path, strerror(errno));
+        fclose(f);
+        return VERIFY_FAILURE;
+    }
+
+    unsigned char footer[FOOTER_SIZE];
+    if (fread(footer, 1, FOOTER_SIZE, f) != FOOTER_SIZE) {
+        LOGE("failed to read footer from %s (%s)\n", path, strerror(errno));
+        fclose(f);
+        return VERIFY_FAILURE;
+    }
+
+    if (footer[2] != 0xff || footer[3] != 0xff) {
+        fclose(f);
+        return VERIFY_FAILURE;
+    }
+
+    size_t comment_size = footer[4] + (footer[5] << 8);
+    size_t signature_start = footer[0] + (footer[1] << 8);
+    LOGI("comment is %d bytes; signature %d bytes from end\n",
+         comment_size, signature_start);
+
+    if (signature_start - FOOTER_SIZE < RSANUMBYTES) {
+        // "signature" block isn't big enough to contain an RSA block.
+        LOGE("signature is too short\n");
+        fclose(f);
+        return VERIFY_FAILURE;
+    }
+
+#define EOCD_HEADER_SIZE 22
+
+    // The end-of-central-directory record is 22 bytes plus any
+    // comment length.
+    size_t eocd_size = comment_size + EOCD_HEADER_SIZE;
+
+    if (fseek(f, -eocd_size, SEEK_END) != 0) {
+        LOGE("failed to seek in %s (%s)\n", path, strerror(errno));
+        fclose(f);
+        return VERIFY_FAILURE;
+    }
+
+    // Determine how much of the file is covered by the signature.
+    // This is everything except the signature data and length, which
+    // includes all of the EOCD except for the comment length field (2
+    // bytes) and the comment data.
+    size_t signed_len = ftell(f) + EOCD_HEADER_SIZE - 2;
+
+    unsigned char* eocd = (unsigned char*)malloc(eocd_size);
+    if (eocd == NULL) {
+        LOGE("malloc for EOCD record failed\n");
+        fclose(f);
+        return VERIFY_FAILURE;
+    }
+    if (fread(eocd, 1, eocd_size, f) != eocd_size) {
+        LOGE("failed to read eocd from %s (%s)\n", path, strerror(errno));
+        fclose(f);
+        return VERIFY_FAILURE;
+    }
+
+    // If this is really is the EOCD record, it will begin with the
+    // magic number $50 $4b $05 $06.
+    if (eocd[0] != 0x50 || eocd[1] != 0x4b ||
+        eocd[2] != 0x05 || eocd[3] != 0x06) {
+        LOGE("signature length doesn't match EOCD marker\n");
+        fclose(f);
+        return VERIFY_FAILURE;
+    }
+
+    size_t i;
+    for (i = 4; i < eocd_size-3; ++i) {
+        if (eocd[i  ] == 0x50 && eocd[i+1] == 0x4b &&
+            eocd[i+2] == 0x05 && eocd[i+3] == 0x06) {
+            // if the sequence $50 $4b $05 $06 appears anywhere after
+            // the real one, minzip will find the later (wrong) one,
+            // which could be exploitable.  Fail verification if
+            // this sequence occurs anywhere after the real one.
+            LOGE("EOCD marker occurs after start of EOCD\n");
+            fclose(f);
+            return VERIFY_FAILURE;
+        }
+    }
+
+#define BUFFER_SIZE 4096
+
+    SHA_CTX ctx;
+    SHA_init(&ctx);
+    unsigned char* buffer = (unsigned char*)malloc(BUFFER_SIZE);
+    if (buffer == NULL) {
+        LOGE("failed to alloc memory for sha1 buffer\n");
+        fclose(f);
+        return VERIFY_FAILURE;
+    }
+
+    double frac = -1.0;
+    size_t so_far = 0;
+    fseek(f, 0, SEEK_SET);
+    while (so_far < signed_len) {
+        size_t size = BUFFER_SIZE;
+        if (signed_len - so_far < size) size = signed_len - so_far;
+        if (fread(buffer, 1, size, f) != size) {
+            LOGE("failed to read data from %s (%s)\n", path, strerror(errno));
+            fclose(f);
+            return VERIFY_FAILURE;
+        }
+        SHA_update(&ctx, buffer, size);
+        so_far += size;
+        double f = so_far / (double)signed_len;
+        if (f > frac + 0.02 || size == so_far) {
+            //ui->SetProgress(f);
+            frac = f;
+        }
+    }
+    fclose(f);
+    free(buffer);
+
+    const uint8_t* sha1 = SHA_final(&ctx);
+    for (i = 0; i < numKeys; ++i) {
+        // The 6 bytes is the "(signature_start) $ff $ff (comment_size)" that
+        // the signing tool appends after the signature itself.
+        if (RSA_verify(pKeys+i, eocd + eocd_size - 6 - RSANUMBYTES,
+                       RSANUMBYTES, sha1)) {
+            LOGI("whole-file signature verified against key %d\n", i);
+            free(eocd);
+            return VERIFY_SUCCESS;
+        }
+    }
+    free(eocd);
+    LOGE("failed to verify whole-file signature\n");
+    return VERIFY_FAILURE;
+}
+
+// Reads a file containing one or more public keys as produced by
+// DumpPublicKey:  this is an RSAPublicKey struct as it would appear
+// as a C source literal, eg:
+//
+//  "{64,0xc926ad21,{1795090719,...,-695002876},{-857949815,...,1175080310}}"
+//
+// (Note that the braces and commas in this example are actual
+// characters the parser expects to find in the file; the ellipses
+// indicate more numbers omitted from this example.)
+//
+// The file may contain multiple keys in this format, separated by
+// commas.  The last key must not be followed by a comma.
+//
+// Returns NULL if the file failed to parse, or if it contain zero keys.
+static RSAPublicKey*
+TWload_keys(const char* filename, int* numKeys) {
+    RSAPublicKey* out = NULL;
+    *numKeys = 0;
+
+    FILE* f = fopen(filename, "r");
+    if (f == NULL) {
+        LOGE("opening %s: ERROR\n", filename);
+        goto exit;
+    }
+
+    {
+        int i;
+        bool done = false;
+        while (!done) {
+            ++*numKeys;
+            out = (RSAPublicKey*)realloc(out, *numKeys * sizeof(RSAPublicKey));
+            RSAPublicKey* key = out + (*numKeys - 1);
+            if (fscanf(f, " { %i , 0x%x , { %u",
+                       &(key->len), &(key->n0inv), &(key->n[0])) != 3) {
+                goto exit;
+            }
+            if (key->len != RSANUMWORDS) {
+                LOGE("key length (%d) does not match expected size\n", key->len);
+                goto exit;
+            }
+            for (i = 1; i < key->len; ++i) {
+                if (fscanf(f, " , %u", &(key->n[i])) != 1) goto exit;
+            }
+            if (fscanf(f, " } , { %u", &(key->rr[0])) != 1) goto exit;
+            for (i = 1; i < key->len; ++i) {
+                if (fscanf(f, " , %u", &(key->rr[i])) != 1) goto exit;
+            }
+            fscanf(f, " } } ");
+
+            // if the line ends in a comma, this file has more keys.
+            switch (fgetc(f)) {
+            case ',':
+                // more keys to come.
+                break;
+
+            case EOF:
+                done = true;
+                break;
+
+            default:
+                LOGE("unexpected character between keys\n");
+                goto exit;
+            }
+        }
+    }
+
+    fclose(f);
+    return out;
+
+exit:
+    if (f) fclose(f);
+    free(out);
+    *numKeys = 0;
+    return NULL;
+}
+
+int TWinstall_zip(const char* path, int* wipe_cache) {
+	int err;
+
+	if (DataManager_GetIntValue(TW_SIGNED_ZIP_VERIFY_VAR)) {
+		int numKeys;
+		RSAPublicKey* loadedKeys = TWload_keys(PUBLIC_KEYS_FILE, &numKeys);
+		if (loadedKeys == NULL) {
+			LOGE("Failed to load keys\n");
+			return -1;
+		}
+		LOGI("%d key(s) loaded from %s\n", numKeys, PUBLIC_KEYS_FILE);
+
+		// Give verification half the progress bar...
+		//ui->Print("Verifying update package...\n");
+		//ui->SetProgressType(RecoveryUI::DETERMINATE);
+		//ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
+
+		err = TWverify_file(path, loadedKeys, numKeys);
+		free(loadedKeys);
+		LOGI("verify_file returned %d\n", err);
+		if (err != VERIFY_SUCCESS) {
+			LOGE("signature verification failed\n");
+			return -1;
+		}
+	}
+	/* Try to open the package.
      */
     ZipArchive zip;
     err = mzOpenZipArchive(path, &zip);
@@ -461,157 +825,8 @@ static int really_install_package(const char *path, int* wipe_cache)
 
     /* Verify and install the contents of the package.
      */
-    LOGI("Installing update...\n");
-    return try_update_binary(path, &zip, wipe_cache);
-}
-
-static void set_sdcard_update_bootloader_message() {
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
-    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
-    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
-    set_bootloader_message(&boot);
-}
-
-static char* copy_sideloaded_package(const char* original_path) {
-  if (ensure_path_mounted(original_path) != 0) {
-    LOGE("Can't mount %s\n", original_path);
-    return NULL;
-  }
-
-  if (ensure_path_mounted(SIDELOAD_TEMP_DIR) != 0) {
-    LOGE("Can't mount %s\n", SIDELOAD_TEMP_DIR);
-    return NULL;
-  }
-
-  if (mkdir(SIDELOAD_TEMP_DIR, 0700) != 0) {
-    if (errno != EEXIST) {
-      LOGE("Can't mkdir %s (%s)\n", SIDELOAD_TEMP_DIR, strerror(errno));
-      return NULL;
-    }
-  }
-
-  // verify that SIDELOAD_TEMP_DIR is exactly what we expect: a
-  // directory, owned by root, readable and writable only by root.
-  struct stat st;
-  if (stat(SIDELOAD_TEMP_DIR, &st) != 0) {
-    LOGE("failed to stat %s (%s)\n", SIDELOAD_TEMP_DIR, strerror(errno));
-    return NULL;
-  }
-  if (!S_ISDIR(st.st_mode)) {
-    LOGE("%s isn't a directory\n", SIDELOAD_TEMP_DIR);
-    return NULL;
-  }
-  if ((st.st_mode & 0777) != 0700) {
-    LOGE("%s has perms %o\n", SIDELOAD_TEMP_DIR, st.st_mode);
-    return NULL;
-  }
-  if (st.st_uid != 0) {
-    LOGE("%s owned by %lu; not root\n", SIDELOAD_TEMP_DIR, st.st_uid);
-    return NULL;
-  }
-
-  char copy_path[PATH_MAX];
-  strcpy(copy_path, SIDELOAD_TEMP_DIR);
-  strcat(copy_path, "/package.zip");
-
-  char* buffer = malloc(BUFSIZ);
-  if (buffer == NULL) {
-    LOGE("Failed to allocate buffer\n");
-    return NULL;
-  }
-
-  size_t read;
-  FILE* fin = fopen(original_path, "rb");
-  if (fin == NULL) {
-    LOGE("Failed to open %s (%s)\n", original_path, strerror(errno));
-    return NULL;
-  }
-  FILE* fout = fopen(copy_path, "wb");
-  if (fout == NULL) {
-    LOGE("Failed to open %s (%s)\n", copy_path, strerror(errno));
-    return NULL;
-  }
-
-  while ((read = fread(buffer, 1, BUFSIZ, fin)) > 0) {
-    if (fwrite(buffer, 1, read, fout) != read) {
-      LOGE("Short write of %s (%s)\n", copy_path, strerror(errno));
-      return NULL;
-    }
-  }
-
-  free(buffer);
-
-  if (fclose(fout) != 0) {
-    LOGE("Failed to close %s (%s)\n", copy_path, strerror(errno));
-    return NULL;
-  }
-
-  if (fclose(fin) != 0) {
-    LOGE("Failed to close %s (%s)\n", original_path, strerror(errno));
-    return NULL;
-  }
-
-  // "adb push" is happy to overwrite read-only files when it's
-  // running as root, but we'll try anyway.
-  if (chmod(copy_path, 0400) != 0) {
-    LOGE("Failed to chmod %s (%s)\n", copy_path, strerror(errno));
-    return NULL;
-  }
-
-  return strdup(copy_path);
-}
-
-int install_zip_package(const char* zip_path_filename) {
-	int result = 0;
-
-    //mount_current_storage();
-	int md5_req = DataManager_GetIntValue(TW_FORCE_MD5_CHECK_VAR);
-	if (md5_req == 1) {
-		ui_print("\n-- Verify md5 for %s", zip_path_filename);
-		int md5chk = check_md5((char*) zip_path_filename);
-		if (md5chk == 1) {
-			ui_print("\n-- Md5 verified, continue");
-			result = 0;
-		}
-		else if (md5chk == -1) {
-			if (md5_req == 1) {
-				ui_print("\n-- No md5 file found!");
-				ui_print("\n-- Aborting install");
-				result = INSTALL_ERROR;
-			}
-			else {
-				ui_print("\n-- No md5 file found, ignoring");
-			}
-		}
-		else if (md5chk == -2) {
-			ui_print("\n-- md5 file doesn't match!");
-			ui_print("\n-- Aborting install");
-			result = INSTALL_ERROR;
-		}
-		printf("%d\n", result);
-	}
-	if (result != INSTALL_ERROR) {
-		ui_print("\n-- Install %s ...\n", zip_path_filename);
-		set_sdcard_update_bootloader_message();
-		char* copy;
-		if (DataManager_GetIntValue(TW_FLASH_ZIP_IN_PLACE) == 1 && strlen(zip_path_filename) > 6 && strncmp(zip_path_filename, "/cache", 6) != 0) {
-			copy = strdup(zip_path_filename);
-		} else {
-			copy = copy_sideloaded_package(zip_path_filename);
-			//unmount_current_storage();
-		}
-		if (copy) {
-			result = really_install_package(copy, 0);
-			free(copy);
-			//update_system_details();
-		} else {
-			result = INSTALL_ERROR;
-		}
-	}
-    //mount_current_storage();
-    //finish_recovery(NULL);
-	return result;
+    //ui->Print("Installing update...\n");
+    return TWtry_update_binary(path, &zip, wipe_cache);
 }
 
 //partial kangbang from system/vold
