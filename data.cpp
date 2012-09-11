@@ -51,9 +51,6 @@ extern "C"
 	void gui_notifyVarChange(const char *name, const char* value);
 
     int get_battery_level(void);
-    void get_device_id(void);
-
-    extern char device_id[15];
 
 	int __system(const char *command);
 }
@@ -67,6 +64,122 @@ map<string, string>                     DataManager::mConstValues;
 string                                  DataManager::mBackingFile;
 int                                     DataManager::mInitialized = 0;
 
+// Device ID functions
+void DataManager::sanitize_device_id(char* device_id) {
+	const char* whitelist ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-._";
+	char str[50];
+	char* c = str;
+
+	strcpy(str, device_id);
+	memset(device_id, 0, sizeof(device_id));
+	while (*c) {
+		if (strchr(whitelist, *c))
+			strncat(device_id, c, 1);
+		c++;
+	}
+	return;
+}
+
+#define CMDLINE_SERIALNO        "androidboot.serialno="
+#define CMDLINE_SERIALNO_LEN    (strlen(CMDLINE_SERIALNO))
+#define CPUINFO_SERIALNO        "Serial"
+#define CPUINFO_SERIALNO_LEN    (strlen(CPUINFO_SERIALNO))
+#define CPUINFO_HARDWARE        "Hardware"
+#define CPUINFO_HARDWARE_LEN    (strlen(CPUINFO_HARDWARE))
+
+void DataManager::get_device_id(void) {
+	FILE *fp;
+	char line[2048];
+	char hardware_id[32], device_id[64];
+	char* token;
+
+    // Assign a blank device_id to start with
+    device_id[0] = 0;
+#ifndef TW_FORCE_CPUINFO_FOR_DEVICE_ID
+    // First, try the cmdline to see if the serial number was supplied
+	fp = fopen("/proc/cmdline", "rt");
+	if (fp != NULL)
+    {
+        // First step, read the line. For cmdline, it's one long line
+        fgets(line, sizeof(line), fp);
+        fclose(fp);
+
+        // Now, let's tokenize the string
+        token = strtok(line, " ");
+
+        // Let's walk through the line, looking for the CMDLINE_SERIALNO token
+        while (token)
+        {
+            // We don't need to verify the length of token, because if it's too short, it will mismatch CMDLINE_SERIALNO at the NULL
+            if (memcmp(token, CMDLINE_SERIALNO, CMDLINE_SERIALNO_LEN) == 0)
+            {
+                // We found the serial number!
+                strcpy(device_id, token + CMDLINE_SERIALNO_LEN);
+				sanitize_device_id((char *)device_id);
+				mConstValues.insert(make_pair("device_id", device_id));
+                return;
+            }
+            token = strtok(NULL, " ");
+        }
+    }
+#endif
+	// Now we'll try cpuinfo for a serial number
+	fp = fopen("/proc/cpuinfo", "rt");
+	if (fp != NULL)
+    {
+		while (fgets(line, sizeof(line), fp) != NULL) { // First step, read the line.
+			if (memcmp(line, CPUINFO_SERIALNO, CPUINFO_SERIALNO_LEN) == 0)  // check the beginning of the line for "Serial"
+			{
+				// We found the serial number!
+				token = line + CPUINFO_SERIALNO_LEN; // skip past "Serial"
+				while ((*token > 0 && *token <= 32 ) || *token == ':') token++; // skip over all spaces and the colon
+				if (*token != 0) {
+                    token[30] = 0;
+					if (token[strlen(token)-1] == 10) { // checking for endline chars and dropping them from the end of the string if needed
+						memset(device_id, 0, sizeof(device_id));
+						strncpy(device_id, token, strlen(token) - 1);
+					} else {
+						strcpy(device_id, token);
+					}
+					LOGI("=> serial from cpuinfo: '%s'\n", device_id);
+					fclose(fp);
+					sanitize_device_id((char *)device_id);
+					mConstValues.insert(make_pair("device_id", device_id));
+					return;
+				}
+			} else if (memcmp(line, CPUINFO_HARDWARE, CPUINFO_HARDWARE_LEN) == 0) {// We're also going to look for the hardware line in cpuinfo and save it for later in case we don't find the device ID
+				// We found the hardware ID
+				token = line + CPUINFO_HARDWARE_LEN; // skip past "Hardware"
+				while ((*token > 0 && *token <= 32 ) || *token == ':')  token++; // skip over all spaces and the colon
+				if (*token != 0) {
+                    token[30] = 0;
+					if (token[strlen(token)-1] == 10) { // checking for endline chars and dropping them from the end of the string if needed
+                        memset(hardware_id, 0, sizeof(hardware_id));
+						strncpy(hardware_id, token, strlen(token) - 1);
+					} else {
+						strcpy(hardware_id, token);
+					}
+					LOGI("=> hardware id from cpuinfo: '%s'\n", hardware_id);
+				}
+			}
+		}
+		fclose(fp);
+    }
+
+	if (hardware_id[0] != 0) {
+		LOGW("\nusing hardware id for device id: '%s'\n", hardware_id);
+		strcpy(device_id, hardware_id);
+		sanitize_device_id((char *)device_id);
+		mConstValues.insert(make_pair("device_id", device_id));
+		return;
+	}
+
+    strcpy(device_id, "serialno");
+	LOGE("=> device id not found, using '%s'.", device_id);
+	mConstValues.insert(make_pair("device_id", device_id));
+    return;
+}
+
 int DataManager::ResetDefaults()
 {
     mValues.clear();
@@ -77,12 +190,13 @@ int DataManager::ResetDefaults()
 
 int DataManager::LoadValues(const string filename)
 {
-    string str;
+    string str, dev_id;
 
 	if (!mInitialized)
         SetDefaultValues();
 
-    // Save off the backing file for set operations
+    GetValue("device_id", dev_id);
+	// Save off the backing file for set operations
     mBackingFile = filename;
 
     // Read in the file, if possible
@@ -125,7 +239,7 @@ int DataManager::LoadValues(const string filename)
 
 	str = GetCurrentStoragePath();
 	str += "/TWRP/BACKUPS/";
-	str += device_id;
+	str += dev_id;
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
 
     return 0;
@@ -135,7 +249,7 @@ error:
     fclose(in);
 	str = GetCurrentStoragePath();
 	str += "/TWRP/BACKUPS/";
-	str += device_id;
+	str += dev_id;
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
     return -1;
 }
@@ -304,8 +418,11 @@ int DataManager::SetValue(const string varName, int value, int persist /* = 0 */
 		else
 			str = GetStrValue(TW_EXTERNAL_PATH);
 
+		string dev_id;
+
+		GetValue("device_id", dev_id);
 		str += "/TWRP/BACKUPS/";
-		str += device_id;
+		str += dev_id;
 
 		SetValue(TW_BACKUPS_FOLDER_VAR, str);
 	}
@@ -478,7 +595,11 @@ void DataManager::SetDefaultValues()
 	SetValue(TW_ZIP_LOCATION_VAR, str.c_str(), 1);
 #endif
 	str += "/TWRP/BACKUPS/";
-    str += device_id;
+
+	string dev_id;
+	GetValue("device_id", dev_id);
+
+    str += dev_id;
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
 
     if (strlen(EXPAND(SP1_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_DISPLAY_NAME)));

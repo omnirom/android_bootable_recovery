@@ -14,10 +14,6 @@ static RSAPublicKey* TWload_keys(const char* filename, int* numKeys);
 int TWverify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKeys);
 int TWinstall_zip(const char* path, int* wipe_cache);
 
-// Device ID variable / function
-extern char device_id[64];
-void get_device_id();
-
 void wipe_dalvik_cache();
 void wipe_battery_stats();
 void wipe_rotate_data();
