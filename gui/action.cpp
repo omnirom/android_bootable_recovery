@@ -28,7 +28,9 @@ extern "C" {
 #include "../recovery_ui.h"
 #include "../extra-functions.h"
 #include "../variables.h"
+#include "../twinstall.h"
 
+int TWinstall_zip(const char* path, int* wipe_cache);
 void fix_perms();
 void wipe_dalvik_cache(void);
 int check_backup_name(int show_error);
@@ -656,6 +658,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					ui_print("TWRP injection complete.\n");
 				}
 			}
+			PartitionManager.Update_System_Details();
 			operation_end(ret_val, simulate);
             return 0;
         }

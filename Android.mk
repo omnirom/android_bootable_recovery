@@ -35,7 +35,10 @@ LOCAL_SRC_FILES += \
     firmware.c \
     partition.cpp \
     partitionmanager.cpp \
-    mtdutils/mtdutils.c
+    mtdutils/mtdutils.c \
+    twinstall.cpp \
+    twmincrypt/twrsa.c \
+    twmincrypt/twsha.c
 
 ifeq ($(TARGET_RECOVERY_REBOOT_SRC),)
   LOCAL_SRC_FILES += reboot.c
@@ -64,7 +67,7 @@ LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES :=
 
 LOCAL_STATIC_LIBRARIES += libmtdutils
-LOCAL_STATIC_LIBRARIES += libext4_utils libminadbd libminzip libunz libmincrypt
+LOCAL_STATIC_LIBRARIES += libext4_utils libminadbd libminzip libunz
 LOCAL_STATIC_LIBRARIES += libminuitwrp libpixelflinger_static libpng libjpegtwrp libgui
 LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++
 

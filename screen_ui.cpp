@@ -36,7 +36,9 @@
 extern "C" {
 #include "minuitwrp/minui.h"
 int twgr_text(int x, int y, const char *s);
+#include "gui/gui.h"
 }
+#include "data.hpp"
 
 #define CHAR_WIDTH 10
 #define CHAR_HEIGHT 18
@@ -220,7 +222,7 @@ void ScreenRecoveryUI::update_screen_locked()
 // Updates only the progress bar, if possible, otherwise redraws the screen.
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::update_progress_locked()
-{
+{return;
     if (show_text || !pagesIdentical) {
         draw_screen_locked();    // Must redraw the whole screen
         pagesIdentical = true;
@@ -364,6 +366,9 @@ void ScreenRecoveryUI::SetProgressType(ProgressType type)
 
 void ScreenRecoveryUI::ShowProgress(float portion, float seconds)
 {
+	DataManager::SetValue("ui_progress_portion", (float)(portion * 100.0));
+    DataManager::SetValue("ui_progress_frames", seconds * 30);
+
     pthread_mutex_lock(&updateMutex);
     progressBarType = DETERMINATE;
     progressScopeStart += progressScopeSize;
@@ -377,6 +382,8 @@ void ScreenRecoveryUI::ShowProgress(float portion, float seconds)
 
 void ScreenRecoveryUI::SetProgress(float fraction)
 {
+	DataManager::SetValue("ui_progress", (float) (fraction * 100.0)); return;
+
     pthread_mutex_lock(&updateMutex);
     if (fraction < 0.0) fraction = 0.0;
     if (fraction > 1.0) fraction = 1.0;
@@ -399,6 +406,9 @@ void ScreenRecoveryUI::Print(const char *fmt, ...)
     va_start(ap, fmt);
     vsnprintf(buf, 256, fmt, ap);
     va_end(ap);
+
+	gui_print("%s", buf);
+	return;
 
     fputs(buf, stdout);
 

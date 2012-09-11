@@ -8,12 +8,6 @@ int __system(const char *command);
 FILE * __popen(const char *program, const char *type);
 int __pclose(FILE *iop);
 
-// Install Zip functions
-int TWtry_update_binary(const char *path, ZipArchive *zip, int* wipe_cache);
-static RSAPublicKey* TWload_keys(const char* filename, int* numKeys);
-int TWverify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKeys);
-int TWinstall_zip(const char* path, int* wipe_cache);
-
 void wipe_dalvik_cache();
 void wipe_battery_stats();
 void wipe_rotate_data();

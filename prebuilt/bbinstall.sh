@@ -1,5 +1,10 @@
 #!/sbin/sh
 
+if [ -f "/sbin/[" ];
+then
+exit
+fi
+
 for cmd in $(/sbin/busybox --list); do
 	/sbin/busybox ln -s /sbin/busybox /sbin/$cmd
 done

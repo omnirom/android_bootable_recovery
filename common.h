@@ -23,11 +23,12 @@
 extern "C" {
 #endif
 
-#define ui_print(...) fprintf(stdout, __VA_ARGS__)
-#define ui_print_overwrite(...) fprintf(stdout, __VA_ARGS__)
+#define ui_print(...) gui_print(__VA_ARGS__)
+#define ui_print_overwrite(...) gui_print_overwrite(__VA_ARGS__)
 
+#include "gui/gui.h"
 // TODO: restore ui_print for LOGE
-#define LOGE(...) fprintf(stdout, "E:" __VA_ARGS__)
+#define LOGE(...) gui_print("E:" __VA_ARGS__)
 #define LOGW(...) fprintf(stdout, "W:" __VA_ARGS__)
 #define LOGI(...) fprintf(stdout, "I:" __VA_ARGS__)
 

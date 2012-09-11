@@ -629,7 +629,7 @@ void TWPartitionManager::Update_System_Details(void) {
 	std::vector<TWPartition*>::iterator iter;
 	int data_size = 0;
 
-	LOGI("Updating system details...\n");
+	ui_print("Updating partition details...\n");
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Can_Be_Mounted) {
 			(*iter)->Update_Size(true);
@@ -696,7 +696,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 			DataManager::SetValue(TW_IS_DECRYPTED, 1);
 			dat->Is_Decrypted = true;
 			dat->Decrypted_Block_Device = crypto_blkdev;
-			LOGI("Data successfully decrypted, new block device: '%s'\n", crypto_blkdev);
+			ui_print("Data successfully decrypted, new block device: '%s'\n", crypto_blkdev);
 			// Sleep for a bit so that the device will be ready
 			sleep(1);
 			Update_System_Details();

@@ -38,6 +38,8 @@ extern "C" void gui_print(const char *fmt, ...)
     vsnprintf(buf, 512, fmt, ap);
     va_end(ap);
 
+	fputs(buf, stdout);
+
     char *start, *next;
 
 	if (buf[0] == '\n' && strlen(buf) < 2) {
@@ -74,6 +76,8 @@ extern "C" void gui_print_overwrite(const char *fmt, ...)
     va_start(ap, fmt);
     vsnprintf(buf, 512, fmt, ap);
     va_end(ap);
+
+	fputs(buf, stdout);
 
     // Pop the last line, and we can continue
     if (!gConsole.empty())   gConsole.pop_back();

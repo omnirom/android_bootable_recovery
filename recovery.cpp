@@ -54,7 +54,6 @@ extern "C" {
 #include "variables.h"
 
 TWPartitionManager PartitionManager;
-char device_id[64];
 
 struct selabel_handle *sehandle;
 
@@ -793,8 +792,8 @@ main(int argc, char **argv) {
     // set by init
     umask(0);
 
-    //Device* device = make_device();
-    //ui = device->GetUI();
+    Device* device = make_device();
+    ui = device->GetUI();
 
 	//ui->Init();
     //ui->SetBackground(RecoveryUI::NONE);
