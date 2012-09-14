@@ -32,7 +32,11 @@
 #include "bootloader.h"
 #include "common.h"
 #include "cutils/properties.h"
+#ifdef ANDROID_RB_RESTART
 #include "cutils/android_reboot.h"
+#else
+#include <sys/reboot.h>
+#endif
 #include "install.h"
 #include "minui/minui.h"
 #include "minzip/DirUtil.h"
@@ -929,6 +933,10 @@ main(int argc, char **argv) {
     // Otherwise, get ready to boot the main system...
     finish_recovery(send_intent);
     ui->Print("Rebooting...\n");
+#ifdef ANDROID_RB_RESTART
     android_reboot(ANDROID_RB_RESTART, 0, 0);
+#else
+	reboot(RB_AUTOBOOT);
+#endif
     return EXIT_SUCCESS;
 }

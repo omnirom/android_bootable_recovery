@@ -57,9 +57,11 @@ public:
 	virtual bool Wipe_Encryption();                                           // Ignores wipe commands for /data/media devices and formats the original block device
 	virtual void Check_FS_Type();                                             // Checks the fs type using blkid, does not do anything on MTD / yaffs2 because this crashes on some devices
 	virtual bool Update_Size(bool Display_Error);                             // Updates size information
+	virtual void Recreate_Media_Folder();                                     // Recreates the /data/media folder
 
 protected:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
+	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
 
 protected:
 	bool Can_Be_Mounted;                                                      // Indicates that the partition can be mounted
@@ -72,8 +74,10 @@ protected:
 	string Symlink_Path;                                                      // Symlink path (e.g. /data/media)
 	string Symlink_Mount_Point;                                               // /sdcard could be the symlink mount point for /data/media
 	string Mount_Point;                                                       // Mount point for this partition (e.g. /system or /data)
-	string Block_Device;                                                      // Block device (e.g. /dev/block/mmcblk1p1)
+	string Actual_Block_Device;                                               // Actual block device (one of primary, alternate, or decrypted)
+	string Primary_Block_Device;                                              // Block device (e.g. /dev/block/mmcblk1p1)
 	string Alternate_Block_Device;                                            // Alternate block device (e.g. /dev/block/mmcblk1)
+	string Decrypted_Block_Device;                                            // Decrypted block device available after decryption
 	bool Removable;                                                           // Indicates if this partition is removable -- affects how often we check overall size, if present, etc.
 	bool Is_Present;                                                          // Indicates if the partition is currently present as a block device
 	int Length;                                                               // Used by make_ext4fs to leave free space at the end of the partition block for things like a crypto footer
@@ -84,10 +88,10 @@ protected:
 	bool Can_Be_Encrypted;                                                    // This partition might be encrypted, affects error handling, can only be true if crypto support is compiled in
 	bool Is_Encrypted;                                                        // This partition is thought to be encrypted -- it wouldn't mount for some reason, only avialble with crypto support
 	bool Is_Decrypted;                                                        // This partition has successfully been decrypted
-	string Decrypted_Block_Device;                                            // Decrypted block device available after decryption
 	string Display_Name;                                                      // Display name for the GUI
 	string Backup_Name;                                                       // Backup name -- used for backup filenames
 	string Backup_FileName;                                                   // Actual backup filename
+	string MTD_Name;                                                          // Name of the partition for MTD devices
 	Backup_Method_enum Backup_Method;                                         // Method used for backup
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
 	bool Is_Storage;                                                          // Indicates if this partition is used for storage for backup, restore, and installing zips
@@ -110,7 +114,7 @@ private:
 	bool Wipe_EXT23();                                                        // Formats as ext3 or ext2
 	bool Wipe_EXT4();                                                         // Formats using ext4, uses make_ext4fs when present
 	bool Wipe_FAT();                                                          // Formats as FAT except that mkdosfs from busybox usually fails so oftentimes this is actually a rm -rf wipe
-	bool Wipe_YAFFS2();                                                       // Formats as yaffs2 for MTD memory types
+	bool Wipe_MTD();                                                       // Formats as yaffs2 for MTD memory types
 	bool Wipe_RMRF();                                                         // Uses rm -rf to wipe
 	bool Wipe_Data_Without_Wiping_Media();                                    // Uses rm -rf to wipe but does not wipe /data/media
 	bool Backup_Tar(string backup_folder);                                    // Backs up using tar for file systems
@@ -123,6 +127,7 @@ private:
 	bool Get_Size_Via_df(bool Display_Error);                                 // Get Partition size, used, and free space using df command
 	unsigned long long Get_Folder_Size(string Path, bool Display_Error);      // Gets the size of the files in a folder and all of its subfolders
 	bool Make_Dir(string Path, bool Display_Error);                           // Creates a directory if it doesn't already exist
+	bool Find_MTD_Block_Device(string MTD_Name);                              // Finds the mtd block device based on the name from the fstab
 
 friend class TWPartitionManager;
 };
@@ -157,10 +162,15 @@ public:
 	virtual int Wipe_By_Block(string Block);                                  // Wipes a partition based on block device
 	virtual int Wipe_By_Name(string Name);                                    // Wipes a partition based on display name
 	virtual int Factory_Reset();                                              // Performs a factory reset
+	virtual int Wipe_Dalvik_Cache();                                          // Wipes dalvik cache
+	virtual int Wipe_Rotate_Data();                                           // Wipes rotation data -- 
+	virtual int Wipe_Battery_Stats();                                         // Wipe battery stats -- /data/system/batterystats.bin
+	virtual int Format_Data();                                                // Really formats data on /data/media devices -- also removes encryption
+	virtual int Wipe_Media_From_Data();                                       // Removes and recreates the media folder on /data/media devices
 	virtual void Refresh_Sizes();                                             // Refreshes size data of partitions
 	virtual void Update_System_Details();                                     // Updates fstab, file systems, sizes, etc.
 	virtual int Decrypt_Device(string Password);                              // Attempt to decrypt any encrypted partitions
-	virtual string Get_Root_Path(string Path);                                // Trims any trailing folders or filenames from the path, also adds a leading / if not present
+	virtual int Fix_Permissions();                                            // Fixes permissions in /system and /data
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions

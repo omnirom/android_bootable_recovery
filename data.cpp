@@ -50,8 +50,6 @@ extern "C"
 
 	void gui_notifyVarChange(const char *name, const char* value);
 
-    int get_battery_level(void);
-
 	int __system(const char *command);
 }
 
@@ -761,8 +759,36 @@ int DataManager::GetMagicValue(const string varName, string& value)
     if (varName == "tw_battery")
     {
         char tmp[16];
+		static char charging = ' ';
+		static int lastVal = -1;
+		static time_t nextSecCheck = 0;
 
-        sprintf(tmp, "%i%%", get_battery_level());
+		struct timeval curTime;
+		gettimeofday(&curTime, NULL);
+		if (curTime.tv_sec > nextSecCheck)
+		{
+			char cap_s[4];
+			FILE * cap = fopen("/sys/class/power_supply/battery/capacity","rt");
+			if (cap){
+				fgets(cap_s, 4, cap);
+				fclose(cap);
+				lastVal = atoi(cap_s);
+				if (lastVal > 100)  lastVal = 101;
+				if (lastVal < 0)    lastVal = 0;
+			}
+			cap = fopen("/sys/class/power_supply/battery/status","rt");
+			if (cap) {
+				fgets(cap_s, 2, cap);
+				fclose(cap);
+				if (cap_s[0] == 'C')
+					charging = '+';
+				else
+					charging = ' ';
+			}
+			nextSecCheck = curTime.tv_sec + 60;
+		}
+
+		sprintf(tmp, "%i%%%c", lastVal, charging);
         value = tmp;
         return 0;
     }

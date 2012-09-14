@@ -42,8 +42,6 @@ int tw_reboot(RebootCommand command)
 	// Always force a sync before we reboot
     sync();
 
-    ensure_path_unmounted("/sdcard");
-
     switch (command)
     {
     case rb_current:

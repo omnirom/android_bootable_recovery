@@ -19,6 +19,7 @@
 #include <string>
 #include <sstream>
 #include "../partitions.hpp"
+#include "../twrp-functions.hpp"
 
 extern "C" {
 #include "../common.h"
@@ -31,7 +32,6 @@ extern "C" {
 #include "../twinstall.h"
 
 int TWinstall_zip(const char* path, int* wipe_cache);
-void fix_perms();
 void wipe_dalvik_cache(void);
 int check_backup_name(int show_error);
 void wipe_battery_stats(void);
@@ -667,62 +667,57 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
             operation_start("Format");
             DataManager::SetValue("tw_partition", arg);
 
-			int ret_val = 0;
+			int ret_val = false;
 
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
 				if (arg == "data")
-					PartitionManager.Factory_Reset();
+					ret_val = PartitionManager.Factory_Reset();
 				else if (arg == "battery")
-					wipe_battery_stats();
+					ret_val = PartitionManager.Wipe_Battery_Stats();
 				else if (arg == "rotate")
-					wipe_rotate_data();
+					ret_val = PartitionManager.Wipe_Rotate_Data();
 				else if (arg == "dalvik")
-					wipe_dalvik_cache();
+					ret_val = PartitionManager.Wipe_Dalvik_Cache();
 				else if (arg == "DATAMEDIA") {
-					LOGE("TODO: Implement formatting of datamedia device!\n");
-					ret_val = 1; //format_data_media();
-					int has_datamedia, dual_storage;
-
-					DataManager::GetValue(TW_HAS_DATA_MEDIA, has_datamedia);
-					DataManager::GetValue(TW_HAS_DUAL_STORAGE, dual_storage);
-					if (has_datamedia && !dual_storage) {
-						system("umount /sdcard");
-						system("mount /data/media /sdcard");
-					}
+					ret_val = PartitionManager.Format_Data();
 				} else if (arg == "INTERNAL") {
 					int has_datamedia, dual_storage;
 
 					DataManager::GetValue(TW_HAS_DATA_MEDIA, has_datamedia);
 					if (has_datamedia) {
-						PartitionManager.Mount_By_Path("/data", 1);
-						__system("rm -rf /data/media");
-						__system("cd /data && mkdir media && chmod 775 media");
-						DataManager::GetValue(TW_HAS_DUAL_STORAGE, dual_storage);
-						if (!dual_storage) {
-							system("umount /sdcard");
-							system("mount /data/media /sdcard");
-						}
+						ret_val = PartitionManager.Wipe_Media_From_Data();
 					} else {
-						ret_val = 0;
-						LOGE("Wipe not implemented yet!\n");
+						ret_val = PartitionManager.Wipe_By_Path(DataManager::GetSettingsStoragePath());
 					}
 				} else if (arg == "EXTERNAL") {
-					ret_val = 0;
-					LOGE("Wipe not implemented yet!\n");
-				} else
-					PartitionManager.Wipe_By_Path(arg);
+					string External_Path;
 
-				if (arg == "/sdcard") {
-					PartitionManager.Mount_By_Path("/sdcard", 1);
-					mkdir("/sdcard/TWRP", 0777);
-					DataManager::Flush();
+					DataManager::GetValue(TW_EXTERNAL_PATH, External_Path);
+					ret_val = PartitionManager.Wipe_By_Path(External_Path);
+				} else
+					ret_val = PartitionManager.Wipe_By_Path(arg);
+
+				if (arg == DataManager::GetSettingsStoragePath()) {
+					// If we wiped the settings storage path, recreate the TWRP folder and dump the settings
+					string Storage_Path = DataManager::GetSettingsStoragePath();
+
+					if (PartitionManager.Mount_By_Path(Storage_Path, true)) {
+						LOGI("Making TWRP folder and saving settings.\n");
+						Storage_Path += "/TWRP";
+						mkdir(Storage_Path.c_str(), 0777);
+						DataManager::Flush();
+					} else {
+						LOGE("Unable to recreate TWRP folder and save settings.\n");
+					}
 				}
 			}
 			PartitionManager.Update_System_Details();
-			if (ret_val != 0)
-				ret_val = 1;
+			if (ret_val)
+				ret_val = 0; // 0 is success
+			else
+				ret_val = 1; // 1 is failure
             operation_end(ret_val, simulate);
             return 0;
         }
@@ -770,7 +765,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else
-				fix_perms();
+				PartitionManager.Fix_Permissions();
 
 			LOGI("fix permissions DONE!\n");
 			operation_end(0, simulate);
@@ -870,7 +865,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else
-				install_htc_dumlock();
+				TWFunc::install_htc_dumlock();
 
 			operation_end(0, simulate);
 			return 0;
@@ -881,7 +876,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else
-				htc_dumlock_restore_original_boot();
+				TWFunc::htc_dumlock_restore_original_boot();
 
 			operation_end(0, simulate);
 			return 0;
@@ -892,7 +887,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else
-				htc_dumlock_reflash_recovery_to_boot();
+				TWFunc::htc_dumlock_reflash_recovery_to_boot();
 
 			operation_end(0, simulate);
 			return 0;

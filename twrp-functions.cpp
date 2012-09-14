@@ -1,0 +1,164 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/vfs.h>
+#include <unistd.h>
+#include <vector>
+#include <dirent.h>
+#include <time.h>
+
+#include "twrp-functions.hpp"
+#include "partitions.hpp"
+#include "common.h"
+extern "C" {
+	#include "extra-functions.h"
+	int __system(const char *command);
+}
+
+/*  Checks md5 for a path
+    Return values:
+        -1 : MD5 does not exist
+        0 : Failed
+        1 : Success */
+int TWFunc::Check_MD5(string File) {
+	int ret;
+	string Command, DirPath, MD5_File, Sline, Filename, MD5_File_Filename, OK;
+	char line[255];
+	size_t pos;
+
+	MD5_File = File + ".md5";
+	if (access(MD5_File.c_str(), F_OK ) != -1) {
+		DirPath = Get_Path(File);
+		chdir(DirPath.c_str());
+		MD5_File = Get_Filename(MD5_File);
+		Command = "/sbin/busybox md5sum -c '" + MD5_File + "' > /tmp/md5output";
+		__system(Command.c_str());
+		FILE * cs = fopen("/tmp/md5output", "r");
+		if (cs == NULL) {
+			LOGE("Unable to open md5 output file.\n");
+			return 0;
+		}
+
+		fgets(line, sizeof(line), cs);
+
+		Sline = line;
+		pos = Sline.find(":");
+		if (pos != string::npos) {
+			Filename = Get_Filename(File);
+			MD5_File_Filename = Sline.substr(0, pos);
+			OK = Sline.substr(pos + 2, Sline.size() - pos - 2);
+			if (Filename == MD5_File_Filename && (OK == "OK" || OK == "OK\n")) {
+				//MD5 is good, return 1
+				ret = 1;
+			} else {
+				// MD5 is bad, return 0
+				ret = 0;
+			}
+		} else {
+			// MD5 is bad, return 0
+			ret = 0;
+		}
+		fclose(cs);
+	} else {
+		//No md5 file, return -1
+		ret = -1;
+	}
+
+    return ret;
+}
+
+// Returns "file.name" from a full /path/to/file.name
+string TWFunc::Get_Filename(string Path) {
+	size_t pos = Path.find_last_of("/");
+	if (pos != string::npos) {
+		string Filename;
+		Filename = Path.substr(pos + 1, Path.size() - pos - 1);
+		return Filename;
+	} else
+		return Path;
+}
+
+// Returns "/path/to/" from a full /path/to/file.name
+string TWFunc::Get_Path(string Path) {
+	size_t pos = Path.find_last_of("/");
+	if (pos != string::npos) {
+		string Pathonly;
+		Pathonly = Path.substr(0, pos + 1);
+		return Pathonly;
+	} else
+		return Path;
+}
+
+// Returns "/path" from a full /path/to/file.name
+string TWFunc::Get_Root_Path(string Path) {
+	string Local_Path = Path;
+
+	// Make sure that we have a leading slash
+	if (Local_Path.substr(0, 1) != "/")
+		Local_Path = "/" + Local_Path;
+
+	// Trim the path to get the root path only
+	size_t position = Local_Path.find("/", 2);
+	if (position != string::npos) {
+		Local_Path.resize(position);
+	}
+	return Local_Path;
+}
+
+void TWFunc::install_htc_dumlock(void) {
+	struct statfs fs1, fs2;
+	int need_libs = 0;
+
+	if (!PartitionManager.Mount_By_Path("/system", true))
+		return;
+
+	if (!PartitionManager.Mount_By_Path("/data", true))
+		return;
+
+	ui_print("Installing HTC Dumlock to system...\n");
+	__system("cp /res/htcd/htcdumlocksys /system/bin/htcdumlock && chmod 755 /system/bin/htcdumlock");
+	if (statfs("/system/bin/flash_image", &fs1) != 0) {
+		ui_print("Installing flash_image...\n");
+		__system("cp /res/htcd/flash_imagesys /system/bin/flash_image && chmod 755 /system/bin/flash_image");
+		need_libs = 1;
+	} else
+		ui_print("flash_image is already installed, skipping...\n");
+	if (statfs("/system/bin/dump_image", &fs2) != 0) {
+		ui_print("Installing dump_image...\n");
+		__system("cp /res/htcd/dump_imagesys /system/bin/dump_image && chmod 755 /system/bin/dump_image");
+		need_libs = 1;
+	} else
+		ui_print("dump_image is already installed, skipping...\n");
+	if (need_libs) {
+		ui_print("Installing libs needed for flash_image and dump_image...\n");
+		__system("cp /res/htcd/libbmlutils.so /system/lib && chmod 755 /system/lib/libbmlutils.so");
+		__system("cp /res/htcd/libflashutils.so /system/lib && chmod 755 /system/lib/libflashutils.so");
+		__system("cp /res/htcd/libmmcutils.so /system/lib && chmod 755 /system/lib/libmmcutils.so");
+		__system("cp /res/htcd/libmtdutils.so /system/lib && chmod 755 /system/lib/libmtdutils.so");
+	}
+	ui_print("Installing HTC Dumlock app...\n");
+	mkdir("/data/app", 0777);
+	__system("rm /data/app/com.teamwin.htcdumlock*");
+	__system("cp /res/htcd/HTCDumlock.apk /data/app/com.teamwin.htcdumlock.apk");
+	sync();
+	ui_print("HTC Dumlock is installed.\n");
+}
+
+void TWFunc::htc_dumlock_restore_original_boot(void) {
+	if (!PartitionManager.Mount_By_Path("/sdcard", true))
+		return;
+
+	ui_print("Restoring original boot...\n");
+	__system("htcdumlock restore");
+	ui_print("Original boot restored.\n");
+}
+
+void TWFunc::htc_dumlock_reflash_recovery_to_boot(void) {
+	if (!PartitionManager.Mount_By_Path("/sdcard", true))
+		return;
+
+	ui_print("Reflashing recovery to boot...\n");
+	__system("htcdumlock recovery noreboot");
+	ui_print("Recovery is flashed to boot.\n");
+}

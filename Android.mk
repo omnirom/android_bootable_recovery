@@ -38,7 +38,8 @@ LOCAL_SRC_FILES += \
     mtdutils/mtdutils.c \
     twinstall.cpp \
     twmincrypt/twrsa.c \
-    twmincrypt/twsha.c
+    twmincrypt/twsha.c \
+    twrp-functions.cpp
 
 ifeq ($(TARGET_RECOVERY_REBOOT_SRC),)
   LOCAL_SRC_FILES += reboot.c

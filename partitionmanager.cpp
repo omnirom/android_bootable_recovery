@@ -34,6 +34,12 @@
 #include "common.h"
 #include "partitions.hpp"
 #include "data.hpp"
+#include "twrp-functions.hpp"
+
+extern "C" {
+	#include "extra-functions.h"
+	int __system(const char *command);
+}
 
 #ifdef TW_INCLUDE_CRYPTO
 	#ifdef TW_INCLUDE_JB_CRYPTO
@@ -89,10 +95,7 @@ int TWPartitionManager::Write_Fstab(void) {
 	}
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Can_Be_Mounted) {
-			if ((*iter)->Is_Decrypted)
-				Line = (*iter)->Decrypted_Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw\n";
-			else
-				Line = (*iter)->Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw\n";
+			Line = (*iter)->Actual_Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw\n";
 			fputs(Line.c_str(), fp);
 			// Handle subpartition tracking
 			if ((*iter)->Is_SubPartition) {
@@ -112,7 +115,7 @@ int TWPartitionManager::Mount_By_Path(string Path, bool Display_Error) {
 	std::vector<TWPartition*>::iterator iter;
 	int ret = false;
 	bool found = false;
-	string Local_Path = Get_Root_Path(Path);
+	string Local_Path = TWFunc::Get_Root_Path(Path);
 
 	// Iterate through all partitions
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
@@ -181,7 +184,7 @@ int TWPartitionManager::UnMount_By_Path(string Path, bool Display_Error) {
 	std::vector<TWPartition*>::iterator iter;
 	int ret = false;
 	bool found = false;
-	string Local_Path = Get_Root_Path(Path);
+	string Local_Path = TWFunc::Get_Root_Path(Path);
 
 	// Iterate through all partitions
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
@@ -294,7 +297,7 @@ int TWPartitionManager::Mount_Settings_Storage(bool Display_Error) {
 
 TWPartition* TWPartitionManager::Find_Partition_By_Path(string Path) {
 	std::vector<TWPartition*>::iterator iter;
-	string Local_Path = Get_Root_Path(Path);
+	string Local_Path = TWFunc::Get_Root_Path(Path);
 
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path))
@@ -307,7 +310,7 @@ TWPartition* TWPartitionManager::Find_Partition_By_Block(string Block) {
 	std::vector<TWPartition*>::iterator iter;
 
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Block_Device == Block || (*iter)->Alternate_Block_Device == Block || ((*iter)->Is_Decrypted && (*iter)->Decrypted_Block_Device == Block))
+		if ((*iter)->Primary_Block_Device == Block || (*iter)->Alternate_Block_Device == Block || ((*iter)->Is_Decrypted && (*iter)->Decrypted_Block_Device == Block))
 			return (*iter);
 	}
 	return NULL;
@@ -331,7 +334,7 @@ int TWPartitionManager::Run_Backup(string Backup_Name) {
 int TWPartitionManager::Run_Restore(string Restore_Name) {
 	int check;
 	TWPartition* Part;
-
+LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
 	DataManager::GetValue(TW_RESTORE_SYSTEM_VAR, check);
 	if (check > 0) {
 		Part = Find_Partition_By_Path("/system");
@@ -389,7 +392,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 #ifdef SP1_NAME
 	DataManager::GetValue(TW_RESTORE_SP1_VAR, check);
 	if (check > 0) {
-		Part = Find_Partition_By_Path(Get_Root_Path(SP1_NAME));
+		Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP1_NAME));
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
 				return false;
@@ -400,7 +403,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 #ifdef SP2_NAME
 	DataManager::GetValue(TW_RESTORE_SP2_VAR, check);
 	if (check > 0) {
-		Part = Find_Partition_By_Path(Get_Root_Path(SP2_NAME));
+		Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP2_NAME));
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
 				return false;
@@ -411,7 +414,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 #ifdef SP3_NAME
 	DataManager::GetValue(TW_RESTORE_SP3_VAR, check);
 	if (check > 0) {
-		Part = Find_Partition_By_Path(Get_Root_Path(SP3_NAME));
+		Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP3_NAME));
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
 				return false;
@@ -518,15 +521,15 @@ void TWPartitionManager::Set_Restore_Files(string Restore_Name) {
 		if (Part->Mount_Point == "/sd-ext")
 			tw_restore_sdext = 1;
 #ifdef SP1_NAME
-		if (Part->Mount_Point == Get_Root_Path(SP1_Name))
+		if (Part->Mount_Point == TWFunc::Get_Root_Path(SP1_Name))
 			tw_restore_sp1 = 1;
 #endif
 #ifdef SP2_NAME
-		if (Part->Mount_Point == Get_Root_Path(SP2_Name))
+		if (Part->Mount_Point == TWFunc::Get_Root_Path(SP2_Name))
 			tw_restore_sp2 = 1;
 #endif
 #ifdef SP3_NAME
-		if (Part->Mount_Point == Get_Root_Path(SP3_Name))
+		if (Part->Mount_Point == TWFunc::Get_Root_Path(SP3_Name))
 			tw_restore_sp3 = 1;
 #endif
 	}
@@ -551,7 +554,7 @@ int TWPartitionManager::Wipe_By_Path(string Path) {
 	std::vector<TWPartition*>::iterator iter;
 	int ret = false;
 	bool found = false;
-	string Local_Path = Get_Root_Path(Path);
+	string Local_Path = TWFunc::Get_Root_Path(Path);
 
 	// Iterate through all partitions
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
@@ -612,12 +615,107 @@ int TWPartitionManager::Factory_Reset(void) {
 	int ret = true;
 
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Wipe_During_Factory_Reset) {
+		if ((*iter)->Wipe_During_Factory_Reset && (*iter)->Is_Present) {
 			if (!(*iter)->Wipe())
 				ret = false;
 		}
 	}
 	return ret;
+}
+
+int TWPartitionManager::Wipe_Dalvik_Cache(void) {
+	struct stat st;
+
+	if (!Mount_By_Path("/data", true))
+		return false;
+
+	if (!Mount_By_Path("/cache", true))
+		return false;
+
+	ui_print("\nWiping Dalvik Cache Directories...\n");
+	__system("rm -rf /data/dalvik-cache");
+	ui_print("Cleaned: /data/dalvik-cache...\n");
+	__system("rm -rf /cache/dalvik-cache");
+	ui_print("Cleaned: /cache/dalvik-cache...\n");
+	__system("rm -rf /cache/dc");
+	ui_print("Cleaned: /cache/dc\n");
+
+	TWPartition* sdext = Find_Partition_By_Path("/sd-ext");
+	if (sdext != NULL) {
+		if (sdext->Is_Present && sdext->Mount(false)) {
+			if (stat("/sd-ext/dalvik-cache", &st) == 0) {
+                __system("rm -rf /sd-ext/dalvik-cache");
+        	    ui_print("Cleaned: /sd-ext/dalvik-cache...\n");
+    	    }
+        }
+	}
+	ui_print("-- Dalvik Cache Directories Wipe Complete!\n\n");
+	return true;
+}
+
+int TWPartitionManager::Wipe_Rotate_Data(void) {
+	if (!Mount_By_Path("/data", true))
+		return false;
+
+	__system("rm -r /data/misc/akmd*");
+	__system("rm -r /data/misc/rild*");
+	ui_print("Rotation data wiped.\n");
+	return true;
+}
+
+int TWPartitionManager::Wipe_Battery_Stats(void) {
+	struct stat st;
+
+	if (!Mount_By_Path("/data", true))
+		return false;
+
+	if (0 != stat("/data/system/batterystats.bin", &st)) {
+		ui_print("No Battery Stats Found. No Need To Wipe.\n");
+	} else {
+		remove("/data/system/batterystats.bin");
+		ui_print("Cleared battery stats.\n");
+	}
+	return true;
+}
+
+int TWPartitionManager::Format_Data(void) {
+	TWPartition* dat = Find_Partition_By_Path("/data");
+
+	if (dat != NULL) {
+		if (!dat->UnMount(true))
+			return false;
+
+		return dat->Wipe_Encryption();
+	} else {
+		LOGE("Unable to locate /data.\n");
+		return false;
+	}
+	return false;
+}
+
+int TWPartitionManager::Wipe_Media_From_Data(void) {
+	TWPartition* dat = Find_Partition_By_Path("/data");
+
+	if (dat != NULL) {
+		if (!dat->Has_Data_Media) {
+			LOGE("This device does not have /data/media\n");
+			return false;
+		}
+		if (!dat->Mount(true))
+			return false;
+
+		ui_print("Wiping internal storage -- /data/media...\n");
+		__system("rm -rf /data/media");
+		__system("cd /data && mkdir media && chmod 775 media");
+		if (dat->Has_Data_Media) {
+			dat->Recreate_Media_Folder();
+		}
+		return true;
+	} else {
+		LOGE("Unable to locate /data.\n");
+		return false;
+	}
+	return false;
 }
 
 void TWPartitionManager::Refresh_Sizes(void) {
@@ -692,7 +790,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	} else {
 		TWPartition* dat = Find_Partition_By_Path("/data");
 		if (dat != NULL) {
-			DataManager::SetValue(TW_DATA_BLK_DEVICE, dat->Block_Device);
+			DataManager::SetValue(TW_DATA_BLK_DEVICE, dat->Primary_Block_Device);
 			DataManager::SetValue(TW_IS_DECRYPTED, 1);
 			dat->Is_Decrypted = true;
 			dat->Decrypted_Block_Device = crypto_blkdev;
@@ -711,17 +809,15 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	return 1;
 }
 
-string TWPartitionManager::Get_Root_Path(string Path) {
-	string Local_Path = Path;
+int TWPartitionManager::Fix_Permissions(void) {
+	if (!Mount_By_Path("/data", true))
+		return false;
 
-	// Make sure that we have a leading slash
-	if (Local_Path.substr(0, 1) != "/")
-		Local_Path = "/" + Local_Path;
+	if (!Mount_By_Path("/system", true))
+		return false;
 
-	// Trim the path to get the root path only
-	size_t position = Local_Path.find("/", 2);
-	if (position != string::npos) {
-		Local_Path.resize(position);
-	}
-	return Local_Path;
+	ui_print("Fixing Permissions\nThis may take a few minutes.\n");
+	__system("./sbin/fix_permissions.sh");
+	ui_print("Done.\n\n");
+	return true;
 }

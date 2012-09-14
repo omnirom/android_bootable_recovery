@@ -28,7 +28,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifdef ANDROID_RB_RESTART
 #include <cutils/android_reboot.h>
+#endif
 
 #include "common.h"
 #include "device.h"
@@ -131,7 +133,9 @@ void RecoveryUI::process_key(int key_code, int updown) {
             break;
 
           case RecoveryUI::REBOOT:
+#ifdef ANDROID_RB_RESTART
             android_reboot(ANDROID_RB_RESTART, 0, 0);
+#endif
             break;
 
           case RecoveryUI::ENQUEUE:

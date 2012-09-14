@@ -39,6 +39,7 @@
 #include "variables.h"
 #include "data.hpp"
 #include "partitions.hpp"
+#include "twrp-functions.hpp"
 
 extern "C" {
 #include "extra-functions.h"
@@ -422,98 +423,6 @@ exit:
     return NULL;
 }
 
-char* get_path (char* path) {
-        char *s;
-
-        /* Go to the end of the string.  */
-        s = path + strlen(path) - 1;
-
-        /* Strip off trailing /s (unless it is also the leading /).  */
-        while (path < s && s[0] == '/')
-                s--;
-
-        /* Strip the last component.  */
-        while (path <= s && s[0] != '/')
-                s--;
-
-        while (path < s && s[0] == '/')
-                s--;
-
-        if (s < path)
-                return (char*)(".");
-
-        s[1] = '\0';
-	return path;
-}
-
-/*
-    Checks md5 for a path
-    Return values:
-        -1 : MD5 does not exist
-        0 : Failed
-        1 : Success
-*/
-int check_md5(const char* path) {
-	FILE* fp;
-	char command[255], line[512], actual_md5[512], md5[512];
-	char md5file[PATH_MAX + 40];
-	char *ptr;
-	unsigned int line_len, index = 0;
-	struct stat st;
-
-	// Check to see if the filename.zip.md5 file exists
-	strcpy(md5file, path);
-    strcat(md5file, ".md5");
-	if (stat(md5file, &st) != 0)
-		return -1; // no MD5 file found
-
-	// Dump the md5 of the zip to a text file for reading
-	sprintf(command, "md5sum '%s' > /tmp/md5output.txt", path);
-	__system(command);
-	fp = fopen("/tmp/md5output.txt", "rt");
-	if (fp == NULL) {
-		LOGI("Unable to open /tmp/md5output.txt.\n");
-		return false;
-	}
-
-	while (fgets(line, sizeof(line), fp) != NULL)
-	{
-		line_len = strlen(line);
-		for (index = 0; index < line_len; index++) {
-			if (line[index] <= 32)
-				line[index] = '\0';
-		}
-		strcpy(actual_md5, line);
-		break;
-	}
-	fclose(fp);
-
-	// Read the filename.zip.md5 file
-	fp = fopen(md5file, "rt");
-	if (fp == NULL) {
-		LOGI("Unable to open '%s'.\n", md5file);
-		return false;
-	}
-
-	while (fgets(line, sizeof(line), fp) != NULL)
-	{
-		line_len = strlen(line);
-		for (index = 0; index < line_len; index++) {
-			if (line[index] <= 32)
-				line[index] = '\0';
-		}
-		strcpy(md5, line);
-		break;
-	}
-	fclose(fp);
-
-	// Comare the 2 MD5 values
-	if (strcmp(actual_md5, md5) == 0)
-		return 1;
-	LOGI("MD5 did not match: '%s' != '%s'\n", actual_md5, md5);
-	return 0;
-}
-
 extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 	int err, zip_verify, md5_return, md5_verify;
 
@@ -525,7 +434,7 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 	}
 
 	ui_print("Checking for MD5 file...\n");
-	md5_return = check_md5(path);
+	md5_return = TWFunc::Check_MD5(path);
 	if (md5_return == 0) {
 		// MD5 did not match.
 		LOGE("Zip MD5 does not match.\nUnable to install zip.\n");
