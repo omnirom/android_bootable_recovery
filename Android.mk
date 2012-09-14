@@ -37,8 +37,6 @@ LOCAL_SRC_FILES += \
     partitionmanager.cpp \
     mtdutils/mtdutils.c \
     twinstall.cpp \
-    twmincrypt/twrsa.c \
-    twmincrypt/twsha.c \
     twrp-functions.cpp
 
 ifeq ($(TARGET_RECOVERY_REBOOT_SRC),)
@@ -70,7 +68,7 @@ LOCAL_SHARED_LIBRARIES :=
 LOCAL_STATIC_LIBRARIES += libmtdutils
 LOCAL_STATIC_LIBRARIES += libext4_utils libminadbd libminzip libunz
 LOCAL_STATIC_LIBRARIES += libminuitwrp libpixelflinger_static libpng libjpegtwrp libgui
-LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++
+LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libmincrypt
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_CFLAGS += -DUSE_EXT4
@@ -254,7 +252,9 @@ include $(commands_recovery_local_path)/libjpegtwrp/Android.mk \
     $(commands_recovery_local_path)/mtdutils/Android.mk \
     $(commands_recovery_local_path)/pigz/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptsettings/Android.mk \
-    $(commands_recovery_local_path)/libcrecovery/Android.mk
+    $(commands_recovery_local_path)/libcrecovery/Android.mk \
+    $(commands_recovery_local_path)/twmincrypt/Android.mk
+
 
 ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/fs_mgr/Android.mk
