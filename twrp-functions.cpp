@@ -7,6 +7,7 @@
 #include <vector>
 #include <dirent.h>
 #include <time.h>
+#include <errno.h>
 
 #include "twrp-functions.hpp"
 #include "partitions.hpp"
@@ -161,4 +162,74 @@ void TWFunc::htc_dumlock_reflash_recovery_to_boot(void) {
 	ui_print("Reflashing recovery to boot...\n");
 	__system("htcdumlock recovery noreboot");
 	ui_print("Recovery is flashed to boot.\n");
+}
+
+int TWFunc::Recursive_Mkdir(string Path) {
+	string pathCpy = Path;
+	string wholePath;
+	size_t pos = pathCpy.find("/", 2);
+
+	while (pos != string::npos)
+	{
+		wholePath = pathCpy.substr(0, pos);
+		if (mkdir(wholePath.c_str(), 0777) && errno != EEXIST) {
+			LOGE("Unable to create folder: %s  (errno=%d)\n", wholePath.c_str(), errno);
+			return false;
+		}
+
+		pos = pathCpy.find("/", pos + 1);
+	}
+	if (mkdir(wholePath.c_str(), 0777) && errno != EEXIST)
+		return false;
+	return true;
+}
+
+unsigned long long TWFunc::Get_Folder_Size(string Path, bool Display_Error) {
+	DIR* d;
+	struct dirent* de;
+	struct stat st;
+	char path2[1024], filename[1024];
+	unsigned long long dusize = 0;
+
+	// Make a copy of path in case the data in the pointer gets overwritten later
+	strcpy(path2, Path.c_str());
+
+	d = opendir(path2);
+	if (d == NULL)
+	{
+		LOGE("error opening '%s'\n", path2);
+		return 0;
+	}
+
+	while ((de = readdir(d)) != NULL)
+	{
+		if (de->d_type == DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
+		{
+			strcpy(filename, path2);
+			strcat(filename, "/");
+			strcat(filename, de->d_name);
+			dusize += Get_Folder_Size(filename, Display_Error);
+		}
+		else if (de->d_type == DT_REG)
+		{
+			strcpy(filename, path2);
+			strcat(filename, "/");
+			strcat(filename, de->d_name);
+			stat(filename, &st);
+			dusize += (unsigned long long)(st.st_size);
+		}
+	}
+	closedir(d);
+
+	return dusize;
+}
+
+bool TWFunc::Path_Exists(string Path) {
+	// Check to see if the Path exists
+	struct statfs st;
+
+	if (statfs(Path.c_str(), &st) != 0)
+		return false;
+	else
+		return true;
 }

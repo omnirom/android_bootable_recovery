@@ -51,6 +51,7 @@ public:
 	virtual bool UnMount(bool Display_Error);                                 // Unmounts the partition if it is mounted
 	virtual bool Wipe();                                                      // Wipes the partition
 	virtual bool Backup(string backup_folder);                                // Backs up the partition to the folder specified
+	virtual bool Check_MD5(string restore_folder);                            // Checks MD5 of a backup
 	virtual bool Restore(string restore_folder);                              // Restores the partition using the backup folder provided
 	virtual string Backup_Method_By_Name();                                   // Returns a string of the backup method for human readable output
 	virtual bool Decrypt(string Password);                                    // Decrypts the partition, return 0 for failure and -1 for success
@@ -106,7 +107,6 @@ private:
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
 	void Setup_File_System(bool Display_Error);                               // Sets defaults for a file system partition
 	void Setup_Image(bool Display_Error);                                     // Sets defaults for an image partition
-	bool Path_Exists(string Path);                                            // Checks to see if the Path exists in the file system
 	void Find_Real_Block_Device(string& Block_Device, bool Display_Error);    // Checks the block device given and follows symlinks until it gets to the real block device
 	bool Find_Partition_Size();                                               // Finds the partition size from /proc/partitions
 	unsigned long long Get_Size_Via_du(string Path, bool Display_Error);      // Uses du to get sizes
@@ -125,7 +125,6 @@ private:
 	bool Restore_Flash_Image(string restore_folder);                          // Restore using flash_image for MTD memory types
 	bool Get_Size_Via_statfs(bool Display_Error);                             // Get Partition size, used, and free space using statfs
 	bool Get_Size_Via_df(bool Display_Error);                                 // Get Partition size, used, and free space using df command
-	unsigned long long Get_Folder_Size(string Path, bool Display_Error);      // Gets the size of the files in a folder and all of its subfolders
 	bool Make_Dir(string Path, bool Display_Error);                           // Creates a directory if it doesn't already exist
 	bool Find_MTD_Block_Device(string MTD_Name);                              // Finds the mtd block device based on the name from the fstab
 
@@ -155,7 +154,7 @@ public:
 	TWPartition* Find_Partition_By_Path(string Path);                         // Returns a pointer to a partition based on path
 	TWPartition* Find_Partition_By_Block(string Block);                       // Returns a pointer to a partition based on block device
 	TWPartition* Find_Partition_By_Name(string Block);                        // Returns a pointer to a partition based on name
-	virtual int Run_Backup(string Backup_Name);                               // Initiates a backup in the current storage
+	virtual int Run_Backup();                                                 // Initiates a backup in the current storage
 	virtual int Run_Restore(string Restore_Name);                             // Restores a backup
 	virtual void Set_Restore_Files(string Restore_Name);                      // Used to gather a list of available backup partitions for the user to select for a restore
 	virtual int Wipe_By_Path(string Path);                                    // Wipes a partition based on path
@@ -171,6 +170,10 @@ public:
 	virtual void Update_System_Details();                                     // Updates fstab, file systems, sizes, etc.
 	virtual int Decrypt_Device(string Password);                              // Attempt to decrypt any encrypted partitions
 	virtual int Fix_Permissions();                                            // Fixes permissions in /system and /data
+
+private:
+	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made
+	bool Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time);
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions

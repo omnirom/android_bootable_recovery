@@ -117,6 +117,9 @@ int TWPartitionManager::Mount_By_Path(string Path, bool Display_Error) {
 	bool found = false;
 	string Local_Path = TWFunc::Get_Root_Path(Path);
 
+	if (Local_Path == "/tmp")
+		return true;
+
 	// Iterate through all partitions
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path)) {
@@ -326,17 +329,443 @@ TWPartition* TWPartitionManager::Find_Partition_By_Name(string Name) {
 	return NULL;
 }
 
-int TWPartitionManager::Run_Backup(string Backup_Name) {
-	LOGI("STUB TWPartitionManager::Run_Backup, Backup_Name: '%s'\n", Backup_Name.c_str());
-	return 1;
+bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename)
+{
+	char command[512];
+	string Full_File = Backup_Folder + Backup_Filename;
+
+	if (!generate_md5) {
+		LOGI("MD5 disabled\n");
+		return true;
+	}
+
+	ui_print(" * Generating md5...\n");
+
+	if (TWFunc::Path_Exists(Full_File)) {
+		sprintf(command, "cd '%s' && md5sum %s > %s.md5",Backup_Folder.c_str(), Backup_Filename.c_str(), Backup_Filename.c_str());
+		LOGI("MD5 command is: '%s'\n", command);
+		if (system(command) == 0) {
+			ui_print("....MD5 Created.\n");
+			return true;
+		} else {
+			ui_print("....MD5 Error.\n");
+			return false;
+		}
+	} else {
+		char filename[512];
+		int index = 0;
+
+		sprintf(filename, "%s%03i", Full_File.c_str(), index);
+		while (TWFunc::Path_Exists(filename)) {
+			sprintf(command, "cd '%s' && md5sum %s%03i > %s%03i.md5",Backup_Folder.c_str(), Backup_Filename.c_str(), index, Backup_Filename.c_str(), index);
+			LOGI("MD5 command is: '%s'\n", command);
+			if (system(command) == 0) {
+				ui_print("....MD5 Created.\n");
+			} else {
+				ui_print("....MD5 Error.\n");
+				return false;
+			}
+			index++;
+		}
+		if (index == 0) {
+			LOGE("Backup file: '%s' not found!\n", filename);
+			return false;
+		}
+	}
+	return true;
+}
+
+bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time) {
+	time_t start, stop;
+
+	if (Part == NULL)
+		return true;
+
+	time(&start);
+
+	if (Part->Backup(Backup_Folder)) {
+		time(&stop);
+		if (Part->Backup_Method == 1) {
+			*file_bytes_remaining -= Part->Backup_Size;
+			*file_time += (int) difftime(stop, start);
+		} else {
+			*img_bytes_remaining -= Part->Backup_Size;
+			*img_time += (int) difftime(stop, start);
+		}
+		return Make_MD5(generate_md5, Backup_Folder, Part->Backup_FileName);
+	} else {
+		return false;
+	}
+}
+
+int TWPartitionManager::Run_Backup(void) {
+	int check, do_md5, partition_count = 0;
+	string Backup_Folder, Backup_Name, Full_Backup_Path;
+	unsigned long long total_bytes = 0, file_bytes = 0, img_bytes = 0, free_space = 0, img_bytes_remaining, file_bytes_remaining;
+	unsigned long img_time = 0, file_time = 0;
+	TWPartition* backup_sys = NULL;
+	TWPartition* backup_data = NULL;
+	TWPartition* backup_cache = NULL;
+	TWPartition* backup_recovery = NULL;
+	TWPartition* backup_boot = NULL;
+	TWPartition* backup_andsec = NULL;
+	TWPartition* backup_sdext = NULL;
+	TWPartition* backup_sp1 = NULL;
+	TWPartition* backup_sp2 = NULL;
+	TWPartition* backup_sp3 = NULL;
+	TWPartition* storage = NULL;
+	struct tm *t;
+	time_t start, stop, seconds, total_start, total_stop;
+	seconds = time(0);
+    t = localtime(&seconds);
+
+	time(&total_start);
+
+	Update_System_Details();
+
+	if (!Mount_Current_Storage(true))
+		return false;
+
+	DataManager::GetValue(TW_SKIP_MD5_GENERATE_VAR, do_md5);
+	if (do_md5 != 0) {
+		LOGI("MD5 creation enabled.\n");
+		do_md5 = true;
+	}
+	DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, Backup_Folder);
+	DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
+	if (Backup_Name == "(Current Date)" || Backup_Name == "0") {
+		char timestamp[255];
+		sprintf(timestamp,"%04d-%02d-%02d--%02d-%02d-%02d",t->tm_year+1900,t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec);
+		Backup_Name = timestamp;
+	}
+	LOGI("Backup Name is: '%s'\n", Backup_Name.c_str());
+	Full_Backup_Path = Backup_Folder + "/" + Backup_Name + "/";
+	LOGI("Full_Backup_Path is: '%s'\n", Full_Backup_Path.c_str());
+
+	ui_print("\n[BACKUP STARTED]\n");
+    ui_print(" * Backup Folder: %s\n", Full_Backup_Path.c_str());
+	if (!TWFunc::Recursive_Mkdir(Full_Backup_Path)) {
+		LOGE("Failed to make backup folder.\n");
+		return false;
+	}
+
+	LOGI("Calculating backup details...\n");
+	DataManager::GetValue(TW_BACKUP_SYSTEM_VAR, check);
+	if (check) {
+		backup_sys = Find_Partition_By_Path("/system");
+		if (backup_sys != NULL) {
+			partition_count++;
+			if (backup_sys->Backup_Method == 1)
+				file_bytes += backup_sys->Backup_Size;
+			else
+				img_bytes += backup_sys->Backup_Size;
+		} else {
+			LOGE("Unable to locate system partition.\n");
+			return false;
+		}
+	}
+	DataManager::GetValue(TW_BACKUP_DATA_VAR, check);
+	if (check) {
+		backup_data = Find_Partition_By_Path("/data");
+		if (backup_data != NULL) {
+			partition_count++;
+			if (backup_data->Backup_Method == 1)
+				file_bytes += backup_data->Backup_Size;
+			else
+				img_bytes += backup_data->Backup_Size;
+		} else {
+			LOGE("Unable to locate data partition.\n");
+			return false;
+		}
+	}
+	DataManager::GetValue(TW_BACKUP_CACHE_VAR, check);
+	if (check) {
+		backup_cache = Find_Partition_By_Path("/cache");
+		if (backup_cache != NULL) {
+			partition_count++;
+			if (backup_cache->Backup_Method == 1)
+				file_bytes += backup_cache->Backup_Size;
+			else
+				img_bytes += backup_cache->Backup_Size;
+		} else {
+			LOGE("Unable to locate cache partition.\n");
+			return false;
+		}
+	}
+	DataManager::GetValue(TW_BACKUP_RECOVERY_VAR, check);
+	if (check) {
+		backup_recovery = Find_Partition_By_Path("/recovery");
+		if (backup_recovery != NULL) {
+			partition_count++;
+			if (backup_recovery->Backup_Method == 1)
+				file_bytes += backup_recovery->Backup_Size;
+			else
+				img_bytes += backup_recovery->Backup_Size;
+		} else {
+			LOGE("Unable to locate recovery partition.\n");
+			return false;
+		}
+	}
+	DataManager::GetValue(TW_BACKUP_BOOT_VAR, check);
+	if (check) {
+		backup_boot = Find_Partition_By_Path("/boot");
+		if (backup_boot != NULL) {
+			partition_count++;
+			if (backup_boot->Backup_Method == 1)
+				file_bytes += backup_boot->Backup_Size;
+			else
+				img_bytes += backup_boot->Backup_Size;
+		} else {
+			LOGE("Unable to locate boot partition.\n");
+			return false;
+		}
+	}
+	DataManager::GetValue(TW_BACKUP_ANDSEC_VAR, check);
+	if (check) {
+		backup_andsec = Find_Partition_By_Path("/and-sec");
+		if (backup_andsec != NULL) {
+			partition_count++;
+			if (backup_andsec->Backup_Method == 1)
+				file_bytes += backup_andsec->Backup_Size;
+			else
+				img_bytes += backup_andsec->Backup_Size;
+		} else {
+			LOGE("Unable to locate android secure partition.\n");
+			return false;
+		}
+	}
+	DataManager::GetValue(TW_BACKUP_SDEXT_VAR, check);
+	if (check) {
+		backup_sdext = Find_Partition_By_Path("/sd-ext");
+		if (backup_sdext != NULL) {
+			partition_count++;
+			if (backup_sdext->Backup_Method == 1)
+				file_bytes += backup_sdext->Backup_Size;
+			else
+				img_bytes += backup_sdext->Backup_Size;
+		} else {
+			LOGE("Unable to locate sd-ext partition.\n");
+			return false;
+		}
+	}
+#ifdef SP1_NAME
+	DataManager::GetValue(TW_BACKUP_SP1_VAR, check);
+	if (check) {
+		backup_sp1 = Find_Partition_By_Path(SP1_NAME);
+		if (backup_sp1 != NULL) {
+			partition_count++;
+			if (backup_sp1->Backup_Method == 1)
+				file_bytes += backup_sp1->Backup_Size;
+			else
+				img_bytes += backup_sp1->Backup_Size;
+		} else {
+			LOGE("Unable to locate %s partition.\n", SP1_NAME);
+			return false;
+		}
+	}
+#endif
+#ifdef SP2_NAME
+	DataManager::GetValue(TW_BACKUP_SP2_VAR, check);
+	if (check) {
+		backup_sp2 = Find_Partition_By_Path(SP2_NAME);
+		if (backup_sp2 != NULL) {
+			partition_count++;
+			if (backup_sp2->Backup_Method == 1)
+				file_bytes += backup_sp2->Backup_Size;
+			else
+				img_bytes += backup_sp2->Backup_Size;
+		} else {
+			LOGE("Unable to locate %s partition.\n", SP2_NAME);
+			return false;
+		}
+	}
+#endif
+#ifdef SP3_NAME
+	DataManager::GetValue(TW_BACKUP_SP3_VAR, check);
+	if (check) {
+		backup_sp3 = Find_Partition_By_Path(SP3_NAME);
+		if (backup_sp3 != NULL) {
+			partition_count++;
+			if (backup_sp3->Backup_Method == 1)
+				file_bytes += backup_sp3->Backup_Size;
+			else
+				img_bytes += backup_sp3->Backup_Size;
+		} else {
+			LOGE("Unable to locate %s partition.\n", SP3_NAME);
+			return false;
+		}
+	}
+#endif
+
+	if (partition_count == 0) {
+		ui_print("No partitions selected for backup.\n");
+		return false;
+	}
+	total_bytes = file_bytes + img_bytes;
+	ui_print(" * Total number of partitions to back up: %d\n", partition_count);
+    ui_print(" * Total size of all data: %lluMB\n", total_bytes / 1024 / 1024);
+	storage = Find_Partition_By_Path(DataManager::GetCurrentStoragePath());
+	if (storage != NULL) {
+		free_space = storage->Free;
+		ui_print(" * Available space: %lluMB\n", free_space / 1024 / 1024);
+	} else {
+		LOGE("Unable to locate storage device.\n");
+		return false;
+	}
+	if (free_space + (32 * 1024 * 1024) < total_bytes) {
+		// We require an extra 32MB just in case
+		LOGE("Not enough free space on storage.\n");
+		return false;
+	}
+	img_bytes_remaining = img_bytes;
+    file_bytes_remaining = file_bytes;
+
+	if (!Backup_Partition(backup_sys, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+		return false;
+	if (!Backup_Partition(backup_data, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+		return false;
+	if (!Backup_Partition(backup_cache, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+		return false;
+	if (!Backup_Partition(backup_recovery, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+		return false;
+	if (!Backup_Partition(backup_boot, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+		return false;
+	if (!Backup_Partition(backup_andsec, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+		return false;
+	if (!Backup_Partition(backup_sdext, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+		return false;
+	if (!Backup_Partition(backup_sp1, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+		return false;
+	if (!Backup_Partition(backup_sp2, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+		return false;
+	if (!Backup_Partition(backup_sp3, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+		return false;
+
+	// Average BPS
+	if (img_time == 0)
+		img_time = 1;
+	if (file_time == 0)
+		file_time = 1;
+	unsigned long int img_bps = img_bytes / img_time;
+	unsigned long int file_bps = file_bytes / file_time;
+
+	ui_print("Average backup rate for file systems: %lu MB/sec\n", (file_bps / (1024 * 1024)));
+	ui_print("Average backup rate for imaged drives: %lu MB/sec\n", (img_bps / (1024 * 1024)));
+
+	time(&total_stop);
+	int total_time = (int) difftime(total_stop, total_start);
+	unsigned long long actual_backup_size = TWFunc::Get_Folder_Size(Full_Backup_Path, true);
+    actual_backup_size /= (1024LLU * 1024LLU);
+
+	ui_print("[%llu MB TOTAL BACKED UP]\n", actual_backup_size);
+	Update_System_Details();
+	ui_print("[BACKUP COMPLETED IN %d SECONDS]\n\n", total_time); // the end
+    return true;
 }
 
 int TWPartitionManager::Run_Restore(string Restore_Name) {
-	int check;
+	int check, restore_sys, restore_data, restore_cache, restore_boot, restore_andsec, restore_sdext, restore_sp1, restore_sp2, restore_sp3;
 	TWPartition* Part;
-LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
-	DataManager::GetValue(TW_RESTORE_SYSTEM_VAR, check);
+
+	DataManager::GetValue(TW_SKIP_MD5_CHECK_VAR, check);
+	DataManager::GetValue(TW_RESTORE_SYSTEM_VAR, restore_sys);
+	DataManager::GetValue(TW_RESTORE_DATA_VAR, restore_data);
+	DataManager::GetValue(TW_RESTORE_CACHE_VAR, restore_cache);
+	DataManager::GetValue(TW_RESTORE_BOOT_VAR, restore_boot);
+	DataManager::GetValue(TW_RESTORE_ANDSEC_VAR, restore_andsec);
+	DataManager::GetValue(TW_RESTORE_SDEXT_VAR, restore_sdext);
+	DataManager::GetValue(TW_RESTORE_SP1_VAR, restore_sp1);
+	DataManager::GetValue(TW_RESTORE_SP2_VAR, restore_sp2);
+	DataManager::GetValue(TW_RESTORE_SP3_VAR, restore_sp3);
+
 	if (check > 0) {
+		// Check MD5 files first before restoring to ensure that all of them match before starting a restore
+		if (restore_sys > 0) {
+			Part = Find_Partition_By_Path("/system");
+			if (Part) {
+				if (!Part->Check_MD5(Restore_Name))
+					return false;
+			} else
+				LOGE("Restore: Unable to locate system partition.\n");
+		}
+
+		if (restore_data > 0) {
+			Part = Find_Partition_By_Path("/data");
+			if (Part) {
+				if (!Part->Check_MD5(Restore_Name))
+					return false;
+			} else
+				LOGE("Restore: Unable to locate data partition.\n");
+		}
+
+		if (restore_cache > 0) {
+			Part = Find_Partition_By_Path("/cache");
+			if (Part) {
+				if (!Part->Check_MD5(Restore_Name))
+					return false;
+			} else
+				LOGE("Restore: Unable to locate cache partition.\n");
+		}
+
+		if (restore_boot > 0) {
+			Part = Find_Partition_By_Path("/boot");
+			if (Part) {
+				if (!Part->Check_MD5(Restore_Name))
+					return false;
+			} else
+				LOGE("Restore: Unable to locate boot partition.\n");
+		}
+
+		if (restore_andsec > 0) {
+			Part = Find_Partition_By_Path("/.android_secure");
+			if (Part) {
+				if (!Part->Check_MD5(Restore_Name))
+					return false;
+			} else
+				LOGE("Restore: Unable to locate android_secure partition.\n");
+		}
+
+		if (restore_sdext > 0) {
+			Part = Find_Partition_By_Path("/sd-ext");
+			if (Part) {
+				if (!Part->Check_MD5(Restore_Name))
+					return false;
+			} else
+				LOGE("Restore: Unable to locate sd-ext partition.\n");
+		}
+#ifdef SP1_NAME
+		if (restore_sp1 > 0) {
+			Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP1_NAME));
+			if (Part) {
+				if (!Part->Check_MD5(Restore_Name))
+					return false;
+			} else
+				LOGE("Restore: Unable to locate %s partition.\n", SP1_NAME);
+		}
+#endif
+#ifdef SP2_NAME
+		if (restore_sp2 > 0) {
+			Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP2_NAME));
+			if (Part) {
+				if (!Part->Check_MD5(Restore_Name))
+					return false;
+			} else
+				LOGE("Restore: Unable to locate %s partition.\n", SP2_NAME);
+		}
+#endif
+#ifdef SP3_NAME
+		if (restore_sp3 > 0) {
+			Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP3_NAME));
+			if (Part) {
+				if (!Part->Check_MD5(Restore_Name))
+					return false;
+			} else
+				LOGE("Restore: Unable to locate %s partition.\n", SP3_NAME);
+		}
+#endif
+	}
+
+	if (restore_sys > 0) {
 		Part = Find_Partition_By_Path("/system");
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
@@ -344,8 +773,8 @@ LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
 		} else
 			LOGE("Restore: Unable to locate system partition.\n");
 	}
-	DataManager::GetValue(TW_RESTORE_DATA_VAR, check);
-	if (check > 0) {
+
+	if (restore_data > 0) {
 		Part = Find_Partition_By_Path("/data");
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
@@ -353,8 +782,8 @@ LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
 		} else
 			LOGE("Restore: Unable to locate data partition.\n");
 	}
-	DataManager::GetValue(TW_RESTORE_CACHE_VAR, check);
-	if (check > 0) {
+
+	if (restore_cache > 0) {
 		Part = Find_Partition_By_Path("/cache");
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
@@ -362,8 +791,8 @@ LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
 		} else
 			LOGE("Restore: Unable to locate cache partition.\n");
 	}
-	DataManager::GetValue(TW_RESTORE_BOOT_VAR, check);
-	if (check > 0) {
+
+	if (restore_boot > 0) {
 		Part = Find_Partition_By_Path("/boot");
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
@@ -371,8 +800,8 @@ LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
 		} else
 			LOGE("Restore: Unable to locate boot partition.\n");
 	}
-	DataManager::GetValue(TW_RESTORE_ANDSEC_VAR, check);
-	if (check > 0) {
+
+	if (restore_andsec > 0) {
 		Part = Find_Partition_By_Path("/.android_secure");
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
@@ -380,8 +809,8 @@ LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
 		} else
 			LOGE("Restore: Unable to locate android_secure partition.\n");
 	}
-	DataManager::GetValue(TW_RESTORE_SDEXT_VAR, check);
-	if (check > 0) {
+
+	if (restore_sdext > 0) {
 		Part = Find_Partition_By_Path("/sd-ext");
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
@@ -390,8 +819,7 @@ LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
 			LOGE("Restore: Unable to locate sd-ext partition.\n");
 	}
 #ifdef SP1_NAME
-	DataManager::GetValue(TW_RESTORE_SP1_VAR, check);
-	if (check > 0) {
+	if (restore_sp1 > 0) {
 		Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP1_NAME));
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
@@ -401,8 +829,7 @@ LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
 	}
 #endif
 #ifdef SP2_NAME
-	DataManager::GetValue(TW_RESTORE_SP2_VAR, check);
-	if (check > 0) {
+	if (restore_sp2 > 0) {
 		Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP2_NAME));
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
@@ -412,8 +839,7 @@ LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
 	}
 #endif
 #ifdef SP3_NAME
-	DataManager::GetValue(TW_RESTORE_SP3_VAR, check);
-	if (check > 0) {
+	if (restore_sp3 > 0) {
 		Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP3_NAME));
 		if (Part) {
 			if (!Part->Restore(Restore_Name))
@@ -422,6 +848,7 @@ LOGE("TO DO: Check MD5 of all partitions before restoring ANY partitions.\n");
 			LOGE("Restore: Unable to locate %s partition.\n", SP3_NAME);
 	}
 #endif
+	Update_System_Details();
 	return true;
 }
 

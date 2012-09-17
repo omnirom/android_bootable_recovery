@@ -2541,6 +2541,21 @@
 			</object>
 
 			<object type="button">
+				<placement x="%col1_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>ADB Sideload</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_action=adbsideload</action>
+					<action function="set">tw_action_text1=ADB Sideload</action>
+					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
+					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
+					<action function="set">tw_slider_text=Swipe to Wipe</action>
+					<action function="page">action_page</action>
+				</actions>
+			</object>
+
+			<object type="button">
 				<condition var1="tw_show_dumlock" var2="1" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />

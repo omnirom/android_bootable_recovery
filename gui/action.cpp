@@ -21,6 +21,9 @@
 #include "../partitions.hpp"
 #include "../twrp-functions.hpp"
 
+#include "../ui.h"
+#include "../adb_install.h"
+
 extern "C" {
 #include "../common.h"
 #include "../roots.h"
@@ -30,6 +33,8 @@ extern "C" {
 #include "../extra-functions.h"
 #include "../variables.h"
 #include "../twinstall.h"
+
+#include "../minadbd/adb.h"
 
 int TWinstall_zip(const char* path, int* wipe_cache);
 void wipe_dalvik_cache(void);
@@ -54,6 +59,8 @@ int gui_start();
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
+
+extern RecoveryUI* ui;
 
 void curtainClose(void);
 
@@ -733,6 +740,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
         if (function == "nandroid")
         {
             operation_start("Nandroid");
+			int ret = 0;
 
 			if (simulate) {
 				DataManager::SetValue("tw_partition", "Simulation");
@@ -741,21 +749,27 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				if (arg == "backup") {
 					string Backup_Name;
 					DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
-					if (Backup_Name == "(Current Date)" || Backup_Name == "0" || Backup_Name == "(" || check_backup_name(1))
-						PartitionManager.Run_Backup(Backup_Name);
-					else
+					if (Backup_Name == "(Current Date)" || Backup_Name == "0" || Backup_Name == "(" || check_backup_name(1) == 0)
+						ret = PartitionManager.Run_Backup();
+					else {
+						operation_end(1, simulate);
 						return -1;
+					}
 					DataManager::SetValue(TW_BACKUP_NAME, "(Current Date)");
 				} else if (arg == "restore") {
 					string Restore_Name;
 					DataManager::GetValue("tw_restore", Restore_Name);
-					PartitionManager.Run_Restore(Restore_Name);
+					ret = PartitionManager.Run_Restore(Restore_Name);
 				} else {
 					operation_end(1, simulate);
 					return -1;
 				}
 			}
-            operation_end(0, simulate);
+			if (ret == false)
+				ret = 1; // 1 for failure
+			else
+				ret = 0; // 0 for success
+            operation_end(ret, simulate);
 			return 0;
         }
 		if (function == "fixpermissions")
@@ -1046,6 +1060,25 @@ LOGE("TODO: Implement ORS support\n");
 			}
 
 			operation_end(op_status, simulate);
+			return 0;
+		}
+		if (function == "adbsideload")
+		{
+			int ret = 0;
+
+			operation_start("Sideload");
+			if (simulate) {
+				simulate_progress_bar();
+			} else {
+				int wipe_cache = 0;
+				ui_print("Starting ADB sideload feature...\n");
+				__system("touch /tmp/update.zip");
+				ret = apply_from_adb(ui, &wipe_cache, "/tmp/last_install");
+				LOGI("Result was: %i\n", ret);
+				if (ret != 0)
+					ret = 1;
+			}
+			operation_end(ret, simulate);
 			return 0;
 		}
     }

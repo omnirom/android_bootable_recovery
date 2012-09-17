@@ -32,6 +32,8 @@
 #include "adb_install.h"
 extern "C" {
 #include "minadbd/adb.h"
+#include "twinstall.h"
+int TWinstall_zip(const char* path, int* wipe_cache);
 }
 
 static RecoveryUI* ui = NULL;
@@ -106,5 +108,5 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
         }
         return INSTALL_ERROR;
     }
-    return install_package(ADB_SIDELOAD_FILENAME, wipe_cache, install_file);
+    return TWinstall_zip(ADB_SIDELOAD_FILENAME, wipe_cache);
 }
