@@ -334,21 +334,19 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	char command[512];
 	string Full_File = Backup_Folder + Backup_Filename;
 
-	if (!generate_md5) {
-		LOGI("MD5 disabled\n");
+	if (!generate_md5)
 		return true;
-	}
 
-	ui_print(" * Generating md5...\n");
+	ui_print(" * Generating md5...");
 
 	if (TWFunc::Path_Exists(Full_File)) {
 		sprintf(command, "cd '%s' && md5sum %s > %s.md5",Backup_Folder.c_str(), Backup_Filename.c_str(), Backup_Filename.c_str());
 		LOGI("MD5 command is: '%s'\n", command);
 		if (system(command) == 0) {
-			ui_print("....MD5 Created.\n");
+			ui_print("MD5 Created.\n");
 			return true;
 		} else {
-			ui_print("....MD5 Error.\n");
+			ui_print("MD5 Error!\n");
 			return false;
 		}
 	} else {
@@ -356,21 +354,21 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 		int index = 0;
 
 		sprintf(filename, "%s%03i", Full_File.c_str(), index);
-		while (TWFunc::Path_Exists(filename)) {
+		while (TWFunc::Path_Exists(filename) == true) {
 			sprintf(command, "cd '%s' && md5sum %s%03i > %s%03i.md5",Backup_Folder.c_str(), Backup_Filename.c_str(), index, Backup_Filename.c_str(), index);
 			LOGI("MD5 command is: '%s'\n", command);
-			if (system(command) == 0) {
-				ui_print("....MD5 Created.\n");
-			} else {
-				ui_print("....MD5 Error.\n");
+			if (system(command) != 0) {
+				ui_print("MD5 Error.\n");
 				return false;
 			}
 			index++;
+			sprintf(filename, "%s%03i", Full_File.c_str(), index);
 		}
 		if (index == 0) {
 			LOGE("Backup file: '%s' not found!\n", filename);
 			return false;
 		}
+		ui_print("MD5 Created.\n");
 	}
 	return true;
 }
@@ -427,10 +425,9 @@ int TWPartitionManager::Run_Backup(void) {
 		return false;
 
 	DataManager::GetValue(TW_SKIP_MD5_GENERATE_VAR, do_md5);
-	if (do_md5 != 0) {
-		LOGI("MD5 creation enabled.\n");
+	if (do_md5 == 0)
 		do_md5 = true;
-	}
+
 	DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, Backup_Folder);
 	DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
 	if (Backup_Name == "(Current Date)" || Backup_Name == "0") {
@@ -663,192 +660,178 @@ int TWPartitionManager::Run_Backup(void) {
     return true;
 }
 
+bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Name) {
+	time_t Start, Stop;
+	time(&Start);
+	if (!Part->Restore(Restore_Name))
+		return false;
+	time(&Stop);
+	ui_print("[%s done (%d seconds)]\n\n", Part->Display_Name.c_str(), (int)difftime(Stop, Start));
+	return true;
+}
+
 int TWPartitionManager::Run_Restore(string Restore_Name) {
-	int check, restore_sys, restore_data, restore_cache, restore_boot, restore_andsec, restore_sdext, restore_sp1, restore_sp2, restore_sp3;
-	TWPartition* Part;
+	int check_md5, check, partition_count = 0;
+	TWPartition* restore_sys = NULL;
+	TWPartition* restore_data = NULL;
+	TWPartition* restore_cache = NULL;
+	TWPartition* restore_boot = NULL;
+	TWPartition* restore_andsec = NULL;
+	TWPartition* restore_sdext = NULL;
+	TWPartition* restore_sp1 = NULL;
+	TWPartition* restore_sp2 = NULL;
+	TWPartition* restore_sp3 = NULL;
+	time_t rStart, rStop;
+	time(&rStart);
 
-	DataManager::GetValue(TW_SKIP_MD5_CHECK_VAR, check);
-	DataManager::GetValue(TW_RESTORE_SYSTEM_VAR, restore_sys);
-	DataManager::GetValue(TW_RESTORE_DATA_VAR, restore_data);
-	DataManager::GetValue(TW_RESTORE_CACHE_VAR, restore_cache);
-	DataManager::GetValue(TW_RESTORE_BOOT_VAR, restore_boot);
-	DataManager::GetValue(TW_RESTORE_ANDSEC_VAR, restore_andsec);
-	DataManager::GetValue(TW_RESTORE_SDEXT_VAR, restore_sdext);
-	DataManager::GetValue(TW_RESTORE_SP1_VAR, restore_sp1);
-	DataManager::GetValue(TW_RESTORE_SP2_VAR, restore_sp2);
-	DataManager::GetValue(TW_RESTORE_SP3_VAR, restore_sp3);
+	ui_print("\n[RESTORE STARTED]\n\n");
+	ui_print("Restore folder: '%s'\n", Restore_Name.c_str());
 
+	if (!Mount_Current_Storage(true))
+		return false;
+
+	DataManager::GetValue(TW_SKIP_MD5_CHECK_VAR, check_md5);
+	DataManager::GetValue(TW_RESTORE_SYSTEM_VAR, check);
 	if (check > 0) {
+		restore_sys = Find_Partition_By_Path("/system");
+		if (restore_sys == NULL) {
+			LOGE("Unable to locate system partition.\n");
+			return false;
+		}
+		partition_count++;
+	}
+	DataManager::GetValue(TW_RESTORE_DATA_VAR, check);
+	if (check > 0) {
+		restore_data = Find_Partition_By_Path("/data");
+		if (restore_data == NULL) {
+			LOGE("Unable to locate data partition.\n");
+			return false;
+		}
+		partition_count++;
+	}
+	DataManager::GetValue(TW_RESTORE_CACHE_VAR, check);
+	if (check > 0) {
+		restore_cache = Find_Partition_By_Path("/cache");
+		if (restore_cache == NULL) {
+			LOGE("Unable to locate cache partition.\n");
+			return false;
+		}
+		partition_count++;
+	}
+	DataManager::GetValue(TW_RESTORE_BOOT_VAR, check);
+	if (check > 0) {
+		restore_boot = Find_Partition_By_Path("/boot");
+		if (restore_boot == NULL) {
+			LOGE("Unable to locate boot partition.\n");
+			return false;
+		}
+		partition_count++;
+	}
+	DataManager::GetValue(TW_RESTORE_ANDSEC_VAR, check);
+	if (check > 0) {
+		restore_andsec = Find_Partition_By_Path("/and-sec");
+		if (restore_andsec == NULL) {
+			LOGE("Unable to locate android secure partition.\n");
+			return false;
+		}
+		partition_count++;
+	}
+	DataManager::GetValue(TW_RESTORE_SDEXT_VAR, check);
+	if (check > 0) {
+		restore_sdext = Find_Partition_By_Path("/sd-ext");
+		if (restore_sdext == NULL) {
+			LOGE("Unable to locate sd-ext partition.\n");
+			return false;
+		}
+		partition_count++;
+	}
+#ifdef SP1_NAME
+	DataManager::GetValue(TW_RESTORE_SP1_VAR, check);
+	if (check > 0) {
+		restore_sp1 = Find_Partition_By_Path(SP1_NAME);
+		if (restore_sp1 == NULL) {
+			LOGE("Unable to locate %s partition.\n", SP1_NAME);
+			return false;
+		}
+		partition_count++;
+	}
+#endif
+#ifdef SP2_NAME
+	DataManager::GetValue(TW_RESTORE_SP2_VAR, check);
+	if (check > 0) {
+		restore_sp2 = Find_Partition_By_Path(SP2_NAME);
+		if (restore_sp2 == NULL) {
+			LOGE("Unable to locate %s partition.\n", SP2_NAME);
+			return false;
+		}
+		partition_count++;
+	}
+#endif
+#ifdef SP3_NAME
+	DataManager::GetValue(TW_RESTORE_SP3_VAR, check);
+	if (check > 0) {
+		restore_sp3 = Find_Partition_By_Path(SP3_NAME);
+		if (restore_sp3 == NULL) {
+			LOGE("Unable to locate %s partition.\n", SP3_NAME);
+			return false;
+		}
+		partition_count++;
+	}
+#endif
+
+	if (partition_count == 0) {
+		LOGE("No partitions selected for restore.\n");
+		return false;
+	}
+
+	if (check_md5 > 0) {
 		// Check MD5 files first before restoring to ensure that all of them match before starting a restore
-		if (restore_sys > 0) {
-			Part = Find_Partition_By_Path("/system");
-			if (Part) {
-				if (!Part->Check_MD5(Restore_Name))
-					return false;
-			} else
-				LOGE("Restore: Unable to locate system partition.\n");
-		}
+		ui_print("Verifying MD5...\n");
+		if (restore_sys != NULL && !restore_sys->Check_MD5(Restore_Name))
+			return false;
+		if (restore_data != NULL && !restore_data->Check_MD5(Restore_Name))
+			return false;
+		if (restore_cache != NULL && !restore_cache->Check_MD5(Restore_Name))
+			return false;
+		if (restore_boot != NULL && !restore_boot->Check_MD5(Restore_Name))
+			return false;
+		if (restore_andsec != NULL && !restore_andsec->Check_MD5(Restore_Name))
+			return false;
+		if (restore_sdext != NULL && !restore_sdext->Check_MD5(Restore_Name))
+			return false;
+		if (restore_sp1 != NULL && !restore_sp1->Check_MD5(Restore_Name))
+			return false;
+		if (restore_sp2 != NULL && !restore_sp2->Check_MD5(Restore_Name))
+			return false;
+		if (restore_sp3 != NULL && !restore_sp3->Check_MD5(Restore_Name))
+			return false;
+		ui_print("Done verifying MD5.\n");
+	} else
+			ui_print("Skipping MD5 check based on user setting.\n");
 
-		if (restore_data > 0) {
-			Part = Find_Partition_By_Path("/data");
-			if (Part) {
-				if (!Part->Check_MD5(Restore_Name))
-					return false;
-			} else
-				LOGE("Restore: Unable to locate data partition.\n");
-		}
+	ui_print("Restoring %i partitions...\n", partition_count);
+	if (restore_sys != NULL && !Restore_Partition(restore_sys, Restore_Name))
+		return false;
+	if (restore_data != NULL && !Restore_Partition(restore_data, Restore_Name))
+		return false;
+	if (restore_cache != NULL && !Restore_Partition(restore_cache, Restore_Name))
+		return false;
+	if (restore_boot != NULL && !Restore_Partition(restore_boot, Restore_Name))
+		return false;
+	if (restore_andsec != NULL && !Restore_Partition(restore_andsec, Restore_Name))
+		return false;
+	if (restore_sdext != NULL && !Restore_Partition(restore_sdext, Restore_Name))
+		return false;
+	if (restore_sp1 != NULL && !Restore_Partition(restore_sp1, Restore_Name))
+		return false;
+	if (restore_sp2 != NULL && !Restore_Partition(restore_sp2, Restore_Name))
+		return false;
+	if (restore_sp3 != NULL && !Restore_Partition(restore_sp3, Restore_Name))
+		return false;
 
-		if (restore_cache > 0) {
-			Part = Find_Partition_By_Path("/cache");
-			if (Part) {
-				if (!Part->Check_MD5(Restore_Name))
-					return false;
-			} else
-				LOGE("Restore: Unable to locate cache partition.\n");
-		}
-
-		if (restore_boot > 0) {
-			Part = Find_Partition_By_Path("/boot");
-			if (Part) {
-				if (!Part->Check_MD5(Restore_Name))
-					return false;
-			} else
-				LOGE("Restore: Unable to locate boot partition.\n");
-		}
-
-		if (restore_andsec > 0) {
-			Part = Find_Partition_By_Path("/.android_secure");
-			if (Part) {
-				if (!Part->Check_MD5(Restore_Name))
-					return false;
-			} else
-				LOGE("Restore: Unable to locate android_secure partition.\n");
-		}
-
-		if (restore_sdext > 0) {
-			Part = Find_Partition_By_Path("/sd-ext");
-			if (Part) {
-				if (!Part->Check_MD5(Restore_Name))
-					return false;
-			} else
-				LOGE("Restore: Unable to locate sd-ext partition.\n");
-		}
-#ifdef SP1_NAME
-		if (restore_sp1 > 0) {
-			Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP1_NAME));
-			if (Part) {
-				if (!Part->Check_MD5(Restore_Name))
-					return false;
-			} else
-				LOGE("Restore: Unable to locate %s partition.\n", SP1_NAME);
-		}
-#endif
-#ifdef SP2_NAME
-		if (restore_sp2 > 0) {
-			Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP2_NAME));
-			if (Part) {
-				if (!Part->Check_MD5(Restore_Name))
-					return false;
-			} else
-				LOGE("Restore: Unable to locate %s partition.\n", SP2_NAME);
-		}
-#endif
-#ifdef SP3_NAME
-		if (restore_sp3 > 0) {
-			Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP3_NAME));
-			if (Part) {
-				if (!Part->Check_MD5(Restore_Name))
-					return false;
-			} else
-				LOGE("Restore: Unable to locate %s partition.\n", SP3_NAME);
-		}
-#endif
-	}
-
-	if (restore_sys > 0) {
-		Part = Find_Partition_By_Path("/system");
-		if (Part) {
-			if (!Part->Restore(Restore_Name))
-				return false;
-		} else
-			LOGE("Restore: Unable to locate system partition.\n");
-	}
-
-	if (restore_data > 0) {
-		Part = Find_Partition_By_Path("/data");
-		if (Part) {
-			if (!Part->Restore(Restore_Name))
-				return false;
-		} else
-			LOGE("Restore: Unable to locate data partition.\n");
-	}
-
-	if (restore_cache > 0) {
-		Part = Find_Partition_By_Path("/cache");
-		if (Part) {
-			if (!Part->Restore(Restore_Name))
-				return false;
-		} else
-			LOGE("Restore: Unable to locate cache partition.\n");
-	}
-
-	if (restore_boot > 0) {
-		Part = Find_Partition_By_Path("/boot");
-		if (Part) {
-			if (!Part->Restore(Restore_Name))
-				return false;
-		} else
-			LOGE("Restore: Unable to locate boot partition.\n");
-	}
-
-	if (restore_andsec > 0) {
-		Part = Find_Partition_By_Path("/.android_secure");
-		if (Part) {
-			if (!Part->Restore(Restore_Name))
-				return false;
-		} else
-			LOGE("Restore: Unable to locate android_secure partition.\n");
-	}
-
-	if (restore_sdext > 0) {
-		Part = Find_Partition_By_Path("/sd-ext");
-		if (Part) {
-			if (!Part->Restore(Restore_Name))
-				return false;
-		} else
-			LOGE("Restore: Unable to locate sd-ext partition.\n");
-	}
-#ifdef SP1_NAME
-	if (restore_sp1 > 0) {
-		Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP1_NAME));
-		if (Part) {
-			if (!Part->Restore(Restore_Name))
-				return false;
-		} else
-			LOGE("Restore: Unable to locate %s partition.\n", SP1_NAME);
-	}
-#endif
-#ifdef SP2_NAME
-	if (restore_sp2 > 0) {
-		Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP2_NAME));
-		if (Part) {
-			if (!Part->Restore(Restore_Name))
-				return false;
-		} else
-			LOGE("Restore: Unable to locate %s partition.\n", SP2_NAME);
-	}
-#endif
-#ifdef SP3_NAME
-	if (restore_sp3 > 0) {
-		Part = Find_Partition_By_Path(TWFunc::Get_Root_Path(SP3_NAME));
-		if (Part) {
-			if (!Part->Restore(Restore_Name))
-				return false;
-		} else
-			LOGE("Restore: Unable to locate %s partition.\n", SP3_NAME);
-	}
-#endif
 	Update_System_Details();
+	time(&rStop);
+	ui_print("[RESTORE COMPLETED IN %d SECONDS]\n\n",(int)difftime(rStop,rStart));
 	return true;
 }
 

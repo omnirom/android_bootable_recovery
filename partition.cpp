@@ -683,7 +683,6 @@ bool TWPartition::Check_MD5(string restore_folder) {
 	int index = 0;
 
 	Full_Filename = restore_folder + "/" + Backup_FileName;
-	LOGI("Full_Filename: '%s'\n", Full_Filename.c_str());
 	if (!TWFunc::Path_Exists(Full_Filename)) {
 		// This is a split archive, we presume
 		sprintf(split_filename, "%s%03i", Full_Filename.c_str(), index);
@@ -694,8 +693,8 @@ bool TWPartition::Check_MD5(string restore_folder) {
 			}
 			index++;
 			sprintf(split_filename, "%s%03i", Full_Filename.c_str(), index);
-			LOGI("Full_Filename: '%s'\n", Full_Filename.c_str());
 		}
+		return true;
 	} else {
 		// Single file archive
 		if (TWFunc::Check_MD5(Full_Filename) == 0) {
@@ -708,7 +707,6 @@ bool TWPartition::Check_MD5(string restore_folder) {
 }
 
 bool TWPartition::Restore(string restore_folder) {
-	ui_print("Restoring %s...\n", Display_Name.c_str());
 	if (Backup_Method == FILES)
 		return Restore_Tar(restore_folder);
 	else if (Backup_Method == DD)
@@ -995,9 +993,11 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 }
 
 bool TWPartition::Backup_Tar(string backup_folder) {
-	char back_name[255];
-	string Full_FileName, Tar_Args, Command;
-	int use_compression;
+	char back_name[255], split_index[5];
+	string Full_FileName, Split_FileName, Tar_Args, Command;
+	int use_compression, index, backup_count;
+	struct stat st;
+	unsigned long long total_bsize = 0;
 
 	if (!Mount(true))
 		return false;
@@ -1013,12 +1013,33 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Current_File_System.c_str());
 	Backup_FileName = back_name;
 
-	Full_FileName = backup_folder + "/" + Backup_FileName;
 	if (Backup_Size > MAX_ARCHIVE_SIZE) {
 		// This backup needs to be split into multiple archives
-		LOGE("Multiple archive splitting is not implemented yet!\n");
-		return false;
+		ui_print("Breaking backup file into multiple archives...\nGenerating file lists\n");
+		sprintf(back_name, "%s", Mount_Point.c_str());
+		backup_count = make_file_list(back_name);
+		if (backup_count < 1) {
+			LOGE("Error generating file list!\n");
+			return false;
+		}
+		for (index=0; index<backup_count; index++) {
+			sprintf(split_index, "%03i", index);
+			Full_FileName = backup_folder + "/" + Backup_FileName + split_index;
+			Command = "tar " + Tar_Args + " -f '" + Full_FileName + "' -T /tmp/list/filelist" + split_index;
+			LOGI("Backup command: '%s'\n", Command.c_str());
+			ui_print("Backup archive %i of %i...\n", (index + 1), backup_count);
+			system(Command.c_str()); // sending backup command formed earlier above
+
+			if (stat(Full_FileName.c_str(), &st) != 0 || st.st_size == 0) {
+				LOGE("File size is zero bytes. Aborting...\n\n"); // oh noes! file size is 0, abort! abort!
+				return false;
+			}
+			total_bsize += st.st_size;
+		}
+		ui_print(" * Total size: %llu bytes.\n", total_bsize);
+		system("cd /tmp && rm -rf list");
 	} else {
+		Full_FileName = backup_folder + "/" + Backup_FileName;
 		if (Has_Data_Media)
 			Command = "cd " + Mount_Point + " && tar " + Tar_Args + " ./ --exclude='media*' -f '" + Full_FileName + "'";
 		else
@@ -1068,6 +1089,8 @@ bool TWPartition::Backup_Dump_Image(string backup_folder) {
 bool TWPartition::Restore_Tar(string restore_folder) {
 	size_t first_period, second_period;
 	string Restore_File_System, Full_FileName, Command;
+	int index = 0;
+	char split_index[5];
 
 	LOGI("Restore filename is: %s\n", Backup_FileName.c_str());
 
@@ -1093,12 +1116,26 @@ bool TWPartition::Restore_Tar(string restore_folder) {
 	if (!Mount(true))
 		return false;
 
-	Full_FileName = restore_folder + "/" + Backup_FileName;
 	ui_print("Restoring %s...\n", Display_Name.c_str());
+	Full_FileName = restore_folder + "/" + Backup_FileName;
 	if (!TWFunc::Path_Exists(Full_FileName)) {
-		// This backup is multiple archives
-		LOGE("Multiple archive not implemented yet.\n");
-		return false;
+		// Backup is multiple archives
+		LOGI("Backup is multiple archives.\n");
+		sprintf(split_index, "%03i", index);
+		Full_FileName = restore_folder + "/" + Backup_FileName + split_index;
+		while (TWFunc::Path_Exists(Full_FileName)) {
+			ui_print("Restoring archive %i...\n", index + 1);
+			Command = "cd " + Mount_Point + " && tar -xf '" + Full_FileName + "'";
+			LOGI("Restore command: '%s'\n", Command.c_str());
+			system(Command.c_str());
+			index++;
+			sprintf(split_index, "%03i", index);
+			Full_FileName = restore_folder + "/" + Backup_FileName + split_index;
+		}
+		if (index == 0) {
+			LOGE("Error locating restore file: '%s'\n", Full_FileName.c_str());
+			return false;
+		}
 	} else {
 		Command = "cd " + Mount_Point + " && tar -xf '" + Full_FileName + "'";
 		LOGI("Restore command: '%s'\n", Command.c_str());
