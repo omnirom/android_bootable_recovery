@@ -52,6 +52,7 @@ static double now() {
 ScreenRecoveryUI::ScreenRecoveryUI() :
     currentIcon(NONE),
     installingFrame(0),
+    rtl_locale(false),
     progressBarType(EMPTY),
     progressScopeStart(0),
     progressScopeSize(0),
@@ -158,18 +159,35 @@ void ScreenRecoveryUI::draw_progress_locked()
             float p = progressScopeStart + progress * progressScopeSize;
             int pos = (int) (p * width);
 
-            if (pos > 0) {
-                gr_blit(progressBarFill, 0, 0, pos, height, dx, dy);
-            }
-            if (pos < width-1) {
-                gr_blit(progressBarEmpty, pos, 0, width-pos, height, dx+pos, dy);
+            if (rtl_locale) {
+                // Fill the progress bar from right to left.
+                if (pos > 0) {
+                    gr_blit(progressBarFill, width-pos, 0, pos, height, dx+width-pos, dy);
+                }
+                if (pos < width-1) {
+                    gr_blit(progressBarEmpty, 0, 0, width-pos, height, dx, dy);
+                }
+            } else {
+                // Fill the progress bar from left to right.
+                if (pos > 0) {
+                    gr_blit(progressBarFill, 0, 0, pos, height, dx, dy);
+                }
+                if (pos < width-1) {
+                    gr_blit(progressBarEmpty, pos, 0, width-pos, height, dx+pos, dy);
+                }
             }
         }
 
         if (progressBarType == INDETERMINATE) {
             static int frame = 0;
             gr_blit(progressBarIndeterminate[frame], 0, 0, width, height, dx, dy);
-            frame = (frame + 1) % indeterminate_frames;
+            // in RTL locales, we run the animation backwards, which
+            // makes the spinner spin the other way.
+            if (rtl_locale) {
+                frame = (frame + indeterminate_frames - 1) % indeterminate_frames;
+            } else {
+                frame = (frame + 1) % indeterminate_frames;
+            }
         }
     }
 }
@@ -358,6 +376,28 @@ void ScreenRecoveryUI::Init()
     pthread_create(&progress_t, NULL, progress_thread, NULL);
 
     RecoveryUI::Init();
+}
+
+void ScreenRecoveryUI::SetLocale(const char* locale) {
+    if (locale) {
+        char* lang = strdup(locale);
+        for (char* p = lang; *p; ++p) {
+            if (*p == '_') {
+                *p = '\0';
+                break;
+            }
+        }
+
+        // A bit cheesy: keep an explicit list of supported languages
+        // that are RTL.
+        if (strcmp(lang, "ar") == 0 ||   // Arabic
+            strcmp(lang, "fa") == 0 ||   // Persian (Farsi)
+            strcmp(lang, "he") == 0 ||   // Hebrew (new language code)
+            strcmp(lang, "iw") == 0) {   // Hebrew (old language code)
+            rtl_locale = true;
+        }
+        free(lang);
+    }
 }
 
 void ScreenRecoveryUI::SetBackground(Icon icon)
