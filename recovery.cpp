@@ -781,7 +781,7 @@ load_locale_from_cache() {
     if (fp != NULL) {
         fgets(buffer, sizeof(buffer), fp);
         int j = 0;
-        int i;
+        unsigned int i;
         for (i = 0; i < sizeof(buffer) && buffer[i]; ++i) {
             if (!isspace(buffer[i])) {
                 buffer[j++] = buffer[i];
@@ -849,6 +849,7 @@ main(int argc, char **argv) {
     ui = device->GetUI();
 
     ui->Init();
+    ui->SetLocale(locale);
     ui->SetBackground(RecoveryUI::NONE);
     if (show_text) ui->ShowText(true);
 

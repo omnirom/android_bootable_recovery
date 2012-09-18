@@ -29,6 +29,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     ScreenRecoveryUI();
 
     void Init();
+    void SetLocale(const char* locale);
 
     // overall recovery state ("background image")
     void SetBackground(Icon icon);
@@ -55,6 +56,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   private:
     Icon currentIcon;
     int installingFrame;
+    bool rtl_locale;
 
     pthread_mutex_t updateMutex;
     gr_surface backgroundIcon[5];
