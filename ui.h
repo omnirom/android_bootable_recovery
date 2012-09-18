@@ -30,6 +30,9 @@ class RecoveryUI {
     // Initialize the object; called before anything else.
     virtual void Init();
 
+    // After calling Init(), you can tell the UI what locale it is operating in.
+    virtual void SetLocale(const char* locale) { }
+
     // Set the overall recovery state ("background image").
     enum Icon { NONE, INSTALLING_UPDATE, ERASING, NO_COMMAND, ERROR };
     virtual void SetBackground(Icon icon) = 0;
