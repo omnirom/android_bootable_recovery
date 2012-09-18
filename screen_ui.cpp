@@ -393,7 +393,8 @@ void ScreenRecoveryUI::SetLocale(const char* locale) {
         if (strcmp(lang, "ar") == 0 ||   // Arabic
             strcmp(lang, "fa") == 0 ||   // Persian (Farsi)
             strcmp(lang, "he") == 0 ||   // Hebrew (new language code)
-            strcmp(lang, "iw") == 0) {   // Hebrew (old language code)
+            strcmp(lang, "iw") == 0 ||   // Hebrew (old language code)
+            strcmp(lang, "ur") == 0) {   // Urdu
             rtl_locale = true;
         }
         free(lang);
