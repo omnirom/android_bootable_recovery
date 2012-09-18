@@ -12,10 +12,6 @@
 #include "twrp-functions.hpp"
 #include "partitions.hpp"
 #include "common.h"
-extern "C" {
-	#include "extra-functions.h"
-	int __system(const char *command);
-}
 
 /*  Checks md5 for a path
     Return values:
@@ -34,7 +30,7 @@ int TWFunc::Check_MD5(string File) {
 		chdir(DirPath.c_str());
 		MD5_File = Get_Filename(MD5_File);
 		Command = "/sbin/busybox md5sum -c '" + MD5_File + "' > /tmp/md5output";
-		__system(Command.c_str());
+		system(Command.c_str());
 		FILE * cs = fopen("/tmp/md5output", "r");
 		if (cs == NULL) {
 			LOGE("Unable to open md5 output file.\n");
@@ -108,7 +104,6 @@ string TWFunc::Get_Root_Path(string Path) {
 }
 
 void TWFunc::install_htc_dumlock(void) {
-	struct statfs fs1, fs2;
 	int need_libs = 0;
 
 	if (!PartitionManager.Mount_By_Path("/system", true))
@@ -118,30 +113,30 @@ void TWFunc::install_htc_dumlock(void) {
 		return;
 
 	ui_print("Installing HTC Dumlock to system...\n");
-	__system("cp /res/htcd/htcdumlocksys /system/bin/htcdumlock && chmod 755 /system/bin/htcdumlock");
-	if (statfs("/system/bin/flash_image", &fs1) != 0) {
+	system("cp /res/htcd/htcdumlocksys /system/bin/htcdumlock && chmod 755 /system/bin/htcdumlock");
+	if (!Path_Exists("/system/bin/flash_image")) {
 		ui_print("Installing flash_image...\n");
-		__system("cp /res/htcd/flash_imagesys /system/bin/flash_image && chmod 755 /system/bin/flash_image");
+		system("cp /res/htcd/flash_imagesys /system/bin/flash_image && chmod 755 /system/bin/flash_image");
 		need_libs = 1;
 	} else
 		ui_print("flash_image is already installed, skipping...\n");
-	if (statfs("/system/bin/dump_image", &fs2) != 0) {
+	if (!Path_Exists("/system/bin/dump_image")) {
 		ui_print("Installing dump_image...\n");
-		__system("cp /res/htcd/dump_imagesys /system/bin/dump_image && chmod 755 /system/bin/dump_image");
+		system("cp /res/htcd/dump_imagesys /system/bin/dump_image && chmod 755 /system/bin/dump_image");
 		need_libs = 1;
 	} else
 		ui_print("dump_image is already installed, skipping...\n");
 	if (need_libs) {
 		ui_print("Installing libs needed for flash_image and dump_image...\n");
-		__system("cp /res/htcd/libbmlutils.so /system/lib && chmod 755 /system/lib/libbmlutils.so");
-		__system("cp /res/htcd/libflashutils.so /system/lib && chmod 755 /system/lib/libflashutils.so");
-		__system("cp /res/htcd/libmmcutils.so /system/lib && chmod 755 /system/lib/libmmcutils.so");
-		__system("cp /res/htcd/libmtdutils.so /system/lib && chmod 755 /system/lib/libmtdutils.so");
+		system("cp /res/htcd/libbmlutils.so /system/lib && chmod 755 /system/lib/libbmlutils.so");
+		system("cp /res/htcd/libflashutils.so /system/lib && chmod 755 /system/lib/libflashutils.so");
+		system("cp /res/htcd/libmmcutils.so /system/lib && chmod 755 /system/lib/libmmcutils.so");
+		system("cp /res/htcd/libmtdutils.so /system/lib && chmod 755 /system/lib/libmtdutils.so");
 	}
 	ui_print("Installing HTC Dumlock app...\n");
 	mkdir("/data/app", 0777);
-	__system("rm /data/app/com.teamwin.htcdumlock*");
-	__system("cp /res/htcd/HTCDumlock.apk /data/app/com.teamwin.htcdumlock.apk");
+	system("rm /data/app/com.teamwin.htcdumlock*");
+	system("cp /res/htcd/HTCDumlock.apk /data/app/com.teamwin.htcdumlock.apk");
 	sync();
 	ui_print("HTC Dumlock is installed.\n");
 }
@@ -151,7 +146,7 @@ void TWFunc::htc_dumlock_restore_original_boot(void) {
 		return;
 
 	ui_print("Restoring original boot...\n");
-	__system("htcdumlock restore");
+	system("htcdumlock restore");
 	ui_print("Original boot restored.\n");
 }
 
@@ -160,7 +155,7 @@ void TWFunc::htc_dumlock_reflash_recovery_to_boot(void) {
 		return;
 
 	ui_print("Reflashing recovery to boot...\n");
-	__system("htcdumlock recovery noreboot");
+	system("htcdumlock recovery noreboot");
 	ui_print("Recovery is flashed to boot.\n");
 }
 

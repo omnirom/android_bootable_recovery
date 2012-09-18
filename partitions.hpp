@@ -140,6 +140,7 @@ public:
 public:
 	virtual int Process_Fstab(string Fstab_Filename, bool Display_Error);     // Parses the fstab and populates the partitions
 	virtual int Write_Fstab();                                                // Creates /etc/fstab file that's used by the command line for mount commands
+	virtual void Output_Partition_Logging();                                  // Outputs partition information to the log
 	virtual int Mount_By_Path(string Path, bool Display_Error);               // Mounts partition based on path (e.g. /system)
 	virtual int Mount_By_Block(string Block, bool Display_Error);             // Mounts partition based on block device (e.g. /dev/block/mmcblk1p1)
 	virtual int Mount_By_Name(string Name, bool Display_Error);               // Mounts partition based on display name (e.g. System)
@@ -170,11 +171,14 @@ public:
 	virtual void Update_System_Details();                                     // Updates fstab, file systems, sizes, etc.
 	virtual int Decrypt_Device(string Password);                              // Attempt to decrypt any encrypted partitions
 	virtual int Fix_Permissions();                                            // Fixes permissions in /system and /data
+	virtual int usb_storage_enable(void);                                     // Enable USB storage mode
+	virtual int usb_storage_disable(void);                                    // Disable USB storage mode
 
 private:
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made
 	bool Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time);
 	bool Restore_Partition(TWPartition* Part, string Restore_Name);
+	void Output_Partition(TWPartition* Part);
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions

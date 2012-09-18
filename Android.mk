@@ -32,7 +32,6 @@ LOCAL_SRC_FILES += \
     extra-functions.c \
     data.cpp \
     makelist.c \
-    firmware.c \
     partition.cpp \
     partitionmanager.cpp \
     mtdutils/mtdutils.c \

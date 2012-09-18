@@ -47,6 +47,7 @@ public:
     static int SetValue(const string varName, float value, int persist = 0);
 
     static void DumpValues();
+	static void update_tz_environment_variables();
 	static void SetDefaultValues();
 	static void ReadSettingsFile(void);
 	

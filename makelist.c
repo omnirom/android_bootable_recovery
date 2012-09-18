@@ -26,7 +26,6 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-#include "extra-functions.h"
 #include "common.h"
 #include "data.h"
 #include "variables.h"
@@ -40,11 +39,11 @@ unsigned long long getUsedSizeViaDu(const char* path)
     sprintf(cmd, "du -sk %s | awk '{ print $1 }'", path);
 
     FILE *fp;
-    fp = __popen(cmd, "r");
+    fp = popen(cmd, "r");
     
     char str[512];
     fgets(str, sizeof(str), fp);
-    __pclose(fp);
+    pclose(fp);
 
     unsigned long long size = atol(str);
     size *= 1024ULL;
@@ -146,8 +145,8 @@ int make_file_list(char* path)
 {
 	makelist_file_count = 0;
 	makelist_current_size = 0;
-	__system("cd /tmp && rm -rf list");
-	__system("cd /tmp && mkdir list");
+	system("cd /tmp && rm -rf list");
+	system("cd /tmp && mkdir list");
 	if (generate_file_lists(path) < 0) {
 		LOGE("Error generating file list\n");
 		return -1;

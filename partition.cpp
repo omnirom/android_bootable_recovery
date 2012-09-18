@@ -206,7 +206,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Display_Name = "Cache";
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
-			Update_Size(Display_Error);
 			MTD_Name = "cache";
 		} else if (Mount_Point == "/datadata") {
 			Wipe_During_Factory_Reset = true;
@@ -218,8 +217,29 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Wipe_During_Factory_Reset = true;
 			Display_Name = "SD-Ext";
 			Wipe_Available_in_GUI = true;
-		} else
-			Update_Size(Display_Error);
+		}
+#ifdef TW_EXTERNAL_STORAGE_PATH
+		if (Mount_Point == EXPAND(TW_EXTERNAL_STORAGE_PATH)) {
+			Is_Storage = true;
+			Storage_Path = EXPAND(TW_EXTERNAL_STORAGE_PATH);
+		}
+#else
+		if (Mount_Point == "/sdcard") {
+			Is_Storage = true;
+			Storage_Path = "/sdcard";
+		}
+#endif
+#ifdef TW_INTERNAL_STORAGE_PATH
+		if (Mount_Point == EXPAND(TW_INTERNAL_STORAGE_PATH)) {
+			Is_Storage = true;
+			Storage_Path = EXPAND(TW_INTERNAL_STORAGE_PATH);
+		}
+#else
+		if (Mount_Point == "/emmc") {
+			Is_Storage = true;
+			Storage_Path = "/emmc";
+		}
+#endif
 	} else if (Is_Image(Fstab_File_System)) {
 		Find_Actual_Block_Device();
 		Setup_Image(Display_Error);
@@ -774,10 +794,17 @@ void TWPartition::Check_FS_Type() {
 		return; // Running blkid on some mtd devices causes a massive crash
 
 	Find_Actual_Block_Device();
-	blkCommand = "blkid " + Actual_Block_Device + " > /tmp/blkidoutput.txt";
+	if (!Is_Present)
+		return;
 
+	if (TWFunc::Path_Exists("/tmp/blkidoutput.txt"))
+		system("rm /tmp/blkidoutput.txt");
+
+	blkCommand = "blkid " + Actual_Block_Device + " > /tmp/blkidoutput.txt";
 	system(blkCommand.c_str());
 	fp = fopen("/tmp/blkidoutput.txt", "rt");
+	if (fp == NULL)
+		return;
 	while (fgets(blkOutput, sizeof(blkOutput), fp) != NULL)
 	{
 		blk = blkOutput;

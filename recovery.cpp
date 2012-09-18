@@ -808,14 +808,15 @@ main(int argc, char **argv) {
 	printf("Starting the UI...");
 	gui_init();
 	printf("=> Installing busybox into /sbin\n");
-	__system("/sbin/bbinstall.sh"); // Let's install busybox
+	system("/sbin/bbinstall.sh"); // Let's install busybox
 	printf("=> Linking mtab\n");
-	__system("ln -s /proc/mounts /etc/mtab"); // And link mtab for mke2fs
+	system("ln -s /proc/mounts /etc/mtab"); // And link mtab for mke2fs
 	printf("=> Processing recovery.fstab\n");
 	if (!PartitionManager.Process_Fstab("/etc/recovery.fstab", 1)) {
 		LOGE("Failing out of recovery due to problem with recovery.fstab.\n");
 		//return -1;
 	}
+	PartitionManager.Output_Partition_Logging();
 	// Load up all the resources
 	gui_loadResources();
 
@@ -890,7 +891,7 @@ main(int argc, char **argv) {
 #ifdef TW_INCLUDE_INJECTTWRP
 	// Back up TWRP Ramdisk if needed:
 	LOGI("Backing up TWRP ramdisk...\n");
-	__system("injecttwrp --backup /tmp/backup_recovery_ramdisk.img");
+	system("injecttwrp --backup /tmp/backup_recovery_ramdisk.img");
 	LOGI("Backup of TWRP ramdisk done.\n");
 #endif
 
@@ -923,9 +924,6 @@ main(int argc, char **argv) {
     //if (status != INSTALL_SUCCESS) ui->SetBackground(RecoveryUI::ERROR);
     if (status != INSTALL_SUCCESS /*|| ui->IsTextVisible()*/) {
 		DataManager_ReadSettingsFile();
-
-		// Update some of the main data
-		update_tz_environment_variables();
         gui_start();
 		//prompt_and_wait(device);
     }

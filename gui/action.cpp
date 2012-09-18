@@ -37,23 +37,9 @@ extern "C" {
 #include "../minadbd/adb.h"
 
 int TWinstall_zip(const char* path, int* wipe_cache);
-void wipe_dalvik_cache(void);
 int check_backup_name(int show_error);
-void wipe_battery_stats(void);
-void wipe_rotate_data(void);
-int usb_storage_enable(void);
-int usb_storage_disable(void);
-int __system(const char *command);
-FILE * __popen(const char *program, const char *type);
-int __pclose(FILE *iop);
 void run_script(const char *str1, const char *str2, const char *str3, const char *str4, const char *str5, const char *str6, const char *str7, int request_confirm);
-void update_tz_environment_variables();
-void install_htc_dumlock(void);
-void htc_dumlock_restore_original_boot(void);
-void htc_dumlock_reflash_recovery_to_boot(void);
-int check_for_script_file(void);
 int gui_console_only();
-int run_script_file(void);
 int gui_start();
 };
 
@@ -230,7 +216,7 @@ int GUIAction::flash_zip(std::string filename, std::string pageName, const int s
 			DataManager::SetValue("tw_operation", "Configuring TWRP");
 			DataManager::SetValue("tw_partition", "");
 			ui_print("Configuring TWRP...\n");
-			if (__system("/sbin/installTwrp reinstall") < 0)
+			if (system("/sbin/installTwrp reinstall") < 0)
 			{
 				ui_print("Unable to configure TWRP with this kernel.\n");
 			}
@@ -419,7 +405,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
         {
             DataManager::SetValue(TW_ACTION_BUSY, 1);
 			if (!simulate)
-				usb_storage_enable();
+				PartitionManager.usb_storage_enable();
 			else
 				ui_print("Simulating actions...\n");
         }
@@ -442,7 +428,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
         if (arg == "usb")
         {
             if (!simulate)
-				usb_storage_disable();
+				PartitionManager.usb_storage_disable();
 			else
 				ui_print("Simulating actions...\n");
 			DataManager::SetValue(TW_ACTION_BUSY, 0);
@@ -483,7 +469,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 			PartitionManager.Mount_Current_Storage(true);
 			sprintf(command, "cp /tmp/recovery.log %s", DataManager::GetCurrentStoragePath().c_str());
-			__system(command);
+			system(command);
 			sync();
 			ui_print("Copied recovery log to %s.\n", DataManager::GetCurrentStoragePath().c_str());
 		} else
@@ -542,7 +528,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			NewTimeZone += DSTZone;
 		
 		DataManager::SetValue(TW_TIME_ZONE_VAR, NewTimeZone);
-		update_tz_environment_variables();
+		DataManager::update_tz_environment_variables();
 		return 0;
 	}
 
@@ -661,7 +647,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				if (simulate) {
 					simulate_progress_bar();
 				} else {
-					__system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+					system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
 					ui_print("TWRP injection complete.\n");
 				}
 			}
@@ -794,7 +780,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			} else {
 				char cmd[512];
 				sprintf(cmd, "dd %s", arg.c_str());
-				__system(cmd);
+				system(cmd);
 			}
             operation_end(0, simulate);
             return 0;
@@ -817,7 +803,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					Volume *vol = volume_for_path("/sdcard");
 					strcpy(sddevice, vol->device);
 					// Just need block not whole partition
-					sddevice[strlen("/dev/block/mmcblkX")] = NULL;
+					sddevice[strlen("/dev/block/mmcblkX")] = '\0';
 
 					char es[64];
 					std::string ext_format, sd_path;
@@ -863,7 +849,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 						//sprintf(command, "mke2fs -t ext4 -m 0 %s", sde.blk);
 						ui_print("Formatting sd-ext as ext4...\n");
 						LOGI("Formatting sd-ext after partitioning, command: '%s'\n", command);
-						__system(command);
+						system(command);
 						ui_print("DONE\n");
 					}
 
@@ -915,7 +901,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				op_status = __system(arg.c_str());
+				op_status = system(arg.c_str());
 				if (op_status != 0)
 					op_status = 1;
 			}
@@ -975,7 +961,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				__system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+				system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
 				ui_print("TWRP injection complete.\n");
 			}
 
@@ -1072,7 +1058,7 @@ LOGE("TODO: Implement ORS support\n");
 			} else {
 				int wipe_cache = 0;
 				ui_print("Starting ADB sideload feature...\n");
-				__system("touch /tmp/update.zip");
+				system("touch /tmp/update.zip");
 				ret = apply_from_adb(ui, &wipe_cache, "/tmp/last_install");
 				LOGI("Result was: %i\n", ret);
 				if (ret != 0)
@@ -1118,7 +1104,7 @@ void* GUIAction::command_thread(void *cookie)
 	char line[512];
 
 	DataManager::GetValue("tw_terminal_command_thread", command);
-	fp = __popen(command.c_str(), "r");
+	fp = popen(command.c_str(), "r");
 	if (fp == NULL) {
 		LOGE("Error opening command to run.\n");
 	} else {

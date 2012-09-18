@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
-#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,372 +24,49 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <ctype.h>
-#include "cutils/misc.h"
-#include "cutils/properties.h"
-#include <dirent.h>
-#include <getopt.h>
 #include <linux/input.h>
-#include <signal.h>
-#include <sys/limits.h>
-#include <termios.h>
-#include <time.h>
-#include <sys/vfs.h>
 
-#include "tw_reboot.h"
 #include "bootloader.h"
 #include "common.h"
 #include "extra-functions.h"
-#include "minuitwrp/minui.h"
-#include "minzip/DirUtil.h"
-#include "minzip/Zip.h"
-#include "recovery_ui.h"
-#include "roots.h"
 #include "data.h"
 #include "variables.h"
-#include "mincrypt/rsa.h"
-#include "verifier.h"
-#include "mincrypt/sha.h"
-
-#ifndef PUBLIC_KEYS_FILE
-#define PUBLIC_KEYS_FILE "/res/keys"
-#endif
-#ifndef ASSUMED_UPDATE_BINARY_NAME
-#define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
-#endif
-enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT };
-
-//kang system() from bionic/libc/unistd and rename it __system() so we can be even more hackish :)
-#undef _PATH_BSHELL
-#define _PATH_BSHELL "/sbin/sh"
-
-extern char **environ;
-
-int __system(const char *command) {
-  pid_t pid;
-	sig_t intsave, quitsave;
-	sigset_t mask, omask;
-	int pstat;
-	char *argp[] = {"sh", "-c", NULL, NULL};
-
-	if (!command)		/* just checking... */
-		return(1);
-
-	argp[2] = (char *)command;
-
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGCHLD);
-	sigprocmask(SIG_BLOCK, &mask, &omask);
-	switch (pid = vfork()) {
-	case -1:			/* error */
-		sigprocmask(SIG_SETMASK, &omask, NULL);
-		return(-1);
-	case 0:				/* child */
-		sigprocmask(SIG_SETMASK, &omask, NULL);
-		execve(_PATH_BSHELL, argp, environ);
-    _exit(127);
-  }
-
-	intsave = (sig_t)  bsd_signal(SIGINT, SIG_IGN);
-	quitsave = (sig_t) bsd_signal(SIGQUIT, SIG_IGN);
-	pid = waitpid(pid, (int *)&pstat, 0);
-	sigprocmask(SIG_SETMASK, &omask, NULL);
-	(void)bsd_signal(SIGINT, intsave);
-	(void)bsd_signal(SIGQUIT, quitsave);
-	return (pid == -1 ? -1 : pstat);
-}
-
-static struct pid {
-	struct pid *next;
-	FILE *fp;
-	pid_t pid;
-} *pidlist;
-
-FILE *__popen(const char *program, const char *type) {
-	struct pid * volatile cur;
-	FILE *iop;
-	int pdes[2];
-	pid_t pid;
-
-	if ((*type != 'r' && *type != 'w') || type[1] != '\0') {
-		errno = EINVAL;
-		return (NULL);
-	}
-
-	if ((cur = malloc(sizeof(struct pid))) == NULL)
-		return (NULL);
-
-	if (pipe(pdes) < 0) {
-		free(cur);
-		return (NULL);
-	}
-
-	switch (pid = vfork()) {
-	case -1:			/* Error. */
-		(void)close(pdes[0]);
-		(void)close(pdes[1]);
-		free(cur);
-		return (NULL);
-		/* NOTREACHED */
-	case 0:				/* Child. */
-	    {
-		struct pid *pcur;
-		/*
-		 * because vfork() instead of fork(), must leak FILE *,
-		 * but luckily we are terminally headed for an execl()
-		 */
-		for (pcur = pidlist; pcur; pcur = pcur->next)
-			close(fileno(pcur->fp));
-
-		if (*type == 'r') {
-			int tpdes1 = pdes[1];
-
-			(void) close(pdes[0]);
-			/*
-			 * We must NOT modify pdes, due to the
-			 * semantics of vfork.
-			 */
-			if (tpdes1 != STDOUT_FILENO) {
-				(void)dup2(tpdes1, STDOUT_FILENO);
-				(void)close(tpdes1);
-				tpdes1 = STDOUT_FILENO;
-			}
-		} else {
-			(void)close(pdes[1]);
-			if (pdes[0] != STDIN_FILENO) {
-				(void)dup2(pdes[0], STDIN_FILENO);
-				(void)close(pdes[0]);
-			}
-		}
-		execl(_PATH_BSHELL, "sh", "-c", program, (char *)NULL);
-		_exit(127);
-		/* NOTREACHED */
-	    }
-	}
-
-	/* Parent; assume fdopen can't fail. */
-	if (*type == 'r') {
-		iop = fdopen(pdes[0], type);
-		(void)close(pdes[1]);
-	} else {
-		iop = fdopen(pdes[1], type);
-		(void)close(pdes[0]);
-	}
-
-	/* Link into list of file descriptors. */
-	cur->fp = iop;
-	cur->pid =  pid;
-	cur->next = pidlist;
-	pidlist = cur;
-
-	return (iop);
-}
-
-/*
- * pclose --
- *	Pclose returns -1 if stream is not associated with a `popened' command,
- *	if already `pclosed', or waitpid returns an error.
- */
-int __pclose(FILE *iop) {
-	struct pid *cur, *last;
-	int pstat;
-	pid_t pid;
-
-	/* Find the appropriate file pointer. */
-	for (last = NULL, cur = pidlist; cur; last = cur, cur = cur->next)
-		if (cur->fp == iop)
-			break;
-
-	if (cur == NULL)
-		return (-1);
-
-	(void)fclose(iop);
-
-	do {
-		pid = waitpid(cur->pid, &pstat, 0);
-	} while (pid == -1 && errno == EINTR);
-
-	/* Remove the entry from the linked list. */
-	if (last == NULL)
-		pidlist = cur->next;
-	else
-		last->next = cur->next;
-	free(cur);
-
-	return (pid == -1 ? -1 : pstat);
-}
-
-//partial kangbang from system/vold
-#ifndef CUSTOM_LUN_FILE
-#define CUSTOM_LUN_FILE "/sys/devices/platform/usb_mass_storage/lun%d/file"
-#endif
-
-int usb_storage_enable(void)
-{
-    int fd;
-	char lun_file[255];
-
-	if (DataManager_GetIntValue(TW_HAS_DUAL_STORAGE) == 1 && DataManager_GetIntValue(TW_HAS_DATA_MEDIA) == 0) {
-		Volume *vol = volume_for_path(DataManager_GetSettingsStoragePath());
-		if (!vol)
-		{
-			LOGE("Unable to locate volume information.");
-			return -1;
-		}
-
-		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
-
-		if ((fd = open(lun_file, O_WRONLY)) < 0)
-		{
-			LOGE("Unable to open ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
-			return -1;
-		}
-
-		if ((write(fd, vol->device, strlen(vol->device)) < 0) &&
-			(!vol->device2 || (write(fd, vol->device, strlen(vol->device2)) < 0))) {
-			LOGE("Unable to write to ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
-			close(fd);
-			return -1;
-		}
-		close(fd);
-
-		Volume *vol2 = volume_for_path(DataManager_GetStrValue(TW_EXTERNAL_PATH));
-		if (!vol)
-		{
-			LOGE("Unable to locate volume information.\n");
-			return -1;
-		}
-
-		sprintf(lun_file, CUSTOM_LUN_FILE, 1);
-
-		if ((fd = open(lun_file, O_WRONLY)) < 0)
-		{
-			LOGE("Unable to open ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
-			return -1;
-		}
-
-		if ((write(fd, vol2->device, strlen(vol2->device)) < 0) &&
-			(!vol2->device2 || (write(fd, vol2->device, strlen(vol2->device2)) < 0))) {
-			LOGE("Unable to write to ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
-			close(fd);
-			return -1;
-		}
-		close(fd);
-	} else {
-		if (DataManager_GetIntValue(TW_HAS_DATA_MEDIA) == 0)
-			strcpy(lun_file, DataManager_GetCurrentStoragePath());
-		else
-			strcpy(lun_file, DataManager_GetStrValue(TW_EXTERNAL_PATH));
-
-		Volume *vol = volume_for_path(lun_file);
-		if (!vol)
-		{
-			LOGE("Unable to locate volume information.\n");
-			return -1;
-		}
-
-		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
-
-		if ((fd = open(lun_file, O_WRONLY)) < 0)
-		{
-			LOGE("Unable to open ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
-			return -1;
-		}
-
-		if ((write(fd, vol->device, strlen(vol->device)) < 0) &&
-			(!vol->device2 || (write(fd, vol->device, strlen(vol->device2)) < 0))) {
-			LOGE("Unable to write to ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
-			close(fd);
-			return -1;
-		}
-		close(fd);
-	}
-	return 0;
-}
-
-int usb_storage_disable(void)
-{
-    int fd, index;
-	char lun_file[255];
-
-	for (index=0; index<2; index++) {
-		sprintf(lun_file, CUSTOM_LUN_FILE, index);
-
-		if ((fd = open(lun_file, O_WRONLY)) < 0)
-		{
-			if (index == 0)
-				LOGE("Unable to open ums lunfile '%s': (%s)", lun_file, strerror(errno));
-			return -1;
-		}
-
-		char ch = 0;
-		if (write(fd, &ch, 1) < 0)
-		{
-			if (index == 0)
-				LOGE("Unable to write to ums lunfile '%s': (%s)", lun_file, strerror(errno));
-			close(fd);
-			return -1;
-		}
-
-		close(fd);
-	}
-    return 0;
-}
-
-void update_tz_environment_variables() {
-    setenv("TZ", DataManager_GetStrValue(TW_TIME_ZONE_VAR), 1);
-    tzset();
-}
 
 void run_script(const char *str1, const char *str2, const char *str3, const char *str4, const char *str5, const char *str6, const char *str7, int request_confirm)
 {
 	ui_print("%s", str1);
-        //ui_clear_key_queue();
-	ui_print("\nPress Power to confirm,");
-       	ui_print("\nany other key to abort.\n");
-	int confirm;
-	/*if (request_confirm) // this option is used to skip the confirmation when the gui is in use
-		confirm = ui_wait_key();
-	else*/
-		confirm = KEY_POWER;
-	
-		if (confirm == BTN_MOUSE || confirm == KEY_POWER || confirm == SELECT_ITEM) {
-                	ui_print("%s", str2);
-		        pid_t pid = fork();
-                	if (pid == 0) {
-                		char *args[] = { "/sbin/sh", "-c", (char*)str3, "1>&2", NULL };
-                	        execv("/sbin/sh", args);
-                	        fprintf(stderr, str4, strerror(errno));
-                	        _exit(-1);
-                	}
-			int status;
-			while (waitpid(pid, &status, WNOHANG) == 0) {
-				ui_print(".");
-               		        sleep(1);
-			}
-                	ui_print("\n");
-			if (!WIFEXITED(status) || (WEXITSTATUS(status) != 0)) {
-                		ui_print("%s", str5);
-                	} else {
-                		ui_print("%s", str6);
-                	}
-		} else {
-	       		ui_print("%s", str7);
-       	        }
-		//if (!ui_text_visible()) return;
+	ui_print("%s", str2);
+	pid_t pid = fork();
+	if (pid == 0) {
+		char *args[] = { "/sbin/sh", "-c", (char*)str3, "1>&2", NULL };
+		execv("/sbin/sh", args);
+		fprintf(stderr, str4, strerror(errno));
+		_exit(-1);
+	}
+	int status;
+	while (waitpid(pid, &status, WNOHANG) == 0) {
+		ui_print(".");
+		sleep(1);
+	}
+	ui_print("\n");
+	if (!WIFEXITED(status) || (WEXITSTATUS(status) != 0)) {
+		ui_print("%s", str5);
+	} else {
+		ui_print("%s", str6);
+	}
 }
 
 void check_and_run_script(const char* script_file, const char* display_name)
 {
 	// Check for and run startup script if script exists
-	struct statfs st;
-	if (statfs(script_file, &st) == 0) {
+	struct stat st;
+	if (stat(script_file, &st) == 0) {
 		ui_print("Running %s script...\n", display_name);
 		char command[255];
 		strcpy(command, "chmod 755 ");
 		strcat(command, script_file);
-		__system(command);
-		__system(script_file);
+		system(command);
+		system(script_file);
 		ui_print("\nFinished running %s script.\n", display_name);
 	}
 }
@@ -404,7 +78,7 @@ int check_backup_name(int show_error) {
 	char backup_loc[255], tw_image_dir[255];
 	int copy_size = strlen(DataManager_GetStrValue(TW_BACKUP_NAME));
 	int index, cur_char;
-	struct statfs st;
+	struct stat st;
 
 	// Check size
 	if (copy_size > MAX_BACKUP_NAME_LEN) {
@@ -435,7 +109,7 @@ int check_backup_name(int show_error) {
 	// Check to make sure that a backup with this name doesn't already exist
 	strcpy(backup_loc, DataManager_GetStrValue(TW_BACKUPS_FOLDER_VAR));
 	sprintf(tw_image_dir,"%s/%s/.", backup_loc, backup_name);
-    if (statfs(tw_image_dir, &st) == 0) {
+    if (stat(tw_image_dir, &st) == 0) {
 		if (show_error)
 			LOGE("A backup with this name already exists.\n");
 		return -4;
@@ -514,12 +188,11 @@ void twfinish_recovery(const char *send_intent) {
     set_bootloader_message(&boot);
 
     // Remove the command file, so recovery won't repeat indefinitely.
-    if (ensure_path_mounted(COMMAND_FILE) != 0 ||
+    if (system("mount /cache") != 0 ||
         (unlink(COMMAND_FILE) && errno != ENOENT)) {
         LOGW("Can't unlink %s\n", COMMAND_FILE);
     }
 
-    ensure_path_unmounted(CACHE_ROOT);
+    system("umount /cache");
     sync();  // For good measure.
 }
-

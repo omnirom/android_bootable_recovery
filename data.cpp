@@ -444,6 +444,11 @@ void DataManager::DumpValues()
     }
 }
 
+void DataManager::update_tz_environment_variables(void) {
+	setenv("TZ", DataManager_GetStrValue(TW_TIME_ZONE_VAR), 1);
+    tzset();
+}
+
 void DataManager::SetDefaultValues()
 {
     string str, path;
@@ -600,9 +605,15 @@ void DataManager::SetDefaultValues()
     str += dev_id;
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
 
+#ifdef SP1_DISPLAY_NAME
     if (strlen(EXPAND(SP1_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_DISPLAY_NAME)));
+#endif
+#ifdef SP2_DISPLAY_NAME
     if (strlen(EXPAND(SP2_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_DISPLAY_NAME)));
+#endif
+#ifdef SP3_DISPLAY_NAME
     if (strlen(EXPAND(SP3_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_DISPLAY_NAME)));
+#endif
 
     mConstValues.insert(make_pair(TW_REBOOT_SYSTEM, tw_isRebootCommandSupported(rb_system) ? "1" : "0"));
 #ifdef TW_NO_REBOOT_RECOVERY
@@ -860,20 +871,13 @@ void DataManager::ReadSettingsFile(void)
 		}
 	}
 
-	// Update storage free space after settings file is loaded
-	if (use_ext == 1)
-		LOGE("TODO: Fix storage size code!\n"); //SetValue(TW_STORAGE_FREE_SIZE, (int)((sdcext.sze - sdcext.used) / 1048576LLU));
-	else if (has_data_media == 1)
-		LOGE("TODO: Fix storage size code!\n"); //SetValue(TW_STORAGE_FREE_SIZE, (int)((dat.sze - dat.used) / 1048576LLU));
-	else
-		LOGE("TODO: Fix storage size code!\n"); //SetValue(TW_STORAGE_FREE_SIZE, (int)((sdcint.sze - sdcint.used) / 1048576LLU));
-
 	if (has_ext) {
 		string ext_path;
 
 		GetValue(TW_EXTERNAL_PATH, ext_path);
 		PartitionManager.Mount_By_Path(ext_path, 0);
 	}
+	update_tz_environment_variables();
 }
 
 string DataManager::GetCurrentStoragePath(void)
