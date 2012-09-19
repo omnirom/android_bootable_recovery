@@ -67,7 +67,7 @@
 		<variable name="row9_text_y" value="570" />
 		<variable name="row10_text_y" value="620" />
 		<variable name="row11_text_y" value="670" />
-		<variable name="row12_text_y" value="700" />
+		<variable name="row12_text_y" value="720" />
 		<variable name="row13_text_y" value="770" />
 		<variable name="row14_text_y" value="820" />
 		<variable name="row15_text_y" value="870" />
@@ -867,6 +867,69 @@
 				<font resource="font" />
 				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
 				<text>%tw_action_text2%</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" var2="0" />
+				</conditions>
+				<actions>
+					<action function="page">action_complete</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" op="!=" var2="0" />
+				</conditions>
+				<actions>
+					<action function="page">action_complete</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_has_action2" var2="0" />
+				<actions>
+					<action function="%tw_action%">%tw_action_param%</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_has_action2" var2="1" />
+				<actions>
+					<action function="%tw_action%">%tw_action_param%</action>
+					<action function="%tw_action2%">%tw_action2_param%</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="action_page_cancel">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>%tw_action_text1%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>%tw_action_text2%</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Cancel</text>
+				<image resource="main_button" />
+				<action function="%tw_cancel_function%"></action>
 			</object>
 
 			<object type="template" name="action_page_console" />
@@ -2546,12 +2609,13 @@
 				<text>ADB Sideload</text>
 				<image resource="main_button" />
 				<actions>
+					<action function="set">tw_back=advanced</action>
 					<action function="set">tw_action=adbsideload</action>
 					<action function="set">tw_action_text1=ADB Sideload</action>
 					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
 					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
-					<action function="set">tw_slider_text=Swipe to Wipe</action>
-					<action function="page">action_page</action>
+					<action function="set">tw_cancel_function=adbsideloadcancel</action>
+					<action function="page">action_page_cancel</action>
 				</actions>
 			</object>
 

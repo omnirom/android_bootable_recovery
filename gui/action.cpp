@@ -1057,14 +1057,40 @@ LOGE("TODO: Implement ORS support\n");
 				simulate_progress_bar();
 			} else {
 				int wipe_cache = 0;
+				string Command;
+
+				if (!PartitionManager.Mount_Current_Storage(true)) {
+					operation_end(1, simulate);
+					return 0;
+				}
+				if (TWFunc::Path_Exists(ADB_SIDELOAD_FILENAME)) {
+					Command = "rm ";
+					Command += ADB_SIDELOAD_FILENAME;
+					system(Command.c_str());
+				}
+				Command = "touch ";
+				Command += ADB_SIDELOAD_FILENAME;
+				system(Command.c_str());
 				ui_print("Starting ADB sideload feature...\n");
-				system("touch /tmp/update.zip");
-				ret = apply_from_adb(ui, &wipe_cache, "/tmp/last_install");
-				LOGI("Result was: %i\n", ret);
+				ret = apply_from_adb(ui, &wipe_cache, "/tmp/install_log");
 				if (ret != 0)
-					ret = 1;
+					ret = 1; // failure
+				else if (wipe_cache)
+					PartitionManager.Wipe_By_Path("/cache");
 			}
 			operation_end(ret, simulate);
+			return 0;
+		}
+		if (function == "adbsideloadcancel")
+		{
+			int child_pid;
+			string Command;
+			Command = "rm ";
+			Command += ADB_SIDELOAD_FILENAME;
+			system(Command.c_str());
+			DataManager::GetValue("tw_child_pid", child_pid);
+			ui_print("Cancelling ADB sideload...\n");
+			kill(child_pid, SIGTERM);
 			return 0;
 		}
     }

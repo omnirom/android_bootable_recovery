@@ -33,6 +33,7 @@
 extern "C" {
 #include "minadbd/adb.h"
 #include "twinstall.h"
+#include "data.h"
 int TWinstall_zip(const char* path, int* wipe_cache);
 }
 
@@ -86,6 +87,7 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
         execl("/sbin/recovery", "recovery", "--adbd", NULL);
         _exit(-1);
     }
+	DataManager_SetIntValue("tw_child_pid", child);
     int status;
     // TODO(dougz): there should be a way to cancel waiting for a
     // package (by pushing some button combo on the device).  For now
@@ -108,5 +110,17 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
         }
         return INSTALL_ERROR;
     }
-    return TWinstall_zip(ADB_SIDELOAD_FILENAME, wipe_cache);
+	char zip_file[255];
+	if (strncmp(ADB_SIDELOAD_FILENAME, "/tmp", 4) == 0) {
+		char command[255];
+		sprintf(zip_file, "%s/%s", DataManager_GetCurrentStoragePath(), "sideload.zip");
+		ui->Print("Copying zip to '%s'\n", zip_file);
+		sprintf(command, "cp %s %s", ADB_SIDELOAD_FILENAME, zip_file);
+		system(command);
+		sprintf(command, "rm %s", ADB_SIDELOAD_FILENAME);
+		system(command);
+	} else {
+		strcpy(zip_file, ADB_SIDELOAD_FILENAME);
+	}
+	return TWinstall_zip(zip_file, wipe_cache);
 }

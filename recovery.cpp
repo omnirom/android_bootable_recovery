@@ -773,6 +773,10 @@ print_property(const char *key, const char *name, void *cookie) {
 
 int
 main(int argc, char **argv) {
+    // Recovery needs to install world-readable files, so clear umask
+    // set by init
+    umask(0);
+
     time_t start = time(NULL);
 
     // If these fail, there's not really anywhere to complain...
@@ -792,9 +796,6 @@ main(int argc, char **argv) {
     }
 
     printf("Starting TWRP %s on %s", TW_VERSION_STR, ctime(&start));
-	// Recovery needs to install world-readable files, so clear umask
-    // set by init
-    umask(0);
 
     Device* device = make_device();
     ui = device->GetUI();
