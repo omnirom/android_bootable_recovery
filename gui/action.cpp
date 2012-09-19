@@ -540,11 +540,37 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		}
 		if (PartitionManager.Mount_Current_Storage(true)) {
 			if (arg == "internal") {
+				string zip_path, zip_root;
+				DataManager::GetValue(TW_ZIP_INTERNAL_VAR, zip_path);
+				zip_root = TWFunc::Get_Root_Path(zip_path);
+#ifdef RECOVERY_SDCARD_ON_DATA
+	#ifndef TW_EXTERNAL_STORAGE_PATH
+				if (zip_root != "/sdcard")
+					DataManager::SetValue(TW_ZIP_INTERNAL_VAR, "/sdcard");
+	#else
+				if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
+					if (zip_root != "/emmc")
+						DataManager::SetValue(TW_ZIP_INTERNAL_VAR, "/emmc");
+				} else {
+					if (zip_root != "/sdcard")
+						DataManager::SetValue(TW_ZIP_INTERNAL_VAR, "/sdcard");
+				}
+	#endif
+#else
+				if (zip_root != DataManager::GetCurrentStoragePath())
+					DataManager::SetValue(TW_ZIP_LOCATION_VAR, DataManager::GetCurrentStoragePath());
+#endif
 				// Save the current zip location to the external variable
 				DataManager::SetValue(TW_ZIP_EXTERNAL_VAR, DataManager::GetStrValue(TW_ZIP_LOCATION_VAR));
 				// Change the current zip location to the internal variable
 				DataManager::SetValue(TW_ZIP_LOCATION_VAR, DataManager::GetStrValue(TW_ZIP_INTERNAL_VAR));
 			} else if (arg == "external") {
+				string zip_path, zip_root;
+				DataManager::GetValue(TW_ZIP_EXTERNAL_VAR, zip_path);
+				zip_root = TWFunc::Get_Root_Path(zip_path);
+				if (zip_root != DataManager::GetCurrentStoragePath()) {
+					DataManager::SetValue(TW_ZIP_EXTERNAL_VAR, DataManager::GetCurrentStoragePath());
+				}
 				// Save the current zip location to the internal variable
 				DataManager::SetValue(TW_ZIP_INTERNAL_VAR, DataManager::GetStrValue(TW_ZIP_LOCATION_VAR));
 				// Change the current zip location to the external variable

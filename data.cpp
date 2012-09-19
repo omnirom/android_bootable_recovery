@@ -840,11 +840,15 @@ void DataManager::ReadSettingsFile(void)
 	GetValue(TW_HAS_EXTERNAL, has_ext);
 	if (has_dual != 0 && use_ext == 1) {
 		// Attempt to sdcard using external storage
-		if (PartitionManager.Mount_Current_Storage(false)) {
+		if (!PartitionManager.Mount_Current_Storage(false)) {
 			LOGE("Failed to mount external storage, using internal storage.\n");
 			// Remount failed, default back to internal storage
 			SetValue(TW_USE_EXTERNAL_STORAGE, 0);
 			PartitionManager.Mount_Current_Storage(true);
+			string int_zip_path;
+			GetValue(TW_ZIP_INTERNAL_VAR, int_zip_path);
+			SetValue(TW_USE_EXTERNAL_STORAGE, 0);
+			SetValue(TW_ZIP_LOCATION_VAR, int_zip_path);
 		}
 	} else {
 		PartitionManager.Mount_Current_Storage(true);
