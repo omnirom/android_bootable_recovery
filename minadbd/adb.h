@@ -217,7 +217,7 @@ void send_packet(apacket *p, atransport *t);
 
 void get_my_path(char *s, size_t maxLen);
 int launch_server(int server_port);
-int adb_main();
+int adb_main(const char* path);
 
 
 /* transports are ref-counted
@@ -413,6 +413,7 @@ extern int SHELL_EXIT_NOTIFY_FD;
 int sendfailmsg(int fd, const char *reason);
 int handle_host_request(char *service, transport_type ttype, char* serial, int reply_fd, asocket *s);
 
-#define ADB_SIDELOAD_FILENAME "/tmp/update.zip"
+//#define ADB_SIDELOAD_FILENAME "/tmp/update.zip"
+extern char ADB_SIDELOAD_FILENAME[255];
 
 #endif

@@ -790,8 +790,8 @@ main(int argc, char **argv) {
     // anything in the command file or bootloader control block; the
     // only way recovery should be run with this argument is when it
     // starts a copy of itself from the apply_from_adb() function.
-    if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
-        adb_main();
+    if (argc == 3 && strcmp(argv[1], "--adbd") == 0) {
+        adb_main(argv[2]);
         return 0;
     }
 

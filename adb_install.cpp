@@ -84,7 +84,7 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
 
     pid_t child;
     if ((child = fork()) == 0) {
-        execl("/sbin/recovery", "recovery", "--adbd", NULL);
+        execl("/sbin/recovery", "recovery", "--adbd", install_file, NULL);
         _exit(-1);
     }
 	DataManager_SetIntValue("tw_child_pid", child);
@@ -102,7 +102,7 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
     maybe_restart_adbd();
 
     struct stat st;
-    if (stat(ADB_SIDELOAD_FILENAME, &st) != 0) {
+    if (stat(install_file, &st) != 0) {
         if (errno == ENOENT) {
             ui->Print("No package received.\n");
         } else {
@@ -110,17 +110,5 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
         }
         return INSTALL_ERROR;
     }
-	char zip_file[255];
-	if (strncmp(ADB_SIDELOAD_FILENAME, "/tmp", 4) == 0) {
-		char command[255];
-		sprintf(zip_file, "%s/%s", DataManager_GetCurrentStoragePath(), "sideload.zip");
-		ui->Print("Copying zip to '%s'\n", zip_file);
-		sprintf(command, "cp %s %s", ADB_SIDELOAD_FILENAME, zip_file);
-		system(command);
-		sprintf(command, "rm %s", ADB_SIDELOAD_FILENAME);
-		system(command);
-	} else {
-		strcpy(zip_file, ADB_SIDELOAD_FILENAME);
-	}
-	return TWinstall_zip(zip_file, wipe_cache);
+	return TWinstall_zip(install_file, wipe_cache);
 }
