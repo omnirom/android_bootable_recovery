@@ -25,11 +25,10 @@ int TWFunc::Check_MD5(string File) {
 	size_t pos;
 
 	MD5_File = File + ".md5";
-	if (access(MD5_File.c_str(), F_OK ) != -1) {
+	if (Path_Exists(MD5_File)) {
 		DirPath = Get_Path(File);
-		chdir(DirPath.c_str());
 		MD5_File = Get_Filename(MD5_File);
-		Command = "/sbin/busybox md5sum -c '" + MD5_File + "' > /tmp/md5output";
+		Command = "cd '" + DirPath + "' && /sbin/busybox md5sum -c '" + MD5_File + "' > /tmp/md5output";
 		system(Command.c_str());
 		FILE * cs = fopen("/tmp/md5output", "r");
 		if (cs == NULL) {
@@ -38,6 +37,7 @@ int TWFunc::Check_MD5(string File) {
 		}
 
 		fgets(line, sizeof(line), cs);
+		fclose(cs);
 
 		Sline = line;
 		pos = Sline.find(":");
@@ -56,7 +56,6 @@ int TWFunc::Check_MD5(string File) {
 			// MD5 is bad, return 0
 			ret = 0;
 		}
-		fclose(cs);
 	} else {
 		//No md5 file, return -1
 		ret = -1;
