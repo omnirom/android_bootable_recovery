@@ -44,6 +44,7 @@
 		<variable name="col1_x" value="10" />
 		<variable name="col2_x" value="383" />
 		<variable name="col_center_x" value="191" />
+		<variable name="col_center_medium_x" value="275" />
 		<variable name="center_x" value="360" />
 		<variable name="row1_y" value="170" />
 		<variable name="row2_y" value="410" />
@@ -790,6 +791,9 @@
 				<action function="set">tw_has_action2=0</action>
 				<action function="set">tw_action2=</action>
 				<action function="set">tw_action2_param=</action>
+				<action function="set">tw_has_cancel=0</action>
+				<action function="set">tw_cancel_action=</action>
+				<action function="set">tw_cancel_param=</action>
 				<action function="page">%tw_clear_destination%</action>
 			</object>
 		</page>
@@ -871,6 +875,15 @@
 			</object>
 
 			<object type="template" name="action_page_console" />
+
+			<object type="button">
+				<condition var1="tw_has_cancel" var2="1" />
+				<placement x="%col_center_medium_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Cancel</text>
+				<image resource="medium_button" />
+				<action function="%tw_cancel_action%">%tw_cancel_param%</action>
+			</object>
 
 			<object type="template" name="progress_bar" />
 
@@ -2533,6 +2546,31 @@
 				<text>Terminal Command</text>
 				<image resource="main_button" />
 				<action function="page">terminalfolder</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row3_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Reload Theme</text>
+				<image resource="main_button" />
+				<action function="reload"></action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>ADB Sideload</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=adbsideload</action>
+					<action function="set">tw_action_text1=ADB Sideload</action>
+					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
+					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
+					<action function="set">tw_has_cancel=1</action>
+					<action function="set">tw_cancel_action=adbsideloadcancel</action>
+					<action function="page">action_page</action>
+				</actions>
 			</object>
 
 			<object type="button">
