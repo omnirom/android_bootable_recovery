@@ -173,6 +173,7 @@ public:
 	virtual int Fix_Permissions();                                            // Fixes permissions in /system and /data
 	virtual int usb_storage_enable(void);                                     // Enable USB storage mode
 	virtual int usb_storage_disable(void);                                    // Disable USB storage mode
+	virtual void Mount_All_Storage(void);                                     // Mounts all storage locations
 
 private:
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made

@@ -36,7 +36,8 @@ LOCAL_SRC_FILES += \
     partitionmanager.cpp \
     mtdutils/mtdutils.c \
     twinstall.cpp \
-    twrp-functions.cpp
+    twrp-functions.cpp \
+    openrecoveryscript.cpp
 
 ifeq ($(TARGET_RECOVERY_REBOOT_SRC),)
   LOCAL_SRC_FILES += reboot.c

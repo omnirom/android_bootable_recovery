@@ -20,6 +20,7 @@
 #include <sstream>
 #include "../partitions.hpp"
 #include "../twrp-functions.hpp"
+#include "../openrecoveryscript.hpp"
 
 #include "../ui.h"
 #include "../adb_install.h"
@@ -1028,10 +1029,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 					DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 					DataManager::ReadSettingsFile();
-LOGE("TODO: Implement ORS support\n");
-					if (0/*check_for_script_file()*/) {
+					if (OpenRecoveryScript::check_for_script_file()) {
 						ui_print("Processing OpenRecoveryScript file...\n");
-						if (/*run_script_file() ==*/ 0) {
+						if (OpenRecoveryScript::run_script_file() == 0) {
 							usleep(2000000); // Sleep for 2 seconds before rebooting
 							tw_reboot(rb_system);
 							load_theme = 0;

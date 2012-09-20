@@ -56,6 +56,7 @@ extern "C" {
 }
 #include "partitions.hpp"
 #include "variables.h"
+#include "openrecoveryscript.hpp"
 
 TWPartitionManager PartitionManager;
 
@@ -924,8 +925,19 @@ main(int argc, char **argv) {
 
     //if (status != INSTALL_SUCCESS) ui->SetBackground(RecoveryUI::ERROR);
     if (status != INSTALL_SUCCESS /*|| ui->IsTextVisible()*/) {
+		finish_recovery(NULL);
 		DataManager_ReadSettingsFile();
-        gui_start();
+		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) == 0 && OpenRecoveryScript::check_for_script_file()) {
+			gui_console_only();
+			OpenRecoveryScript::run_script_file();
+			if (1 || OpenRecoveryScript::run_script_file() != 0) {
+				// There was an error, boot the recovery
+				gui_start();
+			} else {
+				usleep(2000000); // Sleep for 2 seconds before rebooting
+			}
+		} else
+			gui_start();
 		//prompt_and_wait(device);
     }
 

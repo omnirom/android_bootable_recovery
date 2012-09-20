@@ -1498,3 +1498,12 @@ int TWPartitionManager::usb_storage_disable(void) {
 	Mount_By_Path(DataManager::GetCurrentStoragePath(), true);
 	return true;
 }
+
+void TWPartitionManager::Mount_All_Storage(void) {
+	std::vector<TWPartition*>::iterator iter;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Is_Storage)
+			(*iter)->Mount(false);
+	}
+}
