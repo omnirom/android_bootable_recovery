@@ -42,6 +42,7 @@ extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
 	#include "makelist.h"
+	#include "extra-functions.h"
 }
 
 TWPartition::TWPartition(void) {
@@ -217,16 +218,19 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Wipe_During_Factory_Reset = true;
 			Display_Name = "SD-Ext";
 			Wipe_Available_in_GUI = true;
+			Removable = true;
 		}
 #ifdef TW_EXTERNAL_STORAGE_PATH
 		if (Mount_Point == EXPAND(TW_EXTERNAL_STORAGE_PATH)) {
 			Is_Storage = true;
 			Storage_Path = EXPAND(TW_EXTERNAL_STORAGE_PATH);
+			Removable = true;
 		}
 #else
 		if (Mount_Point == "/sdcard") {
 			Is_Storage = true;
 			Storage_Path = "/sdcard";
+			Removable = true;
 		}
 #endif
 #ifdef TW_INTERNAL_STORAGE_PATH
@@ -661,6 +665,9 @@ bool TWPartition::Wipe() {
 		LOGE("Partition '%s' cannot be wiped.\n", Mount_Point.c_str());
 		return false;
 	}
+
+	if (Mount_Point == "/cache")
+		tmplog_offset = 0;
 
 	if (Has_Data_Media)
 		return Wipe_Data_Without_Wiping_Media();

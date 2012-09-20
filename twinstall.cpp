@@ -287,7 +287,7 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 			LOGE("No MD5 file found for '%s'.\nDisable force MD5 check to avoid this error.\n", path);
 			return INSTALL_CORRUPT;
 		} else
-			ui_print("No MD5 file found, this is not an error.\n");
+			ui_print("Skipping MD5 check: no MD5 file found.\n");
 	} else if (md5_return == 1)
 		ui_print("Zip MD5 matched.\n"); // MD5 found and matched.
 

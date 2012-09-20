@@ -413,11 +413,10 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	if (!generate_md5)
 		return true;
 
-	ui_print(" * Generating md5...");
+	ui_print(" * Generating md5...\n");
 
 	if (TWFunc::Path_Exists(Full_File)) {
 		sprintf(command, "cd '%s' && md5sum %s > %s.md5",Backup_Folder.c_str(), Backup_Filename.c_str(), Backup_Filename.c_str());
-		LOGI("MD5 command is: '%s'\n", command);
 		if (system(command) == 0) {
 			ui_print("MD5 Created.\n");
 			return true;
@@ -432,7 +431,6 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 		sprintf(filename, "%s%03i", Full_File.c_str(), index);
 		while (TWFunc::Path_Exists(filename) == true) {
 			sprintf(command, "cd '%s' && md5sum %s%03i > %s%03i.md5",Backup_Folder.c_str(), Backup_Filename.c_str(), index, Backup_Filename.c_str(), index);
-			LOGI("MD5 command is: '%s'\n", command);
 			if (system(command) != 0) {
 				ui_print("MD5 Error.\n");
 				return false;
