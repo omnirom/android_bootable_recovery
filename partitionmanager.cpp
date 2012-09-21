@@ -34,6 +34,7 @@
 
 #include "variables.h"
 #include "common.h"
+#include "ui.h"
 #include "partitions.hpp"
 #include "data.hpp"
 #include "twrp-functions.hpp"
@@ -46,6 +47,8 @@
 	#endif
 	#include "cutils/properties.h"
 #endif
+
+extern RecoveryUI* ui;
 
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
 	FILE *fstabFile;
@@ -452,11 +455,42 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	return true;
 }
 
-bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time) {
+bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes) {
 	time_t start, stop;
+	int img_bps, file_bps;
+	unsigned long total_time, remain_time, section_time;
+	int use_compression, backup_time;
+	float pos;
 
 	if (Part == NULL)
 		return true;
+
+	DataManager::GetValue(TW_BACKUP_AVG_IMG_RATE, img_bps);
+
+	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
+	if (use_compression)
+		DataManager::GetValue(TW_BACKUP_AVG_FILE_COMP_RATE, file_bps);
+	else
+		DataManager::GetValue(TW_BACKUP_AVG_FILE_RATE, file_bps);
+
+	// We know the speed for both, how far into the whole backup are we, based on time
+	total_time = (*img_bytes / (unsigned long)img_bps) + (*file_bytes / (unsigned long)file_bps);
+	remain_time = (*img_bytes_remaining / (unsigned long)img_bps) + (*file_bytes_remaining / (unsigned long)file_bps);
+
+	pos = (total_time - remain_time) / (float) total_time;
+	ui->SetProgress(pos);
+
+	LOGI("Estimated Total time: %lu  Estimated remaining time: %lu\n", total_time, remain_time);
+
+	// And get the time
+	if (Part->Backup_Method == 1)
+		section_time = Part->Backup_Size / file_bps;
+	else
+		section_time = Part->Backup_Size / img_bps;
+
+	// Set the position
+	pos = section_time / (float) total_time;
+	ui->ShowProgress(pos, section_time);
 
 	time(&start);
 
@@ -470,16 +504,23 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 						return false;
 					if (!Make_MD5(generate_md5, Backup_Folder, (*subpart)->Backup_FileName))
 						return false;
+					if (Part->Backup_Method == 1) {
+						*file_bytes_remaining -= (*subpart)->Backup_Size;
+					} else {
+						*img_bytes_remaining -= (*subpart)->Backup_Size;
+					}
 				}
 			}
 		}
 		time(&stop);
+		backup_time = (int) difftime(stop, start);
+		LOGI("Partition Backup time: %d\n", backup_time);
 		if (Part->Backup_Method == 1) {
 			*file_bytes_remaining -= Part->Backup_Size;
-			*file_time += (int) difftime(stop, start);
+			*file_time += backup_time;
 		} else {
 			*img_bytes_remaining -= Part->Backup_Size;
-			*img_time += (int) difftime(stop, start);
+			*img_time += backup_time;
 		}
 		return Make_MD5(generate_md5, Backup_Folder, Part->Backup_FileName);
 	} else {
@@ -716,25 +757,27 @@ int TWPartitionManager::Run_Backup(void) {
 	img_bytes_remaining = img_bytes;
     file_bytes_remaining = file_bytes;
 
-	if (!Backup_Partition(backup_sys, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+	ui->SetProgress(0.0);
+
+	if (!Backup_Partition(backup_sys, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
 		return false;
-	if (!Backup_Partition(backup_data, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+	if (!Backup_Partition(backup_data, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
 		return false;
-	if (!Backup_Partition(backup_cache, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+	if (!Backup_Partition(backup_cache, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
 		return false;
-	if (!Backup_Partition(backup_recovery, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+	if (!Backup_Partition(backup_recovery, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
 		return false;
-	if (!Backup_Partition(backup_boot, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+	if (!Backup_Partition(backup_boot, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
 		return false;
-	if (!Backup_Partition(backup_andsec, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+	if (!Backup_Partition(backup_andsec, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
 		return false;
-	if (!Backup_Partition(backup_sdext, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+	if (!Backup_Partition(backup_sdext, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
 		return false;
-	if (!Backup_Partition(backup_sp1, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+	if (!Backup_Partition(backup_sp1, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
 		return false;
-	if (!Backup_Partition(backup_sp2, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+	if (!Backup_Partition(backup_sp2, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
 		return false;
-	if (!Backup_Partition(backup_sp3, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time))
+	if (!Backup_Partition(backup_sp3, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
 		return false;
 
 	// Average BPS
@@ -742,8 +785,8 @@ int TWPartitionManager::Run_Backup(void) {
 		img_time = 1;
 	if (file_time == 0)
 		file_time = 1;
-	unsigned long int img_bps = img_bytes / img_time;
-	unsigned long int file_bps = file_bytes / file_time;
+	int img_bps = (int)img_bytes / (int)img_time;
+	int file_bps = (int)file_bytes / (int)file_time;
 
 	ui_print("Average backup rate for file systems: %lu MB/sec\n", (file_bps / (1024 * 1024)));
 	ui_print("Average backup rate for imaged drives: %lu MB/sec\n", (img_bps / (1024 * 1024)));
@@ -753,15 +796,35 @@ int TWPartitionManager::Run_Backup(void) {
 	unsigned long long actual_backup_size = TWFunc::Get_Folder_Size(Full_Backup_Path, true);
     actual_backup_size /= (1024LLU * 1024LLU);
 
+	int prev_img_bps, prev_file_bps, use_compression;
+	DataManager::GetValue(TW_BACKUP_AVG_IMG_RATE, prev_img_bps);
+	img_bps += (prev_img_bps * 4);
+    img_bps /= 5;
+
+    DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
+	if (use_compression)
+		DataManager::GetValue(TW_BACKUP_AVG_FILE_COMP_RATE, prev_file_bps);
+    else
+		DataManager::GetValue(TW_BACKUP_AVG_FILE_RATE, prev_file_bps);
+	file_bps += (prev_file_bps * 4);
+    file_bps /= 5;
+
+    DataManager::SetValue(TW_BACKUP_AVG_IMG_RATE, img_bps);
+	if (use_compression)
+		DataManager::SetValue(TW_BACKUP_AVG_FILE_COMP_RATE, file_bps);
+	else
+		DataManager::SetValue(TW_BACKUP_AVG_FILE_RATE, file_bps);
+
 	ui_print("[%llu MB TOTAL BACKED UP]\n", actual_backup_size);
 	Update_System_Details();
 	ui_print("[BACKUP COMPLETED IN %d SECONDS]\n\n", total_time); // the end
     return true;
 }
 
-bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Name) {
+bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count) {
 	time_t Start, Stop;
 	time(&Start);
+	ui->ShowProgress(1.0 / (float)partition_count, 150);
 	if (!Part->Restore(Restore_Name))
 		return false;
 	if (Part->Has_SubPartition) {
@@ -929,23 +992,24 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 			ui_print("Skipping MD5 check based on user setting.\n");
 
 	ui_print("Restoring %i partitions...\n", partition_count);
-	if (restore_sys != NULL && !Restore_Partition(restore_sys, Restore_Name))
+	ui->SetProgress(0.0);
+	if (restore_sys != NULL && !Restore_Partition(restore_sys, Restore_Name, partition_count))
 		return false;
-	if (restore_data != NULL && !Restore_Partition(restore_data, Restore_Name))
+	if (restore_data != NULL && !Restore_Partition(restore_data, Restore_Name, partition_count))
 		return false;
-	if (restore_cache != NULL && !Restore_Partition(restore_cache, Restore_Name))
+	if (restore_cache != NULL && !Restore_Partition(restore_cache, Restore_Name, partition_count))
 		return false;
-	if (restore_boot != NULL && !Restore_Partition(restore_boot, Restore_Name))
+	if (restore_boot != NULL && !Restore_Partition(restore_boot, Restore_Name, partition_count))
 		return false;
-	if (restore_andsec != NULL && !Restore_Partition(restore_andsec, Restore_Name))
+	if (restore_andsec != NULL && !Restore_Partition(restore_andsec, Restore_Name, partition_count))
 		return false;
-	if (restore_sdext != NULL && !Restore_Partition(restore_sdext, Restore_Name))
+	if (restore_sdext != NULL && !Restore_Partition(restore_sdext, Restore_Name, partition_count))
 		return false;
-	if (restore_sp1 != NULL && !Restore_Partition(restore_sp1, Restore_Name))
+	if (restore_sp1 != NULL && !Restore_Partition(restore_sp1, Restore_Name, partition_count))
 		return false;
-	if (restore_sp2 != NULL && !Restore_Partition(restore_sp2, Restore_Name))
+	if (restore_sp2 != NULL && !Restore_Partition(restore_sp2, Restore_Name, partition_count))
 		return false;
-	if (restore_sp3 != NULL && !Restore_Partition(restore_sp3, Restore_Name))
+	if (restore_sp3 != NULL && !Restore_Partition(restore_sp3, Restore_Name, partition_count))
 		return false;
 
 	Update_System_Details();
