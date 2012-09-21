@@ -288,7 +288,10 @@ int format_volume(const char* volume) {
 
     if (strcmp(v->fs_type, "ext4") == 0) {
 #ifdef USE_EXT4
+/*
         int result = make_ext4fs(v->device, v->length, volume, sehandle);
+*/
+        int result = 0;
 #else
         int result = 0;
 #endif

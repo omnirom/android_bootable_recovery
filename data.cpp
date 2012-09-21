@@ -605,6 +605,15 @@ void DataManager::SetDefaultValues()
     str += dev_id;
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
 
+#ifdef SP1_NAME
+	if (strlen(EXPAND(SP1_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_NAME)));
+#endif
+#ifdef SP2_NAME
+	if (strlen(EXPAND(SP2_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP2_NAME)));
+#endif
+#ifdef SP3_NAME
+	if (strlen(EXPAND(SP3_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP3_NAME)));
+#endif
 #ifdef SP1_DISPLAY_NAME
     if (strlen(EXPAND(SP1_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_DISPLAY_NAME)));
 #endif

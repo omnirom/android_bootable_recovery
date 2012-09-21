@@ -239,7 +239,7 @@ static int get_crypt_ftr_and_key(char *real_blk_name, struct crypt_mnt_ftr *cryp
   if (!strcmp(key_loc, KEY_IN_FOOTER)) {
     fname = real_blk_name;
     if ( (fd = open(fname, O_RDONLY)) < 0) {
-      ui_print("Cannot open real block device %s\n", fname);
+      printf("Cannot open real block device %s\n", fname);
       return -1;
     }
 
@@ -255,45 +255,45 @@ static int get_crypt_ftr_and_key(char *real_blk_name, struct crypt_mnt_ftr *cryp
     off = ((off64_t)nr_sec * 512) - CRYPT_FOOTER_OFFSET;
 
     if (lseek64(fd, off, SEEK_SET) == -1) {
-      ui_print("Cannot seek to real block device footer\n");
+      printf("Cannot seek to real block device footer\n");
       goto errout;
     }
   } else if (key_loc[0] == '/') {
     fname = key_loc;
     if ( (fd = open(fname, O_RDONLY)) < 0) {
-      ui_print("Cannot open footer file %s\n", fname);
+      printf("Cannot open footer file %s\n", fname);
       return -1;
     }
 
     /* Make sure it's 16 Kbytes in length */
     fstat(fd, &statbuf);
     if (S_ISREG(statbuf.st_mode) && (statbuf.st_size != 0x4000)) {
-      ui_print("footer file %s is not the expected size!\n", fname);
+      printf("footer file %s is not the expected size!\n", fname);
       goto errout;
     }
   } else {
-    ui_print("Unexpected value for" KEY_LOC_PROP "\n");
+    printf("Unexpected value for" KEY_LOC_PROP "\n");
     return -1;;
   }
 
   if ( (cnt = read(fd, crypt_ftr, sizeof(struct crypt_mnt_ftr))) != sizeof(struct crypt_mnt_ftr)) {
-    ui_print("Cannot read real block device footer\n");
+    printf("Cannot read real block device footer\n");
     goto errout;
   }
 
   if (crypt_ftr->magic != CRYPT_MNT_MAGIC) {
-    ui_print("Bad magic for real block device %s\n", fname);
+    printf("Bad magic for real block device %s\n", fname);
     goto errout;
   }
 
   if (crypt_ftr->major_version != 1) {
-    ui_print("Cannot understand major version %d real block device footer\n",
+    printf("Cannot understand major version %d real block device footer\n",
           crypt_ftr->major_version);
     goto errout;
   }
 
   if (crypt_ftr->minor_version != 0) {
-    ui_print("Warning: crypto footer minor version %d, expected 0, continuing...\n",
+    printf("Warning: crypto footer minor version %d, expected 0, continuing...\n",
           crypt_ftr->minor_version);
   }
 
@@ -302,29 +302,29 @@ static int get_crypt_ftr_and_key(char *real_blk_name, struct crypt_mnt_ftr *cryp
      * Skip to it's stated end so we can read the key.
      */
     if (lseek(fd, crypt_ftr->ftr_size - sizeof(struct crypt_mnt_ftr),  SEEK_CUR) == -1) {
-      ui_print("Cannot seek to start of key\n");
+      printf("Cannot seek to start of key\n");
       goto errout;
     }
   }
 
   if (crypt_ftr->keysize != KEY_LEN_BYTES) {
-    ui_print("Keysize of %d bits not supported for real block device %s\n",
+    printf("Keysize of %d bits not supported for real block device %s\n",
           crypt_ftr->keysize * 8, fname);
     goto errout;
   }
 
   if ( (cnt = read(fd, key, crypt_ftr->keysize)) != crypt_ftr->keysize) {
-    ui_print("Cannot read key for real block device %s\n", fname);
+    printf("Cannot read key for real block device %s\n", fname);
     goto errout;
   }
 
   if (lseek64(fd, KEY_TO_SALT_PADDING, SEEK_CUR) == -1) {
-    ui_print("Cannot seek to real block device salt\n");
+    printf("Cannot seek to real block device salt\n");
     goto errout;
   }
 
   if ( (cnt = read(fd, salt, SALT_LEN)) != SALT_LEN) {
-    ui_print("Cannot read salt for real block device %s\n", fname);
+    printf("Cannot read salt for real block device %s\n", fname);
     goto errout;
   }
 
@@ -372,7 +372,7 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, unsigned char 
   int retval = -1;
 
   if ((fd = open("/dev/device-mapper", O_RDWR)) < 0 ) {
-    ui_print("Cannot open device-mapper\n");
+    printf("Cannot open device-mapper\n");
     goto errout;
   }
 
@@ -380,14 +380,14 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, unsigned char 
 
   ioctl_init(io, DM_CRYPT_BUF_SIZE, name, 0);
   if (ioctl(fd, DM_DEV_CREATE, io)) {
-    ui_print("Cannot create dm-crypt device\n");
+    printf("Cannot create dm-crypt device\n");
     goto errout;
   }
 
   /* Get the device status, in particular, the name of it's device file */
   ioctl_init(io, DM_CRYPT_BUF_SIZE, name, 0);
   if (ioctl(fd, DM_DEV_STATUS, io)) {
-    ui_print("Cannot retrieve dm-crypt device status\n");
+    printf("Cannot retrieve dm-crypt device status\n");
     goto errout;
   }
   minor = (io->dev & 0xff) | ((io->dev >> 12) & 0xfff00);
@@ -412,7 +412,7 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, unsigned char 
   tgt->next = crypt_params - buffer;
 
   if (ioctl(fd, DM_TABLE_LOAD, io)) {
-      ui_print("Cannot load dm-crypt mapping table.\n");
+      printf("Cannot load dm-crypt mapping table.\n");
       goto errout;
   }
 
@@ -420,7 +420,7 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, unsigned char 
   ioctl_init(io, 4096, name, 0);
 
   if (ioctl(fd, DM_DEV_SUSPEND, io)) {
-    ui_print("Cannot resume the dm-crypt device\n");
+    printf("Cannot resume the dm-crypt device\n");
     goto errout;
   }
 
@@ -441,7 +441,7 @@ static int delete_crypto_blk_dev(char *name)
   int retval = -1;
 
   if ((fd = open("/dev/device-mapper", O_RDWR)) < 0 ) {
-    ui_print("Cannot open device-mapper\n");
+    printf("Cannot open device-mapper\n");
     goto errout;
   }
 
@@ -449,7 +449,7 @@ static int delete_crypto_blk_dev(char *name)
 
   ioctl_init(io, DM_CRYPT_BUF_SIZE, name, 0);
   if (ioctl(fd, DM_DEV_REMOVE, io)) {
-    ui_print("Cannot remove dm-crypt device\n");
+    printf("Cannot remove dm-crypt device\n");
     goto errout;
   }
 
@@ -775,21 +775,21 @@ static int test_mount_encrypted_fs(char *passwd, char *mount_point, char *label)
 
   property_get("ro.crypto.state", encrypted_state, "");
   if ( master_key_saved || strcmp(encrypted_state, "encrypted") ) {
-    ui_print("encrypted fs already validated or not running with encryption, aborting");
+    printf("encrypted fs already validated or not running with encryption, aborting");
     return -1;
   }
 
   if (get_orig_mount_parms(mount_point, fs_type, real_blkdev, &mnt_flags, fs_options)) {
-    ui_print("Error reading original mount parms for mount point %s\n", mount_point);
+    printf("Error reading original mount parms for mount point %s\n", mount_point);
     return -1;
   }
 
   if (get_crypt_ftr_and_key(real_blkdev, &crypt_ftr, encrypted_master_key, salt)) {
-    ui_print("Error getting crypt footer and key\n");
+    printf("Error getting crypt footer and key\n");
     return -1;
   }
 
-  ui_print("crypt_ftr->fs_size = %lld\n", crypt_ftr.fs_size);
+  printf("crypt_ftr->fs_size = %lld\n", crypt_ftr.fs_size);
   orig_failed_decrypt_count = crypt_ftr.failed_decrypt_count;
 
   if (! (crypt_ftr.flags & CRYPT_MNT_KEY_UNENCRYPTED) ) {
@@ -798,7 +798,7 @@ static int test_mount_encrypted_fs(char *passwd, char *mount_point, char *label)
 
   if (create_crypto_blk_dev(&crypt_ftr, decrypted_master_key,
                                real_blkdev, crypto_blkdev, label)) {
-    ui_print("Error creating decrypted block device\n");
+    printf("Error creating decrypted block device\n");
     return -1;
   }
 
@@ -812,7 +812,7 @@ static int test_mount_encrypted_fs(char *passwd, char *mount_point, char *label)
   sprintf(tmp_mount_point, "%s/tmp_mnt", mount_point);
   mkdir(tmp_mount_point, 0755);
   if ( mount(crypto_blkdev, tmp_mount_point, "ext4", MS_RDONLY, "") ) {
-    ui_print("Error temp mounting decrypted block device\n");
+    printf("Error temp mounting decrypted block device\n");
     delete_crypto_blk_dev(label);
     crypt_ftr.failed_decrypt_count++;
   } else {

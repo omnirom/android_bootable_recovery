@@ -148,7 +148,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 				// Do nothing
 			} else {
 				// Unhandled data
-				LOGI("Unhandled fstab information: '%s', %i\n", ptr, index);
+				LOGI("Unhandled fstab information: '%s', %i, line: '%s'\n", ptr, index, Line.c_str());
 			}
 		}
 		while (index < line_len && full_line[index] != '\0')
@@ -1249,7 +1249,7 @@ bool TWPartition::Restore_Flash_Image(string restore_folder) {
 bool TWPartition::Update_Size(bool Display_Error) {
 	bool ret = false;
 
-	if (!Can_Be_Mounted)
+	if (!Can_Be_Mounted && !Is_Encrypted)
 		return false;
 
 	if (Removable || Is_Encrypted) {

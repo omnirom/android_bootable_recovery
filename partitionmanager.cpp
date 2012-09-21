@@ -66,6 +66,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 
 		TWPartition* partition = new TWPartition();
 		string line = fstab_line;
+		memset(fstab_line, 0, sizeof(fstab_line));
 
 		if (partition->Process_Fstab_Line(line, Display_Error)) {
 			Partitions.push_back(partition);
@@ -646,7 +647,7 @@ int TWPartitionManager::Run_Backup(void) {
 #ifdef SP1_NAME
 	DataManager::GetValue(TW_BACKUP_SP1_VAR, check);
 	if (check) {
-		backup_sp1 = Find_Partition_By_Path(SP1_NAME);
+		backup_sp1 = Find_Partition_By_Path(EXPAND(SP1_NAME));
 		if (backup_sp1 != NULL) {
 			partition_count++;
 			if (backup_sp1->Backup_Method == 1)
@@ -654,7 +655,7 @@ int TWPartitionManager::Run_Backup(void) {
 			else
 				img_bytes += backup_sp1->Backup_Size;
 		} else {
-			LOGE("Unable to locate %s partition.\n", SP1_NAME);
+			LOGE("Unable to locate %s partition.\n", EXPAND(SP1_NAME));
 			return false;
 		}
 	}
@@ -662,7 +663,7 @@ int TWPartitionManager::Run_Backup(void) {
 #ifdef SP2_NAME
 	DataManager::GetValue(TW_BACKUP_SP2_VAR, check);
 	if (check) {
-		backup_sp2 = Find_Partition_By_Path(SP2_NAME);
+		backup_sp2 = Find_Partition_By_Path(EXPAND(SP2_NAME));
 		if (backup_sp2 != NULL) {
 			partition_count++;
 			if (backup_sp2->Backup_Method == 1)
@@ -670,7 +671,7 @@ int TWPartitionManager::Run_Backup(void) {
 			else
 				img_bytes += backup_sp2->Backup_Size;
 		} else {
-			LOGE("Unable to locate %s partition.\n", SP2_NAME);
+			LOGE("Unable to locate %s partition.\n", EXPAND(SP2_NAME));
 			return false;
 		}
 	}
@@ -678,7 +679,7 @@ int TWPartitionManager::Run_Backup(void) {
 #ifdef SP3_NAME
 	DataManager::GetValue(TW_BACKUP_SP3_VAR, check);
 	if (check) {
-		backup_sp3 = Find_Partition_By_Path(SP3_NAME);
+		backup_sp3 = Find_Partition_By_Path(EXPAND(SP3_NAME));
 		if (backup_sp3 != NULL) {
 			partition_count++;
 			if (backup_sp3->Backup_Method == 1)
@@ -686,7 +687,7 @@ int TWPartitionManager::Run_Backup(void) {
 			else
 				img_bytes += backup_sp3->Backup_Size;
 		} else {
-			LOGE("Unable to locate %s partition.\n", SP3_NAME);
+			LOGE("Unable to locate %s partition.\n", EXPAND(SP3_NAME));
 			return false;
 		}
 	}
@@ -856,9 +857,9 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 #ifdef SP1_NAME
 	DataManager::GetValue(TW_RESTORE_SP1_VAR, check);
 	if (check > 0) {
-		restore_sp1 = Find_Partition_By_Path(SP1_NAME);
+		restore_sp1 = Find_Partition_By_Path(EXPAND(SP1_NAME));
 		if (restore_sp1 == NULL) {
-			LOGE("Unable to locate %s partition.\n", SP1_NAME);
+			LOGE("Unable to locate %s partition.\n", EXPAND(SP1_NAME));
 			return false;
 		}
 		partition_count++;
@@ -867,9 +868,9 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 #ifdef SP2_NAME
 	DataManager::GetValue(TW_RESTORE_SP2_VAR, check);
 	if (check > 0) {
-		restore_sp2 = Find_Partition_By_Path(SP2_NAME);
+		restore_sp2 = Find_Partition_By_Path(EXPAND(SP2_NAME));
 		if (restore_sp2 == NULL) {
-			LOGE("Unable to locate %s partition.\n", SP2_NAME);
+			LOGE("Unable to locate %s partition.\n", EXPAND(SP2_NAME));
 			return false;
 		}
 		partition_count++;
@@ -878,9 +879,9 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 #ifdef SP3_NAME
 	DataManager::GetValue(TW_RESTORE_SP3_VAR, check);
 	if (check > 0) {
-		restore_sp3 = Find_Partition_By_Path(SP3_NAME);
+		restore_sp3 = Find_Partition_By_Path(EXPAND(SP3_NAME));
 		if (restore_sp3 == NULL) {
-			LOGE("Unable to locate %s partition.\n", SP3_NAME);
+			LOGE("Unable to locate %s partition.\n", EXPAND(SP3_NAME));
 			return false;
 		}
 		partition_count++;
@@ -1049,15 +1050,15 @@ void TWPartitionManager::Set_Restore_Files(string Restore_Name) {
 		if (Part->Backup_Path == "/sd-ext")
 			tw_restore_sdext = 1;
 #ifdef SP1_NAME
-		if (Part->Backup_Path == TWFunc::Get_Root_Path(SP1_Name))
+		if (Part->Backup_Path == TWFunc::Get_Root_Path(EXPAND(SP1_NAME)))
 			tw_restore_sp1 = 1;
 #endif
 #ifdef SP2_NAME
-		if (Part->Backup_Path == TWFunc::Get_Root_Path(SP2_Name))
+		if (Part->Backup_Path == TWFunc::Get_Root_Path(EXPAND(SP2_NAME)))
 			tw_restore_sp2 = 1;
 #endif
 #ifdef SP3_NAME
-		if (Part->Backup_Path == TWFunc::Get_Root_Path(SP3_Name))
+		if (Part->Backup_Path == TWFunc::Get_Root_Path(EXPAND(SP3_NAME)))
 			tw_restore_sp3 = 1;
 #endif
 	}
@@ -1288,6 +1289,24 @@ void TWPartitionManager::Update_System_Details(void) {
 				} else
 					DataManager::SetValue(TW_HAS_ANDROID_SECURE, 1);
 			}
+#ifdef SP1_NAME
+			if ((*iter)->Backup_Name == EXPAND(SP1_NAME)) {
+				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
+				DataManager::SetValue(TW_BACKUP_SP1_SIZE, backup_display_size);
+			}
+#endif
+#ifdef SP2_NAME
+			if ((*iter)->Backup_Name == EXPAND(SP2_NAME)) {
+				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
+				DataManager::SetValue(TW_BACKUP_SP2_SIZE, backup_display_size);
+			}
+#endif
+#ifdef SP3_NAME
+			if ((*iter)->Backup_Name == EXPAND(SP3_NAME)) {
+				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
+				DataManager::SetValue(TW_BACKUP_SP3_SIZE, backup_display_size);
+			}
+#endif
 		}
 	}
 	DataManager::SetValue(TW_BACKUP_DATA_SIZE, data_size);
@@ -1302,8 +1321,10 @@ void TWPartitionManager::Update_System_Details(void) {
 			if (has_dual_storage == 1) {
 				// We have dual storage, see if we're using the internal storage that should always be present
 				if (current_storage_path == DataManager::GetSettingsStoragePath()) {
-					// Not able to use internal, so error!
-					LOGE("Unable to mount internal storage.\n");
+					if (!FreeStorage->Is_Encrypted) {
+						// Not able to use internal, so error!
+						LOGE("Unable to mount internal storage.\n");
+					}
 					DataManager::SetValue(TW_STORAGE_FREE_SIZE, 0);
 				} else {
 					// We were using external, flip to internal
