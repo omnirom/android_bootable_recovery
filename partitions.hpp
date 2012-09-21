@@ -50,6 +50,7 @@ public:
 	virtual bool Mount(bool Display_Error);                                   // Mounts the partition if it is not mounted
 	virtual bool UnMount(bool Display_Error);                                 // Unmounts the partition if it is mounted
 	virtual bool Wipe();                                                      // Wipes the partition
+	virtual bool Wipe_AndSec();                                               // Wipes android secure
 	virtual bool Backup(string backup_folder);                                // Backs up the partition to the folder specified
 	virtual bool Check_MD5(string restore_folder);                            // Checks MD5 of a backup
 	virtual bool Restore(string restore_folder);                              // Restores the partition using the backup folder provided
@@ -75,6 +76,7 @@ protected:
 	string Symlink_Path;                                                      // Symlink path (e.g. /data/media)
 	string Symlink_Mount_Point;                                               // /sdcard could be the symlink mount point for /data/media
 	string Mount_Point;                                                       // Mount point for this partition (e.g. /system or /data)
+	string Backup_Path;                                                       // Path for backup
 	string Actual_Block_Device;                                               // Actual block device (one of primary, alternate, or decrypted)
 	string Primary_Block_Device;                                              // Block device (e.g. /dev/block/mmcblk1p1)
 	string Alternate_Block_Device;                                            // Alternate block device (e.g. /dev/block/mmcblk1)
@@ -95,6 +97,7 @@ protected:
 	string MTD_Name;                                                          // Name of the partition for MTD devices
 	Backup_Method_enum Backup_Method;                                         // Method used for backup
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
+	bool Has_Android_Secure;                                                  // Indicates the presence of .android_secure on this partition
 	bool Is_Storage;                                                          // Indicates if this partition is used for storage for backup, restore, and installing zips
 	string Storage_Path;                                                      // Indicates the path to the storage -- root indicates mount point, media/ indicates e.g. /data/media
 	string Current_File_System;                                               // Current file system
@@ -107,6 +110,7 @@ private:
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
 	void Setup_File_System(bool Display_Error);                               // Sets defaults for a file system partition
 	void Setup_Image(bool Display_Error);                                     // Sets defaults for an image partition
+	void Setup_AndSec(void);                                                  // Sets up .android_secure settings
 	void Find_Real_Block_Device(string& Block_Device, bool Display_Error);    // Checks the block device given and follows symlinks until it gets to the real block device
 	bool Find_Partition_Size();                                               // Finds the partition size from /proc/partitions
 	unsigned long long Get_Size_Via_du(string Path, bool Display_Error);      // Uses du to get sizes
@@ -114,7 +118,7 @@ private:
 	bool Wipe_EXT23();                                                        // Formats as ext3 or ext2
 	bool Wipe_EXT4();                                                         // Formats using ext4, uses make_ext4fs when present
 	bool Wipe_FAT();                                                          // Formats as FAT except that mkdosfs from busybox usually fails so oftentimes this is actually a rm -rf wipe
-	bool Wipe_MTD();                                                       // Formats as yaffs2 for MTD memory types
+	bool Wipe_MTD();                                                          // Formats as yaffs2 for MTD memory types
 	bool Wipe_RMRF();                                                         // Uses rm -rf to wipe
 	bool Wipe_Data_Without_Wiping_Media();                                    // Uses rm -rf to wipe but does not wipe /data/media
 	bool Backup_Tar(string backup_folder);                                    // Backs up using tar for file systems
@@ -127,6 +131,7 @@ private:
 	bool Get_Size_Via_df(bool Display_Error);                                 // Get Partition size, used, and free space using df command
 	bool Make_Dir(string Path, bool Display_Error);                           // Creates a directory if it doesn't already exist
 	bool Find_MTD_Block_Device(string MTD_Name);                              // Finds the mtd block device based on the name from the fstab
+	void Recreate_AndSec_Folder(void);                                        // Recreates the .android_secure folder
 
 friend class TWPartitionManager;
 };

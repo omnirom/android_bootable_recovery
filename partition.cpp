@@ -55,6 +55,7 @@ TWPartition::TWPartition(void) {
 	Symlink_Path = "";
 	Symlink_Mount_Point = "";
 	Mount_Point = "";
+	Backup_Path = "";
 	Actual_Block_Device = "";
 	Primary_Block_Device = "";
 	Alternate_Block_Device = "";
@@ -75,6 +76,7 @@ TWPartition::TWPartition(void) {
 	MTD_Name = "";
 	Backup_Method = NONE;
 	Has_Data_Media = false;
+	Has_Android_Secure = false;
 	Is_Storage = false;
 	Storage_Path = "";
 	Current_File_System = "";
@@ -100,6 +102,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 	}
 	string mount_pt(full_line);
 	Mount_Point = mount_pt;
+	Backup_Path = Mount_Point;
 	index = Mount_Point.size();
 	while (index < line_len) {
 		while (index < line_len && full_line[index] == '\0')
@@ -231,17 +234,26 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Is_Storage = true;
 			Storage_Path = "/sdcard";
 			Removable = true;
+#ifndef RECOVERY_SDCARD_ON_DATA
+			Setup_AndSec();
+#endif
 		}
 #endif
 #ifdef TW_INTERNAL_STORAGE_PATH
 		if (Mount_Point == EXPAND(TW_INTERNAL_STORAGE_PATH)) {
 			Is_Storage = true;
 			Storage_Path = EXPAND(TW_INTERNAL_STORAGE_PATH);
+#ifndef RECOVERY_SDCARD_ON_DATA
+			Setup_AndSec();
+#endif
 		}
 #else
 		if (Mount_Point == "/emmc") {
 			Is_Storage = true;
 			Storage_Path = "/emmc";
+#ifndef RECOVERY_SDCARD_ON_DATA
+			Setup_AndSec();
+#endif
 		}
 #endif
 	} else if (Is_Image(Fstab_File_System)) {
@@ -405,6 +417,16 @@ void TWPartition::Setup_Image(bool Display_Error) {
 	}
 }
 
+void TWPartition::Setup_AndSec(void) {
+	Backup_Name = "and-sec";
+	Has_Android_Secure = true;
+	Symlink_Path = Mount_Point + "/.android_secure";
+	Symlink_Mount_Point = "/and-sec";
+	Backup_Path = Symlink_Mount_Point;
+	Make_Dir("/and-sec", true);
+	Recreate_AndSec_Folder();
+}
+
 void TWPartition::Find_Real_Block_Device(string& Block, bool Display_Error) {
 	char device[512], realDevice[512];
 
@@ -527,6 +549,7 @@ bool TWPartition::Get_Size_Via_df(bool Display_Error) {
 		} else {
 			// The device block string is so long that the df information is on the next line
 			int space_count = 0;
+			sprintf(tmpString, "/dev/block/%s", Actual_Block_Device.c_str());
 			while (tmpString[space_count] == 32)
 				space_count++;
 			sscanf(line + space_count, "%lu %lu %lu", &blocks, &used, &available);
@@ -691,6 +714,23 @@ bool TWPartition::Wipe() {
 
 	LOGE("Unable to wipe '%s' -- unknown file system '%s'\n", Mount_Point.c_str(), Current_File_System.c_str());
 	return false;
+}
+
+bool TWPartition::Wipe_AndSec(void) {
+	if (!Has_Android_Secure)
+		return false;
+
+	char cmd[512];
+
+	if (!Mount(true))
+		return false;
+
+	ui_print("Using rm -rf on .android_secure\n");
+	sprintf(cmd, "rm -rf %s/.android_secure/* && rm -rf %s/.android_secure/.*", Mount_Point.c_str(), Mount_Point.c_str());
+
+	LOGI("rm -rf command is: '%s'\n", cmd);
+	system(cmd);
+    return true;
 }
 
 bool TWPartition::Backup(string backup_folder) {
@@ -876,6 +916,7 @@ bool TWPartition::Wipe_EXT23() {
 		sprintf(command, "mke2fs -t %s -m 0 %s", Current_File_System.c_str(), Actual_Block_Device.c_str());
 		LOGI("mke2fs command: %s\n", command);
 		if (system(command) == 0) {
+			Recreate_AndSec_Folder();
 			ui_print("Done.\n");
 			return true;
 		} else {
@@ -908,6 +949,7 @@ bool TWPartition::Wipe_EXT4() {
 		Command += " " + Actual_Block_Device;
 		LOGI("make_ext4fs command: %s\n", Command.c_str());
 		if (system(Command.c_str()) == 0) {
+			Recreate_AndSec_Folder();
 			ui_print("Done.\n");
 			return true;
 		} else {
@@ -923,9 +965,6 @@ bool TWPartition::Wipe_EXT4() {
 bool TWPartition::Wipe_FAT() {
 	char command[512];
 
-	if (Backup_Name == "and-sec") // Don't format if it's android secure
-		return Wipe_RMRF();
-
 	if (TWFunc::Path_Exists("/sbin/mkdosfs")) {
 		if (!UnMount(true))
 			return false;
@@ -934,6 +973,7 @@ bool TWPartition::Wipe_FAT() {
 		Find_Actual_Block_Device();
 		sprintf(command,"mkdosfs %s", Actual_Block_Device.c_str()); // use mkdosfs to format it
 		if (system(command) == 0) {
+			Recreate_AndSec_Folder();
 			ui_print("Done.\n");
 			return true;
 		} else {
@@ -975,6 +1015,7 @@ bool TWPartition::Wipe_MTD() {
         LOGE("Failed to close '%s'", MTD_Name.c_str());
         return false;
     }
+	Recreate_AndSec_Folder();
 	ui_print("Done.\n");
     return true;
 }
@@ -985,16 +1026,12 @@ bool TWPartition::Wipe_RMRF() {
 	if (!Mount(true))
 		return false;
 
-	if (Backup_Name == "and-sec") {
-		ui_print("Using rm -rf on .android_secure\n");
-		sprintf(cmd, "rm -rf %s/.android_secure/* && rm -rf %s/.android_secure/.*", Mount_Point.c_str(), Mount_Point.c_str());
-	} else {
-		ui_print("Using rm -rf on '%s'\n", Mount_Point.c_str());
-		sprintf(cmd, "rm -rf %s/* && rm -rf %s/.*", Mount_Point.c_str(), Mount_Point.c_str());
-	}
+	ui_print("Using rm -rf on '%s'\n", Mount_Point.c_str());
+	sprintf(cmd, "rm -rf %s/* && rm -rf %s/.*", Mount_Point.c_str(), Mount_Point.c_str());
 
 	LOGI("rm -rf command is: '%s'\n", cmd);
 	system(cmd);
+	Recreate_AndSec_Folder();
     return true;
 }
 
@@ -1050,7 +1087,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	if (Backup_Size > MAX_ARCHIVE_SIZE) {
 		// This backup needs to be split into multiple archives
 		ui_print("Breaking backup file into multiple archives...\nGenerating file lists\n");
-		sprintf(back_name, "%s", Mount_Point.c_str());
+		sprintf(back_name, "%s", Backup_Path.c_str());
 		backup_count = make_file_list(back_name);
 		if (backup_count < 1) {
 			LOGE("Error generating file list!\n");
@@ -1075,9 +1112,9 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	} else {
 		Full_FileName = backup_folder + "/" + Backup_FileName;
 		if (Has_Data_Media)
-			Command = "cd " + Mount_Point + " && tar " + Tar_Args + " ./ --exclude='media*' -f '" + Full_FileName + "'";
+			Command = "cd " + Backup_Path + " && tar " + Tar_Args + " ./ --exclude='media*' -f '" + Full_FileName + "'";
 		else
-			Command = "cd " + Mount_Point + " && tar " + Tar_Args + " -f '" + Full_FileName + "' ./*";
+			Command = "cd " + Backup_Path + " && tar " + Tar_Args + " -f '" + Full_FileName + "' ./*";
 		LOGI("Backup command: '%s'\n", Command.c_str());
 		system(Command.c_str());
 	}
@@ -1143,9 +1180,14 @@ bool TWPartition::Restore_Tar(string restore_folder) {
 	Restore_File_System.resize(second_period);
 	LOGI("Restore file system is: '%s'.\n", Restore_File_System.c_str());
 	Current_File_System = Restore_File_System;
-	ui_print("Wiping %s...\n", Display_Name.c_str());
-	if (!Wipe())
+	if (Has_Android_Secure) {
+		ui_print("Wiping android secure...\n");
+		if (!Wipe_AndSec())
+			return false;
+	} else if (!Wipe()) {
+		ui_print("Wiping %s...\n", Display_Name.c_str());
 		return false;
+	}
 
 	if (!Mount(true))
 		return false;
@@ -1159,7 +1201,7 @@ bool TWPartition::Restore_Tar(string restore_folder) {
 		Full_FileName = restore_folder + "/" + Backup_FileName + split_index;
 		while (TWFunc::Path_Exists(Full_FileName)) {
 			ui_print("Restoring archive %i...\n", index + 1);
-			Command = "cd " + Mount_Point + " && tar -xf '" + Full_FileName + "'";
+			Command = "cd " + Backup_Path + " && tar -xf '" + Full_FileName + "'";
 			LOGI("Restore command: '%s'\n", Command.c_str());
 			system(Command.c_str());
 			index++;
@@ -1171,7 +1213,7 @@ bool TWPartition::Restore_Tar(string restore_folder) {
 			return false;
 		}
 	} else {
-		Command = "cd " + Mount_Point + " && tar -xf '" + Full_FileName + "'";
+		Command = "cd " + Backup_Path + " && tar -xf '" + Full_FileName + "'";
 		LOGI("Restore command: '%s'\n", Command.c_str());
 		system(Command.c_str());
 	}
@@ -1236,6 +1278,11 @@ bool TWPartition::Update_Size(bool Display_Error) {
 			LOGI("Data backup size is %iMB, size: %iMB, used: %iMB, free: %iMB, in data/media: %iMB.\n", bak, total, us, fre, datmed);
 		} else
 			return false;
+	} else if (Has_Android_Secure) {
+		if (Mount(Display_Error))
+			Backup_Size = TWFunc::Get_Folder_Size(Backup_Path, Display_Error);
+		else
+			return false;
 	}
 	return true;
 }
@@ -1264,6 +1311,24 @@ void TWPartition::Recreate_Media_Folder(void) {
 	} else {
 		LOGI("Recreating /data/media folder.\n");
 		system("cd /data && mkdir media && chmod 755 media");
+		Command = "umount " + Symlink_Mount_Point;
+		system(Command.c_str());
+		Command = "mount " + Symlink_Path + " " + Symlink_Mount_Point;
+		system(Command.c_str());
+	}
+}
+
+void TWPartition::Recreate_AndSec_Folder(void) {
+	string Command;
+
+	if (!Has_Android_Secure)
+		return;
+
+	if (!Mount(true)) {
+		LOGE("Unable to recreate android secure folder.\n");
+	} else if (!TWFunc::Path_Exists(Symlink_Path)) {
+		LOGI("Recreating android secure folder.\n");
+		TWFunc::Recursive_Mkdir(Symlink_Path);
 		Command = "umount " + Symlink_Mount_Point;
 		system(Command.c_str());
 		Command = "mount " + Symlink_Path + " " + Symlink_Mount_Point;

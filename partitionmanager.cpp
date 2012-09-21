@@ -147,6 +147,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 			printf("Is_Decrypted ");
 		if (Part->Has_Data_Media)
 			printf("Has_Data_Media ");
+		if (Part->Has_Android_Secure)
+			printf("Has_Android_Secure ");
 		if (Part->Is_Storage)
 			printf("Is_Storage ");
 		printf("\n");
@@ -166,6 +168,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 			printf("   Length: %i\n", Part->Length);
 		if (!Part->Display_Name.empty())
 			printf("   Display_Name: %s\n", Part->Display_Name.c_str());
+		if (!Part->Backup_Path.empty())
+			printf("   Backup_Path: %s\n", Part->Backup_Path.c_str());
 		if (!Part->Backup_Name.empty())
 			printf("   Backup_Name: %s\n", Part->Backup_Name.c_str());
 		if (!Part->Backup_FileName.empty())
@@ -1030,30 +1034,30 @@ void TWPartitionManager::Set_Restore_Files(string Restore_Name) {
 		}
 
 		// Now, we just need to find the correct label
-		if (Part->Mount_Point == "/system")
+		if (Part->Backup_Path == "/system")
 			tw_restore_system = 1;
-		if (Part->Mount_Point == "/data")
+		if (Part->Backup_Path == "/data")
 			tw_restore_data = 1;
-		if (Part->Mount_Point == "/cache")
+		if (Part->Backup_Path == "/cache")
 			tw_restore_cache = 1;
-		if (Part->Mount_Point == "/recovery")
+		if (Part->Backup_Path == "/recovery")
 			tw_restore_recovery = 1;
-		if (Part->Mount_Point == "/boot")
+		if (Part->Backup_Path == "/boot")
 			tw_restore_boot = 1;
-		if (Part->Mount_Point == "/.android_secure")
+		if (Part->Backup_Path == "/and-sec")
 			tw_restore_andsec = 1;
-		if (Part->Mount_Point == "/sd-ext")
+		if (Part->Backup_Path == "/sd-ext")
 			tw_restore_sdext = 1;
 #ifdef SP1_NAME
-		if (Part->Mount_Point == TWFunc::Get_Root_Path(SP1_Name))
+		if (Part->Backup_Path == TWFunc::Get_Root_Path(SP1_Name))
 			tw_restore_sp1 = 1;
 #endif
 #ifdef SP2_NAME
-		if (Part->Mount_Point == TWFunc::Get_Root_Path(SP2_Name))
+		if (Part->Backup_Path == TWFunc::Get_Root_Path(SP2_Name))
 			tw_restore_sp2 = 1;
 #endif
 #ifdef SP3_NAME
-		if (Part->Mount_Point == TWFunc::Get_Root_Path(SP3_Name))
+		if (Part->Backup_Path == TWFunc::Get_Root_Path(SP3_Name))
 			tw_restore_sp3 = 1;
 #endif
 	}
@@ -1083,7 +1087,10 @@ int TWPartitionManager::Wipe_By_Path(string Path) {
 	// Iterate through all partitions
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path)) {
-			ret = (*iter)->Wipe();
+			if (Path == "/and-sec")
+				ret = (*iter)->Wipe_AndSec();
+			else
+				ret = (*iter)->Wipe();
 			found = true;
 		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path) {
 			(*iter)->Wipe();
@@ -1272,9 +1279,9 @@ void TWPartitionManager::Update_System_Details(void) {
 					DataManager::SetValue(TW_BACKUP_SDEXT_VAR, 0);
 				} else
 					DataManager::SetValue(TW_HAS_SDEXT_PARTITION, 1);
-			} else if ((*iter)->Mount_Point == "/and-sec") {
+			} else if ((*iter)->Has_Android_Secure) {
 				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
-				DataManager::SetValue(TW_BACKUP_SDEXT_SIZE, backup_display_size);
+				DataManager::SetValue(TW_BACKUP_ANDSEC_SIZE, backup_display_size);
 				if ((*iter)->Backup_Size == 0) {
 					DataManager::SetValue(TW_HAS_ANDROID_SECURE, 0);
 					DataManager::SetValue(TW_BACKUP_ANDSEC_VAR, 0);
@@ -1481,23 +1488,31 @@ int TWPartitionManager::usb_storage_disable(void) {
 		sprintf(lun_file, CUSTOM_LUN_FILE, index);
 
 		if ((fd = open(lun_file, O_WRONLY)) < 0) {
-			if (index == 0)
+			Mount_All_Storage();
+			Update_System_Details();
+			if (index == 0) {
 				LOGE("Unable to open ums lunfile '%s': (%s)", lun_file, strerror(errno));
-			return false;
+				return false;
+			} else
+				return true;
 		}
 
 		char ch = 0;
 		if (write(fd, &ch, 1) < 0) {
-			if (index == 0)
-				LOGE("Unable to write to ums lunfile '%s': (%s)", lun_file, strerror(errno));
 			close(fd);
-			return false;
+			Mount_All_Storage();
+			Update_System_Details();
+			if (index == 0) {
+				LOGE("Unable to write to ums lunfile '%s': (%s)", lun_file, strerror(errno));
+				return false;
+			} else
+				return true;
 		}
 
 		close(fd);
 	}
-	Mount_By_Path(DataManager::GetSettingsStoragePath(), true);
-	Mount_By_Path(DataManager::GetCurrentStoragePath(), true);
+	Mount_All_Storage();
+	Update_System_Details();
 	return true;
 }
 
