@@ -668,12 +668,22 @@ wipe_data(int confirm, Device* device) {
 }
 
 static void
-prompt_and_wait(Device* device) {
+prompt_and_wait(Device* device, int status) {
     const char* const* headers = prepend_title(device->GetMenuHeaders());
 
     for (;;) {
         finish_recovery(NULL);
-        ui->SetBackground(RecoveryUI::NO_COMMAND);
+        switch (status) {
+            case INSTALL_SUCCESS:
+            case INSTALL_NONE:
+                ui->SetBackground(RecoveryUI::NO_COMMAND);
+                break;
+
+            case INSTALL_ERROR:
+            case INSTALL_CORRUPT:
+                ui->SetBackground(RecoveryUI::ERROR);
+                break;
+        }
         ui->SetProgressType(RecoveryUI::EMPTY);
 
         int chosen_item = get_menu_selection(headers, device->GetMenuItems(), 0, 0, device);
@@ -683,7 +693,6 @@ prompt_and_wait(Device* device) {
         // statement below.
         chosen_item = device->InvokeMenuItem(chosen_item);
 
-        int status;
         int wipe_cache;
         switch (chosen_item) {
             case Device::REBOOT:
@@ -920,7 +929,7 @@ main(int argc, char **argv) {
         ui->SetBackground(RecoveryUI::ERROR);
     }
     if (status != INSTALL_SUCCESS || ui->IsTextVisible()) {
-        prompt_and_wait(device);
+        prompt_and_wait(device, status);
     }
 
     // Otherwise, get ready to boot the main system...
