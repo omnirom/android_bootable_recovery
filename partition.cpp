@@ -51,6 +51,7 @@ TWPartition::TWPartition(void) {
 	Wipe_During_Factory_Reset = false;
 	Wipe_Available_in_GUI = false;
 	Is_SubPartition = false;
+	Has_SubPartition = false;
 	SubPartition_Of = "";
 	Symlink_Path = "";
 	Symlink_Mount_Point = "";

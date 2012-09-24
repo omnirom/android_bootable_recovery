@@ -107,7 +107,7 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
         ui->Print("status %d\n", WEXITSTATUS(status));
     }
-
+	DataManager_SetIntValue("tw_has_cancel", 0); // Remove cancel button from gui now that the zip install is going to start
     set_usb_driver(false);
     maybe_restart_adbd();
 

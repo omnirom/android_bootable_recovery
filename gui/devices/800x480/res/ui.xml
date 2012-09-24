@@ -55,7 +55,7 @@
 		<variable name="screen_width" value="800" />
 		<variable name="screen_height" value="480" />
 		<variable name="col_progressbar_x" value="300" />
-		<variable name="row_progressbar_y" value="380" />
+		<variable name="row_progressbar_y" value="440" />
 		<variable name="col1_medium_x" value="120" />
 		<variable name="col2_medium_x" value="250" />
 		<variable name="col3_medium_x" value="380" />
@@ -342,7 +342,7 @@
 
 		<template name="action_page_console">
 			<object type="console">
-				<placement x="%console_x%" y="200" w="%console_width%" h="230" />
+				<placement x="%console_x%" y="160" w="%console_width%" h="230" />
 				<color foreground="%console_foreground%" background="%console_background%" scroll="%console_scroll%" />
 				<font resource="fixed" />
 			</object>
@@ -819,6 +819,9 @@
 				<action function="set">tw_has_action2=0</action>
 				<action function="set">tw_action2=</action>
 				<action function="set">tw_action2_param=</action>
+				<action function="set">tw_has_cancel=0</action>
+				<action function="set">tw_cancel_action=</action>
+				<action function="set">tw_cancel_param=</action>
 				<action function="page">%tw_clear_destination%</action>
 			</object>
 		</page>
@@ -900,6 +903,15 @@
 			</object>
 
 			<object type="template" name="action_page_console" />
+
+			<object type="button">
+				<condition var1="tw_has_cancel" var2="1" />
+				<placement x="%col4_x%" y="%slider_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Cancel</text>
+				<image resource="main_button" />
+				<action function="%tw_cancel_action%">%tw_cancel_param%</action>
+			</object>
 
 			<object type="template" name="progress_bar" />
 
@@ -2546,6 +2558,23 @@
 			</object>
 
 			<object type="button">
+				<placement x="%col4_x%" y="%row1_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>ADB Sideload</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=adbsideload</action>
+					<action function="set">tw_action_text1=ADB Sideload</action>
+					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
+					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
+					<action function="set">tw_has_cancel=1</action>
+					<action function="set">tw_cancel_action=adbsideloadcancel</action>
+					<action function="page">action_page</action>
+				</actions>
+			</object>
+
+			<object type="button">
 				<condition var1="tw_allow_partition_sdcard" var2="1" />
 				<placement x="%col1_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2560,6 +2589,14 @@
 				<text>File Manager</text>
 				<image resource="main_button" />
 				<action function="page">filemanagerlist</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col3_x%" y="%row2_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Reload Theme</text>
+				<image resource="main_button" />
+				<action function="reload"></action>
 			</object>
 
 			<object type="button">
