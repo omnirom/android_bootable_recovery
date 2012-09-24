@@ -49,8 +49,6 @@ extern "C" {
 #include "../variables.h"
 #include "../partitions.hpp"
 
-#include "curtain.h"
-
 const static int CURTAIN_FADE = 32;
 
 using namespace rapidxml;
@@ -61,7 +59,7 @@ static int gGuiInitialized = 0;
 static int gGuiConsoleRunning = 0;
 static int gGuiConsoleTerminate = 0;
 static int gForceRender = 0;
-static int gNoAnimation = 0;
+static int gNoAnimation = 1;
 
 // Needed by pages.cpp too
 int gGuiRunning = 0;
@@ -462,28 +460,11 @@ extern "C" int gui_init()
 
 	gr_init();
 
-    // We need to write out the curtain blob
-    if (sizeof(gCurtainBlob) > 32)
-    {
-		fd = open("/tmp/extract.jpg", O_CREAT | O_WRONLY | O_TRUNC);
-        if (fd < 0)
-            return 0;
-    
-		write(fd, gCurtainBlob, sizeof(gCurtainBlob));
-        close(fd);
-    
-		if (res_create_surface("/tmp/extract.jpg", &gCurtain))
-        {
-            return -1;
-        }
-    }
-    else
-    {
-        gNoAnimation = 1;
-        if (res_create_surface("bootup", &gCurtain))
-            return 0;
-    }
-    unlink("/tmp/extract.png");
+	if (res_create_surface("/res/images/curtain.jpg", &gCurtain))
+	{
+		printf("Unable to locate '/res/images/curtain.jpg'\nDid you set a DEVICE_RESOLUTION in your config files?\n");
+		return -1;
+	}
 
 	curtainSet();
 
@@ -493,17 +474,6 @@ extern "C" int gui_init()
 
 extern "C" int gui_loadResources()
 {
-    // Make sure the sdcard is mounted before we continue
-//#ifdef RECOVERY_SDCARD_ON_DATA
-    /*mkdir("/mnt/data-sdc", 0777);
-    mount(dat.blk, "/mnt/data-sdc", dat.fst, 0, NULL);
-    if (symlink("/mnt/data-sdc/media", "/sdcard"))
-    {
-        LOGE("Unable to symlink (errno %d)\n", errno);
-    }*/
-//#else
-//#endif
-
 //    unlink("/sdcard/video.last");
 //    rename("/sdcard/video.bin", "/sdcard/video.last");
 //    gRecorder = open("/sdcard/video.bin", O_CREAT | O_WRONLY);
