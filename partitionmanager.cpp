@@ -426,10 +426,10 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	if (TWFunc::Path_Exists(Full_File)) {
 		sprintf(command, "cd '%s' && md5sum %s > %s.md5",Backup_Folder.c_str(), Backup_Filename.c_str(), Backup_Filename.c_str());
 		if (system(command) == 0) {
-			ui_print("MD5 Created.\n");
+			ui_print(" * MD5 Created.\n");
 			return true;
 		} else {
-			ui_print("MD5 Error!\n");
+			ui_print(" * MD5 Error!\n");
 			return false;
 		}
 	} else {
@@ -440,7 +440,7 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 		while (TWFunc::Path_Exists(filename) == true) {
 			sprintf(command, "cd '%s' && md5sum %s%03i > %s%03i.md5",Backup_Folder.c_str(), Backup_Filename.c_str(), index, Backup_Filename.c_str(), index);
 			if (system(command) != 0) {
-				ui_print("MD5 Error.\n");
+				ui_print(" * MD5 Error.\n");
 				return false;
 			}
 			index++;
@@ -450,7 +450,7 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 			LOGE("Backup file: '%s' not found!\n", filename);
 			return false;
 		}
-		ui_print("MD5 Created.\n");
+		ui_print(" * MD5 Created.\n");
 	}
 	return true;
 }
@@ -560,6 +560,8 @@ int TWPartitionManager::Run_Backup(void) {
 	DataManager::GetValue(TW_SKIP_MD5_GENERATE_VAR, do_md5);
 	if (do_md5 == 0)
 		do_md5 = true;
+	else
+		do_md5 = false;
 
 	DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, Backup_Folder);
 	DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
