@@ -12,7 +12,6 @@
 	<resources>
 		<resource name="font" type="font" filename="Roboto-Condensed-16" />
 		<resource name="mediumfont" type="font" filename="Roboto-Condensed-14" />
-		<resource name="UItext" type="font" filename="Roboto-Condensed-12" />
 		<resource name="filelist" type="font" filename="Roboto-Condensed-14" />
 		<resource name="top_bar" type="image" filename="top-bar.jpg" />
 		<resource name="main_button" type="image" filename="menu-button" />
@@ -43,7 +42,6 @@
 	</resources>
 
 	<variables>
-		<variable name="backgroundcolor" value="#000000FF" />
 		<variable name="col1_x" value="8" />
 		<variable name="col2_x" value="162" />
 		<variable name="col_center_x" value="85" />
@@ -66,13 +64,13 @@
 		<variable name="row9_text_y" value="237" />
 		<variable name="row10_text_y" value="256" />
 		<variable name="row11_text_y" value="275" />
-		<variable name="row12_text_y" value="300" />
-		<variable name="row13_text_y" value="319" />
-		<variable name="row14_text_y" value="338" />
-		<variable name="row15_text_y" value="357" />
-		<variable name="row16_text_y" value="376" />
-		<variable name="row17_text_y" value="395" />
-		<variable name="row18_text_y" value="414" />
+		<variable name="row12_text_y" value="294" />
+		<variable name="row13_text_y" value="313" />
+		<variable name="row14_text_y" value="332" />
+		<variable name="row15_text_y" value="351" />
+		<variable name="row16_text_y" value="370" />
+		<variable name="row17_text_y" value="389" />
+		<variable name="row18_text_y" value="408" />
 		<variable name="zip_status_y" value="350" />
 		<variable name="tz_selected_y" value="66" />
 		<variable name="tz_set_y" value="348" />
@@ -101,6 +99,7 @@
 		<variable name="home_button_y" value="460" />
 		<variable name="back_button_x" value="275" />
 		<variable name="back_button_y" value="460" />
+		<variable name="sort_text_x" value="8" />
 		<variable name="sort_asc_text_y" value="411" />
 		<variable name="sort_asc_button_y" value="411" />
 		<variable name="sort_desc_text_y" value="435" />
@@ -139,25 +138,28 @@
 		<variable name="listbox_spacing" value="12" />
 		<variable name="sd_plus_x" value="187" />
 		<variable name="sdext_text_x" value="56" />
-		<variable name="sdext_text_y" value="90" />
+		<variable name="sdext_text_y" value="83" />
 		<variable name="sdswap_button_y" value="111" />
 		<variable name="sdswap_text_x" value="56" />
-		<variable name="sdswap_text_y" value="117" />
+		<variable name="sdswap_text_y" value="110" />
 		<variable name="sdfilesystem_text_y" value="144" />
 		<variable name="sdfilesystem_button_y" value="168" />
 		<variable name="lock_x" value="27" />
 		<variable name="lock_y" value="120" />
 		<variable name="filemanager_select_x" value="243" />
 		<variable name="filemanager_select_y" value="414" />
-		<variable name="backup_name_y" value="210" />
+		<variable name="backup_name_y" value="218" />
 		<variable name="terminal_console_height" value="220" />
 		<variable name="terminal_text_y" value="225" />
-		<variable name="terminal_button_y" value="228" />
+		<variable name="terminal_button_y" value="220" />
+		<variable name="row_dst_text_y" value="256" />
+		<variable name="row_offset_text_y" value="275" />
+		<variable name="row_offset_medium_y" value="303" />
 	</variables>
 
 	<templates>
 		<template name="header">
-			<background color="%backgroundcolor%" />
+			<background color="#000000FF" />
 
 			<object type="image">
 				<image resource="top_bar" />
@@ -244,13 +246,13 @@
 		<template name="sort_options">
 			<object type="text" color="%text_color%">
 				<font resource="mediumfont" />
-				<placement x="%col1_x%" y="%sort_asc_text_y%" />
+				<placement x="%sort_text_x%" y="%sort_asc_text_y%" />
 				<text>Sort Ascending:</text>
 			</object>
 
 			<object type="button">
 				<placement x="%sort_col1_button_x%" y="%sort_asc_button_y%" />
-				<font resource="UItext" color="%button_text_color%" />
+				<font resource="mediumfont" color="%button_text_color%" />
 				<text>Name</text>
 				<image resource="sort_button" />
 				<action function="set">tw_gui_sort_order=1</action>
@@ -258,7 +260,7 @@
 
 			<object type="button">
 				<placement x="%sort_col2_button_x%" y="%sort_asc_button_y%" />
-				<font resource="UItext" color="%button_text_color%" />
+				<font resource="mediumfont" color="%button_text_color%" />
 				<text>Date</text>
 				<image resource="sort_button" />
 				<action function="set">tw_gui_sort_order=2</action>
@@ -266,7 +268,7 @@
 
 			<object type="button">
 				<placement x="%sort_col3_button_x%" y="%sort_asc_button_y%" />
-				<font resource="UItext" color="%button_text_color%" />
+				<font resource="mediumfont" color="%button_text_color%" />
 				<text>Size</text>
 				<image resource="sort_button" />
 				<action function="set">tw_gui_sort_order=3</action>
@@ -274,13 +276,13 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="mediumfont" />
-				<placement x="%col1_x%" y="%sort_desc_text_y%" />
+				<placement x="%sort_text_x%" y="%sort_desc_text_y%" />
 				<text>Sort Descending:</text>
 			</object>
 
 			<object type="button">
 				<placement x="%sort_col1_button_x%" y="%sort_desc_button_y%" />
-				<font resource="UItext" color="%button_text_color%" />
+				<font resource="mediumfont" color="%button_text_color%" />
 				<text>Name</text>
 				<image resource="sort_button" />
 				<action function="set">tw_gui_sort_order=-1</action>
@@ -288,7 +290,7 @@
 
 			<object type="button">
 				<placement x="%sort_col2_button_x%" y="%sort_desc_button_y%" />
-				<font resource="UItext" color="%button_text_color%" />
+				<font resource="mediumfont" color="%button_text_color%" />
 				<text>Date</text>
 				<image resource="sort_button" />
 				<action function="set">tw_gui_sort_order=-2</action>
@@ -296,7 +298,7 @@
 
 			<object type="button">
 				<placement x="%sort_col3_button_x%" y="%sort_desc_button_y%" />
-				<font resource="UItext" color="%button_text_color%" />
+				<font resource="mediumfont" color="%button_text_color%" />
 				<text>Size</text>
 				<image resource="sort_button" />
 				<action function="set">tw_gui_sort_order=-3</action>
@@ -2406,7 +2408,7 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row10_text_y%" />
+				<placement x="%col1_x%" y="%row_dst_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Do you use daylight savings time (DST)?</text>
 				<data variable="tw_time_zone_guidst" />
@@ -2415,12 +2417,12 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="%center_x%" y="%row11_text_y%" placement="5" />
+				<placement x="%center_x%" y="%row_offset_text_y%" placement="5" />
 				<text>Offset (usually 0): %tw_time_zone_guioffset%</text>
 			</object>
 
 			<object type="button">
-				<placement x="%col1_medium_x%" y="%row6_medium_y%" />
+				<placement x="%col1_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>None</text>
 				<image resource="medium_button" />
@@ -2428,7 +2430,7 @@
 			</object>
 
 			<object type="button">
-				<placement x="%col2_medium_x%" y="%row6_medium_y%" />
+				<placement x="%col2_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>15</text>
 				<image resource="medium_button" />
@@ -2436,7 +2438,7 @@
 			</object>
 
 			<object type="button">
-				<placement x="%col3_medium_x%" y="%row6_medium_y%" />
+				<placement x="%col3_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>30</text>
 				<image resource="medium_button" />
@@ -2444,7 +2446,7 @@
 			</object>
 
 			<object type="button">
-				<placement x="%col4_medium_x%" y="%row6_medium_y%" />
+				<placement x="%col4_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>45</text>
 				<image resource="medium_button" />

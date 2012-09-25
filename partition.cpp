@@ -178,6 +178,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Has_Data_Media = true;
 			Is_Storage = true;
 			Storage_Path = "/data/media";
+			Recreate_Media_Folder();
 			if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
 				Make_Dir("/emmc", Display_Error);
 				Symlink_Path = "/data/media";
@@ -212,6 +213,10 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
 			MTD_Name = "cache";
+			if (!TWFunc::Path_Exists("/cache/recovery")) {
+				LOGI("Recreating /cache/recovery folder.\n");
+				TWFunc::Recursive_Mkdir("/cache/recovery");
+			}
 		} else if (Mount_Point == "/datadata") {
 			Wipe_During_Factory_Reset = true;
 			Display_Name = "DataData";
@@ -821,6 +826,7 @@ bool TWPartition::Wipe_Encryption() {
 		if (Has_Data_Media && !Symlink_Mount_Point.empty()) {
 			Recreate_Media_Folder();
 		}
+		ui_print("You may need to reboot recovery to be able to use /data again.\n");
 		return true;
 	} else {
 		Has_Data_Media = Save_Data_Media;
@@ -1074,6 +1080,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	if (!Mount(true))
 		return false;
 
+	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, "Backing Up");
 	ui_print("Backing up %s...\n", Display_Name.c_str());
 
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
@@ -1127,6 +1134,7 @@ bool TWPartition::Backup_DD(string backup_folder) {
 	string Full_FileName, Command;
 	int use_compression;
 
+	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, "Backing Up");
 	ui_print("Backing up %s...\n", Display_Name.c_str());
 
 	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Current_File_System.c_str());
@@ -1145,6 +1153,7 @@ bool TWPartition::Backup_Dump_Image(string backup_folder) {
 	string Full_FileName, Command;
 	int use_compression;
 
+	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, "Backing Up");
 	ui_print("Backing up %s...\n", Display_Name.c_str());
 
 	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Current_File_System.c_str());
@@ -1164,6 +1173,7 @@ bool TWPartition::Restore_Tar(string restore_folder) {
 	int index = 0;
 	char split_index[5];
 
+	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, "Restoring");
 	LOGI("Restore filename is: %s\n", Backup_FileName.c_str());
 
 	// Parse backup filename to extract the file system before wiping
@@ -1224,6 +1234,7 @@ bool TWPartition::Restore_Tar(string restore_folder) {
 bool TWPartition::Restore_DD(string restore_folder) {
 	string Full_FileName, Command;
 
+	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, "Restoring");
 	ui_print("Restoring %s...\n", Display_Name.c_str());
 	Full_FileName = restore_folder + "/" + Backup_FileName;
 	Command = "dd bs=4096 if='" + Full_FileName + "' of=" + Actual_Block_Device;
@@ -1235,6 +1246,7 @@ bool TWPartition::Restore_DD(string restore_folder) {
 bool TWPartition::Restore_Flash_Image(string restore_folder) {
 	string Full_FileName, Command;
 
+	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, "Restoring");
 	ui_print("Restoring %s...\n", Display_Name.c_str());
 	Full_FileName = restore_folder + "/" + Backup_FileName;
 	// Sometimes flash image doesn't like to flash due to the first 2KB matching, so we erase first to ensure that it flashes
@@ -1309,7 +1321,7 @@ void TWPartition::Recreate_Media_Folder(void) {
 
 	if (!Mount(true)) {
 		LOGE("Unable to recreate /data/media folder.\n");
-	} else {
+	} else if (!TWFunc::Path_Exists("/data/media")) {
 		LOGI("Recreating /data/media folder.\n");
 		system("cd /data && mkdir media && chmod 755 media");
 		Command = "umount " + Symlink_Mount_Point;

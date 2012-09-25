@@ -26,6 +26,7 @@
 #define TW_ZIP_QUEUE_COUNT			"tw_zip_queue_count"
 
 #define MAX_BACKUP_NAME_LEN 64
+#define TW_BACKUP_TEXT              "tw_backup_text"
 #define TW_BACKUP_NAME		        "tw_backup_name"
 #define TW_BACKUP_SYSTEM_VAR        "tw_backup_system"
 #define TW_BACKUP_DATA_VAR          "tw_backup_data"
@@ -51,7 +52,9 @@
 #define TW_BACKUP_SP2_SIZE          "tw_backup_sp2_size"
 #define TW_BACKUP_SP3_SIZE          "tw_backup_sp3_size"
 #define TW_STORAGE_FREE_SIZE        "tw_storage_free_size"
+#define TW_GENERATE_MD5_TEXT        "tw_generate_md5_text"
 
+#define TW_RESTORE_TEXT             "tw_restore_text"
 #define TW_RESTORE_SYSTEM_VAR       "tw_restore_system"
 #define TW_RESTORE_DATA_VAR         "tw_restore_data"
 #define TW_RESTORE_BOOT_VAR         "tw_restore_boot"
@@ -66,6 +69,8 @@
 #define TW_RESTORE_AVG_FILE_RATE    "tw_restore_avg_file_rate"
 #define TW_RESTORE_AVG_FILE_COMP_RATE    "tw_restore_avg_file_comp_rate"
 #define TW_RESTORE_FILE_DATE        "tw_restore_file_date"
+#define TW_VERIFY_MD5_TEXT          "tw_verify_md5_text"
+#define TW_UPDATE_SYSTEM_DETAILS_TEXT "tw_update_system_details_text"
 
 #define TW_SHOW_SPAM_VAR            "tw_show_spam"
 #define TW_COLOR_THEME_VAR          "tw_color_theme"

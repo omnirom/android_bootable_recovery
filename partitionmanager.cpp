@@ -421,6 +421,7 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	if (!generate_md5)
 		return true;
 
+	TWFunc::GUI_Operation_Text(TW_GENERATE_MD5_TEXT, "Generating MD5");
 	ui_print(" * Generating md5...\n");
 
 	if (TWFunc::Path_Exists(Full_File)) {
@@ -960,6 +961,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 
 	if (check_md5 > 0) {
 		// Check MD5 files first before restoring to ensure that all of them match before starting a restore
+		TWFunc::GUI_Operation_Text(TW_VERIFY_MD5_TEXT, "Verifying MD5");
 		ui_print("Verifying MD5...\n");
 		if (restore_sys != NULL && !restore_sys->Check_MD5(Restore_Name))
 			return false;
@@ -1014,6 +1016,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 	if (restore_sp3 != NULL && !Restore_Partition(restore_sp3, Restore_Name, partition_count))
 		return false;
 
+	TWFunc::GUI_Operation_Text(TW_UPDATE_SYSTEM_DETAILS_TEXT, "Updating System Details");
 	Update_System_Details();
 	time(&rStop);
 	ui_print("[RESTORE COMPLETED IN %d SECONDS]\n\n",(int)difftime(rStop,rStart));

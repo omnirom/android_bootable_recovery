@@ -12,6 +12,7 @@
 #include "twrp-functions.hpp"
 #include "partitions.hpp"
 #include "common.h"
+#include "data.hpp"
 
 /*  Checks md5 for a path
     Return values:
@@ -226,4 +227,26 @@ bool TWFunc::Path_Exists(string Path) {
 		return false;
 	else
 		return true;
+}
+
+void TWFunc::GUI_Operation_Text(string Read_Value, string Default_Text) {
+	string Display_Text;
+
+	DataManager::GetValue(Read_Value, Display_Text);
+	if (Display_Text.empty())
+		Display_Text = Default_Text;
+
+	DataManager::SetValue("tw_operation", Display_Text);
+	DataManager::SetValue("tw_partition", "");
+}
+
+void TWFunc::GUI_Operation_Text(string Read_Value, string Partition_Name, string Default_Text) {
+	string Display_Text;
+
+	DataManager::GetValue(Read_Value, Display_Text);
+	if (Display_Text.empty())
+		Display_Text = Default_Text;
+
+	DataManager::SetValue("tw_operation", Display_Text);
+	DataManager::SetValue("tw_partition", Partition_Name);
 }
