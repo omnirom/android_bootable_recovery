@@ -27,7 +27,6 @@
 
 extern "C" {
 #include "../common.h"
-#include "../roots.h"
 #include "../tw_reboot.h"
 #include "../minuitwrp/minui.h"
 #include "../recovery_ui.h"
@@ -827,8 +826,17 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					// Below seen in Koush's recovery
 					char sddevice[256];
 					char mkdir_path[255];
-					Volume *vol = volume_for_path("/sdcard");
-					strcpy(sddevice, vol->device);
+#ifdef TW_EXTERNAL_STORAGE_PATH
+					TWPartition* SDCard = PartitionManager.Find_Partition_By_Path(EXPAND(TW_EXTERNAL_STORAGE_PATH));
+#else
+					TWPartition* SDCard = PartitionManager.Find_Partition_By_Path("/sdcard");
+#endif
+					if (SDCard == NULL) {
+						LOGE("Unable to locate device to partition.\n");
+						operation_end(1, simulate);
+						return 0;
+					}
+					strcpy(sddevice, SDCard->Actual_Block_Device.c_str());
 					// Just need block not whole partition
 					sddevice[strlen("/dev/block/mmcblkX")] = '\0';
 
