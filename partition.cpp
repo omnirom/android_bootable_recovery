@@ -279,6 +279,30 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			} else
 				DataManager::SetValue(TW_HAS_RECOVERY_PARTITION, 1);
 		}
+#ifdef SP1_NAME
+		string SP1_Path = "/";
+		SP1_Path += EXPAND(SP1_NAME);
+		if (Mount_Point == SP1_Path) {
+			int backup_display_size = (int)(Backup_Size / 1048576LLU);
+			DataManager::SetValue(TW_BACKUP_SP1_SIZE, backup_display_size);
+		}
+#endif
+#ifdef SP2_NAME
+		string SP2_Path = "/";
+		SP2_Path += EXPAND(SP2_NAME);
+		if (Mount_Point == SP2_Path) {
+			int backup_display_size = (int)(Backup_Size / 1048576LLU);
+			DataManager::SetValue(TW_BACKUP_SP2_SIZE, backup_display_size);
+		}
+#endif
+#ifdef SP3_NAME
+		string SP3_Path = "/";
+		SP3_Path += EXPAND(SP3_NAME);
+		if (Mount_Point == SP3_Path) {
+			int backup_display_size = (int)(Backup_Size / 1048576LLU);
+			DataManager::SetValue(TW_BACKUP_SP3_SIZE, backup_display_size);
+		}
+#endif
 	}
 
 	// Process any custom flags
