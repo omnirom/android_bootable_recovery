@@ -790,11 +790,22 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
             LOGI("fix permissions started!\n");
 			if (simulate) {
 				simulate_progress_bar();
-			} else
-				PartitionManager.Fix_Permissions();
+			} else {
+				int op_status;
+				if (!PartitionManager.Mount_By_Path("/data", true) || !PartitionManager.Mount_By_Path("/system", true))
+					operation_end(1, simulate);
 
-			LOGI("fix permissions DONE!\n");
-			operation_end(0, simulate);
+				DataManager::SetValue("tw_terminal_command_thread", "./sbin/fix_permissions.sh");
+				DataManager::SetValue("tw_terminal_state", 1);
+				DataManager::SetValue("tw_background_thread_running", 1);
+				op_status = pthread_create(&terminal_command, NULL, command_thread, NULL);
+				if (op_status != 0) {
+					LOGE("Error starting terminal command thread, %i.\n", op_status);
+					DataManager::SetValue("tw_terminal_state", 0);
+					DataManager::SetValue("tw_background_thread_running", 0);
+					operation_end(1, simulate);
+				}
+			}
 			return 0;
 		}
         if (function == "dd")
@@ -956,10 +967,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				simulate_progress_bar();
 				operation_end(op_status, simulate);
 			} else {
-				command = "cd \"";
-				command += cmdpath;
-				command += "\" && ";
-				command += arg;
+				command = "cd \"" + cmdpath + "\" && " + arg + " 2>&1";;
 				LOGI("Actual command is: '%s'\n", command.c_str());
 				DataManager::SetValue("tw_terminal_command_thread", command);
 				DataManager::SetValue("tw_terminal_state", 1);
@@ -1187,6 +1195,7 @@ void* GUIAction::command_thread(void *cookie)
 				keep_going = 0;
 			} else {
 				// Try to read output
+				memset(line, 0, sizeof(line));
 				bytes_read = read(fd, line, sizeof(line));
 				if (bytes_read > 0)
 					ui_print("%s", line); // Display output

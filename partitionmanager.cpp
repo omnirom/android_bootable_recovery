@@ -1473,19 +1473,6 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	return 1;
 }
 
-int TWPartitionManager::Fix_Permissions(void) {
-	if (!Mount_By_Path("/data", true))
-		return false;
-
-	if (!Mount_By_Path("/system", true))
-		return false;
-
-	ui_print("Fixing Permissions\nThis may take a few minutes.\n");
-	system("./sbin/fix_permissions.sh");
-	ui_print("Done.\n\n");
-	return true;
-}
-
 //partial kangbang from system/vold
 #ifndef CUSTOM_LUN_FILE
 #define CUSTOM_LUN_FILE "/sys/devices/platform/usb_mass_storage/lun%d/file"

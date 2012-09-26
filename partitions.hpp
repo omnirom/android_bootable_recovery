@@ -177,7 +177,6 @@ public:
 	virtual void Refresh_Sizes();                                             // Refreshes size data of partitions
 	virtual void Update_System_Details();                                     // Updates fstab, file systems, sizes, etc.
 	virtual int Decrypt_Device(string Password);                              // Attempt to decrypt any encrypted partitions
-	virtual int Fix_Permissions();                                            // Fixes permissions in /system and /data
 	virtual int usb_storage_enable(void);                                     // Enable USB storage mode
 	virtual int usb_storage_disable(void);                                    // Disable USB storage mode
 	virtual void Mount_All_Storage(void);                                     // Mounts all storage locations
