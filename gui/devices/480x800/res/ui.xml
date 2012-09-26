@@ -1162,6 +1162,24 @@
 			</object>
 
 			<object type="button">
+				<condition var1="tw_has_data_media" var2="0" />
+				<placement x="%col1_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Android Secure</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=wipe</action>
+					<action function="set">tw_action=wipe</action>
+					<action function="set">tw_action_param=ANDROIDSECURE</action>
+					<action function="set">tw_text1=Wipe Android Secure?</action>
+					<action function="set">tw_action_text1=Wiping Android Secure...</action>
+					<action function="set">tw_complete_text1=Wipe Android Secure Complete</action>
+					<action function="set">tw_slider_text=Swipe to Format</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
 				<condition var1="tw_has_sdext_partition" var2="1" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />

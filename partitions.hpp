@@ -172,6 +172,7 @@ public:
 	virtual int Wipe_Dalvik_Cache();                                          // Wipes dalvik cache
 	virtual int Wipe_Rotate_Data();                                           // Wipes rotation data -- 
 	virtual int Wipe_Battery_Stats();                                         // Wipe battery stats -- /data/system/batterystats.bin
+	virtual int Wipe_Android_Secure();                                        // Wipes android secure
 	virtual int Format_Data();                                                // Really formats data on /data/media devices -- also removes encryption
 	virtual int Wipe_Media_From_Data();                                       // Removes and recreates the media folder on /data/media devices
 	virtual void Refresh_Sizes();                                             // Refreshes size data of partitions

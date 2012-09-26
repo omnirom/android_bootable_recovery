@@ -715,6 +715,8 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 					DataManager::GetValue(TW_EXTERNAL_PATH, External_Path);
 					ret_val = PartitionManager.Wipe_By_Path(External_Path);
+				} else if (arg == "ANDROIDSECURE") {
+					ret_val = PartitionManager.Wipe_Android_Secure();
 				} else
 					ret_val = PartitionManager.Wipe_By_Path(arg);
 

@@ -1283,6 +1283,26 @@ int TWPartitionManager::Wipe_Battery_Stats(void) {
 	return true;
 }
 
+int TWPartitionManager::Wipe_Android_Secure(void) {
+	std::vector<TWPartition*>::iterator iter;
+	int ret = false;
+	bool found = false;
+
+	// Iterate through all partitions
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Has_Android_Secure) {
+			ret = (*iter)->Wipe_AndSec();
+			found = true;
+		}
+	}
+	if (found) {
+		return ret;
+	} else {
+		LOGE("No android secure partitions found.\n");
+	}
+	return false;
+}
+
 int TWPartitionManager::Format_Data(void) {
 	TWPartition* dat = Find_Partition_By_Path("/data");
 
