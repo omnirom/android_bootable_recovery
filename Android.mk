@@ -31,7 +31,7 @@ LOCAL_SRC_FILES := \
 LOCAL_SRC_FILES += \
     extra-functions.c \
     data.cpp \
-    makelist.c \
+    makelist.cpp \
     partition.cpp \
     partitionmanager.cpp \
     mtdutils/mtdutils.c \

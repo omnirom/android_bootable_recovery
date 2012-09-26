@@ -20,7 +20,21 @@
 #ifndef _MAKELIST_HEADER
 #define _MAKELIST_HEADER
 
-int make_file_list(char* path);
+#include <string>
 
-#endif
+using namespace std;
+
+// Partition class
+class MakeList
+{
+public:
+	static int Make_File_List(string Path);
+
+private:
+	static int Add_Item(string Item_Name);
+	static int Generate_File_Lists(string Path);
+
+};
+
+#endif // _MAKELIST_HEADER
 

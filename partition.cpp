@@ -38,10 +38,10 @@
 #include "partitions.hpp"
 #include "data.hpp"
 #include "twrp-functions.hpp"
+#include "makelist.hpp"
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
-	#include "makelist.h"
 	#include "extra-functions.h"
 }
 
@@ -103,6 +103,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 	}
 	string mount_pt(full_line);
 	Mount_Point = mount_pt;
+	LOGI("Processing '%s'\n", mount_pt);
 	Backup_Path = Mount_Point;
 	index = Mount_Point.size();
 	while (index < line_len) {
@@ -1096,7 +1097,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 		// This backup needs to be split into multiple archives
 		ui_print("Breaking backup file into multiple archives...\nGenerating file lists\n");
 		sprintf(back_name, "%s", Backup_Path.c_str());
-		backup_count = make_file_list(back_name);
+		backup_count = MakeList::Make_File_List(back_name);
 		if (backup_count < 1) {
 			LOGE("Error generating file list!\n");
 			return false;
