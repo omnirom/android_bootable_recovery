@@ -178,8 +178,6 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 			printf("   Backup_Name: %s\n", Part->Backup_Name.c_str());
 		if (!Part->Backup_FileName.empty())
 			printf("   Backup_FileName: %s\n", Part->Backup_FileName.c_str());
-		if (!Part->MTD_Name.empty())
-			printf("   MTD_Name: %s\n", Part->MTD_Name.c_str());
 		if (!Part->Storage_Path.empty())
 			printf("   Storage_Path: %s\n", Part->Storage_Path.c_str());
 		if (!Part->Current_File_System.empty())
@@ -191,6 +189,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 	} else {
 		printf("%s | %s | Size: %iMB\n", Part->Mount_Point.c_str(), Part->Actual_Block_Device.c_str(), (int)(Part->Size / mb));
 	}
+	if (!Part->MTD_Name.empty())
+		printf("   MTD_Name: %s\n", Part->MTD_Name.c_str());
 	string back_meth = Part->Backup_Method_By_Name();
 	printf("   Backup_Method: %s\n\n", back_meth.c_str());
 }
@@ -1218,6 +1218,9 @@ int TWPartitionManager::Factory_Reset(void) {
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Wipe_During_Factory_Reset && (*iter)->Is_Present) {
 			if (!(*iter)->Wipe())
+				ret = false;
+		} else if ((*iter)->Has_Android_Secure) {
+			if (!(*iter)->Wipe_AndSec())
 				ret = false;
 		}
 	}

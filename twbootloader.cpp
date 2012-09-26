@@ -73,22 +73,22 @@ static int get_bootloader_message_mtd(struct bootloader_message *out,
                                       const TWPartition* Partition) {
     size_t write_size;
     mtd_scan_partitions();
-    const MtdPartition *part = mtd_find_partition_by_name(Partition->Actual_Block_Device.c_str());
+    const MtdPartition *part = mtd_find_partition_by_name(Partition->MTD_Name.c_str());
     if (part == NULL || mtd_partition_info(part, NULL, NULL, &write_size)) {
-        LOGE("Can't find %s\n", Partition->Actual_Block_Device.c_str());
+        LOGE("Can't find %s\n", Partition->MTD_Name.c_str());
         return -1;
     }
 
     MtdReadContext *read = mtd_read_partition(part);
     if (read == NULL) {
-        LOGE("Can't open %s\n(%s)\n", Partition->Actual_Block_Device.c_str(), strerror(errno));
+        LOGE("Can't open %s\n(%s)\n", Partition->MTD_Name.c_str(), strerror(errno));
         return -1;
     }
 
     const ssize_t size = write_size * MISC_PAGES;
     char data[size];
     ssize_t r = mtd_read_data(read, data, size);
-    if (r != size) LOGE("Can't read %s\n(%s)\n", Partition->Actual_Block_Device.c_str(), strerror(errno));
+    if (r != size) LOGE("Can't read %s\n(%s)\n", Partition->MTD_Name.c_str(), strerror(errno));
     mtd_read_close(read);
     if (r != size) return -1;
 
@@ -99,22 +99,22 @@ static int set_bootloader_message_mtd(const struct bootloader_message *in,
                                       const TWPartition* Partition) {
     size_t write_size;
     mtd_scan_partitions();
-    const MtdPartition *part = mtd_find_partition_by_name(Partition->Actual_Block_Device.c_str());
+    const MtdPartition *part = mtd_find_partition_by_name(Partition->MTD_Name.c_str());
     if (part == NULL || mtd_partition_info(part, NULL, NULL, &write_size)) {
-        LOGE("Can't find %s\n", Partition->Actual_Block_Device.c_str());
+        LOGE("Can't find %s\n", Partition->MTD_Name.c_str());
         return -1;
     }
 
     MtdReadContext *read = mtd_read_partition(part);
     if (read == NULL) {
-        LOGE("Can't open %s\n(%s)\n", Partition->Actual_Block_Device.c_str(), strerror(errno));
+        LOGE("Can't open %s\n(%s)\n", Partition->MTD_Name.c_str(), strerror(errno));
         return -1;
     }
 
     ssize_t size = write_size * MISC_PAGES;
     char data[size];
     ssize_t r = mtd_read_data(read, data, size);
-    if (r != size) LOGE("Can't read %s\n(%s)\n", Partition->Actual_Block_Device.c_str(), strerror(errno));
+    if (r != size) LOGE("Can't read %s\n(%s)\n", Partition->MTD_Name.c_str(), strerror(errno));
     mtd_read_close(read);
     if (r != size) return -1;
 
@@ -122,16 +122,16 @@ static int set_bootloader_message_mtd(const struct bootloader_message *in,
 
     MtdWriteContext *write = mtd_write_partition(part);
     if (write == NULL) {
-        LOGE("Can't open %s\n(%s)\n", Partition->Actual_Block_Device.c_str(), strerror(errno));
+        LOGE("Can't open %s\n(%s)\n", Partition->MTD_Name.c_str(), strerror(errno));
         return -1;
     }
     if (mtd_write_data(write, data, size) != size) {
-        LOGE("Can't write %s\n(%s)\n", Partition->Actual_Block_Device.c_str(), strerror(errno));
+        LOGE("Can't write %s\n(%s)\n", Partition->MTD_Name.c_str(), strerror(errno));
         mtd_write_close(write);
         return -1;
     }
     if (mtd_write_close(write)) {
-        LOGE("Can't finish %s\n(%s)\n", Partition->Actual_Block_Device.c_str(), strerror(errno));
+        LOGE("Can't finish %s\n(%s)\n", Partition->MTD_Name.c_str(), strerror(errno));
         return -1;
     }
 

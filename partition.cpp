@@ -119,8 +119,8 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 		} else if (item_index == 1) {
 			// Primary Block Device
 			if (Fstab_File_System == "mtd" || Fstab_File_System == "yaffs2") {
-				Primary_Block_Device = ptr;
-				Find_MTD_Block_Device(Primary_Block_Device);
+				MTD_Name = ptr;
+				Find_MTD_Block_Device(MTD_Name);
 			} else if (*ptr != '/') {
 				if (Display_Error)
 					LOGE("Invalid block device on '%s', '%s', %i\n", Line.c_str(), ptr, index);
@@ -168,12 +168,10 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 		if (Mount_Point == "/system") {
 			Display_Name = "System";
 			Wipe_Available_in_GUI = true;
-			MTD_Name = "system";
 		} else if (Mount_Point == "/data") {
 			Display_Name = "Data";
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
-			MTD_Name = "userdata";
 #ifdef RECOVERY_SDCARD_ON_DATA
 			Has_Data_Media = true;
 			Is_Storage = true;
@@ -212,7 +210,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Display_Name = "Cache";
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
-			MTD_Name = "cache";
 			if (!TWFunc::Path_Exists("/cache/recovery")) {
 				LOGI("Recreating /cache/recovery folder.\n");
 				TWFunc::Recursive_Mkdir("/cache/recovery");
@@ -266,7 +263,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 		Find_Actual_Block_Device();
 		Setup_Image(Display_Error);
 		if (Mount_Point == "/boot") {
-			MTD_Name = "boot";
 			int backup_display_size = (int)(Backup_Size / 1048576LLU);
 			DataManager::SetValue(TW_BACKUP_BOOT_SIZE, backup_display_size);
 			if (Backup_Size == 0) {
@@ -275,7 +271,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			} else
 				DataManager::SetValue(TW_HAS_BOOT_PARTITION, 1);
 		} else if (Mount_Point == "/recovery") {
-			MTD_Name = "recovery";
 			int backup_display_size = (int)(Backup_Size / 1048576LLU);
 			DataManager::SetValue(TW_BACKUP_RECOVERY_SIZE, backup_display_size);
 			if (Backup_Size == 0) {
