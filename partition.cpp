@@ -101,9 +101,8 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 		if (full_line[index] <= 32)
 			full_line[index] = '\0';
 	}
-	string mount_pt(full_line);
-	Mount_Point = mount_pt;
-	LOGI("Processing '%s'\n", mount_pt);
+	Mount_Point = full_line;
+	LOGI("Processing '%s'\n", Mount_Point.c_str());
 	Backup_Path = Mount_Point;
 	index = Mount_Point.size();
 	while (index < line_len) {
@@ -1076,7 +1075,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	string Full_FileName, Split_FileName, Tar_Args, Command;
 	int use_compression, index, backup_count;
 	struct stat st;
-	unsigned long long total_bsize = 0;
+	unsigned long long total_bsize = 0, file_size;
 
 	if (!Mount(true))
 		return false;
@@ -1110,11 +1109,12 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 			ui_print("Backup archive %i of %i...\n", (index + 1), backup_count);
 			system(Command.c_str()); // sending backup command formed earlier above
 
-			if (stat(Full_FileName.c_str(), &st) != 0 || st.st_size == 0) {
-				LOGE("File size is zero bytes. Aborting...\n\n"); // oh noes! file size is 0, abort! abort!
+			file_size = TWFunc::Get_File_Size(Full_FileName);
+			if (file_size == 0) {
+				LOGE("Backup file size for '%s' is 0 bytes.\n", Full_FileName.c_str()); // oh noes! file size is 0, abort! abort!
 				return false;
 			}
-			total_bsize += st.st_size;
+			total_bsize += file_size;
 		}
 		ui_print(" * Total size: %llu bytes.\n", total_bsize);
 		system("cd /tmp && rm -rf list");
@@ -1126,6 +1126,10 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 			Command = "cd " + Backup_Path + " && tar " + Tar_Args + " -f '" + Full_FileName + "' ./*";
 		LOGI("Backup command: '%s'\n", Command.c_str());
 		system(Command.c_str());
+		if (TWFunc::Get_File_Size(Full_FileName) == 0) {
+			LOGE("Backup file size for '%s' is 0 bytes.\n", Full_FileName.c_str());
+			return false;
+		}
 	}
 	return true;
 }
@@ -1146,6 +1150,10 @@ bool TWPartition::Backup_DD(string backup_folder) {
 	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'";
 	LOGI("Backup command: '%s'\n", Command.c_str());
 	system(Command.c_str());
+	if (TWFunc::Get_File_Size(Full_FileName) != Backup_Size) {
+		LOGE("Backup file size %lu for '%s' is does not match backup size %llu.\n", TWFunc::Get_File_Size(Full_FileName), Full_FileName.c_str(), Backup_Size);
+		return false;
+	}
 	return true;
 }
 
@@ -1165,6 +1173,11 @@ bool TWPartition::Backup_Dump_Image(string backup_folder) {
 	Command = "dump_image " + MTD_Name + " '" + Full_FileName + "'";
 	LOGI("Backup command: '%s'\n", Command.c_str());
 	system(Command.c_str());
+	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
+		// Actual size may not match backup size due to bad blocks on MTD devices so just check for 0 bytes
+		LOGE("Backup file size for '%s' is 0 bytes.\n", Full_FileName.c_str());
+		return false;
+	}
 	return true;
 }
 

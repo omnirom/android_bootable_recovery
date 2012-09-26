@@ -22,6 +22,7 @@ public:
 	static bool Path_Exists(string Path);                                       // Returns true if the path exists
 	static void GUI_Operation_Text(string Read_Value, string Default_Text);     // Updates text for display in the GUI, e.g. Backing up %partition name%
 	static void GUI_Operation_Text(string Read_Value, string Partition_Name, string Default_Text); // Same as above but includes partition name
+	static unsigned long Get_File_Size(string Path);                            // Returns the size of a file
 
 };
 

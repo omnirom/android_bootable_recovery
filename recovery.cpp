@@ -803,7 +803,7 @@ main(int argc, char **argv) {
 
 	//ui->Init();
     //ui->SetBackground(RecoveryUI::NONE);
-    load_volume_table();
+    //load_volume_table();
 
 	// Load default values to set DataManager constants and handle ifdefs
 	DataManager_LoadDefaults();

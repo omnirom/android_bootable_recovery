@@ -221,9 +221,9 @@ unsigned long long TWFunc::Get_Folder_Size(string Path, bool Display_Error) {
 
 bool TWFunc::Path_Exists(string Path) {
 	// Check to see if the Path exists
-	struct statfs st;
+	struct stat st;
 
-	if (statfs(Path.c_str(), &st) != 0)
+	if (stat(Path.c_str(), &st) != 0)
 		return false;
 	else
 		return true;
@@ -249,4 +249,12 @@ void TWFunc::GUI_Operation_Text(string Read_Value, string Partition_Name, string
 
 	DataManager::SetValue("tw_operation", Display_Text);
 	DataManager::SetValue("tw_partition", Partition_Name);
+}
+
+unsigned long TWFunc::Get_File_Size(string Path) {
+	struct stat st;
+
+	if (stat(Path.c_str(), &st) != 0)
+		return 0;
+	return st.st_size;
 }

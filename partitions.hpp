@@ -61,6 +61,10 @@ public:
 	virtual bool Update_Size(bool Display_Error);                             // Updates size information
 	virtual void Recreate_Media_Folder();                                     // Recreates the /data/media folder
 
+public:
+	string Current_File_System;                                               // Current file system
+	string Actual_Block_Device;                                               // Actual block device (one of primary, alternate, or decrypted)
+
 protected:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
 	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
@@ -77,7 +81,6 @@ protected:
 	string Symlink_Mount_Point;                                               // /sdcard could be the symlink mount point for /data/media
 	string Mount_Point;                                                       // Mount point for this partition (e.g. /system or /data)
 	string Backup_Path;                                                       // Path for backup
-	string Actual_Block_Device;                                               // Actual block device (one of primary, alternate, or decrypted)
 	string Primary_Block_Device;                                              // Block device (e.g. /dev/block/mmcblk1p1)
 	string Alternate_Block_Device;                                            // Alternate block device (e.g. /dev/block/mmcblk1)
 	string Decrypted_Block_Device;                                            // Decrypted block device available after decryption
@@ -100,7 +103,6 @@ protected:
 	bool Has_Android_Secure;                                                  // Indicates the presence of .android_secure on this partition
 	bool Is_Storage;                                                          // Indicates if this partition is used for storage for backup, restore, and installing zips
 	string Storage_Path;                                                      // Indicates the path to the storage -- root indicates mount point, media/ indicates e.g. /data/media
-	string Current_File_System;                                               // Current file system
 	string Fstab_File_System;                                                 // File system from the recovery.fstab
 	int Format_Block_Size;                                                    // Block size for formatting
 
