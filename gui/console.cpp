@@ -366,7 +366,7 @@ int GUIConsole::NotifyTouch(TOUCH_STATE state, int x, int y)
         {
             mLastTouchY = y;
             if (mCurrentLine == -1)
-                mCurrentLine = mLastCount - mMaxRows;
+                mCurrentLine = mLastCount - 1;
             else if (mCurrentLine > mSlideMultiplier)
                 mCurrentLine -= mSlideMultiplier;
             else
