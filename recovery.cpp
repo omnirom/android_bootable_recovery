@@ -809,11 +809,6 @@ main(int argc, char **argv) {
 	DataManager_LoadDefaults();
 	printf("Starting the UI...");
 	gui_init();
-	//printf("=> Installing busybox into /sbin\n");
-	//system("/sbin/bbinstall.sh"); // Let's install busybox
-	printf("Symlinking gzip to pigz\n");
-	system("ln -sf /sbin/pigz /sbin/gzip");
-	system("ln -sf /sbin/unpigz /sbin/gunzip");
 	printf("=> Linking mtab\n");
 	system("ln -s /proc/mounts /etc/mtab"); // And link mtab for mke2fs
 	printf("=> Processing recovery.fstab\n");
@@ -931,6 +926,7 @@ main(int argc, char **argv) {
 		finish_recovery(NULL);
 		DataManager_ReadSettingsFile();
 		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) == 0 && OpenRecoveryScript::check_for_script_file()) {
+			TWFunc::Output_Version();
 			gui_console_only();
 			OpenRecoveryScript::run_script_file();
 			if (1 || OpenRecoveryScript::run_script_file() != 0) {

@@ -33,9 +33,10 @@ public:
 	static void GUI_Operation_Text(string Read_Value, string Default_Text);     // Updates text for display in the GUI, e.g. Backing up %partition name%
 	static void GUI_Operation_Text(string Read_Value, string Partition_Name, string Default_Text); // Same as above but includes partition name
 	static unsigned long Get_File_Size(string Path);                            // Returns the size of a file
-	static void twfinish_recovery(const char *send_intent);
-	static int tw_reboot(RebootCommand command);
-	static void check_and_run_script(const char* script_file, const char* display_name);
+	static void twfinish_recovery(const char *send_intent);                     // Writes the log to last_log
+	static int tw_reboot(RebootCommand command);                                // Prepares the device for rebooting
+	static void check_and_run_script(const char* script_file, const char* display_name); // checks for the existence of a script, chmods it to 755, then runs it
+	static void Output_Version(void);                                           // Outputs the version to a file in the TWRP folder
 
 private:
 	static void check_and_fclose(FILE *fp, const char *name);

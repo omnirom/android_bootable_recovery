@@ -981,6 +981,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 					DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 					DataManager::ReadSettingsFile();
+					TWFunc::Output_Version();
 					if (OpenRecoveryScript::check_for_script_file()) {
 						ui_print("Processing OpenRecoveryScript file...\n");
 						if (OpenRecoveryScript::run_script_file() == 0) {
