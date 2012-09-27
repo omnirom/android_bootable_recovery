@@ -41,11 +41,6 @@
 #include "partitions.hpp"
 #include "twrp-functions.hpp"
 
-extern "C" {
-#include "extra-functions.h"
-int __system(const char *command);
-};
-
 extern RecoveryUI* ui;
 
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"

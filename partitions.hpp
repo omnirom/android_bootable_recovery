@@ -116,7 +116,6 @@ private:
 	void Find_Real_Block_Device(string& Block_Device, bool Display_Error);    // Checks the block device given and follows symlinks until it gets to the real block device
 	bool Find_Partition_Size();                                               // Finds the partition size from /proc/partitions
 	unsigned long long Get_Size_Via_du(string Path, bool Display_Error);      // Uses du to get sizes
-	void Flip_Block_Device();                                                 // Flips the Block_Device and Alternate_Block_Device
 	bool Wipe_EXT23();                                                        // Formats as ext3 or ext2
 	bool Wipe_EXT4();                                                         // Formats using ext4, uses make_ext4fs when present
 	bool Wipe_FAT();                                                          // Formats as FAT except that mkdosfs from busybox usually fails so oftentimes this is actually a rm -rf wipe
@@ -182,6 +181,7 @@ public:
 	virtual int usb_storage_enable(void);                                     // Enable USB storage mode
 	virtual int usb_storage_disable(void);                                    // Disable USB storage mode
 	virtual void Mount_All_Storage(void);                                     // Mounts all storage locations
+	virtual int Partition_SDCard(void);                                       // Repartitions the sdcard
 
 private:
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made

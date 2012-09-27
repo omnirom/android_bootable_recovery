@@ -29,7 +29,6 @@ LOCAL_SRC_FILES := \
     adb_install.cpp
 
 LOCAL_SRC_FILES += \
-    extra-functions.c \
     data.cpp \
     makelist.cpp \
     partition.cpp \

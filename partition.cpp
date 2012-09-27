@@ -624,14 +624,6 @@ bool TWPartition::Find_Partition_Size(void) {
 	return false;
 }
 
-void TWPartition::Flip_Block_Device(void) {
-	string temp;
-
-	temp = Alternate_Block_Device;
-	Primary_Block_Device = Alternate_Block_Device;
-	Alternate_Block_Device = temp;
-}
-
 bool TWPartition::Is_Mounted(void) {
 	if (!Can_Be_Mounted)
 		return false;
@@ -670,6 +662,7 @@ bool TWPartition::Mount(bool Display_Error) {
 			LOGE("Unable to mount '%s'\n", Mount_Point.c_str());
 		else
 			LOGI("Unable to mount '%s'\n", Mount_Point.c_str());
+		LOGI("Actual block device: '%s', current file system: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str());
 		return false;
 	} else {
 		if (Removable)
@@ -1349,7 +1342,6 @@ void TWPartition::Find_Actual_Block_Device(void) {
 		Is_Present = true;
 		Actual_Block_Device = Primary_Block_Device;
 	} else if (!Alternate_Block_Device.empty() && TWFunc::Path_Exists(Alternate_Block_Device)) {
-		Flip_Block_Device();
 		Actual_Block_Device = Primary_Block_Device;
 		Is_Present = true;
 	} else

@@ -29,7 +29,6 @@ extern "C" {
 #include "../common.h"
 #include "../minuitwrp/minui.h"
 #include "../recovery_ui.h"
-#include "../extra-functions.h"
 #include "../variables.h"
 #include "../twinstall.h"
 
@@ -825,6 +824,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		if (function == "partitionsd")
 		{
 			operation_start("Partition SD Card");
+			int ret_val = 0;
 
 			if (simulate) {
 				simulate_progress_bar();
@@ -834,75 +834,11 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				if (allow_partition == 0) {
 					ui_print("This device does not have a real SD Card!\nAborting!\n");
 				} else {
-					// Below seen in Koush's recovery
-					char sddevice[256];
-					char mkdir_path[255];
-#ifdef TW_EXTERNAL_STORAGE_PATH
-					TWPartition* SDCard = PartitionManager.Find_Partition_By_Path(EXPAND(TW_EXTERNAL_STORAGE_PATH));
-#else
-					TWPartition* SDCard = PartitionManager.Find_Partition_By_Path("/sdcard");
-#endif
-					if (SDCard == NULL) {
-						LOGE("Unable to locate device to partition.\n");
-						operation_end(1, simulate);
-						return 0;
-					}
-					strcpy(sddevice, SDCard->Actual_Block_Device.c_str());
-					// Just need block not whole partition
-					sddevice[strlen("/dev/block/mmcblkX")] = '\0';
-
-					char es[64];
-					std::string ext_format, sd_path;
-					int ext, swap;
-					DataManager::GetValue("tw_sdext_size", ext);
-					DataManager::GetValue("tw_swap_size", swap);
-					DataManager::GetValue("tw_sdpart_file_system", ext_format);
-					sprintf(es, "/sbin/sdparted -es %dM -ss %dM -efs ext3 -s > /cache/part.log",ext,swap);
-					LOGI("\nrunning script: %s\n", es);
-					run_script("\nContinue partitioning?",
-						   "\nPartitioning sdcard : ",
-						   es,
-						   "\nunable to execute parted!\n(%s)\n",
-						   "\nOops... something went wrong!\nPlease check the recovery log!\n",
-						   "\nPartitioning complete!\n\n",
-						   "\nPartitioning aborted!\n\n", 0);
-					
-					// recreate TWRP folder and rewrite settings - these will be gone after sdcard is partitioned
-#ifdef TW_EXTERNAL_STORAGE_PATH
-					PartitionManager.Mount_By_Path(EXPAND(TW_EXTERNAL_STORAGE_PATH), 1);
-					DataManager::GetValue(TW_EXTERNAL_PATH, sd_path);
-					memset(mkdir_path, 0, sizeof(mkdir_path));
-					sprintf(mkdir_path, "%s/TWRP", sd_path.c_str());
-#else
-					PartitionManager.Mount_By_Path("/sdcard", 1);
-					strcpy(mkdir_path, "/sdcard/TWRP");
-#endif
-					mkdir(mkdir_path, 0777);
-					DataManager::Flush();
-#ifdef TW_EXTERNAL_STORAGE_PATH
-					DataManager::SetValue(TW_ZIP_EXTERNAL_VAR, EXPAND(TW_EXTERNAL_STORAGE_PATH));
-					if (DataManager::GetIntValue(TW_USE_EXTERNAL_STORAGE) == 1)
-						DataManager::SetValue(TW_ZIP_LOCATION_VAR, EXPAND(TW_EXTERNAL_STORAGE_PATH));
-#else
-					DataManager::SetValue(TW_ZIP_EXTERNAL_VAR, "/sdcard");
-					if (DataManager::GetIntValue(TW_USE_EXTERNAL_STORAGE) == 1)
-						DataManager::SetValue(TW_ZIP_LOCATION_VAR, "/sdcard");
-#endif
-					// This is sometimes needed to make a healthy ext4 partition
-					if (ext > 0 && strcmp(ext_format.c_str(), "ext4") == 0) {
-						char command[256];
-						LOGE("Fix this format command!\n");
-						//sprintf(command, "mke2fs -t ext4 -m 0 %s", sde.blk);
-						ui_print("Formatting sd-ext as ext4...\n");
-						LOGI("Formatting sd-ext after partitioning, command: '%s'\n", command);
-						system(command);
-						ui_print("DONE\n");
-					}
-
-					PartitionManager.Update_System_Details();
+					if (!PartitionManager.Partition_SDCard())
+						ret_val = 1; // failed
 				}
 			}
-			operation_end(0, simulate);
+			operation_end(ret_val, simulate);
 			return 0;
 		}
 		if (function == "installhtcdumlock")

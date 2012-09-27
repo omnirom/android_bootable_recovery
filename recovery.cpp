@@ -50,7 +50,6 @@ extern "C" {
 }
 
 extern "C" {
-#include "extra-functions.h"
 #include "data.h"
 #include "gui/gui.h"
 }

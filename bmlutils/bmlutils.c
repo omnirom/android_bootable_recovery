@@ -19,9 +19,7 @@
 
 #include <signal.h>
 #include <sys/wait.h>
-#include "../extra-functions.h"
 
-//extern int __system(const char *command);
 #define BML_UNLOCK_ALL				0x8A29		///< unlock all partition RO -> RW
 
 #ifndef BOARD_BML_BOOT
