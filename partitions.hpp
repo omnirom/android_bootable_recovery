@@ -162,6 +162,7 @@ public:
 	TWPartition* Find_Partition_By_Path(string Path);                         // Returns a pointer to a partition based on path
 	TWPartition* Find_Partition_By_Block(string Block);                       // Returns a pointer to a partition based on block device
 	TWPartition* Find_Partition_By_Name(string Block);                        // Returns a pointer to a partition based on name
+	virtual int Check_Backup_Name(bool Display_Error);                        // Checks the current backup name to ensure that it is valid
 	virtual int Run_Backup();                                                 // Initiates a backup in the current storage
 	virtual int Run_Restore(string Restore_Name);                             // Restores a backup
 	virtual void Set_Restore_Files(string Restore_Name);                      // Used to gather a list of available backup partitions for the user to select for a restore

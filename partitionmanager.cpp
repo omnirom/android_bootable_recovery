@@ -413,6 +413,58 @@ TWPartition* TWPartitionManager::Find_Partition_By_Name(string Name) {
 	return NULL;
 }
 
+int TWPartitionManager::Check_Backup_Name(bool Display_Error) {
+	// Check the backup name to ensure that it is the correct size and contains only valid characters
+	// and that a backup with that name doesn't already exist
+	char backup_name[MAX_BACKUP_NAME_LEN];
+	char backup_loc[255], tw_image_dir[255];
+	int copy_size;
+	int index, cur_char;
+	string Backup_Name, Backup_Loc;
+
+	DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
+	copy_size = Backup_Name.size();
+	// Check size
+	if (copy_size > MAX_BACKUP_NAME_LEN) {
+		if (Display_Error)
+			LOGE("Backup name is too long.\n");
+		return -2;
+	}
+
+	// Check each character
+	strncpy(backup_name, Backup_Name.c_str(), copy_size);
+	if (strcmp(backup_name, "0") == 0)
+		return 0; // A "0" (zero) means to use the current timestamp for the backup name
+	for (index=0; index<copy_size; index++) {
+		cur_char = (int)backup_name[index];
+		if (cur_char == 32 || (cur_char >= 48  && cur_char <= 57) || (cur_char >= 65 && cur_char <= 91) || cur_char == 93 || cur_char == 95 || (cur_char >= 97 && cur_char <= 123) || cur_char == 125 || cur_char == 45 || cur_char == 46) {
+			// These are valid characters
+			// Numbers
+			// Upper case letters
+			// Lower case letters
+			// Space
+			// and -_.{}[]
+		} else {
+			if (Display_Error)
+				LOGE("Backup name '%s' contains invalid character: '%c'\n", backup_name, (char)cur_char);
+			return -3;
+		}
+	}
+
+	// Check to make sure that a backup with this name doesn't already exist
+	DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, Backup_Loc);
+	strcpy(backup_loc, Backup_Loc.c_str());
+	sprintf(tw_image_dir,"%s/%s/.", backup_loc, backup_name);
+    if (TWFunc::Path_Exists(tw_image_dir)) {
+		if (Display_Error)
+			LOGE("A backup with this name already exists.\n");
+		return -4;
+	}
+
+	// No problems found, return 0
+	return 0;
+}
+
 bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename)
 {
 	char command[512];
@@ -566,7 +618,7 @@ int TWPartitionManager::Run_Backup(void) {
 
 	DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, Backup_Folder);
 	DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
-	if (Backup_Name == "(Current Date)" || Backup_Name == "0") {
+	if (Backup_Name == "(Current Date)" || Backup_Name == "0" || Backup_Name.empty()) {
 		char timestamp[255];
 		sprintf(timestamp,"%04d-%02d-%02d--%02d-%02d-%02d",t->tm_year+1900,t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec);
 		Backup_Name = timestamp;

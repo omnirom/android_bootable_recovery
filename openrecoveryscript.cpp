@@ -198,6 +198,10 @@ int OpenRecoveryScript::run_script_file(void) {
 					strncpy(value2, tok, line_len - remove_nl);
 					DataManager_SetStrValue(TW_BACKUP_NAME, value2);
 					ui_print("Backup folder set to '%s'\n", value2);
+					if (PartitionManager.Check_Backup_Name(true) != 0) {
+						ret_val = 1;
+						continue;
+					}
 				} else {
 					char empt[50];
 					strcpy(empt, "(Current Date)");

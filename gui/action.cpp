@@ -36,7 +36,6 @@ extern "C" {
 #include "../minadbd/adb.h"
 
 int TWinstall_zip(const char* path, int* wipe_cache);
-int check_backup_name(int show_error);
 void run_script(const char *str1, const char *str2, const char *str3, const char *str4, const char *str5, const char *str6, const char *str7, int request_confirm);
 int gui_console_only();
 int gui_start();
@@ -762,7 +761,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				if (arg == "backup") {
 					string Backup_Name;
 					DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
-					if (Backup_Name == "(Current Date)" || Backup_Name == "0" || Backup_Name == "(" || check_backup_name(1) == 0)
+					if (Backup_Name == "(Current Date)" || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0)
 						ret = PartitionManager.Run_Backup();
 					else {
 						operation_end(1, simulate);
@@ -1020,7 +1019,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				op_status = check_backup_name(1);
+				op_status = PartitionManager.Check_Backup_Name(true);
 				if (op_status != 0)
 					op_status = 1;
 			}
