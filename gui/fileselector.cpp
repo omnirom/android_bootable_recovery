@@ -803,7 +803,7 @@ int GUIFileSelector::GetFileList(const std::string folder)
 			if (mShowNavFolders || (data.fileName != "." && data.fileName != TW_FILESELECTOR_UP_A_LEVEL))
 				mFolderList.push_back(data);
 		}
-		else if (data.fileType == DT_REG)
+		else if (data.fileType == DT_REG || data.fileType == DT_LNK || data.fileType == DT_BLK)
 		{
 			if (mExtn.empty() || (data.fileName.length() > mExtn.length() && data.fileName.substr(data.fileName.length() - mExtn.length()) == mExtn))
 			{
