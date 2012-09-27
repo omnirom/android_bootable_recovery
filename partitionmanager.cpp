@@ -1380,6 +1380,14 @@ void TWPartitionManager::Update_System_Details(void) {
 					DataManager::SetValue(TW_BACKUP_ANDSEC_VAR, 0);
 				} else
 					DataManager::SetValue(TW_HAS_ANDROID_SECURE, 1);
+			} else if ((*iter)->Mount_Point == "/boot") {
+				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
+				DataManager::SetValue(TW_BACKUP_BOOT_SIZE, backup_display_size);
+				if ((*iter)->Backup_Size == 0) {
+					DataManager::SetValue("tw_has_boot_partition", 0);
+					DataManager::SetValue(TW_BACKUP_BOOT_VAR, 0);
+				} else
+					DataManager::SetValue("tw_has_boot_partition", 1);
 			}
 #ifdef SP1_NAME
 			if ((*iter)->Backup_Name == EXPAND(SP1_NAME)) {

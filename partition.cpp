@@ -225,6 +225,9 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Display_Name = "SD-Ext";
 			Wipe_Available_in_GUI = true;
 			Removable = true;
+		} else if (Mount_Point == "/boot") {
+			Display_Name = "Boot";
+			DataManager::SetValue("tw_boot_is_mountable", 1);
 		}
 #ifdef TW_EXTERNAL_STORAGE_PATH
 		if (Mount_Point == EXPAND(TW_EXTERNAL_STORAGE_PATH)) {
@@ -1099,8 +1102,13 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	if (!Mount(true))
 		return false;
 
-	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, "Backing Up");
-	ui_print("Backing up %s...\n", Display_Name.c_str());
+	if (Backup_Path == "/and-sec") {
+		TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, "Android Secure", "Backing Up");
+		ui_print("Backing up %s...\n", "Android Secure");
+	} else {
+		TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, "Backing Up");
+		ui_print("Backing up %s...\n", Display_Name.c_str());
+	}
 
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 	if (use_compression)
