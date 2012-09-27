@@ -5,6 +5,16 @@
 
 using namespace std;
 
+typedef enum
+{
+    rb_current = 0,
+    rb_system,
+    rb_recovery,
+    rb_poweroff,
+    rb_bootloader,     // May also be fastboot
+    rb_download,
+} RebootCommand;
+
 // Partition class
 class TWFunc
 {
@@ -23,6 +33,13 @@ public:
 	static void GUI_Operation_Text(string Read_Value, string Default_Text);     // Updates text for display in the GUI, e.g. Backing up %partition name%
 	static void GUI_Operation_Text(string Read_Value, string Partition_Name, string Default_Text); // Same as above but includes partition name
 	static unsigned long Get_File_Size(string Path);                            // Returns the size of a file
+	static void twfinish_recovery(const char *send_intent);
+	static int tw_reboot(RebootCommand command);
+	static void check_and_run_script(const char* script_file, const char* display_name);
+
+private:
+	static void check_and_fclose(FILE *fp, const char *name);
+	static void copy_log_file(const char* source, const char* destination, int append);
 
 };
 

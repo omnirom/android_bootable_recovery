@@ -42,7 +42,6 @@
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
-	#include "extra-functions.h"
 }
 
 TWPartition::TWPartition(void) {

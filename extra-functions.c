@@ -55,21 +55,6 @@ void run_script(const char *str1, const char *str2, const char *str3, const char
 	}
 }
 
-void check_and_run_script(const char* script_file, const char* display_name)
-{
-	// Check for and run startup script if script exists
-	struct stat st;
-	if (stat(script_file, &st) == 0) {
-		ui_print("Running %s script...\n", display_name);
-		char command[255];
-		strcpy(command, "chmod 755 ");
-		strcat(command, script_file);
-		system(command);
-		system(script_file);
-		ui_print("\nFinished running %s script.\n", display_name);
-	}
-}
-
 int check_backup_name(int show_error) {
 	// Check the backup name to ensure that it is the correct size and contains only valid characters
 	// and that a backup with that name doesn't already exist
@@ -117,82 +102,4 @@ int check_backup_name(int show_error) {
 
 	// No problems found, return 0
 	return 0;
-}
-
-static const char *COMMAND_FILE = "/cache/recovery/command";
-static const char *INTENT_FILE = "/cache/recovery/intent";
-static const char *LOG_FILE = "/cache/recovery/log";
-static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
-static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
-static const char *CACHE_ROOT = "/cache";
-static const char *SDCARD_ROOT = "/sdcard";
-static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
-static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
-
-// close a file, log an error if the error indicator is set
-static void check_and_fclose(FILE *fp, const char *name) {
-    fflush(fp);
-    if (ferror(fp)) LOGE("Error in %s\n(%s)\n", name, strerror(errno));
-    fclose(fp);
-}
-
-static void copy_log_file(const char* source, const char* destination, int append) {
-    FILE *log = fopen_path(destination, append ? "a" : "w");
-    if (log == NULL) {
-        LOGE("Can't open %s\n", destination);
-    } else {
-        FILE *tmplog = fopen(source, "r");
-        if (tmplog != NULL) {
-            if (append) {
-                fseek(tmplog, tmplog_offset, SEEK_SET);  // Since last write
-            }
-            char buf[4096];
-            while (fgets(buf, sizeof(buf), tmplog)) fputs(buf, log);
-            if (append) {
-                tmplog_offset = ftell(tmplog);
-            }
-            check_and_fclose(tmplog, source);
-        }
-        check_and_fclose(log, destination);
-    }
-}
-
-// clear the recovery command and prepare to boot a (hopefully working) system,
-// copy our log file to cache as well (for the system to read), and
-// record any intent we were asked to communicate back to the system.
-// this function is idempotent: call it as many times as you like.
-void twfinish_recovery(const char *send_intent) {
-    // By this point, we're ready to return to the main system...
-    if (send_intent != NULL) {
-        FILE *fp = fopen_path(INTENT_FILE, "w");
-        if (fp == NULL) {
-            LOGE("Can't open %s\n", INTENT_FILE);
-        } else {
-            fputs(send_intent, fp);
-            check_and_fclose(fp, INTENT_FILE);
-        }
-    }
-
-    // Copy logs to cache so the system can find out what happened.
-    copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
-    copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
-    copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, false);
-    chmod(LOG_FILE, 0600);
-    chown(LOG_FILE, 1000, 1000);   // system user
-    chmod(LAST_LOG_FILE, 0640);
-    chmod(LAST_INSTALL_FILE, 0644);
-
-    // Reset to normal system boot so recovery won't cycle indefinitely.
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
-    set_bootloader_message(&boot);
-
-    // Remove the command file, so recovery won't repeat indefinitely.
-    if (system("mount /cache") != 0 ||
-        (unlink(COMMAND_FILE) && errno != ENOENT)) {
-        LOGW("Can't unlink %s\n", COMMAND_FILE);
-    }
-
-    system("umount /cache");
-    sync();  // For good measure.
 }

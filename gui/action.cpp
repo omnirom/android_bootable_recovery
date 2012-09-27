@@ -27,7 +27,6 @@
 
 extern "C" {
 #include "../common.h"
-#include "../tw_reboot.h"
 #include "../minuitwrp/minui.h"
 #include "../recovery_ui.h"
 #include "../extra-functions.h"
@@ -314,16 +313,16 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
         sync();
 
-        if (arg == "recovery")
-            tw_reboot(rb_recovery);
-        else if (arg == "poweroff")
-            tw_reboot(rb_poweroff);
-        else if (arg == "bootloader")
-            tw_reboot(rb_bootloader);
-        else if (arg == "download")
-	    tw_reboot(rb_download);
-        else
-            tw_reboot(rb_system);
+		if (arg == "recovery")
+			TWFunc::tw_reboot(rb_recovery);
+		else if (arg == "poweroff")
+			TWFunc::tw_reboot(rb_poweroff);
+		else if (arg == "bootloader")
+			TWFunc::tw_reboot(rb_bootloader);
+		else if (arg == "download")
+			TWFunc::tw_reboot(rb_download);
+		else
+			TWFunc::tw_reboot(rb_system);
 
         // This should never occur
         return -1;
@@ -1051,7 +1050,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 						ui_print("Processing OpenRecoveryScript file...\n");
 						if (OpenRecoveryScript::run_script_file() == 0) {
 							usleep(2000000); // Sleep for 2 seconds before rebooting
-							tw_reboot(rb_system);
+							TWFunc::tw_reboot(rb_system);
 							load_theme = 0;
 						}
 					}

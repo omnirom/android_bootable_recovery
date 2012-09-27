@@ -57,6 +57,7 @@ extern "C" {
 #include "partitions.hpp"
 #include "variables.h"
 #include "openrecoveryscript.hpp"
+#include "twrp-functions.hpp"
 
 TWPartitionManager PartitionManager;
 
@@ -887,8 +888,8 @@ main(int argc, char **argv) {
     printf("\n");
 
 	// Check for and run startup script if script exists
-	check_and_run_script("/sbin/runatboot.sh", "boot");
-	check_and_run_script("/sbin/postrecoveryboot.sh", "boot");
+	TWFunc::check_and_run_script("/sbin/runatboot.sh", "boot");
+	TWFunc::check_and_run_script("/sbin/postrecoveryboot.sh", "boot");
 
 #ifdef TW_INCLUDE_INJECTTWRP
 	// Back up TWRP Ramdisk if needed:

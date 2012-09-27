@@ -44,13 +44,9 @@ extern "C"
 {
     #include "common.h"
     #include "data.h"
-    #include "tw_reboot.h"
-	#include "roots.h"
 	#include "gui/pages.h"
 
 	void gui_notifyVarChange(const char *name, const char* value);
-
-	int __system(const char *command);
 }
 
 #define FILE_VERSION    0x00010001
@@ -627,17 +623,17 @@ void DataManager::SetDefaultValues()
 	#endif
 #endif
 
-    mConstValues.insert(make_pair(TW_REBOOT_SYSTEM, tw_isRebootCommandSupported(rb_system) ? "1" : "0"));
+    mConstValues.insert(make_pair(TW_REBOOT_SYSTEM, "1"));
 #ifdef TW_NO_REBOOT_RECOVERY
 	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, "0"));
 #else
-	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, tw_isRebootCommandSupported(rb_recovery) ? "1" : "0"));
+	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, "1"));
 #endif
-    mConstValues.insert(make_pair(TW_REBOOT_POWEROFF, tw_isRebootCommandSupported(rb_poweroff) ? "1" : "0"));
+    mConstValues.insert(make_pair(TW_REBOOT_POWEROFF, "1"));
 #ifdef TW_NO_REBOOT_BOOTLOADER
 	mConstValues.insert(make_pair(TW_REBOOT_BOOTLOADER, "0"));
 #else
-	mConstValues.insert(make_pair(TW_REBOOT_BOOTLOADER, tw_isRebootCommandSupported(rb_bootloader) ? "1" : "0"));
+	mConstValues.insert(make_pair(TW_REBOOT_BOOTLOADER, "1"));
 #endif
 #ifdef RECOVERY_SDCARD_ON_DATA
 	mConstValues.insert(make_pair(TW_HAS_DATA_MEDIA, "1"));
