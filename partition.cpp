@@ -209,9 +209,10 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Display_Name = "Cache";
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
-			if (!TWFunc::Path_Exists("/cache/recovery")) {
+			if (Mount(false) && !TWFunc::Path_Exists("/cache/recovery/.")) {
+				string Recreate_Command = "cd /cache && mkdir recovery";
 				LOGI("Recreating /cache/recovery folder.\n");
-				TWFunc::Recursive_Mkdir("/cache/recovery");
+				system(Recreate_Command.c_str());
 			}
 		} else if (Mount_Point == "/datadata") {
 			Wipe_During_Factory_Reset = true;
@@ -1373,8 +1374,9 @@ void TWPartition::Recreate_AndSec_Folder(void) {
 		LOGE("Unable to recreate android secure folder.\n");
 	} else if (!TWFunc::Path_Exists(Symlink_Path)) {
 		LOGI("Recreating android secure folder.\n");
-		TWFunc::Recursive_Mkdir(Symlink_Path);
 		Command = "umount " + Symlink_Mount_Point;
+		system(Command.c_str());
+		Command = "cd " + Mount_Point + " && mkdir .android_secure";
 		system(Command.c_str());
 		Command = "mount " + Symlink_Path + " " + Symlink_Mount_Point;
 		system(Command.c_str());

@@ -809,6 +809,8 @@ main(int argc, char **argv) {
 	DataManager_LoadDefaults();
 	printf("Starting the UI...");
 	gui_init();
+	printf("=> Installing busybox into /sbin\n");
+	system("/sbin/bbinstall.sh"); // Let's install busybox
 	printf("=> Linking mtab\n");
 	system("ln -s /proc/mounts /etc/mtab"); // And link mtab for mke2fs
 	printf("=> Processing recovery.fstab\n");

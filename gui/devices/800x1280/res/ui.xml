@@ -39,6 +39,7 @@
 		<resource name="keyboard2" type="image" filename="keyboard2" />
 		<resource name="keyboard3" type="image" filename="keyboard3" />
 		<resource name="keyboard4" type="image" filename="keyboard4" />
+		<resource name="exclamation" type="image" filename="exclamation400" />
 	</resources>
 
 	<variables>
@@ -155,6 +156,8 @@
 		<variable name="row_dst_text_y" value="720" />
 		<variable name="row_offset_text_y" value="800" />
 		<variable name="row_offset_medium_y" value="840" />
+		<variable name="exclamation_x" value="200" />
+		<variable name="exclamation_y" value="400" />
 	</variables>
 
 	<templates>
@@ -794,12 +797,21 @@
 				<action function="set">tw_has_cancel=0</action>
 				<action function="set">tw_cancel_action=</action>
 				<action function="set">tw_cancel_param=</action>
+				<action function="set">tw_show_exclamation=0</action>
 				<action function="page">%tw_clear_destination%</action>
 			</object>
 		</page>
 
 		<page name="confirm_action">
 			<object type="template" name="header" />
+
+			<object type="button">
+				<condition var1="tw_show_exclamation" var2="1" />
+				<placement x="%exclamation_x%" y="%exclamation_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text></text>
+				<image resource="exclamation" />
+			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
@@ -827,7 +839,7 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="%center_x%" y="%row10_text_y%" placement="5" />
+				<placement x="%center_x%" y="%row15_text_y%" placement="5" />
 				<text>Press back button to cancel.</text>
 			</object>
 
@@ -1153,11 +1165,13 @@
 					<action function="set">tw_has_action2=1</action>
 					<action function="set">tw_action2=set</action>
 					<action function="set">tw_action2_param=tw_zip_location=/sdcard</action>
-					<action function="set">tw_text1=Format Data? (This wipes all media</action>
+					<action function="set">tw_text1=Format Data? (This wipes all internal storage</action>
 					<action function="set">tw_text2=including backups & removes encryption)</action>
+					<action function="set">tw_text3=Most of the time you do not need to do this.</action>
 					<action function="set">tw_action_text1=Formatting Data...</action>
 					<action function="set">tw_complete_text1=Data Format Complete</action>
 					<action function="set">tw_slider_text=Swipe to Format</action>
+					<action function="set">tw_show_exclamation=1</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</object>
