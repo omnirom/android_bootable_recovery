@@ -34,9 +34,15 @@
 #define VIBRATOR_TIMEOUT_FILE	"/sys/class/timed_output/vibrator/enable"
 #define VIBRATOR_TIME_MS    50
 
+#ifndef SYN_REPORT
 #define SYN_REPORT          0x00
+#endif
+#ifndef SYN_CONFIG
 #define SYN_CONFIG          0x01
+#endif
+#ifndef SYN_MT_REPORT
 #define SYN_MT_REPORT       0x02
+#endif
 
 #define ABS_MT_POSITION     0x2a /* Group a set of X and Y */
 #define ABS_MT_AMPLITUDE    0x2b /* Group a set of Z and W */

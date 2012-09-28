@@ -394,7 +394,7 @@ void TWFunc::Output_Version(void) {
 
 	Path = DataManager::GetSettingsStoragePath();
 	if (!PartitionManager.Mount_By_Path(Path, false)) {
-		LOGI("Unable to mount '%s' to write version number.\n");
+		LOGI("Unable to mount '%s' to write version number.\n", Path.c_str());
 		return;
 	}
 	Path += "/TWRP/.version";

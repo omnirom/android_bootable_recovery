@@ -402,7 +402,7 @@ int gr_textExWH(int x, int y, const char *s, void* pFont, int max_width, int max
 				rect_x = x + cwidth;
 			else
 				rect_x = max_width;
-			if (y + font->cheight < max_height)
+			if (y + font->cheight < (unsigned int)(max_height))
 				rect_y = y + font->cheight;
 			else
 				rect_y = max_height;
@@ -423,7 +423,7 @@ int twgr_text(int x, int y, const char *s)
     GGLContext *gl = gr_context;
     GRFont *font = gr_font;
     unsigned off;
-    unsigned cwidth;
+    unsigned cwidth = 0;
 
     y -= font->ascent;
 
