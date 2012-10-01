@@ -387,28 +387,3 @@ void TWFunc::check_and_run_script(const char* script_file, const char* display_n
 		ui_print("\nFinished running %s script.\n", display_name);
 	}
 }
-
-void TWFunc::Output_Version(void) {
-	string Path, Command;
-	char version[255];
-
-	Path = DataManager::GetSettingsStoragePath();
-	if (!PartitionManager.Mount_By_Path(Path, false)) {
-		LOGI("Unable to mount '%s' to write version number.\n", Path.c_str());
-		return;
-	}
-	Path += "/TWRP/.version";
-	if (Path_Exists(Path)) {
-		Command = "rm -f " + Path;
-		system(Command.c_str());
-	}
-	FILE *fp = fopen(Path.c_str(), "w");
-	if (fp == NULL) {
-		LOGE("Unable to open '%s'.\n", Path.c_str());
-		return;
-	}
-	strcpy(version, TW_VERSION_STR);
-	fwrite(version, sizeof(version[0]), strlen(version) / sizeof(version[0]), fp);
-	fclose(fp);
-	sync();
-}

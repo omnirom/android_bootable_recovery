@@ -928,7 +928,6 @@ main(int argc, char **argv) {
 		finish_recovery(NULL);
 		DataManager_ReadSettingsFile();
 		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) == 0 && OpenRecoveryScript::check_for_script_file()) {
-			TWFunc::Output_Version();
 			gui_console_only();
 			OpenRecoveryScript::run_script_file();
 			if (1 || OpenRecoveryScript::run_script_file() != 0) {

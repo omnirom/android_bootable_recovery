@@ -39,6 +39,7 @@
 #include "variables.h"
 #include "data.hpp"
 #include "partitions.hpp"
+#include "twrp-functions.hpp"
 
 extern "C"
 {
@@ -814,6 +815,32 @@ int DataManager::GetMagicValue(const string varName, string& value)
     return -1;
 }
 
+void DataManager::Output_Version(void) {
+	string Path, Command;
+	char version[255];
+
+	Path = DataManager::GetSettingsStoragePath();
+	if (!PartitionManager.Mount_By_Path(Path, false)) {
+		LOGI("Unable to mount '%s' to write version number.\n", Path.c_str());
+		return;
+	}
+	Path += "/TWRP/.version";
+	if (TWFunc::Path_Exists(Path)) {
+		Command = "rm -f " + Path;
+		system(Command.c_str());
+	}
+	FILE *fp = fopen(Path.c_str(), "w");
+	if (fp == NULL) {
+		LOGE("Unable to open '%s'.\n", Path.c_str());
+		return;
+	}
+	strcpy(version, TW_VERSION_STR);
+	fwrite(version, sizeof(version[0]), strlen(version) / sizeof(version[0]), fp);
+	fclose(fp);
+	sync();
+	LOGI("Version number saved to '%s'\n", Path.c_str());
+}
+
 void DataManager::ReadSettingsFile(void)
 {
 	// Load up the values for TWRP - Sleep to let the card be ready
@@ -843,11 +870,12 @@ void DataManager::ReadSettingsFile(void)
 
 	LOGI("Attempt to load settings from settings file...\n");
 	LoadValues(settings_file);
+	Output_Version();
 	GetValue(TW_HAS_DUAL_STORAGE, has_dual);
 	GetValue(TW_USE_EXTERNAL_STORAGE, use_ext);
 	GetValue(TW_HAS_EXTERNAL, has_ext);
 	if (has_dual != 0 && use_ext == 1) {
-		// Attempt to sdcard using external storage
+		// Attempt to switch to using external storage
 		if (!PartitionManager.Mount_Current_Storage(false)) {
 			LOGE("Failed to mount external storage, using internal storage.\n");
 			// Remount failed, default back to internal storage

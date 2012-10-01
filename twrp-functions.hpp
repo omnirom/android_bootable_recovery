@@ -36,7 +36,6 @@ public:
 	static void twfinish_recovery(const char *send_intent);                     // Writes the log to last_log
 	static int tw_reboot(RebootCommand command);                                // Prepares the device for rebooting
 	static void check_and_run_script(const char* script_file, const char* display_name); // checks for the existence of a script, chmods it to 755, then runs it
-	static void Output_Version(void);                                           // Outputs the version to a file in the TWRP folder
 
 private:
 	static void check_and_fclose(FILE *fp, const char *name);

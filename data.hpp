@@ -49,6 +49,7 @@ public:
     static void DumpValues();
 	static void update_tz_environment_variables();
 	static void SetDefaultValues();
+	static void Output_Version(void); // Outputs the version to a file in the TWRP folder
 	static void ReadSettingsFile(void);
 	
 	static string GetCurrentStoragePath(void);
