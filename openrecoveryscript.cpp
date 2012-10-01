@@ -109,58 +109,8 @@ int OpenRecoveryScript::run_script_file(void) {
 				ui_print("command is: '%s' and there is no value\n", command);
 			}
 			if (strcmp(command, "install") == 0) {
-				// Install zip
-				string ret_string;
-
-				PartitionManager.Mount_All_Storage();
-				if (value[0] != '/') {
-					// Relative path given
-					char full_path[SCRIPT_COMMAND_SIZE];
-
-					sprintf(full_path, "%s/%s", DataManager_GetCurrentStoragePath(), value);
-					LOGI("Full zip path: '%s'\n", full_path);
-					if (!TWFunc::Path_Exists(full_path)) {
-						ret_string = Locate_Zip_File(full_path, DataManager_GetCurrentStoragePath());
-						if (!ret_string.empty()) {
-							strcpy(full_path, ret_string.c_str());
-						} else if (DataManager_GetIntValue(TW_HAS_DUAL_STORAGE)) {
-							if (DataManager_GetIntValue(TW_USE_EXTERNAL_STORAGE)) {
-								LOGI("Zip file not found on external storage, trying internal...\n");
-								DataManager_SetIntValue(TW_USE_EXTERNAL_STORAGE, 0);
-							} else {
-								LOGI("Zip file not found on internal storage, trying external...\n");
-								DataManager_SetIntValue(TW_USE_EXTERNAL_STORAGE, 1);
-							}
-							sprintf(full_path, "%s/%s", DataManager_GetCurrentStoragePath(), value);
-							LOGI("Full zip path: '%s'\n", full_path);
-							ret_string = Locate_Zip_File(full_path, DataManager_GetCurrentStoragePath());
-							if (!ret_string.empty())
-								strcpy(full_path, ret_string.c_str());
-						}
-					}
-					strcpy(value, full_path);
-				} else {
-					// Full path given
-					if (!TWFunc::Path_Exists(value)) {
-						ret_string = Locate_Zip_File(value, DataManager_GetCurrentStoragePath());
-						if (!ret_string.empty())
-							strcpy(value, ret_string.c_str());
-					}
-				}
-				int wipe_cache = 0;
-				if (!TWFunc::Path_Exists(value)) {
-					// zip file doesn't exist
-					ui_print("Unable to locate zip file '%s'.\n", value);
-					ret_val = 1;
-				} else {
-					ui_print("Installing zip file '%s'\n", value);
-					ret_val = TWinstall_zip(value, &wipe_cache);
-				}
-				if (ret_val != 0) {
-					LOGE("Error installing zip file '%s'\n", value);
-					ret_val = 1;
-				} else if (wipe_cache)
-					PartitionManager.Wipe_By_Path("/cache");
+				// Install Zip
+				ret_val = Install_Command(value);
 			} else if (strcmp(command, "wipe") == 0) {
 				// Wipe
 				if (strcmp(value, "cache") == 0 || strcmp(value, "/cache") == 0) {
@@ -207,67 +157,7 @@ int OpenRecoveryScript::run_script_file(void) {
 					strcpy(empt, "(Current Date)");
 					DataManager_SetStrValue(TW_BACKUP_NAME, empt);
 				}
-
-				DataManager_SetIntValue(TW_BACKUP_SYSTEM_VAR, 0);
-				DataManager_SetIntValue(TW_BACKUP_DATA_VAR, 0);
-				DataManager_SetIntValue(TW_BACKUP_CACHE_VAR, 0);
-				DataManager_SetIntValue(TW_BACKUP_RECOVERY_VAR, 0);
-				DataManager_SetIntValue(TW_BACKUP_SP1_VAR, 0);
-				DataManager_SetIntValue(TW_BACKUP_SP2_VAR, 0);
-				DataManager_SetIntValue(TW_BACKUP_SP3_VAR, 0);
-				DataManager_SetIntValue(TW_BACKUP_BOOT_VAR, 0);
-				DataManager_SetIntValue(TW_BACKUP_ANDSEC_VAR, 0);
-				DataManager_SetIntValue(TW_BACKUP_SDEXT_VAR, 0);
-				DataManager_SetIntValue(TW_BACKUP_SDEXT_VAR, 0);
-				DataManager_SetIntValue(TW_USE_COMPRESSION_VAR, 0);
-				DataManager_SetIntValue(TW_SKIP_MD5_GENERATE_VAR, 0);
-
-				ui_print("Setting backup options:\n");
-				line_len = strlen(value1);
-				for (i=0; i<line_len; i++) {
-					if (value1[i] == 'S' || value1[i] == 's') {
-						DataManager_SetIntValue(TW_BACKUP_SYSTEM_VAR, 1);
-						ui_print("System\n");
-					} else if (value1[i] == 'D' || value1[i] == 'd') {
-						DataManager_SetIntValue(TW_BACKUP_DATA_VAR, 1);
-						ui_print("Data\n");
-					} else if (value1[i] == 'C' || value1[i] == 'c') {
-						DataManager_SetIntValue(TW_BACKUP_CACHE_VAR, 1);
-						ui_print("Cache\n");
-					} else if (value1[i] == 'R' || value1[i] == 'r') {
-						DataManager_SetIntValue(TW_BACKUP_RECOVERY_VAR, 1);
-						ui_print("Recovery\n");
-					} else if (value1[i] == '1') {
-						DataManager_SetIntValue(TW_BACKUP_SP1_VAR, 1);
-						ui_print("%s\n", "Special1");
-					} else if (value1[i] == '2') {
-						DataManager_SetIntValue(TW_BACKUP_SP2_VAR, 1);
-						ui_print("%s\n", "Special2");
-					} else if (value1[i] == '3') {
-						DataManager_SetIntValue(TW_BACKUP_SP3_VAR, 1);
-						ui_print("%s\n", "Special3");
-					} else if (value1[i] == 'B' || value1[i] == 'b') {
-						DataManager_SetIntValue(TW_BACKUP_BOOT_VAR, 1);
-						ui_print("Boot\n");
-					} else if (value1[i] == 'A' || value1[i] == 'a') {
-						DataManager_SetIntValue(TW_BACKUP_ANDSEC_VAR, 1);
-						ui_print("Android Secure\n");
-					} else if (value1[i] == 'E' || value1[i] == 'e') {
-						DataManager_SetIntValue(TW_BACKUP_SDEXT_VAR, 1);
-						ui_print("SD-Ext\n");
-					} else if (value1[i] == 'O' || value1[i] == 'o') {
-						DataManager_SetIntValue(TW_USE_COMPRESSION_VAR, 1);
-						ui_print("Compression is on\n");
-					} else if (value1[i] == 'M' || value1[i] == 'm') {
-						DataManager_SetIntValue(TW_SKIP_MD5_GENERATE_VAR, 1);
-						ui_print("MD5 Generation is off\n");
-					}
-				}
-				if (!PartitionManager.Run_Backup()) {
-					ret_val = 1;
-					LOGE("Backup failed!\n");
-				} else
-					ui_print("Backup complete!\n");
+				ret_val = Backup_Command(value1);
 			} else if (strcmp(command, "restore") == 0) {
 				// Restore
 				PartitionManager.Mount_All_Storage();
@@ -457,6 +347,66 @@ int OpenRecoveryScript::run_script_file(void) {
 	return ret_val;
 }
 
+int OpenRecoveryScript::Install_Command(string Zip) {
+	// Install zip
+	string ret_string;
+	int ret_val = 0, wipe_cache = 0;
+
+	PartitionManager.Mount_All_Storage();
+	if (Zip.substr(0, 1) != "/") {
+		// Relative path given
+		string Full_Path;
+
+		Full_Path = DataManager_GetCurrentStoragePath();
+		Full_Path += "/" + Zip;
+		LOGI("Full zip path: '%s'\n", Full_Path.c_str());
+		if (!TWFunc::Path_Exists(Full_Path)) {
+			ret_string = Locate_Zip_File(Full_Path, DataManager_GetCurrentStoragePath());
+			if (!ret_string.empty()) {
+				Full_Path = ret_string;
+			} else if (DataManager_GetIntValue(TW_HAS_DUAL_STORAGE)) {
+				if (DataManager_GetIntValue(TW_USE_EXTERNAL_STORAGE)) {
+					LOGI("Zip file not found on external storage, trying internal...\n");
+					DataManager_SetIntValue(TW_USE_EXTERNAL_STORAGE, 0);
+				} else {
+					LOGI("Zip file not found on internal storage, trying external...\n");
+					DataManager_SetIntValue(TW_USE_EXTERNAL_STORAGE, 1);
+				}
+				Full_Path = DataManager_GetCurrentStoragePath();
+				Full_Path += "/" + Zip;
+				LOGI("Full zip path: '%s'\n", Full_Path.c_str());
+				ret_string = Locate_Zip_File(Full_Path, DataManager_GetCurrentStoragePath());
+				if (!ret_string.empty())
+					Full_Path = ret_string;
+			}
+		}
+		Zip = Full_Path;
+	} else {
+		// Full path given
+		if (!TWFunc::Path_Exists(Zip)) {
+			ret_string = Locate_Zip_File(Zip, DataManager_GetCurrentStoragePath());
+			if (!ret_string.empty())
+				Zip = ret_string;
+		}
+	}
+
+	if (!TWFunc::Path_Exists(Zip)) {
+		// zip file doesn't exist
+		ui_print("Unable to locate zip file '%s'.\n", Zip.c_str());
+		ret_val = 1;
+	} else {
+		ui_print("Installing zip file '%s'\n", Zip.c_str());
+		ret_val = TWinstall_zip(Zip.c_str(), &wipe_cache);
+	}
+	if (ret_val != 0) {
+		LOGE("Error installing zip file '%s'\n", Zip.c_str());
+		ret_val = 1;
+	} else if (wipe_cache)
+		PartitionManager.Wipe_By_Path("/cache");
+
+	return ret_val;
+}
+
 string OpenRecoveryScript::Locate_Zip_File(string Zip, string Storage_Root) {
 	string Path = TWFunc::Get_Path(Zip);
 	string File = TWFunc::Get_Filename(Zip);
@@ -477,4 +427,73 @@ string OpenRecoveryScript::Locate_Zip_File(string Zip, string Storage_Root) {
 		pos = Path.find("/", pos + 1);
 	}
 	return "";
+}
+
+int OpenRecoveryScript::Backup_Command(string Options) {
+	char value1[SCRIPT_COMMAND_SIZE];
+	int line_len, i;
+
+	strcpy(value1, Options.c_str());
+
+	DataManager_SetIntValue(TW_BACKUP_SYSTEM_VAR, 0);
+	DataManager_SetIntValue(TW_BACKUP_DATA_VAR, 0);
+	DataManager_SetIntValue(TW_BACKUP_CACHE_VAR, 0);
+	DataManager_SetIntValue(TW_BACKUP_RECOVERY_VAR, 0);
+	DataManager_SetIntValue(TW_BACKUP_SP1_VAR, 0);
+	DataManager_SetIntValue(TW_BACKUP_SP2_VAR, 0);
+	DataManager_SetIntValue(TW_BACKUP_SP3_VAR, 0);
+	DataManager_SetIntValue(TW_BACKUP_BOOT_VAR, 0);
+	DataManager_SetIntValue(TW_BACKUP_ANDSEC_VAR, 0);
+	DataManager_SetIntValue(TW_BACKUP_SDEXT_VAR, 0);
+	DataManager_SetIntValue(TW_BACKUP_SDEXT_VAR, 0);
+	DataManager_SetIntValue(TW_USE_COMPRESSION_VAR, 0);
+	DataManager_SetIntValue(TW_SKIP_MD5_GENERATE_VAR, 0);
+
+	ui_print("Setting backup options:\n");
+	line_len = Options.size();
+	for (i=0; i<line_len; i++) {
+		if (Options.substr(i, 1) == "S" || Options.substr(i, 1) == "s") {
+			DataManager_SetIntValue(TW_BACKUP_SYSTEM_VAR, 1);
+			ui_print("System\n");
+		} else if (Options.substr(i, 1) == "D" || Options.substr(i, 1) == "d") {
+			DataManager_SetIntValue(TW_BACKUP_DATA_VAR, 1);
+			ui_print("Data\n");
+		} else if (Options.substr(i, 1) == "C" || Options.substr(i, 1) == "c") {
+			DataManager_SetIntValue(TW_BACKUP_CACHE_VAR, 1);
+			ui_print("Cache\n");
+		} else if (Options.substr(i, 1) == "R" || Options.substr(i, 1) == "r") {
+			DataManager_SetIntValue(TW_BACKUP_RECOVERY_VAR, 1);
+			ui_print("Recovery\n");
+		} else if (Options.substr(i, 1) == "1") {
+			DataManager_SetIntValue(TW_BACKUP_SP1_VAR, 1);
+			ui_print("%s\n", "Special1");
+		} else if (Options.substr(i, 1) == "2") {
+			DataManager_SetIntValue(TW_BACKUP_SP2_VAR, 1);
+			ui_print("%s\n", "Special2");
+		} else if (Options.substr(i, 1) == "3") {
+			DataManager_SetIntValue(TW_BACKUP_SP3_VAR, 1);
+			ui_print("%s\n", "Special3");
+		} else if (Options.substr(i, 1) == "B" || Options.substr(i, 1) == "b") {
+			DataManager_SetIntValue(TW_BACKUP_BOOT_VAR, 1);
+			ui_print("Boot\n");
+		} else if (Options.substr(i, 1) == "A" || Options.substr(i, 1) == "a") {
+			DataManager_SetIntValue(TW_BACKUP_ANDSEC_VAR, 1);
+			ui_print("Android Secure\n");
+		} else if (Options.substr(i, 1) == "E" || Options.substr(i, 1) == "e") {
+			DataManager_SetIntValue(TW_BACKUP_SDEXT_VAR, 1);
+			ui_print("SD-Ext\n");
+		} else if (Options.substr(i, 1) == "O" || Options.substr(i, 1) == "o") {
+			DataManager_SetIntValue(TW_USE_COMPRESSION_VAR, 1);
+			ui_print("Compression is on\n");
+		} else if (Options.substr(i, 1) == "M" || Options.substr(i, 1) == "m") {
+			DataManager_SetIntValue(TW_SKIP_MD5_GENERATE_VAR, 1);
+			ui_print("MD5 Generation is off\n");
+		}
+	}
+	if (!PartitionManager.Run_Backup()) {
+		LOGE("Backup failed!\n");
+		return 1;
+	}
+	ui_print("Backup complete!\n");
+	return 0;
 }

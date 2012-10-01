@@ -69,6 +69,7 @@ static const struct option OPTIONS[] = {
   { "wipe_cache", no_argument, NULL, 'c' },
   { "show_text", no_argument, NULL, 't' },
   { "just_exit", no_argument, NULL, 'x' },
+  { "nandroid", no_argument, NULL, 'n' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -829,6 +830,7 @@ main(int argc, char **argv) {
     const char *update_package = NULL;
     int wipe_data = 0, wipe_cache = 0;
     bool just_exit = false;
+	bool perform_backup = false;
 
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
@@ -840,6 +842,7 @@ main(int argc, char **argv) {
         case 'c': wipe_cache = 1; break;
         case 't': ui->ShowText(true); break;
         case 'x': just_exit = true; break;
+        case 'n': perform_backup = true; LOGI("nandroid\n"); break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -899,8 +902,22 @@ main(int argc, char **argv) {
 
     int status = INSTALL_SUCCESS;
 
+	if (perform_backup) {
+		char empt[50];
+		gui_console_only();
+		strcpy(empt, "(Current Date)");
+		DataManager_SetStrValue(TW_BACKUP_NAME, empt);
+		if (OpenRecoveryScript::Backup_Command("BSDCAE") != 0)
+			status = INSTALL_ERROR;
+	}
+	if (status == INSTALL_SUCCESS) { // Prevent other actions if backup failed
     if (update_package != NULL) {
 		gui_console_only();
+		if (OpenRecoveryScript::Install_Command(update_package) == 0)
+			status = INSTALL_SUCCESS;
+		else
+			status = INSTALL_ERROR;
+		/*
         status = install_package(update_package, &wipe_cache, TEMPORARY_INSTALL_FILE);
         if (status == INSTALL_SUCCESS && wipe_cache) {
             if (erase_volume("/cache")) {
@@ -908,12 +925,15 @@ main(int argc, char **argv) {
             }
         }
         if (status != INSTALL_SUCCESS) ui->Print("Installation aborted.\n");
+		*/
     } else if (wipe_data) {
 		gui_console_only();
-		if (PartitionManager.Factory_Reset()) status = INSTALL_ERROR;
-        //if (device->WipeData()) status = INSTALL_ERROR;
-        //if (erase_volume("/data")) status = INSTALL_ERROR;
-        //if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
+		if (!PartitionManager.Factory_Reset()) status = INSTALL_ERROR;
+		/*
+        if (device->WipeData()) status = INSTALL_ERROR;
+        if (erase_volume("/data")) status = INSTALL_ERROR;
+        if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
+		*/
         if (status != INSTALL_SUCCESS) ui->Print("Data wipe failed.\n");
     } else if (wipe_cache) {
 		gui_console_only();
@@ -922,6 +942,7 @@ main(int argc, char **argv) {
     } else if (!just_exit) {
         status = INSTALL_ERROR;  // No command specified
     }
+	}
 
     //if (status != INSTALL_SUCCESS) ui->SetBackground(RecoveryUI::ERROR);
     if (status != INSTALL_SUCCESS /*|| ui->IsTextVisible()*/) {
@@ -930,7 +951,7 @@ main(int argc, char **argv) {
 		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) == 0 && OpenRecoveryScript::check_for_script_file()) {
 			gui_console_only();
 			OpenRecoveryScript::run_script_file();
-			if (1 || OpenRecoveryScript::run_script_file() != 0) {
+			if (OpenRecoveryScript::run_script_file() != 0) {
 				// There was an error, boot the recovery
 				gui_start();
 			} else {

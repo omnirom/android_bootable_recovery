@@ -33,9 +33,9 @@ class OpenRecoveryScript
 public:
 	static int check_for_script_file();                                            // Checks to see if the ORS file is present in /cache
 	static int run_script_file();                                                  // Executes the commands in the ORS file
-
-private:
+	static int Install_Command(string Zip);                                        // Installs a zip
 	static string Locate_Zip_File(string Path, string File);                       // Attempts to locate the zip file in storage
+	static int Backup_Command(string Options);                                     // Runs a backup
 
 };
 
