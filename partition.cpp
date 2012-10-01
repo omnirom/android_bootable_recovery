@@ -175,7 +175,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Has_Data_Media = true;
 			Is_Storage = true;
 			Storage_Path = "/data/media";
-			Recreate_Media_Folder();
 			if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
 				Make_Dir("/emmc", Display_Error);
 				Symlink_Path = "/data/media";
@@ -204,6 +203,14 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 				DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
 				DataManager::SetValue("tw_crypto_display", "");
 			}
+	#ifdef RECOVERY_SDCARD_ON_DATA
+			if (!Is_Encrypted || (Is_Encrypted && Is_Decrypted))
+				Recreate_Media_Folder();
+	#endif
+#else
+	#ifdef RECOVERY_SDCARD_ON_DATA
+			Recreate_Media_Folder();
+	#endif
 #endif
 		} else if (Mount_Point == "/cache") {
 			Display_Name = "Cache";
