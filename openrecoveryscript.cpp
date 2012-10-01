@@ -79,6 +79,7 @@ int OpenRecoveryScript::run_script_file(void) {
 	char *val_start, *tok;
 
 	if (fp != NULL) {
+		DataManager_SetIntValue(TW_SIMULATE_ACTIONS, 0);
 		while (fgets(script_line, SCRIPT_COMMAND_SIZE, fp) != NULL && ret_val == 0) {
 			cindex = 0;
 			line_len = strlen(script_line);
