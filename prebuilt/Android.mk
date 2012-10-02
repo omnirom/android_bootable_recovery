@@ -71,15 +71,6 @@ LOCAL_GENERATED_SOURCES := $(GEN)
 LOCAL_SRC_FILES := teamwin $(GEN)
 include $(BUILD_PREBUILT)
 
-#bbinstall.sh
-include $(CLEAR_VARS)
-LOCAL_MODULE := bbinstall.sh
-LOCAL_MODULE_TAGS := eng
-LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
-LOCAL_SRC_FILES := $(LOCAL_MODULE)
-include $(BUILD_PREBUILT)
-
 #fix_permissions
 include $(CLEAR_VARS)
 LOCAL_MODULE := fix_permissions.sh
