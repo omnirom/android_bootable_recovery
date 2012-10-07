@@ -1350,7 +1350,7 @@ void TWPartition::Find_Actual_Block_Device(void) {
 		Is_Present = true;
 		Actual_Block_Device = Primary_Block_Device;
 	} else if (!Alternate_Block_Device.empty() && TWFunc::Path_Exists(Alternate_Block_Device)) {
-		Actual_Block_Device = Primary_Block_Device;
+		Actual_Block_Device = Alternate_Block_Device;
 		Is_Present = true;
 	} else
 		Is_Present = false;
