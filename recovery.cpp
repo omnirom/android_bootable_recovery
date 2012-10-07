@@ -952,7 +952,6 @@ main(int argc, char **argv) {
 		}
 		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) == 0 && OpenRecoveryScript::check_for_script_file()) {
 			gui_console_only();
-			OpenRecoveryScript::run_script_file();
 			if (OpenRecoveryScript::run_script_file() != 0) {
 				// There was an error, boot the recovery
 				gui_start();
