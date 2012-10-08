@@ -809,10 +809,12 @@
 		<page name="confirm_action">
 			<object type="template" name="header" />
 
-			<object type="image">
+			<object type="button">
 				<condition var1="tw_show_exclamation" var2="1" />
-				<image resource="exclamation" />
 				<placement x="%exclamation_x%" y="%exclamation_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text></text>
+				<image resource="exclamation" />
 			</object>
 
 			<object type="text" color="%text_color%">
