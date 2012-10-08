@@ -724,13 +724,16 @@
 				<text>Reboot System</text>
 				<image resource="main_button" />
 				<actions>
-					<action function="set">tw_back=flash_done</action>
+					<action function="set">tw_back=main2</action>
 					<action function="set">tw_action=reboot</action>
 					<action function="set">tw_action_param=system</action>
 					<action function="set">tw_has_action2=0</action>
 					<action function="set">tw_text1=No OS Installed! Are you</action>
 					<action function="set">tw_text2=sure you wish to reboot?</action>
+					<action function="set">tw_text3=</action>
+					<action function="set">tw_text4=</action>
 					<action function="set">tw_action_text1=Rebooting...</action>
+					<action function="set">tw_action_text2=</action>
 					<action function="set">tw_complete_text1=Rebooting...</action>
 					<action function="set">tw_slider_text=Swipe to Reboot</action>
 					<action function="page">rebootcheck</action>
@@ -796,6 +799,7 @@
 				<action function="set">tw_cancel_action=</action>
 				<action function="set">tw_cancel_param=</action>
 				<action function="set">tw_show_exclamation=0</action>
+				<action function="set">tw_show_reboot=0</action>
 				<action function="page">%tw_clear_destination%</action>
 			</object>
 		</page>
@@ -898,20 +902,7 @@
 			<object type="template" name="progress_bar" />
 
 			<object type="action">
-				<conditions>
-					<condition var1="tw_operation_state" var2="1" />
-					<condition var1="tw_operation_status" var2="0" />
-				</conditions>
-				<actions>
-					<action function="page">action_complete</action>
-				</actions>
-			</object>
-
-			<object type="action">
-				<conditions>
-					<condition var1="tw_operation_state" var2="1" />
-					<condition var1="tw_operation_status" op="!=" var2="0" />
-				</conditions>
+				<condition var1="tw_operation_state" var2="1" />
 				<actions>
 					<action function="page">action_complete</action>
 				</actions>
@@ -959,6 +950,7 @@
 			<object type="template" name="action_page_console" />
 
 			<object type="button">
+				<condition var1="tw_show_reboot" var2="0" />
 				<placement x="%col_center_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Back</text>
@@ -966,6 +958,29 @@
 				<actions>
 					<action function="set">tw_clear_destination=%tw_back%</action>
 					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_show_reboot" var2="1" />
+				<placement x="%col_center_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Reboot System</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=main2</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=system</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=No OS Installed! Are you</action>
+					<action function="set">tw_text2=sure you wish to reboot?</action>
+					<action function="set">tw_text3=</action>
+					<action function="set">tw_text4=</action>
+					<action function="set">tw_action_text1=Rebooting...</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1=Rebooting...</action>
+					<action function="set">tw_slider_text=Swipe to Reboot</action>
+					<action function="page">rebootcheck</action>
 				</actions>
 			</object>
 
@@ -1538,6 +1553,7 @@
 				<actions>
 					<action function="set">tw_back=backup</action>
 					<action function="set">tw_complete_text1=Backup Complete</action>
+					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_complete</action>
 				</actions>
 			</object>
@@ -1868,25 +1884,11 @@
 			<object type="template" name="progress_bar" />
 
 			<object type="action">
-				<conditions>
-					<condition var1="tw_operation_state" var2="1" />
-					<condition var1="tw_operation_status" var2="0" />
-				</conditions>
+				<condition var1="tw_operation_state" var2="1" />
 				<actions>
 					<action function="set">tw_back=restore_select</action>
 					<action function="set">tw_complete_text1=Restore Complete</action>
-					<action function="page">action_complete</action>
-				</actions>
-			</object>
-
-			<object type="action">
-				<conditions>
-					<condition var1="tw_operation_state" var2="1" />
-					<condition var1="tw_operation_status" var2="1" />
-				</conditions>
-				<actions>
-					<action function="set">tw_back=restore_select</action>
-					<action function="set">tw_complete_text1=Restore Complete</action>
+					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_complete</action>
 				</actions>
 			</object>
@@ -2549,6 +2551,7 @@
 					<action function="set">tw_action_text2=This will take a few minutes.</action>
 					<action function="set">tw_complete_text1=Fix Permissions Complete</action>
 					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=1</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</object>
@@ -2598,6 +2601,7 @@
 					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
 					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
 					<action function="set">tw_has_cancel=1</action>
+					<action function="set">tw_show_reboot=1</action>
 					<action function="set">tw_cancel_action=adbsideloadcancel</action>
 					<action function="page">action_page</action>
 				</actions>
