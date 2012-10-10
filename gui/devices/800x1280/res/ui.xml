@@ -2548,9 +2548,7 @@
 					<action function="set">tw_back=advanced</action>
 					<action function="set">tw_action=fixpermissions</action>
 					<action function="set">tw_text1=Fix Permissions?</action>
-					<action function="set">tw_text2=This will take a few minutes.</action>
 					<action function="set">tw_action_text1=Fixing Permissions...</action>
-					<action function="set">tw_action_text2=This will take a few minutes.</action>
 					<action function="set">tw_complete_text1=Fix Permissions Complete</action>
 					<action function="set">tw_slider_text=Swipe to Confirm</action>
 					<action function="set">tw_show_reboot=1</action>
