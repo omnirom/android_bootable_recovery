@@ -157,9 +157,9 @@ int fixPermissions::pchmod(string fn, string mode) {
 				mask |= S_IXOTH;
 			}
 			if (mode[n] == '2')
-				mask |= S_IWGRP;
+				mask |= S_IWOTH;
 			if (mode[n] == '1')
-				mask |= S_IXGRP;
+				mask |= S_IXOTH;
 		}
 	} 
 

@@ -790,20 +790,10 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				int op_status;
-				if (!PartitionManager.Mount_By_Path("/data", true) || !PartitionManager.Mount_By_Path("/system", true))
-					operation_end(1, simulate);
-
-				DataManager::SetValue("tw_terminal_command_thread", "./sbin/fix_permissions.sh");
-				DataManager::SetValue("tw_terminal_state", 1);
-				DataManager::SetValue("tw_background_thread_running", 1);
-				op_status = pthread_create(&terminal_command, NULL, command_thread, NULL);
-				if (op_status != 0) {
-					LOGE("Error starting terminal command thread, %i.\n", op_status);
-					DataManager::SetValue("tw_terminal_state", 0);
-					DataManager::SetValue("tw_background_thread_running", 0);
-					operation_end(1, simulate);
-				}
+				int op_status = PartitionManager.Fix_Permissions();
+				if (op_status != 0)
+					op_status = 1; // failure
+				operation_end(op_status, simulate);
 			}
 			return 0;
 		}
