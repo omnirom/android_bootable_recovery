@@ -798,6 +798,7 @@ load_locale_from_cache() {
         }
         buffer[j] = 0;
         locale = strdup(buffer);
+        check_and_fclose(fp, LOCALE_FILE);
     }
 }
 
