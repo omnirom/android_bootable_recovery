@@ -38,6 +38,7 @@
 #include "partitions.hpp"
 #include "data.hpp"
 #include "twrp-functions.hpp"
+#include "fixPermissions.hpp"
 
 #ifdef TW_INCLUDE_CRYPTO
 	#ifdef TW_INCLUDE_JB_CRYPTO
@@ -1551,6 +1552,22 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	return -1;
 #endif
 	return 1;
+}
+
+int TWPartitionManager::Fix_Permissions(void) {
+	int result = 0;
+	if (!Mount_By_Path("/data", true))
+		return false;
+
+	if (!Mount_By_Path("/system", true))
+		return false;
+
+	Mount_By_Path("/sd-ext", false);
+
+	fixPermissions perms;
+	result = perms.fixPerms(true, false);
+	ui_print("Done.\n\n");
+	return result;
 }
 
 //partial kangbang from system/vold

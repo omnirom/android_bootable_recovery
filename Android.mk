@@ -26,6 +26,7 @@ LOCAL_SRC_FILES := \
     ui.cpp \
     screen_ui.cpp \
     verifier.cpp \
+    fixPermissions.cpp \
     adb_install.cpp
 
 LOCAL_SRC_FILES += \
