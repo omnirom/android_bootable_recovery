@@ -1253,7 +1253,7 @@ bool TWPartition::Restore_Tar(string restore_folder) {
 		Full_FileName = restore_folder + "/" + Backup_FileName + split_index;
 		while (TWFunc::Path_Exists(Full_FileName)) {
 			ui_print("Restoring archive %i...\n", index + 1);
-			Command = "cd " + Backup_Path + " && tar -xf '" + Full_FileName + "'";
+			Command = "tar -xf '" + Full_FileName + "'";
 			LOGI("Restore command: '%s'\n", Command.c_str());
 			system(Command.c_str());
 			index++;
