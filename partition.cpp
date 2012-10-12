@@ -1177,8 +1177,8 @@ bool TWPartition::Backup_DD(string backup_folder) {
 	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'";
 	LOGI("Backup command: '%s'\n", Command.c_str());
 	system(Command.c_str());
-	if (TWFunc::Get_File_Size(Full_FileName) != Backup_Size) {
-		LOGE("Backup file size %lu for '%s' is does not match backup size %llu.\n", TWFunc::Get_File_Size(Full_FileName), Full_FileName.c_str(), Backup_Size);
+	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
+		LOGE("Backup file size for '%s' is 0 bytes.\n", Full_FileName.c_str());
 		return false;
 	}
 	return true;
