@@ -1694,6 +1694,7 @@ int TWPartitionManager::usb_storage_disable(void) {
 	}
 	Mount_All_Storage();
 	Update_System_Details();
+	UnMount_Main_Partitions();
 	return true;
 }
 
