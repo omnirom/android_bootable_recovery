@@ -181,6 +181,7 @@ public:
 	virtual int usb_storage_enable(void);                                     // Enable USB storage mode
 	virtual int usb_storage_disable(void);                                    // Disable USB storage mode
 	virtual void Mount_All_Storage(void);                                     // Mounts all storage locations
+	virtual void UnMount_Main_Partitions(void);                               // Unmounts system and data if not data/media and boot if boot is mountable
 	virtual int Partition_SDCard(void);                                       // Repartitions the sdcard
 
 	virtual int Fix_Permissions(); 

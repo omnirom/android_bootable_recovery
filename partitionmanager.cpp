@@ -86,6 +86,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			LOGI("Error creating fstab\n");
 	}
 	Update_System_Details();
+	UnMount_Main_Partitions();
 	return true;
 }
 
@@ -873,6 +874,7 @@ int TWPartitionManager::Run_Backup(void) {
 
 	ui_print("[%llu MB TOTAL BACKED UP]\n", actual_backup_size);
 	Update_System_Details();
+	UnMount_Main_Partitions();
 	ui_print("[BACKUP COMPLETED IN %d SECONDS]\n\n", total_time); // the end
     return true;
 }
@@ -1071,6 +1073,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 
 	TWFunc::GUI_Operation_Text(TW_UPDATE_SYSTEM_DETAILS_TEXT, "Updating System Details");
 	Update_System_Details();
+	UnMount_Main_Partitions();
 	time(&rStop);
 	ui_print("[RESTORE COMPLETED IN %d SECONDS]\n\n",(int)difftime(rStop,rStart));
 	return true;
@@ -1543,6 +1546,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 			// Sleep for a bit so that the device will be ready
 			sleep(1);
 			Update_System_Details();
+			UnMount_Main_Partitions();
 		} else
 			LOGE("Unable to locate data partition.\n");
 	}
@@ -1700,6 +1704,21 @@ void TWPartitionManager::Mount_All_Storage(void) {
 		if ((*iter)->Is_Storage)
 			(*iter)->Mount(false);
 	}
+}
+
+void TWPartitionManager::UnMount_Main_Partitions(void) {
+	// Unmounts system and data if data is not data/media
+	// Also unmounts boot if boot is mountable
+	LOGI("Unmounting main partitions...\n");
+
+	TWPartition* Boot_Partition = Find_Partition_By_Path("/boot");
+
+	UnMount_By_Path("/system", true);
+#ifndef RECOVERY_SDCARD_ON_DATA
+	UnMount_By_Path("/data", true);
+#endif
+	if (Boot_Partition != NULL && Boot_Partition->Can_Be_Mounted)
+		Boot_Partition->UnMount(true);
 }
 
 int TWPartitionManager::Partition_SDCard(void) {

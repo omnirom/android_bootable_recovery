@@ -950,6 +950,7 @@ main(int argc, char **argv) {
 			system("mv /system/recovery-from-boot.p /system/recovery-from-boot.bak");
 			ui_print("Renamed stock recovery file in /system to prevent\nthe stock ROM from replacing TWRP.\n");
 		}
+		PartitionManager.UnMount_By_Path("/system", false);
 		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) == 0 && OpenRecoveryScript::check_for_script_file()) {
 			gui_console_only();
 			if (OpenRecoveryScript::run_script_file() != 0) {
