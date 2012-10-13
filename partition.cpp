@@ -1301,11 +1301,12 @@ bool TWPartition::Restore_Flash_Image(string restore_folder) {
 }
 
 bool TWPartition::Update_Size(bool Display_Error) {
-	bool ret = false;
+	bool ret = false, Was_Already_Mounted = false;
 
 	if (!Can_Be_Mounted && !Is_Encrypted)
 		return false;
 
+	Was_Already_Mounted = Is_Mounted();
 	if (Removable || Is_Encrypted) {
 		if (!Mount(false))
 			return true;
@@ -1313,9 +1314,13 @@ bool TWPartition::Update_Size(bool Display_Error) {
 		return false;
 
 	ret = Get_Size_Via_statfs(Display_Error);
-	if (!ret || Size == 0)
-		if (!Get_Size_Via_df(Display_Error))
+	if (!ret || Size == 0) {
+		if (!Get_Size_Via_df(Display_Error)) {
+			if (!Was_Already_Mounted)
+				UnMount(false);
 			return false;
+		}
+	}
 
 	if (Has_Data_Media) {
 		if (Mount(Display_Error)) {
@@ -1330,14 +1335,22 @@ bool TWPartition::Update_Size(bool Display_Error) {
 			int fre = (int)(Free / 1048576LLU);
 			int datmed = (int)(data_media_used / 1048576LLU);
 			LOGI("Data backup size is %iMB, size: %iMB, used: %iMB, free: %iMB, in data/media: %iMB.\n", bak, total, us, fre, datmed);
-		} else
+		} else {
+			if (!Was_Already_Mounted)
+				UnMount(false);
 			return false;
+		}
 	} else if (Has_Android_Secure) {
 		if (Mount(Display_Error))
 			Backup_Size = TWFunc::Get_Folder_Size(Backup_Path, Display_Error);
-		else
+		else {
+			if (!Was_Already_Mounted)
+				UnMount(false);
 			return false;
+		}
 	}
+	if (!Was_Already_Mounted)
+		UnMount(false);
 	return true;
 }
 
