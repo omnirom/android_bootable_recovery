@@ -249,6 +249,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Removable = true;
 #ifndef RECOVERY_SDCARD_ON_DATA
 			Setup_AndSec();
+			Mount_Storage_Retry();
 #endif
 		}
 #endif
@@ -258,6 +259,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Storage_Path = EXPAND(TW_INTERNAL_STORAGE_PATH);
 #ifndef RECOVERY_SDCARD_ON_DATA
 			Setup_AndSec();
+			Mount_Storage_Retry();
 #endif
 		}
 #else
@@ -266,6 +268,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Storage_Path = "/emmc";
 #ifndef RECOVERY_SDCARD_ON_DATA
 			Setup_AndSec();
+			Mount_Storage_Retry();
 #endif
 		}
 #endif
@@ -441,6 +444,18 @@ void TWPartition::Find_Real_Block_Device(string& Block, bool Display_Error) {
 	} else {
 		Block = device;
 		return;
+	}
+}
+
+void TWPartition::Mount_Storage_Retry(void) {
+	// On some devices, storage doesn't want to mount right away, retry and sleep
+	if (!Mount(false)) {
+		int retry_count = 5;
+		while (retry_count > 0 && !Mount(false)) {
+			usleep(500000);
+			retry_count--;
+		}
+		Mount(true);
 	}
 }
 
