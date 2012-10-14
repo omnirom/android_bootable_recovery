@@ -1625,48 +1625,74 @@ int TWPartitionManager::usb_storage_enable(void) {
 	DataManager::GetValue(TW_HAS_DUAL_STORAGE, has_dual);
 	DataManager::GetValue(TW_HAS_DATA_MEDIA, has_data_media);
 	if (has_dual == 1 && has_data_media == 0) {
-		Part = Find_Partition_By_Path(DataManager::GetSettingsStoragePath());
-		if (Part == NULL) {
-			LOGE("Unable to locate volume information.");
-			return false;
-		}
-		if (!Part->UnMount(true))
-			return false;
-
-		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
-		if ((fd = open(lun_file, O_WRONLY)) < 0) {
-			LOGE("Unable to open ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
-			return false;
-		}
-
-		if (write(fd, Part->Actual_Block_Device.c_str(), Part->Actual_Block_Device.size()) < 0) {
-			LOGE("Unable to write to ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
-			close(fd);
-			return false;
-		}
-		close(fd);
-
-		DataManager::GetValue(TW_EXTERNAL_PATH, ext_path);
-		Part = Find_Partition_By_Path(ext_path);
-		if (Part == NULL) {
-			LOGE("Unable to locate volume information.\n");
-			return false;
-		}
-		if (!Part->UnMount(true))
-			return false;
-
 		sprintf(lun_file, CUSTOM_LUN_FILE, 1);
-		if ((fd = open(lun_file, O_WRONLY)) < 0) {
-			LOGE("Unable to open ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
-			return false;
-		}
+		if (!TWFunc::Path_Exists(lun_file)) {
+			// Device doesn't have multiple lun files, mount current storage
+			Part = Find_Partition_By_Path(DataManager::GetCurrentStoragePath());
+			if (Part == NULL) {
+				LOGE("Unable to locate volume information for USB storage mode.");
+				return false;
+			}
+			if (!Part->UnMount(true))
+				return false;
 
-		if (write(fd, Part->Actual_Block_Device.c_str(), Part->Actual_Block_Device.size()) < 0) {
-			LOGE("Unable to write to ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
+			sprintf(lun_file, CUSTOM_LUN_FILE, 0);
+			if ((fd = open(lun_file, O_WRONLY)) < 0) {
+				LOGE("Unable to open ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
+				return false;
+			}
+
+			if (write(fd, Part->Actual_Block_Device.c_str(), Part->Actual_Block_Device.size()) < 0) {
+				LOGE("Unable to write to ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
+				close(fd);
+				return false;
+			}
 			close(fd);
-			return false;
+		} else {
+			// Device has multiple lun files
+			Part = Find_Partition_By_Path(DataManager::GetSettingsStoragePath());
+			if (Part == NULL) {
+				LOGE("Unable to locate volume information.");
+				return false;
+			}
+			if (!Part->UnMount(true))
+				return false;
+
+			sprintf(lun_file, CUSTOM_LUN_FILE, 0);
+			if ((fd = open(lun_file, O_WRONLY)) < 0) {
+				LOGE("Unable to open ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
+				return false;
+			}
+
+			if (write(fd, Part->Actual_Block_Device.c_str(), Part->Actual_Block_Device.size()) < 0) {
+				LOGE("Unable to write to ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
+				close(fd);
+				return false;
+			}
+			close(fd);
+
+			DataManager::GetValue(TW_EXTERNAL_PATH, ext_path);
+			Part = Find_Partition_By_Path(ext_path);
+			if (Part == NULL) {
+				LOGE("Unable to locate volume information.\n");
+				return false;
+			}
+			if (!Part->UnMount(true))
+				return false;
+
+			sprintf(lun_file, CUSTOM_LUN_FILE, 1);
+			if ((fd = open(lun_file, O_WRONLY)) < 0) {
+				LOGE("Unable to open ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
+				return false;
+			}
+
+			if (write(fd, Part->Actual_Block_Device.c_str(), Part->Actual_Block_Device.size()) < 0) {
+				LOGE("Unable to write to ums lunfile '%s': (%s)\n", lun_file, strerror(errno));
+				close(fd);
+				return false;
+			}
+			close(fd);
 		}
-		close(fd);
 	} else {
 		if (has_data_media == 0)
 			ext_path = DataManager::GetCurrentStoragePath();
