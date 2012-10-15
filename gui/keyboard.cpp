@@ -323,7 +323,7 @@ int GUIKeyboard::SetRenderPos(int x, int y, int w, int h)
 
 int GUIKeyboard::GetSelection(int x, int y)
 {
-	if (x < mRenderX || x - mRenderX > mRenderW || y < mRenderY || y - mRenderY > mRenderH) return -1;
+	if (x < mRenderX || x - mRenderX > KeyboardWidth || y < mRenderY || y - mRenderY > KeyboardHeight) return -1;
 	return 0;
 }
 
@@ -368,10 +368,10 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 	case TOUCH_DRAG:
 		break;
 	case TOUCH_RELEASE:
-		if (x < startX - (mRenderW * 0.5)) {
+		if (x < startX - (KeyboardWidth * 0.5)) {
 			PageManager::NotifyKeyboard(KEYBOARD_SWIPE_LEFT);
 			return 0;
-		} else if (x > startX + (mRenderW * 0.5)) {
+		} else if (x > startX + (KeyboardWidth * 0.5)) {
 			PageManager::NotifyKeyboard(KEYBOARD_SWIPE_RIGHT);
 			return 0;
 		}
