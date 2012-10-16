@@ -120,6 +120,14 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			if (Fstab_File_System == "mtd" || Fstab_File_System == "yaffs2") {
 				MTD_Name = ptr;
 				Find_MTD_Block_Device(MTD_Name);
+			} else if (Fstab_File_System == "bml") {
+				if (Mount_Point == "/boot")
+					MTD_Name = "boot";
+				else if (Mount_Point == "/recovery")
+					MTD_Name = "recovery";
+				Primary_Block_Device = ptr;
+				if (*ptr != '/')
+					LOGE("Until we get better BML support, you will have to find and provide the full block device path to the BML devices e.g. /dev/block/bml9 instead of the partition name\n");
 			} else if (*ptr != '/') {
 				if (Display_Error)
 					LOGE("Invalid block device on '%s', '%s', %i\n", Line.c_str(), ptr, index);
@@ -358,8 +366,7 @@ bool TWPartition::Is_File_System(string File_System) {
 }
 
 bool TWPartition::Is_Image(string File_System) {
-	if (File_System == "emmc" ||
-		File_System == "mtd")
+	if (File_System == "emmc" || File_System == "mtd" || File_System == "bml")
 		return true;
 	else
 		return false;
@@ -399,7 +406,7 @@ void TWPartition::Setup_Image(bool Display_Error) {
 	Backup_Name = Display_Name;
 	if (Fstab_File_System == "emmc")
 		Backup_Method = DD;
-	else if (Fstab_File_System == "mtd")
+	else if (Fstab_File_System == "mtd" || Fstab_File_System == "bml")
 		Backup_Method = FLASH_UTILS;
 	else
 		LOGI("Unhandled file system '%s' on image '%s'\n", Fstab_File_System.c_str(), Display_Name.c_str());
@@ -840,7 +847,7 @@ void TWPartition::Check_FS_Type() {
 	char* arg;
 	char* ptr;
 
-	if (Fstab_File_System == "yaffs2" || Fstab_File_System == "mtd")
+	if (Fstab_File_System == "yaffs2" || Fstab_File_System == "mtd" || Fstab_File_System == "bml")
 		return; // Running blkid on some mtd devices causes a massive crash
 
 	Find_Actual_Block_Device();
