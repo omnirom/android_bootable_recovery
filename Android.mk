@@ -46,6 +46,7 @@ LOCAL_STATIC_LIBRARIES := \
     libpixelflinger_static \
     libpng \
     libcutils \
+    libselinux \
     libstdc++ \
     libc
 
@@ -54,12 +55,6 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_C_INCLUDES += system/extras/ext4_utils
     LOCAL_STATIC_LIBRARIES += libext4_utils_static libz
 endif
-
-ifeq ($(HAVE_SELINUX), true)
-  LOCAL_C_INCLUDES += external/libselinux/include
-  LOCAL_STATIC_LIBRARIES += libselinux
-  LOCAL_CFLAGS += -DHAVE_SELINUX
-endif # HAVE_SELINUX
 
 # This binary is in the recovery ramdisk, which is otherwise a copy of root.
 # It gets copied there in config/Makefile.  LOCAL_MODULE_TAGS suppresses
@@ -72,12 +67,6 @@ ifeq ($(TARGET_RECOVERY_UI_LIB),)
 else
   LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
 endif
-
-ifeq ($(HAVE_SELINUX),true)
-  LOCAL_C_INCLUDES += external/libselinux/include
-  LOCAL_STATIC_LIBRARIES += libselinux
-  LOCAL_CFLAGS += -DHAVE_SELINUX
-endif # HAVE_SELINUX
 
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
