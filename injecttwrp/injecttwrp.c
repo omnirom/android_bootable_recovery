@@ -297,10 +297,10 @@ int find_gzip_recovery_ramdisk(char *boot_image, unsigned long *ramdisk_address)
 }
 
 int main(int argc, char** argv) {
-	int arg_error = 0, delete_ind = 0, return_val;
+	int arg_error = 0, delete_ind = 0, return_val, index, len;
 	unsigned long address2;
 	unsigned char regular_check[8] = "ANDROID!";
-	char boot_image[512], backup_image[512];
+	char boot_image[512], backup_image[512], boot_block_device[512], command[512];
 
 	printf("-- InjectTWRP Recovery Ramdisk Injection Tool for Samsung devices. --\n");
 	printf("--                  by Dees_Troy and Team Win                      --\n");
@@ -308,17 +308,26 @@ int main(int argc, char** argv) {
 	printf("--                Bringing some win to Samsung!                    --\n");
 	printf("--        This tool comes with no warranties whatsoever!           --\n");
 	printf("--        Use at your own risk and always keep a backup!           --\n\n");
-	printf("Version 0.1 beta\n\n");
+	printf("Version 0.2 beta\n\n");
 
 	// Parse the arguments
-	if (argc < 2 || argc > 5)
+	if (argc < 2 || argc > 6)
 		arg_error = 1;
 	else {
-		if ((argc == 2 || argc == 3) && (strcmp(argv[1], "-b") == 0 || strcmp(argv[1], "--backup") == 0)) {
+		strcpy(boot_block_device, "boot");
+		for (index = 1; index < argc; index++) {
+			len = strlen(argv[index]);
+			if (len > 3 && strncmp(argv[index], "bd=", 3) == 0) {
+				strcpy(boot_block_device, argv[index] + 3);
+				index = argc;
+			}
+		}
+		if ((argc >= 2 && argc <= 4) && (strcmp(argv[1], "-b") == 0 || strcmp(argv[1], "--backup") == 0)) {
 			// Backup existing boot image
 			printf("Dumping boot image...\n");
 #ifdef INJECT_USE_TMP
-			system("dump_image boot /tmp/original_boot.img");
+			sprintf(command, "dump_image %s /tmp/original_boot.img", boot_block_device);
+			system(command);
 			strcpy(boot_image, "/tmp/original_boot.img");
 
 			if (argc == 2)
@@ -327,7 +336,8 @@ int main(int argc, char** argv) {
 				strcpy(backup_image, argv[2]);
 #else
 			system("mount /cache");
-			system("dump_image boot /cache/original_boot.img");
+			sprintf(command, "dump_image %s /cache/original_boot.img", boot_block_device);
+			system(command);
 			strcpy(boot_image, "/cache/original_boot.img");
 
 			if (argc == 2)
@@ -356,14 +366,16 @@ int main(int argc, char** argv) {
 			if (strcmp(argv[1], "-d") == 0 || strcmp(argv[1], "--dump") == 0) {
 				printf("Dumping boot image...\n");
 #ifdef INJECT_USE_TMP
-				system("dump_image boot /tmp/original_boot.img");
+				sprintf(command, "dump_image %s /tmp/original_boot.img", boot_block_device);
+				system(command);
 				strcpy(boot_image, "/tmp/original_boot.img");
 #else
 				system("mount /cache");
-				system("dump_image boot /cache/original_boot.img");
+				sprintf(command, "dump_image %s /cache/original_boot.img", boot_block_device);
+				system(command);
 				strcpy(boot_image, "/cache/original_boot.img");
-#endif
 				delete_ind = -1;
+#endif
 			} else
 				strcpy(boot_image, argv[1]);
 
@@ -389,13 +401,11 @@ int main(int argc, char** argv) {
 				system("rm /cache/original_boot.img");
 			}
 
-			if (argc == 5 && (strcmp(argv[4], "-f") == 0 || strcmp(argv[4], "--flash") == 0)) {
-				char command[512];
-
+			if (argc >= 5 && (strcmp(argv[4], "-f") == 0 || strcmp(argv[4], "--flash") == 0)) {
 				printf("Flashing new image...\n");
-				system("erase_image boot"); // Needed because flash_image checks the header and the header sometimes is the same while the ramdisks are different
-				strcpy(command, "flash_image boot ");
-				strcat(command, argv[3]);
+				sprintf(command, "erase_image %s", boot_block_device);
+				system(command);
+				sprintf(command, "flash_image %s %s", boot_block_device, argv[3]);
 				system(command);
 				printf("Flash complete.\n");
 			}
@@ -413,7 +423,9 @@ int main(int argc, char** argv) {
 		printf("injecttwrp --dump ramdisk-recovery.img outputboot.img [--flash]\n");
 		printf("--dump will use dump_image to dump your existing boot image\n");
 		printf("--flash will use flash_image to flash the new boot image\n\n");
-		printf("NOTE: dump_image, erase_image, and flash_image must already be installed!\n");
+		printf("NOTE: dump_image, erase_image, and flash_image must already be installed!\n\n");
+		printf("If needed you can add bd=/dev/block/mmcblk0p5 to indicate the location\n");
+		printf("of the boot partition on emmc devices as the final parameter.\n");
 		return 0;
 	}
 

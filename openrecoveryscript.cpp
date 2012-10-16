@@ -72,7 +72,7 @@ int OpenRecoveryScript::check_for_script_file(void) {
 
 int OpenRecoveryScript::run_script_file(void) {
 	FILE *fp = fopen(SCRIPT_FILE_TMP, "r");
-	int ret_val = 0, cindex, line_len, i, remove_nl;
+	int ret_val = 0, cindex, line_len, i, remove_nl, install_cmd = 0;
 	char script_line[SCRIPT_COMMAND_SIZE], command[SCRIPT_COMMAND_SIZE],
 		 value[SCRIPT_COMMAND_SIZE], mount[SCRIPT_COMMAND_SIZE],
 		 value1[SCRIPT_COMMAND_SIZE], value2[SCRIPT_COMMAND_SIZE];
@@ -112,6 +112,7 @@ int OpenRecoveryScript::run_script_file(void) {
 			if (strcmp(command, "install") == 0) {
 				// Install Zip
 				ret_val = Install_Command(value);
+				install_cmd = -1;
 			} else if (strcmp(command, "wipe") == 0) {
 				// Wipe
 				if (strcmp(value, "cache") == 0 || strcmp(value, "/cache") == 0) {
@@ -344,6 +345,17 @@ int OpenRecoveryScript::run_script_file(void) {
 	} else {
 		LOGE("Error opening script file '%s'\n", SCRIPT_FILE_TMP);
 		return 1;
+	}
+	if (install_cmd && DataManager_GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager_GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
+		ui_print("Injecting TWRP into boot image...\n");
+		TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
+		if (Boot == NULL || Boot->Current_File_System != "emmc")
+			system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+		else {
+			string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
+			system(injectcmd.c_str());
+		}
+		ui_print("TWRP injection complete.\n");
 	}
 	return ret_val;
 }

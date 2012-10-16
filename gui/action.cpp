@@ -670,7 +670,13 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				if (simulate) {
 					simulate_progress_bar();
 				} else {
-					system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+					TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
+					if (Boot == NULL || Boot->Current_File_System != "emmc")
+						system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+					else {
+						string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
+						system(injectcmd.c_str());
+					}
 					ui_print("TWRP injection complete.\n");
 				}
 			}
@@ -1042,6 +1048,22 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					ret = 1; // failure
 				else if (wipe_cache)
 					PartitionManager.Wipe_By_Path("/cache");
+				if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
+					operation_start("ReinjectTWRP");
+					ui_print("Injecting TWRP into boot image...\n");
+					if (simulate) {
+						simulate_progress_bar();
+					} else {
+						TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
+						if (Boot == NULL || Boot->Current_File_System != "emmc")
+							system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+						else {
+							string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
+							system(injectcmd.c_str());
+						}
+						ui_print("TWRP injection complete.\n");
+					}
+				}
 			}
 			operation_end(ret, simulate);
 			return 0;
