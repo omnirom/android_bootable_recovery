@@ -863,7 +863,6 @@ main(int argc, char **argv) {
     ui->SetBackground(RecoveryUI::NONE);
     if (show_text) ui->ShowText(true);
 
-#ifdef HAVE_SELINUX
     struct selinux_opt seopts[] = {
       { SELABEL_OPT_PATH, "/file_contexts" }
     };
@@ -874,7 +873,6 @@ main(int argc, char **argv) {
         fprintf(stderr, "Warning: No file_contexts\n");
         ui->Print("Warning:  No file_contexts\n");
     }
-#endif
 
     device->StartRecovery();
 

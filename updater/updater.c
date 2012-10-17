@@ -105,7 +105,6 @@ int main(int argc, char** argv) {
         return 6;
     }
 
-#ifdef HAVE_SELINUX
     struct selinux_opt seopts[] = {
       { SELABEL_OPT_PATH, "/file_contexts" }
     };
@@ -116,7 +115,6 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Warning:  No file_contexts\n");
         fprintf(cmd_pipe, "ui_print Warning: No file_contexts\n");
     }
-#endif
 
     // Evaluate the parsed script.
 

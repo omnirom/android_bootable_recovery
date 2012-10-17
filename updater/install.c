@@ -78,23 +78,19 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
         goto done;
     }
 
-#ifdef HAVE_SELINUX
     char *secontext = NULL;
 
     if (sehandle) {
         selabel_lookup(sehandle, &secontext, mount_point, 0755);
         setfscreatecon(secontext);
     }
-#endif
 
     mkdir(mount_point, 0755);
 
-#ifdef HAVE_SELINUX
     if (secontext) {
         freecon(secontext);
         setfscreatecon(NULL);
     }
-#endif
 
     if (strcmp(partition_type, "MTD") == 0) {
         mtd_scan_partitions();
