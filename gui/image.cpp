@@ -32,6 +32,8 @@ GUIImage::GUIImage(xml_node<>* node)
     xml_node<>* child;
 
     mImage = NULL;
+	mHighlightImage = NULL;
+	isHighlighted = false;
 
     if (!node)
         return;
@@ -42,6 +44,9 @@ GUIImage::GUIImage(xml_node<>* node)
         attr = child->first_attribute("resource");
         if (attr)
             mImage = PageManager::FindResource(attr->value());
+		attr = child->first_attribute("highlightresource");
+        if (attr)
+            mHighlightImage = PageManager::FindResource(attr->value());
     }
 
     // Load the placement
@@ -75,7 +80,10 @@ GUIImage::GUIImage(xml_node<>* node)
 
 int GUIImage::Render(void)
 {
-    if (!mImage || !mImage->GetResource())      return -1;
+    if (isHighlighted && mHighlightImage && mHighlightImage->GetResource()) {
+		gr_blit(mHighlightImage->GetResource(), 0, 0, mRenderW, mRenderH, mRenderX, mRenderY);
+		return 0;
+	} else if (!mImage || !mImage->GetResource())      return -1;
     gr_blit(mImage->GetResource(), 0, 0, mRenderW, mRenderH, mRenderX, mRenderY);
     return 0;
 }

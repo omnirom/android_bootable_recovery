@@ -107,7 +107,7 @@ int GUIButton::Update(void)
 
     int ret = 0, ret2 = 0;
 
-    if (mButtonImg)         ret = mButtonImg->Update();
+    if (mButtonImg)             ret = mButtonImg->Update();
     if (ret < 0)            return ret;
 
     if (ret == 0)
@@ -188,7 +188,30 @@ int GUIButton::SetRenderPos(int x, int y, int w, int h)
 
 int GUIButton::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
-    if (!isConditionTrue())     return -1;
+	static int last_state = 0;
+
+	if (!isConditionTrue())     return -1;
+	if (x < mRenderX || x - mRenderX > mRenderW || y < mRenderY || y - mRenderY > mRenderH || state == TOUCH_RELEASE) {
+		if (last_state == 1) {
+			last_state = 0;
+			if (mButtonLabel != NULL)
+				mButtonLabel->isHighlighted = false;
+			if (mButtonImg != NULL)
+				mButtonImg->isHighlighted = false;
+			mRendered = false;
+		}
+	} else {
+		if (last_state == 0) {
+			last_state = 1;
+			if (mButtonLabel != NULL)
+				mButtonLabel->isHighlighted = true;
+			if (mButtonImg != NULL)
+				mButtonImg->isHighlighted = true;
+			mRendered = false;
+		}
+	}
+	if (x < mRenderX || x - mRenderX > mRenderW || y < mRenderY || y - mRenderY > mRenderH)
+		return 0;
     return (mAction ? mAction->NotifyTouch(state, x, y) : 1);
 }
 

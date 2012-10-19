@@ -174,16 +174,21 @@ public:
 	// Set number of characters to skip (for scrolling)
 	virtual int SkipCharCount(unsigned skip);
 
+public:
+	bool isHighlighted;
+
 protected:
     std::string mText;
     std::string mLastValue;
     COLOR mColor;
+	COLOR mHighlightColor;
     Resource* mFont;
     int mIsStatic;
     int mVarChanged;
     int mFontHeight;
 	unsigned maxWidth;
 	unsigned charSkip;
+	bool hasHighlightColor;
 
 protected:
     std::string parseText(void);
@@ -204,8 +209,12 @@ public:
     //  Return 0 on success, <0 on error
     virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
 
+public:
+	bool isHighlighted;
+
 protected:
     Resource* mImage;
+	Resource* mHighlightImage;
 };
 
 // GUIFill - Used for fill colors

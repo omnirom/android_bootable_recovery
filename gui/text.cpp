@@ -38,18 +38,29 @@ GUIText::GUIText(xml_node<>* node)
     mFontHeight = 0;
 	maxWidth = 0;
 	charSkip = 0;
+	isHighlighted = false;
+	hasHighlightColor = false;
 
     if (!node)      return;
 
     // Initialize color to solid black
     memset(&mColor, 0, sizeof(COLOR));
     mColor.alpha = 255;
+	memset(&mHighlightColor, 0, sizeof(COLOR));
+    mHighlightColor.alpha = 255;
 
     attr = node->first_attribute("color");
     if (attr)
     {
         std::string color = attr->value();
         ConvertStrToColor(color, &mColor);
+    }
+	attr = node->first_attribute("highlightcolor");
+    if (attr)
+    {
+        std::string color = attr->value();
+		ConvertStrToColor(color, &mHighlightColor);
+		hasHighlightColor = true;
     }
 
     // Load the font, and possibly override the color
@@ -65,6 +76,14 @@ GUIText::GUIText(xml_node<>* node)
         {
             std::string color = attr->value();
             ConvertStrToColor(color, &mColor);
+        }
+
+		attr = child->first_attribute("highlightcolor");
+        if (attr)
+        {
+            std::string color = attr->value();
+			ConvertStrToColor(color, &mHighlightColor);
+			hasHighlightColor = true;
         }
     }
 
@@ -117,7 +136,10 @@ int GUIText::Render(void)
             y -= mFontHeight;
     }
 
-    gr_color(mColor.red, mColor.green, mColor.blue, mColor.alpha);
+    if (hasHighlightColor && isHighlighted)
+		gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, mHighlightColor.alpha);
+	else
+		gr_color(mColor.red, mColor.green, mColor.blue, mColor.alpha);
 
 	if (maxWidth)
 		gr_textExW(x, y, displayValue.c_str(), fontResource, maxWidth + x);
