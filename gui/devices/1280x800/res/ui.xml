@@ -364,6 +364,7 @@
 			<object type="keyboard">
 				<placement x="0" y="438" />
 				<layout resource1="keyboard1" resource2="keyboard2" resource3="keyboard3" resource4="keyboard4" />
+				<highlight color="#90909080" />
 				<layout1>
 					<keysize height="91" width="106" />
 					<row1 key01="102:" key02="q" long02="1" key03="w" long03="2" key04="e" long04="3" key05="r" long05="4" key06="t" long06="5" key07="y" long07="6" key08="u" long08="7" key09="i" long09="8" key10="o" long10="9" key11="p" long11="0" key12="118:c:8" />

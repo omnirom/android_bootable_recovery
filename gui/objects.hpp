@@ -675,7 +675,9 @@ protected:
 	unsigned int currentLayout;
 	unsigned int row_heights[MAX_KEYBOARD_LAYOUTS][MAX_KEYBOARD_ROWS];
 	unsigned int KeyboardWidth, KeyboardHeight;
+	int rowY, colX, highlightRenderCount, hasHighlight;
 	GUIAction* mAction;
+	COLOR mHighlightColor;
 };
 
 // GUIInput - Used for keyboard input

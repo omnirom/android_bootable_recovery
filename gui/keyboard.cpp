@@ -1,4 +1,24 @@
-// keyboard.cpp - GUIKeyboard object
+/* keyboard.cpp - GUIKeyboard object
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
+ *
+ * The code was written from scratch by Dees_Troy dees_troy at
+ * yahoo
+ *
+ * Copyright (c) 2012
+ */
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -30,6 +50,8 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 	: Conditional(node)
 {
 	int layoutindex, rowindex, keyindex, Xindex, Yindex, keyHeight = 0, keyWidth = 0;
+	rowY = colX = -1;
+	highlightRenderCount = hasHighlight = 0;
 	char resource[9], layout[7], row[4], key[5], longpress[6];
 	xml_attribute<>* attr;
 	xml_node<>* child;
@@ -51,6 +73,17 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 	if (child)
 	{
 		mAction = new GUIAction(node);
+	}
+
+	memset(&mHighlightColor, 0, sizeof(COLOR));
+	child = node->first_node("highlight");
+	if (child) {
+		attr = child->first_attribute("color");
+		if (attr) {
+			hasHighlight = 1;
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mHighlightColor);
+		}
 	}
 
 	// Load the images for the different layouts
@@ -294,7 +327,26 @@ int GUIKeyboard::Render(void)
 	if (keyboardImg[currentLayout - 1] && keyboardImg[currentLayout - 1]->GetResource())
 		gr_blit(keyboardImg[currentLayout - 1]->GetResource(), 0, 0, KeyboardWidth, KeyboardHeight, mRenderX, mRenderY);
 
-	mRendered = true;
+	if (hasHighlight && highlightRenderCount != 0) {
+		int boxheight, boxwidth, x;
+		if (rowY == 0)
+			boxheight = row_heights[currentLayout - 1][rowY];
+		else
+			boxheight = row_heights[currentLayout - 1][rowY] - row_heights[currentLayout - 1][rowY - 1];
+		if (colX == 0) {
+			x = mRenderX;
+			boxwidth = keyboard_keys[currentLayout - 1][rowY][colX].end_x;
+		} else {
+			x = mRenderX + keyboard_keys[currentLayout - 1][rowY][colX - 1].end_x;
+			boxwidth = keyboard_keys[currentLayout - 1][rowY][colX].end_x - keyboard_keys[currentLayout - 1][rowY][colX - 1].end_x;
+		}
+		gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, mHighlightColor.alpha);
+		gr_fill(x, mRenderY + row_heights[currentLayout - 1][rowY - 1], boxwidth, boxheight);
+		if (highlightRenderCount > 0)
+			highlightRenderCount--;
+	} else
+		mRendered = true;
+
 	return ret;
 }
 
@@ -323,7 +375,7 @@ int GUIKeyboard::SetRenderPos(int x, int y, int w, int h)
 
 int GUIKeyboard::GetSelection(int x, int y)
 {
-	if (x < mRenderX || x - mRenderX > KeyboardWidth || y < mRenderY || y - mRenderY > KeyboardHeight) return -1;
+	if (x < mRenderX || x - mRenderX > (int)KeyboardWidth || y < mRenderY || y - mRenderY > (int)KeyboardHeight) return -1;
 	return 0;
 }
 
@@ -349,6 +401,7 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 			for (indexy=0; indexy<MAX_KEYBOARD_ROWS; indexy++) {
 				if (row_heights[currentLayout - 1][indexy] > rely) {
 					rowIndex = indexy;
+					rowY = indexy;
 					indexy = MAX_KEYBOARD_ROWS;
 				}
 			}
@@ -358,10 +411,19 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 				if (keyboard_keys[currentLayout - 1][rowIndex][indexx].end_x > relx) {
 					// This is the key that was pressed!
 					initial_key = keyboard_keys[currentLayout - 1][rowIndex][indexx].key;
+					colX = indexx;
 					indexx = MAX_KEYBOARD_KEYS;
 				}
 			}
+			if (initial_key != 0)
+				highlightRenderCount = -1;
+			else
+				highlightRenderCount = 0;
+			mRendered = false;
 		} else {
+			if (highlightRenderCount != 0)
+				mRendered = false;
+			highlightRenderCount = 0;
 			startSelection = 0;
 		}
 		break;
@@ -369,9 +431,17 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 		break;
 	case TOUCH_RELEASE:
 		if (x < startX - (KeyboardWidth * 0.5)) {
+			if (highlightRenderCount != 0) {
+				highlightRenderCount = 0;
+				mRendered = false;
+			}
 			PageManager::NotifyKeyboard(KEYBOARD_SWIPE_LEFT);
 			return 0;
 		} else if (x > startX + (KeyboardWidth * 0.5)) {
+			if (highlightRenderCount != 0) {
+				highlightRenderCount = 0;
+				mRendered = false;
+			}
 			PageManager::NotifyKeyboard(KEYBOARD_SWIPE_RIGHT);
 			return 0;
 		}
@@ -379,8 +449,19 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 	case TOUCH_HOLD:
 	case TOUCH_REPEAT:
 
-		if (startSelection == 0 || GetSelection(x, y) == -1)
+		if (startSelection == 0 || GetSelection(x, y) == -1) {
+			if (highlightRenderCount != 0) {
+				highlightRenderCount = 0;
+				mRendered = false;
+			}
 			return 0;
+		} else if (highlightRenderCount != 0) {
+			if (state == TOUCH_RELEASE)
+				highlightRenderCount = 2;
+			else
+				highlightRenderCount = -1;
+			mRendered = false;
+		}
 
 		// Find the correct row
 		for (indexy=0; indexy<MAX_KEYBOARD_ROWS; indexy++) {
@@ -408,6 +489,7 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 						mRendered = false;
 					} else if ((int)keyboard_keys[currentLayout - 1][rowIndex][indexx].key == KEYBOARD_ACTION) {
 						// Action
+						highlightRenderCount = 0;
 						if (mAction) {
 							// Keyboard has its own action defined
 							return (mAction ? mAction->NotifyTouch(state, x, y) : 1);

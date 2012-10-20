@@ -54,17 +54,24 @@ int ConvertStrToColor(std::string str, COLOR* color)
     if (str[0] != '#')          return -1;
     str.erase(0, 1);
 
-    int result = strtol(str.c_str(), NULL, 16);
-    if (str.size() > 6)
-    {
-        // We have alpha channel
-        color->alpha = result & 0x000000FF;
-        result = result >> 8;
-    }
-    color->red = (result >> 16) & 0x000000FF;
-    color->green = (result >> 8) & 0x000000FF;
-    color->blue = result & 0x000000FF;
-    return 0;
+	int result;
+	if (str.size() >= 8) {
+		// We have alpha channel
+		string alpha = str.substr(6, 2);
+		result = strtol(alpha.c_str(), NULL, 16);
+		color->alpha = result & 0x000000FF;
+		str.resize(6);
+		result = strtol(str.c_str(), NULL, 16);
+		color->red = (result >> 16) & 0x000000FF;
+		color->green = (result >> 8) & 0x000000FF;
+		color->blue = result & 0x000000FF;
+	} else {
+		result = strtol(str.c_str(), NULL, 16);
+		color->red = (result >> 16) & 0x000000FF;
+		color->green = (result >> 8) & 0x000000FF;
+		color->blue = result & 0x000000FF;
+	}
+	return 0;
 }
 
 // Helper APIs
