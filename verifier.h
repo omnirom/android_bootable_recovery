@@ -24,6 +24,8 @@
  */
 int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKeys);
 
+RSAPublicKey* load_keys(const char* filename, int* numKeys);
+
 #define VERIFY_SUCCESS        0
 #define VERIFY_FAILURE        1
 
