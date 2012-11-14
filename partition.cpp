@@ -359,6 +359,7 @@ bool TWPartition::Is_File_System(string File_System) {
 		File_System == "vfat" ||
 		File_System == "ntfs" ||
 		File_System == "yaffs2" ||
+		File_System == "exfat" ||
 		File_System == "auto")
 		return true;
 	else
