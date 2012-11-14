@@ -1680,7 +1680,7 @@
 				<actions>
 					<action function="set">tw_back=restore</action>
 					<action function="set">tw_action=cmd</action>
-					<action function="set">tw_action_param=cd %tw_backups_folder% && rm -rf %tw_restore_name%</action>
+					<action function="set">tw_action_param=cd %tw_backups_folder% && rm -rf &quot;%tw_restore_name%&quot;</action>
 					<action function="set">tw_text1=Delete Backup? %tw_restore_name%</action>
 					<action function="set">tw_text2=This cannot be undone!</action>
 					<action function="set">tw_action_text1=Deleting Backup...</action>

@@ -183,14 +183,19 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Has_Data_Media = true;
 			Is_Storage = true;
 			Storage_Path = "/data/media";
+			Symlink_Path = Storage_Path;
 			if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
 				Make_Dir("/emmc", Display_Error);
-				Symlink_Path = "/data/media";
 				Symlink_Mount_Point = "/emmc";
 			} else {
 				Make_Dir("/sdcard", Display_Error);
-				Symlink_Path = "/data/media";
 				Symlink_Mount_Point = "/sdcard";
+			}
+			if (Mount(false) && TWFunc::Path_Exists("/data/media/0")) {
+				Storage_Path = "/data/media/0";
+				Symlink_Path = Storage_Path;
+				DataManager::SetValue(TW_INTERNAL_PATH, "/data/media/0");
+				UnMount(true);
 			}
 #endif
 #ifdef TW_INCLUDE_CRYPTO
@@ -1054,24 +1059,27 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 		return false;
 
 	ui_print("Wiping data without wiping /data/media ...\n");
-	system("rm -f /data/*");
-	system("rm -f /data/.*");
 
 	DIR* d;
 	d = opendir("/data");
-	if (d != NULL)
-	{
+	if (d != NULL) {
 		struct dirent* de;
 		while ((de = readdir(d)) != NULL) {
-			if (strcmp(de->d_name, "media") == 0)   continue;
+			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)   continue;
+			// The media folder is the "internal sdcard"
+			// The .layout_version file is responsible for determining whether 4.2 decides up upgrade
+			//    the media folder for multi-user.
+			if (strcmp(de->d_name, "media") == 0 || strcmp(de->d_name, ".layout_version") == 0)   continue;
 
 			sprintf(cmd, "rm -fr /data/%s", de->d_name);
 			system(cmd);
 		}
 		closedir(d);
+		ui_print("Done.\n");
+		return true;
 	}
-	ui_print("Done.\n");
-	return true;
+	ui_print("Dirent failed to open /data, error!\n");
+	return false;
 }
 
 bool TWPartition::Backup_Tar(string backup_folder) {

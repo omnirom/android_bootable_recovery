@@ -1582,6 +1582,15 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 			ui_print("Data successfully decrypted, new block device: '%s'\n", crypto_blkdev);
 			// Sleep for a bit so that the device will be ready
 			sleep(1);
+#ifdef RECOVERY_SDCARD_ON_DATA
+			if (dat->Mount(false) && TWFunc::Path_Exists("/data/media/0")) {
+				dat->Storage_Path = "/data/media/0";
+				dat->Symlink_Path = dat->Storage_Path;
+				DataManager::SetValue(TW_INTERNAL_PATH, "/data/media/0");
+				dat->UnMount(false);
+				DataManager::SetBackupFolder();
+			}
+#endif
 			Update_System_Details();
 			UnMount_Main_Partitions();
 		} else
