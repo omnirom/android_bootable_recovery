@@ -27,7 +27,7 @@ class fixPermissions {
 		int fixSystemApps();
 		int fixDataApps();
 		int fixAllFiles(string directory, int gid, int uid, string file_perms);
-		int fixDataData();
+		int fixDataData(string dataDir);
 		struct package {
 			string pkgName;
 			string codePath;
@@ -40,6 +40,7 @@ class fixPermissions {
 		};
 		bool debug;
 		bool remove_data;
+		bool multi_user;
 		package* head;
 		package* temp;		
 		string packageFile;

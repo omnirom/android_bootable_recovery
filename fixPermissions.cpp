@@ -38,6 +38,7 @@ int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_app
 	packageFile = "/data/system/packages.xml";
 	debug = enable_debug;
 	remove_data = remove_data_for_missing_apps;
+	multi_user = TWFunc::Path_Exists("/data/user");
 
 	if (!(TWFunc::Path_Exists(packageFile))) {
 		ui_print("Can't check permissions\n");
@@ -63,9 +64,57 @@ int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_app
 		return -1;
 	}
 
-	ui_print("Fixing /data/data permisions...\n");
-	if ((fixDataData()) != 0) {
-		return -1;
+	if (multi_user) {
+		DIR *d = opendir("/data/user");
+		string new_path, user_id;
+
+		if (d == NULL) {
+			LOGE("Error opening '/data/user'\n");
+			return -1;
+		}
+
+		if (d) {
+			struct dirent *p;
+			while ((p = readdir(d))) {
+				if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+					continue;
+
+				new_path = "/data/user/";
+				new_path.append(p->d_name);
+				user_id = "u";
+				user_id += p->d_name;
+				user_id += "_";
+				if (p->d_type == DT_LNK) {
+					char link[512], realPath[512];
+					strcpy(link, new_path.c_str());
+					memset(realPath, 0, sizeof(realPath));
+					while (readlink(link, realPath, sizeof(realPath)) > 0) {
+						strcpy(link, realPath);
+						memset(realPath, 0, sizeof(realPath));
+					}
+					new_path = link;
+				} else if (p->d_type != DT_DIR) {
+					continue;
+				} else {
+					new_path.append("/");
+					// We're probably going to need to fix permissions on multi user but
+					// it will have to wait for another time. Need to figure out where
+					// the uid and gid is stored for other users.
+					continue;
+				}
+				ui_print("Fixing %s permissions...\n", new_path.c_str());
+				if ((fixDataData(new_path)) != 0) {
+					closedir(d);
+					return -1;
+				}
+			}
+			closedir(d);
+		}
+	} else {
+		ui_print("Fixing /data/data permisions...\n");
+		if ((fixDataData("/data/data/")) != 0) {
+			return -1;
+		}
 	}
 	ui_print("Done fixing permissions.\n");
 	return 0;
@@ -305,20 +354,21 @@ int fixPermissions::fixAllFiles(string directory, int gid, int uid, string file_
 	return 0;
 }
 
-int fixPermissions::fixDataData() {
-	string directory;
+int fixPermissions::fixDataData(string dataDir) {
+	string directory, dir;
 
 	temp = head;
 	while (temp != NULL) {
-		if (TWFunc::Path_Exists(temp->dDir)) {
-			vector <string> dataDataDirs = listAllDirectories(temp->dDir);
+		dir = dataDir + temp->dDir;
+		if (TWFunc::Path_Exists(dir)) {
+			vector <string> dataDataDirs = listAllDirectories(dir);
 			for (unsigned n = 0; n < dataDataDirs.size(); ++n) {
-				directory = temp->dDir + "/";
+				directory = dir + "/";
 				directory.append(dataDataDirs.at(n));
 				if (debug)
 					LOGI("Looking at data directory: '%s'\n", directory.c_str());
 				if (dataDataDirs.at(n) == ".") {
-					if (pchmod(temp->dDir, "0755") != 0)
+					if (pchmod(directory, "0755") != 0)
 						return -1;
 					if (pchown(directory.c_str(), temp->uid, temp->gid) != 0)
 						return -1;
@@ -379,14 +429,13 @@ int fixPermissions::fixDataData() {
 
 vector <string> fixPermissions::listAllDirectories(string path) {
 	DIR *dir = opendir(path.c_str());
-	struct dirent *entry = readdir(dir);
 	vector <string> dirs;
 
 	if (dir == NULL) {
 		LOGE("Error opening '%s'\n", path.c_str());
 		return dirs;
 	}
-
+	struct dirent *entry = readdir(dir);
 	while (entry != NULL) {
 		if (entry->d_type == DT_DIR)
 			dirs.push_back(entry->d_name);
@@ -398,14 +447,13 @@ vector <string> fixPermissions::listAllDirectories(string path) {
 
 vector <string> fixPermissions::listAllFiles(string path) {
 	DIR *dir = opendir(path.c_str());
-	struct dirent *entry = readdir(dir);
 	vector <string> files;
 
 	if (dir == NULL) {
 		LOGE("Error opening '%s'\n", path.c_str());
 		return files;
 	}
-
+	struct dirent *entry = readdir(dir);
 	while (entry != NULL) {
 		if (entry->d_type == DT_REG)
 			files.push_back(entry->d_name);
@@ -419,7 +467,6 @@ int fixPermissions::getPackages() {
 	int len = 0;
 	bool skiploop = false;
 	vector <string> skip;
-	string dataDir;
 	string name;
 	head = NULL;
 
@@ -466,25 +513,32 @@ int fixPermissions::getPackages() {
 		temp->pkgName = next->first_attribute("name")->value();
 		if (debug)
 			LOGI("Loading pkg: %s\n", next->first_attribute("name")->value());
-		temp->codePath = next->first_attribute("codePath")->value();
-		temp->app = basename(next->first_attribute("codePath")->value());
-		temp->appDir = dirname(next->first_attribute("codePath")->value());
-		dataDir.append("/data/data/");
-		dataDir.append(name);
-		temp->dDir = dataDir;
+		if (next->first_attribute("codePath") == NULL) {
+			LOGI("Problem with codePath on %s\n", next->first_attribute("name")->value());
+		} else {
+			temp->codePath = next->first_attribute("codePath")->value();
+			temp->app = basename(next->first_attribute("codePath")->value());
+			temp->appDir = dirname(next->first_attribute("codePath")->value());
+		}
+		temp->dDir = name;
 		if ( next->first_attribute("sharedUserId") != NULL) {
 			temp->uid = atoi(next->first_attribute("sharedUserId")->value());
 			temp->gid = atoi(next->first_attribute("sharedUserId")->value());
 		}
 		else {
-			temp->uid = atoi(next->first_attribute("userId")->value());
-			temp->gid = atoi(next->first_attribute("userId")->value());
+			if (next->first_attribute("userId") == NULL) {
+				LOGI("Problem with userID on %s\n", next->first_attribute("name")->value());
+			} else {
+				temp->uid = atoi(next->first_attribute("userId")->value());
+				temp->gid = atoi(next->first_attribute("userId")->value());
+			}
 		}
-		next = next->next_sibling();
-		name.clear();
-		dataDir.clear();
 		temp->next = head;
 		head = temp;
+		if (next->next_sibling("package") == NULL)
+			break;
+		name.clear();
+		next = next->next_sibling("package");
 	}
 	//Get updated packages	
 	next = pkgNode->first_node("updated-package");
@@ -510,26 +564,33 @@ int fixPermissions::getPackages() {
 			temp->pkgName = next->first_attribute("name")->value();
 			if (debug)
 				LOGI("Loading pkg: %s\n", next->first_attribute("name")->value());
-			temp->codePath = next->first_attribute("codePath")->value();
-			temp->app = basename(next->first_attribute("codePath")->value());
-			temp->appDir = dirname(next->first_attribute("codePath")->value());
+			if (next->first_attribute("codePath") == NULL) {
+				LOGI("Problem with codePath on %s\n", next->first_attribute("name")->value());
+			} else {
+				temp->codePath = next->first_attribute("codePath")->value();
+				temp->app = basename(next->first_attribute("codePath")->value());
+				temp->appDir = dirname(next->first_attribute("codePath")->value());
+			}
 
-			dataDir.append("/data/data/");
-			dataDir.append(name);
-			temp->dDir = dataDir;
+			temp->dDir = name;
 			if ( next->first_attribute("sharedUserId") != NULL) {
 				temp->uid = atoi(next->first_attribute("sharedUserId")->value());
 				temp->gid = atoi(next->first_attribute("sharedUserId")->value());
 			}
 			else {
-				temp->uid = atoi(next->first_attribute("userId")->value());
-				temp->gid = atoi(next->first_attribute("userId")->value());
+				if (next->first_attribute("userId") == NULL) {
+					LOGI("Problem with userID on %s\n", next->first_attribute("name")->value());
+				} else {
+					temp->uid = atoi(next->first_attribute("userId")->value());
+					temp->gid = atoi(next->first_attribute("userId")->value());
+				}
 			}
-			next = next->next_sibling();
-			name.clear();
-			dataDir.clear();
 			temp->next = head;
 			head = temp;
+			if (next->next_sibling("package") == NULL)
+				break;
+			name.clear();
+			next = next->next_sibling("package");
 		}
 	}
 	return 0;
