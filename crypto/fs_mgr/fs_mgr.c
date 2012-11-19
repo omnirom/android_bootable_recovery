@@ -499,7 +499,7 @@ int fs_mgr_do_mount(char *fstab_file, char *n_name, char *n_blk_dev, char *tmp_m
             wait_for_file(fstab[i].blk_dev, WAIT_TIMEOUT);
         }
 
-        if (fstab[i].fs_mgr_flags & MF_CHECK) {
+        if ((fstab[i].fs_mgr_flags & MF_CHECK) && strcmp("ext4", fstab[i].type) != 0) {
             check_fs(fstab[i].blk_dev, fstab[i].type);
         }
 
