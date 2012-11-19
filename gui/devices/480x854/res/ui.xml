@@ -1828,7 +1828,7 @@
 				<actions>
 					<action function="set">tw_back=restore</action>
 					<action function="set">tw_action=cmd</action>
-					<action function="set">tw_action_param=cd %tw_backups_folder% && mv %tw_restore_name% %tw_backup_rename%</action>
+					<action function="set">tw_action_param=cd %tw_backups_folder% && mv &quot;%tw_restore_name%&quot; &quot;%tw_backup_rename%&quot;</action>
 					<action function="set">tw_text1=Rename Backup?</action>
 					<action function="set">tw_text2=This cannot be undone!</action>
 					<action function="set">tw_action_text1=Renaming Backup...</action>
