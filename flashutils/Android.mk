@@ -1,7 +1,6 @@
 LOCAL_PATH := $(call my-dir)
 
 ifneq ($(TARGET_SIMULATOR),true)
-ifeq ($(TARGET_ARCH),arm)
 
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := flashutils.c
@@ -153,5 +152,4 @@ LOCAL_SHARED_LIBRARIES := libflashutils libmmcutils libbmlutils libcutils libc
 LOCAL_STATIC_LIBRARIES := libmtdutils
 include $(BUILD_EXECUTABLE)
 
-endif	# TARGET_ARCH == arm
 endif	# !TARGET_SIMULATOR
