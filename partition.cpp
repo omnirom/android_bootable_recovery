@@ -1300,8 +1300,21 @@ bool TWPartition::Restore_DD(string restore_folder) {
 	string Full_FileName, Command;
 
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, "Restoring");
-	ui_print("Restoring %s...\n", Display_Name.c_str());
 	Full_FileName = restore_folder + "/" + Backup_FileName;
+
+	if (!Find_Partition_Size()) {
+		LOGE("Unable to find partition size for '%s'\n", Mount_Point.c_str());
+		return false;
+	}
+	unsigned long long backup_size = TWFunc::Get_File_Size(Full_FileName);
+	if (backup_size > Size) {
+		LOGE("Size (%iMB) of backup '%s' is larger than target device '%s' (%iMB)\n",
+			(int)(backup_size / 1048576LLU), Full_FileName.c_str(),
+			Actual_Block_Device.c_str(), (int)(Size / 1048576LLU));
+		return false;
+	}
+
+	ui_print("Restoring %s...\n", Display_Name.c_str());
 	Command = "dd bs=4096 if='" + Full_FileName + "' of=" + Actual_Block_Device;
 	LOGI("Restore command: '%s'\n", Command.c_str());
 	system(Command.c_str());
