@@ -1483,6 +1483,8 @@ void TWPartitionManager::Update_System_Details(void) {
 					DataManager::SetValue(TW_BACKUP_RECOVERY_VAR, 0);
 				} else
 					DataManager::SetValue(TW_HAS_RECOVERY_PARTITION, 1);
+			} else if ((*iter)->Mount_Point == "/data") {
+				data_size += (int)((*iter)->Backup_Size / 1048576LLU);
 			}
 #ifdef SP1_NAME
 			if ((*iter)->Backup_Name == EXPAND(SP1_NAME)) {
@@ -1581,6 +1583,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 			DataManager::SetValue(TW_IS_DECRYPTED, 1);
 			dat->Is_Decrypted = true;
 			dat->Decrypted_Block_Device = crypto_blkdev;
+			dat->Setup_File_System(false);
 			ui_print("Data successfully decrypted, new block device: '%s'\n", crypto_blkdev);
 			// Sleep for a bit so that the device will be ready
 			sleep(1);
