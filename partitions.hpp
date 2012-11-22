@@ -49,6 +49,7 @@ public:
 	virtual bool Is_Mounted();                                                // Checks mount to see if the partition is currently mounted
 	virtual bool Mount(bool Display_Error);                                   // Mounts the partition if it is not mounted
 	virtual bool UnMount(bool Display_Error);                                 // Unmounts the partition if it is mounted
+	virtual bool Wipe(string New_File_System);                                // Wipes the partition
 	virtual bool Wipe();                                                      // Wipes the partition
 	virtual bool Wipe_AndSec();                                               // Wipes android secure
 	virtual bool Backup(string backup_folder);                                // Backs up the partition to the folder specified
@@ -116,7 +117,7 @@ private:
 	void Find_Real_Block_Device(string& Block_Device, bool Display_Error);    // Checks the block device given and follows symlinks until it gets to the real block device
 	bool Find_Partition_Size();                                               // Finds the partition size from /proc/partitions
 	unsigned long long Get_Size_Via_du(string Path, bool Display_Error);      // Uses du to get sizes
-	bool Wipe_EXT23();                                                        // Formats as ext3 or ext2
+	bool Wipe_EXT23(string File_System);                                      // Formats as ext3 or ext2
 	bool Wipe_EXT4();                                                         // Formats using ext4, uses make_ext4fs when present
 	bool Wipe_FAT();                                                          // Formats as FAT except that mkdosfs from busybox usually fails so oftentimes this is actually a rm -rf wipe
 	bool Wipe_MTD();                                                          // Formats as yaffs2 for MTD memory types
@@ -125,7 +126,7 @@ private:
 	bool Backup_Tar(string backup_folder);                                    // Backs up using tar for file systems
 	bool Backup_DD(string backup_folder);                                     // Backs up using dd for emmc memory types
 	bool Backup_Dump_Image(string backup_folder);                             // Backs up using dump_image for MTD memory types
-	bool Restore_Tar(string restore_folder);                                  // Restore using tar for file systems
+	bool Restore_Tar(string restore_folder, string Restore_File_System);      // Restore using tar for file systems
 	bool Restore_DD(string restore_folder);                                   // Restore using dd for emmc memory types
 	bool Restore_Flash_Image(string restore_folder);                          // Restore using flash_image for MTD memory types
 	bool Get_Size_Via_statfs(bool Display_Error);                             // Get Partition size, used, and free space using statfs
