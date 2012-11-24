@@ -629,14 +629,14 @@ void DataManager::SetDefaultValues()
     if (strlen(EXPAND(SP2_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_DISPLAY_NAME)));
 #else
 	#ifdef SP2_NAME
-		if (strlen(EXPAND(SP2_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP2_NAME)));
+		if (strlen(EXPAND(SP2_NAME)))    mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_NAME)));
 	#endif
 #endif
 #ifdef SP3_DISPLAY_NAME
     if (strlen(EXPAND(SP3_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_DISPLAY_NAME)));
 #else
 	#ifdef SP3_NAME
-		if (strlen(EXPAND(SP3_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP3_NAME)));
+		if (strlen(EXPAND(SP3_NAME)))    mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_NAME)));
 	#endif
 #endif
 
