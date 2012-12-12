@@ -1245,6 +1245,7 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 	if (!Mount(true))
 		return false;
 
+	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, "Restoring");
 	ui_print("Restoring %s...\n", Display_Name.c_str());
 	Full_FileName = restore_folder + "/" + Backup_FileName;
 	if (!TWFunc::Path_Exists(Full_FileName)) {
@@ -1276,6 +1277,7 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 bool TWPartition::Restore_DD(string restore_folder) {
 	string Full_FileName, Command;
 
+	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, "Restoring");
 	ui_print("Restoring %s...\n", Display_Name.c_str());
 	Full_FileName = restore_folder + "/" + Backup_FileName;
 	Command = "dd bs=4096 if='" + Full_FileName + "' of=" + Actual_Block_Device;
