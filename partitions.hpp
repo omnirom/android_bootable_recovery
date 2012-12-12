@@ -106,6 +106,7 @@ protected:
 	string Storage_Path;                                                      // Indicates the path to the storage -- root indicates mount point, media/ indicates e.g. /data/media
 	string Fstab_File_System;                                                 // File system from the recovery.fstab
 	int Format_Block_Size;                                                    // Block size for formatting
+	bool Ignore_Blkid;                                                        // Ignore blkid results due to superblocks lying to us on certain devices / partitions
 
 private:
 	bool Process_Flags(string Flags, bool Display_Error);                     // Process custom fstab flags

@@ -160,6 +160,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Has_Android_Secure ");
 	if (Part->Is_Storage)
 		printf("Is_Storage ");
+	if (Part->Ignore_Blkid)
+		printf("Ignore_Blkid ");
 	printf("\n");
 	if (!Part->SubPartition_Of.empty())
 		printf("   SubPartition_Of: %s\n", Part->SubPartition_Of.c_str());

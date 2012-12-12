@@ -82,6 +82,7 @@ TWPartition::TWPartition(void) {
 	Current_File_System = "";
 	Fstab_File_System = "";
 	Format_Block_Size = 0;
+	Ignore_Blkid = false;
 }
 
 TWPartition::~TWPartition(void) {
@@ -152,6 +153,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 				// Custom flags, save for later so that new values aren't overwritten by defaults
 				ptr += 6;
 				Flags = ptr;
+				Process_Flags(Flags, Display_Error);
 			} else if (strlen(ptr) == 4 && (strncmp(ptr, "NULL", 4) == 0 || strncmp(ptr, "null", 4) == 0 || strncmp(ptr, "null", 4) == 0)) {
 				// Do nothing
 			} else {
@@ -333,6 +335,8 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			ptr += 13;
 			Is_SubPartition = true;
 			SubPartition_Of = ptr;
+		} else if (strcmp(ptr, "ignoreblkid") == 0) {
+			Ignore_Blkid = true;
 		} else if (strlen(ptr) > 8 && strncmp(ptr, "symlink=", 8) == 0) {
 			ptr += 8;
 			Symlink_Path = ptr;
@@ -881,8 +885,8 @@ void TWPartition::Check_FS_Type() {
 	char* arg;
 	char* ptr;
 
-	if (Fstab_File_System == "yaffs2" || Fstab_File_System == "mtd" || Fstab_File_System == "bml")
-		return; // Running blkid on some mtd devices causes a massive crash
+	if (Fstab_File_System == "yaffs2" || Fstab_File_System == "mtd" || Fstab_File_System == "bml" || Ignore_Blkid)
+		return; // Running blkid on some mtd devices causes a massive crash or needs to be skipped
 
 	Find_Actual_Block_Device();
 	if (!Is_Present)
