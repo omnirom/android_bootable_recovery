@@ -129,68 +129,68 @@ void TWPartitionManager::Output_Partition_Logging(void) {
 void TWPartitionManager::Output_Partition(TWPartition* Part) {
 	unsigned long long mb = 1048576;
 
+	printf("%s | %s | Size: %iMB", Part->Mount_Point.c_str(), Part->Actual_Block_Device.c_str(), (int)(Part->Size / mb));
 	if (Part->Can_Be_Mounted) {
-		printf("%s | %s | Size: %iMB Used: %iMB Free: %iMB Backup Size: %iMB\n   Flags: ", Part->Mount_Point.c_str(), Part->Actual_Block_Device.c_str(), (int)(Part->Size / mb), (int)(Part->Used / mb), (int)(Part->Free / mb), (int)(Part->Backup_Size / mb));
-		if (Part->Can_Be_Wiped)
-			printf("Can_Be_Wiped ");
-		if (Part->Wipe_During_Factory_Reset)
-			printf("Wipe_During_Factory_Reset ");
-		if (Part->Wipe_Available_in_GUI)
-			printf("Wipe_Available_in_GUI ");
-		if (Part->Is_SubPartition)
-			printf("Is_SubPartition ");
-		if (Part->Has_SubPartition)
-			printf("Has_SubPartition ");
-		if (Part->Removable)
-			printf("Removable ");
-		if (Part->Is_Present)
-			printf("IsPresent ");
-		if (Part->Can_Be_Encrypted)
-			printf("Can_Be_Encrypted ");
-		if (Part->Is_Encrypted)
-			printf("Is_Encrypted ");
-		if (Part->Is_Decrypted)
-			printf("Is_Decrypted ");
-		if (Part->Has_Data_Media)
-			printf("Has_Data_Media ");
-		if (Part->Has_Android_Secure)
-			printf("Has_Android_Secure ");
-		if (Part->Is_Storage)
-			printf("Is_Storage ");
-		printf("\n");
-		if (!Part->SubPartition_Of.empty())
-			printf("   SubPartition_Of: %s\n", Part->SubPartition_Of.c_str());
-		if (!Part->Symlink_Path.empty())
-			printf("   Symlink_Path: %s\n", Part->Symlink_Path.c_str());
-		if (!Part->Symlink_Mount_Point.empty())
-			printf("   Symlink_Mount_Point: %s\n", Part->Symlink_Mount_Point.c_str());
-		if (!Part->Primary_Block_Device.empty())
-			printf("   Primary_Block_Device: %s\n", Part->Primary_Block_Device.c_str());
-		if (!Part->Alternate_Block_Device.empty())
-			printf("   Alternate_Block_Device: %s\n", Part->Alternate_Block_Device.c_str());
-		if (!Part->Decrypted_Block_Device.empty())
-			printf("   Decrypted_Block_Device: %s\n", Part->Decrypted_Block_Device.c_str());
-		if (Part->Length != 0)
-			printf("   Length: %i\n", Part->Length);
-		if (!Part->Display_Name.empty())
-			printf("   Display_Name: %s\n", Part->Display_Name.c_str());
-		if (!Part->Backup_Path.empty())
-			printf("   Backup_Path: %s\n", Part->Backup_Path.c_str());
-		if (!Part->Backup_Name.empty())
-			printf("   Backup_Name: %s\n", Part->Backup_Name.c_str());
-		if (!Part->Backup_FileName.empty())
-			printf("   Backup_FileName: %s\n", Part->Backup_FileName.c_str());
-		if (!Part->Storage_Path.empty())
-			printf("   Storage_Path: %s\n", Part->Storage_Path.c_str());
-		if (!Part->Current_File_System.empty())
-			printf("   Current_File_System: %s\n", Part->Current_File_System.c_str());
-		if (!Part->Fstab_File_System.empty())
-			printf("   Fstab_File_System: %s\n", Part->Fstab_File_System.c_str());
-		if (Part->Format_Block_Size != 0)
-			printf("   Format_Block_Size: %i\n", Part->Format_Block_Size);
-	} else {
-		printf("%s | %s | Size: %iMB\n", Part->Mount_Point.c_str(), Part->Actual_Block_Device.c_str(), (int)(Part->Size / mb));
+		printf(" Used: %iMB Free: %iMB Backup Size: %iMB", (int)(Part->Used / mb), (int)(Part->Free / mb), (int)(Part->Backup_Size / mb));
 	}
+	printf("\n   Flags: ");
+	if (Part->Can_Be_Wiped)
+		printf("Can_Be_Wiped ");
+	if (Part->Wipe_During_Factory_Reset)
+		printf("Wipe_During_Factory_Reset ");
+	if (Part->Wipe_Available_in_GUI)
+		printf("Wipe_Available_in_GUI ");
+	if (Part->Is_SubPartition)
+		printf("Is_SubPartition ");
+	if (Part->Has_SubPartition)
+		printf("Has_SubPartition ");
+	if (Part->Removable)
+		printf("Removable ");
+	if (Part->Is_Present)
+		printf("IsPresent ");
+	if (Part->Can_Be_Encrypted)
+		printf("Can_Be_Encrypted ");
+	if (Part->Is_Encrypted)
+		printf("Is_Encrypted ");
+	if (Part->Is_Decrypted)
+		printf("Is_Decrypted ");
+	if (Part->Has_Data_Media)
+		printf("Has_Data_Media ");
+	if (Part->Has_Android_Secure)
+		printf("Has_Android_Secure ");
+	if (Part->Is_Storage)
+		printf("Is_Storage ");
+	printf("\n");
+	if (!Part->SubPartition_Of.empty())
+		printf("   SubPartition_Of: %s\n", Part->SubPartition_Of.c_str());
+	if (!Part->Symlink_Path.empty())
+		printf("   Symlink_Path: %s\n", Part->Symlink_Path.c_str());
+	if (!Part->Symlink_Mount_Point.empty())
+		printf("   Symlink_Mount_Point: %s\n", Part->Symlink_Mount_Point.c_str());
+	if (!Part->Primary_Block_Device.empty())
+		printf("   Primary_Block_Device: %s\n", Part->Primary_Block_Device.c_str());
+	if (!Part->Alternate_Block_Device.empty())
+		printf("   Alternate_Block_Device: %s\n", Part->Alternate_Block_Device.c_str());
+	if (!Part->Decrypted_Block_Device.empty())
+		printf("   Decrypted_Block_Device: %s\n", Part->Decrypted_Block_Device.c_str());
+	if (Part->Length != 0)
+		printf("   Length: %i\n", Part->Length);
+	if (!Part->Display_Name.empty())
+		printf("   Display_Name: %s\n", Part->Display_Name.c_str());
+	if (!Part->Backup_Path.empty())
+		printf("   Backup_Path: %s\n", Part->Backup_Path.c_str());
+	if (!Part->Backup_Name.empty())
+		printf("   Backup_Name: %s\n", Part->Backup_Name.c_str());
+	if (!Part->Backup_FileName.empty())
+		printf("   Backup_FileName: %s\n", Part->Backup_FileName.c_str());
+	if (!Part->Storage_Path.empty())
+		printf("   Storage_Path: %s\n", Part->Storage_Path.c_str());
+	if (!Part->Current_File_System.empty())
+		printf("   Current_File_System: %s\n", Part->Current_File_System.c_str());
+	if (!Part->Fstab_File_System.empty())
+		printf("   Fstab_File_System: %s\n", Part->Fstab_File_System.c_str());
+	if (Part->Format_Block_Size != 0)
+		printf("   Format_Block_Size: %i\n", Part->Format_Block_Size);
 	if (!Part->MTD_Name.empty())
 		printf("   MTD_Name: %s\n", Part->MTD_Name.c_str());
 	string back_meth = Part->Backup_Method_By_Name();
