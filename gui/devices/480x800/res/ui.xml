@@ -2116,6 +2116,18 @@
 				<action function="page">usb_mount</action>
 			</object>
 
+			<object type="button">
+				<conditions>
+					<condition var1="tw_is_encrypted" var2="1" />
+					<condition var1="tw_is_decrypted" var2="0" />
+				</conditions>
+				<placement x="%col2_x%" y="row3_y" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Decrypt Data</text>
+				<image resource="main_button" />
+				<action function="page">decrypt</action>
+			</object>
+
 			<object type="action">
 				<touch key="home" />
 				<action function="page">main</action>
