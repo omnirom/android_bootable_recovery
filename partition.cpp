@@ -656,7 +656,25 @@ bool TWPartition::Mount(bool Display_Error) {
 	// Check the current file system before mounting
 	Check_FS_Type();
 
-	if (mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), Current_File_System.c_str(), 0, NULL) != 0) {
+	if (Fstab_File_System == "yaffs2") {
+		// mount an MTD partition as a YAFFS2 filesystem.
+		mtd_scan_partitions();
+		const MtdPartition* partition;
+		partition = mtd_find_partition_by_name(MTD_Name.c_str());
+		if (partition == NULL) {
+			LOGE("Failed to find '%s' partition to mount at '%s'\n",
+			MTD_Name.c_str(), Mount_Point.c_str());
+			return false;
+		}
+		if (mtd_mount_partition(partition, Mount_Point.c_str(), Fstab_File_System.c_str(), 0)) {
+			if (Display_Error)
+				LOGE("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
+			else
+				LOGI("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
+			return false;
+		} else
+			return true;
+	} else if (mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), Current_File_System.c_str(), 0, NULL) != 0) {
 		if (Display_Error)
 			LOGE("Unable to mount '%s'\n", Mount_Point.c_str());
 		else
