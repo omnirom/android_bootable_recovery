@@ -327,7 +327,7 @@
 					<row1 key01="q" long01="1" key02="w" long02="2" key03="e" long03="3" key04="r" long04="4" key05="t" long05="5" key06="y" long06="6" key07="u" long07="7" key08="i" long08="8" key09="o" long09="9" key10="p" long10="0" />
 					<row2 key01="108:a" key02="s" key03="d" key04="f" key05="g" key06="h" key07="j" key08="k" key09="108:l" />
 					<row3 key01="108:layout2" key02="z" key03="x" key04="c" key05="v" key06="b" key07="n" key08="m" key09="108:c:8" />
-					<row4 key01="104:layout3" key02="150:" key03="390: " key04="80:." key05="180:a:action" />
+					<row4 key01="117:layout3" key02="80:" key03="400: " key04="80:." key05="123:a:action" />
 				</layout1>
 				<layout2>
 					<keysize height="116" width="80" />
