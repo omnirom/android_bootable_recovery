@@ -186,7 +186,7 @@ unsigned long long TWFunc::Get_Folder_Size(string Path, bool Display_Error) {
 	DIR* d;
 	struct dirent* de;
 	struct stat st;
-	char path2[1024], filename[1024];
+	char path2[4096], filename[4096];
 	unsigned long long dusize = 0;
 
 	// Make a copy of path in case the data in the pointer gets overwritten later
