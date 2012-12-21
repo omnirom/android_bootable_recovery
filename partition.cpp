@@ -733,24 +733,38 @@ bool TWPartition::Wipe(string New_File_System) {
 		return Wipe_Data_Without_Wiping_Media();
 
 	int check;
+	bool wiped = false;
 	DataManager::GetValue(TW_RM_RF_VAR, check);
+
 	if (check)
-		return Wipe_RMRF();
+		wiped = Wipe_RMRF();
+	else if (New_File_System == "ext4")
+		wiped = Wipe_EXT4();
+	else if (New_File_System == "ext2" || New_File_System == "ext3")
+		wiped = Wipe_EXT23(New_File_System);
+	else if (New_File_System == "vfat")
+		wiped = Wipe_FAT();
+	else if (New_File_System == "yaffs2")
+		wiped = Wipe_MTD();
+	else {
+		LOGE("Unable to wipe '%s' -- unknown file system '%s'\n", Mount_Point.c_str(), New_File_System.c_str());
+		return false;
+	}
 
-	if (New_File_System == "ext4")
-		return Wipe_EXT4();
-
-	if (New_File_System == "ext2" || New_File_System == "ext3")
-		return Wipe_EXT23(New_File_System);
-
-	if (New_File_System == "vfat")
-		return Wipe_FAT();
-
-	if (New_File_System == "yaffs2")
-		return Wipe_MTD();
-
-	LOGE("Unable to wipe '%s' -- unknown file system '%s'\n", Mount_Point.c_str(), New_File_System.c_str());
-	return false;
+	if (wiped) {
+		Setup_File_System(false);
+		if (Is_Encrypted && !Is_Decrypted) {
+			// just wiped an encrypted partition back to its unencrypted state
+			Is_Encrypted = false;
+			Is_Decrypted = false;
+			Decrypted_Block_Device = "";
+			if (Mount_Point == "/data") {
+				DataManager::SetValue(TW_IS_ENCRYPTED, 0);
+				DataManager::SetValue(TW_IS_DECRYPTED, 0);
+			}
+		}
+	}
+	return wiped;
 }
 
 bool TWPartition::Wipe() {
@@ -875,12 +889,8 @@ bool TWPartition::Wipe_Encryption() {
 	if (!UnMount(true))
 		return false;
 
-	Current_File_System = Fstab_File_System;
-	Is_Encrypted = false;
-	Is_Decrypted = false;
-	Decrypted_Block_Device = "";
 	Has_Data_Media = false;
-	if (Wipe()) {
+	if (Wipe(Fstab_File_System)) {
 		Has_Data_Media = Save_Data_Media;
 		if (Has_Data_Media && !Symlink_Mount_Point.empty()) {
 			Recreate_Media_Folder();
@@ -982,6 +992,7 @@ bool TWPartition::Wipe_EXT23(string File_System) {
 		sprintf(command, "mke2fs -t %s -m 0 %s", File_System.c_str(), Actual_Block_Device.c_str());
 		LOGI("mke2fs command: %s\n", command);
 		if (system(command) == 0) {
+			Current_File_System = File_System;
 			Recreate_AndSec_Folder();
 			ui_print("Done.\n");
 			return true;
@@ -1015,6 +1026,7 @@ bool TWPartition::Wipe_EXT4() {
 		Command += " " + Actual_Block_Device;
 		LOGI("make_ext4fs command: %s\n", Command.c_str());
 		if (system(Command.c_str()) == 0) {
+			Current_File_System = "ext4";
 			Recreate_AndSec_Folder();
 			ui_print("Done.\n");
 			return true;
@@ -1039,6 +1051,7 @@ bool TWPartition::Wipe_FAT() {
 		Find_Actual_Block_Device();
 		sprintf(command,"mkdosfs %s", Actual_Block_Device.c_str()); // use mkdosfs to format it
 		if (system(command) == 0) {
+			Current_File_System = "vfat";
 			Recreate_AndSec_Folder();
 			ui_print("Done.\n");
 			return true;
@@ -1081,6 +1094,7 @@ bool TWPartition::Wipe_MTD() {
         LOGE("Failed to close '%s'", MTD_Name.c_str());
         return false;
     }
+	Current_File_System = "yaffs2";
 	Recreate_AndSec_Folder();
 	ui_print("Done.\n");
     return true;
@@ -1253,7 +1267,6 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 	int index = 0;
 	char split_index[5];
 
-	Current_File_System = Restore_File_System;
 	if (Has_Android_Secure) {
 		ui_print("Wiping android secure...\n");
 		if (!Wipe_AndSec())
