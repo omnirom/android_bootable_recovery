@@ -206,6 +206,10 @@ ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     LOCAL_C_INCLUDES += system/extras/ext4_utils external/openssl/include
 endif
 
+ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
+LOCAL_CFLAGS += -DRK3066
+endif
+
 include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
