@@ -31,6 +31,10 @@
 
 #include "mtdutils.h"
 
+#ifdef RK3066
+    #include "rk30hack.h"
+#endif
+
 typedef struct BmlOverMtdReadContext {
 	const MtdPartition *partition;
 	char *buffer;
@@ -518,11 +522,19 @@ static ssize_t bml_over_mtd_write_block(int fd, ssize_t erase_size, char* data)
 	erase_info.length = size;
 	int retry;
 	for (retry = 0; retry < 2; ++retry) {
+#ifdef RK3066
+		if (rk30_zero_out(fd, pos, size) < 0) {
+			fprintf(stderr, "mtd: erase failure at 0x%08lx (%s)\n",
+					pos, strerror(errno));
+			continue;
+		}
+#else
 		if (ioctl(fd, MEMERASE, &erase_info) < 0) {
 			fprintf(stderr, "mtd: erase failure at 0x%08lx (%s)\n",
 					pos, strerror(errno));
 			continue;
 		}
+#endif
 		if (lseek(fd, pos, SEEK_SET) != pos ||
 				write(fd, data, size) != size) {
 			fprintf(stderr, "mtd: write error at 0x%08lx (%s)\n",
