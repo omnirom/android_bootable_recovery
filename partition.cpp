@@ -214,9 +214,17 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			} else if (!Mount(false)) {
 				Is_Encrypted = true;
 				Is_Decrypted = false;
+				Can_Be_Mounted = false;
+				Current_File_System = "emmc";
+				Setup_Image(Display_Error);
 				DataManager::SetValue(TW_IS_ENCRYPTED, 1);
 				DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
 				DataManager::SetValue("tw_crypto_display", "");
+			} else {
+				// Filesystem is not encrypted and the mount
+				// succeeded, so get it back to the original
+				// unmounted state
+				UnMount(false);
 			}
 	#ifdef RECOVERY_SDCARD_ON_DATA
 			if (!Is_Encrypted || (Is_Encrypted && Is_Decrypted))
@@ -414,12 +422,12 @@ void TWPartition::Setup_File_System(bool Display_Error) {
 void TWPartition::Setup_Image(bool Display_Error) {
 	Display_Name = Mount_Point.substr(1, Mount_Point.size() - 1);
 	Backup_Name = Display_Name;
-	if (Fstab_File_System == "emmc")
+	if (Current_File_System == "emmc")
 		Backup_Method = DD;
-	else if (Fstab_File_System == "mtd" || Fstab_File_System == "bml")
+	else if (Current_File_System == "mtd" || Current_File_System == "bml")
 		Backup_Method = FLASH_UTILS;
 	else
-		LOGI("Unhandled file system '%s' on image '%s'\n", Fstab_File_System.c_str(), Display_Name.c_str());
+		LOGI("Unhandled file system '%s' on image '%s'\n", Current_File_System.c_str(), Display_Name.c_str());
 	if (Find_Partition_Size()) {
 		Used = Size;
 		Backup_Size = Size;
@@ -768,7 +776,10 @@ bool TWPartition::Wipe(string New_File_System) {
 }
 
 bool TWPartition::Wipe() {
-	return Wipe(Current_File_System);
+	if (Is_File_System(Current_File_System))
+		return Wipe(Current_File_System);
+	else
+		return Wipe(Fstab_File_System);
 }
 
 bool TWPartition::Wipe_AndSec(void) {
