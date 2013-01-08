@@ -1567,12 +1567,44 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	property_set("ro.crypto.fs_options", CRYPTO_FS_OPTIONS);
 	property_set("ro.crypto.fs_flags", CRYPTO_FS_FLAGS);
 	property_set("ro.crypto.keyfile.userdata", CRYPTO_KEY_LOC);
+
+#ifdef CRYPTO_SD_FS_TYPE
+    property_set("ro.crypto.sd_fs_type", CRYPTO_SD_FS_TYPE);
+    property_set("ro.crypto.sd_fs_real_blkdev", CRYPTO_SD_REAL_BLKDEV);
+    property_set("ro.crypto.sd_fs_mnt_point", EXPAND(TW_INTERNAL_STORAGE_PATH));
 #endif
+
+    property_set("rw.km_fips_status", "ready");
+
+#endif
+
+	// some samsung devices store "footer" on efs partition
+	TWPartition *efs = Find_Partition_By_Path("/efs");
+	if(efs && !efs->Is_Mounted())
+		efs->Mount(false);
+	else
+		efs = 0;
+#ifdef TW_EXTERNAL_STORAGE_PATH
+	TWPartition* sdcard = Find_Partition_By_Path(EXPAND(TW_EXTERNAL_STORAGE_PATH));
+	if (sdcard) {
+		property_set("ro.crypto.external_encrypted", "1");
+		property_set("ro.crypto.external_blkdev", sdcard->Actual_Block_Device.c_str());
+	} else {
+		property_set("ro.crypto.external_encrypted", "0");
+	}
+#endif
+
 	strcpy(cPassword, Password.c_str());
-	if (cryptfs_check_passwd(cPassword) != 0) {
+	int pwret = cryptfs_check_passwd(cPassword);
+
+	if (pwret != 0) {
 		LOGE("Failed to decrypt data.\n");
 		return -1;
 	}
+
+	if(efs)
+		efs->UnMount(false);
+
 	property_get("ro.crypto.fs_crypto_blkdev", crypto_blkdev, "error");
 	if (strcmp(crypto_blkdev, "error") == 0) {
 		LOGE("Error retrieving decrypted data block device.\n");
@@ -1585,6 +1617,25 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 			dat->Decrypted_Block_Device = crypto_blkdev;
 			dat->Setup_File_System(false);
 			ui_print("Data successfully decrypted, new block device: '%s'\n", crypto_blkdev);
+
+#ifdef CRYPTO_SD_FS_TYPE
+			char crypto_blkdev_sd[255];
+			property_get("ro.crypto.sd_fs_crypto_blkdev", crypto_blkdev_sd, "error");
+			if (strcmp(crypto_blkdev_sd, "error") == 0) {
+				LOGE("Error retrieving decrypted data block device.\n");
+			} else if(TWPartition* emmc = Find_Partition_By_Path(TW_INTERNAL_STORAGE_PATH)){
+				emmc->Is_Decrypted = true;
+				emmc->Decrypted_Block_Device = crypto_blkdev_sd;
+				emmc->Setup_File_System(false);
+				ui_print("Internal SD successfully decrypted, new block device: '%s'\n", crypto_blkdev_sd);
+			}
+
+#ifdef TW_EXTERNAL_STORAGE_PATH
+			sdcard->Is_Decrypted = true;
+			sdcard->Setup_File_System(false);
+#endif //ifdef TW_EXTERNAL_STORAGE_PATH
+#endif //ifdef CRYPTO_SD_FS_TYPE
+
 			// Sleep for a bit so that the device will be ready
 			sleep(1);
 #ifdef RECOVERY_SDCARD_ON_DATA

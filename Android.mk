@@ -17,7 +17,6 @@ LOCAL_PATH := $(call my-dir)
 TARGET_RECOVERY_GUI := true
 
 include $(CLEAR_VARS)
-
 LOCAL_SRC_FILES := \
     recovery.cpp \
     twbootloader.cpp \
@@ -193,6 +192,16 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     LOCAL_CFLAGS += -DCRYPTO_FS_OPTIONS=\"$(TW_CRYPTO_FS_OPTIONS)\"
     LOCAL_CFLAGS += -DCRYPTO_FS_FLAGS=\"$(TW_CRYPTO_FS_FLAGS)\"
     LOCAL_CFLAGS += -DCRYPTO_KEY_LOC=\"$(TW_CRYPTO_KEY_LOC)\"
+ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
+    LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO_SAMSUNG=\"$(TW_INCLUDE_CRYPTO_SAMSUNG)\"
+    ifdef TW_CRYPTO_SD_REAL_BLKDEV
+        LOCAL_CFLAGS += -DCRYPTO_SD_REAL_BLKDEV=\"$(TW_CRYPTO_SD_REAL_BLKDEV)\"
+        LOCAL_CFLAGS += -DCRYPTO_SD_FS_TYPE=\"$(TW_CRYPTO_SD_FS_TYPE)\"
+    endif
+    #LOCAL_LDFLAGS += -L$(TARGET_OUT_SHARED_LIBRARIES) -lsec_km
+    LOCAL_LDFLAGS += -ldl
+    LOCAL_STATIC_LIBRARIES += libcrypt_samsung
+endif
     LOCAL_SHARED_LIBRARIES += libcrypto
     LOCAL_SRC_FILES += crypto/ics/cryptfs.c
     LOCAL_C_INCLUDES += system/extras/ext4_utils external/openssl/include
@@ -265,13 +274,16 @@ include $(commands_recovery_local_path)/libjpegtwrp/Android.mk \
     $(commands_recovery_local_path)/mtdutils/Android.mk \
     $(commands_recovery_local_path)/pigz/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptsettings/Android.mk \
+    $(commands_recovery_local_path)/crypto/cryptfs/Android.mk \
     $(commands_recovery_local_path)/libcrecovery/Android.mk \
     $(commands_recovery_local_path)/twmincrypt/Android.mk
 
+ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
+    include $(commands_recovery_local_path)/crypto/libcrypt_samsung/Android.mk
+endif
 
 ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/fs_mgr/Android.mk
 endif
 
 commands_recovery_local_path :=
-
