@@ -17,13 +17,13 @@
 #ifndef _VARIABLES_HEADER_
 #define _VARIABLES_HEADER_
 
-#define TW_VERSION_STR              "2.3.3.0"
+#define TW_VERSION_STR              "2.4.0.0alpha"
 
 #define TW_USE_COMPRESSION_VAR      "tw_use_compression"
 #define TW_IGNORE_IMAGE_SIZE        "tw_ignore_image_size"
 #define TW_FILENAME                 "tw_filename"
 #define TW_ZIP_INDEX                "tw_zip_index"
-#define TW_ZIP_QUEUE_COUNT			"tw_zip_queue_count"
+#define TW_ZIP_QUEUE_COUNT       "tw_zip_queue_count"
 
 #define MAX_BACKUP_NAME_LEN 64
 #define TW_BACKUP_TEXT              "tw_backup_text"
@@ -164,7 +164,7 @@
 //   tw_sp2_is_mountable
 //   tw_sp3_is_mountable
 
-// Max archive size for tar backups before we split (1.5GB)
-#define MAX_ARCHIVE_SIZE 1610612736LLU
+// Max archive size for tar backups before we split (4GB)
+#define MAX_ARCHIVE_SIZE 4294967296LLU
 
 #endif  // _VARIABLES_HEADER_

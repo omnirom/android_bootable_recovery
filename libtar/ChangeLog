@@ -1,0 +1,15 @@
+2002-12-09	added list_empty() and hash_empty() functions
+
+2002-09-12	fixed list_iterate function to return -1 if it gets
+		an invalid argument
+
+		include <config.h> and <compat.h> from source files, not
+		from header file, since header file is sometimes
+		installed as part of a user-visible API
+		(those APIs should eventually be redesigned without the
+		listhash code being publicly visible, but for now we
+		need to accomodate this)
+
+2002-07-07	modified list iterate function to return int
+		(returns -1 if plugin function returns -1)
+

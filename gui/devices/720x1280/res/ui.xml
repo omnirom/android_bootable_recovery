@@ -1556,7 +1556,9 @@
 			</object>
 
 			<object type="action">
-				<condition var1="tw_operation_state" var2="1" />
+				<conditions>
+					<condition var1="tw_operation_state"  var2="1" />
+				</conditions>
 				<actions>
 					<action function="set">tw_back=backup</action>
 					<action function="set">tw_complete_text1=Backup Complete</action>

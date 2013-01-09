@@ -1,0 +1,21 @@
+Functionality:
+--------------
+
+* add list mode to allow nodes to be inserted in any arbitrary location
+* add "*_hash_iterate()" function
+* add flags argument to *_list_del() that allows the listptr to be set
+  to the previous or next element
+* add a generic pointer type to replace *_listptr_t and *_hashptr_t ???
+
+
+Code Cleanup:
+-------------
+
+* rename functions:
+	*_list_next	=> *_listptr_next()
+	*_list_prev	=> *_listptr_prev()
+	*_hash_next	=> *_hashptr_next()
+* start using "*_list_t" and "*_hash_t" instead of "*_list_t *" and
+  "*_hash_t *" ?
+* add prefixes to structure member field names
+

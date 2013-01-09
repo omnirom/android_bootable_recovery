@@ -1,0 +1,12 @@
+Libfuse for Android
+
+FUSE[1] is a framework to develop userspace file systems for linux. Since Android is based on linux, it won't be too difficult to port libfuse to Android.
+
+The main problem of building and running libfuse on Android is that the bionic c library lacks support for pthread_cancel(), which is necessary for libfuse multi-thread code. This stackoverflow entry[2] has suggested a solution, which uses SIGUSR1 as an alternative. It seems to work.
+
+Libfuse can be build with Android NDK[3]. If success, you will get libfuse.a and an example program fusexmp. To run the example, the android kernel should be built with FUSE kernel support.
+
+References:
+[1]. http://fuse.sourceforge.net
+[2]. http://stackoverflow.com/questions/4610086/pthread-cancel-alternatives-in-android-ndk
+[3]. http://developer.android.com/sdk/ndk/index.html

@@ -208,12 +208,13 @@ int GUIAction::flash_zip(std::string filename, std::string pageName, const int s
 
 		// Now, check if we need to ensure TWRP remains installed...
 		struct stat st;
+		string result;
 		if (stat("/sbin/installTwrp", &st) == 0)
 		{
 			DataManager::SetValue("tw_operation", "Configuring TWRP");
 			DataManager::SetValue("tw_partition", "");
 			ui_print("Configuring TWRP...\n");
-			if (system("/sbin/installTwrp reinstall") < 0)
+			if (TWFunc::Exec_Cmd("/sbin/installTwrp reinstall", result) < 0)
 			{
 				ui_print("Unable to configure TWRP with this kernel.\n");
 			}
@@ -274,7 +275,6 @@ void GUIAction::operation_start(const string operation_name)
 void GUIAction::operation_end(const int operation_status, const int simulate)
 {
 	int simulate_fail;
-
 	DataManager::SetValue("ui_progress", 100);
 	if (simulate) {
 		DataManager::GetValue(TW_SIMULATE_FAIL, simulate_fail);
@@ -283,10 +283,12 @@ void GUIAction::operation_end(const int operation_status, const int simulate)
 		else
 			DataManager::SetValue("tw_operation_status", 0);
 	} else {
-		if (operation_status != 0)
+		if (operation_status != 0) {
 			DataManager::SetValue("tw_operation_status", 1);
-		else
+		}
+		else {
 			DataManager::SetValue("tw_operation_status", 0);
+		}
 	}
 	DataManager::SetValue("tw_operation_state", 1);
 	DataManager::SetValue(TW_ACTION_BUSY, 0);
@@ -462,11 +464,10 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		operation_start("Copy Log");
 		if (!simulate)
 		{
-			char command[255];
-
+			string dst;
 			PartitionManager.Mount_Current_Storage(true);
-			sprintf(command, "cp /tmp/recovery.log %s", DataManager::GetCurrentStoragePath().c_str());
-			system(command);
+			dst = DataManager::GetCurrentStoragePath() + "/recovery.log";
+			TWFunc::copy_file("/tmp/recovery.log", dst.c_str(), 0755);
 			sync();
 			ui_print("Copied recovery log to %s.\n", DataManager::GetCurrentStoragePath().c_str());
 		} else
@@ -663,7 +664,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 			if (wipe_cache)
 				PartitionManager.Wipe_By_Path("/cache");
-
+			string result;
 			if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
 				operation_start("ReinjectTWRP");
 				ui_print("Injecting TWRP into boot image...\n");
@@ -672,10 +673,10 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				} else {
 					TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
 					if (Boot == NULL || Boot->Current_File_System != "emmc")
-						system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+						TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash", result);
 					else {
 						string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
-						system(injectcmd.c_str());
+						TWFunc::Exec_Cmd(injectcmd, result);
 					}
 					ui_print("TWRP injection complete.\n");
 				}
@@ -766,8 +767,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				if (arg == "backup") {
 					string Backup_Name;
 					DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
-					if (Backup_Name == "(Current Date)" || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0)
+					if (Backup_Name == "(Current Date)" || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0) {
 						ret = PartitionManager.Run_Backup();
+					}
 					else {
 						operation_end(1, simulate);
 						return -1;
@@ -786,8 +788,8 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				ret = 1; // 1 for failure
 			else
 				ret = 0; // 0 for success
-            operation_end(ret, simulate);
-			return 0;
+            	operation_end(ret, simulate);
+		return 0;
         }
 		if (function == "fixpermissions")
 		{
@@ -810,9 +812,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				char cmd[512];
-				sprintf(cmd, "dd %s", arg.c_str());
-				system(cmd);
+				string result;
+				string cmd = "dd " + arg;
+				TWFunc::Exec_Cmd(cmd, result);
 			}
             operation_end(0, simulate);
             return 0;
@@ -873,13 +875,14 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		if (function == "cmd")
 		{
 			int op_status = 0;
+			string result;
 
 			operation_start("Command");
 			LOGI("Running command: '%s'\n", arg.c_str());
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				op_status = system(arg.c_str());
+				op_status = TWFunc::Exec_Cmd(arg, result);
 				if (op_status != 0)
 					op_status = 1;
 			}
@@ -930,13 +933,13 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		if (function == "reinjecttwrp")
 		{
 			int op_status = 0;
-
+			string result;
 			operation_start("ReinjectTWRP");
 			ui_print("Injecting TWRP into boot image...\n");
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+				TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash", result);
 				ui_print("TWRP injection complete.\n");
 			}
 
@@ -1031,7 +1034,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				simulate_progress_bar();
 			} else {
 				int wipe_cache = 0;
-				string Command, Sideload_File;
+				string result, Sideload_File;
 
 				if (!PartitionManager.Mount_Current_Storage(true)) {
 					operation_end(1, simulate);
@@ -1039,8 +1042,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				}
 				Sideload_File = DataManager::GetCurrentStoragePath() + "/sideload.zip";
 				if (TWFunc::Path_Exists(Sideload_File)) {
-					Command = "rm " + Sideload_File;
-					system(Command.c_str());
+					unlink(Sideload_File.c_str());
 				}
 				ui_print("Starting ADB sideload feature...\n");
 				ret = apply_from_adb(ui, &wipe_cache, Sideload_File.c_str());
@@ -1056,10 +1058,10 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					} else {
 						TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
 						if (Boot == NULL || Boot->Current_File_System != "emmc")
-							system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+							TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash", result);
 						else {
 							string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
-							system(injectcmd.c_str());
+							TWFunc::Exec_Cmd(injectcmd, result);
 						}
 						ui_print("TWRP injection complete.\n");
 					}
@@ -1071,10 +1073,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		if (function == "adbsideloadcancel")
 		{
 			int child_pid;
-			string Command, Sideload_File;
+			string Sideload_File;
 			Sideload_File = DataManager::GetCurrentStoragePath() + "/sideload.zip";
-			Command = "rm " + Sideload_File;
-			system(Command.c_str());
+			unlink(Sideload_File.c_str());
 			DataManager::GetValue("tw_child_pid", child_pid);
 			ui_print("Cancelling ADB sideload...\n");
 			kill(child_pid, SIGTERM);

@@ -1,0 +1,70 @@
+0.9.8 (2012-08-09)
+
+* The mkfs utility can now create huge file systems (up to several exabytes).
+* Fixed handling of characters beyond Basic Multilingual Plane.
+* Echo messages to syslog only if stderr is not connected to a terminal.
+
+0.9.7 (2012-03-08)
+
+* Out-of-the-box FreeBSD support (via ublio library).
+* Fixed "missing EOD entry" error (could happen while reading directory that
+consists of several clusters).
+* Fixed interpretation of minutes field in files timestamps (minutes could be
+displayed incorrectly).
+* Fixed mtime seconds field initialization for newly created file (mtime could
+be 1 sec less than creation time).
+* SConscript now respects CC, CCFLAGS and LDFLAGS environment variables.
+
+0.9.6 (2012-01-14)
+
+* Fixed write performance regression introduced in 0.9.4.
+* Mount in read-only mode if the device is write-protected.
+* Set ctime to mtime to ensure we don't break programs that rely on ctime
+(e.g. rsync considered that all files are outdated) [Eldad Zack].
+* Indicate that FS in not clean when it was not cleanly unmounted.
+* Utilities are now compatible with GNU/Hurd.
+* Fixed several memory leaks that could occur on error handling paths.
+* Improved handling of corrupted file systems.
+
+0.9.5 (2011-05-15)
+
+* Fixed erasing of the root directory cluster when creating a new FS with
+mkexfatfs. This bug could cause mkexfatfs to produce invalid FS.
+* Utilities are not linked with libfuse anymore.
+* Ensure that the path being opened is either a device or a regular file.
+
+0.9.4 (2011-03-05)
+
+* Introduced exfat-utils: dumpexfat, exfatfsck, mkexfatfs, exfatlabel.
+* Fixed "Invalid argument" error while mounting a volume from a disk with sector size greater than 512 bytes.
+* Wait for all data to be flushed to disk on unmount.
+* Kernel cache is no longer flushed on open. This can slightly improve read performance by avoiding extra read requests from kernel to user-space.
+* Allow to unmount volumes as user (fusermount -u) if they were mounted from the very same user [Tino Lange].
+* Errors and warnings are now duplicated to syslog.
+
+0.9.3 (2010-09-25)
+
+* Directories now can shrink.
+* Improved timestamps resolution from 2 sec to 1 sec.
+* Fixed timestamps displaying under Mac OS X when compiled for i386 or ppc.
+* Fixed FS size displaying for non-GNU systems.
+
+0.9.2 (2010-07-24)
+
+* Fixed a bug which could cause the whole directory to become unreadable after renaming a file in it.
+* Support for Solaris and various *BSD [Albert Lee].
+* Improved error handling on corrupted volumes.
+* Improved allowed file name characters filter.
+* Added man page.
+
+0.9.1 (2010-06-12)
+
+* Implemented automounting (util-linux-ng 2.18 or later is required).
+* Fixed mounting when cluster bitmap is larger than expected.
+* Fixed crash on statfs() when root directory contains error.
+* Fixed bugs specific to big-endian machines.
+* Other bugfixes.
+
+0.9.0 (2010-03-21)
+
+* Initial release.

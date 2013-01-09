@@ -36,6 +36,9 @@ public:
 	static void twfinish_recovery(const char *send_intent);                     // Writes the log to last_log
 	static int tw_reboot(RebootCommand command);                                // Prepares the device for rebooting
 	static void check_and_run_script(const char* script_file, const char* display_name); // checks for the existence of a script, chmods it to 755, then runs it
+	static int Exec_Cmd(string cmd, string &result); //execute a command and return the result as a string by reference
+	static int removeDir(const string path, bool removeParent); //recursively remove a directory
+	static int copy_file(string src, string dst, int mode); //copy file from src to dst with mode permissions
 
 private:
 	static void check_and_fclose(FILE *fp, const char *name);

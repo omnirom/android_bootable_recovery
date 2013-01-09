@@ -1,0 +1,48 @@
+.\" Copyright (C) 2011  Andrew Nayenko
+.\"
+.TH EXFATLABEL 8 "February 2011"
+.SH NAME
+.B exfatlabel
+\- get or set an exFAT file system label
+.SH SYNOPSIS
+.B exfatlabel
+[
+.B \-v
+]
+.I device
+[
+.I label
+]
+
+.SH DESCRIPTION
+.B exfatlabel
+reads or changes an exFAT file system label (volume name).
+
+If
+.I label
+argument is present,
+.B exfatlabel
+sets the new volume name. Label can be up to 15 characters. This limit is
+shorter if characters beyond Unicode BMP are used because internally label
+is stored in UTF-16.
+
+If
+.I label
+argument is omitted,
+.B exfatlabel
+just prints current volume name.
+
+.SH COMMAND LINE OPTIONS
+Command line options available:
+.TP
+.BI \-v
+Print version and copyright.
+
+.SH EXIT CODES
+Zero is returned on success. Any other code means an error.
+
+.SH AUTHOR
+Andrew Nayenko
+
+.SH SEE ALSO
+.BR mkexfatfs (8)

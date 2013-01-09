@@ -220,44 +220,6 @@ int fixPermissions::pchmod(string fn, string mode) {
 	return 0;
 }
 
-int fixPermissions::removeDir(const string path) {
-	DIR *d = opendir(path.c_str());
-	int r = 0;
-	string new_path;
-
-	if (d == NULL) {
-		LOGE("Error opening '%s'\n", path.c_str());
-		return -1;
-	}
-
-	if (d) {
-		struct dirent *p;
-		while (!r && (p = readdir(d))) {
-			if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
-				continue;
-
-			new_path = path + "/";
-			new_path.append(p->d_name);
-			if (p->d_type == DT_DIR) {
-				r = removeDir(new_path);
-				if (!r)
-					LOGI("Unable to removeDir '%s'\n", new_path.c_str());
-			} else {
-				r = unlink(new_path.c_str());
-				if (!r)
-					LOGI("Unable to unlink '%s'\n", new_path.c_str());
-			}
-		}
-		closedir(d);
-	}
-	if (!r)
-		r = rmdir(path.c_str());
-	if (!r)
-		LOGI("Unable to rmdir '%s'\n", path.c_str());
-
-	return r;
-}
-
 int fixPermissions::fixSystemApps() {
 	temp = head;
 	while (temp != NULL) {
@@ -279,7 +241,7 @@ int fixPermissions::fixSystemApps() {
 			if (remove_data && TWFunc::Path_Exists(temp->dDir) && temp->appDir.size() >= 9 && temp->appDir.substr(0, 9) != "/mnt/asec") {
 				if (debug)
 					LOGI("Looking at '%s', removing data dir: '%s', appDir: '%s'", temp->codePath.c_str(), temp->dDir.c_str(), temp->appDir.c_str());
-				if (removeDir(temp->dDir) != 0) {
+				if (TWFunc::removeDir(temp->dDir, false) != 0) {
 					LOGI("Unable to removeDir '%s'\n", temp->dDir.c_str());
 					return -1;
 				}
@@ -325,7 +287,7 @@ int fixPermissions::fixDataApps() {
 			if (remove_data && TWFunc::Path_Exists(temp->dDir) && temp->appDir.size() >= 9 && temp->appDir.substr(0, 9) != "/mnt/asec") {
 				if (debug)
 					LOGI("Looking at '%s', removing data dir: '%s', appDir: '%s'", temp->codePath.c_str(), temp->dDir.c_str(), temp->appDir.c_str());
-				if (removeDir(temp->dDir) != 0) {
+				if (TWFunc::removeDir(temp->dDir, false) != 0) {
 					LOGI("Unable to removeDir '%s'\n", temp->dDir.c_str());
 					return -1;
 				}

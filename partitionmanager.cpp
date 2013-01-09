@@ -31,7 +31,8 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
-
+#include <iostream>
+#include <iomanip>
 #include "variables.h"
 #include "common.h"
 #include "ui.h"
@@ -471,18 +472,20 @@ int TWPartitionManager::Check_Backup_Name(bool Display_Error) {
 
 bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename)
 {
-	char command[512];
+	string command;
 	string Full_File = Backup_Folder + Backup_Filename;
+	string result;
 
-	if (!generate_md5)
+	if (!generate_md5) 
 		return true;
 
 	TWFunc::GUI_Operation_Text(TW_GENERATE_MD5_TEXT, "Generating MD5");
 	ui_print(" * Generating md5...\n");
 
 	if (TWFunc::Path_Exists(Full_File)) {
-		sprintf(command, "cd '%s' && md5sum %s > %s.md5",Backup_Folder.c_str(), Backup_Filename.c_str(), Backup_Filename.c_str());
-		if (system(command) == 0) {
+		command = "md5sum " + Backup_Filename + " > " + Backup_Filename + ".md5";
+		chdir(Backup_Folder.c_str());
+		if (TWFunc::Exec_Cmd(command, result) == 0) {
 			ui_print(" * MD5 Created.\n");
 			return true;
 		} else {
@@ -492,11 +495,15 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	} else {
 		char filename[512];
 		int index = 0;
-
 		sprintf(filename, "%s%03i", Full_File.c_str(), index);
 		while (TWFunc::Path_Exists(filename) == true) {
-			sprintf(command, "cd '%s' && md5sum %s%03i > %s%03i.md5",Backup_Folder.c_str(), Backup_Filename.c_str(), index, Backup_Filename.c_str(), index);
-			if (system(command) != 0) {
+			ostringstream intToStr;
+			intToStr << index;
+			ostringstream fn;
+			fn << setw(3) << setfill('0') << intToStr.str();
+			command = "md5sum " + Backup_Filename + fn.str() + " >"  + Backup_Filename + fn.str() + ".md5";
+			chdir(Backup_Folder.c_str());
+			if (TWFunc::Exec_Cmd(command, result) != 0) {
 				ui_print(" * MD5 Error.\n");
 				return false;
 			}
@@ -878,7 +885,7 @@ int TWPartitionManager::Run_Backup(void) {
 	Update_System_Details();
 	UnMount_Main_Partitions();
 	ui_print("[BACKUP COMPLETED IN %d SECONDS]\n\n", total_time); // the end
-    return true;
+    	return true;
 }
 
 bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count) {
@@ -1287,6 +1294,7 @@ int TWPartitionManager::Factory_Reset(void) {
 
 int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 	struct stat st;
+	vector <string> dir;
 
 	if (!Mount_By_Path("/data", true))
 		return false;
@@ -1294,23 +1302,25 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 	if (!Mount_By_Path("/cache", true))
 		return false;
 
+	dir.push_back("/data/dalvik-cache");
+	dir.push_back("/cache/dalvik-cache");
+	dir.push_back("/cache/dc");
 	ui_print("\nWiping Dalvik Cache Directories...\n");
-	system("rm -rf /data/dalvik-cache");
-	ui_print("Cleaned: /data/dalvik-cache...\n");
-	system("rm -rf /cache/dalvik-cache");
-	ui_print("Cleaned: /cache/dalvik-cache...\n");
-	system("rm -rf /cache/dc");
-	ui_print("Cleaned: /cache/dc\n");
-
+	for (int i = 0; i < dir.size(); ++i) {
+		if (stat(dir.at(i).c_str(), &st) == 0) {
+			TWFunc::removeDir(dir.at(i), false);
+			ui_print("Cleaned: %s...\n", dir.at(i).c_str());
+		}
+	}
 	TWPartition* sdext = Find_Partition_By_Path("/sd-ext");
 	if (sdext != NULL) {
 		if (sdext->Is_Present && sdext->Mount(false)) {
 			if (stat("/sd-ext/dalvik-cache", &st) == 0) {
-                system("rm -rf /sd-ext/dalvik-cache");
-        	    ui_print("Cleaned: /sd-ext/dalvik-cache...\n");
-    	    }
+				TWFunc::removeDir("/sd-ext/dalvik-cache", false);
+        	    		ui_print("Cleaned: /sd-ext/dalvik-cache...\n");
+			}
+		}
         }
-	}
 	ui_print("-- Dalvik Cache Directories Wipe Complete!\n\n");
 	return true;
 }
@@ -1319,9 +1329,8 @@ int TWPartitionManager::Wipe_Rotate_Data(void) {
 	if (!Mount_By_Path("/data", true))
 		return false;
 
-	system("rm -r /data/misc/akmd*");
-	system("rm -r /data/misc/rild*");
-	system("rm -r /data/misc/rild*");
+	unlink("/data/misc/akmd*");
+	unlink("/data/misc/rild*");
 	ui_print("Rotation data wiped.\n");
 	return true;
 }
@@ -1388,8 +1397,9 @@ int TWPartitionManager::Wipe_Media_From_Data(void) {
 			return false;
 
 		ui_print("Wiping internal storage -- /data/media...\n");
-		system("rm -rf /data/media");
-		system("cd /data && mkdir media && chmod 775 media");
+		TWFunc::removeDir("/data/media", false);
+		if (mkdir("/data/media", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0)
+			return -1;
 		if (dat->Has_Data_Media) {
 			dat->Recreate_Media_Folder();
 		}
@@ -1831,7 +1841,8 @@ int TWPartitionManager::Partition_SDCard(void) {
 		if (!SDext->UnMount(true))
 			return false;
 	}
-	system("umount \"$SWAPPATH\"");
+	string result;
+	TWFunc::Exec_Cmd("umount \"$SWAPPATH\"", result);
 	Device = SDCard->Actual_Block_Device;
 	// Just use the root block device
 	Device.resize(strlen("/dev/block/mmcblkX"));
@@ -1883,7 +1894,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 	ui_print("Removing partition table...\n");
 	Command = "parted -s " + Device + " mklabel msdos";
 	LOGI("Command is: '%s'\n", Command.c_str());
-	if (system(Command.c_str()) != 0) {
+	if (TWFunc::Exec_Cmd(Command, result) != 0) {
 		LOGE("Unable to remove partition table.\n");
 		Update_System_Details();
 		return false;
@@ -1891,7 +1902,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 	ui_print("Creating FAT32 partition...\n");
 	Command = "parted " + Device + " mkpartfs primary fat32 0 " + fat_str + "MB";
 	LOGI("Command is: '%s'\n", Command.c_str());
-	if (system(Command.c_str()) != 0) {
+	if (TWFunc::Exec_Cmd(Command, result) != 0) {
 		LOGE("Unable to create FAT32 partition.\n");
 		return false;
 	}
@@ -1899,7 +1910,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 		ui_print("Creating EXT partition...\n");
 		Command = "parted " + Device + " mkpartfs primary ext2 " + fat_str + "MB " + ext_str + "MB";
 		LOGI("Command is: '%s'\n", Command.c_str());
-		if (system(Command.c_str()) != 0) {
+		if (TWFunc::Exec_Cmd(Command, result) != 0) {
 			LOGE("Unable to create EXT partition.\n");
 			Update_System_Details();
 			return false;
@@ -1909,7 +1920,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 		ui_print("Creating swap partition...\n");
 		Command = "parted " + Device + " mkpartfs primary linux-swap " + ext_str + "MB " + swap_str + "MB";
 		LOGI("Command is: '%s'\n", Command.c_str());
-		if (system(Command.c_str()) != 0) {
+		if (TWFunc::Exec_Cmd(Command, result) != 0) {
 			LOGE("Unable to create swap partition.\n");
 			Update_System_Details();
 			return false;
@@ -1944,7 +1955,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 		Command = "mke2fs -t " + ext_format + " -m 0 " + SDext->Actual_Block_Device;
 		ui_print("Formatting sd-ext as %s...\n", ext_format.c_str());
 		LOGI("Formatting sd-ext after partitioning, command: '%s'\n", Command.c_str());
-		system(Command.c_str());
+		TWFunc::Exec_Cmd(Command, result);
 	}
 
 	Update_System_Details();

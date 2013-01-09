@@ -390,7 +390,6 @@ int DataManager::SetValue(const string varName, string value, int persist /* = 0
 
     if (pos->second.second != 0)
         SaveValues();
-
     gui_notifyVarChange(varName.c_str(), value.c_str());
     return 0;
 }
@@ -842,8 +841,7 @@ void DataManager::Output_Version(void) {
 	}
 	Path += "/TWRP/.version";
 	if (TWFunc::Path_Exists(Path)) {
-		Command = "rm -f " + Path;
-		system(Command.c_str());
+		unlink(Path.c_str());
 	}
 	FILE *fp = fopen(Path.c_str(), "w");
 	if (fp == NULL) {

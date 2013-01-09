@@ -1,0 +1,76 @@
+.\" Copyright (C) 2010  Andrew Nayenko
+.\"
+.TH EXFAT-FUSE 8 "July 2010"
+.SH NAME
+mount.exfat-fuse \- mount an exFAT file system
+.SH SYNOPSIS
+.B mount.exfat-fuse
+[
+.B \-d
+]
+[
+.B \-o
+.I options
+]
+[
+.B \-v
+]
+.I device dir
+
+.SH DESCRIPTION
+.B mount.exfat-fuse
+is a free exFAT file system implementation with write support. exFAT is a
+simple file system created by Microsoft. It is intended to replace FAT32
+removing some of it's limitations. exFAT is a standard FS for SDXC memory
+cards.
+
+.SH COMMAND LINE OPTIONS
+Command line options available:
+.TP
+.BI \-d
+Enable debug logging and do not detach from shell.
+.TP
+.BI \-o " options"
+File system specific options. For more details see
+.B FILE SYSTEM OPTIONS
+section below.
+.TP
+.BI \-v
+Print version and copyright.
+
+.SH FILE SYSTEM OPTIONS
+.TP
+.BI umask= value
+Set the umask (the bitmask of the permissions that are
+.B not
+present, in octal).
+The default is the umask of the current process.
+.TP
+.BI dmask= value
+Set the umask for directories only.
+.TP
+.BI fmask= value
+Set the umask for files only.
+.TP
+.BI uid= n
+Set the owner for all files and directories.
+The default is the owner of the current process.
+.TP
+.BI gid= n
+Set the group for all files and directories.
+The default is the group of the current process.
+.TP
+.BI ro
+Mount the file system in read only mode.
+.TP
+.BI noatime
+Do not update access time when file is read.
+
+.SH EXIT CODES
+Zero is returned on successful mount. Any other code means an error.
+
+.SH AUTHOR
+Andrew Nayenko
+
+.SH SEE ALSO
+.BR mount (8)

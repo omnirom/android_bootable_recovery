@@ -26,11 +26,11 @@ LOCAL_SRC_FILES := \
     screen_ui.cpp \
     verifier.cpp \
     fixPermissions.cpp \
+    twrpTar.cpp \
     adb_install.cpp
 
 LOCAL_SRC_FILES += \
     data.cpp \
-    makelist.cpp \
     partition.cpp \
     partitionmanager.cpp \
     mtdutils/mtdutils.c \
@@ -65,7 +65,7 @@ LOCAL_SHARED_LIBRARIES :=
 LOCAL_STATIC_LIBRARIES += libmtdutils
 LOCAL_STATIC_LIBRARIES += libminadbd libminzip libunz
 LOCAL_STATIC_LIBRARIES += libminuitwrp libpixelflinger_static libpng libjpegtwrp libgui
-LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libmincrypt libext4_utils
+LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libmincrypt libext4_utils libtar
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_CFLAGS += -DUSE_EXT4
@@ -76,7 +76,7 @@ endif
 ifeq ($(HAVE_SELINUX), true)
   LOCAL_C_INCLUDES += external/libselinux/include
   LOCAL_STATIC_LIBRARIES += libselinux
-  LOCAL_CFLAGS += -DHAVE_SELINUX
+  LOCAL_CFLAGS += -DHAVE_SELINUX -g
 endif # HAVE_SELINUX
 
 # This binary is in the recovery ramdisk, which is otherwise a copy of root.
@@ -269,14 +269,16 @@ include $(commands_recovery_local_path)/libjpegtwrp/Android.mk \
     $(commands_recovery_local_path)/gui/Android.mk \
     $(commands_recovery_local_path)/mmcutils/Android.mk \
     $(commands_recovery_local_path)/bmlutils/Android.mk \
-    $(commands_recovery_local_path)/flashutils/Android.mk \
     $(commands_recovery_local_path)/prebuilt/Android.mk \
     $(commands_recovery_local_path)/mtdutils/Android.mk \
+    $(commands_recovery_local_path)/flashutils/Android.mk \
     $(commands_recovery_local_path)/pigz/Android.mk \
+    $(commands_recovery_local_path)/dosfstools/Android.mk \
+    $(commands_recovery_local_path)/libtar/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptsettings/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptfs/Android.mk \
     $(commands_recovery_local_path)/libcrecovery/Android.mk \
-    $(commands_recovery_local_path)/twmincrypt/Android.mk
+    $(commands_recovery_local_path)/twmincrypt/Android.mk \
 
 ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
     include $(commands_recovery_local_path)/crypto/libcrypt_samsung/Android.mk
@@ -284,6 +286,13 @@ endif
 
 ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/fs_mgr/Android.mk
+endif
+
+ifeq ($(TW_INCLUDE_EXFAT), true)
+    include $(commands_recovery_local_path)/fuse/Android.mk
+    include $(commands_recovery_local_path)/exfat/libexfat/Android.mk
+    include $(commands_recovery_local_path)/exfat/exfat-fuse/Android.mk
+    include $(commands_recovery_local_path)/exfat/mkfs/Android.mk
 endif
 
 commands_recovery_local_path :=

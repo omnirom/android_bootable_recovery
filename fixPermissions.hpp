@@ -22,7 +22,6 @@ class fixPermissions {
 		int pchmod(std::string fn, string mode);
 		vector <string> listAllDirectories(std::string path);
 		vector <string> listAllFiles(std::string path);
-		int removeDir(const std::string path);
 		int getPackages();
 		int fixSystemApps();
 		int fixDataApps();

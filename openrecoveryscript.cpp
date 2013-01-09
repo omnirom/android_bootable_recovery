@@ -47,8 +47,6 @@ static const char *SCRIPT_FILE_TMP = "/tmp/openrecoveryscript";
 #define SCRIPT_COMMAND_SIZE 512
 
 int OpenRecoveryScript::check_for_script_file(void) {
-	char exec[512];
-
 	if (!PartitionManager.Mount_By_Path(SCRIPT_FILE_CACHE, false)) {
 		LOGE("Unable to mount /cache for OpenRecoveryScript support.\n");
 		return 0;
@@ -56,15 +54,9 @@ int OpenRecoveryScript::check_for_script_file(void) {
 	if (TWFunc::Path_Exists(SCRIPT_FILE_CACHE)) {
 		LOGI("Script file found: '%s'\n", SCRIPT_FILE_CACHE);
 		// Copy script file to /tmp
-		strcpy(exec, "cp ");
-		strcat(exec, SCRIPT_FILE_CACHE);
-		strcat(exec, " ");
-		strcat(exec, SCRIPT_FILE_TMP);
-		system(exec);
+		TWFunc::copy_file(SCRIPT_FILE_CACHE, SCRIPT_FILE_TMP, 0755);
 		// Delete the file from /cache
-		strcpy(exec, "rm ");
-		strcat(exec, SCRIPT_FILE_CACHE);
-		system(exec);
+		unlink(SCRIPT_FILE_CACHE);
 		return 1;
 	}
 	return 0;
@@ -329,7 +321,8 @@ int OpenRecoveryScript::run_script_file(void) {
 				// Reboot
 			} else if (strcmp(command, "cmd") == 0) {
 				if (cindex != 0) {
-					system(value);
+					string status;
+					TWFunc::Exec_Cmd(value, status);
 				} else {
 					LOGE("No value given for cmd\n");
 				}
@@ -347,13 +340,14 @@ int OpenRecoveryScript::run_script_file(void) {
 		return 1;
 	}
 	if (install_cmd && DataManager_GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager_GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
+		string status;
 		ui_print("Injecting TWRP into boot image...\n");
 		TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
 		if (Boot == NULL || Boot->Current_File_System != "emmc")
-			system("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+			TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash", status);
 		else {
 			string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
-			system(injectcmd.c_str());
+			TWFunc::Exec_Cmd(injectcmd.c_str(), status);
 		}
 		ui_print("TWRP injection complete.\n");
 	}

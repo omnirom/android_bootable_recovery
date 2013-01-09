@@ -811,7 +811,7 @@ main(int argc, char **argv) {
 	printf("Starting the UI...");
 	gui_init();
 	printf("=> Linking mtab\n");
-	system("ln -s /proc/mounts /etc/mtab"); // Link mtab for mke2fs
+	symlink("/proc/mounts", "/etc/mtab");
 	printf("=> Processing recovery.fstab\n");
 	if (!PartitionManager.Process_Fstab("/etc/recovery.fstab", 1)) {
 		LOGE("Failing out of recovery due to problem with recovery.fstab.\n");
@@ -894,13 +894,13 @@ main(int argc, char **argv) {
 #ifdef TW_INCLUDE_INJECTTWRP
 	// Back up TWRP Ramdisk if needed:
 	TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
-
+	string result;
 	LOGI("Backing up TWRP ramdisk...\n");
 	if (Boot == NULL || Boot->Current_File_System != "emmc")
-		system("injecttwrp --backup /tmp/backup_recovery_ramdisk.img");
+		TWFunc::Exec_Cmd("injecttwrp --backup /tmp/backup_recovery_ramdisk.img", result);
 	else {
 		string injectcmd = "injecttwrp --backup /tmp/backup_recovery_ramdisk.img bd=" + Boot->Actual_Block_Device;
-		system(injectcmd.c_str());
+		TWFunc::Exec_Cmd(injectcmd, result);
 	}
 	LOGI("Backup of TWRP ramdisk done.\n");
 #endif
@@ -954,7 +954,7 @@ main(int argc, char **argv) {
 		finish_recovery(NULL);
 		DataManager_ReadSettingsFile();
 		if (PartitionManager.Mount_By_Path("/system", false) && TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
-			system("mv /system/recovery-from-boot.p /system/recovery-from-boot.bak");
+			rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
 			ui_print("Renamed stock recovery file in /system to prevent\nthe stock ROM from replacing TWRP.\n");
 		}
 		PartitionManager.UnMount_By_Path("/system", false);

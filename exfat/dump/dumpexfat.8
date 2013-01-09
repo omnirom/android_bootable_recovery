@@ -1,0 +1,46 @@
+.\" Copyright (C) 2011  Andrew Nayenko
+.\"
+.TH DUMPEXFAT 8 "February 2011"
+.SH NAME
+.B dumpexfat
+\- dump exFAT file system
+.SH SYNOPSIS
+.B exfatlabel
+[
+.B \-s
+]
+[
+.B \-u
+]
+[
+.B \-v
+]
+.I device
+
+.SH DESCRIPTION
+.B dumpexfat
+dumps details about exFAT file system including low-level info. All sizes are
+in bytes.
+
+.SH OPTIONS
+Command line options available:
+.TP
+.B \-s
+Dump only info from super block. May be useful for heavily corrupted file
+systems.
+.TP
+.B \-u
+Dump ranges of used sectors starting from 0 and separated with spaces. May be
+useful for backup tools.
+.TP
+.BI \-v
+Print version and copyright.
+
+.SH EXIT CODES
+Zero is returned on success. Any other code means an error.
+
+.SH AUTHOR
+Andrew Nayenko
+
+.SH SEE ALSO
+.BR mkexfatfs (8)

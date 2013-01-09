@@ -1,0 +1,68 @@
+.\" Copyright (C) 2011  Andrew Nayenko
+.\"
+.TH MKEXFATFS 8 "January 2011"
+.SH NAME
+.B mkexfatfs
+\- create an exFAT file system
+.SH SYNOPSIS
+.B mkexfatfs
+[
+.B \-i
+.I volume-id
+]
+[
+.B \-n
+.I volume-name
+]
+[
+.B \-p
+.I partition-first-sector
+]
+[
+.B \-s
+.I sectors-per-cluster
+]
+[
+.B \-v
+]
+.I device
+
+.SH DESCRIPTION
+.B mkexfatfs
+creates an exFAT file system on a block device.
+.I device
+is a special file corresponding to the device.
+
+.SH OPTIONS
+Command line options available:
+.TP
+.BI \-i " volume-id"
+A 32-bit hexadecimal number. By default a value based on current time is set.
+.TP
+.BI \-n " volume-name"
+Volume name (label), up to 15 characters. By default no label is set.
+.TP
+.BI \-p " partition-first-sector"
+First sector of the partition starting from the beginning of the whole disk.
+exFAT super block has a field for this value but in fact it's optional and
+does not affect anything. Default is 0.
+.TP
+.BI \-s " sectors-per-cluster"
+Number of physical sectors per cluster (cluster is an allocation unit in
+exFAT). Must be a power of 2, i.e. 1, 2, 4, 8, etc. Cluster size can not
+exceed 32 MB. Default cluster sizes are:
+4 KB if volume size is less than 256 MB,
+32 KB if volume size is from 256 MB to 32 GB,
+128 KB if volume size is 32 GB or larger.
+.TP
+.BI \-v
+Print version and copyright.
+
+.SH EXIT CODES
+Zero is returned on successful creation. Any other code means an error.
+
+.SH AUTHOR
+Andrew Nayenko
+
+.SH SEE ALSO
+.BR mkfs (8)
