@@ -44,6 +44,9 @@
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+	#include "crypto/libcrypt_samsung/include/libcrypt_samsung.h"
+#endif
 }
 
 using namespace std;
@@ -87,6 +90,9 @@ TWPartition::TWPartition(void) {
 	Fstab_File_System = "";
 	Format_Block_Size = 0;
 	Ignore_Blkid = false;
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+	EcryptFS_Password = "";
+#endif
 }
 
 TWPartition::~TWPartition(void) {
@@ -684,9 +690,9 @@ bool TWPartition::Mount(bool Display_Error) {
 			return false;
 		} else
 			return true;
-	} else if (Fstab_File_System == "exfat") {
+	} else if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sbin/exfat-fuse")) {
 		string cmd = "/sbin/exfat-fuse " + Actual_Block_Device + " " + Mount_Point;
-                LOGI("cmd: %s\n", cmd.c_str());
+		LOGI("cmd: %s\n", cmd.c_str());
 		string result;
 		if (TWFunc::Exec_Cmd(cmd, result) != 0) 
 			return false;
@@ -698,6 +704,18 @@ bool TWPartition::Mount(bool Display_Error) {
 		LOGI("Actual block device: '%s', current file system: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str());
 		return false;
 	} else {
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+		if (EcryptFS_Password.size() > 0) {
+			if (mount_ecryptfs_drive(EcryptFS_Password.c_str(), Mount_Point.c_str(), Mount_Point.c_str(), 0) != 0) {
+				if (Display_Error)
+					LOGE("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());
+				else
+					LOGI("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());
+			} else {
+				LOGI("Successfully mounted ecryptfs for '%s'\n", Mount_Point.c_str());
+			}
+		}
+#endif
 		if (Removable)
 			Update_Size(Display_Error);
 

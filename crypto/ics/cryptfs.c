@@ -659,6 +659,7 @@ int cryptfs_check_passwd(const char *passwd)
 
         int rc2 = 1;
 #ifndef RECOVERY_SDCARD_ON_DATA
+#ifdef TW_INTERNAL_STORAGE_PATH
 		// internal storage for non data/media devices
         if(!rc) {
             strcpy(pwbuf, passwd);
@@ -667,6 +668,7 @@ int cryptfs_check_passwd(const char *passwd)
                     EXPAND(TW_INTERNAL_STORAGE_MOUNT_POINT));
         }
 #endif
+#endif
 #ifdef TW_EXTERNAL_STORAGE_PATH
 		printf("Temp mounting /data\n");
 		// mount data so mount_ecryptfs_drive can access edk in /data/system/
@@ -674,21 +676,17 @@ int cryptfs_check_passwd(const char *passwd)
         // external sd
 		char decrypt_external[256], external_blkdev[256];
 		property_get("ro.crypto.external_encrypted", decrypt_external, "0");
-		// First we have to mount the external storage
-        if (!rc2 && strcmp(decrypt_external, "1") == 0) {
-			printf("Mounting external...\n");
-			property_get("ro.crypto.external_blkdev", external_blkdev, "");
-            rc2 = mount(
-                    external_blkdev, EXPAND(TW_EXTERNAL_STORAGE_PATH),
-                    "vfat", MS_RDONLY, "");
-        }
 		// Mount the external storage as ecryptfs so that ecryptfs can act as a pass-through
-		if (!rc2) {
+		if (!rc2 && strcmp(decrypt_external, "1") == 0) {
 			printf("Mounting external with ecryptfs...\n");
             strcpy(pwbuf, passwd);
             rc2 = mount_ecryptfs_drive(
                     pwbuf, EXPAND(TW_EXTERNAL_STORAGE_PATH),
                     EXPAND(TW_EXTERNAL_STORAGE_PATH), 0);
+			if (rc2 == 0)
+				property_set("ro.crypto.external_use_ecryptfs", "1");
+			else
+				property_set("ro.crypto.external_use_ecryptfs", "0");
         } else {
 			printf("Unable to mount external storage with ecryptfs.\n");
 			umount(EXPAND(TW_EXTERNAL_STORAGE_PATH));

@@ -1596,7 +1596,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 		efs = 0;
 #ifdef TW_EXTERNAL_STORAGE_PATH
 	TWPartition* sdcard = Find_Partition_By_Path(EXPAND(TW_EXTERNAL_STORAGE_PATH));
-	if (sdcard) {
+	if (sdcard && sdcard->Mount(false)) {
 		property_set("ro.crypto.external_encrypted", "1");
 		property_set("ro.crypto.external_blkdev", sdcard->Actual_Block_Device.c_str());
 	} else {
@@ -1639,12 +1639,19 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 				emmc->Setup_File_System(false);
 				ui_print("Internal SD successfully decrypted, new block device: '%s'\n", crypto_blkdev_sd);
 			}
-
-#ifdef TW_EXTERNAL_STORAGE_PATH
-			sdcard->Is_Decrypted = true;
-			sdcard->Setup_File_System(false);
-#endif //ifdef TW_EXTERNAL_STORAGE_PATH
 #endif //ifdef CRYPTO_SD_FS_TYPE
+#ifdef TW_EXTERNAL_STORAGE_PATH
+			char is_external_decrypted[255];
+			property_get("ro.crypto.external_use_ecryptfs", is_external_decrypted, "0");
+			if (strcmp(is_external_decrypted, "1") == 0) {
+				sdcard->Is_Decrypted = true;
+				sdcard->EcryptFS_Password = Password;
+				sdcard->Decrypted_Block_Device = sdcard->Actual_Block_Device;
+			} else {
+				sdcard->Is_Decrypted = false;
+				sdcard->Decrypted_Block_Device = "";
+			}
+#endif //ifdef TW_EXTERNAL_STORAGE_PATH
 
 			// Sleep for a bit so that the device will be ready
 			sleep(1);
