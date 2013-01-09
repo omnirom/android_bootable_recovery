@@ -760,6 +760,13 @@ bool TWPartition::Wipe(string New_File_System) {
 	if (Mount_Point == "/cache")
 		tmplog_offset = 0;
 
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+	if (Mount_Point == "/data" && Mount(false)) {
+		if (TWFunc::Path_Exists("/data/system/edk_p_sd"))
+			TWFunc::copy_file("/data/system/edk_p_sd", "/tmp/edk_p_sd", 0600);
+	}
+#endif
+
 	if (Has_Data_Media)
 		return Wipe_Data_Without_Wiping_Media();
 
@@ -775,7 +782,7 @@ bool TWPartition::Wipe(string New_File_System) {
 		wiped = Wipe_EXT23(New_File_System);
 	else if (New_File_System == "vfat")
 		wiped = Wipe_FAT();
-	if (New_File_System == "exfat")
+	else if (New_File_System == "exfat")
 		wiped = Wipe_EXFAT();
 	else if (New_File_System == "yaffs2")
 		wiped = Wipe_MTD();
@@ -785,6 +792,14 @@ bool TWPartition::Wipe(string New_File_System) {
 	}
 
 	if (wiped) {
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+		if (Mount_Point == "/data" && Mount(false)) {
+			if (TWFunc::Path_Exists("/tmp/edk_p_sd")) {
+				Make_Dir("/data/system", true);
+				TWFunc::copy_file("/tmp/edk_p_sd", "/data/system/edk_p_sd", 0600);
+			}
+		}
+#endif
 		Setup_File_System(false);
 		if (Is_Encrypted && !Is_Decrypted) {
 			// just wiped an encrypted partition back to its unencrypted state
@@ -1178,10 +1193,23 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 			
 			dir = "/data/";
 			dir.append(de->d_name);
-			TWFunc::removeDir(dir, false);
+			if (de->d_type == DT_DIR) {
+				TWFunc::removeDir(dir, false);
+			} else if (de->d_type == DT_REG || de->d_type == DT_LNK) {
+				if (!unlink(dir.c_str()))
+					LOGI("Unable to unlink '%s'\n", dir.c_str());
+			}
 		}
 		closedir(d);
 		ui_print("Done.\n");
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+		if (Mount_Point == "/data" && Mount(false)) {
+			if (TWFunc::Path_Exists("/tmp/edk_p_sd")) {
+				Make_Dir("/data/system", true);
+				TWFunc::copy_file("/tmp/edk_p_sd", "/data/system/edk_p_sd", 0600);
+			}
+		}
+#endif
 		return true;
 	}
 	ui_print("Dirent failed to open /data, error!\n");

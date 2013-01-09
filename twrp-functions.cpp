@@ -401,38 +401,38 @@ void TWFunc::check_and_run_script(const char* script_file, const char* display_n
 }
 
 int TWFunc::removeDir(const string path, bool skipParent) {
-        DIR *d = opendir(path.c_str());
-        int r = 0;
-        string new_path;
+	DIR *d = opendir(path.c_str());
+	int r = 0;
+	string new_path;
 
-        if (d == NULL) {
-                LOGE("Error opening '%s'\n", path.c_str());
-                return -1;
-        }
+	if (d == NULL) {
+		LOGE("Error opening '%s'\n", path.c_str());
+		return -1;
+	}
 
-        if (d) {
-                struct dirent *p;
-                while (!r && (p = readdir(d))) {
+	if (d) {
+		struct dirent *p;
+		while (!r && (p = readdir(d))) {
 			LOGI("checking :%s\n", p->d_name);
-                        if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
-                                continue;
-                        new_path = path + "/";
-                        new_path.append(p->d_name);
-                        if (p->d_type == DT_DIR) {
-                                r = removeDir(new_path, true);
-                                if (!r) {
+			if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+				continue;
+			new_path = path + "/";
+			new_path.append(p->d_name);
+			if (p->d_type == DT_DIR) {
+				r = removeDir(new_path, true);
+				if (!r) {
 					if (p->d_type == DT_DIR) 
 						r = rmdir(new_path.c_str());
 					else
 						LOGI("Unable to removeDir '%s': %s\n", new_path.c_str(), strerror(errno));
 				}
-                        } else {
-                                r = unlink(new_path.c_str());
-                                if (!r)
-                                        LOGI("Unable to unlink '%s'\n", new_path.c_str());
-                        }
-                }
-                closedir(d);
+			} else if (p->d_type == DT_REG || p->d_type == DT_LNK) {
+				r = unlink(new_path.c_str());
+				if (!r)
+					LOGI("Unable to unlink '%s'\n", new_path.c_str());
+			}
+		}
+		closedir(d);
 
 		if (!r) { 
 			if (skipParent)
@@ -440,8 +440,8 @@ int TWFunc::removeDir(const string path, bool skipParent) {
 			else
 				r = rmdir(path.c_str());
 		}
-        }
-        return r;
+	}
+	return r;
 }
 
 int TWFunc::copy_file(string src, string dst, int mode) {
