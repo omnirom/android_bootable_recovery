@@ -67,6 +67,10 @@ LOCAL_STATIC_LIBRARIES += libminadbd libminzip libunz
 LOCAL_STATIC_LIBRARIES += libminuitwrp libpixelflinger_static libpng libjpegtwrp libgui
 LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libmincrypt libext4_utils libtar
 
+ifneq ($(wildcard system/core/libsparse/Android.mk),)
+LOCAL_SHARED_LIBRARIES += libsparse
+endif
+
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_CFLAGS += -DUSE_EXT4
     LOCAL_C_INCLUDES += system/extras/ext4_utils

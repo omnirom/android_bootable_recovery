@@ -72,6 +72,9 @@ endif
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/make_ext4fs
 endif
+ifneq ($(wildcard system/core/libsparse/Android.mk),)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libsparse.so
+endif
 
 TWRP_AUTOGEN := $(intermediates)/teamwin
 
