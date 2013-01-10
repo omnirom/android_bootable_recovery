@@ -133,6 +133,9 @@ typedef int (*mount_ecryptfs_drive_t)(
 int unmount_ecryptfs_drive(
         const char *source);
 
+typedef int (*unmount_ecryptfs_drive_t)(
+        const char *source);
+
 //////////////////////////////////////////////////////////////////////////////
 
 #endif // #ifndef __LIBCRYPT_SAMSUNG_H__

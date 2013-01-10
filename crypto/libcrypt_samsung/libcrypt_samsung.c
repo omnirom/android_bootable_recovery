@@ -11,25 +11,6 @@
 #include "include/libcrypt_samsung.h"
 
 //////////////////////////////////////////////////////////////////////////////
-void xconvert_key_to_hex_ascii(unsigned char *master_key, unsigned int keysize,
-                              char *master_key_ascii)
-{
-  unsigned int i, a;
-  unsigned char nibble;
-
-  for (i=0, a=0; i<keysize; i++, a+=2) {
-    /* For each byte, write out two ascii hex digits */
-    nibble = (master_key[i] >> 4) & 0xf;
-    master_key_ascii[a] = nibble + (nibble > 9 ? 0x37 : 0x30);
-
-    nibble = master_key[i] & 0xf;
-    master_key_ascii[a+1] = nibble + (nibble > 9 ? 0x37 : 0x30);
-  }
-
-  /* Add the null termination */
-  master_key_ascii[a] = '\0';
-
-}
 
 int decrypt_EDK(
         dek_t *dek, const edk_payload_t *edk, /*const*/ char *passwd)
@@ -66,3 +47,19 @@ int mount_ecryptfs_drive(
     return r;
 }
 
+int unmount_ecryptfs_drive(
+        const char *source)
+{
+    void *lib = dlopen("libsec_ecryptfs.so", RTLD_LAZY);
+    if(!lib)
+        return -100;
+
+    int r = -101;
+    unmount_ecryptfs_drive_t sym = (unmount_ecryptfs_drive_t)dlsym(lib, "unmount_ecryptfs_drive");
+    if(sym)
+        r = sym(source);
+
+    dlclose(lib);
+
+    return r;
+}

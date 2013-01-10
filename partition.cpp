@@ -705,7 +705,7 @@ bool TWPartition::Mount(bool Display_Error) {
 		return false;
 	} else {
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-		if (EcryptFS_Password.size() > 0) {
+		if (EcryptFS_Password.size() > 0 && PartitionManager.Mount_By_Path("/data", false)) {
 			if (mount_ecryptfs_drive(EcryptFS_Password.c_str(), Mount_Point.c_str(), Mount_Point.c_str(), 0) != 0) {
 				if (Display_Error)
 					LOGE("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());
@@ -734,6 +734,19 @@ bool TWPartition::UnMount(bool Display_Error) {
 		DataManager::GetValue(TW_DONT_UNMOUNT_SYSTEM, never_unmount_system);
 		if (never_unmount_system == 1 && Mount_Point == "/system")
 			return true; // Never unmount system if you're not supposed to unmount it
+
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+		if (EcryptFS_Password.size() > 0) {
+			if (unmount_ecryptfs_drive(Mount_Point.c_str()) != 0) {
+				if (Display_Error)
+					LOGE("Unable to unmount ecryptfs for '%s'\n", Mount_Point.c_str());
+				else
+					LOGI("Unable to unmount ecryptfs for '%s'\n", Mount_Point.c_str());
+			} else {
+				LOGI("Successfully unmounted ecryptfs for '%s'\n", Mount_Point.c_str());
+			}
+		}
+#endif
 
 		if (!Symlink_Mount_Point.empty())
 			umount(Symlink_Mount_Point.c_str());
