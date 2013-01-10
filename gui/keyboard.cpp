@@ -52,7 +52,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 	int layoutindex, rowindex, keyindex, Xindex, Yindex, keyHeight = 0, keyWidth = 0;
 	rowY = colX = -1;
 	highlightRenderCount = hasHighlight = 0;
-	char resource[9], layout[7], row[4], key[5], longpress[6];
+	char resource[10], layout[8], row[5], key[6], longpress[7];
 	xml_attribute<>* attr;
 	xml_node<>* child;
 	xml_node<>* keylayout;
