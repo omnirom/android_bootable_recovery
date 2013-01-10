@@ -1595,6 +1595,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	else
 		efs = 0;
 #ifdef TW_EXTERNAL_STORAGE_PATH
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 	TWPartition* sdcard = Find_Partition_By_Path(EXPAND(TW_EXTERNAL_STORAGE_PATH));
 	if (sdcard && sdcard->Mount(false)) {
 		property_set("ro.crypto.external_encrypted", "1");
@@ -1602,6 +1603,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	} else {
 		property_set("ro.crypto.external_encrypted", "0");
 	}
+#endif
 #endif
 
 	strcpy(cPassword, Password.c_str());
@@ -1641,6 +1643,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 			}
 #endif //ifdef CRYPTO_SD_FS_TYPE
 #ifdef TW_EXTERNAL_STORAGE_PATH
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 			char is_external_decrypted[255];
 			property_get("ro.crypto.external_use_ecryptfs", is_external_decrypted, "0");
 			if (strcmp(is_external_decrypted, "1") == 0) {
@@ -1651,6 +1654,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 				sdcard->Is_Decrypted = false;
 				sdcard->Decrypted_Block_Device = "";
 			}
+#endif
 #endif //ifdef TW_EXTERNAL_STORAGE_PATH
 
 			// Sleep for a bit so that the device will be ready
