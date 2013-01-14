@@ -705,7 +705,9 @@ bool TWPartition::Mount(bool Display_Error) {
 		return false;
 	} else {
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-		if (EcryptFS_Password.size() > 0 && PartitionManager.Mount_By_Path("/data", false)) {
+		string MetaEcfsFile = EXPAND(TW_EXTERNAL_STORAGE_PATH);
+		MetaEcfsFile += "/.MetaEcfsFile";
+		if (EcryptFS_Password.size() > 0 && PartitionManager.Mount_By_Path("/data", false) && TWFunc::Path_Exists(MetaEcfsFile)) {
 			if (mount_ecryptfs_drive(EcryptFS_Password.c_str(), Mount_Point.c_str(), Mount_Point.c_str(), 0) != 0) {
 				if (Display_Error)
 					LOGE("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());

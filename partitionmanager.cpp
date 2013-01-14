@@ -1650,6 +1650,13 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 				sdcard->Is_Decrypted = true;
 				sdcard->EcryptFS_Password = Password;
 				sdcard->Decrypted_Block_Device = sdcard->Actual_Block_Device;
+				string MetaEcfsFile = EXPAND(TW_EXTERNAL_STORAGE_PATH);
+				MetaEcfsFile += "/.MetaEcfsFile";
+				if (!TWFunc::Path_Exists(MetaEcfsFile)) {
+					// External storage isn't actually encrypted so unmount and remount without ecryptfs
+					sdcard->UnMount(false);
+					sdcard->Mount(false);
+				}
 			} else {
 				sdcard->Is_Decrypted = false;
 				sdcard->Decrypted_Block_Device = "";
