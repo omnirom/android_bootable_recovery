@@ -90,6 +90,7 @@ TWPartition::TWPartition(void) {
 	Fstab_File_System = "";
 	Format_Block_Size = 0;
 	Ignore_Blkid = false;
+	Retain_Layout_Version = false;
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 	EcryptFS_Password = "";
 #endif
@@ -353,6 +354,8 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			SubPartition_Of = ptr;
 		} else if (strcmp(ptr, "ignoreblkid") == 0) {
 			Ignore_Blkid = true;
+		} else if (strcmp(ptr, "retainlayoutversion") == 0) {
+			Retain_Layout_Version = true;
 		} else if (strlen(ptr) > 8 && strncmp(ptr, "symlink=", 8) == 0) {
 			ptr += 8;
 			Symlink_Path = ptr;
@@ -767,6 +770,10 @@ bool TWPartition::UnMount(bool Display_Error) {
 }
 
 bool TWPartition::Wipe(string New_File_System) {
+	bool wiped = false, update_crypt = false;
+	int check;
+	string Layout_Filename = Mount_Point + "/.layout_version";
+
 	if (!Can_Be_Wiped) {
 		LOGE("Partition '%s' cannot be wiped.\n", Mount_Point.c_str());
 		return false;
@@ -782,28 +789,35 @@ bool TWPartition::Wipe(string New_File_System) {
 	}
 #endif
 
-	if (Has_Data_Media)
-		return Wipe_Data_Without_Wiping_Media();
+	if (Retain_Layout_Version && Mount(false) && TWFunc::Path_Exists(Layout_Filename))
+		TWFunc::copy_file(Layout_Filename, "/.layout_version", 0600);
+	else
+		unlink("/.layout_version");
 
-	int check;
-	bool wiped = false;
-	DataManager::GetValue(TW_RM_RF_VAR, check);
+	if (Has_Data_Media) {
+		wiped = Wipe_Data_Without_Wiping_Media();
+	} else {
 
-	if (check)
-		wiped = Wipe_RMRF();
-	else if (New_File_System == "ext4")
-		wiped = Wipe_EXT4();
-	else if (New_File_System == "ext2" || New_File_System == "ext3")
-		wiped = Wipe_EXT23(New_File_System);
-	else if (New_File_System == "vfat")
-		wiped = Wipe_FAT();
-	else if (New_File_System == "exfat")
-		wiped = Wipe_EXFAT();
-	else if (New_File_System == "yaffs2")
-		wiped = Wipe_MTD();
-	else {
-		LOGE("Unable to wipe '%s' -- unknown file system '%s'\n", Mount_Point.c_str(), New_File_System.c_str());
-		return false;
+		DataManager::GetValue(TW_RM_RF_VAR, check);
+
+		if (check)
+			wiped = Wipe_RMRF();
+		else if (New_File_System == "ext4")
+			wiped = Wipe_EXT4();
+		else if (New_File_System == "ext2" || New_File_System == "ext3")
+			wiped = Wipe_EXT23(New_File_System);
+		else if (New_File_System == "vfat")
+			wiped = Wipe_FAT();
+		else if (New_File_System == "exfat")
+			wiped = Wipe_EXFAT();
+		else if (New_File_System == "yaffs2")
+			wiped = Wipe_MTD();
+		else {
+			LOGE("Unable to wipe '%s' -- unknown file system '%s'\n", Mount_Point.c_str(), New_File_System.c_str());
+			unlink("/.layout_version");
+			return false;
+		}
+		update_crypt = wiped;
 	}
 
 	if (wiped) {
@@ -815,15 +829,21 @@ bool TWPartition::Wipe(string New_File_System) {
 			}
 		}
 #endif
-		Setup_File_System(false);
-		if (Is_Encrypted && !Is_Decrypted) {
-			// just wiped an encrypted partition back to its unencrypted state
-			Is_Encrypted = false;
-			Is_Decrypted = false;
-			Decrypted_Block_Device = "";
-			if (Mount_Point == "/data") {
-				DataManager::SetValue(TW_IS_ENCRYPTED, 0);
-				DataManager::SetValue(TW_IS_DECRYPTED, 0);
+
+		if (TWFunc::Path_Exists("/.layout_version") && Mount(false))
+			TWFunc::copy_file("/.layout_version", Layout_Filename, 0600);
+
+		if (update_crypt) {
+			Setup_File_System(false);
+			if (Is_Encrypted && !Is_Decrypted) {
+				// just wiped an encrypted partition back to its unencrypted state
+				Is_Encrypted = false;
+				Is_Decrypted = false;
+				Decrypted_Block_Device = "";
+				if (Mount_Point == "/data") {
+					DataManager::SetValue(TW_IS_ENCRYPTED, 0);
+					DataManager::SetValue(TW_IS_DECRYPTED, 0);
+				}
 			}
 		}
 	}
@@ -1217,14 +1237,6 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 		}
 		closedir(d);
 		ui_print("Done.\n");
-#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-		if (Mount_Point == "/data" && Mount(false)) {
-			if (TWFunc::Path_Exists("/tmp/edk_p_sd")) {
-				Make_Dir("/data/system", true);
-				TWFunc::copy_file("/tmp/edk_p_sd", "/data/system/edk_p_sd", 0600);
-			}
-		}
-#endif
 		return true;
 	}
 	ui_print("Dirent failed to open /data, error!\n");

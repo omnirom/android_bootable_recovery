@@ -163,6 +163,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Is_Storage ");
 	if (Part->Ignore_Blkid)
 		printf("Ignore_Blkid ");
+	if (Part->Retain_Layout_Version)
+		printf("Retain_Layout_Version ");
 	printf("\n");
 	if (!Part->SubPartition_Of.empty())
 		printf("   SubPartition_Of: %s\n", Part->SubPartition_Of.c_str());

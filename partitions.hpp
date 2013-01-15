@@ -107,6 +107,7 @@ protected:
 	string Fstab_File_System;                                                 // File system from the recovery.fstab
 	int Format_Block_Size;                                                    // Block size for formatting
 	bool Ignore_Blkid;                                                        // Ignore blkid results due to superblocks lying to us on certain devices / partitions
+	bool Retain_Layout_Version;                                               // Retains the .layout_version file during a wipe (needed on devices like Sony Xperia T where /data and /data/media are separate partitions)
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 	string EcryptFS_Password;                                                 // Have to store the encryption password to remount
 #endif
