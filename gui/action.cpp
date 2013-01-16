@@ -235,7 +235,41 @@ int GUIAction::doActions()
 
     // For multi-action, we always use a thread
     pthread_t t;
-    pthread_create(&t, NULL, thread_start, this);
+	pthread_attr_t tattr;
+
+	if (pthread_attr_init(&tattr)) {
+		LOGE("Unable to pthread_attr_init\n");
+		return -1;
+	}
+	if (pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_JOINABLE)) {
+		LOGE("Error setting pthread_attr_setdetachstate\n");
+		return -1;
+	}
+	if (pthread_attr_setscope(&tattr, PTHREAD_SCOPE_SYSTEM)) {
+		LOGE("Error setting pthread_attr_setscope\n");
+		return -1;
+	}
+	if (pthread_attr_setstacksize(&tattr, 524288)) {
+		LOGE("Error setting pthread_attr_setstacksize\n");
+		return -1;
+	}
+	LOGI("creating thread\n");
+	int ret = pthread_create(&t, &tattr, thread_start, this);
+	LOGI("after thread creation\n");
+    if (ret) {
+		LOGE("Unable to create more threads for actions... continuing in same thread! %i\n", ret);
+		thread_start(this);
+	} else {
+		if (pthread_join(t, NULL)) {
+			LOGE("Error joining threads\n");
+		} else {
+			LOGI("Thread joined\n");
+		}
+	}
+	if (pthread_attr_destroy(&tattr)) {
+		LOGE("Failed to pthread_attr_destroy\n");
+		return -1;
+	}
 
     return 0;
 }
