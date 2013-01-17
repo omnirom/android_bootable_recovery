@@ -36,12 +36,14 @@
 #include "common.h"
 #include "openrecoveryscript.hpp"
 #include "variables.h"
+#include "adb_install.h"
 extern "C" {
 #include "data.h"
 #include "twinstall.h"
 int TWinstall_zip(const char* path, int* wipe_cache);
 }
 
+extern RecoveryUI* ui;
 static const char *SCRIPT_FILE_CACHE = "/cache/recovery/openrecoveryscript";
 static const char *SCRIPT_FILE_TMP = "/tmp/openrecoveryscript";
 #define SCRIPT_COMMAND_SIZE 512
@@ -325,6 +327,35 @@ int OpenRecoveryScript::run_script_file(void) {
 				}
 			} else if (strcmp(command, "print") == 0) {
 				ui_print("%s\n", value);
+			} else if (strcmp(command, "sideload") == 0) {
+				int wipe_cache = 0;
+				string result, Sideload_File;
+
+				if (!PartitionManager.Mount_Current_Storage(true)) {
+					continue;
+				}
+				Sideload_File = DataManager_GetCurrentStoragePath();
+				Sideload_File += "/sideload.zip";
+				if (TWFunc::Path_Exists(Sideload_File)) {
+					unlink(Sideload_File.c_str());
+				}
+				ui_print("Starting ADB sideload feature...\n");
+				ret_val = apply_from_adb(ui, &wipe_cache, Sideload_File.c_str());
+				if (!ret_val && wipe_cache)
+					PartitionManager.Wipe_By_Path("/cache");
+				if (DataManager_GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager_GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
+					ui_print("Injecting TWRP into boot image...\n");
+					TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
+					if (Boot == NULL || Boot->Current_File_System != "emmc")
+						TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash", result);
+					else {
+						string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
+						TWFunc::Exec_Cmd(injectcmd, result);
+					}
+					ui_print("TWRP injection complete.\n");
+				}
+				ret_val = 1; // Causes device to go to the home screen afterwards
+				ui_print("Sideload finished.\nGoing to main screen.\n");
 			} else {
 				LOGE("Unrecognized script command: '%s'\n", command);
 				ret_val = 1;
