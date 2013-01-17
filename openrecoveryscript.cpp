@@ -103,6 +103,7 @@ int OpenRecoveryScript::run_script_file(void) {
 			}
 			if (strcmp(command, "install") == 0) {
 				// Install Zip
+				PartitionManager.Mount_All_Storage();
 				ret_val = Install_Command(value);
 				install_cmd = -1;
 			} else if (strcmp(command, "wipe") == 0) {
@@ -156,19 +157,19 @@ int OpenRecoveryScript::run_script_file(void) {
 				// Restore
 				PartitionManager.Mount_All_Storage();
 				DataManager_SetIntValue(TW_SKIP_MD5_CHECK_VAR, 0);
+				char folder_path[512], partitions[512];
 
 				string val = value, restore_folder, restore_partitions;
 				size_t pos = val.find_last_of(" ");
 				if (pos == string::npos) {
-					ui_print("Malformed restore parameter: '%s'\n", value1);
-					ret_val = 1;
-					continue;
+					restore_folder = value;
+					partitions[0] = '\0';
+				} else {
+					restore_folder = val.substr(0, pos);
+					restore_partitions = val.substr(pos + 1, val.size() - pos - 1);
+					strcpy(partitions, restore_partitions.c_str());
 				}
-				restore_folder = val.substr(0, pos);
-				char folder_path[512], partitions[512];
 				strcpy(folder_path, restore_folder.c_str());
-				restore_partitions = val.substr(pos + 1, val.size() - pos - 1);
-				strcpy(partitions, restore_partitions.c_str());
 				LOGI("Restore folder is: '%s' and partitions: '%s'\n", folder_path, partitions);
 				ui_print("Restoring '%s'\n", folder_path);
 
@@ -277,10 +278,6 @@ int OpenRecoveryScript::run_script_file(void) {
 						DataManager_SetIntValue(TW_RESTORE_SP2_VAR, 0);
 					if (DataManager_GetIntValue(TW_RESTORE_SP3_VAR) && !tw_restore_sp3)
 						DataManager_SetIntValue(TW_RESTORE_SP3_VAR, 0);
-				} else {
-					ui_print("No restore options set.\n");
-					ret_val = 1;
-					continue;
 				}
 				PartitionManager.Run_Restore(folder_path);
 				ui_print("Restore complete!\n");

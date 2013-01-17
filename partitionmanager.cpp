@@ -659,7 +659,7 @@ int TWPartitionManager::Run_Backup(void) {
 				img_bytes += backup_sys->Backup_Size;
 		} else {
 			LOGE("Unable to locate system partition.\n");
-			return false;
+			DataManager::SetValue(TW_BACKUP_SYSTEM_VAR, 0);
 		}
 	}
 	DataManager::GetValue(TW_BACKUP_DATA_VAR, check);
@@ -680,7 +680,7 @@ int TWPartitionManager::Run_Backup(void) {
 				img_bytes += backup_data->Backup_Size + subpart_size;
 		} else {
 			LOGE("Unable to locate data partition.\n");
-			return false;
+			DataManager::SetValue(TW_BACKUP_DATA_VAR, 0);
 		}
 	}
 	DataManager::GetValue(TW_BACKUP_CACHE_VAR, check);
@@ -694,7 +694,7 @@ int TWPartitionManager::Run_Backup(void) {
 				img_bytes += backup_cache->Backup_Size;
 		} else {
 			LOGE("Unable to locate cache partition.\n");
-			return false;
+			DataManager::SetValue(TW_BACKUP_CACHE_VAR, 0);
 		}
 	}
 	DataManager::GetValue(TW_BACKUP_RECOVERY_VAR, check);
@@ -708,7 +708,7 @@ int TWPartitionManager::Run_Backup(void) {
 				img_bytes += backup_recovery->Backup_Size;
 		} else {
 			LOGE("Unable to locate recovery partition.\n");
-			return false;
+			DataManager::SetValue(TW_BACKUP_RECOVERY_VAR, 0);
 		}
 	}
 	DataManager::GetValue(TW_BACKUP_BOOT_VAR, check);
@@ -722,7 +722,7 @@ int TWPartitionManager::Run_Backup(void) {
 				img_bytes += backup_boot->Backup_Size;
 		} else {
 			LOGE("Unable to locate boot partition.\n");
-			return false;
+			DataManager::SetValue(TW_BACKUP_BOOT_VAR, 0);
 		}
 	}
 	DataManager::GetValue(TW_BACKUP_ANDSEC_VAR, check);
@@ -736,7 +736,7 @@ int TWPartitionManager::Run_Backup(void) {
 				img_bytes += backup_andsec->Backup_Size;
 		} else {
 			LOGE("Unable to locate android secure partition.\n");
-			return false;
+			DataManager::SetValue(TW_BACKUP_ANDSEC_VAR, 0);
 		}
 	}
 	DataManager::GetValue(TW_BACKUP_SDEXT_VAR, check);
@@ -750,7 +750,7 @@ int TWPartitionManager::Run_Backup(void) {
 				img_bytes += backup_sdext->Backup_Size;
 		} else {
 			LOGE("Unable to locate sd-ext partition.\n");
-			return false;
+			DataManager::SetValue(TW_BACKUP_SDEXT_VAR, 0);
 		}
 	}
 #ifdef SP1_NAME
@@ -765,7 +765,7 @@ int TWPartitionManager::Run_Backup(void) {
 				img_bytes += backup_sp1->Backup_Size;
 		} else {
 			LOGE("Unable to locate %s partition.\n", EXPAND(SP1_NAME));
-			return false;
+			DataManager::SetValue(TW_BACKUP_SP1_VAR, 0);
 		}
 	}
 #endif
@@ -781,7 +781,7 @@ int TWPartitionManager::Run_Backup(void) {
 				img_bytes += backup_sp2->Backup_Size;
 		} else {
 			LOGE("Unable to locate %s partition.\n", EXPAND(SP2_NAME));
-			return false;
+			DataManager::SetValue(TW_BACKUP_SP2_VAR, 0);
 		}
 	}
 #endif
@@ -797,7 +797,7 @@ int TWPartitionManager::Run_Backup(void) {
 				img_bytes += backup_sp3->Backup_Size;
 		} else {
 			LOGE("Unable to locate %s partition.\n", EXPAND(SP3_NAME));
-			return false;
+			DataManager::SetValue(TW_BACKUP_SP3_VAR, 0);
 		}
 	}
 #endif
@@ -937,54 +937,54 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 		restore_sys = Find_Partition_By_Path("/system");
 		if (restore_sys == NULL) {
 			LOGE("Unable to locate system partition.\n");
-			return false;
+		} else {
+			partition_count++;
 		}
-		partition_count++;
 	}
 	DataManager::GetValue(TW_RESTORE_DATA_VAR, check);
 	if (check > 0) {
 		restore_data = Find_Partition_By_Path("/data");
 		if (restore_data == NULL) {
 			LOGE("Unable to locate data partition.\n");
-			return false;
+		} else {
+			partition_count++;
 		}
-		partition_count++;
 	}
 	DataManager::GetValue(TW_RESTORE_CACHE_VAR, check);
 	if (check > 0) {
 		restore_cache = Find_Partition_By_Path("/cache");
 		if (restore_cache == NULL) {
 			LOGE("Unable to locate cache partition.\n");
-			return false;
+		} else {
+			partition_count++;
 		}
-		partition_count++;
 	}
 	DataManager::GetValue(TW_RESTORE_BOOT_VAR, check);
 	if (check > 0) {
 		restore_boot = Find_Partition_By_Path("/boot");
 		if (restore_boot == NULL) {
 			LOGE("Unable to locate boot partition.\n");
-			return false;
+		} else {
+			partition_count++;
 		}
-		partition_count++;
 	}
 	DataManager::GetValue(TW_RESTORE_ANDSEC_VAR, check);
 	if (check > 0) {
 		restore_andsec = Find_Partition_By_Path("/and-sec");
 		if (restore_andsec == NULL) {
 			LOGE("Unable to locate android secure partition.\n");
-			return false;
+		} else {
+			partition_count++;
 		}
-		partition_count++;
 	}
 	DataManager::GetValue(TW_RESTORE_SDEXT_VAR, check);
 	if (check > 0) {
 		restore_sdext = Find_Partition_By_Path("/sd-ext");
 		if (restore_sdext == NULL) {
 			LOGE("Unable to locate sd-ext partition.\n");
-			return false;
+		} else {
+			partition_count++;
 		}
-		partition_count++;
 	}
 #ifdef SP1_NAME
 	DataManager::GetValue(TW_RESTORE_SP1_VAR, check);
@@ -992,9 +992,9 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 		restore_sp1 = Find_Partition_By_Path(EXPAND(SP1_NAME));
 		if (restore_sp1 == NULL) {
 			LOGE("Unable to locate %s partition.\n", EXPAND(SP1_NAME));
-			return false;
+		} else {
+			partition_count++;
 		}
-		partition_count++;
 	}
 #endif
 #ifdef SP2_NAME
@@ -1003,9 +1003,9 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 		restore_sp2 = Find_Partition_By_Path(EXPAND(SP2_NAME));
 		if (restore_sp2 == NULL) {
 			LOGE("Unable to locate %s partition.\n", EXPAND(SP2_NAME));
-			return false;
+		} else {
+			partition_count++;
 		}
-		partition_count++;
 	}
 #endif
 #ifdef SP3_NAME
@@ -1014,9 +1014,9 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 		restore_sp3 = Find_Partition_By_Path(EXPAND(SP3_NAME));
 		if (restore_sp3 == NULL) {
 			LOGE("Unable to locate %s partition.\n", EXPAND(SP3_NAME));
-			return false;
+		} else {
+			partition_count++;
 		}
-		partition_count++;
 	}
 #endif
 
@@ -1675,6 +1675,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 				DataManager::SetValue(TW_INTERNAL_PATH, "/data/media/0");
 				dat->UnMount(false);
 				DataManager::SetBackupFolder();
+				Output_Partition(dat);
 			}
 #endif
 			Update_System_Details();

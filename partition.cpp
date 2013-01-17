@@ -725,7 +725,9 @@ bool TWPartition::Mount(bool Display_Error) {
 			Update_Size(Display_Error);
 
 		if (!Symlink_Mount_Point.empty()) {
-			mount(Symlink_Path.c_str(), Symlink_Mount_Point.c_str(), Fstab_File_System.c_str(), NULL, NULL);
+			string Command, Result;
+			Command = "mount '" + Symlink_Path + "' '" + Symlink_Mount_Point + "'";
+			TWFunc::Exec_Cmd(Command, Result);
 		}
 		return true;
 	}
