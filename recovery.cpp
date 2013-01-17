@@ -316,6 +316,7 @@ finish_recovery(const char *send_intent) {
 
 static int
 erase_volume(const char *volume) {
+	return !PartitionManager.Wipe_By_Path(volume);
     ui->SetBackground(RecoveryUI::INSTALLING);
     ui->SetProgressType(RecoveryUI::INDETERMINATE);
     ui->Print("Formatting %s...\n", volume);
