@@ -831,15 +831,21 @@ int DataManager::GetMagicValue(const string varName, string& value)
 }
 
 void DataManager::Output_Version(void) {
-	string Path, Command;
+	string Path;
 	char version[255];
 
-	Path = DataManager::GetSettingsStoragePath();
-	if (!PartitionManager.Mount_By_Path(Path, false)) {
+	if (!PartitionManager.Mount_By_Path("/cache", false)) {
 		LOGI("Unable to mount '%s' to write version number.\n", Path.c_str());
 		return;
 	}
-	Path += "/TWRP/.version";
+	if (!TWFunc::Path_Exists("/cache/recovery/.")) {
+		LOGI("Recreating /cache/recovery folder.\n");
+		if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) {
+			LOGE("DataManager::Output_Version -- Unable to make /cache/recovery\n");
+			return;
+		}
+	}
+	Path = "/cache/recovery/.version";
 	if (TWFunc::Path_Exists(Path)) {
 		unlink(Path.c_str());
 	}

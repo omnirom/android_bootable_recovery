@@ -832,6 +832,9 @@ bool TWPartition::Wipe(string New_File_System) {
 		}
 #endif
 
+		if (Mount_Point == "/cache")
+			DataManager::Output_Version();
+
 		if (TWFunc::Path_Exists("/.layout_version") && Mount(false))
 			TWFunc::copy_file("/.layout_version", Layout_Filename, 0600);
 
