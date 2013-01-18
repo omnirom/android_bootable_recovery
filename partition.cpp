@@ -997,6 +997,7 @@ void TWPartition::Check_FS_Type() {
 	char* blk;
 	char* arg;
 	char* ptr;
+	int type_found = 0;
 
 	if (Fstab_File_System == "yaffs2" || Fstab_File_System == "mtd" || Fstab_File_System == "bml" || Ignore_Blkid)
 		return; // Running blkid on some mtd devices causes a massive crash or needs to be skipped
@@ -1025,35 +1026,33 @@ void TWPartition::Check_FS_Type() {
 		{
 			arg = ptr;
 			while (*ptr > 32)	   ptr++;
-			if (*ptr != 0)
-			{
+			if (*ptr != 0) {
 				*ptr = 0;
 				ptr++;
 			}
 
-			if (strlen(arg) > 6)
-			{
-				if (memcmp(arg, "TYPE=\"", 6) == 0)  break;
+			if (strlen(arg) > 6) {
+				if (memcmp(arg, "TYPE=\"", 6) == 0) {
+					type_found = 1;
+					break;
+				}
 			}
 
-			if (*ptr == 0)
-			{
+			if (*ptr == 0) {
 				arg = NULL;
 				break;
 			}
 		}
 
-		if (arg && strlen(arg) > 7)
-		{
+		if (type_found) {
 			arg += 6;   // Skip the TYPE=" portion
 			arg[strlen(arg)-1] = '\0';  // Drop the tail quote
-		}
-		else
+			if (Current_File_System != arg) {
+				LOGI("'%s' was '%s' now set to '%s'\n", Mount_Point.c_str(), Current_File_System.c_str(), arg);
+				Current_File_System = arg;
+			}
+		} else
 			continue;
-		if (Current_File_System != arg) {
-			LOGI("'%s' was '%s' now set to '%s'\n", Mount_Point.c_str(), Current_File_System.c_str(), arg);
-			Current_File_System = arg;
-		}
 	}
 	return;
 }
