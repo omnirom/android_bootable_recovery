@@ -40,6 +40,7 @@
 extern "C" {
 #include "data.h"
 #include "twinstall.h"
+#include "gui/gui.h"
 int TWinstall_zip(const char* path, int* wipe_cache);
 }
 
@@ -66,7 +67,7 @@ int OpenRecoveryScript::check_for_script_file(void) {
 
 int OpenRecoveryScript::run_script_file(void) {
 	FILE *fp = fopen(SCRIPT_FILE_TMP, "r");
-	int ret_val = 0, cindex, line_len, i, remove_nl, install_cmd = 0;
+	int ret_val = 0, cindex, line_len, i, remove_nl, install_cmd = 0, sideload = 0;
 	char script_line[SCRIPT_COMMAND_SIZE], command[SCRIPT_COMMAND_SIZE],
 		 value[SCRIPT_COMMAND_SIZE], mount[SCRIPT_COMMAND_SIZE],
 		 value1[SCRIPT_COMMAND_SIZE], value2[SCRIPT_COMMAND_SIZE];
@@ -328,34 +329,27 @@ int OpenRecoveryScript::run_script_file(void) {
 			} else if (strcmp(command, "print") == 0) {
 				ui_print("%s\n", value);
 			} else if (strcmp(command, "sideload") == 0) {
-				int wipe_cache = 0;
-				string result, Sideload_File;
-
-				if (!PartitionManager.Mount_Current_Storage(true)) {
-					continue;
+				// ADB Sideload
+				DataManager_SetStrValue("tw_page_done", "0");
+				DataManager_SetStrValue("tw_back", "main");
+				DataManager_SetStrValue("tw_action", "adbsideload");
+				DataManager_SetStrValue("tw_has_action2", "0");
+				DataManager_SetStrValue("tw_action2", "");
+				DataManager_SetStrValue("tw_action2_param", "");
+				DataManager_SetStrValue("tw_action_text1", "ADB Sideload");
+				DataManager_SetStrValue("tw_action_text2", "Usage: adb sideload filename.zip");
+				DataManager_SetStrValue("tw_complete_text1", "ADB Sideload Complete");
+				DataManager_SetIntValue("tw_has_cancel", 1);
+				DataManager_SetIntValue("tw_show_reboot", 1);
+				DataManager_SetStrValue("tw_cancel_action", "adbsideloadcancel");
+				DataManager_SetStrValue("tw_cancel_param", "");
+				if (gui_startPage("action_page") != 0) {
+					LOGE("Failed to load sideload GUI page.\n");
 				}
-				Sideload_File = DataManager_GetCurrentStoragePath();
-				Sideload_File += "/sideload.zip";
-				if (TWFunc::Path_Exists(Sideload_File)) {
-					unlink(Sideload_File.c_str());
-				}
-				ui_print("Starting ADB sideload feature...\n");
-				ret_val = apply_from_adb(ui, &wipe_cache, Sideload_File.c_str());
-				if (!ret_val && wipe_cache)
-					PartitionManager.Wipe_By_Path("/cache");
-				if (DataManager_GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager_GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
-					ui_print("Injecting TWRP into boot image...\n");
-					TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
-					if (Boot == NULL || Boot->Current_File_System != "emmc")
-						TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash", result);
-					else {
-						string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
-						TWFunc::Exec_Cmd(injectcmd, result);
-					}
-					ui_print("TWRP injection complete.\n");
-				}
-				ret_val = 1; // Causes device to go to the home screen afterwards
-				ui_print("Sideload finished.\nGoing to main screen.\n");
+				DataManager_SetIntValue("tw_page_done", 1);
+				gui_console_only();
+				sideload = 1; // Causes device to go to the home screen afterwards
+				ui_print("Sideload finished.\n");
 			} else {
 				LOGE("Unrecognized script command: '%s'\n", command);
 				ret_val = 1;
@@ -379,6 +373,8 @@ int OpenRecoveryScript::run_script_file(void) {
 		}
 		ui_print("TWRP injection complete.\n");
 	}
+	if (sideload)
+		ret_val = 1; // Forces booting to the home page after sideload
 	return ret_val;
 }
 

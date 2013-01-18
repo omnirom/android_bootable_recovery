@@ -253,9 +253,8 @@ int GUIAction::doActions()
 		LOGE("Error setting pthread_attr_setstacksize\n");
 		return -1;
 	}
-	LOGI("creating thread\n");
+	LOGI("Creating thread\n");
 	int ret = pthread_create(&t, &tattr, thread_start, this);
-	LOGI("after thread creation\n");
     if (ret) {
 		LOGE("Unable to create more threads for actions... continuing in same thread! %i\n", ret);
 		thread_start(this);
@@ -1071,6 +1070,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				string result, Sideload_File;
 
 				if (!PartitionManager.Mount_Current_Storage(true)) {
+					DataManager::SetValue("tw_page_done", "1"); // For OpenRecoveryScript support
 					operation_end(1, simulate);
 					return 0;
 				}
@@ -1101,6 +1101,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					}
 				}
 			}
+			DataManager::SetValue("tw_page_done", "1"); // For OpenRecoveryScript support
 			operation_end(ret, simulate);
 			return 0;
 		}
@@ -1113,6 +1114,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			DataManager::GetValue("tw_child_pid", child_pid);
 			ui_print("Cancelling ADB sideload...\n");
 			kill(child_pid, SIGTERM);
+			DataManager::SetValue("tw_page_done", "1"); // For OpenRecoveryScript support
 			return 0;
 		}
     }

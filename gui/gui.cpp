@@ -60,6 +60,7 @@ static int gGuiConsoleRunning = 0;
 static int gGuiConsoleTerminate = 0;
 static int gForceRender = 0;
 static int gNoAnimation = 1;
+static int gGuiInputRunning = 0;
 
 // Needed by pages.cpp too
 int gGuiRunning = 0;
@@ -391,6 +392,56 @@ static int runPages(void)
     return 0;
 }
 
+static int runPage(const char* page_name)
+{
+    gui_changePage(page_name);
+
+	// Raise the curtain
+    if (gCurtain != NULL)
+    {
+        gr_surface surface;
+
+        PageManager::Render();
+        gr_get_surface(&surface);
+        curtainRaise(surface);
+        gr_free_surface(surface);
+    }
+
+    gGuiRunning = 1;
+
+    DataManager::SetValue("tw_loaded", 1);
+
+    for (;;)
+    {
+        loopTimer();
+
+        if (!gForceRender)
+        {
+            int ret;
+
+            ret = PageManager::Update();
+            if (ret > 1)
+                PageManager::Render();
+
+            if (ret > 0)
+                flip();
+        }
+        else
+        {
+            gForceRender = 0;
+            PageManager::Render();
+            flip();
+        }
+		if (DataManager::GetIntValue("tw_page_done") != 0) {
+			gui_changePage("main");
+			break;
+		}
+    }
+
+    gGuiRunning = 0;
+    return 0;
+}
+
 int gui_forceRender(void)
 {
     gForceRender = 1;
@@ -537,11 +588,34 @@ extern "C" int gui_start()
     // Set the default package
     PageManager::SelectPackage("TWRP");
 
-    // Start by spinning off an input handler.
-    pthread_t t;
-    pthread_create(&t, NULL, input_thread, NULL);
+    if (!gGuiInputRunning) {
+		// Start by spinning off an input handler.
+		pthread_t t;
+		pthread_create(&t, NULL, input_thread, NULL);
+		gGuiInputRunning = 1;
+	}
 
     return runPages();
+}
+
+extern "C" int gui_startPage(const char* page_name)
+{
+    if (!gGuiInitialized)   return -1;
+
+    gGuiConsoleTerminate = 1;
+    while (gGuiConsoleRunning)  loopTimer();
+
+    // Set the default package
+    PageManager::SelectPackage("TWRP");
+
+    if (!gGuiInputRunning) {
+		// Start by spinning off an input handler.
+		pthread_t t;
+		pthread_create(&t, NULL, input_thread, NULL);
+		gGuiInputRunning = 1;
+	}
+
+    return runPage(page_name);
 }
 
 static void *console_thread(void *cookie)
