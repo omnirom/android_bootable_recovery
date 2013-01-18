@@ -640,13 +640,6 @@ int TWPartitionManager::Run_Backup(void) {
 	Full_Backup_Path = Backup_Folder + "/" + Backup_Name + "/";
 	LOGI("Full_Backup_Path is: '%s'\n", Full_Backup_Path.c_str());
 
-	ui_print("\n[BACKUP STARTED]\n");
-    ui_print(" * Backup Folder: %s\n", Full_Backup_Path.c_str());
-	if (!TWFunc::Recursive_Mkdir(Full_Backup_Path)) {
-		LOGE("Failed to make backup folder.\n");
-		return false;
-	}
-
 	LOGI("Calculating backup details...\n");
 	DataManager::GetValue(TW_BACKUP_SYSTEM_VAR, check);
 	if (check) {
@@ -817,13 +810,20 @@ int TWPartitionManager::Run_Backup(void) {
 		LOGE("Unable to locate storage device.\n");
 		return false;
 	}
-	if (free_space + (32 * 1024 * 1024) < total_bytes) {
+	if (free_space - (32 * 1024 * 1024) < total_bytes) {
 		// We require an extra 32MB just in case
 		LOGE("Not enough free space on storage.\n");
 		return false;
 	}
 	img_bytes_remaining = img_bytes;
     file_bytes_remaining = file_bytes;
+
+	ui_print("\n[BACKUP STARTED]\n");
+	ui_print(" * Backup Folder: %s\n", Full_Backup_Path.c_str());
+	if (!TWFunc::Recursive_Mkdir(Full_Backup_Path)) {
+		LOGE("Failed to make backup folder.\n");
+		return false;
+	}
 
 	ui->SetProgress(0.0);
 
