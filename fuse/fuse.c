@@ -517,6 +517,7 @@ static int try_get_path(struct fuse *f, fuse_ino_t nodeid, const char *name,
 	if (name != NULL) {
 		s = add_name(&buf, &bufsize, s, name);
 		err = -ENOMEM;
+                printf("setting err to ENOMEM\n");
 		if (s == NULL)
 			goto out_free;
 	}
@@ -530,6 +531,7 @@ static int try_get_path(struct fuse *f, fuse_ino_t nodeid, const char *name,
 				if (!wnode->ticket)
 					wnode->ticket = ticket;
 				err = -EAGAIN;
+				printf("setting err to EAGAIN\n");
 				goto out_free;
 			}
 			wnode->treelock = -1;
@@ -541,16 +543,19 @@ static int try_get_path(struct fuse *f, fuse_ino_t nodeid, const char *name,
 	for (node = get_node(f, nodeid); node->nodeid != FUSE_ROOT_ID;
 	     node = node->parent) {
 		err = -ENOENT;
+		printf("setting err to ENOENT\n");
 		if (node->name == NULL || node->parent == NULL)
 			goto out_unlock;
 
 		err = -ENOMEM;
+		printf("setting err to ENOMEM\n");
 		s = add_name(&buf, &bufsize, s, node->name);
 		if (s == NULL)
 			goto out_unlock;
 
 		if (ticket) {
 			err = -EAGAIN;
+			printf("setting err to EAGAIN\n");
 			if (node->treelock == -1 ||
 			    (node->ticket && node->ticket != ticket))
 				goto out_unlock;

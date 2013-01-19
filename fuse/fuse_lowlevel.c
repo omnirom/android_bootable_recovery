@@ -177,8 +177,10 @@ int fuse_reply_iov(fuse_req_t req, const struct iovec *iov, int count)
 	struct iovec *padded_iov;
 
 	padded_iov = malloc((count + 1) * sizeof(struct iovec));
-	if (padded_iov == NULL)
+	if (padded_iov == NULL) {
+		printf("ENOMEM fuse_reply_iov\n");
 		return fuse_reply_err(req, -ENOMEM);
+	}
 
 	memcpy(padded_iov + 1, iov, count * sizeof(struct iovec));
 	count++;
@@ -308,8 +310,10 @@ int fuse_reply_entry(fuse_req_t req, const struct fuse_entry_param *e)
 
 	/* before ABI 7.4 e->ino == 0 was invalid, only ENOENT meant
 	   negative entry */
-	if (!e->ino && req->f->conn.proto_minor < 4)
+	if (!e->ino && req->f->conn.proto_minor < 4) {
+		printf("ENOENT fuse_reply_entry\n");
 		return fuse_reply_err(req, ENOENT);
+	}
 
 	memset(&arg, 0, sizeof(arg));
 	fill_entry(&arg, e);
@@ -485,8 +489,10 @@ int fuse_reply_ioctl_iov(fuse_req_t req, int result, const struct iovec *iov,
 	int res;
 
 	padded_iov = malloc((count + 2) * sizeof(struct iovec));
-	if (padded_iov == NULL)
+	if (padded_iov == NULL) {
+                printf("ENOMEM fuse_reply_err\n");
 		return fuse_reply_err(req, -ENOMEM);
+	}
 
 	memset(&arg, 0, sizeof(arg));
 	arg.result = result;
@@ -517,8 +523,10 @@ static void do_lookup(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.lookup)
 		req->f->op.lookup(req, nodeid, name);
-	else
+	else {
+                printf("ENOSYS do_lookup\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_forget(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -549,8 +557,10 @@ static void do_getattr(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.getattr)
 		req->f->op.getattr(req, nodeid, fip);
-	else
+	else {
+		printf("ENOSYS do_getattr\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_setattr(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -581,8 +591,10 @@ static void do_setattr(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 			FUSE_SET_ATTR_MTIME_NOW;
 
 		req->f->op.setattr(req, nodeid, &stbuf, arg->valid, fi);
-	} else
+	} else {
+		printf("ENOSYS do_setattr\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_access(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -591,8 +603,10 @@ static void do_access(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.access)
 		req->f->op.access(req, nodeid, arg->mask);
-	else
+	else {
+		printf("ENOSYS do_access\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_readlink(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -601,8 +615,10 @@ static void do_readlink(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.readlink)
 		req->f->op.readlink(req, nodeid);
-	else
+	else {
+		printf("ENOSYS do_readlink\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_mknod(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -617,8 +633,10 @@ static void do_mknod(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.mknod)
 		req->f->op.mknod(req, nodeid, name, arg->mode, arg->rdev);
-	else
+	else {
+		printf("ENOSYS do_mknod\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_mkdir(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -630,8 +648,10 @@ static void do_mkdir(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.mkdir)
 		req->f->op.mkdir(req, nodeid, PARAM(arg), arg->mode);
-	else
+	else {
+		printf("ENOSYS do_mkdir\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_unlink(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -640,8 +660,10 @@ static void do_unlink(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.unlink)
 		req->f->op.unlink(req, nodeid, name);
-	else
+	else {
+		printf("ENOSYS do_unlink\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_rmdir(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -650,8 +672,10 @@ static void do_rmdir(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.rmdir)
 		req->f->op.rmdir(req, nodeid, name);
-	else
+	else {
+		printf("ENOSYS do_rmdir\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_symlink(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -661,8 +685,10 @@ static void do_symlink(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.symlink)
 		req->f->op.symlink(req, linkname, nodeid, name);
-	else
+	else {
+		printf("ENOSYS do_symlink\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_rename(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -673,8 +699,10 @@ static void do_rename(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.rename)
 		req->f->op.rename(req, nodeid, oldname, arg->newdir, newname);
-	else
+	else {
+		printf("ENOSYS do_rename\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_link(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -683,8 +711,10 @@ static void do_link(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.link)
 		req->f->op.link(req, arg->oldnodeid, nodeid, PARAM(arg));
-	else
+	else {
+		printf("ENOSYS do_link\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_create(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -704,8 +734,10 @@ static void do_create(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 			name = (char *) inarg + sizeof(struct fuse_open_in);
 
 		req->f->op.create(req, nodeid, name, arg->mode, &fi);
-	} else
+	} else {
+		printf("ENOSYS do_create\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_open(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -737,8 +769,10 @@ static void do_read(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 			fi.flags = arg->flags;
 		}
 		req->f->op.read(req, nodeid, arg->size, arg->offset, &fi);
-	} else
+	} else {
+		printf("ENOSYS do_read\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_write(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -763,8 +797,10 @@ static void do_write(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 	if (req->f->op.write)
 		req->f->op.write(req, nodeid, param, arg->size,
 				 arg->offset, &fi);
-	else
+	else {
+		printf("ENOSYS do_write\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_flush(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -781,8 +817,10 @@ static void do_flush(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.flush)
 		req->f->op.flush(req, nodeid, &fi);
-	else
+	else {
+		printf("ENOSYS do_flush\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_release(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -816,8 +854,10 @@ static void do_fsync(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.fsync)
 		req->f->op.fsync(req, nodeid, arg->fsync_flags & 1, &fi);
-	else
+	else {
+		printf("ENOSYS do_fsync\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_opendir(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -845,8 +885,10 @@ static void do_readdir(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.readdir)
 		req->f->op.readdir(req, nodeid, arg->size, arg->offset, &fi);
-	else
+	else {
+		printf("ENOSYS do_fsync\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_releasedir(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -876,8 +918,10 @@ static void do_fsyncdir(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.fsyncdir)
 		req->f->op.fsyncdir(req, nodeid, arg->fsync_flags & 1, &fi);
-	else
+	else {
+		printf("ENOSYS do_fsyncdir\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_statfs(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -905,8 +949,10 @@ static void do_setxattr(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 	if (req->f->op.setxattr)
 		req->f->op.setxattr(req, nodeid, name, value, arg->size,
 				    arg->flags);
-	else
+	else {
+		printf("ENOSYS do_setxattr\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_getxattr(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -915,8 +961,10 @@ static void do_getxattr(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.getxattr)
 		req->f->op.getxattr(req, nodeid, PARAM(arg), arg->size);
-	else
+	else {
+		printf("ENOSYS do_getxattr\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_listxattr(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -925,8 +973,10 @@ static void do_listxattr(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.listxattr)
 		req->f->op.listxattr(req, nodeid, arg->size);
-	else
+	else {
+		printf("ENOSYS do_listxattr\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_removexattr(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -935,8 +985,10 @@ static void do_removexattr(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.removexattr)
 		req->f->op.removexattr(req, nodeid, name);
-	else
+	else {
+		printf("ENOSYS do_removetxattr\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void convert_fuse_file_lock(struct fuse_file_lock *fl,
@@ -966,8 +1018,10 @@ static void do_getlk(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 	convert_fuse_file_lock(&arg->lk, &flock);
 	if (req->f->op.getlk)
 		req->f->op.getlk(req, nodeid, &fi, &flock);
-	else
+	else {
+		printf("do_getlk ENOSYS\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_setlk_common(fuse_req_t req, fuse_ino_t nodeid,
@@ -984,8 +1038,10 @@ static void do_setlk_common(fuse_req_t req, fuse_ino_t nodeid,
 	convert_fuse_file_lock(&arg->lk, &flock);
 	if (req->f->op.setlk)
 		req->f->op.setlk(req, nodeid, &fi, &flock, sleep);
-	else
+	else {
+		printf("do_getlk ENOSYS\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_setlk(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -1085,8 +1141,10 @@ static void do_bmap(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 	if (req->f->op.bmap)
 		req->f->op.bmap(req, nodeid, arg->blocksize, arg->block);
-	else
+	else {
+		printf("do_bmap ENOSYS\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 static void do_ioctl(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
@@ -1104,8 +1162,10 @@ static void do_ioctl(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 		req->f->op.ioctl(req, nodeid, arg->cmd,
 				 (void *)(uintptr_t)arg->arg, &fi, flags,
 				 in_buf, arg->in_size, arg->out_size);
-	else
+	else {
+		printf("do_ioctl ENOSYS\n");
 		fuse_reply_err(req, ENOSYS);
+	}
 }
 
 void fuse_pollhandle_destroy(struct fuse_pollhandle *ph)
@@ -1128,6 +1188,7 @@ static void do_poll(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 		if (arg->flags & FUSE_POLL_SCHEDULE_NOTIFY) {
 			ph = malloc(sizeof(struct fuse_pollhandle));
 			if (ph == NULL) {
+				printf("ENOMEM do_poll\n");
 				fuse_reply_err(req, ENOMEM);
 				return;
 			}
@@ -1138,6 +1199,7 @@ static void do_poll(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 
 		req->f->op.poll(req, nodeid, &fi, ph);
 	} else {
+		printf("ENOSYS do_poll\n");
 		fuse_reply_err(req, ENOSYS);
 	}
 }
@@ -1170,6 +1232,7 @@ static void do_init(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 	if (arg->major < 7) {
 		fprintf(stderr, "fuse: unsupported protocol version: %u.%u\n",
 			arg->major, arg->minor);
+		printf("EPROTO do_init\n");
 		fuse_reply_err(req, EPROTO);
 		return;
 	}
@@ -1509,8 +1572,10 @@ static void fuse_ll_process(void *data, const char *buf, size_t len,
 		intr = check_interrupt(f, req);
 		list_add_req(req, &f->list);
 		pthread_mutex_unlock(&f->lock);
-		if (intr)
+		if (intr) {
+			printf("EAGAIN fuse_llprocess\n");
 			fuse_reply_err(intr, EAGAIN);
+		}
 	}
 	fuse_ll_ops[in->opcode].func(req, in->nodeid, inarg);
 	return;
