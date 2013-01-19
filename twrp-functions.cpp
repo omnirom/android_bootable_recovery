@@ -426,7 +426,7 @@ int TWFunc::removeDir(const string path, bool skipParent) {
 					else
 						LOGI("Unable to removeDir '%s': %s\n", new_path.c_str(), strerror(errno));
 				}
-			} else if (p->d_type == DT_REG || p->d_type == DT_LNK) {
+			} else if (p->d_type == DT_REG || p->d_type == DT_LNK || p->d_type == DT_FIFO || p->d_type == DT_SOCK) {
 				r = unlink(new_path.c_str());
 				if (!r)
 					LOGI("Unable to unlink '%s'\n", new_path.c_str());
