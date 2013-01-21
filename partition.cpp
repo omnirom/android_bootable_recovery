@@ -1234,7 +1234,7 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 			dir.append(de->d_name);
 			if (de->d_type == DT_DIR) {
 				TWFunc::removeDir(dir, false);
-			} else if (de->d_type == DT_REG || de->d_type == DT_LNK) {
+			} else if (de->d_type == DT_REG || de->d_type == DT_LNK || de->d_type == DT_FIFO || de->d_type == DT_SOCK) {
 				if (!unlink(dir.c_str()))
 					LOGI("Unable to unlink '%s'\n", dir.c_str());
 			}
