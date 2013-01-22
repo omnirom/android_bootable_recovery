@@ -249,10 +249,11 @@ int GUIAction::doActions()
 		LOGE("Error setting pthread_attr_setscope\n");
 		return -1;
 	}
-	if (pthread_attr_setstacksize(&tattr, 524288)) {
+	/*if (pthread_attr_setstacksize(&tattr, 524288)) {
 		LOGE("Error setting pthread_attr_setstacksize\n");
 		return -1;
 	}
+	*/
 	LOGI("Creating thread\n");
 	int ret = pthread_create(&t, &tattr, thread_start, this);
     if (ret) {

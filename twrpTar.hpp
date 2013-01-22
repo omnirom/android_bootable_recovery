@@ -32,30 +32,39 @@ using namespace std;
 
 class twrpTar {
 	public:
-		int create(string dir, string fn);
-		int createTGZ(string dir, string fn);
-		int extract(string rootDir, string fn);
+		int extract();
 		int compress(string fn);
-		int extractTGZ(string rootdir, string fn);
 		int uncompress(string fn);
                 int addFilesToExistingTar(vector <string> files, string tarFile);
-		int createTar(string dir, string fn);
-		int openTar(string rootdir, string fn, bool gzip);
+		int createTar();
 		int addFile(string fn, bool include_root);
-		int closeTar(string fn, bool gzip);
-		int Split_Archive(string Path, string fn);
+		int closeTar(bool gzip);
+		int createTarGZThread();
+		int createTarThread();
+		int extractTarThread();
+		int splitArchiveThread();
+                void setfn(string fn);
+                void setdir(string dir);
 	private:
+		int createTGZ();
+		int create();
+		int Split_Archive();
 		int removeEOT(string tarFile);
-		int extractTar(string rootdir, string fn);
-		int tarDirs(string dir, string fn, bool include_root);
-		int Generate_Multiple_Archives(string Path, string fn);
-
-	private:
+		int extractTar();
+		int tarDirs(bool include_root);
+		int Generate_Multiple_Archives(string Path);
+		string Strip_Root_Dir(string Path);
+		int extractTGZ();
+		int openTar(bool gzip);
 		int has_data_media;
 		int Archive_File_Count;
 		unsigned long long Archive_Current_Size;
-		string Strip_Root_Dir(string Path);
 		TAR *t;
 		FILE* p;
 		int fd;
+		string tardir;
+		string tarfn;
+		string basefn;
+		typedef int (twrpTar::*ThreadPtr)(void);
+		typedef void* (*PThreadPtr)(void*);
 }; 

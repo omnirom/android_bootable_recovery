@@ -1255,7 +1255,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	unsigned long long total_bsize = 0, file_size;
 	twrpTar tar;
 	vector <string> files;
-
+	
 	if (!Mount(true))
 		return false;
 
@@ -1276,7 +1276,9 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 		// This backup needs to be split into multiple archives
 		ui_print("Breaking backup file into multiple archives...\n");
 		sprintf(back_name, "%s", Backup_Path.c_str());
-		backup_count = tar.Split_Archive(back_name, Full_FileName);
+		tar.setdir(back_name);
+		tar.setfn(Full_FileName);
+		backup_count = tar.splitArchiveThread();
 		if (backup_count == -1) {
 			LOGE("Error tarring split files!\n");
 			return false;
@@ -1285,14 +1287,18 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	} else {
 		Full_FileName = backup_folder + "/" + Backup_FileName;
 		if (use_compression) {
-			if (tar.createTGZ(Backup_Path, Full_FileName) != 0)
-				return false;
+			tar.setdir(Backup_Path);
+			tar.setfn(Full_FileName);
+			if (tar.createTarGZThread() != 0)
+				return -1;
 			string gzname = Full_FileName + ".gz";
 			rename(gzname.c_str(), Full_FileName.c_str());
 		}
 		else {
-			if (tar.create(Backup_Path, Full_FileName) != 0)
-				return false;
+			tar.setdir(Backup_Path);
+			tar.setfn(Full_FileName);
+			if (tar.createTarThread() != 0)
+				return -1;
 		}
 		if (TWFunc::Get_File_Size(Full_FileName) == 0) {
 			LOGE("Backup file size for '%s' is 0 bytes.\n", Full_FileName.c_str());
@@ -1381,7 +1387,9 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 				ui_print("Restoring archive %i...\n", index);
 				LOGI("Restoring '%s'...\n", Full_FileName.c_str());
 				twrpTar tar;
-				if (tar.extract("/", Full_FileName) != 0)
+				tar.setdir("/");
+				tar.setfn(Full_FileName);
+				if (tar.extractTarThread() != 0)
 					return false;
 				sprintf(split_index, "%03i", index);
 				Full_FileName = restore_folder + "/" + Backup_FileName + split_index;
@@ -1393,7 +1401,9 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 		}
 	} else {
 		twrpTar tar;
-		if (tar.extract(Backup_Path, Full_FileName) != 0)
+		tar.setdir(Backup_Path);
+		tar.setfn(Full_FileName);
+		if (tar.extractTarThread() != 0)
 			return false;
 	}
 	return true;

@@ -164,7 +164,7 @@
 //   tw_sp2_is_mountable
 //   tw_sp3_is_mountable
 
-// Max archive size for tar backups before we split (4GB)
-#define MAX_ARCHIVE_SIZE 4294967296LLU
+// Max archive size for tar backups before we split (1.5GB)
+#define MAX_ARCHIVE_SIZE 1610612736LLU
 
 #endif  // _VARIABLES_HEADER_
