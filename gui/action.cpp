@@ -1014,6 +1014,18 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 					DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 					DataManager::ReadSettingsFile();
+					// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
+					// that we converted to ORS commands during boot in recovery.cpp.
+					// Run those first.
+					if (TWFunc::Path_Exists(SCRIPT_FILE_TMP)) {
+						ui_print("Processing AOSP recovery commands...\n");
+						if (OpenRecoveryScript::run_script_file() == 0) {
+							usleep(2000000); // Sleep for 2 seconds before rebooting
+							TWFunc::tw_reboot(rb_system);
+							load_theme = 0;
+						}
+					}
+					// Check for the ORS file in /cache and attempt to run those commands.
 					if (OpenRecoveryScript::check_for_script_file()) {
 						ui_print("Processing OpenRecoveryScript file...\n");
 						if (OpenRecoveryScript::run_script_file() == 0) {

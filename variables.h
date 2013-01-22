@@ -171,4 +171,8 @@
 #define CUSTOM_LUN_FILE "/sys/devices/platform/usb_mass_storage/lun%d/file"
 #endif
 
+// For OpenRecoveryScript
+#define SCRIPT_FILE_CACHE "/cache/recovery/openrecoveryscript"
+#define SCRIPT_FILE_TMP "/tmp/openrecoveryscript"
+
 #endif  // _VARIABLES_HEADER_

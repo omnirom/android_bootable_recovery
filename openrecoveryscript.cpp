@@ -30,6 +30,8 @@
 #include <dirent.h>
 #include <time.h>
 #include <errno.h>
+#include <iostream>
+#include <fstream>
 
 #include "twrp-functions.hpp"
 #include "partitions.hpp"
@@ -38,15 +40,13 @@
 #include "variables.h"
 #include "adb_install.h"
 extern "C" {
-#include "data.h"
-#include "twinstall.h"
-#include "gui/gui.h"
-int TWinstall_zip(const char* path, int* wipe_cache);
+	#include "data.h"
+	#include "twinstall.h"
+	#include "gui/gui.h"
+	int TWinstall_zip(const char* path, int* wipe_cache);
 }
 
 extern RecoveryUI* ui;
-static const char *SCRIPT_FILE_CACHE = "/cache/recovery/openrecoveryscript";
-static const char *SCRIPT_FILE_TMP = "/tmp/openrecoveryscript";
 #define SCRIPT_COMMAND_SIZE 512
 
 int OpenRecoveryScript::check_for_script_file(void) {
@@ -376,6 +376,20 @@ int OpenRecoveryScript::run_script_file(void) {
 	if (sideload)
 		ret_val = 1; // Forces booting to the home page after sideload
 	return ret_val;
+}
+
+int OpenRecoveryScript::Insert_ORS_Command(string Command) {
+	ofstream ORSfile(SCRIPT_FILE_TMP);
+	if (ORSfile.is_open()) {
+		//if (Command.substr(Command.size() - 1, 1) != "\n")
+		//	Command += "\n";
+		LOGI("Inserting '%s'\n", Command.c_str());
+		ORSfile << Command.c_str();
+		ORSfile.close();
+		return 1;
+	}
+	LOGE("Unable to append '%s' to '%s'\n", Command.c_str(), SCRIPT_FILE_TMP);
+	return 0;
 }
 
 int OpenRecoveryScript::Install_Command(string Zip) {
