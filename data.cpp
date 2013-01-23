@@ -675,9 +675,23 @@ void DataManager::SetDefaultValues()
 	mConstValues.insert(make_pair(TW_DONT_UNMOUNT_SYSTEM, "0"));
 #endif
 #ifdef TW_NO_USB_STORAGE
+	printf("TW_NO_USB_STORAGE := true\n");
 	mConstValues.insert(make_pair(TW_HAS_USB_STORAGE, "0"));
 #else
-	mConstValues.insert(make_pair(TW_HAS_USB_STORAGE, "1"));
+	char lun_file[255];
+	string Lun_File_str = CUSTOM_LUN_FILE;
+	size_t found = Lun_File_str.find("%");
+	if (found != string::npos) {
+		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
+		Lun_File_str = lun_file;
+	}
+	if (!TWFunc::Path_Exists(Lun_File_str)) {
+		LOGI("Lun file '%s' does not exist, USB storage mode disabled\n", Lun_File_str.c_str());
+		mConstValues.insert(make_pair(TW_HAS_USB_STORAGE, "0"));
+	} else {
+		LOGI("Lun file '%s'\n", Lun_File_str.c_str());
+		mConstValues.insert(make_pair(TW_HAS_USB_STORAGE, "1"));
+	}
 #endif
 #ifdef TW_INCLUDE_INJECTTWRP
 	mConstValues.insert(make_pair(TW_HAS_INJECTTWRP, "1"));

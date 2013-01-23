@@ -1709,10 +1709,6 @@ int TWPartitionManager::Fix_Permissions(void) {
 }
 
 //partial kangbang from system/vold
-#ifndef CUSTOM_LUN_FILE
-#define CUSTOM_LUN_FILE "/sys/devices/platform/usb_mass_storage/lun%d/file"
-#endif
-
 int TWPartitionManager::Open_Lun_File(string Partition_Path, string Lun_File) {
 	int fd;
 	TWPartition* Part = Find_Partition_By_Path(Partition_Path);

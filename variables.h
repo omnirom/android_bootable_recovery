@@ -167,4 +167,8 @@
 // Max archive size for tar backups before we split (1.5GB)
 #define MAX_ARCHIVE_SIZE 1610612736LLU
 
+#ifndef CUSTOM_LUN_FILE
+#define CUSTOM_LUN_FILE "/sys/devices/platform/usb_mass_storage/lun%d/file"
+#endif
+
 #endif  // _VARIABLES_HEADER_
