@@ -470,13 +470,19 @@ void DataManager::SetDefaultValues()
 
     mConstValues.insert(make_pair(TW_VERSION_VAR, TW_VERSION_STR));
 
+#ifdef TW_FORCE_CPUINFO_FOR_DEVICE_ID
+	printf("TW_FORCE_CPUINFO_FOR_DEVICE_ID := true\n");
+#endif
+
 #ifdef BOARD_HAS_NO_REAL_SDCARD
+	printf("BOARD_HAS_NO_REAL_SDCARD := true\n");
     mConstValues.insert(make_pair(TW_ALLOW_PARTITION_SDCARD, "0"));
 #else
     mConstValues.insert(make_pair(TW_ALLOW_PARTITION_SDCARD, "1"));
 #endif
 
 #ifdef TW_INCLUDE_DUMLOCK
+	printf("TW_INCLUDE_DUMLOCK := true\n");
 	mConstValues.insert(make_pair(TW_SHOW_DUMLOCK, "1"));
 #else
 	mConstValues.insert(make_pair(TW_SHOW_DUMLOCK, "0"));
@@ -588,7 +594,7 @@ void DataManager::SetDefaultValues()
 
 #ifdef TW_DEFAULT_EXTERNAL_STORAGE
 	SetValue(TW_USE_EXTERNAL_STORAGE, 1);
-	LOGI("Defaulting to external storage.\n");
+	printf("TW_DEFAULT_EXTERNAL_STORAGE := true\n");
 #endif
 
 #ifdef RECOVERY_SDCARD_ON_DATA
@@ -618,58 +624,71 @@ void DataManager::SetDefaultValues()
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
 
 #ifdef SP1_DISPLAY_NAME
+	printf("SP1_DISPLAY_NAME := %s\n", EXPAND(SP1_DISPLAY_NAME));
     if (strlen(EXPAND(SP1_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_DISPLAY_NAME)));
 #else
 	#ifdef SP1_NAME
+		printf("SP1_NAME := %s\n", EXPAND(SP1_NAME));
 		if (strlen(EXPAND(SP1_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_NAME)));
 	#endif
 #endif
 #ifdef SP2_DISPLAY_NAME
+	printf("SP2_DISPLAY_NAME := %s\n", EXPAND(SP2_DISPLAY_NAME));
     if (strlen(EXPAND(SP2_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_DISPLAY_NAME)));
 #else
 	#ifdef SP2_NAME
+		printf("SP2_NAME := %s\n", EXPAND(SP2_NAME));
 		if (strlen(EXPAND(SP2_NAME)))    mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_NAME)));
 	#endif
 #endif
 #ifdef SP3_DISPLAY_NAME
+	printf("SP3_DISPLAY_NAME := %s\n", EXPAND(SP3_DISPLAY_NAME));
     if (strlen(EXPAND(SP3_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_DISPLAY_NAME)));
 #else
 	#ifdef SP3_NAME
+		printf("SP3_NAME := %s\n", EXPAND(SP3_NAME));
 		if (strlen(EXPAND(SP3_NAME)))    mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_NAME)));
 	#endif
 #endif
 
     mConstValues.insert(make_pair(TW_REBOOT_SYSTEM, "1"));
 #ifdef TW_NO_REBOOT_RECOVERY
+	printf("RECOVERY_SDCARD_ON_DATA := true\n");
 	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, "0"));
 #else
 	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, "1"));
 #endif
     mConstValues.insert(make_pair(TW_REBOOT_POWEROFF, "1"));
 #ifdef TW_NO_REBOOT_BOOTLOADER
+	printf("RECOVERY_SDCARD_ON_DATA := true\n");
 	mConstValues.insert(make_pair(TW_REBOOT_BOOTLOADER, "0"));
 #else
 	mConstValues.insert(make_pair(TW_REBOOT_BOOTLOADER, "1"));
 #endif
 #ifdef RECOVERY_SDCARD_ON_DATA
+	printf("RECOVERY_SDCARD_ON_DATA := true\n");
 	mConstValues.insert(make_pair(TW_HAS_DATA_MEDIA, "1"));
 #else
 	mConstValues.insert(make_pair(TW_HAS_DATA_MEDIA, "0"));
 #endif
 #ifdef TW_NO_BATT_PERCENT
+	printf("TW_NO_BATT_PERCENT := true\n");
 	mConstValues.insert(make_pair(TW_NO_BATTERY_PERCENT, "1"));
 #else
 	mConstValues.insert(make_pair(TW_NO_BATTERY_PERCENT, "0"));
 #endif
 #ifdef TW_CUSTOM_POWER_BUTTON
+	printf("TW_POWER_BUTTON := %s\n", EXPAND(TW_CUSTOM_POWER_BUTTON));
 	mConstValues.insert(make_pair(TW_POWER_BUTTON, EXPAND(TW_CUSTOM_POWER_BUTTON)));
 #else
 	mConstValues.insert(make_pair(TW_POWER_BUTTON, "0"));
 #endif
 #ifdef TW_ALWAYS_RMRF
+	printf("TW_ALWAYS_RMRF := true\n");
 	mConstValues.insert(make_pair(TW_RM_RF_VAR, "1"));
 #endif
 #ifdef TW_NEVER_UNMOUNT_SYSTEM
+	printf("TW_NEVER_UNMOUNT_SYSTEM := true\n");
 	mConstValues.insert(make_pair(TW_DONT_UNMOUNT_SYSTEM, "1"));
 #else
 	mConstValues.insert(make_pair(TW_DONT_UNMOUNT_SYSTEM, "0"));
@@ -694,23 +713,23 @@ void DataManager::SetDefaultValues()
 	}
 #endif
 #ifdef TW_INCLUDE_INJECTTWRP
+	printf("TW_INCLUDE_INJECTTWRP := true\n");
 	mConstValues.insert(make_pair(TW_HAS_INJECTTWRP, "1"));
 	mValues.insert(make_pair(TW_INJECT_AFTER_ZIP, make_pair("1", 1)));
 #else
 	mConstValues.insert(make_pair(TW_HAS_INJECTTWRP, "0"));
 	mValues.insert(make_pair(TW_INJECT_AFTER_ZIP, make_pair("0", 1)));
 #endif
-#ifdef TW_FLASH_FROM_STORAGE
-	mConstValues.insert(make_pair(TW_FLASH_ZIP_IN_PLACE, "1"));
-#endif
 #ifdef TW_HAS_DOWNLOAD_MODE
+	printf("TW_HAS_DOWNLOAD_MODE := true\n");
 	mConstValues.insert(make_pair(TW_DOWNLOAD_MODE, "1"));
 #endif
 #ifdef TW_INCLUDE_CRYPTO
 	mConstValues.insert(make_pair(TW_HAS_CRYPTO, "1"));
-	LOGI("Device has crypto support compiled into recovery.\n");
+	printf("TW_INCLUDE_CRYPTO := true\n");
 #endif
 #ifdef TW_SDEXT_NO_EXT4
+	printf("TW_SDEXT_NO_EXT4 := true\n");
 	mConstValues.insert(make_pair(TW_SDEXT_DISABLE_EXT4, "1"));
 #else
 	mConstValues.insert(make_pair(TW_SDEXT_DISABLE_EXT4, "0"));
