@@ -31,6 +31,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "../data.hpp"
+#include "../twrp-functions.hpp"
 
 #define TW_FILESELECTOR_UP_A_LEVEL "(Up A Level)"
 
@@ -787,9 +788,12 @@ int GUIFileSelector::GetFileList(const std::string folder)
 			continue;
 		if (data.fileName == ".." && folder == "/")
 			continue;
-		if (data.fileName == "..")
+		if (data.fileName == "..") {
 			data.fileName = TW_FILESELECTOR_UP_A_LEVEL;
-		data.fileType = de->d_type;
+			data.fileType = DT_DIR;
+		} else {
+			data.fileType = de->d_type;
+		}
 
 		std::string path = folder + "/" + data.fileName;
 		stat(path.c_str(), &st);
@@ -801,6 +805,9 @@ int GUIFileSelector::GetFileList(const std::string folder)
 		data.lastModified = st.st_mtime;
 		data.lastStatChange = st.st_ctime;
 
+		if (data.fileType == DT_UNKNOWN) {
+			data.fileType = TWFunc::Get_D_Type_From_Stat(path);
+		}
 		if (data.fileType == DT_DIR)
 		{
 			if (mShowNavFolders || (data.fileName != "." && data.fileName != TW_FILESELECTOR_UP_A_LEVEL))

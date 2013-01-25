@@ -453,3 +453,24 @@ int TWFunc::copy_file(string src, string dst, int mode) {
 	dstfile.close();
 	return 0;
 }
+
+unsigned int TWFunc::Get_D_Type_From_Stat(string Path) {
+	struct stat st;
+
+	stat(Path.c_str(), &st);
+	if (st.st_mode & S_IFDIR)
+		return DT_DIR;
+	else if (st.st_mode & S_IFBLK)
+		return DT_BLK;
+	else if (st.st_mode & S_IFCHR)
+		return DT_CHR;
+	else if (st.st_mode & S_IFIFO)
+		return DT_FIFO;
+	else if (st.st_mode & S_IFLNK)
+		return DT_LNK;
+	else if (st.st_mode & S_IFREG)
+		return DT_REG;
+	else if (st.st_mode & S_IFSOCK)
+		return DT_SOCK;
+	return DT_UNKNOWN;
+}
