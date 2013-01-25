@@ -254,7 +254,6 @@ int GUIAction::doActions()
 		return -1;
 	}
 	*/
-	LOGI("Creating thread\n");
 	int ret = pthread_create(&t, &tattr, thread_start, this);
     if (ret) {
 		LOGE("Unable to create more threads for actions... continuing in same thread! %i\n", ret);
@@ -262,8 +261,6 @@ int GUIAction::doActions()
 	} else {
 		if (pthread_join(t, NULL)) {
 			LOGE("Error joining threads\n");
-		} else {
-			LOGI("Thread joined\n");
 		}
 	}
 	if (pthread_attr_destroy(&tattr)) {
