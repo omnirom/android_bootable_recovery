@@ -758,7 +758,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_BACKUP_SP2_SIZE, make_pair("0", 0)));
 	mValues.insert(make_pair(TW_BACKUP_SP3_SIZE, make_pair("0", 0)));
 	mValues.insert(make_pair(TW_STORAGE_FREE_SIZE, make_pair("0", 0)));
-	
+
     mValues.insert(make_pair(TW_REBOOT_AFTER_FLASH_VAR, make_pair("0", 1)));
     mValues.insert(make_pair(TW_SIGNED_ZIP_VERIFY_VAR, make_pair("0", 1)));
     mValues.insert(make_pair(TW_FORCE_MD5_CHECK_VAR, make_pair("0", 1)));
@@ -785,6 +785,8 @@ void DataManager::SetDefaultValues()
     mValues.insert(make_pair(TW_RESTORE_AVG_IMG_RATE, make_pair("15000000", 1)));
     mValues.insert(make_pair(TW_RESTORE_AVG_FILE_RATE, make_pair("3000000", 1)));
     mValues.insert(make_pair(TW_RESTORE_AVG_FILE_COMP_RATE, make_pair("2000000", 1)));
+    mValues.insert(make_pair("tw_wipe_cache", make_pair("0", 0)));
+    mValues.insert(make_pair("tw_wipe_dalvik", make_pair("0", 0)));
 	if (GetIntValue(TW_HAS_INTERNAL) == 1 && GetIntValue(TW_HAS_DATA_MEDIA) == 1 && GetIntValue(TW_HAS_EXTERNAL) == 0)
 		SetValue(TW_HAS_USB_STORAGE, 0, 0);
 	else

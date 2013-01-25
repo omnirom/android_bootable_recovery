@@ -1059,6 +1059,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				simulate_progress_bar();
 			} else {
 				int wipe_cache = 0;
+				int wipe_dalvik = 0;
 				string result, Sideload_File;
 
 				if (!PartitionManager.Mount_Current_Storage(true)) {
@@ -1070,11 +1071,16 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					unlink(Sideload_File.c_str());
 				}
 				ui_print("Starting ADB sideload feature...\n");
+				DataManager::GetValue("tw_wipe_dalvik", wipe_dalvik);
 				ret = apply_from_adb(ui, &wipe_cache, Sideload_File.c_str());
-				if (ret != 0)
+				if (ret != 0) {
 					ret = 1; // failure
-				else if (wipe_cache)
-					PartitionManager.Wipe_By_Path("/cache");
+				} else {
+					if (wipe_cache || DataManager::GetIntValue("tw_wipe_cache"))
+						PartitionManager.Wipe_By_Path("/cache");
+					if (wipe_dalvik)
+						PartitionManager.Wipe_Dalvik_Cache();
+				}
 				if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
 					operation_start("ReinjectTWRP");
 					ui_print("Injecting TWRP into boot image...\n");

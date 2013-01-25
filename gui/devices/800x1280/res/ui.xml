@@ -2607,17 +2607,7 @@
 				<font resource="font" color="%button_text_color%" />
 				<text>ADB Sideload</text>
 				<image resource="main_button" />
-				<actions>
-					<action function="set">tw_back=advanced</action>
-					<action function="set">tw_action=adbsideload</action>
-					<action function="set">tw_action_text1=ADB Sideload</action>
-					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
-					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
-					<action function="set">tw_has_cancel=1</action>
-					<action function="set">tw_show_reboot=1</action>
-					<action function="set">tw_cancel_action=adbsideloadcancel</action>
-					<action function="page">action_page</action>
-				</actions>
+				<action function="page">sideload</action>
 			</object>
 
 			<object type="button">
@@ -3574,6 +3564,66 @@
 				<touch key="back" />
 				<action function="page">terminalfolder</action>
 			</object>
+		</page>
+
+		<page name="sideload">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_header_y%" placement="5"/>
+				<text>ADB Sideload</text>
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<text>Wipe Dalvik Cache.</text>
+				<data variable="tw_wipe_dalvik" />
+				<image checked="checkbox_true" unchecked="checkbox_false" />
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row3_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<text>Wipe Cache.</text>
+				<data variable="tw_wipe_cache" />
+				<image checked="checkbox_true" unchecked="checkbox_false" />
+			</object>
+
+			<object type="slider">
+				<placement x="%slider_x%" y="%slider_y%" />
+				<resource base="slider" used="slider-used" touch="slider-touch" />
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=adbsideload</action>
+					<action function="set">tw_action_text1=ADB Sideload</action>
+					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
+					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
+					<action function="set">tw_has_cancel=1</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="set">tw_cancel_action=adbsideloadcancel</action>
+					<action function="page">action_page</action>
+				</actions>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
+				<text>Swipe to Start Sideload</text>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advanced</action>
+			</object>
+
+			<object type="template" name="footer" />
 		</page>
 	</pages>
 </recovery>
