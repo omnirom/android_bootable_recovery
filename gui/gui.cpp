@@ -615,6 +615,7 @@ extern "C" int gui_startPage(const char* page_name)
 		gGuiInputRunning = 1;
 	}
 
+	DataManager::SetValue("tw_page_done", 0);
     return runPage(page_name);
 }
 

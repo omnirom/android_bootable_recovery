@@ -3451,25 +3451,12 @@
 				<text>Cancel</text>
 				<image resource="main_button" />
 				<actions>
+					<action function="set">tw_page_done=1</action>
 					<action function="page">main</action>
 				</actions>
 			</object>
 
 			<object type="template" name="keyboardtemplate" />
-
-			<object type="action">
-				<touch key="home" />
-				<actions>
-					<action function="page">main</action>
-				</actions>
-			</object>
-
-			<object type="action">
-				<touch key="back" />
-				<actions>
-					<action function="page">main</action>
-				</actions>
-			</object>
 
 			<object type="template" name="footer" />
 		</page>
@@ -3507,7 +3494,10 @@
 					<condition var1="tw_operation_state" var2="1" />
 					<condition var1="tw_operation_status" op="=" var2="0" />
 				</conditions>
-				<action function="page">main</action>
+				<actions>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">main</action>
+				</actions>
 			</object>
 		</page>
 
@@ -3528,7 +3518,7 @@
 				<sort name="tw_gui_sort_order" />
 				<icon folder="folder_icon" file="file_icon" />
 				<background color="%fileselector_background%" />
-				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" />
+				<font resource="filelist" spacing="%fileselector_spacing%" color="%text_color%" />
 				<filter folders="1" files="0" />
 				<path name="tw_terminal_location" default="/" />
 				<data name="tw_terminal" />

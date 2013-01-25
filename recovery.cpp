@@ -958,41 +958,22 @@ main(int argc, char **argv) {
     //if (status != INSTALL_SUCCESS) ui->SetBackground(RecoveryUI::ERROR);
     if (1) {
 		finish_recovery(NULL);
-		DataManager_ReadSettingsFile();
 		if (PartitionManager.Mount_By_Path("/system", false) && TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
 			rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
 			ui_print("Renamed stock recovery file in /system to prevent\nthe stock ROM from replacing TWRP.\n");
 		}
 		PartitionManager.UnMount_By_Path("/system", false);
-		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) == 0) {
-			// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
-			// that we converted to ORS commands up above. Run those first.
-			int boot_recovery = 1, check = 1;
-			if (TWFunc::Path_Exists(SCRIPT_FILE_TMP)) {
-				boot_recovery = 0;
-				gui_console_only();
-				if (OpenRecoveryScript::run_script_file() != 0) {
-					// There was an error, boot the recovery
-					check = 0;
-					gui_start();
-				} else {
-					usleep(2000000); // Sleep for 2 seconds before rebooting
-				}
+		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) != 0) {
+			LOGI("Is encrypted, do decrypt page first\n");
+			if (gui_startPage("decrypt") != 0) {
+				LOGE("Failed to start decrypt GUI page.\n");
 			}
-			// Check for the ORS file in /cache and attempt to run those commands.
-			if (check && OpenRecoveryScript::check_for_script_file()) {
-				boot_recovery = 0;
-				if (OpenRecoveryScript::run_script_file() != 0) {
-					// There was an error, boot the recovery
-					gui_start();
-				} else {
-					usleep(2000000); // Sleep for 2 seconds before rebooting
-				}
-			}
-			if (boot_recovery)
-				gui_start();
-		} else
-			gui_start();
+		}
+		DataManager_ReadSettingsFile();
+		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
+			OpenRecoveryScript::Run_OpenRecoveryScript();
+		}
+		gui_start();
 		//prompt_and_wait(device);
     }
 

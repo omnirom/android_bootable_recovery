@@ -1013,27 +1013,6 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					int load_theme = 1;
 
 					DataManager::SetValue(TW_IS_ENCRYPTED, 0);
-					DataManager::ReadSettingsFile();
-					// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
-					// that we converted to ORS commands during boot in recovery.cpp.
-					// Run those first.
-					if (TWFunc::Path_Exists(SCRIPT_FILE_TMP)) {
-						ui_print("Processing AOSP recovery commands...\n");
-						if (OpenRecoveryScript::run_script_file() == 0) {
-							usleep(2000000); // Sleep for 2 seconds before rebooting
-							TWFunc::tw_reboot(rb_system);
-							load_theme = 0;
-						}
-					}
-					// Check for the ORS file in /cache and attempt to run those commands.
-					if (OpenRecoveryScript::check_for_script_file()) {
-						ui_print("Processing OpenRecoveryScript file...\n");
-						if (OpenRecoveryScript::run_script_file() == 0) {
-							usleep(2000000); // Sleep for 2 seconds before rebooting
-							TWFunc::tw_reboot(rb_system);
-							load_theme = 0;
-						}
-					}
 
 					if (load_theme) {
 						int has_datamedia;
@@ -1083,7 +1062,6 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				string result, Sideload_File;
 
 				if (!PartitionManager.Mount_Current_Storage(true)) {
-					DataManager::SetValue("tw_page_done", "1"); // For OpenRecoveryScript support
 					operation_end(1, simulate);
 					return 0;
 				}
@@ -1114,7 +1092,6 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					}
 				}
 			}
-			DataManager::SetValue("tw_page_done", "1"); // For OpenRecoveryScript support
 			operation_end(ret, simulate);
 			return 0;
 		}
@@ -1129,6 +1106,36 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			kill(child_pid, SIGTERM);
 			DataManager::SetValue("tw_page_done", "1"); // For OpenRecoveryScript support
 			return 0;
+		}
+		if (function == "openrecoveryscript") {
+			operation_start("OpenRecoveryScript");
+			if (simulate) {
+				simulate_progress_bar();
+			} else {
+				// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
+				// that we converted to ORS commands during boot in recovery.cpp.
+				// Run those first.
+				int reboot = 0;
+				if (TWFunc::Path_Exists(SCRIPT_FILE_TMP)) {
+					ui_print("Processing AOSP recovery commands...\n");
+					if (OpenRecoveryScript::run_script_file() == 0) {
+						reboot = 1;
+					}
+				}
+				// Check for the ORS file in /cache and attempt to run those commands.
+				if (OpenRecoveryScript::check_for_script_file()) {
+					ui_print("Processing OpenRecoveryScript file...\n");
+					if (OpenRecoveryScript::run_script_file() == 0) {
+						reboot = 1;
+					}
+				}
+				if (reboot) {
+					usleep(2000000); // Sleep for 2 seconds before rebooting
+					TWFunc::tw_reboot(rb_system);
+				} else {
+					DataManager::SetValue("tw_page_done", 1);
+				}
+			}
 		}
     }
     else

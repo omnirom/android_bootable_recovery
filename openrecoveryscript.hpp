@@ -37,7 +37,7 @@ public:
 	static int Install_Command(string Zip);                                        // Installs a zip
 	static string Locate_Zip_File(string Path, string File);                       // Attempts to locate the zip file in storage
 	static int Backup_Command(string Options);                                     // Runs a backup
-
+	static void Run_OpenRecoveryScript();                                          // Starts the GUI Page for running OpenRecoveryScript
 };
 
 #endif // _OPENRECOVERYSCRIPT_HPP
