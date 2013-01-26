@@ -75,6 +75,7 @@ int OpenRecoveryScript::run_script_file(void) {
 
 	if (fp != NULL) {
 		DataManager::SetValue(TW_SIMULATE_ACTIONS, 0);
+		DataManager::SetValue("ui_progress", 0); // Reset the progress bar
 		while (fgets(script_line, SCRIPT_COMMAND_SIZE, fp) != NULL && ret_val == 0) {
 			cindex = 0;
 			line_len = strlen(script_line);
