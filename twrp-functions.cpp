@@ -21,20 +21,28 @@
 #include "bootloader.h"
 #include "variables.h"
 
+extern "C" {
+	#include "libcrecovery/common.h"
+}
+
 
 /* Execute a command */
 
 int TWFunc::Exec_Cmd(string cmd, string &result) {
 	FILE* exec;
-	char buffer[128];
+	char buffer[130];
 	int ret = 0;
-	exec = popen(cmd.c_str(), "r");
+	exec = __popen(cmd.c_str(), "r");
 	if (!exec) return -1;
 	while(!feof(exec)) {
-		if (fgets(buffer, 128, exec) != NULL)
+		memset(&buffer, 0, sizeof(buffer));
+		if (fgets(buffer, 128, exec) != NULL) {
+			buffer[128] = '\n';
+			buffer[129] = NULL;
 			result += buffer;
+		}
 	}
-	ret = pclose(exec);
+	ret = __pclose(exec);
 	return ret;
 }
 

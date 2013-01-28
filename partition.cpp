@@ -274,7 +274,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Is_Storage = true;
 			Storage_Path = EXPAND(TW_EXTERNAL_STORAGE_PATH);
 			Removable = true;
-		}
 #else
 		if (Mount_Point == "/sdcard") {
 			Is_Storage = true;
@@ -284,8 +283,13 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Setup_AndSec();
 			Mount_Storage_Retry();
 #endif
-		}
 #endif
+			// blkid cannot detect exfat so we force exfat at the start if exfat support is present
+			if (TWFunc::Path_Exists("/sbin/exfat-fuse") && (Fstab_File_System == "vfat" || Fstab_File_System == "auto")) {
+				Fstab_File_System = "exfat";
+				Current_File_System = Fstab_File_System;
+			}
+		}
 #ifdef TW_INTERNAL_STORAGE_PATH
 		if (Mount_Point == EXPAND(TW_INTERNAL_STORAGE_PATH)) {
 			Is_Storage = true;
@@ -718,7 +722,10 @@ bool TWPartition::Mount(bool Display_Error) {
 					LOGI("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());
 			} else {
 				LOGI("Successfully mounted ecryptfs for '%s'\n", Mount_Point.c_str());
+				Is_Decrypted = true;
 			}
+		} else {
+			Is_Decrypted = false;
 		}
 #endif
 		if (Removable)
@@ -758,7 +765,8 @@ bool TWPartition::UnMount(bool Display_Error) {
 		if (!Symlink_Mount_Point.empty())
 			umount(Symlink_Mount_Point.c_str());
 
-		if (umount(Mount_Point.c_str()) != 0) {
+		umount(Mount_Point.c_str());
+		if (Is_Mounted()) {
 			if (Display_Error)
 				LOGE("Unable to unmount '%s'\n", Mount_Point.c_str());
 			else
