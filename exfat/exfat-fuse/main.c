@@ -2,7 +2,7 @@
 	main.c (01.09.09)
 	FUSE-based exFAT implementation. Requires FUSE 2.6 or later.
 
-	Copyright (C) 2010-2012  Andrew Nayenko
+	Copyright (C) 2010-2013  Andrew Nayenko
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -438,7 +438,7 @@ int main(int argc, char* argv[])
 		else if (strcmp(*pp, "-v") == 0)
 		{
 			free(mount_options);
-			puts("Copyright (C) 2010-2012  Andrew Nayenko");
+			puts("Copyright (C) 2010-2013  Andrew Nayenko");
 			return 0;
 		}
 		else if (spec == NULL)

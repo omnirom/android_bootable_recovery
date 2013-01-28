@@ -2,7 +2,7 @@
 	node.c (09.10.09)
 	exFAT file system implementation library.
 
-	Copyright (C) 2010-2012  Andrew Nayenko
+	Copyright (C) 2010-2013  Andrew Nayenko
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -486,7 +486,7 @@ void exfat_reset_cache(struct exfat* ef)
 	reset_cache(ef, ef->root);
 }
 
-void next_entry(struct exfat* ef, const struct exfat_node* parent,
+static void next_entry(struct exfat* ef, const struct exfat_node* parent,
 		cluster_t* cluster, off64_t* offset)
 {
 	*offset += sizeof(struct exfat_entry);
@@ -908,6 +908,23 @@ int exfat_rename(struct exfat* ef, const char* old_path, const char* new_path)
 		exfat_put_node(ef, node);
 		return rc;
 	}
+
+	/* check that target is not a subdirectory of the source */
+	if (node->flags & EXFAT_ATTRIB_DIR)
+	{
+		struct exfat_node* p;
+
+		for (p = dir; p; p = p->parent)
+			if (node == p)
+			{
+				if (existing != NULL)
+					exfat_put_node(ef, existing);
+				exfat_put_node(ef, dir);
+				exfat_put_node(ef, node);
+				return -EINVAL;
+			}
+	}
+
 	if (existing != NULL)
 	{
 		/* remove target if it's not the same node as source */

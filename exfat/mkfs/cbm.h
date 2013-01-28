@@ -2,7 +2,7 @@
 	cbm.h (09.11.10)
 	Clusters Bitmap creation code.
 
-	Copyright (C) 2011, 2012  Andrew Nayenko
+	Copyright (C) 2011-2013  Andrew Nayenko
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by

@@ -2,7 +2,7 @@
 	main.c (08.11.10)
 	Prints detailed information about exFAT volume.
 
-	Copyright (C) 2011, 2012  Andrew Nayenko
+	Copyright (C) 2011-2013  Andrew Nayenko
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
 			used_sectors = true;
 		else if (strcmp(*pp, "-v") == 0)
 		{
-			puts("Copyright (C) 2011, 2012  Andrew Nayenko");
+			puts("Copyright (C) 2011-2013  Andrew Nayenko");
 			return 0;
 		}
 		else if (spec == NULL)
