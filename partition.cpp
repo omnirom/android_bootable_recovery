@@ -349,7 +349,7 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
 		} else if (strlen(ptr) > 15 && strncmp(ptr, "subpartitionof=", 15) == 0) {
-			ptr += 13;
+			ptr += 15;
 			Is_SubPartition = true;
 			SubPartition_Of = ptr;
 		} else if (strcmp(ptr, "ignoreblkid") == 0) {
