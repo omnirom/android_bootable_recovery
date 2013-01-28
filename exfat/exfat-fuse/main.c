@@ -154,19 +154,25 @@ static int fuse_exfat_release(const char* path, struct fuse_file_info* fi)
 static int fuse_exfat_read(const char* path, char* buffer, size_t size,
 		off64_t offset, struct fuse_file_info* fi)
 {
+	ssize_t ret;
+
 	exfat_debug("[%s] %s (%zu bytes)", __func__, path, size);
-	if (exfat_generic_pread(&ef, get_node(fi), buffer, size, offset) != size)
-		return EOF;
-	return size;
+	ret = exfat_generic_pread(&ef, get_node(fi), buffer, size, offset);
+	if (ret < 0)
+		return -EIO;
+	return ret;
 }
 
 static int fuse_exfat_write(const char* path, const char* buffer, size_t size,
 		off64_t offset, struct fuse_file_info* fi)
 {
+	ssize_t ret;
+
 	exfat_debug("[%s] %s (%zu bytes)", __func__, path, size);
-	if (exfat_generic_pwrite(&ef, get_node(fi), buffer, size, offset) != size)
-		return EOF;
-	return size;
+	ret = exfat_generic_pwrite(&ef, get_node(fi), buffer, size, offset);
+	if (ret < 0)
+		return -EIO;
+	return ret;
 }
 
 static int fuse_exfat_unlink(const char* path)

@@ -341,7 +341,7 @@ ssize_t exfat_generic_pread(const struct exfat* ef, struct exfat_node* node,
 	}
 	if (!ef->ro && !ef->noatime)
 		exfat_update_atime(node);
-	return size - remainder;
+	return MIN(size, node->size - offset) - remainder;
 }
 
 ssize_t exfat_generic_pwrite(struct exfat* ef, struct exfat_node* node,
