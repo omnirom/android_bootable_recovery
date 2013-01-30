@@ -260,7 +260,7 @@ exit:
 }
 
 extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
-	int err, zip_verify, md5_return, md5_verify;
+	int err, zip_verify, md5_return;
 
 	ui_print("Installing '%s'...\n", path);
 
@@ -276,13 +276,7 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 		LOGE("Zip MD5 does not match.\nUnable to install zip.\n");
 		return INSTALL_CORRUPT;
 	} else if (md5_return == -1) {
-		DataManager::GetValue(TW_FORCE_MD5_CHECK_VAR, md5_verify);
-		if (md5_verify == 1) {
-			// Forced MD5 checking is on and no MD5 file found.
-			LOGE("No MD5 file found for '%s'.\nDisable force MD5 check to avoid this error.\n", path);
-			return INSTALL_CORRUPT;
-		} else
-			ui_print("Skipping MD5 check: no MD5 file found.\n");
+		ui_print("Skipping MD5 check: no MD5 file found.\n");
 	} else if (md5_return == 1)
 		ui_print("Zip MD5 matched.\n"); // MD5 found and matched.
 
