@@ -72,7 +72,7 @@
 
 /* In earlier versions, an own llseek() was used, but glibc lseek() is
  * sufficient (or even better :) for 64 bit offsets in the meantime */
-#define llseek lseek
+#define llseek lseek64
 
 /* Constant definitions */
 
