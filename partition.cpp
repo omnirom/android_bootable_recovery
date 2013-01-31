@@ -620,6 +620,29 @@ bool TWPartition::Find_Partition_Size(void) {
 	char line[512];
 	string tmpdevice;
 
+	fp = fopen("/proc/dumchar_info", "rt");
+	if (fp != NULL) {
+		while (fgets(line, sizeof(line), fp) != NULL)
+		{
+			char label[32], device[32];
+			unsigned long size = 0;
+
+			sscanf(line, "%s %lx %*lx %*lu %s", label, &size, device);
+
+			// Skip header, annotation  and blank lines
+			if ((strncmp(device, "/dev/", 5) != 0) || (strlen(line) < 8))
+				continue;
+
+			tmpdevice = "/dev/";
+			tmpdevice += label;
+			if (tmpdevice == Primary_Block_Device || tmpdevice == Alternate_Block_Device) {
+				Size = size;
+				fclose(fp);
+				return true;
+			}
+		}
+	}
+
 	// In this case, we'll first get the partitions we care about (with labels)
 	fp = fopen("/proc/partitions", "rt");
 	if (fp == NULL)
@@ -1344,9 +1367,12 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 }
 
 bool TWPartition::Backup_DD(string backup_folder) {
-	char back_name[255];
-	string Full_FileName, Command, result;
+	char back_name[255], backup_size[32];
+	string Full_FileName, Command, result, DD_BS;
 	int use_compression;
+
+	sprintf(backup_size, "%llu", Backup_Size);
+	DD_BS = backup_size;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, "Backing Up");
 	ui_print("Backing up %s...\n", Display_Name.c_str());
@@ -1356,7 +1382,7 @@ bool TWPartition::Backup_DD(string backup_folder) {
 
 	Full_FileName = backup_folder + "/" + Backup_FileName;
 
-	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'";
+	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'" + " bs=" + DD_BS + "c count=1";
 	LOGI("Backup command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command, result);
 	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
