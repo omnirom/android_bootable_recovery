@@ -62,8 +62,7 @@ int TWFunc::Check_MD5(string File) {
 	if (Path_Exists(MD5_File)) {
 		DirPath = Get_Path(File);
 		MD5_File = Get_Filename(MD5_File);
-		chdir(DirPath.c_str());
-		Command = "/sbin/busybox md5sum -c " + MD5_File;
+		Command = "cd '" + DirPath + "' && /sbin/busybox md5sum -c '" + MD5_File + "'";
 		Exec_Cmd(Command, result);
 		pos = result.find(":");
 		if (pos != string::npos) {

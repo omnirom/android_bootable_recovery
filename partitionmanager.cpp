@@ -485,8 +485,7 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	ui_print(" * Generating md5...\n");
 
 	if (TWFunc::Path_Exists(Full_File)) {
-		command = "md5sum " + Backup_Filename + " > " + Backup_Filename + ".md5";
-		chdir(Backup_Folder.c_str());
+		command = "cd '" + Backup_Folder + "' && md5sum '" + Backup_Filename + "' > '" + Backup_Filename + ".md5'";
 		if (TWFunc::Exec_Cmd(command, result) == 0) {
 			ui_print(" * MD5 Created.\n");
 			return true;
@@ -503,8 +502,7 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 			intToStr << index;
 			ostringstream fn;
 			fn << setw(3) << setfill('0') << intToStr.str();
-			command = "md5sum " + Backup_Filename + fn.str() + " >"  + Backup_Filename + fn.str() + ".md5";
-			chdir(Backup_Folder.c_str());
+			command = "cd '" + Backup_Folder + "' && md5sum '" + Backup_Filename + fn.str() + "' > '"  + Backup_Filename + fn.str() + ".md5'";
 			if (TWFunc::Exec_Cmd(command, result) != 0) {
 				ui_print(" * MD5 Error.\n");
 				return false;
@@ -887,7 +885,9 @@ int TWPartitionManager::Run_Backup(void) {
 	Update_System_Details();
 	UnMount_Main_Partitions();
 	ui_print("[BACKUP COMPLETED IN %d SECONDS]\n\n", total_time); // the end
-    	return true;
+	string backup_log = Full_Backup_Path + "recovery.log";
+	TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
+	return true;
 }
 
 bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count) {

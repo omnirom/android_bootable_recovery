@@ -669,6 +669,8 @@ bool TWPartition::Is_Mounted(void) {
 }
 
 bool TWPartition::Mount(bool Display_Error) {
+	int exfat_mounted = 0;
+
 	if (Is_Mounted()) {
 		return true;
 	} else if (!Can_Be_Mounted) {
@@ -679,6 +681,23 @@ bool TWPartition::Mount(bool Display_Error) {
 
 	// Check the current file system before mounting
 	Check_FS_Type();
+	if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sbin/exfat-fuse")) {
+		string cmd = "/sbin/exfat-fuse " + Actual_Block_Device + " " + Mount_Point;
+		LOGI("cmd: %s\n", cmd.c_str());
+		string result;
+		if (TWFunc::Exec_Cmd(cmd, result) != 0) {
+			LOGI("exfat-fuse failed to mount with result '%s', trying vfat\n", result.c_str());
+			Current_File_System = "vfat";
+		} else {
+#ifdef TW_NO_EXFAT_FUSE
+			UnMount(false);
+			// We'll let the kernel handle it but using exfat-fuse to detect if the file system is actually exfat
+			// Some kernels let us mount vfat as exfat which doesn't work out too well
+#else
+			exfat_mounted = 1;
+#endif
+		}
+	}
 	if (Fstab_File_System == "yaffs2") {
 		// mount an MTD partition as a YAFFS2 filesystem.
 		mtd_scan_partitions();
@@ -697,46 +716,54 @@ bool TWPartition::Mount(bool Display_Error) {
 			return false;
 		} else
 			return true;
-	} else if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sbin/exfat-fuse")) {
-		string cmd = "/sbin/exfat-fuse " + Actual_Block_Device + " " + Mount_Point;
-		LOGI("cmd: %s\n", cmd.c_str());
-		string result;
-		if (TWFunc::Exec_Cmd(cmd, result) != 0) 
-			return false;
-	} else if (mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), Current_File_System.c_str(), 0, NULL) != 0) {
-		if (Display_Error)
-			LOGE("Unable to mount '%s'\n", Mount_Point.c_str());
-		else
-			LOGI("Unable to mount '%s'\n", Mount_Point.c_str());
-		LOGI("Actual block device: '%s', current file system: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str());
-		return false;
-	} else {
-#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-		string MetaEcfsFile = EXPAND(TW_EXTERNAL_STORAGE_PATH);
-		MetaEcfsFile += "/.MetaEcfsFile";
-		if (EcryptFS_Password.size() > 0 && PartitionManager.Mount_By_Path("/data", false) && TWFunc::Path_Exists(MetaEcfsFile)) {
-			if (mount_ecryptfs_drive(EcryptFS_Password.c_str(), Mount_Point.c_str(), Mount_Point.c_str(), 0) != 0) {
+	} else if (!exfat_mounted && mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), Current_File_System.c_str(), 0, NULL) != 0) {
+#ifdef TW_NO_EXFAT_FUSE
+		if (Current_File_System == "exfat") {
+			LOGI("Mounting exfat failed, trying vfat...\n");
+			if (mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), "vfat", 0, NULL) != 0) {
 				if (Display_Error)
-					LOGE("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());
+					LOGE("Unable to mount '%s'\n", Mount_Point.c_str());
 				else
-					LOGI("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());
-			} else {
-				LOGI("Successfully mounted ecryptfs for '%s'\n", Mount_Point.c_str());
-				Is_Decrypted = true;
+					LOGI("Unable to mount '%s'\n", Mount_Point.c_str());
+				LOGI("Actual block device: '%s', current file system: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str());
+				return false;
 			}
 		} else {
-			Is_Decrypted = false;
+#endif
+			if (Display_Error)
+				LOGE("Unable to mount '%s'\n", Mount_Point.c_str());
+			else
+				LOGI("Unable to mount '%s'\n", Mount_Point.c_str());
+			LOGI("Actual block device: '%s', current file system: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str());
+			return false;
+#ifdef TW_NO_EXFAT_FUSE
 		}
 #endif
-		if (Removable)
-			Update_Size(Display_Error);
-
-		if (!Symlink_Mount_Point.empty()) {
-			string Command, Result;
-			Command = "mount '" + Symlink_Path + "' '" + Symlink_Mount_Point + "'";
-			TWFunc::Exec_Cmd(Command, Result);
+	}
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+	string MetaEcfsFile = EXPAND(TW_EXTERNAL_STORAGE_PATH);
+	MetaEcfsFile += "/.MetaEcfsFile";
+	if (EcryptFS_Password.size() > 0 && PartitionManager.Mount_By_Path("/data", false) && TWFunc::Path_Exists(MetaEcfsFile)) {
+		if (mount_ecryptfs_drive(EcryptFS_Password.c_str(), Mount_Point.c_str(), Mount_Point.c_str(), 0) != 0) {
+			if (Display_Error)
+				LOGE("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());
+			else
+				LOGI("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());
+		} else {
+			LOGI("Successfully mounted ecryptfs for '%s'\n", Mount_Point.c_str());
+			Is_Decrypted = true;
 		}
-		return true;
+	} else {
+		Is_Decrypted = false;
+	}
+#endif
+	if (Removable)
+		Update_Size(Display_Error);
+
+	if (!Symlink_Mount_Point.empty()) {
+		string Command, Result;
+		Command = "mount '" + Symlink_Path + "' '" + Symlink_Mount_Point + "'";
+		TWFunc::Exec_Cmd(Command, Result);
 	}
 	return true;
 }
