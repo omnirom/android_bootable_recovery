@@ -53,8 +53,8 @@ int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_app
 	if ((getPackages()) != 0) {
 		return -1;
 	}
-	
-	ui_print("Fixing /system/app perissions...\n");
+
+	ui_print("Fixing /system/app permissions...\n");
 	if ((fixSystemApps()) != 0) {
 		return -1;
 	}
