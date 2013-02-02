@@ -28,7 +28,7 @@ public:
 	static void htc_dumlock_restore_original_boot(void);                        // Restores the backup of boot from HTC Dumlock
 	static void htc_dumlock_reflash_recovery_to_boot(void);                     // Reflashes the current recovery to boot
 	static int Recursive_Mkdir(string Path);                                    // Recursively makes the entire path
-	static unsigned long long Get_Folder_Size(string Path, bool Display_Error); // Gets the size of a folder and all of its subfolders using dirent and stat
+	static unsigned long long Get_Folder_Size(const string& Path, bool Display_Error); // Gets the size of a folder and all of its subfolders using dirent and stat
 	static bool Path_Exists(string Path);                                       // Returns true if the path exists
 	static void GUI_Operation_Text(string Read_Value, string Default_Text);     // Updates text for display in the GUI, e.g. Backing up %partition name%
 	static void GUI_Operation_Text(string Read_Value, string Partition_Name, string Default_Text); // Same as above but includes partition name
