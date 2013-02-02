@@ -653,14 +653,14 @@ void DataManager::SetDefaultValues()
 
     mConstValues.insert(make_pair(TW_REBOOT_SYSTEM, "1"));
 #ifdef TW_NO_REBOOT_RECOVERY
-	printf("RECOVERY_SDCARD_ON_DATA := true\n");
+	printf("TW_NO_REBOOT_RECOVERY := true\n");
 	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, "0"));
 #else
 	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, "1"));
 #endif
     mConstValues.insert(make_pair(TW_REBOOT_POWEROFF, "1"));
 #ifdef TW_NO_REBOOT_BOOTLOADER
-	printf("RECOVERY_SDCARD_ON_DATA := true\n");
+	printf("TW_NO_REBOOT_BOOTLOADER := true\n");
 	mConstValues.insert(make_pair(TW_REBOOT_BOOTLOADER, "0"));
 #else
 	mConstValues.insert(make_pair(TW_REBOOT_BOOTLOADER, "1"));
