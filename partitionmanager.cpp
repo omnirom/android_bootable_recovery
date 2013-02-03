@@ -704,6 +704,7 @@ int TWPartitionManager::Run_Backup(void) {
 			DataManager::SetValue(TW_BACKUP_RECOVERY_VAR, 0);
 		}
 	}
+#ifndef TW_HAS_NO_BOOT_PARTITION
 	DataManager::GetValue(TW_BACKUP_BOOT_VAR, check);
 	if (check) {
 		backup_boot = Find_Partition_By_Path("/boot");
@@ -718,6 +719,7 @@ int TWPartitionManager::Run_Backup(void) {
 			DataManager::SetValue(TW_BACKUP_BOOT_VAR, 0);
 		}
 	}
+#endif
 	DataManager::GetValue(TW_BACKUP_ANDSEC_VAR, check);
 	if (check) {
 		backup_andsec = Find_Partition_By_Path("/and-sec");
@@ -962,6 +964,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 			partition_count++;
 		}
 	}
+#ifndef TW_HAS_NO_BOOT_PARTITION
 	DataManager::GetValue(TW_RESTORE_BOOT_VAR, check);
 	if (check > 0) {
 		restore_boot = Find_Partition_By_Path("/boot");
@@ -971,6 +974,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 			partition_count++;
 		}
 	}
+#endif
 	DataManager::GetValue(TW_RESTORE_ANDSEC_VAR, check);
 	if (check > 0) {
 		restore_andsec = Find_Partition_By_Path("/and-sec");
