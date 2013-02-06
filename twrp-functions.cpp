@@ -411,7 +411,6 @@ int TWFunc::removeDir(const string path, bool skipParent) {
 	if (d) {
 		struct dirent *p;
 		while (!r && (p = readdir(d))) {
-			LOGI("checking :%s\n", p->d_name);
 			if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
 				continue;
 			new_path = path + "/";
@@ -426,8 +425,9 @@ int TWFunc::removeDir(const string path, bool skipParent) {
 				}
 			} else if (p->d_type == DT_REG || p->d_type == DT_LNK || p->d_type == DT_FIFO || p->d_type == DT_SOCK) {
 				r = unlink(new_path.c_str());
-				if (!r)
-					LOGI("Unable to unlink '%s'\n", new_path.c_str());
+				if (r != 0) {
+					LOGI("Unable to unlink '%s: %s'\n", new_path.c_str(), strerror(errno));
+				}
 			}
 		}
 		closedir(d);

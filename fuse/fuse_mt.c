@@ -24,8 +24,6 @@ struct procdata {
 	void *data;
 };
 
-#ifdef __MULTI_THREAD
-
 static void mt_session_proc(void *data, const char *buf, size_t len,
 			    struct fuse_chan *ch)
 {
@@ -112,9 +110,13 @@ int fuse_loop_mt(struct fuse *f)
 	if (f == NULL)
 		return -1;
 
-	return fuse_session_loop_mt(fuse_get_session(f));
+	int res = fuse_start_cleanup_thread(f);
+	if (res)
+		return -1;
+
+	res = fuse_session_loop_mt(fuse_get_session(f));
+	fuse_stop_cleanup_thread(f);
+	return res;
 }
 
 FUSE_SYMVER(".symver fuse_loop_mt_proc,__fuse_loop_mt@");
-
-#endif

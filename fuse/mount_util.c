@@ -11,18 +11,22 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <mntent.h>
+#include <paths.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/mount.h>
 #include <sys/param.h>
 
-#include <paths.h>
-
+#ifdef __NetBSD__
+#define umount2(mnt, flags) unmount(mnt, (flags == 2) ? MNT_FORCE : 0)
+#define mtab_needs_update(mnt) 0
+#else
 static int mtab_needs_update(const char *mnt)
 {
 	int res;
@@ -45,80 +49,28 @@ static int mtab_needs_update(const char *mnt)
 		if (errno == ENOENT)
 			return 0;
 	} else {
+		uid_t ruid;
+		int err;
+
 		if (S_ISLNK(stbuf.st_mode))
 			return 0;
 
+		ruid = getuid();
+		if (ruid != 0)
+			setreuid(0, -1);
+
 		res = access(_PATH_MOUNTED, W_OK);
-		if (res == -1 && errno == EROFS)
+		err = (res == -1) ? errno : 0;
+		if (ruid != 0)
+			setreuid(ruid, -1);
+
+		if (err == EROFS)
 			return 0;
 	}
 
 	return 1;
 }
-
-static int add_mount_legacy(const char *progname, const char *fsname,
-			    const char *mnt, const char *type, const char *opts)
-{
-	int res;
-	int status;
-	sigset_t blockmask;
-	sigset_t oldmask;
-
-	sigemptyset(&blockmask);
-	sigaddset(&blockmask, SIGCHLD);
-	res = sigprocmask(SIG_BLOCK, &blockmask, &oldmask);
-	if (res == -1) {
-		fprintf(stderr, "%s: sigprocmask: %s\n", progname, strerror(errno));
-		return -1;
-	}
-
-	res = fork();
-	if (res == -1) {
-		fprintf(stderr, "%s: fork: %s\n", progname, strerror(errno));
-		goto out_restore;
-	}
-	if (res == 0) {
-		char templ[] = "/tmp/fusermountXXXXXX";
-		char *tmp;
-
-		sigprocmask(SIG_SETMASK, &oldmask, NULL);
-		setuid(geteuid());
-
-		/*
-		 * hide in a directory, where mount isn't able to resolve
-		 * fsname as a valid path
-		 */
-		tmp = mkdtemp(templ);
-		if (!tmp) {
-			fprintf(stderr,
-				"%s: failed to create temporary directory\n",
-				progname);
-			exit(1);
-		}
-		if (chdir(tmp)) {
-			fprintf(stderr, "%s: failed to chdir to %s: %s\n",
-				progname, tmp, strerror(errno));
-			exit(1);
-		}
-		rmdir(tmp);
-		execl("/bin/mount", "/bin/mount", "-i", "-f", "-t", type,
-		      "-o", opts, fsname, mnt, NULL);
-		fprintf(stderr, "%s: failed to execute /bin/mount: %s\n",
-			progname, strerror(errno));
-		exit(1);
-	}
-	res = waitpid(res, &status, 0);
-	if (res == -1)
-		fprintf(stderr, "%s: waitpid: %s\n", progname, strerror(errno));
-
-	if (status != 0)
-		res = -1;
-
- out_restore:
-	sigprocmask(SIG_SETMASK, &oldmask, NULL);
-
-	return res;
-}
+#endif /* __NetBSD__ */
 
 static int add_mount(const char *progname, const char *fsname,
 		       const char *mnt, const char *type, const char *opts)
@@ -142,14 +94,6 @@ static int add_mount(const char *progname, const char *fsname,
 		goto out_restore;
 	}
 	if (res == 0) {
-		/*
-		 * Hide output, because old versions don't support
-		 * --no-canonicalize
-		 */
-		int fd = open("/dev/null", O_RDONLY);
-		dup2(fd, 1);
-		dup2(fd, 2);
-
 		sigprocmask(SIG_SETMASK, &oldmask, NULL);
 		setuid(geteuid());
 		execl("/bin/mount", "/bin/mount", "--no-canonicalize", "-i",
@@ -174,16 +118,10 @@ static int add_mount(const char *progname, const char *fsname,
 int fuse_mnt_add_mount(const char *progname, const char *fsname,
 		       const char *mnt, const char *type, const char *opts)
 {
-	int res;
-
 	if (!mtab_needs_update(mnt))
 		return 0;
 
-	res = add_mount(progname, fsname, mnt, type, opts);
-	if (res == -1)
-		res = add_mount_legacy(progname, fsname, mnt, type, opts);
-
-	return res;
+	return add_mount(progname, fsname, mnt, type, opts);
 }
 
 static int exec_umount(const char *progname, const char *rel_mnt, int lazy)
@@ -243,6 +181,55 @@ int fuse_mnt_umount(const char *progname, const char *abs_mnt,
 	}
 
 	return exec_umount(progname, rel_mnt, lazy);
+}
+
+static int remove_mount(const char *progname, const char *mnt)
+{
+	int res;
+	int status;
+	sigset_t blockmask;
+	sigset_t oldmask;
+
+	sigemptyset(&blockmask);
+	sigaddset(&blockmask, SIGCHLD);
+	res = sigprocmask(SIG_BLOCK, &blockmask, &oldmask);
+	if (res == -1) {
+		fprintf(stderr, "%s: sigprocmask: %s\n", progname, strerror(errno));
+		return -1;
+	}
+
+	res = fork();
+	if (res == -1) {
+		fprintf(stderr, "%s: fork: %s\n", progname, strerror(errno));
+		goto out_restore;
+	}
+	if (res == 0) {
+		sigprocmask(SIG_SETMASK, &oldmask, NULL);
+		setuid(geteuid());
+		execl("/bin/umount", "/bin/umount", "--no-canonicalize", "-i",
+		      "--fake", mnt, NULL);
+		fprintf(stderr, "%s: failed to execute /bin/umount: %s\n",
+			progname, strerror(errno));
+		exit(1);
+	}
+	res = waitpid(res, &status, 0);
+	if (res == -1)
+		fprintf(stderr, "%s: waitpid: %s\n", progname, strerror(errno));
+
+	if (status != 0)
+		res = -1;
+
+ out_restore:
+	sigprocmask(SIG_SETMASK, &oldmask, NULL);
+	return res;
+}
+
+int fuse_mnt_remove_mount(const char *progname, const char *mnt)
+{
+	if (!mtab_needs_update(mnt))
+		return 0;
+
+	return remove_mount(progname, mnt);
 }
 
 char *fuse_mnt_resolve_path(const char *progname, const char *orig)

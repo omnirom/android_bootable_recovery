@@ -20,7 +20,7 @@
  */
 
 #ifndef FUSE_USE_VERSION
-#define FUSE_USE_VERSION 28
+#define FUSE_USE_VERSION 21
 #endif
 
 #include "fuse_common.h"
@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/uio.h>
+#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -412,7 +413,7 @@ struct fuse_operations {
 	 * information without calling this method.	 This ensures, that
 	 * for local locks the l_pid field is correctly filled in.	The
 	 * results may not be accurate in case of race conditions and in
-	 * the presence of hard links, but it's unlikly that an
+	 * the presence of hard links, but it's unlikely that an
 	 * application would rely on accurate GETLK results in these
 	 * cases.  If a conflicting lock is not found, this method will be
 	 * called, and the filesystem may fill out l_pid by a meaningful
@@ -434,6 +435,11 @@ struct fuse_operations {
 	 * Change the access and modification times of a file with
 	 * nanosecond resolution
 	 *
+	 * This supersedes the old utime() interface.  New applications
+	 * should use this.
+	 *
+	 * See the utimensat(2) man page for details.
+	 *
 	 * Introduced in version 2.6
 	 */
 	int (*utimens) (const char *, const struct timespec tv[2]);
@@ -449,18 +455,41 @@ struct fuse_operations {
 	int (*bmap) (const char *, size_t blocksize, uint64_t *idx);
 
 	/**
-	 * Flag indicating, that the filesystem can accept a NULL path
+	 * Flag indicating that the filesystem can accept a NULL path
 	 * as the first argument for the following operations:
 	 *
 	 * read, write, flush, release, fsync, readdir, releasedir,
-	 * fsyncdir, ftruncate, fgetattr and lock
+	 * fsyncdir, ftruncate, fgetattr, lock, ioctl and poll
+	 *
+	 * If this flag is set these operations continue to work on
+	 * unlinked files even if "-ohard_remove" option was specified.
 	 */
-	unsigned int flag_nullpath_ok : 1;
+	unsigned int flag_nullpath_ok:1;
+
+	/**
+	 * Flag indicating that the path need not be calculated for
+	 * the following operations:
+	 *
+	 * read, write, flush, release, fsync, readdir, releasedir,
+	 * fsyncdir, ftruncate, fgetattr, lock, ioctl and poll
+	 *
+	 * Closely related to flag_nullpath_ok, but if this flag is
+	 * set then the path will not be calculaged even if the file
+	 * wasn't unlinked.  However the path can still be non-NULL if
+	 * it needs to be calculated for some other reason.
+	 */
+	unsigned int flag_nopath:1;
+
+	/**
+	 * Flag indicating that the filesystem accepts special
+	 * UTIME_NOW and UTIME_OMIT values in its utimens operation.
+	 */
+	unsigned int flag_utime_omit_ok:1;
 
 	/**
 	 * Reserved flags, don't set
 	 */
-	unsigned int flag_reserved : 31;
+	unsigned int flag_reserved:29;
 
 	/**
 	 * Ioctl
@@ -496,6 +525,70 @@ struct fuse_operations {
 	 */
 	int (*poll) (const char *, struct fuse_file_info *,
 		     struct fuse_pollhandle *ph, unsigned *reventsp);
+
+	/** Write contents of buffer to an open file
+	 *
+	 * Similar to the write() method, but data is supplied in a
+	 * generic buffer.  Use fuse_buf_copy() to transfer data to
+	 * the destination.
+	 *
+	 * Introduced in version 2.9
+	 */
+	int (*write_buf) (const char *, struct fuse_bufvec *buf, off64_t off,
+			  struct fuse_file_info *);
+
+	/** Store data from an open file in a buffer
+	 *
+	 * Similar to the read() method, but data is stored and
+	 * returned in a generic buffer.
+	 *
+	 * No actual copying of data has to take place, the source
+	 * file descriptor may simply be stored in the buffer for
+	 * later data transfer.
+	 *
+	 * The buffer must be allocated dynamically and stored at the
+	 * location pointed to by bufp.  If the buffer contains memory
+	 * regions, they too must be allocated using malloc().  The
+	 * allocated memory will be freed by the caller.
+	 *
+	 * Introduced in version 2.9
+	 */
+	int (*read_buf) (const char *, struct fuse_bufvec **bufp,
+			 size_t size, off64_t off, struct fuse_file_info *);
+	/**
+	 * Perform BSD file locking operation
+	 *
+	 * The op argument will be either LOCK_SH, LOCK_EX or LOCK_UN
+	 *
+	 * Nonblocking requests will be indicated by ORing LOCK_NB to
+	 * the above operations
+	 *
+	 * For more information see the flock(2) manual page.
+	 *
+	 * Additionally fi->owner will be set to a value unique to
+	 * this open file.  This same value will be supplied to
+	 * ->release() when the file is released.
+	 *
+	 * Note: if this method is not implemented, the kernel will still
+	 * allow file locking to work locally.  Hence it is only
+	 * interesting for network filesystems and similar.
+	 *
+	 * Introduced in version 2.9
+	 */
+	int (*flock) (const char *, struct fuse_file_info *, int op);
+
+	/**
+	 * Allocates space for an open file
+	 *
+	 * This function ensures that required space is allocated for specified
+	 * file.  If this function returns success then any subsequent write
+	 * request to specified range is guaranteed not to fail because of lack
+	 * of space on the file system media.
+	 *
+	 * Introduced in version 2.9.1
+	 */
+	int (*fallocate) (const char *, int, off64_t, off64_t,
+			  struct fuse_file_info *);
 };
 
 /** Extra context that may be needed by some filesystems
@@ -671,6 +764,34 @@ int fuse_is_lib_option(const char *opt);
 int fuse_main_real(int argc, char *argv[], const struct fuse_operations *op,
 		   size_t op_size, void *user_data);
 
+/**
+ * Start the cleanup thread when using option "remember".
+ *
+ * This is done automatically by fuse_loop_mt()
+ * @param fuse struct fuse pointer for fuse instance
+ * @return 0 on success and -1 on error
+ */
+int fuse_start_cleanup_thread(struct fuse *fuse);
+
+/**
+ * Stop the cleanup thread when using option "remember".
+ *
+ * This is done automatically by fuse_loop_mt()
+ * @param fuse struct fuse pointer for fuse instance
+ */
+void fuse_stop_cleanup_thread(struct fuse *fuse);
+
+/**
+ * Iterate over cache removing stale entries
+ * use in conjunction with "-oremember"
+ *
+ * NOTE: This is already done for the standard sessions
+ *
+ * @param fuse struct fuse pointer for fuse instance
+ * @return the number of seconds until the next cleanup
+ */
+int fuse_clean_cache(struct fuse *fuse);
+
 /*
  * Stacking API
  */
@@ -707,8 +828,14 @@ int fuse_fs_open(struct fuse_fs *fs, const char *path,
 		 struct fuse_file_info *fi);
 int fuse_fs_read(struct fuse_fs *fs, const char *path, char *buf, size_t size,
 		 off64_t off, struct fuse_file_info *fi);
+int fuse_fs_read_buf(struct fuse_fs *fs, const char *path,
+		     struct fuse_bufvec **bufp, size_t size, off64_t off,
+		     struct fuse_file_info *fi);
 int fuse_fs_write(struct fuse_fs *fs, const char *path, const char *buf,
 		  size_t size, off64_t off, struct fuse_file_info *fi);
+int fuse_fs_write_buf(struct fuse_fs *fs, const char *path,
+		      struct fuse_bufvec *buf, off64_t off,
+		      struct fuse_file_info *fi);
 int fuse_fs_fsync(struct fuse_fs *fs, const char *path, int datasync,
 		  struct fuse_file_info *fi);
 int fuse_fs_flush(struct fuse_fs *fs, const char *path,
@@ -727,6 +854,8 @@ int fuse_fs_create(struct fuse_fs *fs, const char *path, mode_t mode,
 		   struct fuse_file_info *fi);
 int fuse_fs_lock(struct fuse_fs *fs, const char *path,
 		 struct fuse_file_info *fi, int cmd, struct flock *lock);
+int fuse_fs_flock(struct fuse_fs *fs, const char *path,
+		  struct fuse_file_info *fi, int op);
 int fuse_fs_chmod(struct fuse_fs *fs, const char *path, mode_t mode);
 int fuse_fs_chown(struct fuse_fs *fs, const char *path, uid_t uid, gid_t gid);
 int fuse_fs_truncate(struct fuse_fs *fs, const char *path, off64_t size);
@@ -755,6 +884,8 @@ int fuse_fs_ioctl(struct fuse_fs *fs, const char *path, int cmd, void *arg,
 int fuse_fs_poll(struct fuse_fs *fs, const char *path,
 		 struct fuse_file_info *fi, struct fuse_pollhandle *ph,
 		 unsigned *reventsp);
+int fuse_fs_fallocate(struct fuse_fs *fs, const char *path, int mode,
+		 off64_t offset, off64_t length, struct fuse_file_info *fi);
 void fuse_fs_init(struct fuse_fs *fs, struct fuse_conn_info *conn);
 void fuse_fs_destroy(struct fuse_fs *fs);
 

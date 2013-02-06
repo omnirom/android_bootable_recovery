@@ -17,6 +17,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
+	buffer.c \
 	cuse_lowlevel.c \
 	fuse.c \
 	fuse_kern_chan.c \

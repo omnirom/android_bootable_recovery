@@ -17,16 +17,16 @@
 
 #include "fuse_opt.h"
 #include <stdint.h>
+#include <sys/types.h>
 
 /** Major version of FUSE library interface */
 #define FUSE_MAJOR_VERSION 2
 
 /** Minor version of FUSE library interface */
-#define FUSE_MINOR_VERSION 8
+#define FUSE_MINOR_VERSION 9
 
 #define FUSE_MAKE_VERSION(maj, min)  ((maj) * 10 + (min))
-#define FUSE_VERSION 26
-//#define FUSE_VERSION FUSE_MAKE_VERSION(FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION)
+#define FUSE_VERSION FUSE_MAKE_VERSION(FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION)
 
 /* This interface uses 64 bit off64_t */
 #if _FILE_OFFSET_BITS != 64
@@ -70,8 +70,14 @@ struct fuse_file_info {
 	    seekable.  Introduced in version 2.8 */
 	unsigned int nonseekable : 1;
 
+	/* Indicates that flock locks for this file should be
+	   released.  If set, lock_owner shall contain a valid value.
+	   May only be set in ->release().  Introduced in version
+	   2.9 */
+	unsigned int flock_release : 1;
+
 	/** Padding.  Do not use*/
-	unsigned int padding : 28;
+	unsigned int padding : 27;
 
 	/** File handle.  May be filled in by filesystem in open().
 	    Available in all other file operations */
@@ -90,6 +96,10 @@ struct fuse_file_info {
  * FUSE_CAP_EXPORT_SUPPORT: filesystem handles lookups of "." and ".."
  * FUSE_CAP_BIG_WRITES: filesystem can handle write size larger than 4kB
  * FUSE_CAP_DONT_MASK: don't apply umask to file mode on create operations
+ * FUSE_CAP_SPLICE_WRITE: ability to use splice() to write to the fuse device
+ * FUSE_CAP_SPLICE_MOVE: ability to move data to the fuse device with splice()
+ * FUSE_CAP_SPLICE_READ: ability to use splice() to read from the fuse device
+ * FUSE_CAP_IOCTL_DIR: ioctl support on directories
  */
 #define FUSE_CAP_ASYNC_READ	(1 << 0)
 #define FUSE_CAP_POSIX_LOCKS	(1 << 1)
@@ -97,6 +107,11 @@ struct fuse_file_info {
 #define FUSE_CAP_EXPORT_SUPPORT	(1 << 4)
 #define FUSE_CAP_BIG_WRITES	(1 << 5)
 #define FUSE_CAP_DONT_MASK	(1 << 6)
+#define FUSE_CAP_SPLICE_WRITE	(1 << 7)
+#define FUSE_CAP_SPLICE_MOVE	(1 << 8)
+#define FUSE_CAP_SPLICE_READ	(1 << 9)
+#define FUSE_CAP_FLOCK_LOCKS	(1 << 10)
+#define FUSE_CAP_IOCTL_DIR	(1 << 11)
 
 /**
  * Ioctl flags
@@ -104,12 +119,14 @@ struct fuse_file_info {
  * FUSE_IOCTL_COMPAT: 32bit compat ioctl on 64bit machine
  * FUSE_IOCTL_UNRESTRICTED: not restricted to well-formed ioctls, retry allowed
  * FUSE_IOCTL_RETRY: retry with new iovecs
+ * FUSE_IOCTL_DIR: is a directory
  *
  * FUSE_IOCTL_MAX_IOV: maximum of in_iovecs + out_iovecs
  */
 #define FUSE_IOCTL_COMPAT	(1 << 0)
 #define FUSE_IOCTL_UNRESTRICTED	(1 << 1)
 #define FUSE_IOCTL_RETRY	(1 << 2)
+#define FUSE_IOCTL_DIR		(1 << 4)
 
 #define FUSE_IOCTL_MAX_IOV	256
 
@@ -157,9 +174,19 @@ struct fuse_conn_info {
 	unsigned want;
 
 	/**
+	 * Maximum number of backgrounded requests
+	 */
+	unsigned max_background;
+
+	/**
+	 * Kernel congestion threshold parameter
+	 */
+	unsigned congestion_threshold;
+
+	/**
 	 * For future use.
 	 */
-	unsigned reserved[25];
+	unsigned reserved[23];
 };
 
 struct fuse_session;
@@ -231,6 +258,186 @@ int fuse_version(void);
  * @param ph the poll handle
  */
 void fuse_pollhandle_destroy(struct fuse_pollhandle *ph);
+
+/* ----------------------------------------------------------- *
+ * Data buffer						       *
+ * ----------------------------------------------------------- */
+
+/**
+ * Buffer flags
+ */
+enum fuse_buf_flags {
+	/**
+	 * Buffer contains a file descriptor
+	 *
+	 * If this flag is set, the .fd field is valid, otherwise the
+	 * .mem fields is valid.
+	 */
+	FUSE_BUF_IS_FD		= (1 << 1),
+
+	/**
+	 * Seek on the file descriptor
+	 *
+	 * If this flag is set then the .pos field is valid and is
+	 * used to seek to the given offset before performing
+	 * operation on file descriptor.
+	 */
+	FUSE_BUF_FD_SEEK	= (1 << 2),
+
+	/**
+	 * Retry operation on file descriptor
+	 *
+	 * If this flag is set then retry operation on file descriptor
+	 * until .size bytes have been copied or an error or EOF is
+	 * detected.
+	 */
+	FUSE_BUF_FD_RETRY	= (1 << 3),
+};
+
+/**
+ * Buffer copy flags
+ */
+enum fuse_buf_copy_flags {
+	/**
+	 * Don't use splice(2)
+	 *
+	 * Always fall back to using read and write instead of
+	 * splice(2) to copy data from one file descriptor to another.
+	 *
+	 * If this flag is not set, then only fall back if splice is
+	 * unavailable.
+	 */
+	FUSE_BUF_NO_SPLICE	= (1 << 1),
+
+	/**
+	 * Force splice
+	 *
+	 * Always use splice(2) to copy data from one file descriptor
+	 * to another.  If splice is not available, return -EINVAL.
+	 */
+	FUSE_BUF_FORCE_SPLICE	= (1 << 2),
+
+	/**
+	 * Try to move data with splice.
+	 *
+	 * If splice is used, try to move pages from the source to the
+	 * destination instead of copying.  See documentation of
+	 * SPLICE_F_MOVE in splice(2) man page.
+	 */
+	FUSE_BUF_SPLICE_MOVE	= (1 << 3),
+
+	/**
+	 * Don't block on the pipe when copying data with splice
+	 *
+	 * Makes the operations on the pipe non-blocking (if the pipe
+	 * is full or empty).  See SPLICE_F_NONBLOCK in the splice(2)
+	 * man page.
+	 */
+	FUSE_BUF_SPLICE_NONBLOCK= (1 << 4),
+};
+
+/**
+ * Single data buffer
+ *
+ * Generic data buffer for I/O, extended attributes, etc...  Data may
+ * be supplied as a memory pointer or as a file descriptor
+ */
+struct fuse_buf {
+	/**
+	 * Size of data in bytes
+	 */
+	size_t size;
+
+	/**
+	 * Buffer flags
+	 */
+	enum fuse_buf_flags flags;
+
+	/**
+	 * Memory pointer
+	 *
+	 * Used unless FUSE_BUF_IS_FD flag is set.
+	 */
+	void *mem;
+
+	/**
+	 * File descriptor
+	 *
+	 * Used if FUSE_BUF_IS_FD flag is set.
+	 */
+	int fd;
+
+	/**
+	 * File position
+	 *
+	 * Used if FUSE_BUF_FD_SEEK flag is set.
+	 */
+	off64_t pos;
+};
+
+/**
+ * Data buffer vector
+ *
+ * An array of data buffers, each containing a memory pointer or a
+ * file descriptor.
+ *
+ * Allocate dynamically to add more than one buffer.
+ */
+struct fuse_bufvec {
+	/**
+	 * Number of buffers in the array
+	 */
+	size_t count;
+
+	/**
+	 * Index of current buffer within the array
+	 */
+	size_t idx;
+
+	/**
+	 * Current offset within the current buffer
+	 */
+	size_t off;
+
+	/**
+	 * Array of buffers
+	 */
+	struct fuse_buf buf[1];
+};
+
+/* Initialize bufvec with a single buffer of given size */
+#define FUSE_BUFVEC_INIT(size__) 				\
+	((struct fuse_bufvec) {					\
+		/* .count= */ 1,				\
+		/* .idx =  */ 0,				\
+		/* .off =  */ 0,				\
+		/* .buf =  */ { /* [0] = */ {			\
+			/* .size =  */ (size__),		\
+			/* .flags = */ (enum fuse_buf_flags) 0,	\
+			/* .mem =   */ NULL,			\
+			/* .fd =    */ -1,			\
+			/* .pos =   */ 0,			\
+		} }						\
+	} )
+
+/**
+ * Get total size of data in a fuse buffer vector
+ *
+ * @param bufv buffer vector
+ * @return size of data
+ */
+size_t fuse_buf_size(const struct fuse_bufvec *bufv);
+
+/**
+ * Copy data from one buffer vector to another
+ *
+ * @param dst destination buffer vector
+ * @param src source buffer vector
+ * @param flags flags controlling the copy
+ * @return actual number of bytes copied or -errno on error
+ */
+ssize_t fuse_buf_copy(struct fuse_bufvec *dst, struct fuse_bufvec *src,
+		      enum fuse_buf_copy_flags flags);
 
 /* ----------------------------------------------------------- *
  * Signal handling					       *

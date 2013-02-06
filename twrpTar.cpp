@@ -1,30 +1,31 @@
 /*
-        Copyright 2012 bigbiff/Dees_Troy TeamWin
-        This file is part of TWRP/TeamWin Recovery Project.
+	Copyright 2012 bigbiff/Dees_Troy TeamWin
+	This file is part of TWRP/TeamWin Recovery Project.
 
-        TWRP is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
+	TWRP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-        TWRP is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
+	TWRP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-        You should have received a copy of the GNU General Public License
-        along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 extern "C" {
 	#include "libtar/libtar.h"
+	#include "twrpTar.h"
+	#include "tarWrite.h"
 }
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <fstream>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -139,6 +140,7 @@ int twrpTar::Generate_Multiple_Archives(string Path) {
 			if (Archive_Current_Size != 0 && Archive_Current_Size + st.st_size > MAX_ARCHIVE_SIZE) {
 				LOGI("Closing tar '%s', ", tarfn.c_str());
 				closeTar(false);
+				reinit_libtar_buffer();
 				if (TWFunc::Get_File_Size(tarfn) == 0) {
 					LOGE("Backup file size for '%s' is 0 bytes.\n", tarfn.c_str());
 					return -1;
@@ -180,20 +182,23 @@ int twrpTar::Split_Archive()
 	Archive_Current_Size = 0;
 	sprintf(actual_filename, temp.c_str(), Archive_File_Count);
 	tarfn = actual_filename;
+	init_libtar_buffer(0);
 	createTar();
 	DataManager::GetValue(TW_HAS_DATA_MEDIA, has_data_media);
 	ui_print("Creating archive 1...\n");
 	if (Generate_Multiple_Archives(tardir) < 0) {
-		LOGE("Error generating file list\n");
+		LOGE("Error generating multiple archives\n");
+		free_libtar_buffer();
 		return -1;
 	}
 	closeTar(false);
+	free_libtar_buffer();
 	LOGI("Done, created %i archives.\n", (Archive_File_Count++));
 	return (Archive_File_Count);
 }
 
 int twrpTar::extractTar() {
-        char* charRootDir = (char*) tardir.c_str();
+	char* charRootDir = (char*) tardir.c_str();
 	bool gzip = false;
 	if (openTar(gzip) == -1)
 		return -1;
@@ -209,19 +214,19 @@ int twrpTar::extractTar() {
 }
 
 int twrpTar::extract() {
-        int len = 3;
-        char header[len];
-        string::size_type i = 0;
-        int firstbyte = 0;
-        int secondbyte = 0;
-        int ret;
-        ifstream f;
-        f.open(tarfn.c_str(), ios::in | ios::binary);
-        f.get(header, len);
-        firstbyte = header[i] & 0xff;
-        secondbyte = header[++i] & 0xff;
-        f.close();
-        if (firstbyte == 0x1f && secondbyte == 0x8b) {
+	int len = 3;
+	char header[len];
+	string::size_type i = 0;
+	int firstbyte = 0;
+	int secondbyte = 0;
+	int ret;
+	ifstream f;
+	f.open(tarfn.c_str(), ios::in | ios::binary);
+	f.get(header, len);
+	firstbyte = header[i] & 0xff;
+	secondbyte = header[++i] & 0xff;
+	f.close();
+	if (firstbyte == 0x1f && secondbyte == 0x8b) {
 		//if you return the extractTGZ function directly, stack crashes happen
 		LOGI("Extracting gzipped tar\n");
 		ret = extractTGZ();
@@ -234,94 +239,105 @@ int twrpTar::extract() {
 }
 
 int twrpTar::tarDirs(bool include_root) {
-        DIR* d;
-        string mainfolder = tardir + "/", subfolder;
-        char buf[1024];
-        char* charTarFile = (char*) tarfn.c_str();
-        d = opendir(tardir.c_str());
-        if (d != NULL) {
-                struct dirent* de;
-                while ((de = readdir(d)) != NULL) {
-                        LOGI("adding %s\n", de->d_name);
+	DIR* d;
+	string mainfolder = tardir + "/", subfolder;
+	char buf[1024];
+	char* charTarFile = (char*) tarfn.c_str();
+	d = opendir(tardir.c_str());
+	if (d != NULL) {
+		struct dirent* de;
+		while ((de = readdir(d)) != NULL) {
+			LOGI("adding %s\n", de->d_name);
 #ifdef RECOVERY_SDCARD_ON_DATA
-                        if ((tardir == "/data" || tardir == "/data/") && strcmp(de->d_name, "media") == 0) continue;
+			if ((tardir == "/data" || tardir == "/data/") && strcmp(de->d_name, "media") == 0) continue;
 #endif
-                        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)   continue;
+			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)   continue;
 
-                        subfolder = mainfolder;
-                        subfolder += de->d_name;
-                        strcpy(buf, subfolder.c_str());
-                        if (de->d_type == DT_DIR) {
+			subfolder = mainfolder;
+			subfolder += de->d_name;
+			strcpy(buf, subfolder.c_str());
+			if (de->d_type == DT_DIR) {
 					if (include_root) {
-                                if (tar_append_tree(t, buf, NULL) != 0) {
-                                        LOGE("Error appending '%s' to tar archive '%s'\n", buf, charTarFile);
-                                        return -1;
-                                }
+				if (tar_append_tree(t, buf, NULL) != 0) {
+					LOGE("Error appending '%s' to tar archive '%s'\n", buf, charTarFile);
+					return -1;
+				}
 							} else {
 								string temp = Strip_Root_Dir(buf);
 								char* charTarPath = (char*) temp.c_str();
 								if (tar_append_tree(t, buf, charTarPath) != 0) {
-                                        LOGE("Error appending '%s' to tar archive '%s'\n", buf, charTarFile);
-                                        return -1;
-                                }
+					LOGE("Error appending '%s' to tar archive '%s'\n", buf, charTarFile);
+					return -1;
+				}
 							}
-                        } else if (tardir != "/" && (de->d_type == DT_REG || de->d_type == DT_LNK)) {
+			} else if (tardir != "/" && (de->d_type == DT_REG || de->d_type == DT_LNK)) {
 							if (addFile(buf, include_root) != 0)
 								return -1;
 						}
-                        fflush(NULL);
-                }
-                closedir(d);
-        }
+			fflush(NULL);
+		}
+		closedir(d);
+	}
 	return 0;
 }
 
 int twrpTar::createTGZ() {
-        bool gzip = true;
+	bool gzip = true;
+
+	init_libtar_buffer(0);
 	if (createTar() == -1)
 		return -1;
 	if (tarDirs(false) == -1)
 		return -1;
 	if (closeTar(gzip) == -1)
 		return -1;
-        return 0;
+	free_libtar_buffer();
+	return 0;
 }
 
 int twrpTar::create() {
-        bool gzip = false;
+	bool gzip = false;
+
+	init_libtar_buffer(0);
 	if (createTar() == -1)
 		return -1;
 	if (tarDirs(false) == -1)
 		return -1;
 	if (closeTar(gzip) == -1)
 		return -1;
+	free_libtar_buffer();
 	return 0;
 }
 
 int twrpTar::addFilesToExistingTar(vector <string> files, string fn) {
 	char* charTarFile = (char*) fn.c_str();
+	static tartype_t type = { open, close, read, write_tar };
 
-	if (tar_open(&t, charTarFile, NULL, O_RDONLY | O_LARGEFILE, 0644, TAR_GNU) == -1)
+	init_libtar_buffer(0);
+	if (tar_open(&t, charTarFile, &type, O_RDONLY | O_LARGEFILE, 0644, TAR_GNU) == -1)
 		return -1;
 	removeEOT(charTarFile);
-	if (tar_open(&t, charTarFile, NULL, O_WRONLY | O_APPEND | O_LARGEFILE, 0644, TAR_GNU) == -1)
+	if (tar_open(&t, charTarFile, &type, O_WRONLY | O_APPEND | O_LARGEFILE, 0644, TAR_GNU) == -1)
 		return -1;
 	for (unsigned int i = 0; i < files.size(); ++i) {
 		char* file = (char*) files.at(i).c_str();
 		if (tar_append_file(t, file, file) == -1)
 			return -1;
 	}
+	flush_libtar_buffer(t->fd);
 	if (tar_append_eof(t) == -1)
 		return -1;
 	if (tar_close(t) == -1)
 		return -1;
+	free_libtar_buffer();
 	return 0;
 }
 
 int twrpTar::createTar() {
 	char* charTarFile = (char*) tarfn.c_str();
-        char* charRootDir = (char*) tardir.c_str();
+	char* charRootDir = (char*) tardir.c_str();
 	int use_compression = 0;
+	static tartype_t type = { open, close, read, write_tar };
 
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 	if (use_compression) {
@@ -329,21 +345,21 @@ int twrpTar::createTar() {
 		p = popen(cmd.c_str(), "w");
 		fd = fileno(p);
 		if (!p) return -1;
-		if(tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, 0644, TAR_GNU) != 0) {
+		if(tar_fdopen(&t, fd, charRootDir, &type, O_RDONLY | O_LARGEFILE, 0644, TAR_GNU) != 0) {
 			pclose(p);
 			return -1;
 		}
 	}
 	else {
-		if (tar_open(&t, charTarFile, NULL, O_WRONLY | O_CREAT | O_LARGEFILE, 0644, TAR_GNU) == -1)
+		if (tar_open(&t, charTarFile, &type, O_WRONLY | O_CREAT | O_LARGEFILE, 0644, TAR_GNU) == -1)
 			return -1;
 	}
 	return 0;
 }
 
 int twrpTar::openTar(bool gzip) {
-        char* charRootDir = (char*) tardir.c_str();
-        char* charTarFile = (char*) tarfn.c_str();
+	char* charRootDir = (char*) tardir.c_str();
+	char* charTarFile = (char*) tarfn.c_str();
 
 	if (gzip) {
 		LOGI("Opening as a gzip\n");
@@ -404,6 +420,7 @@ int twrpTar::closeTar(bool gzip) {
 	int use_compression;
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 
+	flush_libtar_buffer(t->fd);
 	if (tar_append_eof(t) != 0) {
 		LOGE("tar_append_eof(): %s\n", strerror(errno));
 		tar_close(t);
@@ -453,7 +470,7 @@ int twrpTar::compress(string fn) {
 int twrpTar::extractTGZ() {
 	string splatrootdir(tardir);
 	bool gzip = true;
-        char* splatCharRootDir = (char*) splatrootdir.c_str();
+	char* splatCharRootDir = (char*) splatrootdir.c_str();
 	if (openTar(gzip) == -1)
 		return -1;
 	int ret = tar_extract_all(t, splatCharRootDir);
@@ -461,5 +478,9 @@ int twrpTar::extractTGZ() {
 		LOGE("Unable to close tar file\n");
 		return -1;
 	}
-        return 0;
+	return 0;
+}
+
+extern "C" ssize_t write_tar(int fd, const void *buffer, size_t size) {
+	return (ssize_t) write_libtar_buffer(fd, buffer, size);
 }

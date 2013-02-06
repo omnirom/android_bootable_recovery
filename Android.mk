@@ -36,7 +36,8 @@ LOCAL_SRC_FILES += \
     mtdutils/mtdutils.c \
     twinstall.cpp \
     twrp-functions.cpp \
-    openrecoveryscript.cpp
+    openrecoveryscript.cpp \
+    tarWrite.c
 
 ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)
   LOCAL_SRC_FILES += $(TARGET_RECOVERY_REBOOT_SRC)
