@@ -171,6 +171,10 @@
 #define CUSTOM_LUN_FILE "/sys/devices/platform/usb_mass_storage/lun%d/file"
 #endif
 
+#ifndef TW_BRIGHTNESS_PATH
+#define TW_BRIGHTNESS_PATH /nobrightness
+#endif
+
 // For OpenRecoveryScript
 #define SCRIPT_FILE_CACHE "/cache/recovery/openrecoveryscript"
 #define SCRIPT_FILE_TMP "/tmp/openrecoveryscript"

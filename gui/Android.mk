@@ -19,7 +19,9 @@ LOCAL_SRC_FILES := \
     slider.cpp \
     listbox.cpp \
     keyboard.cpp \
-    input.cpp
+    input.cpp \
+    blanktimer.cpp \
+    ../minuitwrp/graphics.c
 
 ifneq ($(TWRP_CUSTOM_KEYBOARD),)
   LOCAL_SRC_FILES += $(TWRP_CUSTOM_KEYBOARD)
@@ -45,6 +47,9 @@ ifneq ($(RECOVERY_SDCARD_ON_DATA),)
 endif
 ifneq ($(TW_EXTERNAL_STORAGE_PATH),)
 	LOCAL_CFLAGS += -DTW_EXTERNAL_STORAGE_PATH=$(TW_EXTERNAL_STORAGE_PATH)
+endif
+ifneq ($(TW_BRIGHTNESS_PATH),)
+	LOCAL_CFLAGS += -DTW_BRIGHTNESS_PATH=$(TW_BRIGHTNESS_PATH)
 endif
 
 LOCAL_C_INCLUDES += bionic external/stlport/stlport $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION)

@@ -40,6 +40,10 @@ public:
 	static int removeDir(const string path, bool removeParent); //recursively remove a directory
 	static int copy_file(string src, string dst, int mode); //copy file from src to dst with mode permissions
 	static unsigned int Get_D_Type_From_Stat(string Path);                      // Returns a dirent dt_type value using stat instead of dirent
+	static timespec timespec_diff(timespec& start, timespec& end);	            // Return a diff for 2 times
+	static int read_file(string fn, string& results); //read from file
+	static int write_file(string fn, string& line); //write from file
+	static int drop_caches(void); //drop linux cache memory
 
 private:
 	static void check_and_fclose(FILE *fp, const char *name);

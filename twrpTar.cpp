@@ -57,6 +57,7 @@ int twrpTar::createTarGZThread() {
 	if(pthread_join(thread, NULL)) {
 		return -1;
 	}
+	TWFunc::drop_caches();
 	return 0;
 }
 
@@ -68,6 +69,7 @@ int twrpTar::createTarThread() {
 	if(pthread_join(thread, NULL)) {
 		return -1;
 	}
+	TWFunc::drop_caches();
 	return 0;
 }
 
@@ -79,6 +81,7 @@ int twrpTar::extractTarThread() {
 	if(pthread_join(thread, NULL)) {
 		return -1;
 	}
+	TWFunc::drop_caches();
 	return 0;
 }
 
@@ -90,6 +93,7 @@ int twrpTar::splitArchiveThread() {
 	if(pthread_join(thread, NULL)) {
 		return -1;
 	}
+	TWFunc::drop_caches();
 	return 0;
 }
 

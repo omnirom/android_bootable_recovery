@@ -24,6 +24,7 @@
 
 #include "../ui.h"
 #include "../adb_install.h"
+#include "blanktimer.hpp"
 
 extern "C" {
 #include "../common.h"
@@ -44,6 +45,7 @@ int gui_start();
 #include "objects.hpp"
 
 extern RecoveryUI* ui;
+extern blanktimer blankTimer;
 
 void curtainClose(void);
 
@@ -323,6 +325,7 @@ void GUIAction::operation_end(const int operation_status, const int simulate)
 	}
 	DataManager::SetValue("tw_operation_state", 1);
 	DataManager::SetValue(TW_ACTION_BUSY, 0);
+	blankTimer.resetTimerAndUnblank();
 }
 
 int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
