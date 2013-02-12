@@ -41,6 +41,10 @@
 #include "partitions.hpp"
 #include "twrp-functions.hpp"
 
+#ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
+    #include "cutils/properties.h"
+#endif
+
 extern "C"
 {
     #include "common.h"
@@ -90,6 +94,30 @@ void DataManager::get_device_id(void) {
 
     // Assign a blank device_id to start with
     device_id[0] = 0;
+
+#ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
+	// Now we'll use product_model_hardwareid as device id
+	char model_id[PROPERTY_VALUE_MAX];
+	property_get("ro.product.model", model_id, "error");
+	if (strcmp(model_id,"error") != 0) {
+		LOGI("=> product model: '%s'\n", model_id);
+		// Replace spaces with underscores
+		for(int i = 0; i < strlen(model_id); i++) {
+			if(model_id[i] == ' ')
+			model_id[i] = '_';
+		}
+		strcpy(device_id, model_id);
+		if (hardware_id[0] != 0) {
+			strcat(device_id, "_");
+			strcat(device_id, hardware_id);
+		}
+		sanitize_device_id((char *)device_id);
+		mConstValues.insert(make_pair("device_id", device_id));
+		LOGI("=> using device id: '%s'\n", device_id);
+		return;
+	}
+#endif
+
 #ifndef TW_FORCE_CPUINFO_FOR_DEVICE_ID
     // First, try the cmdline to see if the serial number was supplied
 	fp = fopen("/proc/cmdline", "rt");

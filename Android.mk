@@ -222,9 +222,11 @@ ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     LOCAL_SRC_FILES += crypto/jb/cryptfs.c
     LOCAL_C_INCLUDES += system/extras/ext4_utils external/openssl/include
 endif
-
+ifeq ($(TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID), true)
+    LOCAL_CFLAGS += -DTW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
+endif
 ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
-LOCAL_CFLAGS += -DRK3066
+    LOCAL_CFLAGS += -DRK3066
 endif
 
 include $(BUILD_EXECUTABLE)
