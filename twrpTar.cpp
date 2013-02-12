@@ -20,6 +20,7 @@ extern "C" {
 	#include "libtar/libtar.h"
 	#include "twrpTar.h"
 	#include "tarWrite.h"
+	#include "libcrecovery/common.h"
 }
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -342,7 +343,7 @@ int twrpTar::createTar() {
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 	if (use_compression) {
 		string cmd = "pigz - > '" + tarfn + "'";
-		p = popen(cmd.c_str(), "w");
+		p = __popen(cmd.c_str(), "w");
 		fd = fileno(p);
 		if (!p) return -1;
 		if(tar_fdopen(&t, fd, charRootDir, &type, O_RDONLY | O_LARGEFILE, 0644, TAR_GNU) != 0) {
@@ -364,12 +365,12 @@ int twrpTar::openTar(bool gzip) {
 	if (gzip) {
 		LOGI("Opening as a gzip\n");
 		string cmd = "pigz -d -c '" + tarfn + "'";
-		FILE* pipe = popen(cmd.c_str(), "r");
+		FILE* pipe = __popen(cmd.c_str(), "r");
 		int fd = fileno(pipe);
 		if (!pipe) return -1;
 		if(tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, 0644, TAR_GNU) != 0) {
 			LOGI("tar_fdopen returned error\n");
-			pclose(pipe);
+			__pclose(pipe);
 			return -1;
 		}
 	}
@@ -455,7 +456,7 @@ int twrpTar::removeEOT(string tarFile) {
 
 int twrpTar::compress(string fn) {
 	string cmd = "pigz " + fn;
-	p = popen(cmd.c_str(), "r");
+	p = __popen(cmd.c_str(), "r");
 	if (!p) return -1;
 	char buffer[128];
 	string result = "";
@@ -463,7 +464,7 @@ int twrpTar::compress(string fn) {
 		if(fgets(buffer, 128, p) != NULL)
 			result += buffer;
 	}
-	pclose(p);
+	__pclose(p);
 	return 0;
 }
 
