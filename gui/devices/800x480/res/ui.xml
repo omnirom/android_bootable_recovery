@@ -150,6 +150,8 @@
 		<variable name="fileselector_separatorcolor" value="#505050" />
 		<variable name="fileselector_separatorheight" value="1" />
 		<variable name="fileselector_background" value="#303030" />
+		<variable name="fileselector_highlight_color" value="#505050" />
+		<variable name="fileselector_highlight_font_color" value="#33B5E5" />
 		<variable name="fileselector_spacing" value="12" />
 		<variable name="zipstorage_text_y" value="88" />
 		<variable name="listbox_x" value="156" />
@@ -555,6 +557,7 @@
 			</object>
 
 			<object type="fileselector">
+				<highlight color="%fileselector_highlight_color%" />
 				<placement x="%fileselector_folder_x%" y="%fileselector_install_y%" w="%fileselector_folder_width%" h="%fileselector_install_height%" />
 				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
 				<text>Folders:</text>
@@ -562,13 +565,14 @@
 				<sort name="tw_gui_sort_order" />
 				<icon folder="folder_icon" file="file_icon" />
 				<background color="%fileselector_background%" />
-				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" />
+				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
 				<filter folders="1" files="0" />
 				<path name="tw_zip_location" default="/sdcard" />
 				<data name="select" />
 			</object>
 
 			<object type="fileselector">
+				<highlight color="%fileselector_highlight_color%" />
 				<placement x="%fileselector_file_x%" y="%fileselector_install_y%" w="%fileselector_file_width%" h="%fileselector_install_height%" />
 				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
 				<text>%tw_zip_location%</text>
@@ -576,7 +580,7 @@
 				<sort name="tw_gui_sort_order" />
 				<icon folder="folder_icon" file="file_icon" />
 				<background color="%fileselector_background%" />
-				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" />
+				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
 				<filter extn=".zip" folders="0" files="1" />
 				<path name="tw_zip_location" />
 				<data name="tw_filename" />
@@ -2082,12 +2086,13 @@
 			</object>
 
 			<object type="fileselector">
+				<highlight color="%fileselector_highlight_color%" />
 				<placement x="%col2_x%" y="%fileselector_install_y%" w="%fileselector_folderonly_width%" h="%fileselector_install_height%" />
 				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
 				<text>Select Package to Restore:</text>
 				<separator color="%fileselector_separatorcolor%" height="%fileselector_separatorheight%" />
 				<sort name="tw_gui_sort_order" />
-				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" />
+				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
 				<icon folder="folder_icon" file="file_icon" />
 				<background color="%fileselector_background%" />
 				<filter folders="1" files="0" nav="0" />
@@ -2960,6 +2965,7 @@
 			</object>
 
 			<object type="fileselector">
+				<highlight color="%fileselector_highlight_color%" />
 				<placement x="%fileselector_folder_x%" y="%fileselector_install_y%" w="%fileselector_folder_width%" h="%fileselector_install_height%" />
 				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
 				<text>Folders:</text>
@@ -2967,7 +2973,7 @@
 				<sort name="tw_gui_sort_order" />
 				<icon folder="folder_icon" file="file_icon" />
 				<background color="%fileselector_background%" />
-				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" />
+				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
 				<filter folders="1" files="0" />
 				<path name="tw_file_location1" default="/sdcard" />
 				<data name="select" />
@@ -2975,6 +2981,7 @@
 			</object>
 
 			<object type="fileselector">
+				<highlight color="%fileselector_highlight_color%" />
 				<placement x="%fileselector_file_x%" y="%fileselector_install_y%" w="%fileselector_file_width%" h="%fileselector_install_height%" />
 				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
 				<text>%tw_file_location1%</text>
@@ -2982,7 +2989,7 @@
 				<sort name="tw_gui_sort_order" />
 				<icon folder="folder_icon" file="file_icon" />
 				<background color="%fileselector_background%" />
-				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" />
+				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
 				<filter folders="0" files="1" />
 				<path name="tw_file_location1" default="/" />
 				<data name="tw_filename1" />
@@ -3191,12 +3198,13 @@
 			</object>
 
 			<object type="fileselector">
+				<highlight color="%fileselector_highlight_color%" />
 				<placement x="%col2_x%" y="%fileselector_install_y%" w="%fileselector_folderonly_width%" h="%fileselector_install_height%" />
 				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
 				<text>%tw_file_location2%</text>
 				<separator color="%fileselector_separatorcolor%" height="%fileselector_separatorheight%" />
 				<sort name="tw_gui_sort_order" />
-				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" />
+				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
 				<icon folder="folder_icon" file="file_icon" />
 				<background color="%fileselector_background%" />
 				<filter folders="1" files="0" />
@@ -3588,6 +3596,7 @@
 			</object>
 
 			<object type="fileselector">
+				<highlight color="%fileselector_highlight_color%" />
 				<placement x="%col2_x%" y="%fileselector_install_y%" w="%fileselector_folderonly_width%" h="%fileselector_install_height%" />
 				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
 				<text>%tw_terminal_location%</text>
@@ -3595,7 +3604,7 @@
 				<sort name="tw_gui_sort_order" />
 				<icon folder="folder_icon" file="file_icon" />
 				<background color="%fileselector_background%" />
-				<font resource="filelist" spacing="%fileselector_spacing%" color="%text_color%" />
+				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
 				<filter folders="1" files="0" />
 				<path name="tw_terminal_location" default="/" />
 				<data name="tw_terminal" />

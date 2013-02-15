@@ -481,6 +481,12 @@ protected:
 	COLOR mHeaderFontColor;
 	COLOR mSeparatorColor;
 	COLOR mHeaderSeparatorColor;
+	bool hasHighlightColor;
+	bool hasFontHighlightColor;
+	bool isHighlighted;
+	COLOR mHighlightColor;
+	COLOR mFontHighlightColor;
+	int startSelection;
 };
 
 class GUIListBox : public RenderObject, public ActionObject

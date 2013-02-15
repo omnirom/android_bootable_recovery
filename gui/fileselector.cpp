@@ -62,6 +62,10 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node)
 	ConvertStrToColor("black", &mHeaderSeparatorColor);
 	ConvertStrToColor("white", &mFontColor);
 	ConvertStrToColor("white", &mHeaderFontColor);
+	hasHighlightColor = false;
+	hasFontHighlightColor = false;
+	isHighlighted = false;
+	startSelection = -1;
 
 	// Load header text
 	child = node->first_node("header");
@@ -101,6 +105,17 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node)
 	}
 	child = node->first_node("text");
 	if (child)  mHeaderText = child->value();
+
+	memset(&mHighlightColor, 0, sizeof(COLOR));
+	child = node->first_node("highlight");
+	if (child) {
+		attr = child->first_attribute("color");
+		if (attr) {
+			hasHighlightColor = true;
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mHighlightColor);
+		}
+	}
 
 	// Simple way to check for static state
 	mLastValue = gui_parse_text(mHeaderText);
@@ -161,6 +176,15 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node)
 			string parsevalue = gui_parse_text(attr->value());
 			mLineSpacing = atoi(parsevalue.c_str());
 		}
+
+		attr = child->first_attribute("highlightcolor");
+		memset(&mFontHighlightColor, 0, sizeof(COLOR));
+        if (attr)
+        {
+            std::string color = attr->value();
+			ConvertStrToColor(color, &mFontHighlightColor);
+			hasFontHighlightColor = true;
+        }
 	}
 
 	// Load the separator if it exists
@@ -349,14 +373,39 @@ int GUIFileSelector::Render(void)
 	int currentIconOffsetY = 0, currentIconOffsetX = 0;
 	int folderIconOffsetY = (int)((actualLineHeight - mFolderIconHeight) / 2), fileIconOffsetY = (int)((actualLineHeight - mFileIconHeight) / 2);
 	int folderIconOffsetX = (mIconWidth - mFolderIconWidth) / 2, fileIconOffsetX = (mIconWidth - mFileIconWidth) / 2;
+	int actualSelection = mStart;
+
+	if (isHighlighted) {
+		int selectY = scrollingY;
+
+		// Locate the correct line for highlighting
+		while (selectY + actualLineHeight < startSelection) {
+			selectY += actualLineHeight;
+			actualSelection++;
+		}
+		if (hasHighlightColor) {
+			// Highlight the area
+			gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, 255);
+			int HighlightHeight = actualLineHeight;
+			if (mRenderY + mHeaderH + selectY + actualLineHeight > mRenderH + mRenderY) {
+				HighlightHeight = actualLineHeight - (mRenderY + mHeaderH + selectY + actualLineHeight - mRenderH - mRenderY);
+			}
+			gr_fill(mRenderX, mRenderY + mHeaderH + selectY, mRenderW, HighlightHeight);
+		}
+	}
 
 	for (line = 0; line < lines; line++)
 	{
 		Resource* icon;
 		std::string label;
 
-		// Set the color for the font
-		gr_color(mFontColor.red, mFontColor.green, mFontColor.blue, 255);
+		if (isHighlighted && hasFontHighlightColor && line + mStart == actualSelection) {
+			// Use the highlight color for the font
+			gr_color(mFontHighlightColor.red, mFontHighlightColor.green, mFontHighlightColor.blue, 255);
+		} else {
+			// Set the color for the font
+			gr_color(mFontColor.red, mFontColor.green, mFontColor.blue, 255);
+		}
 
 		if (line + mStart < folderSize)
 		{
@@ -514,7 +563,6 @@ int GUIFileSelector::GetSelection(int x, int y)
 
 int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
-	static int startSelection = -1;
 	static int lastY = 0, last2Y = 0;
 	int selection = 0;
 
@@ -525,6 +573,9 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 			startSelection = -1;
 		else
 			startSelection = GetSelection(x,y);
+		isHighlighted = (startSelection > -1);
+		if (isHighlighted)
+			mUpdate = 1;
 		startY = lastY = last2Y = y;
 		scrollingSpeed = 0;
 		break;
@@ -533,14 +584,21 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 		// Check if we dragged out of the selection window
 		if (GetSelection(x, y) == -1) {
 			last2Y = lastY = 0;
+			if (isHighlighted) {
+				isHighlighted = false;
+				mUpdate = 1;
+			}
 			break;
 		}
 
 		// Provide some debounce on initial touches
 		if (startSelection != -1 && abs(y - startY) < touchDebounce) {
+			isHighlighted = true;
+			mUpdate = 1;
 			break;
 		}
 
+		isHighlighted = false;
 		last2Y = lastY;
 		lastY = y;	
 		startSelection = -1;
@@ -581,6 +639,7 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 		break;
 
 	case TOUCH_RELEASE:
+		isHighlighted = false;
 		if (startSelection >= 0)
 		{
 			// We've selected an item!
