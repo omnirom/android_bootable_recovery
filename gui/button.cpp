@@ -37,6 +37,8 @@ GUIButton::GUIButton(xml_node<>* node)
     mButtonLabel = NULL;
     mAction = NULL;
     mRendered = false;
+	hasHighlightColor = false;
+	renderHighlight = false;
 
     if (!node)  return;
 
@@ -65,6 +67,17 @@ GUIButton::GUIButton(xml_node<>* node)
         if (attr)
             mButtonIcon = PageManager::FindResource(attr->value());
     }
+
+	memset(&mHighlightColor, 0, sizeof(COLOR));
+	child = node->first_node("highlight");
+	if (child) {
+		attr = child->first_attribute("color");
+		if (attr) {
+			hasHighlightColor = true;
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mHighlightColor);
+		}
+	}
 
     int x, y, w, h;
     if (mButtonImg)     mButtonImg->GetRenderPos(x, y, w, h);
@@ -96,6 +109,10 @@ int GUIButton::Render(void)
         gr_blit(mButtonIcon->GetResource(), 0, 0, mIconW, mIconH, mIconX, mIconY);
     if (mButtonLabel)   ret = mButtonLabel->Render();
     if (ret < 0)        return ret;
+	if (renderHighlight && hasHighlightColor) {
+		gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, mHighlightColor.alpha);
+		gr_fill(mRenderX, mRenderY, mRenderW, mRenderH);
+	}
     mRendered = true;
     return ret;
 }
@@ -198,6 +215,7 @@ int GUIButton::NotifyTouch(TOUCH_STATE state, int x, int y)
 				mButtonLabel->isHighlighted = false;
 			if (mButtonImg != NULL)
 				mButtonImg->isHighlighted = false;
+			renderHighlight = false;
 			mRendered = false;
 		}
 	} else {
@@ -207,6 +225,7 @@ int GUIButton::NotifyTouch(TOUCH_STATE state, int x, int y)
 				mButtonLabel->isHighlighted = true;
 			if (mButtonImg != NULL)
 				mButtonImg->isHighlighted = true;
+			renderHighlight = true;
 			mRendered = false;
 		}
 	}
