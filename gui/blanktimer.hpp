@@ -29,6 +29,7 @@ class blanktimer {
 		blanktimer(void);
 		int setTimerThread(void);
 		void resetTimerAndUnblank(void);
+		void setTime(int newtime);
 
 	private:
 		void setBlank(int blank);

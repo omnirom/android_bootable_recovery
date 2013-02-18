@@ -599,14 +599,6 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row9_text_y%" />
-				<font resource="font" color="%text_color%" />
-				<text>Force MD5 check on all zips.</text>
-				<data variable="tw_force_md5_check" />
-				<image checked="checkbox_true" unchecked="checkbox_false" />
-			</object>
-
-			<object type="checkbox">
 				<condition var1="tw_has_injecttwrp" var2="1" />
 				<placement x="%col1_x%" y="%row10_text_y%" />
 				<font resource="font" color="%text_color%" />
@@ -2374,21 +2366,13 @@
 			<object type="checkbox">
 				<placement x="%col1_x%" y="%row2_text_y%" />
 				<font resource="font" color="%text_color%" />
-				<text>Force MD5 check on all zips.</text>
-				<data variable="tw_force_md5_check" />
-				<image checked="checkbox_true" unchecked="checkbox_false" />
-			</object>
-
-			<object type="checkbox">
-				<placement x="%col1_x%" y="%row3_text_y%" />
-				<font resource="font" color="%text_color%" />
 				<text>Use rm -rf instead of formatting.</text>
 				<data variable="tw_rm_rf" />
 				<image checked="checkbox_true" unchecked="checkbox_false" />
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row4_text_y%" />
+				<placement x="%col1_x%" y="%row3_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Skip MD5 generation during backup.</text>
 				<data variable="tw_skip_md5_generate" />
@@ -2396,7 +2380,7 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row5_text_y%" />
+				<placement x="%col1_x%" y="%row4_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Enable MD5 verification of backup files.</text>
 				<data variable="tw_skip_md5_check" />
@@ -2404,7 +2388,7 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row6_text_y%" />
+				<placement x="%col1_x%" y="%row5_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Ignore image size errors during backup.</text>
 				<data variable="tw_ignore_image_size" />
@@ -2412,7 +2396,7 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row7_text_y%" />
+				<placement x="%col1_x%" y="%row6_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Simulate actions for theme testing.</text>
 				<data variable="tw_simulate_actions" />
@@ -2421,7 +2405,7 @@
 
 			<object type="checkbox">
 				<condition var1="tw_simulate_actions" var2="1" />
-				<placement x="%col1_x%" y="%row8_text_y%" />
+				<placement x="%col1_x%" y="%row7_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Simulate failure for actions.</text>
 				<data variable="tw_simulate_fail" />
@@ -2439,6 +2423,14 @@
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
+				<placement x="%col2_x%" y="%row3_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Screen</text>
+				<image resource="main_button" />
+				<action function="page">screen</action>
+			</object>
+
+			<object type="button">
 				<placement x="%col_center_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Restore Defaults</text>
@@ -2561,6 +2553,125 @@
 				<font resource="font" />
 				<placement x="%center_x%" y="%tz_current_y%" placement="5" />
 				<text>Current Time Zone: %tw_time_zone%</text>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">settings</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="screen">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Screen Settings</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>Screen Timeout: %tw_screen_timeout_secs% seconds</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_medium_x%" y="%row2_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>None</text>
+				<image resource="medium_button" />
+				<action function="set">tw_screen_timeout_secs=0</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_medium_x%" y="%row2_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>60</text>
+				<image resource="medium_button" />
+				<action function="set">tw_screen_timeout_secs=60</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col3_medium_x%" y="%row2_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>120</text>
+				<image resource="medium_button" />
+				<action function="set">tw_screen_timeout_secs=120</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col4_medium_x%" y="%row2_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>180</text>
+				<image resource="medium_button" />
+				<action function="set">tw_screen_timeout_secs=180</action>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<condition var1="tw_has_brightnesss_file" var2="1" />
+				<font resource="font" />
+				<placement x="%center_x%" y="%row12_text_y%" placement="5" />
+				<text>Brightness: %tw_brightness_display%</text>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_has_brightnesss_file" var2="1" />
+				<placement x="%col1_medium_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>25%</text>
+				<image resource="medium_button" />
+				<actions>
+					<action function="cmd">echo %tw_brightness_25% > &quot;%tw_brightness_file%&quot;</action>
+					<action function="set">tw_brightness_display=25%</action>
+					<action function="set">tw_brightness=%tw_brightness_25%</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_has_brightnesss_file" var2="1" />
+				<placement x="%col2_medium_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>50%</text>
+				<image resource="medium_button" />
+				<actions>
+					<action function="cmd">echo %tw_brightness_50% > &quot;%tw_brightness_file%&quot;</action>
+					<action function="set">tw_brightness_display=50%</action>
+					<action function="set">tw_brightness=%tw_brightness_50%</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_has_brightnesss_file" var2="1" />
+				<placement x="%col3_medium_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>75%</text>
+				<image resource="medium_button" />
+				<actions>
+					<action function="cmd">echo %tw_brightness_75% > &quot;%tw_brightness_file%&quot;</action>
+					<action function="set">tw_brightness_display=75%</action>
+					<action function="set">tw_brightness=%tw_brightness_75%</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_has_brightnesss_file" var2="1" />
+				<placement x="%col4_medium_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>100%</text>
+				<image resource="medium_button" />
+				<actions>
+					<action function="cmd">echo %tw_brightness_100% > &quot;%tw_brightness_file%&quot;</action>
+					<action function="set">tw_brightness_display=100%</action>
+					<action function="set">tw_brightness=%tw_brightness_100%</action>
+				</actions>
 			</object>
 
 			<object type="action">

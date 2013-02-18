@@ -50,6 +50,10 @@ blanktimer::blanktimer(void) {
 	orig_brightness = getBrightness();
 }
 
+void blanktimer::setTime(int newtime) {
+	sleepTimer = newtime;
+}
+
 int blanktimer::setTimerThread(void) {
 	pthread_t thread;
 	ThreadPtr blankptr = &blanktimer::setClockTimer;
@@ -84,13 +88,15 @@ int  blanktimer::setClockTimer(void) {
 		usleep(1000);
 		clock_gettime(CLOCK_MONOTONIC, &curTime);
 		diff = TWFunc::timespec_diff(btimer, curTime);
-		if (diff.tv_sec > sleepTimer && conblank != 1)
+		if (sleepTimer && diff.tv_sec > sleepTimer && conblank != 1) {
+			orig_brightness = getBrightness();
 			setBlank(1);
+			PageManager::ChangeOverlay("lock");
+		}
 		if (conblank == 1 && blanked != 1) {
 			blanked = 1;
 			gr_fb_blank(conblank);
 			setBrightness(0);
-			PageManager::ChangeOverlay("lock");
 		}
 	}
 	return -1;
