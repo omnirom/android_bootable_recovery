@@ -2505,10 +2505,14 @@
 			</object>
 
 			<object type="listbox">
+				<highlight color="%fileselector_highlight_color%" />
 				<placement x="%listbox_x%" y="%listbox_y%" w="%listbox_width%" h="%listbox_tz_height%" />
+				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
+				<text>Select Time Zone:</text>
 				<icon selected="radio_true" unselected="radio_false" />
+				<separator color="%fileselector_separatorcolor%" height="%fileselector_separatorheight%" />
 				<background color="%listbox_background%" />
-				<font resource="font" spacing="%listbox_spacing%" color="%text_color%" />
+				<font resource="font" spacing="%listbox_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
 				<data name="tw_time_zone_guisel" />
 				<listitem name="(UTC -11) Samoa, Midway Island">BST11;BDT</listitem>
 				<listitem name="(UTC -10) Hawaii">HST10;HDT</listitem>

@@ -1,4 +1,4 @@
-// ListBox.cpp - GUIListBox object
+// FileSelector.cpp - GUIFileSelector object
 
 #include <linux/input.h>
 #include <pthread.h>
@@ -31,105 +31,238 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "../data.hpp"
+#include "../twrp-functions.hpp"
+
+#define SCROLLING_SPEED_DECREMENT 6
+#define SCROLLING_FLOOR 10
+#define SCROLLING_MULTIPLIER 6
 
 GUIListBox::GUIListBox(xml_node<>* node)
 {
-    xml_attribute<>* attr;
-    xml_node<>* child;
+	xml_attribute<>* attr;
+	xml_node<>* child;
+	int header_separator_color_specified = 0, header_separator_height_specified = 0, header_text_color_specified = 0, header_background_color_specified = 0;
 
-    mStart = mLineSpacing = mIconWidth = mIconHeight = 0;
-    mIconSelected = mIconUnselected = mBackground = mFont = NULL;
-    mBackgroundX = mBackgroundY = mBackgroundW = mBackgroundH = 0;
-    mUpdate = 0;
-    ConvertStrToColor("black", &mBackgroundColor);
-    ConvertStrToColor("white", &mFontColor);
-    
-    child = node->first_node("icon");
-    if (child)
-    {
-        attr = child->first_attribute("selected");
-        if (attr)
-            mIconSelected = PageManager::FindResource(attr->value());
-        attr = child->first_attribute("unselected");
-        if (attr)
-            mIconUnselected = PageManager::FindResource(attr->value());
-    }
-    child = node->first_node("background");
-    if (child)
-    {
-        attr = child->first_attribute("resource");
-        if (attr)
-            mBackground = PageManager::FindResource(attr->value());
-        attr = child->first_attribute("color");
-        if (attr)
-        {
-            std::string color = attr->value();
-            ConvertStrToColor(color, &mBackgroundColor);
-        }
-    }
+	mStart = mLineSpacing = startY = mFontHeight = mSeparatorH = scrollingY = scrollingSpeed = 0;
+	mIconWidth = mIconHeight = mSelectedIconHeight = mSelectedIconHeight = mUnselectedIconWidth = mUnselectedIconWidth = mHeaderIconHeight = mHeaderIconWidth = 0;
+	mHeaderSeparatorH = mLineHeight = mHeaderIsStatic = mHeaderH = actualLineHeight = 0;
+	mIconSelected = mIconUnselected = mBackground = mFont = mHeaderIcon = NULL;
+	mBackgroundX = mBackgroundY = mBackgroundW = mBackgroundH = 0;
+	mUpdate = 0;
+	touchDebounce = 6;
+	ConvertStrToColor("black", &mBackgroundColor);
+	ConvertStrToColor("black", &mHeaderBackgroundColor);
+	ConvertStrToColor("black", &mSeparatorColor);
+	ConvertStrToColor("black", &mHeaderSeparatorColor);
+	ConvertStrToColor("white", &mFontColor);
+	ConvertStrToColor("white", &mHeaderFontColor);
+	hasHighlightColor = false;
+	hasFontHighlightColor = false;
+	isHighlighted = false;
+	startSelection = -1;
 
-    // Load the placement
-    LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH);
-    SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
+	// Load header text
+	child = node->first_node("header");
+	if (child)
+	{
+		attr = child->first_attribute("icon");
+		if (attr)
+			mHeaderIcon = PageManager::FindResource(attr->value());
 
-    // Load the font, and possibly override the color
-    child = node->first_node("font");
-    if (child)
-    {
-        attr = child->first_attribute("resource");
-        if (attr)
-            mFont = PageManager::FindResource(attr->value());
-
-        attr = child->first_attribute("color");
-        if (attr)
-        {
-            std::string color = attr->value();
-            ConvertStrToColor(color, &mFontColor);
-        }
-
-        attr = child->first_attribute("spacing");
-        if (attr) {
-			string parsevalue = gui_parse_text(attr->value());
-            mLineSpacing = atoi(parsevalue.c_str());
+		attr = child->first_attribute("background");
+		if (attr)
+		{
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mHeaderBackgroundColor);
+			header_background_color_specified = -1;
 		}
-    }
+		attr = child->first_attribute("textcolor");
+		if (attr)
+		{
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mHeaderFontColor);
+			header_text_color_specified = -1;
+		}
+		attr = child->first_attribute("separatorcolor");
+		if (attr)
+		{
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mHeaderSeparatorColor);
+			header_separator_color_specified = -1;
+		}
+		attr = child->first_attribute("separatorheight");
+		if (attr) {
+			string parsevalue = gui_parse_text(attr->value());
+			mHeaderSeparatorH = atoi(parsevalue.c_str());
+			header_separator_height_specified = -1;
+		}
+	}
+	child = node->first_node("text");
+	if (child)  mHeaderText = child->value();
 
-    // Handle the result variable
-    child = node->first_node("data");
-    if (child)
-    {
-        attr = child->first_attribute("name");
-        if (attr)
-            mVariable = attr->value();
-        attr = child->first_attribute("default");
-        if (attr)
-            DataManager::SetValue(mVariable, attr->value());
-    }
+	memset(&mHighlightColor, 0, sizeof(COLOR));
+	child = node->first_node("highlight");
+	if (child) {
+		attr = child->first_attribute("color");
+		if (attr) {
+			hasHighlightColor = true;
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mHighlightColor);
+		}
+	}
 
-    // Retrieve the line height
-    gr_getFontDetails(mFont ? mFont->GetResource() : NULL, &mFontHeight, NULL);
-    mLineHeight = mFontHeight;
-    if (mIconSelected && mIconSelected->GetResource())
-    {
-        if (gr_get_height(mIconSelected->GetResource()) > mLineHeight)
-            mLineHeight = gr_get_height(mIconSelected->GetResource());
-        mIconWidth = gr_get_width(mIconSelected->GetResource());
-        mIconHeight = gr_get_height(mIconSelected->GetResource());
-    }
-    if (mIconUnselected && mIconUnselected->GetResource())
-    {
-        if (gr_get_height(mIconUnselected->GetResource()) > mLineHeight)
-            mLineHeight = gr_get_height(mIconUnselected->GetResource());
-        mIconWidth = gr_get_width(mIconUnselected->GetResource());
-        mIconHeight = gr_get_height(mIconUnselected->GetResource());
-    }
-        
-    if (mBackground && mBackground->GetResource())
-    {
-        mBackgroundW = gr_get_width(mBackground->GetResource());
-        mBackgroundH = gr_get_height(mBackground->GetResource());
-    }
-	
+	// Simple way to check for static state
+	mLastValue = gui_parse_text(mHeaderText);
+	if (mLastValue != mHeaderText)
+		mHeaderIsStatic = 0;
+	else
+		mHeaderIsStatic = -1;
+
+	child = node->first_node("icon");
+	if (child)
+	{
+		attr = child->first_attribute("selected");
+		if (attr)
+			mIconSelected = PageManager::FindResource(attr->value());
+		attr = child->first_attribute("unselected");
+		if (attr)
+			mIconUnselected = PageManager::FindResource(attr->value());
+	}
+	child = node->first_node("background");
+	if (child)
+	{
+		attr = child->first_attribute("resource");
+		if (attr)
+			mBackground = PageManager::FindResource(attr->value());
+		attr = child->first_attribute("color");
+		if (attr)
+		{
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mBackgroundColor);
+			if (!header_background_color_specified)
+				ConvertStrToColor(color, &mHeaderBackgroundColor);
+		}
+	}
+
+	// Load the placement
+	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH);
+	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
+
+	// Load the font, and possibly override the color
+	child = node->first_node("font");
+	if (child)
+	{
+		attr = child->first_attribute("resource");
+		if (attr)
+			mFont = PageManager::FindResource(attr->value());
+
+		attr = child->first_attribute("color");
+		if (attr)
+		{
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mFontColor);
+			if (!header_text_color_specified)
+				ConvertStrToColor(color, &mHeaderFontColor);
+		}
+
+		attr = child->first_attribute("spacing");
+		if (attr) {
+			string parsevalue = gui_parse_text(attr->value());
+			mLineSpacing = atoi(parsevalue.c_str());
+		}
+
+		attr = child->first_attribute("highlightcolor");
+		memset(&mFontHighlightColor, 0, sizeof(COLOR));
+        if (attr)
+        {
+            std::string color = attr->value();
+			ConvertStrToColor(color, &mFontHighlightColor);
+			hasFontHighlightColor = true;
+        }
+	}
+
+	// Load the separator if it exists
+	child = node->first_node("separator");
+	if (child)
+	{
+		attr = child->first_attribute("color");
+		if (attr)
+		{
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mSeparatorColor);
+			if (!header_separator_color_specified)
+				ConvertStrToColor(color, &mHeaderSeparatorColor);
+		}
+
+		attr = child->first_attribute("height");
+		if (attr) {
+			string parsevalue = gui_parse_text(attr->value());
+			mSeparatorH = atoi(parsevalue.c_str());
+			if (!header_separator_height_specified)
+				mHeaderSeparatorH = mSeparatorH;
+		}
+	}
+
+	// Handle the result variable
+	child = node->first_node("data");
+	if (child)
+	{
+		attr = child->first_attribute("name");
+		if (attr)
+			mVariable = attr->value();
+		attr = child->first_attribute("default");
+		if (attr)
+			DataManager::SetValue(mVariable, attr->value());
+	}
+
+	// Retrieve the line height
+	gr_getFontDetails(mFont ? mFont->GetResource() : NULL, &mFontHeight, NULL);
+	mLineHeight = mFontHeight;
+	mHeaderH = mFontHeight;
+
+	if (mIconSelected && mIconSelected->GetResource())
+	{
+		mSelectedIconWidth = gr_get_width(mIconSelected->GetResource());
+		mSelectedIconHeight = gr_get_height(mIconSelected->GetResource());
+		if (mSelectedIconHeight > (int)mLineHeight)
+			mLineHeight = mSelectedIconHeight;
+		mIconWidth = mSelectedIconWidth;
+	}
+
+	if (mIconUnselected && mIconUnselected->GetResource())
+	{
+		mUnselectedIconWidth = gr_get_width(mIconUnselected->GetResource());
+		mUnselectedIconHeight = gr_get_height(mIconUnselected->GetResource());
+		if (mUnselectedIconHeight > (int)mLineHeight)
+			mLineHeight = mUnselectedIconHeight;
+		if (mUnselectedIconWidth > mIconWidth)
+			mIconWidth = mUnselectedIconWidth;
+	}
+
+	if (mHeaderIcon && mHeaderIcon->GetResource())
+	{
+		mHeaderIconWidth = gr_get_width(mHeaderIcon->GetResource());
+		mHeaderIconHeight = gr_get_height(mHeaderIcon->GetResource());
+		if (mHeaderIconHeight > mHeaderH)
+			mHeaderH = mHeaderIconHeight;
+		if (mHeaderIconWidth > mIconWidth)
+			mIconWidth = mHeaderIconWidth;
+	}
+
+	mHeaderH += mLineSpacing + mHeaderSeparatorH;
+	actualLineHeight = mLineHeight + mLineSpacing + mSeparatorH;
+	if (mHeaderH < actualLineHeight)
+		mHeaderH = actualLineHeight;
+
+	if (actualLineHeight / 3 > 6)
+		touchDebounce = actualLineHeight / 3;
+
+	if (mBackground && mBackground->GetResource())
+	{
+		mBackgroundW = gr_get_width(mBackground->GetResource());
+		mBackgroundH = gr_get_height(mBackground->GetResource());
+	}
+
 	// Get the currently selected value for the list
 	DataManager::GetValue(mVariable, currentValue);
 
@@ -146,18 +279,16 @@ GUIListBox::GUIListBox(xml_node<>* node)
         data.displayName = attr->value();
 
 		data.variableValue = child->value();
-		if (child->value() == currentValue)
+		if (child->value() == currentValue) {
 			data.selected = 1;
-		else
+		} else {
 			data.selected = 0;
+		}
 
         mList.push_back(data);
 
         child = child->next_sibling("listitem");
     }
-
-	// Call this to get the selected item to be shown in the list on first render
-	NotifyVarChange(mVariable, currentValue);
 }
 
 GUIListBox::~GUIListBox()
@@ -165,168 +296,363 @@ GUIListBox::~GUIListBox()
 }
 
 int GUIListBox::Render(void)
-{	
+{
 	// First step, fill background
-    gr_color(mBackgroundColor.red, mBackgroundColor.green, mBackgroundColor.blue, 255);
-    gr_fill(mRenderX, mRenderY, mRenderW, mRenderH);
+	gr_color(mBackgroundColor.red, mBackgroundColor.green, mBackgroundColor.blue, 255);
+	gr_fill(mRenderX, mRenderY + mHeaderH, mRenderW, mRenderH - mHeaderH);
 
-    // Next, render the background resource (if it exists)
-    if (mBackground && mBackground->GetResource())
-    {
-        mBackgroundX = mRenderX + ((mRenderW - mBackgroundW) / 2);
-        mBackgroundY = mRenderY + ((mRenderH - mBackgroundH) / 2);
-        gr_blit(mBackground->GetResource(), 0, 0, mBackgroundW, mBackgroundH, mBackgroundX, mBackgroundY);
-    }
+	// Next, render the background resource (if it exists)
+	if (mBackground && mBackground->GetResource())
+	{
+		mBackgroundX = mRenderX + ((mRenderW - mBackgroundW) / 2);
+		mBackgroundY = mRenderY + ((mRenderH - mBackgroundH) / 2);
+		gr_blit(mBackground->GetResource(), 0, 0, mBackgroundW, mBackgroundH, mBackgroundX, mBackgroundY);
+	}
 
-    // Now, we need the lines (icon + text)
-    gr_color(mFontColor.red, mFontColor.green, mFontColor.blue, mFontColor.alpha);
+	// This tells us how many lines we can actually render
+	int lines = (mRenderH - mHeaderH) / (actualLineHeight);
+	int line;
 
-    // This tells us how many lines we can actually render
-    int lines = mRenderH / (mLineHeight + mLineSpacing);
-    int line;
+	int listSize = mList.size();
 
-    int listSize = mList.size();
+	if (listSize < lines) {
+		lines = listSize;
+		scrollingY = 0;
+	} else {
+		lines++;
+		if (lines < listSize)
+			lines++;
+	}
 
-    if (listSize < lines)  lines = listSize;
+	void* fontResource = NULL;
+	if (mFont)  fontResource = mFont->GetResource();
 
-    void* fontResource = NULL;
-    if (mFont)  fontResource = mFont->GetResource();
+	int yPos = mRenderY + mHeaderH + scrollingY;
+	int fontOffsetY = (int)((actualLineHeight - mFontHeight) / 2);
+	int currentIconHeight = 0, currentIconWidth = 0;
+	int currentIconOffsetY = 0, currentIconOffsetX = 0;
+	int UnselectedIconOffsetY = (int)((actualLineHeight - mUnselectedIconHeight) / 2), SelectedIconOffsetY = (int)((actualLineHeight - mSelectedIconHeight) / 2);
+	int UnselectedIconOffsetX = (mIconWidth - mUnselectedIconWidth) / 2, SelectedIconOffsetX = (mIconWidth - mSelectedIconWidth) / 2;
+	int actualSelection = mStart;
 
-    int yPos = mRenderY + (mLineSpacing / 2);
-    for (line = 0; line < lines; line++)
-    {
-        Resource* icon;
-        std::string label;
+	if (isHighlighted) {
+		int selectY = scrollingY;
 
-        label = mList.at(line + mStart).displayName;
+		// Locate the correct line for highlighting
+		while (selectY + actualLineHeight < startSelection) {
+			selectY += actualLineHeight;
+			actualSelection++;
+		}
+		if (hasHighlightColor) {
+			// Highlight the area
+			gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, 255);
+			int HighlightHeight = actualLineHeight;
+			if (mRenderY + mHeaderH + selectY + actualLineHeight > mRenderH + mRenderY) {
+				HighlightHeight = actualLineHeight - (mRenderY + mHeaderH + selectY + actualLineHeight - mRenderH - mRenderY);
+			}
+			gr_fill(mRenderX, mRenderY + mHeaderH + selectY, mRenderW, HighlightHeight);
+		}
+	}
+
+	for (line = 0; line < lines; line++)
+	{
+		Resource* icon;
+		std::string label;
+
+		if (line + mStart >= listSize)
+			continue;
+
+		label = mList.at(line + mStart).displayName;
+		if (isHighlighted && hasFontHighlightColor && line + mStart == actualSelection) {
+			// Use the highlight color for the font
+			gr_color(mFontHighlightColor.red, mFontHighlightColor.green, mFontHighlightColor.blue, 255);
+		} else {
+			// Set the color for the font
+			gr_color(mFontColor.red, mFontColor.green, mFontColor.blue, 255);
+		}
+
 		if (mList.at(line + mStart).selected != 0)
         {
             icon = mIconSelected;
+			currentIconHeight = mSelectedIconHeight;
+			currentIconWidth = mSelectedIconWidth;
+			currentIconOffsetY = SelectedIconOffsetY;
+			currentIconOffsetX = SelectedIconOffsetX;
         }
         else
         {
             icon = mIconUnselected;
+			currentIconHeight = mSelectedIconHeight;
+			currentIconWidth = mSelectedIconWidth;
+			currentIconOffsetY = SelectedIconOffsetY;
+			currentIconOffsetX = SelectedIconOffsetX;
         }
 
-        if (icon && icon->GetResource())
-        {
-            gr_blit(icon->GetResource(), 0, 0, mIconWidth, mIconHeight, mRenderX, (yPos + (int)((mLineHeight - mIconHeight) / 2)));
-        }
-        gr_textExW(mRenderX + mIconWidth + 5, yPos, label.c_str(), fontResource, mRenderX + mRenderW - mIconWidth - 5);
+		if (icon && icon->GetResource())
+		{
+			int rect_y = 0, image_y = (yPos + currentIconOffsetY);
+			if (image_y + currentIconHeight > mRenderY + mRenderH)
+				rect_y = mRenderY + mRenderH - image_y;
+			else
+				rect_y = currentIconHeight;
+			gr_blit(icon->GetResource(), 0, 0, currentIconWidth, rect_y, mRenderX + currentIconOffsetX, image_y);
+		}
+		gr_textExWH(mRenderX + mIconWidth + 5, yPos + fontOffsetY, label.c_str(), fontResource, mRenderX + mRenderW, mRenderY + mRenderH);
 
-        // Move the yPos
-        yPos += mLineHeight + mLineSpacing;
-    }
+		// Add the separator
+		if (yPos + actualLineHeight < mRenderH + mRenderY) {
+			gr_color(mSeparatorColor.red, mSeparatorColor.green, mSeparatorColor.blue, 255);
+			gr_fill(mRenderX, yPos + actualLineHeight - mSeparatorH, mRenderW, mSeparatorH);
+		}
 
-    mUpdate = 0;
-    return 0;
+		// Move the yPos
+		yPos += actualLineHeight;
+	}
+
+	// Render the Header (last so that it overwrites the top most row for per pixel scrolling)
+	// First step, fill background
+	gr_color(mHeaderBackgroundColor.red, mHeaderBackgroundColor.green, mHeaderBackgroundColor.blue, 255);
+	gr_fill(mRenderX, mRenderY, mRenderW, mHeaderH);
+
+	// Now, we need the header (icon + text)
+	yPos = mRenderY;
+	{
+		Resource* headerIcon;
+		int mIconOffsetX = 0;
+
+		// render the icon if it exists
+		headerIcon = mHeaderIcon;
+		if (headerIcon && headerIcon->GetResource())
+		{
+			gr_blit(headerIcon->GetResource(), 0, 0, mHeaderIconWidth, mHeaderIconHeight, mRenderX + ((mHeaderIconWidth - mIconWidth) / 2), (yPos + (int)((mHeaderH - mHeaderIconHeight) / 2)));
+			mIconOffsetX = mIconWidth;
+		}
+
+		// render the text
+		gr_color(mHeaderFontColor.red, mHeaderFontColor.green, mHeaderFontColor.blue, 255);
+		gr_textExWH(mRenderX + mIconOffsetX + 5, yPos + (int)((mHeaderH - mFontHeight) / 2), mLastValue.c_str(), fontResource, mRenderX + mRenderW, mRenderY + mRenderH);
+
+		// Add the separator
+		gr_color(mHeaderSeparatorColor.red, mHeaderSeparatorColor.green, mHeaderSeparatorColor.blue, 255);
+		gr_fill(mRenderX, yPos + mHeaderH - mHeaderSeparatorH, mRenderW, mHeaderSeparatorH);
+	}
+
+	mUpdate = 0;
+	return 0;
 }
 
 int GUIListBox::Update(void)
 {
-    if (mUpdate)
-    {
-        mUpdate = 0;
-        if (Render() == 0)
+	if (!mHeaderIsStatic) {
+		std::string newValue = gui_parse_text(mHeaderText);
+		if (mLastValue != newValue) {
+			mLastValue = newValue;
+			mUpdate = 1;
+		}
+	}
+
+	if (mUpdate)
+	{
+		mUpdate = 0;
+		if (Render() == 0)
 			return 2;
-    }
-    return 0;
+	}
+
+	// Handle kinetic scrolling
+	if (scrollingSpeed == 0) {
+		// Do nothing
+	} else if (scrollingSpeed > 0) {
+		if (scrollingSpeed < ((int) (actualLineHeight * 2.5))) {
+			scrollingY += scrollingSpeed;
+			scrollingSpeed -= SCROLLING_SPEED_DECREMENT;
+		} else {
+			scrollingY += ((int) (actualLineHeight * 2.5));
+			scrollingSpeed -= SCROLLING_SPEED_DECREMENT;
+		}
+		while (mStart && scrollingY > 0) {
+			mStart--;
+			scrollingY -= actualLineHeight;
+		}
+		if (mStart == 0 && scrollingY > 0) {
+			scrollingY = 0;
+			scrollingSpeed = 0;
+		} else if (scrollingSpeed < SCROLLING_FLOOR)
+			scrollingSpeed = 0;
+		mUpdate = 1;
+	} else if (scrollingSpeed < 0) {
+		int totalSize = mList.size();
+		int lines = (mRenderH - mHeaderH) / (actualLineHeight);
+
+		if (totalSize > lines) {
+			int bottom_offset = ((int)(mRenderH) - mHeaderH) - (lines * actualLineHeight);
+
+			bottom_offset -= actualLineHeight;
+
+			if (abs(scrollingSpeed) < ((int) (actualLineHeight * 2.5))) {
+				scrollingY += scrollingSpeed;
+				scrollingSpeed += SCROLLING_SPEED_DECREMENT;
+			} else {
+				scrollingY -= ((int) (actualLineHeight * 2.5));
+				scrollingSpeed += SCROLLING_SPEED_DECREMENT;
+			}
+			while (mStart + lines + (bottom_offset ? 1 : 0) < totalSize && abs(scrollingY) > actualLineHeight) {
+				mStart++;
+				scrollingY += actualLineHeight;
+			}
+			if (bottom_offset != 0 && mStart + lines + 1 >= totalSize && scrollingY <= bottom_offset) {
+				mStart = totalSize - lines - 1;
+				scrollingY = bottom_offset;
+			} else if (mStart + lines >= totalSize && scrollingY < 0) {
+				mStart = totalSize - lines;
+				scrollingY = 0;
+			} else if (scrollingSpeed * -1 < SCROLLING_FLOOR)
+				scrollingSpeed = 0;
+			mUpdate = 1;
+		}
+	}
+
+	return 0;
 }
 
 int GUIListBox::GetSelection(int x, int y)
 {
-    // We only care about y position
-    return (y - mRenderY) / (mLineHeight + mLineSpacing);
+	// We only care about y position
+	if (y < mRenderY || y - mRenderY <= mHeaderH || y - mRenderY > mRenderH) return -1;
+	return (y - mRenderY - mHeaderH);
 }
 
 int GUIListBox::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
-    static int startSelection = -1;
-    static int startY = 0;
-    int selection = 0;
+	static int lastY = 0, last2Y = 0;
+	int selection = 0;
 
-    switch (state)
-    {
-    case TOUCH_START:
-        startSelection = GetSelection(x,y);
-        startY = y;
-        break;
+	switch (state)
+	{
+	case TOUCH_START:
+		if (scrollingSpeed != 0)
+			startSelection = -1;
+		else
+			startSelection = GetSelection(x,y);
+		isHighlighted = (startSelection > -1);
+		if (isHighlighted)
+			mUpdate = 1;
+		startY = lastY = last2Y = y;
+		scrollingSpeed = 0;
+		break;
 
-    case TOUCH_DRAG:
-        // Check if we dragged out of the selection window
-        selection = GetSelection(x,y);
-        if (startSelection != selection)
-        {
-            startSelection = -1;
+	case TOUCH_DRAG:
+		// Check if we dragged out of the selection window
+		if (GetSelection(x, y) == -1) {
+			last2Y = lastY = 0;
+			if (isHighlighted) {
+				isHighlighted = false;
+				mUpdate = 1;
+			}
+			break;
+		}
 
-            // Handle scrolling
-            if (y > (int) (startY + (mLineHeight + mLineSpacing)))
-            {
-                if (mStart)     mStart--;
-                mUpdate = 1;
-                startY = y;
-            }
-            else if (y < (int) (startY - (mLineHeight + mLineSpacing)))
-            {
-                int listSize = mList.size();
-                int lines = mRenderH / (mLineHeight + mLineSpacing);
+		// Provide some debounce on initial touches
+		if (startSelection != -1 && abs(y - startY) < touchDebounce) {
+			isHighlighted = true;
+			mUpdate = 1;
+			break;
+		}
 
-                if (mStart + lines < listSize)     mStart++;
-                mUpdate = 1;
-                startY = y;
-            }
-        }
-        break;
+		isHighlighted = false;
+		last2Y = lastY;
+		lastY = y;	
+		startSelection = -1;
 
-    case TOUCH_RELEASE:
-        if (startSelection >= 0)
-        {
-            // We've selected an item!
-            std::string str;
+		// Handle scrolling
+		scrollingY += y - startY;
+		startY = y;
+		while(mStart && scrollingY > 0) {
+			mStart--;
+			scrollingY -= actualLineHeight;
+		}
+		if (mStart == 0 && scrollingY > 0)
+			scrollingY = 0;
+		{
+			int totalSize = mList.size();
+			int lines = (mRenderH - mHeaderH) / (actualLineHeight);
 
-            int listSize = mList.size();
+			if (totalSize > lines) {
+				int bottom_offset = ((int)(mRenderH) - mHeaderH) - (lines * actualLineHeight);
 
-            // Move the selection to the proper place in the array
-            startSelection += mStart;
+				bottom_offset -= actualLineHeight;
 
-            if (startSelection < listSize)
-            {
-                if (!mVariable.empty())
-                {
-                    int i;
-					for (i=0; i<listSize; i++)
-						mList.at(i).selected = 0;
+				while (mStart + lines + (bottom_offset ? 1 : 0) < totalSize && abs(scrollingY) > actualLineHeight) {
+					mStart++;
+					scrollingY += actualLineHeight;
+				}
+				if (bottom_offset != 0 && mStart + lines + 1 >= totalSize && scrollingY <= bottom_offset) {
+					mStart = totalSize - lines - 1;
+					scrollingY = bottom_offset;
+				} else if (mStart + lines >= totalSize && scrollingY < 0) {
+					mStart = totalSize - lines;
+					scrollingY = 0;
+				}
+			} else
+				scrollingY = 0;
+		}
+		mUpdate = 1;
+		break;
 
-					str = mList.at(startSelection).variableValue;
-					mList.at(startSelection).selected = 1;
-                    DataManager::SetValue(mVariable, str);
-					mUpdate = 1;
-                }
-            }
-        }
-	case TOUCH_HOLD:
+	case TOUCH_RELEASE:
+		isHighlighted = false;
+		if (startSelection >= 0)
+		{
+			// We've selected an item!
+			std::string str;
+
+			int listSize = mList.size();
+			int selectY = scrollingY, actualSelection = mStart;
+
+			// Move the selection to the proper place in the array
+			while (selectY + actualLineHeight < startSelection) {
+				selectY += actualLineHeight;
+				actualSelection++;
+			}
+
+			if (actualSelection < listSize && !mVariable.empty())
+			{
+				int i;
+				for (i=0; i<listSize; i++)
+					mList.at(i).selected = 0;
+
+				str = mList.at(actualSelection).variableValue;
+				mList.at(actualSelection).selected = 1;
+				DataManager::SetValue(mVariable, str);
+				mUpdate = 1;
+			}
+		} else {
+			// This is for kinetic scrolling
+			scrollingSpeed = lastY - last2Y;
+			if (abs(scrollingSpeed) > SCROLLING_FLOOR)
+				scrollingSpeed *= SCROLLING_MULTIPLIER;
+			else
+				scrollingSpeed = 0;
+		}
 	case TOUCH_REPEAT:
-        break;
-    }
-    return 0;
+	case TOUCH_HOLD:
+		break;
+	}
+	return 0;
 }
 
 int GUIListBox::NotifyVarChange(std::string varName, std::string value)
 {
-    string checkValue;
-	int var_changed = 0;
-
-	if (varName.empty())
-    {
-		DataManager::GetValue(mVariable, checkValue);
-		if (checkValue != currentValue) {
-			varName = mVariable;
-			value = checkValue;
-			currentValue = checkValue;
-			var_changed = 1;
+	if (!mHeaderIsStatic) {
+		std::string newValue = gui_parse_text(mHeaderText);
+		if (mLastValue != newValue) {
+			mLastValue = newValue;
+			mStart = 0;
+			scrollingY = 0;
+			scrollingSpeed = 0;
+			mUpdate = 1;
 		}
-    }
-    if (varName == mVariable || var_changed != 0)
+	}
+	if (varName == mVariable)
     {
         int i, listSize = mList.size(), selected_index = 0;
 
@@ -354,28 +680,29 @@ int GUIListBox::NotifyVarChange(std::string varName, std::string value)
 		mUpdate = 1;
         return 0;
     }
-    return 0;
+	return 0;
 }
 
 int GUIListBox::SetRenderPos(int x, int y, int w /* = 0 */, int h /* = 0 */)
 {
-    mRenderX = x;
-    mRenderY = y;
-    if (w || h)
-    {
-        mRenderW = w;
-        mRenderH = h;
-    }
-    SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
-    mUpdate = 1;
-    return 0;
+	mRenderX = x;
+	mRenderY = y;
+	if (w || h)
+	{
+		mRenderW = w;
+		mRenderH = h;
+	}
+	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
+	mUpdate = 1;
+	return 0;
 }
 
 void GUIListBox::SetPageFocus(int inFocus)
 {
-    if (inFocus)
-    {
-        mUpdate = 1;
-    }
+	if (inFocus)
+	{
+		DataManager::GetValue(mVariable, currentValue);
+		NotifyVarChange(mVariable, currentValue);
+		mUpdate = 1;
+	}
 }
-
