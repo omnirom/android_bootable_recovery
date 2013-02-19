@@ -1,3 +1,5 @@
+import /init.recovery.${ro.hardware}.rc
+
 on early-init
     start ueventd
 
@@ -10,10 +12,30 @@ on init
 
     symlink /system/etc /etc
 
+    mkdir /boot
+    mkdir /recovery
+    mkdir /sdcard
+    mkdir /internal_sd
+    mkdir /external_sd
+    mkdir /sd-ext
+    mkdir /datadata
+    mkdir /emmc
     mkdir /system
     mkdir /data
     mkdir /cache
     mount /tmp /tmp tmpfs
+
+    chown root shell /tmp
+    chmod 0775 /tmp
+
+    write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/idVendor 18D1
+    write /sys/class/android_usb/android0/idProduct D001
+    write /sys/class/android_usb/android0/functions adb
+    write /sys/class/android_usb/android0/iManufacturer ${ro.product.manufacturer}
+    write /sys/class/android_usb/android0/iProduct ${ro.product.model}
+    write /sys/class/android_usb/android0/iSerial ${ro.serialno}
+
 
 on boot
 
@@ -32,17 +54,9 @@ service adbd /sbin/adbd recovery
     disabled
 
 # Always start adbd on userdebug and eng builds
-# In recovery, always run adbd as root.
 on property:ro.debuggable=1
-    write /sys/class/android_usb/android0/enable 0
-    write /sys/class/android_usb/android0/idVendor 18D1
-    write /sys/class/android_usb/android0/idProduct D001
-    write /sys/class/android_usb/android0/functions adb
-    #write /sys/class/android_usb/android0/enable 1
-    write /sys/class/android_usb/android0/iManufacturer $ro.product.manufacturer
-    write /sys/class/android_usb/android0/iProduct $ro.product.model
-    write /sys/class/android_usb/android0/iSerial $ro.serialno
-    #start adbd
+    write /sys/class/android_usb/android0/enable 1
+    start adbd
     setprop service.adb.root 1
 
 # Restart adbd so it can run as root
