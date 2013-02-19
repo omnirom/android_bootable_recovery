@@ -24,6 +24,7 @@ extern "C" {
 }
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -49,51 +50,139 @@ void twrpTar::setdir(string dir) {
 	tardir = dir;
 }
 
-int twrpTar::createTarGZThread() {
-	pthread_t thread;
-	ThreadPtr tarptr = &twrpTar::createTGZ;
-	PThreadPtr p = *(PThreadPtr*)&tarptr;
-	pthread_create(&thread, NULL, p, this);
-	if(pthread_join(thread, NULL)) {
+int twrpTar::createTarGZFork() {
+	int status;
+	pid_t pid;
+	if ((pid = fork()) == -1) {
+		LOGI("create tar failed to fork.\n");
 		return -1;
 	}
-	TWFunc::drop_caches();
+	if (pid == 0) {
+		if (createTGZ() != 0)
+			exit(-1);
+		else
+			exit(0);
+	}
+	else {
+		if ((pid = wait(&status)) == -1) {
+			LOGI("Tar creation failed\n");
+			return -1;
+		}
+		else {
+			if (WIFSIGNALED(status) != 0) {
+				LOGI("Child process ended with signal: %d\n", WTERMSIG(status));
+				return -1;
+			}
+			else if (WIFEXITED(status) != 0)
+				LOGI("Tar creation successful\n");
+			else {
+				LOGI("Tar creation failed\n");
+				return -1;
+			}
+		}
+	}
 	return 0;
 }
 
-int twrpTar::createTarThread() {
-	pthread_t thread;
-	ThreadPtr tarptr = &twrpTar::create;
-	PThreadPtr p = *(PThreadPtr*)&tarptr;
-	pthread_create(&thread, NULL, p, this);
-	if(pthread_join(thread, NULL)) {
+int twrpTar::createTarFork() {
+	int status;
+	pid_t pid;
+	if ((pid = fork()) == -1) {
+		LOGI("create tar failed to fork.\n");
 		return -1;
 	}
-	TWFunc::drop_caches();
+	if (pid == 0) {
+		if (create() != 0)
+			exit(-1);
+		else
+			exit(0);
+	}
+	else {
+		if ((pid = wait(&status)) == -1) {
+			LOGI("Tar creation failed\n");
+			return -1;
+		}
+		else {
+			if (WIFSIGNALED(status) != 0) {
+				LOGI("Child process ended with signal: %d\n", WTERMSIG(status));
+				return -1;
+			}
+			else if (WIFEXITED(status) != 0)
+				LOGI("Tar creation successful\n");
+			else {
+				LOGI("Tar creation failed\n");
+				return -1;
+			}
+		}
+	}
 	return 0;
 }
 
-int twrpTar::extractTarThread() {
-	pthread_t thread;
-	ThreadPtr tarptr = &twrpTar::extract;
-	PThreadPtr p = *(PThreadPtr*)&tarptr;
-	pthread_create(&thread, NULL, p, this);
-	if(pthread_join(thread, NULL)) {
+int twrpTar::extractTarFork() {
+	int status;
+	pid_t pid;
+	if ((pid = fork()) == -1) {
+		LOGI("create tar failed to fork.\n");
 		return -1;
 	}
-	TWFunc::drop_caches();
+	if (pid == 0) {
+		if (extract() != 0)
+			exit(-1);
+		else
+			exit(0);
+	}
+	else {
+		if ((pid = wait(&status)) == -1) {
+			LOGI("Tar creation failed\n");
+			return -1;
+		}
+		else {
+			if (WIFSIGNALED(status) != 0) {
+				LOGI("Child process ended with signal: %d\n", WTERMSIG(status));
+				return -1;
+			}
+			else if (WIFEXITED(status) != 0)
+				LOGI("Tar creation successful\n");
+			else {
+				LOGI("Tar creation failed\n");
+				return -1;
+			}
+		}
+	}
 	return 0;
 }
 
-int twrpTar::splitArchiveThread() {
-	pthread_t thread;
-	ThreadPtr tarptr = &twrpTar::Split_Archive;
-	PThreadPtr p = *(PThreadPtr*)&tarptr;
-	pthread_create(&thread, NULL, p, this);
-	if(pthread_join(thread, NULL)) {
+int twrpTar::splitArchiveFork() {
+	int status;
+	pid_t pid;
+	if ((pid = fork()) == -1) {
+		LOGI("create tar failed to fork.\n");
 		return -1;
 	}
-	TWFunc::drop_caches();
+	if (pid == 0) {
+		if (Split_Archive() != 0)
+			exit(-1);
+		else
+			exit(0);
+	}
+	else {
+		if ((pid = wait(&status)) == -1) {
+			LOGI("Tar creation failed\n");
+			return -1;
+		}
+		else {
+			if (WIFSIGNALED(status) != 0) {
+				LOGI("Child process ended with signal: %d\n", WTERMSIG(status));
+				return -1;
+			}
+			else if (WIFEXITED(status) != 0)
+				LOGI("Tar creation successful\n");
+			else {
+				LOGI("Tar creation failed\n");
+				return -1;
+			}
+		}
+	}
 	return 0;
 }
 

@@ -1313,7 +1313,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 		sprintf(back_name, "%s", Backup_Path.c_str());
 		tar.setdir(back_name);
 		tar.setfn(Full_FileName);
-		backup_count = tar.splitArchiveThread();
+		backup_count = tar.splitArchiveFork();
 		if (backup_count == -1) {
 			LOGE("Error tarring split files!\n");
 			return false;
@@ -1324,7 +1324,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 		if (use_compression) {
 			tar.setdir(Backup_Path);
 			tar.setfn(Full_FileName);
-			if (tar.createTarGZThread() != 0)
+			if (tar.createTarGZFork() != 0)
 				return -1;
 			string gzname = Full_FileName + ".gz";
 			rename(gzname.c_str(), Full_FileName.c_str());
@@ -1332,7 +1332,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 		else {
 			tar.setdir(Backup_Path);
 			tar.setfn(Full_FileName);
-			if (tar.createTarThread() != 0)
+			if (tar.createTarFork() != 0)
 				return -1;
 		}
 		if (TWFunc::Get_File_Size(Full_FileName) == 0) {
@@ -1424,7 +1424,7 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 				twrpTar tar;
 				tar.setdir("/");
 				tar.setfn(Full_FileName);
-				if (tar.extractTarThread() != 0)
+				if (tar.extractTarFork() != 0)
 					return false;
 				sprintf(split_index, "%03i", index);
 				Full_FileName = restore_folder + "/" + Backup_FileName + split_index;
@@ -1438,7 +1438,7 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 		twrpTar tar;
 		tar.setdir(Backup_Path);
 		tar.setfn(Full_FileName);
-		if (tar.extractTarThread() != 0)
+		if (tar.extractTarFork() != 0)
 			return false;
 	}
 	return true;
