@@ -44,7 +44,7 @@ GUIListBox::GUIListBox(xml_node<>* node)
 	int header_separator_color_specified = 0, header_separator_height_specified = 0, header_text_color_specified = 0, header_background_color_specified = 0;
 
 	mStart = mLineSpacing = startY = mFontHeight = mSeparatorH = scrollingY = scrollingSpeed = 0;
-	mIconWidth = mIconHeight = mSelectedIconHeight = mSelectedIconHeight = mUnselectedIconWidth = mUnselectedIconWidth = mHeaderIconHeight = mHeaderIconWidth = 0;
+	mIconWidth = mIconHeight = mSelectedIconHeight = mSelectedIconWidth = mUnselectedIconHeight = mUnselectedIconWidth = mHeaderIconHeight = mHeaderIconWidth = 0;
 	mHeaderSeparatorH = mLineHeight = mHeaderIsStatic = mHeaderH = actualLineHeight = 0;
 	mIconSelected = mIconUnselected = mBackground = mFont = mHeaderIcon = NULL;
 	mBackgroundX = mBackgroundY = mBackgroundW = mBackgroundH = 0;
