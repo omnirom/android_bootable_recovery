@@ -95,6 +95,7 @@
 		<variable name="text_color" value="#FFFFFF" />
 		<variable name="text_success_color" value="#33B5E5" />
 		<variable name="text_fail_color" value="#FF0101" />
+		<variable name="highlight_color" value="#90909080" />
 		<variable name="home_button_x" value="10" />
 		<variable name="home_button_y" value="820" />
 		<variable name="back_button_x" value="413" />
@@ -319,7 +320,7 @@
 			<object type="keyboard">
 				<placement x="0" y="504" />
 				<layout resource1="keyboard1" resource2="keyboard2" resource3="keyboard3" resource4="keyboard4" />
-				<highlight color="#90909080" />
+				<highlight color="%highlight_color%" />
 				<layout1>
 					<keysize height="78" width="48" />
 					<row1 key01="q" long01="1" key02="w" long02="2" key03="e" long03="3" key04="r" long04="4" key05="t" long05="5" key06="y" long06="6" key07="u" long07="7" key08="i" long08="8" key09="o" long09="9" key10="p" long10="0" />
@@ -366,6 +367,7 @@
 			<object type="template" name="header" />
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Install</text>
@@ -377,6 +379,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Wipe</text>
@@ -385,6 +388,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Backup</text>
@@ -393,6 +397,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Restore</text>
@@ -401,6 +406,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Mount</text>
@@ -409,6 +415,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Settings</text>
@@ -418,6 +425,7 @@
 
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Advanced</text>
@@ -426,6 +434,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Reboot</text>
@@ -620,6 +629,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_zip_queue_count" op="!=" var2="10"></condition>
 				<placement x="%col1_x%" y="%row_queue_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -629,6 +639,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row_queue_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Clear Zip Queue</text>
@@ -700,6 +711,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Wipe cache/dalvik</text>
@@ -720,6 +732,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Reboot System</text>
@@ -742,6 +755,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Home</text>
@@ -809,6 +823,7 @@
 			<object type="template" name="header" />
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_show_exclamation" var2="1" />
 				<placement x="%exclamation_x%" y="%exclamation_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -892,6 +907,7 @@
 			<object type="template" name="action_page_console" />
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_has_cancel" var2="1" />
 				<placement x="%col_center_medium_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -951,6 +967,7 @@
 			<object type="template" name="action_page_console" />
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_show_reboot" var2="0" />
 				<placement x="%col_center_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -963,6 +980,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_show_reboot" var2="1" />
 				<placement x="%col_center_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -1052,6 +1070,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Cache</text>
@@ -1069,6 +1088,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Dalvik Cache</text>
@@ -1086,6 +1106,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Factory Reset</text>
@@ -1104,6 +1125,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>System</text>
@@ -1122,6 +1144,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_has_external" var2="1" />
 				<placement x="%col1_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -1143,6 +1166,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_has_internal" var2="1" />
 				<placement x="%col2_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -1164,6 +1188,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<conditions>
 					<condition var1="tw_has_internal" var2="1" />
 					<condition var1="tw_has_data_media" var2="1" />
@@ -1191,6 +1216,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_has_data_media" var2="0" />
 				<placement x="%col1_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -1209,6 +1235,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_has_sdext_partition" var2="1" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -1267,6 +1294,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Refresh Sizes</text>
@@ -1275,6 +1303,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%backup_name_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Set Backup Name</text>
@@ -1501,6 +1530,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Cancel</text>
@@ -1659,6 +1689,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Rename Backup</text>
@@ -1671,6 +1702,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Delete Backup</text>
@@ -1849,6 +1881,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Cancel</text>
@@ -2107,6 +2140,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_has_usb_storage" var2="1" />
 				<placement x="%col1_x%" y="row3_y" />
 				<font resource="font" color="%button_text_color%" />
@@ -2116,6 +2150,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<conditions>
 					<condition var1="tw_is_encrypted" var2="1" />
 					<condition var1="tw_is_decrypted" var2="0" />
@@ -2162,6 +2197,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Unmount</text>
@@ -2196,6 +2232,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_reboot_system" var2="1" />
 				<placement x="%col1_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2216,6 +2253,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_reboot_poweroff" var2="1" />
 				<placement x="%col2_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2236,6 +2274,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_reboot_recovery" var2="1" />
 				<placement x="%col1_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2256,6 +2295,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_reboot_bootloader" var2="1" />
 				<placement x="%col2_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2276,6 +2316,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_download_mode" var2="1" />
 				<placement x="%col1_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2383,6 +2424,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Time Zone</text>
@@ -2391,6 +2433,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Restore Defaults</text>
@@ -2467,6 +2510,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>None</text>
@@ -2475,6 +2519,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>15</text>
@@ -2483,6 +2528,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col3_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>30</text>
@@ -2491,6 +2537,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col4_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>45</text>
@@ -2499,6 +2546,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%tz_set_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Set Time Zone</text>
@@ -2535,6 +2583,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Copy Log to SD</text>
@@ -2551,6 +2600,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Fix Permissions</text>
@@ -2568,6 +2618,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_allow_partition_sdcard" var2="1" />
 				<placement x="%col1_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2577,6 +2628,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>File Manager</text>
@@ -2585,6 +2637,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Terminal Command</text>
@@ -2593,6 +2646,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Reload Theme</text>
@@ -2601,6 +2655,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>ADB Sideload</text>
@@ -2609,6 +2664,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_show_dumlock" var2="1" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2618,6 +2674,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_has_injecttwrp" var2="1" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2657,6 +2714,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
@@ -2665,6 +2723,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%sd_plus_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
@@ -2679,6 +2738,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%sdswap_button_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
@@ -2687,6 +2747,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%sd_plus_x%" y="%sdswap_button_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
@@ -2707,6 +2768,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%sdfilesystem_button_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>EXT3</text>
@@ -2715,6 +2777,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_sdext_disable_ext4" var2="0" />
 				<placement x="%col2_x%" y="%sdfilesystem_button_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2781,6 +2844,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_show_dumlock" var2="1" />
 				<placement x="%col1_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2798,6 +2862,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_show_dumlock" var2="1" />
 				<placement x="%col2_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2815,6 +2880,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_show_dumlock" var2="1" />
 				<placement x="%col1_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2916,6 +2982,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%filemanager_select_x%" y="%filemanager_select_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Select</text>
@@ -2947,6 +3014,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_fm_isfolder" var2="0" />
 				<placement x="%col1_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2960,6 +3028,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_fm_isfolder" var2="1" />
 				<placement x="%col1_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2973,6 +3042,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Move</text>
@@ -2985,6 +3055,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>chmod 755</text>
@@ -3001,6 +3072,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>chmod</text>
@@ -3016,6 +3088,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Delete</text>
@@ -3032,6 +3105,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_fm_isfolder" var2="0" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -3046,6 +3120,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_fm_isfolder" var2="1" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -3109,6 +3184,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%filemanager_select_x%" y="%filemanager_select_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Select</text>
@@ -3152,6 +3228,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Cancel</text>
@@ -3201,6 +3278,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Cancel</text>
@@ -3249,6 +3327,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Cancel</text>
@@ -3411,6 +3490,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%row2_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Cancel</text>
@@ -3503,6 +3583,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%filemanager_select_x%" y="%filemanager_select_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Select</text>
@@ -3543,6 +3624,7 @@
 			</object>
 
 			<object type="button">
+				<highlight color="%highlight_color%" />
 				<condition var1="tw_terminal_state" var2="1" />
 				<placement x="%filemanager_select_x%" y="%terminal_button_y%" />
 				<font resource="font" color="%button_text_color%" />
