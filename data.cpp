@@ -358,6 +358,17 @@ int DataManager::GetValue(const string varName, int& value)
     return 0;
 }
 
+unsigned long long DataManager::GetValue(const string varName, unsigned long long& value)
+{
+    string data;
+
+    if (GetValue(varName,data) != 0)
+        return -1;
+
+    value = strtoull(data.c_str(), NULL, 10);
+    return 0;
+}
+
 // This is a dangerous function. It will create the value if it doesn't exist so it has a valid c_str
 string& DataManager::GetValueRef(const string varName)
 {
@@ -452,6 +463,13 @@ int DataManager::SetValue(const string varName, int value, int persist /* = 0 */
 }
 
 int DataManager::SetValue(const string varName, float value, int persist /* = 0 */)
+{
+	ostringstream valStr;
+    valStr << value;
+    return SetValue(varName, valStr.str(), persist);;
+}
+
+int DataManager::SetValue(const string varName, unsigned long long value, int persist /* = 0 */)
 {
 	ostringstream valStr;
     valStr << value;
