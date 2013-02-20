@@ -879,6 +879,7 @@ void DataManager::SetDefaultValues()
 		mConstValues.insert(make_pair("tw_has_brightnesss_file", "0"));
 	}
 #endif
+	mValues.insert(make_pair(TW_MILITARY_TIME, make_pair("0", 0)));
 }
 
 // Magic Values
@@ -891,14 +892,22 @@ int DataManager::GetMagicValue(const string varName, string& value)
 
         struct tm *current;
         time_t now;
+	int tw_military_time;
         now = time(0);
         current = localtime(&now);
-
-        if (current->tm_hour >= 12)
-            sprintf(tmp, "%d:%02d PM", current->tm_hour == 12 ? 12 : current->tm_hour - 12, current->tm_min);
-        else
-            sprintf(tmp, "%d:%02d AM", current->tm_hour == 0 ? 12 : current->tm_hour, current->tm_min);
-
+	GetValue(TW_MILITARY_TIME, tw_military_time); 
+        if (current->tm_hour >= 12) {
+		if (tw_military_time == 1)
+            		sprintf(tmp, "%d:%02d", current->tm_hour, current->tm_min);
+		else
+            		sprintf(tmp, "%d:%02d PM", current->tm_hour == 12 ? 12 : current->tm_hour - 12, current->tm_min);
+		}
+        else {
+		if (tw_military_time == 1) 
+		    sprintf(tmp, "%d:%02d", current->tm_hour, current->tm_min);
+		else
+		    sprintf(tmp, "%d:%02d AM", current->tm_hour == 0 ? 12 : current->tm_hour, current->tm_min);
+	}
         value = tmp;
         return 0;
     }
@@ -1032,7 +1041,6 @@ void DataManager::ReadSettingsFile(void)
 	if (strcmp(EXPAND(TW_BRIGHTNESS_PATH), "/nobrightness") != 0) {
 		string brightness_path = EXPAND(TW_BRIGHTNESS_PATH);
 		string brightness_value = GetStrValue("tw_brightness");
-		LOGI("writing %s to brightness\n", brightness_value.c_str());
 		TWFunc::write_file(brightness_path, brightness_value);
 	}
 #endif

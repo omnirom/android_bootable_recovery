@@ -2448,6 +2448,14 @@
 				<image checked="checkbox_true" unchecked="checkbox_false" />
 			</object>
 
+                        <object type="checkbox">
+                                <placement x="%col1_x%" y="%row9_text_y%" />
+                                <font resource="font" color="%text_color%" />
+                                <text>Use Military Time</text>
+                                <data variable="tw_military_time" />
+                                <image checked="checkbox_true" unchecked="checkbox_false" />
+                        </object>
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row2_y%" />
@@ -2484,7 +2492,7 @@
 				<touch key="back" />
 				<action function="page">main</action>
 			</object>
-			
+
 			<object type="template" name="footer" />
 		</page>
 
