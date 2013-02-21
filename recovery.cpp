@@ -955,30 +955,30 @@ main(int argc, char **argv) {
     }
 	}
 
-    //if (status != INSTALL_SUCCESS) ui->SetBackground(RecoveryUI::ERROR);
-    if (1) {
-		finish_recovery(NULL);
-		if (PartitionManager.Mount_By_Path("/system", false) && TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
-			rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
-			ui_print("Renamed stock recovery file in /system to prevent\nthe stock ROM from replacing TWRP.\n");
+	finish_recovery(NULL);
+	// Offer to decrypt if the device is encrypted
+	if (DataManager_GetIntValue(TW_IS_ENCRYPTED) != 0) {
+		LOGI("Is encrypted, do decrypt page first\n");
+		if (gui_startPage("decrypt") != 0) {
+			LOGE("Failed to start decrypt GUI page.\n");
 		}
-		PartitionManager.UnMount_By_Path("/system", false);
-		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) != 0) {
-			LOGI("Is encrypted, do decrypt page first\n");
-			if (gui_startPage("decrypt") != 0) {
-				LOGE("Failed to start decrypt GUI page.\n");
-			}
-		}
-		DataManager_ReadSettingsFile();
-		if (DataManager_GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
-			OpenRecoveryScript::Run_OpenRecoveryScript();
-		}
-		gui_start();
-		//prompt_and_wait(device);
-    }
+	}
+	// Read the settings file
+	DataManager_ReadSettingsFile();
+	// Run any outstanding OpenRecoveryScript
+	if (DataManager_GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
+		OpenRecoveryScript::Run_OpenRecoveryScript();
+	}
+	// Launch the main GUI
+	gui_start();
 
 	// Check for su to see if the device is rooted or not
 	if (PartitionManager.Mount_By_Path("/system", false)) {
+		// Disable flashing of stock recovery
+		if (TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
+			rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
+			ui_print("Renamed stock recovery file in /system to prevent\nthe stock ROM from replacing TWRP.\n");
+		}
 		if (TWFunc::Path_Exists("/res/supersu/su") && !TWFunc::Path_Exists("/system/bin/su") && !TWFunc::Path_Exists("/system/xbin/su") && !TWFunc::Path_Exists("/system/bin/.ext/.su")) {
 			// Device doesn't have su installed
 			DataManager_SetIntValue("tw_busy", 1);
@@ -992,6 +992,8 @@ main(int argc, char **argv) {
 				LOGE("Failed to start decrypt GUI page.\n");
 			}
 		}
+		sync();
+		PartitionManager.UnMount_By_Path("/system", false);
 	}
 
     // Otherwise, get ready to boot the main system...
