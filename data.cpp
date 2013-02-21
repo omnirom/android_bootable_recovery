@@ -815,7 +815,6 @@ void DataManager::SetDefaultValues()
     mValues.insert(make_pair(TW_FORCE_MD5_CHECK_VAR, make_pair("0", 1)));
     mValues.insert(make_pair(TW_COLOR_THEME_VAR, make_pair("0", 1)));
     mValues.insert(make_pair(TW_USE_COMPRESSION_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_IGNORE_IMAGE_SIZE, make_pair("0", 1)));
     mValues.insert(make_pair(TW_SHOW_SPAM_VAR, make_pair("0", 1)));
     mValues.insert(make_pair(TW_TIME_ZONE_VAR, make_pair("CST6CDT", 1)));
     mValues.insert(make_pair(TW_SORT_FILES_BY_DATE_VAR, make_pair("0", 1)));
