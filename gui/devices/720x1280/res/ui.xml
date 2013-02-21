@@ -950,6 +950,48 @@
 			</object>
 		</page>
 
+		<page name="singleaction_page">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>%tw_action_text1%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>%tw_action_text2%</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<condition var1="tw_operation_state" var2="1" />
+				<actions>
+					<action function="set">tw_page_done=1</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_has_action2" var2="0" />
+				<actions>
+					<action function="%tw_action%">%tw_action_param%</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_has_action2" var2="1" />
+				<actions>
+					<action function="%tw_action%">%tw_action_param%</action>
+					<action function="%tw_action2%">%tw_action2_param%</action>
+				</actions>
+			</object>
+		</page>
+
 		<page name="action_complete">
 			<object type="template" name="header" />
 
@@ -3841,6 +3883,114 @@
 			</object>
 
 			<object type="template" name="footer" />
+		</page>
+
+		<page name="installsu">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_header_y%" placement="5"/>
+				<text>Install SuperSU?</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5"/>
+				<text>Your device does not appear to be rooted.</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row3_text_y%" placement="5"/>
+				<text>Install SuperSU now?</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row4_text_y%" placement="5"/>
+				<text>This will root your device.</text>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col_center_x%" y="%row3_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Do Not Install</text>
+				<image resource="main_button" />
+				<action function="set">tw_page_done=1</action>
+			</object>
+
+			<object type="slider">
+				<placement x="%slider_x%" y="%slider_y%" />
+				<resource base="slider" used="slider-used" touch="slider-touch" />
+				<actions>
+					<action function="set">tw_action=installsu</action>
+					<action function="set">tw_action_text1=Installing SuperSU</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="page">singleaction_page</action>
+				</actions>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
+				<text>Swipe to Install</text>
+			</object>
+		</page>
+
+		<page name="fixsu">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_header_y%" placement="5"/>
+				<text>Fix Superuser Permissions?</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5"/>
+				<text>Root permissions appear to be lost.</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row3_text_y%" placement="5"/>
+				<text>Fix root permissions now?</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row4_text_y%" placement="5"/>
+				<text>(Fixes permissions on su binary & app)</text>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col_center_x%" y="%row3_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Do Not Fix</text>
+				<image resource="main_button" />
+				<action function="set">tw_page_done=1</action>
+			</object>
+
+			<object type="slider">
+				<placement x="%slider_x%" y="%slider_y%" />
+				<resource base="slider" used="slider-used" touch="slider-touch" />
+				<actions>
+					<action function="set">tw_action=fixsu</action>
+					<action function="set">tw_action_text1=Fixing Root Permissions</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="page">singleaction_page</action>
+				</actions>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
+				<text>Swipe to Fix Root</text>
+			</object>
 		</page>
 	</pages>
 </recovery>

@@ -977,9 +977,40 @@ main(int argc, char **argv) {
 		//prompt_and_wait(device);
     }
 
+	// Check for su to see if the device is rooted or not
+	if (PartitionManager.Mount_By_Path("/system", false)) {
+		if (TWFunc::Path_Exists("/res/supersu/su") && !TWFunc::Path_Exists("/system/bin/su") && !TWFunc::Path_Exists("/system/xbin/su") && !TWFunc::Path_Exists("/system/bin/.ext/.su")) {
+			// Device doesn't have su installed
+			DataManager_SetIntValue("tw_busy", 1);
+			if (gui_startPage("installsu") != 0) {
+				LOGE("Failed to start decrypt GUI page.\n");
+			}
+		} else if (TWFunc::Check_su_Perms() > 0) {
+			// su perms are set incorrectly
+			DataManager_SetIntValue("tw_busy", 1);
+			if (gui_startPage("fixsu") != 0) {
+				LOGE("Failed to start decrypt GUI page.\n");
+			}
+		}
+	}
+
     // Otherwise, get ready to boot the main system...
     finish_recovery(send_intent);
     ui->Print("Rebooting...\n");
+	char backup_arg_char[50];
+	strcpy(backup_arg_char, DataManager_GetStrValue("tw_reboot_arg"));
+	string backup_arg = backup_arg_char;
+	if (backup_arg == "recovery")
+		TWFunc::tw_reboot(rb_recovery);
+	else if (backup_arg == "poweroff")
+		TWFunc::tw_reboot(rb_poweroff);
+	else if (backup_arg == "bootloader")
+		TWFunc::tw_reboot(rb_bootloader);
+	else if (backup_arg == "download")
+		TWFunc::tw_reboot(rb_download);
+	else
+		TWFunc::tw_reboot(rb_system);
+
 #ifdef ANDROID_RB_RESTART
     android_reboot(ANDROID_RB_RESTART, 0, 0);
 #else

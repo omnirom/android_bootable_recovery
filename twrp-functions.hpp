@@ -44,6 +44,10 @@ public:
 	static int read_file(string fn, string& results); //read from file
 	static int write_file(string fn, string& line); //write from file
 	static int drop_caches(void); //drop linux cache memory
+	static int Check_su_Perms(void); // check perms and owner of su binary in various locations
+	static bool Fix_su_Perms(void); // sets proper permissions for su binaries and superuser apk
+	static int tw_chmod(string fn, string mode); // chmod function that converts a 4 char string into st_mode automatically
+	static bool Install_SuperSU(void); // Installs su binary and apk and sets proper permissions
 
 private:
 	static void check_and_fclose(FILE *fp, const char *name);

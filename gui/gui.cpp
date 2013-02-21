@@ -423,6 +423,10 @@ runPages (void)
 		  PageManager::Render ();
 		  flip ();
 		}
+		if (DataManager::GetIntValue("tw_gui_done") != 0)
+		{
+			break;
+		}
 	}
 
   gGuiRunning = 0;

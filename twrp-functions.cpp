@@ -48,10 +48,10 @@ int TWFunc::Exec_Cmd(string cmd, string &result) {
 }
 
 /*  Checks md5 for a path
-    Return values:
-        -1 : MD5 does not exist
-        0 : Failed
-        1 : Success */
+	Return values:
+		-1 : MD5 does not exist
+		0 : Failed
+		1 : Success */
 int TWFunc::Check_MD5(string File) {
 	int ret;
 	string Command, DirPath, MD5_File, Sline, Filename, MD5_File_Filename, OK;
@@ -86,7 +86,7 @@ int TWFunc::Check_MD5(string File) {
 		ret = -1;
 	}
 
-    return ret;
+	return ret;
 }
 
 // Returns "file.name" from a full /path/to/file.name
@@ -288,30 +288,30 @@ static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 
 // close a file, log an error if the error indicator is set
 void TWFunc::check_and_fclose(FILE *fp, const char *name) {
-    fflush(fp);
-    if (ferror(fp)) LOGE("Error in %s\n(%s)\n", name, strerror(errno));
-    fclose(fp);
+	fflush(fp);
+	if (ferror(fp)) LOGE("Error in %s\n(%s)\n", name, strerror(errno));
+	fclose(fp);
 }
 
 void TWFunc::copy_log_file(const char* source, const char* destination, int append) {
-    FILE *log = fopen_path(destination, append ? "a" : "w");
-    if (log == NULL) {
-        LOGE("Can't open %s\n", destination);
-    } else {
-        FILE *tmplog = fopen(source, "r");
-        if (tmplog != NULL) {
-            if (append) {
-                fseek(tmplog, tmplog_offset, SEEK_SET);  // Since last write
-            }
-            char buf[4096];
-            while (fgets(buf, sizeof(buf), tmplog)) fputs(buf, log);
-            if (append) {
-                tmplog_offset = ftell(tmplog);
-            }
-            check_and_fclose(tmplog, source);
-        }
-        check_and_fclose(log, destination);
-    }
+	FILE *log = fopen_path(destination, append ? "a" : "w");
+	if (log == NULL) {
+		LOGE("Can't open %s\n", destination);
+	} else {
+		FILE *tmplog = fopen(source, "r");
+		if (tmplog != NULL) {
+			if (append) {
+				fseek(tmplog, tmplog_offset, SEEK_SET);  // Since last write
+			}
+			char buf[4096];
+			while (fgets(buf, sizeof(buf), tmplog)) fputs(buf, log);
+			if (append) {
+				tmplog_offset = ftell(tmplog);
+			}
+			check_and_fclose(tmplog, source);
+		}
+		check_and_fclose(log, destination);
+	}
 }
 
 // clear the recovery command and prepare to boot a (hopefully working) system,
@@ -323,10 +323,10 @@ void TWFunc::twfinish_recovery(const char *send_intent) {
 	if (send_intent != NULL) {
 	FILE *fp = fopen_path(INTENT_FILE, "w");
 	if (fp == NULL) {
-	    LOGE("Can't open %s\n", INTENT_FILE);
+		LOGE("Can't open %s\n", INTENT_FILE);
 	} else {
-	    fputs(send_intent, fp);
-	    check_and_fclose(fp, INTENT_FILE);
+		fputs(send_intent, fp);
+		check_and_fclose(fp, INTENT_FILE);
 	}
 	}
 
@@ -346,7 +346,7 @@ void TWFunc::twfinish_recovery(const char *send_intent) {
 
 	// Remove the command file, so recovery won't repeat indefinitely.
 	if (!PartitionManager.Mount_By_Path("/system", true) || (unlink(COMMAND_FILE) && errno != ENOENT)) {
-        	LOGW("Can't unlink %s\n", COMMAND_FILE);
+			LOGW("Can't unlink %s\n", COMMAND_FILE);
 	}
 
 	PartitionManager.UnMount_By_Path("/cache", true);
@@ -357,34 +357,34 @@ void TWFunc::twfinish_recovery(const char *send_intent) {
 int TWFunc::tw_reboot(RebootCommand command)
 {
 	// Always force a sync before we reboot
-    sync();
+	sync();
 
-    switch (command)
-    {
-    case rb_current:
-    case rb_system:
-        twfinish_recovery("s");
+	switch (command)
+	{
+	case rb_current:
+	case rb_system:
+		twfinish_recovery("s");
 		sync();
 		check_and_run_script("/sbin/rebootsystem.sh", "reboot system");
-        return reboot(RB_AUTOBOOT);
-    case rb_recovery:
+		return reboot(RB_AUTOBOOT);
+	case rb_recovery:
 		check_and_run_script("/sbin/rebootrecovery.sh", "reboot recovery");
-        return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "recovery");
-    case rb_bootloader:
+		return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "recovery");
+	case rb_bootloader:
 		check_and_run_script("/sbin/rebootbootloader.sh", "reboot bootloader");
-        return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "bootloader");
-    case rb_poweroff:
+		return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "bootloader");
+	case rb_poweroff:
 		check_and_run_script("/sbin/poweroff.sh", "power off");
 		android_reboot(ANDROID_RB_POWEROFF, 0, 0);
-        return reboot(RB_POWER_OFF);
-    case rb_download:
+		return reboot(RB_POWER_OFF);
+	case rb_download:
 		check_and_run_script("/sbin/rebootdownload.sh", "reboot download");
 		return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "download");
 	return 1;
-    default:
-        return -1;
-    }
-    return -1;
+	default:
+		return -1;
+	}
+	return -1;
 }
 
 void TWFunc::check_and_run_script(const char* script_file, const char* display_name)
@@ -503,21 +503,224 @@ int TWFunc::write_file(string fn, string& line) {
 
 timespec TWFunc::timespec_diff(timespec& start, timespec& end)
 {
-        timespec temp;
-        if ((end.tv_nsec-start.tv_nsec)<0) {
-                temp.tv_sec = end.tv_sec-start.tv_sec-1;
-                temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
-        } else {
-                temp.tv_sec = end.tv_sec-start.tv_sec;
-                temp.tv_nsec = end.tv_nsec-start.tv_nsec;
-        }
-        return temp;
+	timespec temp;
+	if ((end.tv_nsec-start.tv_nsec)<0) {
+		temp.tv_sec = end.tv_sec-start.tv_sec-1;
+		temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+	} else {
+		temp.tv_sec = end.tv_sec-start.tv_sec;
+		temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+	}
+	return temp;
 }
 
  int TWFunc::drop_caches(void) {
-        string file = "/proc/sys/vm/drop_caches";
-        string value = "3";
-        if (write_file(file, value) != 0)
-                return -1;
-        return 0;
+	string file = "/proc/sys/vm/drop_caches";
+	string value = "3";
+	if (write_file(file, value) != 0)
+		return -1;
+	return 0;
+}
+
+int TWFunc::Check_su_Perms(void) {
+	struct stat st;
+	int ret = 0;
+
+	if (!PartitionManager.Mount_By_Path("/system", false))
+		return 0;
+
+	// Check to ensure that perms are 6755 for all 3 file locations
+	if (stat("/system/bin/su", &st) == 0) {
+		if ((st.st_mode & (S_ISUID | S_ISGID | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) != (S_ISUID | S_ISGID | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) || st.st_uid != 0 || st.st_gid != 0) {
+			ret = 1;
+		}
+	}
+	if (stat("/system/xbin/su", &st) == 0) {
+		if ((st.st_mode & (S_ISUID | S_ISGID | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) != (S_ISUID | S_ISGID | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) || st.st_uid != 0 || st.st_gid != 0) {
+			ret += 2;
+		}
+	}
+	if (stat("/system/bin/.ext/.su", &st) == 0) {
+		if ((st.st_mode & (S_ISUID | S_ISGID | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) != (S_ISUID | S_ISGID | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) || st.st_uid != 0 || st.st_gid != 0) {
+			ret += 4;
+		}
+	}
+	return ret;
+}
+
+bool TWFunc::Fix_su_Perms(void) {
+	if (!PartitionManager.Mount_By_Path("/system", true))
+		return false;
+
+	string file = "/system/bin/su";
+	if (TWFunc::Path_Exists(file)) {
+		if (chown(file.c_str(), 0, 0) != 0) {
+			LOGE("Failed to chown '%s'\n", file.c_str());
+			return false;
+		}
+		if (tw_chmod(file, "6755") != 0) {
+			LOGE("Failed to chmod '%s'\n", file.c_str());
+			return false;
+		}
+	}
+	file = "/system/xbin/su";
+	if (TWFunc::Path_Exists(file)) {
+		if (chown(file.c_str(), 0, 0) != 0) {
+			LOGE("Failed to chown '%s'\n", file.c_str());
+			return false;
+		}
+		if (tw_chmod(file, "6755") != 0) {
+			LOGE("Failed to chmod '%s'\n", file.c_str());
+			return false;
+		}
+	}
+	file = "/system/bin/.ext/.su";
+	if (TWFunc::Path_Exists(file)) {
+		if (chown(file.c_str(), 0, 0) != 0) {
+			LOGE("Failed to chown '%s'\n", file.c_str());
+			return false;
+		}
+		if (tw_chmod(file, "6755") != 0) {
+			LOGE("Failed to chmod '%s'\n", file.c_str());
+			return false;
+		}
+	}
+	file = "/system/app/Superuser.apk";
+	if (TWFunc::Path_Exists(file)) {
+		if (chown(file.c_str(), 0, 0) != 0) {
+			LOGE("Failed to chown '%s'\n", file.c_str());
+			return false;
+		}
+		if (tw_chmod(file, "0644") != 0) {
+			LOGE("Failed to chmod '%s'\n", file.c_str());
+			return false;
+		}
+	}
+	sync();
+	if (!PartitionManager.UnMount_By_Path("/system", true))
+		return false;
+	return true;
+}
+
+int TWFunc::tw_chmod(string fn, string mode) {
+	long mask = 0;
+
+	for ( std::string::size_type n = 0; n < mode.length(); ++n) {
+		if (n == 0) {
+			if (mode[n] == '0')
+				continue;
+			if (mode[n] == '1')
+				mask |= S_ISVTX;
+			if (mode[n] == '2')
+				mask |= S_ISGID;
+			if (mode[n] == '4')
+				mask |= S_ISUID;
+			if (mode[n] == '5') {
+				mask |= S_ISVTX;
+				mask |= S_ISUID;
+			}
+			if (mode[n] == '6') {
+				mask |= S_ISGID;
+				mask |= S_ISUID;
+			}
+			if (mode[n] == '7') {
+				mask |= S_ISVTX;
+				mask |= S_ISGID;
+				mask |= S_ISUID;
+			}
+		}
+		else if (n == 1) {
+			if (mode[n] == '7') {
+				mask |= S_IRWXU;
+			}
+			if (mode[n] == '6') {
+				mask |= S_IRUSR;
+				mask |= S_IWUSR;
+			}
+			if (mode[n] == '5') {
+				mask |= S_IRUSR;
+				mask |= S_IXUSR;
+			}
+			if (mode[n] == '4')
+				mask |= S_IRUSR;
+			if (mode[n] == '3') {
+				mask |= S_IWUSR;
+				mask |= S_IRUSR;
+			}
+			if (mode[n] == '2')
+				mask |= S_IWUSR;
+			if (mode[n] == '1')
+				mask |= S_IXUSR;
+		}
+		else if (n == 2) {
+			if (mode[n] == '7') {
+				mask |= S_IRWXG;
+			}
+			if (mode[n] == '6') {
+				mask |= S_IRGRP;
+				mask |= S_IWGRP;
+			}
+			if (mode[n] == '5') {
+				mask |= S_IRGRP;
+				mask |= S_IXGRP;
+			}
+			if (mode[n] == '4')
+				mask |= S_IRGRP;
+			if (mode[n] == '3') {
+				mask |= S_IWGRP;
+				mask |= S_IXGRP;
+			}
+			if (mode[n] == '2')
+				mask |= S_IWGRP;
+			if (mode[n] == '1')
+				mask |= S_IXGRP;
+		}
+		else if (n == 3) {
+			if (mode[n] == '7') {
+				mask |= S_IRWXO;
+			}
+			if (mode[n] == '6') {
+				mask |= S_IROTH;
+				mask |= S_IWOTH;
+			}
+			if (mode[n] == '5') {
+				mask |= S_IROTH;
+				mask |= S_IXOTH;
+			}
+			if (mode[n] == '4')
+					mask |= S_IROTH;
+			if (mode[n] == '3') {
+				mask |= S_IWOTH;
+				mask |= S_IXOTH;
+			}
+			if (mode[n] == '2')
+				mask |= S_IWOTH;
+			if (mode[n] == '1')
+				mask |= S_IXOTH;
+		}
+	}
+
+	if (chmod(fn.c_str(), mask) != 0) {
+		LOGE("Unable to chmod '%s' %l\n", fn.c_str(), mask);
+		return -1;
+	}
+
+	return 0;
+}
+
+bool TWFunc::Install_SuperSU(void) {
+	if (!PartitionManager.Mount_By_Path("/system", true))
+		return false;
+
+	if (copy_file("/res/supersu/su", "/system/xbin/su", 0755) != 0) {
+		LOGE("Failed to copy su binary to /system/bin\n");
+		return false;
+	}
+	if (copy_file("/res/supersu/Superuser.apk", "/system/app/Superuser.apk", 0644) != 0) {
+		LOGE("Failed to copy Superuser app to /system/app\n");
+		return false;
+	}
+	if (!Fix_su_Perms())
+		return false;
+	return true;
 }

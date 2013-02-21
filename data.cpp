@@ -855,6 +855,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair("tw_background_thread_running", make_pair("0", 0)));
 	mValues.insert(make_pair(TW_RESTORE_FILE_DATE, make_pair("0", 0)));
 	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("60", 1)));
+	mValues.insert(make_pair("tw_gui_done", make_pair("0", 0)));
 #ifdef TW_MAX_BRIGHTNESS
 	if (strcmp(EXPAND(TW_BRIGHTNESS_PATH), "/nobrightness") != 0) {
 		LOGI("TW_BRIGHTNESS_PATH := %s\n", EXPAND(TW_BRIGHTNESS_PATH));
