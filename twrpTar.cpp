@@ -436,7 +436,7 @@ int twrpTar::createTar() {
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 	if (use_compression) {
 		string cmd = "pigz - > '" + tarfn + "'";
-		p = __popen(cmd.c_str(), "w");
+		p = popen(cmd.c_str(), "w");
 		fd = fileno(p);
 		if (!p) return -1;
 		if(tar_fdopen(&t, fd, charRootDir, &type, O_RDONLY | O_LARGEFILE, 0644, TAR_GNU) != 0) {
@@ -458,7 +458,7 @@ int twrpTar::openTar(bool gzip) {
 	if (gzip) {
 		LOGI("Opening as a gzip\n");
 		string cmd = "pigz -d -c '" + tarfn + "'";
-		FILE* pipe = __popen(cmd.c_str(), "r");
+		FILE* pipe = popen(cmd.c_str(), "r");
 		int fd = fileno(pipe);
 		if (!pipe) return -1;
 		if(tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, 0644, TAR_GNU) != 0) {
@@ -549,7 +549,7 @@ int twrpTar::removeEOT(string tarFile) {
 
 int twrpTar::compress(string fn) {
 	string cmd = "pigz " + fn;
-	p = __popen(cmd.c_str(), "r");
+	p = popen(cmd.c_str(), "r");
 	if (!p) return -1;
 	char buffer[128];
 	string result = "";
