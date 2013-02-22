@@ -12,7 +12,9 @@
 #include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <sys/vfs.h>
-#include "cutils/android_reboot.h"
+#ifdef ANDROID_RB_POWEROFF
+	#include "cutils/android_reboot.h"
+#endif
 #include <iostream>
 #include <fstream>
 #include "twrp-functions.hpp"
@@ -375,7 +377,9 @@ int TWFunc::tw_reboot(RebootCommand command)
 		return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "bootloader");
 	case rb_poweroff:
 		check_and_run_script("/sbin/poweroff.sh", "power off");
+#ifdef ANDROID_RB_POWEROFF
 		android_reboot(ANDROID_RB_POWEROFF, 0, 0);
+#endif
 		return reboot(RB_POWER_OFF);
 	case rb_download:
 		check_and_run_script("/sbin/rebootdownload.sh", "reboot download");
