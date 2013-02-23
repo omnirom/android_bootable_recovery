@@ -66,7 +66,7 @@ LOCAL_SHARED_LIBRARIES :=
 LOCAL_STATIC_LIBRARIES += libmtdutils libcrecovery
 LOCAL_STATIC_LIBRARIES += libminadbd libminzip libunz
 LOCAL_STATIC_LIBRARIES += libminuitwrp libpixelflinger_static libpng libjpegtwrp libgui
-LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libmincrypt libext4_utils libtar
+LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libmincrypt libext4_utils libtar libblkid
 
 ifneq ($(wildcard system/core/libsparse/Android.mk),)
 LOCAL_SHARED_LIBRARIES += libsparse
@@ -297,7 +297,8 @@ include $(commands_recovery_local_path)/libjpegtwrp/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptsettings/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptfs/Android.mk \
     $(commands_recovery_local_path)/libcrecovery/Android.mk \
-    $(commands_recovery_local_path)/twmincrypt/Android.mk
+    $(commands_recovery_local_path)/twmincrypt/Android.mk \
+    $(commands_recovery_local_path)/libblkid/Android.mk
 
 ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
     include $(commands_recovery_local_path)/crypto/libcrypt_samsung/Android.mk

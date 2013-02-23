@@ -1,0 +1,73 @@
+============================================
+PLATFORM_VERSION_CODENAME=REL
+PLATFORM_VERSION=4.0.4
+TARGET_PRODUCT=cm_sunfire
+TARGET_BUILD_VARIANT=eng
+TARGET_BUILD_TYPE=release
+TARGET_BUILD_APPS=
+TARGET_ARCH=arm
+TARGET_ARCH_VARIANT=armv7-a
+HOST_ARCH=x86
+HOST_OS=linux
+HOST_BUILD_TYPE=release
+BUILD_ID=IMM76L
+============================================
+No private recovery resources for TARGET_DEVICE sunfire
+make: Entering directory `/builds/cm9'
+build/core/tasks/kernel.mk:40: ***************************************************************
+build/core/tasks/kernel.mk:41: * Using prebuilt kernel binary instead of source              *
+build/core/tasks/kernel.mk:42: * THIS IS DEPRECATED, AND WILL BE DISCONTINUED                *
+build/core/tasks/kernel.mk:43: * Please configure your device to download the kernel         *
+build/core/tasks/kernel.mk:44: * source repository to kernel/moto/sunfire
+build/core/tasks/kernel.mk:45: * See http://wiki.cyanogenmod.com/wiki/Integrated_kernel_building
+build/core/tasks/kernel.mk:46: * for more information                                        *
+build/core/tasks/kernel.mk:47: ***************************************************************
+[33mtarget thumb C:[0m libblkid <= bootable/recovery/libblkid/sysfs1.c
+bootable/recovery/libblkid/sysfs1.c: In function 'sysfs_is_partition_dirent':
+bootable/recovery/libblkid/sysfs1.c:322: warning: implicit declaration of function 'faccessat'
+[33mtarget thumb C:[0m libblkid <= bootable/recovery/libblkid/sysfs2.c
+In file included from bootable/recovery/libblkid/blkidP.h:30,
+                 from bootable/recovery/libblkid/topology.h:4,
+                 from bootable/recovery/libblkid/sysfs2.c:21:
+bootable/recovery/libblkid/bitops.h:59:1: warning: "htobe16" redefined
+In file included from bionic/libc/arch-arm/include/endian.h:87,
+                 from bionic/libc/include/sys/stat.h:36,
+                 from bootable/recovery/libblkid/sysfs2.c:16:
+bionic/libc/include/sys/endian.h:190:1: warning: this is the location of the previous definition
+In file included from bootable/recovery/libblkid/blkidP.h:30,
+                 from bootable/recovery/libblkid/topology.h:4,
+                 from bootable/recovery/libblkid/sysfs2.c:21:
+bootable/recovery/libblkid/bitops.h:63:1: warning: "htobe32" redefined
+In file included from bionic/libc/arch-arm/include/endian.h:87,
+                 from bionic/libc/include/sys/stat.h:36,
+                 from bootable/recovery/libblkid/sysfs2.c:16:
+bionic/libc/include/sys/endian.h:191:1: warning: this is the location of the previous definition
+In file included from bootable/recovery/libblkid/blkidP.h:30,
+                 from bootable/recovery/libblkid/topology.h:4,
+                 from bootable/recovery/libblkid/sysfs2.c:21:
+bootable/recovery/libblkid/bitops.h:67:1: warning: "htobe64" redefined
+In file included from bionic/libc/arch-arm/include/endian.h:87,
+                 from bionic/libc/include/sys/stat.h:36,
+                 from bootable/recovery/libblkid/sysfs2.c:16:
+bionic/libc/include/sys/endian.h:192:1: warning: this is the location of the previous definition
+bootable/recovery/libblkid/sysfs2.c:37: warning: missing initializer
+bootable/recovery/libblkid/sysfs2.c:37: warning: (near initialization for 'topology_vals[1].set_int')
+bootable/recovery/libblkid/sysfs2.c:38: warning: missing initializer
+bootable/recovery/libblkid/sysfs2.c:38: warning: (near initialization for 'topology_vals[2].set_int')
+bootable/recovery/libblkid/sysfs2.c:39: warning: missing initializer
+bootable/recovery/libblkid/sysfs2.c:39: warning: (near initialization for 'topology_vals[3].set_int')
+bootable/recovery/libblkid/sysfs2.c:117: warning: missing initializer
+bootable/recovery/libblkid/sysfs2.c:117: warning: (near initialization for 'sysfs_tp_idinfo.magics[0].len')
+target SharedLib: libblkid (out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/LINKED/libblkid.so)
+prebuilt/linux-x86/toolchain/arm-linux-androideabi-4.4.x/bin/../lib/gcc/arm-linux-androideabi/4.4.3/../../../../arm-linux-androideabi/bin/ld: out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/dos.o: in function dos_nested:dos.c(.data.rel.ro.dos_nested+0x2c): error: undefined reference to 'minix_pt_idinfo'
+prebuilt/linux-x86/toolchain/arm-linux-androideabi-4.4.x/bin/../lib/gcc/arm-linux-androideabi/4.4.3/../../../../arm-linux-androideabi/bin/ld: out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/mbsalign.o: in function mbsalign:bootable/recovery/libblkid/mbsalign.c:280: error: undefined reference to 'mempcpy'
+prebuilt/linux-x86/toolchain/arm-linux-androideabi-4.4.x/bin/../lib/gcc/arm-linux-androideabi/4.4.3/../../../../arm-linux-androideabi/bin/ld: out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/partitions.o: in function idinfos:partitions.c(.data.rel.idinfos+0x28): error: undefined reference to 'minix_pt_idinfo'
+prebuilt/linux-x86/toolchain/arm-linux-androideabi-4.4.x/bin/../lib/gcc/arm-linux-androideabi/4.4.3/../../../../arm-linux-androideabi/bin/ld: out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/superblocks.o: in function idinfos:superblocks.c(.data.rel.idinfos+0x28): error: undefined reference to 'adraid_idinfo'
+prebuilt/linux-x86/toolchain/arm-linux-androideabi-4.4.x/bin/../lib/gcc/arm-linux-androideabi/4.4.3/../../../../arm-linux-androideabi/bin/ld: out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/superblocks.o: in function idinfos:superblocks.c(.data.rel.idinfos+0x38): error: undefined reference to 'lvm2_idinfo'
+prebuilt/linux-x86/toolchain/arm-linux-androideabi-4.4.x/bin/../lib/gcc/arm-linux-androideabi/4.4.3/../../../../arm-linux-androideabi/bin/ld: out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/superblocks.o: in function idinfos:superblocks.c(.data.rel.idinfos+0x3c): error: undefined reference to 'lvm1_idinfo'
+prebuilt/linux-x86/toolchain/arm-linux-androideabi-4.4.x/bin/../lib/gcc/arm-linux-androideabi/4.4.3/../../../../arm-linux-androideabi/bin/ld: out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/superblocks.o: in function idinfos:superblocks.c(.data.rel.idinfos+0x40): error: undefined reference to 'snapcow_idinfo'
+prebuilt/linux-x86/toolchain/arm-linux-androideabi-4.4.x/bin/../lib/gcc/arm-linux-androideabi/4.4.3/../../../../arm-linux-androideabi/bin/ld: out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/superblocks.o: in function idinfos:superblocks.c(.data.rel.idinfos+0x44): error: undefined reference to 'verity_hash_idinfo'
+prebuilt/linux-x86/toolchain/arm-linux-androideabi-4.4.x/bin/../lib/gcc/arm-linux-androideabi/4.4.3/../../../../arm-linux-androideabi/bin/ld: out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/sysfs1.o: in function sysfs_is_partition_dirent:bootable/recovery/libblkid/sysfs1.c:322: error: undefined reference to 'faccessat'
+collect2: ld returned 1 exit status
+make: *** [out/target/product/sunfire/obj/SHARED_LIBRARIES/libblkid_intermediates/LINKED/libblkid.so] Error 1
+make: Leaving directory `/builds/cm9'

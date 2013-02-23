@@ -35,6 +35,7 @@
 	#include "cutils/properties.h"
 #endif
 
+#include "libblkid/blkid.h"
 #include "variables.h"
 #include "common.h"
 #include "partitions.hpp"
@@ -284,11 +285,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Mount_Storage_Retry();
 #endif
 #endif
-			// blkid cannot detect exfat so we force exfat at the start if exfat support is present
-			if (TWFunc::Path_Exists("/sbin/exfat-fuse") && (Fstab_File_System == "vfat" || Fstab_File_System == "auto")) {
-				Fstab_File_System = "exfat";
-				Current_File_System = Fstab_File_System;
-			}
 		}
 #ifdef TW_INTERNAL_STORAGE_PATH
 		if (Mount_Point == EXPAND(TW_INTERNAL_STORAGE_PATH)) {
@@ -1050,12 +1046,8 @@ bool TWPartition::Wipe_Encryption() {
 }
 
 void TWPartition::Check_FS_Type() {
-	string blkCommand, result;
-	string blkOutput;
-	char* blk;
-	char* arg;
-	char* ptr;
-	int type_found = 0;
+	const char* type;
+	blkid_probe pr;
 
 	if (Fstab_File_System == "yaffs2" || Fstab_File_System == "mtd" || Fstab_File_System == "bml" || Ignore_Blkid)
 		return; // Running blkid on some mtd devices causes a massive crash or needs to be skipped
@@ -1064,54 +1056,18 @@ void TWPartition::Check_FS_Type() {
 	if (!Is_Present)
 		return;
 
-	blkCommand = "blkid " + Actual_Block_Device;
-	TWFunc::Exec_Cmd(blkCommand, result);
-	std::stringstream line(result);	
-	while (getline(line, blkOutput))
-	{
-		blk = (char*) blkOutput.c_str();
-		ptr = (char*) blkOutput.c_str();
-		while (*ptr > 32 && *ptr != ':')		ptr++;
-		if (*ptr == 0)						  continue;
-		*ptr = 0;
-
-		// Increment by two, but verify that we don't hit a NULL
-		ptr++;
-		if (*ptr != 0)	  ptr++;
-
-		// Now, find the TYPE field
-		while (1)
-		{
-			arg = ptr;
-			while (*ptr > 32)	   ptr++;
-			if (*ptr != 0) {
-				*ptr = 0;
-				ptr++;
-			}
-
-			if (strlen(arg) > 6) {
-				if (memcmp(arg, "TYPE=\"", 6) == 0) {
-					type_found = 1;
-					break;
-				}
-			}
-
-			if (*ptr == 0) {
-				arg = NULL;
-				break;
-			}
-		}
-
-		if (type_found) {
-			arg += 6;   // Skip the TYPE=" portion
-			arg[strlen(arg)-1] = '\0';  // Drop the tail quote
-			if (Current_File_System != arg) {
-				LOGI("'%s' was '%s' now set to '%s'\n", Mount_Point.c_str(), Current_File_System.c_str(), arg);
-				Current_File_System = arg;
-			}
-		} else
-			continue;
+	pr = blkid_new_probe_from_filename(Actual_Block_Device.c_str());
+	if (blkid_do_fullprobe(pr)) {
+		blkid_free_probe(pr);
+		LOGI("Can't probe device %s\n", Actual_Block_Device.c_str());
+		return;
 	}
+	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) < 0) { 
+		blkid_free_probe(pr);
+		LOGI("can't find filesystem on device %s\n", Actual_Block_Device.c_str());
+		return;
+	}
+	Current_File_System = type;
 	return;
 }
 
