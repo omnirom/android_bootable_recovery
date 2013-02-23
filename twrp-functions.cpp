@@ -716,11 +716,11 @@ bool TWFunc::Install_SuperSU(void) {
 	if (!PartitionManager.Mount_By_Path("/system", true))
 		return false;
 
-	if (copy_file("/res/supersu/su", "/system/xbin/su", 0755) != 0) {
+	if (copy_file("/supersu/su", "/system/xbin/su", 0755) != 0) {
 		LOGE("Failed to copy su binary to /system/bin\n");
 		return false;
 	}
-	if (copy_file("/res/supersu/Superuser.apk", "/system/app/Superuser.apk", 0644) != 0) {
+	if (copy_file("/supersu/Superuser.apk", "/system/app/Superuser.apk", 0644) != 0) {
 		LOGE("Failed to copy Superuser app to /system/app\n");
 		return false;
 	}
