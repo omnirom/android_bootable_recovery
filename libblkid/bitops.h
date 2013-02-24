@@ -56,15 +56,15 @@
 
 //#ifndef htobe16
 //# if !defined(WORDS_BIGENDIAN)
-#  define htobe16(x) bswap_16 (x)
+//#  define htobe16(x) bswap_16 (x)
 #  define htole16(x) (x)
 #  define be16toh(x) bswap_16 (x)
 #  define le16toh(x) (x)
-#  define htobe32(x) bswap_32 (x)
+//#  define htobe32(x) bswap_32 (x)
 #  define htole32(x) (x)
 #  define be32toh(x) bswap_32 (x)
 #  define le32toh(x) (x)
-#  define htobe64(x) bswap_64 (x)
+//#  define htobe64(x) bswap_64 (x)
 #  define htole64(x) (x)
 #  define be64toh(x) bswap_64 (x)
 #  define le64toh(x) (x)
