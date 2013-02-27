@@ -133,7 +133,7 @@ int twrpTar::extractTarFork() {
 	}
 	else {
 		if ((pid = wait(&status)) == -1) {
-			LOGI("Tar creation failed\n");
+			LOGI("Tar extraction failed\n");
 			return -1;
 		}
 		else {
@@ -142,7 +142,7 @@ int twrpTar::extractTarFork() {
 				return -1;
 			}
 			else if (WIFEXITED(status) != 0)
-				LOGI("Tar creation successful\n");
+				LOGI("Tar extraction successful\n");
 			else {
 				LOGI("Tar creation failed\n");
 				return -1;
@@ -210,6 +210,8 @@ int twrpTar::Generate_Multiple_Archives(string Path) {
 		FileName += de->d_name;
 		if (has_data_media == 1 && FileName.size() >= 11 && strncmp(FileName.c_str(), "/data/media", 11) == 0)
 			continue; // Skip /data/media
+		if (de->d_type == DT_BLK || de->d_type == DT_CHR)
+			continue;
 		if (de->d_type == DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
 		{
 			unsigned long long folder_size = TWFunc::Get_Folder_Size(FileName, false);
@@ -344,6 +346,8 @@ int twrpTar::tarDirs(bool include_root) {
 			LOGI("adding %s\n", de->d_name);
 #ifdef RECOVERY_SDCARD_ON_DATA
 			if ((tardir == "/data" || tardir == "/data/") && strcmp(de->d_name, "media") == 0) continue;
+			if (de->d_type == DT_BLK || de->d_type == DT_CHR)
+				continue;
 #endif
 			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)   continue;
 

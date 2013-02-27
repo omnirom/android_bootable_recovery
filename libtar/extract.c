@@ -95,7 +95,7 @@ tar_extract_file(TAR *t, char *realname)
 	char *lnp;
 	int pathname_len;
 	int realname_len;
-	
+
 	if (t->options & TAR_NOOVERWRITE)
 	{
 		struct stat s;
@@ -139,13 +139,13 @@ tar_extract_file(TAR *t, char *realname)
 	}
 
 	if (i != 0) {
-		printf("here i: %d\n", i);
+		printf("FAILED RESTORE OF FILE i: %s\n", realname);
 		return i;
 	}
 
 	i = tar_set_file_perms(t, realname);
 	if (i != 0) {
-		printf("i: %d\n", i);
+		printf("FAILED SETTING PERMS: %d\n", i);
 		return i;
 	}
 /*
@@ -346,7 +346,7 @@ int
 tar_extract_symlink(TAR *t, char *realname)
 {
 	char *filename;
-	
+
 	if (!TH_ISSYM(t))
 	{
 		printf("not a sym\n");
@@ -412,9 +412,9 @@ tar_extract_chardev(TAR *t, char *realname)
 		  compat_makedev(devmaj, devmin)) == -1)
 	{
 #ifdef DEBUG
-		perror("mknod()");
+		printf("mknod() failed, returning good anyway");
 #endif
-		return -1;
+		return 0;
 	}
 
 	return 0;
@@ -451,9 +451,9 @@ tar_extract_blockdev(TAR *t, char *realname)
 		  compat_makedev(devmaj, devmin)) == -1)
 	{
 #ifdef DEBUG
-		perror("mknod()");
+		printf("mknod() failed but returning anyway");
 #endif
-		return -1;
+		return 0;
 	}
 
 	return 0;
