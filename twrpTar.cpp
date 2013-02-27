@@ -122,7 +122,7 @@ int twrpTar::extractTarFork() {
 	int status;
 	pid_t pid;
 	if ((pid = fork()) == -1) {
-		LOGI("create tar failed to fork.\n");
+		LOGI("extract tar failed to fork.\n");
 		return -1;
 	}
 	if (pid == 0) {
@@ -144,7 +144,7 @@ int twrpTar::extractTarFork() {
 			else if (WIFEXITED(status) != 0)
 				LOGI("Tar extraction successful\n");
 			else {
-				LOGI("Tar creation failed\n");
+				LOGI("Tar extraction failed\n");
 				return -1;
 			}
 		}

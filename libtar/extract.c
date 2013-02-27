@@ -89,7 +89,7 @@ tar_set_file_perms(TAR *t, char *realname)
 
 /* switchboard */
 int
-tar_extract_file(TAR *t, char *realname)
+tar_extract_file(TAR *t, char *realname, char *prefix)
 {
 	int i;
 	char *lnp;
@@ -115,7 +115,7 @@ tar_extract_file(TAR *t, char *realname)
 	}
 	else if (TH_ISLNK(t)) {
 		printf("link\n");
-		i = tar_extract_hardlink(t, realname);
+		i = tar_extract_hardlink(t, realname, prefix);
 	}
 	else if (TH_ISSYM(t)) {
 		printf("sym\n");
@@ -300,7 +300,7 @@ tar_skip_regfile(TAR *t)
 
 /* hardlink */
 int
-tar_extract_hardlink(TAR * t, char *realname)
+tar_extract_hardlink(TAR * t, char *realname, char *prefix)
 {
 	char *filename;
 	char *linktgt = NULL;
@@ -325,7 +325,8 @@ tar_extract_hardlink(TAR * t, char *realname)
 	}
 	else
 		linktgt = th_get_linkname(t);
-
+	char *newtgt = strdup(linktgt);
+	sprintf(linktgt, "%s/%s", prefix, newtgt);
 #ifdef DEBUG
 	printf("  ==> extracting: %s (link to %s)\n", filename, linktgt);
 #endif
