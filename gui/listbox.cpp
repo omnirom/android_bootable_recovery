@@ -48,6 +48,8 @@ GUIListBox::GUIListBox(xml_node<>* node)
 	mHeaderSeparatorH = mLineHeight = mHeaderIsStatic = mHeaderH = actualLineHeight = 0;
 	mIconSelected = mIconUnselected = mBackground = mFont = mHeaderIcon = NULL;
 	mBackgroundX = mBackgroundY = mBackgroundW = mBackgroundH = 0;
+	mFastScrollW = mFastScrollLineW = mFastScrollRectW = mFastScrollRectH = 0;
+	mFastScrollRectX = mFastScrollRectY = -1;
 	mUpdate = 0;
 	touchDebounce = 6;
 	ConvertStrToColor("black", &mBackgroundColor);
@@ -56,6 +58,8 @@ GUIListBox::GUIListBox(xml_node<>* node)
 	ConvertStrToColor("black", &mHeaderSeparatorColor);
 	ConvertStrToColor("white", &mFontColor);
 	ConvertStrToColor("white", &mHeaderFontColor);
+	ConvertStrToColor("white", &mFastScrollLineColor);
+	ConvertStrToColor("white", &mFastScrollRectColor);
 	hasHighlightColor = false;
 	hasFontHighlightColor = false;
 	isHighlighted = false;
@@ -215,6 +219,43 @@ GUIListBox::GUIListBox(xml_node<>* node)
 			DataManager::SetValue(mVariable, attr->value());
 	}
 
+	// Fast scroll colors
+	child = node->first_node("fastscroll");
+	if (child)
+	{
+		attr = child->first_attribute("linecolor");
+		if(attr)
+			ConvertStrToColor(attr->value(), &mFastScrollLineColor);
+
+		attr = child->first_attribute("rectcolor");
+		if(attr)
+			ConvertStrToColor(attr->value(), &mFastScrollRectColor);
+
+		attr = child->first_attribute("w");
+		if (attr) {
+			string parsevalue = gui_parse_text(attr->value());
+			mFastScrollW = atoi(parsevalue.c_str());
+		}
+
+		attr = child->first_attribute("linew");
+		if (attr) {
+			string parsevalue = gui_parse_text(attr->value());
+			mFastScrollLineW = atoi(parsevalue.c_str());
+		}
+
+		attr = child->first_attribute("rectw");
+		if (attr) {
+			string parsevalue = gui_parse_text(attr->value());
+			mFastScrollRectW = atoi(parsevalue.c_str());
+		}
+
+		attr = child->first_attribute("recth");
+		if (attr) {
+			string parsevalue = gui_parse_text(attr->value());
+			mFastScrollRectH = atoi(parsevalue.c_str());
+		}
+	}
+
 	// Retrieve the line height
 	gr_getFontDetails(mFont ? mFont->GetResource() : NULL, &mFontHeight, NULL);
 	mLineHeight = mFontHeight;
@@ -314,11 +355,14 @@ int GUIListBox::Render(void)
 	int line;
 
 	int listSize = mList.size();
+	int listW = mRenderW;
 
 	if (listSize < lines) {
 		lines = listSize;
 		scrollingY = 0;
+		mFastScrollRectX = mFastScrollRectY = -1;
 	} else {
+		listW -= mFastScrollW; // space for fast scroll
 		lines++;
 		if (lines < listSize)
 			lines++;
@@ -397,12 +441,12 @@ int GUIListBox::Render(void)
 				rect_y = currentIconHeight;
 			gr_blit(icon->GetResource(), 0, 0, currentIconWidth, rect_y, mRenderX + currentIconOffsetX, image_y);
 		}
-		gr_textExWH(mRenderX + mIconWidth + 5, yPos + fontOffsetY, label.c_str(), fontResource, mRenderX + mRenderW, mRenderY + mRenderH);
+		gr_textExWH(mRenderX + mIconWidth + 5, yPos + fontOffsetY, label.c_str(), fontResource, mRenderX + listW, mRenderY + mRenderH);
 
 		// Add the separator
 		if (yPos + actualLineHeight < mRenderH + mRenderY) {
 			gr_color(mSeparatorColor.red, mSeparatorColor.green, mSeparatorColor.blue, 255);
-			gr_fill(mRenderX, yPos + actualLineHeight - mSeparatorH, mRenderW, mSeparatorH);
+			gr_fill(mRenderX, yPos + actualLineHeight - mSeparatorH, listW, mSeparatorH);
 		}
 
 		// Move the yPos
@@ -435,6 +479,27 @@ int GUIListBox::Render(void)
 		// Add the separator
 		gr_color(mHeaderSeparatorColor.red, mHeaderSeparatorColor.green, mHeaderSeparatorColor.blue, 255);
 		gr_fill(mRenderX, yPos + mHeaderH - mHeaderSeparatorH, mRenderW, mHeaderSeparatorH);
+	}
+
+	// render fast scroll
+	lines = (mRenderH - mHeaderH) / (actualLineHeight);
+	if(mFastScrollW > 0 &&  listSize > lines)
+	{
+		int startX = listW + mRenderX;
+		int fWidth = mRenderW - listW;
+		int fHeight = mRenderH - mHeaderH;
+
+		// line
+		gr_color(mFastScrollLineColor.red, mFastScrollLineColor.green, mFastScrollLineColor.blue, 255);
+		gr_fill(startX + fWidth/2, mRenderY + mHeaderH, mFastScrollLineW, mRenderH - mHeaderH);
+
+		// rect
+		int pct = ((mStart*actualLineHeight - scrollingY)*100)/((listSize)*actualLineHeight-lines*actualLineHeight);
+		mFastScrollRectX = startX + (fWidth - mFastScrollRectW)/2;
+		mFastScrollRectY = mRenderY+mHeaderH + ((fHeight - mFastScrollRectH)*pct)/100;
+
+		gr_color(mFastScrollRectColor.red, mFastScrollRectColor.green, mFastScrollRectColor.blue, 255);
+		gr_fill(mFastScrollRectX, mFastScrollRectY, mFastScrollRectW, mFastScrollRectH);
 	}
 
 	mUpdate = 0;
@@ -548,6 +613,32 @@ int GUIListBox::NotifyTouch(TOUCH_STATE state, int x, int y)
 				isHighlighted = false;
 				mUpdate = 1;
 			}
+			break;
+		}
+
+		// Fast scroll
+		if(mFastScrollRectX != -1 && x >= mRenderX + mRenderW - mFastScrollW)
+		{
+			int pct = ((y-mRenderY-mHeaderH)*100)/(mRenderH-mHeaderH);
+			int totalSize = mList.size();
+			int lines = (mRenderH - mHeaderH) / (actualLineHeight);
+
+			float l = float((totalSize-lines)*pct)/100;
+			if(l + lines >= totalSize)
+			{
+				mStart = totalSize - lines;
+				scrollingY = 0;
+			}
+			else
+			{
+				mStart = l;
+				scrollingY = -(l - int(l))*actualLineHeight;
+			}
+
+			startSelection = -1;
+			mUpdate = 1;
+			scrollingSpeed = 0;
+			isHighlighted = false;
 			break;
 		}
 
