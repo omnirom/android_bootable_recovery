@@ -62,6 +62,7 @@ TWPartitionManager PartitionManager;
 
 struct selabel_handle *sehandle;
 
+
 static const struct option OPTIONS[] = {
   { "send_intent", required_argument, NULL, 's' },
   { "update_package", required_argument, NULL, 'u' },
@@ -963,6 +964,7 @@ main(int argc, char **argv) {
 			LOGE("Failed to start decrypt GUI page.\n");
 		}
 	}
+
 	// Read the settings file
 	DataManager_ReadSettingsFile();
 	// Run any outstanding OpenRecoveryScript
