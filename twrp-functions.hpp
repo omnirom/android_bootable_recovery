@@ -19,7 +19,6 @@ typedef enum
 class TWFunc
 {
 public:
-	static int Check_MD5(string File);
 	static string Get_Root_Path(string Path);                                   // Trims any trailing folders or filenames from the path, also adds a leading / if not present
 	static string Get_Path(string Path);                                        // Trims everything after the last / in the string
 	static string Get_Filename(string Path);                                    // Trims the path off of a filename
@@ -41,6 +40,7 @@ public:
 	static int copy_file(string src, string dst, int mode); //copy file from src to dst with mode permissions
 	static unsigned int Get_D_Type_From_Stat(string Path);                      // Returns a dirent dt_type value using stat instead of dirent
 	static timespec timespec_diff(timespec& start, timespec& end);	            // Return a diff for 2 times
+	static int read_file(string fn, vector<string>& results); //read from file
 	static int read_file(string fn, string& results); //read from file
 	static int write_file(string fn, string& line); //write from file
 	static int drop_caches(void); //drop linux cache memory

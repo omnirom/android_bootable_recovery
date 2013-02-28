@@ -39,6 +39,7 @@
 #include "variables.h"
 #include "data.hpp"
 #include "partitions.hpp"
+#include "twrpDigest.hpp"
 #include "twrp-functions.hpp"
 
 extern RecoveryUI* ui;
@@ -261,7 +262,8 @@ exit:
 
 extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 	int err, zip_verify, md5_return;
-
+	twrpDigest md5sum;
+	string strpath = path;
 	ui_print("Installing '%s'...\n", path);
 
 	if (!PartitionManager.Mount_By_Path(path, 0)) {
@@ -270,14 +272,15 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 	}
 
 	ui_print("Checking for MD5 file...\n");
-	md5_return = TWFunc::Check_MD5(path);
-	if (md5_return == 0) {
+	md5sum.setfn(strpath);
+	md5_return = md5sum.verify_md5digest();
+	if (md5_return == -2) {
 		// MD5 did not match.
 		LOGE("Zip MD5 does not match.\nUnable to install zip.\n");
 		return INSTALL_CORRUPT;
 	} else if (md5_return == -1) {
 		ui_print("Skipping MD5 check: no MD5 file found.\n");
-	} else if (md5_return == 1)
+	} else if (md5_return == 0)
 		ui_print("Zip MD5 matched.\n"); // MD5 found and matched.
 
 	DataManager::GetValue(TW_SIGNED_ZIP_VERIFY_VAR, zip_verify);

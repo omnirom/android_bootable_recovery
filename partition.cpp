@@ -41,6 +41,7 @@
 #include "partitions.hpp"
 #include "data.hpp"
 #include "twrp-functions.hpp"
+#include "twrpDigest.hpp"
 #include "twrpTar.hpp"
 extern "C" {
 	#include "mtdutils/mtdutils.h"
@@ -943,13 +944,15 @@ bool TWPartition::Check_MD5(string restore_folder) {
 	string Full_Filename;
 	char split_filename[512];
 	int index = 0;
+	twrpDigest md5sum;
 
 	Full_Filename = restore_folder + "/" + Backup_FileName;
 	if (!TWFunc::Path_Exists(Full_Filename)) {
 		// This is a split archive, we presume
 		sprintf(split_filename, "%s%03i", Full_Filename.c_str(), index);
 		while (index < 1000 && TWFunc::Path_Exists(split_filename)) {
-			if (TWFunc::Check_MD5(split_filename) == 0) {
+			md5sum.setfn(split_filename);
+			if (md5sum.verify_md5digest() != 0) {
 				LOGE("MD5 failed to match on '%s'.\n", split_filename);
 				return false;
 			}
@@ -959,7 +962,8 @@ bool TWPartition::Check_MD5(string restore_folder) {
 		return true;
 	} else {
 		// Single file archive
-		if (TWFunc::Check_MD5(Full_Filename) == 0) {
+		md5sum.setfn(Full_Filename);
+		if (md5sum.verify_md5digest() != 0) {
 			LOGE("MD5 failed to match on '%s'.\n", split_filename);
 			return false;
 		} else
@@ -1269,7 +1273,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	unsigned long long total_bsize = 0, file_size;
 	twrpTar tar;
 	vector <string> files;
-	
+
 	if (!Mount(true))
 		return false;
 

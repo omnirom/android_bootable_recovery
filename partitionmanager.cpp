@@ -40,6 +40,7 @@
 #include "data.hpp"
 #include "twrp-functions.hpp"
 #include "fixPermissions.hpp"
+#include "twrpDigest.hpp"
 
 #ifdef TW_INCLUDE_CRYPTO
 	#ifdef TW_INCLUDE_JB_CRYPTO
@@ -477,6 +478,7 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	string command;
 	string Full_File = Backup_Folder + Backup_Filename;
 	string result;
+	twrpDigest md5sum;
 
 	if (!generate_md5) 
 		return true;
@@ -485,30 +487,39 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	ui_print(" * Generating md5...\n");
 
 	if (TWFunc::Path_Exists(Full_File)) {
-		command = "cd '" + Backup_Folder + "' && md5sum '" + Backup_Filename + "' > '" + Backup_Filename + ".md5'";
-		if (TWFunc::Exec_Cmd(command, result) == 0) {
-			ui_print(" * MD5 Created.\n");
-			return true;
-		} else {
+		md5sum.setfn(Backup_Folder + Backup_Filename);
+		if (md5sum.computeMD5() == 0)
+			if (md5sum.write_md5digest() == 0)
+				ui_print(" * MD5 Created.\n");
+			else
+				return -1;
+		else
 			ui_print(" * MD5 Error!\n");
-			return false;
-		}
 	} else {
 		char filename[512];
 		int index = 0;
+		string strfn;
 		sprintf(filename, "%s%03i", Full_File.c_str(), index);
+		strfn = filename;
+		ostringstream intToStr;
+		ostringstream fn;
 		while (TWFunc::Path_Exists(filename) == true) {
-			ostringstream intToStr;
 			intToStr << index;
-			ostringstream fn;
 			fn << setw(3) << setfill('0') << intToStr.str();
-			command = "cd '" + Backup_Folder + "' && md5sum '" + Backup_Filename + fn.str() + "' > '"  + Backup_Filename + fn.str() + ".md5'";
-			if (TWFunc::Exec_Cmd(command, result) != 0) {
-				ui_print(" * MD5 Error.\n");
-				return false;
+			md5sum.setfn(strfn);
+			if (md5sum.computeMD5() == 0) {
+				if (md5sum.write_md5digest() != 0)
+				{
+					ui_print(" * MD5 Error.\n");
+					return false;
+				}
+			}
+			else {
+				return -1;
 			}
 			index++;
 			sprintf(filename, "%s%03i", Full_File.c_str(), index);
+			strfn = filename;
 		}
 		if (index == 0) {
 			LOGE("Backup file: '%s' not found!\n", filename);

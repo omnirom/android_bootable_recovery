@@ -27,6 +27,7 @@ LOCAL_SRC_FILES := \
     verifier.cpp \
     fixPermissions.cpp \
     twrpTar.cpp \
+    twrpDigest.cpp \
     adb_install.cpp
 
 LOCAL_SRC_FILES += \

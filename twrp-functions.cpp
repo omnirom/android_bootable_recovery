@@ -49,48 +49,6 @@ int TWFunc::Exec_Cmd(string cmd, string &result) {
 	return ret;
 }
 
-/*  Checks md5 for a path
-	Return values:
-		-1 : MD5 does not exist
-		0 : Failed
-		1 : Success */
-int TWFunc::Check_MD5(string File) {
-	int ret;
-	string Command, DirPath, MD5_File, Sline, Filename, MD5_File_Filename, OK;
-	char line[255];
-	size_t pos;
-	string result;
-
-	MD5_File = File + ".md5";
-	if (Path_Exists(MD5_File)) {
-		DirPath = Get_Path(File);
-		MD5_File = Get_Filename(MD5_File);
-		Command = "cd '" + DirPath + "' && /sbin/busybox md5sum -c '" + MD5_File + "'";
-		Exec_Cmd(Command, result);
-		pos = result.find(":");
-		if (pos != string::npos) {
-			Filename = Get_Filename(File);
-			MD5_File_Filename = result.substr(0, pos);
-			OK = result.substr(pos + 2, result.size() - pos - 2);
-			if (Filename == MD5_File_Filename && (OK == "OK" || OK == "OK\n")) {
-				//MD5 is good, return 1
-				ret = 1;
-			} else {
-				// MD5 is bad, return 0
-				ret = 0;
-			}
-		} else {
-			// MD5 is bad, return 0
-			ret = 0;
-		}
-	} else {
-		//No md5 file, return -1
-		ret = -1;
-	}
-
-	return ret;
-}
-
 // Returns "file.name" from a full /path/to/file.name
 string TWFunc::Get_Filename(string Path) {
 	size_t pos = Path.find_last_of("/");
@@ -482,10 +440,24 @@ unsigned int TWFunc::Get_D_Type_From_Stat(string Path) {
 }
 
 int TWFunc::read_file(string fn, string& results) {
+        ifstream file;
+        file.open(fn.c_str(), ios::in);
+        if (file.is_open()) {
+                file >> results;
+                file.close();
+                return 0;
+	}
+        LOGI("Cannot find file %s\n", fn.c_str());
+        return -1;
+}
+
+int TWFunc::read_file(string fn, vector<string>& results) {
 	ifstream file;
+	string line;
 	file.open(fn.c_str(), ios::in);
 	if (file.is_open()) {
-		file >> results;
+		while (getline(file, line))
+			results.push_back(line);
 		file.close();
 		return 0;
 	}
