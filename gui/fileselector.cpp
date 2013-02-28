@@ -69,6 +69,7 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node)
 	hasHighlightColor = false;
 	hasFontHighlightColor = false;
 	isHighlighted = false;
+	updateFileList = false;
 	startSelection = -1;
 
 	// Load header text
@@ -377,6 +378,13 @@ GUIFileSelector::~GUIFileSelector()
 
 int GUIFileSelector::Render(void)
 {
+	// Update the file list if needed
+	if (updateFileList) {
+		string value;
+		DataManager::GetValue(mPathVar, value);
+		GetFileList(value);
+		updateFileList = false;
+	}
 	// First step, fill background
 	gr_color(mBackgroundColor.red, mBackgroundColor.green, mBackgroundColor.blue, 255);
 	gr_fill(mRenderX, mRenderY + mHeaderH, mRenderW, mRenderH - mHeaderH);
@@ -789,7 +797,6 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 					else
 					{
 						DataManager::SetValue(mPathVar, cwd);
-						GetFileList(cwd);
 						mStart = 0;
 						scrollingY = 0;
 						mUpdate = 1;
@@ -824,11 +831,6 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 
 int GUIFileSelector::NotifyVarChange(std::string varName, std::string value)
 {
-	if (varName.empty())
-	{
-		// Always clear the data variable so we know to use it
-		DataManager::SetValue(mVariable, "");
-	}
 	if (!mHeaderIsStatic) {
 		std::string newValue = gui_parse_text(mHeaderText);
 		if (mLastValue != newValue) {
@@ -841,12 +843,14 @@ int GUIFileSelector::NotifyVarChange(std::string varName, std::string value)
 	}
 	if (varName == mPathVar || varName == mSortVariable)
 	{
-		DataManager::GetValue(mPathVar, value);  // sometimes the value will be the sort order instead of the path, so we read the path everytime
-		DataManager::GetValue(mSortVariable, mSortOrder);
+		// If needed, wait for render to finish before continuing or the list change may not register
+		while (updateFileList || mUpdate) {
+			usleep(500);
+		}
+		updateFileList = true;
 		mStart = 0;
 		scrollingY = 0;
 		scrollingSpeed = 0;
-		GetFileList(value);
 		mUpdate = 1;
 		return 0;
 	}
@@ -976,6 +980,7 @@ int GUIFileSelector::GetFileList(const std::string folder)
 
 	std::sort(mFolderList.begin(), mFolderList.end(), fileSort);
 	std::sort(mFileList.begin(), mFileList.end(), fileSort);
+
 	return 0;
 }
 
@@ -983,9 +988,9 @@ void GUIFileSelector::SetPageFocus(int inFocus)
 {
 	if (inFocus)
 	{
-		std::string value;
-		DataManager::GetValue(mPathVar, value);
-		GetFileList(value);
+		updateFileList = true;
+		scrollingY = 0;
+		scrollingSpeed = 0;
+		mUpdate = 1;
 	}
 }
-
