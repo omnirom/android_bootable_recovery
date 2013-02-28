@@ -37,6 +37,7 @@ extern "C" {
 #include <sstream>
 #include "pages.hpp"
 #include "blanktimer.hpp"
+#include "../data.hpp"
 extern "C" {
 #include "../common.h"
 #include "../recovery_ui.h"
@@ -46,7 +47,6 @@ extern "C" {
 
 blanktimer::blanktimer(void) {
 	blanked = 0;
-	sleepTimer = 60;
 	orig_brightness = getBrightness();
 }
 

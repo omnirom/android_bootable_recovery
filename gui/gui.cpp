@@ -185,9 +185,12 @@ input_thread (void *cookie)
 	0, lshift = 0, rshift = 0, key_repeat = 0;
   static struct timeval touchStart;
   HardwareKeyboard kb;
+  string seconds;
 
   //start screen timeout threads
   blankTimer.setTimerThread();
+  DataManager::GetValue("tw_screen_timeout_secs", seconds);
+  blankTimer.setTime(atoi(seconds.c_str()));
 
   for (;;)
 	{
