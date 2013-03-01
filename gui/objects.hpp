@@ -496,6 +496,7 @@ protected:
 	COLOR mFontHighlightColor;
 	int startSelection;
 	bool updateFileList;
+	pthread_mutex_t updateFileListmutex;
 };
 
 class GUIListBox : public RenderObject, public ActionObject

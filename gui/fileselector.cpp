@@ -378,13 +378,6 @@ GUIFileSelector::~GUIFileSelector()
 
 int GUIFileSelector::Render(void)
 {
-	// Update the file list if needed
-	if (updateFileList) {
-		string value;
-		DataManager::GetValue(mPathVar, value);
-		GetFileList(value);
-		updateFileList = false;
-	}
 	// First step, fill background
 	gr_color(mBackgroundColor.red, mBackgroundColor.green, mBackgroundColor.blue, 255);
 	gr_fill(mRenderX, mRenderY + mHeaderH, mRenderW, mRenderH - mHeaderH);
@@ -395,6 +388,23 @@ int GUIFileSelector::Render(void)
 		mBackgroundX = mRenderX + ((mRenderW - mBackgroundW) / 2);
 		mBackgroundY = mRenderY + ((mRenderH - mBackgroundH) / 2);
 		gr_blit(mBackground->GetResource(), 0, 0, mBackgroundW, mBackgroundH, mBackgroundX, mBackgroundY);
+	}
+
+	// Update the file list if needed
+	pthread_mutex_lock(&updateFileListmutex);
+	if (updateFileList) {
+		pthread_mutex_unlock(&updateFileListmutex);
+		string value;
+		DataManager::GetValue(mPathVar, value);
+		if (GetFileList(value) == 0) {
+			pthread_mutex_lock(&updateFileListmutex);
+			updateFileList = false;
+			pthread_mutex_unlock(&updateFileListmutex);
+		} else {
+			return 0;
+		}
+	} else {
+		pthread_mutex_unlock(&updateFileListmutex);
 	}
 
 	// This tells us how many lines we can actually render
@@ -551,7 +561,12 @@ int GUIFileSelector::Render(void)
 		gr_fill(mFastScrollRectX, mFastScrollRectY, mFastScrollRectW, mFastScrollRectH);
 	}
 
-	mUpdate = 0;
+	// If a change came in during the render then we need to do another redraw so leave mUpdate alone if updateFileList is true.
+	pthread_mutex_lock(&updateFileListmutex);
+	if (!updateFileList) {
+		mUpdate = 0;
+	}
+	pthread_mutex_unlock(&updateFileListmutex);
 	return 0;
 }
 
@@ -843,11 +858,12 @@ int GUIFileSelector::NotifyVarChange(std::string varName, std::string value)
 	}
 	if (varName == mPathVar || varName == mSortVariable)
 	{
-		// If needed, wait for render to finish before continuing or the list change may not register
-		while (updateFileList || mUpdate) {
-			usleep(500);
+		if (varName == mSortVariable) {
+			DataManager::GetValue(mSortVariable, mSortOrder);
 		}
+		pthread_mutex_lock(&updateFileListmutex);
 		updateFileList = true;
+		pthread_mutex_unlock(&updateFileListmutex);
 		mStart = 0;
 		scrollingY = 0;
 		scrollingSpeed = 0;
@@ -988,7 +1004,9 @@ void GUIFileSelector::SetPageFocus(int inFocus)
 {
 	if (inFocus)
 	{
+		pthread_mutex_lock(&updateFileListmutex);
 		updateFileList = true;
+		pthread_mutex_unlock(&updateFileListmutex);
 		scrollingY = 0;
 		scrollingSpeed = 0;
 		mUpdate = 1;
