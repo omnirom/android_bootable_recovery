@@ -46,7 +46,8 @@ extern "C" {
 #include "../variables.h"
 
 blanktimer::blanktimer(void) {
-	blanked = 0;
+	setTime(0);
+	setConBlank(0);
 	orig_brightness = getBrightness();
 }
 
@@ -62,14 +63,10 @@ int blanktimer::setTimerThread(void) {
 	return 0;
 }
 
-void blanktimer::setBlank(int blank) {
-	pthread_mutex_lock(&blankmutex);
+void blanktimer::setConBlank(int blank) {
+	pthread_mutex_lock(&conblankmutex);
 	conblank = blank;
-	pthread_mutex_unlock(&blankmutex);
-}
-
-int blanktimer::getBlank(void) {
-	return conblank;
+	pthread_mutex_unlock(&conblankmutex);
 }
 
 void blanktimer::setTimer(void) {
@@ -84,22 +81,25 @@ timespec blanktimer::getTimer(void) {
 
 int  blanktimer::setClockTimer(void) {
 	timespec curTime, diff;
-	while(1) {
-		usleep(1000);
+	for(;;) {
+		usleep(1000000);
 		clock_gettime(CLOCK_MONOTONIC, &curTime);
 		diff = TWFunc::timespec_diff(btimer, curTime);
-		if (sleepTimer && diff.tv_sec > sleepTimer && conblank != 1) {
+		if (sleepTimer > 2 && diff.tv_sec > (sleepTimer - 2) && conblank == 0) {
 			orig_brightness = getBrightness();
-			setBlank(1);
+			setConBlank(1);
+			setBrightness(5);
+		}
+		if (sleepTimer && diff.tv_sec > sleepTimer && conblank < 2) {
+			setConBlank(2);
+			setBrightness(0);
 			PageManager::ChangeOverlay("lock");
 		}
-		if (conblank == 1 && blanked != 1) {
-			blanked = 1;
-			gr_fb_blank(conblank);
-			setBrightness(0);
+		if (conblank == 2 && gr_fb_blank(1) >= 0) {
+			setConBlank(3);
 		}
 	}
-	return -1;
+	return -1; //shouldn't get here
 }
 
 int blanktimer::getBrightness(void) {
@@ -124,11 +124,19 @@ int blanktimer::setBrightness(int brightness) {
 
 void blanktimer::resetTimerAndUnblank(void) {
 	setTimer();
-	if (blanked) {
-		setBrightness(orig_brightness);
-		blanked = 0;
-		setBlank(0);
-		gr_fb_blank(conblank);
-		gui_forceRender();
+	switch (conblank) {
+		case 3:
+			if (gr_fb_blank(0) < 0) {
+				LOGI("blanktimer::resetTimerAndUnblank failed to gr_fb_blank(0)\n");
+				break;
+			}
+			// No break here, we want to keep going
+		case 2:
+			gui_forceRender();
+			// No break here, we want to keep going
+		case 1:
+			setBrightness(orig_brightness);
+			setConBlank(0);
+			break;
 	}
 }
