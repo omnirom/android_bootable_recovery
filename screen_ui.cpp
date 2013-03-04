@@ -34,8 +34,8 @@
 #include "screen_ui.h"
 #include "ui.h"
 
-#define CHAR_WIDTH 10
-#define CHAR_HEIGHT 18
+static int char_width;
+static int char_height;
 
 // There's only (at most) one of these objects, and global callbacks
 // (for pthread_create, and the input event system) need to find it,
@@ -194,7 +194,7 @@ void ScreenRecoveryUI::draw_progress_locked()
 
 void ScreenRecoveryUI::draw_text_line(int row, const char* t) {
   if (t[0] != '\0') {
-    gr_text(0, (row+1)*CHAR_HEIGHT-1, t);
+    gr_text(0, (row+1)*char_height-1, t);
   }
 }
 
@@ -212,8 +212,8 @@ void ScreenRecoveryUI::draw_screen_locked()
         int i = 0;
         if (show_menu) {
             gr_color(64, 96, 255, 255);
-            gr_fill(0, (menu_top+menu_sel) * CHAR_HEIGHT,
-                    gr_fb_width(), (menu_top+menu_sel+1)*CHAR_HEIGHT+1);
+            gr_fill(0, (menu_top+menu_sel) * char_height,
+                    gr_fb_width(), (menu_top+menu_sel+1)*char_height+1);
 
             for (; i < menu_top + menu_items; ++i) {
                 if (i == menu_top + menu_sel) {
@@ -224,8 +224,8 @@ void ScreenRecoveryUI::draw_screen_locked()
                     draw_text_line(i, menu[i]);
                 }
             }
-            gr_fill(0, i*CHAR_HEIGHT+CHAR_HEIGHT/2-1,
-                    gr_fb_width(), i*CHAR_HEIGHT+CHAR_HEIGHT/2+1);
+            gr_fill(0, i*char_height+char_height/2-1,
+                    gr_fb_width(), i*char_height+char_height/2+1);
             ++i;
         }
 
@@ -327,12 +327,14 @@ void ScreenRecoveryUI::Init()
 {
     gr_init();
 
+    gr_font_size(&char_width, &char_height);
+
     text_col = text_row = 0;
-    text_rows = gr_fb_height() / CHAR_HEIGHT;
+    text_rows = gr_fb_height() / char_height;
     if (text_rows > kMaxRows) text_rows = kMaxRows;
     text_top = 1;
 
-    text_cols = gr_fb_width() / CHAR_WIDTH;
+    text_cols = gr_fb_width() / char_width;
     if (text_cols > kMaxCols - 1) text_cols = kMaxCols - 1;
 
     LoadBitmap("icon_installing", &backgroundIcon[INSTALLING_UPDATE]);

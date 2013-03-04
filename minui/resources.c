@@ -93,21 +93,22 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     png_set_sig_bytes(png_ptr, sizeof(header));
     png_read_info(png_ptr, info_ptr);
 
-    size_t width = info_ptr->width;
-    size_t height = info_ptr->height;
-    size_t stride = 4 * width;
-    size_t pixelSize = stride * height;
-
     int color_type = info_ptr->color_type;
     int bit_depth = info_ptr->bit_depth;
     int channels = info_ptr->channels;
     if (!(bit_depth == 8 &&
           ((channels == 3 && color_type == PNG_COLOR_TYPE_RGB) ||
            (channels == 4 && color_type == PNG_COLOR_TYPE_RGBA) ||
-           (channels == 1 && color_type == PNG_COLOR_TYPE_PALETTE)))) {
+           (channels == 1 && (color_type == PNG_COLOR_TYPE_PALETTE ||
+                              color_type == PNG_COLOR_TYPE_GRAY))))) {
         return -7;
         goto exit;
     }
+
+    size_t width = info_ptr->width;
+    size_t height = info_ptr->height;
+    size_t stride = (color_type == PNG_COLOR_TYPE_GRAY ? 1 : 4) * width;
+    size_t pixelSize = stride * height;
 
     surface = malloc(sizeof(GGLSurface) + pixelSize);
     if (surface == NULL) {
@@ -120,8 +121,8 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     surface->height = height;
     surface->stride = width; /* Yes, pixels, not bytes */
     surface->data = pData;
-    surface->format = (channels == 3) ?
-            GGL_PIXEL_FORMAT_RGBX_8888 : GGL_PIXEL_FORMAT_RGBA_8888;
+    surface->format = (channels == 3) ? GGL_PIXEL_FORMAT_RGBX_8888 :
+        ((color_type == PNG_COLOR_TYPE_PALETTE ? GGL_PIXEL_FORMAT_RGBA_8888 : GGL_PIXEL_FORMAT_L_8));
 
     int alpha = 0;
     if (color_type == PNG_COLOR_TYPE_PALETTE) {
@@ -129,6 +130,9 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     }
     if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
         png_set_tRNS_to_alpha(png_ptr);
+        alpha = 1;
+    }
+    if (color_type == PNG_COLOR_TYPE_GRAY) {
         alpha = 1;
     }
 

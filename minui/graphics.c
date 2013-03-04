@@ -30,7 +30,6 @@
 
 #include <pixelflinger/pixelflinger.h>
 
-#include "font_10x18.h"
 #include "minui.h"
 
 #if defined(RECOVERY_BGRA)
@@ -47,7 +46,7 @@
 #define NUM_BUFFERS 2
 
 typedef struct {
-    GGLSurface texture;
+    GGLSurface* texture;
     unsigned cwidth;
     unsigned cheight;
     unsigned ascent;
@@ -230,12 +229,14 @@ int gr_text(int x, int y, const char *s)
     GRFont *font = gr_font;
     unsigned off;
 
+    if (!font->texture) return x;
+
     x += overscan_offset_x;
     y += overscan_offset_y;
 
     y -= font->ascent;
 
-    gl->bindTexture(gl, &font->texture);
+    gl->bindTexture(gl, font->texture);
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
     gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
     gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
@@ -322,31 +323,21 @@ unsigned int gr_get_height(gr_surface surface) {
 
 static void gr_init_font(void)
 {
-    GGLSurface *ftex;
-    unsigned char *bits, *rle;
-    unsigned char *in, data;
-
     gr_font = calloc(sizeof(*gr_font), 1);
-    ftex = &gr_font->texture;
 
-    bits = malloc(font.width * font.height);
-
-    ftex->version = sizeof(*ftex);
-    ftex->width = font.width;
-    ftex->height = font.height;
-    ftex->stride = font.width;
-    ftex->data = (void*) bits;
-    ftex->format = GGL_PIXEL_FORMAT_A_8;
-
-    in = font.rundata;
-    while((data = *in++)) {
-        memset(bits, (data & 0x80) ? 255 : 0, data & 0x7f);
-        bits += (data & 0x7f);
+    int res = res_create_surface("font", (void**)&(gr_font->texture));
+    if (res != 0) {
+        printf("failed to read font: res=%d\n", res);
+        gr_font->texture = NULL;
+        return;
     }
 
-    gr_font->cwidth = font.cwidth;
-    gr_font->cheight = font.cheight;
-    gr_font->ascent = font.cheight - 2;
+    // interpret the grayscale as alpha
+    gr_font->texture->format = GGL_PIXEL_FORMAT_A_8;
+
+    gr_font->cwidth = gr_font->texture->width / 96;
+    gr_font->cheight = gr_font->texture->height;
+    gr_font->ascent = gr_font->cheight - 2;
 }
 
 int gr_init(void)
