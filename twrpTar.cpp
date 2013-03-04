@@ -107,7 +107,7 @@ int twrpTar::createTarFork() {
 				LOGI("Child process ended with signal: %d\n", WTERMSIG(status));
 				return -1;
 			}
-			else if (WIFEXITED(status) != 0)
+			else if (WEXITSTATUS(status) == 0)
 				LOGI("Tar creation successful\n");
 			else {
 				LOGI("Tar creation failed\n");
@@ -141,7 +141,7 @@ int twrpTar::extractTarFork() {
 				LOGI("Child process ended with signal: %d\n", WTERMSIG(status));
 				return -1;
 			}
-			else if (WIFEXITED(status) != 0)
+			else if (WEXITSTATUS(status) == 0)
 				LOGI("Tar extraction successful\n");
 			else {
 				LOGI("Tar extraction failed\n");
