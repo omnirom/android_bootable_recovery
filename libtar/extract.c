@@ -335,7 +335,8 @@ tar_extract_hardlink(TAR * t, char *realname, char *prefix)
 #ifdef DEBUG
 		perror("link()");
 #endif
-		return -1;
+		printf("Failed restore of hardlink '%s' but returning as if nothing bad happened anyway\n", filename);
+		return 0; // Used to be -1
 	}
 
 	return 0;
