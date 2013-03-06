@@ -30,6 +30,7 @@
 
 #include <pixelflinger/pixelflinger.h>
 
+#include "font_10x18.h"
 #include "minui.h"
 
 #if defined(RECOVERY_BGRA)
@@ -49,7 +50,6 @@ typedef struct {
     GGLSurface* texture;
     unsigned cwidth;
     unsigned cheight;
-    unsigned ascent;
 } GRFont;
 
 static GRFont *gr_font = 0;
@@ -223,7 +223,7 @@ void gr_font_size(int *x, int *y)
     *y = gr_font->cheight;
 }
 
-int gr_text(int x, int y, const char *s)
+int gr_text(int x, int y, const char *s, int bold)
 {
     GGLContext *gl = gr_context;
     GRFont *font = gr_font;
@@ -231,10 +231,10 @@ int gr_text(int x, int y, const char *s)
 
     if (!font->texture) return x;
 
+    bold = bold && (font->texture->height != font->cheight);
+
     x += overscan_offset_x;
     y += overscan_offset_y;
-
-    y -= font->ascent;
 
     gl->bindTexture(gl, font->texture);
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
@@ -245,7 +245,8 @@ int gr_text(int x, int y, const char *s)
     while((off = *s++)) {
         off -= 32;
         if (off < 96) {
-            gl->texCoord2i(gl, (off * font->cwidth) - x, 0 - y);
+            gl->texCoord2i(gl, (off * font->cwidth) - x,
+                           (bold ? font->cheight : 0) - y);
             gl->recti(gl, x, y, x + font->cwidth, y + font->cheight);
         }
         x += font->cwidth;
@@ -326,18 +327,37 @@ static void gr_init_font(void)
     gr_font = calloc(sizeof(*gr_font), 1);
 
     int res = res_create_surface("font", (void**)&(gr_font->texture));
-    if (res != 0) {
+    if (res == 0) {
+        // The font image should be a 96x2 array of character images.  The
+        // columns are the printable ASCII characters 0x20 - 0x7f.  The
+        // top row is regular text; the bottom row is bold.
+        gr_font->cwidth = gr_font->texture->width / 96;
+        gr_font->cheight = gr_font->texture->height / 2;
+    } else {
         printf("failed to read font: res=%d\n", res);
-        gr_font->texture = NULL;
-        return;
+
+        // fall back to the compiled-in font.
+        gr_font->texture = malloc(sizeof(*gr_font->texture));
+        gr_font->texture->width = font.width;
+        gr_font->texture->height = font.height;
+        gr_font->texture->stride = font.width;
+
+        unsigned char* bits = malloc(font.width * font.height);
+        gr_font->texture->data = (void*) bits;
+
+        unsigned char data;
+        unsigned char* in = font.rundata;
+        while((data = *in++)) {
+            memset(bits, (data & 0x80) ? 255 : 0, data & 0x7f);
+            bits += (data & 0x7f);
+        }
+
+        gr_font->cwidth = font.cwidth;
+        gr_font->cheight = font.cheight;
     }
 
     // interpret the grayscale as alpha
     gr_font->texture->format = GGL_PIXEL_FORMAT_A_8;
-
-    gr_font->cwidth = gr_font->texture->width / 96;
-    gr_font->cheight = gr_font->texture->height;
-    gr_font->ascent = gr_font->cheight - 2;
 }
 
 int gr_init(void)

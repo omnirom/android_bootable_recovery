@@ -76,7 +76,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     bool pagesIdentical;
 
     static const int kMaxCols = 96;
-    static const int kMaxRows = 32;
+    static const int kMaxRows = 96;
 
     // Log text overlay, displayed when a magic key is pressed
     char text[kMaxRows][kMaxCols];
@@ -100,7 +100,6 @@ class ScreenRecoveryUI : public RecoveryUI {
     void draw_install_overlay_locked(int frame);
     void draw_background_locked(Icon icon);
     void draw_progress_locked();
-    void draw_text_line(int row, const char* t);
     void draw_screen_locked();
     void update_screen_locked();
     void update_progress_locked();

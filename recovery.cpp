@@ -704,7 +704,6 @@ prompt_and_wait(Device* device, int status) {
                 break;
 
             case Device::WIPE_CACHE:
-                ui->ShowText(false);
                 ui->Print("\n-- Wiping cache...\n");
                 erase_volume("/cache");
                 ui->Print("Cache wipe complete.\n");
