@@ -308,23 +308,34 @@ int twrpTar::extractTar() {
 	return 0;
 }
 
+int twrpTar::getArchiveType() {
+        int type = 0;
+        string::size_type i = 0;
+        int firstbyte = 0, secondbyte = 0;
+	char header[3];
+        
+        ifstream f;
+        f.open(tarfn.c_str(), ios::in | ios::binary);
+        f.get(header, 3);
+        f.close();
+        firstbyte = header[i] & 0xff;
+        secondbyte = header[++i] & 0xff;
+
+        if (firstbyte == 0x1f && secondbyte == 0x8b)
+		type = 1; // Compressed
+	else
+		type = 0; // Uncompressed
+
+	return type;
+}
+
 int twrpTar::extract() {
-	int len = 3;
-	char header[len];
-	string::size_type i = 0;
-	int firstbyte = 0;
-	int secondbyte = 0;
-	int ret;
-	ifstream f;
-	f.open(tarfn.c_str(), ios::in | ios::binary);
-	f.get(header, len);
-	firstbyte = header[i] & 0xff;
-	secondbyte = header[++i] & 0xff;
-	f.close();
-	if (firstbyte == 0x1f && secondbyte == 0x8b) {
+	int Archive_Current_Type = getArchiveType();
+
+	if (Archive_Current_Type == 1) {
 		//if you return the extractTGZ function directly, stack crashes happen
 		LOGI("Extracting gzipped tar\n");
-		ret = extractTGZ();
+		int ret = extractTGZ();
 		return ret;
 	}
 	else {
@@ -578,6 +589,23 @@ int twrpTar::extractTGZ() {
 		return -1;
 	}
 	return 0;
+}
+
+int twrpTar::entryExists(string entry) {
+	char* searchstr = (char*)entry.c_str();
+	int ret;
+
+	int Archive_Current_Type = getArchiveType();
+
+	if (openTar(Archive_Current_Type) == -1)
+		ret = 0;
+	else
+		ret = tar_find(t, searchstr);
+
+	if (tar_close(t) != 0)
+		LOGI("Unable to close tar file after searching for entry '%s'.\n", entry.c_str());
+
+	return ret;
 }
 
 extern "C" ssize_t write_tar(int fd, const void *buffer, size_t size) {

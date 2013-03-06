@@ -153,3 +153,33 @@ tar_append_tree(TAR *t, char *realdir, char *savedir)
 
 	return 0;
 }
+
+
+int
+tar_find(TAR *t, char *searchstr)
+{
+	if (!searchstr)
+		return 0;
+
+	char *filename;
+	int i, entryfound = 0;
+#ifdef DEBUG
+	printf("==> tar_find(0x%lx, %s)\n", (long unsigned int)t, searchstr);
+#endif
+	while ((i = th_read(t)) == 0) {
+		filename = th_get_pathname(t);
+		if (fnmatch(searchstr, filename, FNM_FILE_NAME | FNM_PERIOD) == 0) {
+			entryfound++;
+#ifdef DEBUG
+			printf("Found matching entry: %s\n", filename);
+#endif
+			break;
+		}
+	}
+#ifdef DEBUG
+	if (!entryfound)
+		printf("No matching entry found.\n");
+#endif
+
+	return entryfound;
+}

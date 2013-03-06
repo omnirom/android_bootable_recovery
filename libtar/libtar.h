@@ -291,6 +291,8 @@ int tar_extract_all(TAR *t, char *prefix);
 /* add a whole tree of files */
 int tar_append_tree(TAR *t, char *realdir, char *savedir);
 
+/* find an entry */
+int tar_find(TAR *t, char *searchstr);
 
 #ifdef __cplusplus
 }
