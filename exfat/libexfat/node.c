@@ -56,7 +56,7 @@ void exfat_put_node(struct exfat* ef, struct exfat_node* node)
 		if (node->flags & EXFAT_ATTRIB_UNLINKED)
 		{
 			/* free all clusters and node structure itself */
-			exfat_truncate(ef, node, 0);
+			exfat_truncate(ef, node, 0, true);
 			free(node);
 		}
 		if (ef->cmap.dirty)
@@ -457,17 +457,40 @@ int exfat_cache_directory(struct exfat* ef, struct exfat_node* dir)
 	return 0;
 }
 
+static void tree_attach(struct exfat_node* dir, struct exfat_node* node)
+{
+	node->parent = dir;
+	if (dir->child)
+	{
+		dir->child->prev = node;
+		node->next = dir->child;
+	}
+	dir->child = node;
+}
+
+static void tree_detach(struct exfat_node* node)
+{
+	if (node->prev)
+		node->prev->next = node->next;
+	else /* this is the first node in the list */
+		node->parent->child = node->next;
+	if (node->next)
+		node->next->prev = node->prev;
+	node->parent = NULL;
+	node->prev = NULL;
+	node->next = NULL;
+}
+
 static void reset_cache(struct exfat* ef, struct exfat_node* node)
 {
-	struct exfat_node* child;
-	struct exfat_node* next;
-
-	for (child = node->child; child; child = next)
+	while (node->child)
 	{
-		reset_cache(ef, child);
-		next = child->next;
-		free(child);
+		struct exfat_node* p = node->child;
+		reset_cache(ef, p);
+		tree_detach(p);
+		free(p);
 	}
+	node->flags &= ~EXFAT_ATTRIB_CACHED;
 	if (node->references != 0)
 	{
 		char buffer[EXFAT_NAME_MAX + 1];
@@ -475,10 +498,8 @@ static void reset_cache(struct exfat* ef, struct exfat_node* node)
 		exfat_warn("non-zero reference counter (%d) for `%s'",
 				node->references, buffer);
 	}
-	while (node->references--)
+	while (node->references)
 		exfat_put_node(ef, node);
-	node->child = NULL;
-	node->flags &= ~EXFAT_ATTRIB_CACHED;
 }
 
 void exfat_reset_cache(struct exfat* ef)
@@ -563,30 +584,6 @@ static void erase_entry(struct exfat* ef, struct exfat_node* node)
 	}
 }
 
-static void tree_detach(struct exfat_node* node)
-{
-	if (node->prev)
-		node->prev->next = node->next;
-	else /* this is the first node in the list */
-		node->parent->child = node->next;
-	if (node->next)
-		node->next->prev = node->prev;
-	node->parent = NULL;
-	node->prev = NULL;
-	node->next = NULL;
-}
-
-static void tree_attach(struct exfat_node* dir, struct exfat_node* node)
-{
-	node->parent = dir;
-	if (dir->child)
-	{
-		dir->child->prev = node;
-		node->next = dir->child;
-	}
-	dir->child = node;
-}
-
 static int shrink_directory(struct exfat* ef, struct exfat_node* dir,
 		off64_t deleted_offset)
 {
@@ -630,7 +627,7 @@ static int shrink_directory(struct exfat* ef, struct exfat_node* dir,
 		new_size = CLUSTER_SIZE(*ef->sb);
 	if (new_size == dir->size)
 		return 0;
-	rc = exfat_truncate(ef, dir, new_size);
+	rc = exfat_truncate(ef, dir, new_size, true);
 	if (rc != 0)
 		return rc;
 	return 0;
@@ -676,7 +673,7 @@ static int grow_directory(struct exfat* ef, struct exfat_node* dir,
 {
 	return exfat_truncate(ef, dir,
 			DIV_ROUND_UP(asize + difference, CLUSTER_SIZE(*ef->sb))
-				* CLUSTER_SIZE(*ef->sb));
+				* CLUSTER_SIZE(*ef->sb), true);
 }
 
 static int find_slot(struct exfat* ef, struct exfat_node* dir,
@@ -829,7 +826,7 @@ int exfat_mkdir(struct exfat* ef, const char* path)
 	if (rc != 0)
 		return 0;
 	/* directories always have at least one cluster */
-	rc = exfat_truncate(ef, node, CLUSTER_SIZE(*ef->sb));
+	rc = exfat_truncate(ef, node, CLUSTER_SIZE(*ef->sb), true);
 	if (rc != 0)
 	{
 		delete(ef, node);

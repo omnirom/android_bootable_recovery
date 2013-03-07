@@ -2,7 +2,7 @@
 	io.c (02.09.09)
 	exFAT file system implementation library.
 
-	Copyright (C) 2010-2012  Andrew Nayenko
+	Copyright (C) 2010-2013  Andrew Nayenko
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -350,10 +350,13 @@ ssize_t exfat_generic_pwrite(struct exfat* ef, struct exfat_node* node,
 	cluster_t cluster;
 	const char* bufp = buffer;
 	off64_t lsize, loffset, remainder;
-	printf("node: %s\n", node);
-	if (offset + size > node->size)
-		if (exfat_truncate(ef, node, offset + size) != 0)
-			return -1;
+
+ 	if (offset > node->size)
+ 		if (exfat_truncate(ef, node, offset, true) != 0)
+ 			return -1;
+  	if (offset + size > node->size)
+ 		if (exfat_truncate(ef, node, offset + size, false) != 0)
+ 			return -1;
 	if (size == 0)
 		return 0;
 

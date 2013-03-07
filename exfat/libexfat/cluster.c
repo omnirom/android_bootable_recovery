@@ -106,41 +106,24 @@ cluster_t exfat_advance_cluster(const struct exfat* ef,
 	return node->fptr_cluster;
 }
 
-static cluster_t find_bit_and_set(uint8_t* bitmap, cluster_t start,
-		cluster_t end)
+static cluster_t find_bit_and_set(uint8_t* bitmap, size_t start, size_t end)
 {
-	const cluster_t mid_start = (start + 7) / 8 * 8;
-	const cluster_t mid_end = end / 8 * 8;
-	cluster_t c;
-	cluster_t byte;
+	const size_t start_index = start / 8;
+	const size_t end_index = DIV_ROUND_UP(end, 8);
+	size_t i;
+	size_t c;
 
-	for (c = start; c < mid_start; c++)
-		if (BMAP_GET(bitmap, c) == 0)
-		{
-			BMAP_SET(bitmap, c);
-			return c + EXFAT_FIRST_DATA_CLUSTER;
-		}
-
-	for (byte = mid_start / 8; byte < mid_end / 8; byte++)
-		if (bitmap[byte] != 0xff)
-		{
-			cluster_t bit;
-
-			for (bit = 0; bit < 8; bit++)
-				if (!(bitmap[byte] & (1u << bit)))
-				{
-					bitmap[byte] |= (1u << bit);
-					return byte * 8 + bit + EXFAT_FIRST_DATA_CLUSTER;
-				}
-		}
-
-	for (c = mid_end; c < end; c++)
-		if (BMAP_GET(bitmap, c) == 0)
-		{
-			BMAP_SET(bitmap, c);
-			return c + EXFAT_FIRST_DATA_CLUSTER;
-		}
-
+	for (i = start_index; i < end_index; i++)
+	{
+		if (bitmap[i] == 0xff)
+			continue;
+		for (c = MAX(i * 8, start); c < MIN((i + 1) * 8, end); c++)
+			if (BMAP_GET(bitmap, c) == 0)
+			{
+				BMAP_SET(bitmap, c);
+				return c + EXFAT_FIRST_DATA_CLUSTER;
+			}
+	}
 	return EXFAT_CLUSTER_END;
 }
 
@@ -151,7 +134,7 @@ void exfat_flush_cmap(struct exfat* ef)
 	ef->cmap.dirty = false;
 }
 
-static void set_next_cluster(const struct exfat* ef, int contiguous,
+static void set_next_cluster(const struct exfat* ef, bool contiguous,
 		cluster_t current, cluster_t next)
 {
 	off64_t fat_offset;
@@ -204,7 +187,7 @@ static void make_noncontiguous(const struct exfat* ef, cluster_t first,
 	cluster_t c;
 
 	for (c = first; c < last; c++)
-		set_next_cluster(ef, 0, c, c + 1);
+		set_next_cluster(ef, false, c, c + 1);
 }
 
 static int shrink_file(struct exfat* ef, struct exfat_node* node,
@@ -361,7 +344,8 @@ static int erase_range(struct exfat* ef, struct exfat_node* node,
 	return 0;
 }
 
-int exfat_truncate(struct exfat* ef, struct exfat_node* node, uint64_t size)
+int exfat_truncate(struct exfat* ef, struct exfat_node* node, uint64_t size,
+		bool erase)
 {
 	uint32_t c1 = bytes2clusters(ef, node->size);
 	uint32_t c2 = bytes2clusters(ef, size);
@@ -381,9 +365,12 @@ int exfat_truncate(struct exfat* ef, struct exfat_node* node, uint64_t size)
 	if (rc != 0)
 		return rc;
 
-	rc = erase_range(ef, node, node->size, size);
-	if (rc != 0)
-		return rc;
+	if (erase)
+	{
+		rc = erase_range(ef, node, node->size, size);
+		if (rc != 0)
+			return rc;
+	}
 
 	exfat_update_mtime(node);
 	node->size = size;
