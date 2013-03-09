@@ -95,9 +95,11 @@ int  blanktimer::setClockTimer(void) {
 			setBrightness(0);
 			PageManager::ChangeOverlay("lock");
 		}
+#ifndef TW_NO_SCREEN_BLANK
 		if (conblank == 2 && gr_fb_blank(1) >= 0) {
 			setConBlank(3);
 		}
+#endif
 	}
 	return -1; //shouldn't get here
 }
@@ -126,10 +128,12 @@ void blanktimer::resetTimerAndUnblank(void) {
 	setTimer();
 	switch (conblank) {
 		case 3:
+#ifndef TW_NO_SCREEN_BLANK
 			if (gr_fb_blank(0) < 0) {
 				LOGI("blanktimer::resetTimerAndUnblank failed to gr_fb_blank(0)\n");
 				break;
 			}
+#endif
 			// No break here, we want to keep going
 		case 2:
 			gui_forceRender();
