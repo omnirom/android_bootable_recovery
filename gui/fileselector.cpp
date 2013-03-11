@@ -391,20 +391,14 @@ int GUIFileSelector::Render(void)
 	}
 
 	// Update the file list if needed
-	pthread_mutex_lock(&updateFileListmutex);
 	if (updateFileList) {
-		pthread_mutex_unlock(&updateFileListmutex);
 		string value;
 		DataManager::GetValue(mPathVar, value);
 		if (GetFileList(value) == 0) {
-			pthread_mutex_lock(&updateFileListmutex);
 			updateFileList = false;
-			pthread_mutex_unlock(&updateFileListmutex);
 		} else {
 			return 0;
 		}
-	} else {
-		pthread_mutex_unlock(&updateFileListmutex);
 	}
 
 	// This tells us how many lines we can actually render
@@ -562,11 +556,9 @@ int GUIFileSelector::Render(void)
 	}
 
 	// If a change came in during the render then we need to do another redraw so leave mUpdate alone if updateFileList is true.
-	pthread_mutex_lock(&updateFileListmutex);
 	if (!updateFileList) {
 		mUpdate = 0;
 	}
-	pthread_mutex_unlock(&updateFileListmutex);
 	return 0;
 }
 
@@ -846,6 +838,10 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 
 int GUIFileSelector::NotifyVarChange(std::string varName, std::string value)
 {
+	if (varName.empty()) {
+		// Always clear the data variable so we know to use it
+		DataManager::SetValue(mVariable, "");
+	}
 	if (!mHeaderIsStatic) {
 		std::string newValue = gui_parse_text(mHeaderText);
 		if (mLastValue != newValue) {
@@ -861,9 +857,7 @@ int GUIFileSelector::NotifyVarChange(std::string varName, std::string value)
 		if (varName == mSortVariable) {
 			DataManager::GetValue(mSortVariable, mSortOrder);
 		}
-		pthread_mutex_lock(&updateFileListmutex);
 		updateFileList = true;
-		pthread_mutex_unlock(&updateFileListmutex);
 		mStart = 0;
 		scrollingY = 0;
 		scrollingSpeed = 0;
@@ -1004,9 +998,7 @@ void GUIFileSelector::SetPageFocus(int inFocus)
 {
 	if (inFocus)
 	{
-		pthread_mutex_lock(&updateFileListmutex);
 		updateFileList = true;
-		pthread_mutex_unlock(&updateFileListmutex);
 		scrollingY = 0;
 		scrollingSpeed = 0;
 		mUpdate = 1;
