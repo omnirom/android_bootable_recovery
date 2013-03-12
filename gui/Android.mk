@@ -51,6 +51,9 @@ endif
 ifneq ($(TW_BRIGHTNESS_PATH),)
 	LOCAL_CFLAGS += -DTW_BRIGHTNESS_PATH=$(TW_BRIGHTNESS_PATH)
 endif
+ifneq ($(TW_NO_SCREEN_BLANK),)
+	LOCAL_CFLAGS += -DTW_NO_SCREEN_BLANK
+endif
 
 LOCAL_C_INCLUDES += bionic external/stlport/stlport $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION)
 
