@@ -45,6 +45,11 @@ tar_set_file_perms(TAR *t, char *realname)
 	gid = th_get_gid(t);
 	ut.modtime = ut.actime = th_get_mtime(t);
 
+#ifdef DEBUG
+	printf("   ==> setting perms: %s (mode %04o, uid %d, gid %d)\n",
+	       filename, mode, uid, gid);
+#endif
+
 	/* change owner/group */
 	if (geteuid() == 0)
 #ifdef HAVE_LCHOWN
@@ -109,6 +114,7 @@ tar_extract_file(TAR *t, char *realname, char *prefix)
 
 	if (TH_ISDIR(t))
 	{
+		printf("dir\n");
 		i = tar_extract_dir(t, realname);
 		if (i == 1)
 			i = 0;
@@ -172,10 +178,10 @@ tar_extract_file(TAR *t, char *realname, char *prefix)
 int
 tar_extract_regfile(TAR *t, char *realname)
 {
-	mode_t mode;
+	//mode_t mode;
 	size_t size;
-	uid_t uid;
-	gid_t gid;
+	//uid_t uid;
+	//gid_t gid;
 	int fdout;
 	int i, k;
 	char buf[T_BLOCKSIZE];
@@ -194,17 +200,19 @@ tar_extract_regfile(TAR *t, char *realname)
 	}
 
 	filename = (realname ? realname : th_get_pathname(t));
-	mode = th_get_mode(t);
+	//mode = th_get_mode(t);
 	size = th_get_size(t);
-	uid = th_get_uid(t);
-	gid = th_get_gid(t);
+	//uid = th_get_uid(t);
+	//gid = th_get_gid(t);
 
 	if (mkdirhier(dirname(filename)) == -1)
 		return -1;
 
 #ifdef DEBUG
-	printf("  ==> extracting: %s (mode %04o, uid %d, gid %d, %d bytes)\n",
-	       filename, mode, uid, gid, size);
+	//printf("  ==> extracting: %s (mode %04o, uid %d, gid %d, %d bytes)\n",
+	//       filename, mode, uid, gid, size);
+	printf("  ==> extracting: %s (file size %d bytes)\n",
+	       filename, size);
 #endif
 	fdout = open(filename, O_WRONLY | O_CREAT | O_TRUNC
 #ifdef O_BINARY
@@ -468,7 +476,6 @@ tar_extract_dir(TAR *t, char *realname)
 {
 	mode_t mode;
 	char *filename;
-	printf("filename: %s\n", filename);
 	if (!TH_ISDIR(t))
 	{
 		errno = EINVAL;
@@ -478,8 +485,10 @@ tar_extract_dir(TAR *t, char *realname)
 	filename = (realname ? realname : th_get_pathname(t));
 	mode = th_get_mode(t);
 
-	if (mkdirhier(dirname(filename)) == -1)
+	if (mkdirhier(dirname(filename)) == -1) {
+		printf("tar_extract_dir mkdirhier failed\n");
 		return -1;
+	}
 
 #ifdef DEBUG
 	printf("  ==> extracting: %s (mode %04o, directory)\n", filename,
@@ -489,20 +498,9 @@ tar_extract_dir(TAR *t, char *realname)
 	{
 		if (errno == EEXIST)
 		{
-			if (chmod(filename, mode) == -1)
-			{
 #ifdef DEBUG
-				perror("chmod()");
+			printf("  *** using existing directory");
 #endif
-				return -1;
-			}
-			else
-			{
-#ifdef DEBUG
-				puts("  *** using existing directory");
-#endif
-				return 1;
-			}
 		}
 		else
 		{

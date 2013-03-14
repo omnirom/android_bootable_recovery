@@ -79,7 +79,7 @@ tar_extract_all(TAR *t, char *prefix)
 		printf("    tar_extract_all(): calling tar_extract_file(t, "
 		       "\"%s\")\n", buf);
 #endif
-		printf("filename: %s\n", filename);
+		printf("item name: '%s'\n", filename);
 		/*
 		if (strcmp(filename, "/") == 0) {
 			printf("skipping /\n");
