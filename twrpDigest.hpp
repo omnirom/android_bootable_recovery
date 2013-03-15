@@ -30,6 +30,6 @@ class twrpDigest {
 	private:
 		int read_md5digest(void);
 		string md5fn;
-		vector<string> lines;
+		string line;
 		unsigned char md5sum[MD5LENGTH];
 };
