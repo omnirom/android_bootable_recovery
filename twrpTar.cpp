@@ -215,7 +215,6 @@ int twrpTar::Generate_Multiple_Archives(string Path) {
 		if (de->d_type == DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
 		{
 			unsigned long long folder_size = TWFunc::Get_Folder_Size(FileName, false);
-			tardir = FileName;
 			if (Archive_Current_Size + folder_size > MAX_ARCHIVE_SIZE) {
 				LOGI("Calling Generate_Multiple_Archives\n");
 				if (Generate_Multiple_Archives(FileName) < 0)
@@ -337,41 +336,43 @@ int twrpTar::extract() {
 int twrpTar::tarDirs(bool include_root) {
 	DIR* d;
 	string mainfolder = tardir + "/", subfolder;
-	char buf[1024];
-	char* charTarFile = (char*) tarfn.c_str();
+	char buf[PATH_MAX];
 	d = opendir(tardir.c_str());
 	if (d != NULL) {
 		struct dirent* de;
 		while ((de = readdir(d)) != NULL) {
-			LOGI("adding %s\n", de->d_name);
 #ifdef RECOVERY_SDCARD_ON_DATA
 			if ((tardir == "/data" || tardir == "/data/") && strcmp(de->d_name, "media") == 0) continue;
-			if (de->d_type == DT_BLK || de->d_type == DT_CHR)
-				continue;
 #endif
-			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)   continue;
-
+			if (de->d_type == DT_BLK || de->d_type == DT_CHR || strcmp(de->d_name, "..") == 0)
+				continue;
 			subfolder = mainfolder;
-			subfolder += de->d_name;
+			if (strcmp(de->d_name, ".") != 0) {
+				subfolder += de->d_name;
+			} else {
+				LOGI("adding '%s'\n", subfolder.c_str());
+				if (addFile(subfolder, include_root) != 0)
+					return -1;
+				continue;
+			}
+			LOGI("adding '%s'\n", subfolder.c_str());
 			strcpy(buf, subfolder.c_str());
 			if (de->d_type == DT_DIR) {
-					if (include_root) {
-				if (tar_append_tree(t, buf, NULL) != 0) {
-					LOGE("Error appending '%s' to tar archive '%s'\n", buf, charTarFile);
+				char* charTarPath;
+				if (include_root) {
+					charTarPath = NULL;
+				} else {
+					string temp = Strip_Root_Dir(buf);
+					charTarPath = (char*) temp.c_str();
+				}
+				if (tar_append_tree(t, buf, charTarPath) != 0) {
+					LOGE("Error appending '%s' to tar archive '%s'\n", buf, tarfn.c_str());
 					return -1;
 				}
-							} else {
-								string temp = Strip_Root_Dir(buf);
-								char* charTarPath = (char*) temp.c_str();
-								if (tar_append_tree(t, buf, charTarPath) != 0) {
-					LOGE("Error appending '%s' to tar archive '%s'\n", buf, charTarFile);
-					return -1;
-				}
-							}
 			} else if (tardir != "/" && (de->d_type == DT_REG || de->d_type == DT_LNK)) {
-							if (addFile(buf, include_root) != 0)
-								return -1;
-						}
+				if (addFile(buf, include_root) != 0)
+					return -1;
+			}
 			fflush(NULL);
 		}
 		closedir(d);
