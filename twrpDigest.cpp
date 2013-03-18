@@ -84,7 +84,7 @@ int twrpDigest::write_md5digest(void) {
 
 int twrpDigest::read_md5digest(void) {
 	string md5file = md5fn + ".md5";
-	if (TWFunc::read_file(md5file, lines) != 0)
+	if (TWFunc::read_file(md5file, line) != 0)
 		return -1;
 	return 0;
 }
@@ -94,10 +94,9 @@ int twrpDigest::verify_md5digest(void) {
 	char hex[3];
 	int i;
 	string md5string;
-
 	if (read_md5digest() != 0)
 		return -1;
-	stringstream ss(lines.at(0));
+	stringstream ss(line);
 	vector<string> tokens;
 	while (ss >> buf)
 		tokens.push_back(buf);

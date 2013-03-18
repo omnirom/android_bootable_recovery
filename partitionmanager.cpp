@@ -501,12 +501,8 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 		string strfn;
 		sprintf(filename, "%s%03i", Full_File.c_str(), index);
 		strfn = filename;
-		ostringstream intToStr;
-		ostringstream fn;
 		while (TWFunc::Path_Exists(filename) == true) {
-			intToStr << index;
-			fn << setw(3) << setfill('0') << intToStr.str();
-			md5sum.setfn(strfn);
+			md5sum.setfn(filename);
 			if (md5sum.computeMD5() == 0) {
 				if (md5sum.write_md5digest() != 0)
 				{
