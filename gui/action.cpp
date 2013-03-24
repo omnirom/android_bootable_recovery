@@ -1,4 +1,20 @@
-// image.cpp - GUIImage object
+/*
+	Copyright 2013 bigbiff/Dees_Troy TeamWin
+	This file is part of TWRP/TeamWin Recovery Project.
+
+	TWRP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	TWRP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -745,6 +761,51 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					ret_val = PartitionManager.Wipe_By_Path(External_Path);
 				} else if (arg == "ANDROIDSECURE") {
 					ret_val = PartitionManager.Wipe_Android_Secure();
+				} else if (arg == "LIST") {
+					string Wipe_List, wipe_path;
+					bool skip = false;
+					ret_val = true;
+					TWPartition* wipe_part = NULL;
+
+					DataManager::GetValue("tw_wipe_list", Wipe_List);
+					LOGI("wipe list '%s'\n", Wipe_List.c_str());
+					if (!Wipe_List.empty()) {
+						size_t start_pos = 0, end_pos = Wipe_List.find(";", start_pos);
+						while (end_pos != string::npos && start_pos < Wipe_List.size()) {
+							wipe_path = Wipe_List.substr(start_pos, end_pos - start_pos);
+							LOGI("wipe_path '%s'\n", wipe_path.c_str());
+							if (wipe_path == "/and-sec") {
+								if (!PartitionManager.Wipe_Android_Secure()) {
+									LOGE("Unable to wipe android secure\n");
+									ret_val = false;
+									break;
+								} else {
+									skip = true;
+								}
+							} else if (wipe_path == "DALVIK") {
+								if (!PartitionManager.Wipe_Dalvik_Cache()) {
+									LOGE("Failed to wipe dalvik\n");
+									ret_val = false;
+									break;
+								} else {
+									skip = true;
+								}
+							}
+							if (!skip) {
+								if (!PartitionManager.Wipe_By_Path(wipe_path)) {
+									LOGE("Unable to wipe '%s'\n", wipe_path.c_str());
+									ret_val = false;
+									break;
+								} else if (wipe_path == DataManager::GetSettingsStoragePath()) {
+									arg = wipe_path;
+								}
+							} else {
+								skip = false;
+							}
+							start_pos = end_pos + 1;
+							end_pos = Wipe_List.find(";", start_pos);
+						}
+					}
 				} else
 					ret_val = PartitionManager.Wipe_By_Path(arg);
 

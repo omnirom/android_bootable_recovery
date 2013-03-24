@@ -1,4 +1,21 @@
-// base_objects.cpp - Source to manage GUI base objects
+/*
+	Copyright 2013 bigbiff/Dees_Troy TeamWin
+	This file is part of TWRP/TeamWin Recovery Project.
+
+	TWRP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	TWRP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+*/
+// pages.cpp - Source to manage GUI base objects
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -275,6 +292,12 @@ bool Page::ProcessNode(xml_node<>* page, xml_node<>* templates /* = NULL */, int
 			mRenders.push_back(element);
 			mActions.push_back(element);
 			mInputs.push_back(element);
+		}
+		else if (type == "partitionlist")
+		{
+			GUIPartitionList* element = new GUIPartitionList(child);
+			mRenders.push_back(element);
+			mActions.push_back(element);
 		}
         else if (type == "template")
         {

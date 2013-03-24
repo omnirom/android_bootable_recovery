@@ -57,12 +57,8 @@ public:
 
 	static string GetCurrentStoragePath(void);
 	static string& CGetCurrentStoragePath();
-	static string GetCurrentStorageMount(void);
-	static string& CGetCurrentStorageMount();
 	static string GetSettingsStoragePath(void);
 	static string& CGetSettingsStoragePath();
-	static string GetSettingsStorageMount(void);
-	static string& CGetSettingsStorageMount();
 
 protected:
     typedef pair<string, int> TStrIntPair;

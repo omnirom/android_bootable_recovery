@@ -215,52 +215,41 @@ int OpenRecoveryScript::run_script_file(void) {
 				DataManager::SetValue("tw_restore", folder_path);
 
 				PartitionManager.Set_Restore_Files(folder_path);
+				string Partition_List;
+				DataManager::GetValue("tw_restore_list", Partition_List);
 				if (strlen(partitions) != 0) {
-					int tw_restore_system = 0;
-					int tw_restore_data = 0;
-					int tw_restore_cache = 0;
-					int tw_restore_recovery = 0;
-					int tw_restore_boot = 0;
-					int tw_restore_andsec = 0;
-					int tw_restore_sdext = 0;
-					int tw_restore_sp1 = 0;
-					int tw_restore_sp2 = 0;
-					int tw_restore_sp3 = 0;
+					string Restore_List;
 
 					memset(value2, 0, sizeof(value2));
 					strcpy(value2, partitions);
 					ui_print("Setting restore options: '%s':\n", value2);
 					line_len = strlen(value2);
 					for (i=0; i<line_len; i++) {
-						if ((value2[i] == 'S' || value2[i] == 's') && DataManager::GetIntValue(TW_RESTORE_SYSTEM_VAR) > 0) {
-							tw_restore_system = 1;
+						if ((value2[i] == 'S' || value2[i] == 's') && Partition_List.find("/system;") != string::npos) {
+							Restore_List += "/system;";
 							ui_print("System\n");
-						} else if ((value2[i] == 'D' || value2[i] == 'd') && DataManager::GetIntValue(TW_RESTORE_DATA_VAR) > 0) {
-							tw_restore_data = 1;
+						} else if ((value2[i] == 'D' || value2[i] == 'd') && Partition_List.find("/data;") != string::npos) {
+							Restore_List += "/data;";
 							ui_print("Data\n");
-						} else if ((value2[i] == 'C' || value2[i] == 'c') && DataManager::GetIntValue(TW_RESTORE_CACHE_VAR) > 0) {
-							tw_restore_cache = 1;
+						} else if ((value2[i] == 'C' || value2[i] == 'c') && Partition_List.find("/cache;") != string::npos) {
+							Restore_List += "/cache;";
 							ui_print("Cache\n");
-						} else if ((value2[i] == 'R' || value2[i] == 'r') && DataManager::GetIntValue(TW_RESTORE_RECOVERY_VAR) > 0) {
-							tw_restore_recovery = 1;
-							ui_print("Recovery\n");
+						} else if ((value2[i] == 'R' || value2[i] == 'r') && Partition_List.find("/recovery;") != string::npos) {
+							ui_print("Recovery -- Not allowed to restore recovery\n");
 						} else if (value2[i] == '1' && DataManager::GetIntValue(TW_RESTORE_SP1_VAR) > 0) {
-							tw_restore_sp1 = 1;
-							ui_print("%s\n", "Special1");
+							ui_print("%s\n", "Special1 -- No Longer Supported...");
 						} else if (value2[i] == '2' && DataManager::GetIntValue(TW_RESTORE_SP2_VAR) > 0) {
-							tw_restore_sp2 = 1;
-							ui_print("%s\n", "Special2");
+							ui_print("%s\n", "Special2 -- No Longer Supported...");
 						} else if (value2[i] == '3' && DataManager::GetIntValue(TW_RESTORE_SP3_VAR) > 0) {
-							tw_restore_sp3 = 1;
-							ui_print("%s\n", "Special3");
-						} else if ((value2[i] == 'B' || value2[i] == 'b') && DataManager::GetIntValue(TW_RESTORE_BOOT_VAR) > 0) {
-							tw_restore_boot = 1;
+							ui_print("%s\n", "Special3 -- No Longer Supported...");
+						} else if ((value2[i] == 'B' || value2[i] == 'b') && Partition_List.find("/boot;") != string::npos) {
+							Restore_List += "/boot;";
 							ui_print("Boot\n");
-						} else if ((value2[i] == 'A' || value2[i] == 'a') && DataManager::GetIntValue(TW_RESTORE_ANDSEC_VAR) > 0) {
-							tw_restore_andsec = 1;
+						} else if ((value2[i] == 'A' || value2[i] == 'a')  && Partition_List.find("/and-sec;") != string::npos) {
+							Restore_List += "/and-sec;";
 							ui_print("Android Secure\n");
-						} else if ((value2[i] == 'E' || value2[i] == 'e') && DataManager::GetIntValue(TW_RESTORE_SDEXT_VAR) > 0) {
-							tw_restore_sdext = 1;
+						} else if ((value2[i] == 'E' || value2[i] == 'e')  && Partition_List.find("/sd-ext;") != string::npos) {
+							Restore_List += "/sd-ext;";
 							ui_print("SD-Ext\n");
 						} else if (value2[i] == 'M' || value2[i] == 'm') {
 							DataManager::SetValue(TW_SKIP_MD5_CHECK_VAR, 1);
@@ -268,29 +257,14 @@ int OpenRecoveryScript::run_script_file(void) {
 						}
 					}
 
-					if (DataManager::GetIntValue(TW_RESTORE_SYSTEM_VAR) && !tw_restore_system)
-						DataManager::SetValue(TW_RESTORE_SYSTEM_VAR, 0);
-					if (DataManager::GetIntValue(TW_RESTORE_DATA_VAR) && !tw_restore_data)
-						DataManager::SetValue(TW_RESTORE_DATA_VAR, 0);
-					if (DataManager::GetIntValue(TW_RESTORE_CACHE_VAR) && !tw_restore_cache)
-						DataManager::SetValue(TW_RESTORE_CACHE_VAR, 0);
-					if (DataManager::GetIntValue(TW_RESTORE_RECOVERY_VAR) && !tw_restore_recovery)
-						DataManager::SetValue(TW_RESTORE_RECOVERY_VAR, 0);
-					if (DataManager::GetIntValue(TW_RESTORE_BOOT_VAR) && !tw_restore_boot)
-						DataManager::SetValue(TW_RESTORE_BOOT_VAR, 0);
-					if (DataManager::GetIntValue(TW_RESTORE_ANDSEC_VAR) && !tw_restore_andsec)
-						DataManager::SetValue(TW_RESTORE_ANDSEC_VAR, 0);
-					if (DataManager::GetIntValue(TW_RESTORE_SDEXT_VAR) && !tw_restore_sdext)
-						DataManager::SetValue(TW_RESTORE_SDEXT_VAR, 0);
-					if (DataManager::GetIntValue(TW_RESTORE_SP1_VAR) && !tw_restore_sp1)
-						DataManager::SetValue(TW_RESTORE_SP1_VAR, 0);
-					if (DataManager::GetIntValue(TW_RESTORE_SP2_VAR) && !tw_restore_sp2)
-						DataManager::SetValue(TW_RESTORE_SP2_VAR, 0);
-					if (DataManager::GetIntValue(TW_RESTORE_SP3_VAR) && !tw_restore_sp3)
-						DataManager::SetValue(TW_RESTORE_SP3_VAR, 0);
+					DataManager::SetValue("tw_restore_selected", Restore_List);
+				} else {
+					DataManager::SetValue("tw_restore_selected", Partition_List);
 				}
-				PartitionManager.Run_Restore(folder_path);
-				ui_print("Restore complete!\n");
+				if (!PartitionManager.Run_Restore(folder_path))
+					ret_val = 1;
+				else
+					ui_print("Restore complete!\n");
 			} else if (strcmp(command, "mount") == 0) {
 				// Mount
 				DataManager::SetValue("tw_action_text2", "Mounting");
@@ -493,20 +467,10 @@ string OpenRecoveryScript::Locate_Zip_File(string Zip, string Storage_Root) {
 int OpenRecoveryScript::Backup_Command(string Options) {
 	char value1[SCRIPT_COMMAND_SIZE];
 	int line_len, i;
+	string Backup_List;
 
 	strcpy(value1, Options.c_str());
 
-	DataManager::SetValue(TW_BACKUP_SYSTEM_VAR, 0);
-	DataManager::SetValue(TW_BACKUP_DATA_VAR, 0);
-	DataManager::SetValue(TW_BACKUP_CACHE_VAR, 0);
-	DataManager::SetValue(TW_BACKUP_RECOVERY_VAR, 0);
-	DataManager::SetValue(TW_BACKUP_SP1_VAR, 0);
-	DataManager::SetValue(TW_BACKUP_SP2_VAR, 0);
-	DataManager::SetValue(TW_BACKUP_SP3_VAR, 0);
-	DataManager::SetValue(TW_BACKUP_BOOT_VAR, 0);
-	DataManager::SetValue(TW_BACKUP_ANDSEC_VAR, 0);
-	DataManager::SetValue(TW_BACKUP_SDEXT_VAR, 0);
-	DataManager::SetValue(TW_BACKUP_SDEXT_VAR, 0);
 	DataManager::SetValue(TW_USE_COMPRESSION_VAR, 0);
 	DataManager::SetValue(TW_SKIP_MD5_GENERATE_VAR, 0);
 
@@ -514,34 +478,31 @@ int OpenRecoveryScript::Backup_Command(string Options) {
 	line_len = Options.size();
 	for (i=0; i<line_len; i++) {
 		if (Options.substr(i, 1) == "S" || Options.substr(i, 1) == "s") {
-			DataManager::SetValue(TW_BACKUP_SYSTEM_VAR, 1);
+			Backup_List += "/system;";
 			ui_print("System\n");
 		} else if (Options.substr(i, 1) == "D" || Options.substr(i, 1) == "d") {
-			DataManager::SetValue(TW_BACKUP_DATA_VAR, 1);
+			Backup_List += "/data;";
 			ui_print("Data\n");
 		} else if (Options.substr(i, 1) == "C" || Options.substr(i, 1) == "c") {
-			DataManager::SetValue(TW_BACKUP_CACHE_VAR, 1);
+			Backup_List += "/cache;";
 			ui_print("Cache\n");
 		} else if (Options.substr(i, 1) == "R" || Options.substr(i, 1) == "r") {
-			DataManager::SetValue(TW_BACKUP_RECOVERY_VAR, 1);
+			Backup_List += "/recovery;";
 			ui_print("Recovery\n");
 		} else if (Options.substr(i, 1) == "1") {
-			DataManager::SetValue(TW_BACKUP_SP1_VAR, 1);
-			ui_print("%s\n", "Special1");
+			ui_print("%s\n", "Special1 -- No Longer Supported...");
 		} else if (Options.substr(i, 1) == "2") {
-			DataManager::SetValue(TW_BACKUP_SP2_VAR, 1);
-			ui_print("%s\n", "Special2");
+			ui_print("%s\n", "Special2 -- No Longer Supported...");
 		} else if (Options.substr(i, 1) == "3") {
-			DataManager::SetValue(TW_BACKUP_SP3_VAR, 1);
-			ui_print("%s\n", "Special3");
+			ui_print("%s\n", "Special3 -- No Longer Supported...");
 		} else if (Options.substr(i, 1) == "B" || Options.substr(i, 1) == "b") {
-			DataManager::SetValue(TW_BACKUP_BOOT_VAR, 1);
+			Backup_List += "/boot;";
 			ui_print("Boot\n");
 		} else if (Options.substr(i, 1) == "A" || Options.substr(i, 1) == "a") {
-			DataManager::SetValue(TW_BACKUP_ANDSEC_VAR, 1);
+			Backup_List += "/and-sec;";
 			ui_print("Android Secure\n");
 		} else if (Options.substr(i, 1) == "E" || Options.substr(i, 1) == "e") {
-			DataManager::SetValue(TW_BACKUP_SDEXT_VAR, 1);
+			Backup_List += "/sd-ext;";
 			ui_print("SD-Ext\n");
 		} else if (Options.substr(i, 1) == "O" || Options.substr(i, 1) == "o") {
 			DataManager::SetValue(TW_USE_COMPRESSION_VAR, 1);
@@ -551,6 +512,7 @@ int OpenRecoveryScript::Backup_Command(string Options) {
 			ui_print("MD5 Generation is off\n");
 		}
 	}
+	DataManager::SetValue("tw_backup_list", Backup_List);
 	if (!PartitionManager.Run_Backup()) {
 		LOGE("Backup failed!\n");
 		return 1;

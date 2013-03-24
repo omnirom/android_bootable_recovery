@@ -35,8 +35,10 @@ GUIFill::GUIFill(xml_node<>* node)
         return;
 
     attr = node->first_attribute("color");
-    if (!attr)
+    if (!attr) {
+		LOGE("No color specified for fill\n");
         return;
+	}
 
     std::string color = attr->value();
     ConvertStrToColor(color, &mColor);

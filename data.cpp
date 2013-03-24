@@ -226,7 +226,12 @@ int DataManager::LoadValues(const string filename)
 
     // Read in the file, if possible
     FILE* in = fopen(filename.c_str(), "rb");
-    if (!in)    return 0;
+    if (!in) {
+		LOGI("Settings file '%s' not found.\n", filename.c_str());
+		return 0;
+	} else {
+		LOGI("Loading settings from '%s'.\n", filename.c_str());
+	}
 
     int file_version;
     if (fread(&file_version, 1, sizeof(int), in) != sizeof(int))    goto error;
@@ -259,24 +264,19 @@ int DataManager::LoadValues(const string filename)
         }
         else
             mValues.insert(TNameValuePair(Name, TStrIntPair(Value, 1)));
+		if (Name == "tw_screen_timeout_secs")
+			blankTimer.setTime(atoi(Value.c_str()));
     }
-    fclose(in);
-
-	str = GetCurrentStoragePath();
-	str += "/TWRP/BACKUPS/";
-	str += dev_id;
-	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
-
-    return 0;
-
 error:
-    // File version mismatch. Use defaults.
     fclose(in);
-	str = GetCurrentStoragePath();
-	str += "/TWRP/BACKUPS/";
-	str += dev_id;
-	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
-    return -1;
+	string current = GetCurrentStoragePath();
+	string settings = GetSettingsStoragePath();
+	if (current != settings && !PartitionManager.Mount_By_Path(current, false)) {
+		SetValue("tw_storage_path", settings);
+	} else {
+		SetBackupFolder();
+	}
+    return 0;
 }
 
 int DataManager::Flush()
@@ -433,10 +433,10 @@ int DataManager::SetValue(const string varName, string value, int persist /* = 0
         SaveValues();
 	if (varName == "tw_screen_timeout_secs") {
 		blankTimer.setTime(atoi(value.c_str()));
+	} else if (varName == "tw_storage_path") {
+		SetBackupFolder();
 	}
-	else {
-		gui_notifyVarChange(varName.c_str(), value.c_str());
-	}
+	gui_notifyVarChange(varName.c_str(), value.c_str());
     return 0;
 }
 
@@ -458,13 +458,8 @@ int DataManager::SetValue(const string varName, int value, int persist /* = 0 */
 		else
 			str = GetStrValue(TW_EXTERNAL_PATH);
 
-		string dev_id;
-
-		GetValue("device_id", dev_id);
-		str += "/TWRP/BACKUPS/";
-		str += dev_id;
-
-		SetValue(TW_BACKUPS_FOLDER_VAR, str);
+		SetValue("tw_storage_path", str);
+		SetBackupFolder();
 	}
     return SetValue(varName, valStr.str(), persist);;
 }
@@ -501,13 +496,38 @@ void DataManager::update_tz_environment_variables(void) {
 void DataManager::SetBackupFolder()
 {
 	string str = GetCurrentStoragePath();
+	TWPartition* partition = PartitionManager.Find_Partition_By_Path(str);
 	str += "/TWRP/BACKUPS/";
 
 	string dev_id;
 	GetValue("device_id", dev_id);
 
     str += dev_id;
+	LOGI("Backup folder set to '%s'\n", str.c_str());
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
+	if (partition != NULL) {
+		SetValue("tw_storage_display_name", partition->Storage_Name);
+		char free_space[255];
+		sprintf(free_space, "%llu", partition->Free / 1024 / 1024);
+		SetValue("tw_storage_free_size", free_space);
+		string zip_path, zip_root, storage_path;
+		GetValue(TW_ZIP_LOCATION_VAR, zip_path);
+		if (partition->Has_Data_Media)
+			storage_path = partition->Symlink_Mount_Point;
+		else
+			storage_path = partition->Storage_Path;
+		if (zip_path.size() < storage_path.size()) {
+			SetValue(TW_ZIP_LOCATION_VAR, storage_path);
+		} else {
+			zip_root= zip_path;
+			zip_root.resize(storage_path.size() + 1);
+			if (zip_root != storage_path)
+				SetValue(TW_ZIP_LOCATION_VAR, storage_path);
+		}
+	} else {
+		if (PartitionManager.Fstab_Processed() != 0)
+			LOGE("Storage partition '%s' not found\n", str.c_str());
+	}
 }
 
 void DataManager::SetDefaultValues()
@@ -522,6 +542,7 @@ void DataManager::SetDefaultValues()
     mConstValues.insert(make_pair("false", "0"));
 
     mConstValues.insert(make_pair(TW_VERSION_VAR, TW_VERSION_STR));
+	mValues.insert(make_pair("tw_storage_path", make_pair("/", 1)));
 
 #ifdef TW_FORCE_CPUINFO_FOR_DEVICE_ID
 	printf("TW_FORCE_CPUINFO_FOR_DEVICE_ID := true\n");
@@ -788,7 +809,12 @@ void DataManager::SetDefaultValues()
 	mConstValues.insert(make_pair(TW_SDEXT_DISABLE_EXT4, "0"));
 #endif
 
-    mConstValues.insert(make_pair(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE));
+#ifdef TW_HAS_NO_BOOT_PARTITION
+	mValues.insert(make_pair("tw_backup_list", make_pair("/system;/data;", 0)));
+#else
+	mValues.insert(make_pair("tw_backup_list", make_pair("/system;/data;/boot;", 0)));
+#endif
+	mConstValues.insert(make_pair(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE));
 	mValues.insert(make_pair(TW_BACKUP_NAME, make_pair("(Current Date)", 0)));
 	mValues.insert(make_pair(TW_BACKUP_SYSTEM_VAR, make_pair("1", 1)));
     mValues.insert(make_pair(TW_BACKUP_DATA_VAR, make_pair("1", 1)));
@@ -882,7 +908,7 @@ void DataManager::SetDefaultValues()
 		mConstValues.insert(make_pair("tw_has_brightnesss_file", "0"));
 	}
 #endif
-	mValues.insert(make_pair(TW_MILITARY_TIME, make_pair("0", 0)));
+	mValues.insert(make_pair(TW_MILITARY_TIME, make_pair("0", 1)));
 }
 
 // Magic Values
@@ -1018,7 +1044,7 @@ void DataManager::ReadSettingsFile(void)
 	{
 		usleep(500000);
 		if (!PartitionManager.Mount_Settings_Storage(false))
-			LOGE("Unable to mount %s when trying to read settings file.\n", DataManager_GetSettingsStorageMount());
+			LOGE("Unable to mount %s when trying to read settings file.\n", settings_file);
 	}
 
 	mkdir(mkdir_path, 0777);
@@ -1063,86 +1089,22 @@ void DataManager::ReadSettingsFile(void)
 
 string DataManager::GetCurrentStoragePath(void)
 {
-	if (GetIntValue(TW_HAS_DUAL_STORAGE) == 1) {
-		if (GetIntValue(TW_USE_EXTERNAL_STORAGE) == 0)
-			return GetStrValue(TW_INTERNAL_PATH);
-		else
-			return GetStrValue(TW_EXTERNAL_PATH);
-	} else if (GetIntValue(TW_HAS_INTERNAL) == 1)
-		return GetStrValue(TW_INTERNAL_PATH);
-	else
-		return GetStrValue(TW_EXTERNAL_PATH);
+	return GetStrValue("tw_storage_path");
 }
 
 string& DataManager::CGetCurrentStoragePath()
 {
-	if (GetIntValue(TW_HAS_DUAL_STORAGE) == 1) {
-		if (GetIntValue(TW_USE_EXTERNAL_STORAGE) == 0)
-			return GetValueRef(TW_INTERNAL_PATH);
-		else
-			return GetValueRef(TW_EXTERNAL_PATH);
-	} else if (GetIntValue(TW_HAS_INTERNAL) == 1)
-		return GetValueRef(TW_INTERNAL_PATH);
-	else
-		return GetValueRef(TW_EXTERNAL_PATH);
-}
-
-string DataManager::GetCurrentStorageMount(void)
-{
-	if (GetIntValue(TW_HAS_DUAL_STORAGE) == 1) {
-		if (GetIntValue(TW_USE_EXTERNAL_STORAGE) == 0)
-			return GetStrValue(TW_INTERNAL_MOUNT);
-		else
-			return GetStrValue(TW_EXTERNAL_MOUNT);
-	} else if (GetIntValue(TW_HAS_INTERNAL) == 1)
-		return GetStrValue(TW_INTERNAL_MOUNT);
-	else
-		return GetStrValue(TW_EXTERNAL_MOUNT);
-}
-
-string& DataManager::CGetCurrentStorageMount()
-{
-	if (GetIntValue(TW_HAS_DUAL_STORAGE) == 1) {
-		if (GetIntValue(TW_USE_EXTERNAL_STORAGE) == 0)
-			return GetValueRef(TW_INTERNAL_MOUNT);
-		else
-			return GetValueRef(TW_EXTERNAL_MOUNT);
-	} else if (GetIntValue(TW_HAS_INTERNAL) == 1)
-		return GetValueRef(TW_INTERNAL_MOUNT);
-	else
-		return GetValueRef(TW_EXTERNAL_MOUNT);
+	return GetValueRef("tw_storage_path");
 }
 
 string DataManager::GetSettingsStoragePath(void)
 {
-	if (GetIntValue(TW_HAS_INTERNAL) == 1)
-		return GetStrValue(TW_INTERNAL_PATH);
-	else
-		return GetStrValue(TW_EXTERNAL_PATH);
+	return GetStrValue("tw_settings_path");
 }
 
 string& DataManager::CGetSettingsStoragePath()
 {
-	if (GetIntValue(TW_HAS_INTERNAL) == 1)
-		return GetValueRef(TW_INTERNAL_PATH);
-	else
-		return GetValueRef(TW_EXTERNAL_PATH);
-}
-
-string DataManager::GetSettingsStorageMount(void)
-{
-	if (GetIntValue(TW_HAS_INTERNAL) == 1)
-		return GetStrValue(TW_INTERNAL_MOUNT);
-	else
-		return GetStrValue(TW_EXTERNAL_MOUNT);
-}
-
-string& DataManager::CGetSettingsStorageMount()
-{
-	if (GetIntValue(TW_HAS_INTERNAL) == 1)
-		return GetValueRef(TW_INTERNAL_MOUNT);
-	else
-		return GetValueRef(TW_EXTERNAL_MOUNT);
+	return GetValueRef("tw_settings_path");
 }
 
 extern "C" int DataManager_ResetDefaults()
@@ -1191,18 +1153,6 @@ extern "C" const char* DataManager_GetCurrentStoragePath(void)
 extern "C" const char* DataManager_GetSettingsStoragePath(void)
 {
     string& str = DataManager::CGetSettingsStoragePath();
-    return str.c_str();
-}
-
-extern "C" const char* DataManager_GetCurrentStorageMount(void)
-{
-    string& str = DataManager::CGetCurrentStorageMount();
-    return str.c_str();
-}
-
-extern "C" const char* DataManager_GetSettingsStorageMount(void)
-{
-    string& str = DataManager::CGetSettingsStorageMount();
     return str.c_str();
 }
 

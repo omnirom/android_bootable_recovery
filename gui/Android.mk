@@ -21,6 +21,7 @@ LOCAL_SRC_FILES := \
     keyboard.cpp \
     input.cpp \
     blanktimer.cpp \
+    partitionlist.cpp \
     ../minuitwrp/graphics.c
 
 ifneq ($(TWRP_CUSTOM_KEYBOARD),)

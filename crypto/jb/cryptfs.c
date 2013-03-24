@@ -317,7 +317,7 @@ static int get_crypt_ftr_and_key(char *real_blk_name, struct crypt_mnt_ftr *cryp
     /* the footer size is bigger than we expected.
      * Skip to it's stated end so we can read the key.
      */
-    if (lseek(fd, crypt_ftr->ftr_size - sizeof(struct crypt_mnt_ftr),  SEEK_CUR) == -1) {
+    if (lseek64(fd, crypt_ftr->ftr_size - sizeof(struct crypt_mnt_ftr),  SEEK_CUR) == -1) {
       SLOGE("Cannot seek to start of key\n");
       goto errout;
     }

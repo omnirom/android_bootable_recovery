@@ -1,4 +1,20 @@
-// button.cpp - GUIButton object
+/*
+	Copyright 2012 bigbiff/Dees_Troy TeamWin
+	This file is part of TWRP/TeamWin Recovery Project.
+
+	TWRP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	TWRP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -39,6 +55,7 @@ GUIButton::GUIButton(xml_node<>* node)
     mRendered = false;
 	hasHighlightColor = false;
 	renderHighlight = false;
+	hasFill = false;
 
     if (!node)  return;
 
@@ -49,7 +66,6 @@ GUIButton::GUIButton(xml_node<>* node)
 
     if (mButtonImg->Render() < 0)
     {
-        LOGE("Unable to locate button image\n");
         delete mButtonImg;
         mButtonImg = NULL;
     }
@@ -58,6 +74,21 @@ GUIButton::GUIButton(xml_node<>* node)
         delete mButtonLabel;
         mButtonLabel = NULL;
     }
+	// Load fill if it exists
+	memset(&mFillColor, 0, sizeof(COLOR));
+	child = node->first_node("fill");
+    if (child)
+    {
+		attr = child->first_attribute("color");
+		if (attr) {
+			hasFill = true;
+			std::string color = attr->value();
+			ConvertStrToColor(color, &mFillColor);
+		}
+	}
+	if (!hasFill && mButtonImg == NULL) {
+		LOGE("No image resource or fill specified for button.\n");
+	}
 
     // The icon is a special case
     child = node->first_node("icon");
@@ -80,8 +111,12 @@ GUIButton::GUIButton(xml_node<>* node)
 	}
 
     int x, y, w, h;
-    if (mButtonImg)     mButtonImg->GetRenderPos(x, y, w, h);
-    SetRenderPos(x, y, w, h);
+    if (mButtonImg) {
+		mButtonImg->GetRenderPos(x, y, w, h);
+	} else if (hasFill) {
+		LoadPlacement(node->first_node("placement"), &x, &y, &w, &h);
+	}
+	SetRenderPos(x, y, w, h);
     return;
 }
 
@@ -105,10 +140,32 @@ int GUIButton::Render(void)
 
     if (mButtonImg)     ret = mButtonImg->Render();
     if (ret < 0)        return ret;
+	if (hasFill) {
+		gr_color(mFillColor.red, mFillColor.green, mFillColor.blue, mFillColor.alpha);
+		gr_fill(mRenderX, mRenderY, mRenderW, mRenderH);
+	}
     if (mButtonIcon && mButtonIcon->GetResource())
         gr_blit(mButtonIcon->GetResource(), 0, 0, mIconW, mIconH, mIconX, mIconY);
-    if (mButtonLabel)   ret = mButtonLabel->Render();
-    if (ret < 0)        return ret;
+    if (mButtonLabel) {
+		int w, h;
+		mButtonLabel->GetCurrentBounds(w, h);
+		if (w != mTextW) {
+			mTextW = w;
+			// As a special case, we'll allow large text which automatically moves it to the right.
+			if (mTextW > mRenderW)
+			{
+				mTextX = mRenderW + mRenderX + 5;
+				mRenderW += mTextW + 5;
+			}
+			else
+			{
+				mTextX = mRenderX + ((mRenderW - mTextW) / 2);
+			}
+			mButtonLabel->SetRenderPos(mTextX, mTextY);
+		}
+		ret = mButtonLabel->Render();
+		if (ret < 0)        return ret;
+	}
 	if (renderHighlight && hasHighlightColor) {
 		gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, mHighlightColor.alpha);
 		gr_fill(mRenderX, mRenderY, mRenderW, mRenderH);
@@ -129,9 +186,11 @@ int GUIButton::Update(void)
 
     if (ret == 0)
     {
-        if (mButtonLabel)   ret2 = mButtonLabel->Update();
-        if (ret2 < 0)       return ret2;
-        if (ret2 > ret)     ret = ret2;
+        if (mButtonLabel) {
+			ret2 = mButtonLabel->Update();
+			if (ret2 < 0)       return ret2;
+			if (ret2 > ret)     ret = ret2;
+		}
     }
     else if (ret == 1)
     {

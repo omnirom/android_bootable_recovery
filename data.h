@@ -23,9 +23,7 @@ int DataManager_LoadValues(const char* filename);
 int DataManager_Flush();
 const char* DataManager_GetStrValue(const char* varName);
 const char* DataManager_GetCurrentStoragePath();
-const char* DataManager_GetCurrentStorageMount();
 const char* DataManager_GetSettingsStoragePath();
-const char* DataManager_GetSettingsStorageMount();
 int DataManager_GetIntValue(const char* varName);
 
 int DataManager_SetStrValue(const char* varName, char* value);

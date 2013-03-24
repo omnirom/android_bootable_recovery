@@ -30,6 +30,12 @@
 
 using namespace std;
 
+struct PartitionList {
+	std::string Display_Name;
+	std::string Mount_Point;
+	unsigned int selected;
+};
+
 // Partition class
 class TWPartition
 {
@@ -67,6 +73,7 @@ public:
 	string Actual_Block_Device;                                               // Actual block device (one of primary, alternate, or decrypted)
 	string MTD_Name;                                                          // Name of the partition for MTD devices
 
+
 protected:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
 	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
@@ -74,6 +81,7 @@ protected:
 protected:
 	bool Can_Be_Mounted;                                                      // Indicates that the partition can be mounted
 	bool Can_Be_Wiped;                                                        // Indicates that the partition can be wiped
+	bool Can_Be_Backed_Up;                                                    // Indicates that the partition will show up in the backup list
 	bool Wipe_During_Factory_Reset;                                           // Indicates that this partition is wiped during a factory reset
 	bool Wipe_Available_in_GUI;                                               // Inidcates that the wipe can be user initiated in the GUI system
 	bool Is_SubPartition;                                                     // Indicates that this partition is a sub-partition of another partition (e.g. datadata is a sub-partition of data)
@@ -98,11 +106,14 @@ protected:
 	bool Is_Decrypted;                                                        // This partition has successfully been decrypted
 	string Display_Name;                                                      // Display name for the GUI
 	string Backup_Name;                                                       // Backup name -- used for backup filenames
+	string Backup_Display_Name;                                               // Name displayed in the partition list for backup selection
+	string Storage_Name;                                                      // Name displayed in the partition list for storage selection
 	string Backup_FileName;                                                   // Actual backup filename
 	Backup_Method_enum Backup_Method;                                         // Method used for backup
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
 	bool Has_Android_Secure;                                                  // Indicates the presence of .android_secure on this partition
 	bool Is_Storage;                                                          // Indicates if this partition is used for storage for backup, restore, and installing zips
+	bool Is_Settings_Storage;                                                 // Indicates that this storage partition is the location of the .twrps settings file and the location that is used for custom themes
 	string Storage_Path;                                                      // Indicates the path to the storage -- root indicates mount point, media/ indicates e.g. /data/media
 	string Fstab_File_System;                                                 // File system from the recovery.fstab
 	int Format_Block_Size;                                                    // Block size for formatting
@@ -143,6 +154,8 @@ private:
 	void Mount_Storage_Retry(void);                                           // Tries multiple times with a half second delay to mount a device in case storage is slow to mount
 
 friend class TWPartitionManager;
+friend class DataManager;
+friend class GUIPartitionList;
 };
 
 class TWPartitionManager
@@ -193,6 +206,9 @@ public:
 	virtual int Partition_SDCard(void);                                       // Repartitions the sdcard
 
 	virtual int Fix_Permissions(); 
+	virtual void Get_Partition_List(string ListType, std::vector<PartitionList> *Partition_List);
+	virtual int Fstab_Processed();                                            // Indicates if the fstab has been processed or not
+
 private:
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made
 	bool Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes);

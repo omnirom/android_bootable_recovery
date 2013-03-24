@@ -56,6 +56,7 @@ using namespace std;
 TWPartition::TWPartition(void) {
 	Can_Be_Mounted = false;
 	Can_Be_Wiped = false;
+	Can_Be_Backed_Up = false;
 	Wipe_During_Factory_Reset = false;
 	Wipe_Available_in_GUI = false;
 	Is_SubPartition = false;
@@ -80,6 +81,8 @@ TWPartition::TWPartition(void) {
 	Is_Decrypted = false;
 	Decrypted_Block_Device = "";
 	Display_Name = "";
+	Backup_Display_Name = "";
+	Storage_Name = "";
 	Backup_Name = "";
 	Backup_FileName = "";
 	MTD_Name = "";
@@ -87,6 +90,7 @@ TWPartition::TWPartition(void) {
 	Has_Data_Media = false;
 	Has_Android_Secure = false;
 	Is_Storage = false;
+	Is_Settings_Storage = false;
 	Storage_Path = "";
 	Current_File_System = "";
 	Fstab_File_System = "";
@@ -108,14 +112,18 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 	char* ptr;
 	string Flags;
 	strncpy(full_line, Line.c_str(), line_len);
+	bool skip = false;
 
 	for (index = 0; index < line_len; index++) {
-		if (full_line[index] <= 32)
+		if (full_line[index] == 34)
+			skip = !skip;
+		if (!skip && full_line[index] <= 32)
 			full_line[index] = '\0';
 	}
 	Mount_Point = full_line;
 	LOGI("Processing '%s'\n", Mount_Point.c_str());
 	Backup_Path = Mount_Point;
+	Storage_Path = Mount_Point;
 	index = Mount_Point.size();
 	while (index < line_len) {
 		while (index < line_len && full_line[index] == '\0')
@@ -188,14 +196,22 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 		Setup_File_System(Display_Error);
 		if (Mount_Point == "/system") {
 			Display_Name = "System";
+			Backup_Display_Name = Display_Name;
+			Storage_Name = Display_Name;
 			Wipe_Available_in_GUI = true;
+			Can_Be_Backed_Up = true;
 		} else if (Mount_Point == "/data") {
 			Display_Name = "Data";
+			Backup_Display_Name = Display_Name;
+			Storage_Name = Display_Name;
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
+			Can_Be_Backed_Up = true;
 #ifdef RECOVERY_SDCARD_ON_DATA
+			Storage_Name = "Internal Storage";
 			Has_Data_Media = true;
 			Is_Storage = true;
+			Is_Settings_Storage = true;
 			Storage_Path = "/data/media";
 			Symlink_Path = Storage_Path;
 			if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
@@ -249,8 +265,11 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 #endif
 		} else if (Mount_Point == "/cache") {
 			Display_Name = "Cache";
+			Backup_Display_Name = Display_Name;
+			Storage_Name = Display_Name;
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
+			Can_Be_Backed_Up = true;
 			if (Mount(false) && !TWFunc::Path_Exists("/cache/recovery/.")) {
 				LOGI("Recreating /cache/recovery folder.\n");
 				if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) 
@@ -259,28 +278,38 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 		} else if (Mount_Point == "/datadata") {
 			Wipe_During_Factory_Reset = true;
 			Display_Name = "DataData";
+			Backup_Display_Name = Display_Name;
+			Storage_Name = Display_Name;
 			Is_SubPartition = true;
 			SubPartition_Of = "/data";
 			DataManager::SetValue(TW_HAS_DATADATA, 1);
+			Can_Be_Backed_Up = true;
 		} else if (Mount_Point == "/sd-ext") {
 			Wipe_During_Factory_Reset = true;
 			Display_Name = "SD-Ext";
+			Backup_Display_Name = Display_Name;
+			Storage_Name = Display_Name;
 			Wipe_Available_in_GUI = true;
 			Removable = true;
+			Can_Be_Backed_Up = true;
 		} else if (Mount_Point == "/boot") {
 			Display_Name = "Boot";
+			Backup_Display_Name = Display_Name;
 			DataManager::SetValue("tw_boot_is_mountable", 1);
+			Can_Be_Backed_Up = true;
 		}
 #ifdef TW_EXTERNAL_STORAGE_PATH
 		if (Mount_Point == EXPAND(TW_EXTERNAL_STORAGE_PATH)) {
 			Is_Storage = true;
 			Storage_Path = EXPAND(TW_EXTERNAL_STORAGE_PATH);
 			Removable = true;
+			Wipe_Available_in_GUI = true;
 #else
 		if (Mount_Point == "/sdcard") {
 			Is_Storage = true;
 			Storage_Path = "/sdcard";
 			Removable = true;
+			Wipe_Available_in_GUI = true;
 #ifndef RECOVERY_SDCARD_ON_DATA
 			Setup_AndSec();
 			Mount_Storage_Retry();
@@ -290,7 +319,9 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 #ifdef TW_INTERNAL_STORAGE_PATH
 		if (Mount_Point == EXPAND(TW_INTERNAL_STORAGE_PATH)) {
 			Is_Storage = true;
+			Is_Settings_Storage = true;
 			Storage_Path = EXPAND(TW_INTERNAL_STORAGE_PATH);
+			Wipe_Available_in_GUI = true;
 #ifndef RECOVERY_SDCARD_ON_DATA
 			Setup_AndSec();
 			Mount_Storage_Retry();
@@ -299,7 +330,9 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 #else
 		if (Mount_Point == "/emmc") {
 			Is_Storage = true;
+			Is_Settings_Storage = true;
 			Storage_Path = "/emmc";
+			Wipe_Available_in_GUI = true;
 #ifndef RECOVERY_SDCARD_ON_DATA
 			Setup_AndSec();
 			Mount_Storage_Retry();
@@ -309,6 +342,15 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 	} else if (Is_Image(Fstab_File_System)) {
 		Find_Actual_Block_Device();
 		Setup_Image(Display_Error);
+		if (Mount_Point == "/boot") {
+			Display_Name = "Boot";
+			Backup_Display_Name = Display_Name;
+			Can_Be_Backed_Up = true;
+		} else if (Mount_Point == "/recovery") {
+			Display_Name = "Recovery";
+			Backup_Display_Name = Display_Name;
+			Can_Be_Backed_Up = true;
+		}
 	}
 
 	// Process any custom flags
@@ -319,13 +361,16 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 
 bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 	char flags[MAX_FSTAB_LINE_LENGTH];
-	int flags_len, index = 0;
+	int flags_len, index = 0, ptr_len;
 	char* ptr;
+	bool skip = false, has_display_name = false, has_storage_name = false, has_backup_name = false;
 
 	strcpy(flags, Flags.c_str());
 	flags_len = Flags.size();
 	for (index = 0; index < flags_len; index++) {
-		if (flags[index] == ';')
+		if (flags[index] == 34)
+			skip = !skip;
+		if (!skip && flags[index] == ';')
 			flags[index] = '\0';
 	}
 
@@ -336,12 +381,21 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 		if (index >= flags_len)
 			continue;
 		ptr = flags + index;
+		ptr_len = strlen(ptr);
 		if (strcmp(ptr, "removable") == 0) {
 			Removable = true;
 		} else if (strcmp(ptr, "storage") == 0) {
 			Is_Storage = true;
+		} else if (strcmp(ptr, "settingsstorage") == 0) {
+			Is_Storage = true;
 		} else if (strcmp(ptr, "canbewiped") == 0) {
 			Can_Be_Wiped = true;
+		} else if (ptr_len > 7 && strncmp(ptr, "backup=", 7) == 0) {
+			ptr += 7;
+			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y')
+				Can_Be_Backed_Up = true;
+			else
+				Can_Be_Backed_Up = false;
 		} else if (strcmp(ptr, "wipeingui") == 0) {
 			Can_Be_Wiped = true;
 			Wipe_Available_in_GUI = true;
@@ -349,7 +403,7 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			Can_Be_Wiped = true;
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
-		} else if (strlen(ptr) > 15 && strncmp(ptr, "subpartitionof=", 15) == 0) {
+		} else if (ptr_len > 15 && strncmp(ptr, "subpartitionof=", 15) == 0) {
 			ptr += 15;
 			Is_SubPartition = true;
 			SubPartition_Of = ptr;
@@ -357,16 +411,37 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			Ignore_Blkid = true;
 		} else if (strcmp(ptr, "retainlayoutversion") == 0) {
 			Retain_Layout_Version = true;
-		} else if (strlen(ptr) > 8 && strncmp(ptr, "symlink=", 8) == 0) {
+		} else if (ptr_len > 8 && strncmp(ptr, "symlink=", 8) == 0) {
 			ptr += 8;
 			Symlink_Path = ptr;
-		} else if (strlen(ptr) > 8 && strncmp(ptr, "display=", 8) == 0) {
+		} else if (ptr_len > 8 && strncmp(ptr, "display=", 8) == 0) {
+			has_display_name = true;
 			ptr += 8;
+			if (*ptr == '\"') ptr++;
 			Display_Name = ptr;
-		} else if (strlen(ptr) > 10 && strncmp(ptr, "blocksize=", 10) == 0) {
+			if (Display_Name.substr(Display_Name.size() - 1, 1) == "\"") {
+				Display_Name.resize(Display_Name.size() - 1);
+			}
+		} else if (ptr_len > 11 && strncmp(ptr, "storagename=", 11) == 0) {
+			has_storage_name = true;
+			ptr += 11;
+			if (*ptr == '\"') ptr++;
+			Storage_Name = ptr;
+			if (Storage_Name.substr(Storage_Name.size() - 1, 1) == "\"") {
+				Storage_Name.resize(Storage_Name.size() - 1);
+			}
+		} else if (ptr_len > 11 && strncmp(ptr, "backupname=", 10) == 0) {
+			has_backup_name = true;
+			ptr += 10;
+			if (*ptr == '\"') ptr++;
+			Backup_Display_Name = ptr;
+			if (Backup_Display_Name.substr(Backup_Display_Name.size() - 1, 1) == "\"") {
+				Backup_Display_Name.resize(Backup_Display_Name.size() - 1);
+			}
+		} else if (ptr_len > 10 && strncmp(ptr, "blocksize=", 10) == 0) {
 			ptr += 10;
 			Format_Block_Size = atoi(ptr);
-		} else if (strlen(ptr) > 7 && strncmp(ptr, "length=", 7) == 0) {
+		} else if (ptr_len > 7 && strncmp(ptr, "length=", 7) == 0) {
 			ptr += 7;
 			Length = atoi(ptr);
 		} else {
@@ -378,6 +453,14 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 		while (index < flags_len && flags[index] != '\0')
 			index++;
 	}
+	if (has_display_name && !has_storage_name)
+		Storage_Name = Display_Name;
+	if (!has_display_name && has_storage_name)
+		Display_Name = Storage_Name;
+	if (has_display_name && !has_backup_name)
+		Backup_Display_Name = Display_Name;
+	if (!has_display_name && has_backup_name)
+		Display_Name = Backup_Display_Name;
 	return true;
 }
 
@@ -452,7 +535,9 @@ void TWPartition::Setup_Image(bool Display_Error) {
 }
 
 void TWPartition::Setup_AndSec(void) {
+	Backup_Display_Name = "Android Secure";
 	Backup_Name = "and-sec";
+	Can_Be_Backed_Up = true;
 	Has_Android_Secure = true;
 	Symlink_Path = Mount_Point + "/.android_secure";
 	Symlink_Mount_Point = "/and-sec";
@@ -924,7 +1009,7 @@ bool TWPartition::Wipe_AndSec(void) {
 	if (!Mount(true))
 		return false;
 
-	ui_print("Wiping .android_secure\n");
+	ui_print("Wiping %s\n", Backup_Display_Name.c_str());
 	TWFunc::removeDir(Mount_Point + "/.android_secure/", true);
     return true;
 }
@@ -1293,13 +1378,8 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	if (!Mount(true))
 		return false;
 
-	if (Backup_Path == "/and-sec") {
-		TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, "Android Secure", "Backing Up");
-		ui_print("Backing up %s...\n", "Android Secure");
-	} else {
-		TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, "Backing Up");
-		ui_print("Backing up %s...\n", Display_Name.c_str());
-	}
+	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Backup_Display_Name, "Backing Up");
+	ui_print("Backing up %s...\n", Backup_Display_Name.c_str());
 
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 
@@ -1398,7 +1478,6 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 	char split_index[5];
 
 	if (Has_Android_Secure) {
-		ui_print("Wiping android secure...\n");
 		if (!Wipe_AndSec())
 			return false;
 	} else {
@@ -1406,12 +1485,12 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 		if (!Wipe(Restore_File_System))
 		    return false;
 	}
+	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, "Restoring");
+	ui_print("Restoring %s...\n", Backup_Display_Name.c_str());
 
 	if (!Mount(true))
 		return false;
 
-	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, "Restoring");
-	ui_print("Restoring %s...\n", Display_Name.c_str());
 	Full_FileName = restore_folder + "/" + Backup_FileName;
 	if (!TWFunc::Path_Exists(Full_FileName)) {
 		if (!TWFunc::Path_Exists(Full_FileName)) {
@@ -1575,11 +1654,11 @@ void TWPartition::Recreate_Media_Folder(void) {
 void TWPartition::Recreate_AndSec_Folder(void) {
 	if (!Has_Android_Secure)
 		return;
-	LOGI("Creating .android_secure: %s\n", Symlink_Path.c_str());
+	LOGI("Creating %s: %s\n", Backup_Display_Name.c_str(), Symlink_Path.c_str());
 	if (!Mount(true)) {
-		LOGE("Unable to recreate android secure folder.\n");
+		LOGE("Unable to recreate %s folder.\n", Backup_Name.c_str());
 	} else if (!TWFunc::Path_Exists(Symlink_Path)) {
-		LOGI("Recreating android secure folder.\n");
+		LOGI("Recreating %s folder.\n", Backup_Name.c_str());
 		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
 		mkdir(Symlink_Path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); 
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);

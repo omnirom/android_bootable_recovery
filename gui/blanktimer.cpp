@@ -109,7 +109,17 @@ int blanktimer::getBrightness(void) {
 	string brightness_path = EXPAND(TW_BRIGHTNESS_PATH);
 	if ((TWFunc::read_file(brightness_path, results)) != 0)
 		return -1;
-	return atoi(results.c_str());
+	int result = atoi(results.c_str());
+	if (result == 0) {
+		int tw_brightness;
+		DataManager::GetValue("tw_brightness", tw_brightness);
+		if (tw_brightness) {
+			result = tw_brightness;
+		} else {
+			result = 255;
+		}
+	}
+	return result;
 
 }
 
