@@ -540,6 +540,33 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
             DataManager::SetValue(varName, value);
 			return 0;
         }
+		if (arg.find("*") != string::npos)
+		{
+			string varName = arg.substr(0, arg.find('*'));
+			string multiply_by_str = gui_parse_text(arg.substr(arg.find('*') + 1, string::npos));
+			int multiply_by = atoi(multiply_by_str.c_str());
+			int value;
+
+			DataManager::GetValue(varName, value);
+			DataManager::SetValue(varName, value*multiply_by);
+			return 0;
+		}
+		if (arg.find("/") != string::npos)
+		{
+			string varName = arg.substr(0, arg.find('/'));
+			string divide_by_str = gui_parse_text(arg.substr(arg.find('/') + 1, string::npos));
+			int divide_by = atoi(divide_by_str.c_str());
+			int value;
+
+			if(divide_by != 0)
+			{
+				DataManager::GetValue(varName, value);
+				DataManager::SetValue(varName, value/divide_by);
+			}
+			return 0;
+		}
+		LOGERR("Unable to perform compute '%s'\n", arg.c_str());
+		return -1;
 	}
 	
 	if (function == "setguitimezone")

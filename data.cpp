@@ -470,7 +470,6 @@ int DataManager::SetValue(const string varName, int value, int persist /* = 0 */
 			str = GetStrValue(TW_EXTERNAL_PATH);
 
 		SetValue("tw_storage_path", str);
-		SetBackupFolder();
 	}
     return SetValue(varName, valStr.str(), persist);
 }
@@ -909,26 +908,19 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair("tw_military_time", make_pair("0", 1)));
 	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("60", 1)));
 	mValues.insert(make_pair("tw_gui_done", make_pair("0", 0)));
-#ifdef TW_MAX_BRIGHTNESS
+#ifdef TW_BRIGHTNESS_PATH
+#ifndef TW_MAX_BRIGHTNESS
+#define TW_MAX_BRIGHTNESS 255
+#endif
 	if (strcmp(EXPAND(TW_BRIGHTNESS_PATH), "/nobrightness") != 0) {
 		LOGINFO("TW_BRIGHTNESS_PATH := %s\n", EXPAND(TW_BRIGHTNESS_PATH));
 		mConstValues.insert(make_pair("tw_has_brightnesss_file", "1"));
 		mConstValues.insert(make_pair("tw_brightness_file", EXPAND(TW_BRIGHTNESS_PATH)));
-		ostringstream val100, val25, val50, val75;
-		int value = TW_MAX_BRIGHTNESS;
-		val100 << value;
-		mConstValues.insert(make_pair("tw_brightness_100", val100.str()));
-		value = TW_MAX_BRIGHTNESS * 0.25;
-		val25 << value;
-		mConstValues.insert(make_pair("tw_brightness_25", val25.str()));
-		value = TW_MAX_BRIGHTNESS * 0.5;
-		val50 << value;
-		mConstValues.insert(make_pair("tw_brightness_50", val50.str()));
-		value = TW_MAX_BRIGHTNESS * 0.75;
-		val75 << value;
-		mConstValues.insert(make_pair("tw_brightness_75", val75.str()));
-		mValues.insert(make_pair("tw_brightness", make_pair(val100.str(), 1)));
-		mValues.insert(make_pair("tw_brightness_display", make_pair("100", 1)));
+		ostringstream maxVal;
+		maxVal << TW_MAX_BRIGHTNESS;
+		mConstValues.insert(make_pair("tw_brightness_max", maxVal.str()));
+		mValues.insert(make_pair("tw_brightness", make_pair(maxVal.str(), 1)));
+		mValues.insert(make_pair("tw_brightness_pct", make_pair("100", 1)));
 	} else {
 		mConstValues.insert(make_pair("tw_has_brightnesss_file", "0"));
 	}

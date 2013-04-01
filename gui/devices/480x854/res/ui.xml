@@ -176,6 +176,13 @@
 		<variable name="storage_list_height" value="400" />
 		<variable name="wipe_list_height" value="550" />
 		<variable name="wipe_button_y" value="400" />
+		<variable name="slidervalue_w" value="460" />
+		<variable name="slidervalue_line_clr" value="#FFFFFF" />
+		<variable name="slidervalue_slider_clr" value="#33B5E5" />
+		<variable name="slidervalue_lineh" value="1" />
+		<variable name="slidervalue_padding" value="13" />
+		<variable name="slidervalue_sliderw" value="7" />
+		<variable name="slidervalue_sliderh" value="40" />
 	</variables>
 
 	<templates>
@@ -2252,100 +2259,47 @@
 				<text>Screen Settings</text>
 			</object>
 
-			<object type="text" color="%text_color%">
-				<font resource="font" />
-				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
-				<text>Screen Timeout: %tw_screen_timeout_secs% seconds</text>
-			</object>
-
 			<object type="button">
-				<placement x="%col1_medium_x%" y="%row2_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>None</text>
-				<image resource="medium_button" />
-				<action function="set">tw_screen_timeout_secs=0</action>
-			</object>
-
-			<object type="button">
-				<placement x="%col2_medium_x%" y="%row2_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>60</text>
-				<image resource="medium_button" />
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_screen_timeout_secs" op="=" var2="0" />
+				<text>Enable screen timeout.</text>
+				<image resource="checkbox_false" />
 				<action function="set">tw_screen_timeout_secs=60</action>
 			</object>
 
 			<object type="button">
-				<placement x="%col3_medium_x%" y="%row2_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>120</text>
-				<image resource="medium_button" />
-				<action function="set">tw_screen_timeout_secs=120</action>
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_screen_timeout_secs" op="!=" var2="0" />
+				<text>Enable screen timeout.</text>
+				<image resource="checkbox_true" />
+				<action function="set">tw_screen_timeout_secs=0</action>
 			</object>
 
-			<object type="button">
-				<placement x="%col4_medium_x%" y="%row2_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>180</text>
-				<image resource="medium_button" />
-				<action function="set">tw_screen_timeout_secs=180</action>
+			<object type="slidervalue">
+				<condition var1="tw_screen_timeout_secs" op="!=" var2="0" />
+				<placement x="col1_x" y="%row4_text_y%" w="%slidervalue_w%" />
+				<font resource="font" color="%text_color%" />
+				<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />
+				<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%" />
+				<text>Screen timeout in seconds:</text>
+				<data variable="tw_screen_timeout_secs" min="15" max="300" />
 			</object>
 
-			<object type="text" color="%text_color%">
+			<object type="slidervalue">
 				<condition var1="tw_has_brightnesss_file" var2="1" />
-				<font resource="font" />
-				<placement x="%center_x%" y="%row12_text_y%" placement="5" />
-				<text>Brightness: %tw_brightness_display%</text>
-			</object>
-
-			<object type="button">
-				<condition var1="tw_has_brightnesss_file" var2="1" />
-				<placement x="%col1_medium_x%" y="%row4_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>25%</text>
-				<image resource="medium_button" />
+				<placement x="col1_x" y="%row12_text_y%" w="%slidervalue_w%" />
+				<font resource="font" color="%text_color%" />
+				<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />
+				<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%" />
+				<text>Brightness: %tw_brightness_pct%%</text>
+				<data variable="tw_brightness_pct" min="10" max="100" />
 				<actions>
-					<action function="cmd">echo %tw_brightness_25% > &quot;%tw_brightness_file%&quot;</action>
-					<action function="set">tw_brightness_display=25%</action>
-					<action function="set">tw_brightness=%tw_brightness_25%</action>
-				</actions>
-			</object>
-
-			<object type="button">
-				<condition var1="tw_has_brightnesss_file" var2="1" />
-				<placement x="%col2_medium_x%" y="%row4_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>50%</text>
-				<image resource="medium_button" />
-				<actions>
-					<action function="cmd">echo %tw_brightness_50% > &quot;%tw_brightness_file%&quot;</action>
-					<action function="set">tw_brightness_display=50%</action>
-					<action function="set">tw_brightness=%tw_brightness_50%</action>
-				</actions>
-			</object>
-
-			<object type="button">
-				<condition var1="tw_has_brightnesss_file" var2="1" />
-				<placement x="%col3_medium_x%" y="%row4_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>75%</text>
-				<image resource="medium_button" />
-				<actions>
-					<action function="cmd">echo %tw_brightness_75% > &quot;%tw_brightness_file%&quot;</action>
-					<action function="set">tw_brightness_display=75%</action>
-					<action function="set">tw_brightness=%tw_brightness_75%</action>
-				</actions>
-			</object>
-
-			<object type="button">
-				<condition var1="tw_has_brightnesss_file" var2="1" />
-				<placement x="%col4_medium_x%" y="%row4_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>100%</text>
-				<image resource="medium_button" />
-				<actions>
-					<action function="cmd">echo %tw_brightness_100% > &quot;%tw_brightness_file%&quot;</action>
-					<action function="set">tw_brightness_display=100%</action>
-					<action function="set">tw_brightness=%tw_brightness_100%</action>
+					<action function="set">tw_brightness=%tw_brightness_max%</action>
+					<action function="compute">tw_brightness*%tw_brightness_pct%</action>
+					<action function="compute">tw_brightness/100</action>
+					<action function="cmd">echo %tw_brightness% > &quot;%tw_brightness_file%&quot;</action>
 				</actions>
 			</object>
 

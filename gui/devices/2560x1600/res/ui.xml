@@ -197,6 +197,14 @@
 		<variable name="mount_storage_row" value="1100" />
 		<variable name="wipe_list_height" value="1100" />
 		<variable name="wipe_button_y" value="500" />
+		<variable name="slidervalue_x" value="640" />
+		<variable name="slidervalue_w" value="1280" />
+		<variable name="slidervalue_line_clr" value="#FFFFFF" />
+		<variable name="slidervalue_slider_clr" value="#33B5E5" />
+		<variable name="slidervalue_lineh" value="4" />
+		<variable name="slidervalue_padding" value="0" />
+		<variable name="slidervalue_sliderw" value="30" />
+		<variable name="slidervalue_sliderh" value="90" />
 	</variables>
 
 	<templates>

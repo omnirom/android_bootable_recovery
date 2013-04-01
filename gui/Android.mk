@@ -17,6 +17,7 @@ LOCAL_SRC_FILES := \
     animation.cpp \
     conditional.cpp \
     slider.cpp \
+    slidervalue.cpp \
     listbox.cpp \
     keyboard.cpp \
     input.cpp \
@@ -51,6 +52,11 @@ ifneq ($(TW_EXTERNAL_STORAGE_PATH),)
 endif
 ifneq ($(TW_BRIGHTNESS_PATH),)
 	LOCAL_CFLAGS += -DTW_BRIGHTNESS_PATH=$(TW_BRIGHTNESS_PATH)
+endif
+ifneq ($(TW_MAX_BRIGHTNESS),)
+	LOCAL_CFLAGS += -DTW_MAX_BRIGHTNESS=$(TW_MAX_BRIGHTNESS)
+else
+	LOCAL_CFLAGS += -DTW_MAX_BRIGHTNESS=255
 endif
 ifneq ($(TW_NO_SCREEN_BLANK),)
 	LOCAL_CFLAGS += -DTW_NO_SCREEN_BLANK

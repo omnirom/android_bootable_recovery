@@ -303,7 +303,6 @@ include $(commands_recovery_local_path)/libjpegtwrp/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptsettings/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptfs/Android.mk \
     $(commands_recovery_local_path)/libcrecovery/Android.mk \
-    $(commands_recovery_local_path)/twmincrypt/Android.mk \
     $(commands_recovery_local_path)/libblkid/Android.mk \
     $(commands_recovery_local_path)/minuitwrp/Android.mk
 
