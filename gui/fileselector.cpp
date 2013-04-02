@@ -38,10 +38,8 @@
 #include <algorithm>
 
 extern "C" {
-#include "../common.h"
-#include "../roots.h"
+#include "../twcommon.h"
 #include "../minuitwrp/minui.h"
-#include "../recovery_ui.h"
 }
 
 #include "rapidxml.hpp"
@@ -945,7 +943,7 @@ int GUIFileSelector::GetFileList(const std::string folder)
 	d = opendir(folder.c_str());
 	if (d == NULL)
 	{
-		LOGI("Unable to open '%s'\n", folder.c_str());
+		LOGINFO("Unable to open '%s'\n", folder.c_str());
 		if (folder != "/" && (mShowNavFolders != 0 || mShowFiles != 0)) {
 			size_t found;
 			found = folder.find_last_of('/');

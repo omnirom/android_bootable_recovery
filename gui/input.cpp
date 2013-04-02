@@ -20,9 +20,8 @@
 #include <string>
 
 extern "C" {
-#include "../common.h"
+#include "../twcommon.h"
 #include "../minuitwrp/minui.h"
-#include "../recovery_ui.h"
 }
 
 #include "rapidxml.hpp"
@@ -300,7 +299,7 @@ int GUIInput::HandleTextLocation(int x)
 				}
 			}
 		} else
-			LOGI("GUIInput::HandleTextLocation -> We really shouldn't ever get here...\n");
+			LOGINFO("GUIInput::HandleTextLocation -> We really shouldn't ever get here...\n");
 	} else if (x > lastX) {
 		// Dragging to right, scrolling left
 		while (-1) {

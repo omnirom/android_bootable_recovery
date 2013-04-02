@@ -152,11 +152,11 @@ static int vk_init(struct ev *e)
     len = ioctl(e->fd->fd, EVIOCGNAME(sizeof(e->deviceName)), e->deviceName);
     if (len <= 0)
     {
-        LOGE("Unable to query event object.\n");
+        printf("Unable to query event object.\n");
         return -1;
     }
 #ifdef _EVENT_LOGGING
-    LOGI("Event object: %s\n", e->deviceName);
+    printf("Event object: %s\n", e->deviceName);
 #endif
 
     // Blacklist these "input" devices
@@ -188,7 +188,7 @@ static int vk_init(struct ev *e)
         }
 
         if (e->vk_count % 6) {
-            LOGW("minui: %s is %d %% 6\n", vk_path, e->vk_count % 6);
+            printf("minui: %s is %d %% 6\n", vk_path, e->vk_count % 6);
         }
         e->vk_count /= 6;
         if (e->vk_count <= 0)
@@ -201,14 +201,14 @@ static int vk_init(struct ev *e)
     ioctl(e->fd->fd, EVIOCGABS(ABS_Y), &e->p.yi);
     e->p.synced = 0;
 #ifdef _EVENT_LOGGING
-    LOGI("EV: ST minX: %d  maxX: %d  minY: %d  maxY: %d\n", e->p.xi.minimum, e->p.xi.maximum, e->p.yi.minimum, e->p.yi.maximum);
+    printf("EV: ST minX: %d  maxX: %d  minY: %d  maxY: %d\n", e->p.xi.minimum, e->p.xi.maximum, e->p.yi.minimum, e->p.yi.maximum);
 #endif
 
     ioctl(e->fd->fd, EVIOCGABS(ABS_MT_POSITION_X), &e->mt_p.xi);
     ioctl(e->fd->fd, EVIOCGABS(ABS_MT_POSITION_Y), &e->mt_p.yi);
     e->mt_p.synced = 0;
 #ifdef _EVENT_LOGGING
-    LOGI("EV: MT minX: %d  maxX: %d  minY: %d  maxY: %d\n", e->mt_p.xi.minimum, e->mt_p.xi.maximum, e->mt_p.yi.minimum, e->mt_p.yi.maximum);
+    printf("EV: MT minX: %d  maxX: %d  minY: %d  maxY: %d\n", e->mt_p.xi.minimum, e->mt_p.xi.maximum, e->mt_p.yi.minimum, e->mt_p.yi.maximum);
 #endif
 
     e->vks = malloc(sizeof(*e->vks) * e->vk_count);
@@ -223,7 +223,7 @@ static int vk_init(struct ev *e)
 
         if (strcmp(token[0], "0x01") != 0) {
             /* Java does string compare, so we do too. */
-            LOGW("minui: %s: ignoring unknown virtual key type %s\n", vk_path, token[0]);
+            printf("minui: %s: ignoring unknown virtual key type %s\n", vk_path, token[0]);
             continue;
         }
 
@@ -299,7 +299,7 @@ static int vk_tp_to_screen(struct position *p, int *x, int *y)
     }
 
 #ifdef _EVENT_LOGGING
-    LOGI("EV: p->x=%d  x-range=%d,%d  fb-width=%d\n", p->x, p->xi.minimum, p->xi.maximum, gr_fb_width());
+    printf("EV: p->x=%d  x-range=%d,%d  fb-width=%d\n", p->x, p->xi.minimum, p->xi.maximum, gr_fb_width());
 #endif
 
 #ifndef RECOVERY_TOUCHSCREEN_SWAP_XY
@@ -341,14 +341,14 @@ static int vk_modify(struct ev *e, struct input_event *ev)
     {
         // This appears to be an accelerometer or another strange input device. It's not the touchscreen.
 #ifdef _EVENT_LOGGING
-        LOGI("EV: Device disabled due to non-touchscreen messages.\n");
+        printf("EV: Device disabled due to non-touchscreen messages.\n");
 #endif
         e->ignored = 1;
         return 1;
     }
 
 #ifdef _EVENT_LOGGING
-    LOGI("EV: %s => type: %x  code: %x  value: %d\n", e->deviceName, ev->type, ev->code, ev->value);
+    printf("EV: %s => type: %x  code: %x  value: %d\n", e->deviceName, ev->type, ev->code, ev->value);
 #endif
 
 	// Handle keyboard events, value of 1 indicates key down, 0 indicates key up
@@ -363,7 +363,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
             e->p.synced |= 0x01;
             e->p.x = ev->value;
 #ifdef _EVENT_LOGGING
-            LOGI("EV: %s => EV_ABS  ABS_X  %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS  ABS_X  %d\n", e->deviceName, ev->value);
 #endif
             break;
 
@@ -371,7 +371,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
             e->p.synced |= 0x02;
             e->p.y = ev->value;
 #ifdef _EVENT_LOGGING
-            LOGI("EV: %s => EV_ABS  ABS_Y  %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS  ABS_Y  %d\n", e->deviceName, ev->value);
 #endif
             break;
 
@@ -400,7 +400,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
                 touchReleaseOnNextSynReport = 1;
             }
 #ifdef _EVENT_LOGGING
-            LOGI("EV: %s => EV_ABS  ABS_MT_TOUCH_MAJOR  %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS  ABS_MT_TOUCH_MAJOR  %d\n", e->deviceName, ev->value);
 #endif
             break;
 
@@ -413,7 +413,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
                 touchReleaseOnNextSynReport = 1;
             }
 #ifdef _EVENT_LOGGING
-            LOGI("EV: %s => EV_ABS  ABS_MT_PRESSURE  %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS  ABS_MT_PRESSURE  %d\n", e->deviceName, ev->value);
 #endif
             break;
 
@@ -421,7 +421,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
             e->mt_p.synced |= 0x01;
             e->mt_p.x = ev->value;
 #ifdef _EVENT_LOGGING
-            LOGI("EV: %s => EV_ABS  ABS_MT_POSITION_X  %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS  ABS_MT_POSITION_X  %d\n", e->deviceName, ev->value);
 #endif
             break;
 
@@ -429,29 +429,29 @@ static int vk_modify(struct ev *e, struct input_event *ev)
             e->mt_p.synced |= 0x02;
             e->mt_p.y = ev->value;
 #ifdef _EVENT_LOGGING
-            LOGI("EV: %s => EV_ABS  ABS_MT_POSITION_Y  %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS  ABS_MT_POSITION_Y  %d\n", e->deviceName, ev->value);
 #endif
             break;
 
 #ifdef _EVENT_LOGGING
 		// All of these items are strictly for logging purposes only. Return 1 because they don't need to be handled.
         case ABS_MT_TOUCH_MINOR: //31
-            LOGI("EV: %s => EV_ABS ABS_MT_TOUCH_MINOR %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS ABS_MT_TOUCH_MINOR %d\n", e->deviceName, ev->value);
 			return 1;
             break;
 
         case ABS_MT_WIDTH_MAJOR: //32
-            LOGI("EV: %s => EV_ABS ABS_MT_WIDTH_MAJOR %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS ABS_MT_WIDTH_MAJOR %d\n", e->deviceName, ev->value);
 			return 1;
             break;
 
         case ABS_MT_WIDTH_MINOR: //33
-            LOGI("EV: %s => EV_ABS ABS_MT_WIDTH_MINOR %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS ABS_MT_WIDTH_MINOR %d\n", e->deviceName, ev->value);
 			return 1;
             break;
 
         case ABS_MT_ORIENTATION: //34
-            LOGI("EV: %s => EV_ABS ABS_MT_ORIENTATION %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS ABS_MT_ORIENTATION %d\n", e->deviceName, ev->value);
 			return 1;
             break;
 
@@ -461,17 +461,17 @@ static int vk_modify(struct ev *e, struct input_event *ev)
             break;
 
         case ABS_MT_BLOB_ID: //38
-            LOGI("EV: %s => EV_ABS ABS_MT_BLOB_ID %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS ABS_MT_BLOB_ID %d\n", e->deviceName, ev->value);
 			return 1;
             break;
 
         case ABS_MT_TRACKING_ID: //39
-            LOGI("EV: %s => EV_ABS ABS_MT_TRACKING_ID %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS ABS_MT_TRACKING_ID %d\n", e->deviceName, ev->value);
 			return 1;
             break;
 
 		case ABS_MT_DISTANCE: //3b
-            LOGI("EV: %s => EV_ABS ABS_MT_DISTANCE %d\n", e->deviceName, ev->value);
+            printf("EV: %s => EV_ABS ABS_MT_DISTANCE %d\n", e->deviceName, ev->value);
 			return 1;
             break;
 #endif
@@ -496,8 +496,8 @@ static int vk_modify(struct ev *e, struct input_event *ev)
     }
 
 #ifdef _EVENT_LOGGING
-    if (ev->type == EV_SYN && ev->code == SYN_REPORT)       LOGI("EV: %s => EV_SYN  SYN_REPORT\n", e->deviceName);
-    if (ev->type == EV_SYN && ev->code == SYN_MT_REPORT)    LOGI("EV: %s => EV_SYN  SYN_MT_REPORT\n", e->deviceName);
+    if (ev->type == EV_SYN && ev->code == SYN_REPORT)       printf("EV: %s => EV_SYN  SYN_REPORT\n", e->deviceName);
+    if (ev->type == EV_SYN && ev->code == SYN_MT_REPORT)    printf("EV: %s => EV_SYN  SYN_MT_REPORT\n", e->deviceName);
 #endif
 
     // Discard the MT versions
@@ -555,7 +555,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
 #endif
 
 #ifdef _EVENT_LOGGING
-    LOGI("EV: x: %d  y: %d\n", x, y);
+    printf("EV: x: %d  y: %d\n", x, y);
 #endif
 
     // Clear the current sync states

@@ -34,9 +34,8 @@
 #include <string>
 
 extern "C" {
-#include "../common.h"
+#include "../twcommon.h"
 #include "../minuitwrp/minui.h"
-#include "../recovery_ui.h"
 }
 
 #include "rapidxml.hpp"
@@ -87,7 +86,7 @@ GUIButton::GUIButton(xml_node<>* node)
 		}
 	}
 	if (!hasFill && mButtonImg == NULL) {
-		LOGE("No image resource or fill specified for button.\n");
+		LOGERR("No image resource or fill specified for button.\n");
 	}
 
     // The icon is a special case

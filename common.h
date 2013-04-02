@@ -25,12 +25,11 @@ extern "C" {
 
 static long tmplog_offset = 0;
 
-#define ui_print(...) gui_print(__VA_ARGS__)
-#define ui_print_overwrite(...) gui_print_overwrite(__VA_ARGS__)
+#define ui_print(...) printf(__VA_ARGS__)
+#define ui_print_overwrite(...) printf(__VA_ARGS__)
 
-#include "gui/gui.h"
 // TODO: restore ui_print for LOGE
-#define LOGE(...) gui_print("E:" __VA_ARGS__)
+#define LOGE(...) printf("E:" __VA_ARGS__)
 #define LOGW(...) fprintf(stdout, "W:" __VA_ARGS__)
 #define LOGI(...) fprintf(stdout, "I:" __VA_ARGS__)
 

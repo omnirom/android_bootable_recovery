@@ -18,15 +18,16 @@ LOCAL_SRC_FILES := \
 	sockets.c \
 	services.c \
 	usb_linux_client.c \
-	utils.c
+	utils.c \
+       ../../../system/core/adb/transport_local.c
 
 LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
-
+LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminadbd
 
-LOCAL_STATIC_LIBRARIES := libcutils libc
-include $(BUILD_STATIC_LIBRARY)
+LOCAL_SHARED_LIBRARIES := libcutils libc
+include $(BUILD_SHARED_LIBRARY)
 
 
 

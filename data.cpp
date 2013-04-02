@@ -48,7 +48,7 @@
 
 extern "C"
 {
-    #include "common.h"
+    #include "twcommon.h"
     #include "data.h"
 	#include "gui/pages.h"
 
@@ -102,7 +102,7 @@ void DataManager::get_device_id(void) {
 	char model_id[PROPERTY_VALUE_MAX];
 	property_get("ro.product.model", model_id, "error");
 	if (strcmp(model_id,"error") != 0) {
-		LOGI("=> product model: '%s'\n", model_id);
+		LOGINFO("=> product model: '%s'\n", model_id);
 		// Replace spaces with underscores
 		for(int i = 0; i < strlen(model_id); i++) {
 			if(model_id[i] == ' ')
@@ -115,7 +115,7 @@ void DataManager::get_device_id(void) {
 		}
 		sanitize_device_id((char *)device_id);
 		mConstValues.insert(make_pair("device_id", device_id));
-		LOGI("=> using device id: '%s'\n", device_id);
+		LOGINFO("=> using device id: '%s'\n", device_id);
 		return;
 	}
 #endif
@@ -166,7 +166,7 @@ void DataManager::get_device_id(void) {
 					} else {
 						strcpy(device_id, token);
 					}
-					LOGI("=> serial from cpuinfo: '%s'\n", device_id);
+					LOGINFO("=> serial from cpuinfo: '%s'\n", device_id);
 					fclose(fp);
 					sanitize_device_id((char *)device_id);
 					mConstValues.insert(make_pair("device_id", device_id));
@@ -184,7 +184,7 @@ void DataManager::get_device_id(void) {
 					} else {
 						strcpy(hardware_id, token);
 					}
-					LOGI("=> hardware id from cpuinfo: '%s'\n", hardware_id);
+					LOGINFO("=> hardware id from cpuinfo: '%s'\n", hardware_id);
 				}
 			}
 		}
@@ -192,7 +192,7 @@ void DataManager::get_device_id(void) {
     }
 
 	if (hardware_id[0] != 0) {
-		LOGW("\nusing hardware id for device id: '%s'\n", hardware_id);
+		LOGINFO("\nusing hardware id for device id: '%s'\n", hardware_id);
 		strcpy(device_id, hardware_id);
 		sanitize_device_id((char *)device_id);
 		mConstValues.insert(make_pair("device_id", device_id));
@@ -200,7 +200,7 @@ void DataManager::get_device_id(void) {
 	}
 
     strcpy(device_id, "serialno");
-	LOGE("=> device id not found, using '%s'.", device_id);
+	LOGERR("=> device id not found, using '%s'.", device_id);
 	mConstValues.insert(make_pair("device_id", device_id));
     return;
 }
@@ -227,10 +227,10 @@ int DataManager::LoadValues(const string filename)
     // Read in the file, if possible
     FILE* in = fopen(filename.c_str(), "rb");
     if (!in) {
-		LOGI("Settings file '%s' not found.\n", filename.c_str());
+		LOGINFO("Settings file '%s' not found.\n", filename.c_str());
 		return 0;
 	} else {
-		LOGI("Loading settings from '%s'.\n", filename.c_str());
+		LOGINFO("Loading settings from '%s'.\n", filename.c_str());
 	}
 
     int file_version;
@@ -360,6 +360,17 @@ int DataManager::GetValue(const string varName, int& value)
     return 0;
 }
 
+int DataManager::GetValue(const string varName, float& value)
+{
+    string data;
+
+    if (GetValue(varName,data) != 0)
+        return -1;
+
+    value = atof(data.c_str());
+    return 0;
+}
+
 unsigned long long DataManager::GetValue(const string varName, unsigned long long& value)
 {
     string data;
@@ -461,7 +472,7 @@ int DataManager::SetValue(const string varName, int value, int persist /* = 0 */
 		SetValue("tw_storage_path", str);
 		SetBackupFolder();
 	}
-    return SetValue(varName, valStr.str(), persist);;
+    return SetValue(varName, valStr.str(), persist);
 }
 
 int DataManager::SetValue(const string varName, float value, int persist /* = 0 */)
@@ -478,13 +489,27 @@ int DataManager::SetValue(const string varName, unsigned long long value, int pe
     return SetValue(varName, valStr.str(), persist);;
 }
 
+int DataManager::SetProgress(float Fraction) {
+	return SetValue("ui_progress", (float) (Fraction * 100.0));
+}
+
+int DataManager::ShowProgress(float Portion, float Seconds) {
+	float Starting_Portion;
+	GetValue("ui_progress_portion", Starting_Portion);
+	if (SetValue("ui_progress_portion", (float)(Portion * 100.0) + Starting_Portion) != 0)
+		return -1;
+	if (SetValue("ui_progress_frames", Seconds * 30) != 0)
+		return -1;
+	return 0;
+}
+
 void DataManager::DumpValues()
 {
     map<string, TStrIntPair>::iterator iter;
-    ui_print("Data Manager dump - Values with leading X are persisted.\n");
+    gui_print("Data Manager dump - Values with leading X are persisted.\n");
     for (iter = mValues.begin(); iter != mValues.end(); ++iter)
     {
-        ui_print("%c %s=%s\n", iter->second.second ? 'X' : ' ', iter->first.c_str(), iter->second.first.c_str());
+        gui_print("%c %s=%s\n", iter->second.second ? 'X' : ' ', iter->first.c_str(), iter->second.first.c_str());
     }
 }
 
@@ -503,7 +528,7 @@ void DataManager::SetBackupFolder()
 	GetValue("device_id", dev_id);
 
     str += dev_id;
-	LOGI("Backup folder set to '%s'\n", str.c_str());
+	LOGINFO("Backup folder set to '%s'\n", str.c_str());
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
 	if (partition != NULL) {
 		SetValue("tw_storage_display_name", partition->Storage_Name);
@@ -526,7 +551,7 @@ void DataManager::SetBackupFolder()
 		}
 	} else {
 		if (PartitionManager.Fstab_Processed() != 0)
-			LOGE("Storage partition '%s' not found\n", str.c_str());
+			LOGERR("Storage partition '%s' not found\n", str.c_str());
 	}
 }
 
@@ -563,7 +588,7 @@ void DataManager::SetDefaultValues()
 #endif
 
 #ifdef TW_INTERNAL_STORAGE_PATH
-	LOGI("Internal path defined: '%s'\n", EXPAND(TW_INTERNAL_STORAGE_PATH));
+	LOGINFO("Internal path defined: '%s'\n", EXPAND(TW_INTERNAL_STORAGE_PATH));
 	mValues.insert(make_pair(TW_USE_EXTERNAL_STORAGE, make_pair("0", 1)));
 	mConstValues.insert(make_pair(TW_HAS_INTERNAL, "1"));
 	mValues.insert(make_pair(TW_INTERNAL_PATH, make_pair(EXPAND(TW_INTERNAL_STORAGE_PATH), 0)));
@@ -573,7 +598,7 @@ void DataManager::SetDefaultValues()
 	path += EXPAND(TW_INTERNAL_STORAGE_MOUNT_POINT);
 	mConstValues.insert(make_pair(TW_INTERNAL_MOUNT, path));
 	#ifdef TW_EXTERNAL_STORAGE_PATH
-		LOGI("External path defined: '%s'\n", EXPAND(TW_EXTERNAL_STORAGE_PATH));
+		LOGINFO("External path defined: '%s'\n", EXPAND(TW_EXTERNAL_STORAGE_PATH));
 		// Device has dual storage
 		mConstValues.insert(make_pair(TW_HAS_DUAL_STORAGE, "1"));
 		mConstValues.insert(make_pair(TW_HAS_EXTERNAL, "1"));
@@ -590,7 +615,7 @@ void DataManager::SetDefaultValues()
 			mValues.insert(make_pair(TW_ZIP_INTERNAL_VAR, make_pair("/sdcard", 1)));
 		}
 	#else
-		LOGI("Just has internal storage.\n");
+		LOGINFO("Just has internal storage.\n");
 		// Just has internal storage
 		mValues.insert(make_pair(TW_ZIP_INTERNAL_VAR, make_pair("/sdcard", 1)));
 		mConstValues.insert(make_pair(TW_HAS_DUAL_STORAGE, "0"));
@@ -602,22 +627,22 @@ void DataManager::SetDefaultValues()
 #else
 	#ifdef RECOVERY_SDCARD_ON_DATA
 		#ifdef TW_EXTERNAL_STORAGE_PATH
-			LOGI("Has /data/media + external storage in '%s'\n", EXPAND(TW_EXTERNAL_STORAGE_PATH));
+			LOGINFO("Has /data/media + external storage in '%s'\n", EXPAND(TW_EXTERNAL_STORAGE_PATH));
 			// Device has /data/media + external storage
 			mConstValues.insert(make_pair(TW_HAS_DUAL_STORAGE, "1"));
 		#else
-			LOGI("Single storage only -- data/media.\n");
+			LOGINFO("Single storage only -- data/media.\n");
 			// Device just has external storage
 			mConstValues.insert(make_pair(TW_HAS_DUAL_STORAGE, "0"));
 			mConstValues.insert(make_pair(TW_HAS_EXTERNAL, "0"));
 		#endif
 	#else
-		LOGI("Single storage only.\n");
+		LOGINFO("Single storage only.\n");
 		// Device just has external storage
 		mConstValues.insert(make_pair(TW_HAS_DUAL_STORAGE, "0"));
 	#endif
 	#ifdef RECOVERY_SDCARD_ON_DATA
-		LOGI("Device has /data/media defined.\n");
+		LOGINFO("Device has /data/media defined.\n");
 		// Device has /data/media
 		mConstValues.insert(make_pair(TW_USE_EXTERNAL_STORAGE, "0"));
 		mConstValues.insert(make_pair(TW_HAS_INTERNAL, "1"));
@@ -634,7 +659,7 @@ void DataManager::SetDefaultValues()
 			mValues.insert(make_pair(TW_ZIP_INTERNAL_VAR, make_pair("/sdcard", 1)));
 		#endif
 	#else
-		LOGI("No internal storage defined.\n");
+		LOGINFO("No internal storage defined.\n");
 		// Device has no internal storage
 		mConstValues.insert(make_pair(TW_USE_EXTERNAL_STORAGE, "1"));
 		mConstValues.insert(make_pair(TW_HAS_INTERNAL, "0"));
@@ -643,7 +668,7 @@ void DataManager::SetDefaultValues()
 		mConstValues.insert(make_pair(TW_INTERNAL_LABEL, "0"));
 	#endif
 	#ifdef TW_EXTERNAL_STORAGE_PATH
-		LOGI("Only external path defined: '%s'\n", EXPAND(TW_EXTERNAL_STORAGE_PATH));
+		LOGINFO("Only external path defined: '%s'\n", EXPAND(TW_EXTERNAL_STORAGE_PATH));
 		// External has custom definition
 		mConstValues.insert(make_pair(TW_HAS_EXTERNAL, "1"));
 		mConstValues.insert(make_pair(TW_EXTERNAL_PATH, EXPAND(TW_EXTERNAL_STORAGE_PATH)));
@@ -655,7 +680,7 @@ void DataManager::SetDefaultValues()
 		mConstValues.insert(make_pair(TW_EXTERNAL_MOUNT, path));
 	#else
 		#ifndef RECOVERY_SDCARD_ON_DATA
-			LOGI("No storage defined, defaulting to /sdcard.\n");
+			LOGINFO("No storage defined, defaulting to /sdcard.\n");
 			// Standard external definition
 			mConstValues.insert(make_pair(TW_HAS_EXTERNAL, "1"));
 			mConstValues.insert(make_pair(TW_EXTERNAL_PATH, "/sdcard"));
@@ -779,10 +804,10 @@ void DataManager::SetDefaultValues()
 		Lun_File_str = lun_file;
 	}
 	if (!TWFunc::Path_Exists(Lun_File_str)) {
-		LOGI("Lun file '%s' does not exist, USB storage mode disabled\n", Lun_File_str.c_str());
+		LOGINFO("Lun file '%s' does not exist, USB storage mode disabled\n", Lun_File_str.c_str());
 		mConstValues.insert(make_pair(TW_HAS_USB_STORAGE, "0"));
 	} else {
-		LOGI("Lun file '%s'\n", Lun_File_str.c_str());
+		LOGINFO("Lun file '%s'\n", Lun_File_str.c_str());
 		mConstValues.insert(make_pair(TW_HAS_USB_STORAGE, "1"));
 	}
 #endif
@@ -886,7 +911,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair("tw_gui_done", make_pair("0", 0)));
 #ifdef TW_MAX_BRIGHTNESS
 	if (strcmp(EXPAND(TW_BRIGHTNESS_PATH), "/nobrightness") != 0) {
-		LOGI("TW_BRIGHTNESS_PATH := %s\n", EXPAND(TW_BRIGHTNESS_PATH));
+		LOGINFO("TW_BRIGHTNESS_PATH := %s\n", EXPAND(TW_BRIGHTNESS_PATH));
 		mConstValues.insert(make_pair("tw_has_brightnesss_file", "1"));
 		mConstValues.insert(make_pair("tw_brightness_file", EXPAND(TW_BRIGHTNESS_PATH)));
 		ostringstream val100, val25, val50, val75;
@@ -996,13 +1021,13 @@ void DataManager::Output_Version(void) {
 	char version[255];
 
 	if (!PartitionManager.Mount_By_Path("/cache", false)) {
-		LOGI("Unable to mount '%s' to write version number.\n", Path.c_str());
+		LOGINFO("Unable to mount '%s' to write version number.\n", Path.c_str());
 		return;
 	}
 	if (!TWFunc::Path_Exists("/cache/recovery/.")) {
-		LOGI("Recreating /cache/recovery folder.\n");
+		LOGINFO("Recreating /cache/recovery folder.\n");
 		if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) {
-			LOGE("DataManager::Output_Version -- Unable to make /cache/recovery\n");
+			LOGERR("DataManager::Output_Version -- Unable to make /cache/recovery\n");
 			return;
 		}
 	}
@@ -1012,14 +1037,14 @@ void DataManager::Output_Version(void) {
 	}
 	FILE *fp = fopen(Path.c_str(), "w");
 	if (fp == NULL) {
-		LOGE("Unable to open '%s'.\n", Path.c_str());
+		LOGERR("Unable to open '%s'.\n", Path.c_str());
 		return;
 	}
 	strcpy(version, TW_VERSION_STR);
 	fwrite(version, sizeof(version[0]), strlen(version) / sizeof(version[0]), fp);
 	fclose(fp);
 	sync();
-	LOGI("Version number saved to '%s'\n", Path.c_str());
+	LOGINFO("Version number saved to '%s'\n", Path.c_str());
 }
 
 void DataManager::ReadSettingsFile(void)
@@ -1031,7 +1056,7 @@ void DataManager::ReadSettingsFile(void)
 	GetValue(TW_IS_ENCRYPTED, is_enc);
 	GetValue(TW_HAS_DATA_MEDIA, has_data_media);
 	if (is_enc == 1 && has_data_media == 1) {
-		LOGI("Cannot load settings -- encrypted.\n");
+		LOGINFO("Cannot load settings -- encrypted.\n");
 		return;
 	}
 
@@ -1044,12 +1069,12 @@ void DataManager::ReadSettingsFile(void)
 	{
 		usleep(500000);
 		if (!PartitionManager.Mount_Settings_Storage(false))
-			LOGE("Unable to mount %s when trying to read settings file.\n", settings_file);
+			LOGERR("Unable to mount %s when trying to read settings file.\n", settings_file);
 	}
 
 	mkdir(mkdir_path, 0777);
 
-	LOGI("Attempt to load settings from settings file...\n");
+	LOGINFO("Attempt to load settings from settings file...\n");
 	LoadValues(settings_file);
 	Output_Version();
 	GetValue(TW_HAS_DUAL_STORAGE, has_dual);
@@ -1058,7 +1083,7 @@ void DataManager::ReadSettingsFile(void)
 	if (has_dual != 0 && use_ext == 1) {
 		// Attempt to switch to using external storage
 		if (!PartitionManager.Mount_Current_Storage(false)) {
-			LOGE("Failed to mount external storage, using internal storage.\n");
+			LOGERR("Failed to mount external storage, using internal storage.\n");
 			// Remount failed, default back to internal storage
 			SetValue(TW_USE_EXTERNAL_STORAGE, 0);
 			PartitionManager.Mount_Current_Storage(true);

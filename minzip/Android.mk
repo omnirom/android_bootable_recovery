@@ -21,5 +21,6 @@ endif
 LOCAL_MODULE := libminzip
 
 LOCAL_CFLAGS += -Wall
+LOCAL_SHARED_LIBRARIES := libz
 
-include $(BUILD_STATIC_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)

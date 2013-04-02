@@ -19,9 +19,8 @@
 #include <string>
 
 extern "C" {
-#include "../common.h"
+#include "../twcommon.h"
 #include "../minuitwrp/minui.h"
-#include "../recovery_ui.h"
 }
 
 #include "rapidxml.hpp"
@@ -40,7 +39,7 @@ GUISlider::GUISlider(xml_node<>* node)
 
     if (!node)
     {
-        LOGE("GUISlider created without XML node\n");
+        LOGERR("GUISlider created without XML node\n");
         return;
     }
 
@@ -74,7 +73,7 @@ GUISlider::GUISlider(xml_node<>* node)
         sTouchH = gr_get_height(sTouch->GetResource()); // Height of the "touch image" that follows the touch (arrow)
     }
 
-    //LOGI("mRenderW: %i mTouchW: %i\n", mRenderW, mTouchW);
+    //LOGINFO("mRenderW: %i mTouchW: %i\n", mRenderW, mTouchW);
 	mActionX = mRenderX;
     mActionY = mRenderY;
     mActionW = mRenderW;

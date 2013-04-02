@@ -2,6 +2,7 @@
 #define _TWRPFUNCTIONS_HPP
 
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -32,7 +33,8 @@ public:
 	static void GUI_Operation_Text(string Read_Value, string Default_Text);     // Updates text for display in the GUI, e.g. Backing up %partition name%
 	static void GUI_Operation_Text(string Read_Value, string Partition_Name, string Default_Text); // Same as above but includes partition name
 	static unsigned long Get_File_Size(string Path);                            // Returns the size of a file
-	static void twfinish_recovery(const char *send_intent);                     // Writes the log to last_log
+	static void Update_Log_File(void);                                          // Writes the log to last_log
+	static void Update_Intent_File(string Intent);                              // Updates intent file
 	static int tw_reboot(RebootCommand command);                                // Prepares the device for rebooting
 	static void check_and_run_script(const char* script_file, const char* display_name); // checks for the existence of a script, chmods it to 755, then runs it
 	static int Exec_Cmd(string cmd, string &result); //execute a command and return the result as a string by reference
@@ -50,9 +52,10 @@ public:
 	static bool Install_SuperSU(void); // Installs su binary and apk and sets proper permissions
 
 private:
-	static void check_and_fclose(FILE *fp, const char *name);
-	static void copy_log_file(const char* source, const char* destination, int append);
+	static void Copy_Log(string Source, string Destination);
 
 };
+
+extern int Log_Offset;
 
 #endif // _TWRPFUNCTIONS_HPP

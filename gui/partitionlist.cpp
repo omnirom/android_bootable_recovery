@@ -38,10 +38,8 @@
 #include <algorithm>
 
 extern "C" {
-#include "../common.h"
-#include "../roots.h"
+#include "../twcommon.h"
 #include "../minuitwrp/minui.h"
-#include "../recovery_ui.h"
 }
 
 #include "rapidxml.hpp"
@@ -330,12 +328,12 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node)
 			PartitionManager.Get_Partition_List(ListType, &mList);
 		} else {
 			mList.clear();
-			LOGE("No partition listtype name specified for partitionlist GUI element\n");
+			LOGERR("No partition listtype name specified for partitionlist GUI element\n");
 			return;
 		}
 	} else {
 		mList.clear();
-		LOGE("No partition listtype specified for partitionlist GUI element\n");
+		LOGERR("No partition listtype specified for partitionlist GUI element\n");
 		return;
 	}
 }
@@ -755,7 +753,7 @@ int GUIPartitionList::NotifyTouch(TOUCH_STATE state, int x, int y)
 					bool update_size = false;
 					TWPartition* Part = PartitionManager.Find_Partition_By_Path(str);
 					if (Part == NULL) {
-						LOGE("Unable to locate partition for '%s'\n", str.c_str());
+						LOGERR("Unable to locate partition for '%s'\n", str.c_str());
 						return 0;
 					}
 					if (!Part->Is_Mounted() && Part->Removable)

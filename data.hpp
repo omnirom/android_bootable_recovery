@@ -33,6 +33,7 @@ public:
     // Core get routines
     static int GetValue(const string varName, string& value);
     static int GetValue(const string varName, int& value);
+	static int GetValue(const string varName, float& value);
     static unsigned long long GetValue(const string varName, unsigned long long& value);
 
     // This is a dangerous function. It will create the value if it doesn't exist so it has a valid c_str
@@ -47,6 +48,8 @@ public:
     static int SetValue(const string varName, int value, int persist = 0);
     static int SetValue(const string varName, float value, int persist = 0);
     static int SetValue(const string varName, unsigned long long value, int persist = 0);
+	static int SetProgress(float Fraction);
+	static int ShowProgress(float Portion, float Seconds);
 
     static void DumpValues();
 	static void update_tz_environment_variables();

@@ -69,11 +69,9 @@ asm_flags := \
 LOCAL_CFLAGS+= \
 	$(foreach f,$(asm_flags),-Wa,"$(f)")
 endif
-
+LOCAL_MODULE_TAGS := eng
+LOCAL_SHARED_LIBRARIES += libcutils
 LOCAL_MODULE:= libjpegtwrp
-
-LOCAL_SHARED_LIBRARIES := \
-	libcutils
 
 include $(BUILD_STATIC_LIBRARY)
 

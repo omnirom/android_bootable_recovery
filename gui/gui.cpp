@@ -35,10 +35,8 @@
 
 extern "C"
 {
-#include "../common.h"
-#include "../roots.h"
+#include "../twcommon.h"
 #include "../minuitwrp/minui.h"
-#include "../recovery_ui.h"
 #include "../minzip/Zip.h"
 #include <pixelflinger/pixelflinger.h>
 }
@@ -217,7 +215,7 @@ input_thread (void *cookie)
 			  touch_repeat = 1;
 			  gettimeofday (&touchStart, NULL);
 #ifdef _EVENT_LOGGING
-			  LOGE ("TOUCH_HOLD: %d,%d\n", x, y);
+			  LOGERR("TOUCH_HOLD: %d,%d\n", x, y);
 #endif
 			  PageManager::NotifyTouch (TOUCH_HOLD, x, y);
                           blankTimer.resetTimerAndUnblank();
@@ -225,7 +223,7 @@ input_thread (void *cookie)
 		  else if (touch_repeat && mtime > 100)
 			{
 #ifdef _EVENT_LOGGING
-			  LOGE ("TOUCH_REPEAT: %d,%d\n", x, y);
+			  LOGERR("TOUCH_REPEAT: %d,%d\n", x, y);
 #endif
 			  gettimeofday (&touchStart, NULL);
 			  PageManager::NotifyTouch (TOUCH_REPEAT, x, y);
@@ -234,7 +232,7 @@ input_thread (void *cookie)
 		  else if (key_repeat == 1 && mtime > 500)
 			{
 #ifdef _EVENT_LOGGING
-			  LOGE ("KEY_HOLD: %d,%d\n", x, y);
+			  LOGERR("KEY_HOLD: %d,%d\n", x, y);
 #endif
 			  gettimeofday (&touchStart, NULL);
 			  key_repeat = 2;
@@ -244,7 +242,7 @@ input_thread (void *cookie)
 		  else if (key_repeat == 2 && mtime > 100)
 			{
 #ifdef _EVENT_LOGGING
-			  LOGE ("KEY_REPEAT: %d,%d\n", x, y);
+			  LOGERR("KEY_REPEAT: %d,%d\n", x, y);
 #endif
 			  gettimeofday (&touchStart, NULL);
 			  kb.KeyRepeat ();
@@ -262,7 +260,7 @@ input_thread (void *cookie)
 			  if (state == 0)
 				{
 #ifdef _EVENT_LOGGING
-				  LOGE ("TOUCH_RELEASE: %d,%d\n", x, y);
+				  LOGERR("TOUCH_RELEASE: %d,%d\n", x, y);
 #endif
 				  PageManager::NotifyTouch (TOUCH_RELEASE, x, y);
 				  blankTimer.resetTimerAndUnblank();
@@ -279,7 +277,7 @@ input_thread (void *cookie)
 			  if (!drag)
 				{
 #ifdef _EVENT_LOGGING
-				  LOGE ("TOUCH_START: %d,%d\n", x, y);
+				  LOGERR("TOUCH_START: %d,%d\n", x, y);
 #endif
 				  if (PageManager::NotifyTouch (TOUCH_START, x, y) > 0)
 					state = 1;
@@ -295,7 +293,7 @@ input_thread (void *cookie)
 				  if (state == 0)
 					{
 #ifdef _EVENT_LOGGING
-					  LOGE ("TOUCH_DRAG: %d,%d\n", x, y);
+					  LOGERR("TOUCH_DRAG: %d,%d\n", x, y);
 #endif
 					  if (PageManager::NotifyTouch (TOUCH_DRAG, x, y) > 0)
 						state = 1;
@@ -309,7 +307,7 @@ input_thread (void *cookie)
 		{
 		  // Handle key-press here
 #ifdef _EVENT_LOGGING
-		  LOGE ("TOUCH_KEY: %d\n", ev.code);
+		  LOGERR("TOUCH_KEY: %d\n", ev.code);
 #endif
 		  if (ev.value != 0)
 			{
@@ -502,7 +500,7 @@ gui_forceRender (void)
 int
 gui_changePage (std::string newPage)
 {
-  LOGI ("Set page: '%s'\n", newPage.c_str ());
+  LOGINFO("Set page: '%s'\n", newPage.c_str ());
   PageManager::ChangePage (newPage);
   pthread_mutex_lock(&gForceRendermutex);
   gForceRender = 1;
@@ -600,41 +598,41 @@ gui_loadResources ()
 	{
 	  if (PageManager::LoadPackage ("TWRP", "/res/ui.xml", "decrypt"))
 		{
-		  LOGE ("Failed to load base packages.\n");
+		  LOGERR("Failed to load base packages.\n");
 		  goto error;
 		}
 	  else
 		check = 1;
 	}
   if (check == 0
-	  && PageManager::LoadPackage ("TWRP", "/script/ui.xml", "main"))
+	  && PageManager::LoadPackage("TWRP", "/script/ui.xml", "main"))
 	{
 	  std::string theme_path;
 
 	  theme_path = DataManager::GetSettingsStoragePath ();
-	  if (!PartitionManager.Mount_Settings_Storage (false))
+	  if (!PartitionManager.Mount_Settings_Storage(false))
 		{
 		  int retry_count = 5;
 		  while (retry_count > 0
-				 && !PartitionManager.Mount_Settings_Storage (false))
+				 && !PartitionManager.Mount_Settings_Storage(false))
 			{
 			  usleep (500000);
 			  retry_count--;
 			}
-		  if (!PartitionManager.Mount_Settings_Storage (false))
+		  if (!PartitionManager.Mount_Settings_Storage(false))
 			{
-			  LOGE ("Unable to mount %s during GUI startup.\n",
+			  LOGERR("Unable to mount %s during GUI startup.\n",
 					theme_path.c_str ());
 			  check = 1;
 			}
 		}
 
 	  theme_path += "/TWRP/theme/ui.zip";
-	  if (check || PageManager::LoadPackage ("TWRP", theme_path, "main"))
+	  if (check || PageManager::LoadPackage("TWRP", theme_path, "main"))
 		{
-		  if (PageManager::LoadPackage ("TWRP", "/res/ui.xml", "main"))
+		  if (PageManager::LoadPackage("TWRP", "/res/ui.xml", "main"))
 			{
-			  LOGE ("Failed to load base packages.\n");
+			  LOGERR("Failed to load base packages.\n");
 			  goto error;
 			}
 		}
@@ -647,7 +645,7 @@ gui_loadResources ()
   return 0;
 
 error:
-  LOGE ("An internal error has occurred.\n");
+  LOGERR("An internal error has occurred.\n");
   gGuiInitialized = 0;
   return -1;
 }
@@ -687,7 +685,7 @@ gui_startPage (const char *page_name)
 	loopTimer ();
 
   // Set the default package
-  PageManager::SelectPackage ("TWRP");
+  PageManager::SelectPackage("TWRP");
 
   if (!gGuiInputRunning)
 	{
@@ -697,7 +695,7 @@ gui_startPage (const char *page_name)
 	  gGuiInputRunning = 1;
 	}
 
-  DataManager::SetValue ("tw_page_done", 0);
+  DataManager::SetValue("tw_page_done", 0);
   return runPage (page_name);
 }
 
@@ -722,7 +720,7 @@ console_thread (void *cookie)
 			flip ();
 
 		  if (ret < 0)
-			LOGE ("An update request has failed.\n");
+			LOGERR("An update request has failed.\n");
 		}
 	  else
 		{

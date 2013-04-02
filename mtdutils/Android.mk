@@ -17,6 +17,21 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 
 include $(BUILD_STATIC_LIBRARY)
 
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+	mtdutils.c \
+	mounts.c 
+
+ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
+LOCAL_SRC_FILES += rk30hack.c
+endif
+
+LOCAL_MODULE := libmtdutils
+LOCAL_STATIC_LIBRARIES := libcutils libc
+
+include $(BUILD_SHARED_LIBRARY)
+
 ifeq ($(BOARD_USES_BML_OVER_MTD),true)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := bml_over_mtd.c

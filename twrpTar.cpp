@@ -35,7 +35,7 @@ extern "C" {
 #include <dirent.h>
 #include <sys/mman.h>
 #include "twrpTar.hpp"
-#include "common.h"
+#include "twcommon.h"
 #include "data.hpp"
 #include "variables.h"
 #include "twrp-functions.hpp"
@@ -54,7 +54,7 @@ int twrpTar::createTarGZFork() {
 	int status;
 	pid_t pid;
 	if ((pid = fork()) == -1) {
-		LOGI("create tar failed to fork.\n");
+		LOGINFO("create tar failed to fork.\n");
 		return -1;
 	}
 	if (pid == 0) {
@@ -65,18 +65,18 @@ int twrpTar::createTarGZFork() {
 	}
 	else {
 		if ((pid = wait(&status)) == -1) {
-			LOGI("Tar creation failed\n");
+			LOGINFO("Tar creation failed\n");
 			return -1;
 		}
 		else {
 			if (WIFSIGNALED(status) != 0) {
-				LOGI("Child process ended with signal: %d\n", WTERMSIG(status));
+				LOGINFO("Child process ended with signal: %d\n", WTERMSIG(status));
 				return -1;
 			}
 			else if (WIFEXITED(status) != 0)
-				LOGI("Tar creation successful\n");
+				LOGINFO("Tar creation successful\n");
 			else {
-				LOGI("Tar creation failed\n");
+				LOGINFO("Tar creation failed\n");
 				return -1;
 			}
 		}
@@ -88,7 +88,7 @@ int twrpTar::createTarFork() {
 	int status;
 	pid_t pid;
 	if ((pid = fork()) == -1) {
-		LOGI("create tar failed to fork.\n");
+		LOGINFO("create tar failed to fork.\n");
 		return -1;
 	}
 	if (pid == 0) {
@@ -99,18 +99,18 @@ int twrpTar::createTarFork() {
 	}
 	else {
 		if ((pid = wait(&status)) == -1) {
-			LOGI("Tar creation failed\n");
+			LOGINFO("Tar creation failed\n");
 			return -1;
 		}
 		else {
 			if (WIFSIGNALED(status) != 0) {
-				LOGI("Child process ended with signal: %d\n", WTERMSIG(status));
+				LOGINFO("Child process ended with signal: %d\n", WTERMSIG(status));
 				return -1;
 			}
 			else if (WEXITSTATUS(status) == 0)
-				LOGI("Tar creation successful\n");
+				LOGINFO("Tar creation successful\n");
 			else {
-				LOGI("Tar creation failed\n");
+				LOGINFO("Tar creation failed\n");
 				return -1;
 			}
 		}
@@ -122,7 +122,7 @@ int twrpTar::extractTarFork() {
 	int status;
 	pid_t pid;
 	if ((pid = fork()) == -1) {
-		LOGI("extract tar failed to fork.\n");
+		LOGINFO("extract tar failed to fork.\n");
 		return -1;
 	}
 	if (pid == 0) {
@@ -133,18 +133,18 @@ int twrpTar::extractTarFork() {
 	}
 	else {
 		if ((pid = wait(&status)) == -1) {
-			LOGI("Tar extraction failed\n");
+			LOGINFO("Tar extraction failed\n");
 			return -1;
 		}
 		else {
 			if (WIFSIGNALED(status) != 0) {
-				LOGI("Child process ended with signal: %d\n", WTERMSIG(status));
+				LOGINFO("Child process ended with signal: %d\n", WTERMSIG(status));
 				return -1;
 			}
 			else if (WEXITSTATUS(status) == 0)
-				LOGI("Tar extraction successful\n");
+				LOGINFO("Tar extraction successful\n");
 			else {
-				LOGI("Tar extraction failed\n");
+				LOGINFO("Tar extraction failed\n");
 				return -1;
 			}
 		}
@@ -156,7 +156,7 @@ int twrpTar::splitArchiveFork() {
 	int status;
 	pid_t pid;
 	if ((pid = fork()) == -1) {
-		LOGI("create tar failed to fork.\n");
+		LOGINFO("create tar failed to fork.\n");
 		return -1;
 	}
 	if (pid == 0) {
@@ -167,18 +167,18 @@ int twrpTar::splitArchiveFork() {
 	}
 	else {
 		if ((pid = wait(&status)) == -1) {
-			LOGI("Tar creation failed\n");
+			LOGINFO("Tar creation failed\n");
 			return -1;
 		}
 		else {
 			if (WIFSIGNALED(status) != 0) {
-				LOGI("Child process ended with signal: %d\n", WTERMSIG(status));
+				LOGINFO("Child process ended with signal: %d\n", WTERMSIG(status));
 				return -1;
 			}
 			else if (WIFEXITED(status) != 0)
-				LOGI("Tar creation successful\n");
+				LOGINFO("Tar creation successful\n");
 			else {
-				LOGI("Tar creation failed\n");
+				LOGINFO("Tar creation failed\n");
 				return -1;
 			}
 		}
@@ -195,12 +195,12 @@ int twrpTar::Generate_Multiple_Archives(string Path) {
 
 	if (has_data_media == 1 && Path.size() >= 11 && strncmp(Path.c_str(), "/data/media", 11) == 0)
 		return 0; // Skip /data/media
-	LOGI("Path: '%s', archive filename: '%s'\n", Path.c_str(), tarfn.c_str());
+	LOGINFO("Path: '%s', archive filename: '%s'\n", Path.c_str(), tarfn.c_str());
 
 	d = opendir(Path.c_str());
 	if (d == NULL)
 	{
-		LOGE("error opening '%s' -- error: %s\n", Path.c_str(), strerror(errno));
+		LOGERR("error opening '%s' -- error: %s\n", Path.c_str(), strerror(errno));
 		closedir(d);
 		return -1;
 	}
@@ -216,12 +216,12 @@ int twrpTar::Generate_Multiple_Archives(string Path) {
 		{
 			unsigned long long folder_size = TWFunc::Get_Folder_Size(FileName, false);
 			if (Archive_Current_Size + folder_size > MAX_ARCHIVE_SIZE) {
-				LOGI("Calling Generate_Multiple_Archives\n");
+				LOGINFO("Calling Generate_Multiple_Archives\n");
 				if (Generate_Multiple_Archives(FileName) < 0)
 					return -1;
 			} else {
 				//FileName += "/";
-				LOGI("Adding folder '%s'\n", FileName.c_str());
+				LOGINFO("Adding folder '%s'\n", FileName.c_str());
 				tardir = FileName;
 				if (tarDirs(true) < 0)
 					return -1;
@@ -233,34 +233,34 @@ int twrpTar::Generate_Multiple_Archives(string Path) {
 			stat(FileName.c_str(), &st);
 
 			if (Archive_Current_Size != 0 && Archive_Current_Size + st.st_size > MAX_ARCHIVE_SIZE) {
-				LOGI("Closing tar '%s', ", tarfn.c_str());
+				LOGINFO("Closing tar '%s', ", tarfn.c_str());
 				closeTar(false);
 				reinit_libtar_buffer();
 				if (TWFunc::Get_File_Size(tarfn) == 0) {
-					LOGE("Backup file size for '%s' is 0 bytes.\n", tarfn.c_str());
+					LOGERR("Backup file size for '%s' is 0 bytes.\n", tarfn.c_str());
 					return -1;
 				}
 				Archive_File_Count++;
 				if (Archive_File_Count > 999) {
-					LOGE("Archive count is too large!\n");
+					LOGERR("Archive count is too large!\n");
 					return -1;
 				}
 				string temp = basefn + "%03i";
 				sprintf(actual_filename, temp.c_str(), Archive_File_Count);
 				tarfn = actual_filename;
 				Archive_Current_Size = 0;
-				LOGI("Creating tar '%s'\n", tarfn.c_str());
-				ui_print("Creating archive %i...\n", Archive_File_Count + 1);
+				LOGINFO("Creating tar '%s'\n", tarfn.c_str());
+				gui_print("Creating archive %i...\n", Archive_File_Count + 1);
 				if (createTar() != 0)
 					return -1;
 			}
-			LOGI("Adding file: '%s'... ", FileName.c_str());
+			LOGINFO("Adding file: '%s'... ", FileName.c_str());
 			if (addFile(FileName, true) < 0)
 				return -1;
 			Archive_Current_Size += st.st_size;
-			LOGI("added successfully, archive size: %llu\n", Archive_Current_Size);
+			LOGINFO("added successfully, archive size: %llu\n", Archive_Current_Size);
 			if (st.st_size > 2147483648LL)
-				LOGE("There is a file that is larger than 2GB in the file system\n'%s'\nThis file may not restore properly\n", FileName.c_str());
+				LOGERR("There is a file that is larger than 2GB in the file system\n'%s'\nThis file may not restore properly\n", FileName.c_str());
 		}
 	}
 	closedir(d);
@@ -280,15 +280,15 @@ int twrpTar::Split_Archive()
 	init_libtar_buffer(0);
 	createTar();
 	DataManager::GetValue(TW_HAS_DATA_MEDIA, has_data_media);
-	ui_print("Creating archive 1...\n");
+	gui_print("Creating archive 1...\n");
 	if (Generate_Multiple_Archives(tardir) < 0) {
-		LOGE("Error generating multiple archives\n");
+		LOGERR("Error generating multiple archives\n");
 		free_libtar_buffer();
 		return -1;
 	}
 	closeTar(false);
 	free_libtar_buffer();
-	LOGI("Done, created %i archives.\n", (Archive_File_Count++));
+	LOGINFO("Done, created %i archives.\n", (Archive_File_Count++));
 	return (Archive_File_Count);
 }
 
@@ -298,11 +298,11 @@ int twrpTar::extractTar() {
 	if (openTar(gzip) == -1)
 		return -1;
 	if (tar_extract_all(t, charRootDir) != 0) {
-		LOGE("Unable to extract tar archive '%s'\n", tarfn.c_str());
+		LOGERR("Unable to extract tar archive '%s'\n", tarfn.c_str());
 		return -1;
 	}
 	if (tar_close(t) != 0) {
-		LOGE("Unable to close tar file\n");
+		LOGERR("Unable to close tar file\n");
 		return -1;
 	}
 	return 0;
@@ -334,12 +334,12 @@ int twrpTar::extract() {
 
 	if (Archive_Current_Type == 1) {
 		//if you return the extractTGZ function directly, stack crashes happen
-		LOGI("Extracting gzipped tar\n");
+		LOGINFO("Extracting gzipped tar\n");
 		int ret = extractTGZ();
 		return ret;
 	}
 	else {
-		LOGI("Extracting uncompressed tar\n");
+		LOGINFO("Extracting uncompressed tar\n");
 		return extractTar();
 	}
 }
@@ -361,12 +361,12 @@ int twrpTar::tarDirs(bool include_root) {
 			if (strcmp(de->d_name, ".") != 0) {
 				subfolder += de->d_name;
 			} else {
-				LOGI("adding '%s'\n", subfolder.c_str());
+				LOGINFO("adding '%s'\n", subfolder.c_str());
 				if (addFile(subfolder, include_root) != 0)
 					return -1;
 				continue;
 			}
-			LOGI("adding '%s'\n", subfolder.c_str());
+			LOGINFO("adding '%s'\n", subfolder.c_str());
 			strcpy(buf, subfolder.c_str());
 			if (de->d_type == DT_DIR) {
 				char* charTarPath;
@@ -377,7 +377,7 @@ int twrpTar::tarDirs(bool include_root) {
 					charTarPath = (char*) temp.c_str();
 				}
 				if (tar_append_tree(t, buf, charTarPath) != 0) {
-					LOGE("Error appending '%s' to tar archive '%s'\n", buf, tarfn.c_str());
+					LOGERR("Error appending '%s' to tar archive '%s'\n", buf, tarfn.c_str());
 					return -1;
 				}
 			} else if (tardir != "/" && (de->d_type == DT_REG || de->d_type == DT_LNK)) {
@@ -472,20 +472,20 @@ int twrpTar::openTar(bool gzip) {
 	char* charTarFile = (char*) tarfn.c_str();
 
 	if (gzip) {
-		LOGI("Opening as a gzip\n");
+		LOGINFO("Opening as a gzip\n");
 		string cmd = "pigz -d -c '" + tarfn + "'";
 		FILE* pipe = popen(cmd.c_str(), "r");
 		int fd = fileno(pipe);
 		if (!pipe) return -1;
 		if(tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, 0644, TAR_GNU) != 0) {
-			LOGI("tar_fdopen returned error\n");
+			LOGINFO("tar_fdopen returned error\n");
 			__pclose(pipe);
 			return -1;
 		}
 	}
 	else {
 		if (tar_open(&t, charTarFile, NULL, O_RDONLY | O_LARGEFILE, 0644, TAR_GNU) != 0) {
-			LOGE("Unable to open tar archive '%s'\n", charTarFile);
+			LOGERR("Unable to open tar archive '%s'\n", charTarFile);
 			return -1;
 		}
 	}
@@ -532,16 +532,16 @@ int twrpTar::closeTar(bool gzip) {
 
 	flush_libtar_buffer(t->fd);
 	if (tar_append_eof(t) != 0) {
-		LOGE("tar_append_eof(): %s\n", strerror(errno));
+		LOGERR("tar_append_eof(): %s\n", strerror(errno));
 		tar_close(t);
 		return -1;
 	}
 	if (tar_close(t) != 0) {
-		LOGE("Unable to close tar archive: '%s'\n", tarfn.c_str());
+		LOGERR("Unable to close tar archive: '%s'\n", tarfn.c_str());
 		return -1;
 	}
 	if (use_compression || gzip) {
-		LOGI("Closing popen and fd\n");
+		LOGINFO("Closing popen and fd\n");
 		pclose(p);
 		close(fd);
 	}
@@ -585,7 +585,7 @@ int twrpTar::extractTGZ() {
 		return -1;
 	int ret = tar_extract_all(t, splatCharRootDir);
 	if (tar_close(t) != 0) {
-		LOGE("Unable to close tar file\n");
+		LOGERR("Unable to close tar file\n");
 		return -1;
 	}
 	return 0;
@@ -603,7 +603,7 @@ int twrpTar::entryExists(string entry) {
 		ret = tar_find(t, searchstr);
 
 	if (tar_close(t) != 0)
-		LOGI("Unable to close tar file after searching for entry '%s'.\n", entry.c_str());
+		LOGINFO("Unable to close tar file after searching for entry '%s'.\n", entry.c_str());
 
 	return ret;
 }

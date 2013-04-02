@@ -38,9 +38,8 @@
 #include <string>
 
 extern "C" {
-#include "../common.h"
+#include "../twcommon.h"
 #include "../minuitwrp/minui.h"
-#include "../recovery_ui.h"
 }
 
 #include "rapidxml.hpp"
@@ -116,7 +115,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 	while (keylayout)
 	{
 		if (layoutindex > MAX_KEYBOARD_LAYOUTS) {
-			LOGE("Too many layouts defined in keyboard.\n");
+			LOGERR("Too many layouts defined in keyboard.\n");
 			return;
 		}
 
@@ -141,7 +140,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 		while (keyrow)
 		{
 			if (rowindex > MAX_KEYBOARD_ROWS) {
-				LOGE("Too many rows defined in keyboard.\n");
+				LOGERR("Too many rows defined in keyboard.\n");
 				return;
 			}
 
@@ -158,20 +157,20 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 				char keyinfo[255];
 
 				if (keyindex > MAX_KEYBOARD_KEYS) {
-					LOGE("Too many keys defined in a keyboard row.\n");
+					LOGERR("Too many keys defined in a keyboard row.\n");
 					return;
 				}
 
 				stratt = attr->value();
 				if (strlen(stratt.c_str()) >= 255) {
-					LOGE("Key info on layout%i, row%i, key%dd is too long.\n", layoutindex, rowindex, keyindex);
+					LOGERR("Key info on layout%i, row%i, key%dd is too long.\n", layoutindex, rowindex, keyindex);
 					return;
 				}
 
 				strcpy(keyinfo, stratt.c_str());
 
 				if (strlen(keyinfo) == 0) {
-					LOGE("No key info on layout%i, row%i, key%dd.\n", layoutindex, rowindex, keyindex);
+					LOGERR("No key info on layout%i, row%i, key%dd.\n", layoutindex, rowindex, keyindex);
 					return;
 				}
 
@@ -220,7 +219,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 						// This is an action
 						keyboard_keys[layoutindex - 1][rowindex - 1][keyindex - 1].key = KEYBOARD_ACTION;
 					} else
-						LOGE("Invalid key info on layout%i, row%i, key%02i.\n", layoutindex, rowindex, keyindex);
+						LOGERR("Invalid key info on layout%i, row%i, key%02i.\n", layoutindex, rowindex, keyindex);
 				}
 
 				// PROCESS LONG PRESS INFO IF EXISTS
@@ -229,14 +228,14 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 				if (attr) {
 					stratt = attr->value();
 					if (strlen(stratt.c_str()) >= 255) {
-						LOGE("Key info on layout%i, row%i, key%dd is too long.\n", layoutindex, rowindex, keyindex);
+						LOGERR("Key info on layout%i, row%i, key%dd is too long.\n", layoutindex, rowindex, keyindex);
 						return;
 					}
 
 					strcpy(keyinfo, stratt.c_str());
 
 					if (strlen(keyinfo) == 0) {
-						LOGE("No long press info on layout%i, row%i, long%dd.\n", layoutindex, rowindex, keyindex);
+						LOGERR("No long press info on layout%i, row%i, long%dd.\n", layoutindex, rowindex, keyindex);
 						return;
 					}
 
@@ -282,7 +281,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 							// This is an action
 							keyboard_keys[layoutindex - 1][rowindex - 1][keyindex - 1].longpresskey = KEYBOARD_ACTION;
 						} else
-							LOGE("Invalid long press key info on layout%i, row%i, long%02i.\n", layoutindex, rowindex, keyindex);
+							LOGERR("Invalid long press key info on layout%i, row%i, long%02i.\n", layoutindex, rowindex, keyindex);
 					}
 				}
 				keyindex++;

@@ -25,7 +25,85 @@
 #include <stdio.h>
 #include <errno.h>
 
-extern RecoveryUI* ui;
+//extern RecoveryUI* ui;
+
+#define PUBLIC_KEYS_FILE "/res/keys"
+
+// Reads a file containing one or more public keys as produced by
+// DumpPublicKey:  this is an RSAPublicKey struct as it would appear
+// as a C source literal, eg:
+//
+//  "{64,0xc926ad21,{1795090719,...,-695002876},{-857949815,...,1175080310}}"
+//
+// (Note that the braces and commas in this example are actual
+// characters the parser expects to find in the file; the ellipses
+// indicate more numbers omitted from this example.)
+//
+// The file may contain multiple keys in this format, separated by
+// commas.  The last key must not be followed by a comma.
+//
+// Returns NULL if the file failed to parse, or if it contain zero keys.
+static RSAPublicKey*
+load_keys(const char* filename, int* numKeys) {
+    RSAPublicKey* out = NULL;
+    *numKeys = 0;
+
+    FILE* f = fopen(filename, "r");
+    if (f == NULL) {
+        printf("opening %s: %s\n", filename, strerror(errno));
+        goto exit;
+    }
+
+    {
+        int i;
+        bool done = false;
+        while (!done) {
+            ++*numKeys;
+            out = (RSAPublicKey*)realloc(out, *numKeys * sizeof(RSAPublicKey));
+            RSAPublicKey* key = out + (*numKeys - 1);
+            if (fscanf(f, " { %i , 0x%x , { %u",
+                       &(key->len), &(key->n0inv), &(key->n[0])) != 3) {
+                goto exit;
+            }
+            if (key->len != RSANUMWORDS) {
+                printf("key length (%d) does not match expected size\n", key->len);
+                goto exit;
+            }
+            for (i = 1; i < key->len; ++i) {
+                if (fscanf(f, " , %u", &(key->n[i])) != 1) goto exit;
+            }
+            if (fscanf(f, " } , { %u", &(key->rr[0])) != 1) goto exit;
+            for (i = 1; i < key->len; ++i) {
+                if (fscanf(f, " , %u", &(key->rr[i])) != 1) goto exit;
+            }
+            fscanf(f, " } } ");
+
+            // if the line ends in a comma, this file has more keys.
+            switch (fgetc(f)) {
+            case ',':
+                // more keys to come.
+                break;
+
+            case EOF:
+                done = true;
+                break;
+
+            default:
+                printf("unexpected character between keys\n");
+                goto exit;
+            }
+        }
+    }
+
+    fclose(f);
+    return out;
+
+exit:
+    if (f) fclose(f);
+    free(out);
+    *numKeys = 0;
+    return NULL;
+}
 
 // Look for an RSA signature embedded in the .ZIP file comment given
 // the path to the zip.  Verify it matches one of the given public
@@ -33,9 +111,25 @@ extern RecoveryUI* ui;
 //
 // Return VERIFY_SUCCESS, VERIFY_FAILURE (if any error is encountered
 // or no key matches the signature).
+int verify_file(const char* path) {
+    //ui->SetProgress(0.0);
 
-int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKeys) {
-    ui->SetProgress(0.0);
+	int numKeys;
+    RSAPublicKey* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
+    if (loadedKeys == NULL) {
+        LOGE("Failed to load keys\n");
+        return VERIFY_FAILURE;
+    }
+    LOGI("%d key(s) loaded from %s\n\n   RSA Key:\n\n", numKeys, PUBLIC_KEYS_FILE);
+	int rsa_size = sizeof(RSAPublicKey);
+	unsigned char* ptr = (unsigned char*) loadedKeys;
+	unsigned int valuedees;
+	for (int dees2 = 0; dees2 < rsa_size; dees2++) {
+		valuedees = *ptr;
+		printf("%02x ", valuedees);
+		ptr++;
+	}
+	printf("\n\n");
 
     FILE* f = fopen(path, "rb");
     if (f == NULL) {
@@ -163,7 +257,7 @@ int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKey
         so_far += size;
         double f = so_far / (double)signed_len;
         if (f > frac + 0.02 || size == so_far) {
-            ui->SetProgress(f);
+            //ui->SetProgress(f);
             frac = f;
         }
     }
@@ -174,12 +268,14 @@ int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKey
     for (i = 0; i < numKeys; ++i) {
         // The 6 bytes is the "(signature_start) $ff $ff (comment_size)" that
         // the signing tool appends after the signature itself.
-        if (RSA_verify(pKeys+i, eocd + eocd_size - 6 - RSANUMBYTES,
-                       RSANUMBYTES, sha1)) {
+		int dees = RSA_verify(loadedKeys+i, eocd + eocd_size - 6 - RSANUMBYTES,
+                       RSANUMBYTES, sha1);
+        if (dees) {
             LOGI("whole-file signature verified against key %d\n", i);
             free(eocd);
             return VERIFY_SUCCESS;
         }
+		LOGI("i: %i, eocd_size: %i, RSANUMBYTES: %i, returned %i\n", i, eocd_size, RSANUMBYTES, dees);
     }
     free(eocd);
     LOGE("failed to verify whole-file signature\n");

@@ -39,8 +39,7 @@ extern "C" {
 #include "blanktimer.hpp"
 #include "../data.hpp"
 extern "C" {
-#include "../common.h"
-#include "../recovery_ui.h"
+#include "../twcommon.h"
 }
 #include "../twrp-functions.hpp"
 #include "../variables.h"
@@ -140,7 +139,7 @@ void blanktimer::resetTimerAndUnblank(void) {
 		case 3:
 #ifndef TW_NO_SCREEN_BLANK
 			if (gr_fb_blank(0) < 0) {
-				LOGI("blanktimer::resetTimerAndUnblank failed to gr_fb_blank(0)\n");
+				LOGINFO("blanktimer::resetTimerAndUnblank failed to gr_fb_blank(0)\n");
 				break;
 			}
 #endif

@@ -21,9 +21,8 @@
 #include <iomanip>
 
 extern "C" {
-#include "../common.h"
+#include "../twcommon.h"
 #include "../minuitwrp/minui.h"
-#include "../recovery_ui.h"
 }
 
 #include "rapidxml.hpp"
@@ -207,9 +206,9 @@ ResourceManager::ResourceManager(xml_node<>* resList, ZipArchive* pZip)
 
 				if (!attr_name) {
 					std::string res_name = attr_name->value();
-					LOGE("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
+					LOGERR("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
 				} else
-					LOGE("Resource type (%s) failed to load\n", type.c_str());
+					LOGERR("Resource type (%s) failed to load\n", type.c_str());
 
                 delete res;
             }
@@ -227,9 +226,9 @@ ResourceManager::ResourceManager(xml_node<>* resList, ZipArchive* pZip)
 
 				if (!attr_name) {
 					std::string res_name = attr_name->value();
-					LOGE("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
+					LOGERR("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
 				} else
-					LOGE("Resource type (%s) failed to load\n", type.c_str());
+					LOGERR("Resource type (%s) failed to load\n", type.c_str());
 
                 delete res;
             }
@@ -247,9 +246,9 @@ ResourceManager::ResourceManager(xml_node<>* resList, ZipArchive* pZip)
 
 				if (!attr_name) {
 					std::string res_name = attr_name->value();
-					LOGE("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
+					LOGERR("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
 				} else
-					LOGE("Resource type (%s) failed to load\n", type.c_str());
+					LOGERR("Resource type (%s) failed to load\n", type.c_str());
 
                 delete res;
             }
@@ -260,7 +259,7 @@ ResourceManager::ResourceManager(xml_node<>* resList, ZipArchive* pZip)
         }
         else
         {
-            LOGE("Resource type (%s) not supported.\n", type.c_str());
+            LOGERR("Resource type (%s) not supported.\n", type.c_str());
         }
 
         child = child->next_sibling("resource");

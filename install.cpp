@@ -188,7 +188,7 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
 // commas.  The last key must not be followed by a comma.
 //
 // Returns NULL if the file failed to parse, or if it contain zero keys.
-static RSAPublicKey*
+RSAPublicKey*
 load_keys(const char* filename, int* numKeys) {
     RSAPublicKey* out = NULL;
     *numKeys = 0;
