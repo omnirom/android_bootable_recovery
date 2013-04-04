@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 
     char twrp_booted[PROPERTY_VALUE_MAX];
 	property_get("ro.twrp.boot", twrp_booted, "0");
-	if (strcmp(twrp_booted, "0") != 0) {
+	if (strcmp(twrp_booted, "0") == 0) {
 		property_list(Print_Prop, NULL);
 		printf("\n");
 		property_set("ro.twrp.boot", "1");

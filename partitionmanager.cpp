@@ -128,14 +128,14 @@ int TWPartitionManager::Write_Fstab(void) {
 		if ((*iter)->Can_Be_Mounted) {
 			Line = (*iter)->Actual_Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw\n";
 			fputs(Line.c_str(), fp);
-			// Handle subpartition tracking
-			if ((*iter)->Is_SubPartition) {
-				TWPartition* ParentPartition = Find_Partition_By_Path((*iter)->SubPartition_Of);
-				if (ParentPartition)
-					ParentPartition->Has_SubPartition = true;
-				else
-					LOGERR("Unable to locate parent partition '%s' of '%s'\n", (*iter)->SubPartition_Of.c_str(), (*iter)->Mount_Point.c_str());
-			}
+		}
+		// Handle subpartition tracking
+		if ((*iter)->Is_SubPartition) {
+			TWPartition* ParentPartition = Find_Partition_By_Path((*iter)->SubPartition_Of);
+			if (ParentPartition)
+				ParentPartition->Has_SubPartition = true;
+			else
+				LOGERR("Unable to locate parent partition '%s' of '%s'\n", (*iter)->SubPartition_Of.c_str(), (*iter)->Mount_Point.c_str());
 		}
 	}
 	fclose(fp);
