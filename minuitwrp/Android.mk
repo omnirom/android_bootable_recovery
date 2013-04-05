@@ -3,7 +3,6 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := events.c resources.c
-#LOCAL_SRC_FILES := $(TARGET_OUT_SHARED_LIBRARIES)/libjpegtwrp.so $(TARGET_OUT_SHARED_LIBRARIES)/libpng.so $(TARGET_OUT_SHARED_LIBRARIES)/libpixelflinger.so 
 
 ifneq ($(TW_BOARD_CUSTOM_GRAPHICS),)
     LOCAL_SRC_FILES += $(TW_BOARD_CUSTOM_GRAPHICS)
@@ -58,8 +57,8 @@ endif
 ifneq ($(BOARD_USE_CUSTOM_RECOVERY_FONT),)
   LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=$(BOARD_USE_CUSTOM_RECOVERY_FONT)
 endif
-LOCAL_SHARED_LIBRARIES += libz libpixelflinger libc libcutils
-LOCAL_STATIC_LIBRARIES += libpng libjpegtwrp
+LOCAL_SHARED_LIBRARIES += libz libc libcutils
+LOCAL_STATIC_LIBRARIES += libpng libjpegtwrp libpixelflinger_static
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminuitwrp
 
