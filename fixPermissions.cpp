@@ -443,13 +443,17 @@ int fixPermissions::getPackages() {
 	xmlFile.read(&xmlBuf[0], len);
 	xmlBuf[len] = '\0';
 	xml_document<> pkgDoc;
+	LOGINFO("parsing package, %i...\n", len);
 	pkgDoc.parse<parse_full>(&xmlBuf[0]);
 
 	xml_node<> * pkgNode = pkgDoc.first_node("packages");
-	xml_node <> * next = pkgNode->first_node("package");
-
-	if (next == NULL) {
+	if (pkgNode == NULL) {
 		LOGERR("No packages found to fix.\n");
+		return -1;
+	}
+	xml_node <> * next = pkgNode->first_node("package");
+	if (next == NULL) {
+		LOGERR("No package found to fix.\n");
 		return -1;
 	}
 

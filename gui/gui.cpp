@@ -90,7 +90,8 @@ rapidxml::parse_error_handler (const char *what, void *where)
 {
   fprintf (stderr, "Parser error: %s\n", what);
   fprintf (stderr, "  Start of string: %s\n", (char *) where);
-  abort ();
+  LOGERR("Error parsing XML file.\n");
+  //abort ();
 }
 
 static void
