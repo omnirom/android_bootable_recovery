@@ -1,0 +1,5 @@
+*.o
+fb2png
+adb_screenshoot
+libs
+obj

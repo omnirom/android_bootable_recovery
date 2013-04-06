@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# view argb8888
+#
+# Modified: 
+# Kyan He <kyan.ql.he@gmail.com> @ Tue Feb 15 01:45:54 CST 2011
+#
+# Initial version
+# Kyan He <kyan.ql.he@gmail.com> @ Mon Sep 20 11:45:54 CST 2010
+#
+
+if ! which ffmpeg >/dev/null;
+then
+    echo "no ffmpeg found"
+elif [[ ! $# -eq 2 ]];
+then
+    echo "Usage: `basename $0` <data.argb8888> <width>x<height>"
+else
+    ffmpeg -vcodec rawvideo -f rawvideo -pix_fmt rgb24 -s $2 -i $1 -f image2 -vcodec png $1.png
+fi
+
