@@ -54,6 +54,8 @@ int set_bootloader_message(const struct bootloader_message *in);
 int set_bootloader_message_mtd_name(const struct bootloader_message *in, const char* mtd_name);
 int set_bootloader_message_block_name(const struct bootloader_message *in, const char* block_name);
 
+void get_args(int *argc, char ***argv);
+
 #ifdef __cplusplus
 }
 #endif

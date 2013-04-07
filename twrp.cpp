@@ -27,6 +27,7 @@
 #include "cutils/properties.h"
 extern "C" {
 #include "minadbd/adb.h"
+#include "bootloader.h"
 }
 
 #ifdef ANDROID_RB_RESTART
@@ -64,7 +65,7 @@ int main(int argc, char **argv) {
 	setbuf(stdout, NULL);
 	freopen(TMP_LOG_FILE, "a", stderr);
 	setbuf(stderr, NULL);
-	
+
 	// Handle ADB sideload
 	if (argc == 3 && strcmp(argv[1], "--adbd") == 0) {
 		adb_main(argv[2]);
@@ -91,36 +92,46 @@ int main(int argc, char **argv) {
 
 	PartitionManager.Mount_By_Path("/cache", true);
 
-    string Zip_File, Reboot_Value;
+	string Zip_File, Reboot_Value;
 	bool Cache_Wipe = false, Factory_Reset = false, Perform_Backup = false;
 
-	int index, index2;
-	char* ptr;
-	printf("Startup Commands: ");
-	for (index = 1; index < argc; index++) {
-		printf(" '%s'", argv[index]);
-		if (*argv[index] == 'u') {
-			ptr = argv[index];
-			index2 = 0;
-			while (*ptr != '=' && *ptr != '\n')
-				ptr++;
-			if (*ptr) {
-				Zip_File = ptr;
-			} else
-				LOGERR("argument error specifying zip file\n");
-		} else if (*argv[index] == 'c') {
-			Cache_Wipe = true;
-		} else if (*argv[index] == 'w') {
-			Factory_Reset = true;
-		} else if (*argv[index] == 'n') {
-			Perform_Backup = true;
-		} else if (*argv[index] == 's') {
-			ptr = argv[index];
-			index2 = 0;
-			while (*ptr != '=' && *ptr != '\n')
-				ptr++;
-			if (*ptr) {
-				Reboot_Value = *ptr;
+	{
+		get_args(&argc, &argv);
+
+		int index, index2, len;
+		char* argptr;
+		char* ptr;
+		printf("Startup Commands: ");
+		for (index = 1; index < argc; index++) {
+			argptr = argv[index];
+			printf(" '%s'", argv[index]);
+			len = strlen(argv[index]);
+			if (*argptr == '-') {argptr++; len--;}
+			if (*argptr == '-') {argptr++; len--;}
+			if (*argptr == 'u') {
+				ptr = argptr;
+				index2 = 0;
+				while (*ptr != '=' && *ptr != '\n')
+					ptr++;
+				if (*ptr) {
+					Zip_File = ptr;
+				} else
+					LOGERR("argument error specifying zip file\n");
+			} else if (*argptr == 'w') {
+				if (len == 9)
+					Factory_Reset = true;
+				else if (len == 10)
+					Cache_Wipe = true;
+			} else if (*argptr == 'n') {
+				Perform_Backup = true;
+			} else if (*argptr == 's') {
+				ptr = argptr;
+				index2 = 0;
+				while (*ptr != '=' && *ptr != '\n')
+					ptr++;
+				if (*ptr) {
+					Reboot_Value = *ptr;
+				}
 			}
 		}
 	}
