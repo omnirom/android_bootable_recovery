@@ -686,7 +686,7 @@ int TWPartitionManager::Run_Backup(void) {
 					std::vector<TWPartition*>::iterator subpart;
 
 					for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
-						if ((*subpart)->Can_Be_Backed_Up && (*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == backup_part->Mount_Point) {
+						if ((*subpart)->Can_Be_Backed_Up && (*subpart)->Is_Present && (*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == backup_part->Mount_Point) {
 							partition_count++;
 							if ((*subpart)->Backup_Method == 1)
 								file_bytes += (*subpart)->Backup_Size;
@@ -1761,10 +1761,20 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 		}
 	} else if (ListType == "backup") {
 		char backup_size[255];
+		unsigned long long Backup_Size;
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-			if ((*iter)->Can_Be_Backed_Up && !(*iter)->Is_SubPartition) {
+			if ((*iter)->Can_Be_Backed_Up && !(*iter)->Is_SubPartition && (*iter)->Is_Present) {
 				struct PartitionList part;
-				sprintf(backup_size, "%llu", (*iter)->Backup_Size / 1024 / 1024);
+				Backup_Size = (*iter)->Backup_Size;
+				if ((*iter)->Has_SubPartition) {
+					std::vector<TWPartition*>::iterator subpart;
+
+					for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+						if ((*subpart)->Is_SubPartition && (*subpart)->Can_Be_Backed_Up && (*subpart)->Is_Present && (*subpart)->SubPartition_Of == (*iter)->Mount_Point)
+							Backup_Size += (*subpart)->Backup_Size;
+					}
+				}
+				sprintf(backup_size, "%llu", Backup_Size / 1024 / 1024);
 				part.Display_Name = (*iter)->Backup_Display_Name + " (";
 				part.Display_Name += backup_size;
 				part.Display_Name += "MB)";

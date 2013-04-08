@@ -333,7 +333,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 		if (Mount_Point == "/emmc" || Mount_Point == "/internal_sd" || Mount_Point == "/internal_sdcard") {
 			Is_Storage = true;
 			Is_Settings_Storage = true;
-			Storage_Path = "/emmc";
 			Wipe_Available_in_GUI = true;
 #ifndef RECOVERY_SDCARD_ON_DATA
 			Setup_AndSec();
