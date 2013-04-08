@@ -124,6 +124,9 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 	LOGINFO("Processing '%s'\n", Mount_Point.c_str());
 	Backup_Path = Mount_Point;
 	Storage_Path = Mount_Point;
+	Display_Name = full_line + 1;
+	Backup_Display_Name = Display_Name;
+	Storage_Name = Display_Name;
 	index = Mount_Point.size();
 	while (index < line_len) {
 		while (index < line_len && full_line[index] == '\0')
@@ -305,9 +308,8 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Removable = true;
 			Wipe_Available_in_GUI = true;
 #else
-		if (Mount_Point == "/sdcard") {
+		if (Mount_Point == "/sdcard" || Mount_Point == "/external_sd" || Mount_Point == "/external_sdcard") {
 			Is_Storage = true;
-			Storage_Path = "/sdcard";
 			Removable = true;
 			Wipe_Available_in_GUI = true;
 #ifndef RECOVERY_SDCARD_ON_DATA
@@ -328,7 +330,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 #endif
 		}
 #else
-		if (Mount_Point == "/emmc") {
+		if (Mount_Point == "/emmc" || Mount_Point == "/internal_sd" || Mount_Point == "/internal_sdcard") {
 			Is_Storage = true;
 			Is_Settings_Storage = true;
 			Storage_Path = "/emmc";
