@@ -1057,7 +1057,7 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
         return StringValue(strdup(""));
     }
     uint8_t digest[SHA_DIGEST_SIZE];
-    SHA(args[0]->data, args[0]->size, digest);
+    SHA_hash(args[0]->data, args[0]->size, digest);
     FreeValue(args[0]);
 
     if (argc == 1) {
