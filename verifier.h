@@ -19,12 +19,17 @@
 
 #include "mincrypt/rsa.h"
 
+typedef struct Certificate {
+    int hash_len;  // SHA_DIGEST_SIZE (SHA-1) or SHA256_DIGEST_SIZE (SHA-256)
+    RSAPublicKey* public_key;
+} Certificate;
+
 /* Look in the file for a signature footer, and verify that it
  * matches one of the given keys.  Return one of the constants below.
  */
-int verify_file(const char* path, const RSAPublicKey *pKeys, unsigned int numKeys);
+int verify_file(const char* path, const Certificate *pKeys, unsigned int numKeys);
 
-RSAPublicKey* load_keys(const char* filename, int* numKeys);
+Certificate* load_keys(const char* filename, int* numKeys);
 
 #define VERIFY_SUCCESS        0
 #define VERIFY_FAILURE        1
