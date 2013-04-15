@@ -1191,6 +1191,9 @@ int TWPartitionManager::Wipe_Media_From_Data(void) {
 			return -1;
 		if (dat->Has_Data_Media) {
 			dat->Recreate_Media_Folder();
+			// Unmount and remount - slightly hackish way to ensure that the "/sdcard" folder is still mounted properly after wiping
+			dat->UnMount(false);
+			dat->Mount(false);
 		}
 		return true;
 	} else {
@@ -1417,6 +1420,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 			dat->Is_Decrypted = true;
 			dat->Decrypted_Block_Device = crypto_blkdev;
 			dat->Setup_File_System(false);
+			dat->Current_File_System = dat->Fstab_File_System; // Needed if we're ignoring blkid because encrypted devices start out as emmc
 			gui_print("Data successfully decrypted, new block device: '%s'\n", crypto_blkdev);
 
 #ifdef CRYPTO_SD_FS_TYPE
@@ -1847,6 +1851,13 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 				part.Mount_Point = (*iter)->Backup_Path;
 				part.selected = 0;
 				Partition_List->push_back(part);
+			}
+			if ((*iter)->Has_Data_Media) {
+				struct PartitionList datamedia;
+				datamedia.Display_Name = (*iter)->Storage_Name;
+				datamedia.Mount_Point = "INTERNAL";
+				datamedia.selected = 0;
+				Partition_List->push_back(datamedia);
 			}
 		}
 	} else {

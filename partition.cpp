@@ -480,7 +480,7 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 		Storage_Name = Display_Name;
 	if (!has_display_name && has_storage_name)
 		Display_Name = Storage_Name;
-	if (has_display_name && !has_backup_name)
+	if (has_display_name && !has_backup_name && Backup_Display_Name != "Android Secure")
 		Backup_Display_Name = Display_Name;
 	if (!has_display_name && has_backup_name)
 		Display_Name = Backup_Display_Name;
@@ -1158,6 +1158,9 @@ bool TWPartition::Wipe_Encryption() {
 		return false;
 
 	Has_Data_Media = false;
+	Decrypted_Block_Device = "";
+	Is_Decrypted = false;
+	Is_Encrypted = false;
 	if (Wipe(Fstab_File_System)) {
 		Has_Data_Media = Save_Data_Media;
 		if (Has_Data_Media && !Symlink_Mount_Point.empty()) {
