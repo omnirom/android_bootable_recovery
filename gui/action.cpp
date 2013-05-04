@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <dirent.h>
 
 #include <string>
 #include <sstream>
@@ -405,6 +406,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			}
 		}
         operation_end(ret_val, simulate);
+		return 0;
 	}
 
     if (function == "readBackup")
@@ -494,6 +496,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			PartitionManager.Mount_Current_Storage(true);
 		}
 		operation_end(0, simulate);
+		return 0;
 	}
 	
 	if (function == "copylog")
@@ -705,6 +708,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				operation_end(0, simulate);
 			else
 				operation_end(1, simulate);
+			return 0;
 		}
 
 		if (function == "flash")
@@ -863,6 +867,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			} else
 				PartitionManager.Update_System_Details();
 			operation_end(0, simulate);
+			return 0;
 		}
         if (function == "nandroid")
         {
@@ -893,12 +898,13 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					return -1;
 				}
 			}
+			DataManager::SetValue("tw_encrypt_backup", 0);
 			if (ret == false)
 				ret = 1; // 1 for failure
 			else
 				ret = 0; // 0 for success
-            	operation_end(ret, simulate);
-		return 0;
+            operation_end(ret, simulate);
+			return 0;
         }
 		if (function == "fixpermissions")
 		{
@@ -1226,6 +1232,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					DataManager::SetValue("tw_page_done", 1);
 				}
 			}
+			return 0;
 		}
 		if (function == "installsu")
 		{
@@ -1257,13 +1264,35 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			operation_end(op_status, simulate);
 			return 0;
 		}
+		if (function == "decrypt_backup")
+		{
+			int op_status = 0;
+
+			operation_start("Try Restore Decrypt");
+			if (simulate) {
+				simulate_progress_bar();
+			} else {
+				string Restore_Path, Filename, Password;
+				DataManager::GetValue("tw_restore", Restore_Path);
+				Restore_Path += "/";
+				DataManager::GetValue("tw_restore_password", Password);
+				if (TWFunc::Try_Decrypting_Backup(Restore_Path, Password))
+					op_status = 0; // success
+				else
+					op_status = 1; // fail
+			}
+
+			operation_end(op_status, simulate);
+			return 0;
+		}
     }
     else
     {
-        pthread_t t;
-        pthread_create(&t, NULL, thread_start, this);
+		pthread_t t;
+		pthread_create(&t, NULL, thread_start, this);
         return 0;
     }
+	LOGERR("Unknown action '%s'\n", function.c_str());
     return -1;
 }
 

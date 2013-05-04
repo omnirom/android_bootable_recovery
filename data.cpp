@@ -908,6 +908,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair("tw_military_time", make_pair("0", 1)));
 	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("60", 1)));
 	mValues.insert(make_pair("tw_gui_done", make_pair("0", 0)));
+	mValues.insert(make_pair("tw_encrypt_backup", make_pair("0", 0)));
 #ifdef TW_BRIGHTNESS_PATH
 #ifndef TW_MAX_BRIGHTNESS
 #define TW_MAX_BRIGHTNESS 255
@@ -926,6 +927,12 @@ void DataManager::SetDefaultValues()
 	}
 #endif
 	mValues.insert(make_pair(TW_MILITARY_TIME, make_pair("0", 1)));
+#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
+	mValues.insert(make_pair("tw_include_encrypted_backup", make_pair("1", 0)));
+#else
+	LOGINFO("TW_EXCLUDE_ENCRYPTED_BACKUPS := true\n");
+	mValues.insert(make_pair("tw_include_encrypted_backup", make_pair("0", 0)));
+#endif
 }
 
 // Magic Values

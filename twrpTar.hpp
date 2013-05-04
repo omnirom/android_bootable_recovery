@@ -30,24 +30,43 @@ extern "C" {
 
 using namespace std;
 
+struct TarListStruct {
+	std::string fn;
+	unsigned thread_id;
+};
+
+struct thread_data_struct {
+	std::vector<TarListStruct> *TarList;
+	unsigned thread_id;
+};
+
 class twrpTar {
 	public:
-		int extract();
-		int compress(string fn);
-		int uncompress(string fn);
-                int addFilesToExistingTar(vector <string> files, string tarFile);
-		int createTar();
-		int addFile(string fn, bool include_root);
-		int entryExists(string entry);
-		int closeTar(bool gzip);
-		int createTarGZFork();
+		twrpTar();
+		virtual ~twrpTar();
 		int createTarFork();
 		int extractTarFork();
 		int splitArchiveFork();
-                void setfn(string fn);
-                void setdir(string dir);
+		void setexcl(string exclude);
+		void setfn(string fn);
+		void setdir(string dir);
+		unsigned long long uncompressedSize();
+		
+	public:
+		int use_encryption;
+		int userdata_encryption;
+		int use_compression;
+		int split_archives;
+		int has_data_media;
+		string backup_name;
+
 	private:
-		int createTGZ();
+		int extract();
+		int addFilesToExistingTar(vector <string> files, string tarFile);
+		int createTar();
+		int addFile(string fn, bool include_root);
+		int entryExists(string entry);
+		int closeTar();
 		int create();
 		int Split_Archive();
 		int removeEOT(string tarFile);
@@ -55,16 +74,26 @@ class twrpTar {
 		int tarDirs(bool include_root);
 		int Generate_Multiple_Archives(string Path);
 		string Strip_Root_Dir(string Path);
-		int extractTGZ();
-		int openTar(bool gzip);
-		int has_data_media;
+		int openTar();
 		int Archive_File_Count;
+		int Archive_Current_Type;
 		unsigned long long Archive_Current_Size;
-		int getArchiveType(); // 1 for compressed - 0 for uncompressed
 		TAR *t;
-		FILE* p;
 		int fd;
+		pid_t pigz_pid;
+		pid_t oaes_pid;
+
 		string tardir;
 		string tarfn;
 		string basefn;
+		string tarexclude;
+
+		vector<string> split;
+
+		int Generate_TarList(string Path, std::vector<TarListStruct> *TarList, unsigned long long *Target_Size, unsigned *thread_id);
+		static void* createList(void *cookie);
+		static void* extractMulti(void *cookie);
+		int tarList(bool include_root, std::vector<TarListStruct> *TarList, unsigned thread_id);
+		std::vector<TarListStruct> *ItemList;
+		int thread_id;
 }; 

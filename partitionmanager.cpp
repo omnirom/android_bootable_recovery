@@ -184,6 +184,10 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Is_Decrypted ");
 	if (Part->Has_Data_Media)
 		printf("Has_Data_Media ");
+	if (Part->Can_Encrypt_Backup)
+		printf("Can_Encrypt_Backup ");
+	if (Part->Use_Userdata_Encryption)
+		printf("Use_Userdata_Encryption ");
 	if (Part->Has_Android_Secure)
 		printf("Has_Android_Secure ");
 	if (Part->Is_Storage)
@@ -532,17 +536,19 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 		string strfn;
 		sprintf(filename, "%s%03i", Full_File.c_str(), index);
 		strfn = filename;
-		while (TWFunc::Path_Exists(filename) == true) {
+		while (index < 1000) {
 			md5sum.setfn(filename);
-			if (md5sum.computeMD5() == 0) {
-				if (md5sum.write_md5digest() != 0)
-				{
-					gui_print(" * MD5 Error.\n");
+			if (TWFunc::Path_Exists(filename)) {
+				if (md5sum.computeMD5() == 0) {
+					if (md5sum.write_md5digest() != 0)
+					{
+						gui_print(" * MD5 Error.\n");
+						return false;
+					}
+				} else {
+					gui_print(" * Error computing MD5.\n");
 					return false;
 				}
-			}
-			else {
-				return -1;
 			}
 			index++;
 			sprintf(filename, "%s%03i", Full_File.c_str(), index);
@@ -902,7 +908,9 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 void TWPartitionManager::Set_Restore_Files(string Restore_Name) {
 	// Start with the default values
 	string Restore_List;
-	bool get_date = true;
+	bool get_date = true, check_encryption = true;
+
+	DataManager::SetValue("tw_restore_encrypted", 0);
 
 	DIR* d;
 	d = opendir(Restore_Name.c_str());
@@ -956,10 +964,20 @@ void TWPartitionManager::Set_Restore_Files(string Restore_Name) {
 			extn = ptr;
 		}
 
-		if (strcmp(fstype, "log") == 0) continue;
+		if (fstype == NULL || extn == NULL || strcmp(fstype, "log") == 0) continue;
 		int extnlength = strlen(extn);
-		if (extn == NULL || (extnlength != 3 && extnlength != 6)) continue;
-		if (extnlength == 3 && strncmp(extn, "win", 3) != 0) continue;
+		if (extnlength != 3 && extnlength != 6) continue;
+		if (extnlength >= 3 && strncmp(extn, "win", 3) != 0) continue;
+		//if (extnlength == 6 && strncmp(extn, "win000", 6) != 0) continue;
+
+		if (check_encryption) {
+			string filename = Restore_Name + "/";
+			filename += de->d_name;
+			if (TWFunc::Get_File_Type(filename) == 2) {
+				LOGINFO("'%s' is encrypted\n", filename.c_str());
+				DataManager::SetValue("tw_restore_encrypted", 1);
+			}
+		}
 		if (extnlength == 6 && strncmp(extn, "win000", 6) != 0) continue;
 
 		TWPartition* Part = Find_Partition_By_Path(label);

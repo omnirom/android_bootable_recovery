@@ -183,7 +183,7 @@
 		<variable name="button_fill_full_width" value="400" />
 		<variable name="button_fill_main_width" value="367" />
 		<variable name="button_fill_main_height" value="120" />
-		<variable name="button_fill_half_height" value="60" />
+		<variable name="button_fill_half_height" value="40" />
 		<variable name="button_fill_quarter_height" value="30" />
 		<variable name="button_full_center_x" value="200" />
 		<variable name="backup_list_x" value="23" />
@@ -191,6 +191,7 @@
 		<variable name="backup_list_width" value="367" />
 		<variable name="backup_list_height" value="290" />
 		<variable name="backup_storage_y" value="190" />
+		<variable name="backup_encrypt_y" value="235" />
 		<variable name="restore_list_y" value="100" />
 		<variable name="restore_list_height" value="270" />
 		<variable name="mount_list_height" value="360" />
@@ -1675,6 +1676,36 @@
 				</actions>
 			</object>
 
+			<object type="button">
+				<conditions>
+					<condition var1="tw_include_encrypted_backup" var2="1" />
+					<condition var1="tw_encrypt_backup" var2="0" />
+				</conditions>
+				<highlight color="%highlight_color%" />
+				<fill color="%button_fill_color%" />
+				<placement x="%col3_x%" y="%backup_encrypt_y%" w="%button_fill_main_width%" h="%button_fill_half_height%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>No Encryption</text>
+				<actions>
+					<action function="page">backupencryption</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<conditions>
+					<condition var1="tw_include_encrypted_backup" var2="1" />
+					<condition var1="tw_encrypt_backup" var2="1" />
+				</conditions>
+				<highlight color="%highlight_color%" />
+				<fill color="%button_fill_color%" />
+				<placement x="%col3_x%" y="%backup_encrypt_y%" w="%button_fill_main_width%" h="%button_fill_half_height%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Using Encryption</text>
+				<actions>
+					<action function="page">backupencryption</action>
+				</actions>
+			</object>
+
 			<object type="checkbox">
 				<placement x="%col3_x%" y="%nandcheck_row6%" />
 				<font resource="font" color="%text_color%" />
@@ -1795,6 +1826,140 @@
 			<object type="template" name="footer" />
 		</page>
 
+		<page name="backupencryption">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Encrypt your backup? Please enter a password:</text>
+			</object>
+
+			<object type="input">
+				<placement x="%input_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<background color="%input_background_color%" />
+				<cursor color="%input_cursor_color%" hasfocus="1" width="%input_cursor_width%" />
+				<font resource="font" color="%text_color%" />
+				<text>%tw_backup_encrypt_display%</text>
+				<data name="tw_backup_password" mask="*" maskvariable="tw_backup_encrypt_display" />
+				<restrict minlen="1" maxlen="32" allow="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_" />
+				<action function="page">backupencryption2</action>
+			</object>
+
+			<object type="text" color="%text_fail_color%">
+				<condition var1="tw_password_not_match" var2="1" />
+				<font resource="font" />
+				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
+				<text>Passwords Do Not Match</text>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col_center_x%" y="%cancel_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Cancel</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_encrypt_backup=0</action>
+					<action function="set">tw_backup_password=</action>
+					<action function="set">tw_backup_password2=</action>
+					<action function="set">tw_backup_encrypt_display=</action>
+					<action function="set">tw_backup_encrypt_display2=</action>
+					<action function="page">backup</action>
+				</actions>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">backup</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="backupencryption2">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Encrypt your backup? Please Enter Password Again:</text>
+			</object>
+
+			<object type="input">
+				<placement x="%input_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<background color="%input_background_color%" />
+				<cursor color="%input_cursor_color%" hasfocus="1" width="%input_cursor_width%" />
+				<font resource="font" color="%text_color%" />
+				<text>%tw_backup_encrypt_display2%</text>
+				<data name="tw_backup_password2" mask="*" maskvariable="tw_backup_encrypt_display2" />
+				<restrict minlen="1" maxlen="32" allow="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_" />
+				<actions>
+					<action function="page">checkbackuppassword</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col_center_x%" y="%cancel_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Cancel</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_encrypt_backup=0</action>
+					<action function="set">tw_backup_password=</action>
+					<action function="set">tw_backup_password2=</action>
+					<action function="set">tw_backup_encrypt_display=</action>
+					<action function="set">tw_backup_encrypt_display2=</action>
+					<action function="page">backup</action>
+				</actions>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">backup</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="checkbackuppassword">
+			<object type="action">
+				<condition var1="tw_backup_password2" var2="tw_backup_password" />
+				<actions>
+					<action function="set">tw_encrypt_backup=1</action>
+					<action function="page">backup</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_backup_password2" op="!=" var2="tw_backup_password" />
+				<actions>
+					<action function="set">tw_encrypt_backup=0</action>
+					<action function="set">tw_password_not_match=1</action>
+					<action function="set">tw_backup_password=</action>
+					<action function="set">tw_backup_password2=</action>
+					<action function="set">tw_backup_encrypt_display=</action>
+					<action function="set">tw_backup_encrypt_display2=</action>
+					<action function="page">backupencryption</action>
+				</actions>
+			</object>
+		</page>
+
 		<page name="backup_run">
 			<object type="template" name="header" />
 
@@ -1863,7 +2028,7 @@
 				<condition var1="tw_restore" op="modified" />
 				<actions>
 					<action function="readBackup"></action>
-					<action function="page">restore_select</action>
+					<action function="page">restore_read</action>
 				</actions>
 			</object>
 
@@ -1878,6 +2043,138 @@
 			</object>
 
 			<object type="template" name="footer" />
+		</page>
+
+		<page name="restore_read">
+			<object type="action">
+				<condition var1="tw_restore_encrypted" var2="1" />
+				<actions>
+					<action function="set">tw_password_fail=0</action>
+					<action function="page">restore_decrypt</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_restore_encrypted" var2="0" />
+				<actions>
+					<action function="page">restore_select</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="restore_decrypt">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Backup encrypted. Please enter your password:</text>
+			</object>
+
+			<object type="input">
+				<placement x="%input_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<background color="%input_background_color%" />
+				<cursor color="%input_cursor_color%" hasfocus="1" width="%input_cursor_width%" />
+				<font resource="font" color="%text_color%" />
+				<text>%tw_restore_display%</text>
+				<data name="tw_restore_password" mask="*" maskvariable="tw_restore_display" />
+				<restrict minlen="1" maxlen="32" allow="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_" />
+				<actions>
+					<action function="page">try_restore_decrypt</action>
+				</actions>
+			</object>
+
+			<object type="text" color="%text_fail_color%">
+				<condition var1="tw_password_fail" var2="1" />
+				<font resource="font" />
+				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
+				<text>Password Failed, Please Try Again</text>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col2_x%" y="%cancel_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Cancel</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">restore</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col3_x%" y="%cancel_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Delete</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=restore</action>
+					<action function="set">tw_action=cmd</action>
+					<action function="set">tw_action_param=cd %tw_backups_folder% && rm -rf &quot;%tw_restore_name%&quot;</action>
+					<action function="set">tw_text1=Delete Backup? %tw_restore_name%</action>
+					<action function="set">tw_text2=This cannot be undone!</action>
+					<action function="set">tw_action_text1=Deleting Backup...</action>
+					<action function="set">tw_complete_text1=Backup Delete Complete</action>
+					<action function="set">tw_slider_text=Swipe to Delete</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">restore</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="try_restore_decrypt">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Trying Decryption with Your Password</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<action function="decrypt_backup"></action>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" op="!=" var2="0" />
+				</conditions>
+				<actions>
+					<action function="set">tw_password_fail=1</action>
+					<action function="page">restore_decrypt</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" op="=" var2="0" />
+				</conditions>
+				<actions>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">restore_select</action>
+				</actions>
+			</object>
 		</page>
 
 		<page name="restore_select">

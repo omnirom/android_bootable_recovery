@@ -289,7 +289,7 @@ int tar_extract_glob(TAR *t, char *globname, char *prefix);
 int tar_extract_all(TAR *t, char *prefix);
 
 /* add a whole tree of files */
-int tar_append_tree(TAR *t, char *realdir, char *savedir);
+int tar_append_tree(TAR *t, char *realdir, char *savedir, char *exclude);
 
 /* find an entry */
 int tar_find(TAR *t, char *searchstr);

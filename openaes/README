@@ -1,0 +1,78 @@
+---------------------------------------------------------------------------
+OpenAES-0.7.0
+Nabil S. Al Ramli
+www.nalramli.com
+---------------------------------------------------------------------------
+
+License Terms
+-------------
+
+---------------------------------------------------------------------------
+OpenAES Licence
+---------------------------------------------------------------------------
+Copyright (c) 2012, Nabil S. Al Ramli, www.nalramli.com
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+  - Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+  - Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+---------------------------------------------------------------------------
+
+Introduction
+------------
+
+OpenAES is an open source implementation of the Advanced Encryption
+Standard.  It is distributed as a portable, lightweight C library that can
+be easily integrated into applications.
+
+Compiling
+---------
+
+OpenAES has been tested with the GCC as well as VC compilers.  It is
+necessary to compile the source files located in ./src, and to add ./inc to
+the include paths.
+
+If you are building with OAES_HAVE_ISAAC defined (true by default), then
+you also need to link in the source files under ./src/isaac and also add
+./src/isaac to the include paths.
+
+You may edit ./inc/oaes_config.h to modify build options.
+
+CMake 2.8.0 can be used to build the test programs on different platforms.
+
+In a Linux command line terminal type:
+
+cmake .
+make
+
+In Windows, in a Visual Studio command line window type:
+
+cmake . -G "NMake Makefiles"
+nmake
+
+Usage
+-----
+
+Usage is described in the header file ./inc/oaes_lib.h.
+
+Samples
+-------
+
+Samples applications are provided in the /test folder.

@@ -232,6 +232,11 @@ endif
 ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
     LOCAL_CFLAGS += -DRK3066
 endif
+ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
+    LOCAL_SHARED_LIBRARIES += libopenaes
+else
+    LOCAL_CFLAGS += -DTW_EXCLUDE_ENCRYPTED_BACKUPS
+endif
 
 include $(BUILD_EXECUTABLE)
 
@@ -304,7 +309,8 @@ include $(commands_recovery_local_path)/libjpegtwrp/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptfs/Android.mk \
     $(commands_recovery_local_path)/libcrecovery/Android.mk \
     $(commands_recovery_local_path)/libblkid/Android.mk \
-    $(commands_recovery_local_path)/minuitwrp/Android.mk
+    $(commands_recovery_local_path)/minuitwrp/Android.mk \
+    $(commands_recovery_local_path)/openaes/Android.mk
 
 ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
     include $(commands_recovery_local_path)/crypto/libcrypt_samsung/Android.mk

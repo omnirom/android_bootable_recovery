@@ -1,0 +1,43 @@
+---------------------------------------------------------------------------
+OpenAES-0.7.0
+Nabil S. Al Ramli
+www.nalramli.com
+---------------------------------------------------------------------------
+
+OpenAES-0.7.0
+-------------
+* implement oaes command line utility
+* defect: oaes_decrypt() does not have a way to tell if pad pattern is accidental
+
+OpenAES-0.6.0
+-------------
+* add stepping pause to vt_aes
+
+OpenAES-0.5.0
+-------------
+* defect: algorithm errors with ExpandKey for 192 bit and 256 bit keys
+
+OpenAES-0.4.0
+-------------
+* add vt_aes test program
+* defect: algorithm errors with ShiftRows and MixColumns
+* OAES_DEBUG config to step through encryption and decryption
+* defect: test_performance crash when printing results
+* allow user to specify iv by passing it to oaes_set_option()
+* oaes_key_import_data() and oaes_key_export_data() to operate on key data directly
+* defect: Access violation in oaes_key_export()
+
+OpenAES-0.3.0
+-------------
+* Add CMake support
+* platform independence fixes
+
+OpenAES-0.2.0
+-------------
+* Add performance tests
+* Implement CBC mode in AES algorithm
+* Performance improvements in oaes_shift_rows() and oaes_inv_shift_rows()
+
+OpenAES-0.1.0
+-------------
+* Implement AES algorithm
