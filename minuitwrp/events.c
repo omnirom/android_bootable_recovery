@@ -331,6 +331,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
     static int discard = 0;
     static int lastWasSynReport = 0;
     static int touchReleaseOnNextSynReport = 0;
+	static int use_tracking_id_negative_as_touch_release = 0; // On some devices, type: 3  code: 39  value: -1, aka EV_ABS ABS_MT_TRACKING_ID -1 indicates a true touch release
     int i;
     int x, y;
 
@@ -433,23 +434,57 @@ static int vk_modify(struct ev *e, struct input_event *ev)
 #endif
             break;
 
-#ifdef _EVENT_LOGGING
-		// All of these items are strictly for logging purposes only. Return 1 because they don't need to be handled.
         case ABS_MT_TOUCH_MINOR: //31
+            if (ev->value == 0) {
+                e->mt_p.x = 0;
+                e->mt_p.y = 0;
+                touchReleaseOnNextSynReport = 1;
+            }
+#ifdef _EVENT_LOGGING
             printf("EV: %s => EV_ABS ABS_MT_TOUCH_MINOR %d\n", e->deviceName, ev->value);
-			return 1;
+#endif
             break;
 
         case ABS_MT_WIDTH_MAJOR: //32
+            if (ev->value == 0) {
+                e->mt_p.x = 0;
+                e->mt_p.y = 0;
+                touchReleaseOnNextSynReport = 1;
+            }
+#ifdef _EVENT_LOGGING
             printf("EV: %s => EV_ABS ABS_MT_WIDTH_MAJOR %d\n", e->deviceName, ev->value);
-			return 1;
+#endif
             break;
 
         case ABS_MT_WIDTH_MINOR: //33
+            if (ev->value == 0) {
+                e->mt_p.x = 0;
+                e->mt_p.y = 0;
+                touchReleaseOnNextSynReport = 1;
+            }
+#ifdef _EVENT_LOGGING
             printf("EV: %s => EV_ABS ABS_MT_WIDTH_MINOR %d\n", e->deviceName, ev->value);
-			return 1;
+#endif
             break;
 
+        case ABS_MT_TRACKING_ID: //39
+            if (ev->value < 0) {
+                e->mt_p.x = 0;
+                e->mt_p.y = 0;
+                touchReleaseOnNextSynReport = 2;
+                use_tracking_id_negative_as_touch_release = 1;
+#ifdef _EVENT_LOGGING
+                if (use_tracking_id_negative_as_touch_release)
+                    printf("using ABS_MT_TRACKING_ID value -1 to indicate touch releases\n");
+#endif
+            }
+#ifdef _EVENT_LOGGING
+            printf("EV: %s => EV_ABS ABS_MT_TRACKING_ID %d\n", e->deviceName, ev->value);
+#endif
+            break;
+
+#ifdef _EVENT_LOGGING
+        // These are for touch logging purposes only
         case ABS_MT_ORIENTATION: //34
             printf("EV: %s => EV_ABS ABS_MT_ORIENTATION %d\n", e->deviceName, ev->value);
 			return 1;
@@ -462,11 +497,6 @@ static int vk_modify(struct ev *e, struct input_event *ev)
 
         case ABS_MT_BLOB_ID: //38
             printf("EV: %s => EV_ABS ABS_MT_BLOB_ID %d\n", e->deviceName, ev->value);
-			return 1;
-            break;
-
-        case ABS_MT_TRACKING_ID: //39
-            printf("EV: %s => EV_ABS ABS_MT_TRACKING_ID %d\n", e->deviceName, ev->value);
 			return 1;
             break;
 
@@ -503,7 +533,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
     // Discard the MT versions
     if (ev->code == SYN_MT_REPORT)      return 0;
 
-    if (lastWasSynReport == 1 || touchReleaseOnNextSynReport == 1)
+    if (((lastWasSynReport == 1 || touchReleaseOnNextSynReport == 1) && !use_tracking_id_negative_as_touch_release) || (use_tracking_id_negative_as_touch_release && touchReleaseOnNextSynReport == 2))
     {
         // Reset the value
         touchReleaseOnNextSynReport = 0;
