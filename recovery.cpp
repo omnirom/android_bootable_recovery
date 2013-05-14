@@ -15,11 +15,13 @@
  */
 
 #include <ctype.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
 #include <linux/input.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +29,6 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <dirent.h>
 
 #include "bootloader.h"
 #include "common.h"
@@ -801,6 +802,24 @@ load_locale_from_cache() {
     }
 }
 
+static RecoveryUI* gCurrentUI = NULL;
+
+void
+ui_print(const char* format, ...) {
+    char buffer[256];
+
+    va_list ap;
+    va_start(ap, format);
+    vsnprintf(buffer, sizeof(buffer), format, ap);
+    va_end(ap);
+
+    if (gCurrentUI != NULL) {
+        gCurrentUI->Print("%s", buffer);
+    } else {
+        fputs(buffer, stdout);
+    }
+}
+
 int
 main(int argc, char **argv) {
     time_t start = time(NULL);
@@ -856,6 +875,7 @@ main(int argc, char **argv) {
 
     Device* device = make_device();
     ui = device->GetUI();
+    gCurrentUI = ui;
 
     ui->Init();
     ui->SetLocale(locale);
@@ -909,7 +929,18 @@ main(int argc, char **argv) {
                 LOGE("Cache wipe (requested by package) failed.");
             }
         }
-        if (status != INSTALL_SUCCESS) ui->Print("Installation aborted.\n");
+        if (status != INSTALL_SUCCESS) {
+            ui->Print("Installation aborted.\n");
+
+            // If this is an eng or userdebug build, then automatically
+            // turn the text display on if the script fails so the error
+            // message is visible.
+            char buffer[PROPERTY_VALUE_MAX+1];
+            property_get("ro.build.fingerprint", buffer, "");
+            if (strstr(buffer, ":userdebug/") || strstr(buffer, ":eng/")) {
+                ui->ShowText(true);
+            }
+        }
     } else if (wipe_data) {
         if (device->WipeData()) status = INSTALL_ERROR;
         if (erase_volume("/data")) status = INSTALL_ERROR;

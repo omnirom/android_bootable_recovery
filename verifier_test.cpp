@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "common.h"
 #include "verifier.h"
 #include "ui.h"
 
@@ -113,13 +114,10 @@ class FakeUI : public RecoveryUI {
     bool IsTextVisible() { return false; }
     bool WasTextEverVisible() { return false; }
     void Print(const char* fmt, ...) {
-        char buf[256];
         va_list ap;
         va_start(ap, fmt);
-        vsnprintf(buf, 256, fmt, ap);
+        vfprintf(stderr, fmt, ap);
         va_end(ap);
-
-        fputs(buf, stderr);
     }
 
     void StartMenu(const char* const * headers, const char* const * items,
@@ -127,6 +125,14 @@ class FakeUI : public RecoveryUI {
     int SelectMenu(int sel) { return 0; }
     void EndMenu() { }
 };
+
+void
+ui_print(const char* format, ...) {
+    va_list ap;
+    va_start(ap, format);
+    vfprintf(stdout, format, ap);
+    va_end(ap);
+}
 
 int main(int argc, char **argv) {
     if (argc < 2 || argc > 4) {
