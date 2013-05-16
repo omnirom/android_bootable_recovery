@@ -1,5 +1,5 @@
 # Copyright 2011 The Android Open Source Project
-
+ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -31,3 +31,4 @@ include $(BUILD_STATIC_LIBRARY)
 
 #include $(BUILD_EXECUTABLE)
 
+endif

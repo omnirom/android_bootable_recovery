@@ -1,5 +1,5 @@
 LOCAL_PATH := $(call my-dir)
-
+ifeq ($(TW_INCLUDE_CRYPTO), true)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libcryptfsics
@@ -23,3 +23,4 @@ LOCAL_C_INCLUDES += system/extras/ext4_utils external/openssl/include
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libcrypto
 
 include $(BUILD_SHARED_LIBRARY)
+endif
