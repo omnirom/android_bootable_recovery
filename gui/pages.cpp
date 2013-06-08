@@ -41,8 +41,10 @@ extern "C" {
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
+#include "blanktimer.hpp"
 
 extern int gGuiRunning;
+extern blanktimer blankTimer;
 
 std::map<std::string, PageSet*> PageManager::mPageSets;
 PageSet* PageManager::mCurrentSet;
@@ -890,6 +892,9 @@ int PageManager::Render(void)
 
 int PageManager::Update(void)
 {
+    if(blankTimer.IsScreenOff())
+        return 0;
+
     return (mCurrentSet ? mCurrentSet->Update() : -1);
 }
 
