@@ -36,21 +36,52 @@ extern "C" {
 
 /* Execute a command */
 int TWFunc::Exec_Cmd(string cmd, string &result) {
-	FILE* exec;
-	char buffer[130];
-	int ret = 0;
-	exec = __popen(cmd.c_str(), "r");
-	if (!exec) return -1;
-	while(!feof(exec)) {
-		memset(&buffer, 0, sizeof(buffer));
-		if (fgets(buffer, 128, exec) != NULL) {
-			buffer[128] = '\n';
-			buffer[129] = NULL;
+   int fd[2];
+   int ret = -1;
+   if(pipe(fd) < 0)
+		return -1;
+
+	pid_t pid = fork();
+	if (pid < 0)
+	{
+		close(fd[0]);
+		close(fd[1]);
+		return -1;
+	}
+
+	if(pid == 0) // child
+	{
+		close(fd[0]);
+		dup2(fd[1], 1);  // send stdout to the pipe
+		dup2(fd[1], 2);  // send stderr to the pipe
+		close(fd[1]);
+
+		ret = system(cmd.c_str());
+		if(ret != -1)
+			ret = WEXITSTATUS(ret);
+		else
+			LOGERR("Exec_Cmd: system() failed with -1 (%d)!\n", errno);
+		exit(ret);
+	}
+	else
+	{
+		close(fd[1]);
+
+		int len;
+		char buffer[128];
+		buffer[sizeof(buffer)-1] = 0;
+		while ((len = read(fd[0], buffer, sizeof(buffer)-1)) > 0)
+		{
+			buffer[len] = 0;
+			buffer[sizeof(buffer)-2] = '\n';
+			LOGINFO("%s", buffer);
 			result += buffer;
 		}
+
+		waitpid(pid, &ret, 0);
+		return WEXITSTATUS(ret);
 	}
-	ret = __pclose(exec);
-	return ret;
+	return -1;
 }
 
 // Returns "file.name" from a full /path/to/file.name
