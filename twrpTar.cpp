@@ -659,7 +659,7 @@ int twrpTar::extract() {
 int twrpTar::tarDirs(bool include_root) {
 	DIR* d;
 	string mainfolder = tardir + "/", subfolder;
-	char buf[PATH_MAX];
+	char buf[PATH_MAX], charTarPath[PATH_MAX];
 
 	char excl[1024];
 	string::size_type i;
@@ -697,26 +697,31 @@ int twrpTar::tarDirs(bool include_root) {
 			if (strcmp(de->d_name, ".") != 0) {
 				subfolder += de->d_name;
 			} else {
-				LOGINFO("adding '%s'\n", subfolder.c_str());
+				LOGINFO("addFile '%s' including root: %i\n", buf, include_root);
 				if (addFile(subfolder, include_root) != 0)
 					return -1;
 				continue;
 			}
-			LOGINFO("adding '%s'\n", subfolder.c_str());
 			strcpy(buf, subfolder.c_str());
 			if (de->d_type == DT_DIR) {
-				char* charTarPath;
 				if (include_root) {
-					charTarPath = NULL;
+					charTarPath[0] = NULL;
+					LOGINFO("tar_append_tree '%s' as NULL\n", buf, charTarPath);
+					if (tar_append_tree(t, buf, NULL, excl) != 0) {
+						LOGERR("Error appending '%s' to tar archive '%s'\n", buf, tarfn.c_str());
+						return -1;
+					}
 				} else {
 					string temp = Strip_Root_Dir(buf);
-					charTarPath = (char*) temp.c_str();
-				}
-				if (tar_append_tree(t, buf, charTarPath, excl) != 0) {
-					LOGERR("Error appending '%s' to tar archive '%s'\n", buf, tarfn.c_str());
-					return -1;
+					strcpy(charTarPath, temp.c_str());
+					LOGINFO("tar_append_tree '%s' as '%s'\n", buf, charTarPath);
+					if (tar_append_tree(t, buf, charTarPath, excl) != 0) {
+						LOGERR("Error appending '%s' to tar archive '%s'\n", buf, tarfn.c_str());
+						return -1;
+					}
 				}
 			} else if (tardir != "/" && (de->d_type == DT_REG || de->d_type == DT_LNK)) {
+				LOGINFO("addFile '%s' including root: %i\n", buf, include_root);
 				if (addFile(buf, include_root) != 0)
 					return -1;
 			}

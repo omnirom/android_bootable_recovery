@@ -865,7 +865,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 					}
 				}
 			} else {
-				LOGERR("Unable to locate '%s' partition for restoring.\n", restore_path.c_str());
+				LOGERR("Unable to locate '%s' partition for restoring (restore list).\n", restore_path.c_str());
 			}
 			start_pos = end_pos + 1;
 			end_pos = Restore_List.find(";", start_pos);
@@ -1814,9 +1814,10 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 			size_t start_pos = 0, end_pos = Restore_List.find(";", start_pos);
 			while (end_pos != string::npos && start_pos < Restore_List.size()) {
 				restore_path = Restore_List.substr(start_pos, end_pos - start_pos);
-				if ((restore_part = Find_Partition_By_Path(restore_path)) != NULL && !restore_part->Is_SubPartition) {
-					if (restore_part->Backup_Name == "recovery") {
+				if ((restore_part = Find_Partition_By_Path(restore_path)) != NULL) {
+					if (restore_part->Backup_Name == "recovery" || restore_part->Is_SubPartition) {
 						// Don't allow restore of recovery (causes problems on some devices)
+						// Don't add subpartitions to the list of items
 					} else {
 						struct PartitionList part;
 						part.Display_Name = restore_part->Backup_Display_Name;
