@@ -276,7 +276,7 @@ LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULES_TAGS = optional
 LOCAL_CFLAGS = 
-LOCAL_SRC_FILES = adb_install.cpp bootloader.cpp verifier.cpp
+LOCAL_SRC_FILES = adb_install.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils
 LOCAL_STATIC_LIBRARIES += libmincrypt
 

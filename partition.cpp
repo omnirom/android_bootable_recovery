@@ -637,6 +637,8 @@ bool TWPartition::Find_MTD_Block_Device(string MTD_Name) {
 			if (sscanf(device,"mtd%d", &deviceId) == 1) {
 				sprintf(device, "/dev/block/mtdblock%d", deviceId);
 				Primary_Block_Device = device;
+				fclose(fp);
+				return true;
 			}
 		}
 	}
@@ -828,22 +830,41 @@ bool TWPartition::Mount(bool Display_Error) {
 	}
 	if (Fstab_File_System == "yaffs2") {
 		// mount an MTD partition as a YAFFS2 filesystem.
-		mtd_scan_partitions();
-		const MtdPartition* partition;
-		partition = mtd_find_partition_by_name(MTD_Name.c_str());
-		if (partition == NULL) {
-			LOGERR("Failed to find '%s' partition to mount at '%s'\n",
-			MTD_Name.c_str(), Mount_Point.c_str());
-			return false;
-		}
-		if (mtd_mount_partition(partition, Mount_Point.c_str(), Fstab_File_System.c_str(), 0)) {
-			if (Display_Error)
-				LOGERR("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
-			else
-				LOGINFO("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
-			return false;
-		} else
+		const unsigned long flags = MS_NOATIME | MS_NODEV | MS_NODIRATIME;
+		if (mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), Fstab_File_System.c_str(), flags, NULL) < 0) {
+			if (mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), Fstab_File_System.c_str(), flags | MS_RDONLY, NULL) < 0) {
+				if (Display_Error)
+					LOGERR("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
+				else
+					LOGINFO("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
+				return false;
+			} else {
+				LOGINFO("Mounted '%s' (MTD) as RO\n", Mount_Point.c_str());
+				return true;
+			}
+		} else {
+			struct stat st;
+			string test_path = Mount_Point;
+			if (stat(test_path.c_str(), &st) < 0) {
+				if (Display_Error)
+					LOGERR("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
+				else
+					LOGINFO("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
+				return false;
+			}
+			mode_t new_mode = st.st_mode | S_IXUSR | S_IXGRP | S_IXOTH;
+			if (new_mode != st.st_mode) {
+				LOGINFO("Fixing execute permissions for %s\n", Mount_Point.c_str());
+				if (chmod(Mount_Point.c_str(), new_mode) < 0) {
+					if (Display_Error)
+						LOGERR("Couldn't fix permissions for %s: %s\n", Mount_Point.c_str(), strerror(errno));
+					else
+						LOGINFO("Couldn't fix permissions for %s: %s\n", Mount_Point.c_str(), strerror(errno));
+					return false;
+				}
+			}
 			return true;
+		}
 	} else if (!exfat_mounted && mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), Current_File_System.c_str(), 0, NULL) != 0) {
 #ifdef TW_NO_EXFAT_FUSE
 		if (Current_File_System == "exfat") {
