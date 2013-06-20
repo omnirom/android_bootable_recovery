@@ -544,9 +544,11 @@ void DataManager::SetBackupFolder()
 			SetValue(TW_ZIP_LOCATION_VAR, storage_path);
 		} else {
 			zip_root= zip_path;
-			zip_root.resize(storage_path.size() + 1);
-			if (zip_root != storage_path)
+			zip_root.resize(storage_path.size());
+			if (zip_root != storage_path) {
+				LOGINFO("DataManager::SetBackupFolder zip path was %s changing to %s, %s\n", zip_path.c_str(), storage_path.c_str(), zip_root.c_str());
 				SetValue(TW_ZIP_LOCATION_VAR, storage_path);
+			}
 		}
 	} else {
 		if (PartitionManager.Fstab_Processed() != 0)
@@ -1086,10 +1088,6 @@ void DataManager::ReadSettingsFile(void)
 			// Remount failed, default back to internal storage
 			SetValue(TW_USE_EXTERNAL_STORAGE, 0);
 			PartitionManager.Mount_Current_Storage(true);
-			string int_zip_path;
-			GetValue(TW_ZIP_INTERNAL_VAR, int_zip_path);
-			SetValue(TW_USE_EXTERNAL_STORAGE, 0);
-			SetValue(TW_ZIP_LOCATION_VAR, int_zip_path);
 		}
 	} else {
 		PartitionManager.Mount_Current_Storage(true);
