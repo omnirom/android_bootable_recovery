@@ -836,9 +836,9 @@ void DataManager::SetDefaultValues()
 #endif
 
 #ifdef TW_HAS_NO_BOOT_PARTITION
-	mValues.insert(make_pair("tw_backup_list", make_pair("/system;/data;", 0)));
+	mValues.insert(make_pair("tw_backup_list", make_pair("/system;/data;", 1)));
 #else
-	mValues.insert(make_pair("tw_backup_list", make_pair("/system;/data;/boot;", 0)));
+	mValues.insert(make_pair("tw_backup_list", make_pair("/system;/data;/boot;", 1)));
 #endif
 	mConstValues.insert(make_pair(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE));
 	mValues.insert(make_pair(TW_BACKUP_NAME, make_pair("(Current Date)", 0)));
