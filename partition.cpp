@@ -1214,13 +1214,15 @@ void TWPartition::Check_FS_Type() {
 		LOGINFO("Can't probe device %s\n", Actual_Block_Device.c_str());
 		return;
 	}
+
 	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) < 0) { 
 		blkid_free_probe(pr);
 		LOGINFO("can't find filesystem on device %s\n", Actual_Block_Device.c_str());
 		return;
 	}
+
 	Current_File_System = type;
-	return;
+	blkid_free_probe(pr);
 }
 
 bool TWPartition::Wipe_EXT23(string File_System) {
