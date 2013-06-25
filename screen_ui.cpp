@@ -82,6 +82,10 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     install_overlay_offset_y(190),
     overlay_offset_x(-1),
     overlay_offset_y(-1) {
+
+    for (int i = 0; i < 5; i++)
+        backgroundIcon[i] = NULL;
+
     pthread_mutex_init(&updateMutex, NULL);
     self = this;
 }
