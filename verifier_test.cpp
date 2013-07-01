@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 
     ui = new FakeUI();
 
-    int result = verify_file(argv[1], &test_key, 1);
+    int result = verify_file(argv[1]);
     if (result == VERIFY_SUCCESS) {
         printf("SUCCESS\n");
         return 0;
