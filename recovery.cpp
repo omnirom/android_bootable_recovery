@@ -283,6 +283,19 @@ rotate_last_logs(int max) {
     }
 }
 
+static void
+copy_logs() {
+    // Copy logs to cache so the system can find out what happened.
+    copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
+    copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
+    copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, false);
+    chmod(LOG_FILE, 0600);
+    chown(LOG_FILE, 1000, 1000);   // system user
+    chmod(LAST_LOG_FILE, 0640);
+    chmod(LAST_INSTALL_FILE, 0644);
+    sync();
+}
+
 // clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read), and
 // record any intent we were asked to communicate back to the system.
@@ -312,14 +325,7 @@ finish_recovery(const char *send_intent) {
         check_and_fclose(fp, LOCALE_FILE);
     }
 
-    // Copy logs to cache so the system can find out what happened.
-    copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
-    copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
-    copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, false);
-    chmod(LOG_FILE, 0600);
-    chown(LOG_FILE, 1000, 1000);   // system user
-    chmod(LAST_LOG_FILE, 0640);
-    chmod(LAST_INSTALL_FILE, 0644);
+    copy_logs();
 
     // Reset to normal system boot so recovery won't cycle indefinitely.
     struct bootloader_message boot;
@@ -789,6 +795,7 @@ prompt_and_wait(Device* device, int status) {
                     if (status != INSTALL_SUCCESS) {
                         ui->SetBackground(RecoveryUI::ERROR);
                         ui->Print("Installation aborted.\n");
+                        copy_logs();
                     } else if (!ui->IsTextVisible()) {
                         return;  // reboot if logs aren't visible
                     } else {
@@ -866,7 +873,7 @@ main(int argc, char **argv) {
 
     load_volume_table();
     ensure_path_mounted(LAST_LOG_FILE);
-    rotate_last_logs(5);
+    rotate_last_logs(10);
     get_args(&argc, &argv);
 
     int previous_runs = 0;
@@ -979,6 +986,7 @@ main(int argc, char **argv) {
     }
 
     if (status == INSTALL_ERROR || status == INSTALL_CORRUPT) {
+        copy_logs();
         ui->SetBackground(RecoveryUI::ERROR);
     }
     if (status != INSTALL_SUCCESS || ui->IsTextVisible()) {
