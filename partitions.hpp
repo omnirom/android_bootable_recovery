@@ -210,6 +210,7 @@ public:
 	virtual int Fix_Permissions(); 
 	virtual void Get_Partition_List(string ListType, std::vector<PartitionList> *Partition_List);
 	virtual int Fstab_Processed();                                            // Indicates if the fstab has been processed or not
+	virtual void Output_Storage_Fstab();                                      // Creates a /cache/recovery/storage.fstab file with a list of all potential storage locations for app use
 
 private:
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made
