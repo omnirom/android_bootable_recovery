@@ -259,10 +259,14 @@ void gr_flip(void)
 #ifdef BOARD_HAS_FLIPPED_SCREEN
     /* flip buffer 180 degrees for devices with physicaly inverted screens */
     unsigned int i;
-    for (i = 1; i < (vi.xres * vi.yres); i++) {
-        unsigned short tmp = gr_mem_surface.data[i];
-        gr_mem_surface.data[i] = gr_mem_surface.data[(vi.xres * vi.yres * 2) - i];
-        gr_mem_surface.data[(vi.xres * vi.yres * 2) - i] = tmp;
+    unsigned int j;
+    uint8_t tmp;
+    for (i = 0; i < ((vi.xres_virtual * vi.yres)/2); i++) {
+	for (j = 0; j < PIXEL_SIZE; j++) {
+		tmp = gr_mem_surface.data[i * PIXEL_SIZE + j];
+		gr_mem_surface.data[i * PIXEL_SIZE + j] = gr_mem_surface.data[(vi.xres_virtual * vi.yres * PIXEL_SIZE) - ((i+1) * PIXEL_SIZE) + j];
+		gr_mem_surface.data[(vi.xres_virtual * vi.yres * PIXEL_SIZE) - ((i+1) * PIXEL_SIZE) + j] = tmp;
+	}
     }
 #endif
 
