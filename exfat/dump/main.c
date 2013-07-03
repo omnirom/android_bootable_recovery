@@ -140,13 +140,13 @@ static int dump_full(const char* spec, bool used_sectors)
 
 static void usage(const char* prog)
 {
-	fprintf(stderr, "Usage: %s [-s] [-u] [-v] <device>\n", prog);
+	fprintf(stderr, "Usage: %s [-s] [-u] [-V] <device>\n", prog);
 	exit(1);
 }
 
 int main(int argc, char* argv[])
 {
-	char** pp;
+	int opt;
 	const char* spec = NULL;
 	bool sb_only = false;
 	bool used_sectors = false;
@@ -154,24 +154,26 @@ int main(int argc, char* argv[])
 	printf("dumpexfat %u.%u.%u\n",
 			EXFAT_VERSION_MAJOR, EXFAT_VERSION_MINOR, EXFAT_VERSION_PATCH);
 
-	for (pp = argv + 1; *pp; pp++)
+	while ((opt = getopt(argc, argv, "suV")) != -1)
 	{
-		if (strcmp(*pp, "-s") == 0)
-			sb_only = true;
-		else if (strcmp(*pp, "-u") == 0)
-			used_sectors = true;
-		else if (strcmp(*pp, "-v") == 0)
+		switch (opt)
 		{
+		case 's':
+			sb_only = true;
+			break;
+		case 'u':
+			used_sectors = true;
+			break;
+		case 'V':
 			puts("Copyright (C) 2011-2013  Andrew Nayenko");
 			return 0;
-		}
-		else if (spec == NULL)
-			spec = *pp;
-		else
+		default:
 			usage(argv[0]);
+		}
 	}
-	if (spec == NULL)
+	if (argc - optind != 1)
 		usage(argv[0]);
+	spec = argv[optind];
 
 	if (sb_only)
 		return dump_sb(spec);

@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 	int rc = 0;
 
 	for (pp = argv + 1; *pp; pp++)
-		if (strcmp(*pp, "-v") == 0)
+		if (strcmp(*pp, "-V") == 0)
 		{
 			printf("exfatlabel %u.%u.%u\n", EXFAT_VERSION_MAJOR,
 					EXFAT_VERSION_MINOR, EXFAT_VERSION_PATCH);
@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 
 	if (argc != 2 && argc != 3)
 	{
-		fprintf(stderr, "Usage: %s [-v] <device> [label]\n", argv[0]);
+		fprintf(stderr, "Usage: %s [-V] <device> [label]\n", argv[0]);
 		return 1;
 	}
 

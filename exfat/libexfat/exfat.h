@@ -46,6 +46,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define DIV_ROUND_UP(x, d) (((x) + (d) - 1) / (d))
 #define ROUND_UP(x, d) (DIV_ROUND_UP(x, d) * (d))
+#define UTF8_BYTES(c) ((c) * 6) /* UTF-8 character can occupy up to 6 bytes */
 
 #define BMAP_GET(bitmap, index) \
 	(((uint8_t*) bitmap)[(index) / 8] & (1u << ((index) % 8)))
@@ -98,8 +99,7 @@ struct exfat
 		bool dirty;
 	}
 	cmap;
-	char label[EXFAT_ENAME_MAX * 6 + 1]; /* a character can occupy up to
-											6 bytes in UTF-8 */
+	char label[UTF8_BYTES(EXFAT_ENAME_MAX) + 1];
 	void* zero_cluster;
 	int dmask, fmask;
 	uid_t uid;

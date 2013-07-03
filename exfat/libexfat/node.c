@@ -44,8 +44,8 @@ void exfat_put_node(struct exfat* ef, struct exfat_node* node)
 {
 	if (--node->references < 0)
 	{
-		char buffer[EXFAT_NAME_MAX + 1];
-		exfat_get_name(node, buffer, EXFAT_NAME_MAX);
+		char buffer[UTF8_BYTES(EXFAT_NAME_MAX) + 1];
+		exfat_get_name(node, buffer, sizeof(buffer) - 1);
 		exfat_bug("reference counter of `%s' is below zero", buffer);
 	}
 
@@ -293,9 +293,9 @@ static int readdir(struct exfat* ef, const struct exfat_node* parent,
 				*/
 				if (real_size != (*node)->size)
 				{
-					char buffer[EXFAT_NAME_MAX + 1];
+					char buffer[UTF8_BYTES(EXFAT_NAME_MAX) + 1];
 
-					exfat_get_name(*node, buffer, EXFAT_NAME_MAX);
+					exfat_get_name(*node, buffer, sizeof(buffer) - 1);
 					exfat_error("`%s' real size does not equal to size "
 							"(%"PRIu64" != %"PRIu64")", buffer,
 							real_size, (*node)->size);
@@ -303,9 +303,9 @@ static int readdir(struct exfat* ef, const struct exfat_node* parent,
 				}
 				if (actual_checksum != reference_checksum)
 				{
-					char buffer[EXFAT_NAME_MAX + 1];
+					char buffer[UTF8_BYTES(EXFAT_NAME_MAX) + 1];
 
-					exfat_get_name(*node, buffer, EXFAT_NAME_MAX);
+					exfat_get_name(*node, buffer, sizeof(buffer) - 1);
 					exfat_error("`%s' has invalid checksum (0x%hx != 0x%hx)",
 							buffer, actual_checksum, reference_checksum);
 					goto error;
@@ -389,7 +389,7 @@ static int readdir(struct exfat* ef, const struct exfat_node* parent,
 				goto error;
 			}
 			if (utf16_to_utf8(ef->label, label->name,
-						sizeof(ef->label), EXFAT_ENAME_MAX) != 0)
+						sizeof(ef->label) - 1, EXFAT_ENAME_MAX) != 0)
 				goto error;
 			break;
 
@@ -493,8 +493,8 @@ static void reset_cache(struct exfat* ef, struct exfat_node* node)
 	node->flags &= ~EXFAT_ATTRIB_CACHED;
 	if (node->references != 0)
 	{
-		char buffer[EXFAT_NAME_MAX + 1];
-		exfat_get_name(node, buffer, EXFAT_NAME_MAX);
+		char buffer[UTF8_BYTES(EXFAT_NAME_MAX) + 1];
+		exfat_get_name(node, buffer, sizeof(buffer) - 1);
 		exfat_warn("non-zero reference counter (%d) for `%s'",
 				node->references, buffer);
 	}
@@ -1051,5 +1051,6 @@ int exfat_set_label(struct exfat* ef, const char* label)
 
 	exfat_pwrite(ef->dev, &entry, sizeof(struct exfat_entry_label),
 			co2o(ef, cluster, offset));
+	strcpy(ef->label, label);
 	return 0;
 }

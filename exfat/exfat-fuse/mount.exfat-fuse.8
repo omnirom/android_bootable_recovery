@@ -9,8 +9,14 @@ mount.exfat-fuse \- mount an exFAT file system
 .B \-d
 ]
 [
+.B \-n
+]
+[
 .B \-o
 .I options
+]
+[
+.B \-V
 ]
 [
 .B \-v
@@ -21,7 +27,7 @@ mount.exfat-fuse \- mount an exFAT file system
 .B mount.exfat-fuse
 is a free exFAT file system implementation with write support. exFAT is a
 simple file system created by Microsoft. It is intended to replace FAT32
-removing some of it's limitations. exFAT is a standard FS for SDXC memory
+removing some of its limitations. exFAT is a standard FS for SDXC memory
 cards.
 
 .SH COMMAND LINE OPTIONS
@@ -30,13 +36,19 @@ Command line options available:
 .BI \-d
 Enable debug logging and do not detach from shell.
 .TP
+.BI \-n
+Ignored.
+.TP
 .BI \-o " options"
 File system specific options. For more details see
 .B FILE SYSTEM OPTIONS
 section below.
 .TP
-.BI \-v
+.BI \-V
 Print version and copyright.
+.TP
+.BI \-v
+Ignored.
 
 .SH FILE SYSTEM OPTIONS
 .TP

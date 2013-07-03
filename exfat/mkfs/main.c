@@ -188,14 +188,14 @@ static void usage(const char* prog)
 {
 	fprintf(stderr, "Usage: %s [-i volume-id] [-n label] "
 			"[-p partition-first-sector] "
-			"[-s sectors-per-cluster] [-v] <device>\n", prog);
+			"[-s sectors-per-cluster] [-V] <device>\n", prog);
 	exit(1);
 }
 
 int main(int argc, char* argv[])
 {
 	const char* spec = NULL;
-	char** pp;
+	int opt;
 	int spc_bits = -1;
 	const char* volume_label = NULL;
 	uint32_t volume_serial = 0;
@@ -205,53 +205,38 @@ int main(int argc, char* argv[])
 	printf("mkexfatfs %u.%u.%u\n",
 			EXFAT_VERSION_MAJOR, EXFAT_VERSION_MINOR, EXFAT_VERSION_PATCH);
 
-	for (pp = argv + 1; *pp; pp++)
+	while ((opt = getopt(argc, argv, "i:n:p:s:V")) != -1)
 	{
-		if (strcmp(*pp, "-s") == 0)
+		switch (opt)
 		{
-			pp++;
-			if (*pp == NULL)
-				usage(argv[0]);
-			spc_bits = logarithm2(atoi(*pp));
+		case 'i':
+			volume_serial = strtol(optarg, NULL, 16);
+			break;
+		case 'n':
+			volume_label = optarg;
+			break;
+		case 'p':
+			first_sector = strtoll(optarg, NULL, 10);
+			break;
+		case 's':
+			spc_bits = logarithm2(atoi(optarg));
 			if (spc_bits < 0)
 			{
-				exfat_error("invalid option value: `%s'", *pp);
+				exfat_error("invalid option value: `%s'", optarg);
 				return 1;
 			}
-		}
-		else if (strcmp(*pp, "-n") == 0)
-		{
-			pp++;
-			if (*pp == NULL)
-				usage(argv[0]);
-			volume_label = *pp;
-		}
-		else if (strcmp(*pp, "-i") == 0)
-		{
-			pp++;
-			if (*pp == NULL)
-				usage(argv[0]);
-			volume_serial = strtol(*pp, NULL, 16);
-		}
-		else if (strcmp(*pp, "-p") == 0)
-		{
-			pp++;
-			if (*pp == NULL)
-				usage(argv[0]);
-			first_sector = strtoll(*pp, NULL, 10);
-		}
-		else if (strcmp(*pp, "-v") == 0)
-		{
+			break;
+		case 'V':
 			puts("Copyright (C) 2011-2013  Andrew Nayenko");
 			return 0;
-		}
-		else if (spec == NULL)
-			spec = *pp;
-		else
+		default:
 			usage(argv[0]);
+			break;
+		}
 	}
-	if (spec == NULL)
+	if (argc - optind != 1)
 		usage(argv[0]);
+	spec = argv[optind];
 
 	dev = exfat_open(spec, EXFAT_MODE_RW);
 	if (dev == NULL)

@@ -23,6 +23,7 @@
 #include <exfat.h>
 #include <exfatfs.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #define exfat_debug(format, ...)
 
@@ -39,18 +40,18 @@ static int nodeck(struct exfat* ef, struct exfat_node* node)
 	{
 		if (CLUSTER_INVALID(c))
 		{
-			char name[EXFAT_NAME_MAX + 1];
+			char name[UTF8_BYTES(EXFAT_NAME_MAX) + 1];
 
-			exfat_get_name(node, name, EXFAT_NAME_MAX);
+			exfat_get_name(node, name, sizeof(name) - 1);
 			exfat_error("file `%s' has invalid cluster 0x%x", name, c);
 			rc = 1;
 			break;
 		}
 		if (BMAP_GET(ef->cmap.chunk, c - EXFAT_FIRST_DATA_CLUSTER) == 0)
 		{
-			char name[EXFAT_NAME_MAX + 1];
+			char name[UTF8_BYTES(EXFAT_NAME_MAX) + 1];
 
-			exfat_get_name(node, name, EXFAT_NAME_MAX);
+			exfat_get_name(node, name, sizeof(name) - 1);
 			exfat_error("cluster 0x%x of file `%s' is not allocated", c, name);
 			rc = 1;
 		}
@@ -76,7 +77,7 @@ static void dirck(struct exfat* ef, const char* path)
 		return;
 
 	path_length = strlen(path);
-	entry_path = malloc(path_length + 1 + EXFAT_NAME_MAX);
+	entry_path = malloc(path_length + 1 + UTF8_BYTES(EXFAT_NAME_MAX) + 1);
 	if (entry_path == NULL)
 	{
 		exfat_error("out of memory");
@@ -95,7 +96,8 @@ static void dirck(struct exfat* ef, const char* path)
 	}
 	while ((node = exfat_readdir(ef, &it)))
 	{
-		exfat_get_name(node, entry_path + path_length + 1, EXFAT_NAME_MAX);
+		exfat_get_name(node, entry_path + path_length + 1,
+				UTF8_BYTES(EXFAT_NAME_MAX));
 		exfat_debug("%s: %s, %"PRIu64" bytes, cluster %u", entry_path,
 				IS_CONTIGUOUS(*node) ? "contiguous" : "fragmented",
 				node->size, node->start_cluster);
@@ -124,33 +126,34 @@ static void fsck(struct exfat* ef)
 
 static void usage(const char* prog)
 {
-	fprintf(stderr, "Usage: %s [-v] <device>\n", prog);
+	fprintf(stderr, "Usage: %s [-V] <device>\n", prog);
 	exit(1);
 }
 
 int main(int argc, char* argv[])
 {
-	char** pp;
+	int opt;
 	const char* spec = NULL;
 	struct exfat ef;
 
 	printf("exfatfsck %u.%u.%u\n",
 			EXFAT_VERSION_MAJOR, EXFAT_VERSION_MINOR, EXFAT_VERSION_PATCH);
 
-	for (pp = argv + 1; *pp; pp++)
+	while ((opt = getopt(argc, argv, "V")) != -1)
 	{
-		if (strcmp(*pp, "-v") == 0)
+		switch (opt)
 		{
+		case 'V':
 			puts("Copyright (C) 2011-2013  Andrew Nayenko");
 			return 0;
-		}
-		else if (spec == NULL)
-			spec = *pp;
-		else
+		default:
 			usage(argv[0]);
+			break;
+		}
 	}
-	if (spec == NULL)
+	if (argc - optind != 1)
 		usage(argv[0]);
+	spec = argv[optind];
 
 	if (exfat_mount(&ef, spec, "ro") != 0)
 		return 1;
