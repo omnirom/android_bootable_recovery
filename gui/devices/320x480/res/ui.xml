@@ -174,7 +174,7 @@
 		<variable name="backup_button_row2" value="326" />
 		<variable name="mount_list_height" value="270" />
 		<variable name="mount_storage_row" value="340" />
-		<variable name="storage_list_height" value="340" />
+		<variable name="storage_list_height" value="290" />
 		<variable name="wipe_list_height" value="330" />
 		<variable name="wipe_button_y" value="270" />
 		<variable name="slidervalue_w" value="304" />
@@ -2082,6 +2082,18 @@
 				<font resource="filelist" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
 				<data name="tw_storage_path" />
 				<listtype name="storage" />
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col_center_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>OK</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_clear_destination=%tw_back%</action>
+					<action function="page">clear_vars</action>
+				</actions>
 			</object>
 
 			<object type="action">

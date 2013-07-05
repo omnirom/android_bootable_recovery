@@ -12,9 +12,6 @@
 	<resources>
 		<resource name="font" type="font" filename="Roboto-Regular-30" />
 		<resource name="base" type="image" filename="background.jpg" />
-		<resource name="side" type="image" filename="backgroundside.jpg" />
-		<resource name="bottom" type="image" filename="backgroundbottom.jpg" />
-		<resource name="large_black" type="image" filename="large_black" />
 		<resource name="main_button" type="image" filename="button" />
 		<resource name="file_icon" type="image" filename="file" />
 		<resource name="folder_icon" type="image" filename="folder" />
@@ -213,34 +210,14 @@
 			<background color="#000000FF" />
 
 			<object type="image">
-				<image resource="side" />
-				<placement x="0" y="0" />
-			</object>
-
-			<object type="image">
-				<image resource="side" />
-				<placement x="1875" y="0" />
-			</object>
-
-			<object type="image">
 				<image resource="base" />
-				<placement x="0" y="0" />
-			</object>
-
-			<object type="image">
-				<image resource="bottom" />
-				<placement x="1" y="1155" />
-			</object>
-
-			<object type="image">
-				<image resource="large_black" />
 				<placement x="0" y="0" />
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="250" y="5" />
-				<text>Team Win Recovery Project (twrp)  v%tw_version%</text>
+				<text>Team Win Recovery Project  v%tw_version%</text>
 			</object>
 
 			<object type="text" color="%text_color%">
@@ -1257,6 +1234,18 @@
 				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
 				<data name="tw_storage_path" />
 				<listtype name="storage" />
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%filemanager_select_x%" y="%row2_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>OK</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_clear_destination=%tw_back%</action>
+					<action function="page">clear_vars</action>
+				</actions>
 			</object>
 
 			<object type="action">
