@@ -2595,6 +2595,7 @@
 				<placement x="%slidervalue_x%" y="%row3_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<condition var1="tw_screen_timeout_secs" op="=" var2="0" />
+				<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
 				<text>Enable screen timeout.</text>
 				<image resource="checkbox_false" />
 				<action function="set">tw_screen_timeout_secs=60</action>
@@ -2604,6 +2605,7 @@
 				<placement x="%slidervalue_x%" y="%row3_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<condition var1="tw_screen_timeout_secs" op="!=" var2="0" />
+				<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
 				<text>Enable screen timeout.</text>
 				<image resource="checkbox_true" />
 				<action function="set">tw_screen_timeout_secs=0</action>
@@ -2611,6 +2613,7 @@
 
 			<object type="slidervalue">
 				<condition var1="tw_screen_timeout_secs" op="!=" var2="0" />
+				<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
 				<placement x="slidervalue_x" y="%row5_text_y%" w="%slidervalue_w%" />
 				<font resource="font" color="%text_color%" />
 				<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />

@@ -47,7 +47,9 @@ extern "C"
 #include "../variables.h"
 #include "../partitions.hpp"
 #include "../twrp-functions.hpp"
+#ifndef TW_NO_SCREEN_TIMEOUT
 #include "blanktimer.hpp"
+#endif
 
 const static int CURTAIN_FADE = 32;
 
@@ -62,7 +64,9 @@ static int gForceRender = 0;
 pthread_mutex_t gForceRendermutex;
 static int gNoAnimation = 1;
 static int gGuiInputRunning = 0;
+#ifndef TW_NO_SCREEN_TIMEOUT
 blanktimer blankTimer;
+#endif
 
 // Needed by pages.cpp too
 int gGuiRunning = 0;
@@ -167,6 +171,7 @@ void curtainClose()
 
 static void * input_thread(void *cookie)
 {
+
 	int drag = 0;
 	static int touch_and_hold = 0, dontwait = 0;
 	static int touch_repeat = 0, key_repeat = 0;
@@ -176,10 +181,14 @@ static void * input_thread(void *cookie)
 	HardwareKeyboard kb;
 	string seconds;
 
+#ifndef TW_NO_SCREEN_TIMEOUT
 	//start screen timeout threads
 	blankTimer.setTimerThread();
 	DataManager::GetValue("tw_screen_timeout_secs", seconds);
 	blankTimer.setTime(atoi(seconds.c_str()));
+#else
+	LOGINFO("Skipping screen timeout threads: TW_NO_SCREEN_TIMEOUT is set\n");
+#endif
 
 	for (;;)
 	{
@@ -208,7 +217,9 @@ static void * input_thread(void *cookie)
 				LOGERR("TOUCH_HOLD: %d,%d\n", x, y);
 #endif
 				PageManager::NotifyTouch(TOUCH_HOLD, x, y);
+#ifndef TW_NO_SCREEN_TIMEOUT
 				blankTimer.resetTimerAndUnblank();
+#endif
 			}
 			else if (touch_repeat && mtime > 100)
 			{
@@ -217,7 +228,9 @@ static void * input_thread(void *cookie)
 #endif
 				gettimeofday(&touchStart, NULL);
 				PageManager::NotifyTouch(TOUCH_REPEAT, x, y);
+#ifndef TW_NO_SCREEN_TIMEOUT
 				blankTimer.resetTimerAndUnblank();
+#endif
 			}
 			else if (key_repeat == 1 && mtime > 500)
 			{
@@ -227,7 +240,10 @@ static void * input_thread(void *cookie)
 				gettimeofday(&touchStart, NULL);
 				key_repeat = 2;
 				kb.KeyRepeat();
+#ifndef TW_NO_SCREEN_TIMEOUT
 				blankTimer.resetTimerAndUnblank();
+#endif
+
 			}
 			else if (key_repeat == 2 && mtime > 100)
 			{
@@ -236,7 +252,9 @@ static void * input_thread(void *cookie)
 #endif
 				gettimeofday(&touchStart, NULL);
 				kb.KeyRepeat();
+#ifndef TW_NO_SCREEN_TIMEOUT
 				blankTimer.resetTimerAndUnblank();
+#endif
 			}
 		}
 		else if (ev.type == EV_ABS)
@@ -253,7 +271,9 @@ static void * input_thread(void *cookie)
 					LOGERR("TOUCH_RELEASE: %d,%d\n", x, y);
 #endif
 					PageManager::NotifyTouch(TOUCH_RELEASE, x, y);
+#ifndef TW_NO_SCREEN_TIMEOUT
 					blankTimer.resetTimerAndUnblank();
+#endif
 					touch_and_hold = 0;
 					touch_repeat = 0;
 					if (!key_repeat)
@@ -276,7 +296,9 @@ static void * input_thread(void *cookie)
 					dontwait = 1;
 					key_repeat = 0;
 					gettimeofday(&touchStart, NULL);
+#ifndef TW_NO_SCREEN_TIMEOUT
 					blankTimer.resetTimerAndUnblank();
+#endif
 				}
 				else
 				{
@@ -288,7 +310,9 @@ static void * input_thread(void *cookie)
 						if (PageManager::NotifyTouch(TOUCH_DRAG, x, y) > 0)
 							state = 1;
 						key_repeat = 0;
+#ifndef TW_NO_SCREEN_TIMEOUT
 						blankTimer.resetTimerAndUnblank();
+#endif
 					}
 				}
 			}
@@ -309,7 +333,9 @@ static void * input_thread(void *cookie)
 					touch_repeat = 0;
 					dontwait = 1;
 					gettimeofday(&touchStart, NULL);
+#ifndef TW_NO_SCREEN_TIMEOUT
 					blankTimer.resetTimerAndUnblank();
+#endif
 				}
 				else
 				{
@@ -317,7 +343,9 @@ static void * input_thread(void *cookie)
 					touch_and_hold = 0;
 					touch_repeat = 0;
 					dontwait = 0;
+#ifndef TW_NO_SCREEN_TIMEOUT
 					blankTimer.resetTimerAndUnblank();
+#endif
 				}
 			}
 			else
@@ -328,7 +356,9 @@ static void * input_thread(void *cookie)
 				touch_and_hold = 0;
 				touch_repeat = 0;
 				dontwait = 0;
+#ifndef TW_NO_SCREEN_TIMEOUT
 				blankTimer.resetTimerAndUnblank();
+#endif
 			}
 		}
 	}

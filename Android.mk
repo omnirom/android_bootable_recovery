@@ -99,6 +99,9 @@ endif
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
 #TWRP Build Flags
+ifneq ($(TW_NO_SCREEN_TIMEOUT),)
+    LOCAL_CFLAGS += -DTW_NO_SCREEN_TIMEOUT
+endif
 ifeq ($(BOARD_HAS_NO_REAL_SDCARD), true)
     LOCAL_CFLAGS += -DBOARD_HAS_NO_REAL_SDCARD
 endif

@@ -40,7 +40,9 @@
 #include "data.hpp"
 #include "partitions.hpp"
 #include "twrp-functions.hpp"
+#ifndef TW_NO_SCREEN_TIMEOUT
 #include "gui/blanktimer.hpp"
+#endif
 
 #ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
 	#include "cutils/properties.h"
@@ -59,11 +61,13 @@ extern "C"
 
 using namespace std;
 
-map<string, DataManager::TStrIntPair>	DataManager::mValues;
-map<string, string>					 	DataManager::mConstValues;
-string									DataManager::mBackingFile;
-int										DataManager::mInitialized = 0;
+map<string, DataManager::TStrIntPair>   DataManager::mValues;
+map<string, string>                     DataManager::mConstValues;
+string                                  DataManager::mBackingFile;
+int                                     DataManager::mInitialized = 0;
+#ifndef TW_NO_SCREEN_TIMEOUT
 extern blanktimer blankTimer;
+#endif
 
 // Device ID functions
 void DataManager::sanitize_device_id(char* device_id) {
@@ -264,8 +268,10 @@ int DataManager::LoadValues(const string filename)
 		}
 		else
 			mValues.insert(TNameValuePair(Name, TStrIntPair(Value, 1)));
+#ifndef TW_NO_SCREEN_TIMEOUT
 		if (Name == "tw_screen_timeout_secs")
 			blankTimer.setTime(atoi(Value.c_str()));
+#endif
 	}
 error:
 	fclose(in);
@@ -445,9 +451,13 @@ int DataManager::SetValue(const string varName, string value, int persist /* = 0
 
 	if (pos->second.second != 0)
 		SaveValues();
+
+#ifndef TW_NO_SCREEN_TIMEOUT
 	if (varName == "tw_screen_timeout_secs") {
 		blankTimer.setTime(atoi(value.c_str()));
-	} else if (varName == "tw_storage_path") {
+	} else
+#endif
+	if (varName == "tw_storage_path") {
 		SetBackupFolder();
 	}
 	gui_notifyVarChange(varName.c_str(), value.c_str());
@@ -911,7 +921,13 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair("tw_background_thread_running", make_pair("0", 0)));
 	mValues.insert(make_pair(TW_RESTORE_FILE_DATE, make_pair("0", 0)));
 	mValues.insert(make_pair("tw_military_time", make_pair("0", 1)));
+#ifdef TW_NO_SCREEN_TIMEOUT
+	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("0", 1)));
+	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("1", 1)));
+#else
 	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("60", 1)));
+	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("0", 1)));
+#endif
 	mValues.insert(make_pair("tw_gui_done", make_pair("0", 0)));
 	mValues.insert(make_pair("tw_encrypt_backup", make_pair("0", 0)));
 #ifdef TW_BRIGHTNESS_PATH
