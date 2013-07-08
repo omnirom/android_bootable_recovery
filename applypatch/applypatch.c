@@ -421,18 +421,84 @@ int WriteToPartition(unsigned char* data, size_t len,
             break;
 
         case EMMC:
-            ;
-            FILE* f = fopen(partition, "wb");
-            if (fwrite(data, 1, len, f) != len) {
-                printf("short write writing to %s (%s)\n",
-                       partition, strerror(errno));
+        {
+            size_t start = 0;
+            int success = 0;
+            FILE* f = fopen(partition, "r+b");
+            if (f == NULL) {
+                printf("failed to open %s: %s\n", partition, strerror(errno));
                 return -1;
             }
+            int attempt;
+
+            for (attempt = 0; attempt < 3; ++attempt) {
+                printf("write %s attempt %d start at %d\n", partition, attempt+1, start);
+                fseek(f, start, SEEK_SET);
+                while (start < len) {
+                    size_t to_write = len - start;
+                    if (to_write > (1<<20)) to_write = 1<<20;
+
+                    if (fwrite(data+start, 1, to_write, f) != to_write) {
+                        printf("short write writing to %s (%s)\n",
+                               partition, strerror(errno));
+                        return -1;
+                    }
+                    start += to_write;
+                    if (start < len) {
+                        usleep(50000);  // 50 ms
+                    }
+                }
+
+                // drop caches so our subsequent verification read
+                // won't just be reading the cache.
+                sync();
+                FILE* dc = fopen("/proc/sys/vm/drop_caches", "w");
+                fwrite("3\n", 2, 1, dc);
+                fclose(dc);
+                sleep(1);
+                printf("  caches dropped\n");
+
+                // verify
+                fseek(f, 0, SEEK_SET);
+                unsigned char buffer[4096];
+                start = len;
+                size_t p;
+                for (p = 0; p < len; p += sizeof(buffer)) {
+                    size_t to_read = len - p;
+                    if (to_read > sizeof(buffer)) to_read = sizeof(buffer);
+
+                    if (fread(buffer, 1, to_read, f) != to_read) {
+                        printf("short verify read %s at %d: %s\n",
+                               partition, p, strerror(errno));
+                        start = p;
+                        break;
+                    }
+
+                    if (memcmp(buffer, data+p, to_read)) {
+                        printf("verification failed starting at %d\n", p);
+                        start = p;
+                        break;
+                    }
+                }
+
+                if (start == len) {
+                    printf("verification read succeeded (attempt %d)\n", attempt+1);
+                    success = true;
+                    break;
+                }
+            }
+
+            if (!success) {
+                printf("failed to verify after all attempts\n");
+                return -1;
+            }
+
             if (fclose(f) != 0) {
                 printf("error closing %s (%s)\n", partition, strerror(errno));
                 return -1;
             }
             break;
+        }
     }
 
     free(copy);
@@ -473,7 +539,7 @@ int ParseSha1(const char* str, uint8_t* digest) {
 // Search an array of sha1 strings for one matching the given sha1.
 // Return the index of the match on success, or -1 if no match is
 // found.
-int FindMatchingPatch(uint8_t* sha1, const char** patch_sha1_str,
+int FindMatchingPatch(uint8_t* sha1, char* const * const patch_sha1_str,
                       int num_patches) {
     int i;
     uint8_t patch_sha1[SHA_DIGEST_SIZE];
