@@ -435,33 +435,18 @@ static int vk_modify(struct ev *e, struct input_event *ev)
             break;
 
         case ABS_MT_TOUCH_MINOR: //31
-            if (ev->value == 0) {
-                e->mt_p.x = 0;
-                e->mt_p.y = 0;
-                touchReleaseOnNextSynReport = 1;
-            }
 #ifdef _EVENT_LOGGING
             printf("EV: %s => EV_ABS ABS_MT_TOUCH_MINOR %d\n", e->deviceName, ev->value);
 #endif
             break;
 
         case ABS_MT_WIDTH_MAJOR: //32
-            if (ev->value == 0) {
-                e->mt_p.x = 0;
-                e->mt_p.y = 0;
-                touchReleaseOnNextSynReport = 1;
-            }
 #ifdef _EVENT_LOGGING
             printf("EV: %s => EV_ABS ABS_MT_WIDTH_MAJOR %d\n", e->deviceName, ev->value);
 #endif
             break;
 
         case ABS_MT_WIDTH_MINOR: //33
-            if (ev->value == 0) {
-                e->mt_p.x = 0;
-                e->mt_p.y = 0;
-                touchReleaseOnNextSynReport = 1;
-            }
 #ifdef _EVENT_LOGGING
             printf("EV: %s => EV_ABS ABS_MT_WIDTH_MINOR %d\n", e->deviceName, ev->value);
 #endif
