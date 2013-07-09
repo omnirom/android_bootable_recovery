@@ -424,42 +424,50 @@ int WriteToPartition(unsigned char* data, size_t len,
         {
             size_t start = 0;
             int success = 0;
-            FILE* f = fopen(partition, "r+b");
-            if (f == NULL) {
+            int fd = open(partition, O_RDWR);
+            if (fd < 0) {
                 printf("failed to open %s: %s\n", partition, strerror(errno));
                 return -1;
             }
             int attempt;
 
-            for (attempt = 0; attempt < 3; ++attempt) {
-                printf("write %s attempt %d start at %d\n", partition, attempt+1, start);
-                fseek(f, start, SEEK_SET);
+            for (attempt = 0; attempt < 10; ++attempt) {
+                off_t next_sync = start + (1<<20);
+                printf("raw write %s attempt %d start at %d\n", partition, attempt+1, start);
+                lseek(fd, start, SEEK_SET);
                 while (start < len) {
                     size_t to_write = len - start;
-                    if (to_write > (1<<20)) to_write = 1<<20;
+                    if (to_write > 4096) to_write = 4096;
 
-                    if (fwrite(data+start, 1, to_write, f) != to_write) {
-                        printf("short write writing to %s (%s)\n",
-                               partition, strerror(errno));
-                        return -1;
+                    ssize_t written = write(fd, data+start, to_write);
+                    if (written < 0) {
+                        if (errno == EINTR) {
+                            written = 0;
+                        } else {
+                            printf("failed write writing to %s (%s)\n",
+                                   partition, strerror(errno));
+                            return -1;
+                        }
                     }
-                    start += to_write;
-                    if (start < len) {
-                        usleep(50000);  // 50 ms
+                    start += written;
+                    if (start >= next_sync) {
+                        fsync(fd);
+                        next_sync = start + (1<<20);
                     }
                 }
+                fsync(fd);
 
                 // drop caches so our subsequent verification read
                 // won't just be reading the cache.
                 sync();
-                FILE* dc = fopen("/proc/sys/vm/drop_caches", "w");
-                fwrite("3\n", 2, 1, dc);
-                fclose(dc);
+                int dc = open("/proc/sys/vm/drop_caches", O_WRONLY);
+                write(dc, "3\n", 2);
+                close(dc);
                 sleep(1);
                 printf("  caches dropped\n");
 
                 // verify
-                fseek(f, 0, SEEK_SET);
+                lseek(fd, 0, SEEK_SET);
                 unsigned char buffer[4096];
                 start = len;
                 size_t p;
@@ -467,11 +475,23 @@ int WriteToPartition(unsigned char* data, size_t len,
                     size_t to_read = len - p;
                     if (to_read > sizeof(buffer)) to_read = sizeof(buffer);
 
-                    if (fread(buffer, 1, to_read, f) != to_read) {
-                        printf("short verify read %s at %d: %s\n",
-                               partition, p, strerror(errno));
-                        start = p;
-                        break;
+                    size_t so_far = 0;
+                    while (so_far < to_read) {
+                        ssize_t read_count = read(fd, buffer+so_far, to_read-so_far);
+                        if (read_count < 0) {
+                            if (errno == EINTR) {
+                                read_count = 0;
+                            } else {
+                                printf("verify read error %s at %d: %s\n",
+                                       partition, p, strerror(errno));
+                                return -1;
+                            }
+                        }
+                        if (read_count < to_read) {
+                            printf("short verify read %s at %d: %d %d %s\n",
+                                   partition, p, read_count, to_read, strerror(errno));
+                        }
+                        so_far += read_count;
                     }
 
                     if (memcmp(buffer, data+p, to_read)) {
@@ -486,6 +506,8 @@ int WriteToPartition(unsigned char* data, size_t len,
                     success = true;
                     break;
                 }
+
+                sleep(2);
             }
 
             if (!success) {
@@ -493,7 +515,7 @@ int WriteToPartition(unsigned char* data, size_t len,
                 return -1;
             }
 
-            if (fclose(f) != 0) {
+            if (close(fd) != 0) {
                 printf("error closing %s (%s)\n", partition, strerror(errno));
                 return -1;
             }
