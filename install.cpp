@@ -154,6 +154,7 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
             } else {
                 ui->Print("\n");
             }
+            fflush(stdout);
         } else if (strcmp(command, "wipe_cache") == 0) {
             *wipe_cache = 1;
         } else if (strcmp(command, "clear_display") == 0) {

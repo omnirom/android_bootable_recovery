@@ -920,8 +920,7 @@ main(int argc, char **argv) {
     sehandle = selabel_open(SELABEL_CTX_FILE, seopts, 1);
 
     if (!sehandle) {
-        fprintf(stderr, "Warning: No file_contexts\n");
-        ui->Print("Warning:  No file_contexts\n");
+        ui->Print("Warning: No file_contexts\n");
     }
 
     device->StartRecovery();
