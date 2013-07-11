@@ -424,7 +424,7 @@ int WriteToPartition(unsigned char* data, size_t len,
         {
             size_t start = 0;
             int success = 0;
-            int fd = open(partition, O_RDWR);
+            int fd = open(partition, O_RDWR | O_DIRECT | O_SYNC);
             if (fd < 0) {
                 printf("failed to open %s: %s\n", partition, strerror(errno));
                 return -1;
@@ -433,7 +433,7 @@ int WriteToPartition(unsigned char* data, size_t len,
 
             for (attempt = 0; attempt < 10; ++attempt) {
                 size_t next_sync = start + (1<<20);
-                printf("raw write %s attempt %d start at %d\n", partition, attempt+1, start);
+                printf("raw O_DIRECT write %s attempt %d start at %d\n", partition, attempt+1, start);
                 lseek(fd, start, SEEK_SET);
                 while (start < len) {
                     size_t to_write = len - start;
