@@ -185,7 +185,7 @@ unsigned long long TWFunc::Get_Folder_Size(const string& Path, bool Display_Erro
 
 	while ((de = readdir(d)) != NULL)
 	{
-		if (de->d_type == DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
+		if (de->d_type == DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0 && strcmp(de->d_name, "lost+found") != 0)
 		{
 			dutemp = Get_Folder_Size((Path + "/" + de->d_name), Display_Error);
 			dusize += dutemp;
