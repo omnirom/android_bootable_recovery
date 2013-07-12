@@ -98,6 +98,7 @@ int  blanktimer::setClockTimer(void) {
 			setConBlank(2);
 			setBrightness(0);
 			screenoff = true;
+			TWFunc::check_and_run_script("/sbin/postscreenblank.sh", "blank");
 			PageManager::ChangeOverlay("lock");
 		}
 #ifndef TW_NO_SCREEN_BLANK
@@ -149,6 +150,7 @@ void blanktimer::resetTimerAndUnblank(void) {
 				break;
 			}
 #endif
+			TWFunc::check_and_run_script("/sbin/postscreenunblank.sh", "unblank");
 			// No break here, we want to keep going
 		case 2:
 			gui_forceRender();
