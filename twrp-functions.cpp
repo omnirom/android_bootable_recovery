@@ -589,7 +589,8 @@ bool TWFunc::Fix_su_Perms(void) {
 int TWFunc::tw_chmod(string fn, string mode) {
 	long mask = 0;
 
-	for ( std::string::size_type n = 0; n < mode.length(); ++n) {
+	std::string::size_type n = (mode.length() == 3) ? 1 : 0;
+	for (; n < mode.length(); ++n) {
 		if (n == 0) {
 			if (mode[n] == '0')
 				continue;
