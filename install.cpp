@@ -120,6 +120,7 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
 
     pid_t pid = fork();
     if (pid == 0) {
+        umask(022);
         close(pipefd[0]);
         execv(binary, (char* const*)args);
         fprintf(stdout, "E:Can't run %s (%s)\n", binary, strerror(errno));
