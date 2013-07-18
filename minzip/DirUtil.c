@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <limits.h>
+#include <selinux/selinux.h>
 
 #include "DirUtil.h"
 
@@ -237,7 +238,7 @@ dirUnlinkHierarchy(const char *path)
 
 int
 dirSetHierarchyPermissions(const char *path,
-        int uid, int gid, int dirMode, int fileMode)
+        int uid, int gid, int dirMode, int fileMode, const char* secontext)
 {
     struct stat st;
     if (lstat(path, &st)) {
@@ -252,6 +253,10 @@ dirSetHierarchyPermissions(const char *path,
     /* directories and files get different permissions */
     if (chown(path, uid, gid) ||
         chmod(path, S_ISDIR(st.st_mode) ? dirMode : fileMode)) {
+        return -1;
+    }
+
+    if ((secontext != NULL) && lsetfilecon(path, secontext) && (errno != ENOTSUP)) {
         return -1;
     }
 
@@ -271,7 +276,7 @@ dirSetHierarchyPermissions(const char *path,
 
             char dn[PATH_MAX];
             snprintf(dn, sizeof(dn), "%s/%s", path, de->d_name);
-            if (!dirSetHierarchyPermissions(dn, uid, gid, dirMode, fileMode)) {
+            if (!dirSetHierarchyPermissions(dn, uid, gid, dirMode, fileMode, secontext)) {
                 errno = 0;
             } else if (errno == 0) {
                 errno = -1;
