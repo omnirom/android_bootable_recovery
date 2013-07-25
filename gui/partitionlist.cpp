@@ -193,12 +193,12 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node)
 
 		attr = child->first_attribute("highlightcolor");
 		memset(&mFontHighlightColor, 0, sizeof(COLOR));
-        if (attr)
-        {
-            std::string color = attr->value();
+		if (attr)
+		{
+			std::string color = attr->value();
 			ConvertStrToColor(color, &mFontHighlightColor);
 			hasFontHighlightColor = true;
-        }
+		}
 	}
 
 	// Load the separator if it exists
@@ -433,21 +433,21 @@ int GUIPartitionList::Render(void)
 		}
 
 		if (mList.at(line + mStart).selected != 0)
-        {
-            icon = mIconSelected;
+		{
+			icon = mIconSelected;
 			currentIconHeight = mSelectedIconHeight;
 			currentIconWidth = mSelectedIconWidth;
 			currentIconOffsetY = SelectedIconOffsetY;
 			currentIconOffsetX = SelectedIconOffsetX;
-        }
-        else
-        {
-            icon = mIconUnselected;
+		}
+		else
+		{
+			icon = mIconUnselected;
 			currentIconHeight = mSelectedIconHeight;
 			currentIconWidth = mSelectedIconWidth;
 			currentIconOffsetY = SelectedIconOffsetY;
 			currentIconOffsetX = SelectedIconOffsetX;
-        }
+		}
 
 		if (icon && icon->GetResource())
 		{
@@ -827,8 +827,8 @@ int GUIPartitionList::NotifyVarChange(std::string varName, std::string value)
 		}
 	}
 	if (varName == mVariable && !mUpdate)
-    {
-        if (ListType == "storage") {
+	{
+		if (ListType == "storage") {
 			int i, listSize = mList.size(), selected_index = 0;
 
 			currentValue = value;
@@ -856,8 +856,8 @@ int GUIPartitionList::NotifyVarChange(std::string varName, std::string value)
 		}
 
 		mUpdate = 1;
-        return 0;
-    }
+		return 0;
+	}
 	return 0;
 }
 

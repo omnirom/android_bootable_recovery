@@ -43,26 +43,26 @@
 #include "gui/blanktimer.hpp"
 
 #ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
-    #include "cutils/properties.h"
+	#include "cutils/properties.h"
 #endif
 
 extern "C"
 {
-    #include "twcommon.h"
-    #include "data.h"
+	#include "twcommon.h"
+	#include "data.h"
 	#include "gui/pages.h"
 
 	void gui_notifyVarChange(const char *name, const char* value);
 }
 
-#define FILE_VERSION    0x00010001
+#define FILE_VERSION 0x00010001
 
 using namespace std;
 
-map<string, DataManager::TStrIntPair>   DataManager::mValues;
-map<string, string>                     DataManager::mConstValues;
-string                                  DataManager::mBackingFile;
-int                                     DataManager::mInitialized = 0;
+map<string, DataManager::TStrIntPair>	DataManager::mValues;
+map<string, string>					 	DataManager::mConstValues;
+string									DataManager::mBackingFile;
+int										DataManager::mInitialized = 0;
 extern blanktimer blankTimer;
 
 // Device ID functions
@@ -81,12 +81,12 @@ void DataManager::sanitize_device_id(char* device_id) {
 	return;
 }
 
-#define CMDLINE_SERIALNO        "androidboot.serialno="
-#define CMDLINE_SERIALNO_LEN    (strlen(CMDLINE_SERIALNO))
-#define CPUINFO_SERIALNO        "Serial"
-#define CPUINFO_SERIALNO_LEN    (strlen(CPUINFO_SERIALNO))
-#define CPUINFO_HARDWARE        "Hardware"
-#define CPUINFO_HARDWARE_LEN    (strlen(CPUINFO_HARDWARE))
+#define CMDLINE_SERIALNO		"androidboot.serialno="
+#define CMDLINE_SERIALNO_LEN	(strlen(CMDLINE_SERIALNO))
+#define CPUINFO_SERIALNO		"Serial"
+#define CPUINFO_SERIALNO_LEN	(strlen(CPUINFO_SERIALNO))
+#define CPUINFO_HARDWARE		"Hardware"
+#define CPUINFO_HARDWARE_LEN	(strlen(CPUINFO_HARDWARE))
 
 void DataManager::get_device_id(void) {
 	FILE *fp;
@@ -94,8 +94,8 @@ void DataManager::get_device_id(void) {
 	char hardware_id[32], device_id[64];
 	char* token;
 
-    // Assign a blank device_id to start with
-    device_id[0] = 0;
+	// Assign a blank device_id to start with
+	device_id[0] = 0;
 
 #ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
 	// Now we'll use product_model_hardwareid as device id
@@ -121,37 +121,37 @@ void DataManager::get_device_id(void) {
 #endif
 
 #ifndef TW_FORCE_CPUINFO_FOR_DEVICE_ID
-    // First, try the cmdline to see if the serial number was supplied
+	// First, try the cmdline to see if the serial number was supplied
 	fp = fopen("/proc/cmdline", "rt");
 	if (fp != NULL)
-    {
-        // First step, read the line. For cmdline, it's one long line
-        fgets(line, sizeof(line), fp);
-        fclose(fp);
+	{
+		// First step, read the line. For cmdline, it's one long line
+		fgets(line, sizeof(line), fp);
+		fclose(fp);
 
-        // Now, let's tokenize the string
-        token = strtok(line, " ");
+		// Now, let's tokenize the string
+		token = strtok(line, " ");
 
-        // Let's walk through the line, looking for the CMDLINE_SERIALNO token
-        while (token)
-        {
-            // We don't need to verify the length of token, because if it's too short, it will mismatch CMDLINE_SERIALNO at the NULL
-            if (memcmp(token, CMDLINE_SERIALNO, CMDLINE_SERIALNO_LEN) == 0)
-            {
-                // We found the serial number!
-                strcpy(device_id, token + CMDLINE_SERIALNO_LEN);
+		// Let's walk through the line, looking for the CMDLINE_SERIALNO token
+		while (token)
+		{
+			// We don't need to verify the length of token, because if it's too short, it will mismatch CMDLINE_SERIALNO at the NULL
+			if (memcmp(token, CMDLINE_SERIALNO, CMDLINE_SERIALNO_LEN) == 0)
+			{
+				// We found the serial number!
+				strcpy(device_id, token + CMDLINE_SERIALNO_LEN);
 				sanitize_device_id((char *)device_id);
 				mConstValues.insert(make_pair("device_id", device_id));
-                return;
-            }
-            token = strtok(NULL, " ");
-        }
-    }
+				return;
+			}
+			token = strtok(NULL, " ");
+		}
+	}
 #endif
 	// Now we'll try cpuinfo for a serial number
 	fp = fopen("/proc/cpuinfo", "rt");
 	if (fp != NULL)
-    {
+	{
 		while (fgets(line, sizeof(line), fp) != NULL) { // First step, read the line.
 			if (memcmp(line, CPUINFO_SERIALNO, CPUINFO_SERIALNO_LEN) == 0)  // check the beginning of the line for "Serial"
 			{
@@ -159,7 +159,7 @@ void DataManager::get_device_id(void) {
 				token = line + CPUINFO_SERIALNO_LEN; // skip past "Serial"
 				while ((*token > 0 && *token <= 32 ) || *token == ':') token++; // skip over all spaces and the colon
 				if (*token != 0) {
-                    token[30] = 0;
+					token[30] = 0;
 					if (token[strlen(token)-1] == 10) { // checking for endline chars and dropping them from the end of the string if needed
 						memset(device_id, 0, sizeof(device_id));
 						strncpy(device_id, token, strlen(token) - 1);
@@ -177,9 +177,9 @@ void DataManager::get_device_id(void) {
 				token = line + CPUINFO_HARDWARE_LEN; // skip past "Hardware"
 				while ((*token > 0 && *token <= 32 ) || *token == ':')  token++; // skip over all spaces and the colon
 				if (*token != 0) {
-                    token[30] = 0;
+					token[30] = 0;
 					if (token[strlen(token)-1] == 10) { // checking for endline chars and dropping them from the end of the string if needed
-                        memset(hardware_id, 0, sizeof(hardware_id));
+						memset(hardware_id, 0, sizeof(hardware_id));
 						strncpy(hardware_id, token, strlen(token) - 1);
 					} else {
 						strcpy(hardware_id, token);
@@ -189,7 +189,7 @@ void DataManager::get_device_id(void) {
 			}
 		}
 		fclose(fp);
-    }
+	}
 
 	if (hardware_id[0] != 0) {
 		LOGINFO("\nusing hardware id for device id: '%s'\n", hardware_id);
@@ -199,76 +199,76 @@ void DataManager::get_device_id(void) {
 		return;
 	}
 
-    strcpy(device_id, "serialno");
+	strcpy(device_id, "serialno");
 	LOGERR("=> device id not found, using '%s'.", device_id);
 	mConstValues.insert(make_pair("device_id", device_id));
-    return;
+	return;
 }
 
 int DataManager::ResetDefaults()
 {
-    mValues.clear();
-    mConstValues.clear();
-    SetDefaultValues();
-    return 0;
+	mValues.clear();
+	mConstValues.clear();
+	SetDefaultValues();
+	return 0;
 }
 
 int DataManager::LoadValues(const string filename)
 {
-    string str, dev_id;
+	string str, dev_id;
 
 	if (!mInitialized)
-        SetDefaultValues();
+		SetDefaultValues();
 
-    GetValue("device_id", dev_id);
+	GetValue("device_id", dev_id);
 	// Save off the backing file for set operations
-    mBackingFile = filename;
+	mBackingFile = filename;
 
-    // Read in the file, if possible
-    FILE* in = fopen(filename.c_str(), "rb");
-    if (!in) {
+	// Read in the file, if possible
+	FILE* in = fopen(filename.c_str(), "rb");
+	if (!in) {
 		LOGINFO("Settings file '%s' not found.\n", filename.c_str());
 		return 0;
 	} else {
 		LOGINFO("Loading settings from '%s'.\n", filename.c_str());
 	}
 
-    int file_version;
-    if (fread(&file_version, 1, sizeof(int), in) != sizeof(int))    goto error;
-    if (file_version != FILE_VERSION)                               goto error;
+	int file_version;
+	if (fread(&file_version, 1, sizeof(int), in) != sizeof(int))	goto error;
+	if (file_version != FILE_VERSION)								goto error;
 
-    while (!feof(in))
-    {
-        string Name;
-        string Value;
-        unsigned short length;
-        char array[512];
+	while (!feof(in))
+	{
+		string Name;
+		string Value;
+		unsigned short length;
+		char array[512];
 
-        if (fread(&length, 1, sizeof(unsigned short), in) != sizeof(unsigned short))    goto error;
-        if (length >= 512)                                                              goto error;
-        if (fread(array, 1, length, in) != length)                                      goto error;
-        Name = array;
+		if (fread(&length, 1, sizeof(unsigned short), in) != sizeof(unsigned short))	goto error;
+		if (length >= 512)																goto error;
+		if (fread(array, 1, length, in) != length)										goto error;
+		Name = array;
 
-        if (fread(&length, 1, sizeof(unsigned short), in) != sizeof(unsigned short))    goto error;
-        if (length >= 512)                                                              goto error;
-        if (fread(array, 1, length, in) != length)                                      goto error;
-        Value = array;
+		if (fread(&length, 1, sizeof(unsigned short), in) != sizeof(unsigned short))	goto error;
+		if (length >= 512)																goto error;
+		if (fread(array, 1, length, in) != length)										goto error;
+		Value = array;
 
-        map<string, TStrIntPair>::iterator pos;
+		map<string, TStrIntPair>::iterator pos;
 
-        pos = mValues.find(Name);
-        if (pos != mValues.end())
-        {
-            pos->second.first = Value;
-            pos->second.second = 1;
-        }
-        else
-            mValues.insert(TNameValuePair(Name, TStrIntPair(Value, 1)));
+		pos = mValues.find(Name);
+		if (pos != mValues.end())
+		{
+			pos->second.first = Value;
+			pos->second.second = 1;
+		}
+		else
+			mValues.insert(TNameValuePair(Name, TStrIntPair(Value, 1)));
 		if (Name == "tw_screen_timeout_secs")
 			blankTimer.setTime(atoi(Value.c_str()));
-    }
+	}
 error:
-    fclose(in);
+	fclose(in);
 	string current = GetCurrentStoragePath();
 	string settings = GetSettingsStoragePath();
 	if (current != settings && !PartitionManager.Mount_By_Path(current, false)) {
@@ -276,185 +276,188 @@ error:
 	} else {
 		SetBackupFolder();
 	}
-    return 0;
+	return 0;
 }
 
 int DataManager::Flush()
 {
-    return SaveValues();
+	return SaveValues();
 }
 
 int DataManager::SaveValues()
 {
-    if (mBackingFile.empty())       return -1;
+	if (mBackingFile.empty())
+		return -1;
 
 	string mount_path = GetSettingsStoragePath();
 	PartitionManager.Mount_By_Path(mount_path.c_str(), 1);
 
 	FILE* out = fopen(mBackingFile.c_str(), "wb");
-    if (!out)                       return -1;
+	if (!out)
+		return -1;
 
-    int file_version = FILE_VERSION;
-    fwrite(&file_version, 1, sizeof(int), out);
+	int file_version = FILE_VERSION;
+	fwrite(&file_version, 1, sizeof(int), out);
 
-    map<string, TStrIntPair>::iterator iter;
-    for (iter = mValues.begin(); iter != mValues.end(); ++iter)
-    {
-        // Save only the persisted data
-        if (iter->second.second != 0)
-        {
-            unsigned short length = (unsigned short) iter->first.length() + 1;
-            fwrite(&length, 1, sizeof(unsigned short), out);
-            fwrite(iter->first.c_str(), 1, length, out);
-            length = (unsigned short) iter->second.first.length() + 1;
-            fwrite(&length, 1, sizeof(unsigned short), out);
-            fwrite(iter->second.first.c_str(), 1, length, out);
-        }
-    }
-    fclose(out);
-    return 0;
+	map<string, TStrIntPair>::iterator iter;
+	for (iter = mValues.begin(); iter != mValues.end(); ++iter)
+	{
+		// Save only the persisted data
+		if (iter->second.second != 0)
+		{
+			unsigned short length = (unsigned short) iter->first.length() + 1;
+			fwrite(&length, 1, sizeof(unsigned short), out);
+			fwrite(iter->first.c_str(), 1, length, out);
+			length = (unsigned short) iter->second.first.length() + 1;
+			fwrite(&length, 1, sizeof(unsigned short), out);
+			fwrite(iter->second.first.c_str(), 1, length, out);
+		}
+	}
+	fclose(out);
+	return 0;
 }
 
 int DataManager::GetValue(const string varName, string& value)
 {
-    string localStr = varName;
+	string localStr = varName;
 
-    if (!mInitialized)
-        SetDefaultValues();
+	if (!mInitialized)
+		SetDefaultValues();
 
-    // Strip off leading and trailing '%' if provided
-    if (localStr.length() > 2 && localStr[0] == '%' && localStr[localStr.length()-1] == '%')
-    {
-        localStr.erase(0, 1);
-        localStr.erase(localStr.length() - 1, 1);
-    }
+	// Strip off leading and trailing '%' if provided
+	if (localStr.length() > 2 && localStr[0] == '%' && localStr[localStr.length()-1] == '%')
+	{
+		localStr.erase(0, 1);
+		localStr.erase(localStr.length() - 1, 1);
+	}
 
-    // Handle magic values
-    if (GetMagicValue(localStr, value) == 0)     return 0;
+	// Handle magic values
+	if (GetMagicValue(localStr, value) == 0)
+		return 0;
 
-    map<string, string>::iterator constPos;
-    constPos = mConstValues.find(localStr);
-    if (constPos != mConstValues.end())
-    {
-        value = constPos->second;
-        return 0;
-    }
+	map<string, string>::iterator constPos;
+	constPos = mConstValues.find(localStr);
+	if (constPos != mConstValues.end())
+	{
+		value = constPos->second;
+		return 0;
+	}
 
-    map<string, TStrIntPair>::iterator pos;
-    pos = mValues.find(localStr);
-    if (pos == mValues.end())
-        return -1;
+	map<string, TStrIntPair>::iterator pos;
+	pos = mValues.find(localStr);
+	if (pos == mValues.end())
+		return -1;
 
-    value = pos->second.first;
-    return 0;
+	value = pos->second.first;
+	return 0;
 }
 
 int DataManager::GetValue(const string varName, int& value)
 {
-    string data;
+	string data;
 
-    if (GetValue(varName,data) != 0)
-        return -1;
+	if (GetValue(varName,data) != 0)
+		return -1;
 
-    value = atoi(data.c_str());
-    return 0;
+	value = atoi(data.c_str());
+	return 0;
 }
 
 int DataManager::GetValue(const string varName, float& value)
 {
-    string data;
+	string data;
 
-    if (GetValue(varName,data) != 0)
-        return -1;
+	if (GetValue(varName,data) != 0)
+		return -1;
 
-    value = atof(data.c_str());
-    return 0;
+	value = atof(data.c_str());
+	return 0;
 }
 
 unsigned long long DataManager::GetValue(const string varName, unsigned long long& value)
 {
-    string data;
+	string data;
 
-    if (GetValue(varName,data) != 0)
-        return -1;
+	if (GetValue(varName,data) != 0)
+		return -1;
 
-    value = strtoull(data.c_str(), NULL, 10);
-    return 0;
+	value = strtoull(data.c_str(), NULL, 10);
+	return 0;
 }
 
 // This is a dangerous function. It will create the value if it doesn't exist so it has a valid c_str
 string& DataManager::GetValueRef(const string varName)
 {
-    if (!mInitialized)
-        SetDefaultValues();
+	if (!mInitialized)
+		SetDefaultValues();
 
-    map<string, string>::iterator constPos;
-    constPos = mConstValues.find(varName);
-    if (constPos != mConstValues.end())
-        return constPos->second;
+	map<string, string>::iterator constPos;
+	constPos = mConstValues.find(varName);
+	if (constPos != mConstValues.end())
+		return constPos->second;
 
-    map<string, TStrIntPair>::iterator pos;
-    pos = mValues.find(varName);
-    if (pos == mValues.end())
-        pos = (mValues.insert(TNameValuePair(varName, TStrIntPair("", 0)))).first;
+	map<string, TStrIntPair>::iterator pos;
+	pos = mValues.find(varName);
+	if (pos == mValues.end())
+		pos = (mValues.insert(TNameValuePair(varName, TStrIntPair("", 0)))).first;
 
-    return pos->second.first;
+	return pos->second.first;
 }
 
 // This function will return an empty string if the value doesn't exist
 string DataManager::GetStrValue(const string varName)
 {
-    string retVal;
+	string retVal;
 
-    GetValue(varName, retVal);
-    return retVal;
+	GetValue(varName, retVal);
+	return retVal;
 }
 
 // This function will return 0 if the value doesn't exist
 int DataManager::GetIntValue(const string varName)
 {
-    string retVal;
+	string retVal;
 
-    GetValue(varName, retVal);
-    return atoi(retVal.c_str());
+	GetValue(varName, retVal);
+	return atoi(retVal.c_str());
 }
 
 int DataManager::SetValue(const string varName, string value, int persist /* = 0 */)
 {
-    if (!mInitialized)
-        SetDefaultValues();
+	if (!mInitialized)
+		SetDefaultValues();
 
-    // Don't allow empty values or numerical starting values
-    if (varName.empty() || (varName[0] >= '0' && varName[0] <= '9'))
-        return -1;
+	// Don't allow empty values or numerical starting values
+	if (varName.empty() || (varName[0] >= '0' && varName[0] <= '9'))
+		return -1;
 
-    map<string, string>::iterator constChk;
-    constChk = mConstValues.find(varName);
-    if (constChk != mConstValues.end())
-        return -1;
+	map<string, string>::iterator constChk;
+	constChk = mConstValues.find(varName);
+	if (constChk != mConstValues.end())
+		return -1;
 
-    map<string, TStrIntPair>::iterator pos;
-    pos = mValues.find(varName);
-    if (pos == mValues.end())
-        pos = (mValues.insert(TNameValuePair(varName, TStrIntPair(value, persist)))).first;
-    else
-        pos->second.first = value;
+	map<string, TStrIntPair>::iterator pos;
+	pos = mValues.find(varName);
+	if (pos == mValues.end())
+		pos = (mValues.insert(TNameValuePair(varName, TStrIntPair(value, persist)))).first;
+	else
+		pos->second.first = value;
 
-    if (pos->second.second != 0)
-        SaveValues();
+	if (pos->second.second != 0)
+		SaveValues();
 	if (varName == "tw_screen_timeout_secs") {
 		blankTimer.setTime(atoi(value.c_str()));
 	} else if (varName == "tw_storage_path") {
 		SetBackupFolder();
 	}
 	gui_notifyVarChange(varName.c_str(), value.c_str());
-    return 0;
+	return 0;
 }
 
 int DataManager::SetValue(const string varName, int value, int persist /* = 0 */)
 {
 	ostringstream valStr;
-    valStr << value;
+	valStr << value;
 	if (varName == "tw_use_external_storage") {
 		string str;
 
@@ -471,28 +474,29 @@ int DataManager::SetValue(const string varName, int value, int persist /* = 0 */
 
 		SetValue("tw_storage_path", str);
 	}
-    return SetValue(varName, valStr.str(), persist);
+	return SetValue(varName, valStr.str(), persist);
 }
 
 int DataManager::SetValue(const string varName, float value, int persist /* = 0 */)
 {
 	ostringstream valStr;
-    valStr << value;
-    return SetValue(varName, valStr.str(), persist);;
+	valStr << value;
+	return SetValue(varName, valStr.str(), persist);;
 }
 
 int DataManager::SetValue(const string varName, unsigned long long value, int persist /* = 0 */)
 {
 	ostringstream valStr;
-    valStr << value;
-    return SetValue(varName, valStr.str(), persist);;
+	valStr << value;
+	return SetValue(varName, valStr.str(), persist);
 }
 
 int DataManager::SetProgress(float Fraction) {
 	return SetValue("ui_progress", (float) (Fraction * 100.0));
 }
 
-int DataManager::ShowProgress(float Portion, float Seconds) {
+int DataManager::ShowProgress(float Portion, float Seconds)
+{
 	float Starting_Portion;
 	GetValue("ui_progress_portion", Starting_Portion);
 	if (SetValue("ui_progress_portion", (float)(Portion * 100.0) + Starting_Portion) != 0)
@@ -504,17 +508,16 @@ int DataManager::ShowProgress(float Portion, float Seconds) {
 
 void DataManager::DumpValues()
 {
-    map<string, TStrIntPair>::iterator iter;
-    gui_print("Data Manager dump - Values with leading X are persisted.\n");
-    for (iter = mValues.begin(); iter != mValues.end(); ++iter)
-    {
-        gui_print("%c %s=%s\n", iter->second.second ? 'X' : ' ', iter->first.c_str(), iter->second.first.c_str());
-    }
+	map<string, TStrIntPair>::iterator iter;
+	gui_print("Data Manager dump - Values with leading X are persisted.\n");
+	for (iter = mValues.begin(); iter != mValues.end(); ++iter)
+		gui_print("%c %s=%s\n", iter->second.second ? 'X' : ' ', iter->first.c_str(), iter->second.first.c_str());
 }
 
-void DataManager::update_tz_environment_variables(void) {
+void DataManager::update_tz_environment_variables(void)
+{
 	setenv("TZ", DataManager_GetStrValue(TW_TIME_ZONE_VAR), 1);
-    tzset();
+	tzset();
 }
 
 void DataManager::SetBackupFolder()
@@ -526,7 +529,7 @@ void DataManager::SetBackupFolder()
 	string dev_id;
 	GetValue("device_id", dev_id);
 
-    str += dev_id;
+	str += dev_id;
 	LOGINFO("Backup folder set to '%s'\n", str.c_str());
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
 	if (partition != NULL) {
@@ -558,16 +561,16 @@ void DataManager::SetBackupFolder()
 
 void DataManager::SetDefaultValues()
 {
-    string str, path;
+	string str, path;
 
-    get_device_id();
+	get_device_id();
 
-    mInitialized = 1;
+	mInitialized = 1;
 
-    mConstValues.insert(make_pair("true", "1"));
-    mConstValues.insert(make_pair("false", "0"));
+	mConstValues.insert(make_pair("true", "1"));
+	mConstValues.insert(make_pair("false", "0"));
 
-    mConstValues.insert(make_pair(TW_VERSION_VAR, TW_VERSION_STR));
+	mConstValues.insert(make_pair(TW_VERSION_VAR, TW_VERSION_STR));
 	mValues.insert(make_pair("tw_storage_path", make_pair("/", 1)));
 
 #ifdef TW_FORCE_CPUINFO_FOR_DEVICE_ID
@@ -576,9 +579,9 @@ void DataManager::SetDefaultValues()
 
 #ifdef BOARD_HAS_NO_REAL_SDCARD
 	printf("BOARD_HAS_NO_REAL_SDCARD := true\n");
-    mConstValues.insert(make_pair(TW_ALLOW_PARTITION_SDCARD, "0"));
+	mConstValues.insert(make_pair(TW_ALLOW_PARTITION_SDCARD, "0"));
 #else
-    mConstValues.insert(make_pair(TW_ALLOW_PARTITION_SDCARD, "1"));
+	mConstValues.insert(make_pair(TW_ALLOW_PARTITION_SDCARD, "1"));
 #endif
 
 #ifdef TW_INCLUDE_DUMLOCK
@@ -720,45 +723,45 @@ void DataManager::SetDefaultValues()
 	string dev_id;
 	GetValue("device_id", dev_id);
 
-    str += dev_id;
+	str += dev_id;
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
 
 #ifdef SP1_DISPLAY_NAME
 	printf("SP1_DISPLAY_NAME := %s\n", EXPAND(SP1_DISPLAY_NAME));
-    if (strlen(EXPAND(SP1_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_DISPLAY_NAME)));
+	if (strlen(EXPAND(SP1_DISPLAY_NAME))) mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_DISPLAY_NAME)));
 #else
 	#ifdef SP1_NAME
 		printf("SP1_NAME := %s\n", EXPAND(SP1_NAME));
-		if (strlen(EXPAND(SP1_NAME)))    mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_NAME)));
+		if (strlen(EXPAND(SP1_NAME))) mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_NAME)));
 	#endif
 #endif
 #ifdef SP2_DISPLAY_NAME
 	printf("SP2_DISPLAY_NAME := %s\n", EXPAND(SP2_DISPLAY_NAME));
-    if (strlen(EXPAND(SP2_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_DISPLAY_NAME)));
+	if (strlen(EXPAND(SP2_DISPLAY_NAME))) mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_DISPLAY_NAME)));
 #else
 	#ifdef SP2_NAME
 		printf("SP2_NAME := %s\n", EXPAND(SP2_NAME));
-		if (strlen(EXPAND(SP2_NAME)))    mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_NAME)));
+		if (strlen(EXPAND(SP2_NAME))) mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_NAME)));
 	#endif
 #endif
 #ifdef SP3_DISPLAY_NAME
 	printf("SP3_DISPLAY_NAME := %s\n", EXPAND(SP3_DISPLAY_NAME));
-    if (strlen(EXPAND(SP3_DISPLAY_NAME)))    mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_DISPLAY_NAME)));
+	if (strlen(EXPAND(SP3_DISPLAY_NAME))) mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_DISPLAY_NAME)));
 #else
 	#ifdef SP3_NAME
 		printf("SP3_NAME := %s\n", EXPAND(SP3_NAME));
-		if (strlen(EXPAND(SP3_NAME)))    mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_NAME)));
+		if (strlen(EXPAND(SP3_NAME))) mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_NAME)));
 	#endif
 #endif
 
-    mConstValues.insert(make_pair(TW_REBOOT_SYSTEM, "1"));
+	mConstValues.insert(make_pair(TW_REBOOT_SYSTEM, "1"));
 #ifdef TW_NO_REBOOT_RECOVERY
 	printf("TW_NO_REBOOT_RECOVERY := true\n");
 	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, "0"));
 #else
 	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, "1"));
 #endif
-    mConstValues.insert(make_pair(TW_REBOOT_POWEROFF, "1"));
+	mConstValues.insert(make_pair(TW_REBOOT_POWEROFF, "1"));
 #ifdef TW_NO_REBOOT_BOOTLOADER
 	printf("TW_NO_REBOOT_BOOTLOADER := true\n");
 	mConstValues.insert(make_pair(TW_REBOOT_BOOTLOADER, "0"));
@@ -843,15 +846,15 @@ void DataManager::SetDefaultValues()
 	mConstValues.insert(make_pair(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE));
 	mValues.insert(make_pair(TW_BACKUP_NAME, make_pair("(Current Date)", 0)));
 	mValues.insert(make_pair(TW_BACKUP_SYSTEM_VAR, make_pair("1", 1)));
-    mValues.insert(make_pair(TW_BACKUP_DATA_VAR, make_pair("1", 1)));
-    mValues.insert(make_pair(TW_BACKUP_BOOT_VAR, make_pair("1", 1)));
-    mValues.insert(make_pair(TW_BACKUP_RECOVERY_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_BACKUP_CACHE_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_BACKUP_SP1_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_BACKUP_SP2_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_BACKUP_SP3_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_BACKUP_ANDSEC_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_BACKUP_SDEXT_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_BACKUP_DATA_VAR, make_pair("1", 1)));
+	mValues.insert(make_pair(TW_BACKUP_BOOT_VAR, make_pair("1", 1)));
+	mValues.insert(make_pair(TW_BACKUP_RECOVERY_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_BACKUP_CACHE_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_BACKUP_SP1_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_BACKUP_SP2_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_BACKUP_SP3_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_BACKUP_ANDSEC_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_BACKUP_SDEXT_VAR, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_BACKUP_SYSTEM_SIZE, make_pair("0", 0)));
 	mValues.insert(make_pair(TW_BACKUP_DATA_SIZE, make_pair("0", 0)));
 	mValues.insert(make_pair(TW_BACKUP_BOOT_SIZE, make_pair("0", 0)));
@@ -864,33 +867,33 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_BACKUP_SP3_SIZE, make_pair("0", 0)));
 	mValues.insert(make_pair(TW_STORAGE_FREE_SIZE, make_pair("0", 0)));
 
-    mValues.insert(make_pair(TW_REBOOT_AFTER_FLASH_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_SIGNED_ZIP_VERIFY_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_FORCE_MD5_CHECK_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_COLOR_THEME_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_USE_COMPRESSION_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_SHOW_SPAM_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_TIME_ZONE_VAR, make_pair("CST6CDT", 1)));
-    mValues.insert(make_pair(TW_SORT_FILES_BY_DATE_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_GUI_SORT_ORDER, make_pair("1", 1)));
-    mValues.insert(make_pair(TW_RM_RF_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_SKIP_MD5_CHECK_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_SKIP_MD5_GENERATE_VAR, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_SDEXT_SIZE, make_pair("512", 1)));
-    mValues.insert(make_pair(TW_SWAP_SIZE, make_pair("32", 1)));
-    mValues.insert(make_pair(TW_SDPART_FILE_SYSTEM, make_pair("ext3", 1)));
-    mValues.insert(make_pair(TW_TIME_ZONE_GUISEL, make_pair("CST6;CDT", 1)));
-    mValues.insert(make_pair(TW_TIME_ZONE_GUIOFFSET, make_pair("0", 1)));
-    mValues.insert(make_pair(TW_TIME_ZONE_GUIDST, make_pair("1", 1)));
-    mValues.insert(make_pair(TW_ACTION_BUSY, make_pair("0", 0)));
-    mValues.insert(make_pair(TW_BACKUP_AVG_IMG_RATE, make_pair("15000000", 1)));
-    mValues.insert(make_pair(TW_BACKUP_AVG_FILE_RATE, make_pair("3000000", 1)));
-    mValues.insert(make_pair(TW_BACKUP_AVG_FILE_COMP_RATE, make_pair("2000000", 1)));
-    mValues.insert(make_pair(TW_RESTORE_AVG_IMG_RATE, make_pair("15000000", 1)));
-    mValues.insert(make_pair(TW_RESTORE_AVG_FILE_RATE, make_pair("3000000", 1)));
-    mValues.insert(make_pair(TW_RESTORE_AVG_FILE_COMP_RATE, make_pair("2000000", 1)));
-    mValues.insert(make_pair("tw_wipe_cache", make_pair("0", 0)));
-    mValues.insert(make_pair("tw_wipe_dalvik", make_pair("0", 0)));
+	mValues.insert(make_pair(TW_REBOOT_AFTER_FLASH_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_SIGNED_ZIP_VERIFY_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_FORCE_MD5_CHECK_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_COLOR_THEME_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_USE_COMPRESSION_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_SHOW_SPAM_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_TIME_ZONE_VAR, make_pair("CST6CDT", 1)));
+	mValues.insert(make_pair(TW_SORT_FILES_BY_DATE_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_GUI_SORT_ORDER, make_pair("1", 1)));
+	mValues.insert(make_pair(TW_RM_RF_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_SKIP_MD5_CHECK_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_SKIP_MD5_GENERATE_VAR, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_SDEXT_SIZE, make_pair("512", 1)));
+	mValues.insert(make_pair(TW_SWAP_SIZE, make_pair("32", 1)));
+	mValues.insert(make_pair(TW_SDPART_FILE_SYSTEM, make_pair("ext3", 1)));
+	mValues.insert(make_pair(TW_TIME_ZONE_GUISEL, make_pair("CST6;CDT", 1)));
+	mValues.insert(make_pair(TW_TIME_ZONE_GUIOFFSET, make_pair("0", 1)));
+	mValues.insert(make_pair(TW_TIME_ZONE_GUIDST, make_pair("1", 1)));
+	mValues.insert(make_pair(TW_ACTION_BUSY, make_pair("0", 0)));
+	mValues.insert(make_pair(TW_BACKUP_AVG_IMG_RATE, make_pair("15000000", 1)));
+	mValues.insert(make_pair(TW_BACKUP_AVG_FILE_RATE, make_pair("3000000", 1)));
+	mValues.insert(make_pair(TW_BACKUP_AVG_FILE_COMP_RATE, make_pair("2000000", 1)));
+	mValues.insert(make_pair(TW_RESTORE_AVG_IMG_RATE, make_pair("15000000", 1)));
+	mValues.insert(make_pair(TW_RESTORE_AVG_FILE_RATE, make_pair("3000000", 1)));
+	mValues.insert(make_pair(TW_RESTORE_AVG_FILE_COMP_RATE, make_pair("2000000", 1)));
+	mValues.insert(make_pair("tw_wipe_cache", make_pair("0", 0)));
+	mValues.insert(make_pair("tw_wipe_dalvik", make_pair("0", 0)));
 	if (GetIntValue(TW_HAS_INTERNAL) == 1 && GetIntValue(TW_HAS_DATA_MEDIA) == 1 && GetIntValue(TW_HAS_EXTERNAL) == 0)
 		SetValue(TW_HAS_USB_STORAGE, 0, 0);
 	else
@@ -940,35 +943,37 @@ void DataManager::SetDefaultValues()
 // Magic Values
 int DataManager::GetMagicValue(const string varName, string& value)
 {
-    // Handle special dynamic cases
-    if (varName == "tw_time")
-    {
-        char tmp[32];
+	// Handle special dynamic cases
+	if (varName == "tw_time")
+	{
+		char tmp[32];
 
-        struct tm *current;
-        time_t now;
-	int tw_military_time;
-        now = time(0);
-        current = localtime(&now);
-	GetValue(TW_MILITARY_TIME, tw_military_time); 
-        if (current->tm_hour >= 12) {
-		if (tw_military_time == 1)
-            		sprintf(tmp, "%d:%02d", current->tm_hour, current->tm_min);
-		else
-            		sprintf(tmp, "%d:%02d PM", current->tm_hour == 12 ? 12 : current->tm_hour - 12, current->tm_min);
+		struct tm *current;
+		time_t now;
+		int tw_military_time;
+		now = time(0);
+		current = localtime(&now);
+		GetValue(TW_MILITARY_TIME, tw_military_time); 
+		if (current->tm_hour >= 12)
+		{
+			if (tw_military_time == 1)
+				sprintf(tmp, "%d:%02d", current->tm_hour, current->tm_min);
+			else
+				sprintf(tmp, "%d:%02d PM", current->tm_hour == 12 ? 12 : current->tm_hour - 12, current->tm_min);
 		}
-        else {
-		if (tw_military_time == 1) 
-		    sprintf(tmp, "%d:%02d", current->tm_hour, current->tm_min);
 		else
-		    sprintf(tmp, "%d:%02d AM", current->tm_hour == 0 ? 12 : current->tm_hour, current->tm_min);
+		{
+			if (tw_military_time == 1) 
+				sprintf(tmp, "%d:%02d", current->tm_hour, current->tm_min);
+			else
+				sprintf(tmp, "%d:%02d AM", current->tm_hour == 0 ? 12 : current->tm_hour, current->tm_min);
+		}
+		value = tmp;
+		return 0;
 	}
-        value = tmp;
-        return 0;
-    }
-    if (varName == "tw_battery")
-    {
-        char tmp[16];
+	else if (varName == "tw_battery")
+	{
+		char tmp[16];
 		static char charging = ' ';
 		static int lastVal = -1;
 		static time_t nextSecCheck = 0;
@@ -989,8 +994,8 @@ int DataManager::GetMagicValue(const string varName, string& value)
 				fgets(cap_s, 4, cap);
 				fclose(cap);
 				lastVal = atoi(cap_s);
-				if (lastVal > 100)  lastVal = 101;
-				if (lastVal < 0)    lastVal = 0;
+				if (lastVal > 100)	lastVal = 101;
+				if (lastVal < 0)	lastVal = 0;
 			}
 #ifdef TW_CUSTOM_BATTERY_PATH
 			string status_file = EXPAND(TW_CUSTOM_BATTERY_PATH);
@@ -1011,13 +1016,14 @@ int DataManager::GetMagicValue(const string varName, string& value)
 		}
 
 		sprintf(tmp, "%i%%%c", lastVal, charging);
-        value = tmp;
-        return 0;
-    }
-    return -1;
+		value = tmp;
+		return 0;
+	}
+	return -1;
 }
 
-void DataManager::Output_Version(void) {
+void DataManager::Output_Version(void)
+{
 	string Path;
 	char version[255];
 
@@ -1131,89 +1137,89 @@ string& DataManager::CGetSettingsStoragePath()
 	return GetValueRef("tw_settings_path");
 }
 
-extern "C" int DataManager_ResetDefaults()
+extern "C" int DataManager_ResetDefaults(void)
 {
-    return DataManager::ResetDefaults();
+	return DataManager::ResetDefaults();
 }
 
-extern "C" void DataManager_LoadDefaults()
+extern "C" void DataManager_LoadDefaults(void)
 {
-    return DataManager::SetDefaultValues();
+	return DataManager::SetDefaultValues();
 }
 
 extern "C" int DataManager_LoadValues(const char* filename)
 {
-    return DataManager::LoadValues(filename);
+	return DataManager::LoadValues(filename);
 }
 
-extern "C" int DataManager_Flush()
+extern "C" int DataManager_Flush(void)
 {
-    return DataManager::Flush();
+	return DataManager::Flush();
 }
 
 extern "C" int DataManager_GetValue(const char* varName, char* value)
 {
-    int ret;
-    string str;
+	int ret;
+	string str;
 
-    ret = DataManager::GetValue(varName, str);
-    if (ret == 0)
-        strcpy(value, str.c_str());
-    return ret;
+	ret = DataManager::GetValue(varName, str);
+	if (ret == 0)
+		strcpy(value, str.c_str());
+	return ret;
 }
 
 extern "C" const char* DataManager_GetStrValue(const char* varName)
 {
-    string& str = DataManager::GetValueRef(varName);
-    return str.c_str();
+	string& str = DataManager::GetValueRef(varName);
+	return str.c_str();
 }
 
 extern "C" const char* DataManager_GetCurrentStoragePath(void)
 {
-    string& str = DataManager::CGetCurrentStoragePath();
-    return str.c_str();
+	string& str = DataManager::CGetCurrentStoragePath();
+	return str.c_str();
 }
 
 extern "C" const char* DataManager_GetSettingsStoragePath(void)
 {
-    string& str = DataManager::CGetSettingsStoragePath();
-    return str.c_str();
+	string& str = DataManager::CGetSettingsStoragePath();
+	return str.c_str();
 }
 
 extern "C" int DataManager_GetIntValue(const char* varName)
 {
-    return DataManager::GetIntValue(varName);
+	return DataManager::GetIntValue(varName);
 }
 
 extern "C" int DataManager_SetStrValue(const char* varName, char* value)
 {
-    return DataManager::SetValue(varName, value, 0);
+	return DataManager::SetValue(varName, value, 0);
 }
 
 extern "C" int DataManager_SetIntValue(const char* varName, int value)
 {
-    return DataManager::SetValue(varName, value, 0);
+	return DataManager::SetValue(varName, value, 0);
 }
 
 extern "C" int DataManager_SetFloatValue(const char* varName, float value)
 {
-    return DataManager::SetValue(varName, value, 0);
+	return DataManager::SetValue(varName, value, 0);
 }
 
 extern "C" int DataManager_ToggleIntValue(const char* varName)
 {
-    if (DataManager::GetIntValue(varName))
-        return DataManager::SetValue(varName, 0);
-    else
-        return DataManager::SetValue(varName, 1);
+	if (DataManager::GetIntValue(varName))
+		return DataManager::SetValue(varName, 0);
+	else
+		return DataManager::SetValue(varName, 1);
 }
 
-extern "C" void DataManager_DumpValues()
+extern "C" void DataManager_DumpValues(void)
 {
-    return DataManager::DumpValues();
+	return DataManager::DumpValues();
 }
 
-extern "C" void DataManager_ReadSettingsFile()
+extern "C" void DataManager_ReadSettingsFile(void)
 {
-    return DataManager::ReadSettingsFile();
+	return DataManager::ReadSettingsFile();
 }

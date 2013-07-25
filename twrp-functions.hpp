@@ -8,12 +8,12 @@ using namespace std;
 
 typedef enum
 {
-    rb_current = 0,
-    rb_system,
-    rb_recovery,
-    rb_poweroff,
-    rb_bootloader,     // May also be fastboot
-    rb_download,
+	rb_current = 0,
+	rb_system,
+	rb_recovery,
+	rb_poweroff,
+	rb_bootloader,     // May also be fastboot
+	rb_download,
 } RebootCommand;
 
 // Partition class

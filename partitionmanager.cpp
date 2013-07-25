@@ -1104,14 +1104,14 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 		}
 	}
 	TWPartition* sdext = Find_Partition_By_Path("/sd-ext");
-	if (sdext != NULL) {
-		if (sdext->Is_Present && sdext->Mount(false)) {
-			if (stat("/sd-ext/dalvik-cache", &st) == 0) {
-				TWFunc::removeDir("/sd-ext/dalvik-cache", false);
-        	    		gui_print("Cleaned: /sd-ext/dalvik-cache...\n");
-			}
+	if (sdext && sdext->Is_Present && sdext->Mount(false))
+	{
+		if (stat("/sd-ext/dalvik-cache", &st) == 0)
+		{
+			TWFunc::removeDir("/sd-ext/dalvik-cache", false);
+	   	    gui_print("Cleaned: /sd-ext/dalvik-cache...\n");
 		}
-        }
+	}
 	gui_print("-- Dalvik Cache Directories Wipe Complete!\n\n");
 	return true;
 }

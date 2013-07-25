@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-    char twrp_booted[PROPERTY_VALUE_MAX];
+	char twrp_booted[PROPERTY_VALUE_MAX];
 	property_get("ro.twrp.boot", twrp_booted, "0");
 	if (strcmp(twrp_booted, "0") == 0) {
 		property_list(Print_Prop, NULL);
@@ -242,10 +242,10 @@ int main(int argc, char **argv) {
 		PartitionManager.UnMount_By_Path("/system", false);
 	}
 
-    // Reboot
+	// Reboot
 	TWFunc::Update_Intent_File(Reboot_Value);
-    TWFunc::Update_Log_File();
-    gui_print("Rebooting...\n");
+	TWFunc::Update_Log_File();
+	gui_print("Rebooting...\n");
 	string Reboot_Arg;
 	DataManager::GetValue("tw_reboot_arg", Reboot_Arg);
 	if (Reboot_Arg == "recovery")
@@ -260,9 +260,9 @@ int main(int argc, char **argv) {
 		TWFunc::tw_reboot(rb_system);
 
 #ifdef ANDROID_RB_RESTART
-    android_reboot(ANDROID_RB_RESTART, 0, 0);
+	android_reboot(ANDROID_RB_RESTART, 0, 0);
 #else
 	reboot(RB_AUTOBOOT);
 #endif
-    return 0;
+	return 0;
 }

@@ -24,31 +24,35 @@
 
 using namespace std;
 
-class blanktimer {
-	public:
-		blanktimer(void);
-		int setTimerThread(void);
-		void resetTimerAndUnblank(void);
-		void setTime(int newtime);
-		bool IsScreenOff();
+class blanktimer
+{
+public:
+	blanktimer(void);
 
-	private:
-		void setConBlank(int blank);
-		void setTimer(void);
-		timespec getTimer(void);
-		int getBrightness(void);
-		int setBrightness(int brightness);
-		int setBlankTimer(void);
-		int setClockTimer(void);
-		typedef int (blanktimer::*ThreadPtr)(void);
-		typedef void* (*PThreadPtr)(void*);
-		pthread_mutex_t conblankmutex;
-		pthread_mutex_t timermutex;
-		int conblank;
-		timespec btimer;
-		unsigned long long sleepTimer;
-		int orig_brightness;
-		bool screenoff;
+	int setTimerThread(void);
+	void resetTimerAndUnblank(void);
+	void setTime(int newtime);
+	bool IsScreenOff();
+
+private:
+	typedef int (blanktimer::*ThreadPtr)(void);
+	typedef void* (*PThreadPtr)(void*);
+
+	void setConBlank(int blank);
+	void setTimer(void);
+	timespec getTimer(void);
+	int getBrightness(void);
+	int setBrightness(int brightness);
+	int setBlankTimer(void);
+	int setClockTimer(void);
+
+	pthread_mutex_t conblankmutex;
+	pthread_mutex_t timermutex;
+	int conblank;
+	timespec btimer;
+	unsigned long long sleepTimer;
+	int orig_brightness;
+	bool screenoff;
 };
 
 extern blanktimer blankTimer;

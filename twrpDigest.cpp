@@ -16,10 +16,12 @@
 	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-extern "C" {
+extern "C"
+{
 	#include "digest/md5.h"
 	#include "libcrecovery/common.h"
 }
+
 #include <vector>
 #include <string>
 #include <sstream>

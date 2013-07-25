@@ -1297,7 +1297,7 @@ int twrpTar::entryExists(string entry) {
 
 unsigned long long twrpTar::uncompressedSize() {
 	int type = 0;
-        unsigned long long total_size = 0;
+	unsigned long long total_size = 0;
 	string Tar, Command, result;
 	vector<string> split;
 

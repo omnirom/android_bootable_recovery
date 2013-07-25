@@ -1062,7 +1062,7 @@ bool TWPartition::Wipe_AndSec(void) {
 
 	gui_print("Wiping %s\n", Backup_Display_Name.c_str());
 	TWFunc::removeDir(Mount_Point + "/.android_secure/", true);
-    return true;
+	return true;
 }
 
 bool TWPartition::Backup(string backup_folder) {
@@ -1361,31 +1361,31 @@ bool TWPartition::Wipe_MTD() {
 
 	gui_print("MTD Formatting \"%s\"\n", MTD_Name.c_str());
 
-    mtd_scan_partitions();
-    const MtdPartition* mtd = mtd_find_partition_by_name(MTD_Name.c_str());
-    if (mtd == NULL) {
-        LOGERR("No mtd partition named '%s'", MTD_Name.c_str());
-        return false;
-    }
+	mtd_scan_partitions();
+	const MtdPartition* mtd = mtd_find_partition_by_name(MTD_Name.c_str());
+	if (mtd == NULL) {
+		LOGERR("No mtd partition named '%s'", MTD_Name.c_str());
+		return false;
+	}
 
-    MtdWriteContext* ctx = mtd_write_partition(mtd);
-    if (ctx == NULL) {
-        LOGERR("Can't write '%s', failed to format.", MTD_Name.c_str());
-        return false;
-    }
-    if (mtd_erase_blocks(ctx, -1) == -1) {
-        mtd_write_close(ctx);
-        LOGERR("Failed to format '%s'", MTD_Name.c_str());
-        return false;
-    }
-    if (mtd_write_close(ctx) != 0) {
-        LOGERR("Failed to close '%s'", MTD_Name.c_str());
-        return false;
-    }
+	MtdWriteContext* ctx = mtd_write_partition(mtd);
+	if (ctx == NULL) {
+		LOGERR("Can't write '%s', failed to format.", MTD_Name.c_str());
+		return false;
+	}
+	if (mtd_erase_blocks(ctx, -1) == -1) {
+		mtd_write_close(ctx);
+		LOGERR("Failed to format '%s'", MTD_Name.c_str());
+		return false;
+	}
+	if (mtd_write_close(ctx) != 0) {
+		LOGERR("Failed to close '%s'", MTD_Name.c_str());
+		return false;
+	}
 	Current_File_System = "yaffs2";
 	Recreate_AndSec_Folder();
 	gui_print("Done.\n");
-    return true;
+	return true;
 }
 
 bool TWPartition::Wipe_RMRF() {
@@ -1415,7 +1415,7 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)   continue;
 			// The media folder is the "internal sdcard"
 			// The .layout_version file is responsible for determining whether 4.2 decides up upgrade
-			//    the media folder for multi-user.
+			// the media folder for multi-user.
 			if (strcmp(de->d_name, "media") == 0 || strcmp(de->d_name, ".layout_version") == 0)   continue;
 			
 			dir = "/data/";
@@ -1560,7 +1560,7 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 	} else {
 		gui_print("Wiping %s...\n", Display_Name.c_str());
 		if (!Wipe(Restore_File_System))
-		    return false;
+			return false;
 	}
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, "Restoring");
 	gui_print("Restoring %s...\n", Backup_Display_Name.c_str());

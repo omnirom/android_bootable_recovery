@@ -18,18 +18,21 @@
 extern "C" {
 	#include "digest/md5.h"
 }
+
 using namespace std;
 
-class twrpDigest {
-	public:
-                void setfn(string fn);
-                void setdir(string dir);
-		int computeMD5(void);
-		int verify_md5digest(void);
-		int write_md5digest(void);
-	private:
-		int read_md5digest(void);
-		string md5fn;
-		string line;
-		unsigned char md5sum[MD5LENGTH];
+class twrpDigest
+{
+public:
+	void setfn(string fn);
+	void setdir(string dir);
+	int computeMD5(void);
+	int verify_md5digest(void);
+	int write_md5digest(void);
+
+private:
+	int read_md5digest(void);
+	string md5fn;
+	string line;
+	unsigned char md5sum[MD5LENGTH];
 };

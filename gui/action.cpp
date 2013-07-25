@@ -64,72 +64,72 @@ extern blanktimer blankTimer;
 void curtainClose(void);
 
 GUIAction::GUIAction(xml_node<>* node)
-    : Conditional(node)
+	: Conditional(node)
 {
-    xml_node<>* child;
-    xml_node<>* actions;
-    xml_attribute<>* attr;
+	xml_node<>* child;
+	xml_node<>* actions;
+	xml_attribute<>* attr;
 
-    mKey = 0;
+	mKey = 0;
 
-    if (!node)  return;
+	if (!node)  return;
 
-    // First, get the action
-    actions = node->first_node("actions");
-    if (actions)    child = actions->first_node("action");
-    else            child = node->first_node("action");
+	// First, get the action
+	actions = node->first_node("actions");
+	if (actions)	child = actions->first_node("action");
+	else			child = node->first_node("action");
 
-    if (!child) return;
+	if (!child) return;
 
-    while (child)
-    {
-        Action action;
+	while (child)
+	{
+		Action action;
 
-        attr = child->first_attribute("function");
-        if (!attr)  return;
-    
-        action.mFunction = attr->value();
-        action.mArg = child->value();
-        mActions.push_back(action);
+		attr = child->first_attribute("function");
+		if (!attr)  return;
+	
+		action.mFunction = attr->value();
+		action.mArg = child->value();
+		mActions.push_back(action);
 
-        child = child->next_sibling("action");
-    }
+		child = child->next_sibling("action");
+	}
 
-    // Now, let's get either the key or region
-    child = node->first_node("touch");
-    if (child)
-    {
-        attr = child->first_attribute("key");
-        if (attr)
-        {
-            std::string key = attr->value();
-    
-            mKey = getKeyByName(key);
-        }
-        else
-        {
-            attr = child->first_attribute("x");
-            if (!attr)  return;
-            mActionX = atol(attr->value());
-            attr = child->first_attribute("y");
-            if (!attr)  return;
-            mActionY = atol(attr->value());
-            attr = child->first_attribute("w");
-            if (!attr)  return;
-            mActionW = atol(attr->value());
-            attr = child->first_attribute("h");
-            if (!attr)  return;
-            mActionH = atol(attr->value());
-        }
-    }
+	// Now, let's get either the key or region
+	child = node->first_node("touch");
+	if (child)
+	{
+		attr = child->first_attribute("key");
+		if (attr)
+		{
+			std::string key = attr->value();
+	
+			mKey = getKeyByName(key);
+		}
+		else
+		{
+			attr = child->first_attribute("x");
+			if (!attr)  return;
+			mActionX = atol(attr->value());
+			attr = child->first_attribute("y");
+			if (!attr)  return;
+			mActionY = atol(attr->value());
+			attr = child->first_attribute("w");
+			if (!attr)  return;
+			mActionW = atol(attr->value());
+			attr = child->first_attribute("h");
+			if (!attr)  return;
+			mActionH = atol(attr->value());
+		}
+	}
 }
 
 int GUIAction::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
-    if (state == TOUCH_RELEASE)
-        doActions();
+	if (state == TOUCH_RELEASE)
+		doActions();
 
-    return 0;
+	return 0;
 }
 
 int GUIAction::NotifyKey(int key)
@@ -143,17 +143,17 @@ int GUIAction::NotifyKey(int key)
 
 int GUIAction::NotifyVarChange(std::string varName, std::string value)
 {
-    if (varName.empty() && !isConditionValid() && !mKey && !mActionW)
-        doActions();
+	if (varName.empty() && !isConditionValid() && !mKey && !mActionW)
+		doActions();
 
-    // This handles notifying the condition system of page start
-    if (varName.empty() && isConditionValid())
-        NotifyPageSet();
+	// This handles notifying the condition system of page start
+	if (varName.empty() && isConditionValid())
+		NotifyPageSet();
 
-    if ((varName.empty() || IsConditionVariable(varName)) && isConditionValid() && isConditionTrue())
-        doActions();
+	if ((varName.empty() || IsConditionVariable(varName)) && isConditionValid() && isConditionTrue())
+		doActions();
 
-    return 0;
+	return 0;
 }
 
 void GUIAction::simulate_progress_bar(void)
@@ -168,54 +168,54 @@ void GUIAction::simulate_progress_bar(void)
 
 int GUIAction::flash_zip(std::string filename, std::string pageName, const int simulate, int* wipe_cache)
 {
-    int ret_val = 0;
+	int ret_val = 0;
 
 	DataManager::SetValue("ui_progress", 0);
 
-    if (filename.empty())
-    {
-        LOGERR("No file specified.\n");
-        return -1;
-    }
+	if (filename.empty())
+	{
+		LOGERR("No file specified.\n");
+		return -1;
+	}
 
-    // We're going to jump to this page first, like a loading page
-    gui_changePage(pageName);
+	// We're going to jump to this page first, like a loading page
+	gui_changePage(pageName);
 
-    int fd = -1;
-    ZipArchive zip;
+	int fd = -1;
+	ZipArchive zip;
 
-    if (!PartitionManager.Mount_By_Path(filename, true))
+	if (!PartitionManager.Mount_By_Path(filename, true))
 		return -1;
 
 	if (mzOpenZipArchive(filename.c_str(), &zip))
-    {
-        LOGERR("Unable to open zip file.\n");
-        return -1;
-    }
+	{
+		LOGERR("Unable to open zip file.\n");
+		return -1;
+	}
 
-    // Check the zip to see if it has a custom installer theme
+	// Check the zip to see if it has a custom installer theme
 	const ZipEntry* twrp = mzFindZipEntry(&zip, "META-INF/teamwin/twrp.zip");
-    if (twrp != NULL)
-    {
-        unlink("/tmp/twrp.zip");
-        fd = creat("/tmp/twrp.zip", 0666);
-    }
-    if (fd >= 0 && twrp != NULL && 
-        mzExtractZipEntryToFile(&zip, twrp, fd) && 
-        !PageManager::LoadPackage("install", "/tmp/twrp.zip", "main"))
-    {
-        mzCloseZipArchive(&zip);
+	if (twrp != NULL)
+	{
+		unlink("/tmp/twrp.zip");
+		fd = creat("/tmp/twrp.zip", 0666);
+	}
+	if (fd >= 0 && twrp != NULL &&
+		mzExtractZipEntryToFile(&zip, twrp, fd) &&
+		!PageManager::LoadPackage("install", "/tmp/twrp.zip", "main"))
+	{
+		mzCloseZipArchive(&zip);
 		PageManager::SelectPackage("install");
-        gui_changePage("main");
-    }
-    else
-    {
-        // In this case, we just use the default page
-        mzCloseZipArchive(&zip);
+		gui_changePage("main");
+	}
+	else
+	{
+		// In this case, we just use the default page
+		mzCloseZipArchive(&zip);
 		gui_changePage(pageName);
-    }
-    if (fd >= 0)
-        close(fd);
+	}
+	if (fd >= 0)
+		close(fd);
 
 	if (simulate) {
 		simulate_progress_bar();
@@ -237,20 +237,20 @@ int GUIAction::flash_zip(std::string filename, std::string pageName, const int s
 		}
 	}
 
-    // Done
-    DataManager::SetValue("ui_progress", 100);
-    DataManager::SetValue("ui_progress", 0);
-    return ret_val;
+	// Done
+	DataManager::SetValue("ui_progress", 100);
+	DataManager::SetValue("ui_progress", 0);
+	return ret_val;
 }
 
 int GUIAction::doActions()
 {
-	if (mActions.size() < 1)    return -1;
-    if (mActions.size() == 1)
+	if (mActions.size() < 1)	return -1;
+	if (mActions.size() == 1)
 		return doAction(mActions.at(0), 0);
 
-    // For multi-action, we always use a thread
-    pthread_t t;
+	// For multi-action, we always use a thread
+	pthread_t t;
 	pthread_attr_t tattr;
 
 	if (pthread_attr_init(&tattr)) {
@@ -271,7 +271,7 @@ int GUIAction::doActions()
 	}
 	*/
 	int ret = pthread_create(&t, &tattr, thread_start, this);
-    if (ret) {
+	if (ret) {
 		LOGERR("Unable to create more threads for actions... continuing in same thread! %i\n", ret);
 		thread_start(this);
 	} else {
@@ -284,30 +284,30 @@ int GUIAction::doActions()
 		return -1;
 	}
 
-    return 0;
+	return 0;
 }
 
 void* GUIAction::thread_start(void *cookie)
 {
-    GUIAction* ourThis = (GUIAction*) cookie;
+	GUIAction* ourThis = (GUIAction*) cookie;
 
 	DataManager::SetValue(TW_ACTION_BUSY, 1);
 
-    if (ourThis->mActions.size() > 1)
-    {
-        std::vector<Action>::iterator iter;
-        for (iter = ourThis->mActions.begin(); iter != ourThis->mActions.end(); iter++)
-            ourThis->doAction(*iter, 1);
-    }
-    else
-    {
-        ourThis->doAction(ourThis->mActions.at(0), 1);
-    }
+	if (ourThis->mActions.size() > 1)
+	{
+		std::vector<Action>::iterator iter;
+		for (iter = ourThis->mActions.begin(); iter != ourThis->mActions.end(); iter++)
+			ourThis->doAction(*iter, 1);
+	}
+	else
+	{
+		ourThis->doAction(ourThis->mActions.at(0), 1);
+	}
 	int check = 0;
 	DataManager::GetValue("tw_background_thread_running", check);
 	if (check == 0)
 		DataManager::SetValue(TW_ACTION_BUSY, 0);
-    return NULL;
+	return NULL;
 }
 
 void GUIAction::operation_start(const string operation_name)
@@ -357,7 +357,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 	if (function == "reboot")
 	{
-	        //curtainClose(); this sometimes causes a crash
+			//curtainClose(); this sometimes causes a crash
 
 		sync();
 		DataManager::SetValue("tw_gui_done", 1);
@@ -365,25 +365,25 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 		return 0;
 	}
-    if (function == "home")
-    {
-        PageManager::SelectPackage("TWRP");
-        gui_changePage("main");
-        return 0;
-    }
-
-    if (function == "key")
-    {
-        PageManager::NotifyKey(getKeyByName(arg));
-        return 0;
-    }
-
-    if (function == "page") {
-		std::string page_name = gui_parse_text(arg);
-        return gui_changePage(page_name);
+	if (function == "home")
+	{
+		PageManager::SelectPackage("TWRP");
+		gui_changePage("main");
+		return 0;
 	}
 
-    if (function == "reload") {
+	if (function == "key")
+	{
+		PageManager::NotifyKey(getKeyByName(arg));
+		return 0;
+	}
+
+	if (function == "page") {
+		std::string page_name = gui_parse_text(arg);
+		return gui_changePage(page_name);
+	}
+
+	if (function == "reload") {
 		int check = 0, ret_val = 0;
 		std::string theme_path;
 
@@ -405,85 +405,85 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				ret_val = 1;
 			}
 		}
-        operation_end(ret_val, simulate);
+		operation_end(ret_val, simulate);
 		return 0;
 	}
 
-    if (function == "readBackup")
-    {
+	if (function == "readBackup")
+	{
 		string Restore_Name;
 		DataManager::GetValue("tw_restore", Restore_Name);
 		PartitionManager.Set_Restore_Files(Restore_Name);
-        return 0;
-    }
+		return 0;
+	}
 
-    if (function == "set")
-    {
-        if (arg.find('=') != string::npos)
-        {
-            string varName = arg.substr(0, arg.find('='));
-            string value = arg.substr(arg.find('=') + 1, string::npos);
+	if (function == "set")
+	{
+		if (arg.find('=') != string::npos)
+		{
+			string varName = arg.substr(0, arg.find('='));
+			string value = arg.substr(arg.find('=') + 1, string::npos);
 
-            DataManager::GetValue(value, value);
-            DataManager::SetValue(varName, value);
-        }
-        else
-            DataManager::SetValue(arg, "1");
-        return 0;
-    }
-    if (function == "clear")
-    {
-        DataManager::SetValue(arg, "0");
-        return 0;
-    }
+			DataManager::GetValue(value, value);
+			DataManager::SetValue(varName, value);
+		}
+		else
+			DataManager::SetValue(arg, "1");
+		return 0;
+	}
+	if (function == "clear")
+	{
+		DataManager::SetValue(arg, "0");
+		return 0;
+	}
 
-    if (function == "mount")
-    {
-        if (arg == "usb")
-        {
-            DataManager::SetValue(TW_ACTION_BUSY, 1);
+	if (function == "mount")
+	{
+		if (arg == "usb")
+		{
+			DataManager::SetValue(TW_ACTION_BUSY, 1);
 			if (!simulate)
 				PartitionManager.usb_storage_enable();
 			else
 				gui_print("Simulating actions...\n");
-        }
-        else if (!simulate)
-        {
-            string cmd;
+		}
+		else if (!simulate)
+		{
+			string cmd;
 			if (arg == "EXTERNAL")
 				PartitionManager.Mount_By_Path(DataManager::GetStrValue(TW_EXTERNAL_MOUNT), true);
 			else if (arg == "INTERNAL")
 				PartitionManager.Mount_By_Path(DataManager::GetStrValue(TW_INTERNAL_MOUNT), true);
 			else
 				PartitionManager.Mount_By_Path(arg, true);
-        } else
+		} else
 			gui_print("Simulating actions...\n");
-        return 0;
-    }
+		return 0;
+	}
 
-    if (function == "umount" || function == "unmount")
-    {
-        if (arg == "usb")
-        {
-            if (!simulate)
+	if (function == "umount" || function == "unmount")
+	{
+		if (arg == "usb")
+		{
+			if (!simulate)
 				PartitionManager.usb_storage_disable();
 			else
 				gui_print("Simulating actions...\n");
 			DataManager::SetValue(TW_ACTION_BUSY, 0);
-        }
-        else if (!simulate)
-        {
-            string cmd;
+		}
+		else if (!simulate)
+		{
+			string cmd;
 			if (arg == "EXTERNAL")
 				PartitionManager.UnMount_By_Path(DataManager::GetStrValue(TW_EXTERNAL_MOUNT), true);
 			else if (arg == "INTERNAL")
 				PartitionManager.UnMount_By_Path(DataManager::GetStrValue(TW_INTERNAL_MOUNT), true);
 			else
 				PartitionManager.UnMount_By_Path(arg, true);
-        } else
+		} else
 			gui_print("Simulating actions...\n");
-        return 0;
-    }
+		return 0;
+	}
 	
 	if (function == "restoredefaultsettings")
 	{
@@ -519,20 +519,20 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 	if (function == "compute" || function == "addsubtract")
 	{
 		if (arg.find("+") != string::npos)
-        {
-            string varName = arg.substr(0, arg.find('+'));
-            string string_to_add = arg.substr(arg.find('+') + 1, string::npos);
+		{
+			string varName = arg.substr(0, arg.find('+'));
+			string string_to_add = arg.substr(arg.find('+') + 1, string::npos);
 			int amount_to_add = atoi(string_to_add.c_str());
 			int value;
 
 			DataManager::GetValue(varName, value);
-            DataManager::SetValue(varName, value + amount_to_add);
+			DataManager::SetValue(varName, value + amount_to_add);
 			return 0;
-        }
+		}
 		if (arg.find("-") != string::npos)
-        {
-            string varName = arg.substr(0, arg.find('-'));
-            string string_to_subtract = arg.substr(arg.find('-') + 1, string::npos);
+		{
+			string varName = arg.substr(0, arg.find('-'));
+			string string_to_subtract = arg.substr(arg.find('-') + 1, string::npos);
 			int amount_to_subtract = atoi(string_to_subtract.c_str());
 			int value;
 
@@ -540,9 +540,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			value -= amount_to_subtract;
 			if (value <= 0)
 				value = 0;
-            DataManager::SetValue(varName, value);
+			DataManager::SetValue(varName, value);
 			return 0;
-        }
+		}
 		if (arg.find("*") != string::npos)
 		{
 			string varName = arg.substr(0, arg.find('*'));
@@ -653,11 +653,11 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 	}
 	
 	if (function == "overlay")
-        return gui_changeOverlay(arg);
+		return gui_changeOverlay(arg);
 
 	if (function == "queuezip")
-    {
-        if (zip_queue_index >= 10) {
+	{
+		if (zip_queue_index >= 10) {
 			gui_print("Maximum zip queue reached!\n");
 			return 0;
 		}
@@ -670,8 +670,8 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 	}
 
 	if (function == "cancelzip")
-    {
-        if (zip_queue_index <= 0) {
+	{
+		if (zip_queue_index <= 0) {
 			gui_print("Minimum zip queue reached!\n");
 			return 0;
 		} else {
@@ -696,9 +696,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		return 0;
 	}
 
-    if (isThreaded)
-    {
-        if (function == "fileexists")
+	if (isThreaded)
+	{
+		if (function == "fileexists")
 		{
 			struct stat st;
 			string newpath = arg + "/.";
@@ -712,13 +712,13 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		}
 
 		if (function == "flash")
-        {
+		{
 			int i, ret_val = 0, wipe_cache = 0;
 
 			for (i=0; i<zip_queue_index; i++) {
 				operation_start("Flashing");
-		        DataManager::SetValue("tw_filename", zip_queue[i]);
-		        DataManager::SetValue(TW_ZIP_INDEX, (i + 1));
+				DataManager::SetValue("tw_filename", zip_queue[i]);
+				DataManager::SetValue(TW_ZIP_INDEX, (i + 1));
 
 				ret_val = flash_zip(zip_queue[i], arg, simulate, &wipe_cache);
 				if (ret_val != 0) {
@@ -751,12 +751,12 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			}
 			PartitionManager.Update_System_Details();
 			operation_end(ret_val, simulate);
-            return 0;
-        }
-        if (function == "wipe")
-        {
-            operation_start("Format");
-            DataManager::SetValue("tw_partition", arg);
+			return 0;
+		}
+		if (function == "wipe")
+		{
+			operation_start("Format");
+			DataManager::SetValue("tw_partition", arg);
 
 			int ret_val = false;
 
@@ -863,9 +863,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				ret_val = 0; // 0 is success
 			else
 				ret_val = 1; // 1 is failure
-            operation_end(ret_val, simulate);
-            return 0;
-        }
+			operation_end(ret_val, simulate);
+			return 0;
+		}
 		if (function == "refreshsizes")
 		{
 			operation_start("Refreshing Sizes");
@@ -876,9 +876,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			operation_end(0, simulate);
 			return 0;
 		}
-        if (function == "nandroid")
-        {
-            operation_start("Nandroid");
+		if (function == "nandroid")
+		{
+			operation_start("Nandroid");
 			int ret = 0;
 
 			if (simulate) {
@@ -910,13 +910,13 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				ret = 1; // 1 for failure
 			else
 				ret = 0; // 0 for success
-            operation_end(ret, simulate);
+			operation_end(ret, simulate);
 			return 0;
-        }
+		}
 		if (function == "fixpermissions")
 		{
 			operation_start("Fix Permissions");
-            LOGINFO("fix permissions started!\n");
+			LOGINFO("fix permissions started!\n");
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
@@ -927,9 +927,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			}
 			return 0;
 		}
-        if (function == "dd")
-        {
-            operation_start("imaging");
+		if (function == "dd")
+		{
+			operation_start("imaging");
 
 			if (simulate) {
 				simulate_progress_bar();
@@ -938,9 +938,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				string cmd = "dd " + arg;
 				TWFunc::Exec_Cmd(cmd, result);
 			}
-            operation_end(0, simulate);
-            return 0;
-        }
+			operation_end(0, simulate);
+			return 0;
+		}
 		if (function == "partitionsd")
 		{
 			operation_start("Partition SD Card");
@@ -1292,26 +1292,26 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			operation_end(op_status, simulate);
 			return 0;
 		}
-    }
-    else
-    {
+	}
+	else
+	{
 		pthread_t t;
 		pthread_create(&t, NULL, thread_start, this);
-        return 0;
-    }
+		return 0;
+	}
 	LOGERR("Unknown action '%s'\n", function.c_str());
-    return -1;
+	return -1;
 }
 
 int GUIAction::getKeyByName(std::string key)
 {
-    if (key == "home")          return KEY_HOME;
-    else if (key == "menu")     return KEY_MENU;
-    else if (key == "back")     return KEY_BACK;
-    else if (key == "search")   return KEY_SEARCH;
-    else if (key == "voldown")  return KEY_VOLUMEDOWN;
-    else if (key == "volup")    return KEY_VOLUMEUP;
-    else if (key == "power") {
+	if (key == "home")			return KEY_HOME;
+	else if (key == "menu")		return KEY_MENU;
+	else if (key == "back")	 	return KEY_BACK;
+	else if (key == "search")	return KEY_SEARCH;
+	else if (key == "voldown")	return KEY_VOLUMEDOWN;
+	else if (key == "volup")	return KEY_VOLUMEUP;
+	else if (key == "power") {
 		int ret_val;
 		DataManager::GetValue(TW_POWER_BUTTON, ret_val);
 		if (!ret_val)
@@ -1320,7 +1320,7 @@ int GUIAction::getKeyByName(std::string key)
 			return ret_val;
 	}
 
-    return atol(key.c_str());
+	return atol(key.c_str());
 }
 
 void* GUIAction::command_thread(void *cookie)

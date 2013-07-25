@@ -29,17 +29,17 @@ extern "C" {
 #include "../data.hpp"
 
 GUIInput::GUIInput(xml_node<>* node)
-    : Conditional(node)
+	: Conditional(node)
 {
-    xml_attribute<>* attr;
-    xml_node<>* child;
+	xml_attribute<>* attr;
+	xml_node<>* child;
 
-    mInputText = NULL;
+	mInputText = NULL;
 	mAction = NULL;
 	mBackground = NULL;
 	mCursor = NULL;
 	mFont = NULL;
-    mRendered = false;
+	mRendered = false;
 	HasMask = false;
 	DrawCursor = false;
 	isLocalChange = true;
@@ -52,18 +52,19 @@ GUIInput::GUIInput(xml_node<>* node)
 	ConvertStrToColor("black", &mBackgroundColor);
 	ConvertStrToColor("white", &mCursorColor);
 
-    if (!node)  return;
+	if (!node)
+		return;
 
-    // Load text directly from the node
-    mInputText = new GUIText(node);
+	// Load text directly from the node
+	mInputText = new GUIText(node);
 	// Load action directly from the node
 	mAction = new GUIAction(node);
 
 	if (mInputText->Render() < 0)
-    {
-        delete mInputText;
-        mInputText = NULL;
-    }
+	{
+		delete mInputText;
+		mInputText = NULL;
+	}
 
 	// Load the background
 	child = node->first_node("background");
@@ -114,18 +115,18 @@ GUIInput::GUIInput(xml_node<>* node)
 	DrawCursor = HasInputFocus;
 
 	// Load the font, and possibly override the color
-    child = node->first_node("font");
-    if (child)
-    {
-        attr = child->first_attribute("resource");
-        if (attr) {
-            mFont = PageManager::FindResource(attr->value());
+	child = node->first_node("font");
+	if (child)
+	{
+		attr = child->first_attribute("resource");
+		if (attr) {
+			mFont = PageManager::FindResource(attr->value());
 			gr_getFontDetails(mFont ? mFont->GetResource() : NULL, &mFontHeight, NULL);
 		}
-    }
+	}
 
 	child = node->first_node("text");
-    if (child)  mText = child->value();
+	if (child)  mText = child->value();
 	mLastValue = gui_parse_text(mText);
 
 	child = node->first_node("data");
@@ -175,7 +176,7 @@ GUIInput::GUIInput(xml_node<>* node)
 		}
 	}
 
-    // Load the placement
+	// Load the placement
 	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH);
 	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 
@@ -190,17 +191,15 @@ GUIInput::GUIInput(xml_node<>* node)
 
 	isLocalChange = false;
 	HandleTextLocation(-3);
-
-    return;
 }
 
 GUIInput::~GUIInput()
 {
-    if (mInputText)     delete mInputText;
-	if (mBackground)    delete mBackground;
-	if (mCursor)        delete mCursor;
-	if (mFont)          delete mFont;
-	if (mAction)        delete mAction;
+	if (mInputText)	 	delete mInputText;
+	if (mBackground)	delete mBackground;
+	if (mCursor)		delete mCursor;
+	if (mFont)			delete mFont;
+	if (mAction)		delete mAction;
 }
 
 int GUIInput::HandleTextLocation(int x)
@@ -209,7 +208,8 @@ int GUIInput::HandleTextLocation(int x)
 	string displayValue, originalValue, insertChar;
 	void* fontResource = NULL;
 
-	if (mFont)  fontResource = mFont->GetResource();
+	if (mFont)
+		fontResource = mFont->GetResource();
 
 	DataManager::GetValue(mVariable, originalValue);
 	displayValue = originalValue;
@@ -229,9 +229,10 @@ int GUIInput::HandleTextLocation(int x)
 		mRendered = false;
 		return 0;
 	}
-	if (skipChars && skipChars < displayValue.size()) {
+
+	if (skipChars && skipChars < displayValue.size())
 		displayValue.erase(0, skipChars);
-	}
+
 	textWidth = gr_measureEx(displayValue.c_str(), fontResource);
 	mRendered = false;
 
@@ -239,9 +240,9 @@ int GUIInput::HandleTextLocation(int x)
 
 	if (x < -1000) {
 		// No change in scrolling
-		if (x == -1003) {
+		if (x == -1003)
 			mCursorLocation = -1;
-		}
+
 		if (mCursorLocation == -1) {
 			displayValue = originalValue;
 			skipChars = 0;
@@ -372,15 +373,15 @@ int GUIInput::HandleTextLocation(int x)
 int GUIInput::Render(void)
 {
 	if (!isConditionTrue())
-    {
-        mRendered = false;
-        return 0;
-    }
+	{
+		mRendered = false;
+		return 0;
+	}
 
 	void* fontResource = NULL;
 	if (mFont)  fontResource = mFont->GetResource();
 
-    // First step, fill background
+	// First step, fill background
 	gr_color(mBackgroundColor.red, mBackgroundColor.green, mBackgroundColor.blue, 255);
 	gr_fill(mRenderX, mRenderY, mRenderW, mRenderH);
 
@@ -394,11 +395,11 @@ int GUIInput::Render(void)
 
 	int ret = 0;
 
-    // Render the text
+	// Render the text
 	mInputText->SetRenderPos(mRenderX + scrollingX, mFontY);
 	mInputText->SetMaxWidth(mRenderW - scrollingX);
-	if (mInputText)     ret = mInputText->Render();
-    if (ret < 0)        return ret;
+	if (mInputText)	 ret = mInputText->Render();
+	if (ret < 0)		return ret;
 
 	if (HasInputFocus && DrawCursor) {
 		// Render the cursor
@@ -451,21 +452,21 @@ int GUIInput::Render(void)
 		gr_fill(cursorX, mFontY, CursorWidth, mFontHeight);
 	}
 
-    mRendered = true;
-    return ret;
+	mRendered = true;
+	return ret;
 }
 
 int GUIInput::Update(void)
 {
-    if (!isConditionTrue())     return (mRendered ? 2 : 0);
-    if (!mRendered)             return 2;
+	if (!isConditionTrue())	 return (mRendered ? 2 : 0);
+	if (!mRendered)			 return 2;
 
-    int ret = 0;
+	int ret = 0;
 
-    if (mInputText)         ret = mInputText->Update();
-    if (ret < 0)            return ret;
+	if (mInputText)		 ret = mInputText->Update();
+	if (ret < 0)			return ret;
 
-    return ret;
+	return ret;
 }
 
 int GUIInput::GetSelection(int x, int y)
@@ -476,14 +477,15 @@ int GUIInput::GetSelection(int x, int y)
 
 int GUIInput::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
-    static int startSelection = -1;
+	static int startSelection = -1;
 	int textWidth;
 	string displayValue, originalValue;
 	void* fontResource = NULL;
 
 	if (mFont)  fontResource = mFont->GetResource();
 
-	if (!isConditionTrue())     return -1;
+	if (!isConditionTrue())
+		return -1;
 
 	if (!HasInputFocus) {
 		if (state != TOUCH_RELEASE)
@@ -569,7 +571,7 @@ int GUIInput::NotifyTouch(TOUCH_STATE state, int x, int y)
 			break;
 		}
 	}
-    return 0;
+	return 0;
 }
 
 int GUIInput::NotifyVarChange(std::string varName, std::string value)

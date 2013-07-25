@@ -198,12 +198,12 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node)
 
 		attr = child->first_attribute("highlightcolor");
 		memset(&mFontHighlightColor, 0, sizeof(COLOR));
-        if (attr)
-        {
-            std::string color = attr->value();
+		if (attr)
+		{
+			std::string color = attr->value();
 			ConvertStrToColor(color, &mFontHighlightColor);
 			hasFontHighlightColor = true;
-        }
+		}
 	}
 
 	// Load the separator if it exists
@@ -408,11 +408,10 @@ int GUIFileSelector::Render(void)
 	if (updateFileList) {
 		string value;
 		DataManager::GetValue(mPathVar, value);
-		if (GetFileList(value) == 0) {
+		if (GetFileList(value) == 0)
 			updateFileList = false;
-		} else {
+		else
 			return 0;
-		}
 	}
 
 	// This tells us how many lines we can actually render
@@ -652,7 +651,9 @@ int GUIFileSelector::Update(void)
 int GUIFileSelector::GetSelection(int x, int y)
 {
 	// We only care about y position
-	if (y < mRenderY || y - mRenderY <= mHeaderH || y - mRenderY > mRenderH) return -1;
+	if (y < mRenderY || y - mRenderY <= mHeaderH || y - mRenderY > mRenderH)
+		return -1;
+
 	return (y - mRenderY - mHeaderH);
 }
 
@@ -674,7 +675,6 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 		startY = lastY = last2Y = y;
 		scrollingSpeed = 0;
 		break;
-
 	case TOUCH_DRAG:
 		// Check if we dragged out of the selection window
 		if (GetSelection(x, y) == -1) {

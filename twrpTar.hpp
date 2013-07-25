@@ -17,7 +17,7 @@
 */
 
 extern "C" {
-        #include "libtar/libtar.h"
+	#include "libtar/libtar.h"
 }
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -41,59 +41,60 @@ struct thread_data_struct {
 };
 
 class twrpTar {
-	public:
-		twrpTar();
-		virtual ~twrpTar();
-		int createTarFork();
-		int extractTarFork();
-		int splitArchiveFork();
-		void setexcl(string exclude);
-		void setfn(string fn);
-		void setdir(string dir);
-		unsigned long long uncompressedSize();
-		
-	public:
-		int use_encryption;
-		int userdata_encryption;
-		int use_compression;
-		int split_archives;
-		int has_data_media;
-		string backup_name;
+public:
+	twrpTar();
+	virtual ~twrpTar();
+	int createTarFork();
+	int extractTarFork();
+	int splitArchiveFork();
+	void setexcl(string exclude);
+	void setfn(string fn);
+	void setdir(string dir);
+	unsigned long long uncompressedSize();
+	
+public:
+	int use_encryption;
+	int userdata_encryption;
+	int use_compression;
+	int split_archives;
+	int has_data_media;
+	string backup_name;
 
-	private:
-		int extract();
-		int addFilesToExistingTar(vector <string> files, string tarFile);
-		int createTar();
-		int addFile(string fn, bool include_root);
-		int entryExists(string entry);
-		int closeTar();
-		int create();
-		int Split_Archive();
-		int removeEOT(string tarFile);
-		int extractTar();
-		int tarDirs(bool include_root);
-		int Generate_Multiple_Archives(string Path);
-		string Strip_Root_Dir(string Path);
-		int openTar();
-		int Archive_File_Count;
-		int Archive_Current_Type;
-		unsigned long long Archive_Current_Size;
-		TAR *t;
-		int fd;
-		pid_t pigz_pid;
-		pid_t oaes_pid;
+private:
+	int extract();
+	int addFilesToExistingTar(vector <string> files, string tarFile);
+	int createTar();
+	int addFile(string fn, bool include_root);
+	int entryExists(string entry);
+	int closeTar();
+	int create();
+	int Split_Archive();
+	int removeEOT(string tarFile);
+	int extractTar();
+	int tarDirs(bool include_root);
+	int Generate_Multiple_Archives(string Path);
+	string Strip_Root_Dir(string Path);
+	int openTar();
+	int Generate_TarList(string Path, std::vector<TarListStruct> *TarList, unsigned long long *Target_Size, unsigned *thread_id);
+	static void* createList(void *cookie);
+	static void* extractMulti(void *cookie);
+	int tarList(bool include_root, std::vector<TarListStruct> *TarList, unsigned thread_id);
 
-		string tardir;
-		string tarfn;
-		string basefn;
-		string tarexclude;
+	int Archive_File_Count;
+	int Archive_Current_Type;
+	unsigned long long Archive_Current_Size;
+	TAR *t;
+	int fd;
+	pid_t pigz_pid;
+	pid_t oaes_pid;
 
-		vector<string> split;
+	string tardir;
+	string tarfn;
+	string basefn;
+	string tarexclude;
 
-		int Generate_TarList(string Path, std::vector<TarListStruct> *TarList, unsigned long long *Target_Size, unsigned *thread_id);
-		static void* createList(void *cookie);
-		static void* extractMulti(void *cookie);
-		int tarList(bool include_root, std::vector<TarListStruct> *TarList, unsigned thread_id);
-		std::vector<TarListStruct> *ItemList;
-		int thread_id;
+	vector<string> split;
+
+	std::vector<TarListStruct> *ItemList;
+	int thread_id;
 }; 

@@ -424,15 +424,17 @@ unsigned int TWFunc::Get_D_Type_From_Stat(string Path) {
 }
 
 int TWFunc::read_file(string fn, string& results) {
-        ifstream file;
-        file.open(fn.c_str(), ios::in);
-        if (file.is_open()) {
-                file >> results;
-                file.close();
-                return 0;
+	ifstream file;
+	file.open(fn.c_str(), ios::in);
+
+	if (file.is_open()) {
+		file >> results;
+		file.close();
+		return 0;
 	}
-        LOGINFO("Cannot find file %s\n", fn.c_str());
-        return -1;
+
+	LOGINFO("Cannot find file %s\n", fn.c_str());
+	return -1;
 }
 
 int TWFunc::read_file(string fn, vector<string>& results) {
@@ -498,7 +500,7 @@ timespec TWFunc::timespec_diff(timespec& start, timespec& end)
 	return temp;
 }
 
- int TWFunc::drop_caches(void) {
+int TWFunc::drop_caches(void) {
 	string file = "/proc/sys/vm/drop_caches";
 	string value = "3";
 	if (write_file(file, value) != 0)
@@ -714,7 +716,7 @@ int TWFunc::Get_File_Type(string fn) {
 	string::size_type i = 0;
 	int firstbyte = 0, secondbyte = 0;
 	char header[3];
-        
+
 	ifstream f;
 	f.open(fn.c_str(), ios::in | ios::binary);
 	f.get(header, 3);
@@ -722,13 +724,12 @@ int TWFunc::Get_File_Type(string fn) {
 	firstbyte = header[i] & 0xff;
 	secondbyte = header[++i] & 0xff;
 
-	if (firstbyte == 0x1f && secondbyte == 0x8b) {
+	if (firstbyte == 0x1f && secondbyte == 0x8b)
 		return 1; // Compressed
-	} else if (firstbyte == 0x4f && secondbyte == 0x41) {
+	else if (firstbyte == 0x4f && secondbyte == 0x41)
 		return 2; // Encrypted
-	} else {
+	else
 		return 0; // Unknown
-	}
 
 	return 0;
 }

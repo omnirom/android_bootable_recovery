@@ -17,13 +17,13 @@
 #ifndef _DATA_HEADER
 #define _DATA_HEADER
 
-int DataManager_ResetDefaults();
-void DataManager_LoadDefaults();
+int DataManager_ResetDefaults(void);
+void DataManager_LoadDefaults(void);
 int DataManager_LoadValues(const char* filename);
-int DataManager_Flush();
+int DataManager_Flush(void);
 const char* DataManager_GetStrValue(const char* varName);
-const char* DataManager_GetCurrentStoragePath();
-const char* DataManager_GetSettingsStoragePath();
+const char* DataManager_GetCurrentStoragePath(void);
+const char* DataManager_GetSettingsStoragePath(void);
 int DataManager_GetIntValue(const char* varName);
 
 int DataManager_SetStrValue(const char* varName, char* value);
@@ -32,8 +32,8 @@ int DataManager_SetFloatValue(const char* varName, float value);
 
 int DataManager_ToggleIntValue(const char* varName);
 
-void DataManager_DumpValues();
-void DataManager_ReadSettingsFile();
+void DataManager_DumpValues(void);
+void DataManager_ReadSettingsFile(void);
 
 #endif  // _DATA_HEADER
 
