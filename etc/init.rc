@@ -2,6 +2,7 @@ import /init.recovery.${ro.hardware}.rc
 
 on early-init
     start ueventd
+    start healthd
 
 on init
     export PATH /sbin
@@ -38,6 +39,9 @@ on boot
     class_start default
 
 service ueventd /sbin/ueventd
+    critical
+
+service healthd /sbin/healthd -n
     critical
 
 service recovery /sbin/recovery
