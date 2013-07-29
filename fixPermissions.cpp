@@ -59,7 +59,7 @@ int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_app
 		return -1;
 	}
 
-	gui_print("Fixing /data/app permisions...\n");
+	gui_print("Fixing /data/app permissions...\n");
 	if ((fixDataApps()) != 0) {
 		return -1;
 	}
@@ -111,7 +111,7 @@ int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_app
 			closedir(d);
 		}
 	} else {
-		gui_print("Fixing /data/data permisions...\n");
+		gui_print("Fixing /data/data permissions...\n");
 		if ((fixDataData("/data/data/")) != 0) {
 			return -1;
 		}
