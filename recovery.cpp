@@ -75,6 +75,7 @@ static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
 
 RecoveryUI* ui = NULL;
 char* locale = NULL;
+char recovery_version[PROPERTY_VALUE_MAX+1];
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -526,21 +527,17 @@ copy_sideloaded_package(const char* original_path) {
 
 static const char**
 prepend_title(const char* const* headers) {
-    const char* title[] = { "Android system recovery <"
-                            EXPAND(RECOVERY_API_VERSION) "e>",
-                            "",
-                            NULL };
-
     // count the number of lines in our title, plus the
     // caller-provided headers.
-    int count = 0;
+    int count = 3;   // our title has 3 lines
     const char* const* p;
-    for (p = title; *p; ++p, ++count);
     for (p = headers; *p; ++p, ++count);
 
     const char** new_headers = (const char**)malloc((count+1) * sizeof(char*));
     const char** h = new_headers;
-    for (p = title; *p; ++p, ++h) *h = *p;
+    *(h++) = "Android system recovery <" EXPAND(RECOVERY_API_VERSION) "e>";
+    *(h++) = recovery_version;
+    *(h++) = "";
     for (p = headers; *p; ++p, ++h) *h = *p;
     *h = NULL;
 
@@ -1022,6 +1019,7 @@ main(int argc, char **argv) {
     printf("\n");
 
     property_list(print_property, NULL);
+    property_get("ro.build.display.id", recovery_version, "");
     printf("\n");
 
     int status = INSTALL_SUCCESS;

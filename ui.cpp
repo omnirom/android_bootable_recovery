@@ -46,7 +46,8 @@ static RecoveryUI* self = NULL;
 RecoveryUI::RecoveryUI() :
     key_queue_len(0),
     key_last_down(-1),
-    key_down_time(0) {
+    key_long_press(false),
+    key_down_count(0) {
     pthread_mutex_init(&key_queue_mutex, NULL);
     pthread_cond_init(&key_queue_cond, NULL);
     self = this;
@@ -112,19 +113,22 @@ void RecoveryUI::process_key(int key_code, int updown) {
     bool register_key = false;
     bool long_press = false;
 
-    const long long_threshold = CLOCKS_PER_SEC * 750 / 1000;
-
     pthread_mutex_lock(&key_queue_mutex);
     key_pressed[key_code] = updown;
     if (updown) {
+        ++key_down_count;
         key_last_down = key_code;
-        key_down_time = clock();
+        key_long_press = false;
+        pthread_t th;
+        key_timer_t* info = new key_timer_t;
+        info->ui = this;
+        info->key_code = key_code;
+        info->count = key_down_count;
+        pthread_create(&th, NULL, &RecoveryUI::time_key_helper, info);
+        pthread_detach(th);
     } else {
         if (key_last_down == key_code) {
-            long duration = clock() - key_down_time;
-            if (duration > long_threshold) {
-                long_press = true;
-            }
+            long_press = key_long_press;
             register_key = true;
         }
         key_last_down = -1;
@@ -150,6 +154,24 @@ void RecoveryUI::process_key(int key_code, int updown) {
             break;
         }
     }
+}
+
+void* RecoveryUI::time_key_helper(void* cookie) {
+    key_timer_t* info = (key_timer_t*) cookie;
+    info->ui->time_key(info->key_code, info->count);
+    delete info;
+    return NULL;
+}
+
+void RecoveryUI::time_key(int key_code, int count) {
+    usleep(750000);  // 750 ms == "long"
+    bool long_press = false;
+    pthread_mutex_lock(&key_queue_mutex);
+    if (key_last_down == key_code && key_down_count == count) {
+        long_press = key_long_press = true;
+    }
+    pthread_mutex_unlock(&key_queue_mutex);
+    if (long_press) KeyLongPress(key_code);
 }
 
 void RecoveryUI::EnqueueKey(int key_code) {
@@ -241,4 +263,7 @@ RecoveryUI::KeyAction RecoveryUI::CheckKey(int key) {
 }
 
 void RecoveryUI::NextCheckKeyIsLong(bool is_long_press) {
+}
+
+void RecoveryUI::KeyLongPress(int key) {
 }

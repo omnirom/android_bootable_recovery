@@ -53,6 +53,11 @@ class ScreenRecoveryUI : public RecoveryUI {
     int SelectMenu(int sel);
     void EndMenu();
 
+    void Redraw();
+
+    enum UIElement { HEADER, MENU, MENU_SEL_BG, MENU_SEL_FG, LOG, TEXT_FILL };
+    virtual void SetColor(UIElement e);
+
   private:
     Icon currentIcon;
     int installingFrame;
