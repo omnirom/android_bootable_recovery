@@ -167,7 +167,7 @@ out:
  * then return an empty buffer.  This effectively ignores lines that are too long.
  * On EOF, return null.
  */
-static char *getline(char *buf, int size, FILE *file)
+static char *fs_mgr_getline(char *buf, int size, FILE *file)
 {
     int cnt = 0;
     int eof = 0;
@@ -241,7 +241,7 @@ static struct fstab_rec *read_fstab(char *fstab_path)
     }
 
     entries = 0;
-    while (getline(line, sizeof(line), fstab_file)) {
+    while (fs_mgr_getline(line, sizeof(line), fstab_file)) {
         /* if the last character is a newline, shorten the string by 1 byte */
         len = strlen(line);
         if (line[len - 1] == '\n') {
@@ -268,7 +268,7 @@ static struct fstab_rec *read_fstab(char *fstab_path)
     fseek(fstab_file, 0, SEEK_SET);
 
     cnt = 0;
-    while (getline(line, sizeof(line), fstab_file)) {
+    while (fs_mgr_getline(line, sizeof(line), fstab_file)) {
         /* if the last character is a newline, shorten the string by 1 byte */
         len = strlen(line);
         if (line[len - 1] == '\n') {
