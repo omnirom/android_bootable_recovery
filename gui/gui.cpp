@@ -185,6 +185,8 @@ input_thread (void *cookie)
   static struct timeval touchStart;
   HardwareKeyboard kb;
   string seconds;
+  int screen_width = gr_fb_width();
+  int screen_height = gr_fb_height();
 
   //start screen timeout threads
   blankTimer.setTimerThread();
@@ -198,7 +200,7 @@ input_thread (void *cookie)
 	  struct input_event ev;
 	  int state = 0, ret = 0;
 
-	  ret = ev_get (&ev, dontwait);
+	  ret = ev_get (&ev, dontwait, &screen_width, &screen_height);
 
 	  if (ret < 0)
 		{

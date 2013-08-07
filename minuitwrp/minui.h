@@ -57,7 +57,7 @@ struct input_event;
 
 int ev_init(void);
 void ev_exit(void);
-int ev_get(struct input_event *ev, unsigned dont_wait);
+int ev_get(struct input_event *ev, unsigned dont_wait, int *screen_width, int *screen_height);
 
 // Resources
 
