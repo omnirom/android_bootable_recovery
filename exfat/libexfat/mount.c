@@ -2,11 +2,12 @@
 	mount.c (22.10.09)
 	exFAT file system implementation library.
 
+	Free exFAT implementation.
 	Copyright (C) 2010-2013  Andrew Nayenko
 
-	This program is free software: you can redistribute it and/or modify
+	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
+	the Free Software Foundation, either version 2 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -14,8 +15,9 @@
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License along
+	with this program; if not, write to the Free Software Foundation, Inc.,
+	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "exfat.h"
@@ -95,15 +97,27 @@ static int verify_vbr_checksum(struct exfat_dev* dev, void* sector,
 	uint32_t vbr_checksum;
 	int i;
 
-	exfat_pread(dev, sector, sector_size, 0);
+	if (exfat_pread(dev, sector, sector_size, 0) < 0)
+	{
+		exfat_error("failed to read boot sector");
+		return 1;
+	}
 	vbr_checksum = exfat_vbr_start_checksum(sector, sector_size);
 	for (i = 1; i < 11; i++)
 	{
-		exfat_pread(dev, sector, sector_size, i * sector_size);
+		if (exfat_pread(dev, sector, sector_size, i * sector_size) < 0)
+		{
+			exfat_error("failed to read VBR sector");
+			return 1;
+		}
 		vbr_checksum = exfat_vbr_add_checksum(sector, sector_size,
 				vbr_checksum);
 	}
-	exfat_pread(dev, sector, sector_size, i * sector_size);
+	if (exfat_pread(dev, sector, sector_size, i * sector_size) < 0)
+	{
+		exfat_error("failed to read VBR checksum sector");
+		return 1;
+	}
 	for (i = 0; i < sector_size / sizeof(vbr_checksum); i++)
 		if (le32_to_cpu(((const le32_t*) sector)[i]) != vbr_checksum)
 		{
@@ -116,7 +130,11 @@ static int verify_vbr_checksum(struct exfat_dev* dev, void* sector,
 
 static int commit_super_block(const struct exfat* ef)
 {
-	exfat_pwrite(ef->dev, ef->sb, sizeof(struct exfat_super_block), 0);
+	if (exfat_pwrite(ef->dev, ef->sb, sizeof(struct exfat_super_block), 0) < 0)
+	{
+		exfat_error("failed to write super block");
+		return 1;
+	}
 	return exfat_fsync(ef->dev);
 }
 
@@ -169,7 +187,13 @@ int exfat_mount(struct exfat* ef, const char* spec, const char* options)
 	}
 	memset(ef->sb, 0, sizeof(struct exfat_super_block));
 
-	exfat_pread(ef->dev, ef->sb, sizeof(struct exfat_super_block), 0);
+	if (exfat_pread(ef->dev, ef->sb, sizeof(struct exfat_super_block), 0) < 0)
+	{
+		exfat_close(ef->dev);
+		free(ef->sb);
+		exfat_error("failed to read boot sector");
+		return -EIO;
+	}
 	if (memcmp(ef->sb->oem_name, "EXFAT   ", 8) != 0)
 	{
 		exfat_close(ef->dev);

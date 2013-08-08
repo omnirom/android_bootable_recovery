@@ -2,11 +2,12 @@
 	main.c (01.09.09)
 	FUSE-based exFAT implementation. Requires FUSE 2.6 or later.
 
+	Free exFAT implementation.
 	Copyright (C) 2010-2013  Andrew Nayenko
 
-	This program is free software: you can redistribute it and/or modify
+	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
+	the Free Software Foundation, either version 2 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -14,8 +15,9 @@
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License along
+	with this program; if not, write to the Free Software Foundation, Inc.,
+	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #define FUSE_USE_VERSION 26
@@ -150,6 +152,21 @@ static int fuse_exfat_release(const char* path, struct fuse_file_info* fi)
 	exfat_debug("[%s] %s", __func__, path);
 	exfat_put_node(&ef, get_node(fi));
 	return 0;
+}
+
+static int fuse_exfat_fsync(const char* path, int datasync,
+		struct fuse_file_info *fi)
+{
+	int rc;
+
+	exfat_debug("[%s] %s", __func__, path);
+	rc = exfat_flush_node(&ef, get_node(fi));
+	if (rc != 0)
+		return rc;
+	rc = exfat_flush(&ef);
+	if (rc != 0)
+		return rc;
+	return exfat_fsync(ef.dev);
 }
 
 static int fuse_exfat_read(const char* path, char* buffer, size_t size,
@@ -313,6 +330,8 @@ static struct fuse_operations fuse_exfat_ops =
 	.readdir	= fuse_exfat_readdir,
 	.open		= fuse_exfat_open,
 	.release	= fuse_exfat_release,
+	.fsync		= fuse_exfat_fsync,
+	.fsyncdir	= fuse_exfat_fsync,
 	.read		= fuse_exfat_read,
 	.write		= fuse_exfat_write,
 	.unlink		= fuse_exfat_unlink,

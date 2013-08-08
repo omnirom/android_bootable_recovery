@@ -3,11 +3,12 @@
 	Definitions of structures and constants used in exFAT file system
 	implementation.
 
+	Free exFAT implementation.
 	Copyright (C) 2010-2013  Andrew Nayenko
 
-	This program is free software: you can redistribute it and/or modify
+	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
+	the Free Software Foundation, either version 2 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -15,8 +16,9 @@
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License along
+	with this program; if not, write to the Free Software Foundation, Inc.,
+	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #ifndef EXFAT_H_INCLUDED
@@ -28,6 +30,7 @@
 #include <stdbool.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "compiler.h"
 #include "exfatfs.h"
 #include "version.h"
 
@@ -48,12 +51,16 @@
 #define ROUND_UP(x, d) (DIV_ROUND_UP(x, d) * (d))
 #define UTF8_BYTES(c) ((c) * 6) /* UTF-8 character can occupy up to 6 bytes */
 
+typedef size_t bitmap_t;
+#define BMAP_SIZE(count) (ROUND_UP(count, sizeof(bitmap_t) * 8) / 8)
+#define BMAP_BLOCK(index) ((index) / sizeof(bitmap_t) / 8)
+#define BMAP_MASK(index) ((bitmap_t) 1 << ((index) % (sizeof(bitmap_t) * 8)))
 #define BMAP_GET(bitmap, index) \
-	(((uint8_t*) bitmap)[(index) / 8] & (1u << ((index) % 8)))
+	((bitmap)[BMAP_BLOCK(index)] & BMAP_MASK(index))
 #define BMAP_SET(bitmap, index) \
-	((uint8_t*) bitmap)[(index) / 8] |= (1u << ((index) % 8))
+	((bitmap)[BMAP_BLOCK(index)] |= BMAP_MASK(index))
 #define BMAP_CLR(bitmap, index) \
-	((uint8_t*) bitmap)[(index) / 8] &= ~(1u << ((index) % 8))
+	((bitmap)[BMAP_BLOCK(index)] &= ~BMAP_MASK(index))
 
 struct exfat_node
 {
@@ -94,7 +101,7 @@ struct exfat
 	{
 		cluster_t start_cluster;
 		uint32_t size;				/* in bits */
-		uint8_t* chunk;
+		bitmap_t* chunk;
 		uint32_t chunk_size;		/* in bits */
 		bool dirty;
 	}
@@ -123,14 +130,10 @@ struct exfat_human_bytes
 
 extern int exfat_errors;
 
-void exfat_bug(const char* format, ...)
-	__attribute__((format(printf, 1, 2), noreturn));
-void exfat_error(const char* format, ...)
-	__attribute__((format(printf, 1, 2)));
-void exfat_warn(const char* format, ...)
-	__attribute__((format(printf, 1, 2)));
-void exfat_debug(const char* format, ...)
-	__attribute__((format(printf, 1, 2)));
+void exfat_bug(const char* format, ...) PRINTF NORETURN;
+void exfat_error(const char* format, ...) PRINTF;
+void exfat_warn(const char* format, ...) PRINTF;
+void exfat_debug(const char* format, ...) PRINTF;
 
 struct exfat_dev* exfat_open(const char* spec, enum exfat_mode mode);
 int exfat_close(struct exfat_dev* dev);
@@ -140,9 +143,9 @@ off64_t exfat_get_size(const struct exfat_dev* dev);
 off64_t exfat_seek(struct exfat_dev* dev, off64_t offset, int whence);
 ssize_t exfat_read(struct exfat_dev* dev, void* buffer, size_t size);
 ssize_t exfat_write(struct exfat_dev* dev, const void* buffer, size_t size);
-void exfat_pread(struct exfat_dev* dev, void* buffer, size_t size,
+ssize_t exfat_pread(struct exfat_dev* dev, void* buffer, size_t size,
 		off64_t offset);
-void exfat_pwrite(struct exfat_dev* dev, const void* buffer, size_t size,
+ssize_t exfat_pwrite(struct exfat_dev* dev, const void* buffer, size_t size,
 		off64_t offset);
 ssize_t exfat_generic_pread(const struct exfat* ef, struct exfat_node* node,
 		void* buffer, size_t size, off64_t offset);
@@ -163,7 +166,7 @@ cluster_t exfat_next_cluster(const struct exfat* ef,
 		const struct exfat_node* node, cluster_t cluster);
 cluster_t exfat_advance_cluster(const struct exfat* ef,
 		struct exfat_node* node, uint32_t count);
-void exfat_flush_cmap(struct exfat* ef);
+int exfat_flush(struct exfat* ef);
 int exfat_truncate(struct exfat* ef, struct exfat_node* node, uint64_t size,
 		bool erase);
 uint32_t exfat_count_free_clusters(const struct exfat* ef);
@@ -193,7 +196,7 @@ struct exfat_node* exfat_get_node(struct exfat_node* node);
 void exfat_put_node(struct exfat* ef, struct exfat_node* node);
 int exfat_cache_directory(struct exfat* ef, struct exfat_node* dir);
 void exfat_reset_cache(struct exfat* ef);
-void exfat_flush_node(struct exfat* ef, struct exfat_node* node);
+int exfat_flush_node(struct exfat* ef, struct exfat_node* node);
 int exfat_unlink(struct exfat* ef, struct exfat_node* node);
 int exfat_rmdir(struct exfat* ef, struct exfat_node* node);
 int exfat_mknod(struct exfat* ef, const char* path);

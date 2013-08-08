@@ -2,11 +2,12 @@
 	io.c (02.09.09)
 	exFAT file system implementation library.
 
+	Free exFAT implementation.
 	Copyright (C) 2010-2013  Andrew Nayenko
 
-	This program is free software: you can redistribute it and/or modify
+	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
+	the Free Software Foundation, either version 2 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -14,8 +15,9 @@
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License along
+	with this program; if not, write to the Free Software Foundation, Inc.,
+	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "exfat.h"
@@ -280,28 +282,24 @@ ssize_t exfat_write(struct exfat_dev* dev, const void* buffer, size_t size)
 #endif
 }
 
-void exfat_pread(struct exfat_dev* dev, void* buffer, size_t size,
+ssize_t exfat_pread(struct exfat_dev* dev, void* buffer, size_t size,
 		off64_t offset)
 {
 #ifdef USE_UBLIO
-	if (ublio_pread(dev->ufh, buffer, size, offset) != size)
+	return ublio_pread(dev->ufh, buffer, size, offset);
 #else
-	if (pread64(dev->fd, buffer, size, offset) != size)
+	return pread64(dev->fd, buffer, size, offset);
 #endif
-		exfat_bug("failed to read %zu bytes from file at %"PRIu64, size,
-				(uint64_t) offset);
 }
 
-void exfat_pwrite(struct exfat_dev* dev, const void* buffer, size_t size,
+ssize_t exfat_pwrite(struct exfat_dev* dev, const void* buffer, size_t size,
 		off64_t offset)
 {
 #ifdef USE_UBLIO
-	if (ublio_pwrite(dev->ufh, buffer, size, offset) != size)
+	return ublio_pwrite(dev->ufh, buffer, size, offset);
 #else
-	if (pwrite64(dev->fd, buffer, size, offset) != size)
+	return pwrite64(dev->fd, buffer, size, offset);
 #endif
-		exfat_bug("failed to write %zu bytes to file at %"PRIu64, size,
-				(uint64_t) offset);
 }
 
 ssize_t exfat_generic_pread(const struct exfat* ef, struct exfat_node* node,
@@ -333,7 +331,12 @@ ssize_t exfat_generic_pread(const struct exfat* ef, struct exfat_node* node,
 			return -1;
 		}
 		lsize = MIN(CLUSTER_SIZE(*ef->sb) - loffset, remainder);
-		exfat_pread(ef->dev, bufp, lsize, exfat_c2o(ef, cluster) + loffset);
+		if (exfat_pread(ef->dev, bufp, lsize,
+					exfat_c2o(ef, cluster) + loffset) < 0)
+		{
+			exfat_error("failed to read cluster %#x", cluster);
+			return -1;
+		}
 		bufp += lsize;
 		loffset = 0;
 		remainder -= lsize;
@@ -377,7 +380,12 @@ ssize_t exfat_generic_pwrite(struct exfat* ef, struct exfat_node* node,
 			return -1;
 		}
 		lsize = MIN(CLUSTER_SIZE(*ef->sb) - loffset, remainder);
-		exfat_pwrite(ef->dev, bufp, lsize, exfat_c2o(ef, cluster) + loffset);
+		if (exfat_pwrite(ef->dev, bufp, lsize,
+				exfat_c2o(ef, cluster) + loffset) < 0)
+		{
+			exfat_error("failed to write cluster %#x", cluster);
+			return -1;
+		}
 		bufp += lsize;
 		loffset = 0;
 		remainder -= lsize;
