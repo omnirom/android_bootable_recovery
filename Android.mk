@@ -293,8 +293,7 @@ include $(LOCAL_PATH)/minui/Android.mk \
     $(LOCAL_PATH)/applypatch/Android.mk
 
 #includes for TWRP
-include $(commands_recovery_local_path)/libjpegtwrp/Android.mk \
-    $(commands_recovery_local_path)/injecttwrp/Android.mk \
+include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/htcdumlock/Android.mk \
     $(commands_recovery_local_path)/gui/Android.mk \
     $(commands_recovery_local_path)/mmcutils/Android.mk \
