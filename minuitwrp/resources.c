@@ -30,7 +30,7 @@
 #include <pixelflinger/pixelflinger.h>
 
 #include <png.h>
-#include "../libjpegtwrp/jpeglib.h"
+#include "jpeglib.h"
 
 #include "minui.h"
 
