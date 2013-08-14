@@ -611,6 +611,8 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 				if ((*subpart)->Can_Be_Backed_Up && (*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point) {
 					if (!(*subpart)->Backup(Backup_Folder))
 						return false;
+					sync();
+					sync();
 					if (!Make_MD5(generate_md5, Backup_Folder, (*subpart)->Backup_FileName))
 						return false;
 					if (Part->Backup_Method == 1) {
