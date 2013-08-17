@@ -49,9 +49,14 @@ extern "C" {
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 	#include "crypto/libcrypt_samsung/include/libcrypt_samsung.h"
 #endif
+#ifdef USE_EXT4
+	#include "make_ext4fs.h"
+#endif
 }
 
 using namespace std;
+
+extern struct selabel_handle *selinux_handle;
 
 TWPartition::TWPartition(void) {
 	Can_Be_Mounted = false;
@@ -1257,6 +1262,19 @@ bool TWPartition::Wipe_EXT4() {
 	if (!UnMount(true))
 		return false;
 
+#ifdef USE_EXT4
+	gui_print("Formatting %s using make_ext4fs function.\n", Display_Name.c_str());
+#ifdef HAVE_SELINUX
+	if (make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), selinux_handle) != 0) {
+#else
+	if (make_ext4fs(Actual_Block_Device.c_str(), Length) != 0) {
+#endif
+		LOGERR("Unable to wipe '%s' using function call.\n", Mount_Point.c_str());
+		return false;
+	} else {
+		return true;
+	}
+#else
 	if (TWFunc::Path_Exists("/sbin/make_ext4fs")) {
 		string Command, result;
 
@@ -1283,7 +1301,7 @@ bool TWPartition::Wipe_EXT4() {
 		}
 	} else
 		return Wipe_EXT23("ext4");
-
+#endif
 	return false;
 }
 
