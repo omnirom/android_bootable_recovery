@@ -811,10 +811,6 @@ prompt_and_wait(Device* device, int status) {
                 break;
 
             case Device::APPLY_EXT:
-                // Some packages expect /cache to be mounted (eg,
-                // standard incremental packages expect to use /cache
-                // as scratch space).
-                ensure_path_mounted(CACHE_ROOT);
                 status = update_directory(SDCARD_ROOT, SDCARD_ROOT, &wipe_cache, device);
                 if (status == INSTALL_SUCCESS && wipe_cache) {
                     ui->Print("\n-- Wiping cache (at package request)...\n");
@@ -860,7 +856,6 @@ prompt_and_wait(Device* device, int status) {
                 break;
 
             case Device::APPLY_ADB_SIDELOAD:
-                ensure_path_mounted(CACHE_ROOT);
                 status = apply_from_adb(ui, &wipe_cache, TEMPORARY_INSTALL_FILE);
                 if (status >= 0) {
                     if (status != INSTALL_SUCCESS) {

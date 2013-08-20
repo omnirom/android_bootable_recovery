@@ -467,10 +467,11 @@ void ScreenRecoveryUI::SetProgressType(ProgressType type)
     pthread_mutex_lock(&updateMutex);
     if (progressBarType != type) {
         progressBarType = type;
-        update_progress_locked();
     }
     progressScopeStart = 0;
+    progressScopeSize = 0;
     progress = 0;
+    update_progress_locked();
     pthread_mutex_unlock(&updateMutex);
 }
 

@@ -180,7 +180,9 @@ really_install_package(const char *path, int* wipe_cache)
 {
     ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
     ui->Print("Finding update package...\n");
-    ui->SetProgressType(RecoveryUI::INDETERMINATE);
+    // Give verification half the progress bar...
+    ui->SetProgressType(RecoveryUI::DETERMINATE);
+    ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
     LOGI("Update location: %s\n", path);
 
     if (ensure_path_mounted(path) != 0) {
@@ -198,10 +200,7 @@ really_install_package(const char *path, int* wipe_cache)
     }
     LOGI("%d key(s) loaded from %s\n", numKeys, PUBLIC_KEYS_FILE);
 
-    // Give verification half the progress bar...
     ui->Print("Verifying update package...\n");
-    ui->SetProgressType(RecoveryUI::DETERMINATE);
-    ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
 
     int err;
     err = verify_file(path, loadedKeys, numKeys);
@@ -237,7 +236,13 @@ install_package(const char* path, int* wipe_cache, const char* install_file)
     } else {
         LOGE("failed to open last_install: %s\n", strerror(errno));
     }
-    int result = really_install_package(path, wipe_cache);
+    int result;
+    if (setup_install_mounts() != 0) {
+        LOGE("failed to set up expected mounts for install; aborting\n");
+        result = INSTALL_ERROR;
+    } else {
+        result = really_install_package(path, wipe_cache);
+    }
     if (install_log) {
         fputc(result == INSTALL_SUCCESS ? '1' : '0', install_log);
         fputc('\n', install_log);
