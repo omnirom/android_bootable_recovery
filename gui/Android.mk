@@ -22,8 +22,7 @@ LOCAL_SRC_FILES := \
     keyboard.cpp \
     input.cpp \
     blanktimer.cpp \
-    partitionlist.cpp \
-    ../minuitwrp/graphics.c
+    partitionlist.cpp
 
 ifneq ($(TWRP_CUSTOM_KEYBOARD),)
   LOCAL_SRC_FILES += $(TWRP_CUSTOM_KEYBOARD)
@@ -31,6 +30,7 @@ else
   LOCAL_SRC_FILES += hardwarekeyboard.cpp
 endif
 
+LOCAL_SHARED_LIBRARIES += libminuitwrp libc libstdc++
 LOCAL_MODULE := libguitwrp
 
 # Use this flag to create a build that simulates threaded actions like installing zips, backups, restores, and wipes for theme testing
