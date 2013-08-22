@@ -42,6 +42,10 @@ int ensure_path_unmounted(const char* path);
 // it is mounted.
 int format_volume(const char* volume);
 
+// Ensure that all and only the volumes that packages expect to find
+// mounted (/tmp and /cache) are mounted.  Returns 0 on success.
+int setup_install_mounts();
+
 #ifdef __cplusplus
 }
 #endif
