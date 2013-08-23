@@ -902,7 +902,9 @@ bool TWPartition::Mount(bool Display_Error) {
 			LOGINFO("Successfully mounted ecryptfs for '%s'\n", Mount_Point.c_str());
 			Is_Decrypted = true;
 		}
-	} else {
+	} else if (Mount_Point == EXPAND(TW_EXTERNAL_STORAGE_PATH)) {
+		if (Is_Decrypted)
+			LOGINFO("Mounting external storage, '%s' is not encrypted\n", Mount_Point.c_str());
 		Is_Decrypted = false;
 	}
 #endif

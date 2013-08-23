@@ -75,6 +75,7 @@ static int  master_key_saved = 0;
 static int  using_samsung_encryption = 0;
 //static edk_t saved_master_key;
 static unsigned char saved_master_key[KEY_LEN_BYTES_SAMSUNG];
+edk_payload_t edk_payload;
 #else
 static unsigned char saved_master_key[KEY_LEN_BYTES];
 #endif
@@ -187,8 +188,15 @@ static int get_crypt_ftr_and_key(char *real_blk_name, struct crypt_mnt_ftr *cryp
 	} else {
 		printf("Using Samsung encryption.\n");
 		using_samsung_encryption = 1;
-		memcpy(key, &crypt_ftr->edk_payload, sizeof(edk_payload_t));
-
+        if ( (cnt = read(fd, &edk_payload, sizeof(edk_payload_t))) != sizeof(edk_payload_t)) {
+            printf("Cannot read EDK payload from real block device footer\n");
+            goto errout;
+        }
+        if (lseek64(fd, sizeof(__le32), SEEK_CUR) == -1) {
+            printf("Cannot seek past unknown data from real block device footer\n");
+            goto errout;
+        }
+        memcpy(key, &edk_payload, sizeof(edk_payload_t));
 	}
 #else
     printf("Bad magic for real block device %s\n", fname);
@@ -217,7 +225,7 @@ static int get_crypt_ftr_and_key(char *real_blk_name, struct crypt_mnt_ftr *cryp
     }
   }
 
-  if (crypt_ftr->keysize != sizeof(saved_master_key)) {
+  if (crypt_ftr->keysize > sizeof(saved_master_key)) {
     printf("Keysize of %d bits not supported for real block device %s\n",
           crypt_ftr->keysize * 8, fname);
     goto errout;

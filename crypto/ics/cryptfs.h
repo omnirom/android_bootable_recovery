@@ -68,10 +68,6 @@ struct crypt_mnt_ftr {
   char crypto_type_name[MAX_CRYPTO_TYPE_NAME_LEN]; /* The type of encryption
 							       needed to decrypt this
 							       partition, null terminated */
-#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-    edk_payload_t edk_payload;
-  __le32 unknown_end;
-#endif
 };
 
 #pragma pack()
