@@ -288,7 +288,7 @@ static int vk_inside_display(__s32 value, struct input_absinfo *info, int screen
     return (screen_pos >= 0 && screen_pos < screen_size);
 }
 
-static int vk_tp_to_screen(struct position *p, int *x, int *y, int *screen_width, int *screen_height)
+static int vk_tp_to_screen(struct position *p, int *x, int *y)
 {
     if (p->xi.minimum == p->xi.maximum || p->yi.minimum == p->yi.maximum)
     {
@@ -298,16 +298,17 @@ static int vk_tp_to_screen(struct position *p, int *x, int *y, int *screen_width
         return 0;
     }
 
+#ifdef _EVENT_LOGGING
+    printf("EV: p->x=%d  x-range=%d,%d  fb-width=%d\n", p->x, p->xi.minimum, p->xi.maximum, gr_fb_width());
+#endif
+
 #ifndef RECOVERY_TOUCHSCREEN_SWAP_XY
-    int fb_width = *screen_width;
-    int fb_height = *screen_height;
+    int fb_width = gr_fb_width();
+    int fb_height = gr_fb_height();
 #else
     // We need to swap the scaling sizes, too
-    int fb_width = *screen_height;
-    int fb_height = *screen_width;
-#endif
-#ifdef _EVENT_LOGGING
-    printf("EV: p->x=%d  x-range=%d,%d  fb-width=%d\n", p->x, p->xi.minimum, p->xi.maximum, *screen_width);
+    int fb_width = gr_fb_height();
+    int fb_height = gr_fb_width();
 #endif
 
     *x = (p->x - p->xi.minimum) * (fb_width - 1) / (p->xi.maximum - p->xi.minimum);
@@ -324,7 +325,7 @@ static int vk_tp_to_screen(struct position *p, int *x, int *y, int *screen_width
 
 /* Translate a virtual key in to a real key event, if needed */
 /* Returns non-zero when the event should be consumed */
-static int vk_modify(struct ev *e, struct input_event *ev, int *screen_width, int *screen_height)
+static int vk_modify(struct ev *e, struct input_event *ev)
 {
     static int downX = -1, downY = -1;
     static int discard = 0;
@@ -544,11 +545,11 @@ static int vk_modify(struct ev *e, struct input_event *ev, int *screen_width, in
     // Retrieve where the x,y position is
     if (e->p.synced & 0x03)
     {
-        vk_tp_to_screen(&e->p, &x, &y, screen_width, screen_height);
+        vk_tp_to_screen(&e->p, &x, &y);
     }
     else if (e->mt_p.synced & 0x03)
     {
-        vk_tp_to_screen(&e->mt_p, &x, &y, screen_width, screen_height);
+        vk_tp_to_screen(&e->mt_p, &x, &y);
     }
     else
     {
@@ -562,10 +563,10 @@ static int vk_modify(struct ev *e, struct input_event *ev, int *screen_width, in
     x ^= y;
 #endif
 #ifdef RECOVERY_TOUCHSCREEN_FLIP_X
-    x = *screen_width - x;
+    x = gr_fb_width() - x;
 #endif
 #ifdef RECOVERY_TOUCHSCREEN_FLIP_Y
-    y = *screen_height - y;
+    y = gr_fb_height() - y;
 #endif
 
 #ifdef _EVENT_LOGGING
@@ -620,7 +621,7 @@ static int vk_modify(struct ev *e, struct input_event *ev, int *screen_width, in
     return 0;
 }
 
-int ev_get(struct input_event *ev, unsigned dont_wait, int *screen_width, int *screen_height)
+int ev_get(struct input_event *ev, unsigned dont_wait)
 {
     int r;
     unsigned n;
@@ -633,7 +634,7 @@ int ev_get(struct input_event *ev, unsigned dont_wait, int *screen_width, int *s
                 if(ev_fds[n].revents & POLLIN) {
                     r = read(ev_fds[n].fd, ev, sizeof(*ev));
                     if(r == sizeof(*ev)) {
-                        if (!vk_modify(&evs[n], ev, screen_width, screen_height))
+                        if (!vk_modify(&evs[n], ev))
                             return 0;
                     }
                 }
