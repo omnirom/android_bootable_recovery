@@ -12,6 +12,10 @@
 # include <libgen.h>
 #endif
 
+#ifdef HAVE_SELINUX
+#include "selinux/selinux.h"
+#endif
+
 
 #if defined(NEED_BASENAME) && !defined(HAVE_BASENAME)
 

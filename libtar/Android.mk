@@ -11,5 +11,11 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 					external/zlib
 LOCAL_SHARED_LIBRARIES += libz libc
 
+ifneq ($(wildcard external/libselinux/Android.mk),)
+	LOCAL_C_INCLUDES += external/libselinux/include
+	LOCAL_SHARED_LIBRARIES += libselinux
+	LOCAL_CFLAGS += -DHAVE_SELINUX
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 

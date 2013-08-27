@@ -35,6 +35,9 @@ extern "C"
 #define GNU_LONGNAME_TYPE	'L'
 #define GNU_LONGLINK_TYPE	'K'
 
+/* extended metadata for next file - used to store selinux_context */
+#define TH_EXT_TYPE		'x'
+
 /* our version of the tar header structure */
 struct tar_header
 {
@@ -57,6 +60,9 @@ struct tar_header
 	char padding[12];
 	char *gnu_longname;
 	char *gnu_longlink;
+#ifdef HAVE_SELINUX
+	char *selinux_context;
+#endif
 };
 
 
@@ -96,6 +102,7 @@ TAR;
 #define TAR_CHECK_MAGIC		16	/* check magic in file header */
 #define TAR_CHECK_VERSION	32	/* check version in file header */
 #define TAR_IGNORE_CRC		64	/* ignore CRC in file header */
+#define TAR_STORE_SELINUX	128	/* store selinux context */
 
 /* this is obsolete - it's here for backwards-compatibility only */
 #define TAR_IGNORE_MAGIC	0
@@ -177,6 +184,7 @@ int th_write(TAR *t);
 			 || S_ISFIFO((mode_t)oct_to_int((t)->th_buf.mode)))
 #define TH_ISLONGNAME(t)	((t)->th_buf.typeflag == GNU_LONGNAME_TYPE)
 #define TH_ISLONGLINK(t)	((t)->th_buf.typeflag == GNU_LONGLINK_TYPE)
+#define TH_ISEXTHEADER(t)	((t)->th_buf.typeflag == TH_EXT_TYPE)
 
 /* decode tar header info */
 #define th_get_crc(t) oct_to_int((t)->th_buf.chksum)
