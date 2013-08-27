@@ -51,7 +51,7 @@ public:
 	void setfn(string fn);
 	void setdir(string dir);
 	unsigned long long uncompressedSize();
-	
+
 public:
 	int use_encryption;
 	int userdata_encryption;
@@ -91,10 +91,10 @@ private:
 	string tardir;
 	string tarfn;
 	string basefn;
-	string tarexclude;
 
+	vector <string> tarexclude;
 	vector<string> split;
 
 	std::vector<TarListStruct> *ItemList;
 	int thread_id;
-}; 
+};

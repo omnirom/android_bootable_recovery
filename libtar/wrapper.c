@@ -153,10 +153,12 @@ tar_append_tree(TAR *t, char *realdir, char *savedir, char *exclude)
 		if (exclude) {
 			int omit = 0;
 			for (i = 0; i < (n_spaces+1); i++) {
-				if (dent->d_name == excluded[i]) {
-					printf("    excluding '%s'\n", excluded[i]);
-					omit = 1;
-					break;
+				if (excluded[i] != NULL) {
+						if (strcmp(dent->d_name, excluded[i]) == 0 || strcmp(excluded[i], realdir) == 0) {
+							printf("    excluding '%s'\n", excluded[i]);
+							omit = 1;
+							break;
+						}
 				}
 			}
 			if (omit)
@@ -179,7 +181,7 @@ tar_append_tree(TAR *t, char *realdir, char *savedir, char *exclude)
 				return -1;
 			continue;
 		}
-	}	
+	}
 	closedir(dp);
 	free(excluded);
 
