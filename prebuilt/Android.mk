@@ -51,8 +51,11 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
 endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libaosprecovery.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libjpeg.so
-ifneq ($(wildcard external/libselinux/Android.mk),)
+ifeq ($(HAVE_SELINUX), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libselinux.so
+    ifneq ($(TARGET_USERIMAGES_USE_EXT4), true)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext4_utils.so
+    endif
 endif
 ifeq ($(BUILD_ID), GINGERBREAD)
     TW_NO_EXFAT := true

@@ -73,7 +73,7 @@ ifeq ($(HAVE_SELINUX), true)
   #LOCAL_STATIC_LIBRARIES += libselinux
   #LOCAL_CFLAGS += -DHAVE_SELINUX -g
 endif # HAVE_SELINUX
-ifneq ($(wildcard external/libselinux/Android.mk),)
+ifeq ($(HAVE_SELINUX), true)
     LOCAL_C_INCLUDES += external/libselinux/include
     LOCAL_SHARED_LIBRARIES += libselinux
     LOCAL_CFLAGS += -DHAVE_SELINUX -g
