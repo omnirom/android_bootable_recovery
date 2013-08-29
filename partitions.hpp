@@ -92,6 +92,7 @@ private:
 	bool Wipe_EXFAT();                                                        // Formats as EXFAT
 	bool Wipe_MTD();                                                          // Formats as yaffs2 for MTD memory types
 	bool Wipe_RMRF();                                                         // Uses rm -rf to wipe
+	bool Wipe_F2FS();                                                         // Uses mkfs.f2fs to wipe
 	bool Wipe_Data_Without_Wiping_Media();                                    // Uses rm -rf to wipe but does not wipe /data/media
 	bool Backup_Tar(string backup_folder);                                    // Backs up using tar for file systems
 	bool Backup_DD(string backup_folder);                                     // Backs up using dd for emmc memory types
