@@ -560,6 +560,17 @@ bool TWFunc::Fix_su_Perms(void) {
 			return false;
 		}
 	}
+	file = "/system/xbin/daemonsu";
+	if (TWFunc::Path_Exists(file)) {
+		if (chown(file.c_str(), 0, 0) != 0) {
+			LOGERR("Failed to chown '%s'\n", file.c_str());
+			return false;
+		}
+		if (tw_chmod(file, "6755") != 0) {
+			LOGERR("Failed to chmod '%s'\n", file.c_str());
+			return false;
+		}
+	}
 	file = "/system/bin/.ext/.su";
 	if (TWFunc::Path_Exists(file)) {
 		if (chown(file.c_str(), 0, 0) != 0) {
@@ -567,6 +578,28 @@ bool TWFunc::Fix_su_Perms(void) {
 			return false;
 		}
 		if (tw_chmod(file, "6755") != 0) {
+			LOGERR("Failed to chmod '%s'\n", file.c_str());
+			return false;
+		}
+	}
+	file = "/system/etc/install-recovery.sh";
+	if (TWFunc::Path_Exists(file)) {
+		if (chown(file.c_str(), 0, 0) != 0) {
+			LOGERR("Failed to chown '%s'\n", file.c_str());
+			return false;
+		}
+		if (tw_chmod(file, "0755") != 0) {
+			LOGERR("Failed to chmod '%s'\n", file.c_str());
+			return false;
+		}
+	}
+	file = "/system/etc/init.d/99SuperSUDaemon";
+	if (TWFunc::Path_Exists(file)) {
+		if (chown(file.c_str(), 0, 0) != 0) {
+			LOGERR("Failed to chown '%s'\n", file.c_str());
+			return false;
+		}
+		if (tw_chmod(file, "0755") != 0) {
 			LOGERR("Failed to chmod '%s'\n", file.c_str());
 			return false;
 		}
@@ -696,12 +729,41 @@ int TWFunc::tw_chmod(string fn, string mode) {
 }
 
 bool TWFunc::Install_SuperSU(void) {
+	string status;
+
 	if (!PartitionManager.Mount_By_Path("/system", true))
 		return false;
 
+	TWFunc::Exec_Cmd("/sbin/chattr -i /system/xbin/su", status);
 	if (copy_file("/supersu/su", "/system/xbin/su", 0755) != 0) {
 		LOGERR("Failed to copy su binary to /system/bin\n");
 		return false;
+	}
+	if (!Path_Exists("/system/bin/.ext")) {
+		mkdir("/system/bin/.ext", 0777);
+	}
+	TWFunc::Exec_Cmd("/sbin/chattr -i /system/bin/.ext/su", status);
+	if (copy_file("/supersu/su", "/system/bin/.ext/su", 0755) != 0) {
+		LOGERR("Failed to copy su binary to /system/bin/.ext/su\n");
+		return false;
+	}
+	TWFunc::Exec_Cmd("/sbin/chattr -i /system/xbin/daemonsu", status);
+	if (copy_file("/supersu/su", "/system/xbin/daemonsu", 0755) != 0) {
+		LOGERR("Failed to copy su binary to /system/xbin/daemonsu\n");
+		return false;
+	}
+	if (Path_Exists("/system/etc/init.d")) {
+		TWFunc::Exec_Cmd("/sbin/chattr -i /system/etc/init.d/99SuperSUDaemon", status);
+		if (copy_file("/supersu/99SuperSUDaemon", "/system/etc/init.d/99SuperSUDaemon", 0755) != 0) {
+			LOGERR("Failed to copy 99SuperSUDaemon to /system/etc/init.d/99SuperSUDaemon\n");
+			return false;
+		}
+	} else {
+		TWFunc::Exec_Cmd("/sbin/chattr -i /system/etc/install-recovery.sh", status);
+		if (copy_file("/supersu/install-recovery.sh", "/system/etc/install-recovery.sh", 0755) != 0) {
+			LOGERR("Failed to copy install-recovery.sh to /system/etc/install-recovery.sh\n");
+			return false;
+		}
 	}
 	if (copy_file("/supersu/Superuser.apk", "/system/app/Superuser.apk", 0644) != 0) {
 		LOGERR("Failed to copy Superuser app to /system/app\n");

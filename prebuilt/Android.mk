@@ -234,6 +234,24 @@ ifneq ($(TW_EXCLUDE_SUPERSU), true)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
 	include $(BUILD_PREBUILT)
 
+       #install-recovery.sh
+	include $(CLEAR_VARS)
+	LOCAL_MODULE := install-recovery.sh
+	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
+	LOCAL_SRC_FILES := $(LOCAL_MODULE)
+	include $(BUILD_PREBUILT)
+
+       #99SuperSUDaemon
+	include $(CLEAR_VARS)
+	LOCAL_MODULE := 99SuperSUDaemon
+	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
+	LOCAL_SRC_FILES := $(LOCAL_MODULE)
+	include $(BUILD_PREBUILT)
+
 	#SuperSU special installer APK
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := Superuser.apk
