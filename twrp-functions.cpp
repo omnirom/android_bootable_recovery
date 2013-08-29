@@ -621,101 +621,110 @@ bool TWFunc::Fix_su_Perms(void) {
 	return true;
 }
 
-int TWFunc::tw_chmod(string fn, string mode) {
+int TWFunc::tw_chmod(const string& fn, const string& mode) {
 	long mask = 0;
+	std::string::size_type n = mode.length();
+	int cls = 0;
 
-	std::string::size_type n = (mode.length() == 3) ? 1 : 0;
-	for (; n < mode.length(); ++n) {
-		if (n == 0) {
+	if(n == 3)
+		++cls;
+	else if(n != 4)
+	{
+		LOGERR("TWFunc::tw_chmod used with %u long mode string (should be 3 or 4)!\n", mode.length());
+		return -1;
+	}
+
+	for (n = 0; n < mode.length(); ++n, ++cls) {
+		if (cls == 0) {
 			if (mode[n] == '0')
 				continue;
-			if (mode[n] == '1')
+			else if (mode[n] == '1')
 				mask |= S_ISVTX;
-			if (mode[n] == '2')
+			else if (mode[n] == '2')
 				mask |= S_ISGID;
-			if (mode[n] == '4')
+			else if (mode[n] == '4')
 				mask |= S_ISUID;
-			if (mode[n] == '5') {
+			else if (mode[n] == '5') {
 				mask |= S_ISVTX;
 				mask |= S_ISUID;
 			}
-			if (mode[n] == '6') {
+			else if (mode[n] == '6') {
 				mask |= S_ISGID;
 				mask |= S_ISUID;
 			}
-			if (mode[n] == '7') {
+			else if (mode[n] == '7') {
 				mask |= S_ISVTX;
 				mask |= S_ISGID;
 				mask |= S_ISUID;
 			}
 		}
-		else if (n == 1) {
+		else if (cls == 1) {
 			if (mode[n] == '7') {
 				mask |= S_IRWXU;
 			}
-			if (mode[n] == '6') {
+			else if (mode[n] == '6') {
 				mask |= S_IRUSR;
 				mask |= S_IWUSR;
 			}
-			if (mode[n] == '5') {
+			else if (mode[n] == '5') {
 				mask |= S_IRUSR;
 				mask |= S_IXUSR;
 			}
-			if (mode[n] == '4')
+			else if (mode[n] == '4')
 				mask |= S_IRUSR;
-			if (mode[n] == '3') {
+			else if (mode[n] == '3') {
 				mask |= S_IWUSR;
 				mask |= S_IRUSR;
 			}
-			if (mode[n] == '2')
+			else if (mode[n] == '2')
 				mask |= S_IWUSR;
-			if (mode[n] == '1')
+			else if (mode[n] == '1')
 				mask |= S_IXUSR;
 		}
-		else if (n == 2) {
+		else if (cls == 2) {
 			if (mode[n] == '7') {
 				mask |= S_IRWXG;
 			}
-			if (mode[n] == '6') {
+			else if (mode[n] == '6') {
 				mask |= S_IRGRP;
 				mask |= S_IWGRP;
 			}
-			if (mode[n] == '5') {
+			else if (mode[n] == '5') {
 				mask |= S_IRGRP;
 				mask |= S_IXGRP;
 			}
-			if (mode[n] == '4')
+			else if (mode[n] == '4')
 				mask |= S_IRGRP;
-			if (mode[n] == '3') {
+			else if (mode[n] == '3') {
 				mask |= S_IWGRP;
 				mask |= S_IXGRP;
 			}
-			if (mode[n] == '2')
+			else if (mode[n] == '2')
 				mask |= S_IWGRP;
-			if (mode[n] == '1')
+			else if (mode[n] == '1')
 				mask |= S_IXGRP;
 		}
-		else if (n == 3) {
+		else if (cls == 3) {
 			if (mode[n] == '7') {
 				mask |= S_IRWXO;
 			}
-			if (mode[n] == '6') {
+			else if (mode[n] == '6') {
 				mask |= S_IROTH;
 				mask |= S_IWOTH;
 			}
-			if (mode[n] == '5') {
+			else if (mode[n] == '5') {
 				mask |= S_IROTH;
 				mask |= S_IXOTH;
 			}
-			if (mode[n] == '4')
-					mask |= S_IROTH;
-			if (mode[n] == '3') {
+			else if (mode[n] == '4')
+				mask |= S_IROTH;
+			else if (mode[n] == '3') {
 				mask |= S_IWOTH;
 				mask |= S_IXOTH;
 			}
-			if (mode[n] == '2')
+			else if (mode[n] == '2')
 				mask |= S_IWOTH;
-			if (mode[n] == '1')
+			else if (mode[n] == '1')
 				mask |= S_IXOTH;
 		}
 	}
