@@ -38,6 +38,9 @@ on boot
 
     class_start default
 
+on property:sys.powerctl=*
+   powerctl ${sys.powerctl}
+
 service ueventd /sbin/ueventd
     critical
 
