@@ -174,7 +174,7 @@
 		<variable name="button_fill_main_height" value="324" />
 		<variable name="button_fill_half_height" value="162" />
 		<variable name="button_fill_quarter_height" value="81" />
-		<variable name="backup_list_height" value="855" />
+		<variable name="backup_list_height" value="780" />
 		<variable name="backup_button_row1" value="1118" />
 		<variable name="backup_button_row2" value="1220" />
 		<variable name="mount_list_height" value="1035" />
