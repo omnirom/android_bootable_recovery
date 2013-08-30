@@ -162,6 +162,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Can_Be_Mounted ");
 	if (Part->Can_Be_Wiped)
 		printf("Can_Be_Wiped ");
+	if (Part->Use_Rm_Rf)
+		printf("Use_Rm_Rf ");
 	if (Part->Can_Be_Backed_Up)
 		printf("Can_Be_Backed_Up ");
 	if (Part->Wipe_During_Factory_Reset)

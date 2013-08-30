@@ -404,6 +404,8 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			Is_Storage = true;
 		} else if (strcmp(ptr, "canbewiped") == 0) {
 			Can_Be_Wiped = true;
+		} else if (strcmp(ptr, "usermrf") == 0) {
+			Use_Rm_Rf = true;
 		} else if (ptr_len > 7 && strncmp(ptr, "backup=", 7) == 0) {
 			ptr += 7;
 			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y')
@@ -994,7 +996,7 @@ bool TWPartition::Wipe(string New_File_System) {
 
 		DataManager::GetValue(TW_RM_RF_VAR, check);
 
-		if (check)
+		if (check || Use_Rm_Rf)
 			wiped = Wipe_RMRF();
 		else if (New_File_System == "ext4")
 			wiped = Wipe_EXT4();
