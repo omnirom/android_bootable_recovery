@@ -1265,13 +1265,9 @@ bool TWPartition::Wipe_EXT4() {
 	if (!UnMount(true))
 		return false;
 
-#ifdef USE_EXT4
+#if defined(HAVE_SELINUX) && defined(USE_EXT4)
 	gui_print("Formatting %s using make_ext4fs function.\n", Display_Name.c_str());
-#ifdef HAVE_SELINUX
 	if (make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), selinux_handle) != 0) {
-#else
-	if (make_ext4fs(Actual_Block_Device.c_str(), Length) != 0) {
-#endif
 		LOGERR("Unable to wipe '%s' using function call.\n", Mount_Point.c_str());
 		return false;
 	} else {
