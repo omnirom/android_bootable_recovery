@@ -37,6 +37,7 @@
 #include "mtdutils/mtdutils.h"
 #include "updater.h"
 #include "applypatch/applypatch.h"
+#include "flashutils/flashutils.h"
 
 #ifdef USE_EXT4
 #include "make_ext4fs.h"
