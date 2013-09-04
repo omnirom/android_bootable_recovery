@@ -31,6 +31,7 @@
 #include <cutils/android_reboot.h>
 
 #include "common.h"
+#include "roots.h"
 #include "device.h"
 #include "minui/minui.h"
 #include "screen_ui.h"
@@ -47,7 +48,10 @@ RecoveryUI::RecoveryUI() :
     key_queue_len(0),
     key_last_down(-1),
     key_long_press(false),
-    key_down_count(0) {
+    key_down_count(0),
+    consecutive_power_keys(0),
+    consecutive_alternate_keys(0),
+    last_key(-1) {
     pthread_mutex_init(&key_queue_mutex, NULL);
     pthread_cond_init(&key_queue_cond, NULL);
     self = this;
@@ -151,6 +155,13 @@ void RecoveryUI::process_key(int key_code, int updown) {
 
           case RecoveryUI::ENQUEUE:
             EnqueueKey(key_code);
+            break;
+
+          case RecoveryUI::MOUNT_SYSTEM:
+#ifndef NO_RECOVERY_MOUNT
+            ensure_path_mounted("/system");
+            Print("Mounted /system.");
+#endif
             break;
         }
     }
@@ -258,8 +269,41 @@ void RecoveryUI::FlushKeys() {
     pthread_mutex_unlock(&key_queue_mutex);
 }
 
+// The default CheckKey implementation assumes the device has power,
+// volume up, and volume down keys.
+//
+// - Hold power and press vol-up to toggle display.
+// - Press power seven times in a row to reboot.
+// - Alternate vol-up and vol-down seven times to mount /system.
 RecoveryUI::KeyAction RecoveryUI::CheckKey(int key) {
-    return RecoveryUI::ENQUEUE;
+    if (IsKeyPressed(KEY_POWER) && key == KEY_VOLUMEUP) {
+        return TOGGLE;
+    }
+
+    if (key == KEY_POWER) {
+        ++consecutive_power_keys;
+        if (consecutive_power_keys >= 7) {
+            return REBOOT;
+        }
+    } else {
+        consecutive_power_keys = 0;
+    }
+
+    if ((key == KEY_VOLUMEUP &&
+         (last_key == KEY_VOLUMEDOWN || last_key == -1)) ||
+        (key == KEY_VOLUMEDOWN &&
+         (last_key == KEY_VOLUMEUP || last_key == -1))) {
+        ++consecutive_alternate_keys;
+        if (consecutive_alternate_keys >= 7) {
+            consecutive_alternate_keys = 0;
+            return MOUNT_SYSTEM;
+        }
+    } else {
+        consecutive_alternate_keys = 0;
+    }
+    last_key = key;
+
+    return ENQUEUE;
 }
 
 void RecoveryUI::NextCheckKeyIsLong(bool is_long_press) {
