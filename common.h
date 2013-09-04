@@ -18,6 +18,7 @@
 #define RECOVERY_COMMON_H
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,27 +45,12 @@ static long tmplog_offset = 0;
 #define STRINGIFY(x) #x
 #define EXPAND(x) STRINGIFY(x)
 
-typedef struct {
-    const char* mount_point;  // eg. "/cache".  must live in the root directory.
-
-    const char* fs_type;      // "yaffs2" or "ext4" or "vfat"
-
-    const char* device;       // MTD partition name if fs_type == "yaffs"
-                              // block device if fs_type == "ext4" or "vfat"
-
-    const char* device2;      // alternative device to try if fs_type
-                              // == "ext4" or "vfat" and mounting
-                              // 'device' fails
-
-    long long length;         // (ext4 partition only) when
-                              // formatting, size to use for the
-                              // partition.  0 or negative number
-                              // means to format all but the last
-                              // (that much).
-} Volume;
+typedef struct fstab_rec Volume;
 
 // fopen a file, mounting volumes and making parent dirs as necessary.
 FILE* fopen_path(const char *path, const char *mode);
+
+//void ui_print(const char* format, ...);
 
 #ifdef __cplusplus
 }

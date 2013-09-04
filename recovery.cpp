@@ -15,11 +15,13 @@
  */
 
 #include <ctype.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
 #include <linux/input.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +29,6 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <dirent.h>
 
 #include "bootloader.h"
 #include "common.h"
@@ -70,15 +71,17 @@ static const struct option OPTIONS[] = {
   { "wipe_cache", no_argument, NULL, 'c' },
   { "show_text", no_argument, NULL, 't' },
   { "just_exit", no_argument, NULL, 'x' },
-  { "nandroid", no_argument, NULL, 'n' },
+  { "locale", required_argument, NULL, 'l' },
   { NULL, 0, NULL, 0 },
 };
+
+#define LAST_LOG_FILE "/cache/recovery/last_log"
 
 static const char *COMMAND_FILE = "/cache/recovery/command";
 static const char *INTENT_FILE = "/cache/recovery/intent";
 static const char *LOG_FILE = "/cache/recovery/log";
-static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
 static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
+static const char *LOCALE_FILE = "/cache/recovery/last_locale";
 static const char *CACHE_ROOT = "/cache";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
@@ -86,6 +89,7 @@ static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
 
 RecoveryUI* ui = NULL;
+char* locale = NULL;
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -212,6 +216,7 @@ get_args(int *argc, char ***argv) {
     if (*argc <= 1) {
         FILE *fp = fopen_path(COMMAND_FILE, "r");
         if (fp != NULL) {
+            char *token;
             char *argv0 = (*argv)[0];
             *argv = (char **) malloc(sizeof(char *) * MAX_ARGS);
             (*argv)[0] = argv0;  // use the same program name
@@ -219,7 +224,12 @@ get_args(int *argc, char ***argv) {
             char buf[MAX_ARG_LENGTH];
             for (*argc = 1; *argc < MAX_ARGS; ++*argc) {
                 if (!fgets(buf, sizeof(buf), fp)) break;
-                (*argv)[*argc] = strdup(strtok(buf, "\r\n"));  // Strip newline.
+                token = strtok(buf, "\r\n");
+                if (token != NULL) {
+                    (*argv)[*argc] = strdup(token);  // Strip newline.
+                } else {
+                    --*argc;
+                }
             }
 
             check_and_fclose(fp, COMMAND_FILE);
@@ -273,6 +283,21 @@ copy_log_file(const char* source, const char* destination, int append) {
     }
 }
 
+// Rename last_log -> last_log.1 -> last_log.2 -> ... -> last_log.$max
+// Overwrites any existing last_log.$max.
+static void
+rotate_last_logs(int max) {
+    char oldfn[256];
+    char newfn[256];
+
+    int i;
+    for (i = max-1; i >= 0; --i) {
+        snprintf(oldfn, sizeof(oldfn), (i==0) ? LAST_LOG_FILE : (LAST_LOG_FILE ".%d"), i);
+        snprintf(newfn, sizeof(newfn), LAST_LOG_FILE ".%d", i+1);
+        // ignore errors
+        rename(oldfn, newfn);
+    }
+}
 
 // clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read), and
@@ -289,6 +314,18 @@ finish_recovery(const char *send_intent) {
             fputs(send_intent, fp);
             check_and_fclose(fp, INTENT_FILE);
         }
+    }
+
+    // Save the locale to cache, so if recovery is next started up
+    // without a --locale argument (eg, directly from the bootloader)
+    // it will use the last-known locale.
+    if (locale != NULL) {
+        LOGI("Saving locale \"%s\"\n", locale);
+        FILE* fp = fopen_path(LOCALE_FILE, "w");
+        fwrite(locale, 1, strlen(locale), fp);
+        fflush(fp);
+        fsync(fileno(fp));
+        check_and_fclose(fp, LOCALE_FILE);
     }
 
     // Copy logs to cache so the system can find out what happened.
@@ -317,8 +354,7 @@ finish_recovery(const char *send_intent) {
 
 static int
 erase_volume(const char *volume) {
-	return !PartitionManager.Wipe_By_Path(volume);
-    ui->SetBackground(RecoveryUI::INSTALLING);
+    ui->SetBackground(RecoveryUI::ERASING);
     ui->SetProgressType(RecoveryUI::INDETERMINATE);
     ui->Print("Formatting %s...\n", volume);
 
@@ -671,11 +707,22 @@ wipe_data(int confirm, Device* device) {
 }
 
 static void
-prompt_and_wait(Device* device) {
+prompt_and_wait(Device* device, int status) {
     const char* const* headers = prepend_title(device->GetMenuHeaders());
 
     for (;;) {
         finish_recovery(NULL);
+        switch (status) {
+            case INSTALL_SUCCESS:
+            case INSTALL_NONE:
+                ui->SetBackground(RecoveryUI::NO_COMMAND);
+                break;
+
+            case INSTALL_ERROR:
+            case INSTALL_CORRUPT:
+                ui->SetBackground(RecoveryUI::ERROR);
+                break;
+        }
         ui->SetProgressType(RecoveryUI::EMPTY);
 
         int chosen_item = get_menu_selection(headers, device->GetMenuItems(), 0, 0, device);
@@ -685,7 +732,6 @@ prompt_and_wait(Device* device) {
         // statement below.
         chosen_item = device->InvokeMenuItem(chosen_item);
 
-        int status;
         int wipe_cache;
         switch (chosen_item) {
             case Device::REBOOT:
@@ -775,6 +821,43 @@ print_property(const char *key, const char *name, void *cookie) {
     printf("%s=%s\n", key, name);
 }
 
+static void
+load_locale_from_cache() {
+    FILE* fp = fopen_path(LOCALE_FILE, "r");
+    char buffer[80];
+    if (fp != NULL) {
+        fgets(buffer, sizeof(buffer), fp);
+        int j = 0;
+        unsigned int i;
+        for (i = 0; i < sizeof(buffer) && buffer[i]; ++i) {
+            if (!isspace(buffer[i])) {
+                buffer[j++] = buffer[i];
+            }
+        }
+        buffer[j] = 0;
+        locale = strdup(buffer);
+        check_and_fclose(fp, LOCALE_FILE);
+    }
+}
+
+static RecoveryUI* gCurrentUI = NULL;
+
+void
+ui_print(const char* format, ...) {
+    char buffer[256];
+
+    va_list ap;
+    va_start(ap, format);
+    vsnprintf(buffer, sizeof(buffer), format, ap);
+    va_end(ap);
+
+    if (gCurrentUI != NULL) {
+        gCurrentUI->Print("%s", buffer);
+    } else {
+        fputs(buffer, stdout);
+    }
+}
+
 int
 main(int argc, char **argv) {
     // Recovery needs to install world-readable files, so clear umask
@@ -824,12 +907,17 @@ main(int argc, char **argv) {
 	gui_loadResources();
 
 	PartitionManager.Mount_By_Path("/cache", true);
+
+    load_volume_table();
+    ensure_path_mounted(LAST_LOG_FILE);
+    rotate_last_logs(5);
+
     get_args(&argc, &argv);
 
     int previous_runs = 0;
     const char *send_intent = NULL;
     const char *update_package = NULL;
-    int wipe_data = 0, wipe_cache = 0;
+    int wipe_data = 0, wipe_cache = 0, show_text = 0;
     bool just_exit = false;
 	bool perform_backup = false;
 
@@ -841,16 +929,29 @@ main(int argc, char **argv) {
         case 'u': update_package = optarg; break;
         case 'w': wipe_data = wipe_cache = 1; break;
         case 'c': wipe_cache = 1; break;
-        case 't': ui->ShowText(true); break;
+        case 't': show_text = 1; break;
         case 'x': just_exit = true; break;
-        case 'n': perform_backup = true; LOGI("nandroid\n"); break;
+        case 'l': locale = optarg; break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
         }
     }
 
-#ifdef HAVE_SELINUX
+    if (locale == NULL) {
+        load_locale_from_cache();
+    }
+    printf("locale is [%s]\n", locale);
+
+    Device* device = make_device();
+    ui = device->GetUI();
+    gCurrentUI = ui;
+
+    ui->Init();
+    ui->SetLocale(locale);
+    ui->SetBackground(RecoveryUI::NONE);
+    if (show_text) ui->ShowText(true);
+
     struct selinux_opt seopts[] = {
       { SELABEL_OPT_PATH, "/file_contexts" }
     };
@@ -861,7 +962,6 @@ main(int argc, char **argv) {
         fprintf(stderr, "Warning: No file_contexts\n");
         ui->Print("Warning:  No file_contexts\n");
     }
-#endif
 
     //device->StartRecovery();
 
@@ -936,8 +1036,19 @@ main(int argc, char **argv) {
                 LOGE("Cache wipe (requested by package) failed.");
             }
         }
-        if (status != INSTALL_SUCCESS) ui->Print("Installation aborted.\n");
-		*/
+
+        if (status != INSTALL_SUCCESS) {
+            ui->Print("Installation aborted.\n");
+
+            // If this is an eng or userdebug build, then automatically
+            // turn the text display on if the script fails so the error
+            // message is visible.
+            char buffer[PROPERTY_VALUE_MAX+1];
+            property_get("ro.build.fingerprint", buffer, "");
+            if (strstr(buffer, ":userdebug/") || strstr(buffer, ":eng/")) {
+                ui->ShowText(true);
+            }
+        }
     } else if (wipe_data) {
 		if (!OpenRecoveryScript::Insert_ORS_Command("wipe data\n"))
 			status = INSTALL_ERROR;
@@ -952,7 +1063,8 @@ main(int argc, char **argv) {
 			status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
     } else if (!just_exit) {
-        status = INSTALL_ERROR;  // No command specified
+        status = INSTALL_NONE;  // No command specified
+        ui->SetBackground(RecoveryUI::NO_COMMAND);
     }
 	}
 
@@ -997,6 +1109,13 @@ main(int argc, char **argv) {
 		sync();
 		PartitionManager.UnMount_By_Path("/system", false);
 	}
+
+    if (status == INSTALL_ERROR || status == INSTALL_CORRUPT) {
+        ui->SetBackground(RecoveryUI::ERROR);
+    }
+    if (status != INSTALL_SUCCESS || ui->IsTextVisible()) {
+        prompt_and_wait(device, status);
+    }
 
     // Otherwise, get ready to boot the main system...
     finish_recovery(send_intent);

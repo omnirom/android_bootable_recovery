@@ -36,8 +36,9 @@ void gr_flip(void);
 void gr_fb_blank(bool blank);
 
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
-void gr_fill(int x, int y, int w, int h);
-int gr_text(int x, int y, const char *s);
+void gr_fill(int x1, int y1, int x2, int y2);
+int gr_text(int x, int y, const char *s, int bold);
+ void gr_texticon(int x, int y, gr_surface icon);
 int gr_measure(const char *s);
 void gr_font_size(int *x, int *y);
 
@@ -71,6 +72,7 @@ void ev_dispatch(void);
 
 // Returns 0 if no error, else negative.
 int res_create_surface(const char* name, gr_surface* pSurface);
+int res_create_localized_surface(const char* name, gr_surface* pSurface);
 void res_free_surface(gr_surface surface);
 
 #ifdef __cplusplus

@@ -44,20 +44,24 @@
 #define PIXEL_SIZE   2
 #endif
 
+#define NUM_BUFFERS 2
+
 typedef struct {
-    GGLSurface texture;
+    GGLSurface* texture;
     unsigned cwidth;
     unsigned cheight;
-    unsigned ascent;
 } GRFont;
 
 static GRFont *gr_font = 0;
 static GGLContext *gr_context = 0;
 static GGLSurface gr_font_texture;
-static GGLSurface gr_framebuffer[2];
+static GGLSurface gr_framebuffer[NUM_BUFFERS];
 static GGLSurface gr_mem_surface;
 static unsigned gr_active_fb = 0;
 static unsigned double_buffering = 0;
+static int overscan_percent = OVERSCAN_PERCENT;
+static int overscan_offset_x = 0;
+static int overscan_offset_y = 0;
 
 static int gr_fb_fd = -1;
 static int gr_vt_fd = -1;
@@ -130,6 +134,9 @@ static int get_framebuffer(GGLSurface *fb)
         return -1;
     }
 
+    overscan_offset_x = vi.xres * overscan_percent / 100;
+    overscan_offset_y = vi.yres * overscan_percent / 100;
+
     fb->version = sizeof(*fb);
     fb->width = vi.xres;
     fb->height = vi.yres;
@@ -169,7 +176,7 @@ static void get_memory_surface(GGLSurface* ms) {
 static void set_active_framebuffer(unsigned n)
 {
     if (n > 1 || !double_buffering) return;
-    vi.yres_virtual = vi.yres * PIXEL_SIZE;
+    vi.yres_virtual = vi.yres * NUM_BUFFERS;
     vi.yoffset = n * vi.yres;
     vi.bits_per_pixel = PIXEL_SIZE * 8;
     if (ioctl(gr_fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
@@ -216,15 +223,20 @@ void gr_font_size(int *x, int *y)
     *y = gr_font->cheight;
 }
 
-int gr_text(int x, int y, const char *s)
+int gr_text(int x, int y, const char *s, int bold)
 {
     GGLContext *gl = gr_context;
     GRFont *font = gr_font;
     unsigned off;
 
-    y -= font->ascent;
+    if (!font->texture) return x;
 
-    gl->bindTexture(gl, &font->texture);
+    bold = bold && (font->texture->height != font->cheight);
+
+    x += overscan_offset_x;
+    y += overscan_offset_y;
+
+    gl->bindTexture(gl, font->texture);
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
     gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
     gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
@@ -233,7 +245,8 @@ int gr_text(int x, int y, const char *s)
     while((off = *s++)) {
         off -= 32;
         if (off < 96) {
-            gl->texCoord2i(gl, (off * font->cwidth) - x, 0 - y);
+            gl->texCoord2i(gl, (off * font->cwidth) - x,
+                           (bold ? font->cheight : 0) - y);
             gl->recti(gl, x, y, x + font->cwidth, y + font->cheight);
         }
         x += font->cwidth;
@@ -242,18 +255,49 @@ int gr_text(int x, int y, const char *s)
     return x;
 }
 
-void gr_fill(int x, int y, int w, int h)
+void gr_texticon(int x, int y, gr_surface icon) {
+    if (gr_context == NULL || icon == NULL) {
+        return;
+    }
+    GGLContext* gl = gr_context;
+
+    x += overscan_offset_x;
+    y += overscan_offset_y;
+
+    gl->bindTexture(gl, (GGLSurface*) icon);
+    gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
+    gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
+    gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
+    gl->enable(gl, GGL_TEXTURE_2D);
+
+    int w = gr_get_width(icon);
+    int h = gr_get_height(icon);
+
+    gl->texCoord2i(gl, -x, -y);
+    gl->recti(gl, x, y, x+gr_get_width(icon), y+gr_get_height(icon));
+}
+
+void gr_fill(int x1, int y1, int x2, int y2)
 {
+    x1 += overscan_offset_x;
+    y1 += overscan_offset_y;
+
+    x2 += overscan_offset_x;
+    y2 += overscan_offset_y;
+
     GGLContext *gl = gr_context;
     gl->disable(gl, GGL_TEXTURE_2D);
-    gl->recti(gl, x, y, w, h);
+    gl->recti(gl, x1, y1, x2, y2);
 }
 
 void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy) {
-    if (gr_context == NULL) {
+    if (gr_context == NULL || source == NULL) {
         return;
     }
     GGLContext *gl = gr_context;
+
+    dx += overscan_offset_x;
+    dy += overscan_offset_y;
 
     gl->bindTexture(gl, (GGLSurface*) source);
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
@@ -280,31 +324,40 @@ unsigned int gr_get_height(gr_surface surface) {
 
 static void gr_init_font(void)
 {
-    GGLSurface *ftex;
-    unsigned char *bits, *rle;
-    unsigned char *in, data;
-
     gr_font = calloc(sizeof(*gr_font), 1);
-    ftex = &gr_font->texture;
 
-    bits = malloc(font.width * font.height);
+    int res = res_create_surface("font", (void**)&(gr_font->texture));
+    if (res == 0) {
+        // The font image should be a 96x2 array of character images.  The
+        // columns are the printable ASCII characters 0x20 - 0x7f.  The
+        // top row is regular text; the bottom row is bold.
+        gr_font->cwidth = gr_font->texture->width / 96;
+        gr_font->cheight = gr_font->texture->height / 2;
+    } else {
+        printf("failed to read font: res=%d\n", res);
 
-    ftex->version = sizeof(*ftex);
-    ftex->width = font.width;
-    ftex->height = font.height;
-    ftex->stride = font.width;
-    ftex->data = (void*) bits;
-    ftex->format = GGL_PIXEL_FORMAT_A_8;
+        // fall back to the compiled-in font.
+        gr_font->texture = malloc(sizeof(*gr_font->texture));
+        gr_font->texture->width = font.width;
+        gr_font->texture->height = font.height;
+        gr_font->texture->stride = font.width;
 
-    in = font.rundata;
-    while((data = *in++)) {
-        memset(bits, (data & 0x80) ? 255 : 0, data & 0x7f);
-        bits += (data & 0x7f);
+        unsigned char* bits = malloc(font.width * font.height);
+        gr_font->texture->data = (void*) bits;
+
+        unsigned char data;
+        unsigned char* in = font.rundata;
+        while((data = *in++)) {
+            memset(bits, (data & 0x80) ? 255 : 0, data & 0x7f);
+            bits += (data & 0x7f);
+        }
+
+        gr_font->cwidth = font.cwidth;
+        gr_font->cheight = font.cheight;
     }
 
-    gr_font->cwidth = font.cwidth;
-    gr_font->cheight = font.cheight;
-    gr_font->ascent = font.cheight - 2;
+    // interpret the grayscale as alpha
+    gr_font->texture->format = GGL_PIXEL_FORMAT_A_8;
 }
 
 int gr_init(void)
@@ -364,12 +417,12 @@ void gr_exit(void)
 
 int gr_fb_width(void)
 {
-    return gr_framebuffer[0].width;
+    return gr_framebuffer[0].width - 2*overscan_offset_x;
 }
 
 int gr_fb_height(void)
 {
-    return gr_framebuffer[0].height;
+    return gr_framebuffer[0].height - 2*overscan_offset_y;
 }
 
 gr_pixel *gr_fb_data(void)

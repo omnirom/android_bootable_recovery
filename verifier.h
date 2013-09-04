@@ -30,6 +30,8 @@ static const float VERIFICATION_PROGRESS_FRACTION = 0.25;
  */
 int verify_file(const char* path);
 
+RSAPublicKey* load_keys(const char* filename, int* numKeys);
+
 #define VERIFY_SUCCESS        0
 #define VERIFY_FAILURE        1
 

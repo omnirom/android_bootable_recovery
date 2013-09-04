@@ -50,8 +50,8 @@ LOCAL_MODULE_PATH := $(PRODUCT_OUT)/utilities
 LOCAL_UNSTRIPPED_PATH := $(PRODUCT_OUT)/symbols/utilities
 LOCAL_MODULE_STEM := bml_over_mtd
 LOCAL_C_INCLUDES += bootable/recovery/mtdutils
-LOCAL_STATIC_LIBRARIES := libmtdutils libcutils libc
-LOCAL_FORCE_STATIC_EXECUTABLE := true
+LOCAL_STATIC_LIBRARIES := libmtdutils
+LOCAL_SHARED_LIBRARIES := libcutils liblog libc
 include $(BUILD_EXECUTABLE)
 endif
 

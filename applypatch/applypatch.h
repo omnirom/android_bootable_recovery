@@ -55,7 +55,8 @@ int applypatch(const char* source_filename,
                size_t target_size,
                int num_patches,
                char** const patch_sha1_str,
-               Value** patch_data);
+               Value** patch_data,
+               Value* bonus_data);
 int applypatch_check(const char* filename,
                      int num_patches,
                      char** const patch_sha1_str);
@@ -64,7 +65,7 @@ int LoadFileContents(const char* filename, FileContents* file,
                      int retouch_flag);
 int SaveFileContents(const char* filename, const FileContents* file);
 void FreeFileContents(FileContents* file);
-int FindMatchingPatch(uint8_t* sha1, const char** patch_sha1_str,
+int FindMatchingPatch(uint8_t* sha1, char* const * const patch_sha1_str,
                       int num_patches);
 
 // bsdiff.c
@@ -79,7 +80,8 @@ int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
 // imgpatch.c
 int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                     const Value* patch,
-                    SinkFn sink, void* token, SHA_CTX* ctx);
+                    SinkFn sink, void* token, SHA_CTX* ctx,
+                    const Value* bonus_data);
 
 // freecache.c
 int MakeFreeSpaceOnCache(size_t bytes_needed);

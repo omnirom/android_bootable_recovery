@@ -40,15 +40,27 @@ LOCAL_MODULE := recovery
 #LOCAL_FORCE_STATIC_EXECUTABLE := true
 
 RECOVERY_API_VERSION := 3
+RECOVERY_FSTAB_VERSION := 2
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 
 #LOCAL_STATIC_LIBRARIES := \
-#    libext4_utils \
+#    libext4_utils_static \
+#    libsparse_static \
 #    libminzip \
+#    libz \
 #    libmtdutils \
 #    libmincrypt \
 #    libminadbd \
-#    libpixelflinger_static
+#    libminui \
+#    libpixelflinger_static \
+#    libpng \
+#    libfs_mgr \
+#    libcutils \
+#    liblog \
+#    libselinux \
+#    libstdc++ \
+#    libm \
+#    libc
 
 LOCAL_C_INCLUDES += bionic external/stlport/stlport
 
@@ -67,7 +79,7 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_C_INCLUDES += system/extras/ext4_utils
     LOCAL_SHARED_LIBRARIES += libext4_utils
 endif
-LOCAL_C_INCLUDES += external/libselinux/include
+
 ifeq ($(HAVE_SELINUX), true)
   #LOCAL_C_INCLUDES += external/libselinux/include
   #LOCAL_STATIC_LIBRARIES += libselinux
@@ -90,11 +102,11 @@ endif
 # TODO: Build the ramdisk image in a more principled way.
 LOCAL_MODULE_TAGS := eng
 
-ifeq ($(TARGET_RECOVERY_UI_LIB),)
+#ifeq ($(TARGET_RECOVERY_UI_LIB),)
   LOCAL_SRC_FILES += default_device.cpp
-else
-  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
-endif
+#else
+#  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
+#endif
 
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
@@ -289,6 +301,9 @@ LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULES_TAGS = optional
 LOCAL_CFLAGS = 
+ifneq ($(wildcard system/core/libmincrypt/rsa_e_3.c),)
+    LOCAL_CFLAGS += -DHAS_EXPONENT
+endif
 LOCAL_SRC_FILES = adb_install.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils
 LOCAL_STATIC_LIBRARIES += libmincrypt

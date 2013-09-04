@@ -120,6 +120,18 @@ int main(int argc, char **argv) {
 	bool Cache_Wipe = false, Factory_Reset = false, Perform_Backup = false;
 
 	{
+		TWPartition* misc = PartitionManager.Find_Partition_By_Path("/misc");
+		if (misc != NULL) {
+			if (misc->Current_File_System == "emmc") {
+				set_device_type('e');
+				set_device_name(misc->Actual_Block_Device.c_str());
+			} else if (misc->Current_File_System == "mtd") {
+				set_device_type('m');
+				set_device_name(misc->MTD_Name.c_str());
+			} else {
+				LOGERR("Unknown file system for /misc\n");
+			}
+		}
 		get_args(&argc, &argv);
 
 		int index, index2, len;

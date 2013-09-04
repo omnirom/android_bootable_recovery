@@ -19,6 +19,7 @@
 
 #include <linux/input.h>
 #include <pthread.h>
+#include <time.h>
 
 // Abstract class for controlling the user interface during recovery.
 class RecoveryUI {
@@ -30,8 +31,11 @@ class RecoveryUI {
     // Initialize the object; called before anything else.
     virtual void Init();
 
+    // After calling Init(), you can tell the UI what locale it is operating in.
+    virtual void SetLocale(const char* locale) { }
+
     // Set the overall recovery state ("background image").
-    enum Icon { NONE, INSTALLING, ERROR };
+    enum Icon { NONE, INSTALLING_UPDATE, ERASING, NO_COMMAND, ERROR };
     virtual void SetBackground(Icon icon) = 0;
 
     // --- progress indicator ---
@@ -76,6 +80,8 @@ class RecoveryUI {
     enum KeyAction { ENQUEUE, TOGGLE, REBOOT, IGNORE };
     virtual KeyAction CheckKey(int key);
 
+    virtual void NextCheckKeyIsLong(bool is_long_press);
+
     // --- menu display ---
 
     // Display some header text followed by a menu of items, which appears
@@ -92,6 +98,9 @@ class RecoveryUI {
     // statements will be displayed.
     virtual void EndMenu() = 0;
 
+protected:
+    void EnqueueKey(int key_code);
+
 private:
     // Key event input queue
     pthread_mutex_t key_queue_mutex;
@@ -99,6 +108,7 @@ private:
     int key_queue[256], key_queue_len;
     char key_pressed[KEY_MAX + 1];     // under key_queue_mutex
     int key_last_down;                 // under key_queue_mutex
+    clock_t key_down_time;             // under key_queue_mutex
     int rel_sum;
 
     pthread_t input_t;
