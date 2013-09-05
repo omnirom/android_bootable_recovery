@@ -154,6 +154,18 @@ tar_extract_file(TAR *t, char *realname, char *prefix)
 		printf("FAILED SETTING PERMS: %d\n", i);
 		return i;
 	}
+
+#ifdef HAVE_SELINUX
+	if((t->options & TAR_STORE_SELINUX) && t->th_buf.selinux_context != NULL)
+	{
+#ifdef DEBUG
+		printf("    Restoring SELinux context %s to file %s\n", t->th_buf.selinux_context, realname);
+#endif
+		if(setfilecon(realname, t->th_buf.selinux_context) < 0)
+			fprintf(stderr, "Failed to restore SELinux context %s!\n", strerror(errno));
+	}
+#endif
+
 /*
 	pathname_len = strlen(th_get_pathname(t)) + 1;
 	realname_len = strlen(realname) + 1;

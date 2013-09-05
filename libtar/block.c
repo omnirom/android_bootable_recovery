@@ -21,6 +21,10 @@
 
 #define BIT_ISSET(bitmask, bit) ((bitmask) & (bit))
 
+// Used to identify selinux_context in extended ('x')
+// metadata. From RedHat implementation.
+#define SELINUX_TAG "RHT.security.selinux="
+#define SELINUX_TAG_LEN 21
 
 /* read a header block */
 int
@@ -101,6 +105,11 @@ th_read(TAR *t)
 		free(t->th_buf.gnu_longname);
 	if (t->th_buf.gnu_longlink != NULL)
 		free(t->th_buf.gnu_longlink);
+#ifdef HAVE_SELINUX
+	if (t->th_buf.selinux_context != NULL)
+		free(t->th_buf.selinux_context);
+#endif
+
 	memset(&(t->th_buf), 0, sizeof(struct tar_header));
 
 	i = th_read_internal(t);
@@ -202,6 +211,57 @@ th_read(TAR *t)
 			return -1;
 		}
 	}
+
+#ifdef HAVE_SELINUX
+	if(TH_ISEXTHEADER(t))
+	{
+		sz = th_get_size(t);
+
+		if(sz >= T_BLOCKSIZE) // Not supported
+		{
+#ifdef DEBUG
+			printf("    th_read(): Extended header is too long!\n");
+#endif
+		}
+		else
+		{
+			char buf[T_BLOCKSIZE];
+			i = tar_block_read(t, buf);
+			if (i != T_BLOCKSIZE)
+			{
+				if (i != -1)
+					errno = EINVAL;
+				return -1;
+			}
+
+			// To be sure
+			buf[T_BLOCKSIZE-1] = 0;
+
+			int len = strlen(buf);
+			char *start = strstr(buf, SELINUX_TAG);
+			if(start && start+SELINUX_TAG_LEN < buf+len)
+			{
+				start += SELINUX_TAG_LEN;
+				char *end = strchr(start, '\n');
+				if(end)
+				{
+					t->th_buf.selinux_context = strndup(start, end-start);
+#ifdef DEBUG
+					printf("    th_read(): SELinux context xattr detected: %s\n", t->th_buf.selinux_context);
+#endif
+				}
+			}
+		}
+
+		i = th_read_internal(t);
+		if (i != T_BLOCKSIZE)
+		{
+			if (i != -1)
+				errno = EINVAL;
+			return -1;
+		}
+	}
+#endif
 
 #if 0
 	/*
@@ -358,6 +418,59 @@ th_write(TAR *t)
 		t->th_buf.typeflag = type2;
 		th_set_size(t, sz2);
 	}
+
+#ifdef HAVE_SELINUX
+	if((t->options & TAR_STORE_SELINUX) && t->th_buf.selinux_context != NULL)
+	{
+#ifdef DEBUG
+		printf("th_write(): using selinux_context (\"%s\")\n",
+		       t->th_buf.selinux_context);
+#endif
+		/* save old size and type */
+		type2 = t->th_buf.typeflag;
+		sz2 = th_get_size(t);
+
+		/* write out initial header block with fake size and type */
+		t->th_buf.typeflag = TH_EXT_TYPE;
+
+		/* setup size - EXT header has format "*size of this whole tag as ascii numbers* *space* *content* *newline* */
+		//                                                       size   newline
+		sz = SELINUX_TAG_LEN + strlen(t->th_buf.selinux_context) + 3  +    1;
+
+		if(sz >= 100) // another ascci digit for size
+			++sz;
+
+		if(sz >= T_BLOCKSIZE) // impossible
+		{
+			errno = EINVAL;
+			return -1;
+		}
+
+		th_set_size(t, sz);
+		th_finish(t);
+		i = tar_block_write(t, &(t->th_buf));
+		if (i != T_BLOCKSIZE)
+		{
+			if (i != -1)
+				errno = EINVAL;
+			return -1;
+		}
+
+		memset(buf, 0, T_BLOCKSIZE);
+		snprintf(buf, T_BLOCKSIZE, "%d "SELINUX_TAG"%s\n", sz, t->th_buf.selinux_context);
+		i = tar_block_write(t, &buf);
+		if (i != T_BLOCKSIZE)
+		{
+			if (i != -1)
+				errno = EINVAL;
+			return -1;
+		}
+
+		/* reset type and size to original values */
+		t->th_buf.typeflag = type2;
+		th_set_size(t, sz2);
+	}
+#endif
 
 	th_finish(t);
 
