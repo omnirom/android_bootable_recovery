@@ -54,7 +54,7 @@ int dirUnlinkHierarchy(const char *path);
  * Sets directories to <dirMode> and files to <fileMode>.  Skips symlinks.
  */
 int dirSetHierarchyPermissions(const char *path,
-         int uid, int gid, int dirMode, int fileMode, const char* secontext);
+         int uid, int gid, int dirMode, int fileMode);
 
 #ifdef __cplusplus
 }
