@@ -50,7 +50,7 @@ unsigned int gr_get_height(gr_surface surface);
 // see http://www.mjmwired.net/kernel/Documentation/input/ for info.
 struct input_event;
 
-typedef int (*ev_callback)(int fd, short revents, void *data);
+typedef int (*ev_callback)(int fd, unsigned int epevents, void *data);
 typedef int (*ev_set_key_callback)(int code, int value, void *data);
 
 int ev_init(ev_callback input_cb, void *data);
@@ -65,7 +65,7 @@ int ev_sync_key_state(ev_set_key_callback set_key_cb, void *data);
  */
 int ev_wait(int timeout);
 
-int ev_get_input(int fd, short revents, struct input_event *ev);
+int ev_get_input(int fd, unsigned int epevents, struct input_event *ev);
 void ev_dispatch(void);
 
 // Resources
