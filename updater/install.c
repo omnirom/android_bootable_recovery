@@ -27,7 +27,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
-#include <selinux/selinux.h>
 
 #include "cutils/misc.h"
 #include "cutils/properties.h"
@@ -522,10 +521,9 @@ Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
 
 Value* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
-    bool recursive = (strcmp(name, "set_perm_recursive") == 0) || (strcmp(name, "set_perm2_recursive") == 0);
-    bool has_selabel = (strcmp(name, "set_perm2") == 0) || (strcmp(name, "set_perm2_recursive") == 0);
+    bool recursive = (strcmp(name, "set_perm_recursive") == 0);
 
-    int min_args = 4 + (has_selabel ? 1 : 0) + (recursive ? 1 : 0);
+    int min_args = 4 + (recursive ? 1 : 0);
     if (argc < min_args) {
         return ErrorAbort(state, "%s() expects %d+ args, got %d",
                           name, min_args, argc);
@@ -564,13 +562,8 @@ Value* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
             goto done;
         }
 
-        char* secontext = NULL;
-        if (has_selabel) {
-            secontext = args[4];
-        }
-
-        for (i = 4 + (has_selabel ? 1 : 0); i < argc; ++i) {
-            dirSetHierarchyPermissions(args[i], uid, gid, dir_mode, file_mode, secontext);
+        for (i = 4; i < argc; ++i) {
+            dirSetHierarchyPermissions(args[i], uid, gid, dir_mode, file_mode);
         }
     } else {
         int mode = strtoul(args[2], &end, 0);
@@ -579,12 +572,7 @@ Value* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
             goto done;
         }
 
-        char* secontext = NULL;
-        if (has_selabel) {
-            secontext = args[3];
-        }
-
-        for (i = 3 + (has_selabel ? 1 : 0); i < argc; ++i) {
+        for (i = 3; i < argc; ++i) {
             if (chown(args[i], uid, gid) < 0) {
                 printf("%s: chown of %s to %d %d failed: %s\n",
                         name, args[i], uid, gid, strerror(errno));
@@ -593,11 +581,6 @@ Value* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
             if (chmod(args[i], mode) < 0) {
                 printf("%s: chmod of %s to %o failed: %s\n",
                         name, args[i], mode, strerror(errno));
-                ++bad;
-            }
-            if (has_selabel && lsetfilecon(args[i], secontext) && (errno != ENOTSUP)) {
-                printf("%s: lsetfilecon of %s to %s failed: %s\n",
-                        name, args[i], secontext, strerror(errno));
                 ++bad;
             }
         }
@@ -1152,8 +1135,6 @@ void RegisterInstallFunctions() {
     RegisterFunction("symlink", SymlinkFn);
     RegisterFunction("set_perm", SetPermFn);
     RegisterFunction("set_perm_recursive", SetPermFn);
-    RegisterFunction("set_perm2", SetPermFn);
-    RegisterFunction("set_perm2_recursive", SetPermFn);
 
     RegisterFunction("getprop", GetPropFn);
     RegisterFunction("file_getprop", FileGetPropFn);
