@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
 
 	bool Keep_Going = true;
 	if (Perform_Backup) {
-		DataManager::SetValue(TW_BACKUP_NAME, "(Current Date)");
+		DataManager::SetValue(TW_BACKUP_NAME, "(Auto Generate)");
 		if (!OpenRecoveryScript::Insert_ORS_Command("backup BSDCAE\n"))
 			Keep_Going = false;
 	}

@@ -380,6 +380,7 @@ protected:
 	bool hasFill;
 	COLOR mFillColor;
 	COLOR mHighlightColor;
+	Placement TextPlacement;
 };
 
 class GUICheckbox: public RenderObject, public ActionObject, public Conditional

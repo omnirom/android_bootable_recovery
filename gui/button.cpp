@@ -110,10 +110,11 @@ GUIButton::GUIButton(xml_node<>* node)
 	}
 
 	int x, y, w, h;
+	TextPlacement = TOP_LEFT;
 	if (mButtonImg) {
 		mButtonImg->GetRenderPos(x, y, w, h);
 	} else if (hasFill) {
-		LoadPlacement(node->first_node("placement"), &x, &y, &w, &h);
+		LoadPlacement(node->first_node("placement"), &x, &y, &w, &h, &TextPlacement);
 	}
 	SetRenderPos(x, y, w, h);
 	return;
@@ -150,14 +151,12 @@ int GUIButton::Render(void)
 		mButtonLabel->GetCurrentBounds(w, h);
 		if (w != mTextW) {
 			mTextW = w;
-			// As a special case, we'll allow large text which automatically moves it to the right.
-			if (mTextW > mRenderW)
-			{
+			if (TextPlacement == CENTER_X_ONLY) {
+				mTextX = ((mRenderW - mRenderX) / 2);
+			} else if (mTextW > mRenderW) { // As a special case, we'll allow large text which automatically moves it to the right.
 				mTextX = mRenderW + mRenderX + 5;
 				mRenderW += mTextW + 5;
-			}
-			else
-			{
+			} else {
 				mTextX = mRenderX + ((mRenderW - mTextW) / 2);
 			}
 			mButtonLabel->SetRenderPos(mTextX, mTextY);
@@ -231,14 +230,12 @@ int GUIButton::SetRenderPos(int x, int y, int w, int h)
 	if (mButtonLabel)   mButtonLabel->GetCurrentBounds(mTextW, mTextH);
 	if (mTextW)
 	{
-		// As a special case, we'll allow large text which automatically moves it to the right.
-		if (mTextW > mRenderW)
-		{
+		if (TextPlacement == CENTER_X_ONLY) {
+			mTextX = ((mRenderW - mRenderX) / 2);
+		} else if (mTextW > mRenderW) { // As a special case, we'll allow large text which automatically moves it to the right.
 			mTextX = mRenderW + mRenderX + 5;
 			mRenderW += mTextW + 5;
-		}
-		else
-		{
+		} else {
 			mTextX = mRenderX + ((mRenderW - mTextW) / 2);
 		}
 	}

@@ -670,10 +670,11 @@ int TWPartitionManager::Run_Backup(void) {
 
 	DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, Backup_Folder);
 	DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
-	if (Backup_Name == "(Current Date)" || Backup_Name == "0" || Backup_Name.empty()) {
-		char timestamp[255];
-		sprintf(timestamp,"%04d-%02d-%02d--%02d-%02d-%02d",t->tm_year+1900,t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec);
-		Backup_Name = timestamp;
+	if (Backup_Name == "(Current Date)") {
+		Backup_Name = TWFunc::Get_Current_Date();
+	} else if (Backup_Name == "(Auto Generate)" || Backup_Name == "0" || Backup_Name.empty()) {
+		TWFunc::Auto_Generate_Backup_Name();
+		DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
 	}
 	LOGINFO("Backup Name is: '%s'\n", Backup_Name.c_str());
 	Full_Backup_Path = Backup_Folder + "/" + Backup_Name + "/";

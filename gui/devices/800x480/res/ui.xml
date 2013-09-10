@@ -1741,8 +1741,8 @@
 
 		<page name="backupname1">
 			<object type="action">
-				<condition var1="tw_backup_name" op="=" var2="(Current Date)" />
-				<action function="set">tw_backup_name=</function>
+				<condition var1="tw_backup_name" op="=" var2="(Auto Generate)" />
+				<action function="generatebackupname"></function>
 			</object>
 
 			<object type="action">
@@ -1784,12 +1784,21 @@
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%col_center_x%" y="%cancel_button_y%" />
+				<placement x="%col2_x%" y="%cancel_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Append Date</text>
+				<image resource="main_button" />
+				<action function="appenddatetobackupname"></action>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col3_x%" y="%cancel_button_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Cancel / Clear</text>
 				<image resource="main_button" />
 				<actions>
-					<action function="set">tw_backup_name=(Current Date)</action>
+					<action function="set">tw_backup_name=(Auto Generate)</action>
 					<action function="page">backup</action>
 				</actions>
 			</object>
@@ -1799,7 +1808,7 @@
 			<object type="action">
 				<touch key="home" />
 				<actions>
-					<action function="set">tw_backup_name=(Current Date)</action>
+					<action function="set">tw_backup_name=(Auto Generate)</action>
 					<action function="page">main</action>
 				</actions>
 			</object>
@@ -1807,7 +1816,7 @@
 			<object type="action">
 				<touch key="back" />
 				<actions>
-					<action function="set">tw_backup_name=(Current Date)</action>
+					<action function="set">tw_backup_name=(Auto Generate)</action>
 					<action function="page">backup</action>
 				</actions>
 			</object>

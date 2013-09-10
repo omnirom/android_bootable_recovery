@@ -950,3 +950,51 @@ int TWFunc::Wait_For_Child(pid_t pid, int *status, string Child_Name) {
 	}
 	return 0;
 }
+
+string TWFunc::Get_Current_Date() {
+	string Current_Date;
+	time_t seconds = time(0);
+	struct tm *t = localtime(&seconds);
+	char timestamp[255];
+	sprintf(timestamp,"%04d-%02d-%02d--%02d-%02d-%02d",t->tm_year+1900,t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec);
+	Current_Date = timestamp;
+	return Current_Date;
+}
+
+void TWFunc::Auto_Generate_Backup_Name() {
+	bool mount_state = PartitionManager.Is_Mounted_By_Path("/system");
+	std::vector<string> buildprop;
+	if (!PartitionManager.Mount_By_Path("/system", true)) {
+		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
+		return;
+	}
+	if (TWFunc::read_file("/system/build.prop", buildprop) != 0) {
+		LOGINFO("Unable to open /system/build.prop for getting backup name.\n");
+		DataManager::SetValue(TW_BACKUP_NAME, "");
+		if (!mount_state)
+			PartitionManager.UnMount_By_Path("/system", false);
+		return;
+	}
+	int line_count = buildprop.size();
+	int index;
+	size_t start_pos = 0, end_pos;
+	string propname, propvalue;
+	for (index = 0; index < line_count; index++) {
+		end_pos = buildprop.at(index).find("=", start_pos);
+		propname = buildprop.at(index).substr(start_pos, end_pos);
+		if (propname == "ro.build.display.id") {
+			propvalue = buildprop.at(index).substr(end_pos + 1, buildprop.at(index).size());
+			string Backup_Name = Get_Current_Date();
+			Backup_Name += " " + propvalue;
+			if (Backup_Name.size() > MAX_BACKUP_NAME_LEN)
+				Backup_Name.resize(MAX_BACKUP_NAME_LEN);
+			DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
+			break;
+		}
+	}
+	if (propvalue.empty()) {
+		LOGINFO("ro.build.display.id not found in build.prop\n");
+	}
+	if (!mount_state)
+		PartitionManager.UnMount_By_Path("/system", false);
+}
