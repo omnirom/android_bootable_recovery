@@ -134,7 +134,7 @@ private:
     pthread_t input_t;
 
     static void* input_thread(void* cookie);
-    static int input_callback(int fd, short revents, void* data);
+    static int input_callback(int fd, unsigned int epevents, void* data);
     void process_key(int key_code, int updown);
     bool usb_connected();
 
