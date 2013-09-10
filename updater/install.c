@@ -726,6 +726,11 @@ static int ApplyParsedPerms(
 {
     int bad = 0;
 
+    /* ignore symlinks */
+    if (S_ISLNK(statptr->st_mode)) {
+        return 0;
+    }
+
     if (parsed.has_uid) {
         if (chown(filename, parsed.uid, -1) < 0) {
             printf("ApplyParsedPerms: chown of %s to %d failed: %s\n",
