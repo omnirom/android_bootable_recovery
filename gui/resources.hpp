@@ -3,6 +3,12 @@
 #ifndef _RESOURCE_HEADER
 #define _RESOURCE_HEADER
 
+#ifdef HAVE_SELINUX
+#include "../minzip/Zip.h"
+#else
+#include "../minzipold/Zip.h"
+#endif
+
 // Base Objects
 class Resource
 {

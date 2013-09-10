@@ -3,6 +3,12 @@
 #ifndef _PAGES_HEADER_HPP
 #define _PAGES_HEADER_HPP
 
+#ifdef HAVE_SELINUX
+#include "../minzip/Zip.h"
+#else
+#include "../minzipold/Zip.h"
+#endif
+
 typedef struct {
 	unsigned char red;
 	unsigned char green;

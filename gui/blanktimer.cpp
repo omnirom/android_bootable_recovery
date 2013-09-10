@@ -20,7 +20,6 @@ using namespace std;
 #include "rapidxml.hpp"
 using namespace rapidxml;
 extern "C" {
-#include "../minzip/Zip.h"
 #include "../minuitwrp/minui.h"
 }
 #include <string>
@@ -37,9 +36,15 @@ extern "C" {
 #include <sstream>
 #include "pages.hpp"
 #include "blanktimer.hpp"
+#include "objects.hpp"
 #include "../data.hpp"
 extern "C" {
 #include "../twcommon.h"
+#ifdef HAVE_SELINUX
+#include "../minzip/Zip.h"
+#else
+#include "../minzipold/Zip.h"
+#endif
 }
 #include "../twrp-functions.hpp"
 #include "../variables.h"
