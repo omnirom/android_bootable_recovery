@@ -132,6 +132,11 @@ int ev_add_fd(int fd, ev_callback cb, void *data)
     return ret;
 }
 
+int ev_get_epollfd(void)
+{
+    return epollfd;
+}
+
 void ev_exit(void)
 {
     while (ev_count > 0) {

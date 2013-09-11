@@ -67,6 +67,7 @@ int ev_wait(int timeout);
 
 int ev_get_input(int fd, unsigned int epevents, struct input_event *ev);
 void ev_dispatch(void);
+int ev_get_epollfd(void);
 
 // Resources
 
