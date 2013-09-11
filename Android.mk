@@ -79,13 +79,15 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_C_INCLUDES += system/extras/ext4_utils
     LOCAL_SHARED_LIBRARIES += libext4_utils
 endif
-
-ifeq ($(HAVE_SELINUX), true)
+ifneq ($(wildcard external/libselinux/Android.mk),)
+    TWHAVE_SELINUX := true
+endif
+ifeq ($(TWHAVE_SELINUX), true)
   #LOCAL_C_INCLUDES += external/libselinux/include
   #LOCAL_STATIC_LIBRARIES += libselinux
   #LOCAL_CFLAGS += -DHAVE_SELINUX -g
 endif # HAVE_SELINUX
-ifeq ($(HAVE_SELINUX), true)
+ifeq ($(TWHAVE_SELINUX), true)
     LOCAL_C_INCLUDES += external/libselinux/include
     LOCAL_SHARED_LIBRARIES += libselinux
     LOCAL_CFLAGS += -DHAVE_SELINUX -g

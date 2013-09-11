@@ -11,7 +11,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 					external/zlib
 LOCAL_SHARED_LIBRARIES += libz libc
 
-ifeq ($(HAVE_SELINUX), true)
+ifeq ($(TWHAVE_SELINUX), true)
 	LOCAL_C_INCLUDES += external/libselinux/include
 	LOCAL_SHARED_LIBRARIES += libselinux
 	LOCAL_CFLAGS += -DHAVE_SELINUX
