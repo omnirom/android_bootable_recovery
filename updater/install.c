@@ -524,88 +524,6 @@ Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
     return StringValue(strdup(""));
 }
 
-
-Value* SetPermFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = NULL;
-    bool recursive = (strcmp(name, "set_perm_recursive") == 0);
-
-    int min_args = 4 + (recursive ? 1 : 0);
-    if (argc < min_args) {
-        return ErrorAbort(state, "%s() expects %d+ args, got %d",
-                          name, min_args, argc);
-    }
-
-    char** args = ReadVarArgs(state, argc, argv);
-    if (args == NULL) return NULL;
-
-    char* end;
-    int i;
-    int bad = 0;
-
-    int uid = strtoul(args[0], &end, 0);
-    if (*end != '\0' || args[0][0] == 0) {
-        ErrorAbort(state, "%s: \"%s\" not a valid uid", name, args[0]);
-        goto done;
-    }
-
-    int gid = strtoul(args[1], &end, 0);
-    if (*end != '\0' || args[1][0] == 0) {
-        ErrorAbort(state, "%s: \"%s\" not a valid gid", name, args[1]);
-        goto done;
-    }
-
-    if (recursive) {
-        int dir_mode = strtoul(args[2], &end, 0);
-        if (*end != '\0' || args[2][0] == 0) {
-            ErrorAbort(state, "%s: \"%s\" not a valid dirmode", name, args[2]);
-            goto done;
-        }
-
-        int file_mode = strtoul(args[3], &end, 0);
-        if (*end != '\0' || args[3][0] == 0) {
-            ErrorAbort(state, "%s: \"%s\" not a valid filemode",
-                       name, args[3]);
-            goto done;
-        }
-
-        for (i = 4; i < argc; ++i) {
-            dirSetHierarchyPermissions(args[i], uid, gid, dir_mode, file_mode);
-        }
-    } else {
-        int mode = strtoul(args[2], &end, 0);
-        if (*end != '\0' || args[2][0] == 0) {
-            ErrorAbort(state, "%s: \"%s\" not a valid mode", name, args[2]);
-            goto done;
-        }
-
-        for (i = 3; i < argc; ++i) {
-            if (chown(args[i], uid, gid) < 0) {
-                printf("%s: chown of %s to %d %d failed: %s\n",
-                        name, args[i], uid, gid, strerror(errno));
-                ++bad;
-            }
-            if (chmod(args[i], mode) < 0) {
-                printf("%s: chmod of %s to %o failed: %s\n",
-                        name, args[i], mode, strerror(errno));
-                ++bad;
-            }
-        }
-    }
-    result = strdup("");
-
-done:
-    for (i = 0; i < argc; ++i) {
-        free(args[i]);
-    }
-    free(args);
-
-    if (bad) {
-        free(result);
-        return ErrorAbort(state, "%s: some changes failed", name);
-    }
-    return StringValue(result);
-}
-
 struct perm_parsed_args {
     bool has_uid;
     uid_t uid;
@@ -1397,11 +1315,6 @@ void RegisterInstallFunctions() {
     RegisterFunction("package_extract_dir", PackageExtractDirFn);
     RegisterFunction("package_extract_file", PackageExtractFileFn);
     RegisterFunction("symlink", SymlinkFn);
-
-    // Maybe, at some future point, we can delete these functions? They have been
-    // replaced by perm_set and perm_set_recursive.
-    RegisterFunction("set_perm", SetPermFn);
-    RegisterFunction("set_perm_recursive", SetPermFn);
 
     // Usage:
     //   set_metadata("filename", "key1", "value1", "key2", "value2", ...)
