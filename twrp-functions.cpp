@@ -35,7 +35,7 @@ extern "C" {
 }
 
 /* Execute a command */
-int TWFunc::Exec_Cmd(string cmd, string &result) {
+int TWFunc::Exec_Cmd(const string& cmd, string &result) {
 	FILE* exec;
 	char buffer[130];
 	int ret = 0;
@@ -51,6 +51,28 @@ int TWFunc::Exec_Cmd(string cmd, string &result) {
 	}
 	ret = __pclose(exec);
 	return ret;
+}
+
+int TWFunc::Exec_Cmd(const string& cmd) {
+	pid_t pid;
+	int status;
+	switch(pid = fork())
+	{
+		case -1:
+			LOGERR("Exec_Cmd(): vfork failed!\n");
+			return -1;
+		case 0: // child
+			execl("/sbin/sh", "sh", "-c", cmd.c_str(), NULL);
+			_exit(127);
+			break;
+		default:
+		{
+			if (TWFunc::Wait_For_Child(pid, &status, cmd) != 0)
+				return -1;
+			else
+				return 0;
+		}
+	}
 }
 
 // Returns "file.name" from a full /path/to/file.name
@@ -130,21 +152,19 @@ void TWFunc::install_htc_dumlock(void) {
 }
 
 void TWFunc::htc_dumlock_restore_original_boot(void) {
-	string status;
 	if (!PartitionManager.Mount_By_Path("/sdcard", true))
 		return;
 
 	gui_print("Restoring original boot...\n");
-	Exec_Cmd("htcdumlock restore", status);
+	Exec_Cmd("htcdumlock restore");
 	gui_print("Original boot restored.\n");
 }
 
 void TWFunc::htc_dumlock_reflash_recovery_to_boot(void) {
-	string status;
 	if (!PartitionManager.Mount_By_Path("/sdcard", true))
 		return;
 	gui_print("Reflashing recovery to boot...\n");
-	Exec_Cmd("htcdumlock recovery noreboot", status);
+	Exec_Cmd("htcdumlock recovery noreboot");
 	gui_print("Recovery is flashed to boot.\n");
 }
 
@@ -337,11 +357,10 @@ void TWFunc::check_and_run_script(const char* script_file, const char* display_n
 {
 	// Check for and run startup script if script exists
 	struct stat st;
-	string result;
 	if (stat(script_file, &st) == 0) {
 		gui_print("Running %s script...\n", display_name);
 		chmod(script_file, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-		TWFunc::Exec_Cmd(script_file, result);
+		TWFunc::Exec_Cmd(script_file);
 		gui_print("\nFinished running %s script.\n", display_name);
 	}
 }
@@ -738,12 +757,10 @@ int TWFunc::tw_chmod(const string& fn, const string& mode) {
 }
 
 bool TWFunc::Install_SuperSU(void) {
-	string status;
-
 	if (!PartitionManager.Mount_By_Path("/system", true))
 		return false;
 
-	TWFunc::Exec_Cmd("/sbin/chattr -i /system/xbin/su", status);
+	TWFunc::Exec_Cmd("/sbin/chattr -i /system/xbin/su");
 	if (copy_file("/supersu/su", "/system/xbin/su", 0755) != 0) {
 		LOGERR("Failed to copy su binary to /system/bin\n");
 		return false;
@@ -751,24 +768,24 @@ bool TWFunc::Install_SuperSU(void) {
 	if (!Path_Exists("/system/bin/.ext")) {
 		mkdir("/system/bin/.ext", 0777);
 	}
-	TWFunc::Exec_Cmd("/sbin/chattr -i /system/bin/.ext/su", status);
+	TWFunc::Exec_Cmd("/sbin/chattr -i /system/bin/.ext/su");
 	if (copy_file("/supersu/su", "/system/bin/.ext/su", 0755) != 0) {
 		LOGERR("Failed to copy su binary to /system/bin/.ext/su\n");
 		return false;
 	}
-	TWFunc::Exec_Cmd("/sbin/chattr -i /system/xbin/daemonsu", status);
+	TWFunc::Exec_Cmd("/sbin/chattr -i /system/xbin/daemonsu");
 	if (copy_file("/supersu/su", "/system/xbin/daemonsu", 0755) != 0) {
 		LOGERR("Failed to copy su binary to /system/xbin/daemonsu\n");
 		return false;
 	}
 	if (Path_Exists("/system/etc/init.d")) {
-		TWFunc::Exec_Cmd("/sbin/chattr -i /system/etc/init.d/99SuperSUDaemon", status);
+		TWFunc::Exec_Cmd("/sbin/chattr -i /system/etc/init.d/99SuperSUDaemon");
 		if (copy_file("/supersu/99SuperSUDaemon", "/system/etc/init.d/99SuperSUDaemon", 0755) != 0) {
 			LOGERR("Failed to copy 99SuperSUDaemon to /system/etc/init.d/99SuperSUDaemon\n");
 			return false;
 		}
 	} else {
-		TWFunc::Exec_Cmd("/sbin/chattr -i /system/etc/install-recovery.sh", status);
+		TWFunc::Exec_Cmd("/sbin/chattr -i /system/etc/install-recovery.sh");
 		if (copy_file("/supersu/install-recovery.sh", "/system/etc/install-recovery.sh", 0755) != 0) {
 			LOGERR("Failed to copy install-recovery.sh to /system/etc/install-recovery.sh\n");
 			return false;

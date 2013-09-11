@@ -227,13 +227,12 @@ int GUIAction::flash_zip(std::string filename, std::string pageName, const int s
 
 		// Now, check if we need to ensure TWRP remains installed...
 		struct stat st;
-		string result;
 		if (stat("/sbin/installTwrp", &st) == 0)
 		{
 			DataManager::SetValue("tw_operation", "Configuring TWRP");
 			DataManager::SetValue("tw_partition", "");
 			gui_print("Configuring TWRP...\n");
-			if (TWFunc::Exec_Cmd("/sbin/installTwrp reinstall", result) < 0)
+			if (TWFunc::Exec_Cmd("/sbin/installTwrp reinstall") < 0)
 			{
 				gui_print("Unable to configure TWRP with this kernel.\n");
 			}
@@ -759,7 +758,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 			if (wipe_cache)
 				PartitionManager.Wipe_By_Path("/cache");
-			string result;
+
 			if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
 				operation_start("ReinjectTWRP");
 				gui_print("Injecting TWRP into boot image...\n");
@@ -768,10 +767,10 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				} else {
 					TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
 					if (Boot == NULL || Boot->Current_File_System != "emmc")
-						TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash", result);
+						TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
 					else {
 						string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
-						TWFunc::Exec_Cmd(injectcmd, result);
+						TWFunc::Exec_Cmd(injectcmd);
 					}
 					gui_print("TWRP injection complete.\n");
 				}
@@ -961,9 +960,8 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				string result;
 				string cmd = "dd " + arg;
-				TWFunc::Exec_Cmd(cmd, result);
+				TWFunc::Exec_Cmd(cmd);
 			}
 			operation_end(0, simulate);
 			return 0;
@@ -1024,14 +1022,13 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		if (function == "cmd")
 		{
 			int op_status = 0;
-			string result;
 
 			operation_start("Command");
 			LOGINFO("Running command: '%s'\n", arg.c_str());
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				op_status = TWFunc::Exec_Cmd(arg, result);
+				op_status = TWFunc::Exec_Cmd(arg);
 				if (op_status != 0)
 					op_status = 1;
 			}
@@ -1082,13 +1079,12 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		if (function == "reinjecttwrp")
 		{
 			int op_status = 0;
-			string result;
 			operation_start("ReinjectTWRP");
 			gui_print("Injecting TWRP into boot image...\n");
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash", result);
+				TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
 				gui_print("TWRP injection complete.\n");
 			}
 
@@ -1175,7 +1171,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			} else {
 				int wipe_cache = 0;
 				int wipe_dalvik = 0;
-				string result, Sideload_File;
+				string Sideload_File;
 
 				if (!PartitionManager.Mount_Current_Storage(true)) {
 					operation_end(1, simulate);
@@ -1207,10 +1203,10 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					} else {
 						TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
 						if (Boot == NULL || Boot->Current_File_System != "emmc")
-							TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash", result);
+							TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
 						else {
 							string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
-							TWFunc::Exec_Cmd(injectcmd, result);
+							TWFunc::Exec_Cmd(injectcmd);
 						}
 						gui_print("TWRP injection complete.\n");
 					}

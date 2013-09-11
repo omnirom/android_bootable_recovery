@@ -997,13 +997,12 @@ main(int argc, char **argv) {
 #ifdef TW_INCLUDE_INJECTTWRP
 	// Back up TWRP Ramdisk if needed:
 	TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
-	string result;
 	LOGI("Backing up TWRP ramdisk...\n");
 	if (Boot == NULL || Boot->Current_File_System != "emmc")
-		TWFunc::Exec_Cmd("injecttwrp --backup /tmp/backup_recovery_ramdisk.img", result);
+		TWFunc::Exec_Cmd("injecttwrp --backup /tmp/backup_recovery_ramdisk.img");
 	else {
 		string injectcmd = "injecttwrp --backup /tmp/backup_recovery_ramdisk.img bd=" + Boot->Actual_Block_Device;
-		TWFunc::Exec_Cmd(injectcmd, result);
+		TWFunc::Exec_Cmd(injectcmd);
 	}
 	LOGI("Backup of TWRP ramdisk done.\n");
 #endif

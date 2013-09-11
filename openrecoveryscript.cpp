@@ -314,8 +314,7 @@ int OpenRecoveryScript::run_script_file(void) {
 			} else if (strcmp(command, "cmd") == 0) {
 				DataManager::SetValue("tw_action_text2", "Running Command");
 				if (cindex != 0) {
-					string status;
-					TWFunc::Exec_Cmd(value, status);
+					TWFunc::Exec_Cmd(value);
 				} else {
 					LOGERR("No value given for cmd\n");
 				}
@@ -364,14 +363,13 @@ int OpenRecoveryScript::run_script_file(void) {
 		return 1;
 	}
 	if (install_cmd && DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
-		string status;
 		gui_print("Injecting TWRP into boot image...\n");
 		TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
 		if (Boot == NULL || Boot->Current_File_System != "emmc")
-			TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash", status);
+			TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
 		else {
 			string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
-			TWFunc::Exec_Cmd(injectcmd.c_str(), status);
+			TWFunc::Exec_Cmd(injectcmd.c_str());
 		}
 		gui_print("TWRP injection complete.\n");
 	}
