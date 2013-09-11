@@ -51,6 +51,7 @@ service recovery /sbin/recovery
 
 service adbd /sbin/adbd recovery
     disabled
+    socket adbd stream 660 system system
 
 # Always start adbd on userdebug and eng builds
 on property:ro.debuggable=1
