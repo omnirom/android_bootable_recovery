@@ -603,6 +603,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 	}
 
 	if (function == "togglestorage") {
+		LOGERR("togglestorage action was deprecated from TWRP\n");
 		if (arg == "internal") {
 			DataManager::SetValue(TW_USE_EXTERNAL_STORAGE, 0);
 		} else if (arg == "external") {
@@ -1290,8 +1291,8 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			if (simulate) {
 				simulate_progress_bar();
 			} else {
-				if (!TWFunc::Fix_su_Perms())
-					op_status = 1;
+				LOGERR("Fixing su permissions was deprecated from TWRP.\n");
+				LOGERR("4.3+ ROMs with SELinux will always lose su perms.\n");
 			}
 
 			operation_end(op_status, simulate);

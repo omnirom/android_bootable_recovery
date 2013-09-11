@@ -249,14 +249,12 @@ int main(int argc, char **argv) {
 			// Device doesn't have su installed
 			DataManager::SetValue("tw_busy", 1);
 			if (gui_startPage("installsu") != 0) {
-				LOGERR("Failed to start decrypt GUI page.\n");
+				LOGERR("Failed to start SuperSU install page.\n");
 			}
 		} else if (TWFunc::Check_su_Perms() > 0) {
 			// su perms are set incorrectly
-			DataManager::SetValue("tw_busy", 1);
-			if (gui_startPage("fixsu") != 0) {
-				LOGERR("Failed to start decrypt GUI page.\n");
-			}
+			LOGINFO("Root permissions appear to be lost... fixing. (This will always happen on 4.3+ ROMs with SELinux.\n");
+			TWFunc::Fix_su_Perms();
 		}
 		sync();
 		PartitionManager.UnMount_By_Path("/system", false);
