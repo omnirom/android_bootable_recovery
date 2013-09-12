@@ -43,6 +43,7 @@ extern "C"
 #include "variables.h"
 #include "twrp-functions.hpp"
 #include "twrpDigest.hpp"
+#include "twcommon.h"
 
 using namespace std;
 
@@ -82,6 +83,7 @@ int twrpDigest::write_md5digest(void) {
 	md5string += basename((char*) md5fn.c_str());
 	md5string +=  + "\n";
 	TWFunc::write_file(md5file, md5string);
+	LOGINFO("MD5 for %s: %s\n", md5fn.c_str(), md5string.c_str());
 	return 0;
 }
 
