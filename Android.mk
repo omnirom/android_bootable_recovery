@@ -313,7 +313,6 @@ include $(BUILD_SHARED_LIBRARY)
 commands_recovery_local_path := $(LOCAL_PATH)
 include $(LOCAL_PATH)/minui/Android.mk \
     $(LOCAL_PATH)/minelf/Android.mk \
-    $(LOCAL_PATH)/minzip/Android.mk \
     $(LOCAL_PATH)/minadbd/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
@@ -346,6 +345,11 @@ endif
 ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/jb/Android.mk
     include $(commands_recovery_local_path)/crypto/fs_mgr/Android.mk
+endif
+ifeq ($(HAVE_SELINUX), true)
+    include $(commands_recovery_local_path)/minzip/Android.mk
+else
+    include $(commands_recovery_local_path)/minzipold/Android.mk
 endif
 ifeq ($(BUILD_ID), GINGERBREAD)
     TW_NO_EXFAT := true
