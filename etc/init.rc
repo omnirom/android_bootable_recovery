@@ -44,7 +44,7 @@ on property:sys.powerctl=*
 service ueventd /sbin/ueventd
     critical
 
-service healthd /sbin/healthd -n
+service healthd /sbin/healthd -r
     critical
 
 service recovery /sbin/recovery
