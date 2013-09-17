@@ -987,7 +987,7 @@ void TWFunc::Auto_Generate_Backup_Name() {
 	}
 	if (TWFunc::read_file("/system/build.prop", buildprop) != 0) {
 		LOGINFO("Unable to open /system/build.prop for getting backup name.\n");
-		DataManager::SetValue(TW_BACKUP_NAME, "");
+		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
 		if (!mount_state)
 			PartitionManager.UnMount_By_Path("/system", false);
 		return;
@@ -1011,6 +1011,7 @@ void TWFunc::Auto_Generate_Backup_Name() {
 	}
 	if (propvalue.empty()) {
 		LOGINFO("ro.build.display.id not found in build.prop\n");
+		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
 	}
 	if (!mount_state)
 		PartitionManager.UnMount_By_Path("/system", false);
