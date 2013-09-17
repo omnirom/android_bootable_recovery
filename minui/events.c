@@ -168,7 +168,7 @@ void ev_dispatch(void)
     }
 }
 
-int ev_get_input(int fd, unsigned int epevents, struct input_event *ev)
+int ev_get_input(int fd, uint32_t epevents, struct input_event *ev)
 {
     int r;
 

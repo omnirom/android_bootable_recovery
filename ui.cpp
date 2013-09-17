@@ -63,7 +63,7 @@ void RecoveryUI::Init() {
 }
 
 
-int RecoveryUI::input_callback(int fd, unsigned int epevents, void* data)
+int RecoveryUI::input_callback(int fd, uint32_t epevents, void* data)
 {
     struct input_event ev;
     int ret;
