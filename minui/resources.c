@@ -123,10 +123,18 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     surface->height = height;
     surface->stride = width; /* Yes, pixels, not bytes */
     surface->data = pData;
-    surface->format = (channels == 3) ? GGL_PIXEL_FORMAT_RGBX_8888 :
-        ((color_type == PNG_COLOR_TYPE_PALETTE ? GGL_PIXEL_FORMAT_RGBA_8888 : GGL_PIXEL_FORMAT_L_8));
 
-    int alpha = 0;
+    if (channels == 3) {
+        surface->format = GGL_PIXEL_FORMAT_RGBX_8888;
+    } else if (color_type == PNG_COLOR_TYPE_PALETTE) {
+        surface->format = GGL_PIXEL_FORMAT_RGBA_8888;
+    } else if (channels == 1) {
+        surface->format = GGL_PIXEL_FORMAT_L_8;
+    } else {
+        surface->format = GGL_PIXEL_FORMAT_RGBA_8888;
+    }
+
+    int alpha = (channels == 4);
     if (color_type == PNG_COLOR_TYPE_PALETTE) {
         png_set_palette_to_rgb(png_ptr);
     }
