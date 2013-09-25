@@ -21,80 +21,82 @@
 #include "common.h"
 #include "verifier.h"
 #include "ui.h"
+#include "mincrypt/sha.h"
+#include "mincrypt/sha256.h"
 
 // This is build/target/product/security/testkey.x509.pem after being
 // dumped out by dumpkey.jar.
 RSAPublicKey test_key =
     { 64, 0xc926ad21,
-      { 1795090719, 2141396315, 950055447, -1713398866,
-        -26044131, 1920809988, 546586521, -795969498,
-        1776797858, -554906482, 1805317999, 1429410244,
-        129622599, 1422441418, 1783893377, 1222374759,
-        -1731647369, 323993566, 28517732, 609753416,
-        1826472888, 215237850, -33324596, -245884705,
-        -1066504894, 774857746, 154822455, -1797768399,
-        -1536767878, -1275951968, -1500189652, 87251430,
-        -1760039318, 120774784, 571297800, -599067824,
-        -1815042109, -483341846, -893134306, -1900097649,
-        -1027721089, 950095497, 555058928, 414729973,
-        1136544882, -1250377212, 465547824, -236820568,
-        -1563171242, 1689838846, -404210357, 1048029507,
-        895090649, 247140249, 178744550, -747082073,
-        -1129788053, 109881576, -350362881, 1044303212,
-        -522594267, -1309816990, -557446364, -695002876},
-      { -857949815, -510492167, -1494742324, -1208744608,
-        251333580, 2131931323, 512774938, 325948880,
-        -1637480859, 2102694287, -474399070, 792812816,
-        1026422502, 2053275343, -1494078096, -1181380486,
-        165549746, -21447327, -229719404, 1902789247,
-        772932719, -353118870, -642223187, 216871947,
-        -1130566647, 1942378755, -298201445, 1055777370,
-        964047799, 629391717, -2062222979, -384408304,
-        191868569, -1536083459, -612150544, -1297252564,
-        -1592438046, -724266841, -518093464, -370899750,
-        -739277751, -1536141862, 1323144535, 61311905,
-        1997411085, 376844204, 213777604, -217643712,
-        9135381, 1625809335, -1490225159, -1342673351,
-        1117190829, -57654514, 1825108855, -1281819325,
-        1111251351, -1726129724, 1684324211, -1773988491,
-        367251975, 810756730, -1941182952, 1175080310 },
+      { 0x6afee91fu, 0x7fa31d5bu, 0x38a0b217u, 0x99df9baeu,
+        0xfe72991du, 0x727d3c04u, 0x20943f99u, 0xd08e7826u,
+        0x69e7c8a2u, 0xdeeccc8eu, 0x6b9af76fu, 0x553311c4u,
+        0x07b9e247u, 0x54c8bbcau, 0x6a540d81u, 0x48dbf567u,
+        0x98c92877u, 0x134fbfdeu, 0x01b32564u, 0x24581948u,
+        0x6cddc3b8u, 0x0cd444dau, 0xfe0381ccu, 0xf15818dfu,
+        0xc06e6d42u, 0x2e2f6412u, 0x093a6737u, 0x94d83b31u,
+        0xa466c87au, 0xb3f284a0u, 0xa694ec2cu, 0x053359e6u,
+        0x9717ee6au, 0x0732e080u, 0x220d5008u, 0xdc4af350u,
+        0x93d0a7c3u, 0xe330c9eau, 0xcac3da1eu, 0x8ebecf8fu,
+        0xc2be387fu, 0x38a14e89u, 0x211586f0u, 0x18b846f5u,
+        0x43be4c72u, 0xb578c204u, 0x1bbfb230u, 0xf1e267a8u,
+        0xa2d3e656u, 0x64b8e4feu, 0xe7e83d4bu, 0x3e77a943u,
+        0x3559ffd9u, 0x0ebb0f99u, 0x0aa76ce6u, 0xd3786ea7u,
+        0xbca8cd6bu, 0x068ca8e8u, 0xeb1de2ffu, 0x3e3ecd6cu,
+        0xe0d9d825u, 0xb1edc762u, 0xdec60b24u, 0xd6931904u},
+      { 0xccdcb989u, 0xe19281f9u, 0xa6e80accu, 0xb7f40560u,
+        0x0efb0bccu, 0x7f12b0bbu, 0x1e90531au, 0x136d95d0u,
+        0x9e660665u, 0x7d54918fu, 0xe3b93ea2u, 0x2f415d10u,
+        0x3d2df6e6u, 0x7a627ecfu, 0xa6f22d70u, 0xb995907au,
+        0x09de16b2u, 0xfeb8bd61u, 0xf24ec294u, 0x716a427fu,
+        0x2e12046fu, 0xeaf3d56au, 0xd9b873adu, 0x0ced340bu,
+        0xbc9cec09u, 0x73c65903u, 0xee39ce9bu, 0x3eede25au,
+        0x397633b7u, 0x2583c165u, 0x8514f97du, 0xe9166510u,
+        0x0b6fae99u, 0xa47139fdu, 0xdb8352f0u, 0xb2ad7f2cu,
+        0xa11552e2u, 0xd4d490a7u, 0xe11e8568u, 0xe9e484dau,
+        0xd3ef8449u, 0xa47055dau, 0x4edd9557u, 0x03a78ba1u,
+        0x770e130du, 0x16762facu, 0x0cbdfcc4u, 0xf3070540u,
+        0x008b6515u, 0x60e7e1b7u, 0xa72cf7f9u, 0xaff86e39u,
+        0x4296faadu, 0xfc90430eu, 0x6cc8f377u, 0xb398fd43u,
+        0x423c5997u, 0x991d59c4u, 0x6464bf73u, 0x96431575u,
+        0x15e3d207u, 0x30532a7au, 0x8c4be618u, 0x460a4d76u },
       3
     };
 
 RSAPublicKey test_f4_key =
     { 64, 0xc9bd1f21,
-      { 293133087u, 3210546773u, 865313125u, 250921607u,
-        3158780490u, 943703457u, 1242806226u, 2986289859u,
-        2942743769u, 2457906415u, 2719374299u, 1783459420u,
-        149579627u, 3081531591u, 3440738617u, 2788543742u,
-        2758457512u, 1146764939u, 3699497403u, 2446203424u,
-        1744968926u, 1159130537u, 2370028300u, 3978231572u,
-        3392699980u, 1487782451u, 1180150567u, 2841334302u,
-        3753960204u, 961373345u, 3333628321u, 748825784u,
-        2978557276u, 1566596926u, 1613056060u, 2600292737u,
-        1847226629u, 50398611u, 1890374404u, 2878700735u,
-        2286201787u, 1401186359u, 619285059u, 731930817u,
-        2340993166u, 1156490245u, 2992241729u, 151498140u,
-        318782170u, 3480838990u, 2100383433u, 4223552555u,
-        3628927011u, 4247846280u, 1759029513u, 4215632601u,
-        2719154626u, 3490334597u, 1751299340u, 3487864726u,
-        3668753795u, 4217506054u, 3748782284u, 3150295088u },
-      { 1772626313u, 445326068u, 3477676155u, 1758201194u,
-        2986784722u, 491035581u, 3922936562u, 702212696u,
-        2979856666u, 3324974564u, 2488428922u, 3056318590u,
-        1626954946u, 664714029u, 398585816u, 3964097931u,
-        3356701905u, 2298377729u, 2040082097u, 3025491477u,
-        539143308u, 3348777868u, 2995302452u, 3602465520u,
-        212480763u, 2691021393u, 1307177300u, 704008044u,
-        2031136606u, 1054106474u, 3838318865u, 2441343869u,
-        1477566916u, 700949900u, 2534790355u, 3353533667u,
-        336163563u, 4106790558u, 2701448228u, 1571536379u,
-        1103842411u, 3623110423u, 1635278839u, 1577828979u,
-        910322800u, 715583630u, 138128831u, 1017877531u,
-        2289162787u, 447994798u, 1897243165u, 4121561445u,
-        4150719842u, 2131821093u, 2262395396u, 3305771534u,
-        980753571u, 3256525190u, 3128121808u, 1072869975u,
-        3507939515u, 4229109952u, 118381341u, 2209831334u },
+      { 0x1178db1fu, 0xbf5d0e55u, 0x3393a165u, 0x0ef4c287u,
+        0xbc472a4au, 0x383fc5a1u, 0x4a13b7d2u, 0xb1ff2ac3u,
+        0xaf66b4d9u, 0x9280acefu, 0xa2165bdbu, 0x6a4d6e5cu,
+        0x08ea676bu, 0xb7ac70c7u, 0xcd158139u, 0xa635ccfeu,
+        0xa46ab8a8u, 0x445a3e8bu, 0xdc81d9bbu, 0x91ce1a20u,
+        0x68021cdeu, 0x4516eda9u, 0x8d43c30cu, 0xed1eff14u,
+        0xca387e4cu, 0x58adc233u, 0x4657ab27u, 0xa95b521eu,
+        0xdfc0e30cu, 0x394d64a1u, 0xc6b321a1u, 0x2ca22cb8u,
+        0xb1892d5cu, 0x5d605f3eu, 0x6025483cu, 0x9afd5181u,
+        0x6e1a7105u, 0x03010593u, 0x70acd304u, 0xab957cbfu,
+        0x8844abbbu, 0x53846837u, 0x24e98a43u, 0x2ba060c1u,
+        0x8b88b88eu, 0x44eea405u, 0xb259fc41u, 0x0907ad9cu,
+        0x13003adau, 0xcf79634eu, 0x7d314ec9u, 0xfbbe4c2bu,
+        0xd84d0823u, 0xfd30fd88u, 0x68d8a909u, 0xfb4572d9u,
+        0xa21301c2u, 0xd00a4785u, 0x6862b50cu, 0xcfe49796u,
+        0xdaacbd83u, 0xfb620906u, 0xdf71e0ccu, 0xbbc5b030u },
+      { 0x69a82189u, 0x1a8b22f4u, 0xcf49207bu, 0x68cc056au,
+        0xb206b7d2u, 0x1d449bbdu, 0xe9d342f2u, 0x29daea58u,
+        0xb19d011au, 0xc62f15e4u, 0x9452697au, 0xb62bb87eu,
+        0x60f95cc2u, 0x279ebb2du, 0x17c1efd8u, 0xec47558bu,
+        0xc81334d1u, 0x88fe7601u, 0x79992eb1u, 0xb4555615u,
+        0x2022ac8cu, 0xc79a4b8cu, 0xb288b034u, 0xd6b942f0u,
+        0x0caa32fbu, 0xa065ba51u, 0x4de9f154u, 0x29f64f6cu,
+        0x7910af5eu, 0x3ed4636au, 0xe4c81911u, 0x9183f37du,
+        0x5811e1c4u, 0x29c7a58cu, 0x9715d4d3u, 0xc7e2dce3u,
+        0x140972ebu, 0xf4c8a69eu, 0xa104d424u, 0x5dabbdfbu,
+        0x41cb4c6bu, 0xd7f44717u, 0x61785ff7u, 0x5e0bc273u,
+        0x36426c70u, 0x2aa6f08eu, 0x083badbfu, 0x3cab941bu,
+        0x8871da23u, 0x1ab3dbaeu, 0x7115a21du, 0xf5aa0965u,
+        0xf766f562u, 0x7f110225u, 0x86d96a04u, 0xc50a120eu,
+        0x3a751ca3u, 0xc21aa186u, 0xba7359d0u, 0x3ff2b257u,
+        0xd116e8bbu, 0xfc1318c0u, 0x070e5b1du, 0x83b759a6u },
       65537
     };
 
@@ -136,30 +138,37 @@ ui_print(const char* format, ...) {
 
 int main(int argc, char **argv) {
     if (argc < 2 || argc > 4) {
-        fprintf(stderr, "Usage: %s [-f4 | -file <keys>] <package>\n", argv[0]);
+        fprintf(stderr, "Usage: %s [-sha256] [-f4 | -file <keys>] <package>\n", argv[0]);
         return 2;
     }
 
-    RSAPublicKey* key = &test_key;
+    Certificate default_cert;
+    Certificate* cert = &default_cert;
+    cert->public_key = &test_key;
+    cert->hash_len = SHA_DIGEST_SIZE;
     int num_keys = 1;
     ++argv;
+    if (strcmp(argv[0], "-sha256") == 0) {
+        ++argv;
+        cert->hash_len = SHA256_DIGEST_SIZE;
+    }
     if (strcmp(argv[0], "-f4") == 0) {
         ++argv;
-        key = &test_f4_key;
+        cert->public_key = &test_f4_key;
     } else if (strcmp(argv[0], "-file") == 0) {
         ++argv;
-        key = load_keys(argv[0], &num_keys);
+        cert = load_keys(argv[0], &num_keys);
         ++argv;
     }
 
     ui = new FakeUI();
 
-    int result = verify_file(*argv, key, num_keys);
+    int result = verify_file(*argv, cert, num_keys);
     if (result == VERIFY_SUCCESS) {
-        printf("SUCCESS\n");
+        printf("VERIFIED\n");
         return 0;
     } else if (result == VERIFY_FAILURE) {
-        printf("FAILURE\n");
+        printf("NOT VERIFIED\n");
         return 1;
     } else {
         printf("bad return value\n");
