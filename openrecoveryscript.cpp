@@ -102,6 +102,8 @@ int OpenRecoveryScript::run_script_file(void) {
 					val_start++; //get rid of space
 				if ((int) *val_start == 51)
 					val_start++; //get rid of = at the beginning
+				if ((int) *val_start == 32)
+					val_start++; //get rid of space
 				strncpy(value, val_start, line_len - cindex - remove_nl);
 				LOGINFO("value is: '%s'\n", value);
 			} else {
