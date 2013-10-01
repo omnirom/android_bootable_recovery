@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     script[script_entry->uncompLen] = '\0';
 
     const ZipEntry* file_contexts_entry = mzFindZipEntry(&za, SELINUX_CONTEXTS_ZIP);
-    if (script_entry != NULL) {
+    if (file_contexts_entry != NULL) {
         int file_contexts_fd = creat(SELINUX_CONTEXTS_TMP, 0644);
 		if (file_contexts_fd < 0) {
 			fprintf(stderr, "Could not extract %s to '%s'\n", SELINUX_CONTEXTS_ZIP, SELINUX_CONTEXTS_TMP);
