@@ -2,7 +2,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := events.c resources.c
+LOCAL_SRC_FILES := events.c resources.c graphics_overlay.c
 
 ifneq ($(TW_BOARD_CUSTOM_GRAPHICS),)
     LOCAL_SRC_FILES += $(TW_BOARD_CUSTOM_GRAPHICS)
@@ -15,6 +15,10 @@ LOCAL_C_INCLUDES += \
     external/zlib \
     system/core/include \
     external/jpeg
+
+ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
+    LOCAL_CFLAGS += -DTW_QCOM_BSP
+endif
 
 ifeq ($(RECOVERY_TOUCHSCREEN_SWAP_XY), true)
 LOCAL_CFLAGS += -DRECOVERY_TOUCHSCREEN_SWAP_XY
