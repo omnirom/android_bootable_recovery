@@ -2,7 +2,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := events.c resources.c
+LOCAL_SRC_FILES := events.c resources.c graphics_overlay.c
 
 ifneq ($(TW_BOARD_CUSTOM_GRAPHICS),)
     LOCAL_SRC_FILES += $(TW_BOARD_CUSTOM_GRAPHICS)
@@ -15,6 +15,15 @@ LOCAL_C_INCLUDES += \
     external/zlib \
     system/core/include \
     external/jpeg
+
+#ifeq ($(call is-vendor-board-platform,QCOM),true)
+#    LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
+#    LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
+#endif
+
+ifeq ($(RECOVERY_USE_QCOM_OVERLAY), true)
+    LOCAL_CFLAGS += -DQCOM_BSP
+endif
 
 LOCAL_C_INCLUDES += \
     bootable/recovery/libjpegtwrp
