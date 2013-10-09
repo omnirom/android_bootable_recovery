@@ -17,11 +17,24 @@
 #ifndef _RECOVERY_VERIFIER_H
 #define _RECOVERY_VERIFIER_H
 
+#include "mincrypt/p256.h"
 #include "mincrypt/rsa.h"
 
-typedef struct Certificate {
+typedef struct {
+    p256_int x;
+    p256_int y;
+} ECPublicKey;
+
+typedef struct {
+    typedef enum {
+        RSA,
+        EC,
+    } KeyType;
+
     int hash_len;  // SHA_DIGEST_SIZE (SHA-1) or SHA256_DIGEST_SIZE (SHA-256)
-    RSAPublicKey* public_key;
+    KeyType key_type;
+    RSAPublicKey* rsa;
+    ECPublicKey* ec;
 } Certificate;
 
 /* Look in the file for a signature footer, and verify that it
