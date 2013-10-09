@@ -537,6 +537,12 @@ int twrpTar::Generate_Multiple_Archives(string Path) {
 		{
 			unsigned long long folder_size = TWFunc::Get_Folder_Size(FileName, false);
 			if (Archive_Current_Size + folder_size > MAX_ARCHIVE_SIZE) {
+				// Add the root folder first
+				LOGINFO("Adding root folder '%s' before splitting.\n", FileName.c_str());
+				if (addFile(FileName, true) != 0) {
+					LOGERR("Error adding folder '%s' to split archive.\n", FileName.c_str());
+					return -1;
+				}
 				LOGINFO("Calling Generate_Multiple_Archives\n");
 				if (Generate_Multiple_Archives(FileName) < 0)
 					return -1;
