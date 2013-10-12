@@ -23,6 +23,7 @@
 #include <linux/input.h>
 
 #include "minui.h"
+#include "cutils/log.h"
 
 #define MAX_DEVICES 16
 #define MAX_MISC_FDS 16
@@ -79,7 +80,7 @@ int ev_init(ev_callback input_cb, void *data)
 
             /* TODO: add ability to specify event masks. For now, just assume
              * that only EV_KEY and EV_REL event types are ever needed. */
-            if (!test_bit(EV_KEY, ev_bits) && !test_bit(EV_REL, ev_bits)) {
+            if (!test_bit(EV_KEY, ev_bits) && !test_bit(EV_REL, ev_bits) && !test_bit(EV_ABS, ev_bits)) {
                 close(fd);
                 continue;
             }
@@ -97,7 +98,7 @@ int ev_init(ev_callback input_cb, void *data)
             ev_fdinfo[ev_count].data = data;
             ev_count++;
             ev_dev_count++;
-            if(ev_dev_count == MAX_DEVICES) break;
+            if (ev_dev_count == (MAX_DEVICES + MAX_MISC_FDS)) break;
         }
     }
 

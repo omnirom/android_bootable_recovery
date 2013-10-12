@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include <cutils/android_reboot.h>
+#include <cutils/properties.h>
 
 #include "common.h"
 #include "roots.h"
@@ -54,7 +55,19 @@ RecoveryUI::RecoveryUI() :
     enable_reboot(true),
     consecutive_power_keys(0),
     consecutive_alternate_keys(0),
-    last_key(-1) {
+    last_key(-1),
+    in_touch(0),
+    touch_x(0),
+    touch_y(0),
+    old_x(0),
+    old_y(0),
+    diff_x(0),
+    diff_y(0),
+    min_x_swipe_px(100),
+    min_y_swipe_px(80),
+    max_x_touch(0),
+    max_y_touch(0),
+    mt_count(0) {
     pthread_mutex_init(&key_queue_mutex, NULL);
     pthread_cond_init(&key_queue_cond, NULL);
     self = this;
@@ -62,6 +75,7 @@ RecoveryUI::RecoveryUI() :
 }
 
 void RecoveryUI::Init() {
+    set_min_swipe_lengths();
     ev_init(input_callback, NULL);
     pthread_create(&input_t, NULL, input_thread, NULL);
 }
@@ -75,6 +89,8 @@ int RecoveryUI::input_callback(int fd, uint32_t epevents, void* data)
     ret = ev_get_input(fd, epevents, &ev);
     if (ret)
         return -1;
+
+    self->process_swipe(fd, &ev);
 
     if (ev.type == EV_SYN) {
         return 0;
@@ -192,6 +208,90 @@ void RecoveryUI::time_key(int key_code, int count) {
     }
     pthread_mutex_unlock(&key_queue_mutex);
     if (long_press) KeyLongPress(key_code);
+}
+
+void RecoveryUI::set_min_swipe_lengths() {
+    char value[PROPERTY_VALUE_MAX];
+    property_get("ro.sf.lcd_density", value, "0");
+    int screen_density = atoi(value);
+    if(screen_density > 0) {
+        min_x_swipe_px = (int)(0.5 * screen_density); // Roughly 0.5in
+        min_y_swipe_px = (int)(0.3 * screen_density); // Roughly 0.3in
+    }
+}
+
+void RecoveryUI::reset_gestures() {
+    diff_x = 0;
+    diff_y = 0;
+    old_x = 0;
+    old_y = 0;
+    touch_x = 0;
+    touch_y = 0;
+}
+
+void RecoveryUI::process_swipe(int fd, struct input_event *ev) {
+
+    if (max_x_touch == 0 || max_y_touch == 0) {
+        int abs_store[6] = {0};
+        ioctl(fd, EVIOCGABS(ABS_MT_POSITION_X), abs_store);
+        self->max_x_touch = abs_store[2];
+
+        ioctl(fd, EVIOCGABS(ABS_MT_POSITION_Y), abs_store);
+        self->max_y_touch = abs_store[2];
+    }
+
+    if (ev->type == EV_KEY && ev->code == BTN_TOUCH) {
+        if (ev->value == KEY_DOWN)
+            mt_count++;
+        else if (mt_count > 0 && ev->value == KEY_UP)
+            mt_count--;
+
+        if (mt_count == 0)
+            reset_gestures();
+
+    } else if (ev->type == EV_SYN) {
+        //Print("x=%d y=%d dx=%d dy=%d\n", diff_x, diff_y, min_x_swipe_px, min_y_swipe_px);
+        if (in_touch == 0 && ev->code == SYN_MT_REPORT) {
+            reset_gestures();
+            return;
+        }
+        in_touch = 0;
+        if (diff_y > min_y_swipe_px) {
+            EnqueueKey(KEY_VOLUMEDOWN);
+            reset_gestures();
+        } else if (diff_y < -min_y_swipe_px) {
+            EnqueueKey(KEY_VOLUMEUP);
+            reset_gestures();
+        } else if (diff_x > min_x_swipe_px) {
+            EnqueueKey(KEY_POWER);
+            reset_gestures();
+        } else if (diff_x < -min_x_swipe_px) {
+            EnqueueKey(KEY_BACK);
+            reset_gestures();
+        }
+
+    } else if (ev->type == EV_ABS && ev->code == ABS_MT_POSITION_X) {
+
+        in_touch = 1;
+        old_x = touch_x;
+        float touch_x_rel = (float)ev->value / (float)self->max_x_touch;
+        touch_x = touch_x_rel * gr_fb_width();
+
+        if (old_x != 0)
+            diff_x += touch_x - old_x;
+
+    } else if (ev->type == EV_ABS && ev->code == ABS_MT_POSITION_Y) {
+
+        in_touch = 1;
+        old_y = touch_y;
+        float touch_y_rel = (float)ev->value / (float)self->max_y_touch;
+        touch_y = touch_y_rel * gr_fb_height();
+
+        if (old_y != 0)
+            diff_y += touch_y - old_y;
+    }
+
+    return;
 }
 
 void RecoveryUI::EnqueueKey(int key_code) {

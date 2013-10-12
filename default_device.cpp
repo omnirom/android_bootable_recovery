@@ -20,8 +20,8 @@
 #include "device.h"
 #include "screen_ui.h"
 
-static const char* HEADERS[] = { "Volume up/down to move highlight;",
-                                 "enter button to select.",
+static const char* HEADERS[] = { "Swipe up/down to change selections;",
+                                 "swipe right to select, or left to go back.",
                                  "",
                                  NULL };
 
