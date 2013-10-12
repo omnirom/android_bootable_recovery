@@ -161,8 +161,9 @@ tar_extract_file(TAR *t, char *realname, char *prefix)
 #ifdef DEBUG
 		printf("    Restoring SELinux context %s to file %s\n", t->th_buf.selinux_context, realname);
 #endif
-		if(setfilecon(realname, t->th_buf.selinux_context) < 0)
+		if (lsetfilecon(realname, t->th_buf.selinux_context) < 0) {
 			fprintf(stderr, "Failed to restore SELinux context %s!\n", strerror(errno));
+		}
 	}
 #endif
 

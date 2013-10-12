@@ -901,7 +901,6 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 			end_pos = Restore_List.find(";", start_pos);
 		}
 	}
-
 	TWFunc::GUI_Operation_Text(TW_UPDATE_SYSTEM_DETAILS_TEXT, "Updating System Details");
 	Update_System_Details();
 	UnMount_Main_Partitions();

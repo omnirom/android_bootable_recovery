@@ -53,6 +53,9 @@ extern "C" {
 	#include "make_ext4fs.h"
 #endif
 }
+#ifdef HAVE_SELINUX
+#include "selinux/selinux.h"
+#endif
 
 using namespace std;
 
@@ -1272,6 +1275,12 @@ bool TWPartition::Wipe_EXT4() {
 		LOGERR("Unable to wipe '%s' using function call.\n", Mount_Point.c_str());
 		return false;
 	} else {
+		#ifdef HAVE_SELINUX
+		string sedir = Mount_Point + "/lost+found";
+		PartitionManager.Mount_By_Path(sedir.c_str(), true);
+		rmdir(sedir.c_str());
+		mkdir(sedir.c_str(), S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP);
+		#endif
 		return true;
 	}
 #else
