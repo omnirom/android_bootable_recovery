@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
+#include "asn1_decoder.h"
 #include "common.h"
-#include "verifier.h"
 #include "ui.h"
+#include "verifier.h"
 
+#include "mincrypt/dsa_sig.h"
+#include "mincrypt/p256.h"
+#include "mincrypt/p256_ecdsa.h"
 #include "mincrypt/rsa.h"
 #include "mincrypt/sha.h"
 #include "mincrypt/sha256.h"
@@ -27,6 +31,78 @@
 #include <errno.h>
 
 extern RecoveryUI* ui;
+
+/*
+ * Simple version of PKCS#7 SignedData extraction. This extracts the
+ * signature OCTET STRING to be used for signature verification.
+ *
+ * For full details, see http://www.ietf.org/rfc/rfc3852.txt
+ *
+ * The PKCS#7 structure looks like:
+ *
+ *   SEQUENCE (ContentInfo)
+ *     OID (ContentType)
+ *     [0] (content)
+ *       SEQUENCE (SignedData)
+ *         INTEGER (version CMSVersion)
+ *         SET (DigestAlgorithmIdentifiers)
+ *         SEQUENCE (EncapsulatedContentInfo)
+ *         [0] (CertificateSet OPTIONAL)
+ *         [1] (RevocationInfoChoices OPTIONAL)
+ *         SET (SignerInfos)
+ *           SEQUENCE (SignerInfo)
+ *             INTEGER (CMSVersion)
+ *             SEQUENCE (SignerIdentifier)
+ *             SEQUENCE (DigestAlgorithmIdentifier)
+ *             SEQUENCE (SignatureAlgorithmIdentifier)
+ *             OCTET STRING (SignatureValue)
+ */
+static bool read_pkcs7(uint8_t* pkcs7_der, size_t pkcs7_der_len, uint8_t** sig_der,
+        size_t* sig_der_length) {
+    asn1_context_t* ctx = asn1_context_new(pkcs7_der, pkcs7_der_len);
+    if (ctx == NULL) {
+        return false;
+    }
+
+    asn1_context_t* pkcs7_seq = asn1_sequence_get(ctx);
+    if (pkcs7_seq != NULL && asn1_sequence_next(pkcs7_seq)) {
+        asn1_context_t *signed_data_app = asn1_constructed_get(pkcs7_seq);
+        if (signed_data_app != NULL) {
+            asn1_context_t* signed_data_seq = asn1_sequence_get(signed_data_app);
+            if (signed_data_seq != NULL
+                    && asn1_sequence_next(signed_data_seq)
+                    && asn1_sequence_next(signed_data_seq)
+                    && asn1_sequence_next(signed_data_seq)
+                    && asn1_constructed_skip_all(signed_data_seq)) {
+                asn1_context_t *sig_set = asn1_set_get(signed_data_seq);
+                if (sig_set != NULL) {
+                    asn1_context_t* sig_seq = asn1_sequence_get(sig_set);
+                    if (sig_seq != NULL
+                            && asn1_sequence_next(sig_seq)
+                            && asn1_sequence_next(sig_seq)
+                            && asn1_sequence_next(sig_seq)
+                            && asn1_sequence_next(sig_seq)) {
+                        uint8_t* sig_der_ptr;
+                        if (asn1_octet_string_get(sig_seq, &sig_der_ptr, sig_der_length)) {
+                            *sig_der = (uint8_t*) malloc(*sig_der_length);
+                            if (*sig_der != NULL) {
+                                memcpy(*sig_der, sig_der_ptr, *sig_der_length);
+                            }
+                        }
+                        asn1_context_free(sig_seq);
+                    }
+                    asn1_context_free(sig_set);
+                }
+                asn1_context_free(signed_data_seq);
+            }
+            asn1_context_free(signed_data_app);
+        }
+        asn1_context_free(pkcs7_seq);
+    }
+    asn1_context_free(ctx);
+
+    return *sig_der != NULL;
+}
 
 // Look for an RSA signature embedded in the .ZIP file comment given
 // the path to the zip.  Verify it matches one of the given public
@@ -79,9 +155,8 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
     LOGI("comment is %d bytes; signature %d bytes from end\n",
          comment_size, signature_start);
 
-    if (signature_start - FOOTER_SIZE < RSANUMBYTES) {
-        // "signature" block isn't big enough to contain an RSA block.
-        LOGE("signature is too short\n");
+    if (signature_start <= FOOTER_SIZE) {
+        LOGE("Signature start is in the footer");
         fclose(f);
         return VERIFY_FAILURE;
     }
@@ -187,6 +262,23 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
     const uint8_t* sha1 = SHA_final(&sha1_ctx);
     const uint8_t* sha256 = SHA256_final(&sha256_ctx);
 
+    uint8_t* sig_der = NULL;
+    size_t sig_der_length = 0;
+
+    size_t signature_size = signature_start - FOOTER_SIZE;
+    if (!read_pkcs7(eocd + eocd_size - signature_start, signature_size, &sig_der,
+            &sig_der_length)) {
+        LOGE("Could not find signature DER block\n");
+        free(eocd);
+        return VERIFY_FAILURE;
+    }
+    free(eocd);
+
+    /*
+     * Check to make sure at least one of the keys matches the signature. Since
+     * any key can match, we need to try each before determining a verification
+     * failure has happened.
+     */
     for (i = 0; i < numKeys; ++i) {
         const uint8_t* hash;
         switch (pKeys[i].hash_len) {
@@ -197,16 +289,46 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
 
         // The 6 bytes is the "(signature_start) $ff $ff (comment_size)" that
         // the signing tool appends after the signature itself.
-        if (RSA_verify(pKeys[i].public_key, eocd + eocd_size - 6 - RSANUMBYTES,
-                       RSANUMBYTES, hash, pKeys[i].hash_len)) {
-            LOGI("whole-file signature verified against key %d\n", i);
-            free(eocd);
+        if (pKeys[i].key_type == Certificate::RSA) {
+            if (sig_der_length < RSANUMBYTES) {
+                // "signature" block isn't big enough to contain an RSA block.
+                LOGI("signature is too short for RSA key %d\n", i);
+                continue;
+            }
+
+            if (!RSA_verify(pKeys[i].rsa, sig_der, RSANUMBYTES,
+                            hash, pKeys[i].hash_len)) {
+                LOGI("failed to verify against RSA key %d\n", i);
+                continue;
+            }
+
+            LOGI("whole-file signature verified against RSA key %d\n", i);
+            free(sig_der);
+            return VERIFY_SUCCESS;
+        } else if (pKeys[i].key_type == Certificate::EC
+                && pKeys[i].hash_len == SHA256_DIGEST_SIZE) {
+            p256_int r, s;
+            if (!dsa_sig_unpack(sig_der, sig_der_length, &r, &s)) {
+                LOGI("Not a DSA signature block for EC key %d\n", i);
+                continue;
+            }
+
+            p256_int p256_hash;
+            p256_from_bin(hash, &p256_hash);
+            if (!p256_ecdsa_verify(&(pKeys[i].ec->x), &(pKeys[i].ec->y),
+                                   &p256_hash, &r, &s)) {
+                LOGI("failed to verify against EC key %d\n", i);
+                continue;
+            }
+
+            LOGI("whole-file signature verified against EC key %d\n", i);
+            free(sig_der);
             return VERIFY_SUCCESS;
         } else {
-            LOGI("failed to verify against key %d\n", i);
+            LOGI("Unknown key type %d\n", pKeys[i].key_type);
         }
     }
-    free(eocd);
+    free(sig_der);
     LOGE("failed to verify whole-file signature\n");
     return VERIFY_FAILURE;
 }
@@ -238,6 +360,7 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
 //       2: 2048-bit RSA key with e=65537 and SHA-1 hash
 //       3: 2048-bit RSA key with e=3 and SHA-256 hash
 //       4: 2048-bit RSA key with e=65537 and SHA-256 hash
+//       5: 256-bit EC key using the NIST P-256 curve parameters and SHA-256 hash
 //
 // Returns NULL if the file failed to parse, or if it contain zero keys.
 Certificate*
@@ -258,28 +381,41 @@ load_keys(const char* filename, int* numKeys) {
             ++*numKeys;
             out = (Certificate*)realloc(out, *numKeys * sizeof(Certificate));
             Certificate* cert = out + (*numKeys - 1);
-            cert->public_key = (RSAPublicKey*)malloc(sizeof(RSAPublicKey));
+            memset(cert, '\0', sizeof(Certificate));
 
             char start_char;
             if (fscanf(f, " %c", &start_char) != 1) goto exit;
             if (start_char == '{') {
                 // a version 1 key has no version specifier.
-                cert->public_key->exponent = 3;
+                cert->key_type = Certificate::RSA;
+                cert->rsa = (RSAPublicKey*)malloc(sizeof(RSAPublicKey));
+                cert->rsa->exponent = 3;
                 cert->hash_len = SHA_DIGEST_SIZE;
             } else if (start_char == 'v') {
                 int version;
                 if (fscanf(f, "%d {", &version) != 1) goto exit;
                 switch (version) {
                     case 2:
-                        cert->public_key->exponent = 65537;
+                        cert->key_type = Certificate::RSA;
+                        cert->rsa = (RSAPublicKey*)malloc(sizeof(RSAPublicKey));
+                        cert->rsa->exponent = 65537;
                         cert->hash_len = SHA_DIGEST_SIZE;
                         break;
                     case 3:
-                        cert->public_key->exponent = 3;
+                        cert->key_type = Certificate::RSA;
+                        cert->rsa = (RSAPublicKey*)malloc(sizeof(RSAPublicKey));
+                        cert->rsa->exponent = 3;
                         cert->hash_len = SHA256_DIGEST_SIZE;
                         break;
                     case 4:
-                        cert->public_key->exponent = 65537;
+                        cert->key_type = Certificate::RSA;
+                        cert->rsa = (RSAPublicKey*)malloc(sizeof(RSAPublicKey));
+                        cert->rsa->exponent = 65537;
+                        cert->hash_len = SHA256_DIGEST_SIZE;
+                        break;
+                    case 5:
+                        cert->key_type = Certificate::EC;
+                        cert->ec = (ECPublicKey*)calloc(1, sizeof(ECPublicKey));
                         cert->hash_len = SHA256_DIGEST_SIZE;
                         break;
                     default:
@@ -287,23 +423,55 @@ load_keys(const char* filename, int* numKeys) {
                 }
             }
 
-            RSAPublicKey* key = cert->public_key;
-            if (fscanf(f, " %i , 0x%x , { %u",
-                       &(key->len), &(key->n0inv), &(key->n[0])) != 3) {
+            if (cert->key_type == Certificate::RSA) {
+                RSAPublicKey* key = cert->rsa;
+                if (fscanf(f, " %i , 0x%x , { %u",
+                           &(key->len), &(key->n0inv), &(key->n[0])) != 3) {
+                    goto exit;
+                }
+                if (key->len != RSANUMWORDS) {
+                    LOGE("key length (%d) does not match expected size\n", key->len);
+                    goto exit;
+                }
+                for (i = 1; i < key->len; ++i) {
+                    if (fscanf(f, " , %u", &(key->n[i])) != 1) goto exit;
+                }
+                if (fscanf(f, " } , { %u", &(key->rr[0])) != 1) goto exit;
+                for (i = 1; i < key->len; ++i) {
+                    if (fscanf(f, " , %u", &(key->rr[i])) != 1) goto exit;
+                }
+                fscanf(f, " } } ");
+
+                LOGI("read key e=%d hash=%d\n", key->exponent, cert->hash_len);
+            } else if (cert->key_type == Certificate::EC) {
+                ECPublicKey* key = cert->ec;
+                int key_len;
+                unsigned int byte;
+                uint8_t x_bytes[P256_NBYTES];
+                uint8_t y_bytes[P256_NBYTES];
+                if (fscanf(f, " %i , { %u", &key_len, &byte) != 2) goto exit;
+                if (key_len != P256_NBYTES) {
+                    LOGE("Key length (%d) does not match expected size %d\n", key_len, P256_NBYTES);
+                    goto exit;
+                }
+                x_bytes[P256_NBYTES - 1] = byte;
+                for (i = P256_NBYTES - 2; i >= 0; --i) {
+                    if (fscanf(f, " , %u", &byte) != 1) goto exit;
+                    x_bytes[i] = byte;
+                }
+                if (fscanf(f, " } , { %u", &byte) != 1) goto exit;
+                y_bytes[P256_NBYTES - 1] = byte;
+                for (i = P256_NBYTES - 2; i >= 0; --i) {
+                    if (fscanf(f, " , %u", &byte) != 1) goto exit;
+                    y_bytes[i] = byte;
+                }
+                fscanf(f, " } } ");
+                p256_from_bin(x_bytes, &key->x);
+                p256_from_bin(y_bytes, &key->y);
+            } else {
+                LOGE("Unknown key type %d\n", cert->key_type);
                 goto exit;
             }
-            if (key->len != RSANUMWORDS) {
-                LOGE("key length (%d) does not match expected size\n", key->len);
-                goto exit;
-            }
-            for (i = 1; i < key->len; ++i) {
-                if (fscanf(f, " , %u", &(key->n[i])) != 1) goto exit;
-            }
-            if (fscanf(f, " } , { %u", &(key->rr[0])) != 1) goto exit;
-            for (i = 1; i < key->len; ++i) {
-                if (fscanf(f, " , %u", &(key->rr[i])) != 1) goto exit;
-            }
-            fscanf(f, " } } ");
 
             // if the line ends in a comma, this file has more keys.
             switch (fgetc(f)) {
@@ -319,8 +487,6 @@ load_keys(const char* filename, int* numKeys) {
                 LOGE("unexpected character between keys\n");
                 goto exit;
             }
-
-            LOGI("read key e=%d hash=%d\n", key->exponent, cert->hash_len);
         }
     }
 
