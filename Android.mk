@@ -24,6 +24,7 @@ LOCAL_SRC_FILES := \
     roots.cpp \
     ui.cpp \
     screen_ui.cpp \
+    asn1_decoder.cpp \
     verifier.cpp \
     adb_install.cpp
 
@@ -76,7 +77,13 @@ LOCAL_C_INCLUDES += system/extras/ext4_utils
 
 include $(BUILD_EXECUTABLE)
 
-
+# All the APIs for testing
+include $(CLEAR_VARS)
+LOCAL_MODULE := libverifier
+LOCAL_MODULE_TAGS := tests
+LOCAL_SRC_FILES := \
+    asn1_decoder.cpp
+include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := verifier_test
@@ -84,6 +91,7 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := \
     verifier_test.cpp \
+    asn1_decoder.cpp \
     verifier.cpp \
     ui.cpp
 LOCAL_STATIC_LIBRARIES := \
@@ -100,6 +108,7 @@ include $(LOCAL_PATH)/minui/Android.mk \
     $(LOCAL_PATH)/minzip/Android.mk \
     $(LOCAL_PATH)/minadbd/Android.mk \
     $(LOCAL_PATH)/mtdutils/Android.mk \
+    $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
