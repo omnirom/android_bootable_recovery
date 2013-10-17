@@ -25,7 +25,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 
-GUIImage::GUIImage(xml_node<>* node)
+GUIImage::GUIImage(xml_node<>* node) : Conditional(node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;
@@ -79,6 +79,9 @@ GUIImage::GUIImage(xml_node<>* node)
 
 int GUIImage::Render(void)
 {
+	if (!isConditionTrue())
+		return 0;
+
 	if (isHighlighted && mHighlightImage && mHighlightImage->GetResource()) {
 		gr_blit(mHighlightImage->GetResource(), 0, 0, mRenderW, mRenderH, mRenderX, mRenderY);
 		return 0;

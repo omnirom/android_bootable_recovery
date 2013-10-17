@@ -215,7 +215,7 @@ protected:
 };
 
 // GUIImage - Used for static image
-class GUIImage : public RenderObject
+class GUIImage : public RenderObject, public Conditional
 {
 public:
 	GUIImage(xml_node<>* node);
