@@ -157,6 +157,9 @@ int main(int argc, char **argv) {
 				index2 = 0;
 				while (*ptr != '=' && *ptr != '\n')
 					ptr++;
+				// skip the = before grabbing Zip_File
+				while (*ptr == '=')
+					ptr++;
 				if (*ptr) {
 					Zip_File = ptr;
 				} else
