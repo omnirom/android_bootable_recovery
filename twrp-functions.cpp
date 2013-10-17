@@ -1016,6 +1016,13 @@ void TWFunc::Auto_Generate_Backup_Name() {
 			Backup_Name += " " + propvalue;
 			if (Backup_Name.size() > MAX_BACKUP_NAME_LEN)
 				Backup_Name.resize(MAX_BACKUP_NAME_LEN);
+			// Trailing spaces cause problems on some file systems, so remove them
+			string space_check, space = " ";
+			space_check = Backup_Name.substr(Backup_Name.size() - 1, 1);
+			while (space_check == space) {
+				Backup_Name.resize(Backup_Name.size() - 1);
+				space_check = Backup_Name.substr(Backup_Name.size() - 1, 1);
+			}
 			DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
 			break;
 		}
