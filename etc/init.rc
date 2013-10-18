@@ -10,16 +10,8 @@ on init
     export ANDROID_DATA /data
     export EXTERNAL_STORAGE /sdcard
 
-    symlink /system/etc /etc
-
     mkdir /boot
     mkdir /recovery
-    mkdir /sdcard
-    mkdir /internal_sd
-    mkdir /external_sd
-    mkdir /sd-ext
-    mkdir /datadata
-    mkdir /emmc
     mkdir /system
     mkdir /data
     mkdir /cache
