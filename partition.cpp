@@ -563,9 +563,9 @@ void TWPartition::Setup_Image(bool Display_Error) {
 		Backup_Size = Size;
 	} else {
 		if (Display_Error)
-			LOGERR("Unable to find parition size for '%s'\n", Mount_Point.c_str());
+			LOGERR("Unable to find partition size for '%s'\n", Mount_Point.c_str());
 		else
-			LOGINFO("Unable to find parition size for '%s'\n", Mount_Point.c_str());
+			LOGINFO("Unable to find partition size for '%s'\n", Mount_Point.c_str());
 	}
 }
 
