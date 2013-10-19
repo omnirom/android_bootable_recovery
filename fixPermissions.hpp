@@ -27,6 +27,9 @@ class fixPermissions {
 		int fixDataApps();
 		int fixAllFiles(string directory, int gid, int uid, string file_perms);
 		int fixDataData(string dataDir);
+		int fixDataDataContexts(void);
+		int restorecon(std::string entry, struct stat *sb);
+
 		struct package {
 			string pkgName;
 			string codePath;

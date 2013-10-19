@@ -30,9 +30,62 @@
 #include "fixPermissions.hpp"
 #include "twrp-functions.hpp"
 #include "twcommon.h"
+#ifdef HAVE_SELINUX
+#include "selinux/selinux.h"
+#include "selinux/label.h"
+#include "selinux/android.h"
+#include "selinux/label.h"
+#endif
 
 using namespace std;
 using namespace rapidxml;
+
+#ifdef HAVE_SELINUX
+int fixPermissions::restorecon(string entry, struct stat *sb) {
+	char *oldcontext, *newcontext;
+	struct selabel_handle *sehandle;
+
+	sehandle = selinux_android_file_context_handle();
+	if (lgetfilecon(entry.c_str(), &oldcontext) < 0) {
+		LOGINFO("Couldn't get selinux context for %s\n", entry.c_str());
+		return -1;
+	}
+	if (selabel_lookup(sehandle, &newcontext, entry.c_str(), sb->st_mode) < 0) {
+		LOGINFO("Couldn't lookup selinux context for %s\n", entry.c_str());
+		return -1;
+	}
+	LOGINFO("Relabeling %s from %s to %s\n", entry.c_str(), oldcontext, newcontext);
+	if (lsetfilecon(entry.c_str(), newcontext) < 0) {
+		LOGINFO("Couldn't label %s with %s: %s\n", entry.c_str(), newcontext, strerror(errno));
+	}
+	freecon(oldcontext);
+	freecon(newcontext);
+	return 0;
+}
+
+int fixPermissions::fixDataDataContexts(void) {
+	DIR *d;
+	struct dirent *de;
+	struct stat sb;
+	struct selabel_handle *selinux_handle;
+	struct selinux_opt selinux_options[] = {
+		{ SELABEL_OPT_PATH, "/file_contexts" }
+	};
+	selinux_handle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
+	if (!selinux_handle)
+		printf("No file contexts for SELinux\n");
+	else
+		printf("SELinux contexts loaded from /file_contexts\n");
+	d = opendir("/data/data");
+	while (( de = readdir(d)) != NULL) {
+		stat(de->d_name, &sb);
+		string f = "/data/data/";
+		f = f + de->d_name;
+		restorecon(f, &sb);
+	}
+	return 0;
+}
+#endif
 
 int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_apps) {
 	packageFile = "/data/system/packages.xml";
@@ -116,6 +169,10 @@ int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_app
 			return -1;
 		}
 	}
+	#ifdef HAVE_SELINUX
+	gui_print("Fixing /data/data contexts.\n");
+	fixDataDataContexts();
+	#endif
 	gui_print("Done fixing permissions.\n");
 	return 0;
 }
@@ -225,7 +282,7 @@ int fixPermissions::fixSystemApps() {
 	while (temp != NULL) {
 		if (TWFunc::Path_Exists(temp->codePath)) {
 			if (temp->appDir.compare("/system/app") == 0) {
-				if (debug)  {
+				if (debug)	{
 					LOGINFO("Looking at '%s'\n", temp->codePath.c_str());
 					LOGINFO("Fixing permissions on '%s'\n", temp->pkgName.c_str());
 					LOGINFO("Directory: '%s'\n", temp->appDir.c_str());
