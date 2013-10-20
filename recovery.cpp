@@ -873,6 +873,39 @@ load_locale_from_cache() {
     }
 }
 
+static void
+setup_adbd() {
+    struct stat f;
+    static char *key_src = "/data/misc/adb/adb_keys";
+    static char *key_dest = "/adb_keys";
+
+    // Mount /data and copy adb_keys to root if it exists
+    ensure_path_mounted("/data");
+    if (stat(key_src, &f) == 0) {
+        FILE *file_src = fopen(key_src, "r");
+        if (file_src == NULL) {
+            LOGE("Can't open %s\n", key_src);
+        } else {
+            FILE *file_dest = fopen(key_dest, "w");
+            if (file_dest == NULL) {
+                LOGE("Can't open %s\n", key_dest);
+            } else {
+                char buf[4096];
+                while (fgets(buf, sizeof(buf), file_src)) fputs(buf, file_dest);
+                check_and_fclose(file_dest, key_dest);
+
+                // Enable secure adbd
+                property_set("ro.adb.secure", "1");
+            }
+            check_and_fclose(file_src, key_src);
+        }
+    }
+    ensure_path_unmounted("/data");
+
+    // Trigger (re)start of adb daemon
+    property_set("service.adb.root", "1");
+}
+
 static RecoveryUI* gCurrentUI = NULL;
 
 void
@@ -913,6 +946,8 @@ static int write_file(const char *path, const char *value)
     }
 }
 
+extern "C" int busybox_driver(int argc, char **argv);
+
 int
 main(int argc, char **argv) {
     time_t start = time(NULL);
@@ -929,6 +964,21 @@ main(int argc, char **argv) {
     if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
         adb_main();
         return 0;
+    }
+
+    // Handle alternative invocations
+    char* command = argv[0];
+    char* stripped = strrchr(argv[0], '/');
+    if (stripped)
+        command = stripped + 1;
+
+    if (strcmp(command, "recovery") != 0) {
+        if (!strcmp(command, "setup_adbd")) {
+            load_volume_table();
+            setup_adbd();
+            return 0;
+        }
+        return busybox_driver(argc, argv);
     }
 
     printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));

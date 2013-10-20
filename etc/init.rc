@@ -86,17 +86,19 @@ service healthd /sbin/healthd -r
 service recovery /sbin/recovery
     seclabel u:r:recovery:s0
 
+service setup_adbd /sbin/setup_adbd
+    oneshot
+    disabled
+
 service adbd /sbin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
     disabled
     socket adbd stream 660 system system
     seclabel u:r:adbd:s0
 
-# Always start adbd on userdebug and eng builds
+# setup_adbd will start adb once it has checked the keys
 on property:ro.debuggable=1
-    write /sys/class/android_usb/android0/enable 1
-    start adbd
+    start setup_adbd
 
-# Restart adbd so it can run as root
 on property:service.adb.root=1
     write /sys/class/android_usb/android0/enable 0
     restart adbd
