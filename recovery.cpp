@@ -61,6 +61,7 @@ static const struct option OPTIONS[] = {
   { "stages", required_argument, NULL, 'g' },
   { "shutdown_after", no_argument, NULL, 'p' },
   { "reason", required_argument, NULL, 'r' },
+  { "sideload", no_argument, NULL, 'a' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -98,6 +99,7 @@ char* reason = NULL;
  *   --wipe_cache - wipe cache (but not user data), then reboot
  *   --set_encrypted_filesystem=on|off - enables / diasables encrypted fs
  *   --just_exit - do nothing; exit and reboot
+ *   --sideload - enter sideload mode
  *
  * After completing, we remove /cache/recovery/command and reboot.
  * Arguments may also be supplied in the bootloader control block (BCB).
@@ -732,6 +734,22 @@ static void choose_recovery_file(Device* device) {
     }
 }
 
+static int enter_sideload_mode(int status, int* wipe_cache) {
+    ensure_path_mounted(CACHE_ROOT);
+    status = apply_from_adb(ui, wipe_cache, TEMPORARY_INSTALL_FILE);
+    if (status >= 0) {
+        if (status != INSTALL_SUCCESS) {
+            ui->SetBackground(RecoveryUI::ERROR);
+            ui->Print("Installation aborted.\n");
+        } else if (!ui->IsTextVisible()) {
+            return status;  // reboot if logs aren't visible
+        } else {
+            ui->Print("\nInstall from ADB complete.\n");
+        }
+    }
+    return status;
+}
+
 // Return REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER.  Returning NO_ACTION
 // means to take the default, which is to reboot or shutdown depending
 // on if the --shutdown_after flag was passed to recovery.
@@ -832,18 +850,7 @@ prompt_and_wait(Device* device, int status) {
                 break;
 
             case Device::APPLY_ADB_SIDELOAD:
-                status = apply_from_adb(ui, &wipe_cache, TEMPORARY_INSTALL_FILE);
-                if (status >= 0) {
-                    if (status != INSTALL_SUCCESS) {
-                        ui->SetBackground(RecoveryUI::ERROR);
-                        ui->Print("Installation aborted.\n");
-                        copy_logs();
-                    } else if (!ui->IsTextVisible()) {
-                        return Device::NO_ACTION;  // reboot if logs aren't visible
-                    } else {
-                        ui->Print("\nInstall from ADB complete.\n");
-                    }
-                }
+                status = enter_sideload_mode(status, &wipe_cache);
                 break;
         }
     }
@@ -876,8 +883,8 @@ load_locale_from_cache() {
 static void
 setup_adbd() {
     struct stat f;
-    static char *key_src = "/data/misc/adb/adb_keys";
-    static char *key_dest = "/adb_keys";
+    const char *key_src = "/data/misc/adb/adb_keys";
+    const char *key_dest = "/adb_keys";
 
     // Mount /data and copy adb_keys to root if it exists
     ensure_path_mounted("/data");
@@ -952,8 +959,6 @@ int
 main(int argc, char **argv) {
     time_t start = time(NULL);
 
-    redirect_stdio(TEMPORARY_LOG_FILE);
-
     // If this binary is started with the single argument "--adbd",
     // instead of being the normal recovery binary, it turns into kind
     // of a stripped-down version of adbd that only supports the
@@ -981,6 +986,8 @@ main(int argc, char **argv) {
         return busybox_driver(argc, argv);
     }
 
+    redirect_stdio(TEMPORARY_LOG_FILE);
+
     printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
 
     load_volume_table();
@@ -990,7 +997,7 @@ main(int argc, char **argv) {
 
     const char *send_intent = NULL;
     const char *update_package = NULL;
-    int wipe_data = 0, wipe_cache = 0, show_text = 0;
+    int wipe_data = 0, wipe_cache = 0, show_text = 0, sideload = 0;
     bool just_exit = false;
     bool shutdown_after = false;
 
@@ -1014,6 +1021,7 @@ main(int argc, char **argv) {
         }
         case 'p': shutdown_after = true; break;
         case 'r': reason = optarg; break;
+        case 'a': sideload = 1; break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -1113,6 +1121,8 @@ main(int argc, char **argv) {
     } else if (wipe_cache) {
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
+    } else if (sideload) {
+        status = enter_sideload_mode(status, &wipe_cache);
     } else if (!just_exit) {
         status = INSTALL_NONE;  // No command specified
         ui->SetBackground(RecoveryUI::NO_COMMAND);
