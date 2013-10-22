@@ -104,7 +104,9 @@ int  blanktimer::setClockTimer(void) {
 			setBrightness(0);
 			screenoff = true;
 			TWFunc::check_and_run_script("/sbin/postscreenblank.sh", "blank");
+#ifndef USE_LCD_FOR_BLANK
 			PageManager::ChangeOverlay("lock");
+#endif
 		}
 #ifndef TW_NO_SCREEN_BLANK
 		if (conblank == 2 && gr_fb_blank(1) >= 0) {

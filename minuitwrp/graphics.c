@@ -691,12 +691,24 @@ gr_pixel *gr_fb_data(void)
 
 int gr_fb_blank(int blank)
 {
+#ifdef TARGET_LCD_BLANK_PATH
+    int fd;
+
+    fd = open(TARGET_LCD_BLANK_PATH, O_RDWR);
+    if (fd < 0) {
+        perror("cannot open LCD blank path");
+    }
+    write(fd, blank ? "000" : "127", 3);
+    close(fd);
+    return fd;
+#else
     int ret;
 
     ret = ioctl(gr_fb_fd, FBIOBLANK, blank ? FB_BLANK_POWERDOWN : FB_BLANK_UNBLANK);
     if (ret < 0)
         perror("ioctl(): blank");
-	return ret;
+    return ret;
+#endif
 }
 
 int gr_get_surface(gr_surface* surface)

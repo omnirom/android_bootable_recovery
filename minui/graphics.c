@@ -437,9 +437,21 @@ gr_pixel *gr_fb_data(void)
 
 void gr_fb_blank(bool blank)
 {
+#ifdef TARGET_LCD_BLANK_PATH
+    int fd;
+
+    fd = open(TARGET_LCD_BLANK_PATH, O_RDWR);
+    if (fd < 0) {
+        perror("cannot open LCD blank path");
+        return;
+    }
+    write(fd, blank ? "000" : "127", 3);
+    close(fd);
+#else
     int ret;
 
     ret = ioctl(gr_fb_fd, FBIOBLANK, blank ? FB_BLANK_POWERDOWN : FB_BLANK_UNBLANK);
     if (ret < 0)
         perror("ioctl(): blank");
+#endif
 }
