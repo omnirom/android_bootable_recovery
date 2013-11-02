@@ -21,17 +21,21 @@ ifeq ($(TWHAVE_SELINUX), true)
 endif
 
 LOCAL_SRC_FILES := \
-	dynarray.c \
 	toolbox.c \
 	$(patsubst %,%.c,$(TOOLS))
 
-TOOLS += reboot
-
-ifeq ($(BOARD_USES_BOOTMENU),true)
-	LOCAL_SRC_FILES += ../../../external/bootmenu/libreboot/reboot.c
-else
-	LOCAL_SRC_FILES += reboot.c
+ifneq ($(wildcard system/core/toolbox/dynarray.c),)
+    LOCAL_SRC_FILES += dynarray.c
 endif
+
+# reboot.c was removed in 4.4 kitkat
+#TOOLS += reboot
+
+#ifeq ($(BOARD_USES_BOOTMENU),true)
+#	LOCAL_SRC_FILES += ../../../external/bootmenu/libreboot/reboot.c
+#else
+#	LOCAL_SRC_FILES += reboot.c
+#endif
 
 LOCAL_C_INCLUDES := bionic/libc/bionic
 

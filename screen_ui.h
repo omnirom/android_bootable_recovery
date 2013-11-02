@@ -53,6 +53,14 @@ class ScreenRecoveryUI : public RecoveryUI {
     int SelectMenu(int sel);
     void EndMenu();
 
+    void Redraw();
+
+    enum UIElement { HEADER, MENU, MENU_SEL_BG, MENU_SEL_FG, LOG, TEXT_FILL };
+    virtual void SetColor(UIElement e);
+
+  protected:
+    int install_overlay_offset_x, install_overlay_offset_y;
+
   private:
     Icon currentIcon;
     int installingFrame;
@@ -94,7 +102,6 @@ class ScreenRecoveryUI : public RecoveryUI {
     int animation_fps;
     int indeterminate_frames;
     int installing_frames;
-    int install_overlay_offset_x, install_overlay_offset_y;
     int overlay_offset_x, overlay_offset_y;
 
     void draw_install_overlay_locked(int frame);

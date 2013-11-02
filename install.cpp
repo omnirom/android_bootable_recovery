@@ -154,6 +154,7 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
             } else {
                 ui->Print("\n");
             }
+            fflush(stdout);
         } else if (strcmp(command, "wipe_cache") == 0) {
             *wipe_cache = 1;
         } else if (strcmp(command, "clear_display") == 0) {
@@ -179,7 +180,9 @@ really_install_package(const char *path, int* wipe_cache)
 {
     ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
     ui->Print("Finding update package...\n");
-    ui->SetProgressType(RecoveryUI::INDETERMINATE);
+    // Give verification half the progress bar...
+    ui->SetProgressType(RecoveryUI::DETERMINATE);
+    ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
     LOGI("Update location: %s\n", path);
 
     if (ensure_path_mounted(path) != 0) {
@@ -190,17 +193,14 @@ really_install_package(const char *path, int* wipe_cache)
     ui->Print("Opening update package...\n");
 
     int numKeys;
-    RSAPublicKey* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
+    Certificate* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
     if (loadedKeys == NULL) {
         LOGE("Failed to load keys\n");
         return INSTALL_CORRUPT;
     }
     LOGI("%d key(s) loaded from %s\n", numKeys, PUBLIC_KEYS_FILE);
 
-    // Give verification half the progress bar...
     ui->Print("Verifying update package...\n");
-    ui->SetProgressType(RecoveryUI::DETERMINATE);
-    ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
 
     int err;
     err = verify_file(path, loadedKeys, numKeys);
@@ -236,7 +236,13 @@ install_package(const char* path, int* wipe_cache, const char* install_file)
     } else {
         LOGE("failed to open last_install: %s\n", strerror(errno));
     }
-    int result = really_install_package(path, wipe_cache);
+    int result;
+    if (setup_install_mounts() != 0) {
+        LOGE("failed to set up expected mounts for install; aborting\n");
+        result = INSTALL_ERROR;
+    } else {
+        result = really_install_package(path, wipe_cache);
+    }
     if (install_log) {
         fputc(result == INSTALL_SUCCESS ? '1' : '0', install_log);
         fputc('\n', install_log);

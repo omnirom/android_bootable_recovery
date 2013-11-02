@@ -20,6 +20,7 @@
 
 #include "mincrypt/rsa.h"
 #include "mincrypt/sha.h"
+#include "mincrypt/sha256.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -38,23 +39,13 @@
 int verify_file(const char* path) {
     //ui->SetProgress(0.0);
 
-	int numKeys;
-    RSAPublicKey* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
-    if (loadedKeys == NULL) {
+    int numKeys;
+    Certificate* pKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
+    if (pKeys == NULL) {
         LOGE("Failed to load keys\n");
-        return VERIFY_FAILURE;
+        return INSTALL_CORRUPT;
     }
-	/*
-    LOGI("%d key(s) loaded from %s\n\n   RSA Key:\n\n", numKeys, PUBLIC_KEYS_FILE);
-	int rsa_size = sizeof(RSAPublicKey);
-	unsigned char* ptr = (unsigned char*) loadedKeys;
-	unsigned int valuedees;
-	for (int dees2 = 0; dees2 < rsa_size; dees2++) {
-		valuedees = *ptr;
-		printf("%02x ", valuedees);
-		ptr++;
-	}
-	printf("\n\n");*/
+    LOGI("%d key(s) loaded from %s\n", numKeys, PUBLIC_KEYS_FILE);
 
     FILE* f = fopen(path, "rb");
     if (f == NULL) {
@@ -87,6 +78,7 @@ int verify_file(const char* path) {
     }
 
     if (footer[2] != 0xff || footer[3] != 0xff) {
+        LOGE("footer is wrong\n");
         fclose(f);
         return VERIFY_FAILURE;
     }
@@ -158,8 +150,19 @@ int verify_file(const char* path) {
 
 #define BUFFER_SIZE 4096
 
-    SHA_CTX ctx;
-    SHA_init(&ctx);
+    bool need_sha1 = false;
+    bool need_sha256 = false;
+    for (i = 0; i < numKeys; ++i) {
+        switch (pKeys[i].hash_len) {
+            case SHA_DIGEST_SIZE: need_sha1 = true; break;
+            case SHA256_DIGEST_SIZE: need_sha256 = true; break;
+        }
+    }
+
+    SHA_CTX sha1_ctx;
+    SHA256_CTX sha256_ctx;
+    SHA_init(&sha1_ctx);
+    SHA256_init(&sha256_ctx);
     unsigned char* buffer = (unsigned char*)malloc(BUFFER_SIZE);
     if (buffer == NULL) {
         LOGE("failed to alloc memory for sha1 buffer\n");
@@ -178,7 +181,8 @@ int verify_file(const char* path) {
             fclose(f);
             return VERIFY_FAILURE;
         }
-        SHA_update(&ctx, buffer, size);
+        if (need_sha1) SHA_update(&sha1_ctx, buffer, size);
+        if (need_sha256) SHA256_update(&sha256_ctx, buffer, size);
         so_far += size;
         double f = so_far / (double)signed_len;
         if (f > frac + 0.02 || size == so_far) {
@@ -189,20 +193,28 @@ int verify_file(const char* path) {
     fclose(f);
     free(buffer);
 
-    const uint8_t* sha1 = SHA_final(&ctx);
+    const uint8_t* sha1 = SHA_final(&sha1_ctx);
+    const uint8_t* sha256 = SHA256_final(&sha256_ctx);
+
     for (i = 0; i < numKeys; ++i) {
+        const uint8_t* hash;
+        switch (pKeys[i].hash_len) {
+            case SHA_DIGEST_SIZE: hash = sha1; break;
+            case SHA256_DIGEST_SIZE: hash = sha256; break;
+            default: continue;
+        }
+
         // The 6 bytes is the "(signature_start) $ff $ff (comment_size)" that
         // the signing tool appends after the signature itself.
-		int dees = RSA_verify(loadedKeys+i, eocd + eocd_size - 6 - RSANUMBYTES,
-                       RSANUMBYTES, sha1);
-        if (dees) {
+        if (RSA_verify(pKeys[i].public_key, eocd + eocd_size - 6 - RSANUMBYTES,
+                       RSANUMBYTES, hash, pKeys[i].hash_len)) {
             LOGI("whole-file signature verified against key %d\n", i);
             free(eocd);
             return VERIFY_SUCCESS;
         } else {
             LOGI("failed to verify against key %d\n", i);
         }
-		LOGI("i: %i, eocd_size: %i, RSANUMBYTES: %i, returned %i\n", i, eocd_size, RSANUMBYTES, dees);
+		LOGI("i: %i, eocd_size: %i, RSANUMBYTES: %i\n", i, eocd_size, RSANUMBYTES);
     }
     free(eocd);
     LOGE("failed to verify whole-file signature\n");
@@ -228,10 +240,19 @@ int verify_file(const char* path) {
 // The file may contain multiple keys in this format, separated by
 // commas.  The last key must not be followed by a comma.
 //
+// A Certificate is a pair of an RSAPublicKey and a particular hash
+// (we support SHA-1 and SHA-256; we store the hash length to signify
+// which is being used).  The hash used is implied by the version number.
+//
+//       1: 2048-bit RSA key with e=3 and SHA-1 hash
+//       2: 2048-bit RSA key with e=65537 and SHA-1 hash
+//       3: 2048-bit RSA key with e=3 and SHA-256 hash
+//       4: 2048-bit RSA key with e=65537 and SHA-256 hash
+//
 // Returns NULL if the file failed to parse, or if it contain zero keys.
-RSAPublicKey*
+Certificate*
 load_keys(const char* filename, int* numKeys) {
-    RSAPublicKey* out = NULL;
+    Certificate* out = NULL;
     *numKeys = 0;
 
     FILE* f = fopen(filename, "r");
@@ -245,29 +266,39 @@ load_keys(const char* filename, int* numKeys) {
         bool done = false;
         while (!done) {
             ++*numKeys;
-            out = (RSAPublicKey*)realloc(out, *numKeys * sizeof(RSAPublicKey));
-            RSAPublicKey* key = out + (*numKeys - 1);
+            out = (Certificate*)realloc(out, *numKeys * sizeof(Certificate));
+            Certificate* cert = out + (*numKeys - 1);
+            cert->public_key = (RSAPublicKey*)malloc(sizeof(RSAPublicKey));
 
-#ifdef HAS_EXPONENT
             char start_char;
             if (fscanf(f, " %c", &start_char) != 1) goto exit;
             if (start_char == '{') {
                 // a version 1 key has no version specifier.
-                key->exponent = 3;
+                cert->public_key->exponent = 3;
+                cert->hash_len = SHA_DIGEST_SIZE;
             } else if (start_char == 'v') {
                 int version;
                 if (fscanf(f, "%d {", &version) != 1) goto exit;
-                if (version == 2) {
-                    key->exponent = 65537;
-                } else {
-                    goto exit;
+                switch (version) {
+                    case 2:
+                        cert->public_key->exponent = 65537;
+                        cert->hash_len = SHA_DIGEST_SIZE;
+                        break;
+                    case 3:
+                        cert->public_key->exponent = 3;
+                        cert->hash_len = SHA256_DIGEST_SIZE;
+                        break;
+                    case 4:
+                        cert->public_key->exponent = 65537;
+                        cert->hash_len = SHA256_DIGEST_SIZE;
+                        break;
+                    default:
+                        goto exit;
                 }
             }
 
+            RSAPublicKey* key = cert->public_key;
             if (fscanf(f, " %i , 0x%x , { %u",
-#else
-            if (fscanf(f, " { %i , 0x%x , { %u",
-#endif
                        &(key->len), &(key->n0inv), &(key->n[0])) != 3) {
                 goto exit;
             }
@@ -298,9 +329,7 @@ load_keys(const char* filename, int* numKeys) {
                 LOGE("unexpected character between keys\n");
                 goto exit;
             }
-#ifdef HAS_EXPONENT
-            LOGI("read key e=%d\n", key->exponent);
-#endif
+            LOGI("read key e=%d hash=%d\n", key->exponent, cert->hash_len);
         }
     }
 
