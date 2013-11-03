@@ -18,7 +18,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+/*
 #include "common.h"
+*/
 #include "verifier.h"
 #include "ui.h"
 #include "mincrypt/sha.h"
@@ -163,7 +165,10 @@ int main(int argc, char **argv) {
 
     ui = new FakeUI();
 
+/*
     int result = verify_file(*argv, cert, num_keys);
+*/
+    int result = verify_file(*argv);
     if (result == VERIFY_SUCCESS) {
         printf("VERIFIED\n");
         return 0;

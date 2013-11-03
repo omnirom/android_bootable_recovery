@@ -289,12 +289,13 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := verifier_test
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE_TAGS := tests
+LOCAL_C_INCLUDES := bootable/recovery/libmincrypt/includes
 LOCAL_SRC_FILES := \
     verifier_test.cpp \
     verifier.cpp \
     ui.cpp
 LOCAL_STATIC_LIBRARIES := \
-    libmincrypt \
+    libmincrypttwrp \
     libminui \
     libcutils \
     libstdc++ \
