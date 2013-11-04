@@ -98,6 +98,9 @@ ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/fsck.f2fs
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/fibmap.f2fs
 endif
+ifneq ($(wildcard system/core/reboot/Android.mk),)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/reboot
+endif
 
 TWRP_AUTOGEN := $(intermediates)/teamwin
 
