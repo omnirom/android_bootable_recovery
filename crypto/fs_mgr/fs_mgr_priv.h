@@ -25,17 +25,7 @@
 
 #define CRYPTO_TMPFS_OPTIONS "size=128m,mode=0771,uid=1000,gid=1000"
 
-struct fstab_rec {
-    char *blk_dev;
-    char *mnt_point;
-    char *type;
-    unsigned long flags;
-    char *fs_options;
-    int fs_mgr_flags;
-    char *key_loc;
-};
-
-#define WAIT_TIMEOUT 5
+#define WAIT_TIMEOUT 20
 
 /* fstab has the following format:
  *
@@ -59,8 +49,8 @@ struct fstab_rec {
  *                     run an fscheck program on the <source> before mounting the filesystem.
  *                     If check is specifed on a read-only filesystem, it is ignored.
  *                     Also, "encryptable" means that filesystem can be encrypted.
- *                     The "encryptable" flag _MUST_ be followed by a : and a string which
- *                     is the location of the encryption keys.  I can either be a path
+ *                     The "encryptable" flag _MUST_ be followed by a = and a string which
+ *                     is the location of the encryption keys.  It can either be a path
  *                     to a file or partition which contains the keys, or the word "footer"
  *                     which means the keys are in the last 16 Kbytes of the partition
  *                     containing the filesystem.
@@ -72,9 +62,24 @@ struct fstab_rec {
  *
  */
 
-#define MF_WAIT      0x1
-#define MF_CHECK     0x2
-#define MF_CRYPT     0x4
+#define MF_WAIT         0x1
+#define MF_CHECK        0x2
+#define MF_CRYPT        0x4
+#define MF_NONREMOVABLE 0x8
+#define MF_VOLDMANAGED  0x10
+#define MF_LENGTH       0x20
+#define MF_RECOVERYONLY 0x40
+#define MF_SWAPPRIO     0x80
+#define MF_ZRAMSIZE     0x100
+#define MF_VERIFY       0x200
+/*
+ * There is no emulated sdcard daemon running on /data/media on this device,
+ * so treat the physical SD card as the only external storage device,
+ * a la the Nexus One.
+ */
+#define MF_NOEMULATEDSD 0x400
+
+#define DM_BUF_SIZE 4096
 
 #endif /* __CORE_FS_MGR_PRIV_H */
 
