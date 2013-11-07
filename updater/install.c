@@ -285,6 +285,40 @@ done:
     return StringValue(result);
 }
 
+Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
+    char* result = NULL;
+    if (argc != 2) {
+        return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
+    }
+
+    char* src_name;
+    char* dst_name;
+
+    if (ReadArgs(state, argv, 2, &src_name, &dst_name) < 0) {
+        return NULL;
+    }
+    if (strlen(src_name) == 0) {
+        ErrorAbort(state, "src_name argument to %s() can't be empty", name);
+        goto done;
+    }
+    if (strlen(dst_name) == 0) {
+        ErrorAbort(state, "dst_name argument to %s() can't be empty",
+                   name);
+        goto done;
+    }
+
+    if (rename(src_name, dst_name) != 0) {
+        ErrorAbort(state, "Rename of %s() to %s() failed, error %s()",
+          src_name, dst_name, strerror(errno));
+    } else {
+        result = dst_name;
+    }
+
+done:
+    free(src_name);
+    if (result != dst_name) free(dst_name);
+    return StringValue(result);
+}
 
 Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
     char** paths = malloc(argc * sizeof(char*));
@@ -1425,6 +1459,7 @@ void RegisterInstallFunctions() {
 
     RegisterFunction("read_file", ReadFileFn);
     RegisterFunction("sha1_check", Sha1CheckFn);
+    RegisterFunction("rename", RenameFn);
 
     RegisterFunction("wipe_cache", WipeCacheFn);
 
