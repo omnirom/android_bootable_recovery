@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab89d9a9_53f1e4da",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 358,
+      "author": {
+        "id": 1000061
+      },
+      "writtenOn": "2013-11-10T01:25:25Z",
+      "side": 1,
+      "message": "Pointing to a non-existent file. The build fails. crypto/scrypt is empty folder.",
+      "revId": "fefd1ebef829c576fbb6c06e3e349ccb52e812e6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
