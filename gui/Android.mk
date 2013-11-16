@@ -68,6 +68,14 @@ ifeq ($(HAVE_SELINUX), true)
 LOCAL_CFLAGS += -DHAVE_SELINUX
 endif
 
+ifndef DEVICE_RESOLUTION
+$(warning ********************************************************************************)
+$(warning * DEVICE_RESOLUTION is NOT SET in BoardConfig.mk )
+$(warning * Please see http://tinyw.in/nP7d for details    )
+$(warning ********************************************************************************)
+$(error stopping)
+endif
+
 LOCAL_C_INCLUDES += bionic external/stlport/stlport $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION)
 
 include $(BUILD_STATIC_LIBRARY)
