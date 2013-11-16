@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab89d9a9_17b9ffe5",
+        "filename": "gui/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 1000010
+      },
+      "writtenOn": "2013-11-16T18:40:19Z",
+      "side": 1,
+      "message": "\"...DEVICE_RESOLUTION ($(DEVICE_RESOLUTION)) does...\"",
+      "revId": "06e740800bfe18943ed8a9ac8a238d5b251a438c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
