@@ -1,0 +1,11 @@
+bionic.patch:
+
+Allows scrypt to compile against bionic.
+
+use_openssl_pbkdf2.patch:
+
+Uses the PBKDF2 function from OpenSSL (it uses accelerated SHA256)
+
+arm-neon.patch:
+
+Adds NEON acceleration for the Salsa20/8 mixing function.
