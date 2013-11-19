@@ -356,6 +356,7 @@ ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/fs_mgr/Android.mk
     include $(commands_recovery_local_path)/crypto/logwrapper/Android.mk
     include $(commands_recovery_local_path)/crypto/scrypt/Android.mk
+    include $(commands_recovery_local_path)/crypto/crypttools/Android.mk
 endif
 ifeq ($(HAVE_SELINUX), true)
     include $(commands_recovery_local_path)/minzip/Android.mk
