@@ -235,6 +235,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("   MTD_Name: %s\n", Part->MTD_Name.c_str());
 	string back_meth = Part->Backup_Method_By_Name();
 	printf("   Backup_Method: %s\n\n", back_meth.c_str());
+	if (Part->Mount_Flags || !Part->Mount_Options.empty())
+		printf("   Mount_Flags=0x%8x, Mount_Options=%s\n", Part->Mount_Flags, Part->Mount_Options.c_str());
 }
 
 int TWPartitionManager::Mount_By_Path(string Path, bool Display_Error) {
