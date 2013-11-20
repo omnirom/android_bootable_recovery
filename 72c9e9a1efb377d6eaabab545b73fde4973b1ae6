@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab89d9a9_112e6a3d",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-11-20T20:35:08Z",
+      "side": 1,
+      "message": "Considering that we have \"TWRP fstab flags\" and \"mount fstab flags\" I think it might be clearer if we change these 2 variables to Mount_Flags and Mount_Options",
+      "revId": "72c9e9a1efb377d6eaabab545b73fde4973b1ae6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab89d9a9_d1fb22b8",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 545,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-11-20T20:35:08Z",
+      "side": 1,
+      "message": "I suggest moving the fs flags output to somewhere in this function:\nhttps://github.com/omnirom/android_bootable_recovery/blob/android-4.4/partitionmanager.cpp#L149\nMakes it easier to glance over everything related to the partition in the logs if it\u0027s all together.",
+      "revId": "72c9e9a1efb377d6eaabab545b73fde4973b1ae6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
