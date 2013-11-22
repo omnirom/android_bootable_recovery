@@ -1281,6 +1281,7 @@ void TWPartitionManager::Update_System_Details(void) {
 #endif
 		}
 	}
+	gui_print("...done\n");
 	DataManager::SetValue(TW_BACKUP_DATA_SIZE, data_size);
 	string current_storage_path = DataManager::GetCurrentStoragePath();
 	TWPartition* FreeStorage = Find_Partition_By_Path(current_storage_path);
