@@ -81,7 +81,9 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     install_overlay_offset_x(13),
     install_overlay_offset_y(190),
     overlay_offset_x(-1),
-    overlay_offset_y(-1) {
+    overlay_offset_y(-1),
+    stage(-1),
+    max_stage(-1) {
 
     for (int i = 0; i < 5; i++)
         backgroundIcon[i] = NULL;
@@ -120,14 +122,28 @@ void ScreenRecoveryUI::draw_background_locked(Icon icon)
         int iconHeight = gr_get_height(surface);
         int textWidth = gr_get_width(text_surface);
         int textHeight = gr_get_height(text_surface);
+        int stageHeight = gr_get_height(stageMarkerEmpty);
+
+        int sh = (max_stage >= 0) ? stageHeight : 0;
 
         int iconX = (gr_fb_width() - iconWidth) / 2;
-        int iconY = (gr_fb_height() - (iconHeight+textHeight+40)) / 2;
+        int iconY = (gr_fb_height() - (iconHeight+textHeight+40+sh)) / 2;
 
         int textX = (gr_fb_width() - textWidth) / 2;
-        int textY = ((gr_fb_height() - (iconHeight+textHeight+40)) / 2) + iconHeight + 40;
+        int textY = ((gr_fb_height() - (iconHeight+textHeight+40+sh)) / 2) + iconHeight + 40;
 
         gr_blit(surface, 0, 0, iconWidth, iconHeight, iconX, iconY);
+        if (stageHeight > 0) {
+            int sw = gr_get_width(stageMarkerEmpty);
+            int x = (gr_fb_width() - max_stage * gr_get_width(stageMarkerEmpty)) / 2;
+            int y = iconY + iconHeight + 20;
+            for (int i = 0; i < max_stage; ++i) {
+                gr_blit((i < stage) ? stageMarkerFill : stageMarkerEmpty,
+                        0, 0, sw, stageHeight, x, y);
+                x += sw;
+            }
+        }
+
         if (icon == INSTALLING_UPDATE || icon == ERASING) {
             draw_install_overlay_locked(installingFrame);
         }
@@ -383,6 +399,8 @@ void ScreenRecoveryUI::Init()
 
     LoadBitmap("progress_empty", &progressBarEmpty);
     LoadBitmap("progress_fill", &progressBarFill);
+    LoadBitmap("stage_empty", &stageMarkerEmpty);
+    LoadBitmap("stage_fill", &stageMarkerFill);
 
     LoadLocalizedBitmap("installing_text", &backgroundText[INSTALLING_UPDATE]);
     LoadLocalizedBitmap("erasing_text", &backgroundText[ERASING]);
@@ -453,7 +471,10 @@ void ScreenRecoveryUI::SetBackground(Icon icon)
         gr_surface text = backgroundText[icon];
         overlay_offset_x = install_overlay_offset_x + (gr_fb_width() - gr_get_width(bg)) / 2;
         overlay_offset_y = install_overlay_offset_y +
-            (gr_fb_height() - (gr_get_height(bg) + gr_get_height(text) + 40)) / 2;
+            (gr_fb_height() - (gr_get_height(bg) +
+                               gr_get_height(text) +
+                               40 +
+                               ((max_stage >= 0) ? gr_get_height(stageMarkerEmpty) : 0))) / 2;
     }
 
     currentIcon = icon;
@@ -502,6 +523,13 @@ void ScreenRecoveryUI::SetProgress(float fraction)
             update_progress_locked();
         }
     }
+    pthread_mutex_unlock(&updateMutex);
+}
+
+void ScreenRecoveryUI::SetStage(int current, int max) {
+    pthread_mutex_lock(&updateMutex);
+    stage = current;
+    max_stage = max;
     pthread_mutex_unlock(&updateMutex);
 }
 
