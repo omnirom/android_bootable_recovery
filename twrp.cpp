@@ -120,6 +120,18 @@ int main(int argc, char **argv) {
 		printf("No file contexts for SELinux\n");
 	else
 		printf("SELinux contexts loaded from /file_contexts\n");
+	{ // Check to ensure SELinux can be supported by the kernel
+		char *contexts = NULL;
+		lgetfilecon("/sbin/teamwin", &contexts);
+		if (!contexts) {
+		    gui_print("Kernel does not have support for reading SELinux contexts.\n");
+		} else {
+			free(contexts);
+			gui_print("Full SELinux support is present.\n");
+		}
+	}
+#else
+	gui_print("No SELinux support (no libselinux).\n");
 #endif
 
 	PartitionManager.Mount_By_Path("/cache", true);
