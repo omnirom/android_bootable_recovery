@@ -729,6 +729,48 @@ bool TWPartition::Get_Size_Via_df(bool Display_Error) {
 	return true;
 }
 
+unsigned long long TWPartition::Get_Data_Media_Backup_Size(bool Display_Error)
+{
+	DIR* d;
+	struct dirent* de;
+	struct stat st;
+	unsigned long long dusize = 0;
+	unsigned long long dutemp = 0;
+	const std::string Path = "/data";
+
+	d = opendir(Path.c_str());
+	if (d == NULL)
+	{
+		LOGERR("error opening '%s'\n", Path.c_str());
+		LOGERR("error: %s\n", strerror(errno));
+		return 0;
+	}
+
+	while ((de = readdir(d)) != NULL)
+	{
+		if (de->d_type == DT_DIR)
+		{
+			if(strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, "lost+found") == 0)
+				continue;
+
+			// Ignore /data/media - we don't back it up
+			if(strcmp(de->d_name, "media") == 0)
+				continue;
+
+			dutemp = TWFunc::Get_Folder_Size((Path + "/" + de->d_name), Display_Error);
+			dusize += dutemp;
+			dutemp = 0;
+		}
+		else if (de->d_type == DT_REG)
+		{
+			stat((Path + "/" + de->d_name).c_str(), &st);
+			dusize += (unsigned long long)(st.st_size);
+		}
+	}
+	closedir(d);
+	return dusize;
+}
+
 bool TWPartition::Find_Partition_Size(void) {
 	FILE* fp;
 	char line[512];
@@ -1703,17 +1745,12 @@ bool TWPartition::Update_Size(bool Display_Error) {
 
 	if (Has_Data_Media) {
 		if (Mount(Display_Error)) {
-			unsigned long long data_media_used, actual_data;
-			Used = TWFunc::Get_Folder_Size("/data", Display_Error);
-			data_media_used = TWFunc::Get_Folder_Size("/data/media", Display_Error);
-			actual_data = Used - data_media_used;
-			Backup_Size = actual_data;
+			Backup_Size = Get_Data_Media_Backup_Size(Display_Error);
 			int bak = (int)(Backup_Size / 1048576LLU);
 			int total = (int)(Size / 1048576LLU);
 			int us = (int)(Used / 1048576LLU);
 			int fre = (int)(Free / 1048576LLU);
-			int datmed = (int)(data_media_used / 1048576LLU);
-			LOGINFO("Data backup size is %iMB, size: %iMB, used: %iMB, free: %iMB, in data/media: %iMB.\n", bak, total, us, fre, datmed);
+			LOGINFO("Data backup size is %iMB, size: %iMB, used: %iMB, free: %iMB.\n", bak, total, us, fre);
 		} else {
 			if (!Was_Already_Mounted)
 				UnMount(false);
