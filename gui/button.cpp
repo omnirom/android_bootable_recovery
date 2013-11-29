@@ -58,15 +58,19 @@ GUIButton::GUIButton(xml_node<>* node)
 
 	if (!node)  return;
 
-	// Three of the four can be loaded directly from the node
-	mButtonImg = new GUIImage(node);
+	// These can be loaded directly from the node
 	mButtonLabel = new GUIText(node);
 	mAction = new GUIAction(node);
 
-	if (mButtonImg->Render() < 0)
+	child = node->first_node("image");
+	if (child)
 	{
-		delete mButtonImg;
-		mButtonImg = NULL;
+		mButtonImg = new GUIImage(node);
+		if (mButtonImg->Render() < 0)
+		{
+			delete mButtonImg;
+			mButtonImg = NULL;
+		}
 	}
 	if (mButtonLabel->Render() < 0)
 	{
