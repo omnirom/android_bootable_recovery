@@ -1596,34 +1596,17 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	Backup_FileName = back_name;
 	Full_FileName = backup_folder + "/" + Backup_FileName;
 	tar.has_data_media = Has_Data_Media;
-	if (!use_encryption && Backup_Size > MAX_ARCHIVE_SIZE) {
-		// This backup needs to be split into multiple archives
-		gui_print("Breaking backup file into multiple archives...\n");
-		sprintf(back_name, "%s", Backup_Path.c_str());
-		tar.setdir(back_name);
-		tar.setfn(Full_FileName);
-		backup_count = tar.splitArchiveFork();
-		if (backup_count == -1) {
-			LOGERR("Error tarring split files!\n");
-			return false;
-		}
-		return true;
-	} else {
-		Full_FileName = backup_folder + "/" + Backup_FileName;
-		tar.setdir(Backup_Path);
-		tar.setfn(Full_FileName);
-		if (tar.createTarFork() != 0)
-			return false;
-		if (use_compression && !use_encryption) {
-			string gzname = Full_FileName + ".gz";
-			rename(gzname.c_str(), Full_FileName.c_str());
-		}
-		if (use_encryption)
-			Full_FileName += "000";
-		if (TWFunc::Get_File_Size(Full_FileName) == 0) {
-			LOGERR("Backup file size for '%s' is 0 bytes.\n", Full_FileName.c_str());
-			return false;
-		}
+	Full_FileName = backup_folder + "/" + Backup_FileName;
+	tar.setdir(Backup_Path);
+	tar.setfn(Full_FileName);
+	tar.setsize(Backup_Size);
+	if (tar.createTarFork() != 0)
+		return false;
+	if (use_encryption)
+		Full_FileName += "000";
+	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
+		LOGERR("Backup file size for '%s' is 0 bytes.\n", Full_FileName.c_str());
+		return false;
 	}
 	return true;
 }
