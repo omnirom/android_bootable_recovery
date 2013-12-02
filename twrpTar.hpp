@@ -27,6 +27,7 @@ extern "C" {
 #include <fstream>
 #include <string>
 #include <vector>
+#include "twrpDU.hpp"
 
 using namespace std;
 
@@ -94,6 +95,7 @@ private:
 
 	vector <string> tarexclude;
 	vector<string> split;
+	twrpDU* du;
 
 	std::vector<TarListStruct> *ItemList;
 	int thread_id;
