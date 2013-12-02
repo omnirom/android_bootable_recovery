@@ -1,5 +1,5 @@
 /*
-	Copyright 2012 bigbiff/Dees_Troy TeamWin
+	Copyright 2013 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -104,6 +104,7 @@ TWPartition::TWPartition(void) {
 	Format_Block_Size = 0;
 	Ignore_Blkid = false;
 	Retain_Layout_Version = false;
+	du = new twrpDU();
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 	EcryptFS_Password = "";
 #endif
@@ -1487,7 +1488,10 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 	tar.use_compression = use_compression;
 	//exclude Google Music Cache
-	tar.setexcl("/data/data/com.google.android.music/files");
+	vector<string> excludedirs = du->get_absolute_dirs();
+	for (int i = 0; i < excludedirs.size(); ++i) {
+		tar.setexcl(excludedirs.at(i));
+	}
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	DataManager::GetValue("tw_encrypt_backup", use_encryption);
 	if (use_encryption && Can_Encrypt_Backup) {
@@ -1704,8 +1708,8 @@ bool TWPartition::Update_Size(bool Display_Error) {
 	if (Has_Data_Media) {
 		if (Mount(Display_Error)) {
 			unsigned long long data_media_used, actual_data;
-			Used = TWFunc::Get_Folder_Size("/data", Display_Error);
-			data_media_used = TWFunc::Get_Folder_Size("/data/media", Display_Error);
+			Used = du->Get_Folder_Size("/data");
+			data_media_used = du->Get_Folder_Size("/data/media");
 			actual_data = Used - data_media_used;
 			Backup_Size = actual_data;
 			int bak = (int)(Backup_Size / 1048576LLU);
@@ -1721,7 +1725,7 @@ bool TWPartition::Update_Size(bool Display_Error) {
 		}
 	} else if (Has_Android_Secure) {
 		if (Mount(Display_Error))
-			Backup_Size = TWFunc::Get_Folder_Size(Backup_Path, Display_Error);
+			Backup_Size = du->Get_Folder_Size(Backup_Path);
 		else {
 			if (!Was_Already_Mounted)
 				UnMount(false);
