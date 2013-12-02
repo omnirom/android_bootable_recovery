@@ -1,19 +1,18 @@
 /*
-        Copyright 2013 bigbiff/Dees_Troy TeamWin
-        This file is part of TWRP/TeamWin Recovery Project.
 
-        TWRP is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
+ccdd
+		TWRP is free software: you can redistribute it and/or modify
+		it under the terms of the GNU General Public License as published by
+		the Free Software Foundation, either version 3 of the License, or
+		(at your option) any later version.
 
-        TWRP is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
+		TWRP is distributed in the hope that it will be useful,
+		but WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+		GNU General Public License for more details.
 
-        You should have received a copy of the GNU General Public License
-        along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+		You should have received a copy of the GNU General Public License
+		along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <stdio.h>
@@ -45,6 +44,7 @@ extern "C" {
 #include "partitions.hpp"
 #include "openrecoveryscript.hpp"
 #include "variables.h"
+#include "twrpDU.hpp"
 
 #ifdef HAVE_SELINUX
 #include "selinux/label.h"
@@ -53,6 +53,7 @@ struct selabel_handle *selinux_handle;
 
 TWPartitionManager PartitionManager;
 int Log_Offset;
+twrpDU du;
 
 static void Print_Prop(const char *key, const char *name, void *cookie) {
 	printf("%s=%s\n", key, name);
@@ -124,7 +125,7 @@ int main(int argc, char **argv) {
 		char *contexts = NULL;
 		lgetfilecon("/sbin/teamwin", &contexts);
 		if (!contexts) {
-		    gui_print("Kernel does not have support for reading SELinux contexts.\n");
+			gui_print("Kernel does not have support for reading SELinux contexts.\n");
 		} else {
 			free(contexts);
 			gui_print("Full SELinux support is present.\n");

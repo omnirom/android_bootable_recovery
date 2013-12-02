@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <string>
+#include "twrpDU.hpp"
 
 #define MAX_FSTAB_LINE_LENGTH 2048
 
@@ -159,7 +160,7 @@ friend class GUIPartitionList;
 class TWPartitionManager
 {
 public:
-	TWPartitionManager() {}
+	TWPartitionManager();													  // Constructor for TWRPartionManager
 	~TWPartitionManager() {}
 
 public:
