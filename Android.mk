@@ -20,6 +20,7 @@ LOCAL_SRC_FILES := \
     twrp.cpp \
     fixPermissions.cpp \
     twrpTar.cpp \
+	twrpDU.cpp \
     twrpDigest.cpp \
 
 LOCAL_SRC_FILES += \

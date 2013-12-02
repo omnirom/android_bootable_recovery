@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <string>
+#include "twrpDU.hpp"
 
 #define MAX_FSTAB_LINE_LENGTH 2048
 
@@ -147,6 +148,7 @@ private:
 	int Format_Block_Size;                                                    // Block size for formatting
 	bool Ignore_Blkid;                                                        // Ignore blkid results due to superblocks lying to us on certain devices / partitions
 	bool Retain_Layout_Version;                                               // Retains the .layout_version file during a wipe (needed on devices like Sony Xperia T where /data and /data/media are separate partitions)
+	twrpDU* du;																  // Object to calculate folder sizes with skipped directories
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 	string EcryptFS_Password;                                                 // Have to store the encryption password to remount
 #endif
@@ -159,7 +161,7 @@ friend class GUIPartitionList;
 class TWPartitionManager
 {
 public:
-	TWPartitionManager() {}
+	TWPartitionManager();													  // Constructor for TWRPartionManager
 	~TWPartitionManager() {}
 
 public:
@@ -207,6 +209,7 @@ public:
 	void Get_Partition_List(string ListType, std::vector<PartitionList> *Partition_List);
 	int Fstab_Processed();                                                    // Indicates if the fstab has been processed or not
 	void Output_Storage_Fstab();                                              // Creates a /cache/recovery/storage.fstab file with a list of all potential storage locations for app use
+	twrpDU* du;																  // Object to calculate folder sizes with skipped directories
 
 private:
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made
