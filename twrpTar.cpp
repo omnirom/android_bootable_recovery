@@ -1,5 +1,5 @@
 /*
-	Copyright 2012 bigbiff/Dees_Troy TeamWin
+	Copyright 2013 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -115,7 +115,10 @@ int twrpTar::createTarFork() {
 					continue; // Skip /data/media
 				if (de->d_type == DT_BLK || de->d_type == DT_CHR)
 					continue;
-				if (de->d_type == DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0 && strcmp(de->d_name, "lost+found") != 0) {
+				bool skip_dir = false;
+				string dir(de->d_name);
+				skip_dir = du.check_skip_dirs(dir);
+				if (de->d_type == DT_DIR && !skip_dir) {
 					item_len = strlen(de->d_name);
 					if (userdata_encryption && ((item_len >= 3 && strncmp(de->d_name, "app", 3) == 0) || (item_len >= 6 && strncmp(de->d_name, "dalvik", 6) == 0))) {
 						if (Generate_TarList(FileName, &RegularList, &target_size, &regular_thread_id) < 0) {
@@ -123,9 +126,9 @@ int twrpTar::createTarFork() {
 							closedir(d);
 							_exit(-1);
 						}
-						regular_size += TWFunc::Get_Folder_Size(FileName, false);
+						regular_size += du.Get_Folder_Size(FileName);
 					} else {
-						encrypt_size += TWFunc::Get_Folder_Size(FileName, false);
+						encrypt_size += du.Get_Folder_Size(FileName);
 					}
 				} else if (de->d_type == DT_REG) {
 					stat(FileName.c_str(), &st);
@@ -159,7 +162,10 @@ int twrpTar::createTarFork() {
 					continue; // Skip /data/media
 				if (de->d_type == DT_BLK || de->d_type == DT_CHR)
 					continue;
-				if (de->d_type == DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0 && strcmp(de->d_name, "lost+found") != 0) {
+				bool skip_dir = false;
+				string dir(de->d_name);
+				skip_dir = du.check_skip_dirs(dir);
+				if (de->d_type == DT_DIR && !skip_dir) {
 					item_len = strlen(de->d_name);
 					if (userdata_encryption && ((item_len >= 3 && strncmp(de->d_name, "app", 3) == 0) || (item_len >= 6 && strncmp(de->d_name, "dalvik", 6) == 0))) {
 						// Do nothing, we added these to RegularList earlier
@@ -472,7 +478,10 @@ int twrpTar::Generate_TarList(string Path, std::vector<TarListStruct> *TarList, 
 			continue;
 		TarItem.fn = FileName;
 		TarItem.thread_id = *thread_id;
-		if (de->d_type == DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0 && strcmp(de->d_name, "lost+found") != 0) {
+		bool skip_dir = false;
+		string dir(de->d_name);
+		skip_dir = du.check_skip_dirs(dir);
+		if (de->d_type == DT_DIR && !skip_dir) {
 			TarList->push_back(TarItem);
 			if (Generate_TarList(FileName, TarList, Target_Size, thread_id) < 0)
 				return -1;
@@ -535,7 +544,7 @@ int twrpTar::Generate_Multiple_Archives(string Path) {
 			continue;
 		if (de->d_type == DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
 		{
-			unsigned long long folder_size = TWFunc::Get_Folder_Size(FileName, false);
+			uint64_t folder_size = du.Get_Folder_Size(FileName);
 			if (Archive_Current_Size + folder_size > MAX_ARCHIVE_SIZE) {
 				// Add the root folder first
 				LOGINFO("Adding root folder '%s' before splitting.\n", FileName.c_str());
@@ -699,10 +708,16 @@ int twrpTar::tarDirs(bool include_root) {
 		}
 		struct dirent* de;
 		while ((de = readdir(d)) != NULL) {
+		    bool skip_dir = false;
 #ifdef RECOVERY_SDCARD_ON_DATA
-			if ((tardir == "/data" || tardir == "/data/") && strcmp(de->d_name, "media") == 0) continue;
+			du.add_absolute_dir("/data/media");
+			string dir(tardir + "/" + de->d_name);
+		    skip_dir = du.check_skip_dirs(dir);
+			if (skip_dir) continue;
 #endif
-			if (de->d_type == DT_BLK || de->d_type == DT_CHR || strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, "lost+found") == 0)
+			dir = de->d_name;
+		    skip_dir = du.check_skip_dirs(dir);
+			if (de->d_type == DT_BLK || de->d_type == DT_CHR || skip_dir)
 				continue;
 
 			// Skip excluded stuff
