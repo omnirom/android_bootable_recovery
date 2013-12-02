@@ -34,6 +34,9 @@
 #include <linux/xattr.h>
 #include <inttypes.h>
 
+#include "bootloader.h"
+#include "applypatch/applypatch.h"
+#include "cutils/android_reboot.h"
 #include "cutils/misc.h"
 #include "cutils/properties.h"
 #include "edify/expr.h"
@@ -42,7 +45,6 @@
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
 #include "updater.h"
-#include "applypatch/applypatch.h"
 
 #ifdef USE_EXT4
 #include "make_ext4fs.h"
@@ -1337,6 +1339,105 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
     return v;
 }
 
+// Immediately reboot the device.  Recovery is not finished normally,
+// so if you reboot into recovery it will re-start applying the
+// current package (because nothing has cleared the copy of the
+// arguments stored in the BCB).
+//
+// The argument is the partition name passed to the android reboot
+// property.  It can be "recovery" to boot from the recovery
+// partition, or "" (empty string) to boot from the regular boot
+// partition.
+Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 2) {
+        return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
+    }
+
+    char* filename;
+    char* property;
+    if (ReadArgs(state, argv, 2, &filename, &property) < 0) return NULL;
+
+    char buffer[80];
+
+    // zero out the 'command' field of the bootloader message.
+    memset(buffer, 0, sizeof(((struct bootloader_message*)0)->command));
+    FILE* f = fopen(filename, "r+b");
+    fseek(f, offsetof(struct bootloader_message, command), SEEK_SET);
+    fwrite(buffer, sizeof(((struct bootloader_message*)0)->command), 1, f);
+    fclose(f);
+    free(filename);
+
+    strcpy(buffer, "reboot,");
+    if (property != NULL) {
+        strncat(buffer, property, sizeof(buffer)-10);
+    }
+
+    property_set(ANDROID_RB_PROPERTY, buffer);
+
+    sleep(5);
+    free(property);
+    ErrorAbort(state, "%s() failed to reboot", name);
+    return NULL;
+}
+
+// Store a string value somewhere that future invocations of recovery
+// can access it.  This value is called the "stage" and can be used to
+// drive packages that need to do reboots in the middle of
+// installation and keep track of where they are in the multi-stage
+// install.
+//
+// The first argument is the block device for the misc partition
+// ("/misc" in the fstab), which is where this value is stored.  The
+// second argument is the string to store; it should not exceed 31
+// bytes.
+Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 2) {
+        return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
+    }
+
+    char* filename;
+    char* stagestr;
+    if (ReadArgs(state, argv, 2, &filename, &stagestr) < 0) return NULL;
+
+    // Store this value in the misc partition, immediately after the
+    // bootloader message that the main recovery uses to save its
+    // arguments in case of the device restarting midway through
+    // package installation.
+    FILE* f = fopen(filename, "r+b");
+    fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
+    int to_write = strlen(stagestr)+1;
+    int max_size = sizeof(((struct bootloader_message*)0)->stage);
+    if (to_write > max_size) {
+        to_write = max_size;
+        stagestr[max_size-1] = 0;
+    }
+    fwrite(stagestr, to_write, 1, f);
+    fclose(f);
+
+    free(stagestr);
+    return StringValue(filename);
+}
+
+// Return the value most recently saved with SetStageFn.  The argument
+// is the block device for the misc partition.
+Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 2) {
+        return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
+    }
+
+    char* filename;
+    if (ReadArgs(state, argv, 1, &filename) < 0) return NULL;
+
+    char buffer[sizeof(((struct bootloader_message*)0)->stage)];
+    FILE* f = fopen(filename, "rb");
+    fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
+    fread(buffer, sizeof(buffer), 1, f);
+    fclose(f);
+    buffer[sizeof(buffer)-1] = '\0';
+
+    return StringValue(strdup(buffer));
+}
+
 void RegisterInstallFunctions() {
     RegisterFunction("mount", MountFn);
     RegisterFunction("is_mounted", IsMountedFn);
@@ -1379,4 +1480,8 @@ void RegisterInstallFunctions() {
     RegisterFunction("ui_print", UIPrintFn);
 
     RegisterFunction("run_program", RunProgramFn);
+
+    RegisterFunction("reboot_now", RebootNowFn);
+    RegisterFunction("get_stage", GetStageFn);
+    RegisterFunction("set_stage", SetStageFn);
 }
