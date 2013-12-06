@@ -123,7 +123,17 @@ int main(int argc, char **argv) {
 		printf("SELinux contexts loaded from /file_contexts\n");
 	{ // Check to ensure SELinux can be supported by the kernel
 		char *contexts = NULL;
-		lgetfilecon("/sbin/teamwin", &contexts);
+
+		if (PartitionManager.Mount_By_Path("/cache", true) && TWFunc::Path_Exists("/cache/recovery")) {
+			lgetfilecon("/cache/recovery", &contexts);
+			if (!contexts) {
+				lsetfilecon("/cache/recovery", "test");
+				lgetfilecon("/cache/recovery", &contexts);
+			}
+		} else {
+			LOGINFO("Could not check /cache/recovery SELinux contexts, using /sbin/teamwin instead which may be inaccurate.\n");
+			lgetfilecon("/sbin/teamwin", &contexts);
+		}
 		if (!contexts) {
 			gui_print("Kernel does not have support for reading SELinux contexts.\n");
 		} else {
