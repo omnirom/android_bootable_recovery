@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b8b61a3_0ceadf6f",
+        "filename": "fixPermissions.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-12-06T17:58:08Z",
+      "side": 1,
+      "message": "This function is using spaces instead of tabs.",
+      "revId": "26a2d7ead72cb31aaacb222ffe3952d47529230a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b8b61a3_2cff9b31",
+        "filename": "fixPermissions.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-12-06T17:58:08Z",
+      "side": 1,
+      "message": "Lots of tabbing issues in this function. Mix of tabs and spaces.",
+      "revId": "26a2d7ead72cb31aaacb222ffe3952d47529230a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b8b61a3_ece4d3a6",
+        "filename": "fixPermissions.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-12-06T17:58:08Z",
+      "side": 1,
+      "message": "Both of these lines aren\u0027t tabbed properly.",
+      "revId": "26a2d7ead72cb31aaacb222ffe3952d47529230a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
