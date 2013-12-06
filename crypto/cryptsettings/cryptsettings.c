@@ -5,7 +5,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef TW_INCLUDE_JB_CRYPTO
 #include "../crypto/fs_mgr/include/fs_mgr.h"
+#endif
 
 #include "cutils/properties.h"
 
@@ -41,11 +43,13 @@ int main(void)
 	printf("TW_CRYPTO_FS_FLAGS := \"%s\"\n", prop);
 	property_get("ro.crypto.keyfile.userdata", prop, "footer");
 	printf("TW_CRYPTO_KEY_LOC := \"%s\"\n", prop);
+#ifdef TW_INCLUDE_JB_CRYPTO
 	printf("\n*** NEW FOR JELLY BEAN:\n");
 	strcpy(fstab_filename, FSTAB_PREFIX);
 	property_get("ro.hardware", fstab_filename + sizeof(FSTAB_PREFIX) - 1, "");
 	fs_mgr_get_crypt_info(fstab_filename, key_loc, blk_dev, sizeof(key_loc));
 	printf("fstab file location: '%s'\n\nTW_INCLUDE_JB_CRYPTO := true\n", fstab_filename);
+#endif
 
 	return 0;
 }

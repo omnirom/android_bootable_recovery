@@ -1,5 +1,5 @@
 # Copyright 2011 The Android Open Source Project
-
+ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -14,7 +14,6 @@ LOCAL_C_INCLUDES += system/extras/ext4_utils bootable/recovery/libmincrypt/inclu
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
 include $(BUILD_STATIC_LIBRARY)
-
 
 
 include $(CLEAR_VARS)
@@ -34,3 +33,4 @@ LOCAL_STATIC_LIBRARIES := libfs_mgrtwrp liblogwraptwrp libcutils liblog libc lib
 
 include $(BUILD_EXECUTABLE)
 
+endif

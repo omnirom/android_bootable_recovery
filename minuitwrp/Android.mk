@@ -16,9 +16,6 @@ LOCAL_C_INCLUDES += \
     system/core/include \
     external/jpeg
 
-LOCAL_C_INCLUDES += \
-    bootable/recovery/libjpegtwrp
-
 ifeq ($(RECOVERY_TOUCHSCREEN_SWAP_XY), true)
 LOCAL_CFLAGS += -DRECOVERY_TOUCHSCREEN_SWAP_XY
 endif
