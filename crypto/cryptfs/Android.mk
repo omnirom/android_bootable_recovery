@@ -40,9 +40,9 @@ LOCAL_SHARED_LIBRARIES += libcrypto
 LOCAL_LDFLAGS += -ldl
 
 LOCAL_STATIC_LIBRARIES += libmtdutils
-LOCAL_STATIC_LIBRARIES += libminadbd libminzip libunz
-LOCAL_STATIC_LIBRARIES += libminuitwrp libpixelflinger_static libpng libjpegtwrp libgui
-LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libmincrypt libext4_utils
+LOCAL_STATIC_LIBRARIES += libminzip libunz
+LOCAL_STATIC_LIBRARIES += libpixelflinger_static libpng libmincrypttwrp
+LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libext4_utils
 LOCAL_STATIC_LIBRARIES += libcrypt_samsung
 
 
