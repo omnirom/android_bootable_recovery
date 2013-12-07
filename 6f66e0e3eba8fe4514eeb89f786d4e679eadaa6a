@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b8b61a3_97ec3cb8",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-12-07T14:35:17Z",
+      "side": 1,
+      "message": "I don\u0027t think we should instantiate du for every partition. I\u0027d rather see it instantiated within the functions where it\u0027s needed or make a single global copy of it in twrp.cpp and reference it via extern.",
+      "revId": "6f66e0e3eba8fe4514eeb89f786d4e679eadaa6a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b8b61a3_b72db8fb",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1712,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-12-07T14:35:17Z",
+      "side": 1,
+      "message": "One of the items Tassadar was pointing out is that we don\u0027t need to know the size of /data/media to get the backup size and calculating its size is time consuming. All we really need to know is the backup size and how much free space we have.",
+      "revId": "6f66e0e3eba8fe4514eeb89f786d4e679eadaa6a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b8b61a3_d732445c",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-12-07T14:35:17Z",
+      "side": 1,
+      "message": "See comment in partitions.cpp about where and when we should create twrpDU.",
+      "revId": "6f66e0e3eba8fe4514eeb89f786d4e679eadaa6a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b8b61a3_f7374049",
+        "filename": "twrpDU.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-12-07T14:35:17Z",
+      "side": 1,
+      "message": "Mixed tabs and spaces",
+      "revId": "6f66e0e3eba8fe4514eeb89f786d4e679eadaa6a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b8b61a3_173d8c28",
+        "filename": "twrpDU.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-12-07T14:35:17Z",
+      "side": 1,
+      "message": "Mostly spaces in this function.",
+      "revId": "6f66e0e3eba8fe4514eeb89f786d4e679eadaa6a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b8b61a3_374288b4",
+        "filename": "twrpDU.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2013-12-07T14:35:17Z",
+      "side": 1,
+      "message": "More use of spaces instead of tabs.",
+      "revId": "6f66e0e3eba8fe4514eeb89f786d4e679eadaa6a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
