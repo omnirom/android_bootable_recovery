@@ -611,16 +611,21 @@ Page* PageSet::FindPage(std::string name)
 int PageSet::LoadVariables(xml_node<>* vars)
 {
 	xml_node<>* child;
+	xml_attribute<> *name, *value, *persist;
+	int p;
 
 	child = vars->first_node("variable");
 	while (child)
 	{
-		if (!child->first_attribute("name"))
-			break;
-		if (!child->first_attribute("value"))
-			break;
+		name = child->first_attribute("name");
+		value = child->first_attribute("value");
+		persist = child->first_attribute("persist");
+		if(name && value)
+		{
+			p = persist ? atoi(persist->value()) : 0;
+			DataManager::SetValue(name->value(), value->value(), p);
+		}
 
-		DataManager::SetValue(child->first_attribute("name")->value(), child->first_attribute("value")->value());
 		child = child->next_sibling("variable");
 	}
 	return 0;
