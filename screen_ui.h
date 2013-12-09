@@ -87,6 +87,9 @@ class ScreenRecoveryUI : public RecoveryUI {
     static const int kMaxCols = 96;
     static const int kMaxRows = 96;
 
+    static const int kMaxMenuCols = 96;
+    static const int kMaxMenuRows = 250;
+
     // Log text overlay, displayed when a magic key is pressed
     char text[kMaxRows][kMaxCols];
     int text_cols, text_rows;
@@ -94,9 +97,11 @@ class ScreenRecoveryUI : public RecoveryUI {
     bool show_text;
     bool show_text_ever;   // has show_text ever been true?
 
-    char menu[kMaxRows][kMaxCols];
+    char menu[kMaxMenuRows][kMaxMenuCols];
     bool show_menu;
     int menu_top, menu_items, menu_sel;
+    int menu_show_start;
+    int max_menu_rows;
 
     pthread_t progress_t;
 
