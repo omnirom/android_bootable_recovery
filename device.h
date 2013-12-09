@@ -85,6 +85,7 @@ class Device {
     static const int kHighlightUp = -2;
     static const int kHighlightDown = -3;
     static const int kInvokeItem = -4;
+    static const int kGoBack = -5;
 
     // Called when we do a wipe data/factory reset operation (either via a
     // reboot from the main system with the --wipe_data flag, or when the
