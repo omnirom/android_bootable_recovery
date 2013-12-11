@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <fcntl.h>
 
 #include <fs_mgr.h>
 #include "mtdutils/mtdutils.h"
@@ -28,6 +29,10 @@
 #include "roots.h"
 #include "common.h"
 #include "make_ext4fs.h"
+extern "C" {
+#include "wipe.h"
+#include "cryptfs.h"
+}
 
 static struct fstab *fstab = NULL;
 
@@ -191,11 +196,31 @@ int format_volume(const char* volume) {
     }
 
     if (strcmp(v->fs_type, "ext4") == 0) {
-        int result = make_ext4fs(v->blk_device, v->length, volume, sehandle);
+        ssize_t length = 0;
+        if (v->length != 0) {
+            length = v->length;
+        } else if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0) {
+            length = -CRYPT_FOOTER_OFFSET;
+        }
+        int result = make_ext4fs(v->blk_device, length, volume, sehandle);
         if (result != 0) {
             LOGE("format_volume: make_extf4fs failed on %s\n", v->blk_device);
             return -1;
         }
+
+        // if there's a key_loc that looks like a path, it should be a
+        // block device for storing encryption metadata.  wipe it too.
+        if (v->key_loc != NULL && v->key_loc[0] == '/') {
+            LOGI("wiping %s\n", v->key_loc);
+            int fd = open(v->key_loc, O_WRONLY | O_CREAT, 0644);
+            if (fd < 0) {
+                LOGE("format_volume: failed to open %s\n", v->key_loc);
+                return -1;
+            }
+            wipe_block_device(fd, get_file_size(fd));
+            close(fd);
+        }
+
         return 0;
     }
 
