@@ -1520,6 +1520,7 @@ int TWPartitionManager::Open_Lun_File(string Partition_Path, string Lun_File) {
 		LOGERR("Unable to write to ums lunfile '%s': (%s)\n", Lun_File.c_str(), strerror(errno));
 		return false;
 	}
+	property_set("sys.storage.ums_enabled", "1");
 	return true;
 }
 
@@ -1580,6 +1581,7 @@ int TWPartitionManager::usb_storage_disable(void) {
 	Mount_All_Storage();
 	Update_System_Details();
 	UnMount_Main_Partitions();
+	property_set("sys.storage.ums_enabled", "0");
 	if (ret < 0 && index == 0) {
 		LOGERR("Unable to write to ums lunfile '%s'.", lun_file);
 		return false;
