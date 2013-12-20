@@ -1353,7 +1353,6 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     if (args[0]->size < 0) {
-        printf("%s(): no file contents received", name);
         return StringValue(strdup(""));
     }
     uint8_t digest[SHA_DIGEST_SIZE];
@@ -1406,12 +1405,11 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     FileContents fc;
     if (LoadFileContents(filename, &fc, RETOUCH_DONT_MASK) != 0) {
-        ErrorAbort(state, "%s() loading \"%s\" failed: %s",
-                   name, filename, strerror(errno));
         free(filename);
-        free(v);
+        v->size = -1;
+        v->data = NULL;
         free(fc.data);
-        return NULL;
+        return v;
     }
 
     v->size = fc.size;
