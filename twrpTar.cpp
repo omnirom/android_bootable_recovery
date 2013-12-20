@@ -714,6 +714,8 @@ int twrpTar::tarDirs(bool include_root) {
 			string dir(tardir + "/" + de->d_name);
 		    skip_dir = du.check_skip_dirs(dir);
 			if (skip_dir) continue;
+#else
+			string dir;
 #endif
 			dir = de->d_name;
 		    skip_dir = du.check_skip_dirs(dir);
