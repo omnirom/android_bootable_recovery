@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <errno.h>
 #include "gui/rapidxml.hpp"
 #include "fixPermissions.hpp"
 #include "twrp-functions.hpp"
