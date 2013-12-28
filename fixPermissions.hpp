@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <errno.h>
 #include "gui/rapidxml.hpp"
 #include "twrp-functions.hpp"
 
