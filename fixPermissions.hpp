@@ -17,6 +17,7 @@ using namespace std;
 class fixPermissions {
 	public:
 		int fixPerms(bool enable_debug, bool remove_data_for_missing_apps);
+		int fixDataInternalContexts(void);
 
 	private:
 		int pchown(std::string fn, int puid, int pgid);
@@ -28,8 +29,8 @@ class fixPermissions {
 		int fixDataApps();
 		int fixAllFiles(string directory, int gid, int uid, string file_perms);
 		int fixDataData(string dataDir);
-		int fixDataDataContexts(void);
 		int restorecon(std::string entry, struct stat *sb);
+		int fixDataDataContexts(void);
 
 		struct package {
 			string pkgName;
@@ -45,6 +46,6 @@ class fixPermissions {
 		bool remove_data;
 		bool multi_user;
 		package* head;
-		package* temp;		
+		package* temp;
 		string packageFile;
 };
