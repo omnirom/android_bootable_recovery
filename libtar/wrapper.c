@@ -80,12 +80,6 @@ tar_extract_all(TAR *t, char *prefix)
 		       "\"%s\")\n", buf);
 #endif
 		printf("item name: '%s'\n", filename);
-		/*
-		if (strcmp(filename, "/") == 0) {
-			printf("skipping /\n");
-			continue;
-		}
-		*/
 		if (tar_extract_file(t, buf, prefix) != 0)
 			return -1;
 	}
