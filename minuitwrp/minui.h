@@ -70,4 +70,6 @@ int ev_wait(int timeout);
 void ev_dispatch(void);
 int ev_get_input(int fd, short revents, struct input_event *ev);
 
+int vibrate(int timeout_ms);
+
 #endif
