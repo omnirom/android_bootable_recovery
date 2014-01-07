@@ -30,6 +30,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "../data.hpp"
 
 #include <string>
 
@@ -280,6 +281,7 @@ int GUIButton::NotifyTouch(TOUCH_STATE state, int x, int y)
 	} else {
 		if (last_state == 0) {
 			last_state = 1;
+			DataManager::Vibrate("tw_vibrate");
 			if (mButtonLabel != NULL)
 				mButtonLabel->isHighlighted = true;
 			if (mButtonImg != NULL)

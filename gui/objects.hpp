@@ -25,6 +25,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <time.h>
 
 extern "C" {
 #ifdef HAVE_SELINUX
@@ -285,6 +286,7 @@ protected:
 	void operation_start(const string operation_name);
 	void operation_end(const int operation_status, const int simulate);
 	static void* command_thread(void *cookie);
+	time_t Start;
 };
 
 class GUIConsole : public RenderObject, public ActionObject
