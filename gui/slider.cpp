@@ -15,6 +15,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "../data.hpp"
 
 #include <string>
 
@@ -153,6 +154,7 @@ int GUISlider::NotifyTouch(TOUCH_STATE state, int x, int y)
 		break;
 
 	case TOUCH_RELEASE:
+               DataManager::Vibrate("tw_button_vibrate");
 		if (!dragging)
 			return 0;
 

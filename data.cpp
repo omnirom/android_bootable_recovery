@@ -55,7 +55,7 @@ extern "C"
 	#include "twcommon.h"
 	#include "data.h"
 	#include "gui/pages.h"
-
+	#include "minuitwrp/minui.h"
 	void gui_notifyVarChange(const char *name, const char* value);
 }
 
@@ -583,6 +583,7 @@ void DataManager::SetDefaultValues()
 
 	mConstValues.insert(make_pair(TW_VERSION_VAR, TW_VERSION_STR));
 	mValues.insert(make_pair("tw_storage_path", make_pair("/", 1)));
+	mValues.insert(make_pair("tw_vibrate", make_pair("80", 1)));
 
 #ifdef TW_FORCE_CPUINFO_FOR_DEVICE_ID
 	printf("TW_FORCE_CPUINFO_FOR_DEVICE_ID := true\n");
@@ -1239,4 +1240,12 @@ extern "C" void DataManager_DumpValues(void)
 extern "C" void DataManager_ReadSettingsFile(void)
 {
 	return DataManager::ReadSettingsFile();
+}
+void DataManager::Vibrate(const string varName)
+{
+	int vib_value = 0;
+	GetValue(varName, vib_value);
+	if (vib_value) {
+		vibrate(vib_value);
+	}
 }

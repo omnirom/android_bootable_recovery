@@ -30,6 +30,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "../data.hpp"
 
 #include <string>
 
@@ -388,6 +389,7 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 	switch (state)
 	{
 	case TOUCH_START:
+	DataManager::Vibrate("tw_vibrate");
 		if (GetSelection(x, y) == 0) {
 			startSelection = -1;
 			was_held = 0;
@@ -419,6 +421,7 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 			if (highlightRenderCount != 0)
 				mRendered = false;
 			highlightRenderCount = 0;
+			DataManager::Vibrate("tw_vibrate");
 			startSelection = 0;
 		}
 		break;
