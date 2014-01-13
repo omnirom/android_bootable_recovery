@@ -16,34 +16,6 @@
 #include "Log.h"
 #include "SysUtil.h"
 
-/*
- * Having trouble finding a portable way to get this.  sysconf(_SC_PAGE_SIZE)
- * seems appropriate, but we don't have that on the device.  Some systems
- * have getpagesize(2), though the linux man page has some odd cautions.
- */
-#define DEFAULT_PAGE_SIZE   4096
-
-
-/*
- * Create an anonymous shared memory segment large enough to hold "length"
- * bytes.  The actual segment may be larger because mmap() operates on
- * page boundaries (usually 4K).
- */
-static void* sysCreateAnonShmem(size_t length)
-{
-    void* ptr;
-
-    ptr = mmap(NULL, length, PROT_READ | PROT_WRITE,
-            MAP_SHARED | MAP_ANON, -1, 0);
-    if (ptr == MAP_FAILED) {
-        LOGW("mmap(%d, RW, SHARED|ANON) failed: %s\n", (int) length,
-            strerror(errno));
-        return NULL;
-    }
-
-    return ptr;
-}
-
 static int getFileStartAndLength(int fd, off_t *start_, size_t *length_)
 {
     off_t start, end;
@@ -69,41 +41,6 @@ static int getFileStartAndLength(int fd, off_t *start_, size_t *length_)
 
     *start_ = start;
     *length_ = length;
-
-    return 0;
-}
-
-/*
- * Pull the contents of a file into an new shared memory segment.  We grab
- * everything from fd's current offset on.
- *
- * We need to know the length ahead of time so we can allocate a segment
- * of sufficient size.
- */
-int sysLoadFileInShmem(int fd, MemMapping* pMap)
-{
-    off_t start;
-    size_t length, actual;
-    void* memPtr;
-
-    assert(pMap != NULL);
-
-    if (getFileStartAndLength(fd, &start, &length) < 0)
-        return -1;
-
-    memPtr = sysCreateAnonShmem(length);
-    if (memPtr == NULL)
-        return -1;
-
-    pMap->baseAddr = pMap->addr = memPtr;
-    pMap->baseLength = pMap->length = length;
-
-    actual = TEMP_FAILURE_RETRY(read(fd, memPtr, length));
-    if (actual != length) {
-        LOGE("only read %d of %d bytes\n", (int) actual, (int) length);
-        sysReleaseShmem(pMap);
-        return -1;
-    }
 
     return 0;
 }
@@ -140,59 +77,6 @@ int sysMapFileInShmem(int fd, MemMapping* pMap)
 }
 
 /*
- * Map part of a file (from fd's current offset) into a shared, read-only
- * memory segment.
- *
- * On success, returns 0 and fills out "pMap".  On failure, returns a nonzero
- * value and does not disturb "pMap".
- */
-int sysMapFileSegmentInShmem(int fd, off_t start, long length,
-    MemMapping* pMap)
-{
-    off_t dummy;
-    size_t fileLength, actualLength;
-    off_t actualStart;
-    int adjust;
-    void* memPtr;
-
-    assert(pMap != NULL);
-
-    if (getFileStartAndLength(fd, &dummy, &fileLength) < 0)
-        return -1;
-
-    if (start + length > (long)fileLength) {
-        LOGW("bad segment: st=%d len=%ld flen=%d\n",
-            (int) start, length, (int) fileLength);
-        return -1;
-    }
-
-    /* adjust to be page-aligned */
-    adjust = start % DEFAULT_PAGE_SIZE;
-    actualStart = start - adjust;
-    actualLength = length + adjust;
-
-    memPtr = mmap(NULL, actualLength, PROT_READ, MAP_FILE | MAP_SHARED,
-                fd, actualStart);
-    if (memPtr == MAP_FAILED) {
-        LOGW("mmap(%d, R, FILE|SHARED, %d, %d) failed: %s\n",
-            (int) actualLength, fd, (int) actualStart, strerror(errno));
-        return -1;
-    }
-
-    pMap->baseAddr = memPtr;
-    pMap->baseLength = actualLength;
-    pMap->addr = (char*)memPtr + adjust;
-    pMap->length = length;
-
-    LOGVV("mmap seg (st=%d ln=%d): bp=%p bl=%d ad=%p ln=%d\n",
-        (int) start, (int) length,
-        pMap->baseAddr, (int) pMap->baseLength,
-        pMap->addr, (int) pMap->length);
-
-    return 0;
-}
-
-/*
  * Release a memory mapping.
  */
 void sysReleaseShmem(MemMapping* pMap)
@@ -209,4 +93,3 @@ void sysReleaseShmem(MemMapping* pMap)
         pMap->baseLength = 0;
     }
 }
-

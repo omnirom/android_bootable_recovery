@@ -27,29 +27,12 @@ INLINE void sysCopyMap(MemMapping* dst, const MemMapping* src) {
 }
 
 /*
- * Load a file into a new shared memory segment.  All data from the current
- * offset to the end of the file is pulled in.
- *
- * The segment is read-write, allowing VM fixups.  (It should be modified
- * to support .gz/.zip compressed data.)
- *
- * On success, "pMap" is filled in, and zero is returned.
- */
-int sysLoadFileInShmem(int fd, MemMapping* pMap);
-
-/*
  * Map a file (from fd's current offset) into a shared,
  * read-only memory segment.
  *
  * On success, "pMap" is filled in, and zero is returned.
  */
 int sysMapFileInShmem(int fd, MemMapping* pMap);
-
-/*
- * Like sysMapFileInShmem, but on only part of a file.
- */
-int sysMapFileSegmentInShmem(int fd, off_t start, long length,
-    MemMapping* pMap);
 
 /*
  * Release the pages associated with a shared memory segment.
