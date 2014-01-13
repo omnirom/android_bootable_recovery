@@ -17,12 +17,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "common.h"
 #include "verifier.h"
 #include "ui.h"
 #include "mincrypt/sha.h"
 #include "mincrypt/sha256.h"
+#include "minzip/SysUtil.h"
 
 // This is build/target/product/security/testkey.x509.pem after being
 // dumped out by dumpkey.jar.
@@ -227,7 +231,13 @@ int main(int argc, char **argv) {
 
     ui = new FakeUI();
 
-    int result = verify_file(argv[argn], certs, num_keys);
+    MemMapping map;
+    if (sysMapFile(argv[argn], &map) != 0) {
+        fprintf(stderr, "failed to mmap %s: %s\n", argv[argn], strerror(errno));
+        return 4;
+    }
+
+    int result = verify_file(map.addr, map.length, certs, num_keys);
     if (result == VERIFY_SUCCESS) {
         printf("VERIFIED\n");
         return 0;

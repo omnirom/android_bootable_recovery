@@ -186,12 +186,22 @@ really_install_package(const char *path, int* wipe_cache)
     ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
     LOGI("Update location: %s\n", path);
 
-    if (ensure_path_mounted(path) != 0) {
-        LOGE("Can't mount %s\n", path);
-        return INSTALL_CORRUPT;
+    // Map the update package into memory.
+    ui->Print("Opening update package...\n");
+
+    if (path) {
+        if (path[0] == '@') {
+            ensure_path_mounted(path+1);
+        } else {
+            ensure_path_mounted(path);
+        }
     }
 
-    ui->Print("Opening update package...\n");
+    MemMapping map;
+    if (sysMapFile(path, &map) != 0) {
+        LOGE("failed to map file\n");
+        return INSTALL_CORRUPT;
+    }
 
     int numKeys;
     Certificate* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
@@ -204,27 +214,33 @@ really_install_package(const char *path, int* wipe_cache)
     ui->Print("Verifying update package...\n");
 
     int err;
-    err = verify_file(path, loadedKeys, numKeys);
+    err = verify_file(map.addr, map.length, loadedKeys, numKeys);
     free(loadedKeys);
     LOGI("verify_file returned %d\n", err);
     if (err != VERIFY_SUCCESS) {
         LOGE("signature verification failed\n");
+        sysReleaseMap(&map);
         return INSTALL_CORRUPT;
     }
 
     /* Try to open the package.
      */
     ZipArchive zip;
-    err = mzOpenZipArchive(path, &zip);
+    err = mzOpenZipArchive(map.addr, map.length, &zip);
     if (err != 0) {
         LOGE("Can't open %s\n(%s)\n", path, err != -1 ? strerror(err) : "bad");
+        sysReleaseMap(&map);
         return INSTALL_CORRUPT;
     }
 
     /* Verify and install the contents of the package.
      */
     ui->Print("Installing update...\n");
-    return try_update_binary(path, &zip, wipe_cache);
+    int result = try_update_binary(path, &zip, wipe_cache);
+
+    sysReleaseMap(&map);
+
+    return result;
 }
 
 int

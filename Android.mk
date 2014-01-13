@@ -98,6 +98,7 @@ LOCAL_SRC_FILES := \
 LOCAL_STATIC_LIBRARIES := \
     libmincrypt \
     libminui \
+    libminzip \
     libcutils \
     libstdc++ \
     libc

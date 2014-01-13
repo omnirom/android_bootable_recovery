@@ -46,11 +46,11 @@ typedef struct ZipEntry {
  * One Zip archive.  Treat as opaque.
  */
 typedef struct ZipArchive {
-    int         fd;
-    unsigned int numEntries;
-    ZipEntry*   pEntries;
-    HashTable*  pHash;          // maps file name to ZipEntry
-    MemMapping  map;
+    unsigned int   numEntries;
+    ZipEntry*      pEntries;
+    HashTable*     pHash;          // maps file name to ZipEntry
+    unsigned char* addr;
+    size_t         length;
 } ZipArchive;
 
 /*
@@ -68,7 +68,7 @@ typedef struct {
  * On success, returns 0 and populates "pArchive".  Returns nonzero errno
  * value on failure.
  */
-int mzOpenZipArchive(const char* fileName, ZipArchive* pArchive);
+int mzOpenZipArchive(unsigned char* addr, size_t length, ZipArchive* pArchive);
 
 /*
  * Close archive, releasing resources associated with it.

@@ -111,14 +111,9 @@ static bool read_pkcs7(uint8_t* pkcs7_der, size_t pkcs7_der_len, uint8_t** sig_d
 // Return VERIFY_SUCCESS, VERIFY_FAILURE (if any error is encountered
 // or no key matches the signature).
 
-int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys) {
+int verify_file(unsigned char* addr, size_t length,
+                const Certificate* pKeys, unsigned int numKeys) {
     ui->SetProgress(0.0);
-
-    FILE* f = fopen(path, "rb");
-    if (f == NULL) {
-        LOGE("failed to open %s (%s)\n", path, strerror(errno));
-        return VERIFY_FAILURE;
-    }
 
     // An archive with a whole-file signature will end in six bytes:
     //
@@ -131,22 +126,15 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
 
 #define FOOTER_SIZE 6
 
-    if (fseek(f, -FOOTER_SIZE, SEEK_END) != 0) {
-        LOGE("failed to seek in %s (%s)\n", path, strerror(errno));
-        fclose(f);
+    if (length < FOOTER_SIZE) {
+        LOGE("not big enough to contain footer\n");
         return VERIFY_FAILURE;
     }
 
-    unsigned char footer[FOOTER_SIZE];
-    if (fread(footer, 1, FOOTER_SIZE, f) != FOOTER_SIZE) {
-        LOGE("failed to read footer from %s (%s)\n", path, strerror(errno));
-        fclose(f);
-        return VERIFY_FAILURE;
-    }
+    unsigned char* footer = addr + length - FOOTER_SIZE;
 
     if (footer[2] != 0xff || footer[3] != 0xff) {
         LOGE("footer is wrong\n");
-        fclose(f);
         return VERIFY_FAILURE;
     }
 
@@ -157,7 +145,6 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
 
     if (signature_start <= FOOTER_SIZE) {
         LOGE("Signature start is in the footer");
-        fclose(f);
         return VERIFY_FAILURE;
     }
 
@@ -167,9 +154,8 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
     // comment length.
     size_t eocd_size = comment_size + EOCD_HEADER_SIZE;
 
-    if (fseek(f, -eocd_size, SEEK_END) != 0) {
-        LOGE("failed to seek in %s (%s)\n", path, strerror(errno));
-        fclose(f);
+    if (length < eocd_size) {
+        LOGE("not big enough to contain EOCD\n");
         return VERIFY_FAILURE;
     }
 
@@ -177,26 +163,15 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
     // This is everything except the signature data and length, which
     // includes all of the EOCD except for the comment length field (2
     // bytes) and the comment data.
-    size_t signed_len = ftell(f) + EOCD_HEADER_SIZE - 2;
+    size_t signed_len = length - eocd_size + EOCD_HEADER_SIZE - 2;
 
-    unsigned char* eocd = (unsigned char*)malloc(eocd_size);
-    if (eocd == NULL) {
-        LOGE("malloc for EOCD record failed\n");
-        fclose(f);
-        return VERIFY_FAILURE;
-    }
-    if (fread(eocd, 1, eocd_size, f) != eocd_size) {
-        LOGE("failed to read eocd from %s (%s)\n", path, strerror(errno));
-        fclose(f);
-        return VERIFY_FAILURE;
-    }
+    unsigned char* eocd = addr + length - eocd_size;
 
     // If this is really is the EOCD record, it will begin with the
     // magic number $50 $4b $05 $06.
     if (eocd[0] != 0x50 || eocd[1] != 0x4b ||
         eocd[2] != 0x05 || eocd[3] != 0x06) {
         LOGE("signature length doesn't match EOCD marker\n");
-        fclose(f);
         return VERIFY_FAILURE;
     }
 
@@ -209,7 +184,6 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
             // which could be exploitable.  Fail verification if
             // this sequence occurs anywhere after the real one.
             LOGE("EOCD marker occurs after start of EOCD\n");
-            fclose(f);
             return VERIFY_FAILURE;
         }
     }
@@ -229,35 +203,23 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
     SHA256_CTX sha256_ctx;
     SHA_init(&sha1_ctx);
     SHA256_init(&sha256_ctx);
-    unsigned char* buffer = (unsigned char*)malloc(BUFFER_SIZE);
-    if (buffer == NULL) {
-        LOGE("failed to alloc memory for sha1 buffer\n");
-        fclose(f);
-        return VERIFY_FAILURE;
-    }
 
     double frac = -1.0;
     size_t so_far = 0;
-    fseek(f, 0, SEEK_SET);
     while (so_far < signed_len) {
-        size_t size = BUFFER_SIZE;
-        if (signed_len - so_far < size) size = signed_len - so_far;
-        if (fread(buffer, 1, size, f) != size) {
-            LOGE("failed to read data from %s (%s)\n", path, strerror(errno));
-            fclose(f);
-            return VERIFY_FAILURE;
-        }
-        if (need_sha1) SHA_update(&sha1_ctx, buffer, size);
-        if (need_sha256) SHA256_update(&sha256_ctx, buffer, size);
+        size_t size = signed_len - so_far;
+        if (size > BUFFER_SIZE) size = BUFFER_SIZE;
+
+        if (need_sha1) SHA_update(&sha1_ctx, addr + so_far, size);
+        if (need_sha256) SHA256_update(&sha256_ctx, addr + so_far, size);
         so_far += size;
+
         double f = so_far / (double)signed_len;
         if (f > frac + 0.02 || size == so_far) {
             ui->SetProgress(f);
             frac = f;
         }
     }
-    fclose(f);
-    free(buffer);
 
     const uint8_t* sha1 = SHA_final(&sha1_ctx);
     const uint8_t* sha256 = SHA256_final(&sha256_ctx);
@@ -269,10 +231,8 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
     if (!read_pkcs7(eocd + eocd_size - signature_start, signature_size, &sig_der,
             &sig_der_length)) {
         LOGE("Could not find signature DER block\n");
-        free(eocd);
         return VERIFY_FAILURE;
     }
-    free(eocd);
 
     /*
      * Check to make sure at least one of the keys matches the signature. Since
