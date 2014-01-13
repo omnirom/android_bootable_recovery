@@ -1,6 +1,13 @@
 import /init.recovery.${ro.hardware}.rc
 
 on early-init
+    # Apply strict SELinux checking of PROT_EXEC on mmap/mprotect calls.
+    write /sys/fs/selinux/checkreqprot 0
+
+    # Set the security context for the init process.
+    # This should occur before anything else (e.g. ueventd) is started.
+    setcon u:r:init:s0
+
     start ueventd
     start healthd
 
@@ -43,15 +50,19 @@ on property:sys.powerctl=*
 
 service ueventd /sbin/ueventd
     critical
+    seclabel u:r:ueventd:s0
 
 service healthd /sbin/healthd -r
     critical
+    seclabel u:r:healthd:s0
 
 service recovery /sbin/recovery
+    seclabel u:r:recovery:s0
 
 service adbd /sbin/adbd recovery
     disabled
     socket adbd stream 660 system system
+    seclabel u:r:adbd:s0
 
 # Always start adbd on userdebug and eng builds
 on property:ro.debuggable=1
