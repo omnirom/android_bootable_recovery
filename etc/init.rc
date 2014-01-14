@@ -5,7 +5,7 @@ on early-init
     start healthd
 
 on init
-    export PATH /sbin
+    export PATH /sbin:/system/bin
     export LD_LIBRARY_PATH .:/sbin
     export ANDROID_ROOT /system
     export ANDROID_DATA /data
@@ -16,7 +16,7 @@ on init
     mkdir /system
     mkdir /data
     mkdir /cache
-    mount /tmp /tmp tmpfs
+    mount tmpfs tmpfs /tmp
 
     chown root shell /tmp
     chmod 0775 /tmp
