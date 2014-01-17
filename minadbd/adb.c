@@ -390,7 +390,7 @@ int adb_main(const char* path)
     init_transport_registration();
 
     // The minimal version of adbd only uses USB.
-    if (access("/dev/android_adb", F_OK) == 0) {
+    if (access(USB_ADB_PATH, F_OK) == 0 || access(USB_FFS_ADB_EP0, F_OK) == 0) {
         // listen on USB
         usb_init();
     }
