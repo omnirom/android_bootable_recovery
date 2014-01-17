@@ -410,6 +410,17 @@ extern int SHELL_EXIT_NOTIFY_FD;
 
 #define CHUNK_SIZE (64*1024)
 
+#if !ADB_HOST
+#define USB_ADB_PATH     "/dev/android_adb"
+
+#define USB_FFS_ADB_PATH  "/dev/usb-ffs/adb/"
+#define USB_FFS_ADB_EP(x) USB_FFS_ADB_PATH#x
+
+#define USB_FFS_ADB_EP0   USB_FFS_ADB_EP(ep0)
+#define USB_FFS_ADB_OUT   USB_FFS_ADB_EP(ep1)
+#define USB_FFS_ADB_IN    USB_FFS_ADB_EP(ep2)
+#endif
+
 int sendfailmsg(int fd, const char *reason);
 int handle_host_request(char *service, transport_type ttype, char* serial, int reply_fd, asocket *s);
 
