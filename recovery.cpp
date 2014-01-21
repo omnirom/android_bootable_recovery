@@ -938,7 +938,7 @@ main(int argc, char **argv) {
         return 0;
     }
 
-    printf("Starting recovery on %s", ctime(&start));
+    printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
 
     load_volume_table();
     ensure_path_mounted(LAST_LOG_FILE);

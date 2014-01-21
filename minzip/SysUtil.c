@@ -153,6 +153,8 @@ static int sysMapBlockFile(FILE* mapf, MemMapping* pMap)
     pMap->addr = reserve;
     pMap->length = size;
 
+    LOGI("mmapped %d ranges\n", range_count);
+
     return 0;
 }
 
