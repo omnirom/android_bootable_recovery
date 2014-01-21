@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cb5d2d02_149017f8",
+        "filename": "fixPermissions.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-01-21T14:53:26Z",
+      "side": 1,
+      "message": "This variable isn\u0027t used anywhere.",
+      "revId": "2203d1ee0b1b671a31f2027fa2e629063af8997e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb5d2d02_549a8f17",
+        "filename": "fixPermissions.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-01-21T14:53:26Z",
+      "side": 1,
+      "message": "The LOGINFO and d \u003d opendir lines are in both parts of the if-then block. Best practice would be to set dir in the if-then block and move the other 2 lines outside of the if-block to prevent repetition.\n\nAlso would be good practice to verify that the opendir call succeeds before the while loop.",
+      "revId": "2203d1ee0b1b671a31f2027fa2e629063af8997e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb5d2d02_34951be8",
+        "filename": "fixPermissions.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-01-21T14:53:26Z",
+      "side": 1,
+      "message": "There\u0027s an extra tab here.",
+      "revId": "2203d1ee0b1b671a31f2027fa2e629063af8997e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb5d2d02_948427b8",
+        "filename": "fixPermissions.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-01-21T14:53:26Z",
+      "side": 1,
+      "message": "I don\u0027t see anything that requires data.hpp",
+      "revId": "2203d1ee0b1b671a31f2027fa2e629063af8997e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb5d2d02_f48ba3c1",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1507,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-01-21T14:53:26Z",
+      "side": 1,
+      "message": "Extra space here.",
+      "revId": "2203d1ee0b1b671a31f2027fa2e629063af8997e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
