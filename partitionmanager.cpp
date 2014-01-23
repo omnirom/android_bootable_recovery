@@ -38,13 +38,16 @@
 #include "twrpDigest.hpp"
 #include "twrpDU.hpp"
 
+extern "C" {
+	#include "cutils/properties.h"
+}
+
 #ifdef TW_INCLUDE_CRYPTO
 	#ifdef TW_INCLUDE_JB_CRYPTO
 		#include "crypto/jb/cryptfs.h"
 	#else
 		#include "crypto/ics/cryptfs.h"
 	#endif
-	#include "cutils/properties.h"
 #endif
 
 TWPartitionManager::TWPartitionManager(void) {
