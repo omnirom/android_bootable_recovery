@@ -59,7 +59,7 @@ service healthd /sbin/healthd -r
 service recovery /sbin/recovery
     seclabel u:r:recovery:s0
 
-service adbd /sbin/adbd recovery
+service adbd /sbin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
     disabled
     socket adbd stream 660 system system
     seclabel u:r:adbd:s0
