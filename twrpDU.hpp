@@ -40,8 +40,9 @@ public:
 	uint64_t Get_Folder_Size(const string& Path); // Gets the folder's size using stat
 	void add_absolute_dir(string Path);
 	void add_relative_dir(string Path);
-	bool check_skip_dirs(string& dir);            // Checks a list of directories to see if we should skip it
+	bool check_skip_dirs(string& dir);
 	vector<string> get_absolute_dirs(void);
+	void clear_relative_dir(string dir);
 private:
 	vector<string> absolutedir;
 	vector<string> relativedir;
