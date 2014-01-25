@@ -43,6 +43,16 @@ void twrpDU::add_relative_dir(string dir) {
 	relativedir.push_back(dir);
 }
 
+void twrpDU::clear_relative_dir(string dir) {
+	vector<string>::iterator iter = relativedir.begin();
+	while (iter != relativedir.end()) {
+		if (*iter == dir)
+			iter = relativedir.erase(iter);
+		else
+			iter++;
+	}
+}
+
 void twrpDU::add_absolute_dir(string dir) {
 	absolutedir.push_back(dir);
 }
@@ -97,7 +107,6 @@ bool twrpDU::check_skip_dirs(string& dir) {
 		}
 	}
 	for (int i = 0; i < absolutedir.size(); ++i) {
-		//string absdir = parent + dir;
 		if (dir == absolutedir.at(i)) {
 			result = true;
 			break;

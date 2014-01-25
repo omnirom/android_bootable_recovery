@@ -399,7 +399,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 		} else if (Mount_Point == "/recovery") {
 			Display_Name = "Recovery";
 			Backup_Display_Name = Display_Name;
-			Can_Be_Backed_Up = true;
 		}
 	}
 
@@ -1539,8 +1538,9 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 			// The media folder is the "internal sdcard"
 			// The .layout_version file is responsible for determining whether 4.2 decides up upgrade
 			// the media folder for multi-user.
+			//TODO: convert this to use twrpDU.cpp
 			if (strcmp(de->d_name, "media") == 0 || strcmp(de->d_name, ".layout_version") == 0)   continue;
-			
+
 			dir = "/data/";
 			dir.append(de->d_name);
 			if (de->d_type == DT_DIR) {
@@ -1551,6 +1551,7 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 			}
 		}
 		closedir(d);
+
 		gui_print("Done.\n");
 		return true;
 	}
@@ -1798,6 +1799,7 @@ bool TWPartition::Update_Size(bool Display_Error) {
 			unsigned long long data_media_used, actual_data;
 			du.add_relative_dir("media");
 			Used = du.Get_Folder_Size("/data");
+			du.clear_relative_dir("media");
 			Backup_Size = Used;
 			int bak = (int)(Used / 1048576LLU);
 			int fre = (int)(Free / 1048576LLU);
