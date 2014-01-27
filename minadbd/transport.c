@@ -678,27 +678,6 @@ retry:
     return result;
 }
 
-void register_socket_transport(int s, const char *serial, int port, int local)
-{
-    atransport *t = calloc(1, sizeof(atransport));
-    char buff[32];
-
-    if (!serial) {
-        snprintf(buff, sizeof buff, "T-%p", t);
-        serial = buff;
-    }
-    D("transport: %s init'ing for socket %d, on port %d\n", serial, s, port);
-    if ( init_socket_transport(t, s, port, local) < 0 ) {
-        adb_close(s);
-        free(t);
-        return;
-    }
-    if(serial) {
-        t->serial = strdup(serial);
-    }
-    register_transport(t);
-}
-
 void register_usb_transport(usb_handle *usb, const char *serial, unsigned writeable)
 {
     atransport *t = calloc(1, sizeof(atransport));
