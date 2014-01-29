@@ -976,6 +976,39 @@ protected:
 	int lineW;
 };
 
+class MouseCursor : public RenderObject
+{
+public:
+	MouseCursor(int posX, int posY);
+	virtual ~MouseCursor();
+
+	// Render - Render the full object to the GL surface
+	//  Return 0 on success, <0 on error
+	virtual int Render(void);
+
+	// Update - Update any UI component animations (called <= 30 FPS)
+	//  Return 0 if nothing to update, 1 on success and contiue, >1 if full render required, and <0 on error
+	virtual int Update(void);
+
+	// SetPos - Update the position of the render object
+	//  Return 0 on success, <0 on error
+	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
+
+	void Move(int deltaX, int deltaY);
+	void GetPos(int& x, int& y);
+	void LoadData(xml_node<>* node);
+	void ResetData(int resX, int resY);
+
+private:
+	int m_resX;
+	int m_resY;
+	bool m_moved;
+	float m_speedMultiplier;
+	COLOR m_color;
+	Resource *m_image;
+	bool m_present;
+};
+
 // Helper APIs
 bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w = NULL, int* h = NULL, RenderObject::Placement* placement = NULL);
 
