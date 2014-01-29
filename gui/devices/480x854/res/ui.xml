@@ -39,6 +39,7 @@
 		<resource name="keyboard2" type="image" filename="keyboard2" />
 		<resource name="keyboard3" type="image" filename="keyboard3" />
 		<resource name="keyboard4" type="image" filename="keyboard4" />
+		<resource name="cursor" type="image" filename="cursor" />
 	</resources>
 
 	<variables>
@@ -184,6 +185,12 @@
 		<variable name="slidervalue_sliderw" value="7" />
 		<variable name="slidervalue_sliderh" value="40" />
 	</variables>
+
+	<mousecursor>
+		<placement w="15" h="15" />
+		<background color="#FFFF00FF" resource="cursor" />
+		<speed multiplier="1.5" />
+	</mousecursor>
 
 	<templates>
 		<template name="header">
