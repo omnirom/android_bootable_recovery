@@ -96,6 +96,9 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 			if ((*iter)->Is_Storage) {
 				(*iter)->Is_Settings_Storage = true;
+#ifndef RECOVERY_SDCARD_ON_DATA
+				(*iter)->Setup_AndSec();
+#endif
 				Found_Settings_Storage = true;
 				DataManager::SetValue("tw_settings_path", (*iter)->Storage_Path);
 				DataManager::SetValue("tw_storage_path", (*iter)->Storage_Path);
