@@ -46,7 +46,7 @@ int fixPermissions::restorecon(string entry, struct stat *sb) {
 	char *oldcontext, *newcontext;
 	struct selabel_handle *sehandle;
 
-	sehandle = selinux_android_file_context_handle();
+	sehandle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
 	if (lgetfilecon(entry.c_str(), &oldcontext) < 0) {
 		LOGINFO("Couldn't get selinux context for %s\n", entry.c_str());
 		return -1;
