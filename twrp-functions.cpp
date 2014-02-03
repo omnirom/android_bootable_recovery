@@ -1019,3 +1019,96 @@ void TWFunc::Auto_Generate_Backup_Name() {
 	if (!mount_state)
 		PartitionManager.UnMount_By_Path("/system", false);
 }
+
+void TWFunc::Fixup_Time_On_Boot()
+{
+#ifdef QCOM_RTC_FIX
+	// Devices with Qualcomm Snapdragon 800 do some shenanigans with RTC.
+	// They never set it, it just ticks forward from 1970-01-01 00:00,
+	// and then they have files /data/system/time/ats_* with 64bit offset
+	// in miliseconds which, when added to the RTC, gives the correct time.
+	// So, the time is: (offset_from_ats + value_from_RTC)
+	// There are multiple ats files, they are for different systems? Bases?
+	// Like, ats_1 is for modem and ats_2 is for TOD (time of day?).
+	// Look at file time_genoff.h in CodeAurora, qcom-opensource/time-services
+
+	static const char *paths[] = { "/data/system/time/", "/data/time/"  };
+
+	DIR *d;
+	FILE *f;
+	uint64_t offset = 0;
+	struct timeval tv;
+	struct dirent *dt;
+	std::string ats_path;
+
+
+	// Don't fix the time of it already is over year 2000, it is likely already okay, either
+	// because the RTC is fine or because the recovery already set it and then crashed
+	gettimeofday(&tv, NULL);
+	if(tv.tv_sec > 946684800) // timestamp of 2000-01-01 00:00:00
+	{
+		LOGINFO("TWFunc::Fixup_Time: not fixing time, it seems to be already okay (after year 2000).\n");
+		return;
+	}
+
+	if(!PartitionManager.Mount_By_Path("/data", false))
+		return;
+
+	// Prefer ats_2, it seems to be the one we want according to logcat on hammerhead
+	// - it is the one for ATS_TOD (time of day?).
+	// However, I never saw a device where the offset differs between ats files.
+	for(size_t i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i)
+	{
+		DIR *d = opendir(paths[i]);
+		if(!d)
+			continue;
+
+		while((dt = readdir(d)))
+		{
+			if(dt->d_type != DT_REG || strncmp(dt->d_name, "ats_", 4) != 0)
+				continue;
+
+			if(ats_path.empty() || strcmp(dt->d_name, "ats_2") == 0)
+				ats_path = std::string(paths[i]).append(dt->d_name);
+		}
+
+		closedir(d);
+	}
+
+	if(ats_path.empty())
+	{
+		LOGERR("TWFunc::Fixup_Time: no ats files found, leaving time as-is!\n");
+		return;
+	}
+
+	f = fopen(ats_path.c_str(), "r");
+	if(!f)
+	{
+		LOGERR("TWFunc::Fixup_Time: failed to open file %s\n", ats_path.c_str());
+		return;
+	}
+
+	if(fread(&offset, sizeof(offset), 1, f) != 1)
+	{
+		LOGERR("TWFunc::Fixup_Time: failed load uint64 from file %s\n", ats_path.c_str());
+		fclose(f);
+		return;
+	}
+	fclose(f);
+
+	LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s, offset %llu\n", ats_path.c_str(), offset);
+
+	gettimeofday(&tv, NULL);
+
+	tv.tv_sec += offset/1000;
+	tv.tv_usec += (offset%1000)*1000;
+
+	while(tv.tv_usec >= 1000000)
+	{
+		++tv.tv_sec;
+		tv.tv_usec -= 1000000;
+	}
+
+	settimeofday(&tv, NULL);
+#endif
+}

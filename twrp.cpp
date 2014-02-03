@@ -268,6 +268,9 @@ int main(int argc, char **argv) {
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
 	}
+
+	TWFunc::Fixup_Time_On_Boot();
+
 	// Launch the main GUI
 	gui_start();
 
