@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab62b9bd_54c7fd4a",
+        "filename": "minui/graphics.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 440,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-02-03T21:02:46Z",
+      "side": 1,
+      "message": "The #ifdef here should be changed to:\n#if defined(TW_NO_SCREEN_BLANK) \u0026\u0026 defined(TW_BRIGHTNESS_PATH) \u0026\u0026 defined(TW_MAX_BRIGHTNESS)\n\nTo ensure that all values are defined to prevent a compile error.",
+      "revId": "d4859798172839eac79189aeba80010247fa5d10",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
