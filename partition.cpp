@@ -74,10 +74,18 @@ static struct flag_list mount_flags[] = {
 	{ "remount",    MS_REMOUNT },
 	{ "bind",       MS_BIND },
 	{ "rec",        MS_REC },
+#ifdef MS_UNBINDABLE
 	{ "unbindable", MS_UNBINDABLE },
+#endif
+#ifdef MS_PRIVATE
 	{ "private",    MS_PRIVATE },
+#endif
+#ifdef MS_SLAVE
 	{ "slave",      MS_SLAVE },
+#endif
+#ifdef MS_SHARED
 	{ "shared",     MS_SHARED },
+#endif
 	{ "sync",       MS_SYNCHRONOUS },
 	{ "defaults",   0 },
 	{ 0,            0 },
