@@ -466,8 +466,20 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 		ptr_len = strlen(ptr);
 		if (strcmp(ptr, "removable") == 0) {
 			Removable = true;
-		} else if (strcmp(ptr, "storage") == 0) {
-			Is_Storage = true;
+		} else if (strncmp(ptr, "storage", 7) == 0) {
+			if (ptr_len == 7) {
+				LOGINFO("ptr_len is 7, storage set to true\n");
+				Is_Storage = true;
+			} else if (ptr_len == 9) {
+				ptr += 9;
+				if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y') {
+					LOGINFO("storage set to true\n");
+					Is_Storage = true;
+				} else {
+					LOGINFO("storage set to false\n");
+					Is_Storage = false;
+				}
+			}
 		} else if (strcmp(ptr, "settingsstorage") == 0) {
 			Is_Storage = true;
 		} else if (strcmp(ptr, "canbewiped") == 0) {
