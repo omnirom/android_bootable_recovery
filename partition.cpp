@@ -1602,12 +1602,6 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	tar.setsize(Backup_Size);
 	if (tar.createTarFork() != 0)
 		return false;
-	if (use_encryption)
-		Full_FileName += "000";
-	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
-		LOGERR("Backup file size for '%s' is 0 bytes.\n", Full_FileName.c_str());
-		return false;
-	}
 	return true;
 }
 
