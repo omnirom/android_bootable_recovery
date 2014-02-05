@@ -2684,8 +2684,24 @@
 			<object type="slidervalue">
 				<placement x="col1_x" y="%row4_text_y%" w="%slidervalue_w%" />
 				<font resource="font" color="%text_color%" />
-				<text>Vibration Value : </text>
-				<data variable="tw_vibrate" min="0" max="300" />
+				<text>Button Vibration:</text>
+				<data variable="tw_button_vibrate" min="0" max="300" />
+				<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />
+			</object>
+
+			<object type="slidervalue">
+				<placement x="col1_x" y="%row8_text_y%" w="%slidervalue_w%" />
+				<font resource="font" color="%text_color%" />
+				<text>Keyboard Vibration:</text>
+				<data variable="tw_keyboard_vibrate" min="0" max="300" />
+				<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />
+			</object>
+
+			<object type="slidervalue">
+				<placement x="col1_x" y="%row12_text_y%" w="%slidervalue_w%" />
+				<font resource="font" color="%text_color%" />
+				<text>Action Vibration:</text>
+				<data variable="tw_action_vibrate" min="0" max="500" />
 				<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />
 			</object>
 
