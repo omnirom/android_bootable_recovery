@@ -348,7 +348,7 @@ void GUIAction::operation_end(const int operation_status, const int simulate)
 #endif
 	time(&Stop);
 	if ((int) difftime(Stop, Start) > 10)
-		DataManager::Vibrate("tw_vibrate");
+		DataManager::Vibrate("tw_action_vibrate");
 }
 
 int GUIAction::doAction(Action action, int isThreaded /* = 0 */)

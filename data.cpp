@@ -583,7 +583,9 @@ void DataManager::SetDefaultValues()
 
 	mConstValues.insert(make_pair(TW_VERSION_VAR, TW_VERSION_STR));
 	mValues.insert(make_pair("tw_storage_path", make_pair("/", 1)));
-	mValues.insert(make_pair("tw_vibrate", make_pair("80", 1)));
+	mValues.insert(make_pair("tw_button_vibrate", make_pair("80", 1)));
+	mValues.insert(make_pair("tw_keyboard_vibrate", make_pair("40", 1)));
+	mValues.insert(make_pair("tw_action_vibrate", make_pair("160", 1)));
 
 #ifdef TW_FORCE_CPUINFO_FOR_DEVICE_ID
 	printf("TW_FORCE_CPUINFO_FOR_DEVICE_ID := true\n");
