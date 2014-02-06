@@ -581,7 +581,7 @@ bool TWFunc::Fix_su_Perms(void) {
 			LOGERR("Failed to chown '%s'\n", file.c_str());
 			return false;
 		}
-		if (tw_chmod(file, "6755") != 0) {
+		if (tw_chmod(file, "0755") != 0) {
 			LOGERR("Failed to chmod '%s'\n", file.c_str());
 			return false;
 		}
