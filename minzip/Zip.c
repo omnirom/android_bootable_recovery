@@ -772,7 +772,7 @@ bool mzReadZipEntry(const ZipArchive* pArchive, const ZipEntry* pEntry,
 static bool writeProcessFunction(const unsigned char *data, int dataLen,
                                  void *cookie)
 {
-    int fd = (int)cookie;
+    int fd = (int)(intptr_t)cookie;
 
     ssize_t soFar = 0;
     while (true) {
@@ -802,7 +802,7 @@ bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
     const ZipEntry *pEntry, int fd)
 {
     bool ret = mzProcessZipEntryContents(pArchive, pEntry, writeProcessFunction,
-                                         (void*)fd);
+                                         (void*)(intptr_t)fd);
     if (!ret) {
         LOGE("Can't extract entry to file.\n");
         return false;
