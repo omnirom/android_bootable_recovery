@@ -437,15 +437,17 @@ gr_pixel *gr_fb_data(void)
 
 void gr_fb_blank(bool blank)
 {
-#ifdef RECOVERY_LCD_BACKLIGHT_PATH
+#if defined(TW_NO_SCREEN_BLANK) && defined(TW_BRIGHTNESS_PATH) && defined(TW_MAX_BRIGHTNESS)
     int fd;
+    char brightness[4];
+    snprintf(brightness, 4, "%03d", TW_MAX_BRIGHTNESS/2);
 
-    fd = open(RECOVERY_LCD_BACKLIGHT_PATH, O_RDWR);
+    fd = open(TW_BRIGHTNESS_PATH, O_RDWR);
     if (fd < 0) {
         perror("cannot open LCD backlight");
         return;
     }
-    write(fd, blank ? "000" : "127", 3);
+    write(fd, blank ? "000" : brightness, 3);
     close(fd);
 #else
     int ret;
