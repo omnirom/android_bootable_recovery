@@ -361,10 +361,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Is_Storage = true;
 			Removable = true;
 			Wipe_Available_in_GUI = true;
-#ifndef RECOVERY_SDCARD_ON_DATA
-			Setup_AndSec();
-			Mount_Storage_Retry();
-#endif
 #endif
 		}
 #ifdef TW_INTERNAL_STORAGE_PATH
@@ -373,20 +369,12 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Is_Settings_Storage = true;
 			Storage_Path = EXPAND(TW_INTERNAL_STORAGE_PATH);
 			Wipe_Available_in_GUI = true;
-#ifndef RECOVERY_SDCARD_ON_DATA
-			Setup_AndSec();
-			Mount_Storage_Retry();
-#endif
 		}
 #else
 		if (Mount_Point == "/emmc" || Mount_Point == "/internal_sd" || Mount_Point == "/internal_sdcard") {
 			Is_Storage = true;
 			Is_Settings_Storage = true;
 			Wipe_Available_in_GUI = true;
-#ifndef RECOVERY_SDCARD_ON_DATA
-			Setup_AndSec();
-			Mount_Storage_Retry();
-#endif
 		}
 #endif
 	} else if (Is_Image(Fstab_File_System)) {
@@ -663,6 +651,7 @@ void TWPartition::Setup_AndSec(void) {
 	Backup_Path = Symlink_Mount_Point;
 	Make_Dir("/and-sec", true);
 	Recreate_AndSec_Folder();
+	Mount_Storage_Retry();
 }
 
 void TWPartition::Find_Real_Block_Device(string& Block, bool Display_Error) {
