@@ -659,7 +659,7 @@ int GUIFileSelector::GetSelection(int x, int y)
 
 int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
-	static int lastY = 0, last2Y = 0;
+	static int lastY = 0, last2Y = 0, fastScroll = 0;
 	int selection = 0;
 
 	switch (state)
@@ -674,6 +674,9 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 			mUpdate = 1;
 		startY = lastY = last2Y = y;
 		scrollingSpeed = 0;
+
+		if(mFastScrollRectX != -1 && x >= mRenderX + mRenderW - mFastScrollW)
+			fastScroll = 1;
 		break;
 	case TOUCH_DRAG:
 		// Check if we dragged out of the selection window
@@ -687,7 +690,7 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 		}
 
 		// Fast scroll
-		if(mFastScrollRectX != -1 && x >= mRenderX + mRenderW - mFastScrollW)
+		if(fastScroll)
 		{
 			int pct = ((y-mRenderY-mHeaderH)*100)/(mRenderH-mHeaderH);
 			int totalSize = (mShowFolders ? mFolderList.size() : 0) + (mShowFiles ? mFileList.size() : 0);
@@ -761,6 +764,7 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 
 	case TOUCH_RELEASE:
 		isHighlighted = false;
+		fastScroll = 0;
 		if (startSelection >= 0)
 		{
 			// We've selected an item!
