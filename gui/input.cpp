@@ -216,7 +216,6 @@ GUIInput::~GUIInput()
 	if (mInputText)	 	delete mInputText;
 	if (mBackground)	delete mBackground;
 	if (mCursor)		delete mCursor;
-	if (mFont)			delete mFont;
 	if (mAction)		delete mAction;
 }
 

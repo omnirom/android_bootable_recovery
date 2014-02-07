@@ -304,10 +304,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 
 GUIKeyboard::~GUIKeyboard()
 {
-	int layoutindex;
 
-	for (layoutindex=0; layoutindex<MAX_KEYBOARD_LAYOUTS; layoutindex++)
-		if (keyboardImg[layoutindex])   delete keyboardImg[layoutindex];
 }
 
 int GUIKeyboard::Render(void)

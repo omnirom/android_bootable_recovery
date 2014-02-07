@@ -193,6 +193,12 @@ Page::Page(xml_node<>* page, xml_node<>* templates /* = NULL */)
 	return;
 }
 
+Page::~Page()
+{
+	for (std::vector<GUIObject*>::iterator itr = mObjects.begin(); itr != mObjects.end(); ++itr)
+		delete *itr;
+}
+
 bool Page::ProcessNode(xml_node<>* page, xml_node<>* templates /* = NULL */, int depth /* = 0 */)
 {
 	if (depth == 10)
@@ -225,86 +231,101 @@ bool Page::ProcessNode(xml_node<>* page, xml_node<>* templates /* = NULL */, int
 		if (type == "text")
 		{
 			GUIText* element = new GUIText(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "image")
 		{
 			GUIImage* element = new GUIImage(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 		}
 		else if (type == "fill")
 		{
 			GUIFill* element = new GUIFill(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 		}
 		else if (type == "action")
 		{
 			GUIAction* element = new GUIAction(child);
+			mObjects.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "console")
 		{
 			GUIConsole* element = new GUIConsole(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "button")
 		{
 			GUIButton* element = new GUIButton(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "checkbox")
 		{
 			GUICheckbox* element = new GUICheckbox(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "fileselector")
 		{
 			GUIFileSelector* element = new GUIFileSelector(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "animation")
 		{
 			GUIAnimation* element = new GUIAnimation(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 		}
 		else if (type == "progressbar")
 		{
 			GUIProgressBar* element = new GUIProgressBar(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "slider")
 		{
 			GUISlider* element = new GUISlider(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "slidervalue")
 		{
 			GUISliderValue *element = new GUISliderValue(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "listbox")
 		{
 			GUIListBox* element = new GUIListBox(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "keyboard")
 		{
 			GUIKeyboard* element = new GUIKeyboard(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
 		else if (type == "input")
 		{
 			GUIInput* element = new GUIInput(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 			mInputs.push_back(element);
@@ -312,6 +333,7 @@ bool Page::ProcessNode(xml_node<>* page, xml_node<>* templates /* = NULL */, int
 		else if (type == "partitionlist")
 		{
 			GUIPartitionList* element = new GUIPartitionList(child);
+			mObjects.push_back(element);
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
@@ -526,6 +548,9 @@ PageSet::PageSet(char* xmlFile)
 
 PageSet::~PageSet()
 {
+	for (std::vector<Page*>::iterator itr = mPages.begin(); itr != mPages.end(); ++itr)
+		delete *itr;
+
 	delete mResources;
 	free(mXmlFile);
 }
@@ -869,6 +894,8 @@ int PageManager::ReloadPackage(std::string name, std::string package)
 	}
 	if (mCurrentSet == set)
 		SelectPackage(name);
+	if (mBaseSet == set)
+		mBaseSet = mCurrentSet;
 	delete set;
 	return 0;
 }
