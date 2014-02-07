@@ -57,6 +57,9 @@ extern "C"
 #include "blanktimer.hpp"
 #endif
 
+// Enable to print render time of each frame to the log file
+//#define PRINT_RENDER_TIME 1
+
 const static int CURTAIN_FADE = 32;
 
 using namespace rapidxml;
@@ -484,6 +487,11 @@ static int runPages(void)
 
 	DataManager::SetValue("tw_loaded", 1);
 
+#ifdef PRINT_RENDER_TIME
+	timespec start, end;
+	int32_t render_t, flip_t;
+#endif
+
 	for (;;)
 	{
 		loopTimer();
@@ -493,11 +501,30 @@ static int runPages(void)
 			int ret;
 
 			ret = PageManager::Update();
+
+#ifndef PRINT_RENDER_TIME
 			if (ret > 1)
 				PageManager::Render();
 
 			if (ret > 0)
 				flip();
+#else
+			if (ret > 1)
+			{
+				clock_gettime(CLOCK_MONOTONIC, &start);
+				PageManager::Render();
+				clock_gettime(CLOCK_MONOTONIC, &end);
+				render_t = TWFunc::timespec_diff_ms(start, end);
+
+				flip();
+				clock_gettime(CLOCK_MONOTONIC, &start);
+				flip_t = TWFunc::timespec_diff_ms(end, start);
+
+				LOGINFO("Render(): %u ms, flip(): %u ms, total: %u ms\n", render_t, flip_t, render_t+flip_t);
+			}
+			else if(ret == 1)
+				flip();
+#endif
 		}
 		else
 		{

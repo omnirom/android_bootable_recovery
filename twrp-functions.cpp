@@ -515,6 +515,12 @@ timespec TWFunc::timespec_diff(timespec& start, timespec& end)
 	return temp;
 }
 
+int32_t TWFunc::timespec_diff_ms(timespec& start, timespec& end)
+{
+	return ((end.tv_sec * 1000) + end.tv_nsec/1000000) -
+			((start.tv_sec * 1000) + start.tv_nsec/1000000);
+}
+
 int TWFunc::drop_caches(void) {
 	string file = "/proc/sys/vm/drop_caches";
 	string value = "3";
