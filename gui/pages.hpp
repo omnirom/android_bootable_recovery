@@ -29,14 +29,14 @@ class RenderObject;
 class ActionObject;
 class InputObject;
 class MouseCursor;
+class GUIObject;
 
 class Page
 {
 public:
-	virtual ~Page() {}
-
-public:
 	Page(xml_node<>* page, xml_node<>* templates = NULL);
+	virtual ~Page();
+
 	std::string GetName(void)   { return mName; }
 
 public:
@@ -51,6 +51,7 @@ public:
 
 protected:
 	std::string mName;
+	std::vector<GUIObject*> mObjects;
 	std::vector<RenderObject*> mRenders;
 	std::vector<ActionObject*> mActions;
 	std::vector<InputObject*> mInputs;
