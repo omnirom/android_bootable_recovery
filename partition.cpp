@@ -40,6 +40,7 @@
 #include "twrpDigest.hpp"
 #include "twrpTar.hpp"
 #include "twrpDU.hpp"
+#include "fixPermissions.hpp"
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
@@ -1511,6 +1512,9 @@ bool TWPartition::Wipe_F2FS() {
 
 bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 	string dir;
+	#ifdef HAVE_SELINUX
+	fixPermissions perms;
+	#endif
 
 	// This handles wiping data on devices with "sdcard" in /data/media
 	if (!Mount(true))
@@ -1540,6 +1544,10 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 			}
 		}
 		closedir(d);
+
+		#ifdef HAVE_SELINUX
+		perms.fixDataInternalContexts();
+		#endif
 
 		gui_print("Done.\n");
 		return true;
@@ -1811,12 +1819,19 @@ void TWPartition::Find_Actual_Block_Device(void) {
 void TWPartition::Recreate_Media_Folder(void) {
 	string Command;
 
+	#ifdef HAVE_SELINUX
+	fixPermissions perms;
+	#endif
+
 	if (!Mount(true)) {
 		LOGERR("Unable to recreate /data/media folder.\n");
 	} else if (!TWFunc::Path_Exists("/data/media")) {
 		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
 		LOGINFO("Recreating /data/media folder.\n");
 		mkdir("/data/media", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); 
+		#ifdef HAVE_SELINUX
+		perms.fixDataInternalContexts();
+		#endif
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
 	}
 }
