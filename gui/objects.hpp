@@ -978,6 +978,31 @@ protected:
 	int lineW;
 };
 
+class MouseCursor : public RenderObject
+{
+public:
+	MouseCursor(int posX, int posY);
+	virtual ~MouseCursor();
+
+	virtual int Render(void);
+	virtual int Update(void);
+	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
+
+	void Move(int deltaX, int deltaY);
+	void GetPos(int& x, int& y);
+	void LoadData(xml_node<>* node);
+	void ResetData(int resX, int resY);
+
+private:
+	int m_resX;
+	int m_resY;
+	bool m_moved;
+	float m_speedMultiplier;
+	COLOR m_color;
+	Resource *m_image;
+	bool m_present;
+};
+
 // Helper APIs
 bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w = NULL, int* h = NULL, RenderObject::Placement* placement = NULL);
 

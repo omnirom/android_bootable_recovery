@@ -186,6 +186,7 @@ static void * input_thread(void *cookie)
 	static struct timeval touchStart;
 	HardwareKeyboard kb;
 	string seconds;
+	MouseCursor *cursor = PageManager::GetMouseCursor();
 
 #ifndef TW_NO_SCREEN_TIMEOUT
 	//start screen timeout threads
@@ -329,7 +330,47 @@ static void * input_thread(void *cookie)
 #ifdef _EVENT_LOGGING
 			LOGERR("TOUCH_KEY: %d\n", ev.code);
 #endif
-			if (ev.value != 0)
+			// Left mouse button
+			if(ev.code == BTN_LEFT)
+			{
+				if(ev.value == 1)
+				{
+					cursor->GetPos(x, y);
+
+					if (PageManager::NotifyTouch(TOUCH_START, x, y) > 0)
+						state = 1;
+					drag = 1;
+					touch_and_hold = 1;
+					dontwait = 1;
+					key_repeat = 0;
+					gettimeofday(&touchStart, NULL);
+				}
+				else if(drag == 1)
+				{
+					if (state == 0)
+					{
+						cursor->GetPos(x, y);
+
+						PageManager::NotifyTouch(TOUCH_RELEASE, x, y);
+
+						touch_and_hold = 0;
+						touch_repeat = 0;
+						if (!key_repeat)
+							dontwait = 0;
+					}
+					state = 0;
+					drag = 0;
+				}
+			}
+			// side mouse button, often used for "back" function
+			else if(ev.code == BTN_SIDE)
+			{
+				if(ev.value == 1)
+					kb.KeyDown(KEY_BACK);
+				else
+					kb.KeyUp(KEY_BACK);
+			}
+			else if (ev.value != 0)
 			{
 				// This is a key press
 				if (kb.KeyDown(ev.code))
@@ -367,6 +408,26 @@ static void * input_thread(void *cookie)
 #endif
 			}
 		}
+		else if(ev.type == EV_REL)
+		{
+#ifdef _EVENT_LOGGING
+			LOGERR("EV_REL %d %d\n", ev.code, ev.value);
+#endif
+			if(ev.code == REL_X)
+				cursor->Move(ev.value, 0);
+			else if(ev.code == REL_Y)
+				cursor->Move(0, ev.value);
+
+			if(drag == 1) {
+				cursor->GetPos(x, y);
+#ifdef _EVENT_LOGGING
+				LOGERR("TOUCH_DRAG: %d, %d\n", x, y);
+#endif
+				if (PageManager::NotifyTouch(TOUCH_DRAG, x, y) > 0)
+					state = 1;
+				key_repeat = 0;
+			}
+        }
 	}
 	return NULL;
 }
