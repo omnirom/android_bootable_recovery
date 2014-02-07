@@ -55,7 +55,7 @@ extern "C" {
 
 int GUIFileSelector::mSortOrder = 0;
 
-GUIFileSelector::GUIFileSelector(xml_node<>* node)
+GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIObject(node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;
@@ -392,6 +392,9 @@ GUIFileSelector::~GUIFileSelector()
 
 int GUIFileSelector::Render(void)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	// First step, fill background
 	gr_color(mBackgroundColor.red, mBackgroundColor.green, mBackgroundColor.blue, 255);
 	gr_fill(mRenderX, mRenderY + mHeaderH, mRenderW, mRenderH - mHeaderH);
@@ -577,6 +580,9 @@ int GUIFileSelector::Render(void)
 
 int GUIFileSelector::Update(void)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	if (!mHeaderIsStatic) {
 		std::string newValue = gui_parse_text(mHeaderText);
 		if (mLastValue != newValue) {
@@ -659,6 +665,9 @@ int GUIFileSelector::GetSelection(int x, int y)
 
 int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
+	if(!isConditionTrue())
+		return -1;
+
 	static int lastY = 0, last2Y = 0, fastScroll = 0;
 	int selection = 0;
 
@@ -858,6 +867,9 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 
 int GUIFileSelector::NotifyVarChange(std::string varName, std::string value)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	if (varName.empty()) {
 		// Always clear the data variable so we know to use it
 		DataManager::SetValue(mVariable, "");

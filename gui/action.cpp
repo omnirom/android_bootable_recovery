@@ -67,7 +67,7 @@ extern blanktimer blankTimer;
 void curtainClose(void);
 
 GUIAction::GUIAction(xml_node<>* node)
-	: Conditional(node)
+	: GUIObject(node)
 {
 	xml_node<>* child;
 	xml_node<>* actions;

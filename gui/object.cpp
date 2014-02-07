@@ -27,7 +27,7 @@ extern "C" {
 #include "objects.hpp"
 #include "../data.hpp"
 
-Conditional::Conditional(xml_node<>* node)
+GUIObject::GUIObject(xml_node<>* node)
 {
 	// Break out early, it's too hard to check if valid every step
 	if (!node)		return;
@@ -61,7 +61,11 @@ Conditional::Conditional(xml_node<>* node)
 	}
 }
 
-bool Conditional::IsConditionVariable(std::string var)
+GUIObject::~GUIObject()
+{
+}
+
+bool GUIObject::IsConditionVariable(std::string var)
 {
 	std::vector<Condition>::iterator iter;
 	for (iter = mConditions.begin(); iter != mConditions.end(); iter++)
@@ -72,7 +76,7 @@ bool Conditional::IsConditionVariable(std::string var)
 	return false;
 }
 
-bool Conditional::isConditionTrue()
+bool GUIObject::isConditionTrue()
 {
 	std::vector<Condition>::iterator iter;
 	for (iter = mConditions.begin(); iter != mConditions.end(); iter++)
@@ -83,7 +87,7 @@ bool Conditional::isConditionTrue()
 	return true;
 }
 
-bool Conditional::isConditionTrue(Condition* condition)
+bool GUIObject::isConditionTrue(Condition* condition)
 {
 	// This is used to hold the proper value of "true" based on the '!' NOT flag
 	bool bTrue = true;
@@ -150,12 +154,12 @@ bool Conditional::isConditionTrue(Condition* condition)
 	return !bTrue;
 }
 
-bool Conditional::isConditionValid()
+bool GUIObject::isConditionValid()
 {
 	return !mConditions.empty();
 }
 
-void Conditional::NotifyPageSet()
+void GUIObject::NotifyPageSet()
 {
 	std::vector<Condition>::iterator iter;
 	for (iter = mConditions.begin(); iter != mConditions.end(); iter++)
@@ -175,7 +179,7 @@ void Conditional::NotifyPageSet()
 	}
 }
 
-bool Conditional::isMounted(string vol)
+bool GUIObject::isMounted(string vol)
 {
 	FILE *fp;
 	char tmpOutput[255];

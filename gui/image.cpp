@@ -25,7 +25,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 
-GUIImage::GUIImage(xml_node<>* node) : Conditional(node)
+GUIImage::GUIImage(xml_node<>* node) : GUIObject(node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;

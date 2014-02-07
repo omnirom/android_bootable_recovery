@@ -25,7 +25,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 
-GUIProgressBar::GUIProgressBar(xml_node<>* node)
+GUIProgressBar::GUIProgressBar(xml_node<>* node) : GUIObject(node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;
@@ -82,6 +82,9 @@ GUIProgressBar::GUIProgressBar(xml_node<>* node)
 
 int GUIProgressBar::Render(void)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	// This handles making sure timing updates occur
 	Update();
 	return RenderInternal();
@@ -102,6 +105,9 @@ int GUIProgressBar::RenderInternal(void)
 
 int GUIProgressBar::Update(void)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	std::string str;
 	int min, max, cur, pos;
 
@@ -168,6 +174,9 @@ int GUIProgressBar::Update(void)
 
 int GUIProgressBar::NotifyVarChange(std::string varName, std::string value)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	static int nextPush = 0;
 
 	if (varName.empty())

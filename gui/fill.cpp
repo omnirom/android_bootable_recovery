@@ -25,7 +25,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 
-GUIFill::GUIFill(xml_node<>* node)
+GUIFill::GUIFill(xml_node<>* node) : GUIObject(node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;
@@ -50,6 +50,9 @@ GUIFill::GUIFill(xml_node<>* node)
 
 int GUIFill::Render(void)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	gr_color(mColor.red, mColor.green, mColor.blue, mColor.alpha);
 	gr_fill(mRenderX, mRenderY, mRenderW, mRenderH);
 	return 0;
