@@ -106,6 +106,8 @@ int vibrate(int timeout_ms)
     int fd;
     int ret;
 
+    if (timeout_ms > 10000) timeout_ms = 1000;
+
     fd = open(VIBRATOR_TIMEOUT_FILE, O_WRONLY);
     if (fd < 0)
         return -1;
