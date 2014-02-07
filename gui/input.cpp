@@ -47,7 +47,7 @@ extern "C" {
 #include "../data.hpp"
 
 GUIInput::GUIInput(xml_node<>* node)
-	: Conditional(node)
+	: GUIObject(node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;

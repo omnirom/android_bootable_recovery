@@ -26,7 +26,7 @@ extern "C" {
 #include "objects.hpp"
 
 GUIText::GUIText(xml_node<>* node)
-	: Conditional(node)
+	: GUIObject(node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;

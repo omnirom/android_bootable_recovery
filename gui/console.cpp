@@ -103,7 +103,7 @@ extern "C" void gui_print_overwrite(const char *fmt, ...)
 	return;
 }
 
-GUIConsole::GUIConsole(xml_node<>* node)
+GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;
@@ -242,6 +242,9 @@ int GUIConsole::RenderConsole(void)
 
 int GUIConsole::Render(void)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	if (mSlideout && mSlideoutState == hidden)
 		return RenderSlideout();
 
@@ -250,6 +253,9 @@ int GUIConsole::Render(void)
 
 int GUIConsole::Update(void)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	if (mSlideout && mSlideoutState != visible)
 	{
 		if (mSlideoutState == hidden)
@@ -326,6 +332,9 @@ int GUIConsole::IsInRegion(int x, int y)
 //  Return 0 on success, >0 to ignore remainder of touch, and <0 on error
 int GUIConsole::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
+	if(!isConditionTrue())
+		return -1;
+
 	if (mSlideout && mSlideoutState == hidden)
 	{
 		if (state == TOUCH_START)

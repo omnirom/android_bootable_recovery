@@ -43,7 +43,7 @@ extern "C" {
 #include "objects.hpp"
 
 GUIKeyboard::GUIKeyboard(xml_node<>* node)
-	: Conditional(node)
+	: GUIObject(node)
 {
 	int layoutindex, rowindex, keyindex, Xindex, Yindex, keyHeight = 0, keyWidth = 0;
 	rowY = colX = -1;

@@ -26,7 +26,7 @@ extern "C" {
 #include "objects.hpp"
 
 
-GUIAnimation::GUIAnimation(xml_node<>* node)
+GUIAnimation::GUIAnimation(xml_node<>* node) : GUIObject(node)
 {
 	xml_node<>* child;
 	xml_attribute<>* attr;
@@ -101,6 +101,9 @@ GUIAnimation::GUIAnimation(xml_node<>* node)
 
 int GUIAnimation::Render(void)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	if (!mAnimation || !mAnimation->GetResource(mFrame))	return -1;
 
 	gr_blit(mAnimation->GetResource(mFrame), 0, 0, mRenderW, mRenderH, mRenderX, mRenderY);
@@ -109,6 +112,9 @@ int GUIAnimation::Render(void)
 
 int GUIAnimation::Update(void)
 {
+	if(!isConditionTrue())
+		return 0;
+
 	if (!mAnimation)		return -1;
 
 	// Handle the "end-of-animation" state

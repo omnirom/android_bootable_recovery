@@ -15,7 +15,7 @@ LOCAL_SRC_FILES := \
     fileselector.cpp \
     progressbar.cpp \
     animation.cpp \
-    conditional.cpp \
+    object.cpp \
     slider.cpp \
     slidervalue.cpp \
     listbox.cpp \
