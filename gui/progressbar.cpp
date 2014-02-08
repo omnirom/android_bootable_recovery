@@ -172,8 +172,10 @@ int GUIProgressBar::Update(void)
 	return 2;
 }
 
-int GUIProgressBar::NotifyVarChange(std::string varName, std::string value)
+int GUIProgressBar::NotifyVarChange(const std::string& varName, const std::string& value)
 {
+	GUIObject::NotifyVarChange(varName, value);
+
 	if(!isConditionTrue())
 		return 0;
 
