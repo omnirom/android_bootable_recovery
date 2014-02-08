@@ -783,6 +783,8 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 
 			if (startSelection < folderSize + fileSize)
 			{
+				DataManager::Vibrate("tw_button_vibrate");
+
 				if (startSelection < folderSize)
 				{
 					std::string oldcwd;
