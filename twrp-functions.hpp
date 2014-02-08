@@ -74,6 +74,7 @@ public:
 	static int Try_Decrypting_File(string fn, string password); // -1 for some error, 0 for failed to decrypt, 1 for decrypted, 3 for decrypted and found gzip format
 	static bool Try_Decrypting_Backup(string Restore_Path, string Password); // true for success, false for failed to decrypt
 	static int Wait_For_Child(pid_t pid, int *status, string Child_Name); // Waits for pid to exit and checks exit status
+	static string System_Property_Get(string Prop_Name);                // Returns value of Prop_Name from reading /system/build.prop
 	static string Get_Current_Date(void);                               // Returns the current date in ccyy-m-dd--hh-nn-ss format
 	static void Auto_Generate_Backup_Name();                            // Populates TW_BACKUP_NAME with a backup name based on current date and ro.build.display.id from /system/build.prop
 	static void Fixup_Time_On_Boot(); // Fixes time on devices which need it

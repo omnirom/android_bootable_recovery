@@ -980,50 +980,56 @@ string TWFunc::Get_Current_Date() {
 	return Current_Date;
 }
 
-void TWFunc::Auto_Generate_Backup_Name() {
+string TWFunc::System_Property_Get(string Prop_Name) {
 	bool mount_state = PartitionManager.Is_Mounted_By_Path("/system");
 	std::vector<string> buildprop;
-	if (!PartitionManager.Mount_By_Path("/system", true)) {
-		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
-		return;
-	}
+	string propvalue;
+	if (!PartitionManager.Mount_By_Path("/system", true))
+		return propvalue;
 	if (TWFunc::read_file("/system/build.prop", buildprop) != 0) {
-		LOGINFO("Unable to open /system/build.prop for getting backup name.\n");
+		LOGINFO("Unable to open /system/build.prop for getting '%s'.\n", Prop_Name.c_str());
 		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
 		if (!mount_state)
 			PartitionManager.UnMount_By_Path("/system", false);
-		return;
+		return propvalue;
 	}
 	int line_count = buildprop.size();
 	int index;
 	size_t start_pos = 0, end_pos;
-	string propname, propvalue;
+	string propname;
 	for (index = 0; index < line_count; index++) {
 		end_pos = buildprop.at(index).find("=", start_pos);
 		propname = buildprop.at(index).substr(start_pos, end_pos);
-		if (propname == "ro.build.display.id") {
+		if (propname == Prop_Name) {
 			propvalue = buildprop.at(index).substr(end_pos + 1, buildprop.at(index).size());
-			string Backup_Name = Get_Current_Date();
-			Backup_Name += " " + propvalue;
-			if (Backup_Name.size() > MAX_BACKUP_NAME_LEN)
-				Backup_Name.resize(MAX_BACKUP_NAME_LEN);
-			// Trailing spaces cause problems on some file systems, so remove them
-			string space_check, space = " ";
-			space_check = Backup_Name.substr(Backup_Name.size() - 1, 1);
-			while (space_check == space) {
-				Backup_Name.resize(Backup_Name.size() - 1);
-				space_check = Backup_Name.substr(Backup_Name.size() - 1, 1);
-			}
-			DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
-			break;
+			if (!mount_state)
+				PartitionManager.UnMount_By_Path("/system", false);
+			return propvalue;
 		}
-	}
-	if (propvalue.empty()) {
-		LOGINFO("ro.build.display.id not found in build.prop\n");
-		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
 	}
 	if (!mount_state)
 		PartitionManager.UnMount_By_Path("/system", false);
+	return propvalue;
+}
+
+void TWFunc::Auto_Generate_Backup_Name() {
+	string propvalue = System_Property_Get("ro.build.display.id");
+	if (propvalue.empty()) {
+		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
+		return;
+	}
+	string Backup_Name = Get_Current_Date();
+	Backup_Name += " " + propvalue;
+	if (Backup_Name.size() > MAX_BACKUP_NAME_LEN)
+		Backup_Name.resize(MAX_BACKUP_NAME_LEN);
+	// Trailing spaces cause problems on some file systems, so remove them
+	string space_check, space = " ";
+	space_check = Backup_Name.substr(Backup_Name.size() - 1, 1);
+	while (space_check == space) {
+		Backup_Name.resize(Backup_Name.size() - 1);
+		space_check = Backup_Name.substr(Backup_Name.size() - 1, 1);
+	}
+	DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
 }
 
 void TWFunc::Fixup_Time_On_Boot()
