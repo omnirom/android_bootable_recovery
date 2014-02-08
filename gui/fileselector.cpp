@@ -865,8 +865,10 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return 0;
 }
 
-int GUIFileSelector::NotifyVarChange(std::string varName, std::string value)
+int GUIFileSelector::NotifyVarChange(const std::string& varName, const std::string& value)
 {
+	GUIObject::NotifyVarChange(varName, value);
+
 	if(!isConditionTrue())
 		return 0;
 

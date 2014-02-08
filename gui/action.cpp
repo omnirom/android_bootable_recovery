@@ -144,16 +144,13 @@ int GUIAction::NotifyKey(int key)
 	return 0;
 }
 
-int GUIAction::NotifyVarChange(std::string varName, std::string value)
+int GUIAction::NotifyVarChange(const std::string& varName, const std::string& value)
 {
+	GUIObject::NotifyVarChange(varName, value);
+
 	if (varName.empty() && !isConditionValid() && !mKey && !mActionW)
 		doActions();
-
-	// This handles notifying the condition system of page start
-	if (varName.empty() && isConditionValid())
-		NotifyPageSet();
-
-	if ((varName.empty() || IsConditionVariable(varName)) && isConditionValid() && isConditionTrue())
+	else if((varName.empty() || IsConditionVariable(varName)) && isConditionValid() && isConditionTrue())
 		doActions();
 
 	return 0;

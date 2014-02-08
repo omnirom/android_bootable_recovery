@@ -519,13 +519,8 @@ void Page::SetPageFocus(int inFocus)
 
 int Page::NotifyVarChange(std::string varName, std::string value)
 {
-	std::vector<ActionObject*>::iterator iter;
-
-	// Don't try to handle a lack of handlers
-	if (mActions.size() == 0)
-		return 1;
-
-	for (iter = mActions.begin(); iter != mActions.end(); ++iter)
+	std::vector<GUIObject*>::iterator iter;
+	for (iter = mObjects.begin(); iter != mObjects.end(); ++iter)
 	{
 		if ((*iter)->NotifyVarChange(varName, value))
 			LOGERR("An action handler errored on NotifyVarChange.\n");
@@ -865,7 +860,10 @@ PageSet* PageManager::SelectPackage(std::string name)
 
 	tmp = FindPackage(name);
 	if (tmp)
+	{
 		mCurrentSet = tmp;
+		mCurrentSet->NotifyVarChange("", "");
+	}
 	else
 		LOGERR("Unable to find package.\n");
 

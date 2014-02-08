@@ -114,10 +114,6 @@ public:
 	//  Return 0 if this object handles the request, 1 if not
 	virtual int IsInRegion(int x, int y) { return ((x < mActionX || x > mActionX + mActionW || y < mActionY || y > mActionY + mActionH) ? 0 : 1); }
 
-	// NotifyVarChange - Notify of a variable change
-	//  Returns 0 on success, <0 on error
-	virtual int NotifyVarChange(std::string varName, std::string value) { return 0; }
-
 protected:
 	int mActionX, mActionY, mActionW, mActionH;
 };
@@ -132,16 +128,24 @@ public:
 	bool IsConditionVariable(std::string var);
 	bool isConditionTrue();
 	bool isConditionValid();
-	void NotifyPageSet();
+
+	// NotifyVarChange - Notify of a variable change
+	//  Returns 0 on success, <0 on error
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 
 protected:
 	class Condition
 	{
 	public:
+		Condition() {
+			mLastResult = true;
+		}
+
 		std::string mVar1;
 		std::string mVar2;
 		std::string mCompareOp;
 		std::string mLastVal;
+		bool mLastResult;
 	};
 
 	std::vector<Condition> mConditions;
@@ -149,6 +153,8 @@ protected:
 protected:
 	bool isMounted(std::string vol);
 	bool isConditionTrue(Condition* condition);
+
+	bool mConditionsResult;
 };
 
 class InputObject
@@ -189,7 +195,7 @@ public:
 	virtual int GetCurrentBounds(int& w, int& h);
 
 	// Notify of a variable change
-	virtual int NotifyVarChange(std::string varName, std::string value);
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 
 	// Set maximum width in pixels
 	virtual int SetMaxWidth(unsigned width);
@@ -264,7 +270,7 @@ public:
 public:
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
 	virtual int NotifyKey(int key);
-	virtual int NotifyVarChange(std::string varName, std::string value);
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 	virtual int doActions();
 
 protected:
@@ -441,7 +447,7 @@ public:
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
 
 	// NotifyVarChange - Notify of a variable change
-	virtual int NotifyVarChange(std::string varName, std::string value);
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 
 	// SetPos - Update the position of the render object
 	//  Return 0 on success, <0 on error
@@ -545,7 +551,7 @@ public:
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
 
 	// NotifyVarChange - Notify of a variable change
-	virtual int NotifyVarChange(std::string varName, std::string value);
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 
 	// SetPos - Update the position of the render object
 	//  Return 0 on success, <0 on error
@@ -633,7 +639,7 @@ public:
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
 
 	// NotifyVarChange - Notify of a variable change
-	virtual int NotifyVarChange(std::string varName, std::string value);
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 
 	// SetPos - Update the position of the render object
 	//  Return 0 on success, <0 on error
@@ -737,7 +743,7 @@ public:
 
 	// NotifyVarChange - Notify of a variable change
 	//  Returns 0 on success, <0 on error
-	virtual int NotifyVarChange(std::string varName, std::string value);
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 
 protected:
 	Resource* mEmptyBar;
@@ -854,7 +860,7 @@ public:
 	virtual int Update(void);
 
 	// Notify of a variable change
-	virtual int NotifyVarChange(std::string varName, std::string value);
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 
 	// NotifyTouch - Notify of a touch event
 	//  Return 0 on success, >0 to ignore remainder of touch, and <0 on error
@@ -937,7 +943,7 @@ public:
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
 
 	// Notify of a variable change
-	virtual int NotifyVarChange(std::string varName, std::string value);
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 
 	// SetPageFocus - Notify when a page gains or loses focus
 	virtual void SetPageFocus(int inFocus);

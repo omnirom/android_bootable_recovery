@@ -222,8 +222,10 @@ std::string GUIText::parseText(void)
 	}
 }
 
-int GUIText::NotifyVarChange(std::string varName, std::string value)
+int GUIText::NotifyVarChange(const std::string& varName, const std::string& value)
 {
+	GUIObject::NotifyVarChange(varName, value);
+
 	mVarChanged = 1;
 	return 0;
 }

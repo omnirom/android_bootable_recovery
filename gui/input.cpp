@@ -591,8 +591,10 @@ int GUIInput::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return 0;
 }
 
-int GUIInput::NotifyVarChange(std::string varName, std::string value)
+int GUIInput::NotifyVarChange(const std::string& varName, const std::string& value)
 {
+	GUIObject::NotifyVarChange(varName, value);
+
 	if (varName == mVariable && !isLocalChange) {
 		HandleTextLocation(-1003);
 		return 0;

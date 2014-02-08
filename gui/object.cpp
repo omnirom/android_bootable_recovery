@@ -29,6 +29,8 @@ extern "C" {
 
 GUIObject::GUIObject(xml_node<>* node)
 {
+	mConditionsResult = true;
+
 	// Break out early, it's too hard to check if valid every step
 	if (!node)		return;
 
@@ -78,13 +80,7 @@ bool GUIObject::IsConditionVariable(std::string var)
 
 bool GUIObject::isConditionTrue()
 {
-	std::vector<Condition>::iterator iter;
-	for (iter = mConditions.begin(); iter != mConditions.end(); iter++)
-	{
-		if (!isConditionTrue(&(*iter)))
-			return false;
-	}
-	return true;
+	return mConditionsResult;
 }
 
 bool GUIObject::isConditionTrue(Condition* condition)
@@ -159,12 +155,15 @@ bool GUIObject::isConditionValid()
 	return !mConditions.empty();
 }
 
-void GUIObject::NotifyPageSet()
+int GUIObject::NotifyVarChange(const std::string& varName, const std::string& value)
 {
+	mConditionsResult = true;
+
+	const bool varNameEmpty = varName.empty();
 	std::vector<Condition>::iterator iter;
-	for (iter = mConditions.begin(); iter != mConditions.end(); iter++)
+	for (iter = mConditions.begin(); iter != mConditions.end(); ++iter)
 	{
-		if (iter->mCompareOp == "modified")
+		if(varNameEmpty && iter->mCompareOp == "modified")
 		{
 			string val;
 	
@@ -176,7 +175,14 @@ void GUIObject::NotifyPageSet()
 			}
 			iter->mLastVal = val;
 		}
+
+		if(varNameEmpty || iter->mVar1 == varName || iter->mVar2 == varName)
+			iter->mLastResult = isConditionTrue(&(*iter));
+
+		if(!iter->mLastResult)
+			mConditionsResult = false;
 	}
+	return 0;
 }
 
 bool GUIObject::isMounted(string vol)
