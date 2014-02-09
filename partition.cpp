@@ -53,6 +53,7 @@ extern "C" {
 }
 #ifdef HAVE_SELINUX
 #include "selinux/selinux.h"
+#include <selinux/label.h>
 #endif
 
 using namespace std;
@@ -1344,17 +1345,25 @@ bool TWPartition::Wipe_EXT4() {
 		return false;
 
 #if defined(HAVE_SELINUX) && defined(USE_EXT4)
+	int ret;
+	char *secontext = NULL;
+
 	gui_print("Formatting %s using make_ext4fs function.\n", Display_Name.c_str());
-	if (make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), selinux_handle) != 0) {
+
+	if (selabel_lookup(selinux_handle, &secontext, Mount_Point.c_str(), S_IFDIR) < 0) {
+		LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
+		ret = make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), NULL);
+	} else {
+		ret = make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), selinux_handle);
+	}
+	if (ret != 0) {
 		LOGERR("Unable to wipe '%s' using function call.\n", Mount_Point.c_str());
 		return false;
 	} else {
-		#ifdef HAVE_SELINUX
 		string sedir = Mount_Point + "/lost+found";
 		PartitionManager.Mount_By_Path(sedir.c_str(), true);
 		rmdir(sedir.c_str());
 		mkdir(sedir.c_str(), S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP);
-		#endif
 		return true;
 	}
 #else
