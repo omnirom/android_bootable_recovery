@@ -52,8 +52,6 @@ public:
 	void setdir(string dir);
 	void setsize(unsigned long long backup_size);
 	void setpassword(string pass);
-	
-	unsigned long long uncompressedSize();
 
 public:
 	int use_encryption;
