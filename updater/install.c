@@ -45,10 +45,24 @@
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
 #include "updater.h"
+#include "syspatch.h"
 
 #ifdef USE_EXT4
 #include "make_ext4fs.h"
 #endif
+
+// Take a sha-1 digest and return it as a newly-allocated hex string.
+static char* PrintSha1(uint8_t* digest) {
+    char* buffer = malloc(SHA_DIGEST_SIZE*2 + 1);
+    int i;
+    const char* alphabet = "0123456789abcdef";
+    for (i = 0; i < SHA_DIGEST_SIZE; ++i) {
+        buffer[i*2] = alphabet[(digest[i] >> 4) & 0xf];
+        buffer[i*2+1] = alphabet[digest[i] & 0xf];
+    }
+    buffer[i*2] = '\0';
+    return buffer;
+}
 
 // mount(fs_type, partition_type, location, mount_point)
 //
@@ -1053,8 +1067,104 @@ Value* ApplyPatchSpaceFn(const char* name, State* state,
     return StringValue(strdup(CacheSizeCheck(bytes) ? "" : "t"));
 }
 
+// syspatch(file, size, tgt_sha1, init_sha1, patch)
 
-// apply_patch(srcfile, tgtfile, tgtsha1, tgtsize, sha1_1, patch_1, ...)
+Value* SysPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 5) {
+        return ErrorAbort(state, "%s(): expected 5 args, got %d", name, argc);
+    }
+
+    char* filename;
+    char* filename_size_str;
+    char* target_sha1;
+    char* init_sha1;
+    char* patch_filename;
+    uint8_t target_digest[SHA_DIGEST_SIZE];
+    uint8_t init_digest[SHA_DIGEST_SIZE];
+
+    if (ReadArgs(state, argv, 5, &filename, &filename_size_str,
+                 &target_sha1, &init_sha1, &patch_filename) < 0) {
+        return NULL;
+    }
+
+    if (ParseSha1(target_sha1, target_digest) != 0) {
+        printf("%s(): failed to parse '%s' as target SHA-1", name, target_sha1);
+        memset(target_digest, 0, SHA_DIGEST_SIZE);
+    }
+    if (ParseSha1(init_sha1, init_digest) != 0) {
+        printf("%s(): failed to parse '%s' as init SHA-1", name, init_sha1);
+        memset(init_digest, 0, SHA_DIGEST_SIZE);
+    }
+
+    size_t len = strtoull(filename_size_str, NULL, 0);
+
+    SHA_CTX ctx;
+    SHA_init(&ctx);
+    FILE* src = fopen(filename, "r");
+    size_t pos = 0;
+    unsigned char buffer[4096];
+    while (pos < len) {
+        size_t to_read = len - pos;
+        if (to_read > sizeof(buffer)) to_read = sizeof(buffer);
+        size_t read = fread(buffer, 1, to_read, src);
+        if (read <= 0) {
+            printf("%s(): short read after %zu bytes\n", name, pos);
+            break;
+        }
+        SHA_update(&ctx, buffer, read);
+        pos += read;
+    }
+    rewind(src);
+    uint8_t* digest = SHA_final(&ctx);
+
+    char* hexdigest = PrintSha1(digest);
+    printf("  system partition sha1 = %s\n", hexdigest);
+
+    if (memcmp(digest, target_digest, SHA_DIGEST_SIZE) == 0) {
+        printf("%s(): %s is already target\n", name, filename);
+        fclose(src);
+        goto done;
+    }
+
+    if (memcmp(digest, init_digest, SHA_DIGEST_SIZE) != 0) {
+        return ErrorAbort(state, "%s(): %s in unknown state\n", name, filename);
+    }
+
+    ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
+
+    const ZipEntry* entry = mzFindZipEntry(za, patch_filename);
+    if (entry == NULL) {
+        return ErrorAbort(state, "%s(): no %s in package\n", name, patch_filename);
+    }
+
+    unsigned char* patch_data;
+    size_t patch_len;
+    if (!mzGetStoredEntry(za, entry, &patch_data, &patch_len)) {
+        return ErrorAbort(state, "%s(): failed to get %s entry\n", name, patch_filename);
+    }
+
+    FILE* tgt = fopen(filename, "r+");
+
+    int ret = syspatch(src, patch_data, patch_len, tgt);
+
+    fclose(src);
+    fclose(tgt);
+
+    if (ret != 0) {
+        return ErrorAbort(state, "%s(): patching failed\n", name);
+    }
+
+      done:
+    free(filename_size_str);
+    free(target_sha1);
+    free(init_sha1);
+    free(patch_filename);
+    return StringValue(filename);
+
+}
+
+// apply_patch(file, size, init_sha1, tgt_sha1, patch)
+
 Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc < 6 || (argc % 2) == 1) {
         return ErrorAbort(state, "%s(): expected at least 6 args and an "
@@ -1237,19 +1347,6 @@ Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
     sprintf(buffer, "%d", status);
 
     return StringValue(strdup(buffer));
-}
-
-// Take a sha-1 digest and return it as a newly-allocated hex string.
-static char* PrintSha1(uint8_t* digest) {
-    char* buffer = malloc(SHA_DIGEST_SIZE*2 + 1);
-    int i;
-    const char* alphabet = "0123456789abcdef";
-    for (i = 0; i < SHA_DIGEST_SIZE; ++i) {
-        buffer[i*2] = alphabet[(digest[i] >> 4) & 0xf];
-        buffer[i*2+1] = alphabet[digest[i] & 0xf];
-    }
-    buffer[i*2] = '\0';
-    return buffer;
 }
 
 // sha1_check(data)
@@ -1468,6 +1565,8 @@ void RegisterInstallFunctions() {
     RegisterFunction("apply_patch", ApplyPatchFn);
     RegisterFunction("apply_patch_check", ApplyPatchCheckFn);
     RegisterFunction("apply_patch_space", ApplyPatchSpaceFn);
+
+    RegisterFunction("syspatch", SysPatchFn);
 
     RegisterFunction("read_file", ReadFileFn);
     RegisterFunction("sha1_check", Sha1CheckFn);
