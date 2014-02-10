@@ -703,7 +703,7 @@ static bool writeProcessFunction(const unsigned char *data, int dataLen,
     while (true) {
         ssize_t n = write(fd, data+soFar, dataLen-soFar);
         if (n <= 0) {
-            LOGE("Error writing %ld bytes from zip file from %p: %s\n",
+            LOGE("Error writing %zd bytes from zip file from %p: %s\n",
                  dataLen-soFar, data+soFar, strerror(errno));
             if (errno != EINTR) {
               return false;
@@ -712,7 +712,7 @@ static bool writeProcessFunction(const unsigned char *data, int dataLen,
             soFar += n;
             if (soFar == dataLen) return true;
             if (soFar > dataLen) {
-                LOGE("write overrun?  (%ld bytes instead of %d)\n",
+                LOGE("write overrun?  (%zd bytes instead of %d)\n",
                      soFar, dataLen);
                 return false;
             }
@@ -732,6 +732,23 @@ bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
         LOGE("Can't extract entry to file.\n");
         return false;
     }
+    return true;
+}
+
+/*
+ * Obtain a pointer to the in-memory representation of a stored entry.
+ */
+bool mzGetStoredEntry(const ZipArchive *pArchive,
+    const ZipEntry *pEntry, unsigned char **addr, size_t *length)
+{
+    if (pEntry->compression != STORED) {
+        LOGE("Can't getStoredEntry for '%s'; not stored\n",
+             pEntry->fileName);
+        return false;
+    }
+
+    *addr = pArchive->addr + pEntry->offset;
+    *length = pEntry->uncompLen;
     return true;
 }
 

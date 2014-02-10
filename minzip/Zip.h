@@ -183,6 +183,17 @@ bool mzExtractZipEntryToBuffer(const ZipArchive *pArchive,
     const ZipEntry *pEntry, unsigned char* buffer);
 
 /*
+ * Return a pointer and length for a given entry.  The returned region
+ * should be valid until pArchive is closed, and should be treated as
+ * read-only.
+ *
+ * Only makes sense for entries which are stored (ie, not compressed).
+ * No guarantees are made regarding alignment of the returned pointer.
+ */
+bool mzGetStoredEntry(const ZipArchive *pArchive,
+    const ZipEntry* pEntry, unsigned char **addr, size_t *length);
+
+/*
  * Inflate all entries under zipDir to the directory specified by
  * targetDir, which must exist and be a writable directory.
  *
