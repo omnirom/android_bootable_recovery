@@ -1114,38 +1114,6 @@ int twrpTar::entryExists(string entry) {
 	return ret;
 }
 
-unsigned long long twrpTar::uncompressedSize() {
-	int type = 0;
-	unsigned long long total_size = 0;
-	string Tar, Command, result;
-	vector<string> split;
-
-	Tar = TWFunc::Get_Filename(tarfn);
-	type = TWFunc::Get_File_Type(tarfn);
-	if (type == 0)
-		total_size = TWFunc::Get_File_Size(tarfn);
-	else {
-		Command = "pigz -l " + tarfn;
-		/* if we set Command = "pigz -l " + tarfn + " | sed '1d' | cut -f5 -d' '";
-		   we get the uncompressed size at once. */
-		TWFunc::Exec_Cmd(Command, result);
-		if (!result.empty()) {
-			/* Expected output:
-				compressed   original reduced  name
-				  95855838  179403776   -1.3%  data.yaffs2.win
-						^
-					     split[5]
-			*/
-			split = TWFunc::split_string(result, ' ', true);
-			if (split.size() > 4)
-				total_size = atoi(split[5].c_str());
-		}
-	}
-	LOGINFO("%s's uncompressed size: %llu bytes\n", Tar.c_str(), total_size);
-
-	return total_size;
-}
-
 extern "C" ssize_t write_tar(int fd, const void *buffer, size_t size) {
 	return (ssize_t) write_libtar_buffer(fd, buffer, size);
 }

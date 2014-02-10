@@ -49,7 +49,6 @@ public:
 	static int Get_File_Type(string fn); // Determines file type, 0 for unknown, 1 for gzip, 2 for OAES encrypted
 	static int Try_Decrypting_File(string fn, string password); // -1 for some error, 0 for failed to decrypt, 1 for decrypted, 3 for decrypted and found gzip format
 	static unsigned long Get_File_Size(string Path);                            // Returns the size of a file
-	static vector<string> split_string(const string &in, char del, bool skip_empty);
 
 #ifndef BUILD_TWRPTAR_MAIN
 	static void install_htc_dumlock(void);                                      // Installs HTC Dumlock
