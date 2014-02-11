@@ -353,7 +353,8 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/minuitwrp/Android.mk \
     $(commands_recovery_local_path)/openaes/Android.mk \
     $(commands_recovery_local_path)/toolbox/Android.mk \
-    $(commands_recovery_local_path)/libmincrypt/Android.mk
+    $(commands_recovery_local_path)/libmincrypt/Android.mk \
+    $(commands_recovery_local_path)/twrpTarMain/Android.mk
 
 ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
     include $(commands_recovery_local_path)/crypto/libcrypt_samsung/Android.mk
