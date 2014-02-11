@@ -27,6 +27,9 @@
 # include <unistd.h>
 #endif
 
+#ifdef HAVE_SELINUX
+#include "selinux/selinux.h"
+#endif
 
 struct tar_dev
 {
