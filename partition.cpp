@@ -1593,6 +1593,9 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 		tar.use_encryption = use_encryption;
 		if (Use_Userdata_Encryption)
 			tar.userdata_encryption = use_encryption;
+		string Password;
+		DataManager::GetValue("tw_backup_password", Password);
+		tar.setpassword(Password);
 	} else {
 		use_encryption = false;
 	}
@@ -1681,37 +1684,18 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 		return false;
 
 	Full_FileName = restore_folder + "/" + Backup_FileName;
-	/*if (!TWFunc::Path_Exists(Full_FileName)) {
-		if (!TWFunc::Path_Exists(Full_FileName)) {
-			// Backup is multiple archives
-			LOGINFO("Backup is multiple archives.\n");
-			sprintf(split_index, "%03i", index);
-			Full_FileName = restore_folder + "/" + Backup_FileName + split_index;
-			while (TWFunc::Path_Exists(Full_FileName)) {
-				index++;
-				gui_print("Restoring archive %i...\n", index);
-				LOGINFO("Restoring '%s'...\n", Full_FileName.c_str());
-				twrpTar tar;
-				tar.setdir("/");
-				tar.setfn(Full_FileName);
-				if (tar.extractTarFork() != 0)
-					return false;
-				sprintf(split_index, "%03i", index);
-				Full_FileName = restore_folder + "/" + Backup_FileName + split_index;
-			}
-			if (index == 0) {
-				LOGERR("Error locating restore file: '%s'\n", Full_FileName.c_str());
-				return false;
-			}
-		}
-	} else {*/
-		twrpTar tar;
-		tar.setdir(Backup_Path);
-		tar.setfn(Full_FileName);
-		tar.backup_name = Backup_Name;
-		if (tar.extractTarFork() != 0)
-			return false;
-	//}
+	twrpTar tar;
+	tar.setdir(Backup_Path);
+	tar.setfn(Full_FileName);
+	tar.backup_name = Backup_Name;
+#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
+	string Password;
+	DataManager::GetValue("tw_restore_password", Password);
+	if (!Password.empty())
+		tar.setpassword(Password);
+#endif
+	if (tar.extractTarFork() != 0)
+		return false;
 	return true;
 }
 

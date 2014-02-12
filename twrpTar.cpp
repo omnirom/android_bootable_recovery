@@ -21,7 +21,6 @@ extern "C" {
 	#include "libtar/libtar.h"
 	#include "twrpTar.h"
 	#include "tarWrite.h"
-	#include "libcrecovery/common.h"
 }
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,7 +38,6 @@ extern "C" {
 #include <sys/mman.h>
 #include "twrpTar.hpp"
 #include "twcommon.h"
-#include "data.hpp"
 #include "variables.h"
 #include "twrp-functions.hpp"
 
@@ -75,6 +73,10 @@ void twrpTar::setexcl(string exclude) {
 
 void twrpTar::setsize(unsigned long long backup_size) {
 	Total_Backup_Size = backup_size;
+}
+
+void twrpTar::setpassword(string pass) {
+	password = pass;
 }
 
 int twrpTar::createTarFork() {
@@ -529,9 +531,7 @@ int twrpTar::extract() {
 		int ret = extractTar();
 		return ret;
 	} else if (Archive_Current_Type == 2) {
-		string Password;
-		DataManager::GetValue("tw_restore_password", Password);
-		int ret = TWFunc::Try_Decrypting_File(tarfn, Password);
+		int ret = TWFunc::Try_Decrypting_File(tarfn, password);
 		if (ret < 1) {
 			LOGERR("Failed to decrypt tar file '%s'\n", tarfn.c_str());
 			return -1;
@@ -675,13 +675,11 @@ int twrpTar::createTar() {
 	char* charTarFile = (char*) tarfn.c_str();
 	char* charRootDir = (char*) tardir.c_str();
 	static tartype_t type = { open, close, read, write_tar };
-	string Password;
 
 	if (use_encryption && use_compression) {
 		// Compressed and encrypted
 		Archive_Current_Type = 3;
 		LOGINFO("Using encryption and compression...\n");
-		DataManager::GetValue("tw_backup_password", Password);
 		int i, pipes[4];
 
 		if (pipe(pipes) < 0) {
@@ -738,7 +736,7 @@ int twrpTar::createTar() {
 				dup2(pipes[2], 0);
 				close(1);
 				dup2(output_fd, 1);
-				if (execlp("openaes", "openaes", "enc", "--key", Password.c_str(), NULL) < 0) {
+				if (execlp("openaes", "openaes", "enc", "--key", password.c_str(), NULL) < 0) {
 					LOGERR("execlp openaes ERROR!\n");
 					close(pipes[2]);
 					close(output_fd);
@@ -806,7 +804,6 @@ int twrpTar::createTar() {
 		// Encrypted
 		Archive_Current_Type = 2;
 		LOGINFO("Using encryption...\n");
-		DataManager::GetValue("tw_backup_password", Password);
 		int oaesfd[2];
 		pipe(oaesfd);
 		oaes_pid = fork();
@@ -826,7 +823,7 @@ int twrpTar::createTar() {
 			}
 			dup2(oaesfd[0], 0); // remap stdin
 			dup2(output_fd, 1); // remap stdout to output file
-			if (execlp("openaes", "openaes", "enc", "--key", Password.c_str(), NULL) < 0) {
+			if (execlp("openaes", "openaes", "enc", "--key", password.c_str(), NULL) < 0) {
 				LOGERR("execlp openaes ERROR!\n");
 				close(output_fd);
 				close(oaesfd[0]);
@@ -861,7 +858,6 @@ int twrpTar::openTar() {
 
 	if (Archive_Current_Type == 3) {
 		LOGINFO("Opening encrypted and compressed backup...\n");
-		DataManager::GetValue("tw_restore_password", Password);
 		int i, pipes[4];
 
 		if (pipe(pipes) < 0) {
@@ -894,7 +890,7 @@ int twrpTar::openTar() {
 			dup2(input_fd, 0);
 			close(1);
 			dup2(pipes[1], 1);
-			if (execlp("openaes", "openaes", "dec", "--key", Password.c_str(), NULL) < 0) {
+			if (execlp("openaes", "openaes", "dec", "--key", password.c_str(), NULL) < 0) {
 				LOGERR("execlp openaes ERROR!\n");
 				close(input_fd);
 				close(pipes[1]);
@@ -938,7 +934,6 @@ int twrpTar::openTar() {
 		}
 	} else if (Archive_Current_Type == 2) {
 		LOGINFO("Opening encrypted backup...\n");
-		DataManager::GetValue("tw_restore_password", Password);
 		int oaesfd[2];
 
 		pipe(oaesfd);
@@ -960,7 +955,7 @@ int twrpTar::openTar() {
 			close(0);   // close stdin
 			dup2(oaesfd[1], 1); // remap stdout
 			dup2(input_fd, 0); // remap input fd to stdin
-			if (execlp("openaes", "openaes", "dec", "--key", Password.c_str(), NULL) < 0) {
+			if (execlp("openaes", "openaes", "dec", "--key", password.c_str(), NULL) < 0) {
 				LOGERR("execlp openaes ERROR!\n");
 				close(input_fd);
 				close(oaesfd[1]);
