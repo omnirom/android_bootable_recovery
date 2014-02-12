@@ -349,6 +349,10 @@ int OpenRecoveryScript::run_script_file(void) {
 					sideload = 1; // Causes device to go to the home screen afterwards
 					gui_print("Sideload finished.\n");
 				}
+			} else if (strcmp(command, "fixperms") == 0 || strcmp(command, "fixpermissions") == 0) {
+				ret_val = PartitionManager.Fix_Permissions();
+				if (ret_val != 0)
+					ret_val = 1; // failure
 			} else {
 				LOGERR("Unrecognized script command: '%s'\n", command);
 				ret_val = 1;
