@@ -733,6 +733,8 @@ int GUIListBox::NotifyTouch(TOUCH_STATE state, int x, int y)
 				mList.at(actualSelection).selected = 1;
 				DataManager::SetValue(mVariable, str);
 				mUpdate = 1;
+
+				DataManager::Vibrate("tw_button_vibrate");
 			}
 		} else {
 			// This is for kinetic scrolling

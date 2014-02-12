@@ -735,6 +735,8 @@ int GUIPartitionList::NotifyTouch(TOUCH_STATE state, int x, int y)
 			}
 
 			if (actualSelection < listSize && ListType == "mount") {
+				DataManager::Vibrate("tw_button_vibrate");
+
 				if (!mList.at(actualSelection).selected) {
 					if (PartitionManager.Mount_By_Path(mList.at(actualSelection).Mount_Point, true)) {
 						mList.at(actualSelection).selected = 1;
@@ -747,6 +749,8 @@ int GUIPartitionList::NotifyTouch(TOUCH_STATE state, int x, int y)
 					}
 				}
 			} else if (actualSelection < listSize && !mVariable.empty()) {
+				DataManager::Vibrate("tw_button_vibrate");
+
 				if (ListType == "storage") {
 					int i;
 					std::string str = mList.at(actualSelection).Mount_Point;
