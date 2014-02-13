@@ -105,8 +105,7 @@ int main(int argc, char** argv) {
 
     Expr* root;
     int error_count = 0;
-    yy_scan_string(script);
-    int error = yyparse(&root, &error_count);
+    int error = parse_string(script, &root, &error_count);
     if (error != 0 || error_count > 0) {
         printf("%d parse errors\n", error_count);
         return 6;

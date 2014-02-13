@@ -980,7 +980,7 @@ main(int argc, char **argv) {
         load_locale_from_cache();
     }
     printf("locale is [%s]\n", locale);
-    printf("stage is [%s]\n", stage, stage);
+    printf("stage is [%s]\n", stage);
 
     Device* device = make_device();
     ui = device->GetUI();

@@ -23,6 +23,7 @@ LOCAL_SRC_FILES := \
 LOCAL_CFLAGS := $(edify_cflags) -g -O0
 LOCAL_MODULE := edify
 LOCAL_YACCFLAGS := -v
+LOCAL_CFLAGS += -Wno-unused-parameter
 
 include $(BUILD_HOST_EXECUTABLE)
 
@@ -34,6 +35,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(edify_src_files)
 
 LOCAL_CFLAGS := $(edify_cflags)
+LOCAL_CFLAGS += -Wno-unused-parameter
 LOCAL_MODULE := libedify
 
 include $(BUILD_STATIC_LIBRARY)

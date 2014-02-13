@@ -35,6 +35,7 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 RECOVERY_API_VERSION := 3
 RECOVERY_FSTAB_VERSION := 2
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
+LOCAL_CFLAGS += -Wno-unused-parameter
 
 LOCAL_STATIC_LIBRARIES := \
     libext4_utils_static \
@@ -90,6 +91,7 @@ LOCAL_MODULE := verifier_test
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE_TAGS := tests
 LOCAL_CFLAGS += -DNO_RECOVERY_MOUNT
+LOCAL_CFLAGS += -Wno-unused-parameter
 LOCAL_SRC_FILES := \
     verifier_test.cpp \
     asn1_decoder.cpp \
