@@ -1419,7 +1419,7 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
     v->type = VAL_BLOB;
 
     FileContents fc;
-    if (LoadFileContents(filename, &fc, RETOUCH_DONT_MASK) != 0) {
+    if (LoadFileContents(filename, &fc) != 0) {
         free(filename);
         v->size = -1;
         v->data = NULL;

@@ -106,7 +106,6 @@ include $(BUILD_EXECUTABLE)
 
 
 include $(LOCAL_PATH)/minui/Android.mk \
-    $(LOCAL_PATH)/minelf/Android.mk \
     $(LOCAL_PATH)/minzip/Android.mk \
     $(LOCAL_PATH)/minadbd/Android.mk \
     $(LOCAL_PATH)/mtdutils/Android.mk \
