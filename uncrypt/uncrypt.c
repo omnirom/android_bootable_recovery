@@ -149,9 +149,14 @@ char* parse_recovery_command_file()
     int count = 0;
     char temp[1024];
 
-    FILE* fo = fopen(RECOVERY_COMMAND_FILE_TMP, "w");
+
 
     FILE* f = fopen(RECOVERY_COMMAND_FILE, "r");
+    if (f == NULL) {
+        return NULL;
+    }
+    FILE* fo = fopen(RECOVERY_COMMAND_FILE_TMP, "w");
+
     while (fgets(temp, sizeof(temp), f)) {
         printf("read: %s", temp);
         if (strncmp(temp, "--update_package=", strlen("--update_package=")) == 0) {
