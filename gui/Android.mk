@@ -23,7 +23,8 @@ LOCAL_SRC_FILES := \
     input.cpp \
     blanktimer.cpp \
     partitionlist.cpp \
-    mousecursor.cpp
+    mousecursor.cpp \
+    batteryled.cpp
 
 ifneq ($(TWRP_CUSTOM_KEYBOARD),)
   LOCAL_SRC_FILES += $(TWRP_CUSTOM_KEYBOARD)
@@ -66,7 +67,10 @@ ifneq ($(TW_NO_SCREEN_TIMEOUT),)
 	LOCAL_CFLAGS += -DTW_NO_SCREEN_TIMEOUT
 endif
 ifeq ($(HAVE_SELINUX), true)
-LOCAL_CFLAGS += -DHAVE_SELINUX
+	LOCAL_CFLAGS += -DHAVE_SELINUX
+endif
+ifneq ($(TW_CHARGING_LED_PATH),)
+	LOCAL_CFLAGS += -DTW_CHARGING_LED_PATH=$(TW_CHARGING_LED_PATH)
 endif
 
 ifeq ($(DEVICE_RESOLUTION),)

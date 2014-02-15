@@ -45,6 +45,7 @@
 #ifndef TW_NO_SCREEN_TIMEOUT
 #include "gui/blanktimer.hpp"
 #endif
+#include "gui/batteryled.hpp"
 
 #ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
 	#include "cutils/properties.h"
@@ -70,6 +71,7 @@ int                                     DataManager::mInitialized = 0;
 #ifndef TW_NO_SCREEN_TIMEOUT
 extern blanktimer blankTimer;
 #endif
+extern batteryled batteryLed;
 
 // Device ID functions
 void DataManager::sanitize_device_id(char* device_id) {
@@ -1027,10 +1029,13 @@ int DataManager::GetMagicValue(const string varName, string& value)
 			if (cap) {
 				fgets(cap_s, 2, cap);
 				fclose(cap);
-				if (cap_s[0] == 'C')
+				if (cap_s[0] == 'C') {
 					charging = '+';
-				else
+					batteryLed.setCharging(true);
+				} else {
 					charging = ' ';
+					batteryLed.setCharging(false);
+				}
 			}
 			nextSecCheck = curTime.tv_sec + 60;
 		}

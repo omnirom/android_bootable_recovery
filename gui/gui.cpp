@@ -56,6 +56,7 @@ extern "C"
 #ifndef TW_NO_SCREEN_TIMEOUT
 #include "blanktimer.hpp"
 #endif
+#include "batteryled.hpp"
 
 // Enable to print render time of each frame to the log file
 //#define PRINT_RENDER_TIME 1
@@ -76,6 +77,7 @@ static int gGuiInputRunning = 0;
 #ifndef TW_NO_SCREEN_TIMEOUT
 blanktimer blankTimer;
 #endif
+batteryled batteryLed;
 
 // Needed by pages.cpp too
 int gGuiRunning = 0;
