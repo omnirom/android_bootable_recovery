@@ -1031,10 +1031,10 @@ int DataManager::GetMagicValue(const string varName, string& value)
 				fclose(cap);
 				if (cap_s[0] == 'C') {
 					charging = '+';
-					batteryLed.setCharging(true);
+					batteryLed.setCharging(true, cap_s[0]);
 				} else {
 					charging = ' ';
-					batteryLed.setCharging(false);
+					batteryLed.setCharging(false, cap_s[0]);
 				}
 			}
 			nextSecCheck = curTime.tv_sec + 60;

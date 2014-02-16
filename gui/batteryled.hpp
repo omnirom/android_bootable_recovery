@@ -25,7 +25,7 @@ class batteryled
 {
 public:
 	batteryled(void);
-	bool setCharging(bool charging);
+	bool setCharging(bool charging, char status);
 	bool getCharging(void);
 };
 
