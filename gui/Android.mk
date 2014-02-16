@@ -72,6 +72,9 @@ endif
 ifneq ($(TW_CHARGING_LED_PATH),)
 	LOCAL_CFLAGS += -DTW_CHARGING_LED_PATH=$(TW_CHARGING_LED_PATH)
 endif
+ifneq ($(TW_CHARGED_LED_PATH),)
+	LOCAL_CFLAGS += -DTW_CHARGED_LED_PATH=$(TW_CHARGED_LED_PATH)
+endif
 
 ifeq ($(DEVICE_RESOLUTION),)
 $(warning ********************************************************************************)
