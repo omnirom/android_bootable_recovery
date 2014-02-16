@@ -82,9 +82,11 @@ static bool setCharging() {
 			break;
 	}
 
+  #ifdef _EVENT_LOGGING
 	LOGINFO("Writing '%s' to battery led: '%s'\n", status_charging.c_str(), charging_file.c_str());
-	success1 = TWFunc::write_file(charging_file, status_charging);
 	LOGINFO("Writing '%s' to battery led: '%s'\n", status_full.c_str(), full_file.c_str());
+  #endif
+	success1 = TWFunc::write_file(charging_file, status_charging);
 	success2 = TWFunc::write_file(full_file, status_full);
  #else
 	#error "TWRP: Failing compilation because TW_CHARGING_LED_PATH was defined, but TW_CHARGED_LED_PATH was not!"
