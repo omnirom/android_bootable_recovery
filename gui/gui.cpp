@@ -202,7 +202,7 @@ static void * input_thread(void *cookie)
 	LOGINFO("Skipping screen timeout threads: TW_NO_SCREEN_TIMEOUT is set\n");
 #endif
 
-	/* setup the battery led indicator */
+	/* setup the battery led indicator thread */
 	batteryLed.setDelay(2 /* seconds */);
 	batteryLed.setTimerThread();
 
