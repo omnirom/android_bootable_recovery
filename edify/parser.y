@@ -29,6 +29,10 @@ extern int gColumn;
 void yyerror(Expr** root, int* error_count, const char* s);
 int yyparse(Expr** root, int* error_count);
 
+struct yy_buffer_state;
+void yy_switch_to_buffer(struct yy_buffer_state* new_buffer);
+struct yy_buffer_state* yy_scan_string(const char* yystr);
+
 %}
 
 %locations
@@ -127,4 +131,9 @@ void yyerror(Expr** root, int* error_count, const char* s) {
   }
   printf("line %d col %d: %s\n", gLine, gColumn, s);
   ++*error_count;
+}
+
+int parse_string(const char* str, Expr** root, int* error_count) {
+    yy_switch_to_buffer(yy_scan_string(str));
+    return yyparse(root, error_count);
 }

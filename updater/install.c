@@ -52,7 +52,7 @@
 #endif
 
 // Take a sha-1 digest and return it as a newly-allocated hex string.
-static char* PrintSha1(uint8_t* digest) {
+static char* PrintSha1(const uint8_t* digest) {
     char* buffer = malloc(SHA_DIGEST_SIZE*2 + 1);
     int i;
     const char* alphabet = "0123456789abcdef";
@@ -1115,9 +1115,9 @@ Value* SysPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
         pos += read;
     }
     rewind(src);
-    uint8_t* digest = SHA_final(&ctx);
+    const uint8_t* digest = SHA_final(&ctx);
 
-    char* hexdigest = PrintSha1(digest);
+    const char* hexdigest = PrintSha1(digest);
     printf("  system partition sha1 = %s\n", hexdigest);
 
     if (memcmp(digest, target_digest, SHA_DIGEST_SIZE) == 0) {
