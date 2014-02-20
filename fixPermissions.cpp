@@ -94,28 +94,59 @@ int fixPermissions::fixDataDataContexts(void) {
 	return 0;
 }
 
+int fixPermissions::fixContextsRecursively(string name, int level) {
+	DIR *d;
+	struct dirent *de;
+	struct stat sb;
+	string path;
+
+	if (!(d = opendir(name.c_str())))
+		return -1;
+	if (!(de = readdir(d)))
+		return -1;
+
+	do {
+		if (de->d_type ==  DT_DIR) {
+			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+				continue;
+			path = name + "/" + de->d_name;
+			restorecon(path, &sb);
+			fixContextsRecursively(path, level + 1);
+		}
+		else {
+			path = name + "/" + de->d_name;
+			restorecon(path, &sb);
+		}
+	} while (de = readdir(d));
+	closedir(d);
+	return 0;
+}
+
 int fixPermissions::fixDataInternalContexts(void) {
 	DIR *d;
 	struct dirent *de;
 	struct stat sb;
-	string dir;
+	string dir, androiddir;
 
-	if (TWFunc::Path_Exists("/data/media")) {
-		dir = "/data/media";
-	}
-	else {
+	if (TWFunc::Path_Exists("/data/media/0"))
 		dir = "/data/media/0";
-	}
+	else
+		dir = "/data/media";
 	LOGINFO("Fixing %s contexts\n", dir.c_str());
 	d = opendir(dir.c_str());
 
 	while (( de = readdir(d)) != NULL) {
 		stat(de->d_name, &sb);
 		string f;
-		f = dir + de->d_name;
+		f = dir + "/" + de->d_name;
 		restorecon(f, &sb);
 	}
 	closedir(d);
+
+	androiddir = dir + "/Android/";
+	if (TWFunc::Path_Exists(androiddir)) {
+		fixContextsRecursively(androiddir, 0);
+	}
 	return 0;
 }
 #endif
