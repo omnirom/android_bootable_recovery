@@ -250,6 +250,9 @@ static int vk_init(struct ev *e)
 #define OFF(x)  ((x)%BITS_PER_LONG)
 #define LONG(x) ((x)/BITS_PER_LONG)
 #define test_bit(bit, array)	((array[LONG(bit)] >> OFF(bit)) & 1)
+
+// Check for EV_REL (REL_X and REL_Y) and, because touchscreens can have those too,
+// check also for EV_KEY (BTN_LEFT and BTN_RIGHT)
 static void check_mouse(int fd)
 {
 	if(has_mouse)
@@ -259,12 +262,18 @@ static void check_mouse(int fd)
 	memset(bit, 0, sizeof(bit));
 	ioctl(fd, EVIOCGBIT(0, EV_MAX), bit[0]);
 
-	if(!test_bit(EV_REL, bit[0]))
+	if(!test_bit(EV_REL, bit[0]) || !test_bit(EV_KEY, bit[0]))
 		return;
 
 	ioctl(fd, EVIOCGBIT(EV_REL, KEY_MAX), bit[EV_REL]);
-	if(test_bit(REL_X, bit[EV_REL]) && test_bit(REL_Y, bit[EV_REL]))
-		has_mouse = 1;
+	if(!test_bit(REL_X, bit[EV_REL]) || !test_bit(REL_Y, bit[EV_REL]))
+		return;
+
+	ioctl(fd, EVIOCGBIT(EV_KEY, KEY_MAX), bit[EV_KEY]);
+	if(!test_bit(BTN_LEFT, bit[EV_KEY]) || !test_bit(BTN_RIGHT, bit[EV_KEY]))
+		return;
+
+	has_mouse = 1;
 }
 
 int ev_has_mouse(void)
