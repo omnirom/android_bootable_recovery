@@ -31,6 +31,7 @@ class fixPermissions {
 		int fixDataData(string dataDir);
 		int restorecon(std::string entry, struct stat *sb);
 		int fixDataDataContexts(void);
+		int fixContextsRecursively(std::string path, int level);
 
 		struct package {
 			string pkgName;
