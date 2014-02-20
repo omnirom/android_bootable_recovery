@@ -79,7 +79,7 @@ int TWFunc::Exec_Cmd(const string& cmd) {
 	switch(pid = fork())
 	{
 		case -1:
-			LOGERR("Exec_Cmd(): vfork failed!\n");
+			LOGERR("Exec_Cmd(): vfork failed: %d!\n", errno);
 			return -1;
 		case 0: // child
 			execl("/sbin/sh", "sh", "-c", cmd.c_str(), NULL);
