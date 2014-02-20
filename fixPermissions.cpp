@@ -98,7 +98,7 @@ int fixPermissions::fixDataInternalContexts(void) {
 	DIR *d;
 	struct dirent *de;
 	struct stat sb;
-	string dir;
+	string dir, androiddir;
 
 	if (TWFunc::Path_Exists("/data/media")) {
 		dir = "/data/media";
@@ -112,10 +112,23 @@ int fixPermissions::fixDataInternalContexts(void) {
 	while (( de = readdir(d)) != NULL) {
 		stat(de->d_name, &sb);
 		string f;
-		f = dir + de->d_name;
+		f = dir + "/" + de->d_name;
 		restorecon(f, &sb);
 	}
 	closedir(d);
+
+	if (TWFunc::Path_Exists(dir + "/Android/")) {
+		androiddir = dir + "/Android/";
+		d = opendir(androiddir.c_str());
+
+		while (( de = readdir(d)) != NULL) {
+			stat(de->d_name, &sb);
+			string f;
+			f = dir + "/" + de->d_name;
+			restorecon(f, &sb);
+		}
+		closedir(d);
+	}
 	return 0;
 }
 #endif
