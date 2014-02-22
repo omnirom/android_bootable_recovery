@@ -40,8 +40,8 @@ void gr_fill(int x1, int y1, int x2, int y2);
 
 // system/core/charger uses different gr_print signatures in diferent
 // Android versions, either with or without int bold.
-int gr_text(int x, int y, const char *s, ...);
-int gr_text_impl(int x, int y, const char *s, int bold);
+//int gr_text(int x, int y, const char *s, ...); //This breaks charger.c
+int gr_text(int x, int y, const char *s, int bold);
 
  void gr_texticon(int x, int y, gr_surface icon);
 int gr_measure(const char *s);
