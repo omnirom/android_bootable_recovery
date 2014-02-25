@@ -311,6 +311,30 @@ int gr_measureEx(const char *s, void* font)
     return total;
 }
 
+int gr_maxExW(const char *s, void* font, int max_width)
+{
+    GRFont* fnt = (GRFont*) font;
+    int total = 0;
+    unsigned pos;
+    unsigned off;
+
+    if (!fnt)   fnt = gr_font;
+
+    while ((off = *s++))
+    {
+        off -= 32;
+        if (off < 96) {
+            max_width -= (fnt->offset[off+1] - fnt->offset[off]);
+			if (max_width > 0) {
+				total++;
+			} else {
+				return total;
+			}
+		}
+    }
+    return total;
+}
+
 unsigned character_width(const char *s, void* pFont)
 {
 	GRFont *font = (GRFont*) pFont;
