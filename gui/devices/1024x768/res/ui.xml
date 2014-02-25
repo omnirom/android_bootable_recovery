@@ -102,6 +102,7 @@
 		<variable name="text_success_color" value="#33B5E5" />
 		<variable name="text_fail_color" value="#FF0101" />
 		<variable name="highlight_color" value="#90909080" />
+		<variable name="caps_highlight_color" value="#33B5E580" />
 		<variable name="slider_x" value="307" />
 		<variable name="slider_y" value="600" />
 		<variable name="slider_text_y" value="650" />
@@ -382,6 +383,7 @@
 				<placement x="0" y="408" />
 				<layout resource1="keyboard1" resource2="keyboard2" resource3="keyboard3" resource4="keyboard4" />
 				<highlight color="%highlight_color%" />
+				<capshighlight color="%caps_highlight_color%" />
 				<layout1>
 					<keysize height="90" width="85" />
 					<row1 key01="80:" key02="q" long02="1" key03="w" long03="2" key04="e" long04="3" key05="r" long05="4" key06="t" long06="5" key07="y" long07="6" key08="u" long08="7" key09="i" long09="8" key10="o" long10="9" key11="p" long11="0" key12="94:c:8" />
@@ -390,7 +392,7 @@
 					<row4 key01="320:" key02="385: " key03="80:/" long03=":" key04="80:-" long04="_" />
 				</layout1>
 				<layout2>
-					<keysize height="90" width="85" />
+					<keysize height="90" width="85" capslock="0" revert_layout="1" />
 					<row1 key01="80:" key02="Q" long02="1" key03="W" long03="2" key04="E" long04="3" key05="R" long05="4" key06="T" long06="5" key07="Y" long07="6" key08="U" long08="7" key09="I" long09="8" key10="O" long10="9" key11="P" long11="0" key12="94:c:8" />
 					<row2 key01="115:layout3" key02="83:A" key03="83:S" key04="83:D" key05="83:F" key06="83:G" key07="83:H" key08="83:J" key09="83:K" key10="83:L" key11="162:action" />
 					<row3 key01="140:layout1" key02="82:Z" key03="82:X" key04="82:C" key05="82:V" key06="82:B" key07="82:N" key08="82:M" key09="82:," long09="!" key10="82:." long10="?" key11="144:layout1" />

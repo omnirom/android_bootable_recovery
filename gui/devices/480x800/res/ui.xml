@@ -97,6 +97,7 @@
 		<variable name="text_success_color" value="#33B5E5" />
 		<variable name="text_fail_color" value="#FF0101" />
 		<variable name="highlight_color" value="#90909080" />
+		<variable name="caps_highlight_color" value="#33B5E580" />
 		<variable name="home_button_x" value="10" />
 		<variable name="home_button_y" value="766" />
 		<variable name="back_button_x" value="413" />
@@ -355,6 +356,7 @@
 				<placement x="0" y="450" />
 				<layout resource1="keyboard1" resource2="keyboard2" resource3="keyboard3" resource4="keyboard4" />
 				<highlight color="%highlight_color%" />
+				<capshighlight color="%caps_highlight_color%" />
 				<layout1>
 					<keysize height="78" width="48" />
 					<row1 key01="q" long01="1" key02="w" long02="2" key03="e" long03="3" key04="r" long04="4" key05="t" long05="5" key06="y" long06="6" key07="u" long07="7" key08="i" long08="8" key09="o" long09="9" key10="p" long10="0" />
@@ -363,7 +365,7 @@
 					<row4 key01="72:layout3" key02="48:" key03="240: " key04="48:." key05="72:a:action" />
 				</layout1>
 				<layout2>
-					<keysize height="78" width="48" />
+					<keysize height="78" width="48" capslock="0" revert_layout="1" />
 					<row1 key01="Q" long01="1" key02="W" long02="2" key03="E" long03="3" key04="R" long04="4" key05="T" long05="5" key06="Y" long06="6" key07="U" long07="7" key08="I" long08="8" key09="O" long09="9" key10="P" long10="0" />
 					<row2 key01="72:A" key02="S" key03="D" key04="F" key05="G" key06="H" key07="J" key08="K" key09="72:L" />
 					<row3 key01="72:layout1" key02="Z" key03="X" key04="C" key05="V" key06="B" key07="N" key08="M" key09="72:c:8" />
