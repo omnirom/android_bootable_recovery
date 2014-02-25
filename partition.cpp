@@ -457,7 +457,6 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			Removable = true;
 		} else if (strncmp(ptr, "storage", 7) == 0) {
 			if (ptr_len == 7) {
-				LOGINFO("ptr_len is 7, storage set to true\n");
 				Is_Storage = true;
 			} else if (ptr_len == 9) {
 				ptr += 9;
