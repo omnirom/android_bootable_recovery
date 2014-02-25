@@ -46,9 +46,11 @@
 #include "mtdutils/mtdutils.h"
 #include "updater.h"
 #include "syspatch.h"
+#include "install.h"
 
 #ifdef USE_EXT4
 #include "make_ext4fs.h"
+#include "wipe.h"
 #endif
 
 // Take a sha-1 digest and return it as a newly-allocated hex string.
@@ -428,6 +430,54 @@ Value* PackageExtractDirFn(const char* name, State* state,
 }
 
 
+DontCareMap* ReadDontCareMapFromZip(ZipArchive* za, const char* path) {
+    const char* name = "ReadDontCareMapFromZip";
+
+    const ZipEntry* entry = mzFindZipEntry(za, path);
+    if (entry == NULL) {
+        printf("%s: no %s in package\n", name, path);
+        return NULL;
+    }
+
+    size_t map_size = mzGetZipEntryUncompLen(entry);
+    char* map_data = malloc(map_size);
+    if (map_data == NULL) {
+        printf("%s: failed to allocate %zu bytes for %s\n",
+               name, map_size, path);
+        return NULL;
+    }
+
+    if (!mzExtractZipEntryToBuffer(za, entry, (unsigned char*) map_data)) {
+        printf("%s: failed to read %s\n", name, path);
+        return NULL;
+    }
+
+    char* p = map_data;
+    DontCareMap* map = (DontCareMap*) malloc(sizeof(DontCareMap));
+
+    map->block_size = strtoul(p, &p, 0);
+    if (map->block_size != 4096) {
+        printf("%s: unexpected block size %zu\n", name, map->block_size);
+        return NULL;
+    }
+
+    map->region_count = strtoul(p, &p, 0);
+    map->regions = (int*) malloc(map->region_count * sizeof(int));
+
+    int i;
+    for (i = 0; i < map->region_count; ++i) {
+        map->regions[i] = strtoul(p, &p, 0);
+    }
+
+    return map;
+}
+
+bool MapWriter(const unsigned char* data, int dataLen, void* cookie) {
+    return write_with_map(data, dataLen, (MapState*) cookie) == dataLen;
+}
+
+// package_extract_file(package_path, destination_path, map_path)
+//   or
 // package_extract_file(package_path, destination_path)
 //   or
 // package_extract_file(package_path)
@@ -435,19 +485,30 @@ Value* PackageExtractDirFn(const char* name, State* state,
 //   function (the char* returned is actually a FileContents*).
 Value* PackageExtractFileFn(const char* name, State* state,
                            int argc, Expr* argv[]) {
-    if (argc != 1 && argc != 2) {
-        return ErrorAbort(state, "%s() expects 1 or 2 args, got %d",
+    if (argc < 1 || argc > 3) {
+        return ErrorAbort(state, "%s() expects 1 or 2 or 3 args, got %d",
                           name, argc);
     }
     bool success = false;
-    if (argc == 2) {
-        // The two-argument version extracts to a file.
+    if (argc >= 2) {
+        // The two-argument version extracts to a file; the three-arg
+        // version extracts to a file, skipping over regions in a
+        // don't care map.
+
+        ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
 
         char* zip_path;
         char* dest_path;
-        if (ReadArgs(state, argv, 2, &zip_path, &dest_path) < 0) return NULL;
+        char* map_path = NULL;
+        DontCareMap* map = NULL;
+        if (argc == 2) {
+            if (ReadArgs(state, argv, 2, &zip_path, &dest_path) < 0) return NULL;
+        } else {
+            if (ReadArgs(state, argv, 3, &zip_path, &dest_path, &map_path) < 0) return NULL;
+            map = ReadDontCareMapFromZip(za, map_path);
+            if (map == NULL) goto done2;
+        }
 
-        ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
         const ZipEntry* entry = mzFindZipEntry(za, zip_path);
         if (entry == NULL) {
             printf("%s: no %s in package\n", name, zip_path);
@@ -460,12 +521,26 @@ Value* PackageExtractFileFn(const char* name, State* state,
                     name, dest_path, strerror(errno));
             goto done2;
         }
-        success = mzExtractZipEntryToFile(za, entry, fileno(f));
+        if (map) {
+            MapState state;
+            state.map = map;
+            state.cr = 0;
+            state.so_far = 0;
+            state.f = f;
+            success = mzProcessZipEntryContents(za, entry, MapWriter, &state);
+        } else {
+            success = mzExtractZipEntryToFile(za, entry, fileno(f));
+        }
         fclose(f);
 
       done2:
         free(zip_path);
         free(dest_path);
+        free(map_path);
+        if (map) {
+            free(map->regions);
+            free(map);
+        }
         return StringValue(strdup(success ? "t" : ""));
     } else {
         // The one-argument version returns the contents of the file
@@ -1067,23 +1142,48 @@ Value* ApplyPatchSpaceFn(const char* name, State* state,
     return StringValue(strdup(CacheSizeCheck(bytes) ? "" : "t"));
 }
 
-// syspatch(file, size, tgt_sha1, init_sha1, patch)
+bool CheckMappedFileSha1(FILE* f, DontCareMap* map, uint8_t* intended_digest) {
+    MapState state;
+
+    state.f = f;
+    state.so_far = 0;
+    state.cr = 0;
+    state.map = map;
+
+    SHA_CTX ctx;
+    SHA_init(&ctx);
+
+    unsigned char buffer[32173];
+    size_t bytes_read;
+
+    while ((bytes_read = read_with_map(buffer, sizeof(buffer), &state)) > 0) {
+        SHA_update(&ctx, buffer, bytes_read);
+    }
+    const uint8_t* digest = SHA_final(&ctx);
+
+    return memcmp(digest, intended_digest, SHA_DIGEST_SIZE) == 0;
+}
+
+
+// syspatch(file, tgt_mapfile, tgt_sha1, init_mapfile, init_sha1, patch)
 
 Value* SysPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc != 5) {
-        return ErrorAbort(state, "%s(): expected 5 args, got %d", name, argc);
+    if (argc != 6) {
+        return ErrorAbort(state, "%s(): expected 6 args, got %d", name, argc);
     }
 
     char* filename;
-    char* filename_size_str;
+    char* target_mapfilename;
     char* target_sha1;
+    char* init_mapfilename;
     char* init_sha1;
     char* patch_filename;
     uint8_t target_digest[SHA_DIGEST_SIZE];
     uint8_t init_digest[SHA_DIGEST_SIZE];
 
-    if (ReadArgs(state, argv, 5, &filename, &filename_size_str,
-                 &target_sha1, &init_sha1, &patch_filename) < 0) {
+    if (ReadArgs(state, argv, 6, &filename,
+                 &target_mapfilename, &target_sha1,
+                 &init_mapfilename, &init_sha1, &patch_filename) < 0) {
         return NULL;
     }
 
@@ -1096,68 +1196,56 @@ Value* SysPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
         memset(init_digest, 0, SHA_DIGEST_SIZE);
     }
 
-    size_t len = strtoull(filename_size_str, NULL, 0);
-
-    SHA_CTX ctx;
-    SHA_init(&ctx);
-    FILE* src = fopen(filename, "r");
-    size_t pos = 0;
-    unsigned char buffer[4096];
-    while (pos < len) {
-        size_t to_read = len - pos;
-        if (to_read > sizeof(buffer)) to_read = sizeof(buffer);
-        size_t read = fread(buffer, 1, to_read, src);
-        if (read <= 0) {
-            printf("%s(): short read after %zu bytes\n", name, pos);
-            break;
-        }
-        SHA_update(&ctx, buffer, read);
-        pos += read;
-    }
-    rewind(src);
-    const uint8_t* digest = SHA_final(&ctx);
-
-    const char* hexdigest = PrintSha1(digest);
-    printf("  system partition sha1 = %s\n", hexdigest);
-
-    if (memcmp(digest, target_digest, SHA_DIGEST_SIZE) == 0) {
-        printf("%s(): %s is already target\n", name, filename);
-        fclose(src);
-        goto done;
-    }
-
-    if (memcmp(digest, init_digest, SHA_DIGEST_SIZE) != 0) {
-        return ErrorAbort(state, "%s(): %s in unknown state\n", name, filename);
-    }
-
     ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
+    FILE* src = fopen(filename, "r");
 
-    const ZipEntry* entry = mzFindZipEntry(za, patch_filename);
-    if (entry == NULL) {
-        return ErrorAbort(state, "%s(): no %s in package\n", name, patch_filename);
+    DontCareMap* init_map = ReadDontCareMapFromZip(za, init_mapfilename);
+    if (init_map == NULL) return ErrorAbort(state, "%s(): failed to read init map\n", name);
+    DontCareMap* target_map = ReadDontCareMapFromZip(za, target_mapfilename);
+    if (target_map == NULL) return ErrorAbort(state, "%s(): failed to read target map\n", name);
+
+    if (CheckMappedFileSha1(src, init_map, init_digest)) {
+        // If the partition contents match the init_digest, then we need to apply the patch.
+
+        rewind(src);
+
+        const ZipEntry* entry = mzFindZipEntry(za, patch_filename);
+        if (entry == NULL) {
+            return ErrorAbort(state, "%s(): no %s in package\n", name, patch_filename);
+        }
+
+        unsigned char* patch_data;
+        size_t patch_len;
+        if (!mzGetStoredEntry(za, entry, &patch_data, &patch_len)) {
+            return ErrorAbort(state, "%s(): failed to get %s entry\n", name, patch_filename);
+        }
+
+        FILE* tgt = fopen(filename, "r+");
+
+        int ret = syspatch(src, init_map, patch_data, patch_len, tgt, target_map);
+
+        fclose(src);
+        fclose(tgt);
+
+        if (ret != 0) {
+            return ErrorAbort(state, "%s(): patching failed\n", name);
+        }
+    } else {
+        rewind(src);
+        if (CheckMappedFileSha1(src, target_map, target_digest)) {
+            // If the partition contents match the target already, we
+            // don't need to do anything.
+            printf("%s: output is already target\n", name);
+        } else {
+            return ErrorAbort(state, "%s(): %s in unknown state\n", name, filename);
+        }
     }
 
-    unsigned char* patch_data;
-    size_t patch_len;
-    if (!mzGetStoredEntry(za, entry, &patch_data, &patch_len)) {
-        return ErrorAbort(state, "%s(): failed to get %s entry\n", name, patch_filename);
-    }
-
-    FILE* tgt = fopen(filename, "r+");
-
-    int ret = syspatch(src, patch_data, patch_len, tgt);
-
-    fclose(src);
-    fclose(tgt);
-
-    if (ret != 0) {
-        return ErrorAbort(state, "%s(): patching failed\n", name);
-    }
-
-      done:
-    free(filename_size_str);
+  done:
     free(target_sha1);
+    free(target_mapfilename);
     free(init_sha1);
+    free(init_mapfilename);
     free(patch_filename);
     return StringValue(filename);
 
@@ -1516,7 +1604,7 @@ Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
 // Return the value most recently saved with SetStageFn.  The argument
 // is the block device for the misc partition.
 Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc != 2) {
+    if (argc != 1) {
         return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
     }
 
@@ -1531,6 +1619,27 @@ Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
     buffer[sizeof(buffer)-1] = '\0';
 
     return StringValue(strdup(buffer));
+}
+
+Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 2) {
+        return ErrorAbort(state, "%s() expects 2 args, got %d", name, argc);
+    }
+
+    char* filename;
+    char* len_str;
+    if (ReadArgs(state, argv, 2, &filename, &len_str) < 0) return NULL;
+
+    size_t len = strtoull(len_str, NULL, 0);
+    int fd = open(filename, O_WRONLY, 0644);
+    int success = wipe_block_device(fd, len);
+
+    free(filename);
+    free(len_str);
+
+    close(fd);
+
+    return StringValue(strdup(success ? "t" : ""));
 }
 
 void RegisterInstallFunctions() {
@@ -1566,6 +1675,7 @@ void RegisterInstallFunctions() {
     RegisterFunction("apply_patch_check", ApplyPatchCheckFn);
     RegisterFunction("apply_patch_space", ApplyPatchSpaceFn);
 
+    RegisterFunction("wipe_block_device", WipeBlockDeviceFn);
     RegisterFunction("syspatch", SysPatchFn);
 
     RegisterFunction("read_file", ReadFileFn);
