@@ -47,6 +47,11 @@
 #include "updater.h"
 #include "install.h"
 
+#include <dirent.h>
+
+static char bakfiles[PATH_MAX][512];
+static int totalbaks = 0;
+
 #ifdef USE_EXT4
 #include "make_ext4fs.h"
 #include "wipe.h"
@@ -414,6 +419,7 @@ done:
 Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
     char** paths = malloc(argc * sizeof(char*));
     int i;
+
     for (i = 0; i < argc; ++i) {
         paths[i] = Evaluate(state, argv[i]);
         if (paths[i] == NULL) {
@@ -1165,6 +1171,20 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
         return NULL;
     }
 
+    int i;
+    /* Skip files listed in the backup table */
+    for (i=0; i<totalbaks; i++) {
+        if (!strncmp(source_filename, bakfiles[i],PATH_MAX)) {
+            fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe,
+                "ui_print Skipping update of modified file %s\n", source_filename);
+            /* the command pipe tokenizes on \n, so issue an empty ui_print
+               to do the real line break */
+            fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe,
+                "ui_print\n");
+            return StringValue(strdup("t"));
+        }
+    }
+
     char* endptr;
     size_t target_size = strtol(target_size_str, &endptr, 10);
     if (target_size == 0 && endptr == target_size_str) {
@@ -1180,7 +1200,6 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
     int patchcount = (argc-4) / 2;
     Value** patches = ReadValueVarArgs(state, argc-4, argv+4);
 
-    int i;
     for (i = 0; i < patchcount; ++i) {
         if (patches[i*2]->type != VAL_STRING) {
             ErrorAbort(state, "%s(): sha-1 #%d is not string", name, i);
@@ -1233,12 +1252,30 @@ Value* ApplyPatchCheckFn(const char* name, State* state,
         return NULL;
     }
 
+    int i=0;
+    /* Skip files listed in the backup table */
+    for (i=0; i<totalbaks; i++) {
+        if (!strncmp(filename, bakfiles[i],PATH_MAX)) {
+            /*fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe,
+                "ui_print Skipping update of modified file %s\n", filename);*/
+            return StringValue(strdup("t"));
+        }
+    }
+
     int patchcount = argc-1;
     char** sha1s = ReadVarArgs(state, argc-1, argv+1);
 
     int result = applypatch_check(filename, patchcount, sha1s);
 
-    int i;
+    if (result == -ENOENT && totalbaks) {
+        /* File is gone, and we're dealing with a system containing
+           modified files supported by the CM backup tool. Push it
+           to the "skippable" list so we don't try to apply it when
+           the time comes, and return OK to any enclosing asserts */
+        sprintf (bakfiles[totalbaks++], "%s", filename);
+        result = 0;
+    }
+
     for (i = 0; i < patchcount; ++i) {
         free(sha1s[i]);
     }
@@ -1277,6 +1314,62 @@ Value* WipeCacheFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
     fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe, "wipe_cache\n");
     return StringValue(strdup("t"));
+}
+
+static int collect_backup_data(char *bakpath, char *bakroot) {
+    DIR *d;
+
+    d = opendir(bakpath);
+    if (!d) {
+        /* No backups, go away */
+        return 0;
+    }
+    while (1) {
+        struct dirent *entry;
+        const char *d_name;
+        entry = readdir(d);
+        if (!entry) {
+            break;
+        }
+        d_name = entry->d_name;
+        if (entry->d_type & DT_DIR) {
+            if (strcmp (d_name, "..") != 0 &&
+                    strcmp (d_name, ".") != 0) {
+                int path_length;
+                char path[PATH_MAX];
+
+                path_length = snprintf (path, PATH_MAX,
+                        "%s/%s", bakpath, d_name);
+                //printf ("%s\n", path);
+                if (path_length >= PATH_MAX) {
+                    return 1;
+                }
+                collect_backup_data(path, bakroot);
+            }
+        } else {
+            char *fspath = strdup(bakpath);
+            sprintf (bakfiles[totalbaks++], "%s/%s", bakpath+strlen(bakroot), d_name);
+        }
+
+    }
+    closedir(d);
+
+    return 0;
+}
+
+Value* CollectBackupDataFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc < 1) {
+        return ErrorAbort(state, "%s(): expected at least 1 arg, got %d",
+                          name, argc);
+    }
+
+    char* bakpath;
+    if (ReadArgs(state, argv, 1, &bakpath) < 0) {
+        return NULL;
+    }
+
+    int ret = collect_backup_data(bakpath, bakpath);
+    return StringValue(strdup(ret == 0 ? "t" : ""));
 }
 
 Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -1589,4 +1682,6 @@ void RegisterInstallFunctions() {
     RegisterFunction("set_stage", SetStageFn);
 
     RegisterFunction("enable_reboot", EnableRebootFn);
+
+    RegisterFunction("collect_backup_data", CollectBackupDataFn);
 }
