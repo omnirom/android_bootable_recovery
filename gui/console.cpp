@@ -117,6 +117,7 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 	mScrollColor.alpha = 255;
 	mLastCount = 0;
 	mSlideout = 0;
+	RenderCount = 0;
 	mSlideoutState = hidden;
 
 	mRenderX = 0; mRenderY = 0; mRenderW = gr_fb_width(); mRenderH = gr_fb_height();
@@ -211,21 +212,42 @@ int GUIConsole::RenderConsole(void)
 	gr_color(mForegroundColor.red, mForegroundColor.green, mForegroundColor.blue, mForegroundColor.alpha);
 
 	// Don't try to continue to render without data
+	int prevCount = mLastCount;
 	mLastCount = gConsole.size();
 	if (mLastCount == 0)
 		return (mSlideout ? RenderSlideout() : 0);
+
+	// Due to word wrap, figure out what / how the newly added text needs to be added to the render vector that is word wrapped
+	// Note, that multiple consoles on different GUI pages may be different widths or use different fonts, so the word wrapping
+	// may different in different console windows
+	for (int i = prevCount; i < mLastCount; i++) {
+		string curr_line = gConsole[i];
+		int keep_going = 1;
+		int line_char_width;
+		while (keep_going) {
+			line_char_width = gr_maxExW(curr_line.c_str(), fontResource, mConsoleW);
+			if (line_char_width < curr_line.size()) {
+				rConsole.push_back(curr_line.substr(0, line_char_width));
+				curr_line = curr_line.substr(line_char_width, curr_line.size() - line_char_width - 1);
+			} else {
+				rConsole.push_back(curr_line);
+				keep_going = 0;
+			}
+		}
+	}
+	RenderCount = rConsole.size();
 
 	// Find the start point
 	int start;
 	int curLine = mCurrentLine; // Thread-safing (Another thread updates this value)
 	if (curLine == -1)
 	{
-		start = mLastCount - mMaxRows;
+		start = RenderCount - mMaxRows;
 	}
 	else
 	{
-		if (curLine > (int) mLastCount)
-			curLine = (int) mLastCount;
+		if (curLine > (int) RenderCount)
+			curLine = (int) RenderCount;
 		if ((int) mMaxRows > curLine)
 			curLine = (int) mMaxRows;
 		start = curLine - mMaxRows;
@@ -234,8 +256,8 @@ int GUIConsole::RenderConsole(void)
 	unsigned int line;
 	for (line = 0; line < mMaxRows; line++)
 	{
-		if ((start + (int) line) >= 0 && (start + (int) line) < (int) mLastCount)
-			gr_textExW(mConsoleX, mStartY + (line * mFontHeight), gConsole[start + line].c_str(), fontResource, mConsoleW + mConsoleX);
+		if ((start + (int) line) >= 0 && (start + (int) line) < (int) RenderCount)
+			gr_textExW(mConsoleX, mStartY + (line * mFontHeight), rConsole[start + line].c_str(), fontResource, mConsoleW + mConsoleX);
 	}
 	return (mSlideout ? RenderSlideout() : 0);
 }
@@ -354,7 +376,7 @@ int GUIConsole::NotifyTouch(TOUCH_STATE state, int x, int y)
 	}
 
 	// If we don't have enough lines to scroll, throw this away.
-	if (mLastCount < mMaxRows)   return 1;
+	if (RenderCount < mMaxRows)   return 1;
 
 	// We are scrolling!!!
 	switch (state)
@@ -377,7 +399,7 @@ int GUIConsole::NotifyTouch(TOUCH_STATE state, int x, int y)
 		{
 			mLastTouchY = y;
 			if (mCurrentLine == -1)
-				mCurrentLine = mLastCount - 1;
+				mCurrentLine = RenderCount - 1;
 			else if (mCurrentLine > mSlideMultiplier)
 				mCurrentLine -= mSlideMultiplier;
 			else
@@ -392,7 +414,7 @@ int GUIConsole::NotifyTouch(TOUCH_STATE state, int x, int y)
 			if (mCurrentLine >= 0)
 			{
 				mCurrentLine += mSlideMultiplier;
-				if (mCurrentLine >= (int) mLastCount)
+				if (mCurrentLine >= (int) RenderCount)
 					mCurrentLine = -1;
 			}
 		}

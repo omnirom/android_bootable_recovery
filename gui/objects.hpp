@@ -339,6 +339,7 @@ protected:
 	unsigned int mFontHeight;
 	int mCurrentLine;
 	unsigned int mLastCount;
+	unsigned int RenderCount;
 	unsigned int mMaxRows;
 	int mStartY;
 	int mSlideoutX, mSlideoutY, mSlideoutW, mSlideoutH;
@@ -348,6 +349,7 @@ protected:
 	int mSlideMultiplier;
 	int mSlideout;
 	SlideoutState mSlideoutState;
+	std::vector<std::string> rConsole;
 
 protected:
 	virtual int RenderSlideout(void);
