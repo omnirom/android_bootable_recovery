@@ -653,6 +653,28 @@ int cryptfs_crypto_complete(void)
   return -1;
 }
 
+int cryptfs_check_footer(void)
+{
+    int rc = -1;
+    char fs_type[PROPERTY_VALUE_MAX];
+    char real_blkdev[MAXPATHLEN];
+    char fs_options[PROPERTY_VALUE_MAX];
+    unsigned long mnt_flags;
+    struct crypt_mnt_ftr crypt_ftr;
+    /* Allocate enough space for a 256 bit key, but we may use less */
+    unsigned char encrypted_master_key[256];
+    unsigned char salt[SALT_LEN];
+
+    if (get_orig_mount_parms(DATA_MNT_POINT, fs_type, real_blkdev, &mnt_flags, fs_options)) {
+        printf("Error reading original mount parms for mount point %s\n", DATA_MNT_POINT);
+        return rc;
+    }
+
+    rc = get_crypt_ftr_and_key(real_blkdev, &crypt_ftr, encrypted_master_key, salt);
+
+    return rc;
+}
+
 int cryptfs_check_passwd(const char *passwd)
 {
     char pwbuf[256];

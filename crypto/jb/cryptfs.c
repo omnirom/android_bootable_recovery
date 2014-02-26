@@ -1354,13 +1354,32 @@ int cryptfs_crypto_complete(void)
 
 #define FSTAB_PREFIX "/fstab."
 
+int cryptfs_check_footer(void)
+{
+    int rc = -1;
+    char fstab_filename[PROPERTY_VALUE_MAX + sizeof(FSTAB_PREFIX)];
+    char propbuf[PROPERTY_VALUE_MAX];
+    struct crypt_mnt_ftr crypt_ftr;
+
+    property_get("ro.hardware", propbuf, "");
+    snprintf(fstab_filename, sizeof(fstab_filename), FSTAB_PREFIX"%s", propbuf);
+
+    fstab = fs_mgr_read_fstab(fstab_filename);
+    if (!fstab) {
+        printf("failed to open %s\n", fstab_filename);
+        return -1;
+    }
+
+    rc = get_crypt_ftr_and_key(&crypt_ftr);
+
+    return rc;
+}
+
 int cryptfs_check_passwd(char *passwd)
 {
     int rc = -1;
     char fstab_filename[PROPERTY_VALUE_MAX + sizeof(FSTAB_PREFIX)];
     char propbuf[PROPERTY_VALUE_MAX];
-    int i;
-    int flags;
 
     property_get("ro.hardware", propbuf, "");
     snprintf(fstab_filename, sizeof(fstab_filename), FSTAB_PREFIX"%s", propbuf);
