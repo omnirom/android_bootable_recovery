@@ -1018,6 +1018,10 @@ void TWFunc::Auto_Generate_Backup_Name() {
 		space_check = Backup_Name.substr(Backup_Name.size() - 1, 1);
 	}
 	DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
+	if (PartitionManager.Check_Backup_Name(false) != 0) {
+		LOGINFO("Auto generated backup name '%s' contains invalid characters, using date instead.\n", Backup_Name.c_str());
+		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
+	}
 }
 
 void TWFunc::Fixup_Time_On_Boot()
