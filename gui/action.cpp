@@ -1105,11 +1105,12 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				int wipe_dalvik = 0;
 				string Sideload_File;
 
-				if (!PartitionManager.Mount_Current_Storage(true)) {
-					operation_end(1, simulate);
-					return 0;
+				if (!PartitionManager.Mount_Current_Storage(false)) {
+					gui_print("Using RAM for sideload storage.\n");
+					Sideload_File = "/tmp/sideload.zip";
+				} else {
+					Sideload_File = DataManager::GetCurrentStoragePath() + "/sideload.zip";
 				}
-				Sideload_File = DataManager::GetCurrentStoragePath() + "/sideload.zip";
 				if (TWFunc::Path_Exists(Sideload_File)) {
 					unlink(Sideload_File.c_str());
 				}
