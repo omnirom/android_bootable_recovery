@@ -50,6 +50,14 @@ extern "C" {
 #ifdef USE_EXT4
 	#include "make_ext4fs.h"
 #endif
+
+#ifdef TW_INCLUDE_CRYPTO
+	#ifdef TW_INCLUDE_JB_CRYPTO
+		#include "crypto/jb/cryptfs.h"
+	#else
+		#include "crypto/ics/cryptfs.h"
+	#endif
+#endif
 }
 #ifdef HAVE_SELINUX
 #include "selinux/selinux.h"
@@ -290,14 +298,38 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 				Decrypted_Block_Device = crypto_blkdev;
 				LOGINFO("Data already decrypted, new block device: '%s'\n", crypto_blkdev);
 			} else if (!Mount(false)) {
-				Is_Encrypted = true;
-				Is_Decrypted = false;
-				Can_Be_Mounted = false;
-				Current_File_System = "emmc";
-				Setup_Image(Display_Error);
-				DataManager::SetValue(TW_IS_ENCRYPTED, 1);
-				DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
-				DataManager::SetValue("tw_crypto_display", "");
+				if (Is_Present) {
+#ifdef TW_INCLUDE_JB_CRYPTO
+					// No extra flags needed
+#else
+					property_set("ro.crypto.fs_type", CRYPTO_FS_TYPE);
+					property_set("ro.crypto.fs_real_blkdev", CRYPTO_REAL_BLKDEV);
+					property_set("ro.crypto.fs_mnt_point", CRYPTO_MNT_POINT);
+					property_set("ro.crypto.fs_options", CRYPTO_FS_OPTIONS);
+					property_set("ro.crypto.fs_flags", CRYPTO_FS_FLAGS);
+					property_set("ro.crypto.keyfile.userdata", CRYPTO_KEY_LOC);
+#ifdef CRYPTO_SD_FS_TYPE
+					property_set("ro.crypto.sd_fs_type", CRYPTO_SD_FS_TYPE);
+					property_set("ro.crypto.sd_fs_real_blkdev", CRYPTO_SD_REAL_BLKDEV);
+					property_set("ro.crypto.sd_fs_mnt_point", EXPAND(TW_INTERNAL_STORAGE_PATH));
+#endif
+					property_set("rw.km_fips_status", "ready");
+#endif
+					if (cryptfs_check_footer() == 0) {
+						Is_Encrypted = true;
+						Is_Decrypted = false;
+						Can_Be_Mounted = false;
+						Current_File_System = "emmc";
+						Setup_Image(Display_Error);
+						DataManager::SetValue(TW_IS_ENCRYPTED, 1);
+						DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
+						DataManager::SetValue("tw_crypto_display", "");
+					} else {
+						LOGERR("Could not mount /data and unable to find crypto footer.\n");
+					}
+				} else {
+					LOGERR("Primary block device '%s' for mount point '%s' is not present!\n", Primary_Block_Device.c_str(), Mount_Point.c_str());
+				}
 			} else {
 				// Filesystem is not encrypted and the mount
 				// succeeded, so get it back to the original

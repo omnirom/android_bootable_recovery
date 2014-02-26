@@ -1383,9 +1383,9 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	property_set("ro.crypto.keyfile.userdata", CRYPTO_KEY_LOC);
 
 #ifdef CRYPTO_SD_FS_TYPE
-    property_set("ro.crypto.sd_fs_type", CRYPTO_SD_FS_TYPE);
-    property_set("ro.crypto.sd_fs_real_blkdev", CRYPTO_SD_REAL_BLKDEV);
-    property_set("ro.crypto.sd_fs_mnt_point", EXPAND(TW_INTERNAL_STORAGE_PATH));
+	property_set("ro.crypto.sd_fs_type", CRYPTO_SD_FS_TYPE);
+	property_set("ro.crypto.sd_fs_real_blkdev", CRYPTO_SD_REAL_BLKDEV);
+	property_set("ro.crypto.sd_fs_mnt_point", EXPAND(TW_INTERNAL_STORAGE_PATH));
 #endif
 
     property_set("rw.km_fips_status", "ready");

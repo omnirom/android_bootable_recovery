@@ -139,6 +139,7 @@ extern "C" {
   typedef void (*kdf_func)(char *passwd, unsigned char *salt, unsigned char *ikey, void *params);
 
   int cryptfs_crypto_complete(void);
+  int cryptfs_check_footer(void);
   int cryptfs_check_passwd(char *pw);
   int cryptfs_verify_passwd(char *newpw);
   int cryptfs_restart(void);
