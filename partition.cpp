@@ -63,6 +63,11 @@ extern "C" {
 #include "selinux/selinux.h"
 #include <selinux/label.h>
 #endif
+#ifdef HAVE_CAPABILITIES
+#include <sys/capability.h>
+#include <sys/xattr.h>
+#include <linux/xattr.h>
+#endif
 
 using namespace std;
 
@@ -1699,6 +1704,7 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 	string Full_FileName, Command;
 	int index = 0;
 	char split_index[5];
+	bool ret = false;
 
 	if (Has_Android_Secure) {
 		if (!Wipe_AndSec())
@@ -1726,8 +1732,29 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 		tar.setpassword(Password);
 #endif
 	if (tar.extractTarFork() != 0)
-		return false;
-	return true;
+		ret = false;
+	else
+		ret = true;
+#ifdef HAVE_CAPABILITIES
+	// Restore capabilities to the run-as binary
+	if (Mount_Point == "/system" && Mount(true) && TWFunc::Path_Exists("/system/bin/run-as")) {
+		struct vfs_cap_data cap_data;
+		uint64_t capabilities = (1 << CAP_SETUID) | (1 << CAP_SETGID);
+
+		memset(&cap_data, 0, sizeof(cap_data));
+		cap_data.magic_etc = VFS_CAP_REVISION | VFS_CAP_FLAGS_EFFECTIVE;
+		cap_data.data[0].permitted = (uint32_t) (capabilities & 0xffffffff);
+		cap_data.data[0].inheritable = 0;
+		cap_data.data[1].permitted = (uint32_t) (capabilities >> 32);
+		cap_data.data[1].inheritable = 0;
+		if (setxattr("/system/bin/run-as", XATTR_NAME_CAPS, &cap_data, sizeof(cap_data), 0) < 0) {
+			LOGINFO("Failed to reset capabilities of /system/bin/run-as binary.\n");
+		} else {
+			LOGINFO("Reset capabilities of /system/bin/run-as binary successful.\n");
+		}
+	}
+#endif
+	return ret;
 }
 
 bool TWPartition::Restore_DD(string restore_folder) {
