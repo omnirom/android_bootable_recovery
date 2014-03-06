@@ -46,60 +46,22 @@ extern "C" void gui_print(const char *fmt, ...)
 		return;
 	}
 
-	for (start = next = buf; *next != '\0'; next++)
+	for (start = next = buf; *next != '\0';)
 	{
 		if (*next == '\n')
 		{
 			*next = '\0';
-			next++;
+			gConsole.push_back(start);
 
-			std::string line = start;
-			gConsole.push_back(line);
-			start = next;
-
-			// Handle the normal \n\0 case
-			if (*next == '\0')
-				return;
+			start = ++next;
 		}
+		else
+			++next;
 	}
-	std::string line = start;
-	gConsole.push_back(line);
-	return;
-}
 
-extern "C" void gui_print_overwrite(const char *fmt, ...)
-{
-	char buf[512];		// We're going to limit a single request to 512 bytes
-
-	va_list ap;
-	va_start(ap, fmt);
-	vsnprintf(buf, 512, fmt, ap);
-	va_end(ap);
-
-	fputs(buf, stdout);
-
-	// Pop the last line, and we can continue
-	if (!gConsole.empty())   gConsole.pop_back();
-
-	char *start, *next;
-	for (start = next = buf; *next != '\0'; next++)
-	{
-		if (*next == '\n')
-		{
-			*next = '\0';
-			next++;
-			
-			std::string line = start;
-			gConsole.push_back(line);
-			start = next;
-
-			// Handle the normal \n\0 case
-			if (*next == '\0')
-				return;
-		}
-	}
-	std::string line = start;
-	gConsole.push_back(line);
+	// The text after last \n (or whole string if there is no \n)
+	if(*start)
+		gConsole.push_back(start);
 	return;
 }
 
