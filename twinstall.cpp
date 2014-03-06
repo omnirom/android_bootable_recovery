@@ -48,6 +48,7 @@
 #include "twrp-functions.hpp"
 extern "C" {
 	#include "gui/gui.h"
+	#include "legacy_property_service.h"
 }
 
 static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache) {
@@ -127,8 +128,15 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 
 	pid_t pid = fork();
 	if (pid == 0) {
+		char tmp[32];
+		int propfd, propsz;
+		legacy_properties_init();
+		legacy_get_property_workspace(&propfd, &propsz);
+		sprintf(tmp, "%d,%d", dup(propfd), propsz);
+		setenv("ANDROID_PROPERTY_WORKSPACE", tmp, 1);
+ 
 		close(pipe_fd[0]);
-		execv(Temp_Binary.c_str(), (char* const*)args);
+		execve(Temp_Binary.c_str(), (char* const*)args, environ);
 		printf("E:Can't execute '%s'\n", Temp_Binary.c_str());
 		_exit(-1);
 	}
