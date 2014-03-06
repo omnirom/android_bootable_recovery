@@ -1081,20 +1081,20 @@ void TWFunc::Fixup_Time_On_Boot()
 
 	if(ats_path.empty())
 	{
-		LOGERR("TWFunc::Fixup_Time: no ats files found, leaving time as-is!\n");
+		LOGINFO("TWFunc::Fixup_Time: no ats files found, leaving time as-is!\n");
 		return;
 	}
 
 	f = fopen(ats_path.c_str(), "r");
 	if(!f)
 	{
-		LOGERR("TWFunc::Fixup_Time: failed to open file %s\n", ats_path.c_str());
+		LOGINFO("TWFunc::Fixup_Time: failed to open file %s\n", ats_path.c_str());
 		return;
 	}
 
 	if(fread(&offset, sizeof(offset), 1, f) != 1)
 	{
-		LOGERR("TWFunc::Fixup_Time: failed load uint64 from file %s\n", ats_path.c_str());
+		LOGINFO("TWFunc::Fixup_Time: failed load uint64 from file %s\n", ats_path.c_str());
 		fclose(f);
 		return;
 	}
