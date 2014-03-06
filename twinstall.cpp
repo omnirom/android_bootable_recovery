@@ -48,6 +48,34 @@
 #include "twrp-functions.hpp"
 extern "C" {
 	#include "gui/gui.h"
+	#include "legacy_property_service.h"
+}
+
+static const char* properties_path = "/dev/__properties__";
+static const char* properties_path_renamed = "/dev/__properties_kk__";
+
+static void switch_to_legacy_properties()
+{
+	char tmp[32];
+	int propfd, propsz;
+	legacy_properties_init();
+	legacy_get_property_workspace(&propfd, &propsz);
+	sprintf(tmp, "%d,%d", dup(propfd), propsz);
+	setenv("ANDROID_PROPERTY_WORKSPACE", tmp, 1);
+
+	if (TWFunc::Path_Exists(properties_path)) {
+		// hide real properties so that the updater uses the envvar to find the legacy format properties
+		if (rename(properties_path, properties_path_renamed) != 0)
+			LOGERR("Renaming properties failed: %s (assertions in old installers may fail)\n", strerror(errno));
+	}
+}
+
+static void switch_to_new_properties()
+{
+	if (TWFunc::Path_Exists(properties_path_renamed)) {
+		if (rename(properties_path_renamed, properties_path) != 0)
+			LOGERR("Restoring properties failed: %s\n", strerror(errno));
+	}
 }
 
 static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache) {
@@ -127,8 +155,9 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 
 	pid_t pid = fork();
 	if (pid == 0) {
+		switch_to_legacy_properties();
 		close(pipe_fd[0]);
-		execv(Temp_Binary.c_str(), (char* const*)args);
+		execve(Temp_Binary.c_str(), (char* const*)args, environ);
 		printf("E:Can't execute '%s'\n", Temp_Binary.c_str());
 		_exit(-1);
 	}
@@ -175,6 +204,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	fclose(child_data);
 
 	waitpid(pid, &status, 0);
+	switch_to_new_properties();
 	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
 		LOGERR("Error executing updater binary in zip '%s'\n", path);
 		return INSTALL_ERROR;
