@@ -272,6 +272,9 @@ ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),)
 else ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),true)
     LOCAL_CFLAGS += -DQCOM_RTC_FIX
 endif
+ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
+    LOCAL_CFLAGS += -DHAVE_CAPABILITIES
+endif
 
 include $(BUILD_EXECUTABLE)
 
