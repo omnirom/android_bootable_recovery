@@ -73,6 +73,7 @@ int ev_get_epollfd(void);
 
 // Returns 0 if no error, else negative.
 int res_create_surface(const char* name, gr_surface* pSurface);
+int res_create_multi_surface(const char* name, int* frames, gr_surface** pSurface);
 int res_create_localized_surface(const char* name, gr_surface* pSurface);
 void res_free_surface(gr_surface surface);
 
