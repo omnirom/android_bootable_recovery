@@ -191,7 +191,7 @@ int GUIConsole::RenderConsole(void)
 			line_char_width = gr_maxExW(curr_line.c_str(), fontResource, mConsoleW);
 			if (line_char_width < curr_line.size()) {
 				rConsole.push_back(curr_line.substr(0, line_char_width));
-				curr_line = curr_line.substr(line_char_width, curr_line.size() - line_char_width);
+				curr_line = curr_line.substr(line_char_width);
 			} else {
 				rConsole.push_back(curr_line);
 				break;
