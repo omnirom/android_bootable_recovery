@@ -621,7 +621,7 @@ int twrpTar::tarList(std::vector<TarListStruct> *TarList, unsigned thread_id) {
 void* twrpTar::createList(void *cookie) {
 
 	twrpTar* threadTar = (twrpTar*) cookie;
-	if (threadTar->tarList(threadTar->ItemList, threadTar->thread_id) == -1) {
+	if (threadTar->tarList(threadTar->ItemList, threadTar->thread_id) != 0) {
 		LOGINFO("ERROR tarList for thread ID %i\n", threadTar->thread_id);
 		return (void*)-2;
 	}
