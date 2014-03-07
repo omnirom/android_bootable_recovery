@@ -27,25 +27,26 @@
 #include <linux/fb.h>
 #include <linux/kd.h>
 
-#include <pixelflinger/pixelflinger.h>
-
 #include <png.h>
 
 #include "minui.h"
 
 extern char* locale;
 
-// libpng gives "undefined reference to 'pow'" errors, and I have no
-// idea how to convince the build system to link with -lm.  We don't
-// need this functionality (it's used for gamma adjustment) so provide
-// a dummy implementation to satisfy the linker.
-double pow(double x, double y) {
-    return x * y;
+#define SURFACE_DATA_ALIGNMENT 8
+
+static gr_surface malloc_surface(size_t data_size) {
+    unsigned char* temp = malloc(sizeof(GRSurface) + data_size + SURFACE_DATA_ALIGNMENT);
+    if (temp == NULL) return NULL;
+    gr_surface surface = (gr_surface) temp;
+    surface->data = temp + sizeof(GRSurface) +
+        (SURFACE_DATA_ALIGNMENT - (sizeof(GRSurface) % SURFACE_DATA_ALIGNMENT));
+    return surface;
 }
 
 int res_create_surface(const char* name, gr_surface* pSurface) {
     char resPath[256];
-    GGLSurface* surface = NULL;
+    gr_surface surface = NULL;
     int result = 0;
     unsigned char header[8];
     png_structp png_ptr = NULL;
@@ -100,9 +101,8 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
 
     int channels = png_get_channels(png_ptr, info_ptr);
 
-    if (!(bit_depth == 8 &&
+    if (!(bit_depth <= 8 &&
           ((channels == 3 && color_type == PNG_COLOR_TYPE_RGB) ||
-           (channels == 4 && color_type == PNG_COLOR_TYPE_RGBA) ||
            (channels == 1 && (color_type == PNG_COLOR_TYPE_PALETTE ||
                               color_type == PNG_COLOR_TYPE_GRAY))))) {
         return -7;
@@ -110,38 +110,20 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     }
 
     size_t stride = (color_type == PNG_COLOR_TYPE_GRAY ? 1 : 4) * width;
-    size_t pixelSize = stride * height;
 
-    surface = malloc(sizeof(GGLSurface) + pixelSize);
+    surface = malloc_surface(stride * height);
     if (surface == NULL) {
         result = -8;
         goto exit;
     }
-    unsigned char* pData = (unsigned char*) (surface + 1);
-    surface->version = sizeof(GGLSurface);
+    unsigned char* pData = surface->data;
     surface->width = width;
     surface->height = height;
-    surface->stride = width; /* Yes, pixels, not bytes */
-    surface->data = pData;
-
-    if (channels == 3) {
-        surface->format = GGL_PIXEL_FORMAT_RGBX_8888;
-    } else if (color_type == PNG_COLOR_TYPE_PALETTE) {
-        surface->format = GGL_PIXEL_FORMAT_RGBA_8888;
-    } else if (channels == 1) {
-        surface->format = GGL_PIXEL_FORMAT_L_8;
-    } else {
-        surface->format = GGL_PIXEL_FORMAT_RGBA_8888;
-    }
+    surface->row_bytes = stride;
+    surface->pixel_bytes = (color_type == PNG_COLOR_TYPE_GRAY ? 1 : 4);
 
     int alpha = (channels == 4);
-    if (color_type == PNG_COLOR_TYPE_PALETTE) {
-        png_set_palette_to_rgb(png_ptr);
-    }
-    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
-        png_set_tRNS_to_alpha(png_ptr);
-        alpha = 1;
-    }
+    png_set_expand(png_ptr);
     if (color_type == PNG_COLOR_TYPE_GRAY) {
         alpha = 1;
     }
@@ -196,7 +178,7 @@ int res_create_multi_surface(const char* name, int* frames, gr_surface** pSurfac
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
     int i;
-    GGLSurface** surface = NULL;
+    gr_surface* surface = NULL;
 
     *pSurface = NULL;
     *frames = -1;
@@ -248,9 +230,8 @@ int res_create_multi_surface(const char* name, int* frames, gr_surface** pSurfac
 
     int channels = png_get_channels(png_ptr, info_ptr);
 
-    if (!(bit_depth == 8 &&
+    if (!(bit_depth <= 8 &&
           ((channels == 3 && color_type == PNG_COLOR_TYPE_RGB) ||
-           (channels == 4 && color_type == PNG_COLOR_TYPE_RGBA) ||
            (channels == 1 && (color_type == PNG_COLOR_TYPE_PALETTE ||
                               color_type == PNG_COLOR_TYPE_GRAY))))) {
         return -7;
@@ -279,38 +260,21 @@ int res_create_multi_surface(const char* name, int* frames, gr_surface** pSurfac
     size_t stride = (color_type == PNG_COLOR_TYPE_GRAY ? 1 : 4) * width;
     size_t pixelSize = stride * height / *frames;
 
-    surface = malloc(*frames * sizeof(GGLSurface*));
+    surface = malloc(*frames * sizeof(gr_surface));
     if (surface == NULL) {
         result = -8;
         goto exit;
     }
     for (i = 0; i < *frames; ++i) {
-        surface[i] = malloc(sizeof(GGLSurface) + pixelSize);
-        surface[i]->version = sizeof(GGLSurface);
+        surface[i] = malloc_surface(pixelSize);
         surface[i]->width = width;
         surface[i]->height = height / *frames;
-        surface[i]->stride = width; /* Yes, pixels, not bytes */
-        surface[i]->data = (unsigned char*) (surface[i] + 1);
-
-        if (channels == 3) {
-            surface[i]->format = GGL_PIXEL_FORMAT_RGBX_8888;
-        } else if (color_type == PNG_COLOR_TYPE_PALETTE) {
-            surface[i]->format = GGL_PIXEL_FORMAT_RGBA_8888;
-        } else if (channels == 1) {
-            surface[i]->format = GGL_PIXEL_FORMAT_L_8;
-        } else {
-            surface[i]->format = GGL_PIXEL_FORMAT_RGBA_8888;
-        }
+        surface[i]->row_bytes = stride;
+        surface[i]->pixel_bytes = (color_type == PNG_COLOR_TYPE_GRAY ? 1 : 4);
     }
 
     int alpha = (channels == 4);
-    if (color_type == PNG_COLOR_TYPE_PALETTE) {
-        png_set_palette_to_rgb(png_ptr);
-    }
-    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
-        png_set_tRNS_to_alpha(png_ptr);
-        alpha = 1;
-    }
+    png_set_expand(png_ptr);
     if (color_type == PNG_COLOR_TYPE_GRAY) {
         alpha = 1;
     }
@@ -384,7 +348,7 @@ static int matches_locale(const char* loc) {
 
 int res_create_localized_surface(const char* name, gr_surface* pSurface) {
     char resPath[256];
-    GGLSurface* surface = NULL;
+    gr_surface surface = NULL;
     int result = 0;
     unsigned char header[8];
     png_structp png_ptr = NULL;
@@ -438,11 +402,13 @@ int res_create_localized_surface(const char* name, gr_surface* pSurface) {
             &color_type, NULL, NULL, NULL);
     int channels = png_get_channels(png_ptr, info_ptr);
 
-    if (!(bit_depth == 8 &&
+    if (!(bit_depth <= 8 &&
           (channels == 1 && color_type == PNG_COLOR_TYPE_GRAY))) {
         return -7;
         goto exit;
     }
+
+    png_set_expand(png_ptr);
 
     unsigned char* row = malloc(width);
     png_uint_32 y;
@@ -456,19 +422,17 @@ int res_create_localized_surface(const char* name, gr_surface* pSurface) {
         if (y+1+h >= height || matches_locale(loc)) {
             printf("  %20s: %s (%d x %d @ %d)\n", name, loc, w, h, y);
 
-            surface = malloc(sizeof(GGLSurface));
+            surface = malloc_surface(w*h);
             if (surface == NULL) {
                 result = -8;
                 goto exit;
             }
-            unsigned char* pData = malloc(w*h);
+            unsigned char* pData = surface->data;
 
-            surface->version = sizeof(GGLSurface);
             surface->width = w;
             surface->height = h;
-            surface->stride = w; /* Yes, pixels, not bytes */
-            surface->data = pData;
-            surface->format = GGL_PIXEL_FORMAT_A_8;
+            surface->row_bytes = w;
+            surface->pixel_bytes = 1;
 
             int i;
             for (i = 0; i < h; ++i, ++y) {
@@ -501,8 +465,5 @@ exit:
 }
 
 void res_free_surface(gr_surface surface) {
-    GGLSurface* pSurface = (GGLSurface*) surface;
-    if (pSurface) {
-        free(pSurface);
-    }
+    free(surface);
 }
