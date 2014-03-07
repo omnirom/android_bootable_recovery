@@ -602,7 +602,7 @@ int twrpTar::tarList(std::vector<TarListStruct> *TarList, unsigned thread_id) {
 				}
 				Archive_Current_Size += (unsigned long long)(st.st_size);
 			}
-			LOGINFO("addFile '%s' including root: %i\n", buf, include_root_dir);
+			LOGINFO("addFile '%s' including root: %i size: %llu tot: %llu\n", buf, include_root_dir, (unsigned long long)(st.st_size), Archive_Current_Size);
 			if (addFile(buf, include_root_dir) != 0) {
 				LOGERR("Error adding file '%s' to '%s'\n", buf, tarfn.c_str());
 				return -1;

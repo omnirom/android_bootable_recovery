@@ -84,14 +84,17 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 			string dir = de->d_name;
 			skip_dir = check_skip_dirs(dir);
 		}
+		if (skip_dir) {
+			LOGINFO(" ** Skipping '%s' **\n", de->d_name);
+		}
 		if (de->d_type == DT_DIR && !skip_dir) {
 			dutemp = Get_Folder_Size((Path + "/" + de->d_name));
 			dusize += dutemp;
 			dutemp = 0;
-		}
-		else if (de->d_type == DT_REG) {
+		} else if (de->d_type == DT_REG) {
 			stat((Path + "/" + de->d_name).c_str(), &st);
 			dusize += (uint64_t)(st.st_size);
+			LOGINFO("'%s' is %llu, total: %llu\n", (Path + "/" + de->d_name).c_str(), (uint64_t)(st.st_size), dusize);
 		}
 	}
 	closedir(d);
