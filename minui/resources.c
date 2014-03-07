@@ -181,6 +181,182 @@ exit:
     return result;
 }
 
+int res_create_multi_surface(const char* name, int* frames, gr_surface** pSurface) {
+    char resPath[256];
+    int result = 0;
+    unsigned char header[8];
+    png_structp png_ptr = NULL;
+    png_infop info_ptr = NULL;
+    int i;
+    GGLSurface** surface = NULL;
+
+    *pSurface = NULL;
+    *frames = -1;
+
+    snprintf(resPath, sizeof(resPath)-1, "/res/images/%s.png", name);
+    resPath[sizeof(resPath)-1] = '\0';
+    FILE* fp = fopen(resPath, "rb");
+    if (fp == NULL) {
+        result = -1;
+        goto exit;
+    }
+
+    size_t bytesRead = fread(header, 1, sizeof(header), fp);
+    if (bytesRead != sizeof(header)) {
+        result = -2;
+        goto exit;
+    }
+
+    if (png_sig_cmp(header, 0, sizeof(header))) {
+        result = -3;
+        goto exit;
+    }
+
+    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_ptr) {
+        result = -4;
+        goto exit;
+    }
+
+    info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr) {
+        result = -5;
+        goto exit;
+    }
+
+    if (setjmp(png_jmpbuf(png_ptr))) {
+        result = -6;
+        goto exit;
+    }
+
+    png_init_io(png_ptr, fp);
+    png_set_sig_bytes(png_ptr, sizeof(header));
+    png_read_info(png_ptr, info_ptr);
+
+    int color_type, bit_depth;
+    png_uint_32 width, height;
+    png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth,
+            &color_type, NULL, NULL, NULL);
+
+    int channels = png_get_channels(png_ptr, info_ptr);
+
+    if (!(bit_depth == 8 &&
+          ((channels == 3 && color_type == PNG_COLOR_TYPE_RGB) ||
+           (channels == 4 && color_type == PNG_COLOR_TYPE_RGBA) ||
+           (channels == 1 && (color_type == PNG_COLOR_TYPE_PALETTE ||
+                              color_type == PNG_COLOR_TYPE_GRAY))))) {
+        return -7;
+        goto exit;
+    }
+
+    *frames = 1;
+    png_textp text;
+    int num_text;
+    if (png_get_text(png_ptr, info_ptr, &text, &num_text)) {
+        for (i = 0; i < num_text; ++i) {
+            if (text[i].key && strcmp(text[i].key, "Frames") == 0 && text[i].text) {
+                *frames = atoi(text[i].text);
+                break;
+            }
+        }
+        printf("  found frames = %d\n", *frames);
+    }
+
+    if (height % *frames != 0) {
+        printf("bad height (%d) for frame count (%d)\n", height, *frames);
+        result = -9;
+        goto exit;
+    }
+
+    size_t stride = (color_type == PNG_COLOR_TYPE_GRAY ? 1 : 4) * width;
+    size_t pixelSize = stride * height / *frames;
+
+    surface = malloc(*frames * sizeof(GGLSurface*));
+    if (surface == NULL) {
+        result = -8;
+        goto exit;
+    }
+    for (i = 0; i < *frames; ++i) {
+        surface[i] = malloc(sizeof(GGLSurface) + pixelSize);
+        surface[i]->version = sizeof(GGLSurface);
+        surface[i]->width = width;
+        surface[i]->height = height / *frames;
+        surface[i]->stride = width; /* Yes, pixels, not bytes */
+        surface[i]->data = (unsigned char*) (surface[i] + 1);
+
+        if (channels == 3) {
+            surface[i]->format = GGL_PIXEL_FORMAT_RGBX_8888;
+        } else if (color_type == PNG_COLOR_TYPE_PALETTE) {
+            surface[i]->format = GGL_PIXEL_FORMAT_RGBA_8888;
+        } else if (channels == 1) {
+            surface[i]->format = GGL_PIXEL_FORMAT_L_8;
+        } else {
+            surface[i]->format = GGL_PIXEL_FORMAT_RGBA_8888;
+        }
+    }
+
+    int alpha = (channels == 4);
+    if (color_type == PNG_COLOR_TYPE_PALETTE) {
+        png_set_palette_to_rgb(png_ptr);
+    }
+    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+        png_set_tRNS_to_alpha(png_ptr);
+        alpha = 1;
+    }
+    if (color_type == PNG_COLOR_TYPE_GRAY) {
+        alpha = 1;
+    }
+
+    png_uint_32 y;
+    if (channels == 3 || (channels == 1 && !alpha)) {
+        for (y = 0; y < height; ++y) {
+            int fy = y / *frames;
+            int fr = y % *frames;
+            unsigned char* pRow = surface[fr]->data + fy * stride;
+            png_read_row(png_ptr, pRow, NULL);
+
+            int x;
+            for(x = width - 1; x >= 0; x--) {
+                int sx = x * 3;
+                int dx = x * 4;
+                unsigned char r = pRow[sx];
+                unsigned char g = pRow[sx + 1];
+                unsigned char b = pRow[sx + 2];
+                unsigned char a = 0xff;
+                pRow[dx    ] = r; // r
+                pRow[dx + 1] = g; // g
+                pRow[dx + 2] = b; // b
+                pRow[dx + 3] = a;
+            }
+        }
+    } else {
+        for (y = 0; y < height; ++y) {
+            int fy = y / *frames;
+            int fr = y % *frames;
+            unsigned char* pRow = surface[fr]->data + fy * stride;
+            png_read_row(png_ptr, pRow, NULL);
+        }
+    }
+
+    *pSurface = (gr_surface*) surface;
+
+exit:
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+
+    if (fp != NULL) {
+        fclose(fp);
+    }
+    if (result < 0) {
+        if (surface) {
+            for (i = 0; i < *frames; ++i) {
+                if (surface[i]) free(surface[i]);
+            }
+            free(surface);
+        }
+    }
+    return result;
+}
+
 static int matches_locale(const char* loc) {
     if (locale == NULL) return 0;
 
@@ -249,7 +425,7 @@ int res_create_localized_surface(const char* name, gr_surface* pSurface) {
     png_read_info(png_ptr, info_ptr);
 
     int color_type, bit_depth;
-    size_t width, height;
+    png_uint_32 width, height;
     png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth,
             &color_type, NULL, NULL, NULL);
     int channels = png_get_channels(png_ptr, info_ptr);
@@ -261,13 +437,13 @@ int res_create_localized_surface(const char* name, gr_surface* pSurface) {
     }
 
     unsigned char* row = malloc(width);
-    int y;
+    png_uint_32 y;
     for (y = 0; y < height; ++y) {
         png_read_row(png_ptr, row, NULL);
         int w = (row[1] << 8) | row[0];
         int h = (row[3] << 8) | row[2];
         int len = row[4];
-        char* loc = row+5;
+        char* loc = (char*)row+5;
 
         if (y+1+h >= height || matches_locale(loc)) {
             printf("  %20s: %s (%d x %d @ %d)\n", name, loc, w, h, y);
