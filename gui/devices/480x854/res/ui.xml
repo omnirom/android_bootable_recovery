@@ -2450,6 +2450,14 @@
 				<action function="page">screen</action>
 			</object>
 
+                        <object type="button">
+				<placement x="%col1_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Restore Defaults</text>
+				<image resource="main_button" />
+				<action function="restoredefaultsettings"></action>
+			</object>
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row4_y%" />
@@ -2457,14 +2465,6 @@
 				<text>Vibration Duration</text>
 				<image resource="main_button" />
 				<action function="page">Vibrate</action>
-			</object>
-
-			<object type="button">
-				<placement x="%col_x%" y="%row4_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>Restore Defaults</text>
-				<image resource="main_button" />
-				<action function="restoredefaultsettings"></action>
 			</object>
 
 			<object type="action">
