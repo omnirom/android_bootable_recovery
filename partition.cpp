@@ -1386,7 +1386,7 @@ bool TWPartition::Wipe_EXT4() {
 
 	gui_print("Formatting %s using make_ext4fs function.\n", Display_Name.c_str());
 
-	if (selabel_lookup(selinux_handle, &secontext, Mount_Point.c_str(), S_IFDIR) < 0) {
+	if (!selinux_handle || selabel_lookup(selinux_handle, &secontext, Mount_Point.c_str(), S_IFDIR) < 0) {
 		LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
 		ret = make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), NULL);
 	} else {
