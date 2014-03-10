@@ -64,4 +64,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_STATIC_LIBRARIES := libfusetwrp
 
+LOCAL_SHARED_LIBRARIES := \
+	libutils libdl
+
 include $(BUILD_EXECUTABLE)
