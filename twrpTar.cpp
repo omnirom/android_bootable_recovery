@@ -124,10 +124,7 @@ int twrpTar::createTarFork() {
 					continue; // Skip /data/media
 				if (de->d_type == DT_BLK || de->d_type == DT_CHR)
 					continue;
-				bool skip_dir = false;
-				string dir(de->d_name);
-				skip_dir = du.check_skip_dirs(dir);
-				if (de->d_type == DT_DIR && !skip_dir) {
+				if (de->d_type == DT_DIR && !du.check_skip_dirs(tardir, de->d_name)) {
 					item_len = strlen(de->d_name);
 					if (userdata_encryption && ((item_len >= 3 && strncmp(de->d_name, "app", 3) == 0) || (item_len >= 6 && strncmp(de->d_name, "dalvik", 6) == 0))) {
 						if (Generate_TarList(FileName, &RegularList, &target_size, &regular_thread_id) < 0) {
@@ -171,10 +168,7 @@ int twrpTar::createTarFork() {
 					continue; // Skip /data/media
 				if (de->d_type == DT_BLK || de->d_type == DT_CHR)
 					continue;
-				bool skip_dir = false;
-				string dir(de->d_name);
-				skip_dir = du.check_skip_dirs(dir);
-				if (de->d_type == DT_DIR && !skip_dir) {
+				if (de->d_type == DT_DIR && !du.check_skip_dirs(tardir, de->d_name)) {
 					item_len = strlen(de->d_name);
 					if (userdata_encryption && ((item_len >= 3 && strncmp(de->d_name, "app", 3) == 0) || (item_len >= 6 && strncmp(de->d_name, "dalvik", 6) == 0))) {
 						// Do nothing, we added these to RegularList earlier
@@ -485,10 +479,7 @@ int twrpTar::Generate_TarList(string Path, std::vector<TarListStruct> *TarList, 
 			continue;
 		TarItem.fn = FileName;
 		TarItem.thread_id = *thread_id;
-		bool skip_dir = false;
-		string dir(de->d_name);
-		skip_dir = du.check_skip_dirs(dir);
-		if (de->d_type == DT_DIR && !skip_dir) {
+		if (de->d_type == DT_DIR && !du.check_skip_dirs(Path, de->d_name)) {
 			TarList->push_back(TarItem);
 			if (Generate_TarList(FileName, TarList, Target_Size, thread_id) < 0)
 				return -1;
