@@ -89,6 +89,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := verifier_test
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE_TAGS := tests
+LOCAL_CFLAGS += -DNO_RECOVERY_MOUNT
 LOCAL_SRC_FILES := \
     verifier_test.cpp \
     asn1_decoder.cpp \
