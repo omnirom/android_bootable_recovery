@@ -32,6 +32,7 @@
 
 #include "font_10x18.h"
 #include "minui.h"
+#include "graphics.h"
 
 typedef struct {
     GRSurface* texture;
@@ -40,153 +41,24 @@ typedef struct {
 } GRFont;
 
 static GRFont* gr_font = NULL;
+static minui_backend* gr_backend = NULL;
 
 static int overscan_percent = OVERSCAN_PERCENT;
 static int overscan_offset_x = 0;
 static int overscan_offset_y = 0;
 
-static int gr_fb_fd = -1;
 static int gr_vt_fd = -1;
-
-static GRSurface gr_framebuffer[2];
-static bool double_buffered;
-static GRSurface* gr_draw = NULL;
-static int displayed_buffer;
 
 static unsigned char gr_current_r = 255;
 static unsigned char gr_current_g = 255;
 static unsigned char gr_current_b = 255;
 static unsigned char gr_current_a = 255;
 
-static struct fb_var_screeninfo vi;
+static GRSurface* gr_draw = NULL;
 
 static bool outside(int x, int y)
 {
     return x < 0 || x >= gr_draw->width || y < 0 || y >= gr_draw->height;
-}
-
-static void set_displayed_framebuffer(unsigned n)
-{
-    if (n > 1 || !double_buffered) return;
-
-    vi.yres_virtual = gr_framebuffer[0].height * 2;
-    vi.yoffset = n * gr_framebuffer[0].height;
-    vi.bits_per_pixel = gr_framebuffer[0].pixel_bytes * 8;
-    if (ioctl(gr_fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
-        perror("active fb swap failed");
-    }
-    displayed_buffer = n;
-}
-
-static int get_framebuffer()
-{
-    int fd;
-    void *bits;
-
-    struct fb_fix_screeninfo fi;
-
-    fd = open("/dev/graphics/fb0", O_RDWR);
-    if (fd < 0) {
-        perror("cannot open fb0");
-        return -1;
-    }
-
-    if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
-        perror("failed to get fb0 info");
-        close(fd);
-        return -1;
-    }
-
-    if (ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
-        perror("failed to get fb0 info");
-        close(fd);
-        return -1;
-    }
-
-    // We print this out for informational purposes only, but
-    // throughout we assume that the framebuffer device uses an RGBX
-    // pixel format.  This is the case for every development device I
-    // have access to.  For some of those devices (eg, hammerhead aka
-    // Nexus 5), FBIOGET_VSCREENINFO *reports* that it wants a
-    // different format (XBGR) but actually produces the correct
-    // results on the display when you write RGBX.
-    //
-    // If you have a device that actually *needs* another pixel format
-    // (ie, BGRX, or 565), patches welcome...
-
-    printf("fb0 reports (possibly inaccurate):\n"
-           "  vi.bits_per_pixel = %d\n"
-           "  vi.red.offset   = %3d   .length = %3d\n"
-           "  vi.green.offset = %3d   .length = %3d\n"
-           "  vi.blue.offset  = %3d   .length = %3d\n",
-           vi.bits_per_pixel,
-           vi.red.offset, vi.red.length,
-           vi.green.offset, vi.green.length,
-           vi.blue.offset, vi.blue.length);
-
-    bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (bits == MAP_FAILED) {
-        perror("failed to mmap framebuffer");
-        close(fd);
-        return -1;
-    }
-
-    overscan_offset_x = vi.xres * overscan_percent / 100;
-    overscan_offset_y = vi.yres * overscan_percent / 100;
-
-    gr_framebuffer[0].width = vi.xres;
-    gr_framebuffer[0].height = vi.yres;
-    gr_framebuffer[0].row_bytes = fi.line_length;
-    gr_framebuffer[0].pixel_bytes = vi.bits_per_pixel / 8;
-    gr_framebuffer[0].data = bits;
-    memset(gr_framebuffer[0].data, 0, gr_framebuffer[0].height * gr_framebuffer[0].row_bytes);
-
-    /* check if we can use double buffering */
-    if (vi.yres * fi.line_length * 2 <= fi.smem_len) {
-        double_buffered = true;
-
-        memcpy(gr_framebuffer+1, gr_framebuffer, sizeof(GRSurface));
-        gr_framebuffer[1].data = gr_framebuffer[0].data +
-            gr_framebuffer[0].height * gr_framebuffer[0].row_bytes;
-
-        gr_draw = gr_framebuffer+1;
-
-    } else {
-        double_buffered = false;
-
-        // Without double-buffering, we allocate RAM for a buffer to
-        // draw in, and then "flipping" the buffer consists of a
-        // memcpy from the buffer we allocated to the framebuffer.
-
-        gr_draw = (GRSurface*) malloc(sizeof(GRSurface));
-        memcpy(gr_draw, gr_framebuffer, sizeof(GRSurface));
-        gr_draw->data = (unsigned char*) malloc(gr_draw->height * gr_draw->row_bytes);
-        if (!gr_draw->data) {
-            perror("failed to allocate in-memory surface");
-            return -1;
-        }
-    }
-
-    memset(gr_draw->data, 0, gr_draw->height * gr_draw->row_bytes);
-    gr_fb_fd = fd;
-    set_displayed_framebuffer(0);
-
-    return fd;
-}
-
-void gr_flip(void)
-{
-    if (double_buffered) {
-        // Change gr_draw to point to the buffer currently displayed,
-        // then flip the driver so we're displaying the other buffer
-        // instead.
-        gr_draw = gr_framebuffer + displayed_buffer;
-        set_displayed_framebuffer(1-displayed_buffer);
-    } else {
-        // Copy from the in-memory surface to the framebuffer.
-        memcpy(gr_framebuffer[0].data, gr_draw->data,
-               gr_draw->height * gr_draw->row_bytes);
-    }
 }
 
 int gr_measure(const char *s)
@@ -466,7 +338,7 @@ static void gr_test() {
         gr_color(0, 0, 255, 128);
         gr_fill(gr_draw->width - 200 - x, 300, gr_draw->width - x, 500);
 
-        gr_flip();
+        gr_draw = gr_backend->flip(gr_backend);
     }
     printf("getting end time\n");
     time_t end = time(NULL);
@@ -477,6 +349,10 @@ static void gr_test() {
     }
 }
 #endif
+
+void gr_flip() {
+    gr_draw = gr_backend->flip(gr_backend);
+}
 
 int gr_init(void)
 {
@@ -493,36 +369,28 @@ int gr_init(void)
         return -1;
     }
 
-    if (get_framebuffer(&gr_framebuffer) < 0) {
-        gr_exit();
+    gr_backend = open_fbdev();
+    gr_draw = gr_backend->init(gr_backend);
+    if (gr_draw == NULL) {
         return -1;
     }
 
-    printf("framebuffer: fd %d (%d x %d)\n",
-           gr_fb_fd, gr_draw->width, gr_draw->height);
+    overscan_offset_x = gr_draw->width * overscan_percent / 100;
+    overscan_offset_y = gr_draw->height * overscan_percent / 100;
 
     gr_flip();
     gr_flip();
-
-    gr_fb_blank(true);
-    gr_fb_blank(false);
 
     return 0;
 }
 
 void gr_exit(void)
 {
-    close(gr_fb_fd);
-    gr_fb_fd = -1;
+    gr_backend->exit(gr_backend);
 
     ioctl(gr_vt_fd, KDSETMODE, (void*) KD_TEXT);
     close(gr_vt_fd);
     gr_vt_fd = -1;
-
-    if (!double_buffered) {
-        if (gr_draw) free(gr_draw->data);
-        free(gr_draw);
-    }
 }
 
 int gr_fb_width(void)
@@ -537,9 +405,5 @@ int gr_fb_height(void)
 
 void gr_fb_blank(bool blank)
 {
-    int ret;
-
-    ret = ioctl(gr_fb_fd, FBIOBLANK, blank ? FB_BLANK_POWERDOWN : FB_BLANK_UNBLANK);
-    if (ret < 0)
-        perror("ioctl(): blank");
+    gr_backend->blank(gr_backend, blank);
 }
