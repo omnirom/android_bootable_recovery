@@ -24,6 +24,9 @@
 #include "cutils/log.h"
 #include "mtdutils.h"
 
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
 #define LOG_TAG "flash_image"
 
 #define HEADER_SIZE 2048  // size of header to compare for equality
