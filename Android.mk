@@ -14,6 +14,9 @@
 
 LOCAL_PATH := $(call my-dir)
 
+#Extra BoardConfig flags
+include $(commands_recovery_local_path)/boardconfig/BoardConfig.mk
+
 TARGET_RECOVERY_GUI := true
 
 LOCAL_SRC_FILES := \
@@ -272,9 +275,6 @@ ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),)
 else ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),true)
     LOCAL_CFLAGS += -DQCOM_RTC_FIX
 endif
-ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
-    LOCAL_CFLAGS += -DHAVE_CAPABILITIES
-endif
 
 include $(BUILD_EXECUTABLE)
 
@@ -322,7 +322,7 @@ ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
     LOCAL_CFLAGS += -DRK3066
 endif
 LOCAL_C_INCLUDES := bootable/recovery/libmincrypt/includes
-LOCAL_SRC_FILES = adb_install.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c legacy_property_service.c
+LOCAL_SRC_FILES = adb_install.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils
 LOCAL_STATIC_LIBRARIES += libmincrypttwrp
 
