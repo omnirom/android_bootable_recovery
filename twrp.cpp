@@ -264,12 +264,14 @@ int main(int argc, char **argv) {
 
 	// Read the settings file
 	DataManager::ReadSettingsFile();
+
+	// Fixup the RTC clock on devices which require it
+	TWFunc::Fixup_Time_On_Boot();
+
 	// Run any outstanding OpenRecoveryScript
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
 	}
-
-	TWFunc::Fixup_Time_On_Boot();
 
 	// Launch the main GUI
 	gui_start();
