@@ -27,6 +27,7 @@ extern "C" {
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "twrpDU.hpp"
 
 using namespace std;
@@ -34,12 +35,12 @@ using namespace std;
 twrpDU::twrpDU() {
 		add_relative_dir(".");
 		add_relative_dir("..");
-		add_relative_dir("lost_found");
+		add_relative_dir("lost+found");
 		add_absolute_dir("/data/data/com.google.android.music/files");
 		parent = "";
 }
 
-void twrpDU::add_relative_dir(string dir) {
+void twrpDU::add_relative_dir(const string& dir) {
 	relativedir.push_back(dir);
 }
 
@@ -53,8 +54,8 @@ void twrpDU::clear_relative_dir(string dir) {
 	}
 }
 
-void twrpDU::add_absolute_dir(string dir) {
-	absolutedir.push_back(dir);
+void twrpDU::add_absolute_dir(const string& dir) {
+	absolutedir.push_back(remove_trailing_slashes(dir));
 }
 
 vector<string> twrpDU::get_absolute_dirs(void) {
@@ -79,12 +80,7 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 
 	while ((de = readdir(d)) != NULL)
 	{
-		bool skip_dir = false;
-		if (de->d_type == DT_DIR) {
-			string dir = de->d_name;
-			skip_dir = check_skip_dirs(dir);
-		}
-		if (de->d_type == DT_DIR && !skip_dir) {
+		if (de->d_type == DT_DIR && !check_skip_dirs(Path, de->d_name)) {
 			dutemp = Get_Folder_Size((Path + "/" + de->d_name));
 			dusize += dutemp;
 			dutemp = 0;
@@ -98,19 +94,46 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 	return dusize;
 }
 
-bool twrpDU::check_skip_dirs(string& dir) {
-	bool result = false;
-	for (int i = 0; i < relativedir.size(); ++i) {
-		if (dir == relativedir.at(i)) {
-			result = true;
+bool twrpDU::check_relative_skip_dirs(const string& dir) {
+	return std::find(relativedir.begin(), relativedir.end(), dir) != relativedir.end();
+}
+
+bool twrpDU::check_absolute_skip_dirs(const string& path) {
+	string normalized = remove_trailing_slashes(path);
+	return std::find(absolutedir.begin(), absolutedir.end(), normalized) != absolutedir.end();
+}
+
+bool twrpDU::check_skip_dirs(const string& parent, const string& dir) {
+	return check_relative_skip_dirs(dir) || check_absolute_skip_dirs(parent + "/" + dir);
+}
+
+bool twrpDU::check_skip_dirs(const string& path) {
+	string normalized = remove_trailing_slashes(path);
+	size_t slashIdx = normalized.find_last_of('/');
+	if(slashIdx != std::string::npos && slashIdx+1 < normalized.size()) {
+		if(check_relative_skip_dirs(normalized.substr(slashIdx+1)))
+			return true;
+	}
+	return check_absolute_skip_dirs(normalized);
+}
+
+string twrpDU::remove_trailing_slashes(const std::string& path)
+{
+	string res;
+	size_t last_idx = 0, idx = 0;
+	while(last_idx != string::npos)
+	{
+		if(last_idx != 0)
+			res += '/';
+
+		idx = path.find_first_of('/', last_idx);
+		if(idx == string::npos) {
+			res += path.substr(last_idx, idx);
 			break;
 		}
+
+		res += path.substr(last_idx, idx-last_idx);
+		last_idx = path.find_first_not_of('/', idx);
 	}
-	for (int i = 0; i < absolutedir.size(); ++i) {
-		if (dir == absolutedir.at(i)) {
-			result = true;
-			break;
-		}
-	}
-	return result;
+	return res;
 }
