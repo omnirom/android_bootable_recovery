@@ -13,6 +13,7 @@ ifeq ($(TARGET_PRODUCT), cm_galaxy5)
     RECOVERY_GRAPHICS_USE_LINELENGTH := true
     TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
     DEVICE_RESOLUTION := 240x320
+    cp -a device/samsung/$(TARGET_COMMON_NAME)/twrp.fstab $(OUT)/recovery/root/etc
 
 #Samsung GT-I5510 (callisto)
 else ifeq ($(TARGET_PRODUCT), cm_callisto)
@@ -22,6 +23,7 @@ else ifeq ($(TARGET_PRODUCT), cm_callisto)
     RECOVERY_GRAPHICS_USE_LINELENGTH := true
     TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
     DEVICE_RESOLUTION := 240x320
+    cp -a device/samsung/$(TARGET_COMMON_NAME)/twrp.fstab $(OUT)/recovery/root/etc
 
 #Samsung GT-S5570 (tass)
 else ifeq ($(TARGET_PRODUCT), cm_tass)
@@ -31,6 +33,7 @@ else ifeq ($(TARGET_PRODUCT), cm_tass)
     RECOVERY_GRAPHICS_USE_LINELENGTH := true
     TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
     DEVICE_RESOLUTION := 240x320
+    cp -a device/samsung/$(TARGET_COMMON_NAME)/twrp.fstab $(OUT)/recovery/root/etc
 
 #Samsung GT-S5660 (gio)
 else ifeq ($(TARGET_PRODUCT), cm_gio)
@@ -40,6 +43,7 @@ else ifeq ($(TARGET_PRODUCT), cm_gio)
     RECOVERY_GRAPHICS_USE_LINELENGTH := true
     TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
     DEVICE_RESOLUTION := 320x480
+    cp -a device/samsung/$(TARGET_COMMON_NAME)/twrp.fstab $(OUT)/recovery/root/etc
 
 #Samsung GT-S5670 (beni)
 else ifeq ($(TARGET_PRODUCT), cm_beni)
@@ -49,6 +53,7 @@ else ifeq ($(TARGET_PRODUCT), cm_beni)
     RECOVERY_GRAPHICS_USE_LINELENGTH := true
     TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
     DEVICE_RESOLUTION := 240x320
+    cp -a device/samsung/$(TARGET_COMMON_NAME)/twrp.fstab $(OUT)/recovery/root/etc
 
 #Samsung Galaxy Ace GT-S5830 (cooper)
 else ifeq ($(TARGET_PRODUCT), cm_cooper)
@@ -58,6 +63,7 @@ else ifeq ($(TARGET_PRODUCT), cm_cooper)
     RECOVERY_GRAPHICS_USE_LINELENGTH := true
     TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
     DEVICE_RESOLUTION := 320x480
+    cp -a device/samsung/$(TARGET_COMMON_NAME)/twrp.fstab $(OUT)/recovery/root/etc
 
 endif
 #---- end device specific config
