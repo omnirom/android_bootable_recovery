@@ -274,6 +274,31 @@ unsigned long TWFunc::Get_File_Size(string Path) {
 	return st.st_size;
 }
 
+std::string TWFunc::Remove_Trailing_Slashes(const std::string& path, bool leaveLast)
+{
+	std::string res;
+	size_t last_idx = 0, idx = 0;
+
+	while(last_idx != std::string::npos)
+	{
+		if(last_idx != 0)
+			res += '/';
+
+		idx = path.find_first_of('/', last_idx);
+		if(idx == std::string::npos) {
+			res += path.substr(last_idx, idx);
+			break;
+		}
+
+		res += path.substr(last_idx, idx-last_idx);
+		last_idx = path.find_first_not_of('/', idx);
+	}
+
+	if(leaveLast)
+		res += '/';
+	return res;
+}
+
 #ifndef BUILD_TWRPTAR_MAIN
 
 // Returns "/path" from a full /path/to/file.name
