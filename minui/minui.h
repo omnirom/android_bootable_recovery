@@ -17,6 +17,8 @@
 #ifndef _MINUI_H_
 #define _MINUI_H_
 
+#include <sys/types.h>
+
 #include <stdbool.h>
 
 #ifdef __cplusplus
