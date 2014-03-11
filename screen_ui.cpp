@@ -69,39 +69,13 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     menu_top(0),
     menu_items(0),
     menu_sel(0),
-
-    // These values are correct for the default image resources
-    // provided with the android platform.  Devices which use
-    // different resources should have a subclass of ScreenRecoveryUI
-    // that overrides Init() to set these values appropriately and
-    // then call the superclass Init().
     animation_fps(20),
-    indeterminate_frames(6),
-    installing_frames(7),
-    install_overlay_offset_x(13),
-    install_overlay_offset_y(190),
-    overlay_offset_x(-1),
-    overlay_offset_y(-1) {
-
+    installing_frames(-1) {
     for (int i = 0; i < 5; i++)
         backgroundIcon[i] = NULL;
 
     pthread_mutex_init(&updateMutex, NULL);
     self = this;
-}
-
-// Draw the given frame over the installation overlay animation.  The
-// background is not cleared or draw with the base icon first; we
-// assume that the frame already contains some other frame of the
-// animation.  Does nothing if no overlay animation is defined.
-// Should only be called with updateMutex locked.
-void ScreenRecoveryUI::draw_install_overlay_locked(int frame) {
-    if (installationOverlay == NULL || overlay_offset_x < 0) return;
-    gr_surface surface = installationOverlay[frame];
-    int iconWidth = gr_get_width(surface);
-    int iconHeight = gr_get_height(surface);
-    gr_blit(surface, 0, 0, iconWidth, iconHeight,
-            overlay_offset_x, overlay_offset_y);
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
@@ -114,6 +88,9 @@ void ScreenRecoveryUI::draw_background_locked(Icon icon)
 
     if (icon) {
         gr_surface surface = backgroundIcon[icon];
+        if (icon == INSTALLING_UPDATE || icon == ERASING) {
+            surface = installation[installingFrame];
+        }
         gr_surface text_surface = backgroundText[icon];
 
         int iconWidth = gr_get_width(surface);
@@ -121,16 +98,13 @@ void ScreenRecoveryUI::draw_background_locked(Icon icon)
         int textWidth = gr_get_width(text_surface);
         int textHeight = gr_get_height(text_surface);
 
-        int iconX = (gr_fb_width() - iconWidth) / 2;
-        int iconY = (gr_fb_height() - (iconHeight+textHeight+40)) / 2;
+        iconX = (gr_fb_width() - iconWidth) / 2;
+        iconY = (gr_fb_height() - (iconHeight+textHeight+40)) / 2;
 
         int textX = (gr_fb_width() - textWidth) / 2;
         int textY = ((gr_fb_height() - (iconHeight+textHeight+40)) / 2) + iconHeight + 40;
 
         gr_blit(surface, 0, 0, iconWidth, iconHeight, iconX, iconY);
-        if (icon == INSTALLING_UPDATE || icon == ERASING) {
-            draw_install_overlay_locked(installingFrame);
-        }
 
         gr_color(255, 255, 255, 255);
         gr_texticon(textX, textY, text_surface);
@@ -144,7 +118,8 @@ void ScreenRecoveryUI::draw_progress_locked()
     if (currentIcon == ERROR) return;
 
     if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
-        draw_install_overlay_locked(installingFrame);
+        gr_surface icon = installation[installingFrame];
+        gr_blit(icon, 0, 0, gr_get_width(icon), gr_get_height(icon), iconX, iconY);
     }
 
     if (progressBarType != EMPTY) {
@@ -179,18 +154,6 @@ void ScreenRecoveryUI::draw_progress_locked()
                 if (pos < width-1) {
                     gr_blit(progressBarEmpty, pos, 0, width-pos, height, dx+pos, dy);
                 }
-            }
-        }
-
-        if (progressBarType == INDETERMINATE) {
-            static int frame = 0;
-            gr_blit(progressBarIndeterminate[frame], 0, 0, width, height, dx, dy);
-            // in RTL locales, we run the animation backwards, which
-            // makes the spinner spin the other way.
-            if (rtl_locale) {
-                frame = (frame + indeterminate_frames - 1) % indeterminate_frames;
-            } else {
-                frame = (frame + 1) % indeterminate_frames;
             }
         }
     }
@@ -319,12 +282,6 @@ void ScreenRecoveryUI::progress_loop() {
             redraw = 1;
         }
 
-        // update the progress bar animation, if active
-        // skip this if we have a text overlay (too expensive to update)
-        if (progressBarType == INDETERMINATE && !show_text) {
-            redraw = 1;
-        }
-
         // move the progress bar forward on timed intervals, if configured
         int duration = progressScopeDuration;
         if (progressBarType == DETERMINATE && duration > 0) {
@@ -355,6 +312,13 @@ void ScreenRecoveryUI::LoadBitmap(const char* filename, gr_surface* surface) {
     }
 }
 
+void ScreenRecoveryUI::LoadBitmapArray(const char* filename, int* frames, gr_surface** surface) {
+    int result = res_create_multi_surface(filename, frames, surface);
+    if (result < 0) {
+        LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
+    }
+}
+
 void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, gr_surface* surface) {
     int result = res_create_localized_surface(filename, surface);
     if (result < 0) {
@@ -376,7 +340,9 @@ void ScreenRecoveryUI::Init()
     text_cols = gr_fb_width() / char_width;
     if (text_cols > kMaxCols - 1) text_cols = kMaxCols - 1;
 
-    LoadBitmap("icon_installing", &backgroundIcon[INSTALLING_UPDATE]);
+    backgroundIcon[NONE] = NULL;
+    LoadBitmapArray("icon_installing", &installing_frames, &installation);
+    backgroundIcon[INSTALLING_UPDATE] = installing_frames ? installation[0] : NULL;
     backgroundIcon[ERASING] = backgroundIcon[INSTALLING_UPDATE];
     LoadBitmap("icon_error", &backgroundIcon[ERROR]);
     backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
@@ -388,31 +354,6 @@ void ScreenRecoveryUI::Init()
     LoadLocalizedBitmap("erasing_text", &backgroundText[ERASING]);
     LoadLocalizedBitmap("no_command_text", &backgroundText[NO_COMMAND]);
     LoadLocalizedBitmap("error_text", &backgroundText[ERROR]);
-
-    int i;
-
-    progressBarIndeterminate = (gr_surface*)malloc(indeterminate_frames *
-                                                    sizeof(gr_surface));
-    for (i = 0; i < indeterminate_frames; ++i) {
-        char filename[40];
-        // "indeterminate01.png", "indeterminate02.png", ...
-        sprintf(filename, "indeterminate%02d", i+1);
-        LoadBitmap(filename, progressBarIndeterminate+i);
-    }
-
-    if (installing_frames > 0) {
-        installationOverlay = (gr_surface*)malloc(installing_frames *
-                                                   sizeof(gr_surface));
-        for (i = 0; i < installing_frames; ++i) {
-            char filename[40];
-            // "icon_installing_overlay01.png",
-            // "icon_installing_overlay02.png", ...
-            sprintf(filename, "icon_installing_overlay%02d", i+1);
-            LoadBitmap(filename, installationOverlay+i);
-        }
-    } else {
-        installationOverlay = NULL;
-    }
 
     pthread_create(&progress_t, NULL, progress_thread, NULL);
 
@@ -445,16 +386,6 @@ void ScreenRecoveryUI::SetLocale(const char* locale) {
 void ScreenRecoveryUI::SetBackground(Icon icon)
 {
     pthread_mutex_lock(&updateMutex);
-
-    // Adjust the offset to account for the positioning of the
-    // base image on the screen.
-    if (backgroundIcon[icon] != NULL) {
-        gr_surface bg = backgroundIcon[icon];
-        gr_surface text = backgroundText[icon];
-        overlay_offset_x = install_overlay_offset_x + (gr_fb_width() - gr_get_width(bg)) / 2;
-        overlay_offset_y = install_overlay_offset_y +
-            (gr_fb_height() - (gr_get_height(bg) + gr_get_height(text) + 40)) / 2;
-    }
 
     currentIcon = icon;
     update_screen_locked();
@@ -495,7 +426,7 @@ void ScreenRecoveryUI::SetProgress(float fraction)
     if (fraction > 1.0) fraction = 1.0;
     if (progressBarType == DETERMINATE && fraction > progress) {
         // Skip updates that aren't visibly different.
-        int width = gr_get_width(progressBarIndeterminate[0]);
+        int width = gr_get_width(progressBarEmpty);
         float scale = width * progressScopeSize;
         if ((int) (progress * scale) != (int) (fraction * scale)) {
             progress = fraction;

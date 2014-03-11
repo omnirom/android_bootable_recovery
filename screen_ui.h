@@ -69,8 +69,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     pthread_mutex_t updateMutex;
     gr_surface backgroundIcon[5];
     gr_surface backgroundText[5];
-    gr_surface *installationOverlay;
-    gr_surface *progressBarIndeterminate;
+    gr_surface *installation;
     gr_surface progressBarEmpty;
     gr_surface progressBarFill;
 
@@ -100,9 +99,9 @@ class ScreenRecoveryUI : public RecoveryUI {
     pthread_t progress_t;
 
     int animation_fps;
-    int indeterminate_frames;
     int installing_frames;
-    int overlay_offset_x, overlay_offset_y;
+
+    int iconX, iconY;
 
     void draw_install_overlay_locked(int frame);
     void draw_background_locked(Icon icon);
@@ -114,6 +113,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     void progress_loop();
 
     void LoadBitmap(const char* filename, gr_surface* surface);
+    void LoadBitmapArray(const char* filename, int* frames, gr_surface** surface);
     void LoadLocalizedBitmap(const char* filename, gr_surface* surface);
 };
 
