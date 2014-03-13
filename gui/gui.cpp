@@ -187,8 +187,8 @@ static void * input_thread(void *cookie)
 	static int x = 0, y = 0;
 	static int lshift = 0, rshift = 0;
 	static struct timeval touchStart;
-	HardwareKeyboard kb;
 	string seconds;
+	HardwareKeyboard *kb = PageManager::GetHardwareKeyboard();
 	MouseCursor *cursor = PageManager::GetMouseCursor();
 
 #ifndef TW_NO_SCREEN_TIMEOUT
@@ -249,7 +249,7 @@ static void * input_thread(void *cookie)
 #endif
 				gettimeofday(&touchStart, NULL);
 				key_repeat = 2;
-				kb.KeyRepeat();
+				kb->KeyRepeat();
 #ifndef TW_NO_SCREEN_TIMEOUT
 				blankTimer.resetTimerAndUnblank();
 #endif
@@ -261,7 +261,7 @@ static void * input_thread(void *cookie)
 				LOGERR("KEY_REPEAT: %d,%d\n", x, y);
 #endif
 				gettimeofday(&touchStart, NULL);
-				kb.KeyRepeat();
+				kb->KeyRepeat();
 #ifndef TW_NO_SCREEN_TIMEOUT
 				blankTimer.resetTimerAndUnblank();
 #endif
@@ -354,6 +354,9 @@ static void * input_thread(void *cookie)
 					{
 						cursor->GetPos(x, y);
 
+#ifdef _EVENT_LOGGING
+						LOGERR("TOUCH_RELEASE: %d,%d\n", x, y);
+#endif
 						PageManager::NotifyTouch(TOUCH_RELEASE, x, y);
 
 						touch_and_hold = 0;
@@ -369,15 +372,13 @@ static void * input_thread(void *cookie)
 			else if(ev.code == BTN_SIDE)
 			{
 				if(ev.value == 1)
-					kb.KeyDown(KEY_BACK);
+					kb->KeyDown(KEY_BACK);
 				else
-					kb.KeyUp(KEY_BACK);
-			}
-			else if (ev.value != 0)
-			{
+					kb->KeyUp(KEY_BACK);
+			} else if (ev.value != 0) {
 				// This is a key press
-				if (kb.KeyDown(ev.code))
-				{
+				if (kb->KeyDown(ev.code)) {
+					// Key repeat is enabled for this key
 					key_repeat = 1;
 					touch_and_hold = 0;
 					touch_repeat = 0;
@@ -386,9 +387,9 @@ static void * input_thread(void *cookie)
 #ifndef TW_NO_SCREEN_TIMEOUT
 					blankTimer.resetTimerAndUnblank();
 #endif
-				}
-				else
-				{
+				} else {
+					// No key repeat so immediately also send key up notice
+					kb->KeyUp(ev.code);
 					key_repeat = 0;
 					touch_and_hold = 0;
 					touch_repeat = 0;
@@ -397,11 +398,9 @@ static void * input_thread(void *cookie)
 					blankTimer.resetTimerAndUnblank();
 #endif
 				}
-			}
-			else
-			{
+			} else {
 				// This is a key release
-				kb.KeyUp(ev.code);
+				kb->KeyUp(ev.code);
 				key_repeat = 0;
 				touch_and_hold = 0;
 				touch_repeat = 0;

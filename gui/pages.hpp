@@ -30,6 +30,7 @@ class ActionObject;
 class InputObject;
 class MouseCursor;
 class GUIObject;
+class HardwareKeyboard;
 
 class Page
 {
@@ -43,7 +44,7 @@ public:
 	virtual int Render(void);
 	virtual int Update(void);
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
-	virtual int NotifyKey(int key);
+	virtual int NotifyKey(int key, bool down);
 	virtual int NotifyKeyboard(int key);
 	virtual int SetKeyBoardFocus(int inFocus);
 	virtual int NotifyVarChange(std::string varName, std::string value);
@@ -84,7 +85,7 @@ public:
 	int Render(void);
 	int Update(void);
 	int NotifyTouch(TOUCH_STATE state, int x, int y);
-	int NotifyKey(int key);
+	int NotifyKey(int key, bool down);
 	int NotifyKeyboard(int key);
 	int SetKeyBoardFocus(int inFocus);
 	int NotifyVarChange(std::string varName, std::string value);
@@ -127,13 +128,15 @@ public:
 	static int Render(void);
 	static int Update(void);
 	static int NotifyTouch(TOUCH_STATE state, int x, int y);
-	static int NotifyKey(int key);
+	static int NotifyKey(int key, bool down);
 	static int NotifyKeyboard(int key);
 	static int SetKeyBoardFocus(int inFocus);
 	static int NotifyVarChange(std::string varName, std::string value);
 
 	static MouseCursor *GetMouseCursor();
 	static void LoadCursorData(xml_node<>* node);
+
+	static HardwareKeyboard *GetHardwareKeyboard();
 
 protected:
 	static PageSet* FindPackage(std::string name);
@@ -143,6 +146,7 @@ protected:
 	static PageSet* mCurrentSet;
 	static PageSet* mBaseSet;
 	static MouseCursor *mMouseCursor;
+	static HardwareKeyboard *mHardwareKeyboard;
 };
 
 #endif  // _PAGES_HEADER_HPP
