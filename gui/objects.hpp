@@ -25,6 +25,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
 #include <time.h>
 
 extern "C" {
@@ -101,7 +102,7 @@ public:
 
 	// NotifyKey - Notify of a key press
 	//  Return 0 on success (and consume key), >0 to pass key to next handler, and <0 on error
-	virtual int NotifyKey(int key) { return 1; }
+	virtual int NotifyKey(int key, bool down) { return 1; }
 
 	// GetRenderPos - Returns the current position of the object
 	virtual int GetActionPos(int& x, int& y, int& w, int& h) { x = mActionX; y = mActionY; w = mActionW; h = mActionH; return 0; }
@@ -269,7 +270,7 @@ public:
 
 public:
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
-	virtual int NotifyKey(int key);
+	virtual int NotifyKey(int key, bool down);
 	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 	virtual int doActions();
 
@@ -282,7 +283,7 @@ protected:
 	};
 
 	std::vector<Action> mActions;
-	int mKey;
+	std::map<int, bool> mKeys;
 
 protected:
 	int getKeyByName(std::string key);
@@ -927,6 +928,11 @@ public:
 	virtual int KeyDown(int key_code);
 	virtual int KeyUp(int key_code);
 	virtual int KeyRepeat(void);
+
+	void ConsumeKeyRelease(int key);
+
+private:
+	std::set<int> mPressedKeys;
 };
 
 class GUISliderValue: public GUIObject, public RenderObject, public ActionObject
