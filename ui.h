@@ -79,7 +79,7 @@ class RecoveryUI {
     // Return value indicates whether an immediate operation should be
     // triggered (toggling the display, rebooting the device), or if
     // the key should be enqueued for use by the main thread.
-    enum KeyAction { ENQUEUE, TOGGLE, REBOOT, IGNORE };
+    enum KeyAction { ENQUEUE, TOGGLE, REBOOT, IGNORE, MOUNT_SYSTEM };
     virtual KeyAction CheckKey(int key);
 
     // Called immediately before each call to CheckKey(), tell you if
@@ -122,6 +122,10 @@ private:
     bool key_long_press;               // under key_queue_mutex
     int key_down_count;                // under key_queue_mutex
     int rel_sum;
+
+    int consecutive_power_keys;
+    int consecutive_alternate_keys;
+    int last_key;
 
     typedef struct {
         RecoveryUI* ui;
