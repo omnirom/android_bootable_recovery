@@ -86,7 +86,7 @@ void ScreenRecoveryUI::draw_background_locked(Icon icon)
 {
     pagesIdentical = false;
     gr_color(0, 0, 0, 255);
-    gr_fill(0, 0, gr_fb_width(), gr_fb_height());
+    gr_clear();
 
     if (icon) {
         gr_surface surface = backgroundIcon[icon];
@@ -203,12 +203,12 @@ void ScreenRecoveryUI::SetColor(UIElement e) {
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_screen_locked()
 {
-    draw_background_locked(currentIcon);
-    draw_progress_locked();
-
-    if (show_text) {
-        SetColor(TEXT_FILL);
-        gr_fill(0, 0, gr_fb_width(), gr_fb_height());
+    if (!show_text) {
+        draw_background_locked(currentIcon);
+        draw_progress_locked();
+    } else {
+        gr_color(0, 0, 0, 255);
+        gr_clear();
 
         int y = 0;
         int i = 0;
