@@ -384,6 +384,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
 {
     static int downX = -1, downY = -1;
     static int discard = 0;
+    static int last_virt_key = 0;
     static int lastWasSynReport = 0;
     static int touchReleaseOnNextSynReport = 0;
 	static int use_tracking_id_negative_as_touch_release = 0; // On some devices, type: 3  code: 39  value: -1, aka EV_ABS ABS_MT_TRACKING_ID -1 indicates a true touch release
@@ -593,7 +594,11 @@ static int vk_modify(struct ev *e, struct input_event *ev)
         if (discard)
         {
             discard = 0;
-            return 1;
+
+            // Send the keyUp event
+            ev->type = EV_KEY;
+            ev->code = last_virt_key;
+            ev->value = 0;
         }
         return 0;
     }
@@ -650,6 +655,8 @@ static int vk_modify(struct ev *e, struct input_event *ev)
                 ev->type = EV_KEY;
                 ev->code = e->vks[i].scancode;
                 ev->value = 1;
+
+                last_virt_key = e->vks[i].scancode;
 
                 vibrate(VIBRATOR_TIME_MS);
 
