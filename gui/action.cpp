@@ -73,8 +73,6 @@ GUIAction::GUIAction(xml_node<>* node)
 	xml_node<>* actions;
 	xml_attribute<>* attr;
 
-	mKey = 0;
-
 	if (!node)  return;
 
 	// First, get the action
@@ -105,9 +103,12 @@ GUIAction::GUIAction(xml_node<>* node)
 		attr = child->first_attribute("key");
 		if (attr)
 		{
-			std::string key = attr->value();
-	
-			mKey = getKeyByName(key);
+			std::vector<std::string> keys = TWFunc::Split_String(attr->value(), "+");
+			for(size_t i = 0; i < keys.size(); ++i)
+			{
+				const int key = getKeyByName(keys[i]);
+				mKeys[key] = false;
+			}
 		}
 		else
 		{
@@ -135,12 +136,41 @@ int GUIAction::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return 0;
 }
 
-int GUIAction::NotifyKey(int key)
+int GUIAction::NotifyKey(int key, bool down)
 {
-	if (!mKey || key != mKey)
-		return 1;
+	if (mKeys.empty())
+		return 0;
 
-	doActions();
+	std::map<int, bool>::iterator itr = mKeys.find(key);
+	if(itr == mKeys.end())
+		return 0;
+
+	bool prevState = itr->second;
+	itr->second = down;
+
+	// If there is only one key for this action, wait for key up so it
+	// doesn't trigger with multi-key actions.
+	// Else, check if all buttons are pressed, then consume their release events
+	// so they don't trigger one-button actions and reset mKeys pressed status
+	if(mKeys.size() == 1) {
+		if(!down && prevState)
+			doActions();
+	} else if(down) {
+		for(itr = mKeys.begin(); itr != mKeys.end(); ++itr) {
+			if(!itr->second)
+				return 0;
+		}
+
+		// Passed, all req buttons are pressed, reset them and consume release events
+		HardwareKeyboard *kb = PageManager::GetHardwareKeyboard();
+		for(itr = mKeys.begin(); itr != mKeys.end(); ++itr) {
+			kb->ConsumeKeyRelease(itr->first);
+			itr->second = false;
+		}
+
+		doActions();
+	}
+
 	return 0;
 }
 
@@ -148,7 +178,7 @@ int GUIAction::NotifyVarChange(const std::string& varName, const std::string& va
 {
 	GUIObject::NotifyVarChange(varName, value);
 
-	if (varName.empty() && !isConditionValid() && !mKey && !mActionW)
+	if (varName.empty() && !isConditionValid() && mKeys.empty() && !mActionW)
 		doActions();
 	else if((varName.empty() || IsConditionVariable(varName)) && isConditionValid() && isConditionTrue())
 		doActions();
@@ -380,7 +410,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 	if (function == "key")
 	{
-		PageManager::NotifyKey(getKeyByName(arg));
+		const int key = getKeyByName(arg);
+		PageManager::NotifyKey(key, true);
+		PageManager::NotifyKey(key, false);
 		return 0;
 	}
 

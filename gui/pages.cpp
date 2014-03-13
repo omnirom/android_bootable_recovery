@@ -55,6 +55,7 @@ std::map<std::string, PageSet*> PageManager::mPageSets;
 PageSet* PageManager::mCurrentSet;
 PageSet* PageManager::mBaseSet = NULL;
 MouseCursor *PageManager::mMouseCursor = NULL;
+HardwareKeyboard *PageManager::mHardwareKeyboard = NULL;
 
 // Helper routine to convert a string to a color declaration
 int ConvertStrToColor(std::string str, COLOR* color)
@@ -447,7 +448,7 @@ int Page::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return ret;
 }
 
-int Page::NotifyKey(int key)
+int Page::NotifyKey(int key, bool down)
 {
 	std::vector<ActionObject*>::reverse_iterator iter;
 
@@ -458,11 +459,9 @@ int Page::NotifyKey(int key)
 	// We work backwards, from top-most element to bottom-most element
 	for (iter = mActions.rbegin(); iter != mActions.rend(); iter++)
 	{
-		int ret = (*iter)->NotifyKey(key);
-		if (ret == 0)
-			return 0;
-		else if (ret < 0)
-			LOGERR("An action handler has returned an error");
+		int ret = (*iter)->NotifyKey(key, down);
+		if (ret < 0)
+			LOGERR("An action handler has returned an error\n");
 	}
 	return 1;
 }
@@ -719,12 +718,12 @@ int PageSet::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return (mCurrentPage ? mCurrentPage->NotifyTouch(state, x, y) : -1);
 }
 
-int PageSet::NotifyKey(int key)
+int PageSet::NotifyKey(int key, bool down)
 {
 	if (mOverlayPage)
-		return (mOverlayPage->NotifyKey(key));
+		return (mOverlayPage->NotifyKey(key, down));
 
-	return (mCurrentPage ? mCurrentPage->NotifyKey(key) : -1);
+	return (mCurrentPage ? mCurrentPage->NotifyKey(key, down) : -1);
 }
 
 int PageSet::NotifyKeyboard(int key)
@@ -964,6 +963,13 @@ int PageManager::Render(void)
 	return res;
 }
 
+HardwareKeyboard *PageManager::GetHardwareKeyboard()
+{
+	if(!mHardwareKeyboard)
+		mHardwareKeyboard = new HardwareKeyboard();
+	return mHardwareKeyboard;
+}
+
 MouseCursor *PageManager::GetMouseCursor()
 {
 	if(!mMouseCursor)
@@ -1002,9 +1008,9 @@ int PageManager::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return (mCurrentSet ? mCurrentSet->NotifyTouch(state, x, y) : -1);
 }
 
-int PageManager::NotifyKey(int key)
+int PageManager::NotifyKey(int key, bool down)
 {
-	return (mCurrentSet ? mCurrentSet->NotifyKey(key) : -1);
+	return (mCurrentSet ? mCurrentSet->NotifyKey(key, down) : -1);
 }
 
 int PageManager::NotifyKeyboard(int key)
