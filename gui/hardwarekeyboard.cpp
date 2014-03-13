@@ -38,15 +38,22 @@ HardwareKeyboard::~HardwareKeyboard()
 
 int HardwareKeyboard::KeyDown(int key_code)
 {
+	mPressedKeys.insert(key_code);
+	PageManager::NotifyKey(key_code, true);
 #ifdef _EVENT_LOGGING
 	LOGERR("HardwareKeyboard::KeyDown %i\n", key_code);
 #endif
-	PageManager::NotifyKey(key_code);
 	return 0; // 0 = no key repeat anything else turns on key repeat
 }
 
 int HardwareKeyboard::KeyUp(int key_code)
 {
+	std::set<int>::iterator itr = mPressedKeys.find(key_code);
+	if(itr != mPressedKeys.end())
+	{
+		mPressedKeys.erase(itr);
+		PageManager::NotifyKey(key_code, false);
+	}
 #ifdef _EVENT_LOGGING
 	LOGERR("HardwareKeyboard::KeyUp %i\n", key_code);
 #endif
@@ -55,8 +62,22 @@ int HardwareKeyboard::KeyUp(int key_code)
 
 int HardwareKeyboard::KeyRepeat(void)
 {
+	/*
+	 * Uncomment when key repeats are sent somewhere.
+	 * std::set<int>::iterator itr = mPressedKeys.find(key_code);
+	 * if(itr != mPressedKeys.end())
+	 * {
+	 *	Send repeats somewhere, don't remove itr from mPressedKeys
+	 * }
+	 */
+
 #ifdef _EVENT_LOGGING
 	LOGERR("HardwareKeyboard::KeyRepeat\n");
 #endif
 	return 0;
+}
+
+void HardwareKeyboard::ConsumeKeyRelease(int key)
+{
+	mPressedKeys.erase(key);
 }
