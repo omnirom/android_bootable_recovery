@@ -52,6 +52,8 @@ unsigned int gr_get_height(gr_surface surface);
 int gr_get_surface(gr_surface* surface);
 int gr_free_surface(gr_surface surface);
 
+int gr_save_screenshot(const char *dest);
+
 // input event structure, include <linux/input.h> for the definition.
 // see http://www.mjmwired.net/kernel/Documentation/input/ for info.
 struct input_event;
