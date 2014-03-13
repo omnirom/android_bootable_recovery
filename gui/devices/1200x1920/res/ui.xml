@@ -269,6 +269,11 @@
 				<touch key="power" />
 				<action function="overlay">lock</action>
 			</object>
+
+			<object type="action">
+				<touch key="power+voldown" />
+				<action function="screenshot" />
+			</object>
 		</template>
 
 		<template name="progress_bar">

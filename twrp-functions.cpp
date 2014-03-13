@@ -1176,4 +1176,22 @@ std::vector<std::string> TWFunc::Split_String(const std::string& str, const std:
 	return res;
 }
 
+bool TWFunc::Create_Dir_Recursive(const std::string& path, mode_t mode, uid_t uid, gid_t gid)
+{
+	std::vector<std::string> parts = Split_String(path, "/");
+	std::string cur_path;
+	struct stat info;
+	for(size_t i = 0; i < parts.size(); ++i)
+	{
+		cur_path += "/" + parts[i];
+		if(stat(cur_path.c_str(), &info) < 0 || !S_ISDIR(info.st_mode))
+		{
+			if(mkdir(cur_path.c_str(), mode) < 0)
+				return false;
+			chown(cur_path.c_str(), uid, gid);
+		}
+	}
+	return true;
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN
