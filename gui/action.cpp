@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <dirent.h>
+#include <pwd.h>
 
 #include <string>
 #include <sstream>
@@ -682,6 +683,52 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		operation_start("GenerateBackupName");
 		TWFunc::Auto_Generate_Backup_Name();
 		operation_end(0, simulate);
+		return 0;
+	}
+
+	if (function == "screenshot")
+	{
+		time_t tm;
+		char path[64]; // max possible length of assembled path. Change it if you change the path.
+		int path_len;
+		uid_t uid = -1;
+		gid_t gid = -1;
+
+		struct passwd *pwd = getpwnam("media_rw");
+		if(pwd) {
+			uid = pwd->pw_uid;
+			gid = pwd->pw_gid;
+		}
+
+		if(PartitionManager.Is_Mounted_By_Path("/sdcard"))
+			strcpy(path, "/sdcard/Pictures/Screenshots/");
+		else
+			strcpy(path, "/tmp/");
+
+		if(!TWFunc::Create_Dir_Recursive(path, 0666, uid, gid))
+			return 0;
+
+		tm = time(NULL);
+		path_len = strlen(path);
+
+		// Screenshot_2014-01-01-18-21-38.png
+		strftime(path+path_len, sizeof(path)-path_len, "Screenshot_%Y-%m-%d-%H-%M-%S.png", localtime(&tm));
+
+		int res = gr_save_screenshot(path);
+		if(res == 0) {
+			chmod(path, 0666);
+			chown(path, uid, gid);
+
+			LOGINFO("Screenshot was saved to %s\n", path);
+
+			// blink to notify that the screenshow was taken
+			gr_color(255, 255, 255, 255);
+			gr_fill(0, 0, gr_fb_width(), gr_fb_height());
+			gr_flip();
+			gui_forceRender();
+		} else {
+			LOGERR("Failed to take a screenshot!\n");
+		}
 		return 0;
 	}
 
