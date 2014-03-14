@@ -174,11 +174,11 @@ get_args(int *argc, char ***argv) {
     get_bootloader_message(&boot);  // this may fail, leaving a zeroed structure
 
     if (boot.command[0] != 0 && boot.command[0] != 255) {
-        LOGI("Boot command: %.*s\n", sizeof(boot.command), boot.command);
+        LOGI("Boot command: %.*s\n", (int)sizeof(boot.command), boot.command);
     }
 
     if (boot.status[0] != 0 && boot.status[0] != 255) {
-        LOGI("Boot status: %.*s\n", sizeof(boot.status), boot.status);
+        LOGI("Boot status: %.*s\n", (int)sizeof(boot.status), boot.status);
     }
 
     // --- if arguments weren't supplied, look in the bootloader control block
