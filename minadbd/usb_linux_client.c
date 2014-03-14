@@ -388,7 +388,7 @@ static int bulk_read(int bulk_out, char *buf, size_t length)
         ret = adb_read(bulk_out, buf + count, length - count);
         if (ret < 0) {
             if (errno != EINTR) {
-                D("[ bulk_read failed fd=%d length=%d count=%d ]\n",
+                D("[ bulk_read failed fd=%d length=%zu count=%zu ]\n",
                                            bulk_out, length, count);
                 return ret;
             }
