@@ -95,7 +95,7 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     png_read_info(png_ptr, info_ptr);
 
     int color_type, bit_depth;
-    size_t width, height;
+    png_uint_32 width, height;
     png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth,
             &color_type, NULL, NULL, NULL);
 
