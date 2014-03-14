@@ -247,7 +247,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
                     break;
             }
             if (next != read) {
-                printf("short read (%d bytes of %d) for partition \"%s\"\n",
+                printf("short read (%zu bytes of %zu) for partition \"%s\"\n",
                        read, next, partition);
                 free(file->data);
                 file->data = NULL;
@@ -274,7 +274,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         if (memcmp(sha_so_far, parsed_sha, SHA_DIGEST_SIZE) == 0) {
             // we have a match.  stop reading the partition; we'll return
             // the data we've read so far.
-            printf("partition read matched size %d sha %s\n",
+            printf("partition read matched size %zu sha %s\n",
                    size[index[i]], sha1sum[index[i]]);
             break;
         }
@@ -402,7 +402,7 @@ int WriteToPartition(unsigned char* data, size_t len,
 
             size_t written = mtd_write_data(ctx, (char*)data, len);
             if (written != len) {
-                printf("only wrote %d of %d bytes to MTD %s\n",
+                printf("only wrote %zu of %zu bytes to MTD %s\n",
                        written, len, partition);
                 mtd_write_close(ctx);
                 return -1;
@@ -476,20 +476,20 @@ int WriteToPartition(unsigned char* data, size_t len,
                             if (errno == EINTR) {
                                 read_count = 0;
                             } else {
-                                printf("verify read error %s at %d: %s\n",
+                                printf("verify read error %s at %zu: %s\n",
                                        partition, p, strerror(errno));
                                 return -1;
                             }
                         }
                         if ((size_t)read_count < to_read) {
-                            printf("short verify read %s at %d: %d %d %s\n",
+                            printf("short verify read %s at %zu: %zd %zu %s\n",
                                    partition, p, read_count, to_read, strerror(errno));
                         }
                         so_far += read_count;
                     }
 
                     if (memcmp(buffer, data+p, to_read)) {
-                        printf("verification failed starting at %d\n", p);
+                        printf("verification failed starting at %zu\n", p);
                         start = p;
                         break;
                     }
