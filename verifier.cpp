@@ -140,7 +140,7 @@ int verify_file(unsigned char* addr, size_t length,
 
     size_t comment_size = footer[4] + (footer[5] << 8);
     size_t signature_start = footer[0] + (footer[1] << 8);
-    LOGI("comment is %d bytes; signature %d bytes from end\n",
+    LOGI("comment is %zu bytes; signature %zu bytes from end\n",
          comment_size, signature_start);
 
     if (signature_start <= FOOTER_SIZE) {
@@ -252,24 +252,24 @@ int verify_file(unsigned char* addr, size_t length,
         if (pKeys[i].key_type == Certificate::RSA) {
             if (sig_der_length < RSANUMBYTES) {
                 // "signature" block isn't big enough to contain an RSA block.
-                LOGI("signature is too short for RSA key %d\n", i);
+                LOGI("signature is too short for RSA key %zu\n", i);
                 continue;
             }
 
             if (!RSA_verify(pKeys[i].rsa, sig_der, RSANUMBYTES,
                             hash, pKeys[i].hash_len)) {
-                LOGI("failed to verify against RSA key %d\n", i);
+                LOGI("failed to verify against RSA key %zu\n", i);
                 continue;
             }
 
-            LOGI("whole-file signature verified against RSA key %d\n", i);
+            LOGI("whole-file signature verified against RSA key %zu\n", i);
             free(sig_der);
             return VERIFY_SUCCESS;
         } else if (pKeys[i].key_type == Certificate::EC
                 && pKeys[i].hash_len == SHA256_DIGEST_SIZE) {
             p256_int r, s;
             if (!dsa_sig_unpack(sig_der, sig_der_length, &r, &s)) {
-                LOGI("Not a DSA signature block for EC key %d\n", i);
+                LOGI("Not a DSA signature block for EC key %zu\n", i);
                 continue;
             }
 
@@ -277,11 +277,11 @@ int verify_file(unsigned char* addr, size_t length,
             p256_from_bin(hash, &p256_hash);
             if (!p256_ecdsa_verify(&(pKeys[i].ec->x), &(pKeys[i].ec->y),
                                    &p256_hash, &r, &s)) {
-                LOGI("failed to verify against EC key %d\n", i);
+                LOGI("failed to verify against EC key %zu\n", i);
                 continue;
             }
 
-            LOGI("whole-file signature verified against EC key %d\n", i);
+            LOGI("whole-file signature verified against EC key %zu\n", i);
             free(sig_der);
             return VERIFY_SUCCESS;
         } else {
