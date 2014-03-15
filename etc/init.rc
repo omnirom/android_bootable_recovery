@@ -43,11 +43,13 @@ on property:sys.powerctl=*
 
 on property:sys.storage.ums_enabled=1
     write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/idProduct D003
     write /sys/class/android_usb/android0/functions adb,mass_storage
     write /sys/class/android_usb/android0/enable 1
 
 on property:sys.storage.ums_enabled=0
     write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/idProduct D001
     write /sys/class/android_usb/android0/functions adb
     write /sys/class/android_usb/android0/enable ${service.adb.root}
 
