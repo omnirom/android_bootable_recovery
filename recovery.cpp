@@ -986,6 +986,7 @@ main(int argc, char **argv) {
     ui = device->GetUI();
     gCurrentUI = ui;
 
+    ui->SetLocale(locale);
     ui->Init();
 
     int st_cur, st_max;
@@ -993,7 +994,6 @@ main(int argc, char **argv) {
         ui->SetStage(st_cur, st_max);
     }
 
-    ui->SetLocale(locale);
     ui->SetBackground(RecoveryUI::NONE);
     if (show_text) ui->ShowText(true);
 

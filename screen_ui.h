@@ -63,6 +63,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   private:
     Icon currentIcon;
     int installingFrame;
+    const char* locale;
     bool rtl_locale;
 
     pthread_mutex_t updateMutex;
