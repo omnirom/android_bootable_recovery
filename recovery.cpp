@@ -974,8 +974,8 @@ main(int argc, char **argv) {
     ui = device->GetUI();
     gCurrentUI = ui;
 
-    ui->Init();
     ui->SetLocale(locale);
+    ui->Init();
     ui->SetBackground(RecoveryUI::NONE);
     if (show_text) ui->ShowText(true);
 
