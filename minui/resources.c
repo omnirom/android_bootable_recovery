@@ -110,7 +110,7 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
         *channels = 3;
     } else {
         fprintf(stderr, "minui doesn't support PNG depth %d channels %d color_type %d\n",
-                bit_depth, (int) channels, color_type);
+                bit_depth, *channels, color_type);
         result = -7;
         goto exit;
     }
