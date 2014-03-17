@@ -103,7 +103,7 @@ static int sysMapBlockFile(FILE* mapf, MemMapping* pMap)
         }
     }
 
-    if (fscanf(mapf, "%d %d\n%d\n", &size, &blksize, &range_count) != 3) {
+    if (fscanf(mapf, "%zu %u\n%u\n", &size, &blksize, &range_count) != 3) {
         LOGW("failed to parse block map header\n");
         return -1;
     }
