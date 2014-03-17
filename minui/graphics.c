@@ -269,7 +269,7 @@ static void gr_init_font(void)
 {
     gr_font = calloc(sizeof(*gr_font), 1);
 
-    int res = res_create_surface("font", &(gr_font->texture));
+    int res = res_create_alpha_surface("font", &(gr_font->texture));
     if (res == 0) {
         // The font image should be a 96x2 array of character images.  The
         // columns are the printable ASCII characters 0x20 - 0x7f.  The
