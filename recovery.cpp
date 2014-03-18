@@ -56,6 +56,7 @@ static const struct option OPTIONS[] = {
   { "show_text", no_argument, NULL, 't' },
   { "just_exit", no_argument, NULL, 'x' },
   { "locale", required_argument, NULL, 'l' },
+  { "shutdown_after", no_argument, NULL, 'p' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -942,16 +943,15 @@ main(int argc, char **argv) {
     rotate_last_logs(10);
     get_args(&argc, &argv);
 
-    int previous_runs = 0;
     const char *send_intent = NULL;
     const char *update_package = NULL;
     int wipe_data = 0, wipe_cache = 0, show_text = 0;
     bool just_exit = false;
+    bool shutdown_after = false;
 
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
         switch (arg) {
-        case 'p': previous_runs = atoi(optarg); break;
         case 's': send_intent = optarg; break;
         case 'u': update_package = optarg; break;
         case 'w': wipe_data = wipe_cache = 1; break;
@@ -959,6 +959,7 @@ main(int argc, char **argv) {
         case 't': show_text = 1; break;
         case 'x': just_exit = true; break;
         case 'l': locale = optarg; break;
+        case 'p': shutdown_after = true; break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -1061,7 +1062,12 @@ main(int argc, char **argv) {
 
     // Otherwise, get ready to boot the main system...
     finish_recovery(send_intent);
-    ui->Print("Rebooting...\n");
-    property_set(ANDROID_RB_PROPERTY, "reboot,");
+    if (shutdown_after) {
+        ui->Print("Shutting down...\n");
+        property_set(ANDROID_RB_PROPERTY, "shutdown,");
+    } else {
+        ui->Print("Rebooting...\n");
+        property_set(ANDROID_RB_PROPERTY, "reboot,");
+    }
     return EXIT_SUCCESS;
 }
