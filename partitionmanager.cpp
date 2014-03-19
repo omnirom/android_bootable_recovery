@@ -56,7 +56,7 @@ TWPartitionManager::TWPartitionManager(void) {
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
 	FILE *fstabFile;
 	char fstab_line[MAX_FSTAB_LINE_LENGTH];
-	bool Found_Settings_Storage = false;
+	TWPartition* settings_partition = NULL;
 
 	fstabFile = fopen(Fstab_Filename.c_str(), "rt");
 	if (fstabFile == NULL) {
@@ -76,9 +76,8 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		memset(fstab_line, 0, sizeof(fstab_line));
 
 		if (partition->Process_Fstab_Line(line, Display_Error)) {
-			if (!Found_Settings_Storage && partition->Is_Settings_Storage) {
-				Found_Settings_Storage = true;
-				Setup_Settings_Storage_Partition(partition);
+			if (!settings_partition && partition->Is_Settings_Storage) {
+				settings_partition = partition;
 			} else {
 				partition->Is_Settings_Storage = false;
 			}
@@ -88,15 +87,15 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		}
 	}
 	fclose(fstabFile);
-	if (!Found_Settings_Storage) {
+	if (!settings_partition) {
 		std::vector<TWPartition*>::iterator iter;
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 			if ((*iter)->Is_Storage) {
-				Setup_Settings_Storage_Partition((*iter));
+				settings_partition = (*iter);
 				break;
 			}
 		}
-		if (!Found_Settings_Storage)
+		if (!settings_partition)
 			LOGERR("Unable to locate storage partition for storing settings file.\n");
 	}
 	if (!Write_Fstab()) {
@@ -107,6 +106,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 	}
 	Update_System_Details();
 	UnMount_Main_Partitions();
+	Setup_Settings_Storage_Partition(settings_partition);
 	return true;
 }
 
