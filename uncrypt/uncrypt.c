@@ -189,10 +189,10 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         return -1;
     }
 
-    printf(" block size: %ld bytes\n", sb.st_blksize);
+    printf(" block size: %ld bytes\n", (long)sb.st_blksize);
 
     int blocks = ((sb.st_size-1) / sb.st_blksize) + 1;
-    printf("  file size: %lld bytes, %d blocks\n", sb.st_size, blocks);
+    printf("  file size: %lld bytes, %d blocks\n", (long long)sb.st_size, blocks);
 
     int* ranges;
     int range_alloc = 1;
@@ -201,7 +201,7 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
     ranges[0] = -1;
     ranges[1] = -1;
 
-    fprintf(mapf, "%s\n%lld %lu\n", blk_dev, sb.st_size, sb.st_blksize);
+    fprintf(mapf, "%s\n%lld %lu\n", blk_dev, (long long)sb.st_size, (unsigned long)sb.st_blksize);
 
     unsigned char* buffers[WINDOW_SIZE];
     int i;
