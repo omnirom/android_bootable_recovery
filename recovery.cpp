@@ -749,9 +749,22 @@ static void choose_recovery_file(Device* device) {
     }
 }
 
-static int enter_sideload_mode(int status, int* wipe_cache) {
+static int enter_sideload_mode(int status, int* wipe_cache, Device* device) {
+
     ensure_path_mounted(CACHE_ROOT);
-    status = apply_from_adb(ui, wipe_cache, TEMPORARY_INSTALL_FILE);
+    start_sideload(ui);
+
+    static const char* headers[] = {  "ADB Sideload",
+                                "",
+                                NULL
+    };
+
+    static const char* list[] = { "Cancel sideload", NULL };
+
+    int item = get_menu_selection(headers, list, 0, 0, device);
+    if (item != 0)
+        status = apply_from_adb(wipe_cache, TEMPORARY_INSTALL_FILE);
+
     if (status >= 0) {
         if (status != INSTALL_SUCCESS) {
             ui->SetBackground(RecoveryUI::ERROR);
@@ -871,7 +884,7 @@ prompt_and_wait(Device* device, int status) {
                     break;
 
                 case Device::APPLY_ADB_SIDELOAD:
-                    status = enter_sideload_mode(status, &wipe_cache);
+                    status = enter_sideload_mode(status, &wipe_cache, device);
                     break;
             }
             if (status == Device::kRefresh) {
@@ -1178,7 +1191,7 @@ main(int argc, char **argv) {
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
     } else if (sideload) {
-        status = enter_sideload_mode(status, &wipe_cache);
+        status = enter_sideload_mode(status, &wipe_cache, device);
     } else if (!just_exit) {
         status = INSTALL_NONE;  // No command specified
         ui->SetBackground(RecoveryUI::NO_COMMAND);

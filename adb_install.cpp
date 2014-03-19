@@ -36,6 +36,7 @@ extern "C" {
 }
 
 static RecoveryUI* ui = NULL;
+static pthread_t sideload_thread;
 
 static void
 set_usb_driver(bool enabled) {
@@ -70,12 +71,39 @@ maybe_restart_adbd() {
     }
 }
 
+struct sideload_waiter_data {
+    pid_t child;
+};
+
+static struct sideload_waiter_data waiter;
+
+void *adb_sideload_thread(void* v) {
+    struct sideload_waiter_data* data = (struct sideload_waiter_data*)v;
+
+    int status;
+    waitpid(data->child, &status, 0);
+    LOGI("sideload process finished\n");
+
+    ui->CancelWaitKey();
+
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        if (WEXITSTATUS(status) == 3) {
+            ui->Print("\nYou need adb 1.0.32 or newer to sideload\nto this device.\n\n");
+        } else if (!WIFSIGNALED(status)) {
+            ui->Print("\n(adbd status %d)\n", WEXITSTATUS(status));
+        }
+    }
+
+    LOGI("sideload thread finished\n");
+    return NULL;
+}
+
 // How long (in seconds) we wait for the host to start sending us a
 // package, before timing out.
 #define ADB_INSTALL_TIMEOUT 300
 
-int
-apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
+void
+start_sideload(RecoveryUI* ui_) {
     ui = ui_;
 
     stop_adbd();
@@ -84,12 +112,16 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
     ui->Print("\n\nNow send the package you want to apply\n"
               "to the device with \"adb sideload <filename>\"...\n");
 
-    pid_t child;
-    if ((child = fork()) == 0) {
+    if ((waiter.child = fork()) == 0) {
         execl("/sbin/recovery", "recovery", "--adbd", NULL);
         _exit(-1);
     }
 
+    pthread_create(&sideload_thread, NULL, &adb_sideload_thread, &waiter);
+}
+
+int
+apply_from_adb(int* wipe_cache, const char* install_file) {
     // FUSE_SIDELOAD_HOST_PATHNAME will start to exist once the host
     // connects and starts serving a package.  Poll for its
     // appearance.  (Note that inotify doesn't work with FUSE.)
@@ -98,7 +130,7 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
     bool waited = false;
     struct stat st;
     for (int i = 0; i < ADB_INSTALL_TIMEOUT; ++i) {
-        if (waitpid(child, &status, WNOHANG) != 0) {
+        if (waitpid(waiter.child, &status, WNOHANG) != 0) {
             result = INSTALL_ERROR;
             waited = true;
             break;
@@ -111,7 +143,7 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
             } else {
                 ui->Print("\nTimed out waiting for package.\n\n", strerror(errno));
                 result = INSTALL_ERROR;
-                kill(child, SIGKILL);
+                kill(waiter.child, SIGKILL);
                 break;
             }
         }
@@ -128,19 +160,16 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
         // package (by pushing some button combo on the device).  For now
         // you just have to 'adb sideload' a file that's not a valid
         // package, like "/dev/null".
-        waitpid(child, &status, 0);
-    }
-
-    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        if (WEXITSTATUS(status) == 3) {
-            ui->Print("\nYou need adb 1.0.32 or newer to sideload\nto this device.\n\n");
-        } else if (!WIFSIGNALED(status)) {
-            ui->Print("\n(adbd status %d)\n", WEXITSTATUS(status));
-        }
+        waitpid(waiter.child, &status, 0);
     }
 
     set_usb_driver(false);
     maybe_restart_adbd();
+
+    // kill the child
+    kill(waiter.child, SIGTERM);
+    pthread_join(sideload_thread, NULL);
+    ui->FlushKeys();
 
     return result;
 }

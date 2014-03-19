@@ -70,6 +70,9 @@ class RecoveryUI {
     // Wait for keypress and return it.  May return -1 after timeout.
     virtual int WaitKey();
 
+    // Cancel a WaitKey()
+    virtual void CancelWaitKey();
+
     virtual bool IsKeyPressed(int key);
 
     // Erase any queued-up keys.
