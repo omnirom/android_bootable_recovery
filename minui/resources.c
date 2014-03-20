@@ -101,7 +101,7 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
     } else if (bit_depth <= 8 && *channels == 1 && color_type == PNG_COLOR_TYPE_GRAY) {
         // 1-, 2-, 4-, or 8-bit gray images: expand to 8-bit gray.
         png_set_expand_gray_1_2_4_to_8(*png_ptr);
-    } else if (bit_depth == 8 && *channels == 1 && color_type == PNG_COLOR_TYPE_PALETTE) {
+    } else if (bit_depth <= 8 && *channels == 1 && color_type == PNG_COLOR_TYPE_PALETTE) {
         // paletted images: expand to 8-bit RGB.  Note that we DON'T
         // currently expand the tRNS chunk (if any) to an alpha
         // channel, because minui doesn't support alpha channels in
