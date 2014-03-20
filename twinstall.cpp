@@ -155,7 +155,9 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 
 	pid_t pid = fork();
 	if (pid == 0) {
+#ifndef TW_NO_LEGACY_PROPS
 		switch_to_legacy_properties();
+#endif
 		close(pipe_fd[0]);
 		execve(Temp_Binary.c_str(), (char* const*)args, environ);
 		printf("E:Can't execute '%s'\n", Temp_Binary.c_str());
@@ -204,7 +206,9 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	fclose(child_data);
 
 	waitpid(pid, &status, 0);
+#ifndef TW_NO_LEGACY_PROPS
 	switch_to_new_properties();
+#endif
 	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
 		LOGERR("Error executing updater binary in zip '%s'\n", path);
 		return INSTALL_ERROR;
