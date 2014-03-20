@@ -54,19 +54,25 @@ static int sock = -1;
 
 static int vold_connect() {
 
-    int ret = 1;
+    int retries = 5;
+    int ret = -1;
     if (sock > 0) {
-        return ret;
+        return 1;
     }
 
     // socket connection to vold
-    if ((sock = socket_local_client("vold",
-                                     ANDROID_SOCKET_NAMESPACE_RESERVED,
-                                     SOCK_STREAM)) < 0) {
-        LOGE("Error connecting to Vold! (%s)\n", strerror(errno));
-        ret = -1;
-    } else {
-        LOGI("Connected to Vold..\n");
+    while (retries > 0) {
+        if ((sock = socket_local_client("vold",
+                                         ANDROID_SOCKET_NAMESPACE_RESERVED,
+                                         SOCK_STREAM)) < 0) {
+            LOGE("Error connecting to Vold! (%s)\n", strerror(errno));
+        } else {
+            LOGI("Connected to Vold..\n");
+            ret = 1;
+            break;
+        }
+        sleep(1);
+        retries--;
     }
     return ret;
 }
