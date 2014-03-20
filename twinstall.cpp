@@ -162,12 +162,14 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	}
 	mzCloseZipArchive(Zip);
 
+#ifndef TW_NO_LEGACY_PROPS
 	/* Set legacy properties */
 	if (switch_to_legacy_properties() != 0) {
 		LOGERR("Legacy property environment did not initialize successfully. Properties may not be detected.\n");
 	} else {
 		LOGINFO("Legacy property environment initialized.\n");
 	}
+#endif
 
 	pipe(pipe_fd);
 
@@ -230,6 +232,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 
 	waitpid(pid, &status, 0);
 
+#ifndef TW_NO_LEGACY_PROPS
 	/* Unset legacy properties */
 	if (legacy_props_path_modified) {
 		if (switch_to_new_properties() != 0) {
@@ -238,6 +241,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 			LOGINFO("Legacy property environment disabled.\n");
 		}
 	}
+#endif
 
 	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
 		LOGERR("Error executing updater binary in zip '%s'\n", path);
