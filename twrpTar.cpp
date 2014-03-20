@@ -467,6 +467,7 @@ int twrpTar::Generate_TarList(string Path, std::vector<TarListStruct> *TarList, 
 			for (i = 0; i < tarexclude.size(); i++) {
 				if (FileName == tarexclude[i]) {
 					LOGINFO("Excluding %s\n", FileName.c_str());
+					skip = true;
 					break;
 				}
 			}
