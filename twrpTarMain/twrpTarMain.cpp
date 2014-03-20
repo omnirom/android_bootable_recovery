@@ -122,10 +122,6 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	vector<string> excludedirs = du.get_absolute_dirs();
-	for (j = 0; j < excludedirs.size(); ++j) {
-		tar.setexcl(excludedirs.at(j));
-	}
 	tar.has_data_media = has_data_media;
 	tar.setdir(Directory);
 	tar.setfn(Tar_Filename);
