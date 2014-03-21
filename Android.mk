@@ -74,6 +74,7 @@ else
 endif
 
 LOCAL_C_INCLUDES += system/extras/ext4_utils
+LOCAL_C_INCLUDES += external/openssl/include
 
 include $(BUILD_EXECUTABLE)
 
