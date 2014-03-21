@@ -67,10 +67,7 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 	DIR* d;
 	struct dirent* de;
 	struct stat st;
-	unsigned long long dusize = 0;
-	unsigned long long dutemp = 0;
-
-	parent = Path.substr(0, Path.find_last_of('/'));
+	uint64_t dusize = 0;
 
 	d = opendir(Path.c_str());
 	if (d == NULL) {
@@ -79,14 +76,10 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 		return 0;
 	}
 
-	while ((de = readdir(d)) != NULL)
-	{
+	while ((de = readdir(d)) != NULL) {
 		if (de->d_type == DT_DIR && !check_skip_dirs(Path, de->d_name)) {
-			dutemp = Get_Folder_Size((Path + "/" + de->d_name));
-			dusize += dutemp;
-			dutemp = 0;
-		}
-		else if (de->d_type == DT_REG) {
+			dusize += Get_Folder_Size(Path + "/" + de->d_name);
+		} else if (de->d_type == DT_REG) {
 			stat((Path + "/" + de->d_name).c_str(), &st);
 			dusize += (uint64_t)(st.st_size);
 		}
