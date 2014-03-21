@@ -1822,9 +1822,7 @@ bool TWPartition::Update_Size(bool Display_Error) {
 	if (Has_Data_Media) {
 		if (Mount(Display_Error)) {
 			unsigned long long data_media_used, actual_data;
-			du.add_relative_dir("media");
 			Used = du.Get_Folder_Size("/data");
-			du.clear_relative_dir("media");
 			Backup_Size = Used;
 			int bak = (int)(Used / 1048576LLU);
 			int fre = (int)(Free / 1048576LLU);
