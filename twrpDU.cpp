@@ -59,6 +59,16 @@ void twrpDU::add_absolute_dir(const string& dir) {
 	absolutedir.push_back(TWFunc::Remove_Trailing_Slashes(dir));
 }
 
+void twrpDU::clear_absolute_dir(string dir) {
+	vector<string>::iterator iter = absolutedir.begin();
+	while (iter != absolutedir.end()) {
+		if (*iter == TWFunc::Remove_Trailing_Slashes(dir))
+			iter = absolutedir.erase(iter);
+		else
+			iter++;
+	}
+}
+
 vector<string> twrpDU::get_absolute_dirs(void) {
 	return absolutedir;
 }
