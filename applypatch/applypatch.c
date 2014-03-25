@@ -27,6 +27,7 @@
 
 #include "mincrypt/sha.h"
 #include "applypatch.h"
+#include "bmlutils/bmlutils.h"
 #include "mtdutils/mtdutils.h"
 #include "edify/expr.h"
 
@@ -57,7 +58,8 @@ int LoadFileContents(const char* filename, FileContents* file,
     // A special 'filename' beginning with "MTD:" or "EMMC:" means to
     // load the contents of a partition.
     if (strncmp(filename, "MTD:", 4) == 0 ||
-        strncmp(filename, "EMMC:", 5) == 0) {
+        strncmp(filename, "EMMC:", 5) == 0 ||
+        strncmp(filename, "BML:", 4) == 0) {
         return LoadPartitionContents(filename, file);
     }
 
@@ -147,12 +149,22 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         type = MTD;
     } else if (strcmp(magic, "EMMC") == 0) {
         type = EMMC;
+    } else if (strcmp(magic, "BML") == 0) {
+        type = EMMC;
     } else {
         printf("LoadPartitionContents called with bad filename (%s)\n",
                filename);
         return -1;
     }
     const char* partition = strtok(NULL, ":");
+
+    if (strcmp(magic, "BML") == 0) {
+        if (strcmp(partition, "boot") == 0) {
+            partition = BOARD_BML_BOOT;
+        } else if (strcmp(partition, "recovery") == 0) {
+            partition = BOARD_BML_RECOVERY;
+        }
+    }
 
     int i;
     int colons = 0;
@@ -368,11 +380,30 @@ int WriteToPartition(unsigned char* data, size_t len,
         type = MTD;
     } else if (strcmp(magic, "EMMC") == 0) {
         type = EMMC;
+    } else if (strcmp(magic, "BML") == 0) {
+        type = EMMC;
     } else {
         printf("WriteToPartition called with bad target (%s)\n", target);
         return -1;
     }
     const char* partition = strtok(NULL, ":");
+
+    if (strcmp(magic, "BML") == 0) {
+        if (strcmp(partition, "boot") == 0) {
+            partition = BOARD_BML_BOOT;
+        } else if (strcmp(partition, "recovery") == 0) {
+            partition = BOARD_BML_RECOVERY;
+        }
+
+        int bmlpartition = open(partition, O_RDWR | O_LARGEFILE);
+        if (bmlpartition < 0)
+            return -1;
+        if (ioctl(bmlpartition, BML_UNLOCK_ALL, 0)) {
+            printf("failed to unlock BML partition: (%s)\n", partition);
+            return -1;
+        }
+        close(bmlpartition);
+    }
 
     if (partition == NULL) {
         printf("bad partition target name \"%s\"\n", target);
@@ -845,7 +876,8 @@ static int GenerateTarget(FileContents* source_file,
         // file?
 
         if (strncmp(target_filename, "MTD:", 4) == 0 ||
-            strncmp(target_filename, "EMMC:", 5) == 0) {
+            strncmp(target_filename, "EMMC:", 5) == 0 ||
+            strncmp(target_filename, "BML:", 4) == 0) {
             // If the target is a partition, we're actually going to
             // write the output to /tmp and then copy it to the
             // partition.  statfs() always returns 0 blocks free for
@@ -887,7 +919,8 @@ static int GenerateTarget(FileContents* source_file,
                 // location.
 
                 if (strncmp(source_filename, "MTD:", 4) == 0 ||
-                    strncmp(source_filename, "EMMC:", 5) == 0) {
+                    strncmp(source_filename, "EMMC:", 5) == 0 ||
+                    strncmp(source_filename, "BML:", 4) == 0) {
                     // It's impossible to free space on the target filesystem by
                     // deleting the source if the source is a partition.  If
                     // we're ever in a state where we need to do this, fail.
@@ -932,7 +965,8 @@ static int GenerateTarget(FileContents* source_file,
         output = -1;
         outname = NULL;
         if (strncmp(target_filename, "MTD:", 4) == 0 ||
-            strncmp(target_filename, "EMMC:", 5) == 0) {
+            strncmp(target_filename, "EMMC:", 5) == 0 ||
+            strncmp(target_filename, "BML:", 4) == 0) {
             // We store the decoded output in memory.
             msi.buffer = malloc(target_size);
             if (msi.buffer == NULL) {
