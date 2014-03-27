@@ -33,12 +33,10 @@
 #include <sys/atomics.h>
 #include "legacy_property_service.h"
 
-
 static int persistent_properties_loaded = 0;
 static int property_area_inited = 0;
 
 static int property_set_fd = -1;
-
 
 typedef struct {
     void *data;
@@ -203,9 +201,13 @@ static void copy_property_to_legacy(const char *key, const char *value, void *co
     legacy_property_set(key, value);
 }
 
-void legacy_properties_init()
+int legacy_properties_init()
 {
-    init_property_area();
-    property_list(copy_property_to_legacy, 0);
-}
+    if(init_property_area() != 0)
+        return -1;
 
+    if(property_list(copy_property_to_legacy, 0) != 0)
+        return -1;
+
+    return 0;
+}

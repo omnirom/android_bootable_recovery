@@ -63,7 +63,7 @@ struct prop_info {
     char value[PROP_VALUE_MAX];
 };
 
-struct prop_msg 
+struct prop_msg
 {
     unsigned cmd;
     char name[PROP_NAME_MAX];
@@ -71,7 +71,7 @@ struct prop_msg
 };
 
 #define PROP_MSG_SETPROP 1
-    
+
 /*
 ** Rules:
 **
