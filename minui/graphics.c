@@ -40,6 +40,20 @@
 #include "graphics.h"
 
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+#endif
+
+typedef struct {
+    char        name[80];
+    GRFont*     font;
+} font_item;
+
+static font_item gr_fonts[] = {
+    { "menu", NULL },
+    { "log", NULL },
+};
+
 static GRFont* gr_font = NULL;
 static minui_backend* gr_backend = NULL;
 
@@ -299,6 +313,17 @@ void gr_fill(int x1, int y1, int x2, int y2)
     }
 }
 
+void gr_set_font(const char* name)
+{
+    unsigned int idx;
+    for (idx = 0; idx < ARRAY_SIZE(gr_fonts); ++idx) {
+        if (strcmp(name, gr_fonts[idx].name) == 0) {
+            gr_font = gr_fonts[idx].font;
+            break;
+        }
+    }
+}
+
 void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
     if (source == NULL) return;
 
@@ -332,11 +357,14 @@ unsigned int gr_get_height(GRSurface* surface) {
     return surface->height;
 }
 
-static void gr_init_font(void)
+static void gr_init_one_font(int idx)
 {
-    gr_font = calloc(sizeof(*gr_font), 1);
+    char name[80];
+    GRFont* gr_font = calloc(sizeof(*gr_font), 1);
+    snprintf(name, sizeof(name), "font_%s", gr_fonts[idx].name);
+    gr_fonts[idx].font = gr_font;
 
-    int res = res_create_alpha_surface("font", &(gr_font->texture));
+    int res = res_create_alpha_surface(name, &(gr_font->texture));
     if (res == 0) {
         // The font image should be a 96x2 array of character images.  The
         // columns are the printable ASCII characters 0x20 - 0x7f.  The
@@ -366,6 +394,15 @@ static void gr_init_font(void)
         gr_font->cwidth = font.cwidth;
         gr_font->cheight = font.cheight;
     }
+}
+
+static void gr_init_font()
+{
+    unsigned int idx;
+    for (idx = 0; idx < ARRAY_SIZE(gr_fonts); ++idx) {
+        gr_init_one_font(idx);
+    }
+    gr_font = gr_fonts[0].font;
 }
 
 #if 0

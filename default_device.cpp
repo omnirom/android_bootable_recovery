@@ -27,14 +27,14 @@ static const char* HEADERS[] = { "Swipe up/down to change selections;",
                                  "",
                                  NULL };
 
-static const char* ITEMS[] =  {"reboot system now",
-                               "apply update",
-                               "wipe data/factory reset",
-                               "wipe cache partition",
-                               "wipe media",
-                               "reboot to bootloader",
-                               "power down",
-                               "view recovery logs",
+static const char* ITEMS[] =  {"Reboot system now",
+                               "Apply update",
+                               "Wipe data/factory reset",
+                               "Wipe cache partition",
+                               "Wipe media",
+                               "Reboot to bootloader",
+                               "Power down",
+                               "View recovery logs",
                                NULL };
 
 static Device::BuiltinAction ACTIONS[] = {
@@ -71,6 +71,9 @@ class DefaultDevice : public Device {
 
     int HandleMenuKey(int key, int visible) {
         if (visible) {
+            if (key & KEY_FLAG_ABS) {
+                return key;
+            }
             switch (key) {
               case KEY_RIGHTSHIFT:
               case KEY_DOWN:
