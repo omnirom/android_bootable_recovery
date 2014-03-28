@@ -407,6 +407,13 @@ static int vk_modify(struct ev *e, struct input_event *ev)
     printf("EV: %s => type: %x  code: %x  value: %d\n", e->deviceName, ev->type, ev->code, ev->value);
 #endif
 
+    if (ev->type == 0) {
+#ifdef _EVENT_LOGGING
+        printf("ignoring type 0\n");
+#endif
+        return 0;
+    }
+
 	// Handle keyboard events, value of 1 indicates key down, 0 indicates key up
 	if (ev->type == EV_KEY) {
 		return 0;
