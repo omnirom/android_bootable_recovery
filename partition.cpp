@@ -1001,6 +1001,8 @@ bool TWPartition::Mount(bool Display_Error) {
 			}
 		} else {
 #endif
+			if (Removable)
+				Display_Error = false;
 			if (Display_Error)
 				LOGERR("Unable to mount '%s'\n", Mount_Point.c_str());
 			else
