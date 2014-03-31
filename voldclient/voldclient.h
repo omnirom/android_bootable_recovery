@@ -20,7 +20,9 @@
 #include <linux/kdev_t.h>
 
 int vold_mount_volume(const char* path, bool wait);
+int vold_mount_auto_volume(const char* label, bool wait);
 int vold_unmount_volume(const char* path, bool force, bool wait);
+int vold_unmount_auto_volume(const char* label, bool force, bool wait);
 
 int vold_share_volume(const char* path);
 int vold_unshare_volume(const char* path, bool remount);

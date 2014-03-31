@@ -29,6 +29,7 @@ static const char* ITEMS[] =  {"reboot system now",
                                "apply update from ADB",
                                "wipe data/factory reset",
                                "wipe cache partition",
+                               "wipe media",
                                "reboot to bootloader",
                                "power down",
                                "view recovery logs",
@@ -84,10 +85,11 @@ class DefaultDevice : public Device {
           case 1: return APPLY_ADB_SIDELOAD;
           case 2: return WIPE_DATA;
           case 3: return WIPE_CACHE;
-          case 4: return REBOOT_BOOTLOADER;
-          case 5: return SHUTDOWN;
-          case 6: return READ_RECOVERY_LASTLOG;
-          case 7: return APPLY_EXT;
+          case 4: return WIPE_MEDIA;
+          case 5: return REBOOT_BOOTLOADER;
+          case 6: return SHUTDOWN;
+          case 7: return READ_RECOVERY_LASTLOG;
+          case 8: return APPLY_EXT;
           default: return NO_ACTION;
         }
     }

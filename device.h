@@ -67,7 +67,7 @@ class Device {
 
     enum BuiltinAction { NO_ACTION, REBOOT, APPLY_EXT,
                          APPLY_CACHE,   // APPLY_CACHE is deprecated; has no effect
-                         APPLY_ADB_SIDELOAD, WIPE_DATA, WIPE_CACHE,
+                         APPLY_ADB_SIDELOAD, WIPE_DATA, WIPE_CACHE, WIPE_MEDIA,
                          REBOOT_BOOTLOADER, SHUTDOWN, READ_RECOVERY_LASTLOG };
 
     // Perform a recovery action selected from the menu.
@@ -95,6 +95,9 @@ class Device {
     // needed.  Return 0 on success.  The userdata and cache partitions
     // are erased AFTER this returns (whether it returns success or not).
     virtual int WipeData() { return 0; }
+
+    // Same as above for media (/data/media and primary storage)
+    virtual int WipeMedia() { return 0; }
 
     // Return the headers (an array of strings, one per line,
     // NULL-terminated) for the main menu.  Typically these tell users

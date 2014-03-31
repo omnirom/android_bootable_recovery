@@ -55,9 +55,52 @@ int vold_mount_volume(const char* path, bool wait) {
     return vold_command(3, cmd, wait);
 }
 
+int vold_mount_auto_volume(const char* label, bool wait) {
+    char path[80];
+    sprintf(path, "/storage/%s", label);
+    const char *cmd[3] = { "volume", "mount", label };
+    int state = vold_get_volume_state(path);
+
+    if (state == Volume::State_Mounted) {
+        LOGI("Volume %s already mounted\n", path);
+        return 0;
+    }
+
+    if (state != Volume::State_Idle) {
+        LOGI("Volume %s is not idle, current state is %d\n", path, state);
+        return -1;
+    }
+
+    if (access(path, R_OK) != 0) {
+        mkdir(path, 0000);
+        chown(path, 1000, 1000);
+    }
+    return vold_command(3, cmd, wait);
+}
+
 int vold_unmount_volume(const char* path, bool force, bool wait) {
 
     const char *cmd[4] = { "volume", "unmount", path, "force" };
+    int state = vold_get_volume_state(path);
+
+    if (state <= Volume::State_Idle) {
+        LOGI("Volume %s is not mounted\n", path);
+        return 0;
+    }
+
+    if (state != Volume::State_Mounted) {
+        LOGI("Volume %s cannot be unmounted in state %d\n", path, state);
+        return -1;
+    }
+
+    return vold_command(force ? 4: 3, cmd, wait);
+}
+
+int vold_unmount_auto_volume(const char* label, bool force, bool wait) {
+
+    char path[80];
+    sprintf(path, "/storage/%s", label);
+    const char *cmd[4] = { "volume", "unmount", label, "force" };
     int state = vold_get_volume_state(path);
 
     if (state <= Volume::State_Idle) {

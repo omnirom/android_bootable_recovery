@@ -59,6 +59,7 @@ static const struct option OPTIONS[] = {
   { "update_package", required_argument, NULL, 'u' },
   { "wipe_data", no_argument, NULL, 'w' },
   { "wipe_cache", no_argument, NULL, 'c' },
+  { "wipe_media", no_argument, NULL, 'm' },
   { "show_text", no_argument, NULL, 't' },
   { "just_exit", no_argument, NULL, 'x' },
   { "locale", required_argument, NULL, 'l' },
@@ -427,7 +428,9 @@ erase_volume(const char *volume) {
 
     ui->Print("Formatting %s...\n", volume);
 
-    ensure_path_unmounted(volume);
+    if (volume[0] == '/') {
+        ensure_path_unmounted(volume);
+    }
     int result = format_volume(volume);
 
     if (is_cache) {
@@ -749,6 +752,44 @@ static void choose_recovery_file(Device* device) {
     }
 }
 
+static void
+wipe_media(int confirm, Device* device) {
+    if (confirm) {
+        static const char** title_headers = NULL;
+
+        if (title_headers == NULL) {
+            const char* headers[] = { "Confirm wipe of all user media?",
+                                      "  THIS CAN NOT BE UNDONE.",
+                                      "",
+                                      NULL };
+            title_headers = prepend_title((const char**)headers);
+        }
+
+        const char* items[] = { " No",
+                                " No",
+                                " No",
+                                " No",
+                                " No",
+                                " No",
+                                " No",
+                                " Yes -- delete all user media",   // [7]
+                                " No",
+                                " No",
+                                " No",
+                                NULL };
+
+        int chosen_item = get_menu_selection(title_headers, items, 1, 0, device);
+        if (chosen_item != 7) {
+            return;
+        }
+    }
+
+    ui->Print("\n-- Wiping media...\n");
+    device->WipeMedia();
+    erase_volume("media");
+    ui->Print("Media wipe complete.\n");
+}
+
 static int enter_sideload_mode(int status, int* wipe_cache, Device* device) {
 
     ensure_path_mounted(CACHE_ROOT);
@@ -832,6 +873,11 @@ prompt_and_wait(Device* device, int status) {
                     ui->Print("\n-- Wiping cache...\n");
                     erase_volume("/cache");
                     ui->Print("Cache wipe complete.\n");
+                    if (!ui->IsTextVisible()) return Device::NO_ACTION;
+                    break;
+
+                case Device::WIPE_MEDIA:
+                    wipe_media(ui->IsTextVisible(), device);
                     if (!ui->IsTextVisible()) return Device::NO_ACTION;
                     break;
 
@@ -1066,7 +1112,7 @@ main(int argc, char **argv) {
 
     const char *send_intent = NULL;
     const char *update_package = NULL;
-    int wipe_data = 0, wipe_cache = 0, show_text = 0, sideload = 0;
+    int wipe_data = 0, wipe_cache = 0, wipe_media = 0, show_text = 0, sideload = 0;
     bool just_exit = false;
     bool shutdown_after = false;
 
@@ -1076,6 +1122,7 @@ main(int argc, char **argv) {
         case 's': send_intent = optarg; break;
         case 'u': update_package = optarg; break;
         case 'w': wipe_data = wipe_cache = 1; break;
+        case 'm': wipe_media = 1; break;
         case 'c': wipe_cache = 1; break;
         case 't': show_text = 1; break;
         case 'x': just_exit = true; break;
@@ -1190,6 +1237,9 @@ main(int argc, char **argv) {
     } else if (wipe_cache) {
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
+    } else if (wipe_media) {
+        if (erase_volume("media")) status = INSTALL_ERROR;
+        if (status != INSTALL_SUCCESS) ui->Print("Media wipe failed.\n");
     } else if (sideload) {
         status = enter_sideload_mode(status, &wipe_cache, device);
     } else if (!just_exit) {

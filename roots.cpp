@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 #include <fs_mgr.h>
 #include "mtdutils/mtdutils.h"
@@ -105,19 +106,63 @@ void load_volume_table()
     printf("\n");
 }
 
+static fstab_rec* primary_storage_volume = NULL;
+fstab_rec* get_primary_storage_volume() {
+    if (primary_storage_volume == NULL) {
+        primary_storage_volume = volume_for_path("/storage/sdcard0");
+        if (primary_storage_volume == NULL) {
+            int i;
+            int idx = -1;
+            for (i = 0; i < get_num_volumes(); i++) {
+                fstab_rec* v = get_device_volumes() + i;
+                if (fs_mgr_is_voldmanaged(v) &&
+                        v->label && strncmp(v->label, "sdcard", 6) == 0) {
+                    int curidx = 0;
+                    if (isdigit(v->label[6])) {
+                        curidx = atoi(&v->label[6]);
+                    }
+                    if (idx == -1 || curidx < idx) {
+                        primary_storage_volume = v;
+                        idx = curidx;
+                    }
+                }
+            }
+        }
+    }
+    return primary_storage_volume;
+}
+
 int is_primary_storage_voldmanaged() {
-    fstab_rec* v;
-    v = volume_for_path("/storage/sdcard0");
+    fstab_rec* v = get_primary_storage_volume();
+    if (!v) {
+        LOGI("primary storage volume not found\n");
+        return 0;
+    }
     return fs_mgr_is_voldmanaged(v);
 }
 
 static char* primary_storage_path = NULL;
 char* get_primary_storage_path() {
     if (primary_storage_path == NULL) {
-        if (volume_for_path("/storage/sdcard0"))
+        if (volume_for_path("/storage/sdcard0")) {
             primary_storage_path = "/storage/sdcard0";
-        else
-            primary_storage_path = "/sdcard";
+        }
+        else {
+            int i;
+            for (i = 0; i < get_num_volumes(); i++) {
+                fstab_rec* v = get_device_volumes() + i;
+                if (fs_mgr_is_voldmanaged(v) &&
+                        v->label && strncmp(v->label, "sdcard", 6) == 0) {
+                    char* path = (char*)malloc(9+strlen(v->label)+1);
+                    sprintf(path, "/storage/%s", v->label);
+                    primary_storage_path = path;
+                    break;
+                }
+            }
+            if (primary_storage_path == NULL) {
+                primary_storage_path = "/sdcard";
+            }
+        }
     }
     return primary_storage_path;
 }
@@ -261,7 +306,79 @@ static int exec_cmd(const char* path, char* const argv[]) {
     return WEXITSTATUS(status);
 }
 
+static int rmtree_except(const char* path, const char* except)
+{
+    char pathbuf[PATH_MAX];
+    int rc = 0;
+    DIR* dp = opendir(path);
+    if (dp == NULL) {
+        return -1;
+    }
+    struct dirent* de;
+    while ((de = readdir(dp)) != NULL) {
+        if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."))
+            continue;
+        if (except && !strcmp(de->d_name, except))
+            continue;
+        struct stat st;
+        snprintf(pathbuf, sizeof(pathbuf), "%s/%s", path, de->d_name);
+        rc = lstat(pathbuf, &st);
+        if (rc != 0) {
+            LOGE("Failed to stat %s\n", pathbuf);
+            break;
+        }
+        if (S_ISDIR(st.st_mode)) {
+            rc = rmtree_except(pathbuf, NULL);
+            if (rc != 0)
+                break;
+            rc = rmdir(pathbuf);
+        }
+        else {
+            rc = unlink(pathbuf);
+        }
+        if (rc != 0) {
+            LOGI("Failed to remove %s: %s\n", pathbuf, strerror(errno));
+            break;
+        }
+    }
+    closedir(dp);
+    return rc;
+}
+
 int format_volume(const char* volume) {
+    if (strcmp(volume, "media") == 0) {
+        if (ensure_path_mounted("/data") != 0) {
+            LOGE("format_volume failed to mount /data\n");
+            return -1;
+        }
+        int rc = 0;
+        rc = rmtree_except("/data/media", NULL);
+        ensure_path_unmounted("/data");
+        fstab_rec* vol = get_primary_storage_volume();
+        if (vol) {
+            if (is_primary_storage_voldmanaged()) {
+                char path[80];
+                sprintf(path, "/storage/%s", vol->label);
+                if (vold_mount_auto_volume(vol->label, 1) != 0) {
+                    LOGE("vold failed to mount primary storage %s\n", vol->label);
+                    return 1;
+                }
+                rc = rmtree_except(path, NULL);
+                vold_unmount_auto_volume(vol->label, 0, 1);
+            }
+            else {
+                if (ensure_path_mounted(vol->mount_point) != 0) {
+                    LOGE("failed to mount primary storage %s\n", vol->mount_point);
+                    return 1;
+                }
+            }
+        }
+        else {
+            LOGE("primary storage volume does not exist\n");
+        }
+        return rc;
+    }
+
     fstab_rec* v = volume_for_path(volume);
     if (v == NULL) {
         LOGE("unknown volume \"%s\"\n", volume);
@@ -275,6 +392,15 @@ int format_volume(const char* volume) {
     if (strcmp(v->mount_point, volume) != 0) {
         LOGE("can't give path \"%s\" to format_volume\n", volume);
         return -1;
+    }
+
+    if (strcmp(volume, "/data") == 0) {
+        if (ensure_path_mounted("/data") == 0) {
+            int rc = rmtree_except("/data", "media");
+            ensure_path_unmounted(volume);
+            return rc;
+        }
+        LOGE("format_volume failed to mount /data, formatting instead\n");
     }
 
     if (ensure_path_unmounted(volume) != 0) {
