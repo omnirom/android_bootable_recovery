@@ -93,7 +93,7 @@ int twrpTar::createTarFork() {
 			int item_len, ret, thread_error = 0;
 			std::vector<TarListStruct> RegularList;
 			std::vector<TarListStruct> EncryptList;
-			string FileName;
+			string FolderPath;
 			struct TarListStruct TarItem;
 			twrpTar reg, enc[9];
 			struct stat st;
@@ -114,26 +114,24 @@ int twrpTar::createTarFork() {
 			}
 			// Figure out the size of all data to be encrypted and create a list of unencrypted files
 			while ((de = readdir(d)) != NULL) {
-				FileName = tardir + "/";
-				FileName += de->d_name;
-				if (has_data_media == 1 && FileName.size() >= 11 && strncmp(FileName.c_str(), "/data/media", 11) == 0)
-					continue; // Skip /data/media
-				if (de->d_type == DT_BLK || de->d_type == DT_CHR)
+				FolderPath = tardir + "/" + de->d_name;
+
+				if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FolderPath))
 					continue;
-				if (de->d_type == DT_DIR && !du.check_skip_dirs(tardir, de->d_name)) {
+				if (de->d_type == DT_DIR) {
 					item_len = strlen(de->d_name);
 					if (userdata_encryption && ((item_len >= 3 && strncmp(de->d_name, "app", 3) == 0) || (item_len >= 6 && strncmp(de->d_name, "dalvik", 6) == 0))) {
-						if (Generate_TarList(FileName, &RegularList, &target_size, &regular_thread_id) < 0) {
+						if (Generate_TarList(FolderPath, &RegularList, &target_size, &regular_thread_id) < 0) {
 							LOGERR("Error in Generate_TarList with regular list!\n");
 							closedir(d);
 							_exit(-1);
 						}
-						regular_size += du.Get_Folder_Size(FileName);
+						regular_size += du.Get_Folder_Size(FolderPath);
 					} else {
-						encrypt_size += du.Get_Folder_Size(FileName);
+						encrypt_size += du.Get_Folder_Size(FolderPath);
 					}
 				} else if (de->d_type == DT_REG) {
-					stat(FileName.c_str(), &st);
+					stat(FolderPath.c_str(), &st);
 					encrypt_size += (unsigned long long)(st.st_size);
 				}
 			}
@@ -158,30 +156,27 @@ int twrpTar::createTarFork() {
 			}
 			// Divide up the encrypted file list for threading
 			while ((de = readdir(d)) != NULL) {
-				FileName = tardir + "/";
-				FileName += de->d_name;
-				if (has_data_media == 1 && FileName.size() >= 11 && strncmp(FileName.c_str(), "/data/media", 11) == 0)
-					continue; // Skip /data/media
-				if (de->d_type == DT_BLK || de->d_type == DT_CHR)
+				FolderPath = tardir + "/" + de->d_name;
+
+				if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FolderPath))
 					continue;
-				if (de->d_type == DT_DIR && !du.check_skip_dirs(tardir, de->d_name)) {
+				if (de->d_type == DT_DIR) {
 					item_len = strlen(de->d_name);
 					if (userdata_encryption && ((item_len >= 3 && strncmp(de->d_name, "app", 3) == 0) || (item_len >= 6 && strncmp(de->d_name, "dalvik", 6) == 0))) {
 						// Do nothing, we added these to RegularList earlier
 					} else {
-						FileName = tardir + "/";
-						FileName += de->d_name;
-						if (Generate_TarList(FileName, &EncryptList, &target_size, &enc_thread_id) < 0) {
+						FolderPath = tardir + "/" + de->d_name;
+						if (Generate_TarList(FolderPath, &EncryptList, &target_size, &enc_thread_id) < 0) {
 							LOGERR("Error in Generate_TarList with encrypted list!\n");
 							closedir(d);
 							_exit(-1);
 						}
 					}
 				} else if (de->d_type == DT_REG || de->d_type == DT_LNK) {
-					stat(FileName.c_str(), &st);
+					stat(FolderPath.c_str(), &st);
 					if (de->d_type == DT_REG)
 						Archive_Current_Size += (unsigned long long)(st.st_size);
-					TarItem.fn = FileName;
+					TarItem.fn = FolderPath;
 					TarItem.thread_id = enc_thread_id;
 					EncryptList.push_back(TarItem);
 				}
@@ -440,12 +435,9 @@ int twrpTar::Generate_TarList(string Path, std::vector<TarListStruct> *TarList, 
 	DIR* d;
 	struct dirent* de;
 	struct stat st;
-	string FileName;
+	string FolderPath;
 	struct TarListStruct TarItem;
 	string::size_type i;
-
-	if (has_data_media == 1 && Path.size() >= 11 && strncmp(Path.c_str(), "/data/media", 11) == 0)
-		return 0; // Skip /data/media
 
 	d = opendir(Path.c_str());
 	if (d == NULL) {
@@ -454,21 +446,18 @@ int twrpTar::Generate_TarList(string Path, std::vector<TarListStruct> *TarList, 
 		return -1;
 	}
 	while ((de = readdir(d)) != NULL) {
-		FileName = Path + "/";
-		FileName += de->d_name;
+		FolderPath = Path + "/" + de->d_name;
 
-		if (has_data_media == 1 && FileName.size() >= 11 && strncmp(FileName.c_str(), "/data/media", 11) == 0)
-			continue; // Skip /data/media
-		if (de->d_type == DT_BLK || de->d_type == DT_CHR)
+		if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FolderPath))
 			continue;
-		TarItem.fn = FileName;
+		TarItem.fn = FolderPath;
 		TarItem.thread_id = *thread_id;
-		if (de->d_type == DT_DIR && !du.check_skip_dirs(Path, de->d_name)) {
+		if (de->d_type == DT_DIR) {
 			TarList->push_back(TarItem);
-			if (Generate_TarList(FileName, TarList, Target_Size, thread_id) < 0)
+			if (Generate_TarList(FolderPath, TarList, Target_Size, thread_id) < 0)
 				return -1;
 		} else if (de->d_type == DT_REG || de->d_type == DT_LNK) {
-			stat(FileName.c_str(), &st);
+			stat(FolderPath.c_str(), &st);
 			TarList->push_back(TarItem);
 			if (de->d_type == DT_REG)
 				Archive_Current_Size += st.st_size;

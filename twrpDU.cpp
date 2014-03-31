@@ -103,12 +103,7 @@ bool twrpDU::check_relative_skip_dirs(const string& dir) {
 }
 
 bool twrpDU::check_absolute_skip_dirs(const string& path) {
-	string normalized = TWFunc::Remove_Trailing_Slashes(path);
 	return std::find(absolutedir.begin(), absolutedir.end(), normalized) != absolutedir.end();
-}
-
-bool twrpDU::check_skip_dirs(const string& parent, const string& dir) {
-	return check_relative_skip_dirs(dir) || check_absolute_skip_dirs(parent + "/" + dir);
 }
 
 bool twrpDU::check_skip_dirs(const string& path) {
