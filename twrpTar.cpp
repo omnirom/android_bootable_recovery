@@ -114,13 +114,11 @@ int twrpTar::createTarFork() {
 			}
 			// Figure out the size of all data to be encrypted and create a list of unencrypted files
 			while ((de = readdir(d)) != NULL) {
-				FileName = tardir + "/";
-				FileName += de->d_name;
-				if (has_data_media == 1 && FileName.size() >= 11 && strncmp(FileName.c_str(), "/data/media", 11) == 0)
-					continue; // Skip /data/media
-				if (de->d_type == DT_BLK || de->d_type == DT_CHR)
+				FileName = tardir + "/" + de->d_name;
+
+				if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName))
 					continue;
-				if (de->d_type == DT_DIR && !du.check_skip_dirs(tardir, de->d_name)) {
+				if (de->d_type == DT_DIR) {
 					item_len = strlen(de->d_name);
 					if (userdata_encryption && ((item_len >= 3 && strncmp(de->d_name, "app", 3) == 0) || (item_len >= 6 && strncmp(de->d_name, "dalvik", 6) == 0))) {
 						if (Generate_TarList(FileName, &RegularList, &target_size, &regular_thread_id) < 0) {
@@ -158,19 +156,16 @@ int twrpTar::createTarFork() {
 			}
 			// Divide up the encrypted file list for threading
 			while ((de = readdir(d)) != NULL) {
-				FileName = tardir + "/";
-				FileName += de->d_name;
-				if (has_data_media == 1 && FileName.size() >= 11 && strncmp(FileName.c_str(), "/data/media", 11) == 0)
-					continue; // Skip /data/media
-				if (de->d_type == DT_BLK || de->d_type == DT_CHR)
+				FileName = tardir + "/" + de->d_name;
+
+				if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName))
 					continue;
-				if (de->d_type == DT_DIR && !du.check_skip_dirs(tardir, de->d_name)) {
+				if (de->d_type == DT_DIR) {
 					item_len = strlen(de->d_name);
 					if (userdata_encryption && ((item_len >= 3 && strncmp(de->d_name, "app", 3) == 0) || (item_len >= 6 && strncmp(de->d_name, "dalvik", 6) == 0))) {
 						// Do nothing, we added these to RegularList earlier
 					} else {
-						FileName = tardir + "/";
-						FileName += de->d_name;
+						FileName = tardir + "/" + de->d_name;
 						if (Generate_TarList(FileName, &EncryptList, &target_size, &enc_thread_id) < 0) {
 							LOGERR("Error in Generate_TarList with encrypted list!\n");
 							closedir(d);
@@ -446,9 +441,6 @@ int twrpTar::Generate_TarList(string Path, std::vector<TarListStruct> *TarList, 
 	struct TarListStruct TarItem;
 	string::size_type i;
 
-	if (has_data_media == 1 && Path.size() >= 11 && strncmp(Path.c_str(), "/data/media", 11) == 0)
-		return 0; // Skip /data/media
-
 	d = opendir(Path.c_str());
 	if (d == NULL) {
 		LOGERR("Error opening '%s' -- error: %s\n", Path.c_str(), strerror(errno));
@@ -456,16 +448,13 @@ int twrpTar::Generate_TarList(string Path, std::vector<TarListStruct> *TarList, 
 		return -1;
 	}
 	while ((de = readdir(d)) != NULL) {
-		FileName = Path + "/";
-		FileName += de->d_name;
+		FileName = Path + "/" + de->d_name;
 
-		if (has_data_media == 1 && FileName.size() >= 11 && strncmp(FileName.c_str(), "/data/media", 11) == 0)
-			continue; // Skip /data/media
-		if (de->d_type == DT_BLK || de->d_type == DT_CHR)
+		if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName))
 			continue;
 		TarItem.fn = FileName;
 		TarItem.thread_id = *thread_id;
-		if (de->d_type == DT_DIR && !du.check_skip_dirs(Path, de->d_name)) {
+		if (de->d_type == DT_DIR) {
 			TarList->push_back(TarItem);
 			if (Generate_TarList(FileName, TarList, Target_Size, thread_id) < 0)
 				return -1;

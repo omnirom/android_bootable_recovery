@@ -42,14 +42,12 @@ public:
 	void add_relative_dir(const string& Path);
 	bool check_relative_skip_dirs(const string& dir);
 	bool check_absolute_skip_dirs(const string& path);
-	bool check_skip_dirs(const string& parent, const string& dir);
 	bool check_skip_dirs(const string& path);
 	vector<string> get_absolute_dirs(void);
 	void clear_relative_dir(string dir);
 private:
 	vector<string> absolutedir;
 	vector<string> relativedir;
-	string parent;
 };
 
 extern twrpDU du;
