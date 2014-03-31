@@ -41,7 +41,6 @@ twrpDU::twrpDU() {
 #ifdef RECOVERY_SDCARD_ON_DATA
 		add_absolute_dir("/data/media");
 #endif
-		parent = "";
 }
 
 void twrpDU::add_relative_dir(const string& dir) {
@@ -80,7 +79,7 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 	}
 
 	while ((de = readdir(d)) != NULL) {
-		if (de->d_type == DT_DIR && !check_skip_dirs(Path, de->d_name)) {
+		if (de->d_type == DT_DIR && !check_skip_dirs(Path + "/" + de->d_name)) {
 			dusize += Get_Folder_Size(Path + "/" + de->d_name);
 		} else if (de->d_type == DT_REG) {
 			stat((Path + "/" + de->d_name).c_str(), &st);
@@ -96,12 +95,7 @@ bool twrpDU::check_relative_skip_dirs(const string& dir) {
 }
 
 bool twrpDU::check_absolute_skip_dirs(const string& path) {
-	string normalized = TWFunc::Remove_Trailing_Slashes(path);
-	return std::find(absolutedir.begin(), absolutedir.end(), normalized) != absolutedir.end();
-}
-
-bool twrpDU::check_skip_dirs(const string& parent, const string& dir) {
-	return check_relative_skip_dirs(dir) || check_absolute_skip_dirs(parent + "/" + dir);
+	return std::find(absolutedir.begin(), absolutedir.end(), path) != absolutedir.end();
 }
 
 bool twrpDU::check_skip_dirs(const string& path) {
