@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b77b57d_55228da1",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1006,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-04-01T18:38:40Z",
+      "side": 1,
+      "message": "How about:\nif (Display_Error \u0026\u0026 !Removable)",
+      "revId": "583a8877b706be5cecc94c0c4aeec68120bb0715",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
