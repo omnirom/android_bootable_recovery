@@ -20,6 +20,6 @@
 #include <stdbool.h>
 
 void legacy_get_property_workspace(int *fd, int *sz);
-void legacy_properties_init();
+int legacy_properties_init();
 
 #endif	/* _LEGACY_PROPERTY_H */
