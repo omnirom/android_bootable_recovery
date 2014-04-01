@@ -771,7 +771,10 @@ wipe_data(int confirm, Device* device) {
     ui->Print("Data wipe complete.\n");
 }
 
-static void
+// Return REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER.  Returning NO_ACTION
+// means to take the default, which is to reboot or shutdown depending
+// on if the --shutdown_after flag was passed to recovery.
+static Device::BuiltinAction
 prompt_and_wait(Device* device, int status) {
     const char* const* headers = prepend_title(device->GetMenuHeaders());
 
@@ -795,23 +798,28 @@ prompt_and_wait(Device* device, int status) {
         // device-specific code may take some action here.  It may
         // return one of the core actions handled in the switch
         // statement below.
-        chosen_item = device->InvokeMenuItem(chosen_item);
+        Device::BuiltinAction chosen_action = device->InvokeMenuItem(chosen_item);
 
         int wipe_cache;
-        switch (chosen_item) {
+        switch (chosen_action) {
+            case Device::NO_ACTION:
+                break;
+
             case Device::REBOOT:
-                return;
+            case Device::SHUTDOWN:
+            case Device::REBOOT_BOOTLOADER:
+                return chosen_action;
 
             case Device::WIPE_DATA:
                 wipe_data(ui->IsTextVisible(), device);
-                if (!ui->IsTextVisible()) return;
+                if (!ui->IsTextVisible()) return Device::NO_ACTION;
                 break;
 
             case Device::WIPE_CACHE:
                 ui->Print("\n-- Wiping cache...\n");
                 erase_volume("/cache");
                 ui->Print("Cache wipe complete.\n");
-                if (!ui->IsTextVisible()) return;
+                if (!ui->IsTextVisible()) return Device::NO_ACTION;
                 break;
 
             case Device::APPLY_EXT:
@@ -829,7 +837,7 @@ prompt_and_wait(Device* device, int status) {
                         ui->SetBackground(RecoveryUI::ERROR);
                         ui->Print("Installation aborted.\n");
                     } else if (!ui->IsTextVisible()) {
-                        return;  // reboot if logs aren't visible
+                        return Device::NO_ACTION;  // reboot if logs aren't visible
                     } else {
                         ui->Print("\nInstall from sdcard complete.\n");
                     }
@@ -852,7 +860,7 @@ prompt_and_wait(Device* device, int status) {
                         ui->SetBackground(RecoveryUI::ERROR);
                         ui->Print("Installation aborted.\n");
                     } else if (!ui->IsTextVisible()) {
-                        return;  // reboot if logs aren't visible
+                        return Device::NO_ACTION;  // reboot if logs aren't visible
                     } else {
                         ui->Print("\nInstall from cache complete.\n");
                     }
@@ -867,7 +875,7 @@ prompt_and_wait(Device* device, int status) {
                         ui->Print("Installation aborted.\n");
                         copy_logs();
                     } else if (!ui->IsTextVisible()) {
-                        return;  // reboot if logs aren't visible
+                        return Device::NO_ACTION;  // reboot if logs aren't visible
                     } else {
                         ui->Print("\nInstall from ADB complete.\n");
                     }
@@ -1074,18 +1082,31 @@ main(int argc, char **argv) {
         copy_logs();
         ui->SetBackground(RecoveryUI::ERROR);
     }
+    Device::BuiltinAction after = shutdown_after ? Device::SHUTDOWN : Device::REBOOT;
     if (status != INSTALL_SUCCESS || ui->IsTextVisible()) {
-        prompt_and_wait(device, status);
+        Device::BuiltinAction temp = prompt_and_wait(device, status);
+        if (temp != Device::NO_ACTION) after = temp;
     }
 
-    // Otherwise, get ready to boot the main system...
+    // Save logs and clean up before rebooting or shutting down.
     finish_recovery(send_intent);
-    if (shutdown_after) {
-        ui->Print("Shutting down...\n");
-        property_set(ANDROID_RB_PROPERTY, "shutdown,");
-    } else {
-        ui->Print("Rebooting...\n");
-        property_set(ANDROID_RB_PROPERTY, "reboot,");
+
+    switch (after) {
+        case Device::SHUTDOWN:
+            ui->Print("Shutting down...\n");
+            property_set(ANDROID_RB_PROPERTY, "shutdown,");
+            break;
+
+        case Device::REBOOT_BOOTLOADER:
+            ui->Print("Rebooting to bootloader...\n");
+            property_set(ANDROID_RB_PROPERTY, "reboot,bootloader");
+            break;
+
+        default:
+            ui->Print("Rebooting...\n");
+            property_set(ANDROID_RB_PROPERTY, "reboot,");
+            break;
     }
+    sleep(5); // should reboot before this finishes
     return EXIT_SUCCESS;
 }
