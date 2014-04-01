@@ -871,7 +871,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 
 					for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
 						if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == restore_part->Mount_Point) {
-							if (!(*subpart)->Check_MD5(Restore_Name))
+							if (check_md5 > 0 && !(*subpart)->Check_MD5(Restore_Name))
 								return false;
 						}
 					}
