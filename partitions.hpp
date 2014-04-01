@@ -218,6 +218,7 @@ private:
 	bool Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes);
 	bool Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count);
 	void Output_Partition(TWPartition* Part);
+	TWPartition* Find_Next_Storage(string Path, string Exclude);
 	int Open_Lun_File(string Partition_Path, string Lun_File);
 
 private:
