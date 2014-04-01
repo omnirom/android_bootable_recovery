@@ -47,7 +47,6 @@ public:
 	virtual ~twrpTar();
 	int createTarFork();
 	int extractTarFork();
-	void setexcl(string exclude);
 	void setfn(string fn);
 	void setdir(string dir);
 	void setsize(unsigned long long backup_size);
@@ -90,8 +89,6 @@ private:
 	string tarfn;
 	string basefn;
 	string password;
-
-	vector <string> tarexclude;
 
 	std::vector<TarListStruct> *ItemList;
 	int thread_id;

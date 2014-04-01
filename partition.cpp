@@ -1618,11 +1618,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 	tar.use_compression = use_compression;
-	//exclude Google Music Cache
-	vector<string> excludedirs = du.get_absolute_dirs();
-	for (int i = 0; i < excludedirs.size(); ++i) {
-		tar.setexcl(excludedirs.at(i));
-	}
+
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	DataManager::GetValue("tw_encrypt_backup", use_encryption);
 	if (use_encryption && Can_Encrypt_Backup) {
