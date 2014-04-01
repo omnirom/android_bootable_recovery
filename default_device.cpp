@@ -31,20 +31,10 @@ static const char* ITEMS[] =  {"reboot system now",
                                "wipe cache partition",
                                NULL };
 
-class DefaultUI : public ScreenRecoveryUI {
-  public:
-    virtual KeyAction CheckKey(int key) {
-        if (key == KEY_HOME) {
-            return TOGGLE;
-        }
-        return ENQUEUE;
-    }
-};
-
 class DefaultDevice : public Device {
   public:
     DefaultDevice() :
-        ui(new DefaultUI) {
+        ui(new ScreenRecoveryUI) {
     }
 
     RecoveryUI* GetUI() { return ui; }
@@ -61,6 +51,7 @@ class DefaultDevice : public Device {
                 return kHighlightUp;
 
               case KEY_ENTER:
+              case KEY_POWER:
                 return kInvokeItem;
             }
         }
