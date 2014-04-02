@@ -104,9 +104,9 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		else
 			LOGINFO("Error creating fstab\n");
 	}
+	Setup_Settings_Storage_Partition(settings_partition);
 	Update_System_Details();
 	UnMount_Main_Partitions();
-	Setup_Settings_Storage_Partition(settings_partition);
 	return true;
 }
 
