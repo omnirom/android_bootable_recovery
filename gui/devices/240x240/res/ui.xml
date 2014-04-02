@@ -1374,7 +1374,10 @@
 				<placement x="%button_refresh_x%" y="%row9_text_y%" w="%button_fill_med_width%" h="%button_fill_quarter_height%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Refresh</text>
-				<action function="refreshsizes"></action>
+				<actions>
+					<action function="refreshsizes"></action>
+					<action function="page">backup</action>
+				</actions>
 			</object>
 
 			<object type="button">
