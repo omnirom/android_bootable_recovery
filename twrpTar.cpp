@@ -234,6 +234,7 @@ int twrpTar::createTarFork() {
 				enc[i].ItemList = &EncryptList;
 				enc[i].thread_id = i;
 				enc[i].use_encryption = use_encryption;
+				enc[i].setpassword(password);
 				enc[i].use_compression = use_compression;
 				enc[i].split_archives = 1;
 				LOGINFO("Start encryption thread %i\n", i);
@@ -379,6 +380,7 @@ int twrpTar::extractTarFork() {
 					if (TWFunc::Path_Exists(actual_filename)) {
 						thread_count++;
 						tars[i].basefn = basefn;
+						tars[i].setpassword(password);
 						tars[i].thread_id = i;
 						LOGINFO("Creating extract thread ID %i\n", i);
 						ret = pthread_create(&tar_thread[i], &tattr, extractMulti, (void*)&tars[i]);
