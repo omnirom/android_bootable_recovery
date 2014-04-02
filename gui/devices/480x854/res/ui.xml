@@ -1396,7 +1396,10 @@
 				<placement x="%col2_x%" y="%backup_button_row1%" w="%button_fill_main_width%" h="%button_fill_quarter_height%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Refresh Sizes</text>
-				<action function="refreshsizes"></action>
+				<actions>
+					<action function="refreshsizes"></action>
+					<action function="page">backup</action>
+				</actions>
 			</object>
 
 			<object type="button">

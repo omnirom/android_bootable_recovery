@@ -1647,7 +1647,10 @@
 				<font resource="font" color="%button_text_color%" />
 				<text>Refresh Sizes</text>
 				<image resource="main_button" />
-				<action function="refreshsizes"></action>
+				<actions>
+					<action function="refreshsizes"></action>
+					<action function="page">backup</action>
+				</actions>
 			</object>
 
 			<object type="button">
