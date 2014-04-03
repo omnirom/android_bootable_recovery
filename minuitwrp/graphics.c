@@ -246,11 +246,13 @@ static int get_framebuffer(GGLSurface *fb)
         return -1;
     }
 
+#ifdef MSM_BSP
     has_overlay = target_has_overlay(fi.id);
 
-#ifdef MSM_BSP
     if (isTargetMdp5())
         setDisplaySplit();
+#else
+    has_overlay = false;
 #endif
 
     if (!has_overlay) {
