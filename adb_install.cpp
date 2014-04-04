@@ -163,6 +163,8 @@ apply_from_adb(int* wipe_cache, const char* install_file) {
         waitpid(waiter.child, &status, 0);
     }
 
+    set_perf_mode(true);
+
     set_usb_driver(false);
     maybe_restart_adbd();
 
@@ -170,6 +172,8 @@ apply_from_adb(int* wipe_cache, const char* install_file) {
     kill(waiter.child, SIGTERM);
     pthread_join(sideload_thread, NULL);
     ui->FlushKeys();
+
+    set_perf_mode(false);
 
     return result;
 }

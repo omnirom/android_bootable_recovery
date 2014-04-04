@@ -30,6 +30,8 @@ enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE };
 int install_package(const char *root_path, int* wipe_cache,
                     const char* install_file, bool needs_mount);
 
+void set_perf_mode(bool enable);
+
 #ifdef __cplusplus
 }
 #endif
