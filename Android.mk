@@ -75,6 +75,12 @@ ifneq ($(wildcard system/core/libsparse/Android.mk),)
 LOCAL_SHARED_LIBRARIES += libsparse
 endif
 
+ifeq ($(TW_OEM_BUILD),true)
+    LOCAL_CFLAGS += -DTW_OEM_BUILD
+    BOARD_HAS_NO_REAL_SDCARD := true
+    TW_USE_TOOLBOX := true
+    TW_EXCLUDE_SUPERSU := true
+endif
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_CFLAGS += -DUSE_EXT4
     LOCAL_C_INCLUDES += system/extras/ext4_utils
@@ -277,9 +283,6 @@ ifneq ($(TW_NO_LEGACY_PROPS),)
 endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
-endif
-ifeq ($(TW_OEM_BUILD),true)
-    LOCAL_CFLAGS += -DTW_OEM_BUILD
 endif
 
 include $(BUILD_EXECUTABLE)
