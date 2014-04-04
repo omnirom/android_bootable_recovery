@@ -284,6 +284,7 @@ endif
 
 include $(BUILD_EXECUTABLE)
 
+ifneq ($(TW_USE_TOOLBOX), true)
 include $(CLEAR_VARS)
 # Create busybox symlinks... gzip and gunzip are excluded because those need to link to pigz instead
 BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
@@ -301,6 +302,7 @@ $(RECOVERY_BUSYBOX_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	$(hide) ln -sf $(BUSYBOX_BINARY) $@
 
 ALL_DEFAULT_INSTALLED_MODULES += $(RECOVERY_BUSYBOX_SYMLINKS)
+endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := verifier_test

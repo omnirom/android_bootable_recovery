@@ -20,6 +20,68 @@ ifeq ($(TWHAVE_SELINUX), true)
 		load_policy
 endif
 
+ifeq ($(TW_USE_TOOLBOX), true)
+	TOOLS += \
+		mount \
+		cat \
+		ps \
+		kill \
+		ln \
+		insmod \
+		rmmod \
+		lsmod \
+		ifconfig \
+		setconsole \
+		rm \
+		mkdir \
+		rmdir \
+		getevent \
+		sendevent \
+		date \
+		wipe \
+		sync \
+		umount \
+		notify \
+		cmp \
+		dmesg \
+		route \
+		hd \
+		dd \
+		df \
+		watchprops \
+		log \
+		sleep \
+		renice \
+		printenv \
+		smd \
+		chmod \
+		chown \
+		newfs_msdos \
+		netstat \
+		ioctl \
+		mv \
+		schedtop \
+		top \
+		iftop \
+		id \
+		uptime \
+		vmstat \
+		nandread \
+		ionice \
+		touch \
+		lsof \
+		du \
+		md5 \
+		clear \
+		swapon \
+		swapoff \
+		mkswap \
+		readlink
+	ifneq ($(TWHAVE_SELINUX), true)
+		TOOLS += ls
+	endif
+endif
+
 LOCAL_SRC_FILES := \
 	toolbox.c \
 	$(patsubst %,%.c,$(TOOLS))
