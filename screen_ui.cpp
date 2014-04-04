@@ -87,7 +87,7 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
 void ScreenRecoveryUI::draw_background_locked(Icon icon)
 {
     pagesIdentical = false;
-    gr_color(0, 0, 0, 255);
+    gr_color(250, 250, 250, 255);
     gr_clear();
 
     if (icon) {
@@ -123,7 +123,7 @@ void ScreenRecoveryUI::draw_background_locked(Icon icon)
             }
         }
 
-        gr_color(255, 255, 255, 255);
+        gr_color(115, 115, 115, 255);
         gr_texticon(textX, textY, text_surface);
     }
 }
@@ -148,7 +148,7 @@ void ScreenRecoveryUI::draw_progress_locked()
         int dy = (3*gr_fb_height() + iconHeight - 2*height)/4;
 
         // Erase behind the progress bar (in case this was a progress-only update)
-        gr_color(0, 0, 0, 255);
+        gr_color(250, 250, 250, 255);
         gr_fill(dx, dy, width, height);
 
         if (progressBarType == DETERMINATE) {
@@ -179,20 +179,17 @@ void ScreenRecoveryUI::draw_progress_locked()
 void ScreenRecoveryUI::SetColor(UIElement e) {
     switch (e) {
         case HEADER:
-            gr_color(247, 0, 6, 255);
+            gr_color(0xff, 0x57, 0x22, 255);  // Quantum "Deep Orange" 500
             break;
         case MENU:
         case MENU_SEL_BG:
-            gr_color(0, 106, 157, 255);
+            gr_color(0x67, 0x3a, 0xb7, 255);  // Quantum "Deep Purple" 500
             break;
         case MENU_SEL_FG:
             gr_color(255, 255, 255, 255);
             break;
         case LOG:
-            gr_color(249, 194, 0, 255);
-            break;
-        case TEXT_FILL:
-            gr_color(0, 0, 0, 160);
+            gr_color(0x3f, 0x51, 0xb5, 255);  // Quantum "Indigo" 500
             break;
         default:
             gr_color(255, 255, 255, 255);
@@ -208,7 +205,7 @@ void ScreenRecoveryUI::draw_screen_locked()
         draw_background_locked(currentIcon);
         draw_progress_locked();
     } else {
-        gr_color(0, 0, 0, 255);
+        gr_color(250, 250, 250, 255);
         gr_clear();
 
         int y = 0;
@@ -222,13 +219,13 @@ void ScreenRecoveryUI::draw_screen_locked()
                 if (i == menu_top + menu_sel) {
                     // draw the highlight bar
                     SetColor(MENU_SEL_BG);
-                    gr_fill(0, y-2, gr_fb_width(), y+char_height+2);
+                    gr_fill(0, y-2+kTextYOffset, gr_fb_width(), y+char_height+2+kTextYOffset);
                     // white text of selected item
                     SetColor(MENU_SEL_FG);
-                    if (menu[i][0]) gr_text(4, y, menu[i], 1);
+                    if (menu[i][0]) gr_text(kTextXOffset, y+kTextYOffset, menu[i], 1);
                     SetColor(MENU);
                 } else {
-                    if (menu[i][0]) gr_text(4, y, menu[i], i < menu_top);
+                    if (menu[i][0]) gr_text(kTextXOffset, y+kTextYOffset, menu[i], i < menu_top);
                 }
                 y += char_height+4;
             }
@@ -249,7 +246,7 @@ void ScreenRecoveryUI::draw_screen_locked()
         for (int ty = gr_fb_height() - char_height, count = 0;
              ty > y+2 && count < text_rows;
              ty -= char_height, ++count) {
-            gr_text(4, ty, text[row], 0);
+            gr_text(kTextXOffset, ty+kTextYOffset, text[row], 0);
             --row;
             if (row < 0) row = text_rows-1;
         }
@@ -350,11 +347,11 @@ void ScreenRecoveryUI::Init()
     gr_font_size(&char_width, &char_height);
 
     text_col = text_row = 0;
-    text_rows = gr_fb_height() / char_height;
+    text_rows = (gr_fb_height() - 2 * kTextYOffset) / char_height;
     if (text_rows > kMaxRows) text_rows = kMaxRows;
     text_top = 1;
 
-    text_cols = gr_fb_width() / char_width;
+    text_cols = (gr_fb_width() - 2 * kTextXOffset) / char_width;
     if (text_cols > kMaxCols - 1) text_cols = kMaxCols - 1;
 
     backgroundIcon[NONE] = NULL;
