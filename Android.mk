@@ -278,6 +278,9 @@ endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
 endif
+ifeq ($(TW_OEM_BUILD),true)
+    LOCAL_CFLAGS += -DTW_OEM_BUILD
+endif
 
 include $(BUILD_EXECUTABLE)
 

@@ -294,6 +294,7 @@ int DataManager::Flush()
 
 int DataManager::SaveValues()
 {
+#ifndef TW_OEM_BUILD
 	if (mBackingFile.empty())
 		return -1;
 
@@ -322,6 +323,7 @@ int DataManager::SaveValues()
 		}
 	}
 	fclose(out);
+#endif // ifdef TW_OEM_BUILD
 	return 0;
 }
 
@@ -1078,6 +1080,7 @@ void DataManager::Output_Version(void)
 
 void DataManager::ReadSettingsFile(void)
 {
+#ifndef TW_OEM_BUILD
 	// Load up the values for TWRP - Sleep to let the card be ready
 	char mkdir_path[255], settings_file[255];
 	int is_enc, has_dual, use_ext, has_data_media, has_ext;
@@ -1127,6 +1130,7 @@ void DataManager::ReadSettingsFile(void)
 		GetValue(TW_EXTERNAL_PATH, ext_path);
 		PartitionManager.Mount_By_Path(ext_path, 0);
 	}
+#endif // ifdef TW_OEM_BUILD
 	update_tz_environment_variables();
 #ifdef TW_MAX_BRIGHTNESS
 	if (strcmp(EXPAND(TW_BRIGHTNESS_PATH), "/nobrightness") != 0) {

@@ -692,7 +692,7 @@ extern "C" int gui_loadResources(void)
 	//    unlink("/sdcard/video.last");
 	//    rename("/sdcard/video.bin", "/sdcard/video.last");
 	//    gRecorder = open("/sdcard/video.bin", O_CREAT | O_WRONLY);
-
+#ifndef TW_OEM_BUILD
 	int check = 0;
 	DataManager::GetValue(TW_IS_ENCRYPTED, check);
 	if (check)
@@ -731,14 +731,16 @@ extern "C" int gui_loadResources(void)
 		theme_path += "/TWRP/theme/ui.zip";
 		if (check || PageManager::LoadPackage("TWRP", theme_path, "main"))
 		{
+#endif // ifndef TW_OEM_BUILD
 			if (PageManager::LoadPackage("TWRP", "/res/ui.xml", "main"))
 			{
 				LOGERR("Failed to load base packages.\n");
 				goto error;
 			}
+#ifndef TW_OEM_BUILD
 		}
 	}
-
+#endif // ifndef TW_OEM_BUILD
 	// Set the default package
 	PageManager::SelectPackage("TWRP");
 
@@ -746,7 +748,7 @@ extern "C" int gui_loadResources(void)
 	return 0;
 
 error:
-	LOGERR("An internal error has occurred.\n");
+	LOGERR("An internal error has occurred: unable to load theme.\n");
 	gGuiInitialized = 0;
 	return -1;
 }
