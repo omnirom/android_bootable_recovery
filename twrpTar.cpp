@@ -558,7 +558,7 @@ int twrpTar::tarList(std::vector<TarListStruct> *TarList, unsigned thread_id) {
 			strcpy(buf, TarList->at(i).fn.c_str());
 			lstat(buf, &st);
 			if (S_ISREG(st.st_mode)) { // item is a regular file
-				if (Archive_Current_Size + (unsigned long long)(st.st_size) > MAX_ARCHIVE_SIZE) {
+				if (split_archives && Archive_Current_Size + (unsigned long long)(st.st_size) > MAX_ARCHIVE_SIZE) {
 					if (closeTar() != 0) {
 						LOGERR("Error closing '%s' on thread %i\n", tarfn.c_str(), thread_id);
 						return -3;
