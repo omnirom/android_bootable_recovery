@@ -667,10 +667,18 @@ int twrpTar::createTar() {
 			LOGERR("Error creating second pipe\n");
 			return -1;
 		}
+		int output_fd = open(tarfn.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		if (output_fd < 0) {
+			LOGERR("Failed to open '%s'\n", tarfn.c_str());
+			for (i = 0; i < 4; i++)
+				close(pipes[i]); // close all
+			return -1;
+		}
 		pigz_pid = fork();
 
 		if (pigz_pid < 0) {
 			LOGERR("pigz fork() failed\n");
+			close(output_fd);
 			for (i = 0; i < 4; i++)
 				close(pipes[i]); // close all
 			return -1;
@@ -684,6 +692,7 @@ int twrpTar::createTar() {
 			dup2(pipes[3], 1);
 			if (execlp("pigz", "pigz", "-", NULL) < 0) {
 				LOGERR("execlp pigz ERROR!\n");
+				close(output_fd);
 				close(pipes[0]);
 				close(pipes[3]);
 				_exit(-1);
@@ -694,18 +703,12 @@ int twrpTar::createTar() {
 
 			if (oaes_pid < 0) {
 				LOGERR("openaes fork() failed\n");
+				close(output_fd);
 				for (i = 0; i < 4; i++)
 					close(pipes[i]); // close all
 				return -1;
 			} else if (oaes_pid == 0) {
 				// openaes Child
-				int output_fd = open(tarfn.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-				if (output_fd < 0) {
-					LOGERR("Failed to open '%s'\n", tarfn.c_str());
-					for (i = 0; i < 4; i++)
-						close(pipes[i]); // close all
-					return -1;
-				}
 				close(pipes[0]);
 				close(pipes[1]);
 				close(pipes[3]);
@@ -738,27 +741,29 @@ int twrpTar::createTar() {
 		Archive_Current_Type = 1;
 		LOGINFO("Using compression...\n");
 		int pigzfd[2];
+		int output_fd = open(tarfn.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		if (output_fd < 0) {
+			LOGERR("Failed to open '%s'\n", tarfn.c_str());
+			close(pigzfd[0]);
+			return -1;
+		}
 
 		if (pipe(pigzfd) < 0) {
 			LOGERR("Error creating pipe\n");
+			close(output_fd);
 			return -1;
 		}
 		pigz_pid = fork();
 
 		if (pigz_pid < 0) {
 			LOGERR("fork() failed\n");
+			close(output_fd);
 			close(pigzfd[0]);
 			close(pigzfd[1]);
 			return -1;
 		} else if (pigz_pid == 0) {
 			// Child
 			close(pigzfd[1]);   // close unused output pipe
-			int output_fd = open(tarfn.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-			if (output_fd < 0) {
-				LOGERR("Failed to open '%s'\n", tarfn.c_str());
-				close(pigzfd[0]);
-				_exit(-1);
-			}
 			dup2(pigzfd[0], 0); // remap stdin
 			dup2(output_fd, 1); // remap stdout to output file
 			if (execlp("pigz", "pigz", "-", NULL) < 0) {
@@ -782,22 +787,27 @@ int twrpTar::createTar() {
 		Archive_Current_Type = 2;
 		LOGINFO("Using encryption...\n");
 		int oaesfd[2];
-		pipe(oaesfd);
+		int output_fd = open(tarfn.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		if (output_fd < 0) {
+			LOGERR("Failed to open '%s'\n", tarfn.c_str());
+			return -1;
+		}
+		if (pipe(oaesfd) < 0) {
+			LOGERR("Error creating pipe\n");
+			close(output_fd);
+			return -1;
+		}
 		oaes_pid = fork();
 
 		if (oaes_pid < 0) {
 			LOGERR("fork() failed\n");
+			close(output_fd);
 			close(oaesfd[0]);
 			close(oaesfd[1]);
 			return -1;
 		} else if (oaes_pid == 0) {
 			// Child
 			close(oaesfd[1]);   // close unused
-			int output_fd = open(tarfn.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-			if (output_fd < 0) {
-				LOGERR("Failed to open '%s'\n", tarfn.c_str());
-				_exit(-1);
-			}
 			dup2(oaesfd[0], 0); // remap stdin
 			dup2(output_fd, 1); // remap stdout to output file
 			if (execlp("openaes", "openaes", "enc", "--key", password.c_str(), NULL) < 0) {
@@ -836,19 +846,29 @@ int twrpTar::openTar() {
 	if (Archive_Current_Type == 3) {
 		LOGINFO("Opening encrypted and compressed backup...\n");
 		int i, pipes[4];
+		int input_fd = open(tarfn.c_str(), O_RDONLY | O_LARGEFILE);
+		if (input_fd < 0) {
+			LOGERR("Failed to open '%s'\n", tarfn.c_str());
+			return -1;
+		}
 
 		if (pipe(pipes) < 0) {
 			LOGERR("Error creating first pipe\n");
+			close(input_fd);
 			return -1;
 		}
 		if (pipe(pipes + 2) < 0) {
 			LOGERR("Error creating second pipe\n");
+			close(pipes[0]);
+			close(pipes[1]);
+			close(input_fd);
 			return -1;
 		}
 		oaes_pid = fork();
 
 		if (oaes_pid < 0) {
 			LOGERR("pigz fork() failed\n");
+			close(input_fd);
 			for (i = 0; i < 4; i++)
 				close(pipes[i]); // close all
 			return -1;
@@ -857,12 +877,6 @@ int twrpTar::openTar() {
 			close(pipes[0]); // Close pipes that are not used by this child
 			close(pipes[2]);
 			close(pipes[3]);
-			int input_fd = open(tarfn.c_str(), O_RDONLY | O_LARGEFILE);
-			if (input_fd < 0) {
-				LOGERR("Failed to open '%s'\n", tarfn.c_str());
-				close(pipes[1]);
-				_exit(-1);
-			}
 			close(0);
 			dup2(input_fd, 0);
 			close(1);
@@ -879,6 +893,7 @@ int twrpTar::openTar() {
 
 			if (pigz_pid < 0) {
 				LOGERR("openaes fork() failed\n");
+				close(input_fd);
 				for (i = 0; i < 4; i++)
 					close(pipes[i]); // close all
 				return -1;
@@ -892,6 +907,7 @@ int twrpTar::openTar() {
 				dup2(pipes[3], 1);
 				if (execlp("pigz", "pigz", "-d", "-c", NULL) < 0) {
 					LOGERR("execlp pigz ERROR!\n");
+					close(input_fd);
 					close(pipes[0]);
 					close(pipes[3]);
 					_exit(-1);
@@ -912,23 +928,28 @@ int twrpTar::openTar() {
 	} else if (Archive_Current_Type == 2) {
 		LOGINFO("Opening encrypted backup...\n");
 		int oaesfd[2];
+		int input_fd = open(tarfn.c_str(), O_RDONLY | O_LARGEFILE);
+		if (input_fd < 0) {
+			LOGERR("Failed to open '%s'\n", tarfn.c_str());
+			return -1;
+		}
 
-		pipe(oaesfd);
+		if (pipe(oaesfd) < 0) {
+			LOGERR("Error creating pipe\n");
+			close(input_fd);
+			return -1;
+		}
+
 		oaes_pid = fork();
 		if (oaes_pid < 0) {
 			LOGERR("fork() failed\n");
+			close(input_fd);
 			close(oaesfd[0]);
 			close(oaesfd[1]);
 			return -1;
 		} else if (oaes_pid == 0) {
 			// Child
 			close(oaesfd[0]); // Close unused pipe
-			int input_fd = open(tarfn.c_str(), O_RDONLY | O_LARGEFILE);
-			if (input_fd < 0) {
-				LOGERR("Failed to open '%s'\n", tarfn.c_str());
-				close(oaesfd[1]);
-				_exit(-1);
-			}
 			close(0);   // close stdin
 			dup2(oaesfd[1], 1); // remap stdout
 			dup2(input_fd, 0); // remap input fd to stdin
@@ -951,22 +972,27 @@ int twrpTar::openTar() {
 	} else if (Archive_Current_Type == 1) {
 		LOGINFO("Opening as a gzip...\n");
 		int pigzfd[2];
-		pipe(pigzfd);
+		int input_fd = open(tarfn.c_str(), O_RDONLY | O_LARGEFILE);
+		if (input_fd < 0) {
+			LOGERR("Failed to open '%s'\n", tarfn.c_str());
+			return -1;
+		}
+		if (pipe(pigzfd) < 0) {
+			LOGERR("Error creating pipe\n");
+			close(input_fd);
+			return -1;
+		}
 
 		pigz_pid = fork();
 		if (pigz_pid < 0) {
 			LOGERR("fork() failed\n");
+			close(input_fd);
 			close(pigzfd[0]);
 			close(pigzfd[1]);
 			return -1;
 		} else if (pigz_pid == 0) {
 			// Child
 			close(pigzfd[0]);
-			int input_fd = open(tarfn.c_str(), O_RDONLY | O_LARGEFILE);
-			if (input_fd < 0) {
-				LOGERR("Failed to open '%s'\n", tarfn.c_str());
-				_exit(-1);
-			}
 			dup2(input_fd, 0); // remap input fd to stdin
 			dup2(pigzfd[1], 1); // remap stdout
 			if (execlp("pigz", "pigz", "-d", "-c", NULL) < 0) {
