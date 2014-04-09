@@ -26,7 +26,6 @@ class twrpDigest
 {
 public:
 	void setfn(string fn);
-	void setdir(string dir);
 	int computeMD5(void);
 	int verify_md5digest(void);
 	int write_md5digest(void);

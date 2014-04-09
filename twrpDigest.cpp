@@ -33,17 +33,12 @@ extern "C"
 #include <errno.h>
 #include <fcntl.h>
 #include <fstream>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <dirent.h>
 #include <sys/mman.h>
 #include "twcommon.h"
 #include "data.hpp"
 #include "variables.h"
 #include "twrp-functions.hpp"
 #include "twrpDigest.hpp"
-#include "twcommon.h"
 
 using namespace std;
 
@@ -65,7 +60,7 @@ int twrpDigest::computeMD5(void) {
 		MD5Update(&md5c, buf, len);
 	}
 	fclose(file);
-	MD5Final(md5sum ,&md5c);
+	MD5Final(md5sum, &md5c);
 	return 0;
 }
 
@@ -76,7 +71,7 @@ int twrpDigest::write_md5digest(void) {
 	md5file = md5fn + ".md5";
 
 	for (i = 0; i < 16; ++i) {
-		snprintf(hex, 3 ,"%02x", md5sum[i]);
+		snprintf(hex, 3, "%02x", md5sum[i]);
 		md5string += hex;
 	}
 	md5string += "  ";
@@ -88,9 +83,28 @@ int twrpDigest::write_md5digest(void) {
 }
 
 int twrpDigest::read_md5digest(void) {
-	string md5file = md5fn + ".md5";
-	if (TWFunc::read_file(md5file, line) != 0)
+	int i = 0;
+	bool foundMd5File = false;
+	string md5file = "";
+	vector<string> md5ext;
+	md5ext.push_back(".md5");
+	md5ext.push_back(".md5sum");
+
+	while (i < md5ext.size()) {
+		md5file = md5fn + md5ext[i];
+		if (TWFunc::Path_Exists(md5file)) {
+			foundMd5File = true;
+			break;
+		}
+		i++;
+	}
+
+	if (!foundMd5File) {
 		return -1;
+	} else if (TWFunc::read_file(md5file, line) != 0) {
+		LOGERR("Could not read %s\n", md5file.c_str());
+	}
+
 	return 0;
 }
 
