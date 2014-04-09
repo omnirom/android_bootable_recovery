@@ -89,8 +89,12 @@ int twrpDigest::write_md5digest(void) {
 
 int twrpDigest::read_md5digest(void) {
 	string md5file = md5fn + ".md5";
-	if (TWFunc::read_file(md5file, line) != 0)
-		return -1;
+	if (TWFunc::read_file(md5file, line) != 0) {
+		md5file = md5fn + ".md5sum";
+		if (TWFunc::read_file(md5file, line) != 0) {
+			return -1;
+		}
+	}
 	return 0;
 }
 
