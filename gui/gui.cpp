@@ -296,16 +296,18 @@ static void * input_thread(void *cookie)
 			{
 				if (!drag)
 				{
+					if (x != 0 && y != 0) {
 #ifdef _EVENT_LOGGING
-					LOGERR("TOUCH_START: %d,%d\n", x, y);
+						LOGERR("TOUCH_START: %d,%d\n", x, y);
 #endif
-					if (PageManager::NotifyTouch(TOUCH_START, x, y) > 0)
-						state = 1;
-					drag = 1;
-					touch_and_hold = 1;
-					dontwait = 1;
-					key_repeat = 0;
-					gettimeofday(&touchStart, NULL);
+						if (PageManager::NotifyTouch(TOUCH_START, x, y) > 0)
+							state = 1;
+						drag = 1;
+						touch_and_hold = 1;
+						dontwait = 1;
+						key_repeat = 0;
+						gettimeofday(&touchStart, NULL);
+					}
 #ifndef TW_NO_SCREEN_TIMEOUT
 					blankTimer.resetTimerAndUnblank();
 #endif
