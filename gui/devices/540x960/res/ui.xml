@@ -1103,7 +1103,10 @@
 			</object>
 
 			<object type="text" color="%text_color%">
-				<condition var1="tw_has_data_media" var2="0" />
+				<conditions>
+					<condition var1="tw_has_android_secure" var2="1" />
+					<condition var1="fileexists" var2="/and-sec" />
+				</conditions>
 				<font resource="font" />
 				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
 				<text>.android_secure</text>

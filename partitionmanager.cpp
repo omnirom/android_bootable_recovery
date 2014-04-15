@@ -57,6 +57,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 	FILE *fstabFile;
 	char fstab_line[MAX_FSTAB_LINE_LENGTH];
 	TWPartition* settings_partition = NULL;
+	TWPartition* andsec_partition = NULL;
 
 	fstabFile = fopen(Fstab_Filename.c_str(), "rt");
 	if (fstabFile == NULL) {
@@ -81,6 +82,11 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			} else {
 				partition->Is_Settings_Storage = false;
 			}
+			if (!andsec_partition && partition->Has_Android_Secure) {
+				andsec_partition = partition;
+			} else {
+				partition->Has_Android_Secure = false;
+			}
 			Partitions.push_back(partition);
 		} else {
 			delete partition;
@@ -103,6 +109,11 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			LOGERR("Error creating fstab\n");
 		else
 			LOGINFO("Error creating fstab\n");
+	}
+	if (andsec_partition) {
+		Setup_Android_Secure_Location(andsec_partition);
+	} else {
+		Setup_Android_Secure_Location(settings_partition);
 	}
 	Setup_Settings_Storage_Partition(settings_partition);
 	Update_System_Details();
@@ -139,12 +150,18 @@ int TWPartitionManager::Write_Fstab(void) {
 }
 
 void TWPartitionManager::Setup_Settings_Storage_Partition(TWPartition* Part) {
-#ifndef RECOVERY_SDCARD_ON_DATA
-	Part->Setup_AndSec();
-#endif
 	DataManager::SetValue("tw_settings_path", Part->Storage_Path);
 	DataManager::SetValue("tw_storage_path", Part->Storage_Path);
 	LOGINFO("Settings storage is '%s'\n", Part->Storage_Path.c_str());
+}
+
+void TWPartitionManager::Setup_Android_Secure_Location(TWPartition* Part) {
+	if (Part->Has_Android_Secure)
+		Part->Setup_AndSec();
+#ifndef RECOVERY_SDCARD_ON_DATA
+	else
+		Part->Setup_AndSec();
+#endif
 }
 
 void TWPartitionManager::Output_Partition_Logging(void) {
