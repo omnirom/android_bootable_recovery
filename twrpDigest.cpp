@@ -103,6 +103,7 @@ int twrpDigest::read_md5digest(void) {
 		return -1;
 	} else if (TWFunc::read_file(md5file, line) != 0) {
 		LOGERR("Could not read %s\n", md5file.c_str());
+		return 1;
 	}
 
 	return 0;
@@ -111,10 +112,12 @@ int twrpDigest::read_md5digest(void) {
 int twrpDigest::verify_md5digest(void) {
 	string buf;
 	char hex[3];
-	int i;
+	int i, ret;
 	string md5string;
-	if (read_md5digest() != 0)
-		return -1;
+
+	ret = read_md5digest();
+	if (ret != 0)
+		return ret;
 	stringstream ss(line);
 	vector<string> tokens;
 	while (ss >> buf)
