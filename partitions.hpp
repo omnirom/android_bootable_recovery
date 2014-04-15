@@ -213,7 +213,8 @@ public:
 	void Output_Storage_Fstab();                                              // Creates a /cache/recovery/storage.fstab file with a list of all potential storage locations for app use
 
 private:
-	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets things up for the storage partition
+	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
+	void Setup_Android_Secure_Location(TWPartition* Part);                    // Sets up .android_secure if needed
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made
 	bool Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes);
 	bool Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count);

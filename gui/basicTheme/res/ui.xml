@@ -703,7 +703,10 @@
                 <placement x="%col1_x%" y="525" />
                 <font resource="font" color="white" />
                 <text>.android_secure</text>
-                <condition var1="fileexists" var2="/sdcard/.android_secure" />
+                <conditions>
+                    <condition var1="tw_has_android_secure" var2="1" />
+                    <condition var1="fileexists" var2="/and-sec" />
+                </conditions>
                 <data variable="tw_backup_andsec" />
                 <image checked="checkbox_true" unchecked="checkbox_false" />
             </object>
