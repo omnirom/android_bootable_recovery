@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b77b57d_7d112fb2",
+        "filename": "twrpDigest.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-04-15T13:21:53Z",
+      "side": 1,
+      "message": "Should use TWFunc::Path_Exists for checking if a file exists instead of adding another function that does the same thing.",
+      "revId": "805cb7f137adc51203ca983e2cd11e3354d13f84",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
