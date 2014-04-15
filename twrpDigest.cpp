@@ -19,6 +19,7 @@
 extern "C"
 {
 	#include "digest/md5.h"
+	#include "gui/gui.h"
 	#include "libcrecovery/common.h"
 }
 
@@ -100,21 +101,32 @@ int twrpDigest::read_md5digest(void) {
 	}
 
 	if (!foundMd5File) {
+		gui_print("Skipping MD5 check: no MD5 file found\n");
 		return -1;
 	} else if (TWFunc::read_file(md5file, line) != 0) {
-		LOGERR("Could not read %s\n", md5file.c_str());
+		gui_print("Skipping MD5 check: MD5 file unreadable\n");
+		return 1;
 	}
 
 	return 0;
 }
 
+/* verify_md5digest return codes:
+	-2: md5 did not match
+	-1: no md5 file found
+	 0: md5 matches
+	 1: md5 file unreadable
+*/
+
 int twrpDigest::verify_md5digest(void) {
 	string buf;
 	char hex[3];
-	int i;
+	int i, ret;
 	string md5string;
-	if (read_md5digest() != 0)
-		return -1;
+
+	ret = read_md5digest();
+	if (ret != 0)
+		return ret;
 	stringstream ss(line);
 	vector<string> tokens;
 	while (ss >> buf)
@@ -124,7 +136,11 @@ int twrpDigest::verify_md5digest(void) {
 		snprintf(hex, 3, "%02x", md5sum[i]);
 		md5string += hex;
 	}
-	if (tokens.at(0) != md5string)
+	if (tokens.at(0) != md5string) {
+		LOGERR("MD5 does not match\n");
 		return -2;
+	}
+
+	gui_print("MD5 matched\n");
 	return 0;
 }
