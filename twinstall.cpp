@@ -260,14 +260,16 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 	gui_print("Installing '%s'...\nChecking for MD5 file...\n", path);
 	md5sum.setfn(strpath);
 	md5_return = md5sum.verify_md5digest();
-	if (md5_return == -2) {
-		// MD5 did not match.
-		LOGERR("Zip MD5 does not match.\nUnable to install zip.\n");
+	if (md5_return == -2) { // md5 did not match
+		LOGERR("Zip MD5 does not match.\nAborting zip install.\n");
 		return INSTALL_CORRUPT;
-	} else if (md5_return == -1) {
+	} else if (md5_return == -1) { // no .md5 or .md5sum file
 		gui_print("Skipping MD5 check: no MD5 file found.\n");
-	} else if (md5_return == 0)
-		gui_print("Zip MD5 matched.\n"); // MD5 found and matched.
+	} else if (md5_return == 0) { // md5 match
+		gui_print("Zip MD5 matched.\n");
+	} else if (md5_return == 1) { // corrupt .md5 or .md5sum file
+		gui_print("Skipping MD5 check: MD5 file corrupt\n");
+	}
 
 #ifndef TW_OEM_BUILD
 	DataManager::GetValue(TW_SIGNED_ZIP_VERIFY_VAR, zip_verify);
