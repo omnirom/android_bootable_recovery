@@ -9,6 +9,7 @@ LOCAL_SRC_FILES := \
 
 ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
 LOCAL_SRC_FILES += rk30hack.c
+LOCAL_CFLAGS += -DRK3066
 endif
 
 LOCAL_MODULE := libmtdutils
@@ -25,6 +26,7 @@ LOCAL_SRC_FILES := \
 
 ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
 LOCAL_SRC_FILES += rk30hack.c
+LOCAL_CFLAGS += -DRK3066
 endif
 
 LOCAL_MODULE := libmtdutils

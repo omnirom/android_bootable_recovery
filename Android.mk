@@ -264,9 +264,6 @@ endif
 ifneq ($(TW_CUSTOM_BATTERY_PATH),)
 	LOCAL_CFLAGS += -DTW_CUSTOM_BATTERY_PATH=$(TW_CUSTOM_BATTERY_PATH)
 endif
-ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
-    LOCAL_CFLAGS += -DRK3066
-endif
 ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
     LOCAL_SHARED_LIBRARIES += libopenaes
 else
@@ -330,9 +327,6 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULES_TAGS = optional
-ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
-    LOCAL_CFLAGS += -DRK3066
-endif
 LOCAL_C_INCLUDES := bootable/recovery/libmincrypt/includes
 LOCAL_SRC_FILES = adb_install.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c legacy_property_service.c
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils
