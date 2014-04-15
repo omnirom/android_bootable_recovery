@@ -953,6 +953,7 @@ void DataManager::SetDefaultValues()
 	if (findbright.empty()) {
 		// Attempt to locate the brightness file
 		findbright = Find_File::Find("brightness", "/sys/class/backlight");
+		if (findbright.empty()) findbright = Find_File::Find("brightness", "/sys/class/leds/lcd-backlight");
 	}
 	if (findbright.empty()) {
 		LOGINFO("Unable to locate brightness file\n");
