@@ -279,9 +279,10 @@ int DataManager::LoadValues(const string filename)
 error:
 	fclose(in);
 	string current = GetCurrentStoragePath();
-	string settings = GetSettingsStoragePath();
-	if (current != settings && !PartitionManager.Mount_By_Path(current, false)) {
-		SetValue("tw_storage_path", settings);
+	TWPartition* Part = PartitionManager.Find_Partition_By_Path(current);
+	if (current != Part->Storage_Path && Part->Mount(false)) {
+		LOGINFO("LoadValues setting storage path to '%s'\n", Part->Storage_Path.c_str());
+		SetValue("tw_storage_path", Part->Storage_Path);
 	} else {
 		SetBackupFolder();
 	}
