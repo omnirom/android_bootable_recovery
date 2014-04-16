@@ -3552,7 +3552,7 @@
 				<resource base="slider" used="slider-used" touch="slider-touch" />
 				<action function="page">filemanageracction</action>
 			</object>
-			
+
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
@@ -3568,7 +3568,7 @@
 				<touch key="home" />
 				<action function="page">main</action>
 			</object>
-				
+
 			<object type="template" name="footer" />
 		</page>
 

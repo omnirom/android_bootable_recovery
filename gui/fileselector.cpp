@@ -733,7 +733,7 @@ int GUIFileSelector::NotifyTouch(TOUCH_STATE state, int x, int y)
 
 		isHighlighted = false;
 		last2Y = lastY;
-		lastY = y;	
+		lastY = y;
 		startSelection = -1;
 
 		// Handle scrolling
@@ -925,7 +925,7 @@ bool GUIFileSelector::fileSort(FileData d1, FileData d2)
 		return -1;
 	if (d2.fileName == TW_FILESELECTOR_UP_A_LEVEL)
 		return 0;
-	
+
 	switch (mSortOrder) {
 		case 3: // by size largest first
 			if (d1.fileSize == d2.fileSize || d1.fileType == DT_DIR) // some directories report a different size than others - but this is not the size of the files inside the directory, so we just sort by name on directories

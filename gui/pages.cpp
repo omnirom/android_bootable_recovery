@@ -66,7 +66,7 @@ int ConvertStrToColor(std::string str, COLOR* color)
 
 	// Translate variables
 	DataManager::GetValue(str, str);
-	
+
 	// Look for some defaults
 	if (str == "black")			return 0;
 	else if (str == "white")	{ color->red = color->green = color->blue = 255; return 0; }
@@ -150,8 +150,8 @@ int ActionObject::SetActionPos(int x, int y, int w, int h)
 	if (x < 0 || y < 0)
 		return -1;
 
-	mActionX = x; 
-	mActionY = y; 
+	mActionX = x;
+	mActionY = y;
 	if (w || h)
 	{
 		mActionW = w;
@@ -557,7 +557,7 @@ int PageSet::Load(ZipArchive* package)
 	xml_node<>* parent;
 	xml_node<>* child;
 	xml_node<>* templates;
- 
+
 	parent = mDoc.first_node("recovery");
 	if (!parent)
 		parent = mDoc.first_node("install");
@@ -792,13 +792,13 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 			LOGERR("Unable to locate ui.xml in zip file\n");
 			goto error;
 		}
-	
+
 		// Allocate the buffer for the file
 		len = mzGetZipEntryUncompLen(ui_xml);
 		xmlFile = (char*) malloc(len + 1);
 		if (!xmlFile)
 			goto error;
-	
+
 		if (!mzExtractZipEntryToBuffer(&zip, ui_xml, (unsigned char*) xmlFile))
 		{
 			LOGERR("Unable to extract ui.xml\n");
@@ -823,7 +823,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	{
 		LOGERR("Package %s failed to load.\n", name.c_str());
 	}
-	
+
 	// The first successful package we loaded is the base
 	if (mBaseSet == NULL)
 		mBaseSet = mCurrentSet;

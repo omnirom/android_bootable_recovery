@@ -188,12 +188,12 @@ fp_start()
          $MOUNT /system > /dev/null 2>&1
          SYSMOUNT=1
       fi
-      
+
       if $TEST $( $GREP -c " /data " "/proc/mounts" ) -eq 0; then
          $MOUNT /data > /dev/null 2>&1
          DATAMOUNT=1
       fi
-      
+
       if $TEST -e /dev/block/mmcblk0p2 && $TEST $( $GREP -c " $SD_EXT_DIRECTORY " "/proc/mounts" ) -eq 0; then
          $MOUNT $SD_EXT_DIRECTORY > /dev/null 2>&1
          SYSSDMOUNT=1
@@ -207,7 +207,7 @@ fp_start()
    if $TEST ! -e "$LOG_FILE"; then
       > $LOG_FILE
    fi
-   
+
    fp_print "$0 $VERSION started at $FP_STARTTIME"
 }
 
@@ -216,7 +216,7 @@ fp_chown_uid()
    FP_OLDUID=$1
    FP_UID=$2
    FP_FILE=$3
-   
+
    #if user ownership doesn't equal then change them
    if $TEST "$FP_OLDUID" != "$FP_UID"; then
       if $TEST $VERBOSE -ne 0; then
@@ -233,7 +233,7 @@ fp_chown_gid()
    FP_OLDGID=$1
    FP_GID=$2
    FP_FILE=$3
-   
+
    #if group ownership doesn't equal then change them
    if $TEST "$FP_OLDGID" != "$FP_GID"; then
       if $TEST $VERBOSE -ne 0; then
@@ -252,7 +252,7 @@ fp_chmod()
    FP_PERSTR=$2
    FP_PERNUM=$3
    FP_FILE=$4
-   
+
    #if the permissions are not equal
    if $TEST "$FP_OLDPER" != "$FP_PERSTR"; then
       if $TEST $VERBOSE -ne 0; then
@@ -299,22 +299,22 @@ fp_package()
    GID=$UID
    APPDIR=$( $ECHO $CODEPATH | $SED 's%^\(.*\)/.*%\1%' )
    APK=$( $ECHO $CODEPATH | $SED 's%^.*/\(.*\..*\)$%\1%' )
-   
+
    #debug
    if $TEST $DEBUG -eq 1; then
       fp_print "CODEPATH: $CODEPATH APPDIR: $APPDIR APK:$APK UID/GID:$UID:$GID"
    fi
-   
+
    #check for existence of apk
    if $TEST -e $CODEPATH;  then
       fp_print "Processing ($curnum of $endnum): $PACKAGE..."
-      
+
       #lets get existing permissions of CODEPATH
       OLD_UGD=$( $LS -ln "$CODEPATH" )
       OLD_PER=$( $ECHO $OLD_UGD | $CUT -d ' ' -f1 )
       OLD_UID=$( $ECHO $OLD_UGD | $CUT -d ' ' -f3 )
       OLD_GID=$( $ECHO $OLD_UGD | $CUT -d ' ' -f4 )
-      
+
       #apk source dirs
       if $TEST "$APPDIR" = "/system/app"; then
          #skip system apps if set
@@ -345,7 +345,7 @@ fp_package()
          fi
       fi
    fi
-   
+
    #the data/data for the package
    if $TEST -d "/data/data/$PACKAGE"; then
       #find all directories in /data/data/$PACKAGE
@@ -356,14 +356,14 @@ fp_package()
          OLD_GID=$( $ECHO $dataline | $CUT -d ' ' -f4 )
          FILEDIR=$( $ECHO $dataline | $CUT -d ' ' -f9 )
          FOURDIR=$( $ECHO $FILEDIR | $CUT -d '/' -f5 )
-         
+
          #set defaults for iteration
          ISLIB=0
          REVPERM=755
          REVPSTR="rwxr-xr-x"
          REVUID=$UID
          REVGID=$GID
-         
+
          if $TEST "$FOURDIR" = ""; then
             #package directory, perms:755 owner:$UID:$GID
             fp_chmod $OLD_PER "rwxr-xr-x" 755 "$FILEDIR"
@@ -400,7 +400,7 @@ fp_package()
             REVPSTR="rwxrwx--x"
             fp_chmod $OLD_PER "rwxrwx--x" 771 "$FILEDIR"
          fi
-         
+
          #change ownership of directories matched
          if $TEST "$ISLIB" = "1"; then
             fp_chown_uid $OLD_UID 1000 "$FILEDIR"
@@ -409,21 +409,21 @@ fp_package()
             fp_chown_uid $OLD_UID $UID "$FILEDIR"
             fp_chown_gid $OLD_GID $GID "$FILEDIR"
          fi
-         
+
          #if any files exist in directory with improper permissions reset them
          $FIND $FILEDIR -type f -maxdepth 1 ! -perm $REVPERM -exec $LS -ln {} \; | while read subline; do
             OLD_PER=$( $ECHO $subline | $CUT -d ' ' -f1 )
             SUBFILE=$( $ECHO $subline | $CUT -d ' ' -f9 )
             fp_chmod $OLD_PER $REVPSTR $REVPERM "$SUBFILE"
          done
-         
+
          #if any files exist in directory with improper user reset them
          $FIND $FILEDIR -type f -maxdepth 1 ! -user $REVUID -exec $LS -ln {} \; | while read subline; do
             OLD_UID=$( $ECHO $subline | $CUT -d ' ' -f3 )
             SUBFILE=$( $ECHO $subline | $CUT -d ' ' -f9 )
             fp_chown_uid $OLD_UID $REVUID "$SUBFILE"
          done
-         
+
          #if any files exist in directory with improper group reset them
          $FIND $FILEDIR -type f -maxdepth 1 ! -group $REVGID -exec $LS -ln {} \; | while read subline; do
             OLD_GID=$( $ECHO $subline | $CUT -d ' ' -f4 )
@@ -451,24 +451,24 @@ fp_end()
    if $TEST $SYSREMOUNT -eq 1; then
       $MOUNT -o remount,ro $DEVICE /system > /dev/null 2>&1
    fi
-   
+
    if $TEST $SYSSDMOUNT -eq 1; then
       $UMOUNT $SD_EXT_DIRECTORY > /dev/null 2>&1
    fi
-   
+
    if $TEST $SYSMOUNT -eq 1; then
       $UMOUNT /system > /dev/null 2>&1
    fi
-   
+
    if $TEST $DATAMOUNT -eq 1; then
       $UMOUNT /data > /dev/null 2>&1
    fi
-   
+
    FP_ENDTIME=$( $DATE +"%m-%d-%Y %H:%M:%S" )
    FP_ENDEPOCH=$( $DATE +%s )
-   
+
    date_diff $FP_STARTEPOCH $FP_ENDEPOCH
-   
+
    fp_print "$0 $VERSION ended at $FP_ENDTIME (Runtime:${FP_DDM}m${FP_DDS}s)"
 }
 

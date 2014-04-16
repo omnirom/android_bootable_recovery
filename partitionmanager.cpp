@@ -541,7 +541,7 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	string result;
 	twrpDigest md5sum;
 
-	if (!generate_md5) 
+	if (!generate_md5)
 		return true;
 
 	TWFunc::GUI_Operation_Text(TW_GENERATE_MD5_TEXT, "Generating MD5");
