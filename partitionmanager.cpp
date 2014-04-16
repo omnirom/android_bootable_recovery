@@ -77,12 +77,12 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		memset(fstab_line, 0, sizeof(fstab_line));
 
 		if (partition->Process_Fstab_Line(line, Display_Error)) {
-			if (!settings_partition && partition->Is_Settings_Storage) {
+			if (!settings_partition && partition->Is_Settings_Storage && partition->Is_Present) {
 				settings_partition = partition;
 			} else {
 				partition->Is_Settings_Storage = false;
 			}
-			if (!andsec_partition && partition->Has_Android_Secure) {
+			if (!andsec_partition && partition->Has_Android_Secure && partition->Is_Present) {
 				andsec_partition = partition;
 			} else {
 				partition->Has_Android_Secure = false;
@@ -110,12 +110,15 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		else
 			LOGINFO("Error creating fstab\n");
 	}
+
 	if (andsec_partition) {
 		Setup_Android_Secure_Location(andsec_partition);
-	} else {
+	} else if (settings_partition) {
 		Setup_Android_Secure_Location(settings_partition);
 	}
-	Setup_Settings_Storage_Partition(settings_partition);
+	if (settings_partition) {
+		Setup_Settings_Storage_Partition(settings_partition);
+	}
 	Update_System_Details();
 	UnMount_Main_Partitions();
 	return true;
