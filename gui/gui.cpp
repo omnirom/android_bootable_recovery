@@ -429,7 +429,7 @@ static void * input_thread(void *cookie)
 					state = 1;
 				key_repeat = 0;
 			}
-        }
+		}
 	}
 	return NULL;
 }
@@ -688,9 +688,6 @@ extern "C" int gui_init(void)
 
 extern "C" int gui_loadResources(void)
 {
-	//    unlink("/sdcard/video.last");
-	//    rename("/sdcard/video.bin", "/sdcard/video.last");
-	//    gRecorder = open("/sdcard/video.bin", O_CREAT | O_WRONLY);
 #ifndef TW_OEM_BUILD
 	int check = 0;
 	DataManager::GetValue(TW_IS_ENCRYPTED, check);

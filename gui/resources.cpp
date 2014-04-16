@@ -143,7 +143,7 @@ AnimationResource::AnimationResource(xml_node<>* node, ZipArchive* pZip)
 		{
 			if (ExtractResource(pZip, "images", fileName.str(), ".png", TMP_RESOURCE_NAME) != 0)
 				break;
-	
+
 			if (res_create_surface(TMP_RESOURCE_NAME, &surface))
 				break;
 

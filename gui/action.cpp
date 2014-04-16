@@ -88,7 +88,7 @@ GUIAction::GUIAction(xml_node<>* node)
 
 		attr = child->first_attribute("function");
 		if (!attr)  return;
-	
+
 		action.mFunction = attr->value();
 		action.mArg = child->value();
 		mActions.push_back(action);
@@ -502,7 +502,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			gui_print("Simulating actions...\n");
 		return 0;
 	}
-	
+
 	if (function == "restoredefaultsettings")
 	{
 		operation_start("Restore Defaults");
@@ -516,7 +516,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		operation_end(0, simulate);
 		return 0;
 	}
-	
+
 	if (function == "copylog")
 	{
 		operation_start("Copy Log");
@@ -533,7 +533,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		operation_end(0, simulate);
 		return 0;
 	}
-	
+
 	if (function == "compute" || function == "addsubtract")
 	{
 		if (arg.find("+") != string::npos)
@@ -589,27 +589,27 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		LOGERR("Unable to perform compute '%s'\n", arg.c_str());
 		return -1;
 	}
-	
+
 	if (function == "setguitimezone")
 	{
 		string SelectedZone;
 		DataManager::GetValue(TW_TIME_ZONE_GUISEL, SelectedZone); // read the selected time zone into SelectedZone
 		string Zone = SelectedZone.substr(0, SelectedZone.find(';')); // parse to get time zone
 		string DSTZone = SelectedZone.substr(SelectedZone.find(';') + 1, string::npos); // parse to get DST component
-		
+
 		int dst;
 		DataManager::GetValue(TW_TIME_ZONE_GUIDST, dst); // check wether user chose to use DST
-		
+
 		string offset;
 		DataManager::GetValue(TW_TIME_ZONE_GUIOFFSET, offset); // pull in offset
-		
+
 		string NewTimeZone = Zone;
 		if (offset != "0")
 			NewTimeZone += ":" + offset;
-		
+
 		if (dst != 0)
 			NewTimeZone += DSTZone;
-		
+
 		DataManager::SetValue(TW_TIME_ZONE_VAR, NewTimeZone);
 		DataManager::update_tz_environment_variables();
 		return 0;
@@ -619,7 +619,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		LOGERR("togglestorage action was deprecated from TWRP\n");
 		return 0;
 	}
-	
+
 	if (function == "overlay")
 		return gui_changeOverlay(arg);
 

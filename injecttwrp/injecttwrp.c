@@ -352,7 +352,7 @@ int main(int argc, char** argv) {
 				printf("This is not a properly formatted Samsung boot image!\nFailed\n");
 				return 1;
 			}
-			
+
 			// Find the ramdisk
 			return_val = find_gzip_recovery_ramdisk(boot_image, &address2);
 			if (return_val < 0) {
@@ -385,7 +385,7 @@ int main(int argc, char** argv) {
 				printf("This is not a properly formatted Samsung boot image!\nFailed\n");
 				return 1;
 			}
-			
+
 			// Find the ramdisk
 			return_val = find_gzip_recovery_ramdisk(boot_image, &address2);
 			if (return_val < 0) {

@@ -126,8 +126,10 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 			string parsevalue = gui_parse_text(attr->value());
 			int def = atoi(parsevalue.c_str());
 
-			if (def < mMin)      def = mMin;
-			else if (def > mMax) def = mMax;
+			if (def < mMin)
+				def = mMin;
+			else if (def > mMax)
+				def = mMax;
 			DataManager::SetValue(mVariable, def);
 		}
 
@@ -324,8 +326,10 @@ int GUISliderValue::Render(void)
 
 int GUISliderValue::Update(void)
 {
-	if (!isConditionTrue()) return mRendered ? 2 : 0;
-	if (!mRendered)         return 2;
+	if (!isConditionTrue())
+		return mRendered ? 2 : 0;
+	if (!mRendered)
+		return 2;
 
 	if(mLabel)
 		return mLabel->Update();
@@ -345,7 +349,8 @@ float GUISliderValue::pctFromValue(int value)
 
 int GUISliderValue::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
-	if (!isConditionTrue())     return -1;
+	if (!isConditionTrue())
+		return -1;
 
 	static bool dragging = false;
 	switch (state)
