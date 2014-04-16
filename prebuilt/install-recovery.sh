@@ -10,7 +10,7 @@
 
 /system/xbin/daemonsu --auto-daemon &
 
-# Some apps like to run stuff from this script as well, that will 
+# Some apps like to run stuff from this script as well, that will
 # obviously break root - in your code, just search this file
 # for "install-recovery-2.sh", and if present, write there instead.
 

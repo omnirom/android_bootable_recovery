@@ -324,7 +324,7 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIObject(node)
 	// Get the data for the list
 	child = node->first_node("listitem");
 	if (!child) return;
-	
+
 	while (child)
 	{
 		ListData data;
@@ -677,7 +677,7 @@ int GUIListBox::NotifyTouch(TOUCH_STATE state, int x, int y)
 
 		isHighlighted = false;
 		last2Y = lastY;
-		lastY = y;	
+		lastY = y;
 		startSelection = -1;
 
 		// Handle scrolling

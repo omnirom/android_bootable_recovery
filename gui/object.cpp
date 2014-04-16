@@ -56,7 +56,7 @@ GUIObject::GUIObject(xml_node<>* node)
 
 		attr = condition->first_attribute("var2");
 		if (attr)   cond.mVar2 = attr->value();
-	
+
 		mConditions.push_back(cond);
 
 		condition = condition->next_sibling("condition");
@@ -166,7 +166,7 @@ int GUIObject::NotifyVarChange(const std::string& varName, const std::string& va
 		if(varNameEmpty && iter->mCompareOp == "modified")
 		{
 			string val;
-	
+
 			// If this fails, val will not be set, which is perfect
 			if (DataManager::GetValue(iter->mVar1, val))
 			{

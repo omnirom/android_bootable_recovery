@@ -8,7 +8,7 @@ int main(int argc, char *argv)
     unsigned m;
     unsigned run_val;
     unsigned run_count;
- 
+
     n = gimp_image.width * gimp_image.height;
     m = 0;
     x = gimp_image.pixel_data;
@@ -23,7 +23,7 @@ int main(int argc, char *argv)
     printf("  .width = %d,\n  .height = %d,\n  .cwidth = %d,\n  .cheight = %d,\n", gimp_image.width, gimp_image.height,
            gimp_image.width / 96, gimp_image.height);
     printf("  .rundata = {\n");
-   
+
     run_val = (*x ? 0 : 255);
     run_count = 1;
     n--;
