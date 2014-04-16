@@ -33,7 +33,7 @@ HardwareKeyboard::HardwareKeyboard(void)
 
 HardwareKeyboard::~HardwareKeyboard()
 {
-	
+
 }
 
 int HardwareKeyboard::KeyDown(int key_code)

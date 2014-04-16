@@ -691,7 +691,7 @@ int GUIPartitionList::NotifyTouch(TOUCH_STATE state, int x, int y)
 
 		isHighlighted = false;
 		last2Y = lastY;
-		lastY = y;	
+		lastY = y;
 		startSelection = -1;
 
 		// Handle scrolling
@@ -788,7 +788,7 @@ int GUIPartitionList::NotifyTouch(TOUCH_STATE state, int x, int y)
 						}
 						mList.at(actualSelection).selected = 1;
 						mUpdate = 1;
-						
+
 						DataManager::SetValue(mVariable, str);
 					}
 				} else {

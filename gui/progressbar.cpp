@@ -156,11 +156,15 @@ int GUIProgressBar::Update(void)
 	cur -= min;
 	min = 0;
 
-	if (cur < min)  cur = min;
-	if (cur > max)  cur = max;
+	if (cur < min)
+		cur = min;
+	if (cur > max)
+		cur = max;
 
-	if (max == 0)   pos = 0;
-	else            pos = (cur * mRenderW) / max;
+	if (max == 0)
+		pos = 0;
+	else
+		pos = (cur * mRenderW) / max;
 
 	if (pos == mLastPos)
 		return 0;

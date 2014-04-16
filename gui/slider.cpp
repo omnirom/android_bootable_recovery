@@ -134,7 +134,7 @@ int GUISlider::NotifyTouch(TOUCH_STATE state, int x, int y)
 	switch (state)
 	{
 	case TOUCH_START:
-		if (x >= mRenderX && x <= mRenderX + sTouchW && 
+		if (x >= mRenderX && x <= mRenderX + sTouchW &&
 			y >= mRenderY && y <= mRenderY + mRenderH)
 		{
 			sCurTouchX = x - (sTouchW / 2);

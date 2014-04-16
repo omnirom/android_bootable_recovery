@@ -568,7 +568,7 @@
 				<data name="tw_filename" />
 				<selection name="tw_file" />
 			</object>
-			
+
 			<object type="template" name="sort_options" />
 
 			<object type="action">
@@ -624,7 +624,7 @@
 				<placement x="%center_x%" y="%row5_text_y%" placement="5" />
 				<text>%tw_file%</text>
 			</object>
-			
+
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%row6_text_y%" placement="5" />
@@ -2487,13 +2487,13 @@
 				<touch key="back" />
 				<action function="page">main</action>
 			</object>
-			
+
 			<object type="template" name="footer" />
 		</page>
 
 		<page name="timezone">
 			<object type="template" name="header" />
-			
+
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
@@ -2972,7 +2972,7 @@
 			<object type="template" name="footer" />
 		</page>
 
-		
+
 		<page name="htcdumlock">
 			<object type="template" name="header" />
 
@@ -3062,7 +3062,7 @@
 				<resource base="slider" used="slider-used" touch="slider-touch" />
 				<action function="overlay"></action>
 			</object>
-			
+
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
@@ -3070,7 +3070,7 @@
 			</object>
 		</page>
 
-		
+
 		<page name="filemanagerlist">
 			<object type="template" name="header" />
 
@@ -3548,7 +3548,7 @@
 				<resource base="slider" used="slider-used" touch="slider-touch" />
 				<action function="page">filemanageracction</action>
 			</object>
-			
+
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
@@ -3564,7 +3564,7 @@
 				<touch key="home" />
 				<action function="page">main</action>
 			</object>
-				
+
 			<object type="template" name="footer" />
 		</page>
 

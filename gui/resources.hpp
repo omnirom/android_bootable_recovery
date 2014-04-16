@@ -28,7 +28,7 @@ protected:
 };
 
 typedef enum {
-	TOUCH_START = 0, 
+	TOUCH_START = 0,
 	TOUCH_DRAG = 1,
 	TOUCH_RELEASE = 2,
 	TOUCH_HOLD = 3,
