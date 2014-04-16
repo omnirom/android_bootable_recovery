@@ -117,7 +117,8 @@ int  blanktimer::setClockTimer(void) {
 
 int blanktimer::getBrightness(void) {
 	string results;
-	string brightness_path = EXPAND(TW_BRIGHTNESS_PATH);
+	string brightness_path;
+	DataManager::GetValue("tw_brightness_file", brightness_path);
 	if ((TWFunc::read_file(brightness_path, results)) != 0)
 		return -1;
 	int result = atoi(results.c_str());
@@ -135,9 +136,10 @@ int blanktimer::getBrightness(void) {
 }
 
 int blanktimer::setBrightness(int brightness) {
-	string brightness_path = EXPAND(TW_BRIGHTNESS_PATH);
+	string brightness_path;
 	string bstring;
 	char buff[100];
+	DataManager::GetValue("tw_brightness_file", brightness_path);
 	sprintf(buff, "%d", brightness);
 	bstring = buff;
 	if ((TWFunc::write_file(brightness_path, bstring)) != 0)
