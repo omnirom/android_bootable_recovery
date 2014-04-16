@@ -319,7 +319,7 @@ int fixPermissions::pchmod(string fn, string mode) {
 			if (mode[n] == '1')
 				mask |= S_IXOTH;
 		}
-	} 
+	}
 
 	if (chmod(fn.c_str(), mask) != 0) {
 		LOGERR("Unable to chmod '%s' %l\n", fn.c_str(), mask);
@@ -615,7 +615,7 @@ int fixPermissions::getPackages() {
 		name.clear();
 		next = next->next_sibling("package");
 	}
-	//Get updated packages	
+	//Get updated packages
 	next = pkgNode->first_node("updated-package");
 	if (next != NULL) {
 		while (next->first_attribute("name") != NULL) {

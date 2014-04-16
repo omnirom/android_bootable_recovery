@@ -510,7 +510,7 @@ int TWPartitionManager::Check_Backup_Name(bool Display_Error) {
 		return 0; // A "0" (zero) means to use the current timestamp for the backup name
 	for (index=0; index<copy_size; index++) {
 		cur_char = (int)backup_name[index];
-		if (cur_char == 32 || (cur_char >= 48  && cur_char <= 57) || (cur_char >= 65 && cur_char <= 91) || cur_char == 93 || cur_char == 95 || (cur_char >= 97 && cur_char <= 123) || cur_char == 125 || cur_char == 45 || cur_char == 46) {
+		if (cur_char == 32 || (cur_char >= 48 && cur_char <= 57) || (cur_char >= 65 && cur_char <= 91) || cur_char == 93 || cur_char == 95 || (cur_char >= 97 && cur_char <= 123) || cur_char == 125 || cur_char == 45 || cur_char == 46) {
 			// These are valid characters
 			// Numbers
 			// Upper case letters
@@ -528,7 +528,7 @@ int TWPartitionManager::Check_Backup_Name(bool Display_Error) {
 	DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, Backup_Loc);
 	strcpy(backup_loc, Backup_Loc.c_str());
 	sprintf(tw_image_dir,"%s/%s", backup_loc, Backup_Name.c_str());
-    if (TWFunc::Path_Exists(tw_image_dir)) {
+	if (TWFunc::Path_Exists(tw_image_dir)) {
 		if (Display_Error)
 			LOGERR("A backup with this name already exists.\n");
 		return -4;
@@ -544,7 +544,7 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	string result;
 	twrpDigest md5sum;
 
-	if (!generate_md5) 
+	if (!generate_md5)
 		return true;
 
 	TWFunc::GUI_Operation_Text(TW_GENERATE_MD5_TEXT, "Generating MD5");
@@ -618,7 +618,7 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 	pos = (total_time - remain_time) / (float) total_time;
 	DataManager::SetProgress(pos);
 
-	LOGINFO("Estimated Total time: %lu  Estimated remaining time: %lu\n", total_time, remain_time);
+	LOGINFO("Estimated total time: %lu\nEstimated remaining time: %lu\n", total_time, remain_time);
 
 	// And get the time
 	if (Part->Backup_Method == 1)
@@ -680,7 +680,7 @@ int TWPartitionManager::Run_Backup(void) {
 	time_t start, stop, seconds, total_start, total_stop;
 	size_t start_pos = 0, end_pos = 0;
 	seconds = time(0);
-    t = localtime(&seconds);
+	t = localtime(&seconds);
 
 	time(&total_start);
 
@@ -747,7 +747,7 @@ int TWPartitionManager::Run_Backup(void) {
 	}
 	total_bytes = file_bytes + img_bytes;
 	gui_print(" * Total number of partitions to back up: %d\n", partition_count);
-    gui_print(" * Total size of all data: %lluMB\n", total_bytes / 1024 / 1024);
+	gui_print(" * Total size of all data: %lluMB\n", total_bytes / 1024 / 1024);
 	storage = Find_Partition_By_Path(DataManager::GetCurrentStoragePath());
 	if (storage != NULL) {
 		free_space = storage->Free;
@@ -762,7 +762,7 @@ int TWPartitionManager::Run_Backup(void) {
 		return false;
 	}
 	img_bytes_remaining = img_bytes;
-    file_bytes_remaining = file_bytes;
+	file_bytes_remaining = file_bytes;
 
 	gui_print("\n[BACKUP STARTED]\n");
 	gui_print(" * Backup Folder: %s\n", Full_Backup_Path.c_str());
@@ -802,23 +802,23 @@ int TWPartitionManager::Run_Backup(void) {
 	time(&total_stop);
 	int total_time = (int) difftime(total_stop, total_start);
 	uint64_t actual_backup_size = du.Get_Folder_Size(Full_Backup_Path);
-    actual_backup_size /= (1024LLU * 1024LLU);
+	actual_backup_size /= (1024LLU * 1024LLU);
 
 	int prev_img_bps, use_compression;
 	unsigned long long prev_file_bps;
 	DataManager::GetValue(TW_BACKUP_AVG_IMG_RATE, prev_img_bps);
 	img_bps += (prev_img_bps * 4);
-    img_bps /= 5;
+	img_bps /= 5;
 
-    DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
+	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 	if (use_compression)
 		DataManager::GetValue(TW_BACKUP_AVG_FILE_COMP_RATE, prev_file_bps);
-    else
+	else
 		DataManager::GetValue(TW_BACKUP_AVG_FILE_RATE, prev_file_bps);
 	file_bps += (prev_file_bps * 4);
-    file_bps /= 5;
+	file_bps /= 5;
 
-    DataManager::SetValue(TW_BACKUP_AVG_IMG_RATE, img_bps);
+	DataManager::SetValue(TW_BACKUP_AVG_IMG_RATE, img_bps);
 	if (use_compression)
 		DataManager::SetValue(TW_BACKUP_AVG_FILE_COMP_RATE, file_bps);
 	else
@@ -1201,7 +1201,7 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 		if (stat("/sd-ext/dalvik-cache", &st) == 0)
 		{
 			TWFunc::removeDir("/sd-ext/dalvik-cache", false);
-	   	    gui_print("Cleaned: /sd-ext/dalvik-cache...\n");
+			gui_print("Cleaned: /sd-ext/dalvik-cache...\n");
 		}
 	}
 	gui_print("-- Dalvik Cache Directories Wipe Complete!\n\n");
@@ -1542,7 +1542,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	property_set("ro.crypto.sd_fs_mnt_point", EXPAND(TW_INTERNAL_STORAGE_PATH));
 #endif
 
-    property_set("rw.km_fips_status", "ready");
+	property_set("rw.km_fips_status", "ready");
 
 #endif
 
@@ -1854,7 +1854,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 		tmpdevice += device;
 		if (tmpdevice == Device) {
 			// Adjust block size to byte size
-			total_size = (int)(blocks * 1024ULL  / 1000000LLU);
+			total_size = (int)(blocks * 1024ULL / 1000000LLU);
 			break;
 		}
 	}

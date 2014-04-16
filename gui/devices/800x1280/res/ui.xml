@@ -262,7 +262,7 @@
 		<template name="progress_bar">
 			<object type="progressbar">
 				<placement x="%col_progressbar_x%" y="%row_progressbar_y%" />
-				<resource  empty="progress_empty" full="progress_full" />
+				<resource empty="progress_empty" full="progress_full" />
 				<data name="ui_progress" />
 			</object>
 
@@ -345,7 +345,7 @@
 		</template>
 
 		<template name="footer">
-			<object type="console"> 
+			<object type="console">
 				<slideout resource="slideout" x="355" y="1220" />
 				<placement x="%console_x%" y="0" w="%console_width%" h="1220" />
 				<color foreground="%console_foreground%" background="%console_background%" scroll="%console_scroll%" />
@@ -3882,7 +3882,7 @@
 				<resource base="slider" used="slider-used" touch="slider-touch" />
 				<action function="page">filemanageracction</action>
 			</object>
-			
+
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
@@ -3898,7 +3898,7 @@
 				<touch key="home" />
 				<action function="page">main</action>
 			</object>
-				
+
 			<object type="template" name="footer" />
 		</page>
 

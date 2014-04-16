@@ -184,9 +184,9 @@ static int vk_init(struct ev *e)
         close(vk_fd);
         if (len <= 0)
             return -1;
-    
+
         vks[len] = '\0';
-    
+
         /* Parse a line like:
             keytype:keycode:centerx:centery:width:height:keytype2:keycode2:centerx2:...
         */
@@ -660,7 +660,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
 
                 vibrate(VIBRATOR_TIME_MS);
 
-                // Mark that all further movement until lift is discard, 
+                // Mark that all further movement until lift is discard,
                 // and make sure we don't come back into this area
                 discard = 1;
                 downX = 0;

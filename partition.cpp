@@ -359,7 +359,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Can_Be_Backed_Up = true;
 			if (Mount(false) && !TWFunc::Path_Exists("/cache/recovery/.")) {
 				LOGINFO("Recreating /cache/recovery folder.\n");
-				if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) 
+				if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0)
 					return -1;
 			}
 		} else if (Mount_Point == "/datadata") {
@@ -1438,7 +1438,7 @@ void TWPartition::Check_FS_Type() {
 		return;
 	}
 
-	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) < 0) { 
+	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) < 0) {
 		blkid_free_probe(pr);
 		LOGINFO("can't find filesystem on device %s\n", Actual_Block_Device.c_str());
 		return;
@@ -1976,7 +1976,7 @@ void TWPartition::Recreate_Media_Folder(void) {
 	} else if (!TWFunc::Path_Exists("/data/media")) {
 		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
 		LOGINFO("Recreating /data/media folder.\n");
-		mkdir("/data/media", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); 
+		mkdir("/data/media", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 		#ifdef HAVE_SELINUX
 		perms.fixDataInternalContexts();
 		#endif
@@ -1993,7 +1993,7 @@ void TWPartition::Recreate_AndSec_Folder(void) {
 	} else if (!TWFunc::Path_Exists(Symlink_Path)) {
 		LOGINFO("Recreating %s folder.\n", Backup_Name.c_str());
 		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
-		mkdir(Symlink_Path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); 
+		mkdir(Symlink_Path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
 	}
 }

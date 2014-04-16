@@ -999,7 +999,7 @@ int DataManager::GetMagicValue(const string varName, string& value)
 		int tw_military_time;
 		now = time(0);
 		current = localtime(&now);
-		GetValue(TW_MILITARY_TIME, tw_military_time); 
+		GetValue(TW_MILITARY_TIME, tw_military_time);
 		if (current->tm_hour >= 12)
 		{
 			if (tw_military_time == 1)
@@ -1009,7 +1009,7 @@ int DataManager::GetMagicValue(const string varName, string& value)
 		}
 		else
 		{
-			if (tw_military_time == 1) 
+			if (tw_military_time == 1)
 				sprintf(tmp, "%d:%02d", current->tm_hour, current->tm_min);
 			else
 				sprintf(tmp, "%d:%02d AM", current->tm_hour == 0 ? 12 : current->tm_hour, current->tm_min);

@@ -16,4 +16,4 @@ dest=$1
 for ARG in $*
 do
    process_file $dest $ARG
-done	
+done

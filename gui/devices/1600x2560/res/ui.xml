@@ -271,7 +271,7 @@
 		<template name="progress_bar">
 			<object type="progressbar">
 				<placement x="%col_progressbar_x%" y="%row_progressbar_y%" />
-				<resource  empty="progress_empty" full="progress_full" />
+				<resource empty="progress_empty" full="progress_full" />
 				<data name="ui_progress" />
 			</object>
 

@@ -123,7 +123,7 @@ void get_device_id(void)
 		}
 		fclose(fp);
     }
-	
+
 	if (hardware_id[0] != 0) {
 		if (verbose)
 			printf("using hardware id for device id: '%s'\n", hardware_id);

@@ -255,7 +255,7 @@
 		<template name="progress_bar">
 			<object type="progressbar">
 				<placement x="%col_progressbar_x%" y="%row_progressbar_y%" />
-				<resource  empty="progress_empty" full="progress_full" />
+				<resource empty="progress_empty" full="progress_full" />
 				<data name="ui_progress" />
 			</object>
 
@@ -1487,7 +1487,7 @@
 				<text>Append Date</text>
 				<action function="appenddatetobackupname"></action>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
@@ -2505,7 +2505,7 @@
 				<placement x="%center_x%" y="%row_offset_text_y%" placement="5" />
 				<text>Offset (usually 0): %tw_time_zone_guioffset%</text>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
@@ -2514,7 +2514,7 @@
 				<text>None</text>
 				<action function="set">tw_time_zone_guioffset=0</action>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
@@ -2523,7 +2523,7 @@
 				<text>15</text>
 				<action function="set">tw_time_zone_guioffset=15</action>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
@@ -2532,7 +2532,7 @@
 				<text>30</text>
 				<action function="set">tw_time_zone_guioffset=30</action>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
@@ -2541,7 +2541,7 @@
 				<text>45</text>
 				<action function="set">tw_time_zone_guioffset=45</action>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%tz_set_y%" />
@@ -3452,7 +3452,7 @@
 				<resource base="slider" used="slider-used" touch="slider-touch" />
 				<action function="page">filemanageracction</action>
 			</object>
-			
+
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
@@ -3468,7 +3468,7 @@
 				<touch key="home" />
 				<action function="page">main</action>
 			</object>
-				
+
 			<object type="template" name="footer" />
 		</page>
 
