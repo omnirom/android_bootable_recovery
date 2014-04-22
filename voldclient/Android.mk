@@ -6,7 +6,7 @@ LOCAL_SRC_FILES := commands.cpp dispatcher.cpp event_loop.cpp
 LOCAL_CFLAGS := -DMINIVOLD -Werror -Wno-unused-parameter
 LOCAL_C_INCLUDES :=         	\
     $(KERNEL_HEADERS)			\
-    bootable/simplerecovery    	\
+    $(LOCAL_PATH)/..    	\
     system/core/fs_mgr/include	\
     system/core/include     	\
     system/core/libcutils   	\
