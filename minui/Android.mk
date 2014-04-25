@@ -1,11 +1,14 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := graphics.c graphics_fbdev.c events.c resources.c
+LOCAL_SRC_FILES := graphics.c graphics_adf.c graphics_fbdev.c events.c \
+	resources.c
 
 LOCAL_C_INCLUDES +=\
     external/libpng\
     external/zlib
+
+LOCAL_WHOLE_STATIC_LIBRARIES += libadf
 
 LOCAL_MODULE := libminui
 
