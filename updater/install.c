@@ -927,8 +927,8 @@ Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 // file_getprop(file, key)
 //
 //   interprets 'file' as a getprop-style file (key=value pairs, one
-//   per line, # comment lines and blank lines okay), and returns the value
-//   for 'key' (or "" if it isn't defined).
+//   per line. # comment lines,blank lines, lines without '=' ignored),
+//   and returns the value for 'key' (or "" if it isn't defined).
 Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     char* buffer = NULL;
@@ -986,9 +986,7 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 
         char* equal = strchr(line, '=');
         if (equal == NULL) {
-            ErrorAbort(state, "%s: malformed line \"%s\": %s not a prop file?",
-                       name, line, filename);
-            goto done;
+            continue;
         }
 
         // trim whitespace between key and '='
