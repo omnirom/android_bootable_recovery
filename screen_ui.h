@@ -39,6 +39,8 @@ class ScreenRecoveryUI : public RecoveryUI {
     void ShowProgress(float portion, float seconds);
     void SetProgress(float fraction);
 
+    void SetStage(int current, int max);
+
     // text log
     void ShowText(bool visible);
     bool IsTextVisible();
@@ -58,9 +60,6 @@ class ScreenRecoveryUI : public RecoveryUI {
     enum UIElement { HEADER, MENU, MENU_SEL_BG, MENU_SEL_FG, LOG, TEXT_FILL };
     virtual void SetColor(UIElement e);
 
-  protected:
-    int install_overlay_offset_x, install_overlay_offset_y;
-
   private:
     Icon currentIcon;
     int installingFrame;
@@ -73,6 +72,8 @@ class ScreenRecoveryUI : public RecoveryUI {
     gr_surface *installation;
     gr_surface progressBarEmpty;
     gr_surface progressBarFill;
+    gr_surface stageMarkerEmpty;
+    gr_surface stageMarkerFill;
 
     ProgressType progressBarType;
 
@@ -104,7 +105,8 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     int iconX, iconY;
 
-    void draw_install_overlay_locked(int frame);
+    int stage, max_stage;
+
     void draw_background_locked(Icon icon);
     void draw_progress_locked();
     void draw_screen_locked();

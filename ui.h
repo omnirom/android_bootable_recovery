@@ -30,6 +30,8 @@ class RecoveryUI {
 
     // Initialize the object; called before anything else.
     virtual void Init();
+    // Show a stage indicator.  Call immediately after Init().
+    virtual void SetStage(int current, int max) { }
 
     // After calling Init(), you can tell the UI what locale it is operating in.
     virtual void SetLocale(const char* locale) { }
