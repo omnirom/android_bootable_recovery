@@ -112,7 +112,6 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     int stage, max_stage;
 
-    void draw_install_overlay_locked(int frame);
     void draw_background_locked(Icon icon);
     void draw_progress_locked();
     void draw_screen_locked();
