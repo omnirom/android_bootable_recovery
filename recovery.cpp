@@ -1099,6 +1099,10 @@ main(int argc, char **argv) {
         return busybox_driver(argc, argv);
     }
 
+    // Clear umask for packages that copy files out to /tmp and then over
+    // to /system without properly setting all permissions (eg. gapps).
+    umask(0);
+
     redirect_stdio(TEMPORARY_LOG_FILE);
 
     printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
