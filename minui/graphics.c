@@ -369,10 +369,20 @@ int gr_init(void)
         return -1;
     }
 
-    gr_backend = open_fbdev();
-    gr_draw = gr_backend->init(gr_backend);
-    if (gr_draw == NULL) {
-        return -1;
+    gr_backend = open_adf();
+    if (gr_backend) {
+        gr_draw = gr_backend->init(gr_backend);
+        if (!gr_draw) {
+            gr_backend->exit(gr_backend);
+        }
+    }
+
+    if (!gr_draw) {
+        gr_backend = open_fbdev();
+        gr_draw = gr_backend->init(gr_backend);
+        if (gr_draw == NULL) {
+            return -1;
+        }
     }
 
     overscan_offset_x = gr_draw->width * overscan_percent / 100;
