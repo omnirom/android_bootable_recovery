@@ -43,8 +43,8 @@
 #include <linux/kd.h>
 
 #ifdef MSM_BSP
-#include <msm_mdp.h>
-#include <msm_ion.h>
+#include <linux/msm_mdp.h>
+#include <linux/msm_ion.h>
 #endif
 
 #include <pixelflinger/pixelflinger.h>

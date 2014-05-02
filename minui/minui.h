@@ -46,6 +46,7 @@ int gr_text_impl(int x, int y, const char *s, int bold);
  void gr_texticon(int x, int y, gr_surface icon);
 int gr_measure(const char *s);
 void gr_font_size(int *x, int *y);
+void gr_get_memory_surface(gr_surface);
 
 void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy);
 unsigned int gr_get_width(gr_surface surface);
@@ -79,9 +80,6 @@ void ev_dispatch(void);
 int res_create_surface(const char* name, gr_surface* pSurface);
 int res_create_localized_surface(const char* name, gr_surface* pSurface);
 void res_free_surface(gr_surface surface);
-static inline int res_create_display_surface(const char* name, gr_surface* pSurface) {
-    return res_create_surface(name, pSurface);
-}
 
 #ifdef __cplusplus
 }
