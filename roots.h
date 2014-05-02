@@ -32,10 +32,12 @@ fstab_rec* volume_for_path(const char* path);
 
 // Make sure that the volume 'path' is on is mounted.  Returns 0 on
 // success (volume is mounted).
+int ensure_volume_mounted(fstab_rec* v);
 int ensure_path_mounted(const char* path);
 
 // Make sure that the volume 'path' is on is mounted.  Returns 0 on
 // success (volume is unmounted);
+int ensure_volume_unmounted(fstab_rec *v);
 int ensure_path_unmounted(const char* path);
 
 // Reformat the given volume (must be the mount point only, eg
@@ -52,11 +54,18 @@ int setup_install_mounts();
 // and 0 if the partition was not wiped.
 int erase_persistent_partition();
 
-char* get_primary_storage_path();
-char** get_extra_storage_paths();
 char* get_android_secure_path();
-int get_num_extra_volumes();
 int get_num_volumes();
+
+struct storage_item {
+    fstab_rec*  vol;
+    char*       label;
+    char*       path;
+};
+
+int is_data_media();
+storage_item* get_storage_items();
+void free_storage_items(storage_item* items);
 
 #ifdef __cplusplus
 }

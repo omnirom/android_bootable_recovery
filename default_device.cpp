@@ -20,21 +20,34 @@
 #include "device.h"
 #include "screen_ui.h"
 
+#include "roots.h"
+
 static const char* HEADERS[] = { "Swipe up/down to change selections;",
                                  "swipe right to select, or left to go back.",
                                  "",
                                  NULL };
 
 static const char* ITEMS[] =  {"reboot system now",
-                               "apply update from ADB",
+                               "apply update",
                                "wipe data/factory reset",
                                "wipe cache partition",
                                "wipe media",
                                "reboot to bootloader",
                                "power down",
                                "view recovery logs",
-                               "apply update from sdcard",
                                NULL };
+
+static Device::BuiltinAction ACTIONS[] = {
+    Device::REBOOT,
+    Device::APPLY_UPDATE,
+    Device::WIPE_DATA,
+    Device::WIPE_CACHE,
+    Device::WIPE_MEDIA,
+    Device::REBOOT_BOOTLOADER,
+    Device::SHUTDOWN,
+    Device::READ_RECOVERY_LASTLOG,
+    Device::NO_ACTION
+};
 
 extern int ui_root_menu;
 
@@ -42,6 +55,16 @@ class DefaultDevice : public Device {
   public:
     DefaultDevice() :
         ui(new ScreenRecoveryUI) {
+        // Remove "wipe media" option for non-datamedia devices
+        if (!is_data_media()) {
+            int i;
+            for (i = 4; ITEMS[i+1] != NULL; ++i) {
+                ITEMS[i] = ITEMS[i+1];
+                ACTIONS[i] = ACTIONS[i+1];
+            }
+            ITEMS[i] = NULL;
+            ACTIONS[i] = NO_ACTION;
+        }
     }
 
     RecoveryUI* GetUI() { return ui; }
@@ -80,18 +103,12 @@ class DefaultDevice : public Device {
     }
 
     BuiltinAction InvokeMenuItem(int menu_position) {
-        switch (menu_position) {
-          case 0: return REBOOT;
-          case 1: return APPLY_ADB_SIDELOAD;
-          case 2: return WIPE_DATA;
-          case 3: return WIPE_CACHE;
-          case 4: return WIPE_MEDIA;
-          case 5: return REBOOT_BOOTLOADER;
-          case 6: return SHUTDOWN;
-          case 7: return READ_RECOVERY_LASTLOG;
-          case 8: return APPLY_EXT;
-          default: return NO_ACTION;
+        if (menu_position < 0 ||
+                menu_position >= (int)(sizeof(ITEMS)/sizeof(ITEMS[0])) ||
+                ITEMS[menu_position] == NULL) {
+            return NO_ACTION;
         }
+        return ACTIONS[menu_position];
     }
 
     const char* const* GetMenuHeaders() { return HEADERS; }
