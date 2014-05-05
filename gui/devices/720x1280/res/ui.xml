@@ -2470,7 +2470,8 @@
 				<action function="page">screen</action>
 			</object>
 
-                        <object type="button">
+			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Restore Defaults</text>

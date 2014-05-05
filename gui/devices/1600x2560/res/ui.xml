@@ -2485,7 +2485,8 @@
 			</object>
 
 			<object type="button">
-				<placement x="%col_x%" y="%row4_y%" />
+				<highlight color="%highlight_color%" />
+				<placement x="%col1_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Restore Defaults</text>
 				<image resource="main_button" />
