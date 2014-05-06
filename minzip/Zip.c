@@ -698,7 +698,9 @@ static bool writeProcessFunction(const unsigned char *data, int dataLen,
                                  void *cookie)
 {
     int fd = (int)(intptr_t)cookie;
-
+    if (dataLen == 0) {
+        return true;
+    }
     ssize_t soFar = 0;
     while (true) {
         ssize_t n = write(fd, data+soFar, dataLen-soFar);
