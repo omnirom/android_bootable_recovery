@@ -176,7 +176,12 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
     int status;
     waitpid(pid, &status, 0);
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        LOGE("Error in %s\n(Status %d)\n", path, WEXITSTATUS(status));
+        if (WEXITSTATUS(status) != 7) {
+           LOGE("Installation error in %s\n(Status %d)\n", path, WEXITSTATUS(status));
+        } else {
+           LOGE("Failed to install %s\n", path);
+           LOGE("Please take note of all the above lines for reports\n");
+        }
         return INSTALL_ERROR;
     }
 
