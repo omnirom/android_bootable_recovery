@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b77b57d_d5812fa7",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2014-05-12T19:22:30Z",
+      "side": 1,
+      "message": "This guarantees that the first storage partition found will be used as settings storage if settingstorage is not explicitly defined in fstab. This should probably also set: (*iter)-\u003eIs_Settings_Storage \u003d true;",
+      "revId": "3a67e3819018c6f04c9f03966ccc8acee5743ed5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b77b57d_f58e2bd3",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1972,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2014-05-12T19:22:30Z",
+      "side": 1,
+      "message": "If this is reached, then the last storage partition found will be used for settings, contradicting my earlier comment.",
+      "revId": "3a67e3819018c6f04c9f03966ccc8acee5743ed5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
