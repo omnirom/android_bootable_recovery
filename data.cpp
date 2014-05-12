@@ -280,7 +280,9 @@ error:
 	fclose(in);
 	string current = GetCurrentStoragePath();
 	TWPartition* Part = PartitionManager.Find_Partition_By_Path(current);
-	if (current != Part->Storage_Path && Part->Mount(false)) {
+	if(!Part)
+		Part = PartitionManager.Get_Default_Storage_Partition();
+	if (Part && current != Part->Storage_Path && Part->Mount(false)) {
 		LOGINFO("LoadValues setting storage path to '%s'\n", Part->Storage_Path.c_str());
 		SetValue("tw_storage_path", Part->Storage_Path);
 	} else {
@@ -586,10 +588,15 @@ void DataManager::SetDefaultValues()
 	mConstValues.insert(make_pair("false", "0"));
 
 	mConstValues.insert(make_pair(TW_VERSION_VAR, TW_VERSION_STR));
-	mValues.insert(make_pair("tw_storage_path", make_pair("/", 1)));
 	mValues.insert(make_pair("tw_button_vibrate", make_pair("80", 1)));
 	mValues.insert(make_pair("tw_keyboard_vibrate", make_pair("40", 1)));
 	mValues.insert(make_pair("tw_action_vibrate", make_pair("160", 1)));
+
+	TWPartition *store = PartitionManager.Get_Default_Storage_Partition();
+	if(store)
+		mValues.insert(make_pair("tw_storage_path", make_pair(store->Storage_Path.c_str(), 1)));
+	else
+		mValues.insert(make_pair("tw_storage_path", make_pair("/", 1)));
 
 #ifdef TW_FORCE_CPUINFO_FOR_DEVICE_ID
 	printf("TW_FORCE_CPUINFO_FOR_DEVICE_ID := true\n");
