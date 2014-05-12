@@ -85,7 +85,6 @@ protected:
 private:
 	static void sanitize_device_id(char* device_id);
 	static void get_device_id(void);
-
 };
 
 #endif // _DATAMANAGER_HPP_HEADER
