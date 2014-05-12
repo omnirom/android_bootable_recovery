@@ -33,7 +33,7 @@ Find_File::Find_File() {
 }
 
 string Find_File::Find_Internal(const string& filename, const string& starting_path) {
-	DIR *d = opendir(starting_path.c_str());
+	DIR *d;
 	string new_path, return_path;
 	vector<string> dirs;
 	vector<string> symlinks;
@@ -45,6 +45,7 @@ string Find_File::Find_Internal(const string& filename, const string& starting_p
 	}
 	searched_dirs.push_back(starting_path);
 
+	d = opendir(starting_path.c_str());
 	if (d == NULL) {
 		LOGERR("Find_File: Error opening '%s'\n", starting_path.c_str());
 		return "";
