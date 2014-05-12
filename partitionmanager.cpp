@@ -1955,3 +1955,19 @@ void TWPartitionManager::Output_Storage_Fstab(void) {
 	}
 	fclose(fp);
 }
+
+TWPartition *TWPartitionManager::Get_Default_Storage_Partition()
+{
+	TWPartition *res = NULL;
+	for (std::vector<TWPartition*>::iterator iter = Partitions.begin(); iter != Partitions.end(); ++iter) {
+		if(!(*iter)->Is_Storage)
+			continue;
+
+		if((*iter)->Is_Settings_Storage)
+			return *iter;
+
+		if(!res)
+			res = *iter;
+	}
+	return res;
+}
