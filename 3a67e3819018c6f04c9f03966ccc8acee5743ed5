@@ -33,6 +33,24 @@
       "revId": "3a67e3819018c6f04c9f03966ccc8acee5743ed5",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b77b57d_35b98378",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1972,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2014-05-12T19:23:35Z",
+      "side": 1,
+      "message": "Oh, nevermind this comment. I didn\u0027t pay attention to if(!res)",
+      "parentUuid": "8b77b57d_f58e2bd3",
+      "revId": "3a67e3819018c6f04c9f03966ccc8acee5743ed5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
