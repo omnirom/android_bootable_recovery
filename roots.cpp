@@ -434,7 +434,7 @@ static int rmtree_except(const char* path, const char* except)
     return rc;
 }
 
-int format_volume(const char* volume) {
+int format_volume(const char* volume, bool force) {
     if (strcmp(volume, "media") == 0) {
         if (!is_data_media()) {
             return 0;
@@ -464,7 +464,7 @@ int format_volume(const char* volume) {
         return -1;
     }
 
-    if (strcmp(volume, "/data") == 0) {
+    if (!force && strcmp(volume, "/data") == 0) {
         if (ensure_path_mounted("/data") == 0) {
             // Preserve .layout_version to avoid "nesting bug"
             LOGI("Preserving layout version\n");

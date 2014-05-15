@@ -94,6 +94,13 @@ LOCAL_STATIC_LIBRARIES := \
     libm \
     libc
 
+# OEMLOCK support requires a device specific liboemlock be supplied.
+# See comments in recovery.cpp for the API.
+ifeq ($(TARGET_HAVE_OEMLOCK), true)
+    LOCAL_CFLAGS += -DHAVE_OEMLOCK
+    LOCAL_STATIC_LIBRARIES += liboemlock
+endif
+
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_CFLAGS += -DUSE_EXT4
     LOCAL_C_INCLUDES += system/extras/ext4_utils system/vold
