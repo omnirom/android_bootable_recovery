@@ -466,8 +466,31 @@ int format_volume(const char* volume) {
 
     if (strcmp(volume, "/data") == 0) {
         if (ensure_path_mounted("/data") == 0) {
+            // Preserve .layout_version to avoid "nesting bug"
+            LOGI("Preserving layout version\n");
+            unsigned char layout_buf[256];
+            ssize_t layout_buflen = -1;
+            int fd;
+            fd = open("/data/.layout_version", O_RDONLY);
+            if (fd != -1) {
+                layout_buflen = read(fd, layout_buf, sizeof(layout_buf));
+                close(fd);
+            }
+
             int rc = rmtree_except("/data", "media");
+
+            // Restore .layout_version
+            if (layout_buflen > 0) {
+                LOGI("Restoring layout version\n");
+                fd = open("/data/.layout_version", O_WRONLY | O_CREAT | O_EXCL, 0600);
+                if (fd != -1) {
+                    write(fd, layout_buf, layout_buflen);
+                    close(fd);
+                }
+            }
+
             ensure_path_unmounted(volume);
+
             return rc;
         }
         LOGE("format_volume failed to mount /data, formatting instead\n");
