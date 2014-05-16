@@ -205,6 +205,11 @@ int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
         ctrl[1] = offtin(buf+8);
         ctrl[2] = offtin(buf+16);
 
+        if (ctrl[0] < 0 || ctrl[1] < 0) {
+            printf("corrupt patch (negative byte counts)\n");
+            return 1;
+        }
+
         // Sanity check
         if (newpos + ctrl[0] > *new_size) {
             printf("corrupt patch (new file overrun)\n");
