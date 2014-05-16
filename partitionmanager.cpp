@@ -1608,8 +1608,10 @@ int TWPartitionManager::usb_storage_enable(void) {
 		if (Mount1) {
 			if (!Open_Lun_File(Mount1->Mount_Point, lun_file))
 				return false;
+			sprintf(lun_file, CUSTOM_LUN_FILE, 1);
 			Mount2 = Find_Next_Storage(Mount1->Mount_Point, "/data");
 			if (Mount2) {
+				DataManager::GetValue(TW_EXTERNAL_PATH, ext_path);
 				Open_Lun_File(ext_path, lun_file);
 			}
 		} else {
