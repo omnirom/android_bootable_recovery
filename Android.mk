@@ -13,6 +13,7 @@
 # limitations under the License.
 
 LOCAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
 
 TARGET_RECOVERY_GUI := true
 
@@ -42,7 +43,10 @@ LOCAL_MODULE := recovery
 #LOCAL_FORCE_STATIC_EXECUTABLE := true
 
 RECOVERY_API_VERSION := 3
-RECOVERY_FSTAB_VERSION := 2
+ifeq ($(RECOVERY_FSTAB_VERSION),)
+    RECOVERY_FSTAB_VERSION := 1
+endif
+
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 
 #LOCAL_STATIC_LIBRARIES := \
@@ -281,6 +285,9 @@ ifneq ($(TW_NO_LEGACY_PROPS),)
 endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
+endif
+ifeq ($(RECOVERY_FSTAB_VERSION),2)
+    LOCAL_CFLAGS += -DDEVICE_HAS_V2_FSTAB
 endif
 
 include $(BUILD_EXECUTABLE)
