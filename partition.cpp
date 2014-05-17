@@ -172,20 +172,32 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 	strncpy(full_line, Line.c_str(), line_len);
 	bool skip = false;
 
+
 	for (index = 0; index < line_len; index++) {
 		if (full_line[index] == 34)
 			skip = !skip;
 		if (!skip && full_line[index] <= 32)
 			full_line[index] = '\0';
 	}
+
+#ifdef DEVICE_HAS_V2_FSTAB
+	// V2 fstabs begin with primary block device
+	Primary_Block_Device = full_line;
+	LOGINFO("Processing '%s'\n", Primary_Block_Device.c_str());
+	index = Primary_Block_Device.size();
+
+	// We set backup path later for V2 fstabs
+#else
 	Mount_Point = full_line;
 	LOGINFO("Processing '%s'\n", Mount_Point.c_str());
 	Backup_Path = Mount_Point;
 	Storage_Path = Mount_Point;
+	index = Mount_Point.size();
+#endif
 	Display_Name = full_line + 1;
 	Backup_Display_Name = Display_Name;
 	Storage_Name = Display_Name;
-	index = Mount_Point.size();
+
 	while (index < line_len) {
 		while (index < line_len && full_line[index] == '\0')
 			index++;
@@ -193,20 +205,36 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			continue;
 		ptr = full_line + index;
 		if (item_index == 0) {
-			// File System
+		#ifdef DEVICE_HAS_V2_FSTAB
+			// Mount point
+			Mout_Point = ptr;
+			Backup_Path = Mount_Point;
+			Storage_Path = Mount_Point;
+		#else
+			// File system
 			Fstab_File_System = ptr;
 			Current_File_System = ptr;
+		#endif
 			item_index++;
 		} else if (item_index == 1) {
+		#ifdef DEVICE_HAS_V2_FSTAB
+			Fstab_File_System = ptr;
+			Current_File_System = ptr;
+		#endif
 			// Primary Block Device
 			if (Fstab_File_System == "mtd" || Fstab_File_System == "yaffs2") {
+			#ifdef DEVICE_HAS_V2_FSTAB
+				MTD_name = Primary_Block_Device;
+			#else
 				MTD_Name = ptr;
+			#endif
 				Find_MTD_Block_Device(MTD_Name);
 			} else if (Fstab_File_System == "bml") {
 				if (Mount_Point == "/boot")
 					MTD_Name = "boot";
 				else if (Mount_Point == "/recovery")
 					MTD_Name = "recovery";
+			#ifndef DEVICE_HAS_V2_FSTAB
 				Primary_Block_Device = ptr;
 				if (*ptr != '/')
 					LOGERR("Until we get better BML support, you will have to find and provide the full block device path to the BML devices e.g. /dev/block/bml9 instead of the partition name\n");
@@ -216,16 +244,21 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 				else
 					LOGINFO("Invalid block device on '%s', '%s', %i\n", Line.c_str(), ptr, index);
 				return 0;
+			#endif
 			} else {
+			#ifndef DEVICE_HAS_V2_FSTAB
 				Primary_Block_Device = ptr;
+			#endif
 				Find_Real_Block_Device(Primary_Block_Device, Display_Error);
 			}
 			item_index++;
 		} else if (item_index > 1) {
 			if (*ptr == '/') {
+			#ifndef DEVICE_HAS_V2_FSTAB
 				// Alternate Block Device
 				Alternate_Block_Device = ptr;
 				Find_Real_Block_Device(Alternate_Block_Device, Display_Error);
+			#endif
 			} else if (strlen(ptr) > 7 && strncmp(ptr, "length=", 7) == 0) {
 				// Partition length
 				ptr += 7;
