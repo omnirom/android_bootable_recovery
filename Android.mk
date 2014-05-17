@@ -282,6 +282,9 @@ endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
 endif
+ifneq ($(TARGET_HAS_V2_FSTAB),)
+    LOCAL_CFLAGS += -DDEVICE_HAS_V2_FSTAB
+endif
 
 include $(BUILD_EXECUTABLE)
 
