@@ -661,14 +661,15 @@ browse_directory(const char* path, Device* device) {
     int chosen_item = 0;
     while (true) {
         chosen_item = get_menu_selection(headers, zips, 1, chosen_item, device);
-
-        char* item = zips[chosen_item];
-        int item_len = strlen(item);
-        if (chosen_item == 0) {          // item 0 is always "../"
+        // item 0 is always "../"
+        if (chosen_item == 0 || chosen_item == Device::kGoBack) {
             // go up but continue browsing (if the caller is update_directory)
             result = NULL;
             break;
         }
+
+        char* item = zips[chosen_item];
+        int item_len = strlen(item);
 
         char new_path[PATH_MAX];
         strlcpy(new_path, path, PATH_MAX);
