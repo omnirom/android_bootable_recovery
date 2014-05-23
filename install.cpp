@@ -160,6 +160,11 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
             *wipe_cache = 1;
         } else if (strcmp(command, "clear_display") == 0) {
             ui->SetBackground(RecoveryUI::NONE);
+        } else if (strcmp(command, "enable_reboot") == 0) {
+            // packages can explicitly request that they want the user
+            // to be able to reboot during installation (useful for
+            // debugging packages that don't exit).
+            ui->SetEnableReboot(true);
         } else {
             LOGE("unknown command [%s]\n", command);
         }
@@ -236,7 +241,9 @@ really_install_package(const char *path, int* wipe_cache)
     /* Verify and install the contents of the package.
      */
     ui->Print("Installing update...\n");
+    ui->SetEnableReboot(false);
     int result = try_update_binary(path, &zip, wipe_cache);
+    ui->SetEnableReboot(true);
 
     sysReleaseMap(&map);
 

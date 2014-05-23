@@ -1640,6 +1640,15 @@ Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[])
     return StringValue(strdup(success ? "t" : ""));
 }
 
+Value* EnableRebootFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 0) {
+        return ErrorAbort(state, "%s() expects no args, got %d", name, argc);
+    }
+    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
+    fprintf(ui->cmd_pipe, "enable_reboot\n");
+    return StringValue(strdup("t"));
+}
+
 void RegisterInstallFunctions() {
     RegisterFunction("mount", MountFn);
     RegisterFunction("is_mounted", IsMountedFn);
@@ -1689,4 +1698,6 @@ void RegisterInstallFunctions() {
     RegisterFunction("reboot_now", RebootNowFn);
     RegisterFunction("get_stage", GetStageFn);
     RegisterFunction("set_stage", SetStageFn);
+
+    RegisterFunction("enable_reboot", EnableRebootFn);
 }

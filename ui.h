@@ -93,6 +93,13 @@ class RecoveryUI {
     // be called with "true".
     virtual void KeyLongPress(int key);
 
+    // Normally in recovery there's a key sequence that triggers
+    // immediate reboot of the device, regardless of what recovery is
+    // doing (with the default CheckKey implementation, it's pressing
+    // the power button 7 times in row).  Call this to enable or
+    // disable that feature.  It is enabled by default.
+    virtual void SetEnableReboot(bool enabled);
+
     // --- menu display ---
 
     // Display some header text followed by a menu of items, which appears
@@ -121,6 +128,7 @@ private:
     int key_last_down;                 // under key_queue_mutex
     bool key_long_press;               // under key_queue_mutex
     int key_down_count;                // under key_queue_mutex
+    bool enable_reboot;                // under key_queue_mutex
     int rel_sum;
 
     int consecutive_power_keys;

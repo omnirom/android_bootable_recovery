@@ -49,6 +49,7 @@ RecoveryUI::RecoveryUI() :
     key_last_down(-1),
     key_long_press(false),
     key_down_count(0),
+    enable_reboot(true),
     consecutive_power_keys(0),
     consecutive_alternate_keys(0),
     last_key(-1) {
@@ -116,6 +117,7 @@ int RecoveryUI::input_callback(int fd, uint32_t epevents, void* data)
 void RecoveryUI::process_key(int key_code, int updown) {
     bool register_key = false;
     bool long_press = false;
+    bool reboot_enabled;
 
     pthread_mutex_lock(&key_queue_mutex);
     key_pressed[key_code] = updown;
@@ -137,6 +139,7 @@ void RecoveryUI::process_key(int key_code, int updown) {
         }
         key_last_down = -1;
     }
+    reboot_enabled = enable_reboot;
     pthread_mutex_unlock(&key_queue_mutex);
 
     if (register_key) {
@@ -150,7 +153,9 @@ void RecoveryUI::process_key(int key_code, int updown) {
             break;
 
           case RecoveryUI::REBOOT:
-            android_reboot(ANDROID_RB_RESTART, 0, 0);
+            if (reboot_enabled) {
+                android_reboot(ANDROID_RB_RESTART, 0, 0);
+            }
             break;
 
           case RecoveryUI::ENQUEUE:
@@ -281,9 +286,15 @@ RecoveryUI::KeyAction RecoveryUI::CheckKey(int key) {
     }
 
     if (key == KEY_POWER) {
-        ++consecutive_power_keys;
-        if (consecutive_power_keys >= 7) {
-            return REBOOT;
+        pthread_mutex_lock(&key_queue_mutex);
+        bool reboot_enabled = enable_reboot;
+        pthread_mutex_unlock(&key_queue_mutex);
+
+        if (reboot_enabled) {
+            ++consecutive_power_keys;
+            if (consecutive_power_keys >= 7) {
+                return REBOOT;
+            }
         }
     } else {
         consecutive_power_keys = 0;
@@ -310,4 +321,10 @@ void RecoveryUI::NextCheckKeyIsLong(bool is_long_press) {
 }
 
 void RecoveryUI::KeyLongPress(int key) {
+}
+
+void RecoveryUI::SetEnableReboot(bool enabled) {
+    pthread_mutex_lock(&key_queue_mutex);
+    enable_reboot = enabled;
+    pthread_mutex_unlock(&key_queue_mutex);
 }
