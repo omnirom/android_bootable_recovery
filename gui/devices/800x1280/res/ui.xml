@@ -178,7 +178,8 @@
 		<variable name="mount_list_height" value="690" />
 		<variable name="mount_storage_row" value="830" />
 		<variable name="storage_list_height" value="775" />
-		<variable name="wipe_list_height" value="870" />
+		<variable name="wipe_list_height" value="670" />
+		<variable name="wipe_button_row1" value="900" />
 		<variable name="wipe_button_y" value="650" />
 		<variable name="slidervalue_w" value="780" />
 		<variable name="slidervalue_line_clr" value="#FFFFFF" />
@@ -1151,7 +1152,10 @@
 				<font resource="font" color="%button_text_color%" />
 				<text>Advanced Wipe</text>
 				<image resource="main_button" />
-				<action function="page">advancedwipe</action>
+				<actions>
+					<action function="set">partitionlisterror=0</action>
+					<action function="page">advancedwipe</action>
+				</actions>
 			</object>
 
 			<object type="button">
@@ -1204,6 +1208,10 @@
 		<page name="advancedwipe">
 			<object type="template" name="header" />
 
+			<object type="action">
+				<action function="set">tw_wipe_list=</action>
+			</object>
+
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
@@ -1236,6 +1244,25 @@
 					<action function="set">tw_complete_text1=Wipe Complete</action>
 					<action function="page">action_page</action>
 				</actions>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<fill color="%button_fill_color%" />
+				<placement x="%col1_x%" y="%wipe_button_row1%" w="%button_fill_full_width%" h="%button_fill_half_height%" placement="5" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Repair or Change File System</text>
+				<actions>
+					<action function="checkpartitionlist"></action>
+					<action function="page">checkpartitionlist</action>
+				</actions>
+			</object>
+
+			<object type="text" color="%text_fail_color%">
+				<condition var1="partitionlisterror" var2="1" />
+				<font resource="font" />
+				<placement x="%center_x%" y="%wipe_button_row1%" placement="5" />
+				<text>Invalid partition selection</text>
 			</object>
 
 			<object type="text" color="%text_color%">
@@ -1333,6 +1360,320 @@
 				<condition var1="tw_confirm_formatdata" op="!=" var2="yes" />
 				<action function="page">formatdata</function>
 			</object>
+		</page>
+
+		<page name="checkpartitionlist">
+			<object type="action">
+				<condition var1="tw_check_partition_list" op="=" var2="1" />
+				<actions>
+					<action function="set">partitionlisterror=0</action>
+					<action function="getpartitiondetails"></action>
+					<action function="page">partitionoptions</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_check_partition_list" op="!=" var2="1" />
+				<actions>
+					<action function="set">partitionlisterror=1</action>
+					<action function="set">tw_wipe_list=</action>
+					<action function="page">advancedwipe</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="partitionoptions">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Partition Options for: %tw_partition_name%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Mount Point: %tw_partition_mount_point%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Current file system: %tw_partition_file_system%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<condition var1="tw_partition_is_present" op="!=" var2="0" />
+				<font resource="font" />
+				<placement x="%col1_x%" y="%row3_text_y%" />
+				<text>Present: Yes</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<condition var1="tw_partition_is_present" op="=" var2="0" />
+				<font resource="font" />
+				<placement x="%col1_x%" y="%row3_text_y%" />
+				<text>Present: No</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<condition var1="tw_partition_removable" op="!=" var2="0" />
+				<font resource="font" />
+				<placement x="%col2_x%" y="%row3_text_y%" />
+				<text>Removable: Yes</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<condition var1="tw_partition_removable" op="=" var2="0" />
+				<font resource="font" />
+				<placement x="%col2_x%" y="%row3_text_y%" />
+				<text>Removable: No</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%col1_x%" y="%row4_text_y%" />
+				<text>Size: %tw_partition_size%MB</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%col2_x%" y="%row4_text_y%" />
+				<text>Used: %tw_partition_used%MB</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%col1_x%" y="%row5_text_y%" />
+				<text>Free: %tw_partition_free%MB</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%col2_x%" y="%row5_text_y%" />
+				<text>Backup Size: %tw_partition_backup_size%MB</text>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_can_repair" op="=" var2="1" />
+				<highlight color="%highlight_color%" />
+				<placement x="%col1_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Repair</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=partitionoptions</action>
+					<action function="set">tw_action=repair</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Repair %tw_partition_name%?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Repairing...</action>
+					<action function="set">tw_complete_text1=Repair Complete</action>
+					<action function="set">tw_slider_text=Swipe to Repair</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col2_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Change File System</text>
+				<image resource="main_button" />
+				<action function="page">selectfilesystem</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advancedwipe</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="selectfilesystem">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Change file system for: %tw_partition_name%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Mount Point: %tw_partition_mount_point%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Current file system: %tw_partition_file_system%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>Some ROMs or kernels may not support some</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
+				<text>file systems. Proceed with caution!</text>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_ext" op="=" var2="1" />
+				<highlight color="%highlight_color%" />
+				<placement x="%col1_x%" y="%row2_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>EXT2</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=selectfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=ext2</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to EXT2?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_ext" op="=" var2="1" />
+				<highlight color="%highlight_color%" />
+				<placement x="%col2_x%" y="%row2_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>EXT3</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=selectfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=ext3</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to EXT3?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_ext" op="=" var2="1" />
+				<highlight color="%highlight_color%" />
+				<placement x="%col1_x%" y="%row3_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>EXT4</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=selectfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=ext4</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to EXT4?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_f2fs" op="=" var2="1" />
+				<highlight color="%highlight_color%" />
+				<placement x="%col2_x%" y="%row3_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>F2FS</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=selectfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=f2fs</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to F2FS?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_vfat" op="=" var2="1" />
+				<highlight color="%highlight_color%" />
+				<placement x="%col1_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>FAT</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=selectfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=vfat</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to FAT?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_exfat" op="=" var2="1" />
+				<highlight color="%highlight_color%" />
+				<placement x="%col2_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>exFAT</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=selectfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=exfat</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to exFAT?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">partitionoptions</action>
+			</object>
+
+			<object type="template" name="footer" />
 		</page>
 
 		<page name="backup">
@@ -2458,7 +2799,8 @@
 				<action function="page">screen</action>
 			</object>
 
-                        <object type="button">
+			<object type="button">
+				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Restore Defaults</text>

@@ -684,6 +684,96 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		operation_end(0, simulate);
 		return 0;
 	}
+	if (function == "checkpartitionlist") {
+		string Wipe_List, wipe_path;
+		int count = 0;
+
+		DataManager::GetValue("tw_wipe_list", Wipe_List);
+		LOGINFO("checkpartitionlist list '%s'\n", Wipe_List.c_str());
+		if (!Wipe_List.empty()) {
+			size_t start_pos = 0, end_pos = Wipe_List.find(";", start_pos);
+			while (end_pos != string::npos && start_pos < Wipe_List.size()) {
+				wipe_path = Wipe_List.substr(start_pos, end_pos - start_pos);
+				LOGINFO("checkpartitionlist wipe_path '%s'\n", wipe_path.c_str());
+				if (wipe_path == "/and-sec" || wipe_path == "DALVIK" || wipe_path == "INTERNAL") {
+					// Do nothing
+				} else {
+					count++;
+				}
+				start_pos = end_pos + 1;
+				end_pos = Wipe_List.find(";", start_pos);
+			}
+			DataManager::SetValue("tw_check_partition_list", count);
+		} else {
+			DataManager::SetValue("tw_check_partition_list", 0);
+		}
+		return 0;
+	}
+	if (function == "getpartitiondetails") {
+		string Wipe_List, wipe_path;
+		int count = 0;
+
+		DataManager::GetValue("tw_wipe_list", Wipe_List);
+		LOGINFO("getpartitiondetails list '%s'\n", Wipe_List.c_str());
+		if (!Wipe_List.empty()) {
+			size_t start_pos = 0, end_pos = Wipe_List.find(";", start_pos);
+			while (end_pos != string::npos && start_pos < Wipe_List.size()) {
+				wipe_path = Wipe_List.substr(start_pos, end_pos - start_pos);
+				LOGINFO("getpartitiondetails wipe_path '%s'\n", wipe_path.c_str());
+				if (wipe_path == "/and-sec" || wipe_path == "DALVIK" || wipe_path == "INTERNAL") {
+					// Do nothing
+				} else {
+					DataManager::SetValue("tw_partition_path", wipe_path);
+					break;
+				}
+				start_pos = end_pos + 1;
+				end_pos = Wipe_List.find(";", start_pos);
+			}
+			if (!wipe_path.empty()) {
+				TWPartition* Part = PartitionManager.Find_Partition_By_Path(wipe_path);
+				if (Part) {
+					unsigned long long mb = 1048576;
+
+					DataManager::SetValue("tw_partition_name", Part->Display_Name);
+					DataManager::SetValue("tw_partition_mount_point", Part->Mount_Point);
+					DataManager::SetValue("tw_partition_file_system", Part->Current_File_System);
+					DataManager::SetValue("tw_partition_size", Part->Size / mb);
+					DataManager::SetValue("tw_partition_used", Part->Used / mb);
+					DataManager::SetValue("tw_partition_free", Part->Free / mb);
+					DataManager::SetValue("tw_partition_backup_size", Part->Backup_Size / mb);
+					DataManager::SetValue("tw_partition_removable", Part->Removable);
+					DataManager::SetValue("tw_partition_is_present", Part->Is_Present);
+
+					if (Part->Can_Repair())
+						DataManager::SetValue("tw_partition_can_repair", 1);
+					else
+						DataManager::SetValue("tw_partition_can_repair", 0);
+					if (TWFunc::Path_Exists("/sbin/mkdosfs"))
+						DataManager::SetValue("tw_partition_vfat", 1);
+					else
+						DataManager::SetValue("tw_partition_vfat", 0);
+					if (TWFunc::Path_Exists("/sbin/mkfs.exfat"))
+						DataManager::SetValue("tw_partition_exfat", 1);
+					else
+						DataManager::SetValue("tw_partition_exfat", 0);
+					if (TWFunc::Path_Exists("/sbin/mkfs.f2fs"))
+						DataManager::SetValue("tw_partition_f2fs", 1);
+					else
+						DataManager::SetValue("tw_partition_f2fs", 0);
+					if (TWFunc::Path_Exists("/sbin/mke2fs"))
+						DataManager::SetValue("tw_partition_ext", 1);
+					else
+						DataManager::SetValue("tw_partition_ext", 0);
+					return 0;
+				} else {
+					LOGERR("Unable to locate partition: '%s'\n", wipe_path.c_str());
+				}
+			}
+		}
+		DataManager::SetValue("tw_partition_name", "");
+		DataManager::SetValue("tw_partition_file_system", "");
+		return 0;
+	}
 
 	if (isThreaded)
 	{
@@ -1277,6 +1367,49 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					op_status = 0; // success
 				else
 					op_status = 1; // fail
+			}
+
+			operation_end(op_status, simulate);
+			return 0;
+		}
+		if (function == "repair")
+		{
+			int op_status = 0;
+
+			operation_start("Repair Partition");
+			if (simulate) {
+				simulate_progress_bar();
+			} else {
+				string part_path;
+				DataManager::GetValue("tw_partition_mount_point", part_path);
+				if (PartitionManager.Repair_By_Path(part_path, true)) {
+					op_status = 0; // success
+				} else {
+					LOGERR("Error repairing file system.\n");
+					op_status = 1; // fail
+				}
+			}
+
+			operation_end(op_status, simulate);
+			return 0;
+		}
+		if (function == "changefilesystem")
+		{
+			int op_status = 0;
+
+			operation_start("Change File System");
+			if (simulate) {
+				simulate_progress_bar();
+			} else {
+				string part_path, file_system;
+				DataManager::GetValue("tw_partition_mount_point", part_path);
+				DataManager::GetValue("tw_action_new_file_system", file_system);
+				if (PartitionManager.Wipe_By_Path(part_path, file_system)) {
+					op_status = 0; // success
+				} else {
+					LOGERR("Error changing file system.\n");
+					op_status = 1; // fail
+				}
 			}
 
 			operation_end(op_status, simulate);
