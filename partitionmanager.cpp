@@ -1096,6 +1096,69 @@ int TWPartitionManager::Wipe_By_Name(string Name) {
 	return false;
 }
 
+int TWPartitionManager::Wipe_By_Path(string Path, string New_File_System) {
+	std::vector<TWPartition*>::iterator iter;
+	int ret = false;
+	bool found = false;
+	string Local_Path = TWFunc::Get_Root_Path(Path);
+
+	// Iterate through all partitions
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path)) {
+			if (Path == "/and-sec")
+				ret = (*iter)->Wipe_AndSec();
+			else
+				ret = (*iter)->Wipe(New_File_System);
+			found = true;
+		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path) {
+			(*iter)->Wipe(New_File_System);
+		}
+	}
+	if (found) {
+		return ret;
+	} else
+		LOGERR("Wipe: Unable to find partition for path '%s'\n", Local_Path.c_str());
+	return false;
+}
+
+int TWPartitionManager::Wipe_By_Block(string Block, string New_File_System) {
+	TWPartition* Part = Find_Partition_By_Block(Block);
+
+	if (Part) {
+		if (Part->Has_SubPartition) {
+			std::vector<TWPartition*>::iterator subpart;
+
+			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+				if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point)
+					(*subpart)->Wipe(New_File_System);
+			}
+			return Part->Wipe(New_File_System);
+		} else
+			return Part->Wipe(New_File_System);
+	}
+	LOGERR("Wipe: Unable to find partition for block '%s'\n", Block.c_str());
+	return false;
+}
+
+int TWPartitionManager::Wipe_By_Name(string Name, string New_File_System) {
+	TWPartition* Part = Find_Partition_By_Name(Name);
+
+	if (Part) {
+		if (Part->Has_SubPartition) {
+			std::vector<TWPartition*>::iterator subpart;
+
+			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+				if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point)
+					(*subpart)->Wipe();
+			}
+			return Part->Wipe(New_File_System);
+		} else
+			return Part->Wipe(New_File_System);
+	}
+	LOGERR("Wipe: Unable to find partition for name '%s'\n", Name.c_str());
+	return false;
+}
+
 int TWPartitionManager::Factory_Reset(void) {
 	std::vector<TWPartition*>::iterator iter;
 	int ret = true;
@@ -1231,6 +1294,78 @@ int TWPartitionManager::Wipe_Media_From_Data(void) {
 		LOGERR("Unable to locate /data.\n");
 		return false;
 	}
+	return false;
+}
+
+int TWPartitionManager::Repair_By_Path(string Path, bool Display_Error) {
+	std::vector<TWPartition*>::iterator iter;
+	int ret = false;
+	bool found = false;
+	string Local_Path = TWFunc::Get_Root_Path(Path);
+
+	if (Local_Path == "/tmp" || Local_Path == "/")
+		return true;
+
+	// Iterate through all partitions
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path)) {
+			ret = (*iter)->Repair();
+			found = true;
+		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path) {
+			(*iter)->Repair();
+		}
+	}
+	if (found) {
+		return ret;
+	} else if (Display_Error) {
+		LOGERR("Repair: Unable to find partition for path '%s'\n", Local_Path.c_str());
+	} else {
+		LOGINFO("Repair: Unable to find partition for path '%s'\n", Local_Path.c_str());
+	}
+	return false;
+}
+
+int TWPartitionManager::Repair_By_Block(string Block, bool Display_Error) {
+	TWPartition* Part = Find_Partition_By_Block(Block);
+
+	if (Part) {
+		if (Part->Has_SubPartition) {
+			std::vector<TWPartition*>::iterator subpart;
+
+			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+				if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point)
+					(*subpart)->Repair();
+			}
+			return Part->Repair();
+		} else
+			return Part->Repair();
+	}
+	if (Display_Error)
+		LOGERR("Repair: Unable to find partition for block '%s'\n", Block.c_str());
+	else
+		LOGINFO("Repair: Unable to find partition for block '%s'\n", Block.c_str());
+	return false;
+}
+
+int TWPartitionManager::Repair_By_Name(string Name, bool Display_Error) {
+	TWPartition* Part = Find_Partition_By_Name(Name);
+
+	if (Part) {
+		if (Part->Has_SubPartition) {
+			std::vector<TWPartition*>::iterator subpart;
+
+			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
+				if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point)
+					(*subpart)->Repair();
+			}
+			return Part->Repair();
+		} else
+			return Part->Repair();
+	}
+	if (Display_Error)
+		LOGERR("Repair: Unable to find partition for name '%s'\n", Name.c_str());
+	else
+		LOGINFO("Repair: Unable to find partition for name '%s'\n", Name.c_str());
 	return false;
 }
 
