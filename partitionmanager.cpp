@@ -1573,7 +1573,6 @@ int TWPartitionManager::Open_Lun_File(string Partition_Path, string Lun_File) {
 int TWPartitionManager::usb_storage_enable(void) {
 	int has_dual, has_data_media;
 	char lun_file[255];
-	string ext_path;
 	bool has_multiple_lun = false;
 
 	DataManager::GetValue(TW_HAS_DATA_MEDIA, has_data_media);
@@ -1610,7 +1609,8 @@ int TWPartitionManager::usb_storage_enable(void) {
 				return false;
 			Mount2 = Find_Next_Storage(Mount1->Mount_Point, "/data");
 			if (Mount2) {
-				Open_Lun_File(ext_path, lun_file);
+				sprintf(lun_file, CUSTOM_LUN_FILE, 1);
+				Open_Lun_File(Mount2->Mount_Point, lun_file);
 			}
 		} else {
 			LOGERR("Unable to find storage partition to mount to USB\n");
@@ -1623,8 +1623,8 @@ int TWPartitionManager::usb_storage_enable(void) {
 
 int TWPartitionManager::usb_storage_disable(void) {
 	int index, ret;
-	char lun_file[255], ch[2] = {0, 0};
-	string str = ch;
+	char lun_file[255];
+	string str = "\n";
 
 	for (index=0; index<2; index++) {
 		sprintf(lun_file, CUSTOM_LUN_FILE, index);
