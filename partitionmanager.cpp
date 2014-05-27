@@ -1623,8 +1623,8 @@ int TWPartitionManager::usb_storage_enable(void) {
 
 int TWPartitionManager::usb_storage_disable(void) {
 	int index, ret;
-	char lun_file[255], ch[2] = {0, 0};
-	string str = ch;
+	char lun_file[255];
+	string str = "\n";
 
 	for (index=0; index<2; index++) {
 		sprintf(lun_file, CUSTOM_LUN_FILE, index);
