@@ -87,9 +87,6 @@ class ScreenRecoveryUI : public RecoveryUI {
     static const int kMaxCols = 96;
     static const int kMaxRows = 96;
 
-    static const int kTextXOffset = 8;
-    static const int kTextYOffset = 4;
-
     // Log text overlay, displayed when a magic key is pressed
     char text[kMaxRows][kMaxCols];
     int text_cols, text_rows;
