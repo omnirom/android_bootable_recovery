@@ -130,6 +130,8 @@ static gr_surface fbdev_init(minui_backend* backend) {
         return NULL;
     }
 
+    memset(bits, 0, fi.smem_len);
+
     gr_framebuffer[0].width = vi.xres;
     gr_framebuffer[0].height = vi.yres;
     gr_framebuffer[0].row_bytes = fi.line_length;
