@@ -40,9 +40,10 @@ static int get_bootloader_message_block(struct bootloader_message *out, const Vo
 static int set_bootloader_message_block(const struct bootloader_message *in, const Volume* v);
 */
 int get_bootloader_message(struct bootloader_message *out) {
+
     //volume_for_path("/misc");
     if (device_name[0] == 0) {
-      LOGE("Cannot load volume /misc!\n");
+      LOGI("Cannot load volume /misc!\n");
       return -1;
     }
     if (device_type == 'm') {
@@ -57,7 +58,7 @@ int get_bootloader_message(struct bootloader_message *out) {
 int set_bootloader_message(const struct bootloader_message *in) {
     //volume_for_path("/misc");
     if (device_name[0] == 0) {
-      LOGE("Cannot load volume /misc!\n");
+      LOGI("Cannot load volume /misc!\n");
       return -1;
     }
     if (device_type == 'm') {
