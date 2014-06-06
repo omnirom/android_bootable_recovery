@@ -164,9 +164,6 @@ tar_extract_file(TAR *t, char *realname, char *prefix)
 		if (lsetfilecon(realname, t->th_buf.selinux_context) < 0) {
 			fprintf(stderr, "Failed to restore SELinux context %s!\n", strerror(errno));
 		}
-		if (lsetfilecon(dirname(realname), t->th_buf.selinux_context) < 0) {
-			fprintf(stderr, "Failed to restore SELinux context %s!\n", strerror(errno));
-		}
 	}
 #endif
 
