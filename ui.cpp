@@ -56,6 +56,7 @@ RecoveryUI::RecoveryUI() :
     pthread_mutex_init(&key_queue_mutex, NULL);
     pthread_cond_init(&key_queue_cond, NULL);
     self = this;
+    memset(key_pressed, 0, sizeof(key_pressed));
 }
 
 void RecoveryUI::Init() {
