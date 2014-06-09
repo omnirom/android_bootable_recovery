@@ -463,17 +463,31 @@ DontCareMap* ReadDontCareMapFromZip(ZipArchive* za, const char* path) {
 
     map->region_count = strtoul(p, &p, 0);
     map->regions = (int*) malloc(map->region_count * sizeof(int));
+    map->total_blocks = 0;
 
     int i;
     for (i = 0; i < map->region_count; ++i) {
         map->regions[i] = strtoul(p, &p, 0);
+        map->total_blocks += map->regions[i];
     }
 
     return map;
 }
 
+static FILE* mapwrite_cmd_pipe;
+
+static void progress_cb(long done, long total) {
+    if (total > 0) {
+        double frac = (double)done / total;
+        fprintf(mapwrite_cmd_pipe, "set_progress %f\n", frac);
+        fflush(mapwrite_cmd_pipe);
+    }
+}
+
+
+
 bool MapWriter(const unsigned char* data, int dataLen, void* cookie) {
-    return write_with_map(data, dataLen, (MapState*) cookie) == dataLen;
+    return write_with_map(data, dataLen, (MapState*) cookie, progress_cb) == dataLen;
 }
 
 // package_extract_file(package_path, destination_path, map_path)
@@ -490,6 +504,10 @@ Value* PackageExtractFileFn(const char* name, State* state,
                           name, argc);
     }
     bool success = false;
+
+    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
+    mapwrite_cmd_pipe = ui->cmd_pipe;
+
     if (argc >= 2) {
         // The two-argument version extracts to a file; the three-arg
         // version extracts to a file, skipping over regions in a
@@ -1185,6 +1203,9 @@ Value* SysPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
         return NULL;
     }
 
+    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
+    mapwrite_cmd_pipe = ui->cmd_pipe;
+
     if (ParseSha1(target_sha1, target_digest) != 0) {
         printf("%s(): failed to parse '%s' as target SHA-1", name, target_sha1);
         memset(target_digest, 0, SHA_DIGEST_SIZE);
@@ -1220,7 +1241,7 @@ Value* SysPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
 
         FILE* tgt = fopen(filename, "r+");
 
-        int ret = syspatch(src, init_map, patch_data, patch_len, tgt, target_map);
+        int ret = syspatch(src, init_map, patch_data, patch_len, tgt, target_map, progress_cb);
 
         fclose(src);
         fclose(tgt);
