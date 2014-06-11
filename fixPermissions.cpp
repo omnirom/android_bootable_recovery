@@ -117,6 +117,10 @@ int fixPermissions::fixDataInternalContexts(void) {
 		dir = "/data/media/0";
 	else
 		dir = "/data/media";
+	if (!TWFunc::Path_Exists(dir)) {
+		LOGINFO("fixDataInternalContexts: '%s' does not exist!\n", dir.c_str());
+		return 0;
+	}
 	LOGINFO("Fixing %s contexts\n", dir.c_str());
 	restorecon(dir, &sb);
 	d = opendir(dir.c_str());

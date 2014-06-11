@@ -1081,7 +1081,7 @@ bool TWPartition::UnMount(bool Display_Error) {
 }
 
 bool TWPartition::Wipe(string New_File_System) {
-	bool wiped = false, update_crypt = false;
+	bool wiped = false, update_crypt = false, recreate_media = true;
 	int check;
 	string Layout_Filename = Mount_Point + "/.layout_version";
 
@@ -1107,6 +1107,7 @@ bool TWPartition::Wipe(string New_File_System) {
 
 	if (Has_Data_Media && Current_File_System == New_File_System) {
 		wiped = Wipe_Data_Without_Wiping_Media();
+		recreate_media = false;
 	} else {
 
 		DataManager::GetValue(TW_RM_RF_VAR, check);
@@ -1161,6 +1162,10 @@ bool TWPartition::Wipe(string New_File_System) {
 					DataManager::SetValue(TW_IS_DECRYPTED, 0);
 				}
 			}
+		}
+
+		if (Mount_Point == "/data" && Has_Data_Media && recreate_media) {
+			Recreate_Media_Folder();
 		}
 	}
 	return wiped;
@@ -1810,8 +1815,15 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 			return false;
 	} else {
 		gui_print("Wiping %s...\n", Display_Name.c_str());
-		if (!Wipe(Restore_File_System))
-			return false;
+		if (Has_Data_Media && Mount_Point == "/data" && Restore_File_System != Current_File_System) {
+			gui_print("WARNING: This /data backup was made with %s file system!\n", Restore_File_System.c_str());
+			gui_print("The backup may not boot unless you change back to %s.\n", Restore_File_System.c_str());
+			if (!Wipe_Data_Without_Wiping_Media())
+				return false;
+		} else {
+			if (!Wipe(Restore_File_System))
+				return false;
+		}
 	}
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, "Restoring");
 	gui_print("Restoring %s...\n", Backup_Display_Name.c_str());
@@ -1980,7 +1992,9 @@ void TWPartition::Recreate_Media_Folder(void) {
 		#ifdef HAVE_SELINUX
 		perms.fixDataInternalContexts();
 		#endif
+		// Toggle mount to ensure that "internal sdcard" gets mounted
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
+		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
 	}
 }
 
