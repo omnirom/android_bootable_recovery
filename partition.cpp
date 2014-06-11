@@ -1810,7 +1810,7 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 			return false;
 	} else {
 		gui_print("Wiping %s...\n", Display_Name.c_str());
-		if (!Wipe(Restore_File_System))
+		if (!Wipe())
 			return false;
 	}
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, "Restoring");
