@@ -1810,8 +1810,15 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 			return false;
 	} else {
 		gui_print("Wiping %s...\n", Display_Name.c_str());
-		if (!Wipe(Restore_File_System))
-			return false;
+		if (Has_Data_Media && Mount_Point == "/data" && Restore_File_System != Current_File_System) {
+			gui_print("WARNING: This /data backup was made with %s file system!\n", Restore_File_System.c_str());
+			gui_print("The backup may not boot unless you change back to %s.\n", Restore_File_System.c_str());
+			if (!Wipe_Data_Without_Wiping_Media())
+				return false;
+		} else {
+			if (!Wipe(Restore_File_System))
+				return false;
+		}
 	}
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, "Restoring");
 	gui_print("Restoring %s...\n", Backup_Display_Name.c_str());
