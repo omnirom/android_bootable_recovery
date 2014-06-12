@@ -40,7 +40,8 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_CFLAGS := \
 	-D_FILE_OFFSET_BITS=64 \
-	-DFUSE_USE_VERSION=26
+	-DFUSE_USE_VERSION=26 \
+	-fno-strict-aliasing
 
 LOCAL_MODULE := libfusetwrp
 LOCAL_MODULE_TAGS := optional
