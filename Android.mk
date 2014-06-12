@@ -14,6 +14,8 @@
 
 LOCAL_PATH := $(call my-dir)
 
+include $(CLEAR_VARS)
+
 TARGET_RECOVERY_GUI := true
 
 LOCAL_SRC_FILES := \
