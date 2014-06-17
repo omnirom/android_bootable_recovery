@@ -19,6 +19,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -151,6 +152,20 @@ int ensure_path_unmounted(const char* path) {
     return unmount_mounted_volume(mv);
 }
 
+static int exec_cmd(const char* path, char* const argv[]) {
+    int status;
+    pid_t child;
+    if ((child = vfork()) == 0) {
+        execv(path, argv);
+        _exit(-1);
+    }
+    waitpid(child, &status, 0);
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        LOGE("%s failed with status %d\n", path, WEXITSTATUS(status));
+    }
+    return WEXITSTATUS(status);
+}
+
 int format_volume(const char* volume) {
     Volume* v = volume_for_path(volume);
     if (v == NULL) {
@@ -195,19 +210,7 @@ int format_volume(const char* volume) {
         return 0;
     }
 
-    if (strcmp(v->fs_type, "ext4") == 0) {
-        ssize_t length = 0;
-        if (v->length != 0) {
-            length = v->length;
-        } else if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0) {
-            length = -CRYPT_FOOTER_OFFSET;
-        }
-        int result = make_ext4fs(v->blk_device, length, volume, sehandle);
-        if (result != 0) {
-            LOGE("format_volume: make_extf4fs failed on %s\n", v->blk_device);
-            return -1;
-        }
-
+    if (strcmp(v->fs_type, "ext4") == 0 || strcmp(v->fs_type, "f2fs") == 0) {
         // if there's a key_loc that looks like a path, it should be a
         // block device for storing encryption metadata.  wipe it too.
         if (v->key_loc != NULL && v->key_loc[0] == '/') {
@@ -221,6 +224,39 @@ int format_volume(const char* volume) {
             close(fd);
         }
 
+        ssize_t length = 0;
+        if (v->length != 0) {
+            length = v->length;
+        } else if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0) {
+            length = -CRYPT_FOOTER_OFFSET;
+        }
+        int result;
+        if (strcmp(v->fs_type, "ext4") == 0) {
+            result = make_ext4fs(v->blk_device, length, volume, sehandle);
+        } else {   /* Has to be f2fs because we checked earlier. */
+            if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0 && length < 0) {
+                LOGE("format_volume: crypt footer + negative length (%lld) not supported on %s\n", v->fs_type, length);
+                return -1;
+            }
+            if (length < 0) {
+                LOGE("format_volume: negative length (%ld) not supported on %s\n", length, v->fs_type);
+                return -1;
+            }
+            char *num_sectors;
+            if (asprintf(&num_sectors, "%ld", length / 512) <= 0) {
+                LOGE("format_volume: failed to create %s command for %s\n", v->fs_type, v->blk_device);
+                return -1;
+            }
+            const char *f2fs_path = "/sbin/mkfs.f2fs";
+            const char* const f2fs_argv[] = {"mkfs.f2fs", "-t", "-d1", v->blk_device, num_sectors, NULL};
+
+            result = exec_cmd(f2fs_path, (char* const*)f2fs_argv);
+            free(num_sectors);
+        }
+        if (result != 0) {
+            LOGE("format_volume: make %s failed on %s with %d(%s)\n", v->fs_type, v->blk_device, result, strerror(errno));
+            return -1;
+        }
         return 0;
     }
 

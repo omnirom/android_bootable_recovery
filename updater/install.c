@@ -211,14 +211,29 @@ done:
     return StringValue(result);
 }
 
+static int exec_cmd(const char* path, char* const argv[]) {
+    int status;
+    pid_t child;
+    if ((child = vfork()) == 0) {
+        execv(path, argv);
+        _exit(-1);
+    }
+    waitpid(child, &status, 0);
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        printf("%s failed with status %d\n", path, WEXITSTATUS(status));
+    }
+    return WEXITSTATUS(status);
+}
+
 
 // format(fs_type, partition_type, location, fs_size, mount_point)
 //
 //    fs_type="yaffs2" partition_type="MTD"     location=partition fs_size=<bytes> mount_point=<location>
 //    fs_type="ext4"   partition_type="EMMC"    location=device    fs_size=<bytes> mount_point=<location>
-//    if fs_size == 0, then make_ext4fs uses the entire partition.
+//    fs_type="f2fs"   partition_type="EMMC"    location=device    fs_size=<bytes> mount_point=<location>
+//    if fs_size == 0, then make fs uses the entire partition.
 //    if fs_size > 0, that is the size to use
-//    if fs_size < 0, then reserve that many bytes at the end of the partition
+//    if fs_size < 0, then reserve that many bytes at the end of the partition (not for "f2fs")
 Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 5) {
@@ -285,6 +300,24 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
         int status = make_ext4fs(location, atoll(fs_size), mount_point, sehandle);
         if (status != 0) {
             printf("%s: make_ext4fs failed (%d) on %s",
+                    name, status, location);
+            result = strdup("");
+            goto done;
+        }
+        result = location;
+    } else if (strcmp(fs_type, "f2fs") == 0) {
+        char *num_sectors;
+        if (asprintf(&num_sectors, "%lld", atoll(fs_size) / 512) <= 0) {
+            printf("format_volume: failed to create %s command for %s\n", fs_type, location);
+            result = strdup("");
+            goto done;
+        }
+        const char *f2fs_path = "/sbin/mkfs.f2fs";
+        const char* const f2fs_argv[] = {"mkfs.f2fs", "-t", "-d1", location, num_sectors, NULL};
+        int status = exec_cmd(f2fs_path, (char* const*)f2fs_argv);
+        free(num_sectors);
+        if (status != 0) {
+            printf("%s: mkfs.f2fs failed (%d) on %s",
                     name, status, location);
             result = strdup("");
             goto done;
