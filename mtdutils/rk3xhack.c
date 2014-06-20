@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* This is a hack for Rockchip rk30xx based devices. The problem is that
+/* This is a hack for Rockchip rk3x based devices. The problem is that
  * the MEMERASE ioctl is failing (hangs and never returns) in their kernel.
  * The sources are not fully available, so fixing it in the rk30xxnand_ko driver
  * is not possible.
@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "rk30hack.h"
+#include "rk3xhack.h"
 
 int rk30_zero_out(int fd, off_t pos, ssize_t size)
 {

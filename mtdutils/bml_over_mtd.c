@@ -31,8 +31,8 @@
 
 #include "mtdutils.h"
 
-#ifdef RK3066
-    #include "rk30hack.h"
+#ifdef RK3X
+    #include "rk3xhack.h"
 #endif
 
 typedef struct BmlOverMtdReadContext {
@@ -522,7 +522,7 @@ static ssize_t bml_over_mtd_write_block(int fd, ssize_t erase_size, char* data)
 	erase_info.length = size;
 	int retry;
 	for (retry = 0; retry < 2; ++retry) {
-#ifdef RK3066
+#ifdef RK3X
 		if (rk30_zero_out(fd, pos, size) < 0) {
 			fprintf(stderr, "mtd: erase failure at 0x%08lx (%s)\n",
 					pos, strerror(errno));
