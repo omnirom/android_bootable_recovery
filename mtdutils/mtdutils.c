@@ -28,8 +28,8 @@
 
 #include "mtdutils.h"
 
-#ifdef RK3066
-    #include "rk30hack.h"
+#ifdef RK3X
+    #include "rk3xhack.h"
 #endif
 
 struct MtdReadContext {
@@ -427,7 +427,7 @@ static int write_block(MtdWriteContext *ctx, const char *data)
         erase_info.length = size;
         int retry;
         for (retry = 0; retry < 2; ++retry) {
-#ifdef RK3066
+#ifdef RK3X
             if (rk30_zero_out(fd, pos, size) < 0) {
                 fprintf(stderr, "mtd: erase failure at 0x%08lx (%s)\n",
                         pos, strerror(errno));
@@ -469,7 +469,7 @@ static int write_block(MtdWriteContext *ctx, const char *data)
         // Try to erase it once more as we give up on this block
         add_bad_block_offset(ctx, pos);
         printf("mtd: skipping write block at 0x%08lx\n", pos);
-#ifdef RK3066
+#ifdef RK3X
         rk30_zero_out(fd, pos, size);
 #else
 
@@ -544,7 +544,7 @@ off_t mtd_erase_blocks(MtdWriteContext *ctx, int blocks)
         struct erase_info_user erase_info;
         erase_info.start = pos;
         erase_info.length = ctx->partition->erase_size;
-#ifdef RK3066
+#ifdef RK3X
         if (rk30_zero_out(ctx->fd, pos, ctx->partition->erase_size) < 0) {
             fprintf(stderr, "mtd: erase failure at 0x%08lx\n", pos);
         }

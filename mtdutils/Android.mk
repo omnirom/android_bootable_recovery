@@ -7,9 +7,9 @@ LOCAL_SRC_FILES := \
 	mtdutils.c \
 	mounts.c 
 
-ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
-LOCAL_SRC_FILES += rk30hack.c
-LOCAL_CFLAGS += -DRK3066
+ifeq ($(BOARD_USES_RK3XHACK),true)
+LOCAL_SRC_FILES += rk3xhack.c
+LOCAL_CFLAGS += -DRK3X
 endif
 
 LOCAL_MODULE := libmtdutils
@@ -24,9 +24,9 @@ LOCAL_SRC_FILES := \
 	mtdutils.c \
 	mounts.c 
 
-ifeq ($(TARGET_BOARD_PLATFORM),rk30xx)
-LOCAL_SRC_FILES += rk30hack.c
-LOCAL_CFLAGS += -DRK3066
+ifeq ($(BOARD_USES_RK3XHACK),true)
+LOCAL_SRC_FILES += rk3xhack.c
+LOCAL_CFLAGS += -DRK3X
 endif
 
 LOCAL_MODULE := libmtdutils
