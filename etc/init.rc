@@ -44,12 +44,30 @@ on fs
 
 
 on boot
-
     ifup lo
     hostname localhost
     domainname localdomain
 
     class_start default
+
+# Load properties from /system/ + /factory after fs mount.
+on load_all_props_action
+    load_all_props
+
+# Mount filesystems and start core system services.
+on late-init
+    trigger early-fs
+    trigger fs
+    trigger post-fs
+    trigger post-fs-data
+
+    # Load properties from /system/ + /factory after fs mount. Place
+    # this in another action so that the load will be scheduled after the prior
+    # issued fs triggers have completed.
+    trigger load_all_props_action
+
+    trigger early-boot
+    trigger boot
 
 on property:sys.powerctl=*
    powerctl ${sys.powerctl}
