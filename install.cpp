@@ -182,7 +182,7 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
 }
 
 static int
-really_install_package(const char *path, int* wipe_cache)
+really_install_package(const char *path, int* wipe_cache, bool needs_mount)
 {
     ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
     ui->Print("Finding update package...\n");
@@ -194,7 +194,7 @@ really_install_package(const char *path, int* wipe_cache)
     // Map the update package into memory.
     ui->Print("Opening update package...\n");
 
-    if (path) {
+    if (path && needs_mount) {
         if (path[0] == '@') {
             ensure_path_mounted(path+1);
         } else {
@@ -244,6 +244,7 @@ really_install_package(const char *path, int* wipe_cache)
     ui->SetEnableReboot(false);
     int result = try_update_binary(path, &zip, wipe_cache);
     ui->SetEnableReboot(true);
+    ui->Print("\n");
 
     sysReleaseMap(&map);
 
@@ -251,7 +252,8 @@ really_install_package(const char *path, int* wipe_cache)
 }
 
 int
-install_package(const char* path, int* wipe_cache, const char* install_file)
+install_package(const char* path, int* wipe_cache, const char* install_file,
+                bool needs_mount)
 {
     FILE* install_log = fopen_path(install_file, "w");
     if (install_log) {
@@ -265,7 +267,7 @@ install_package(const char* path, int* wipe_cache, const char* install_file)
         LOGE("failed to set up expected mounts for install; aborting\n");
         result = INSTALL_ERROR;
     } else {
-        result = really_install_package(path, wipe_cache);
+        result = really_install_package(path, wipe_cache, needs_mount);
     }
     if (install_log) {
         fputc(result == INSTALL_SUCCESS ? '1' : '0', install_log);

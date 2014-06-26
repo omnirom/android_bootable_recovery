@@ -13,6 +13,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	adb.c \
 	fdevent.c \
+	fuse_sideload.c \
 	transport.c \
 	transport_usb.c \
 	sockets.c \
@@ -25,8 +26,5 @@ LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 
 LOCAL_MODULE := libminadbd
 
-LOCAL_STATIC_LIBRARIES := libcutils libc
+LOCAL_STATIC_LIBRARIES := libcutils libc libmincrypt
 include $(BUILD_STATIC_LIBRARY)
-
-
-

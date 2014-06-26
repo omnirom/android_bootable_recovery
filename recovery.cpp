@@ -712,7 +712,7 @@ update_directory(const char* path, const char* unmount_when_done,
                 ensure_path_unmounted(unmount_when_done);
             }
             if (copy) {
-                result = install_package(copy, wipe_cache, TEMPORARY_INSTALL_FILE);
+                result = install_package(copy, wipe_cache, TEMPORARY_INSTALL_FILE, true);
                 free(copy);
             } else {
                 result = INSTALL_ERROR;
@@ -1047,7 +1047,7 @@ main(int argc, char **argv) {
     int status = INSTALL_SUCCESS;
 
     if (update_package != NULL) {
-        status = install_package(update_package, &wipe_cache, TEMPORARY_INSTALL_FILE);
+        status = install_package(update_package, &wipe_cache, TEMPORARY_INSTALL_FILE, true);
         if (status == INSTALL_SUCCESS && wipe_cache) {
             if (erase_volume("/cache")) {
                 LOGE("Cache wipe (requested by package) failed.");
