@@ -123,6 +123,35 @@ static gr_surface fbdev_init(minui_backend* backend) {
            vi.green.offset, vi.green.length,
            vi.blue.offset, vi.blue.length);
 
+    if (vi.bits_per_pixel != 32) {
+        vi.bits_per_pixel = 32;
+#ifdef RECOVERY_BGRA
+        vi.red.offset     = 8;
+        vi.green.offset   = 16;
+        vi.blue.offset    = 24;
+        vi.transp.offset  = 0;
+#else
+        vi.red.offset     = 24;
+        vi.green.offset   = 16;
+        vi.blue.offset    = 8;
+        vi.transp.offset  = 0;
+#endif
+        vi.red.length     = 8;
+        vi.green.length   = 8;
+        vi.blue.length    = 8;
+        vi.transp.length  = 8;
+        if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
+            perror("failed to put fb0 info");
+            close(fd);
+            return NULL;
+        }
+        if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
+            perror("failed to get fb0 info");
+            close(fd);
+            return NULL;
+        }
+    }
+
     bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (bits == MAP_FAILED) {
         perror("failed to mmap framebuffer");
