@@ -80,7 +80,6 @@ static int map_mdp_pixel_format()
 #endif
     return format;
 }
-#endif // #ifdef MSM_BSP
 
 static bool overlay_supported = false;
 static bool isMDP5 = false;
@@ -104,7 +103,7 @@ bool target_has_overlay(char *version)
             isMDP5 = true;
         }
     }
-if (overlay_supported) printf("Using qcomm overlay\n");
+    if (overlay_supported) printf("Using qcomm overlay\n");
     return overlay_supported;
 }
 
@@ -115,8 +114,6 @@ bool isTargetMdp5()
 
     return false;
 }
-
-#ifdef MSM_BSP
 
 int free_ion_mem(void) {
     if (!overlay_supported)
@@ -425,6 +422,14 @@ int overlay_display_frame(int fd, GGLubyte* data, size_t size)
 }
 
 #else
+
+bool target_has_overlay(char *version) {
+    return false;
+}
+
+bool isTargetMdp5() {
+    return false;
+}
 
 int free_ion_mem(void) {
     return -EINVAL;
