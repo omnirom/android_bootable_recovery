@@ -77,7 +77,6 @@ static int map_mdp_pixel_format()
 #endif
     return format;
 }
-#endif // #ifdef MSM_BSP
 
 static bool overlay_supported = false;
 
@@ -102,8 +101,6 @@ bool target_has_overlay(char *version)
 
     return overlay_supported;
 }
-
-#ifdef MSM_BSP
 
 int free_ion_mem(void) {
     if (!overlay_supported)
@@ -283,6 +280,10 @@ int overlay_display_frame(int fd, GGLubyte* data, size_t size)
 }
 
 #else
+
+bool target_has_overlay(char *version) {
+    return false;
+}
 
 int free_ion_mem(void) {
     return -EINVAL;
