@@ -27,18 +27,10 @@ extern "C" {
 
 
 static std::vector<std::string> gConsole;
+static std::vector<std::string> gConsoleColor;
 
-extern "C" void gui_print(const char *fmt, ...)
+extern "C" void __gui_print(const char *color, char *buf)
 {
-	char buf[512];		// We're going to limit a single request to 512 bytes
-
-	va_list ap;
-	va_start(ap, fmt);
-	vsnprintf(buf, 512, fmt, ap);
-	va_end(ap);
-
-	fputs(buf, stdout);
-
 	char *start, *next;
 
 	if (buf[0] == '\n' && strlen(buf) < 2) {
@@ -52,6 +44,7 @@ extern "C" void gui_print(const char *fmt, ...)
 		{
 			*next = '\0';
 			gConsole.push_back(start);
+			gConsoleColor.push_back(color);
 
 			start = ++next;
 		}
@@ -60,8 +53,39 @@ extern "C" void gui_print(const char *fmt, ...)
 	}
 
 	// The text after last \n (or whole string if there is no \n)
-	if(*start)
+	if(*start) {
 		gConsole.push_back(start);
+		gConsoleColor.push_back(color);
+	}
+}
+
+extern "C" void gui_print(const char *fmt, ...)
+{
+	char buf[512];		// We're going to limit a single request to 512 bytes
+
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(buf, 512, fmt, ap);
+	va_end(ap);
+
+	fputs(buf, stdout);
+
+	__gui_print("normal", buf);
+	return;
+}
+
+extern "C" void gui_print_color(const char *color, const char *fmt, ...)
+{
+	char buf[512];		// We're going to limit a single request to 512 bytes
+
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(buf, 512, fmt, ap);
+	va_end(ap);
+
+	fputs(buf, stdout);
+
+	__gui_print(color, buf);
 	return;
 }
 
@@ -171,9 +195,6 @@ int GUIConsole::RenderConsole(void)
 	gr_color(mScrollColor.red, mScrollColor.green, mScrollColor.blue, mScrollColor.alpha);
 	gr_fill(mConsoleX + (mConsoleW * 9 / 10), mConsoleY, (mConsoleW / 10), mConsoleH);
 
-	// Render the lines
-	gr_color(mForegroundColor.red, mForegroundColor.green, mForegroundColor.blue, mForegroundColor.alpha);
-
 	// Don't try to continue to render without data
 	int prevCount = mLastCount;
 	mLastCount = gConsole.size();
@@ -186,14 +207,17 @@ int GUIConsole::RenderConsole(void)
 	// may different in different console windows
 	for (int i = prevCount; i < mLastCount; i++) {
 		string curr_line = gConsole[i];
+		string curr_color = gConsoleColor[i];
 		int line_char_width;
 		for(;;) {
 			line_char_width = gr_maxExW(curr_line.c_str(), fontResource, mConsoleW);
 			if (line_char_width < curr_line.size()) {
 				rConsole.push_back(curr_line.substr(0, line_char_width));
+				rConsoleColor.push_back(curr_color);
 				curr_line = curr_line.substr(line_char_width);
 			} else {
 				rConsole.push_back(curr_line);
+				rConsoleColor.push_back(curr_color);
 				break;
 			}
 		}
@@ -219,8 +243,18 @@ int GUIConsole::RenderConsole(void)
 	unsigned int line;
 	for (line = 0; line < mMaxRows; line++)
 	{
-		if ((start + (int) line) >= 0 && (start + (int) line) < (int) RenderCount)
+		if ((start + (int) line) >= 0 && (start + (int) line) < (int) RenderCount) {
+			if (rConsoleColor[start + line] == "normal") {
+				gr_color(mForegroundColor.red, mForegroundColor.green, mForegroundColor.blue, mForegroundColor.alpha);
+			} else {
+				COLOR mFontColor;
+				std::string color = rConsoleColor[start + line];
+				ConvertStrToColor(color, &mFontColor);
+				mFontColor.alpha = 255;
+				gr_color(mFontColor.red, mFontColor.green, mFontColor.blue, mFontColor.alpha);
+			}
 			gr_textExW(mConsoleX, mStartY + (line * mFontHeight), rConsole[start + line].c_str(), fontResource, mConsoleW + mConsoleX);
+		}
 	}
 	return (mSlideout ? RenderSlideout() : 0);
 }

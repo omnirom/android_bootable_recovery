@@ -135,14 +135,14 @@ int main(int argc, char **argv) {
 			lgetfilecon("/sbin/teamwin", &contexts);
 		}
 		if (!contexts) {
-			gui_print("Kernel does not have support for reading SELinux contexts.\n");
+			gui_print_color("warning", "Kernel does not have support for reading SELinux contexts.\n");
 		} else {
 			free(contexts);
 			gui_print("Full SELinux support is present.\n");
 		}
 	}
 #else
-	gui_print("No SELinux support (no libselinux).\n");
+	gui_print_color("warning", "No SELinux support (no libselinux).\n");
 #endif
 
 	PartitionManager.Mount_By_Path("/cache", true);

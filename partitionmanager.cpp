@@ -827,7 +827,7 @@ int TWPartitionManager::Run_Backup(void) {
 	gui_print("[%llu MB TOTAL BACKED UP]\n", actual_backup_size);
 	Update_System_Details();
 	UnMount_Main_Partitions();
-	gui_print("[BACKUP COMPLETED IN %d SECONDS]\n\n", total_time); // the end
+	gui_print_color("highlight", "[BACKUP COMPLETED IN %d SECONDS]\n\n", total_time); // the end
 	string backup_log = Full_Backup_Path + "recovery.log";
 	TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
 	return true;
@@ -932,7 +932,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 	Update_System_Details();
 	UnMount_Main_Partitions();
 	time(&rStop);
-	gui_print("[RESTORE COMPLETED IN %d SECONDS]\n\n",(int)difftime(rStop,rStart));
+	gui_print_color("highlight", "[RESTORE COMPLETED IN %d SECONDS]\n\n",(int)difftime(rStop,rStart));
 	return true;
 }
 
