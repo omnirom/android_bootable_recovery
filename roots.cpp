@@ -464,7 +464,7 @@ int format_volume(const char* volume, bool force) {
         return -1;
     }
 
-    if (!force && strcmp(volume, "/data") == 0) {
+    if (strcmp(volume, "/data") == 0 && is_data_media() && !force) {
         if (ensure_path_mounted("/data") == 0) {
             // Preserve .layout_version to avoid "nesting bug"
             LOGI("Preserving layout version\n");
