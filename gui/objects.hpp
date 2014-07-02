@@ -350,6 +350,7 @@ protected:
 	int mSlideout;
 	SlideoutState mSlideoutState;
 	std::vector<std::string> rConsole;
+	std::vector<std::string> rConsoleColor;
 	bool mRender;
 
 protected:

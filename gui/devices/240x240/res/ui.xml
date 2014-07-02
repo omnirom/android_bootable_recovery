@@ -116,6 +116,9 @@
 		<variable name="console_x" value="0" />
 		<variable name="console_width" value="240" />
 		<variable name="console_foreground" value="#A0A0A0" />
+		<variable name="warning" value="#F8F8A0" />
+		<variable name="error" value="#FF4040" />
+		<variable name="highlight" value="#33B5E5" />
 		<variable name="console_background" value="#303030" />
 		<variable name="console_scroll" value="#303030" />
 		<variable name="console_action_height" value="120" />
