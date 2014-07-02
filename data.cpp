@@ -945,10 +945,10 @@ void DataManager::SetDefaultValues()
 #endif
 	mValues.insert(make_pair("tw_gui_done", make_pair("0", 0)));
 	mValues.insert(make_pair("tw_encrypt_backup", make_pair("0", 0)));
-#ifdef TW_BRIGHTNESS_PATH
 #ifndef TW_MAX_BRIGHTNESS
 #define TW_MAX_BRIGHTNESS 255
 #endif
+#ifdef TW_BRIGHTNESS_PATH
 	string findbright;
 	if (strcmp(EXPAND(TW_BRIGHTNESS_PATH), "/nobrightness") != 0) {
 		findbright = EXPAND(TW_BRIGHTNESS_PATH);
