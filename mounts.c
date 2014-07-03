@@ -191,6 +191,22 @@ find_mounted_volume_by_mount_point(const char *mount_point)
     return NULL;
 }
 
+const char *
+get_filesystem_by_mounted_volume(const MountedVolume *vol)
+{
+    if (vol)
+        return vol->filesystem;
+    return NULL;
+}
+
+const char *
+get_device_by_mounted_volume(const MountedVolume *vol)
+{
+    if (vol)
+        return vol->device;
+    return NULL;
+}
+
 int
 unmount_mounted_volume(const MountedVolume *volume)
 {
