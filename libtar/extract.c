@@ -94,7 +94,7 @@ tar_set_file_perms(TAR *t, char *realname)
 
 /* switchboard */
 int
-tar_extract_file(TAR *t, char *realname, char *prefix)
+tar_extract_file(TAR *t, char *realname, char *prefix, const int *progress_fd)
 {
 	int i;
 	char *lnp;
@@ -141,7 +141,7 @@ tar_extract_file(TAR *t, char *realname, char *prefix)
 	}
 	else /* if (TH_ISREG(t)) */ {
 		printf("reg\n");
-		i = tar_extract_regfile(t, realname);
+		i = tar_extract_regfile(t, realname, progress_fd);
 	}
 
 	if (i != 0) {
@@ -189,7 +189,7 @@ tar_extract_file(TAR *t, char *realname, char *prefix)
 
 /* extract regular file */
 int
-tar_extract_regfile(TAR *t, char *realname)
+tar_extract_regfile(TAR *t, char *realname, const int *progress_fd)
 {
 	//mode_t mode;
 	size_t size;
@@ -284,6 +284,11 @@ tar_extract_regfile(TAR *t, char *realname)
 #ifdef DEBUG
 	printf("### done extracting %s\n", filename);
 #endif
+
+	if (*progress_fd != 0) {
+		unsigned long long file_size = (unsigned long long)(size);
+		write(*progress_fd, &file_size, sizeof(file_size));
+	}
 
 	return 0;
 }

@@ -57,9 +57,10 @@ public:
 	bool Wipe_AndSec();                                                       // Wipes android secure
 	bool Can_Repair();                                                        // Checks to see if we have everything needed to be able to repair the current file system
 	bool Repair();                                                            // Repairs the current file system
-	bool Backup(string backup_folder);                                        // Backs up the partition to the folder specified
+	bool Backup(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size); // Backs up the partition to the folder specified
 	bool Check_MD5(string restore_folder);                                    // Checks MD5 of a backup
-	bool Restore(string restore_folder);                                      // Restores the partition using the backup folder provided
+	bool Restore(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size); // Restores the partition using the backup folder provided
+	unsigned long long Get_Restore_Size(string restore_folder);               // Returns the overall restore size of the backup
 	string Backup_Method_By_Name();                                           // Returns a string of the backup method for human readable output
 	bool Decrypt(string Password);                                            // Decrypts the partition, return 0 for failure and -1 for success
 	bool Wipe_Encryption();                                                   // Ignores wipe commands for /data/media devices and formats the original block device
@@ -94,12 +95,13 @@ private:
 	bool Wipe_RMRF();                                                         // Uses rm -rf to wipe
 	bool Wipe_F2FS();                                                         // Uses mkfs.f2fs to wipe
 	bool Wipe_Data_Without_Wiping_Media();                                    // Uses rm -rf to wipe but does not wipe /data/media
-	bool Backup_Tar(string backup_folder);                                    // Backs up using tar for file systems
+	bool Backup_Tar(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size); // Backs up using tar for file systems
 	bool Backup_DD(string backup_folder);                                     // Backs up using dd for emmc memory types
 	bool Backup_Dump_Image(string backup_folder);                             // Backs up using dump_image for MTD memory types
-	bool Restore_Tar(string restore_folder, string Restore_File_System);      // Restore using tar for file systems
-	bool Restore_DD(string restore_folder);                                   // Restore using dd for emmc memory types
-	bool Restore_Flash_Image(string restore_folder);                          // Restore using flash_image for MTD memory types
+	string Get_Restore_File_System(string restore_folder);                    // Returns the file system that was in place at the time of the backup
+	bool Restore_Tar(string restore_folder, string Restore_File_System, const unsigned long long *total_restore_size, unsigned long long *already_restored_size); // Restore using tar for file systems
+	bool Restore_DD(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size); // Restore using dd for emmc memory types
+	bool Restore_Flash_Image(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size); // Restore using flash_image for MTD memory types
 	bool Get_Size_Via_statfs(bool Display_Error);                             // Get Partition size, used, and free space using statfs
 	bool Get_Size_Via_df(bool Display_Error);                                 // Get Partition size, used, and free space using df command
 	bool Make_Dir(string Path, bool Display_Error);                           // Creates a directory if it doesn't already exist
@@ -131,6 +133,7 @@ private:
 	unsigned long long Used;                                                  // Overall used space
 	unsigned long long Free;                                                  // Overall free space
 	unsigned long long Backup_Size;                                           // Backup size -- may be different than used space especially when /data/media is present
+	unsigned long long Restore_Size;                                          // Restore size of the current restore operation
 	bool Can_Be_Encrypted;                                                    // This partition might be encrypted, affects error handling, can only be true if crypto support is compiled in
 	bool Is_Encrypted;                                                        // This partition is thought to be encrypted -- it wouldn't mount for some reason, only avialble with crypto support
 	bool Is_Decrypted;                                                        // This partition has successfully been decrypted
@@ -227,7 +230,7 @@ private:
 	void Setup_Android_Secure_Location(TWPartition* Part);                    // Sets up .android_secure if needed
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made
 	bool Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes);
-	bool Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count);
+	bool Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count, const unsigned long long *total_restore_size, unsigned long long *already_restored_size);
 	void Output_Partition(TWPartition* Part);
 	TWPartition* Find_Next_Storage(string Path, string Exclude);
 	int Open_Lun_File(string Partition_Path, string Lun_File);
