@@ -1094,16 +1094,6 @@ void TWFunc::Fixup_Time_On_Boot()
 	struct dirent *dt;
 	std::string ats_path;
 
-
-	// Don't fix the time of it already is over year 2000, it is likely already okay, either
-	// because the RTC is fine or because the recovery already set it and then crashed
-	gettimeofday(&tv, NULL);
-	if(tv.tv_sec > 946684800) // timestamp of 2000-01-01 00:00:00
-	{
-		LOGINFO("TWFunc::Fixup_Time: not fixing time, it seems to be already okay (after year 2000).\n");
-		return;
-	}
-
 	if(!PartitionManager.Mount_By_Path("/data", false))
 		return;
 
