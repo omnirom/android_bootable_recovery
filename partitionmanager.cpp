@@ -598,7 +598,8 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 	unsigned long long file_bps;
 	unsigned long total_time, remain_time, section_time;
 	int use_compression, backup_time;
-	float pos;
+	float pos, start_pos, end_pos;
+	unsigned long long total_size, current_size;
 
 	if (Part == NULL)
 		return true;
@@ -616,7 +617,10 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 	remain_time = (*img_bytes_remaining / (unsigned long)img_bps) + (*file_bytes_remaining / (unsigned long)file_bps);
 
 	pos = (total_time - remain_time) / (float) total_time;
-	DataManager::SetProgress(pos);
+	total_size = *file_bytes + *img_bytes;
+	current_size = *file_bytes + *img_bytes - *file_bytes_remaining - *img_bytes_remaining;
+	start_pos = ((float)(current_size) / (float)(total_size));
+	DataManager::SetProgress(start_pos);
 
 	LOGINFO("Estimated total time: %lu\nEstimated remaining time: %lu\n", total_time, remain_time);
 
@@ -628,17 +632,23 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 
 	// Set the position
 	pos = section_time / (float) total_time;
-	DataManager::ShowProgress(pos, section_time);
+	//DataManager::ShowProgress(pos, section_time);
+	end_pos = ((float)(current_size + Part->Backup_Size) / (float)(total_size));
 
 	time(&start);
 
-	if (Part->Backup(Backup_Folder)) {
+	if (Part->Backup(Backup_Folder, start_pos, end_pos)) {
+		DataManager::SetProgress(end_pos);
 		if (Part->Has_SubPartition) {
+			current_size += Part->Backup_Size;
+			start_pos = (float)((float)(current_size) / (float)(total_size));
+			DataManager::SetProgress(start_pos);
 			std::vector<TWPartition*>::iterator subpart;
 
 			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
 				if ((*subpart)->Can_Be_Backed_Up && (*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point) {
-					if (!(*subpart)->Backup(Backup_Folder))
+					end_pos = (float)((float)(current_size + (*subpart)->Backup_Size) / (float)(total_size));
+					if (!(*subpart)->Backup(Backup_Folder, start_pos, end_pos))
 						return false;
 					sync();
 					sync();
@@ -649,6 +659,9 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 					} else {
 						*img_bytes_remaining -= (*subpart)->Backup_Size;
 					}
+					current_size += Part->Backup_Size;
+					start_pos = (float)(current_size / total_size);
+					DataManager::SetProgress(start_pos);
 				}
 			}
 		}

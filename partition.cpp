@@ -1284,9 +1284,9 @@ bool TWPartition::Repair() {
 	return false;
 }
 
-bool TWPartition::Backup(string backup_folder) {
+bool TWPartition::Backup(string backup_folder, float start_pos, float end_pos) {
 	if (Backup_Method == FILES)
-		return Backup_Tar(backup_folder);
+		return Backup_Tar(backup_folder, start_pos, end_pos);
 	else if (Backup_Method == DD)
 		return Backup_DD(backup_folder);
 	else if (Backup_Method == FLASH_UTILS)
@@ -1709,7 +1709,7 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 #endif // ifdef TW_OEM_BUILD
 }
 
-bool TWPartition::Backup_Tar(string backup_folder) {
+bool TWPartition::Backup_Tar(string backup_folder, float start_pos, float end_pos) {
 	char back_name[255], split_index[5];
 	string Full_FileName, Split_FileName, Tar_Args, Command;
 	int use_compression, use_encryption = 0, index, backup_count;
@@ -1749,7 +1749,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 	tar.setdir(Backup_Path);
 	tar.setfn(Full_FileName);
 	tar.setsize(Backup_Size);
-	if (tar.createTarFork() != 0)
+	if (tar.createTarFork(start_pos, end_pos) != 0)
 		return false;
 	return true;
 }
