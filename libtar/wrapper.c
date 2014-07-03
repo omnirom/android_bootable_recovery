@@ -27,7 +27,7 @@ tar_extract_glob(TAR *t, char *globname, char *prefix)
 {
 	char *filename;
 	char buf[MAXPATHLEN];
-	int i;
+	int i, fd = 0;
 
 	while ((i = th_read(t)) == 0)
 	{
@@ -44,7 +44,7 @@ tar_extract_glob(TAR *t, char *globname, char *prefix)
 			snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
 		else
 			strlcpy(buf, filename, sizeof(buf));
-		if (tar_extract_file(t, filename, prefix) != 0)
+		if (tar_extract_file(t, filename, prefix, &fd) != 0)
 			return -1;
 	}
 
@@ -53,7 +53,7 @@ tar_extract_glob(TAR *t, char *globname, char *prefix)
 
 
 int
-tar_extract_all(TAR *t, char *prefix)
+tar_extract_all(TAR *t, char *prefix, const int *progress_fd)
 {
 	char *filename;
 	char buf[MAXPATHLEN];
@@ -80,7 +80,7 @@ tar_extract_all(TAR *t, char *prefix)
 		       "\"%s\")\n", buf);
 #endif
 		printf("item name: '%s'\n", filename);
-		if (tar_extract_file(t, buf, prefix) != 0)
+		if (tar_extract_file(t, buf, prefix, progress_fd) != 0)
 			return -1;
 	}
 	return (i == 1 ? 0 : -1);

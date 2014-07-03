@@ -599,6 +599,7 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 	unsigned long total_time, remain_time, section_time;
 	int use_compression, backup_time;
 	float pos;
+	unsigned long long total_size, current_size;
 
 	if (Part == NULL)
 		return true;
@@ -615,7 +616,10 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 	total_time = (*img_bytes / (unsigned long)img_bps) + (*file_bytes / (unsigned long)file_bps);
 	remain_time = (*img_bytes_remaining / (unsigned long)img_bps) + (*file_bytes_remaining / (unsigned long)file_bps);
 
-	pos = (total_time - remain_time) / (float) total_time;
+	//pos = (total_time - remain_time) / (float) total_time;
+	total_size = *file_bytes + *img_bytes;
+	current_size = *file_bytes + *img_bytes - *file_bytes_remaining - *img_bytes_remaining;
+	pos = ((float)(current_size) / (float)(total_size));
 	DataManager::SetProgress(pos);
 
 	LOGINFO("Estimated total time: %lu\nEstimated remaining time: %lu\n", total_time, remain_time);
@@ -628,17 +632,20 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 
 	// Set the position
 	pos = section_time / (float) total_time;
-	DataManager::ShowProgress(pos, section_time);
+	//DataManager::ShowProgress(pos, section_time);
 
 	time(&start);
 
-	if (Part->Backup(Backup_Folder)) {
+	if (Part->Backup(Backup_Folder, &total_size, &current_size)) {
+		current_size += Part->Backup_Size;
+		pos = (float)((float)(current_size) / (float)(total_size));
+		DataManager::SetProgress(pos);
 		if (Part->Has_SubPartition) {
 			std::vector<TWPartition*>::iterator subpart;
 
 			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
 				if ((*subpart)->Can_Be_Backed_Up && (*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point) {
-					if (!(*subpart)->Backup(Backup_Folder))
+					if (!(*subpart)->Backup(Backup_Folder, &total_size, &current_size))
 						return false;
 					sync();
 					sync();
@@ -649,6 +656,9 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 					} else {
 						*img_bytes_remaining -= (*subpart)->Backup_Size;
 					}
+					current_size += Part->Backup_Size;
+					pos = (float)(current_size / total_size);
+					DataManager::SetProgress(pos);
 				}
 			}
 		}
@@ -833,18 +843,18 @@ int TWPartitionManager::Run_Backup(void) {
 	return true;
 }
 
-bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count) {
+bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count, const unsigned long long *total_restore_size, unsigned long long *already_restored_size) {
 	time_t Start, Stop;
 	time(&Start);
-	DataManager::ShowProgress(1.0 / (float)partition_count, 150);
-	if (!Part->Restore(Restore_Name))
+	//DataManager::ShowProgress(1.0 / (float)partition_count, 150);
+	if (!Part->Restore(Restore_Name, total_restore_size, already_restored_size))
 		return false;
 	if (Part->Has_SubPartition) {
 		std::vector<TWPartition*>::iterator subpart;
 
 		for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
 			if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point) {
-				if (!(*subpart)->Restore(Restore_Name))
+				if (!(*subpart)->Restore(Restore_Name, total_restore_size, already_restored_size))
 					return false;
 			}
 		}
@@ -861,6 +871,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 	time(&rStart);
 	string Restore_List, restore_path;
 	size_t start_pos = 0, end_pos;
+	unsigned long long total_restore_size = 0, already_restored_size = 0;
 
 	gui_print("\n[RESTORE STARTED]\n\n");
 	gui_print("Restore folder: '%s'\n", Restore_Name.c_str());
@@ -876,6 +887,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 	} else {
 		gui_print("Skipping MD5 check based on user setting.\n");
 	}
+	gui_print("Calculating restore details...\n");
 	DataManager::GetValue("tw_restore_selected", Restore_List);
 	if (!Restore_List.empty()) {
 		end_pos = Restore_List.find(";", start_pos);
@@ -886,6 +898,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 				partition_count++;
 				if (check_md5 > 0 && !restore_part->Check_MD5(Restore_Name))
 					return false;
+				total_restore_size += restore_part->Get_Restore_Size(Restore_Name);
 				if (restore_part->Has_SubPartition) {
 					std::vector<TWPartition*>::iterator subpart;
 
@@ -893,6 +906,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 						if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == restore_part->Mount_Point) {
 							if (check_md5 > 0 && !(*subpart)->Check_MD5(Restore_Name))
 								return false;
+							total_restore_size += (*subpart)->Get_Restore_Size(Restore_Name);
 						}
 					}
 				}
@@ -910,7 +924,9 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 	}
 
 	gui_print("Restoring %i partitions...\n", partition_count);
+	gui_print("Total restore size is %lluMB\n", total_restore_size / 1048576);
 	DataManager::SetProgress(0.0);
+
 	start_pos = 0;
 	if (!Restore_List.empty()) {
 		end_pos = Restore_List.find(";", start_pos);
@@ -919,7 +935,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 			restore_part = Find_Partition_By_Path(restore_path);
 			if (restore_part != NULL) {
 				partition_count++;
-				if (!Restore_Partition(restore_part, Restore_Name, partition_count))
+				if (!Restore_Partition(restore_part, Restore_Name, partition_count, &total_restore_size, &already_restored_size))
 					return false;
 			} else {
 				LOGERR("Unable to locate '%s' partition for restoring.\n", restore_path.c_str());
@@ -933,6 +949,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 	UnMount_Main_Partitions();
 	time(&rStop);
 	gui_print_color("highlight", "[RESTORE COMPLETED IN %d SECONDS]\n\n",(int)difftime(rStop,rStart));
+	DataManager::SetValue("tw_file_progress", "");
 	return true;
 }
 

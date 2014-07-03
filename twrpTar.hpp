@@ -45,12 +45,13 @@ class twrpTar {
 public:
 	twrpTar();
 	virtual ~twrpTar();
-	int createTarFork();
-	int extractTarFork();
+	int createTarFork(const unsigned long long *overall_size, const unsigned long long *other_backups_size);
+	int extractTarFork(const unsigned long long *overall_size, unsigned long long *other_backups_size);
 	void setfn(string fn);
 	void setdir(string dir);
 	void setsize(unsigned long long backup_size);
 	void setpassword(string pass);
+	unsigned long long get_size();
 
 public:
 	int use_encryption;
@@ -59,6 +60,9 @@ public:
 	int split_archives;
 	int has_data_media;
 	string backup_name;
+	int progress_pipe_fd;
+	string partition_name;
+	string backup_folder;
 
 private:
 	int extract();
@@ -75,6 +79,7 @@ private:
 	static void* createList(void *cookie);
 	static void* extractMulti(void *cookie);
 	int tarList(std::vector<TarListStruct> *TarList, unsigned thread_id);
+	unsigned long long uncompressedSize(string filename, int *archive_type);
 
 	int Archive_Current_Type;
 	unsigned long long Archive_Current_Size;
@@ -84,6 +89,7 @@ private:
 	int fd;
 	pid_t pigz_pid;
 	pid_t oaes_pid;
+	unsigned long long file_count;
 
 	string tardir;
 	string tarfn;

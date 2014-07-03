@@ -2304,6 +2304,18 @@
 				<text>%tw_operation% %tw_partition%</text>
 			</object>
 
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<text>%tw_file_progress%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%col_right_x%" y="%row2_text_y%" placement="1" />
+				<text>%tw_size_progress%</text>
+			</object>
+
 			<object type="template" name="action_page_console" />
 
 			<object type="template" name="progress_bar" />
@@ -2677,6 +2689,12 @@
 				<font resource="font" />
 				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
 				<text>%tw_operation% %tw_partition%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>%tw_size_progress%</text>
 			</object>
 
 			<object type="template" name="action_page_console" />

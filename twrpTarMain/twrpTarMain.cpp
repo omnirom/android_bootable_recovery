@@ -47,6 +47,7 @@ int main(int argc, char **argv) {
 	int i, action = 0;
 	unsigned j;
 	string Directory, Tar_Filename;
+	unsigned long long temp1 = 0, temp2 = 0;
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	string Password;
 #endif
@@ -142,14 +143,14 @@ int main(int argc, char **argv) {
 	}
 #endif
 	if (action == 1) {
-		if (tar.createTarFork() != 0) {
+		if (tar.createTarFork(&temp1, &temp2) != 0) {
 			sync();
 			return -1;
 		}
 		sync();
 		printf("\n\ntar created successfully.\n");
 	} else if (action == 2) {
-		if (tar.extractTarFork() != 0) {
+		if (tar.extractTarFork(&temp1, &temp2) != 0) {
 			sync();
 			return -1;
 		}
