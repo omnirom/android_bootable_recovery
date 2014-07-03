@@ -36,6 +36,13 @@ LOCAL_SRC_FILES += \
     openrecoveryscript.cpp \
     tarWrite.c
 
+LOCAL_SRC_FILES += \
+    ubi/ubiutils-common.c \
+    ubi/libubi.c
+
+LOCAL_C_INCLUDES += \
+     bootable/recovery/ubi/include
+
 ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)
   LOCAL_SRC_FILES += $(TARGET_RECOVERY_REBOOT_SRC)
 endif
@@ -287,6 +294,9 @@ ifneq ($(TW_NO_LEGACY_PROPS),)
 endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
+endif
+ifeq ($(TW_SWITCHED_MEMORIES), true)
+    LOCAL_CFLAGS += -DTW_SWITCHED_MEMORIES
 endif
 
 include $(BUILD_EXECUTABLE)
