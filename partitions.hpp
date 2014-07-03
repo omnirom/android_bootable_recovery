@@ -57,7 +57,7 @@ public:
 	bool Wipe_AndSec();                                                       // Wipes android secure
 	bool Can_Repair();                                                        // Checks to see if we have everything needed to be able to repair the current file system
 	bool Repair();                                                            // Repairs the current file system
-	bool Backup(string backup_folder);                                        // Backs up the partition to the folder specified
+	bool Backup(string backup_folder, float start_pos, float end_pos);        // Backs up the partition to the folder specified
 	bool Check_MD5(string restore_folder);                                    // Checks MD5 of a backup
 	bool Restore(string restore_folder);                                      // Restores the partition using the backup folder provided
 	string Backup_Method_By_Name();                                           // Returns a string of the backup method for human readable output
@@ -94,7 +94,7 @@ private:
 	bool Wipe_RMRF();                                                         // Uses rm -rf to wipe
 	bool Wipe_F2FS();                                                         // Uses mkfs.f2fs to wipe
 	bool Wipe_Data_Without_Wiping_Media();                                    // Uses rm -rf to wipe but does not wipe /data/media
-	bool Backup_Tar(string backup_folder);                                    // Backs up using tar for file systems
+	bool Backup_Tar(string backup_folder, unsigned long long overall_size, unsigned long long other_backups_size); // Backs up using tar for file systems
 	bool Backup_DD(string backup_folder);                                     // Backs up using dd for emmc memory types
 	bool Backup_Dump_Image(string backup_folder);                             // Backs up using dump_image for MTD memory types
 	bool Restore_Tar(string restore_folder, string Restore_File_System);      // Restore using tar for file systems
