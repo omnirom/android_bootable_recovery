@@ -78,6 +78,13 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
+	char crash_prop_val[PROPERTY_VALUE_MAX];
+	int crash_counter;
+	property_get("twrp.crash_counter", crash_prop_val, "-1");
+	crash_counter = atoi(crash_prop_val) + 1;
+	snprintf(crash_prop_val, sizeof(crash_prop_val), "%d", crash_counter);
+	property_set("twrp.crash_counter", crash_prop_val);
+
 	time_t StartupTime = time(NULL);
 	printf("Starting TWRP %s on %s", TW_VERSION_STR, ctime(&StartupTime));
 
@@ -204,14 +211,14 @@ int main(int argc, char **argv) {
 				}
 			}
 		}
+		printf("\n");
 	}
 
-	char twrp_booted[PROPERTY_VALUE_MAX];
-	property_get("ro.twrp.boot", twrp_booted, "0");
-	if (strcmp(twrp_booted, "0") == 0) {
+	if(crash_counter == 0) {
 		property_list(Print_Prop, NULL);
 		printf("\n");
-		property_set("ro.twrp.boot", "1");
+	} else {
+		printf("twrp.crash_counter=%d\n", crash_counter);
 	}
 
 	// Check for and run startup script if script exists
