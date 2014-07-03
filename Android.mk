@@ -24,7 +24,8 @@ LOCAL_SRC_FILES := \
     twrpTar.cpp \
 	twrpDU.cpp \
     twrpDigest.cpp \
-    find_file.cpp
+    find_file.cpp \
+    infomanager.cpp
 
 LOCAL_SRC_FILES += \
     data.cpp \

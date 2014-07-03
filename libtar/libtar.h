@@ -226,7 +226,7 @@ void th_finish(TAR *t);
 /***** extract.c ***********************************************************/
 
 /* sequentially extract next file from t */
-int tar_extract_file(TAR *t, char *realname, char *prefix);
+int tar_extract_file(TAR *t, char *realname, char *prefix, const int *progress_fd);
 
 /* extract different file types */
 int tar_extract_dir(TAR *t, char *realname);
@@ -237,7 +237,7 @@ int tar_extract_blockdev(TAR *t, char *realname);
 int tar_extract_fifo(TAR *t, char *realname);
 
 /* for regfiles, we need to extract the content blocks as well */
-int tar_extract_regfile(TAR *t, char *realname);
+int tar_extract_regfile(TAR *t, char *realname, const int *progress_fd);
 int tar_skip_regfile(TAR *t);
 
 
@@ -294,7 +294,7 @@ void int_to_oct_nonull(int num, char *oct, size_t octlen);
 
 /* extract groups of files */
 int tar_extract_glob(TAR *t, char *globname, char *prefix);
-int tar_extract_all(TAR *t, char *prefix);
+int tar_extract_all(TAR *t, char *prefix, const int *progress_fd);
 
 /* add a whole tree of files */
 int tar_append_tree(TAR *t, char *realdir, char *savedir, char *exclude);
