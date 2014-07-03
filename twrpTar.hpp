@@ -59,6 +59,7 @@ public:
 	int split_archives;
 	int has_data_media;
 	string backup_name;
+	int progress_pipe_fd;
 
 private:
 	int extract();
@@ -84,6 +85,7 @@ private:
 	int fd;
 	pid_t pigz_pid;
 	pid_t oaes_pid;
+	unsigned long long file_count;
 
 	string tardir;
 	string tarfn;
