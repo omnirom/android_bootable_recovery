@@ -273,7 +273,8 @@ int main(int argc, char **argv) {
 	DataManager::ReadSettingsFile();
 
 	// Fixup the RTC clock on devices which require it
-	TWFunc::Fixup_Time_On_Boot();
+	if(crash_counter == 0)
+		TWFunc::Fixup_Time_On_Boot();
 
 	// Run any outstanding OpenRecoveryScript
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
