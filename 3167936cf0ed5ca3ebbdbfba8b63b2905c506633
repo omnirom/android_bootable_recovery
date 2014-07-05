@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4b713d8b_1a469d27",
+        "filename": "mtdutils/Android.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1000044
+      },
+      "writtenOn": "2014-07-05T15:09:31Z",
+      "side": 1,
+      "message": "Should be ifneq",
+      "revId": "3167936cf0ed5ca3ebbdbfba8b63b2905c506633",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_3a435918",
+        "filename": "mtdutils/Android.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1000044
+      },
+      "writtenOn": "2014-07-05T15:09:31Z",
+      "side": 1,
+      "message": "And again",
+      "revId": "3167936cf0ed5ca3ebbdbfba8b63b2905c506633",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
