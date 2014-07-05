@@ -1,4 +1,4 @@
-/*
+/*update
 	Copyright 2013 bigbiff/Dees_Troy TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
@@ -1411,7 +1411,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					op_status = 1; // fail
 				}
 			}
-
+			PartitionManager.Update_System_Details();
 			operation_end(op_status, simulate);
 			return 0;
 		}
