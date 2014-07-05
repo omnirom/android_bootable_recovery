@@ -7,7 +7,7 @@ LOCAL_SRC_FILES := \
 	mtdutils.c \
 	mounts.c 
 
-ifeq ($(filter rk30xx rk3188,$(TARGET_BOARD_PLATFORM)),)
+ifneq ($(filter rk30xx rk3188,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SRC_FILES += rk3xhack.c
 LOCAL_CFLAGS += -DRK3X
 endif
@@ -24,7 +24,7 @@ LOCAL_SRC_FILES := \
 	mtdutils.c \
 	mounts.c 
 
-ifeq ($(filter rk30xx rk3188,$(TARGET_BOARD_PLATFORM)),)
+ifneq ($(filter rk30xx rk3188,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SRC_FILES += rk3xhack.c
 LOCAL_CFLAGS += -DRK3X
 endif
