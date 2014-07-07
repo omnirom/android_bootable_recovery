@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4b713d8b_ddadff98",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 953,
+      "author": {
+        "id": 1000026
+      },
+      "writtenOn": "2014-07-07T20:37:28Z",
+      "side": 1,
+      "message": "Hm ... I still dont get it :)\n\n#ifdef TW_BRIGHTNESS_PATH here",
+      "revId": "03fb7284060c56e84d11170a87d4e59c6de16609",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_fdb2bbf9",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 961,
+      "author": {
+        "id": 1000026
+      },
+      "writtenOn": "2014-07-07T20:37:28Z",
+      "side": 1,
+      "message": "and the #endif here - so if TW_BRIGHTNESS_PATH is defined and found it will be used and defaults skipped - else defaults will be used. Thats how I would understand it :)",
+      "revId": "03fb7284060c56e84d11170a87d4e59c6de16609",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
