@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "4b713d8b_bd05a37f",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 953,
+      "author": {
+        "id": 1000026
+      },
+      "writtenOn": "2014-07-08T13:44:58Z",
+      "side": 1,
+      "message": "Ok now its clear :)\nSo we can actually abandon the n1 specific gerrit to add TW_BRIGHTNESS_PATH again :)",
+      "parentUuid": "4b713d8b_7dd30b07",
+      "revId": "03fb7284060c56e84d11170a87d4e59c6de16609",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4b713d8b_fdb2bbf9",
         "filename": "data.cpp",
         "patchSetId": 1
