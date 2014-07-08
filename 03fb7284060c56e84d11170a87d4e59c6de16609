@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "4b713d8b_7dd30b07",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 953,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-08T13:32:41Z",
+      "side": 1,
+      "message": "TW_BRIGHTNESS_PATH is always defined. Maybe it would be more clear if I just remove the ifdef entirely.\nhttps://github.com/omnirom/android_bootable_recovery/blob/android-4.4/variables.h#L175\n\nIf it is set to the default of /nobrightness then we use the find file class to attempt to locate the correct brightness file. This method now works properly on the N1. I do have an N1 and I tested it myself.",
+      "parentUuid": "4b713d8b_ddadff98",
+      "revId": "03fb7284060c56e84d11170a87d4e59c6de16609",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4b713d8b_fdb2bbf9",
         "filename": "data.cpp",
         "patchSetId": 1
