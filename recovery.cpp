@@ -604,9 +604,9 @@ static int compare_string(const void* a, const void* b) {
     return strcmp(*(const char**)a, *(const char**)b);
 }
 
-static int
-update_directory(const char* path, const char* unmount_when_done,
-                 int* wipe_cache, Device* device) {
+// Returns a malloc'd path, or NULL.
+static char*
+browse_directory(const char* path, Device* device) {
     ensure_path_mounted(path);
 
     const char* MENU_HEADERS[] = { "Choose a package to install:",
@@ -618,10 +618,7 @@ update_directory(const char* path, const char* unmount_when_done,
     d = opendir(path);
     if (d == NULL) {
         LOGE("error opening %s: %s\n", path, strerror(errno));
-        if (unmount_when_done != NULL) {
-            ensure_path_unmounted(unmount_when_done);
-        }
-        return 0;
+        return NULL;
     }
 
     const char** headers = prepend_title(MENU_HEADERS);
@@ -677,58 +674,41 @@ update_directory(const char* path, const char* unmount_when_done,
     z_size += d_size;
     zips[z_size] = NULL;
 
-    int result;
+    char* result;
     int chosen_item = 0;
-    do {
+    while (true) {
         chosen_item = get_menu_selection(headers, zips, 1, chosen_item, device);
 
         char* item = zips[chosen_item];
         int item_len = strlen(item);
         if (chosen_item == 0) {          // item 0 is always "../"
             // go up but continue browsing (if the caller is update_directory)
-            result = -1;
-            break;
-        } else if (item[item_len-1] == '/') {
-            // recurse down into a subdirectory
-            char new_path[PATH_MAX];
-            strlcpy(new_path, path, PATH_MAX);
-            strlcat(new_path, "/", PATH_MAX);
-            strlcat(new_path, item, PATH_MAX);
-            new_path[strlen(new_path)-1] = '\0';  // truncate the trailing '/'
-            result = update_directory(new_path, unmount_when_done, wipe_cache, device);
-            if (result >= 0) break;
-        } else {
-            // selected a zip file:  attempt to install it, and return
-            // the status to the caller.
-            char new_path[PATH_MAX];
-            strlcpy(new_path, path, PATH_MAX);
-            strlcat(new_path, "/", PATH_MAX);
-            strlcat(new_path, item, PATH_MAX);
-
-            ui->Print("\n-- Install %s ...\n", path);
-            set_sdcard_update_bootloader_message();
-            char* copy = copy_sideloaded_package(new_path);
-            if (unmount_when_done != NULL) {
-                ensure_path_unmounted(unmount_when_done);
-            }
-            if (copy) {
-                result = install_package(copy, wipe_cache, TEMPORARY_INSTALL_FILE, true);
-                free(copy);
-            } else {
-                result = INSTALL_ERROR;
-            }
+            result = NULL;
             break;
         }
-    } while (true);
+
+        char new_path[PATH_MAX];
+        strlcpy(new_path, path, PATH_MAX);
+        strlcat(new_path, "/", PATH_MAX);
+        strlcat(new_path, item, PATH_MAX);
+
+        if (item[item_len-1] == '/') {
+            // recurse down into a subdirectory
+            new_path[strlen(new_path)-1] = '\0';  // truncate the trailing '/'
+            result = browse_directory(new_path, device);
+            if (result) break;
+        } else {
+            // selected a zip file: return the malloc'd path to the caller.
+            result = strdup(new_path);
+            break;
+        }
+    }
 
     int i;
     for (i = 0; i < z_size; ++i) free(zips[i]);
     free(zips);
     free(headers);
 
-    if (unmount_when_done != NULL) {
-        ensure_path_unmounted(unmount_when_done);
-    }
     return result;
 }
 
@@ -800,7 +780,7 @@ prompt_and_wait(Device* device, int status) {
         // statement below.
         Device::BuiltinAction chosen_action = device->InvokeMenuItem(chosen_item);
 
-        int wipe_cache;
+        int wipe_cache = 0;
         switch (chosen_action) {
             case Device::NO_ACTION:
                 break;
@@ -822,8 +802,28 @@ prompt_and_wait(Device* device, int status) {
                 if (!ui->IsTextVisible()) return Device::NO_ACTION;
                 break;
 
-            case Device::APPLY_EXT:
-                status = update_directory(SDCARD_ROOT, SDCARD_ROOT, &wipe_cache, device);
+            case Device::APPLY_EXT: {
+                ensure_path_mounted(SDCARD_ROOT);
+                char* path = browse_directory(SDCARD_ROOT, device);
+                if (path == NULL) {
+                    ui->Print("\n-- No package file selected.\n", path);
+                    break;
+                }
+
+                ui->Print("\n-- Install %s ...\n", path);
+                set_sdcard_update_bootloader_message();
+                char* copy = copy_sideloaded_package(path);
+                free(path);
+                ensure_path_unmounted(SDCARD_ROOT);
+
+                int status;
+                if (copy) {
+                    status = install_package(copy, &wipe_cache, TEMPORARY_INSTALL_FILE, true);
+                    free(copy);
+                } else {
+                    status = INSTALL_ERROR;
+                }
+
                 if (status == INSTALL_SUCCESS && wipe_cache) {
                     ui->Print("\n-- Wiping cache (at package request)...\n");
                     if (erase_volume("/cache")) {
@@ -843,28 +843,10 @@ prompt_and_wait(Device* device, int status) {
                     }
                 }
                 break;
+            }
 
             case Device::APPLY_CACHE:
-                // Don't unmount cache at the end of this.
-                status = update_directory(CACHE_ROOT, NULL, &wipe_cache, device);
-                if (status == INSTALL_SUCCESS && wipe_cache) {
-                    ui->Print("\n-- Wiping cache (at package request)...\n");
-                    if (erase_volume("/cache")) {
-                        ui->Print("Cache wipe failed.\n");
-                    } else {
-                        ui->Print("Cache wipe complete.\n");
-                    }
-                }
-                if (status >= 0) {
-                    if (status != INSTALL_SUCCESS) {
-                        ui->SetBackground(RecoveryUI::ERROR);
-                        ui->Print("Installation aborted.\n");
-                    } else if (!ui->IsTextVisible()) {
-                        return Device::NO_ACTION;  // reboot if logs aren't visible
-                    } else {
-                        ui->Print("\nInstall from cache complete.\n");
-                    }
-                }
+                ui->Print("\nAPPLY_CACHE is deprecated.\n");
                 break;
 
             case Device::APPLY_ADB_SIDELOAD:
