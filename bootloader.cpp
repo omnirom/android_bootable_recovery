@@ -275,7 +275,7 @@ static int get_bootloader_message_block(struct bootloader_message *out,
 static int set_bootloader_message_block(const struct bootloader_message *in,
                                         const Volume* v) {
     wait_for_device(v->blk_device);
-    FILE* f = fopen(v->blk_device, "wb");
+    FILE* f = fopen(v->blk_device, "rb+");
     if (f == NULL) {
         LOGE("Can't open %s\n(%s)\n", v->blk_device, strerror(errno));
         return -1;
@@ -317,7 +317,7 @@ int get_bootloader_message_block_name(struct bootloader_message *out) {
 int set_bootloader_message_block_name(const struct bootloader_message *in,
                                         const char* block_name) {
     wait_for_device(block_name);
-    FILE* f = fopen(block_name, "wb");
+    FILE* f = fopen(block_name, "rb+");
     if (f == NULL) {
         printf("Can't open %s\n(%s)\n", block_name, strerror(errno));
         return -1;
