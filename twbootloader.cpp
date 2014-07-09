@@ -193,7 +193,7 @@ static int set_bootloader_message_block(const struct bootloader_message *in,
                                         const TWPartition* Partition) {
 	wait_for_device(Partition->Actual_Block_Device.c_str());
 
-	FILE* f = fopen(Partition->Actual_Block_Device.c_str(), "wb");
+	FILE* f = fopen(Partition->Actual_Block_Device.c_str(), "rb+");
 	if (f == NULL) {
 		LOGE("Can't open %s\n(%s)\n", Partition->Actual_Block_Device.c_str(), strerror(errno));
 		return -1;
