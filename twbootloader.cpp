@@ -172,6 +172,9 @@ static int get_bootloader_message_block(struct bootloader_message *out,
 		LOGE("Can't open %s\n(%s)\n", Partition->Actual_Block_Device.c_str(), strerror(errno));
 		return -1;
 	}
+#ifdef BOARD_RECOVERY_BLDRMSG_OFFSET
+    fseek(f, BOARD_RECOVERY_BLDRMSG_OFFSET, SEEK_SET);
+#endif
 
 	struct bootloader_message temp;
 	int count = fread(&temp, sizeof(temp), 1, f);
@@ -198,6 +201,9 @@ static int set_bootloader_message_block(const struct bootloader_message *in,
 		LOGE("Can't open %s\n(%s)\n", Partition->Actual_Block_Device.c_str(), strerror(errno));
 		return -1;
 	}
+#ifdef BOARD_RECOVERY_BLDRMSG_OFFSET
+    fseek(f, BOARD_RECOVERY_BLDRMSG_OFFSET, SEEK_SET);
+#endif
 
 	int count = fwrite(in, sizeof(*in), 1, f);
 	if (count != 1) {
