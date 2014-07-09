@@ -1,0 +1,412 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4b713d8b_e803db0f",
+        "filename": "Android.mk",
+        "patchSetId": 5
+      },
+      "lineNbr": 294,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "This build flag is not used anywhere and should be removed.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_a87003a6",
+        "filename": "mounts.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "Both of these new functions are not used anywhere and should be removed.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_c8753f95",
+        "filename": "mounts.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "Both of these new functions are not used anywhere and should be removed.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_0809f72e",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 943,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "Whitespace issue -- this tab should be removed.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_283cf3ba",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 945,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "This whole if-block is tabbed in once then 2 spaces. It should be 2 tabs so that it properly lines up with the rest of TWRP\u0027s coding style.\n\nA large part of this if-block is duplicated in the unmount function. Seems like there should be a way to combine the duplicate blocks of code into a separate function to avoid duplication.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_480bef25",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 961,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGERR instead of LOGE",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_6818ab7a",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 970,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGERR instead of LOGE",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_88150744",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 975,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGERR instead of LOGE",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_a822c3a1",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 989,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGERR instead of LOGE",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_280eb336",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1001,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "Whitespace issue -- this tab should be removed.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_c827ffb0",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1003,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGERR instead of LOGE",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_e81cbb6b",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1006,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGINFO instead of LOGI",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_0822d7a0",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1012,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "Whitespace issue here.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_283793e2",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1015,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "Whitespace issue here.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_4834cfdb",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1150,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "Whitespace issue -- this tab should be removed.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_48392fca",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1152,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "This whole if-block is tabbed in once then 2 spaces. It should be 2 tabs so that it properly lines up with the rest of TWRP\u0027s coding style.\n\nA large part of this if-block is duplicated in the mount function. Seems like there should be a way to combine the duplicate blocks of code into a separate function to avoid duplication.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_08573707",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1161,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGERR instead of LOGE",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_e8511b14",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1167,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGERR instead of LOGE",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_c84c5f7b",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1176,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGERR instead of LOGE",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_a8472356",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1181,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGERR instead of LOGE",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_882ee785",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1187,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGERR instead of LOGE",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_68318bea",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1190,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "TWRP uses LOGINFO instead of LOGI",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_6846eb56",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1259,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "Is there really no way to properly wipe a ubifs block device so that the file system can get recreated? Using rm -rf should be a last resort. If the file system gets corrupted, using rm -rf won\u0027t be enough to fix it up.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_88434744",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1766,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-09T15:34:47Z",
+      "side": 1,
+      "message": "2 tabs instead of 1 tab plus 2 spaces.",
+      "revId": "06cbade0879c482d4af0ec6a0dba5133a53fa2a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
