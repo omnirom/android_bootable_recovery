@@ -1456,6 +1456,7 @@ Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
     memset(buffer, 0, sizeof(((struct bootloader_message*)0)->command));
     FILE* f = fopen(filename, "r+b");
     fseek(f, offsetof(struct bootloader_message, command), SEEK_SET);
+    fseek(f, BOOTLOADER_MESSAGE_OFFSET_IN_MISC, SEEK_CUR);
     ota_fwrite(buffer, sizeof(((struct bootloader_message*)0)->command), 1, f);
     fclose(f);
     free(filename);
@@ -1498,6 +1499,7 @@ Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
     // package installation.
     FILE* f = fopen(filename, "r+b");
     fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
+    fseek(f, BOOTLOADER_MESSAGE_OFFSET_IN_MISC, SEEK_CUR);
     int to_write = strlen(stagestr)+1;
     int max_size = sizeof(((struct bootloader_message*)0)->stage);
     if (to_write > max_size) {
@@ -1524,6 +1526,7 @@ Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
     char buffer[sizeof(((struct bootloader_message*)0)->stage)];
     FILE* f = fopen(filename, "rb");
     fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
+    fseek(f, BOOTLOADER_MESSAGE_OFFSET_IN_MISC, SEEK_CUR);
     ota_fread(buffer, sizeof(buffer), 1, f);
     fclose(f);
     buffer[sizeof(buffer)-1] = '\0';
