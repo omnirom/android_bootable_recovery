@@ -31,7 +31,8 @@
 #include "common.h"
 #include "adb_install.h"
 extern "C" {
-#include "minadbd/adb.h"
+#include "minadbd/fuse_adb_provider.h"
+#include "fuse_sideload.h"
 }
 
 static RecoveryUI* ui = NULL;
@@ -89,7 +90,7 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
         _exit(-1);
     }
 
-    // ADB_SIDELOAD_HOST_PATHNAME will start to exist once the host
+    // FUSE_SIDELOAD_HOST_PATHNAME will start to exist once the host
     // connects and starts serving a package.  Poll for its
     // appearance.  (Note that inotify doesn't work with FUSE.)
     int result;
@@ -103,7 +104,7 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
             break;
         }
 
-        if (stat(ADB_SIDELOAD_HOST_PATHNAME, &st) != 0) {
+        if (stat(FUSE_SIDELOAD_HOST_PATHNAME, &st) != 0) {
             if (errno == ENOENT && i < ADB_INSTALL_TIMEOUT-1) {
                 sleep(1);
                 continue;
@@ -114,14 +115,14 @@ apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
                 break;
             }
         }
-        result = install_package(ADB_SIDELOAD_HOST_PATHNAME, wipe_cache, install_file, false);
+        result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, install_file, false);
         break;
     }
 
     if (!waited) {
         // Calling stat() on this magic filename signals the minadbd
         // subprocess to shut down.
-        stat(ADB_SIDELOAD_HOST_EXIT_PATHNAME, &st);
+        stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
 
         // TODO(dougz): there should be a way to cancel waiting for a
         // package (by pushing some button combo on the device).  For now

@@ -60,9 +60,8 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#include "transport.h"
-#include "adb.h"
 #include "mincrypt/sha256.h"
+#include "fuse_sideload.h"
 
 #define PACKAGE_FILE_ID   (FUSE_ROOT_ID+1)
 #define EXIT_FLAG_ID      (FUSE_ROOT_ID+2)
@@ -72,7 +71,9 @@
 
 struct fuse_data {
     int ffd;   // file descriptor for the fuse socket
-    int sfd;   // file descriptor for the adb channel
+
+    struct provider_vtab* vtab;
+    void* cookie;
 
     uint64_t file_size;     // bytes
 
@@ -170,13 +171,13 @@ static int handle_lookup(void* data, struct fuse_data* fd,
     out.entry_valid = 10;
     out.attr_valid = 10;
 
-    if (strncmp(ADB_SIDELOAD_HOST_FILENAME, data,
-                sizeof(ADB_SIDELOAD_HOST_FILENAME)) == 0) {
+    if (strncmp(FUSE_SIDELOAD_HOST_FILENAME, data,
+                sizeof(FUSE_SIDELOAD_HOST_FILENAME)) == 0) {
         out.nodeid = PACKAGE_FILE_ID;
         out.generation = PACKAGE_FILE_ID;
         fill_attr(&(out.attr), fd, PACKAGE_FILE_ID, fd->file_size, S_IFREG | 0444);
-    } else if (strncmp(ADB_SIDELOAD_HOST_EXIT_FLAG, data,
-                       sizeof(ADB_SIDELOAD_HOST_EXIT_FLAG)) == 0) {
+    } else if (strncmp(FUSE_SIDELOAD_HOST_EXIT_FLAG, data,
+                       sizeof(FUSE_SIDELOAD_HOST_EXIT_FLAG)) == 0) {
         out.nodeid = EXIT_FLAG_ID;
         out.generation = EXIT_FLAG_ID;
         fill_attr(&(out.attr), fd, EXIT_FLAG_ID, 0, S_IFREG | 0);
@@ -231,17 +232,8 @@ static int fetch_block(struct fuse_data* fd, uint32_t block) {
         memset(fd->block_data + fetch_size, 0, fd->block_size - fetch_size);
     }
 
-    char buf[10];
-    snprintf(buf, sizeof(buf), "%08u", block);
-    if (writex(fd->sfd, buf, 8) < 0) {
-        fprintf(stderr, "failed to write to adb host: %s\n", strerror(errno));
-        return -EIO;
-    }
-
-    if (readx(fd->sfd, fd->block_data, fetch_size) < 0) {
-        fprintf(stderr, "failed to read from adb host: %s\n", strerror(errno));
-        return -EIO;
-    }
+    int result = fd->vtab->read_block(fd->cookie, block, fd->block_data, fetch_size);
+    if (result < 0) return result;
 
     fd->curr_block = block;
 
@@ -346,13 +338,14 @@ static int handle_read(void* data, struct fuse_data* fd, const struct fuse_in_he
     return NO_STATUS;
 }
 
-int run_fuse(int sfd, uint64_t file_size, uint32_t block_size)
+int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
+                      uint64_t file_size, uint32_t block_size)
 {
     int result;
 
     // If something's already mounted on our mountpoint, try to remove
     // it.  (Mostly in case of a previous abnormal exit.)
-    umount2(ADB_SIDELOAD_HOST_MOUNTPOINT, MNT_FORCE);
+    umount2(FUSE_SIDELOAD_HOST_MOUNTPOINT, MNT_FORCE);
 
     if (block_size < 1024) {
         fprintf(stderr, "block size (%u) is too small\n", block_size);
@@ -365,7 +358,8 @@ int run_fuse(int sfd, uint64_t file_size, uint32_t block_size)
 
     struct fuse_data fd;
     memset(&fd, 0, sizeof(fd));
-    fd.sfd = sfd;
+    fd.vtab = vtab;
+    fd.cookie = cookie;
     fd.file_size = file_size;
     fd.block_size = block_size;
     fd.file_blocks = (file_size == 0) ? 0 : (((file_size-1) / block_size) + 1);
@@ -414,7 +408,7 @@ int run_fuse(int sfd, uint64_t file_size, uint32_t block_size)
               "allow_other,rootmode=040000"),
              fd.ffd, fd.uid, fd.gid, block_size);
 
-    result = mount("/dev/fuse", ADB_SIDELOAD_HOST_MOUNTPOINT,
+    result = mount("/dev/fuse", FUSE_SIDELOAD_HOST_MOUNTPOINT,
                    "fuse", MS_NOSUID | MS_NODEV | MS_RDONLY | MS_NOEXEC, opts);
     if (result < 0) {
         perror("mount");
@@ -493,8 +487,9 @@ int run_fuse(int sfd, uint64_t file_size, uint32_t block_size)
     }
 
   done:
-    writex(sfd, "DONEDONE", 8);
-    result = umount2(ADB_SIDELOAD_HOST_MOUNTPOINT, MNT_DETACH);
+    fd.vtab->close(fd.cookie);
+
+    result = umount2(FUSE_SIDELOAD_HOST_MOUNTPOINT, MNT_DETACH);
     if (result < 0) {
         printf("fuse_sideload umount failed: %s\n", strerror(errno));
     }

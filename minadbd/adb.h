@@ -421,11 +421,4 @@ extern int SHELL_EXIT_NOTIFY_FD;
 int sendfailmsg(int fd, const char *reason);
 int handle_host_request(char *service, transport_type ttype, char* serial, int reply_fd, asocket *s);
 
-// define the filenames created by the sideload-host FUSE filesystem
-#define ADB_SIDELOAD_HOST_MOUNTPOINT "/sideload"
-#define ADB_SIDELOAD_HOST_FILENAME "package.zip"
-#define ADB_SIDELOAD_HOST_PATHNAME (ADB_SIDELOAD_HOST_MOUNTPOINT "/" ADB_SIDELOAD_HOST_FILENAME)
-#define ADB_SIDELOAD_HOST_EXIT_FLAG "exit"
-#define ADB_SIDELOAD_HOST_EXIT_PATHNAME (ADB_SIDELOAD_HOST_MOUNTPOINT "/" ADB_SIDELOAD_HOST_EXIT_FLAG)
-
 #endif

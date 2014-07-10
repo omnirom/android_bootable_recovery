@@ -22,7 +22,7 @@
 
 #include "sysdeps.h"
 #include "fdevent.h"
-#include "fuse_sideload.h"
+#include "fuse_adb_provider.h"
 
 #define  TRACE_TAG  TRACE_SERVICES
 #include "adb.h"
@@ -54,7 +54,7 @@ static void sideload_host_service(int sfd, void* cookie)
 
     printf("sideload-host file size %llu block size %lu\n", file_size, block_size);
 
-    int result = run_fuse(sfd, file_size, block_size);
+    int result = run_adb_fuse(sfd, file_size, block_size);
 
     printf("sideload_host finished\n");
     sleep(1);

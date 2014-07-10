@@ -17,6 +17,18 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
+LOCAL_SRC_FILES := fuse_sideload.c
+
+LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
+LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
+
+LOCAL_MODULE := libfusesideload
+
+LOCAL_STATIC_LIBRARIES := libcutils libc libmincrypt
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+
 LOCAL_SRC_FILES := \
     recovery.cpp \
     bootloader.cpp \
@@ -49,6 +61,7 @@ LOCAL_STATIC_LIBRARIES := \
     libmtdutils \
     libmincrypt \
     libminadbd \
+    libfusesideload \
     libminui \
     libpng \
     libfs_mgr \

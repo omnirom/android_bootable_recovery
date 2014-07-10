@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef __FUSE_SIDELOAD_H
-#define __FUSE_SIDELOAD_H
+#ifndef __FUSE_ADB_PROVIDER_H
+#define __FUSE_ADB_PROVIDER_H
 
-int run_fuse(int sfd, uint64_t file_size, uint32_t block_size);
+int run_adb_fuse(int sfd, uint64_t file_size, uint32_t block_size);
 
 #endif
