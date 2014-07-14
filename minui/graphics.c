@@ -61,6 +61,21 @@ static bool outside(int x, int y)
     return x < 0 || x >= gr_draw->width || y < 0 || y >= gr_draw->height;
 }
 
+#if defined(RECOVERY_BGRA)
+static void rgba2bgra(unsigned char *p, int w)
+{
+    int x;
+    for (x = 0; x < w; ++x) {
+        char r, b;
+        r = *(p+0);
+        b = *(p+2);
+        *(p+0) = b;
+        *(p+2) = r;
+        p += 4;
+    }
+}
+#endif
+
 int gr_measure(const char *s)
 {
     return gr_font->cwidth * strlen(s);
@@ -98,6 +113,9 @@ static void icon_blend_alpha(unsigned char* src_p,int src_row_bytes,
              ++px;
              ++px;
         }
+#if defined(RECOVERY_BGRA)
+        rgba2bgra(dst_p, width);
+#endif
         src_p += src_row_bytes;
         dst_p += dst_row_bytes;
     }
@@ -130,6 +148,9 @@ static void text_blend(unsigned char* src_p, int src_row_bytes,
                 px += 4;
             }
         }
+#if defined(RECOVERY_BGRA)
+        rgba2bgra(dst_p, width);
+#endif
         src_p += src_row_bytes;
         dst_p += dst_row_bytes;
     }
@@ -223,6 +244,9 @@ void gr_clear()
                 *px++ = gr_current_b;
                 px++;
             }
+#if defined(RECOVERY_BGRA)
+            rgba2bgra(px - gr_draw->width * 4, gr_draw->width);
+#endif
             px += gr_draw->row_bytes - (gr_draw->width * gr_draw->pixel_bytes);
         }
     }
@@ -249,6 +273,9 @@ void gr_fill(int x1, int y1, int x2, int y2)
                 *px++ = gr_current_b;
                 px++;
             }
+#if defined(RECOVERY_BGRA)
+            rgba2bgra(p, x2-x1);
+#endif
             p += gr_draw->row_bytes;
         }
     } else if (gr_current_a > 0) {
@@ -264,6 +291,9 @@ void gr_fill(int x1, int y1, int x2, int y2)
                 ++px;
                 ++px;
             }
+#if defined(RECOVERY_BGRA)
+            rgba2bgra(p, x2-x1);
+#endif
             p += gr_draw->row_bytes;
         }
     }
