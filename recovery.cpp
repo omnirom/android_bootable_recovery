@@ -1161,7 +1161,7 @@ main(int argc, char **argv) {
 	// Check for su to see if the device is rooted or not
 	if (PartitionManager.Mount_By_Path("/system", false)) {
 		// Disable flashing of stock recovery
-		if (TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
+		if (TWFunc::Path_Exists("/system/recovery-from-boot.p") && TWFunc::Path_Exists("/system/etc/install-recovery.sh")) {
 			rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
 			ui_print("Renamed stock recovery file in /system to prevent\nthe stock ROM from replacing TWRP.\n");
 		}
