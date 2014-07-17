@@ -961,8 +961,9 @@ void DataManager::SetDefaultValues()
 	}
 	if (findbright.empty()) {
 		// Attempt to locate the brightness file
-		findbright = Find_File::Find("brightness", "/sys/class/backlight");
-		if (findbright.empty()) findbright = Find_File::Find("brightness", "/sys/class/leds/lcd-backlight");
+		if (DataManager::Find_Brightness_Path(findbright) != 0) {
+			if (findbright.empty()) findbright = Find_File::Find("brightness", "/sys/class/leds/lcd-backlight");
+		}
 	}
 	if (findbright.empty()) {
 		LOGINFO("Unable to locate brightness file\n");
@@ -976,8 +977,16 @@ void DataManager::SetDefaultValues()
 		mConstValues.insert(make_pair("tw_brightness_max", maxVal.str()));
 		mValues.insert(make_pair("tw_brightness", make_pair(maxVal.str(), 1)));
 		mValues.insert(make_pair("tw_brightness_pct", make_pair("100", 1)));
+		if (findbright.compare("/sys/class/leds/lm3533-lcd-bl-1/brightness") == 0) {
+			string secondfindbright;
+			secondfindbright = Find_File::Find("brightness", "/sys/class/leds/lm3533-lcd-bl-2");
+			if (secondfindbright != "") {
+				LOGINFO("Found a second brightness file at '%s'\n", secondfindbright.c_str());
+				mConstValues.insert(make_pair("tw_secondary_brightness_file", secondfindbright));
+			}
+		}
 		string max_bright = maxVal.str();
-		TWFunc::write_file(findbright, max_bright);
+		TWFunc::Set_Brightness(max_bright);
 	}
 #endif
 	mValues.insert(make_pair(TW_MILITARY_TIME, make_pair("0", 1)));
@@ -1139,12 +1148,11 @@ void DataManager::ReadSettingsFile(void)
 #endif // ifdef TW_OEM_BUILD
 	PartitionManager.Mount_All_Storage();
 	update_tz_environment_variables();
-
-	string brightness_path = GetStrValue("tw_brightness_file");
-	if (!brightness_path.empty() && brightness_path != "/nobrightness" && TWFunc::Path_Exists(brightness_path)) {
-		string brightness_value = GetStrValue("tw_brightness");
-		TWFunc::write_file(brightness_path, brightness_value);
+#ifdef TW_MAX_BRIGHTNESS
+	if (GetStrValue("tw_brightness_path") != "/nobrightness") {
+		TWFunc::Set_Brightness(GetStrValue("tw_brightness"));
 	}
+#endif
 }
 
 string DataManager::GetCurrentStoragePath(void)
@@ -1261,3 +1269,28 @@ void DataManager::Vibrate(const string varName)
 		vibrate(vib_value);
 	}
 }
+
+int DataManager::Find_Brightness_Path(std::string &returns)
+{
+	static const char *paths[] = { "/sys/class/backlight/", "/sys/class/leds/" };
+	static const char *sysctl[] = { "wled:backlight", "lm3533-lcd-bl", "lm3533-lcd-bl-1", "lcd-backlight_1", "pwm-backlight", "s6e8aa0", "panel", "s5p_bl", "bowser" };
+
+	std::string brightness_path;
+	std::string tmppath;
+
+	for(size_t i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i)
+	{
+		for(size_t j = 0; j < (sizeof(sysctl)/sizeof(sysctl[0])); ++j)
+		{
+			tmppath = std::string(paths[i]).append(sysctl[j]);
+			brightness_path = Find_File::Find("brightness", tmppath);
+			if (brightness_path != "")
+			{
+				returns = brightness_path;
+				return 0;
+			}
+		}
+	}
+	return -1;
+}
+
