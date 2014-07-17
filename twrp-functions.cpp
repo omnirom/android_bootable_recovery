@@ -659,6 +659,20 @@ int TWFunc::read_file(string fn, vector<string>& results) {
 	return -1;
 }
 
+int TWFunc::read_file(string fn, uint64_t& results) {
+	ifstream file;
+	file.open(fn.c_str(), ios::in);
+
+	if (file.is_open()) {
+		file >> results;
+		file.close();
+		return 0;
+	}
+
+	LOGINFO("Cannot find file %s\n", fn.c_str());
+	return -1;
+}
+
 int TWFunc::write_file(string fn, string& line) {
 	FILE *file;
 	file = fopen(fn.c_str(), "w");
@@ -1076,6 +1090,38 @@ void TWFunc::Auto_Generate_Backup_Name() {
 void TWFunc::Fixup_Time_On_Boot()
 {
 #ifdef QCOM_RTC_FIX
+
+	LOGINFO("TWFunc::Fixup_Time: Pre-fix date and time: %s\n", TWFunc::Get_Current_Date().c_str());
+
+	struct timeval tv;
+	uint64_t offset = 0;
+	std::string sepoch = "/sys/class/rtc/rtc0/since_epoch";
+
+	if (TWFunc::read_file(sepoch, offset) == 0) {
+
+		LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s\n", sepoch.c_str());
+
+		tv.tv_sec = offset;
+		tv.tv_usec = 0;
+		settimeofday(&tv, NULL);
+
+		gettimeofday(&tv, NULL);
+
+		if (tv.tv_sec > 1405209403) { // Anything older then 12 Jul 2014 23:56:43 GMT will do nicely thank you ;)
+
+			LOGINFO("TWFunc::Fixup_Time: Date and time corrected: %s\n", TWFunc::Get_Current_Date().c_str());
+			return;
+
+		}
+
+	} else {
+
+		LOGINFO("TWFunc::Fixup_Time: opening %s failed\n", sepoch.c_str());
+
+	}
+
+	LOGINFO("TWFunc::Fixup_Time: will attempt to use the ats files now.\n", sepoch.c_str());
+
 	// Devices with Qualcomm Snapdragon 800 do some shenanigans with RTC.
 	// They never set it, it just ticks forward from 1970-01-01 00:00,
 	// and then they have files /data/system/time/ats_* with 64bit offset
@@ -1087,10 +1133,9 @@ void TWFunc::Fixup_Time_On_Boot()
 
 	static const char *paths[] = { "/data/system/time/", "/data/time/"  };
 
-	DIR *d;
 	FILE *f;
-	uint64_t offset = 0;
-	struct timeval tv;
+	DIR *d;
+	offset = 0;
 	struct dirent *dt;
 	std::string ats_path;
 
@@ -1120,7 +1165,7 @@ void TWFunc::Fixup_Time_On_Boot()
 
 	if(ats_path.empty())
 	{
-		LOGINFO("TWFunc::Fixup_Time: no ats files found, leaving time as-is!\n");
+		LOGINFO("TWFunc::Fixup_Time: no ats files found, leaving untouched!\n");
 		return;
 	}
 
@@ -1153,6 +1198,9 @@ void TWFunc::Fixup_Time_On_Boot()
 	}
 
 	settimeofday(&tv, NULL);
+
+	LOGINFO("TWFunc::Fixup_Time: Date and time corrected: %s\n", TWFunc::Get_Current_Date().c_str());
+
 #endif
 }
 
@@ -1192,6 +1240,24 @@ bool TWFunc::Create_Dir_Recursive(const std::string& path, mode_t mode, uid_t ui
 		}
 	}
 	return true;
+}
+
+int TWFunc::Set_Brightness(std::string brightness_value)
+{
+
+	std::string brightness_file = DataManager::GetStrValue("tw_brightness_file");;
+
+	if (brightness_file.compare("/nobrightness") != 0) {
+		std::string secondary_brightness_file = DataManager::GetStrValue("tw_secondary_brightness_file");
+		LOGINFO("TWFunc::Set_Brightness: Setting brightness control to %s\n", brightness_value.c_str());
+		int result = TWFunc::write_file(brightness_file, brightness_value);
+		if (secondary_brightness_file != "") {
+			LOGINFO("TWFunc::Set_Brightness: Setting SECONDARY brightness control to %s\n", brightness_value.c_str());
+			TWFunc::write_file(secondary_brightness_file, brightness_value);
+		}
+		return result;
+	}
+	return -1;
 }
 
 #endif // ndef BUILD_TWRPTAR_MAIN

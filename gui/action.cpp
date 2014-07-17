@@ -824,6 +824,11 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		return 0;
 	}
 
+	if (function == "setbrightness")
+	{
+		return TWFunc::Set_Brightness(arg);
+	}
+
 	if (isThreaded)
 	{
 		if (function == "fileexists")

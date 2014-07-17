@@ -976,8 +976,17 @@ void DataManager::SetDefaultValues()
 		mConstValues.insert(make_pair("tw_brightness_max", maxVal.str()));
 		mValues.insert(make_pair("tw_brightness", make_pair(maxVal.str(), 1)));
 		mValues.insert(make_pair("tw_brightness_pct", make_pair("100", 1)));
+#ifdef TW_SECONDARY_BRIGHTNESS_PATH
+		string secondfindbright = EXPAND(TW_SECONDARY_BRIGHTNESS_PATH);
+		if (secondfindbright != "" && TWFunc::Path_Exists(secondfindbright)) {
+			LOGINFO("Will use a second brightness file at '%s'\n", secondfindbright.c_str());
+			mConstValues.insert(make_pair("tw_secondary_brightness_file", secondfindbright));
+		} else {
+			LOGINFO("Specified secondary brightness file '%s' not found.\n", secondfindbright.c_str());
+		}
+#endif
 		string max_bright = maxVal.str();
-		TWFunc::write_file(findbright, max_bright);
+		TWFunc::Set_Brightness(max_bright);
 	}
 #endif
 	mValues.insert(make_pair(TW_MILITARY_TIME, make_pair("0", 1)));
@@ -1139,12 +1148,11 @@ void DataManager::ReadSettingsFile(void)
 #endif // ifdef TW_OEM_BUILD
 	PartitionManager.Mount_All_Storage();
 	update_tz_environment_variables();
-
-	string brightness_path = GetStrValue("tw_brightness_file");
-	if (!brightness_path.empty() && brightness_path != "/nobrightness" && TWFunc::Path_Exists(brightness_path)) {
-		string brightness_value = GetStrValue("tw_brightness");
-		TWFunc::write_file(brightness_path, brightness_value);
+#ifdef TW_MAX_BRIGHTNESS
+	if (GetStrValue("tw_brightness_path") != "/nobrightness") {
+		TWFunc::Set_Brightness(GetStrValue("tw_brightness"));
 	}
+#endif
 }
 
 string DataManager::GetCurrentStoragePath(void)

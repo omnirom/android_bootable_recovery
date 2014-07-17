@@ -2589,7 +2589,7 @@
 					<action function="set">tw_brightness=%tw_brightness_max%</action>
 					<action function="compute">tw_brightness*%tw_brightness_pct%</action>
 					<action function="compute">tw_brightness/100</action>
-					<action function="cmd">echo %tw_brightness% > &quot;%tw_brightness_file%&quot;</action>
+					<action function="setbrightness">%tw_brightness%</action>
 				</actions>
 			</object>
 
