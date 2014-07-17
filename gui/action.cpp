@@ -826,6 +826,10 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 	if (isThreaded)
 	{
+		if (function == "setbrightness")
+		{
+			return TWFunc::Set_Brightness(arg);
+		}
 		if (function == "fileexists")
 		{
 			struct stat st;
