@@ -70,6 +70,7 @@ public:
 	static int32_t timespec_diff_ms(timespec& start, timespec& end);            // Returns diff in ms
 	static int read_file(string fn, vector<string>& results); //read from file
 	static int read_file(string fn, string& results); //read from file
+	static int read_file(string fn, uint64_t& results); //read from file
 	static int write_file(string fn, string& line); //write from file
 	static int drop_caches(void); //drop linux cache memory
 	static int Check_su_Perms(void); // check perms and owner of su binary in various locations
@@ -83,6 +84,7 @@ public:
 	static void Fixup_Time_On_Boot(); // Fixes time on devices which need it
 	static std::vector<std::string> Split_String(const std::string& str, const std::string& delimiter, bool removeEmpty = true); // Splits string by delimiter
 	static bool Create_Dir_Recursive(const std::string& path, mode_t mode = 0755, uid_t uid = -1, gid_t gid = -1);  // Create directory and it's parents, if they don't exist. mode, uid and gid are set to all _newly_ created folders. If whole path exists, do nothing.
+	static int Set_Brightness(std::string brightness_value); // Well, you can read, it does what it says, passing return int from TWFunc::Write_File ;)
 
 private:
 	static void Copy_Log(string Source, string Destination);
