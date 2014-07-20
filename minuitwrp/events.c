@@ -178,6 +178,11 @@ static int vk_init(struct ev *e)
     {
         e->ignored = 1;
     }
+    // Blacklisting for the Xperia SP, without these, touch won't work and will freeze TWRP.
+    if (strcmp(e->deviceName, "l3gd20_gyr") == 0 || strcmp(e->deviceName, "lsm303dlhc_acc_lt") == 0)
+    {
+	e->ignored = 1;
+    }
 #endif
 
     strcat(vk_path, e->deviceName);
