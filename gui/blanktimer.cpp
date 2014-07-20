@@ -97,11 +97,11 @@ int  blanktimer::setClockTimer(void) {
 		if (sleepTimer > 2 && diff.tv_sec > (sleepTimer - 2) && conblank == 0) {
 			orig_brightness = getBrightness();
 			setConBlank(1);
-			TWFunc::Set_Brightness(5);
+			TWFunc::Set_Brightness("5");
 		}
 		if (sleepTimer && diff.tv_sec > sleepTimer && conblank < 2) {
 			setConBlank(2);
-			TWFunc::Set_Brightness(0);
+			TWFunc::Set_Brightness("0");
 			screenoff = true;
 			TWFunc::check_and_run_script("/sbin/postscreenblank.sh", "blank");
 			PageManager::ChangeOverlay("lock");
@@ -115,21 +115,20 @@ int  blanktimer::setClockTimer(void) {
 	return -1; //shouldn't get here
 }
 
-int blanktimer::getBrightness(void) {
+string blanktimer::getBrightness(void) {
 	string results;
 	string brightness_path;
 	DataManager::GetValue("tw_brightness_file", brightness_path);
-	if ((TWFunc::read_file(brightness_path, results)) != 0)
-		return -1;
-	int result = atoi(results.c_str());
-	if (result == 0) {
-		int tw_brightness;
-		DataManager::GetValue("tw_brightness", tw_brightness);
-		if (tw_brightness) {
-			result = tw_brightness;
-		} else {
-			result = 255;
-		}
+	if (brightness_path == "/nobrightness")
+		return "/nobrightness";
+	TWFunc::read_file(brightness_path, results);
+	string result = results.c_str();
+	string tw_brightness;
+	DataManager::GetValue("tw_brightness", tw_brightness);
+	if (tw_brightness != "") {
+		result = tw_brightness;
+	} else {
+		result = 255;
 	}
 	return result;
 
@@ -152,6 +151,8 @@ void blanktimer::resetTimerAndUnblank(void) {
 			screenoff = false;
 			// No break here, we want to keep going
 		case 1:
+			if (orig_brightness == "/nobrightness")
+				break;
 			TWFunc::Set_Brightness(orig_brightness);
 			setConBlank(0);
 			break;
