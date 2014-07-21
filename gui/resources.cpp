@@ -183,6 +183,11 @@ Resource* ResourceManager::FindResource(std::string name)
 
 ResourceManager::ResourceManager(xml_node<>* resList, ZipArchive* pZip)
 {
+	LoadResources(resList, pZip);
+}
+
+void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
+{
 	xml_node<>* child;
 
 	if (!resList)
