@@ -61,7 +61,7 @@ int gr_get_rotation(void);
 void gr_update_surface_dimensions(void);
 int gr_save_screenshot(const char *dest);
 
-#ifdef TW_HAS_LANDSCAPE
+#ifdef TW_ROTATION
 inline void gr_cpy_fb_with_rotation(void *dst, void *src);
 inline void gr_rotate_90deg_4b(uint32_t *dst, uint32_t *src);
 inline void gr_rotate_90deg_2b(uint16_t *dst, uint16_t *src);

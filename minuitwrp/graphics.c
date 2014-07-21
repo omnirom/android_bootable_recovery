@@ -69,7 +69,7 @@ static GRFont *gr_font = 0;
 static GGLContext *gr_context = 0;
 static GGLSurface gr_font_texture;
 static GGLSurface gr_framebuffer[NUM_BUFFERS];
-static GGLSurface gr_mem_surface;
+GGLSurface gr_mem_surface;
 static unsigned gr_active_fb = 0;
 static unsigned double_buffering = 0;
 static int gr_is_curr_clr_opaque = 0;
@@ -80,7 +80,7 @@ static int gr_freeze = 0;
 static int gr_fb_fd = -1;
 static int gr_vt_fd = -1;
 
-static struct fb_var_screeninfo vi;
+struct fb_var_screeninfo vi;
 static struct fb_fix_screeninfo fi;
 
 static bool has_overlay = false;
@@ -317,6 +317,10 @@ static int get_framebuffer(GGLSurface *fb)
 	print_fb_var_screeninfo();
 #endif
 
+#ifdef TW_ROTATION
+    gr_set_rotation(TW_ROTATION);
+#endif
+
     return fd;
 }
 
@@ -369,7 +373,7 @@ void gr_flip(void)
 
         /* copy data from the in-memory surface to the buffer we're about
          * to make active. */
-#ifndef TW_HAS_LANDSCAPE
+#ifndef TW_ROTATION
         memcpy(gr_framebuffer[gr_active_fb].data, gr_mem_surface.data,
                vi.xres_virtual * vi.yres * PIXEL_SIZE);
 #else
@@ -653,14 +657,9 @@ void* gr_loadFont(const char* fontName)
     if (fd == -1)
     {
         char tmp[128];
-#ifndef TW_HAS_LANDSCAPE
+
         sprintf(tmp, "/res/fonts/%s.dat", fontName);
-#else
-        if(gr_get_rotation()%180 == 0)
-            sprintf(tmp, "/res/fonts/%s.dat", fontName);
-        else
-            sprintf(tmp, "/res/landscape/fonts/%s.dat", fontName);
-#endif
+
         fd = open(tmp, O_RDONLY);
         if (fd == -1)
             return NULL;
@@ -913,7 +912,7 @@ int gr_get_rotation(void)
     return gr_rotation;
 }
 
-#ifdef TW_HAS_LANDSCAPE
+#ifdef TW_ROTATION
 void gr_cpy_fb_with_rotation(void *dst, void *src)
 {
     switch(gr_rotation)
@@ -1059,30 +1058,30 @@ void gr_rotate_270deg_2b(uint16_t *dst, uint16_t *src)
 void gr_rotate_180deg_4b(uint32_t *dst, uint32_t *src)
 {
     uint32_t i, x;
-    int len = vi.xres * vi.yres;
+    int len = vi.xres_virtual * vi.yres;
     src += len;
     for(i = 0; i < gr_mem_surface.height; ++i)
     {
         for(x = 0; x < gr_mem_surface.width; ++x)
             *dst++ = *src--;
-        dst += vi.xres_virtual - vi.xres;
+        //dst += vi.xres_virtual - vi.xres;
     }
 }
 
 void gr_rotate_180deg_2b(uint16_t *dst, uint16_t *src)
 {
     uint32_t i, x;
-    int len = vi.xres * vi.yres;
+    int len = vi.xres_virtual * vi.yres;
     src += len;
     for(i = 0; i < gr_mem_surface.height; ++i)
     {
         for(x = 0; x < gr_mem_surface.width; ++x)
             *dst++ = *src--;
-        dst += vi.xres_virtual - vi.xres;
+        //dst += vi.xres_virtual - vi.xres;
     }
 }
 
-#endif // TW_HAS_LANDSCAPE
+#endif // TW_ROTATION
 
 void gr_freeze_fb(int freeze)
 {
