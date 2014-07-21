@@ -81,6 +81,7 @@ class ResourceManager
 public:
 	ResourceManager(xml_node<>* resList, ZipArchive* pZip);
 	virtual ~ResourceManager();
+	void LoadResources(xml_node<>* resList, ZipArchive* pZip);
 
 public:
 	Resource* FindResource(std::string name);
