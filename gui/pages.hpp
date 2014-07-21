@@ -35,7 +35,7 @@ class HardwareKeyboard;
 class Page
 {
 public:
-	Page(xml_node<>* page, xml_node<>* templates = NULL);
+	Page(xml_node<>* page, std::vector<xml_node<>*> *templates = NULL);
 	virtual ~Page();
 
 	std::string GetName(void)   { return mName; }
@@ -61,7 +61,7 @@ protected:
 	COLOR mBackground;
 
 protected:
-	bool ProcessNode(xml_node<>* page, xml_node<>* templates = NULL, int depth = 0);
+	bool ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates = NULL, int depth = 0);
 };
 
 class PageSet
@@ -72,6 +72,7 @@ public:
 
 public:
 	int Load(ZipArchive* package);
+	int CheckInclude(ZipArchive* package, xml_document<> *parentDoc);
 
 	Page* FindPage(std::string name);
 	int SetPage(std::string page);
@@ -91,7 +92,7 @@ public:
 	int NotifyVarChange(std::string varName, std::string value);
 
 protected:
-	int LoadPages(xml_node<>* pages, xml_node<>* templates = NULL);
+	int LoadPages(xml_node<>* pages);
 	int LoadVariables(xml_node<>* vars);
 
 protected:
@@ -99,6 +100,7 @@ protected:
 	xml_document<> mDoc;
 	ResourceManager* mResources;
 	std::vector<Page*> mPages;
+	std::vector<xml_node<>*> templates;
 	Page* mCurrentPage;
 	Page* mOverlayPage; // This is a special case, used for "locking" the screen
 };

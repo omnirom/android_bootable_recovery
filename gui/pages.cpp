@@ -160,7 +160,7 @@ int ActionObject::SetActionPos(int x, int y, int w, int h)
 	return 0;
 }
 
-Page::Page(xml_node<>* page, xml_node<>* templates /* = NULL */)
+Page::Page(xml_node<>* page, std::vector<xml_node<>*> *templates /* = NULL */)
 {
 	mTouchStart = NULL;
 
@@ -200,7 +200,7 @@ Page::~Page()
 		delete *itr;
 }
 
-bool Page::ProcessNode(xml_node<>* page, xml_node<>* templates /* = NULL */, int depth /* = 0 */)
+bool Page::ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates /* = NULL */, int depth /* = 0 */)
 {
 	if (depth == 10)
 	{
@@ -347,24 +347,31 @@ bool Page::ProcessNode(xml_node<>* page, xml_node<>* templates /* = NULL */, int
 			else
 			{
 				std::string name = child->first_attribute("name")->value();
+				xml_node<>* node;
+				bool node_found = false;
 
 				// We need to find the correct template
-				xml_node<>* node;
-				node = templates->first_node("template");
+				for (std::vector<xml_node<>*>::iterator itr = templates->begin(); itr != templates->end(); itr++) {
+					node = (*itr)->first_node("template");
 
-				while (node)
-				{
-					if (!node->first_attribute("name"))
-						continue;
-
-					if (name == node->first_attribute("name")->value())
+					while (node)
 					{
-						if (!ProcessNode(node, templates, depth + 1))
-							return false;
-						else
+						if (!node->first_attribute("name"))
+							continue;
+
+						if (name == node->first_attribute("name")->value())
+						{
+							if (!ProcessNode(node, templates, depth + 1))
+								return false;
+							else {
+								node_found = true;
+								break;
+							}
+						}
+						if (node_found)
 							break;
+						node = node->next_sibling("template");
 					}
-					node = node->next_sibling("template");
 				}
 			}
 		}
@@ -547,6 +554,8 @@ PageSet::~PageSet()
 {
 	for (std::vector<Page*>::iterator itr = mPages.begin(); itr != mPages.end(); ++itr)
 		delete *itr;
+	for (std::vector<xml_node<>*>::iterator itr2 = templates.begin(); itr2 != templates.end(); ++itr2)
+		delete *itr2;
 
 	delete mResources;
 	free(mXmlFile);
@@ -556,7 +565,9 @@ int PageSet::Load(ZipArchive* package)
 {
 	xml_node<>* parent;
 	xml_node<>* child;
-	xml_node<>* templates;
+	xml_node<>* xmltemplate;
+	xml_node<>* blank_templates;
+	int pages_loaded = -1, ret;
 
 	parent = mDoc.first_node("recovery");
 	if (!parent)
@@ -580,13 +591,134 @@ int PageSet::Load(ZipArchive* package)
 
 	LOGINFO("Loading pages...\n");
 	// This may be NULL if no templates are present
-	templates = parent->first_node("templates");
+	xmltemplate = parent->first_node("templates");
+	if (xmltemplate)
+		templates.push_back(xmltemplate);
 
 	child = parent->first_node("pages");
-	if (!child)
-		return -1;
+	if (child) {
+		if (LoadPages(child)) {
+			LOGERR("PageSet::Load returning -1\n");
+			return -1;
+		}
+	}
+	
+	return CheckInclude(package, &mDoc);
+}
 
-	return LoadPages(child, templates);
+int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
+{
+	xml_node<>* par;
+	xml_node<>* par2;
+	xml_node<>* chld;
+	xml_node<>* parent;
+	xml_node<>* child;
+	xml_node<>* xmltemplate;
+	long len;
+	char* xmlFile = NULL;
+	string filename;
+	xml_document<> doc;
+
+	par = parentDoc->first_node("recovery");
+	if (!par) {
+		par = parentDoc->first_node("install");
+	}
+	if (!par) {
+		return 0;
+	}
+
+	par2 = par->first_node("include");
+	if (!par2)
+		return 0;
+	chld = par2->first_node("xmlfile");
+	while (chld != NULL) {
+		xml_attribute<>* attr = chld->first_attribute("name");
+		if (!attr)
+			break;
+
+		LOGINFO("PageSet::CheckInclude loading filename: '%s'\n", filename.c_str());
+		if (!package) {
+			// We can try to load the XML directly...
+			filename = "/res/";
+			filename += attr->value();
+			struct stat st;
+			if(stat(filename.c_str(),&st) != 0) {
+				LOGERR("Unable to locate '%s'\n", filename.c_str());
+				return -1;
+			}
+
+			len = st.st_size;
+			xmlFile = (char*) malloc(len + 1);
+			if (!xmlFile)
+				return -1;
+
+			int fd = open(filename.c_str(), O_RDONLY);
+			if (fd == -1)
+				return -1;
+
+			read(fd, xmlFile, len);
+			close(fd);
+		} else {
+			filename += attr->value();
+			const ZipEntry* ui_xml = mzFindZipEntry(package, filename.c_str());
+			if (ui_xml == NULL)
+			{
+				LOGERR("Unable to locate '%s' in zip file\n", filename.c_str());
+				return -1;
+			}
+
+			// Allocate the buffer for the file
+			len = mzGetZipEntryUncompLen(ui_xml);
+			xmlFile = (char*) malloc(len + 1);
+			if (!xmlFile)
+				return -1;
+
+			if (!mzExtractZipEntryToBuffer(package, ui_xml, (unsigned char*) xmlFile))
+			{
+				LOGERR("Unable to extract '%s'\n", filename.c_str());
+				return -1;
+			}
+		}
+		doc.parse<0>(xmlFile);
+
+		parent = doc.first_node("recovery");
+		if (!parent)
+			parent = doc.first_node("install");
+
+		// Now, let's parse the XML
+		LOGINFO("Loading included resources...\n");
+		child = parent->first_node("resources");
+		if (child)
+			mResources->LoadResources(child, package);
+
+		LOGINFO("Loading included variables...\n");
+		child = parent->first_node("variables");
+		if (child)
+			LoadVariables(child);
+
+		LOGINFO("Loading mouse cursor...\n");
+		child = parent->first_node("mousecursor");
+		if(child)
+			PageManager::LoadCursorData(child);
+
+		LOGINFO("Loading included pages...\n");
+		// This may be NULL if no templates are present
+		xmltemplate = parent->first_node("templates");
+		if (xmltemplate)
+			templates.push_back(xmltemplate);
+
+		child = parent->first_node("pages");
+		if (child)
+			if (LoadPages(child))
+				return -1;
+
+		if (CheckInclude(package, &doc))
+			return -1;
+
+		chld = chld->next_sibling("xmlfile");
+	}
+
+	return 0;
 }
 
 int PageSet::SetPage(std::string page)
@@ -659,7 +791,7 @@ int PageSet::LoadVariables(xml_node<>* vars)
 	return 0;
 }
 
-int PageSet::LoadPages(xml_node<>* pages, xml_node<>* templates /* = NULL */)
+int PageSet::LoadPages(xml_node<>* pages)
 {
 	xml_node<>* child;
 
@@ -669,7 +801,7 @@ int PageSet::LoadPages(xml_node<>* pages, xml_node<>* templates /* = NULL */)
 	child = pages->first_node("page");
 	while (child != NULL)
 	{
-		Page* page = new Page(child, templates);
+		Page* page = new Page(child, &templates);
 		if (page->GetName().empty())
 		{
 			LOGERR("Unable to process load page\n");
