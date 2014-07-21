@@ -71,7 +71,7 @@ ifeq ($(TARGET_RECOVERY_PIXEL_FORMAT),"RGB_565")
 endif
 
 ifeq ($(BOARD_HAS_FLIPPED_SCREEN), true)
-LOCAL_CFLAGS += -DBOARD_HAS_FLIPPED_SCREEN
+    LOCAL_CFLAGS += -DTW_ROTATION=180
 endif
 
 ifeq ($(TW_IGNORE_MAJOR_AXIS_0), true)
@@ -84,6 +84,11 @@ endif
 
 ifneq ($(TW_WHITELIST_INPUT),)
   LOCAL_CFLAGS += -DWHITELIST_INPUT=$(TW_WHITELIST_INPUT)
+endif
+
+# This rotates or flips the screen. Valid values are 90, 180, and 270
+ifneq ($(TW_ROTATION),)
+	LOCAL_CFLAGS += -DTW_ROTATION=$(TW_ROTATION)
 endif
 
 LOCAL_SHARED_LIBRARIES += libz libc libcutils libjpeg

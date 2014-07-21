@@ -25,6 +25,8 @@ void gr_exit(void);
 
 int gr_fb_width(void);
 int gr_fb_height(void);
+int gr_screen_width(void);
+int gr_screen_height(void);
 gr_pixel *gr_fb_data(void);
 void gr_flip(void);
 int gr_fb_blank(int blank);
@@ -52,7 +54,22 @@ unsigned int gr_get_height(gr_surface surface);
 int gr_get_surface(gr_surface* surface);
 int gr_free_surface(gr_surface surface);
 
+
+void gr_freeze_fb(int freeze);
+void gr_set_rotation(int rot);
+int gr_get_rotation(void);
+void gr_update_surface_dimensions(void);
 int gr_save_screenshot(const char *dest);
+
+#ifdef TW_ROTATION
+inline void gr_cpy_fb_with_rotation(void *dst, void *src);
+inline void gr_rotate_90deg_4b(uint32_t *dst, uint32_t *src);
+inline void gr_rotate_90deg_2b(uint16_t *dst, uint16_t *src);
+inline void gr_rotate_270deg_4b(uint32_t *dst, uint32_t *src);
+inline void gr_rotate_270deg_2b(uint16_t *dst, uint16_t *src);
+inline void gr_rotate_180deg_4b(uint32_t *dst, uint32_t *src);
+inline void gr_rotate_180deg_2b(uint16_t *dst, uint16_t *src);
+#endif
 
 // input event structure, include <linux/input.h> for the definition.
 // see http://www.mjmwired.net/kernel/Documentation/input/ for info.
