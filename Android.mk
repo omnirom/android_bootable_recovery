@@ -124,6 +124,9 @@ LOCAL_MODULE_TAGS := eng
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
 #TWRP Build Flags
+ifeq ($(TW_SCREEN_BLANK_ON_BOOT),true)
+    LOCAL_CFLAGS += -DTW_SCREEN_BLANK_ON_BOOT
+endif
 ifneq ($(TW_NO_SCREEN_TIMEOUT),)
     LOCAL_CFLAGS += -DTW_NO_SCREEN_TIMEOUT
 endif
