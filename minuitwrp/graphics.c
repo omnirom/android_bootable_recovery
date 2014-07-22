@@ -789,8 +789,11 @@ int gr_init(void)
     gl->enable(gl, GGL_BLEND);
     gl->blendFunc(gl, GGL_SRC_ALPHA, GGL_ONE_MINUS_SRC_ALPHA);
 
-//    gr_fb_blank(true);
-//    gr_fb_blank(false);
+#ifdef TW_SCREEN_BLANK_ON_BOOT
+    printf("TW_SCREEN_BLANK_ON_BOOT := true\n");
+    gr_fb_blank(true);
+    gr_fb_blank(false);
+#endif
 
     if (!alloc_ion_mem(fi.line_length * vi.yres))
         allocate_overlay(gr_fb_fd, gr_framebuffer);
