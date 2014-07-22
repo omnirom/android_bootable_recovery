@@ -357,8 +357,10 @@ Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
                    name);
         goto done;
     }
-
-    if (rename(src_name, dst_name) != 0) {
+    if (make_parents(dst_name) != 0) {
+        ErrorAbort(state, "Creating parent of %s() failed, error %s()",
+          dst_name, strerror(errno));
+    } else if (rename(src_name, dst_name) != 0) {
         ErrorAbort(state, "Rename of %s() to %s() failed, error %s()",
           src_name, dst_name, strerror(errno));
     } else {
@@ -642,7 +644,7 @@ static int make_parents(char* name) {
         *p = '\0';
         if (make_parents(name) < 0) return -1;
         int result = mkdir(name, 0700);
-        if (result == 0) printf("symlink(): created [%s]\n", name);
+        if (result == 0) printf("created [%s]\n", name);
         *p = '/';
         if (result == 0 || errno == EEXIST) {
             // successfully created or already existed; we're done
