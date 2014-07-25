@@ -9,14 +9,6 @@ TOOLS := \
 
 ifeq ($(TWHAVE_SELINUX), true)
 	TOOLS += \
-		ls \
-		getenforce \
-		setenforce \
-		chcon \
-		restorecon \
-		runcon \
-		getsebool \
-		setsebool \
 		load_policy
 endif
 
@@ -27,6 +19,7 @@ ifeq ($(TW_USE_TOOLBOX), true)
 		ps \
 		kill \
 		ln \
+		ls \
 		insmod \
 		rmmod \
 		lsmod \
@@ -77,8 +70,15 @@ ifeq ($(TW_USE_TOOLBOX), true)
 		swapoff \
 		mkswap \
 		readlink
-	ifneq ($(TWHAVE_SELINUX), true)
-		TOOLS += ls
+	ifeq ($(TWHAVE_SELINUX), true)
+		TOOLS += \
+		getenforce \
+		setenforce \
+		chcon \
+		restorecon \
+		runcon \
+		getsebool \
+		setsebool
 	endif
 endif
 
