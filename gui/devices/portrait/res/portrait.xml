@@ -1387,7 +1387,7 @@
 			</object>
 
 			<object type="slider">
-				<placement x="%slider_x%" y="slider_y" />
+				<placement x="%slider_x%" y="%slider_y%" />
 				<resource base="slider" used="slider-used" touch="slider-touch" />
 				<action function="page">backup_run</action>
 			</object>
