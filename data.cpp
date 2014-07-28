@@ -960,12 +960,6 @@ void DataManager::SetDefaultValues()
 		}
 	}
 	if (findbright.empty()) {
-		// Attempt to locate the brightness file
-		if (DataManager::Find_Brightness_Path(findbright) != 0) {
-			if (findbright.empty()) findbright = Find_File::Find("brightness", "/sys/class/leds/lcd-backlight");
-		}
-	}
-	if (findbright.empty()) {
 		LOGINFO("Unable to locate brightness file\n");
 		mConstValues.insert(make_pair("tw_has_brightnesss_file", "0"));
 	} else {
@@ -978,10 +972,13 @@ void DataManager::SetDefaultValues()
 		mValues.insert(make_pair("tw_brightness", make_pair(maxVal.str(), 1)));
 		mValues.insert(make_pair("tw_brightness_pct", make_pair("100", 1)));
 #ifdef TW_SECONDARY_BRIGHTNESS_PATH
-		string secondfindbright = EXPAND(TW_SECONDARY_BRIGHTNESS_PATH);
-		if (secondfindbright != "") {
-			LOGINFO("Will use a second brightness file at '%s'\n", secondfindbright.c_str());
-			mConstValues.insert(make_pair("tw_secondary_brightness_file", secondfindbright));
+		string findsecondarybright = EXPAND(TW_SECONDARY_BRIGHTNESS_PATH);
+		LOGINFO("TW_SECONDARY_BRIGHTNESS_PATH := %s\n", findsecondarybright.c_str());
+		if (TWFunc::Path_Exists(findsecondarybright)) {
+			LOGINFO("Will use the secondary brightness file at '%s'\n", findsecondarybright.c_str());
+			mConstValues.insert(make_pair("tw_secondary_brightness_file", findsecondarybright));
+		} else {
+			LOGINFO("Specified secondary brightness file '%s' not found.\n", findsecondarybright.c_str());
 		}
 #endif
 		string max_bright = maxVal.str();
@@ -1268,28 +1265,3 @@ void DataManager::Vibrate(const string varName)
 		vibrate(vib_value);
 	}
 }
-
-int DataManager::Find_Brightness_Path(std::string &returns)
-{
-	static const char *paths[] = { "/sys/class/backlight/", "/sys/class/leds/" };
-	static const char *sysctl[] = { "wled:backlight", "lm3533-lcd-bl", "lm3533-lcd-bl-1", "lcd-backlight_1", "pwm-backlight", "s6e8aa0", "panel", "s5p_bl", "bowser" };
-
-	std::string brightness_path;
-	std::string tmppath;
-
-	for(size_t i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i)
-	{
-		for(size_t j = 0; j < (sizeof(sysctl)/sizeof(sysctl[0])); ++j)
-		{
-			tmppath = std::string(paths[i]).append(sysctl[j]);
-			brightness_path = Find_File::Find("brightness", tmppath);
-			if (brightness_path != "")
-			{
-				returns = brightness_path;
-				return 0;
-			}
-		}
-	}
-	return -1;
-}
-
