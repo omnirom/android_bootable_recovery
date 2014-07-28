@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4b713d8b_be2d96fb",
+        "filename": "data.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 980,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-28T13:13:09Z",
+      "side": 1,
+      "message": "The /sys/class/leds/lm3533-lcd-bl-1/brightness path is probably specific to only one device. This whole block of code then is useless for all other devices. We should probably have a build flag for a second brightness file that can be passed in from the device files. It would be an extremely rare case that I will merge code that only works on one device.",
+      "revId": "615b4743f5d80f56c12dc089c4ab286eabe54faa",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_9eec5ab8",
+        "filename": "data.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1276,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-28T13:13:09Z",
+      "side": 1,
+      "message": "I\u0027m not sure why this sysctl is needed. The Find_File class would already search all subfolders below the paths variables automatically. Further, the sysctl list appears to contain many device specific items like lm3533-lcd-bl. In mainline TWRP we try to keep device specifics out of the code base.",
+      "revId": "615b4743f5d80f56c12dc089c4ab286eabe54faa",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_de32525c",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1096,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-28T13:13:09Z",
+      "side": 1,
+      "message": "ft is unused and should be removed.",
+      "revId": "615b4743f5d80f56c12dc089c4ab286eabe54faa",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_fe370e49",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1097,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-28T13:13:09Z",
+      "side": 1,
+      "message": "We have 2 declarations for struct timeval (stv and tv further down). We also have 2 declarations for uint64_t (rtcOffset and offset further down). Since these seem to be used the same way, why not move the declarations from further down up to this location and use them for both the epoch and the ats files? I see no reason why these same variables couldn\u0027t be used for both methods.",
+      "revId": "615b4743f5d80f56c12dc089c4ab286eabe54faa",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
