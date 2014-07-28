@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4b713d8b_3e4266b4",
+        "filename": "gui/blanktimer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-28T13:16:55Z",
+      "side": 1,
+      "message": "Since the getBrightness function now returns a string, this 255 needs to be inside quotes and returned as a string \"255\".",
+      "revId": "f165e3bc5fc21d7b8222817fc926ad3c15bf1726",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
