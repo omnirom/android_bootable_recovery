@@ -128,7 +128,7 @@ string blanktimer::getBrightness(void) {
 	if (tw_brightness != "") {
 		result = tw_brightness;
 	} else {
-		result = 255;
+		result = "255";
 	}
 	return result;
 
