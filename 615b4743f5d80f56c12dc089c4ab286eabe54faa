@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "4b713d8b_3e2b46dc",
+        "filename": "data.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 980,
+      "author": {
+        "id": 1000981
+      },
+      "writtenOn": "2014-07-28T14:38:22Z",
+      "side": 1,
+      "message": "Will change that to a configurable option to be used from the device configuration. It makes sense. thanks!",
+      "parentUuid": "4b713d8b_be2d96fb",
+      "revId": "615b4743f5d80f56c12dc089c4ab286eabe54faa",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4b713d8b_9eec5ab8",
         "filename": "data.cpp",
         "patchSetId": 5
@@ -30,6 +48,24 @@
       "writtenOn": "2014-07-28T13:13:09Z",
       "side": 1,
       "message": "I\u0027m not sure why this sysctl is needed. The Find_File class would already search all subfolders below the paths variables automatically. Further, the sysctl list appears to contain many device specific items like lm3533-lcd-bl. In mainline TWRP we try to keep device specifics out of the code base.",
+      "revId": "615b4743f5d80f56c12dc089c4ab286eabe54faa",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_1e64ca42",
+        "filename": "data.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1276,
+      "author": {
+        "id": 1000981
+      },
+      "writtenOn": "2014-07-28T14:38:22Z",
+      "side": 1,
+      "message": "I have tried to make this as fast and cost effective as I could. You are making sense though.\n\nThe reason why this is working this particular way was to ensure it will skip scanning lcd-backlight until it really can not find anything elsewhere.\n\nIf you have any idea how to achieve that with Find_File, I will happily incorporate that.",
+      "parentUuid": "4b713d8b_9eec5ab8",
       "revId": "615b4743f5d80f56c12dc089c4ab286eabe54faa",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "4b713d8b_3e598690",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1096,
+      "author": {
+        "id": 1000981
+      },
+      "writtenOn": "2014-07-28T14:38:22Z",
+      "side": 1,
+      "message": "Whoops :o ... consider it removed.",
+      "parentUuid": "4b713d8b_de32525c",
+      "revId": "615b4743f5d80f56c12dc089c4ab286eabe54faa",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4b713d8b_fe370e49",
         "filename": "twrp-functions.cpp",
         "patchSetId": 5
@@ -64,6 +118,24 @@
       "writtenOn": "2014-07-28T13:13:09Z",
       "side": 1,
       "message": "We have 2 declarations for struct timeval (stv and tv further down). We also have 2 declarations for uint64_t (rtcOffset and offset further down). Since these seem to be used the same way, why not move the declarations from further down up to this location and use them for both the epoch and the ats files? I see no reason why these same variables couldn\u0027t be used for both methods.",
+      "revId": "615b4743f5d80f56c12dc089c4ab286eabe54faa",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_5e564261",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1097,
+      "author": {
+        "id": 1000981
+      },
+      "writtenOn": "2014-07-28T14:38:22Z",
+      "side": 1,
+      "message": "Did that to make sure they did not cross contaminate the checks among the 2 parts.\n\nWill change it though, it makes sense :)",
+      "parentUuid": "4b713d8b_fe370e49",
       "revId": "615b4743f5d80f56c12dc089c4ab286eabe54faa",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
