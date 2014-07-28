@@ -79,7 +79,7 @@ ifneq ($(wildcard system/core/libsparse/Android.mk),)
 LOCAL_SHARED_LIBRARIES += libsparse
 endif
 
-ifeq ($(TW_OEM_BUILD),true)
+ifeq ($(TW_OEM_BUILD), true)
     LOCAL_CFLAGS += -DTW_OEM_BUILD
     BOARD_HAS_NO_REAL_SDCARD := true
     TW_USE_TOOLBOX := true
@@ -124,7 +124,7 @@ LOCAL_MODULE_TAGS := eng
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
 #TWRP Build Flags
-ifeq ($(TW_SCREEN_BLANK_ON_BOOT),true)
+ifeq ($(TW_SCREEN_BLANK_ON_BOOT), true)
     LOCAL_CFLAGS += -DTW_SCREEN_BLANK_ON_BOOT
 endif
 ifneq ($(TW_NO_SCREEN_TIMEOUT),)
@@ -264,6 +264,9 @@ endif
 ifneq ($(TW_BRIGHTNESS_PATH),)
 	LOCAL_CFLAGS += -DTW_BRIGHTNESS_PATH=$(TW_BRIGHTNESS_PATH)
 endif
+ifneq ($(TW_SECONDARY_BRIGHTNESS_PATH),)
+	LOCAL_CFLAGS += -DTW_SECONDARY_BRIGHTNESS_PATH=$(TW_SECONDARY_BRIGHTNESS_PATH)
+endif
 ifneq ($(TW_MAX_BRIGHTNESS),)
 	LOCAL_CFLAGS += -DTW_MAX_BRIGHTNESS=$(TW_MAX_BRIGHTNESS)
 endif
@@ -276,10 +279,10 @@ else
     LOCAL_CFLAGS += -DTW_EXCLUDE_ENCRYPTED_BACKUPS
 endif
 ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),)
-  ifeq ($(TARGET_CPU_VARIANT),krait)
+  ifeq ($(TARGET_CPU_VARIANT), krait)
     LOCAL_CFLAGS += -DQCOM_RTC_FIX
   endif
-else ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),true)
+else ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX), true)
     LOCAL_CFLAGS += -DQCOM_RTC_FIX
 endif
 ifneq ($(TW_NO_LEGACY_PROPS),)

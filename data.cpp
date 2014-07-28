@@ -977,14 +977,13 @@ void DataManager::SetDefaultValues()
 		mConstValues.insert(make_pair("tw_brightness_max", maxVal.str()));
 		mValues.insert(make_pair("tw_brightness", make_pair(maxVal.str(), 1)));
 		mValues.insert(make_pair("tw_brightness_pct", make_pair("100", 1)));
-		if (findbright.compare("/sys/class/leds/lm3533-lcd-bl-1/brightness") == 0) {
-			string secondfindbright;
-			secondfindbright = Find_File::Find("brightness", "/sys/class/leds/lm3533-lcd-bl-2");
-			if (secondfindbright != "") {
-				LOGINFO("Found a second brightness file at '%s'\n", secondfindbright.c_str());
-				mConstValues.insert(make_pair("tw_secondary_brightness_file", secondfindbright));
-			}
+#ifdef TW_SECONDARY_BRIGHTNESS_PATH
+		string secondfindbright = EXPAND(TW_SECONDARY_BRIGHTNESS_PATH);
+		if (secondfindbright != "") {
+			LOGINFO("Will use a second brightness file at '%s'\n", secondfindbright.c_str());
+			mConstValues.insert(make_pair("tw_secondary_brightness_file", secondfindbright));
 		}
+#endif
 		string max_bright = maxVal.str();
 		TWFunc::Set_Brightness(max_bright);
 	}
