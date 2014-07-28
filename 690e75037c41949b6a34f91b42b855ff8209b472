@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4b713d8b_7e4cdee3",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-07-28T13:19:12Z",
+      "side": 1,
+      "message": "I know I\u0027m nit-picking, but to stay with the style of the rest of the make file, please put a space after the comma, \",true\" -\u003e \", true\".",
+      "revId": "690e75037c41949b6a34f91b42b855ff8209b472",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
