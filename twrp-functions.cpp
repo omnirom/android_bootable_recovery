@@ -1093,22 +1093,21 @@ void TWFunc::Fixup_Time_On_Boot()
 
 	LOGINFO("TWFunc::Fixup_Time: Pre-fix date and time: %s\n", TWFunc::Get_Current_Date().c_str());
 
-	FILE *ft;
-	struct timeval stv;
-	uint64_t rtcOffset = 0;
+	struct timeval tv;
+	uint64_t offset = 0;
 	std::string sepoch = "/sys/class/rtc/rtc0/since_epoch";
 
-	if (TWFunc::read_file(sepoch, rtcOffset) == 0) {
+	if (TWFunc::read_file(sepoch, offset) == 0) {
 
 		LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s\n", sepoch.c_str());
 
-		stv.tv_sec = rtcOffset;
-		stv.tv_usec = 0;
-		settimeofday(&stv, NULL);
+		tv.tv_sec = offset;
+		tv.tv_usec = 0;
+		settimeofday(&tv, NULL);
 
-		gettimeofday(&stv, NULL);
+		gettimeofday(&tv, NULL);
 
-		if (stv.tv_sec > 1405209403) { // Anything older then 12 Jul 2014 23:56:43 GMT will do nicely thank you ;)
+		if (tv.tv_sec > 1405209403) { // Anything older then 12 Jul 2014 23:56:43 GMT will do nicely thank you ;)
 
 			LOGINFO("TWFunc::Fixup_Time: Date and time corrected: %s\n", TWFunc::Get_Current_Date().c_str());
 			return;
@@ -1136,10 +1135,8 @@ void TWFunc::Fixup_Time_On_Boot()
 
 	FILE *f;
 	DIR *d;
-	uint64_t offset = 0;
 	struct dirent *dt;
 	std::string ats_path;
-	struct timeval tv;
 
 	if(!PartitionManager.Mount_By_Path("/data", false))
 		return;
