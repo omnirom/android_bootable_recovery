@@ -841,7 +841,13 @@
 				<data name="tw_wipe_list" />
 				<listtype name="wipe" />
 			</object>
-
+                        <object type="checkbox">
+				<placement x="%listbox_x%" y="%row14_text_y%"/>
+				<font resource="font" color="%text_color%" />
+				<text>Antiforensic wipe - prevents data recovery</text>
+				<data variable="tw_forensic_wipe" />
+				<image checked="checkbox_true" unchecked="checkbox_false" />
+			</object>
 			<object type="slider">
 				<placement x="%slider_x%" y="%slider_y%" />
 				<resource base="slider" used="slider-used" touch="slider-touch" />
@@ -937,7 +943,13 @@
 				<restrict minlen="3" maxlen="3" allow="yes" />
 				<action function="page">formatdata_confirm</action>
 			</object>
-
+                        <object type="checkbox">
+				<placement x="%col1_x%" y="%row7_text_y%"/>
+				<font resource="font" color="%text_color%" />
+				<text>Antiforensic wipe - prevents data recovery</text>
+				<data variable="tw_forensic_wipe" />
+				<image checked="checkbox_true" unchecked="checkbox_false" />
+			</object>
 			<object type="template" name="keyboardtemplate" />
 
 			<object type="action">

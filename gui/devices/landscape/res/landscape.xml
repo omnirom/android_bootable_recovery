@@ -1098,13 +1098,21 @@
 					<action function="page">checkpartitionlist</action>
 				</actions>
 			</object>
-
+                        <object type="checkbox">
+				<placement x="%col3_x%" y="%row16_text_y%"/>
+				<font resource="font" color="%text_color%" />
+				<text>Antiforensic wipe - prevents data recovery</text>
+				<data variable="tw_forensic_wipe" />
+				<image checked="checkbox_true" unchecked="checkbox_false" />
+			</object>
 			<object type="text" color="%text_fail_color%">
 				<condition var1="partitionlisterror" var2="1" />
 				<font resource="font" />
 				<placement x="%col3_x%" y="%backup_storage_y%" />
 				<text>Invalid partition selection</text>
 			</object>
+
+
 
 			<object type="slider">
 				<placement x="%slider_x%" y="%slider_y%" />
@@ -1175,6 +1183,13 @@
 				<data name="tw_confirm_formatdata" />
 				<restrict minlen="3" maxlen="3" allow="yes" />
 				<action function="page">formatdata_confirm</action>
+			</object>
+                        <object type="checkbox">
+				<placement x="%col1_x%" y="%row8_text_y%"/>
+				<font resource="font" color="%text_color%" />
+				<text>Antiforensic wipe - prevents data recovery</text>
+				<data variable="tw_forensic_wipe" />
+				<image checked="checkbox_true" unchecked="checkbox_false" />
 			</object>
 
 			<object type="template" name="keyboardtemplate" />

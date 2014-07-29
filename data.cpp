@@ -921,6 +921,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_RESTORE_AVG_IMG_RATE, make_pair("15000000", 1)));
 	mValues.insert(make_pair(TW_RESTORE_AVG_FILE_RATE, make_pair("3000000", 1)));
 	mValues.insert(make_pair(TW_RESTORE_AVG_FILE_COMP_RATE, make_pair("2000000", 1)));
+        mValues.insert(make_pair(TW_USE_FORENSIC_WIPE, make_pair("0", 0)));
 	mValues.insert(make_pair("tw_wipe_cache", make_pair("0", 0)));
 	mValues.insert(make_pair("tw_wipe_dalvik", make_pair("0", 0)));
 	if (GetIntValue(TW_HAS_INTERNAL) == 1 && GetIntValue(TW_HAS_DATA_MEDIA) == 1 && GetIntValue(TW_HAS_EXTERNAL) == 0)

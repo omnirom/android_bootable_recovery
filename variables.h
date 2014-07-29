@@ -22,11 +22,12 @@
 #define TW_USE_COMPRESSION_VAR      "tw_use_compression"
 #define TW_FILENAME                 "tw_filename"
 #define TW_ZIP_INDEX                "tw_zip_index"
-#define TW_ZIP_QUEUE_COUNT       "tw_zip_queue_count"
+#define TW_ZIP_QUEUE_COUNT          "tw_zip_queue_count"
+#define TW_USE_FORENSIC_WIPE        "tw_forensic_wipe"
 
 #define MAX_BACKUP_NAME_LEN 64
 #define TW_BACKUP_TEXT              "tw_backup_text"
-#define TW_BACKUP_NAME		        "tw_backup_name"
+#define TW_BACKUP_NAME		    "tw_backup_name"
 #define TW_BACKUP_SYSTEM_VAR        "tw_backup_system"
 #define TW_BACKUP_DATA_VAR          "tw_backup_data"
 #define TW_BACKUP_BOOT_VAR          "tw_backup_boot"

@@ -773,6 +773,15 @@ bool TWPartition::Find_MTD_Block_Device(string MTD_Name) {
 	return false;
 }
 
+
+long long getPartitionSize(string Actual_Block_Device){
+	int fileDescriptor = open(Actual_Block_Device.c_str(), O_WRONLY);
+        long long partitionSizeBytes=0LL;
+        ioctl(fileDescriptor,BLKGETSIZE64,&partitionSizeBytes);
+	close(fileDescriptor);
+	return partitionSizeBytes;
+}
+
 bool TWPartition::Get_Size_Via_statfs(bool Display_Error) {
 	struct statfs st;
 	string Local_Path = Mount_Point + "/.";
@@ -789,7 +798,7 @@ bool TWPartition::Get_Size_Via_statfs(bool Display_Error) {
 		}
 		return false;
 	}
-	Size = (st.f_blocks * st.f_bsize);
+	Size = getPartitionSize(Actual_Block_Device);
 	Used = ((st.f_blocks - st.f_bfree) * st.f_bsize);
 	Free = (st.f_bfree * st.f_bsize);
 	Backup_Size = Used;
@@ -1106,10 +1115,17 @@ bool TWPartition::Wipe(string New_File_System) {
 	else
 		unlink("/.layout_version");
 
+	int forensicWipe=0;
+	DataManager::GetValue("tw_forensic_wipe",forensicWipe);
 	if (Has_Data_Media && Current_File_System == New_File_System) {
+		if ( forensicWipe == 1 ) LOGERR("Please select Format Data to perform antiforensic wipe on data/media partitions.");
 		wiped = Wipe_Data_Without_Wiping_Media();
 		recreate_media = false;
 	} else {
+		if ( forensicWipe == 1  ){ //user expects 0's to be written across the partition
+			LOGINFO("Attempting forensic wipe on %s \n",Display_Name.c_str());
+			zero_Partition(); 
+		}
 
 		DataManager::GetValue(TW_RM_RF_VAR, check);
 
@@ -1374,13 +1390,13 @@ string TWPartition::Get_Restore_File_System(string restore_folder) {
 	first_period = Backup_FileName.find(".");
 	if (first_period == string::npos) {
 		LOGERR("Unable to find file system (first period).\n");
-		return false;
+		return "none";
 	}
 	Restore_File_System = Backup_FileName.substr(first_period + 1, Backup_FileName.size() - first_period - 1);
 	second_period = Restore_File_System.find(".");
 	if (second_period == string::npos) {
 		LOGERR("Unable to find file system (second period).\n");
-		return false;
+		return "none";
 	}
 	Restore_File_System.resize(second_period);
 	LOGINFO("Restore file system is: '%s'.\n", Restore_File_System.c_str());
@@ -1718,6 +1734,52 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 #endif // ifdef TW_OEM_BUILD
 }
 
+
+
+/**
+*writes zeros all over this partition
+*/
+bool TWPartition::zero_Partition(void){
+	gui_print( "Preparing %s partition - '%s' for antiforensic zeroing",Display_Name.c_str(),Actual_Block_Device.c_str());
+
+	//Open the device, if problem, fail.
+	int fileDescriptor = open(Actual_Block_Device.c_str(), O_WRONLY);
+	if (fileDescriptor < 0) {
+		gui_print("Error opening block:'%s'",Actual_Block_Device.c_str());
+		return false;
+	}
+
+        //setup a char buffer of all zeros and reporting variables
+	unsigned int writeBufferSize=1048576; //1meg
+	char* zeros = static_cast<char*>(calloc(1, writeBufferSize));
+	size_t written, megs=-1,partitionSizeInMegs=Size/1048576;
+
+	// Write 0s across the entire partition while the device still accepts more zeros
+	do {
+		written = write(fileDescriptor, zeros,writeBufferSize);
+                //only increment megs if we have written 1/2 meg of data or more. Last meg may not be full.
+                if (written > 524288){
+			megs++;
+		}
+		if (megs % 128 == 0) {  //update GUI text and/or progress bar every 128 cycles.
+			if (partitionSizeInMegs<1){  //if partition size is unknown, display what we can
+				gui_print("Nullifying %s: %ld Megabytes written",Display_Name.c_str(), megs);
+			} else {  //update progress bar and gui log
+			        float progressPercent=(float) megs/partitionSizeInMegs;
+				int displayPercent = progressPercent * 100;
+				DataManager::SetProgress(progressPercent);
+				gui_print("Nullified %i%% of %s - %ld of %ld Megabytes",displayPercent, Display_Name.c_str(), megs,partitionSizeInMegs);
+			}
+		}
+	} while (written == writeBufferSize); 
+	close(fileDescriptor);
+	free(zeros);
+	gui_print("--- Antiforensic zero of %ldMegabytes performed on %s\n",megs, Display_Name.c_str());
+	return true;
+}
+
+
+
 bool TWPartition::Backup_Tar(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size) {
 	char back_name[255], split_index[5];
 	string Full_FileName, Split_FileName, Tar_Args, Command;
@@ -1980,7 +2042,6 @@ bool TWPartition::Update_Size(bool Display_Error) {
 			return true;
 	} else if (!Mount(Display_Error))
 		return false;
-
 	ret = Get_Size_Via_statfs(Display_Error);
 	if (!ret || Size == 0) {
 		if (!Get_Size_Via_df(Display_Error)) {

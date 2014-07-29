@@ -72,6 +72,7 @@ public:
 	string Current_File_System;                                               // Current file system
 	string Actual_Block_Device;                                               // Actual block device (one of primary, alternate, or decrypted)
 	string MTD_Name;                                                          // Name of the partition for MTD devices
+	bool zero_Partition(void);                                        // Performs an anti-forensic wipe on the partition
 
 private:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
