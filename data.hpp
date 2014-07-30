@@ -44,7 +44,6 @@ public:
 	// Helper functions
 	static string GetStrValue(const string varName);
 	static int GetIntValue(const string varName);
-	static int Find_Brightness_Path(std::string &returns); // It will search well known locations to see if it can discover the brightness control file, returning it by reference
 
 	// Core set routines
 	static int SetValue(const string varName, string value, int persist = 0);
