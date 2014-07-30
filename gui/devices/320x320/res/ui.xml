@@ -159,8 +159,8 @@
 		<variable name="sdswap_text_y" value="47" />
 		<variable name="sdfilesystem_text_y" value="92" />
 		<variable name="sdfilesystem_button_y" value="120" />
-		<variable name="lock_x" value="72" />
-		<variable name="lock_y" value="46" />
+		<variable name="lock_x" value="96" />
+		<variable name="lock_y" value="70" />
 		<variable name="filemanager_select_x" value="130" />
 		<variable name="filemanager_select_y" value="280" />
 		<variable name="terminal_console_height" value="126" />
@@ -224,13 +224,13 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="100" y="3" />
+				<placement x="200" y="3" />
 				<text>%tw_time%</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="170" y="3" />
+				<placement x="316" y="3" placement="1" />
 				<conditions>
 					<condition var1="tw_no_battery_percent" var2="0" />
 					<condition var1="tw_battery" op=">" var2="0" />

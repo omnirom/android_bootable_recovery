@@ -48,7 +48,6 @@
 	<variables>
 		<variable name="col1_x" value="6" />
 		<variable name="col2_x" value="126" />
-		<variable name="col3_x" value="180" />
 		<variable name="col_center_x" value="62" />
 		<variable name="col_center_medium_x" value="122" />
 		<variable name="center_x" value="120" />
@@ -60,7 +59,6 @@
 		<variable name="row2_y" value="65" />
 		<variable name="row3_y" value="110" />
 		<variable name="row4_y" value="155" />
-		<variable name="row5_y" value="200" />
 		<variable name="row_queue_y" value="134" />
 		<variable name="row1_header_y" value="0" />
 		<variable name="row1_text_y" value="16" />
@@ -78,7 +76,6 @@
 		<variable name="row13_text_y" value="208" />
 		<variable name="zip_status_y" value="224" />
 		<variable name="backup_text_y" value="60" />
-		<variable name="tz_selected_y" value="44" />
 		<variable name="tz_set_y" value="200" />
 		<variable name="tz_current_y" value="184" />
 		<variable name="col_progressbar_x" value="25" />
@@ -233,7 +230,7 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="170" y="3" />
+				<placement x="236" y="3" placement="1" />
 				<conditions>
 					<condition var1="tw_no_battery_percent" var2="0" />
 					<condition var1="tw_battery" op=">" var2="0" />
