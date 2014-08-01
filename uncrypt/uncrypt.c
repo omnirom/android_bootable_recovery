@@ -159,7 +159,7 @@ char* parse_recovery_command_file()
 
     while (fgets(temp, sizeof(temp), f)) {
         printf("read: %s", temp);
-        if (strncmp(temp, "--update_package=", strlen("--update_package=")) == 0) {
+        if (strncmp(temp, "--update_package=/data/", strlen("--update_package=/data/")) == 0) {
             fn = strdup(temp + strlen("--update_package="));
             strcpy(temp, "--update_package=@" CACHE_BLOCK_MAP "\n");
         }
