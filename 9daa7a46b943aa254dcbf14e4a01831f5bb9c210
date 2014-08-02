@@ -1,0 +1,225 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4b713d8b_af2e4285",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 924,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Used spaces instead of tab",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_cf47fe55",
+        "filename": "gui/devices/landscape/res/landscape.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 1101,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Use tabes instead of spaces on this line and there should be new lines before and after the object tags",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_ef4cba7a",
+        "filename": "gui/devices/landscape/res/landscape.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 1115,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "These 2 extra blank lines should be removed.",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_0f52d617",
+        "filename": "gui/devices/landscape/res/landscape.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 1187,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Tabs instead of spaces and new lines before the object tag",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_2f579207",
+        "filename": "gui/devices/portrait/res/portrait.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 844,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Use tabs instead of spaces and put new lines before and after the object tags",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_4f3ccebb",
+        "filename": "gui/devices/portrait/res/portrait.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 946,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Use tabs instead of spaces and put new lines before and after the object tags",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_6f398aca",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 776,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Extra new line here",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_8f46e653",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 779,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Used spaces instead of tabs here and the next line",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_2f7072a1",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1127,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Extra whitespace",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_0f6bb6b5",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1737,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Extra new lines here",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_af43a243",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1760,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Use tabs instead of spaces",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_cf70dea7",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1768,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "There\u0027s a mix of both tabs and spaces on this line",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b713d8b_ef759a94",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1774,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-08-02T13:26:18Z",
+      "side": 1,
+      "message": "Extra space here",
+      "revId": "9daa7a46b943aa254dcbf14e4a01831f5bb9c210",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
