@@ -45,6 +45,10 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 	mShowRange = false;
 	mChangeOnDrag = false;
 	mRendered = false;
+	mBackgroundImage = NULL;
+	mHandleImage = NULL;
+	mHandleHoverImage = NULL;
+	mDragging = false;
 
 	mLabel = NULL;
 	ConvertStrToColor("white", &mTextColor);
@@ -94,6 +98,22 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 		attr = child->first_attribute("slider");
 		if (attr)
 			ConvertStrToColor(attr->value(), &mSliderColor);
+	}
+
+	child = node->first_node("resource");
+	if (child)
+	{
+		attr = child->first_attribute("background");
+		if(attr)
+			mBackgroundImage = PageManager::FindResource(attr->value());
+
+		attr = child->first_attribute("handle");
+		if(attr)
+			mHandleImage = PageManager::FindResource(attr->value());
+
+		attr = child->first_attribute("handlehover");
+		if(attr)
+			mHandleHoverImage = PageManager::FindResource(attr->value());
 	}
 
 	child = node->first_node("data");
@@ -249,15 +269,22 @@ int GUISliderValue::SetRenderPos(int x, int y, int w, int h)
 	}
 
 	mSliderY = y;
-	mLineY = (y + mSliderH/2) - (mLineH/2);
-
-	mLineX = mRenderX + mLinePadding;
 
 	mActionX = mRenderX;
 	mActionY = mRenderY;
 	mActionW = mRenderW;
 	mActionH = mRenderH;
-	lineW = mRenderW - (mLinePadding * 2);
+
+	if(mBackgroundImage && mBackgroundImage->GetResource())
+	{
+		mLineW = gr_get_width(mBackgroundImage->GetResource());
+		mLineH = gr_get_height(mBackgroundImage->GetResource());
+	}
+	else
+		mLineW = mRenderW - (mLinePadding * 2);
+
+	mLineY = y + (mSliderH/2 - mLineH/2);
+	mLineX = mRenderX + (mRenderW/2 - mLineW/2);
 
 	return 0;
 }
@@ -293,15 +320,31 @@ int GUISliderValue::Render(void)
 	}
 
 	// line
-	gr_color(mLineColor.red, mLineColor.green, mLineColor.blue, mLineColor.alpha);
-	gr_fill(mLineX, mLineY, lineW, mLineH);
+	if(mBackgroundImage && mBackgroundImage->GetResource())
+	{
+		gr_blit(mBackgroundImage->GetResource(), 0, 0, mLineW, mLineH, mLineX, mLineY);
+	}
+	else
+	{
+		gr_color(mLineColor.red, mLineColor.green, mLineColor.blue, mLineColor.alpha);
+		gr_fill(mLineX, mLineY, mLineW, mLineH);
+	}
 
 	// slider
-	uint32_t sliderX = (mValuePct*lineW)/100 + mLineX;
-	sliderX -= mSliderW/2;
+	uint32_t sliderX = mLineX + (mValuePct*(mLineW - mSliderW))/100;
 
-	gr_color(mSliderColor.red, mSliderColor.green, mSliderColor.blue, mSliderColor.alpha);
-	gr_fill(sliderX, mSliderY, mSliderW, mSliderH);
+	if(mHandleImage && mHandleImage->GetResource())
+	{
+		gr_surface s = mHandleImage->GetResource();
+		if(mDragging && mHandleHoverImage && mHandleHoverImage->GetResource())
+			s = mHandleHoverImage->GetResource();
+		gr_blit(s, 0, 0, mSliderW, mSliderH, sliderX, mLineY + (mLineH/2 - mSliderH/2));
+	}
+	else
+	{
+		gr_color(mSliderColor.red, mSliderColor.green, mSliderColor.blue, mSliderColor.alpha);
+		gr_fill(sliderX, mSliderY, mSliderW, mSliderH);
+	}
 
 	void *fontResource = NULL;
 	if(mFont) fontResource = mFont->GetResource();
@@ -310,7 +353,7 @@ int GUISliderValue::Render(void)
 	{
 		int rangeY = (mLineY - mLineH/2) - mFontHeight/2;
 		gr_textEx(mRenderX + mPadding/2, rangeY, mMinStr.c_str(), fontResource);
-		gr_textEx(mLineX + lineW + mPadding/2, rangeY, mMaxStr.c_str(), fontResource);
+		gr_textEx(mLineX + mLineW + mPadding/2, rangeY, mMaxStr.c_str(), fontResource);
 	}
 
 	if(mValueStr && mShowCurr)
@@ -352,24 +395,23 @@ int GUISliderValue::NotifyTouch(TOUCH_STATE state, int x, int y)
 	if (!isConditionTrue())
 		return -1;
 
-	static bool dragging = false;
 	switch (state)
 	{
 	case TOUCH_START:
-		if (x >= mRenderX && x <= mRenderX + mRenderW &&
+		if (x >= mLineX && x <= mLineX + mLineW &&
 			y >= mRenderY && y <= mRenderY + mRenderH)
 		{
-			dragging = true;
+			mDragging = true;
 		}
 		// no break
 	case TOUCH_DRAG:
 	{
-		if (!dragging)  return 0;
+		if (!mDragging)  return 0;
 
-		x = std::max(mLineX, x);
-		x = std::min(mLineX + lineW, x);
+		x = std::max(mLineX + mSliderW/2, x);
+		x = std::min(mLineX + mLineW - mSliderW/2, x);
 
-		mValuePct = float(((x - mLineX) * 100) / lineW);
+		mValuePct = float(((x - (mLineX + mSliderW/2)) * 100) / (mLineW - mSliderW));
 		int newVal = valueFromPct(mValuePct);
 		if (newVal != mValue) {
 			mRendered = false;
@@ -385,8 +427,8 @@ int GUISliderValue::NotifyTouch(TOUCH_STATE state, int x, int y)
 	}
 	case TOUCH_RELEASE:
 	{
-		if (!dragging)  return 0;
-		dragging = false;
+		if (!mDragging)  return 0;
+		mDragging = false;
 
 		if (!mVariable.empty())
 			DataManager::SetValue(mVariable, mValue);
