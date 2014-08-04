@@ -999,7 +999,11 @@ protected:
 	int mFontHeight;
 	GUIAction *mAction;
 	bool mChangeOnDrag;
-	int lineW;
+	int mLineW;
+	bool mDragging;
+	Resource *mBackgroundImage;
+	Resource *mHandleImage;
+	Resource *mHandleHoverImage;
 };
 
 class MouseCursor : public RenderObject
