@@ -235,15 +235,15 @@ int format_volume(const char* volume) {
             result = make_ext4fs(v->blk_device, length, volume, sehandle);
         } else {   /* Has to be f2fs because we checked earlier. */
             if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0 && length < 0) {
-                LOGE("format_volume: crypt footer + negative length (%lld) not supported on %s\n", v->fs_type, length);
+                LOGE("format_volume: crypt footer + negative length (%zd) not supported on %s\n", length, v->fs_type);
                 return -1;
             }
             if (length < 0) {
-                LOGE("format_volume: negative length (%ld) not supported on %s\n", length, v->fs_type);
+                LOGE("format_volume: negative length (%zd) not supported on %s\n", length, v->fs_type);
                 return -1;
             }
             char *num_sectors;
-            if (asprintf(&num_sectors, "%ld", length / 512) <= 0) {
+            if (asprintf(&num_sectors, "%zd", length / 512) <= 0) {
                 LOGE("format_volume: failed to create %s command for %s\n", v->fs_type, v->blk_device);
                 return -1;
             }
