@@ -58,24 +58,25 @@
 		<variable name="row4_y" value="905" />
 		<variable name="row_queue_y" value="710" />
 		<variable name="row1_header_y" value="131" />
+		<variable name="text_row_height" value="50" />
 		<variable name="row1_text_y" value="170" />
-		<variable name="row2_text_y" value="220" />
-		<variable name="row3_text_y" value="270" />
-		<variable name="row4_text_y" value="320" />
-		<variable name="row5_text_y" value="370" />
-		<variable name="row6_text_y" value="420" />
-		<variable name="row7_text_y" value="470" />
-		<variable name="row8_text_y" value="520" />
-		<variable name="row9_text_y" value="570" />
-		<variable name="row10_text_y" value="620" />
-		<variable name="row11_text_y" value="670" />
-		<variable name="row12_text_y" value="720" />
-		<variable name="row13_text_y" value="770" />
-		<variable name="row14_text_y" value="820" />
-		<variable name="row15_text_y" value="870" />
-		<variable name="row16_text_y" value="920" />
-		<variable name="row17_text_y" value="970" />
-		<variable name="row18_text_y" value="1020" />
+		<variable name="row2_text_y" value="%row1_text_y%+%text_row_height%" />
+		<variable name="row3_text_y" value="%row2_text_y%+%text_row_height%" />
+		<variable name="row4_text_y" value="%row3_text_y%+%text_row_height%" />
+		<variable name="row5_text_y" value="%row4_text_y%+%text_row_height%" />
+		<variable name="row6_text_y" value="%row5_text_y%+%text_row_height%" />
+		<variable name="row7_text_y" value="%row6_text_y%+%text_row_height%" />
+		<variable name="row8_text_y" value="%row7_text_y%+%text_row_height%" />
+		<variable name="row9_text_y" value="%row8_text_y%+%text_row_height%" />
+		<variable name="row10_text_y" value="%row9_text_y%+%text_row_height%" />
+		<variable name="row11_text_y" value="%row10_text_y%+%text_row_height%" />
+		<variable name="row12_text_y" value="%row11_text_y%+%text_row_height%" />
+		<variable name="row13_text_y" value="%row12_text_y%+%text_row_height%" />
+		<variable name="row14_text_y" value="%row13_text_y%+%text_row_height%" />
+		<variable name="row15_text_y" value="%row14_text_y%+%text_row_height%" />
+		<variable name="row16_text_y" value="%row15_text_y%+%text_row_height%" />
+		<variable name="row17_text_y" value="%row16_text_y%+%text_row_height%" />
+		<variable name="row18_text_y" value="%row17_text_y%+%text_row_height%" />
 		<variable name="zip_status_y" value="640" />
 		<variable name="tz_selected_y" value="160" />
 		<variable name="tz_set_y" value="955" />
