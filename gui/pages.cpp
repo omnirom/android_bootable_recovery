@@ -783,7 +783,32 @@ int PageSet::LoadVariables(xml_node<>* vars)
 		if(name && value)
 		{
 			p = persist ? atoi(persist->value()) : 0;
-			DataManager::SetValue(name->value(), value->value(), p);
+			string temp = value->value();
+			string valstr = gui_parse_text(temp);
+
+			if (valstr.find("+") != string::npos) {
+				string val1str = valstr;
+				val1str = val1str.substr(0, val1str.find('+'));
+				string val2str = valstr;
+				val2str = val2str.substr(val2str.find('+') + 1, string::npos);
+				int val1 = atoi(val1str.c_str());
+				int val2 = atoi(val2str.c_str());
+				int val = val1 + val2;
+
+				DataManager::SetValue(name->value(), val, p);
+			} else if (valstr.find("-") != string::npos) {
+				string val1str = valstr;
+				val1str = val1str.substr(0, val1str.find('-'));
+				string val2str = valstr;
+				val2str = val2str.substr(val2str.find('-') + 1, string::npos);
+				int val1 = atoi(val1str.c_str());
+				int val2 = atoi(val2str.c_str());
+				int val = val1 - val2;
+
+				DataManager::SetValue(name->value(), val, p);
+			} else {
+				DataManager::SetValue(name->value(), valstr, p);
+			}
 		}
 
 		child = child->next_sibling("variable");
