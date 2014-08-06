@@ -353,15 +353,14 @@ Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
         goto done;
     }
     if (strlen(dst_name) == 0) {
-        ErrorAbort(state, "dst_name argument to %s() can't be empty",
-                   name);
+        ErrorAbort(state, "dst_name argument to %s() can't be empty", name);
         goto done;
     }
     if (make_parents(dst_name) != 0) {
-        ErrorAbort(state, "Creating parent of %s() failed, error %s()",
+        ErrorAbort(state, "Creating parent of %s failed, error %s",
           dst_name, strerror(errno));
     } else if (rename(src_name, dst_name) != 0) {
-        ErrorAbort(state, "Rename of %s() to %s() failed, error %s()",
+        ErrorAbort(state, "Rename of %s to %s failed, error %s",
           src_name, dst_name, strerror(errno));
     } else {
         result = dst_name;
