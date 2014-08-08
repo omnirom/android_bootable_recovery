@@ -1110,6 +1110,16 @@ int PageManager::SwitchToConsole(void)
 	return 0;
 }
 
+int PageManager::EndConsole(void)
+{
+	if (mCurrentSet && mBaseSet) {
+		delete mCurrentSet;
+		mCurrentSet = mBaseSet;
+		return 0;
+	}
+	return -1;
+}
+
 int PageManager::IsCurrentPage(Page* page)
 {
 	return (mCurrentSet ? mCurrentSet->IsCurrentPage(page) : 0);

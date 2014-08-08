@@ -60,6 +60,20 @@ int OpenRecoveryScript::check_for_script_file(void) {
 	return 0;
 }
 
+int OpenRecoveryScript::copy_script_file(string filename) {
+	if (TWFunc::Path_Exists(filename)) {
+		LOGINFO("Script file found: '%s'\n", filename.c_str());
+		if (filename == SCRIPT_FILE_TMP)
+			return 1; // file is already in the right place
+		// Copy script file to /tmp
+		TWFunc::copy_file(filename, SCRIPT_FILE_TMP, 0755);
+		// Delete the old file
+		unlink(filename.c_str());
+		return 1;
+	}
+	return 0;
+}
+
 int OpenRecoveryScript::run_script_file(void) {
 	FILE *fp = fopen(SCRIPT_FILE_TMP, "r");
 	int ret_val = 0, cindex, line_len, i, remove_nl, install_cmd = 0, sideload = 0;
@@ -305,7 +319,16 @@ int OpenRecoveryScript::run_script_file(void) {
 					ret_val = 1;
 				}
 			} else if (strcmp(command, "reboot") == 0) {
-				// Reboot
+				if (strlen(value) && strcmp(value, "recovery") == 0)
+					TWFunc::tw_reboot(rb_recovery);
+				else if (strlen(value) && strcmp(value, "poweroff") == 0)
+					TWFunc::tw_reboot(rb_poweroff);
+				else if (strlen(value) && strcmp(value, "bootloader") == 0)
+					TWFunc::tw_reboot(rb_bootloader);
+				else if (strlen(value) && strcmp(value, "download") == 0)
+					TWFunc::tw_reboot(rb_download);
+				else
+					TWFunc::tw_reboot(rb_system);
 			} else if (strcmp(command, "cmd") == 0) {
 				DataManager::SetValue("tw_action_text2", "Running Command");
 				if (cindex != 0) {
@@ -350,6 +373,15 @@ int OpenRecoveryScript::run_script_file(void) {
 				ret_val = PartitionManager.Fix_Permissions();
 				if (ret_val != 0)
 					ret_val = 1; // failure
+			} else if (strcmp(command, "decrypt") == 0) {
+				if (*value) {
+					ret_val = PartitionManager.Decrypt_Device(value);
+					if (ret_val != 0)
+						ret_val = 1; // failure
+				} else {
+					LOGERR("No password provided.\n");
+					ret_val = 1; // failure
+				}
 			} else {
 				LOGERR("Unrecognized script command: '%s'\n", command);
 				ret_val = 1;
