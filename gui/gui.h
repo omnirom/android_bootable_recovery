@@ -19,6 +19,8 @@
 #ifndef _GUI_HEADER
 #define _GUI_HEADER
 
+#include <stdio.h>
+
 int gui_console_only();
 int gui_init();
 int gui_loadResources();
@@ -26,6 +28,7 @@ int gui_start();
 int gui_startPage(const char* page_name);
 void gui_print(const char *fmt, ...);
 void gui_print_color(const char *color, const char *fmt, ...);
+void gui_set_FILE(FILE* f);
 
 #endif  // _GUI_HEADER
 

@@ -120,8 +120,9 @@ public:
 	static Resource* FindResource(std::string name);
 	static Resource* FindResource(std::string package, std::string name);
 
-	// Used for console-only mode - Can be reverted via ChangePage
+	// Used for console-only mode
 	static int SwitchToConsole(void);
+	static int EndConsole(void);
 
 	// Helper to identify if a particular page is the active page
 	static int IsCurrentPage(Page* page);

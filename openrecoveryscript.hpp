@@ -28,6 +28,7 @@ class OpenRecoveryScript
 {
 public:
 	static int check_for_script_file();                                            // Checks to see if the ORS file is present in /cache
+	static int copy_script_file(string filename);                                  // Copies a script file to the temp folder
 	static int run_script_file();                                                  // Executes the commands in the ORS file
 	static int Insert_ORS_Command(string Command);                                 // Inserts the Command into the SCRIPT_FILE_TMP file
 	static int Install_Command(string Zip);                                        // Installs a zip

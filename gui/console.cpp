@@ -28,6 +28,7 @@ extern "C" {
 
 static std::vector<std::string> gConsole;
 static std::vector<std::string> gConsoleColor;
+static FILE* ors_file;
 
 extern "C" void __gui_print(const char *color, char *buf)
 {
@@ -56,6 +57,10 @@ extern "C" void __gui_print(const char *color, char *buf)
 	if(*start) {
 		gConsole.push_back(start);
 		gConsoleColor.push_back(color);
+	}
+	if (ors_file) {
+		fprintf(ors_file, "%s\n", buf);
+		fflush(ors_file);
 	}
 }
 
@@ -87,6 +92,11 @@ extern "C" void gui_print_color(const char *color, const char *fmt, ...)
 
 	__gui_print(color, buf);
 	return;
+}
+
+extern "C" void gui_set_FILE(FILE* f)
+{
+	ors_file = f;
 }
 
 GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
