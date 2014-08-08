@@ -400,6 +400,9 @@ endif
 ifeq ($(TW_INCLUDE_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/ics/Android.mk
 endif
+ifneq ($(TW_OEM_BUILD),true)
+    include $(commands_recovery_local_path)/orscmd/Android.mk
+endif
 
 # FB2PNG
 ifeq ($(TW_INCLUDE_FB2PNG), true)
