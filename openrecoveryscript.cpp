@@ -60,6 +60,20 @@ int OpenRecoveryScript::check_for_script_file(void) {
 	return 0;
 }
 
+int OpenRecoveryScript::copy_script_file(string filename) {
+	if (TWFunc::Path_Exists(filename)) {
+		LOGINFO("Script file found: '%s'\n", filename.c_str());
+		if (filename == SCRIPT_FILE_TMP)
+			return 1; // file is already in the right place
+		// Copy script file to /tmp
+		TWFunc::copy_file(filename, SCRIPT_FILE_TMP, 0755);
+		// Delete the old file
+		unlink(filename.c_str());
+		return 1;
+	}
+	return 0;
+}
+
 int OpenRecoveryScript::run_script_file(void) {
 	FILE *fp = fopen(SCRIPT_FILE_TMP, "r");
 	int ret_val = 0, cindex, line_len, i, remove_nl, install_cmd = 0, sideload = 0;
