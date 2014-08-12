@@ -173,11 +173,53 @@ static int vk_init(struct ev *e)
         e->ignored = 1;
     }
 #else
+#ifndef TW_INPUT_BLACKLIST
     // Blacklist these "input" devices
-    if (strcmp(e->deviceName, "bma250") == 0 || strcmp(e->deviceName, "bma150") == 0 || strcmp(e->deviceName, "accelerometer") == 0)
+    if (strcmp(e->deviceName, "bma250") == 0 || strcmp(e->deviceName, "bma150") == 0) == 0)
     {
+        printf("blacklisting %s input device\n", e->deviceName);
         e->ignored = 1;
     }
+#else
+    char bl[] = EXPAND(TW_INPUT_BLACKLIST);
+    char blacklist[1024];
+    int blacklist_size = sizeof(bl), index = 0;
+    if (blacklist_size > 1023) {
+        printf("TW_INPUT_BLACKLIST is too long.\n");
+    } else {
+        memcpy((void*)blacklist, bl, sizeof(bl));
+        blacklist[blacklist_size] = '\0';
+        char* deviceName = blacklist;
+        if (blacklist == '\"') {
+            // Remove leading quote at beginning of string
+            index++;
+            deviceName = blacklist + 1;
+        }
+
+        while (index < blacklist_size) {
+            if (blacklist[index] == '\"') {
+                // Trailing quote at end of string
+                blacklist[index] = '\0';
+                blacklist_size--;
+            }
+            if (blacklist[index] == '\n' || blacklist[index] == '\0') {
+                blacklist[index] = '\0';
+                printf("blacklist checking '%s'\n", deviceName);
+                if (strcmp(e->deviceName, deviceName) == 0) {
+                    printf("blacklisting %s input device\n", deviceName);
+                    e->ignored = 1;
+                }
+                if (index + 1 == blacklist_size) {
+                    break;
+                }
+                index++;
+                deviceName = blacklist + index;
+            } else {
+                index++;
+            }
+        }
+    }
+#endif
 #endif
 
     strcat(vk_path, e->deviceName);
