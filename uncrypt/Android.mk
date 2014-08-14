@@ -20,11 +20,6 @@ LOCAL_SRC_FILES := uncrypt.c
 
 LOCAL_MODULE := uncrypt
 
-LOCAL_STATIC_LIBRARIES := \
-	libfs_mgr \
-	libcutils \
-	libc
-
-LOCAL_FORCE_STATIC_EXECUTABLE := true
+LOCAL_STATIC_LIBRARIES := libfs_mgr libcutils
 
 include $(BUILD_EXECUTABLE)
