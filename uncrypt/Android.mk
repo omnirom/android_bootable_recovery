@@ -25,4 +25,6 @@ LOCAL_STATIC_LIBRARIES := \
 	libcutils \
 	libc
 
+LOCAL_FORCE_STATIC_EXECUTABLE := true
+
 include $(BUILD_EXECUTABLE)
