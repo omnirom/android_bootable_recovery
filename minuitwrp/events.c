@@ -175,7 +175,7 @@ static int vk_init(struct ev *e)
 #else
 #ifndef TW_INPUT_BLACKLIST
     // Blacklist these "input" devices
-    if (strcmp(e->deviceName, "bma250") == 0 || strcmp(e->deviceName, "bma150") == 0) == 0)
+    if (strcmp(e->deviceName, "bma250") == 0 || strcmp(e->deviceName, "bma150") == 0)
     {
         printf("blacklisting %s input device\n", e->deviceName);
         e->ignored = 1;
