@@ -54,7 +54,7 @@
 #endif
 
 // Take a sha-1 digest and return it as a newly-allocated hex string.
-static char* PrintSha1(const uint8_t* digest) {
+char* PrintSha1(const uint8_t* digest) {
     char* buffer = malloc(SHA_DIGEST_SIZE*2 + 1);
     int i;
     const char* alphabet = "0123456789abcdef";

@@ -95,7 +95,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size __unused,
                 printf("failed to read chunk %d raw data\n", i);
                 return -1;
             }
-            SHA_update(ctx, patch->data + pos, data_len);
+            if (ctx) SHA_update(ctx, patch->data + pos, data_len);
             if (sink((unsigned char*)patch->data + pos,
                      data_len, token) != data_len) {
                 printf("failed to write chunk %d raw data\n", i);
@@ -217,7 +217,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size __unused,
                            (long)have);
                     return -1;
                 }
-                SHA_update(ctx, temp_data, have);
+                if (ctx) SHA_update(ctx, temp_data, have);
             } while (ret != Z_STREAM_END);
             deflateEnd(&strm);
 
