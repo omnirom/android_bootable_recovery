@@ -40,7 +40,7 @@ typedef struct _FileContents {
 // and use it as the source instead.
 #define CACHE_TEMP_SOURCE "/cache/saved.file"
 
-typedef ssize_t (*SinkFn)(unsigned char*, ssize_t, void*);
+typedef ssize_t (*SinkFn)(const unsigned char*, ssize_t, void*);
 
 // applypatch.c
 int ShowLicenses();
