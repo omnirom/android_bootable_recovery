@@ -56,6 +56,8 @@
 #define RECOVERY_COMMAND_FILE_TMP "/cache/recovery/command.tmp"
 #define CACHE_BLOCK_MAP "/cache/recovery/block.map"
 
+static struct fstab* fstab = NULL;
+
 static int write_at_offset(unsigned char* buffer, size_t size,
                            int wfd, off64_t offset)
 {
@@ -101,8 +103,10 @@ void add_block_to_ranges(int** ranges, int* range_alloc, int* range_used, int ne
     }
 }
 
-const char* find_block_device(const char* path, int* encryptable, int* encrypted)
+static struct fstab* read_fstab()
 {
+    fstab = NULL;
+
     // The fstab path is always "/fstab.${ro.hardware}".
     char fstab_path[PATH_MAX+1] = "/fstab.";
     if (!property_get("ro.hardware", fstab_path+strlen(fstab_path), "")) {
@@ -110,12 +114,17 @@ const char* find_block_device(const char* path, int* encryptable, int* encrypted
         return NULL;
     }
 
-    struct fstab* fstab = fs_mgr_read_fstab(fstab_path);
+    fstab = fs_mgr_read_fstab(fstab_path);
     if (!fstab) {
         fprintf(stderr, "failed to read %s\n", fstab_path);
         return NULL;
     }
 
+    return fstab;
+}
+
+const char* find_block_device(const char* path, int* encryptable, int* encrypted)
+{
     // Look for a volume whose mount point is the prefix of path and
     // return its block device.  Set encrypted if it's currently
     // encrypted.
@@ -302,6 +311,33 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
     return 0;
 }
 
+void wipe_misc() {
+    int i;
+    for (i = 0; i < fstab->num_entries; ++i) {
+        struct fstab_rec* v = &fstab->recs[i];
+        if (!v->mount_point) continue;
+        if (strcmp(v->mount_point, "/misc") == 0) {
+            int fd = open(v->blk_device, O_RDWR);
+            uint8_t zeroes[1088];   // sizeof(bootloader_message) from recovery
+            memset(zeroes, 0, sizeof(zeroes));
+
+            size_t written = 0;
+            size_t size = sizeof(zeroes);
+            while (written < size) {
+                ssize_t w = write(fd, zeroes, size-written);
+                if (w < 0 && errno != EINTR) {
+                    fprintf(stderr, "zero write failed: %s\n", strerror(errno));
+                    return;
+                } else {
+                    written += w;
+                }
+            }
+
+            close(fd);
+        }
+    }
+}
+
 void reboot_to_recovery() {
     property_set("sys.powerctl", "reboot,recovery");
     sleep(10);
@@ -347,6 +383,9 @@ int main(int argc, char** argv)
 
     int encryptable;
     int encrypted;
+    if (read_fstab() == NULL) {
+        return 1;
+    }
     const char* blk_dev = find_block_device(path, &encryptable, &encrypted);
     if (blk_dev == NULL) {
         fprintf(stderr, "failed to find block device for %s\n", path);
@@ -376,7 +415,8 @@ int main(int argc, char** argv)
         }
     }
 
+    wipe_misc();
     rename(RECOVERY_COMMAND_FILE_TMP, RECOVERY_COMMAND_FILE);
-    reboot_to_recovery();
+    if (do_reboot) reboot_to_recovery();
     return 0;
 }
