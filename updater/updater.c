@@ -21,6 +21,7 @@
 #include "edify/expr.h"
 #include "updater.h"
 #include "install.h"
+#include "blockimg.h"
 #include "minzip/Zip.h"
 #include "minzip/SysUtil.h"
 
@@ -98,6 +99,7 @@ int main(int argc, char** argv) {
 
     RegisterBuiltins();
     RegisterInstallFunctions();
+    RegisterBlockImageFunctions();
     RegisterDeviceExtensions();
     FinishRegistration();
 
@@ -127,6 +129,8 @@ int main(int argc, char** argv) {
     updater_info.cmd_pipe = cmd_pipe;
     updater_info.package_zip = &za;
     updater_info.version = atoi(version);
+    updater_info.package_zip_addr = map.addr;
+    updater_info.package_zip_len = map.length;
 
     State state;
     state.cookie = &updater_info;

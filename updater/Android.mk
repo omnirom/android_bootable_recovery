@@ -4,6 +4,7 @@ LOCAL_PATH := $(call my-dir)
 
 updater_src_files := \
 	install.c \
+	blockimg.c \
 	updater.c
 
 #

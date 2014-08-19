@@ -32,7 +32,7 @@
 #include "edify/expr.h"
 
 static int LoadPartitionContents(const char* filename, FileContents* file);
-static ssize_t FileSink(unsigned char* data, ssize_t len, void* token);
+static ssize_t FileSink(const unsigned char* data, ssize_t len, void* token);
 static int GenerateTarget(FileContents* source_file,
                           const Value* source_patch_value,
                           FileContents* copy_file,
@@ -599,7 +599,7 @@ int ShowLicenses() {
     return 0;
 }
 
-ssize_t FileSink(unsigned char* data, ssize_t len, void* token) {
+ssize_t FileSink(const unsigned char* data, ssize_t len, void* token) {
     int fd = *(int *)token;
     ssize_t done = 0;
     ssize_t wrote;
@@ -620,7 +620,7 @@ typedef struct {
     ssize_t pos;
 } MemorySinkInfo;
 
-ssize_t MemorySink(unsigned char* data, ssize_t len, void* token) {
+ssize_t MemorySink(const unsigned char* data, ssize_t len, void* token) {
     MemorySinkInfo* msi = (MemorySinkInfo*)token;
     if (msi->size - msi->pos < len) {
         return -1;
