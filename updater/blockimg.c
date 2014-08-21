@@ -61,7 +61,7 @@ static RangeSet* parse_range(char* text) {
 
     RangeSet* out = malloc(sizeof(RangeSet) + num * sizeof(int));
     if (out == NULL) {
-        fprintf(stderr, "failed to allocate range of %d bytes\n",
+        fprintf(stderr, "failed to allocate range of %lu bytes\n",
                 sizeof(RangeSet) + num * sizeof(int));
         exit(1);
     }
@@ -108,7 +108,7 @@ static void writeblock(int fd, const uint8_t* data, size_t size) {
 
 static void check_lseek(int fd, off_t offset, int whence) {
     while (true) {
-        int ret = lseek(fd, offset, whence);
+        off_t ret = lseek(fd, offset, whence);
         if (ret < 0) {
             if (errno != EINTR) {
                 fprintf(stderr, "lseek failed: %s\n", strerror(errno));
@@ -128,7 +128,7 @@ static void allocate(size_t size, uint8_t** buffer, size_t* buffer_alloc) {
 
     *buffer = (uint8_t*) malloc(size);
     if (*buffer == NULL) {
-        fprintf(stderr, "failed to allocate %d bytes\n", size);
+        fprintf(stderr, "failed to allocate %zu bytes\n", size);
         exit(1);
     }
     *buffer_alloc = size;
@@ -165,7 +165,7 @@ static ssize_t RangeSinkWrite(const uint8_t* data, ssize_t size, void* token) {
             ++rss->p_block;
             if (rss->p_block < rss->tgt->count) {
                 rss->p_remain = (rss->tgt->pos[rss->p_block*2+1] - rss->tgt->pos[rss->p_block*2]) * BLOCKSIZE;
-                check_lseek(rss->fd, rss->tgt->pos[rss->p_block*2] * BLOCKSIZE, SEEK_SET);
+                check_lseek(rss->fd, rss->tgt->pos[rss->p_block*2] * (off_t)BLOCKSIZE, SEEK_SET);
             } else {
                 // we can't write any more; return how many bytes have
                 // been written so far.
@@ -253,12 +253,13 @@ static void* unzip_new_data(void* cookie) {
 
 Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]) {
     Value* blockdev_filename;
-    Value* transfer_list;
+    Value* transfer_list_value;
+    char* transfer_list = NULL;
     Value* new_data_fn;
     Value* patch_data_fn;
     bool success = false;
 
-    if (ReadValueArgs(state, argv, 4, &blockdev_filename, &transfer_list,
+    if (ReadValueArgs(state, argv, 4, &blockdev_filename, &transfer_list_value,
                       &new_data_fn, &patch_data_fn) < 0) {
         return NULL;
     }
@@ -267,7 +268,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
         ErrorAbort(state, "blockdev_filename argument to %s must be string", name);
         goto done;
     }
-    if (transfer_list->type != VAL_BLOB) {
+    if (transfer_list_value->type != VAL_BLOB) {
         ErrorAbort(state, "transfer_list argument to %s must be blob", name);
         goto done;
     }
@@ -364,7 +365,19 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
     char* line;
     char* word;
 
-    line = strtok_r(transfer_list->data, "\n", &linesave);
+    // The data in transfer_list_value is not necessarily
+    // null-terminated, so we need to copy it to a new buffer and add
+    // the null that strtok_r will need.
+    transfer_list = malloc(transfer_list_value->size+1);
+    if (transfer_list == NULL) {
+        fprintf(stderr, "failed to allocate %zd bytes for transfer list\n",
+                transfer_list_value->size+1);
+        exit(1);
+    }
+    memcpy(transfer_list, transfer_list_value->data, transfer_list_value->size);
+    transfer_list[transfer_list_value->size] = '\0';
+
+    line = strtok_r(transfer_list, "\n", &linesave);
 
     // first line in transfer list is the version number; currently
     // there's only version 1.
@@ -401,7 +414,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             allocate(src->size * BLOCKSIZE, &buffer, &buffer_alloc);
             size_t p = 0;
             for (i = 0; i < src->count; ++i) {
-                check_lseek(fd, src->pos[i*2] * BLOCKSIZE, SEEK_SET);
+                check_lseek(fd, src->pos[i*2] * (off_t)BLOCKSIZE, SEEK_SET);
                 size_t sz = (src->pos[i*2+1] - src->pos[i*2]) * BLOCKSIZE;
                 readblock(fd, buffer+p, sz);
                 p += sz;
@@ -409,7 +422,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
 
             p = 0;
             for (i = 0; i < tgt->count; ++i) {
-                check_lseek(fd, tgt->pos[i*2] * BLOCKSIZE, SEEK_SET);
+                check_lseek(fd, tgt->pos[i*2] * (off_t)BLOCKSIZE, SEEK_SET);
                 size_t sz = (tgt->pos[i*2+1] - tgt->pos[i*2]) * BLOCKSIZE;
                 writeblock(fd, buffer+p, sz);
                 p += sz;
@@ -432,7 +445,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             allocate(BLOCKSIZE, &buffer, &buffer_alloc);
             memset(buffer, 0, BLOCKSIZE);
             for (i = 0; i < tgt->count; ++i) {
-                check_lseek(fd, tgt->pos[i*2] * BLOCKSIZE, SEEK_SET);
+                check_lseek(fd, tgt->pos[i*2] * (off_t)BLOCKSIZE, SEEK_SET);
                 for (j = tgt->pos[i*2]; j < tgt->pos[i*2+1]; ++j) {
                     writeblock(fd, buffer, BLOCKSIZE);
                 }
@@ -457,7 +470,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             rss.tgt = tgt;
             rss.p_block = 0;
             rss.p_remain = (tgt->pos[1] - tgt->pos[0]) * BLOCKSIZE;
-            check_lseek(fd, tgt->pos[0] * BLOCKSIZE, SEEK_SET);
+            check_lseek(fd, tgt->pos[0] * (off_t)BLOCKSIZE, SEEK_SET);
 
             pthread_mutex_lock(&nti.mu);
             nti.rss = &rss;
@@ -491,7 +504,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             allocate(src->size * BLOCKSIZE, &buffer, &buffer_alloc);
             size_t p = 0;
             for (i = 0; i < src->count; ++i) {
-                check_lseek(fd, src->pos[i*2] * BLOCKSIZE, SEEK_SET);
+                check_lseek(fd, src->pos[i*2] * (off_t)BLOCKSIZE, SEEK_SET);
                 size_t sz = (src->pos[i*2+1] - src->pos[i*2]) * BLOCKSIZE;
                 readblock(fd, buffer+p, sz);
                 p += sz;
@@ -507,7 +520,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             rss.tgt = tgt;
             rss.p_block = 0;
             rss.p_remain = (tgt->pos[1] - tgt->pos[0]) * BLOCKSIZE;
-            check_lseek(fd, tgt->pos[0] * BLOCKSIZE, SEEK_SET);
+            check_lseek(fd, tgt->pos[0] * (off_t)BLOCKSIZE, SEEK_SET);
 
             if (style[0] == 'i') {      // imgdiff
                 ApplyImagePatch(buffer, src->size * BLOCKSIZE,
@@ -541,9 +554,9 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
                 for (i = 0; i < tgt->count; ++i) {
                     uint64_t range[2];
                     // offset in bytes
-                    range[0] = tgt->pos[i*2] * BLOCKSIZE;
+                    range[0] = tgt->pos[i*2] * (uint64_t)BLOCKSIZE;
                     // len in bytes
-                    range[1] = (tgt->pos[i*2+1] - tgt->pos[i*2]) * BLOCKSIZE;
+                    range[1] = (tgt->pos[i*2+1] - tgt->pos[i*2]) * (uint64_t)BLOCKSIZE;
 
                     if (ioctl(fd, BLKDISCARD, &range) < 0) {
                         printf("    blkdiscard failed: %s\n", strerror(errno));
@@ -568,8 +581,9 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
     printf("max alloc needed was %zu\n", buffer_alloc);
 
   done:
+    free(transfer_list);
     FreeValue(blockdev_filename);
-    FreeValue(transfer_list);
+    FreeValue(transfer_list_value);
     FreeValue(new_data_fn);
     FreeValue(patch_data_fn);
     return StringValue(success ? strdup("t") : strdup(""));
@@ -606,7 +620,7 @@ Value* RangeSha1Fn(const char* name, State* state, int argc, Expr* argv[]) {
 
     int i, j;
     for (i = 0; i < rs->count; ++i) {
-        check_lseek(fd, rs->pos[i*2] * BLOCKSIZE, SEEK_SET);
+        check_lseek(fd, rs->pos[i*2] * (off_t)BLOCKSIZE, SEEK_SET);
         for (j = rs->pos[i*2]; j < rs->pos[i*2+1]; ++j) {
             readblock(fd, buffer, BLOCKSIZE);
             SHA_update(&ctx, buffer, BLOCKSIZE);
