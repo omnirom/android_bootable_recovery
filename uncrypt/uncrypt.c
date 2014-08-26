@@ -48,6 +48,8 @@
 #include <linux/fs.h>
 #include <sys/mman.h>
 
+#define LOG_TAG "uncrypt"
+#include <log/log.h>
 #include <cutils/properties.h>
 #include <fs_mgr.h>
 
@@ -66,7 +68,7 @@ static int write_at_offset(unsigned char* buffer, size_t size,
     while (written < size) {
         ssize_t wrote = write(wfd, buffer + written, size - written);
         if (wrote < 0) {
-            fprintf(stderr, "error writing offset %lld: %s\n", offset, strerror(errno));
+            ALOGE("error writing offset %lld: %s\n", offset, strerror(errno));
             return -1;
         }
         written += wrote;
@@ -110,13 +112,13 @@ static struct fstab* read_fstab()
     // The fstab path is always "/fstab.${ro.hardware}".
     char fstab_path[PATH_MAX+1] = "/fstab.";
     if (!property_get("ro.hardware", fstab_path+strlen(fstab_path), "")) {
-        fprintf(stderr, "failed to get ro.hardware\n");
+        ALOGE("failed to get ro.hardware\n");
         return NULL;
     }
 
     fstab = fs_mgr_read_fstab(fstab_path);
     if (!fstab) {
-        fprintf(stderr, "failed to read %s\n", fstab_path);
+        ALOGE("failed to read %s\n", fstab_path);
         return NULL;
     }
 
@@ -194,14 +196,14 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
 
     ret = stat(path, &sb);
     if (ret != 0) {
-        fprintf(stderr, "failed to stat %s\n", path);
+        ALOGE("failed to stat %s\n", path);
         return -1;
     }
 
-    printf(" block size: %ld bytes\n", (long)sb.st_blksize);
+    ALOGI(" block size: %ld bytes\n", (long)sb.st_blksize);
 
     int blocks = ((sb.st_size-1) / sb.st_blksize) + 1;
-    printf("  file size: %lld bytes, %d blocks\n", (long long)sb.st_size, blocks);
+    ALOGI("  file size: %lld bytes, %d blocks\n", (long long)sb.st_size, blocks);
 
     int* ranges;
     int range_alloc = 1;
@@ -225,7 +227,7 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
 
     int fd = open(path, O_RDONLY);
     if (fd < 0) {
-        fprintf(stderr, "failed to open fd for reading: %s\n", strerror(errno));
+        ALOGE("failed to open fd for reading: %s\n", strerror(errno));
         return -1;
     }
     fsync(fd);
@@ -234,7 +236,7 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
     if (encrypted) {
         wfd = open(blk_dev, O_WRONLY);
         if (wfd < 0) {
-            fprintf(stderr, "failed to open fd for writing: %s\n", strerror(errno));
+            ALOGE("failed to open fd for writing: %s\n", strerror(errno));
             return -1;
         }
     }
@@ -245,7 +247,7 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
             int block = head_block;
             ret = ioctl(fd, FIBMAP, &block);
             if (ret != 0) {
-                fprintf(stderr, "failed to find block %d\n", head_block);
+                ALOGE("failed to find block %d\n", head_block);
                 return -1;
             }
             add_block_to_ranges(&ranges, &range_alloc, &range_used, block);
@@ -264,7 +266,7 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
             while (so_far < sb.st_blksize && pos < sb.st_size) {
                 ssize_t this_read = read(fd, buffers[tail] + so_far, sb.st_blksize - so_far);
                 if (this_read < 0) {
-                    fprintf(stderr, "failed to read: %s\n", strerror(errno));
+                    ALOGE("failed to read: %s\n", strerror(errno));
                     return -1;
                 }
                 so_far += this_read;
@@ -284,7 +286,7 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         int block = head_block;
         ret = ioctl(fd, FIBMAP, &block);
         if (ret != 0) {
-            fprintf(stderr, "failed to find block %d\n", head_block);
+            ALOGE("failed to find block %d\n", head_block);
             return -1;
         }
         add_block_to_ranges(&ranges, &range_alloc, &range_used, block);
@@ -312,12 +314,13 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
 }
 
 void wipe_misc() {
+    ALOGI("removing old commands from misc");
     int i;
     for (i = 0; i < fstab->num_entries; ++i) {
         struct fstab_rec* v = &fstab->recs[i];
         if (!v->mount_point) continue;
         if (strcmp(v->mount_point, "/misc") == 0) {
-            int fd = open(v->blk_device, O_RDWR);
+            int fd = open(v->blk_device, O_WRONLY);
             uint8_t zeroes[1088];   // sizeof(bootloader_message) from recovery
             memset(zeroes, 0, sizeof(zeroes));
 
@@ -326,7 +329,7 @@ void wipe_misc() {
             while (written < size) {
                 ssize_t w = write(fd, zeroes, size-written);
                 if (w < 0 && errno != EINTR) {
-                    fprintf(stderr, "zero write failed: %s\n", strerror(errno));
+                    ALOGE("zero write failed: %s\n", strerror(errno));
                     return;
                 } else {
                     written += w;
@@ -339,8 +342,10 @@ void wipe_misc() {
 }
 
 void reboot_to_recovery() {
+    ALOGI("rebooting to recovery");
     property_set("sys.powerctl", "reboot,recovery");
     sleep(10);
+    ALOGE("reboot didn't succeed?");
 }
 
 int main(int argc, char** argv)
@@ -366,18 +371,20 @@ int main(int argc, char** argv)
             // if we're rebooting to recovery without a package (say,
             // to wipe data), then we don't need to do anything before
             // going to recovery.
-            fprintf(stderr, "no recovery command file or no update package arg");
+            ALOGI("no recovery command file or no update package arg");
             reboot_to_recovery();
             return 1;
         }
         map_file = CACHE_BLOCK_MAP;
     }
 
+    ALOGI("update package is %s", input_path);
+
     // Turn the name of the file we're supposed to convert into an
     // absolute path, so we can find what filesystem it's on.
     char path[PATH_MAX+1];
     if (realpath(input_path, path) == NULL) {
-        fprintf(stderr, "failed to convert %s to absolute path: %s\n", input_path, strerror(errno));
+        ALOGE("failed to convert %s to absolute path: %s", input_path, strerror(errno));
         return 1;
     }
 
@@ -388,15 +395,15 @@ int main(int argc, char** argv)
     }
     const char* blk_dev = find_block_device(path, &encryptable, &encrypted);
     if (blk_dev == NULL) {
-        fprintf(stderr, "failed to find block device for %s\n", path);
+        ALOGE("failed to find block device for %s", path);
         return 1;
     }
 
     // If the filesystem it's on isn't encrypted, we only produce the
     // block map, we don't rewrite the file contents (it would be
     // pointless to do so).
-    printf("encryptable: %s\n", encryptable ? "yes" : "no");
-    printf("  encrypted: %s\n", encrypted ? "yes" : "no");
+    ALOGI("encryptable: %s\n", encryptable ? "yes" : "no");
+    ALOGI("  encrypted: %s\n", encrypted ? "yes" : "no");
 
     if (!encryptable) {
         // If the file is on a filesystem that doesn't support
@@ -410,6 +417,7 @@ int main(int argc, char** argv)
 
         unlink(RECOVERY_COMMAND_FILE_TMP);
     } else {
+        ALOGI("writing block map %s", map_file);
         if (produce_block_map(path, map_file, blk_dev, encrypted) != 0) {
             return 1;
         }
