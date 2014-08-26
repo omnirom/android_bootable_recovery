@@ -36,8 +36,6 @@ LOCAL_STATIC_LIBRARIES += libcutils liblog libstdc++ libc
 LOCAL_STATIC_LIBRARIES += libselinux
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
 
-LOCAL_STATIC_LIBRARIES += libsyspatch libxz libxdelta3
-
 # Each library in TARGET_RECOVERY_UPDATER_LIBS should have a function
 # named "Register_<libname>()".  Here we emit a little C function that
 # gets #included by updater.c.  It calls all those registration
