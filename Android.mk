@@ -288,6 +288,10 @@ endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
 endif
+ifneq ($(filter htc-legacy, $(TW_BATTERY_LED)),)
+	LOCAL_STATIC_LIBRARIES += batteryled
+	LOCAL_CFLAGS += -DTW_BATTERY_LED=$(TW_BATTERY_LED)
+endif
 
 include $(BUILD_EXECUTABLE)
 
@@ -410,6 +414,10 @@ endif
 # FB2PNG
 ifeq ($(TW_INCLUDE_FB2PNG), true)
     include $(commands_recovery_local_path)/fb2png/Android.mk
+endif
+
+ifneq ($(filter htc-legacy, $(TW_BATTERY_LED)),)
+	include $(commands_recovery_local_path)/batteryled/Android.mk
 endif
 
 commands_recovery_local_path :=
