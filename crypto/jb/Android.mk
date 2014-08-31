@@ -7,7 +7,10 @@ LOCAL_MODULE_TAGS := eng
 LOCAL_MODULES_TAGS = optional
 LOCAL_CFLAGS = 
 LOCAL_SRC_FILES = cryptfs.c
-LOCAL_C_INCLUDES += system/extras/ext4_utils external/openssl/include bootable/recovery/crypto/scrypt/lib/crypto
+LOCAL_C_INCLUDES += \
+    system/extras/ext4_utils \
+    external/openssl/include \
+    $(commands_recovery_local_path)/crypto/scrypt/lib/crypto
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libcrypto libext4_utils
 LOCAL_STATIC_LIBRARIES += libfs_mgrtwrp libscrypttwrp_static liblogwraptwrp libmincrypttwrp
 

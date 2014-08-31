@@ -10,6 +10,6 @@ LOCAL_STATIC_LIBRARIES += libfs_mgrtwrp libc libcutils
 LOCAL_MODULE_CLASS := UTILITY_EXECUTABLES
 LOCAL_MODULE_PATH := $(PRODUCT_OUT)/utilities
 LOCAL_FORCE_STATIC_EXECUTABLE := true
-LOCAL_C_INCLUDES := bootable/recovery/crypto/jb/
+LOCAL_C_INCLUDES := $(commands_recovery_local_path)/crypto/jb/
 include $(BUILD_EXECUTABLE)
 endif

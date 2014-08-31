@@ -18,7 +18,10 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := applypatch.c bspatch.c freecache.c imgpatch.c utils.c
 LOCAL_MODULE := libapplypatch
 LOCAL_MODULE_TAGS := eng
-LOCAL_C_INCLUDES += external/bzip2 external/zlib bootable/recovery
+LOCAL_C_INCLUDES += \
+    external/bzip2 \
+    external/zlib \
+    $(commands_recovery_local_path)
 LOCAL_STATIC_LIBRARIES += libmtdutils libmincrypttwrp libbz libz
 
 include $(BUILD_STATIC_LIBRARY)
@@ -27,7 +30,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := main.c
 LOCAL_MODULE := applypatch
-LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_C_INCLUDES += $(commands_recovery_local_path)
 LOCAL_STATIC_LIBRARIES += libapplypatch libmtdutils libmincrypttwrp libbz libminelf
 LOCAL_SHARED_LIBRARIES += libz libcutils libstdc++ libc
 
@@ -39,7 +42,7 @@ LOCAL_SRC_FILES := main.c
 LOCAL_MODULE := applypatch_static
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE_TAGS := eng
-LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_C_INCLUDES += $(commands_recovery_local_path)
 LOCAL_STATIC_LIBRARIES += libapplypatch libmtdutils libmincrypttwrp libbz libminelf
 LOCAL_STATIC_LIBRARIES += libz libcutils libstdc++ libc
 
