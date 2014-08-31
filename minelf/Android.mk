@@ -18,7 +18,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	Retouch.c
 
-LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_C_INCLUDES += $(commands_recovery_local_path)
 
 LOCAL_MODULE := libminelf
 

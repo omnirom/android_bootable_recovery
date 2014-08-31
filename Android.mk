@@ -14,6 +14,14 @@
 
 LOCAL_PATH := $(call my-dir)
 
+ifeq ($(RECOVERY_VARIANT),)
+ifeq ($(LOCAL_PATH),bootable/recovery)
+RECOVERY_VARIANT := twrp
+endif
+endif
+
+ifeq ($(RECOVERY_VARIANT),twrp)
+
 include $(CLEAR_VARS)
 
 TARGET_RECOVERY_GUI := true
@@ -321,7 +329,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := verifier_test
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE_TAGS := tests
-LOCAL_C_INCLUDES := bootable/recovery/libmincrypt/includes
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
 LOCAL_SRC_FILES := \
     verifier_test.cpp \
     verifier.cpp \
@@ -339,7 +347,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULES_TAGS = optional
-LOCAL_C_INCLUDES := bootable/recovery/libmincrypt/includes
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
 LOCAL_SRC_FILES = adb_install.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c legacy_property_service.c
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils
 LOCAL_STATIC_LIBRARIES += libmincrypttwrp
@@ -417,4 +425,8 @@ endif
 # FB2PNG
 ifeq ($(TW_INCLUDE_FB2PNG), true)
     include $(commands_recovery_local_path)/fb2png/Android.mk
+endif
+
+commands_recovery_local_path :=
+
 endif

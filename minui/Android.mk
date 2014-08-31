@@ -18,10 +18,10 @@ ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
     LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
     LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
   else
-    LOCAL_C_INCLUDES += bootable/recovery/minui/include
+    LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
   endif
 else
-  LOCAL_C_INCLUDES += bootable/recovery/minui/include
+  LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
 endif
 
 LOCAL_STATIC_LIBRARY := libpng
@@ -73,10 +73,10 @@ ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
     LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
     LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
   else
-    LOCAL_C_INCLUDES += bootable/recovery/minui/include
+    LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
   endif
 else
-  LOCAL_C_INCLUDES += bootable/recovery/minui/include
+  LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
 endif
 
 LOCAL_C_INCLUDES +=\
