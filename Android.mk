@@ -14,6 +14,14 @@
 
 LOCAL_PATH := $(call my-dir)
 
+ifeq ($(RECOVERY_VARIANT),)
+ifeq ($(LOCAL_PATH),bootable/recovery)
+RECOVERY_VARIANT := twrp
+endif
+endif
+
+ifeq ($(RECOVERY_VARIANT),twrp)
+
 include $(CLEAR_VARS)
 
 TARGET_RECOVERY_GUI := true
@@ -413,3 +421,5 @@ ifeq ($(TW_INCLUDE_FB2PNG), true)
 endif
 
 commands_recovery_local_path :=
+
+endif
