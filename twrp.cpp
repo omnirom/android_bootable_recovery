@@ -44,6 +44,10 @@ extern "C" {
 #include "variables.h"
 #include "twrpDU.hpp"
 
+#ifdef TW_BATTERY_LED
+#include "batteryled/batteryled.hpp"
+#endif
+
 #ifdef HAVE_SELINUX
 #include "selinux/label.h"
 struct selabel_handle *selinux_handle;
@@ -90,6 +94,10 @@ int main(int argc, char **argv) {
 	DataManager::SetDefaultValues();
 	printf("Starting the UI...");
 	gui_init();
+#ifdef TW_BATTERY_LED
+	BatteryLed bl;
+	bl.init();
+#endif
 	printf("=> Linking mtab\n");
 	symlink("/proc/mounts", "/etc/mtab");
 	if (TWFunc::Path_Exists("/etc/twrp.fstab")) {

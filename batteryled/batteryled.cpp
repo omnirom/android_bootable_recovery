@@ -1,5 +1,6 @@
 /*
 	Copyright 2014 Tom Hite (for TeamWin)
+	Copyright 2014 TWRP/TeamWin Recovery Project
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -16,21 +17,21 @@
 	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using namespace std;
-
 #include <string>
-#include <sys/time.h>
-#include <time.h>
 #include <unistd.h>
 
-extern "C"
-{
-#include "../twcommon.h"
-}
 #include "../twrp-functions.hpp"
 #include "batteryled.hpp"
+extern "C" {
+#include "../twcommon.h"
+}
 
-static char getChargingStatus() {
+BatteryLed::BatteryLed(void) {
+	checkDelay = DEFAULT_CHECK_DELAY_SECONDS;
+	pthread_mutex_init(&delaymutex, NULL);
+}
+
+char BatteryLed::getChargingStatus(void) {
 	char cap_s[2];
 
 #ifdef TW_CUSTOM_BATTERY_PATH
@@ -50,14 +51,18 @@ static char getChargingStatus() {
 	return cap_s[0];
 }
 
-static bool setCharging() {
-	bool charging = false;
-	int success = -1;
+int BatteryLed::setChargingStatus(void) {
+#ifdef HTC_LEGACY_LED
+	return setHtcChargingStatus();
+#endif
+}
 
+#ifdef HTC_LEGACY_LED
+int BatteryLed::setHtcChargingStatus(void) {
 	char status = getChargingStatus();
 
-	string charging_file = EXPAND(TW_HTC_CHARGING_LED_PATH);
-	string full_file = EXPAND(TW_HTC_CHARGED_LED_PATH);
+	string charging_file = "/sys/class/leds/amber/brightness";
+	string full_file = "/sys/class/leds/green/brightness";
 	string status_charging;
 	string status_full;
 
@@ -65,7 +70,6 @@ static bool setCharging() {
 		case 'C':
 			status_charging = "1";
 			status_full = "0";
-			charging = true;
 			break;
 		case 'F':
 			status_charging = "0";
@@ -78,63 +82,79 @@ static bool setCharging() {
 	}
 
 #ifdef _EVENT_LOGGING
-	LOGINFO("Writing '%s' to battery led: %s\n", status_charging.c_str(), charging_file.c_str());
-	LOGINFO("Writing '%s' to battery led: %s\n", status_full.c_str(), full_file.c_str());
+	LOGINFO("Writing '%s' to battery led: %s\n",
+		status_charging.c_str(), charging_file.c_str());
+	LOGINFO("Writing '%s' to battery led: %s\n",
+		status_full.c_str(), full_file.c_str());
 #endif
-	success = TWFunc::write_file(charging_file, status_charging);
-	if (success != 0) {
+	int write_status = TWFunc::write_file(charging_file, status_charging);
+	if (write_status != 0) {
 		LOGERR("Failed writing to battery led: %s\n", charging_file.c_str());
 	} else {
-		success = TWFunc::write_file(full_file, status_full);
-		if (success != 0) {
+		write_status = TWFunc::write_file(full_file, status_full);
+		if (write_status != 0) {
 			LOGERR("Failed writing to battery led: %s\n", full_file.c_str());
 		}
 	}
 
-	return (success == 0) ? charging : false;
+	return write_status;
 }
+#endif // HTC_LEGACY_LED
 
-batteryled::batteryled(void) {
-	pthread_mutex_init(&delaymutex, NULL);
-    setDelay(DEFAULT_CHECK_DELAY_SECONDS);
-}
-
-void batteryled::setDelay(int newdelay) {
+void BatteryLed::setDelay(int newdelay) {
 	pthread_mutex_lock(&delaymutex);
 
 	// Restrict range of delays
 	if (newdelay < MIN_CHECK_DELAY_SECONDS) {
+		LOGINFO("BatteryLED loop delay of %d sec not in range %d-%d sec; setting to %d sec\n",
+			newdelay, MIN_CHECK_DELAY_SECONDS, MAX_CHECK_DELAY_SECONDS,
+			MIN_CHECK_DELAY_SECONDS);
 		newdelay = MIN_CHECK_DELAY_SECONDS;
 	} else if (newdelay > MAX_CHECK_DELAY_SECONDS) {
+		LOGINFO("BatteryLED loop delay of %d sec not in range %d-%d sec; setting to %d sec\n",
+			newdelay, MIN_CHECK_DELAY_SECONDS, MAX_CHECK_DELAY_SECONDS,
+			MAX_CHECK_DELAY_SECONDS);
 		newdelay = MAX_CHECK_DELAY_SECONDS;
+	} else {
+		LOGINFO("BatteryLED loop delay changed to %d sec\n", newdelay);
 	}
 	checkDelay = newdelay;
 
 	pthread_mutex_unlock(&delaymutex);
 }
 
-int batteryled::setTimerThread(void) {
+int BatteryLed::setTimerThread(void) {
 	int success;
 	pthread_t thread;
-	ThreadPtr battptr = &batteryled::startBatteryCheckLoop;
+	ThreadPtr battptr = &BatteryLed::startBatteryCheckLoop;
 	PThreadPtr p = *(PThreadPtr*)&battptr;
 	success = pthread_create(&thread, NULL, p, this);
 	if (success != 0) {
-		LOGERR("TWRP battery check thread cannot start; pthread_create failed with return %d\n", success);
+		LOGERR("BatteryLED thread cannot start; pthread_create error=%d\n",
+			success);
 	}
 	return 0;
 }
 
-int batteryled::startBatteryCheckLoop(void) {
-	LOGINFO("Entering TWRP battery check thread loop with delay timer set to %d sec\n", checkDelay);
+int BatteryLed::startBatteryCheckLoop(void) {
+	int set_status = 0;
+	LOGINFO("BatteryLED thread started with loop delay of %d sec\n",
+		checkDelay);
 
-	// sanity check checkDelay
-	while (checkDelay != 0 && checkDelay >= MIN_CHECK_DELAY_SECONDS && checkDelay <= MAX_CHECK_DELAY_SECONDS) {
+	while (set_status == 0) {
 		usleep(checkDelay * 1000000);
-		setCharging();
+		set_status = setChargingStatus();
 	}
 
-	LOGERR("Exiting TWRP battery check thread because delay timer (%d sec) set outside of allowed range (%d-%d sec)\n", checkDelay, MIN_CHECK_DELAY_SECONDS, MAX_CHECK_DELAY_SECONDS);
 	return 0;
 }
 
+void BatteryLed::init(void) {
+// If a non-default loop delay needs to be set before the loop starts, it can
+// be added here, before setTimerThread().
+// #ifdef SOME_LED
+// 	setDelay(4);
+// #endif
+
+	setTimerThread();
+}
