@@ -7,8 +7,10 @@ TOOLS := \
 	getprop \
 	setprop
 
+# If busybox does not have SELinux support, provide these tools with toolbox.
+# Note that RECOVERY_BUSYBOX_TOOLS will be empty if TW_USE_TOOLBOX == true.
 ifeq ($(TWHAVE_SELINUX), true)
-	TOOLS += \
+	TOOLS_FOR_SELINUX := \
 		ls \
 		getenforce \
 		setenforce \
@@ -18,6 +20,7 @@ ifeq ($(TWHAVE_SELINUX), true)
 		getsebool \
 		setsebool \
 		load_policy
+	TOOLS += $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(TOOLS_FOR_SELINUX))
 endif
 
 ifeq ($(TW_USE_TOOLBOX), true)

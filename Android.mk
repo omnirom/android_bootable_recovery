@@ -310,11 +310,17 @@ include $(CLEAR_VARS)
 # Create busybox symlinks... gzip and gunzip are excluded because those need to link to pigz instead
 BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
 exclude := tune2fs mke2fs mkdosfs gzip gunzip
+
+# If busybox does not have restorecon, assume it does not have SELinux support.
+# Then, let toolbox provide 'ls' so -Z is available to list SELinux contexts.
 ifeq ($(TWHAVE_SELINUX), true)
-	exclude += ls
-	# toolbox will provide ls support with ls -Z capability for listing SELinux contexts
+	ifeq ($(filter restorecon, $(notdir $(BUSYBOX_LINKS))),)
+		exclude += ls
+	endif
 endif
-RECOVERY_BUSYBOX_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(filter-out $(exclude),$(notdir $(BUSYBOX_LINKS))))
+
+RECOVERY_BUSYBOX_TOOLS := $(filter-out $(exclude), $(notdir $(BUSYBOX_LINKS)))
+RECOVERY_BUSYBOX_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/, $(RECOVERY_BUSYBOX_TOOLS))
 $(RECOVERY_BUSYBOX_SYMLINKS): BUSYBOX_BINARY := busybox
 $(RECOVERY_BUSYBOX_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "Symlink: $@ -> $(BUSYBOX_BINARY)"
