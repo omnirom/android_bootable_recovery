@@ -58,9 +58,6 @@ extern "C"
 #ifndef TW_NO_SCREEN_TIMEOUT
 #include "blanktimer.hpp"
 #endif
-#ifdef TW_HTC_LED
-#include "batteryled.hpp"
-#endif
 
 // Enable to print render time of each frame to the log file
 //#define PRINT_RENDER_TIME 1
@@ -81,9 +78,6 @@ static int gGuiInputRunning = 0;
 static int gCmdLineRunning = 0;
 #ifndef TW_NO_SCREEN_TIMEOUT
 blanktimer blankTimer;
-#endif
-#ifdef TW_HTC_LED
-batteryled batteryLed;
 #endif
 
 // Needed by pages.cpp too
@@ -207,11 +201,6 @@ static void * input_thread(void *cookie)
 	blankTimer.setTime(atoi(seconds.c_str()));
 #else
 	LOGINFO("Skipping screen timeout threads: TW_NO_SCREEN_TIMEOUT is set\n");
-#endif
-#ifdef TW_HTC_LED
-	/* setup the battery led indicator thread */
-	batteryLed.setDelay(2); // in seconds
-	batteryLed.setTimerThread();
 #endif
 
 	for (;;)
