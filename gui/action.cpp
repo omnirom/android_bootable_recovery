@@ -1305,7 +1305,6 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				} else {
 					ret = 1; // failure
 				}
-				PartitionManager.Update_System_Details();
 				if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
 					operation_start("ReinjectTWRP");
 					gui_print("Injecting TWRP into boot image...\n");
@@ -1466,6 +1465,32 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				}
 			}
 			PartitionManager.Update_System_Details();
+			operation_end(op_status, simulate);
+			return 0;
+		}
+		if (function == "startmtp")
+		{
+			int op_status = 0;
+
+			operation_start("Start MTP");
+			if (PartitionManager.Enable_MTP())
+				op_status = 0; // success
+			else
+				op_status = 1; // fail
+
+			operation_end(op_status, simulate);
+			return 0;
+		}
+		if (function == "stopmtp")
+		{
+			int op_status = 0;
+
+			operation_start("Stop MTP");
+			if (PartitionManager.Disable_MTP())
+				op_status = 0; // success
+			else
+				op_status = 1; // fail
+
 			operation_end(op_status, simulate);
 			return 0;
 		}

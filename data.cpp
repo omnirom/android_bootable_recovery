@@ -996,6 +996,14 @@ void DataManager::SetDefaultValues()
 	LOGINFO("TW_EXCLUDE_ENCRYPTED_BACKUPS := true\n");
 	mValues.insert(make_pair("tw_include_encrypted_backup", make_pair("0", 0)));
 #endif
+#ifdef TW_HAS_MTP
+	mConstValues.insert(make_pair("tw_has_mtp", "1"));
+	mValues.insert(make_pair("tw_mtp_enabled", make_pair("1", 1)));
+#else
+	LOGINFO("TW_EXCLUDE_MTP := true\n");
+	mConstValues.insert(make_pair("tw_has_mtp", "0"));
+	mConstValues.insert(make_pair("tw_mtp_enabled", "0"));
+#endif
 }
 
 // Magic Values
