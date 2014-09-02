@@ -2146,6 +2146,32 @@
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<conditions>
+					<condition var1="tw_has_mtp" var2="1" />
+					<condition var1="tw_mtp_enabled" var2="0" />
+				</conditions>
+				<placement x="%col2_x%" y="row4_y" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Enable MTP</text>
+				<image resource="main_button" />
+				<action function="startmtp"></action>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<conditions>
+					<condition var1="tw_has_mtp" var2="1" />
+					<condition var1="tw_mtp_enabled" var2="1" />
+				</conditions>
+				<placement x="%col2_x%" y="row4_y" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Disable MTP</text>
+				<image resource="main_button" />
+				<action function="stopmtp"></action>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<conditions>
 					<condition var1="tw_is_encrypted" var2="1" />
 					<condition var1="tw_is_decrypted" var2="0" />
 				</conditions>
@@ -2201,6 +2227,7 @@
 
 			<object type="action">
 				<action function="mount">usb</action>
+				<action function="set">tw_busy=1</action>
 			</object>
 
 			<object type="template" name="footer" />
@@ -2213,6 +2240,7 @@
 
 			<object type="action">
 				<action function="page">mount</action>
+				<action function="set">tw_busy=0</action>
 			</object>
 		</page>
 

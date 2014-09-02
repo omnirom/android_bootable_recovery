@@ -45,7 +45,7 @@ public:
 	};
 
 public:
-	TWPartition();
+	TWPartition(int *id);
 	virtual ~TWPartition();
 
 public:
@@ -72,6 +72,7 @@ public:
 	string Current_File_System;                                               // Current file system
 	string Actual_Block_Device;                                               // Actual block device (one of primary, alternate, or decrypted)
 	string MTD_Name;                                                          // Name of the partition for MTD devices
+	bool Is_Present;                                                          // Indicates if the partition is currently present as a block device
 
 private:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
@@ -127,8 +128,9 @@ private:
 	string Alternate_Block_Device;                                            // Alternate block device (e.g. /dev/block/mmcblk1)
 	string Decrypted_Block_Device;                                            // Decrypted block device available after decryption
 	bool Removable;                                                           // Indicates if this partition is removable -- affects how often we check overall size, if present, etc.
-	bool Is_Present;                                                          // Indicates if the partition is currently present as a block device
 	int Length;                                                               // Used by make_ext4fs to leave free space at the end of the partition block for things like a crypto footer
+	int *initmtpid;															  // Initial MTP ID
+	int mtpid;															      // Store MTP ID
 	unsigned long long Size;                                                  // Overall size of the partition
 	unsigned long long Used;                                                  // Overall used space
 	unsigned long long Free;                                                  // Overall free space
@@ -224,6 +226,8 @@ public:
 	void Get_Partition_List(string ListType, std::vector<PartitionList> *Partition_List);
 	int Fstab_Processed();                                                    // Indicates if the fstab has been processed or not
 	void Output_Storage_Fstab();                                              // Creates a /cache/recovery/storage.fstab file with a list of all potential storage locations for app use
+	bool Enable_MTP();                                                        // Enables MTP
+	bool Disable_MTP();                                                       // Disables MTP
 
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
@@ -234,6 +238,9 @@ private:
 	void Output_Partition(TWPartition* Part);
 	TWPartition* Find_Next_Storage(string Path, string Exclude);
 	int Open_Lun_File(string Partition_Path, string Lun_File);
+	int mtpid;
+	pthread_t mtpthread;
+	bool mtp_was_enabled;
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions

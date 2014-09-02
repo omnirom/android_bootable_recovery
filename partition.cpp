@@ -107,7 +107,8 @@ static struct flag_list mount_flags[] = {
 	{ 0,            0 },
 };
 
-TWPartition::TWPartition(void) {
+TWPartition::TWPartition(int *id) {
+	initmtpid = id;
 	Can_Be_Mounted = false;
 	Can_Be_Wiped = false;
 	Can_Be_Backed_Up = false;
@@ -428,6 +429,12 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Display_Name = "Recovery";
 			Backup_Display_Name = Display_Name;
 		}
+	}
+
+	// Generate MTP ID
+	if (Is_Storage) {
+		(*initmtpid)++;
+		mtpid = *initmtpid;
 	}
 
 	// Process any custom flags
@@ -1051,6 +1058,9 @@ bool TWPartition::UnMount(bool Display_Error) {
 		if (never_unmount_system == 1 && Mount_Point == "/system")
 			return true; // Never unmount system if you're not supposed to unmount it
 
+		if (Is_Storage)
+			TWFunc::Toggle_MTP(false);
+
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 		if (EcryptFS_Password.size() > 0) {
 			if (unmount_ecryptfs_drive(Mount_Point.c_str()) != 0) {
@@ -1074,15 +1084,16 @@ bool TWPartition::UnMount(bool Display_Error) {
 			else
 				LOGINFO("Unable to unmount '%s'\n", Mount_Point.c_str());
 			return false;
-		} else
+		} else {
 			return true;
+		}
 	} else {
 		return true;
 	}
 }
 
 bool TWPartition::Wipe(string New_File_System) {
-	bool wiped = false, update_crypt = false, recreate_media = true;
+	bool wiped = false, update_crypt = false, recreate_media = true, mtp_toggle = true;
 	int check;
 	string Layout_Filename = Mount_Point + "/.layout_version";
 
@@ -1109,8 +1120,8 @@ bool TWPartition::Wipe(string New_File_System) {
 	if (Has_Data_Media && Current_File_System == New_File_System) {
 		wiped = Wipe_Data_Without_Wiping_Media();
 		recreate_media = false;
+		mtp_toggle = false;
 	} else {
-
 		DataManager::GetValue(TW_RM_RF_VAR, check);
 
 		if (check || Use_Rm_Rf)
@@ -1128,6 +1139,9 @@ bool TWPartition::Wipe(string New_File_System) {
 		else if (New_File_System == "f2fs")
 			wiped = Wipe_F2FS();
 		else {
+			if (Is_Storage) {
+				TWFunc::Toggle_MTP(true);
+			}
 			LOGERR("Unable to wipe '%s' -- unknown file system '%s'\n", Mount_Point.c_str(), New_File_System.c_str());
 			unlink("/.layout_version");
 			return false;
@@ -1168,6 +1182,9 @@ bool TWPartition::Wipe(string New_File_System) {
 		if (Mount_Point == "/data" && Has_Data_Media && recreate_media) {
 			Recreate_Media_Folder();
 		}
+	}
+	if (Is_Storage && mtp_toggle) {
+		TWFunc::Toggle_MTP(true);
 	}
 	return wiped;
 }
@@ -1417,6 +1434,8 @@ bool TWPartition::Wipe_Encryption() {
 	Decrypted_Block_Device = "";
 	Is_Decrypted = false;
 	Is_Encrypted = false;
+	Find_Actual_Block_Device();
+	bool mtp_was_enabled = TWFunc::Toggle_MTP(false);
 	if (Wipe(Fstab_File_System)) {
 		Has_Data_Media = Save_Data_Media;
 		if (Has_Data_Media && !Symlink_Mount_Point.empty()) {
@@ -1425,6 +1444,7 @@ bool TWPartition::Wipe_Encryption() {
 #ifndef TW_OEM_BUILD
 		gui_print("You may need to reboot recovery to be able to use /data again.\n");
 #endif
+		TWFunc::Toggle_MTP(mtp_was_enabled);
 		return true;
 	} else {
 		Has_Data_Media = Save_Data_Media;
@@ -1632,6 +1652,8 @@ bool TWPartition::Wipe_MTD() {
 }
 
 bool TWPartition::Wipe_RMRF() {
+	if (Is_Storage)
+		TWFunc::Toggle_MTP(false);
 	if (!Mount(true))
 		return false;
 
@@ -2018,9 +2040,9 @@ bool TWPartition::Update_Size(bool Display_Error) {
 }
 
 void TWPartition::Find_Actual_Block_Device(void) {
-	if (Is_Decrypted) {
+	if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
 		Actual_Block_Device = Decrypted_Block_Device;
-		if (TWFunc::Path_Exists(Primary_Block_Device))
+		if (TWFunc::Path_Exists(Decrypted_Block_Device))
 			Is_Present = true;
 	} else if (TWFunc::Path_Exists(Primary_Block_Device)) {
 		Is_Present = true;
