@@ -1260,4 +1260,22 @@ int TWFunc::Set_Brightness(std::string brightness_value)
 	return -1;
 }
 
+bool TWFunc::Toggle_MTP(bool enable) {
+#ifdef TW_HAS_MTP
+	static int was_enabled = false;
+
+	if (enable && was_enabled) {
+		if (!PartitionManager.Enable_MTP())
+			PartitionManager.Disable_MTP();
+	} else {
+		was_enabled = DataManager::GetIntValue("tw_mtp_enabled");
+		PartitionManager.Disable_MTP();
+		usleep(500);
+	}
+	return was_enabled;
+#else
+	return false;
+#endif
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN
