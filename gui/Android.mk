@@ -62,7 +62,7 @@ endif
 ifeq ($(HAVE_SELINUX), true)
 LOCAL_CFLAGS += -DHAVE_SELINUX
 endif
-ifeq ($(TW_OEM_BUILD),true)
+ifeq ($(TW_OEM_BUILD), true)
     LOCAL_CFLAGS += -DTW_OEM_BUILD
 endif
 

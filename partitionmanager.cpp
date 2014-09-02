@@ -38,6 +38,11 @@
 #include "twrpDigest.hpp"
 #include "twrpDU.hpp"
 
+#ifdef TW_HAS_MTP
+#include "mtp/mtp_MtpServer.hpp"
+#include "mtp/twrpMtp.hpp"
+#endif
+
 extern "C" {
 	#include "cutils/properties.h"
 }
@@ -51,6 +56,8 @@ extern "C" {
 #endif
 
 TWPartitionManager::TWPartitionManager(void) {
+	mtpid = 100;
+	mtp_was_enabled = false;
 }
 
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
@@ -71,8 +78,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 
 		if (fstab_line[strlen(fstab_line) - 1] != '\n')
 			fstab_line[strlen(fstab_line)] = '\n';
-
-		TWPartition* partition = new TWPartition();
+		TWPartition* partition = new TWPartition(&mtpid);
 		string line = fstab_line;
 		memset(fstab_line, 0, sizeof(fstab_line));
 
@@ -695,6 +701,7 @@ int TWPartitionManager::Run_Backup(void) {
 	time(&total_start);
 
 	Update_System_Details();
+	PartitionManager.Disable_MTP();
 
 	if (!Mount_Current_Storage(true))
 		return false;
@@ -840,6 +847,7 @@ int TWPartitionManager::Run_Backup(void) {
 	gui_print_color("highlight", "[BACKUP COMPLETED IN %d SECONDS]\n\n", total_time); // the end
 	string backup_log = Full_Backup_Path + "recovery.log";
 	TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
+	PartitionManager.Enable_MTP();
 	return true;
 }
 
@@ -1297,14 +1305,24 @@ int TWPartitionManager::Wipe_Media_From_Data(void) {
 			return false;
 
 		gui_print("Wiping internal storage -- /data/media...\n");
+		mtp_was_enabled = TWFunc::Toggle_MTP(false);
 		TWFunc::removeDir("/data/media", false);
-		if (mkdir("/data/media", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0)
-			return -1;
+		if (mkdir("/data/media", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) {
+			if (mtp_was_enabled) {
+				if (!Enable_MTP())
+					Disable_MTP();
+			}
+			return false;
+		}
 		if (dat->Has_Data_Media) {
 			dat->Recreate_Media_Folder();
 			// Unmount and remount - slightly hackish way to ensure that the "/sdcard" folder is still mounted properly after wiping
 			dat->UnMount(false);
 			dat->Mount(false);
+		}
+		if (mtp_was_enabled) {
+			if (!Enable_MTP())
+				Disable_MTP();
 		}
 		return true;
 	} else {
@@ -1735,20 +1753,22 @@ int TWPartitionManager::usb_storage_enable(void) {
 		if (TWFunc::Path_Exists(lun_file))
 			has_multiple_lun = true;
 	}
+	mtp_was_enabled = TWFunc::Toggle_MTP(false);
 	if (!has_multiple_lun) {
 		LOGINFO("Device doesn't have multiple lun files, mount current storage\n");
 		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
 		if (TWFunc::Get_Root_Path(DataManager::GetCurrentStoragePath()) == "/data") {
 			TWPartition* Mount = Find_Next_Storage("", "/data");
 			if (Mount) {
-				if (!Open_Lun_File(Mount->Mount_Point, lun_file))
-					return false;
+				if (!Open_Lun_File(Mount->Mount_Point, lun_file)) {
+					goto error_handle;
+				}
 			} else {
 				LOGERR("Unable to find storage partition to mount to USB\n");
-				return false;
+				goto error_handle;
 			}
 		} else if (!Open_Lun_File(DataManager::GetCurrentStoragePath(), lun_file)) {
-			return false;
+			goto error_handle;
 		}
 	} else {
 		LOGINFO("Device has multiple lun files\n");
@@ -1757,8 +1777,9 @@ int TWPartitionManager::usb_storage_enable(void) {
 		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
 		Mount1 = Find_Next_Storage("", "/data");
 		if (Mount1) {
-			if (!Open_Lun_File(Mount1->Mount_Point, lun_file))
-				return false;
+			if (!Open_Lun_File(Mount1->Mount_Point, lun_file)) {
+				goto error_handle;
+			}
 			sprintf(lun_file, CUSTOM_LUN_FILE, 1);
 			Mount2 = Find_Next_Storage(Mount1->Mount_Point, "/data");
 			if (Mount2) {
@@ -1766,11 +1787,16 @@ int TWPartitionManager::usb_storage_enable(void) {
 			}
 		} else {
 			LOGERR("Unable to find storage partition to mount to USB\n");
-			return false;
+			goto error_handle;
 		}
 	}
 	property_set("sys.storage.ums_enabled", "1");
 	return true;
+error_handle:
+	if (mtp_was_enabled)
+		if (!Enable_MTP())
+			Disable_MTP();
+	return false;
 }
 
 int TWPartitionManager::usb_storage_disable(void) {
@@ -1789,6 +1815,9 @@ int TWPartitionManager::usb_storage_disable(void) {
 	Update_System_Details();
 	UnMount_Main_Partitions();
 	property_set("sys.storage.ums_enabled", "0");
+	if (mtp_was_enabled)
+		if (!Enable_MTP())
+			Disable_MTP();
 	if (ret < 0 && index == 0) {
 		LOGERR("Unable to write to ums lunfile '%s'.", lun_file);
 		return false;
@@ -2122,4 +2151,70 @@ TWPartition *TWPartitionManager::Get_Default_Storage_Partition()
 			res = *iter;
 	}
 	return res;
+}
+
+bool TWPartitionManager::Enable_MTP(void) {
+#ifdef TW_HAS_MTP
+	if (mtpthread) {
+		LOGERR("MTP already enabled\n");
+		return true;
+	}
+	//Launch MTP Responder
+	LOGINFO("Starting MTP\n");
+	char vendor[PROPERTY_VALUE_MAX];
+	char product[PROPERTY_VALUE_MAX];
+	int count = 0;
+	property_set("sys.usb.config", "none");
+	property_get("usb.vendor", vendor, "18D1");
+	property_get("usb.product.mtpadb", product, "4EE2");
+	string vendorstr = vendor;
+	string productstr = product;
+	TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
+	TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
+	property_set("sys.usb.config", "mtp,adb");
+	std::vector<TWPartition*>::iterator iter;
+	twrpMtp *mtp = new twrpMtp();
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
+			printf("twrp mtpid: %d\n", (*iter)->mtpid);
+			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, (*iter)->mtpid);
+			count++;
+		}
+	}
+	if (count) {
+		mtpthread = mtp->runserver();
+		DataManager::SetValue("tw_mtp_enabled", 1);
+		return true;
+	}
+	LOGERR("No valid storage partitions found for MTP.\n");
+#else
+	LOGERR("MTP support not included\n");
+#endif
+	DataManager::SetValue("tw_mtp_enabled", 0);
+	return false;
+}
+
+bool TWPartitionManager::Disable_MTP(void) {
+#ifdef TW_HAS_MTP
+	char vendor[PROPERTY_VALUE_MAX];
+	char product[PROPERTY_VALUE_MAX];
+	property_set("sys.usb.config", "none");
+	property_get("usb.vendor", vendor, "18D1");
+	property_get("usb.product.adb", product, "D002");
+	string vendorstr = vendor;
+	string productstr = product;
+	TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
+	TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
+	if (mtpthread) {
+		pthread_kill(mtpthread, 0);
+		mtpthread = NULL;
+	}
+	property_set("sys.usb.config", "adb");
+	DataManager::SetValue("tw_mtp_enabled", 0);
+	return true;
+#else
+	LOGERR("MTP support not included\n");
+	DataManager::SetValue("tw_mtp_enabled", 0);
+	return false;
+#endif
 }
