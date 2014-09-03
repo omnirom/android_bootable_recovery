@@ -322,7 +322,7 @@ MtpResponseCode MyMtpDatabase::getObjectPropertyValue(MtpObjectHandle handle,
 											MtpDataPacket& packet) {
 	MTPD("MyMtpDatabase::getObjectPropertyValue mtpid: %i, property: %x\n", handle, property);
 	int type;
-	MtpResponseCode result;
+	MtpResponseCode result = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 	uint64_t longValue;
 	if (!getObjectPropertyInfo(property, type)) {
 		MTPE("MyMtpDatabase::setObjectPropertyValue returning MTP_RESPONSE_OBJECT_PROP_NOT_SUPPORTED\n");
@@ -334,6 +334,11 @@ MtpResponseCode MyMtpDatabase::getObjectPropertyValue(MtpObjectHandle handle,
 			result = MTP_RESPONSE_OK;
 			break;
 		}
+	}
+
+	if (result != MTP_RESPONSE_OK) {
+		MTPE("MyMtpDatabase::setObjectPropertyValue unable to locate handle: %i\n", handle);
+		return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 	}
 
 	// special case date properties, which are strings to MTP

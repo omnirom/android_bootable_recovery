@@ -212,7 +212,7 @@ int MtpStorage::getObjectInfo(MtpObjectHandle handle, MtpObjectInfo& info) {
 				return 0;
 		}
 	}
-	MTPE("MtpStorage::getObjectInfo no object found, error!\n");
+	// Item is not on this storage device
 	return -1;
 }
 
@@ -290,7 +290,7 @@ int MtpStorage::getObjectFilePath(MtpObjectHandle handle, MtpString& outFilePath
 			goto end;
 		}
 	}
-	MTPE("MtpStorage::getObjectFilePath fauled to find handle: %i\n", handle);
+	// Item is not on this storage
 	return -1;
 end:
 	outFormat = MTP_FORMAT_ASSOCIATION;
@@ -440,7 +440,6 @@ int MtpStorage::deleteFile(MtpObjectHandle handle) {
 			goto end;
 		}
 	}
-	MTPE("MtpStorage::deleteFile deleting handle: %d FAILED\n", handle);
 	return -1;
 end:
 	if (local_parent_id) {
@@ -556,7 +555,7 @@ int MtpStorage::getObjectPropertyList(MtpObjectHandle handle, uint32_t format, u
 		}
 	}
 	else {
-		MTPE("MtpStorage::getObjectPropertyList unsupported property %x\n", property);
+		// Either the property is not supported or the handle is not on this storage
 		return -1;
 	}
 
@@ -653,7 +652,7 @@ int MtpStorage::renameObject(MtpObjectHandle handle, std::string newName) {
 			}
 		}
 	}
-	MTPE("MtpStorage::renameObject handle / node not found, error!\n");
+	// handle not foudn on this storage
 	return -1;
 }
 
@@ -680,7 +679,7 @@ int MtpStorage::getObjectPropertyValue(MtpObjectHandle handle, MtpObjectProperty
 			return 0;
 		}
 	}
-	MTPE("MtpStorage::getObjectPropertyValue unable to locate handle: %i\n", handle);
+	// handle not found on this storage
 	return -1;
 }
 pthread_t MtpStorage::inotify(void) {
