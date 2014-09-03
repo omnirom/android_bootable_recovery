@@ -33,7 +33,7 @@
 
 class twrpMtp {
 	public:
-		twrpMtp();
+		twrpMtp(int debug_enabled /* = 0 */);
 		pthread_t runserver(void);
 		void addStorage(std::string display, std::string path, int mtpid);
 	private:
