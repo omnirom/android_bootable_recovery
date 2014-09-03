@@ -212,7 +212,7 @@ int MtpStorage::getObjectInfo(MtpObjectHandle handle, MtpObjectInfo& info) {
 				return 0;
 		}
 	}
-	MTPE("MtpStorage::getObjectInfo no object found, error!\n");
+	MTPD("MtpStorage::getObjectInfo no object found on this storage\n");
 	return -1;
 }
 
@@ -680,7 +680,7 @@ int MtpStorage::getObjectPropertyValue(MtpObjectHandle handle, MtpObjectProperty
 			return 0;
 		}
 	}
-	MTPE("MtpStorage::getObjectPropertyValue unable to locate handle: %i\n", handle);
+	MTPD("MtpStorage::getObjectPropertyValue unable to locate handle: %i on this storage\n", handle);
 	return -1;
 }
 pthread_t MtpStorage::inotify(void) {

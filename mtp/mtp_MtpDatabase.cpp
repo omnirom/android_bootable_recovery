@@ -336,6 +336,11 @@ MtpResponseCode MyMtpDatabase::getObjectPropertyValue(MtpObjectHandle handle,
 		}
 	}
 
+	if (result != MTP_RESPONSE_OK) {
+		MTPE("MyMtpDatabase::setObjectPropertyValue unable to locate handle: %i\n", handle);
+		return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+	}
+
 	// special case date properties, which are strings to MTP
 	// but stored internally as a uint64
 	if (property == MTP_PROPERTY_DATE_MODIFIED || property == MTP_PROPERTY_DATE_ADDED) {
