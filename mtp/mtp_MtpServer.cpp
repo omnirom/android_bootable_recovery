@@ -35,16 +35,17 @@
 
 void twmtp_MtpServer::start()
 {
-	setup();
-	add_storage();
-	server->run();
+	if (setup() == 0) {
+		add_storage();
+		server->run();
+	}
 }
 
 void twmtp_MtpServer::set_storages(storages* mtpstorages) {
 	stores = mtpstorages;
 }
 
-void twmtp_MtpServer::setup()
+int twmtp_MtpServer::setup()
 {
 	#define USB_MTP_DEVICE "/dev/mtp_usb"
 	usePtp =  false;
@@ -60,8 +61,10 @@ void twmtp_MtpServer::setup()
 		refserver = server;
 		MTPI("created new mtpserver object\n");
 	} else {
-		MTPE("could not open MTP driver, errno: %d", errno);
+		MTPE("could not open MTP driver, errno: %d\n", errno);
+		return -1;
 	}
+	return 0;
 }
 
 void twmtp_MtpServer::run()
