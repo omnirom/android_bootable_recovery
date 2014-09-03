@@ -43,6 +43,7 @@ public:
 	static const char* getFormatCodeName(MtpObjectFormat code);
 	static const char* getObjectPropCodeName(MtpPropertyCode code);
 	static const char* getDevicePropCodeName(MtpPropertyCode code);
+	static void enableDebug();
 };
 
 

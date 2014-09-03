@@ -21,20 +21,20 @@
 #include <stdio.h>
 
 #define MTP_DEBUG_BUFFER_SIZE 2048
-//#define MTP_DEBUG 1
+static int debug_enabled = 0;
 
 extern "C" void mtpdebug(const char *fmt, ...)
 {
-#ifdef MTP_DEBUG
-	char buf[MTP_DEBUG_BUFFER_SIZE];		// We're going to limit a single request to 512 bytes
+	if (debug_enabled) {
+		char buf[MTP_DEBUG_BUFFER_SIZE];		// We're going to limit a single request to 512 bytes
 
-	va_list ap;
-	va_start(ap, fmt);
-	vsnprintf(buf, MTP_DEBUG_BUFFER_SIZE, fmt, ap);
-	va_end(ap);
+		va_list ap;
+		va_start(ap, fmt);
+		vsnprintf(buf, MTP_DEBUG_BUFFER_SIZE, fmt, ap);
+		va_end(ap);
 
-	fputs(buf, stdout);
-#endif
+		fputs(buf, stdout);
+	}
 }
 
 struct CodeEntry {
@@ -416,4 +416,9 @@ const char* MtpDebug::getDevicePropCodeName(MtpPropertyCode code) {
 	if (code == 0)
 		return "NONE";
 	return getCodeName(code, sDevicePropCodes);
+}
+
+void MtpDebug::enableDebug(void) {
+	debug_enabled = 1;
+	MTPD("MTP debug logging enabled\n");
 }
