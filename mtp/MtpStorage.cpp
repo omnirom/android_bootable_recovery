@@ -652,7 +652,7 @@ int MtpStorage::renameObject(MtpObjectHandle handle, std::string newName) {
 			}
 		}
 	}
-	// handle not foudn on this storage
+	// handle not found on this storage
 	return -1;
 }
 
