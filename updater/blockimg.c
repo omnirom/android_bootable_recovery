@@ -106,12 +106,12 @@ static void writeblock(int fd, const uint8_t* data, size_t size) {
     }
 }
 
-static void check_lseek(int fd, off_t offset, int whence) {
+static void check_lseek(int fd, off64_t offset, int whence) {
     while (true) {
-        off_t ret = lseek(fd, offset, whence);
+        off64_t ret = lseek64(fd, offset, whence);
         if (ret < 0) {
             if (errno != EINTR) {
-                fprintf(stderr, "lseek failed: %s\n", strerror(errno));
+                fprintf(stderr, "lseek64 failed: %s\n", strerror(errno));
                 exit(1);
             }
         } else {
@@ -165,7 +165,7 @@ static ssize_t RangeSinkWrite(const uint8_t* data, ssize_t size, void* token) {
             ++rss->p_block;
             if (rss->p_block < rss->tgt->count) {
                 rss->p_remain = (rss->tgt->pos[rss->p_block*2+1] - rss->tgt->pos[rss->p_block*2]) * BLOCKSIZE;
-                check_lseek(rss->fd, rss->tgt->pos[rss->p_block*2] * (off_t)BLOCKSIZE, SEEK_SET);
+                check_lseek(rss->fd, (off64_t)rss->tgt->pos[rss->p_block*2] * BLOCKSIZE, SEEK_SET);
             } else {
                 // we can't write any more; return how many bytes have
                 // been written so far.
@@ -414,7 +414,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             allocate(src->size * BLOCKSIZE, &buffer, &buffer_alloc);
             size_t p = 0;
             for (i = 0; i < src->count; ++i) {
-                check_lseek(fd, src->pos[i*2] * (off_t)BLOCKSIZE, SEEK_SET);
+                check_lseek(fd, (off64_t)src->pos[i*2] * BLOCKSIZE, SEEK_SET);
                 size_t sz = (src->pos[i*2+1] - src->pos[i*2]) * BLOCKSIZE;
                 readblock(fd, buffer+p, sz);
                 p += sz;
@@ -422,7 +422,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
 
             p = 0;
             for (i = 0; i < tgt->count; ++i) {
-                check_lseek(fd, tgt->pos[i*2] * (off_t)BLOCKSIZE, SEEK_SET);
+                check_lseek(fd, (off64_t)tgt->pos[i*2] * BLOCKSIZE, SEEK_SET);
                 size_t sz = (tgt->pos[i*2+1] - tgt->pos[i*2]) * BLOCKSIZE;
                 writeblock(fd, buffer+p, sz);
                 p += sz;
@@ -445,7 +445,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             allocate(BLOCKSIZE, &buffer, &buffer_alloc);
             memset(buffer, 0, BLOCKSIZE);
             for (i = 0; i < tgt->count; ++i) {
-                check_lseek(fd, tgt->pos[i*2] * (off_t)BLOCKSIZE, SEEK_SET);
+                check_lseek(fd, (off64_t)tgt->pos[i*2] * BLOCKSIZE, SEEK_SET);
                 for (j = tgt->pos[i*2]; j < tgt->pos[i*2+1]; ++j) {
                     writeblock(fd, buffer, BLOCKSIZE);
                 }
@@ -470,7 +470,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             rss.tgt = tgt;
             rss.p_block = 0;
             rss.p_remain = (tgt->pos[1] - tgt->pos[0]) * BLOCKSIZE;
-            check_lseek(fd, tgt->pos[0] * (off_t)BLOCKSIZE, SEEK_SET);
+            check_lseek(fd, (off64_t)tgt->pos[0] * BLOCKSIZE, SEEK_SET);
 
             pthread_mutex_lock(&nti.mu);
             nti.rss = &rss;
@@ -504,7 +504,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             allocate(src->size * BLOCKSIZE, &buffer, &buffer_alloc);
             size_t p = 0;
             for (i = 0; i < src->count; ++i) {
-                check_lseek(fd, src->pos[i*2] * (off_t)BLOCKSIZE, SEEK_SET);
+                check_lseek(fd, (off64_t)src->pos[i*2] * BLOCKSIZE, SEEK_SET);
                 size_t sz = (src->pos[i*2+1] - src->pos[i*2]) * BLOCKSIZE;
                 readblock(fd, buffer+p, sz);
                 p += sz;
@@ -520,7 +520,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             rss.tgt = tgt;
             rss.p_block = 0;
             rss.p_remain = (tgt->pos[1] - tgt->pos[0]) * BLOCKSIZE;
-            check_lseek(fd, tgt->pos[0] * (off_t)BLOCKSIZE, SEEK_SET);
+            check_lseek(fd, (off64_t)tgt->pos[0] * BLOCKSIZE, SEEK_SET);
 
             if (style[0] == 'i') {      // imgdiff
                 ApplyImagePatch(buffer, src->size * BLOCKSIZE,
@@ -620,7 +620,7 @@ Value* RangeSha1Fn(const char* name, State* state, int argc, Expr* argv[]) {
 
     int i, j;
     for (i = 0; i < rs->count; ++i) {
-        check_lseek(fd, rs->pos[i*2] * (off_t)BLOCKSIZE, SEEK_SET);
+        check_lseek(fd, (off64_t)rs->pos[i*2] * BLOCKSIZE, SEEK_SET);
         for (j = rs->pos[i*2]; j < rs->pos[i*2+1]; ++j) {
             readblock(fd, buffer, BLOCKSIZE);
             SHA_update(&ctx, buffer, BLOCKSIZE);
