@@ -103,24 +103,27 @@ void Node::addProperties(int storageID, int parent_object) {
 	struct stat st;
 	int mFormat = 0;
 	uint64_t puid;
+	off_t file_size = 0;
+	std::string mtimeStr = "00101T000000";
+	std::string atimeStr = "00101T000000";
 
 	std::string mtpidStr = static_cast<std::ostringstream*>( &(std::ostringstream() << mtpid) )->str();
 	std::string storageIDStr = static_cast<std::ostringstream*>( &(std::ostringstream() << storageID) )->str();
 	std::string puidStr = storageIDStr + mtpidStr;
 	if ( ! (std::istringstream(puidStr) >> puid) ) puid = 0;
-	stat(getPath().c_str(), &st);
-	std::string mtimeStr = static_cast<std::ostringstream*>( &(std::ostringstream() << st.st_mtime) )->str();
-	std::string atimeStr = static_cast<std::ostringstream*>( &(std::ostringstream() << st.st_atime) )->str();
-	if (S_ISDIR(st.st_mode)) {
-		mFormat = MTP_FORMAT_ASSOCIATION; // folder
+	mFormat = MTP_FORMAT_UNDEFINED;   // file
+	if (lstat(getPath().c_str(), &st) == 0) {
+		file_size = st.st_size;
+		if (S_ISDIR(st.st_mode))
+			mFormat = MTP_FORMAT_ASSOCIATION; // folder
+		mtimeStr = static_cast<std::ostringstream*>( &(std::ostringstream() << st.st_mtime) )->str();
+		atimeStr = static_cast<std::ostringstream*>( &(std::ostringstream() << st.st_atime) )->str();
 	}
-	else {
-		mFormat = MTP_FORMAT_UNDEFINED;   // file
-	}
+
 	addProperty(MTP_PROPERTY_STORAGE_ID, storageID, "", MTP_TYPE_UINT32);
 	addProperty(MTP_PROPERTY_OBJECT_FORMAT, mFormat, "", MTP_TYPE_UINT16);
 	addProperty(MTP_PROPERTY_PROTECTION_STATUS, 0, "", MTP_TYPE_UINT16);
-	addProperty(MTP_PROPERTY_OBJECT_SIZE, st.st_size, "", MTP_TYPE_UINT64);
+	addProperty(MTP_PROPERTY_OBJECT_SIZE, file_size, "", MTP_TYPE_UINT64);
 	addProperty(MTP_PROPERTY_OBJECT_FILE_NAME, 0, basename(getPath().c_str()), MTP_TYPE_STR);
 	MTPD("mtpid: %i, filename: '%s', parent object: %i\n", mtpid, basename(getPath().c_str()), parent_object);
 	addProperty(MTP_PROPERTY_DATE_MODIFIED, 0, mtimeStr, MTP_TYPE_STR);
