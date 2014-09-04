@@ -460,7 +460,6 @@ int MtpStorage::getObjectPropertyList(MtpObjectHandle handle, uint32_t format, u
 	MTPD("MtpStorage::getObjectPropertyList handle: %d, format: %d, property: %lx\n", handle, format, property);
 	if (property == MTP_PROPERTY_OBJECT_FORMAT) {
 		MTPD("MtpStorage::getObjectPropertyList MTP_PROPERTY_OBJECT_FORMAT\n");
-		MTPD("mtpmap count: %d\n", mtpmap.size());
 		for (iter i = mtpmap.begin(); i != mtpmap.end(); i++) {
 			MTPD("root: %d\n", i->second->Root());
 			Node *node = i->second->findNode(handle, i->second->Root());
@@ -558,6 +557,8 @@ int MtpStorage::getObjectPropertyList(MtpObjectHandle handle, uint32_t format, u
 		// Either the property is not supported or the handle is not on this storage
 		return -1;
 	}
+	// handle not found on this storage
+	return -1;
 
 endloop:
 	MTPD("mtpparentid: %d\n", local_mtpparentid);
