@@ -44,6 +44,12 @@ Node::Node() {
 
 void Node::setMtpid(int aMtpid) { mtpid = aMtpid; }
 void Node::setPath(std::string aPath) { path = aPath; }
+void Node::rename(std::string aPath) {
+	path = aPath;
+	updateProperty(MTP_PROPERTY_OBJECT_FILE_NAME, 0, basename(aPath.c_str()), MTP_TYPE_STR);
+	updateProperty(MTP_PROPERTY_NAME, 0, basename(aPath.c_str()), MTP_TYPE_STR);
+	updateProperty(MTP_PROPERTY_DISPLAY_NAME, 0, basename(aPath.c_str()), MTP_TYPE_STR);
+}
 void Node::setLeft(Node* aLeft) { left = aLeft; }
 void Node::setRight(Node* aRight) { right = aRight; }
 void Node::setParent(Node* aParent) { parent = aParent; }

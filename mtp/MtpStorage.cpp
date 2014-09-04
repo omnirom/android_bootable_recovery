@@ -644,7 +644,7 @@ int MtpStorage::renameObject(MtpObjectHandle handle, std::string newName) {
 				std::string newFullName = parentdir + "/" + newName;
 				MTPD("old: '%s', new: '%s'\n", oldName.c_str(), newFullName.c_str());
 				if (rename(oldName.c_str(), newFullName.c_str()) == 0) {
-					node->setPath(newFullName);
+					node->rename(newFullName);
 					return 0;
 				} else {
 					MTPE("MtpStorage::renameObject failed, handle: %d, new name: '%s'\n", handle, newName.c_str());

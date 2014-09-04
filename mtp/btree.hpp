@@ -36,6 +36,7 @@ public:
 	Node();
 	void setMtpid(int aMtpid);
 	void setPath(std::string aPath);
+	void rename(std::string aPath);
 	void setLeft(Node* aLeft);
 	void setRight(Node* aRight);
 	void setParent(Node* aParent);
