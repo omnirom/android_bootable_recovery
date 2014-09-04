@@ -312,6 +312,7 @@ int main(int argc, char **argv) {
 		property_set("mtp.crash_check", "0");
 	} else {
 		gui_print_color("warning", "MTP Crashed, not starting MTP on boot.\n");
+		DataManager::SetValue("tw_mtp_enabled", 0);
 	}
 #endif
 
