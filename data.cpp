@@ -999,6 +999,7 @@ void DataManager::SetDefaultValues()
 #ifdef TW_HAS_MTP
 	mConstValues.insert(make_pair("tw_has_mtp", "1"));
 	mValues.insert(make_pair("tw_mtp_enabled", make_pair("1", 1)));
+	mValues.insert(make_pair("tw_mtp_debug", make_pair("0", 1)));
 #else
 	LOGINFO("TW_EXCLUDE_MTP := true\n");
 	mConstValues.insert(make_pair("tw_has_mtp", "0"));
