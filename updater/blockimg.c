@@ -37,9 +37,9 @@
 
 #define BLOCKSIZE 4096
 
-// Set this to 1 to interpret 'erase' transfers to mean do a
-// BLKDISCARD ioctl.  Set to 0 to interpret erase to mean fill the
-// region with zeroes.
+// Set this to 0 to interpret 'erase' transfers to mean do a
+// BLKDISCARD ioctl (the normal behavior).  Set to 1 to interpret
+// erase to mean fill the region with zeroes.
 #define DEBUG_ERASE  0
 
 #ifndef BLKDISCARD
