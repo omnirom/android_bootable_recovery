@@ -70,6 +70,7 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 	struct dirent* de;
 	struct stat st;
 	uint64_t dusize = 0;
+	string FullPath;
 
 	d = opendir(Path.c_str());
 	if (d == NULL) {
@@ -79,10 +80,15 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 	}
 
 	while ((de = readdir(d)) != NULL) {
-		if (de->d_type == DT_DIR && !check_skip_dirs(Path + "/" + de->d_name)) {
-			dusize += Get_Folder_Size(Path + "/" + de->d_name);
-		} else if (de->d_type == DT_REG) {
-			stat((Path + "/" + de->d_name).c_str(), &st);
+		FullPath = Path + "/";
+		FullPath += de->d_name;
+		if (lstat(FullPath.c_str(), &st)) {
+			LOGERR("Unable to stat '%s'\n", FullPath.c_str());
+			continue;
+		}
+		if ((st.st_mode & S_IFDIR) && !check_skip_dirs(FullPath) && de->d_type != DT_SOCK) {
+			dusize += Get_Folder_Size(FullPath);
+		} else if (st.st_mode & S_IFREG) {
 			dusize += (uint64_t)(st.st_size);
 		}
 	}
