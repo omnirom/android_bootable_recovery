@@ -185,7 +185,7 @@ MtpObjectHandleList* MtpStorage::getObjectList(MtpStorageID storageID, MtpObject
 
 int MtpStorage::getObjectInfo(MtpObjectHandle handle, MtpObjectInfo& info) {
 	struct stat st;
-	uint64_t size;
+	uint64_t size = 0;
 	MTPD("MtpStorage::getObjectInfo handle: %d\n", handle);
 	for (iter i = mtpmap.begin(); i != mtpmap.end(); i++) {
 		Node* node = i->second->findNode(handle, i->second->Root());
@@ -196,8 +196,8 @@ int MtpStorage::getObjectInfo(MtpObjectHandle handle, MtpObjectInfo& info) {
 				MTPD("info.mStorageID: %d\n", info.mStorageID);
 				info.mParent = node->getMtpParentId();
 				MTPD("mParent: %d\n", info.mParent);
-				lstat(node->getPath().c_str(), &st);
-				size = st.st_size;
+				if (lstat(node->getPath().c_str(), &st) == 0)
+					size = st.st_size;
 				MTPD("size is: %llu\n", size);
 				info.mCompressedSize = size;//(size > 0xFFFFFFFFLL ? 0xFFFFFFFF : size);
 				info.mDateModified = st.st_mtime;
@@ -283,8 +283,10 @@ int MtpStorage::getObjectFilePath(MtpObjectHandle handle, MtpString& outFilePath
 		node = i->second->findNode(handle, i->second->Root());
 		MTPD("node returned: %d\n", node);
 		if (node != NULL) {
-			lstat(node->getPath().c_str(), &st);
-			outFileLength = st.st_size;
+			if (lstat(node->getPath().c_str(), &st) == 0)
+				outFileLength = st.st_size;
+			else
+				outFileLength = 0;
 			outFilePath = strdup(node->getPath().c_str());
 			MTPD("outFilePath: %s\n", node->getPath().c_str());
 			goto end;
@@ -312,11 +314,17 @@ int MtpStorage::readParentDirs(std::string path) {
 		closedir(d);
 	}
 	while ((de = readdir(d)) != NULL) {
-		if (de->d_type == DT_DIR && strcmp(de->d_name, ".") == 0)
+		// Because exfat-fuse causes issues with dirent, we will use stat
+		// for some things that dirent should be able to do
+		item = path + "/" + de->d_name;
+		if (lstat(item.c_str(), &st)) {
+			MTPE("Error running lstat on '%s'\n", item.c_str());
+			return -1;
+		}
+		if ((st.st_mode & S_IFDIR) && strcmp(de->d_name, ".") == 0)
 			continue;
-		if (de->d_type == DT_DIR && strcmp(de->d_name, "..") != 0) {
+		if ((st.st_mode & S_IFDIR) && strcmp(de->d_name, "..") != 0) {
 			// Handle dirs
-			item = path + "/" + de->d_name;
 			MTPD("dir: %s\n", item.c_str());
 			mtpParentList.push_back(item);
 			parent = item.substr(0, item.find_last_of('/'));
@@ -540,9 +548,9 @@ int MtpStorage::getObjectPropertyList(MtpObjectHandle handle, uint32_t format, u
 			Node *node = i->second->findNode(handle, i->second->Root());
 			if (node != NULL) {
 				struct stat st;
-				uint64_t size;
-				lstat(node->getPath().c_str(), &st);
-				size = st.st_size;
+				uint64_t size = 0;
+				if (lstat(node->getPath().c_str(), &st) == 0)
+					size = st.st_size;
 				propertyCodes.push_back(MTP_PROPERTY_OBJECT_SIZE);
 				longValues.push_back(size);
 				valueStrs.push_back("");
@@ -705,14 +713,18 @@ int MtpStorage::addInotifyDirs(std::string path) {
 	}
 
 	while ((de = readdir(d)) != NULL) {
-		if (de->d_type != DT_DIR || strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
-			continue;
 		inotifypath = path + "/" + de->d_name;
+		if (lstat(inotifypath.c_str(), &st)) {
+			MTPE("Error using lstat on '%s'\n", inotifypath.c_str());
+			return -1;
+		}
+		if (!(st.st_mode & S_IFDIR) || strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+			continue;
 		if (addInotifyDirs(inotifypath)) {
 			closedir(d);
 			return -1;
 		}
-		inotify_wd = inotify_add_watch(inotify_fd, inotifypath.c_str(), IN_CREATE | IN_DELETE);
+		inotify_wd = inotify_add_watch(inotify_fd, inotifypath.c_str(), WATCH_FLAGS);
 		inotifymap[inotify_wd] = inotifypath;
 		MTPD("added inotify dir: '%s'\n", inotifypath.c_str());
 	}
@@ -868,8 +880,9 @@ int MtpStorage::inotify_t(void) {
 						if (node != NULL) {
 							uint64_t orig_size = node->getIntProperty(MTP_PROPERTY_OBJECT_SIZE);
 							struct stat st;
-							lstat(item.c_str(), &st);
-							uint64_t new_size = (uint64_t)st.st_size;
+							uint64_t new_size = 0;
+							if (lstat(item.c_str(), &st) == 0)
+								new_size = (uint64_t)st.st_size;
 							if (orig_size != new_size) {
 								MTPD("size changed from %llu to %llu on mtpid: %i\n", orig_size, new_size, node->Mtpid());
 								node->updateProperty(MTP_PROPERTY_OBJECT_SIZE, new_size, "", MTP_TYPE_UINT64);

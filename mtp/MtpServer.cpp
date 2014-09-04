@@ -1132,7 +1132,12 @@ static void deleteRecursive(const char* path) {
 		strcpy(fileSpot, name);
 
 		int type = entry->d_type;
-		if (entry->d_type == DT_DIR) {
+		struct stat st;
+		if (lstat(pathbuf, &st)) {
+			MTPE("Failed to lstat '%s'\n", pathbuf);
+			continue;
+		}
+		if (st.st_mode & S_IFDIR) {
 			deleteRecursive(pathbuf);
 			rmdir(pathbuf);
 		} else {
