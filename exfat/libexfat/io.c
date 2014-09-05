@@ -3,7 +3,7 @@
 	exFAT file system implementation library.
 
 	Free exFAT implementation.
-	Copyright (C) 2010-2013  Andrew Nayenko
+	Copyright (C) 2010-2014  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,13 +24,19 @@
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/mount.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#ifdef __APPLE__
+#include <errno.h>
+#if defined(__APPLE__)
 #include <sys/disk.h>
+#elif defined(__OpenBSD__)
+#include <sys/param.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
+#include <sys/ioctl.h>
 #endif
+#include <sys/mount.h>
 #ifdef USE_UBLIO
 #include <sys/uio.h>
 #include <ublio.h>
@@ -65,6 +71,7 @@ static int open_rw(const char* spec)
 	if (fd != -1 && ioctl(fd, BLKROGET, &ro) == 0 && ro)
 	{
 		close(fd);
+		errno = EROFS;
 		return -1;
 	}
 #endif
@@ -93,7 +100,8 @@ struct exfat_dev* exfat_open(const char* spec, enum exfat_mode mode)
 		if (dev->fd == -1)
 		{
 			free(dev);
-			exfat_error("failed to open `%s' in read-only mode", spec);
+			exfat_error("failed to open '%s' in read-only mode: %s", spec,
+					strerror(errno));
 			return NULL;
 		}
 		dev->mode = EXFAT_MODE_RO;
@@ -103,7 +111,8 @@ struct exfat_dev* exfat_open(const char* spec, enum exfat_mode mode)
 		if (dev->fd == -1)
 		{
 			free(dev);
-			exfat_error("failed to open `%s' in read-write mode", spec);
+			exfat_error("failed to open '%s' in read-write mode: %s", spec,
+					strerror(errno));
 			return NULL;
 		}
 		dev->mode = EXFAT_MODE_RW;
@@ -119,11 +128,11 @@ struct exfat_dev* exfat_open(const char* spec, enum exfat_mode mode)
 		if (dev->fd != -1)
 		{
 			dev->mode = EXFAT_MODE_RO;
-			exfat_warn("`%s' is write-protected, mounting read-only", spec);
+			exfat_warn("'%s' is write-protected, mounting read-only", spec);
 			break;
 		}
 		free(dev);
-		exfat_error("failed to open `%s'", spec);
+		exfat_error("failed to open '%s': %s", spec, strerror(errno));
 		return NULL;
 	}
 
@@ -131,7 +140,7 @@ struct exfat_dev* exfat_open(const char* spec, enum exfat_mode mode)
 	{
 		close(dev->fd);
 		free(dev);
-		exfat_error("failed to fstat `%s'", spec);
+		exfat_error("failed to fstat '%s'", spec);
 		return NULL;
 	}
 	if (!S_ISBLK(stbuf.st_mode) &&
@@ -140,11 +149,11 @@ struct exfat_dev* exfat_open(const char* spec, enum exfat_mode mode)
 	{
 		close(dev->fd);
 		free(dev);
-		exfat_error("`%s' is neither a device, nor a regular file", spec);
+		exfat_error("'%s' is neither a device, nor a regular file", spec);
 		return NULL;
 	}
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 	if (!S_ISREG(stbuf.st_mode))
 	{
 		uint32_t block_size = 0;
@@ -167,6 +176,32 @@ struct exfat_dev* exfat_open(const char* spec, enum exfat_mode mode)
 		dev->size = blocks * block_size;
 	}
 	else
+#elif defined(__OpenBSD__)
+	if (!S_ISREG(stbuf.st_mode))
+	{
+		struct disklabel lab;
+		struct partition* pp;
+		char* partition;
+
+		if (ioctl(dev->fd, DIOCGDINFO, &lab) == -1)
+		{
+			close(dev->fd);
+			free(dev);
+			exfat_error("failed to get disklabel");
+			return NULL;
+		}
+
+		/* Don't need to check that partition letter is valid as we won't get
+		   this far otherwise. */
+		partition = strchr(spec, '\0') - 1;
+		pp = &(lab.d_partitions[*partition - 'a']);
+		dev->size = DL_GETPSIZE(pp) * lab.d_secsize;
+
+		if (pp->p_fstype != FS_NTFS)
+			exfat_warn("partition type is not 0x07 (NTFS/exFAT); "
+					"you can fix this with fdisk(8)");
+	}
+	else
 #endif
 	{
 		/* works for Linux, FreeBSD, Solaris */
@@ -175,14 +210,14 @@ struct exfat_dev* exfat_open(const char* spec, enum exfat_mode mode)
 		{
 			close(dev->fd);
 			free(dev);
-			exfat_error("failed to get size of `%s'", spec);
+			exfat_error("failed to get size of '%s'", spec);
 			return NULL;
 		}
 		if (exfat_seek(dev, 0, SEEK_SET) == -1)
 		{
 			close(dev->fd);
 			free(dev);
-			exfat_error("failed to seek to the beginning of `%s'", spec);
+			exfat_error("failed to seek to the beginning of '%s'", spec);
 			return NULL;
 		}
 	}
@@ -210,32 +245,41 @@ struct exfat_dev* exfat_open(const char* spec, enum exfat_mode mode)
 
 int exfat_close(struct exfat_dev* dev)
 {
+	int rc = 0;
+
 #ifdef USE_UBLIO
 	if (ublio_close(dev->ufh) != 0)
+	{
 		exfat_error("failed to close ublio");
+		rc = -EIO;
+	}
 #endif
 	if (close(dev->fd) != 0)
 	{
-		free(dev);
-		exfat_error("failed to close device");
-		return 1;
+		exfat_error("failed to close device: %s", strerror(errno));
+		rc = -EIO;
 	}
 	free(dev);
-	return 0;
+	return rc;
 }
 
 int exfat_fsync(struct exfat_dev* dev)
 {
+	int rc = 0;
+
 #ifdef USE_UBLIO
 	if (ublio_fsync(dev->ufh) != 0)
-#else
-	if (fsync(dev->fd) != 0)
-#endif
 	{
-		exfat_error("fsync failed");
-		return 1;
+		exfat_error("ublio fsync failed");
+		rc = -EIO;
 	}
-	return 0;
+#endif
+	if (fsync(dev->fd) != 0)
+	{
+		exfat_error("fsync failed: %s", strerror(errno));
+		rc = -EIO;
+	}
+	return rc;
 }
 
 enum exfat_mode exfat_get_mode(const struct exfat_dev* dev)
