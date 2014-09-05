@@ -1,0 +1,560 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0b49054d_e6030610",
+        "filename": "exfat/libexfat/io.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "pwrite64",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_0609ea2e",
+        "filename": "exfat/mkfs/fat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "range": {
+        "startLine": 29,
+        "startChar": 7,
+        "endLine": 29,
+        "endChar": 12
+      },
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_260eee36",
+        "filename": "exfat/mkfs/fat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_460bf225",
+        "filename": "exfat/mkfs/fat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "range": {
+        "startLine": 34,
+        "startChar": 7,
+        "endLine": 34,
+        "endChar": 12
+      },
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_6618f67a",
+        "filename": "exfat/mkfs/main.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_8615da43",
+        "filename": "exfat/mkfs/main.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_a622dea1",
+        "filename": "exfat/mkfs/main.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_c627e2b0",
+        "filename": "exfat/mkfs/main.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_e61ce66b",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_0622caa0",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_2637cee2",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_4634d2db",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_6631d6ea",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_862eba85",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_a6473e56",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_c64c427b",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_e6514614",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_06572a07",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_263c2ebb",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_463932ca",
+        "filename": "exfat/mkfs/mkexfat.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_66463657",
+        "filename": "exfat/mkfs/mkexfat.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_86431a44",
+        "filename": "exfat/mkfs/mkexfat.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_a6701ea6",
+        "filename": "exfat/mkfs/mkexfat.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_c6752295",
+        "filename": "exfat/mkfs/mkexfat.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_e66a26b0",
+        "filename": "exfat/mkfs/mkexfat.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_06700aa1",
+        "filename": "exfat/mkfs/rootdir.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_26650edf",
+        "filename": "exfat/mkfs/rootdir.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_466212d8",
+        "filename": "exfat/mkfs/uct.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_665f1613",
+        "filename": "exfat/mkfs/uct.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_865cfa1d",
+        "filename": "exfat/mkfs/vbr.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_a69d7ec1",
+        "filename": "exfat/mkfs/vbr.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b49054d_c6a282fa",
+        "filename": "exfat/mkfs/vbr.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-09-05T13:04:27Z",
+      "side": 1,
+      "message": "off64_t",
+      "revId": "9e20af12220f54e7f137de0fa067271aafef8c03",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
