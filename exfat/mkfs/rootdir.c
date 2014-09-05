@@ -3,7 +3,7 @@
 	Root directory creation code.
 
 	Free exFAT implementation.
-	Copyright (C) 2011-2013  Andrew Nayenko
+	Copyright (C) 2011-2014  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,12 +26,12 @@
 #include "cbm.h"
 #include "uctc.h"
 
-static off64_t rootdir_alignment(void)
+static off_t rootdir_alignment(void)
 {
 	return get_cluster_size();
 }
 
-static off64_t rootdir_size(void)
+static off_t rootdir_size(void)
 {
 	return get_cluster_size();
 }
