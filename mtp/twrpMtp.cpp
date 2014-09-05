@@ -82,12 +82,27 @@ int twrpMtp::start(void) {
 	return 0;
 }
 
-pthread_t twrpMtp::runserver(void) {
+pthread_t twrpMtp::threadserver(void) {
 	pthread_t thread;
 	ThreadPtr mtpptr = &twrpMtp::start;
 	PThreadPtr p = *(PThreadPtr*)&mtpptr;
 	pthread_create(&thread, NULL, p, this);
 	return thread;
+}
+
+pid_t twrpMtp::forkserver(void) {
+	pid_t pid;
+	if ((pid = fork()) == -1) {
+		MTPE("MTP fork failed.\n");
+		return 0;
+	}
+	if (pid == 0) {
+		// Child process
+		start();
+	} else {
+		return pid;
+	}
+	return 0;
 }
 
 void twrpMtp::addStorage(std::string display, std::string path, int mtpid) {

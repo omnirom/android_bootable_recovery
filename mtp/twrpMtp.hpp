@@ -34,7 +34,8 @@
 class twrpMtp {
 	public:
 		twrpMtp(int debug_enabled /* = 0 */);
-		pthread_t runserver(void);
+		pthread_t threadserver(void);
+		pid_t forkserver(void);
 		void addStorage(std::string display, std::string path, int mtpid);
 	private:
 		int start(void);

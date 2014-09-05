@@ -2153,7 +2153,7 @@ TWPartition *TWPartitionManager::Get_Default_Storage_Partition()
 
 bool TWPartitionManager::Enable_MTP(void) {
 #ifdef TW_HAS_MTP
-	if (mtpthread) {
+	if (mtppid) {
 		LOGERR("MTP already enabled\n");
 		return true;
 	}
@@ -2183,9 +2183,14 @@ bool TWPartitionManager::Enable_MTP(void) {
 		}
 	}
 	if (count) {
-		mtpthread = mtp->runserver();
-		DataManager::SetValue("tw_mtp_enabled", 1);
-		return true;
+		mtppid = mtp->forkserver();
+		if (mtppid) {
+			DataManager::SetValue("tw_mtp_enabled", 1);
+			return true;
+		} else {
+			LOGERR("Failed to enable MTP\n");
+			return false;
+		}
 	}
 	LOGERR("No valid storage partitions found for MTP.\n");
 #else
@@ -2206,9 +2211,9 @@ bool TWPartitionManager::Disable_MTP(void) {
 	string productstr = product;
 	TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
 	TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
-	if (mtpthread) {
-		pthread_kill(mtpthread, 0);
-		mtpthread = NULL;
+	if (mtppid) {
+		kill(mtppid, SIGTERM);
+		mtppid = 0;
 	}
 	property_set("sys.usb.config", "adb");
 	DataManager::SetValue("tw_mtp_enabled", 0);
