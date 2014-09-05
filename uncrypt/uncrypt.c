@@ -160,8 +160,6 @@ char* parse_recovery_command_file()
     int count = 0;
     char temp[1024];
 
-
-
     FILE* f = fopen(RECOVERY_COMMAND_FILE, "r");
     if (f == NULL) {
         return NULL;
@@ -405,16 +403,15 @@ int main(int argc, char** argv)
     ALOGI("encryptable: %s\n", encryptable ? "yes" : "no");
     ALOGI("  encrypted: %s\n", encrypted ? "yes" : "no");
 
-    if (!encryptable) {
-        // If the file is on a filesystem that doesn't support
-        // encryption (eg, /cache), then leave it alone.
-        //
-        // TODO: change this to be !encrypted -- if the file is on
-        // /data but /data isn't encrypted, we don't need to use the
-        // block map mechanism.  We do for now so as to get more
-        // testing of it (since most dogfood devices aren't
-        // encrypted).
-
+    // Recovery supports installing packages from 3 paths: /cache,
+    // /data, and /sdcard.  (On a particular device, other locations
+    // may work, but those are three we actually expect.)
+    //
+    // On /data we want to convert the file to a block map so that we
+    // can read the package without mounting the partition.  On /cache
+    // and /sdcard we leave the file alone.
+    if (strncmp(path, "/data/", 6) != 0) {
+        // path does not start with "/data/"; leave it alone.
         unlink(RECOVERY_COMMAND_FILE_TMP);
     } else {
         ALOGI("writing block map %s", map_file);
