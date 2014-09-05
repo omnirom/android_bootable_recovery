@@ -3,7 +3,7 @@
 	Creates exFAT file system.
 
 	Free exFAT implementation.
-	Copyright (C) 2011-2013  Andrew Nayenko
+	Copyright (C) 2011-2014  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ static struct
 {
 	int sector_bits;
 	int spc_bits;
-	off64_t volume_size;
+	off_t volume_size;
 	le16_t volume_label[EXFAT_ENAME_MAX + 1];
 	uint32_t volume_serial;
 	uint64_t first_sector;
@@ -68,7 +68,7 @@ int get_spc_bits(void)
 	return param.spc_bits;
 }
 
-off64_t get_volume_size(void)
+off_t get_volume_size(void)
 {
 	return param.volume_size;
 }
@@ -98,13 +98,13 @@ int get_cluster_size(void)
 	return get_sector_size() << get_spc_bits();
 }
 
-static int setup_spc_bits(int sector_bits, int user_defined, off64_t volume_size)
+static int setup_spc_bits(int sector_bits, int user_defined, off_t volume_size)
 {
 	int i;
 
 	if (user_defined != -1)
 	{
-		off64_t cluster_size = 1 << sector_bits << user_defined;
+		off_t cluster_size = 1 << sector_bits << user_defined;
 		if (volume_size / cluster_size > EXFAT_LAST_DATA_CLUSTER)
 		{
 			struct exfat_human_bytes chb, vhb;
@@ -224,12 +224,12 @@ int main(int argc, char* argv[])
 			spc_bits = logarithm2(atoi(optarg));
 			if (spc_bits < 0)
 			{
-				exfat_error("invalid option value: `%s'", optarg);
+				exfat_error("invalid option value: '%s'", optarg);
 				return 1;
 			}
 			break;
 		case 'V':
-			puts("Copyright (C) 2011-2013  Andrew Nayenko");
+			puts("Copyright (C) 2011-2014  Andrew Nayenko");
 			return 0;
 		default:
 			usage(argv[0]);
