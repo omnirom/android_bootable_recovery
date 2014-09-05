@@ -90,6 +90,21 @@ pthread_t twrpMtp::runserver(void) {
 	return thread;
 }
 
+pid_t twrpMtp::forkserver(void) {
+	pid_t pid;
+	if ((pid = fork()) == -1) {
+		MTPE("MTP fork failed.\n");
+		return 0;
+	}
+	if (pid == 0) {
+		// Child process
+		start();
+	} else {
+		return pid;
+	}
+	return 0;
+}
+
 void twrpMtp::addStorage(std::string display, std::string path, int mtpid) {
 	s = new storage;
 	s->display = display;

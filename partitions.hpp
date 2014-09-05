@@ -239,7 +239,7 @@ private:
 	TWPartition* Find_Next_Storage(string Path, string Exclude);
 	int Open_Lun_File(string Partition_Path, string Lun_File);
 	int mtpid;
-	pthread_t mtpthread;
+	pid_t mtppid;
 	bool mtp_was_enabled;
 
 private:
