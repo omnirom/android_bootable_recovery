@@ -2174,7 +2174,8 @@ bool TWPartitionManager::Enable_MTP(void) {
 	/* To enable MTP debug, use the twrp command line feature to
 	 * twrp set tw_mtp_debug 1
 	 */
-	twrpMtp *mtp = new twrpMtp(DataManager::GetIntValue("tw_mtp_debug"));
+	//twrpMtp *mtp = new twrpMtp(DataManager::GetIntValue("tw_mtp_debug"));
+	twrpMtp *mtp = new twrpMtp(1);
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
 			printf("twrp mtpid: %d\n", (*iter)->mtpid);
