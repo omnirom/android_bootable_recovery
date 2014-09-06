@@ -21,6 +21,7 @@
 
 #include <cutils/tztime.h>
 #include "MtpUtils.h"
+#include "MtpDebug.h"
 
 
 /*
@@ -58,10 +59,14 @@ bool parseDateTime(const char* dateTime, time_t& outSeconds) {
 	tm.tm_year = year - 1900;
 	tm.tm_wday = 0;
 	tm.tm_isdst = -1;
-	if (useUTC)
-		outSeconds = mktime(&tm);
-	else
+	//if (useUTC) {
+	outSeconds = mktime(&tm);
+	//}
+	/* mktime_tz is blocking :P
+	else {
 		outSeconds = mktime_tz(&tm, tm.tm_zone);
+	}
+	*/
 
 	return true;
 }
