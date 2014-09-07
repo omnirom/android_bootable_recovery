@@ -58,6 +58,7 @@
 // #define PRINT_SCREENINFO 1 // Enables printing of screen info to log
 
 typedef struct {
+    int type;
     GGLSurface texture;
     unsigned offset[97];
     unsigned cheight;
@@ -392,6 +393,9 @@ int gr_measureEx(const char *s, void* font)
 
     if (!fnt)   fnt = gr_font;
 
+    if(fnt->type == FONT_TYPE_TTF)
+        return gr_ttf_measureEx(s, font);
+
     while ((off = *s++))
     {
         off -= 32;
@@ -410,6 +414,9 @@ int gr_maxExW(const char *s, void* font, int max_width)
 
     if (!fnt)   fnt = gr_font;
 
+    if(fnt->type == FONT_TYPE_TTF)
+        return gr_ttf_maxExW(s, font, max_width);
+
     while ((off = *s++))
     {
         off -= 32;
@@ -425,6 +432,8 @@ int gr_maxExW(const char *s, void* font, int max_width)
     return total;
 }
 
+// TODO: REMOVE?
+#if 0
 unsigned character_width(const char *s, void* pFont)
 {
 	GRFont *font = (GRFont*) pFont;
@@ -439,6 +448,7 @@ unsigned character_width(const char *s, void* pFont)
 
 	return font->offset[off+1] - font->offset[off];
 }
+#endif
 
 int gr_textEx(int x, int y, const char *s, void* pFont)
 {
@@ -449,6 +459,9 @@ int gr_textEx(int x, int y, const char *s, void* pFont)
 
     /* Handle default font */
     if (!font)  font = gr_font;
+
+    if(font->type == FONT_TYPE_TTF)
+        return gr_ttf_textExWH(gl, x, y, s, pFont, -1, -1);
 
     gl->bindTexture(gl, &font->texture);
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
@@ -479,6 +492,9 @@ int gr_textExW(int x, int y, const char *s, void* pFont, int max_width)
 
     /* Handle default font */
     if (!font)  font = gr_font;
+
+    if(font->type == FONT_TYPE_TTF)
+        return gr_ttf_textExWH(gl, x, y, s, pFont, max_width, -1);
 
     gl->bindTexture(gl, &font->texture);
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
@@ -518,6 +534,9 @@ int gr_textExWH(int x, int y, const char *s, void* pFont, int max_width, int max
     /* Handle default font */
     if (!font)  font = gr_font;
 
+    if(font->type == FONT_TYPE_TTF)
+        return gr_ttf_textExWH(gl, x, y, s, pFont, max_width, max_height);
+
     gl->bindTexture(gl, &font->texture);
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
     gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
@@ -549,6 +568,7 @@ int gr_textExWH(int x, int y, const char *s, void* pFont, int max_width, int max
     return x;
 }
 
+/* TODO: remove?
 int twgr_text(int x, int y, const char *s)
 {
     GGLContext *gl = gr_context;
@@ -575,7 +595,7 @@ int twgr_text(int x, int y, const char *s)
     }
 
     return x;
-}
+}*/
 
 void gr_fill(int x, int y, int w, int h)
 {
@@ -682,33 +702,30 @@ void* gr_loadFont(const char* fontName)
     ftex->stride = width;
     ftex->data = (void*) bits;
     ftex->format = GGL_PIXEL_FORMAT_A_8;
+    font->type = FONT_TYPE_TWRP;
     font->cheight = height;
     font->ascent = height - 2;
     return (void*) font;
 }
 
-int gr_getFontDetails(void* font, unsigned* cheight, unsigned* maxwidth)
+void gr_freeFont(void *font)
+{
+    GRFont *f = font;
+    free(f->texture.data);
+    free(f);
+}
+
+int gr_getMaxFontHeight(void *font)
 {
     GRFont *fnt = (GRFont*) font;
 
     if (!fnt)   fnt = gr_font;
     if (!fnt)   return -1;
 
-    if (cheight)    *cheight = fnt->cheight;
-    if (maxwidth)
-    {
-        int pos;
-        *maxwidth = 0;
-        for (pos = 0; pos < 96; pos++)
-        {
-            unsigned int width = fnt->offset[pos+1] - fnt->offset[pos];
-            if (width > *maxwidth)
-            {
-                *maxwidth = width;
-            }
-        }
-    }
-    return 0;
+    if(fnt->type == FONT_TYPE_TTF)
+        return gr_ttf_getMaxFontHeight(font);
+
+    return fnt->cheight;
 }
 
 static void gr_init_font(void)
@@ -746,6 +763,7 @@ static void gr_init_font(void)
     ftex->stride = width;
     ftex->data = (void*) bits;
     ftex->format = GGL_PIXEL_FORMAT_A_8;
+    gr_font->type = FONT_TYPE_TWRP;
     gr_font->cheight = height;
     gr_font->ascent = height - 2;
     return;

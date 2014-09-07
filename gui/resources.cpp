@@ -65,27 +65,68 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
  : Resource(node, pZip)
 {
 	std::string file;
+	xml_attribute<>* attr;
 
 	mFont = NULL;
 	if (!node)
 		return;
 
-	if (node->first_attribute("filename"))
-		file = node->first_attribute("filename")->value();
+	attr = node->first_attribute("filename");
+	if (!attr)
+		return;
 
-	if (ExtractResource(pZip, "fonts", file, ".dat", TMP_RESOURCE_NAME) == 0)
+	file = attr->value();
+	if(file.size() < 4 || file.compare(file.size()-4, 4, ".ttf") != 0)
 	{
-		mFont = gr_loadFont(TMP_RESOURCE_NAME);
-		unlink(TMP_RESOURCE_NAME);
+		m_type = TYPE_TWRP;
+
+		if (ExtractResource(pZip, "fonts", file, ".dat", TMP_RESOURCE_NAME) == 0)
+		{
+			mFont = gr_loadFont(TMP_RESOURCE_NAME);
+			unlink(TMP_RESOURCE_NAME);
+		}
+		else
+		{
+			mFont = gr_loadFont(file.c_str());
+		}
 	}
 	else
 	{
-		mFont = gr_loadFont(file.c_str());
+		m_type = TYPE_TTF;
+
+		attr = node->first_attribute("size");
+		if(!attr)
+			return;
+
+		int size = atoi(attr->value());
+		int dpi = 300;
+
+		attr = node->first_attribute("dpi");
+		if(attr)
+			dpi = atoi(attr->value());
+
+		if (ExtractResource(pZip, "fonts", file, "", TMP_RESOURCE_NAME) == 0)
+		{
+			mFont = gr_ttf_loadFont(TMP_RESOURCE_NAME, size, dpi);
+			unlink(TMP_RESOURCE_NAME);
+		}
+		else
+		{
+			file = std::string("/res/fonts/") + file;
+			mFont = gr_ttf_loadFont(file.c_str(), size, dpi);
+		}
 	}
 }
 
 FontResource::~FontResource()
 {
+	if(mFont)
+	{
+		if(m_type == TYPE_TTF)
+			gr_ttf_freeFont(mFont);
+		else
+			gr_freeFont(mFont);
+	}
 }
 
 ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)

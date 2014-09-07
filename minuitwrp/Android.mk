@@ -2,7 +2,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := events.c resources.c graphics_overlay.c graphics_utils.c
+LOCAL_SRC_FILES := events.c resources.c graphics_overlay.c graphics_utils.c truetype.c
 
 ifneq ($(TW_BOARD_CUSTOM_GRAPHICS),)
     LOCAL_SRC_FILES += $(TW_BOARD_CUSTOM_GRAPHICS)
@@ -26,7 +26,8 @@ LOCAL_C_INCLUDES += \
     external/libpng \
     external/zlib \
     system/core/include \
-    external/jpeg
+    external/jpeg \
+    external/freetype/include
 
 ifeq ($(RECOVERY_TOUCHSCREEN_SWAP_XY), true)
 LOCAL_CFLAGS += -DRECOVERY_TOUCHSCREEN_SWAP_XY
@@ -107,8 +108,8 @@ ifneq ($(TW_WHITELIST_INPUT),)
   LOCAL_CFLAGS += -DWHITELIST_INPUT=$(TW_WHITELIST_INPUT)
 endif
 
-LOCAL_SHARED_LIBRARIES += libz libc libcutils libjpeg
-LOCAL_STATIC_LIBRARIES += libpng libpixelflinger_static
+LOCAL_SHARED_LIBRARIES += libz libc libcutils libjpeg libft2 libpng
+LOCAL_STATIC_LIBRARIES += libpixelflinger_static
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminuitwrp
 

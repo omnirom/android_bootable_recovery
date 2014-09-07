@@ -177,7 +177,7 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 		}
 	}
 
-	gr_getFontDetails(mFont, &mFontHeight, NULL);
+	mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
 	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 	SetRenderPos(mConsoleX, mConsoleY);
 	return;
