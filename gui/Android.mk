@@ -65,6 +65,9 @@ endif
 ifeq ($(TW_OEM_BUILD), true)
     LOCAL_CFLAGS += -DTW_OEM_BUILD
 endif
+ifeq ($(TW_DISABLE_TTF), true)
+    LOCAL_CFLAGS += -DTW_DISABLE_TTF
+endif
 
 ifeq ($(DEVICE_RESOLUTION),)
 $(warning ********************************************************************************)

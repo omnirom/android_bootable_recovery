@@ -333,7 +333,7 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIObject(node)
 	}
 
 	// Retrieve the line height
-	gr_getFontDetails(mFont ? mFont->GetResource() : NULL, &mFontHeight, NULL);
+	mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
 	mLineHeight = mFontHeight;
 	mHeaderH = mFontHeight;
 
