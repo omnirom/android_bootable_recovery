@@ -198,7 +198,7 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 		}
 	}
 
-	gr_getFontDetails(mFont ? mFont->GetResource() : NULL, (unsigned*) &mFontHeight, NULL);
+	mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
 
 	if(mShowCurr)
 	{
