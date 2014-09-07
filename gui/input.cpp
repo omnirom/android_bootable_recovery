@@ -139,7 +139,7 @@ GUIInput::GUIInput(xml_node<>* node)
 		attr = child->first_attribute("resource");
 		if (attr) {
 			mFont = PageManager::FindResource(attr->value());
-			gr_getFontDetails(mFont ? mFont->GetResource() : NULL, &mFontHeight, NULL);
+			mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
 		}
 	}
 

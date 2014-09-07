@@ -14,9 +14,9 @@
 	</include>
 
 	<resources>
-		<resource name="font" type="font" filename="Roboto-Condensed-30" />
-		<resource name="mediumfont" type="font" filename="Roboto-Condensed-30" />
-		<resource name="filelist" type="font" filename="Roboto-Condensed-30" />
+		<resource name="font" type="font" filename="RobotoCondensed-Regular.ttf" size="30" fallback="Roboto-Condensed-30" />
+		<resource name="mediumfont" type="font" filename="RobotoCondensed-Regular.ttf" size="30" fallback="Roboto-Condensed-30" />
+		<resource name="filelist" type="font" filename="RobotoCondensed-Regular.ttf" size="30" fallback="Roboto-Condensed-30" />
 		<resource name="top_bar" type="image" filename="top-bar.jpg" />
 		<resource name="main_button" type="image" filename="menu-button" />
 		<resource name="file_icon" type="image" filename="file" />

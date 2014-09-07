@@ -97,7 +97,7 @@ GUIText::GUIText(xml_node<>* node)
 	mLastValue = parseText();
 	if (mLastValue != mText)   mIsStatic = 0;
 
-	gr_getFontDetails(mFont ? mFont->GetResource() : NULL, (unsigned*) &mFontHeight, NULL);
+	mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
 	return;
 }
 
