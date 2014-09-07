@@ -38,6 +38,12 @@ typedef enum {
 class FontResource : public Resource
 {
 public:
+	enum Type
+	{
+		TYPE_TWRP,
+		TYPE_TTF,
+	};
+
 	FontResource(xml_node<>* node, ZipArchive* pZip);
 	virtual ~FontResource();
 
@@ -46,6 +52,7 @@ public:
 
 protected:
 	void* mFont;
+	Type m_type;
 };
 
 class ImageResource : public Resource
