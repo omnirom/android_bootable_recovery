@@ -14,7 +14,7 @@
 	</include>
 
 	<resources>
-		<resource name="font" type="font" filename="Roboto-Condensed-16" />
+		<resource name="font" type="font" filename="RobotoCondensed-Regular.ttf" size="16" fallback="Roboto-Condensed-16" />
 		<resource name="base" type="image" filename="background.jpg" />
 		<resource name="main_button" type="image" filename="button" />
 		<resource name="file_icon" type="image" filename="file" />
