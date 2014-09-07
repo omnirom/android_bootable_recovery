@@ -20,6 +20,9 @@
 typedef void* gr_surface;
 typedef unsigned short gr_pixel;
 
+#define FONT_TYPE_TWRP 0
+#define FONT_TYPE_TTF  1
+
 int gr_init(void);
 void gr_exit(void);
 
@@ -35,16 +38,27 @@ void gr_fill(int x, int y, int w, int h);
 int gr_textEx(int x, int y, const char *s, void* font);
 int gr_textExW(int x, int y, const char *s, void* font, int max_width);
 int gr_textExWH(int x, int y, const char *s, void* pFont, int max_width, int max_height);
-int twgr_text(int x, int y, const char *s);
+//int twgr_text(int x, int y, const char *s); TODO: Remove?
 static inline int gr_text(int x, int y, const char *s)     { return gr_textEx(x, y, s, NULL); }
 int gr_measureEx(const char *s, void* font);
 static inline int gr_measure(const char *s)                { return gr_measureEx(s, NULL); }
 int gr_maxExW(const char *s, void* font, int max_width);
 
-int gr_getFontDetails(void* font, unsigned* cheight, unsigned* maxwidth);
-static inline void gr_font_size(int *x, int *y)            { gr_getFontDetails(NULL, (unsigned*) y, (unsigned*) x); }
+int gr_getMaxFontHeight(void *font);
+
+// TODO: Remove?
+//static inline void gr_font_size(int *x, int *y)            { gr_getFontDetails(NULL, (unsigned*) y, (unsigned*) x); }
 
 void* gr_loadFont(const char* fontName);
+void gr_freeFont(void *font);
+
+void *gr_ttf_loadFont(const char *filename, int size, int dpi);
+void gr_ttf_freeFont(void *font);
+int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int max_width, int max_height);
+int gr_ttf_measureEx(const char *s, void *font);
+int gr_ttf_maxExW(const char *s, void *font, int max_width);
+int gr_ttf_getMaxFontHeight(void *font);
+void gr_ttf_dump_stats(void);
 
 void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy);
 unsigned int gr_get_width(gr_surface surface);
