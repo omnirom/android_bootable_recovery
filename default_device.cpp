@@ -32,6 +32,7 @@ static const char* ITEMS[] =  {"reboot system now",
                                "reboot to bootloader",
                                "power down",
                                "view recovery logs",
+                               "apply update from sdcard",
                                NULL };
 
 class DefaultDevice : public Device {
@@ -71,6 +72,7 @@ class DefaultDevice : public Device {
           case 4: return REBOOT_BOOTLOADER;
           case 5: return SHUTDOWN;
           case 6: return READ_RECOVERY_LASTLOG;
+          case 7: return APPLY_EXT;
           default: return NO_ACTION;
         }
     }
