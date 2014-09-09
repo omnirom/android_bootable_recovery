@@ -57,6 +57,12 @@ MyMtpDatabase::~MyMtpDatabase() {
 	}
 }
 
+int MyMtpDatabase::DEVICE_PROPERTIES[3] = {
+	MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER,
+	MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME,
+	MTP_DEVICE_PROPERTY_IMAGE_SIZE
+};
+
 int MyMtpDatabase::FILE_PROPERTIES[10] = {
 	// NOTE must match beginning of AUDIO_PROPERTIES, VIDEO_PROPERTIES
 	// and IMAGE_PROPERTIES below
@@ -71,6 +77,7 @@ int MyMtpDatabase::FILE_PROPERTIES[10] = {
 	MTP_PROPERTY_NAME,
 	MTP_PROPERTY_DATE_ADDED
 };
+
 int MyMtpDatabase::AUDIO_PROPERTIES[19] = {
 	// NOTE must match FILE_PROPERTIES above
 	MTP_PROPERTY_STORAGE_ID,
@@ -268,9 +275,34 @@ MtpObjectFormatList* MyMtpDatabase::getSupportedCaptureFormats() {
 MtpObjectPropertyList* MyMtpDatabase::getSupportedObjectProperties(MtpObjectFormat format) {
 	int* properties;
 	MtpObjectPropertyList* list = new MtpObjectPropertyList();
-	properties = FILE_PROPERTIES;
-	int length = sizeof(FILE_PROPERTIES);
-	MTPD("MyMtpDatabase::getSupportedObjectProperties length is: %i, format: %x, sizeof: %i, forcing length to 10\n", length, format, sizeof(properties));
+	int length = 0;
+	switch (format) {
+		case MTP_FORMAT_MP3:
+		case MTP_FORMAT_WAV:
+		case MTP_FORMAT_WMA:
+		case MTP_FORMAT_OGG:
+		case MTP_FORMAT_AAC:
+			properties = AUDIO_PROPERTIES;
+			length = sizeof(AUDIO_PROPERTIES) / sizeof(AUDIO_PROPERTIES[0]);
+		case MTP_FORMAT_MPEG:
+		case MTP_FORMAT_3GP_CONTAINER:
+		case MTP_FORMAT_WMV:
+			properties = VIDEO_PROPERTIES;
+			length = sizeof(VIDEO_PROPERTIES) / sizeof(VIDEO_PROPERTIES[0]);
+		case MTP_FORMAT_EXIF_JPEG:
+		case MTP_FORMAT_GIF:
+		case MTP_FORMAT_PNG:
+		case MTP_FORMAT_BMP:
+			properties = IMAGE_PROPERTIES;
+			length = sizeof(IMAGE_PROPERTIES) / sizeof(IMAGE_PROPERTIES[0]);
+		case 0:
+			properties = ALL_PROPERTIES;
+			length = sizeof(ALL_PROPERTIES) / sizeof(ALL_PROPERTIES[0]);
+		default:
+			properties = FILE_PROPERTIES;
+			length = sizeof(FILE_PROPERTIES) / sizeof(FILE_PROPERTIES[0]);
+	}
+	MTPD("MyMtpDatabase::getSupportedObjectProperties length is: %i, format: %x, sizeof: %i", length, format);
 	for (int i = 0; i < length; i++) {
 		MTPD("supported object property: %x\n", properties[i]);
 		list->push(properties[i]);
@@ -279,44 +311,13 @@ MtpObjectPropertyList* MyMtpDatabase::getSupportedObjectProperties(MtpObjectForm
 }
 
 MtpDevicePropertyList* MyMtpDatabase::getSupportedDeviceProperties() {
-	int properties[] = {
-		MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER,
-		MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME,
-		MTP_DEVICE_PROPERTY_IMAGE_SIZE,
-	};
 	MtpDevicePropertyList* list = new MtpDevicePropertyList();
-	int length = sizeof(properties) / sizeof(int);
-	MTPD("MyMtpDatabase::getSupportedDeviceProperties length was: %i, forcing to 3\n", length);
-	length = 3;
+	int length = sizeof(DEVICE_PROPERTIES) / sizeof(DEVICE_PROPERTIES[0]);
+	MTPD("MyMtpDatabase::getSupportedDeviceProperties length was: %i\n");
 	for (int i = 0; i < length; i++)
-		list->push(properties[i]);
+		list->push(DEVICE_PROPERTIES[i]);
 	return list;
 }
-
-int* MyMtpDatabase::getSupportedObjectProperties(int format) {
-	switch (format) {
-		case MTP_FORMAT_MP3:
-		case MTP_FORMAT_WAV:
-		case MTP_FORMAT_WMA:
-		case MTP_FORMAT_OGG:
-		case MTP_FORMAT_AAC:
-			return AUDIO_PROPERTIES;
-		case MTP_FORMAT_MPEG:
-		case MTP_FORMAT_3GP_CONTAINER:
-		case MTP_FORMAT_WMV:
-			return VIDEO_PROPERTIES;
-		case MTP_FORMAT_EXIF_JPEG:
-		case MTP_FORMAT_GIF:
-		case MTP_FORMAT_PNG:
-		case MTP_FORMAT_BMP:
-			return IMAGE_PROPERTIES;
-		case 0:
-			return ALL_PROPERTIES;
-		default:
-			return FILE_PROPERTIES;
-	}
-}
-
 MtpResponseCode MyMtpDatabase::getObjectPropertyValue(MtpObjectHandle handle,
 											MtpObjectProperty property,
 											MtpDataPacket& packet) {
@@ -656,7 +657,7 @@ void* MyMtpDatabase::getThumbnail(MtpObjectHandle handle, size_t& outThumbSize) 
 MtpResponseCode MyMtpDatabase::getObjectFilePath(MtpObjectHandle handle, MtpString& outFilePath, int64_t& outFileLength, MtpObjectFormat& outFormat) {
 	std::map<int, MtpStorage*>::iterator storit;
 	for (storit = storagemap.begin(); storit != storagemap.end(); storit++) {
-		MTPD("MyMtpDatabase::getObjectFilePath calling getObhectFilePath\n");
+		MTPD("MyMtpDatabase::getObjectFilePath calling getObjectFilePath\n");
 		if (storit->second->getObjectFilePath(handle, outFilePath, outFileLength, outFormat) == 0) {
 			MTPD("MTP_RESPONSE_OK\n");
 			return MTP_RESPONSE_OK;
@@ -827,7 +828,6 @@ MtpProperty* MyMtpDatabase::getDevicePropertyDesc(MtpDeviceProperty property) {
 
 			// get current value
 			if (ret == MTP_RESPONSE_OK) {
-				MTPD("here\n");
 				result->setCurrentValue('\0');
 				result->setDefaultValue('\0');
 			} else {
