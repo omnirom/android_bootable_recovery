@@ -46,6 +46,7 @@ private:
 	int* getSupportedObjectProperties(int format);
 
     static int FILE_PROPERTIES[10];
+	static int DEVICE_PROPERTIES[3];
     static int AUDIO_PROPERTIES[19];
     static int VIDEO_PROPERTIES[15];
     static int IMAGE_PROPERTIES[12];
