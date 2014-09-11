@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <iomanip>
+#include <sys/wait.h>
 #include "variables.h"
 #include "twcommon.h"
 #include "partitions.hpp"
@@ -2212,8 +2213,12 @@ bool TWPartitionManager::Disable_MTP(void) {
 	TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
 	TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
 	if (mtppid) {
-		kill(mtppid, SIGTERM);
+		LOGINFO("Disabling MTP\n");
+		int status;
+		kill(mtppid, SIGKILL);
 		mtppid = 0;
+		// We don't care about the exit value, but this prevents a zombie process
+		waitpid(mtppid, &status, 0);
 	}
 	property_set("sys.usb.config", "adb");
 	DataManager::SetValue("tw_mtp_enabled", 0);

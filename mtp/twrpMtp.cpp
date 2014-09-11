@@ -99,6 +99,8 @@ pid_t twrpMtp::forkserver(void) {
 	if (pid == 0) {
 		// Child process
 		start();
+		MTPD("MTP child process exited.\n");
+		_exit(0);
 	} else {
 		return pid;
 	}
