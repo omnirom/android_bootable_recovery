@@ -30,6 +30,11 @@ LOCAL_SRC_FILES = \
     mtp_MtpDatabase.cpp \
     node.cpp
 LOCAL_SHARED_LIBRARIES += libz libc libusbhost libstdc++ libstlport libdl libcutils libutils
+
+ifneq ($(TW_MTP_DEVICE),)
+	LOCAL_CFLAGS += -DUSB_MTP_DEVICE=$(TW_MTP_DEVICE)
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 # Build twrpmtp binary / executable

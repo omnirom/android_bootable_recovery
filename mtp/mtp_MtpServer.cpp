@@ -47,11 +47,13 @@ void twmtp_MtpServer::set_storages(storages* mtpstorages) {
 
 int twmtp_MtpServer::setup()
 {
-	#define USB_MTP_DEVICE "/dev/mtp_usb"
 	usePtp =  false;
 	MyMtpDatabase* mtpdb = new MyMtpDatabase();
 #ifdef USB_MTP_DEVICE
-	int fd = open(USB_MTP_DEVICE, O_RDWR);
+#define STRINGIFY(x) #x
+#define EXPAND(x) STRINGIFY(x)
+	MTPI("Using '%s' for MTP device.\n", EXPAND(USB_MTP_DEVICE));
+	int fd = open(EXPAND(USB_MTP_DEVICE), O_RDWR);
 #else
 	int fd = open("/dev/mtp_usb", O_RDWR);
 #endif
