@@ -56,6 +56,8 @@ extern "C" {
 	#endif
 #endif
 
+extern bool datamedia;
+
 TWPartitionManager::TWPartitionManager(void) {
 	mtpid = 100;
 	mtp_was_enabled = false;
@@ -100,6 +102,16 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		}
 	}
 	fclose(fstabFile);
+	if (!datamedia && !settings_partition && Find_Partition_By_Path("/sdcard") == NULL) {
+		// Attempt to automatically identify /data/media emulated storage devices
+		TWPartition* Dat = Find_Partition_By_Path("/data");
+		if (Dat) {
+			LOGINFO("Using automatic handling for /data/media emulated storage device.\n");
+			datamedia = true;
+			Dat->Setup_Data_Media();
+			settings_partition = Dat;
+		}
+	}
 	if (!settings_partition) {
 		std::vector<TWPartition*>::iterator iter;
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
@@ -168,10 +180,8 @@ void TWPartitionManager::Setup_Settings_Storage_Partition(TWPartition* Part) {
 void TWPartitionManager::Setup_Android_Secure_Location(TWPartition* Part) {
 	if (Part->Has_Android_Secure)
 		Part->Setup_AndSec();
-#ifndef RECOVERY_SDCARD_ON_DATA
-	else
+	else if (!datamedia)
 		Part->Setup_AndSec();
-#endif
 }
 
 void TWPartitionManager::Output_Partition_Logging(void) {
@@ -1660,15 +1670,13 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 
 			// Sleep for a bit so that the device will be ready
 			sleep(1);
-#ifdef RECOVERY_SDCARD_ON_DATA
-			if (dat->Mount(false) && TWFunc::Path_Exists("/data/media/0")) {
+			if (dat->Has_Data_Media && dat->Mount(false) && TWFunc::Path_Exists("/data/media/0")) {
 				dat->Storage_Path = "/data/media/0";
 				dat->Symlink_Path = dat->Storage_Path;
 				DataManager::SetValue("tw_storage_path", "/data/media/0");
 				dat->UnMount(false);
 				Output_Partition(dat);
 			}
-#endif
 			Update_System_Details();
 			UnMount_Main_Partitions();
 		} else
@@ -1843,9 +1851,9 @@ void TWPartitionManager::UnMount_Main_Partitions(void) {
 	TWPartition* Boot_Partition = Find_Partition_By_Path("/boot");
 
 	UnMount_By_Path("/system", true);
-#ifndef RECOVERY_SDCARD_ON_DATA
-	UnMount_By_Path("/data", true);
-#endif
+	if (!datamedia)
+		UnMount_By_Path("/data", true);
+
 	if (Boot_Partition != NULL && Boot_Partition->Can_Be_Mounted)
 		Boot_Partition->UnMount(true);
 }
