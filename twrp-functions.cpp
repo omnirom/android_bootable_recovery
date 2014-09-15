@@ -42,6 +42,7 @@
 #include "partitions.hpp"
 #include "variables.h"
 #include "bootloader.h"
+#include "cutils/properties.h"
 #ifdef ANDROID_RB_POWEROFF
 	#include "cutils/android_reboot.h"
 #endif
@@ -1276,6 +1277,16 @@ bool TWFunc::Toggle_MTP(bool enable) {
 #else
 	return false;
 #endif
+}
+
+void TWFunc::SetPerformanceMode(bool mode) {
+	if (mode) {
+		property_set("recovery.perf.mode", "1");
+	} else {
+		property_set("recovery.perf.mode", "0");
+	}
+	// Some time for events to catch up to init handlers
+	usleep(500000);
 }
 
 #endif // ndef BUILD_TWRPTAR_MAIN
