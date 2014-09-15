@@ -75,6 +75,7 @@ int                                     DataManager::mInitialized = 0;
 #ifndef TW_NO_SCREEN_TIMEOUT
 extern blanktimer blankTimer;
 #endif
+extern bool datamedia;
 
 // Device ID functions
 void DataManager::sanitize_device_id(char* device_id) {
@@ -620,133 +621,8 @@ void DataManager::SetDefaultValues()
 	mConstValues.insert(make_pair(TW_SHOW_DUMLOCK, "0"));
 #endif
 
-#ifdef TW_INTERNAL_STORAGE_PATH
-	LOGINFO("Internal path defined: '%s'\n", EXPAND(TW_INTERNAL_STORAGE_PATH));
-	mValues.insert(make_pair(TW_USE_EXTERNAL_STORAGE, make_pair("0", 1)));
-	mConstValues.insert(make_pair(TW_HAS_INTERNAL, "1"));
-	mValues.insert(make_pair(TW_INTERNAL_PATH, make_pair(EXPAND(TW_INTERNAL_STORAGE_PATH), 0)));
-	mConstValues.insert(make_pair(TW_INTERNAL_LABEL, EXPAND(TW_INTERNAL_STORAGE_MOUNT_POINT)));
-	path.clear();
-	path = "/";
-	path += EXPAND(TW_INTERNAL_STORAGE_MOUNT_POINT);
-	mConstValues.insert(make_pair(TW_INTERNAL_MOUNT, path));
-	#ifdef TW_EXTERNAL_STORAGE_PATH
-		LOGINFO("External path defined: '%s'\n", EXPAND(TW_EXTERNAL_STORAGE_PATH));
-		// Device has dual storage
-		mConstValues.insert(make_pair(TW_HAS_DUAL_STORAGE, "1"));
-		mConstValues.insert(make_pair(TW_HAS_EXTERNAL, "1"));
-		mConstValues.insert(make_pair(TW_EXTERNAL_PATH, EXPAND(TW_EXTERNAL_STORAGE_PATH)));
-		mConstValues.insert(make_pair(TW_EXTERNAL_LABEL, EXPAND(TW_EXTERNAL_STORAGE_MOUNT_POINT)));
-		mValues.insert(make_pair(TW_ZIP_EXTERNAL_VAR, make_pair(EXPAND(TW_EXTERNAL_STORAGE_PATH), 1)));
-		path.clear();
-		path = "/";
-		path += EXPAND(TW_EXTERNAL_STORAGE_MOUNT_POINT);
-		mConstValues.insert(make_pair(TW_EXTERNAL_MOUNT, path));
-		if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
-			mValues.insert(make_pair(TW_ZIP_INTERNAL_VAR, make_pair("/emmc", 1)));
-		} else {
-			mValues.insert(make_pair(TW_ZIP_INTERNAL_VAR, make_pair("/sdcard", 1)));
-		}
-	#else
-		LOGINFO("Just has internal storage.\n");
-		// Just has internal storage
-		mValues.insert(make_pair(TW_ZIP_INTERNAL_VAR, make_pair("/sdcard", 1)));
-		mConstValues.insert(make_pair(TW_HAS_DUAL_STORAGE, "0"));
-		mConstValues.insert(make_pair(TW_HAS_EXTERNAL, "0"));
-		mConstValues.insert(make_pair(TW_EXTERNAL_PATH, "0"));
-		mConstValues.insert(make_pair(TW_EXTERNAL_MOUNT, "0"));
-		mConstValues.insert(make_pair(TW_EXTERNAL_LABEL, "0"));
-	#endif
-#else
-	#ifdef RECOVERY_SDCARD_ON_DATA
-		#ifdef TW_EXTERNAL_STORAGE_PATH
-			LOGINFO("Has /data/media + external storage in '%s'\n", EXPAND(TW_EXTERNAL_STORAGE_PATH));
-			// Device has /data/media + external storage
-			mConstValues.insert(make_pair(TW_HAS_DUAL_STORAGE, "1"));
-		#else
-			LOGINFO("Single storage only -- data/media.\n");
-			// Device just has external storage
-			mConstValues.insert(make_pair(TW_HAS_DUAL_STORAGE, "0"));
-			mConstValues.insert(make_pair(TW_HAS_EXTERNAL, "0"));
-		#endif
-	#else
-		LOGINFO("Single storage only.\n");
-		// Device just has external storage
-		mConstValues.insert(make_pair(TW_HAS_DUAL_STORAGE, "0"));
-	#endif
-	#ifdef RECOVERY_SDCARD_ON_DATA
-		LOGINFO("Device has /data/media defined.\n");
-		// Device has /data/media
-		mConstValues.insert(make_pair(TW_USE_EXTERNAL_STORAGE, "0"));
-		mConstValues.insert(make_pair(TW_HAS_INTERNAL, "1"));
-		mValues.insert(make_pair(TW_INTERNAL_PATH, make_pair("/data/media", 0)));
-		mConstValues.insert(make_pair(TW_INTERNAL_MOUNT, "/data"));
-		mConstValues.insert(make_pair(TW_INTERNAL_LABEL, "data"));
-		#ifdef TW_EXTERNAL_STORAGE_PATH
-			if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
-				mValues.insert(make_pair(TW_ZIP_INTERNAL_VAR, make_pair("/emmc", 1)));
-			} else {
-				mValues.insert(make_pair(TW_ZIP_INTERNAL_VAR, make_pair("/sdcard", 1)));
-			}
-		#else
-			mValues.insert(make_pair(TW_ZIP_INTERNAL_VAR, make_pair("/sdcard", 1)));
-		#endif
-	#else
-		LOGINFO("No internal storage defined.\n");
-		// Device has no internal storage
-		mConstValues.insert(make_pair(TW_USE_EXTERNAL_STORAGE, "1"));
-		mConstValues.insert(make_pair(TW_HAS_INTERNAL, "0"));
-		mValues.insert(make_pair(TW_INTERNAL_PATH, make_pair("0", 0)));
-		mConstValues.insert(make_pair(TW_INTERNAL_MOUNT, "0"));
-		mConstValues.insert(make_pair(TW_INTERNAL_LABEL, "0"));
-	#endif
-	#ifdef TW_EXTERNAL_STORAGE_PATH
-		LOGINFO("Only external path defined: '%s'\n", EXPAND(TW_EXTERNAL_STORAGE_PATH));
-		// External has custom definition
-		mConstValues.insert(make_pair(TW_HAS_EXTERNAL, "1"));
-		mConstValues.insert(make_pair(TW_EXTERNAL_PATH, EXPAND(TW_EXTERNAL_STORAGE_PATH)));
-		mConstValues.insert(make_pair(TW_EXTERNAL_LABEL, EXPAND(TW_EXTERNAL_STORAGE_MOUNT_POINT)));
-		mValues.insert(make_pair(TW_ZIP_EXTERNAL_VAR, make_pair(EXPAND(TW_EXTERNAL_STORAGE_PATH), 1)));
-		path.clear();
-		path = "/";
-		path += EXPAND(TW_EXTERNAL_STORAGE_MOUNT_POINT);
-		mConstValues.insert(make_pair(TW_EXTERNAL_MOUNT, path));
-	#else
-		#ifndef RECOVERY_SDCARD_ON_DATA
-			LOGINFO("No storage defined, defaulting to /sdcard.\n");
-			// Standard external definition
-			mConstValues.insert(make_pair(TW_HAS_EXTERNAL, "1"));
-			mConstValues.insert(make_pair(TW_EXTERNAL_PATH, "/sdcard"));
-			mConstValues.insert(make_pair(TW_EXTERNAL_MOUNT, "/sdcard"));
-			mConstValues.insert(make_pair(TW_EXTERNAL_LABEL, "sdcard"));
-			mValues.insert(make_pair(TW_ZIP_EXTERNAL_VAR, make_pair("/sdcard", 1)));
-		#endif
-	#endif
-#endif
-
-#ifdef TW_DEFAULT_EXTERNAL_STORAGE
-	SetValue(TW_USE_EXTERNAL_STORAGE, 1);
-	printf("TW_DEFAULT_EXTERNAL_STORAGE := true\n");
-#endif
-
-#ifdef RECOVERY_SDCARD_ON_DATA
-	if (PartitionManager.Mount_By_Path("/data", false) && TWFunc::Path_Exists("/data/media/0"))
-		SetValue(TW_INTERNAL_PATH, "/data/media/0");
-#endif
 	str = GetCurrentStoragePath();
-#ifdef RECOVERY_SDCARD_ON_DATA
-	#ifndef TW_EXTERNAL_STORAGE_PATH
-		SetValue(TW_ZIP_LOCATION_VAR, "/sdcard", 1);
-	#else
-		if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
-			SetValue(TW_ZIP_LOCATION_VAR, "/emmc", 1);
-		} else {
-			SetValue(TW_ZIP_LOCATION_VAR, "/sdcard", 1);
-		}
-	#endif
-#else
 	SetValue(TW_ZIP_LOCATION_VAR, str.c_str(), 1);
-#endif
 	str += "/TWRP/BACKUPS/";
 
 	string dev_id;
@@ -754,34 +630,6 @@ void DataManager::SetDefaultValues()
 
 	str += dev_id;
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
-
-#ifdef SP1_DISPLAY_NAME
-	printf("SP1_DISPLAY_NAME := %s\n", EXPAND(SP1_DISPLAY_NAME));
-	if (strlen(EXPAND(SP1_DISPLAY_NAME))) mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_DISPLAY_NAME)));
-#else
-	#ifdef SP1_NAME
-		printf("SP1_NAME := %s\n", EXPAND(SP1_NAME));
-		if (strlen(EXPAND(SP1_NAME))) mConstValues.insert(make_pair(TW_SP1_PARTITION_NAME_VAR, EXPAND(SP1_NAME)));
-	#endif
-#endif
-#ifdef SP2_DISPLAY_NAME
-	printf("SP2_DISPLAY_NAME := %s\n", EXPAND(SP2_DISPLAY_NAME));
-	if (strlen(EXPAND(SP2_DISPLAY_NAME))) mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_DISPLAY_NAME)));
-#else
-	#ifdef SP2_NAME
-		printf("SP2_NAME := %s\n", EXPAND(SP2_NAME));
-		if (strlen(EXPAND(SP2_NAME))) mConstValues.insert(make_pair(TW_SP2_PARTITION_NAME_VAR, EXPAND(SP2_NAME)));
-	#endif
-#endif
-#ifdef SP3_DISPLAY_NAME
-	printf("SP3_DISPLAY_NAME := %s\n", EXPAND(SP3_DISPLAY_NAME));
-	if (strlen(EXPAND(SP3_DISPLAY_NAME))) mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_DISPLAY_NAME)));
-#else
-	#ifdef SP3_NAME
-		printf("SP3_NAME := %s\n", EXPAND(SP3_NAME));
-		if (strlen(EXPAND(SP3_NAME))) mConstValues.insert(make_pair(TW_SP3_PARTITION_NAME_VAR, EXPAND(SP3_NAME)));
-	#endif
-#endif
 
 	mConstValues.insert(make_pair(TW_REBOOT_SYSTEM, "1"));
 #ifdef TW_NO_REBOOT_RECOVERY
@@ -800,8 +648,11 @@ void DataManager::SetDefaultValues()
 #ifdef RECOVERY_SDCARD_ON_DATA
 	printf("RECOVERY_SDCARD_ON_DATA := true\n");
 	mConstValues.insert(make_pair(TW_HAS_DATA_MEDIA, "1"));
+	mConstValues.insert(make_pair("tw_has_internal", "1"));
+	datamedia = true;
 #else
-	mConstValues.insert(make_pair(TW_HAS_DATA_MEDIA, "0"));
+	mValues.insert(make_pair(TW_HAS_DATA_MEDIA, make_pair("0", 0)));
+	mValues.insert(make_pair("tw_has_internal", make_pair("0", 0)));
 #endif
 #ifdef TW_NO_BATT_PERCENT
 	printf("TW_NO_BATT_PERCENT := true\n");
@@ -874,27 +725,6 @@ void DataManager::SetDefaultValues()
 #endif
 	mConstValues.insert(make_pair(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE));
 	mValues.insert(make_pair(TW_BACKUP_NAME, make_pair("(Auto Generate)", 0)));
-	mValues.insert(make_pair(TW_BACKUP_SYSTEM_VAR, make_pair("1", 1)));
-	mValues.insert(make_pair(TW_BACKUP_DATA_VAR, make_pair("1", 1)));
-	mValues.insert(make_pair(TW_BACKUP_BOOT_VAR, make_pair("1", 1)));
-	mValues.insert(make_pair(TW_BACKUP_RECOVERY_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_BACKUP_CACHE_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_BACKUP_SP1_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_BACKUP_SP2_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_BACKUP_SP3_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_BACKUP_ANDSEC_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_BACKUP_SDEXT_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_BACKUP_SYSTEM_SIZE, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_BACKUP_DATA_SIZE, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_BACKUP_BOOT_SIZE, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_BACKUP_RECOVERY_SIZE, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_BACKUP_CACHE_SIZE, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_BACKUP_ANDSEC_SIZE, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_BACKUP_SDEXT_SIZE, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_BACKUP_SP1_SIZE, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_BACKUP_SP2_SIZE, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_BACKUP_SP3_SIZE, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_STORAGE_FREE_SIZE, make_pair("0", 0)));
 
 	mValues.insert(make_pair(TW_REBOOT_AFTER_FLASH_VAR, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_SIGNED_ZIP_VERIFY_VAR, make_pair("0", 1)));
@@ -915,12 +745,6 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_TIME_ZONE_GUIOFFSET, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_TIME_ZONE_GUIDST, make_pair("1", 1)));
 	mValues.insert(make_pair(TW_ACTION_BUSY, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_BACKUP_AVG_IMG_RATE, make_pair("15000000", 1)));
-	mValues.insert(make_pair(TW_BACKUP_AVG_FILE_RATE, make_pair("3000000", 1)));
-	mValues.insert(make_pair(TW_BACKUP_AVG_FILE_COMP_RATE, make_pair("2000000", 1)));
-	mValues.insert(make_pair(TW_RESTORE_AVG_IMG_RATE, make_pair("15000000", 1)));
-	mValues.insert(make_pair(TW_RESTORE_AVG_FILE_RATE, make_pair("3000000", 1)));
-	mValues.insert(make_pair(TW_RESTORE_AVG_FILE_COMP_RATE, make_pair("2000000", 1)));
 	mValues.insert(make_pair("tw_wipe_cache", make_pair("0", 0)));
 	mValues.insert(make_pair("tw_wipe_dalvik", make_pair("0", 0)));
 	if (GetIntValue(TW_HAS_INTERNAL) == 1 && GetIntValue(TW_HAS_DATA_MEDIA) == 1 && GetIntValue(TW_HAS_EXTERNAL) == 0)

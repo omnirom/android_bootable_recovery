@@ -51,6 +51,7 @@ struct selabel_handle *selinux_handle;
 
 TWPartitionManager PartitionManager;
 int Log_Offset;
+bool datamedia;
 twrpDU du;
 
 static void Print_Prop(const char *key, const char *name, void *cookie) {
@@ -75,6 +76,10 @@ int main(int argc, char **argv) {
 		adb_main(argv[2]);
 		return 0;
 	}
+
+#ifdef RECOVERY_SDCARD_ON_DATA
+	datamedia = true;
+#endif
 
 	char crash_prop_val[PROPERTY_VALUE_MAX];
 	int crash_counter;
