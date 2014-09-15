@@ -76,6 +76,7 @@ public:
 
 protected:
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
+	void Setup_Data_Media(int mtp);                                           // Sets up a partition as a /data/media emulated storage partition
 
 private:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
