@@ -33,14 +33,15 @@ extern "C" {
 
 using namespace std;
 
+extern bool datamedia;
+
 twrpDU::twrpDU() {
-		add_relative_dir(".");
-		add_relative_dir("..");
-		add_relative_dir("lost+found");
-		add_absolute_dir("/data/data/com.google.android.music/files");
-#ifdef RECOVERY_SDCARD_ON_DATA
+	add_relative_dir(".");
+	add_relative_dir("..");
+	add_relative_dir("lost+found");
+	add_absolute_dir("/data/data/com.google.android.music/files");
+	if (datamedia)
 		add_absolute_dir("/data/media");
-#endif
 }
 
 void twrpDU::add_relative_dir(const string& dir) {
