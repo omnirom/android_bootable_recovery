@@ -853,7 +853,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				DataManager::SetValue("tw_filename", zip_queue[i]);
 				DataManager::SetValue(TW_ZIP_INDEX, (i + 1));
 
+				TWFunc::SetPerformanceMode(true);
 				ret_val = flash_zip(zip_queue[i], arg, simulate, &wipe_cache);
+				TWFunc::SetPerformanceMode(false);
 				if (ret_val != 0) {
 					gui_print("Error flashing zip '%s'\n", zip_queue[i].c_str());
 					i = 10; // Error flashing zip - exit queue
@@ -1416,10 +1418,12 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				DataManager::GetValue("tw_restore", Restore_Path);
 				Restore_Path += "/";
 				DataManager::GetValue("tw_restore_password", Password);
+				TWFunc::SetPerformanceMode(true);
 				if (TWFunc::Try_Decrypting_Backup(Restore_Path, Password))
 					op_status = 0; // success
 				else
 					op_status = 1; // fail
+				TWFunc::SetPerformanceMode(false);
 			}
 
 			operation_end(op_status, simulate);
