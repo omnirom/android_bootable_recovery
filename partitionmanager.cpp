@@ -1862,7 +1862,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 #else
 	TWPartition* SDCard = Find_Partition_By_Path("/sdcard");
 #endif
-	if (SDCard == NULL) {
+	if (SDCard == NULL || !SDCard->Removable || SDCard->Has_Data_Media) {
 		LOGERR("Unable to locate device to partition.\n");
 		return false;
 	}
