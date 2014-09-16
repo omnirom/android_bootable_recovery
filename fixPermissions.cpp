@@ -71,6 +71,10 @@ int fixPermissions::restorecon(string entry, struct stat *sb) {
 int fixPermissions::fixDataDataContexts(void) {
 	string dir = "/data/data/";
 	sehandle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
+	if (!sehandle) {
+		LOGINFO("Unable to open /file_contexts\n");
+		return 0;
+	}
 	if (TWFunc::Path_Exists(dir)) {
 		fixContextsRecursively(dir, 0);
 	}
@@ -112,7 +116,10 @@ int fixPermissions::fixDataInternalContexts(void) {
 	struct stat sb;
 	string dir, androiddir;
 	sehandle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
-
+	if (!sehandle) {
+		LOGINFO("Unable to open /file_contexts\n");
+		return 0;
+	}
 	if (TWFunc::Path_Exists("/data/media/0"))
 		dir = "/data/media/0";
 	else
