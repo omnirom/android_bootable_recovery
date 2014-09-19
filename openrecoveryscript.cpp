@@ -105,7 +105,7 @@ int OpenRecoveryScript::run_script_file(void) {
 					remove_nl = 1;
 			if (cindex != 0) {
 				strncpy(command, script_line, cindex);
-				LOGINFO("command is: '%s' and ", command);
+				LOGINFO("command is: '%s'\n", command);
 				val_start = script_line;
 				val_start += cindex + 1;
 				if ((int) *val_start == 32)
@@ -477,11 +477,11 @@ string OpenRecoveryScript::Locate_Zip_File(string Zip, string Storage_Root) {
 	while (pos != string::npos)
 	{
 		pathCpy = Path.substr(pos, Path.size() - pos);
-		wholePath = pathCpy + "/" + File;
+		wholePath = pathCpy + File;
 		LOGINFO("Looking for zip at '%s'\n", wholePath.c_str());
 		if (TWFunc::Path_Exists(wholePath))
 			return wholePath;
-		wholePath = Storage_Root + "/" + wholePath;
+		wholePath = Storage_Root + wholePath;
 		LOGINFO("Looking for zip at '%s'\n", wholePath.c_str());
 		if (TWFunc::Path_Exists(wholePath))
 			return wholePath;
