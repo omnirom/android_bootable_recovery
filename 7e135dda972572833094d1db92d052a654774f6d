@@ -46,6 +46,30 @@
       "revId": "7e135dda972572833094d1db92d052a654774f6d",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_d3a7a607",
+        "filename": "twrp.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2014-09-20T13:49:34Z",
+      "side": 1,
+      "message": "Great explanation, thanks _that.",
+      "parentUuid": "cb528df8_f3566a09",
+      "range": {
+        "startLine": 54,
+        "startChar": 5,
+        "endLine": 54,
+        "endChar": 14
+      },
+      "revId": "7e135dda972572833094d1db92d052a654774f6d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
