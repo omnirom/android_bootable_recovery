@@ -22,6 +22,30 @@
       "revId": "7e135dda972572833094d1db92d052a654774f6d",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_f3566a09",
+        "filename": "twrp.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-09-20T09:00:48Z",
+      "side": 1,
+      "message": "Yes. According to the standard, variables with static storage duration are initialized before main(). The standard talks about \"zero initialization\" - the variable is initialized with integer 0 converted to its type bool, which results in false.",
+      "parentUuid": "cb528df8_10112461",
+      "range": {
+        "startLine": 54,
+        "startChar": 5,
+        "endLine": 54,
+        "endChar": 14
+      },
+      "revId": "7e135dda972572833094d1db92d052a654774f6d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
