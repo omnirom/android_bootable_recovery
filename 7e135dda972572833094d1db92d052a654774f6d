@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cb528df8_10112461",
+        "filename": "twrp.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2014-09-20T04:02:37Z",
+      "side": 1,
+      "message": "novice programming question: at this scope, datamedia initializes to false? is that why you can have so many if(datamedia) checks elsewhere, even if it\u0027s not explicitly set to a default value here?",
+      "range": {
+        "startLine": 54,
+        "startChar": 5,
+        "endLine": 54,
+        "endChar": 14
+      },
+      "revId": "7e135dda972572833094d1db92d052a654774f6d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
