@@ -111,7 +111,7 @@ void twrpMtp::addStorage(std::string display, std::string path, int mtpid) {
 	s = new storage;
 	s->display = display;
 	s->mount = path;
-	s->mtpid = mtpid;
+	s->mtpid = 0xFFFF + mtpid;
 	MTPD("twrpMtp mtpid: %d\n", s->mtpid);
 	mtpstorages->push_back(s);
 }
