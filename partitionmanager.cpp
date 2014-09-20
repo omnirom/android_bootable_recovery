@@ -68,6 +68,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 	char fstab_line[MAX_FSTAB_LINE_LENGTH];
 	TWPartition* settings_partition = NULL;
 	TWPartition* andsec_partition = NULL;
+	bool ignore_fstab_sdcard = false;
 
 	fstabFile = fopen(Fstab_Filename.c_str(), "rt");
 	if (fstabFile == NULL) {
@@ -96,12 +97,30 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			} else {
 				partition->Has_Android_Secure = false;
 			}
+			if (partition->Data_Media_Size_Reference > 0) {
+				partition->Find_Partition_Size();
+				if (partition->Size == (partition->Data_Media_Size_Reference * 1024ULL))
+					ignore_fstab_sdcard = true;
+			}
 			Partitions.push_back(partition);
 		} else {
 			delete partition;
 		}
 	}
 	fclose(fstabFile);
+	if (ignore_fstab_sdcard) {
+		std::vector<TWPartition*>::iterator iter;
+		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+			if ((*iter)->Mount_Point == "/emmc" || (*iter)->Mount_Point == "/sdcard" || (*iter)->Mount_Point == "/internal_sd" || (*iter)->Mount_Point == "/internal_sdcard") {
+				if ((*iter)->Is_Settings_Storage)
+					settings_partition = NULL;
+				if ((*iter)->Has_Android_Secure)
+					andsec_partition = NULL;
+				Partitions.erase(iter);
+				break;
+			}
+		}
+	}
 	if (!datamedia && !settings_partition && Find_Partition_By_Path("/sdcard") == NULL && Find_Partition_By_Path("/internal_sd") == NULL && Find_Partition_By_Path("/internal_sdcard") == NULL && Find_Partition_By_Path("/emmc") == NULL) {
 		// Attempt to automatically identify /data/media emulated storage devices
 		TWPartition* Dat = Find_Partition_By_Path("/data");
@@ -130,7 +149,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			LOGINFO("Error creating fstab\n");
 	}
 
-	if (andsec_partition) {
+	if (datamedia && andsec_partition) {
 		Setup_Android_Secure_Location(andsec_partition);
 	} else if (settings_partition) {
 		Setup_Android_Secure_Location(settings_partition);
@@ -285,6 +304,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("   Mount_Flags=0x%8x, Mount_Options=%s\n", Part->Mount_Flags, Part->Mount_Options.c_str());
 	if (Part->mtpid)
 		printf("   MTP Storage ID: %i\n", Part->mtpid);
+	if (Part->Data_Media_Size_Reference > 0)
+		printf("   Data_Media_Size_Reference: %llu\n", Part->Data_Media_Size_Reference);
 	printf("\n");
 }
 
