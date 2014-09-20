@@ -158,6 +158,7 @@ TWPartition::TWPartition(int *id) {
 	Format_Block_Size = 0;
 	Ignore_Blkid = false;
 	Retain_Layout_Version = false;
+	Data_Media_Size_Reference = 0;
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 	EcryptFS_Password = "";
 #endif
@@ -578,6 +579,9 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 				Mount_Options.resize(Mount_Options.size() - 1);
 			}
 			Process_FS_Flags(Mount_Options, Mount_Flags);
+		} else if (ptr_len > 11 && strncmp(ptr, "dmdatasize=", 11) == 0) {
+			ptr += 11;
+			Data_Media_Size_Reference = atol(ptr);
 		} else {
 			if (Display_Error)
 				LOGERR("Unhandled flag: '%s'\n", ptr);
