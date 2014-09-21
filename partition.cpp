@@ -864,7 +864,7 @@ bool TWPartition::Find_Partition_Size(void) {
 			char label[32], device[32];
 			unsigned long size = 0;
 
-			sscanf(line, "%s %lx %*lx %*lu %s", label, &size, device);
+			sscanf(line, "%s %lx %*x %*u %s", label, &size, device);
 
 			// Skip header, annotation	and blank lines
 			if ((strncmp(device, "/dev/", 5) != 0) || (strlen(line) < 8))
@@ -1391,13 +1391,13 @@ string TWPartition::Get_Restore_File_System(string restore_folder) {
 	first_period = Backup_FileName.find(".");
 	if (first_period == string::npos) {
 		LOGERR("Unable to find file system (first period).\n");
-		return false;
+		return string();
 	}
 	Restore_File_System = Backup_FileName.substr(first_period + 1, Backup_FileName.size() - first_period - 1);
 	second_period = Restore_File_System.find(".");
 	if (second_period == string::npos) {
 		LOGERR("Unable to find file system (second period).\n");
-		return false;
+		return string();
 	}
 	Restore_File_System.resize(second_period);
 	LOGINFO("Restore file system is: '%s'.\n", Restore_File_System.c_str());
