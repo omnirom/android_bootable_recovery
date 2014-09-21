@@ -108,8 +108,7 @@ static struct flag_list mount_flags[] = {
 	{ 0,            0 },
 };
 
-TWPartition::TWPartition(int *id) {
-	initmtpid = id;
+TWPartition::TWPartition() {
 	Can_Be_Mounted = false;
 	Can_Be_Wiped = false;
 	Can_Be_Backed_Up = false;
@@ -409,12 +408,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Display_Name = "Recovery";
 			Backup_Display_Name = Display_Name;
 		}
-	}
-
-	// Generate MTP ID
-	if (Is_Storage) {
-		(*initmtpid)++;
-		mtpid = *initmtpid;
 	}
 
 	// Process any custom flags
