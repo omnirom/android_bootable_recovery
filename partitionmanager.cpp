@@ -57,7 +57,6 @@ extern "C" {
 #endif
 
 TWPartitionManager::TWPartitionManager(void) {
-	mtpid = 100;
 	mtp_was_enabled = false;
 }
 
@@ -79,7 +78,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 
 		if (fstab_line[strlen(fstab_line) - 1] != '\n')
 			fstab_line[strlen(fstab_line)] = '\n';
-		TWPartition* partition = new TWPartition(&mtpid);
+		TWPartition* partition = new TWPartition();
 		string line = fstab_line;
 		memset(fstab_line, 0, sizeof(fstab_line));
 
@@ -2176,10 +2175,12 @@ bool TWPartitionManager::Enable_MTP(void) {
 	 * twrp set tw_mtp_debug 1
 	 */
 	twrpMtp *mtp = new twrpMtp(DataManager::GetIntValue("tw_mtp_debug"));
+	unsigned int storageid = 1 << 16;	// upper 16 bits are for physical storage device, we pretend to have only one
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
-			printf("twrp mtpid: %d\n", (*iter)->mtpid);
-			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, (*iter)->mtpid);
+			++storageid;
+			printf("twrp mtpstorageid: %u\n", storageid);
+			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, storageid);
 			count++;
 		}
 	}
