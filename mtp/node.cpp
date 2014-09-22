@@ -105,7 +105,6 @@ void Node::addProperties(int storageID, int parent_object) {
 	uint64_t puid;
 	off_t file_size = 0;
 	std::string mtimeStr = "00101T000000";
-	std::string atimeStr = "00101T000000";
 
 	std::string mtpidStr = static_cast<std::ostringstream*>( &(std::ostringstream() << mtpid) )->str();
 	std::string storageIDStr = static_cast<std::ostringstream*>( &(std::ostringstream() << storageID) )->str();
@@ -117,7 +116,6 @@ void Node::addProperties(int storageID, int parent_object) {
 		if (S_ISDIR(st.st_mode))
 			mFormat = MTP_FORMAT_ASSOCIATION; // folder
 		mtimeStr = static_cast<std::ostringstream*>( &(std::ostringstream() << st.st_mtime) )->str();
-		atimeStr = static_cast<std::ostringstream*>( &(std::ostringstream() << st.st_atime) )->str();
 	}
 
 	addProperty(MTP_PROPERTY_STORAGE_ID, storageID, "", MTP_TYPE_UINT32);
@@ -131,7 +129,7 @@ void Node::addProperties(int storageID, int parent_object) {
 	addProperty(MTP_PROPERTY_PERSISTENT_UID, puid, "", MTP_TYPE_UINT128);
 	addProperty(MTP_PROPERTY_NAME, 0, basename(getPath().c_str()), MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_DISPLAY_NAME, 0, basename(getPath().c_str()), MTP_TYPE_STR);
-	addProperty(MTP_PROPERTY_DATE_ADDED, 0, atimeStr, MTP_TYPE_STR);
+	addProperty(MTP_PROPERTY_DATE_ADDED, 0, mtimeStr, MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_DESCRIPTION, 0, "", MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_ARTIST, 0, "", MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_ALBUM_NAME, 0, "", MTP_TYPE_STR);
