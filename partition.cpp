@@ -1327,6 +1327,8 @@ bool TWPartition::Check_MD5(string restore_folder) {
 	int index = 0;
 	twrpDigest md5sum;
 
+	sync();
+
 	memset(split_filename, 0, sizeof(split_filename));
 	Full_Filename = restore_folder + "/" + Backup_FileName;
 	if (!TWFunc::Path_Exists(Full_Filename)) {
