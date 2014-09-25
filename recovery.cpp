@@ -60,6 +60,7 @@ static const struct option OPTIONS[] = {
   { "locale", required_argument, NULL, 'l' },
   { "stages", required_argument, NULL, 'g' },
   { "shutdown_after", no_argument, NULL, 'p' },
+  { "reason", required_argument, NULL, 'r' },
   { NULL, 0, NULL, 0 },
 };
 
@@ -80,6 +81,7 @@ RecoveryUI* ui = NULL;
 char* locale = NULL;
 char recovery_version[PROPERTY_VALUE_MAX+1];
 char* stage = NULL;
+char* reason = NULL;
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -870,6 +872,7 @@ main(int argc, char **argv) {
             break;
         }
         case 'p': shutdown_after = true; break;
+        case 'r': reason = optarg; break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -881,6 +884,7 @@ main(int argc, char **argv) {
     }
     printf("locale is [%s]\n", locale);
     printf("stage is [%s]\n", stage);
+    printf("reason is [%s]\n", reason);
 
     Device* device = make_device();
     ui = device->GetUI();
