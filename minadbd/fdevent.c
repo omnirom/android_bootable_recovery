@@ -102,7 +102,8 @@ static fdevent list_pending = {
 static fdevent **fd_table = 0;
 static int fd_table_max = 0;
 
-#ifdef __linux__
+#ifdef CRAPTASTIC
+//HAVE_EPOLL
 
 #include <sys/epoll.h>
 
@@ -110,16 +111,32 @@ static int epoll_fd = -1;
 
 static void fdevent_init()
 {
-    epoll_fd = epoll_create1(EPOLL_CLOEXEC);
-    if(epoll_fd == -1) {
+        /* XXX: what's a good size for the passed in hint? */
+    epoll_fd = epoll_create(256);
+
+    if(epoll_fd < 0) {
         perror("epoll_create() failed");
         exit(1);
     }
+
+        /* mark for close-on-exec */
+    fcntl(epoll_fd, F_SETFD, FD_CLOEXEC);
 }
 
 static void fdevent_connect(fdevent *fde)
 {
-    // Nothing to do here. fdevent_update will handle the EPOLL_CTL_ADD.
+    struct epoll_event ev;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.events = 0;
+    ev.data.ptr = fde;
+
+#if 0
+    if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fde->fd, &ev)) {
+        perror("epoll_ctl() failed\n");
+        exit(1);
+    }
+#endif
 }
 
 static void fdevent_disconnect(fdevent *fde)
