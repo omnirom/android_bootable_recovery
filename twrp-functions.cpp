@@ -1289,4 +1289,10 @@ void TWFunc::SetPerformanceMode(bool mode) {
 	usleep(500000);
 }
 
+std::string TWFunc::to_string(unsigned long value) {
+	std::ostringstream os;
+	os << value;
+	return os.str();
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN
