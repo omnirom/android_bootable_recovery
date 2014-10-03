@@ -222,7 +222,7 @@
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="239" y="20" />
-				<text>Team Win Recovery Project  v%tw_version%</text>
+				<text>Team Win Recovery Project	 v%tw_version%</text>
 			</object>
 
 			<object type="text" color="%text_color%">
@@ -247,6 +247,15 @@
 					<condition var1="tw_battery" op="<" var2="101" />
 				</conditions>
 				<text>Battery: %tw_battery%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="739" y="132" />
+				<conditions>
+					<condition var1="tw_no_cpu_temp" var2="0" />
+				</conditions>
+				<text>CPU: %tw_cpu_temp% C</text>
 			</object>
 
 			<object type="button">
