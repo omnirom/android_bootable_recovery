@@ -249,6 +249,15 @@
 				<text>Battery: %tw_battery%</text>
 			</object>
 
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="739" y="132" />
+				<conditions>
+					<condition var1="tw_no_cpu_temp" var2="0" />
+				</conditions>
+				<text>CPU: %tw_cpu_temp% C</text>
+			</object>
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<placement x="%home_button_x%" y="%home_button_y%" />
