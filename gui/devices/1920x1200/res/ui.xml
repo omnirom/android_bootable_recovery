@@ -252,6 +252,15 @@
 				<text>%tw_time%</text>
 			</object>
 
+                        <object type="text" color="%text_color%">
+                                <font resource="font" />
+                                <placement x="950" y="40" />
+                                <conditions>
+                                    <condition var1="tw_no_cpu_temp" var2="1" />
+                                </conditions>
+                                <text>CPU: %tw_cpu_temp% C</text>
+                        </object>
+
 			<object type="text" color="%text_color%">
 				<condition var1="tw_simulate_actions" var2="1" />
 				<font resource="font" />

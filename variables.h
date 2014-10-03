@@ -130,6 +130,7 @@
 #define TW_HAS_SDEXT_PARTITION      "tw_has_sdext_partition"
 #define TW_HAS_USB_STORAGE          "tw_has_usb_storage"
 #define TW_NO_BATTERY_PERCENT       "tw_no_battery_percent"
+#define TW_NO_CPU_TEMP		    "tw_no_cpu_temp"
 #define TW_POWER_BUTTON             "tw_power_button"
 #define TW_SIMULATE_ACTIONS         "tw_simulate_actions"
 #define TW_SIMULATE_FAIL            "tw_simulate_fail"
