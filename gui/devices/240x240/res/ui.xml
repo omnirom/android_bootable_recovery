@@ -238,6 +238,15 @@
 				</conditions>
 				<text>%tw_battery%</text>
 			</object>
+
+                        <object type="text" color="%text_color%">
+                                <font resource="font" />
+                                <placement x="372" y="3" />
+                                <conditions>
+                                    <condition var1="tw_no_cpu_temp" var2="1" />
+                                </conditions>
+                                <text>CPU: %tw_cpu_temp% C</text>
+                        </object>
 		</template>
 
 		<template name="header">
