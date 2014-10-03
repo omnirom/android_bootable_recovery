@@ -248,8 +248,17 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="450" y="37" />
+				<placement x="425" y="37" />
 				<text>%tw_time%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="500" y="37" />
+				<conditions>
+					<condition var1="tw_no_cpu_temp" var2="0" />
+				</conditions>
+				<text>CPU: %tw_cpu_temp% C</text>
 			</object>
 
 			<object type="text" color="%text_color%">

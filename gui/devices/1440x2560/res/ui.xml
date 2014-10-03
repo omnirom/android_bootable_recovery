@@ -9,9 +9,9 @@
 		<preview>preview.jpg</preview>
 	</details>
 
-    <include>
-        <xmlfile name="portrait.xml" />
-    </include>
+	<include>
+		<xmlfile name="portrait.xml" />
+	</include>
 
 	<resources>
 		<resource name="font" type="font" filename="RobotoCondensed-Regular.ttf" size="50" fallback="Roboto-Condensed-50" />
@@ -244,6 +244,15 @@
 					<condition var1="tw_battery" op="<" var2="101" />
 				</conditions>
 				<text>Battery: %tw_battery%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="839" y="132" />
+				<conditions>
+					<condition var1="tw_no_cpu_temp" var2="0" />
+				</conditions>
+				<text>CPU: %tw_cpu_temp% C</text>
 			</object>
 
 			<object type="button">

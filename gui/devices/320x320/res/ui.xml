@@ -224,7 +224,7 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="200" y="3" />
+				<placement x="110" y="3" />
 				<text>%tw_time%</text>
 			</object>
 
@@ -237,6 +237,15 @@
 					<condition var1="tw_battery" op="<" var2="101" />
 				</conditions>
 				<text>%tw_battery%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="190" y="3" />
+				<conditions>
+					<condition var1="tw_no_cpu_temp" var2="0" />
+				</conditions>
+				<text>CPU: %tw_cpu_temp% C</text>
 			</object>
 		</template>
 

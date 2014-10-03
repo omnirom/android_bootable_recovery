@@ -231,13 +231,13 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="250" y="5" />
+				<placement x="200" y="5" />
 				<text>Team Win Recovery Project  v%tw_version%</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="250" y="30" />
+				<placement x="200" y="30" />
 				<conditions>
 					<condition var1="tw_no_battery_percent" var2="0" />
 					<condition var1="tw_battery" op=">" var2="0" />
@@ -248,14 +248,23 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="450" y="30" />
+				<placement x="400" y="30" />
 				<text>%tw_time%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="700" y="30" />
+				<conditions>
+					<condition var1="tw_no_cpu_temp" var2="0" />
+				</conditions>
+				<text>CPU: %tw_cpu_temp% C</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<condition var1="tw_simulate_actions" var2="1" />
 				<font resource="font" />
-				<placement x="550" y="30" />
+				<placement x="475" y="30" />
 				<text>SIMULATING ACTIONS</text>
 			</object>
 

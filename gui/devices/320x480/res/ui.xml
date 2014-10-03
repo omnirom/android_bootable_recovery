@@ -232,13 +232,22 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="165" y="39" />
+				<placement x="135" y="39" />
 				<conditions>
 					<condition var1="tw_no_battery_percent" var2="0" />
 					<condition var1="tw_battery" op=">" var2="0" />
 					<condition var1="tw_battery" op="<" var2="101" />
 				</conditions>
 				<text>Battery: %tw_battery%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="265" y="39" />
+				<conditions>
+					<condition var1="tw_no_cpu_temp" var2="0" />
+				</conditions>
+				<text>%tw_cpu_temp% C</text>
 			</object>
 
 			<object type="button">
