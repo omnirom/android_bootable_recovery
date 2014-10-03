@@ -72,6 +72,7 @@ map<string, DataManager::TStrIntPair>   DataManager::mValues;
 map<string, string>                     DataManager::mConstValues;
 string                                  DataManager::mBackingFile;
 int                                     DataManager::mInitialized = 0;
+
 #ifndef TW_NO_SCREEN_TIMEOUT
 extern blanktimer blankTimer;
 #endif
@@ -352,7 +353,6 @@ int DataManager::GetValue(const string varName, string& value)
 	// Handle magic values
 	if (GetMagicValue(localStr, value) == 0)
 		return 0;
-
 	map<string, string>::iterator constPos;
 	constPos = mConstValues.find(localStr);
 	if (constPos != mConstValues.end())
@@ -809,6 +809,12 @@ void DataManager::SetDefaultValues()
 #else
 	mConstValues.insert(make_pair(TW_NO_BATTERY_PERCENT, "0"));
 #endif
+#ifdef TW_NO_CPU_TEMP
+	printf("TW_NO_CPU_TEMP := true\n");
+	mConstValues.insert(make_pair(TW_NO_CPU_TEMP, "1"));
+#else
+	mConstValues.insert(make_pair(TW_NO_CPU_TEMP, "0"));
+#endif
 #ifdef TW_CUSTOM_POWER_BUTTON
 	printf("TW_POWER_BUTTON := %s\n", EXPAND(TW_CUSTOM_POWER_BUTTON));
 	mConstValues.insert(make_pair(TW_POWER_BUTTON, EXPAND(TW_CUSTOM_POWER_BUTTON)));
@@ -1037,6 +1043,37 @@ int DataManager::GetMagicValue(const string varName, string& value)
 		}
 		value = tmp;
 		return 0;
+	}
+	else if (varName == "tw_cpu_temp")
+	{
+	   string cpu_temp_file;
+	   static unsigned long convert_temp = 0;
+	   static time_t cpuSecCheck = 0;
+	   int divisor = 0;
+	   struct timeval curTime;
+	   string results;
+
+	   gettimeofday(&curTime, NULL);
+	   if (curTime.tv_sec > cpuSecCheck)
+	   {
+		   LOGINFO("updating cpu\n");
+#ifdef TW_CUSTOM_CPU_TEMP_PATH
+		   cpu_temp_file = EXPAND(TW_CUSTOM_CPU_TEMP_PATH);
+		   if (TWFunc::read_file(cpu_temp_file, results) != 0)
+			return -1;
+#else
+		   cpu_temp_file = "/sys/class/thermal/thermal_zone0/temp";
+		   if (TWFunc::read_file(cpu_temp_file, results) != 0)
+			return -1;
+#endif
+		   convert_temp = strtoul(results.c_str(), NULL, 0) / 1000;
+		   if (convert_temp <= 0)
+			convert_temp = strtoul(results.c_str(), NULL, 0);
+	 	   cpuSecCheck = curTime.tv_sec + 5;
+	   }
+	   value = TWFunc::to_string(convert_temp);
+   	   LOGINFO("value: %s\n", value.c_str());
+	   return 0;
 	}
 	else if (varName == "tw_battery")
 	{
