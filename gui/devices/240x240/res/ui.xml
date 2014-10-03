@@ -216,7 +216,7 @@
 			</object>
 
 			<object type="text" color="%text_fail_color%">
-				<condition var1="tw_simulate_actions" var2="1" />
+				<condition var1="tw_simulate_actions" var2="0" />
 				<font resource="font" />
 				<placement x="3" y="21" />
 				<text>SIMULATION</text>
@@ -238,6 +238,15 @@
 				</conditions>
 				<text>%tw_battery%</text>
 			</object>
+
+                        <object type="text" color="%text_color%">
+                                <font resource="font" />
+                                <placement x="372" y="3" />
+                                <conditions>
+                                    <condition var1="tw_no_cpu_temp" var2="0" />
+                                </conditions>
+                                <text>CPU: %tw_cpu_temp% C</text>
+                        </object>
 		</template>
 
 		<template name="header">

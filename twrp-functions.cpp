@@ -1278,4 +1278,11 @@ bool TWFunc::Toggle_MTP(bool enable) {
 #endif
 }
 
+std::string TWFunc::to_string(unsigned long value)
+{
+    std::ostringstream os;
+    os << value;
+    return os.str();
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN
