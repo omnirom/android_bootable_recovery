@@ -14,13 +14,17 @@
 
 LOCAL_PATH := $(call my-dir)
 
-ifeq ($(RECOVERY_VARIANT),)
-ifeq ($(LOCAL_PATH),bootable/recovery)
-RECOVERY_VARIANT := twrp
-endif
+ifdef project-path-for
+    ifeq ($(LOCAL_PATH),$(call project-path-for,recovery))
+        PROJECT_PATH_AGREES := true
+    endif
+else
+    ifeq ($(LOCAL_PATH),bootable/recovery)
+        PROJECT_PATH_AGREES := true
+    endif
 endif
 
-ifeq ($(RECOVERY_VARIANT),twrp)
+ifeq ($(PROJECT_PATH_AGREES),true)
 
 include $(CLEAR_VARS)
 
