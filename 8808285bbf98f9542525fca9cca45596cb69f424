@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cb528df8_9f651f1d",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1284,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-07T13:21:35Z",
+      "side": 1,
+      "message": "I don\u0027t think we want to notify the user that we\u0027re setting performance mode all the time. I suggest that we just do this silently or at most, log it with LOGINFO instead.",
+      "range": {
+        "startLine": 1284,
+        "startChar": 2,
+        "endLine": 1284,
+        "endChar": 11
+      },
+      "revId": "8808285bbf98f9542525fca9cca45596cb69f424",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_bf6ae3e7",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1287,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-07T13:21:35Z",
+      "side": 1,
+      "message": "Either silent or LOGINFO",
+      "revId": "8808285bbf98f9542525fca9cca45596cb69f424",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
