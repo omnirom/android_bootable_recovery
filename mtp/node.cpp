@@ -33,38 +33,28 @@
 #include "MtpDebug.h"
 
 
-Node::Node() {
-	mtpid= -1;
-	path = "";
-	left = NULL;
-	right = NULL;
-	parent = NULL;
-	mtpparentid = 0;
+Node::Node()
+	: handle(-1), parent(0), name("")
+{
 }
 
-void Node::setMtpid(int aMtpid) { mtpid = aMtpid; }
-void Node::setPath(std::string aPath) { path = aPath; }
-void Node::rename(std::string aPath) {
-	path = aPath;
-	updateProperty(MTP_PROPERTY_OBJECT_FILE_NAME, 0, basename(aPath.c_str()), MTP_TYPE_STR);
-	updateProperty(MTP_PROPERTY_NAME, 0, basename(aPath.c_str()), MTP_TYPE_STR);
-	updateProperty(MTP_PROPERTY_DISPLAY_NAME, 0, basename(aPath.c_str()), MTP_TYPE_STR);
+Node::Node(MtpObjectHandle handle, MtpObjectHandle parent, const std::string& name)
+	: handle(handle), parent(parent), name(name)
+{
 }
-void Node::setLeft(Node* aLeft) { left = aLeft; }
-void Node::setRight(Node* aRight) { right = aRight; }
-void Node::setParent(Node* aParent) { parent = aParent; }
-void Node::setMtpParentId(int id) {
-	mtpparentid = id;
-	MTPD("setting mtpparentid: %i on mtpid: %i\n", mtpparentid, mtpid);
-}
-int Node::Mtpid() { return mtpid; }
-int Node::getMtpParentId() { return mtpparentid; }
-std::string Node::getPath() { return path; }
-Node* Node::Left() { return left; }
-Node* Node::Right() { return right; }
-Node* Node::Parent() { return parent; }
 
-uint64_t Node::getIntProperty(uint64_t property) {
+void Node::rename(const std::string& newName) {
+	name = newName;
+	updateProperty(MTP_PROPERTY_OBJECT_FILE_NAME, 0, name.c_str(), MTP_TYPE_STR);
+	updateProperty(MTP_PROPERTY_NAME, 0, name.c_str(), MTP_TYPE_STR);
+	updateProperty(MTP_PROPERTY_DISPLAY_NAME, 0, name.c_str(), MTP_TYPE_STR);
+}
+
+MtpObjectHandle Node::Mtpid() const { return handle; }
+MtpObjectHandle Node::getMtpParentId() const { return parent; }
+const std::string& Node::getName() const { return name; }
+
+uint64_t Node::getIntProperty(MtpPropertyCode property) {
 	for (unsigned index = 0; index < mtpProp.size(); ++index) {
 		if (mtpProp[index].property == property)
 			return mtpProp[index].valueInt;
@@ -73,8 +63,18 @@ uint64_t Node::getIntProperty(uint64_t property) {
 	return -1;
 }
 
-void Node::addProperty(uint64_t property, uint64_t valueInt, std::string valueStr, int dataType) {
-	MTPD("adding str property: %lld, valueInt: %lld, valueStr: %s, dataType: %d\n", property, valueInt, valueStr.c_str(), dataType);
+const Node::mtpProperty& Node::getProperty(MtpPropertyCode property) {
+	static const mtpProperty dummyProp;
+	for (size_t i = 0; i < mtpProp.size(); ++i) {
+		if (mtpProp[i].property == property)
+			return mtpProp[i];
+	}
+	MTPE("Node::getProperty failed to find property %x, returning dummy property\n", (unsigned)property);
+	return dummyProp;
+}
+
+void Node::addProperty(MtpPropertyCode property, uint64_t valueInt, std::string valueStr, MtpDataType dataType) {
+//	MTPD("adding property: %lld, valueInt: %lld, valueStr: %s, dataType: %d\n", property, valueInt, valueStr.c_str(), dataType);
 	struct mtpProperty prop;
 	prop.property = property;
 	prop.valueInt = valueInt;
@@ -83,7 +83,7 @@ void Node::addProperty(uint64_t property, uint64_t valueInt, std::string valueSt
 	mtpProp.push_back(prop);
 }
 
-void Node::updateProperty(uint64_t property, uint64_t valueInt, std::string valueStr, int dataType) {
+void Node::updateProperty(MtpPropertyCode property, uint64_t valueInt, std::string valueStr, MtpDataType dataType) {
 	for (unsigned i = 0; i < mtpProp.size(); i++) {
 		if (mtpProp[i].property == property) {
 			mtpProp[i].valueInt = valueInt;
@@ -99,43 +99,45 @@ std::vector<Node::mtpProperty>& Node::getMtpProps() {
 	return mtpProp;
 }
 
-void Node::addProperties(int storageID, int parent_object) {
+void Node::addProperties(const std::string& path, int storageID) {
+	MTPD("addProperties: handle: %u, filename: '%s'\n", handle, getName().c_str());
 	struct stat st;
 	int mFormat = 0;
 	uint64_t puid;
 	off_t file_size = 0;
-	std::string mtimeStr = "00101T000000";
 
-	std::string mtpidStr = static_cast<std::ostringstream*>( &(std::ostringstream() << mtpid) )->str();
+	std::string mtpidStr = static_cast<std::ostringstream*>( &(std::ostringstream() << handle) )->str();
 	std::string storageIDStr = static_cast<std::ostringstream*>( &(std::ostringstream() << storageID) )->str();
 	std::string puidStr = storageIDStr + mtpidStr;
 	if ( ! (std::istringstream(puidStr) >> puid) ) puid = 0;
 	mFormat = MTP_FORMAT_UNDEFINED;   // file
-	if (lstat(getPath().c_str(), &st) == 0) {
+	if (lstat(path.c_str(), &st) == 0) {
 		file_size = st.st_size;
 		if (S_ISDIR(st.st_mode))
 			mFormat = MTP_FORMAT_ASSOCIATION; // folder
-		mtimeStr = static_cast<std::ostringstream*>( &(std::ostringstream() << st.st_mtime) )->str();
 	}
 
+	// TODO: don't store properties with constant values at all, add them at query time instead
 	addProperty(MTP_PROPERTY_STORAGE_ID, storageID, "", MTP_TYPE_UINT32);
 	addProperty(MTP_PROPERTY_OBJECT_FORMAT, mFormat, "", MTP_TYPE_UINT16);
 	addProperty(MTP_PROPERTY_PROTECTION_STATUS, 0, "", MTP_TYPE_UINT16);
 	addProperty(MTP_PROPERTY_OBJECT_SIZE, file_size, "", MTP_TYPE_UINT64);
-	addProperty(MTP_PROPERTY_OBJECT_FILE_NAME, 0, basename(getPath().c_str()), MTP_TYPE_STR);
-	MTPD("mtpid: %i, filename: '%s', parent object: %i\n", mtpid, basename(getPath().c_str()), parent_object);
-	addProperty(MTP_PROPERTY_DATE_MODIFIED, 0, mtimeStr, MTP_TYPE_STR);
-	addProperty(MTP_PROPERTY_PARENT_OBJECT, parent_object, "", MTP_TYPE_UINT32);
+	addProperty(MTP_PROPERTY_OBJECT_FILE_NAME, 0, getName().c_str(), MTP_TYPE_STR);
+	addProperty(MTP_PROPERTY_DATE_MODIFIED, st.st_mtime, "", MTP_TYPE_UINT64);
+	addProperty(MTP_PROPERTY_PARENT_OBJECT, parent, "", MTP_TYPE_UINT32);
 	addProperty(MTP_PROPERTY_PERSISTENT_UID, puid, "", MTP_TYPE_UINT128);
-	addProperty(MTP_PROPERTY_NAME, 0, basename(getPath().c_str()), MTP_TYPE_STR);
-	addProperty(MTP_PROPERTY_DISPLAY_NAME, 0, basename(getPath().c_str()), MTP_TYPE_STR);
-	addProperty(MTP_PROPERTY_DATE_ADDED, 0, mtimeStr, MTP_TYPE_STR);
+		// TODO: we can't really support persistent UIDs without a persistent DB.
+		// probably a combination of volume UUID + st_ino would come close.
+		// doesn't help for fs with no native inodes numbers like fat though...
+	addProperty(MTP_PROPERTY_NAME, 0, getName().c_str(), MTP_TYPE_STR);
+	addProperty(MTP_PROPERTY_DISPLAY_NAME, 0, getName().c_str(), MTP_TYPE_STR);
+	addProperty(MTP_PROPERTY_DATE_ADDED, st.st_mtime, "", MTP_TYPE_UINT64);
 	addProperty(MTP_PROPERTY_DESCRIPTION, 0, "", MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_ARTIST, 0, "", MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_ALBUM_NAME, 0, "", MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_ALBUM_ARTIST, 0, "", MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_TRACK, 0, "", MTP_TYPE_UINT16);
-	addProperty(MTP_PROPERTY_ORIGINAL_RELEASE_DATE, 0, "00101T000000", MTP_TYPE_STR);
+	addProperty(MTP_PROPERTY_ORIGINAL_RELEASE_DATE, 2014, "", MTP_TYPE_UINT64);	// TODO: extract year from st.st_mtime?
 	addProperty(MTP_PROPERTY_DURATION, 0, "", MTP_TYPE_UINT32);
 	addProperty(MTP_PROPERTY_GENRE, 0, "", MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_COMPOSER, 0, "", MTP_TYPE_STR);
