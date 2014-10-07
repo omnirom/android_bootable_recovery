@@ -45,7 +45,7 @@ public:
 	};
 
 public:
-	TWPartition(int *id);
+	TWPartition();
 	virtual ~TWPartition();
 
 public:
@@ -76,7 +76,7 @@ public:
 
 protected:
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
-	void Setup_Data_Media(int mtp);                                           // Sets up a partition as a /data/media emulated storage partition
+	void Setup_Data_Media();                                                  // Sets up a partition as a /data/media emulated storage partition
 
 private:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
@@ -133,8 +133,6 @@ private:
 	string Decrypted_Block_Device;                                            // Decrypted block device available after decryption
 	bool Removable;                                                           // Indicates if this partition is removable -- affects how often we check overall size, if present, etc.
 	int Length;                                                               // Used by make_ext4fs to leave free space at the end of the partition block for things like a crypto footer
-	int *initmtpid;															  // Initial MTP ID
-	int mtpid;															      // Store MTP ID
 	unsigned long long Size;                                                  // Overall size of the partition
 	unsigned long long Used;                                                  // Overall used space
 	unsigned long long Free;                                                  // Overall free space
@@ -241,7 +239,6 @@ private:
 	void Output_Partition(TWPartition* Part);
 	TWPartition* Find_Next_Storage(string Path, string Exclude);
 	int Open_Lun_File(string Partition_Path, string Lun_File);
-	int mtpid;
 	pid_t mtppid;
 	bool mtp_was_enabled;
 

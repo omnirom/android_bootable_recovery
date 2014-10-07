@@ -59,7 +59,6 @@ extern "C" {
 extern bool datamedia;
 
 TWPartitionManager::TWPartitionManager(void) {
-	mtpid = 100;
 	mtp_was_enabled = false;
 }
 
@@ -81,7 +80,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 
 		if (fstab_line[strlen(fstab_line) - 1] != '\n')
 			fstab_line[strlen(fstab_line)] = '\n';
-		TWPartition* partition = new TWPartition(&mtpid);
+		TWPartition* partition = new TWPartition();
 		string line = fstab_line;
 		memset(fstab_line, 0, sizeof(fstab_line));
 
@@ -108,7 +107,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		if (Dat) {
 			LOGINFO("Using automatic handling for /data/media emulated storage device.\n");
 			datamedia = true;
-			Dat->Setup_Data_Media(++mtpid);
+			Dat->Setup_Data_Media();
 			settings_partition = Dat;
 		}
 	}
@@ -283,8 +282,6 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 	printf("   Backup_Method: %s\n", back_meth.c_str());
 	if (Part->Mount_Flags || !Part->Mount_Options.empty())
 		printf("   Mount_Flags=0x%8x, Mount_Options=%s\n", Part->Mount_Flags, Part->Mount_Options.c_str());
-	if (Part->mtpid)
-		printf("   MTP Storage ID: %i\n", Part->mtpid);
 	printf("\n");
 }
 
@@ -2187,10 +2184,12 @@ bool TWPartitionManager::Enable_MTP(void) {
 	 * twrp set tw_mtp_debug 1
 	 */
 	twrpMtp *mtp = new twrpMtp(DataManager::GetIntValue("tw_mtp_debug"));
+	unsigned int storageid = 1 << 16;	// upper 16 bits are for physical storage device, we pretend to have only one
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
-			printf("twrp mtpid: %d\n", (*iter)->mtpid);
-			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, (*iter)->mtpid);
+			++storageid;
+			printf("twrp addStorage %s, mtpstorageid: %u\n", (*iter)->Storage_Path.c_str(), storageid);
+			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, storageid);
 			count++;
 		}
 	}

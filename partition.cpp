@@ -108,8 +108,7 @@ static struct flag_list mount_flags[] = {
 	{ 0,            0 },
 };
 
-TWPartition::TWPartition(int *id) {
-	initmtpid = id;
+TWPartition::TWPartition() {
 	Can_Be_Mounted = false;
 	Can_Be_Wiped = false;
 	Can_Be_Backed_Up = false;
@@ -161,7 +160,6 @@ TWPartition::TWPartition(int *id) {
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 	EcryptFS_Password = "";
 #endif
-	mtpid = 0;
 }
 
 TWPartition::~TWPartition(void) {
@@ -275,7 +273,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Can_Encrypt_Backup = true;
 			Use_Userdata_Encryption = true;
 			if (datamedia)
-				Setup_Data_Media(0);
+				Setup_Data_Media();
 #ifdef TW_INCLUDE_CRYPTO
 			Can_Be_Encrypted = true;
 			char crypto_blkdev[255];
@@ -409,12 +407,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Display_Name = "Recovery";
 			Backup_Display_Name = Display_Name;
 		}
-	}
-
-	// Generate MTP ID
-	if (Is_Storage) {
-		(*initmtpid)++;
-		mtpid = *initmtpid;
 	}
 
 	// Process any custom flags
@@ -682,7 +674,7 @@ void TWPartition::Setup_AndSec(void) {
 	Mount_Storage_Retry();
 }
 
-void TWPartition::Setup_Data_Media(int mtp) {
+void TWPartition::Setup_Data_Media() {
 	LOGINFO("Setting up '%s' as data/media emulated storage.\n", Mount_Point.c_str());
 	Storage_Name = "Internal Storage";
 	Has_Data_Media = true;
@@ -703,8 +695,6 @@ void TWPartition::Setup_Data_Media(int mtp) {
 		DataManager::SetValue(TW_INTERNAL_PATH, "/data/media/0");
 		UnMount(true);
 	}
-	if (mtp)
-		mtpid = mtp;
 	DataManager::SetValue("tw_has_internal", 1);
 	DataManager::SetValue("tw_has_data_media", 1);
 	du.add_absolute_dir("/data/media");

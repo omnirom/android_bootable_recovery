@@ -30,6 +30,7 @@
 #include "MtpServer.h"
 
 class MtpDatabase;
+struct inotify_event;
 
 class MtpStorage {
 
@@ -43,16 +44,10 @@ private:
     uint64_t                mReserveSpace;
     bool                    mRemovable;
 	MtpServer*				mServer;
-	std::deque<std::string> mtpParentList;
-	int mtpparentid;
-    Tree *mtpdbtree;
     typedef std::map<int, Tree*> maptree;
     typedef maptree::iterator iter;
     maptree mtpmap;
 	std::string mtpstorageparent;
-	pthread_t inotify_thread;
-	int inotify_fd;
-	int inotify_wd;
 	android::Mutex           mMutex;
 
 public:
@@ -71,30 +66,50 @@ public:
     inline const char*      getPath() const { return (const char *)mFilePath; }
     inline bool             isRemovable() const { return mRemovable; }
     inline uint64_t         getMaxFileSize() const { return mMaxFileSize; }
-	int readParentDirs(std::string path);
+
+	struct PropEntry {
+		MtpObjectHandle handle;
+		uint16_t property;
+		uint16_t datatype;
+		uint64_t intvalue;
+		std::string strvalue;
+	};
+
+	int readDir(const std::string& path, Tree* tree);
 	int createDB();
 	MtpObjectHandleList* getObjectList(MtpStorageID storageID, MtpObjectHandle parent);
 	int getObjectInfo(MtpObjectHandle handle, MtpObjectInfo& info);
-	MtpObjectHandle beginSendObject(const char* path, MtpObjectFormat format, MtpObjectHandle parent, MtpStorageID storage, uint64_t size, time_t modified);
+	MtpObjectHandle beginSendObject(const char* path, MtpObjectFormat format, MtpObjectHandle parent, uint64_t size, time_t modified);
+	void endSendObject(const char* path, MtpObjectHandle handle, MtpObjectFormat format, bool succeeded);
 	int getObjectPropertyList(MtpObjectHandle handle, uint32_t format, uint32_t property, int groupCode, int depth, MtpDataPacket& packet);
 	int getObjectFilePath(MtpObjectHandle handle, MtpString& outFilePath, int64_t& outFileLength, MtpObjectFormat& outFormat);
 	int deleteFile(MtpObjectHandle handle);
 	int renameObject(MtpObjectHandle handle, std::string newName);
-	int getObjectPropertyValue(MtpObjectHandle handle, MtpObjectProperty property, uint64_t &longValue);
+	int getObjectPropertyValue(MtpObjectHandle handle, MtpObjectProperty property, PropEntry& prop);
 	void lockMutex(int thread_type);
 	void unlockMutex(int thread_type);
 
 private:
-	void createEmptyDir(const char* path);
 	pthread_t inotify();
 	int inotify_t();
 	typedef int (MtpStorage::*ThreadPtr)(void);
 	typedef void* (*PThreadPtr)(void *);
-	std::map<int, std::string> inotifymap;
-	int addInotifyDirs(std::string path);
-	void deleteTrees(int parent);
+	std::map<int, Tree*> inotifymap;	// inotify wd -> tree
+	pthread_t inotify_thread;
+	int inotify_fd;
+	int addInotify(Tree* tree);
+	void handleInotifyEvent(struct inotify_event* event);
+
 	bool sendEvents;
-	int getParentObject(std::string parent_path);
+	MtpObjectHandle handleCurrentlySending;
+
+	Node* addNewNode(bool isDir, Tree* tree, const std::string& name);
+	Node* findNode(MtpObjectHandle handle);
+	Node* findNodeByPath(const std::string& path);
+	std::string getNodePath(Node* node);
+
+	void queryNodeProperties(std::vector<PropEntry>& results, Node* node, uint32_t property, int groupCode, MtpStorageID storageID);
+
 	bool use_mutex;
 	pthread_mutex_t inMutex; // inotify mutex
 	pthread_mutex_t mtpMutex; // main mtp mutex

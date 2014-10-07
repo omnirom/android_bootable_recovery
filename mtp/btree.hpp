@@ -17,79 +17,65 @@
 #ifndef BTREE_HPP
 #define BTREE_HPP
 
-#include <iostream>
 #include <vector>
-#include <utils/threads.h>
-#include "MtpDebug.h"
+#include <map>
+#include "MtpTypes.h"
 
-// A generic tree node class
+// A directory entry
 class Node {
-	int mtpid;
-	int mtpparentid;
-	std::string path;
-	int parentID;
-	Node* left;
-	Node* right;
-	Node* parent;
+	MtpObjectHandle handle;
+	MtpObjectHandle parent;
+	std::string name;	// name only without path
 
 public:
 	Node();
-	void setMtpid(int aMtpid);
-	void setPath(std::string aPath);
-	void rename(std::string aPath);
-	void setLeft(Node* aLeft);
-	void setRight(Node* aRight);
-	void setParent(Node* aParent);
-	void setMtpParentId(int id);
-	int Mtpid();
-	int getMtpParentId();
-	std::string getPath();
-	Node* Left();
-	Node* Right();
-	Node* Parent();
-	void addProperty(uint64_t property, uint64_t valueInt, std::string valueStr, int dataType);
-	void updateProperty(uint64_t property, uint64_t valueInt, std::string valueStr, int dataType);
-	void addProperties(int storageID, int parent_object);
-	uint64_t getIntProperty(uint64_t property);
+	Node(MtpObjectHandle handle, MtpObjectHandle parent, const std::string& name);
+	virtual ~Node() {}
+
+	virtual bool isDir() const { return false; }
+
+	void rename(const std::string& newName);
+	MtpObjectHandle Mtpid() const;
+	MtpObjectHandle getMtpParentId() const;
+	const std::string& getName() const;
+
+	void addProperty(MtpPropertyCode property, uint64_t valueInt, std::string valueStr, MtpDataType dataType);
+	void updateProperty(MtpPropertyCode property, uint64_t valueInt, std::string valueStr, MtpDataType dataType);
+	void addProperties(const std::string& path, int storageID);
+	uint64_t getIntProperty(MtpPropertyCode property);
 	struct mtpProperty {
-		uint64_t property;
+		MtpPropertyCode property;
+		MtpDataType dataType;
 		uint64_t valueInt;
 		std::string valueStr;
-		int dataType;
+		mtpProperty() : property(0), dataType(0), valueInt(0) {}
 	};
 	std::vector<mtpProperty>& getMtpProps();
 	std::vector<mtpProperty> mtpProp;
+	const mtpProperty& getProperty(MtpPropertyCode property);
 };
 
-// Binary Search Tree class
-class Tree {
-	Node* root;
+// A directory
+class Tree : public Node {
+	std::map<MtpObjectHandle, Node*> entries;
+	bool alreadyRead;
 public:
-	Tree();
+	Tree(MtpObjectHandle handle, MtpObjectHandle parent, const std::string& name);
 	~Tree();
-	Node* Root() {
-		MTPD("root: %d\n", root);
-		return root; 
-	};
-	Node* addNode(int mtpid, std::string path);
-	void setMtpParentId(int mtpparentid, Node* node);
-	Node* findNode(int key, Node* parent);
-	void getmtpids(Node* node, std::vector<int>* mtpids);
-	void deleteNode(int key);
-	Node* min(Node* node);
-	Node* max(Node* node);
-	Node* successor(int key, Node* parent);
-	Node* predecessor(int key, Node* parent);
-	std::string getPath(Node* node);
-	int getMtpParentId(Node* node);
-	Node* findNodePath(std::string path, Node* node);
-	Node* getNext(Node* node);
-	int getCount();
 
-private:
-	Node* addNode(int mtpid, Node* leaf, std::string path);
-	void freeNode(Node* leaf);
-	int count;
+	virtual bool isDir() const { return true; }
+
+	void addEntry(Node* node);
+	Node* findNode(MtpObjectHandle handle);
+	void getmtpids(MtpObjectHandleList* mtpids);
+	void deleteNode(MtpObjectHandle handle);
+	std::string getPath(Node* node);
+	int getMtpParentId() { return Node::getMtpParentId(); }
+	int getMtpParentId(Node* node);
+	Node* findEntryByName(std::string name);
+	int getCount();
+	bool wasAlreadyRead() const { return alreadyRead; }
+	void setAlreadyRead(bool b) { alreadyRead = b; }
 };
 
 #endif
