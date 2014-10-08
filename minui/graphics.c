@@ -34,11 +34,6 @@
 #include "minui.h"
 #include "graphics.h"
 
-typedef struct {
-    GRSurface* texture;
-    int cwidth;
-    int cheight;
-} GRFont;
 
 static GRFont* gr_font = NULL;
 static minui_backend* gr_backend = NULL;
@@ -105,6 +100,18 @@ static void text_blend(unsigned char* src_p, int src_row_bytes,
     }
 }
 
+/* Add text_blend one bitmap buffer */
+void gr_text_blend(int x,int y, GRFont* font)
+{
+    if (font == NULL ||font->texture==NULL  || outside(x, y) || outside(x+font->cwidth-1, y+font->cheight-1))
+        return;
+
+    unsigned char* src_p = font->texture->data;
+    int offset = y * gr_draw->row_bytes + x * gr_draw->pixel_bytes;
+    unsigned char *dst_p = gr_draw->data+offset;
+
+    text_blend(src_p,font->cwidth,dst_p,gr_draw->row_bytes,font->cwidth,font->cheight);
+}
 
 void gr_text(int x, int y, const char *s, int bold)
 {

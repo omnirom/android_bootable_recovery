@@ -33,6 +33,12 @@ typedef struct {
     unsigned char* data;
 } GRSurface;
 
+typedef struct {
+    GRSurface* texture;
+    int cwidth;
+    int cheight;
+} GRFont;
+
 typedef GRSurface* gr_surface;
 
 int gr_init(void);
@@ -116,6 +122,7 @@ int res_create_localized_alpha_surface(const char* name, const char* locale,
 // Free a surface allocated by any of the res_create_*_surface()
 // functions.
 void res_free_surface(gr_surface surface);
+void gr_text_blend(int x,int y, GRFont* pfont);
 
 #ifdef __cplusplus
 }
