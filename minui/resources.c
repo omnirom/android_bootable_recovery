@@ -46,12 +46,16 @@ static gr_surface malloc_surface(size_t data_size) {
 
 static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
                     png_uint_32* width, png_uint_32* height, png_byte* channels) {
-    char resPath[256];
-    unsigned char header[8];
+    char resPath[256] = {0};
+    unsigned char header[8] = {0};
     int result = 0;
 
-    snprintf(resPath, sizeof(resPath)-1, "/res/images/%s.png", name);
-    resPath[sizeof(resPath)-1] = '\0';
+    if(strstr(name, "/")==NULL){
+        snprintf(resPath, sizeof(resPath), "/res/images/%s.png", name);
+    }else{
+        strlcpy(resPath,name,sizeof(resPath));
+    }
+
     FILE* fp = fopen(resPath, "rb");
     if (fp == NULL) {
         result = -1;
@@ -107,13 +111,23 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
         // channel, because minui doesn't support alpha channels in
         // general.
         png_set_palette_to_rgb(*png_ptr);
-        *channels = 3;
     } else {
         fprintf(stderr, "minui doesn't support PNG depth %d channels %d color_type %d\n",
                 bit_depth, *channels, color_type);
         result = -7;
         goto exit;
     }
+
+    if (png_get_valid(*png_ptr, *info_ptr, PNG_INFO_tRNS)) {
+        fprintf(stdout,"Has PNG_INFO_tRNS!\n");
+        png_set_tRNS_to_alpha(png_ptr);
+    }
+
+    png_read_update_info(*png_ptr, *info_ptr);
+    png_get_IHDR(*png_ptr, *info_ptr, width, height, &bit_depth,
+            &color_type, NULL, NULL, NULL);
+
+    *channels = png_get_channels(*png_ptr, *info_ptr);
 
     return result;
 
@@ -190,6 +204,7 @@ static void transform_rgb_to_draw(unsigned char* input_row,
             break;
 
         case 4:
+        case 6:
             // copy RGBA to RGBX
             memcpy(output_row, input_row, width*4);
             break;

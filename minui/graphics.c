@@ -67,6 +67,36 @@ void gr_font_size(int *x, int *y)
     *y = gr_font->cheight;
 }
 
+static void icon_blend_alpha(unsigned char* src_p,int src_row_bytes,
+                       unsigned char* dst_p, int dst_row_bytes,
+                       int width, int height){
+    int i,j;
+    unsigned char r,g,b,a;
+
+    for (j = 0; j < height; ++j) {
+        unsigned char* sx = src_p;
+        unsigned char* px = dst_p;
+        for (i = 0; i < width; ++i) {
+             r  = *sx++;
+             g = *sx++;
+             b = *sx++;
+             a = *sx++;
+
+             *px = (*px * (255-a) + r * a )/ 255;
+             ++px;
+
+             *px = (*px * (255-a) + g * a) / 255;
+             ++px;
+
+             *px = (*px * (255-a) + b * a) / 255;
+
+             ++px;
+             ++px;
+        }
+        src_p += src_row_bytes;
+        dst_p += dst_row_bytes;
+    }
+}
 static void text_blend(unsigned char* src_p, int src_row_bytes,
                        unsigned char* dst_p, int dst_row_bytes,
                        int width, int height)
@@ -250,12 +280,7 @@ void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
     unsigned char* src_p = source->data + sy*source->row_bytes + sx*source->pixel_bytes;
     unsigned char* dst_p = gr_draw->data + dy*gr_draw->row_bytes + dx*gr_draw->pixel_bytes;
 
-    int i;
-    for (i = 0; i < h; ++i) {
-        memcpy(dst_p, src_p, w * source->pixel_bytes);
-        src_p += source->row_bytes;
-        dst_p += gr_draw->row_bytes;
-    }
+    icon_blend_alpha(src_p,source->row_bytes,dst_p,gr_draw->row_bytes,source->width,source->height);
 }
 
 unsigned int gr_get_width(GRSurface* surface) {
