@@ -1,0 +1,191 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cb528df8_0a864f68",
+        "filename": "data.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1049,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "Spaces instead of tabs",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_2a9b13c2",
+        "filename": "gui/devices/1024x600/res/ui.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "Spaces instead of tabs",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_4a9857c3",
+        "filename": "gui/devices/1024x768/res/ui.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "Spaces instead of tabs",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_4aaf77dd",
+        "filename": "gui/devices/1200x1920/res/ui.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "This should not be changed.",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_6abc3b1a",
+        "filename": "gui/devices/1200x1920/res/ui.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "Spaces instead of tabs",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_8ab95f2b",
+        "filename": "gui/devices/1280x800/res/ui.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "Spaces instead of tabs",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_ca8b6770",
+        "filename": "gui/devices/1440x2560/res/ui.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "This should not be changed",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_aa862369",
+        "filename": "gui/devices/1440x2560/res/ui.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "Spaces instead of tabs",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_6a951b8a",
+        "filename": "gui/devices/1600x2560/res/ui.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "This should not be changed",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_8a923fa1",
+        "filename": "gui/devices/1600x2560/res/ui.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "Spaces instead of tabs",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_ea802b4f",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1283,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-08T18:03:10Z",
+      "side": 1,
+      "message": "Spaces instead of tabs",
+      "revId": "3bf549236ab49bdd494a90d12924306383c58c86",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
