@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cb528df8_6af43bbb",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 16
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1000293
+      },
+      "writtenOn": "2014-10-09T19:37:03Z",
+      "side": 1,
+      "message": "Add empty line after this one, otherwise git thinks the whole message is the  summary",
+      "revId": "eead7cf65d6b622d3e065c65afbac2dd68beec46",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
