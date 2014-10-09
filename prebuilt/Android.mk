@@ -81,6 +81,7 @@ endif
 ifneq ($(TW_NO_EXFAT), true)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkexfatfs
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libexfat.so
+else
     TW_NO_EXFAT_FUSE := true
 endif
 ifneq ($(TW_NO_EXFAT_FUSE), true)
