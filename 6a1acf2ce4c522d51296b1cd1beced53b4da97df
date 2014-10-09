@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cb528df8_0a280f2e",
+        "filename": "prebuilt/Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1001102
+      },
+      "writtenOn": "2014-10-09T15:58:43Z",
+      "side": 1,
+      "message": "If I\u0027m not wrong with this line exfat-fuse will never be compiled.",
+      "range": {
+        "startLine": 84,
+        "startChar": 0,
+        "endLine": 84,
+        "endChar": 4
+      },
+      "revId": "6a1acf2ce4c522d51296b1cd1beced53b4da97df",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
