@@ -2401,7 +2401,7 @@
 			<object type="checkbox">
 				<placement x="%col1_x%" y="%row6_text_y%" />
 				<font resource="font" color="%text_color%" />
-				<text>Use Military Time</text>
+				<text>Use 24-hour clock</text>
 				<data variable="tw_military_time" />
 				<image checked="checkbox_true" unchecked="checkbox_false" />
 			</object>
