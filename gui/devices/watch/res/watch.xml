@@ -658,16 +658,6 @@
 			</object>
 
 			<object type="text" color="%text_color%">
-				<conditions>
-					<condition var1="tw_has_android_secure" var2="1" />
-					<condition var1="fileexists" var2="/and-sec" />
-				</conditions>
-				<font resource="font" />
-				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
-				<text>.android_secure</text>
-			</object>
-
-			<object type="text" color="%text_color%">
 				<condition var1="tw_has_data_media" var2="1" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
@@ -675,10 +665,20 @@
 			</object>
 
 			<object type="text" color="%text_color%">
+				<conditions>
+					<condition var1="tw_has_android_secure" var2="1" />
+					<condition var1="fileexists" var2="/and-sec" />
+				</conditions>
+				<font resource="font" />
+				<placement x="%col2_x%" y="%row4_text_y%" placement="1" />
+				<text>Android Secure  </text>
+			</object>
+
+			<object type="text" color="%text_color%">
 				<condition var1="tw_has_sdext_partition" var2="1" />
 				<font resource="font" />
-				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
-				<text>SD-EXT</text>
+				<placement x="%col2_x%" y="%row4_text_y%" />
+				<text>  SD-EXT</text>
 			</object>
 
 			<object type="text" color="%text_color%">
