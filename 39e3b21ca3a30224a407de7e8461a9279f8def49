@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cb528df8_ea374b49",
+        "filename": "gui/devices/720x1280/res/ui.xml",
+        "patchSetId": 19
+      },
+      "lineNbr": 251,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2014-10-11T15:55:22Z",
+      "side": 1,
+      "message": "Any particular reason for this change? CPU now crowds Battery percentage on my 720p device. The previous value was fine here.",
+      "range": {
+        "startLine": 251,
+        "startChar": 18,
+        "endLine": 251,
+        "endChar": 21
+      },
+      "revId": "39e3b21ca3a30224a407de7e8461a9279f8def49",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
