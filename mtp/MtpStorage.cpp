@@ -768,7 +768,7 @@ Node* MtpStorage::findNode(MtpObjectHandle handle) {
 		}
 	}
 	// Item is not on this storage device
-	MTPE("MtpStorage::findNode: no node found for handle %u, searched %u trees\n", handle, mtpmap.size());
+	MTPD("MtpStorage::findNode: no node found for handle %u on storage %u, searched %u trees\n", handle, mStorageID, mtpmap.size());
 	return NULL;
 }
 
