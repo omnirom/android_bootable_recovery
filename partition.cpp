@@ -1509,6 +1509,11 @@ bool TWPartition::Wipe_EXT23(string File_System) {
 }
 
 bool TWPartition::Wipe_EXT4() {
+	Find_Actual_Block_Device();
+	if (!Is_Present) {
+		LOGERR("Block device not present, cannot wipe %s.\n", Display_Name.c_str());
+		return false;
+	}
 	if (!UnMount(true))
 		return false;
 
