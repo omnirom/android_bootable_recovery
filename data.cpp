@@ -903,6 +903,8 @@ int DataManager::GetMagicValue(const string varName, string& value)
 		   convert_temp = strtoul(results.c_str(), NULL, 0) / 1000;
 		   if (convert_temp <= 0)
 			convert_temp = strtoul(results.c_str(), NULL, 0);
+		   if (convert_temp >= 100)
+			convert_temp = strtoul(results.c_str(), NULL, 0) / 10;  	
 	 	   cpuSecCheck = curTime.tv_sec + 5;
 	   }
 	   value = TWFunc::to_string(convert_temp);
