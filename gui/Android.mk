@@ -71,12 +71,14 @@ $(warning **********************************************************************
 $(error stopping)
 endif
 
-ifeq "$(wildcard $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION))" ""
-$(warning ********************************************************************************)
-$(warning * DEVICE_RESOLUTION ($(DEVICE_RESOLUTION)) does NOT EXIST in $(commands_recovery_local_path)/gui/devices )
-$(warning * Please choose an existing theme or create a new one for your device )
-$(warning ********************************************************************************)
-$(error stopping)
+ifeq ($(TW_CUSTOM_THEME),)
+	ifeq "$(wildcard $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION))" ""
+	$(warning ********************************************************************************)
+	$(warning * DEVICE_RESOLUTION ($(DEVICE_RESOLUTION)) does NOT EXIST in $(commands_recovery_local_path)/gui/devices )
+	$(warning * Please choose an existing theme or create a new one for your device )
+	$(warning ********************************************************************************)
+	$(error stopping)
+	endif
 endif
 
 LOCAL_C_INCLUDES += bionic external/stlport/stlport $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION)
