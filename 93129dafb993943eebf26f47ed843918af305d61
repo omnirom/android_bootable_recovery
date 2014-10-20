@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b39a1b3_13113461",
+        "filename": "data.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 906,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-10-20T12:47:51Z",
+      "side": 1,
+      "message": "This should be changed to \u003e\u003d 999 or at least \u003e\u003d 150 as temps above 100, although somewhat unlikely, are possible.",
+      "revId": "93129dafb993943eebf26f47ed843918af305d61",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
