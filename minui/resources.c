@@ -50,7 +50,7 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
     unsigned char header[8] = {0};
     int result = 0;
 
-    if(strstr(name, "/")==NULL){
+    if(*name != '/') {
         snprintf(resPath, sizeof(resPath), "/res/images/%s.png", name);
     }else{
         strlcpy(resPath,name,sizeof(resPath));
