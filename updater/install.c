@@ -358,6 +358,9 @@ Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (make_parents(dst_name) != 0) {
         ErrorAbort(state, "Creating parent of %s failed, error %s",
           dst_name, strerror(errno));
+    } else if (access(dst_name, F_OK) == 0 && access(src_name, F_OK) != 0) {
+        // File was already moved
+        result = dst_name;
     } else if (rename(src_name, dst_name) != 0) {
         ErrorAbort(state, "Rename of %s to %s failed, error %s",
           src_name, dst_name, strerror(errno));
