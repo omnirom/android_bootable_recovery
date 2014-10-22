@@ -935,6 +935,9 @@ extern "C" int gui_console_only(void)
 	if (!gGuiInitialized)
 		return -1;
 
+	if (gGuiConsoleRunning)
+		return 0;
+
 	gGuiConsoleTerminate = 0;
 	gGuiConsoleRunning = 1;
 
