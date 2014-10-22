@@ -936,6 +936,10 @@ extern "C" int gui_console_only(void)
 		return -1;
 
 	gGuiConsoleTerminate = 0;
+
+	if (gGuiConsoleRunning)
+		return 0;
+
 	gGuiConsoleRunning = 1;
 
 	// Start by spinning off an input handler.
