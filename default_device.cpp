@@ -31,6 +31,7 @@ static const char* ITEMS[] =  {"reboot system now",
                                "wipe cache partition",
                                "reboot to bootloader",
                                "power down",
+                               "view recovery logs",
                                NULL };
 
 class DefaultDevice : public Device {
@@ -69,6 +70,7 @@ class DefaultDevice : public Device {
           case 3: return WIPE_CACHE;
           case 4: return REBOOT_BOOTLOADER;
           case 5: return SHUTDOWN;
+          case 6: return READ_RECOVERY_LASTLOG;
           default: return NO_ACTION;
         }
     }
