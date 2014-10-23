@@ -52,6 +52,26 @@
 #include "wipe.h"
 #endif
 
+void uiPrint(State* state, char* buffer) {
+    char* line = strtok(buffer, "\n");
+    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
+    while (line) {
+        fprintf(ui->cmd_pipe, "ui_print %s\n", line);
+        line = strtok(NULL, "\n");
+    }
+    fprintf(ui->cmd_pipe, "ui_print\n");
+}
+
+__attribute__((__format__(printf, 2, 3))) __nonnull((2))
+void uiPrintf(State* state, const char* format, ...) {
+    char error_msg[1024];
+    va_list ap;
+    va_start(ap, format);
+    vsnprintf(error_msg, sizeof(error_msg), format, ap);
+    va_end(ap);
+    uiPrint(state, error_msg);
+}
+
 // Take a sha-1 digest and return it as a newly-allocated hex string.
 char* PrintSha1(const uint8_t* digest) {
     char* buffer = malloc(SHA_DIGEST_SIZE*2 + 1);
@@ -633,7 +653,7 @@ struct perm_parsed_args {
     uint64_t capabilities;
 };
 
-static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
+static struct perm_parsed_args ParsePermArgs(State * state, int argc, char** args) {
     int i;
     struct perm_parsed_args parsed;
     int bad = 0;
@@ -648,7 +668,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.uid = uid;
                 parsed.has_uid = true;
             } else {
-                printf("ParsePermArgs: invalid UID \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid UID \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -659,7 +679,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.gid = gid;
                 parsed.has_gid = true;
             } else {
-                printf("ParsePermArgs: invalid GID \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid GID \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -670,7 +690,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.mode = mode;
                 parsed.has_mode = true;
             } else {
-                printf("ParsePermArgs: invalid mode \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid mode \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -681,7 +701,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.dmode = mode;
                 parsed.has_dmode = true;
             } else {
-                printf("ParsePermArgs: invalid dmode \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid dmode \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -692,7 +712,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.fmode = mode;
                 parsed.has_fmode = true;
             } else {
-                printf("ParsePermArgs: invalid fmode \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid fmode \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -703,7 +723,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.capabilities = capabilities;
                 parsed.has_capabilities = true;
             } else {
-                printf("ParsePermArgs: invalid capabilities \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid capabilities \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -713,7 +733,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.selabel = args[i+1];
                 parsed.has_selabel = true;
             } else {
-                printf("ParsePermArgs: invalid selabel \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid selabel \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -730,6 +750,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
 }
 
 static int ApplyParsedPerms(
+        State * state,
         const char* filename,
         const struct stat *statptr,
         struct perm_parsed_args parsed)
@@ -743,39 +764,39 @@ static int ApplyParsedPerms(
 
     if (parsed.has_uid) {
         if (chown(filename, parsed.uid, -1) < 0) {
-            printf("ApplyParsedPerms: chown of %s to %d failed: %s\n",
-                   filename, parsed.uid, strerror(errno));
+            uiPrintf(state, "ApplyParsedPerms: chown of %s to %d failed: %s\n",
+                    filename, parsed.uid, strerror(errno));
             bad++;
         }
     }
 
     if (parsed.has_gid) {
         if (chown(filename, -1, parsed.gid) < 0) {
-            printf("ApplyParsedPerms: chgrp of %s to %d failed: %s\n",
-                   filename, parsed.gid, strerror(errno));
+            uiPrintf(state, "ApplyParsedPerms: chgrp of %s to %d failed: %s\n",
+                    filename, parsed.gid, strerror(errno));
             bad++;
         }
     }
 
     if (parsed.has_mode) {
         if (chmod(filename, parsed.mode) < 0) {
-            printf("ApplyParsedPerms: chmod of %s to %d failed: %s\n",
-                   filename, parsed.mode, strerror(errno));
+            uiPrintf(state, "ApplyParsedPerms: chmod of %s to %d failed: %s\n",
+                    filename, parsed.mode, strerror(errno));
             bad++;
         }
     }
 
     if (parsed.has_dmode && S_ISDIR(statptr->st_mode)) {
         if (chmod(filename, parsed.dmode) < 0) {
-            printf("ApplyParsedPerms: chmod of %s to %d failed: %s\n",
-                   filename, parsed.dmode, strerror(errno));
+            uiPrintf(state, "ApplyParsedPerms: chmod of %s to %d failed: %s\n",
+                    filename, parsed.dmode, strerror(errno));
             bad++;
         }
     }
 
     if (parsed.has_fmode && S_ISREG(statptr->st_mode)) {
         if (chmod(filename, parsed.fmode) < 0) {
-            printf("ApplyParsedPerms: chmod of %s to %d failed: %s\n",
+            uiPrintf(state, "ApplyParsedPerms: chmod of %s to %d failed: %s\n",
                    filename, parsed.fmode, strerror(errno));
             bad++;
         }
@@ -784,8 +805,8 @@ static int ApplyParsedPerms(
     if (parsed.has_selabel) {
         // TODO: Don't silently ignore ENOTSUP
         if (lsetfilecon(filename, parsed.selabel) && (errno != ENOTSUP)) {
-            printf("ApplyParsedPerms: lsetfilecon of %s to %s failed: %s\n",
-                   filename, parsed.selabel, strerror(errno));
+            uiPrintf(state, "ApplyParsedPerms: lsetfilecon of %s to %s failed: %s\n",
+                    filename, parsed.selabel, strerror(errno));
             bad++;
         }
     }
@@ -794,7 +815,7 @@ static int ApplyParsedPerms(
         if (parsed.capabilities == 0) {
             if ((removexattr(filename, XATTR_NAME_CAPS) == -1) && (errno != ENODATA)) {
                 // Report failure unless it's ENODATA (attribute not set)
-                printf("ApplyParsedPerms: removexattr of %s to %" PRIx64 " failed: %s\n",
+                uiPrintf(state, "ApplyParsedPerms: removexattr of %s to %" PRIx64 " failed: %s\n",
                        filename, parsed.capabilities, strerror(errno));
                 bad++;
             }
@@ -807,8 +828,8 @@ static int ApplyParsedPerms(
             cap_data.data[1].permitted = (uint32_t) (parsed.capabilities >> 32);
             cap_data.data[1].inheritable = 0;
             if (setxattr(filename, XATTR_NAME_CAPS, &cap_data, sizeof(cap_data), 0) < 0) {
-                printf("ApplyParsedPerms: setcap of %s to %" PRIx64 " failed: %s\n",
-                       filename, parsed.capabilities, strerror(errno));
+                uiPrintf(state, "ApplyParsedPerms: setcap of %s to %" PRIx64 " failed: %s\n",
+                        filename, parsed.capabilities, strerror(errno));
                 bad++;
             }
         }
@@ -820,10 +841,11 @@ static int ApplyParsedPerms(
 // nftw doesn't allow us to pass along context, so we need to use
 // global variables.  *sigh*
 static struct perm_parsed_args recursive_parsed_args;
+static State* recursive_state;
 
 static int do_SetMetadataRecursive(const char* filename, const struct stat *statptr,
         int fileflags, struct FTW *pfwt) {
-    return ApplyParsedPerms(filename, statptr, recursive_parsed_args);
+    return ApplyParsedPerms(recursive_state, filename, statptr, recursive_parsed_args);
 }
 
 static Value* SetMetadataFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -848,14 +870,16 @@ static Value* SetMetadataFn(const char* name, State* state, int argc, Expr* argv
         goto done;
     }
 
-    struct perm_parsed_args parsed = ParsePermArgs(argc, args);
+    struct perm_parsed_args parsed = ParsePermArgs(state, argc, args);
 
     if (recursive) {
         recursive_parsed_args = parsed;
+        recursive_state = state;
         bad += nftw(args[0], do_SetMetadataRecursive, 30, FTW_CHDIR | FTW_DEPTH | FTW_PHYS);
         memset(&recursive_parsed_args, 0, sizeof(recursive_parsed_args));
+        recursive_state = NULL;
     } else {
-        bad += ApplyParsedPerms(args[0], &sb, parsed);
+        bad += ApplyParsedPerms(state, args[0], &sb, parsed);
     }
 
 done:
@@ -1227,15 +1251,7 @@ Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
     free(args);
     buffer[size] = '\0';
-
-    char* line = strtok(buffer, "\n");
-    while (line) {
-        fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe,
-                "ui_print %s\n", line);
-        line = strtok(NULL, "\n");
-    }
-    fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe, "ui_print\n");
-
+    uiPrint(state, buffer);
     return StringValue(buffer);
 }
 
