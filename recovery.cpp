@@ -77,6 +77,8 @@ static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 
+#define KEEP_LOG_COUNT 10
+
 RecoveryUI* ui = NULL;
 char* locale = NULL;
 char recovery_version[PROPERTY_VALUE_MAX+1];
@@ -159,6 +161,12 @@ fopen_path(const char *path, const char *mode) {
 
     FILE *fp = fopen(path, mode);
     return fp;
+}
+
+static void redirect_stdio(const char* filename) {
+    // If these fail, there's not really anywhere to complain...
+    freopen(filename, "a", stdout); setbuf(stdout, NULL);
+    freopen(filename, "a", stderr); setbuf(stderr, NULL);
 }
 
 // close a file, log an error if the error indicator is set
@@ -665,6 +673,65 @@ wipe_data(int confirm, Device* device) {
     ui->Print("Data wipe complete.\n");
 }
 
+static void file_to_ui(const char* fn) {
+    FILE *fp = fopen_path(fn, "re");
+    if (fp == NULL) {
+        ui->Print("  Unable to open %s: %s\n", fn, strerror(errno));
+        return;
+    }
+    char line[1024];
+    int ct = 0;
+    redirect_stdio("/dev/null");
+    while(fgets(line, sizeof(line), fp) != NULL) {
+        ui->Print("%s", line);
+        ct++;
+        if (ct % 30 == 0) {
+            // give the user time to glance at the entries
+            ui->WaitKey();
+        }
+    }
+    redirect_stdio(TEMPORARY_LOG_FILE);
+    fclose(fp);
+}
+
+static void choose_recovery_file(Device* device) {
+    int i;
+    static const char** title_headers = NULL;
+    char *filename;
+    const char* headers[] = { "Select file to view",
+                              "",
+                              NULL };
+    char* entries[KEEP_LOG_COUNT + 2];
+    memset(entries, 0, sizeof(entries));
+
+    for (i = 0; i < KEEP_LOG_COUNT; i++) {
+        char *filename;
+        if (asprintf(&filename, (i==0) ? LAST_LOG_FILE : (LAST_LOG_FILE ".%d"), i) == -1) {
+            // memory allocation failure - return early. Should never happen.
+            return;
+        }
+        if ((ensure_path_mounted(filename) != 0) || (access(filename, R_OK) == -1)) {
+            free(filename);
+            entries[i+1] = NULL;
+            break;
+        }
+        entries[i+1] = filename;
+    }
+
+    entries[0] = strdup("Go back");
+    title_headers = prepend_title((const char**)headers);
+
+    while(1) {
+        int chosen_item = get_menu_selection(title_headers, entries, 1, 0, device);
+        if (chosen_item == 0) break;
+        file_to_ui(entries[chosen_item]);
+    }
+
+    for (i = 0; i < KEEP_LOG_COUNT + 1; i++) {
+        free(entries[i]);
+    }
+}
+
 // Return REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER.  Returning NO_ACTION
 // means to take the default, which is to reboot or shutdown depending
 // on if the --shutdown_after flag was passed to recovery.
@@ -760,6 +827,10 @@ prompt_and_wait(Device* device, int status) {
                 ui->Print("\nAPPLY_CACHE is deprecated.\n");
                 break;
 
+            case Device::READ_RECOVERY_LASTLOG:
+                choose_recovery_file(device);
+                break;
+
             case Device::APPLY_ADB_SIDELOAD:
                 status = apply_from_adb(ui, &wipe_cache, TEMPORARY_INSTALL_FILE);
                 if (status >= 0) {
@@ -824,9 +895,7 @@ int
 main(int argc, char **argv) {
     time_t start = time(NULL);
 
-    // If these fail, there's not really anywhere to complain...
-    freopen(TEMPORARY_LOG_FILE, "a", stdout); setbuf(stdout, NULL);
-    freopen(TEMPORARY_LOG_FILE, "a", stderr); setbuf(stderr, NULL);
+    redirect_stdio(TEMPORARY_LOG_FILE);
 
     // If this binary is started with the single argument "--adbd",
     // instead of being the normal recovery binary, it turns into kind
@@ -844,7 +913,7 @@ main(int argc, char **argv) {
 
     load_volume_table();
     ensure_path_mounted(LAST_LOG_FILE);
-    rotate_last_logs(10);
+    rotate_last_logs(KEEP_LOG_COUNT);
     get_args(&argc, &argv);
 
     const char *send_intent = NULL;
