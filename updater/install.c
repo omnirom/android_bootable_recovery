@@ -91,16 +91,27 @@ char* PrintSha1(const uint8_t* digest) {
 //    fs_type="ext4"   partition_type="EMMC"    location=device
 Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
-    if (argc != 4) {
-        return ErrorAbort(state, "%s() expects 4 args, got %d", name, argc);
+    if (argc != 4 && argc != 5) {
+        return ErrorAbort(state, "%s() expects 4-5 args, got %d", name, argc);
     }
     char* fs_type;
     char* partition_type;
     char* location;
     char* mount_point;
-    if (ReadArgs(state, argv, 4, &fs_type, &partition_type,
+    char* mount_options;
+    bool has_mount_options;
+    if (argc == 5) {
+        has_mount_options = true;
+        if (ReadArgs(state, argv, 5, &fs_type, &partition_type,
+                 &location, &mount_point, &mount_options) < 0) {
+            return NULL;
+        }
+    } else {
+        has_mount_options = false;
+        if (ReadArgs(state, argv, 4, &fs_type, &partition_type,
                  &location, &mount_point) < 0) {
-        return NULL;
+            return NULL;
+        }
     }
 
     if (strlen(fs_type) == 0) {
@@ -154,7 +165,8 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
         result = mount_point;
     } else {
         if (mount(location, mount_point, fs_type,
-                  MS_NOATIME | MS_NODEV | MS_NODIRATIME, "") < 0) {
+                  MS_NOATIME | MS_NODEV | MS_NODIRATIME,
+                  has_mount_options ? mount_options : "") < 0) {
             printf("%s: failed to mount %s at %s: %s\n",
                     name, location, mount_point, strerror(errno));
             result = strdup("");
@@ -168,6 +180,7 @@ done:
     free(partition_type);
     free(location);
     if (result != mount_point) free(mount_point);
+    if (has_mount_options) free(mount_options);
     return StringValue(result);
 }
 
