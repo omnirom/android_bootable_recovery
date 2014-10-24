@@ -770,9 +770,17 @@ static int ApplyParsedPerms(
 {
     int bad = 0;
 
+    if (parsed.has_selabel) {
+        if (lsetfilecon(filename, parsed.selabel) != 0) {
+            uiPrintf(state, "ApplyParsedPerms: lsetfilecon of %s to %s failed: %s\n",
+                    filename, parsed.selabel, strerror(errno));
+            bad++;
+        }
+    }
+
     /* ignore symlinks */
     if (S_ISLNK(statptr->st_mode)) {
-        return 0;
+        return bad;
     }
 
     if (parsed.has_uid) {
@@ -811,15 +819,6 @@ static int ApplyParsedPerms(
         if (chmod(filename, parsed.fmode) < 0) {
             uiPrintf(state, "ApplyParsedPerms: chmod of %s to %d failed: %s\n",
                    filename, parsed.fmode, strerror(errno));
-            bad++;
-        }
-    }
-
-    if (parsed.has_selabel) {
-        // TODO: Don't silently ignore ENOTSUP
-        if (lsetfilecon(filename, parsed.selabel) && (errno != ENOTSUP)) {
-            uiPrintf(state, "ApplyParsedPerms: lsetfilecon of %s to %s failed: %s\n",
-                    filename, parsed.selabel, strerror(errno));
             bad++;
         }
     }
