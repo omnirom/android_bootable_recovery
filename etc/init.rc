@@ -47,32 +47,24 @@ on boot
 on property:sys.powerctl=*
    powerctl ${sys.powerctl}
 
-on property:sys.storage.ums_enabled=1
-    write /sys/class/android_usb/android0/enable 0
-    write /sys/class/android_usb/android0/functions adb,mass_storage
-    write /sys/class/android_usb/android0/enable 1
-
-on property:sys.storage.ums_enabled=0
-    write /sys/class/android_usb/android0/enable 0
-    write /sys/class/android_usb/android0/functions adb
-    write /sys/class/android_usb/android0/enable ${service.adb.root}
-
 on property:sys.usb.config=none
-    stop adbd
     write /sys/class/android_usb/android0/enable 0
     write /sys/class/android_usb/android0/bDeviceClass 0
 
-on property:sys.usb.config=mtp,adb
-    stop adbd
+on property:sys.usb.config=mass_storage,adb
     write /sys/class/android_usb/android0/enable 0
-    write /sys/class/android_usb/android0/functions mtp,adb
+    write /sys/class/android_usb/android0/functions ${sys.usb.config}
+    write /sys/class/android_usb/android0/enable 1
+
+on property:sys.usb.config=mtp,adb
+    write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/functions ${sys.usb.config}
     write /sys/class/android_usb/android0/enable 1
     start adbd
 
 on property:sys.usb.config=adb
-    stop adbd
     write /sys/class/android_usb/android0/enable 0
-    write /sys/class/android_usb/android0/functions adb
+    write /sys/class/android_usb/android0/functions ${sys.usb.config}
     write /sys/class/android_usb/android0/enable ${service.adb.root}
     start adbd
 
