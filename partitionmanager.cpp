@@ -1814,6 +1814,7 @@ int TWPartitionManager::usb_storage_enable(void) {
 		}
 	}
 	property_set("sys.storage.ums_enabled", "1");
+	property_set("sys.usb.config", "mass_storage,adb");
 	return true;
 error_handle:
 	if (mtp_was_enabled)
@@ -1838,6 +1839,7 @@ int TWPartitionManager::usb_storage_disable(void) {
 	Update_System_Details();
 	UnMount_Main_Partitions();
 	property_set("sys.storage.ums_enabled", "0");
+	property_set("sys.usb.config", "adb");
 	if (mtp_was_enabled)
 		if (!Enable_MTP())
 			Disable_MTP();
