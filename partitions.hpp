@@ -180,29 +180,17 @@ public:
 	int Write_Fstab();                                                        // Creates /etc/fstab file that's used by the command line for mount commands
 	void Output_Partition_Logging();                                          // Outputs partition information to the log
 	int Mount_By_Path(string Path, bool Display_Error);                       // Mounts partition based on path (e.g. /system)
-	int Mount_By_Block(string Block, bool Display_Error);                     // Mounts partition based on block device (e.g. /dev/block/mmcblk1p1)
-	int Mount_By_Name(string Name, bool Display_Error);                       // Mounts partition based on display name (e.g. System)
 	int UnMount_By_Path(string Path, bool Display_Error);                     // Unmounts partition based on path
-	int UnMount_By_Block(string Block, bool Display_Error);                   // Unmounts partition based on block device
-	int UnMount_By_Name(string Name, bool Display_Error);                     // Unmounts partition based on display name
 	int Is_Mounted_By_Path(string Path);                                      // Checks if partition is mounted based on path
-	int Is_Mounted_By_Block(string Block);                                    // Checks if partition is mounted based on block device
-	int Is_Mounted_By_Name(string Name);                                      // Checks if partition is mounted based on display name
 	int Mount_Current_Storage(bool Display_Error);                            // Mounts the current storage location
 	int Mount_Settings_Storage(bool Display_Error);                           // Mounts the settings file storage location (usually internal)
 	TWPartition* Find_Partition_By_Path(string Path);                         // Returns a pointer to a partition based on path
-	TWPartition* Find_Partition_By_Block(string Block);                       // Returns a pointer to a partition based on block device
-	TWPartition* Find_Partition_By_Name(string Block);                        // Returns a pointer to a partition based on name
 	int Check_Backup_Name(bool Display_Error);                                // Checks the current backup name to ensure that it is valid
 	int Run_Backup();                                                         // Initiates a backup in the current storage
 	int Run_Restore(string Restore_Name);                                     // Restores a backup
 	void Set_Restore_Files(string Restore_Name);                              // Used to gather a list of available backup partitions for the user to select for a restore
 	int Wipe_By_Path(string Path);                                            // Wipes a partition based on path
-	int Wipe_By_Block(string Block);                                          // Wipes a partition based on block device
-	int Wipe_By_Name(string Name);                                            // Wipes a partition based on display name
 	int Wipe_By_Path(string Path, string New_File_System);                    // Wipes a partition based on path
-	int Wipe_By_Block(string Block, string New_File_System);                  // Wipes a partition based on block device
-	int Wipe_By_Name(string Name, string New_File_System);                    // Wipes a partition based on display name
 	int Factory_Reset();                                                      // Performs a factory reset
 	int Wipe_Dalvik_Cache();                                                  // Wipes dalvik cache
 	int Wipe_Rotate_Data();                                                   // Wipes rotation data --
@@ -211,9 +199,6 @@ public:
 	int Format_Data();                                                        // Really formats data on /data/media devices -- also removes encryption
 	int Wipe_Media_From_Data();                                               // Removes and recreates the media folder on /data/media devices
 	int Repair_By_Path(string Path, bool Display_Error);                      // Repairs a partition based on path
-	int Repair_By_Block(string Block, bool Display_Error);                    // Repairs a partition based on block device
-	int Repair_By_Name(string Name, bool Display_Error);                      // Repairs a partition based on display name
-	void Refresh_Sizes();                                                     // Refreshes size data of partitions
 	void Update_System_Details();                                             // Updates fstab, file systems, sizes, etc.
 	int Decrypt_Device(string Password);                                      // Attempt to decrypt any encrypted partitions
 	int usb_storage_enable(void);                                             // Enable USB storage mode
