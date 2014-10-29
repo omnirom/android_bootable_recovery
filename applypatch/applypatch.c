@@ -309,7 +309,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
 // Save the contents of the given FileContents object under the given
 // filename.  Return 0 on success.
 int SaveFileContents(const char* filename, const FileContents* file) {
-    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR);
     if (fd < 0) {
         printf("failed to open \"%s\" for write: %s\n",
                filename, strerror(errno));
@@ -324,8 +324,14 @@ int SaveFileContents(const char* filename, const FileContents* file) {
         close(fd);
         return -1;
     }
-    fsync(fd);
-    close(fd);
+    if (fsync(fd) != 0) {
+        printf("fsync of \"%s\" failed: %s\n", filename, strerror(errno));
+        return -1;
+    }
+    if (close(fd) != 0) {
+        printf("close of \"%s\" failed: %s\n", filename, strerror(errno));
+        return -1;
+    }
 
     if (chmod(filename, file->st.st_mode) != 0) {
         printf("chmod of \"%s\" failed: %s\n", filename, strerror(errno));
@@ -408,7 +414,7 @@ int WriteToPartition(unsigned char* data, size_t len,
         {
             size_t start = 0;
             int success = 0;
-            int fd = open(partition, O_RDWR);
+            int fd = open(partition, O_RDWR | O_SYNC);
             if (fd < 0) {
                 printf("failed to open %s: %s\n", partition, strerror(errno));
                 return -1;
@@ -433,7 +439,22 @@ int WriteToPartition(unsigned char* data, size_t len,
                     }
                     start += written;
                 }
-                fsync(fd);
+                if (fsync(fd) != 0) {
+                   printf("failed to sync to %s (%s)\n",
+                          partition, strerror(errno));
+                   return -1;
+                }
+                if (close(fd) != 0) {
+                   printf("failed to close %s (%s)\n",
+                          partition, strerror(errno));
+                   return -1;
+                }
+                fd = open(partition, O_RDONLY);
+                if (fd < 0) {
+                   printf("failed to reopen %s for verify (%s)\n",
+                          partition, strerror(errno));
+                   return -1;
+                }
 
                 // drop caches so our subsequent verification read
                 // won't just be reading the cache.
@@ -919,7 +940,8 @@ static int GenerateTarget(FileContents* source_file,
             strcpy(outname, target_filename);
             strcat(outname, ".patch");
 
-            output = open(outname, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+            output = open(outname, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC,
+                S_IRUSR | S_IWUSR);
             if (output < 0) {
                 printf("failed to open output file %s: %s\n",
                        outname, strerror(errno));
@@ -950,8 +972,14 @@ static int GenerateTarget(FileContents* source_file,
         }
 
         if (output >= 0) {
-            fsync(output);
-            close(output);
+            if (fsync(output) != 0) {
+                printf("failed to fsync file \"%s\" (%s)\n", outname, strerror(errno));
+                result = 1;
+            }
+            if (close(output) != 0) {
+                printf("failed to close file \"%s\" (%s)\n", outname, strerror(errno));
+                result = 1;
+            }
         }
 
         if (result != 0) {
