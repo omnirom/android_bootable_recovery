@@ -53,6 +53,7 @@ ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)
 endif
 
 LOCAL_MODULE := recovery
+LOCAL_LDFLAGS += -Wl$(comma)-dynamic-linker$(comma)/sbin/linker
 
 #LOCAL_FORCE_STATIC_EXECUTABLE := true
 
@@ -315,6 +316,16 @@ endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
 endif
+
+LOCAL_ADDITIONAL_DEPENDENCIES := \
+    teamwin \
+    twrp
+
+BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
+exclude := tune2fs mke2fs mkdosfs gzip gunzip
+RECOVERY_BUSYBOX_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(filter-out $(exclude),$(notdir $(BUSYBOX_LINKS))))
+
+LOCAL_ADDITIONAL_DEPENDENCIES += $(RECOVERY_BUSYBOX_SYMLINKS)
 
 include $(BUILD_EXECUTABLE)
 
