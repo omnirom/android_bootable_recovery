@@ -141,9 +141,9 @@ $(SYMLINKS): $(LOCAL_INSTALLED_MODULE) $(LOCAL_PATH)/Android.mk
 	@rm -rf $@
 	$(hide) ln -sf $(TOOLBOX_BINARY) $@
 
-ALL_DEFAULT_INSTALLED_MODULES += $(SYMLINKS)
-
-# We need this so that the installed files could be picked up based on the
-# local module name
-ALL_MODULES.$(LOCAL_MODULE).INSTALLED := \
-    $(ALL_MODULES.$(LOCAL_MODULE).INSTALLED) $(SYMLINKS)
+include $(CLEAR_VARS)
+LOCAL_MODULE := toolbox_symlinks
+LOCAL_MODULE_TAGS := optional
+LOCAL_ADDITIONAL_DEPENDENCIES := $(SYMLINKS)
+include $(BUILD_PHONY_PACKAGE)
+SYMLINKS :=

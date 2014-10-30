@@ -317,6 +317,41 @@ ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
 endif
 LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
+LOCAL_ADDITIONAL_DEPENDENCIES := \
+    teamwin \
+    twrp \
+    toolbox_symlinks \
+    busybox_symlinks \
+    fix_permissions.sh \
+    mke2fs.conf \
+    pigz \
+    unpigz_symlink \
+    dosfsck \
+    dosfslabel \
+    mkdosfs \
+    fsck_msdos_symlink \
+    mkexfatfs \
+    openaes
+
+ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
+    LOCAL_ADDITIONAL_DEPENDENCIES += parted
+endif
+ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += ../openaes/LICENSE
+endif
+ifeq ($(TW_INCLUDE_DUMLOCK), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += \
+        htcdumlocksys flash_imagesys dump_imagesys libbmlutils.so \
+        libflashutils.so libmmcutils.so libmtdutils.so HTCDumlock.apk
+endif
+ifneq ($(TW_EXCLUDE_SUPERSU), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += \
+        su install-recovery.sh 99SuperSUDaemon Superuser.apk
+endif
+ifneq ($(TW_NO_EXFAT_FUSE), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += exfat-fuse
+endif
+
 include $(BUILD_EXECUTABLE)
 
 ifneq ($(TW_USE_TOOLBOX), true)
@@ -342,8 +377,13 @@ $(RECOVERY_BUSYBOX_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@rm -rf $@
 	$(hide) ln -sf $(BUSYBOX_BINARY) $@
 
-ALL_DEFAULT_INSTALLED_MODULES += $(RECOVERY_BUSYBOX_SYMLINKS)
-endif
+include $(CLEAR_VARS)
+LOCAL_MODULE := busybox_symlinks
+LOCAL_MODULE_TAGS := optional
+LOCAL_ADDITIONAL_DEPENDENCIES := $(RECOVERY_BUSYBOX_SYMLINKS)
+include $(BUILD_PHONY_PACKAGE)
+RECOVERY_BUSYBOX_SYMLINKS :=
+endif # !TW_USE_TOOLBOX
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := verifier_test
