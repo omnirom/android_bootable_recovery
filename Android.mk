@@ -28,6 +28,42 @@ ifeq ($(PROJECT_PATH_AGREES),true)
 
 include $(CLEAR_VARS)
 
+LOCAL_MODULE := recovery
+#LOCAL_MODULE_STEM := blah
+LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_MODULE_PATH := $(OUT)/obj/EXECUTABLES/recovery_intermediates
+LOCAL_STATIC_LIBRARIES := libc
+LOCAL_FORCE_STATIC_EXECUTABLE := true
+
+LOCAL_ADDITIONAL_DEPENDENCIES := \
+    recovery_twrp \
+    teamwin \
+    twrp
+
+BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
+exclude := tune2fs mke2fs mkdosfs gzip gunzip
+RECOVERY_BUSYBOX_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(filter-out $(exclude),$(notdir $(BUSYBOX_LINKS))))
+
+LOCAL_ADDITIONAL_DEPENDENCIES += $(RECOVERY_BUSYBOX_SYMLINKS)
+
+RELINK := $(LOCAL_PATH)/prebuilt/relink.sh
+RELINK_SOURCE_FILES += $(OUT)/obj/EXECUTABLES/recovery_twrp_intermediates/recovery_twrp
+
+GEN := $(intermediates)/recovery
+$(GEN): $(RELINK)
+$(GEN): $(RELINK_SOURCE_FILES) $(call intermediates-dir-for,EXECUTABLES,recovery)/recovery
+	$(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES)
+	#cp -f $(TARGET_RECOVERY_ROOT_OUT)/sbin/recovery $(TARGET_RECOVERY_ROOT_OUT)/sbin/recovery
+	#ln -sf /sbin/recovery_twrp $(OUT)/obj/EXECUTABLES/recovery_intermediates/recovery
+
+LOCAL_GENERATED_SOURCES := $(GEN)
+LOCAL_SRC_FILES := recovery.sh $(GEN)
+
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+
 TARGET_RECOVERY_GUI := true
 
 LOCAL_SRC_FILES := \
@@ -52,7 +88,9 @@ ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)
   LOCAL_SRC_FILES += $(TARGET_RECOVERY_REBOOT_SRC)
 endif
 
-LOCAL_MODULE := recovery
+LOCAL_MODULE := recovery_twrp
+#LOCAL_MODULE_PATH := $(OUT)/obj/EXECUTABLES/recovery_intermediates
+#LOCAL_MODULE_STEM := recovery
 
 #LOCAL_FORCE_STATIC_EXECUTABLE := true
 
@@ -315,6 +353,16 @@ endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
 endif
+
+LOCAL_ADDITIONAL_DEPENDENCIES := \
+    teamwin \
+    twrp
+
+BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
+exclude := tune2fs mke2fs mkdosfs gzip gunzip
+RECOVERY_BUSYBOX_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(filter-out $(exclude),$(notdir $(BUSYBOX_LINKS))))
+
+LOCAL_ADDITIONAL_DEPENDENCIES += $(RECOVERY_BUSYBOX_SYMLINKS)
 
 include $(BUILD_EXECUTABLE)
 
