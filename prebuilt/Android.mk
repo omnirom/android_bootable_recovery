@@ -10,6 +10,7 @@ LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 
 # Manage list
+RELINK_SOURCE_FILES += $(OUT)/obj/EXECUTABLES/recovery_twrp_intermediates/recovery_twrp
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dump_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/flash_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/erase_image
@@ -133,11 +134,21 @@ GEN := $(intermediates)/teamwin
 $(GEN): $(RELINK)
 $(GEN): $(RELINK_SOURCE_FILES) $(call intermediates-dir-for,EXECUTABLES,recovery)/recovery
 	$(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES)
-	$(RELINK) $(call intermediates-dir-for,EXECUTABLES,recovery) $(call intermediates-dir-for,EXECUTABLES,recovery)/recovery
+	$(RELINK) $(call intermediates-dir-for,EXECUTABLES,recovery_twrp) $(call intermediates-dir-for,EXECUTABLES,recovery_twrp)/recovery_twrp
 
 LOCAL_GENERATED_SOURCES := $(GEN)
 LOCAL_SRC_FILES := teamwin $(GEN)
 include $(BUILD_PREBUILT)
+
+#build system hax
+#include $(CLEAR_VARS)
+#LOCAL_MODULE := recovery_fake
+#LOCAL_MODULE_STEM := recovery
+#LOCAL_MODULE_TAGS := eng
+#LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+#LOCAL_MODULE_PATH := $(OUT)/obj/EXECUTABLES/recovery_intermediates
+#LOCAL_SRC_FILES := $(LOCAL_MODULE)
+#include $(BUILD_PREBUILT)
 
 #fix_permissions
 include $(CLEAR_VARS)
