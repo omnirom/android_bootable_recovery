@@ -53,6 +53,7 @@ ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)
 endif
 
 LOCAL_MODULE := recovery
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
 #LOCAL_FORCE_STATIC_EXECUTABLE := true
 
@@ -315,6 +316,93 @@ endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
 endif
+
+LOCAL_ADDITIONAL_DEPENDENCIES := \
+    teamwin \
+    twrp \
+    toolbox_recovery
+
+ifneq ($(TW_USE_TOOLBOX), true)
+	# Create dependency to generate busybox symlinks
+	BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
+	exclude_busybox := tune2fs mke2fs mkdosfs gzip gunzip
+	TWRP_BUSYBOX_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(filter-out $(exclude_busybox),$(notdir $(BUSYBOX_LINKS))))
+	LOCAL_ADDITIONAL_DEPENDENCIES += $(TWRP_BUSYBOX_SYMLINKS)
+else
+	# Create dependency to generate toolbox symlinks instead of busybox
+	TOOLBOX_LINKS += \
+		mount \
+		cat \
+		ps \
+		kill \
+		ln \
+		insmod \
+		rmmod \
+		lsmod \
+		ifconfig \
+		setconsole \
+		rm \
+		mkdir \
+		rmdir \
+		getevent \
+		sendevent \
+		date \
+		wipe \
+		sync \
+		umount \
+		notify \
+		cmp \
+		dmesg \
+		route \
+		hd \
+		dd \
+		df \
+		watchprops \
+		log \
+		sleep \
+		renice \
+		printenv \
+		smd \
+		chmod \
+		chown \
+		newfs_msdos \
+		netstat \
+		ioctl \
+		mv \
+		schedtop \
+		top \
+		iftop \
+		id \
+		uptime \
+		vmstat \
+		nandread \
+		ionice \
+		touch \
+		lsof \
+		du \
+		md5 \
+		clear \
+		swapon \
+		swapoff \
+		mkswap \
+		readlink
+	ifneq ($(TWHAVE_SELINUX), true)
+		TOOLBOX_LINKS += ls
+	endif
+endif
+
+# Create dependency to generate toolbox symlinks
+exclude_toolbox :=
+TOOLBOX_LINKS += start stop getprop setprop
+
+ifeq ($(TWHAVE_SELINUX), true)
+	TOOLBOX_LINKS += ls getenforce setenforce chcon restorecon runcon \
+		getsebool setsebool load_policy
+endif
+
+TWRP_TOOLBOX_SYMLINKS += $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(filter-out $(exclude_toolbox),$(notdir $(TOOLBOX_LINKS))))
+
+LOCAL_ADDITIONAL_DEPENDENCIES += $(TWRP_TOOLBOX_SYMLINKS)
 
 include $(BUILD_EXECUTABLE)
 
