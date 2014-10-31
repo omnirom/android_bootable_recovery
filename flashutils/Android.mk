@@ -25,6 +25,7 @@ LOCAL_MODULE := flash_image
 LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := libflashutils libmtdutils libmmcutils libbmlutils libcrecovery
 LOCAL_SHARED_LIBRARIES := libcutils libc
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
@@ -33,6 +34,7 @@ LOCAL_MODULE := dump_image
 LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := libflashutils libmtdutils libmmcutils libbmlutils libcrecovery
 LOCAL_SHARED_LIBRARIES := libcutils libc
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
@@ -41,6 +43,7 @@ LOCAL_MODULE := erase_image
 LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := libflashutils libmtdutils libmmcutils libbmlutils libcrecovery
 LOCAL_SHARED_LIBRARIES := libcutils libc
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 include $(BUILD_EXECUTABLE)
 
 ALL_DEFAULT_INSTALLED_MODULES += $(addprefix $(TARGET_OUT)/bin/, flash_image dump_image erase_image)
@@ -130,6 +133,7 @@ LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 LOCAL_SRC_FILES := flash_image.c
 LOCAL_SHARED_LIBRARIES := libflashutils libmmcutils libbmlutils libcutils libc
 LOCAL_STATIC_LIBRARIES := libmtdutils
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
@@ -140,6 +144,7 @@ LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 LOCAL_SRC_FILES := dump_image.c
 LOCAL_SHARED_LIBRARIES := libflashutils libmmcutils libbmlutils libcutils libc
 LOCAL_STATIC_LIBRARIES := libmtdutils
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
@@ -150,6 +155,7 @@ LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 LOCAL_SRC_FILES := erase_image.c
 LOCAL_SHARED_LIBRARIES := libflashutils libmmcutils libbmlutils libcutils libc
 LOCAL_STATIC_LIBRARIES := libmtdutils
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 include $(BUILD_EXECUTABLE)
 
 endif	# !TARGET_SIMULATOR

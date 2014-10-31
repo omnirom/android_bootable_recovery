@@ -315,6 +315,7 @@ endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
 endif
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
 include $(BUILD_EXECUTABLE)
 
@@ -374,6 +375,7 @@ LOCAL_STATIC_LIBRARIES += libmincrypttwrp
 ifneq ($(BOARD_RECOVERY_BLDRMSG_OFFSET),)
     LOCAL_CFLAGS += -DBOARD_RECOVERY_BLDRMSG_OFFSET=$(BOARD_RECOVERY_BLDRMSG_OFFSET)
 endif
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
 include $(BUILD_SHARED_LIBRARY)
 

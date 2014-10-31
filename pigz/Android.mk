@@ -12,6 +12,7 @@ LOCAL_SRC_FILES = pigz.c yarn.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 					external/zlib
 LOCAL_SHARED_LIBRARIES += libz libc
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
 include $(BUILD_EXECUTABLE)
 

@@ -34,6 +34,7 @@ LOCAL_SHARED_LIBRARIES += libz libc libusbhost libstdc++ libstlport libdl libcut
 ifneq ($(TW_MTP_DEVICE),)
 	LOCAL_CFLAGS += -DUSB_MTP_DEVICE=$(TW_MTP_DEVICE)
 endif
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
 include $(BUILD_SHARED_LIBRARY)
 
