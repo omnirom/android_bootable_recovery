@@ -30,6 +30,7 @@ OPTFLAGS = -O2 -fomit-frame-pointer $(shell getconf LFS_CFLAGS)
 WARNFLAGS = -Wall
 DEBUGFLAGS = -g
 CFLAGS += $(OPTFLAGS) $(WARNFLAGS) $(DEBUGFLAGS)
+LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
 VPATH = src
 
