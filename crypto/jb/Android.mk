@@ -13,6 +13,7 @@ LOCAL_C_INCLUDES += \
     $(commands_recovery_local_path)/crypto/scrypt/lib/crypto
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libcrypto libext4_utils
 LOCAL_STATIC_LIBRARIES += libfs_mgrtwrp libscrypttwrp_static liblogwraptwrp libmincrypttwrp
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
 include $(BUILD_SHARED_LIBRARY)
 endif

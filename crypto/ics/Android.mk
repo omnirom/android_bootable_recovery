@@ -21,6 +21,7 @@ endif
 LOCAL_SRC_FILES = cryptfs.c
 LOCAL_C_INCLUDES += system/extras/ext4_utils external/openssl/include
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libcrypto
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
 include $(BUILD_SHARED_LIBRARY)
 endif

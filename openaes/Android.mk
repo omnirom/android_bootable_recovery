@@ -13,6 +13,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 	LOCAL_SHARED_LIBRARIES = libopenaes libc
+	LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 	include $(BUILD_EXECUTABLE)
 
 	# Build shared library
@@ -24,6 +25,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
 		$(commands_recovery_local_path)/openaes/inc
 	LOCAL_SRC_FILES = src/oaes_lib.c src/isaac/rand.c
 	LOCAL_SHARED_LIBRARIES = libc
+	LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 	include $(BUILD_SHARED_LIBRARY)
 
 	# Build static library
