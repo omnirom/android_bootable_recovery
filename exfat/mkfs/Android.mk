@@ -14,8 +14,3 @@ LOCAL_SHARED_LIBRARIES += libz libc libexfat libdl
 LOCAL_STATIC_LIBRARIES += libfusetwrp
 
 include $(BUILD_EXECUTABLE)
-
-# We need this so that the installed files could be picked up based on the
-# local module name
-ALL_MODULES.$(LOCAL_MODULE).INSTALLED := \
-    $(ALL_MODULES.$(LOCAL_MODULE).INSTALLED) $(SYMLINKS)
