@@ -3,7 +3,7 @@
 	exFAT file system checker.
 
 	Free exFAT implementation.
-	Copyright (C) 2011-2014  Andrew Nayenko
+	Copyright (C) 2011-2013  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ static int nodeck(struct exfat* ef, struct exfat_node* node)
 			char name[UTF8_BYTES(EXFAT_NAME_MAX) + 1];
 
 			exfat_get_name(node, name, sizeof(name) - 1);
-			exfat_error("file '%s' has invalid cluster 0x%x", name, c);
+			exfat_error("file `%s' has invalid cluster 0x%x", name, c);
 			rc = 1;
 			break;
 		}
@@ -54,7 +54,7 @@ static int nodeck(struct exfat* ef, struct exfat_node* node)
 			char name[UTF8_BYTES(EXFAT_NAME_MAX) + 1];
 
 			exfat_get_name(node, name, sizeof(name) - 1);
-			exfat_error("cluster 0x%x of file '%s' is not allocated", c, name);
+			exfat_error("cluster 0x%x of file `%s' is not allocated", c, name);
 			rc = 1;
 		}
 		c = exfat_next_cluster(ef, node, c);
@@ -72,20 +72,16 @@ static void dirck(struct exfat* ef, const char* path)
 	char* entry_path;
 
 	if (exfat_lookup(ef, &parent, path) != 0)
-		exfat_bug("directory '%s' is not found", path);
+		exfat_bug("directory `%s' is not found", path);
 	if (!(parent->flags & EXFAT_ATTRIB_DIR))
-		exfat_bug("'%s' is not a directory (0x%x)", path, parent->flags);
+		exfat_bug("`%s' is not a directory (0x%x)", path, parent->flags);
 	if (nodeck(ef, parent) != 0)
-	{
-		exfat_put_node(ef, parent);
 		return;
-	}
 
 	path_length = strlen(path);
 	entry_path = malloc(path_length + 1 + UTF8_BYTES(EXFAT_NAME_MAX) + 1);
 	if (entry_path == NULL)
 	{
-		exfat_put_node(ef, parent);
 		exfat_error("out of memory");
 		return;
 	}
@@ -97,6 +93,7 @@ static void dirck(struct exfat* ef, const char* path)
 	{
 		free(entry_path);
 		exfat_put_node(ef, parent);
+		exfat_error("failed to open directory `%s'", path);
 		return;
 	}
 	while ((node = exfat_readdir(ef, &it)))
@@ -149,7 +146,7 @@ int main(int argc, char* argv[])
 		switch (opt)
 		{
 		case 'V':
-			puts("Copyright (C) 2011-2014  Andrew Nayenko");
+			puts("Copyright (C) 2011-2013  Andrew Nayenko");
 			return 0;
 		default:
 			usage(argv[0]);

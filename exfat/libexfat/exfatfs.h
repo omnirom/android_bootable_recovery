@@ -3,7 +3,7 @@
 	Definitions of structures and constants used in exFAT file system.
 
 	Free exFAT implementation.
-	Copyright (C) 2010-2014  Andrew Nayenko
+	Copyright (C) 2010-2013  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -153,10 +153,10 @@ struct exfat_entry_meta2			/* file or directory info (part 2) */
 	uint8_t name_length;
 	le16_t name_hash;
 	le16_t __unknown2;
-	le64_t valid_size;				/* in bytes, less or equal to size */
+	le64_t real_size;				/* in bytes, equals to size */
 	uint8_t __unknown3[4];
 	le32_t start_cluster;
-	le64_t size;					/* in bytes */
+	le64_t size;					/* in bytes, equals to real_size */
 }
 PACKED;
 STATIC_ASSERT(sizeof(struct exfat_entry_meta2) == 32);

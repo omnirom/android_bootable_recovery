@@ -3,7 +3,7 @@
 	Prints detailed information about exFAT volume.
 
 	Free exFAT implementation.
-	Copyright (C) 2011-2014  Andrew Nayenko
+	Copyright (C) 2011-2013  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -85,13 +85,13 @@ static int dump_sb(const char* spec)
 	if (exfat_read(dev, &sb, sizeof(struct exfat_super_block)) < 0)
 	{
 		exfat_close(dev);
-		exfat_error("failed to read from '%s'", spec);
+		exfat_error("failed to read from `%s'", spec);
 		return 1;
 	}
 	if (memcmp(sb.oem_name, "EXFAT   ", sizeof(sb.oem_name)) != 0)
 	{
 		exfat_close(dev);
-		exfat_error("exFAT file system is not found on '%s'", spec);
+		exfat_error("exFAT file system is not found on `%s'", spec);
 		return 1;
 	}
 
@@ -106,7 +106,7 @@ static int dump_sb(const char* spec)
 
 static void dump_sectors(struct exfat* ef)
 {
-	off64_t a = 0, b = 0;
+	off_t a = 0, b = 0;
 
 	printf("Used sectors ");
 	while (exfat_find_used_sectors(ef, &a, &b) == 0)
@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
 			used_sectors = true;
 			break;
 		case 'V':
-			puts("Copyright (C) 2011-2014  Andrew Nayenko");
+			puts("Copyright (C) 2011-2013  Andrew Nayenko");
 			return 0;
 		default:
 			usage(argv[0]);

@@ -4,7 +4,7 @@
 	implementation.
 
 	Free exFAT implementation.
-	Copyright (C) 2010-2014  Andrew Nayenko
+	Copyright (C) 2010-2013  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -51,6 +51,7 @@
 #define ROUND_UP(x, d) (DIV_ROUND_UP(x, d) * (d))
 #define UTF8_BYTES(c) ((c) * 6) /* UTF-8 character can occupy up to 6 bytes */
 
+typedef size_t bitmap_t;
 #define BMAP_SIZE(count) (ROUND_UP(count, sizeof(bitmap_t) * 8) / 8)
 #define BMAP_BLOCK(index) ((index) / sizeof(bitmap_t) / 8)
 #define BMAP_MASK(index) ((bitmap_t) 1 << ((index) % (sizeof(bitmap_t) * 8)))
@@ -193,7 +194,6 @@ size_t utf16_length(const le16_t* str);
 
 struct exfat_node* exfat_get_node(struct exfat_node* node);
 void exfat_put_node(struct exfat* ef, struct exfat_node* node);
-int exfat_cleanup_node(struct exfat* ef, struct exfat_node* node);
 int exfat_cache_directory(struct exfat* ef, struct exfat_node* dir);
 void exfat_reset_cache(struct exfat* ef);
 int exfat_flush_node(struct exfat* ef, struct exfat_node* node);

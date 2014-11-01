@@ -3,7 +3,7 @@
 	Creates exFAT file system.
 
 	Free exFAT implementation.
-	Copyright (C) 2011-2014  Andrew Nayenko
+	Copyright (C) 2011-2013  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -224,12 +224,12 @@ int main(int argc, char* argv[])
 			spc_bits = logarithm2(atoi(optarg));
 			if (spc_bits < 0)
 			{
-				exfat_error("invalid option value: '%s'", optarg);
+				exfat_error("invalid option value: `%s'", optarg);
 				return 1;
 			}
 			break;
 		case 'V':
-			puts("Copyright (C) 2011-2014  Andrew Nayenko");
+			puts("Copyright (C) 2011-2013  Andrew Nayenko");
 			return 0;
 		default:
 			usage(argv[0]);

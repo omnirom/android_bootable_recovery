@@ -1,4 +1,4 @@
-.\" Copyright (C) 2011-2014  Andrew Nayenko
+.\" Copyright (C) 2011  Andrew Nayenko
 .\"
 .TH MKEXFATFS 8 "January 2011"
 .SH NAME
@@ -31,10 +31,7 @@
 .B mkexfatfs
 creates an exFAT file system on a block device.
 .I device
-is a special file corresponding to the partition on the device. Note that if
-this is an MBR partition then the file system type should be set to 0x07
-(NTFS/exFAT) otherwise other operating systems may refuse to mount the
-file system.
+is a special file corresponding to the device.
 
 .SH OPTIONS
 Command line options available:
@@ -68,4 +65,4 @@ Zero is returned on successful creation. Any other code means an error.
 Andrew Nayenko
 
 .SH SEE ALSO
-.BR mkfs (8), fdisk (8)
+.BR mkfs (8)
