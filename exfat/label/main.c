@@ -3,7 +3,7 @@
 	Prints or changes exFAT volume label.
 
 	Free exFAT implementation.
-	Copyright (C) 2011-2014  Andrew Nayenko
+	Copyright (C) 2011-2013  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 		{
 			printf("exfatlabel %u.%u.%u\n", EXFAT_VERSION_MAJOR,
 					EXFAT_VERSION_MINOR, EXFAT_VERSION_PATCH);
-			puts("Copyright (C) 2011-2014  Andrew Nayenko");
+			puts("Copyright (C) 2011-2013  Andrew Nayenko");
 			return 0;
 		}
 
