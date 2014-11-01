@@ -3,9 +3,8 @@ ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libcryptfsjb
-LOCAL_MODULE_TAGS := eng
-LOCAL_MODULES_TAGS = optional
-LOCAL_CFLAGS = 
+LOCAL_MODULE_TAGS := eng optional
+LOCAL_CFLAGS :=
 LOCAL_SRC_FILES = cryptfs.c
 LOCAL_C_INCLUDES += \
     system/extras/ext4_utils \

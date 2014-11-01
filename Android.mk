@@ -431,8 +431,7 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libaosprecovery
-LOCAL_MODULE_TAGS := eng
-LOCAL_MODULES_TAGS = optional
+LOCAL_MODULE_TAGS := eng optional
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
 LOCAL_SRC_FILES = adb_install.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c legacy_property_service.c
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils
