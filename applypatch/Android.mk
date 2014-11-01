@@ -38,6 +38,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := main.c
 LOCAL_MODULE := applypatch
+LOCAL_MODULE_TAGS := optional
 LOCAL_C_INCLUDES += $(commands_recovery_local_path)
 LOCAL_STATIC_LIBRARIES += libapplypatch libmtdutils libmincrypttwrp libbz libminelf
 LOCAL_SHARED_LIBRARIES += libz libcutils libstdc++ libc
@@ -49,7 +50,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := main.c
 LOCAL_MODULE := applypatch_static
 LOCAL_FORCE_STATIC_EXECUTABLE := true
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
 LOCAL_C_INCLUDES += $(commands_recovery_local_path)
 LOCAL_STATIC_LIBRARIES += libapplypatch libmtdutils libmincrypttwrp libbz libminelf
 LOCAL_STATIC_LIBRARIES += libz libcutils libstdc++ libc
