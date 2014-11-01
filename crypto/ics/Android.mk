@@ -3,8 +3,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libcryptfsics
-LOCAL_MODULE_TAGS := eng
-LOCAL_MODULES_TAGS = optional
+LOCAL_MODULE_TAGS := eng optional
 LOCAL_CFLAGS = 
 LOCAL_CFLAGS += -DCRYPTO_FS_TYPE=\"$(TW_CRYPTO_FS_TYPE)\"
 ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
