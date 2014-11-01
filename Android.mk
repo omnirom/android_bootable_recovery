@@ -316,6 +316,68 @@ ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
 endif
 
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
+
+LOCAL_ADDITIONAL_DEPENDENCIES := \
+    busybox_symlinks \
+    dosfsck \
+    dosfslabel \
+    dump_image \
+    erase_image \
+    flash_image \
+    fix_permissions.sh \
+    fsck_msdos_symlink \
+    mkdosfs \
+    mke2fs.conf \
+    mkexfatfs \
+    pigz \
+    teamwin \
+    toolbox_symlinks \
+    twrp \
+    unpigz_symlink \
+    updater
+
+ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
+    LOCAL_ADDITIONAL_DEPENDENCIES += parted
+endif
+ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += openaes ../openaes/LICENSE
+endif
+ifeq ($(TW_INCLUDE_DUMLOCK), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += \
+        htcdumlock htcdumlocksys flash_imagesys dump_imagesys libbmlutils.so \
+        libflashutils.so libmmcutils.so libmtdutils.so HTCDumlock.apk
+endif
+ifneq ($(TW_EXCLUDE_SUPERSU), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += \
+        su install-recovery.sh 99SuperSUDaemon Superuser.apk
+endif
+ifneq ($(TW_NO_EXFAT_FUSE), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += exfat-fuse
+endif
+ifeq ($(TW_INCLUDE_CRYPTO), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += cryptfs cryptsettings
+endif
+ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += getfooter
+endif
+ifeq ($(TW_INCLUDE_FB2PNG), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += fb2png
+endif
+ifneq ($(TW_OEM_BUILD),true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += orscmd
+endif
+ifeq ($(BOARD_USES_BML_OVER_MTD),true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += bml_over_mtd
+endif
+ifeq ($(TW_INCLUDE_INJECTTWRP), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += injecttwrp
+endif
+# Allow devices to specify device-specific recovery dependencies
+ifneq ($(TARGET_RECOVERY_DEVICE_MODULES),)
+    LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_RECOVERY_DEVICE_MODULES)
+endif
+
 include $(BUILD_EXECUTABLE)
 
 ifneq ($(TW_USE_TOOLBOX), true)
@@ -341,8 +403,13 @@ $(RECOVERY_BUSYBOX_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@rm -rf $@
 	$(hide) ln -sf $(BUSYBOX_BINARY) $@
 
-ALL_DEFAULT_INSTALLED_MODULES += $(RECOVERY_BUSYBOX_SYMLINKS)
-endif
+include $(CLEAR_VARS)
+LOCAL_MODULE := busybox_symlinks
+LOCAL_MODULE_TAGS := optional
+LOCAL_ADDITIONAL_DEPENDENCIES := $(RECOVERY_BUSYBOX_SYMLINKS)
+include $(BUILD_PHONY_PACKAGE)
+RECOVERY_BUSYBOX_SYMLINKS :=
+endif # !TW_USE_TOOLBOX
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := verifier_test

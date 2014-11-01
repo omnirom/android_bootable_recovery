@@ -133,7 +133,6 @@ GEN := $(intermediates)/teamwin
 $(GEN): $(RELINK)
 $(GEN): $(RELINK_SOURCE_FILES) $(call intermediates-dir-for,EXECUTABLES,recovery)/recovery
 	$(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES)
-	$(RELINK) $(call intermediates-dir-for,EXECUTABLES,recovery) $(call intermediates-dir-for,EXECUTABLES,recovery)/recovery
 
 LOCAL_GENERATED_SOURCES := $(GEN)
 LOCAL_SRC_FILES := teamwin $(GEN)
