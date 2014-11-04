@@ -1516,6 +1516,8 @@ int TWPartitionManager::usb_storage_enable(void) {
 	char lun_file[255];
 	bool has_multiple_lun = false;
 
+	property_set("sys.storage.ums_enabled", "1");
+	sleep(1);
 	DataManager::GetValue(TW_HAS_DATA_MEDIA, has_data_media);
 	string Lun_File_str = CUSTOM_LUN_FILE;
 	size_t found = Lun_File_str.find("%");
@@ -1561,12 +1563,12 @@ int TWPartitionManager::usb_storage_enable(void) {
 			goto error_handle;
 		}
 	}
-	property_set("sys.storage.ums_enabled", "1");
 	return true;
 error_handle:
 	if (mtp_was_enabled)
 		if (!Enable_MTP())
 			Disable_MTP();
+	property_set("sys.storage.ums_enabled", "0");
 	return false;
 }
 
