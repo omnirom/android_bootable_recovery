@@ -65,8 +65,10 @@ class Device {
     //   - invoke a specific action (a menu position: any non-negative number)
     virtual int HandleMenuKey(int key, int visible) = 0;
 
-    enum BuiltinAction { NO_ACTION, REBOOT, APPLY_EXT, APPLY_CACHE,
-                         APPLY_ADB_SIDELOAD, WIPE_DATA, WIPE_CACHE };
+    enum BuiltinAction { NO_ACTION, REBOOT, APPLY_EXT,
+                         APPLY_CACHE,   // APPLY_CACHE is deprecated; has no effect
+                         APPLY_ADB_SIDELOAD, WIPE_DATA, WIPE_CACHE,
+                         REBOOT_BOOTLOADER, SHUTDOWN, READ_RECOVERY_LASTLOG };
 
     // Perform a recovery action selected from the menu.
     // 'menu_position' will be the item number of the selected menu

@@ -287,13 +287,11 @@ Value* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     long l_int = strtol(left, &end, 10);
     if (left[0] == '\0' || *end != '\0') {
-        printf("[%s] is not an int\n", left);
         goto done;
     }
 
     long r_int = strtol(right, &end, 10);
     if (right[0] == '\0' || *end != '\0') {
-        printf("[%s] is not an int\n", right);
         goto done;
     }
 

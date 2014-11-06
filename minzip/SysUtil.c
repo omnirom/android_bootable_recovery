@@ -8,41 +8,16 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <errno.h>
 #include <assert.h>
 
-#define LOG_TAG "minzip"
+#define LOG_TAG "sysutil"
 #include "Log.h"
 #include "SysUtil.h"
-
-/*
- * Having trouble finding a portable way to get this.  sysconf(_SC_PAGE_SIZE)
- * seems appropriate, but we don't have that on the device.  Some systems
- * have getpagesize(2), though the linux man page has some odd cautions.
- */
-#define DEFAULT_PAGE_SIZE   4096
-
-
-/*
- * Create an anonymous shared memory segment large enough to hold "length"
- * bytes.  The actual segment may be larger because mmap() operates on
- * page boundaries (usually 4K).
- */
-static void* sysCreateAnonShmem(size_t length)
-{
-    void* ptr;
-
-    ptr = mmap(NULL, length, PROT_READ | PROT_WRITE,
-            MAP_SHARED | MAP_ANON, -1, 0);
-    if (ptr == MAP_FAILED) {
-        LOGW("mmap(%d, RW, SHARED|ANON) failed: %s\n", (int) length,
-            strerror(errno));
-        return NULL;
-    }
-
-    return ptr;
-}
 
 static int getFileStartAndLength(int fd, off_t *start_, size_t *length_)
 {
@@ -74,48 +49,13 @@ static int getFileStartAndLength(int fd, off_t *start_, size_t *length_)
 }
 
 /*
- * Pull the contents of a file into an new shared memory segment.  We grab
- * everything from fd's current offset on.
- *
- * We need to know the length ahead of time so we can allocate a segment
- * of sufficient size.
- */
-int sysLoadFileInShmem(int fd, MemMapping* pMap)
-{
-    off_t start;
-    size_t length, actual;
-    void* memPtr;
-
-    assert(pMap != NULL);
-
-    if (getFileStartAndLength(fd, &start, &length) < 0)
-        return -1;
-
-    memPtr = sysCreateAnonShmem(length);
-    if (memPtr == NULL)
-        return -1;
-
-    pMap->baseAddr = pMap->addr = memPtr;
-    pMap->baseLength = pMap->length = length;
-
-    actual = TEMP_FAILURE_RETRY(read(fd, memPtr, length));
-    if (actual != length) {
-        LOGE("only read %d of %d bytes\n", (int) actual, (int) length);
-        sysReleaseShmem(pMap);
-        return -1;
-    }
-
-    return 0;
-}
-
-/*
- * Map a file (from fd's current offset) into a shared, read-only memory
+ * Map a file (from fd's current offset) into a private, read-only memory
  * segment.  The file offset must be a multiple of the page size.
  *
  * On success, returns 0 and fills out "pMap".  On failure, returns a nonzero
  * value and does not disturb "pMap".
  */
-int sysMapFileInShmem(int fd, MemMapping* pMap)
+static int sysMapFD(int fd, MemMapping* pMap)
 {
     off_t start;
     size_t length;
@@ -126,87 +66,148 @@ int sysMapFileInShmem(int fd, MemMapping* pMap)
     if (getFileStartAndLength(fd, &start, &length) < 0)
         return -1;
 
-    memPtr = mmap(NULL, length, PROT_READ, MAP_FILE | MAP_SHARED, fd, start);
+    memPtr = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, start);
     if (memPtr == MAP_FAILED) {
-        LOGW("mmap(%d, R, FILE|SHARED, %d, %d) failed: %s\n", (int) length,
+        LOGW("mmap(%d, R, PRIVATE, %d, %d) failed: %s\n", (int) length,
             fd, (int) start, strerror(errno));
         return -1;
     }
 
-    pMap->baseAddr = pMap->addr = memPtr;
-    pMap->baseLength = pMap->length = length;
+    pMap->addr = memPtr;
+    pMap->length = length;
+    pMap->range_count = 1;
+    pMap->ranges = malloc(sizeof(MappedRange));
+    pMap->ranges[0].addr = memPtr;
+    pMap->ranges[0].length = length;
 
     return 0;
 }
 
-/*
- * Map part of a file (from fd's current offset) into a shared, read-only
- * memory segment.
- *
- * On success, returns 0 and fills out "pMap".  On failure, returns a nonzero
- * value and does not disturb "pMap".
- */
-int sysMapFileSegmentInShmem(int fd, off_t start, long length,
-    MemMapping* pMap)
+static int sysMapBlockFile(FILE* mapf, MemMapping* pMap)
 {
-    off_t dummy;
-    size_t fileLength, actualLength;
-    off_t actualStart;
-    int adjust;
-    void* memPtr;
+    char block_dev[PATH_MAX+1];
+    size_t size;
+    unsigned int blksize;
+    unsigned int blocks;
+    unsigned int range_count;
+    unsigned int i;
 
-    assert(pMap != NULL);
-
-    if (getFileStartAndLength(fd, &dummy, &fileLength) < 0)
+    if (fgets(block_dev, sizeof(block_dev), mapf) == NULL) {
+        LOGW("failed to read block device from header\n");
         return -1;
+    }
+    for (i = 0; i < sizeof(block_dev); ++i) {
+        if (block_dev[i] == '\n') {
+            block_dev[i] = 0;
+            break;
+        }
+    }
 
-    if (start + length > (long)fileLength) {
-        LOGW("bad segment: st=%d len=%ld flen=%d\n",
-            (int) start, length, (int) fileLength);
+    if (fscanf(mapf, "%zu %u\n%u\n", &size, &blksize, &range_count) != 3) {
+        LOGW("failed to parse block map header\n");
         return -1;
     }
 
-    /* adjust to be page-aligned */
-    adjust = start % DEFAULT_PAGE_SIZE;
-    actualStart = start - adjust;
-    actualLength = length + adjust;
+    blocks = ((size-1) / blksize) + 1;
 
-    memPtr = mmap(NULL, actualLength, PROT_READ, MAP_FILE | MAP_SHARED,
-                fd, actualStart);
-    if (memPtr == MAP_FAILED) {
-        LOGW("mmap(%d, R, FILE|SHARED, %d, %d) failed: %s\n",
-            (int) actualLength, fd, (int) actualStart, strerror(errno));
+    pMap->range_count = range_count;
+    pMap->ranges = malloc(range_count * sizeof(MappedRange));
+    memset(pMap->ranges, 0, range_count * sizeof(MappedRange));
+
+    // Reserve enough contiguous address space for the whole file.
+    unsigned char* reserve;
+    reserve = mmap64(NULL, blocks * blksize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (reserve == MAP_FAILED) {
+        LOGW("failed to reserve address space: %s\n", strerror(errno));
         return -1;
     }
 
-    pMap->baseAddr = memPtr;
-    pMap->baseLength = actualLength;
-    pMap->addr = (char*)memPtr + adjust;
-    pMap->length = length;
+    pMap->ranges[range_count-1].addr = reserve;
+    pMap->ranges[range_count-1].length = blocks * blksize;
 
-    LOGVV("mmap seg (st=%d ln=%d): bp=%p bl=%d ad=%p ln=%d\n",
-        (int) start, (int) length,
-        pMap->baseAddr, (int) pMap->baseLength,
-        pMap->addr, (int) pMap->length);
+    int fd = open(block_dev, O_RDONLY);
+    if (fd < 0) {
+        LOGW("failed to open block device %s: %s\n", block_dev, strerror(errno));
+        return -1;
+    }
 
+    unsigned char* next = reserve;
+    for (i = 0; i < range_count; ++i) {
+        int start, end;
+        if (fscanf(mapf, "%d %d\n", &start, &end) != 2) {
+            LOGW("failed to parse range %d in block map\n", i);
+            return -1;
+        }
+
+        void* addr = mmap64(next, (end-start)*blksize, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, ((off64_t)start)*blksize);
+        if (addr == MAP_FAILED) {
+            LOGW("failed to map block %d: %s\n", i, strerror(errno));
+            return -1;
+        }
+        pMap->ranges[i].addr = addr;
+        pMap->ranges[i].length = (end-start)*blksize;
+
+        next += pMap->ranges[i].length;
+    }
+
+    pMap->addr = reserve;
+    pMap->length = size;
+
+    LOGI("mmapped %d ranges\n", range_count);
+
+    return 0;
+}
+
+int sysMapFile(const char* fn, MemMapping* pMap)
+{
+    memset(pMap, 0, sizeof(*pMap));
+
+    if (fn && fn[0] == '@') {
+        // A map of blocks
+        FILE* mapf = fopen(fn+1, "r");
+        if (mapf == NULL) {
+            LOGV("Unable to open '%s': %s\n", fn+1, strerror(errno));
+            return -1;
+        }
+
+        if (sysMapBlockFile(mapf, pMap) != 0) {
+            LOGW("Map of '%s' failed\n", fn);
+            return -1;
+        }
+
+        fclose(mapf);
+    } else {
+        // This is a regular file.
+        int fd = open(fn, O_RDONLY, 0);
+        if (fd < 0) {
+            LOGE("Unable to open '%s': %s\n", fn, strerror(errno));
+            return -1;
+        }
+
+        if (sysMapFD(fd, pMap) != 0) {
+            LOGE("Map of '%s' failed\n", fn);
+            close(fd);
+            return -1;
+        }
+
+        close(fd);
+    }
     return 0;
 }
 
 /*
  * Release a memory mapping.
  */
-void sysReleaseShmem(MemMapping* pMap)
+void sysReleaseMap(MemMapping* pMap)
 {
-    if (pMap->baseAddr == NULL && pMap->baseLength == 0)
-        return;
-
-    if (munmap(pMap->baseAddr, pMap->baseLength) < 0) {
-        LOGW("munmap(%p, %d) failed: %s\n",
-            pMap->baseAddr, (int)pMap->baseLength, strerror(errno));
-    } else {
-        LOGV("munmap(%p, %d) succeeded\n", pMap->baseAddr, pMap->baseLength);
-        pMap->baseAddr = NULL;
-        pMap->baseLength = 0;
+    int i;
+    for (i = 0; i < pMap->range_count; ++i) {
+        if (munmap(pMap->ranges[i].addr, pMap->ranges[i].length) < 0) {
+            LOGW("munmap(%p, %d) failed: %s\n",
+                 pMap->ranges[i].addr, (int)pMap->ranges[i].length, strerror(errno));
+        }
     }
+    free(pMap->ranges);
+    pMap->ranges = NULL;
+    pMap->range_count = 0;
 }
-

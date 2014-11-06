@@ -46,11 +46,11 @@ typedef struct ZipEntry {
  * One Zip archive.  Treat as opaque.
  */
 typedef struct ZipArchive {
-    int         fd;
-    unsigned int numEntries;
-    ZipEntry*   pEntries;
-    HashTable*  pHash;          // maps file name to ZipEntry
-    MemMapping  map;
+    unsigned int   numEntries;
+    ZipEntry*      pEntries;
+    HashTable*     pHash;          // maps file name to ZipEntry
+    unsigned char* addr;
+    size_t         length;
 } ZipArchive;
 
 /*
@@ -68,7 +68,7 @@ typedef struct {
  * On success, returns 0 and populates "pArchive".  Returns nonzero errno
  * value on failure.
  */
-int mzOpenZipArchive(const char* fileName, ZipArchive* pArchive);
+int mzOpenZipArchive(unsigned char* addr, size_t length, ZipArchive* pArchive);
 
 /*
  * Close archive, releasing resources associated with it.
@@ -181,6 +181,17 @@ bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
  */
 bool mzExtractZipEntryToBuffer(const ZipArchive *pArchive,
     const ZipEntry *pEntry, unsigned char* buffer);
+
+/*
+ * Return a pointer and length for a given entry.  The returned region
+ * should be valid until pArchive is closed, and should be treated as
+ * read-only.
+ *
+ * Only makes sense for entries which are stored (ie, not compressed).
+ * No guarantees are made regarding alignment of the returned pointer.
+ */
+bool mzGetStoredEntry(const ZipArchive *pArchive,
+    const ZipEntry* pEntry, unsigned char **addr, size_t *length);
 
 /*
  * Inflate all entries under zipDir to the directory specified by

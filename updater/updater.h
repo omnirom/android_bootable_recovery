@@ -27,6 +27,9 @@ typedef struct {
     FILE* cmd_pipe;
     ZipArchive* package_zip;
     int version;
+
+    uint8_t* package_zip_addr;
+    size_t package_zip_len;
 } UpdaterInfo;
 
 extern struct selabel_handle *sehandle;

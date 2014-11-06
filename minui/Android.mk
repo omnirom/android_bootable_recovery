@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := graphics_overlay.c events.c resources.c
+LOCAL_SRC_FILES := graphics_adf.c graphics_fbdev.c graphics_overlay.c events.c resources.c
 ifneq ($(BOARD_CUSTOM_GRAPHICS),)
   LOCAL_SRC_FILES += $(BOARD_CUSTOM_GRAPHICS)
 else
@@ -25,6 +25,8 @@ else
 endif
 
 LOCAL_STATIC_LIBRARY := libpng
+LOCAL_WHOLE_STATIC_LIBRARIES += libadf
+
 LOCAL_MODULE := libminui
 
 # This used to compare against values in double-quotes (which are just
@@ -60,7 +62,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := graphics_overlay.c events.c resources.c
+LOCAL_SRC_FILES := graphics_adf.c graphics_fbdev.c graphics_overlay.c events.c resources.c
 ifneq ($(BOARD_CUSTOM_GRAPHICS),)
   LOCAL_SRC_FILES += $(BOARD_CUSTOM_GRAPHICS)
 else
@@ -87,6 +89,7 @@ LOCAL_MODULE := libminui
 
 LOCAL_ARM_MODE:= arm
 LOCAL_SHARED_LIBRARIES := libpng libpixelflinger
+LOCAL_WHOLE_STATIC_LIBRARIES += libadf
 # This used to compare against values in double-quotes (which are just
 # ordinary characters in this context).  Strip double-quotes from the
 # value so that either will work.

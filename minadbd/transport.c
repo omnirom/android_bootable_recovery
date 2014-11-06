@@ -678,27 +678,6 @@ retry:
     return result;
 }
 
-void register_socket_transport(int s, const char *serial, int port, int local)
-{
-    atransport *t = calloc(1, sizeof(atransport));
-    char buff[32];
-
-    if (!serial) {
-        snprintf(buff, sizeof buff, "T-%p", t);
-        serial = buff;
-    }
-    D("transport: %s init'ing for socket %d, on port %d\n", serial, s, port);
-    if ( init_socket_transport(t, s, port, local) < 0 ) {
-        adb_close(s);
-        free(t);
-        return;
-    }
-    if(serial) {
-        t->serial = strdup(serial);
-    }
-    register_transport(t);
-}
-
 void register_usb_transport(usb_handle *usb, const char *serial, unsigned writeable)
 {
     atransport *t = calloc(1, sizeof(atransport));
@@ -734,7 +713,7 @@ int readx(int fd, void *ptr, size_t len)
     char *p = ptr;
     int r;
 #if ADB_TRACE
-    int  len0 = len;
+    size_t len0 = len;
 #endif
     D("readx: fd=%d wanted=%d\n", fd, (int)len);
     while(len > 0) {
@@ -755,7 +734,7 @@ int readx(int fd, void *ptr, size_t len)
     }
 
 #if ADB_TRACE
-    D("readx: fd=%d wanted=%d got=%d\n", fd, len0, len0 - len);
+    D("readx: fd=%d wanted=%zu got=%zu\n", fd, len0, len0 - len);
     dump_hex( ptr, len0 );
 #endif
     return 0;

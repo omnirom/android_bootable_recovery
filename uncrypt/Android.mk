@@ -1,4 +1,4 @@
-# Copyright (C) 2009 The Android Open Source Project
+# Copyright (C) 2014 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@
 # limitations under the License.
 
 LOCAL_PATH := $(call my-dir)
+
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := \
-	Retouch.c
-
 LOCAL_C_INCLUDES += $(commands_recovery_local_path)
+LOCAL_SRC_FILES := uncrypt.c
 
-LOCAL_MODULE := libminelf
+LOCAL_MODULE := uncrypt
 
-LOCAL_CFLAGS += -Wall
+LOCAL_STATIC_LIBRARIES := libfs_mgr liblog libcutils
 
-include $(BUILD_STATIC_LIBRARY)
+include $(BUILD_EXECUTABLE)

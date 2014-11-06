@@ -30,6 +30,8 @@ class RecoveryUI {
 
     // Initialize the object; called before anything else.
     virtual void Init();
+    // Show a stage indicator.  Call immediately after Init().
+    virtual void SetStage(int current, int max) { }
 
     // After calling Init(), you can tell the UI what locale it is operating in.
     virtual void SetLocale(const char* locale) { }
@@ -77,7 +79,7 @@ class RecoveryUI {
     // Return value indicates whether an immediate operation should be
     // triggered (toggling the display, rebooting the device), or if
     // the key should be enqueued for use by the main thread.
-    enum KeyAction { ENQUEUE, TOGGLE, REBOOT, IGNORE };
+    enum KeyAction { ENQUEUE, TOGGLE, REBOOT, IGNORE, MOUNT_SYSTEM };
     virtual KeyAction CheckKey(int key);
 
     // Called immediately before each call to CheckKey(), tell you if
@@ -90,6 +92,13 @@ class RecoveryUI {
     // keys being pressed in the meantime), NextCheckKeyIsLong() will
     // be called with "true".
     virtual void KeyLongPress(int key);
+
+    // Normally in recovery there's a key sequence that triggers
+    // immediate reboot of the device, regardless of what recovery is
+    // doing (with the default CheckKey implementation, it's pressing
+    // the power button 7 times in row).  Call this to enable or
+    // disable that feature.  It is enabled by default.
+    virtual void SetEnableReboot(bool enabled);
 
     // --- menu display ---
 
@@ -119,7 +128,12 @@ private:
     int key_last_down;                 // under key_queue_mutex
     bool key_long_press;               // under key_queue_mutex
     int key_down_count;                // under key_queue_mutex
+    bool enable_reboot;                // under key_queue_mutex
     int rel_sum;
+
+    int consecutive_power_keys;
+    int consecutive_alternate_keys;
+    int last_key;
 
     typedef struct {
         RecoveryUI* ui;
@@ -130,7 +144,7 @@ private:
     pthread_t input_t;
 
     static void* input_thread(void* cookie);
-    static int input_callback(int fd, short revents, void* data);
+    static int input_callback(int fd, uint32_t epevents, void* data);
     void process_key(int key_code, int updown);
     bool usb_connected();
 

@@ -407,6 +407,7 @@ int adb_main(const char* path)
 
     fprintf(stderr, "userid is %d\n", getuid());
 */
+
     D("Event loop starting\n");
 
     fdevent_loop();

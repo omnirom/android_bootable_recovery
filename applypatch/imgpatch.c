@@ -18,6 +18,7 @@
 // format.
 
 #include <stdio.h>
+#include <sys/cdefs.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
@@ -35,7 +36,7 @@
  * file, and update the SHA context with the output data as well.
  * Return 0 on success.
  */
-int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
+int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size __unused,
                     const Value* patch,
                     SinkFn sink, void* token, SHA_CTX* ctx,
                     const Value* bonus_data) {
@@ -94,7 +95,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                 printf("failed to read chunk %d raw data\n", i);
                 return -1;
             }
-            SHA_update(ctx, patch->data + pos, data_len);
+            if (ctx) SHA_update(ctx, patch->data + pos, data_len);
             if (sink((unsigned char*)patch->data + pos,
                      data_len, token) != data_len) {
                 printf("failed to write chunk %d raw data\n", i);
@@ -132,7 +133,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
 
             unsigned char* expanded_source = malloc(expanded_len);
             if (expanded_source == NULL) {
-                printf("failed to allocate %d bytes for expanded_source\n",
+                printf("failed to allocate %zu bytes for expanded_source\n",
                        expanded_len);
                 return -1;
             }
@@ -163,7 +164,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
             // We should have filled the output buffer exactly, except
             // for the bonus_size.
             if (strm.avail_out != bonus_size) {
-                printf("source inflation short by %d bytes\n", strm.avail_out-bonus_size);
+                printf("source inflation short by %zu bytes\n", strm.avail_out-bonus_size);
                 return -1;
             }
             inflateEnd(&strm);
@@ -216,7 +217,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                            (long)have);
                     return -1;
                 }
-                SHA_update(ctx, temp_data, have);
+                if (ctx) SHA_update(ctx, temp_data, have);
             } while (ret != Z_STREAM_END);
             deflateEnd(&strm);
 

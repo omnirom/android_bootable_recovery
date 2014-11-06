@@ -19,4 +19,6 @@
 
 void RegisterInstallFunctions();
 
+static int make_parents(char* name);
+
 #endif

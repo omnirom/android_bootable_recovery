@@ -13,6 +13,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	adb.c \
 	fdevent.c \
+	fuse_adb_provider.c \
 	transport.c \
 	transport_usb.c \
 	sockets.c \
@@ -26,8 +27,5 @@ LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminadbd
 
-LOCAL_SHARED_LIBRARIES := libcutils libc
+LOCAL_SHARED_LIBRARIES := libfusesideload libcutils libc
 include $(BUILD_SHARED_LIBRARY)
-
-
-

@@ -30,7 +30,8 @@
 #include "cutils/properties.h"
 #include "adb_install.h"
 extern "C" {
-#include "minadbd/adb.h"
+#include "minadbd/fuse_adb_provider.h"
+#include "fuse_sideload.h"
 }
 
 static RecoveryUI* ui = NULL;
@@ -78,6 +79,10 @@ maybe_restart_adbd() {
     }
 }
 
+// How long (in seconds) we wait for the host to start sending us a
+// package, before timing out.
+#define ADB_INSTALL_TIMEOUT 300
+
 int
 apply_from_adb(const char* install_file) {
 
@@ -92,22 +97,62 @@ apply_from_adb(const char* install_file) {
         execl("/sbin/recovery", "recovery", "--adbd", install_file, NULL);
         _exit(-1);
     }
+
 	char child_prop[PROPERTY_VALUE_MAX];
 	sprintf(child_prop, "%i", child);
 	property_set("tw_child_pid", child_prop);
+
+    // FUSE_SIDELOAD_HOST_PATHNAME will start to exist once the host
+    // connects and starts serving a package.  Poll for its
+    // appearance.  (Note that inotify doesn't work with FUSE.)
+    int result;
     int status;
-    // TODO(dougz): there should be a way to cancel waiting for a
-    // package (by pushing some button combo on the device).  For now
-    // you just have to 'adb sideload' a file that's not a valid
-    // package, like "/dev/null".
-    waitpid(child, &status, 0);
+    bool waited = false;
+    struct stat st;
+    for (int i = 0; i < ADB_INSTALL_TIMEOUT; ++i) {
+        if (waitpid(child, &status, WNOHANG) != 0) {
+            result = INSTALL_ERROR;
+            waited = true;
+            break;
+        }
+
+        if (stat(FUSE_SIDELOAD_HOST_PATHNAME, &st) != 0) {
+            if (errno == ENOENT && i < ADB_INSTALL_TIMEOUT-1) {
+                sleep(1);
+                continue;
+            } else {
+                ui->Print("\nTimed out waiting for package.\n\n", strerror(errno));
+                result = INSTALL_ERROR;
+                kill(child, SIGKILL);
+                break;
+            }
+        }
+        result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, install_file, false);
+        break;
+    }
+
+    if (!waited) {
+        // Calling stat() on this magic filename signals the minadbd
+        // subprocess to shut down.
+        stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
+
+        // TODO(dougz): there should be a way to cancel waiting for a
+        // package (by pushing some button combo on the device).  For now
+        // you just have to 'adb sideload' a file that's not a valid
+        // package, like "/dev/null".
+        waitpid(child, &status, 0);
+    }
+
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        printf("status %d\n", WEXITSTATUS(status));
+        if (WEXITSTATUS(status) == 3) {
+            printf("\nYou need adb 1.0.32 or newer to sideload\nto this device.\n\n");
+        } else if (!WIFSIGNALED(status)) {
+            printf("status %d\n", WEXITSTATUS(status));
+        }
     }
     set_usb_driver(false);
     maybe_restart_adbd();
 
-    struct stat st;
     if (stat(install_file, &st) != 0) {
         if (errno == ENOENT) {
             printf("No package received.\n");

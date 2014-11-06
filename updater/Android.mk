@@ -4,6 +4,7 @@ LOCAL_PATH := $(call my-dir)
 
 updater_src_files := \
 	install.c \
+	blockimg.c \
 	updater.c
 
 #
@@ -20,6 +21,7 @@ LOCAL_SRC_FILES := $(updater_src_files)
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
 LOCAL_CFLAGS += -DUSE_EXT4
+LOCAL_CFLAGS += -Wno-unused-parameter
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 LOCAL_STATIC_LIBRARIES += \
     libext4_utils \

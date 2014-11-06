@@ -33,6 +33,7 @@
 #endif
 
 #include "common.h"
+#include "roots.h"
 #include "device.h"
 #include "minui/minui.h"
 #include "screen_ui.h"
@@ -49,10 +50,15 @@ RecoveryUI::RecoveryUI() :
     key_queue_len(0),
     key_last_down(-1),
     key_long_press(false),
-    key_down_count(0) {
+    key_down_count(0),
+    enable_reboot(true),
+    consecutive_power_keys(0),
+    consecutive_alternate_keys(0),
+    last_key(-1) {
     pthread_mutex_init(&key_queue_mutex, NULL);
     pthread_cond_init(&key_queue_cond, NULL);
     self = this;
+    memset(key_pressed, 0, sizeof(key_pressed));
 }
 
 void RecoveryUI::Init() {
@@ -61,12 +67,12 @@ void RecoveryUI::Init() {
 }
 
 
-int RecoveryUI::input_callback(int fd, short revents, void* data)
+int RecoveryUI::input_callback(int fd, uint32_t epevents, void* data)
 {
     struct input_event ev;
     int ret;
 
-    ret = ev_get_input(fd, revents, &ev);
+    ret = ev_get_input(fd, epevents, &ev);
     if (ret)
         return -1;
 
@@ -114,6 +120,7 @@ int RecoveryUI::input_callback(int fd, short revents, void* data)
 void RecoveryUI::process_key(int key_code, int updown) {
     bool register_key = false;
     bool long_press = false;
+    bool reboot_enabled;
 
     pthread_mutex_lock(&key_queue_mutex);
     key_pressed[key_code] = updown;
@@ -135,6 +142,7 @@ void RecoveryUI::process_key(int key_code, int updown) {
         }
         key_last_down = -1;
     }
+    reboot_enabled = enable_reboot;
     pthread_mutex_unlock(&key_queue_mutex);
 
     if (register_key) {
@@ -149,12 +157,21 @@ void RecoveryUI::process_key(int key_code, int updown) {
 
           case RecoveryUI::REBOOT:
 #ifdef ANDROID_RB_RESTART
-            android_reboot(ANDROID_RB_RESTART, 0, 0);
+            if (reboot_enabled) {
+                android_reboot(ANDROID_RB_RESTART, 0, 0);
+            }
 #endif
             break;
 
           case RecoveryUI::ENQUEUE:
             EnqueueKey(key_code);
+            break;
+
+          case RecoveryUI::MOUNT_SYSTEM:
+#ifndef NO_RECOVERY_MOUNT
+            ensure_path_mounted("/system");
+            Print("Mounted /system.");
+#endif
             break;
         }
     }
@@ -262,12 +279,57 @@ void RecoveryUI::FlushKeys() {
     pthread_mutex_unlock(&key_queue_mutex);
 }
 
+// The default CheckKey implementation assumes the device has power,
+// volume up, and volume down keys.
+//
+// - Hold power and press vol-up to toggle display.
+// - Press power seven times in a row to reboot.
+// - Alternate vol-up and vol-down seven times to mount /system.
 RecoveryUI::KeyAction RecoveryUI::CheckKey(int key) {
-    return RecoveryUI::ENQUEUE;
+    if ((IsKeyPressed(KEY_POWER) && key == KEY_VOLUMEUP) || key == KEY_HOME) {
+        return TOGGLE;
+    }
+
+    if (key == KEY_POWER) {
+        pthread_mutex_lock(&key_queue_mutex);
+        bool reboot_enabled = enable_reboot;
+        pthread_mutex_unlock(&key_queue_mutex);
+
+        if (reboot_enabled) {
+            ++consecutive_power_keys;
+            if (consecutive_power_keys >= 7) {
+                return REBOOT;
+            }
+        }
+    } else {
+        consecutive_power_keys = 0;
+    }
+
+    if ((key == KEY_VOLUMEUP &&
+         (last_key == KEY_VOLUMEDOWN || last_key == -1)) ||
+        (key == KEY_VOLUMEDOWN &&
+         (last_key == KEY_VOLUMEUP || last_key == -1))) {
+        ++consecutive_alternate_keys;
+        if (consecutive_alternate_keys >= 7) {
+            consecutive_alternate_keys = 0;
+            return MOUNT_SYSTEM;
+        }
+    } else {
+        consecutive_alternate_keys = 0;
+    }
+    last_key = key;
+
+    return ENQUEUE;
 }
 
 void RecoveryUI::NextCheckKeyIsLong(bool is_long_press) {
 }
 
 void RecoveryUI::KeyLongPress(int key) {
+}
+
+void RecoveryUI::SetEnableReboot(bool enabled) {
+    pthread_mutex_lock(&key_queue_mutex);
+    enable_reboot = enabled;
+    pthread_mutex_unlock(&key_queue_mutex);
 }

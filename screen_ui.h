@@ -39,6 +39,8 @@ class ScreenRecoveryUI : public RecoveryUI {
     void ShowProgress(float portion, float seconds);
     void SetProgress(float fraction);
 
+    void SetStage(int current, int max);
+
     // text log
     void ShowText(bool visible);
     bool IsTextVisible();
@@ -58,21 +60,20 @@ class ScreenRecoveryUI : public RecoveryUI {
     enum UIElement { HEADER, MENU, MENU_SEL_BG, MENU_SEL_FG, LOG, TEXT_FILL };
     virtual void SetColor(UIElement e);
 
-  protected:
-    int install_overlay_offset_x, install_overlay_offset_y;
-
   private:
     Icon currentIcon;
     int installingFrame;
+    const char* locale;
     bool rtl_locale;
 
     pthread_mutex_t updateMutex;
     gr_surface backgroundIcon[5];
     gr_surface backgroundText[5];
-    gr_surface *installationOverlay;
-    gr_surface *progressBarIndeterminate;
+    gr_surface *installation;
     gr_surface progressBarEmpty;
     gr_surface progressBarFill;
+    gr_surface stageMarkerEmpty;
+    gr_surface stageMarkerFill;
 
     ProgressType progressBarType;
 
@@ -100,11 +101,14 @@ class ScreenRecoveryUI : public RecoveryUI {
     pthread_t progress_t;
 
     int animation_fps;
-    int indeterminate_frames;
     int installing_frames;
-    int overlay_offset_x, overlay_offset_y;
+  protected:
+  private:
 
-    void draw_install_overlay_locked(int frame);
+    int iconX, iconY;
+
+    int stage, max_stage;
+
     void draw_background_locked(Icon icon);
     void draw_progress_locked();
     void draw_screen_locked();
@@ -114,6 +118,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     void progress_loop();
 
     void LoadBitmap(const char* filename, gr_surface* surface);
+    void LoadBitmapArray(const char* filename, int* frames, gr_surface** surface);
     void LoadLocalizedBitmap(const char* filename, gr_surface* surface);
 };
 

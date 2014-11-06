@@ -112,9 +112,7 @@ int ApplyBSDiffPatch(const unsigned char* old_data, ssize_t old_size,
         printf("short write of output: %d (%s)\n", errno, strerror(errno));
         return 1;
     }
-    if (ctx) {
-        SHA_update(ctx, new_data, new_size);
-    }
+    if (ctx) SHA_update(ctx, new_data, new_size);
     free(new_data);
 
     return 0;
@@ -204,6 +202,11 @@ int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
         ctrl[0] = offtin(buf);
         ctrl[1] = offtin(buf+8);
         ctrl[2] = offtin(buf+16);
+
+        if (ctrl[0] < 0 || ctrl[1] < 0) {
+            printf("corrupt patch (negative byte counts)\n");
+            return 1;
+        }
 
         // Sanity check
         if (newpos + ctrl[0] > *new_size) {

@@ -19,8 +19,10 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <fcntl.h>
 
 extern "C" {
 #include <fs_mgr.h>
@@ -30,11 +32,16 @@ extern "C" {
 #include "roots.h"
 #include "common.h"
 #include "make_ext4fs.h"
-#include "partitions.hpp"
+extern "C" {
+#include "wipe.h"
+#include "cryptfs.h"
+}
 
 static struct fstab *fstab = NULL;
 
 extern struct selabel_handle *sehandle;
+
+static const char* PERSISTENT_PATH = "/persistent";
 
 void load_volume_table()
 {
@@ -47,7 +54,7 @@ void load_volume_table()
         return;
     }
 
-    ret = fs_mgr_add_entry(fstab, "/tmp", "ramdisk", "ramdisk", 0);
+    ret = fs_mgr_add_entry(fstab, "/tmp", "ramdisk", "ramdisk");
     if (ret < 0 ) {
         LOGE("failed to add /tmp entry to fstab\n");
         fs_mgr_free_fstab(fstab);
@@ -157,6 +164,20 @@ int ensure_path_unmounted(const char* path) {
     return unmount_mounted_volume(mv);
 }
 
+static int exec_cmd(const char* path, char* const argv[]) {
+    int status;
+    pid_t child;
+    if ((child = vfork()) == 0) {
+        execv(path, argv);
+        _exit(-1);
+    }
+    waitpid(child, &status, 0);
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        LOGE("%s failed with status %d\n", path, WEXITSTATUS(status));
+    }
+    return WEXITSTATUS(status);
+}
+
 int format_volume(const char* volume) {
 	if (PartitionManager.Wipe_By_Path(volume))
 		return 0;
@@ -205,10 +226,51 @@ int format_volume(const char* volume) {
         return 0;
     }
 
-    if (strcmp(v->fs_type, "ext4") == 0) {
-        int result = make_ext4fs(v->blk_device, v->length, volume, sehandle);
+    if (strcmp(v->fs_type, "ext4") == 0 || strcmp(v->fs_type, "f2fs") == 0) {
+        // if there's a key_loc that looks like a path, it should be a
+        // block device for storing encryption metadata.  wipe it too.
+        if (v->key_loc != NULL && v->key_loc[0] == '/') {
+            LOGI("wiping %s\n", v->key_loc);
+            int fd = open(v->key_loc, O_WRONLY | O_CREAT, 0644);
+            if (fd < 0) {
+                LOGE("format_volume: failed to open %s\n", v->key_loc);
+                return -1;
+            }
+            wipe_block_device(fd, get_file_size(fd));
+            close(fd);
+        }
+
+        ssize_t length = 0;
+        if (v->length != 0) {
+            length = v->length;
+        } else if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0) {
+            length = -CRYPT_FOOTER_OFFSET;
+        }
+        int result;
+        if (strcmp(v->fs_type, "ext4") == 0) {
+            result = make_ext4fs(v->blk_device, length, volume, sehandle);
+        } else {   /* Has to be f2fs because we checked earlier. */
+            if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0 && length < 0) {
+                LOGE("format_volume: crypt footer + negative length (%zd) not supported on %s\n", length, v->fs_type);
+                return -1;
+            }
+            if (length < 0) {
+                LOGE("format_volume: negative length (%zd) not supported on %s\n", length, v->fs_type);
+                return -1;
+            }
+            char *num_sectors;
+            if (asprintf(&num_sectors, "%zd", length / 512) <= 0) {
+                LOGE("format_volume: failed to create %s command for %s\n", v->fs_type, v->blk_device);
+                return -1;
+            }
+            const char *f2fs_path = "/sbin/mkfs.f2fs";
+            const char* const f2fs_argv[] = {"mkfs.f2fs", "-t", "-d1", v->blk_device, num_sectors, NULL};
+
+            result = exec_cmd(f2fs_path, (char* const*)f2fs_argv);
+            free(num_sectors);
+        }
         if (result != 0) {
-            LOGE("format_volume: make_extf4fs failed on %s\n", v->blk_device);
+            LOGE("format_volume: make %s failed on %s with %d(%s)\n", v->fs_type, v->blk_device, result, strerror(errno));
             return -1;
         }
         return 0;
@@ -216,6 +278,41 @@ int format_volume(const char* volume) {
 
     LOGE("format_volume: fs_type \"%s\" unsupported\n", v->fs_type);
     return -1;
+}
+
+int erase_persistent_partition() {
+    Volume *v = volume_for_path(PERSISTENT_PATH);
+    if (v == NULL) {
+        // most devices won't have /persistent, so this is not an error.
+        return 0;
+    }
+
+    int fd = open(v->blk_device, O_RDWR);
+    uint64_t size = get_file_size(fd);
+    if (size == 0) {
+        LOGE("failed to stat size of /persistent\n");
+        close(fd);
+        return -1;
+    }
+
+    char oem_unlock_enabled;
+    lseek(fd, size - 1, SEEK_SET);
+    read(fd, &oem_unlock_enabled, 1);
+
+    if (oem_unlock_enabled) {
+        if (wipe_block_device(fd, size)) {
+           LOGE("error wiping /persistent: %s\n", strerror(errno));
+           close(fd);
+           return -1;
+        }
+
+        lseek(fd, size - 1, SEEK_SET);
+        write(fd, &oem_unlock_enabled, 1);
+    }
+
+    close(fd);
+
+    return (int) oem_unlock_enabled;
 }
 
 int setup_install_mounts() {
@@ -228,10 +325,16 @@ int setup_install_mounts() {
 
         if (strcmp(v->mount_point, "/tmp") == 0 ||
             strcmp(v->mount_point, "/cache") == 0) {
-            if (ensure_path_mounted(v->mount_point) != 0) return -1;
+            if (ensure_path_mounted(v->mount_point) != 0) {
+                LOGE("failed to mount %s\n", v->mount_point);
+                return -1;
+            }
 
         } else {
-            if (ensure_path_unmounted(v->mount_point) != 0) return -1;
+            if (ensure_path_unmounted(v->mount_point) != 0) {
+                LOGE("failed to unmount %s\n", v->mount_point);
+                return -1;
+            }
         }
     }
     return 0;

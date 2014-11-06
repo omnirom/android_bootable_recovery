@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <sys/poll.h>
+#include <sys/epoll.h>
 
 #include <linux/input.h>
 
@@ -34,11 +34,15 @@
     ((array)[(bit)/BITS_PER_LONG] & (1 << ((bit) % BITS_PER_LONG)))
 
 struct fd_info {
+    int fd;
     ev_callback cb;
     void *data;
 };
 
-static struct pollfd ev_fds[MAX_DEVICES + MAX_MISC_FDS];
+static int epollfd;
+static struct epoll_event polledevents[MAX_DEVICES + MAX_MISC_FDS];
+static int npolledevents;
+
 static struct fd_info ev_fdinfo[MAX_DEVICES + MAX_MISC_FDS];
 
 static unsigned ev_count = 0;
@@ -50,6 +54,12 @@ int ev_init(ev_callback input_cb, void *data)
     DIR *dir;
     struct dirent *de;
     int fd;
+    struct epoll_event ev;
+    bool epollctlfail = false;
+
+    epollfd = epoll_create(MAX_DEVICES + MAX_MISC_FDS);
+    if (epollfd == -1)
+        return -1;
 
     dir = opendir("/dev/input");
     if(dir != 0) {
@@ -74,8 +84,15 @@ int ev_init(ev_callback input_cb, void *data)
                 continue;
             }
 
-            ev_fds[ev_count].fd = fd;
-            ev_fds[ev_count].events = POLLIN;
+            ev.events = EPOLLIN | EPOLLWAKEUP;
+            ev.data.ptr = (void *)&ev_fdinfo[ev_count];
+            if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev)) {
+                close(fd);
+                epollctlfail = true;
+                continue;
+            }
+
+            ev_fdinfo[ev_count].fd = fd;
             ev_fdinfo[ev_count].cb = input_cb;
             ev_fdinfo[ev_count].data = data;
             ev_count++;
@@ -84,59 +101,78 @@ int ev_init(ev_callback input_cb, void *data)
         }
     }
 
+    if (epollctlfail && !ev_count) {
+        close(epollfd);
+        epollfd = -1;
+        return -1;
+    }
+
     return 0;
 }
 
 int ev_add_fd(int fd, ev_callback cb, void *data)
 {
+    struct epoll_event ev;
+    int ret;
+
     if (ev_misc_count == MAX_MISC_FDS || cb == NULL)
         return -1;
 
-    ev_fds[ev_count].fd = fd;
-    ev_fds[ev_count].events = POLLIN;
-    ev_fdinfo[ev_count].cb = cb;
-    ev_fdinfo[ev_count].data = data;
-    ev_count++;
-    ev_misc_count++;
-    return 0;
+    ev.events = EPOLLIN | EPOLLWAKEUP;
+    ev.data.ptr = (void *)&ev_fdinfo[ev_count];
+    ret = epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
+    if (!ret) {
+        ev_fdinfo[ev_count].fd = fd;
+        ev_fdinfo[ev_count].cb = cb;
+        ev_fdinfo[ev_count].data = data;
+        ev_count++;
+        ev_misc_count++;
+    }
+
+    return ret;
+}
+
+int ev_get_epollfd(void)
+{
+    return epollfd;
 }
 
 void ev_exit(void)
 {
     while (ev_count > 0) {
-        close(ev_fds[--ev_count].fd);
+        close(ev_fdinfo[--ev_count].fd);
     }
     ev_misc_count = 0;
     ev_dev_count = 0;
+    close(epollfd);
 }
 
 int ev_wait(int timeout)
 {
-    int r;
-
-    r = poll(ev_fds, ev_count, timeout);
-    if (r <= 0)
+    npolledevents = epoll_wait(epollfd, polledevents, ev_count, timeout);
+    if (npolledevents <= 0)
         return -1;
     return 0;
 }
 
 void ev_dispatch(void)
 {
-    unsigned n;
+    int n;
     int ret;
 
-    for (n = 0; n < ev_count; n++) {
-        ev_callback cb = ev_fdinfo[n].cb;
-        if (cb && (ev_fds[n].revents & ev_fds[n].events))
-            cb(ev_fds[n].fd, ev_fds[n].revents, ev_fdinfo[n].data);
+    for (n = 0; n < npolledevents; n++) {
+        struct fd_info *fdi = polledevents[n].data.ptr;
+        ev_callback cb = fdi->cb;
+        if (cb)
+            cb(fdi->fd, polledevents[n].events, fdi->data);
     }
 }
 
-int ev_get_input(int fd, short revents, struct input_event *ev)
+int ev_get_input(int fd, uint32_t epevents, struct input_event *ev)
 {
     int r;
 
-    if (revents & POLLIN) {
+    if (epevents & EPOLLIN) {
         r = read(fd, ev, sizeof(*ev));
         if (r == sizeof(*ev))
             return 0;
@@ -157,11 +193,11 @@ int ev_sync_key_state(ev_set_key_callback set_key_cb, void *data)
         memset(key_bits, 0, sizeof(key_bits));
         memset(ev_bits, 0, sizeof(ev_bits));
 
-        ret = ioctl(ev_fds[i].fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits);
+        ret = ioctl(ev_fdinfo[i].fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits);
         if (ret < 0 || !test_bit(EV_KEY, ev_bits))
             continue;
 
-        ret = ioctl(ev_fds[i].fd, EVIOCGKEY(sizeof(key_bits)), key_bits);
+        ret = ioctl(ev_fdinfo[i].fd, EVIOCGKEY(sizeof(key_bits)), key_bits);
         if (ret < 0)
             continue;
 

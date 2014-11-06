@@ -319,7 +319,8 @@ static void local_socket_event_func(int fd, unsigned ev, void *_s)
 
         while(avail > 0) {
             r = adb_read(fd, x, avail);
-            D("LS(%d): post adb_read(fd=%d,...) r=%d (errno=%d) avail=%d\n", s->id, s->fd, r, r<0?errno:0, avail);
+            D("LS(%d): post adb_read(fd=%d,...) r=%d (errno=%d) avail=%zu\n",
+              s->id, s->fd, r, r<0?errno:0, avail);
             if(r > 0) {
                 avail -= r;
                 x += r;

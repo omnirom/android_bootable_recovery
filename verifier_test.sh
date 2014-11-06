@@ -81,20 +81,30 @@ expect_fail unsigned.zip
 expect_fail jarsigned.zip
 
 # success cases
-expect_succeed otasigned.zip
+expect_succeed otasigned.zip -e3
 expect_succeed otasigned_f4.zip -f4
-expect_succeed otasigned_sha256.zip -sha256
-expect_succeed otasigned_f4_sha256.zip -sha256 -f4
+expect_succeed otasigned_sha256.zip -e3 -sha256
+expect_succeed otasigned_f4_sha256.zip -f4 -sha256
+expect_succeed otasigned_ecdsa_sha256.zip -ec -sha256
+
+# success with multiple keys
+expect_succeed otasigned.zip -f4 -e3
+expect_succeed otasigned_f4.zip -ec -f4
+expect_succeed otasigned_sha256.zip -ec -e3 -e3 -sha256
+expect_succeed otasigned_f4_sha256.zip -ec -sha256 -e3 -f4 -sha256
+expect_succeed otasigned_ecdsa_sha256.zip -f4 -sha256 -e3 -ec -sha256
 
 # verified against different key
 expect_fail otasigned.zip -f4
-expect_fail otasigned_f4.zip
+expect_fail otasigned_f4.zip -e3
+expect_fail otasigned_ecdsa_sha256.zip -e3 -sha256
 
 # verified against right key but wrong hash algorithm
-expect_fail otasigned.zip -sha256
-expect_fail otasigned_f4.zip -sha256 -f4
+expect_fail otasigned.zip -e3 -sha256
+expect_fail otasigned_f4.zip -f4 -sha256
 expect_fail otasigned_sha256.zip
 expect_fail otasigned_f4_sha256.zip -f4
+expect_fail otasigned_ecdsa_sha256.zip
 
 # various other cases
 expect_fail random.zip

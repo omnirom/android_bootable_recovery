@@ -57,9 +57,9 @@ void write_tagged(FILE *out, const char *line, const char *tag, int number) {
     const char *end = line + strlen(line);
     while (end > line && isspace(end[-1])) --end;
     if (number > 0) {
-        fprintf(out, "%.*s%s%d%s", end - line, line, tag, number, end);
+        fprintf(out, "%.*s%s%d%s", (int)(end - line), line, tag, number, end);
     } else {
-        fprintf(out, "%.*s%s%s", end - line, line, tag, end);
+        fprintf(out, "%.*s%s%s", (int)(end - line), line, tag, end);
     }
 }
 

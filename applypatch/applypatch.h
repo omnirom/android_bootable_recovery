@@ -19,7 +19,6 @@
 
 #include <sys/stat.h>
 #include "mincrypt/sha.h"
-#include "minelf/Retouch.h"
 #include "edify/expr.h"
 
 typedef struct _Patch {
@@ -41,7 +40,7 @@ typedef struct _FileContents {
 // and use it as the source instead.
 #define CACHE_TEMP_SOURCE "/cache/saved.file"
 
-typedef ssize_t (*SinkFn)(unsigned char*, ssize_t, void*);
+typedef ssize_t (*SinkFn)(const unsigned char*, ssize_t, void*);
 
 // applypatch.c
 int ShowLicenses();
@@ -61,8 +60,7 @@ int applypatch_check(const char* filename,
                      int num_patches,
                      char** const patch_sha1_str);
 
-int LoadFileContents(const char* filename, FileContents* file,
-                     int retouch_flag);
+int LoadFileContents(const char* filename, FileContents* file);
 int SaveFileContents(const char* filename, const FileContents* file);
 void FreeFileContents(FileContents* file);
 int FindMatchingPatch(uint8_t* sha1, char* const * const patch_sha1_str,

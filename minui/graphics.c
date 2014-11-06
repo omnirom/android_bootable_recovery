@@ -29,43 +29,33 @@
 #include <linux/fb.h>
 #include <linux/kd.h>
 
-#include <pixelflinger/pixelflinger.h>
+#include <time.h>
 
 #include "font_10x18.h"
 #include "minui.h"
-
-#if defined(RECOVERY_BGRA)
-#define PIXEL_FORMAT GGL_PIXEL_FORMAT_BGRA_8888
-#define PIXEL_SIZE   4
-#elif defined(RECOVERY_RGBX)
-#define PIXEL_FORMAT GGL_PIXEL_FORMAT_RGBX_8888
-#define PIXEL_SIZE   4
-#else
-#define PIXEL_FORMAT GGL_PIXEL_FORMAT_RGB_565
-#define PIXEL_SIZE   2
-#endif
-
-#define NUM_BUFFERS 2
+#include "graphics.h"
 
 typedef struct {
-    GGLSurface* texture;
-    unsigned cwidth;
-    unsigned cheight;
+    GRSurface* texture;
+    int cwidth;
+    int cheight;
 } GRFont;
 
-static GRFont *gr_font = 0;
-static GGLContext *gr_context = 0;
-static GGLSurface gr_font_texture;
-static GGLSurface gr_framebuffer[NUM_BUFFERS];
-static GGLSurface gr_mem_surface;
-static unsigned gr_active_fb = 0;
-static unsigned double_buffering = 0;
+static GRFont* gr_font = NULL;
+static minui_backend* gr_backend = NULL;
+
 static int overscan_percent = OVERSCAN_PERCENT;
 static int overscan_offset_x = 0;
 static int overscan_offset_y = 0;
 
-static int gr_fb_fd = -1;
 static int gr_vt_fd = -1;
+
+static unsigned char gr_current_r = 255;
+static unsigned char gr_current_g = 255;
+static unsigned char gr_current_b = 255;
+static unsigned char gr_current_a = 255;
+
+static GRSurface* gr_draw = NULL;
 
 static struct fb_var_screeninfo vi;
 static struct fb_fix_screeninfo fi;
@@ -167,8 +157,6 @@ static int get_framebuffer(GGLSurface *fb)
     if (vi.yres * fi.line_length * 2 > fi.smem_len)
         return fd;
 
-    double_buffering = 1;
-
     fb->version = sizeof(*fb);
     fb->width = vi.xres;
     fb->height = vi.yres;
@@ -233,6 +221,11 @@ void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a
     gl->color4xv(gl, color);
 }
 
+static bool outside(int x, int y)
+{
+    return x < 0 || x >= gr_draw->width || y < 0 || y >= gr_draw->height;
+}
+
 int gr_measure(const char *s)
 {
     return gr_font->cwidth * strlen(s);
@@ -249,58 +242,118 @@ int gr_text(int x, int y, const char *s, ...)
     return gr_text_impl(x, y, s, 0);
 }
 
+static void text_blend(unsigned char* src_p, int src_row_bytes,
+                       unsigned char* dst_p, int dst_row_bytes,
+                       int width, int height)
+{
+    int i, j;
+    for (j = 0; j < height; ++j) {
+        unsigned char* sx = src_p;
+        unsigned char* px = dst_p;
+        for (i = 0; i < width; ++i) {
+            unsigned char a = *sx++;
+            if (gr_current_a < 255) a = ((int)a * gr_current_a) / 255;
+            if (a == 255) {
+                *px++ = gr_current_r;
+                *px++ = gr_current_g;
+                *px++ = gr_current_b;
+                px++;
+            } else if (a > 0) {
+                *px = (*px * (255-a) + gr_current_r * a) / 255;
+                ++px;
+                *px = (*px * (255-a) + gr_current_g * a) / 255;
+                ++px;
+                *px = (*px * (255-a) + gr_current_b * a) / 255;
+                ++px;
+                ++px;
+            } else {
+                px += 4;
+            }
+        }
+        src_p += src_row_bytes;
+        dst_p += dst_row_bytes;
+    }
+}
+
+
 int gr_text_impl(int x, int y, const char *s, int bold)
 {
-    GGLContext *gl = gr_context;
     GRFont *font = gr_font;
     unsigned off;
 
-    if (!font->texture) return x;
+    if (!font->texture) return;
+    if (gr_current_a == 0) return;
 
     bold = bold && (font->texture->height != font->cheight);
 
     x += overscan_offset_x;
     y += overscan_offset_y;
 
-    gl->bindTexture(gl, font->texture);
-    gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
-    gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
-    gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
-    gl->enable(gl, GGL_TEXTURE_2D);
-
     while((off = *s++)) {
         off -= 32;
+        if (outside(x, y) || outside(x+font->cwidth-1, y+font->cheight-1)) break;
         if (off < 96) {
-            gl->texCoord2i(gl, (off * font->cwidth) - x,
-                           (bold ? font->cheight : 0) - y);
-            gl->recti(gl, x, y, x + font->cwidth, y + font->cheight);
+
+            unsigned char* src_p = font->texture->data + (off * font->cwidth) +
+                (bold ? font->cheight * font->texture->row_bytes : 0);
+            unsigned char* dst_p = gr_draw->data + y*gr_draw->row_bytes + x*gr_draw->pixel_bytes;
+
+            text_blend(src_p, font->texture->row_bytes,
+                       dst_p, gr_draw->row_bytes,
+                       font->cwidth, font->cheight);
+
         }
         x += font->cwidth;
     }
-
-    return x;
 }
 
-void gr_texticon(int x, int y, gr_surface icon) {
-    if (gr_context == NULL || icon == NULL) {
+void gr_texticon(int x, int y, GRSurface* icon) {
+    if (icon == NULL) return;
+
+    if (icon->pixel_bytes != 1) {
+        printf("gr_texticon: source has wrong format\n");
         return;
     }
-    GGLContext* gl = gr_context;
 
     x += overscan_offset_x;
     y += overscan_offset_y;
 
-    gl->bindTexture(gl, (GGLSurface*) icon);
-    gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
-    gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
-    gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
-    gl->enable(gl, GGL_TEXTURE_2D);
+    if (outside(x, y) || outside(x+icon->width-1, y+icon->height-1)) return;
 
-    int w = gr_get_width(icon);
-    int h = gr_get_height(icon);
+    unsigned char* src_p = icon->data;
+    unsigned char* dst_p = gr_draw->data + y*gr_draw->row_bytes + x*gr_draw->pixel_bytes;
 
-    gl->texCoord2i(gl, -x, -y);
-    gl->recti(gl, x, y, x+gr_get_width(icon), y+gr_get_height(icon));
+    text_blend(src_p, icon->row_bytes,
+               dst_p, gr_draw->row_bytes,
+               icon->width, icon->height);
+}
+
+void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+{
+    gr_current_r = r;
+    gr_current_g = g;
+    gr_current_b = b;
+    gr_current_a = a;
+}
+
+void gr_clear()
+{
+    if (gr_current_r == gr_current_g &&
+        gr_current_r == gr_current_b) {
+        memset(gr_draw->data, gr_current_r, gr_draw->height * gr_draw->row_bytes);
+    } else {
+        int x, y;
+        unsigned char* px = gr_draw->data;
+        for (y = 0; y < gr_draw->height; ++y) {
+            for (x = 0; x < gr_draw->width; ++x) {
+                *px++ = gr_current_r;
+                *px++ = gr_current_g;
+                *px++ = gr_current_b;
+                px++;
+            }
+            px += gr_draw->row_bytes - (gr_draw->width * gr_draw->pixel_bytes);
+        }
+    }
 }
 
 void gr_fill(int x1, int y1, int x2, int y2)
@@ -311,48 +364,82 @@ void gr_fill(int x1, int y1, int x2, int y2)
     x2 += overscan_offset_x;
     y2 += overscan_offset_y;
 
-    GGLContext *gl = gr_context;
-    gl->disable(gl, GGL_TEXTURE_2D);
-    gl->recti(gl, x1, y1, x2, y2);
+    if (outside(x1, y1) || outside(x2-1, y2-1)) return;
+
+    unsigned char* p = gr_draw->data + y1 * gr_draw->row_bytes + x1 * gr_draw->pixel_bytes;
+    if (gr_current_a == 255) {
+        int x, y;
+        for (y = y1; y < y2; ++y) {
+            unsigned char* px = p;
+            for (x = x1; x < x2; ++x) {
+                *px++ = gr_current_r;
+                *px++ = gr_current_g;
+                *px++ = gr_current_b;
+                px++;
+            }
+            p += gr_draw->row_bytes;
+        }
+    } else if (gr_current_a > 0) {
+        int x, y;
+        for (y = y1; y < y2; ++y) {
+            unsigned char* px = p;
+            for (x = x1; x < x2; ++x) {
+                *px = (*px * (255-gr_current_a) + gr_current_r * gr_current_a) / 255;
+                ++px;
+                *px = (*px * (255-gr_current_a) + gr_current_g * gr_current_a) / 255;
+                ++px;
+                *px = (*px * (255-gr_current_a) + gr_current_b * gr_current_a) / 255;
+                ++px;
+                ++px;
+            }
+            p += gr_draw->row_bytes;
+        }
+    }
 }
 
-void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy) {
-    if (gr_context == NULL || source == NULL) {
+void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
+    if (source == NULL) return;
+
+    if (gr_draw->pixel_bytes != source->pixel_bytes) {
+        printf("gr_blit: source has wrong format\n");
         return;
     }
-    GGLContext *gl = gr_context;
 
     dx += overscan_offset_x;
     dy += overscan_offset_y;
 
-    gl->bindTexture(gl, (GGLSurface*) source);
-    gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
-    gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
-    gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
-    gl->enable(gl, GGL_TEXTURE_2D);
-    gl->texCoord2i(gl, sx - dx, sy - dy);
-    gl->recti(gl, dx, dy, dx + w, dy + h);
+    if (outside(dx, dy) || outside(dx+w-1, dy+h-1)) return;
+
+    unsigned char* src_p = source->data + sy*source->row_bytes + sx*source->pixel_bytes;
+    unsigned char* dst_p = gr_draw->data + dy*gr_draw->row_bytes + dx*gr_draw->pixel_bytes;
+
+    int i;
+    for (i = 0; i < h; ++i) {
+        memcpy(dst_p, src_p, w * source->pixel_bytes);
+        src_p += source->row_bytes;
+        dst_p += gr_draw->row_bytes;
+    }
 }
 
-unsigned int gr_get_width(gr_surface surface) {
+unsigned int gr_get_width(GRSurface* surface) {
     if (surface == NULL) {
         return 0;
     }
-    return ((GGLSurface*) surface)->width;
+    return surface->width;
 }
 
-unsigned int gr_get_height(gr_surface surface) {
+unsigned int gr_get_height(GRSurface* surface) {
     if (surface == NULL) {
         return 0;
     }
-    return ((GGLSurface*) surface)->height;
+    return surface->height;
 }
 
 static void gr_init_font(void)
 {
     gr_font = calloc(sizeof(*gr_font), 1);
 
-    int res = res_create_surface("font", (void**)&(gr_font->texture));
+    int res = res_create_alpha_surface("font", &(gr_font->texture));
     if (res == 0) {
         // The font image should be a 96x2 array of character images.  The
         // columns are the printable ASCII characters 0x20 - 0x7f.  The
@@ -366,7 +453,8 @@ static void gr_init_font(void)
         gr_font->texture = malloc(sizeof(*gr_font->texture));
         gr_font->texture->width = font.width;
         gr_font->texture->height = font.height;
-        gr_font->texture->stride = font.width;
+        gr_font->texture->row_bytes = font.width;
+        gr_font->texture->pixel_bytes = 1;
 
         unsigned char* bits = malloc(font.width * font.height);
         gr_font->texture->data = (void*) bits;
@@ -381,17 +469,65 @@ static void gr_init_font(void)
         gr_font->cwidth = font.cwidth;
         gr_font->cheight = font.cheight;
     }
+}
 
-    // interpret the grayscale as alpha
-    gr_font->texture->format = GGL_PIXEL_FORMAT_A_8;
+#if 0
+// Exercises many of the gr_*() functions; useful for testing.
+static void gr_test() {
+    GRSurface** images;
+    int frames;
+    int result = res_create_multi_surface("icon_installing", &frames, &images);
+    if (result < 0) {
+        printf("create surface %d\n", result);
+        gr_exit();
+        return;
+    }
+
+    time_t start = time(NULL);
+    int x;
+    for (x = 0; x <= 1200; ++x) {
+        if (x < 400) {
+            gr_color(0, 0, 0, 255);
+        } else {
+            gr_color(0, (x-400)%128, 0, 255);
+        }
+        gr_clear();
+
+        gr_color(255, 0, 0, 255);
+        gr_surface frame = images[x%frames];
+        gr_blit(frame, 0, 0, frame->width, frame->height, x, 0);
+
+        gr_color(255, 0, 0, 128);
+        gr_fill(400, 150, 600, 350);
+
+        gr_color(255, 255, 255, 255);
+        gr_text(500, 225, "hello, world!", 0);
+        gr_color(255, 255, 0, 128);
+        gr_text(300+x, 275, "pack my box with five dozen liquor jugs", 1);
+
+        gr_color(0, 0, 255, 128);
+        gr_fill(gr_draw->width - 200 - x, 300, gr_draw->width - x, 500);
+
+        gr_draw = gr_backend->flip(gr_backend);
+    }
+    printf("getting end time\n");
+    time_t end = time(NULL);
+    printf("got end time\n");
+    printf("start %ld end %ld\n", (long)start, (long)end);
+    if (end > start) {
+        printf("%.2f fps\n", ((double)x) / (end-start));
+    }
+}
+#endif
+
+void gr_flip() {
+    gr_draw = gr_backend->flip(gr_backend);
 }
 
 int gr_init(void)
 {
-    gglInit(&gr_context);
-    GGLContext *gl = gr_context;
-
     gr_init_font();
+
     gr_vt_fd = open("/dev/tty0", O_RDWR | O_SYNC);
     if (gr_vt_fd < 0) {
         // This is non-fatal; post-Cupcake kernels don't have tty0.
@@ -403,10 +539,12 @@ int gr_init(void)
         return -1;
     }
 
-    gr_fb_fd = get_framebuffer(gr_framebuffer);
-    if (gr_fb_fd < 0) {
-        gr_exit();
-        return -1;
+    gr_backend = open_adf();
+    if (gr_backend) {
+        gr_draw = gr_backend->init(gr_backend);
+        if (!gr_draw) {
+            gr_backend->exit(gr_backend);
+        }
     }
 
     get_memory_surface(&gr_mem_surface);
@@ -420,12 +558,19 @@ int gr_init(void)
         set_active_framebuffer(0);
     gl->colorBuffer(gl, &gr_mem_surface);
 
-    gl->activeTexture(gl, 0);
-    gl->enable(gl, GGL_BLEND);
-    gl->blendFunc(gl, GGL_SRC_ALPHA, GGL_ONE_MINUS_SRC_ALPHA);
+    if (!gr_draw) {
+        gr_backend = open_fbdev();
+        gr_draw = gr_backend->init(gr_backend);
+        if (gr_draw == NULL) {
+            return -1;
+        }
+    }
 
-    gr_fb_blank(true);
-    gr_fb_blank(false);
+    overscan_offset_x = gr_draw->width * overscan_percent / 100;
+    overscan_offset_y = gr_draw->height * overscan_percent / 100;
+
+    gr_flip();
+    gr_flip();
 
     if (!alloc_ion_mem(fi.line_length * vi.yres))
         allocate_overlay(gr_fb_fd, gr_framebuffer);
@@ -443,6 +588,8 @@ void gr_exit(void)
 
     free(gr_mem_surface.data);
 
+    gr_backend->exit(gr_backend);
+
     ioctl(gr_vt_fd, KDSETMODE, (void*) KD_TEXT);
     close(gr_vt_fd);
     gr_vt_fd = -1;
@@ -450,17 +597,12 @@ void gr_exit(void)
 
 int gr_fb_width(void)
 {
-    return gr_framebuffer[0].width - 2*overscan_offset_x;
+    return gr_draw->width - 2*overscan_offset_x;
 }
 
 int gr_fb_height(void)
 {
-    return gr_framebuffer[0].height - 2*overscan_offset_y;
-}
-
-gr_pixel *gr_fb_data(void)
-{
-    return (unsigned short *) gr_mem_surface.data;
+    return gr_draw->height - 2*overscan_offset_y;
 }
 
 void gr_fb_blank(bool blank)
@@ -478,13 +620,10 @@ void gr_fb_blank(bool blank)
     write(fd, blank ? "000" : brightness, 3);
     close(fd);
 #else
-    int ret;
+    gr_backend->blank(gr_backend, blank);
+
     if (blank)
         free_overlay(gr_fb_fd);
-
-    ret = ioctl(gr_fb_fd, FBIOBLANK, blank ? FB_BLANK_POWERDOWN : FB_BLANK_UNBLANK);
-    if (ret < 0)
-        perror("ioctl(): blank");
 
     if (!blank)
         allocate_overlay(gr_fb_fd, gr_framebuffer);

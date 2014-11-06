@@ -74,7 +74,7 @@ static int ParsePatchArgs(int argc, char** argv,
             (*patches)[i] = NULL;
         } else {
             FileContents fc;
-            if (LoadFileContents(colon, &fc, RETOUCH_DONT_MASK) != 0) {
+            if (LoadFileContents(colon, &fc) != 0) {
                 goto abort;
             }
             (*patches)[i] = malloc(sizeof(Value));
@@ -103,7 +103,7 @@ int PatchMode(int argc, char** argv) {
     Value* bonus = NULL;
     if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
         FileContents fc;
-        if (LoadFileContents(argv[2], &fc, RETOUCH_DONT_MASK) != 0) {
+        if (LoadFileContents(argv[2], &fc) != 0) {
             printf("failed to load bonus file %s\n", argv[2]);
             return 1;
         }

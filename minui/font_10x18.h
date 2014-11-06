@@ -3,7 +3,7 @@ struct {
   unsigned height;
   unsigned cwidth;
   unsigned cheight;
-  unsigned char rundata[];
+  unsigned char rundata[2973];
 } font = {
   .width = 960,
   .height = 18,
