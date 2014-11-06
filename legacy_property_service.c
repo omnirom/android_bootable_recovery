@@ -30,7 +30,8 @@
 #include "legacy_properties.h"
 
 #include <sys/mman.h>
-#include <sys/atomics.h>
+// Not available in 5.0
+//#include <sys/atomics.h>
 #include "legacy_property_service.h"
 
 static int persistent_properties_loaded = 0;

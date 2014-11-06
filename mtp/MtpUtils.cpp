@@ -18,8 +18,8 @@
 
 #include <stdio.h>
 #include <time.h>
-
-#include <cutils/tztime.h>
+// Not available in 5.0
+//#include <cutils/tztime.h>
 #include "MtpUtils.h"
 #include "MtpDebug.h"
 
