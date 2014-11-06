@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 The Android Open Source Project
+ * Copyright 2013 The Android Open Source Project
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,29 +24,33 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SYSTEM_CORE_INCLUDE_MINCRYPT_SHA256_H_
-#define SYSTEM_CORE_INCLUDE_MINCRYPT_SHA256_H_
+#include <string.h>
 
-#include <stdint.h>
-#include "hash-internal.h"
+#include "mincrypt/p256_ecdsa.h"
+#include "mincrypt/p256.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+int p256_ecdsa_verify(const p256_int* key_x, const p256_int* key_y,
+                      const p256_int* message,
+                      const p256_int* r, const p256_int* s) {
+  p256_int u, v;
 
-typedef HASH_CTX SHA256_CTX;
+  // Check public key.
+  if (!p256_is_valid_point(key_x, key_y)) return 0;
 
-void SHA256_init(SHA256_CTX* ctx);
-void SHA256_update(SHA256_CTX* ctx, const void* data, int len);
-const uint8_t* SHA256_final(SHA256_CTX* ctx);
+  // Check r and s are != 0 % n.
+  p256_mod(&SECP256r1_n, r, &u);
+  p256_mod(&SECP256r1_n, s, &v);
+  if (p256_is_zero(&u) || p256_is_zero(&v)) return 0;
 
-// Convenience method. Returns digest address.
-const uint8_t* SHA256_hash(const void* data, int len, uint8_t* digest);
+  p256_modinv_vartime(&SECP256r1_n, s, &v);
+  p256_modmul(&SECP256r1_n, message, 0, &v, &u);  // message / s % n
+  p256_modmul(&SECP256r1_n, r, 0, &v, &v);  // r / s % n
 
-#define SHA256_DIGEST_SIZE 32
+  p256_points_mul_vartime(&u, &v,
+                          key_x, key_y,
+                          &u, &v);
 
-#ifdef __cplusplus
+  p256_mod(&SECP256r1_n, &u, &u);  // (x coord % p) % n
+  return p256_cmp(r, &u) == 0;
 }
-#endif // __cplusplus
 
-#endif  // SYSTEM_CORE_INCLUDE_MINCRYPT_SHA256_H_
