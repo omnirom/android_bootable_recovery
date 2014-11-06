@@ -77,6 +77,13 @@ static int gr_is_curr_clr_opaque = 0;
 static int gr_fb_fd = -1;
 static int gr_vt_fd = -1;
 
+static unsigned char gr_current_r = 255;
+static unsigned char gr_current_g = 255;
+static unsigned char gr_current_b = 255;
+static unsigned char gr_current_a = 255;
+
+static GRSurface* gr_draw = NULL;
+
 struct fb_var_screeninfo vi;
 static struct fb_fix_screeninfo fi;
 
@@ -575,7 +582,8 @@ void gr_fill(int x, int y, int w, int h)
 }
 
 void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy) {
-    if (gr_context == NULL) {
+	// This is the old code, not sure if we still need it or not
+    /*if (gr_context == NULL) {
         return;
     }
 
@@ -594,7 +602,29 @@ void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy) {
     gl->recti(gl, dx, dy, dx + w, dy + h);
 
     if(surface->format == GGL_PIXEL_FORMAT_RGBX_8888)
-        gl->enable(gl, GGL_BLEND);
+        gl->enable(gl, GGL_BLEND);*/
+    if (source == NULL) return;
+
+    // This code doesn't compile yet, but may very well be needed later
+    /*if (gr_draw->pixel_bytes != source->pixel_bytes) {
+        printf("gr_blit: source has wrong format\n");
+        return;
+    }
+
+    dx += overscan_offset_x;
+    dy += overscan_offset_y;
+
+    if (outside(dx, dy) || outside(dx+w-1, dy+h-1)) return;*/
+
+    unsigned char* src_p = source->data + sy*source->row_bytes + sx*source->pixel_bytes;
+    unsigned char* dst_p = gr_draw->data + dy*gr_draw->row_bytes + dx*gr_draw->pixel_bytes;
+
+    int i;
+    for (i = 0; i < h; ++i) {
+        memcpy(dst_p, src_p, w * source->pixel_bytes);
+        src_p += source->row_bytes;
+        dst_p += gr_draw->row_bytes;
+    }
 }
 
 unsigned int gr_get_width(gr_surface surface) {
