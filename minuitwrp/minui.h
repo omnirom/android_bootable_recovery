@@ -17,16 +17,7 @@
 #ifndef _MINUI_H_
 #define _MINUI_H_
 
-typedef struct {
-    int width;
-    int height;
-    int row_bytes;
-    int pixel_bytes;
-    unsigned char* data;
-} GRSurface;
-
-typedef GRSurface* gr_surface;
-
+typedef void* gr_surface;
 typedef unsigned short gr_pixel;
 
 #define FONT_TYPE_TWRP 0
