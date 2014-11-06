@@ -491,9 +491,6 @@ include $(BUILD_SHARED_LIBRARY)
 commands_recovery_local_path := $(LOCAL_PATH)
 include $(LOCAL_PATH)/minui/Android.mk \
     $(LOCAL_PATH)/minadbd/Android.mk \
-    $(LOCAL_PATH)/minzip/Android.mk \
-    $(LOCAL_PATH)/minadbd/Android.mk \
-    $(LOCAL_PATH)/mtdutils/Android.mk \
     $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
