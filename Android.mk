@@ -104,7 +104,7 @@ LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES :=
 
 LOCAL_STATIC_LIBRARIES += libcrecovery libguitwrp
-LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libaosprecovery libcorkscrew
+LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libaosprecovery
 LOCAL_SHARED_LIBRARIES += libgccdemangle
 
 ifneq ($(wildcard system/core/libsparse/Android.mk),)
@@ -445,8 +445,9 @@ LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 
 LOCAL_MODULE := libfusesideload
-
-LOCAL_SHARED_LIBRARIES := libcutils libc libmincrypttwrp
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
+LOCAL_SHARED_LIBRARIES := libcutils libc
+LOCAL_STATIC_LIBRARIES := libmincrypttwrp
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
