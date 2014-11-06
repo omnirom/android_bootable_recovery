@@ -107,11 +107,12 @@ apply_from_adb(const char* install_file) {
     // appearance.  (Note that inotify doesn't work with FUSE.)
     int result;
     int status;
+    int wipe_cache;
     bool waited = false;
     struct stat st;
     for (int i = 0; i < ADB_INSTALL_TIMEOUT; ++i) {
         if (waitpid(child, &status, WNOHANG) != 0) {
-            result = INSTALL_ERROR;
+            result = -1;
             waited = true;
             break;
         }
@@ -121,13 +122,14 @@ apply_from_adb(const char* install_file) {
                 sleep(1);
                 continue;
             } else {
-                ui->Print("\nTimed out waiting for package.\n\n", strerror(errno));
-                result = INSTALL_ERROR;
+                printf("\nTimed out waiting for package.\n\n", strerror(errno));
+                result = -1;
                 kill(child, SIGKILL);
                 break;
             }
         }
-        result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, install_file, false);
+        printf("FIX ME: need to make adb sideload actually install the file!\n");
+        //result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, install_file, false);
         break;
     }
 

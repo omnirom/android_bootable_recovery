@@ -456,10 +456,6 @@ load_keys(const char* filename, int* numKeys) {
                 LOGE("unexpected character between keys\n");
                 goto exit;
             }
-<<<<<<< HEAD
-            LOGI("read key e=%d hash=%d\n", key->exponent, cert->hash_len);
-=======
->>>>>>> cddb68b5eafbeba696d5276bda1f1a9f70bbde42
         }
     }
 
