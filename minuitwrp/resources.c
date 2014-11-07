@@ -97,14 +97,16 @@ int res_create_surface_png(const char* name, gr_surface* pSurface) {
     png_set_sig_bytes(png_ptr, sizeof(header));
     png_read_info(png_ptr, info_ptr);
 
-    size_t width = info_ptr->width;
-    size_t height = info_ptr->height;
+    int color_type, bit_depth;
+    size_t width, height;
+
+    png_get_IHDR(png_ptr, info_ptr, width, height, &bit_depth,
+            &color_type, NULL, NULL, NULL);
+
+    png_byte* channels = png_get_channels(png_ptr, info_ptr);
     size_t stride = 4 * width;
     size_t pixelSize = stride * height;
 
-    int color_type = info_ptr->color_type;
-    int bit_depth = info_ptr->bit_depth;
-    int channels = info_ptr->channels;
     if (!(bit_depth == 8 &&
           ((channels == 3 && color_type == PNG_COLOR_TYPE_RGB) ||
            (channels == 4 && color_type == PNG_COLOR_TYPE_RGBA) ||

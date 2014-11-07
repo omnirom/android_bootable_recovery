@@ -56,7 +56,7 @@ unsigned int gr_get_height(gr_surface surface);
 // see http://www.mjmwired.net/kernel/Documentation/input/ for info.
 struct input_event;
 
-typedef int (*ev_callback)(int fd, short revents, void *data);
+typedef int (*ev_callback)(int fd, uint32_t epevents, void *data);
 typedef int (*ev_set_key_callback)(int code, int value, void *data);
 
 int ev_init(ev_callback input_cb, void *data);
@@ -71,18 +71,32 @@ int ev_sync_key_state(ev_set_key_callback set_key_cb, void *data);
  */
 int ev_wait(int timeout);
 
-int ev_get_input(int fd, short revents, struct input_event *ev);
+int ev_get_input(int fd, uint32_t epevents, struct input_event *ev);
 void ev_dispatch(void);
+int ev_get_epollfd(void);
 
 // Resources
 
 // Returns 0 if no error, else negative.
 int res_create_surface(const char* name, gr_surface* pSurface);
+
+// Load an array of display surfaces from a single PNG image.  The PNG
+// should have a 'Frames' text chunk whose value is the number of
+// frames this image represents.  The pixel data itself is interlaced
+// by row.
+int res_create_multi_display_surface(const char* name,
+                                     int* frames, gr_surface** pSurface);
+
 int res_create_localized_surface(const char* name, gr_surface* pSurface);
 void res_free_surface(gr_surface surface);
 static inline int res_create_display_surface(const char* name, gr_surface* pSurface) {
     return res_create_surface(name, pSurface);
 }
+
+// These are new graphics functions from 5.0 that were not available in
+// 4.4 that are required by charger and healthd
+void gr_clear();
+
 
 #ifdef __cplusplus
 }

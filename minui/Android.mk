@@ -9,8 +9,9 @@ else
 endif
 
 LOCAL_C_INCLUDES +=\
-    external/libpng\
-    external/zlib
+    external/libpng \
+    external/zlib \
+    system/core/include/pixelflinger
 
 ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
   LOCAL_CFLAGS += -DMSM_BSP
@@ -25,6 +26,7 @@ else
 endif
 
 LOCAL_STATIC_LIBRARY := libpng
+LOCAL_WHOLE_STATIC_LIBRARIES := libpixelflinger_static
 LOCAL_MODULE := libminui
 
 # This used to compare against values in double-quotes (which are just
