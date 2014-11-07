@@ -218,33 +218,8 @@ int GUIAction::flash_zip(std::string filename, std::string pageName, const int s
 	if (!PartitionManager.Mount_By_Path(filename, true))
 		return -1;
 
-	if (mzOpenZipArchive(filename.c_str(), &zip))
-	{
-		LOGERR("Unable to open zip file.\n");
-		return -1;
-	}
+	gui_changePage(pageName);
 
-	// Check the zip to see if it has a custom installer theme
-	const ZipEntry* twrp = mzFindZipEntry(&zip, "META-INF/teamwin/twrp.zip");
-	if (twrp != NULL)
-	{
-		unlink("/tmp/twrp.zip");
-		fd = creat("/tmp/twrp.zip", 0666);
-	}
-	if (fd >= 0 && twrp != NULL &&
-		mzExtractZipEntryToFile(&zip, twrp, fd) &&
-		!PageManager::LoadPackage("install", "/tmp/twrp.zip", "main"))
-	{
-		mzCloseZipArchive(&zip);
-		PageManager::SelectPackage("install");
-		gui_changePage("main");
-	}
-	else
-	{
-		// In this case, we just use the default page
-		mzCloseZipArchive(&zip);
-		gui_changePage(pageName);
-	}
 	if (fd >= 0)
 		close(fd);
 
