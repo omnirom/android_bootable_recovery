@@ -52,20 +52,6 @@ ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)
   LOCAL_SRC_FILES += $(TARGET_RECOVERY_REBOOT_SRC)
 endif
 
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := \
-    recovery.cpp \
-    bootloader.cpp \
-    install.cpp \
-    roots.cpp \
-    ui.cpp \
-    screen_ui.cpp \
-    asn1_decoder.cpp \
-    verifier.cpp \
-    adb_install.cpp \
-    fuse_sdcard_provider.c
-
 LOCAL_MODULE := recovery
 
 #LOCAL_FORCE_STATIC_EXECUTABLE := true
