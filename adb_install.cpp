@@ -36,7 +36,7 @@ extern "C" {
 
 static RecoveryUI* ui = NULL;
 
-static void
+void
 set_usb_driver(bool enabled) {
     int fd = open("/sys/class/android_usb/android0/enable", O_WRONLY);
     if (fd < 0) {
@@ -68,7 +68,7 @@ stop_adbd() {
 }
 
 
-static void
+void
 maybe_restart_adbd() {
     char value[PROPERTY_VALUE_MAX+1];
     int len = property_get("ro.debuggable", value, NULL);
@@ -128,12 +128,14 @@ apply_from_adb(const char* install_file) {
                 break;
             }
         }
-        printf("FIX ME: need to make adb sideload actually install the file!\n");
-        //result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, install_file, false);
+        property_set("tw_sideload_file", FUSE_SIDELOAD_HOST_PATHNAME);
+        // Install is handled elsewhere in TWRP
+        result = 5; //install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, install_file, false);
         break;
     }
 
-    if (!waited) {
+    // We do this elsewhere in TWRP
+    /*if (!waited) {
         // Calling stat() on this magic filename signals the minadbd
         // subprocess to shut down.
         stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
@@ -143,25 +145,26 @@ apply_from_adb(const char* install_file) {
         // you just have to 'adb sideload' a file that's not a valid
         // package, like "/dev/null".
         waitpid(child, &status, 0);
-    }
+    }*/
 
-    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        if (WEXITSTATUS(status) == 3) {
-            printf("\nYou need adb 1.0.32 or newer to sideload\nto this device.\n\n");
-        } else if (!WIFSIGNALED(status)) {
-            printf("status %d\n", WEXITSTATUS(status));
+    if (result != 5) {
+        stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
+        waitpid(child, &status, 0);
+        result = -1;
+        if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+            if (WEXITSTATUS(status) == 3) {
+                printf("\nYou need adb 1.0.32 or newer to sideload\nto this device.\n\n");
+                result = -2;
+            } else if (!WIFSIGNALED(status)) {
+                printf("status %d\n", WEXITSTATUS(status));
+            }
         }
-    }
-    set_usb_driver(false);
-    maybe_restart_adbd();
+	    set_usb_driver(false);
+	    maybe_restart_adbd();
+	    return result;
+	} else {
+        return 0;
+	}
 
-    if (stat(install_file, &st) != 0) {
-        if (errno == ENOENT) {
-            printf("No package received.\n");
-        } else {
-            printf("Error reading package:\n  %s\n", strerror(errno));
-        }
-        return -1;
-    }
-	return 0;
+	return -1; // This should not happen
 }

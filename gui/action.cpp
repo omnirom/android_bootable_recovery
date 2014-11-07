@@ -51,6 +51,7 @@ extern "C" {
 #include "../twinstall.h"
 #include "cutils/properties.h"
 #include "../minadbd/adb.h"
+#include "../adb_install.h"
 
 int TWinstall_zip(const char* path, int* wipe_cache);
 void run_script(const char *str1, const char *str2, const char *str3, const char *str4, const char *str5, const char *str6, const char *str7, int request_confirm);
@@ -1257,30 +1258,42 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			} else {
 				int wipe_cache = 0;
 				int wipe_dalvik = 0;
-				string Sideload_File;
 
-				if (!PartitionManager.Mount_Current_Storage(false)) {
-					gui_print("Using RAM for sideload storage.\n");
-					Sideload_File = "/tmp/sideload.zip";
-				} else {
-					Sideload_File = DataManager::GetCurrentStoragePath() + "/sideload.zip";
-				}
-				if (TWFunc::Path_Exists(Sideload_File)) {
-					unlink(Sideload_File.c_str());
-				}
 				gui_print("Starting ADB sideload feature...\n");
 				DataManager::GetValue("tw_wipe_dalvik", wipe_dalvik);
-				ret = apply_from_adb(Sideload_File.c_str());
+				ret = apply_from_adb("/");
 				DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui now that the zip install is going to start
+				char file_prop[PROPERTY_VALUE_MAX];
+				property_get("tw_sideload_file", file_prop, "error");
 				if (ret != 0) {
 					ret = 1; // failure
-				} else if (TWinstall_zip(Sideload_File.c_str(), &wipe_cache) == 0) {
-					if (wipe_cache || DataManager::GetIntValue("tw_wipe_cache"))
-						PartitionManager.Wipe_By_Path("/cache");
-					if (wipe_dalvik)
-						PartitionManager.Wipe_Dalvik_Cache();
+					if (ret == -2)
+						gui_print("You need adb 1.0.32 or newer to sideload to this device.\n");
 				} else {
-					ret = 1; // failure
+					if (TWinstall_zip(file_prop, &wipe_cache) == 0) {
+						if (wipe_cache || DataManager::GetIntValue("tw_wipe_cache"))
+							PartitionManager.Wipe_By_Path("/cache");
+						if (wipe_dalvik)
+							PartitionManager.Wipe_Dalvik_Cache();
+					} else {
+						ret = 1; // failure
+					}
+					set_usb_driver(false);
+					maybe_restart_adbd();
+				}
+				if (strcmp(file_prop, "error") != 0) {
+					struct stat st;
+					stat("/sideload/exit", &st);
+					int child_pid, status;
+					char child_prop[PROPERTY_VALUE_MAX];
+					property_get("tw_child_pid", child_prop, "error");
+					if (strcmp(child_prop, "error") == 0) {
+						LOGERR("Unable to get child ID from prop\n");
+					} else {
+						child_pid = atoi(child_prop);
+						LOGINFO("Waiting for child sideload process to exit.\n");
+						waitpid(child_pid, &status, 0);
+					}
 				}
 				if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
 					operation_start("ReinjectTWRP");
@@ -1304,18 +1317,19 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		}
 		if (function == "adbsideloadcancel")
 		{
-			int child_pid;
+			int child_pid, status;
 			char child_prop[PROPERTY_VALUE_MAX];
-			string Sideload_File;
-			Sideload_File = DataManager::GetCurrentStoragePath() + "/sideload.zip";
-			unlink(Sideload_File.c_str());
+			struct stat st;
+			DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui
+			gui_print("Cancelling ADB sideload...\n");
+			stat("/sideload/exit", &st);
+			sleep(1);
 			property_get("tw_child_pid", child_prop, "error");
 			if (strcmp(child_prop, "error") == 0) {
 				LOGERR("Unable to get child ID from prop\n");
 				return 0;
 			}
 			child_pid = atoi(child_prop);
-			gui_print("Cancelling ADB sideload...\n");
 			kill(child_pid, SIGTERM);
 			DataManager::SetValue("tw_page_done", "1"); // For OpenRecoveryScript support
 			return 0;

@@ -257,12 +257,20 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 	string strpath = path;
 	ZipArchive Zip;
 
-	gui_print("Installing '%s'...\nChecking for MD5 file...\n", path);
-	md5sum.setfn(strpath);
-	md5_return = md5sum.verify_md5digest();
-	if (md5_return == -2) { // md5 did not match
-		LOGERR("Aborting zip install\n");
+	if (strcmp(path, "error") == 0) {
+		LOGERR("Failed to get adb sideload file: '%s'\n", path);
 		return INSTALL_CORRUPT;
+	}
+
+	gui_print("Installing '%s'...\n", path);
+	if (strlen(path) < 9 || strncmp(path, "/sideload", 9) != 0) {
+		gui_print("Checking for MD5 file...\n");
+		md5sum.setfn(strpath);
+		md5_return = md5sum.verify_md5digest();
+		if (md5_return == -2) { // md5 did not match
+			LOGERR("Aborting zip install\n");
+			return INSTALL_CORRUPT;
+		}
 	}
 
 #ifndef TW_OEM_BUILD

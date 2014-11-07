@@ -256,7 +256,7 @@ static void usb_adb_init()
         close_on_exec(fd);
     }
 
-    D("[ usb_init - starting thread ]\n");
+    printf("[ usb_init - starting thread ]\n");
     if(adb_thread_create(&tid, usb_adb_open_thread, h)){
         fatal_errno("cannot create usb thread");
         fprintf(stderr, "cannot create the usb thread()\n");
