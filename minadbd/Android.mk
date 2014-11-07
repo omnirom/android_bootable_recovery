@@ -19,8 +19,7 @@ LOCAL_SRC_FILES := \
 	sockets.c \
 	services.c \
 	usb_linux_client.c \
-	utils.c \
-       ../../../system/core/adb/transport_local.c
+	utils.c
 
 LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
