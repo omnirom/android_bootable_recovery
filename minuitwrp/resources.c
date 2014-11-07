@@ -100,10 +100,10 @@ int res_create_surface_png(const char* name, gr_surface* pSurface) {
     int color_type, bit_depth;
     size_t width, height;
 
-    png_get_IHDR(png_ptr, info_ptr, width, height, &bit_depth,
+    png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth,
             &color_type, NULL, NULL, NULL);
 
-    png_byte* channels = png_get_channels(png_ptr, info_ptr);
+    png_byte channels = png_get_channels(png_ptr, info_ptr);
     size_t stride = 4 * width;
     size_t pixelSize = stride * height;
 

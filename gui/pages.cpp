@@ -921,7 +921,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 
 	// Open the XML file
 	LOGINFO("Loading package: %s (%s)\n", name.c_str(), package.c_str());
-	if (mzOpenZipArchive(package.c_str(), &zip))
+	if (1 || mzOpenZipArchive(package.c_str(), &zip))
 	{
 		// We can try to load the XML directly...
 		struct stat st;

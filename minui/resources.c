@@ -100,10 +100,10 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     int color_type, bit_depth;
     size_t width, height;
 
-    png_get_IHDR(png_ptr, info_ptr, width, height, &bit_depth,
+    png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth,
             &color_type, NULL, NULL, NULL);
 
-    png_byte* channels = png_get_channels(png_ptr, info_ptr);
+    png_byte channels = png_get_channels(png_ptr, info_ptr);
 
     if (!(bit_depth == 8 &&
           ((channels == 3 && color_type == PNG_COLOR_TYPE_RGB) ||
