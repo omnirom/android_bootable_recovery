@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include <iostream>
 #include <vector>
-#include <sstream>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <sys/types.h>
@@ -103,13 +101,9 @@ void Node::addProperties(const std::string& path, int storageID) {
 	MTPD("addProperties: handle: %u, filename: '%s'\n", handle, getName().c_str());
 	struct stat st;
 	int mFormat = 0;
-	uint64_t puid;
+	uint64_t puid = ((uint64_t)storageID << 32) + handle;
 	off_t file_size = 0;
 
-	std::string mtpidStr = static_cast<std::ostringstream*>( &(std::ostringstream() << handle) )->str();
-	std::string storageIDStr = static_cast<std::ostringstream*>( &(std::ostringstream() << storageID) )->str();
-	std::string puidStr = storageIDStr + mtpidStr;
-	if ( ! (std::istringstream(puidStr) >> puid) ) puid = 0;
 	mFormat = MTP_FORMAT_UNDEFINED;   // file
 	if (lstat(path.c_str(), &st) == 0) {
 		file_size = st.st_size;
@@ -129,6 +123,7 @@ void Node::addProperties(const std::string& path, int storageID) {
 		// TODO: we can't really support persistent UIDs without a persistent DB.
 		// probably a combination of volume UUID + st_ino would come close.
 		// doesn't help for fs with no native inodes numbers like fat though...
+		// however, Microsoft's own impl (Zune, etc.) does not support persistent UIDs either
 	addProperty(MTP_PROPERTY_NAME, 0, getName().c_str(), MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_DISPLAY_NAME, 0, getName().c_str(), MTP_TYPE_STR);
 	addProperty(MTP_PROPERTY_DATE_ADDED, st.st_mtime, "", MTP_TYPE_UINT64);
