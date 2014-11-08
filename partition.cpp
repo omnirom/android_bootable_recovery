@@ -1241,8 +1241,8 @@ bool TWPartition::Repair() {
 			return false;
 		gui_print("Repairing %s using fsck.f2fs...\n", Display_Name.c_str());
 		Find_Actual_Block_Device();
-		command = "/sbin/fsck.f2fs " + Actual_Block_Device;
-		LOGINFO("Repair command: %s\n", command.c_str());
+		command = "/sbin/fsck.f2fs -f" + Actual_Block_Device;
+		LOGINFO("Repair command: %s -f\n ", command.c_str());
 		if (TWFunc::Exec_Cmd(command) == 0) {
 			gui_print("Done.\n");
 			return true;
