@@ -18,6 +18,7 @@
 #define BTREE_HPP
 
 #include <vector>
+#include <string>
 #include <map>
 #include "MtpTypes.h"
 
