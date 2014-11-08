@@ -289,13 +289,17 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 		ret_val = verify_file(map.addr, map.length);
 		if (ret_val != VERIFY_SUCCESS) {
 			LOGERR("Zip signature verification failed: %i\n", ret_val);
+			sysReleaseMap(&map);
 			return -1;
 		}
 	}
 	ret_val = mzOpenZipArchive(map.addr, map.length, &Zip);
 	if (ret_val != 0) {
 		LOGERR("Zip file is corrupt!\n", path);
+		sysReleaseMap(&map);
 		return INSTALL_CORRUPT;
 	}
-	return Run_Update_Binary(path, &Zip, wipe_cache);
+	ret_val = Run_Update_Binary(path, &Zip, wipe_cache);
+	sysReleaseMap(&map);
+	return ret_val;
 }
