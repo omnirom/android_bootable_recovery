@@ -33,7 +33,8 @@ static const char _NR[] = {
 
 #include <stddef.h>
 #include <time.h> 
-#include <sys/timeb.h>
+//#include <sys/timeb.h>
+#include "ftime.h"
 #include <malloc.h>
 #include <string.h>
 
