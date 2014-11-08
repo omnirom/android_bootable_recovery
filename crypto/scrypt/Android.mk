@@ -1,5 +1,5 @@
 LOCAL_PATH := $(call my-dir)
-include $(call all-named-subdir-makefiles,tests)
+#include $(call all-named-subdir-makefiles,tests)
 
 # Enable to be able to use ALOG* with #include "cutils/log.h"
 #log_c_includes += system/core/include

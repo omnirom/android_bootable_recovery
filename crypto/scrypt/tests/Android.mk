@@ -18,6 +18,6 @@ LOCAL_STATIC_LIBRARIES := \
     libgtest \
     libgtest_main
 
-LOCAL_MODULE := scrypt_test
+LOCAL_MODULE := scrypt_test_twrp
 
 include $(BUILD_NATIVE_TEST)
