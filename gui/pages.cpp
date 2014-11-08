@@ -32,12 +32,15 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "../twrp-functions.hpp"
 
 #include <string>
 
 extern "C" {
 #include "../twcommon.h"
 #include "../minuitwrp/minui.h"
+#include "../minzip/SysUtil.h"
+#include "../minzip/Zip.h"
 }
 
 #include "rapidxml.hpp"
@@ -918,11 +921,13 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	char* xmlFile = NULL;
 	PageSet* pageSet = NULL;
 	int ret;
+	MemMapping map;
 
 	// Open the XML file
 	LOGINFO("Loading package: %s (%s)\n", name.c_str(), package.c_str());
-	if (1 || mzOpenZipArchive(package.c_str(), &zip))
+	if (package.size() > 4 && package.substr(package.size() - 4) != ".zip")
 	{
+		LOGINFO("Load XML directly\n");
 		// We can try to load the XML directly...
 		struct stat st;
 		if(stat(package.c_str(),&st) != 0)
@@ -942,6 +947,18 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	}
 	else
 	{
+		LOGINFO("Loading zip theme\n");
+		if (!TWFunc::Path_Exists(package))
+			return -1;
+		if (sysMapFile(package.c_str(), &map) != 0) {
+			LOGERR("Failed to map '%s'\n", package.c_str());
+			return -1;
+		}
+		if (mzOpenZipArchive(map.addr, map.length, &zip)) {
+			LOGERR("Unable to open zip archive '%s'\n", package.c_str());
+			sysReleaseMap(&map);
+			return -1;
+		}
 		pZip = &zip;
 		const ZipEntry* ui_xml = mzFindZipEntry(&zip, "ui.xml");
 		if (ui_xml == NULL)
@@ -987,14 +1004,18 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 
 	mCurrentSet = pageSet;
 
-	if (pZip)
+	if (pZip) {
 		mzCloseZipArchive(pZip);
+		sysReleaseMap(&map);
+	}
 	return ret;
 
 error:
 	LOGERR("An internal error has occurred.\n");
-	if (pZip)
+	if (pZip) {
 		mzCloseZipArchive(pZip);
+		sysReleaseMap(&map);
+	}
 	if (xmlFile)
 		free(xmlFile);
 	return -1;

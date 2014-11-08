@@ -33,7 +33,7 @@ else
   LOCAL_SRC_FILES += hardwarekeyboard.cpp
 endif
 
-LOCAL_SHARED_LIBRARIES += libminuitwrp libc libstdc++
+LOCAL_SHARED_LIBRARIES += libminuitwrp libc libstdc++ libminzip
 LOCAL_MODULE := libguitwrp
 
 # Use this flag to create a build that simulates threaded actions like installing zips, backups, restores, and wipes for theme testing
