@@ -175,7 +175,7 @@ static int get_framebuffer(GGLSurface *fb)
     fb->stride = fi.line_length/PIXEL_SIZE;
     fb->format = PIXEL_FORMAT;
     if (!has_overlay) {
-        fb->data = (void*) (((unsigned) bits) + vi.yres * fi.line_length);
+        fb->data = (void*) (((unsigned long) bits) + vi.yres * fi.line_length);
         memset(fb->data, 0, vi.yres * fi.line_length);
     }
 

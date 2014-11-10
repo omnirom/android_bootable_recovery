@@ -34,13 +34,11 @@ ifeq ($(TW_USE_TOOLBOX), true)
 		rmmod \
 		lsmod \
 		ifconfig \
-		setconsole \
 		rm \
 		mkdir \
 		rmdir \
 		getevent \
 		sendevent \
-		date \
 		wipe \
 		sync \
 		umount \
@@ -51,7 +49,6 @@ ifeq ($(TW_USE_TOOLBOX), true)
 		hd \
 		dd \
 		df \
-		watchprops \
 		log \
 		sleep \
 		renice \
@@ -69,16 +66,11 @@ ifeq ($(TW_USE_TOOLBOX), true)
 		id \
 		uptime \
 		vmstat \
-		nandread \
 		ionice \
 		touch \
 		lsof \
 		du \
-		md5 \
 		clear \
-		swapon \
-		swapoff \
-		mkswap \
 		readlink
 	ifneq ($(TWHAVE_SELINUX), true)
 		TOOLS += ls

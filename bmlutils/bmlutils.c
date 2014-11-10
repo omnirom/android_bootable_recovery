@@ -22,50 +22,7 @@
 
 #include <bmlutils.h>
 
-#undef _PATH_BSHELL
-#define _PATH_BSHELL "/sbin/sh"
-
-int __system(const char *command)
-{
-  pid_t pid;
-	sig_t intsave, quitsave;
-	sigset_t mask, omask;
-	int pstat;
-	char *argp[] = {"sh", "-c", NULL, NULL};
-
-	if (!command)		/* just checking... */
-		return(1);
-
-	argp[2] = (char *)command;
-
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGCHLD);
-	sigprocmask(SIG_BLOCK, &mask, &omask);
-	switch (pid = vfork()) {
-	case -1:			/* error */
-		sigprocmask(SIG_SETMASK, &omask, NULL);
-		return(-1);
-	case 0:				/* child */
-		sigprocmask(SIG_SETMASK, &omask, NULL);
-		execve(_PATH_BSHELL, argp, environ);
-    _exit(127);
-  }
-
-	intsave = (sig_t)  bsd_signal(SIGINT, SIG_IGN);
-	quitsave = (sig_t) bsd_signal(SIGQUIT, SIG_IGN);
-	pid = waitpid(pid, (int *)&pstat, 0);
-	sigprocmask(SIG_SETMASK, &omask, NULL);
-	(void)bsd_signal(SIGINT, intsave);
-	(void)bsd_signal(SIGQUIT, quitsave);
-	return (pid == -1 ? -1 : pstat);
-}
-
-static struct pid {
-	struct pid *next;
-	FILE *fp;
-	pid_t pid;
-} *pidlist;
-
+#include "../libcrecovery/common.h"
 
 static int restore_internal(const char* bml, const char* filename)
 {

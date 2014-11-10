@@ -89,9 +89,9 @@ LOCAL_C_INCLUDES += bionic external/stlport/stlport
 LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES :=
 
-LOCAL_STATIC_LIBRARIES += libcrecovery libguitwrp
+LOCAL_STATIC_LIBRARIES += libguitwrp
 LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libaosprecovery
-LOCAL_SHARED_LIBRARIES += libgccdemangle
+LOCAL_SHARED_LIBRARIES += libgccdemangle libcrecovery
 
 ifneq ($(wildcard system/core/libsparse/Android.mk),)
 LOCAL_SHARED_LIBRARIES += libsparse
@@ -324,15 +324,10 @@ endif
 LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
 LOCAL_ADDITIONAL_DEPENDENCIES := \
-    busybox_symlinks \
-    dosfsck \
-    dosfslabel \
     dump_image \
     erase_image \
     flash_image \
     fix_permissions.sh \
-    fsck_msdos_symlink \
-    mkdosfs \
     mke2fs.conf \
     mkexfatfs \
     pigz \
@@ -342,6 +337,16 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     unpigz_symlink \
     updater
 
+ifneq ($(TARGET_ARCH), arm64)
+    LOCAL_ADDITIONAL_DEPENDENCIES += \
+        dosfsck \
+        dosfslabel \
+        fsck_msdos_symlink \
+        mkdosfs
+endif
+ifneq ($(TW_USE_TOOLBOX), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += busybox_symlinks
+endif
 ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
     LOCAL_ADDITIONAL_DEPENDENCIES += parted
 endif
@@ -495,7 +500,6 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/mtdutils/Android.mk \
     $(commands_recovery_local_path)/flashutils/Android.mk \
     $(commands_recovery_local_path)/pigz/Android.mk \
-    $(commands_recovery_local_path)/dosfstools/Android.mk \
     $(commands_recovery_local_path)/libtar/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptsettings/Android.mk \
     $(commands_recovery_local_path)/crypto/cryptfs/Android.mk \
@@ -507,6 +511,10 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/libmincrypt/Android.mk \
     $(commands_recovery_local_path)/twrpTarMain/Android.mk \
     $(commands_recovery_local_path)/mtp/Android.mk
+
+ifneq ($(TARGET_ARCH), arm64)
+    include $(commands_recovery_local_path)/dosfstools/Android.mk
+endif
 
 ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
     include $(commands_recovery_local_path)/crypto/libcrypt_samsung/Android.mk
