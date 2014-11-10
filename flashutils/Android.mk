@@ -83,7 +83,7 @@ LOCAL_SRC_FILES := flashutils.c
 LOCAL_MODULE := libflashutils
 LOCAL_MODULE_TAGS := eng
 LOCAL_C_INCLUDES += $(commands_recovery_local_path)
-LOCAL_SHARED_LIBRARIES := libc libmmcutils libbmlutils
+LOCAL_SHARED_LIBRARIES := libc libmmcutils libbmlutils libcrecovery
 LOCAL_STATIC_LIBRARIES := libmtdutils
 
 BOARD_RECOVERY_DEFINES := BOARD_BML_BOOT BOARD_BML_RECOVERY
