@@ -84,7 +84,7 @@ LOCAL_CFLAGS += -Wno-unused-parameter
 #    libm \
 #    libc
 
-LOCAL_C_INCLUDES += bionic external/stlport/stlport
+LOCAL_C_INCLUDES += bionic external/stlport/stlport external/openssl/include
 
 LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES :=
@@ -280,6 +280,11 @@ ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     LOCAL_SHARED_LIBRARIES += libcryptfsjb
     #LOCAL_SRC_FILES += crypto/jb/cryptfs.c
     #LOCAL_C_INCLUDES += system/extras/ext4_utils external/openssl/include
+endif
+ifeq ($(TW_INCLUDE_L_CRYPTO), true)
+    LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO
+    LOCAL_CFLAGS += -DTW_INCLUDE_L_CRYPTO
+    LOCAL_SHARED_LIBRARIES += libcryptfslollipop
 endif
 ifeq ($(TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID), true)
     LOCAL_CFLAGS += -DTW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
@@ -526,6 +531,9 @@ ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/logwrapper/Android.mk
     include $(commands_recovery_local_path)/crypto/scrypt/Android.mk
     include $(commands_recovery_local_path)/crypto/crypttools/Android.mk
+endif
+ifeq ($(TW_INCLUDE_L_CRYPTO), true)
+    include $(commands_recovery_local_path)/crypto/lollipop/Android.mk
 endif
 ifeq ($(TWHAVE_SELINUX), true)
     include $(commands_recovery_local_path)/minzip/Android.mk

@@ -51,6 +51,8 @@ extern "C" {
 #ifdef TW_INCLUDE_CRYPTO
 	#ifdef TW_INCLUDE_JB_CRYPTO
 		#include "crypto/jb/cryptfs.h"
+	#elif defined(TW_INCLUDE_L_CRYPTO)
+		#include "crypto/lollipop/cryptfs.h"
 	#else
 		#include "crypto/ics/cryptfs.h"
 	#endif
@@ -1334,7 +1336,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	size_t result;
 
 	property_set("ro.crypto.state", "encrypted");
-#ifdef TW_INCLUDE_JB_CRYPTO
+#if defined(TW_INCLUDE_JB_CRYPTO) || defined(TW_INCLUDE_L_CRYPTO)
 	// No extra flags needed
 #else
 	property_set("ro.crypto.fs_type", CRYPTO_FS_TYPE);
