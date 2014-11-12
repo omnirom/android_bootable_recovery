@@ -47,9 +47,9 @@
 	</resources>
 
 	<variables>
-		<variable name="col1_x" value="13" />
-		<variable name="col2_x" value="830" />
-		<variable name="col_center_x" value="422" />
+		<variable name="col1_x" value="120" />
+		<variable name="col2_x" value="904" />
+		<variable name="col_center_x" value="521" />
 		<variable name="col_center_medium_x" value="629" />
 		<variable name="center_x" value="798" />
 		<variable name="row1_y" value="339" />
@@ -83,15 +83,15 @@
 		<variable name="row16_text_y" value="1835" />
 		<variable name="row17_text_y" value="1935" />
 		<variable name="row18_text_y" value="2035" />
-		<variable name="zip_status_y" value="1226" />
+		<variable name="zip_status_y" value="1250" />
 		<variable name="tz_selected_y" value="319" />
 		<variable name="tz_set_y" value="1995" />
 		<variable name="tz_current_y" value="1895" />
-		<variable name="col_progressbar_x" value="547" />
+		<variable name="col_progressbar_x" value="615" />
 		<variable name="row_progressbar_y" value="2195" />
-		<variable name="col1_medium_x" value="13" />
-		<variable name="col2_medium_x" value="423" />
-		<variable name="col3_medium_x" value="833" />
+		<variable name="col1_medium_x" value="110" />
+		<variable name="col2_medium_x" value="490" />
+		<variable name="col3_medium_x" value="860" />
 		<variable name="col4_medium_x" value="1242" />
 		<variable name="row1_medium_y" value="259" />
 		<variable name="row2_medium_y" value="459" />
@@ -100,7 +100,7 @@
 		<variable name="row5_medium_y" value="1057" />
 		<variable name="row6_medium_y" value="1676" />
 		<variable name="row7_medium_y" value="971" />
-		<variable name="slider_x" value="324" />
+		<variable name="slider_x" value="353" />
 		<variable name="slider_y" value="2125" />
 		<variable name="slider_text_y" value="2229" />
 		<variable name="button_text_color" value="#AAAAAA" />
@@ -109,11 +109,11 @@
 		<variable name="text_fail_color" value="#FF0101" />
 		<variable name="highlight_color" value="#90909080" />
 		<variable name="caps_highlight_color" value="#33B5E580" />
-		<variable name="home_button_x" value="13" />
+		<variable name="home_button_x" value="385" />
 		<variable name="home_button_y" value="2446" />
-		<variable name="back_button_x" value="1415" />
+		<variable name="back_button_x" value="1090" />
 		<variable name="back_button_y" value="2446" />
-		<variable name="sort_text_x" value="13" />
+		<variable name="sort_text_x" value="120" />
 		<variable name="sort_asc_text_y" value="2175" />
 		<variable name="sort_asc_button_y" value="2155" />
 		<variable name="sort_desc_text_y" value="2294" />
@@ -121,7 +121,7 @@
 		<variable name="sort_col1_button_x" value="519" />
 		<variable name="sort_col2_button_x" value="718" />
 		<variable name="sort_col3_button_x" value="918" />
-		<variable name="input_width" value="1569" />
+		<variable name="input_width" value="1360" />
 		<variable name="input_height" value="100" />
 		<variable name="input_background_color" value="#303030" />
 		<variable name="input_cursor_color" value="#33B5E5" />
@@ -135,10 +135,10 @@
 		<variable name="console_background" value="#303030" />
 		<variable name="console_scroll" value="#303030" />
 		<variable name="console_action_height" value="938" />
-		<variable name="console_install_height" value="1200" />
-		<variable name="console_installdone_height" value="1169" />
-		<variable name="fileselector_x" value="7" />
-		<variable name="fileselector_width" value="1583" />
+		<variable name="console_install_height" value="1500" />
+		<variable name="console_installdone_height" value="900" />
+		<variable name="fileselector_x" value="120" />
+		<variable name="fileselector_width" value="1360" />
 		<variable name="fileselector_install_height" value="1556" />
 		<variable name="fileselector_header_background" value="#202020" />
 		<variable name="fileselector_header_textcolor" value="#AAAAAA" />
@@ -156,8 +156,8 @@
 		<variable name="fastscroll_linew" value="4" />
 		<variable name="fastscroll_rectw" value="80" />
 		<variable name="fastscroll_recth" value="140" />
-		<variable name="listbox_x" value="7" />
-		<variable name="listbox_width" value="1583" />
+		<variable name="listbox_x" value="120" />
+		<variable name="listbox_width" value="1360" />
 		<variable name="listbox_tz_height" value="1177" />
 		<variable name="listbox_background" value="#303030" />
 		<variable name="listbox_spacing" value="62" />
@@ -169,7 +169,7 @@
 		<variable name="sdswap_text_y" value="539" />
 		<variable name="sdfilesystem_text_y" value="678" />
 		<variable name="sdfilesystem_button_y" value="758" />
-		<variable name="lock_x" value="480" />
+		<variable name="lock_x" value="495" />
 		<variable name="lock_y" value="800" />
 		<variable name="filemanager_select_x" value="1117" />
 		<variable name="filemanager_select_y" value="2155" />
@@ -181,8 +181,8 @@
 		<variable name="row_offset_text_y" value="1536" />
 		<variable name="row_offset_medium_y" value="1676" />
 		<variable name="button_fill_color" value="#303030" />
-		<variable name="button_fill_full_width" value="1569" />
-		<variable name="button_fill_main_width" value="751" />
+		<variable name="button_fill_full_width" value="1360" />
+		<variable name="button_fill_main_width" value="577" />
 		<variable name="button_fill_main_height" value="431" />
 		<variable name="button_fill_half_height" value="216" />
 		<variable name="button_fill_quarter_height" value="108" />
@@ -195,7 +195,7 @@
 		<variable name="wipe_list_height" value="1620" />
 		<variable name="wipe_button_row1" value="1884" />
 		<variable name="wipe_button_y" value="1298" />
-		<variable name="slidervalue_w" value="1569" />
+		<variable name="slidervalue_w" value="1355" />
 		<variable name="slidervalue_line_clr" value="#FFFFFF" />
 		<variable name="slidervalue_slider_clr" value="#33B5E5" />
 		<variable name="slidervalue_lineh" value="3" />
@@ -221,7 +221,7 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="239" y="20" />
+				<placement x="500" y="20" />
 				<text>Team Win Recovery Project  v%tw_version%</text>
 			</object>
 
@@ -235,27 +235,27 @@
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="239" y="132" />
-				<text>%tw_time%</text>
+				<text>Time: %tw_time%</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="539" y="132" />
+				<placement x="650" y="132" />
 				<conditions>
 					<condition var1="tw_no_battery_percent" var2="0" />
 					<condition var1="tw_battery" op=">" var2="0" />
 					<condition var1="tw_battery" op="<" var2="101" />
 				</conditions>
-				<text>Battery: %tw_battery%</text>
+				<text>Battery Level: %tw_battery%</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="739" y="132" />
+				<placement x="1200" y="132" />
 				<conditions>
 					<condition var1="tw_no_cpu_temp" var2="0" />
 				</conditions>
-				<text>CPU: %tw_cpu_temp% C</text>
+				<text>CPU Temp: %tw_cpu_temp%C</text>
 			</object>
 
 			<object type="button">
@@ -377,7 +377,7 @@
 
 		<template name="footer">
 			<object type="console">
-				<slideout resource="slideout" x="718" y="2448" />
+				<slideout resource="slideout" x="745" y="2446" />
 				<placement x="%console_x%" y="0" w="%console_width%" h="2448" />
 				<color foreground="%console_foreground%" background="%console_background%" scroll="%console_scroll%" />
 				<font resource="fixed" />
