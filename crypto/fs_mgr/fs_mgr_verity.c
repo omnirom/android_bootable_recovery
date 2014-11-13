@@ -140,7 +140,7 @@ static int get_target_device_size(char *blk_device, uint64_t *device_size)
         return -1;
     }
 
-    ext4_parse_sb(&sb);
+    ext4_parse_sb_info(&sb);
     *device_size = info.len;
 
     close(data_device);
