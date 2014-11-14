@@ -179,6 +179,18 @@ static gr_surface fbdev_init(minui_backend* backend) {
 
 static gr_surface fbdev_flip(minui_backend* backend __unused) {
     if (double_buffered) {
+#if defined(RECOVERY_BGRA)
+        // In case of BGRA, do some byte swapping
+        unsigned int idx;
+        unsigned char tmp;
+        unsigned char* ucfb_vaddr = (unsigned char*)gr_draw->data;
+        for (idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes);
+                idx += 4) {
+            tmp = ucfb_vaddr[idx];
+            ucfb_vaddr[idx    ] = ucfb_vaddr[idx + 2];
+            ucfb_vaddr[idx + 2] = tmp;
+        }
+#endif
         // Change gr_draw to point to the buffer currently displayed,
         // then flip the driver so we're displaying the other buffer
         // instead.
