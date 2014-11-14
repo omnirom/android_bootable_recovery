@@ -379,7 +379,7 @@ static void adb_cleanup(void)
 int adb_main()
 {
     atexit(adb_cleanup);
-#if defined(HAVE_FORKEXEC)
+#if !defined(_WIN32)
     // No SIGCHLD. Let the service subproc handle its children.
     signal(SIGPIPE, SIG_IGN);
 #endif
