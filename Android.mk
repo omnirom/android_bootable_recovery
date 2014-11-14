@@ -334,7 +334,6 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     flash_image \
     fix_permissions.sh \
     mke2fs.conf \
-    mkexfatfs \
     pigz \
     teamwin \
     toolbox_symlinks \
@@ -351,6 +350,9 @@ ifneq ($(TARGET_ARCH), arm64)
 endif
 ifneq ($(TW_USE_TOOLBOX), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += busybox_symlinks
+endif
+ifneq ($(TW_NO_EXFAT), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += mkexfatfs
 endif
 ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
     LOCAL_ADDITIONAL_DEPENDENCIES += parted
