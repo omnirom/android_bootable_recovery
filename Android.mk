@@ -329,7 +329,6 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     fsck_msdos_symlink \
     mkdosfs \
     mke2fs.conf \
-    mkexfatfs \
     pigz \
     teamwin \
     toolbox_symlinks \
@@ -337,6 +336,9 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     unpigz_symlink \
     updater
 
+ifneq ($(TW_NO_EXFAT), true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += mkexfatfs
+endif
 ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
     LOCAL_ADDITIONAL_DEPENDENCIES += parted
 endif
