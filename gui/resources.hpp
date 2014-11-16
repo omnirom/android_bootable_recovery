@@ -77,8 +77,8 @@ public:
 	virtual ~AnimationResource();
 
 public:
-	virtual void* GetResource(void) { return mSurfaces.at(0); }
-	virtual void* GetResource(int entry) { return mSurfaces.at(entry); }
+	virtual void* GetResource(void) { return mSurfaces.empty() ? NULL : mSurfaces.at(0); }
+	virtual void* GetResource(int entry) { return mSurfaces.empty() ? NULL : mSurfaces.at(entry); }
 	virtual int GetResourceCount(void) { return mSurfaces.size(); }
 
 protected:

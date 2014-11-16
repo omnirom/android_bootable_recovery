@@ -247,7 +247,6 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 
 	if (!resList)
 		return;
-
 	child = resList->first_node("resource");
 	while (child != NULL)
 	{
