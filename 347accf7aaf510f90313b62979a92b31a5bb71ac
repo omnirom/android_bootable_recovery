@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4b469d43_9b4e1799",
+        "filename": "fixPermissions.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 386,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-17T16:31:22Z",
+      "side": 1,
+      "message": "shell script sets files to 1000:1000 too",
+      "revId": "347accf7aaf510f90313b62979a92b31a5bb71ac",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b469d43_7b816b93",
+        "filename": "fixPermissions.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 398,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-17T16:31:22Z",
+      "side": 1,
+      "message": "typo here, should be 0600",
+      "revId": "347accf7aaf510f90313b62979a92b31a5bb71ac",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b469d43_db489f8e",
+        "filename": "fixPermissions.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 521,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-17T16:31:22Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "347accf7aaf510f90313b62979a92b31a5bb71ac",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
