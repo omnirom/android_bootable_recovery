@@ -44,9 +44,9 @@ LOCAL_SRC_FILES = cryptfs.c
 #    hardware/libhardware/include/hardware \
 #	system/security/softkeymaster/include/keymaster
 #LOCAL_SHARED_LIBRARIES += libc liblog libcutils libcrypto libext4_utils
-LOCAL_SHARED_LIBRARIES := $(common_shared_libraries)
+LOCAL_SHARED_LIBRARIES := $(common_shared_libraries) libmincrypttwrp liblogwrap
 LOCAL_C_INCLUDES := external/openssl/include $(common_c_includes)
-LOCAL_STATIC_LIBRARIES += libfs_mgr libscrypt_static liblogwrap libmincrypttwrp
+LOCAL_WHOLE_STATIC_LIBRARIES += libfs_mgr libscrypt_static
 
 include $(BUILD_SHARED_LIBRARY)
 endif

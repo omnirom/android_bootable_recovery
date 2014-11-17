@@ -442,8 +442,7 @@ LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 
 LOCAL_MODULE := libfusesideload
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
-LOCAL_SHARED_LIBRARIES := libcutils libc
-LOCAL_STATIC_LIBRARIES := libmincrypttwrp
+LOCAL_SHARED_LIBRARIES := libcutils libc libmincrypttwrp
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -476,8 +475,7 @@ LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng optional
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
 LOCAL_SRC_FILES = adb_install.cpp asn1_decoder.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c legacy_property_service.c
-LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload
-LOCAL_STATIC_LIBRARIES += libmincrypttwrp
+LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload libmincrypttwrp
 
 ifneq ($(BOARD_RECOVERY_BLDRMSG_OFFSET),)
     LOCAL_CFLAGS += -DBOARD_RECOVERY_BLDRMSG_OFFSET=$(BOARD_RECOVERY_BLDRMSG_OFFSET)
