@@ -30,7 +30,7 @@ LOCAL_CFLAGS += -DRK3X
 endif
 
 LOCAL_MODULE := libmtdutils
-LOCAL_STATIC_LIBRARIES := libcutils libc
+LOCAL_SHARED_LIBRARIES := libcutils libc
 
 include $(BUILD_SHARED_LIBRARY)
 
@@ -52,8 +52,7 @@ LOCAL_MODULE_PATH := $(PRODUCT_OUT)/utilities
 LOCAL_UNSTRIPPED_PATH := $(PRODUCT_OUT)/symbols/utilities
 LOCAL_MODULE_STEM := bml_over_mtd
 LOCAL_C_INCLUDES += $(commands_recovery_local_path)/mtdutils
-LOCAL_STATIC_LIBRARIES := libmtdutils
-LOCAL_SHARED_LIBRARIES := libcutils liblog libc
+LOCAL_SHARED_LIBRARIES := libmtdutils libcutils liblog libc
 include $(BUILD_EXECUTABLE)
 endif
 
