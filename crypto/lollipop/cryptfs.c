@@ -1224,7 +1224,7 @@ static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
 
     unsigned char* master_key = convert_hex_ascii_to_key(passwd, &key_size);
     if (!master_key) {
-        printf("Failed to convert passwd from hex");
+        printf("Failed to convert passwd from hex\n");
         return -1;
     }
 
@@ -1234,13 +1234,13 @@ static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
     free(master_key);
 
     if (rc) {
-        printf("scrypt failed");
+        printf("scrypt failed\n");
         return -1;
     }
 
     if (keymaster_sign_object(ftr, ikey, KEY_LEN_BYTES + IV_LEN_BYTES,
                               &signature, &signature_size)) {
-        printf("Signing failed");
+        printf("Signing failed\n");
         return -1;
     }
 
@@ -1249,7 +1249,7 @@ static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
     free(signature);
 
     if (rc) {
-        printf("scrypt failed");
+        printf("scrypt failed\n");
         return -1;
     }
 
@@ -1929,12 +1929,12 @@ int check_unmounted_and_get_ftr(struct crypt_mnt_ftr* crypt_ftr)
     property_get("ro.crypto.state", encrypted_state, "");
     if ( master_key_saved || strcmp(encrypted_state, "encrypted") ) {
         printf("encrypted fs already validated or not running with encryption,"
-              " aborting");
-        return -1;
+              " aborting\n");
+        //return -1;
     }
 
     if (get_crypt_ftr_and_key(crypt_ftr)) {
-        printf("Error getting crypt footer and key");
+        printf("Error getting crypt footer and key\n");
         return -1;
     }
 

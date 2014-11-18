@@ -278,21 +278,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 				Setup_Data_Media();
 #ifdef TW_INCLUDE_CRYPTO
 			Can_Be_Encrypted = true;
-#ifdef TW_INCLUDE_L_CRYPTO
-			int password_type = cryptfs_get_password_type();
-			if (password_type == CRYPT_TYPE_DEFAULT) {
-				LOGINFO("Device is encrypted with the default password, attempting to decrypt.\n");
-				property_set("ro.crypto.state", "encrypted");
-				if (cryptfs_check_passwd("default_password") == 0) {
-					gui_print("Successfully decrypted with default password.\n");
-				} else {
-					LOGERR("Unable to decrypt with default password.");
-					LOGERR("You may need to perform a Format Data.\n");
-				}
-			} else {
-				DataManager::SetValue("TW_CRYPTO_TYPE", password_type);
-			}
-#endif
 			char crypto_blkdev[255];
 			property_get("ro.crypto.fs_crypto_blkdev", crypto_blkdev, "error");
 			if (strcmp(crypto_blkdev, "error") != 0) {
