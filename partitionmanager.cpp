@@ -1395,6 +1395,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	strcpy(cPassword, Password.c_str());
 #ifdef TW_INCLUDE_L_CRYPTO
 	Mount_By_Path("/vendor", false); // if exists, mount vendor partition as we may need some proprietary files
+	Mount_By_Path("/firmware", false); // if exists, mount firmware partition as we may need some proprietary files
 #endif
 	int pwret = cryptfs_check_passwd(cPassword);
 
