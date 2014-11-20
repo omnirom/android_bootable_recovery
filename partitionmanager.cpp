@@ -1462,6 +1462,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 				dat->Storage_Path = "/data/media/0";
 				dat->Symlink_Path = dat->Storage_Path;
 				DataManager::SetValue("tw_storage_path", "/data/media/0");
+				DataManager::SetValue("tw_settings_path", "/data/media/0");
 				dat->UnMount(false);
 				Output_Partition(dat);
 			}
