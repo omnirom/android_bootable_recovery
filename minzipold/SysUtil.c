@@ -95,15 +95,15 @@ int sysLoadFileInShmem(int fd, MemMapping* pMap)
     if (memPtr == NULL)
         return -1;
 
-    actual = read(fd, memPtr, length);
+    pMap->baseAddr = pMap->addr = memPtr;
+    pMap->baseLength = pMap->length = length;
+
+    actual = TEMP_FAILURE_RETRY(read(fd, memPtr, length));
     if (actual != length) {
         LOGE("only read %d of %d bytes\n", (int) actual, (int) length);
         sysReleaseShmem(pMap);
         return -1;
     }
-
-    pMap->baseAddr = pMap->addr = memPtr;
-    pMap->baseLength = pMap->length = length;
 
     return 0;
 }
