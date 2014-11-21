@@ -985,6 +985,7 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
     unsigned int i;
     bool seenMatch = false;
     int ok = true;
+    int extractCount = 0;
     for (i = 0; i < pArchive->numEntries; i++) {
         ZipEntry *pEntry = pArchive->pEntries + i;
         if (pEntry->fileNameLen < zipDirLen) {
@@ -1115,23 +1116,19 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
                  * Open the target for writing.
                  */
 
-#ifdef HAVE_SELINUX
                 char *secontext = NULL;
 
                 if (sehnd) {
                     selabel_lookup(sehnd, &secontext, targetFile, UNZIP_FILEMODE);
                     setfscreatecon(secontext);
                 }
-#endif
 
                 int fd = creat(targetFile, UNZIP_FILEMODE);
 
-#ifdef HAVE_SELINUX
                 if (secontext) {
                     freecon(secontext);
                     setfscreatecon(NULL);
                 }
-#endif
 
                 if (fd < 0) {
                     LOGE("Can't create target file \"%s\": %s\n",
@@ -1154,12 +1151,15 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
                     break;
                 }
 
-                LOGD("Extracted file \"%s\"\n", targetFile);
+                LOGV("Extracted file \"%s\"\n", targetFile);
+                ++extractCount;
             }
         }
 
         if (callback != NULL) callback(targetFile, cookie);
     }
+
+    LOGD("Extracted %d file(s)\n", extractCount);
 
     free(helper.buf);
     free(zpath);

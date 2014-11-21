@@ -31,16 +31,17 @@
 #include "mincrypt/rsa.h"
 #include "mincrypt/sha.h"
 #include "minui/minui.h"
-#ifdef HAVE_SELINUX
+#include "mtdutils/mounts.h"
+#include "mtdutils/mtdutils.h"
+#ifdef LOLLIPOP
 #include "minzip/SysUtil.h"
 #include "minzip/Zip.h"
+#include "verifier.h"
 #else
+#include "verifierold.h"
 #include "minzipold/SysUtil.h"
 #include "minzipold/Zip.h"
 #endif
-#include "mtdutils/mounts.h"
-#include "mtdutils/mtdutils.h"
-#include "verifier.h"
 #include "variables.h"
 #include "data.hpp"
 #include "partitions.hpp"
@@ -278,28 +279,44 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 #endif
 	DataManager::SetProgress(0);
 
+#ifdef LOLLIPOP
 	MemMapping map;
 	if (sysMapFile(path, &map) != 0) {
 		LOGERR("Failed to sysMapFile '%s'\n", path);
         return -1;
     }
+#endif
 
 	if (zip_verify) {
 		gui_print("Verifying zip signature...\n");
+#ifdef LOLLIPOP
 		ret_val = verify_file(map.addr, map.length);
+#else
+		ret_val = verify_file(path);
+#endif
 		if (ret_val != VERIFY_SUCCESS) {
 			LOGERR("Zip signature verification failed: %i\n", ret_val);
+#ifdef LOLLIPOP
 			sysReleaseMap(&map);
+#endif
 			return -1;
 		}
 	}
+#ifdef LOLLIPOP
 	ret_val = mzOpenZipArchive(map.addr, map.length, &Zip);
+#else
+	ret_val = mzOpenZipArchive(path, &Zip);
+#endif
 	if (ret_val != 0) {
 		LOGERR("Zip file is corrupt!\n", path);
+#ifdef LOLLIPOP
 		sysReleaseMap(&map);
+#endif
 		return INSTALL_CORRUPT;
 	}
 	ret_val = Run_Update_Binary(path, &Zip, wipe_cache);
+#ifdef LOLLIPOP
 	sysReleaseMap(&map);
+#endif
 	return ret_val;
 }
