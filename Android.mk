@@ -84,7 +84,7 @@ LOCAL_CFLAGS += -Wno-unused-parameter
 #    libm \
 #    libc
 
-LOCAL_C_INCLUDES += bionic external/stlport/stlport external/openssl/include
+LOCAL_C_INCLUDES += bionic external/stlport/stlport external/openssl/include $(LOCAL_PATH)/libmincrypt/includes
 
 LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES :=
@@ -326,6 +326,11 @@ ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
 endif
 
+# Auto filled build flag
+ifeq ($(PLATFORM_VERSION), 5.0)
+    LOCAL_CFLAGS += -DANDROID_VERSION=5
+endif
+
 LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 
 LOCAL_ADDITIONAL_DEPENDENCIES := \
@@ -339,8 +344,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     teamwin \
     toolbox_symlinks \
     twrp \
-    unpigz_symlink \
-    updater
+    unpigz_symlink
 
 ifneq ($(TARGET_ARCH), arm64)
     LOCAL_ADDITIONAL_DEPENDENCIES += \
@@ -439,7 +443,7 @@ LOCAL_SRC_FILES := fuse_sideload.c
 
 LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
-
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libfusesideload
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
 LOCAL_SHARED_LIBRARIES := libcutils libc libmincrypttwrp
@@ -474,7 +478,12 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng optional
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
-LOCAL_SRC_FILES = adb_install.cpp asn1_decoder.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c legacy_property_service.c
+LOCAL_SRC_FILES := adb_install.cpp asn1_decoder.cpp bootloader.cpp mtdutils/mtdutils.c legacy_property_service.c
+ifeq ($(PLATFORM_VERSION), 5.0)
+    LOCAL_SRC_FILES += verifier.cpp
+else
+    LOCAL_SRC_FILES += verifierold.cpp
+endif
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload libmincrypttwrp
 
 ifneq ($(BOARD_RECOVERY_BLDRMSG_OFFSET),)
@@ -533,7 +542,7 @@ endif
 ifeq ($(TW_INCLUDE_L_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/lollipop/Android.mk
 endif
-ifeq ($(TWHAVE_SELINUX), true)
+ifeq ($(PLATFORM_VERSION), 5.0)
     include $(commands_recovery_local_path)/minzip/Android.mk
 else
     include $(commands_recovery_local_path)/minzipold/Android.mk

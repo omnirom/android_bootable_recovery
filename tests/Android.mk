@@ -22,5 +22,6 @@ $(foreach file,$(test_src_files), \
     $(eval LOCAL_SRC_FILES := $(file)) \
     $(eval LOCAL_MODULE := $(notdir $(file:%.cpp=%))) \
     $(eval LOCAL_C_INCLUDES := $(LOCAL_PATH)/..) \
+    $(eval LOCAL_MODULE_TAGS := optional) \
     $(eval include $(BUILD_NATIVE_TEST)) \
 )

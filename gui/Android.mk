@@ -81,6 +81,11 @@ ifeq ($(TW_CUSTOM_THEME),)
 	endif
 endif
 
+# Auto filled build flag
+ifeq ($(PLATFORM_VERSION), 5.0)
+    LOCAL_CFLAGS += -DANDROID_VERSION=5
+endif
+
 LOCAL_C_INCLUDES += bionic external/stlport/stlport $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION)
 
 include $(BUILD_STATIC_LIBRARY)
