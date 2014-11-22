@@ -756,6 +756,7 @@ static void file_to_ui(const char* fn) {
     }
     char line[1024];
     int ct = 0;
+    ui->SetBackground(RecoveryUI::VIEWING_LOG);
     redirect_stdio("/dev/null");
     while(fgets(line, sizeof(line), fp) != NULL) {
         ui->Print("%s", line);
