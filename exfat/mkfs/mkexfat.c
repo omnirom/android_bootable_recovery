@@ -27,10 +27,10 @@
 #include <stdio.h>
 #include <string.h>
 
-static int check_size(off_t volume_size)
+static int check_size(loff_t volume_size)
 {
 	const struct fs_object** pp;
-	off_t position = 0;
+	loff_t position = 0;
 
 	for (pp = objects; *pp; pp++)
 	{
@@ -52,12 +52,12 @@ static int check_size(off_t volume_size)
 }
 
 static int erase_object(struct exfat_dev* dev, const void* block,
-		size_t block_size, off_t start, off_t size)
+		size_t block_size, loff_t start, loff_t size)
 {
-	const off_t block_count = DIV_ROUND_UP(size, block_size);
-	off_t i;
+	const loff_t block_count = DIV_ROUND_UP(size, block_size);
+	loff_t i;
 
-	if (exfat_seek(dev, start, SEEK_SET) == (off_t) -1)
+	if (exfat_seek(dev, start, SEEK_SET) == (loff_t) -1)
 	{
 		exfat_error("seek to 0x%"PRIx64" failed", start);
 		return 1;
@@ -77,7 +77,7 @@ static int erase_object(struct exfat_dev* dev, const void* block,
 static int erase(struct exfat_dev* dev)
 {
 	const struct fs_object** pp;
-	off_t position = 0;
+	loff_t position = 0;
 	const size_t block_size = 1024 * 1024;
 	void* block = malloc(block_size);
 
@@ -107,12 +107,12 @@ static int erase(struct exfat_dev* dev)
 static int create(struct exfat_dev* dev)
 {
 	const struct fs_object** pp;
-	off_t position = 0;
+	loff_t position = 0;
 
 	for (pp = objects; *pp; pp++)
 	{
 		position = ROUND_UP(position, (*pp)->get_alignment());
-		if (exfat_seek(dev, position, SEEK_SET) == (off_t) -1)
+		if (exfat_seek(dev, position, SEEK_SET) == (loff_t) -1)
 		{
 			exfat_error("seek to 0x%"PRIx64" failed", position);
 			return 1;
@@ -124,7 +124,7 @@ static int create(struct exfat_dev* dev)
 	return 0;
 }
 
-int mkfs(struct exfat_dev* dev, off_t volume_size)
+int mkfs(struct exfat_dev* dev, loff_t volume_size)
 {
 	if (check_size(volume_size) != 0)
 		return 1;
@@ -146,10 +146,10 @@ int mkfs(struct exfat_dev* dev, off_t volume_size)
 	return 0;
 }
 
-off_t get_position(const struct fs_object* object)
+loff_t get_position(const struct fs_object* object)
 {
 	const struct fs_object** pp;
-	off_t position = 0;
+	loff_t position = 0;
 
 	for (pp = objects; *pp; pp++)
 	{
