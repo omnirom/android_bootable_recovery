@@ -106,7 +106,7 @@ static int dump_sb(const char* spec)
 
 static void dump_sectors(struct exfat* ef)
 {
-	off_t a = 0, b = 0;
+	loff_t a = 0, b = 0;
 
 	printf("Used sectors ");
 	while (exfat_find_used_sectors(ef, &a, &b) == 0)

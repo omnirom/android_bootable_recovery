@@ -29,7 +29,7 @@
 struct iterator
 {
 	cluster_t cluster;
-	off_t offset;
+	loff_t offset;
 	int contiguous;
 	char* chunk;
 };
@@ -87,7 +87,7 @@ int exfat_cleanup_node(struct exfat* ef, struct exfat_node* node)
 /**
  * Cluster + offset from the beginning of the directory to absolute offset.
  */
-static off_t co2o(struct exfat* ef, cluster_t cluster, off_t offset)
+static loff_t co2o(struct exfat* ef, cluster_t cluster, loff_t offset)
 {
 	return exfat_c2o(ef, cluster) + offset % CLUSTER_SIZE(*ef->sb);
 }
@@ -584,7 +584,7 @@ void exfat_reset_cache(struct exfat* ef)
 }
 
 static bool next_entry(struct exfat* ef, const struct exfat_node* parent,
-		cluster_t* cluster, off_t* offset)
+		cluster_t* cluster, loff_t* offset)
 {
 	*offset += sizeof(struct exfat_entry);
 	if (*offset % CLUSTER_SIZE(*ef->sb) == 0)
@@ -603,8 +603,8 @@ static bool next_entry(struct exfat* ef, const struct exfat_node* parent,
 int exfat_flush_node(struct exfat* ef, struct exfat_node* node)
 {
 	cluster_t cluster;
-	off_t offset;
-	off_t meta1_offset, meta2_offset;
+	loff_t offset;
+	loff_t meta1_offset, meta2_offset;
 	struct exfat_entry_meta1 meta1;
 	struct exfat_entry_meta2 meta2;
 
@@ -670,7 +670,7 @@ int exfat_flush_node(struct exfat* ef, struct exfat_node* node)
 static bool erase_entry(struct exfat* ef, struct exfat_node* node)
 {
 	cluster_t cluster = node->entry_cluster;
-	off_t offset = node->entry_offset;
+	loff_t offset = node->entry_offset;
 	int name_entries = DIV_ROUND_UP(utf16_length(node->name), EXFAT_ENAME_MAX);
 	uint8_t entry_type;
 
@@ -706,7 +706,7 @@ static bool erase_entry(struct exfat* ef, struct exfat_node* node)
 }
 
 static int shrink_directory(struct exfat* ef, struct exfat_node* dir,
-		off_t deleted_offset)
+		loff_t deleted_offset)
 {
 	const struct exfat_node* node;
 	const struct exfat_node* last_node;
@@ -753,7 +753,7 @@ static int shrink_directory(struct exfat* ef, struct exfat_node* dir,
 static int delete(struct exfat* ef, struct exfat_node* node)
 {
 	struct exfat_node* parent = node->parent;
-	off_t deleted_offset = node->entry_offset;
+	loff_t deleted_offset = node->entry_offset;
 	int rc;
 
 	exfat_get_node(parent);
@@ -808,7 +808,7 @@ static int grow_directory(struct exfat* ef, struct exfat_node* dir,
 }
 
 static int find_slot(struct exfat* ef, struct exfat_node* dir,
-		cluster_t* cluster, off_t* offset, int subentries)
+		cluster_t* cluster, loff_t* offset, int subentries)
 {
 	struct iterator it;
 	int rc;
@@ -853,7 +853,7 @@ static int find_slot(struct exfat* ef, struct exfat_node* dir,
 }
 
 static int write_entry(struct exfat* ef, struct exfat_node* dir,
-		const le16_t* name, cluster_t cluster, off_t offset, uint16_t attrib)
+		const le16_t* name, cluster_t cluster, loff_t offset, uint16_t attrib)
 {
 	struct exfat_node* node;
 	struct exfat_entry_meta1 meta1;
@@ -931,7 +931,7 @@ static int create(struct exfat* ef, const char* path, uint16_t attrib)
 	struct exfat_node* dir;
 	struct exfat_node* existing;
 	cluster_t cluster = EXFAT_CLUSTER_BAD;
-	off_t offset = -1;
+	loff_t offset = -1;
 	le16_t name[EXFAT_NAME_MAX + 1];
 	int rc;
 
@@ -1000,12 +1000,12 @@ int exfat_mkdir(struct exfat* ef, const char* path)
 
 static int rename_entry(struct exfat* ef, struct exfat_node* dir,
 		struct exfat_node* node, const le16_t* name, cluster_t new_cluster,
-		off_t new_offset)
+		loff_t new_offset)
 {
 	struct exfat_entry_meta1 meta1;
 	struct exfat_entry_meta2 meta2;
 	cluster_t old_cluster = node->entry_cluster;
-	off_t old_offset = node->entry_offset;
+	loff_t old_offset = node->entry_offset;
 	const size_t name_length = utf16_length(name);
 	const int name_entries = DIV_ROUND_UP(name_length, EXFAT_ENAME_MAX);
 	int i;
@@ -1077,7 +1077,7 @@ int exfat_rename(struct exfat* ef, const char* old_path, const char* new_path)
 	struct exfat_node* existing;
 	struct exfat_node* dir;
 	cluster_t cluster = EXFAT_CLUSTER_BAD;
-	off_t offset = -1;
+	loff_t offset = -1;
 	le16_t name[EXFAT_NAME_MAX + 1];
 	int rc;
 
@@ -1177,7 +1177,7 @@ const char* exfat_get_label(struct exfat* ef)
 	return ef->label;
 }
 
-static int find_label(struct exfat* ef, cluster_t* cluster, off_t* offset)
+static int find_label(struct exfat* ef, cluster_t* cluster, loff_t* offset)
 {
 	struct iterator it;
 	int rc;
@@ -1215,7 +1215,7 @@ int exfat_set_label(struct exfat* ef, const char* label)
 	le16_t label_utf16[EXFAT_ENAME_MAX + 1];
 	int rc;
 	cluster_t cluster;
-	off_t offset;
+	loff_t offset;
 	struct exfat_entry_label entry;
 
 	memset(label_utf16, 0, sizeof(label_utf16));

@@ -161,8 +161,8 @@ void exfat_print_info(const struct exfat_super_block* sb,
 		uint32_t free_clusters)
 {
 	struct exfat_human_bytes hb;
-	off_t total_space = le64_to_cpu(sb->sector_count) * SECTOR_SIZE(*sb);
-	off_t avail_space = (off_t) free_clusters * CLUSTER_SIZE(*sb);
+	loff_t total_space = le64_to_cpu(sb->sector_count) * SECTOR_SIZE(*sb);
+	loff_t avail_space = (loff_t) free_clusters * CLUSTER_SIZE(*sb);
 
 	printf("File system version           %hhu.%hhu\n",
 			sb->version.major, sb->version.minor);

@@ -51,7 +51,7 @@ static struct
 {
 	int sector_bits;
 	int spc_bits;
-	off_t volume_size;
+	loff_t volume_size;
 	le16_t volume_label[EXFAT_ENAME_MAX + 1];
 	uint32_t volume_serial;
 	uint64_t first_sector;
@@ -68,7 +68,7 @@ int get_spc_bits(void)
 	return param.spc_bits;
 }
 
-off_t get_volume_size(void)
+loff_t get_volume_size(void)
 {
 	return param.volume_size;
 }
@@ -98,13 +98,13 @@ int get_cluster_size(void)
 	return get_sector_size() << get_spc_bits();
 }
 
-static int setup_spc_bits(int sector_bits, int user_defined, off_t volume_size)
+static int setup_spc_bits(int sector_bits, int user_defined, loff_t volume_size)
 {
 	int i;
 
 	if (user_defined != -1)
 	{
-		off_t cluster_size = 1 << sector_bits << user_defined;
+		loff_t cluster_size = 1 << sector_bits << user_defined;
 		if (volume_size / cluster_size > EXFAT_LAST_DATA_CLUSTER)
 		{
 			struct exfat_human_bytes chb, vhb;

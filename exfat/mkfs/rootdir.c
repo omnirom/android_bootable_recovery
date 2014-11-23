@@ -26,12 +26,12 @@
 #include "uctc.h"
 #include <string.h>
 
-static off_t rootdir_alignment(void)
+static loff_t rootdir_alignment(void)
 {
 	return get_cluster_size();
 }
 
-static off_t rootdir_size(void)
+static loff_t rootdir_size(void)
 {
 	return get_cluster_size();
 }

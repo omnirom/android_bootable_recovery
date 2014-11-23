@@ -27,12 +27,12 @@
 #include <limits.h>
 #include <string.h>
 
-static off_t cbm_alignment(void)
+static loff_t cbm_alignment(void)
 {
 	return get_cluster_size();
 }
 
-static off_t cbm_size(void)
+static loff_t cbm_size(void)
 {
 	return DIV_ROUND_UP(
 			(get_volume_size() - get_position(&cbm)) / get_cluster_size(),
