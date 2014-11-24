@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <sys/vfs.h>
+#include <time.h>
 
 #include "cutils/properties.h"
 
@@ -19,27 +20,20 @@ using namespace android;
 
 static int append_sod(const char* opt_hash)
 {
-    int fd;
     const char* key;
     char value[PROPERTY_VALUE_MAX];
     int len;
     char buf[PROP_LINE_LEN];
-
-    unlink(PATHNAME_SOD);
-    fd = open(PATHNAME_SOD, O_RDWR|O_CREAT, 0600);
-    if (fd < 0) {
-        return -1;
-    }
+    char sodbuf[PROP_LINE_LEN*10];
+    char* p = sodbuf;
 
     key = "hash.name";
     strcpy(value, opt_hash);
-    len = sprintf(buf, "%s=%s\n", key, value);
-    write(fd, buf, len);
+    p += sprintf(p, "%s=%s\n", key, value);
 
     key = "ro.build.product";
     property_get(key, value, "");
-    len = sprintf(buf, "%s=%s\n", key, value);
-    write(fd, buf, len);
+    p += sprintf(p, "%s=%s\n", key, value);
 
     for (int i = 0; i < MAX_PART; ++i) {
         partspec* part = part_get(i);
@@ -68,33 +62,23 @@ static int append_sod(const char* opt_hash)
             }
             ensure_path_unmounted(part->path);
         }
-        len = sprintf(buf, "fs.%s.size=%llu\n", part->name, part->size);
-        write(fd, buf, len);
-        len = sprintf(buf, "fs.%s.used=%llu\n", part->name, part->used);
-        write(fd, buf, len);
+        p += sprintf(p, "fs.%s.size=%llu\n", part->name, part->size);
+        p += sprintf(p, "fs.%s.used=%llu\n", part->name, part->used);
     }
 
-    close(fd);
-    int rc = tar_append_file(tar, PATHNAME_SOD, "SOD");
-    unlink(PATHNAME_SOD);
+    int rc = tar_append_file_contents(tar, "SOD", 0600,
+            getuid(), getgid(), sodbuf, p-sodbuf);
     return rc;
 }
 
 static int append_eod(const char* opt_hash)
 {
-    int fd;
     char buf[PROP_LINE_LEN];
-    int len;
+    char eodbuf[PROP_LINE_LEN*10];
+    char* p = eodbuf;
     int n;
 
-    unlink(PATHNAME_EOD);
-    fd = open(PATHNAME_EOD, O_RDWR|O_CREAT, 0600);
-    if (fd < 0) {
-        return -1;
-    }
-
-    len = sprintf(buf, "hash.datalen=%u\n", hash_datalen);
-    write(fd, buf, len);
+    p += sprintf(p, "hash.datalen=%u\n", hash_datalen);
 
     unsigned char digest[HASH_MAX_LENGTH];
     char hexdigest[HASH_MAX_STRING_LENGTH];
@@ -104,21 +88,18 @@ static int append_eod(const char* opt_hash)
         for (n = 0; n < SHA_DIGEST_LENGTH; ++n) {
             sprintf(hexdigest+2*n, "%02x", digest[n]);
         }
-        len = sprintf(buf, "hash.value=%s\n", hexdigest);
+        p += sprintf(p, "hash.value=%s\n", hexdigest);
     }
     else { // default to md5
         MD5_Final(digest, &md5_ctx);
         for (n = 0; n < MD5_DIGEST_LENGTH; ++n) {
             sprintf(hexdigest+2*n, "%02x", digest[n]);
         }
-        len = sprintf(buf, "hash.value=%s\n", hexdigest);
+        p += sprintf(p, "hash.value=%s\n", hexdigest);
     }
 
-    write(fd, buf, len);
-
-    close(fd);
-    int rc = tar_append_file(tar, PATHNAME_EOD, "EOD");
-    unlink(PATHNAME_EOD);
+    int rc = tar_append_file_contents(tar, "EOD", 0600,
+            getuid(), getgid(), eodbuf, p-eodbuf);
     return rc;
 }
 

@@ -26,9 +26,6 @@ extern "C" {
 
 #define PROP_LINE_LEN (PROPERTY_KEY_MAX+1+PROPERTY_VALUE_MAX+1+1)
 
-#define PATHNAME_SOD "/tmp/sod"
-#define PATHNAME_EOD "/tmp/eod"
-
 extern int sockfd;
 extern TAR* tar;
 extern gzFile gzf;

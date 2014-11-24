@@ -23,21 +23,14 @@ using namespace android;
 
 static int verify_sod()
 {
-    int fd;
     const char* key;
     char value[PROPERTY_VALUE_MAX];
     char sodbuf[PROP_LINE_LEN*10];
+    size_t len;
 
-    fd = open(PATHNAME_SOD, O_RDONLY);
-    if (fd < 0) {
-        logmsg("tar_verify_sod: failed to open file\n");
-        return -1;
-    }
-
-    ssize_t len = read(fd, sodbuf, sizeof(sodbuf));
-    if (len <= 0) {
-        logmsg("verify_sod: short read\n");
-        close(fd);
+    len = sizeof(sodbuf);
+    if (tar_extract_file_contents(tar, sodbuf, &len) != 0) {
+        logmsg("tar_verify_sod: failed to extract file\n");
         return -1;
     }
 
@@ -82,7 +75,6 @@ static int verify_sod()
             }
         }
     }
-    close(fd);
 
     if (!val_hashname[0]) {
         logmsg("verify_sod: did not find hash.name\n");
@@ -109,16 +101,11 @@ static int verify_eod(size_t actual_hash_datalen,
 {
     int rc = -1;
     char eodbuf[PROP_LINE_LEN*10];
+    size_t len;
 
-    int fd = open(PATHNAME_EOD, O_RDONLY);
-    if (fd < 0) {
-        logmsg("verify_eod: failed to open file\n");
-        return -1;
-    }
-    int len = read(fd, eodbuf, sizeof(eodbuf));
-    if (len <= 0) {
-        logmsg("tar_verify_sod: short read\n");
-        close(fd);
+    len = sizeof(eodbuf);
+    if (tar_extract_file_contents(tar, eodbuf, &len) != 0) {
+        logmsg("verify_eod: failed to extract file\n");
         return -1;
     }
 
@@ -171,8 +158,6 @@ static int verify_eod(size_t actual_hash_datalen,
             (memcmp(hexdigest, reported_hash, strlen(hexdigest)) == 0)) {
         rc = 0;
     }
-
-    close(fd);
 
     return rc;
 }
@@ -259,17 +244,11 @@ static int do_restore_tree(int sockfd)
             }
         }
         if (!strcmp(pathname, "SOD")) {
-            rc = tar_extract_file(tar, PATHNAME_SOD);
-            if (rc == 0) {
-                rc = verify_sod();
-            }
+            rc = verify_sod();
             logmsg("do_restore_tree: tar_verify_sod returned %d\n", rc);
         }
         else if (!strcmp(pathname, "EOD")) {
-            rc = tar_extract_file(tar, PATHNAME_EOD);
-            if (rc == 0) {
-                rc = verify_eod(save_hash_datalen, &save_sha_ctx, &save_md5_ctx);
-            }
+            rc = verify_eod(save_hash_datalen, &save_sha_ctx, &save_md5_ctx);
             logmsg("do_restore_tree: tar_verify_eod returned %d\n", rc);
         }
         else if (!strcmp(pathname, "boot") || !strcmp(pathname, "recovery")) {
