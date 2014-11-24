@@ -19,6 +19,8 @@
 
 #include "bu.h"
 
+#include "messagesocket.h"
+
 #define PATHNAME_RC "/tmp/burc"
 
 using namespace android;
@@ -33,6 +35,8 @@ char* hash_name;
 size_t hash_datalen;
 SHA_CTX sha_ctx;
 MD5_CTX md5_ctx;
+
+static MessageSocket ms;
 
 void
 ui_print(const char* format, ...) {
@@ -63,6 +67,83 @@ void logmsg(const char *fmt, ...)
     }
 }
 
+static partspec partlist[MAX_PART];
+static partspec* curpart;
+
+int part_add(const char* name)
+{
+    fstab_rec* vol = NULL;
+    char* path = NULL;
+    int i;
+
+    path = (char*)malloc(1+strlen(name)+1);
+    sprintf(path, "/%s", name);
+    vol = volume_for_path(path);
+    if (vol == NULL || vol->fs_type == NULL) {
+        logmsg("missing vol info for %s, ignoring\n", name);
+        goto err;
+    }
+
+    for (i = 0; i < MAX_PART; ++i) {
+        if (partlist[i].name == NULL) {
+            partlist[i].name = strdup(name);
+            partlist[i].path = path;
+            partlist[i].vol = vol;
+            logmsg("part_add: i=%d, name=%s, path=%s\n", i, name, path);
+            return 0;
+        }
+        if (strcmp(partlist[i].name, name) == 0) {
+            logmsg("duplicate partition %s, ignoring\n", name);
+            goto err;
+        }
+    }
+
+err:
+    free(path);
+    return -1;
+}
+
+partspec* part_get(int i)
+{
+    if (i >= 0 && i < MAX_PART) {
+        if (partlist[i].name != NULL) {
+            return &partlist[i];
+        }
+    }
+    return NULL;
+}
+
+partspec* part_find(const char* name)
+{
+    for (int i = 0; i < MAX_PART; ++i) {
+        if (partlist[i].name && !strcmp(name, partlist[i].name)) {
+            return &partlist[i];
+        }
+    }
+    return NULL;
+}
+
+void part_set(partspec* part)
+{
+    curpart = part;
+    curpart->off = 0;
+}
+
+int update_progress(uint64_t off)
+{
+    if (curpart) {
+        int oldpct = min(100, (int)((uint64_t)100*curpart->off/curpart->used));
+        curpart->off += off;
+        int newpct = min(100, (int)((uint64_t)100*curpart->off/curpart->used));
+        if (newpct > oldpct) {
+            char msg[256];
+            sprintf(msg, "%s: %d%% complete", curpart->name, newpct);
+            ms.Show(msg);
+        }
+    }
+    return 0;
+}
+
 static int tar_cb_open(const char* path, int mode, ...)
 {
     errno = EINVAL;
@@ -83,6 +164,7 @@ static ssize_t tar_cb_read(int fd, void* buf, size_t len)
         MD5_Update(&md5_ctx, buf, nread);
         hash_datalen += nread;
     }
+    update_progress(nread);
     return nread;
 }
 
@@ -108,6 +190,7 @@ static ssize_t tar_cb_write(int fd, const void* buf, size_t len)
         len -= n;
         written += n;
     }
+    update_progress(written);
     return written;
 }
 
@@ -127,6 +210,7 @@ static ssize_t tar_gz_cb_read(int fd, void* buf, size_t len)
         MD5_Update(&md5_ctx, buf, nread);
         hash_datalen += nread;
     }
+    update_progress(nread);
     return nread;
 }
 
@@ -152,6 +236,7 @@ static ssize_t tar_gz_cb_write(int fd, const void* buf, size_t len)
         len -= n;
         written += n;
     }
+    update_progress(written);
     return written;
 }
 
@@ -225,16 +310,22 @@ int main(int argc, char **argv)
     load_volume_table();
 //    vold_client_start(&v_callbacks, 1);
 
+    ms.ClientInit();
+
     if (!strcmp(opname, "backup")) {
+        ms.Show("Backup in progress...");
         rc = do_backup(argc-optidx, &argv[optidx]);
     }
     else if (!strcmp(opname, "restore")) {
+        ms.Show("Restore in progress...");
         rc = do_restore(argc-optidx, &argv[optidx]);
     }
     else {
         logmsg("Unknown operation %s\n", opname);
         do_exit(1);
     }
+
+    ms.Dismiss();
 
     sleep(1);
     close(sockfd);

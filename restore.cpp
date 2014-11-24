@@ -19,8 +19,6 @@
 
 #include "bu.h"
 
-#include "messagesocket.h"
-
 using namespace android;
 
 static int verify_sod()
@@ -43,6 +41,8 @@ static int verify_sod()
         return -1;
     }
 
+    int partidx = 0;
+
     char val_hashname[PROPERTY_VALUE_MAX];
     memset(val_hashname, 0, sizeof(val_hashname));
     char val_product[PROPERTY_VALUE_MAX];
@@ -63,6 +63,22 @@ static int verify_sod()
             }
             if (strcmp(key, "ro.build.product") == 0) {
                 strncpy(val_product, val, sizeof(val_product));
+            }
+            if (strncmp(key, "fs.", 3) == 0) {
+                char* name = key+3;
+                char* attr = strchr(name, '.');
+                if (attr) {
+                    *attr = '\0';
+                    ++attr;
+                    part_add(name);
+                    struct partspec* part = part_find(name);
+                    if (!strcmp(attr, "size")) {
+                        part->size = strtoul(val, NULL, 0);
+                    }
+                    if (!strcmp(attr, "used")) {
+                        part->used = strtoul(val, NULL, 0);
+                    }
+                }
             }
         }
     }
@@ -238,6 +254,8 @@ static int do_restore_tree(int sockfd)
                     logmsg("do_restore_tree: cannot mount %s\n", cur_mount);
                     break;
                 }
+                partspec* curpart = part_find(&cur_mount[1]);
+                part_set(curpart);
             }
         }
         if (!strcmp(pathname, "SOD")) {
@@ -259,6 +277,8 @@ static int do_restore_tree(int sockfd)
             sprintf(mnt, "/%s", pathname);
             fstab_rec* vol = volume_for_path(mnt);
             if (vol != NULL && vol->fs_type != NULL) {
+                partspec* curpart = part_find(pathname);
+                part_set(curpart);
                 rc = tar_extract_file(tar, vol->blk_device);
             }
             else {
@@ -266,6 +286,7 @@ static int do_restore_tree(int sockfd)
             }
         }
         else {
+            uint64_t len = th_get_size(tar);
             rc = tar_extract_file(tar, pathname);
         }
         free(pathname);
@@ -294,14 +315,8 @@ int do_restore(int argc, char **argv)
     int len;
     int written;
 
-    MessageSocket ms;
-    ms.ClientInit();
-    ms.Show("Restore in progress...");
-
     rc = do_restore_tree(sockfd);
     logmsg("do_restore: rc=%d\n", rc);
-
-    ms.Dismiss();
 
     free(hash_name);
     hash_name = NULL;

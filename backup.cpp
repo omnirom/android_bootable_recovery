@@ -15,18 +15,7 @@
 
 #include "bu.h"
 
-#include "messagesocket.h"
-
 using namespace android;
-
-#define MAX_PART 8
-
-struct partspec {
-    const char* name;
-    char*       path;
-    fstab_rec*  vol;
-};
-struct partspec partlist[MAX_PART];
 
 static int append_sod(const char* opt_hash)
 {
@@ -52,33 +41,36 @@ static int append_sod(const char* opt_hash)
     len = sprintf(buf, "%s=%s\n", key, value);
     write(fd, buf, len);
 
-    for (int i = 0; partlist[i].name; ++i) {
-        const char* fstype = partlist[i].vol->fs_type;
+    for (int i = 0; i < MAX_PART; ++i) {
+        partspec* part = part_get(i);
+        if (!part)
+            break;
+        const char* fstype = part->vol->fs_type;
         uint64_t size, used;
         if (!strcmp(fstype, "mtd") || !strcmp(fstype, "bml") || !strcmp(fstype, "emmc")) {
-            int fd = open(partlist[i].vol->blk_device, O_RDONLY);
-            size = used = lseek(fd, 0, SEEK_END);
+            int fd = open(part->vol->blk_device, O_RDONLY);
+            part->size = part->used = lseek(fd, 0, SEEK_END);
             close(fd);
         }
         else {
             struct statfs stfs;
             memset(&stfs, 0, sizeof(stfs));
-            if (ensure_path_mounted(partlist[i].path) != 0) {
-                logmsg("append_sod: failed to mount %s\n", partlist[i].path);
+            if (ensure_path_mounted(part->path) != 0) {
+                logmsg("append_sod: failed to mount %s\n", part->path);
                 continue;
             }
-            if (statfs(partlist[i].path, &stfs) == 0) {
-                size = (stfs.f_blocks) * stfs.f_bsize;
-                used = (stfs.f_blocks - stfs.f_bfree) * stfs.f_bsize;
+            if (statfs(part->path, &stfs) == 0) {
+                part->size = (stfs.f_blocks) * stfs.f_bsize;
+                part->used = (stfs.f_blocks - stfs.f_bfree) * stfs.f_bsize;
             }
             else {
-                logmsg("Failed to statfs %s: %s\n", partlist[i].path, strerror(errno));
+                logmsg("Failed to statfs %s: %s\n", part->path, strerror(errno));
             }
-            ensure_path_unmounted(partlist[i].path);
+            ensure_path_unmounted(part->path);
         }
-        len = sprintf(buf, "fs.%s.size=%llu\n", partlist[i].name, size);
+        len = sprintf(buf, "fs.%s.size=%llu\n", part->name, part->size);
         write(fd, buf, len);
-        len = sprintf(buf, "fs.%s.used=%llu\n", partlist[i].name, used);
+        len = sprintf(buf, "fs.%s.used=%llu\n", part->name, part->used);
         write(fd, buf, len);
     }
 
@@ -260,39 +252,15 @@ int do_backup(int argc, char **argv)
             return -1;
         }
     }
-    if (argc - optidx >= MAX_PART) {
-        logmsg("Too many partitions (%d > %d)\n", (argc-optidx), MAX_PART);
-        return -1;
-    }
     for (n = optidx; n < argc; ++n) {
         const char* partname = argv[n];
         if (*partname == '-')
             ++partname;
-        for (i = 0; i < MAX_PART; ++i) {
-            if (partlist[i].name == NULL) {
-                partlist[i].name = partname;
-                partlist[i].path = (char *)malloc(1+strlen(partname)+1);
-                sprintf(partlist[i].path, "/%s", partname);
-                partlist[i].vol = volume_for_path(partlist[i].path);
-                if (partlist[i].vol == NULL || partlist[i].vol->fs_type == NULL) {
-                    logmsg("do_backup: missing vol info for %s, ignoring\n", partname);
-                    partlist[i].vol = NULL;
-                    free(partlist[i].path);
-                    partlist[i].path = NULL;
-                    partlist[i].name = NULL;
-                }
-                break;
-            }
-            if (strcmp(partname, partlist[i].name) == 0) {
-                logmsg("Ignoring duplicate partition %s\n", partname);
-                break;
-            }
+        if (part_add(partname) != 0) {
+            logmsg("Failed to add partition %s\n", partname);
+            return -1;
         }
     }
-
-    MessageSocket ms;
-    ms.ClientInit();
-    ms.Show("Backup in progress...");
 
     rc = create_tar(opt_compress, "w");
     if (rc != 0) {
@@ -304,21 +272,25 @@ int do_backup(int argc, char **argv)
 
     hash_name = strdup(opt_hash);
 
-    for (i = 0; partlist[i].name; ++i) {
-        const char* fstype = partlist[i].vol->fs_type;
+    for (i = 0; i < MAX_PART; ++i) {
+        partspec* curpart = part_get(i);
+        if (!curpart)
+            break;
+
+        part_set(curpart);
+        const char* fstype = curpart->vol->fs_type;
         if (!strcmp(fstype, "mtd") || !strcmp(fstype, "bml") || !strcmp(fstype, "emmc")) {
-            rc = tar_append_device_contents(tar, partlist[i].vol->blk_device, partlist[i].name);
+            rc = tar_append_device_contents(tar, curpart->vol->blk_device, curpart->name);
         }
         else {
-            if (ensure_path_mounted(partlist[i].path) != 0) {
-                logmsg("do_backup: cannot mount %s\n", partlist[i].path);
+            if (ensure_path_mounted(curpart->path) != 0) {
+                logmsg("do_backup: cannot mount %s\n", curpart->path);
                 continue;
             }
-            String8 path(partlist[i].path);
+            String8 path(curpart->path);
             rc = do_backup_tree(path);
-            ensure_path_unmounted(partlist[i].path);
+            ensure_path_unmounted(curpart->path);
         }
-
     }
 
     free(hash_name);
@@ -330,8 +302,6 @@ int do_backup(int argc, char **argv)
 
     if (opt_compress)
         gzflush(gzf, Z_FINISH);
-
-    ms.Dismiss();
 
     logmsg("backup complete: rc=%d\n", rc);
 
