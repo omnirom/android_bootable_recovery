@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/epoll.h>
 
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
@@ -40,12 +41,87 @@
 
 #include "voldclient/voldclient.h"
 
+#include "messagesocket.h"
+
 #define UI_WAIT_KEY_TIMEOUT_SEC    120
 
 // There's only (at most) one of these objects, and global callbacks
 // (for pthread_create, and the input event system) need to find it,
 // so use a global variable.
 static RecoveryUI* self = NULL;
+
+static int string_split(char* s, char** fields, int maxfields)
+{
+    int n = 0;
+    while (n+1 < maxfields) {
+        char* p = strchr(s, ' ');
+        if (!p)
+            break;
+        *p = '\0';
+        printf("string_split: field[%d]=%s\n", n, s);
+        fields[n++] = s;
+        s = p+1;
+    }
+    fields[n] = s;
+    printf("string_split: last field[%d]=%s\n", n, s);
+    return n+1;
+}
+
+static int message_socket_client_event(int fd, uint32_t epevents, void *data)
+{
+    MessageSocket* client = (MessageSocket*)data;
+
+    printf("message_socket client event\n");
+    if (!(epevents & EPOLLIN)) {
+        return 0;
+    }
+
+    char buf[256];
+    ssize_t nread;
+    nread = client->Read(buf, sizeof(buf));
+    if (nread <= 0) {
+        ev_del_fd(fd);
+        self->DialogDismiss();
+        client->Close();
+        delete client;
+        return 0;
+    }
+
+    printf("message_socket client message <%s>\n", buf);
+
+    // Parse the message.  Right now we support:
+    //   dialog show <string>
+    //   dialog dismiss
+    char* fields[3];
+    int nfields;
+    nfields = string_split(buf, fields, 3);
+    printf("fields=%d\n", nfields);
+    if (nfields < 2)
+        return 0;
+    printf("field[0]=%s, field[1]=%s\n", fields[0], fields[1]);
+    if (strcmp(fields[0], "dialog") == 0) {
+        if (strcmp(fields[1], "show") == 0 && nfields > 2) {
+            self->DialogShowInfo(fields[2]);
+        }
+        if (strcmp(fields[1], "dismiss") == 0) {
+            self->DialogDismiss();
+        }
+    }
+
+    return 0;
+}
+
+static int message_socket_listen_event(int fd, uint32_t epevents, void *data)
+{
+    MessageSocket* ms = (MessageSocket*)data;
+    MessageSocket* client = ms->Accept();
+    printf("message_socket_listen_event: event on %d\n", fd);
+    if (client) {
+        printf("message_socket client connected\n");
+        ev_add_fd(client->fd(), message_socket_client_event, client);
+    }
+    return 0;
+}
 
 RecoveryUI::RecoveryUI() :
     key_queue_len(0),
@@ -77,6 +153,8 @@ RecoveryUI::RecoveryUI() :
 void RecoveryUI::Init() {
     set_min_swipe_lengths();
     ev_init(input_callback, NULL);
+    message_socket.ServerInit();
+    ev_add_fd(message_socket.fd(), message_socket_listen_event, &message_socket);
     pthread_create(&input_t, NULL, input_thread, NULL);
 }
 
@@ -295,6 +373,12 @@ void RecoveryUI::process_swipe(int fd, struct input_event *ev) {
 }
 
 void RecoveryUI::EnqueueKey(int key_code) {
+    if (DialogShowing()) {
+        if (DialogDismissable()) {
+            DialogDismiss();
+        }
+        return;
+    }
     pthread_mutex_lock(&key_queue_mutex);
     const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
     if (key_queue_len < queue_max) {

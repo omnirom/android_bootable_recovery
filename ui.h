@@ -21,6 +21,8 @@
 #include <pthread.h>
 #include <time.h>
 
+#include "messagesocket.h"
+
 // Abstract class for controlling the user interface during recovery.
 class RecoveryUI {
   public:
@@ -37,7 +39,7 @@ class RecoveryUI {
     virtual void SetLocale(const char* locale) { }
 
     // Set the overall recovery state ("background image").
-    enum Icon { NONE, INSTALLING_UPDATE, ERASING, NO_COMMAND, ERROR };
+    enum Icon { NONE, INSTALLING_UPDATE, ERASING, NO_COMMAND, INFO, ERROR, NR_ICONS };
     virtual void SetBackground(Icon icon) = 0;
 
     // --- progress indicator ---
@@ -64,6 +66,11 @@ class RecoveryUI {
     // Write a message to the on-screen log (shown if the user has
     // toggled on the text display).
     virtual void Print(const char* fmt, ...) = 0; // __attribute__((format(printf, 1, 2))) = 0;
+    virtual void DialogShowInfo(const char* text) = 0;
+    virtual void DialogShowError(const char* text) = 0;
+    virtual int  DialogShowing() const = 0;
+    virtual bool DialogDismissable() const = 0;
+    virtual void DialogDismiss() = 0;
 
     // --- key handling ---
 
@@ -155,6 +162,8 @@ private:
     int max_x_touch;
     int max_y_touch;
     int mt_count;
+
+    MessageSocket message_socket;
 
     typedef struct {
         RecoveryUI* ui;

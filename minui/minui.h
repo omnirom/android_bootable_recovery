@@ -72,6 +72,7 @@ typedef int (*ev_set_key_callback)(int code, int value, void *data);
 int ev_init(ev_callback input_cb, void *data);
 void ev_exit(void);
 int ev_add_fd(int fd, ev_callback cb, void *data);
+int ev_del_fd(int fd);
 int ev_sync_key_state(ev_set_key_callback set_key_cb, void *data);
 
 /* timeout has the same semantics as for poll

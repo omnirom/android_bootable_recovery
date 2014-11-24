@@ -138,6 +138,22 @@ int ev_get_epollfd(void)
     return epollfd;
 }
 
+int ev_del_fd(int fd)
+{
+    unsigned n;
+    for (n = 0; n < ev_count; ++n) {
+        if (ev_fdinfo[n].fd == fd) {
+            if (n != ev_count-1) {
+                ev_fdinfo[n] = ev_fdinfo[ev_count-1];
+            }
+            ev_count--;
+            ev_misc_count--;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void ev_exit(void)
 {
     while (ev_count > 0) {

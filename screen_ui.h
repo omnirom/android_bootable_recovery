@@ -48,6 +48,11 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     // printing messages
     void Print(const char* fmt, ...); // __attribute__((format(printf, 1, 2)));
+    void DialogShowInfo(const char* text);
+    void DialogShowError(const char* text);
+    int  DialogShowing() const { return (dialog_text != NULL); }
+    bool DialogDismissable() const { return (dialog_icon == ERROR); }
+    void DialogDismiss();
 
     // menu display
     void StartMenu(const char* const * headers, const char* const * items,
@@ -57,7 +62,7 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     void Redraw();
 
-    enum UIElement { HEADER, MENU, TOP, MENU_SEL_BG, MENU_SEL_FG, LOG, TEXT_FILL };
+    enum UIElement { HEADER, MENU, TOP, MENU_SEL_BG, MENU_SEL_FG, LOG, TEXT_FILL, ERROR_TEXT };
     virtual void SetColor(UIElement e);
 
   private:
@@ -67,8 +72,8 @@ class ScreenRecoveryUI : public RecoveryUI {
     bool rtl_locale;
 
     pthread_mutex_t updateMutex;
-    gr_surface backgroundIcon[5];
-    gr_surface backgroundText[5];
+    gr_surface backgroundIcon[NR_ICONS];
+    gr_surface backgroundText[NR_ICONS];
     gr_surface *installation;
     gr_surface progressBarEmpty;
     gr_surface progressBarFill;
@@ -97,6 +102,9 @@ class ScreenRecoveryUI : public RecoveryUI {
     bool show_text;
     bool show_text_ever;   // has show_text ever been true?
 
+    Icon dialog_icon;
+    char *dialog_text;
+
     char menu[kMaxMenuRows][kMaxMenuCols];
     bool show_menu;
     int menu_top, menu_items, menu_sel;
@@ -116,6 +124,7 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     void draw_background_locked(Icon icon);
     void draw_progress_locked();
+    void draw_dialog();
     void draw_screen_locked();
     void update_screen_locked();
     void update_progress_locked();

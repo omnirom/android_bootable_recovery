@@ -37,6 +37,7 @@ LOCAL_SRC_FILES := \
     roots.cpp \
     ui.cpp \
     screen_ui.cpp \
+    messagesocket.cpp \
     asn1_decoder.cpp \
     verifier.cpp \
     adb_install.cpp \
@@ -169,6 +170,7 @@ LOCAL_SRC_FILES := \
     bu.cpp \
     backup.cpp \
     restore.cpp \
+    messagesocket.cpp \
     roots.cpp
 LOCAL_CFLAGS += -DMINIVOLD
 LOCAL_CFLAGS += -Wno-unused-parameter
@@ -254,7 +256,8 @@ LOCAL_SRC_FILES := \
     verifier_test.cpp \
     asn1_decoder.cpp \
     verifier.cpp \
-    ui.cpp
+    ui.cpp \
+    messagesocket.cpp
 LOCAL_STATIC_LIBRARIES := \
     libvoldclient \
     libmincrypt \
