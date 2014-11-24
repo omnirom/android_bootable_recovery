@@ -30,9 +30,3 @@ else
 endif
 
 include $(BUILD_STATIC_LIBRARY)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libminui
-LOCAL_WHOLE_STATIC_LIBRARIES += libminui
-LOCAL_SHARED_LIBRARIES := libpng
-include $(BUILD_SHARED_LIBRARY)

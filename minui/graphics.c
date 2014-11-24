@@ -30,7 +30,12 @@
 
 #include <time.h>
 
-#include "font_10x18.h"
+#ifdef RECOVERY_FONT
+#include RECOVERY_FONT
+#else
+#include "roboto_10x18.h"
+#endif
+
 #include "minui.h"
 #include "graphics.h"
 

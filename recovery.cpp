@@ -460,7 +460,7 @@ prepend_title(const char* const* headers) {
 
     const char** new_headers = (const char**)malloc((count+1) * sizeof(char*));
     const char** h = new_headers;
-    *(h++) = "Android system recovery <" EXPAND(RECOVERY_API_VERSION) "e>";
+    *(h++) = "CyanogenMod Simple recovery <" EXPAND(RECOVERY_API_VERSION) "e>";
     *(h++) = recovery_version;
     *(h++) = "";
     for (p = headers; *p; ++p, ++h) *h = *p;

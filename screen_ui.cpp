@@ -84,12 +84,20 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     self = this;
 }
 
+#define C_BG        0,0,0
+#define C_MENU      0,153,204
+#define C_HEADER    111,111,111
+#define C_TOP       208,208,208
+#define C_LOG       76,76,76
+#define C_SELECTED  C_MENU
+#define C_HIGHLIGHT 60,60,61
+
 // Clear the screen and draw the currently selected background icon (if any).
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_background_locked(Icon icon)
 {
     pagesIdentical = false;
-    gr_color(0, 0, 0, 255);
+    gr_color(C_BG, 255);
     gr_clear();
 
     if (icon) {
@@ -150,7 +158,7 @@ void ScreenRecoveryUI::draw_progress_locked()
         int dy = (3*gr_fb_height() + iconHeight - 2*height)/4;
 
         // Erase behind the progress bar (in case this was a progress-only update)
-        gr_color(0, 0, 0, 255);
+        gr_color(C_BG, 255);
         gr_fill(dx, dy, width, height);
 
         if (progressBarType == DETERMINATE) {
@@ -222,6 +230,7 @@ void ScreenRecoveryUI::draw_screen_locked()
                 if (i == menu_top) SetColor(MENU);
 
                 if (i == menu_top + menu_sel) {
+                    gr_color(C_HIGHLIGHT, 255);
                     // draw the highlight bar
                     SetColor(MENU_SEL_BG);
                     gr_fill(0, y-2, gr_fb_width(), y+char_height+2);
