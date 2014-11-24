@@ -31,7 +31,11 @@
 
 #include "minui.h"
 
+#ifdef SHARED_MINUI
+char *locale = NULL;
+#else
 extern char* locale;
+#endif
 
 #define SURFACE_DATA_ALIGNMENT 8
 
