@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2b432935_4e5dd348",
+        "filename": "mtp/MtpStorage.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-25T19:42:01Z",
+      "side": 1,
+      "message": "we should init inotify_fd here too, probably to -1.",
+      "revId": "9c57609aebc9fb9f08ea73e94c32df359e94c02a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b432935_2e6087fd",
+        "filename": "mtp/MtpStorage.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 670,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-25T19:42:01Z",
+      "side": 1,
+      "message": "also move this check to line 133 - no need to start the thread if it won\u0027t work anyway",
+      "revId": "9c57609aebc9fb9f08ea73e94c32df359e94c02a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b432935_6e5a8f53",
+        "filename": "mtp/MtpStorage.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 697,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-25T19:42:01Z",
+      "side": 1,
+      "message": "This looks like unreachable code",
+      "revId": "9c57609aebc9fb9f08ea73e94c32df359e94c02a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
