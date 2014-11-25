@@ -195,10 +195,10 @@ void ScreenRecoveryUI::SetColor(UIElement e) {
             break;
         case MENU:
         case MENU_SEL_FG:
-            gr_color(0, 153, 204, 255);
+            gr_color(0, 177, 229, 255);
             break;
         case MENU_SEL_BG:
-            gr_color(60, 60, 61, 255);
+            gr_color(106, 103, 102, 255);
             break;
         case LOG:
             gr_color(76, 76, 76, 255);
@@ -362,6 +362,7 @@ void ScreenRecoveryUI::draw_screen_locked()
 void ScreenRecoveryUI::update_screen_locked()
 {
     draw_screen_locked();
+    LOGV("%s: flip %p\n", __func__, __builtin_return_address(0));
     gr_flip();
 }
 
@@ -370,6 +371,7 @@ void ScreenRecoveryUI::update_screen_locked()
 void ScreenRecoveryUI::update_progress_locked()
 {
     draw_progress_locked();
+    LOGV("%s: flip %p\n", __func__, __builtin_return_address(0));
     gr_flip();
 }
 
@@ -712,7 +714,6 @@ void ScreenRecoveryUI::EndMenu() {
     pthread_mutex_lock(&updateMutex);
     if (show_menu > 0 && text_rows > 0 && text_cols > 0) {
         show_menu = 0;
-        update_screen_locked();
     }
     pthread_mutex_unlock(&updateMutex);
 }
