@@ -77,7 +77,7 @@ target_arch := unknown_arch
 endif
 
 target_c_flags    := $(common_c_flags) $($(target_arch)_c_flags) $(local_c_flags)
-target_c_includes := $(addprefix $(commands_recovery_local_path)/crypto/scrypt/,$(common_c_includes)) $(local_c_includes)
+target_c_includes := $(addprefix external/scrypt/,$(common_c_includes)) $(local_c_includes)
 target_src_files  := $(common_src_files) $($(target_arch)_src_files)
 target_src_files  := $(filter-out $($(target_arch)_exclude_files), $(target_src_files))
 
@@ -97,7 +97,7 @@ host_arch := unknown_arch
 endif
 
 host_c_flags    := $(common_c_flags) $($(host_arch)_c_flags) $(local_c_flags)
-host_c_includes := $(addprefix $(commands_recovery_local_path)/crypto/scrypt/,$(common_c_includes)) $(local_c_includes)
+host_c_includes := $(addprefix external/scrypt/,$(common_c_includes)) $(local_c_includes)
 host_src_files  := $(common_src_files) $($(host_arch)_src_files)
 host_src_files  := $(filter-out $($(host_arch)_exclude_files), $(host_src_files))
 
