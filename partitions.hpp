@@ -73,6 +73,7 @@ public:
 	string Actual_Block_Device;                                               // Actual block device (one of primary, alternate, or decrypted)
 	string MTD_Name;                                                          // Name of the partition for MTD devices
 	bool Is_Present;                                                          // Indicates if the partition is currently present as a block device
+	string Crypto_Key_Location;                                               // Location of the crypto key used for decrypting encrypted data partitions
 
 protected:
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods

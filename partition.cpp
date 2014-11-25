@@ -159,6 +159,7 @@ TWPartition::TWPartition() {
 	Format_Block_Size = 0;
 	Ignore_Blkid = false;
 	Retain_Layout_Version = false;
+	Crypto_Key_Location = "footer";
 #ifdef TW_INCLUDE_CRYPTO_SAMSUNG
 	EcryptFS_Password = "";
 #endif
@@ -304,6 +305,9 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 					property_set("ro.crypto.sd_fs_mnt_point", EXPAND(TW_INTERNAL_STORAGE_PATH));
 #endif
 					property_set("rw.km_fips_status", "ready");
+#endif
+#ifdef TW_INCLUDE_L_CRYPTO
+					set_partition_data(Actual_Block_Device.c_str(), Crypto_Key_Location.c_str(), Fstab_File_System.c_str());
 #endif
 					if (cryptfs_check_footer() == 0) {
 						Is_Encrypted = true;
@@ -572,6 +576,15 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 				Mount_Options.resize(Mount_Options.size() - 1);
 			}
 			Process_FS_Flags(Mount_Options, Mount_Flags);
+		} else if ((ptr_len > 12 && strncmp(ptr, "encryptable=", 12) == 0) || (ptr_len > 13 && strncmp(ptr, "encryptable=", 13) == 0)) {
+			ptr += 12;
+			if (*ptr == '=') ptr++;
+			if (*ptr == '\"') ptr++;
+
+			Crypto_Key_Location = ptr;
+			if (Crypto_Key_Location.substr(Crypto_Key_Location.size() - 1, 1) == "\"") {
+				Crypto_Key_Location.resize(Crypto_Key_Location.size() - 1);
+			}
 		} else {
 			if (Display_Error)
 				LOGERR("Unhandled flag: '%s'\n", ptr);
