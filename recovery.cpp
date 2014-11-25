@@ -884,54 +884,49 @@ show_apply_update_menu(Device* device) {
     int wipe_cache;
     int status = INSTALL_ERROR;
 
-    for (;;) {
-        int chosen = get_menu_selection(headers, menu_items, 0, 0, device);
-        if (chosen == Device::kGoBack) {
-            break;
-        }
-        if (chosen == item_sideload) {
-            status = enter_sideload_mode(&wipe_cache, device);
+    int chosen = get_menu_selection(headers, menu_items, 0, 0, device);
+    if (chosen == Device::kGoBack) {
+        goto out;
+    }
+    if (chosen == item_sideload) {
+        status = enter_sideload_mode(&wipe_cache, device);
+    }
+    else {
+        storage_item* item = &items[chosen-1];
+        status = ensure_volume_mounted(item->vol);
+        if (status == 0) {
+            char* path = browse_directory(item->path, device);
+            if (path != NULL) {
+                ui->Print("\n-- Install %s ...\n", path);
+                set_sdcard_update_bootloader_message();
+                void* token = start_sdcard_fuse(path);
+                status = install_package(FUSE_SIDELOAD_HOST_PATHNAME, &wipe_cache,
+                                         TEMPORARY_INSTALL_FILE, false);
+                finish_sdcard_fuse(token);
+            }
+            else {
+                 ui->Print("\n-- No package file selected.\n", path);
+            }
         }
         else {
-            storage_item* item = &items[chosen-1];
-            status = ensure_volume_mounted(item->vol);
-            if (status == 0) {
-                char* path = browse_directory(item->path, device);
-                if (path != NULL) {
-                    ui->Print("\n-- Install %s ...\n", path);
-                    set_sdcard_update_bootloader_message();
-                    void* token = start_sdcard_fuse(path);
-                    status = install_package(FUSE_SIDELOAD_HOST_PATHNAME, &wipe_cache,
-                                             TEMPORARY_INSTALL_FILE, false);
-                    finish_sdcard_fuse(token);
-                }
-                else {
-                     ui->Print("\n-- No package file selected.\n", path);
-                }
-            }
-            else {
-                status = INSTALL_ERROR;
-            }
-            ensure_volume_unmounted(item->vol);
+            status = INSTALL_ERROR;
         }
-        if (status == INSTALL_SUCCESS && wipe_cache) {
-            ui->Print("\n-- Wiping cache (at package request)...\n");
-            if (erase_volume("/cache")) {
-                ui->Print("Cache wipe failed.\n");
-            } else {
-                ui->Print("Cache wipe complete.\n");
-            }
+        ensure_volume_unmounted(item->vol);
+    }
+    if (status == INSTALL_SUCCESS && wipe_cache) {
+        ui->Print("\n-- Wiping cache (at package request)...\n");
+        if (erase_volume("/cache")) {
+            ui->Print("Cache wipe failed.\n");
+        } else {
+            ui->Print("Cache wipe complete.\n");
         }
-        if (status >= 0 && status != INSTALL_NONE) {
-            if (status != INSTALL_SUCCESS) {
-                ui->SetBackground(RecoveryUI::ERROR);
-                ui->Print("Installation aborted.\n");
-            } else if (!ui->IsTextVisible()) {
-                break;
-            }
-            else {
-                ui->Print("\nInstallation complete.\n");
-            }
+    }
+    if (status >= 0 && status != INSTALL_NONE) {
+        if (status != INSTALL_SUCCESS) {
+            ui->SetBackground(RecoveryUI::ERROR);
+            ui->Print("Installation aborted.\n");
+        } else if (ui->IsTextVisible()) {
+            ui->Print("\nInstallation complete.\n");
         }
     }
 
