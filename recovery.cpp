@@ -41,11 +41,15 @@
 #include "ui.h"
 #include "screen_ui.h"
 #include "device.h"
+
+#include "voldclient/voldclient.h"
+
 #include "adb_install.h"
 extern "C" {
 #include "minadbd/adb.h"
 #include "fuse_sideload.h"
 #include "fuse_sdcard_provider.h"
+#include "recovery_cmds.h"
 }
 
 struct selabel_handle *sehandle;
@@ -471,7 +475,7 @@ prepend_title(const char* const* headers) {
     return new_headers;
 }
 
-static int
+int
 get_menu_selection(const char* const * headers, const char* const * items,
                    int menu_only, int initial_selection, Device* device) {
     // throw away keys pressed previously, so user doesn't
@@ -482,7 +486,7 @@ get_menu_selection(const char* const * headers, const char* const * items,
     int selected = initial_selection;
     int chosen_item = -1;
 
-    while (chosen_item < 0 && chosen_item != Device::kGoBack) {
+    while (chosen_item < 0 && chosen_item != Device::kGoBack && chosen_item != Device::kRefresh) {
         int key = ui->WaitKey();
         int visible = ui->IsTextVisible();
 
@@ -496,6 +500,9 @@ get_menu_selection(const char* const * headers, const char* const * items,
             }
         } else if (key == -2) { // we are returning from ui_cancel_wait_key(): trigger a GO_BACK
             return Device::kGoBack;
+        }
+        else if (key == -6) {
+            return Device::kRefresh;
         }
 
         int action = device->HandleMenuKey(key, visible);
@@ -517,6 +524,9 @@ get_menu_selection(const char* const * headers, const char* const * items,
                     break;
                 case Device::kGoBack:
                     chosen_item = Device::kGoBack;
+                    break;
+                case Device::kRefresh:
+                    chosen_item = Device::kRefresh;
                     break;
             }
         } else if (!menu_only) {
@@ -789,78 +799,86 @@ prompt_and_wait(Device* device, int status) {
         Device::BuiltinAction chosen_action = device->InvokeMenuItem(chosen_item);
 
         int wipe_cache = 0;
-        switch (chosen_action) {
-            case Device::NO_ACTION:
-                break;
 
-            case Device::REBOOT:
-            case Device::SHUTDOWN:
-            case Device::REBOOT_BOOTLOADER:
-                return chosen_action;
+        for (;;) {
+            switch (chosen_action) {
+                case Device::NO_ACTION:
+                    break;
 
-            case Device::WIPE_DATA:
-                wipe_data(ui->IsTextVisible(), device);
-                if (!ui->IsTextVisible()) return Device::NO_ACTION;
-                break;
+                case Device::REBOOT:
+                case Device::SHUTDOWN:
+                case Device::REBOOT_BOOTLOADER:
+                    return chosen_action;
 
-            case Device::WIPE_CACHE:
-                ui->Print("\n-- Wiping cache...\n");
-                erase_volume("/cache");
-                ui->Print("Cache wipe complete.\n");
-                if (!ui->IsTextVisible()) return Device::NO_ACTION;
-                break;
+                case Device::WIPE_DATA:
+                    wipe_data(ui->IsTextVisible(), device);
+                    if (!ui->IsTextVisible()) return Device::NO_ACTION;
+                    break;
 
-            case Device::APPLY_EXT: {
-                ensure_path_mounted(SDCARD_ROOT);
-                char* path = browse_directory(SDCARD_ROOT, device);
-                if (path == NULL) {
-                    ui->Print("\n-- No package file selected.\n", path);
+                case Device::WIPE_CACHE:
+                    ui->Print("\n-- Wiping cache...\n");
+                    erase_volume("/cache");
+                    ui->Print("Cache wipe complete.\n");
+                    if (!ui->IsTextVisible()) return Device::NO_ACTION;
+                    break;
+
+                case Device::APPLY_EXT: {
+                    ensure_path_mounted(SDCARD_ROOT);
+                    char* path = browse_directory(SDCARD_ROOT, device);
+                    if (path == NULL) {
+                        ui->Print("\n-- No package file selected.\n", path);
+                        break;
+                    }
+
+                    ui->Print("\n-- Install %s ...\n", path);
+                    set_sdcard_update_bootloader_message();
+                    void* token = start_sdcard_fuse(path);
+
+                    int status = install_package(FUSE_SIDELOAD_HOST_PATHNAME, &wipe_cache,
+                                                 TEMPORARY_INSTALL_FILE, false);
+
+                    finish_sdcard_fuse(token);
+                    ensure_path_unmounted(SDCARD_ROOT);
+
+                    if (status == INSTALL_SUCCESS && wipe_cache) {
+                        ui->Print("\n-- Wiping cache (at package request)...\n");
+                        if (erase_volume("/cache")) {
+                            ui->Print("Cache wipe failed.\n");
+                        } else {
+                            ui->Print("Cache wipe complete.\n");
+                        }
+                    }
+
+                    if (status >= 0) {
+                        if (status != INSTALL_SUCCESS) {
+                            ui->SetBackground(RecoveryUI::ERROR);
+                            ui->Print("Installation aborted.\n");
+                        } else if (!ui->IsTextVisible()) {
+                            return Device::NO_ACTION;  // reboot if logs aren't visible
+                        } else {
+                            ui->Print("\nInstall from sdcard complete.\n");
+                        }
+                    }
                     break;
                 }
 
-                ui->Print("\n-- Install %s ...\n", path);
-                set_sdcard_update_bootloader_message();
-                void* token = start_sdcard_fuse(path);
+                case Device::APPLY_CACHE:
+                    ui->Print("\nAPPLY_CACHE is deprecated.\n");
+                    break;
 
-                int status = install_package(FUSE_SIDELOAD_HOST_PATHNAME, &wipe_cache,
-                                             TEMPORARY_INSTALL_FILE, false);
+                case Device::READ_RECOVERY_LASTLOG:
+                    choose_recovery_file(device);
+                    break;
 
-                finish_sdcard_fuse(token);
-                ensure_path_unmounted(SDCARD_ROOT);
-
-                if (status == INSTALL_SUCCESS && wipe_cache) {
-                    ui->Print("\n-- Wiping cache (at package request)...\n");
-                    if (erase_volume("/cache")) {
-                        ui->Print("Cache wipe failed.\n");
-                    } else {
-                        ui->Print("Cache wipe complete.\n");
-                    }
-                }
-
-                if (status >= 0) {
-                    if (status != INSTALL_SUCCESS) {
-                        ui->SetBackground(RecoveryUI::ERROR);
-                        ui->Print("Installation aborted.\n");
-                    } else if (!ui->IsTextVisible()) {
-                        return Device::NO_ACTION;  // reboot if logs aren't visible
-                    } else {
-                        ui->Print("\nInstall from sdcard complete.\n");
-                    }
-                }
-                break;
+                case Device::APPLY_ADB_SIDELOAD:
+                    status = enter_sideload_mode(status, &wipe_cache);
+                    break;
             }
-
-            case Device::APPLY_CACHE:
-                ui->Print("\nAPPLY_CACHE is deprecated.\n");
-                break;
-
-            case Device::READ_RECOVERY_LASTLOG:
-                choose_recovery_file(device);
-                break;
-
-            case Device::APPLY_ADB_SIDELOAD:
-                status = enter_sideload_mode(status, &wipe_cache);
-                break;
+            if (status == Device::kRefresh) {
+                status = 0;
+                continue;
+            }
+            break;
         }
     }
 }
@@ -962,7 +980,22 @@ static int write_file(const char *path, const char *value)
     }
 }
 
-extern "C" int busybox_driver(int argc, char **argv);
+static int handle_volume_hotswap(char* label, char* path) {
+    ui->NotifyVolumesChanged();
+    return 0;
+}
+
+static int handle_volume_state_changed(char* label, char* path, int state) {
+    LOGV("%s: %s\n", path, volume_state_to_string(state));
+
+    return 0;
+}
+
+static struct vold_callbacks v_callbacks = {
+    .state_changed = handle_volume_state_changed,
+    .disk_added = handle_volume_hotswap,
+    .disk_removed = handle_volume_hotswap,
+};
 
 int
 main(int argc, char **argv) {
@@ -987,9 +1020,21 @@ main(int argc, char **argv) {
         command = stripped + 1;
 
     if (strcmp(command, "recovery") != 0) {
+        struct recovery_cmd cmd = get_command(command);
+        if (cmd.name)
+            return cmd.main_func(argc, argv);
+
         if (!strcmp(command, "setup_adbd")) {
             load_volume_table();
             setup_adbd();
+            return 0;
+        }
+        if (strstr(argv[0], "start")) {
+            property_set("ctl.start", argv[1]);
+            return 0;
+        }
+        if (strstr(argv[0], "stop")) {
+            property_set("ctl.stop", argv[1]);
             return 0;
         }
         return busybox_driver(argc, argv);
@@ -1000,6 +1045,8 @@ main(int argc, char **argv) {
     printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
 
     load_volume_table();
+    vold_client_start(&v_callbacks, 1);
+    vold_set_automount(1);
     ensure_path_mounted(LAST_LOG_FILE);
     rotate_last_logs(KEEP_LOG_COUNT);
     get_args(&argc, &argv);
@@ -1150,6 +1197,10 @@ main(int argc, char **argv) {
 
     // Save logs and clean up before rebooting or shutting down.
     finish_recovery(send_intent);
+
+    vold_unmount_all();
+
+    sync();
 
     switch (after) {
         case Device::SHUTDOWN:

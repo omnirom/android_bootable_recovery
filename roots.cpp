@@ -35,13 +35,15 @@ extern "C" {
 #include "cryptfs.h"
 }
 
+#include "voldclient/voldclient.h"
+
 static struct fstab *fstab = NULL;
 
 extern struct selabel_handle *sehandle;
 
 static const char* PERSISTENT_PATH = "/persistent";
 
-static void write_fstab_entry(Volume *v, FILE *file)
+static void write_fstab_entry(fstab_rec *v, FILE *file)
 {
     if (NULL != v && strcmp(v->fs_type, "mtd") != 0 && strcmp(v->fs_type, "emmc") != 0
                   && strcmp(v->fs_type, "bml") != 0 && !fs_mgr_is_voldmanaged(v)
@@ -52,6 +54,14 @@ static void write_fstab_entry(Volume *v, FILE *file)
         fprintf(file, "%s ", v->mount_point);
         fprintf(file, "%s defaults\n", v->fs_type);
     }
+}
+
+int get_num_volumes() {
+    return fstab->num_entries;
+}
+
+fstab_rec* get_device_volumes() {
+    return fstab->recs;
 }
 
 void load_volume_table()
@@ -83,7 +93,7 @@ void load_volume_table()
     printf("recovery filesystem table\n");
     printf("=========================\n");
     for (i = 0; i < fstab->num_entries; ++i) {
-        Volume* v = &fstab->recs[i];
+        fstab_rec* v = &fstab->recs[i];
         printf("  %d %s %s %s %lld\n", i, v->mount_point, v->fs_type,
                v->blk_device, v->length);
 
@@ -95,12 +105,64 @@ void load_volume_table()
     printf("\n");
 }
 
-Volume* volume_for_path(const char* path) {
+int is_primary_storage_voldmanaged() {
+    fstab_rec* v;
+    v = volume_for_path("/storage/sdcard0");
+    return fs_mgr_is_voldmanaged(v);
+}
+
+static char* primary_storage_path = NULL;
+char* get_primary_storage_path() {
+    if (primary_storage_path == NULL) {
+        if (volume_for_path("/storage/sdcard0"))
+            primary_storage_path = "/storage/sdcard0";
+        else
+            primary_storage_path = "/sdcard";
+    }
+    return primary_storage_path;
+}
+
+int get_num_extra_volumes() {
+    int num = 0;
+    int i;
+    for (i = 0; i < get_num_volumes(); i++) {
+        fstab_rec* v = get_device_volumes() + i;
+        if ((strcmp("/external_sd", v->mount_point) == 0) ||
+                ((strcmp(get_primary_storage_path(), v->mount_point) != 0) &&
+                fs_mgr_is_voldmanaged(v) && vold_is_volume_available(v->mount_point)))
+            num++;
+    }
+    return num;
+}
+
+char** get_extra_storage_paths() {
+    int i = 0, j = 0;
+    static char* paths[MAX_NUM_MANAGED_VOLUMES];
+    int num_extra_volumes = get_num_extra_volumes();
+
+    if (num_extra_volumes == 0)
+        return NULL;
+
+    for (i = 0; i < get_num_volumes(); i++) {
+        fstab_rec* v = get_device_volumes() + i;
+        if ((strcmp("/external_sd", v->mount_point) == 0) ||
+                ((strcmp(get_primary_storage_path(), v->mount_point) != 0) &&
+                fs_mgr_is_voldmanaged(v) && vold_is_volume_available(v->mount_point))) {
+            paths[j] = v->mount_point;
+            j++;
+        }
+    }
+    paths[j] = NULL;
+
+    return paths;
+}
+
+fstab_rec* volume_for_path(const char* path) {
     return fs_mgr_get_entry_for_mount_point(fstab, path);
 }
 
 int ensure_path_mounted(const char* path) {
-    Volume* v = volume_for_path(path);
+    fstab_rec* v = volume_for_path(path);
     if (v == NULL) {
         LOGE("unknown volume for path [%s]\n", path);
         return -1;
@@ -126,7 +188,10 @@ int ensure_path_mounted(const char* path) {
 
     mkdir(v->mount_point, 0755);  // in case it doesn't already exist
 
-    if (strcmp(v->fs_type, "yaffs2") == 0) {
+    if (fs_mgr_is_voldmanaged(v)) {
+        return vold_mount_volume(v->mount_point, 1);
+
+    } else if (strcmp(v->fs_type, "yaffs2") == 0) {
         // mount an MTD partition as a YAFFS2 filesystem.
         mtd_scan_partitions();
         const MtdPartition* partition;
@@ -152,7 +217,7 @@ int ensure_path_mounted(const char* path) {
 }
 
 int ensure_path_unmounted(const char* path) {
-    Volume* v = volume_for_path(path);
+    fstab_rec* v = volume_for_path(path);
     if (v == NULL) {
         LOGE("unknown volume for path [%s]\n", path);
         return -1;
@@ -176,6 +241,9 @@ int ensure_path_unmounted(const char* path) {
         return 0;
     }
 
+    if (fs_mgr_is_voldmanaged(volume_for_path(v->mount_point)))
+        return vold_unmount_volume(v->mount_point, 0, 1);
+
     return unmount_mounted_volume(mv);
 }
 
@@ -194,7 +262,7 @@ static int exec_cmd(const char* path, char* const argv[]) {
 }
 
 int format_volume(const char* volume) {
-    Volume* v = volume_for_path(volume);
+    fstab_rec* v = volume_for_path(volume);
     if (v == NULL) {
         LOGE("unknown volume \"%s\"\n", volume);
         return -1;
@@ -212,6 +280,15 @@ int format_volume(const char* volume) {
     if (ensure_path_unmounted(volume) != 0) {
         LOGE("format_volume failed to unmount \"%s\"\n", v->mount_point);
         return -1;
+    }
+
+    // Only use vold format for exact matches otherwise /sdcard will be
+    // formatted instead of /storage/sdcard0/.android_secure
+    if (fs_mgr_is_voldmanaged(v) && strcmp(volume, v->mount_point) == 0) {
+        if (ensure_path_unmounted(volume) != 0) {
+            LOGE("format_volume failed to unmount %s", v->mount_point);
+        }
+        return vold_format_volume(v->mount_point, 1);
     }
 
     if (strcmp(v->fs_type, "yaffs2") == 0 || strcmp(v->fs_type, "mtd") == 0) {
@@ -292,7 +369,7 @@ int format_volume(const char* volume) {
 }
 
 int erase_persistent_partition() {
-    Volume *v = volume_for_path(PERSISTENT_PATH);
+    fstab_rec *v = volume_for_path(PERSISTENT_PATH);
     if (v == NULL) {
         // most devices won't have /persistent, so this is not an error.
         return 0;
@@ -332,7 +409,7 @@ int setup_install_mounts() {
         return -1;
     }
     for (int i = 0; i < fstab->num_entries; ++i) {
-        Volume* v = fstab->recs + i;
+        fstab_rec* v = fstab->recs + i;
 
         if (strcmp(v->mount_point, "/tmp") == 0 ||
             strcmp(v->mount_point, "/cache") == 0) {

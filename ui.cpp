@@ -37,6 +37,8 @@
 #include "screen_ui.h"
 #include "ui.h"
 
+#include "voldclient/voldclient.h"
+
 #define UI_WAIT_KEY_TIMEOUT_SEC    120
 
 // There's only (at most) one of these objects, and global callbacks
@@ -154,6 +156,7 @@ void RecoveryUI::process_key(int key_code, int updown) {
             break;
 
           case RecoveryUI::REBOOT:
+            vold_unmount_all();
             if (reboot_enabled) {
                 android_reboot(ANDROID_RB_RESTART, 0, 0);
             }
@@ -215,6 +218,7 @@ void* RecoveryUI::input_thread(void *cookie)
 int RecoveryUI::WaitKey()
 {
     pthread_mutex_lock(&key_queue_mutex);
+    int timeouts = UI_WAIT_KEY_TIMEOUT_SEC;
 
     // Time out after UI_WAIT_KEY_TIMEOUT_SEC, unless a USB cable is
     // plugged in.
@@ -224,14 +228,19 @@ int RecoveryUI::WaitKey()
         gettimeofday(&now, NULL);
         timeout.tv_sec = now.tv_sec;
         timeout.tv_nsec = now.tv_usec * 1000;
-        timeout.tv_sec += UI_WAIT_KEY_TIMEOUT_SEC;
+        timeout.tv_sec += 1;
 
         int rc = 0;
         while (key_queue_len == 0 && rc != ETIMEDOUT) {
             rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex,
                                         &timeout);
+            if (VolumesChanged()) {
+                pthread_mutex_unlock(&key_queue_mutex);
+                return Device::kRefresh;
+            }
         }
-    } while (usb_connected() && key_queue_len == 0);
+        timeouts--;
+    } while ((timeouts || usb_connected()) && key_queue_len == 0);
 
     int key = -1;
     if (key_queue_len > 0) {
@@ -328,4 +337,15 @@ void RecoveryUI::SetEnableReboot(bool enabled) {
     pthread_mutex_lock(&key_queue_mutex);
     enable_reboot = enabled;
     pthread_mutex_unlock(&key_queue_mutex);
+}
+
+void RecoveryUI::NotifyVolumesChanged() {
+    v_changed = 1;
+}
+
+bool RecoveryUI::VolumesChanged() {
+    int ret = v_changed;
+    if (v_changed > 0)
+        v_changed = 0;
+    return ret == 1;
 }

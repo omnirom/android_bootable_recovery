@@ -29,6 +29,26 @@ on init
     chown root shell /tmp
     chmod 0775 /tmp
 
+    mkdir /mnt 0775 root system
+    mkdir /storage 0050 root sdcard_r
+    mount tmpfs tmpfs /storage mode=0050,uid=0,gid=1028
+
+    # See storage config details at http://source.android.com/tech/storage/
+    mkdir /mnt/shell 0700 shell shell
+
+    # Directory for putting things only root should see.
+    mkdir /mnt/secure 0700 root root
+
+    # Create private mountpoint so we can MS_MOVE from staging
+    mount tmpfs tmpfs /mnt/secure mode=0700,uid=0,gid=0
+
+    # Directory for staging bindmounts
+    mkdir /mnt/secure/staging 0700 root root
+
+    # Fuse public mount points.
+    mkdir /mnt/fuse 0700 root system
+    mount tmpfs tmpfs /mnt/fuse mode=0775,gid=1000
+
     write /proc/sys/kernel/panic_on_oops 1
 
 on fs
@@ -95,6 +115,11 @@ service adbd /sbin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
     socket adbd stream 660 system system
     seclabel u:r:adbd:s0
 
+service vold /sbin/minivold
+    socket vold stream 0660 root mount
+    ioprio be 2
+    seclabel u:r:vold:s0
+
 # setup_adbd will start adb once it has checked the keys
 on property:ro.debuggable=1
     start setup_adbd
@@ -103,3 +128,13 @@ on property:service.adb.root=1
     write /sys/class/android_usb/android0/enable 0
     restart adbd
     write /sys/class/android_usb/android0/enable 1
+
+on property:sys.storage.ums_enabled=1
+    write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/functions adb,mass_storage
+    write /sys/class/android_usb/android0/enable 1
+
+on property:sys.storage.ums_enabled=0
+    write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/functions adb
+    write /sys/class/android_usb/android0/enable ${service.adb.root}

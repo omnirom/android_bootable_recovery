@@ -39,8 +39,6 @@ extern "C" {
 #define STRINGIFY(x) #x
 #define EXPAND(x) STRINGIFY(x)
 
-typedef struct fstab_rec Volume;
-
 // fopen a file, mounting volumes and making parent dirs as necessary.
 FILE* fopen_path(const char *path, const char *mode);
 

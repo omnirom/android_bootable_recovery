@@ -42,6 +42,15 @@ LOCAL_SRC_FILES := \
     adb_install.cpp \
     fuse_sdcard_provider.c
 
+# External tools
+LOCAL_SRC_FILES += \
+	../../system/core/toolbox/dynarray.c \
+	../../system/core/toolbox/getprop.c \
+    ../../system/core/toolbox/newfs_msdos.c \
+	../../system/core/toolbox/setprop.c \
+    ../../system/core/toolbox/wipe.c \
+    ../../system/vold/vdc.c
+
 LOCAL_MODULE := recovery
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
@@ -57,7 +66,14 @@ LOCAL_CFLAGS += -Wno-unused-parameter
 
 LOCAL_STATIC_LIBRARIES := \
     libext4_utils_static \
+    libmake_ext4fs \
     libsparse_static \
+    libfsck_msdos \
+    libminipigz \
+    libminizip \
+    libreboot \
+    libvoldclient \
+    libsdcard \
     libminzip \
     libz \
     libmtdutils \
@@ -81,26 +97,29 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_STATIC_LIBRARIES += libext4_utils_static libz
 endif
 
+LOCAL_CFLAGS += -DUSE_EXT4 -DMINIVOLD
+LOCAL_C_INCLUDES += system/extras/ext4_utils system/core/fs_mgr/include external/fsck_msdos
+LOCAL_C_INCLUDES += system/vold
+
 # This binary is in the recovery ramdisk, which is otherwise a copy of root.
 # It gets copied there in config/Makefile.  LOCAL_MODULE_TAGS suppresses
 # a (redundant) copy of the binary in /system/bin for user builds.
 # TODO: Build the ramdisk image in a more principled way.
 LOCAL_MODULE_TAGS := eng
 
-ifeq ($(TARGET_RECOVERY_UI_LIB),)
+#ifeq ($(TARGET_RECOVERY_UI_LIB),)
   LOCAL_SRC_FILES += default_device.cpp
-else
-  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
-endif
+#else
+#  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
+#endif
 
-# Busybox linkage is a non-fatal error
 LOCAL_LDFLAGS += -Wl,--no-fatal-warnings
 
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 LOCAL_C_INCLUDES += external/openssl/include
 
 # Symlinks
-RECOVERY_LINKS := busybox reboot setup_adbd
+RECOVERY_LINKS := busybox reboot setup_adbd vdc sdcard
 
 RECOVERY_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(RECOVERY_LINKS))
 
@@ -154,6 +173,7 @@ LOCAL_SRC_FILES := \
     verifier.cpp \
     ui.cpp
 LOCAL_STATIC_LIBRARIES := \
+    libvoldclient \
     libmincrypt \
     libminui \
     libminzip \
@@ -172,6 +192,7 @@ include $(LOCAL_PATH)/minui/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/uncrypt/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
-    $(LOCAL_PATH)/applypatch/Android.mk
+    $(LOCAL_PATH)/applypatch/Android.mk \
+    $(LOCAL_PATH)/voldclient/Android.mk
 
 endif

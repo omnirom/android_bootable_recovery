@@ -18,6 +18,7 @@
 #define RECOVERY_ROOTS_H_
 
 #include "common.h"
+#include <fs_mgr.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,8 +27,8 @@ extern "C" {
 // Load and parse volume data from /etc/recovery.fstab.
 void load_volume_table();
 
-// Return the Volume* record for this path (or NULL).
-Volume* volume_for_path(const char* path);
+// Return the fstab_rec* record for this path (or NULL).
+fstab_rec* volume_for_path(const char* path);
 
 // Make sure that the volume 'path' is on is mounted.  Returns 0 on
 // success (volume is mounted).
@@ -51,8 +52,16 @@ int setup_install_mounts();
 // and 0 if the partition was not wiped.
 int erase_persistent_partition();
 
+char* get_primary_storage_path();
+char** get_extra_storage_paths();
+char* get_android_secure_path();
+int get_num_extra_volumes();
+int get_num_volumes();
+
 #ifdef __cplusplus
 }
 #endif
+
+#define MAX_NUM_MANAGED_VOLUMES 10
 
 #endif  // RECOVERY_ROOTS_H_
