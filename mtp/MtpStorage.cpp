@@ -53,6 +53,7 @@ MtpStorage::MtpStorage(MtpStorageID id, const char* filePath,
 {
 	MTPI("MtpStorage id: %d path: %s\n", id, filePath);
 	inotify_thread = 0;
+	inotify_fd = -1;
 	sendEvents = false;
 	handleCurrentlySending = 0;
 	use_mutex = true;
@@ -127,9 +128,15 @@ int MtpStorage::createDB() {
 	mtpmap[0] = new Tree(0, 0, "");
 	MTPD("MtpStorage::createDB DONE\n");
 	if (use_mutex) {
-		MTPD("Starting inotify thread\n");
 		sendEvents = true;
-		inotify_thread = inotify();
+		MTPD("inotify_init\n");
+		inotify_fd = inotify_init();
+		if (inotify_fd < 0) {
+			MTPE("Can't run inotify_init for mtp server: %s\n", strerror(errno));
+		} else {
+			MTPD("Starting inotify thread\n");
+			inotify_thread = inotify();
+		}
 	} else {
 		MTPD("NOT starting inotify thread\n");
 	}
@@ -566,6 +573,10 @@ pthread_t MtpStorage::inotify(void) {
 }
 
 int MtpStorage::addInotify(Tree* tree) {
+	if (inotify_fd < 0) {
+		MTPE("inotify_fd not set or error: %i\n", inotify_fd);
+		return -1;
+	}
 	std::string path = getNodePath(tree);
 	MTPD("adding inotify for tree %x, dir: %s\n", tree, path.c_str());
 	int wd = inotify_add_watch(inotify_fd, path.c_str(), WATCH_FLAGS);
@@ -659,13 +670,7 @@ int MtpStorage::inotify_t(void) {
 	#define EVENT_BUF_LEN ( 1024 * ( EVENT_SIZE + 16) )
 	char buf[EVENT_BUF_LEN];
 
-	MTPD("inotify thread: inotify_init\n");
-	inotify_fd = inotify_init();
-
-	if (inotify_fd < 0) {
-		MTPE("Can't run inotify for mtp server: %s\n", strerror(errno));
-		return -1;
-	}
+	MTPD("inotify thread starting.\n");
 
 	while (true) {
 		int i = 0;
