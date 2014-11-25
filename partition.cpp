@@ -45,21 +45,12 @@
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
-#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-	#include "crypto/libcrypt_samsung/include/libcrypt_samsung.h"
-#endif
 #ifdef USE_EXT4
 	#include "make_ext4fs.h"
 #endif
 
 #ifdef TW_INCLUDE_CRYPTO
-	#ifdef TW_INCLUDE_JB_CRYPTO
-		#include "crypto/jb/cryptfs.h"
-	#elif defined(TW_INCLUDE_L_CRYPTO)
-		#include "crypto/lollipop/cryptfs.h"
-	#else
-		#include "crypto/ics/cryptfs.h"
-	#endif
+	#include "crypto/lollipop/cryptfs.h"
 #endif
 }
 #ifdef HAVE_SELINUX
@@ -137,6 +128,7 @@ TWPartition::TWPartition() {
 	Can_Be_Encrypted = false;
 	Is_Encrypted = false;
 	Is_Decrypted = false;
+	Mount_To_Decrypt = false;
 	Decrypted_Block_Device = "";
 	Display_Name = "";
 	Backup_Display_Name = "";
@@ -159,9 +151,7 @@ TWPartition::TWPartition() {
 	Format_Block_Size = 0;
 	Ignore_Blkid = false;
 	Retain_Layout_Version = false;
-#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-	EcryptFS_Password = "";
-#endif
+	Crypto_Key_Location = "footer";
 }
 
 TWPartition::~TWPartition(void) {
@@ -289,22 +279,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 				LOGINFO("Data already decrypted, new block device: '%s'\n", crypto_blkdev);
 			} else if (!Mount(false)) {
 				if (Is_Present) {
-#if defined(TW_INCLUDE_JB_CRYPTO) || defined(TW_INCLUDE_L_CRYPTO)
-					// No extra flags needed
-#else
-					property_set("ro.crypto.fs_type", CRYPTO_FS_TYPE);
-					property_set("ro.crypto.fs_real_blkdev", CRYPTO_REAL_BLKDEV);
-					property_set("ro.crypto.fs_mnt_point", CRYPTO_MNT_POINT);
-					property_set("ro.crypto.fs_options", CRYPTO_FS_OPTIONS);
-					property_set("ro.crypto.fs_flags", CRYPTO_FS_FLAGS);
-					property_set("ro.crypto.keyfile.userdata", CRYPTO_KEY_LOC);
-#ifdef CRYPTO_SD_FS_TYPE
-					property_set("ro.crypto.sd_fs_type", CRYPTO_SD_FS_TYPE);
-					property_set("ro.crypto.sd_fs_real_blkdev", CRYPTO_SD_REAL_BLKDEV);
-					property_set("ro.crypto.sd_fs_mnt_point", EXPAND(TW_INTERNAL_STORAGE_PATH));
-#endif
-					property_set("rw.km_fips_status", "ready");
-#endif
+					set_partition_data(Actual_Block_Device.c_str(), Crypto_Key_Location.c_str(), Fstab_File_System.c_str());
 					if (cryptfs_check_footer() == 0) {
 						Is_Encrypted = true;
 						Is_Decrypted = false;
@@ -572,6 +547,17 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 				Mount_Options.resize(Mount_Options.size() - 1);
 			}
 			Process_FS_Flags(Mount_Options, Mount_Flags);
+		} else if ((ptr_len > 12 && strncmp(ptr, "encryptable=", 12) == 0) || (ptr_len > 13 && strncmp(ptr, "forceencrypt=", 13) == 0)) {
+			ptr += 12;
+			if (*ptr == '=') ptr++;
+			if (*ptr == '\"') ptr++;
+
+			Crypto_Key_Location = ptr;
+			if (Crypto_Key_Location.substr(Crypto_Key_Location.size() - 1, 1) == "\"") {
+				Crypto_Key_Location.resize(Crypto_Key_Location.size() - 1);
+			}
+		} else if (ptr_len > 8 && strncmp(ptr, "mounttodecrypt", 14) == 0) {
+			Mount_To_Decrypt = true;
 		} else {
 			if (Display_Error)
 				LOGERR("Unhandled flag: '%s'\n", ptr);
@@ -1021,25 +1007,7 @@ bool TWPartition::Mount(bool Display_Error) {
 		}
 #endif
 	}
-#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-	string MetaEcfsFile = EXPAND(TW_EXTERNAL_STORAGE_PATH);
-	MetaEcfsFile += "/.MetaEcfsFile";
-	if (EcryptFS_Password.size() > 0 && PartitionManager.Mount_By_Path("/data", false) && TWFunc::Path_Exists(MetaEcfsFile)) {
-		if (mount_ecryptfs_drive(EcryptFS_Password.c_str(), Mount_Point.c_str(), Mount_Point.c_str(), 0) != 0) {
-			if (Display_Error)
-				LOGERR("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());
-			else
-				LOGINFO("Unable to mount ecryptfs for '%s'\n", Mount_Point.c_str());
-		} else {
-			LOGINFO("Successfully mounted ecryptfs for '%s'\n", Mount_Point.c_str());
-			Is_Decrypted = true;
-		}
-	} else if (Mount_Point == EXPAND(TW_EXTERNAL_STORAGE_PATH)) {
-		if (Is_Decrypted)
-			LOGINFO("Mounting external storage, '%s' is not encrypted\n", Mount_Point.c_str());
-		Is_Decrypted = false;
-	}
-#endif
+
 	if (Removable)
 		Update_Size(Display_Error);
 
@@ -1060,19 +1028,6 @@ bool TWPartition::UnMount(bool Display_Error) {
 
 		if (Is_Storage)
 			TWFunc::Toggle_MTP(false);
-
-#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-		if (EcryptFS_Password.size() > 0) {
-			if (unmount_ecryptfs_drive(Mount_Point.c_str()) != 0) {
-				if (Display_Error)
-					LOGERR("Unable to unmount ecryptfs for '%s'\n", Mount_Point.c_str());
-				else
-					LOGINFO("Unable to unmount ecryptfs for '%s'\n", Mount_Point.c_str());
-			} else {
-				LOGINFO("Successfully unmounted ecryptfs for '%s'\n", Mount_Point.c_str());
-			}
-		}
-#endif
 
 		if (!Symlink_Mount_Point.empty())
 			umount(Symlink_Mount_Point.c_str());
@@ -1104,13 +1059,6 @@ bool TWPartition::Wipe(string New_File_System) {
 
 	if (Mount_Point == "/cache")
 		Log_Offset = 0;
-
-#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-	if (Mount_Point == "/data" && Mount(false)) {
-		if (TWFunc::Path_Exists("/data/system/edk_p_sd"))
-			TWFunc::copy_file("/data/system/edk_p_sd", "/tmp/edk_p_sd", 0600);
-	}
-#endif
 
 	if (Retain_Layout_Version && Mount(false) && TWFunc::Path_Exists(Layout_Filename))
 		TWFunc::copy_file(Layout_Filename, "/.layout_version", 0600);
@@ -1150,15 +1098,6 @@ bool TWPartition::Wipe(string New_File_System) {
 	}
 
 	if (wiped) {
-#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
-		if (Mount_Point == "/data" && Mount(false)) {
-			if (TWFunc::Path_Exists("/tmp/edk_p_sd")) {
-				Make_Dir("/data/system", true);
-				TWFunc::copy_file("/tmp/edk_p_sd", "/data/system/edk_p_sd", 0600);
-			}
-		}
-#endif
-
 		if (Mount_Point == "/cache")
 			DataManager::Output_Version();
 
