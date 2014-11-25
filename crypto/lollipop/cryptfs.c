@@ -56,7 +56,7 @@
 //#include "CheckBattery.h"
 //#include "Process.h"
 
-#include <hardware/keymaster.h>
+#include "libminhardware/keymaster.h"
 
 #define UNUSED __attribute__((unused))
 
