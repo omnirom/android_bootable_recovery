@@ -31,6 +31,8 @@ int newfs_msdos_main(int argc, char **argv);
 int vdc_main(int argc, char **argv);
 int pigz_main(int argc, char **argv);
 int sdcard_main(int argc, char **argv);
+int start_main(int argc, char **argv);
+int stop_main(int argc, char **argv);
 #ifdef USE_F2FS
 int make_f2fs_main(int argc, char **argv);
 int fsck_f2fs_main(int argc, char **argv);
@@ -56,6 +58,8 @@ static const struct recovery_cmd recovery_cmds[] = {
     { "vdc",            vdc_main },
     { "pigz",           pigz_main },
     { "sdcard",         sdcard_main },
+    { "start",          start_main },
+    { "stop",           stop_main },
 #ifdef USE_F2FS
     { "mkfs.f2fs",      make_f2fs_main },
     { "fsck.f2fs",      fsck_f2fs_main },
