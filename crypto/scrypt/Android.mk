@@ -1,5 +1,4 @@
 LOCAL_PATH := $(call my-dir)
-#include $(call all-named-subdir-makefiles,tests)
 
 # Enable to be able to use ALOG* with #include "cutils/log.h"
 #log_c_includes += system/core/include
@@ -10,3 +9,5 @@ LOCAL_PATH := $(call my-dir)
 # that import_openssl.sh import won't remove them.
 include $(LOCAL_PATH)/build-config.mk
 include $(LOCAL_PATH)/Scrypt.mk
+
+include $(LOCAL_PATH)/tests/Android.mk
