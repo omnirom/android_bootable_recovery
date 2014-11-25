@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2b432935_8e1c1b7d",
+        "filename": "mtp/MtpStorage.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-25T20:25:06Z",
+      "side": 1,
+      "message": "inotify_thread \u003d 0;\ninotify_fd \u003d -1;",
+      "revId": "01c06347df15fcfc96e080139d864636128d44a8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
