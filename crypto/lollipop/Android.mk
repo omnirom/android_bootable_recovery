@@ -21,15 +21,16 @@ common_shared_libraries := \
 	libcutils \
 	liblog \
 	libdiskconfig \
-	libhardware_legacy \
 	liblogwrap \
 	libext4_utils \
 	libf2fs_sparseblock \
 	libcrypto \
 	libselinux \
 	libutils \
-	libhardware \
+	libminhardware \
 	libsoftkeymaster
+
+common_shared_libraries := libcrypto libselinux libhardware libsoftkeymaster libcutils
 
 LOCAL_MODULE := libcryptfslollipop
 LOCAL_MODULE_TAGS := eng optional
@@ -44,9 +45,26 @@ LOCAL_SRC_FILES = cryptfs.c
 #    hardware/libhardware/include/hardware \
 #	system/security/softkeymaster/include/keymaster
 #LOCAL_SHARED_LIBRARIES += libc liblog libcutils libcrypto libext4_utils
-LOCAL_SHARED_LIBRARIES := $(common_shared_libraries) libmincrypttwrp liblogwrap
+LOCAL_SHARED_LIBRARIES := $(common_shared_libraries) libmincrypttwrp
 LOCAL_C_INCLUDES := external/openssl/include $(common_c_includes)
-LOCAL_WHOLE_STATIC_LIBRARIES += libfs_mgr libscrypt_static
+LOCAL_WHOLE_STATIC_LIBRARIES += libscrypttwrp_static
+
+include $(BUILD_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+
+LOCAL_SHARED_LIBRARIES := libcutils liblog
+
+LOCAL_INCLUDES += $(LOCAL_PATH) $(LOCAL_PATH)\libminhardware
+
+LOCAL_CFLAGS  += -DQEMU_HARDWARE
+QEMU_HARDWARE := true
+
+LOCAL_SHARED_LIBRARIES += libdl
+
+LOCAL_SRC_FILES += libminhardware/hardware.c
+
+LOCAL_MODULE:= libminhardware
 
 include $(BUILD_SHARED_LIBRARY)
 endif

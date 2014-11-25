@@ -208,24 +208,11 @@ extern "C" {
   typedef int (*kdf_func)(const char *passwd, const unsigned char *salt,
                           unsigned char *ikey, void *params);
 
-  int cryptfs_crypto_complete(void);
-  int cryptfs_check_footer(void);
+  void set_partition_data(const char* block_device, const char* key_location, const char* fs);
+  int cryptfs_check_footer();
   int cryptfs_check_passwd(char *pw);
   int cryptfs_verify_passwd(char *newpw);
-  int cryptfs_restart(void);
-  int cryptfs_enable(char *flag, int type, char *passwd, int allow_reboot);
-  int cryptfs_changepw(int type, const char *newpw);
-  int cryptfs_enable_default(char *flag, int allow_reboot);
-  int cryptfs_setup_volume(const char *label, int major, int minor,
-                           char *crypto_dev_path, unsigned int max_pathlen,
-                           int *new_major, int *new_minor);
-  int cryptfs_revert_volume(const char *label);
-  int cryptfs_getfield(char *fieldname, char *value, int len);
-  int cryptfs_setfield(char *fieldname, char *value);
-  int cryptfs_mount_default_encrypted(void);
   int cryptfs_get_password_type(void);
-  char* cryptfs_get_password(void);
-  void cryptfs_clear_password(void);
 #ifdef __cplusplus
 }
 #endif
