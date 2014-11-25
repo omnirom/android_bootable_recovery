@@ -19,7 +19,8 @@
 
 class RecoveryUI;
 
-void start_sideload(RecoveryUI* h);
-int apply_from_adb(int* wipe_cache, const char* install_file);
+void start_sideload(RecoveryUI* h, int* wipe_cache, const char* install_file);
+void wait_sideload();
+int  stop_sideload();
 
 #endif
