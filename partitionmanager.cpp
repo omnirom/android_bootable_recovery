@@ -1914,7 +1914,7 @@ bool TWPartitionManager::Enable_MTP(void) {
 		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
 			++storageid;
 			printf("twrp addStorage %s, mtpstorageid: %u\n", (*iter)->Storage_Path.c_str(), storageid);
-			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, storageid);
+			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, storageid, (*iter)->Get_Max_FileSize());
 			count++;
 		}
 	}

@@ -36,6 +36,7 @@ typedef struct Storage {
 	std::string display;
 	std::string mount;
 	int mtpid;
+	uint64_t maxFileSize;
 } storage;
 
 typedef std::vector<storage*> storages;
