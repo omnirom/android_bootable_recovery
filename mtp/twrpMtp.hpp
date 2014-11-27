@@ -36,7 +36,7 @@ class twrpMtp {
 		twrpMtp(int debug_enabled /* = 0 */);
 		pthread_t threadserver(void);
 		pid_t forkserver(void);
-		void addStorage(std::string display, std::string path, int mtpid);
+		void addStorage(std::string display, std::string path, int mtpid, uint64_t maxFileSize);
 	private:
 		int start(void);
 		typedef int (twrpMtp::*ThreadPtr)(void);
