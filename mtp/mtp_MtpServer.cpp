@@ -123,7 +123,7 @@ void twmtp_MtpServer::add_storage()
 				int storageID = stores->at(i)->mtpid;
 				long reserveSpace = 1;
 				bool removable = false;
-				long maxFileSize = 1000000000L;
+				long maxFileSize = stores->at(i)->maxFileSize;
 				if (descriptionStr != "") {
 					MtpStorage* storage = new MtpStorage(storageID, &pathStr[0], &descriptionStr[0], reserveSpace, removable, maxFileSize, refserver);
 					server->addStorage(storage);
