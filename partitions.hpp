@@ -56,6 +56,7 @@ public:
 	bool Wipe();                                                              // Wipes the partition
 	bool Wipe_AndSec();                                                       // Wipes android secure
 	bool Can_Repair();                                                        // Checks to see if we have everything needed to be able to repair the current file system
+	uint64_t Get_Max_FileSize();					  	  //get partition maxFileSie
 	bool Repair();                                                            // Repairs the current file system
 	bool Backup(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size); // Backs up the partition to the folder specified
 	bool Check_MD5(string restore_folder);                                    // Checks MD5 of a backup
