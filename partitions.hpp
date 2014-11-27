@@ -56,6 +56,7 @@ public:
 	bool Wipe();                                                              // Wipes the partition
 	bool Wipe_AndSec();                                                       // Wipes android secure
 	bool Can_Repair();                                                        // Checks to see if we have everything needed to be able to repair the current file system
+	uint64_t Get_Max_FileSize(void);				  	  //get partition maxFileSie
 	bool Repair();                                                            // Repairs the current file system
 	bool Backup(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size); // Backs up the partition to the folder specified
 	bool Check_MD5(string restore_folder);                                    // Checks MD5 of a backup
@@ -134,6 +135,7 @@ private:
 	bool Removable;                                                           // Indicates if this partition is removable -- affects how often we check overall size, if present, etc.
 	int Length;                                                               // Used by make_ext4fs to leave free space at the end of the partition block for things like a crypto footer
 	unsigned long long Size;                                                  // Overall size of the partition
+	uint64_t maxFileSize;
 	unsigned long long Used;                                                  // Overall used space
 	unsigned long long Free;                                                  // Overall free space
 	unsigned long long Backup_Size;                                           // Backup size -- may be different than used space especially when /data/media is present

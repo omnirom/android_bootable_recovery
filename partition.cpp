@@ -131,6 +131,7 @@ TWPartition::TWPartition() {
 	Is_Present = false;
 	Length = 0;
 	Size = 0;
+	maxFileSize = 0;
 	Used = 0;
 	Free = 0;
 	Backup_Size = 0;
@@ -2096,3 +2097,21 @@ void TWPartition::Recreate_AndSec_Folder(void) {
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
 	}
 }
+
+uint64_t TWPartition::Get_Max_FileSize(void) {
+        if (Current_File_System == "ext4")
+                return 16 * (uint64_t) 1024 * 1024 * 1024 * 1024; //16 TB
+        else if (Current_File_System == "vfat")
+                return 2 * (uint64_t) 1024 * 1024 * 1024; //2 GB
+        else if (Current_File_System == "ntfs")
+                return 256 * (uint64_t) 1024 * 1024 * 1024* 1024; //256 TB
+        if (Current_File_System == "exfat")
+                return 16 * (uint64_t) 1024 * 1024 * 1024 * 1024 * 1024 * 1024; //16 EB
+        else if (Current_File_System == "ext3")
+                return 2 * (uint64_t) 1024 * 1024 * 1024* 1024; //2 TB
+        else if (Current_File_System == "f2fs")
+                return 3.94 * (uint64_t) 1024 * 1024 * 1024* 1024; //3.94 TB
+	else
+		return 100000000L;
+}
+
