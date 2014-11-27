@@ -81,6 +81,7 @@ protected:
 private:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
 	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
+	void getMaxFileSize(void);					  	  //get partition maxFileSie
 
 	bool Process_Flags(string Flags, bool Display_Error);                     // Process custom fstab flags
 	bool Process_FS_Flags(string& Options, int Flags);                        // Process standard fstab fs flags
@@ -134,6 +135,7 @@ private:
 	bool Removable;                                                           // Indicates if this partition is removable -- affects how often we check overall size, if present, etc.
 	int Length;                                                               // Used by make_ext4fs to leave free space at the end of the partition block for things like a crypto footer
 	unsigned long long Size;                                                  // Overall size of the partition
+	uint64_t maxFileSize;
 	unsigned long long Used;                                                  // Overall used space
 	unsigned long long Free;                                                  // Overall free space
 	unsigned long long Backup_Size;                                           // Backup size -- may be different than used space especially when /data/media is present

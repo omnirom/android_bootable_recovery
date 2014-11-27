@@ -1962,6 +1962,7 @@ bool TWPartitionManager::Enable_MTP(void) {
 	char vendor[PROPERTY_VALUE_MAX];
 	char product[PROPERTY_VALUE_MAX];
 	int count = 0;
+	uint64_t maxFileSize;
 	property_set("sys.usb.config", "none");
 	property_get("usb.vendor", vendor, "18D1");
 	property_get("usb.product.mtpadb", product, "4EE2");
@@ -1980,7 +1981,7 @@ bool TWPartitionManager::Enable_MTP(void) {
 		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
 			++storageid;
 			printf("twrp addStorage %s, mtpstorageid: %u\n", (*iter)->Storage_Path.c_str(), storageid);
-			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, storageid);
+			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, storageid, (*iter)->maxFileSize);
 			count++;
 		}
 	}

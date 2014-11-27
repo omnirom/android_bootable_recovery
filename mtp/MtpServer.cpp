@@ -1079,6 +1079,7 @@ MtpResponseCode MtpServer::doSendObject() {
 		if (errno == ECANCELED)
 			result = MTP_RESPONSE_TRANSACTION_CANCELLED;
 		else
+		    MTPD("errno: %d\n", errno);
 			result = MTP_RESPONSE_GENERAL_ERROR;
 	}
 
@@ -1093,7 +1094,7 @@ done:
 	mSendObjectHandle = kInvalidObjectHandle;
 	MTPD("result: %d\n", result);
 	mSendObjectFormat = 0;
-	return MTP_RESPONSE_OK;
+	return result;
 }
 
 static void deleteRecursive(const char* path) {

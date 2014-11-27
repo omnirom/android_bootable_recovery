@@ -131,6 +131,7 @@ TWPartition::TWPartition() {
 	Is_Present = false;
 	Length = 0;
 	Size = 0;
+	maxFileSize = 0;
 	Used = 0;
 	Free = 0;
 	Backup_Size = 0;
@@ -1481,6 +1482,7 @@ void TWPartition::Check_FS_Type() {
 	}
 
 	Current_File_System = type;
+	getMaxFileSize();
 	blkid_free_probe(pr);
 }
 
@@ -2096,3 +2098,21 @@ void TWPartition::Recreate_AndSec_Folder(void) {
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
 	}
 }
+
+void TWPartition::getMaxFileSize(void) {
+        if (Current_File_System == "ext4")
+                maxFileSize = 16 * (uint64_t) 1024 * 1024 * 1024 * 1024; //16 TB
+        else if (Current_File_System == "vfat")
+                maxFileSize = 2 * (uint64_t) 1024 * 1024 * 1024; //2 GB
+        else if (Current_File_System == "ntfs")
+                maxFileSize = 256 * (uint64_t) 1024 * 1024 * 1024* 1024; //256 TB
+        if (Current_File_System == "exfat")
+                maxFileSize = 16 * (uint64_t) 1024 * 1024 * 1024 * 1024 * 1024 * 1024; //16 EB
+        else if (Current_File_System == "ext3")
+                maxFileSize = 2 * (uint64_t) 1024 * 1024 * 1024* 1024; //2 TB
+        else if (Current_File_System == "f2fs")
+                maxFileSize = 3.94 * (uint64_t) 1024 * 1024 * 1024* 1024; //3.94 TB
+	else
+		maxFileSize = 100000000L;
+}
+
