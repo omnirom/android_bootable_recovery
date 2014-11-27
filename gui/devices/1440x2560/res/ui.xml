@@ -237,7 +237,7 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="539" y="132" />
+				<placement x="489" y="132" />
 				<conditions>
 					<condition var1="tw_no_battery_percent" var2="0" />
 					<condition var1="tw_battery" op=">" var2="0" />
@@ -248,7 +248,7 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="839" y="132" />
+				<placement x="819" y="132" />
 				<conditions>
 					<condition var1="tw_no_cpu_temp" var2="0" />
 				</conditions>
