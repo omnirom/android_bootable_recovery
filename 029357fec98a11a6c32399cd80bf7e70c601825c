@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2b432935_51a7344d",
+        "filename": "mtp/MtpServer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1082,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-28T08:10:07Z",
+      "side": 1,
+      "message": "Missing {}, also wrong indentation",
+      "revId": "029357fec98a11a6c32399cd80bf7e70c601825c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b432935_71a43048",
+        "filename": "partitions.hpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-28T08:10:07Z",
+      "side": 1,
+      "message": "f(void) is not wrong but considered bad style in C++, see:\nhttp://www.parashift.com/c++-faq/void-in-param-list.html",
+      "revId": "029357fec98a11a6c32399cd80bf7e70c601825c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
