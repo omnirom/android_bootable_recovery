@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2b432935_54956289",
+        "filename": "partition.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2101,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-28T20:43:45Z",
+      "side": 1,
+      "message": "Style: The previous patch version, with many returns and no intermediate variable, was the more modern, \"functional\", coding style.",
+      "revId": "ec9fb3a7b15ada0d47eb996dd2725c5db47e645f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b432935_74925ea4",
+        "filename": "partition.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2102,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-28T20:43:45Z",
+      "side": 1,
+      "message": "Bug: A gigabyte is 1 billion bytes (or 1024*1024*1024, which pedants call \"gibibyte\" or \"GiB\"). This number here is 1 TB.",
+      "revId": "ec9fb3a7b15ada0d47eb996dd2725c5db47e645f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b432935_94eb4a0e",
+        "filename": "partition.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2110,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-28T20:43:45Z",
+      "side": 1,
+      "message": "Bug/Comment: Comment doesn\u0027t match code. Also the -1 is missing here and in probably most of the other lines.",
+      "revId": "ec9fb3a7b15ada0d47eb996dd2725c5db47e645f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b432935_b4f046fd",
+        "filename": "partition.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2114,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-28T20:43:45Z",
+      "side": 1,
+      "message": "Comment doesn\u0027t match code. Also note that 16 EB doesn\u0027t fit into a uint64_t. You can use the expression \"(uint64_t)-1\" to express \"16 EB - 1\".",
+      "revId": "ec9fb3a7b15ada0d47eb996dd2725c5db47e645f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
