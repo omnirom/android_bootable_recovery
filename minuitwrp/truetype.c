@@ -118,6 +118,42 @@ static inline uint32_t fnv_hash_add(uint32_t cur_hash, uint32_t word)
     return cur_hash;
 }
 
+int utf8_to_unicode(unsigned char* pIn, unsigned int *pOut)
+{
+    if(pIn == NULL || pOut == NULL)
+        return 0;
+
+    int utf_bytes = 1;
+    unsigned int unicode = 0;
+    unsigned char tmp;
+    tmp = *pIn++;
+    if (tmp < 0x80)
+    {
+        *pOut = tmp;
+    }
+    else
+    {
+        unsigned int high_bit_mask = 0x3F;
+        unsigned int high_bit_shift = 0;
+        int total_bits = 0;
+        while((tmp & 0xC0) == 0xC0)
+        {
+            utf_bytes ++;
+            if(utf_bytes > 6) return 0;
+            tmp = 0xFF & (tmp << 1);
+            total_bits += 6;
+            high_bit_mask >>= 1;
+            high_bit_shift++;
+            unicode <<= 6;
+            unicode |= (*pIn++) & 0x3F;
+        }
+        unicode |= ((tmp >> high_bit_shift) & high_bit_mask) << total_bits;
+        *pOut = unicode;
+    }
+
+    return utf_bytes;
+}
+
 static bool gr_ttf_string_cache_equals(void *keyA, void *keyB)
 {
     StringCacheKey *a = keyA;
@@ -347,16 +383,22 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
     TrueTypeFont *f = font;
     TrueTypeCacheEntry *ent;
     int max_len = 0, total_w = 0;
-    char c;
+    int utf_bytes = 0;
+    unsigned int unicode = 0;
     int i, x, diff, char_idx, prev_idx = 0;
     int height, base;
     FT_Vector delta;
     uint8_t *data = NULL;
     const char *text_itr = text;
+    int *char_idxs;
 
-    while((c = *text_itr++))
+    char_idxs = (int*)malloc(strlen(text) * sizeof(int));
+    while(*text_itr)
     {
-        char_idx = FT_Get_Char_Index(f->face, c);
+        utf_bytes = utf8_to_unicode(text_itr, &unicode);
+        text_itr += (utf_bytes == 0)? 1: utf_bytes;
+        char_idx = FT_Get_Char_Index(f->face, unicode);
+        char_idxs[max_len] = char_idx;
         ent = gr_ttf_glyph_cache_get(f, char_idx);
         if(ent)
         {
@@ -381,7 +423,10 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
         gr_ttf_getMaxFontHeight(font);
 
     if(font->max_height == -1)
+    {
+        free(char_idxs);
         return -1;
+    }
 
     height = font->max_height;
 
@@ -399,7 +444,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
 
     for(i = 0; i < max_len; ++i)
     {
-        char_idx = FT_Get_Char_Index(f->face, text[i]);
+        char_idx = char_idxs[i];
         if(FT_HAS_KERNING(f->face) && prev_idx && char_idx)
         {
             FT_Get_Kerning(f->face, prev_idx, char_idx, FT_KERNING_DEFAULT, &delta);
@@ -416,6 +461,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
         prev_idx = char_idx;
     }
 
+    free(char_idxs);
     return max_len;
 }
 
@@ -525,7 +571,8 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
     TrueTypeFont *f = font;
     TrueTypeCacheEntry *ent;
     int max_len = 0, total_w = 0;
-    char c;
+    int utf_bytes = 0;
+    unsigned int unicode;
     int char_idx, prev_idx = 0;
     FT_Vector delta;
     StringCacheEntry *e;
@@ -540,9 +587,10 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
         return max_len;
     }
 
-    for(; (c = *s++); ++max_len)
+    for(; *s; ++max_len)
     {
-        char_idx = FT_Get_Char_Index(f->face, c);
+        utf_bytes = utf8_to_unicode(s, &unicode);
+        s += (utf_bytes == 0)?  1: utf_bytes;
         if(FT_HAS_KERNING(f->face) && prev_idx && char_idx)
         {
             FT_Get_Kerning(f->face, prev_idx, char_idx, FT_KERNING_DEFAULT, &delta);
