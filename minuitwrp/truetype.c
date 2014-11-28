@@ -86,6 +86,17 @@ static FontData font_data = {
 static const uint32_t FNV_prime = 16777619U;
 static const uint32_t offset_basis = 2166136261U;
 
+int utf8_to_unicode(unsigned c1, unsigned c2, unsigned c3)
+{
+	unsigned short unicode;
+	
+	unicode = (c1 & 0x1F) << 12;
+	unicode |= (c2 & 0x3F) << 6;
+	unicode |= (c3 & 0x3F);
+	
+	return unicode;
+}
+
 static uint32_t fnv_hash(void *data, uint32_t len)
 {
     uint8_t *d8 = data;
@@ -347,16 +358,35 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
     TrueTypeFont *f = font;
     TrueTypeCacheEntry *ent;
     int max_len = 0, total_w = 0;
-    char c;
+    unsigned char c, c2, c3;
     int i, x, diff, char_idx, prev_idx = 0;
     int height, base;
     FT_Vector delta;
     uint8_t *data = NULL;
     const char *text_itr = text;
-
+    int *char_idxs;
+	
+	char_idxs = (int*)malloc(strlen(text) * sizeof(int));
     while((c = *text_itr++))
     {
-        char_idx = FT_Get_Char_Index(f->face, c);
+		if (c < 0x80)
+		{
+			char_idx = FT_Get_Char_Index(f->face, c);
+		}
+		else
+		{
+			if ((c & 0xF0) == 0xE0)
+			{
+				c2 = *text_itr++;
+				c3 = *text_itr++;
+				char_idx = FT_Get_Char_Index(f->face, utf8_to_unicode(c, c2, c3));
+			}
+			else
+			{
+				char_idx = FT_Get_Char_Index(f->face, c);
+			}
+		}
+        char_idxs[max_len] = char_idx;
         ent = gr_ttf_glyph_cache_get(f, char_idx);
         if(ent)
         {
@@ -380,8 +410,11 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
     if(font->max_height == -1)
         gr_ttf_getMaxFontHeight(font);
 
-    if(font->max_height == -1)
+    if(font->max_height == -1) 
+    {
+		free(char_idxs);
         return -1;
+	}
 
     height = font->max_height;
 
@@ -399,7 +432,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
 
     for(i = 0; i < max_len; ++i)
     {
-        char_idx = FT_Get_Char_Index(f->face, text[i]);
+        char_idx = char_idxs[i];
         if(FT_HAS_KERNING(f->face) && prev_idx && char_idx)
         {
             FT_Get_Kerning(f->face, prev_idx, char_idx, FT_KERNING_DEFAULT, &delta);
@@ -416,6 +449,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
         prev_idx = char_idx;
     }
 
+	free(char_idxs);
     return max_len;
 }
 
@@ -525,7 +559,7 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
     TrueTypeFont *f = font;
     TrueTypeCacheEntry *ent;
     int max_len = 0, total_w = 0;
-    char c;
+    unsigned char c, c2, c3;
     int char_idx, prev_idx = 0;
     FT_Vector delta;
     StringCacheEntry *e;
@@ -542,7 +576,23 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
 
     for(; (c = *s++); ++max_len)
     {
-        char_idx = FT_Get_Char_Index(f->face, c);
+		if (c < 0x80)
+		{
+			char_idx = FT_Get_Char_Index(f->face, c);
+		}
+		else
+		{
+			if ((c & 0xF0) == 0xE0)
+			{
+				c2 = *s++;
+				c3 = *s++;
+				char_idx = FT_Get_Char_Index(f->face, utf8_to_unicode(c, c2, c3));
+			}
+			else
+			{
+				char_idx = FT_Get_Char_Index(f->face, c);
+			}
+		}
         if(FT_HAS_KERNING(f->face) && prev_idx && char_idx)
         {
             FT_Get_Kerning(f->face, prev_idx, char_idx, FT_KERNING_DEFAULT, &delta);
