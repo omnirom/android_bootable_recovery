@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2b432935_d46a32b0",
+        "filename": "minuitwrp/truetype.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 372,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-28T18:15:00Z",
+      "side": 1,
+      "message": "reading the next UTF-8 character (including advancing the pointer) should be extracted to a separate function that also does proper boundary checking.",
+      "revId": "cf08b403c66fbed4957dcb359cd6793d79015214",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b432935_f46f2ebd",
+        "filename": "minuitwrp/truetype.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 413,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-28T18:15:00Z",
+      "side": 1,
+      "message": "trailing whitespace and indentation issues in this block",
+      "revId": "cf08b403c66fbed4957dcb359cd6793d79015214",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b432935_14659ade",
+        "filename": "minuitwrp/truetype.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 579,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-11-28T18:15:00Z",
+      "side": 1,
+      "message": "should use the common UTF-8 reading function extracted from the previous block",
+      "revId": "cf08b403c66fbed4957dcb359cd6793d79015214",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
