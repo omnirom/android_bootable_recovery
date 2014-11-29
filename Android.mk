@@ -284,6 +284,7 @@ LOCAL_STATIC_LIBRARIES := \
     libcutils \
     libstdc++ \
     libc
+LOCAL_C_INCLUDES += system/core/fs_mgr/include
 include $(BUILD_EXECUTABLE)
 
 
