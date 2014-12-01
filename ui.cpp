@@ -172,12 +172,10 @@ static int string_split(char* s, char** fields, int maxfields)
         if (!p)
             break;
         *p = '\0';
-        printf("string_split: field[%d]=%s\n", n, s);
         fields[n++] = s;
         s = p+1;
     }
     fields[n] = s;
-    printf("string_split: last field[%d]=%s\n", n, s);
     return n+1;
 }
 
@@ -185,7 +183,6 @@ static int message_socket_client_event(int fd, uint32_t epevents, void *data)
 {
     MessageSocket* client = (MessageSocket*)data;
 
-    printf("message_socket client event\n");
     if (!(epevents & EPOLLIN)) {
         return 0;
     }
@@ -201,18 +198,14 @@ static int message_socket_client_event(int fd, uint32_t epevents, void *data)
         return 0;
     }
 
-    printf("message_socket client message <%s>\n", buf);
-
     // Parse the message.  Right now we support:
     //   dialog show <string>
     //   dialog dismiss
     char* fields[3];
     int nfields;
     nfields = string_split(buf, fields, 3);
-    printf("fields=%d\n", nfields);
     if (nfields < 2)
         return 0;
-    printf("field[0]=%s, field[1]=%s\n", fields[0], fields[1]);
     if (strcmp(fields[0], "dialog") == 0) {
         if (strcmp(fields[1], "show") == 0 && nfields > 2) {
             self->DialogShowInfo(fields[2]);
@@ -229,9 +222,7 @@ static int message_socket_listen_event(int fd, uint32_t epevents, void *data)
 {
     MessageSocket* ms = (MessageSocket*)data;
     MessageSocket* client = ms->Accept();
-    printf("message_socket_listen_event: event on %d\n", fd);
     if (client) {
-        printf("message_socket client connected\n");
         ev_add_fd(client->fd(), message_socket_client_event, client);
     }
     return 0;

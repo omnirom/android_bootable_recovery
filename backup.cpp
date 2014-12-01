@@ -243,7 +243,7 @@ int do_backup(int argc, char **argv)
         }
     }
 
-    rc = create_tar(opt_compress, "w");
+    rc = create_tar(adb_ofd, opt_compress, "w");
     if (rc != 0) {
         logmsg("do_backup: cannot open tar stream\n");
         return rc;

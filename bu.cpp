@@ -27,7 +27,8 @@ using namespace android;
 
 struct selabel_handle *sehandle;
 
-int sockfd;
+int adb_ifd;
+int adb_ofd;
 TAR* tar;
 gzFile gzf;
 
@@ -131,14 +132,18 @@ void part_set(partspec* part)
 
 int update_progress(uint64_t off)
 {
+    static time_t last_time = 0;
+    static int last_pct = 0;
     if (curpart) {
-        int oldpct = min(100, (int)((uint64_t)100*curpart->off/curpart->used));
         curpart->off += off;
-        int newpct = min(100, (int)((uint64_t)100*curpart->off/curpart->used));
-        if (newpct > oldpct) {
+        time_t now = time(NULL);
+        int pct = min(100, (int)((uint64_t)100*curpart->off/curpart->used));
+        if (now != last_time && pct != last_pct) {
             char msg[256];
-            sprintf(msg, "%s: %d%% complete", curpart->name, newpct);
+            sprintf(msg, "%s: %d%% complete", curpart->name, pct);
             ms.Show(msg);
+            last_time = now;
+            last_pct = pct;
         }
     }
     return 0;
@@ -247,7 +252,7 @@ static tartype_t tar_io_gz = {
     tar_gz_cb_write
 };
 
-int create_tar(const char* compress, const char* mode)
+int create_tar(int fd, const char* compress, const char* mode)
 {
     int rc = -1;
 
@@ -255,13 +260,13 @@ int create_tar(const char* compress, const char* mode)
     MD5_Init(&md5_ctx);
 
     if (!compress || strcasecmp(compress, "none") == 0) {
-        rc = tar_fdopen(&tar, sockfd, "foobar", &tar_io,
+        rc = tar_fdopen(&tar, fd, "foobar", &tar_io,
                 0, /* oflags: unused */
                 0, /* mode: unused */
                 TAR_GNU | TAR_STORE_SELINUX /* options */);
     }
     else if (strcasecmp(compress, "gzip") == 0) {
-        gzf = gzdopen(sockfd, mode);
+        gzf = gzdopen(fd, mode);
         if (gzf != NULL) {
             rc = tar_fdopen(&tar, 0, "foobar", &tar_io_gz,
                     0, /* oflags: unused */
@@ -290,16 +295,21 @@ int main(int argc, char **argv)
     int n;
     int rc = 1;
 
+    const char* logfile = "/tmp/recovery.log";
+    adb_ifd = dup(STDIN_FILENO);
+    adb_ofd = dup(STDOUT_FILENO);
+    freopen(logfile, "a", stdout); setbuf(stdout, NULL);
+    freopen(logfile, "a", stderr); setbuf(stderr, NULL);
+
     logmsg("bu: invoked with %d args\n", argc);
 
-    if (argc < 3) {
+    if (argc < 2) {
         logmsg("Not enough args (%d)\n", argc);
         do_exit(1);
     }
 
-    // progname sockfd args...
+    // progname args...
     int optidx = 1;
-    sockfd = atoi(argv[optidx++]);
     const char* opname = argv[optidx++];
 
     struct selinux_opt seopts[] = {
@@ -327,8 +337,10 @@ int main(int argc, char **argv)
 
     ms.Dismiss();
 
+    close(adb_ofd);
+    close(adb_ifd);
+
     sleep(1);
-    close(sockfd);
 
     logmsg("bu exiting\n");
 

@@ -162,7 +162,7 @@ static int verify_eod(size_t actual_hash_datalen,
     return rc;
 }
 
-static int do_restore_tree(int sockfd)
+static int do_restore_tree()
 {
     int rc = 0;
     ssize_t len;
@@ -172,9 +172,9 @@ static int do_restore_tree(int sockfd)
 
     logmsg("do_restore_tree: enter\n");
 
-    len = recv(sockfd, buf, sizeof(buf), MSG_PEEK);
+    len = recv(adb_ifd, buf, sizeof(buf), MSG_PEEK);
     if (len < 0) {
-        logmsg("do_restore_tree: peek(%d) failed (%d:%s)\n", sockfd, rc, strerror(errno));
+        logmsg("do_restore_tree: peek failed (%d:%s)\n", rc, strerror(errno));
         return -1;
     }
     if (len < 2) {
@@ -186,7 +186,7 @@ static int do_restore_tree(int sockfd)
         compress = "gzip";
     }
 
-    create_tar(compress, "r");
+    create_tar(adb_ifd, compress, "r");
 
     size_t save_hash_datalen;
     SHA_CTX save_sha_ctx;
@@ -294,7 +294,7 @@ int do_restore(int argc, char **argv)
     int len;
     int written;
 
-    rc = do_restore_tree(sockfd);
+    rc = do_restore_tree();
     logmsg("do_restore: rc=%d\n", rc);
 
     free(hash_name);
