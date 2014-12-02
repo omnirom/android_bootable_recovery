@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0b32e5d2_0ac9fbad",
+        "filename": "partition.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2107,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-12-02T17:28:19Z",
+      "side": 1,
+      "message": "Spaces instead of tabs",
+      "range": {
+        "startLine": 2107,
+        "startChar": 12,
+        "endLine": 2107,
+        "endChar": 31
+      },
+      "revId": "5a6713e142a71c2bc5f73409f3bc83682e6feb54",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
