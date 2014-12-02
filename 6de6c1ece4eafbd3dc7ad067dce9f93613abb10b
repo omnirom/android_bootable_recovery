@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0b32e5d2_aad9cf84",
+        "filename": "minuitwrp/truetype.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 386,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-12-02T15:17:42Z",
+      "side": 1,
+      "message": "utf_bytes should be an int to match the return type of the utf8_to_unicode function.",
+      "range": {
+        "startLine": 386,
+        "startChar": 21,
+        "endLine": 386,
+        "endChar": 30
+      },
+      "revId": "6de6c1ece4eafbd3dc7ad067dce9f93613abb10b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b32e5d2_cace03b8",
+        "filename": "minuitwrp/truetype.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 574,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2014-12-02T15:17:42Z",
+      "side": 1,
+      "message": "utf_bytes should be an int to match the return type of the utf8_to_unicode function.",
+      "revId": "6de6c1ece4eafbd3dc7ad067dce9f93613abb10b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
