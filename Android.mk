@@ -307,8 +307,6 @@ ifeq ($(PLATFORM_VERSION), 5.0.1)
     LOCAL_CFLAGS += -DANDROID_VERSION=5
 endif
 
-LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
-
 LOCAL_ADDITIONAL_DEPENDENCIES := \
     dump_image \
     erase_image \
@@ -328,6 +326,9 @@ ifneq ($(TARGET_ARCH), arm64)
         dosfslabel \
         fsck_msdos_symlink \
         mkdosfs
+    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
+else
+    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
 endif
 ifneq ($(TW_USE_TOOLBOX), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += busybox_symlinks
