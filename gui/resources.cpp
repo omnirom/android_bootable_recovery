@@ -149,8 +149,10 @@ ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)
 	std::string file;
 
 	mSurface = NULL;
-	if (!node)
+	if (!node) {
+		LOGERR("ImageResource node is NULL\n");
 		return;
+	}
 
 	if (node->first_attribute("filename"))
 		file = node->first_attribute("filename")->value();
@@ -261,10 +263,13 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 			FontResource* res = new FontResource(child, pZip);
 			if (res == NULL || res->GetResource() == NULL)
 			{
-				xml_attribute<>* attr_name = child->first_attribute("name");
+				std::string res_name;
+				if (child->first_attribute("name"))
+					res_name = child->first_attribute("name")->value();
+				if (res_name.empty() && child->first_attribute("filename"))
+					res_name = child->first_attribute("filename")->value();
 
-				if (!attr_name) {
-					std::string res_name = attr_name->value();
+				if (!res_name.empty()) {
 					LOGERR("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
 				} else
 					LOGERR("Resource type (%s) failed to load\n", type.c_str());
@@ -281,10 +286,13 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 			ImageResource* res = new ImageResource(child, pZip);
 			if (res == NULL || res->GetResource() == NULL)
 			{
-				xml_attribute<>* attr_name = child->first_attribute("name");
+				std::string res_name;
+				if (child->first_attribute("name"))
+					res_name = child->first_attribute("name")->value();
+				if (res_name.empty() && child->first_attribute("filename"))
+					res_name = child->first_attribute("filename")->value();
 
-				if (!attr_name) {
-					std::string res_name = attr_name->value();
+				if (!res_name.empty()) {
 					LOGERR("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
 				} else
 					LOGERR("Resource type (%s) failed to load\n", type.c_str());
@@ -301,10 +309,13 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 			AnimationResource* res = new AnimationResource(child, pZip);
 			if (res == NULL || res->GetResource() == NULL)
 			{
-				xml_attribute<>* attr_name = child->first_attribute("name");
+				std::string res_name;
+				if (child->first_attribute("name"))
+					res_name = child->first_attribute("name")->value();
+				if (res_name.empty() && child->first_attribute("filename"))
+					res_name = child->first_attribute("filename")->value();
 
-				if (!attr_name) {
-					std::string res_name = attr_name->value();
+				if (!res_name.empty()) {
 					LOGERR("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
 				} else
 					LOGERR("Resource type (%s) failed to load\n", type.c_str());
