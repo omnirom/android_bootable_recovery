@@ -327,7 +327,7 @@ ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
 endif
 
 # Auto filled build flag
-ifeq ($(PLATFORM_VERSION), 5.0)
+ifeq ($(PLATFORM_VERSION), 5.0.1)
     LOCAL_CFLAGS += -DANDROID_VERSION=5
 endif
 
@@ -479,7 +479,7 @@ LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng optional
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
 LOCAL_SRC_FILES := adb_install.cpp asn1_decoder.cpp bootloader.cpp mtdutils/mtdutils.c legacy_property_service.c
-ifeq ($(PLATFORM_VERSION), 5.0)
+ifeq ($(PLATFORM_VERSION), 5.0.1)
     LOCAL_SRC_FILES += verifier.cpp
 else
     LOCAL_SRC_FILES += verifierold.cpp
@@ -542,7 +542,7 @@ endif
 ifeq ($(TW_INCLUDE_L_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/lollipop/Android.mk
 endif
-ifeq ($(PLATFORM_VERSION), 5.0)
+ifeq ($(PLATFORM_VERSION), 5.0.1)
     include $(commands_recovery_local_path)/minzip/Android.mk
 else
     include $(commands_recovery_local_path)/minzipold/Android.mk

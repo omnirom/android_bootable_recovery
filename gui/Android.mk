@@ -82,7 +82,7 @@ ifeq ($(TW_CUSTOM_THEME),)
 endif
 
 # Auto filled build flag
-ifeq ($(PLATFORM_VERSION), 5.0)
+ifeq ($(PLATFORM_VERSION), 5.0.1)
     LOCAL_CFLAGS += -DANDROID_VERSION=5
 endif
 
