@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0b32e5d2_ead027d0",
+        "filename": "prebuilt/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-04T01:38:05Z",
+      "side": 1,
+      "message": "If you want to maintain less code, I think the relink scripts can be easily combined to a single one.",
+      "revId": "dea085f76b2a75bd1e4f491a05de95672d02fd4b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
