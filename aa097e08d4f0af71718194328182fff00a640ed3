@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0b32e5d2_8ac16b05",
+        "filename": "gui/resources.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-04T01:35:17Z",
+      "side": 1,
+      "message": "null pointer deref when there is no attribute \"name\". (same for the other similar changes)",
+      "revId": "aa097e08d4f0af71718194328182fff00a640ed3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
