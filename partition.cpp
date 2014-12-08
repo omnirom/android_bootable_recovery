@@ -1745,7 +1745,7 @@ bool TWPartition::Backup_DD(string backup_folder) {
 
 	Full_FileName = backup_folder + "/" + Backup_FileName;
 
-	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'" + " bs=" + DD_BS + "c count=1";
+	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'" + " bs=" + DD_BS + " count=1";
 	LOGINFO("Backup command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command);
 	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
