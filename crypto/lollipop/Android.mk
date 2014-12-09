@@ -1,5 +1,5 @@
 LOCAL_PATH := $(call my-dir)
-ifeq ($(TW_INCLUDE_L_CRYPTO), true)
+ifeq ($(TW_INCLUDE_CRYPTO), true)
 include $(CLEAR_VARS)
 
 common_c_includes := \

@@ -131,6 +131,7 @@ static int keymaster_check_compatibility()
 
     printf("keymaster version is %d\n", keymaster_dev->common.module->module_api_version);
 
+#if (KEYMASTER_HEADER_VERSION >= 3)
     if (keymaster_dev->common.module->module_api_version
             < KEYMASTER_MODULE_API_VERSION_0_3) {
         rc = 0;
@@ -141,6 +142,7 @@ static int keymaster_check_compatibility()
         rc = 1;
     }
 
+#endif
 out:
     keymaster_close(keymaster_dev);
     return rc;
