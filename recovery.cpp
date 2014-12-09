@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/klog.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -76,6 +77,8 @@ static const char *CACHE_ROOT = "/cache";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
+static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
+#define KLOG_DEFAULT_LEN (64 * 1024)
 
 #define KEEP_LOG_COUNT 10
 
@@ -259,6 +262,44 @@ set_sdcard_update_bootloader_message() {
     set_bootloader_message(&boot);
 }
 
+// read from kernel log into buffer and write out to file
+static void
+save_kernel_log(const char *destination) {
+    int n;
+    char *buffer;
+    int klog_buf_len;
+    FILE *log;
+
+    klog_buf_len = klogctl(KLOG_SIZE_BUFFER, 0, 0);
+    if (klog_buf_len <= 0) {
+        LOGE("Error getting klog size (%s), using default\n", strerror(errno));
+        klog_buf_len = KLOG_DEFAULT_LEN;
+    }
+
+    buffer = (char *)malloc(klog_buf_len);
+    if (!buffer) {
+        LOGE("Can't alloc %d bytes for klog buffer\n", klog_buf_len);
+        return;
+    }
+
+    n = klogctl(KLOG_READ_ALL, buffer, klog_buf_len);
+    if (n < 0) {
+        LOGE("Error in reading klog (%s)\n", strerror(errno));
+        free(buffer);
+        return;
+    }
+
+    log = fopen_path(destination, "w");
+    if (log == NULL) {
+        LOGE("Can't open %s\n", destination);
+        free(buffer);
+        return;
+    }
+    fwrite(buffer, n, 1, log);
+    check_and_fclose(log, destination);
+    free(buffer);
+}
+
 // How much of the temp log we have copied to the copy in cache.
 static long tmplog_offset = 0;
 
@@ -306,8 +347,11 @@ copy_logs() {
     copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
     copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
     copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, false);
+    save_kernel_log(LAST_KMSG_FILE);
     chmod(LOG_FILE, 0600);
     chown(LOG_FILE, 1000, 1000);   // system user
+    chmod(LAST_KMSG_FILE, 0600);
+    chown(LAST_KMSG_FILE, 1000, 1000);   // system user
     chmod(LAST_LOG_FILE, 0640);
     chmod(LAST_INSTALL_FILE, 0644);
     sync();
@@ -695,15 +739,26 @@ static void file_to_ui(const char* fn) {
 }
 
 static void choose_recovery_file(Device* device) {
-    int i;
+    unsigned int i;
+    unsigned int n;
     static const char** title_headers = NULL;
     char *filename;
     const char* headers[] = { "Select file to view",
                               "",
                               NULL };
-    char* entries[KEEP_LOG_COUNT + 2];
+    // "Go back" + LAST_KMSG_FILE + KEEP_LOG_COUNT + terminating NULL entry
+    char* entries[KEEP_LOG_COUNT + 3];
     memset(entries, 0, sizeof(entries));
 
+    n = 0;
+    entries[n++] = strdup("Go back");
+
+    // Add kernel kmsg file if available
+    if ((ensure_path_mounted(LAST_KMSG_FILE) == 0) && (access(LAST_KMSG_FILE, R_OK) == 0)) {
+        entries[n++] = strdup(LAST_KMSG_FILE);
+    }
+
+    // Add LAST_LOG_FILE + LAST_LOG_FILE.x
     for (i = 0; i < KEEP_LOG_COUNT; i++) {
         char *filename;
         if (asprintf(&filename, (i==0) ? LAST_LOG_FILE : (LAST_LOG_FILE ".%d"), i) == -1) {
@@ -712,13 +767,12 @@ static void choose_recovery_file(Device* device) {
         }
         if ((ensure_path_mounted(filename) != 0) || (access(filename, R_OK) == -1)) {
             free(filename);
-            entries[i+1] = NULL;
+            entries[n++] = NULL;
             break;
         }
-        entries[i+1] = filename;
+        entries[n++] = filename;
     }
 
-    entries[0] = strdup("Go back");
     title_headers = prepend_title((const char**)headers);
 
     while(1) {
@@ -727,7 +781,7 @@ static void choose_recovery_file(Device* device) {
         file_to_ui(entries[chosen_item]);
     }
 
-    for (i = 0; i < KEEP_LOG_COUNT + 1; i++) {
+    for (i = 0; i < (sizeof(entries) / sizeof(*entries)); i++) {
         free(entries[i]);
     }
 }
