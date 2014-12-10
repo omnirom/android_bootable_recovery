@@ -278,16 +278,76 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 endif
 
 ifneq ($(TW_EXCLUDE_SUPERSU), true)
-	#su binary
-	include $(CLEAR_VARS)
-	LOCAL_MODULE := su
-	LOCAL_MODULE_TAGS := eng
-	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-	LOCAL_SRC_FILES := $(LOCAL_MODULE)
-	include $(BUILD_PREBUILT)
+	ifeq ($(TARGET_ARCH), arm)
+		#chattr.pie
+		include $(CLEAR_VARS)
+		LOCAL_MODULE := chattr.pie
+		LOCAL_MODULE_TAGS := eng
+		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
+		LOCAL_SRC_FILES := $(LOCAL_MODULE)
+		include $(BUILD_PREBUILT)
 
-       #install-recovery.sh
+		#libsupol.so
+		include $(CLEAR_VARS)
+		LOCAL_MODULE := libsupol.so
+		LOCAL_MODULE_TAGS := eng
+		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
+		LOCAL_SRC_FILES := $(LOCAL_MODULE)
+		include $(BUILD_PREBUILT)
+
+		#su binary
+		include $(CLEAR_VARS)
+		LOCAL_MODULE := su
+		LOCAL_MODULE_TAGS := eng
+		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
+		LOCAL_SRC_FILES := $(LOCAL_MODULE)
+		include $(BUILD_PREBUILT)
+
+		#supolicy
+		include $(CLEAR_VARS)
+		LOCAL_MODULE := supolicy
+		LOCAL_MODULE_TAGS := eng
+		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
+		LOCAL_SRC_FILES := $(LOCAL_MODULE)
+		include $(BUILD_PREBUILT)
+	endif
+	ifeq ($(TARGET_ARCH), arm64)
+		#libsupol.so
+		include $(CLEAR_VARS)
+		LOCAL_MODULE := libsupol.soarm64
+		LOCAL_MODULE_STEM := libsupol.so
+		LOCAL_MODULE_TAGS := eng
+		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
+		LOCAL_SRC_FILES := $(LOCAL_MODULE)
+		include $(BUILD_PREBUILT)
+
+		#su binary
+		include $(CLEAR_VARS)
+		LOCAL_MODULE := suarm64
+		LOCAL_MODULE_STEM := su
+		LOCAL_MODULE_TAGS := eng
+		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
+		LOCAL_SRC_FILES := $(LOCAL_MODULE)
+		include $(BUILD_PREBUILT)
+
+		#supolicy
+		include $(CLEAR_VARS)
+		LOCAL_MODULE := supolicyarm64
+		LOCAL_MODULE_STEM := supolicy
+		LOCAL_MODULE_TAGS := eng
+		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
+		LOCAL_SRC_FILES := $(LOCAL_MODULE)
+		include $(BUILD_PREBUILT)
+	endif
+
+	#install-recovery.sh
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := install-recovery.sh
 	LOCAL_MODULE_TAGS := eng
@@ -296,7 +356,16 @@ ifneq ($(TW_EXCLUDE_SUPERSU), true)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
 	include $(BUILD_PREBUILT)
 
-       #99SuperSUDaemon
+	#install-supersu.sh
+	include $(CLEAR_VARS)
+	LOCAL_MODULE := install-supersu.sh
+	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
+	LOCAL_SRC_FILES := $(LOCAL_MODULE)
+	include $(BUILD_PREBUILT)
+
+	#99SuperSUDaemon
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := 99SuperSUDaemon
 	LOCAL_MODULE_TAGS := eng
