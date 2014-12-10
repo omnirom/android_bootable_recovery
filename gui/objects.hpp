@@ -28,14 +28,6 @@
 #include <set>
 #include <time.h>
 
-extern "C" {
-#ifdef HAVE_SELINUX
-#include "../minzip/Zip.h"
-#else
-#include "../minzipold/Zip.h"
-#endif
-}
-
 using namespace rapidxml;
 
 #include "../data.hpp"

@@ -39,11 +39,6 @@ extern "C"
 {
 #include "../twcommon.h"
 #include "../minuitwrp/minui.h"
-#ifdef HAVE_SELINUX
-#include "../minzip/Zip.h"
-#else
-#include "../minzipold/Zip.h"
-#endif
 #include <pixelflinger/pixelflinger.h>
 }
 

@@ -39,13 +39,8 @@
 extern "C" {
 #include "../twcommon.h"
 #include "../minuitwrp/minui.h"
-#if (ANDROID_VERSION >= 5)
 #include "../minzip/SysUtil.h"
 #include "../minzip/Zip.h"
-#else
-#include "../minzipold/SysUtil.h"
-#include "../minzipold/Zip.h"
-#endif
 }
 
 #include "rapidxml.hpp"
@@ -926,9 +921,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	char* xmlFile = NULL;
 	PageSet* pageSet = NULL;
 	int ret;
-#if (ANDROID_VERSION >= 5)
 	MemMapping map;
-#endif
 
 	// Open the XML file
 	LOGINFO("Loading package: %s (%s)\n", name.c_str(), package.c_str());
@@ -955,7 +948,6 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	else
 	{
 		LOGINFO("Loading zip theme\n");
-#if (ANDROID_VERSION >= 5)
 		if (!TWFunc::Path_Exists(package))
 			return -1;
 		if (sysMapFile(package.c_str(), &map) != 0) {
@@ -967,12 +959,6 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 			sysReleaseMap(&map);
 			return -1;
 		}
-#else
-		if (mzOpenZipArchive(package.c_str(), &zip)) {
-			LOGERR("Failed to open theme zip.\n");
-			return -1;
-		}
-#endif
 		pZip = &zip;
 		const ZipEntry* ui_xml = mzFindZipEntry(&zip, "ui.xml");
 		if (ui_xml == NULL)
@@ -1020,9 +1006,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 
 	if (pZip) {
 		mzCloseZipArchive(pZip);
-#if (ANDROID_VERSION >= 5)
 		sysReleaseMap(&map);
-#endif
 	}
 	return ret;
 
@@ -1030,9 +1014,7 @@ error:
 	LOGERR("An internal error has occurred.\n");
 	if (pZip) {
 		mzCloseZipArchive(pZip);
-#if (ANDROID_VERSION >= 5)
 		sysReleaseMap(&map);
-#endif
 	}
 	if (xmlFile)
 		free(xmlFile);

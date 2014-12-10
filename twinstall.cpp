@@ -33,15 +33,9 @@
 #include "minui/minui.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
-#if (ANDROID_VERSION >= 5)
 #include "minzip/SysUtil.h"
 #include "minzip/Zip.h"
 #include "verifier.h"
-#else
-#include "verifierold.h"
-#include "minzipold/SysUtil.h"
-#include "minzipold/Zip.h"
-#endif
 #include "variables.h"
 #include "data.hpp"
 #include "partitions.hpp"
@@ -279,44 +273,30 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 #endif
 	DataManager::SetProgress(0);
 
-#if (ANDROID_VERSION >= 5)
 	MemMapping map;
 	if (sysMapFile(path, &map) != 0) {
 		LOGERR("Failed to sysMapFile '%s'\n", path);
         return -1;
     }
-#endif
 
 	if (zip_verify) {
 		gui_print("Verifying zip signature...\n");
-#if (ANDROID_VERSION >= 5)
 		ret_val = verify_file(map.addr, map.length);
-#else
-		ret_val = verify_file(path);
-#endif
 		if (ret_val != VERIFY_SUCCESS) {
 			LOGERR("Zip signature verification failed: %i\n", ret_val);
-#if (ANDROID_VERSION >= 5)
 			sysReleaseMap(&map);
-#endif
 			return -1;
+		} else {
+			gui_print("Zip signature verified successfully.\n");
 		}
 	}
-#if (ANDROID_VERSION >= 5)
 	ret_val = mzOpenZipArchive(map.addr, map.length, &Zip);
-#else
-	ret_val = mzOpenZipArchive(path, &Zip);
-#endif
 	if (ret_val != 0) {
 		LOGERR("Zip file is corrupt!\n", path);
-#if (ANDROID_VERSION >= 5)
 		sysReleaseMap(&map);
-#endif
 		return INSTALL_CORRUPT;
 	}
 	ret_val = Run_Update_Binary(path, &Zip, wipe_cache);
-#if (ANDROID_VERSION >= 5)
 	sysReleaseMap(&map);
-#endif
 	return ret_val;
 }

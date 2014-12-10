@@ -40,11 +40,6 @@ extern "C" {
 #include "../data.hpp"
 extern "C" {
 #include "../twcommon.h"
-#ifdef HAVE_SELINUX
-#include "../minzip/Zip.h"
-#else
-#include "../minzipold/Zip.h"
-#endif
 }
 #include "../twrp-functions.hpp"
 #include "../variables.h"
