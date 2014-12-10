@@ -346,10 +346,6 @@ int main(int argc, char **argv) {
 			if (gui_startPage("installsu") != 0) {
 				LOGERR("Failed to start SuperSU install page.\n");
 			}
-		} else if (TWFunc::Check_su_Perms() > 0) {
-			// su perms are set incorrectly
-			LOGINFO("Root permissions appear to be lost... fixing. (This will always happen on 4.3+ ROMs with SELinux.\n");
-			TWFunc::Fix_su_Perms();
 		}
 		sync();
 		PartitionManager.UnMount_By_Path("/system", false);
