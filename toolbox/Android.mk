@@ -1,7 +1,7 @@
 LOCAL_PATH:= system/core/toolbox/
 
 
-ifeq ($(PLATFORM_VERSION), 5.0.1)
+ifeq ($(PLATFORM_SDK_VERSION), 21)
 
 # Rule for lollipop
 common_cflags := \
