@@ -82,6 +82,9 @@ static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 
 #define KEEP_LOG_COUNT 10
 
+// Number of lines per page when displaying a file on screen
+#define LINES_PER_PAGE 30
+
 RecoveryUI* ui = NULL;
 char* locale = NULL;
 char recovery_version[PROPERTY_VALUE_MAX+1];
@@ -725,15 +728,46 @@ static void file_to_ui(const char* fn) {
     }
     char line[1024];
     int ct = 0;
+    int key = 0;
     redirect_stdio("/dev/null");
     while(fgets(line, sizeof(line), fp) != NULL) {
         ui->Print("%s", line);
         ct++;
-        if (ct % 30 == 0) {
+        if (ct % LINES_PER_PAGE == 0) {
             // give the user time to glance at the entries
-            ui->WaitKey();
+            key = ui->WaitKey();
+
+            if (key == KEY_POWER) {
+                break;
+            }
+
+            if (key == KEY_VOLUMEUP) {
+                // Go back by seeking to the beginning and dumping ct - n
+                // lines.  It's ugly, but this way we don't need to store
+                // the previous offsets.  The files we're dumping here aren't
+                // expected to be very large.
+                int i;
+
+                ct -= 2 * LINES_PER_PAGE;
+                if (ct < 0) {
+                    ct = 0;
+                }
+                fseek(fp, 0, SEEK_SET);
+                for (i = 0; i < ct; i++) {
+                    fgets(line, sizeof(line), fp);
+                }
+                ui->Print("^^^^^^^^^^\n");
+            }
         }
     }
+
+    // If the user didn't abort, then give the user time to glance at
+    // the end of the log, sorry, no rewind here
+    if (key != KEY_POWER) {
+        ui->Print("\n--END-- (press any key)\n");
+        ui->WaitKey();
+    }
+
     redirect_stdio(TEMPORARY_LOG_FILE);
     fclose(fp);
 }
