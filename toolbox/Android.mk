@@ -337,6 +337,15 @@ $(SYMLINKS): $(LOCAL_INSTALLED_MODULE) $(LOCAL_PATH)/Android.mk
 	@rm -rf $@
 	$(hide) ln -sf $(TOOLBOX_BINARY) $@
 
+ifneq (,$(filter $(PLATFORM_SDK_VERSION),16 17 18))
+ALL_DEFAULT_INSTALLED_MODULES += $(SYMLINKS)
+
+# We need this so that the installed files could be picked up based on the
+# local module name
+ALL_MODULES.$(LOCAL_MODULE).INSTALLED := \
+	$(ALL_MODULES.$(LOCAL_MODULE).INSTALLED) $(SYMLINKS)
+endif
+
 include $(CLEAR_VARS)
 LOCAL_MODULE := toolbox_symlinks
 LOCAL_MODULE_TAGS := optional
