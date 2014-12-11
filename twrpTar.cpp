@@ -21,6 +21,7 @@ extern "C" {
 	#include "libtar/libtar.h"
 	#include "twrpTar.h"
 	#include "tarWrite.h"
+	#include "set_metadata.h"
 }
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1242,6 +1243,7 @@ int twrpTar::closeTar() {
 		LOGERR("Backup file size for '%s' is 0 bytes.\n", tarfn.c_str());
 		return -1;
 	}
+	tw_set_default_metadata(tarfn.c_str());
 	return 0;
 }
 

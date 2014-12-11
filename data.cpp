@@ -46,6 +46,7 @@
 #include "gui/blanktimer.hpp"
 #endif
 #include "find_file.hpp"
+#include "set_metadata.h"
 
 #ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
 	#include "cutils/properties.h"
@@ -333,6 +334,7 @@ int DataManager::SaveValues()
 		}
 	}
 	fclose(out);
+	tw_set_default_metadata(mBackingFile.c_str());
 #endif // ifdef TW_OEM_BUILD
 	return 0;
 }

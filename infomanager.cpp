@@ -39,6 +39,7 @@
 #include "infomanager.hpp"
 #include "twcommon.h"
 #include "partitions.hpp"
+#include "set_metadata.h"
 
 using namespace std;
 
@@ -97,7 +98,7 @@ int InfoManager::SaveValues(void) {
 		return -1;
 
 	PartitionManager.Mount_By_Path(File, true);
-LOGINFO("InfoManager saving '%s'\n", File.c_str());
+	LOGINFO("InfoManager saving '%s'\n", File.c_str());
 	FILE* out = fopen(File.c_str(), "wb");
 	if (!out)
 		return -1;
@@ -112,6 +113,7 @@ LOGINFO("InfoManager saving '%s'\n", File.c_str());
 		fwrite(iter->second.c_str(), 1, length, out);
 	}
 	fclose(out);
+	tw_set_default_metadata(File.c_str());
 	return 0;
 }
 

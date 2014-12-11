@@ -54,6 +54,7 @@
 
 extern "C" {
 	#include "libcrecovery/common.h"
+	#include "set_metadata.h"
 }
 
 /* Execute a command */
@@ -406,9 +407,13 @@ int TWFunc::Recursive_Mkdir(string Path) {
 	while (pos != string::npos)
 	{
 		wholePath = pathCpy.substr(0, pos);
-		if (mkdir(wholePath.c_str(), 0777) && errno != EEXIST) {
-			LOGERR("Unable to create folder: %s  (errno=%d)\n", wholePath.c_str(), errno);
-			return false;
+		if (!TWFunc::Path_Exists(wholePath)) {
+			if (mkdir(wholePath.c_str(), 0777)) {
+				LOGERR("Unable to create folder: %s  (errno=%d)\n", wholePath.c_str(), errno);
+				return false;
+			} else {
+				tw_set_default_metadata(wholePath.c_str());
+			}
 		}
 
 		pos = pathCpy.find("/", pos + 1);

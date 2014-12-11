@@ -42,6 +42,7 @@
 #include "twrpDU.hpp"
 #include "fixPermissions.hpp"
 #include "infomanager.hpp"
+#include "set_metadata.h"
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
@@ -1748,6 +1749,7 @@ bool TWPartition::Backup_DD(string backup_folder) {
 	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'" + " bs=" + DD_BS + " count=1";
 	LOGINFO("Backup command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command);
+	tw_set_default_metadata(Full_FileName.c_str());
 	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
 		LOGERR("Backup file size for '%s' is 0 bytes.\n", Full_FileName.c_str());
 		return false;
@@ -1771,6 +1773,7 @@ bool TWPartition::Backup_Dump_Image(string backup_folder) {
 	Command = "dump_image " + MTD_Name + " '" + Full_FileName + "'";
 	LOGINFO("Backup command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command);
+	tw_set_default_metadata(Full_FileName.c_str());
 	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
 		// Actual size may not match backup size due to bad blocks on MTD devices so just check for 0 bytes
 		LOGERR("Backup file size for '%s' is 0 bytes.\n", Full_FileName.c_str());

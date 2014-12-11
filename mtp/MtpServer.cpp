@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include "../twcommon.h"
+#include "../set_metadata.h"
 #include <cutils/properties.h>
 
 #include "MtpTypes.h"
@@ -1002,6 +1003,7 @@ MtpResponseCode MtpServer::doSendObjectInfo() {
 			return MTP_RESPONSE_GENERAL_ERROR;
 		}
 		chown((const char *)path, getuid(), mFileGroup);
+		tw_set_default_metadata((const char *)path);
 
 		// SendObject does not get sent for directories, so call endSendObject here instead
 		mDatabase->lockMutex();
@@ -1073,6 +1075,7 @@ MtpResponseCode MtpServer::doSendObject() {
 		ret = ioctl(mFD, MTP_RECEIVE_FILE, (unsigned long)&mfr);
 	}
 	close(mfr.fd);
+	tw_set_default_metadata((const char *)mSendObjectFilePath);
 
 	if (ret < 0) {
 		unlink(mSendObjectFilePath);

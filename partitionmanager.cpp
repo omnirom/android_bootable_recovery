@@ -38,6 +38,7 @@
 #include "fixPermissions.hpp"
 #include "twrpDigest.hpp"
 #include "twrpDU.hpp"
+#include "set_metadata.h"
 
 #ifdef TW_HAS_MTP
 #include "mtp/mtp_MtpServer.hpp"
@@ -757,6 +758,7 @@ int TWPartitionManager::Run_Backup(void) {
 	gui_print_color("highlight", "[BACKUP COMPLETED IN %d SECONDS]\n\n", total_time); // the end
 	string backup_log = Full_Backup_Path + "recovery.log";
 	TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
+	tw_set_default_metadata(backup_log.c_str());
 	return true;
 }
 
