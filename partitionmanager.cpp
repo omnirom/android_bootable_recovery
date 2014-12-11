@@ -1948,6 +1948,7 @@ bool TWPartitionManager::Disable_MTP(void) {
 	string productstr = product;
 	TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
 	TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
+	usleep(2000);
 	if (mtppid) {
 		LOGINFO("Disabling MTP\n");
 		int status;
