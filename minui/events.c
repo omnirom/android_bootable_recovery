@@ -84,7 +84,11 @@ int ev_init(ev_callback input_cb, void *data)
                 continue;
             }
 
+#ifdef EPOLLWAKEUP
             ev.events = EPOLLIN | EPOLLWAKEUP;
+#else
+            ev.events = EPOLLIN;
+#endif
             ev.data.ptr = (void *)&ev_fdinfo[ev_count];
             if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev)) {
                 close(fd);
@@ -118,7 +122,11 @@ int ev_add_fd(int fd, ev_callback cb, void *data)
     if (ev_misc_count == MAX_MISC_FDS || cb == NULL)
         return -1;
 
+#ifdef EPOLLWAKEUP
     ev.events = EPOLLIN | EPOLLWAKEUP;
+#else
+    ev.events = EPOLLIN;
+#endif
     ev.data.ptr = (void *)&ev_fdinfo[ev_count];
     ret = epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
     if (!ret) {
