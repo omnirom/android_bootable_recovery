@@ -994,7 +994,7 @@
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
-				<placement x="%col1_x%" y="%wipe_button_row1%" w="%button_fill_full_width%" h="%button_fill_half_height%" placement="5" />
+				<placement x="%col1_x%" y="%wipe_button_row1%" w="%button_fill_full_width%" h="%button_fill_half_height%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Repair or Change File System</text>
 				<actions>
@@ -1439,7 +1439,7 @@
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
-				<placement x="%col1_x%" y="%row1_header_y%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" placement="5" />
+				<placement x="%col1_x%" y="%row1_header_y%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Backup Name: %tw_backup_name%</text>
 				<actions>

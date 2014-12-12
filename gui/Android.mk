@@ -56,6 +56,12 @@ endif
 ifeq ($(TW_DISABLE_TTF), true)
     LOCAL_CFLAGS += -DTW_DISABLE_TTF
 endif
+ifneq ($(TW_X_OFFSET),)
+  LOCAL_CFLAGS += -DTW_X_OFFSET=$(TW_X_OFFSET)
+endif
+ifneq ($(TW_Y_OFFSET),)
+  LOCAL_CFLAGS += -DTW_Y_OFFSET=$(TW_Y_OFFSET)
+endif
 
 ifeq ($(DEVICE_RESOLUTION),)
   $(warning ********************************************************************************)
