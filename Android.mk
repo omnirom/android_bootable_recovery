@@ -312,14 +312,13 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     teamwin \
     toolbox_symlinks \
     twrp \
-    unpigz_symlink
+    unpigz_symlink \
+    dosfsck \
+    dosfslabel \
+    fsck_msdos_symlink \
+    mkdosfs
 
 ifneq ($(TARGET_ARCH), arm64)
-    LOCAL_ADDITIONAL_DEPENDENCIES += \
-        dosfsck \
-        dosfslabel \
-        fsck_msdos_symlink \
-        mkdosfs
     LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
 else
     LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
@@ -487,11 +486,8 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/libmincrypt/Android.mk \
     $(commands_recovery_local_path)/twrpTarMain/Android.mk \
     $(commands_recovery_local_path)/mtp/Android.mk \
-    $(commands_recovery_local_path)/minzip/Android.mk
-
-ifneq ($(TARGET_ARCH), arm64)
-    include $(commands_recovery_local_path)/dosfstools/Android.mk
-endif
+    $(commands_recovery_local_path)/minzip/Android.mk \
+    $(commands_recovery_local_path)/dosfstools/Android.mk
 
 ifeq ($(TW_INCLUDE_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/lollipop/Android.mk
