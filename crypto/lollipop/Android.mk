@@ -8,7 +8,7 @@ common_c_includes := \
 	external/openssl/include \
 	external/stlport/stlport \
 	bionic \
-	external/scrypt/lib/crypto \
+	bootable/recovery/crypto/scrypt/lib/crypto \
 	frameworks/native/include \
 	system/security/keystore \
 	hardware/libhardware/include/hardware \
@@ -51,20 +51,4 @@ LOCAL_WHOLE_STATIC_LIBRARIES += libscrypttwrp_static
 
 include $(BUILD_SHARED_LIBRARY)
 
-include $(CLEAR_VARS)
-
-LOCAL_SHARED_LIBRARIES := libcutils liblog
-
-LOCAL_INCLUDES += $(LOCAL_PATH) $(LOCAL_PATH)\libminhardware
-
-LOCAL_CFLAGS  += -DQEMU_HARDWARE
-QEMU_HARDWARE := true
-
-LOCAL_SHARED_LIBRARIES += libdl
-
-LOCAL_SRC_FILES += libminhardware/hardware.c
-
-LOCAL_MODULE:= libminhardware
-
-include $(BUILD_SHARED_LIBRARY)
 endif

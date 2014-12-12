@@ -24,7 +24,7 @@ endif
 
 LOCAL_SRC_FILES += $(target_src_files)
 LOCAL_CFLAGS += $(target_c_flags)
-LOCAL_C_INCLUDES += $(target_c_includes)
+LOCAL_C_INCLUDES += $(target_c_includes) bootable/recovery/crypto/scrypt/lib/util
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE:= libscrypttwrp_static
 LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
