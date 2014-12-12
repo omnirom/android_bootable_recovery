@@ -115,6 +115,7 @@ bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h
 		value = node->first_attribute("x")->value();
 		DataManager::GetValue(value, value);
 		*x = atol(value.c_str());
+		*x += TW_X_OFFSET;
 	}
 
 	if (node->first_attribute("y"))
@@ -122,6 +123,7 @@ bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h
 		value = node->first_attribute("y")->value();
 		DataManager::GetValue(value, value);
 		*y = atol(value.c_str());
+		*y += TW_Y_OFFSET;
 	}
 
 	if (w && node->first_attribute("w"))
