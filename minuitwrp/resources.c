@@ -63,8 +63,11 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
     resPath[sizeof(resPath)-1] = '\0';
     FILE* fp = fopen(resPath, "rb");
     if (fp == NULL) {
-        result = -1;
-        goto exit;
+        fp = fopen(name, "rb");
+        if (fp == NULL) {
+            result = -1;
+            goto exit;
+        }
     }
 
     size_t bytesRead = fread(header, 1, sizeof(header), fp);
