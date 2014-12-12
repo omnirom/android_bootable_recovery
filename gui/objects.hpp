@@ -35,6 +35,13 @@ using namespace rapidxml;
 #include "pages.hpp"
 #include "../partitions.hpp"
 
+#ifndef TW_X_OFFSET
+#define TW_X_OFFSET 0
+#endif
+#ifndef TW_Y_OFFSET
+#define TW_Y_OFFSET 0
+#endif
+
 class RenderObject
 {
 public:
