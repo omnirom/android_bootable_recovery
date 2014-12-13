@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "eb3671c6_c9b29193",
+        "filename": "gui/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-13T00:26:19Z",
+      "side": 1,
+      "message": "I think these offsets should really be loaded from the skin instead.",
+      "revId": "9f2a2dc8c62697e3f86846f75174c495f031f06c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
