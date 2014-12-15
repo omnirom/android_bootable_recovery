@@ -10,6 +10,8 @@ on early-init
 
     start ueventd
     start healthd
+     # Set SELinux permissive
+    setenforce 0
 
 on init
     export PATH /sbin:/system/bin
