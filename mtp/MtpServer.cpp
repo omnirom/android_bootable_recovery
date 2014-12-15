@@ -38,6 +38,8 @@
 #include "MtpStorage.h"
 #include "MtpStringBuffer.h"
 
+#include "mtp_MtpServer.hpp"
+
 #include <linux/usb/f_mtp.h>
 
 static const MtpOperationCode kSupportedOperationCodes[] = {
@@ -161,54 +163,85 @@ bool MtpServer::hasStorage(MtpStorageID id) {
 
 void MtpServer::run() {
 	int fd = mFD;
+	MTPD("about to open pipe\n");
+	int pipe_fd = open(MTP_PIPE, O_RDONLY | O_NONBLOCK);
+	fd_set fdset;
+	int sel_return;
+
+	if (pipe_fd <= 0)
+		MTPE("Error opening /sbin/mtppipe\n");
 
 	MTPI("MtpServer::run fd: %d\n", fd);
 
 	while (1) {
-		MTPD("About to read device...\n");
-		int ret = mRequest.read(fd);
-		if (ret < 0) {
-			MTPD("request read returned %d, errno: %d", ret, errno);
-			if (errno == ECANCELED) {
-				// return to top of loop and wait for next command
-				continue;
-			}
-			break;
-		}
-		MtpOperationCode operation = mRequest.getOperationCode();
-		MtpTransactionID transaction = mRequest.getTransactionID();
-
-		MTPD("operation: %s", MtpDebug::getOperationCodeName(operation));
-		mRequest.dump();
-
-		// FIXME need to generalize this
-		bool dataIn = (operation == MTP_OPERATION_SEND_OBJECT_INFO
-					|| operation == MTP_OPERATION_SET_OBJECT_REFERENCES
-					|| operation == MTP_OPERATION_SET_OBJECT_PROP_VALUE
-					|| operation == MTP_OPERATION_SET_DEVICE_PROP_VALUE);
-		if (dataIn) {
-			int ret = mData.read(fd);
+		FD_ZERO(&fdset);
+		if (fd >= 0)
+			FD_SET(fd, &fdset);
+		if (pipe_fd >= 0)
+			FD_SET(pipe_fd, &fdset);
+		MTPD("select\n");
+		sel_return = select((fd > pipe_fd ? fd : pipe_fd) + 1, &fdset, NULL, NULL, NULL);
+		MTPD("select returned %i\n", sel_return);
+		if (fd >= 0 && FD_ISSET(fd, &fdset)) {
+			MTPD("About to read device...\n");
+			int ret = mRequest.read(fd);
 			if (ret < 0) {
-				MTPD("data read returned %d, errno: %d", ret, errno);
+				MTPD("request read returned %d, errno: %d", ret, errno);
 				if (errno == ECANCELED) {
 					// return to top of loop and wait for next command
 					continue;
 				}
 				break;
 			}
-			MTPD("received data:");
-			mData.dump();
-		} else {
-			mData.reset();
-		}
+			MtpOperationCode operation = mRequest.getOperationCode();
+			MtpTransactionID transaction = mRequest.getTransactionID();
 
-		if (handleRequest()) {
-			if (!dataIn && mData.hasData()) {
-				mData.setOperationCode(operation);
-				mData.setTransactionID(transaction);
-				MTPD("sending data:");
+			MTPD("operation: %s", MtpDebug::getOperationCodeName(operation));
+			mRequest.dump();
+
+			// FIXME need to generalize this
+			bool dataIn = (operation == MTP_OPERATION_SEND_OBJECT_INFO
+						|| operation == MTP_OPERATION_SET_OBJECT_REFERENCES
+						|| operation == MTP_OPERATION_SET_OBJECT_PROP_VALUE
+						|| operation == MTP_OPERATION_SET_DEVICE_PROP_VALUE);
+			if (dataIn) {
+				int ret = mData.read(fd);
+				if (ret < 0) {
+					MTPD("data read returned %d, errno: %d", ret, errno);
+					if (errno == ECANCELED) {
+						// return to top of loop and wait for next command
+						continue;
+					}
+					break;
+				}
+				MTPD("received data:");
 				mData.dump();
-				ret = mData.write(fd);
+			} else {
+				mData.reset();
+			}
+
+			if (handleRequest()) {
+				if (!dataIn && mData.hasData()) {
+					mData.setOperationCode(operation);
+					mData.setTransactionID(transaction);
+					MTPD("sending data:");
+					mData.dump();
+					ret = mData.write(fd);
+					if (ret < 0) {
+						MTPD("request write returned %d, errno: %d", ret, errno);
+						if (errno == ECANCELED) {
+							// return to top of loop and wait for next command
+							continue;
+						}
+						break;
+					}
+				}
+
+				mResponse.setTransactionID(transaction);
+				MTPD("sending response %04X\n", mResponse.getResponseCode());
+				ret = mResponse.write(fd);
+				MTPD("ret: %d\n", ret);
+				mResponse.dump();
 				if (ret < 0) {
 					MTPD("request write returned %d, errno: %d", ret, errno);
 					if (errno == ECANCELED) {
@@ -217,23 +250,25 @@ void MtpServer::run() {
 					}
 					break;
 				}
+			} else {
+				MTPD("skipping response\n");
 			}
-
-			mResponse.setTransactionID(transaction);
-			MTPD("sending response %04X\n", mResponse.getResponseCode());
-			ret = mResponse.write(fd);
-			MTPD("ret: %d\n", ret);
-			mResponse.dump();
-			if (ret < 0) {
-				MTPD("request write returned %d, errno: %d", ret, errno);
-				if (errno == ECANCELED) {
-					// return to top of loop and wait for next command
-					continue;
+		}
+		if (pipe_fd >= 0 && FD_ISSET(pipe_fd, &fdset)) {
+			MTPD("reading mtppipe\n");
+			struct mtpmsg mtp_message;
+			int read_count = ::read(pipe_fd, &mtp_message, sizeof(mtp_message));
+			MTPD("read %i from mtppipe\n", read_count);
+			if (read_count > 0) {
+				if (mtp_message.add_remove == 1) {
+					MTPD("mtppipe add storage %i\n", mtp_message.storage_id);
+				} else if (mtp_message.add_remove == 2) {
+					MTPD("mtppipe remove storage %i\n", mtp_message.storage_id);
+					sendStoreRemoved(mtp_message.storage_id);
+				} else {
+					MTPE("Unknown mtppipe add_remove value: %i\n", mtp_message.add_remove);
 				}
-				break;
 			}
-		} else {
-			MTPD("skipping response\n");
 		}
 	}
 
@@ -249,6 +284,7 @@ void MtpServer::run() {
 	if (mSessionOpen)
 		mDatabase->sessionEnded();
 	close(fd);
+	close(pipe_fd);
 	mFD = -1;
 }
 

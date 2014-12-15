@@ -57,6 +57,7 @@ extern bool datamedia;
 
 TWPartitionManager::TWPartitionManager(void) {
 	mtp_was_enabled = false;
+	mtp_write_fd = -1;
 }
 
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
@@ -1896,6 +1897,14 @@ bool TWPartitionManager::Enable_MTP(void) {
 	char vendor[PROPERTY_VALUE_MAX];
 	char product[PROPERTY_VALUE_MAX];
 	int count = 0;
+
+	unlink(MTP_PIPE);
+	if (mkfifo(MTP_PIPE, 0666) != 0) {
+		LOGINFO("Unable to mkfifo %s\n", MTP_PIPE);
+		unlink(MTP_PIPE);
+		return 0;
+	}
+
 	property_set("sys.usb.config", "none");
 	property_get("usb.vendor", vendor, "18D1");
 	property_get("usb.product.mtpadb", product, "4EE2");
@@ -1915,6 +1924,7 @@ bool TWPartitionManager::Enable_MTP(void) {
 		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
 			++storageid;
 			printf("twrp addStorage %s, mtpstorageid: %u\n", (*iter)->Storage_Path.c_str(), storageid);
+			(*iter)->MTP_Storage_ID = storageid;
 			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, storageid, (*iter)->Get_Max_FileSize());
 			count++;
 		}
@@ -1922,9 +1932,11 @@ bool TWPartitionManager::Enable_MTP(void) {
 	if (count) {
 		mtppid = mtp->forkserver();
 		if (mtppid) {
+			mtp_write_fd = open(MTP_PIPE, O_WRONLY | O_NONBLOCK);
 			DataManager::SetValue("tw_mtp_enabled", 1);
 			return true;
 		} else {
+			mtp_write_fd = -1;
 			LOGERR("Failed to enable MTP\n");
 			return false;
 		}
@@ -1939,7 +1951,7 @@ bool TWPartitionManager::Enable_MTP(void) {
 
 bool TWPartitionManager::Disable_MTP(void) {
 #ifdef TW_HAS_MTP
-	char vendor[PROPERTY_VALUE_MAX];
+	/*char vendor[PROPERTY_VALUE_MAX];
 	char product[PROPERTY_VALUE_MAX];
 	property_set("sys.usb.config", "none");
 	property_get("usb.vendor", vendor, "18D1");
@@ -1958,7 +1970,27 @@ bool TWPartitionManager::Disable_MTP(void) {
 		waitpid(mtppid, &status, 0);
 	}
 	property_set("sys.usb.config", "adb");
-	DataManager::SetValue("tw_mtp_enabled", 0);
+	DataManager::SetValue("tw_mtp_enabled", 0);*/
+	std::vector<TWPartition*>::iterator iter;
+
+	if (mtp_write_fd < 0) {
+		LOGERR("Unable to open file for write\n");
+		return false;
+	}
+	struct mtpmsg mtp_message;
+	mtp_message.add_remove = 2; // Remove
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->MTP_Storage_ID) {
+			LOGINFO("sending message to remove %i\n", (*iter)->MTP_Storage_ID);
+			mtp_message.storage_id = (*iter)->MTP_Storage_ID;
+			if (write(mtp_write_fd, &mtp_message, sizeof(mtp_message)) <= 0) {
+				LOGERR("error sending message to remove storage %i\n", (*iter)->MTP_Storage_ID);
+			} else {
+				LOGINFO("Message sent, removed storage ID: %i\n", (*iter)->MTP_Storage_ID);
+				(*iter)->MTP_Storage_ID = 0;
+			}
+		}
+	}
 	return true;
 #else
 	LOGERR("MTP support not included\n");

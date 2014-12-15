@@ -153,6 +153,7 @@ TWPartition::TWPartition() {
 	Ignore_Blkid = false;
 	Retain_Layout_Version = false;
 	Crypto_Key_Location = "footer";
+	MTP_Storage_ID = 0;
 }
 
 TWPartition::~TWPartition(void) {

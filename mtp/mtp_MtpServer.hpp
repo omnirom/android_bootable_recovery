@@ -32,6 +32,13 @@
 #include "MtpStorage.h"
 #include "mtp_MtpDatabase.hpp"
 
+#define MTP_PIPE "/sbin/mtppipe"
+
+struct mtpmsg {
+	int add_remove; // 1 is add, 2 is remove
+	unsigned int storage_id;
+};
+
 typedef struct Storage {
 	std::string display;
 	std::string mount;

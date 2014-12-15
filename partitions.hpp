@@ -75,6 +75,7 @@ public:
 	string MTD_Name;                                                          // Name of the partition for MTD devices
 	bool Is_Present;                                                          // Indicates if the partition is currently present as a block device
 	string Crypto_Key_Location;                                               // Location of the crypto key used for decrypting encrypted data partitions
+	unsigned int MTP_Storage_ID;
 
 protected:
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
@@ -226,6 +227,7 @@ private:
 	int Open_Lun_File(string Partition_Path, string Lun_File);
 	pid_t mtppid;
 	bool mtp_was_enabled;
+	int mtp_write_fd;
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions
