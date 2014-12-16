@@ -11,6 +11,10 @@ on early-init
     start ueventd
     start healthd
 
+service set_permissive /sbin/toolbox setenforce 0
+    oneshot
+    seclabel u:r:recovery:s0
+
 on init
     export PATH /sbin:/system/bin
     export LD_LIBRARY_PATH .:/sbin
