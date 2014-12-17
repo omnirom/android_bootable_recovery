@@ -75,6 +75,7 @@ public:
 	string MTD_Name;                                                          // Name of the partition for MTD devices
 	bool Is_Present;                                                          // Indicates if the partition is currently present as a block device
 	string Crypto_Key_Location;                                               // Location of the crypto key used for decrypting encrypted data partitions
+	unsigned int MTP_Storage_ID;
 
 protected:
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
@@ -214,6 +215,8 @@ public:
 	void Output_Storage_Fstab();                                              // Creates a /cache/recovery/storage.fstab file with a list of all potential storage locations for app use
 	bool Enable_MTP();                                                        // Enables MTP
 	bool Disable_MTP();                                                       // Disables MTP
+	bool Add_Remove_MTP_Storage(unsigned int Storage_ID, int message_type);   // Adds or removes an MTP Storage partition
+	bool Add_Remove_MTP_Storage(string Mount_Point, int message_type);        // Adds or removes an MTP Storage partition
 
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
@@ -226,6 +229,7 @@ private:
 	int Open_Lun_File(string Partition_Path, string Lun_File);
 	pid_t mtppid;
 	bool mtp_was_enabled;
+	int mtp_write_fd;
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions

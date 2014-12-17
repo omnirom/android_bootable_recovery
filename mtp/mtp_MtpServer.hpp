@@ -54,6 +54,9 @@ class twmtp_MtpServer {
 		void set_storages(storages* mtpstorages);
 		storages *stores;
 	private:
+		typedef int (twmtp_MtpServer::*ThreadPtr)(void);
+		typedef void* (*PThreadPtr)(void *);
+		int mtppipe_thread(void);
 		bool usePtp;
 		MtpServer* server;
 		MtpServer* refserver;
