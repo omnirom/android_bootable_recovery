@@ -43,6 +43,7 @@
 #ifdef TW_HAS_MTP
 #include "mtp/mtp_MtpServer.hpp"
 #include "mtp/twrpMtp.hpp"
+#include "mtp/MtpMessage.hpp"
 #endif
 
 extern "C" {
@@ -57,6 +58,7 @@ extern bool datamedia;
 
 TWPartitionManager::TWPartitionManager(void) {
 	mtp_was_enabled = false;
+	mtp_write_fd = -1;
 }
 
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
@@ -64,6 +66,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 	char fstab_line[MAX_FSTAB_LINE_LENGTH];
 	TWPartition* settings_partition = NULL;
 	TWPartition* andsec_partition = NULL;
+	unsigned int storageid = 1 << 16;	// upper 16 bits are for physical storage device, we pretend to have only one
 
 	fstabFile = fopen(Fstab_Filename.c_str(), "rt");
 	if (fstabFile == NULL) {
@@ -82,6 +85,10 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		memset(fstab_line, 0, sizeof(fstab_line));
 
 		if (partition->Process_Fstab_Line(line, Display_Error)) {
+			if (partition->Is_Storage) {
+				++storageid;
+				partition->MTP_Storage_ID = storageid;
+			}
 			if (!settings_partition && partition->Is_Settings_Storage && partition->Is_Present) {
 				settings_partition = partition;
 			} else {
@@ -106,6 +113,9 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			datamedia = true;
 			Dat->Setup_Data_Media();
 			settings_partition = Dat;
+			// Since /data was not considered a storage partition earlier, we still need to assign an MTP ID
+			++storageid;
+			Dat->MTP_Storage_ID = storageid;
 		}
 	}
 	if (!settings_partition) {
@@ -301,6 +311,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 	printf("   Backup_Method: %s\n", back_meth.c_str());
 	if (Part->Mount_Flags || !Part->Mount_Options.empty())
 		printf("   Mount_Flags=0x%8x, Mount_Options=%s\n", Part->Mount_Flags, Part->Mount_Options.c_str());
+	if (Part->MTP_Storage_ID)
+		printf("   MTP_Storage_ID: %i\n", Part->MTP_Storage_ID);
 	printf("\n");
 }
 
@@ -1146,13 +1158,10 @@ int TWPartitionManager::Wipe_Media_From_Data(void) {
 			return false;
 
 		gui_print("Wiping internal storage -- /data/media...\n");
-		mtp_was_enabled = TWFunc::Toggle_MTP(false);
+		Remove_MTP_Storage(dat->MTP_Storage_ID);
 		TWFunc::removeDir("/data/media", false);
 		if (mkdir("/data/media", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) {
-			if (mtp_was_enabled) {
-				if (!Enable_MTP())
-					Disable_MTP();
-			}
+			Add_MTP_Storage(dat->MTP_Storage_ID);
 			return false;
 		}
 		if (dat->Has_Data_Media) {
@@ -1161,10 +1170,7 @@ int TWPartitionManager::Wipe_Media_From_Data(void) {
 			dat->UnMount(false);
 			dat->Mount(false);
 		}
-		if (mtp_was_enabled) {
-			if (!Enable_MTP())
-				Disable_MTP();
-		}
+		Add_MTP_Storage(dat->MTP_Storage_ID);
 		return true;
 	} else {
 		LOGERR("Unable to locate /data.\n");
@@ -1485,7 +1491,7 @@ int TWPartitionManager::usb_storage_enable(void) {
 		if (TWFunc::Path_Exists(lun_file))
 			has_multiple_lun = true;
 	}
-	mtp_was_enabled = TWFunc::Toggle_MTP(false);
+	mtp_was_enabled = TWFunc::Toggle_MTP(false); // Must disable MTP for USB Storage
 	if (!has_multiple_lun) {
 		LOGINFO("Device doesn't have multiple lun files, mount current storage\n");
 		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
@@ -1896,6 +1902,14 @@ bool TWPartitionManager::Enable_MTP(void) {
 	char vendor[PROPERTY_VALUE_MAX];
 	char product[PROPERTY_VALUE_MAX];
 	int count = 0;
+
+	int mtppipe[2];
+
+	if (pipe(mtppipe) < 0) {
+		LOGERR("Error creating MTP pipe\n");
+		return false;
+	}
+
 	property_set("sys.usb.config", "none");
 	property_get("usb.vendor", vendor, "18D1");
 	property_get("usb.product.mtpadb", product, "4EE2");
@@ -1910,24 +1924,29 @@ bool TWPartitionManager::Enable_MTP(void) {
 	 * twrp set tw_mtp_debug 1
 	 */
 	twrpMtp *mtp = new twrpMtp(DataManager::GetIntValue("tw_mtp_debug"));
-	unsigned int storageid = 1 << 16;	// upper 16 bits are for physical storage device, we pretend to have only one
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
-			++storageid;
-			printf("twrp addStorage %s, mtpstorageid: %u\n", (*iter)->Storage_Path.c_str(), storageid);
-			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, storageid, (*iter)->Get_Max_FileSize());
+			printf("twrp addStorage %s, mtpstorageid: %u\n", (*iter)->Storage_Path.c_str(), (*iter)->MTP_Storage_ID);
+			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, (*iter)->MTP_Storage_ID, (*iter)->Get_Max_FileSize());
 			count++;
 		}
 	}
 	if (count) {
-		mtppid = mtp->forkserver();
+		mtppid = mtp->forkserver(mtppipe);
 		if (mtppid) {
+			close(mtppipe[0]); // Host closes read side
+			mtp_write_fd = mtppipe[1];
 			DataManager::SetValue("tw_mtp_enabled", 1);
 			return true;
 		} else {
+			close(mtppipe[0]);
+			close(mtppipe[1]);
 			LOGERR("Failed to enable MTP\n");
 			return false;
 		}
+	} else {
+		close(mtppipe[0]);
+		close(mtppipe[1]);
 	}
 	LOGERR("No valid storage partitions found for MTP.\n");
 #else
@@ -1956,6 +1975,8 @@ bool TWPartitionManager::Disable_MTP(void) {
 		mtppid = 0;
 		// We don't care about the exit value, but this prevents a zombie process
 		waitpid(mtppid, &status, 0);
+		close(mtp_write_fd);
+		mtp_write_fd = -1;
 	}
 	property_set("sys.usb.config", "adb");
 	DataManager::SetValue("tw_mtp_enabled", 0);
@@ -1965,4 +1986,116 @@ bool TWPartitionManager::Disable_MTP(void) {
 	DataManager::SetValue("tw_mtp_enabled", 0);
 	return false;
 #endif
+}
+
+TWPartition* TWPartitionManager::Find_Partition_By_MTP_Storage_ID(unsigned int Storage_ID) {
+	std::vector<TWPartition*>::iterator iter;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->MTP_Storage_ID == Storage_ID)
+			return (*iter);
+	}
+	return NULL;
+}
+
+bool TWPartitionManager::Add_Remove_MTP_Storage(TWPartition* Part, int message_type) {
+#ifdef TW_HAS_MTP
+	struct mtpmsg mtp_message;
+
+	if (!mtppid)
+		return false; // MTP is disabled
+
+	if (mtp_write_fd < 0) {
+		LOGERR("MTP: mtp_write_fd is not set\n");
+		return false;
+	}
+
+	if (Part) {
+		if (message_type == MTP_MESSAGE_REMOVE_STORAGE) {
+			mtp_message.message_type = MTP_MESSAGE_REMOVE_STORAGE; // Remove
+			LOGINFO("sending message to remove %i\n", Part->MTP_Storage_ID);
+			mtp_message.storage_id = Part->MTP_Storage_ID;
+			if (write(mtp_write_fd, &mtp_message, sizeof(mtp_message)) <= 0) {
+				LOGERR("error sending message to remove storage %i\n", Part->MTP_Storage_ID);
+				return false;
+			} else {
+				LOGINFO("Message sent, remove storage ID: %i\n", Part->MTP_Storage_ID);
+				return true;
+			}
+		} else if (message_type == MTP_MESSAGE_ADD_STORAGE && Part->Is_Mounted()) {
+			mtp_message.message_type = MTP_MESSAGE_ADD_STORAGE; // Add
+			mtp_message.storage_id = Part->MTP_Storage_ID;
+			mtp_message.path = Part->Storage_Path.c_str();
+			mtp_message.display = Part->Storage_Name.c_str();
+			mtp_message.maxFileSize = Part->Get_Max_FileSize();
+			LOGINFO("sending message to add %i '%s'\n", Part->MTP_Storage_ID, mtp_message.path);
+			if (write(mtp_write_fd, &mtp_message, sizeof(mtp_message)) <= 0) {
+				LOGERR("error sending message to add storage %i\n", Part->MTP_Storage_ID);
+				return false;
+			} else {
+				LOGINFO("Message sent, add storage ID: %i\n", Part->MTP_Storage_ID);
+				return true;
+			}
+		} else {
+			LOGERR("Unknown MTP message type: %i\n", message_type);
+		}
+	} else {
+		// This hopefully never happens as the error handling should
+		// occur in the calling function.
+		LOGERR("TWPartitionManager::Add_Remove_MTP_Storage NULL partition given\n");
+	}
+	return true;
+#else
+	LOGERR("MTP support not included\n");
+	DataManager::SetValue("tw_mtp_enabled", 0);
+	return false;
+#endif
+}
+
+bool TWPartitionManager::Add_MTP_Storage(string Mount_Point) {
+#ifdef TW_HAS_MTP
+	TWPartition* Part = PartitionManager.Find_Partition_By_Path(Mount_Point);
+	if (Part) {
+		return PartitionManager.Add_Remove_MTP_Storage(Part, MTP_MESSAGE_ADD_STORAGE);
+	} else {
+		LOGERR("TWFunc::Add_MTP_Storage unable to locate partition for '%s'\n", Mount_Point.c_str());
+	}
+#endif
+	return false;
+}
+
+bool TWPartitionManager::Add_MTP_Storage(unsigned int Storage_ID) {
+#ifdef TW_HAS_MTP
+	TWPartition* Part = PartitionManager.Find_Partition_By_MTP_Storage_ID(Storage_ID);
+	if (Part) {
+		return PartitionManager.Add_Remove_MTP_Storage(Part, MTP_MESSAGE_ADD_STORAGE);
+	} else {
+		LOGERR("TWFunc::Add_MTP_Storage unable to locate partition for %i\n", Storage_ID);
+	}
+#endif
+	return false;
+}
+
+bool TWPartitionManager::Remove_MTP_Storage(string Mount_Point) {
+#ifdef TW_HAS_MTP
+	TWPartition* Part = PartitionManager.Find_Partition_By_Path(Mount_Point);
+	if (Part) {
+		return PartitionManager.Add_Remove_MTP_Storage(Part, MTP_MESSAGE_REMOVE_STORAGE);
+	} else {
+		LOGERR("TWFunc::Remove_MTP_Storage unable to locate partition for '%s'\n", Mount_Point.c_str());
+	}
+#endif
+	return false;
+}
+
+bool TWPartitionManager::Remove_MTP_Storage(unsigned int Storage_ID) {
+#ifdef TW_HAS_MTP
+	TWPartition* Part = PartitionManager.Find_Partition_By_MTP_Storage_ID(Storage_ID);
+	if (Part) {
+		return PartitionManager.Add_Remove_MTP_Storage(Part, MTP_MESSAGE_REMOVE_STORAGE);
+	} else {
+		LOGERR("TWFunc::Remove_MTP_Storage unable to locate partition for %i\n", Storage_ID);
+	}
+#endif
+	return false;
 }
