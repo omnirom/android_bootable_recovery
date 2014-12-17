@@ -462,6 +462,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				gui_print("Simulating actions...\n");
 		} else if (!simulate) {
 			PartitionManager.Mount_By_Path(arg, true);
+			TWFunc::Add_Remove_MTP_Storage(arg, 1);
 		} else
 			gui_print("Simulating actions...\n");
 		return 0;

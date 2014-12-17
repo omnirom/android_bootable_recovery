@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <vector>
 #include <utils/threads.h>
+#include <pthread.h>
 
 #include "mtp_MtpServer.hpp"
 #include "MtpServer.h"
@@ -37,6 +38,11 @@ void twmtp_MtpServer::start()
 {
 	if (setup() == 0) {
 		add_storage();
+		MTPD("Starting add / remove mtppipe monitor thread\n");
+		pthread_t thread;
+		ThreadPtr mtpptr = &twmtp_MtpServer::mtppipe_thread;
+		PThreadPtr p = *(PThreadPtr*)&mtpptr;
+		pthread_create(&thread, NULL, p, this);
 		server->run();
 	}
 }
@@ -140,9 +146,53 @@ void twmtp_MtpServer::remove_storage(int storageId)
 	if (server) {
 		MtpStorage* storage = server->getStorage(storageId);
 		if (storage) {
+			MTPD("twmtp_MtpServer::remove_storage calling removeStorage\n");
 			server->removeStorage(storage);
-			delete storage;
+			// This delete seems to freeze / lock, probably because the
+			// removeStorage call above has already removed the storage
+			// object.
+			//delete storage;
 		}
 	} else
 		MTPD("server is null in remove_storage");
+	MTPD("twmtp_MtpServer::remove_storage DONE\n");
+}
+
+int twmtp_MtpServer::mtppipe_thread(void)
+{
+	MTPD("Starting twmtp_MtpServer::mtppipe_thread\n");
+	int pipe_fd;
+	int read_count = 1;
+	struct mtpmsg mtp_message;
+	while (1) {
+		read_count = 1;
+		MTPD("twmtp_MtpServer::mtppipe_thread opening mtppipe\n");
+		pipe_fd = open(MTP_PIPE, O_RDONLY);
+		if (pipe_fd < 0)
+			continue;
+		MTPD("twmtp_MtpServer::mtppipe_thread opened pipe\n");
+		//while (read_count) {
+			read_count = ::read(pipe_fd, &mtp_message, sizeof(mtp_message));
+			MTPD("read %i from mtppipe\n", read_count);
+			if (read_count > 0) {
+				if (mtp_message.message_type == MTP_MESSAGE_ADD_STORAGE) {
+					MTPI("mtppipe add storage %i '%s'\n", mtp_message.storage_id, mtp_message.path);
+					long reserveSpace = 1;
+					bool removable = false;
+					MtpStorage* storage = new MtpStorage(mtp_message.storage_id, mtp_message.path, mtp_message.display, reserveSpace, removable, mtp_message.maxFileSize, refserver);
+					server->addStorage(storage);
+					MTPD("mtppipe done adding storage\n");
+				} else if (mtp_message.message_type == MTP_MESSAGE_REMOVE_STORAGE) {
+					MTPI("mtppipe remove storage %i\n", mtp_message.storage_id);
+					remove_storage(mtp_message.storage_id);
+					MTPD("mtppipe done removing storage\n");
+				} else {
+					MTPE("Unknown mtppipe message value: %i\n", mtp_message.message_type);
+				}
+			}
+		//}
+		close(pipe_fd);
+	}
+	MTPD("twmtp_MtpServer::mtppipe_thread closing\n");
+	return 0;
 }

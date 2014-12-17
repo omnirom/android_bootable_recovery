@@ -1303,6 +1303,26 @@ bool TWFunc::Toggle_MTP(bool enable) {
 #endif
 }
 
+bool TWFunc::Add_Remove_MTP_Storage(unsigned int Storage_ID, int message_type) {
+#ifdef TW_HAS_MTP
+	return PartitionManager.Add_Remove_MTP_Storage(Storage_ID, message_type);
+#else
+	return false;
+#endif
+}
+
+bool TWFunc::Add_Remove_MTP_Storage(string Mount_Point, int message_type) {
+#ifdef TW_HAS_MTP
+	TWPartition* Part = PartitionManager.Find_Partition_By_Path(Mount_Point);
+	if (Part) {
+		return PartitionManager.Add_Remove_MTP_Storage(Part->MTP_Storage_ID, message_type);
+	} else {
+		LOGERR("TWFunc::Add_Remove_MTP_Storage unable to locate partition for '%s'\n", Mount_Point.c_str());
+	}
+#endif
+	return false;
+}
+
 void TWFunc::SetPerformanceMode(bool mode) {
 	if (mode) {
 		property_set("recovery.perf.mode", "1");

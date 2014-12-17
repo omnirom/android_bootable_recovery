@@ -749,6 +749,7 @@ int GUIPartitionList::NotifyTouch(TOUCH_STATE state, int x, int y)
 				if (!mList.at(actualSelection).selected) {
 					if (PartitionManager.Mount_By_Path(mList.at(actualSelection).Mount_Point, true)) {
 						mList.at(actualSelection).selected = 1;
+						TWFunc::Add_Remove_MTP_Storage(mList.at(actualSelection).Mount_Point, 1);
 						mUpdate = 1;
 					}
 				} else {

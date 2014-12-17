@@ -72,6 +72,7 @@ MtpStorage::~MtpStorage() {
 	if (inotify_thread) {
 		// TODO: what does this do? manpage says it does not kill the thread
 		pthread_kill(inotify_thread, 0);
+		MTPD("~MtpStorage removing inotify watches and closing inotify_fd\n");
 		for (std::map<int, Tree*>::iterator i = inotifymap.begin(); i != inotifymap.end(); i++) {
 			inotify_rm_watch(inotify_fd, i->first);
 		}
