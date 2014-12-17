@@ -77,6 +77,7 @@ public:
 
 	int readDir(const std::string& path, Tree* tree);
 	int createDB();
+	int destroyDB();
 	MtpObjectHandleList* getObjectList(MtpStorageID storageID, MtpObjectHandle parent);
 	int getObjectInfo(MtpObjectHandle handle, MtpObjectInfo& info);
 	MtpObjectHandle beginSendObject(const char* path, MtpObjectFormat format, MtpObjectHandle parent, uint64_t size, time_t modified);
@@ -88,6 +89,7 @@ public:
 	int getObjectPropertyValue(MtpObjectHandle handle, MtpObjectProperty property, PropEntry& prop);
 	void lockMutex(int thread_type);
 	void unlockMutex(int thread_type);
+	void inotify_t_kill(void);
 
 private:
 	pthread_t inotify();
@@ -113,6 +115,8 @@ private:
 	bool use_mutex;
 	pthread_mutex_t inMutex; // inotify mutex
 	pthread_mutex_t mtpMutex; // main mtp mutex
+	int inotify_thread_kill;
+	int inotify_thread_dead;
 };
 
 #endif // _MTP_STORAGE_H

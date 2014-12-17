@@ -64,6 +64,7 @@ public:
     virtual                         ~MyMtpDatabase();
 
 	void					createDB(MtpStorage* storage, MtpStorageID storageID);
+	void					destroyDB(MtpStorageID storageID);
     virtual MtpObjectHandle         beginSendObject(const char* path,
                                             MtpObjectFormat format,
                                             MtpObjectHandle parent,

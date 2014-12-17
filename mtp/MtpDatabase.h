@@ -61,6 +61,7 @@ public:
     virtual MtpDevicePropertyList*  getSupportedDeviceProperties() = 0;
 
 	virtual void 					createDB(MtpStorage* storage, MtpStorageID storageID) = 0;
+	virtual void 					destroyDB(MtpStorageID storageID) = 0;
 
     virtual MtpResponseCode         getObjectPropertyValue(MtpObjectHandle handle,
                                             MtpObjectProperty property,
