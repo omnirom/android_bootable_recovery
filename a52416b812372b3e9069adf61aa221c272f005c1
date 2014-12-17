@@ -1,0 +1,208 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "eb3671c6_2fc40d45",
+        "filename": "gui/action.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 468,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "I think the partitionmanager should handle this internally instead - not all clients that mount a partition. GUI should not need to include anything from MTP directly at all.",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_4fc14134",
+        "filename": "gui/partitionlist.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 755,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "I think the partitionmanager should handle this internally instead - not all clients that mount a partition. GUI should not need to include anything from MTP directly at all.",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_6fbe05ab",
+        "filename": "mtp/MtpMessage.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "I\u0027d prefer this header to be C++",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_8fd7b9f8",
+        "filename": "mtp/MtpMessage.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "...then we can say here: enum MessageType { MSG_ADD, MSG_REMOVE } message_type;",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_afdc7d1b",
+        "filename": "mtp/mtp_MtpServer.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "A double delete should usually crash, not hang. Also, where is that other delete?",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_cfe1b1ce",
+        "filename": "mtp/mtp_MtpServer.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "I still don\u0027t like the separate thread and all the synchronization issues it brings.",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_efe675e3",
+        "filename": "mtp/mtp_MtpServer.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "else something bad happened, but we should probably not loop endlessly here when something goes wrong.",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_2fc96d55",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1924,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "storage IDs have already been assigned to partitions - shouldn\u0027t be needed again here.",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_6fd36507",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2009,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "I\u0027d introduce a Find_Partition_By_MTP_Storage_ID() instead of nesting 5 levels deep here.",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_8f009970",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2020,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "should this really call Mount() here?",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_4fd6a1f8",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2042,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "I think not all calls to this function are inside #ifdef MTP. I wouldn\u0027t spread #ifdefs everywhere this is called, so we should treat this not as an error.",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eb3671c6_0fcca964",
+        "filename": "partitions.hpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-17T19:28:51Z",
+      "side": 1,
+      "message": "It would be cleaner (especially for the call sites) to have separate functions here for adding and removing, but only one set that acts directly on a TWPartition*. That would also reduce the scope where MtpMessage.h is needed to the implementation of these functions.",
+      "revId": "a52416b812372b3e9069adf61aa221c272f005c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
