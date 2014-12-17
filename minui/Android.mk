@@ -19,7 +19,11 @@ ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
     LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
     LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
   else
-    LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
+    ifeq ($(TARGET_CUSTOM_KERNEL_HEADERS),)
+      LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
+    else
+      LOCAL_C_INCLUDES += $(TARGET_CUSTOM_KERNEL_HEADERS)
+    endif
   endif
 else
   LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
@@ -75,7 +79,11 @@ ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
     LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
     LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
   else
-    LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
+    ifeq ($(TARGET_CUSTOM_KERNEL_HEADERS),)
+      LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
+    else
+      LOCAL_C_INCLUDES += $(TARGET_CUSTOM_KERNEL_HEADERS)
+    endif
   endif
 else
   LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
