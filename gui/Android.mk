@@ -62,6 +62,12 @@ endif
 ifeq ($(TW_DISABLE_TTF), true)
     LOCAL_CFLAGS += -DTW_DISABLE_TTF
 endif
+ifeq ($(TW_OEM_BUILD),true)
+    TW_EXCLUDE_MTP := true
+endif
+ifeq ($(TW_EXCLUDE_MTP),)
+    LOCAL_CFLAGS += -DTW_HAS_MTP
+endif
 
 ifeq ($(DEVICE_RESOLUTION),)
 $(warning ********************************************************************************)

@@ -52,11 +52,16 @@ class twmtp_MtpServer {
 		void add_storage();
 		void remove_storage(int storageId);
 		void set_storages(storages* mtpstorages);
+		void set_read_pipe(int pipe);
 		storages *stores;
 	private:
+		typedef int (twmtp_MtpServer::*ThreadPtr)(void);
+		typedef void* (*PThreadPtr)(void *);
+		int mtppipe_thread(void);
 		bool usePtp;
 		MtpServer* server;
 		MtpServer* refserver;
+		int mtp_read_pipe;
 
 };
 #endif

@@ -47,6 +47,9 @@ extern "C" {
 #include "../data.hpp"
 #include "../twrp-functions.hpp"
 #include "../partitions.hpp"
+#ifdef TW_HAS_MTP
+#include "../mtp/MtpMessage.h"
+#endif
 
 #define SCROLLING_SPEED_DECREMENT 6
 #define SCROLLING_FLOOR 10
@@ -749,6 +752,9 @@ int GUIPartitionList::NotifyTouch(TOUCH_STATE state, int x, int y)
 				if (!mList.at(actualSelection).selected) {
 					if (PartitionManager.Mount_By_Path(mList.at(actualSelection).Mount_Point, true)) {
 						mList.at(actualSelection).selected = 1;
+#ifdef TW_HAS_MTP
+						PartitionManager.Add_Remove_MTP_Storage(mList.at(actualSelection).Mount_Point, MTP_MESSAGE_ADD_STORAGE);
+#endif
 						mUpdate = 1;
 					}
 				} else {

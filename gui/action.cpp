@@ -53,6 +53,9 @@ extern "C" {
 #include "../minadbd/adb.h"
 #include "../adb_install.h"
 #include "../set_metadata.h"
+#ifdef TW_HAS_MTP
+#include "../mtp/MtpMessage.h"
+#endif
 
 int TWinstall_zip(const char* path, int* wipe_cache);
 void run_script(const char *str1, const char *str2, const char *str3, const char *str4, const char *str5, const char *str6, const char *str7, int request_confirm);
@@ -462,6 +465,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				gui_print("Simulating actions...\n");
 		} else if (!simulate) {
 			PartitionManager.Mount_By_Path(arg, true);
+#ifdef TW_HAS_MTP
+			PartitionManager.Add_Remove_MTP_Storage(arg, MTP_MESSAGE_ADD_STORAGE);
+#endif
 		} else
 			gui_print("Simulating actions...\n");
 		return 0;
