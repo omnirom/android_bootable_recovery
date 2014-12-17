@@ -25,11 +25,13 @@
 #include <fcntl.h>
 #include <vector>
 #include <utils/threads.h>
+#include <pthread.h>
 
 #include "mtp_MtpServer.hpp"
 #include "MtpServer.h"
 #include "MtpStorage.h"
 #include "MtpDebug.h"
+#include "MtpMessage.hpp"
 
 #include <string>
 
@@ -37,6 +39,11 @@ void twmtp_MtpServer::start()
 {
 	if (setup() == 0) {
 		add_storage();
+		MTPD("Starting add / remove mtppipe monitor thread\n");
+		pthread_t thread;
+		ThreadPtr mtpptr = &twmtp_MtpServer::mtppipe_thread;
+		PThreadPtr p = *(PThreadPtr*)&mtpptr;
+		pthread_create(&thread, NULL, p, this);
 		server->run();
 	}
 }
@@ -140,9 +147,52 @@ void twmtp_MtpServer::remove_storage(int storageId)
 	if (server) {
 		MtpStorage* storage = server->getStorage(storageId);
 		if (storage) {
+			MTPD("twmtp_MtpServer::remove_storage calling removeStorage\n");
 			server->removeStorage(storage);
-			delete storage;
 		}
 	} else
 		MTPD("server is null in remove_storage");
+	MTPD("twmtp_MtpServer::remove_storage DONE\n");
+}
+
+int twmtp_MtpServer::mtppipe_thread(void)
+{
+	if (mtp_read_pipe == -1) {
+		MTPD("mtppipe_thread exiting because mtp_read_pipe not set\n");
+		return 0;
+	}
+	MTPD("Starting twmtp_MtpServer::mtppipe_thread\n");
+	int read_count;
+	struct mtpmsg mtp_message;
+	while (1) {
+		read_count = ::read(mtp_read_pipe, &mtp_message, sizeof(mtp_message));
+		MTPD("read %i from mtppipe\n", read_count);
+		if (read_count == sizeof(mtp_message)) {
+			if (mtp_message.message_type == MTP_MESSAGE_ADD_STORAGE) {
+				MTPI("mtppipe add storage %i '%s'\n", mtp_message.storage_id, mtp_message.path);
+				long reserveSpace = 1;
+				bool removable = false;
+				MtpStorage* storage = new MtpStorage(mtp_message.storage_id, mtp_message.path, mtp_message.display, reserveSpace, removable, mtp_message.maxFileSize, refserver);
+				server->addStorage(storage);
+				MTPD("mtppipe done adding storage\n");
+			} else if (mtp_message.message_type == MTP_MESSAGE_REMOVE_STORAGE) {
+				MTPI("mtppipe remove storage %i\n", mtp_message.storage_id);
+				remove_storage(mtp_message.storage_id);
+				MTPD("mtppipe done removing storage\n");
+			} else {
+				MTPE("Unknown mtppipe message value: %i\n", mtp_message.message_type);
+			}
+		} else {
+			MTPE("twmtp_MtpServer::mtppipe_thread unexpected read_count %i\n", read_count);
+			close(mtp_read_pipe);
+			break;
+		}
+	}
+	MTPD("twmtp_MtpServer::mtppipe_thread closing\n");
+	return 0;
+}
+
+void twmtp_MtpServer::set_read_pipe(int pipe)
+{
+	mtp_read_pipe = pipe;
 }

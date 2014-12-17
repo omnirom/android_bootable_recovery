@@ -36,6 +36,7 @@
 #include <signal.h>
 #include <sys/inotify.h>
 #include <fcntl.h>
+#include "tw_sys_atomics.h"
 
 #define WATCH_FLAGS ( IN_CREATE | IN_DELETE | IN_MOVE | IN_MODIFY )
 
@@ -54,6 +55,8 @@ MtpStorage::MtpStorage(MtpStorageID id, const char* filePath,
 	MTPI("MtpStorage id: %d path: %s\n", id, filePath);
 	inotify_thread = 0;
 	inotify_fd = -1;
+	// Threading has not started yet so we should be safe to set these directly instead of using atomics
+	inotify_thread_kill = 0;
 	sendEvents = false;
 	handleCurrentlySending = 0;
 	use_mutex = true;
@@ -63,25 +66,32 @@ MtpStorage::MtpStorage(MtpStorageID id, const char* filePath,
 	}
 	if (pthread_mutex_init(&inMutex, NULL) != 0) {
 		MTPE("Failed to init inMutex\n");
+		pthread_mutex_destroy(&mtpMutex);
 		use_mutex = false;
 	}
-	
 }
 
 MtpStorage::~MtpStorage() {
 	if (inotify_thread) {
-		// TODO: what does this do? manpage says it does not kill the thread
-		pthread_kill(inotify_thread, 0);
+		__tw_atomic_cmpxchg(0, 1, &inotify_thread_kill);
+		//inotify_thread_kill = 1;
+		MTPD("joining inotify_thread after sending the kill notification.\n");
+		pthread_join(inotify_thread, NULL); // There's not much we can do if there's an error here
+		inotify_thread = 0;
+		MTPD("~MtpStorage removing inotify watches and closing inotify_fd\n");
 		for (std::map<int, Tree*>::iterator i = inotifymap.begin(); i != inotifymap.end(); i++) {
 			inotify_rm_watch(inotify_fd, i->first);
 		}
 		close(inotify_fd);
+		inotifymap.clear();
 	}
-	for (iter i = mtpmap.begin(); i != mtpmap.end(); i++) {
-		delete i->second;
-	}
+	// Deleting the root tree causes a cascade in btree.cpp that ends up
+	// deleting all of the trees and nodes.
+	delete mtpmap[0];
+	mtpmap.clear();
 	if (use_mutex) {
 		use_mutex = false;
+		MTPD("~MtpStorage destroying mutexes\n");
 		pthread_mutex_destroy(&mtpMutex);
 		pthread_mutex_destroy(&inMutex);
 	}
@@ -566,9 +576,22 @@ int MtpStorage::getObjectPropertyValue(MtpObjectHandle handle, MtpObjectProperty
 
 pthread_t MtpStorage::inotify(void) {
 	pthread_t thread;
+	pthread_attr_t tattr;
+
+	if (pthread_attr_init(&tattr)) {
+		MTPE("Unable to pthread_attr_init\n");
+		return 0;
+	}
+	if (pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_JOINABLE)) {
+		MTPE("Error setting pthread_attr_setdetachstate\n");
+		return 0;
+	}
 	ThreadPtr inotifyptr = &MtpStorage::inotify_t;
 	PThreadPtr p = *(PThreadPtr*)&inotifyptr;
-	pthread_create(&thread, NULL, p, this);
+	pthread_create(&thread, &tattr, p, this);
+	if (pthread_attr_destroy(&tattr)) {
+		MTPE("Failed to pthread_attr_destroy\n");
+	}
 	return thread;
 }
 
@@ -669,10 +692,20 @@ int MtpStorage::inotify_t(void) {
 	#define EVENT_SIZE ( sizeof(struct inotify_event) )
 	#define EVENT_BUF_LEN ( 1024 * ( EVENT_SIZE + 16) )
 	char buf[EVENT_BUF_LEN];
+	fd_set fdset;
+	struct timeval seltmout;
+	int sel_ret;
 
 	MTPD("inotify thread starting.\n");
 
-	while (true) {
+	while (__tw_atomic_cmpxchg(0, inotify_thread_kill, &inotify_thread_kill) == 0) {
+		FD_ZERO(&fdset);
+		FD_SET(inotify_fd, &fdset);
+		seltmout.tv_sec = 0;
+		seltmout.tv_usec = 25000;
+		sel_ret = select(inotify_fd + 1, &fdset, NULL, NULL, &seltmout);
+		if (sel_ret == 0)
+			continue;
 		int i = 0;
 		int len = read(inotify_fd, buf, EVENT_BUF_LEN);
 
@@ -682,7 +715,7 @@ int MtpStorage::inotify_t(void) {
 			MTPE("inotify_t Can't read inotify events\n");
 		}
 
-		while (i < len) {
+		while (i < len && __tw_atomic_cmpxchg(0, inotify_thread_kill, &inotify_thread_kill) == 0) {
 			struct inotify_event *event = (struct inotify_event *) &buf[i];
 			if (event->len) {
 				MTPD("inotify event: wd: %i, mask: %x, name: %s\n", event->wd, event->mask, event->name);
@@ -693,11 +726,12 @@ int MtpStorage::inotify_t(void) {
 			i += EVENT_SIZE + event->len;
 		}
 	}
-
-	for (std::map<int, Tree*>::iterator i = inotifymap.begin(); i != inotifymap.end(); i++) {
+	MTPD("inotify_thread_kill received!\n");
+	// This cleanup is handled in the destructor.
+	/*for (std::map<int, Tree*>::iterator i = inotifymap.begin(); i != inotifymap.end(); i++) {
 		inotify_rm_watch(inotify_fd, i->first);
 	}
-	close(inotify_fd);
+	close(inotify_fd);*/
 	return 0;
 }
 

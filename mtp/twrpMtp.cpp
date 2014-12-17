@@ -72,12 +72,14 @@ twrpMtp::twrpMtp(int debug_enabled = 0) {
 	if (debug_enabled)
 		MtpDebug::enableDebug();
 	mtpstorages = new storages;
+	mtp_read_pipe = -1;
 }
 
 int twrpMtp::start(void) {
 	MTPI("Starting MTP\n");
 	twmtp_MtpServer *mtp = new twmtp_MtpServer();
 	mtp->set_storages(mtpstorages);
+	mtp->set_read_pipe(mtp_read_pipe);
 	mtp->start();
 	return 0;
 }
@@ -90,7 +92,7 @@ pthread_t twrpMtp::threadserver(void) {
 	return thread;
 }
 
-pid_t twrpMtp::forkserver(void) {
+pid_t twrpMtp::forkserver(int mtppipe[2]) {
 	pid_t pid;
 	if ((pid = fork()) == -1) {
 		MTPE("MTP fork failed.\n");
@@ -98,8 +100,11 @@ pid_t twrpMtp::forkserver(void) {
 	}
 	if (pid == 0) {
 		// Child process
+		close(mtppipe[1]); // Child closes write side
+		mtp_read_pipe = mtppipe[0];
 		start();
 		MTPD("MTP child process exited.\n");
+		close(mtppipe[0]);
 		_exit(0);
 	} else {
 		return pid;
