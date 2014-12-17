@@ -54,6 +54,7 @@ MtpStorage::MtpStorage(MtpStorageID id, const char* filePath,
 	MTPI("MtpStorage id: %d path: %s\n", id, filePath);
 	inotify_thread = 0;
 	inotify_fd = -1;
+	inotify_thread_kill = 0;
 	sendEvents = false;
 	handleCurrentlySending = 0;
 	use_mutex = true;
@@ -63,6 +64,7 @@ MtpStorage::MtpStorage(MtpStorageID id, const char* filePath,
 	}
 	if (pthread_mutex_init(&inMutex, NULL) != 0) {
 		MTPE("Failed to init inMutex\n");
+		pthread_mutex_destroy(&mtpMutex);
 		use_mutex = false;
 	}
 	
@@ -70,18 +72,24 @@ MtpStorage::MtpStorage(MtpStorageID id, const char* filePath,
 
 MtpStorage::~MtpStorage() {
 	if (inotify_thread) {
-		// TODO: what does this do? manpage says it does not kill the thread
-		pthread_kill(inotify_thread, 0);
+		inotify_thread_kill = 1;
+		MTPD("~MtpStorage removing inotify watches and closing inotify_fd\n");
 		for (std::map<int, Tree*>::iterator i = inotifymap.begin(); i != inotifymap.end(); i++) {
 			inotify_rm_watch(inotify_fd, i->first);
 		}
 		close(inotify_fd);
 	}
+	// Deleting the root tree causes a cascade in btree.cpp that ends up
+	// deleting all of the trees and nodes.
+	Tree* tree = mtpmap[0];
+	if (tree)
+		delete tree;
 	for (iter i = mtpmap.begin(); i != mtpmap.end(); i++) {
-		delete i->second;
+		mtpmap.erase(i);
 	}
 	if (use_mutex) {
 		use_mutex = false;
+		usleep(32000); // Sleep to make sure that any locked thread exits before we destroy the mutexes
 		pthread_mutex_destroy(&mtpMutex);
 		pthread_mutex_destroy(&inMutex);
 	}
@@ -665,14 +673,29 @@ void MtpStorage::handleInotifyEvent(struct inotify_event* event)
 	}
 }
 
+void MtpStorage::inotify_t_kill(void) {
+	MTPD("MtpStorage::inotify_t_kill called\n");
+	inotify_thread_kill = 1;
+}
+
 int MtpStorage::inotify_t(void) {
 	#define EVENT_SIZE ( sizeof(struct inotify_event) )
 	#define EVENT_BUF_LEN ( 1024 * ( EVENT_SIZE + 16) )
 	char buf[EVENT_BUF_LEN];
+	fd_set fdset;
+	struct timeval seltmout;
+	int sel_ret;
 
 	MTPD("inotify thread starting.\n");
 
-	while (true) {
+	while (!inotify_thread_kill) {
+		FD_ZERO(&fdset);
+		FD_SET(inotify_fd, &fdset);
+		seltmout.tv_sec = 0;
+		seltmout.tv_usec = 25000;
+		sel_ret = select(inotify_fd + 1, &fdset, NULL, NULL, &seltmout);
+		if (sel_ret == 0)
+			continue;
 		int i = 0;
 		int len = read(inotify_fd, buf, EVENT_BUF_LEN);
 
@@ -682,22 +705,26 @@ int MtpStorage::inotify_t(void) {
 			MTPE("inotify_t Can't read inotify events\n");
 		}
 
-		while (i < len) {
+		while (i < len && !inotify_thread_kill) {
 			struct inotify_event *event = (struct inotify_event *) &buf[i];
 			if (event->len) {
 				MTPD("inotify event: wd: %i, mask: %x, name: %s\n", event->wd, event->mask, event->name);
 				lockMutex(1);
-				handleInotifyEvent(event);
+				if (!inotify_thread_kill)
+					handleInotifyEvent(event);
+				else
+					break;
 				unlockMutex(1);
 			}
 			i += EVENT_SIZE + event->len;
 		}
 	}
-
-	for (std::map<int, Tree*>::iterator i = inotifymap.begin(); i != inotifymap.end(); i++) {
+	MTPD("inotify_thread_kill received!\n");
+	// This cleanup is handled in the destructor.
+	/*for (std::map<int, Tree*>::iterator i = inotifymap.begin(); i != inotifymap.end(); i++) {
 		inotify_rm_watch(inotify_fd, i->first);
 	}
-	close(inotify_fd);
+	close(inotify_fd);*/
 	return 0;
 }
 
@@ -799,18 +826,20 @@ void MtpStorage::lockMutex(int thread_type) {
 	if (thread_type) {
 		// inotify thread
 		pthread_mutex_lock(&inMutex);
-		while (pthread_mutex_trylock(&mtpMutex)) {
+		while (pthread_mutex_trylock(&mtpMutex) && !inotify_thread_kill) {
 			pthread_mutex_unlock(&inMutex);
 			usleep(32000);
-			pthread_mutex_lock(&inMutex);
+			if (!inotify_thread_kill)
+				pthread_mutex_lock(&inMutex);
 		}
 	} else {
 		// main mtp thread
 		pthread_mutex_lock(&mtpMutex);
-		while (pthread_mutex_trylock(&inMutex)) {
+		while (pthread_mutex_trylock(&inMutex) && !inotify_thread_kill) {
 			pthread_mutex_unlock(&mtpMutex);
 			usleep(13000);
-			pthread_mutex_lock(&mtpMutex);
+			if (!inotify_thread_kill)
+				pthread_mutex_lock(&mtpMutex);
 		}
 	}
 }
