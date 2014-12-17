@@ -113,6 +113,8 @@ private:
 	bool use_mutex;
 	pthread_mutex_t inMutex; // inotify mutex
 	pthread_mutex_t mtpMutex; // main mtp mutex
+	int inotify_thread_kill;
+	int inotify_thread_dead;
 };
 
 #endif // _MTP_STORAGE_H

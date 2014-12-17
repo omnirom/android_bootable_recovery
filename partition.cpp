@@ -153,6 +153,7 @@ TWPartition::TWPartition() {
 	Ignore_Blkid = false;
 	Retain_Layout_Version = false;
 	Crypto_Key_Location = "footer";
+	MTP_Storage_ID = 0;
 }
 
 TWPartition::~TWPartition(void) {
@@ -1028,7 +1029,7 @@ bool TWPartition::UnMount(bool Display_Error) {
 			return true; // Never unmount system if you're not supposed to unmount it
 
 		if (Is_Storage)
-			TWFunc::Toggle_MTP(false);
+			PartitionManager.Remove_MTP_Storage(MTP_Storage_ID);
 
 		if (!Symlink_Mount_Point.empty())
 			umount(Symlink_Mount_Point.c_str());
@@ -1049,7 +1050,7 @@ bool TWPartition::UnMount(bool Display_Error) {
 }
 
 bool TWPartition::Wipe(string New_File_System) {
-	bool wiped = false, update_crypt = false, recreate_media = true, mtp_toggle = true;
+	bool wiped = false, update_crypt = false, recreate_media = true;
 	int check;
 	string Layout_Filename = Mount_Point + "/.layout_version";
 
@@ -1069,7 +1070,6 @@ bool TWPartition::Wipe(string New_File_System) {
 	if (Has_Data_Media && Current_File_System == New_File_System) {
 		wiped = Wipe_Data_Without_Wiping_Media();
 		recreate_media = false;
-		mtp_toggle = false;
 	} else {
 		DataManager::GetValue(TW_RM_RF_VAR, check);
 
@@ -1088,9 +1088,6 @@ bool TWPartition::Wipe(string New_File_System) {
 		else if (New_File_System == "f2fs")
 			wiped = Wipe_F2FS();
 		else {
-			if (Is_Storage) {
-				TWFunc::Toggle_MTP(true);
-			}
 			LOGERR("Unable to wipe '%s' -- unknown file system '%s'\n", Mount_Point.c_str(), New_File_System.c_str());
 			unlink("/.layout_version");
 			return false;
@@ -1123,8 +1120,8 @@ bool TWPartition::Wipe(string New_File_System) {
 			Recreate_Media_Folder();
 		}
 	}
-	if (Is_Storage && mtp_toggle) {
-		TWFunc::Toggle_MTP(true);
+	if (Is_Storage) {
+		PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
 	}
 	return wiped;
 }
@@ -1377,20 +1374,22 @@ bool TWPartition::Wipe_Encryption() {
 	Is_Decrypted = false;
 	Is_Encrypted = false;
 	Find_Actual_Block_Device();
-	bool mtp_was_enabled = TWFunc::Toggle_MTP(false);
 	if (Wipe(Fstab_File_System)) {
 		Has_Data_Media = Save_Data_Media;
 		if (Has_Data_Media && !Symlink_Mount_Point.empty()) {
 			Recreate_Media_Folder();
+			if (Mount(false))
+				PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
 		}
 #ifndef TW_OEM_BUILD
 		gui_print("You may need to reboot recovery to be able to use /data again.\n");
 #endif
-		TWFunc::Toggle_MTP(mtp_was_enabled);
 		return true;
 	} else {
 		Has_Data_Media = Save_Data_Media;
 		LOGERR("Unable to format to remove encryption.\n");
+		if (Has_Data_Media && Mount(false))
+			PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
 		return false;
 	}
 	return false;
@@ -1599,10 +1598,13 @@ bool TWPartition::Wipe_MTD() {
 }
 
 bool TWPartition::Wipe_RMRF() {
-	if (Is_Storage)
-		TWFunc::Toggle_MTP(false);
 	if (!Mount(true))
 		return false;
+	// This is the only wipe that leaves the partition mounted, so we
+	// must manually remove the partition from MTP if it is a storage
+	// partition.
+	if (Is_Storage)
+		PartitionManager.Remove_MTP_Storage(MTP_Storage_ID);
 
 	gui_print("Removing all files under '%s'\n", Mount_Point.c_str());
 	TWFunc::removeDir(Mount_Point, true);
