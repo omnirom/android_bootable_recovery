@@ -117,6 +117,10 @@ MtpServer::~MtpServer() {
 
 void MtpServer::addStorage(MtpStorage* storage) {
 	MTPD("addStorage(): storage: %x\n", storage);
+	if (getStorage(storage->getStorageID()) != NULL) {
+		MTPE("MtpServer::addStorage Storage for storage ID %i already exists.\n", storage->getStorageID());
+		return;
+	}
 	mDatabase->createDB(storage, storage->getStorageID());
 	android::Mutex::Autolock autoLock(mMutex);
 	mStorages.push(storage);
@@ -128,11 +132,17 @@ void MtpServer::removeStorage(MtpStorage* storage) {
 
 	for (size_t i = 0; i < mStorages.size(); i++) {
 		if (mStorages[i] == storage) {
-			mStorages.removeAt(i);
+			MTPD("MtpServer::removeStorage calling sendStoreRemoved\n");
+			mDatabase->lockMutex();
+			mDatabase->destroyDB(storage->getStorageID());
 			sendStoreRemoved(storage->getStorageID());
+			MTPD("MtpServer::removeStorage removeAt\n");
+			mStorages.removeAt(i);
+			//mDatabase->unlockMutex(); This mutex gets destroyed
 			break;
 		}
 	}
+	MTPD("MtpServer::removeStorage DONE\n");
 }
 
 MtpStorage* MtpServer::getStorage(MtpStorageID id) {
@@ -275,6 +285,7 @@ void MtpServer::sendStoreAdded(MtpStorageID id) {
 void MtpServer::sendStoreRemoved(MtpStorageID id) {
 	MTPD("sendStoreRemoved %08X\n", id);
 	sendEvent(MTP_EVENT_STORE_REMOVED, id);
+	MTPD("MtpServer::sendStoreRemoved done\n");
 }
 
 void MtpServer::sendEvent(MtpEventCode code, uint32_t param1) {

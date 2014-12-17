@@ -54,6 +54,7 @@ MtpStorage::MtpStorage(MtpStorageID id, const char* filePath,
 	MTPI("MtpStorage id: %d path: %s\n", id, filePath);
 	inotify_thread = 0;
 	inotify_fd = -1;
+	inotify_thread_kill = 0;
 	sendEvents = false;
 	handleCurrentlySending = 0;
 	use_mutex = true;
@@ -70,15 +71,28 @@ MtpStorage::MtpStorage(MtpStorageID id, const char* filePath,
 
 MtpStorage::~MtpStorage() {
 	if (inotify_thread) {
-		// TODO: what does this do? manpage says it does not kill the thread
-		pthread_kill(inotify_thread, 0);
+		inotify_thread_kill = 1;
+		MTPD("~MtpStorage removing inotify watches and closing inotify_fd\n");
 		for (std::map<int, Tree*>::iterator i = inotifymap.begin(); i != inotifymap.end(); i++) {
 			inotify_rm_watch(inotify_fd, i->first);
 		}
 		close(inotify_fd);
 	}
-	for (iter i = mtpmap.begin(); i != mtpmap.end(); i++) {
-		delete i->second;
+	// Somewhat dirty way to delete everything without getting stuck
+	// The old method would get stuck / locked here and never finish or
+	// return.
+	Tree* tree;
+	int keep_going = 1;
+	while (keep_going) {
+		for (iter i = mtpmap.begin(); i != mtpmap.end(); i++) {
+			tree = i->second;
+			if (tree) {
+				delete tree;
+			}
+			mtpmap.erase(i);
+			break;
+		}
+		keep_going = 0;
 	}
 	if (use_mutex) {
 		use_mutex = false;
@@ -665,14 +679,29 @@ void MtpStorage::handleInotifyEvent(struct inotify_event* event)
 	}
 }
 
+void MtpStorage::inotify_t_kill(void) {
+	MTPD("MtpStorage::inotify_t_kill called\n");
+	inotify_thread_kill = 1;
+}
+
 int MtpStorage::inotify_t(void) {
 	#define EVENT_SIZE ( sizeof(struct inotify_event) )
 	#define EVENT_BUF_LEN ( 1024 * ( EVENT_SIZE + 16) )
 	char buf[EVENT_BUF_LEN];
+	fd_set fdset;
+	struct timeval seltmout;
+	int sel_ret;
 
 	MTPD("inotify thread starting.\n");
 
-	while (true) {
+	while (!inotify_thread_kill) {
+		FD_ZERO(&fdset);
+		FD_SET(inotify_fd, &fdset);
+		seltmout.tv_sec = 0;
+		seltmout.tv_usec = 25000;
+		sel_ret = select(inotify_fd + 1, &fdset, NULL, NULL, &seltmout);
+		if (sel_ret == 0)
+			continue;
 		int i = 0;
 		int len = read(inotify_fd, buf, EVENT_BUF_LEN);
 
@@ -693,11 +722,11 @@ int MtpStorage::inotify_t(void) {
 			i += EVENT_SIZE + event->len;
 		}
 	}
-
-	for (std::map<int, Tree*>::iterator i = inotifymap.begin(); i != inotifymap.end(); i++) {
+	MTPD("inotify_thread_kill received!\n");
+	/*for (std::map<int, Tree*>::iterator i = inotifymap.begin(); i != inotifymap.end(); i++) {
 		inotify_rm_watch(inotify_fd, i->first);
 	}
-	close(inotify_fd);
+	close(inotify_fd);*/
 	return 0;
 }
 
