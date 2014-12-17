@@ -153,6 +153,7 @@ TWPartition::TWPartition() {
 	Ignore_Blkid = false;
 	Retain_Layout_Version = false;
 	Crypto_Key_Location = "footer";
+	MTP_Storage_ID = 0;
 }
 
 TWPartition::~TWPartition(void) {
@@ -1016,6 +1017,8 @@ bool TWPartition::Mount(bool Display_Error) {
 		string Command = "mount '" + Symlink_Path + "' '" + Symlink_Mount_Point + "'";
 		TWFunc::Exec_Cmd(Command);
 	}
+	if (Is_Storage)
+		TWFunc::Toggle_MTP(false);
 	return true;
 }
 

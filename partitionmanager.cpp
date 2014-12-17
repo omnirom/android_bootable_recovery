@@ -57,6 +57,7 @@ extern bool datamedia;
 
 TWPartitionManager::TWPartitionManager(void) {
 	mtp_was_enabled = false;
+	mtp_write_fd = -1;
 }
 
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
@@ -1896,6 +1897,14 @@ bool TWPartitionManager::Enable_MTP(void) {
 	char vendor[PROPERTY_VALUE_MAX];
 	char product[PROPERTY_VALUE_MAX];
 	int count = 0;
+
+	unlink(MTP_PIPE);
+	if (mkfifo(MTP_PIPE, 0666) != 0) {
+		LOGINFO("Unable to mkfifo %s\n", MTP_PIPE);
+		unlink(MTP_PIPE);
+		return 0;
+	}
+
 	property_set("sys.usb.config", "none");
 	property_get("usb.vendor", vendor, "18D1");
 	property_get("usb.product.mtpadb", product, "4EE2");
@@ -1915,6 +1924,7 @@ bool TWPartitionManager::Enable_MTP(void) {
 		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
 			++storageid;
 			printf("twrp addStorage %s, mtpstorageid: %u\n", (*iter)->Storage_Path.c_str(), storageid);
+			(*iter)->MTP_Storage_ID = storageid;
 			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, storageid, (*iter)->Get_Max_FileSize());
 			count++;
 		}
@@ -1939,7 +1949,7 @@ bool TWPartitionManager::Enable_MTP(void) {
 
 bool TWPartitionManager::Disable_MTP(void) {
 #ifdef TW_HAS_MTP
-	char vendor[PROPERTY_VALUE_MAX];
+	/*char vendor[PROPERTY_VALUE_MAX];
 	char product[PROPERTY_VALUE_MAX];
 	property_set("sys.usb.config", "none");
 	property_get("usb.vendor", vendor, "18D1");
@@ -1958,7 +1968,52 @@ bool TWPartitionManager::Disable_MTP(void) {
 		waitpid(mtppid, &status, 0);
 	}
 	property_set("sys.usb.config", "adb");
-	DataManager::SetValue("tw_mtp_enabled", 0);
+	DataManager::SetValue("tw_mtp_enabled", 0);*/
+	std::vector<TWPartition*>::iterator iter;
+	LOGINFO("Disable MTP called\n");
+	if (mtp_write_fd < 0) {
+		LOGINFO("opening mtppipe\n");
+		mtp_write_fd = open(MTP_PIPE, O_WRONLY | O_NONBLOCK);
+	}
+
+	if (mtp_write_fd < 0) {
+		LOGERR("Unable to open file for write\n");
+		return false;
+	}
+	struct mtpmsg mtp_message;
+	unsigned int storageid = 1 << 16;	// upper 16 bits are for physical storage device, we pretend to have only one
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Is_Storage && (*iter)->Is_Present) {
+			if ((*iter)->MTP_Storage_ID) {
+				mtp_message.add_remove = MTP_MESSAGE_REMOVE; // Remove
+				LOGINFO("sending message to remove %i\n", (*iter)->MTP_Storage_ID);
+				mtp_message.storage_id = (*iter)->MTP_Storage_ID;
+				if (write(mtp_write_fd, &mtp_message, sizeof(mtp_message)) <= 0) {
+					LOGERR("error sending message to remove storage %i\n", (*iter)->MTP_Storage_ID);
+				} else {
+					LOGINFO("Message sent, remove storage ID: %i\n", (*iter)->MTP_Storage_ID);
+					(*iter)->MTP_Storage_ID = 0;
+				}
+			} else {
+				LOGINFO("Add\n");
+				mtp_message.add_remove = MTP_MESSAGE_ADD; // Add
+				++storageid;
+				mtp_message.storage_id = storageid;
+				mtp_message.path = (*iter)->Storage_Path.c_str();
+				mtp_message.display = (*iter)->Storage_Name.c_str();
+				mtp_message.maxFileSize = (*iter)->Get_Max_FileSize();
+				LOGINFO("sending message to add %i '%s'\n", storageid, mtp_message.path);
+				if (write(mtp_write_fd, &mtp_message, sizeof(mtp_message)) <= 0) {
+					LOGERR("error sending message to add storage %i\n", storageid);
+				} else {
+					LOGINFO("Message sent, add storage ID: %i\n", storageid);
+					(*iter)->MTP_Storage_ID = storageid;
+				}
+			}
+		}
+	}
+	close(mtp_write_fd);
+	mtp_write_fd = -1;
 	return true;
 #else
 	LOGERR("MTP support not included\n");

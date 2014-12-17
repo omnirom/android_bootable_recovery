@@ -79,6 +79,7 @@ public:
 protected:
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
 	void Setup_Data_Media();                                                  // Sets up a partition as a /data/media emulated storage partition
+	unsigned int MTP_Storage_ID;
 
 private:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
@@ -226,6 +227,7 @@ private:
 	int Open_Lun_File(string Partition_Path, string Lun_File);
 	pid_t mtppid;
 	bool mtp_was_enabled;
+	int mtp_write_fd;
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions

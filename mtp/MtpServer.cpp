@@ -128,11 +128,14 @@ void MtpServer::removeStorage(MtpStorage* storage) {
 
 	for (size_t i = 0; i < mStorages.size(); i++) {
 		if (mStorages[i] == storage) {
-			mStorages.removeAt(i);
+			MTPD("MtpServer::removeStorage calling sendStoreRemoved\n");
 			sendStoreRemoved(storage->getStorageID());
+			MTPD("MtpServer::removeStorage removeAt\n");
+			mStorages.removeAt(i);
 			break;
 		}
 	}
+	MTPD("MtpServer::removeStorage DONE\n");
 }
 
 MtpStorage* MtpServer::getStorage(MtpStorageID id) {
@@ -275,6 +278,7 @@ void MtpServer::sendStoreAdded(MtpStorageID id) {
 void MtpServer::sendStoreRemoved(MtpStorageID id) {
 	MTPD("sendStoreRemoved %08X\n", id);
 	sendEvent(MTP_EVENT_STORE_REMOVED, id);
+	MTPD("MtpServer::sendStoreRemoved done\n");
 }
 
 void MtpServer::sendEvent(MtpEventCode code, uint32_t param1) {

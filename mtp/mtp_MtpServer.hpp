@@ -32,6 +32,19 @@
 #include "MtpStorage.h"
 #include "mtp_MtpDatabase.hpp"
 
+#define MTP_PIPE "/sbin/mtppipe"
+
+#define MTP_MESSAGE_ADD 1
+#define MTP_MESSAGE_REMOVE 2
+
+struct mtpmsg {
+	int add_remove; // 1 is add, 2 is remove, see above
+	unsigned int storage_id;
+	const char* display;
+	const char* path;
+	uint64_t maxFileSize;
+};
+
 typedef struct Storage {
 	std::string display;
 	std::string mount;
@@ -54,6 +67,9 @@ class twmtp_MtpServer {
 		void set_storages(storages* mtpstorages);
 		storages *stores;
 	private:
+		typedef int (twmtp_MtpServer::*ThreadPtr)(void);
+		typedef void* (*PThreadPtr)(void *);
+		int mtppipe_thread(void);
 		bool usePtp;
 		MtpServer* server;
 		MtpServer* refserver;
