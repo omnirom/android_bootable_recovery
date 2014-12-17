@@ -233,8 +233,15 @@ void MyMtpDatabase::endSendObject(const char* path, MtpObjectHandle handle,
 }
 
 void MyMtpDatabase::createDB(MtpStorage* storage, MtpStorageID storageID) {
+	MTPD("MyMtpDatabase::createDB called\n");
 	storagemap[storageID] = storage;
 	storage->createDB();
+}
+
+void MyMtpDatabase::destroyDB(MtpStorageID storageID) {
+	MtpStorage* storage = storagemap[storageID];
+	storagemap.erase(storageID);
+	delete storage;
 }
 
 MtpObjectHandleList* MyMtpDatabase::getObjectList(MtpStorageID storageID,
