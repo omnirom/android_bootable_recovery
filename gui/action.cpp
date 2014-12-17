@@ -1268,6 +1268,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				int wipe_dalvik = 0;
 
 				gui_print("Starting ADB sideload feature...\n");
+				bool mtp_was_enabled = TWFunc::Toggle_MTP(false);
 				DataManager::GetValue("tw_wipe_dalvik", wipe_dalvik);
 				ret = apply_from_adb("/");
 				DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui now that the zip install is going to start
@@ -1289,6 +1290,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					set_usb_driver(false);
 					maybe_restart_adbd();
 				}
+				TWFunc::Toggle_MTP(mtp_was_enabled);
 				if (strcmp(file_prop, "error") != 0) {
 					struct stat st;
 					stat("/sideload/exit", &st);
