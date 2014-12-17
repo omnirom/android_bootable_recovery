@@ -462,6 +462,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				gui_print("Simulating actions...\n");
 		} else if (!simulate) {
 			PartitionManager.Mount_By_Path(arg, true);
+			PartitionManager.Add_MTP_Storage(arg);
 		} else
 			gui_print("Simulating actions...\n");
 		return 0;

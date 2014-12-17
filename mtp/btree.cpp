@@ -26,8 +26,10 @@ Tree::Tree(MtpObjectHandle handle, MtpObjectHandle parent, const std::string& na
 
 // Destructor
 Tree::~Tree() {
+	Node* node;
 	for (std::map<MtpObjectHandle, Node*>::iterator it = entries.begin(); it != entries.end(); ++it)
 		delete it->second;
+	entries.clear();
 }
 
 int Tree::getCount(void) {
