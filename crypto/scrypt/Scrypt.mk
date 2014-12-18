@@ -24,7 +24,7 @@ endif
 
 LOCAL_SRC_FILES += $(target_src_files)
 LOCAL_CFLAGS += $(target_c_flags)
-LOCAL_C_INCLUDES += $(target_c_includes) bootable/recovery/crypto/scrypt/lib/util
+LOCAL_C_INCLUDES += $(target_c_includes) $(commands_recovery_local_path)/crypto/scrypt/lib/util
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE:= libscrypttwrp_static
 LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
@@ -38,7 +38,7 @@ include $(LOCAL_PATH)/android-config.mk
 LOCAL_SHARED_LIBRARIES := $(log_shared_libraries)
 LOCAL_SRC_FILES += $(host_src_files)
 LOCAL_CFLAGS += $(host_c_flags)
-LOCAL_C_INCLUDES += $(host_c_includes)
+LOCAL_C_INCLUDES += $(host_c_includes) $(commands_recovery_local_path)/crypto/scrypt/lib/util
 LOCAL_LDLIBS += -ldl
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE:= libscrypttwrp_static

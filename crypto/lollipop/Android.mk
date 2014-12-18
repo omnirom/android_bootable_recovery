@@ -8,7 +8,7 @@ common_c_includes := \
 	external/openssl/include \
 	external/stlport/stlport \
 	bionic \
-	bootable/recovery/crypto/scrypt/lib/crypto \
+	$(commands_recovery_local_path)/crypto/scrypt/lib/crypto \
 	frameworks/native/include \
 	system/security/keystore \
 	hardware/libhardware/include/hardware \
