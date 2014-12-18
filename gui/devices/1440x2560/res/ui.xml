@@ -50,7 +50,7 @@
 		<variable name="col1_x" value="0" />
 		<variable name="col2_x" value="780" />
 		<variable name="col_center_x" value="410" />
-		<variable name="col_center_medium_x" value="550" />
+		<variable name="col_center_medium_x" value="593" />
 		<variable name="center_x" value="720" />
 		<variable name="row1_y" value="339" />
 		<variable name="row2_y" value="915" />
@@ -85,7 +85,7 @@
 		<variable name="tz_set_y" value="1995" />
 		<variable name="tz_current_y" value="1895" />
 		<variable name="col_progressbar_x" value="`0" />
-		<variable name="row_progressbar_y" value="2195" />
+		<variable name="row_progressbar_y" value="2250" />
 		<variable name="col1_medium_x" value="13" />
 		<variable name="col2_medium_x" value="370" />
 		<variable name="col3_medium_x" value="730" />
