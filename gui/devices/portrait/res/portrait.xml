@@ -769,10 +769,7 @@
 			</object>
 
 			<object type="button">
-				<conditions>
-					<condition var1="tw_has_internal" var2="1" />
-					<condition var1="tw_has_data_media" var2="1" />
-				</conditions>
+				<condition var1="tw_has_data_media" var2="1" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%wipe_button_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -780,6 +777,30 @@
 				<image resource="main_button" />
 				<actions>
 					<action function="page">formatdata</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<conditions>
+					<condition var1="tw_is_encrypted" var2="1" />
+					<condition var1="tw_has_data_media" var2="0" />
+				</conditions>
+				<highlight color="%highlight_color%" />
+				<placement x="%col2_x%" y="%wipe_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Wipe Encryption</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=wipe</action>
+					<action function="set">tw_action=wipe</action>
+					<action function="set">tw_action_param=DATAMEDIA</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Wipe Encryption from Data?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting Data...</action>
+					<action function="set">tw_complete_text1=Data Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Format Data</action>
+					<action function="page">confirm_action</action>
 				</actions>
 			</object>
 
