@@ -1371,6 +1371,15 @@ bool TWPartition::Wipe_Encryption() {
 
 	Has_Data_Media = false;
 	Decrypted_Block_Device = "";
+#ifdef TW_INCLUDE_CRYPTO
+	if (Is_Decrypted) {
+		if (!UnMount(true))
+			return false;
+		if (delete_crypto_blk_dev("userdata") != 0) {
+			LOGERR("Error deleting crypto block device, continuing anyway.\n");
+		}
+	}
+#endif
 	Is_Decrypted = false;
 	Is_Encrypted = false;
 	Find_Actual_Block_Device();
@@ -1381,6 +1390,7 @@ bool TWPartition::Wipe_Encryption() {
 			if (Mount(false))
 				PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
 		}
+		DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 #ifndef TW_OEM_BUILD
 		gui_print("You may need to reboot recovery to be able to use /data again.\n");
 #endif
