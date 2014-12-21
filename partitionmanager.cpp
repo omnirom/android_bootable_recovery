@@ -1433,6 +1433,10 @@ int TWPartitionManager::Fix_Permissions(void) {
 
 	fixPermissions perms;
 	result = perms.fixPerms(true, false);
+#ifdef HAVE_SELINUX
+	if (result == 0 && DataManager::GetIntValue("tw_fixperms_restorecon") == 1)
+		result = perms.fixContexts();
+#endif
 	UnMount_Main_Partitions();
 	gui_print("Done.\n\n");
 	return result;
