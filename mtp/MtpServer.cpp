@@ -1001,6 +1001,7 @@ MtpResponseCode MtpServer::doSendObjectInfo() {
 		return MTP_RESPONSE_STORAGE_FULL;
 	uint64_t maxFileSize = storage->getMaxFileSize();
 	// check storage max file size
+	MTPD("maxFileSize: %ld\n", maxFileSize); 
 	if (maxFileSize != 0) {
 		// if mSendObjectFileSize is 0xFFFFFFFF, then all we know is the file size
 		// is >= 0xFFFFFFFF
