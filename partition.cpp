@@ -1654,9 +1654,6 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 	return Wipe_Encryption();
 #else
 	string dir;
-	#ifdef HAVE_SELINUX
-	fixPermissions perms;
-	#endif
 
 	// This handles wiping data on devices with "sdcard" in /data/media
 	if (!Mount(true))
@@ -2018,10 +2015,6 @@ void TWPartition::Find_Actual_Block_Device(void) {
 void TWPartition::Recreate_Media_Folder(void) {
 	string Command;
 
-	#ifdef HAVE_SELINUX
-	fixPermissions perms;
-	#endif
-
 	if (!Mount(true)) {
 		LOGERR("Unable to recreate /data/media folder.\n");
 	} else if (!TWFunc::Path_Exists("/data/media")) {
@@ -2029,7 +2022,13 @@ void TWPartition::Recreate_Media_Folder(void) {
 		LOGINFO("Recreating /data/media folder.\n");
 		mkdir("/data/media", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 #ifdef HAVE_SELINUX
+		// Attempt to set the correct SELinux contexts on the folder
+		fixPermissions perms;
 		perms.fixDataInternalContexts();
+		// Afterwards, we will try to set the
+		// default metadata that we were hopefully able to get during
+		// early boot.
+		tw_set_default_metadata("/data/media");
 #endif
 		// Toggle mount to ensure that "internal sdcard" gets mounted
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);

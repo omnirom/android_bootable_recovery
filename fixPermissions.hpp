@@ -16,28 +16,31 @@ using namespace std;
 
 class fixPermissions {
 	public:
+		fixPermissions();
+		~fixPermissions();
 		int fixPerms(bool enable_debug, bool remove_data_for_missing_apps);
+		int fixContexts();
 		int fixDataInternalContexts(void);
 
 	private:
-		int pchown(std::string fn, int puid, int pgid);
-		int pchmod(std::string fn, string mode);
-		vector <string> listAllDirectories(std::string path);
-		vector <string> listAllFiles(std::string path);
-		int getPackages();
-		int fixSystemApps();
-		int fixDataApps();
-		int fixAllFiles(string directory, int gid, int uid, string file_perms);
+		int pchown(string fn, int puid, int pgid);
+		int pchmod(string fn, mode_t mode);
+		vector <string> listAllDirectories(string path);
+		vector <string> listAllFiles(string path);
+		void deletePackages();
+		int getPackages(const string& packageFile);
+		int fixApps();
+		int fixAllFiles(string directory, int uid, int gid, mode_t file_perms);
+		int fixDir(const string& dir, int diruid, int dirgid, mode_t dirmode, int fileuid, int filegid, mode_t filemode);
 		int fixDataData(string dataDir);
-		int restorecon(std::string entry, struct stat *sb);
+		int restorecon(string entry, struct stat *sb);
 		int fixDataDataContexts(void);
-		int fixContextsRecursively(std::string path, int level);
+		int fixContextsRecursively(string path, int level);
 
 		struct package {
 			string pkgName;
 			string codePath;
 			string appDir;
-			string app;
 			string dDir;
 			int gid;
 			int uid;
@@ -45,8 +48,5 @@ class fixPermissions {
 		};
 		bool debug;
 		bool remove_data;
-		bool multi_user;
 		package* head;
-		package* temp;
-		string packageFile;
 };

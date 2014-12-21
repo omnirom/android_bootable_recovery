@@ -2764,16 +2764,7 @@
 				<font resource="font" color="%button_text_color%" />
 				<text>Fix Permissions</text>
 				<image resource="main_button" />
-				<actions>
-					<action function="set">tw_back=advanced</action>
-					<action function="set">tw_action=fixpermissions</action>
-					<action function="set">tw_text1=Fix Permissions?</action>
-					<action function="set">tw_action_text1=Fixing Permissions...</action>
-					<action function="set">tw_complete_text1=Fix Permissions Complete</action>
-					<action function="set">tw_slider_text=Swipe to Confirm</action>
-					<action function="set">tw_show_reboot=1</action>
-					<action function="page">confirm_action</action>
-				</actions>
+				<action function="page">fixperms</action>
 			</object>
 
 			<object type="button">
@@ -3884,6 +3875,68 @@
 				<font resource="font" />
 				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
 				<text>Swipe to Start Sideload</text>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advanced</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="fixperms">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5"/>
+				<text>Fix Permissions</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%col2_x%" y="%row2_text_y%" />
+				<text>Note: Fixing permissions is rarely needed.</text>
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col2_x%" y="%row3_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<text>Also fix SELinux contexts</text>
+				<data variable="tw_fixperms_restorecon" />
+				<image checked="checkbox_true" unchecked="checkbox_false" />
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%col2_x%" y="%row4_text_y%" />
+				<text>Fixing SELinux contexts may cause your device to not boot properly.</text>
+			</object>
+
+			<object type="slider">
+				<placement x="%slider_x%" y="%slider_y%" />
+				<resource base="slider" used="slider-used" touch="slider-touch" />
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=fixpermissions</action>
+					<action function="set">tw_action_text1=Fixing Permissions...</action>
+					<action function="set">tw_complete_text1=Fix Permissions Complete</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">action_page</action>
+				</actions>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
+				<text>Swipe to Fix Permissions</text>
 			</object>
 
 			<object type="action">

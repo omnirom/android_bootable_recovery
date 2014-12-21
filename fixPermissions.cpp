@@ -41,6 +41,20 @@
 using namespace std;
 using namespace rapidxml;
 
+static const mode_t kMode_0600 = 0600; // S_IRUSR | S_IWUSR
+static const mode_t kMode_0640 = 0640; // S_IRUSR | S_IWUSR | S_IRGRP
+static const mode_t kMode_0644 = 0644; // S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+static const mode_t kMode_0660 = 0660; // S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP
+static const mode_t kMode_0755 = 0755; // S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
+static const mode_t kMode_0771 = 0771; // S_IRWXU | S_IRWXG | S_IXOTH
+
+fixPermissions::fixPermissions() : head(NULL) {
+}
+
+fixPermissions::~fixPermissions() {
+	deletePackages();
+}
+
 #ifdef HAVE_SELINUX
 struct selabel_handle *sehandle;
 struct selinux_opt selinux_options[] = {
@@ -49,6 +63,7 @@ struct selinux_opt selinux_options[] = {
 
 int fixPermissions::restorecon(string entry, struct stat *sb) {
 	char *oldcontext, *newcontext;
+
 	if (lgetfilecon(entry.c_str(), &oldcontext) < 0) {
 		LOGINFO("Couldn't get selinux context for %s\n", entry.c_str());
 		return -1;
@@ -105,7 +120,7 @@ int fixPermissions::fixContextsRecursively(string name, int level) {
 			path = name + "/" + de->d_name;
 			restorecon(path, &sb);
 		}
-	} while (de = readdir(d));
+	} while ((de = readdir(d)));
 	closedir(d);
 	return 0;
 }
@@ -120,6 +135,7 @@ int fixPermissions::fixDataInternalContexts(void) {
 		LOGINFO("Unable to open /file_contexts\n");
 		return 0;
 	}
+	// TODO: what about /data/media/1 etc.?
 	if (TWFunc::Path_Exists("/data/media/0"))
 		dir = "/data/media/0";
 	else
@@ -150,10 +166,10 @@ int fixPermissions::fixDataInternalContexts(void) {
 #endif
 
 int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_apps) {
-	packageFile = "/data/system/packages.xml";
+	string packageFile = "/data/system/packages.xml";
 	debug = enable_debug;
 	remove_data = remove_data_for_missing_apps;
-	multi_user = TWFunc::Path_Exists("/data/user");
+	bool multi_user = TWFunc::Path_Exists("/data/user");
 
 	if (!(TWFunc::Path_Exists(packageFile))) {
 		gui_print("Can't check permissions\n");
@@ -165,17 +181,12 @@ int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_app
 	}
 
 	gui_print("Fixing permissions...\nLoading packages...\n");
-	if ((getPackages()) != 0) {
+	if ((getPackages(packageFile)) != 0) {
 		return -1;
 	}
 
-	gui_print("Fixing /system/app permissions...\n");
-	if ((fixSystemApps()) != 0) {
-		return -1;
-	}
-
-	gui_print("Fixing /data/app permissions...\n");
-	if ((fixDataApps()) != 0) {
+	gui_print("Fixing app permissions...\n");
+	if (fixApps() != 0) {
 		return -1;
 	}
 
@@ -231,13 +242,21 @@ int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_app
 			return -1;
 		}
 	}
-	#ifdef HAVE_SELINUX
+	gui_print("Done fixing permissions.\n");
+	return 0;
+}
+
+int fixPermissions::fixContexts()
+{
+#ifdef HAVE_SELINUX
 	gui_print("Fixing /data/data/ contexts.\n");
 	fixDataDataContexts();
 	fixDataInternalContexts();
-	#endif
-	gui_print("Done fixing permissions.\n");
+	gui_print("Done fixing contexts.\n");
 	return 0;
+#endif
+	gui_print("Not fixing SELinux contexts; support not compiled in.\n");
+	return -1;
 }
 
 int fixPermissions::pchown(string fn, int puid, int pgid) {
@@ -249,145 +268,41 @@ int fixPermissions::pchown(string fn, int puid, int pgid) {
 	return 0;
 }
 
-int fixPermissions::pchmod(string fn, string mode) {
-	long mask = 0;
-	LOGINFO("Fixing %s, mode: %s\n", fn.c_str(), mode.c_str());
-	for ( std::string::size_type n = 0; n < mode.length(); ++n) {
-		if (n == 0) {
-			if (mode[n] == '0')
-				continue;
-			else if (mode[n] == '1')
-				mask = S_ISVTX;
-			else if (mode[n] == '2')
-				mask = S_ISGID;
-		}
-		else if (n == 1) {
-			if (mode[n] == '7') {
-				mask |= S_IRWXU;
-			}
-			if (mode[n] == '6') {
-				mask |= S_IRUSR;
-				mask |= S_IWUSR;
-			}
-			if (mode[n] == '5') {
-				mask |= S_IRUSR;
-				mask |= S_IXUSR;
-			}
-			if (mode[n] == '4')
-				mask |= S_IRUSR;
-			if (mode[n] == '3') {
-				mask |= S_IWUSR;
-				mask |= S_IRUSR;
-			}
-			if (mode[n] == '2')
-				mask |= S_IWUSR;
-			if (mode[n] == '1')
-				mask |= S_IXUSR;
-		}
-		else if (n == 2) {
-			if (mode[n] == '7') {
-				mask |= S_IRWXG;
-			}
-			if (mode[n] == '6') {
-				mask |= S_IRGRP;
-				mask |= S_IWGRP;
-			}
-			if (mode[n] == '5') {
-				mask |= S_IRGRP;
-				mask |= S_IXGRP;
-			}
-			if (mode[n] == '4')
-				mask |= S_IRGRP;
-			if (mode[n] == '3') {
-				mask |= S_IWGRP;
-				mask |= S_IXGRP;
-			}
-			if (mode[n] == '2')
-				mask |= S_IWGRP;
-			if (mode[n] == '1')
-				mask |= S_IXGRP;
-		}
-		else if (n == 3) {
-			if (mode[n] == '7') {
-				mask |= S_IRWXO;
-			}
-			if (mode[n] == '6') {
-				mask |= S_IROTH;
-				mask |= S_IWOTH;
-			}
-			if (mode[n] == '5') {
-				mask |= S_IROTH;
-				mask |= S_IXOTH;
-			}
-			if (mode[n] == '4')
-				mask |= S_IROTH;
-			if (mode[n] == '3') {
-				mask |= S_IWOTH;
-				mask |= S_IXOTH;
-			}
-			if (mode[n] == '2')
-				mask |= S_IWOTH;
-			if (mode[n] == '1')
-				mask |= S_IXOTH;
-		}
-	}
+int fixPermissions::pchmod(string fn, mode_t mode) {
+	LOGINFO("Fixing %s, mode: %o\n", fn.c_str(), mode);
 
-	if (chmod(fn.c_str(), mask) != 0) {
-		LOGERR("Unable to chmod '%s' %l\n", fn.c_str(), mask);
+	if (chmod(fn.c_str(), mode) != 0) {
+		LOGERR("Unable to chmod '%s' %o\n", fn.c_str(), mode);
 		return -1;
 	}
 
 	return 0;
 }
 
-int fixPermissions::fixSystemApps() {
-	temp = head;
+int fixPermissions::fixApps() {
+	package* temp = head;
 	while (temp != NULL) {
-		if (TWFunc::Path_Exists(temp->codePath)) {
+		struct stat st;
+		if (stat(temp->codePath.c_str(), &st) == 0) {
+			int new_uid = 0;
+			int new_gid = 0;
+			mode_t perms = 0;
+			bool fix = false;
 			if (temp->appDir.compare("/system/app") == 0 || temp->appDir.compare("/system/priv-app") == 0) {
-				if (debug)	{
-					LOGINFO("Looking at '%s'\n", temp->codePath.c_str());
-					LOGINFO("Fixing permissions on '%s'\n", temp->pkgName.c_str());
-					LOGINFO("Directory: '%s'\n", temp->appDir.c_str());
-					LOGINFO("Original package owner: %d, group: %d\n", temp->uid, temp->gid);
-				}
-				if (pchown(temp->codePath, 0, 0) != 0)
-					return -1;
-				if (pchmod(temp->codePath, "0644") != 0)
-					return -1;
-			}
-		} else {
-			//Remove data directory since app isn't installed
-			if (remove_data && TWFunc::Path_Exists(temp->dDir) && temp->appDir.size() >= 9 && temp->appDir.substr(0, 9) != "/mnt/asec") {
-				if (debug)
-					LOGINFO("Looking at '%s', removing data dir: '%s', appDir: '%s'", temp->codePath.c_str(), temp->dDir.c_str(), temp->appDir.c_str());
-				if (TWFunc::removeDir(temp->dDir, false) != 0) {
-					LOGINFO("Unable to removeDir '%s'\n", temp->dDir.c_str());
-					return -1;
-				}
-			}
-		}
-		temp = temp->next;
-	}
-	return 0;
-}
-
-int fixPermissions::fixDataApps() {
-	bool fix = false;
-	int new_gid = 0;
-	string perms = "0000";
-
-	temp = head;
-	while (temp != NULL) {
-		if (TWFunc::Path_Exists(temp->codePath)) {
-			if (temp->appDir.compare("/data/app") == 0 || temp->appDir.compare("/sd-ext/app") == 0) {
 				fix = true;
+				new_uid = 0;
+				new_gid = 0;
+				perms = kMode_0644;
+			} else if (temp->appDir.compare("/data/app") == 0 || temp->appDir.compare("/sd-ext/app") == 0) {
+				fix = true;
+				new_uid = 1000;
 				new_gid = 1000;
-				perms = "0644";
+				perms = kMode_0644;
 			} else if (temp->appDir.compare("/data/app-private") == 0 || temp->appDir.compare("/sd-ext/app-private") == 0) {
 				fix = true;
+				new_uid = 1000;
 				new_gid = temp->gid;
-				perms = "0640";
+				perms = kMode_0640;
 			} else
 				fix = false;
 			if (fix) {
@@ -397,18 +312,26 @@ int fixPermissions::fixDataApps() {
 					LOGINFO("Directory: '%s'\n", temp->appDir.c_str());
 					LOGINFO("Original package owner: %d, group: %d\n", temp->uid, temp->gid);
 				}
-				if (pchown(temp->codePath, 1000, new_gid) != 0)
-					return -1;
-				if (pchmod(temp->codePath, perms) != 0)
-					return -1;
+				if (S_ISDIR(st.st_mode)) {
+					// Android 5.0 introduced codePath pointing to a directory instead of the apk itself
+					// TODO: check what this should do
+					if (fixDir(temp->codePath, new_uid, new_gid, kMode_0755, new_uid, new_gid, perms) != 0)
+						return -1;
+				} else {
+					if (pchown(temp->codePath, new_uid, new_gid) != 0)
+						return -1;
+					if (pchmod(temp->codePath, perms) != 0)
+						return -1;
+				}
 			}
-		} else {
+		} else if (remove_data) {
 			//Remove data directory since app isn't installed
-			if (remove_data && TWFunc::Path_Exists(temp->dDir) && temp->appDir.size() >= 9 && temp->appDir.substr(0, 9) != "/mnt/asec") {
+			string datapath = "/data/data/" + temp->dDir;
+			if (TWFunc::Path_Exists(datapath) && temp->appDir.size() >= 9 && temp->appDir.substr(0, 9) != "/mnt/asec") {
 				if (debug)
-					LOGINFO("Looking at '%s', removing data dir: '%s', appDir: '%s'", temp->codePath.c_str(), temp->dDir.c_str(), temp->appDir.c_str());
-				if (TWFunc::removeDir(temp->dDir, false) != 0) {
-					LOGINFO("Unable to removeDir '%s'\n", temp->dDir.c_str());
+					LOGINFO("Looking at '%s', removing data dir: '%s', appDir: '%s'", temp->codePath.c_str(), datapath.c_str(), temp->appDir.c_str());
+				if (TWFunc::removeDir(datapath, false) != 0) {
+					LOGINFO("Unable to removeDir '%s'\n", datapath.c_str());
 					return -1;
 				}
 			}
@@ -418,7 +341,7 @@ int fixPermissions::fixDataApps() {
 	return 0;
 }
 
-int fixPermissions::fixAllFiles(string directory, int gid, int uid, string file_perms) {
+int fixPermissions::fixAllFiles(string directory, int uid, int gid, mode_t file_perms) {
 	vector <string> files;
 	string file;
 
@@ -436,25 +359,30 @@ int fixPermissions::fixAllFiles(string directory, int gid, int uid, string file_
 	return 0;
 }
 
-int fixPermissions::fixDataData(string dataDir) {
-	string directory, dir;
+int fixPermissions::fixDir(const string& dir, int diruid, int dirgid, mode_t dirmode, int fileuid, int filegid, mode_t filemode)
+{
+	if (pchmod(dir.c_str(), dirmode) != 0)
+		return -1;
+	if (pchown(dir.c_str(), diruid, dirgid) != 0)
+		return -1;
+	if (fixAllFiles(dir, fileuid, filegid, filemode) != 0)
+		return -1;
+	return 0;
+}
 
-	temp = head;
+int fixPermissions::fixDataData(string dataDir) {
+	package* temp = head;
 	while (temp != NULL) {
-		dir = dataDir + temp->dDir;
+		string dir = dataDir + temp->dDir;
 		if (TWFunc::Path_Exists(dir)) {
 			vector <string> dataDataDirs = listAllDirectories(dir);
 			for (unsigned n = 0; n < dataDataDirs.size(); ++n) {
-				directory = dir + "/";
+				string directory = dir + "/";
 				directory.append(dataDataDirs.at(n));
 				if (debug)
 					LOGINFO("Looking at data directory: '%s'\n", directory.c_str());
 				if (dataDataDirs.at(n) == ".") {
-					if (pchmod(directory, "0755") != 0)
-						return -1;
-					if (pchown(directory.c_str(), temp->uid, temp->gid) != 0)
-						return -1;
-					if (fixAllFiles(directory, temp->uid, temp->gid, "0755") != 0)
+					if (fixDir(directory, temp->uid, temp->gid, kMode_0755, temp->uid, temp->gid, kMode_0755) != 0)
 						return -1;
 				}
 				else if (dataDataDirs.at(n) == "..") {
@@ -462,44 +390,25 @@ int fixPermissions::fixDataData(string dataDir) {
 						LOGINFO("Skipping ..\n");
 					continue;
 				}
+				// TODO: when any of these fails, do we really want to stop everything? 
 				else if (dataDataDirs.at(n) == "lib") {
-					if (pchmod(directory.c_str(), "0755") != 0)
-						return -1;
-					if (pchown(directory.c_str(), 1000, 1000) != 0)
-						return -1;
-					if (fixAllFiles(directory, temp->uid, temp->gid, "0755") != 0)
+					if (fixDir(directory, 1000, 1000, kMode_0755, 1000, 1000, kMode_0755) != 0)
 						return -1;
 				}
 				else if (dataDataDirs.at(n) == "shared_prefs") {
-					if (pchmod(directory.c_str(), "0771") != 0)
-						return -1;
-					if (pchown(directory.c_str(), temp->uid, temp->gid) != 0)
-						return -1;
-					if (fixAllFiles(directory, temp->uid, temp->gid, "0660") != 0)
+					if (fixDir(directory, temp->uid, temp->gid,kMode_0771, temp->uid, temp->gid, kMode_0660) != 0)
 						return -1;
 				}
 				else if (dataDataDirs.at(n) == "databases") {
-					if (pchmod(directory.c_str(), "0771") != 0)
-						return -1;
-					if (pchown(directory.c_str(), temp->uid, temp->gid) != 0)
-						return -1;
-					if (fixAllFiles(directory, temp->uid, temp->gid, "0660") != 0)
+					if (fixDir(directory, temp->uid, temp->gid,kMode_0771, temp->uid, temp->gid, kMode_0660) != 0)
 						return -1;
 				}
 				else if (dataDataDirs.at(n) == "cache") {
-					if (pchmod(directory.c_str(), "0771") != 0)
-						return -1;
-					if (pchown(directory.c_str(), temp->uid, temp->gid) != 0)
-						return -1;
-					if (fixAllFiles(directory, temp->uid, temp->gid, "0600") != 0)
+					if (fixDir(directory, temp->uid, temp->gid,kMode_0771, temp->uid, temp->gid, kMode_0600) != 0)
 						return -1;
 				}
 				else {
-					if (pchmod(directory.c_str(), "0771") != 0)
-						return -1;
-					if (pchown(directory.c_str(), temp->uid, temp->gid) != 0)
-						return -1;
-					if (fixAllFiles(directory, temp->uid, temp->gid, "0755") != 0)
+					if (fixDir(directory, temp->uid, temp->gid,kMode_0771, temp->uid, temp->gid, kMode_0755) != 0)
 						return -1;
 				}
 			}
@@ -509,6 +418,7 @@ int fixPermissions::fixDataData(string dataDir) {
 	return 0;
 }
 
+// TODO: merge to listAllDirEntries(path, type)
 vector <string> fixPermissions::listAllDirectories(string path) {
 	DIR *dir = opendir(path.c_str());
 	vector <string> dirs;
@@ -545,25 +455,32 @@ vector <string> fixPermissions::listAllFiles(string path) {
 	return files;
 }
 
-int fixPermissions::getPackages() {
-	int len = 0;
-	bool skiploop = false;
-	vector <string> skip;
-	string name;
+void fixPermissions::deletePackages() {
+	while (head) {
+		package* temp = head;
+		head = temp->next;
+		delete temp;
+	}
+}
+
+int fixPermissions::getPackages(const string& packageFile) {
+	deletePackages();
 	head = NULL;
 
+	// TODO: simply skip all packages in /system/framework? or why are these excluded?
+	vector <string> skip;
 	skip.push_back("/system/framework/framework-res.apk");
 	skip.push_back("/system/framework/com.htc.resources.apk");
 
 	ifstream xmlFile(packageFile.c_str());
 	xmlFile.seekg(0, ios::end);
-	len = (int) xmlFile.tellg();
+	int len = (int) xmlFile.tellg();
 	xmlFile.seekg(0, ios::beg);
-	char xmlBuf[len + 1];
+	vector<char> xmlBuf(len + 1);
 	xmlFile.read(&xmlBuf[0], len);
 	xmlBuf[len] = '\0';
 	xml_document<> pkgDoc;
-	LOGINFO("parsing package, %i...\n", len);
+	LOGINFO("Parsing packages.xml, size=%i...\n", len);
 	pkgDoc.parse<parse_full>(&xmlBuf[0]);
 
 	xml_node<> * pkgNode = pkgDoc.first_node("packages");
@@ -571,113 +488,61 @@ int fixPermissions::getPackages() {
 		LOGERR("No packages found to fix.\n");
 		return -1;
 	}
-	xml_node <> * next = pkgNode->first_node("package");
-	if (next == NULL) {
+
+	// Get packages
+	for (xml_node<>* node = pkgNode->first_node(); node; node = node->next_sibling()) {
+		if (node->type() != node_element)
+			continue;
+		string elementName = node->name();
+		// we want <package> and <updated-package>
+		if (!(elementName == "package" || elementName == "updated-package"))
+			continue;
+
+		xml_attribute<>* attName = node->first_attribute("name");
+		if (!attName)
+			continue;
+		string name = attName->value();
+
+		xml_attribute<>* attCodePath = node->first_attribute("codePath");
+		if (!attCodePath)
+		{
+			LOGINFO("No codePath on %s, skipping.\n", name.c_str());
+			continue;
+		}
+		string codePath = attCodePath->value();
+
+		bool doskip = std::find(skip.begin(), skip.end(), codePath) != skip.end();
+		if (doskip) {
+			if (debug)
+				LOGINFO("Skipping package %s\n", codePath.c_str());
+			continue;
+		}
+
+		if (debug)
+			LOGINFO("Loading pkg: %s\n", name.c_str());
+
+		package* temp = new package;
+		temp->pkgName = name;
+		temp->codePath = codePath;
+		temp->appDir = codePath;
+		temp->dDir = name;
+		xml_attribute<>* attUserId = node->first_attribute("userId");
+		if (!attUserId)
+			attUserId = node->first_attribute("sharedUserId");
+		if (!attUserId) {
+			LOGINFO("Problem with userID on %s\n", name.c_str());
+		} else {
+			temp->uid = atoi(attUserId->value());
+			temp->gid = atoi(attUserId->value());
+		}
+		temp->next = head;
+		head = temp;
+	}
+
+	if (head == NULL) {
 		LOGERR("No package found to fix.\n");
 		return -1;
 	}
 
-	//Get packages
-	while (next->first_attribute("name") != NULL) {
-		package* temp = new package;
-		for (unsigned n = 0; n < skip.size(); ++n) {
-			if (skip.at(n).compare(next->first_attribute("codePath")->value()) == 0) {
-				skiploop = true;
-				break;
-			}
-		}
-
-		if (skiploop == true) {
-			if (debug)
-				LOGINFO("Skipping package %s\n", next->first_attribute("codePath")->value());
-			free(temp);
-			next = next->next_sibling();
-			skiploop = false;
-			continue;
-		}
-		name.append((next->first_attribute("name")->value()));
-		temp->pkgName = next->first_attribute("name")->value();
-		if (debug)
-			LOGINFO("Loading pkg: %s\n", next->first_attribute("name")->value());
-		if (next->first_attribute("codePath") == NULL) {
-			LOGINFO("Problem with codePath on %s\n", next->first_attribute("name")->value());
-		} else {
-			temp->codePath = next->first_attribute("codePath")->value();
-			temp->app = basename(next->first_attribute("codePath")->value());
-			temp->appDir = dirname(next->first_attribute("codePath")->value());
-		}
-		temp->dDir = name;
-		if ( next->first_attribute("sharedUserId") != NULL) {
-			temp->uid = atoi(next->first_attribute("sharedUserId")->value());
-			temp->gid = atoi(next->first_attribute("sharedUserId")->value());
-		}
-		else {
-			if (next->first_attribute("userId") == NULL) {
-				LOGINFO("Problem with userID on %s\n", next->first_attribute("name")->value());
-			} else {
-				temp->uid = atoi(next->first_attribute("userId")->value());
-				temp->gid = atoi(next->first_attribute("userId")->value());
-			}
-		}
-		temp->next = head;
-		head = temp;
-		if (next->next_sibling("package") == NULL)
-			break;
-		name.clear();
-		next = next->next_sibling("package");
-	}
-	//Get updated packages
-	next = pkgNode->first_node("updated-package");
-	if (next != NULL) {
-		while (next->first_attribute("name") != NULL) {
-			package* temp = new package;
-			for (unsigned n = 0; n < skip.size(); ++n) {
-				if (skip.at(n).compare(next->first_attribute("codePath")->value()) == 0) {
-					skiploop = true;
-					break;
-				}
-			}
-
-			if (skiploop == true) {
-				if (debug)
-					LOGINFO("Skipping package %s\n", next->first_attribute("codePath")->value());
-				free(temp);
-				next = next->next_sibling();
-				skiploop = false;
-				continue;
-			}
-			name.append((next->first_attribute("name")->value()));
-			temp->pkgName = next->first_attribute("name")->value();
-			if (debug)
-				LOGINFO("Loading pkg: %s\n", next->first_attribute("name")->value());
-			if (next->first_attribute("codePath") == NULL) {
-				LOGINFO("Problem with codePath on %s\n", next->first_attribute("name")->value());
-			} else {
-				temp->codePath = next->first_attribute("codePath")->value();
-				temp->app = basename(next->first_attribute("codePath")->value());
-				temp->appDir = dirname(next->first_attribute("codePath")->value());
-			}
-
-			temp->dDir = name;
-			if ( next->first_attribute("sharedUserId") != NULL) {
-				temp->uid = atoi(next->first_attribute("sharedUserId")->value());
-				temp->gid = atoi(next->first_attribute("sharedUserId")->value());
-			}
-			else {
-				if (next->first_attribute("userId") == NULL) {
-					LOGINFO("Problem with userID on %s\n", next->first_attribute("name")->value());
-				} else {
-					temp->uid = atoi(next->first_attribute("userId")->value());
-					temp->gid = atoi(next->first_attribute("userId")->value());
-				}
-			}
-			temp->next = head;
-			head = temp;
-			if (next->next_sibling("package") == NULL)
-				break;
-			name.clear();
-			next = next->next_sibling("package");
-		}
-	}
 	return 0;
 }
