@@ -2056,19 +2056,18 @@ uint64_t TWPartition::Get_Max_FileSize() {
 	const uint64_t constTB = (uint64_t) constGB * 1024;
 	const uint64_t constPB = (uint64_t) constTB * 1024;
 	const uint64_t constEB = (uint64_t) constPB * 1024;
-
-				if (Current_File_System == "ext4")
-								maxFileSize = 16 * constTB; //16 TB
-				else if (Current_File_System == "vfat")
-								maxFileSize = 4 * constGB; //4 GB
-				else if (Current_File_System == "ntfs")
-								maxFileSize = 256 * constTB; //256 TB
-				if (Current_File_System == "exfat")
-								maxFileSize = 16 * constPB; //16 PB
-				else if (Current_File_System == "ext3")
-								maxFileSize = 2 * constTB; //2 TB
-				else if (Current_File_System == "f2fs")
-							maxFileSize = 3.94 * constTB; //3.94 TB
+	if (Current_File_System == "ext4")
+		maxFileSize = 16 * constTB; //16 TB
+	else if (Current_File_System == "vfat")
+		maxFileSize = 4 * constGB; //4 GB
+	else if (Current_File_System == "ntfs")
+		maxFileSize = 256 * constTB; //256 TB
+	else if (Current_File_System == "exfat")
+		maxFileSize = 16 * constPB; //16 PB
+	else if (Current_File_System == "ext3")
+		maxFileSize = 2 * constTB; //2 TB
+	else if (Current_File_System == "f2fs")
+		maxFileSize = 3.94 * constTB; //3.94 TB
 	else
 		maxFileSize = 100000000L;
 	return maxFileSize - 1;

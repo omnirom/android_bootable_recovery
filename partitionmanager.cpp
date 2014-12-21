@@ -1930,7 +1930,7 @@ bool TWPartitionManager::Enable_MTP(void) {
 	twrpMtp *mtp = new twrpMtp(DataManager::GetIntValue("tw_mtp_debug"));
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
-			printf("twrp addStorage %s, mtpstorageid: %u\n", (*iter)->Storage_Path.c_str(), (*iter)->MTP_Storage_ID);
+			printf("twrp addStorage %s, mtpstorageid: %u, maxFileSize: %lld\n", (*iter)->Storage_Path.c_str(), (*iter)->MTP_Storage_ID, (*iter)->Get_Max_FileSize());
 			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, (*iter)->MTP_Storage_ID, (*iter)->Get_Max_FileSize());
 			count++;
 		}
