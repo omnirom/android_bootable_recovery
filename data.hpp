@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <map>
+#include <vector>
 
 using namespace std;
 
@@ -43,6 +44,7 @@ public:
 
 	// Helper functions
 	static string GetStrValue(const string varName);
+	static int GetVectorValue(const string varName, vector<string> &value);
 	static int GetIntValue(const string varName);
 
 	// Core set routines
@@ -50,6 +52,7 @@ public:
 	static int SetValue(const string varName, int value, int persist = 0);
 	static int SetValue(const string varName, float value, int persist = 0);
 	static int SetValue(const string varName, unsigned long long value, int persist = 0);
+	static int SetVectorValue(const string varName, string value);
 	static int SetProgress(float Fraction);
 	static int ShowProgress(float Portion, float Seconds);
 
@@ -71,6 +74,7 @@ protected:
 	typedef pair<string, unsigned long long> TStrULLPair;
 	typedef pair<string, TStrIntPair> TNameValuePair;
 	static map<string, TStrIntPair> mValues;
+	static map<string, vector<string> > mVecValues;
 	static map<string, TStrULLPair> mULLValues;
 	static string mBackingFile;
 	static int mInitialized;

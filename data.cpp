@@ -69,8 +69,10 @@ extern "C"
 
 using namespace std;
 
+
 map<string, DataManager::TStrIntPair>   DataManager::mValues;
 map<string, string>                     DataManager::mConstValues;
+map<string, vector<string> > 		DataManager::mVecValues;
 string                                  DataManager::mBackingFile;
 int                                     DataManager::mInitialized = 0;
 
@@ -441,6 +443,31 @@ int DataManager::GetIntValue(const string varName)
 
 	GetValue(varName, retVal);
 	return atoi(retVal.c_str());
+}
+
+int DataManager::GetVectorValue(const string varName, vector<string> &value) {
+	map<string, vector<string> >::iterator pos;
+	pos = mVecValues.find(varName);
+	if (pos != mVecValues.end())
+		value = pos->second;
+	else
+		return -1;
+	return 0;
+}
+
+int DataManager::SetVectorValue(const string varName, string value) {
+	// Don't allow empty values or numerical starting values
+	if (varName.empty() || (varName[0] >= '0' && varName[0] <= '9'))
+		return -1;
+	map<string, vector<string> >::iterator pos;
+	pos = mVecValues.find(varName);
+	if (pos != mVecValues.end()) {
+		pos->second.push_back(value);
+	}
+	else  {
+		mVecValues[varName].push_back(value);
+	}
+	return 0;
 }
 
 int DataManager::SetValue(const string varName, string value, int persist /* = 0 */)
@@ -891,27 +918,28 @@ int DataManager::GetMagicValue(const string varName, string& value)
 	   string results;
 
 	   gettimeofday(&curTime, NULL);
-	   if (curTime.tv_sec > cpuSecCheck)
-	   {
+           if (curTime.tv_sec > cpuSecCheck)
+           {
 #ifdef TW_CUSTOM_CPU_TEMP_PATH
-		   cpu_temp_file = EXPAND(TW_CUSTOM_CPU_TEMP_PATH);
-		   if (TWFunc::read_file(cpu_temp_file, results) != 0)
-			return -1;
+                   cpu_temp_file = EXPAND(TW_CUSTOM_CPU_TEMP_PATH);
+                   if (TWFunc::read_file(cpu_temp_file, results) != 0)
+                        return -1;
 #else
-		   cpu_temp_file = "/sys/class/thermal/thermal_zone0/temp";
-		   if (TWFunc::read_file(cpu_temp_file, results) != 0)
-			return -1;
+                   cpu_temp_file = "/sys/class/thermal/thermal_zone0/temp";
+                   if (TWFunc::read_file(cpu_temp_file, results) != 0)
+                        return -1;
 #endif
-		   convert_temp = strtoul(results.c_str(), NULL, 0) / 1000;
-		   if (convert_temp <= 0)
-			convert_temp = strtoul(results.c_str(), NULL, 0);
-		   if (convert_temp >= 150)
-			convert_temp = strtoul(results.c_str(), NULL, 0) / 10;
-		   cpuSecCheck = curTime.tv_sec + 5;
-	   }
-	   value = TWFunc::to_string(convert_temp);
-	   return 0;
-	}
+                   convert_temp = strtoul(results.c_str(), NULL, 0) / 1000;
+                   if (convert_temp <= 0)
+                        convert_temp = strtoul(results.c_str(), NULL, 0);
+                   if (convert_temp >= 150)
+                        convert_temp = strtoul(results.c_str(), NULL, 0) / 10;
+                   cpuSecCheck = curTime.tv_sec + 5;
+           }
+           value = TWFunc::to_string(convert_temp);
+           return 0;
+        }
+
 	else if (varName == "tw_battery")
 	{
 		char tmp[16];
