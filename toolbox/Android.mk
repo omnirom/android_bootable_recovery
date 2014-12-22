@@ -107,7 +107,7 @@ ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
 OUR_TOOLS += r
 endif
 
-ALL_TOOLS = $(BSD_TOOLS) $(OUR_TOOLS)
+ALL_TOOLS = $(BSD_TOOLS) $(OUR_TOOLS) setenforce
 
 LOCAL_SRC_FILES := \
     upstream-netbsd/lib/libc/gen/getbsize.c \
@@ -119,6 +119,10 @@ LOCAL_SRC_FILES := \
     pwcache.c \
     $(patsubst %,%.c,$(OUR_TOOLS)) \
     toolbox.c \
+
+ifeq (,$(filter $(LOCAL_SRC_FILES),setenforce.c))
+    LOCAL_SRC_FILES += setenforce.c
+endif
 
 LOCAL_CFLAGS += $(common_cflags)
 
