@@ -44,6 +44,9 @@ extern "C" {
 #ifndef BUILD_TWRPTAR_MAIN
 #include "data.hpp"
 #include "infomanager.hpp"
+extern "C" {
+	#include "set_metadata.h"
+}
 #endif //ndef BUILD_TWRPTAR_MAIN
 
 using namespace std;
@@ -1243,7 +1246,9 @@ int twrpTar::closeTar() {
 		LOGERR("Backup file size for '%s' is 0 bytes.\n", tarfn.c_str());
 		return -1;
 	}
+#ifndef BUILD_TWRPTAR_MAIN
 	tw_set_default_metadata(tarfn.c_str());
+#endif
 	return 0;
 }
 
