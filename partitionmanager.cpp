@@ -1895,6 +1895,15 @@ TWPartition *TWPartitionManager::Get_Default_Storage_Partition()
 	return res;
 }
 
+static void set_property_if_different(const char* name, const char* value)
+{
+	// this avoids triggering the init.rc action if there is no real change
+	char oldvalue[PROPERTY_VALUE_MAX];
+	property_get(name, oldvalue, "");
+	if (strcmp(oldvalue, value))
+		property_set(name, value);
+}
+
 bool TWPartitionManager::Enable_MTP(void) {
 #ifdef TW_HAS_MTP
 	if (mtppid) {
@@ -1914,6 +1923,7 @@ bool TWPartitionManager::Enable_MTP(void) {
 		return false;
 	}
 
+#ifdef TW_MTP_SWITCH_USB_IDS
 	property_set("sys.usb.config", "none");
 	property_get("usb.vendor", vendor, "18D1");
 	property_get("usb.product.mtpadb", product, "4EE2");
@@ -1921,7 +1931,8 @@ bool TWPartitionManager::Enable_MTP(void) {
 	string productstr = product;
 	TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
 	TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
-	property_set("sys.usb.config", "mtp,adb");
+#endif
+	set_property_if_different("sys.usb.config", "mtp,adb");
 	usleep(2000); // Short sleep to prevent an occasional kernel panic on some devices
 	std::vector<TWPartition*>::iterator iter;
 	/* To enable MTP debug, use the twrp command line feature to
@@ -1964,6 +1975,7 @@ bool TWPartitionManager::Disable_MTP(void) {
 #ifdef TW_HAS_MTP
 	char vendor[PROPERTY_VALUE_MAX];
 	char product[PROPERTY_VALUE_MAX];
+#ifdef TW_MTP_SWITCH_USB_IDS
 	property_set("sys.usb.config", "none");
 	property_get("usb.vendor", vendor, "18D1");
 	property_get("usb.product.adb", product, "D002");
@@ -1972,6 +1984,7 @@ bool TWPartitionManager::Disable_MTP(void) {
 	TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
 	TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
 	usleep(2000);
+#endif
 	if (mtppid) {
 		LOGINFO("Disabling MTP\n");
 		int status;
@@ -1982,7 +1995,7 @@ bool TWPartitionManager::Disable_MTP(void) {
 		close(mtp_write_fd);
 		mtp_write_fd = -1;
 	}
-	property_set("sys.usb.config", "adb");
+	set_property_if_different("sys.usb.config", "adb");
 	DataManager::SetValue("tw_mtp_enabled", 0);
 	return true;
 #else
