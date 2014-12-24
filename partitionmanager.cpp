@@ -2026,7 +2026,7 @@ bool TWPartitionManager::Add_Remove_MTP_Storage(TWPartition* Part, int message_t
 				LOGINFO("Message sent, remove storage ID: %i\n", Part->MTP_Storage_ID);
 				return true;
 			}
-		} else if (message_type == MTP_MESSAGE_ADD_STORAGE && Part->Is_Mounted()) {
+		} else if (message_type == MTP_MESSAGE_ADD_STORAGE && Part->Is_Mounted() && Part->Is_Storage) {
 			mtp_message.message_type = MTP_MESSAGE_ADD_STORAGE; // Add
 			mtp_message.storage_id = Part->MTP_Storage_ID;
 			mtp_message.path = Part->Storage_Path.c_str();
