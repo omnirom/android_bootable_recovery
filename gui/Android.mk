@@ -64,21 +64,21 @@ ifeq ($(TW_DISABLE_TTF), true)
 endif
 
 ifeq ($(DEVICE_RESOLUTION),)
-$(warning ********************************************************************************)
-$(warning * DEVICE_RESOLUTION is NOT SET in BoardConfig.mk )
-$(warning * Please see http://tinyw.in/nP7d for details    )
-$(warning ********************************************************************************)
-$(error stopping)
+  $(warning ********************************************************************************)
+  $(warning * DEVICE_RESOLUTION is NOT SET in BoardConfig.mk )
+  $(warning * Please see http://tinyw.in/50tg for details.   )
+  $(warning ********************************************************************************)
+  $(error stopping)
 endif
 
 ifeq ($(TW_CUSTOM_THEME),)
-	ifeq "$(wildcard $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION))" ""
-	$(warning ********************************************************************************)
-	$(warning * DEVICE_RESOLUTION ($(DEVICE_RESOLUTION)) does NOT EXIST in $(commands_recovery_local_path)/gui/devices )
-	$(warning * Please choose an existing theme or create a new one for your device )
-	$(warning ********************************************************************************)
-	$(error stopping)
-	endif
+  ifeq "$(wildcard $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION))" ""
+    $(warning ********************************************************************************)
+    $(warning * DEVICE_RESOLUTION ($(DEVICE_RESOLUTION)) does NOT EXIST in $(commands_recovery_local_path)/gui/devices )
+    $(warning * Please choose an existing theme or create a new one for your device. )
+    $(warning ********************************************************************************)
+    $(error stopping)
+  endif
 endif
 
 LOCAL_C_INCLUDES += bionic external/stlport/stlport $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION)
