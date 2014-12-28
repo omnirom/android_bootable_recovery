@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab30f9cd_a7a2eaf8",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2029,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-28T21:23:02Z",
+      "side": 1,
+      "message": "The check for Is_Storage should be elsewhere, otherwise we get the wrong error message (\"Unknown MTP message type\"). The Is_Mounted check is wrong too.",
+      "revId": "22df522a37f5e57469245c7a761d2599f1bf2b19",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
