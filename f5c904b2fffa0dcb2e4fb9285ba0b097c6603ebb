@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab30f9cd_2798bac2",
+        "filename": "gui/action.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1184,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-28T22:40:38Z",
+      "side": 0,
+      "message": "This function seems to be missing in the new code",
+      "revId": "f5c904b2fffa0dcb2e4fb9285ba0b097c6603ebb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
