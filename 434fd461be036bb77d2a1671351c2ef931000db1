@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab30f9cd_27399acb",
+        "filename": "data.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-28T12:24:01Z",
+      "side": 1,
+      "message": "This can be simplified - line 468 does everything we need (insert an empty value or find the existing one).",
+      "revId": "434fd461be036bb77d2a1671351c2ef931000db1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab30f9cd_47468e56",
+        "filename": "data.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 921,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-28T12:24:01Z",
+      "side": 1,
+      "message": "whitespace inconsistency introduced in this block",
+      "revId": "434fd461be036bb77d2a1671351c2ef931000db1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab30f9cd_073c96ba",
+        "filename": "data.hpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-28T12:24:01Z",
+      "side": 1,
+      "message": "This adds a value to a vector, and there is currently no way to clear the vector. Should be named accordingly, e.g. \"AddVectorValue\". I\u0027d prefer if this zip queue rework would be a separate patch set.",
+      "revId": "434fd461be036bb77d2a1671351c2ef931000db1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab30f9cd_67439245",
+        "filename": "gui/action.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1533,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-28T12:24:01Z",
+      "side": 1,
+      "message": "as discussed, threading needs more fixes.",
+      "revId": "434fd461be036bb77d2a1671351c2ef931000db1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab30f9cd_a74caa79",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-28T12:24:01Z",
+      "side": 1,
+      "message": "The map should be static because it\u0027s constant and shared by all instances",
+      "revId": "434fd461be036bb77d2a1671351c2ef931000db1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab30f9cd_c7519e14",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-28T12:24:01Z",
+      "side": 1,
+      "message": "This should be a local variable where it is used.",
+      "revId": "434fd461be036bb77d2a1671351c2ef931000db1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab30f9cd_e756a209",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-28T12:24:01Z",
+      "side": 1,
+      "message": "This should be a bool.",
+      "revId": "434fd461be036bb77d2a1671351c2ef931000db1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
