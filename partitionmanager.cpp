@@ -1922,7 +1922,6 @@ bool TWPartitionManager::Enable_MTP(void) {
 	TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
 	TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
 	property_set("sys.usb.config", "mtp,adb");
-	usleep(2000); // Short sleep to prevent an occasional kernel panic on some devices
 	std::vector<TWPartition*>::iterator iter;
 	/* To enable MTP debug, use the twrp command line feature to
 	 * twrp set tw_mtp_debug 1

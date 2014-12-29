@@ -56,6 +56,11 @@ int twmtp_MtpServer::setup()
 {
 	usePtp =  false;
 	MyMtpDatabase* mtpdb = new MyMtpDatabase();
+	/* Sleep for a bit before we open the MTP USB device because some
+	 * devices are not ready due to the kernel not responding to our
+	 * sysfs requests right away.
+	 */
+	usleep(800000);
 #ifdef USB_MTP_DEVICE
 #define STRINGIFY(x) #x
 #define EXPAND(x) STRINGIFY(x)
