@@ -1903,8 +1903,6 @@ bool TWPartitionManager::Enable_MTP(void) {
 	}
 	//Launch MTP Responder
 	LOGINFO("Starting MTP\n");
-	char vendor[PROPERTY_VALUE_MAX];
-	char product[PROPERTY_VALUE_MAX];
 	int count = 0;
 
 	int mtppipe[2];
@@ -1914,14 +1912,20 @@ bool TWPartitionManager::Enable_MTP(void) {
 		return false;
 	}
 
-	property_set("sys.usb.config", "none");
-	property_get("usb.vendor", vendor, "18D1");
-	property_get("usb.product.mtpadb", product, "4EE2");
-	string vendorstr = vendor;
-	string productstr = product;
-	TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
-	TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
-	property_set("sys.usb.config", "mtp,adb");
+	char old_value[PROPERTY_VALUE_MAX];
+	property_get("sys.usb.config", old_value, "error");
+	if (strcmp(old_value, "error") != 0 && strcmp(old_value, "mtp,adb") != 0) {
+		char vendor[PROPERTY_VALUE_MAX];
+		char product[PROPERTY_VALUE_MAX];
+		property_set("sys.usb.config", "none");
+		property_get("usb.vendor", vendor, "18D1");
+		property_get("usb.product.mtpadb", product, "4EE2");
+		string vendorstr = vendor;
+		string productstr = product;
+		TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
+		TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
+		property_set("sys.usb.config", "mtp,adb");
+	}
 	std::vector<TWPartition*>::iterator iter;
 	/* To enable MTP debug, use the twrp command line feature to
 	 * twrp set tw_mtp_debug 1
@@ -1960,17 +1964,21 @@ bool TWPartitionManager::Enable_MTP(void) {
 }
 
 bool TWPartitionManager::Disable_MTP(void) {
+	char old_value[PROPERTY_VALUE_MAX];
+	property_get("sys.usb.config", old_value, "error");
+	if (strcmp(old_value, "adb") != 0) {
+		char vendor[PROPERTY_VALUE_MAX];
+		char product[PROPERTY_VALUE_MAX];
+		property_set("sys.usb.config", "none");
+		property_get("usb.vendor", vendor, "18D1");
+		property_get("usb.product.adb", product, "D002");
+		string vendorstr = vendor;
+		string productstr = product;
+		TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
+		TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
+		usleep(2000);
+	}
 #ifdef TW_HAS_MTP
-	char vendor[PROPERTY_VALUE_MAX];
-	char product[PROPERTY_VALUE_MAX];
-	property_set("sys.usb.config", "none");
-	property_get("usb.vendor", vendor, "18D1");
-	property_get("usb.product.adb", product, "D002");
-	string vendorstr = vendor;
-	string productstr = product;
-	TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
-	TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
-	usleep(2000);
 	if (mtppid) {
 		LOGINFO("Disabling MTP\n");
 		int status;
@@ -1981,14 +1989,13 @@ bool TWPartitionManager::Disable_MTP(void) {
 		close(mtp_write_fd);
 		mtp_write_fd = -1;
 	}
+#endif
 	property_set("sys.usb.config", "adb");
+#ifdef TW_HAS_MTP
 	DataManager::SetValue("tw_mtp_enabled", 0);
 	return true;
-#else
-	LOGERR("MTP support not included\n");
-	DataManager::SetValue("tw_mtp_enabled", 0);
-	return false;
 #endif
+	return false;
 }
 
 TWPartition* TWPartitionManager::Find_Partition_By_MTP_Storage_ID(unsigned int Storage_ID) {
