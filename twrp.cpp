@@ -311,26 +311,23 @@ int main(int argc, char **argv) {
 	property_get("mtp.crash_check", mtp_crash_check, "0");
 	if (strcmp(mtp_crash_check, "0") == 0) {
 		property_set("mtp.crash_check", "1");
-		if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
-			if (DataManager::GetIntValue(TW_IS_DECRYPTED) != 0 && DataManager::GetIntValue("tw_mtp_enabled") == 1) {
-				LOGINFO("Enabling MTP during startup\n");
-				if (!PartitionManager.Enable_MTP())
-					PartitionManager.Disable_MTP();
-				else
-					gui_print("MTP Enabled\n");
-			}
-		} else if (DataManager::GetIntValue("tw_mtp_enabled") == 1) {
+		if (DataManager::GetIntValue("tw_mtp_enabled") == 1 && ((DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0 && DataManager::GetIntValue(TW_IS_DECRYPTED) != 0) || DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0)) {
 			LOGINFO("Enabling MTP during startup\n");
 			if (!PartitionManager.Enable_MTP())
 				PartitionManager.Disable_MTP();
 			else
 				gui_print("MTP Enabled\n");
+		} else {
+			PartitionManager.Disable_MTP();
 		}
 		property_set("mtp.crash_check", "0");
 	} else {
 		gui_print_color("warning", "MTP Crashed, not starting MTP on boot.\n");
 		DataManager::SetValue("tw_mtp_enabled", 0);
+		PartitionManager.Disable_MTP();
 	}
+#else
+	PartitionManager.Disable_MTP();
 #endif
 
 	// Launch the main GUI
