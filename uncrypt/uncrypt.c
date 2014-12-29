@@ -39,6 +39,7 @@
 // Recovery can take this block map file and retrieve the underlying
 // file data to use as an update package.
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
