@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab30f9cd_c7fa7e72",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1972,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-29T22:30:36Z",
+      "side": 1,
+      "message": "Shouldn\u0027t we set it to \"adb\" here? Otherwise it won\u0027t get set to \"adb\" in non-MTP builds.",
+      "revId": "e3c026ed012c222ab75ed340223fac91fc2eeba1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab30f9cd_87008670",
+        "filename": "twrp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 316,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-29T22:30:36Z",
+      "side": 1,
+      "message": "we should merge these duplicated blocks before they get even larger...",
+      "revId": "e3c026ed012c222ab75ed340223fac91fc2eeba1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab30f9cd_a7058a7f",
+        "filename": "twrp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 324,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-29T22:30:36Z",
+      "side": 1,
+      "message": "(this is the other one)",
+      "revId": "e3c026ed012c222ab75ed340223fac91fc2eeba1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
