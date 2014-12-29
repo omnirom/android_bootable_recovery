@@ -192,11 +192,12 @@ void MtpServer::run() {
 		MTPD("About to read device...\n");
 		int ret = mRequest.read(fd);
 		if (ret < 0) {
-			MTPD("request read returned %d, errno: %d", ret, errno);
 			if (errno == ECANCELED) {
 				// return to top of loop and wait for next command
+				MTPD("request read returned %d ECANCELED, starting over\n", ret);
 				continue;
 			}
+			MTPE("request read returned %d, errno: %d, exiting MtpServer::run loop\n", ret, errno);
 			break;
 		}
 		MtpOperationCode operation = mRequest.getOperationCode();
@@ -213,11 +214,12 @@ void MtpServer::run() {
 		if (dataIn) {
 			int ret = mData.read(fd);
 			if (ret < 0) {
-				MTPD("data read returned %d, errno: %d", ret, errno);
 				if (errno == ECANCELED) {
 					// return to top of loop and wait for next command
+					MTPD("data read returned %d ECANCELED, starting over\n", ret);
 					continue;
 				}
+				MTPD("data read returned %d, errno: %d, exiting MtpServer::run loop\n", ret, errno);
 				break;
 			}
 			MTPD("received data:");
@@ -234,11 +236,12 @@ void MtpServer::run() {
 				mData.dump();
 				ret = mData.write(fd);
 				if (ret < 0) {
-					MTPD("request write returned %d, errno: %d", ret, errno);
 					if (errno == ECANCELED) {
 						// return to top of loop and wait for next command
+						MTPD("data write returned %d ECANCELED, starting over\n", ret);
 						continue;
 					}
+					MTPE("data write returned %d, errno: %d, exiting MtpServer::run loop\n", ret, errno);
 					break;
 				}
 			}
@@ -249,11 +252,12 @@ void MtpServer::run() {
 			MTPD("ret: %d\n", ret);
 			mResponse.dump();
 			if (ret < 0) {
-				MTPD("request write returned %d, errno: %d", ret, errno);
 				if (errno == ECANCELED) {
 					// return to top of loop and wait for next command
+					MTPD("response write returned %d ECANCELED, starting over\n", ret);
 					continue;
 				}
+				MTPE("response write returned %d, errno: %d, exiting MtpServer::run loop\n", ret, errno);
 				break;
 			}
 		} else {
