@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "cutils/properties.h"
 extern "C" {
@@ -71,6 +72,8 @@ int main(int argc, char **argv) {
 	setbuf(stdout, NULL);
 	freopen(TMP_LOG_FILE, "a", stderr);
 	setbuf(stderr, NULL);
+
+	signal(SIGPIPE, SIG_IGN);
 
 	// Handle ADB sideload
 	if (argc == 3 && strcmp(argv[1], "--adbd") == 0) {
