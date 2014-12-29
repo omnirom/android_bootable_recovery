@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab30f9cd_875a46f7",
+        "filename": "mtp/MtpServer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 241,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-29T15:16:30Z",
+      "side": 1,
+      "message": "this is the data write, not the request write - unique error messages would be nice.",
+      "revId": "f7995ed2f0173a58b4241077366be190905e1a50",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab30f9cd_a75f4ae6",
+        "filename": "mtp/MtpServer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-29T15:16:30Z",
+      "side": 1,
+      "message": "also here",
+      "revId": "f7995ed2f0173a58b4241077366be190905e1a50",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab30f9cd_c7543ecd",
+        "filename": "mtp/MtpServer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 257,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2014-12-29T15:16:30Z",
+      "side": 1,
+      "message": "\"response write\" maybe?",
+      "revId": "f7995ed2f0173a58b4241077366be190905e1a50",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
