@@ -2015,6 +2015,8 @@ bool TWPartitionManager::Add_Remove_MTP_Storage(TWPartition* Part, int message_t
 	}
 
 	if (Part) {
+		if (Part->MTP_Storage_ID == 0)
+			return false;
 		if (message_type == MTP_MESSAGE_REMOVE_STORAGE) {
 			mtp_message.message_type = MTP_MESSAGE_REMOVE_STORAGE; // Remove
 			LOGINFO("sending message to remove %i\n", Part->MTP_Storage_ID);

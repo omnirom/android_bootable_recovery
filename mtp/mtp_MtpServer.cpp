@@ -170,11 +170,15 @@ int twmtp_MtpServer::mtppipe_thread(void)
 		if (read_count == sizeof(mtp_message)) {
 			if (mtp_message.message_type == MTP_MESSAGE_ADD_STORAGE) {
 				MTPI("mtppipe add storage %i '%s'\n", mtp_message.storage_id, mtp_message.path);
-				long reserveSpace = 1;
-				bool removable = false;
-				MtpStorage* storage = new MtpStorage(mtp_message.storage_id, mtp_message.path, mtp_message.display, reserveSpace, removable, mtp_message.maxFileSize, refserver);
-				server->addStorage(storage);
-				MTPD("mtppipe done adding storage\n");
+				if (mtp_message.storage_id) {
+					long reserveSpace = 1;
+					bool removable = false;
+					MtpStorage* storage = new MtpStorage(mtp_message.storage_id, mtp_message.path, mtp_message.display, reserveSpace, removable, mtp_message.maxFileSize, refserver);
+					server->addStorage(storage);
+					MTPD("mtppipe done adding storage\n");
+				} else {
+					MTPE("Invalid storage ID %i specified\n", mtp_message.storage_id);
+				}
 			} else if (mtp_message.message_type == MTP_MESSAGE_REMOVE_STORAGE) {
 				MTPI("mtppipe remove storage %i\n", mtp_message.storage_id);
 				remove_storage(mtp_message.storage_id);
