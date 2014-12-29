@@ -458,15 +458,27 @@ static int vk_modify(struct ev *e, struct input_event *ev)
             e->mt_p.synced = 0x03;
             if (ev->value == (1 << 31))
             {
+#ifndef TW_IGNORE_MT_POSITION_0
                 e->mt_p.x = 0;
                 e->mt_p.y = 0;
                 lastWasSynReport = 1;
+#endif
+#ifdef _EVENT_LOGGING
+#ifndef TW_IGNORE_MT_POSITION_0
+                printf("EV: %s => EV_ABS  ABS_MT_POSITION  %d, set x and y to 0 and lastWasSynReport to 1\n", e->deviceName, ev->value);
+#else
+                printf("Ignoring ABS_MT_POSITION 0\n", e->deviceName, ev->value);
+#endif
+#endif
             }
             else
             {
                 lastWasSynReport = 0;
                 e->mt_p.x = (ev->value & 0x7FFF0000) >> 16;
                 e->mt_p.y = (ev->value & 0xFFFF);
+#ifdef _EVENT_LOGGING
+                printf("EV: %s => EV_ABS  ABS_MT_POSITION  %d, set x: %d and y: %d and lastWasSynReport to 0\n", e->deviceName, ev->value, (ev->value & 0x7FFF0000) >> 16, (ev->value & 0xFFFF));
+#endif
             }
             break;
 
