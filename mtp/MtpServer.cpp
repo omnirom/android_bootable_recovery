@@ -192,11 +192,11 @@ void MtpServer::run() {
 		MTPD("About to read device...\n");
 		int ret = mRequest.read(fd);
 		if (ret < 0) {
-			MTPD("request read returned %d, errno: %d", ret, errno);
 			if (errno == ECANCELED) {
 				// return to top of loop and wait for next command
 				continue;
 			}
+			MTPE("request read returned %d, errno: %d, exiting MtpServer::run loop\n", ret, errno);
 			break;
 		}
 		MtpOperationCode operation = mRequest.getOperationCode();
