@@ -12,6 +12,10 @@ LOCAL_SRC_FILES += rk3xhack.c
 LOCAL_CFLAGS += -DRK3X
 endif
 
+ifeq ($(TARGET_MOUNT_BY_NAME),true)
+LOCAL_CFLAGS += -DBYNAME
+endif
+
 LOCAL_MODULE := libmtdutils
 LOCAL_STATIC_LIBRARIES := libcutils libc
 LOCAL_CLANG := true
@@ -27,6 +31,10 @@ LOCAL_SRC_FILES := \
 ifneq ($(filter rk30xx rk3188,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SRC_FILES += rk3xhack.c
 LOCAL_CFLAGS += -DRK3X
+endif
+
+ifeq ($(TARGET_MOUNT_BY_NAME),true)
+LOCAL_CFLAGS += -DBYNAME
 endif
 
 LOCAL_MODULE := libmtdutils

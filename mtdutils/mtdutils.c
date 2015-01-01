@@ -32,6 +32,11 @@
     #include "rk3xhack.h"
 #endif
 
+#ifdef BYNAME
+static const char mtdprefix[] = "/dev/block/mtd/by-name/";
+#define MTD_BASENAME_OFFSET (sizeof(mtdprefix)-1)
+#endif
+
 struct MtdReadContext {
     const MtdPartition *partition;
     char *buffer;
@@ -141,7 +146,11 @@ mtd_scan_partitions()
             p->device_index = mtdnum;
             p->size = mtdsize;
             p->erase_size = mtderasesize;
+#ifdef BYNAME
+            asprintf(&p->name, "%s%s", mtdprefix, mtdname);
+#else
             p->name = strdup(mtdname);
+#endif
             if (p->name == NULL) {
                 errno = ENOMEM;
                 goto bail;
@@ -180,6 +189,11 @@ mtd_find_partition_by_name(const char *name)
                 if (strcmp(p->name, name) == 0) {
                     return p;
                 }
+#ifdef BYNAME
+                if (strcmp(p->name+MTD_BASENAME_OFFSET, name) == 0) {
+                    return p;
+                }
+#endif
             }
         }
     }
