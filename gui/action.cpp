@@ -339,8 +339,8 @@ void GUIAction::operation_start(const string operation_name)
 	DataManager::SetValue(TW_ACTION_BUSY, 1);
 	DataManager::SetValue("ui_progress", 0);
 	DataManager::SetValue("tw_operation", operation_name);
-	DataManager::SetValue("tw_operation_status", 0);
 	DataManager::SetValue("tw_operation_state", 0);
+	DataManager::SetValue("tw_operation_status", 0);
 }
 
 void GUIAction::operation_end(const int operation_status)
