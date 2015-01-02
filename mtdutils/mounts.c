@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <mntent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,10 +60,8 @@ free_volume_internals(const MountedVolume *volume, int zero)
 int
 scan_mounted_volumes()
 {
-    char buf[2048];
-    const char *bufp;
-    int fd;
-    ssize_t nbytes;
+    FILE* fp;
+    struct mntent* mentry;
 
     if (g_mounts_state.volumes == NULL) {
         const int numv = 32;
@@ -84,80 +83,20 @@ scan_mounted_volumes()
     }
     g_mounts_state.volume_count = 0;
 
-    /* Open and read the file contents.
-     */
-    fd = open(PROC_MOUNTS_FILENAME, O_RDONLY);
-    if (fd < 0) {
-        goto bail;
+    /* Open and read mount table entries. */
+    fp = setmntent(PROC_MOUNTS_FILENAME, "r");
+    if (fp == NULL) {
+        return -1;
     }
-    nbytes = read(fd, buf, sizeof(buf) - 1);
-    close(fd);
-    if (nbytes < 0) {
-        goto bail;
+    while ((mentry = getmntent(fp)) != NULL) {
+        MountedVolume* v = &g_mounts_state.volumes[g_mounts_state.volume_count++];
+        v->device = strdup(mentry->mnt_fsname);
+        v->mount_point = strdup(mentry->mnt_dir);
+        v->filesystem = strdup(mentry->mnt_type);
+        v->flags = strdup(mentry->mnt_opts);
     }
-    buf[nbytes] = '\0';
-
-    /* Parse the contents of the file, which looks like:
-     *
-     *     # cat /proc/mounts
-     *     rootfs / rootfs rw 0 0
-     *     /dev/pts /dev/pts devpts rw 0 0
-     *     /proc /proc proc rw 0 0
-     *     /sys /sys sysfs rw 0 0
-     *     /dev/block/mtdblock4 /system yaffs2 rw,nodev,noatime,nodiratime 0 0
-     *     /dev/block/mtdblock5 /data yaffs2 rw,nodev,noatime,nodiratime 0 0
-     *     /dev/block/mmcblk0p1 /sdcard vfat rw,sync,dirsync,fmask=0000,dmask=0000,codepage=cp437,iocharset=iso8859-1,utf8 0 0
-     *
-     * The zeroes at the end are dummy placeholder fields to make the
-     * output match Linux's /etc/mtab, but don't represent anything here.
-     */
-    bufp = buf;
-    while (nbytes > 0) {
-        char device[64];
-        char mount_point[64];
-        char filesystem[64];
-        char flags[128];
-        int matches;
-
-        /* %as is a gnu extension that malloc()s a string for each field.
-         */
-        matches = sscanf(bufp, "%63s %63s %63s %127s",
-                device, mount_point, filesystem, flags);
-
-        if (matches == 4) {
-            device[sizeof(device)-1] = '\0';
-            mount_point[sizeof(mount_point)-1] = '\0';
-            filesystem[sizeof(filesystem)-1] = '\0';
-            flags[sizeof(flags)-1] = '\0';
-
-            MountedVolume *v =
-                    &g_mounts_state.volumes[g_mounts_state.volume_count++];
-            v->device = strdup(device);
-            v->mount_point = strdup(mount_point);
-            v->filesystem = strdup(filesystem);
-            v->flags = strdup(flags);
-        } else {
-printf("matches was %d on <<%.40s>>\n", matches, bufp);
-        }
-
-        /* Eat the line.
-         */
-        while (nbytes > 0 && *bufp != '\n') {
-            bufp++;
-            nbytes--;
-        }
-        if (nbytes > 0) {
-            bufp++;
-            nbytes--;
-        }
-    }
-
+    endmntent(fp);
     return 0;
-
-bail:
-//TODO: free the strings we've allocated.
-    g_mounts_state.volume_count = 0;
-    return -1;
 }
 
 const MountedVolume *
