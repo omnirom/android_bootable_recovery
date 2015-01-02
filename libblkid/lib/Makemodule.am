@@ -1,0 +1,115 @@
+
+noinst_LTLIBRARIES += libcommon.la
+libcommon_la_CFLAGS = $(AM_CFLAGS)
+libcommon_la_SOURCES = \
+	lib/at.c \
+	lib/blkdev.c \
+	lib/canonicalize.c \
+	lib/colors.c \
+	lib/crc32.c \
+	lib/crc64.c \
+	lib/env.c \
+	lib/fileutils.c \
+	lib/ismounted.c \
+	lib/mangle.c \
+	lib/match.c \
+	lib/mbsalign.c \
+	lib/md5.c \
+	lib/pager.c \
+	lib/path.c \
+	lib/procutils.c \
+	lib/randutils.c \
+	lib/setproctitle.c \
+	lib/strutils.c \
+	lib/sysfs.c \
+	lib/timeutils.c \
+	lib/ttyutils.c \
+	lib/exec_shell.c \
+	lib/readutmp.c
+
+if LINUX
+libcommon_la_SOURCES += \
+	lib/linux_version.c \
+	lib/loopdev.c
+endif
+
+if !HAVE_LANGINFO
+libcommon_la_SOURCES += lib/langinfo.c
+endif
+
+if HAVE_CPU_SET_T
+libcommon_la_SOURCES += lib/cpuset.c
+endif
+
+dist_man_MANS += lib/terminal-colors.d.5
+
+check_PROGRAMS += \
+	test_at \
+	test_blkdev \
+	test_canonicalize \
+	test_colors \
+	test_fileutils \
+	test_ismounted \
+	test_mangle \
+	test_procutils \
+	test_randutils \
+	test_strutils \
+	test_ttyutils
+
+if LINUX
+if HAVE_CPU_SET_T
+check_PROGRAMS += test_cpuset
+endif
+check_PROGRAMS += \
+	test_sysfs \
+	test_pager
+endif
+
+test_ttyutils_SOURCES = lib/ttyutils.c
+test_ttyutils_CFLAGS = -DTEST_PROGRAM
+test_ttyutils_LDADD = libcommon.la
+
+test_blkdev_SOURCES = lib/blkdev.c
+test_blkdev_CFLAGS = -DTEST_PROGRAM_BLKDEV
+test_blkdev_LDADD = libcommon.la
+
+test_ismounted_SOURCES = lib/ismounted.c
+test_ismounted_CFLAGS = -DTEST_PROGRAM
+test_ismounted_LDADD = libcommon.la
+
+test_mangle_SOURCES = lib/mangle.c
+test_mangle_CFLAGS = -DTEST_PROGRAM
+
+test_at_SOURCES = lib/at.c
+test_at_CFLAGS = -DTEST_PROGRAM_AT
+
+test_strutils_SOURCES = lib/strutils.c
+test_strutils_CFLAGS = -DTEST_PROGRAM
+
+test_colors_SOURCES = lib/colors.c
+test_colors_CFLAGS = -DTEST_PROGRAM
+
+test_randutils_SOURCES = lib/randutils.c
+test_randutils_CFLAGS = -DTEST_PROGRAM
+
+test_procutils_SOURCES = lib/procutils.c lib/at.c
+test_procutils_CFLAGS = -DTEST_PROGRAM
+
+if LINUX
+test_cpuset_SOURCES = lib/cpuset.c
+test_cpuset_CFLAGS = -DTEST_PROGRAM
+
+test_sysfs_SOURCES = lib/sysfs.c
+test_sysfs_CFLAGS = -DTEST_PROGRAM_SYSFS
+test_sysfs_LDADD = libcommon.la
+
+test_pager_SOURCES = lib/pager.c
+test_pager_CFLAGS = -DTEST_PROGRAM
+endif
+
+test_fileutils_SOURCES = lib/fileutils.c
+test_fileutils_CFLAGS = -DTEST_PROGRAM
+
+test_canonicalize_SOURCES = lib/canonicalize.c
+test_canonicalize_CFLAGS = -DTEST_PROGRAM_CANONICALIZE
+

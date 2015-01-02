@@ -34,8 +34,9 @@ LOCAL_SRC_FILES := \
     twrp.cpp \
     fixPermissions.cpp \
     twrpTar.cpp \
-	twrpDU.cpp \
+    twrpDU.cpp \
     twrpDigest.cpp \
+    digest/md5.c \
     find_file.cpp \
     infomanager.cpp
 

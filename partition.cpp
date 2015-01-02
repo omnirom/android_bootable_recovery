@@ -31,7 +31,7 @@
 	#include "cutils/properties.h"
 #endif
 
-#include "libblkid/blkid.h"
+#include "libblkid/include/blkid.h"
 #include "variables.h"
 #include "twcommon.h"
 #include "partitions.hpp"
@@ -2070,6 +2070,7 @@ uint64_t TWPartition::Get_Max_FileSize() {
 		maxFileSize = 3.94 * constTB; //3.94 TB
 	else
 		maxFileSize = 100000000L;
+	LOGINFO("Get_Max_FileSize::maxFileSize: %\n", maxFileSize);
 	return maxFileSize - 1;
 }
 
