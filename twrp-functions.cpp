@@ -1038,4 +1038,48 @@ std::string TWFunc::to_string(unsigned long value) {
 	return os.str();
 }
 
+pid_t TWFunc::tw_popen(string command, int *in_pipe, int *out_pipe) {
+	int pipe_stdin[2], pipe_stdout[2];
+	pid_t pid;
+
+	if (pipe(pipe_stdin) != 0 || pipe(pipe_stdout) != 0) {
+		LOGERR("tw_popen failed to create pipes\n");
+		return -1;
+	}
+
+	pid = fork();
+
+	if (pid < 0) {
+		LOGERR("tw_popen fork failed\n");
+		return -1;
+	} else if (pid == 0) {
+		// Child process
+		close(pipe_stdin[1]);
+		dup2(pipe_stdin[0], 0);
+		close(pipe_stdout[0]);
+		dup2(pipe_stdout[1], 1);
+		close(pipe_stdout[0]);
+		close(pipe_stdin[1]);
+
+		execl("/sbin/sh", "sh", "-c", command.c_str(), NULL);
+		perror("execl");
+		exit(1);
+	}
+
+	// Parent process only gets here
+	if (in_pipe == NULL)
+		close(pipe_stdin[1]);
+	else
+		*in_pipe = pipe_stdin[1];
+
+	if (out_pipe == NULL)
+		close(pipe_stdout[0]);
+	else
+		*out_pipe = pipe_stdout[0];
+
+	close(pipe_stdin[0]);
+	close(pipe_stdout[1]);
+	return pid;
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN

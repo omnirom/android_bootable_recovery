@@ -83,6 +83,7 @@ public:
 	static int Set_Brightness(std::string brightness_value); // Well, you can read, it does what it says, passing return int from TWFunc::Write_File ;)
 	static bool Toggle_MTP(bool enable);                                        // Disables MTP if enable is false and re-enables MTP if enable is true and it was enabled the last time it was toggled off
 	static std::string to_string(unsigned long value); //convert ul to string
+	static pid_t tw_popen(string command, int *in_pipe, int *out_pipe);
 
 	static void SetPerformanceMode(bool mode); // support recovery.perf.mode
 
