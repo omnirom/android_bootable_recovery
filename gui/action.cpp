@@ -1378,34 +1378,50 @@ int GUIAction::adbsideloadcancel(std::string arg)
 	return 0;
 }
 
+void* GUIAction::openrecoveryscript_thread_fn(void *cookie)
+{
+	GUIAction* this_ = (GUIAction*) cookie;
+
+	// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
+	// that we converted to ORS commands during boot in recovery.cpp.
+	// Run those first.
+	int reboot = 0;
+	if (TWFunc::Path_Exists(SCRIPT_FILE_TMP)) {
+		gui_print("Processing AOSP recovery commands...\n");
+		if (OpenRecoveryScript::run_script_file() == 0) {
+			reboot = 1;
+		}
+	}
+	// Check for the ORS file in /cache and attempt to run those commands.
+	if (OpenRecoveryScript::check_for_script_file()) {
+		gui_print("Processing OpenRecoveryScript file...\n");
+		if (OpenRecoveryScript::run_script_file() == 0) {
+			reboot = 1;
+		}
+	}
+	if (reboot) {
+		usleep(2000000); // Sleep for 2 seconds before rebooting
+		TWFunc::tw_reboot(rb_system);
+	} else {
+		DataManager::SetValue("tw_page_done", 1);
+	}
+	this_->operation_end(1);
+	return NULL;
+}
+
 int GUIAction::openrecoveryscript(std::string arg)
 {
 	operation_start("OpenRecoveryScript");
 	if (simulate) {
 		simulate_progress_bar();
+		operation_end(0);
 	} else {
-		// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
-		// that we converted to ORS commands during boot in recovery.cpp.
-		// Run those first.
-		int reboot = 0;
-		if (TWFunc::Path_Exists(SCRIPT_FILE_TMP)) {
-			gui_print("Processing AOSP recovery commands...\n");
-			if (OpenRecoveryScript::run_script_file() == 0) {
-				reboot = 1;
-			}
-		}
-		// Check for the ORS file in /cache and attempt to run those commands.
-		if (OpenRecoveryScript::check_for_script_file()) {
-			gui_print("Processing OpenRecoveryScript file...\n");
-			if (OpenRecoveryScript::run_script_file() == 0) {
-				reboot = 1;
-			}
-		}
-		if (reboot) {
-			usleep(2000000); // Sleep for 2 seconds before rebooting
-			TWFunc::tw_reboot(rb_system);
-		} else {
-			DataManager::SetValue("tw_page_done", 1);
+		// we need to start a thread to allow the action page to display properly
+		pthread_t openrecoveryscript_thread;
+		int rc = pthread_create(&openrecoveryscript_thread, NULL, openrecoveryscript_thread_fn, this);
+		if (rc != 0) {
+			LOGERR("Error starting sideload thread, rc=%i.\n", rc);
+			operation_end(1);
 		}
 	}
 	return 0;
