@@ -41,6 +41,7 @@
 #include "../openrecoveryscript.hpp"
 
 #include "../adb_install.h"
+#include "../fuse_sideload.h"
 #ifndef TW_NO_SCREEN_TIMEOUT
 #include "blanktimer.hpp"
 #endif
@@ -68,6 +69,7 @@ GUIAction::mapFunc GUIAction::mf;
 static string zip_queue[10];
 static int zip_queue_index;
 static pthread_t terminal_command;
+pid_t sideload_child_pid;
 
 GUIAction::GUIAction(xml_node<>* node)
 	: GUIObject(node)
@@ -833,6 +835,26 @@ int GUIAction::fileexists(std::string arg)
 	return 0;
 }
 
+void GUIAction::reinject_after_flash()
+{
+	if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
+		operation_start("ReinjectTWRP");
+		gui_print("Injecting TWRP into boot image...\n");
+		if (simulate) {
+			simulate_progress_bar();
+		} else {
+			TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
+			if (Boot == NULL || Boot->Current_File_System != "emmc")
+				TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+			else {
+				string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
+				TWFunc::Exec_Cmd(injectcmd);
+			}
+			gui_print("TWRP injection complete.\n");
+		}
+	}
+}
+
 int GUIAction::flash(std::string arg)
 {
 	int i, ret_val = 0, wipe_cache = 0;
@@ -856,22 +878,7 @@ int GUIAction::flash(std::string arg)
 	if (wipe_cache)
 		PartitionManager.Wipe_By_Path("/cache");
 
-	if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
-		operation_start("ReinjectTWRP");
-		gui_print("Injecting TWRP into boot image...\n");
-		if (simulate) {
-			simulate_progress_bar();
-		} else {
-			TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
-			if (Boot == NULL || Boot->Current_File_System != "emmc")
-				TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
-			else {
-				string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
-				TWFunc::Exec_Cmd(injectcmd);
-			}
-			gui_print("TWRP injection complete.\n");
-		}
-	}
+	reinject_after_flash();
 	PartitionManager.Update_System_Details();
 	operation_end(ret_val);
 	return 0;
@@ -1283,92 +1290,90 @@ int GUIAction::decrypt(std::string arg)
 	return 0;
 }
 
-int GUIAction::adbsideload(std::string arg)
+void* GUIAction::sideload_thread_fn(void *cookie)
 {
-	int ret = 0;
+	gui_print("Starting ADB sideload feature...\n");
+	bool mtp_was_enabled = TWFunc::Toggle_MTP(false);
+	GUIAction* this_ = (GUIAction*) cookie;
 
-	operation_start("Sideload");
-	if (simulate) {
-		simulate_progress_bar();
+	// wait for the adb connection
+	int ret = apply_from_adb("/", &sideload_child_pid);
+	DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui now that the zip install is going to start
+
+	if (ret != 0) {
+		if (ret == -2)
+			gui_print("You need adb 1.0.32 or newer to sideload to this device.\n");
+		ret = 1; // failure
 	} else {
 		int wipe_cache = 0;
 		int wipe_dalvik = 0;
-
-		gui_print("Starting ADB sideload feature...\n");
-		bool mtp_was_enabled = TWFunc::Toggle_MTP(false);
 		DataManager::GetValue("tw_wipe_dalvik", wipe_dalvik);
-		ret = apply_from_adb("/");
-		DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui now that the zip install is going to start
-		char file_prop[PROPERTY_VALUE_MAX];
-		property_get("tw_sideload_file", file_prop, "error");
-		if (ret != 0) {
-			ret = 1; // failure
-			if (ret == -2)
-				gui_print("You need adb 1.0.32 or newer to sideload to this device.\n");
+
+		if (TWinstall_zip(FUSE_SIDELOAD_HOST_PATHNAME, &wipe_cache) == 0) {
+			if (wipe_cache || DataManager::GetIntValue("tw_wipe_cache"))
+				PartitionManager.Wipe_By_Path("/cache");
+			if (wipe_dalvik)
+				PartitionManager.Wipe_Dalvik_Cache();
 		} else {
-			if (TWinstall_zip(file_prop, &wipe_cache) == 0) {
-				if (wipe_cache || DataManager::GetIntValue("tw_wipe_cache"))
-					PartitionManager.Wipe_By_Path("/cache");
-				if (wipe_dalvik)
-					PartitionManager.Wipe_Dalvik_Cache();
-			} else {
-				ret = 1; // failure
-			}
-			set_usb_driver(false);
-			maybe_restart_adbd();
-		}
-		TWFunc::Toggle_MTP(mtp_was_enabled);
-		if (strcmp(file_prop, "error") != 0) {
-			struct stat st;
-			stat("/sideload/exit", &st);
-			int child_pid, status;
-			char child_prop[PROPERTY_VALUE_MAX];
-			property_get("tw_child_pid", child_prop, "error");
-			if (strcmp(child_prop, "error") == 0) {
-				LOGERR("Unable to get child ID from prop\n");
-			} else {
-				child_pid = atoi(child_prop);
-				LOGINFO("Waiting for child sideload process to exit.\n");
-				waitpid(child_pid, &status, 0);
-			}
-		}
-		if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
-			operation_start("ReinjectTWRP");
-			gui_print("Injecting TWRP into boot image...\n");
-			if (simulate) {
-				simulate_progress_bar();
-			} else {
-				TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
-				if (Boot == NULL || Boot->Current_File_System != "emmc")
-					TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
-				else {
-					string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
-					TWFunc::Exec_Cmd(injectcmd);
-				}
-				gui_print("TWRP injection complete.\n");
-			}
+			ret = 1; // failure
 		}
 	}
-	operation_end(ret);
+	if (sideload_child_pid) {
+		LOGINFO("Signaling child sideload process to exit.\n");
+		struct stat st;
+		// Calling stat() on this magic filename signals the minadbd
+		// subprocess to shut down.
+		stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
+		int status;
+		LOGINFO("Waiting for child sideload process to exit.\n");
+		waitpid(sideload_child_pid, &status, 0);
+	}
+
+	TWFunc::Toggle_MTP(mtp_was_enabled);
+	this_->reinject_after_flash();
+	this_->operation_end(ret);
+	return NULL;
+}
+
+int GUIAction::adbsideload(std::string arg)
+{
+	operation_start("Sideload");
+	if (simulate) {
+		simulate_progress_bar();
+		operation_end(0);
+	} else {
+		// we need to start a thread to allow the operation to be cancelable
+		pthread_t sideload_thread;
+		int rc = pthread_create(&sideload_thread, NULL, sideload_thread_fn, this);
+		if (rc != 0) {
+			LOGERR("Error starting sideload thread, rc=%i.\n", rc);
+			operation_end(1);
+		}
+	}
 	return 0;
 }
 
 int GUIAction::adbsideloadcancel(std::string arg)
 {
-	int child_pid;
-	char child_prop[PROPERTY_VALUE_MAX];
 	struct stat st;
 	DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui
 	gui_print("Cancelling ADB sideload...\n");
-	stat("/sideload/exit", &st);
-	::sleep(1);
-	property_get("tw_child_pid", child_prop, "error");
-	if (strcmp(child_prop, "error") == 0) {
-		LOGERR("Unable to get child ID from prop\n");
+	LOGINFO("Signaling child sideload process to exit.\n");
+	// Calling stat() on this magic filename signals the minadbd
+	// subprocess to shut down.
+	stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
+	if (!sideload_child_pid) {
+		LOGERR("Unable to get child ID\n");
 		return 0;
 	}
-	child_pid = atoi(child_prop);
-	kill(child_pid, SIGTERM);
+	::sleep(1);
+	LOGINFO("Killing child sideload process.\n");
+	kill(sideload_child_pid, SIGTERM);
+	int status;
+	LOGINFO("Waiting for child sideload process to exit.\n");
+	waitpid(sideload_child_pid, &status, 0);
+	sideload_child_pid = 0;
+	operation_end(1);
 	DataManager::SetValue("tw_page_done", "1"); // For OpenRecoveryScript support
 	return 0;
 }

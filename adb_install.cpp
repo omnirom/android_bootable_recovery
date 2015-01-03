@@ -84,7 +84,7 @@ maybe_restart_adbd() {
 #define ADB_INSTALL_TIMEOUT 300
 
 int
-apply_from_adb(const char* install_file) {
+apply_from_adb(const char* install_file, pid_t* child_pid) {
 
     stop_adbd();
     set_usb_driver(true);
@@ -98,16 +98,14 @@ apply_from_adb(const char* install_file) {
         _exit(-1);
     }
 
-	char child_prop[PROPERTY_VALUE_MAX];
-	sprintf(child_prop, "%i", child);
-	property_set("tw_child_pid", child_prop);
+    *child_pid = child;
+    // caller can now kill the child thread from another thread
 
     // FUSE_SIDELOAD_HOST_PATHNAME will start to exist once the host
     // connects and starts serving a package.  Poll for its
     // appearance.  (Note that inotify doesn't work with FUSE.)
     int result;
     int status;
-    int wipe_cache;
     bool waited = false;
     struct stat st;
     for (int i = 0; i < ADB_INSTALL_TIMEOUT; ++i) {
@@ -122,20 +120,21 @@ apply_from_adb(const char* install_file) {
                 sleep(1);
                 continue;
             } else {
-                printf("\nTimed out waiting for package.\n\n", strerror(errno));
+                printf("\nTimed out waiting for package: %s\n\n", strerror(errno));
                 result = -1;
                 kill(child, SIGKILL);
                 break;
             }
         }
-        property_set("tw_sideload_file", FUSE_SIDELOAD_HOST_PATHNAME);
         // Install is handled elsewhere in TWRP
-        result = 5; //install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, install_file, false);
-        break;
+        //install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, install_file, false);
+	return 0;
     }
 
-    // We do this elsewhere in TWRP
-    /*if (!waited) {
+    // if we got here, something failed
+    *child_pid = 0;
+
+    if (!waited) {
         // Calling stat() on this magic filename signals the minadbd
         // subprocess to shut down.
         stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
@@ -145,26 +144,19 @@ apply_from_adb(const char* install_file) {
         // you just have to 'adb sideload' a file that's not a valid
         // package, like "/dev/null".
         waitpid(child, &status, 0);
-    }*/
+    }
 
-    if (result != 5) {
-        stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
-        waitpid(child, &status, 0);
-        result = -1;
-        if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-            if (WEXITSTATUS(status) == 3) {
-                printf("\nYou need adb 1.0.32 or newer to sideload\nto this device.\n\n");
-                result = -2;
-            } else if (!WIFSIGNALED(status)) {
-                printf("status %d\n", WEXITSTATUS(status));
-            }
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        if (WEXITSTATUS(status) == 3) {
+            printf("\nYou need adb 1.0.32 or newer to sideload\nto this device.\n\n");
+            result = -2;
+        } else if (!WIFSIGNALED(status)) {
+            printf("status %d\n", WEXITSTATUS(status));
         }
-	    set_usb_driver(false);
-	    maybe_restart_adbd();
-	    return result;
-	} else {
-        return 0;
-	}
+    }
 
-	return -1; // This should not happen
+    set_usb_driver(false);
+    maybe_restart_adbd();
+
+    return result;
 }

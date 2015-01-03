@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
 
 	// Handle ADB sideload
 	if (argc == 3 && strcmp(argv[1], "--adbd") == 0) {
+		property_set("ctl.stop", "adbd");
 		adb_main(argv[2]);
 		return 0;
 	}
@@ -95,7 +96,7 @@ int main(int argc, char **argv) {
 	property_set("ro.twrp.version", TW_VERSION_STR);
 
 	time_t StartupTime = time(NULL);
-	printf("Starting TWRP %s on %s (pid %d)", TW_VERSION_STR, ctime(&StartupTime), getpid());
+	printf("Starting TWRP %s on %s (pid %d)\n", TW_VERSION_STR, ctime(&StartupTime), getpid());
 
 	// Load default values to set DataManager constants and handle ifdefs
 	DataManager::SetDefaultValues();

@@ -356,7 +356,8 @@ int OpenRecoveryScript::run_script_file(void) {
 					gui_print("Starting ADB sideload feature...\n");
 					DataManager::SetValue("tw_has_cancel", 1);
 					DataManager::SetValue("tw_cancel_action", "adbsideloadcancel");
-					ret_val = apply_from_adb(Sideload_File.c_str());
+					pid_t child_pid;
+					ret_val = apply_from_adb(Sideload_File.c_str(), &child_pid);
 					DataManager::SetValue("tw_has_cancel", 0);
 					if (ret_val != 0)
 						ret_val = 1; // failure
