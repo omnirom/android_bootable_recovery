@@ -286,6 +286,7 @@ protected:
 	void operation_start(const string operation_name);
 	void operation_end(const int operation_status);
 	static void* command_thread(void *cookie);
+	static void* openrecoveryscript_thread_fn(void *cookie);
 	time_t Start;
 
 	// map action name to function pointer
