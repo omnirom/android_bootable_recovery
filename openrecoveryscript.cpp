@@ -28,6 +28,8 @@
 #include <errno.h>
 #include <iostream>
 #include <fstream>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "twrp-functions.hpp"
 #include "partitions.hpp"
@@ -39,6 +41,7 @@
 extern "C" {
 	#include "twinstall.h"
 	#include "gui/gui.h"
+	#include "cutils/properties.h"
 	int TWinstall_zip(const char* path, int* wipe_cache);
 }
 
@@ -344,31 +347,39 @@ int OpenRecoveryScript::run_script_file(void) {
 				install_cmd = -1;
 
 				int wipe_cache = 0;
-				string result, Sideload_File;
+				string result;
 
-				if (!PartitionManager.Mount_Current_Storage(true)) {
+				gui_print("Starting ADB sideload feature...\n");
+				DataManager::SetValue("tw_has_cancel", 1);
+				DataManager::SetValue("tw_cancel_action", "adbsideloadcancel");
+				ret_val = apply_from_adb("/");
+				char file_prop[PROPERTY_VALUE_MAX];
+				property_get("tw_sideload_file", file_prop, "error");
+				DataManager::SetValue("tw_has_cancel", 0);
+				if (ret_val != 0)
 					ret_val = 1; // failure
+				else if (TWinstall_zip(file_prop, &wipe_cache) == 0) {
+					if (wipe_cache)
+						PartitionManager.Wipe_By_Path("/cache");
 				} else {
-					Sideload_File = DataManager::GetCurrentStoragePath() + "/sideload.zip";
-					if (TWFunc::Path_Exists(Sideload_File)) {
-						unlink(Sideload_File.c_str());
-					}
-					gui_print("Starting ADB sideload feature...\n");
-					DataManager::SetValue("tw_has_cancel", 1);
-					DataManager::SetValue("tw_cancel_action", "adbsideloadcancel");
-					ret_val = apply_from_adb(Sideload_File.c_str());
-					DataManager::SetValue("tw_has_cancel", 0);
-					if (ret_val != 0)
-						ret_val = 1; // failure
-					else if (TWinstall_zip(Sideload_File.c_str(), &wipe_cache) == 0) {
-						if (wipe_cache)
-							PartitionManager.Wipe_By_Path("/cache");
-					} else {
-						ret_val = 1; // failure
-					}
-					sideload = 1; // Causes device to go to the home screen afterwards
-					gui_print("Sideload finished.\n");
+					ret_val = 1; // failure
 				}
+				sideload = 1; // Causes device to go to the home screen afterwards
+				if (strcmp(file_prop, "error") != 0) {
+					struct stat st;
+					stat("/sideload/exit", &st);
+					int child_pid, status;
+					char child_prop[PROPERTY_VALUE_MAX];
+					property_get("tw_child_pid", child_prop, "error");
+					if (strcmp(child_prop, "error") == 0) {
+						LOGERR("Unable to get child ID from prop\n");
+					} else {
+						child_pid = atoi(child_prop);
+						LOGINFO("Waiting for child sideload process to exit.\n");
+						waitpid(child_pid, &status, 0);
+					}
+				}
+				gui_print("Sideload finished.\n");
 			} else if (strcmp(command, "fixperms") == 0 || strcmp(command, "fixpermissions") == 0) {
 				ret_val = PartitionManager.Fix_Permissions();
 				if (ret_val != 0)
