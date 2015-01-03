@@ -28,6 +28,8 @@
 #include <errno.h>
 #include <iostream>
 #include <fstream>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "twrp-functions.hpp"
 #include "partitions.hpp"
@@ -36,9 +38,12 @@
 #include "variables.h"
 #include "adb_install.h"
 #include "data.hpp"
+#include "adb_install.h"
+#include "fuse_sideload.h"
 extern "C" {
 	#include "twinstall.h"
 	#include "gui/gui.h"
+	#include "cutils/properties.h"
 	int TWinstall_zip(const char* path, int* wipe_cache);
 }
 
@@ -344,32 +349,33 @@ int OpenRecoveryScript::run_script_file(void) {
 				install_cmd = -1;
 
 				int wipe_cache = 0;
-				string result, Sideload_File;
+				string result;
+				pid_t sideload_child_pid;
 
-				if (!PartitionManager.Mount_Current_Storage(true)) {
+				gui_print("Starting ADB sideload feature...\n");
+				ret_val = apply_from_adb("/", &sideload_child_pid);
+				if (ret_val != 0) {
+					if (ret_val == -2)
+						gui_print("You need adb 1.0.32 or newer to sideload to this device.\n");
 					ret_val = 1; // failure
+				} else if (TWinstall_zip(FUSE_SIDELOAD_HOST_PATHNAME, &wipe_cache) == 0) {
+					if (wipe_cache)
+						PartitionManager.Wipe_By_Path("/cache");
 				} else {
-					Sideload_File = DataManager::GetCurrentStoragePath() + "/sideload.zip";
-					if (TWFunc::Path_Exists(Sideload_File)) {
-						unlink(Sideload_File.c_str());
-					}
-					gui_print("Starting ADB sideload feature...\n");
-					DataManager::SetValue("tw_has_cancel", 1);
-					DataManager::SetValue("tw_cancel_action", "adbsideloadcancel");
-					pid_t child_pid;
-					ret_val = apply_from_adb(Sideload_File.c_str(), &child_pid);
-					DataManager::SetValue("tw_has_cancel", 0);
-					if (ret_val != 0)
-						ret_val = 1; // failure
-					else if (TWinstall_zip(Sideload_File.c_str(), &wipe_cache) == 0) {
-						if (wipe_cache)
-							PartitionManager.Wipe_By_Path("/cache");
-					} else {
-						ret_val = 1; // failure
-					}
-					sideload = 1; // Causes device to go to the home screen afterwards
-					gui_print("Sideload finished.\n");
+					ret_val = 1; // failure
 				}
+				sideload = 1; // Causes device to go to the home screen afterwards
+				if (sideload_child_pid != 0) {
+					LOGINFO("Signaling child sideload process to exit.\n");
+					struct stat st;
+					// Calling stat() on this magic filename signals the minadbd
+					// subprocess to shut down.
+					stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
+					int status;
+					LOGINFO("Waiting for child sideload process to exit.\n");
+					waitpid(sideload_child_pid, &status, 0);
+				}
+				gui_print("Sideload finished.\n");
 			} else if (strcmp(command, "fixperms") == 0 || strcmp(command, "fixpermissions") == 0) {
 				ret_val = PartitionManager.Fix_Permissions();
 				if (ret_val != 0)
