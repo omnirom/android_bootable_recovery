@@ -75,6 +75,7 @@
 		<variable name="row12_text_y" value="192" />
 		<variable name="row13_text_y" value="208" />
 		<variable name="zip_status_y" value="224" />
+		<variable name="flash_list_height" value="120" />
 		<variable name="backup_text_y" value="60" />
 		<variable name="tz_set_y" value="200" />
 		<variable name="tz_current_y" value="184" />

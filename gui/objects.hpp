@@ -352,6 +352,7 @@ protected:
 	int changefilesystem(std::string arg);
 	int startmtp(std::string arg);
 	int stopmtp(std::string arg);
+	int flashimage(std::string arg);
 
 	int simulate;
 };
