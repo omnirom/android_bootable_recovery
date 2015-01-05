@@ -793,6 +793,10 @@ int GUIPartitionList::NotifyTouch(TOUCH_STATE state, int x, int y)
 						DataManager::SetValue(mVariable, str);
 					}
 				} else {
+					if (ListType == "flashimg") { // only one item can be selected for flashing images
+						for (int i=0; i<listSize; i++)
+							mList.at(i).selected = 0;
+					}
 					if (mList.at(actualSelection).selected)
 						mList.at(actualSelection).selected = 0;
 					else

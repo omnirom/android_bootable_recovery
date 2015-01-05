@@ -154,6 +154,7 @@ TWPartition::TWPartition() {
 	Retain_Layout_Version = false;
 	Crypto_Key_Location = "footer";
 	MTP_Storage_ID = 0;
+	Can_Flash_Img = false;
 }
 
 TWPartition::~TWPartition(void) {
@@ -382,9 +383,11 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Display_Name = "Boot";
 			Backup_Display_Name = Display_Name;
 			Can_Be_Backed_Up = true;
+			Can_Flash_Img = true;
 		} else if (Mount_Point == "/recovery") {
 			Display_Name = "Recovery";
 			Backup_Display_Name = Display_Name;
+			Can_Flash_Img = true;
 		}
 	}
 
@@ -560,6 +563,17 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			}
 		} else if (ptr_len > 8 && strncmp(ptr, "mounttodecrypt", 14) == 0) {
 			Mount_To_Decrypt = true;
+		} else if (strncmp(ptr, "flashimg", 8) == 0) {
+			if (ptr_len == 8) {
+				Can_Flash_Img = true;
+			} else if (ptr_len == 10) {
+				ptr += 10;
+				if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y') {
+					Can_Flash_Img = true;
+				} else {
+					Can_Flash_Img = false;
+				}
+			}
 		} else {
 			if (Display_Error)
 				LOGERR("Unhandled flag: '%s'\n", ptr);
@@ -2070,7 +2084,74 @@ uint64_t TWPartition::Get_Max_FileSize() {
 		maxFileSize = 3.94 * constTB; //3.94 TB
 	else
 		maxFileSize = 100000000L;
-	LOGINFO("Get_Max_FileSize::maxFileSize: %\n", maxFileSize);
+	LOGINFO("Get_Max_FileSize::maxFileSize: %llu\n", maxFileSize);
 	return maxFileSize - 1;
 }
 
+bool TWPartition::Flash_Image(string Filename) {
+	string Restore_File_System;
+
+	LOGINFO("Image filename is: %s\n", Filename.c_str());
+
+	if (Backup_Method == FILES) {
+		LOGERR("Cannot flash images to file systems\n");
+		return false;
+	} else if (!Can_Flash_Img) {
+		LOGERR("Cannot flash images to partitions %s\n", Display_Name.c_str());
+		return false;
+	} else if (Backup_Method == DD)
+		return Flash_Image_DD(Filename);
+	else if (Backup_Method == FLASH_UTILS)
+		return Flash_Image_FI(Filename);
+
+	LOGERR("Unknown flash method for '%s'\n", Mount_Point.c_str());
+	return false;
+}
+
+bool TWPartition::Flash_Image_DD(string Filename) {
+	string Command;
+
+	if (!Find_Partition_Size()) {
+		LOGERR("Unable to find partition size for '%s'\n", Mount_Point.c_str());
+		return false;
+	}
+	unsigned long long backup_size = TWFunc::Get_File_Size(Filename);
+	if (backup_size > Size) {
+		LOGERR("Size (%iMB) of image '%s' is larger than target device '%s' (%iMB)\n",
+			(int)(backup_size / 1048576LLU), Filename.c_str(),
+			Actual_Block_Device.c_str(), (int)(Size / 1048576LLU));
+		return false;
+	}
+
+	gui_print("Flashing %s...\n", Display_Name.c_str());
+	Command = "dd bs=4096 if='" + Filename + "' of=" + Actual_Block_Device;
+	LOGINFO("Flash command: '%s'\n", Command.c_str());
+	TWFunc::Exec_Cmd(Command);
+	return true;
+}
+
+bool TWPartition::Flash_Image_FI(string Filename) {
+	string Command;
+
+	if (!Find_Partition_Size()) {
+		LOGERR("Unable to find partition size for '%s'\n", Mount_Point.c_str());
+		return false;
+	}
+	unsigned long long backup_size = TWFunc::Get_File_Size(Filename);
+	if (backup_size > Size) {
+		LOGERR("Size (%iMB) of image '%s' is larger than target device '%s' (%iMB)\n",
+			(int)(backup_size / 1048576LLU), Filename.c_str(),
+			MTD_Name.c_str(), (int)(Size / 1048576LLU));
+		return false;
+	}
+
+	gui_print("Flashing %s...\n", Display_Name.c_str());
+	// Sometimes flash image doesn't like to flash due to the first 2KB matching, so we erase first to ensure that it flashes
+	Command = "erase_image " + MTD_Name;
+	LOGINFO("Erase command: '%s'\n", Command.c_str());
+	TWFunc::Exec_Cmd(Command);
+	Command = "flash_image " + MTD_Name + " '" + Filename + "'";
+	LOGINFO("Flash command: '%s'\n", Command.c_str());
+	TWFunc::Exec_Cmd(Command);
+	return true;
+}
