@@ -106,6 +106,7 @@ ActionThread::ActionThread()
 	m_funcMap["decrypt_backup"] = &GUIAction::decrypt_backup;
 	m_funcMap["repair"] = &GUIAction::repair;
 	m_funcMap["changefilesystem"] = &GUIAction::changefilesystem;
+	m_funcMap["flashimage"] = &GUIAction::flashimage;
 }
 
 ActionThread::~ActionThread()
@@ -1682,6 +1683,24 @@ int GUIAction::stopmtp(std::string arg)
 
 	operation_start("Stop MTP");
 	if (PartitionManager.Disable_MTP())
+		op_status = 0; // success
+	else
+		op_status = 1; // fail
+
+	operation_end(op_status);
+	return 0;
+}
+
+int GUIAction::flashimage(std::string arg)
+{
+	int op_status = 0;
+
+	operation_start("Flash Image");
+	string path, filename, full_filename;
+	DataManager::GetValue("tw_zip_location", path);
+	DataManager::GetValue("tw_file", filename);
+	full_filename = path + "/" + filename;
+	if (PartitionManager.Flash_Image(full_filename))
 		op_status = 0; // success
 	else
 		op_status = 1; // fail

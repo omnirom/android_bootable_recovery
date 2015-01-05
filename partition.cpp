@@ -154,6 +154,7 @@ TWPartition::TWPartition() {
 	Retain_Layout_Version = false;
 	Crypto_Key_Location = "footer";
 	MTP_Storage_ID = 0;
+	Can_Flash_Img = false;
 }
 
 TWPartition::~TWPartition(void) {
@@ -382,9 +383,11 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Display_Name = "Boot";
 			Backup_Display_Name = Display_Name;
 			Can_Be_Backed_Up = true;
+			Can_Flash_Img = true;
 		} else if (Mount_Point == "/recovery") {
 			Display_Name = "Recovery";
 			Backup_Display_Name = Display_Name;
+			Can_Flash_Img = true;
 		}
 	}
 
@@ -560,6 +563,17 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			}
 		} else if (ptr_len > 8 && strncmp(ptr, "mounttodecrypt", 14) == 0) {
 			Mount_To_Decrypt = true;
+		} else if (strncmp(ptr, "flashimg", 8) == 0) {
+			if (ptr_len == 8) {
+				Can_Flash_Img = true;
+			} else if (ptr_len == 10) {
+				ptr += 9;
+				if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y') {
+					Can_Flash_Img = true;
+				} else {
+					Can_Flash_Img = false;
+				}
+			}
 		} else {
 			if (Display_Error)
 				LOGERR("Unhandled flag: '%s'\n", ptr);
@@ -1313,9 +1327,7 @@ bool TWPartition::Restore(string restore_folder, const unsigned long long *total
 	else if (Is_Image(Restore_File_System)) {
 		*already_restored_size += TWFunc::Get_File_Size(Backup_Name);
 		if (Restore_File_System == "emmc")
-			return Restore_DD(restore_folder, total_restore_size, already_restored_size);
-		else if (Restore_File_System == "mtd" || Restore_File_System == "bml")
-			return Restore_Flash_Image(restore_folder, total_restore_size, already_restored_size);
+			return Restore_Image(restore_folder, total_restore_size, already_restored_size, Restore_File_System);
 	}
 
 	LOGERR("Unknown restore method for '%s'\n", Mount_Point.c_str());
@@ -1888,53 +1900,21 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System,
 	return ret;
 }
 
-bool TWPartition::Restore_DD(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size) {
-	string Full_FileName, Command;
+bool TWPartition::Restore_Image(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size, string Restore_File_System) {
+	string Full_FileName;
 	double display_percent, progress_percent;
 	char size_progress[1024];
 
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, "Restoring");
 	Full_FileName = restore_folder + "/" + Backup_FileName;
 
-	if (!Find_Partition_Size()) {
-		LOGERR("Unable to find partition size for '%s'\n", Mount_Point.c_str());
-		return false;
+	if (Restore_File_System == "emmc") {
+		if (!Flash_Image_DD(Full_FileName))
+			return false;
+	} else if (Restore_File_System == "mtd" || Restore_File_System == "bml") {
+		if (!Flash_Image_FI(Full_FileName))
+			return false;
 	}
-	unsigned long long backup_size = TWFunc::Get_File_Size(Full_FileName);
-	if (backup_size > Size) {
-		LOGERR("Size (%iMB) of backup '%s' is larger than target device '%s' (%iMB)\n",
-			(int)(backup_size / 1048576LLU), Full_FileName.c_str(),
-			Actual_Block_Device.c_str(), (int)(Size / 1048576LLU));
-		return false;
-	}
-
-	gui_print("Restoring %s...\n", Display_Name.c_str());
-	Command = "dd bs=4096 if='" + Full_FileName + "' of=" + Actual_Block_Device;
-	LOGINFO("Restore command: '%s'\n", Command.c_str());
-	TWFunc::Exec_Cmd(Command);
-	display_percent = (double)(Restore_Size + *already_restored_size) / (double)(*total_restore_size) * 100;
-	sprintf(size_progress, "%lluMB of %lluMB, %i%%", (Restore_Size + *already_restored_size) / 1048576, *total_restore_size / 1048576, (int)(display_percent));
-	DataManager::SetValue("tw_size_progress", size_progress);
-	progress_percent = (display_percent / 100);
-	DataManager::SetProgress((float)(progress_percent));
-	*already_restored_size += Restore_Size;
-	return true;
-}
-
-bool TWPartition::Restore_Flash_Image(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size) {
-	string Full_FileName, Command;
-	double display_percent, progress_percent;
-	char size_progress[1024];
-
-	gui_print("Restoring %s...\n", Display_Name.c_str());
-	Full_FileName = restore_folder + "/" + Backup_FileName;
-	// Sometimes flash image doesn't like to flash due to the first 2KB matching, so we erase first to ensure that it flashes
-	Command = "erase_image " + MTD_Name;
-	LOGINFO("Erase command: '%s'\n", Command.c_str());
-	TWFunc::Exec_Cmd(Command);
-	Command = "flash_image " + MTD_Name + " '" + Full_FileName + "'";
-	LOGINFO("Restore command: '%s'\n", Command.c_str());
-	TWFunc::Exec_Cmd(Command);
 	display_percent = (double)(Restore_Size + *already_restored_size) / (double)(*total_restore_size) * 100;
 	sprintf(size_progress, "%lluMB of %lluMB, %i%%", (Restore_Size + *already_restored_size) / 1048576, *total_restore_size / 1048576, (int)(display_percent));
 	DataManager::SetValue("tw_size_progress", size_progress);
@@ -2070,7 +2050,62 @@ uint64_t TWPartition::Get_Max_FileSize() {
 		maxFileSize = 3.94 * constTB; //3.94 TB
 	else
 		maxFileSize = 100000000L;
-	LOGINFO("Get_Max_FileSize::maxFileSize: %\n", maxFileSize);
+	LOGINFO("Get_Max_FileSize::maxFileSize: %llu\n", maxFileSize);
 	return maxFileSize - 1;
 }
 
+bool TWPartition::Flash_Image(string Filename) {
+	string Restore_File_System;
+
+	LOGINFO("Image filename is: %s\n", Filename.c_str());
+
+	if (Backup_Method == FILES) {
+		LOGERR("Cannot flash images to file systems\n");
+		return false;
+	} else if (!Can_Flash_Img) {
+		LOGERR("Cannot flash images to partitions %s\n", Display_Name.c_str());
+		return false;
+	} else {
+		if (!Find_Partition_Size()) {
+			LOGERR("Unable to find partition size for '%s'\n", Mount_Point.c_str());
+			return false;
+		}
+		unsigned long long image_size = TWFunc::Get_File_Size(Filename);
+		if (image_size > Size) {
+			LOGERR("Size (%llu bytes) of image '%s' is larger than target device '%s' (%llu bytes)\n",
+				image_size, Filename.c_str(), Actual_Block_Device.c_str(), Size);
+			return false;
+		}
+		if (Backup_Method == DD)
+			return Flash_Image_DD(Filename);
+		else if (Backup_Method == FLASH_UTILS)
+			return Flash_Image_FI(Filename);
+	}
+
+	LOGERR("Unknown flash method for '%s'\n", Mount_Point.c_str());
+	return false;
+}
+
+bool TWPartition::Flash_Image_DD(string Filename) {
+	string Command;
+
+	gui_print("Flashing %s...\n", Display_Name.c_str());
+	Command = "dd bs=4096 if='" + Filename + "' of=" + Actual_Block_Device;
+	LOGINFO("Flash command: '%s'\n", Command.c_str());
+	TWFunc::Exec_Cmd(Command);
+	return true;
+}
+
+bool TWPartition::Flash_Image_FI(string Filename) {
+	string Command;
+
+	gui_print("Flashing %s...\n", Display_Name.c_str());
+	// Sometimes flash image doesn't like to flash due to the first 2KB matching, so we erase first to ensure that it flashes
+	Command = "erase_image " + MTD_Name;
+	LOGINFO("Erase command: '%s'\n", Command.c_str());
+	TWFunc::Exec_Cmd(Command);
+	Command = "flash_image " + MTD_Name + " '" + Filename + "'";
+	LOGINFO("Flash command: '%s'\n", Command.c_str());
+	TWFunc::Exec_Cmd(Command);
+	return true;
+}

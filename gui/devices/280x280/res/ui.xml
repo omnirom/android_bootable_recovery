@@ -74,6 +74,7 @@
 		<variable name="row11_text_y" value="209" />
 		<variable name="row12_text_y" value="228" />
 		<variable name="row13_text_y" value="237" />
+		<variable name="flash_list_height" value="140" />
 		<variable name="zip_status_y" value="265" />
 		<variable name="backup_text_y" value="50" />
 		<variable name="col_progressbar_x" value="31" />

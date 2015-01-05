@@ -192,6 +192,7 @@
 		<variable name="button_fill_half_height" value="53" />
 		<variable name="button_fill_quarter_height" value="40" />
 		<variable name="button_full_center_x" value="320" />
+		<variable name="flash_list_height" value="220" />
 		<variable name="backup_list_x" value="28" />
 		<variable name="backup_list_y" value="105" />
 		<variable name="backup_list_width" value="609" />

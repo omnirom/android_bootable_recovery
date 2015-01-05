@@ -84,6 +84,7 @@
 		<variable name="row17_text_y" value="1935" />
 		<variable name="row18_text_y" value="2035" />
 		<variable name="zip_status_y" value="1250" />
+		<variable name="flash_list_height" value="650" />
 		<variable name="tz_selected_y" value="319" />
 		<variable name="tz_set_y" value="1995" />
 		<variable name="tz_current_y" value="1895" />
