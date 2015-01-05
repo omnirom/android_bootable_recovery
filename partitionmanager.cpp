@@ -268,6 +268,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Retain_Layout_Version ");
 	if (Part->Mount_To_Decrypt)
 		printf("Mount_To_Decrypt ");
+	if (Part->Can_Flash_Img)
+		printf("Can_Flash_Img ");
 	printf("\n");
 	if (!Part->SubPartition_Of.empty())
 		printf("   SubPartition_Of: %s\n", Part->SubPartition_Of.c_str());
@@ -1848,6 +1850,16 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 				Partition_List->push_back(datamedia);
 			}
 		}
+	} else if (ListType == "flashimg") {
+		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+			if ((*iter)->Can_Flash_Img && (*iter)->Is_Present) {
+				struct PartitionList part;
+				part.Display_Name = (*iter)->Backup_Display_Name;
+				part.Mount_Point = (*iter)->Backup_Path;
+				part.selected = 0;
+				Partition_List->push_back(part);
+			}
+		}
 	} else {
 		LOGERR("Unknown list type '%s' requested for TWPartitionManager::Get_Partition_List\n", ListType.c_str());
 	}
@@ -2110,4 +2122,55 @@ bool TWPartitionManager::Remove_MTP_Storage(unsigned int Storage_ID) {
 	}
 #endif
 	return false;
+}
+
+bool TWPartitionManager::Flash_Image(string Filename) {
+	int check, partition_count = 0;
+	TWPartition* flash_part = NULL;
+	string Flash_List, flash_path;
+	size_t start_pos = 0, end_pos = 0;
+
+	gui_print("\n[IMAGE FLASH STARTED]\n\n");
+	gui_print("Image to flash: '%s'\n", Filename.c_str());
+
+	if (!Mount_Current_Storage(true))
+		return false;
+
+	gui_print("Calculating restore details...\n");
+	DataManager::GetValue("tw_flash_partition", Flash_List);
+	if (!Flash_List.empty()) {
+		end_pos = Flash_List.find(";", start_pos);
+		while (end_pos != string::npos && start_pos < Flash_List.size()) {
+			flash_path = Flash_List.substr(start_pos, end_pos - start_pos);
+			flash_part = Find_Partition_By_Path(flash_path);
+			if (flash_part != NULL) {
+				partition_count++;
+				if (partition_count > 1) {
+					LOGERR("Too many partitions selected for flashing.\n");
+					return false;
+				}
+			} else {
+				LOGERR("Unable to locate '%s' partition for flashing (flash list).\n", flash_path.c_str());
+				return false;
+			}
+			start_pos = end_pos + 1;
+			end_pos = Flash_List.find(";", start_pos);
+		}
+	}
+
+	if (partition_count == 0) {
+		LOGERR("No partitions selected for flashing.\n");
+		return false;
+	}
+
+	DataManager::SetProgress(0.0);
+	if (flash_part) {
+		if (!flash_part->Flash_Image(Filename))
+			return false;
+	} else {
+		LOGERR("Invalid flash partition specified.\n");
+		return false;
+	}
+	gui_print_color("highlight", "[IMAGE FLASH COMPLETED]\n\n");
+	return true;
 }
