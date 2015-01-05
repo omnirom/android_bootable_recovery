@@ -148,6 +148,17 @@
 
 			<object type="template" name="sort_options" />
 
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%filemanager_select_x%" y="%filemanager_select_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Images...</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="page">install_image</action>
+				</actions>
+			</object>
+
 			<object type="action">
 				<condition var1="tw_filename" op="modified" />
 				<actions>
@@ -388,6 +399,172 @@
 					<action function="page">clear_vars</action>
 				</actions>
 			</object>
+		</page>
+
+		<page name="install_image">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Select Image to Flash</text>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<fill color="%button_fill_color%" />
+				<placement x="%button_full_center_x%" y="%zipstorage_text_y%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<actions>
+					<action function="set">tw_back=install_image</action>
+					<action function="page">selectstorage</action>
+				</actions>
+			</object>
+
+			<object type="fileselector">
+				<highlight color="%fileselector_highlight_color%" />
+				<placement x="%fileselector_folder_x%" y="%fileselector_install_y%" w="%fileselector_folder_width%" h="%fileselector_install_height%" />
+				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
+				<fastscroll linecolor="%fastscroll_linecolor%" rectcolor="%fastscroll_rectcolor%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%" />
+				<text>Folders:</text>
+				<separator color="%fileselector_separatorcolor%" height="%fileselector_separatorheight%" />
+				<sort name="tw_gui_sort_order" />
+				<icon folder="folder_icon" file="file_icon" />
+				<background color="%fileselector_background%" />
+				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
+				<filter folders="1" files="0" />
+				<path name="tw_zip_location" default="/sdcard" />
+				<data name="select" />
+			</object>
+
+			<object type="fileselector">
+				<highlight color="%fileselector_highlight_color%" />
+				<placement x="%fileselector_file_x%" y="%fileselector_install_y%" w="%fileselector_file_width%" h="%fileselector_install_height%" />
+				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
+				<fastscroll linecolor="%fastscroll_linecolor%" rectcolor="%fastscroll_rectcolor%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%" />
+				<text>%tw_zip_location%</text>
+				<separator color="%fileselector_separatorcolor%" height="%fileselector_separatorheight%" />
+				<sort name="tw_gui_sort_order" />
+				<icon folder="folder_icon" file="file_icon" />
+				<background color="%fileselector_background%" />
+				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
+				<filter extn=".img" folders="0" files="1" />
+				<path name="tw_zip_location" />
+				<data name="tw_filename" />
+				<selection name="tw_file" />
+			</object>
+
+			<object type="template" name="sort_options" />
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%filemanager_select_x%" y="%filemanager_select_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Zips...</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="page">install</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_filename" op="modified" />
+				<action function="page">flashimage_confirm</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">install</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="flashimage_confirm">
+			<object type="template" name="header" />
+
+			<object type="partitionlist">
+				<highlight color="%fileselector_highlight_color%" />
+				<placement x="%col2_x%" y="%row1_text_y%" w="%listbox_width%" h="%flash_list_height%" />
+				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
+				<fastscroll linecolor="%fastscroll_linecolor%" rectcolor="%fastscroll_rectcolor%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%" />
+				<text>Select Partition to Flash Image:</text>
+				<icon selected="radio_true" unselected="radio_false" />
+				<separator color="%fileselector_separatorcolor%" height="%fileselector_separatorheight%" />
+				<background color="%listbox_background%" />
+				<font resource="font" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
+				<data name="tw_flash_partition" />
+				<listtype name="flashimg" />
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row8_text_y%" placement="5" />
+				<text>Folder:</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row9_text_y%" placement="5" />
+				<text>%tw_zip_location%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row10_text_y%" placement="5" />
+				<text>File to flash:</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%row11_text_y%" placement="5" />
+				<text>%tw_file%</text>
+			</object>
+
+			<object type="slider">
+				<placement x="%slider_x%" y="%slider_y%" placement="5" />
+				<resource base="slider" used="slider-used" touch="slider-touch" />
+				<actions>
+					<action function="set">tw_back=flashimage_confirm</action>
+					<action function="set">tw_action=flashimage</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_action_text1=Flashing Image...</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1=Image Flashed</action>
+					<action function="page">action_page</action>
+				</actions>
+				<action function="flashimage"></action>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
+				<text>Swipe to Confirm Flash</text>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<actions>
+					<action function="set">tw_clear_destination=install_image</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<actions>
+					<action function="set">tw_clear_destination=main2</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+
+			<object type="template" name="footer" />
 		</page>
 
 		<page name="clear_vars">
