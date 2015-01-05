@@ -46,6 +46,12 @@ RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_uuid.so
 ifneq ($(wildcard external/e2fsprogs/lib/quota/Android.mk),)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_quota.so
 endif
+ifneq ($(wildcard external/e2fsprogs/lib/ext2fs/Android.mk),)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2fs.so
+endif
+ifneq ($(wildcard external/e2fsprogs/lib/blkid/Android.mk),)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_blkid.so
+endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libpng.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/liblog.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libm.so
