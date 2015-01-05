@@ -31,10 +31,9 @@ LOCAL_SRC_FILES = 	lib/at.c \
 			lib/strutils.c \
 			lib/sysfs.c \
 
-LOCAL_C_INCLUDES += 	$(LOCAL_PATH)/libfdisk/src \
+LOCAL_C_INCLUDES += \
 			$(LOCAL_PATH)/include \
-			$(LOCAL_PATH)/libuuid/src \
-		    	$(LOCAL_PATH)/src
+		    $(LOCAL_PATH)/src
 
 LOCAL_SHARED_LIBRARIES += libc
 include $(BUILD_SHARED_LIBRARY)
@@ -59,7 +58,7 @@ LOCAL_SRC_FILES =	libuuid/src/clear.c \
 
 LOCAL_C_INCLUDES += 	$(LOCAL_PATH)/libuuid/src \
 			$(LOCAL_PATH)/include \
-		    	$(LOCAL_PATH)/src
+			$(LOCAL_PATH)/src
 
 LOCAL_SHARED_LIBRARIES += libc libutil-linux
 
@@ -92,7 +91,7 @@ LOCAL_SRC_FILES = 	libfdisk/src/alignment.c \
 LOCAL_C_INCLUDES += 	$(LOCAL_PATH)/libfdisk/src \
 			$(LOCAL_PATH)/include \
 			$(LOCAL_PATH)/libuuid/src \
-		    	$(LOCAL_PATH)/src
+			$(LOCAL_PATH)/src
 
 LOCAL_SHARED_LIBRARIES += libc libutil-linux libuuid
 include $(BUILD_SHARED_LIBRARY)
@@ -189,7 +188,7 @@ LOCAL_SRC_FILES = 	src/cache.c \
 			src/topology/topology.c \
 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/include \
-		    $(LOCAL_PATH)/src
+			$(LOCAL_PATH)/src
 
-LOCAL_SHARED_LIBRARIES += libc libfdisk libutil-linux
+LOCAL_SHARED_LIBRARIES += libc libutil-linux
 include $(BUILD_SHARED_LIBRARY)
