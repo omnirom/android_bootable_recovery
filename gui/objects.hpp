@@ -257,6 +257,8 @@ protected:
 // GUIAction - Used for standard actions
 class GUIAction : public GUIObject, public ActionObject
 {
+	friend class ActionThread;
+
 public:
 	GUIAction(xml_node<>* node);
 
@@ -290,11 +292,6 @@ protected:
 	static void* sideload_thread_fn(void *cookie);
 	static void* openrecoveryscript_thread_fn(void *cookie);
 	time_t Start;
-
-	// map action name to function pointer
-	typedef int (GUIAction::*execFunction)(std::string);
-	typedef std::map<std::string, execFunction> mapFunc;
-	static mapFunc mf;
 
 	// GUI actions
 	int reboot(std::string arg);
@@ -353,6 +350,34 @@ protected:
 	int stopmtp(std::string arg);
 
 	int simulate;
+};
+
+class ActionThread
+{
+public:
+	ActionThread();
+	~ActionThread();
+
+	void queueAction(GUIAction *act, const std::string& func, const std::string& arg);
+	void run();
+private:
+	struct QueueData
+	{
+		GUIAction *act;
+		std::string func;
+		std::string arg;
+	};
+
+	// map action name to function pointer
+	typedef int (GUIAction::*execFunction)(std::string);
+	typedef std::map<std::string, execFunction> mapFunc;
+
+	mapFunc m_funcMap;
+	pthread_t m_thread;
+	bool m_thread_running;
+	pthread_mutex_t m_queue_lock;
+	pthread_mutex_t m_act_lock;
+	std::queue<QueueData*> m_queue;
 };
 
 class GUIConsole : public GUIObject, public RenderObject, public ActionObject

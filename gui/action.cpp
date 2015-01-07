@@ -36,6 +36,7 @@
 
 #include <string>
 #include <sstream>
+#include <queue>
 #include "../partitions.hpp"
 #include "../twrp-functions.hpp"
 #include "../openrecoveryscript.hpp"
@@ -65,11 +66,145 @@ extern blanktimer blankTimer;
 
 void curtainClose(void);
 
-GUIAction::mapFunc GUIAction::mf;
 static string zip_queue[10];
 static int zip_queue_index;
 static pthread_t terminal_command;
 pid_t sideload_child_pid;
+
+static ActionThread action_thread;
+
+static void *ActionThread_work_wrapper(void *data)
+{
+	((ActionThread*)data)->run();
+	return NULL;
+}
+
+ActionThread::ActionThread()
+{
+	m_thread_running = true;
+	pthread_mutex_init(&m_queue_lock, NULL);
+	pthread_mutex_init(&m_act_lock, NULL);
+
+	m_funcMap["reboot"] = &GUIAction::reboot;
+	m_funcMap["home"] = &GUIAction::home;
+	m_funcMap["key"] = &GUIAction::key;
+	m_funcMap["page"] = &GUIAction::page;
+	m_funcMap["reload"] = &GUIAction::reload;
+	m_funcMap["readBackup"] = &GUIAction::readBackup;
+	m_funcMap["set"] = &GUIAction::set;
+	m_funcMap["clear"] = &GUIAction::clear;
+	m_funcMap["mount"] = &GUIAction::mount;
+	m_funcMap["unmount"] = &GUIAction::unmount;
+	m_funcMap["umount"] = &GUIAction::unmount;
+	m_funcMap["restoredefaultsettings"] = &GUIAction::restoredefaultsettings;
+	m_funcMap["copylog"] = &GUIAction::copylog;
+	m_funcMap["compute"] = &GUIAction::compute;
+	m_funcMap["addsubtract"] = &GUIAction::compute;
+	m_funcMap["setguitimezone"] = &GUIAction::setguitimezone;
+	m_funcMap["overlay"] = &GUIAction::overlay;
+	m_funcMap["queuezip"] = &GUIAction::queuezip;
+	m_funcMap["cancelzip"] = &GUIAction::cancelzip;
+	m_funcMap["queueclear"] = &GUIAction::queueclear;
+	m_funcMap["sleep"] = &GUIAction::sleep;
+	m_funcMap["appenddatetobackupname"] = &GUIAction::appenddatetobackupname;
+	m_funcMap["generatebackupname"] = &GUIAction::generatebackupname;
+	m_funcMap["checkpartitionlist"] = &GUIAction::checkpartitionlist;
+	m_funcMap["getpartitiondetails"] = &GUIAction::getpartitiondetails;
+	m_funcMap["screenshot"] = &GUIAction::screenshot;
+	m_funcMap["setbrightness"] = &GUIAction::setbrightness;
+
+	// previously-threaded actions
+	m_funcMap["fileexists"] = &GUIAction::fileexists;
+	m_funcMap["flash"] = &GUIAction::flash;
+	m_funcMap["wipe"] = &GUIAction::wipe;
+	m_funcMap["refreshsizes"] = &GUIAction::refreshsizes;
+	m_funcMap["nandroid"] = &GUIAction::nandroid;
+	m_funcMap["fixpermissions"] = &GUIAction::fixpermissions;
+	m_funcMap["dd"] = &GUIAction::dd;
+	m_funcMap["partitionsd"] = &GUIAction::partitionsd;
+	m_funcMap["installhtcdumlock"] = &GUIAction::installhtcdumlock;
+	m_funcMap["htcdumlockrestoreboot"] = &GUIAction::htcdumlockrestoreboot;
+	m_funcMap["htcdumlockreflashrecovery"] = &GUIAction::htcdumlockreflashrecovery;
+	m_funcMap["cmd"] = &GUIAction::cmd;
+	m_funcMap["terminalcommand"] = &GUIAction::terminalcommand;
+	m_funcMap["killterminal"] = &GUIAction::killterminal;
+	m_funcMap["reinjecttwrp"] = &GUIAction::reinjecttwrp;
+	m_funcMap["checkbackupname"] = &GUIAction::checkbackupname;
+	m_funcMap["decrypt"] = &GUIAction::decrypt;
+	m_funcMap["adbsideload"] = &GUIAction::adbsideload;
+	m_funcMap["adbsideloadcancel"] = &GUIAction::adbsideloadcancel;
+	m_funcMap["openrecoveryscript"] = &GUIAction::openrecoveryscript;
+	m_funcMap["installsu"] = &GUIAction::installsu;
+	m_funcMap["fixsu"] = &GUIAction::fixsu;
+	m_funcMap["decrypt_backup"] = &GUIAction::decrypt_backup;
+	m_funcMap["repair"] = &GUIAction::repair;
+	m_funcMap["changefilesystem"] = &GUIAction::changefilesystem;
+	m_funcMap["startmtp"] = &GUIAction::startmtp;
+	m_funcMap["stopmtp"] = &GUIAction::stopmtp;
+
+	pthread_create(&m_thread, NULL, &ActionThread_work_wrapper, this);
+}
+
+ActionThread::~ActionThread()
+{
+	pthread_mutex_lock(&m_queue_lock);
+	if(m_thread_running) {
+		m_thread_running = false;
+		pthread_mutex_unlock(&m_queue_lock);
+		pthread_join(m_thread, NULL);
+	} else {
+		pthread_mutex_unlock(&m_queue_lock);
+	}
+	pthread_mutex_destroy(&m_queue_lock);
+	pthread_mutex_destroy(&m_act_lock);
+}
+
+void ActionThread::queueAction(GUIAction *act, const std::string& func, const std::string& arg)
+{
+	QueueData *d = new QueueData;
+	d->act = act;
+	d->func = func;
+	d->arg = arg;
+
+	pthread_mutex_lock(&m_queue_lock);
+	m_queue.push(d);
+	pthread_mutex_unlock(&m_queue_lock);
+}
+
+void ActionThread::run()
+{
+	QueueData *d;
+	while(true)
+	{
+		pthread_mutex_lock(&m_queue_lock);
+		if(!m_thread_running) {
+			pthread_mutex_unlock(&m_queue_lock);
+			return;
+		}
+
+		if(!m_queue.empty()) {
+			d = m_queue.front();
+			m_queue.pop();
+
+			// one action might depend on result of another one
+			pthread_mutex_lock(&m_act_lock);
+			pthread_mutex_unlock(&m_queue_lock);
+
+			mapFunc::const_iterator funcitr = m_funcMap.find(gui_parse_text(d->func));
+			if (funcitr != m_funcMap.end()) {
+				(d->act->*funcitr->second)(gui_parse_text(d->arg));
+			} else {
+				LOGERR("Unknown action '%s'\n", d->func.c_str());
+			}
+			pthread_mutex_unlock(&m_act_lock);
+
+			delete d;
+		} else {
+			pthread_mutex_unlock(&m_queue_lock);
+			usleep(25000);
+		}
+	}
+}
 
 GUIAction::GUIAction(xml_node<>* node)
 	: GUIObject(node)
@@ -79,65 +214,6 @@ GUIAction::GUIAction(xml_node<>* node)
 	xml_attribute<>* attr;
 
 	if (!node)  return;
-
-	if (mf.empty()) {
-		mf["reboot"] = &GUIAction::reboot;
-		mf["home"] = &GUIAction::home;
-		mf["key"] = &GUIAction::key;
-		mf["page"] = &GUIAction::page;
-		mf["reload"] = &GUIAction::reload;
-		mf["readBackup"] = &GUIAction::readBackup;
-		mf["set"] = &GUIAction::set;
-		mf["clear"] = &GUIAction::clear;
-		mf["mount"] = &GUIAction::mount;
-		mf["unmount"] = &GUIAction::unmount;
-		mf["umount"] = &GUIAction::unmount;
-		mf["restoredefaultsettings"] = &GUIAction::restoredefaultsettings;
-		mf["copylog"] = &GUIAction::copylog;
-		mf["compute"] = &GUIAction::compute;
-		mf["addsubtract"] = &GUIAction::compute;
-		mf["setguitimezone"] = &GUIAction::setguitimezone;
-		mf["overlay"] = &GUIAction::overlay;
-		mf["queuezip"] = &GUIAction::queuezip;
-		mf["cancelzip"] = &GUIAction::cancelzip;
-		mf["queueclear"] = &GUIAction::queueclear;
-		mf["sleep"] = &GUIAction::sleep;
-		mf["appenddatetobackupname"] = &GUIAction::appenddatetobackupname;
-		mf["generatebackupname"] = &GUIAction::generatebackupname;
-		mf["checkpartitionlist"] = &GUIAction::checkpartitionlist;
-		mf["getpartitiondetails"] = &GUIAction::getpartitiondetails;
-		mf["screenshot"] = &GUIAction::screenshot;
-		mf["setbrightness"] = &GUIAction::setbrightness;
-
-		// threaded actions
-		mf["fileexists"] = &GUIAction::fileexists;
-		mf["flash"] = &GUIAction::flash;
-		mf["wipe"] = &GUIAction::wipe;
-		mf["refreshsizes"] = &GUIAction::refreshsizes;
-		mf["nandroid"] = &GUIAction::nandroid;
-		mf["fixpermissions"] = &GUIAction::fixpermissions;
-		mf["dd"] = &GUIAction::dd;
-		mf["partitionsd"] = &GUIAction::partitionsd;
-		mf["installhtcdumlock"] = &GUIAction::installhtcdumlock;
-		mf["htcdumlockrestoreboot"] = &GUIAction::htcdumlockrestoreboot;
-		mf["htcdumlockreflashrecovery"] = &GUIAction::htcdumlockreflashrecovery;
-		mf["cmd"] = &GUIAction::cmd;
-		mf["terminalcommand"] = &GUIAction::terminalcommand;
-		mf["killterminal"] = &GUIAction::killterminal;
-		mf["reinjecttwrp"] = &GUIAction::reinjecttwrp;
-		mf["checkbackupname"] = &GUIAction::checkbackupname;
-		mf["decrypt"] = &GUIAction::decrypt;
-		mf["adbsideload"] = &GUIAction::adbsideload;
-		mf["adbsideloadcancel"] = &GUIAction::adbsideloadcancel;
-		mf["openrecoveryscript"] = &GUIAction::openrecoveryscript;
-		mf["installsu"] = &GUIAction::installsu;
-		mf["fixsu"] = &GUIAction::fixsu;
-		mf["decrypt_backup"] = &GUIAction::decrypt_backup;
-		mf["repair"] = &GUIAction::repair;
-		mf["changefilesystem"] = &GUIAction::changefilesystem;
-		mf["startmtp"] = &GUIAction::startmtp;
-		mf["stopmtp"] = &GUIAction::stopmtp;
-	}
 
 	// First, get the action
 	actions = node->first_node("actions");
@@ -321,17 +397,8 @@ int GUIAction::doActions()
 int GUIAction::doAction(Action action)
 {
 	DataManager::GetValue(TW_SIMULATE_ACTIONS, simulate);
-
-	std::string function = gui_parse_text(action.mFunction);
-	std::string arg = gui_parse_text(action.mArg);
-
-	// find function and execute it
-	mapFunc::const_iterator funcitr = mf.find(function);
-	if (funcitr != mf.end())
-		return (this->*funcitr->second)(arg);
-
-	LOGERR("Unknown action '%s'\n", function.c_str());
-	return -1;
+	action_thread.queueAction(this, action.mFunction, action.mArg);
+	return 0;
 }
 
 void GUIAction::operation_start(const string operation_name)
