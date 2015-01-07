@@ -257,6 +257,8 @@ protected:
 // GUIAction - Used for standard actions
 class GUIAction : public GUIObject, public ActionObject
 {
+	friend class ActionThread;
+
 public:
 	GUIAction(xml_node<>* node);
 
@@ -280,16 +282,15 @@ protected:
 
 protected:
 	int getKeyByName(std::string key);
-	int doAction(Action action);
+	int doAction(Action action, int isThreaded = 0);
+	int checkIfActionNeedsThreading(Action action);
 	void simulate_progress_bar(void);
 	int flash_zip(std::string filename, std::string pageName, int* wipe_cache);
 	void reinject_after_flash();
 	void operation_start(const string operation_name);
 	void operation_end(const int operation_status);
-	static void* command_thread(void *cookie);
-	static void* sideload_thread_fn(void *cookie);
-	static void* openrecoveryscript_thread_fn(void *cookie);
 	time_t Start;
+	static void* thread_start(void *cookie);
 
 	// map action name to function pointer
 	typedef int (GUIAction::*execFunction)(std::string);
@@ -353,6 +354,32 @@ protected:
 	int stopmtp(std::string arg);
 
 	int simulate;
+};
+
+class ActionThread
+{
+public:
+	ActionThread();
+	~ActionThread();
+
+	void threadAction(GUIAction *act, const std::string& func, const std::string& arg, int isThreaded);
+	void run(void *data);
+private:
+	struct ThreadData
+	{
+		GUIAction *act;
+		std::string func;
+		std::string arg;
+	};
+
+	// map action name to function pointer
+	typedef int (GUIAction::*execFunction)(std::string);
+	typedef std::map<std::string, execFunction> mapFunc;
+
+	mapFunc m_funcMap;
+	pthread_t m_thread;
+	bool m_thread_running;
+	pthread_mutex_t m_act_lock;
 };
 
 class GUIConsole : public GUIObject, public RenderObject, public ActionObject
