@@ -38,9 +38,6 @@ public:
 	static int GetValue(const string varName, float& value);
 	static unsigned long long GetValue(const string varName, unsigned long long& value);
 
-	// This is a dangerous function. It will create the value if it doesn't exist so it has a valid c_str
-	static string& GetValueRef(const string varName);
-
 	// Helper functions
 	static string GetStrValue(const string varName);
 	static int GetIntValue(const string varName);
@@ -62,16 +59,12 @@ public:
 	static void ReadSettingsFile(void);
 
 	static string GetCurrentStoragePath(void);
-	static string& CGetCurrentStoragePath();
 	static string GetSettingsStoragePath(void);
-	static string& CGetSettingsStoragePath();
 
 protected:
 	typedef pair<string, int> TStrIntPair;
-	typedef pair<string, unsigned long long> TStrULLPair;
 	typedef pair<string, TStrIntPair> TNameValuePair;
 	static map<string, TStrIntPair> mValues;
-	static map<string, TStrULLPair> mULLValues;
 	static string mBackingFile;
 	static int mInitialized;
 
@@ -86,6 +79,7 @@ private:
 	static void sanitize_device_id(char* device_id);
 	static void get_device_id(void);
 
+	static pthread_mutex_t m_valuesLock;
 };
 
 #endif // _DATAMANAGER_HPP_HEADER
