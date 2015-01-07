@@ -59,7 +59,6 @@
 extern "C"
 {
 	#include "twcommon.h"
-	#include "data.h"
 	#include "gui/pages.h"
 	#include "minuitwrp/minui.h"
 	void gui_notifyVarChange(const char *name, const char* value);
@@ -78,6 +77,8 @@ int                                     DataManager::mInitialized = 0;
 extern blanktimer blankTimer;
 #endif
 extern bool datamedia;
+
+pthread_mutex_t DataManager::m_valuesLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 
 // Device ID functions
 void DataManager::sanitize_device_id(char* device_id) {
@@ -221,7 +222,10 @@ void DataManager::get_device_id(void) {
 
 int DataManager::ResetDefaults()
 {
+	pthread_mutex_lock(&m_valuesLock);
 	mValues.clear();
+	pthread_mutex_unlock(&m_valuesLock);
+
 	mConstValues.clear();
 	SetDefaultValues();
 	return 0;
@@ -270,6 +274,8 @@ int DataManager::LoadValues(const string filename)
 
 		map<string, TStrIntPair>::iterator pos;
 
+		pthread_mutex_lock(&m_valuesLock);
+
 		pos = mValues.find(Name);
 		if (pos != mValues.end())
 		{
@@ -278,6 +284,9 @@ int DataManager::LoadValues(const string filename)
 		}
 		else
 			mValues.insert(TNameValuePair(Name, TStrIntPair(Value, 1)));
+
+		pthread_mutex_unlock(&m_valuesLock);
+
 #ifndef TW_NO_SCREEN_TIMEOUT
 		if (Name == "tw_screen_timeout_secs")
 			blankTimer.setTime(atoi(Value.c_str()));
@@ -319,6 +328,8 @@ int DataManager::SaveValues()
 	int file_version = FILE_VERSION;
 	fwrite(&file_version, 1, sizeof(int), out);
 
+	pthread_mutex_lock(&m_valuesLock);
+
 	map<string, TStrIntPair>::iterator iter;
 	for (iter = mValues.begin(); iter != mValues.end(); ++iter)
 	{
@@ -333,6 +344,9 @@ int DataManager::SaveValues()
 			fwrite(iter->second.first.c_str(), 1, length, out);
 		}
 	}
+
+	pthread_mutex_unlock(&m_valuesLock);
+
 	fclose(out);
 	tw_set_default_metadata(mBackingFile.c_str());
 #endif // ifdef TW_OEM_BUILD
@@ -364,12 +378,16 @@ int DataManager::GetValue(const string varName, string& value)
 		return 0;
 	}
 
+	pthread_mutex_lock(&m_valuesLock);
 	map<string, TStrIntPair>::iterator pos;
 	pos = mValues.find(localStr);
-	if (pos == mValues.end())
+	if (pos == mValues.end()){
+		pthread_mutex_unlock(&m_valuesLock);
 		return -1;
+	}
 
 	value = pos->second.first;
+	pthread_mutex_unlock(&m_valuesLock);
 	return 0;
 }
 
@@ -406,25 +424,6 @@ unsigned long long DataManager::GetValue(const string varName, unsigned long lon
 	return 0;
 }
 
-// This is a dangerous function. It will create the value if it doesn't exist so it has a valid c_str
-string& DataManager::GetValueRef(const string varName)
-{
-	if (!mInitialized)
-		SetDefaultValues();
-
-	map<string, string>::iterator constPos;
-	constPos = mConstValues.find(varName);
-	if (constPos != mConstValues.end())
-		return constPos->second;
-
-	map<string, TStrIntPair>::iterator pos;
-	pos = mValues.find(varName);
-	if (pos == mValues.end())
-		pos = (mValues.insert(TNameValuePair(varName, TStrIntPair("", 0)))).first;
-
-	return pos->second.first;
-}
-
 // This function will return an empty string if the value doesn't exist
 string DataManager::GetStrValue(const string varName)
 {
@@ -457,6 +456,8 @@ int DataManager::SetValue(const string varName, string value, int persist /* = 0
 	if (constChk != mConstValues.end())
 		return -1;
 
+	pthread_mutex_lock(&m_valuesLock);
+
 	map<string, TStrIntPair>::iterator pos;
 	pos = mValues.find(varName);
 	if (pos == mValues.end())
@@ -466,6 +467,8 @@ int DataManager::SetValue(const string varName, string value, int persist /* = 0
 
 	if (pos->second.second != 0)
 		SaveValues();
+
+	pthread_mutex_unlock(&m_valuesLock);
 
 #ifndef TW_NO_SCREEN_TIMEOUT
 	if (varName == "tw_screen_timeout_secs") {
@@ -535,13 +538,15 @@ void DataManager::DumpValues()
 {
 	map<string, TStrIntPair>::iterator iter;
 	gui_print("Data Manager dump - Values with leading X are persisted.\n");
+	pthread_mutex_lock(&m_valuesLock);
 	for (iter = mValues.begin(); iter != mValues.end(); ++iter)
 		gui_print("%c %s=%s\n", iter->second.second ? 'X' : ' ', iter->first.c_str(), iter->second.first.c_str());
+	pthread_mutex_unlock(&m_valuesLock);
 }
 
 void DataManager::update_tz_environment_variables(void)
 {
-	setenv("TZ", DataManager_GetStrValue(TW_TIME_ZONE_VAR), 1);
+	setenv("TZ", GetStrValue(TW_TIME_ZONE_VAR).c_str(), 1);
 	tzset();
 }
 
@@ -588,6 +593,8 @@ void DataManager::SetDefaultValues()
 	string str, path;
 
 	get_device_id();
+
+	pthread_mutex_lock(&m_valuesLock);
 
 	mInitialized = 1;
 
@@ -848,6 +855,8 @@ void DataManager::SetDefaultValues()
 	mConstValues.insert(make_pair("tw_has_mtp", "0"));
 	mConstValues.insert(make_pair("tw_mtp_enabled", "0"));
 #endif
+
+	pthread_mutex_unlock(&m_valuesLock);
 }
 
 // Magic Values
@@ -1012,7 +1021,7 @@ void DataManager::ReadSettingsFile(void)
 
 	memset(mkdir_path, 0, sizeof(mkdir_path));
 	memset(settings_file, 0, sizeof(settings_file));
-	sprintf(mkdir_path, "%s/TWRP", DataManager_GetSettingsStoragePath());
+	sprintf(mkdir_path, "%s/TWRP", GetSettingsStoragePath().c_str());
 	sprintf(settings_file, "%s/.twrps", mkdir_path);
 
 	if (!PartitionManager.Mount_Settings_Storage(false))
@@ -1042,107 +1051,11 @@ string DataManager::GetCurrentStoragePath(void)
 	return GetStrValue("tw_storage_path");
 }
 
-string& DataManager::CGetCurrentStoragePath()
-{
-	return GetValueRef("tw_storage_path");
-}
-
 string DataManager::GetSettingsStoragePath(void)
 {
 	return GetStrValue("tw_settings_path");
 }
 
-string& DataManager::CGetSettingsStoragePath()
-{
-	return GetValueRef("tw_settings_path");
-}
-
-extern "C" int DataManager_ResetDefaults(void)
-{
-	return DataManager::ResetDefaults();
-}
-
-extern "C" void DataManager_LoadDefaults(void)
-{
-	return DataManager::SetDefaultValues();
-}
-
-extern "C" int DataManager_LoadValues(const char* filename)
-{
-	return DataManager::LoadValues(filename);
-}
-
-extern "C" int DataManager_Flush(void)
-{
-	return DataManager::Flush();
-}
-
-extern "C" int DataManager_GetValue(const char* varName, char* value)
-{
-	int ret;
-	string str;
-
-	ret = DataManager::GetValue(varName, str);
-	if (ret == 0)
-		strcpy(value, str.c_str());
-	return ret;
-}
-
-extern "C" const char* DataManager_GetStrValue(const char* varName)
-{
-	string& str = DataManager::GetValueRef(varName);
-	return str.c_str();
-}
-
-extern "C" const char* DataManager_GetCurrentStoragePath(void)
-{
-	string& str = DataManager::CGetCurrentStoragePath();
-	return str.c_str();
-}
-
-extern "C" const char* DataManager_GetSettingsStoragePath(void)
-{
-	string& str = DataManager::CGetSettingsStoragePath();
-	return str.c_str();
-}
-
-extern "C" int DataManager_GetIntValue(const char* varName)
-{
-	return DataManager::GetIntValue(varName);
-}
-
-extern "C" int DataManager_SetStrValue(const char* varName, char* value)
-{
-	return DataManager::SetValue(varName, value, 0);
-}
-
-extern "C" int DataManager_SetIntValue(const char* varName, int value)
-{
-	return DataManager::SetValue(varName, value, 0);
-}
-
-extern "C" int DataManager_SetFloatValue(const char* varName, float value)
-{
-	return DataManager::SetValue(varName, value, 0);
-}
-
-extern "C" int DataManager_ToggleIntValue(const char* varName)
-{
-	if (DataManager::GetIntValue(varName))
-		return DataManager::SetValue(varName, 0);
-	else
-		return DataManager::SetValue(varName, 1);
-}
-
-extern "C" void DataManager_DumpValues(void)
-{
-	return DataManager::DumpValues();
-}
-
-extern "C" void DataManager_ReadSettingsFile(void)
-{
-	return DataManager::ReadSettingsFile();
-}
 void DataManager::Vibrate(const string varName)
 {
 	int vib_value = 0;
