@@ -71,6 +71,84 @@ static int zip_queue_index;
 static pthread_t terminal_command;
 pid_t sideload_child_pid;
 
+static ActionThread action_thread;
+
+static void *ActionThread_work_wrapper(void *data)
+{
+	((ActionThread*)data)->run();
+	return NULL;
+}
+
+ActionThread::ActionThread()
+{
+	m_thread_running = false;
+
+	pthread_mutex_init(&m_act_lock, NULL);
+
+	// These actions will run in a separate thread
+	m_funcMap["flash"] = &GUIAction::flash;
+	m_funcMap["wipe"] = &GUIAction::wipe;
+	m_funcMap["refreshsizes"] = &GUIAction::refreshsizes;
+	m_funcMap["nandroid"] = &GUIAction::nandroid;
+	m_funcMap["fixpermissions"] = &GUIAction::fixpermissions;
+	m_funcMap["dd"] = &GUIAction::dd;
+	m_funcMap["partitionsd"] = &GUIAction::partitionsd;
+	m_funcMap["installhtcdumlock"] = &GUIAction::installhtcdumlock;
+	m_funcMap["htcdumlockrestoreboot"] = &GUIAction::htcdumlockrestoreboot;
+	m_funcMap["htcdumlockreflashrecovery"] = &GUIAction::htcdumlockreflashrecovery;
+	m_funcMap["cmd"] = &GUIAction::cmd;
+	m_funcMap["terminalcommand"] = &GUIAction::terminalcommand;
+	m_funcMap["reinjecttwrp"] = &GUIAction::reinjecttwrp;
+	m_funcMap["decrypt"] = &GUIAction::decrypt;
+	m_funcMap["adbsideload"] = &GUIAction::adbsideload;
+	m_funcMap["openrecoveryscript"] = &GUIAction::openrecoveryscript;
+	m_funcMap["installsu"] = &GUIAction::installsu;
+	m_funcMap["decrypt_backup"] = &GUIAction::decrypt_backup;
+	m_funcMap["repair"] = &GUIAction::repair;
+	m_funcMap["changefilesystem"] = &GUIAction::changefilesystem;
+}
+
+ActionThread::~ActionThread()
+{
+	pthread_mutex_lock(&m_act_lock);
+	if(m_thread_running) {
+		pthread_mutex_unlock(&m_act_lock);
+		pthread_join(m_thread, NULL);
+	} else {
+		pthread_mutex_unlock(&m_act_lock);
+	}
+	pthread_mutex_destroy(&m_act_lock);
+}
+
+void ActionThread::threadAction(GUIAction *act, const std::string& func, const std::string& arg)
+{
+	pthread_mutex_lock(&m_act_lock);
+	if (m_thread_running) {
+		LOGERR("Another threaded action is already running.\n");
+	} else {
+		m_thread_running = true;
+		d.act = act;
+		d.func = func;
+		d.arg = arg;
+
+		pthread_create(&m_thread, NULL, &ActionThread_work_wrapper, this);
+	}
+	pthread_mutex_unlock(&m_act_lock);
+}
+
+void ActionThread::run()
+{
+	mapFunc::const_iterator funcitr = m_funcMap.find(gui_parse_text(d.func));
+	if (funcitr != m_funcMap.end()) {
+		(d.act->*funcitr->second)(gui_parse_text(d.arg));
+	} else {
+		LOGERR("Unknown action '%s'\n", d.func.c_str());
+	}
+	pthread_mutex_lock(&m_act_lock);
+	m_thread_running = false;
+	pthread_mutex_unlock(&m_act_lock);
+}
+
 GUIAction::GUIAction(xml_node<>* node)
 	: GUIObject(node)
 {
@@ -81,6 +159,7 @@ GUIAction::GUIAction(xml_node<>* node)
 	if (!node)  return;
 
 	if (mf.empty()) {
+		// These actions will not be run in a separate thread
 		mf["reboot"] = &GUIAction::reboot;
 		mf["home"] = &GUIAction::home;
 		mf["key"] = &GUIAction::key;
@@ -108,33 +187,11 @@ GUIAction::GUIAction(xml_node<>* node)
 		mf["getpartitiondetails"] = &GUIAction::getpartitiondetails;
 		mf["screenshot"] = &GUIAction::screenshot;
 		mf["setbrightness"] = &GUIAction::setbrightness;
-
-		// threaded actions
 		mf["fileexists"] = &GUIAction::fileexists;
-		mf["flash"] = &GUIAction::flash;
-		mf["wipe"] = &GUIAction::wipe;
-		mf["refreshsizes"] = &GUIAction::refreshsizes;
-		mf["nandroid"] = &GUIAction::nandroid;
-		mf["fixpermissions"] = &GUIAction::fixpermissions;
-		mf["dd"] = &GUIAction::dd;
-		mf["partitionsd"] = &GUIAction::partitionsd;
-		mf["installhtcdumlock"] = &GUIAction::installhtcdumlock;
-		mf["htcdumlockrestoreboot"] = &GUIAction::htcdumlockrestoreboot;
-		mf["htcdumlockreflashrecovery"] = &GUIAction::htcdumlockreflashrecovery;
-		mf["cmd"] = &GUIAction::cmd;
-		mf["terminalcommand"] = &GUIAction::terminalcommand;
 		mf["killterminal"] = &GUIAction::killterminal;
-		mf["reinjecttwrp"] = &GUIAction::reinjecttwrp;
 		mf["checkbackupname"] = &GUIAction::checkbackupname;
-		mf["decrypt"] = &GUIAction::decrypt;
-		mf["adbsideload"] = &GUIAction::adbsideload;
 		mf["adbsideloadcancel"] = &GUIAction::adbsideloadcancel;
-		mf["openrecoveryscript"] = &GUIAction::openrecoveryscript;
-		mf["installsu"] = &GUIAction::installsu;
 		mf["fixsu"] = &GUIAction::fixsu;
-		mf["decrypt_backup"] = &GUIAction::decrypt_backup;
-		mf["repair"] = &GUIAction::repair;
-		mf["changefilesystem"] = &GUIAction::changefilesystem;
 		mf["startmtp"] = &GUIAction::startmtp;
 		mf["stopmtp"] = &GUIAction::stopmtp;
 	}
@@ -330,8 +387,9 @@ int GUIAction::doAction(Action action)
 	if (funcitr != mf.end())
 		return (this->*funcitr->second)(arg);
 
-	LOGERR("Unknown action '%s'\n", function.c_str());
-	return -1;
+	// function was not found so it must be a threaded action
+	action_thread.threadAction(this, action.mFunction, action.mArg);
+	return 0;
 }
 
 void GUIAction::operation_start(const string operation_name)
