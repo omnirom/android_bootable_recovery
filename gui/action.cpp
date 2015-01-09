@@ -325,7 +325,7 @@ void GUIAction::simulate_progress_bar(void)
 	}
 }
 
-int GUIAction::flash_zip(std::string filename, std::string pageName, int* wipe_cache)
+int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 {
 	int ret_val = 0;
 
@@ -337,14 +337,8 @@ int GUIAction::flash_zip(std::string filename, std::string pageName, int* wipe_c
 		return -1;
 	}
 
-	// We're going to jump to this page first, like a loading page
-	gui_changePage(pageName);
-
 	if (!PartitionManager.Mount_By_Path(filename, true))
 		return -1;
-
-	// TODO: why again?
-	gui_changePage(pageName);
 
 	if (simulate) {
 		simulate_progress_bar();
@@ -944,29 +938,33 @@ void GUIAction::reinject_after_flash()
 int GUIAction::flash(std::string arg)
 {
 	int i, ret_val = 0, wipe_cache = 0;
+	// We're going to jump to this page first, like a loading page
+	gui_changePage(arg);
 	for (i=0; i<zip_queue_index; i++) {
 		operation_start("Flashing");
 		DataManager::SetValue("tw_filename", zip_queue[i]);
 		DataManager::SetValue(TW_ZIP_INDEX, (i + 1));
 
 		TWFunc::SetPerformanceMode(true);
-		ret_val = flash_zip(zip_queue[i], arg, &wipe_cache);
+		ret_val = flash_zip(zip_queue[i], &wipe_cache);
 		TWFunc::SetPerformanceMode(false);
 		if (ret_val != 0) {
 			gui_print("Error flashing zip '%s'\n", zip_queue[i].c_str());
-			i = 10; // Error flashing zip - exit queue
 			ret_val = 1;
+			break;
 		}
 	}
 	zip_queue_index = 0;
-	DataManager::SetValue(TW_ZIP_QUEUE_COUNT, zip_queue_index);
 
-	if (wipe_cache)
+	if (wipe_cache) {
+		gui_print("One or more zip requested a cache wipe\nWiping cache now.\n");
 		PartitionManager.Wipe_By_Path("/cache");
+	}
 
 	reinject_after_flash();
 	PartitionManager.Update_System_Details();
 	operation_end(ret_val);
+	DataManager::SetValue(TW_ZIP_QUEUE_COUNT, zip_queue_index);
 	return 0;
 }
 
