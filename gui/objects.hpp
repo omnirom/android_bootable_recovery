@@ -285,7 +285,7 @@ protected:
 	int getKeyByName(std::string key);
 	int doAction(Action action);
 	void simulate_progress_bar(void);
-	int flash_zip(std::string filename, std::string pageName, int* wipe_cache);
+	int flash_zip(std::string filename, int* wipe_cache);
 	void reinject_after_flash();
 	void operation_start(const string operation_name);
 	void operation_end(const int operation_status);
