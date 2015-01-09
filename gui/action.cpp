@@ -66,10 +66,69 @@ extern blanktimer blankTimer;
 void curtainClose(void);
 
 GUIAction::mapFunc GUIAction::mf;
+std::set<string> GUIAction::setActionsRunningInCallerThread;
 static string zip_queue[10];
 static int zip_queue_index;
 static pthread_t terminal_command;
 pid_t sideload_child_pid;
+
+static ActionThread action_thread;
+
+static void *ActionThread_work_wrapper(void *data)
+{
+	action_thread.run(data);
+	return NULL;
+}
+
+ActionThread::ActionThread()
+{
+	m_thread_running = false;
+	pthread_mutex_init(&m_act_lock, NULL);
+}
+
+ActionThread::~ActionThread()
+{
+	pthread_mutex_lock(&m_act_lock);
+	if(m_thread_running) {
+		pthread_mutex_unlock(&m_act_lock);
+		pthread_join(m_thread, NULL);
+	} else {
+		pthread_mutex_unlock(&m_act_lock);
+	}
+	pthread_mutex_destroy(&m_act_lock);
+}
+
+void ActionThread::threadActions(GUIAction *act, size_t start_index)
+{
+	pthread_mutex_lock(&m_act_lock);
+	if (m_thread_running) {
+		pthread_mutex_unlock(&m_act_lock);
+		LOGERR("Another threaded action is already running -- not running actions '%s' and following\n", act->mActions[start_index].mFunction.c_str());
+	} else {
+		m_thread_running = true;
+		pthread_mutex_unlock(&m_act_lock);
+		ThreadData *d = new ThreadData;
+		d->act = act;
+		d->start_index = start_index;
+
+		pthread_create(&m_thread, NULL, &ActionThread_work_wrapper, d);
+	}
+}
+
+void ActionThread::run(void *data)
+{
+	ThreadData *d = (ThreadData*)data;
+	GUIAction* act = d->act;
+
+	std::vector<GUIAction::Action>::iterator it;
+	for (it = act->mActions.begin() + d->start_index; it != act->mActions.end(); ++it)
+		act->doAction(*it);
+
+	pthread_mutex_lock(&m_act_lock);
+	m_thread_running = false;
+	pthread_mutex_unlock(&m_act_lock);
+	delete d;
+}
 
 GUIAction::GUIAction(xml_node<>* node)
 	: GUIObject(node)
@@ -81,6 +140,7 @@ GUIAction::GUIAction(xml_node<>* node)
 	if (!node)  return;
 
 	if (mf.empty()) {
+		// These actions will be run in the caller's thread
 		mf["reboot"] = &GUIAction::reboot;
 		mf["home"] = &GUIAction::home;
 		mf["key"] = &GUIAction::key;
@@ -108,9 +168,19 @@ GUIAction::GUIAction(xml_node<>* node)
 		mf["getpartitiondetails"] = &GUIAction::getpartitiondetails;
 		mf["screenshot"] = &GUIAction::screenshot;
 		mf["setbrightness"] = &GUIAction::setbrightness;
-
-		// threaded actions
 		mf["fileexists"] = &GUIAction::fileexists;
+		mf["killterminal"] = &GUIAction::killterminal;
+		mf["checkbackupname"] = &GUIAction::checkbackupname;
+		mf["adbsideloadcancel"] = &GUIAction::adbsideloadcancel;
+		mf["fixsu"] = &GUIAction::fixsu;
+		mf["startmtp"] = &GUIAction::startmtp;
+		mf["stopmtp"] = &GUIAction::stopmtp;
+
+		// remember actions that run in the caller thread
+		for (mapFunc::const_iterator it = mf.begin(); it != mf.end(); ++it)
+			setActionsRunningInCallerThread.insert(it->first);
+
+		// These actions will run in a separate thread
 		mf["flash"] = &GUIAction::flash;
 		mf["wipe"] = &GUIAction::wipe;
 		mf["refreshsizes"] = &GUIAction::refreshsizes;
@@ -123,20 +193,14 @@ GUIAction::GUIAction(xml_node<>* node)
 		mf["htcdumlockreflashrecovery"] = &GUIAction::htcdumlockreflashrecovery;
 		mf["cmd"] = &GUIAction::cmd;
 		mf["terminalcommand"] = &GUIAction::terminalcommand;
-		mf["killterminal"] = &GUIAction::killterminal;
 		mf["reinjecttwrp"] = &GUIAction::reinjecttwrp;
-		mf["checkbackupname"] = &GUIAction::checkbackupname;
 		mf["decrypt"] = &GUIAction::decrypt;
 		mf["adbsideload"] = &GUIAction::adbsideload;
-		mf["adbsideloadcancel"] = &GUIAction::adbsideloadcancel;
 		mf["openrecoveryscript"] = &GUIAction::openrecoveryscript;
 		mf["installsu"] = &GUIAction::installsu;
-		mf["fixsu"] = &GUIAction::fixsu;
 		mf["decrypt_backup"] = &GUIAction::decrypt_backup;
 		mf["repair"] = &GUIAction::repair;
 		mf["changefilesystem"] = &GUIAction::changefilesystem;
-		mf["startmtp"] = &GUIAction::startmtp;
-		mf["stopmtp"] = &GUIAction::stopmtp;
 	}
 
 	// First, get the action
@@ -306,6 +370,11 @@ int GUIAction::flash_zip(std::string filename, std::string pageName, int* wipe_c
 	return ret_val;
 }
 
+bool GUIAction::needsToRunInSeparateThread(const GUIAction::Action& action)
+{
+	return setActionsRunningInCallerThread.find(action.mFunction) == setActionsRunningInCallerThread.end();
+}
+
 int GUIAction::doActions()
 {
 	if (mActions.size() < 1)
@@ -313,7 +382,17 @@ int GUIAction::doActions()
 
 	std::vector<Action>::iterator it;
 	for (it = mActions.begin(); it != mActions.end(); ++it)
+	{
+		if (needsToRunInSeparateThread(*it))
+		{
+			// run all remaining actions in a separate thread
+			action_thread.threadActions(this, it - mActions.begin());
+			// ...and we're done here
+			break;
+		}
+
 		doAction(*it);
+	}
 
 	return 0;
 }
@@ -1168,16 +1247,52 @@ int GUIAction::terminalcommand(std::string arg)
 	} else {
 		command = "cd \"" + cmdpath + "\" && " + arg + " 2>&1";;
 		LOGINFO("Actual command is: '%s'\n", command.c_str());
-		DataManager::SetValue("tw_terminal_command_thread", command);
 		DataManager::SetValue("tw_terminal_state", 1);
 		DataManager::SetValue("tw_background_thread_running", 1);
-		op_status = pthread_create(&terminal_command, NULL, command_thread, NULL);
-		if (op_status != 0) {
-			LOGERR("Error starting terminal command thread, %i.\n", op_status);
-			DataManager::SetValue("tw_terminal_state", 0);
-			DataManager::SetValue("tw_background_thread_running", 0);
-			operation_end(1);
+		FILE* fp;
+		char line[512];
+
+		fp = popen(command.c_str(), "r");
+		if (fp == NULL) {
+			LOGERR("Error opening command to run.\n");
+		} else {
+			int fd = fileno(fp), has_data = 0, check = 0, keep_going = -1, bytes_read = 0;
+			struct timeval timeout;
+			fd_set fdset;
+
+			while(keep_going)
+			{
+				FD_ZERO(&fdset);
+				FD_SET(fd, &fdset);
+				timeout.tv_sec = 0;
+				timeout.tv_usec = 400000;
+				has_data = select(fd+1, &fdset, NULL, NULL, &timeout);
+				if (has_data == 0) {
+					// Timeout reached
+					DataManager::GetValue("tw_terminal_state", check);
+					if (check == 0) {
+						keep_going = 0;
+					}
+				} else if (has_data < 0) {
+					// End of execution
+					keep_going = 0;
+				} else {
+					// Try to read output
+					memset(line, 0, sizeof(line));
+					bytes_read = read(fd, line, sizeof(line));
+					if (bytes_read > 0)
+						gui_print("%s", line); // Display output
+					else
+						keep_going = 0; // Done executing
+				}
+			}
+			fclose(fp);
 		}
+		DataManager::SetValue("tw_operation_status", 0);
+		DataManager::SetValue("tw_operation_state", 1);
+		DataManager::SetValue("tw_terminal_state", 0);
+		DataManager::SetValue("tw_background_thread_running", 0);
+		DataManager::SetValue(TW_ACTION_BUSY, 0);
 	}
 	return 0;
 }
@@ -1290,51 +1405,6 @@ int GUIAction::decrypt(std::string arg)
 	return 0;
 }
 
-void* GUIAction::sideload_thread_fn(void *cookie)
-{
-	gui_print("Starting ADB sideload feature...\n");
-	bool mtp_was_enabled = TWFunc::Toggle_MTP(false);
-	GUIAction* this_ = (GUIAction*) cookie;
-
-	// wait for the adb connection
-	int ret = apply_from_adb("/", &sideload_child_pid);
-	DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui now that the zip install is going to start
-
-	if (ret != 0) {
-		if (ret == -2)
-			gui_print("You need adb 1.0.32 or newer to sideload to this device.\n");
-		ret = 1; // failure
-	} else {
-		int wipe_cache = 0;
-		int wipe_dalvik = 0;
-		DataManager::GetValue("tw_wipe_dalvik", wipe_dalvik);
-
-		if (TWinstall_zip(FUSE_SIDELOAD_HOST_PATHNAME, &wipe_cache) == 0) {
-			if (wipe_cache || DataManager::GetIntValue("tw_wipe_cache"))
-				PartitionManager.Wipe_By_Path("/cache");
-			if (wipe_dalvik)
-				PartitionManager.Wipe_Dalvik_Cache();
-		} else {
-			ret = 1; // failure
-		}
-	}
-	if (sideload_child_pid) {
-		LOGINFO("Signaling child sideload process to exit.\n");
-		struct stat st;
-		// Calling stat() on this magic filename signals the minadbd
-		// subprocess to shut down.
-		stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
-		int status;
-		LOGINFO("Waiting for child sideload process to exit.\n");
-		waitpid(sideload_child_pid, &status, 0);
-	}
-
-	TWFunc::Toggle_MTP(mtp_was_enabled);
-	this_->reinject_after_flash();
-	this_->operation_end(ret);
-	return NULL;
-}
-
 int GUIAction::adbsideload(std::string arg)
 {
 	operation_start("Sideload");
@@ -1342,13 +1412,45 @@ int GUIAction::adbsideload(std::string arg)
 		simulate_progress_bar();
 		operation_end(0);
 	} else {
-		// we need to start a thread to allow the operation to be cancelable
-		pthread_t sideload_thread;
-		int rc = pthread_create(&sideload_thread, NULL, sideload_thread_fn, this);
-		if (rc != 0) {
-			LOGERR("Error starting sideload thread, rc=%i.\n", rc);
-			operation_end(1);
+		gui_print("Starting ADB sideload feature...\n");
+		bool mtp_was_enabled = TWFunc::Toggle_MTP(false);
+
+		// wait for the adb connection
+		int ret = apply_from_adb("/", &sideload_child_pid);
+		DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui now that the zip install is going to start
+
+		if (ret != 0) {
+			if (ret == -2)
+				gui_print("You need adb 1.0.32 or newer to sideload to this device.\n");
+			ret = 1; // failure
+		} else {
+			int wipe_cache = 0;
+			int wipe_dalvik = 0;
+			DataManager::GetValue("tw_wipe_dalvik", wipe_dalvik);
+
+			if (TWinstall_zip(FUSE_SIDELOAD_HOST_PATHNAME, &wipe_cache) == 0) {
+				if (wipe_cache || DataManager::GetIntValue("tw_wipe_cache"))
+					PartitionManager.Wipe_By_Path("/cache");
+				if (wipe_dalvik)
+					PartitionManager.Wipe_Dalvik_Cache();
+			} else {
+				ret = 1; // failure
+			}
 		}
+		if (sideload_child_pid) {
+			LOGINFO("Signaling child sideload process to exit.\n");
+			struct stat st;
+			// Calling stat() on this magic filename signals the minadbd
+			// subprocess to shut down.
+			stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
+			int status;
+			LOGINFO("Waiting for child sideload process to exit.\n");
+			waitpid(sideload_child_pid, &status, 0);
+		}
+
+		TWFunc::Toggle_MTP(mtp_was_enabled);
+		reinject_after_flash();
+		operation_end(ret);
 	}
 	return 0;
 }
@@ -1378,37 +1480,6 @@ int GUIAction::adbsideloadcancel(std::string arg)
 	return 0;
 }
 
-void* GUIAction::openrecoveryscript_thread_fn(void *cookie)
-{
-	GUIAction* this_ = (GUIAction*) cookie;
-
-	// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
-	// that we converted to ORS commands during boot in recovery.cpp.
-	// Run those first.
-	int reboot = 0;
-	if (TWFunc::Path_Exists(SCRIPT_FILE_TMP)) {
-		gui_print("Processing AOSP recovery commands...\n");
-		if (OpenRecoveryScript::run_script_file() == 0) {
-			reboot = 1;
-		}
-	}
-	// Check for the ORS file in /cache and attempt to run those commands.
-	if (OpenRecoveryScript::check_for_script_file()) {
-		gui_print("Processing OpenRecoveryScript file...\n");
-		if (OpenRecoveryScript::run_script_file() == 0) {
-			reboot = 1;
-		}
-	}
-	if (reboot) {
-		usleep(2000000); // Sleep for 2 seconds before rebooting
-		TWFunc::tw_reboot(rb_system);
-	} else {
-		DataManager::SetValue("tw_page_done", 1);
-	}
-	this_->operation_end(1);
-	return NULL;
-}
-
 int GUIAction::openrecoveryscript(std::string arg)
 {
 	operation_start("OpenRecoveryScript");
@@ -1416,13 +1487,31 @@ int GUIAction::openrecoveryscript(std::string arg)
 		simulate_progress_bar();
 		operation_end(0);
 	} else {
-		// we need to start a thread to allow the action page to display properly
-		pthread_t openrecoveryscript_thread;
-		int rc = pthread_create(&openrecoveryscript_thread, NULL, openrecoveryscript_thread_fn, this);
-		if (rc != 0) {
-			LOGERR("Error starting sideload thread, rc=%i.\n", rc);
-			operation_end(1);
+		// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
+		// that we converted to ORS commands during boot in recovery.cpp.
+		// Run those first.
+		int reboot = 0;
+		if (TWFunc::Path_Exists(SCRIPT_FILE_TMP)) {
+			gui_print("Processing AOSP recovery commands...\n");
+			if (OpenRecoveryScript::run_script_file() == 0) {
+				reboot = 1;
+			}
 		}
+		// Check for the ORS file in /cache and attempt to run those commands.
+		if (OpenRecoveryScript::check_for_script_file()) {
+			gui_print("Processing OpenRecoveryScript file...\n");
+			if (OpenRecoveryScript::run_script_file() == 0) {
+				reboot = 1;
+			}
+		}
+		if (reboot) {
+			usleep(2000000); // Sleep for 2 seconds before rebooting
+			TWFunc::tw_reboot(rb_system);
+		} else {
+			DataManager::SetValue("tw_page_done", 1);
+		}
+		operation_end(1);
+		return 0;
 	}
 	return 0;
 }
@@ -1574,55 +1663,4 @@ int GUIAction::getKeyByName(std::string key)
 	}
 
 	return atol(key.c_str());
-}
-
-void* GUIAction::command_thread(void *cookie)
-{
-	string command;
-	FILE* fp;
-	char line[512];
-
-	DataManager::GetValue("tw_terminal_command_thread", command);
-	fp = popen(command.c_str(), "r");
-	if (fp == NULL) {
-		LOGERR("Error opening command to run.\n");
-	} else {
-		int fd = fileno(fp), has_data = 0, check = 0, keep_going = -1, bytes_read = 0;
-		struct timeval timeout;
-		fd_set fdset;
-
-		while(keep_going)
-		{
-			FD_ZERO(&fdset);
-			FD_SET(fd, &fdset);
-			timeout.tv_sec = 0;
-			timeout.tv_usec = 400000;
-			has_data = select(fd+1, &fdset, NULL, NULL, &timeout);
-			if (has_data == 0) {
-				// Timeout reached
-				DataManager::GetValue("tw_terminal_state", check);
-				if (check == 0) {
-					keep_going = 0;
-				}
-			} else if (has_data < 0) {
-				// End of execution
-				keep_going = 0;
-			} else {
-				// Try to read output
-				memset(line, 0, sizeof(line));
-				bytes_read = read(fd, line, sizeof(line));
-				if (bytes_read > 0)
-					gui_print("%s", line); // Display output
-				else
-					keep_going = 0; // Done executing
-			}
-		}
-		fclose(fp);
-	}
-	DataManager::SetValue("tw_operation_status", 0);
-	DataManager::SetValue("tw_operation_state", 1);
-	DataManager::SetValue("tw_terminal_state", 0);
-	DataManager::SetValue("tw_background_thread_running", 0);
-	DataManager::SetValue(TW_ACTION_BUSY, 0);
-	return NULL;
 }
