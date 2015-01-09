@@ -273,7 +273,7 @@
 
 			<object type="action">
 				<touch key="power" />
-				<action function="overlay">lock</action>
+				<action function="key">back</action>
 			</object>
 
 			<object type="action">
