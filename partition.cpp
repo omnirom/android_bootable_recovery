@@ -1325,9 +1325,7 @@ bool TWPartition::Restore(string restore_folder, const unsigned long long *total
 	if (Is_File_System(Restore_File_System))
 		return Restore_Tar(restore_folder, Restore_File_System, total_restore_size, already_restored_size);
 	else if (Is_Image(Restore_File_System)) {
-		*already_restored_size += TWFunc::Get_File_Size(Backup_Name);
-		if (Restore_File_System == "emmc")
-			return Restore_Image(restore_folder, total_restore_size, already_restored_size, Restore_File_System);
+		return Restore_Image(restore_folder, total_restore_size, already_restored_size, Restore_File_System);
 	}
 
 	LOGERR("Unknown restore method for '%s'\n", Mount_Point.c_str());
