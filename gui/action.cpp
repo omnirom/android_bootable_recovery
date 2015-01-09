@@ -98,18 +98,18 @@ ActionThread::~ActionThread()
 	pthread_mutex_destroy(&m_act_lock);
 }
 
-void ActionThread::threadActions(GUIAction *act, size_t start_index)
+void ActionThread::threadActions(GUIAction *act)
 {
 	pthread_mutex_lock(&m_act_lock);
 	if (m_thread_running) {
 		pthread_mutex_unlock(&m_act_lock);
-		LOGERR("Another threaded action is already running -- not running actions '%s' and following\n", act->mActions[start_index].mFunction.c_str());
+		LOGERR("Another threaded action is already running -- not running %u actions starting with '%s'\n",
+				act->mActions.size(), act->mActions[0].mFunction.c_str());
 	} else {
 		m_thread_running = true;
 		pthread_mutex_unlock(&m_act_lock);
 		ThreadData *d = new ThreadData;
 		d->act = act;
-		d->start_index = start_index;
 
 		pthread_create(&m_thread, NULL, &ActionThread_work_wrapper, d);
 	}
@@ -121,7 +121,7 @@ void ActionThread::run(void *data)
 	GUIAction* act = d->act;
 
 	std::vector<GUIAction::Action>::iterator it;
-	for (it = act->mActions.begin() + d->start_index; it != act->mActions.end(); ++it)
+	for (it = act->mActions.begin(); it != act->mActions.end(); ++it)
 		act->doAction(*it);
 
 	pthread_mutex_lock(&m_act_lock);
@@ -380,18 +380,24 @@ int GUIAction::doActions()
 	if (mActions.size() < 1)
 		return -1;
 
+	bool needThread = false;
 	std::vector<Action>::iterator it;
 	for (it = mActions.begin(); it != mActions.end(); ++it)
 	{
 		if (needsToRunInSeparateThread(*it))
 		{
-			// run all remaining actions in a separate thread
-			action_thread.threadActions(this, it - mActions.begin());
-			// ...and we're done here
+			needThread = true;
 			break;
 		}
-
-		doAction(*it);
+	}
+	if (needThread)
+	{
+		action_thread.threadActions(this);
+	}
+	else
+	{
+		for (it = mActions.begin(); it != mActions.end(); ++it)
+			doAction(*it);
 	}
 
 	return 0;

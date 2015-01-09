@@ -362,13 +362,12 @@ public:
 	ActionThread();
 	~ActionThread();
 
-	void threadActions(GUIAction *act, size_t start_index);
+	void threadActions(GUIAction *act);
 	void run(void *data);
 private:
 	struct ThreadData
 	{
 		GUIAction *act;
-		size_t start_index;
 	};
 
 	pthread_t m_thread;
