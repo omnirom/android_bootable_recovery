@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b25f591_a921d9af",
+        "filename": "gui/blanktimer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-10T23:21:08Z",
+      "side": 1,
+      "message": "must be one line down",
+      "revId": "6c648f1ff89af88170d4b9ab03524fa41eefdfdc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
