@@ -42,9 +42,7 @@
 
 #include "../adb_install.h"
 #include "../fuse_sideload.h"
-#ifndef TW_NO_SCREEN_TIMEOUT
 #include "blanktimer.hpp"
-#endif
 extern "C" {
 #include "../twcommon.h"
 #include "../minuitwrp/minui.h"
@@ -58,10 +56,6 @@ extern "C" {
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
-
-#ifndef TW_NO_SCREEN_TIMEOUT
-extern blanktimer blankTimer;
-#endif
 
 void curtainClose(void);
 
@@ -446,9 +440,7 @@ void GUIAction::operation_end(const int operation_status)
 	}
 	DataManager::SetValue("tw_operation_state", 1);
 	DataManager::SetValue(TW_ACTION_BUSY, 0);
-#ifndef TW_NO_SCREEN_TIMEOUT
 	blankTimer.resetTimerAndUnblank();
-#endif
 	time(&Stop);
 	if ((int) difftime(Stop, Start) > 10)
 		DataManager::Vibrate("tw_action_vibrate");
