@@ -45,14 +45,9 @@ extern "C" {
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
-#ifndef TW_NO_SCREEN_TIMEOUT
 #include "blanktimer.hpp"
-#endif
 
 extern int gGuiRunning;
-#ifndef TW_NO_SCREEN_TIMEOUT
-extern blanktimer blankTimer;
-#endif
 
 std::map<std::string, PageSet*> PageManager::mPageSets;
 PageSet* PageManager::mCurrentSet;
@@ -1197,10 +1192,8 @@ void PageManager::LoadCursorData(xml_node<>* node)
 
 int PageManager::Update(void)
 {
-#ifndef TW_NO_SCREEN_TIMEOUT
-	if(blankTimer.IsScreenOff())
+	if(blankTimer.isScreenOff())
 		return 0;
-#endif
 
 	int res = (mCurrentSet ? mCurrentSet->Update() : -1);
 

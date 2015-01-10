@@ -19,7 +19,6 @@
 #ifndef __BLANKTIMER_HEADER_HPP
 #define __BLANKTIMER_HEADER_HPP
 
-#include <pthread.h>
 #include <sys/time.h>
 
 using namespace std;
@@ -27,32 +26,29 @@ using namespace std;
 class blanktimer
 {
 public:
-	blanktimer(void);
+	blanktimer();
 
-	int setTimerThread(void);
-	void resetTimerAndUnblank(void);
+	// set timeout in seconds
 	void setTime(int newtime);
-	bool IsScreenOff();
+
+	// call this in regular intervals
+	void checkForTimeout();
+
+	// call this when an input event is received or when an operation is finished
+	void resetTimerAndUnblank();
+
+	bool isScreenOff();
 
 private:
-	typedef int (blanktimer::*ThreadPtr)(void);
-	typedef void* (*PThreadPtr)(void*);
-
-	void setConBlank(int blank);
 	void setTimer(void);
-	timespec getTimer(void);
 	string getBrightness(void);
-	int setBrightness(int brightness);
-	int setBlankTimer(void);
-	int setClockTimer(void);
 
-	pthread_mutex_t conblankmutex;
-	pthread_mutex_t timermutex;
-	int conblank;
+	pthread_mutex_t mutex;
+	enum State { kOn = 0, kDim = 1, kOff = 2, kBlanked = 3 };
+	State state;
 	timespec btimer;
-	unsigned long long sleepTimer;
+	long sleepTimer;
 	string orig_brightness;
-	bool screenoff;
 };
 
 extern blanktimer blankTimer;

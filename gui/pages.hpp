@@ -4,6 +4,18 @@
 #define _PAGES_HEADER_HPP
 
 #include "../minzip/Zip.h"
+#include <vector>
+#include <map>
+#include "rapidxml.hpp"
+using namespace rapidxml;
+
+enum TOUCH_STATE {
+	TOUCH_START = 0,
+	TOUCH_DRAG = 1,
+	TOUCH_RELEASE = 2,
+	TOUCH_HOLD = 3,
+	TOUCH_REPEAT = 4
+};
 
 typedef struct {
 	unsigned char red;
