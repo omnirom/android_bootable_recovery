@@ -73,9 +73,6 @@ map<string, string>                     DataManager::mConstValues;
 string                                  DataManager::mBackingFile;
 int                                     DataManager::mInitialized = 0;
 
-#ifndef TW_NO_SCREEN_TIMEOUT
-extern blanktimer blankTimer;
-#endif
 extern bool datamedia;
 
 pthread_mutex_t DataManager::m_valuesLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;

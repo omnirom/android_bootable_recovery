@@ -17,97 +17,66 @@
 */
 
 using namespace std;
-#include "rapidxml.hpp"
-using namespace rapidxml;
-extern "C" {
-#include "../minuitwrp/minui.h"
-}
 #include <string>
-#include <vector>
-#include <map>
-#include "resources.hpp"
 #include <pthread.h>
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-#include <pixelflinger/pixelflinger.h>
-#include <linux/kd.h>
-#include <linux/fb.h>
-#include <sstream>
 #include "pages.hpp"
 #include "blanktimer.hpp"
-#include "objects.hpp"
 #include "../data.hpp"
 extern "C" {
+#include "../minuitwrp/minui.h"
 #include "../twcommon.h"
 }
 #include "../twrp-functions.hpp"
 #include "../variables.h"
 
 blanktimer::blanktimer(void) {
-	setTime(0);
-	setConBlank(0);
+	pthread_mutex_init(&mutex, NULL);
+	setTime(0); // no timeout
+	state = kOn;
 	orig_brightness = getBrightness();
-	screenoff = false;
 }
 
-bool blanktimer::IsScreenOff() {
-	return screenoff;
+bool blanktimer::isScreenOff() {
+	return state >= kOff;
 }
 
 void blanktimer::setTime(int newtime) {
+	pthread_mutex_lock(&mutex);
 	sleepTimer = newtime;
-}
-
-int blanktimer::setTimerThread(void) {
-	pthread_t thread;
-	ThreadPtr blankptr = &blanktimer::setClockTimer;
-	PThreadPtr p = *(PThreadPtr*)&blankptr;
-	pthread_create(&thread, NULL, p, this);
-	return 0;
-}
-
-void blanktimer::setConBlank(int blank) {
-	pthread_mutex_lock(&conblankmutex);
-	conblank = blank;
-	pthread_mutex_unlock(&conblankmutex);
+	pthread_mutex_unlock(&mutex);
 }
 
 void blanktimer::setTimer(void) {
-	pthread_mutex_lock(&timermutex);
 	clock_gettime(CLOCK_MONOTONIC, &btimer);
-	pthread_mutex_unlock(&timermutex);
 }
 
-timespec blanktimer::getTimer(void) {
-	return btimer;
-}
-
-int  blanktimer::setClockTimer(void) {
+void blanktimer::checkForTimeout() {
+#ifndef TW_NO_SCREEN_TIMEOUT
+	pthread_mutex_lock(&mutex);
 	timespec curTime, diff;
-	for(;;) {
-		usleep(1000000);
-		clock_gettime(CLOCK_MONOTONIC, &curTime);
-		diff = TWFunc::timespec_diff(btimer, curTime);
-		if (sleepTimer > 2 && diff.tv_sec > (sleepTimer - 2) && conblank == 0) {
-			orig_brightness = getBrightness();
-			setConBlank(1);
-			TWFunc::Set_Brightness("5");
-		}
-		if (sleepTimer && diff.tv_sec > sleepTimer && conblank < 2) {
-			setConBlank(2);
-			TWFunc::Set_Brightness("0");
-			screenoff = true;
-			TWFunc::check_and_run_script("/sbin/postscreenblank.sh", "blank");
-			PageManager::ChangeOverlay("lock");
-		}
-#ifndef TW_NO_SCREEN_BLANK
-		if (conblank == 2 && gr_fb_blank(1) >= 0) {
-			setConBlank(3);
-		}
-#endif
+	clock_gettime(CLOCK_MONOTONIC, &curTime);
+	diff = TWFunc::timespec_diff(btimer, curTime);
+	if (sleepTimer > 2 && diff.tv_sec > (sleepTimer - 2) && state == kOn) {
+		orig_brightness = getBrightness();
+		state = kDim;
+		TWFunc::Set_Brightness("5");
 	}
-	return -1; //shouldn't get here
+	if (sleepTimer && diff.tv_sec > sleepTimer && state < kOff) {
+		state = kOff;
+		TWFunc::Set_Brightness("0");
+		TWFunc::check_and_run_script("/sbin/postscreenblank.sh", "blank");
+		PageManager::ChangeOverlay("lock");
+	}
+#ifndef TW_NO_SCREEN_BLANK
+	if (state == kOff && gr_fb_blank(1) >= 0) {
+		state = kBlanked;
+	}
+#endif
+	pthread_mutex_unlock(&mutex);
+#endif
 }
 
 string blanktimer::getBrightness(void) {
@@ -125,25 +94,30 @@ string blanktimer::getBrightness(void) {
 }
 
 void blanktimer::resetTimerAndUnblank(void) {
+#ifndef TW_NO_SCREEN_TIMEOUT
+	pthread_mutex_lock(&mutex);
 	setTimer();
-	switch (conblank) {
-		case 3:
+	switch (state) {
+		case kBlanked:
 #ifndef TW_NO_SCREEN_BLANK
 			if (gr_fb_blank(0) < 0) {
 				LOGINFO("blanktimer::resetTimerAndUnblank failed to gr_fb_blank(0)\n");
 				break;
 			}
 #endif
+			// TODO: this is asymmetric with postscreenblank.sh - shouldn't it be under the next case label?
 			TWFunc::check_and_run_script("/sbin/postscreenunblank.sh", "unblank");
 			// No break here, we want to keep going
-		case 2:
+		case kOff:
 			gui_forceRender();
-			screenoff = false;
 			// No break here, we want to keep going
-		case 1:
+		case kDim:
 			if (orig_brightness != "/nobrightness")
 				TWFunc::Set_Brightness(orig_brightness);
-			setConBlank(0);
+			state = kOn;
+		case kOn:
 			break;
 	}
+	pthread_mutex_unlock(&mutex);
+#endif
 }
