@@ -361,7 +361,7 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 
 bool GUIAction::needsToRunInSeparateThread(const GUIAction::Action& action)
 {
-	return setActionsRunningInCallerThread.find(action.mFunction) == setActionsRunningInCallerThread.end();
+	return setActionsRunningInCallerThread.find(gui_parse_text(action.mFunction)) == setActionsRunningInCallerThread.end();
 }
 
 int GUIAction::doActions()
