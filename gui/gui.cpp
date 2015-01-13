@@ -805,6 +805,38 @@ error:
 	return -1;
 }
 
+extern "C" int gui_loadCustomResources(void)
+{
+#ifndef TW_OEM_BUILD
+	if (!PartitionManager.Mount_Settings_Storage(false)) {
+		LOGERR("Unable to mount settings storage during GUI startup.\n");
+		return -1;
+	}
+
+	std::string theme_path = DataManager::GetSettingsStoragePath();
+	theme_path += "/TWRP/theme/ui.zip";
+	// Check for a custom theme
+	if (TWFunc::Path_Exists(theme_path)) {
+		// There is a custom theme, try to load it
+		if (PageManager::ReloadPackage("TWRP", theme_path)) {
+			// Custom theme failed to load, try to load stock theme
+			if (PageManager::ReloadPackage("TWRP", "/res/ui.xml")) {
+				LOGERR("Failed to load base packages.\n");
+				goto error;
+			}
+		}
+	}
+	// Set the default package
+	PageManager::SelectPackage("TWRP");
+#endif
+	return 0;
+
+error:
+	LOGERR("An internal error has occurred: unable to load theme.\n");
+	gGuiInitialized = 0;
+	return -1;
+}
+
 extern "C" int gui_start(void)
 {
 	if (!gGuiInitialized)

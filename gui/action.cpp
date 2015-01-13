@@ -1354,44 +1354,18 @@ int GUIAction::decrypt(std::string arg)
 		if (op_status != 0)
 			op_status = 1;
 		else {
-			int load_theme = 1;
 
 			DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 
-			if (load_theme) {
-				int has_datamedia;
+			int has_datamedia;
 
-				// Check for a custom theme and load it if exists
-				DataManager::GetValue(TW_HAS_DATA_MEDIA, has_datamedia);
-				if (has_datamedia != 0) {
-					struct stat st;
-					int check = 0;
-					std::string theme_path;
-
-					if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
-						LOGERR("Failed to get default contexts and file mode for storage files.\n");
-					} else {
-						LOGINFO("Got default contexts and file mode for storage files.\n");
-					}
-
-					theme_path = DataManager::GetSettingsStoragePath();
-					if (PartitionManager.Mount_By_Path(theme_path.c_str(), 1) < 0) {
-						LOGERR("Unable to mount %s during reload function startup.\n", theme_path.c_str());
-						check = 1;
-					}
-
-					theme_path += "/TWRP/theme/ui.zip";
-					if (check == 0 && stat(theme_path.c_str(), &st) == 0) {
-						if (PageManager::ReloadPackage("TWRP", theme_path) != 0)
-						{
-							// Loading the custom theme failed - try loading the stock theme
-							LOGINFO("Attempting to reload stock theme...\n");
-							if (PageManager::ReloadPackage("TWRP", "/res/ui.xml"))
-							{
-								LOGERR("Failed to load base packages.\n");
-							}
-						}
-					}
+			// Check for a custom theme and load it if exists
+			DataManager::GetValue(TW_HAS_DATA_MEDIA, has_datamedia);
+			if (has_datamedia != 0) {
+				if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
+					LOGERR("Failed to get default contexts and file mode for storage files.\n");
+				} else {
+					LOGINFO("Got default contexts and file mode for storage files.\n");
 				}
 			}
 		}

@@ -278,6 +278,9 @@ int main(int argc, char **argv) {
 		LOGINFO("Is encrypted, do decrypt page first\n");
 		if (gui_startPage("decrypt") != 0) {
 			LOGERR("Failed to start decrypt GUI page.\n");
+		} else {
+			// Check for and load custom theme if present
+			gui_loadCustomResources();
 		}
 	} else if (datamedia) {
 		if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
