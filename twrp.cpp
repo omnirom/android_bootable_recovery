@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
 	// Offer to decrypt if the device is encrypted
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
 		LOGINFO("Is encrypted, do decrypt page first\n");
-		if (gui_startPage("decrypt") != 0) {
+		if (gui_startPage("decrypt", 1, 1) != 0) {
 			LOGERR("Failed to start decrypt GUI page.\n");
 		} else {
 			// Check for and load custom theme if present
@@ -347,7 +347,7 @@ int main(int argc, char **argv) {
 		if (TWFunc::Path_Exists("/supersu/su") && !TWFunc::Path_Exists("/system/bin/su") && !TWFunc::Path_Exists("/system/xbin/su") && !TWFunc::Path_Exists("/system/bin/.ext/.su")) {
 			// Device doesn't have su installed
 			DataManager::SetValue("tw_busy", 1);
-			if (gui_startPage("installsu") != 0) {
+			if (gui_startPage("installsu", 1, 1) != 0) {
 				LOGERR("Failed to start SuperSU install page.\n");
 			}
 		}

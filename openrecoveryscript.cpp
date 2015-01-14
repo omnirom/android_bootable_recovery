@@ -566,7 +566,7 @@ void OpenRecoveryScript::Run_OpenRecoveryScript(void) {
 	DataManager::SetValue("tw_complete_text1", "OpenRecoveryScript Complete");
 	DataManager::SetValue("tw_has_cancel", 0);
 	DataManager::SetValue("tw_show_reboot", 0);
-	if (gui_startPage("action_page") != 0) {
+	if (gui_startPage("action_page", 0, 1) != 0) {
 		LOGERR("Failed to load OpenRecoveryScript GUI page.\n");
 	}
 }

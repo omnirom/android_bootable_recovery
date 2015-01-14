@@ -26,7 +26,7 @@ int gui_init();
 int gui_loadResources();
 int gui_loadCustomResources();
 int gui_start();
-int gui_startPage(const char* page_name);
+int gui_startPage(const char* page_name, const int allow_comands, int stop_on_page_done);
 void gui_print(const char *fmt, ...);
 void gui_print_color(const char *color, const char *fmt, ...);
 void gui_set_FILE(FILE* f);
