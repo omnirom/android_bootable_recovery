@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b25f591_1ae06d26",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 562,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-14T21:13:01Z",
+      "side": 1,
+      "message": "These declarations can be moved to line 573.",
+      "revId": "384ca4c915cf4066fdf3ee80888c0a7e6fd544cd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_3add2973",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 858,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-14T21:13:01Z",
+      "side": 1,
+      "message": "I don\u0027t understand this case. When there is still a read fd open from before, close it and don\u0027t allow further commands?",
+      "revId": "384ca4c915cf4066fdf3ee80888c0a7e6fd544cd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
