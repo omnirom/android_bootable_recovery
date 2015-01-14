@@ -33,6 +33,24 @@
       "revId": "384ca4c915cf4066fdf3ee80888c0a7e6fd544cd",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_7a4de13d",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 858,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2015-01-14T22:02:40Z",
+      "side": 1,
+      "message": "It\u0027s extremely unlikely that we will reach this point in the code while a command is being read. The idea is to make sure that we don\u0027t allow commands to come in when we don\u0027t want them to come in.",
+      "parentUuid": "8b25f591_3add2973",
+      "revId": "384ca4c915cf4066fdf3ee80888c0a7e6fd544cd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
