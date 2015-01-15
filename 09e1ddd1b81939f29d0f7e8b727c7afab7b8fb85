@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b25f591_b5368aae",
+        "filename": "gui/action.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-15T20:06:59Z",
+      "side": 1,
+      "message": "I\u0027d remove the \"#\" from this line and add quotes to the macro call. So it\u0027s more obvious which one is the string and which one is the method name.",
+      "revId": "09e1ddd1b81939f29d0f7e8b727c7afab7b8fb85",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
