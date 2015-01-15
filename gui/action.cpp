@@ -135,69 +135,71 @@ GUIAction::GUIAction(xml_node<>* node)
 	if (!node)  return;
 
 	if (mf.empty()) {
+#define ADD_ACTION(n) mf[#n] = &GUIAction::n
+#define ADD_ACTION_EX(name, func) mf[name] = &GUIAction::func
 		// These actions will be run in the caller's thread
-		mf["reboot"] = &GUIAction::reboot;
-		mf["home"] = &GUIAction::home;
-		mf["key"] = &GUIAction::key;
-		mf["page"] = &GUIAction::page;
-		mf["reload"] = &GUIAction::reload;
-		mf["readBackup"] = &GUIAction::readBackup;
-		mf["set"] = &GUIAction::set;
-		mf["clear"] = &GUIAction::clear;
-		mf["mount"] = &GUIAction::mount;
-		mf["unmount"] = &GUIAction::unmount;
-		mf["umount"] = &GUIAction::unmount;
-		mf["restoredefaultsettings"] = &GUIAction::restoredefaultsettings;
-		mf["copylog"] = &GUIAction::copylog;
-		mf["compute"] = &GUIAction::compute;
-		mf["addsubtract"] = &GUIAction::compute;
-		mf["setguitimezone"] = &GUIAction::setguitimezone;
-		mf["overlay"] = &GUIAction::overlay;
-		mf["queuezip"] = &GUIAction::queuezip;
-		mf["cancelzip"] = &GUIAction::cancelzip;
-		mf["queueclear"] = &GUIAction::queueclear;
-		mf["sleep"] = &GUIAction::sleep;
-		mf["appenddatetobackupname"] = &GUIAction::appenddatetobackupname;
-		mf["generatebackupname"] = &GUIAction::generatebackupname;
-		mf["checkpartitionlist"] = &GUIAction::checkpartitionlist;
-		mf["getpartitiondetails"] = &GUIAction::getpartitiondetails;
-		mf["screenshot"] = &GUIAction::screenshot;
-		mf["setbrightness"] = &GUIAction::setbrightness;
-		mf["fileexists"] = &GUIAction::fileexists;
-		mf["killterminal"] = &GUIAction::killterminal;
-		mf["checkbackupname"] = &GUIAction::checkbackupname;
-		mf["adbsideloadcancel"] = &GUIAction::adbsideloadcancel;
-		mf["fixsu"] = &GUIAction::fixsu;
-		mf["startmtp"] = &GUIAction::startmtp;
-		mf["stopmtp"] = &GUIAction::stopmtp;
-		mf["cancelbackup"] = &GUIAction::cancelbackup;
+		ADD_ACTION(reboot);
+		ADD_ACTION(home);
+		ADD_ACTION(key);
+		ADD_ACTION(page);
+		ADD_ACTION(reload);
+		ADD_ACTION(readBackup);
+		ADD_ACTION(set);
+		ADD_ACTION(clear);
+		ADD_ACTION(mount);
+		ADD_ACTION(unmount);
+		ADD_ACTION_EX("umount", unmount);
+		ADD_ACTION(restoredefaultsettings);
+		ADD_ACTION(copylog);
+		ADD_ACTION(compute);
+		ADD_ACTION_EX("addsubtract", compute);
+		ADD_ACTION(setguitimezone);
+		ADD_ACTION(overlay);
+		ADD_ACTION(queuezip);
+		ADD_ACTION(cancelzip);
+		ADD_ACTION(queueclear);
+		ADD_ACTION(sleep);
+		ADD_ACTION(appenddatetobackupname);
+		ADD_ACTION(generatebackupname);
+		ADD_ACTION(checkpartitionlist);
+		ADD_ACTION(getpartitiondetails);
+		ADD_ACTION(screenshot);
+		ADD_ACTION(setbrightness);
+		ADD_ACTION(fileexists);
+		ADD_ACTION(killterminal);
+		ADD_ACTION(checkbackupname);
+		ADD_ACTION(adbsideloadcancel);
+		ADD_ACTION(fixsu);
+		ADD_ACTION(startmtp);
+		ADD_ACTION(stopmtp);
+		ADD_ACTION(cancelbackup);
 
 		// remember actions that run in the caller thread
 		for (mapFunc::const_iterator it = mf.begin(); it != mf.end(); ++it)
 			setActionsRunningInCallerThread.insert(it->first);
 
 		// These actions will run in a separate thread
-		mf["flash"] = &GUIAction::flash;
-		mf["wipe"] = &GUIAction::wipe;
-		mf["refreshsizes"] = &GUIAction::refreshsizes;
-		mf["nandroid"] = &GUIAction::nandroid;
-		mf["fixpermissions"] = &GUIAction::fixpermissions;
-		mf["dd"] = &GUIAction::dd;
-		mf["partitionsd"] = &GUIAction::partitionsd;
-		mf["installhtcdumlock"] = &GUIAction::installhtcdumlock;
-		mf["htcdumlockrestoreboot"] = &GUIAction::htcdumlockrestoreboot;
-		mf["htcdumlockreflashrecovery"] = &GUIAction::htcdumlockreflashrecovery;
-		mf["cmd"] = &GUIAction::cmd;
-		mf["terminalcommand"] = &GUIAction::terminalcommand;
-		mf["reinjecttwrp"] = &GUIAction::reinjecttwrp;
-		mf["decrypt"] = &GUIAction::decrypt;
-		mf["adbsideload"] = &GUIAction::adbsideload;
-		mf["openrecoveryscript"] = &GUIAction::openrecoveryscript;
-		mf["installsu"] = &GUIAction::installsu;
-		mf["decrypt_backup"] = &GUIAction::decrypt_backup;
-		mf["repair"] = &GUIAction::repair;
-		mf["changefilesystem"] = &GUIAction::changefilesystem;
-		mf["flashimage"] = &GUIAction::flashimage;
+		ADD_ACTION(flash);
+		ADD_ACTION(wipe);
+		ADD_ACTION(refreshsizes);
+		ADD_ACTION(nandroid);
+		ADD_ACTION(fixpermissions);
+		ADD_ACTION(dd);
+		ADD_ACTION(partitionsd);
+		ADD_ACTION(installhtcdumlock);
+		ADD_ACTION(htcdumlockrestoreboot);
+		ADD_ACTION(htcdumlockreflashrecovery);
+		ADD_ACTION(cmd);
+		ADD_ACTION(terminalcommand);
+		ADD_ACTION(reinjecttwrp);
+		ADD_ACTION(decrypt);
+		ADD_ACTION(adbsideload);
+		ADD_ACTION(openrecoveryscript);
+		ADD_ACTION(installsu);
+		ADD_ACTION(decrypt_backup);
+		ADD_ACTION(repair);
+		ADD_ACTION(changefilesystem);
+		ADD_ACTION(flashimage);
 	}
 
 	// First, get the action
