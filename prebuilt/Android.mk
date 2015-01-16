@@ -131,6 +131,9 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcryptfslollipop.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libhardware.so
+    ifeq ($(TARGET_HW_DISK_ENCRYPTION),true)
+        RELINK_SOURCE_FILES += $(TARGET_OUT)/vendor/lib/libcryptfs_hw.so
+    endif
 endif
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/make_ext4fs
