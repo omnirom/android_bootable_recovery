@@ -259,6 +259,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Wipe_Available_in_GUI = true;
 			Can_Be_Backed_Up = true;
 		} else if (Mount_Point == "/data") {
+			UnMount(false); // added in case /data is mounted as tmpfs for qcom hardware decrypt
 			Display_Name = "Data";
 			Backup_Display_Name = Display_Name;
 			Storage_Name = Display_Name;
