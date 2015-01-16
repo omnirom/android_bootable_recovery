@@ -52,6 +52,10 @@
 
 #define UNUSED __attribute__((unused))
 
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+#include "cryptfs_hw.h"
+#endif
+
 #define DM_CRYPT_BUF_SIZE 4096
 
 #define HASH_COUNT 2000
@@ -592,7 +596,14 @@ static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr, unsigned c
   tgt->status = 0;
   tgt->sector_start = 0;
   tgt->length = crypt_ftr->fs_size;
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+ if(is_hw_disk_encryption((char*)crypt_ftr->crypto_type_name))
+   strlcpy(tgt->target_type, "req-crypt",DM_MAX_TYPE_NAME);
+ else
+   strlcpy(tgt->target_type, "crypt", DM_MAX_TYPE_NAME);
+#else
   strcpy(tgt->target_type, "crypt");
+#endif
 
   crypt_params = buffer + sizeof(struct dm_ioctl) + sizeof(struct dm_target_spec);
   convert_key_to_hex_ascii(master_key, crypt_ftr->keysize, master_key_ascii);
@@ -638,7 +649,11 @@ static int get_dm_crypt_version(int fd, const char *name,  int *version)
      */
     v = (struct dm_target_versions *) &buffer[sizeof(struct dm_ioctl)];
     while (v->next) {
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+        if(!strcmp(v->name, "crypt") || !strcmp(v->name, "req-crypt")) {
+#else
         if (! strcmp(v->name, "crypt")) {
+#endif
             /* We found the crypt driver, return the version, and get out */
             version[0] = v->version[0];
             version[1] = v->version[1];
@@ -660,12 +675,16 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, unsigned char 
   struct dm_ioctl *io;
   struct dm_target_spec *tgt;
   unsigned int minor;
-  int fd;
+  int fd=0;
   int i;
   int retval = -1;
   int version[3];
   char *extra_params;
   int load_count;
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+  char encrypted_state[PROPERTY_VALUE_MAX] = {0};
+  char progress[PROPERTY_VALUE_MAX] = {0};
+#endif
 
   if ((fd = open("/dev/device-mapper", O_RDWR)) < 0 ) {
     printf("Cannot open device-mapper\n");
@@ -689,6 +708,15 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, unsigned char 
   minor = (io->dev & 0xff) | ((io->dev >> 12) & 0xfff00);
   snprintf(crypto_blk_name, MAXPATHLEN, "/dev/block/dm-%u", minor);
 
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+  /* Set fde_enabled if either FDE completed or in-progress */
+  property_get("ro.crypto.state", encrypted_state, ""); /* FDE completed */
+  property_get("vold.encrypt_progress", progress, ""); /* FDE in progress */
+  if (!strcmp(encrypted_state, "encrypted") || strcmp(progress, ""))
+      extra_params = "fde_enabled";
+  else
+      extra_params = "fde_disabled";
+#else
   extra_params = "";
   if (! get_dm_crypt_version(fd, name, version)) {
       /* Support for allow_discards was added in version 1.11.0 */
@@ -698,6 +726,7 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, unsigned char 
           printf("Enabling support for allow_discards in dmcrypt.\n");
       }
   }
+#endif
 
   load_count = load_crypto_mapping_table(crypt_ftr, master_key, real_blk_name, name,
                                          fd, extra_params);
@@ -1040,6 +1069,14 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
     }
   }
 
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+  if (is_hw_fde_enabled()) {
+    if(is_hw_disk_encryption((char*) crypt_ftr->crypto_type_name))
+      if (!set_hw_device_encryption_key(passwd, (char*) crypt_ftr->crypto_type_name))
+        rc = -1;
+  }
+#endif
+
   // Create crypto block device - all (non fatal) code paths
   // need it
   if (create_crypto_blk_dev(crypt_ftr, decrypted_master_key,
@@ -1289,12 +1326,14 @@ int cryptfs_check_passwd(char *passwd)
 
     if (adjusted_passwd) {
         int failed_decrypt_count = crypt_ftr.failed_decrypt_count;
+printf("trying adjusted password\n");
         rc = test_mount_encrypted_fs(&crypt_ftr, adjusted_passwd,
                                      DATA_MNT_POINT, "userdata");
 
         // Maybe the original one still works?
         if (rc) {
             // Don't double count this failure
+printf("trying passwd\n");
             crypt_ftr.failed_decrypt_count = failed_decrypt_count;
             rc = test_mount_encrypted_fs(&crypt_ftr, passwd,
                                          DATA_MNT_POINT, "userdata");
@@ -1305,15 +1344,18 @@ int cryptfs_check_passwd(char *passwd)
                 printf("TWRP NOT Updating pattern to new format");
                 //cryptfs_changepw(CRYPT_TYPE_PATTERN, passwd);
             } else if (hex_passwd) {
+printf("trying hex_passwd\n");
                 rc = test_mount_encrypted_fs(&crypt_ftr, hex_passwd,
                                          DATA_MNT_POINT, "userdata");
             }
         }
         free(adjusted_passwd);
     } else {
+printf("trying passwd\n");
         rc = test_mount_encrypted_fs(&crypt_ftr, passwd,
                                      DATA_MNT_POINT, "userdata");
         if (rc && hex_passwd) {
+printf("trying hex_passwd\n");
             rc = test_mount_encrypted_fs(&crypt_ftr, hex_passwd,
                                      DATA_MNT_POINT, "userdata");
         }
