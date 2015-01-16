@@ -8,6 +8,13 @@ LOCAL_CFLAGS :=
 LOCAL_SRC_FILES = cryptfs.c
 LOCAL_SHARED_LIBRARIES := libcrypto libhardware libcutils
 LOCAL_C_INCLUDES := external/openssl/include $(commands_recovery_local_path)/crypto/scrypt/lib/crypto
+
+ifeq ($(TARGET_HW_DISK_ENCRYPTION),true)
+LOCAL_C_INCLUDES += device/qcom/common/cryptfs_hw
+LOCAL_SHARED_LIBRARIES += libcryptfs_hw
+LOCAL_CFLAGS += -DCONFIG_HW_DISK_ENCRYPTION
+endif
+
 LOCAL_WHOLE_STATIC_LIBRARIES += libscrypttwrp_static
 
 include $(BUILD_SHARED_LIBRARY)
