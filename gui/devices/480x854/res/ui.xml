@@ -50,6 +50,7 @@
 		<variable name="col1_x" value="10" />
 		<variable name="col2_x" value="240" />
 		<variable name="col_center_x" value="128" />
+		<variable name="col_center_medium_x" value="183" />
 		<variable name="center_x" value="240" />
 		<variable name="row1_y" value="140" />
 		<variable name="row2_y" value="290" />

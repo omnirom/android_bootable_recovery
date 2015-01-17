@@ -34,6 +34,7 @@ extern "C" {
 #include <string>
 #include <sstream>
 #include <vector>
+#include <csignal>
 #include <dirent.h>
 #include <libgen.h>
 #include <sys/mman.h>
@@ -83,9 +84,13 @@ void twrpTar::setpassword(string pass) {
 	password = pass;
 }
 
-int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigned long long *other_backups_size) {
+void twrpTar::Signal_Kill(int signum) {
+	_exit(255);
+}
+
+int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &fork_pid) {
 	int status = 0;
-	pid_t pid, rc_pid;
+	pid_t rc_pid, tar_fork_pid;
 	int progress_pipe[2], ret;
 
 	file_count = 0;
@@ -94,16 +99,17 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 		LOGERR("Error creating progress tracking pipe\n");
 		return -1;
 	}
-	if ((pid = fork()) == -1) {
+	if ((tar_fork_pid = fork()) == -1) {
 		LOGINFO("create tar failed to fork.\n");
 		close(progress_pipe[0]);
 		close(progress_pipe[1]);
 		return -1;
 	}
-	if (pid == 0) {
-		// Child process
 
+	if (tar_fork_pid == 0) {
+		// Child process
 		// Child closes input side of progress pipe
+		signal(SIGUSR2, twrpTar::Signal_Kill);
 		close(progress_pipe[0]);
 		progress_pipe_fd = progress_pipe[1];
 
@@ -375,6 +381,8 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 		files_backup = 0;
 		size_backup = 0;
 
+		fork_pid = tar_fork_pid;
+
 		// Parent closes output side
 		close(progress_pipe[1]);
 
@@ -422,7 +430,7 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 		backup_info.SetValue("file_count", files_backup);
 		backup_info.SaveValues();
 #endif //ndef BUILD_TWRPTAR_MAIN
-		if (TWFunc::Wait_For_Child(pid, &status, "createTarFork()") != 0)
+		if (TWFunc::Wait_For_Child(tar_fork_pid, &status, "createTarFork()") != 0)
 			return -1;
 	}
 	return 0;
@@ -430,7 +438,7 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 
 int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned long long *other_backups_size) {
 	int status = 0;
-	pid_t pid, rc_pid;
+	pid_t rc_pid, tar_fork_pid;
 	int progress_pipe[2], ret;
 
 	if (pipe(progress_pipe) < 0) {
@@ -438,10 +446,10 @@ int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned lon
 		return -1;
 	}
 
-	pid = fork();
-	if (pid >= 0) // fork was successful
+	tar_fork_pid = fork();
+	if (tar_fork_pid >= 0) // fork was successful
 	{
-		if (pid == 0) // child process
+		if (tar_fork_pid == 0) // child process
 		{
 			close(progress_pipe[0]);
 			progress_pipe_fd = progress_pipe[1];
@@ -585,7 +593,7 @@ int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned lon
 #endif //ndef BUILD_TWRPTAR_MAIN
 			*other_backups_size += size_backup;
 
-			if (TWFunc::Wait_For_Child(pid, &status, "extractTarFork()") != 0)
+			if (TWFunc::Wait_For_Child(tar_fork_pid, &status, "extractTarFork()") != 0)
 				return -1;
 		}
 	}
