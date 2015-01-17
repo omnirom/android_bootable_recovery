@@ -1,5 +1,5 @@
 /*
-	Copyright 2012 bigbiff/Dees_Troy TeamWin
+	Copyright 2014 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <iomanip>
+#include <csignal>
 #include <sys/wait.h>
 #include "variables.h"
 #include "twcommon.h"
@@ -56,9 +57,38 @@ extern "C" {
 
 extern bool datamedia;
 
+bool TWPartitionManager::backup_cancel_wait = false;;
+bool TWPartitionManager::stop_backup = false;
+int TWPartitionManager::tar_fork_pid = 0;
+
 TWPartitionManager::TWPartitionManager(void) {
 	mtp_was_enabled = false;
 	mtp_write_fd = -1;
+
+	signal(SIGUSR1, TWPartitionManager::Signal_Cancel);
+}
+
+void TWPartitionManager::Signal_Cancel(int signum) {
+	std::string Backup_Name, Backup_Folder, Full_Backup_Name;
+	int status;
+
+	TWPartitionManager::stop_backup = true;
+
+	if ((TWPartitionManager::tar_fork_pid != 0)) {
+        	LOGINFO("Killing pid: %ld\n", TWPartitionManager::tar_fork_pid);
+	       	kill(TWPartitionManager::tar_fork_pid, SIGUSR2);
+	}
+
+	while (kill(TWPartitionManager::tar_fork_pid, 0) == 0) {
+		usleep(1000);
+	}
+
+	DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
+	DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, Backup_Folder);
+	Full_Backup_Name = Backup_Folder + "/" + Backup_Name;
+	LOGINFO("Removing directory %s\n", Full_Backup_Name.c_str());
+	TWFunc::removeDir(Full_Backup_Name, false);
+	TWPartitionManager::backup_cancel_wait = true;
 }
 
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
@@ -559,7 +589,7 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 	TWFunc::SetPerformanceMode(true);
 	time(&start);
 
-	if (Part->Backup(Backup_Folder, &total_size, &current_size)) {
+	if (Part->Backup(Backup_Folder, &total_size, &current_size, TWPartitionManager::tar_fork_pid)) {
 		bool md5Success = false;
 		current_size += Part->Backup_Size;
 		pos = (float)((float)(current_size) / (float)(total_size));
@@ -569,7 +599,7 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 
 			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
 				if ((*subpart)->Can_Be_Backed_Up && (*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point) {
-					if (!(*subpart)->Backup(Backup_Folder, &total_size, &current_size)) {
+					if (!(*subpart)->Backup(Backup_Folder, &total_size, &current_size, TWPartitionManager::tar_fork_pid)) {
 						TWFunc::SetPerformanceMode(false);
 						return false;
 					}
@@ -608,6 +638,13 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 		TWFunc::SetPerformanceMode(false);
 		return false;
 	}
+	return 0;
+}
+
+int TWPartitionManager::Cancel_Backup() {
+	std::raise(SIGUSR1);
+	while (!TWPartitionManager::backup_cancel_wait) usleep(1000);
+	return 0;
 }
 
 int TWPartitionManager::Run_Backup(void) {
@@ -717,7 +754,7 @@ int TWPartitionManager::Run_Backup(void) {
 
 	start_pos = 0;
 	end_pos = Backup_List.find(";", start_pos);
-	while (end_pos != string::npos && start_pos < Backup_List.size()) {
+	while (end_pos != string::npos && start_pos < Backup_List.size() && !TWPartitionManager::stop_backup) {
 		backup_path = Backup_List.substr(start_pos, end_pos - start_pos);
 		backup_part = Find_Partition_By_Path(backup_path);
 		if (backup_part != NULL) {
@@ -728,6 +765,12 @@ int TWPartitionManager::Run_Backup(void) {
 		}
 		start_pos = end_pos + 1;
 		end_pos = Backup_List.find(";", start_pos);
+	}
+
+	if (TWPartitionManager::stop_backup) {
+		TWPartitionManager::backup_cancel_wait = false;;
+		TWPartitionManager::stop_backup = false;
+		return false;
 	}
 
 	// Average BPS
