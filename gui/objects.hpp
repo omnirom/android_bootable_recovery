@@ -360,6 +360,7 @@ protected:
 	int startmtp(std::string arg);
 	int stopmtp(std::string arg);
 	int flashimage(std::string arg);
+	int cancelbackup(std::string arg);
 
 	int simulate;
 };
