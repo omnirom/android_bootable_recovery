@@ -45,7 +45,7 @@ class twrpTar {
 public:
 	twrpTar();
 	virtual ~twrpTar();
-	int createTarFork(const unsigned long long *overall_size, const unsigned long long *other_backups_size);
+	int createTarFork(const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &fork_pid);
 	int extractTarFork(const unsigned long long *overall_size, unsigned long long *other_backups_size);
 	void setfn(string fn);
 	void setdir(string dir);
@@ -80,6 +80,7 @@ private:
 	static void* extractMulti(void *cookie);
 	int tarList(std::vector<TarListStruct> *TarList, unsigned thread_id);
 	unsigned long long uncompressedSize(string filename, int *archive_type);
+	static void Signal_Kill(int signum);
 
 	int Archive_Current_Type;
 	unsigned long long Archive_Current_Size;
