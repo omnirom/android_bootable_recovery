@@ -1859,6 +1859,21 @@
 
 			<object type="template" name="action_page_console" />
 
+
+
+			<object type="template" name="progress_bar" />
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col_center_medium_x%" y="%row4_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Cancel</text>
+				<image resource="medium_button" />
+				<actions>
+					<action function="cancelbackup"></action>
+				</actions>
+			</object>
+
 			<object type="template" name="progress_bar" />
 
 			<object type="action">
@@ -1867,9 +1882,21 @@
 
 			<object type="action">
 				<condition var1="tw_operation_state" var2="1" />
+				<condition var1="tw_cancel_backup" var2="0" />
 				<actions>
 					<action function="set">tw_back=backup</action>
 					<action function="set">tw_complete_text1=Backup Complete</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">action_complete</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_operation_state" var2="1" />
+				<condition var1="tw_cancel_backup" var2="1" />
+				<actions>
+					<action function="set">tw_back=backup</action>
+					<action function="set">tw_complete_text1=Backup Cancelled</action>
 					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_complete</action>
 				</actions>
