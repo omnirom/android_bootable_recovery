@@ -36,7 +36,7 @@
 #include <signal.h>
 #include <sys/inotify.h>
 #include <fcntl.h>
-#include "tw_sys_atomics.h"
+#include "../tw_sys_atomics.h"
 
 #define WATCH_FLAGS ( IN_CREATE | IN_DELETE | IN_MOVE | IN_MODIFY )
 
