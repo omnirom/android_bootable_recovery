@@ -1253,9 +1253,10 @@ bool TWPartition::Repair() {
 	return false;
 }
 
-bool TWPartition::Backup(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size) {
-	if (Backup_Method == FILES)
-		return Backup_Tar(backup_folder, overall_size, other_backups_size);
+bool TWPartition::Backup(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid) {
+	if (Backup_Method == FILES) {
+		return Backup_Tar(backup_folder, overall_size, other_backups_size, tar_fork_pid);
+	}
 	else if (Backup_Method == DD)
 		return Backup_DD(backup_folder);
 	else if (Backup_Method == FLASH_UTILS)
@@ -1702,7 +1703,7 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 #endif // ifdef TW_OEM_BUILD
 }
 
-bool TWPartition::Backup_Tar(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size) {
+bool TWPartition::Backup_Tar(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid) {
 	char back_name[255], split_index[5];
 	string Full_FileName, Split_FileName, Tar_Args, Command;
 	int use_compression, use_encryption = 0, index, backup_count;
@@ -1744,7 +1745,7 @@ bool TWPartition::Backup_Tar(string backup_folder, const unsigned long long *ove
 	tar.setsize(Backup_Size);
 	tar.partition_name = Backup_Name;
 	tar.backup_folder = backup_folder;
-	if (tar.createTarFork(overall_size, other_backups_size) != 0)
+	if (tar.createTarFork(overall_size, other_backups_size, tar_fork_pid) != 0)
 		return false;
 	return true;
 }

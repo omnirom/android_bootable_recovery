@@ -169,6 +169,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		mf["fixsu"] = &GUIAction::fixsu;
 		mf["startmtp"] = &GUIAction::startmtp;
 		mf["stopmtp"] = &GUIAction::stopmtp;
+		mf["cancelbackup"] = &GUIAction::cancelbackup;
 
 		// remember actions that run in the caller thread
 		for (mapFunc::const_iterator it = mf.begin(); it != mf.end(); ++it)
@@ -1087,13 +1088,13 @@ int GUIAction::refreshsizes(std::string arg)
 
 int GUIAction::nandroid(std::string arg)
 {
-	operation_start("Nandroid");
-	int ret = 0;
-
 	if (simulate) {
 		DataManager::SetValue("tw_partition", "Simulation");
 		simulate_progress_bar();
 	} else {
+		operation_start("Nandroid");
+		int ret = 0;
+
 		if (arg == "backup") {
 			string Backup_Name;
 			DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
@@ -1103,7 +1104,6 @@ int GUIAction::nandroid(std::string arg)
 			else {
 				operation_end(1);
 				return -1;
-
 			}
 			DataManager::SetValue(TW_BACKUP_NAME, "(Auto Generate)");
 		} else if (arg == "restore") {
@@ -1112,16 +1112,38 @@ int GUIAction::nandroid(std::string arg)
 			ret = PartitionManager.Run_Restore(Restore_Name);
 		} else {
 			operation_end(1);
-					return -1;
-				}
-			}
-			DataManager::SetValue("tw_encrypt_backup", 0);
+			return -1;
+		}
+		DataManager::SetValue("tw_encrypt_backup", 0);
+		if (!PartitionManager.stop_backup) {
 			if (ret == false)
 				ret = 1; // 1 for failure
 			else
 				ret = 0; // 0 for success
+			DataManager::SetValue("tw_cancel_backup", 0);
 			operation_end(ret);
-			return 0;
+		}
+		else {
+			DataManager::SetValue("tw_cancel_backup", 1);
+			gui_print("Backup Canceled.\n");
+			ret = 0;
+		}
+		return ret;
+	}
+	return 0;
+}
+
+int GUIAction::cancelbackup(std::string arg) {
+	operation_start("Cancel Backup");
+	if (simulate) {
+		simulate_progress_bar();
+	} else {
+		int op_status = PartitionManager.Cancel_Backup();
+		if (op_status != 0)
+			op_status = 1; // failure
+		operation_end(op_status);
+	}
+	return 0;
 }
 
 int GUIAction::fixpermissions(std::string arg)
