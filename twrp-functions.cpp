@@ -585,7 +585,7 @@ int TWFunc::removeDir(const string path, bool skipParent) {
 	string new_path;
 
 	if (d == NULL) {
-		LOGERR("Error opening '%s'\n", path.c_str());
+		LOGERR("Error opening dir: '%s'\n", path.c_str());
 		return -1;
 	}
 
@@ -1036,6 +1036,10 @@ std::string TWFunc::to_string(unsigned long value) {
 	std::ostringstream os;
 	os << value;
 	return os.str();
+}
+
+void TWFunc::Signal_Cancel(int signum) {
+	PartitionManager.Signal_Cancel(signum);
 }
 
 #endif // ndef BUILD_TWRPTAR_MAIN

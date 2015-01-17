@@ -85,6 +85,7 @@ public:
 	static std::string to_string(unsigned long value); //convert ul to string
 
 	static void SetPerformanceMode(bool mode); // support recovery.perf.mode
+	static void Signal_Cancel(int signum);
 
 private:
 	static void Copy_Log(string Source, string Destination);
