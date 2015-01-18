@@ -256,80 +256,43 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 		if (!attr)
 			break;
 
+		Resource* res = NULL;
 		std::string type = attr->value();
-
 		if (type == "font")
 		{
-			FontResource* res = new FontResource(child, pZip);
-			if (res == NULL || res->GetResource() == NULL)
-			{
-				std::string res_name;
-				if (child->first_attribute("name"))
-					res_name = child->first_attribute("name")->value();
-				if (res_name.empty() && child->first_attribute("filename"))
-					res_name = child->first_attribute("filename")->value();
-
-				if (!res_name.empty()) {
-					LOGERR("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
-				} else
-					LOGERR("Resource type (%s) failed to load\n", type.c_str());
-
-				delete res;
-			}
-			else
-			{
-				mResources.push_back((Resource*) res);
-			}
+			res = new FontResource(child, pZip);
 		}
 		else if (type == "image")
 		{
-			ImageResource* res = new ImageResource(child, pZip);
-			if (res == NULL || res->GetResource() == NULL)
-			{
-				std::string res_name;
-				if (child->first_attribute("name"))
-					res_name = child->first_attribute("name")->value();
-				if (res_name.empty() && child->first_attribute("filename"))
-					res_name = child->first_attribute("filename")->value();
-
-				if (!res_name.empty()) {
-					LOGERR("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
-				} else
-					LOGERR("Resource type (%s) failed to load\n", type.c_str());
-
-				delete res;
-			}
-			else
-			{
-				mResources.push_back((Resource*) res);
-			}
+			res = new ImageResource(child, pZip);
 		}
 		else if (type == "animation")
 		{
-			AnimationResource* res = new AnimationResource(child, pZip);
-			if (res == NULL || res->GetResource() == NULL)
-			{
-				std::string res_name;
-				if (child->first_attribute("name"))
-					res_name = child->first_attribute("name")->value();
-				if (res_name.empty() && child->first_attribute("filename"))
-					res_name = child->first_attribute("filename")->value();
-
-				if (!res_name.empty()) {
-					LOGERR("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
-				} else
-					LOGERR("Resource type (%s) failed to load\n", type.c_str());
-
-				delete res;
-			}
-			else
-			{
-				mResources.push_back((Resource*) res);
-			}
+			res = new AnimationResource(child, pZip);
 		}
 		else
 		{
 			LOGERR("Resource type (%s) not supported.\n", type.c_str());
+		}
+
+		if (res == NULL || res->GetResource() == NULL)
+		{
+			std::string res_name;
+			if (child->first_attribute("name"))
+				res_name = child->first_attribute("name")->value();
+			if (res_name.empty() && child->first_attribute("filename"))
+				res_name = child->first_attribute("filename")->value();
+
+			if (!res_name.empty()) {
+				LOGERR("Resource (%s)-(%s) failed to load\n", type.c_str(), res_name.c_str());
+			} else
+				LOGERR("Resource type (%s) failed to load\n", type.c_str());
+
+			delete res;
+		}
+		else
+		{
+			mResources.push_back(res);
 		}
 
 		child = child->next_sibling("resource");
