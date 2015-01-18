@@ -1641,7 +1641,7 @@ bool TWPartition::Wipe_F2FS() {
 
 		gui_print("Formatting %s using mkfs.f2fs...\n", Display_Name.c_str());
 		Find_Actual_Block_Device();
-		command = "mkfs.f2fs " + Actual_Block_Device;
+		command = "mkfs.f2fs -t -d1 -r 16384 " + Actual_Block_Device;
 		if (TWFunc::Exec_Cmd(command) == 0) {
 			Recreate_AndSec_Folder();
 			gui_print("Done.\n");
