@@ -331,7 +331,10 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIObject(node)
 
 		attr = child->first_attribute("name");
 		if (!attr) return;
-		data.displayName = attr->value();
+
+        xml_attribute<>* id = child->first_attribute("id");
+        if (id)	data.displayName = LanguageManager::parse(id->value());
+        if (data.displayName == "")	data.displayName = attr->value();
 
 		data.variableValue = child->value();
 		if (child->value() == currentValue) {

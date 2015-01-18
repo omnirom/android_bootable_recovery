@@ -18,6 +18,7 @@
 				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
+
 				<text>Install</text>
 				<image resource="main_button" />
 				<actions>
