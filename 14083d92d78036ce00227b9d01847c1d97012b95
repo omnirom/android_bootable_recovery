@@ -1,0 +1,259 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b25f591_80a5ca9d",
+        "filename": "gui/action.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1106,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "Why was the return removed, and why is ret not set here?",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_60a8ce74",
+        "filename": "gui/action.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1127,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "What\u0027s the point of setting ret if it is not used afterwards?",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_409bd267",
+        "filename": "gui/action.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1129,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "NULL is not an int",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_c0b7c2d2",
+        "filename": "gui/devices/landscape/res/landscape.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 1218,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "incorrect whitespace change",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_20c7b64c",
+        "filename": "gui/devices/landscape/res/landscape.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 2162,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "landscape layout doesn\u0027t have row4_y",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_e0acbe85",
+        "filename": "gui/devices/landscape/res/landscape.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 2168,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "broken XML!",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_00b2bae2",
+        "filename": "gui/devices/portrait/res/portrait.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 1878,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "broken XML!",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_40c4b245",
+        "filename": "gui/devices/watch/res/watch.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 854,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "incorrect whitespace change",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_60c1ae34",
+        "filename": "gui/devices/watch/res/watch.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 1874,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "broken XML!",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_a0d726f8",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "mixed indentation whitespace",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_c0dc221d",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "why is this not a normal SIGTERM?",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_80beaaa7",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "use waitpid instead of this loop? Also, should probably be inside the \"if\" above.",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_e0e11ece",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 645,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "why do we need a signal here?",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_20cc1665",
+        "filename": "partitions.hpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "What is this member variable used for?",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_00e71ae1",
+        "filename": "twrpTar.hpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-18T11:29:47Z",
+      "side": 1,
+      "message": "What is this member variable needed for?",
+      "revId": "14083d92d78036ce00227b9d01847c1d97012b95",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
