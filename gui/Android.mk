@@ -8,6 +8,7 @@ LOCAL_SRC_FILES := \
     resources.cpp \
     pages.cpp \
     text.cpp \
+    languages.cpp \
     image.cpp \
     action.cpp \
     console.cpp \
@@ -130,6 +131,13 @@ $(TWRP_RES_GEN):
 	$(TWRP_COMMON_XML)
 	$(TWRP_REMOVE_FONT)
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/
+	$(TWRP_RES_LOC)/../../sed_ui.xml.sh  $(TARGET_RECOVERY_ROOT_OUT)/res/ui.xml
+ifneq ($(wildcard $(TARGET_RECOVERY_ROOT_OUT)/res/portrait.xml),)
+	$(TWRP_RES_LOC)/../../sed_t.sh $(TWRP_RES_LOC)/../../list.xml $(TARGET_RECOVERY_ROOT_OUT)/res/portrait.xml 
+else
+	$(TWRP_RES_LOC)/../../sed_t.sh $(TWRP_RES_LOC)/../../list.xml $(TARGET_RECOVERY_ROOT_OUT)/res/ui.xml
+endif
+
 ifneq ($(TW_USE_TOOLBOX), true)
 	ln -sf $(TWRP_SH_TARGET) $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
 endif

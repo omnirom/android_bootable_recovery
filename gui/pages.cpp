@@ -1011,6 +1011,9 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	// NULL-terminate the string
 	xmlFile[len] = 0x00;
 
+    //load languages.xml from /res/languages.xml
+     LanguageManager::LoadLanguages(package);
+
 	// Before loading, mCurrentSet must be the loading package so we can find resources
 	pageSet = mCurrentSet;
 	mCurrentSet = new PageSet(xmlFile);

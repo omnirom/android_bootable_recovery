@@ -91,7 +91,13 @@ GUIText::GUIText(xml_node<>* node)
 	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH, &mPlacement);
 
 	child = node->first_node("text");
-	if (child)  mText = child->value();
+
+    if (child)  {
+        xml_attribute<>* id = child->first_attribute("id");
+        if (id)	mText = LanguageManager::parse(id->value());//load multi languages
+        if (mText == "")	mText = child->value();
+    }
+
 
 	// Simple way to check for static state
 	mLastValue = parseText();
