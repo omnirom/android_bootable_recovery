@@ -1475,6 +1475,15 @@ int GUIAction::openrecoveryscript(std::string arg)
 			}
 		}
 		if (reboot) {
+		if (PartitionManager.Mount_By_Path("/system", false)) {
+			// Disable flashing of stock recovery
+			if (TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
+				rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
+				gui_print("Renamed stock recovery file in /system to prevent\nthe stock ROM from replacing TWRP.\n");
+			}
+		}
+		sync();
+		PartitionManager.UnMount_By_Path("/system", false);
 			usleep(2000000); // Sleep for 2 seconds before rebooting
 			TWFunc::tw_reboot(rb_system);
 		} else {
