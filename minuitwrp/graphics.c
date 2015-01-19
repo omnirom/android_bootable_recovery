@@ -586,12 +586,57 @@ void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy) {
         gl->disable(gl, GGL_BLEND);
 
     gl->bindTexture(gl, surface);
+
+    float dw = (float)w * 1.5;
+    float dh = (float)h * 1.5;
+
+    gl->texParameteri(gl, GGL_TEXTURE_2D, GGL_TEXTURE_MIN_FILTER, GGL_LINEAR);
+    gl->texParameteri(gl, GGL_TEXTURE_2D, GGL_TEXTURE_MAG_FILTER, GGL_LINEAR);
+
+#if 0
+    // this appears to work for everything but the curtain, no idea why
+    GGLint crop[4];
+    GGLint where[4];
+    crop[0] = 0;
+    crop[1] = 0;
+    crop[2] = w;
+    crop[3] = h;
+    where[0] = dx;
+    where[1] = dy;
+    where[2] = dw;
+    where[3] = dh;
+    gglBitBlit(gl, 0 /*tmu*/, crop, where);
+#else
+    gl->texParameteri(gl, GGL_TEXTURE_2D, GGL_TEXTURE_WRAP_S, GGL_CLAMP);
+    gl->texParameteri(gl, GGL_TEXTURE_2D, GGL_TEXTURE_WRAP_T, GGL_CLAMP);
+
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
-    gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
-    gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
+//    gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
+//    gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
+    gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_AUTOMATIC);
+    gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_AUTOMATIC);
     gl->enable(gl, GGL_TEXTURE_2D);
-    gl->texCoord2i(gl, sx - dx, sy - dy);
-    gl->recti(gl, dx, dy, dx + w, dy + h);
+//    gl->texCoord2i(gl, sx - dx, sy - dy);
+
+    int32_t grad[8];
+    // s, dsdx, dsdy, scale, t, dtdx, dtdy, tscale   <- this is wrong!
+    // This api uses block floating-point for S and T texture coordinates.
+    // All values are given in 16.16, scaled by 'scale'. In other words,
+    // set scale to 0, for 16.16 values.
+    memset(grad, 0, sizeof(grad));
+    // s, dsdx, dsdy, t, dtdx, dtdy, sscale, tscale
+    float dsdx = (float)w / dw;
+    float dtdy = (float)h / dh;
+    grad[0] = ((float)sx - (dsdx * dx)) * 65536;
+    grad[1] = dsdx * 65536;
+    grad[3] = ((float)sy - (dtdy * dy)) * 65536;
+    grad[5] = dtdy * 65536;
+//    printf("blit: w=%d h=%d dx=%d dy=%d dw=%f dh=%f dsdx=%f dtdy=%f s0=%x dsdx=%x t0=%x dtdy=%x\n",
+//                    w,   h,    dx,   dy,   dw,   dh,   dsdx,   dtdy, grad[0], grad[1], grad[3], grad[5]);
+    gl->texCoordGradScale8xv(gl, 0 /*tmu*/, grad);
+
+    gl->recti(gl, dx, dy, dx + dw, dy + dh);
+#endif
 
     if(surface->format == GGL_PIXEL_FORMAT_RGBX_8888)
         gl->enable(gl, GGL_BLEND);
