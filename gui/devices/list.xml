@@ -1,0 +1,343 @@
+<action id="text_confirm" function="set">tw_slider_text=Swipe to Confirm</action>
+<action id="text_reboot" function="set">tw_slider_text=Swipe to Reboot</action>
+<action id="text_wipe" function="set">tw_slider_text=Swipe to Wipe</action>
+<action id="text_format" function="set">tw_slider_text=Swipe to Format</action>
+<action id="text_wipe_cache_dalvik" function="set">tw_text1=Wipe Cache & Dalvik?</action>
+<action id="text_action_wipe_cache_dalvik" function="set">tw_action_text1=Wiping Cache & Dalvik...</action>
+<action id="text_complete_wipe_cache_dalvik" function="set">tw_complete_text1=Cache & Dalvik Wipe Complete</action>
+<action id="text1_warning_no_os" function="set">tw_text1=No OS Installed! Are you</action>
+<action id="text2_warning_no_os_reboot" function="set">tw_text2=sure you wish to reboot?</action>
+<action id="text_action_reboot" function="set">tw_action_text1=Rebooting...</action>
+<action id="text_complete_reboot" function="set">tw_complete_text1=Rebooting...</action>
+<action id="text_wipe_cache" function="set">tw_text1=Wipe Cache?</action>
+<action id="text_action_wipe_cache" function="set">tw_action_text1=Wiping Cache...</action>
+<action id="text_complete_wipe_cache" function="set">tw_complete_text1=Cache Wipe Complete</action>
+<action id="text_wipe_dalvik_cache" function="set">tw_text1=Wipe Dalvik-Cache?</action>
+<action id="text_action_wipe_dalvik_cache" function="set">tw_action_text1=Wiping Dalvik-Cache...</action>
+<action id="text_complete_wipe_dalvik_cache" function="set">tw_complete_text1=Dalvik-Cache Wipe Complete</action>
+<action id="text1_factory_reset" function="set">tw_text1=Factory Reset?</action>
+<action id="text2_factory_reset" function="set">tw_text2=(Wipes Data and Cache)</action>
+<action id="text_action_factory_reset" function="set">tw_action_text1=Factory Reset...</action>
+<action id="text_complete_factory_reset" function="set">tw_complete_text1=Factory Reset Complete</action>
+<action id="text1_wipe_system" function="set">tw_text1=Wipe System?</action>
+<action id="text2_wipe_system" function="set">tw_text2=This will wipe your ROM</action>
+<action id="text_action_wipe_system" function="set">tw_action_text1=Wiping System...</action>
+<action id="text_complete_wipe_system" function="set">tw_complete_text1=System Wipe Complete</action>
+<action id="text_wipe_external_storage" function="set">tw_text1=Wipe External Storage (SD Card)?</action>
+<action id="text_action_wipe_external_storage" function="set">tw_action_text1=Wiping External Storage...</action>
+<action id="text_complete_wipe_external_storage" function="set">tw_complete_text1=External Storage Wipe Complete</action>
+<action id="text_wipe_internal_storage" function="set">tw_text1=Wipe Internal Storage?</action>
+<action id="text_action_wipe_internal_storage" function="set">tw_action_text1=Wiping Internal Storage...</action>
+<action id="text_complete_wipe_internal_storage" function="set">tw_complete_text1=Internal Storage Wipe Complete</action>
+<action id="text1_format_data" function="set">tw_text1=Format Data? (This wipes all internal storage</action>
+<action id="text2_format_data" function="set">tw_text2=including backups & removes encryption)</action>
+<action id="text3_format_data" function="set">tw_text3=Most of the time you do not need to do this.</action>
+<action id="text_action_format_data" function="set">tw_action_text1=Formatting Data...</action>
+<action id="text_complete_format_data" function="set">tw_complete_text1=Data Format Complete</action>
+<action id="text_wipe_android_secure" function="set">tw_text1=Wipe Android Secure?</action>
+<action id="text_action_wipe_android_secure" function="set">tw_action_text1=Wiping Android Secure...</action>
+<action id="text_complete_wipe_android_secure" function="set">tw_complete_text1=Wipe Android Secure Complete</action>
+<action id="text_wipe_sd_ext" function="set">tw_text1=Wipe SD-Ext?</action>
+<action id="text_action_wipe_sd_ext" function="set">tw_action_text1=Wiping SD-Ext...</action>
+<action id="text_complete_wipe_sd_ext" function="set">tw_complete_text1=SD-Ext Wipe Complete</action>
+<action id="text_complete_backup" function="set">tw_complete_text1=Backup Complete</action>
+<action id="text_delete_backup" function="set">tw_text1=Delete Backup? %tw_restore_name%</action>
+<action id="text_cannot_undone" function="set">tw_text2=This cannot be undone!</action>
+<action id="text_action_delete_backup" function="set">tw_action_text1=Deleting Backup...</action>
+<action id="text_complete_delete_backup" function="set">tw_complete_text1=Backup Delete Complete</action>
+<action id="text_delete" function="set">tw_slider_text=Swipe to Delete</action>
+<action id="text_rename_backup" function="set">tw_text1=Rename Backup?</action>
+<action id="text_action_rename_backup" function="set">tw_action_text1=Renaming Backup...</action>
+<action id="text_complete_rename_backup" function="set">tw_complete_text1=Backup Rename Complete</action>
+<action id="text_rename" function="set">tw_slider_text=Swipe to Rename</action>
+<action id="text_complete_restore" function="set">tw_complete_text1=Restore Complete</action>
+<action id="text2_warning_no_os_poweroff" function="set">tw_text2=sure you wish to power off?</action>
+<action id="text_action_poweroff" function="set">tw_action_text1=Turning Off...</action>
+<action id="text_complete_poweroff" function="set">tw_complete_text1=Turning Off...</action>
+<action id="text_poweroff" function="set">tw_slider_text=Swipe to Power Off</action>
+<action id="text_copy_log" function="set">tw_text1=Copy Log to SD Card?</action>
+<action id="text_action_copy_log" function="set">tw_action_text1=Copying Log to SD Card...</action>
+<action id="text_complete_copy_log" function="set">tw_complete_text1=Log Copy Complete</action>
+<action id="text_fix_permissions" function="set">tw_text1=Fix Permissions?</action>
+<action id="text_action_fix_permissions" function="set">tw_action_text1=Fixing Permissions...</action>
+<action id="text_complete_fix_permissions" function="set">tw_complete_text1=Fix Permissions Complete</action>
+<action id="text_reinject" function="set">tw_text1=Re-Inject TWRP?</action>
+<action id="text_action_reinject" function="set">tw_action_text1=Re-Injecting TWRP...</action>
+<action id="text_complete_reinject" function="set">tw_complete_text1=TWRP Injection Complete</action>
+<action id="text1_action_partition" function="set">tw_action_text1=Partitioning SD Card...</action>
+<action id="text2_action_partition" function="set">tw_action_text2=This will take a few minutes.</action>
+<action id="text_complete_partition" function="set">tw_complete_text1=Partitioning Complete</action>
+<action id="text_restore_original_boot" function="set">tw_text1=Restore original boot image?</action>
+<action id="text_action_restore_original_boot" function="set">tw_action_text1=Restoring Original Boot...</action>
+<action id="text_complete_restore_original_boot" function="set">tw_complete_text1=Restore Original Boot Complete</action>
+<action id="text_reflash_recovery" function="set">tw_text1=Reflash recovery to boot?</action>
+<action id="text_action_reflash_recovery" function="set">tw_action_text1=Flashing recovery to boot...</action>
+<action id="text_complete_reflash_recovery" function="set">tw_complete_text1=Recovery Flash to Boot Complete</action>
+<action id="text_install_htcdumlock" function="set">tw_text1=Install HTC dumlock files to ROM?</action>
+<action id="text_action_install_htcdumlock" function="set">tw_action_text1=Installing HTC Dumlock...</action>
+<action id="text_complete_install_htcdumlock" function="set">tw_complete_text1=HTC Dumlock Install Complete</action>
+<action id="text_complete_file_operation" function="set">tw_complete_text1=File Operation Complete</action>
+<action id="text1_action_adbsidelod" function="set">tw_action_text1=ADB Sideload</action>
+<action id="text2_action_adbsidelod" function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
+<action id="text_complete_adbsidelod" function="set">tw_complete_text1=ADB Sideload Complete</action>
+<action id="text_set_active" function="set">tw_action_text1=active system 0/1</action>
+<listitem id="utc-11" name="(UTC -11) Samoa, Midway Island">BST11;BDT</listitem>
+<listitem id="utc-10" name="(UTC -10) Hawaii">HST10;HDT</listitem>
+<listitem id="utc-9" name="(UTC -9) Alaska">AST9;ADT</listitem>
+<listitem id="utc-8" name="(UTC -8) Pacific Time">PST8;PDT</listitem>
+<listitem id="utc-7" name="(UTC -7) Mountain Time">MST7;MDT</listitem>
+<listitem id="utc-6" name="(UTC -6) Central Time">CST6;CDT</listitem>
+<listitem id="utc-5" name="(UTC -5) Eastern Time">EST5;EDT</listitem>
+<listitem id="utc-4" name="(UTC -4) Atlantic Time">AST4;ADT</listitem>
+<listitem id="utc-3" name="(UTC -3) Brazil, Buenos Aires">GRNLNDST3;GRNLNDDT</listitem>
+<listitem id="utc-2" name="(UTC -2) Mid-Atlantic">FALKST2;FALKDT</listitem>
+<listitem id="utc-1" name="(UTC -1) Azores, Cape Verde">AZOREST1;AZOREDT</listitem>
+<listitem id="utc0" name="(UTC  0) London, Dublin, Lisbon">GMT0;BST</listitem>
+<listitem id="utc1" name="(UTC +1) Berlin, Brussels, Paris">NFT-1;DFT</listitem>
+<listitem id="utc2" name="(UTC +2) Athens, Istanbul, South Africa">WET-2;WET</listitem>
+<listitem id="utc3" name="(UTC +3) Moscow, Baghdad">SAUST-3;SAUDT</listitem>
+<listitem id="utc4" name="(UTC +4) Abu Dhabi, Tbilisi, Muscat">WST-4;WDT</listitem>
+<listitem id="utc5" name="(UTC +5) Yekaterinburg, Islamabad">PAKST-5;PAKDT</listitem>
+<listitem id="utc6" name="(UTC +6) Almaty, Dhaka, Colombo">TASHST-6;TASHDT</listitem>
+<listitem id="utc7" name="(UTC +7) Bangkok, Hanoi, Jakarta">THAIST-7;THAIDT</listitem>
+<listitem id="utc8" name="(UTC +8) Beijing, Singapore, Hong Kong">TAIST-8;TAIDT</listitem>
+<listitem id="utc9" name="(UTC +9) Tokyo, Seoul, Yakutsk">JST-9;JSTDT</listitem>
+<listitem id="utc10" name="(UTC +10) Eastern Australia, Guam">EET-10;EETDT</listitem>
+<listitem id="utc11" name="(UTC +11) Vladivostok, Solomon Islands">MET-11;METDT</listitem>
+<listitem id="utc12" name="(UTC +12) Auckland, Wellington, Fiji">NZST-12;NZDT</listitem>
+<text id="timezone_15">15</text>
+<text id="timezone_30">30</text>
+<text id="timezone_45">45</text>
+<text id="restore_android_secure">.android_secure</text>
+<text id="backup_android_secure">.android_secure (%tw_backup_andsec_size% MB)</text>
+<text id="filemanageroptions_selected">%tw_fm_type% Selected:</text>
+<text id="time">%tw_time%</text>
+<text id="backup_name_exists">A backup with that name already exists!</text>
+<text id="sideload">ADB Sideload</text>
+<text id="add_zip">Add More Zips</text>
+<text id="advanced">Advanced</text>
+<text id="wipe_android_secure">Android Secure</text>
+<text id="back">Back</text>
+<text id="backup_device">Back Up Device</text>
+<text id="backup">Backup</text>
+<text id="backup_device">Backup Device</text>
+<text id="backup_name">Backup Name: %tw_backup_name%</text>
+<text id="battery_long">Battery Level: %tw_battery%</text>
+<text id="battery">Battery: %tw_battery%</text>
+<text id="usb_mounted_text1">Be sure to safely remove your device</text>
+<text id="restore_boot">Boot</text>
+<text id="backup_boot">Boot (%tw_backup_boot_size% MB)</text>
+<text id="reboot_bootloader">Bootloader</text>
+<text id="choosedestinationfolder">Browse to Destination Folder & Press Select</text>
+<text id="terminalfolder">Browse to Starting Folder</text>
+<text id="restore_cache">Cache</text>
+<text id="wipe_cache">Cache</text>
+<text id="backup_cache">Cache (%tw_backup_cache_size% MB)</text>
+<text id="cancel">Cancel</text>
+<text id="cancel_clear">Cancel / Clear</text>
+<text id="filemanageroptions_chmod">chmod</text>
+<text id="filemanageroptions_chmod_755">chmod 755</text>
+<text id="clear_zip">Clear Queue</text>
+<text id="clear_zip">Clear Zip Queue</text>
+<text id="filemanageroptions_copy_file">Copy File</text>
+<text id="filemanageroptions_copy_folder">Copy Folder</text>
+<text id="advanced_copy_log">Copy Log to SD</text>
+<text id="timezone_current">Current Time Zone: %tw_time_zone%</text>
+<text id="wipe_dalvik_cache">Dalvik Cache</text>
+<text id="restore_data">Data</text>
+<text id="backup_data">Data (%tw_backup_data_size% MB)</text>
+<text id="date">Date</text>
+<text id="decrypt">Decrypt Data</text>
+<text id="filemanageroptions_delete">Delete</text>
+<text id="restore_delete">Delete Backup</text>
+<text id="timezone_dst">Do you use daylight savings time (DST)?</text>
+<text id="reboot_download">Download</text>
+<text id="backup_enable_compression">Enable Compression (Requires more time)</text>
+<text id="backup_enable_compression">Enable compression.</text>
+<text id="restore_enable_md5">Enable MD5 checking of backup files</text>
+<text id="restore_enable_md5">Enable MD5 verification of backup files.</text>
+<text id="partsdcard_ext_size">EXT Size: %tw_sdext_size%</text>
+<text id="wipe_external">External Storage</text>
+<text id="factory_reset">Factory Reset</text>
+<text id="failed">Failed</text>
+<text id="zip_queue">File %tw_zip_queue_count% of max of 10</text>
+<text id="advanced_file_manager">File Manager</text>
+<text id="filemanagerlist">File Manager: Select a File or Folder</text>
+<text id="partsdcard_file_system">File system: %tw_sdpart_file_system%</text>
+<text id="file2flash">File to flash:</text>
+<text id="advanced_fix_permissions">Fix Permissions</text>
+<text id="flash_queue">Flashing file %tw_zip_index% of %tw_zip_queue_count%</text>
+<text id="folder">Folder:</text>
+<text id="folder">Folders:</text>
+<text id="md5_check">Force MD5 check on all zips?</text>
+<text id="md5_check">Force MD5 check on all zips.</text>
+<text id="wipe_data">Format Data</text>
+<text id="backup_free_space">Free Space: %tw_storage_free_size% MB</text>
+<text id="usb_mounted_text2">from your computer before unmounting!</text>
+<text id="home">Home</text>
+<text id="htcdumlock">HTC Dumlock</text>
+<text id="backup_ignore_size">Ignore image size errors during backup.</text>
+<text id="inject_twrp">Inject TWRP after install.</text>
+<text id="install">Install</text>
+<text id="htcdumlock_install">Install HTC Dumlock</text>
+<text id="wipe_internal">Internal Storage</text>
+<text id="terminalcommand_kill">KILL</text>
+<text id="mount">Mount</text>
+<text id="mount_boot">Mount Boot</text>
+<text id="mount_cache">Mount Cache</text>
+<text id="mount_data">Mount Data</text>
+<text id="mount_internal">Mount Internal</text>
+<text id="mount_menu">Mount Menu</text>
+<text id="mount_sd">Mount SD Card</text>
+<text id="mount_sd_ext">Mount SD-Ext</text>
+<text id="mount_system">Mount System</text>
+<text id="mount_usb">Mount USB Storage</text>
+<text id="filemanageroptions_move">Move</text>
+<text id="name">Name</text>
+<text id="timezone_none">None</text>
+<text id="timezone_offset">Offset (usually 0): %tw_time_zone_guioffset%</text>
+<text id="restore_package_date">Package Date: %tw_restore_file_date%</text>
+<text id="restore_ing">Package to Restore: %tw_restore_name%</text>
+<text id="partsdcard">Partition SD Card</text>
+<text id="decrypt_password_failed">Password Failed, Please Try Again</text>
+<text id="backup_enter_name">Please Enter a Backup Name</text>
+<text id="enter_name">Please Enter a New %tw_fm_type% Name</text>
+<text id="restore_enter_name">Please Enter a New Backup Name</text>
+<text id="filemanagerchmod_enter_permissions">Please Enter New Permissions</text>
+<text id="decrypt_enter_password">Please Enter Your Password</text>
+<text id="reboot_poweroff">Power Off</text>
+<text id="back2cancel">Press back button to cancel.</text>
+<text id="back2cancel_zip">Press back to cancel adding this zip.</text>
+<text id="advanced_reinject_twrp">Re-Inject TWRP</text>
+<text id="reboot">Reboot</text>
+<text id="reboot_menu">Reboot Menu</text>
+<text id="reboot_system">Reboot System</text>
+<text id="reboot_recovery">Recovery</text>
+<text id="backup_recovery">Recovery (%tw_backup_recovery_size% MB)</text>
+<text id="htcdumlock_reflash_recovery">Reflash Recovery</text>
+<text id="refresh_size">Refresh Sizes</text>
+<text id="advanced_reload_theme">Reload Theme</text>
+<text id="restore_rename">Rename Backup</text>
+<text id="filemanageroptions_rename_file">Rename File</text>
+<text id="filemanageroptions_rename_folder">Rename Folder</text>
+<text id="restore">Restore</text>
+<text id="restore_default">Restore Defaults</text>
+<text id="htcdumlock_orig_boot">Restore Original Boot</text>
+<text id="restore_ing">Restoring: %tw_restore_name%</text>
+<text id="wipe_sd_ext">SD Ext</text>
+<text id="restore_sd_ext">sd-ext</text>
+<text id="backup_sd_ext">sd-ext (%tw_backup_sdext_size% MB)</text>
+<text id="select">Select</text>
+<text id="select_folder">Select Folder</text>
+<text id="restore_select_package">Select Package to Restore:</text>
+<text id="timezone_select">Select Time Zone</text>
+<text id="select_zip">Select Zip to Install</text>
+<text id="set_backup_name">Set Backup Name</text>
+<text id="timezone_set">Set Time Zone</text>
+<text id="settings">Settings</text>
+<text id="simulate_for_theme">Simulate actions for theme testing.</text>
+<text id="simulate_failure_actions">Simulate failure for actions.</text>
+<text id="simulate_for_theme">Simulate most actions for theme testing</text>
+<text id="simulating">SIMULATING ACTIONS</text>
+<text id="size">Size</text>
+<text id="backup_skip_md5">Skip MD5 generation during backup.</text>
+<text id="backup_skip_md5">Skip MD5 generation on backups</text>
+<text id="flash_confirm_text2">software and render your device unusable.</text>
+<text id="sort_asc">Sort Ascending:</text>
+<text id="sort_desc">Sort Descending:</text>
+<text id="terminalcommand_path">Starting Path: %tw_terminal_location%</text>
+<text id="successful">Successful</text>
+<text id="partsdcard_swap_size">Swap Size: %tw_swap_size%</text>
+<text id="swipe2backup">Swipe to Back Up</text>
+<text id="swipe2confirm">Swipe to Confirm</text>
+<text id="swipe2flash">Swipe to Confirm Flash</text>
+<text id="partsdcard_swipe">Swipe to Confirm Partition</text>
+<text id="partsdcard_swipe">Swipe to Partition</text>
+<text id="swipe2restore">Swipe to Restore</text>
+<text id="swipe2sideload">Swipe to Start Sideload</text>
+<text id="lock_swipe">Swipe to Unlock</text>
+<text id="reboot_menu_system">System</text>
+<text id="backup_system">System (%tw_backup_system_size% MB)</text>
+<text id="head">Team Win Recovery Project  v%tw_version%</text>
+<text id="head_long">Team Win Recovery Project (twrp)  v%tw_version%</text>
+<text id="head_short">TeamWin Recovery v%tw_version%</text>
+<text id="advanced_terminal_command">Terminal Command</text>
+<text id="partsdcard_text2">This action cannot be undone!</text>
+<text id="flash_confirm_text1">This operation may install incompatible</text>
+<text id="time_zone">Time Zone</text>
+<text id="trydecrypt">Trying Decryption with Your Password</text>
+<text id="usb_unmount">Unmount</text>
+<text id="unmount_boot">Unmount Boot</text>
+<text id="unmount_cache">Unmount Cache</text>
+<text id="unmount_data">Unmount Data</text>
+<text id="unmount_internal">Unmount Internal</text>
+<text id="unmount_sd">Unmount SD Card</text>
+<text id="unmount_sd_ext">Unmount SD-Ext</text>
+<text id="unmount_system">Unmount System</text>
+<text id="usb_mounted">USB Storage Mounted</text>
+<text id="usb_mounted_text">USB Storage Mounted -- Be sure to safely remove your device from your computer before unmounting!</text>
+<text id="use_external">Use external SD</text>
+<text id="use_internal">Use internal storage</text>
+<text id="use_rm">Use rm -rf instead of formatting?</text>
+<text id="use_rm">Use rm -rf instead of formatting.</text>
+<text id="use_external">Using external SD</text>
+<text id="use_internal">Using internal storage</text>
+<text id="flash_confirm_text">WARNING: This operation may install incompatible software and render your device unusable.</text>
+<text id="wipe">Wipe</text>
+<text id="wipe_cache">Wipe Cache.</text>
+<text id="wipe_cache_dalvik">Wipe cache/dalvik</text>
+<text id="wipe_cache_dalvik">Wipe cache/dalvik</text>
+<text id="wipe_dalvik_cache">Wipe Dalvik Cache.</text>
+<text id="wipe_menu">Wipe Menu</text>
+<text id="partsdcard_text1">You will lose all files on your SD card!</text>
+<text id="signature_verification">Zip file signature verification?</text>
+<text id="signature_verification">Zip file signature verification.</text>
+<text id="zip_complete">Zip Install Complete</text>
+<text id="sel_timezone">Select Time Zone:</text>
+<text id="set_lang_en">Set lang to En</text>
+<text id="set_lang_zh">Set lang to zh-CN</text>
+<text id="set_lang_en">Set lang to En</text>
+<text id="set_lang_zh">Set lang to zh-CN</text>
+<text id="true_tdb">TrueDualboot</text>
+<text id="main_active_system">active system 0/1</text>
+<text id="ac_system0">active system0.</text>
+<text id="ac_system1">active system1.</text>
+<text id="current_system">Current System: %tw_active_system%</text>
+<text id="tdb_functions">tdb_func</text>
+<text id="tdb_st">tdb state : %tw_tdb_state%</text>
+<text id="e_tdb">Enable TDB</text>
+<text id="d_tdb">Disable TDB</text>
+<text id="screen">Screen</text>
+<text id="screen_set">Screen Settings</text>
+<text id="e_screen_timeout">Enable screen timeout.</text>
+<text id="screen_timout_sec">Screen timeout in seconds:</text>
+<text id="brightness">Brightness: %tw_brightness_pct%%</text>
+<text id="u_military_time">Use Military Time.</text>
+<text id="vibra_menu">Vibration Duration</text>
+<text id="vibrat_set">Vibration Settings :</text>
+<text id="button_vibrat">Button Vibration:</text>
+<text id="keyboard_vibrat">Keyboard Vibration:</text>
+<text id="action_vibrat">Action Vibration:</text>
+<text id="wipe_all">Wipes Data, Cache, and Dalvik</text>
+<text id="most_of_time">Most of the time this is</text>
+<text id="only_wipe">the only wipe that you need.</text>
+<text id="s_f_reset">Swipe to Factory Reset</text>
+<text id="advanced_wipe">Advanced Wipe</text>
+<text id="selwipepart">Select Partitions to Wipe:</text>
+<text id="swipe2wipe">Swipe to Wipe</text>
+<text id="selpart2backup">Select Partitions to Back Up:</text>
+<text id="selpart2mount">Select Partitions to Mount:</text>
+<text id="no_encrypt">No Encryption</text>
+<text id="using_encrypt">Using Encryption</text>
+<text id="selpackage2restore">Select Package to Restore:</text>
+<action id="text_copyinglog2sd" function="set">tw_action_text1=Copying Log to SD Card...</action>
+<action id="text_copylogcomplete" function="set">tw_complete_text1=Log Copy Complete</action>
+<action id="text_wipeselparts" function="set">tw_text1=Wipe Selected Partition(s)?</action>
+<action id="text_wiping_parts" function="set">tw_action_text1=Wiping Partition(s)...</action>
+<action id="text_wipe_complete" function="set">tw_complete_text1=Wipe Complete</action>
+<action id="text_en_tdb" function="set">tw_text1=Enable truedualboot?</action>
+<action id="text_en_tdb2" function="set">tw_action_text1=Enable truedualboot...</action>
+<action id="text_en_tdb_on" function="set">tw_complete_text1=Truedualboot on</action>
+<action id="text_dis_tdb" function="set">tw_text1=Disable truedualboot?</action>
+<action id="text_dis_tdb2" function="set">tw_action_text1=Disable truedualboot...</action>
+<action id="text_dis_tdb_off" function="set">tw_complete_text1=Truedualboot off</action>

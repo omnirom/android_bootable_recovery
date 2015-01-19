@@ -1,0 +1,701 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Languages Language="en">
+	<string id="lang_en">English</string>
+	<string id="lang_zh-CN">简体中文</string>
+	<string id="language_select">Select Language</string>
+	<string id="lang_set">Set Language</string>
+	<string id="language_current">Current Language: %tw_lang_name%</string>
+	<string id="text_confirm">tw_slider_text=Swipe to Confirm</string>
+	<string id="text_reboot">tw_slider_text=Swipe to Reboot</string>
+	<string id="text_wipe">tw_slider_text=Swipe to Wipe</string>
+	<string id="text_format">tw_slider_text=Swipe to Format</string>
+	<string id="text_wipe_cache_dalvik">tw_text1=Wipe Cache & Dalvik?</string>
+	<string id="text_action_wipe_cache_dalvik">tw_action_text1=Wiping Cache & Dalvik...</string>
+	<string id="text_complete_wipe_cache_dalvik">tw_complete_text1=Cache & Dalvik Wipe Complete</string>
+	<string id="text1_warning_no_os">tw_text1=No OS Installed! Are you</string>
+	<string id="text2_warning_no_os_reboot">tw_text2=sure you wish to reboot?</string>
+	<string id="text_action_reboot">tw_action_text1=Rebooting...</string>
+	<string id="text_complete_reboot">tw_complete_text1=Rebooting...</string>
+	<string id="text2_warning_no_os_poweroff">tw_text2=sure you wish to power off?</string>
+	<string id="text_action_poweroff">tw_action_text1=Turning Off...</string>
+	<string id="text_complete_poweroff">tw_complete_text1=Turning Off...</string>
+	<string id="text_poweroff">tw_slider_text=Swipe to Power Off</string>
+	<string id="text_wipe_cache">tw_text1=Wipe Cache?</string>
+	<string id="text_action_wipe_cache">tw_action_text1=Wiping Cache...</string>
+	<string id="text_complete_wipe_cache">tw_complete_text1=Cache Wipe Complete</string>
+	<string id="text_wipe_dalvik_cache">tw_text1=Wipe Dalvik-Cache?</string>
+	<string id="text_action_wipe_dalvik_cache">tw_action_text1=Wiping Dalvik-Cache...</string>
+	<string id="text_complete_wipe_dalvik_cache">tw_complete_text1=Dalvik-Cache Wipe Complete</string>
+	<string id="text1_factory_reset">tw_text1=Factory Reset?</string>
+	<string id="text2_factory_reset">tw_text2=(Wipes Data and Cache)</string>
+	<string id="text_action_factory_reset">tw_action_text1=Factory Reset...</string>
+	<string id="text_complete_factory_reset">tw_complete_text1=Factory Reset Complete</string>
+	<string id="text1_wipe_system">tw_text1=Wipe System?</string>
+	<string id="text2_wipe_system">tw_text2=This will wipe your ROM</string>
+	<string id="text_action_wipe_system">tw_action_text1=Wiping System...</string>
+	<string id="text_complete_wipe_system">tw_complete_text1=System Wipe Complete</string>
+	<string id="text_wipe_external_storage">tw_text1=Wipe External Storage (SD Card)?</string>
+	<string id="text_action_wipe_external_storage">tw_action_text1=Wiping External Storage...</string>
+	<string id="text_complete_wipe_external_storage">tw_complete_text1=External Storage Wipe Complete</string>
+	<string id="text_wipe_internal_storage">tw_text1=Wipe Internal Storage?</string>
+	<string id="text_action_wipe_internal_storage">tw_action_text1=Wiping Internal Storage...</string>
+	<string id="text_complete_wipe_internal_storage">tw_complete_text1=Internal Storage Wipe Complete</string>
+	<string id="text1_format_data">tw_text1=Format Data? (This wipes all internal storage</string>
+	<string id="text2_format_data">tw_text2=including backups & removes encryption)</string>
+	<string id="text3_format_data">tw_text3=Most of the time you do not need to do this.</string>
+	<string id="text_action_format_data">tw_action_text1=Formatting Data...</string>
+	<string id="text_complete_format_data">tw_complete_text1=Data Format Complete</string>
+	<string id="text_wipe_android_secure">tw_text1=Wipe Android Secure?</string>
+	<string id="text_action_wipe_android_secure">tw_action_text1=Wiping Android Secure...</string>
+	<string id="text_complete_wipe_android_secure">tw_complete_text1=Wipe Android Secure Complete</string>
+	<string id="text_wipe_sd_ext">tw_text1=Wipe SD-Ext?</string>
+	<string id="text_action_wipe_sd_ext">tw_action_text1=Wiping SD-Ext...</string>
+	<string id="text_complete_wipe_sd_ext">tw_complete_text1=SD-Ext Wipe Complete</string>
+	<string id="text_complete_backup">tw_complete_text1=Backup Complete</string>
+	<string id="text_delete_backup">tw_text1=Delete Backup? %tw_restore_name%</string>
+	<string id="text_cannot_undone">tw_text2=This cannot be undone!</string>
+	<string id="text_action_delete_backup">tw_action_text1=Deleting Backup...</string>
+	<string id="text_complete_delete_backup">tw_complete_text1=Backup Delete Complete</string>
+	<string id="text_delete">tw_slider_text=Swipe to Delete</string>
+	<string id="text_rename_backup">tw_text1=Rename Backup?</string>
+	<string id="text_action_rename_backup">tw_action_text1=Renaming Backup...</string>
+	<string id="text_complete_rename_backup">tw_complete_text1=Backup Rename Complete</string>
+	<string id="text_rename">tw_slider_text=Swipe to Rename</string>
+	<string id="text_complete_restore">tw_complete_text1=Restore Complete</string>
+	<string id="text_copy_log">tw_text1=Copy Log to SD Card?</string>
+	<string id="text_action_copy_log">tw_action_text1=Copying Log to SD Card...</string>
+	<string id="text_complete_copy_log">tw_complete_text1=Log Copy Complete</string>
+	<string id="text_fix_permissions">tw_text1=Fix Permissions?</string>
+	<string id="text_action_fix_permissions">tw_action_text1=Fixing Permissions...</string>
+	<string id="text_complete_fix_permissions">tw_complete_text1=Fix Permissions Complete</string>
+	<string id="text_reinject">tw_text1=Re-Inject TWRP?</string>
+	<string id="text_action_reinject">tw_action_text1=Re-Injecting TWRP...</string>
+	<string id="text_complete_reinject">tw_complete_text1=TWRP Injection Complete</string>
+	<string id="text1_action_partition">tw_action_text1=Partitioning SD Card...</string>
+	<string id="text2_action_partition">tw_action_text2=This will take a few minutes.</string>
+	<string id="text_complete_partition">tw_complete_text1=Partitioning Complete</string>
+	<string id="text_restore_original_boot">tw_text1=Restore original boot image?</string>
+	<string id="text_action_restore_original_boot">tw_action_text1=Restoring Original Boot...</string>
+	<string id="text_complete_restore_original_boot">tw_complete_text1=Restore Original Boot Complete</string>
+	<string id="text_reflash_recovery">tw_text1=Reflash recovery to boot?</string>
+	<string id="text_action_reflash_recovery">tw_action_text1=Flashing recovery to boot...</string>
+	<string id="text_complete_reflash_recovery">tw_complete_text1=Recovery Flash to Boot Complete</string>
+	<string id="text_install_htcdumlock">tw_text1=Install HTC dumlock files to ROM?</string>
+	<string id="text_action_install_htcdumlock">tw_action_text1=Installing HTC Dumlock...</string>
+	<string id="text_complete_install_htcdumlock">tw_complete_text1=HTC Dumlock Install Complete</string>
+	<string id="text_complete_file_operation">tw_complete_text1=File Operation Complete</string>
+	<string id="text1_action_adbsidelod">tw_action_text1=ADB Sideload</string>
+	<string id="text2_action_adbsidelod">tw_action_text2=Usage: adb sideload filename.zip</string>
+	<string id="text_complete_adbsidelod">tw_complete_text1=ADB Sideload Complete</string>
+	<string id="text_set_active">tw_action_text1=active system 0/1</string>
+	<string id="text_en_tdb">tw_text1=Enable truedualboot?</string>
+	<string id="text_en_tdb2">tw_action_text1=Enable truddualboot ...</string>
+	<string id="text_en_tdb_on">tw_complete_text1=Truedualboot on </string>
+	<string id="text_dis_tdb">tw_text1=Disable truedualboot?</string>
+	<string id="text_dis_tdb2">tw_action_text1=Disable truedualboot ...</string>
+	<string id="text_dis_tdb_off">tw_complete_text1=Truedualboot off</string>
+        <string id="text_wipeselparts">tw_text1=Wipe Selected Partition(s)?</string>
+        <string id="text_wiping_parts">tw_action_text1=Wiping Partition(s)...</string>
+        <string id="text_wipe_complete">tw_complete_text1=Wipe Complete</string>
+        <string id="text_copyinglog2sd">tw_action_text1=Copying Log to SD Card...</string>
+        <string id="text_copylogcomplete">tw_complete_text1=Log Copy Complete</string>
+	<string id="set_lang_en">Set lang to En</string>
+	<string id="set_lang_zh">Set lang to zh-CN</string>
+	<string id="true_tdb">TrueDualBoot</string>
+	<string id="main_active_system">active system 0/1</string>
+        <string id="current_system">Current System: %tw_active_system%</string>
+	<string id="ac_system0">active system0.</string>
+	<string id="ac_system1">active system1.</string>
+        <string id="screen">Brightness & Timeout</string>
+        <string id="screen_set">Screen Settings</string>
+        <string id="e_screen_timeout">Enable screen timeout.</string>
+        <string id="screen_timout_sec">Screen timeout in seconds:</string>
+        <string id="brightness">Brightness: %tw_brightness_pct%%</string>
+        <string id="u_military_time">Use Military Time.</string>
+        <string id="vibra_menu">Vibration Duration</string>
+        <string id="vibrat_set">Vibration Settings :</string>
+        <string id="button_vibrat">Button Vibration:</string>
+        <string id="keyboard_vibrat">Keyboard Vibration:</string>
+        <string id="action_vibrat">Action Vibration:</string>
+        <string id="wipe_all">Wipes Data, Cache, and Dalvik</string>
+        <string id="most_of_time">Most of the time this is</string>
+        <strind id="only_wipe">the only wipe that you need.</string>
+        <string id="s_f_reset">Swipe to Factory Reset</string>
+        <string id="advanced_wipe">Advanced Wipe</string>
+        <string id="selwipepart">Select Partitions to Wipe:</string>
+        <string id="swipe2wipe">Swipe to Wipe</string>
+        <string id="selpart2backup">Select Partitions to Back Up:</string>
+        <string id="selpart2mount">Select Partitions to Mount:</string>
+        <string id="no_encrypt">No Encryption</string>
+        <string id="using_encrypt">Using Encryption</string>
+        <string id="selpackage2restore">Select Package to Restore:</string>
+	<string id="utc-11">(UTC -11) Samoa, Midway Island</string>
+	<string id="utc-10">(UTC -10) Hawaii</string>
+	<string id="utc-9">(UTC -9) Alaska</string>
+	<string id="utc-8">(UTC -8) Pacific Time</string>
+	<string id="utc-7">(UTC -7) Mountain Time</string>
+	<string id="utc-6">(UTC -6) Central Time</string>
+	<string id="utc-5">(UTC -5) Eastern Time</string>
+	<string id="utc-4">(UTC -4) Atlantic Time</string>
+	<string id="utc-3">(UTC -3) Brazil, Buenos Aires</string>
+	<string id="utc-2">(UTC -2) Mid-Atlantic</string>
+	<string id="utc-1">(UTC -1) Azores, Cape Verde</string>
+	<string id="utc0">(UTC  0) London, Dublin, Lisbon</string>
+	<string id="utc1">(UTC +1) Berlin, Brussels, Paris</string>
+	<string id="utc2">(UTC +2) Athens, Istanbul, South Africa</string>
+	<string id="utc3">(UTC +3) Moscow, Baghdad</string>
+	<string id="utc4">(UTC +4) Abu Dhabi, Tbilisi, Muscat</string>
+	<string id="utc5">(UTC +5) Yekaterinburg, Islamabad</string>
+	<string id="utc6">(UTC +6) Almaty, Dhaka, Colombo</string>
+	<string id="utc7">(UTC +7) Bangkok, Hanoi, Jakarta</string>
+	<string id="utc8">(UTC +8) Beijing, Singapore, Hong Kong</string>
+	<string id="utc9">(UTC +9) Tokyo, Seoul, Yakutsk</string>
+	<string id="utc10">(UTC +10) Eastern Australia, Guam</string>
+	<string id="utc11">(UTC +11) Vladivostok, Solomon Islands</string>
+	<string id="utc12">(UTC +12) Auckland, Wellington, Fiji</string>
+	<string id="timezone_15">15</string>
+	<string id="timezone_30">30</string>
+	<string id="timezone_45">45</string>
+	<string id="restore_android_secure">.android_secure</string>
+	<string id="backup_android_secure">.android_secure (%tw_backup_andsec_size% MB)</string>
+	<string id="filemanageroptions_selected">%tw_fm_type% Selected:</string>
+	<string id="time">%tw_time%</string>
+	<string id="backup_name_exists">A backup with that name already exists!</string>
+	<string id="sideload">ADB Sideload</string>
+	<string id="add_zip">Add More Zips</string>
+	<string id="advanced">Advanced</string>
+	<string id="wipe_android_secure">Android Secure</string>
+	<string id="back">Back</string>
+	<string id="backup_device">Back Up Device</string>
+	<string id="backup">Backup</string>
+	<string id="backup_device">Backup Device</string>
+	<string id="backup_name">Backup Name: %tw_backup_name%</string>
+	<string id="battery_long">Battery Level: %tw_battery%</string>
+	<string id="battery">Battery: %tw_battery%</string>
+	<string id="usb_mounted_text1">Be sure to safely remove your device</string>
+	<string id="restore_boot">Boot</string>
+	<string id="backup_boot">Boot (%tw_backup_boot_size% MB)</string>
+	<string id="reboot_bootloader">Bootloader</string>
+	<string id="choosedestinationfolder">Browse to Destination Folder & Press Select</string>
+	<string id="terminalfolder">Browse to Starting Folder</string>
+	<string id="restore_cache">Cache</string>
+	<string id="wipe_cache">Cache</string>
+	<string id="backup_cache">Cache (%tw_backup_cache_size% MB)</string>
+	<string id="cancel">Cancel</string>
+	<string id="cancel_clear">Cancel / Clear</string>
+	<string id="filemanageroptions_chmod">chmod</string>
+	<string id="filemanageroptions_chmod_755">chmod 755</string>
+	<string id="clear_zip">Clear Queue</string>
+	<string id="clear_zip">Clear Zip Queue</string>
+	<string id="filemanageroptions_copy_file">Copy File</string>
+	<string id="filemanageroptions_copy_folder">Copy Folder</string>
+	<string id="advanced_copy_log">Copy Log to SD</string>
+	<string id="timezone_current">Current Time Zone: %tw_time_zone%</string>
+	<string id="wipe_dalvik_cache">Dalvik Cache</string>
+	<string id="restore_data">Data</string>
+	<string id="backup_data">Data (%tw_backup_data_size% MB)</string>
+	<string id="date">Date</string>
+	<string id="decrypt">Decrypt Data</string>
+	<string id="filemanageroptions_delete">Delete</string>
+	<string id="restore_delete">Delete Backup</string>
+	<string id="timezone_dst">Do you use daylight savings time (DST)?</string>
+	<string id="reboot_download">Download</string>
+	<string id="backup_enable_compression">Enable Compression (Requires more time)</string>
+	<string id="backup_enable_compression">Enable compression.</string>
+	<string id="restore_enable_md5">Enable MD5 checking of backup files</string>
+	<string id="restore_enable_md5">Enable MD5 verification of backup files.</string>
+	<string id="partsdcard_ext_size">EXT Size: %tw_sdext_size%</string>
+	<string id="wipe_external">External Storage</string>
+	<string id="factory_reset">Factory Reset</string>
+	<string id="failed">Failed</string>
+	<string id="zip_queue">File %tw_zip_queue_count% of max of 10</string>
+	<string id="advanced_file_manager">File Manager</string>
+	<string id="filemanagerlist">File Manager: Select a File or Folder</string>
+	<string id="partsdcard_file_system">File system: %tw_sdpart_file_system%</string>
+	<string id="file2flash">File to flash:</string>
+	<string id="advanced_fix_permissions">Fix Permissions</string>
+	<string id="flash_queue">Flashing file %tw_zip_index% of %tw_zip_queue_count%</string>
+	<string id="folder">Folder:</string>
+	<string id="folder">Folders:</string>
+	<string id="md5_check">Force MD5 check on all zips?</string>
+	<string id="md5_check">Force MD5 check on all zips.</string>
+	<string id="wipe_data">Format Data</string>
+	<string id="backup_free_space">Free Space: %tw_storage_free_size% MB</string>
+	<string id="usb_mounted_text2">from your computer before unmounting!</string>
+	<string id="home">Home</string>
+	<string id="htcdumlock">HTC Dumlock</string>
+	<string id="backup_ignore_size">Ignore image size errors during backup.</string>
+	<string id="inject_twrp">Inject TWRP after install.</string>
+	<string id="install">Install</string>
+	<string id="htcdumlock_install">Install HTC Dumlock</string>
+	<string id="wipe_internal">Internal Storage</string>
+	<string id="terminalcommand_kill">KILL</string>
+	<string id="mount">Mount</string>
+	<string id="mount_boot">Mount Boot</string>
+	<string id="mount_cache">Mount Cache</string>
+	<string id="mount_data">Mount Data</string>
+	<string id="mount_internal">Mount Internal</string>
+	<string id="mount_menu">Mount Menu</string>
+	<string id="mount_sd">Mount SD Card</string>
+	<string id="mount_sd_ext">Mount SD-Ext</string>
+	<string id="mount_system">Mount System</string>
+	<string id="mount_usb">Mount USB Storage</string>
+	<string id="filemanageroptions_move">Move</string>
+	<string id="name">Name</string>
+	<string id="timezone_none">None</string>
+	<string id="timezone_offset">Offset (usually 0): %tw_time_zone_guioffset%</string>
+	<string id="restore_package_date">Package Date: %tw_restore_file_date%</string>
+	<string id="restore_ing">Package to Restore: %tw_restore_name%</string>
+	<string id="partsdcard">Partition SD Card</string>
+	<string id="decrypt_password_failed">Password Failed, Please Try Again</string>
+	<string id="backup_enter_name">Please Enter a Backup Name</string>
+	<string id="enter_name">Please Enter a New %tw_fm_type% Name</string>
+	<string id="restore_enter_name">Please Enter a New Backup Name</string>
+	<string id="filemanagerchmod_enter_permissions">Please Enter New Permissions</string>
+	<string id="decrypt_enter_password">Please Enter Your Password</string>
+	<string id="reboot_poweroff">Power Off</string>
+	<string id="back2cancel">Press back button to cancel.</string>
+        <string id="back2cancel_zip">Press back to cancel adding this zip.</string>
+	<string id="advanced_reinject_twrp">Re-Inject TWRP</string>
+	<string id="reboot">Reboot</string>
+	<string id="reboot_menu">Reboot Menu</string>
+	<string id="reboot_system">Reboot System</string>
+	<string id="reboot_recovery">Recovery</string>
+	<string id="backup_recovery">Recovery (%tw_backup_recovery_size% MB)</string>
+	<string id="htcdumlock_reflash_recovery">Reflash Recovery</string>
+	<string id="refresh_size">Refresh Sizes</string>
+	<string id="advanced_reload_theme">Theme & Languages</string>
+	<string id="restore_rename">Rename Backup</string>
+	<string id="filemanageroptions_rename_file">Rename File</string>
+	<string id="filemanageroptions_rename_folder">Rename Folder</string>
+	<string id="restore">Restore</string>
+	<string id="restore_default">Restore Defaults</string>
+	<string id="htcdumlock_orig_boot">Restore Original Boot</string>
+	<string id="restore_ing">Restoring: %tw_restore_name%</string>
+	<string id="wipe_sd_ext">SD Ext</string>
+	<string id="restore_sd_ext">sd-ext</string>
+	<string id="backup_sd_ext">sd-ext (%tw_backup_sdext_size% MB)</string>
+	<string id="select">Select</string>
+	<string id="select_folder">Select Folder</string>
+	<string id="restore_select_package">Select Package to Restore:</string>
+	<string id="timezone_select">Select Time Zone</string>
+	<string id="select_zip">Select Zip to Install</string>
+	<string id="set_backup_name">Set Backup Name</string>
+	<string id="timezone_set">Set Time Zone</string>
+	<string id="settings">Settings</string>
+	<string id="simulate_for_theme">Simulate actions for theme testing.</string>
+	<string id="simulate_failure_actions">Simulate failure for actions.</string>
+	<string id="simulate_for_theme">Simulate most actions for theme testing</string>
+	<string id="simulating">SIMULATING ACTIONS</string>
+	<string id="size">Size</string>
+	<string id="backup_skip_md5">Skip MD5 generation during backup.</string>
+	<string id="backup_skip_md5">Skip MD5 generation on backups</string>
+	<string id="flash_confirm_text2">software and render your device unusable.</string>
+	<string id="sort_asc">Sort Ascending:</string>
+	<string id="sort_desc">Sort Descending:</string>
+	<string id="terminalcommand_path">Starting Path: %tw_terminal_location%</string>
+	<string id="successful">Successful</string>
+	<string id="partsdcard_swap_size">Swap Size: %tw_swap_size%</string>
+	<string id="swipe2backup">Swipe to Back Up</string>
+	<string id="swipe2confirm">Swipe to Confirm</string>
+	<string id="swipe2flash">Swipe to Confirm Flash</string>
+	<string id="partsdcard_swipe">Swipe to Confirm Partition</string>
+	<string id="partsdcard_swipe">Swipe to Partition</string>
+	<string id="swipe2restore">Swipe to Restore</string>
+	<string id="swipe2sideload">Swipe to Start Sideload</string>
+	<string id="lock_swipe">Swipe to Unlock</string>
+        <string id="reboot_menu_system">System</string>
+	<string id="backup_system">System (%tw_backup_system_size% MB)</string>
+	<string id="head">Team Win Recovery Project  v%tw_version%</string>
+	<string id="head_long">Team Win Recovery Project (twrp)  v%tw_version%</string>
+	<string id="head_short">TeamWin Recovery v%tw_version%</string>
+	<string id="advanced_terminal_command">Terminal Command</string>
+	<string id="partsdcard_text2">This action cannot be undone!</string>
+	<string id="flash_confirm_text1">This operation may install incompatible</string>
+	<string id="time_zone">Time Zone</string>
+	<string id="trydecrypt">Trying Decryption with Your Password</string>
+	<string id="usb_unmount">Unmount</string>
+	<string id="unmount_boot">Unmount Boot</string>
+	<string id="unmount_cache">Unmount Cache</string>
+	<string id="unmount_data">Unmount Data</string>
+	<string id="unmount_internal">Unmount Internal</string>
+	<string id="unmount_sd">Unmount SD Card</string>
+	<string id="unmount_sd_ext">Unmount SD-Ext</string>
+	<string id="unmount_system">Unmount System</string>
+	<string id="usb_mounted">USB Storage Mounted</string>
+	<string id="usb_mounted_text">USB Storage Mounted -- Be sure to safely remove your device from your computer before unmounting!</string>
+	<string id="use_external">Use external SD</string>
+	<string id="use_internal">Use internal storage</string>
+	<string id="use_rm">Use rm -rf instead of formatting?</string>
+	<string id="use_rm">Use rm -rf instead of formatting.</string>
+	<string id="use_external">Using external SD</string>
+	<string id="use_internal">Using internal storage</string>
+	<string id="flash_confirm_text">WARNING: This operation may install incompatible software and render your device unusable.</string>
+	<string id="wipe">Wipe</string>
+	<string id="wipe_cache">Wipe Cache.</string>
+	<string id="wipe_cache_dalvik">Wipe cache/dalvik</string>
+	<string id="wipe_cache_dalvik">Wipe cache/dalvik</string>
+	<string id="wipe_dalvik_cache">Wipe Dalvik Cache.</string>
+	<string id="wipe_menu">Wipe Menu</string>
+	<string id="partsdcard_text1">You will lose all files on your SD card!</string>
+	<string id="signature_verification">Zip file signature verification?</string>
+	<string id="signature_verification">Zip file signature verification.</string>
+	<string id="zip_complete">Zip Install Complete</string>
+	<string id="sel_timezone">Select Time Zone</string>
+	<string id="tdb_functions">TrueDualBoot func</string>
+	<string id="tdb_st">tdb state:%tw_tdb_state%</string>
+	<string id="e_tdb">Turn on tdb</string>
+	<string id="d_tdb">Turn off tdb</string>
+</Languages>
+
+<Languages Language="zh-CN">
+	<string id="lang_en">English</string>
+	<string id="lang_zh-CN">简体中文</string>
+	<string id="language_select">选择语言</string>
+	<string id="lang_set">设置语言</string>
+	<string id="language_current">当前语言: %tw_lang_name%</string>
+	<string id="text_confirm">tw_slider_text=滑动按钮确认</string>
+	<string id="text_reboot">tw_slider_text=滑动按钮重启</string>
+	<string id="text_wipe">tw_slider_text=滑动按钮Wipe</string>
+	<string id="text_format">tw_slider_text=滑动按钮Format</string>
+	<string id="text_wipe_cache_dalvik">tw_text1=Wipe Cache & Dalvik?</string>
+	<string id="text_action_wipe_cache_dalvik">tw_action_text1=Wiping Cache & Dalvik...</string>
+	<string id="text_complete_wipe_cache_dalvik">tw_complete_text1=Cache & Dalvik Wipe 完成</string>
+	<string id="text1_warning_no_os">tw_text1=未安装系统! 你确认</string>
+	<string id="text2_warning_no_os_reboot">tw_text2=想要重启么?</string>
+	<string id="text_action_reboot">tw_action_text1=重启中...</string>
+	<string id="text_complete_reboot">tw_complete_text1=重启中...</string>
+	<string id="text2_warning_no_os_poweroff">tw_text2=想要关机么?</string>
+	<string id="text_action_poweroff">tw_action_text1=关机中...</string>
+	<string id="text_complete_poweroff">tw_complete_text1=关机中...</string>
+	<string id="text_poweroff">tw_slider_text=滑动按钮关机</string>
+	<string id="text_wipe_cache">tw_text1=Wipe Cache?</string>
+	<string id="text_action_wipe_cache">tw_action_text1=Wipe Cache 中...</string>
+	<string id="text_complete_wipe_cache">tw_complete_text1=Cache Wipe 完成</string>
+	<string id="text_wipe_dalvik_cache">tw_text1=Wipe Dalvik-Cache?</string>
+	<string id="text_action_wipe_dalvik_cache">tw_action_text1=Wipe Dalvik-Cache 中...</string>
+	<string id="text_complete_wipe_dalvik_cache">tw_complete_text1=Dalvik-Cache Wipe 完成</string>
+	<string id="text1_factory_reset">tw_text1=恢复出厂模式?</string>
+	<string id="text2_factory_reset">tw_text2=(Wipes Data and Cache)</string>
+	<string id="text_action_factory_reset">tw_action_text1=恢复出厂中...</string>
+	<string id="text_complete_factory_reset">tw_complete_text1=恢复出厂中完成</string>
+	<string id="text1_wipe_system">tw_text1=Wipe 系统?</string>
+	<string id="text2_wipe_system">tw_text2=这将会清除你的系统！</string>
+	<string id="text_action_wipe_system">tw_action_text1=Wiping System...</string>
+	<string id="text_complete_wipe_system">tw_complete_text1=系统 Wipe 完成</string>
+	<string id="text_wipe_external_storage">tw_text1=Wipe TF卡?</string>
+	<string id="text_action_wipe_external_storage">tw_action_text1=Wipe TF卡中...</string>
+	<string id="text_complete_wipe_external_storage">tw_complete_text1=TF卡 Wipe 完成</string>
+	<string id="text_wipe_internal_storage">tw_text1=Wipe 内置存储?</string>
+	<string id="text_action_wipe_internal_storage">tw_action_text1=Wipe 内置存储中...</string>
+	<string id="text_complete_wipe_internal_storage">tw_complete_text1=内置存储 Wipe 完成</string>
+	<string id="text1_format_data">tw_text1=格式化 Data? (这个操作可能会清除</string>
+	<string id="text2_format_data">tw_text2=内置储存包括系统备份，并移除加密)</string>
+	<string id="text3_format_data">tw_text3=大多数情况下你不需要进行这个操作！</string>
+	<string id="text_action_format_data">tw_action_text1=格式化 Data 中...</string>
+	<string id="text_complete_format_data">tw_complete_text1=Data 格式化完成</string>
+	<string id="text_wipe_android_secure">tw_text1=Wipe Android Secure?</string>
+	<string id="text_action_wipe_android_secure">tw_action_text1=Wipe Android Secure 中...</string>
+	<string id="text_complete_wipe_android_secure">tw_complete_text1=Wipe Android Secure 完成</string>
+	<string id="text_wipe_sd_ext">tw_text1=Wipe SD-Ext?</string>
+	<string id="text_action_wipe_sd_ext">tw_action_text1=Wipe SD-Ext 中...</string>
+	<string id="text_complete_wipe_sd_ext">tw_complete_text1=SD-Ext Wipe 完成</string>
+	<string id="text_complete_backup">tw_complete_text1=备份完成</string>
+	<string id="text_delete_backup">tw_text1=删除备份? %tw_restore_name%</string>
+	<string id="text_cannot_undone">tw_text2=这个操作将不可撤销!</string>
+	<string id="text_action_delete_backup">tw_action_text1=删除备份中...</string>
+	<string id="text_complete_delete_backup">tw_complete_text1=删除备份完成</string>
+	<string id="text_delete">tw_slider_text=滑动按钮删除</string>
+	<string id="text_rename_backup">tw_text1=重命名备份?</string>
+	<string id="text_action_rename_backup">tw_action_text1=重命名备份中...</string>
+	<string id="text_complete_rename_backup">tw_complete_text1=备份重命名完成</string>
+	<string id="text_rename">tw_slider_text=滑动按钮重命名</string>
+	<string id="text_complete_restore">tw_complete_text1=恢复完成</string>
+	<string id="text_copy_log">tw_text1=复制 Log 到TF卡?</string>
+	<string id="text_action_copy_log">tw_action_text1=复制 Log 中...</string>
+	<string id="text_complete_copy_log">tw_complete_text1=Log 复制完成</string>
+	<string id="text_fix_permissions">tw_text1=修复权限?</string>
+	<string id="text_action_fix_permissions">tw_action_text1=修复权限中...</string>
+	<string id="text_complete_fix_permissions">tw_complete_text1=修复权限完成</string>
+	<string id="text_reinject">tw_text1=重新注入 TWRP?</string>
+	<string id="text_action_reinject">tw_action_text1=重新注入 TWRP 中...</string>
+	<string id="text_complete_reinject">tw_complete_text1=TWRP 重新注入完成</string>
+	<string id="text1_action_partition">tw_action_text1=对TF卡分区...</string>
+	<string id="text2_action_partition">tw_action_text2=这个过程需要几分钟.</string>
+	<string id="text_complete_partition">tw_complete_text1=分区完成</string>
+	<string id="text_restore_original_boot">tw_text1=恢复原始 boot 镜像?</string>
+	<string id="text_action_restore_original_boot">tw_action_text1=恢复原始 boot 镜像中...</string>
+	<string id="text_complete_restore_original_boot">tw_complete_text1=恢复原始 boot 镜像完成</string>
+	<string id="text_reflash_recovery">tw_text1=重刷 recovery 到 boot 分区?</string>
+	<string id="text_action_reflash_recovery">tw_action_text1=recovery 刷入 boot 分区中...</string>
+	<string id="text_complete_reflash_recovery">tw_complete_text1=Recovery 刷入 Boot 分区完成</string>
+	<string id="text_install_htcdumlock">tw_text1=安装 HTC dumlock 文件到 ROM 中?</string>
+	<string id="text_action_install_htcdumlock">tw_action_text1=安装 HTC dumlock 中...</string>
+	<string id="text_complete_install_htcdumlock">tw_complete_text1=安装 HTC dumlock 完成</string>
+	<string id="text_complete_file_operation">tw_complete_text1=文件操作完成</string>
+	<string id="text1_action_adbsidelod">tw_action_text1=ADB Sideload</string>
+	<string id="text2_action_adbsidelod">tw_action_text2=用法: adb sideload filename.zip</string>
+	<string id="text_complete_adbsidelod">tw_complete_text1=ADB Sideload 完成</string>
+	<string id="text_en_tdb">tw_text1=开启双系统支持?</string>
+	<string id="text_en_tdb2">tw_action_text1=正在处理中 ...</string>
+	<string id="text_en_tdb_on">tw_complete_text1=成功开启双系统支持 </string>
+	<string id="text_dis_tdb">tw_text1=关闭双系统支持?</string>
+	<string id="text_dis_tdb2">tw_action_text1=正在处理中 ...</string>
+	<string id="text_dis_tdb_off">tw_complete_text1=成功关闭双系统支持</string>
+	<string id="text_set_active">tw_action_text1=激活系统0/1</string>
+        <string id="text_wipeselparts">tw_text1=是否清空所选分区？</string>
+        <string id="text_wiping_parts">tw_action_text1=正在格式化分区。。</string>
+        <string id="text_wipe_complete">tw_complete_text1=格式化完成</string>
+        <string id="text_copyinglog2sd">tw_action_text1=正在往sdcard复制日志...</string>
+        <string id="text_copylogcomplete">tw_complete_text1=复制日志完成</string>
+
+	<string id="main_active_system">激活系统0/1</string>
+	<string id="true_tdb">双系统设置</string>
+	<string id="ac_system0">选择系统0</string>
+	<string id="ac_system1">选择系统1</string>
+        <string id="screen">屏幕设置</string>
+        <string id="screen_set">屏幕设置</string>
+        <string id="e_screen_timeout">允许关闭屏幕</string>
+        <string id="screen_timout_sec">多少秒关闭屏幕</string>
+        <string id="u_military_time">使用军方时间</string>
+        <string id="vibra_menu">振动频率设置</string>
+        <string id="vibrat_set">振动频率设置</string>
+        <string id="button_vibrat">按键:</string>
+        <string id="keyboard_vibrat">键盘:</string>
+        <string id="action_vibrat">操作:</string>
+        <string id="brightness">亮度: %tw_brightness_pct%%</string>
+        <string id="current_system">当前系统: %tw_active_system%</string>
+	<string id="set_lang_zh">设置语言为中文</string>
+	<string id="set_lang_en">设置语言为英文</string>
+        <string id="wipe_all">清空 Data,Cache,Dalvik分区</string>
+        <string id="most_of_time">大多数时候</string>
+        <strind id="only_wipe">这就是你需要的操作.</string>
+        <string id="s_f_reset">滑动恢复出厂设置</string>
+        <string id="advanced_wipe">高级操作</string>
+        <string id="selwipepart">选择要清空的分区</string>
+        <string id="swipe2wipe">滑动按钮清空</string>
+        <string id="selpart2backup">选择要备份的分区</string>
+        <string id="selpart2mount">选择要挂载的分区</string>
+        <string id="no_encrypt">没有开启加密</string>
+        <string id="using_encrypt">已经启用加密</string>
+        <string id="selpackage2restore">选择恢复用的镜像:</string>
+
+	<string id="utc-11">(UTC -11) 美属萨摩亚, 中途岛</string>
+	<string id="utc-10">(UTC -10) 夏威夷</string>
+	<string id="utc-9">(UTC -9) 阿拉斯加</string>
+	<string id="utc-8">(UTC -8) 太平洋标准时间</string>
+	<string id="utc-7">(UTC -7) 北美山区标准时间</string>
+	<string id="utc-6">(UTC -6) 北美中部标准时间</string>
+	<string id="utc-5">(UTC -5) 北美东部标准时间</string>
+	<string id="utc-4">(UTC -4) 大西洋标准时间</string>
+	<string id="utc-3">(UTC -3) 巴西, 阿根廷(布宜诺斯)</string>
+	<string id="utc-2">(UTC -2) 中大西洋</string>
+	<string id="utc-1">(UTC -1) 葡萄牙(亚速尔群岛), 佛得角</string>
+	<string id="utc0">(UTC  0) 伦敦, 都柏林, 里斯本</string>
+	<string id="utc1">(UTC +1) 柏林, 布鲁塞尔, 巴黎</string>
+	<string id="utc2">(UTC +2) 雅典, 伊斯坦布尔, 南非</string>
+	<string id="utc3">(UTC +3) 莫斯科, 巴格达</string>
+	<string id="utc4">(UTC +4) 阿布扎比, 第比利斯, 马斯喀特</string>
+	<string id="utc5">(UTC +5) 叶卡捷琳堡, 伊斯兰堡</string>
+	<string id="utc6">(UTC +6) 阿拉木图, 达卡, 科伦坡</string>
+	<string id="utc7">(UTC +7) 曼谷, 河内, 雅加达</string>
+	<string id="utc8">(UTC +8) 北京, 新加坡, 香港</string>
+	<string id="utc9">(UTC +9) 东京, 首尔, 雅库茨克</string>
+	<string id="utc10">(UTC +10) 澳大利亚东部, 关岛</string>
+	<string id="utc11">(UTC +11) 符拉迪沃斯托克, 索罗门群岛</string>
+	<string id="utc12">(UTC +12) 奥克兰, 惠灵顿, 斐济</string>
+	<string id="timezone_15">15分</string>
+	<string id="timezone_30">30分</string>
+	<string id="timezone_45">45分</string>
+	<string id="restore_android_secure">.android_secure</string>
+	<string id="backup_android_secure">.android_secure (%tw_backup_andsec_size% MB)</string>
+	<string id="filemanageroptions_selected">已选择%tw_fm_type%:</string>
+	<string id="time">时间:%tw_time%</string>
+	<string id="backup_name_exists">备份文件已存在!</string>
+	<string id="sideload">ADB Sideload</string>
+	<string id="add_zip">继续添加Zip</string>
+	<string id="advanced">高级</string>
+	<string id="wipe_android_secure">Android Secure</string>
+	<string id="back">返回</string>
+	<string id="backup_device">备份分区选择</string>
+	<string id="backup">备份分区</string>
+	<string id="backup_device">备份分区选择</string>
+	<string id="backup_name">备份文件名字: %tw_backup_name%</string>
+	<string id="battery_long">剩余电量: %tw_battery%</string>
+	<string id="battery">电量: %tw_battery%</string>
+	<string id="usb_mounted_text1">确保卸载前从你的电</string>
+	<string id="restore_boot">Boot</string>
+	<string id="backup_boot">Boot (%tw_backup_boot_size% MB)</string>
+	<string id="reboot_bootloader">Fastboot模式</string>
+	<string id="choosedestinationfolder">选择目标文件夹 & 按选择按钮</string>
+	<string id="terminalfolder">浏览运行文件夹</string>
+	<string id="restore_cache">Cache</string>
+	<string id="wipe_cache">Cache</string>
+	<string id="backup_cache">Cache (%tw_backup_cache_size% MB)</string>
+	<string id="cancel">取消</string>
+	<string id="cancel_clear">取消/清除</string>
+	<string id="filemanageroptions_chmod">chmod</string>
+	<string id="filemanageroptions_chmod_755">chmod 755</string>
+	<string id="clear_zip">清除Zip列队</string>
+	<string id="clear_zip">清除Zip列队</string>
+	<string id="filemanageroptions_copy_file">复制文件</string>
+	<string id="filemanageroptions_copy_folder">复制文件夹</string>
+	<string id="advanced_copy_log">复制Log到SD卡</string>
+	<string id="timezone_current">当前时区: %tw_time_zone%</string>
+	<string id="wipe_dalvik_cache">Dalvik Cache</string>
+	<string id="restore_data">Data</string>
+	<string id="backup_data">Data (%tw_backup_data_size% MB)</string>
+	<string id="date">日期</string>
+	<string id="decrypt">Decrypt Data</string>
+	<string id="filemanageroptions_delete">删除</string>
+	<string id="restore_delete">删除备份文件</string>
+	<string id="timezone_dst">是否使用夏令时 (DST)?</string>
+	<string id="reboot_download">下载模式</string>
+	<string id="backup_enable_compression">启用压缩.</string>
+	<string id="backup_enable_compression">启用压缩.</string>
+	<string id="restore_enable_md5">启用MD5校验所有备份文件.</string>
+	<string id="restore_enable_md5">启用MD5校验所有备份文件.</string>
+	<string id="partsdcard_ext_size">EXT大小: %tw_sdext_size%</string>
+	<string id="wipe_external">外部存储</string>
+	<string id="factory_reset">恢复出厂</string>
+	<string id="failed">失败</string>
+	<string id="zip_queue">最多10个文件，第%tw_zip_queue_count%个</string>
+	<string id="advanced_file_manager">文件管理器</string>
+	<string id="filemanagerlist">文件浏览: 选择文件或者文件夹</string>
+	<string id="partsdcard_file_system">文件系统: %tw_sdpart_file_system%</string>
+	<string id="file2flash">将要刷的文件:</string>
+	<string id="advanced_fix_permissions">修复权限</string>
+	<string id="flash_queue">刷入文件%tw_zip_index%，共%tw_zip_queue_count%个</string>
+	<string id="folder">文件夹:</string>
+	<string id="folder">文件夹:</string>
+	<string id="md5_check">强制检查所有zip的MD5值.</string>
+	<string id="md5_check">强制检查所有zip的MD5值.</string>
+	<string id="wipe_data">格式化 Data</string>
+	<string id="backup_free_space">剩余空间: %tw_storage_free_size% MB</string>
+	<string id="usb_mounted_text2">脑上安全移除设备!</string>
+	<string id="home">主页</string>
+	<string id="htcdumlock">HTC Dumlock</string>
+	<string id="backup_ignore_size">备份时忽略image大小错误.</string>
+	<string id="inject_twrp">安装后注入TWRP.</string>
+	<string id="install">安装刷机包</string>
+	<string id="htcdumlock_install">安装 HTC Dumlock</string>
+	<string id="wipe_internal">内部存储</string>
+	<string id="terminalcommand_kill">KILL</string>
+	<string id="mount">挂载分区</string>
+	<string id="mount_boot">挂载Boot分区</string>
+	<string id="mount_cache">挂载Cache</string>
+	<string id="mount_data">挂载Data</string>
+	<string id="mount_internal">挂载内置储存</string>
+	<string id="mount_menu">挂载菜单</string>
+	<string id="mount_sd">挂载TF卡</string>
+	<string id="mount_sd_ext">挂载SD-Ext</string>
+	<string id="mount_system">挂载System</string>
+	<string id="mount_usb">挂载USB存储</string>
+	<string id="filemanageroptions_move">移动</string>
+	<string id="name">名字</string>
+	<string id="timezone_none">无</string>
+	<string id="timezone_offset">时间偏差(常用 0): %tw_time_zone_guioffset%</string>
+	<string id="restore_package_date">备份包日期: %tw_restore_file_date%</string>
+	<string id="restore_ing">还原中: %tw_restore_name%</string>
+	<string id="partsdcard">对TF卡分区</string>
+	<string id="decrypt_password_failed">密码错误，请重新输入!</string>
+	<string id="backup_enter_name">请输入备份文件名字</string>
+	<string id="enter_name">请输入新的 %tw_fm_type% 名字</string>
+	<string id="restore_enter_name">输入新的备份文件名</string>
+	<string id="filemanagerchmod_enter_permissions">请输入新的权限</string>
+	<string id="decrypt_enter_password">请输入密码</string>
+	<string id="reboot_poweroff">关机</string>
+        <string id="back2cancel_zip">按返回键取消添加这个zip包.</string>
+        <string id="back2cancel">按返回键取消.</string>
+	<string id="advanced_reinject_twrp">重新注入TWRP</string>
+	<string id="reboot">重启</string>
+	<string id="reboot_menu">重启菜单</string>
+	<string id="reboot_system">重启系统</string>
+	<string id="reboot_recovery">Recovery模式</string>
+	<string id="backup_recovery">Recovery (%tw_backup_recovery_size% MB)</string>
+	<string id="htcdumlock_reflash_recovery">重刷Recovery</string>
+	<string id="refresh_size">刷新大小</string>
+	<string id="advanced_reload_theme">重载主题 & 设置语言</string>
+	<string id="restore_rename">重命名备份文件</string>
+	<string id="filemanageroptions_rename_file">重命名文件</string>
+	<string id="filemanageroptions_rename_folder">重命名文件夹</string>
+	<string id="restore">还原分区</string>
+	<string id="restore_default">恢复默认设置</string>
+	<string id="htcdumlock_orig_boot">恢复初始Boot</string>
+	<string id="restore_ing">还原中: %tw_restore_name%</string>
+	<string id="wipe_sd_ext">SD Ext</string>
+	<string id="restore_sd_ext">sd-ext</string>
+	<string id="backup_sd_ext">sd-ext (%tw_backup_sdext_size% MB)</string>
+	<string id="select">选择</string>
+	<string id="select_folder">选择文件夹</string>
+	<string id="restore_select_package">选择还原包:</string>
+	<string id="timezone_select">选择时区</string>
+	<string id="select_zip">选择要安装的zip包</string>
+	<string id="set_backup_name">设置备份文件名字</string>
+	<string id="timezone_set">设置时区</string>
+	<string id="settings">设置</string>
+	<string id="simulate_for_theme">主题测试时的模拟操作.</string>
+	<string id="simulate_failure_actions">模拟失败的操作.</string>
+	<string id="simulate_for_theme">主题测试时的模拟操作.</string>
+	<string id="simulating">模拟操作</string>
+	<string id="size">大小</string>
+	<string id="backup_skip_md5">备份时略过MD5生成.</string>
+	<string id="backup_skip_md5">备份时略过MD5生成.</string>
+	<string id="flash_confirm_text2">件，使您的设备无法使用。</string>
+	<string id="sort_asc">升序:</string>
+	<string id="sort_desc">降序:</string>
+	<string id="terminalcommand_path">运行路径: %tw_terminal_location%</string>
+	<string id="successful">成功</string>
+	<string id="partsdcard_swap_size">Swap大小: %tw_swap_size%</string>
+	<string id="swipe2backup">滑动按钮开始备份</string>
+	<string id="swipe2confirm">滑动按钮确认</string>
+	<string id="swipe2flash">滑动按钮确认刷入</string>
+	<string id="partsdcard_swipe">滑动按钮确认分区</string>
+	<string id="partsdcard_swipe">滑动按钮确认分区</string>
+	<string id="swipe2restore">滑动按钮开始还原</string>
+	<string id="swipe2sideload">滑动按钮开始Sideload</string>
+	<string id="lock_swipe">滑动按钮解锁</string>
+        <string id="reboot_menu_system">重启系统</string>
+	<string id="backup_system">System/系统 (%tw_backup_system_size% MB)</string>
+	<string id="head">中文TWRP  版本%tw_version%</string>
+	<string id="head_long">中文TWRP  版本%tw_version%</string>
+	<string id="head_short">中文TWRP  版本%tw_version%</string>
+	<string id="advanced_terminal_command">终端命令</string>
+	<string id="partsdcard_text2">此操作无法恢复!</string>
+	<string id="flash_confirm_text1">此操作可能安装不兼容的软</string>
+	<string id="time_zone">时区</string>
+	<string id="trydecrypt">请用你的密码解密</string>
+	<string id="usb_unmount">卸载</string>
+	<string id="unmount_boot">卸载Boot</string>
+	<string id="unmount_cache">卸载Cache</string>
+	<string id="unmount_data">卸载Data</string>
+	<string id="unmount_internal">卸载内置储存</string>
+	<string id="unmount_sd">卸载TF卡</string>
+	<string id="unmount_sd_ext">卸载SD-Ext</string>
+	<string id="unmount_system">卸载System</string>
+	<string id="usb_mounted">USB存储已挂载</string>
+	<string id="usb_mounted_text">确保卸载前从你的电脑上安全移除设备!</string>
+	<string id="use_external">使用外置TF卡</string>
+	<string id="use_internal">使用内部存储</string>
+	<string id="use_rm">使用rm -rf代替格式化?</string>
+	<string id="use_rm">使用rm -rf代替格式化.</string>
+	<string id="use_external">使用外置TF卡</string>
+	<string id="use_internal">使用内部存储</string>
+	<string id="flash_confirm_text">警告: 此操作可能安装不兼容的软件，使您的设备无法使用。</string>
+	<string id="wipe">清除数据</string>
+	<string id="wipe_cache">清除 Cache.</string>
+	<string id="wipe_cache_dalvik">清除 Cache/Dalvik</string>
+	<string id="wipe_cache_dalvik">清除 Cache/Dalvik</string>
+	<string id="wipe_dalvik_cache">清除 Dalvik Cache.</string>
+	<string id="wipe_menu">清除菜单</string>
+	<string id="partsdcard_text1">SD卡上所有文件将被清除!</string>
+	<string id="signature_verification">Zip文件签名校验.</string>
+	<string id="signature_verification">Zip文件签名校验.</string>
+	<string id="zip_complete">Zip包安装完成</string>
+	<string id="sel_timezone">选择时区</string>
+	<string id="tdb_functions">真实双系统开关</string>
+	<string id="tdb_st">双系统状态 : %tw_tdb_state%</string>
+	<string id="e_tdb">开启双系统</string>
+	<string id="d_tdb">关闭双系统</string>
+</Languages>
+

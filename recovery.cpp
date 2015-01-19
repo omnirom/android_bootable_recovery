@@ -929,7 +929,6 @@ main(int argc, char **argv) {
         return 0;
     }
 
-<<<<<<< HEAD
     printf("Starting TWRP %s on %s", TW_VERSION_STR, ctime(&start));
 
     Device* device = make_device();
