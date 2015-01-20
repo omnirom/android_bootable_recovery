@@ -729,10 +729,10 @@ extern "C" int gui_init(void)
 {
 	gr_init();
 
-	if (res_create_surface("/res/images/curtain.jpg", &gCurtain))
+	if (res_create_surface("/twres/images/curtain.jpg", &gCurtain))
 	{
 		printf
-		("Unable to locate '/res/images/curtain.jpg'\nDid you set a DEVICE_RESOLUTION in your config files?\n");
+		("Unable to locate '/twres/images/curtain.jpg'\nDid you set a DEVICE_RESOLUTION in your config files?\n");
 		return -1;
 	}
 
@@ -749,7 +749,7 @@ extern "C" int gui_loadResources(void)
 	DataManager::GetValue(TW_IS_ENCRYPTED, check);
 	if (check)
 	{
-		if (PageManager::LoadPackage("TWRP", "/res/ui.xml", "decrypt"))
+		if (PageManager::LoadPackage("TWRP", "/twres/ui.xml", "decrypt"))
 		{
 			LOGERR("Failed to load base packages.\n");
 			goto error;
@@ -784,7 +784,7 @@ extern "C" int gui_loadResources(void)
 		if (check || PageManager::LoadPackage("TWRP", theme_path, "main"))
 		{
 #endif // ifndef TW_OEM_BUILD
-			if (PageManager::LoadPackage("TWRP", "/res/ui.xml", "main"))
+			if (PageManager::LoadPackage("TWRP", "/twres/ui.xml", "main"))
 			{
 				LOGERR("Failed to load base packages.\n");
 				goto error;
@@ -820,7 +820,7 @@ extern "C" int gui_loadCustomResources(void)
 		// There is a custom theme, try to load it
 		if (PageManager::ReloadPackage("TWRP", theme_path)) {
 			// Custom theme failed to load, try to load stock theme
-			if (PageManager::ReloadPackage("TWRP", "/res/ui.xml")) {
+			if (PageManager::ReloadPackage("TWRP", "/twres/ui.xml")) {
 				LOGERR("Failed to load base packages.\n");
 				goto error;
 			}
