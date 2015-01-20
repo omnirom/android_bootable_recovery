@@ -156,6 +156,9 @@ endif
 ifneq ($(TW_RECOVERY_ADDITIONAL_RELINK_FILES),)
     RELINK_SOURCE_FILES += $(TW_RECOVERY_ADDITIONAL_RELINK_FILES)
 endif
+ifneq ($(wildcard external/pcre/Android.mk),)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libpcre.so
+endif
 
 TWRP_AUTOGEN := $(intermediates)/teamwin
 
