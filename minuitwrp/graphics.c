@@ -626,7 +626,7 @@ void* gr_loadFont(const char* fontName)
     {
         char tmp[128];
 
-        sprintf(tmp, "/res/fonts/%s.dat", fontName);
+        sprintf(tmp, "%sfonts/%s.dat", TWRES, fontName);
         fd = open(tmp, O_RDONLY);
         if (fd == -1)
             return NULL;

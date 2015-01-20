@@ -647,7 +647,7 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 		LOGINFO("PageSet::CheckInclude loading filename: '%s'\n", filename.c_str());
 		if (!package) {
 			// We can try to load the XML directly...
-			filename = "/res/";
+			filename = TWRES;
 			filename += attr->value();
 			struct stat st;
 			if(stat(filename.c_str(),&st) != 0) {

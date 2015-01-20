@@ -344,8 +344,12 @@ string TWFunc::Get_Root_Path(string Path) {
 	return Local_Path;
 }
 
+#define HTCD_LOCATION "htcd/"
+
 void TWFunc::install_htc_dumlock(void) {
 	int need_libs = 0;
+	string folder_path = TWRES;
+	folder_path += HTCD_LOCATION;
 
 	if (!PartitionManager.Mount_By_Path("/system", true))
 		return;
@@ -354,30 +358,30 @@ void TWFunc::install_htc_dumlock(void) {
 		return;
 
 	gui_print("Installing HTC Dumlock to system...\n");
-	copy_file("/res/htcd/htcdumlocksys", "/system/bin/htcdumlock", 0755);
+	copy_file(folder_path + "htcdumlocksys", "/system/bin/htcdumlock", 0755);
 	if (!Path_Exists("/system/bin/flash_image")) {
 		gui_print("Installing flash_image...\n");
-		copy_file("/res/htcd/flash_imagesys", "/system/bin/flash_image", 0755);
+		copy_file(folder_path + "flash_imagesys", "/system/bin/flash_image", 0755);
 		need_libs = 1;
 	} else
 		gui_print("flash_image is already installed, skipping...\n");
 	if (!Path_Exists("/system/bin/dump_image")) {
 		gui_print("Installing dump_image...\n");
-		copy_file("/res/htcd/dump_imagesys", "/system/bin/dump_image", 0755);
+		copy_file(folder_path + "dump_imagesys", "/system/bin/dump_image", 0755);
 		need_libs = 1;
 	} else
 		gui_print("dump_image is already installed, skipping...\n");
 	if (need_libs) {
 		gui_print("Installing libs needed for flash_image and dump_image...\n");
-		copy_file("/res/htcd/libbmlutils.so", "/system/lib/libbmlutils.so", 0755);
-		copy_file("/res/htcd/libflashutils.so", "/system/lib/libflashutils.so", 0755);
-		copy_file("/res/htcd/libmmcutils.so", "/system/lib/libmmcutils.so", 0755);
-		copy_file("/res/htcd/libmtdutils.so", "/system/lib/libmtdutils.so", 0755);
+		copy_file(folder_path + "libbmlutils.so", "/system/lib/libbmlutils.so", 0644);
+		copy_file(folder_path + "libflashutils.so", "/system/lib/libflashutils.so", 0644);
+		copy_file(folder_path + "libmmcutils.so", "/system/lib/libmmcutils.so", 0644);
+		copy_file(folder_path + "libmtdutils.so", "/system/lib/libmtdutils.so", 0644);
 	}
 	gui_print("Installing HTC Dumlock app...\n");
 	mkdir("/data/app", 0777);
 	unlink("/data/app/com.teamwin.htcdumlock*");
-	copy_file("/res/htcd/HTCDumlock.apk", "/data/app/com.teamwin.htcdumlock.apk", 0777);
+	copy_file(folder_path + "HTCDumlock.apk", "/data/app/com.teamwin.htcdumlock.apk", 0777);
 	sync();
 	gui_print("HTC Dumlock is installed.\n");
 }
