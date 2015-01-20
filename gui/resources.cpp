@@ -100,7 +100,7 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 		}
 		else
 		{
-			file = std::string("/res/fonts/") + file;
+			file = std::string(TWRES "fonts/") + file;
 			mFont = gr_ttf_loadFont(file.c_str(), size, dpi);
 		}
 	}

@@ -644,11 +644,11 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 		if (!attr)
 			break;
 
-		LOGINFO("PageSet::CheckInclude loading filename: '%s'\n", filename.c_str());
 		if (!package) {
 			// We can try to load the XML directly...
-			filename = "/res/";
+			filename = TWRES;
 			filename += attr->value();
+			LOGINFO("PageSet::CheckInclude loading filename: '%s'\n", filename.c_str());
 			struct stat st;
 			if(stat(filename.c_str(),&st) != 0) {
 				LOGERR("Unable to locate '%s'\n", filename.c_str());
@@ -668,6 +668,7 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 			close(fd);
 		} else {
 			filename += attr->value();
+			LOGINFO("PageSet::CheckInclude loading filename: '%s'\n", filename.c_str());
 			const ZipEntry* ui_xml = mzFindZipEntry(package, filename.c_str());
 			if (ui_xml == NULL)
 			{
@@ -1094,7 +1095,7 @@ int PageManager::ReloadPackage(std::string name, std::string package)
 
 	if (LoadPackage(name, package, "main") != 0)
 	{
-		LOGERR("Failed to load package.\n");
+		LOGERR("Failed to load package '%s'.\n", package.c_str());
 		mPageSets.insert(std::pair<std::string, PageSet*>(name, set));
 		return -1;
 	}

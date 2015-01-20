@@ -59,7 +59,8 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
     unsigned char header[8];
     int result = 0;
 
-    snprintf(resPath, sizeof(resPath)-1, "/res/images/%s.png", name);
+    snprintf(resPath, sizeof(resPath)-1, TWRES "images/%s.png", name);
+    printf("open_png %s\n", resPath);
     resPath[sizeof(resPath)-1] = '\0';
     FILE* fp = fopen(resPath, "rb");
     if (fp == NULL) {
@@ -261,7 +262,7 @@ int res_create_surface_jpg(const char* name, gr_surface* pSurface) {
     if (fp == NULL) {
         char resPath[256];
 
-        snprintf(resPath, sizeof(resPath)-1, "/res/images/%s", name);
+        snprintf(resPath, sizeof(resPath)-1, TWRES "images/%s", name);
         resPath[sizeof(resPath)-1] = '\0';
         fp = fopen(resPath, "rb");
         if (fp == NULL) {
