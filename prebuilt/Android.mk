@@ -140,10 +140,8 @@ endif
 ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
     ifeq ($(PLATFORM_SDK_VERSION), 21)
         RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT_SBIN)/mkfs.f2fs
-        #RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT_SBIN)/fibmap.f2fs
     else
         RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mkfs.f2fs
-        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/fibmap.f2fs
     endif
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/fsck.f2fs
 endif
