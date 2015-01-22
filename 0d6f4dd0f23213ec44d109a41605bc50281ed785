@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b25f591_1b986f7b",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2015-01-22T20:57:16Z",
+      "side": 1,
+      "message": "These 2 bools need to be atomics to be truly thread safe. Any time these are referenced or changed, it should be done using atomic functions.",
+      "revId": "0d6f4dd0f23213ec44d109a41605bc50281ed785",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_dbadf798",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 384,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2015-01-22T20:57:16Z",
+      "side": 1,
+      "message": "improper white space here and the next line",
+      "revId": "0d6f4dd0f23213ec44d109a41605bc50281ed785",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
