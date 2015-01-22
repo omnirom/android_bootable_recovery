@@ -274,7 +274,7 @@ static int exec_cmd(const char* path, char* const argv[]) {
 //    fs_type="f2fs"   partition_type="EMMC"    location=device    fs_size=<bytes> mount_point=<location>
 //    if fs_size == 0, then make fs uses the entire partition.
 //    if fs_size > 0, that is the size to use
-//    if fs_size < 0, then reserve that many bytes at the end of the partition (not for "f2fs")
+//    if fs_size < 0, then reserve that many bytes at the end of the partition
 Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 5) {
@@ -348,13 +348,18 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
         result = location;
     } else if (strcmp(fs_type, "f2fs") == 0) {
         char *num_sectors;
+        char bytes_reserved[10] = {0};
         if (asprintf(&num_sectors, "%lld", atoll(fs_size) / 512) <= 0) {
             printf("format_volume: failed to create %s command for %s\n", fs_type, location);
             result = strdup("");
             goto done;
         }
+        if (atoll(num_sectors) <=0) {
+            snprintf(bytes_reserved, sizeof(bytes_reserved), "%lld", -atoll(fs_size));
+        }
         const char *f2fs_path = "/sbin/mkfs.f2fs";
-        const char* const f2fs_argv[] = {"mkfs.f2fs", "-t", "-d1", location, num_sectors, NULL};
+        const char* const f2fs_argv[] = {"mkfs.f2fs", "-t", "-d1", "-r", bytes_reserved,
+                location, NULL};
         int status = exec_cmd(f2fs_path, (char* const*)f2fs_argv);
         free(num_sectors);
         if (status != 0) {
