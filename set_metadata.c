@@ -39,7 +39,7 @@ int tw_get_context(const char* filename) {
 		printf("tw_get_context got selinux context: %s\n", selinux_context);
 		return 0;
 	} else {
-		printf("tw_get_context failed to get selinux context");
+		printf("tw_get_context failed to get selinux context\n");
 		selinux_context = NULL;
 	}
 	return -1;

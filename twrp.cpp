@@ -284,7 +284,7 @@ int main(int argc, char **argv) {
 		}
 	} else if (datamedia) {
 		if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
-			LOGERR("Failed to get default contexts and file mode for storage files.\n");
+			LOGINFO("Failed to get default contexts and file mode for storage files.\n");
 		} else {
 			LOGINFO("Got default contexts and file mode for storage files.\n");
 		}
