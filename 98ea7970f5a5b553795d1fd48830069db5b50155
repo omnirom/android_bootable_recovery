@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b25f591_4d34eadb",
+        "filename": "partitions.hpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000293
+      },
+      "writtenOn": "2015-01-24T12:23:07Z",
+      "side": 1,
+      "message": "It\u0027s the future already, 2015!",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
