@@ -2,6 +2,159 @@
   "comments": [
     {
       "key": {
+        "uuid": "8b25f591_0d575207",
+        "filename": "gui/action.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1115,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "why was the return -1 removed here?",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_6d460657",
+        "filename": "gui/action.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1143,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "should this be outside the \"if simulate\"?",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_0d7032a1",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "still needed after removing the internal signal?",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_6d5fe612",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 619,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "unused local variable",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_4d622ad8",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 623,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "double (())",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_2d65eede",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 625,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "spaces in indentation",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_8d5c221e",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 628,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "should be inside the \"if\" above",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_ad9d5ec1",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 630,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "Why do we even wait here at all?",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_eda75607",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 754,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "reset tar_fork_pid somewhere here?",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "8b25f591_4d34eadb",
         "filename": "partitions.hpp",
         "patchSetId": 15
@@ -13,6 +166,40 @@
       "writtenOn": "2015-01-24T12:23:07Z",
       "side": 1,
       "message": "It\u0027s the future already, 2015!",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_2d3c0ebb",
+        "filename": "partitions.hpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "tabs between code and comment",
+      "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_4d394aca",
+        "filename": "partitions.hpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-24T14:02:19Z",
+      "side": 1,
+      "message": "dead, remove",
       "revId": "98ea7970f5a5b553795d1fd48830069db5b50155",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
