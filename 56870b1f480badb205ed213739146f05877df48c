@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b25f591_edf596eb",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 638,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-01-24T20:02:29Z",
+      "side": 1,
+      "message": "We need to have the remove directory here, the twrpTar function returns 255 and then Run_Backup returns and error and no further processing is allowed. The remove directory code was never executed.",
+      "revId": "56870b1f480badb205ed213739146f05877df48c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
