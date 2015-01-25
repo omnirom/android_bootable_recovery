@@ -53,6 +53,7 @@
 #endif
 
 #define NUM_BUFFERS 2
+#define ALIGN(x, align) (((x) + ((align)-1)) & ~((align)-1))
 #define MAX_DISPLAY_DIM  2048
 
 // #define PRINT_SCREENINFO 1 // Enables printing of screen info to log
@@ -180,67 +181,6 @@ static int get_framebuffer(GGLSurface *fb)
 
     fprintf(stderr, "Pixel format: %dx%d @ %dbpp\n", vi.xres, vi.yres, vi.bits_per_pixel);
 
-    vi.bits_per_pixel = PIXEL_SIZE * 8;
-    if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_BGRA_8888) {
-        fprintf(stderr, "Pixel format: BGRA_8888\n");
-        if (PIXEL_SIZE != 4)    fprintf(stderr, "E: Pixel Size mismatch!\n");
-        vi.red.offset     = 8;
-        vi.red.length     = 8;
-        vi.green.offset   = 16;
-        vi.green.length   = 8;
-        vi.blue.offset    = 24;
-        vi.blue.length    = 8;
-        vi.transp.offset  = 0;
-        vi.transp.length  = 8;
-    } else if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_RGBX_8888) {
-        fprintf(stderr, "Pixel format: RGBX_8888\n");
-        if (PIXEL_SIZE != 4)    fprintf(stderr, "E: Pixel Size mismatch!\n");
-        vi.red.offset     = 24;
-        vi.red.length     = 8;
-        vi.green.offset   = 16;
-        vi.green.length   = 8;
-        vi.blue.offset    = 8;
-        vi.blue.length    = 8;
-        vi.transp.offset  = 0;
-        vi.transp.length  = 8;
-    } else if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_RGB_565) {
-#ifdef RECOVERY_RGB_565
-		fprintf(stderr, "Pixel format: RGB_565\n");
-		vi.blue.offset    = 0;
-		vi.green.offset   = 5;
-		vi.red.offset     = 11;
-#else
-        fprintf(stderr, "Pixel format: BGR_565\n");
-		vi.blue.offset    = 11;
-		vi.green.offset   = 5;
-		vi.red.offset     = 0;
-#endif
-		if (PIXEL_SIZE != 2)    fprintf(stderr, "E: Pixel Size mismatch!\n");
-		vi.blue.length    = 5;
-		vi.green.length   = 6;
-		vi.red.length     = 5;
-        vi.blue.msb_right = 0;
-        vi.green.msb_right = 0;
-        vi.red.msb_right = 0;
-        vi.transp.offset  = 0;
-        vi.transp.length  = 0;
-    }
-    else
-    {
-        perror("unknown pixel format");
-        close(fd);
-        return -1;
-    }
-
-    vi.vmode = FB_VMODE_NONINTERLACED;
-    vi.activate = FB_ACTIVATE_NOW | FB_ACTIVATE_FORCE;
-
-    if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
-        perror("failed to put fb0 info");
-        close(fd);
-        return -1;
-    }
-
     if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
         perror("failed to get fb0 info");
         close(fd);
@@ -257,6 +197,72 @@ static int get_framebuffer(GGLSurface *fb)
 #endif
 
     if (!has_overlay) {
+        vi.bits_per_pixel = PIXEL_SIZE * 8;
+        if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_BGRA_8888) {
+            fprintf(stderr, "Pixel format: BGRA_8888\n");
+            if (PIXEL_SIZE != 4)    fprintf(stderr, "E: Pixel Size mismatch!\n");
+            vi.red.offset     = 8;
+            vi.red.length     = 8;
+            vi.green.offset   = 16;
+            vi.green.length   = 8;
+            vi.blue.offset    = 24;
+            vi.blue.length    = 8;
+            vi.transp.offset  = 0;
+            vi.transp.length  = 8;
+        } else if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_RGBX_8888) {
+            fprintf(stderr, "Pixel format: RGBX_8888\n");
+            if (PIXEL_SIZE != 4)    fprintf(stderr, "E: Pixel Size mismatch!\n");
+            vi.red.offset     = 24;
+            vi.red.length     = 8;
+            vi.green.offset   = 16;
+            vi.green.length   = 8;
+            vi.blue.offset    = 8;
+            vi.blue.length    = 8;
+            vi.transp.offset  = 0;
+            vi.transp.length  = 8;
+        } else if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_RGB_565) {
+#ifdef RECOVERY_RGB_565
+            fprintf(stderr, "Pixel format: RGB_565\n");
+            vi.blue.offset    = 0;
+            vi.green.offset   = 5;
+            vi.red.offset     = 11;
+#else
+            fprintf(stderr, "Pixel format: BGR_565\n");
+            vi.blue.offset    = 11;
+            vi.green.offset   = 5;
+            vi.red.offset     = 0;
+#endif
+            if (PIXEL_SIZE != 2)    fprintf(stderr, "E: Pixel Size mismatch!\n");
+            vi.blue.length    = 5;
+            vi.green.length   = 6;
+            vi.red.length     = 5;
+            vi.blue.msb_right = 0;
+            vi.green.msb_right = 0;
+            vi.red.msb_right = 0;
+            vi.transp.offset  = 0;
+            vi.transp.length  = 0;
+        }
+        else {
+            perror("unknown pixel format");
+            close(fd);
+            return -1;
+        }
+
+        vi.vmode = FB_VMODE_NONINTERLACED;
+        vi.activate = FB_ACTIVATE_NOW | FB_ACTIVATE_FORCE;
+
+        if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
+            perror("failed to put fb0 info");
+            close(fd);
+            return -1;
+        }
+
+        if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
+            perror("failed to get fb0 info");
+            close(fd);
+            return -1;
+        }
+
         printf("Not using qualcomm overlay, '%s'\n", fi.id);
         bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         if (bits == MAP_FAILED) {
@@ -266,6 +272,7 @@ static int get_framebuffer(GGLSurface *fb)
         }
     } else {
         printf("Using qualcomm overlay\n");
+        fi.line_length = ALIGN(vi.xres, 32) * PIXEL_SIZE;
     }
 
 #ifdef RECOVERY_GRAPHICS_USE_LINELENGTH
