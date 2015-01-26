@@ -69,14 +69,10 @@ struct desc_v1 {
 } __attribute__((packed));
 
 struct desc_v2 {
-    struct usb_functionfs_descs_head_v2 {
-        __le32 magic;
-        __le32 length;
-        __le32 flags;
-        __le32 fs_count;
-        __le32 hs_count;
-        __le32 ss_count;
-    } __attribute__((packed)) header;
+    struct usb_functionfs_descs_head_v2 header;
+    // The rest of the structure depends on the flags in the header.
+    __le32 fs_count;
+    __le32 hs_count;
     struct func_desc fs_descs, hs_descs;
 } __attribute__((packed));
 
@@ -304,9 +300,8 @@ static void init_functionfs(struct usb_handle *h)
     v2_descriptor.header.magic = cpu_to_le32(FUNCTIONFS_DESCRIPTORS_MAGIC_V2);
     v2_descriptor.header.length = cpu_to_le32(sizeof(v2_descriptor));
     v2_descriptor.header.flags = FUNCTIONFS_HAS_FS_DESC | FUNCTIONFS_HAS_HS_DESC;
-    v2_descriptor.header.fs_count = 3;
-    v2_descriptor.header.hs_count = 3;
-    v2_descriptor.header.ss_count = 0;
+    v2_descriptor.fs_count = 3;
+    v2_descriptor.hs_count = 3;
     v2_descriptor.fs_descs = fs_descriptors;
     v2_descriptor.hs_descs = hs_descriptors;
 
