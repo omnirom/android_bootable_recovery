@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b25f591_cd21baaf",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-26T22:31:02Z",
+      "side": 1,
+      "message": "why do we need a recursive mutex?",
+      "revId": "4ef5c0ef658f1354800fc272c65c702831553dbb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_0d1cb277",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 628,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-26T22:31:02Z",
+      "side": 1,
+      "message": "Where is this reset to 0 in the non-cancel case?",
+      "revId": "4ef5c0ef658f1354800fc272c65c702831553dbb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_ed16765a",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 755,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-01-26T22:31:02Z",
+      "side": 1,
+      "message": "I\u0027d introduce a get_stop_backup() that encapsulates the mutex usage, as counterpart to set_stop_backup().\n\n...and in the next step create something like class SynchronizedFlag that fully encapsulates the variable (make sure it\u0027s at least int sized) and the mutex and that can be used as easily as a normal flag.",
+      "revId": "4ef5c0ef658f1354800fc272c65c702831553dbb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
