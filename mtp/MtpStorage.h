@@ -28,6 +28,7 @@
 #include <pthread.h>
 #include "btree.hpp"
 #include "MtpServer.h"
+#include "../tw_atomic.hpp"
 
 class MtpDatabase;
 struct inotify_event;
@@ -113,7 +114,7 @@ private:
 	bool use_mutex;
 	pthread_mutex_t inMutex; // inotify mutex
 	pthread_mutex_t mtpMutex; // main mtp mutex
-	int inotify_thread_kill;
+	TWAtomicInt inotify_thread_kill;
 };
 
 #endif // _MTP_STORAGE_H

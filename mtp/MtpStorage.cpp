@@ -36,7 +36,7 @@
 #include <signal.h>
 #include <sys/inotify.h>
 #include <fcntl.h>
-#include "tw_sys_atomics.h"
+#include "../tw_atomic.hpp"
 
 #define WATCH_FLAGS ( IN_CREATE | IN_DELETE | IN_MOVE | IN_MODIFY )
 
@@ -56,7 +56,7 @@ MtpStorage::MtpStorage(MtpStorageID id, const char* filePath,
 	inotify_thread = 0;
 	inotify_fd = -1;
 	// Threading has not started yet so we should be safe to set these directly instead of using atomics
-	inotify_thread_kill = 0;
+	inotify_thread_kill.set_value(0);
 	sendEvents = false;
 	handleCurrentlySending = 0;
 	use_mutex = true;
@@ -73,8 +73,7 @@ MtpStorage::MtpStorage(MtpStorageID id, const char* filePath,
 
 MtpStorage::~MtpStorage() {
 	if (inotify_thread) {
-		__tw_atomic_cmpxchg(0, 1, &inotify_thread_kill);
-		//inotify_thread_kill = 1;
+		inotify_thread_kill.set_value(1);
 		MTPD("joining inotify_thread after sending the kill notification.\n");
 		pthread_join(inotify_thread, NULL); // There's not much we can do if there's an error here
 		inotify_thread = 0;
@@ -698,7 +697,7 @@ int MtpStorage::inotify_t(void) {
 
 	MTPD("inotify thread starting.\n");
 
-	while (__tw_atomic_cmpxchg(0, inotify_thread_kill, &inotify_thread_kill) == 0) {
+	while (inotify_thread_kill.get_value() == 0) {
 		FD_ZERO(&fdset);
 		FD_SET(inotify_fd, &fdset);
 		seltmout.tv_sec = 0;
@@ -715,7 +714,7 @@ int MtpStorage::inotify_t(void) {
 			MTPE("inotify_t Can't read inotify events\n");
 		}
 
-		while (i < len && __tw_atomic_cmpxchg(0, inotify_thread_kill, &inotify_thread_kill) == 0) {
+		while (inotify_thread_kill.get_value() == 0) {
 			struct inotify_event *event = (struct inotify_event *) &buf[i];
 			if (event->len) {
 				MTPD("inotify event: wd: %i, mask: %x, name: %s\n", event->wd, event->mask, event->name);
