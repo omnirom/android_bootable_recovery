@@ -719,44 +719,40 @@ static int vk_modify(struct ev *e, struct input_event *ev)
     return 0;
 }
 
-int ev_get(struct input_event *ev, unsigned dont_wait)
+int ev_get(struct input_event *ev)
 {
     int r;
     unsigned n;
     struct timeval curr;
 
-    do {
-        gettimeofday(&curr, NULL);
-        if(curr.tv_sec - lastInputStat.tv_sec >= 2)
+    gettimeofday(&curr, NULL);
+    if(curr.tv_sec - lastInputStat.tv_sec >= 2)
+    {
+        struct stat st;
+        stat("/dev/input", &st);
+        if (st.st_mtime > lastInputMTime)
         {
-            struct stat st;
-            stat("/dev/input", &st);
-            if (st.st_mtime > lastInputMTime)
-            {
-                LOGI("Reloading input devices\n");
-                ev_exit();
-                ev_init();
-                lastInputMTime = st.st_mtime;
-            }
-            lastInputStat = curr;
+            printf("Reloading input devices\n");
+            ev_exit();
+            ev_init();
+            lastInputMTime = st.st_mtime;
         }
+        lastInputStat = curr;
+    }
 
-        r = poll(ev_fds, ev_count, 0);
+    r = poll(ev_fds, ev_count, 0);
 
-        if(r > 0) {
-            for(n = 0; n < ev_count; n++) {
-                if(ev_fds[n].revents & POLLIN) {
-                    r = read(ev_fds[n].fd, ev, sizeof(*ev));
-                    if(r == sizeof(*ev)) {
-                        if (!vk_modify(&evs[n], ev))
-                            return 0;
-                    }
+    if(r > 0) {
+        for(n = 0; n < ev_count; n++) {
+            if(ev_fds[n].revents & POLLIN) {
+                r = read(ev_fds[n].fd, ev, sizeof(*ev));
+                if(r == sizeof(*ev)) {
+                    if (!vk_modify(&evs[n], ev))
+                        return 0;
                 }
             }
         }
-
-        usleep(1000);
-    } while(dont_wait == 0);
+    }
 
     return -1;
 }
