@@ -12,7 +12,6 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	adb.c \
-	fdevent.c \
 	fuse_adb_provider.c \
 	transport.c \
 	transport_usb.c \
@@ -26,7 +25,5 @@ LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 LOCAL_C_INCLUDES += bootable/recovery
 
 LOCAL_MODULE := libminadbd
-
-LOCAL_STATIC_LIBRARIES := libfusesideload libcutils libc
 
 include $(BUILD_STATIC_LIBRARY)
