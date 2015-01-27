@@ -51,6 +51,7 @@ extern "C"
 #include "../openrecoveryscript.hpp"
 #include "../orscmd/orscmd.h"
 #include "blanktimer.hpp"
+#include "../tw_atomic.hpp"
 
 // Enable to print render time of each frame to the log file
 //#define PRINT_RENDER_TIME 1
@@ -62,11 +63,10 @@ using namespace rapidxml;
 // Global values
 static gr_surface gCurtain = NULL;
 static int gGuiInitialized = 0;
-static int gGuiConsoleRunning = 0;
-static int gGuiConsoleTerminate = 0;
-static int gForceRender = 0;
-pthread_mutex_t gForceRendermutex;
-static int gNoAnimation = 1;
+static TWAtomicInt gGuiConsoleRunning;
+static TWAtomicInt gGuiConsoleTerminate;
+static TWAtomicInt gForceRender;
+const int gNoAnimation = 1;
 static int gGuiInputRunning = 0;
 blanktimer blankTimer;
 int ors_read_fd = -1;
@@ -480,7 +480,7 @@ static void ors_command_read()
 					OpenRecoveryScript::run_script_file();
 				}
 				gui_set_FILE(NULL);
-				gGuiConsoleTerminate = 1;
+				gGuiConsoleTerminate.set_value(1);
 			}
 		}
 		fclose(orsout);
@@ -581,11 +581,11 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 		}
 #endif
 
-		if (gGuiConsoleRunning) {
+		if (gGuiConsoleRunning.get_value()) {
 			continue;
 		}
 
-		if (!gForceRender)
+		if (!gForceRender.get_value())
 		{
 			int ret;
 
@@ -617,9 +617,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 		}
 		else
 		{
-			pthread_mutex_lock(&gForceRendermutex);
-			gForceRender = 0;
-			pthread_mutex_unlock(&gForceRendermutex);
+			gForceRender.set_value(0);
 			PageManager::Render();
 			flip();
 		}
@@ -642,9 +640,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 
 int gui_forceRender(void)
 {
-	pthread_mutex_lock(&gForceRendermutex);
-	gForceRender = 1;
-	pthread_mutex_unlock(&gForceRendermutex);
+	gForceRender.set_value(1);
 	return 0;
 }
 
@@ -652,27 +648,21 @@ int gui_changePage(std::string newPage)
 {
 	LOGINFO("Set page: '%s'\n", newPage.c_str());
 	PageManager::ChangePage(newPage);
-	pthread_mutex_lock(&gForceRendermutex);
-	gForceRender = 1;
-	pthread_mutex_unlock(&gForceRendermutex);
+	gForceRender.set_value(1);
 	return 0;
 }
 
 int gui_changeOverlay(std::string overlay)
 {
 	PageManager::ChangeOverlay(overlay);
-	pthread_mutex_lock(&gForceRendermutex);
-	gForceRender = 1;
-	pthread_mutex_unlock(&gForceRendermutex);
+	gForceRender.set_value(1);
 	return 0;
 }
 
 int gui_changePackage(std::string newPackage)
 {
 	PageManager::SelectPackage(newPackage);
-	pthread_mutex_lock(&gForceRendermutex);
-	gForceRender = 1;
-	pthread_mutex_unlock(&gForceRendermutex);
+	gForceRender.set_value(1);
 	return 0;
 }
 
@@ -836,9 +826,9 @@ extern "C" int gui_startPage(const char *page_name, const int allow_commands, in
 	if (!gGuiInitialized)
 		return -1;
 
-	gGuiConsoleTerminate = 1;
+	gGuiConsoleTerminate.set_value(1);
 
-	while (gGuiConsoleRunning)
+	while (gGuiConsoleRunning.get_value())
 		loopTimer();
 
 	// Set the default package
@@ -871,11 +861,11 @@ static void * console_thread(void *cookie)
 {
 	PageManager::SwitchToConsole();
 
-	while (!gGuiConsoleTerminate)
+	while (!gGuiConsoleTerminate.get_value())
 	{
 		loopTimer();
 
-		if (!gForceRender)
+		if (!gForceRender.get_value())
 		{
 			int ret;
 
@@ -891,15 +881,13 @@ static void * console_thread(void *cookie)
 		}
 		else
 		{
-			pthread_mutex_lock(&gForceRendermutex);
-			gForceRender = 0;
-			pthread_mutex_unlock(&gForceRendermutex);
+			gForceRender.set_value(0);
 			PageManager::Render();
 			flip();
 		}
 	}
-	gGuiConsoleRunning = 0;
-	gForceRender = 1; // this will kickstart the GUI to render again
+	gGuiConsoleRunning.set_value(0);
+	gForceRender.set_value(1); // this will kickstart the GUI to render again
 	PageManager::EndConsole();
 	LOGINFO("Console stopping\n");
 	return NULL;
@@ -910,12 +898,12 @@ extern "C" int gui_console_only(void)
 	if (!gGuiInitialized)
 		return -1;
 
-	gGuiConsoleTerminate = 0;
+	gGuiConsoleTerminate.set_value(0);
 
-	if (gGuiConsoleRunning)
+	if (gGuiConsoleRunning.get_value())
 		return 0;
 
-	gGuiConsoleRunning = 1;
+	gGuiConsoleRunning.set_value(1);
 
 	// Start by spinning off an input handler.
 	pthread_t t;
