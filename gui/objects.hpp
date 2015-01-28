@@ -288,9 +288,11 @@ protected:
 	std::map<int, bool> mKeys;
 
 protected:
+	enum ThreadType { THREAD_NONE, THREAD_ACTION, THREAD_CANCEL };
+
 	int getKeyByName(std::string key);
 	int doAction(Action action);
-	bool needsToRunInSeparateThread(const Action& action);
+	ThreadType getThreadType(const Action& action);
 	void simulate_progress_bar(void);
 	int flash_zip(std::string filename, int* wipe_cache);
 	void reinject_after_flash();
@@ -363,25 +365,6 @@ protected:
 	int cancelbackup(std::string arg);
 
 	int simulate;
-};
-
-class ActionThread
-{
-public:
-	ActionThread();
-	~ActionThread();
-
-	void threadActions(GUIAction *act);
-	void run(void *data);
-private:
-	struct ThreadData
-	{
-		GUIAction *act;
-	};
-
-	pthread_t m_thread;
-	bool m_thread_running;
-	pthread_mutex_t m_act_lock;
 };
 
 class GUIConsole : public GUIObject, public RenderObject, public ActionObject
