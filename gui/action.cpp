@@ -67,11 +67,36 @@ static int zip_queue_index;
 static pthread_t terminal_command;
 pid_t sideload_child_pid;
 
-static ActionThread action_thread;
+static void *ActionThread_work_wrapper(void *data);
+
+class ActionThread
+{
+public:
+	ActionThread();
+	~ActionThread();
+
+	void threadActions(GUIAction *act);
+	void run(void *data);
+private:
+	friend void *ActionThread_work_wrapper(void*);
+	struct ThreadData
+	{
+		ActionThread *this_;
+		GUIAction *act;
+		ThreadData(ActionThread *this_, GUIAction *act) : this_(this_), act(act) {}
+	};
+
+	pthread_t m_thread;
+	bool m_thread_running;
+	pthread_mutex_t m_act_lock;
+};
+
+static ActionThread action_thread;	// for all kinds of longer running actions
+static ActionThread cancel_thread;	// for longer running "cancel" actions
 
 static void *ActionThread_work_wrapper(void *data)
 {
-	action_thread.run(data);
+	static_cast<ActionThread::ThreadData*>(data)->this_->run(data);
 	return NULL;
 }
 
@@ -103,9 +128,7 @@ void ActionThread::threadActions(GUIAction *act)
 	} else {
 		m_thread_running = true;
 		pthread_mutex_unlock(&m_act_lock);
-		ThreadData *d = new ThreadData;
-		d->act = act;
-
+		ThreadData *d = new ThreadData(this, act);
 		pthread_create(&m_thread, NULL, &ActionThread_work_wrapper, d);
 	}
 }
@@ -370,9 +393,17 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 	return ret_val;
 }
 
-bool GUIAction::needsToRunInSeparateThread(const GUIAction::Action& action)
+GUIAction::ThreadType GUIAction::getThreadType(const GUIAction::Action& action)
 {
-	return setActionsRunningInCallerThread.find(gui_parse_text(action.mFunction)) == setActionsRunningInCallerThread.end();
+	string func = gui_parse_text(action.mFunction);
+	bool needsThread = setActionsRunningInCallerThread.find(func) == setActionsRunningInCallerThread.end();
+	if (needsThread) {
+		if (func == "cancelbackup")
+			return THREAD_CANCEL;
+		else
+			return THREAD_ACTION;
+	}
+	return THREAD_NONE;
 }
 
 int GUIAction::doActions()
@@ -380,25 +411,40 @@ int GUIAction::doActions()
 	if (mActions.size() < 1)
 		return -1;
 
-	bool needThread = false;
+	// Determine in which thread to run the actions.
+	// Do it for all actions at once before starting, so that we can cancel the whole batch if the thread is already busy.
+	ThreadType threadType = THREAD_NONE;
 	std::vector<Action>::iterator it;
-	for (it = mActions.begin(); it != mActions.end(); ++it)
-	{
-		if (needsToRunInSeparateThread(*it))
-		{
-			needThread = true;
+	for (it = mActions.begin(); it != mActions.end(); ++it) {
+		ThreadType tt = getThreadType(*it);
+		if (tt == THREAD_NONE)
+			continue;
+		if (threadType == THREAD_NONE)
+			threadType = tt;
+		else if (threadType != tt) {
+			LOGERR("Can't mix normal and cancel actions in the same list.\n"
+				"Running the whole batch in the cancel thread.\n");
+			threadType = THREAD_CANCEL;
 			break;
 		}
 	}
-	if (needThread)
-	{
-		action_thread.threadActions(this);
-	}
-	else
-	{
-		const size_t cnt = mActions.size();
-		for (size_t i = 0; i < cnt; ++i)
-			doAction(mActions[i]);
+
+	// Now run the actions in the desired thread.
+	switch (threadType) {
+		case THREAD_ACTION:
+			action_thread.threadActions(this);
+			break;
+
+		case THREAD_CANCEL:
+			cancel_thread.threadActions(this);
+			break;
+
+		default: {
+			// no iterators here because theme reloading might kill our object
+			const size_t cnt = mActions.size();
+			for (size_t i = 0; i < cnt; ++i)
+				doAction(mActions[i]);
+		}
 	}
 
 	return 0;
