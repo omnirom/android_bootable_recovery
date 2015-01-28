@@ -26,9 +26,10 @@
 #include "mincrypt/sha.h"
 #include "mincrypt/sha256.h"
 
-#include <string.h>
-#include <stdio.h>
 #include <errno.h>
+#include <malloc.h>
+#include <stdio.h>
+#include <string.h>
 
 extern RecoveryUI* ui;
 
