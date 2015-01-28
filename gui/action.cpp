@@ -67,11 +67,36 @@ static int zip_queue_index;
 static pthread_t terminal_command;
 pid_t sideload_child_pid;
 
-static ActionThread action_thread;
+static void *ActionThread_work_wrapper(void *data);
+
+class ActionThread
+{
+public:
+	ActionThread();
+	~ActionThread();
+
+	void threadActions(GUIAction *act);
+	void run(void *data);
+private:
+	friend void *ActionThread_work_wrapper(void*);
+	struct ThreadData
+	{
+		ActionThread *this_;
+		GUIAction *act;
+		ThreadData(ActionThread *this_, GUIAction *act) : this_(this_), act(act) {}
+	};
+
+	pthread_t m_thread;
+	bool m_thread_running;
+	pthread_mutex_t m_act_lock;
+};
+
+static ActionThread action_thread;	// for all kinds of longer running actions
+static ActionThread cancel_thread;	// for longer running "cancel" actions
 
 static void *ActionThread_work_wrapper(void *data)
 {
-	action_thread.run(data);
+	static_cast<ActionThread::ThreadData*>(data)->this_->run(data);
 	return NULL;
 }
 
@@ -103,9 +128,7 @@ void ActionThread::threadActions(GUIAction *act)
 	} else {
 		m_thread_running = true;
 		pthread_mutex_unlock(&m_act_lock);
-		ThreadData *d = new ThreadData;
-		d->act = act;
-
+		ThreadData *d = new ThreadData(this, act);
 		pthread_create(&m_thread, NULL, &ActionThread_work_wrapper, d);
 	}
 }
@@ -370,9 +393,17 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 	return ret_val;
 }
 
-bool GUIAction::needsToRunInSeparateThread(const GUIAction::Action& action)
+GUIAction::ThreadType GUIAction::getThreadType(const GUIAction::Action& action)
 {
-	return setActionsRunningInCallerThread.find(gui_parse_text(action.mFunction)) == setActionsRunningInCallerThread.end();
+	string func = gui_parse_text(action.mFunction);
+	bool needsThread = setActionsRunningInCallerThread.find(func) == setActionsRunningInCallerThread.end();
+	if (needsThread) {
+		if (func == "cancelbackup")
+			return THREAD_CANCEL;
+		else
+			return THREAD_ACTION;
+	}
+	return THREAD_NONE;
 }
 
 int GUIAction::doActions()
@@ -380,25 +411,40 @@ int GUIAction::doActions()
 	if (mActions.size() < 1)
 		return -1;
 
-	bool needThread = false;
+	// Determine in which thread to run the actions.
+	// Do it for all actions at once before starting, so that we can cancel the whole batch if the thread is already busy.
+	ThreadType threadType = THREAD_NONE;
 	std::vector<Action>::iterator it;
-	for (it = mActions.begin(); it != mActions.end(); ++it)
-	{
-		if (needsToRunInSeparateThread(*it))
-		{
-			needThread = true;
+	for (it = mActions.begin(); it != mActions.end(); ++it) {
+		ThreadType tt = getThreadType(*it);
+		if (tt == THREAD_NONE)
+			continue;
+		if (threadType == THREAD_NONE)
+			threadType = tt;
+		else if (threadType != tt) {
+			LOGERR("Can't mix normal and cancel actions in the same list.\n"
+				"Running the whole batch in the cancel thread.\n");
+			threadType = THREAD_CANCEL;
 			break;
 		}
 	}
-	if (needThread)
-	{
-		action_thread.threadActions(this);
-	}
-	else
-	{
-		const size_t cnt = mActions.size();
-		for (size_t i = 0; i < cnt; ++i)
-			doAction(mActions[i]);
+
+	// Now run the actions in the desired thread.
+	switch (threadType) {
+		case THREAD_ACTION:
+			action_thread.threadActions(this);
+			break;
+
+		case THREAD_CANCEL:
+			cancel_thread.threadActions(this);
+			break;
+
+		default: {
+			// no iterators here because theme reloading might kill our object
+			const size_t cnt = mActions.size();
+			for (size_t i = 0; i < cnt; ++i)
+				doAction(mActions[i]);
+		}
 	}
 
 	return 0;
@@ -920,7 +966,6 @@ int GUIAction::fileexists(std::string arg)
 void GUIAction::reinject_after_flash()
 {
 	if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
-		operation_start("ReinjectTWRP");
 		gui_print("Injecting TWRP into boot image...\n");
 		if (simulate) {
 			simulate_progress_bar();
@@ -1060,7 +1105,7 @@ int GUIAction::wipe(std::string arg)
 			}
 		} else
 			ret_val = PartitionManager.Wipe_By_Path(arg);
-#ifdef TW_OEM_BUILD
+#ifndef TW_OEM_BUILD
 		if (arg == DataManager::GetSettingsStoragePath()) {
 			// If we wiped the settings storage path, recreate the TWRP folder and dump the settings
 			string Storage_Path = DataManager::GetSettingsStoragePath();
@@ -1099,8 +1144,10 @@ int GUIAction::refreshsizes(std::string arg)
 int GUIAction::nandroid(std::string arg)
 {
 	if (simulate) {
+		PartitionManager.stop_backup.set_value(0);
 		DataManager::SetValue("tw_partition", "Simulation");
 		simulate_progress_bar();
+		operation_end(0);
 	} else {
 		operation_start("Nandroid");
 		int ret = 0;
@@ -1131,13 +1178,13 @@ int GUIAction::nandroid(std::string arg)
 			else
 				ret = 0; // 0 for success
 			DataManager::SetValue("tw_cancel_backup", 0);
-			operation_end(ret);
 		}
 		else {
 			DataManager::SetValue("tw_cancel_backup", 1);
 			gui_print("Backup Canceled.\n");
 			ret = 0;
 		}
+		operation_end(ret);
 		return ret;
 	}
 	return 0;
@@ -1145,16 +1192,12 @@ int GUIAction::nandroid(std::string arg)
 
 int GUIAction::cancelbackup(std::string arg) {
 	if (simulate) {
-		simulate_progress_bar();
 		PartitionManager.stop_backup.set_value(1);
-		operation_end(0);
 	}
 	else {
-		operation_start("Cancel Backup");
 		int op_status = PartitionManager.Cancel_Backup();
 		if (op_status != 0)
 			op_status = 1; // failure
-		operation_end(op_status);
 	}
 
 	return 0;
@@ -1162,16 +1205,18 @@ int GUIAction::cancelbackup(std::string arg) {
 
 int GUIAction::fixpermissions(std::string arg)
 {
+	int op_status = 0;
+
 	operation_start("Fix Permissions");
 	LOGINFO("fix permissions started!\n");
 	if (simulate) {
 		simulate_progress_bar();
 	} else {
-		int op_status = PartitionManager.Fix_Permissions();
+		op_status = PartitionManager.Fix_Permissions();
 		if (op_status != 0)
 			op_status = 1; // failure
-		operation_end(op_status);
 	}
+	operation_end(op_status);
 	return 0;
 }
 
@@ -1481,7 +1526,6 @@ int GUIAction::adbsideloadcancel(std::string arg)
 	LOGINFO("Waiting for child sideload process to exit.\n");
 	waitpid(sideload_child_pid, &status, 0);
 	sideload_child_pid = 0;
-	operation_end(1);
 	DataManager::SetValue("tw_page_done", "1"); // For OpenRecoveryScript support
 	return 0;
 }
