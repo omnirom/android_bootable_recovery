@@ -111,8 +111,8 @@ public:
 	virtual int SetActionPos(int x, int y, int w = 0, int h = 0);
 
 	// IsInRegion - Checks if the request is handled by this object
-	//  Return 0 if this object handles the request, 1 if not
-	virtual int IsInRegion(int x, int y) { return ((x < mActionX || x > mActionX + mActionW || y < mActionY || y > mActionY + mActionH) ? 0 : 1); }
+	//  Return 1 if this object handles the request, 0 if not
+	virtual int IsInRegion(int x, int y) { return ((x < mActionX || x >= mActionX + mActionW || y < mActionY || y >= mActionY + mActionH) ? 0 : 1); }
 
 protected:
 	int mActionX, mActionY, mActionW, mActionH;
@@ -403,7 +403,7 @@ public:
 	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
 
 	// IsInRegion - Checks if the request is handled by this object
-	//  Return 0 if this object handles the request, 1 if not
+	//  Return 1 if this object handles the request, 0 if not
 	virtual int IsInRegion(int x, int y);
 
 	// NotifyTouch - Notify of a touch event

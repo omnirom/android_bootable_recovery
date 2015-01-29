@@ -339,7 +339,7 @@ int GUIConsole::SetRenderPos(int x, int y, int w, int h)
 }
 
 // IsInRegion - Checks if the request is handled by this object
-//  Return 0 if this object handles the request, 1 if not
+//  Return 1 if this object handles the request, 0 if not
 int GUIConsole::IsInRegion(int x, int y)
 {
 	if (mSlideout)
@@ -353,7 +353,7 @@ int GUIConsole::IsInRegion(int x, int y)
 			return 0;
 	}
 
-	return (x < mConsoleX || x > mConsoleX + mConsoleW || y < mConsoleY || y > mConsoleY + mConsoleH) ? 0 : 1;
+	return (x < mConsoleX || x >= mConsoleX + mConsoleW || y < mConsoleY || y >= mConsoleY + mConsoleH) ? 0 : 1;
 }
 
 // NotifyTouch - Notify of a touch event
