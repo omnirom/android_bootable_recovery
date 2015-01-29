@@ -1,5 +1,4 @@
 // hardwarekeyboard.cpp - HardwareKeyboard object
-// Custom hardware keyboard support for Asus Transformer devices
 
 #include <stdarg.h>
 #include <stdio.h>
