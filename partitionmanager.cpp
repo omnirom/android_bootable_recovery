@@ -1945,7 +1945,6 @@ bool TWPartitionManager::Enable_MTP(void) {
 	}
 	//Launch MTP Responder
 	LOGINFO("Starting MTP\n");
-	int count = 0;
 
 	int mtppipe[2];
 
@@ -1968,41 +1967,44 @@ bool TWPartitionManager::Enable_MTP(void) {
 		TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
 		property_set("sys.usb.config", "mtp,adb");
 	}
-	std::vector<TWPartition*>::iterator iter;
 	/* To enable MTP debug, use the twrp command line feature to
 	 * twrp set tw_mtp_debug 1
 	 */
 	twrpMtp *mtp = new twrpMtp(DataManager::GetIntValue("tw_mtp_debug"));
-	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false)) {
-			printf("twrp addStorage %s, mtpstorageid: %u, maxFileSize: %lld\n", (*iter)->Storage_Path.c_str(), (*iter)->MTP_Storage_ID, (*iter)->Get_Max_FileSize());
-			mtp->addStorage((*iter)->Storage_Name, (*iter)->Storage_Path, (*iter)->MTP_Storage_ID, (*iter)->Get_Max_FileSize());
-			count++;
-		}
-	}
-	if (count) {
-		mtppid = mtp->forkserver(mtppipe);
-		if (mtppid) {
-			close(mtppipe[0]); // Host closes read side
-			mtp_write_fd = mtppipe[1];
-			DataManager::SetValue("tw_mtp_enabled", 1);
-			return true;
-		} else {
-			close(mtppipe[0]);
-			close(mtppipe[1]);
-			LOGERR("Failed to enable MTP\n");
-			return false;
-		}
+	mtppid = mtp->forkserver(mtppipe);
+	if (mtppid) {
+		close(mtppipe[0]); // Host closes read side
+		mtp_write_fd = mtppipe[1];
+		DataManager::SetValue("tw_mtp_enabled", 1);
+		Add_All_MTP_Storage();
+		return true;
 	} else {
 		close(mtppipe[0]);
 		close(mtppipe[1]);
+		LOGERR("Failed to enable MTP\n");
+		return false;
 	}
-	LOGERR("No valid storage partitions found for MTP.\n");
 #else
 	LOGERR("MTP support not included\n");
 #endif
 	DataManager::SetValue("tw_mtp_enabled", 0);
 	return false;
+}
+
+void TWPartitionManager::Add_All_MTP_Storage(void) {
+#ifdef TW_HAS_MTP
+	std::vector<TWPartition*>::iterator iter;
+
+	if (!mtppid)
+		return; // MTP is not enabled
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount(false))
+			Add_Remove_MTP_Storage((*iter), MTP_MESSAGE_ADD_STORAGE);
+	}
+#else
+	return;
+#endif
 }
 
 bool TWPartitionManager::Disable_MTP(void) {
@@ -2082,7 +2084,7 @@ bool TWPartitionManager::Add_Remove_MTP_Storage(TWPartition* Part, int message_t
 			mtp_message.path = Part->Storage_Path.c_str();
 			mtp_message.display = Part->Storage_Name.c_str();
 			mtp_message.maxFileSize = Part->Get_Max_FileSize();
-			LOGINFO("sending message to add %i '%s'\n", Part->MTP_Storage_ID, mtp_message.path);
+			LOGINFO("sending message to add %i '%s' '%s'\n", mtp_message.storage_id, mtp_message.path, mtp_message.display);
 			if (write(mtp_write_fd, &mtp_message, sizeof(mtp_message)) <= 0) {
 				LOGINFO("error sending message to add storage %i\n", Part->MTP_Storage_ID);
 				return false;
