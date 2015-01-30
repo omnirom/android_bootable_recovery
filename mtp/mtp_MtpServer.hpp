@@ -44,8 +44,6 @@ typedef std::vector<storage*> storages;
 class twmtp_MtpServer {
 	public:
 		void start();
-		int setup();
-		void run();
 		void cleanup();
 		void send_object_added(int handle);
 		void send_object_removed(int handle);

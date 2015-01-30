@@ -37,23 +37,6 @@
 
 void twmtp_MtpServer::start()
 {
-	if (setup() == 0) {
-		add_storage();
-		MTPD("Starting add / remove mtppipe monitor thread\n");
-		pthread_t thread;
-		ThreadPtr mtpptr = &twmtp_MtpServer::mtppipe_thread;
-		PThreadPtr p = *(PThreadPtr*)&mtpptr;
-		pthread_create(&thread, NULL, p, this);
-		server->run();
-	}
-}
-
-void twmtp_MtpServer::set_storages(storages* mtpstorages) {
-	stores = mtpstorages;
-}
-
-int twmtp_MtpServer::setup()
-{
 	usePtp =  false;
 	MyMtpDatabase* mtpdb = new MyMtpDatabase();
 	/* Sleep for a bit before we open the MTP USB device because some
@@ -64,27 +47,36 @@ int twmtp_MtpServer::setup()
 #ifdef USB_MTP_DEVICE
 #define STRINGIFY(x) #x
 #define EXPAND(x) STRINGIFY(x)
+	const char* mtp_device = EXPAND(USB_MTP_DEVICE);
 	MTPI("Using '%s' for MTP device.\n", EXPAND(USB_MTP_DEVICE));
-	int fd = open(EXPAND(USB_MTP_DEVICE), O_RDWR);
 #else
-	int fd = open("/dev/mtp_usb", O_RDWR);
+	const char* mtp_device = "/dev/mtp_usb";
 #endif
-	if (fd >= 0) {
-		MTPD("fd: %d\n", fd);
-		server = new MtpServer(fd, mtpdb, usePtp, 0, 0664, 0775);
-		refserver = server;
-		MTPI("created new mtpserver object\n");
-	} else {
+	int fd = open(mtp_device, O_RDWR);
+	if (fd < 0) {
 		MTPE("could not open MTP driver, errno: %d\n", errno);
-		return -1;
+		return;
 	}
-	return 0;
+	MTPD("fd: %d\n", fd);
+	server = new MtpServer(mtpdb, usePtp, 0, 0664, 0775);
+	refserver = server;
+	MTPI("created new mtpserver object\n");
+	add_storage();
+	MTPD("Starting add / remove mtppipe monitor thread\n");
+	pthread_t thread;
+	ThreadPtr mtpptr = &twmtp_MtpServer::mtppipe_thread;
+	PThreadPtr p = *(PThreadPtr*)&mtpptr;
+	pthread_create(&thread, NULL, p, this);
+	// This loop restarts the MTP process if the device is unplugged and replugged in
+	while (true) {
+		server->run(fd);
+		fd = open(mtp_device, O_RDWR);
+		usleep(800000);
+	}
 }
 
-void twmtp_MtpServer::run()
-{
-	MTPD("running in twmtp\n");
-	server->run();
+void twmtp_MtpServer::set_storages(storages* mtpstorages) {
+	stores = mtpstorages;
 }
 
 void twmtp_MtpServer::cleanup()
@@ -126,7 +118,7 @@ void twmtp_MtpServer::add_storage()
 	android::Mutex sMutex;
 	android::Mutex::Autolock autoLock(sMutex);
 
-	MTPI("adding internal storage\n");
+	MTPD("twmtp_MtpServer::add_storage count of storage devices: %i\n", stores->size());
 	for (unsigned int i = 0; i < stores->size(); ++i) {
 			std::string pathStr = stores->at(i)->mount;
 
