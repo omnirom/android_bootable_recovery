@@ -92,7 +92,7 @@ private:
     android::Vector<ObjectEdit*>  mObjectEditList;
 
 public:
-                        MtpServer(int fd, MtpDatabase* database, bool ptp,
+                        MtpServer(MtpDatabase* database, bool ptp,
                                     int fileGroup, int filePerm, int directoryPerm);
     virtual             ~MtpServer();
 
@@ -102,7 +102,7 @@ public:
     void                addStorage(MtpStorage* storage);
     void                removeStorage(MtpStorage* storage);
 
-    void                run();
+    void                run(int fd);
 
     void                sendObjectAdded(MtpObjectHandle handle);
     void                sendObjectRemoved(MtpObjectHandle handle);

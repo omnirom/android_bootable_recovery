@@ -96,10 +96,9 @@ static const MtpEventCode kSupportedEventCodes[] = {
 	MTP_EVENT_OBJECT_PROP_CHANGED,
 };
 
-MtpServer::MtpServer(int fd, MtpDatabase* database, bool ptp,
+MtpServer::MtpServer(MtpDatabase* database, bool ptp,
 					int fileGroup, int filePerm, int directoryPerm)
-	:	mFD(fd),
-		mDatabase(database),
+	:	mDatabase(database),
 		mPtp(ptp),
 		mFileGroup(fileGroup),
 		mFilePermission(filePerm),
@@ -110,6 +109,7 @@ MtpServer::MtpServer(int fd, MtpDatabase* database, bool ptp,
 		mSendObjectFormat(0),
 		mSendObjectFileSize(0)
 {
+	mFD = -1;
 }
 
 MtpServer::~MtpServer() {
@@ -183,9 +183,11 @@ bool MtpServer::hasStorage(MtpStorageID id) {
 	return (getStorage(id) != NULL);
 }
 
-void MtpServer::run() {
-	int fd = mFD;
+void MtpServer::run(int fd) {
+	if (fd < 0)
+		return;
 
+	mFD = fd;
 	MTPI("MtpServer::run fd: %d\n", fd);
 
 	while (1) {
@@ -275,7 +277,7 @@ void MtpServer::run() {
 	mObjectEditList.clear();
 
 	if (mSessionOpen)
-		mDatabase->sessionEnded();
+		mDatabase->sessionEnded(); // This doesn't actually do anything but was carry over from AOSP
 	close(fd);
 	mFD = -1;
 }
