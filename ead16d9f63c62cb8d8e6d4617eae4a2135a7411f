@@ -16,6 +16,24 @@
       "revId": "ead16d9f63c62cb8d8e6d4617eae4a2135a7411f",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b25f591_0db3d2ff",
+        "filename": "minuitwrp/graphics.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 260,
+      "author": {
+        "id": 1001224
+      },
+      "writtenOn": "2015-01-31T11:21:51Z",
+      "side": 1,
+      "message": "see this one as a reference:\nhttps://www.codeaurora.org/cgit/quic/la/platform/bootable/recovery/commit/minui?h\u003dLNX.LA.3.7.2.1_rb1\u0026id\u003d1baf8a73ac96fd8016c6855fa018de0d15757bcb\n\nalso\nhttps://github.com/CyanogenMod/android_bootable_recovery/blob/cm-11.0/minui/graphics.c",
+      "parentUuid": "8b25f591_ada39eae",
+      "revId": "ead16d9f63c62cb8d8e6d4617eae4a2135a7411f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
