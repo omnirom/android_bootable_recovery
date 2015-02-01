@@ -899,9 +899,10 @@ protected:
 	{
 		unsigned char key;
 		unsigned char longpresskey;
-		unsigned int end_x;
-		unsigned int layout;
+		int end_x;
+		int layout;
 	};
+	int ParseKey(const char* keyinfo, keyboard_key_class& key, int& Xindex, int keyWidth, bool longpress);
 	struct capslock_tracking_struct
 	{
 		int capslock;
@@ -914,9 +915,8 @@ protected:
 	struct capslock_tracking_struct caps_tracking[MAX_KEYBOARD_LAYOUTS];
 	bool mRendered;
 	std::string mVariable;
-	unsigned int cursorLocation;
-	unsigned int currentLayout;
-	unsigned int row_heights[MAX_KEYBOARD_LAYOUTS][MAX_KEYBOARD_ROWS];
+	int currentLayout;
+	int row_heights[MAX_KEYBOARD_LAYOUTS][MAX_KEYBOARD_ROWS];
 	unsigned int KeyboardWidth, KeyboardHeight;
 	int rowY, colX, highlightRenderCount, hasHighlight, hasCapsHighlight;
 	GUIAction* mAction;
