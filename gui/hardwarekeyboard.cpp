@@ -5,12 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include <sys/reboot.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -19,50 +17,52 @@
 
 extern "C" {
 #include "../common.h"
-#include "../minuitwrp/minui.h"
-#include "../recovery_ui.h"
 }
 
-#include "rapidxml.hpp"
 #include "objects.hpp"
-#include "../data.hpp"
 #include <linux/input.h>
 
-HardwareKeyboard::HardwareKeyboard(void) {
-	// Do Nothing
-	DataManager::SetValue("Lshift_down", 0);
-	DataManager::SetValue("Rshift_down", 0);
-	DataManager::SetValue("last_key", 0);
+HardwareKeyboard::HardwareKeyboard()
+ : mLastKeyChar(0)
+{
 }
 
-HardwareKeyboard::~HardwareKeyboard() {
-	// Do Nothing
+HardwareKeyboard::~HardwareKeyboard()
+{
 }
 
-int HardwareKeyboard::KeyDown(int key_code) {
+// Map keys to other keys.
+static int TranslateKeyCode(int key_code)
+{
+	switch (key_code) {
+		case KEY_HOMEPAGE: // Home key on Asus Transformer hardware keyboard
+			return KEY_HOME;
+		case KEY_SLEEP: // Lock key on Asus Transformer hardware keyboard
+			return KEY_POWER;
+	}
+	return key_code;
+}
 
-	int keyboard = -1;
-	int shiftkey, Lshift_down, Rshift_down;
-
-	DataManager::GetValue("Lshift_down", Lshift_down);
-	DataManager::GetValue("Rshift_down", Rshift_down);
-	if (Lshift_down || Rshift_down)
-		shiftkey = 1;
-	else
-		shiftkey = 0;
-
+int HardwareKeyboard::KeyDown(int key_code)
+{
 #ifdef _EVENT_LOGGING
 	LOGE("HardwareKeyboard::KeyDown %i\n", key_code);
 #endif
+	key_code = TranslateKeyCode(key_code);
+
+	// determine if any Shift key is held down
+	bool shiftkey = false;
+	std::set<int>::iterator it = mPressedKeys.find(KEY_LEFTSHIFT);
+	if (it == mPressedKeys.end())
+		it = mPressedKeys.find(KEY_RIGHTSHIFT);
+	if (it != mPressedKeys.end())
+		shiftkey = true;
+
+	mPressedKeys.insert(key_code);
+
+	int keyboard = -1;
+
 	switch (key_code) {
-		case KEY_LEFTSHIFT: // Left Shift
-			DataManager::SetValue("Lshift_down", 1);
-			return 0;
-			break;
-		case KEY_RIGHTSHIFT: // Right Shift
-			DataManager::SetValue("Rshift_down", 1);
-			return 0;
-			break;
 		case KEY_A:
 			if (shiftkey)
 				keyboard = 'A';
@@ -366,23 +366,7 @@ int HardwareKeyboard::KeyDown(int key_code) {
 		case KEY_RIGHT: // Right arrow
 			keyboard = KEYBOARD_ARROW_RIGHT;
 			break;
-		case KEY_BACK: // back button on screen
-			mPressedKeys.insert(KEY_BACK);
-			PageManager::NotifyKey(KEY_BACK, true);
-			return 0;
-			break;
-		case KEY_HOMEPAGE: // keyboard home button
-		case KEY_HOME: // home button on screen
-			mPressedKeys.insert(KEY_HOME);
-			PageManager::NotifyKey(KEY_HOME, true);
-			return 0;
-			break;
-		case KEY_SLEEP: // keyboard lock button
-		case KEY_POWER: // tablet power button
-			mPressedKeys.insert(KEY_POWER);
-			PageManager::NotifyKey(KEY_POWER, true);
-			return 0;
-			break;
+
 #ifdef _EVENT_LOGGING
 		default:
 			LOGE("Unmapped keycode: %i\n", key_code);
@@ -390,45 +374,43 @@ int HardwareKeyboard::KeyDown(int key_code) {
 #endif
 	}
 	if (keyboard != -1) {
-		DataManager::SetValue("last_key", keyboard);
-		mPressedKeys.insert(keyboard);
+		mLastKeyChar = keyboard;
+		// NotifyKeyboard means: "report character to input widget". KEYBOARD_* codes are special, others are ASCII chars.
 		if (!PageManager::NotifyKeyboard(keyboard))
 			return 1;  // Return 1 to enable key repeat
 	} else {
-		DataManager::SetValue("last_key", 0);
+		mLastKeyChar = 0;
+		PageManager::NotifyKey(key_code, true);
 	}
 	return 0;
 }
 
-int HardwareKeyboard::KeyUp(int key_code) {
+int HardwareKeyboard::KeyUp(int key_code)
+{
+#ifdef _EVENT_LOGGING
+	LOGE("HardwareKeyboard::KeyUp %i\n", key_code);
+#endif
+	key_code = TranslateKeyCode(key_code);
 	std::set<int>::iterator itr = mPressedKeys.find(key_code);
 	if (itr != mPressedKeys.end()) {
 		mPressedKeys.erase(itr);
 		PageManager::NotifyKey(key_code, false);
 	}
-#ifdef _EVENT_LOGGING
-	LOGE("HardwareKeyboard::KeyUp %i\n", key_code);
-#endif
-	if (key_code == KEY_LEFTSHIFT) { // Left Shift
-		DataManager::SetValue("Lshift_down", 0);
-	} else if (key_code == 31) { // Right Shift
-		DataManager::SetValue("Rshift_down", 0);
-	}
 	return 0;
 }
 
-int HardwareKeyboard::KeyRepeat(void) {
-	int last_key;
-
-	DataManager::GetValue("last_key", last_key);
+int HardwareKeyboard::KeyRepeat()
+{
 #ifdef _EVENT_LOGGING
-	LOGE("HardwareKeyboard::KeyRepeat: %i\n", last_key);
+	LOGE("HardwareKeyboard::KeyRepeat: %i\n", mLastKeyChar);
 #endif
-	if (last_key)
-		PageManager::NotifyKeyboard(last_key);
+	if (mLastKeyChar)
+		PageManager::NotifyKeyboard(mLastKeyChar);
 	return 0;
 }
 
-void HardwareKeyboard::ConsumeKeyRelease(int key) {
+void HardwareKeyboard::ConsumeKeyRelease(int key)
+{
+	// causes following KeyUp event to suppress notifications
 	mPressedKeys.erase(key);
 }

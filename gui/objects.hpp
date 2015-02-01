@@ -992,17 +992,22 @@ protected:
 class HardwareKeyboard
 {
 public:
-	HardwareKeyboard(void);
+	HardwareKeyboard();
 	virtual ~HardwareKeyboard();
 
 public:
-	virtual int KeyDown(int key_code);
-	virtual int KeyUp(int key_code);
-	virtual int KeyRepeat(void);
+	// called by the input handler for key events
+	int KeyDown(int key_code);
+	int KeyUp(int key_code);
 
+	// called by the input handler when holding a key down
+	int KeyRepeat();
+
+	// called by multi-key actions to suppress key-release notifications
 	void ConsumeKeyRelease(int key);
 
 private:
+	int mLastKeyChar;
 	std::set<int> mPressedKeys;
 };
 

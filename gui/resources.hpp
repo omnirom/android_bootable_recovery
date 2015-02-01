@@ -5,6 +5,10 @@
 
 #include "../minzip/Zip.h"
 
+extern "C" {
+#include "../minuitwrp/minui.h"
+}
+
 // Base Objects
 class Resource
 {
