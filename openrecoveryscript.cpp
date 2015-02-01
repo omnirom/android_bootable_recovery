@@ -50,19 +50,27 @@ extern "C" {
 #define SCRIPT_COMMAND_SIZE 512
 
 int OpenRecoveryScript::check_for_script_file(void) {
+	string scriptfile;
+
 	if (!PartitionManager.Mount_By_Path(SCRIPT_FILE_CACHE, false)) {
 		LOGERR("Unable to mount /cache for OpenRecoveryScript support.\n");
 		return 0;
 	}
+
 	if (TWFunc::Path_Exists(SCRIPT_FILE_CACHE)) {
-		LOGINFO("Script file found: '%s'\n", SCRIPT_FILE_CACHE);
-		// Copy script file to /tmp
-		TWFunc::copy_file(SCRIPT_FILE_CACHE, SCRIPT_FILE_TMP, 0755);
-		// Delete the file from /cache
-		unlink(SCRIPT_FILE_CACHE);
-		return 1;
+		scriptfile = SCRIPT_FILE_CACHE;
+	} else if (TWFunc::Path_Exists(COMMAND_FILE_CACHE)) {
+		scriptfile = COMMAND_FILE_CACHE;
+	} else {
+		return 0;
 	}
-	return 0;
+
+	LOGINFO("Script file found: '%s'\n", scriptfile.c_str());
+	// Copy script file to /tmp
+	TWFunc::copy_file(scriptfile, SCRIPT_FILE_TMP, 0755);
+	// Delete the file from /cache
+	unlink(scriptfile.c_str());
+	return 1;
 }
 
 int OpenRecoveryScript::copy_script_file(string filename) {

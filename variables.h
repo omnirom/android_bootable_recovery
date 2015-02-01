@@ -178,6 +178,7 @@
 
 // For OpenRecoveryScript
 #define SCRIPT_FILE_CACHE "/cache/recovery/openrecoveryscript"
+#define COMMAND_FILE_CACHE "/cache/recovery/command"
 #define SCRIPT_FILE_TMP "/tmp/openrecoveryscript"
 #define TMP_LOG_FILE "/tmp/recovery.log"
 
