@@ -714,11 +714,7 @@ int GUIInput::NotifyKeyboard(int key)
 			if (mCursorLocation == -1) {
 				variableValue += key;
 			} else {
-				const char newchar = (char)key;
-				const char* a = &newchar;
-				string newstring = a;
-				newstring.resize(1);
-				variableValue.insert(mCursorLocation + skipChars, newstring);
+				variableValue.insert(mCursorLocation + skipChars, 1, key);
 				mCursorLocation++;
 			}
 			isLocalChange = true;
