@@ -752,9 +752,10 @@ int ev_get(struct input_event *ev)
                 }
             }
         }
+        return -1;
     }
 
-    return -1;
+    return -2;
 }
 
 int ev_wait(int timeout)
