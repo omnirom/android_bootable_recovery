@@ -340,10 +340,7 @@ int main(int argc, char **argv) {
 	// Check for su to see if the device is rooted or not
 	if (PartitionManager.Mount_By_Path("/system", false)) {
 		// Disable flashing of stock recovery
-		if (TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
-			rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
-			gui_print("Renamed stock recovery file in /system to prevent\nthe stock ROM from replacing TWRP.\n");
-		}
+		TWFunc::Disable_Stock_Recovery_Replace();
 		if (TWFunc::Path_Exists("/supersu/su") && !TWFunc::Path_Exists("/system/bin/su") && !TWFunc::Path_Exists("/system/xbin/su") && !TWFunc::Path_Exists("/system/bin/.ext/.su")) {
 			// Device doesn't have su installed
 			DataManager::SetValue("tw_busy", 1);
