@@ -864,7 +864,7 @@ void TWFunc::Fixup_Time_On_Boot()
 
 	}
 
-	LOGINFO("TWFunc::Fixup_Time: will attempt to use the ats files now.\n", sepoch.c_str());
+	LOGINFO("TWFunc::Fixup_Time: will attempt to use the ats files now.\n");
 
 	// Devices with Qualcomm Snapdragon 800 do some shenanigans with RTC.
 	// They never set it, it just ticks forward from 1970-01-01 00:00,
@@ -1036,6 +1036,18 @@ std::string TWFunc::to_string(unsigned long value) {
 	std::ostringstream os;
 	os << value;
 	return os.str();
+}
+
+void TWFunc::Disable_Stock_Recovery_Replace(void) {
+	if (PartitionManager.Mount_By_Path("/system", false)) {
+		// Disable flashing of stock recovery
+		if (TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
+			rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
+			gui_print("Renamed stock recovery file in /system to prevent\nthe stock ROM from replacing TWRP.\n");
+			sync();
+		}
+		PartitionManager.UnMount_By_Path("/system", false);
+	}
 }
 
 #endif // ndef BUILD_TWRPTAR_MAIN
