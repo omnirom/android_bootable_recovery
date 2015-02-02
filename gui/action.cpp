@@ -1555,6 +1555,8 @@ int GUIAction::openrecoveryscript(std::string arg)
 			}
 		}
 		if (reboot) {
+			// Disable stock recovery reflashing
+			TWFunc::Disable_Stock_Recovery_Replace();
 			usleep(2000000); // Sleep for 2 seconds before rebooting
 			TWFunc::tw_reboot(rb_system);
 		} else {
