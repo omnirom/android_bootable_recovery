@@ -94,6 +94,24 @@ extern "C" void gui_print_color(const char *color, const char *fmt, ...)
 	return;
 }
 
+extern "C" void LOGIF(int display_in_gui, const char *fmt, ...)
+{
+	char buf[2048];		// We're going to limit a single request to 2048 bytes
+
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(buf, 2048, fmt, ap);
+	va_end(ap);
+
+	if (display_in_gui) {
+		gui_print_color("error", buf);
+	} else {
+		fprintf(stdout, "I:%s", buf);
+	}
+
+	return;
+}
+
 extern "C" void gui_set_FILE(FILE* f)
 {
 	ors_file = f;

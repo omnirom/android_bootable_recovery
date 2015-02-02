@@ -49,6 +49,7 @@
 
 extern "C" {
 	#include "cutils/properties.h"
+	#include "gui/gui.h"
 }
 
 #ifdef TW_INCLUDE_CRYPTO
@@ -341,10 +342,8 @@ int TWPartitionManager::Mount_By_Path(string Path, bool Display_Error) {
 	}
 	if (found) {
 		return ret;
-	} else if (Display_Error) {
-		LOGERR("Mount: Unable to find partition for path '%s'\n", Local_Path.c_str());
 	} else {
-		LOGINFO("Mount: Unable to find partition for path '%s'\n", Local_Path.c_str());
+		LOGIF(Display_Error, "Mount: Unable to find partition for path '%s'\n", Local_Path.c_str());
 	}
 	return false;
 }
@@ -366,10 +365,8 @@ int TWPartitionManager::UnMount_By_Path(string Path, bool Display_Error) {
 	}
 	if (found) {
 		return ret;
-	} else if (Display_Error) {
-		LOGERR("UnMount: Unable to find partition for path '%s'\n", Local_Path.c_str());
 	} else {
-		LOGINFO("UnMount: Unable to find partition for path '%s'\n", Local_Path.c_str());
+		LOGIF(Display_Error, "UnMount: Unable to find partition for path '%s'\n", Local_Path.c_str());
 	}
 	return false;
 }
@@ -1231,10 +1228,8 @@ int TWPartitionManager::Repair_By_Path(string Path, bool Display_Error) {
 	}
 	if (found) {
 		return ret;
-	} else if (Display_Error) {
-		LOGERR("Repair: Unable to find partition for path '%s'\n", Local_Path.c_str());
 	} else {
-		LOGINFO("Repair: Unable to find partition for path '%s'\n", Local_Path.c_str());
+		LOGIF(Display_Error, "Repair: Unable to find partition for path '%s'\n", Local_Path.c_str());
 	}
 	return false;
 }

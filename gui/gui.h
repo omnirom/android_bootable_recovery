@@ -29,6 +29,7 @@ int gui_start();
 int gui_startPage(const char* page_name, const int allow_comands, int stop_on_page_done);
 void gui_print(const char *fmt, ...);
 void gui_print_color(const char *color, const char *fmt, ...);
+void LOGIF(int display_in_gui, const char *fmt, ...);
 void gui_set_FILE(FILE* f);
 
 #endif  // _GUI_HEADER

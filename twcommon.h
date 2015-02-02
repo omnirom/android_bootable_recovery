@@ -13,6 +13,7 @@ extern "C" {
 #define LOGERR(...) printf("E:" __VA_ARGS__)
 #define LOGINFO(...) printf("I:" __VA_ARGS__)
 #define gui_print(...) printf( __VA_ARGS__ )
+#define LOGIF(...) printf( __VA_ARGS__ )
 #endif
 
 #define STRINGIFY(x) #x

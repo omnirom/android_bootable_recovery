@@ -46,6 +46,7 @@
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
+	#include "gui/gui.h"
 #ifdef USE_EXT4
 	#include "make_ext4fs.h"
 #endif
@@ -208,10 +209,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 				if (*ptr != '/')
 					LOGERR("Until we get better BML support, you will have to find and provide the full block device path to the BML devices e.g. /dev/block/bml9 instead of the partition name\n");
 			} else if (*ptr != '/') {
-				if (Display_Error)
-					LOGERR("Invalid block device on '%s', '%s', %i\n", Line.c_str(), ptr, index);
-				else
-					LOGINFO("Invalid block device on '%s', '%s', %i\n", Line.c_str(), ptr, index);
+				LOGIF(Display_Error, "Invalid block device on '%s', '%s', %i\n", Line.c_str(), ptr, index);
 				return 0;
 			} else {
 				Primary_Block_Device = ptr;
@@ -244,10 +242,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 	}
 
 	if (!Is_File_System(Fstab_File_System) && !Is_Image(Fstab_File_System)) {
-		if (Display_Error)
-			LOGERR("Unknown File System: '%s'\n", Fstab_File_System.c_str());
-		else
-			LOGINFO("Unknown File System: '%s'\n", Fstab_File_System.c_str());
+		LOGIF(Display_Error, "Unknown File System: '%s'\n", Fstab_File_System.c_str());
 		return 0;
 	} else if (Is_File_System(Fstab_File_System)) {
 		Find_Actual_Block_Device();
@@ -575,10 +570,7 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 				}
 			}
 		} else {
-			if (Display_Error)
-				LOGERR("Unhandled flag: '%s'\n", ptr);
-			else
-				LOGINFO("Unhandled flag: '%s'\n", ptr);
+			LOGIF(Display_Error, "Unhandled flag: '%s'\n", ptr);
 		}
 		while (index < flags_len && flags[index] != '\0')
 			index++;
@@ -619,10 +611,7 @@ bool TWPartition::Is_Image(string File_System) {
 bool TWPartition::Make_Dir(string Path, bool Display_Error) {
 	if (!TWFunc::Path_Exists(Path)) {
 		if (mkdir(Path.c_str(), 0777) == -1) {
-			if (Display_Error)
-				LOGERR("Can not create '%s' folder.\n", Path.c_str());
-			else
-				LOGINFO("Can not create '%s' folder.\n", Path.c_str());
+			LOGIF(Display_Error, "Can not create '%s' folder.\n", Path.c_str());
 			return false;
 		} else {
 			LOGINFO("Created '%s' folder.\n", Path.c_str());
@@ -658,10 +647,7 @@ void TWPartition::Setup_Image(bool Display_Error) {
 		Used = Size;
 		Backup_Size = Size;
 	} else {
-		if (Display_Error)
-			LOGERR("Unable to find partition size for '%s'\n", Mount_Point.c_str());
-		else
-			LOGINFO("Unable to find partition size for '%s'\n", Mount_Point.c_str());
+		LOGIF(Display_Error, "Unable to find partition size for '%s'\n", Mount_Point.c_str());
 	}
 }
 
@@ -716,10 +702,7 @@ void TWPartition::Find_Real_Block_Device(string& Block, bool Display_Error) {
 	}
 
 	if (device[0] != '/') {
-		if (Display_Error)
-			LOGERR("Invalid symlink path '%s' found on block device '%s'\n", device, Block.c_str());
-		else
-			LOGINFO("Invalid symlink path '%s' found on block device '%s'\n", device, Block.c_str());
+		LOGIF(Display_Error, "Invalid symlink path '%s' found on block device '%s'\n", device, Block.c_str());
 		return;
 	} else {
 		Block = device;
@@ -791,10 +774,7 @@ bool TWPartition::Get_Size_Via_statfs(bool Display_Error) {
 
 	if (statfs(Local_Path.c_str(), &st) != 0) {
 		if (!Removable) {
-			if (Display_Error)
-				LOGERR("Unable to statfs '%s'\n", Local_Path.c_str());
-			else
-				LOGINFO("Unable to statfs '%s'\n", Local_Path.c_str());
+			LOGIF(Display_Error, "Unable to statfs '%s'\n", Local_Path.c_str());
 		}
 		return false;
 	}
@@ -967,10 +947,7 @@ bool TWPartition::Mount(bool Display_Error) {
 		const unsigned long flags = MS_NOATIME | MS_NODEV | MS_NODIRATIME;
 		if (mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), Fstab_File_System.c_str(), flags, NULL) < 0) {
 			if (mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), Fstab_File_System.c_str(), flags | MS_RDONLY, NULL) < 0) {
-				if (Display_Error)
-					LOGERR("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
-				else
-					LOGINFO("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
+				LOGIF(Display_Error, "Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
 				return false;
 			} else {
 				LOGINFO("Mounted '%s' (MTD) as RO\n", Mount_Point.c_str());
@@ -980,20 +957,14 @@ bool TWPartition::Mount(bool Display_Error) {
 			struct stat st;
 			string test_path = Mount_Point;
 			if (stat(test_path.c_str(), &st) < 0) {
-				if (Display_Error)
-					LOGERR("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
-				else
-					LOGINFO("Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
+				LOGIF(Display_Error, "Failed to mount '%s' (MTD)\n", Mount_Point.c_str());
 				return false;
 			}
 			mode_t new_mode = st.st_mode | S_IXUSR | S_IXGRP | S_IXOTH;
 			if (new_mode != st.st_mode) {
 				LOGINFO("Fixing execute permissions for %s\n", Mount_Point.c_str());
 				if (chmod(Mount_Point.c_str(), new_mode) < 0) {
-					if (Display_Error)
-						LOGERR("Couldn't fix permissions for %s: %s\n", Mount_Point.c_str(), strerror(errno));
-					else
-						LOGINFO("Couldn't fix permissions for %s: %s\n", Mount_Point.c_str(), strerror(errno));
+					LOGIF(Display_Error, "Couldn't fix permissions for %s: %s\n", Mount_Point.c_str(), strerror(errno));
 					return false;
 				}
 			}
@@ -1004,19 +975,13 @@ bool TWPartition::Mount(bool Display_Error) {
 		if (Current_File_System == "exfat") {
 			LOGINFO("Mounting exfat failed, trying vfat...\n");
 			if (mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), "vfat", 0, NULL) != 0) {
-				if (Display_Error)
-					LOGERR("Unable to mount '%s'\n", Mount_Point.c_str());
-				else
-					LOGINFO("Unable to mount '%s'\n", Mount_Point.c_str());
+				LOGIF(Display_Error, "Unable to mount '%s'\n", Mount_Point.c_str());
 				LOGINFO("Actual block device: '%s', current file system: '%s', flags: 0x%8x, options: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str(), Mount_Flags, Mount_Options.c_str());
 				return false;
 			}
 		} else {
 #endif
-			if (!Removable && Display_Error)
-				LOGERR("Unable to mount '%s'\n", Mount_Point.c_str());
-			else
-				LOGINFO("Unable to mount '%s'\n", Mount_Point.c_str());
+			LOGIF(!Removable && Display_Error, "Unable to mount '%s'\n", Mount_Point.c_str());
 			LOGINFO("Actual block device: '%s', current file system: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str());
 			return false;
 #ifdef TW_NO_EXFAT_FUSE
@@ -1050,10 +1015,7 @@ bool TWPartition::UnMount(bool Display_Error) {
 
 		umount(Mount_Point.c_str());
 		if (Is_Mounted()) {
-			if (Display_Error)
-				LOGERR("Unable to unmount '%s'\n", Mount_Point.c_str());
-			else
-				LOGINFO("Unable to unmount '%s'\n", Mount_Point.c_str());
+			LOGIF(Display_Error, "Unable to unmount '%s'\n", Mount_Point.c_str());
 			return false;
 		} else {
 			return true;
