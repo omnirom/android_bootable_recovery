@@ -501,6 +501,98 @@ protected:
 	std::string mVarName;
 };
 
+struct ScrollListData {
+	Resource* displayResource;
+	std::string displayName;
+	int list_index;
+};
+
+class GUIScrollList : public GUIObject, public RenderObject, public ActionObject
+{
+public:
+	GUIScrollList(xml_node<>* node);
+	virtual ~GUIScrollList();
+
+public:
+	// Render - Render the full object to the GL surface
+	//  Return 0 on success, <0 on error
+	virtual int Render(void);
+
+	// Update - Update any UI component animations (called <= 30 FPS)
+	//  Return 0 if nothing to update, 1 on success and contiue, >1 if full render required, and <0 on error
+	virtual int Update(void);
+
+	// NotifyTouch - Notify of a touch event
+	//  Return 0 on success, >0 to ignore remainder of touch, and <0 on error
+	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
+
+	// NotifyVarChange - Notify of a variable change
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
+
+	// SetPos - Update the position of the render object
+	//  Return 0 on success, <0 on error
+	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
+
+	// SetPageFocus - Notify when a page gains or loses focus
+	virtual void SetPageFocus(int inFocus);
+
+protected:
+	virtual int GetSelection(int x, int y);
+	void SetMaxIconSize(int w, int h);
+	void SetVisibleListLocation(int list_index);
+
+protected:
+	std::vector<ScrollListData> mList;
+	std::string mVariable;
+	std::string mSelection;
+	std::string currentValue;
+	std::string mHeaderText;
+	std::string mLastValue;
+	int actualLineHeight;
+	int mStart;
+	int startY;
+	int mSeparatorH, mHeaderSeparatorH;
+	int mLineSpacing;
+	int mUpdate;
+	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH, mHeaderH;
+	int mFastScrollW;
+	int mFastScrollLineW;
+	int mFastScrollRectW;
+	int mFastScrollRectH;
+	int mFastScrollRectX;
+	int mFastScrollRectY;
+	int mIconWidth, mIconHeight, mHeaderIconHeight, mHeaderIconWidth;
+	int scrollingSpeed;
+	int scrollingY;
+	unsigned mFontHeight;
+	unsigned mLineHeight;
+	Resource* mHeaderIcon;
+	Resource* mBackground;
+	Resource* mFont;
+	COLOR mBackgroundColor;
+	COLOR mFontColor;
+	COLOR mHeaderBackgroundColor;
+	COLOR mHeaderFontColor;
+	COLOR mSeparatorColor;
+	COLOR mHeaderSeparatorColor;
+	COLOR mFastScrollLineColor;
+	COLOR mFastScrollRectColor;
+	bool hasHighlightColor;
+	bool hasFontHighlightColor;
+	bool isHighlighted;
+	COLOR mHighlightColor;
+	COLOR mFontHighlightColor;
+	int mHeaderIsStatic;
+	int startSelection;
+	int touchDebounce;
+	int itemChosen;
+	int lastY, last2Y, fastScroll;
+
+friend class GUIFileSelector;
+friend class GUIListBox;
+friend class GUIPartitionList;
+};
+
 class GUIFileSelector : public GUIObject, public RenderObject, public ActionObject
 {
 public:
@@ -550,6 +642,7 @@ protected:
 	static bool fileSort(FileData d1, FileData d2);
 
 protected:
+	GUIScrollList* scrollList;
 	std::vector<FileData> mFolderList;
 	std::vector<FileData> mFileList;
 	std::string mPathVar;
@@ -557,51 +650,11 @@ protected:
 	std::string mVariable;
 	std::string mSortVariable;
 	std::string mSelection;
-	std::string mHeaderText;
-	std::string mLastValue;
-	int actualLineHeight;
-	int mStart;
-	int mLineSpacing;
-	int mSeparatorH;
-	int mHeaderSeparatorH;
 	int mShowFolders, mShowFiles, mShowNavFolders;
 	int mUpdate;
-	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH;
-	int mHeaderH;
-	int mFastScrollW;
-	int mFastScrollLineW;
-	int mFastScrollRectW;
-	int mFastScrollRectH;
-	int mFastScrollRectX;
-	int mFastScrollRectY;
 	static int mSortOrder;
-	int startY;
-	int scrollingSpeed;
-	int scrollingY;
-	int mHeaderIsStatic;
-	int touchDebounce;
-	unsigned mFontHeight;
-	unsigned mLineHeight;
-	int mIconWidth, mIconHeight, mFolderIconHeight, mFileIconHeight, mFolderIconWidth, mFileIconWidth, mHeaderIconHeight, mHeaderIconWidth;
-	Resource* mHeaderIcon;
 	Resource* mFolderIcon;
 	Resource* mFileIcon;
-	Resource* mBackground;
-	Resource* mFont;
-	COLOR mBackgroundColor;
-	COLOR mFontColor;
-	COLOR mHeaderBackgroundColor;
-	COLOR mHeaderFontColor;
-	COLOR mSeparatorColor;
-	COLOR mHeaderSeparatorColor;
-	COLOR mFastScrollLineColor;
-	COLOR mFastScrollRectColor;
-	bool hasHighlightColor;
-	bool hasFontHighlightColor;
-	bool isHighlighted;
-	COLOR mHighlightColor;
-	COLOR mFontHighlightColor;
-	int startSelection;
 	bool updateFileList;
 };
 
@@ -645,52 +698,13 @@ protected:
 	virtual int GetSelection(int x, int y);
 
 protected:
+	GUIScrollList* scrollList;
 	std::vector<ListData> mList;
-	std::string mVariable;
-	std::string mSelection;
+	std::string mVariable;;
 	std::string currentValue;
-	std::string mHeaderText;
-	std::string mLastValue;
-	int actualLineHeight;
-	int mStart;
-	int startY;
-	int mSeparatorH, mHeaderSeparatorH;
-	int mLineSpacing;
 	int mUpdate;
-	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH, mHeaderH;
-	int mFastScrollW;
-	int mFastScrollLineW;
-	int mFastScrollRectW;
-	int mFastScrollRectH;
-	int mFastScrollRectX;
-	int mFastScrollRectY;
-	int mIconWidth, mIconHeight, mSelectedIconWidth, mSelectedIconHeight, mUnselectedIconWidth, mUnselectedIconHeight, mHeaderIconHeight, mHeaderIconWidth;
-	int scrollingSpeed;
-	int scrollingY;
-	static int mSortOrder;
-	unsigned mFontHeight;
-	unsigned mLineHeight;
-	Resource* mHeaderIcon;
 	Resource* mIconSelected;
 	Resource* mIconUnselected;
-	Resource* mBackground;
-	Resource* mFont;
-	COLOR mBackgroundColor;
-	COLOR mFontColor;
-	COLOR mHeaderBackgroundColor;
-	COLOR mHeaderFontColor;
-	COLOR mSeparatorColor;
-	COLOR mHeaderSeparatorColor;
-	COLOR mFastScrollLineColor;
-	COLOR mFastScrollRectColor;
-	bool hasHighlightColor;
-	bool hasFontHighlightColor;
-	bool isHighlighted;
-	COLOR mHighlightColor;
-	COLOR mFontHighlightColor;
-	int mHeaderIsStatic;
-	int startSelection;
-	int touchDebounce;
 };
 
 class GUIPartitionList : public GUIObject, public RenderObject, public ActionObject
@@ -727,53 +741,16 @@ protected:
 	virtual void MatchList(void);
 
 protected:
+	GUIScrollList* scrollList;
 	std::vector<PartitionList> mList;
 	std::string ListType;
 	std::string mVariable;
 	std::string selectedList;
 	std::string currentValue;
-	std::string mHeaderText;
 	std::string mLastValue;
-	int actualLineHeight;
-	int mStart;
-	int startY;
-	int mSeparatorH, mHeaderSeparatorH;
-	int mLineSpacing;
 	int mUpdate;
-	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH, mHeaderH;
-	int mFastScrollW;
-	int mFastScrollLineW;
-	int mFastScrollRectW;
-	int mFastScrollRectH;
-	int mFastScrollRectX;
-	int mFastScrollRectY;
-	int mIconWidth, mIconHeight, mSelectedIconWidth, mSelectedIconHeight, mUnselectedIconWidth, mUnselectedIconHeight, mHeaderIconHeight, mHeaderIconWidth;
-	int scrollingSpeed;
-	int scrollingY;
-	static int mSortOrder;
-	unsigned mFontHeight;
-	unsigned mLineHeight;
-	Resource* mHeaderIcon;
 	Resource* mIconSelected;
 	Resource* mIconUnselected;
-	Resource* mBackground;
-	Resource* mFont;
-	COLOR mBackgroundColor;
-	COLOR mFontColor;
-	COLOR mHeaderBackgroundColor;
-	COLOR mHeaderFontColor;
-	COLOR mSeparatorColor;
-	COLOR mHeaderSeparatorColor;
-	COLOR mFastScrollLineColor;
-	COLOR mFastScrollRectColor;
-	bool hasHighlightColor;
-	bool hasFontHighlightColor;
-	bool isHighlighted;
-	COLOR mHighlightColor;
-	COLOR mFontHighlightColor;
-	int mHeaderIsStatic;
-	int startSelection;
-	int touchDebounce;
 	bool updateList;
 };
 
