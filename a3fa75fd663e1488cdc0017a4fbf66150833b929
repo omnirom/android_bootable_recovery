@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_454ccae3",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1653,
+      "author": {
+        "id": 1001213
+      },
+      "writtenOn": "2015-02-04T12:00:18Z",
+      "side": 1,
+      "message": "mkfs.f2fs have no option \" -r \"",
+      "range": {
+        "startLine": 1653,
+        "startChar": 15,
+        "endLine": 1653,
+        "endChar": 16
+      },
+      "revId": "a3fa75fd663e1488cdc0017a4fbf66150833b929",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
