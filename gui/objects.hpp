@@ -501,11 +501,17 @@ protected:
 	std::string mVarName;
 };
 
-class GUIFileSelector : public GUIObject, public RenderObject, public ActionObject
+struct ScrollListData {
+	Resource* displayResource;
+	std::string displayName;
+	int list_index;
+};
+
+class GUIScrollList : public GUIObject, public RenderObject, public ActionObject
 {
 public:
-	GUIFileSelector(xml_node<>* node);
-	virtual ~GUIFileSelector();
+	GUIScrollList(xml_node<>* node);
+	virtual ~GUIScrollList();
 
 public:
 	// Render - Render the full object to the GL surface
@@ -529,6 +535,88 @@ public:
 
 	// SetPageFocus - Notify when a page gains or loses focus
 	virtual void SetPageFocus(int inFocus);
+
+protected:
+	// derived classes need to implement these
+	// get number of items
+	virtual size_t GetListSize() { return 0; }
+	// get data for one item
+	virtual int GetListItem(size_t item_index, Resource*& icon, std::string &text)
+		{ icon = NULL; text = ""; return -1; }
+	// an item was selected
+	virtual void NotifySelect(size_t item_selected) {}
+
+	virtual int GetSelection(int x, int y);
+	void SetMaxIconSize(int w, int h);
+	void SetVisibleListLocation(size_t list_index);
+
+protected:
+	std::string mVariable;
+	std::string mSelection;
+	std::string currentValue;
+	std::string mHeaderText;
+	std::string mLastValue;
+	int actualLineHeight;
+	int mStart;
+	int startY;
+	int mSeparatorH, mHeaderSeparatorH;
+	int mLineSpacing;
+	int mUpdate;
+	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH, mHeaderH;
+	int mFastScrollW;
+	int mFastScrollLineW;
+	int mFastScrollRectW;
+	int mFastScrollRectH;
+	int mFastScrollRectX;
+	int mFastScrollRectY;
+	int mIconWidth, mIconHeight, mHeaderIconHeight, mHeaderIconWidth;
+	int scrollingSpeed;
+	int scrollingY;
+	int mFontHeight;
+	unsigned mLineHeight;
+	Resource* mHeaderIcon;
+	Resource* mBackground;
+	Resource* mFont;
+	COLOR mBackgroundColor;
+	COLOR mFontColor;
+	COLOR mHeaderBackgroundColor;
+	COLOR mHeaderFontColor;
+	COLOR mSeparatorColor;
+	COLOR mHeaderSeparatorColor;
+	COLOR mFastScrollLineColor;
+	COLOR mFastScrollRectColor;
+	bool hasHighlightColor;
+	bool hasFontHighlightColor;
+	bool isHighlighted;
+	COLOR mHighlightColor;
+	COLOR mFontHighlightColor;
+	int mHeaderIsStatic;
+	int startSelection;
+	int touchDebounce;
+	int itemChosen;
+	int lastY, last2Y, fastScroll;
+};
+
+class GUIFileSelector : public GUIScrollList
+{
+public:
+	GUIFileSelector(xml_node<>* node);
+	virtual ~GUIFileSelector();
+
+public:
+	// Update - Update any UI component animations (called <= 30 FPS)
+	//  Return 0 if nothing to update, 1 on success and contiue, >1 if full render required, and <0 on error
+	virtual int Update(void);
+
+	// NotifyVarChange - Notify of a variable change
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
+
+	// SetPageFocus - Notify when a page gains or loses focus
+	virtual void SetPageFocus(int inFocus);
+
+	virtual size_t GetListSize();
+	virtual int GetListItem(size_t item_index, Resource*& icon, std::string &text);
+	virtual void NotifySelect(size_t item_selected);
 
 protected:
 	struct FileData {
@@ -544,8 +632,6 @@ protected:
 	};
 
 protected:
-	virtual int GetSelection(int x, int y);
-
 	virtual int GetFileList(const std::string folder);
 	static bool fileSort(FileData d1, FileData d2);
 
@@ -557,82 +643,33 @@ protected:
 	std::string mVariable;
 	std::string mSortVariable;
 	std::string mSelection;
-	std::string mHeaderText;
-	std::string mLastValue;
-	int actualLineHeight;
-	int mStart;
-	int mLineSpacing;
-	int mSeparatorH;
-	int mHeaderSeparatorH;
 	int mShowFolders, mShowFiles, mShowNavFolders;
-	int mUpdate;
-	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH;
-	int mHeaderH;
-	int mFastScrollW;
-	int mFastScrollLineW;
-	int mFastScrollRectW;
-	int mFastScrollRectH;
-	int mFastScrollRectX;
-	int mFastScrollRectY;
 	static int mSortOrder;
-	int startY;
-	int scrollingSpeed;
-	int scrollingY;
-	int mHeaderIsStatic;
-	int touchDebounce;
-	unsigned mFontHeight;
-	unsigned mLineHeight;
-	int mIconWidth, mIconHeight, mFolderIconHeight, mFileIconHeight, mFolderIconWidth, mFileIconWidth, mHeaderIconHeight, mHeaderIconWidth;
-	Resource* mHeaderIcon;
 	Resource* mFolderIcon;
 	Resource* mFileIcon;
-	Resource* mBackground;
-	Resource* mFont;
-	COLOR mBackgroundColor;
-	COLOR mFontColor;
-	COLOR mHeaderBackgroundColor;
-	COLOR mHeaderFontColor;
-	COLOR mSeparatorColor;
-	COLOR mHeaderSeparatorColor;
-	COLOR mFastScrollLineColor;
-	COLOR mFastScrollRectColor;
-	bool hasHighlightColor;
-	bool hasFontHighlightColor;
-	bool isHighlighted;
-	COLOR mHighlightColor;
-	COLOR mFontHighlightColor;
-	int startSelection;
 	bool updateFileList;
 };
 
-class GUIListBox : public GUIObject, public RenderObject, public ActionObject
+class GUIListBox : public GUIScrollList
 {
 public:
 	GUIListBox(xml_node<>* node);
 	virtual ~GUIListBox();
 
 public:
-	// Render - Render the full object to the GL surface
-	//  Return 0 on success, <0 on error
-	virtual int Render(void);
-
 	// Update - Update any UI component animations (called <= 30 FPS)
 	//  Return 0 if nothing to update, 1 on success and contiue, >1 if full render required, and <0 on error
 	virtual int Update(void);
 
-	// NotifyTouch - Notify of a touch event
-	//  Return 0 on success, >0 to ignore remainder of touch, and <0 on error
-	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
-
 	// NotifyVarChange - Notify of a variable change
 	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 
-	// SetPos - Update the position of the render object
-	//  Return 0 on success, <0 on error
-	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
-
 	// SetPageFocus - Notify when a page gains or loses focus
 	virtual void SetPageFocus(int inFocus);
+
+	virtual size_t GetListSize();
+	virtual int GetListItem(size_t item_index, Resource*& icon, std::string &text);
+	virtual void NotifySelect(size_t item_selected);
 
 protected:
 	struct ListData {
@@ -642,88 +679,35 @@ protected:
 	};
 
 protected:
-	virtual int GetSelection(int x, int y);
-
-protected:
 	std::vector<ListData> mList;
 	std::string mVariable;
-	std::string mSelection;
 	std::string currentValue;
-	std::string mHeaderText;
-	std::string mLastValue;
-	int actualLineHeight;
-	int mStart;
-	int startY;
-	int mSeparatorH, mHeaderSeparatorH;
-	int mLineSpacing;
-	int mUpdate;
-	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH, mHeaderH;
-	int mFastScrollW;
-	int mFastScrollLineW;
-	int mFastScrollRectW;
-	int mFastScrollRectH;
-	int mFastScrollRectX;
-	int mFastScrollRectY;
-	int mIconWidth, mIconHeight, mSelectedIconWidth, mSelectedIconHeight, mUnselectedIconWidth, mUnselectedIconHeight, mHeaderIconHeight, mHeaderIconWidth;
-	int scrollingSpeed;
-	int scrollingY;
-	static int mSortOrder;
-	unsigned mFontHeight;
-	unsigned mLineHeight;
-	Resource* mHeaderIcon;
 	Resource* mIconSelected;
 	Resource* mIconUnselected;
-	Resource* mBackground;
-	Resource* mFont;
-	COLOR mBackgroundColor;
-	COLOR mFontColor;
-	COLOR mHeaderBackgroundColor;
-	COLOR mHeaderFontColor;
-	COLOR mSeparatorColor;
-	COLOR mHeaderSeparatorColor;
-	COLOR mFastScrollLineColor;
-	COLOR mFastScrollRectColor;
-	bool hasHighlightColor;
-	bool hasFontHighlightColor;
-	bool isHighlighted;
-	COLOR mHighlightColor;
-	COLOR mFontHighlightColor;
-	int mHeaderIsStatic;
-	int startSelection;
-	int touchDebounce;
 };
 
-class GUIPartitionList : public GUIObject, public RenderObject, public ActionObject
+class GUIPartitionList : public GUIScrollList
 {
 public:
 	GUIPartitionList(xml_node<>* node);
 	virtual ~GUIPartitionList();
 
 public:
-	// Render - Render the full object to the GL surface
-	//  Return 0 on success, <0 on error
-	virtual int Render(void);
-
 	// Update - Update any UI component animations (called <= 30 FPS)
 	//  Return 0 if nothing to update, 1 on success and contiue, >1 if full render required, and <0 on error
 	virtual int Update(void);
 
-	// NotifyTouch - Notify of a touch event
-	//  Return 0 on success, >0 to ignore remainder of touch, and <0 on error
-	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
-
 	// NotifyVarChange - Notify of a variable change
 	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
-
-	// SetPos - Update the position of the render object
-	//  Return 0 on success, <0 on error
-	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
 
 	// SetPageFocus - Notify when a page gains or loses focus
 	virtual void SetPageFocus(int inFocus);
 
+	virtual size_t GetListSize();
+	virtual int GetListItem(size_t item_index, Resource*& icon, std::string &text);
+	virtual void NotifySelect(size_t item_selected);
+
 protected:
-	virtual int GetSelection(int x, int y);
 	virtual void MatchList(void);
 
 protected:
@@ -732,48 +716,9 @@ protected:
 	std::string mVariable;
 	std::string selectedList;
 	std::string currentValue;
-	std::string mHeaderText;
 	std::string mLastValue;
-	int actualLineHeight;
-	int mStart;
-	int startY;
-	int mSeparatorH, mHeaderSeparatorH;
-	int mLineSpacing;
-	int mUpdate;
-	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH, mHeaderH;
-	int mFastScrollW;
-	int mFastScrollLineW;
-	int mFastScrollRectW;
-	int mFastScrollRectH;
-	int mFastScrollRectX;
-	int mFastScrollRectY;
-	int mIconWidth, mIconHeight, mSelectedIconWidth, mSelectedIconHeight, mUnselectedIconWidth, mUnselectedIconHeight, mHeaderIconHeight, mHeaderIconWidth;
-	int scrollingSpeed;
-	int scrollingY;
-	static int mSortOrder;
-	unsigned mFontHeight;
-	unsigned mLineHeight;
-	Resource* mHeaderIcon;
 	Resource* mIconSelected;
 	Resource* mIconUnselected;
-	Resource* mBackground;
-	Resource* mFont;
-	COLOR mBackgroundColor;
-	COLOR mFontColor;
-	COLOR mHeaderBackgroundColor;
-	COLOR mHeaderFontColor;
-	COLOR mSeparatorColor;
-	COLOR mHeaderSeparatorColor;
-	COLOR mFastScrollLineColor;
-	COLOR mFastScrollRectColor;
-	bool hasHighlightColor;
-	bool hasFontHighlightColor;
-	bool isHighlighted;
-	COLOR mHighlightColor;
-	COLOR mFontHighlightColor;
-	int mHeaderIsStatic;
-	int startSelection;
-	int touchDebounce;
 	bool updateList;
 };
 
