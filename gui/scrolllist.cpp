@@ -27,9 +27,9 @@ extern "C" {
 #include "objects.hpp"
 #include "../data.hpp"
 
-const int SCROLLING_SPEED_DECREMENT = 12; // friction
+const int SCROLLING_SPEED_DECREMENT = 6; // friction
 const int SCROLLING_FLOOR = 10;	// minimum pixels for scrolling to start or stop
-const int SCROLLING_MULTIPLIER = 2; // initial speed of kinetic scrolling
+const int SCROLLING_MULTIPLIER = 1; // initial speed of kinetic scrolling
 const float SCROLLING_SPEED_LIMIT = 2.5; // maximum number of items to scroll per update
 
 GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
