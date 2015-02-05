@@ -407,11 +407,11 @@ protected:
 	COLOR mForegroundColor;
 	COLOR mBackgroundColor;
 	COLOR mScrollColor;
-	unsigned int mFontHeight;
-	int mCurrentLine;
-	unsigned int mLastCount;
-	unsigned int RenderCount;
-	unsigned int mMaxRows;
+	int mFontHeight;
+	int mCurrentLine; // index of last line to show; -1 to keep tracking last line
+	size_t mLastCount; // lines from gConsole that are already split and copied into rConsole
+	size_t RenderCount; // total number of lines after wrapping
+	int mMaxRows; // height of console in text rows
 	int mStartY;
 	int mSlideoutX, mSlideoutY, mSlideoutW, mSlideoutH;
 	int mSlideinX, mSlideinY, mSlideinW, mSlideinH;

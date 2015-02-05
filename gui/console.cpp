@@ -206,7 +206,7 @@ int GUIConsole::RenderConsole(void)
 	gr_fill(mConsoleX + (mConsoleW * 9 / 10), mConsoleY, (mConsoleW / 10), mConsoleH);
 
 	// Don't try to continue to render without data
-	int prevCount = mLastCount;
+	size_t prevCount = mLastCount;
 	mLastCount = gConsole.size();
 	mRender = false;
 	if (mLastCount == 0)
@@ -215,12 +215,11 @@ int GUIConsole::RenderConsole(void)
 	// Due to word wrap, figure out what / how the newly added text needs to be added to the render vector that is word wrapped
 	// Note, that multiple consoles on different GUI pages may be different widths or use different fonts, so the word wrapping
 	// may different in different console windows
-	for (int i = prevCount; i < mLastCount; i++) {
+	for (size_t i = prevCount; i < mLastCount; i++) {
 		string curr_line = gConsole[i];
 		string curr_color = gConsoleColor[i];
-		int line_char_width;
 		for(;;) {
-			line_char_width = gr_maxExW(curr_line.c_str(), fontResource, mConsoleW);
+			size_t line_char_width = gr_maxExW(curr_line.c_str(), fontResource, mConsoleW);
 			if (line_char_width < curr_line.size()) {
 				rConsole.push_back(curr_line.substr(0, line_char_width));
 				rConsoleColor.push_back(curr_color);
@@ -237,7 +236,7 @@ int GUIConsole::RenderConsole(void)
 	// Find the start point
 	int start;
 	int curLine = mCurrentLine; // Thread-safing (Another thread updates this value)
-	if (curLine == -1)
+	if (curLine == -1) // follow tail
 	{
 		start = RenderCount - mMaxRows;
 	}
@@ -250,20 +249,21 @@ int GUIConsole::RenderConsole(void)
 		start = curLine - mMaxRows;
 	}
 
-	unsigned int line;
-	for (line = 0; line < mMaxRows; line++)
+	// note: start can be negative here
+	for (int line = 0; line < mMaxRows; line++)
 	{
-		if ((start + (int) line) >= 0 && (start + (int) line) < (int) RenderCount) {
-			if (rConsoleColor[start + line] == "normal") {
+		int index = start + line;
+		if (index >= 0 && index < (int) RenderCount) {
+			if (rConsoleColor[index] == "normal") {
 				gr_color(mForegroundColor.red, mForegroundColor.green, mForegroundColor.blue, mForegroundColor.alpha);
 			} else {
 				COLOR mFontColor;
-				std::string color = rConsoleColor[start + line];
+				std::string color = rConsoleColor[index];
 				ConvertStrToColor(color, &mFontColor);
 				mFontColor.alpha = 255;
 				gr_color(mFontColor.red, mFontColor.green, mFontColor.blue, mFontColor.alpha);
 			}
-			gr_textExW(mConsoleX, mStartY + (line * mFontHeight), rConsole[start + line].c_str(), fontResource, mConsoleW + mConsoleX);
+			gr_textExW(mConsoleX, mStartY + (line * mFontHeight), rConsole[index].c_str(), fontResource, mConsoleW + mConsoleX);
 		}
 	}
 	return (mSlideout ? RenderSlideout() : 0);
@@ -382,7 +382,7 @@ int GUIConsole::NotifyTouch(TOUCH_STATE state, int x, int y)
 	}
 
 	// If we don't have enough lines to scroll, throw this away.
-	if (RenderCount < mMaxRows)   return 1;
+	if ((int)RenderCount < mMaxRows)   return 1;
 
 	// We are scrolling!!!
 	switch (state)
