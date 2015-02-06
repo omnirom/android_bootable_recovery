@@ -37,6 +37,7 @@
 extern "C" {
 #include "../twcommon.h"
 #include "../minuitwrp/minui.h"
+#include "gui.h"
 }
 
 #include "rapidxml.hpp"
@@ -131,12 +132,12 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 		if (child) {
 			attr = child->first_attribute("height");
 			if (attr)
-				keyHeight = atoi(attr->value());
+				keyHeight = scale_theme_y(atoi(attr->value()));
 			else
 				keyHeight = 0;
 			attr = child->first_attribute("width");
 			if (attr)
-				keyWidth = atoi(attr->value());
+				keyWidth = scale_theme_x(atoi(attr->value()));
 			else
 				keyWidth = 0;
 			attr = child->first_attribute("capslock");
@@ -234,7 +235,7 @@ int GUIKeyboard::ParseKey(const char* keyinfo, keyboard_key_class& key, int& Xin
 		keychar = keyinfo[0];
 	} else {
 		// This key has extra data: {keywidth}:{what_the_key_does}
-		keyWidth = atoi(keyinfo);
+		keyWidth = scale_theme_x(atoi(keyinfo));
 
 		const char* ptr = keyinfo;
 		while (*ptr > 32 && *ptr != ':')
