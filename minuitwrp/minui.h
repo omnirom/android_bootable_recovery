@@ -67,7 +67,9 @@ unsigned int gr_get_height(gr_surface surface);
 int gr_get_surface(gr_surface* surface);
 int gr_free_surface(gr_surface surface);
 
+// Functions in graphics_utils.c
 int gr_save_screenshot(const char *dest);
+int gr_scale_surface(gr_surface source, gr_surface* destination, float scale_w, float scale_h);
 
 // input event structure, include <linux/input.h> for the definition.
 // see http://www.mjmwired.net/kernel/Documentation/input/ for info.
