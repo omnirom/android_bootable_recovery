@@ -63,6 +63,9 @@ endif
 ifneq ($(TW_Y_OFFSET),)
   LOCAL_CFLAGS += -DTW_Y_OFFSET=$(TW_Y_OFFSET)
 endif
+ifeq ($(TW_ROUND_SCREEN), true)
+  LOCAL_CFLAGS += -DTW_ROUND_SCREEN
+endif
 
 ifeq ($(DEVICE_RESOLUTION),)
   $(warning ********************************************************************************)

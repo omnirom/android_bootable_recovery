@@ -173,14 +173,14 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 		if (attr)
 		{
 			string parsevalue = gui_parse_text(attr->value());
-			mLineH = atoi(parsevalue.c_str());
+			mLineH = scale_theme_y(atoi(parsevalue.c_str()));
 		}
 
 		attr = child->first_attribute("linepadding");
 		if (attr)
 		{
 			string parsevalue = gui_parse_text(attr->value());
-			mPadding = atoi(parsevalue.c_str());
+			mPadding = scale_theme_x(atoi(parsevalue.c_str()));
 			mLinePadding = mPadding;
 		}
 
@@ -188,14 +188,14 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 		if (attr)
 		{
 			string parsevalue = gui_parse_text(attr->value());
-			mSliderW = atoi(parsevalue.c_str());
+			mSliderW = scale_theme_x(atoi(parsevalue.c_str()));
 		}
 
 		attr = child->first_attribute("sliderh");
 		if (attr)
 		{
 			string parsevalue = gui_parse_text(attr->value());
-			mSliderH = atoi(parsevalue.c_str());
+			mSliderH = scale_theme_y(atoi(parsevalue.c_str()));
 		}
 	}
 
