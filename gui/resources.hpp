@@ -25,6 +25,8 @@ private:
 
 protected:
 	static int ExtractResource(ZipArchive* pZip, std::string folderName, std::string fileName, std::string fileExtn, std::string destFile);
+	static void LoadImage(ZipArchive* pZip, std::string file, gr_surface* source);
+	static void CheckAndScaleImage(gr_surface source, gr_surface* destination, int retain_aspect);
 };
 
 class FontResource : public Resource
@@ -52,7 +54,7 @@ protected:
 class ImageResource : public Resource
 {
 public:
-	ImageResource(xml_node<>* node, ZipArchive* pZip);
+	ImageResource(xml_node<>* node, ZipArchive* pZip, int retain_aspect);
 	virtual ~ImageResource();
 
 public:
@@ -65,7 +67,7 @@ protected:
 class AnimationResource : public Resource
 {
 public:
-	AnimationResource(xml_node<>* node, ZipArchive* pZip);
+	AnimationResource(xml_node<>* node, ZipArchive* pZip, int retain_aspect);
 	virtual ~AnimationResource();
 
 public:
