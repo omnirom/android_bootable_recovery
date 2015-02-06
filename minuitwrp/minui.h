@@ -67,6 +67,7 @@ unsigned int gr_get_height(gr_surface surface);
 int gr_get_surface(gr_surface* surface);
 int gr_free_surface(gr_surface surface);
 
+// Functions in graphics_utils.c
 int gr_save_screenshot(const char *dest);
 
 // input event structure, include <linux/input.h> for the definition.
@@ -83,6 +84,7 @@ int ev_has_mouse(void);
 // Returns 0 if no error, else negative.
 int res_create_surface(const char* name, gr_surface* pSurface);
 void res_free_surface(gr_surface surface);
+int res_scale_surface(gr_surface source, gr_surface* destination, float scale_w, float scale_h);
 
 // Needed for AOSP:
 int ev_wait(int timeout);
