@@ -347,7 +347,7 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     if (!name)      return -1;
 
     if (strlen(name) > 4 && strcmp(name + strlen(name) - 4, ".jpg") == 0)
-		return res_create_surface_jpg(name,pSurface);
+        return res_create_surface_jpg(name,pSurface);
 
     ret = res_create_surface_png(name,pSurface);
     if (ret < 0)
@@ -361,4 +361,78 @@ void res_free_surface(gr_surface surface) {
     if (pSurface) {
         free(pSurface);
     }
+}
+
+// Scale image function
+int res_scale_surface(gr_surface source, gr_surface* destination, float scale_w, float scale_h) {
+    GGLContext *sc_context = 0;
+    gglInit(&sc_context);
+    GGLContext *gl = sc_context;
+    GGLSurface* sc_mem_surface = NULL;
+    *destination = NULL;
+    GGLSurface *surface = (GGLSurface*)source;
+    int w = gr_get_width(source), h = gr_get_height(source);
+    int sx = 0, sy = 0, dx = 0, dy = 0;
+    float dw = (float)w * scale_w;
+    float dh = (float)h * scale_h;
+
+    // Create a new surface that is the appropriate size
+    sc_mem_surface = init_display_surface((int)dw, (int)dh);
+    if (!sc_mem_surface) {
+        printf("gr_scale_surface failed to init_display_surface\n");
+        return -1;
+    }
+    sc_mem_surface->format = surface->format;
+
+    // Finish initializing the context
+    gl->colorBuffer(gl, sc_mem_surface);
+    gl->activeTexture(gl, 0);
+
+    // Enable or disable blending based on source surface format
+    if (surface->format == GGL_PIXEL_FORMAT_RGBX_8888) {
+        gl->disable(gl, GGL_BLEND);
+    } else {
+        gl->enable(gl, GGL_BLEND);
+        gl->blendFunc(gl, GGL_ONE, GGL_ZERO);
+    }
+
+    // Bind our source surface to the context
+    gl->bindTexture(gl, surface);
+
+    // Deal with the scaling
+    gl->texParameteri(gl, GGL_TEXTURE_2D, GGL_TEXTURE_MIN_FILTER, GGL_LINEAR);
+    gl->texParameteri(gl, GGL_TEXTURE_2D, GGL_TEXTURE_MAG_FILTER, GGL_LINEAR);
+    gl->texParameteri(gl, GGL_TEXTURE_2D, GGL_TEXTURE_WRAP_S, GGL_CLAMP);
+    gl->texParameteri(gl, GGL_TEXTURE_2D, GGL_TEXTURE_WRAP_T, GGL_CLAMP);
+    gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
+    gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_AUTOMATIC);
+    gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_AUTOMATIC);
+    gl->enable(gl, GGL_TEXTURE_2D);
+
+    int32_t grad[8];
+    memset(grad, 0, sizeof(grad));
+    // s, dsdx, dsdy, scale, t, dtdx, dtdy, tscale   <- this is wrong!
+    // This api uses block floating-point for S and T texture coordinates.
+    // All values are given in 16.16, scaled by 'scale'. In other words,
+    // set scale to 0, for 16.16 values.
+
+    // s, dsdx, dsdy, t, dtdx, dtdy, sscale, tscale
+    float dsdx = (float)w / dw;
+    float dtdy = (float)h / dh;
+    grad[0] = ((float)sx - (dsdx * dx)) * 65536;
+    grad[1] = dsdx * 65536;
+    grad[3] = ((float)sy - (dtdy * dy)) * 65536;
+    grad[5] = dtdy * 65536;
+//    printf("blit: w=%d h=%d dx=%d dy=%d dw=%f dh=%f dsdx=%f dtdy=%f s0=%x dsdx=%x t0=%x dtdy=%x\n",
+//                    w,   h,    dx,   dy,   dw,   dh,   dsdx,   dtdy, grad[0], grad[1], grad[3], grad[5]);
+    gl->texCoordGradScale8xv(gl, 0 /*tmu*/, grad);
+
+    // draw / scale the source surface to our target context
+    gl->recti(gl, dx, dy, dx + dw, dy + dh);
+    // put the scaled surface in our destination
+    *destination = (gr_surface*) sc_mem_surface;
+    // free memory used in the source
+    res_free_surface(source);
+    source = NULL;
+    return 0;
 }

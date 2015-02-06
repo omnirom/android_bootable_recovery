@@ -3,6 +3,7 @@
 <recovery>
 	<details>
 		<resolution width="320" height="320" />
+		<roundscreen offset_x="40" offset_y="40" />
 		<author>TeamWin</author>
 		<title>Backup Naowz</title>
 		<description>Default basic theme</description>
