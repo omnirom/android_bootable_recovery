@@ -41,6 +41,7 @@ extern "C" {
 #include "../minuitwrp/minui.h"
 #include "../minzip/SysUtil.h"
 #include "../minzip/Zip.h"
+#include "gui.h"
 }
 
 #include "rapidxml.hpp"
@@ -113,6 +114,7 @@ bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h
 		value = node->first_attribute("x")->value();
 		DataManager::GetValue(value, value);
 		*x = atol(value.c_str());
+        *x = scale_theme_x(*x);
 		*x += tw_x_offset;
 	}
 
@@ -121,6 +123,7 @@ bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h
 		value = node->first_attribute("y")->value();
 		DataManager::GetValue(value, value);
 		*y = atol(value.c_str());
+        *y = scale_theme_y(*y);
 		*y += tw_y_offset;
 	}
 
@@ -129,6 +132,7 @@ bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h
 		value = node->first_attribute("w")->value();
 		DataManager::GetValue(value, value);
 		*w = atol(value.c_str());
+        *w = scale_theme_x(*w);
 	}
 
 	if (h && node->first_attribute("h"))
@@ -136,6 +140,7 @@ bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h
 		value = node->first_attribute("h")->value();
 		DataManager::GetValue(value, value);
 		*h = atol(value.c_str());
+        *h = scale_theme_y(*h);
 	}
 
 	if (placement && node->first_attribute("placement"))
@@ -582,6 +587,31 @@ int PageSet::Load(ZipArchive* package)
 		parent = mDoc.first_node("install");
 
 	// Now, let's parse the XML
+    LOGINFO("Checking resolution...\n");
+    child = parent->first_node("details");
+    if (child) {
+        xml_node<>* resolution = child->first_node("resolution");
+        if (resolution) {
+            xml_attribute<>* width_attr = resolution->first_attribute("width");
+            xml_attribute<>* height_attr = resolution->first_attribute("height");
+            if (width_attr && height_attr) {
+                int width = atoi(width_attr->value());
+                int height = atoi(height_attr->value());
+                if (width != 0 && height != 0) {
+                    float scale_w = (float)gr_fb_width() / (float)width;
+                    float scale_h = (float)gr_fb_height() / (float)height;
+                    LOGINFO("Scaling theme width %fx and height %fx\n", scale_w, scale_h);
+                    set_scale_values(scale_w, scale_h);
+                }
+            } else {
+                LOGINFO("XML does not contain width and height, no scaling will be applied\n");
+            }
+        } else {
+            LOGINFO("XML contains no resolution tag, no scaling will be applied.\n");
+        }
+    } else {
+        LOGINFO("XML contains no details tag, no scaling will be applied.\n");
+    }
 	LOGINFO("Loading resources...\n");
 	child = parent->first_node("resources");
 	if (child)

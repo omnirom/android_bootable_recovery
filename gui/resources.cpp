@@ -23,6 +23,7 @@
 extern "C" {
 #include "../twcommon.h"
 #include "../minuitwrp/minui.h"
+#include "gui.h"
 }
 
 #include "rapidxml.hpp"
@@ -86,7 +87,7 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 		if(!attr)
 			return;
 
-		int size = atoi(attr->value());
+		int size = scale_theme_min(atoi(attr->value()));
 		int dpi = 300;
 
 		attr = node->first_attribute("dpi");
@@ -147,6 +148,7 @@ ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)
  : Resource(node, pZip)
 {
 	std::string file;
+    gr_surface temp_surface;
 
 	mSurface = NULL;
 	if (!node) {
@@ -159,17 +161,30 @@ ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)
 
 	if (ExtractResource(pZip, "images", file, ".png", TMP_RESOURCE_NAME) == 0)
 	{
-		res_create_surface(TMP_RESOURCE_NAME, &mSurface);
+		res_create_surface(TMP_RESOURCE_NAME, &temp_surface);
 		unlink(TMP_RESOURCE_NAME);
 	}
 	else if (ExtractResource(pZip, "images", file, "", TMP_RESOURCE_NAME) == 0)
 	{
 		// JPG includes the .jpg extension in the filename so extension should be blank
-		res_create_surface(TMP_RESOURCE_NAME, &mSurface);
+		res_create_surface(TMP_RESOURCE_NAME, &temp_surface);
 		unlink(TMP_RESOURCE_NAME);
 	}
 	else
-		res_create_surface(file.c_str(), &mSurface);
+    {
+		// File name in xml may have included .png so try without adding .png
+        res_create_surface(file.c_str(), &temp_surface);
+    }
+    if (temp_surface) {
+        if (get_scale_w() != 0 && get_scale_h() != 0) {
+            if (gr_scale_surface(temp_surface, &mSurface, get_scale_w(), get_scale_h())) {
+                LOGINFO("Error scaling image, using regular size.\n");
+                mSurface = temp_surface;
+            }
+        } else {
+            mSurface = temp_surface;
+        }
+    }
 }
 
 ImageResource::~ImageResource()
@@ -195,24 +210,35 @@ AnimationResource::AnimationResource(xml_node<>* node, ZipArchive* pZip)
 		std::ostringstream fileName;
 		fileName << file << std::setfill ('0') << std::setw (3) << fileNum;
 
-		gr_surface surface;
+		gr_surface surface, temp_surface;
 		if (pZip)
 		{
 			if (ExtractResource(pZip, "images", fileName.str(), ".png", TMP_RESOURCE_NAME) != 0)
 				break;
 
-			if (res_create_surface(TMP_RESOURCE_NAME, &surface))
+			if (res_create_surface(TMP_RESOURCE_NAME, &temp_surface))
 				break;
 
 			unlink(TMP_RESOURCE_NAME);
 		}
 		else
 		{
-			if (res_create_surface(fileName.str().c_str(), &surface))
+			if (res_create_surface(fileName.str().c_str(), &temp_surface))
 				break;
 		}
-		mSurfaces.push_back(surface);
-		fileNum++;
+        if (temp_surface) {
+            if (get_scale_w() != 0 && get_scale_h() != 0) {
+                if (gr_scale_surface(temp_surface, &surface, get_scale_w(), get_scale_h())) {
+                    LOGINFO("Error scaling image, using regular size.\n");
+                    mSurfaces.push_back(temp_surface);
+                } else {
+                    mSurfaces.push_back(surface);
+                }
+            } else {
+                mSurfaces.push_back(temp_surface);
+            }
+            fileNum++;
+        }
 	}
 }
 
@@ -274,7 +300,6 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 		{
 			LOGERR("Resource type (%s) not supported.\n", type.c_str());
 		}
-
 		if (res == NULL || res->GetResource() == NULL)
 		{
 			std::string res_name;
@@ -292,7 +317,7 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 		}
 		else
 		{
-			mResources.push_back(res);
+            mResources.push_back(res);
 		}
 
 		child = child->next_sibling("resource");
