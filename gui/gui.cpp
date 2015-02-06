@@ -75,6 +75,8 @@ static TWAtomicInt gForceRender;
 const int gNoAnimation = 1;
 blanktimer blankTimer;
 int ors_read_fd = -1;
+static float scale_theme_w = 1;
+static float scale_theme_h = 1;
 
 // Needed by pages.cpp too
 int gGuiRunning = 0;
@@ -767,12 +769,25 @@ extern "C" int gui_init(void)
 {
 	gr_init();
 	std::string curtain_path = TWRES "images/curtain.jpg";
+	gr_surface source_Surface = NULL;
 
-	if (res_create_surface(curtain_path.c_str(), &gCurtain))
+	if (res_create_surface(curtain_path.c_str(), &source_Surface))
 	{
-		printf
-		("Unable to locate '%s'\nDid you set a DEVICE_RESOLUTION in your config files?\n", curtain_path.c_str());
+		printf("Unable to locate '%s'\nDid you set a DEVICE_RESOLUTION in your config files?\n", curtain_path.c_str());
 		return -1;
+	}
+	if (gr_get_width(source_Surface) != gr_fb_width() || gr_get_height(source_Surface) != gr_fb_height()) {
+		// We need to scale the curtain to fit the screen
+		float scale_w = (float)gr_fb_width() / (float)gr_get_width(source_Surface);
+		float scale_h = (float)gr_fb_height() / (float)gr_get_height(source_Surface);
+		if (res_scale_surface(source_Surface, &gCurtain, scale_w, scale_h)) {
+			LOGINFO("Failed to scale curtain\n");
+			gCurtain = source_Surface;
+		} else {
+			LOGINFO("Scaling the curtain width %fx and height %fx\n", scale_w, scale_h);
+		}
+	} else {
+		gCurtain = source_Surface;
 	}
 
 	curtainSet();
@@ -964,4 +979,47 @@ extern "C" int gui_console_only(void)
 	pthread_create(&t, NULL, console_thread, NULL);
 
 	return 0;
+}
+
+extern "C" void set_scale_values(float w, float h)
+{
+	scale_theme_w = w;
+	scale_theme_h = h;
+}
+
+extern "C" int scale_theme_x(int initial_x)
+{
+	if (scale_theme_w != 1) {
+		return (int) ((float)initial_x * scale_theme_w);
+	}
+	return initial_x;
+}
+
+extern "C" int scale_theme_y(int initial_y)
+{
+	if (scale_theme_h != 1) {
+		return (int) ((float)initial_y * scale_theme_h);
+	}
+	return initial_y;
+}
+
+extern "C" int scale_theme_min(int initial_value)
+{
+	if (scale_theme_w != 1 || scale_theme_h != 1) {
+		if (scale_theme_w < scale_theme_h)
+			return scale_theme_x(initial_value);
+		else
+			return scale_theme_y(initial_value);
+	}
+	return initial_value;
+}
+
+extern "C" float get_scale_w()
+{
+	return scale_theme_w;
+}
+
+extern "C" float get_scale_h()
+{
+	return scale_theme_h;
 }
