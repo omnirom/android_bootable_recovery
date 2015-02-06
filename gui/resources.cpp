@@ -23,6 +23,7 @@
 extern "C" {
 #include "../twcommon.h"
 #include "../minuitwrp/minui.h"
+#include "gui.h"
 }
 
 #include "rapidxml.hpp"
@@ -61,6 +62,49 @@ int Resource::ExtractResource(ZipArchive* pZip, std::string folderName, std::str
 	return ret;
 }
 
+void Resource::LoadImage(ZipArchive* pZip, std::string file, gr_surface* source)
+{
+	if (ExtractResource(pZip, "images", file, ".png", TMP_RESOURCE_NAME) == 0)
+	{
+		res_create_surface(TMP_RESOURCE_NAME, source);
+		unlink(TMP_RESOURCE_NAME);
+	}
+	else if (ExtractResource(pZip, "images", file, "", TMP_RESOURCE_NAME) == 0)
+	{
+		// JPG includes the .jpg extension in the filename so extension should be blank
+		res_create_surface(TMP_RESOURCE_NAME, source);
+		unlink(TMP_RESOURCE_NAME);
+	}
+	else if (!pZip)
+	{
+		// File name in xml may have included .png so try without adding .png
+		res_create_surface(file.c_str(), source);
+	}
+}
+
+void Resource::CheckAndScaleImage(gr_surface source, gr_surface* destination, int retain_aspect)
+{
+	if (!source) {
+		*destination = NULL;
+		return;
+	}
+	if (get_scale_w() != 0 && get_scale_h() != 0) {
+		float scale_w = get_scale_w(), scale_h = get_scale_h();
+		if (retain_aspect) {
+			if (scale_w < scale_h)
+				scale_h = scale_w;
+			else
+				scale_w = scale_h;
+		}
+		if (res_scale_surface(source, destination, scale_w, scale_h)) {
+			LOGINFO("Error scaling image, using regular size.\n");
+			*destination = source;
+		}
+	} else {
+		*destination = source;
+	}
+}
+
 FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
  : Resource(node, pZip)
 {
@@ -86,7 +130,7 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 		if(!attr)
 			return;
 
-		int size = atoi(attr->value());
+		int size = scale_theme_min(atoi(attr->value()));
 		int dpi = 300;
 
 		attr = node->first_attribute("dpi");
@@ -143,10 +187,11 @@ FontResource::~FontResource()
 	}
 }
 
-ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)
+ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip, int retain_aspect)
  : Resource(node, pZip)
 {
 	std::string file;
+	gr_surface temp_surface = NULL;
 
 	mSurface = NULL;
 	if (!node) {
@@ -156,20 +201,13 @@ ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)
 
 	if (node->first_attribute("filename"))
 		file = node->first_attribute("filename")->value();
+	else {
+		LOGERR("No filename specified for image resource.\n");
+		return;
+	}
 
-	if (ExtractResource(pZip, "images", file, ".png", TMP_RESOURCE_NAME) == 0)
-	{
-		res_create_surface(TMP_RESOURCE_NAME, &mSurface);
-		unlink(TMP_RESOURCE_NAME);
-	}
-	else if (ExtractResource(pZip, "images", file, "", TMP_RESOURCE_NAME) == 0)
-	{
-		// JPG includes the .jpg extension in the filename so extension should be blank
-		res_create_surface(TMP_RESOURCE_NAME, &mSurface);
-		unlink(TMP_RESOURCE_NAME);
-	}
-	else
-		res_create_surface(file.c_str(), &mSurface);
+	LoadImage(pZip, file, &temp_surface);
+	CheckAndScaleImage(temp_surface, &mSurface, retain_aspect);
 }
 
 ImageResource::~ImageResource()
@@ -178,7 +216,7 @@ ImageResource::~ImageResource()
 		res_free_surface(mSurface);
 }
 
-AnimationResource::AnimationResource(xml_node<>* node, ZipArchive* pZip)
+AnimationResource::AnimationResource(xml_node<>* node, ZipArchive* pZip, int retain_aspect)
  : Resource(node, pZip)
 {
 	std::string file;
@@ -189,30 +227,24 @@ AnimationResource::AnimationResource(xml_node<>* node, ZipArchive* pZip)
 
 	if (node->first_attribute("filename"))
 		file = node->first_attribute("filename")->value();
+	else {
+		LOGERR("No filename specified for image resource.\n");
+		return;
+	}
 
 	for (;;)
 	{
 		std::ostringstream fileName;
 		fileName << file << std::setfill ('0') << std::setw (3) << fileNum;
 
-		gr_surface surface;
-		if (pZip)
-		{
-			if (ExtractResource(pZip, "images", fileName.str(), ".png", TMP_RESOURCE_NAME) != 0)
-				break;
-
-			if (res_create_surface(TMP_RESOURCE_NAME, &surface))
-				break;
-
-			unlink(TMP_RESOURCE_NAME);
-		}
-		else
-		{
-			if (res_create_surface(fileName.str().c_str(), &surface))
-				break;
-		}
-		mSurfaces.push_back(surface);
-		fileNum++;
+		gr_surface surface, temp_surface = NULL;
+		LoadImage(pZip, fileName.str(), &temp_surface);
+		CheckAndScaleImage(temp_surface, &surface, retain_aspect);
+		if (surface) {
+			mSurfaces.push_back(surface);
+			fileNum++;
+		} else
+			break; // Done loading animation images
 	}
 }
 
@@ -264,17 +296,24 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 		}
 		else if (type == "image")
 		{
-			res = new ImageResource(child, pZip);
+			int retain = 0;
+			xml_attribute<>* retain_aspect_ratio = child->first_attribute("retainaspect");
+			if (retain_aspect_ratio)
+				retain = 1; // the value does not matter, if retainaspect is present, we assume that we want to retain it
+			res = new ImageResource(child, pZip, retain);
 		}
 		else if (type == "animation")
 		{
-			res = new AnimationResource(child, pZip);
+			int retain = 0;
+			xml_attribute<>* retain_aspect_ratio = child->first_attribute("retainaspect");
+			if (retain_aspect_ratio)
+				retain = 1; // the value does not matter, if retainaspect is present, we assume that we want to retain it
+			res = new AnimationResource(child, pZip, retain);
 		}
 		else
 		{
 			LOGERR("Resource type (%s) not supported.\n", type.c_str());
 		}
-
 		if (res == NULL || res->GetResource() == NULL)
 		{
 			std::string res_name;

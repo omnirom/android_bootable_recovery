@@ -3,6 +3,7 @@
 <recovery>
 	<details>
 		<resolution width="240" height="240" />
+		<roundscreen offset_x="30" offset_y="30" />
 		<author>masteroftime</author>
 		<title>TWRP x201</title>
 		<description>tDPI Smartwatch Theme</description>
@@ -25,10 +26,10 @@
 		<resource name="progress" type="animation" filename="indeterminate" />
 		<resource name="progress_empty" type="image" filename="progress_empty" />
 		<resource name="progress_full" type="image" filename="progress_fill" />
-		<resource name="checkbox_false" type="image" filename="checkbox_empty" />
-		<resource name="checkbox_true" type="image" filename="checkbox_checked" />
-		<resource name="radio_false" type="image" filename="radio_empty" />
-		<resource name="radio_true" type="image" filename="radio_selected" />
+		<resource name="checkbox_false" type="image" filename="checkbox_empty" retainaspect="1" />
+		<resource name="checkbox_true" type="image" filename="checkbox_checked" retainaspect="1" />
+		<resource name="radio_false" type="image" filename="radio_empty" retainaspect="1" />
+		<resource name="radio_true" type="image" filename="radio_selected" retainaspect="1" />
 		<resource name="medium_button" type="image" filename="medium-button" />
 		<resource name="sort_button" type="image" filename="sort-button" />
 		<resource name="minus_button" type="image" filename="minus-button" />
@@ -43,6 +44,7 @@
 		<resource name="keyboard2" type="image" filename="keyboard2" />
 		<resource name="keyboard3" type="image" filename="keyboard3" />
 		<resource name="keyboard4" type="image" filename="keyboard4" />
+		<resource name="cursor" type="image" filename="cursor" retainaspect="1" />
 	</resources>
 
 	<variables>

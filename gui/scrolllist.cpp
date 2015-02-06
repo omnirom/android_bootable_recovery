@@ -91,7 +91,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 		attr = child->first_attribute("separatorheight");
 		if (attr) {
 			string parsevalue = gui_parse_text(attr->value());
-			mHeaderSeparatorH = atoi(parsevalue.c_str());
+			mHeaderSeparatorH = scale_theme_y(atoi(parsevalue.c_str()));
 			header_separator_height_specified = -1;
 		}
 	}
@@ -156,7 +156,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 		attr = child->first_attribute("spacing");
 		if (attr) {
 			string parsevalue = gui_parse_text(attr->value());
-			mItemSpacing = atoi(parsevalue.c_str());
+			mItemSpacing = scale_theme_y(atoi(parsevalue.c_str()));
 		}
 
 		attr = child->first_attribute("highlightcolor");
@@ -185,7 +185,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 		attr = child->first_attribute("height");
 		if (attr) {
 			string parsevalue = gui_parse_text(attr->value());
-			mSeparatorH = atoi(parsevalue.c_str());
+			mSeparatorH = scale_theme_y(atoi(parsevalue.c_str()));
 			if (!header_separator_height_specified)
 				mHeaderSeparatorH = mSeparatorH;
 		}
@@ -206,25 +206,25 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 		attr = child->first_attribute("w");
 		if (attr) {
 			string parsevalue = gui_parse_text(attr->value());
-			mFastScrollW = atoi(parsevalue.c_str());
+			mFastScrollW = scale_theme_x(atoi(parsevalue.c_str()));
 		}
 
 		attr = child->first_attribute("linew");
 		if (attr) {
 			string parsevalue = gui_parse_text(attr->value());
-			mFastScrollLineW = atoi(parsevalue.c_str());
+			mFastScrollLineW = scale_theme_x(atoi(parsevalue.c_str()));
 		}
 
 		attr = child->first_attribute("rectw");
 		if (attr) {
 			string parsevalue = gui_parse_text(attr->value());
-			mFastScrollRectW = atoi(parsevalue.c_str());
+			mFastScrollRectW = scale_theme_x(atoi(parsevalue.c_str()));
 		}
 
 		attr = child->first_attribute("recth");
 		if (attr) {
 			string parsevalue = gui_parse_text(attr->value());
-			mFastScrollRectH = atoi(parsevalue.c_str());
+			mFastScrollRectH = scale_theme_y(atoi(parsevalue.c_str()));
 		}
 	}
 
