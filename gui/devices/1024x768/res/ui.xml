@@ -22,10 +22,10 @@
 		<resource name="progress" type="animation" filename="indeterminate" />
 		<resource name="progress_empty" type="image" filename="progress_empty" />
 		<resource name="progress_full" type="image" filename="progress_fill" />
-		<resource name="checkbox_false" type="image" filename="checkbox_empty" />
-		<resource name="checkbox_true" type="image" filename="checkbox_checked" />
-		<resource name="radio_false" type="image" filename="radio_empty" />
-		<resource name="radio_true" type="image" filename="radio_selected" />
+		<resource name="checkbox_false" type="image" filename="checkbox_empty" retainaspect="1" />
+		<resource name="checkbox_true" type="image" filename="checkbox_checked" retainaspect="1" />
+		<resource name="radio_false" type="image" filename="radio_empty" retainaspect="1" />
+		<resource name="radio_true" type="image" filename="radio_selected" retainaspect="1" />
 		<resource name="medium_button" type="image" filename="medium-button" />
 		<resource name="mediumwide_button" type="image" filename="mediumwide-button" />
 		<resource name="sort_button" type="image" filename="sort-button" />

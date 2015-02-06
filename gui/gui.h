@@ -31,5 +31,13 @@ void gui_print(const char *fmt, ...);
 void gui_print_color(const char *color, const char *fmt, ...);
 void gui_set_FILE(FILE* f);
 
+void set_scale_values(float w, float h);
+int scale_theme_x(int initial_x);
+int scale_theme_y(int initial_y);
+int scale_theme_min(int initial_value);
+float get_scale_w();
+float get_scale_h();
+float get_scale_h();
+
 #endif  // _GUI_HEADER
 
