@@ -75,7 +75,7 @@ struct input_event;
 
 int ev_init(void);
 void ev_exit(void);
-int ev_get(struct input_event *ev);
+int ev_get(struct input_event *ev, int timeout_ms);
 int ev_has_mouse(void);
 
 // Resources
