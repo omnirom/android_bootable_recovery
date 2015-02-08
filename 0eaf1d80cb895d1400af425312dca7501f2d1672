@@ -1,0 +1,197 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_ee08332d",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 775,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "free of source_Surface missing here",
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_ce037710",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 599,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "wrong indentation",
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_6e152341",
+        "filename": "gui/resources.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "This can be written more compact:\n\t\tfloat scale_w \u003d get_scale_w(), scale_h \u003d get_scale_h();\n\t\tif (retain_aspect) {\n\t\t\tif (scale_w \u003c scale_h)\n\t\t\t\tscale_h \u003d scale_w;\n\t\t\telse\n\t\t\t\tscale_w \u003d scale_h;\n\t\t}\n\t\tint ret \u003d gr_scale_surface(source, destination, scale_w, scale_h);",
+      "range": {
+        "startLine": 68,
+        "startChar": 0,
+        "endLine": 78,
+        "endChar": 3
+      },
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_0e0e6f36",
+        "filename": "gui/resources.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "wrong indentation",
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_2e0b2b27",
+        "filename": "gui/resources.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "wrong indentation",
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_ce1c576c",
+        "filename": "gui/resources.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "res_free_surface does only a single free, but gr_scale_surface does separate mallocs for the surface struct and the bitmap data. So I believe that this leaks all the bitmap data.",
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_4e18677a",
+        "filename": "gui/resources.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "wrong indentation",
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_8e225fa2",
+        "filename": "gui/resources.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "Is there any reason why the code for loading the animation frame image is different from the loading code for normal images? Maybe both can be unified so CheckAndScaleImage can be extended to LoadAndScaleImage.",
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_ae271bb1",
+        "filename": "gui/resources.hpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "wrong indentation, and maybe the function should be static in the cpp only",
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_ee21139d",
+        "filename": "minuitwrp/graphics_utils.c",
+        "patchSetId": 8
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "look at init_display_surface in resource.c how to allocate surface and bitmap in one memory block",
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_0e374fe2",
+        "filename": "minuitwrp/graphics_utils.c",
+        "patchSetId": 8
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-08T08:39:32Z",
+      "side": 1,
+      "message": "look at init_display_surface in resource.c how to allocate surface and bitmap in one memory block",
+      "revId": "0eaf1d80cb895d1400af425312dca7501f2d1672",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
