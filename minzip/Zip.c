@@ -327,10 +327,6 @@ static bool parseZipArchive(ZipArchive* pArchive)
 #else
         pEntry = &pArchive->pEntries[i];
 #endif
-
-        //LOGI("%d: localHdr=%d fnl=%d el=%d cl=%d\n",
-        //    i, localHdrOffset, fileNameLen, extraLen, commentLen);
-
         pEntry->fileNameLen = fileNameLen;
         pEntry->fileName = fileName;
 
@@ -923,8 +919,8 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
 
     /* Walk through the entries and extract anything whose path begins
      * with zpath.
-//TODO: since the entries are sorted, binary search for the first match
-//      and stop after the first non-match.
+    //TODO: since the entries are sorted, binary search for the first match
+    //      and stop after the first non-match.
      */
     unsigned int i;
     bool seenMatch = false;
@@ -933,10 +929,10 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
     for (i = 0; i < pArchive->numEntries; i++) {
         ZipEntry *pEntry = pArchive->pEntries + i;
         if (pEntry->fileNameLen < zipDirLen) {
-//TODO: look out for a single empty directory entry that matches zpath, but
-//      missing the trailing slash.  Most zip files seem to include
-//      the trailing slash, but I think it's legal to leave it off.
-//      e.g., zpath "a/b/", entry "a/b", with no children of the entry.
+       //TODO: look out for a single empty directory entry that matches zpath, but
+       //      missing the trailing slash.  Most zip files seem to include
+       //      the trailing slash, but I think it's legal to leave it off.
+       //      e.g., zpath "a/b/", entry "a/b", with no children of the entry.
             /* No chance of matching.
              */
 #if SORT_ENTRIES
