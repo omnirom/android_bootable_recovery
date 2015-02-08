@@ -70,7 +70,7 @@ int ConvertStrToColor(std::string str, COLOR* color)
 	DataManager::GetValue(str, str);
 
 	// Look for some defaults
-	if (str == "black")			return 0;
+	if (str == "black")		return 0;
 	else if (str == "white")	{ color->red = color->green = color->blue = 255; return 0; }
 	else if (str == "red")		{ color->red = 255; return 0; }
 	else if (str == "green")	{ color->green = 255; return 0; }
@@ -103,52 +103,94 @@ int ConvertStrToColor(std::string str, COLOR* color)
 }
 
 // Helper APIs
+std::string LoadAttrString(xml_node<>* element, const char* attrname, const char* defaultvalue)
+{
+	if (!element)
+		return defaultvalue;
+
+	xml_attribute<>* attr = element->first_attribute(attrname);
+	return attr ? attr->value() : defaultvalue;
+}
+
+int LoadAttrInt(xml_node<>* element, const char* attrname, int defaultvalue)
+{
+	string value = LoadAttrString(element, attrname);
+	// resolve variables
+	DataManager::GetValue(value, value);
+	return value.empty() ? defaultvalue : atoi(value.c_str());
+}
+
+int LoadAttrIntScaleX(xml_node<>* element, const char* attrname, int defaultvalue)
+{
+	return scale_theme_x(LoadAttrInt(element, attrname, defaultvalue));
+}
+
+int LoadAttrIntScaleY(xml_node<>* element, const char* attrname, int defaultvalue)
+{
+	return scale_theme_y(LoadAttrInt(element, attrname, defaultvalue));
+}
+
+COLOR LoadAttrColor(xml_node<>* element, const char* attrname, COLOR defaultvalue)
+{
+	string value = LoadAttrString(element, attrname);
+	// resolve variables
+	DataManager::GetValue(value, value);
+	COLOR ret = defaultvalue;
+	if (ConvertStrToColor(value, &ret) == 0)
+		return ret;
+	else
+		return defaultvalue;
+}
+
+FontResource* LoadAttrFont(xml_node<>* element, const char* attrname)
+{
+	std::string name = LoadAttrString(element, attrname, "");
+	if (name.empty())
+		return NULL;
+	else
+		return (FontResource*) PageManager::FindResource(name);
+	// TODO: make resource lookup type-safe
+}
+
+ImageResource* LoadAttrImage(xml_node<>* element, const char* attrname)
+{
+	std::string name = LoadAttrString(element, attrname, "");
+	if (name.empty())
+		return NULL;
+	else
+		return (ImageResource*) PageManager::FindResource(name);
+	// TODO: make resource lookup type-safe
+}
+
+AnimationResource* LoadAttrAnimation(xml_node<>* element, const char* attrname)
+{
+	std::string name = LoadAttrString(element, attrname, "");
+	if (name.empty())
+		return NULL;
+	else
+		return (AnimationResource*) PageManager::FindResource(name);
+	// TODO: make resource lookup type-safe
+}
+
 bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h /* = NULL */, RenderObject::Placement* placement /* = NULL */)
 {
 	if (!node)
 		return false;
 
-	std::string value;
 	if (node->first_attribute("x"))
-	{
-		value = node->first_attribute("x")->value();
-		DataManager::GetValue(value, value);
-		*x = atol(value.c_str());
-		*x = scale_theme_x(*x);
-		*x += tw_x_offset;
-	}
+		*x = LoadAttrIntScaleX(node, "x") + tw_x_offset;
 
 	if (node->first_attribute("y"))
-	{
-		value = node->first_attribute("y")->value();
-		DataManager::GetValue(value, value);
-		*y = atol(value.c_str());
-		*y = scale_theme_y(*y);
-		*y += tw_y_offset;
-	}
+		*y = LoadAttrIntScaleY(node, "y") + tw_y_offset;
 
 	if (w && node->first_attribute("w"))
-	{
-		value = node->first_attribute("w")->value();
-		DataManager::GetValue(value, value);
-		*w = atol(value.c_str());
-		*w = scale_theme_x(*w);
-	}
+		*w = LoadAttrIntScaleX(node, "w");
 
 	if (h && node->first_attribute("h"))
-	{
-		value = node->first_attribute("h")->value();
-		DataManager::GetValue(value, value);
-		*h = atol(value.c_str());
-		*h = scale_theme_y(*h);
-	}
+		*h = LoadAttrIntScaleY(node, "h");
 
 	if (placement && node->first_attribute("placement"))
-	{
-		value = node->first_attribute("placement")->value();
-		DataManager::GetValue(value, value);
-		*placement = (RenderObject::Placement) atol(value.c_str());
-	}
+		*placement = (RenderObject::Placement) LoadAttrInt(node, "placement");
 
 	return true;
 }
