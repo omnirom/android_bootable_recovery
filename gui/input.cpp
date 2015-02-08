@@ -88,15 +88,8 @@ GUIInput::GUIInput(xml_node<>* node)
 	child = node->first_node("background");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr)
-			mBackground = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("color");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mBackgroundColor);
-		}
+		mBackground = LoadAttrImage(child, "resource");
+		mBackgroundColor = LoadAttrColor(child, "color");
 	}
 	if (mBackground && mBackground->GetResource())
 	{
@@ -108,15 +101,8 @@ GUIInput::GUIInput(xml_node<>* node)
 	child = node->first_node("cursor");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr)
-			mCursor = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("color");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mCursorColor);
-		}
+		mCursor = LoadAttrImage(child, "resource");
+		mCursorColor = LoadAttrColor(child, "color", mCursorColor);
 		attr = child->first_attribute("hasfocus");
 		if (attr)
 		{
@@ -136,11 +122,8 @@ GUIInput::GUIInput(xml_node<>* node)
 	child = node->first_node("font");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr) {
-			mFont = PageManager::FindResource(attr->value());
-			mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
-		}
+		mFont = LoadAttrFont(child, "resource");
+		mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
 	}
 
 	child = node->first_node("text");

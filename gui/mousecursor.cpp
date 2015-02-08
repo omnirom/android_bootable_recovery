@@ -62,15 +62,11 @@ void MouseCursor::LoadData(xml_node<>* node)
 		if(attr)
 			ConvertStrToColor(attr->value(), &m_color);
 
-		attr = child->first_attribute("resource");
-		if(attr)
+		m_image = LoadAttrImage(child, "resource");
+		if(m_image)
 		{
-			m_image = PageManager::FindResource(attr->value());
-			if(m_image)
-			{
-				mRenderW = gr_get_width(m_image->GetResource());
-				mRenderH = gr_get_height(m_image->GetResource());
-			}
+			mRenderW = gr_get_width(m_image->GetResource());
+			mRenderH = gr_get_height(m_image->GetResource());
 		}
 	}
 

@@ -43,9 +43,7 @@ GUIAnimation::GUIAnimation(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("resource");
 	if (child)
 	{
-		attr = child->first_attribute("name");
-		if (attr)
-			mAnimation = (AnimationResource*) PageManager::FindResource(attr->value());
+		mAnimation = LoadAttrAnimation(child, "name");
 	}
 
 	// Load the placement

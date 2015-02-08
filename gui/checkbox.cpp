@@ -48,12 +48,8 @@ GUICheckbox::GUICheckbox(xml_node<>* node)
 	child = node->first_node("image");
 	if (child)
 	{
-		attr = child->first_attribute("checked");
-		if (attr)
-			mChecked = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("unchecked");
-		if (attr)
-			mUnchecked = PageManager::FindResource(attr->value());
+		mChecked = LoadAttrImage(child, "checked");
+		mUnchecked = LoadAttrImage(child, "unchecked");
 	}
 
 	// Get the variable data
@@ -83,7 +79,6 @@ GUICheckbox::GUICheckbox(xml_node<>* node)
 	int x, y, w, h;
 	mLabel->GetRenderPos(x, y, w, h);
 	SetRenderPos(x, y, 0, 0);
-	return;
 }
 
 GUICheckbox::~GUICheckbox()

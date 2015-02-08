@@ -47,17 +47,9 @@ GUISlider::GUISlider(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("resource");
 	if (child)
 	{
-		attr = child->first_attribute("base");
-		if (attr)
-			sSlider = PageManager::FindResource(attr->value());
-
-		attr = child->first_attribute("used");
-		if (attr)
-			sSliderUsed = PageManager::FindResource(attr->value());
-
-		attr = child->first_attribute("touch");
-		if (attr)
-			sTouch = PageManager::FindResource(attr->value());
+		sSlider = LoadAttrImage(child, "base");
+		sSliderUsed = LoadAttrImage(child, "used");
+		sTouch = LoadAttrImage(child, "touch");
 	}
 
 	// Load the placement

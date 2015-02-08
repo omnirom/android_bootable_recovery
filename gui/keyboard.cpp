@@ -101,7 +101,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 		strcpy(resource, "resource1");
 		attr = child->first_attribute(resource);
 		while (attr && layoutindex < (MAX_KEYBOARD_LAYOUTS + 1)) {
-			keyboardImg[layoutindex - 1] = PageManager::FindResource(attr->value());
+			keyboardImg[layoutindex - 1] = LoadAttrImage(child, resource);
 
 			layoutindex++;
 			resource[8] = (char)(layoutindex + 48);

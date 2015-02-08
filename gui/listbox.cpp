@@ -40,12 +40,8 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 	// Get the icons, if any
 	child = node->first_node("icon");
 	if (child) {
-		attr = child->first_attribute("selected");
-		if (attr)
-			mIconSelected = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("unselected");
-		if (attr)
-			mIconUnselected = PageManager::FindResource(attr->value());
+		mIconSelected = LoadAttrImage(child, "selected");
+		mIconUnselected = LoadAttrImage(child, "unselected");
 	}
 	if (mIconSelected && mIconSelected->GetResource()) {
 		mSelectedIconWidth = gr_get_width(mIconSelected->GetResource());
@@ -162,7 +158,7 @@ size_t GUIListBox::GetItemCount()
 	return mList.size();
 }
 
-int GUIListBox::GetListItem(size_t item_index, Resource*& icon, std::string &text)
+int GUIListBox::GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
 {
 	text = mList.at(item_index).displayName;
 	if (mList.at(item_index).selected)

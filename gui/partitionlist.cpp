@@ -43,12 +43,8 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node) : GUIScrollList(node)
 	child = node->first_node("icon");
 	if (child)
 	{
-		attr = child->first_attribute("selected");
-		if (attr)
-			mIconSelected = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("unselected");
-		if (attr)
-			mIconUnselected = PageManager::FindResource(attr->value());
+		mIconSelected = LoadAttrImage(child, "selected");
+		mIconUnselected = LoadAttrImage(child, "unselected");
 	}
 
 	// Handle the result variable
@@ -220,7 +216,7 @@ size_t GUIPartitionList::GetItemCount()
 	return mList.size();
 }
 
-int GUIPartitionList::GetListItem(size_t item_index, Resource*& icon, std::string &text)
+int GUIPartitionList::GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
 {
 	text = mList.at(item_index).Display_Name;
 	if (mList.at(item_index).selected)

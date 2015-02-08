@@ -129,32 +129,15 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 		child = node->first_node("font");
 		if (child)
 		{
-			attr = child->first_attribute("resource");
-			if (attr)
-				mFont = PageManager::FindResource(attr->value());
+			mFont = LoadAttrFont(child, "resource");
 		}
 
 		child = node->first_node("color");
 		if (child)
 		{
-			attr = child->first_attribute("foreground");
-			if (attr)
-			{
-				std::string color = attr->value();
-				ConvertStrToColor(color, &mForegroundColor);
-			}
-			attr = child->first_attribute("background");
-			if (attr)
-			{
-				std::string color = attr->value();
-				ConvertStrToColor(color, &mBackgroundColor);
-			}
-			attr = child->first_attribute("scroll");
-			if (attr)
-			{
-				std::string color = attr->value();
-				ConvertStrToColor(color, &mScrollColor);
-			}
+			mForegroundColor = LoadAttrColor(child, "foreground", mForegroundColor);
+			mBackgroundColor = LoadAttrColor(child, "background", mBackgroundColor);
+			mScrollColor = LoadAttrColor(child, "scroll", mScrollColor);
 		}
 
 		// Load the placement
@@ -166,8 +149,7 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 			mSlideout = 1;
 			LoadPlacement(child, &mSlideoutX, &mSlideoutY);
 
-			attr = child->first_attribute("resource");
-			if (attr)   mSlideoutImage = PageManager::FindResource(attr->value());
+			mSlideoutImage = LoadAttrImage(child, "resource");
 
 			if (mSlideoutImage && mSlideoutImage->GetResource())
 			{
@@ -180,7 +162,6 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 	mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
 	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 	SetRenderPos(mConsoleX, mConsoleY);
-	return;
 }
 
 int GUIConsole::RenderSlideout(void)

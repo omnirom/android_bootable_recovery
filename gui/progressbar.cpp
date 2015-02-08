@@ -45,13 +45,8 @@ GUIProgressBar::GUIProgressBar(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("resource");
 	if (child)
 	{
-		attr = child->first_attribute("empty");
-		if (attr)
-			mEmptyBar = PageManager::FindResource(attr->value());
-
-		attr = child->first_attribute("full");
-		if (attr)
-			mFullBar = PageManager::FindResource(attr->value());
+		mEmptyBar = LoadAttrImage(child, "empty");
+		mFullBar = LoadAttrImage(child, "full");
 	}
 
 	// Load the placement

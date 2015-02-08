@@ -17,8 +17,8 @@ public:
 	virtual ~Resource() {}
 
 public:
-	virtual void* GetResource(void) = 0;
-	std::string GetName(void) { return mName; }
+	std::string GetName() { return mName; }
+	virtual bool loadedOK() = 0;
 
 private:
 	std::string mName;
@@ -42,7 +42,8 @@ public:
 	virtual ~FontResource();
 
 public:
-	virtual void* GetResource(void) { return mFont; }
+	void* GetResource() { return mFont; }
+	virtual bool loadedOK() { return mFont != NULL; }
 
 protected:
 	void* mFont;
@@ -56,7 +57,8 @@ public:
 	virtual ~ImageResource();
 
 public:
-	virtual void* GetResource(void) { return mSurface; }
+	gr_surface GetResource() { return mSurface; }
+	virtual bool loadedOK() { return mSurface != NULL; }
 
 protected:
 	gr_surface mSurface;
@@ -69,9 +71,10 @@ public:
 	virtual ~AnimationResource();
 
 public:
-	virtual void* GetResource(void) { return mSurfaces.empty() ? NULL : mSurfaces.at(0); }
-	virtual void* GetResource(int entry) { return mSurfaces.empty() ? NULL : mSurfaces.at(entry); }
-	virtual int GetResourceCount(void) { return mSurfaces.size(); }
+	gr_surface GetResource() { return mSurfaces.empty() ? NULL : mSurfaces.at(0); }
+	gr_surface GetResource(int entry) { return mSurfaces.empty() ? NULL : mSurfaces.at(entry); }
+	virtual int GetResourceCount() { return mSurfaces.size(); }
+	virtual bool loadedOK() { return !mSurfaces.empty(); }
 
 protected:
 	std::vector<gr_surface> mSurfaces;

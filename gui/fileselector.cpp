@@ -109,12 +109,8 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	// Get folder and file icons if present
 	child = node->first_node("icon");
 	if (child) {
-		attr = child->first_attribute("folder");
-		if (attr)
-			mFolderIcon = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("file");
-		if (attr)
-			mFileIcon = PageManager::FindResource(attr->value());
+		mFolderIcon = LoadAttrImage(child, "folder");
+		mFileIcon = LoadAttrImage(child, "file");
 	}
 	if (mFolderIcon && mFolderIcon->GetResource()) {
 		mFolderIconWidth = gr_get_width(mFolderIcon->GetResource());
@@ -320,7 +316,7 @@ size_t GUIFileSelector::GetItemCount()
 	return folderSize + fileSize;
 }
 
-int GUIFileSelector::GetListItem(size_t item_index, Resource*& icon, std::string &text)
+int GUIFileSelector::GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
 {
 	size_t folderSize = mShowFolders ? mFolderList.size() : 0;
 	size_t fileSize = mShowFiles ? mFileList.size() : 0;

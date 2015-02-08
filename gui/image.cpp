@@ -40,12 +40,8 @@ GUIImage::GUIImage(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("image");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr)
-			mImage = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("highlightresource");
-		if (attr)
-			mHighlightImage = PageManager::FindResource(attr->value());
+		mImage = LoadAttrImage(child, "resource");
+		mHighlightImage = LoadAttrImage(child, "highlightresource");
 	}
 
 	// Load the placement
@@ -73,8 +69,6 @@ GUIImage::GUIImage(xml_node<>* node) : GUIObject(node)
 		}
 		SetPlacement(TOP_LEFT);
 	}
-
-	return;
 }
 
 int GUIImage::Render(void)

@@ -69,7 +69,7 @@ int ConvertStrToColor(std::string str, COLOR* color)
 	DataManager::GetValue(str, str);
 
 	// Look for some defaults
-	if (str == "black")			return 0;
+	if (str == "black")		return 0;
 	else if (str == "white")	{ color->red = color->green = color->blue = 255; return 0; }
 	else if (str == "red")		{ color->red = 255; return 0; }
 	else if (str == "green")	{ color->green = 255; return 0; }
@@ -102,6 +102,77 @@ int ConvertStrToColor(std::string str, COLOR* color)
 }
 
 // Helper APIs
+std::string LoadAttrString(xml_node<>* element, const char* attrname, const char* defaultvalue)
+{
+	if (!element)
+		return defaultvalue;
+
+	xml_attribute<>* attr = element->first_attribute(attrname);
+	return attr ? attr->value() : defaultvalue;
+}
+
+int LoadAttrInt(xml_node<>* element, const char* attrname, int defaultvalue)
+{
+	string value = LoadAttrString(element, attrname);
+	// resolve variables
+	DataManager::GetValue(value, value);
+	return value.empty() ? defaultvalue : atoi(value.c_str());
+}
+
+int LoadAttrIntScaleX(xml_node<>* element, const char* attrname, int defaultvalue)
+{
+	// TODO: integrate scaling
+	return LoadAttrInt(element, attrname, defaultvalue);
+}
+
+int LoadAttrIntScaleY(xml_node<>* element, const char* attrname, int defaultvalue)
+{
+	// TODO: integrate scaling
+	return LoadAttrInt(element, attrname, defaultvalue);
+}
+
+COLOR LoadAttrColor(xml_node<>* element, const char* attrname, COLOR defaultvalue)
+{
+	string value = LoadAttrString(element, attrname);
+	// resolve variables
+	DataManager::GetValue(value, value);
+	COLOR ret = defaultvalue;
+	if (ConvertStrToColor(value, &ret) == 0)
+		return ret;
+	else
+		return defaultvalue;
+}
+
+FontResource* LoadAttrFont(xml_node<>* element, const char* attrname)
+{
+	std::string name = LoadAttrString(element, attrname, "");
+	if (name.empty())
+		return NULL;
+	else
+		return (FontResource*) PageManager::FindResource(name);
+	// TODO: make resource lookup type-safe
+}
+
+ImageResource* LoadAttrImage(xml_node<>* element, const char* attrname)
+{
+	std::string name = LoadAttrString(element, attrname, "");
+	if (name.empty())
+		return NULL;
+	else
+		return (ImageResource*) PageManager::FindResource(name);
+	// TODO: make resource lookup type-safe
+}
+
+AnimationResource* LoadAttrAnimation(xml_node<>* element, const char* attrname)
+{
+	std::string name = LoadAttrString(element, attrname, "");
+	if (name.empty())
+		return NULL;
+	else
+		return (AnimationResource*) PageManager::FindResource(name);
+	// TODO: make resource lookup type-safe
+}
+
 bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h /* = NULL */, RenderObject::Placement* placement /* = NULL */)
 {
 	if (!node)
