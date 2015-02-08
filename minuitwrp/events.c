@@ -719,7 +719,7 @@ static int vk_modify(struct ev *e, struct input_event *ev)
     return 0;
 }
 
-int ev_get(struct input_event *ev)
+int ev_get(struct input_event *ev, int timeout_ms)
 {
     int r;
     unsigned n;
@@ -740,7 +740,7 @@ int ev_get(struct input_event *ev)
         lastInputStat = curr;
     }
 
-    r = poll(ev_fds, ev_count, 0);
+    r = poll(ev_fds, ev_count, timeout_ms);
 
     if(r > 0) {
         for(n = 0; n < ev_count; n++) {
