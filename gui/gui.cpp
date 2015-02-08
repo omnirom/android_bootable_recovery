@@ -205,7 +205,7 @@ public:
 	}
 
 	// process input events. returns true if any event was received.
-	bool processInput();
+	bool processInput(int timeout_ms);
 
 	void handleDrag();
 
@@ -249,10 +249,10 @@ private:
 InputHandler input_handler;
 
 
-bool InputHandler::processInput()
+bool InputHandler::processInput(int timeout_ms)
 {
 	input_event ev;
-	int ret = ev_get(&ev);
+	int ret = ev_get(&ev, timeout_ms);
 
 	if (ret < 0)
 	{
@@ -546,7 +546,7 @@ static void ors_command_read()
 // This special function will return immediately the first time, but then
 // always returns 1/30th of a second (or immediately if called later) from
 // the last time it was called
-static void loopTimer(void)
+static void loopTimer(int input_timeout_ms)
 {
 	static timespec lastCall;
 	static int initialized = 0;
@@ -560,7 +560,7 @@ static void loopTimer(void)
 
 	do
 	{
-		bool got_event = input_handler.processInput(); // get inputs but don't send drag notices
+		bool got_event = input_handler.processInput(input_timeout_ms); // get inputs but don't send drag notices
 		timespec curTime;
 		clock_gettime(CLOCK_MONOTONIC, &curTime);
 
@@ -583,6 +583,7 @@ static void loopTimer(void)
 		// We need to sleep some period time microseconds
 		//unsigned int sleepTime = 33333 -(diff.tv_nsec / 1000);
 		//usleep(sleepTime); // removed so we can scan for input
+		input_timeout_ms = 0;
 	} while (1);
 }
 
@@ -615,9 +616,12 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 	int has_data = 0;
 #endif
 
+	int input_timeout_ms = 0;
+	int idle_frames = 0;
+
 	for (;;)
 	{
-		loopTimer();
+		loopTimer(input_timeout_ms);
 #ifndef TW_OEM_BUILD
 		if (ors_read_fd > 0) {
 			FD_ZERO(&fdset);
@@ -637,9 +641,13 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 
 		if (!gForceRender.get_value())
 		{
-			int ret;
-
-			ret = PageManager::Update();
+			int ret = PageManager::Update();
+			if (ret == 0)
+				++idle_frames;
+			else
+				idle_frames = 0;
+			// due to possible animation objects, we need to delay activating the input timeout
+			input_timeout_ms = idle_frames > 15 ? 1000 : 0;
 
 #ifndef PRINT_RENDER_TIME
 			if (ret > 1)
@@ -663,7 +671,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 
 				LOGINFO("Render(): %u ms, flip(): %u ms, total: %u ms\n", render_t, flip_t, render_t+flip_t);
 			}
-			else if(ret == 1)
+			else if (ret > 0)
 				flip();
 #endif
 		}
@@ -672,6 +680,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 			gForceRender.set_value(0);
 			PageManager::Render();
 			flip();
+			input_timeout_ms = 0;
 		}
 
 		blankTimer.checkForTimeout();
@@ -908,7 +917,7 @@ static void * console_thread(void *cookie)
 
 	while (!gGuiConsoleTerminate.get_value())
 	{
-		loopTimer();
+		loopTimer(0);
 
 		if (!gForceRender.get_value())
 		{

@@ -632,8 +632,10 @@ void GUIScrollList::HandleScrolling()
 		firstDisplayedItem--;
 		y_offset -= actualItemHeight;
 	}
-	if (firstDisplayedItem == 0 && y_offset > 0)
+	if (firstDisplayedItem == 0 && y_offset > 0) {
 		y_offset = 0; // user kept dragging downward past the top of the list, so always reset the offset to 0 since we can't scroll any further in this direction
+		scrollingSpeed = 0; // stop kinetic scrolling
+	}
 
 	// handle dragging upward, scrolling downward
 	int totalSize = GetItemCount();
@@ -649,9 +651,11 @@ void GUIScrollList::HandleScrolling()
 	if (bottom_offset != 0 && firstDisplayedItem + lines + 1 >= totalSize && y_offset <= bottom_offset) {
 		firstDisplayedItem = totalSize - lines - 1;
 		y_offset = bottom_offset;
+		scrollingSpeed = 0; // stop kinetic scrolling
 	} else if (firstDisplayedItem + lines >= totalSize && y_offset < 0) {
 		firstDisplayedItem = totalSize - lines;
 		y_offset = 0;
+		scrollingSpeed = 0; // stop kinetic scrolling
 	}
 }
 
