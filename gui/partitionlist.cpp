@@ -35,7 +35,6 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node) : GUIScrollList(node)
 	xml_attribute<>* attr;
 	xml_node<>* child;
 
-	int mIconWidth = 0, mIconHeight = 0, mSelectedIconHeight = 0, mSelectedIconWidth = 0, mUnselectedIconHeight = 0, mUnselectedIconWidth = 0;
 	mIconSelected = mIconUnselected = NULL;
 	mUpdate = 0;
 	updateList = false;
@@ -43,12 +42,8 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node) : GUIScrollList(node)
 	child = node->first_node("icon");
 	if (child)
 	{
-		attr = child->first_attribute("selected");
-		if (attr)
-			mIconSelected = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("unselected");
-		if (attr)
-			mIconUnselected = PageManager::FindResource(attr->value());
+		mIconSelected = LoadAttrImage(child, "selected");
+		mIconUnselected = LoadAttrImage(child, "unselected");
 	}
 
 	// Handle the result variable
@@ -63,25 +58,9 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node) : GUIScrollList(node)
 			selectedList = attr->value();
 	}
 
-	if (mIconSelected && mIconSelected->GetResource())
-	{
-		mSelectedIconWidth = gr_get_width(mIconSelected->GetResource());
-		mSelectedIconHeight = gr_get_height(mIconSelected->GetResource());
-		if (mSelectedIconHeight > mIconHeight)
-			mIconHeight = mSelectedIconHeight;
-		mIconWidth = mSelectedIconWidth;
-	}
-
-	if (mIconUnselected && mIconUnselected->GetResource())
-	{
-		mUnselectedIconWidth = gr_get_width(mIconUnselected->GetResource());
-		mUnselectedIconHeight = gr_get_height(mIconUnselected->GetResource());
-		if (mUnselectedIconHeight > mIconHeight)
-			mIconHeight = mUnselectedIconHeight;
-		if (mUnselectedIconWidth > mIconWidth)
-			mIconWidth = mUnselectedIconWidth;
-	}
-	SetMaxIconSize(mIconWidth, mIconHeight);
+	int iconWidth = std::max(mIconSelected->GetWidth(), mIconUnselected->GetWidth());
+	int iconHeight = std::max(mIconSelected->GetHeight(), mIconUnselected->GetHeight());
+	SetMaxIconSize(iconWidth, iconHeight);
 
 	child = node->first_node("listtype");
 	if (child && (attr = child->first_attribute("name"))) {
@@ -218,7 +197,7 @@ size_t GUIPartitionList::GetItemCount()
 	return mList.size();
 }
 
-int GUIPartitionList::GetListItem(size_t item_index, Resource*& icon, std::string &text)
+int GUIPartitionList::GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
 {
 	text = mList.at(item_index).Display_Name;
 	if (mList.at(item_index).selected)

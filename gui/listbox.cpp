@@ -34,36 +34,17 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 	xml_attribute<>* attr;
 	xml_node<>* child;
 	mIconSelected = mIconUnselected = NULL;
-	int mSelectedIconWidth = 0, mSelectedIconHeight = 0, mUnselectedIconWidth = 0, mUnselectedIconHeight = 0, mIconWidth = 0, mIconHeight = 0;
 	mUpdate = 0;
 
 	// Get the icons, if any
 	child = node->first_node("icon");
 	if (child) {
-		attr = child->first_attribute("selected");
-		if (attr)
-			mIconSelected = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("unselected");
-		if (attr)
-			mIconUnselected = PageManager::FindResource(attr->value());
+		mIconSelected = LoadAttrImage(child, "selected");
+		mIconUnselected = LoadAttrImage(child, "unselected");
 	}
-	if (mIconSelected && mIconSelected->GetResource()) {
-		mSelectedIconWidth = gr_get_width(mIconSelected->GetResource());
-		mSelectedIconHeight = gr_get_height(mIconSelected->GetResource());
-		if (mSelectedIconHeight > mIconHeight)
-			mIconHeight = mSelectedIconHeight;
-		mIconWidth = mSelectedIconWidth;
-	}
-
-	if (mIconUnselected && mIconUnselected->GetResource()) {
-		mUnselectedIconWidth = gr_get_width(mIconUnselected->GetResource());
-		mUnselectedIconHeight = gr_get_height(mIconUnselected->GetResource());
-		if (mUnselectedIconHeight > mIconHeight)
-			mIconHeight = mUnselectedIconHeight;
-		if (mUnselectedIconWidth > mIconWidth)
-			mIconWidth = mUnselectedIconWidth;
-	}
-	SetMaxIconSize(mIconWidth, mIconHeight);
+	int iconWidth = std::max(mIconSelected->GetWidth(), mIconUnselected->GetWidth());
+	int iconHeight = std::max(mIconSelected->GetHeight(), mIconUnselected->GetHeight());
+	SetMaxIconSize(iconWidth, iconHeight);
 
 	// Handle the result variable
 	child = node->first_node("data");
@@ -160,7 +141,7 @@ size_t GUIListBox::GetItemCount()
 	return mList.size();
 }
 
-int GUIListBox::GetListItem(size_t item_index, Resource*& icon, std::string &text)
+int GUIListBox::GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
 {
 	text = mList.at(item_index).displayName;
 	if (mList.at(item_index).selected)

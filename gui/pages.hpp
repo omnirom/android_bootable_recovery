@@ -17,12 +17,15 @@ enum TOUCH_STATE {
 	TOUCH_REPEAT = 4
 };
 
-typedef struct {
+struct COLOR {
 	unsigned char red;
 	unsigned char green;
 	unsigned char blue;
 	unsigned char alpha;
-} COLOR;
+	COLOR() : red(0), green(0), blue(0), alpha(0) {}
+	COLOR(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255)
+		: red(r), green(g), blue(b), alpha(a) {}
+};
 
 // Utility Functions
 int ConvertStrToColor(std::string str, COLOR* color);

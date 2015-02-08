@@ -43,9 +43,7 @@ GUIAnimation::GUIAnimation(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("resource");
 	if (child)
 	{
-		attr = child->first_attribute("name");
-		if (attr)
-			mAnimation = (AnimationResource*) PageManager::FindResource(attr->value());
+		mAnimation = LoadAttrAnimation(child, "name");
 	}
 
 	// Load the placement
@@ -77,8 +75,8 @@ GUIAnimation::GUIAnimation(xml_node<>* node) : GUIObject(node)
 	// Fetch the render sizes
 	if (mAnimation && mAnimation->GetResource())
 	{
-		mRenderW = gr_get_width(mAnimation->GetResource());
-		mRenderH = gr_get_height(mAnimation->GetResource());
+		mRenderW = mAnimation->GetWidth();
+		mRenderH = mAnimation->GetHeight();
 
 		// Adjust for placement
 		if (mPlacement != TOP_LEFT && mPlacement != BOTTOM_LEFT)
