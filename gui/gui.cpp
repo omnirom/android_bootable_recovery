@@ -867,6 +867,8 @@ error:
 
 extern "C" int gui_start(void)
 {
+	DataManager::SetValue("tw_page_done", 0);
+	DataManager::SetValue("tw_gui_done", 0);
 	return gui_startPage(NULL, 1, 0);
 }
 
@@ -897,6 +899,7 @@ extern "C" int gui_startPage(const char *page_name, const int allow_commands, in
 	}
 #endif
 	DataManager::SetValue("tw_page_done", 0);
+	DataManager::SetValue("tw_gui_done", 0);
 	return runPages(page_name, stop_on_page_done);
 }
 
