@@ -588,6 +588,9 @@ static void loopTimer(void)
 
 static int runPages(const char *page_name, const int stop_on_page_done)
 {
+	DataManager::SetValue("tw_page_done", 0);
+	DataManager::SetValue("tw_gui_done", 0);
+
 	if (page_name)
 		gui_changePage(page_name);
 
@@ -896,7 +899,6 @@ extern "C" int gui_startPage(const char *page_name, const int allow_commands, in
 		}
 	}
 #endif
-	DataManager::SetValue("tw_page_done", 0);
 	return runPages(page_name, stop_on_page_done);
 }
 
