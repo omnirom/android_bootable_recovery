@@ -714,7 +714,7 @@ int MtpStorage::inotify_t(void) {
 			MTPE("inotify_t Can't read inotify events\n");
 		}
 
-		while (inotify_thread_kill.get_value() == 0) {
+		while (i < len && inotify_thread_kill.get_value() == 0) {
 			struct inotify_event *event = (struct inotify_event *) &buf[i];
 			if (event->len) {
 				MTPD("inotify event: wd: %i, mask: %x, name: %s\n", event->wd, event->mask, event->name);
