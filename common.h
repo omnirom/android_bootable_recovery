@@ -17,6 +17,7 @@
 #ifndef RECOVERY_COMMON_H
 #define RECOVERY_COMMON_H
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -45,6 +46,8 @@ typedef struct fstab_rec Volume;
 FILE* fopen_path(const char *path, const char *mode);
 
 void ui_print(const char* format, ...);
+
+bool is_ro_debuggable();
 
 #ifdef __cplusplus
 }

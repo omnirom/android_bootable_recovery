@@ -161,6 +161,11 @@ fopen_path(const char *path, const char *mode) {
     return fp;
 }
 
+bool is_ro_debuggable() {
+    char value[PROPERTY_VALUE_MAX+1];
+    return (property_get("ro.debuggable", value, NULL) == 1 && value[0] == '1');
+}
+
 // close a file, log an error if the error indicator is set
 static void
 check_and_fclose(FILE *fp, const char *name) {
@@ -954,9 +959,7 @@ main(int argc, char **argv) {
             // If this is an eng or userdebug build, then automatically
             // turn the text display on if the script fails so the error
             // message is visible.
-            char buffer[PROPERTY_VALUE_MAX+1];
-            property_get("ro.build.fingerprint", buffer, "");
-            if (strstr(buffer, ":userdebug/") || strstr(buffer, ":eng/")) {
+            if (is_ro_debuggable()) {
                 ui->ShowText(true);
             }
         }
