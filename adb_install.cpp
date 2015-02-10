@@ -61,9 +61,7 @@ stop_adbd() {
 
 static void
 maybe_restart_adbd() {
-    char value[PROPERTY_VALUE_MAX+1];
-    int len = property_get("ro.debuggable", value, NULL);
-    if (len == 1 && value[0] == '1') {
+    if (is_ro_debuggable()) {
         ui->Print("Restarting adbd...\n");
         set_usb_driver(true);
         property_set("ctl.start", "adbd");
