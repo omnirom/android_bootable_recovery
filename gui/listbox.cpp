@@ -103,8 +103,6 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 
 GUIListBox::~GUIListBox()
 {
-	delete mIconSelected;
-	delete mIconUnselected;
 }
 
 int GUIListBox::Update(void)

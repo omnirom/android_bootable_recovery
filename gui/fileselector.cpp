@@ -141,8 +141,6 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 
 GUIFileSelector::~GUIFileSelector()
 {
-	delete mFileIcon;
-	delete mFolderIcon;
 }
 
 int GUIFileSelector::Update(void)

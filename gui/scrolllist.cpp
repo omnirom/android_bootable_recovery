@@ -259,9 +259,6 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 
 GUIScrollList::~GUIScrollList()
 {
-	delete mHeaderIcon;
-	delete mBackground;
-	delete mFont;
 }
 
 void GUIScrollList::SetMaxIconSize(int w, int h)

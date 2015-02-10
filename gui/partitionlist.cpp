@@ -96,8 +96,6 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node) : GUIScrollList(node)
 
 GUIPartitionList::~GUIPartitionList()
 {
-	delete mIconSelected;
-	delete mIconUnselected;
 }
 
 int GUIPartitionList::Update(void)

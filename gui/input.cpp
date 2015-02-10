@@ -214,8 +214,6 @@ GUIInput::GUIInput(xml_node<>* node)
 GUIInput::~GUIInput()
 {
 	if (mInputText)	 	delete mInputText;
-	if (mBackground)	delete mBackground;
-	if (mCursor)		delete mCursor;
 	if (mAction)		delete mAction;
 }
 

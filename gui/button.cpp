@@ -130,7 +130,6 @@ GUIButton::~GUIButton()
 	if (mButtonImg)	 	delete mButtonImg;
 	if (mButtonLabel)   delete mButtonLabel;
 	if (mAction)		delete mAction;
-	if (mButtonIcon)	delete mButtonIcon;
 }
 
 int GUIButton::Render(void)
