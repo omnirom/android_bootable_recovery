@@ -128,7 +128,7 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
         goto exit;
     }*/
     if (color_type == PNG_COLOR_TYPE_PALETTE) {
-        png_set_palette_to_rgb(png_ptr);
+        png_set_palette_to_rgb(*png_ptr);
     }
 
     return result;
@@ -153,10 +153,10 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
 
 // Allocate and return a gr_surface sufficient for storing an image of
 // the indicated size in the framebuffer pixel format.
-static GGLSurface* init_display_surface(png_uint_32 width, png_uint_32 height) {
+gr_surface* init_display_surface(unsigned width, unsigned height, unsigned pixel_size) {
     GGLSurface* surface;
 
-    surface = (GGLSurface*) malloc_surface(width * height * 4);
+    surface = (GGLSurface*) malloc_surface(width * height * pixel_size);
     if (surface == NULL) return NULL;
 
     surface->version = sizeof(GGLSurface);
@@ -164,7 +164,7 @@ static GGLSurface* init_display_surface(png_uint_32 width, png_uint_32 height) {
     surface->height = height;
     surface->stride = width;
 
-    return surface;
+    return (gr_surface*) surface;
 }
 
 // Copy 'input_row' to 'output_row', transforming it to the
@@ -225,7 +225,7 @@ int res_create_surface_png(const char* name, gr_surface* pSurface) {
     result = open_png(name, &png_ptr, &info_ptr, &width, &height, &channels);
     if (result < 0) return result;
 
-    surface = init_display_surface(width, height);
+    surface = (GGLSurface*) init_display_surface(width, height, 4);
     if (surface == NULL) {
         result = -8;
         goto exit;
@@ -287,19 +287,14 @@ int res_create_surface_jpg(const char* name, gr_surface* pSurface) {
     size_t width = cinfo.image_width;
     size_t height = cinfo.image_height;
     size_t stride = 4 * width;
-    size_t pixelSize = stride * height;
 
-    surface = malloc(sizeof(GGLSurface) + pixelSize);
+    surface = (GGLSurface*) init_display_surface(width, height, 4);
     if (surface == NULL) {
         result = -8;
         goto exit;
     }
 
     unsigned char* pData = (unsigned char*) (surface + 1);
-    surface->version = sizeof(GGLSurface);
-    surface->width = width;
-    surface->height = height;
-    surface->stride = width; /* Yes, pixels, not bytes */
     surface->data = pData;
     surface->format = GGL_PIXEL_FORMAT_RGBX_8888;
 
@@ -375,7 +370,7 @@ int res_scale_surface(gr_surface source, gr_surface* destination, float scale_w,
     float dh = (float)h * scale_h;
 
     // Create a new surface that is the appropriate size
-    sc_mem_surface = init_display_surface((int)dw, (int)dh);
+    sc_mem_surface = (GGLSurface*) init_display_surface((int)dw, (int)dh, 4);
     if (!sc_mem_surface) {
         printf("gr_scale_surface failed to init_display_surface\n");
         return -1;

@@ -65,7 +65,6 @@ void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy);
 unsigned int gr_get_width(gr_surface surface);
 unsigned int gr_get_height(gr_surface surface);
 int gr_get_surface(gr_surface* surface);
-int gr_free_surface(gr_surface surface);
 
 // Functions in graphics_utils.c
 int gr_save_screenshot(const char *dest);
@@ -80,7 +79,7 @@ int ev_get(struct input_event *ev, int timeout_ms);
 int ev_has_mouse(void);
 
 // Resources
-
+gr_surface* init_display_surface(unsigned width, unsigned height, unsigned pixel_size);
 // Returns 0 if no error, else negative.
 int res_create_surface(const char* name, gr_surface* pSurface);
 void res_free_surface(gr_surface surface);

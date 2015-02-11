@@ -317,15 +317,6 @@ static int get_framebuffer(GGLSurface *fb)
     return fd;
 }
 
-static void get_memory_surface(GGLSurface* ms) {
-  ms->version = sizeof(*ms);
-  ms->width = vi.xres;
-  ms->height = vi.yres;
-  ms->stride = vi.xres_virtual;
-  ms->data = malloc(vi.xres_virtual * vi.yres * PIXEL_SIZE);
-  ms->format = PIXEL_FORMAT;
-}
-
 static void set_active_framebuffer(unsigned n)
 {
     if (n > 1  || !double_buffering) return;
@@ -755,7 +746,11 @@ int gr_init(void)
         return -1;
     }
 
-    get_memory_surface(&gr_mem_surface);
+    GGLSurface* ms = (GGLSurface*) init_display_surface(vi.xres_virtual, vi.yres, PIXEL_SIZE);
+    if (!ms)    return -1;
+    ms->width = vi.xres;
+    ms->format = PIXEL_FORMAT;
+    gr_mem_surface = *ms;
 
     fprintf(stderr, "framebuffer: fd %d (%d x %d)\n",
             gr_fb_fd, gr_framebuffer[0].width, gr_framebuffer[0].height);
@@ -829,27 +824,15 @@ int gr_fb_blank(int blank)
 
 int gr_get_surface(gr_surface* surface)
 {
-    GGLSurface* ms = malloc(sizeof(GGLSurface));
+    GGLSurface* ms = (GGLSurface*) init_display_surface(vi.xres_virtual, vi.yres, PIXEL_SIZE);
     if (!ms)    return -1;
-
-    // Allocate the data
-    get_memory_surface(ms);
+    ms->width = vi.xres;
+    ms->format = PIXEL_FORMAT;
 
     // Now, copy the data
     memcpy(ms->data, gr_mem_surface.data, vi.xres * vi.yres * vi.bits_per_pixel / 8);
 
     *surface = (gr_surface*) ms;
-    return 0;
-}
-
-int gr_free_surface(gr_surface surface)
-{
-    if (!surface)
-        return -1;
-
-    GGLSurface* ms = (GGLSurface*) surface;
-    free(ms->data);
-    free(ms);
     return 0;
 }
 
