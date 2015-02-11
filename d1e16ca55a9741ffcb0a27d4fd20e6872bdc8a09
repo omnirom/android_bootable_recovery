@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_9989cb24",
+        "filename": "minuitwrp/graphics.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 749,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-11T22:59:21Z",
+      "side": 1,
+      "message": "How does this work? gr_mem_surface is a GGLSurface, but init_display_surface returns a pointer to a memory block that begins with a GGLSurface followed by the bitmap data.",
+      "revId": "d1e16ca55a9741ffcb0a27d4fd20e6872bdc8a09",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_b98e8727",
+        "filename": "minuitwrp/resources.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-11T22:59:21Z",
+      "side": 1,
+      "message": "gr_surface is the abstract handle type for a surface, so I think this function should return a gr_surface, not a pointer.",
+      "revId": "d1e16ca55a9741ffcb0a27d4fd20e6872bdc8a09",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_d9934352",
+        "filename": "minuitwrp/resources.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-11T22:59:21Z",
+      "side": 1,
+      "message": "this should not be needed (and might even break with address alignment for the bitmap). Assign in the other direction instead.",
+      "revId": "d1e16ca55a9741ffcb0a27d4fd20e6872bdc8a09",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
