@@ -365,9 +365,7 @@ void res_free_surface(gr_surface surface) {
 
 // Scale image function
 int res_scale_surface(gr_surface source, gr_surface* destination, float scale_w, float scale_h) {
-    GGLContext *sc_context = 0;
-    gglInit(&sc_context);
-    GGLContext *gl = sc_context;
+    GGLContext *gl = NULL;
     GGLSurface* sc_mem_surface = NULL;
     *destination = NULL;
     GGLSurface *surface = (GGLSurface*)source;
@@ -384,7 +382,8 @@ int res_scale_surface(gr_surface source, gr_surface* destination, float scale_w,
     }
     sc_mem_surface->format = surface->format;
 
-    // Finish initializing the context
+    // Initialize the context
+    gglInit(&gl);
     gl->colorBuffer(gl, sc_mem_surface);
     gl->activeTexture(gl, 0);
 
@@ -429,6 +428,8 @@ int res_scale_surface(gr_surface source, gr_surface* destination, float scale_w,
 
     // draw / scale the source surface to our target context
     gl->recti(gl, dx, dy, dx + dw, dy + dh);
+    gglUninit(gl);
+    gl = NULL;
     // put the scaled surface in our destination
     *destination = (gr_surface*) sc_mem_surface;
     // free memory used in the source
