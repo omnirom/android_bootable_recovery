@@ -437,34 +437,43 @@ int OpenRecoveryScript::Install_Command(string Zip) {
 	std::vector<PartitionList> Storage_List;
 	string Full_Path;
 
-	PartitionManager.Mount_All_Storage();
-	PartitionManager.Get_Partition_List("storage", &Storage_List);
-	int listSize = Storage_List.size();
-	for (int i = 0; i < listSize; i++) {
-		if (PartitionManager.Is_Mounted_By_Path(Storage_List.at(i).Mount_Point)) {
-			Full_Path = Storage_List.at(i).Mount_Point + "/" + Zip;
-			if (TWFunc::Path_Exists(Full_Path)) {
-				Zip = Full_Path;
-				break;
-			}
-			Full_Path = Zip;
-			LOGINFO("Trying to find zip '%s' on '%s'...\n", Full_Path.c_str(), Storage_List.at(i).Mount_Point.c_str());
-			ret_string = Locate_Zip_File(Full_Path, Storage_List.at(i).Mount_Point);
-			if (!ret_string.empty()) {
-				Zip = ret_string;
-				break;
+	if (Zip.substr(0, 1) == "@") {
+		// This is a special file that contains a map of blocks on the data partition
+		Full_Path = Zip.substr(1);
+		if (!PartitionManager.Mount_By_Path(Full_Path, true) || !TWFunc::Path_Exists(Full_Path)) {
+			gui_print("Unable to install via mapped zip '%s'\n", Full_Path.c_str());
+			return 1;
+		}
+		gui_print("Installing mapped zip file '%s'\n", Full_Path.c_str());
+	} else if (!TWFunc::Path_Exists(Zip)) {
+		PartitionManager.Mount_All_Storage();
+		PartitionManager.Get_Partition_List("storage", &Storage_List);
+		int listSize = Storage_List.size();
+		for (int i = 0; i < listSize; i++) {
+			if (PartitionManager.Is_Mounted_By_Path(Storage_List.at(i).Mount_Point)) {
+				Full_Path = Storage_List.at(i).Mount_Point + "/" + Zip;
+				if (TWFunc::Path_Exists(Full_Path)) {
+					Zip = Full_Path;
+					break;
+				}
+				Full_Path = Zip;
+				LOGINFO("Trying to find zip '%s' on '%s'...\n", Full_Path.c_str(), Storage_List.at(i).Mount_Point.c_str());
+				ret_string = Locate_Zip_File(Full_Path, Storage_List.at(i).Mount_Point);
+				if (!ret_string.empty()) {
+					Zip = ret_string;
+					break;
+				}
 			}
 		}
+		if (!TWFunc::Path_Exists(Zip)) {
+			// zip file doesn't exist
+			gui_print("Unable to locate zip file '%s'.\n", Zip.c_str());
+			ret_val = 1;
+		} else
+			gui_print("Installing zip file '%s'\n", Zip.c_str());
 	}
 
-	if (!TWFunc::Path_Exists(Zip)) {
-		// zip file doesn't exist
-		gui_print("Unable to locate zip file '%s'.\n", Zip.c_str());
-		ret_val = 1;
-	} else {
-		gui_print("Installing zip file '%s'\n", Zip.c_str());
-		ret_val = TWinstall_zip(Zip.c_str(), &wipe_cache);
-	}
+	ret_val = TWinstall_zip(Zip.c_str(), &wipe_cache);
 	if (ret_val != 0) {
 		LOGERR("Error installing zip file '%s'\n", Zip.c_str());
 		ret_val = 1;
