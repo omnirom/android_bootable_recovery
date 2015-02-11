@@ -605,7 +605,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 		PageManager::Render();
 		gr_get_surface(&surface);
 		curtainRaise(surface);
-		gr_free_surface(surface);
+		res_free_surface(surface);
 	}
 
 	gGuiRunning = 1;
