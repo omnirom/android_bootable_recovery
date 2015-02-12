@@ -45,13 +45,8 @@ GUIProgressBar::GUIProgressBar(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("resource");
 	if (child)
 	{
-		attr = child->first_attribute("empty");
-		if (attr)
-			mEmptyBar = PageManager::FindResource(attr->value());
-
-		attr = child->first_attribute("full");
-		if (attr)
-			mFullBar = PageManager::FindResource(attr->value());
+		mEmptyBar = LoadAttrImage(child, "empty");
+		mFullBar = LoadAttrImage(child, "full");
 	}
 
 	// Load the placement
@@ -61,23 +56,13 @@ GUIProgressBar::GUIProgressBar(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("data");
 	if (child)
 	{
-		attr = child->first_attribute("min");
-		if (attr)   mMinValVar = attr->value();
-
-		attr = child->first_attribute("max");
-		if (attr)   mMaxValVar = attr->value();
-
-		attr = child->first_attribute("name");
-		if (attr)   mCurValVar = attr->value();
+		mMinValVar = LoadAttrString(child, "min");
+		mMaxValVar = LoadAttrString(child, "max");
+		mCurValVar = LoadAttrString(child, "name");
 	}
 
-	if (mEmptyBar && mEmptyBar->GetResource())
-	{
-		mRenderW = gr_get_width(mEmptyBar->GetResource());
-		mRenderH = gr_get_height(mEmptyBar->GetResource());
-	}
-
-	return;
+	mRenderW = mEmptyBar->GetWidth();
+	mRenderH = mEmptyBar->GetHeight();
 }
 
 int GUIProgressBar::Render(void)

@@ -41,7 +41,8 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	firstDisplayedItem = mItemSpacing = mFontHeight = mSeparatorH = y_offset = scrollingSpeed = 0;
 	maxIconWidth = maxIconHeight =  mHeaderIconHeight = mHeaderIconWidth = 0;
 	mHeaderSeparatorH = mHeaderIsStatic = mHeaderH = actualItemHeight = 0;
-	mBackground = mFont = mHeaderIcon = NULL;
+	mBackground = mHeaderIcon = NULL;
+	mFont = NULL;
 	mBackgroundW = mBackgroundH = 0;
 	mFastScrollW = mFastScrollLineW = mFastScrollRectW = mFastScrollRectH = 0;
 	lastY = last2Y = fastScroll = 0;
@@ -63,9 +64,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("header");
 	if (child)
 	{
-		attr = child->first_attribute("icon");
-		if (attr)
-			mHeaderIcon = PageManager::FindResource(attr->value());
+		mHeaderIcon = LoadAttrImage(child, "icon");
 
 		attr = child->first_attribute("background");
 		if (attr)
@@ -119,9 +118,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("background");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr)
-			mBackground = PageManager::FindResource(attr->value());
+		mBackground = LoadAttrImage(child, "resource");
 		attr = child->first_attribute("color");
 		if (attr)
 		{
@@ -140,9 +137,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("font");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr)
-			mFont = PageManager::FindResource(attr->value());
+		mFont = LoadAttrFont(child, "resource");
 
 		attr = child->first_attribute("color");
 		if (attr)
@@ -229,13 +224,13 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	}
 
 	// Retrieve the line height
-	mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
+	mFontHeight = mFont->GetHeight();
 	mHeaderH = mFontHeight;
 
 	if (mHeaderIcon && mHeaderIcon->GetResource())
 	{
-		mHeaderIconWidth = gr_get_width(mHeaderIcon->GetResource());
-		mHeaderIconHeight = gr_get_height(mHeaderIcon->GetResource());
+		mHeaderIconWidth = mHeaderIcon->GetWidth();
+		mHeaderIconHeight = mHeaderIcon->GetHeight();
 		if (mHeaderIconHeight > mHeaderH)
 			mHeaderH = mHeaderIconHeight;
 		if (mHeaderIconWidth > maxIconWidth)
@@ -252,8 +247,8 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 
 	if (mBackground && mBackground->GetResource())
 	{
-		mBackgroundW = gr_get_width(mBackground->GetResource());
-		mBackgroundH = gr_get_height(mBackground->GetResource());
+		mBackgroundW = mBackground->GetWidth();
+		mBackgroundH = mBackground->GetHeight();
 	}
 }
 
@@ -349,7 +344,7 @@ int GUIScrollList::Render(void)
 			break;
 
 		// get item data
-		Resource* icon;
+		ImageResource* icon;
 		std::string label;
 		if (GetListItem(itemindex, icon, label))
 			break;
@@ -373,8 +368,8 @@ int GUIScrollList::Render(void)
 		}
 
 		if (icon && icon->GetResource()) {
-			int currentIconHeight = gr_get_height(icon->GetResource());
-			int currentIconWidth = gr_get_width(icon->GetResource());
+			int currentIconHeight = icon->GetHeight();
+			int currentIconWidth = icon->GetWidth();
 			int currentIconOffsetY = (int)((actualItemHeight - currentIconHeight) / 2);
 			int currentIconOffsetX = (maxIconWidth - currentIconWidth) / 2;
 			int rect_y = 0, image_y = (yPos + currentIconOffsetY);
@@ -405,11 +400,10 @@ int GUIScrollList::Render(void)
 	// Now, we need the header (icon + text)
 	yPos = mRenderY;
 	{
-		Resource* headerIcon;
 		int mIconOffsetX = 0;
 
 		// render the icon if it exists
-		headerIcon = mHeaderIcon;
+		ImageResource* headerIcon = mHeaderIcon;
 		if (headerIcon && headerIcon->GetResource())
 		{
 			gr_blit(headerIcon->GetResource(), 0, 0, mHeaderIconWidth, mHeaderIconHeight, mRenderX + ((mHeaderIconWidth - maxIconWidth) / 2), (yPos + (int)((mHeaderH - mHeaderIconHeight) / 2)));
