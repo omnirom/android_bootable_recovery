@@ -199,21 +199,8 @@ static gr_surface fbdev_flip(minui_backend* backend __unused) {
         set_displayed_framebuffer(1-displayed_buffer);
     } else {
         // Copy from the in-memory surface to the framebuffer.
-
-#if defined(RECOVERY_BGRA)
-        unsigned int idx;
-        unsigned char* ucfb_vaddr = (unsigned char*)gr_framebuffer[0].data;
-        unsigned char* ucbuffer_vaddr = (unsigned char*)gr_draw->data;
-        for (idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes); idx += 4) {
-            ucfb_vaddr[idx    ] = ucbuffer_vaddr[idx + 2];
-            ucfb_vaddr[idx + 1] = ucbuffer_vaddr[idx + 1];
-            ucfb_vaddr[idx + 2] = ucbuffer_vaddr[idx    ];
-            ucfb_vaddr[idx + 3] = ucbuffer_vaddr[idx + 3];
-        }
-#else
         memcpy(gr_framebuffer[0].data, gr_draw->data,
                gr_draw->height * gr_draw->row_bytes);
-#endif
     }
     return gr_draw;
 }

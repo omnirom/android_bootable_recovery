@@ -142,7 +142,9 @@ static gr_surface adf_init(minui_backend *backend)
     ssize_t n_dev_ids, i;
     gr_surface ret;
 
-#if defined(RECOVERY_BGRA)
+#if defined(RECOVERY_ABGR)
+    pdata->format = DRM_FORMAT_ABGR8888;
+#elif defined(RECOVERY_BGRA)
     pdata->format = DRM_FORMAT_BGRA8888;
 #elif defined(RECOVERY_RGBX)
     pdata->format = DRM_FORMAT_RGBX8888;
