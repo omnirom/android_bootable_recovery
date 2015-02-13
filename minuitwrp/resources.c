@@ -54,7 +54,7 @@ static GGLSurface* malloc_surface(size_t data_size) {
 }
 
 static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
-                    png_uint_32* width, png_uint_32* height, png_byte* channels) {
+                    png_uint_32* width, png_uint_32* height, png_byte* channels, FILE** fpp) {
     char resPath[256];
     unsigned char header[8];
     int result = 0;
@@ -131,6 +131,7 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
         png_set_palette_to_rgb(png_ptr);
     }
 
+    *fpp = fp;
     return result;
 
   exit:
@@ -219,10 +220,11 @@ int res_create_surface_png(const char* name, gr_surface* pSurface) {
     png_infop info_ptr = NULL;
     png_uint_32 width, height;
     png_byte channels;
+    FILE* fp;
 
     *pSurface = NULL;
 
-    result = open_png(name, &png_ptr, &info_ptr, &width, &height, &channels);
+    result = open_png(name, &png_ptr, &info_ptr, &width, &height, &channels, &fp);
     if (result < 0) return result;
 
     surface = init_display_surface(width, height);
@@ -247,6 +249,7 @@ int res_create_surface_png(const char* name, gr_surface* pSurface) {
     *pSurface = (gr_surface) surface;
 
   exit:
+    fclose(fp);
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     if (result < 0 && surface != NULL) free(surface);
     return result;
