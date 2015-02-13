@@ -122,10 +122,10 @@ int GUIListBox::Update(void)
 
 int GUIListBox::NotifyVarChange(const std::string& varName, const std::string& value)
 {
+	GUIScrollList::NotifyVarChange(varName, value);
+
 	if(!isConditionTrue())
 		return 0;
-
-	GUIScrollList::NotifyVarChange(varName, value);
 
 	// Check to see if the variable that we are using to store the list selected value has been updated
 	if (varName == mVariable) {

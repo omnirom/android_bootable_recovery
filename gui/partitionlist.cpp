@@ -145,10 +145,10 @@ int GUIPartitionList::Update(void)
 
 int GUIPartitionList::NotifyVarChange(const std::string& varName, const std::string& value)
 {
+	GUIScrollList::NotifyVarChange(varName, value);
+
 	if(!isConditionTrue())
 		return 0;
-
-	GUIScrollList::NotifyVarChange(varName, value);
 
 	if (varName == mVariable && !mUpdate)
 	{

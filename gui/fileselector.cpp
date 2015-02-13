@@ -171,10 +171,10 @@ int GUIFileSelector::Update(void)
 
 int GUIFileSelector::NotifyVarChange(const std::string& varName, const std::string& value)
 {
+	GUIScrollList::NotifyVarChange(varName, value);
+
 	if(!isConditionTrue())
 		return 0;
-
-	GUIScrollList::NotifyVarChange(varName, value);
 
 	if (varName.empty()) {
 		// Always clear the data variable so we know to use it
