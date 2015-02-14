@@ -213,7 +213,7 @@ public:
 	int Partition_SDCard(void);                                               // Repartitions the sdcard
 	TWPartition *Get_Default_Storage_Partition();                             // Returns a pointer to a default storage partition
 	int Cancel_Backup();                                                      // Signals partition backup to cancel
-
+	void Clean_Backup_Folder(string Backup_Folder);				  // Clean Backup Folder on Error
 	int Fix_Permissions();
 	void Get_Partition_List(string ListType, std::vector<PartitionList> *Partition_List);
 	int Fstab_Processed();                                                    // Indicates if the fstab has been processed or not
