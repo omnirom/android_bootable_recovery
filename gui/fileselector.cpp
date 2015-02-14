@@ -40,7 +40,6 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	xml_attribute<>* attr;
 	xml_node<>* child;
 
-	int mIconWidth = 0, mIconHeight = 0, mFolderIconHeight = 0, mFileIconHeight = 0, mFolderIconWidth = 0, mFileIconWidth = 0;
 	mFolderIcon = mFileIcon = NULL;
 	mShowFolders = mShowFiles = mShowNavFolders = 1;
 	mUpdate = 0;
@@ -109,29 +108,12 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	// Get folder and file icons if present
 	child = node->first_node("icon");
 	if (child) {
-		attr = child->first_attribute("folder");
-		if (attr)
-			mFolderIcon = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("file");
-		if (attr)
-			mFileIcon = PageManager::FindResource(attr->value());
+		mFolderIcon = LoadAttrImage(child, "folder");
+		mFileIcon = LoadAttrImage(child, "file");
 	}
-	if (mFolderIcon && mFolderIcon->GetResource()) {
-		mFolderIconWidth = gr_get_width(mFolderIcon->GetResource());
-		mFolderIconHeight = gr_get_height(mFolderIcon->GetResource());
-		if (mFolderIconHeight > mIconHeight)
-			mIconHeight = mFolderIconHeight;
-		mIconWidth = mFolderIconWidth;
-	}
-	if (mFileIcon && mFileIcon->GetResource()) {
-		mFileIconWidth = gr_get_width(mFileIcon->GetResource());
-		mFileIconHeight = gr_get_height(mFileIcon->GetResource());
-		if (mFileIconHeight > mIconHeight)
-			mIconHeight = mFileIconHeight;
-		if (mFileIconWidth > mIconWidth)
-			mIconWidth = mFileIconWidth;
-	}
-	SetMaxIconSize(mIconWidth, mIconHeight);
+	int iconWidth = std::max(mFolderIcon->GetWidth(), mFileIcon->GetWidth());
+	int iconHeight = std::max(mFolderIcon->GetHeight(), mFileIcon->GetHeight());
+	SetMaxIconSize(iconWidth, iconHeight);
 
 	// Fetch the file/folder list
 	std::string value;
@@ -318,7 +300,7 @@ size_t GUIFileSelector::GetItemCount()
 	return folderSize + fileSize;
 }
 
-int GUIFileSelector::GetListItem(size_t item_index, Resource*& icon, std::string &text)
+int GUIFileSelector::GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
 {
 	size_t folderSize = mShowFolders ? mFolderList.size() : 0;
 	size_t fileSize = mShowFiles ? mFileList.size() : 0;

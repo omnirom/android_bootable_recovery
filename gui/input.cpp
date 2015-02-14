@@ -88,35 +88,21 @@ GUIInput::GUIInput(xml_node<>* node)
 	child = node->first_node("background");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr)
-			mBackground = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("color");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mBackgroundColor);
-		}
+		mBackground = LoadAttrImage(child, "resource");
+		mBackgroundColor = LoadAttrColor(child, "color", mBackgroundColor);
 	}
 	if (mBackground && mBackground->GetResource())
 	{
-		mBackgroundW = gr_get_width(mBackground->GetResource());
-		mBackgroundH = gr_get_height(mBackground->GetResource());
+		mBackgroundW = mBackground->GetWidth();
+		mBackgroundH = mBackground->GetHeight();
 	}
 
 	// Load the cursor color
 	child = node->first_node("cursor");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr)
-			mCursor = PageManager::FindResource(attr->value());
-		attr = child->first_attribute("color");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mCursorColor);
-		}
+		mCursor = LoadAttrImage(child, "resource");
+		mCursorColor = LoadAttrColor(child, "color", mCursorColor);
 		attr = child->first_attribute("hasfocus");
 		if (attr)
 		{
@@ -132,15 +118,12 @@ GUIInput::GUIInput(xml_node<>* node)
 	}
 	DrawCursor = HasInputFocus;
 
-	// Load the font, and possibly override the color
+	// Load the font
 	child = node->first_node("font");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr) {
-			mFont = PageManager::FindResource(attr->value());
-			mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
-		}
+		mFont = LoadAttrFont(child, "resource");
+		mFontHeight = mFont->GetHeight();
 	}
 
 	child = node->first_node("text");
@@ -213,8 +196,8 @@ GUIInput::GUIInput(xml_node<>* node)
 
 GUIInput::~GUIInput()
 {
-	if (mInputText)	 	delete mInputText;
-	if (mAction)		delete mAction;
+	delete mInputText;
+	delete mAction;
 }
 
 int GUIInput::HandleTextLocation(int x)

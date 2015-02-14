@@ -47,31 +47,20 @@ GUISlider::GUISlider(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("resource");
 	if (child)
 	{
-		attr = child->first_attribute("base");
-		if (attr)
-			sSlider = PageManager::FindResource(attr->value());
-
-		attr = child->first_attribute("used");
-		if (attr)
-			sSliderUsed = PageManager::FindResource(attr->value());
-
-		attr = child->first_attribute("touch");
-		if (attr)
-			sTouch = PageManager::FindResource(attr->value());
+		sSlider = LoadAttrImage(child, "base");
+		sSliderUsed = LoadAttrImage(child, "used");
+		sTouch = LoadAttrImage(child, "touch");
 	}
 
 	// Load the placement
 	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY);
 
-	if (sSlider && sSlider->GetResource())
-	{
-		mRenderW = gr_get_width(sSlider->GetResource());
-		mRenderH = gr_get_height(sSlider->GetResource());
-	}
+	mRenderW = sSlider->GetWidth();
+	mRenderH = sSlider->GetHeight();
 	if (sTouch && sTouch->GetResource())
 	{
-		sTouchW = gr_get_width(sTouch->GetResource());  // Width of the "touch image" that follows the touch (arrow)
-		sTouchH = gr_get_height(sTouch->GetResource()); // Height of the "touch image" that follows the touch (arrow)
+		sTouchW = sTouch->GetWidth();  // Width of the "touch image" that follows the touch (arrow)
+		sTouchH = sTouch->GetHeight(); // Height of the "touch image" that follows the touch (arrow)
 	}
 
 	//LOGINFO("mRenderW: %i mTouchW: %i\n", mRenderW, mTouchW);

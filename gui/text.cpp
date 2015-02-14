@@ -28,9 +28,6 @@ extern "C" {
 GUIText::GUIText(xml_node<>* node)
 	: GUIObject(node)
 {
-	xml_attribute<>* attr;
-	xml_node<>* child;
-
 	mFont = NULL;
 	mIsStatic = 1;
 	mVarChanged = 0;
@@ -38,53 +35,21 @@ GUIText::GUIText(xml_node<>* node)
 	maxWidth = 0;
 	charSkip = 0;
 	isHighlighted = false;
-	hasHighlightColor = false;
 
 	if (!node)
 		return;
 
-	// Initialize color to solid black
-	memset(&mColor, 0, sizeof(COLOR));
-	mColor.alpha = 255;
-	memset(&mHighlightColor, 0, sizeof(COLOR));
-	mHighlightColor.alpha = 255;
-
-	attr = node->first_attribute("color");
-	if (attr)
-	{
-		std::string color = attr->value();
-		ConvertStrToColor(color, &mColor);
-	}
-	attr = node->first_attribute("highlightcolor");
-	if (attr)
-	{
-		std::string color = attr->value();
-		ConvertStrToColor(color, &mHighlightColor);
-		hasHighlightColor = true;
-	}
+	// Load colors
+	mColor = LoadAttrColor(node, "color", COLOR(0,0,0,255));
+	mHighlightColor = LoadAttrColor(node, "highlightcolor", mColor);
 
 	// Load the font, and possibly override the color
-	child = node->first_node("font");
+	xml_node<>* child = node->first_node("font");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr)
-			mFont = PageManager::FindResource(attr->value());
-
-		attr = child->first_attribute("color");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mColor);
-		}
-
-		attr = child->first_attribute("highlightcolor");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mHighlightColor);
-			hasHighlightColor = true;
-		}
+		mFont = LoadAttrFont(child, "resource");
+		mColor = LoadAttrColor(child, "color", mColor);
+		mHighlightColor = LoadAttrColor(child, "highlightcolor", mColor);
 	}
 
 	// Load the placement
@@ -97,8 +62,7 @@ GUIText::GUIText(xml_node<>* node)
 	mLastValue = parseText();
 	if (mLastValue != mText)   mIsStatic = 0;
 
-	mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
-	return;
+	mFontHeight = mFont->GetHeight();
 }
 
 int GUIText::Render(void)
@@ -107,13 +71,11 @@ int GUIText::Render(void)
 		return 0;
 
 	void* fontResource = NULL;
-	string displayValue;
-
 	if (mFont)
 		fontResource = mFont->GetResource();
 
 	mLastValue = parseText();
-	displayValue = mLastValue;
+	string displayValue = mLastValue;
 
 	if (charSkip)
 		displayValue.erase(0, charSkip);
@@ -138,7 +100,7 @@ int GUIText::Render(void)
 			y -= mFontHeight;
 	}
 
-	if (hasHighlightColor && isHighlighted)
+	if (isHighlighted)
 		gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, mHighlightColor.alpha);
 	else
 		gr_color(mColor.red, mColor.green, mColor.blue, mColor.alpha);
