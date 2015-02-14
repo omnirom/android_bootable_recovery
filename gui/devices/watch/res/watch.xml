@@ -1415,10 +1415,18 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row4_text_y%" />
+				<placement x="%col1_x%" y="%row3_text_y%" />
 				<text>Skip MD5 generation during backup.</text>
 				<data variable="tw_skip_md5_generate" />
 			</object>
+
+                        <object type="checkbox">
+                                <placement x="%col1_x%" y="%row4_text_y%" />
+                                <font resource="font" color="%text_color%" />
+                                <text>Disable Free Space Check.</text>
+                                <data variable="tw_disable_free_space" />
+                                <image checked="checkbox_true" unchecked="checkbox_false" />
+                        </object>
 
 			<object type="action">
 				<touch key="home" />
