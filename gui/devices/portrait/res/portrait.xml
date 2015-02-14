@@ -1588,6 +1588,14 @@
 				<image checked="checkbox_true" unchecked="checkbox_false" />
 			</object>
 
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row17_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<text>Disable Free Space Check.</text>
+				<data variable="tw_disable_free_space" />
+				<image checked="checkbox_true" unchecked="checkbox_false" />
+			</object>
+
 			<object type="slider">
 				<placement x="%slider_x%" y="%slider_y%" />
 				<resource base="slider" used="slider-used" touch="slider-touch" />
