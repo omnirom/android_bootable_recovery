@@ -37,7 +37,6 @@ int scale_theme_y(int initial_y);
 int scale_theme_min(int initial_value);
 float get_scale_w();
 float get_scale_h();
-float get_scale_h();
 
 #endif  // _GUI_HEADER
 

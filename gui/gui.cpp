@@ -990,7 +990,10 @@ extern "C" void set_scale_values(float w, float h)
 extern "C" int scale_theme_x(int initial_x)
 {
 	if (scale_theme_w != 1) {
-		return (int) ((float)initial_x * scale_theme_w);
+		int scaled = (float)initial_x * scale_theme_w;
+		if (scaled == 0 && initial_x > 0)
+			return 1;
+		return scaled;
 	}
 	return initial_x;
 }
@@ -998,7 +1001,10 @@ extern "C" int scale_theme_x(int initial_x)
 extern "C" int scale_theme_y(int initial_y)
 {
 	if (scale_theme_h != 1) {
-		return (int) ((float)initial_y * scale_theme_h);
+		int scaled = (float)initial_y * scale_theme_h;
+		if (scaled == 0 && initial_y > 0)
+			return 1;
+		return scaled;
 	}
 	return initial_y;
 }
