@@ -175,6 +175,14 @@ void GUIPartitionList::SetPageFocus(int inFocus)
 		if (ListType == "storage") {
 			DataManager::GetValue(mVariable, currentValue);
 			SetStoragePosition();
+		} else if (ListType == "flashimg") {
+			DataManager::GetValue(mVariable, currentValue);
+			size_t listSize = mList.size();
+			for (size_t i = 0; i < listSize; i++)
+				mList.at(i).selected = 0;
+			MatchList();
+			mUpdate = 1;
+			return;
 		}
 		updateList = true;
 		mUpdate = 1;
@@ -182,7 +190,7 @@ void GUIPartitionList::SetPageFocus(int inFocus)
 }
 
 void GUIPartitionList::MatchList(void) {
-	int i, listSize = mList.size();
+	size_t i, listSize = mList.size();
 	string variablelist, searchvalue;
 	size_t pos;
 
