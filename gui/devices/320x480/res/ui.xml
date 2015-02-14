@@ -94,8 +94,8 @@
 		<variable name="row5_medium_y" value="258" />
 		<variable name="row6_medium_y" value="303" />
 		<variable name="row7_medium_y" value="348" />
-		<variable name="slider_x" value="39" />
-		<variable name="slider_y" value="400" />
+		<variable name="slider_x" value="55" />
+		<variable name="slider_y" value="410" />
 		<variable name="slider_text_y" value="425" />
 		<variable name="button_text_color" value="#AAAAAA" />
 		<variable name="text_color" value="#FFFFFF" />
