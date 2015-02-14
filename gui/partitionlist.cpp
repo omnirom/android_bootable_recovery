@@ -130,7 +130,7 @@ int GUIPartitionList::Update(void)
 		SetVisibleListLocation(0);
 		updateList = false;
 		mUpdate = 1;
-		if (ListType == "backup")
+		if (ListType == "backup" || ListType == "flashimg")
 			MatchList();
 	}
 
@@ -172,7 +172,7 @@ void GUIPartitionList::SetPageFocus(int inFocus)
 {
 	GUIScrollList::SetPageFocus(inFocus);
 	if (inFocus) {
-		if (ListType == "storage") {
+		if (ListType == "storage" || ListType == "flashimg") {
 			DataManager::GetValue(mVariable, currentValue);
 			SetStoragePosition();
 		}
