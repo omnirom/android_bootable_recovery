@@ -526,6 +526,8 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 	float pos;
 	unsigned long long total_size, current_size;
 
+	string backup_log = Backup_Folder + "recovery.log";
+
 	if (Part == NULL)
 		return true;
 
@@ -574,6 +576,9 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 				if ((*subpart)->Can_Be_Backed_Up && (*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point) {
 					if (!(*subpart)->Backup(Backup_Folder, &total_size, &current_size, tar_fork_pid)) {
 						TWFunc::SetPerformanceMode(false);
+						Clean_Backup_Folder(Backup_Folder);
+						TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
+						tw_set_default_metadata(backup_log.c_str());
 						return false;
 					}
 					sync();
@@ -608,10 +613,42 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 		TWFunc::SetPerformanceMode(false);
 		return md5Success;
 	} else {
+		Clean_Backup_Folder(Backup_Folder);
+		TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
+		tw_set_default_metadata(backup_log.c_str());
 		TWFunc::SetPerformanceMode(false);
 		return false;
 	}
 	return 0;
+}
+
+void TWPartitionManager::Clean_Backup_Folder(string Backup_Folder) {
+	DIR *d = opendir(Backup_Folder.c_str());
+	struct dirent *p;
+	int r;
+
+	gui_print("Backup Failed.\nCleaning Backup Folder\n");
+
+	if (d == NULL) {
+		LOGERR("Error opening dir: '%s'\n", Backup_Folder.c_str());
+		return;
+	}
+
+	while (p = readdir(d)) {
+		if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+			continue;
+
+		string path = Backup_Folder + p->d_name;
+
+		size_t dot = path.find_last_of(".") + 1;
+		if (path.substr(dot) == "win" || path.substr(dot) == "md5" || path.substr(dot) == "info") {
+			r = unlink(path.c_str());
+			if (r != 0) {
+				LOGINFO("Unable to unlink '%s: %s'\n", path.c_str(), strerror(errno));
+			}
+		}
+	}
+	closedir(d);
 }
 
 int TWPartitionManager::Cancel_Backup() {
@@ -638,7 +675,7 @@ int TWPartitionManager::Cancel_Backup() {
 }
 
 int TWPartitionManager::Run_Backup(void) {
-	int check, do_md5, partition_count = 0;
+	int check, do_md5, partition_count, disable_free_space_check = 0;
 	string Backup_Folder, Backup_Name, Full_Backup_Path, Backup_List, backup_path;
 	unsigned long long total_bytes = 0, file_bytes = 0, img_bytes = 0, free_space = 0, img_bytes_remaining, file_bytes_remaining, subpart_size;
 	unsigned long img_time = 0, file_time = 0;
@@ -726,10 +763,14 @@ int TWPartitionManager::Run_Backup(void) {
 		LOGERR("Unable to locate storage device.\n");
 		return false;
 	}
-	if (free_space - (32 * 1024 * 1024) < total_bytes) {
-		// We require an extra 32MB just in case
-		LOGERR("Not enough free space on storage.\n");
-		return false;
+
+	DataManager::GetValue("tw_disable_free_space", disable_free_space_check);
+	if (!disable_free_space_check) {
+		if (free_space - (32 * 1024 * 1024) < total_bytes) {
+			// We require an extra 32MB just in case
+			LOGERR("Not enough free space on storage.\n");
+			return false;
+		}
 	}
 	img_bytes_remaining = img_bytes;
 	file_bytes_remaining = file_bytes;

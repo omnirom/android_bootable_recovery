@@ -101,6 +101,7 @@
 		<variable name="nandcheck_row5" value="250" />
 		<variable name="nandcheck_row6" value="280" />
 		<variable name="nandcheck_row7" value="310" />
+		<variable name="nandcheck_row8" value="340" />
 		<variable name="button_text_color" value="#AAAAAA" />
 		<variable name="text_color" value="#A0A0A0" />
 		<variable name="text_success_color" value="#33B5E5" />
