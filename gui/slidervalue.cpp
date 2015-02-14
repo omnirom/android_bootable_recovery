@@ -73,16 +73,8 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("font");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr)
-			mFont = PageManager::FindResource(attr->value());
-
-		attr = child->first_attribute("color");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mTextColor);
-		}
+		mFont = LoadAttrFont(child, "resource");
+		mTextColor = LoadAttrColor(child, "color", mTextColor);
 	}
 
 	// Load the placement
@@ -103,17 +95,9 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 	child = node->first_node("resource");
 	if (child)
 	{
-		attr = child->first_attribute("background");
-		if(attr)
-			mBackgroundImage = PageManager::FindResource(attr->value());
-
-		attr = child->first_attribute("handle");
-		if(attr)
-			mHandleImage = PageManager::FindResource(attr->value());
-
-		attr = child->first_attribute("handlehover");
-		if(attr)
-			mHandleHoverImage = PageManager::FindResource(attr->value());
+		mBackgroundImage = LoadAttrImage(child, "background");
+		mHandleImage = LoadAttrImage(child, "handle");
+		mHandleHoverImage = LoadAttrImage(child, "handlehover");
 	}
 
 	child = node->first_node("data");
@@ -199,7 +183,7 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 		}
 	}
 
-	mFontHeight = gr_getMaxFontHeight(mFont ? mFont->GetResource() : NULL);
+	mFontHeight = mFont->GetHeight();
 
 	if(mShowCurr)
 	{
@@ -277,8 +261,8 @@ int GUISliderValue::SetRenderPos(int x, int y, int w, int h)
 
 	if(mBackgroundImage && mBackgroundImage->GetResource())
 	{
-		mLineW = gr_get_width(mBackgroundImage->GetResource());
-		mLineH = gr_get_height(mBackgroundImage->GetResource());
+		mLineW = mBackgroundImage->GetWidth();
+		mLineH = mBackgroundImage->GetHeight();
 	}
 	else
 		mLineW = mRenderW - (mLinePadding * 2);

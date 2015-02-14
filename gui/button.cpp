@@ -98,9 +98,7 @@ GUIButton::GUIButton(xml_node<>* node)
 	child = node->first_node("icon");
 	if (child)
 	{
-		attr = child->first_attribute("resource");
-		if (attr)
-			mButtonIcon = PageManager::FindResource(attr->value());
+		mButtonIcon = LoadAttrImage(child, "resource");
 	}
 
 	memset(&mHighlightColor, 0, sizeof(COLOR));
@@ -122,14 +120,13 @@ GUIButton::GUIButton(xml_node<>* node)
 		LoadPlacement(node->first_node("placement"), &x, &y, &w, &h, &TextPlacement);
 	}
 	SetRenderPos(x, y, w, h);
-	return;
 }
 
 GUIButton::~GUIButton()
 {
-	if (mButtonImg)	 	delete mButtonImg;
-	if (mButtonLabel)   delete mButtonLabel;
-	if (mAction)		delete mAction;
+	delete mButtonImg;
+	delete mButtonLabel;
+	delete mAction;
 }
 
 int GUIButton::Render(void)
@@ -221,12 +218,8 @@ int GUIButton::SetRenderPos(int x, int y, int w, int h)
 		mRenderH = h;
 	}
 
-	mIconW = 0;	 mIconH = 0;
-	if (mButtonIcon && mButtonIcon->GetResource())
-	{
-		mIconW = gr_get_width(mButtonIcon->GetResource());
-		mIconH = gr_get_height(mButtonIcon->GetResource());
-	}
+	mIconW = mButtonIcon->GetWidth();
+	mIconH = mButtonIcon->GetHeight();
 
 	mTextH = 0;
 	mTextW = 0;

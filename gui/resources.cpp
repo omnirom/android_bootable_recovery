@@ -314,7 +314,8 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 		{
 			LOGERR("Resource type (%s) not supported.\n", type.c_str());
 		}
-		if (res == NULL || res->GetResource() == NULL)
+
+		if (res == NULL || !res->loadedOK())
 		{
 			std::string res_name;
 			if (child->first_attribute("name"))

@@ -102,7 +102,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 		strcpy(resource, "resource1");
 		attr = child->first_attribute(resource);
 		while (attr && layoutindex < (MAX_KEYBOARD_LAYOUTS + 1)) {
-			keyboardImg[layoutindex - 1] = PageManager::FindResource(attr->value());
+			keyboardImg[layoutindex - 1] = LoadAttrImage(child, resource);
 
 			layoutindex++;
 			resource[8] = (char)(layoutindex + 48);
@@ -113,8 +113,8 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 	// Check the first image to get height and width
 	if (keyboardImg[0] && keyboardImg[0]->GetResource())
 	{
-		KeyboardWidth = gr_get_width(keyboardImg[0]->GetResource());
-		KeyboardHeight = gr_get_height(keyboardImg[0]->GetResource());
+		KeyboardWidth = keyboardImg[0]->GetWidth();
+		KeyboardHeight = keyboardImg[0]->GetHeight();
 	}
 
 	// Load all of the layout maps
