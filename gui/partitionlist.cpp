@@ -130,7 +130,7 @@ int GUIPartitionList::Update(void)
 		SetVisibleListLocation(0);
 		updateList = false;
 		mUpdate = 1;
-		if (ListType == "backup")
+		if (ListType == "backup" || ListType == "flashimg")
 			MatchList();
 	}
 
@@ -154,7 +154,7 @@ int GUIPartitionList::NotifyVarChange(const std::string& varName, const std::str
 	{
 		if (ListType == "storage") {
 			currentValue = value;
-			SetStoragePosition();
+			SetPosition();
 		} else if (ListType == "backup") {
 			MatchList();
 		} else if (ListType == "restore") {
@@ -172,9 +172,9 @@ void GUIPartitionList::SetPageFocus(int inFocus)
 {
 	GUIScrollList::SetPageFocus(inFocus);
 	if (inFocus) {
-		if (ListType == "storage") {
+		if (ListType == "storage" || ListType == "flashimg") {
 			DataManager::GetValue(mVariable, currentValue);
-			SetStoragePosition();
+			SetPosition();
 		}
 		updateList = true;
 		mUpdate = 1;
@@ -199,16 +199,16 @@ void GUIPartitionList::MatchList(void) {
 	}
 }
 
-void GUIPartitionList::SetStoragePosition() {
+void GUIPartitionList::SetPosition() {
 	int listSize = mList.size();
 
+	SetVisibleListLocation(0);
 	for (int i = 0; i < listSize; i++) {
 		if (mList.at(i).Mount_Point == currentValue) {
 			mList.at(i).selected = 1;
 			SetVisibleListLocation(i);
 		} else {
 			mList.at(i).selected = 0;
-			SetVisibleListLocation(0);
 		}
 	}
 }

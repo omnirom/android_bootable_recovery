@@ -728,7 +728,7 @@ public:
 
 protected:
 	void MatchList();
-	void SetStoragePosition();
+	void SetPosition();
 
 protected:
 	std::vector<PartitionList> mList;
