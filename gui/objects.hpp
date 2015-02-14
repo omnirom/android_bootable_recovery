@@ -893,7 +893,6 @@ protected:
 class GUIInput : public GUIObject, public RenderObject, public ActionObject, public InputObject
 {
 public:
-	// w and h may be ignored, in which case, no bounding box is applied
 	GUIInput(xml_node<>* node);
 	virtual ~GUIInput();
 
