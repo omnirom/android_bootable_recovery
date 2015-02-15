@@ -552,7 +552,7 @@ protected:
 	// Handle scrolling changes for drags and kinetic scrolling
 	void HandleScrolling();
 
-	// Returns many rows the list is capable of displaying
+	// Returns many full rows the list is capable of displaying
 	int GetDisplayItemCount();
 
 	// Returns the size in pixels of a partial item or row size
@@ -569,7 +569,7 @@ protected:
 	COLOR mHeaderFontColor;
 	std::string mHeaderText; // Original header text without parsing any variables
 	std::string mLastHeaderValue; // Header text after parsing variables
-	int mHeaderIsStatic; // indicates if the header is static (no need to check for changes in NotifyVarChange)
+	bool mHeaderIsStatic; // indicates if the header is static (no need to check for changes in NotifyVarChange)
 	int mHeaderH; // actual header height including font, icon, padding, and separator heights
 	ImageResource* mHeaderIcon;
 	int mHeaderIconHeight, mHeaderIconWidth; // width and height of the header icon if present
@@ -579,9 +579,8 @@ protected:
 	// Per-item layout
 	FontResource* mFont;
 	COLOR mFontColor;
-	bool hasHighlightColor; // indicates if a hightlight color was set
-	bool hasFontHighlightColor; // indicates if the font hightlight color is set
-	COLOR mHighlightColor; // background row hightlight color
+	bool hasHighlightColor; // indicates if a highlight color was set
+	COLOR mHighlightColor; // background row highlight color
 	COLOR mFontHighlightColor;
 	int mFontHeight;
 	int actualItemHeight; // Actual height of each item in pixels including max icon size, font size, and padding

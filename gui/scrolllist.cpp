@@ -36,11 +36,11 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;
-	int header_separator_color_specified = 0, header_separator_height_specified = 0, header_text_color_specified = 0, header_background_color_specified = 0;
 
 	firstDisplayedItem = mItemSpacing = mFontHeight = mSeparatorH = y_offset = scrollingSpeed = 0;
 	maxIconWidth = maxIconHeight =  mHeaderIconHeight = mHeaderIconWidth = 0;
-	mHeaderSeparatorH = mHeaderIsStatic = mHeaderH = actualItemHeight = 0;
+	mHeaderSeparatorH = mHeaderH = actualItemHeight = 0;
+	mHeaderIsStatic = false;
 	mBackground = mHeaderIcon = NULL;
 	mFont = NULL;
 	mBackgroundW = mBackgroundH = 0;
@@ -57,45 +57,14 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	ConvertStrToColor("white", &mFastScrollLineColor);
 	ConvertStrToColor("white", &mFastScrollRectColor);
 	hasHighlightColor = false;
-	hasFontHighlightColor = false;
 	selectedItem = NO_ITEM;
 
 	// Load header text
-	child = node->first_node("header");
-	if (child)
-	{
-		mHeaderIcon = LoadAttrImage(child, "icon");
-
-		attr = child->first_attribute("background");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mHeaderBackgroundColor);
-			header_background_color_specified = -1;
-		}
-		attr = child->first_attribute("textcolor");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mHeaderFontColor);
-			header_text_color_specified = -1;
-		}
-		attr = child->first_attribute("separatorcolor");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mHeaderSeparatorColor);
-			header_separator_color_specified = -1;
-		}
-		attr = child->first_attribute("separatorheight");
-		if (attr) {
-			string parsevalue = gui_parse_text(attr->value());
-			mHeaderSeparatorH = scale_theme_y(atoi(parsevalue.c_str()));
-			header_separator_height_specified = -1;
-		}
-	}
 	child = node->first_node("text");
 	if (child)  mHeaderText = child->value();
+	// Simple way to check for static state
+	mLastHeaderValue = gui_parse_text(mHeaderText);
+	mHeaderIsStatic = (mLastHeaderValue == mHeaderText);
 
 	memset(&mHighlightColor, 0, sizeof(COLOR));
 	child = node->first_node("highlight");
@@ -108,25 +77,11 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 		}
 	}
 
-	// Simple way to check for static state
-	mLastHeaderValue = gui_parse_text(mHeaderText);
-	if (mLastHeaderValue != mHeaderText)
-		mHeaderIsStatic = 0;
-	else
-		mHeaderIsStatic = -1;
-
 	child = node->first_node("background");
 	if (child)
 	{
 		mBackground = LoadAttrImage(child, "resource");
-		attr = child->first_attribute("color");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mBackgroundColor);
-			if (!header_background_color_specified)
-				ConvertStrToColor(color, &mHeaderBackgroundColor);
-		}
+		mBackgroundColor = LoadAttrColor(child, "color");
 	}
 
 	// Load the placement
@@ -138,109 +93,61 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	if (child)
 	{
 		mFont = LoadAttrFont(child, "resource");
-
-		attr = child->first_attribute("color");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mFontColor);
-			if (!header_text_color_specified)
-				ConvertStrToColor(color, &mHeaderFontColor);
-		}
-
-		attr = child->first_attribute("spacing");
-		if (attr) {
-			string parsevalue = gui_parse_text(attr->value());
-			mItemSpacing = scale_theme_y(atoi(parsevalue.c_str()));
-		}
-
-		attr = child->first_attribute("highlightcolor");
-		memset(&mFontHighlightColor, 0, sizeof(COLOR));
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mFontHighlightColor);
-			hasFontHighlightColor = true;
-		}
+		mFontColor = LoadAttrColor(child, "color");
+		mFontHighlightColor = LoadAttrColor(child, "highlightcolor", mFontColor);
+		mItemSpacing = LoadAttrIntScaleY(child, "spacing");
 	}
 
 	// Load the separator if it exists
 	child = node->first_node("separator");
 	if (child)
 	{
-		attr = child->first_attribute("color");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mSeparatorColor);
-			if (!header_separator_color_specified)
-				ConvertStrToColor(color, &mHeaderSeparatorColor);
-		}
-
-		attr = child->first_attribute("height");
-		if (attr) {
-			string parsevalue = gui_parse_text(attr->value());
-			mSeparatorH = scale_theme_y(atoi(parsevalue.c_str()));
-			if (!header_separator_height_specified)
-				mHeaderSeparatorH = mSeparatorH;
-		}
+		mSeparatorColor = LoadAttrColor(child, "color");
+		mSeparatorH = LoadAttrIntScaleY(child, "height");
 	}
 
-	// Fast scroll colors
+	// Fast scroll
 	child = node->first_node("fastscroll");
 	if (child)
 	{
-		attr = child->first_attribute("linecolor");
-		if(attr)
-			ConvertStrToColor(attr->value(), &mFastScrollLineColor);
+		mFastScrollLineColor = LoadAttrColor(child, "linecolor");
+		mFastScrollRectColor = LoadAttrColor(child, "rectcolor");
 
-		attr = child->first_attribute("rectcolor");
-		if(attr)
-			ConvertStrToColor(attr->value(), &mFastScrollRectColor);
-
-		attr = child->first_attribute("w");
-		if (attr) {
-			string parsevalue = gui_parse_text(attr->value());
-			mFastScrollW = scale_theme_x(atoi(parsevalue.c_str()));
-		}
-
-		attr = child->first_attribute("linew");
-		if (attr) {
-			string parsevalue = gui_parse_text(attr->value());
-			mFastScrollLineW = scale_theme_x(atoi(parsevalue.c_str()));
-		}
-
-		attr = child->first_attribute("rectw");
-		if (attr) {
-			string parsevalue = gui_parse_text(attr->value());
-			mFastScrollRectW = scale_theme_x(atoi(parsevalue.c_str()));
-		}
-
-		attr = child->first_attribute("recth");
-		if (attr) {
-			string parsevalue = gui_parse_text(attr->value());
-			mFastScrollRectH = scale_theme_y(atoi(parsevalue.c_str()));
-		}
+		mFastScrollW = LoadAttrIntScaleX(child, "w");
+		mFastScrollLineW = LoadAttrIntScaleX(child, "linew");
+		mFastScrollRectW = LoadAttrIntScaleX(child, "rectw");
+		mFastScrollRectH = LoadAttrIntScaleY(child, "recth");
 	}
 
 	// Retrieve the line height
 	mFontHeight = mFont->GetHeight();
-	mHeaderH = mFontHeight;
-
-	if (mHeaderIcon && mHeaderIcon->GetResource())
-	{
-		mHeaderIconWidth = mHeaderIcon->GetWidth();
-		mHeaderIconHeight = mHeaderIcon->GetHeight();
-		if (mHeaderIconHeight > mHeaderH)
-			mHeaderH = mHeaderIconHeight;
-		if (mHeaderIconWidth > maxIconWidth)
-			maxIconWidth = mHeaderIconWidth;
-	}
-
-	mHeaderH += mItemSpacing + mHeaderSeparatorH;
 	actualItemHeight = mFontHeight + mItemSpacing + mSeparatorH;
-	if (mHeaderH < actualItemHeight)
-		mHeaderH = actualItemHeight;
+
+	// Load the header if it exists
+	child = node->first_node("header");
+	if (child)
+	{
+		mHeaderH = mFontHeight;
+		mHeaderIcon = LoadAttrImage(child, "icon");
+		mHeaderBackgroundColor = LoadAttrColor(child, "background", mBackgroundColor);
+		mHeaderFontColor = LoadAttrColor(child, "textcolor", mFontColor);
+		mHeaderSeparatorColor = LoadAttrColor(child, "separatorcolor", mSeparatorColor);
+		mHeaderSeparatorH = LoadAttrIntScaleY(child, "separatorheight", mSeparatorH);
+
+		if (mHeaderIcon && mHeaderIcon->GetResource())
+		{
+			mHeaderIconWidth = mHeaderIcon->GetWidth();
+			mHeaderIconHeight = mHeaderIcon->GetHeight();
+			if (mHeaderIconHeight > mHeaderH)
+				mHeaderH = mHeaderIconHeight;
+			if (mHeaderIconWidth > maxIconWidth)
+				maxIconWidth = mHeaderIconWidth;
+		}
+
+		mHeaderH += mItemSpacing + mHeaderSeparatorH;
+		if (mHeaderH < actualItemHeight)
+			mHeaderH = actualItemHeight;
+	}
 
 	if (actualItemHeight / 3 > 6)
 		touchDebounce = actualItemHeight / 3;
@@ -264,7 +171,7 @@ void GUIScrollList::SetMaxIconSize(int w, int h)
 		maxIconHeight = h;
 	if (maxIconHeight > mFontHeight) {
 		actualItemHeight = maxIconHeight + mItemSpacing + mSeparatorH;
-		if (actualItemHeight > mHeaderH)
+		if (mHeaderH > 0 && actualItemHeight > mHeaderH)
 			mHeaderH = actualItemHeight;
 	}
 }
@@ -300,8 +207,11 @@ int GUIScrollList::Render(void)
 		return 0;
 
 	// First step, fill background
-	gr_color(mBackgroundColor.red, mBackgroundColor.green, mBackgroundColor.blue, 255);
+	gr_color(mBackgroundColor.red, mBackgroundColor.green, mBackgroundColor.blue, mBackgroundColor.alpha);
 	gr_fill(mRenderX, mRenderY + mHeaderH, mRenderW, mRenderH - mHeaderH);
+
+	// don't paint outside of the box
+	gr_clip(mRenderX, mRenderY, mRenderW, mRenderH);
 
 	// Next, render the background resource (if it exists)
 	if (mBackground && mBackground->GetResource())
@@ -311,7 +221,7 @@ int GUIScrollList::Render(void)
 		gr_blit(mBackground->GetResource(), 0, 0, mBackgroundW, mBackgroundH, mBackgroundX, mBackgroundY);
 	}
 
-	// This tells us how many lines we can actually render
+	// This tells us how many full lines we can actually render
 	size_t lines = GetDisplayItemCount();
 
 	size_t listSize = GetItemCount();
@@ -351,55 +261,46 @@ int GUIScrollList::Render(void)
 
 		if (hasHighlightColor && itemindex == selectedItem) {
 			// Highlight the item background of the selected item
-			gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, 255);
-			int HighlightHeight = actualItemHeight;
-			if (yPos + HighlightHeight > mRenderY + mRenderH) {
-				HighlightHeight = mRenderY + mRenderH - yPos;
-			}
-			gr_fill(mRenderX, yPos, mRenderW, HighlightHeight);
+			gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, mHighlightColor.alpha);
+			gr_fill(mRenderX, yPos, mRenderW, actualItemHeight);
 		}
 
-		if (hasFontHighlightColor && itemindex == selectedItem) {
+		if (itemindex == selectedItem) {
 			// Use the highlight color for the font
-			gr_color(mFontHighlightColor.red, mFontHighlightColor.green, mFontHighlightColor.blue, 255);
+			gr_color(mFontHighlightColor.red, mFontHighlightColor.green, mFontHighlightColor.blue, mFontHighlightColor.alpha);
 		} else {
 			// Set the color for the font
-			gr_color(mFontColor.red, mFontColor.green, mFontColor.blue, 255);
+			gr_color(mFontColor.red, mFontColor.green, mFontColor.blue, mFontColor.alpha);
 		}
 
+		// render icon
 		if (icon && icon->GetResource()) {
 			int currentIconHeight = icon->GetHeight();
 			int currentIconWidth = icon->GetWidth();
-			int currentIconOffsetY = (int)((actualItemHeight - currentIconHeight) / 2);
+			int currentIconOffsetY = (actualItemHeight - currentIconHeight) / 2;
 			int currentIconOffsetX = (maxIconWidth - currentIconWidth) / 2;
-			int rect_y = 0, image_y = (yPos + currentIconOffsetY);
-			if (image_y + currentIconHeight > mRenderY + mRenderH)
-				rect_y = mRenderY + mRenderH - image_y;
-			else
-				rect_y = currentIconHeight;
-			gr_blit(icon->GetResource(), 0, 0, currentIconWidth, rect_y, mRenderX + currentIconOffsetX, image_y);
+			int image_y = (yPos + currentIconOffsetY);
+			gr_blit(icon->GetResource(), 0, 0, currentIconWidth, currentIconHeight, mRenderX + currentIconOffsetX, image_y);
 		}
 
-		gr_textExWH(mRenderX + maxIconWidth + 5, yPos + fontOffsetY, label.c_str(), fontResource, mRenderX + listW, mRenderY + mRenderH);
+		// render label text
+		gr_textEx(mRenderX + maxIconWidth + 5, yPos + fontOffsetY, label.c_str(), fontResource);
 
 		// Add the separator
-		if (yPos + actualItemHeight < mRenderH + mRenderY) {
-			gr_color(mSeparatorColor.red, mSeparatorColor.green, mSeparatorColor.blue, 255);
-			gr_fill(mRenderX, yPos + actualItemHeight - mSeparatorH, listW, mSeparatorH);
-		}
+		gr_color(mSeparatorColor.red, mSeparatorColor.green, mSeparatorColor.blue, mSeparatorColor.alpha);
+		gr_fill(mRenderX, yPos + actualItemHeight - mSeparatorH, listW, mSeparatorH);
 
 		// Move the yPos
 		yPos += actualItemHeight;
 	}
 
 	// Render the Header (last so that it overwrites the top most row for per pixel scrolling)
-	// First step, fill background
-	gr_color(mHeaderBackgroundColor.red, mHeaderBackgroundColor.green, mHeaderBackgroundColor.blue, 255);
-	gr_fill(mRenderX, mRenderY, mRenderW, mHeaderH);
-
-	// Now, we need the header (icon + text)
 	yPos = mRenderY;
-	{
+	if (mHeaderH > 0) {
+		// First step, fill background
+		gr_color(mHeaderBackgroundColor.red, mHeaderBackgroundColor.green, mHeaderBackgroundColor.blue, mHeaderBackgroundColor.alpha);
+		gr_fill(mRenderX, mRenderY, mRenderW, mHeaderH);
+
 		int mIconOffsetX = 0;
 
 		// render the icon if it exists
@@ -411,11 +312,11 @@ int GUIScrollList::Render(void)
 		}
 
 		// render the text
-		gr_color(mHeaderFontColor.red, mHeaderFontColor.green, mHeaderFontColor.blue, 255);
-		gr_textExWH(mRenderX + mIconOffsetX + 5, yPos + (int)((mHeaderH - mFontHeight) / 2), mLastHeaderValue.c_str(), fontResource, mRenderX + mRenderW, mRenderY + mRenderH);
+		gr_color(mHeaderFontColor.red, mHeaderFontColor.green, mHeaderFontColor.blue, mHeaderFontColor.alpha);
+		gr_textEx(mRenderX + mIconOffsetX + 5, yPos + (int)((mHeaderH - mFontHeight) / 2), mLastHeaderValue.c_str(), fontResource);
 
 		// Add the separator
-		gr_color(mHeaderSeparatorColor.red, mHeaderSeparatorColor.green, mHeaderSeparatorColor.blue, 255);
+		gr_color(mHeaderSeparatorColor.red, mHeaderSeparatorColor.green, mHeaderSeparatorColor.blue, mHeaderSeparatorColor.alpha);
 		gr_fill(mRenderX, yPos + mHeaderH - mHeaderSeparatorH, mRenderW, mHeaderSeparatorH);
 	}
 
@@ -427,7 +328,7 @@ int GUIScrollList::Render(void)
 		int fHeight = mRenderH - mHeaderH;
 
 		// line
-		gr_color(mFastScrollLineColor.red, mFastScrollLineColor.green, mFastScrollLineColor.blue, 255);
+		gr_color(mFastScrollLineColor.red, mFastScrollLineColor.green, mFastScrollLineColor.blue, mFastScrollLineColor.alpha);
 		gr_fill(startX + fWidth/2, mRenderY + mHeaderH, mFastScrollLineW, mRenderH - mHeaderH);
 
 		// rect
@@ -442,10 +343,12 @@ int GUIScrollList::Render(void)
 		int mFastScrollRectX = startX + (fWidth - mFastScrollRectW)/2;
 		int mFastScrollRectY = mRenderY+mHeaderH + ((fHeight - mFastScrollRectH)*pct)/100;
 
-		gr_color(mFastScrollRectColor.red, mFastScrollRectColor.green, mFastScrollRectColor.blue, 255);
+		gr_color(mFastScrollRectColor.red, mFastScrollRectColor.green, mFastScrollRectColor.blue, mFastScrollRectColor.alpha);
 		gr_fill(mFastScrollRectX, mFastScrollRectY, mFastScrollRectW, mFastScrollRectH);
 	}
 	mUpdate = 0;
+	// reset clipping
+	gr_noclip();
 	return 0;
 }
 

@@ -36,6 +36,8 @@ void gr_flip(void);
 int gr_fb_blank(int blank);
 
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+void gr_clip(int x, int y, int w, int h);
+void gr_noclip();
 void gr_fill(int x, int y, int w, int h);
 
 int gr_textEx(int x, int y, const char *s, void* font);
