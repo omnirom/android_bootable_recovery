@@ -27,9 +27,8 @@ extern "C" {
 #include "objects.hpp"
 #include "../data.hpp"
 
-const int SCROLLING_SPEED_DECREMENT = 6; // friction
-const int SCROLLING_FLOOR = 10;	// minimum pixels for scrolling to start or stop
-const int SCROLLING_MULTIPLIER = 1; // initial speed of kinetic scrolling
+const float SCROLLING_SPEED_DECREMENT = 0.9; // friction
+const int SCROLLING_FLOOR = 2; // minimum pixels for scrolling to stop
 const float SCROLLING_SPEED_LIMIT = 2.5; // maximum number of items to scroll per update
 
 GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
@@ -367,6 +366,7 @@ int GUIScrollList::Update(void)
 
 	// Handle kinetic scrolling
 	int maxScrollDistance = actualItemHeight * SCROLLING_SPEED_LIMIT;
+	int oldScrollingSpeed = scrollingSpeed;
 	if (scrollingSpeed == 0) {
 		// Do nothing
 		return 0;
@@ -375,13 +375,17 @@ int GUIScrollList::Update(void)
 			y_offset += scrollingSpeed;
 		else
 			y_offset += maxScrollDistance;
-		scrollingSpeed -= SCROLLING_SPEED_DECREMENT;
+		scrollingSpeed *= SCROLLING_SPEED_DECREMENT;
+		if (scrollingSpeed == oldScrollingSpeed)
+			--scrollingSpeed;
 	} else if (scrollingSpeed < 0) {
 		if (abs(scrollingSpeed) < maxScrollDistance)
 			y_offset += scrollingSpeed;
 		else
 			y_offset -= maxScrollDistance;
-		scrollingSpeed += SCROLLING_SPEED_DECREMENT;
+		scrollingSpeed *= SCROLLING_SPEED_DECREMENT;
+		if (scrollingSpeed == oldScrollingSpeed)
+			++scrollingSpeed;
 	}
 	if (abs(scrollingSpeed) < SCROLLING_FLOOR)
 		scrollingSpeed = 0;
@@ -506,9 +510,7 @@ int GUIScrollList::NotifyTouch(TOUCH_STATE state, int x, int y)
 		} else {
 			// Start kinetic scrolling
 			scrollingSpeed = lastY - last2Y;
-			if (abs(scrollingSpeed) > SCROLLING_FLOOR)
-				scrollingSpeed *= SCROLLING_MULTIPLIER;
-			else
+			if (abs(scrollingSpeed) < touchDebounce)
 				scrollingSpeed = 0;
 		}
 	case TOUCH_REPEAT:
