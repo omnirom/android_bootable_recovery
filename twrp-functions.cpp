@@ -35,6 +35,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include "twrp-functions.hpp"
 #include "twcommon.h"
 #ifndef BUILD_TWRPTAR_MAIN
@@ -814,7 +815,7 @@ void TWFunc::Auto_Generate_Backup_Name() {
 		return;
 	}
 	string Backup_Name = Get_Current_Date();
-	Backup_Name += " " + propvalue;
+	Backup_Name += "_" + propvalue;
 	if (Backup_Name.size() > MAX_BACKUP_NAME_LEN)
 		Backup_Name.resize(MAX_BACKUP_NAME_LEN);
 	// Trailing spaces cause problems on some file systems, so remove them
@@ -824,6 +825,7 @@ void TWFunc::Auto_Generate_Backup_Name() {
 		Backup_Name.resize(Backup_Name.size() - 1);
 		space_check = Backup_Name.substr(Backup_Name.size() - 1, 1);
 	}
+	replace(Backup_Name.begin(), Backup_Name.end(), ' ', '_');
 	DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
 	if (PartitionManager.Check_Backup_Name(false) != 0) {
 		LOGINFO("Auto generated backup name '%s' contains invalid characters, using date instead.\n", Backup_Name.c_str());
