@@ -517,38 +517,44 @@ void TWFunc::Update_Intent_File(string Intent) {
 // reboot: Reboot the system. Return -1 on error, no return on success
 int TWFunc::tw_reboot(RebootCommand command)
 {
+	Update_Log_File();
 	// Always force a sync before we reboot
 	sync();
 
 	switch (command) {
 		case rb_current:
 		case rb_system:
-			Update_Log_File();
 			Update_Intent_File("s");
 			sync();
 			check_and_run_script("/sbin/rebootsystem.sh", "reboot system");
+#ifdef ANDROID_RB_PROPERTY
+			property_set(ANDROID_RB_PROPERTY, "reboot,");
+			return 0;
+#else
 			return reboot(RB_AUTOBOOT);
+#endif
 		case rb_recovery:
 			check_and_run_script("/sbin/rebootrecovery.sh", "reboot recovery");
 #ifdef ANDROID_RB_PROPERTY
 			property_set(ANDROID_RB_PROPERTY, "reboot,recovery");
+			return 0;
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "recovery");
 #endif
-			sleep(5);
-			return 0;
 		case rb_bootloader:
 			check_and_run_script("/sbin/rebootbootloader.sh", "reboot bootloader");
 #ifdef ANDROID_RB_PROPERTY
 			property_set(ANDROID_RB_PROPERTY, "reboot,bootloader");
+			return 0;
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "bootloader");
 #endif
-			sleep(5);
-			return 0;
 		case rb_poweroff:
 			check_and_run_script("/sbin/poweroff.sh", "power off");
-#ifdef ANDROID_RB_POWEROFF
+#ifdef ANDROID_RB_PROPERTY
+			property_set(ANDROID_RB_PROPERTY, "shutdown,");
+			return 0;
+#elif defined(ANDROID_RB_POWEROFF)
 			android_reboot(ANDROID_RB_POWEROFF, 0, 0);
 #endif
 			return reboot(RB_POWER_OFF);
@@ -556,11 +562,10 @@ int TWFunc::tw_reboot(RebootCommand command)
 			check_and_run_script("/sbin/rebootdownload.sh", "reboot download");
 #ifdef ANDROID_RB_PROPERTY
 			property_set(ANDROID_RB_PROPERTY, "reboot,download");
+			return 0;
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "download");
 #endif
-			sleep(5);
-			return 0;
 		default:
 			return -1;
 	}
