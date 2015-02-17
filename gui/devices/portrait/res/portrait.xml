@@ -1551,7 +1551,7 @@
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
-				<placement x="%col2_x%" y="%backup_button_row1%" w="%button_fill_main_width%" h="%button_fill_quarter_height%" />
+				<placement x="%col2_x%" y="%backup_button_row1%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Refresh Sizes</text>
 				<actions>
@@ -2599,14 +2599,72 @@
 		<page name="settings">
 			<object type="template" name="header" />
 
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<fill color="%button_fill_color%" />
+				<placement x="%button_col_tab1%" y="%row1_y%" w="%button_fill_tab1%" h="%button_fill_quarter_height%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>General</text>
+				<actions>
+					<action function="set">tw_general_tab=1</action> 
+					<action function="set">tw_timezone_tab=0</action> 
+					<action function="set">tw_screen_tab=0</action> 
+					<action function="set">tw_vibration_tab=0</action> 
+				</actions>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<fill color="%button_fill_color%" />
+				<placement x="%button_col_tab2%" y="%row1_y%" w="%button_fill_tab2%" h="%button_fill_quarter_height%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Time Zone</text>
+				<actions>
+					<action function="set">tw_timezone_tab=1</action> 
+					<action function="set">tw_general_tab=0</action> 
+					<action function="set">tw_screen_tab=0</action> 
+					<action function="set">tw_vibration_tab=0</action> 
+				</actions>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<fill color="%button_fill_color%" />
+				<placement x="%button_col_tab3%" y="%row1_y%" w="%button_fill_tab3%" h="%button_fill_quarter_height%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Screen</text>
+				<actions>
+					<action function="set">tw_screen_tab=1</action> 
+					<action function="set">tw_general_tab=0</action> 
+					<action function="set">tw_timezone_tab=0</action> 
+					<action function="set">tw_vibration_tab=0</action> 
+				</actions>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<fill color="%button_fill_color%" />
+				<placement x="%button_col_tab4%" y="%row1_y%" w="%button_fill_tab4%" h="%button_fill_quarter_height%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>Vibration</text>
+				<actions>
+					<action function="set">tw_vibration_tab=1</action> 
+					<action function="set">tw_screen_tab=0</action> 
+					<action function="set">tw_general_tab=0</action> 
+					<action function="set">tw_timezone_tab=0</action> 
+				</actions>
+			</object>
+
 			<object type="text" color="%text_color%">
+				<condition var1="tw_general_tab" var2="1" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
-				<text>Settings</text>
+				<text>General Settings</text>
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row1_text_y%" />
+				<condition var1="tw_general_tab" var2="1" />
+				<placement x="%col1_x%" y="%row3_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Zip file signature verification.</text>
 				<data variable="tw_signed_zip_verify" />
@@ -2614,7 +2672,8 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row2_text_y%" />
+				<condition var1="tw_general_tab" var2="1" />
+				<placement x="%col1_x%" y="%row4_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Use rm -rf instead of formatting.</text>
 				<data variable="tw_rm_rf" />
@@ -2622,7 +2681,8 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row3_text_y%" />
+				<condition var1="tw_general_tab" var2="1" />
+				<placement x="%col1_x%" y="%row5_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Skip MD5 generation during backup.</text>
 				<data variable="tw_skip_md5_generate" />
@@ -2630,7 +2690,8 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row4_text_y%" />
+				<condition var1="tw_general_tab" var2="1" />
+				<placement x="%col1_x%" y="%row6_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Enable MD5 verification of backup files.</text>
 				<data variable="tw_skip_md5_check" />
@@ -2638,7 +2699,8 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row5_text_y%" />
+				<condition var1="tw_general_tab" var2="1" />
+				<placement x="%col1_x%" y="%row7_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Use 24-hour clock.</text>
 				<data variable="tw_military_time" />
@@ -2646,7 +2708,8 @@
 			</object>
 
 			<object type="checkbox">
-				<placement x="%col1_x%" y="%row6_text_y%" />
+				<condition var1="tw_general_tab" var2="1" />
+				<placement x="%col1_x%" y="%row8_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Simulate actions for theme testing.</text>
 				<data variable="tw_simulate_actions" />
@@ -2654,8 +2717,11 @@
 			</object>
 
 			<object type="checkbox">
-				<condition var1="tw_simulate_actions" var2="1" />
-				<placement x="%col1_x%" y="%row7_text_y%" />
+				<conditions>
+					<condition var1="tw_general_tab" var2="1" />
+					<condition var1="tw_simulate_actions" var2="1" />
+				</conditions>
+				<placement x="%col1_x%" y="%row9_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Simulate failure for actions.</text>
 				<data variable="tw_simulate_fail" />
@@ -2663,60 +2729,27 @@
 			</object>
 
 			<object type="button">
-				<highlight color="%highlight_color%" />
-				<placement x="%col1_x%" y="%row3_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>Time Zone</text>
-				<image resource="main_button" />
-				<action function="page">timezone</action>
-			</object>
-
-			<object type="button">
-				<highlight color="%highlight_color%" />
-				<placement x="%col2_x%" y="%row3_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>Screen</text>
-				<image resource="main_button" />
-				<action function="page">screen</action>
-			</object>
-
-			<object type="button">
+				<condition var1="tw_general_tab" var2="1" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
-				<text>Restore Defaults</text>
+				<text>Reset</text>
 				<image resource="main_button" />
 				<action function="restoredefaultsettings"></action>
 			</object>
 
-			<object type="button">
-				<highlight color="%highlight_color%" />
-				<placement x="%col2_x%" y="%row4_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>Vibration Duration</text>
-				<image resource="main_button" />
-				<action function="page">Vibrate</action>
+
+			<object type="text" color="%text_color%">
+				<condition var1="tw_timezone_tab" var2="1" />
+				<font resource="font" />
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Time Zone Settings</text>
 			</object>
-
-			<object type="action">
-				<touch key="home" />
-				<action function="page">main</action>
-			</object>
-
-			<object type="action">
-				<touch key="back" />
-				<action function="page">main</action>
-			</object>
-
-			<object type="template" name="footer" />
-		</page>
-
-		<page name="timezone">
-			<object type="template" name="header" />
 
 			<object type="listbox">
+				<condition var1="tw_timezone_tab" var2="1" />
 				<highlight color="%fileselector_highlight_color%" />
-				<placement x="%listbox_x%" y="%row1_header_y%" w="%listbox_width%" h="%listbox_tz_height%" />
+				<placement x="%listbox_x%" y="%row2_text_y%" w="%listbox_width%" h="%listbox_tz_height%" />
 				<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
 				<fastscroll linecolor="%fastscroll_linecolor%" rectcolor="%fastscroll_rectcolor%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%" />
 				<text>Select Time Zone:</text>
@@ -2752,6 +2785,7 @@
 			</object>
 
 			<object type="checkbox">
+				<condition var1="tw_timezone_tab" var2="1" />
 				<placement x="%col1_x%" y="%row_dst_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Do you use daylight savings time (DST)?</text>
@@ -2760,12 +2794,14 @@
 			</object>
 
 			<object type="text" color="%text_color%">
+				<condition var1="tw_timezone_tab" var2="1" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%row_offset_text_y%" placement="5" />
 				<text>Offset (usually 0): %tw_time_zone_guioffset%</text>
 			</object>
 
 			<object type="button">
+				<condition var1="tw_timezone_tab" var2="1" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col1_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2775,6 +2811,7 @@
 			</object>
 
 			<object type="button">
+				<condition var1="tw_timezone_tab" var2="1" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col2_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2784,6 +2821,7 @@
 			</object>
 
 			<object type="button">
+				<condition var1="tw_timezone_tab" var2="1" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col3_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2793,6 +2831,7 @@
 			</object>
 
 			<object type="button">
+				<condition var1="tw_timezone_tab" var2="1" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col4_medium_x%" y="%row_offset_medium_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2801,7 +2840,15 @@
 				<action function="set">tw_time_zone_guioffset=45</action>
 			</object>
 
+			<object type="text" color="%text_color%">
+				<condition var1="tw_timezone_tab" var2="1" />
+				<font resource="font" />
+				<placement x="%center_x%" y="%tz_current_y%" placement="5" />
+				<text>Current Time Zone: %tw_time_zone%</text>
+			</object>
+
 			<object type="button">
+				<condition var1="tw_timezone_tab" var2="1" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%tz_set_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2810,36 +2857,17 @@
 				<action function="setguitimezone"></action>
 			</object>
 
-			<object type="text" color="%text_color%">
-				<font resource="font" />
-				<placement x="%center_x%" y="%tz_current_y%" placement="5" />
-				<text>Current Time Zone: %tw_time_zone%</text>
-			</object>
-
-			<object type="action">
-				<touch key="home" />
-				<action function="page">main</action>
-			</object>
-
-			<object type="action">
-				<touch key="back" />
-				<action function="page">settings</action>
-			</object>
-
-			<object type="template" name="footer" />
-		</page>
-
-		<page name="screen">
-			<object type="template" name="header" />
 
 			<object type="text" color="%text_color%">
+				<condition var1="tw_screen_tab" var2="1" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
 				<text>Screen Settings</text>
 			</object>
 
 			<object type="button">
-				<placement x="%col1_x%" y="%row2_text_y%" />
+				<condition var1="tw_screen_tab" var2="1" />
+				<placement x="%col1_x%" y="%row4_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<condition var1="tw_screen_timeout_secs" op="=" var2="0" />
 				<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
@@ -2849,7 +2877,8 @@
 			</object>
 
 			<object type="button">
-				<placement x="%col1_x%" y="%row2_text_y%" />
+				<condition var1="tw_screen_tab" var2="1" />
+				<placement x="%col1_x%" y="%row5_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<condition var1="tw_screen_timeout_secs" op="!=" var2="0" />
 				<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
@@ -2859,9 +2888,10 @@
 			</object>
 
 			<object type="slidervalue">
+				<condition var1="tw_screen_tab" var2="1" />
 				<condition var1="tw_screen_timeout_secs" op="!=" var2="0" />
 				<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
-				<placement x="col1_x" y="%row4_text_y%" w="%slidervalue_w%" />
+				<placement x="col1_x" y="%row6_text_y%" w="%slidervalue_w%" />
 				<font resource="font" color="%text_color%" />
 				<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />
 				<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%" />
@@ -2870,6 +2900,7 @@
 			</object>
 
 			<object type="slidervalue">
+				<condition var1="tw_screen_tab" var2="1" />
 				<condition var1="tw_has_brightnesss_file" var2="1" />
 				<placement x="col1_x" y="%row12_text_y%" w="%slidervalue_w%" />
 				<font resource="font" color="%text_color%" />
@@ -2885,29 +2916,15 @@
 				</actions>
 			</object>
 
-			<object type="action">
-				<touch key="home" />
-				<action function="page">main</action>
-			</object>
-
-			<object type="action">
-				<touch key="back" />
-				<action function="page">settings</action>
-			</object>
-
-			<object type="template" name="footer" />
-		</page>
-
-		<page name="Vibrate">
-			<object type="template" name="header" />
-
 			<object type="text" color="%text_color%">
+				<condition var1="tw_vibration_tab" var2="1" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
-				<text>Vibration Settings :</text>
+				<text>Vibration Settings</text>
 			</object>
 
 			<object type="slidervalue">
+				<condition var1="tw_vibration_tab" var2="1" />
 				<placement x="col1_x" y="%row4_text_y%" w="%slidervalue_w%" />
 				<font resource="font" color="%text_color%" />
 				<text>Button Vibration:</text>
@@ -2916,6 +2933,7 @@
 			</object>
 
 			<object type="slidervalue">
+				<condition var1="tw_vibration_tab" var2="1" />
 				<placement x="col1_x" y="%row8_text_y%" w="%slidervalue_w%" />
 				<font resource="font" color="%text_color%" />
 				<text>Keyboard Vibration:</text>
@@ -2924,6 +2942,7 @@
 			</object>
 
 			<object type="slidervalue">
+				<condition var1="tw_vibration_tab" var2="1" />
 				<placement x="col1_x" y="%row12_text_y%" w="%slidervalue_w%" />
 				<font resource="font" color="%text_color%" />
 				<text>Action Vibration:</text>
@@ -2938,7 +2957,7 @@
 
 			<object type="action">
 				<touch key="back" />
-				<action function="page">settings</action>
+				<action function="page">main</action>
 			</object>
 
 			<object type="template" name="footer" />

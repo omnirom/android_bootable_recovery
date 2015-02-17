@@ -83,8 +83,8 @@
 		<variable name="zip_status_y" value="1375" />
 		<variable name="flash_list_height" value="650" />
 		<variable name="tz_selected_y" value="319" />
-		<variable name="tz_set_y" value="1995" />
-		<variable name="tz_current_y" value="1895" />
+		<variable name="tz_set_y" value="2045" />
+		<variable name="tz_current_y" value="1995" />
 		<variable name="col_progressbar_x" value="`0" />
 		<variable name="row_progressbar_y" value="2250" />
 		<variable name="col1_medium_x" value="13" />
@@ -175,12 +175,20 @@
 		<variable name="terminal_console_height" value="1303" />
 		<variable name="terminal_text_y" value="1363" />
 		<variable name="terminal_button_y" value="1397" />
-		<variable name="row_dst_text_y" value="1436" />
-		<variable name="row_offset_text_y" value="1536" />
-		<variable name="row_offset_medium_y" value="1676" />
+		<variable name="row_dst_text_y" value="1646" />
+		<variable name="row_offset_text_y" value="1726" />
+		<variable name="row_offset_medium_y" value="1806" />
+		<variable name="button_col_tab1" value="10" />
+		<variable name="button_col_tab2" value="370" />
+		<variable name="button_col_tab3" value="730" />
+		<variable name="button_col_tab4" value="1090" />
 		<variable name="button_fill_color" value="#303030" />
 		<variable name="button_fill_full_width" value="1569" />
 		<variable name="button_fill_main_width" value="751" />
+		<variable name="button_fill_tab1" value="350" />
+		<variable name="button_fill_tab2" value="350" />
+		<variable name="button_fill_tab3" value="350" />
+		<variable name="button_fill_tab4" value="350" />
 		<variable name="button_fill_main_height" value="431" />
 		<variable name="button_fill_half_height" value="216" />
 		<variable name="button_fill_quarter_height" value="108" />
