@@ -63,15 +63,11 @@ GUIButton::GUIButton(xml_node<>* node)
 	mButtonLabel = new GUIText(node);
 	mAction = new GUIAction(node);
 
-	child = node->first_node("image");
-	if (child)
+	mButtonImg = new GUIImage(node);
+	if (mButtonImg->Render() < 0)
 	{
-		mButtonImg = new GUIImage(node);
-		if (mButtonImg->Render() < 0)
-		{
-			delete mButtonImg;
-			mButtonImg = NULL;
-		}
+		delete mButtonImg;
+		mButtonImg = NULL;
 	}
 	if (mButtonLabel->Render() < 0)
 	{
@@ -79,45 +75,22 @@ GUIButton::GUIButton(xml_node<>* node)
 		mButtonLabel = NULL;
 	}
 	// Load fill if it exists
-	memset(&mFillColor, 0, sizeof(COLOR));
-	child = node->first_node("fill");
-	if (child)
-	{
-		attr = child->first_attribute("color");
-		if (attr) {
-			hasFill = true;
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mFillColor);
-		}
-	}
+	mFillColor = LoadAttrColor(FindNode(node, "fill"), "color", &hasFill);
 	if (!hasFill && mButtonImg == NULL) {
 		LOGERR("No image resource or fill specified for button.\n");
 	}
 
 	// The icon is a special case
-	child = node->first_node("icon");
-	if (child)
-	{
-		mButtonIcon = LoadAttrImage(child, "resource");
-	}
+	mButtonIcon = LoadAttrImage(FindNode(node, "icon"), "resource");
 
-	memset(&mHighlightColor, 0, sizeof(COLOR));
-	child = node->first_node("highlight");
-	if (child) {
-		attr = child->first_attribute("color");
-		if (attr) {
-			hasHighlightColor = true;
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mHighlightColor);
-		}
-	}
+	mHighlightColor = LoadAttrColor(FindNode(node, "highlight"), "color", &hasHighlightColor);
 
 	int x, y, w, h;
 	TextPlacement = TOP_LEFT;
 	if (mButtonImg) {
 		mButtonImg->GetRenderPos(x, y, w, h);
 	} else if (hasFill) {
-		LoadPlacement(node->first_node("placement"), &x, &y, &w, &h, &TextPlacement);
+		LoadPlacement(FindNode(node, "placement"), &x, &y, &w, &h, &TextPlacement);
 	}
 	SetRenderPos(x, y, w, h);
 }

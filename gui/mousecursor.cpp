@@ -51,11 +51,11 @@ void MouseCursor::LoadData(xml_node<>* node)
 	xml_attribute<>* attr;
 	xml_node<>* child;
 
-	child = node->first_node("placement");
+	child = FindNode(node, "placement");
 	if(child)
 		LoadPlacement(child, &mRenderX, &mRenderY, &mRenderW, &mRenderH);
 
-	child = node->first_node("background");
+	child = FindNode(node, "background");
 	if(child)
 	{
 		m_color = LoadAttrColor(child, "color", m_color);
@@ -67,7 +67,7 @@ void MouseCursor::LoadData(xml_node<>* node)
 		}
 	}
 
-	child = node->first_node("speed");
+	child = FindNode(node, "speed");
 	if(child)
 	{
 		attr = child->first_attribute("multiplier");

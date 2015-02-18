@@ -42,7 +42,7 @@ GUIProgressBar::GUIProgressBar(xml_node<>* node) : GUIObject(node)
 		return;
 	}
 
-	child = node->first_node("resource");
+	child = FindNode(node, "resource");
 	if (child)
 	{
 		mEmptyBar = LoadAttrImage(child, "empty");
@@ -50,10 +50,10 @@ GUIProgressBar::GUIProgressBar(xml_node<>* node) : GUIObject(node)
 	}
 
 	// Load the placement
-	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY);
+	LoadPlacement(FindNode(node, "placement"), &mRenderX, &mRenderY);
 
 	// Load the data
-	child = node->first_node("data");
+	child = FindNode(node, "data");
 	if (child)
 	{
 		mMinValVar = LoadAttrString(child, "min");

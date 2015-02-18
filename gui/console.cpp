@@ -101,7 +101,6 @@ extern "C" void gui_set_FILE(FILE* f)
 
 GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 {
-	xml_attribute<>* attr;
 	xml_node<>* child;
 
 	mFont = NULL;
@@ -126,13 +125,9 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 	}
 	else
 	{
-		child = node->first_node("font");
-		if (child)
-		{
-			mFont = LoadAttrFont(child, "resource");
-		}
+		mFont = LoadAttrFont(FindNode(node, "font"), "resource");
 
-		child = node->first_node("color");
+		child = FindNode(node, "color");
 		if (child)
 		{
 			mForegroundColor = LoadAttrColor(child, "foreground", mForegroundColor);
@@ -141,9 +136,9 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 		}
 
 		// Load the placement
-		LoadPlacement(node->first_node("placement"), &mConsoleX, &mConsoleY, &mConsoleW, &mConsoleH);
+		LoadPlacement(FindNode(node, "placement"), &mConsoleX, &mConsoleY, &mConsoleW, &mConsoleH);
 
-		child = node->first_node("slideout");
+		child = FindNode(node, "slideout");
 		if (child)
 		{
 			mSlideout = 1;
