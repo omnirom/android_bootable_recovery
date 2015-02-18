@@ -35,9 +35,9 @@ GUIObject::GUIObject(xml_node<>* node)
 	if (!node)		return;
 
 	// First, get the action
-	xml_node<>* condition = node->first_node("conditions");
-	if (condition)  condition = condition->first_node("condition");
-	else			condition = node->first_node("condition");
+	xml_node<>* condition = FindNode(node, "conditions");
+	if (condition)  condition = FindNode(condition, "condition");
+	else			condition = FindNode(node, "condition");
 
 	if (!condition)	return;
 

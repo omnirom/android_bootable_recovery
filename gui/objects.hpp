@@ -649,6 +649,7 @@ protected:
 	std::vector<FileData> mFolderList;
 	std::vector<FileData> mFileList;
 	std::string mPathVar; // current path displayed, saved in the data manager
+	std::string mPathDefault; // default value for the path if none is set in mPathVar
 	std::string mExtn; // used for filtering the file list, for example, *.zip
 	std::string mVariable; // set when the user selects an item, pull path like /path/to/foo
 	std::string mSortVariable; // data manager variable used to change the sorting of files
@@ -812,6 +813,7 @@ public:
 
 protected:
 	GUIAction* sAction;
+	GUIText* sSliderLabel;
 	ImageResource* sSlider;
 	ImageResource* sSliderUsed;
 	ImageResource* sTouch;
@@ -875,7 +877,8 @@ protected:
 	int currentLayout;
 	int row_heights[MAX_KEYBOARD_LAYOUTS][MAX_KEYBOARD_ROWS];
 	unsigned int KeyboardWidth, KeyboardHeight;
-	int rowY, colX, highlightRenderCount, hasHighlight, hasCapsHighlight;
+	int rowY, colX, highlightRenderCount;
+	bool hasHighlight, hasCapsHighlight;
 	GUIAction* mAction;
 	COLOR mHighlightColor;
 	COLOR mCapsHighlightColor;
@@ -1064,10 +1067,12 @@ private:
 };
 
 // Helper APIs
+xml_node<>* FindNode(xml_node<>* parent, const char* nodename, int depth = 0);
 std::string LoadAttrString(xml_node<>* element, const char* attrname, const char* defaultvalue = "");
 int LoadAttrInt(xml_node<>* element, const char* attrname, int defaultvalue = 0);
 int LoadAttrIntScaleX(xml_node<>* element, const char* attrname, int defaultvalue = 0);
 int LoadAttrIntScaleY(xml_node<>* element, const char* attrname, int defaultvalue = 0);
+COLOR LoadAttrColor(xml_node<>* element, const char* attrname, bool* found_color, COLOR defaultvalue = COLOR(0,0,0,0));
 COLOR LoadAttrColor(xml_node<>* element, const char* attrname, COLOR defaultvalue = COLOR(0,0,0,0));
 FontResource* LoadAttrFont(xml_node<>* element, const char* attrname);
 ImageResource* LoadAttrImage(xml_node<>* element, const char* attrname);
