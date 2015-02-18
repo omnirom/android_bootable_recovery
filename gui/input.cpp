@@ -85,7 +85,7 @@ GUIInput::GUIInput(xml_node<>* node)
 	}
 
 	// Load the background
-	child = node->first_node("background");
+	child = FindNode(node, "background");
 	if (child)
 	{
 		mBackground = LoadAttrImage(child, "resource");
@@ -98,7 +98,7 @@ GUIInput::GUIInput(xml_node<>* node)
 	}
 
 	// Load the cursor color
-	child = node->first_node("cursor");
+	child = FindNode(node, "cursor");
 	if (child)
 	{
 		mCursor = LoadAttrImage(child, "resource");
@@ -106,31 +106,26 @@ GUIInput::GUIInput(xml_node<>* node)
 		attr = child->first_attribute("hasfocus");
 		if (attr)
 		{
-			std::string color = attr->value();
-			SetInputFocus(atoi(color.c_str()));
+			std::string focus = attr->value();
+			SetInputFocus(atoi(focus.c_str()));
 		}
-		attr = child->first_attribute("width");
-		if (attr)
-		{
-			std::string cwidth = gui_parse_text(attr->value());
-			CursorWidth = scale_theme_x(atoi(cwidth.c_str()));
-		}
+		CursorWidth = LoadAttrIntScaleX(child, "width", CursorWidth);
 	}
 	DrawCursor = HasInputFocus;
 
 	// Load the font
-	child = node->first_node("font");
+	child = FindNode(node, "font");
 	if (child)
 	{
 		mFont = LoadAttrFont(child, "resource");
 		mFontHeight = mFont->GetHeight();
 	}
 
-	child = node->first_node("text");
+	child = FindNode(node, "text");
 	if (child)  mText = child->value();
 	mLastValue = gui_parse_text(mText);
 
-	child = node->first_node("data");
+	child = FindNode(node, "data");
 	if (child)
 	{
 		attr = child->first_attribute("name");
@@ -139,11 +134,8 @@ GUIInput::GUIInput(xml_node<>* node)
 		attr = child->first_attribute("default");
 		if (attr)
 			DataManager::SetValue(mVariable, attr->value());
-		attr = child->first_attribute("mask");
-		if (attr) {
-			mMask = attr->value();
-			HasMask = true;
-		}
+		mMask = LoadAttrString(child, "mask");
+		HasMask = !mMask.empty();
 		attr = child->first_attribute("maskvariable");
 		if (attr)
 			mMaskVariable = attr->value();
@@ -152,33 +144,19 @@ GUIInput::GUIInput(xml_node<>* node)
 	}
 
 	// Load input restrictions
-	child = node->first_node("restrict");
+	child = FindNode(node, "restrict");
 	if (child)
 	{
-		attr = child->first_attribute("minlen");
-		if (attr) {
-			std::string attrib = attr->value();
-			MinLen = atoi(attrib.c_str());
-		}
-		attr = child->first_attribute("maxlen");
-		if (attr) {
-			std::string attrib = attr->value();
-			MaxLen = atoi(attrib.c_str());
-		}
-		attr = child->first_attribute("allow");
-		if (attr) {
-			HasAllowed = true;
-			AllowedList = attr->value();
-		}
-		attr = child->first_attribute("disable");
-		if (attr) {
-			HasDisabled = true;
-			DisabledList = attr->value();
-		}
+		MinLen = LoadAttrInt(child, "minlen", MinLen);
+		MaxLen = LoadAttrInt(child, "maxlen", MaxLen);
+		AllowedList = LoadAttrString(child, "allow");
+		HasAllowed = !AllowedList.empty();
+		DisabledList = LoadAttrString(child, "disable");
+		HasDisabled = !DisabledList.empty();
 	}
 
 	// Load the placement
-	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH);
+	LoadPlacement(FindNode(node, "placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH);
 	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 
 	if (mInputText && mFontHeight && mFontHeight < (unsigned)mRenderH) {

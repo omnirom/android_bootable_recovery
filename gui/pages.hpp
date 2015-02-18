@@ -102,6 +102,8 @@ public:
 	int SetKeyBoardFocus(int inFocus);
 	int NotifyVarChange(std::string varName, std::string value);
 
+	std::vector<xml_node<>*> styles;
+
 protected:
 	int LoadPages(xml_node<>* pages);
 	int LoadVariables(xml_node<>* vars);
@@ -152,6 +154,8 @@ public:
 	static void LoadCursorData(xml_node<>* node);
 
 	static HardwareKeyboard *GetHardwareKeyboard();
+
+	static xml_node<>* FindStyle(std::string name);
 
 protected:
 	static PageSet* FindPackage(std::string name);
