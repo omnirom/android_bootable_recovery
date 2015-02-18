@@ -27,9 +27,6 @@ extern "C" {
 
 GUIImage::GUIImage(xml_node<>* node) : GUIObject(node)
 {
-	xml_attribute<>* attr;
-	xml_node<>* child;
-
 	mImage = NULL;
 	mHighlightImage = NULL;
 	isHighlighted = false;
@@ -37,15 +34,11 @@ GUIImage::GUIImage(xml_node<>* node) : GUIObject(node)
 	if (!node)
 		return;
 
-	child = node->first_node("image");
-	if (child)
-	{
-		mImage = LoadAttrImage(child, "resource");
-		mHighlightImage = LoadAttrImage(child, "highlightresource");
-	}
+	mImage = LoadAttrImage(FindNode(node, "image"), "resource");
+	mHighlightImage = LoadAttrImage(FindNode(node, "image"), "highlightresource");
 
 	// Load the placement
-	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY, NULL, NULL, &mPlacement);
+	LoadPlacement(FindNode(node, "placement"), &mRenderX, &mRenderY, NULL, NULL, &mPlacement);
 
 	if (mImage && mImage->GetResource())
 	{

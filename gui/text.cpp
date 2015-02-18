@@ -44,18 +44,14 @@ GUIText::GUIText(xml_node<>* node)
 	mHighlightColor = LoadAttrColor(node, "highlightcolor", mColor);
 
 	// Load the font, and possibly override the color
-	xml_node<>* child = node->first_node("font");
-	if (child)
-	{
-		mFont = LoadAttrFont(child, "resource");
-		mColor = LoadAttrColor(child, "color", mColor);
-		mHighlightColor = LoadAttrColor(child, "highlightcolor", mColor);
-	}
+	mFont = LoadAttrFont(FindNode(node, "font"), "resource");
+	mColor = LoadAttrColor(FindNode(node, "font"), "color", mColor);
+	mHighlightColor = LoadAttrColor(FindNode(node, "font"), "highlightcolor", mColor);
 
 	// Load the placement
-	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH, &mPlacement);
+	LoadPlacement(FindNode(node, "placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH, &mPlacement);
 
-	child = node->first_node("text");
+	xml_node<>* child = FindNode(node, "text");
 	if (child)  mText = child->value();
 
 	// Simple way to check for static state
