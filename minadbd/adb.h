@@ -22,6 +22,10 @@
 #include "transport.h"  /* readx(), writex() */
 #include "fdevent.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_PAYLOAD 4096
 
 #define A_SYNC 0x434e5953
@@ -420,5 +424,9 @@ extern int SHELL_EXIT_NOTIFY_FD;
 
 int sendfailmsg(int fd, const char *reason);
 int handle_host_request(char *service, transport_type ttype, char* serial, int reply_fd, asocket *s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
