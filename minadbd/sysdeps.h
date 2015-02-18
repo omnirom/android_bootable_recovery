@@ -36,6 +36,10 @@
 #include <errno.h>
 #include <ctype.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define OS_PATH_SEPARATOR '\\'
 #define OS_PATH_SEPARATOR_STR "\\"
 
@@ -253,6 +257,10 @@ static __inline__  int  adb_is_absolute_host_path( const char*  path )
 {
     return isalpha(path[0]) && path[1] == ':' && path[2] == '\\';
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #else /* !_WIN32 a.k.a. Unix */
 
@@ -490,5 +498,9 @@ static __inline__  int  adb_is_absolute_host_path( const char*  path )
 }
 
 #endif /* !_WIN32 */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ADB_SYSDEPS_H */
