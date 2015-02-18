@@ -45,7 +45,7 @@ GUICheckbox::GUICheckbox(xml_node<>* node)
 	mLabel = new GUIText(node);
 
 	// Read the check states
-	child = node->first_node("image");
+	child = FindNode(node, "image");
 	if (child)
 	{
 		mChecked = LoadAttrImage(child, "checked");
@@ -53,7 +53,7 @@ GUICheckbox::GUICheckbox(xml_node<>* node)
 	}
 
 	// Get the variable data
-	child = node->first_node("data");
+	child = FindNode(node, "data");
 	if (child)
 	{
 		attr = child->first_attribute("variable");

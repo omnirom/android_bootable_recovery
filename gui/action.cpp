@@ -226,9 +226,9 @@ GUIAction::GUIAction(xml_node<>* node)
 	}
 
 	// First, get the action
-	actions = node->first_node("actions");
-	if (actions)	child = actions->first_node("action");
-	else			child = node->first_node("action");
+	actions = FindNode(node, "actions");
+	if (actions)	child = FindNode(actions, "action");
+	else			child = FindNode(node, "action");
 
 	if (!child) return;
 
@@ -247,7 +247,7 @@ GUIAction::GUIAction(xml_node<>* node)
 	}
 
 	// Now, let's get either the key or region
-	child = node->first_node("touch");
+	child = FindNode(node, "touch");
 	if (child)
 	{
 		attr = child->first_attribute("key");
