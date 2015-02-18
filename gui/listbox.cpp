@@ -37,7 +37,7 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 	mUpdate = 0;
 
 	// Get the icons, if any
-	child = node->first_node("icon");
+	child = FindNode(node, "icon");
 	if (child) {
 		mIconSelected = LoadAttrImage(child, "selected");
 		mIconUnselected = LoadAttrImage(child, "unselected");
@@ -47,7 +47,7 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 	SetMaxIconSize(iconWidth, iconHeight);
 
 	// Handle the result variable
-	child = node->first_node("data");
+	child = FindNode(node, "data");
 	if (child) {
 		attr = child->first_attribute("name");
 		if (attr)
@@ -60,7 +60,7 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 	}
 
 	// Get the data for the list
-	child = node->first_node("listitem");
+	child = FindNode(node, "listitem");
 	if (!child) return;
 	while (child) {
 		ListData data;

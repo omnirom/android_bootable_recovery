@@ -65,18 +65,9 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	mLastHeaderValue = gui_parse_text(mHeaderText);
 	mHeaderIsStatic = (mLastHeaderValue == mHeaderText);
 
-	memset(&mHighlightColor, 0, sizeof(COLOR));
-	child = node->first_node("highlight");
-	if (child) {
-		attr = child->first_attribute("color");
-		if (attr) {
-			hasHighlightColor = true;
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mHighlightColor);
-		}
-	}
+	mHighlightColor = LoadAttrColor(FindNode(node, "highlight"), "color", &hasHighlightColor);
 
-	child = node->first_node("background");
+	child = FindNode(node, "background");
 	if (child)
 	{
 		mBackground = LoadAttrImage(child, "resource");
@@ -84,11 +75,11 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	}
 
 	// Load the placement
-	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH);
+	LoadPlacement(FindNode(node, "placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH);
 	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 
 	// Load the font, and possibly override the color
-	child = node->first_node("font");
+	child = FindNode(node, "font");
 	if (child)
 	{
 		mFont = LoadAttrFont(child, "resource");
@@ -98,7 +89,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	}
 
 	// Load the separator if it exists
-	child = node->first_node("separator");
+	child = FindNode(node, "separator");
 	if (child)
 	{
 		mSeparatorColor = LoadAttrColor(child, "color");
@@ -106,7 +97,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	}
 
 	// Fast scroll
-	child = node->first_node("fastscroll");
+	child = FindNode(node, "fastscroll");
 	if (child)
 	{
 		mFastScrollLineColor = LoadAttrColor(child, "linecolor");
@@ -123,7 +114,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	actualItemHeight = mFontHeight + mItemSpacing + mSeparatorH;
 
 	// Load the header if it exists
-	child = node->first_node("header");
+	child = FindNode(node, "header");
 	if (child)
 	{
 		mHeaderH = mFontHeight;

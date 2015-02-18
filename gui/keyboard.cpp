@@ -48,7 +48,8 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 {
 	int layoutindex, rowindex, keyindex, Xindex, Yindex, keyHeight = 0, keyWidth = 0;
 	rowY = colX = -1;
-	highlightRenderCount = hasHighlight = hasCapsHighlight = 0;
+	highlightRenderCount = 0;
+	hasHighlight = hasCapsHighlight = false;
 	char resource[10], layout[8], row[5], key[6], longpress[7];
 	xml_attribute<>* attr;
 	xml_node<>* child;
@@ -66,36 +67,17 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 	if (!node)  return;
 
 	// Load the action
-	child = node->first_node("action");
+	child = FindNode(node, "action");
 	if (child)
 	{
 		mAction = new GUIAction(node);
 	}
 
-	memset(&mHighlightColor, 0, sizeof(COLOR));
-	child = node->first_node("highlight");
-	if (child) {
-		attr = child->first_attribute("color");
-		if (attr) {
-			hasHighlight = 1;
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mHighlightColor);
-		}
-	}
-
-	memset(&mCapsHighlightColor, 0, sizeof(COLOR));
-	child = node->first_node("capshighlight");
-	if (child) {
-		attr = child->first_attribute("color");
-		if (attr) {
-			hasCapsHighlight = 1;
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mCapsHighlightColor);
-		}
-	}
+	mHighlightColor = LoadAttrColor(FindNode(node, "highlight"), "color", &hasHighlight);
+	mCapsHighlightColor = LoadAttrColor(FindNode(node, "capshighlight"), "color", &hasCapsHighlight);
 
 	// Load the images for the different layouts
-	child = node->first_node("layout");
+	child = FindNode(node, "layout");
 	if (child)
 	{
 		layoutindex = 1;
@@ -120,7 +102,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 	// Load all of the layout maps
 	layoutindex = 1;
 	strcpy(layout, "layout1");
-	keylayout = node->first_node(layout);
+	keylayout = FindNode(node, layout);
 	while (keylayout)
 	{
 		if (layoutindex > MAX_KEYBOARD_LAYOUTS) {
@@ -212,12 +194,12 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 		}
 		layoutindex++;
 		layout[6] = (char)(layoutindex + 48);
-		keylayout = node->first_node(layout);
+		keylayout = FindNode(node, layout);
 	}
 
 	int x, y, w, h;
 	// Load the placement
-	LoadPlacement(node->first_node("placement"), &x, &y, &w, &h);
+	LoadPlacement(FindNode(node, "placement"), &x, &y, &w, &h);
 	SetActionPos(x, y, KeyboardWidth, KeyboardHeight);
 	SetRenderPos(x, y, w, h);
 	return;

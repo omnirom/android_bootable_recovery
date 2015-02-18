@@ -39,7 +39,7 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node) : GUIScrollList(node)
 	mUpdate = 0;
 	updateList = false;
 
-	child = node->first_node("icon");
+	child = FindNode(node, "icon");
 	if (child)
 	{
 		mIconSelected = LoadAttrImage(child, "selected");
@@ -47,7 +47,7 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node) : GUIScrollList(node)
 	}
 
 	// Handle the result variable
-	child = node->first_node("data");
+	child = FindNode(node, "data");
 	if (child)
 	{
 		attr = child->first_attribute("name");
@@ -62,7 +62,7 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node) : GUIScrollList(node)
 	int iconHeight = std::max(mIconSelected->GetHeight(), mIconUnselected->GetHeight());
 	SetMaxIconSize(iconWidth, iconHeight);
 
-	child = node->first_node("listtype");
+	child = FindNode(node, "listtype");
 	if (child && (attr = child->first_attribute("name"))) {
 		ListType = attr->value();
 		updateList = true;

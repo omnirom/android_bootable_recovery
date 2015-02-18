@@ -120,7 +120,7 @@
 		<variable name="sort_col3_button_x" value="440" />
 		<variable name="col1_sdext_x" value="265" />
 		<variable name="col2_sdext_x" value="475" />
-		<variable name="row1_sdext_y" value="85" />
+		<variable name="row1_sdext_y" value="85" />/
 		<variable name="row2_sdext_y" value="150" />
 		<variable name="row_extsize_y" value="85" />
 		<variable name="row_swapsize_y" value="150" />

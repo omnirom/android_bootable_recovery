@@ -70,8 +70,10 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 		if (attr)
 			mPathVar = attr->value();
 		attr = child->first_attribute("default");
-		if (attr)
+		if (attr) {
+			mPathDefault = attr->value();
 			DataManager::SetValue(mPathVar, attr->value());
+		}
 	}
 
 	// Handle the result variable
@@ -168,6 +170,8 @@ int GUIFileSelector::NotifyVarChange(const std::string& varName, const std::stri
 		} else {
 			// Reset the list to the top
 			SetVisibleListLocation(0);
+			if (value.empty())
+				DataManager::SetValue(mPathVar, mPathDefault);
 		}
 		updateFileList = true;
 		mUpdate = 1;
@@ -288,6 +292,10 @@ void GUIFileSelector::SetPageFocus(int inFocus)
 {
 	GUIScrollList::SetPageFocus(inFocus);
 	if (inFocus) {
+		std::string value;
+		DataManager::GetValue(mPathVar, value);
+		if (value.empty())
+			DataManager::SetValue(mPathVar, mPathDefault);
 		updateFileList = true;
 		mUpdate = 1;
 	}

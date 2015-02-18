@@ -29,7 +29,6 @@ extern "C" {
 GUIAnimation::GUIAnimation(xml_node<>* node) : GUIObject(node)
 {
 	xml_node<>* child;
-	xml_attribute<>* attr;
 
 	mAnimation = NULL;
 	mFrame = 1;
@@ -40,36 +39,26 @@ GUIAnimation::GUIAnimation(xml_node<>* node) : GUIObject(node)
 
 	if (!node)  return;
 
-	child = node->first_node("resource");
-	if (child)
-	{
-		mAnimation = LoadAttrAnimation(child, "name");
-	}
+	mAnimation = LoadAttrAnimation(FindNode(node, "resource"), "name");
 
 	// Load the placement
-	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY, NULL, NULL, &mPlacement);
+	LoadPlacement(FindNode(node, "placement"), &mRenderX, &mRenderY, NULL, NULL, &mPlacement);
 
-	child = node->first_node("speed");
+	child = FindNode(node, "speed");
 	if (child)
 	{
-		attr = child->first_attribute("fps");
-		if (attr)
-			mFPS = atoi(attr->value());
-		attr = child->first_attribute("render");
-		if (attr)
-			mRender = atoi(attr->value());
+		mFPS = LoadAttrInt(child, "fps", mFPS);
+		mRender = LoadAttrInt(child, "render", mRender);
 	}
 	if (mFPS > 30)  mFPS = 30;
 
-	child = node->first_node("loop");
+	child = FindNode(node, "loop");
 	if (child)
 	{
-		attr = child->first_attribute("frame");
+		xml_attribute<>* attr = child->first_attribute("frame");
 		if (attr)
 			mLoop = atoi(attr->value()) - 1;
-		attr = child->first_attribute("start");
-		if (attr)
-			mFrame = atoi(attr->value());
+		mFrame = LoadAttrInt(child, "start", mFrame);
 	}
 
 	// Fetch the render sizes
