@@ -17,10 +17,19 @@
 #ifndef __TRANSPORT_H
 #define __TRANSPORT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* convenience wrappers around read/write that will retry on
 ** EINTR and/or short read/write.  Returns 0 on success, -1
 ** on error or EOF.
 */
 int readx(int fd, void *ptr, size_t len);
 int writex(int fd, const void *ptr, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif   /* __TRANSPORT_H */

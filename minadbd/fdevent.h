@@ -19,6 +19,10 @@
 
 #include <stdint.h>  /* for int64_t */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* events that may be observed */
 #define FDE_READ              0x0001
 #define FDE_WRITE             0x0002
@@ -79,5 +83,8 @@ struct fdevent
     void *arg;
 };
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
