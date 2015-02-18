@@ -1643,7 +1643,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int argc, 
             goto pbiudone;
         }
 
-        if (stash_max_blocks > 0) {
+        if (stash_max_blocks >= 0) {
             res = CreateStash(state, stash_max_blocks, blockdev_filename->data,
                     &params.stashbase);
 
