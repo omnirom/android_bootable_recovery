@@ -257,7 +257,8 @@ void close_usb_devices();
 void unregister_transport(atransport *t);
 void unregister_all_tcp_transports();
 
-void register_usb_transport(usb_handle *h, const char *serial, unsigned writeable);
+void register_usb_transport(usb_handle *h, const char *serial,
+                            const char* dev_path, unsigned writeable);
 
 /* this should only be used for transports with connection_state == CS_NOPERM */
 void unregister_usb_transport(usb_handle *usb);

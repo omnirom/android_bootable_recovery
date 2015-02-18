@@ -13,11 +13,8 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	adb.c \
 	fuse_adb_provider.c \
-	transport.c \
-	transport_usb.c \
 	sockets.c \
 	services.c \
-	usb_linux_client.c \
 	utils.c
 
 LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
