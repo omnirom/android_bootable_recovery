@@ -16,6 +16,10 @@
 #ifndef _ADB_UTILS_H
 #define _ADB_UTILS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* bounded buffer functions */
 
 /* all these functions are used to append data to a bounded buffer.
@@ -64,5 +68,9 @@ char*   buff_add  (char*  buff, char*  buffEnd, const char*  format, ... );
  */
 #define  BUFF_DECL(_buff,_cursor,_end,_size)   \
     char   _buff[_size], *_cursor=_buff, *_end = _cursor + (_size)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ADB_UTILS_H */

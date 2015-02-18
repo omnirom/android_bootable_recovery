@@ -17,6 +17,14 @@
 #ifndef __FUSE_ADB_PROVIDER_H
 #define __FUSE_ADB_PROVIDER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int run_adb_fuse(int sfd, uint64_t file_size, uint32_t block_size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
