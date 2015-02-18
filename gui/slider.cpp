@@ -44,7 +44,7 @@ GUISlider::GUISlider(xml_node<>* node) : GUIObject(node)
 		return;
 	}
 
-	child = node->first_node("resource");
+	child = FindNode(node, "resource");
 	if (child)
 	{
 		sSlider = LoadAttrImage(child, "base");
@@ -53,7 +53,7 @@ GUISlider::GUISlider(xml_node<>* node) : GUIObject(node)
 	}
 
 	// Load the placement
-	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY);
+	LoadPlacement(FindNode(node, "placement"), &mRenderX, &mRenderY);
 
 	mRenderW = sSlider->GetWidth();
 	mRenderH = sSlider->GetHeight();

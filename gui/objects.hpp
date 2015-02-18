@@ -875,7 +875,8 @@ protected:
 	int currentLayout;
 	int row_heights[MAX_KEYBOARD_LAYOUTS][MAX_KEYBOARD_ROWS];
 	unsigned int KeyboardWidth, KeyboardHeight;
-	int rowY, colX, highlightRenderCount, hasHighlight, hasCapsHighlight;
+	int rowY, colX, highlightRenderCount;
+	bool hasHighlight, hasCapsHighlight;
 	GUIAction* mAction;
 	COLOR mHighlightColor;
 	COLOR mCapsHighlightColor;
@@ -1064,10 +1065,12 @@ private:
 };
 
 // Helper APIs
+xml_node<>* FindNode(xml_node<>* parent, const char* nodename);
 std::string LoadAttrString(xml_node<>* element, const char* attrname, const char* defaultvalue = "");
 int LoadAttrInt(xml_node<>* element, const char* attrname, int defaultvalue = 0);
 int LoadAttrIntScaleX(xml_node<>* element, const char* attrname, int defaultvalue = 0);
 int LoadAttrIntScaleY(xml_node<>* element, const char* attrname, int defaultvalue = 0);
+COLOR LoadAttrColor(xml_node<>* element, const char* attrname, bool* found_color, COLOR defaultvalue = COLOR(0,0,0,0));
 COLOR LoadAttrColor(xml_node<>* element, const char* attrname, COLOR defaultvalue = COLOR(0,0,0,0));
 FontResource* LoadAttrFont(xml_node<>* element, const char* attrname);
 ImageResource* LoadAttrImage(xml_node<>* element, const char* attrname);

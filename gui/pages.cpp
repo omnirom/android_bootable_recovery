@@ -103,13 +103,59 @@ int ConvertStrToColor(std::string str, COLOR* color)
 }
 
 // Helper APIs
+xml_node<>* FindNode(xml_node<>* parent, const char* nodename)
+{
+	xml_node<>* child = parent->first_node(nodename);
+	if (child)
+		return child;
+	xml_node<>* style = parent->first_node("style");
+	while (style) {
+		if (!style->first_attribute("name")) {
+			LOGERR("No name given for style.\n");
+			continue;
+		} else {
+			std::string name = style->first_attribute("name")->value();
+			xml_node<>* node = PageManager::FindStyle(name);
+
+			if (node) {
+				// We found the style that was named
+				xml_node<>* stylenode = FindNode(node, nodename);
+				if (stylenode)
+					return stylenode;
+			}
+		}
+		style = style->next_sibling("style");
+	}
+	return NULL;
+}
+
 std::string LoadAttrString(xml_node<>* element, const char* attrname, const char* defaultvalue)
 {
 	if (!element)
 		return defaultvalue;
 
 	xml_attribute<>* attr = element->first_attribute(attrname);
-	return attr ? attr->value() : defaultvalue;
+	if (attr)
+		return attr->value();
+	xml_node<>* style = element->first_node("style");
+	while (style) {
+		if (!style->first_attribute("name")) {
+			LOGERR("No name given for style.\n");
+			continue;
+		} else {
+			std::string name = style->first_attribute("name")->value();
+			xml_node<>* node;
+
+			if (node) {
+				// We found the style that was named
+				std::string stylevalue = LoadAttrString(node, attrname, defaultvalue);
+				if (stylevalue != defaultvalue)
+					return stylevalue;
+			}
+		}
+		style = style->next_sibling("style");
+	}
+	return defaultvalue;
 }
 
 int LoadAttrInt(xml_node<>* element, const char* attrname, int defaultvalue)
@@ -130,9 +176,10 @@ int LoadAttrIntScaleY(xml_node<>* element, const char* attrname, int defaultvalu
 	return scale_theme_y(LoadAttrInt(element, attrname, defaultvalue));
 }
 
-COLOR LoadAttrColor(xml_node<>* element, const char* attrname, COLOR defaultvalue)
+COLOR LoadAttrColor(xml_node<>* element, const char* attrname, bool* found_color, COLOR defaultvalue)
 {
 	string value = LoadAttrString(element, attrname);
+	*found_color = !value.empty();
 	// resolve variables
 	DataManager::GetValue(value, value);
 	COLOR ret = defaultvalue;
@@ -140,6 +187,12 @@ COLOR LoadAttrColor(xml_node<>* element, const char* attrname, COLOR defaultvalu
 		return ret;
 	else
 		return defaultvalue;
+}
+
+COLOR LoadAttrColor(xml_node<>* element, const char* attrname, COLOR defaultvalue)
+{
+	bool found_color = false;
+	return LoadAttrColor(element, attrname, &found_color, defaultvalue);
 }
 
 FontResource* LoadAttrFont(xml_node<>* element, const char* attrname)
@@ -621,8 +674,7 @@ int PageSet::Load(ZipArchive* package)
 	xml_node<>* parent;
 	xml_node<>* child;
 	xml_node<>* xmltemplate;
-	xml_node<>* blank_templates;
-	int pages_loaded = -1, ret;
+	xml_node<>* xmlstyle;
 
 	parent = mDoc.first_node("recovery");
 	if (!parent)
@@ -701,6 +753,11 @@ int PageSet::Load(ZipArchive* package)
 	if (xmltemplate)
 		templates.push_back(xmltemplate);
 
+	// Load styles if present
+	xmlstyle = parent->first_node("styles");
+	if (xmlstyle)
+		styles.push_back(xmlstyle);
+
 	child = parent->first_node("pages");
 	if (child) {
 		if (LoadPages(child)) {
@@ -720,6 +777,7 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 	xml_node<>* parent;
 	xml_node<>* child;
 	xml_node<>* xmltemplate;
+	xml_node<>* xmlstyle;
 	long len;
 	char* xmlFile = NULL;
 	string filename;
@@ -816,6 +874,11 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 		xmltemplate = parent->first_node("templates");
 		if (xmltemplate)
 			templates.push_back(xmltemplate);
+
+		// Load styles if present
+		xmlstyle = parent->first_node("styles");
+		if (xmlstyle)
+			styles.push_back(xmlstyle);
 
 		child = parent->first_node("pages");
 		if (child && LoadPages(child))
@@ -1286,6 +1349,23 @@ HardwareKeyboard *PageManager::GetHardwareKeyboard()
 	if(!mHardwareKeyboard)
 		mHardwareKeyboard = new HardwareKeyboard();
 	return mHardwareKeyboard;
+}
+
+xml_node<>* PageManager::FindStyle(std::string name)
+{
+	for (std::vector<xml_node<>*>::iterator itr = mCurrentSet->styles.begin(); itr != mCurrentSet->styles.end(); itr++) {
+		xml_node<>* node = (*itr)->first_node("style");
+
+		while (node) {
+			if (!node->first_attribute("name"))
+				continue;
+
+			if (name == node->first_attribute("name")->value())
+				return node;
+			node = node->next_sibling("style");
+		}
+	}
+	return NULL;
 }
 
 MouseCursor *PageManager::GetMouseCursor()

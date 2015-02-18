@@ -27,23 +27,15 @@ extern "C" {
 
 GUIFill::GUIFill(xml_node<>* node) : GUIObject(node)
 {
-	xml_attribute<>* attr;
-	xml_node<>* child;
-
-	if (!node)
-		return;
-
-	attr = node->first_attribute("color");
-	if (!attr) {
+	bool has_color = false;
+	mColor = LoadAttrColor(node, "color", &has_color);
+	if (!has_color) {
 		LOGERR("No color specified for fill\n");
 		return;
 	}
 
-	std::string color = attr->value();
-	ConvertStrToColor(color, &mColor);
-
 	// Load the placement
-	LoadPlacement(node->first_node("placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH);
+	LoadPlacement(FindNode(node, "placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH);
 
 	return;
 }
