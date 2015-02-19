@@ -12,6 +12,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	adb.c \
+	adb_main.c \
 	fuse_adb_provider.c \
 	sockets.c \
 	services.c \
