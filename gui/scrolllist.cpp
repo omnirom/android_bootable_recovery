@@ -44,6 +44,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	mFont = NULL;
 	mBackgroundW = mBackgroundH = 0;
 	mFastScrollW = mFastScrollLineW = mFastScrollRectW = mFastScrollRectH = 0;
+	mFastScrollRectCurrentY = mFastScrollRectCurrentH = mFastScrollRectTouchY = 0;
 	lastY = last2Y = fastScroll = 0;
 	mUpdate = 0;
 	touchDebounce = 6;
@@ -284,7 +285,7 @@ int GUIScrollList::Render(void)
 		yPos += actualItemHeight;
 	}
 
-	// Render the Header (last so that it overwrites the top most row for per pixel scrolling)
+	// Render the Header
 	yPos = mRenderY;
 	if (mHeaderH > 0) {
 		// First step, fill background
@@ -310,35 +311,41 @@ int GUIScrollList::Render(void)
 		gr_fill(mRenderX, yPos + mHeaderH - mHeaderSeparatorH, mRenderW, mHeaderSeparatorH);
 	}
 
-	// render fast scroll
-	lines = GetDisplayItemCount();
-	if (hasScroll) {
-		int startX = listW + mRenderX;
-		int fWidth = mRenderW - listW;
-		int fHeight = mRenderH - mHeaderH;
-
-		// line
-		gr_color(mFastScrollLineColor.red, mFastScrollLineColor.green, mFastScrollLineColor.blue, mFastScrollLineColor.alpha);
-		gr_fill(startX + fWidth/2, mRenderY + mHeaderH, mFastScrollLineW, mRenderH - mHeaderH);
-
-		// rect
-		int pct = 0;
-		if (GetDisplayRemainder() != 0) {
-			// Properly handle the percentage if a partial line is present
-			int partial_line_size = actualItemHeight - GetDisplayRemainder();
-			pct = ((firstDisplayedItem*actualItemHeight - y_offset)*100)/(listSize*actualItemHeight-((lines + 1)*actualItemHeight) + partial_line_size);
-		} else {
-			pct = ((firstDisplayedItem*actualItemHeight - y_offset)*100)/(listSize*actualItemHeight-lines*actualItemHeight);
-		}
-		int mFastScrollRectX = startX + (fWidth - mFastScrollRectW)/2;
-		int mFastScrollRectY = mRenderY+mHeaderH + ((fHeight - mFastScrollRectH)*pct)/100;
-
-		gr_color(mFastScrollRectColor.red, mFastScrollRectColor.green, mFastScrollRectColor.blue, mFastScrollRectColor.alpha);
-		gr_fill(mFastScrollRectX, mFastScrollRectY, mFastScrollRectW, mFastScrollRectH);
-	}
-	mUpdate = 0;
 	// reset clipping
 	gr_noclip();
+
+	// render fast scroll
+	if (hasScroll) {
+		int fWidth = mRenderW - listW;
+		int fHeight = mRenderH - mHeaderH;
+		int centerX = listW + mRenderX + fWidth / 2;
+
+		// first determine the total list height and where we are in the list
+		int totalHeight = GetItemCount() * actualItemHeight; // total height of the full list in pixels
+		int topPos = firstDisplayedItem * actualItemHeight - y_offset;
+
+		// now scale it proportionally to the scrollbar height
+		int boxH = fHeight * fHeight / totalHeight; // proportional height of the displayed portion
+		boxH = std::max(boxH, mFastScrollRectH); // but keep a minimum height
+		int boxY = (fHeight - boxH) * topPos / (totalHeight - fHeight); // pixels relative to top of list
+		int boxW = mFastScrollRectW;
+
+		int x = centerX - boxW / 2;
+		int y = mRenderY + mHeaderH + boxY;
+
+		// line above and below box (needs to be split because box can be transparent)
+		gr_color(mFastScrollLineColor.red, mFastScrollLineColor.green, mFastScrollLineColor.blue, mFastScrollLineColor.alpha);
+		gr_fill(centerX - mFastScrollLineW / 2, mRenderY + mHeaderH, mFastScrollLineW, boxY);
+		gr_fill(centerX - mFastScrollLineW / 2, y + boxH, mFastScrollLineW, fHeight - boxY - boxH);
+
+		// box
+		gr_color(mFastScrollRectColor.red, mFastScrollRectColor.green, mFastScrollRectColor.blue, mFastScrollRectColor.alpha);
+		gr_fill(x, y, boxW, boxH);
+
+		mFastScrollRectCurrentY = boxY;
+		mFastScrollRectCurrentH = boxH;
+	}
+	mUpdate = 0;
 	return 0;
 }
 
@@ -416,8 +423,20 @@ int GUIScrollList::NotifyTouch(TOUCH_STATE state, int x, int y)
 	switch (state)
 	{
 	case TOUCH_START:
-		if (hasScroll && x >= mRenderX + mRenderW - mFastScrollW)
+		if (hasScroll && x >= mRenderX + mRenderW - mFastScrollW) {
 			fastScroll = 1; // Initial touch is in the fast scroll region
+			int fastScrollBoxTop = mFastScrollRectCurrentY + mRenderY + mHeaderH;
+			int fastScrollBoxBottom = fastScrollBoxTop + mFastScrollRectCurrentH;
+			if (y >= fastScrollBoxTop && y < fastScrollBoxBottom)
+				// user grabbed the fastscroll bar
+				// try to keep the initially touched part of the scrollbar under the finger
+				mFastScrollRectTouchY = y - fastScrollBoxTop;
+			else
+				// user tapped outside the fastscroll bar
+				// center fastscroll rect on the initial touch position
+				mFastScrollRectTouchY = mFastScrollRectCurrentH / 2;
+		}
+
 		if (scrollingSpeed != 0) {
 			selectedItem = NO_ITEM; // this allows the user to tap the list to stop the scrolling without selecting the item they tap
 			scrollingSpeed = 0; // stop scrolling on a new touch
@@ -433,36 +452,20 @@ int GUIScrollList::NotifyTouch(TOUCH_STATE state, int x, int y)
 	case TOUCH_DRAG:
 		if (fastScroll)
 		{
-			int pct = ((y-mRenderY-mHeaderH)*100)/(mRenderH-mHeaderH);
-			int totalSize = GetItemCount();
-			int lines = GetDisplayItemCount();
+			int relY = y - mRenderY - mHeaderH; // touch position relative to window
+			int windowH = mRenderH - mHeaderH;
+			int totalHeight = GetItemCount() * actualItemHeight; // total height of the full list in pixels
 
-			float l = float((totalSize-lines)*pct)/100;
-			if(l + lines >= totalSize)
-			{
-				firstDisplayedItem = totalSize - lines;
-				if (GetDisplayRemainder() != 0) {
-					// There's a partial row displayed, set the scrolling offset so that the last item really is at the very bottom
-					firstDisplayedItem--;
-					y_offset = GetDisplayRemainder() - actualItemHeight;
-				} else {
-					// There's no partial row so zero out the offset
-					y_offset = 0;
-				}
-			}
-			else
-			{
-				if (l < 0)
-					l = 0;
-				firstDisplayedItem = l;
-				y_offset = -(l - int(l))*actualItemHeight;
-				if (GetDisplayRemainder() != 0) {
-					// There's a partial row displayed, make sure y_offset doesn't go past the max
-					if (firstDisplayedItem == totalSize - lines - 1 && y_offset < GetDisplayRemainder() - actualItemHeight)
-						y_offset = GetDisplayRemainder() - actualItemHeight;
-				} else if (firstDisplayedItem == totalSize - lines)
-					y_offset = 0;
-			}
+			// calculate new top position of the fastscroll bar relative to window
+			int newY = relY - mFastScrollRectTouchY;
+			// keep it fully inside the list
+			newY = std::min(std::max(newY, 0), windowH - mFastScrollRectCurrentH);
+
+			// now compute the new scroll position for the list
+			int newTopPos = newY * (totalHeight - windowH) / (windowH - mFastScrollRectCurrentH); // new top pixel of list
+			newTopPos = std::min(newTopPos, totalHeight - windowH); // account for rounding errors
+			firstDisplayedItem = newTopPos / actualItemHeight;
+			y_offset = - newTopPos % actualItemHeight;
 
 			selectedItem = NO_ITEM;
 			mUpdate = 1;
@@ -490,6 +493,8 @@ int GUIScrollList::NotifyTouch(TOUCH_STATE state, int x, int y)
 		break;
 
 	case TOUCH_RELEASE:
+		if (fastScroll)
+			mUpdate = 1; // get rid of touch effects on the fastscroll bar
 		fastScroll = 0;
 		if (selectedItem != NO_ITEM) {
 			// We've selected an item!
