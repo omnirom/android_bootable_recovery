@@ -15,7 +15,6 @@ LOCAL_SRC_FILES := \
 	fuse_adb_provider.c \
 	sockets.c \
 	services.c \
-	utils.c
 
 LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
