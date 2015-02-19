@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_4e56a261",
+        "filename": "toolbox/Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-02-19T18:35:30Z",
+      "side": 1,
+      "message": "this is not how you use LOCAL_ADDITIONAL_DEPENDENCIES",
+      "range": {
+        "startLine": 154,
+        "startChar": 0,
+        "endLine": 154,
+        "endChar": 29
+      },
+      "revId": "bcc502cff9fea2d892a0344879e420df1d10fb47",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
