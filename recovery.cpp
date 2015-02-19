@@ -43,7 +43,7 @@
 #include "device.h"
 #include "adb_install.h"
 extern "C" {
-#include "minadbd/adb.h"
+#include "adb.h"
 #include "fuse_sideload.h"
 #include "fuse_sdcard_provider.h"
 }
@@ -841,7 +841,7 @@ main(int argc, char **argv) {
     // only way recovery should be run with this argument is when it
     // starts a copy of itself from the apply_from_adb() function.
     if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
-        adb_main();
+        adb_main(0, DEFAULT_ADB_PORT);
         return 0;
     }
 

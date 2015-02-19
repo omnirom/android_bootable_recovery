@@ -67,7 +67,6 @@ LOCAL_STATIC_LIBRARIES := \
     libmtdutils \
     libmincrypt \
     libminadbd \
-    libadbd \
     libfusesideload \
     libminui \
     libpng \
