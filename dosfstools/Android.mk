@@ -15,7 +15,7 @@ LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 include $(BUILD_EXECUTABLE)
 
 # build symlink
-SYMLINKS := $(addprefix $(TARGET_OUT)/bin/,fsck_msdos)
+SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,fsck_msdos)
 $(SYMLINKS): DOSFSCK_BINARY := $(LOCAL_MODULE)
 $(SYMLINKS): $(LOCAL_INSTALLED_MODULE) $(LOCAL_PATH)/Android.mk
 	@echo "Symlink: $@ -> $(DOSFSCK_BINARY)"
