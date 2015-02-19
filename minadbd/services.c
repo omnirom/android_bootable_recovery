@@ -61,40 +61,6 @@ static void sideload_host_service(int sfd, void* cookie)
     exit(result == 0 ? 0 : 1);
 }
 
-#if 0
-static void echo_service(int fd, void *cookie)
-{
-    char buf[4096];
-    int r;
-    char *p;
-    int c;
-
-    for(;;) {
-        r = read(fd, buf, 4096);
-        if(r == 0) goto done;
-        if(r < 0) {
-            if(errno == EINTR) continue;
-            else goto done;
-        }
-
-        c = r;
-        p = buf;
-        while(c > 0) {
-            r = write(fd, p, c);
-            if(r > 0) {
-                c -= r;
-                p += r;
-                continue;
-            }
-            if((r < 0) && (errno == EINTR)) continue;
-            goto done;
-        }
-    }
-done:
-    close(fd);
-}
-#endif
-
 static int create_service_thread(void (*func)(int, void *), void *cookie)
 {
     stinfo *sti;
@@ -135,10 +101,6 @@ int service_to_fd(const char *name)
         exit(3);
     } else if (!strncmp(name, "sideload-host:", 14)) {
         ret = create_service_thread(sideload_host_service, (void*)(name + 14));
-#if 0
-    } else if(!strncmp(name, "echo:", 5)){
-        ret = create_service_thread(echo_service, 0);
-#endif
     }
     if (ret >= 0) {
         close_on_exec(ret);
