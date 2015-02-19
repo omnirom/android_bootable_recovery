@@ -825,6 +825,30 @@ static void choose_recovery_file(Device* device) {
     }
 }
 
+static int apply_from_sdcard(Device* device, int* wipe_cache) {
+    if (ensure_path_mounted(SDCARD_ROOT) != 0) {
+        ui->Print("\n-- Couldn't mount %s.\n", SDCARD_ROOT);
+        return INSTALL_ERROR;
+    }
+
+    char* path = browse_directory(SDCARD_ROOT, device);
+    if (path == NULL) {
+        ui->Print("\n-- No package file selected.\n", path);
+        return INSTALL_ERROR;
+    }
+
+    ui->Print("\n-- Install %s ...\n", path);
+    set_sdcard_update_bootloader_message();
+    void* token = start_sdcard_fuse(path);
+
+    int status = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache,
+                                 TEMPORARY_INSTALL_FILE, false);
+
+    finish_sdcard_fuse(token);
+    ensure_path_unmounted(SDCARD_ROOT);
+    return status;
+}
+
 // Return REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER.  Returning NO_ACTION
 // means to take the default, which is to reboot or shutdown depending
 // on if the --shutdown_after flag was passed to recovery.
@@ -876,49 +900,35 @@ prompt_and_wait(Device* device, int status) {
                 if (!ui->IsTextVisible()) return Device::NO_ACTION;
                 break;
 
-            case Device::APPLY_EXT: {
-                if (ensure_path_mounted(SDCARD_ROOT) != 0) {
-                    ui->Print("\n-- Couldn't mount %s.\n", SDCARD_ROOT);
-                    break;
-                }
-
-                char* path = browse_directory(SDCARD_ROOT, device);
-                if (path == NULL) {
-                    ui->Print("\n-- No package file selected.\n", path);
-                    break;
-                }
-
-                ui->Print("\n-- Install %s ...\n", path);
-                set_sdcard_update_bootloader_message();
-                void* token = start_sdcard_fuse(path);
-
-                int status = install_package(FUSE_SIDELOAD_HOST_PATHNAME, &wipe_cache,
-                                             TEMPORARY_INSTALL_FILE, false);
-
-                finish_sdcard_fuse(token);
-                ensure_path_unmounted(SDCARD_ROOT);
-
-                if (status == INSTALL_SUCCESS && wipe_cache) {
-                    ui->Print("\n-- Wiping cache (at package request)...\n");
-                    if (erase_volume("/cache")) {
-                        ui->Print("Cache wipe failed.\n");
+            case Device::APPLY_ADB_SIDELOAD:
+            case Device::APPLY_EXT:
+                {
+                    bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
+                    if (adb) {
+                        status = apply_from_adb(ui, &wipe_cache, TEMPORARY_INSTALL_FILE);
                     } else {
-                        ui->Print("Cache wipe complete.\n");
+                        status = apply_from_sdcard(device, &wipe_cache);
                     }
-                }
 
-                if (status >= 0) {
-                    if (status != INSTALL_SUCCESS) {
-                        ui->SetBackground(RecoveryUI::ERROR);
-                        ui->Print("Installation aborted.\n");
-                    } else if (!ui->IsTextVisible()) {
-                        return Device::NO_ACTION;  // reboot if logs aren't visible
-                    } else {
-                        ui->Print("\nInstall from SD card complete.\n");
+                    if (status == INSTALL_SUCCESS && wipe_cache) {
+                        ui->Print("\n-- Wiping cache (at package request)...\n");
+                        bool okay = erase_volume("/cache");
+                        ui->Print("Cache wipe %s.\n", okay ? "succeeded" : "failed");
+                    }
+
+                    if (status >= 0) {
+                        if (status != INSTALL_SUCCESS) {
+                            ui->SetBackground(RecoveryUI::ERROR);
+                            ui->Print("Installation aborted.\n");
+                            copy_logs();
+                        } else if (!ui->IsTextVisible()) {
+                            return Device::NO_ACTION;  // reboot if logs aren't visible
+                        } else {
+                            ui->Print("\nInstall from %s complete.\n", adb ? "ADB" : "SD card");
+                        }
                     }
                 }
                 break;
-            }
 
             case Device::APPLY_CACHE:
                 ui->Print("\nAPPLY_CACHE is deprecated.\n");
@@ -926,21 +936,6 @@ prompt_and_wait(Device* device, int status) {
 
             case Device::READ_RECOVERY_LASTLOG:
                 choose_recovery_file(device);
-                break;
-
-            case Device::APPLY_ADB_SIDELOAD:
-                status = apply_from_adb(ui, &wipe_cache, TEMPORARY_INSTALL_FILE);
-                if (status >= 0) {
-                    if (status != INSTALL_SUCCESS) {
-                        ui->SetBackground(RecoveryUI::ERROR);
-                        ui->Print("Installation aborted.\n");
-                        copy_logs();
-                    } else if (!ui->IsTextVisible()) {
-                        return Device::NO_ACTION;  // reboot if logs aren't visible
-                    } else {
-                        ui->Print("\nInstall from ADB complete.\n");
-                    }
-                }
                 break;
         }
     }
