@@ -47,9 +47,9 @@ void *service_bootstrap_func(void *x)
 static void sideload_host_service(int sfd, void* cookie)
 {
     char* saveptr;
-    const char* s = strtok_r(cookie, ":", &saveptr);
+    const char* s = adb_strtok_r(cookie, ":", &saveptr);
     uint64_t file_size = strtoull(s, NULL, 10);
-    s = strtok_r(NULL, ":", &saveptr);
+    s = adb_strtok_r(NULL, ":", &saveptr);
     uint32_t block_size = strtoul(s, NULL, 10);
 
     printf("sideload-host file size %llu block size %lu\n", file_size, block_size);
