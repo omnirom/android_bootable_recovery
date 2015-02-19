@@ -34,6 +34,16 @@ LOCAL_STATIC_LIBRARIES += libapplypatch libedify libmtdutils libminzip libz
 LOCAL_STATIC_LIBRARIES += libmincrypt libbz
 LOCAL_STATIC_LIBRARIES += libcutils liblog libstdc++ libc
 LOCAL_STATIC_LIBRARIES += libselinux
+tune2fs_static_libraries := \
+ libext2_com_err \
+ libext2_blkid \
+ libext2_quota \
+ libext2_uuid_static \
+ libext2_e2p \
+ libext2fs
+LOCAL_STATIC_LIBRARIES += libtune2fs $(tune2fs_static_libraries)
+
+LOCAL_C_INCLUDES += external/e2fsprogs/misc
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
 
 # Each library in TARGET_RECOVERY_UPDATER_LIBS should have a function

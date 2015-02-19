@@ -61,7 +61,7 @@ static RangeSet* parse_range(char* text) {
 
     RangeSet* out = malloc(sizeof(RangeSet) + num * sizeof(int));
     if (out == NULL) {
-        fprintf(stderr, "failed to allocate range of %lu bytes\n",
+        fprintf(stderr, "failed to allocate range of %zu bytes\n",
                 sizeof(RangeSet) + num * sizeof(int));
         exit(1);
     }
@@ -245,6 +245,133 @@ static void* unzip_new_data(void* cookie) {
     return NULL;
 }
 
+// Do a source/target load for move/bsdiff/imgdiff in version 1.
+// 'wordsave' is the save_ptr of a strtok_r()-in-progress.  We expect
+// to parse the remainder of the string as:
+//
+//    <src_range> <tgt_range>
+//
+// The source range is loaded into the provided buffer, reallocating
+// it to make it larger if necessary.  The target ranges are returned
+// in *tgt, if tgt is non-NULL.
+
+static void LoadSrcTgtVersion1(char* wordsave, RangeSet** tgt, int* src_blocks,
+                               uint8_t** buffer, size_t* buffer_alloc, int fd) {
+    char* word;
+
+    word = strtok_r(NULL, " ", &wordsave);
+    RangeSet* src = parse_range(word);
+
+    if (tgt != NULL) {
+        word = strtok_r(NULL, " ", &wordsave);
+        *tgt = parse_range(word);
+    }
+
+    allocate(src->size * BLOCKSIZE, buffer, buffer_alloc);
+    size_t p = 0;
+    int i;
+    for (i = 0; i < src->count; ++i) {
+        check_lseek(fd, (off64_t)src->pos[i*2] * BLOCKSIZE, SEEK_SET);
+        size_t sz = (src->pos[i*2+1] - src->pos[i*2]) * BLOCKSIZE;
+        readblock(fd, *buffer+p, sz);
+        p += sz;
+    }
+
+    *src_blocks = src->size;
+    free(src);
+}
+
+static void MoveRange(uint8_t* dest, RangeSet* locs, const uint8_t* source) {
+    // source contains packed data, which we want to move to the
+    // locations given in *locs in the dest buffer.  source and dest
+    // may be the same buffer.
+
+    int start = locs->size;
+    int i;
+    for (i = locs->count-1; i >= 0; --i) {
+        int blocks = locs->pos[i*2+1] - locs->pos[i*2];
+        start -= blocks;
+        memmove(dest + (locs->pos[i*2] * BLOCKSIZE), source + (start * BLOCKSIZE),
+                blocks * BLOCKSIZE);
+    }
+}
+
+// Do a source/target load for move/bsdiff/imgdiff in version 2.
+// 'wordsave' is the save_ptr of a strtok_r()-in-progress.  We expect
+// to parse the remainder of the string as one of:
+//
+//    <tgt_range> <src_block_count> <src_range>
+//        (loads data from source image only)
+//
+//    <tgt_range> <src_block_count> - <[stash_id:stash_range] ...>
+//        (loads data from stashes only)
+//
+//    <tgt_range> <src_block_count> <src_range> <src_loc> <[stash_id:stash_range] ...>
+//        (loads data from both source image and stashes)
+//
+// On return, buffer is filled with the loaded source data (rearranged
+// and combined with stashed data as necessary).  buffer may be
+// reallocated if needed to accommodate the source data.  *tgt is the
+// target RangeSet.  Any stashes required are taken from stash_table
+// and free()'d after being used.
+
+static void LoadSrcTgtVersion2(char* wordsave, RangeSet** tgt, int* src_blocks,
+                               uint8_t** buffer, size_t* buffer_alloc, int fd,
+                               uint8_t** stash_table) {
+    char* word;
+
+    if (tgt != NULL) {
+        word = strtok_r(NULL, " ", &wordsave);
+        *tgt = parse_range(word);
+    }
+
+    word = strtok_r(NULL, " ", &wordsave);
+    *src_blocks = strtol(word, NULL, 0);
+
+    allocate(*src_blocks * BLOCKSIZE, buffer, buffer_alloc);
+
+    word = strtok_r(NULL, " ", &wordsave);
+    if (word[0] == '-' && word[1] == '\0') {
+        // no source ranges, only stashes
+    } else {
+        RangeSet* src = parse_range(word);
+
+        size_t p = 0;
+        int i;
+        for (i = 0; i < src->count; ++i) {
+            check_lseek(fd, (off64_t)src->pos[i*2] * BLOCKSIZE, SEEK_SET);
+            size_t sz = (src->pos[i*2+1] - src->pos[i*2]) * BLOCKSIZE;
+            readblock(fd, *buffer+p, sz);
+            p += sz;
+        }
+        free(src);
+
+        word = strtok_r(NULL, " ", &wordsave);
+        if (word == NULL) {
+            // no stashes, only source range
+            return;
+        }
+
+        RangeSet* locs = parse_range(word);
+        MoveRange(*buffer, locs, *buffer);
+    }
+
+    while ((word = strtok_r(NULL, " ", &wordsave)) != NULL) {
+        // Each word is a an index into the stash table, a colon, and
+        // then a rangeset describing where in the source block that
+        // stashed data should go.
+        char* colonsave = NULL;
+        char* colon = strtok_r(word, ":", &colonsave);
+        int stash_id = strtol(colon, NULL, 0);
+        colon = strtok_r(NULL, ":", &colonsave);
+        RangeSet* locs = parse_range(colon);
+        MoveRange(*buffer, locs, stash_table[stash_id]);
+        free(stash_table[stash_id]);
+        stash_table[stash_id] = NULL;
+        free(locs);
+    }
+}
+
 // args:
 //    - block device (or file) to modify in-place
 //    - transfer list (blob)
@@ -311,22 +438,32 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
     //    new [rangeset]
     //      - fill the blocks with data read from the new_data file
     //
-    //    bsdiff patchstart patchlen [src rangeset] [tgt rangeset]
-    //    imgdiff patchstart patchlen [src rangeset] [tgt rangeset]
-    //      - read the source blocks, apply a patch, write result to
-    //        target blocks.  bsdiff or imgdiff specifies the type of
-    //        patch.
-    //
-    //    move [src rangeset] [tgt rangeset]
-    //      - copy data from source blocks to target blocks (no patch
-    //        needed; rangesets are the same size)
-    //
     //    erase [rangeset]
     //      - mark the given blocks as empty
+    //
+    //    move <...>
+    //    bsdiff <patchstart> <patchlen> <...>
+    //    imgdiff <patchstart> <patchlen> <...>
+    //      - read the source blocks, apply a patch (or not in the
+    //        case of move), write result to target blocks.  bsdiff or
+    //        imgdiff specifies the type of patch; move means no patch
+    //        at all.
+    //
+    //        The format of <...> differs between versions 1 and 2;
+    //        see the LoadSrcTgtVersion{1,2}() functions for a
+    //        description of what's expected.
+    //
+    //    stash <stash_id> <src_range>
+    //      - (version 2 only) load the given source range and stash
+    //        the data in the given slot of the stash table.
     //
     // The creator of the transfer list will guarantee that no block
     // is read (ie, used as the source for a patch or move) after it
     // has been written.
+    //
+    // In version 2, the creator will guarantee that a given stash is
+    // loaded (with a stash command) before it's used in a
+    // move/bsdiff/imgdiff command.
     //
     // Within one command the source and target ranges may overlap so
     // in general we need to read the entire source into memory before
@@ -379,12 +516,18 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
 
     line = strtok_r(transfer_list, "\n", &linesave);
 
+    int version;
     // first line in transfer list is the version number; currently
     // there's only version 1.
-    if (strcmp(line, "1") != 0) {
+    if (strcmp(line, "1") == 0) {
+        version = 1;
+    } else if (strcmp(line, "2") == 0) {
+        version = 2;
+    } else {
         ErrorAbort(state, "unexpected transfer list version [%s]\n", line);
         goto done;
     }
+    printf("blockimg version is %d\n", version);
 
     // second line in transfer list is the total number of blocks we
     // expect to write.
@@ -394,33 +537,49 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
     if (total_blocks == 0) ++total_blocks;
     int blocks_so_far = 0;
 
+    uint8_t** stash_table = NULL;
+    if (version >= 2) {
+        // Next line is how many stash entries are needed simultaneously.
+        line = strtok_r(NULL, "\n", &linesave);
+        int stash_entries = strtol(line, NULL, 0);
+
+        stash_table = (uint8_t**) calloc(stash_entries, sizeof(uint8_t*));
+        if (stash_table == NULL) {
+            fprintf(stderr, "failed to allocate %d-entry stash table\n", stash_entries);
+            exit(1);
+        }
+
+        // Next line is the maximum number of blocks that will be
+        // stashed simultaneously.  This could be used to verify that
+        // enough memory or scratch disk space is available.
+        line = strtok_r(NULL, "\n", &linesave);
+        int stash_max_blocks = strtol(line, NULL, 0);
+    }
+
     uint8_t* buffer = NULL;
     size_t buffer_alloc = 0;
 
     // third and subsequent lines are all individual transfer commands.
     for (line = strtok_r(NULL, "\n", &linesave); line;
          line = strtok_r(NULL, "\n", &linesave)) {
+
         char* style;
         style = strtok_r(line, " ", &wordsave);
 
         if (strcmp("move", style) == 0) {
-            word = strtok_r(NULL, " ", &wordsave);
-            RangeSet* src = parse_range(word);
-            word = strtok_r(NULL, " ", &wordsave);
-            RangeSet* tgt = parse_range(word);
-
-            printf("  moving %d blocks\n", src->size);
-
-            allocate(src->size * BLOCKSIZE, &buffer, &buffer_alloc);
-            size_t p = 0;
-            for (i = 0; i < src->count; ++i) {
-                check_lseek(fd, (off64_t)src->pos[i*2] * BLOCKSIZE, SEEK_SET);
-                size_t sz = (src->pos[i*2+1] - src->pos[i*2]) * BLOCKSIZE;
-                readblock(fd, buffer+p, sz);
-                p += sz;
+            RangeSet* tgt;
+            int src_blocks;
+            if (version == 1) {
+                LoadSrcTgtVersion1(wordsave, &tgt, &src_blocks,
+                                   &buffer, &buffer_alloc, fd);
+            } else if (version == 2) {
+                LoadSrcTgtVersion2(wordsave, &tgt, &src_blocks,
+                                   &buffer, &buffer_alloc, fd, stash_table);
             }
 
-            p = 0;
+            printf("  moving %d blocks\n", src_blocks);
+
+            size_t p = 0;
             for (i = 0; i < tgt->count; ++i) {
                 check_lseek(fd, (off64_t)tgt->pos[i*2] * BLOCKSIZE, SEEK_SET);
                 size_t sz = (tgt->pos[i*2+1] - tgt->pos[i*2]) * BLOCKSIZE;
@@ -432,8 +591,19 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             fprintf(cmd_pipe, "set_progress %.4f\n", (double)blocks_so_far / total_blocks);
             fflush(cmd_pipe);
 
-            free(src);
             free(tgt);
+
+        } else if (strcmp("stash", style) == 0) {
+            word = strtok_r(NULL, " ", &wordsave);
+            int stash_id = strtol(word, NULL, 0);
+            int src_blocks;
+            size_t stash_alloc = 0;
+
+            // Even though the "stash" style only appears in version
+            // 2, the version 1 source loader happens to do exactly
+            // what we want to read data into the stash_table.
+            LoadSrcTgtVersion1(wordsave, NULL, &src_blocks,
+                               stash_table + stash_id, &stash_alloc, fd);
 
         } else if (strcmp("zero", style) == 0 ||
                    (DEBUG_ERASE && strcmp("erase", style) == 0)) {
@@ -493,22 +663,17 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             word = strtok_r(NULL, " ", &wordsave);
             size_t patch_len = strtoul(word, NULL, 0);
 
-            word = strtok_r(NULL, " ", &wordsave);
-            RangeSet* src = parse_range(word);
-            word = strtok_r(NULL, " ", &wordsave);
-            RangeSet* tgt = parse_range(word);
-
-            printf("  patching %d blocks to %d\n", src->size, tgt->size);
-
-            // Read the source into memory.
-            allocate(src->size * BLOCKSIZE, &buffer, &buffer_alloc);
-            size_t p = 0;
-            for (i = 0; i < src->count; ++i) {
-                check_lseek(fd, (off64_t)src->pos[i*2] * BLOCKSIZE, SEEK_SET);
-                size_t sz = (src->pos[i*2+1] - src->pos[i*2]) * BLOCKSIZE;
-                readblock(fd, buffer+p, sz);
-                p += sz;
+            RangeSet* tgt;
+            int src_blocks;
+            if (version == 1) {
+                LoadSrcTgtVersion1(wordsave, &tgt, &src_blocks,
+                                   &buffer, &buffer_alloc, fd);
+            } else if (version == 2) {
+                LoadSrcTgtVersion2(wordsave, &tgt, &src_blocks,
+                                   &buffer, &buffer_alloc, fd, stash_table);
             }
+
+            printf("  patching %d blocks to %d\n", src_blocks, tgt->size);
 
             Value patch_value;
             patch_value.type = VAL_BLOB;
@@ -523,11 +688,11 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             check_lseek(fd, (off64_t)tgt->pos[0] * BLOCKSIZE, SEEK_SET);
 
             if (style[0] == 'i') {      // imgdiff
-                ApplyImagePatch(buffer, src->size * BLOCKSIZE,
+                ApplyImagePatch(buffer, src_blocks * BLOCKSIZE,
                                 &patch_value,
                                 &RangeSinkWrite, &rss, NULL, NULL);
             } else {
-                ApplyBSDiffPatch(buffer, src->size * BLOCKSIZE,
+                ApplyBSDiffPatch(buffer, src_blocks * BLOCKSIZE,
                                  &patch_value, 0,
                                  &RangeSinkWrite, &rss, NULL);
             }
@@ -541,7 +706,6 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
             fprintf(cmd_pipe, "set_progress %.4f\n", (double)blocks_so_far / total_blocks);
             fflush(cmd_pipe);
 
-            free(src);
             free(tgt);
         } else if (!DEBUG_ERASE && strcmp("erase", style) == 0) {
             struct stat st;

@@ -46,11 +46,32 @@
 #include "mtdutils/mtdutils.h"
 #include "updater.h"
 #include "install.h"
+#include "tune2fs.h"
 
 #ifdef USE_EXT4
 #include "make_ext4fs.h"
 #include "wipe.h"
 #endif
+
+void uiPrint(State* state, char* buffer) {
+    char* line = strtok(buffer, "\n");
+    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
+    while (line) {
+        fprintf(ui->cmd_pipe, "ui_print %s\n", line);
+        line = strtok(NULL, "\n");
+    }
+    fprintf(ui->cmd_pipe, "ui_print\n");
+}
+
+__attribute__((__format__(printf, 2, 3))) __nonnull((2))
+void uiPrintf(State* state, const char* format, ...) {
+    char error_msg[1024];
+    va_list ap;
+    va_start(ap, format);
+    vsnprintf(error_msg, sizeof(error_msg), format, ap);
+    va_end(ap);
+    uiPrint(state, error_msg);
+}
 
 // Take a sha-1 digest and return it as a newly-allocated hex string.
 char* PrintSha1(const uint8_t* digest) {
@@ -71,16 +92,27 @@ char* PrintSha1(const uint8_t* digest) {
 //    fs_type="ext4"   partition_type="EMMC"    location=device
 Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
-    if (argc != 4) {
-        return ErrorAbort(state, "%s() expects 4 args, got %d", name, argc);
+    if (argc != 4 && argc != 5) {
+        return ErrorAbort(state, "%s() expects 4-5 args, got %d", name, argc);
     }
     char* fs_type;
     char* partition_type;
     char* location;
     char* mount_point;
-    if (ReadArgs(state, argv, 4, &fs_type, &partition_type,
+    char* mount_options;
+    bool has_mount_options;
+    if (argc == 5) {
+        has_mount_options = true;
+        if (ReadArgs(state, argv, 5, &fs_type, &partition_type,
+                 &location, &mount_point, &mount_options) < 0) {
+            return NULL;
+        }
+    } else {
+        has_mount_options = false;
+        if (ReadArgs(state, argv, 4, &fs_type, &partition_type,
                  &location, &mount_point) < 0) {
-        return NULL;
+            return NULL;
+        }
     }
 
     if (strlen(fs_type) == 0) {
@@ -120,13 +152,13 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
         const MtdPartition* mtd;
         mtd = mtd_find_partition_by_name(location);
         if (mtd == NULL) {
-            printf("%s: no mtd partition named \"%s\"",
+            uiPrintf(state, "%s: no mtd partition named \"%s\"",
                     name, location);
             result = strdup("");
             goto done;
         }
         if (mtd_mount_partition(mtd, mount_point, fs_type, 0 /* rw */) != 0) {
-            printf("mtd mount of %s failed: %s\n",
+            uiPrintf(state, "mtd mount of %s failed: %s\n",
                     location, strerror(errno));
             result = strdup("");
             goto done;
@@ -134,8 +166,9 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
         result = mount_point;
     } else {
         if (mount(location, mount_point, fs_type,
-                  MS_NOATIME | MS_NODEV | MS_NODIRATIME, "") < 0) {
-            printf("%s: failed to mount %s at %s: %s\n",
+                  MS_NOATIME | MS_NODEV | MS_NODIRATIME,
+                  has_mount_options ? mount_options : "") < 0) {
+            uiPrintf(state, "%s: failed to mount %s at %s: %s\n",
                     name, location, mount_point, strerror(errno));
             result = strdup("");
         } else {
@@ -148,6 +181,7 @@ done:
     free(partition_type);
     free(location);
     if (result != mount_point) free(mount_point);
+    if (has_mount_options) free(mount_options);
     return StringValue(result);
 }
 
@@ -198,10 +232,14 @@ Value* UnmountFn(const char* name, State* state, int argc, Expr* argv[]) {
     scan_mounted_volumes();
     const MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point);
     if (vol == NULL) {
-        printf("unmount of %s failed; no such volume\n", mount_point);
+        uiPrintf(state, "unmount of %s failed; no such volume\n", mount_point);
         result = strdup("");
     } else {
-        unmount_mounted_volume(vol);
+        int ret = unmount_mounted_volume(vol);
+        if (ret != 0) {
+           uiPrintf(state, "unmount of %s failed (%d): %s\n",
+                    mount_point, ret, strerror(errno));
+        }
         result = mount_point;
     }
 
@@ -358,6 +396,9 @@ Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (make_parents(dst_name) != 0) {
         ErrorAbort(state, "Creating parent of %s failed, error %s",
           dst_name, strerror(errno));
+    } else if (access(dst_name, F_OK) == 0 && access(src_name, F_OK) != 0) {
+        // File was already moved
+        result = dst_name;
     } else if (rename(src_name, dst_name) != 0) {
         ErrorAbort(state, "Rename of %s to %s failed, error %s",
           src_name, dst_name, strerror(errno));
@@ -630,7 +671,7 @@ struct perm_parsed_args {
     uint64_t capabilities;
 };
 
-static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
+static struct perm_parsed_args ParsePermArgs(State * state, int argc, char** args) {
     int i;
     struct perm_parsed_args parsed;
     int bad = 0;
@@ -645,7 +686,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.uid = uid;
                 parsed.has_uid = true;
             } else {
-                printf("ParsePermArgs: invalid UID \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid UID \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -656,7 +697,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.gid = gid;
                 parsed.has_gid = true;
             } else {
-                printf("ParsePermArgs: invalid GID \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid GID \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -667,7 +708,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.mode = mode;
                 parsed.has_mode = true;
             } else {
-                printf("ParsePermArgs: invalid mode \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid mode \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -678,7 +719,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.dmode = mode;
                 parsed.has_dmode = true;
             } else {
-                printf("ParsePermArgs: invalid dmode \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid dmode \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -689,7 +730,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.fmode = mode;
                 parsed.has_fmode = true;
             } else {
-                printf("ParsePermArgs: invalid fmode \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid fmode \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -700,7 +741,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.capabilities = capabilities;
                 parsed.has_capabilities = true;
             } else {
-                printf("ParsePermArgs: invalid capabilities \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid capabilities \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -710,7 +751,7 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
                 parsed.selabel = args[i+1];
                 parsed.has_selabel = true;
             } else {
-                printf("ParsePermArgs: invalid selabel \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid selabel \"%s\"\n", args[i + 1]);
                 bad++;
             }
             continue;
@@ -727,62 +768,62 @@ static struct perm_parsed_args ParsePermArgs(int argc, char** args) {
 }
 
 static int ApplyParsedPerms(
+        State * state,
         const char* filename,
         const struct stat *statptr,
         struct perm_parsed_args parsed)
 {
     int bad = 0;
 
+    if (parsed.has_selabel) {
+        if (lsetfilecon(filename, parsed.selabel) != 0) {
+            uiPrintf(state, "ApplyParsedPerms: lsetfilecon of %s to %s failed: %s\n",
+                    filename, parsed.selabel, strerror(errno));
+            bad++;
+        }
+    }
+
     /* ignore symlinks */
     if (S_ISLNK(statptr->st_mode)) {
-        return 0;
+        return bad;
     }
 
     if (parsed.has_uid) {
         if (chown(filename, parsed.uid, -1) < 0) {
-            printf("ApplyParsedPerms: chown of %s to %d failed: %s\n",
-                   filename, parsed.uid, strerror(errno));
+            uiPrintf(state, "ApplyParsedPerms: chown of %s to %d failed: %s\n",
+                    filename, parsed.uid, strerror(errno));
             bad++;
         }
     }
 
     if (parsed.has_gid) {
         if (chown(filename, -1, parsed.gid) < 0) {
-            printf("ApplyParsedPerms: chgrp of %s to %d failed: %s\n",
-                   filename, parsed.gid, strerror(errno));
+            uiPrintf(state, "ApplyParsedPerms: chgrp of %s to %d failed: %s\n",
+                    filename, parsed.gid, strerror(errno));
             bad++;
         }
     }
 
     if (parsed.has_mode) {
         if (chmod(filename, parsed.mode) < 0) {
-            printf("ApplyParsedPerms: chmod of %s to %d failed: %s\n",
-                   filename, parsed.mode, strerror(errno));
+            uiPrintf(state, "ApplyParsedPerms: chmod of %s to %d failed: %s\n",
+                    filename, parsed.mode, strerror(errno));
             bad++;
         }
     }
 
     if (parsed.has_dmode && S_ISDIR(statptr->st_mode)) {
         if (chmod(filename, parsed.dmode) < 0) {
-            printf("ApplyParsedPerms: chmod of %s to %d failed: %s\n",
-                   filename, parsed.dmode, strerror(errno));
+            uiPrintf(state, "ApplyParsedPerms: chmod of %s to %d failed: %s\n",
+                    filename, parsed.dmode, strerror(errno));
             bad++;
         }
     }
 
     if (parsed.has_fmode && S_ISREG(statptr->st_mode)) {
         if (chmod(filename, parsed.fmode) < 0) {
-            printf("ApplyParsedPerms: chmod of %s to %d failed: %s\n",
+            uiPrintf(state, "ApplyParsedPerms: chmod of %s to %d failed: %s\n",
                    filename, parsed.fmode, strerror(errno));
-            bad++;
-        }
-    }
-
-    if (parsed.has_selabel) {
-        // TODO: Don't silently ignore ENOTSUP
-        if (lsetfilecon(filename, parsed.selabel) && (errno != ENOTSUP)) {
-            printf("ApplyParsedPerms: lsetfilecon of %s to %s failed: %s\n",
-                   filename, parsed.selabel, strerror(errno));
             bad++;
         }
     }
@@ -791,7 +832,7 @@ static int ApplyParsedPerms(
         if (parsed.capabilities == 0) {
             if ((removexattr(filename, XATTR_NAME_CAPS) == -1) && (errno != ENODATA)) {
                 // Report failure unless it's ENODATA (attribute not set)
-                printf("ApplyParsedPerms: removexattr of %s to %" PRIx64 " failed: %s\n",
+                uiPrintf(state, "ApplyParsedPerms: removexattr of %s to %" PRIx64 " failed: %s\n",
                        filename, parsed.capabilities, strerror(errno));
                 bad++;
             }
@@ -804,8 +845,8 @@ static int ApplyParsedPerms(
             cap_data.data[1].permitted = (uint32_t) (parsed.capabilities >> 32);
             cap_data.data[1].inheritable = 0;
             if (setxattr(filename, XATTR_NAME_CAPS, &cap_data, sizeof(cap_data), 0) < 0) {
-                printf("ApplyParsedPerms: setcap of %s to %" PRIx64 " failed: %s\n",
-                       filename, parsed.capabilities, strerror(errno));
+                uiPrintf(state, "ApplyParsedPerms: setcap of %s to %" PRIx64 " failed: %s\n",
+                        filename, parsed.capabilities, strerror(errno));
                 bad++;
             }
         }
@@ -817,10 +858,11 @@ static int ApplyParsedPerms(
 // nftw doesn't allow us to pass along context, so we need to use
 // global variables.  *sigh*
 static struct perm_parsed_args recursive_parsed_args;
+static State* recursive_state;
 
 static int do_SetMetadataRecursive(const char* filename, const struct stat *statptr,
         int fileflags, struct FTW *pfwt) {
-    return ApplyParsedPerms(filename, statptr, recursive_parsed_args);
+    return ApplyParsedPerms(recursive_state, filename, statptr, recursive_parsed_args);
 }
 
 static Value* SetMetadataFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -845,14 +887,16 @@ static Value* SetMetadataFn(const char* name, State* state, int argc, Expr* argv
         goto done;
     }
 
-    struct perm_parsed_args parsed = ParsePermArgs(argc, args);
+    struct perm_parsed_args parsed = ParsePermArgs(state, argc, args);
 
     if (recursive) {
         recursive_parsed_args = parsed;
+        recursive_state = state;
         bad += nftw(args[0], do_SetMetadataRecursive, 30, FTW_CHDIR | FTW_DEPTH | FTW_PHYS);
         memset(&recursive_parsed_args, 0, sizeof(recursive_parsed_args));
+        recursive_state = NULL;
     } else {
-        bad += ApplyParsedPerms(args[0], &sb, parsed);
+        bad += ApplyParsedPerms(state, args[0], &sb, parsed);
     }
 
 done:
@@ -1224,15 +1268,7 @@ Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
     free(args);
     buffer[size] = '\0';
-
-    char* line = strtok(buffer, "\n");
-    while (line) {
-        fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe,
-                "ui_print %s\n", line);
-        line = strtok(NULL, "\n");
-    }
-    fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe, "ui_print\n");
-
+    uiPrint(state, buffer);
     return StringValue(buffer);
 }
 
@@ -1504,6 +1540,37 @@ Value* EnableRebootFn(const char* name, State* state, int argc, Expr* argv[]) {
     return StringValue(strdup("t"));
 }
 
+Value* Tune2FsFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc == 0) {
+        return ErrorAbort(state, "%s() expects args, got %d", name, argc);
+    }
+
+    char** args = ReadVarArgs(state, argc, argv);
+    if (args == NULL) {
+        return ErrorAbort(state, "%s() could not read args", name);
+    }
+
+    int i;
+    char** args2 = malloc(sizeof(char*) * (argc+1));
+    // Tune2fs expects the program name as its args[0]
+    args2[0] = strdup(name);
+    for (i = 0; i < argc; ++i) {
+       args2[i + 1] = args[i];
+    }
+    int result = tune2fs_main(argc + 1, args2);
+    for (i = 0; i < argc; ++i) {
+        free(args[i]);
+    }
+    free(args);
+
+    free(args2[0]);
+    free(args2);
+    if (result != 0) {
+        return ErrorAbort(state, "%s() returned error code %d", name, result);
+    }
+    return StringValue(strdup("t"));
+}
+
 void RegisterInstallFunctions() {
     RegisterFunction("mount", MountFn);
     RegisterFunction("is_mounted", IsMountedFn);
@@ -1554,4 +1621,5 @@ void RegisterInstallFunctions() {
     RegisterFunction("set_stage", SetStageFn);
 
     RegisterFunction("enable_reboot", EnableRebootFn);
+    RegisterFunction("tune2fs", Tune2FsFn);
 }

@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/klog.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -76,6 +77,13 @@ static const char *CACHE_ROOT = "/cache";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
+static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
+#define KLOG_DEFAULT_LEN (64 * 1024)
+
+#define KEEP_LOG_COUNT 10
+
+// Number of lines per page when displaying a file on screen
+#define LINES_PER_PAGE 30
 
 RecoveryUI* ui = NULL;
 char* locale = NULL;
@@ -164,6 +172,12 @@ fopen_path(const char *path, const char *mode) {
 bool is_ro_debuggable() {
     char value[PROPERTY_VALUE_MAX+1];
     return (property_get("ro.debuggable", value, NULL) == 1 && value[0] == '1');
+}
+
+static void redirect_stdio(const char* filename) {
+    // If these fail, there's not really anywhere to complain...
+    freopen(filename, "a", stdout); setbuf(stdout, NULL);
+    freopen(filename, "a", stderr); setbuf(stderr, NULL);
 }
 
 // close a file, log an error if the error indicator is set
@@ -256,6 +270,44 @@ set_sdcard_update_bootloader_message() {
     set_bootloader_message(&boot);
 }
 
+// read from kernel log into buffer and write out to file
+static void
+save_kernel_log(const char *destination) {
+    int n;
+    char *buffer;
+    int klog_buf_len;
+    FILE *log;
+
+    klog_buf_len = klogctl(KLOG_SIZE_BUFFER, 0, 0);
+    if (klog_buf_len <= 0) {
+        LOGE("Error getting klog size (%s), using default\n", strerror(errno));
+        klog_buf_len = KLOG_DEFAULT_LEN;
+    }
+
+    buffer = (char *)malloc(klog_buf_len);
+    if (!buffer) {
+        LOGE("Can't alloc %d bytes for klog buffer\n", klog_buf_len);
+        return;
+    }
+
+    n = klogctl(KLOG_READ_ALL, buffer, klog_buf_len);
+    if (n < 0) {
+        LOGE("Error in reading klog (%s)\n", strerror(errno));
+        free(buffer);
+        return;
+    }
+
+    log = fopen_path(destination, "w");
+    if (log == NULL) {
+        LOGE("Can't open %s\n", destination);
+        free(buffer);
+        return;
+    }
+    fwrite(buffer, n, 1, log);
+    check_and_fclose(log, destination);
+    free(buffer);
+}
+
 // How much of the temp log we have copied to the copy in cache.
 static long tmplog_offset = 0;
 
@@ -303,8 +355,11 @@ copy_logs() {
     copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
     copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
     copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, false);
+    save_kernel_log(LAST_KMSG_FILE);
     chmod(LOG_FILE, 0600);
     chown(LOG_FILE, 1000, 1000);   // system user
+    chmod(LAST_KMSG_FILE, 0600);
+    chown(LAST_KMSG_FILE, 1000, 1000);   // system user
     chmod(LAST_LOG_FILE, 0640);
     chmod(LAST_INSTALL_FILE, 0644);
     sync();
@@ -670,6 +725,106 @@ wipe_data(int confirm, Device* device) {
     ui->Print("Data wipe complete.\n");
 }
 
+static void file_to_ui(const char* fn) {
+    FILE *fp = fopen_path(fn, "re");
+    if (fp == NULL) {
+        ui->Print("  Unable to open %s: %s\n", fn, strerror(errno));
+        return;
+    }
+    char line[1024];
+    int ct = 0;
+    int key = 0;
+    redirect_stdio("/dev/null");
+    while(fgets(line, sizeof(line), fp) != NULL) {
+        ui->Print("%s", line);
+        ct++;
+        if (ct % LINES_PER_PAGE == 0) {
+            // give the user time to glance at the entries
+            key = ui->WaitKey();
+
+            if (key == KEY_POWER) {
+                break;
+            }
+
+            if (key == KEY_VOLUMEUP) {
+                // Go back by seeking to the beginning and dumping ct - n
+                // lines.  It's ugly, but this way we don't need to store
+                // the previous offsets.  The files we're dumping here aren't
+                // expected to be very large.
+                int i;
+
+                ct -= 2 * LINES_PER_PAGE;
+                if (ct < 0) {
+                    ct = 0;
+                }
+                fseek(fp, 0, SEEK_SET);
+                for (i = 0; i < ct; i++) {
+                    fgets(line, sizeof(line), fp);
+                }
+                ui->Print("^^^^^^^^^^\n");
+            }
+        }
+    }
+
+    // If the user didn't abort, then give the user time to glance at
+    // the end of the log, sorry, no rewind here
+    if (key != KEY_POWER) {
+        ui->Print("\n--END-- (press any key)\n");
+        ui->WaitKey();
+    }
+
+    redirect_stdio(TEMPORARY_LOG_FILE);
+    fclose(fp);
+}
+
+static void choose_recovery_file(Device* device) {
+    unsigned int i;
+    unsigned int n;
+    static const char** title_headers = NULL;
+    char *filename;
+    const char* headers[] = { "Select file to view",
+                              "",
+                              NULL };
+    // "Go back" + LAST_KMSG_FILE + KEEP_LOG_COUNT + terminating NULL entry
+    char* entries[KEEP_LOG_COUNT + 3];
+    memset(entries, 0, sizeof(entries));
+
+    n = 0;
+    entries[n++] = strdup("Go back");
+
+    // Add kernel kmsg file if available
+    if ((ensure_path_mounted(LAST_KMSG_FILE) == 0) && (access(LAST_KMSG_FILE, R_OK) == 0)) {
+        entries[n++] = strdup(LAST_KMSG_FILE);
+    }
+
+    // Add LAST_LOG_FILE + LAST_LOG_FILE.x
+    for (i = 0; i < KEEP_LOG_COUNT; i++) {
+        char *filename;
+        if (asprintf(&filename, (i==0) ? LAST_LOG_FILE : (LAST_LOG_FILE ".%d"), i) == -1) {
+            // memory allocation failure - return early. Should never happen.
+            return;
+        }
+        if ((ensure_path_mounted(filename) != 0) || (access(filename, R_OK) == -1)) {
+            free(filename);
+            entries[n++] = NULL;
+            break;
+        }
+        entries[n++] = filename;
+    }
+
+    title_headers = prepend_title((const char**)headers);
+
+    while(1) {
+        int chosen_item = get_menu_selection(title_headers, entries, 1, 0, device);
+        if (chosen_item == 0) break;
+        file_to_ui(entries[chosen_item]);
+    }
+
+    for (i = 0; i < (sizeof(entries) / sizeof(*entries)); i++) {
+        free(entries[i]);
+    }
+}
+
 // Return REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER.  Returning NO_ACTION
 // means to take the default, which is to reboot or shutdown depending
 // on if the --shutdown_after flag was passed to recovery.
@@ -765,6 +920,10 @@ prompt_and_wait(Device* device, int status) {
                 ui->Print("\nAPPLY_CACHE is deprecated.\n");
                 break;
 
+            case Device::READ_RECOVERY_LASTLOG:
+                choose_recovery_file(device);
+                break;
+
             case Device::APPLY_ADB_SIDELOAD:
                 status = apply_from_adb(ui, &wipe_cache, TEMPORARY_INSTALL_FILE);
                 if (status >= 0) {
@@ -829,9 +988,7 @@ int
 main(int argc, char **argv) {
     time_t start = time(NULL);
 
-    // If these fail, there's not really anywhere to complain...
-    freopen(TEMPORARY_LOG_FILE, "a", stdout); setbuf(stdout, NULL);
-    freopen(TEMPORARY_LOG_FILE, "a", stderr); setbuf(stderr, NULL);
+    redirect_stdio(TEMPORARY_LOG_FILE);
 
     // If this binary is started with the single argument "--adbd",
     // instead of being the normal recovery binary, it turns into kind
@@ -849,7 +1006,7 @@ main(int argc, char **argv) {
 
     load_volume_table();
     ensure_path_mounted(LAST_LOG_FILE);
-    rotate_last_logs(10);
+    rotate_last_logs(KEEP_LOG_COUNT);
     get_args(&argc, &argv);
 
     const char *send_intent = NULL;
