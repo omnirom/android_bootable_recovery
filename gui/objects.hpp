@@ -589,13 +589,18 @@ protected:
 	int mSeparatorH; // Height of the separator between items
 	COLOR mSeparatorColor; // color of the separator that is between items
 
-	// Scrolling and dynamic state
+	// Scrollbar
 	int mFastScrollW; // width of the fastscroll area
 	int mFastScrollLineW; // width of the line for fastscroll rendering
 	int mFastScrollRectW; // width of the rectangle for fastscroll
-	int mFastScrollRectH; // height of the rectangle for fastscroll
+	int mFastScrollRectH; // minimum height of the rectangle for fastscroll
 	COLOR mFastScrollLineColor;
 	COLOR mFastScrollRectColor;
+
+	// Scrolling and dynamic state
+	int mFastScrollRectCurrentY; // current top of fastscroll rect relative to list top
+	int mFastScrollRectCurrentH; // current height of fastscroll rect
+	int mFastScrollRectTouchY; // offset from top of fastscroll rect where the user initially touched
 	bool hasScroll; // indicates that we have enough items in the list to scroll
 	int firstDisplayedItem; // this item goes at the top of the display list - may only be partially visible
 	int scrollingSpeed; // on a touch release, this is set based on the difference in the y-axis between the last 2 touches and indicates how fast the kinetic scrolling will go
