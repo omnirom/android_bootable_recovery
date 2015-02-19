@@ -370,33 +370,3 @@ void handle_packet(apacket *p, atransport *t)
 
     put_apacket(p);
 }
-
-static void adb_cleanup(void)
-{
-    usb_cleanup();
-}
-
-int adb_main()
-{
-    atexit(adb_cleanup);
-#if !defined(_WIN32)
-    // No SIGCHLD. Let the service subproc handle its children.
-    signal(SIGPIPE, SIG_IGN);
-#endif
-
-    init_transport_registration();
-
-    // The minimal version of adbd only uses USB.
-    if (access(USB_ADB_PATH, F_OK) == 0 || access(USB_FFS_ADB_EP0, F_OK) == 0) {
-        // listen on USB
-        usb_init();
-    }
-
-    D("Event loop starting\n");
-
-    fdevent_loop();
-
-    usb_cleanup();
-
-    return 0;
-}
