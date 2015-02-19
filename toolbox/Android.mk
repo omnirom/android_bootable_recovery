@@ -22,7 +22,6 @@ ifeq ($(TWHAVE_SELINUX), true)
     TOOLS_FOR_SELINUX := \
         ls \
         getenforce \
-        setenforce \
         chcon \
         restorecon \
         runcon \
@@ -30,6 +29,10 @@ ifeq ($(TWHAVE_SELINUX), true)
         setsebool \
         load_policy
     OUR_TOOLS += $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(TOOLS_FOR_SELINUX))
+
+    # toolbox setenforce is used during init, so it needs to be included here
+    # symlink is omitted at the very end if busybox already provides this
+    OUR_TOOLS += setenforce
 endif
 
 ifeq ($(TW_USE_TOOLBOX), true)
@@ -136,12 +139,6 @@ ifeq ($(PLATFORM_SDK_VERSION), 21)
         upstream-netbsd/lib/libutil/raise_default_signal.c \
         dynarray.c \
         pwcache.c
-endif
-
-ifeq ($(PLATFORM_SDK_VERSION), 21)
-    ifeq (,$(filter $(LOCAL_SRC_FILES),setenforce.c))
-        LOCAL_SRC_FILES += setenforce.c
-    endif
 else
     ifneq ($(wildcard system/core/toolbox/dynarray.c),)
         LOCAL_SRC_FILES += dynarray.c
@@ -201,9 +198,17 @@ include $(BUILD_EXECUTABLE)
 $(LOCAL_PATH)/toolbox.c: $(intermediates)/tools.h
 
 ifeq ($(PLATFORM_SDK_VERSION), 21)
-    ALL_TOOLS := $(BSD_TOOLS) $(OUR_TOOLS) setenforce
+    ALL_TOOLS := $(BSD_TOOLS) $(OUR_TOOLS)
 else
     ALL_TOOLS := $(OUR_TOOLS)
+endif
+
+ifeq ($(TWHAVE_SELINUX), true)
+    # toolbox setenforce is used during init in non-symlink form, so it was
+    # required to be included as part of the suite above. if busybox already
+    # provides setenforce, we can omit the toolbox symlink
+    TEMP_TOOLS := $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(ALL_TOOLS))
+    ALL_TOOLS := $(TEMP_TOOLS)
 endif
 
 TOOLS_H := $(intermediates)/tools.h
@@ -240,4 +245,5 @@ SYMLINKS :=
 ALL_TOOLS :=
 BSD_TOOLS :=
 OUR_TOOLS :=
+TEMP_TOOLS :=
 TOOLS_FOR_SELINUX :=
