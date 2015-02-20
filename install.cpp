@@ -219,7 +219,7 @@ really_install_package(const char *path, int* wipe_cache, bool needs_mount)
     ui->Print("Verifying update package...\n");
 
     int err;
-    err = verify_file(map.addr, map.length, loadedKeys, numKeys);
+    err = verify_file(map.addr, map.length);
     free(loadedKeys);
     LOGI("verify_file returned %d\n", err);
     if (err != VERIFY_SUCCESS) {
