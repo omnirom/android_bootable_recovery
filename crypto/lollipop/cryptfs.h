@@ -213,7 +213,7 @@ extern "C" {
   int cryptfs_check_passwd(char *pw);
   int cryptfs_verify_passwd(char *newpw);
   int cryptfs_get_password_type(void);
-  int delete_crypto_blk_dev(char *name);
+  int delete_crypto_blk_dev(const char *name);
 #ifdef __cplusplus
 }
 #endif

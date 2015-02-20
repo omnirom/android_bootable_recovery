@@ -725,7 +725,7 @@ errout:
   return retval;
 }
 
-int delete_crypto_blk_dev(char *name)
+int delete_crypto_blk_dev(const char *name)
 {
   int fd;
   char buffer[DM_CRYPT_BUF_SIZE];
