@@ -84,7 +84,7 @@ void DataManager::sanitize_device_id(char* device_id) {
 	char* c = str;
 
 	strcpy(str, device_id);
-	memset(device_id, 0, sizeof(device_id));
+	memset(device_id, 0, sizeof(*device_id));
 	while (*c) {
 		if (strchr(whitelist, *c))
 			strncat(device_id, c, 1);

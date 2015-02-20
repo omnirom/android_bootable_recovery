@@ -1262,7 +1262,7 @@ int twrpTar::closeTar() {
 
 int twrpTar::removeEOT(string tarFile) {
 	char* charTarFile = (char*) tarFile.c_str();
-	off_t tarFileEnd;
+	off_t tarFileEnd = 0;
 	while (th_read(t) == 0) {
 		if (TH_ISREG(t))
 			tar_skip_regfile(t);
@@ -1270,7 +1270,7 @@ int twrpTar::removeEOT(string tarFile) {
 	}
 	if (tar_close(t) == -1)
 		return -1;
-	if (truncate(charTarFile, tarFileEnd) == -1)
+	if (tarFileEnd > 0 && truncate(charTarFile, tarFileEnd) == -1)
 		return -1;
 	return 0;
 }
