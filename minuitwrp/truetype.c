@@ -572,7 +572,7 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
     TrueTypeCacheEntry *ent;
     int max_len = 0, total_w = 0;
     int utf_bytes = 0;
-    unsigned int unicode;
+    unsigned int unicode = 0;
     int char_idx, prev_idx = 0;
     FT_Vector delta;
     StringCacheEntry *e;
@@ -590,6 +590,7 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
     for(; *s; ++max_len)
     {
         utf_bytes = utf8_to_unicode(s, &unicode);
+        char_idx = FT_Get_Char_Index(f->face, unicode);
         s += (utf_bytes == 0)?  1: utf_bytes;
         if(FT_HAS_KERNING(f->face) && prev_idx && char_idx)
         {
