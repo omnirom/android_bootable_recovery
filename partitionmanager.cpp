@@ -634,7 +634,7 @@ void TWPartitionManager::Clean_Backup_Folder(string Backup_Folder) {
 		return;
 	}
 
-	while (p = readdir(d)) {
+	while ((p = readdir(d))) {
 		if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
 			continue;
 
@@ -675,7 +675,7 @@ int TWPartitionManager::Cancel_Backup() {
 }
 
 int TWPartitionManager::Run_Backup(void) {
-	int check, do_md5, partition_count, disable_free_space_check = 0;
+	int check, do_md5, partition_count = 0, disable_free_space_check = 0;
 	string Backup_Folder, Backup_Name, Full_Backup_Path, Backup_List, backup_path;
 	unsigned long long total_bytes = 0, file_bytes = 0, img_bytes = 0, free_space = 0, img_bytes_remaining, file_bytes_remaining, subpart_size;
 	unsigned long img_time = 0, file_time = 0;

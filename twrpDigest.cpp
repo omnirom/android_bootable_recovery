@@ -86,7 +86,7 @@ int twrpDigest::write_md5digest(void) {
 }
 
 int twrpDigest::read_md5digest(void) {
-	int i = 0;
+	size_t i = 0;
 	bool foundMd5File = false;
 	string md5file = "";
 	vector<string> md5ext;
