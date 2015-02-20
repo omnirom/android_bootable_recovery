@@ -1,0 +1,78 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_313c6bbb",
+        "filename": "toolbox/Android.mk",
+        "patchSetId": 4
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-02-20T16:40:38Z",
+      "side": 1,
+      "message": "from here to one 109, remove 1 indent from each line",
+      "revId": "983860f6aff80593b073a22ca205548778447e65",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_5139e7c9",
+        "filename": "toolbox/Android.mk",
+        "patchSetId": 4
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-02-20T16:40:38Z",
+      "side": 1,
+      "message": "can probably move this to the LOCAL_SHARED_LIBRARIES section below",
+      "revId": "983860f6aff80593b073a22ca205548778447e65",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_11576f07",
+        "filename": "toolbox/Android.mk",
+        "patchSetId": 4
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-02-20T16:40:38Z",
+      "side": 1,
+      "message": "last line to remove 1 indent",
+      "revId": "983860f6aff80593b073a22ca205548778447e65",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_7146e356",
+        "filename": "toolbox/Android.mk",
+        "patchSetId": 4
+      },
+      "lineNbr": 235,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-02-20T16:40:38Z",
+      "side": 1,
+      "message": "not needed (not used anymore)",
+      "range": {
+        "startLine": 235,
+        "startChar": 0,
+        "endLine": 235,
+        "endChar": 13
+      },
+      "revId": "983860f6aff80593b073a22ca205548778447e65",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
