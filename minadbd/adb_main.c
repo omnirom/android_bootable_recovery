@@ -24,9 +24,11 @@
 #include "adb.h"
 #include "sysdeps.h"
 
-int adb_main()
+int adb_main(int is_daemon, int server_port)
 {
     atexit(usb_cleanup);
+
+    adb_device_banner = "sideload";
 
     // No SIGCHLD. Let the service subproc handle its children.
     signal(SIGPIPE, SIG_IGN);
