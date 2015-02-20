@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_b1705ba6",
+        "filename": "toolbox/Android.mk",
+        "patchSetId": 4
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-02-20T17:00:01Z",
+      "side": 0,
+      "message": "This is wiped out by the LOCAL_STATIC_LIBRARIES define for libusbhost below. Looks like it was replaced by the LOCAL_WHOLE_STATIC_LIBRARIES define. So, dead code.",
+      "revId": "10ec0175c8270f223b5fbcdcd1b8299d012eaa57",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
