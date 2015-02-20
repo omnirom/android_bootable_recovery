@@ -1386,7 +1386,7 @@ bool TWPartition::Wipe_Encryption() {
 	if (Is_Decrypted) {
 		if (!UnMount(true))
 			return false;
-		if (delete_crypto_blk_dev("userdata") != 0) {
+		if (delete_crypto_blk_dev((char*)("userdata")) != 0) {
 			LOGERR("Error deleting crypto block device, continuing anyway.\n");
 		}
 	}

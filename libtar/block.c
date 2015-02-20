@@ -11,7 +11,7 @@
 */
 
 #include <internal.h>
-
+#include <stdio.h>
 #include <errno.h>
 
 #ifdef STDC_HEADERS
