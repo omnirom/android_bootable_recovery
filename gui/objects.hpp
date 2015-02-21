@@ -366,67 +366,6 @@ protected:
 	int simulate;
 };
 
-class GUIConsole : public GUIObject, public RenderObject, public ActionObject
-{
-public:
-	GUIConsole(xml_node<>* node);
-
-public:
-	// Render - Render the full object to the GL surface
-	//  Return 0 on success, <0 on error
-	virtual int Render(void);
-
-	// Update - Update any UI component animations (called <= 30 FPS)
-	//  Return 0 if nothing to update, 1 on success and contiue, >1 if full render required, and <0 on error
-	virtual int Update(void);
-
-	// SetRenderPos - Update the position of the object
-	//  Return 0 on success, <0 on error
-	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
-
-	// IsInRegion - Checks if the request is handled by this object
-	//  Return 1 if this object handles the request, 0 if not
-	virtual int IsInRegion(int x, int y);
-
-	// NotifyTouch - Notify of a touch event
-	//  Return 0 on success, >0 to ignore remainder of touch, and <0 on error (Return error to allow other handlers)
-	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
-
-protected:
-	enum SlideoutState
-	{
-		hidden = 0,
-		visible,
-		request_hide,
-		request_show
-	};
-
-	FontResource* mFont;
-	ImageResource* mSlideoutImage;
-	COLOR mForegroundColor;
-	COLOR mBackgroundColor;
-	COLOR mScrollColor;
-	int mFontHeight;
-	int mCurrentLine; // index of last line to show; -1 to keep tracking last line
-	size_t mLastCount; // lines from gConsole that are already split and copied into rConsole
-	size_t RenderCount; // total number of lines after wrapping
-	int mMaxRows; // height of console in text rows
-	int mStartY;
-	int mSlideoutX, mSlideoutY, mSlideoutW, mSlideoutH;
-	int mSlideinX, mSlideinY, mSlideinW, mSlideinH;
-	int mConsoleX, mConsoleY, mConsoleW, mConsoleH;
-	int mLastTouchX, mLastTouchY;
-	int mSlideout;
-	SlideoutState mSlideoutState;
-	std::vector<std::string> rConsole;
-	std::vector<std::string> rConsoleColor;
-	bool mRender;
-
-protected:
-	virtual int RenderSlideout(void);
-	virtual int RenderConsole(void);
-};
-
 class GUIButton : public GUIObject, public RenderObject, public ActionObject
 {
 public:
@@ -738,6 +677,71 @@ protected:
 	ImageResource* mIconSelected;
 	ImageResource* mIconUnselected;
 	bool updateList;
+};
+
+class GUIConsole : public GUIScrollList
+{
+public:
+	GUIConsole(xml_node<>* node);
+
+public:
+	// Render - Render the full object to the GL surface
+	//  Return 0 on success, <0 on error
+	virtual int Render(void);
+
+	// Update - Update any UI component animations (called <= 30 FPS)
+	//  Return 0 if nothing to update, 1 on success and contiue, >1 if full render required, and <0 on error
+	virtual int Update(void);
+
+	// SetRenderPos - Update the position of the object
+	//  Return 0 on success, <0 on error
+	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
+
+	// IsInRegion - Checks if the request is handled by this object
+	//  Return 1 if this object handles the request, 0 if not
+	virtual int IsInRegion(int x, int y);
+
+	// NotifyTouch - Notify of a touch event
+	//  Return 0 on success, >0 to ignore remainder of touch, and <0 on error (Return error to allow other handlers)
+	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
+
+	// ScrollList interface
+	virtual size_t GetItemCount();
+	virtual int GetListItem(size_t item_index, ImageResource*& icon, std::string &text);
+	virtual void NotifySelect(size_t item_selected);
+protected:
+	enum SlideoutState
+	{
+		hidden = 0,
+		visible,
+		request_hide,
+		request_show
+	};
+
+	//FontResource* mFont;
+	ImageResource* mSlideoutImage;
+	COLOR mForegroundColor;
+	//COLOR mBackgroundColor;
+	COLOR mScrollColor;
+	//int mFontHeight;
+	int mCurrentLine; // index of last line to show; -1 to keep tracking last line
+	size_t mLastCount; // lines from gConsole that are already split and copied into rConsole
+	size_t RenderCount; // total number of lines after wrapping
+	int mMaxRows; // height of console in text rows
+	//int mStartY;
+	int mSlideoutX, mSlideoutY, mSlideoutW, mSlideoutH;
+	int mSlideinX, mSlideinY, mSlideinW, mSlideinH;
+	int mConsoleX, mConsoleY, mConsoleW, mConsoleH;
+	//int mLastTouchX, mLastTouchY;
+	int mSlideout;
+	SlideoutState mSlideoutState;
+	std::vector<std::string> rConsole;
+	std::vector<std::string> rConsoleColor;
+	bool mRender;
+
+protected:
+	virtual int RenderSlideout(void);
+	virtual int RenderConsole(void);
 };
 
 // GUIAnimation - Used for animations

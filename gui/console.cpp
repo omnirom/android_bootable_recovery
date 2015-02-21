@@ -99,22 +99,22 @@ extern "C" void gui_set_FILE(FILE* f)
 	ors_file = f;
 }
 
-GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
+GUIConsole::GUIConsole(xml_node<>* node) : GUIScrollList(node)
 {
 	xml_node<>* child;
 
-	mFont = NULL;
+	//mFont = NULL;
 	mCurrentLine = -1;
 	memset(&mForegroundColor, 255, sizeof(COLOR));
-	memset(&mBackgroundColor, 0, sizeof(COLOR));
-	mBackgroundColor.alpha = 255;
+	//memset(&mBackgroundColor, 0, sizeof(COLOR));
+	//mBackgroundColor.alpha = 255;
 	memset(&mScrollColor, 0x08, sizeof(COLOR));
 	mScrollColor.alpha = 255;
 	mLastCount = 0;
 	mSlideout = 0;
 	RenderCount = 0;
 	mSlideoutState = hidden;
-	mRender = true;
+	//mRender = true;
 
 	mRenderX = 0; mRenderY = 0; mRenderW = gr_fb_width(); mRenderH = gr_fb_height();
 
@@ -125,7 +125,7 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 	}
 	else
 	{
-		mFont = LoadAttrFont(FindNode(node, "font"), "resource");
+		//mFont = LoadAttrFont(FindNode(node, "font"), "resource");
 
 		child = FindNode(node, "color");
 		if (child)
@@ -133,6 +133,7 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 			mForegroundColor = LoadAttrColor(child, "foreground", mForegroundColor);
 			mBackgroundColor = LoadAttrColor(child, "background", mBackgroundColor);
 			mScrollColor = LoadAttrColor(child, "scroll", mScrollColor);
+			mFontColor = mFontHighlightColor = mForegroundColor;
 		}
 
 		// Load the placement
@@ -154,7 +155,7 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIObject(node)
 		}
 	}
 
-	mFontHeight = mFont->GetHeight();
+	//mFontHeight = mFont->GetHeight();
 	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 	SetRenderPos(mConsoleX, mConsoleY);
 }
@@ -174,17 +175,18 @@ int GUIConsole::RenderConsole(void)
 	if (mFont)
 		fontResource = mFont->GetResource();
 
+#if 0
 	// We fill the background
 	gr_color(mBackgroundColor.red, mBackgroundColor.green, mBackgroundColor.blue, 255);
 	gr_fill(mConsoleX, mConsoleY, mConsoleW, mConsoleH);
 
 	gr_color(mScrollColor.red, mScrollColor.green, mScrollColor.blue, mScrollColor.alpha);
 	gr_fill(mConsoleX + (mConsoleW * 9 / 10), mConsoleY, (mConsoleW / 10), mConsoleH);
-
+#endif
 	// Don't try to continue to render without data
 	size_t prevCount = mLastCount;
 	mLastCount = gConsole.size();
-	mRender = false;
+	//mRender = false;
 	if (mLastCount == 0)
 		return (mSlideout ? RenderSlideout() : 0);
 
@@ -209,6 +211,7 @@ int GUIConsole::RenderConsole(void)
 	}
 	RenderCount = rConsole.size();
 
+#if 0
 	// Find the start point
 	int start;
 	int curLine = mCurrentLine; // Thread-safing (Another thread updates this value)
@@ -242,6 +245,9 @@ int GUIConsole::RenderConsole(void)
 			gr_textExW(mConsoleX, mStartY + (line * mFontHeight), rConsole[index].c_str(), fontResource, mConsoleW + mConsoleX);
 		}
 	}
+#endif
+	GUIScrollList::Render();
+
 	return (mSlideout ? RenderSlideout() : 0);
 }
 
@@ -258,6 +264,31 @@ int GUIConsole::Render(void)
 
 int GUIConsole::Update(void)
 {
+	if (mSlideout && mSlideoutState != visible)
+	{
+		if (mSlideoutState == hidden)
+			return 0;
+
+		if (mSlideoutState == request_hide)
+			mSlideoutState = hidden;
+
+		if (mSlideoutState == request_show)
+			mSlideoutState = visible;
+
+		// Any time we activate the slider, we reset the position
+		// mCurrentLine = -1;
+		return 2;
+	}
+
+	GUIScrollList::Update();
+
+	if (mUpdate) {
+		mUpdate = 0;
+		if (Render() == 0)
+			return 2;
+	}
+	return 0;
+#if 0
 	if(!isConditionTrue())
 		return 0;
 
@@ -290,6 +321,7 @@ int GUIConsole::Update(void)
 		return 2;
 	}
 	return 0;
+#endif
 }
 
 int GUIConsole::SetRenderPos(int x, int y, int w, int h)
@@ -305,12 +337,14 @@ int GUIConsole::SetRenderPos(int x, int y, int w, int h)
 		mConsoleW = w;
 		mConsoleH = h;
 	}
+	GUIScrollList::SetRenderPos(x, y, mConsoleW, mConsoleH);
+	//printf("Console scroll list at %d %d %d %d\n", x, y, mConsoleW, mConsoleH);
 
 	// Calculate the max rows
-	mMaxRows = mConsoleH / mFontHeight;
+	// mMaxRows = mConsoleH / mFontHeight;
 
 	// Adjust so we always fit to bottom
-	mStartY = mConsoleY + (mConsoleH % mFontHeight);
+	//mStartY = mConsoleY + (mConsoleH % mFontHeight);
 	return 0;
 }
 
@@ -329,6 +363,7 @@ int GUIConsole::IsInRegion(int x, int y)
 			return 0;
 	}
 
+	return GUIScrollList::IsInRegion(x, y);
 	return (x < mConsoleX || x >= mConsoleX + mConsoleW || y < mConsoleY || y >= mConsoleY + mConsoleH) ? 0 : 1;
 }
 
@@ -336,9 +371,10 @@ int GUIConsole::IsInRegion(int x, int y)
 //  Return 0 on success, >0 to ignore remainder of touch, and <0 on error
 int GUIConsole::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
+#if 0
 	if(!isConditionTrue())
 		return -1;
-
+#endif
 	if (mSlideout && mSlideoutState == hidden)
 	{
 		if (state == TOUCH_START)
@@ -356,7 +392,8 @@ int GUIConsole::NotifyTouch(TOUCH_STATE state, int x, int y)
 			return 1;
 		}
 	}
-
+	return GUIScrollList::NotifyTouch(state, x, y);
+#if 0
 	// If we don't have enough lines to scroll, throw this away.
 	if ((int)RenderCount < mMaxRows)   return 1;
 
@@ -399,4 +436,28 @@ int GUIConsole::NotifyTouch(TOUCH_STATE state, int x, int y)
 		break;
 	}
 	return 0;
+#endif
+}
+
+size_t GUIConsole::GetItemCount()
+{
+	return RenderCount;
+}
+
+int GUIConsole::GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
+{
+	if (item_index >= rConsole.size())
+	{
+		// this should NEVER happen
+		return -1;
+	}
+
+	icon = NULL;
+	text = rConsole[item_index];
+	return 0;
+}
+
+void GUIConsole::NotifySelect(size_t item_selected)
+{
+	// do nothing - console ignores selections
 }
