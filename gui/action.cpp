@@ -1360,8 +1360,7 @@ int GUIAction::terminalcommand(std::string arg)
 				} else {
 					// Try to read output
 					memset(line, 0, sizeof(line));
-					bytes_read = read(fd, line, sizeof(line));
-					if (bytes_read > 0)
+					if(fgets(line, sizeof(line), fp) != NULL)
 						gui_print("%s", line); // Display output
 					else
 						keep_going = 0; // Done executing
