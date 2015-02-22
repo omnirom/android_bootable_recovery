@@ -572,7 +572,7 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
     TrueTypeCacheEntry *ent;
     int max_len = 0, total_w = 0;
     int utf_bytes = 0;
-    unsigned int unicode;
+    unsigned int unicode = 0;
     int char_idx, prev_idx = 0;
     FT_Vector delta;
     StringCacheEntry *e;
@@ -582,15 +582,16 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
     e = gr_ttf_string_cache_peek(font, s, max_width);
     if(e)
     {
-        max_len = e->rendered_len;
+        //max_len = e->rendered_len;
         pthread_mutex_unlock(&f->mutex);
-        return max_len;
+        return strlen(s);
     }
 
-    for(; *s; ++max_len)
+    for(; *s; max_len += utf_bytes)
     {
         utf_bytes = utf8_to_unicode(s, &unicode);
         s += (utf_bytes == 0)?  1: utf_bytes;
+        char_idx = FT_Get_Char_Index(f->face, unicode);
         if(FT_HAS_KERNING(f->face) && prev_idx && char_idx)
         {
             FT_Get_Kerning(f->face, prev_idx, char_idx, FT_KERNING_DEFAULT, &delta);
@@ -598,8 +599,10 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
         }
         prev_idx = char_idx;
 
-        if(total_w > max_width)
+        if(total_w > max_width) {
+            max_len -= utf_bytes;
             break;
+        }
 
         ent = gr_ttf_glyph_cache_get(f, char_idx);
         if(!ent)
@@ -608,7 +611,7 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
         total_w += ent->glyph->root.advance.x >> 16;
     }
     pthread_mutex_unlock(&f->mutex);
-    return max_len > 0 ? max_len - 1 : 0;
+    return max_len > 0 ? max_len : 0;
 }
 
 int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int max_width, int max_height)
