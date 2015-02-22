@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_c40433cc",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-22T22:30:23Z",
+      "side": 1,
+      "message": "sizeof(char) \u003d\u003d 1, so this does the same as *device_id \u003d 0\n\nThe code around here generally looks broken - varying buffer sizes, some of them too small, and no length checks at all.",
+      "revId": "aa643dadc1de7bc3cd01b2986d1ec6e8119b1258",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_e4092fe1",
+        "filename": "install.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-22T22:30:23Z",
+      "side": 1,
+      "message": "This file is unused anyway...",
+      "revId": "aa643dadc1de7bc3cd01b2986d1ec6e8119b1258",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
