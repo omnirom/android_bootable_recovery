@@ -57,7 +57,7 @@ typedef struct
 struct StringCacheEntry
 {
     GGLSurface surface;
-    int rendered_len;
+    int rendered_bytes; // number of bytes from C string rendered, not number of UTF8 characters!
     StringCacheKey *key;
     struct StringCacheEntry *prev;
     struct StringCacheEntry *next;
@@ -65,7 +65,7 @@ struct StringCacheEntry
 
 typedef struct StringCacheEntry StringCacheEntry;
 
-typedef struct 
+typedef struct
 {
     FT_Library ft_library;
     Hashmap *fonts;
@@ -378,11 +378,12 @@ static int gr_ttf_copy_glyph_to_surface(GGLSurface *dest, FT_BitmapGlyph glyph, 
     return 0;
 }
 
+// returns number of bytes from const char *text rendered to fit max_width, not number of UTF8 characters!
 static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const char *text, int max_width)
 {
     TrueTypeFont *f = font;
     TrueTypeCacheEntry *ent;
-    int max_len = 0, total_w = 0;
+    int bytes_rendered = 0, total_w = 0;
     int utf_bytes = 0;
     unsigned int unicode = 0;
     int i, x, diff, char_idx, prev_idx = 0;
@@ -391,14 +392,19 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
     uint8_t *data = NULL;
     const char *text_itr = text;
     int *char_idxs;
+    int char_idxs_len = 0;
 
-    char_idxs = (int*)malloc(strlen(text) * sizeof(int));
+    char_idxs = malloc(strlen(text) * sizeof(int));
+
     while(*text_itr)
     {
         utf_bytes = utf8_to_unicode(text_itr, &unicode);
-        text_itr += (utf_bytes == 0)? 1: utf_bytes;
+        text_itr += utf_bytes;
+        bytes_rendered += utf_bytes;
+
         char_idx = FT_Get_Char_Index(f->face, unicode);
-        char_idxs[max_len] = char_idx;
+        char_idxs[char_idxs_len] = char_idx;
+
         ent = gr_ttf_glyph_cache_get(f, char_idx);
         if(ent)
         {
@@ -416,7 +422,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
             total_w += diff;
         }
         prev_idx = char_idx;
-        ++max_len;
+        ++char_idxs_len;
     }
 
     if(font->max_height == -1)
@@ -442,7 +448,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
     surface->data = (void*)data;
     surface->format = GGL_PIXEL_FORMAT_A_8;
 
-    for(i = 0; i < max_len; ++i)
+    for(i = 0; i < char_idxs_len; ++i)
     {
         char_idx = char_idxs[i];
         if(FT_HAS_KERNING(f->face) && prev_idx && char_idx)
@@ -462,7 +468,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
     }
 
     free(char_idxs);
-    return max_len;
+    return bytes_rendered;
 }
 
 static StringCacheEntry *gr_ttf_string_cache_peek(TrueTypeFont *font, const char *text, int max_width)
@@ -489,8 +495,8 @@ static StringCacheEntry *gr_ttf_string_cache_get(TrueTypeFont *font, const char 
     {
         res = malloc(sizeof(StringCacheEntry));
         memset(res, 0, sizeof(StringCacheEntry));
-        res->rendered_len = gr_ttf_render_text(font, &res->surface, text, max_width);
-        if(res->rendered_len < 0)
+        res->rendered_bytes = gr_ttf_render_text(font, &res->surface, text, max_width);
+        if(res->rendered_bytes < 0)
         {
             free(res);
             return NULL;
@@ -570,9 +576,9 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
 {
     TrueTypeFont *f = font;
     TrueTypeCacheEntry *ent;
-    int max_len = 0, total_w = 0;
-    int utf_bytes = 0;
-    unsigned int unicode;
+    int max_bytes = 0, total_w = 0;
+    int utf_bytes, prev_utf_bytes = 0;
+    unsigned int unicode = 0;
     int char_idx, prev_idx = 0;
     FT_Vector delta;
     StringCacheEntry *e;
@@ -582,15 +588,17 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
     e = gr_ttf_string_cache_peek(font, s, max_width);
     if(e)
     {
-        max_len = e->rendered_len;
+        max_bytes = e->rendered_bytes;
         pthread_mutex_unlock(&f->mutex);
-        return max_len;
+        return max_bytes;
     }
 
-    for(; *s; ++max_len)
+    while(*s)
     {
         utf_bytes = utf8_to_unicode(s, &unicode);
-        s += (utf_bytes == 0)?  1: utf_bytes;
+        s += utf_bytes;
+
+        char_idx = FT_Get_Char_Index(f->face, unicode);
         if(FT_HAS_KERNING(f->face) && prev_idx && char_idx)
         {
             FT_Get_Kerning(f->face, prev_idx, char_idx, FT_KERNING_DEFAULT, &delta);
@@ -599,16 +607,21 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
         prev_idx = char_idx;
 
         if(total_w > max_width)
+        {
+            max_bytes -= prev_utf_bytes;
             break;
+        }
+        prev_utf_bytes = utf_bytes;
 
         ent = gr_ttf_glyph_cache_get(f, char_idx);
         if(!ent)
             continue;
 
         total_w += ent->glyph->root.advance.x >> 16;
+        max_bytes += utf_bytes;
     }
     pthread_mutex_unlock(&f->mutex);
-    return max_len > 0 ? max_len - 1 : 0;
+    return max_bytes;
 }
 
 int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int max_width, int max_height)
@@ -634,7 +647,7 @@ int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int
     }
 
     int y_bottom = y + e->surface.height;
-    int res = e->rendered_len;
+    int res = e->rendered_bytes;
 
     if(max_height != -1 && max_height < y_bottom)
     {

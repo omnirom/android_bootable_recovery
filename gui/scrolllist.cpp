@@ -275,7 +275,7 @@ int GUIScrollList::Render(void)
 		}
 
 		// render label text
-		gr_textEx(mRenderX + maxIconWidth + 5, yPos + fontOffsetY, label.c_str(), fontResource);
+		gr_textExW(mRenderX + maxIconWidth + 5, yPos + fontOffsetY, label.c_str(), fontResource, listW);
 
 		// Add the separator
 		gr_color(mSeparatorColor.red, mSeparatorColor.green, mSeparatorColor.blue, mSeparatorColor.alpha);
