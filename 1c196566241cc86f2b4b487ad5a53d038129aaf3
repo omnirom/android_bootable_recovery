@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_64a8df74",
+        "filename": "partition.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1389,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-23T08:50:48Z",
+      "side": 1,
+      "message": "The fix in PS1 (in cryptfs) looked cleaner than this. Was there any problem with that?",
+      "revId": "1c196566241cc86f2b4b487ad5a53d038129aaf3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
