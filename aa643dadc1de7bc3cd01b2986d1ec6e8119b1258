@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "6b22818b_c4a8b38b",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-02-23T02:24:00Z",
+      "side": 1,
+      "message": "moved to https://gerrit.omnirom.org/12178",
+      "parentUuid": "6b22818b_c40433cc",
+      "revId": "aa643dadc1de7bc3cd01b2986d1ec6e8119b1258",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6b22818b_e4092fe1",
         "filename": "install.cpp",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2015-02-22T22:30:23Z",
       "side": 1,
       "message": "This file is unused anyway...",
+      "revId": "aa643dadc1de7bc3cd01b2986d1ec6e8119b1258",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_a4a3b7ae",
+        "filename": "install.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-02-23T02:24:00Z",
+      "side": 1,
+      "message": "is an innocuous change that keeps verify_file consistent with how it is actually defined elsewhere",
+      "parentUuid": "6b22818b_e4092fe1",
       "revId": "aa643dadc1de7bc3cd01b2986d1ec6e8119b1258",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
