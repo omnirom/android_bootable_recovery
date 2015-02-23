@@ -16,6 +16,24 @@
       "revId": "1c196566241cc86f2b4b487ad5a53d038129aaf3",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_a4b2d7e3",
+        "filename": "partition.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1389,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-02-23T08:57:50Z",
+      "side": 1,
+      "message": "The implied cast to char* is deprecated and my previous commit didn\u0027t actually resolve it. I agree it makes sense that the argument to delete_crypto_blk_dev should be const char*, but I presume the crypto folder will be kept in line with some other source, so I opted to keep my hands off it.",
+      "parentUuid": "6b22818b_64a8df74",
+      "revId": "1c196566241cc86f2b4b487ad5a53d038129aaf3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
