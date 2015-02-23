@@ -2167,7 +2167,7 @@
 				<text>Reboot Menu</text>
 			</object>
 
-			<object type="button">
+			<object type="button" style="rebootsystem">
 				<placement x="%col1_x%" y="%row1_y%" />
 				<text>System</text>
 			</object>
