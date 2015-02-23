@@ -47,7 +47,7 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	updateFileList = false;
 
 	// Load filter for filtering files (e.g. *.zip for only zips)
-	child = node->first_node("filter");
+	child = FindNode(node, "filter");
 	if (child) {
 		attr = child->first_attribute("extn");
 		if (attr)
@@ -64,7 +64,7 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	}
 
 	// Handle the path variable
-	child = node->first_node("path");
+	child = FindNode(node, "path");
 	if (child) {
 		attr = child->first_attribute("name");
 		if (attr)
@@ -77,7 +77,7 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	}
 
 	// Handle the result variable
-	child = node->first_node("data");
+	child = FindNode(node, "data");
 	if (child) {
 		attr = child->first_attribute("name");
 		if (attr)
@@ -88,7 +88,7 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	}
 
 	// Handle the sort variable
-	child = node->first_node("sort");
+	child = FindNode(node, "sort");
 	if (child) {
 		attr = child->first_attribute("name");
 		if (attr)
@@ -101,14 +101,14 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	}
 
 	// Handle the selection variable
-	child = node->first_node("selection");
+	child = FindNode(node, "selection");
 	if (child && (attr = child->first_attribute("name")))
 		mSelection = attr->value();
 	else
 		mSelection = "0";
 
 	// Get folder and file icons if present
-	child = node->first_node("icon");
+	child = FindNode(node, "icon");
 	if (child) {
 		mFolderIcon = LoadAttrImage(child, "folder");
 		mFileIcon = LoadAttrImage(child, "file");
