@@ -828,7 +828,7 @@ static const char *targetEntryPath(MzPathHelper *helper, ZipEntry *pEntry)
  */
 bool mzExtractRecursive(const ZipArchive *pArchive,
                         const char *zipDir, const char *targetDir,
-                        int flags, const struct utimbuf *timestamp,
+                        const struct utimbuf *timestamp,
                         void (*callback)(const char *fn, void *), void *cookie,
                         struct selabel_handle *sehnd)
 {
@@ -932,30 +932,19 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
             break;
         }
 
-        /* With DRY_RUN set, invoke the callback but don't do anything else.
-         */
-        if (flags & MZ_EXTRACT_DRY_RUN) {
-            if (callback != NULL) callback(targetFile, cookie);
-            continue;
-        }
-
-        /* Create the file or directory.
-         */
 #define UNZIP_DIRMODE 0755
 #define UNZIP_FILEMODE 0644
-        if (pEntry->fileName[pEntry->fileNameLen-1] == '/') {
-            if (!(flags & MZ_EXTRACT_FILES_ONLY)) {
-                int ret = dirCreateHierarchy(
-                        targetFile, UNZIP_DIRMODE, timestamp, false, sehnd);
-                if (ret != 0) {
-                    LOGE("Can't create containing directory for \"%s\": %s\n",
-                            targetFile, strerror(errno));
-                    ok = false;
-                    break;
-                }
-                LOGD("Extracted dir \"%s\"\n", targetFile);
-            }
-        } else {
+        /*
+         * Create the file or directory. We ignore directory entries
+         * because we recursively create paths to each file entry we encounter
+         * in the zip archive anyway.
+         *
+         * NOTE: A "directory entry" in a zip archive is just a zero length
+         * entry that ends in a "/". They're not mandatory and many tools get
+         * rid of them. We need to process them only if we want to preserve
+         * empty directories from the archive.
+         */
+        if (pEntry->fileName[pEntry->fileNameLen-1] != '/') {
             /* This is not a directory.  First, make sure that
              * the containing directory exists.
              */
@@ -968,97 +957,62 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
                 break;
             }
 
-            /* With FILES_ONLY set, we need to ignore metadata entirely,
-             * so treat symlinks as regular files.
+            /*
+             * The entry is a regular file or a symlink. Open the target for writing.
+             *
+             * TODO: This behavior for symlinks seems rather bizarre. For a
+             * symlink foo/bar/baz -> foo/tar/taz, we will create a file called
+             * "foo/bar/baz" whose contents are the literal "foo/tar/taz". We
+             * warn about this for now and preserve older behavior.
              */
-            if (!(flags & MZ_EXTRACT_FILES_ONLY) && mzIsZipEntrySymlink(pEntry)) {
-                /* The entry is a symbolic link.
-                 * The relative target of the symlink is in the
-                 * data section of this entry.
-                 */
-                if (pEntry->uncompLen == 0) {
-                    LOGE("Symlink entry \"%s\" has no target\n",
-                            targetFile);
-                    ok = false;
-                    break;
-                }
-                char *linkTarget = malloc(pEntry->uncompLen + 1);
-                if (linkTarget == NULL) {
-                    ok = false;
-                    break;
-                }
-                ok = mzReadZipEntry(pArchive, pEntry, linkTarget,
-                        pEntry->uncompLen);
-                if (!ok) {
-                    LOGE("Can't read symlink target for \"%s\"\n",
-                            targetFile);
-                    free(linkTarget);
-                    break;
-                }
-                linkTarget[pEntry->uncompLen] = '\0';
-
-                /* Make the link.
-                 */
-                ret = symlink(linkTarget, targetFile);
-                if (ret != 0) {
-                    LOGE("Can't symlink \"%s\" to \"%s\": %s\n",
-                            targetFile, linkTarget, strerror(errno));
-                    free(linkTarget);
-                    ok = false;
-                    break;
-                }
-                LOGD("Extracted symlink \"%s\" -> \"%s\"\n",
-                        targetFile, linkTarget);
-                free(linkTarget);
-            } else {
-                /* The entry is a regular file.
-                 * Open the target for writing.
-                 */
-
-                char *secontext = NULL;
-
-                if (sehnd) {
-                    selabel_lookup(sehnd, &secontext, targetFile, UNZIP_FILEMODE);
-                    setfscreatecon(secontext);
-                }
-
-                int fd = open(targetFile, O_CREAT|O_WRONLY|O_TRUNC|O_SYNC
-                        , UNZIP_FILEMODE);
-
-                if (secontext) {
-                    freecon(secontext);
-                    setfscreatecon(NULL);
-                }
-
-                if (fd < 0) {
-                    LOGE("Can't create target file \"%s\": %s\n",
-                            targetFile, strerror(errno));
-                    ok = false;
-                    break;
-                }
-
-                bool ok = mzExtractZipEntryToFile(pArchive, pEntry, fd);
-                if (ok) {
-                    ok = (fsync(fd) == 0);
-                }
-                if (close(fd) != 0) {
-                    ok = false;
-                }
-                if (!ok) {
-                    LOGE("Error extracting \"%s\"\n", targetFile);
-                    ok = false;
-                    break;
-                }
-
-                if (timestamp != NULL && utime(targetFile, timestamp)) {
-                    LOGE("Error touching \"%s\"\n", targetFile);
-                    ok = false;
-                    break;
-                }
-
-                LOGV("Extracted file \"%s\"\n", targetFile);
-                ++extractCount;
+            if (mzIsZipEntrySymlink(pEntry)) {
+                LOGE("Symlink entry \"%.*s\" will be output as a regular file.",
+                     pEntry->fileNameLen, pEntry->fileName);
             }
+
+            char *secontext = NULL;
+
+            if (sehnd) {
+                selabel_lookup(sehnd, &secontext, targetFile, UNZIP_FILEMODE);
+                setfscreatecon(secontext);
+            }
+
+            int fd = open(targetFile, O_CREAT|O_WRONLY|O_TRUNC|O_SYNC,
+                UNZIP_FILEMODE);
+
+            if (secontext) {
+                freecon(secontext);
+                setfscreatecon(NULL);
+            }
+
+            if (fd < 0) {
+                LOGE("Can't create target file \"%s\": %s\n",
+                        targetFile, strerror(errno));
+                ok = false;
+                break;
+            }
+
+            bool ok = mzExtractZipEntryToFile(pArchive, pEntry, fd);
+            if (ok) {
+                ok = (fsync(fd) == 0);
+            }
+            if (close(fd) != 0) {
+                ok = false;
+            }
+            if (!ok) {
+                LOGE("Error extracting \"%s\"\n", targetFile);
+                ok = false;
+                break;
+            }
+
+            if (timestamp != NULL && utime(targetFile, timestamp)) {
+                LOGE("Error touching \"%s\"\n", targetFile);
+                ok = false;
+                break;
+            }
+
+            LOGV("Extracted file \"%s\"\n", targetFile);
+            ++extractCount;
         }
 
         if (callback != NULL) callback(targetFile, cookie);
