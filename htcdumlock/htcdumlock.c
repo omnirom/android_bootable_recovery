@@ -36,6 +36,8 @@
 // Number of bytes in the ramdisks to compare
 #define SCAN_SIZE 60
 
+#define DEVID_MAX 64
+
 #define CMDLINE_SERIALNO        "androidboot.serialno="
 #define CMDLINE_SERIALNO_LEN    (strlen(CMDLINE_SERIALNO))
 #define CPUINFO_SERIALNO        "Serial"
@@ -43,98 +45,54 @@
 #define CPUINFO_HARDWARE        "Hardware"
 #define CPUINFO_HARDWARE_LEN    (strlen(CPUINFO_HARDWARE))
 
-char device_id[255];
+char device_id[DEVID_MAX] = { 0 };
 int verbose = 0, java = 0;
 
+void sanitize_device_id(void) {
+	const char* whitelist ="-._";
+	char str[DEVID_MAX];
+	char* c = str;
+
+	snprintf(str, DEVID_MAX, "%s", device_id);
+	memset(device_id, 0, strlen(device_id));
+	while (*c) {
+		if (isalnum(*c) || strchr(whitelist, *c))
+			strncat(device_id, c, 1);
+		c++;
+	}
+	return;
+}
+
+/* Recent HTC devices that still take advantage of dumlock
+   can safely rely on cmdline device_id retrieval */
 void get_device_id(void)
 {
 	FILE *fp;
-    char line[2048];
-	char hardware_id[32];
+	char line[2048];
 	char* token;
 
-    // Assign a blank device_id to start with
-    device_id[0] = 0;
-
-    // First, try the cmdline to see if the serial number was supplied
+	// Check the cmdline to see if the serial number was supplied
 	fp = fopen("/proc/cmdline", "rt");
-	if (fp != NULL)
-    {
-        // First step, read the line. For cmdline, it's one long line
-        fgets(line, sizeof(line), fp);
-        fclose(fp);
+	if (fp != NULL) {
+		fgets(line, sizeof(line), fp);
+		fclose(fp); // cmdline is only one line long
 
-        // Now, let's tokenize the string
-        token = strtok(line, " ");
-
-        // Let's walk through the line, looking for the CMDLINE_SERIALNO token
-        while (token)
-        {
-            // We don't need to verify the length of token, because if it's too short, it will mismatch CMDLINE_SERIALNO at the NULL
-            if (memcmp(token, CMDLINE_SERIALNO, CMDLINE_SERIALNO_LEN) == 0)
-            {
-                // We found the serial number!
-                strcpy(device_id, token + CMDLINE_SERIALNO_LEN);
-                return;
-            }
-            token = strtok(NULL, " ");
-        }
-    }
-
-	// Now we'll try cpuinfo for a serial number
-	fp = fopen("/proc/cpuinfo", "rt");
-	if (fp != NULL)
-    {
-		while (fgets(line, sizeof(line), fp) != NULL) { // First step, read the line.
-			if (memcmp(line, CPUINFO_SERIALNO, CPUINFO_SERIALNO_LEN) == 0)  // check the beginning of the line for "Serial"
-			{
-				// We found the serial number!
-				token = line + CPUINFO_SERIALNO_LEN; // skip past "Serial"
-				while (((int)*token > 0 && (int)*token <= 32 ) || (int)*token == ':') token++; // skip over all spaces and the colon
-				if (*token != NULL) {
-                    token[30] = 0;
-					if (token[strlen(token)-1] == 10) { // checking for endline chars and dropping them from the end of the string if needed
-						memset(device_id, 0, sizeof(device_id));
-						strncpy(device_id, token, strlen(token) - 1);
-					} else {
-						strcpy(device_id, token);
-					}
-					if (verbose)
-						printf("serial from cpuinfo: '%s'\n", device_id);
-					fclose(fp);
-					return;
-				}
-			} else if (memcmp(line, CPUINFO_HARDWARE, CPUINFO_HARDWARE_LEN) == 0) {// We're also going to look for the hardware line in cpuinfo and save it for later in case we don't find the device ID
-				// We found the hardware ID
-				token = line + CPUINFO_HARDWARE_LEN; // skip past "Hardware"
-				while (((int)*token > 0 && (int)*token <= 32 ) || (int)*token == ':')  token++; // skip over all spaces and the colon
-				if (*token != NULL) {
-                    token[30] = 0;
-					if (token[strlen(token)-1] == 10) { // checking for endline chars and dropping them from the end of the string if needed
-                        memset(hardware_id, 0, sizeof(hardware_id));
-						strncpy(hardware_id, token, strlen(token) - 1);
-					} else {
-						strcpy(hardware_id, token);
-					}
-					if (verbose)
-						printf("hardware id from cpuinfo: '%s'\n", hardware_id);
-				}
+		token = strtok(line, " ");
+		while (token) {
+			if (memcmp(token, CMDLINE_SERIALNO, CMDLINE_SERIALNO_LEN) == 0) {
+				token += CMDLINE_SERIALNO_LEN;
+				snprintf(device_id, DEVID_MAX, "%s", token);
+				sanitize_device_id(); // also removes newlines
+				return;
 			}
+			token = strtok(NULL, " ");
 		}
-		fclose(fp);
-    }
-
-	if (hardware_id[0] != 0) {
-		if (verbose)
-			printf("using hardware id for device id: '%s'\n", hardware_id);
-		strcpy(device_id, hardware_id);
-		return;
 	}
 
-    strcpy(device_id, "serialno");
+	strcpy(device_id, "serialno");
 	if (verbose)
 		printf("device id not found, using '%s'.", device_id);
-    return;
+	return;
 }
 
 void reboot_device() {
@@ -386,8 +344,8 @@ int main(int argc, char** argv)
 	get_device_id();
 	if (verbose)
 		printf("Device ID is: '%s'\n", device_id);
-	if (strcmp(device_id, "0000000000000000") == 0) {
-		printf("Error, device ID is all zeros!\n");
+	if (strcmp(device_id, "serialno") == 0) {
+		printf("Error, dummy device ID detected!\n");
 		printf("Did you 'su' first? HTC Dumlock requires root access.\nFailed\n");
 		return 0;
 	}

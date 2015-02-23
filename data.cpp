@@ -31,6 +31,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include <string>
 #include <utility>
@@ -47,8 +48,10 @@
 #endif
 #include "find_file.hpp"
 #include "set_metadata.h"
+#include <cutils/properties.h>
 
-#include "cutils/properties.h"
+#define DEVID_MAX 64
+#define HWID_MAX 32
 
 #ifndef TW_MAX_BRIGHTNESS
 #define TW_MAX_BRIGHTNESS 255
@@ -77,14 +80,14 @@ pthread_mutex_t DataManager::m_valuesLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 
 // Device ID functions
 void DataManager::sanitize_device_id(char* device_id) {
-	const char* whitelist ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-._";
-	char str[50];
+	const char* whitelist ="-._";
+	char str[DEVID_MAX];
 	char* c = str;
 
-	strcpy(str, device_id);
-	memset(device_id, 0, sizeof(device_id));
+	snprintf(str, DEVID_MAX, "%s", device_id);
+	memset(device_id, 0, strlen(device_id));
 	while (*c) {
-		if (strchr(whitelist, *c))
+		if (isalnum(*c) || strchr(whitelist, *c))
 			strncat(device_id, c, 1);
 		c++;
 	}
@@ -100,30 +103,55 @@ void DataManager::sanitize_device_id(char* device_id) {
 
 void DataManager::get_device_id(void) {
 	FILE *fp;
+	size_t i;
 	char line[2048];
-	char hardware_id[32], device_id[64];
+	char hardware_id[HWID_MAX] = { 0 };
+	char device_id[DEVID_MAX] = { 0 };
 	char* token;
 
-	// Assign a blank device_id to start with
-	device_id[0] = 0;
-
 #ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
-	// Now we'll use product_model_hardwareid as device id
+	// Use (product_model)_(hardware_id) as device id
 	char model_id[PROPERTY_VALUE_MAX];
 	property_get("ro.product.model", model_id, "error");
-	if (strcmp(model_id,"error") != 0) {
+	if (strcmp(model_id, "error") != 0) {
 		LOGINFO("=> product model: '%s'\n", model_id);
 		// Replace spaces with underscores
-		for(int i = 0; i < strlen(model_id); i++) {
-			if(model_id[i] == ' ')
-			model_id[i] = '_';
+		for (i = 0; i < strlen(model_id); i++) {
+			if (model_id[i] == ' ')
+				model_id[i] = '_';
 		}
-		strcpy(device_id, model_id);
-		if (hardware_id[0] != 0) {
-			strcat(device_id, "_");
-			strcat(device_id, hardware_id);
+		snprintf(device_id, DEVID_MAX, "%s", model_id);
+
+		if (strlen(device_id) < DEVID_MAX) {
+			fp = fopen("proc_cpuinfo.txt", "rt");
+			if (fp != NULL) {
+				while (fgets(line, sizeof(line), fp) != NULL) {
+					if (memcmp(line, CPUINFO_HARDWARE,
+							CPUINFO_HARDWARE_LEN) == 0) {
+						// skip past "Hardware", spaces, and colon
+						token = line + CPUINFO_HARDWARE_LEN;
+						while (*token && (!isgraph(*token) || *token == ':'))
+							token++;
+
+						if (*token && *token != '\n'
+								&& strcmp("UNKNOWN\n", token)) {
+							snprintf(hardware_id, HWID_MAX, "%s", token);
+							if (hardware_id[strlen(hardware_id)-1] == '\n')
+								hardware_id[strlen(hardware_id)-1] = 0;
+							LOGINFO("=> hardware id from cpuinfo: '%s'\n",
+									hardware_id);
+						}
+						break;
+					}
+				}
+				fclose(fp);
+			}
 		}
-		sanitize_device_id((char *)device_id);
+
+		if (hardware_id[0] != 0)
+			snprintf(device_id, DEVID_MAX, "%s_%s", model_id, hardware_id);
+
+		sanitize_device_id(device_id);
 		mConstValues.insert(make_pair("device_id", device_id));
 		LOGINFO("=> using device id: '%s'\n", device_id);
 		return;
@@ -131,26 +159,18 @@ void DataManager::get_device_id(void) {
 #endif
 
 #ifndef TW_FORCE_CPUINFO_FOR_DEVICE_ID
-	// First, try the cmdline to see if the serial number was supplied
+	// Check the cmdline to see if the serial number was supplied
 	fp = fopen("/proc/cmdline", "rt");
-	if (fp != NULL)
-	{
-		// First step, read the line. For cmdline, it's one long line
+	if (fp != NULL) {
 		fgets(line, sizeof(line), fp);
-		fclose(fp);
+		fclose(fp); // cmdline is only one line long
 
-		// Now, let's tokenize the string
 		token = strtok(line, " ");
-
-		// Let's walk through the line, looking for the CMDLINE_SERIALNO token
-		while (token)
-		{
-			// We don't need to verify the length of token, because if it's too short, it will mismatch CMDLINE_SERIALNO at the NULL
-			if (memcmp(token, CMDLINE_SERIALNO, CMDLINE_SERIALNO_LEN) == 0)
-			{
-				// We found the serial number!
-				strcpy(device_id, token + CMDLINE_SERIALNO_LEN);
-				sanitize_device_id((char *)device_id);
+		while (token) {
+			if (memcmp(token, CMDLINE_SERIALNO, CMDLINE_SERIALNO_LEN) == 0) {
+				token += CMDLINE_SERIALNO_LEN;
+				snprintf(device_id, DEVID_MAX, "%s", token);
+				sanitize_device_id(device_id); // also removes newlines
 				mConstValues.insert(make_pair("device_id", device_id));
 				return;
 			}
@@ -158,42 +178,36 @@ void DataManager::get_device_id(void) {
 		}
 	}
 #endif
-	// Now we'll try cpuinfo for a serial number
+	// Check cpuinfo for serial number; if found, use as device_id
+	// If serial number is not found, fallback to hardware_id for the device_id
 	fp = fopen("/proc/cpuinfo", "rt");
-	if (fp != NULL)
-	{
-		while (fgets(line, sizeof(line), fp) != NULL) { // First step, read the line.
-			if (memcmp(line, CPUINFO_SERIALNO, CPUINFO_SERIALNO_LEN) == 0)  // check the beginning of the line for "Serial"
-			{
-				// We found the serial number!
-				token = line + CPUINFO_SERIALNO_LEN; // skip past "Serial"
-				while ((*token > 0 && *token <= 32 ) || *token == ':') token++; // skip over all spaces and the colon
-				if (*token != 0) {
-					token[30] = 0;
-					if (token[strlen(token)-1] == 10) { // checking for endline chars and dropping them from the end of the string if needed
-						memset(device_id, 0, sizeof(device_id));
-						strncpy(device_id, token, strlen(token) - 1);
-					} else {
-						strcpy(device_id, token);
-					}
+	if (fp != NULL) {
+		while (fgets(line, sizeof(line), fp) != NULL) {
+			if (memcmp(line, CPUINFO_SERIALNO, CPUINFO_SERIALNO_LEN) == 0) {
+				// skip past "Serial", spaces, and colon
+				token = line + CPUINFO_SERIALNO_LEN;
+				while (*token && (!isgraph(*token) || *token == ':'))
+					token++;
+
+				if (*token && *token != '\n') {
+					snprintf(device_id, DEVID_MAX, "%s", token);
+					sanitize_device_id(device_id); // also removes newlines
 					LOGINFO("=> serial from cpuinfo: '%s'\n", device_id);
-					fclose(fp);
-					sanitize_device_id((char *)device_id);
 					mConstValues.insert(make_pair("device_id", device_id));
+					fclose(fp);
 					return;
 				}
-			} else if (memcmp(line, CPUINFO_HARDWARE, CPUINFO_HARDWARE_LEN) == 0) {// We're also going to look for the hardware line in cpuinfo and save it for later in case we don't find the device ID
-				// We found the hardware ID
-				token = line + CPUINFO_HARDWARE_LEN; // skip past "Hardware"
-				while ((*token > 0 && *token <= 32 ) || *token == ':')  token++; // skip over all spaces and the colon
-				if (*token != 0) {
-					token[30] = 0;
-					if (token[strlen(token)-1] == 10) { // checking for endline chars and dropping them from the end of the string if needed
-						memset(hardware_id, 0, sizeof(hardware_id));
-						strncpy(hardware_id, token, strlen(token) - 1);
-					} else {
-						strcpy(hardware_id, token);
-					}
+			} else if (memcmp(line, CPUINFO_HARDWARE,
+					CPUINFO_HARDWARE_LEN) == 0) {
+				// skip past "Hardware", spaces, and colon
+				token = line + CPUINFO_HARDWARE_LEN;
+				while (*token && (!isgraph(*token) || *token == ':'))
+					token++;
+
+				if (*token && *token != '\n') {
+					snprintf(hardware_id, HWID_MAX, "%s", token);
+					if (hardware_id[strlen(hardware_id)-1] == '\n')
+						hardware_id[strlen(hardware_id)-1] = 0;
 					LOGINFO("=> hardware id from cpuinfo: '%s'\n", hardware_id);
 				}
 			}
@@ -203,14 +217,14 @@ void DataManager::get_device_id(void) {
 
 	if (hardware_id[0] != 0) {
 		LOGINFO("\nusing hardware id for device id: '%s'\n", hardware_id);
-		strcpy(device_id, hardware_id);
-		sanitize_device_id((char *)device_id);
+		snprintf(device_id, DEVID_MAX, "%s", hardware_id);
+		sanitize_device_id(device_id);
 		mConstValues.insert(make_pair("device_id", device_id));
 		return;
 	}
 
 	strcpy(device_id, "serialno");
-	LOGERR("=> device id not found, using '%s'.", device_id);
+	LOGERR("=> device id not found, using '%s'\n", device_id);
 	mConstValues.insert(make_pair("device_id", device_id));
 	return;
 }
