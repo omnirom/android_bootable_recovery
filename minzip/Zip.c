@@ -484,7 +484,7 @@ const ZipEntry* mzFindZipEntry(const ZipArchive* pArchive,
 /*
  * Return true if the entry is a symbolic link.
  */
-bool mzIsZipEntrySymlink(const ZipEntry* pEntry)
+static bool mzIsZipEntrySymlink(const ZipEntry* pEntry)
 {
     if ((pEntry->versionMadeBy & 0xff00) == CENVEM_UNIX) {
         return S_ISLNK(pEntry->externalFileAttributes >> 16);
@@ -628,30 +628,6 @@ static bool crcProcessFunction(const unsigned char *data, int dataLen,
     return true;
 }
 
-/*
- * Check the CRC on this entry; return true if it is correct.
- * May do other internal checks as well.
- */
-bool mzIsZipEntryIntact(const ZipArchive *pArchive, const ZipEntry *pEntry)
-{
-    unsigned long crc;
-    bool ret;
-
-    crc = crc32(0L, Z_NULL, 0);
-    ret = mzProcessZipEntryContents(pArchive, pEntry, crcProcessFunction,
-            (void *)&crc);
-    if (!ret) {
-        LOGE("Can't calculate CRC for entry\n");
-        return false;
-    }
-    if (crc != (unsigned long)pEntry->crc32) {
-        LOGW("CRC for entry %.*s (0x%08lx) != expected (0x%08lx)\n",
-                pEntry->fileNameLen, pEntry->fileName, crc, pEntry->crc32);
-        return false;
-    }
-    return true;
-}
-
 typedef struct {
     char *buf;
     int bufLen;
@@ -730,23 +706,6 @@ bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
         LOGE("Can't extract entry to file.\n");
         return false;
     }
-    return true;
-}
-
-/*
- * Obtain a pointer to the in-memory representation of a stored entry.
- */
-bool mzGetStoredEntry(const ZipArchive *pArchive,
-    const ZipEntry *pEntry, unsigned char **addr, size_t *length)
-{
-    if (pEntry->compression != STORED) {
-        LOGE("Can't getStoredEntry for '%s'; not stored\n",
-             pEntry->fileName);
-        return false;
-    }
-
-    *addr = pArchive->addr + pEntry->offset;
-    *length = pEntry->uncompLen;
     return true;
 }
 
