@@ -193,6 +193,7 @@
 			<object type="template" name="sort_options" />
 
 			<object type="button" style="mediumbutton">
+				<condition var1="tw_show_dumlock" op="!=" var2="1" />
 				<placement x="%filemanager_select_x%" y="%filemanager_select_y%" />
 				<text>Images...</text>
 				<actions>

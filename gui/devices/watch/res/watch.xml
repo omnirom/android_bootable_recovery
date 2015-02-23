@@ -179,6 +179,7 @@
 			</object>
 
 			<object type="button">
+				<condition var1="tw_show_dumlock" op="!=" var2="1" />
 				<placement x="%col2_x%" y="%row1_home_y%" />
 				<text>Install Images</text>
 				<action function="page">install_image</action>
