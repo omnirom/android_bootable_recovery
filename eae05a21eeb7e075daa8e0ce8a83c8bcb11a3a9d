@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_248427b6",
+        "filename": "htcdumlock/htcdumlock.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-02-24T19:25:08Z",
+      "side": 1,
+      "message": "fix indentation",
+      "revId": "eae05a21eeb7e075daa8e0ce8a83c8bcb11a3a9d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
