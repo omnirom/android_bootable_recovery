@@ -61,7 +61,7 @@ static RangeSet* parse_range(char* text) {
 
     RangeSet* out = malloc(sizeof(RangeSet) + num * sizeof(int));
     if (out == NULL) {
-        fprintf(stderr, "failed to allocate range of %lu bytes\n",
+        fprintf(stderr, "failed to allocate range of %zu bytes\n",
                 sizeof(RangeSet) + num * sizeof(int));
         exit(1);
     }
