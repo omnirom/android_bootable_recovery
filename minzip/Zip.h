@@ -92,49 +92,15 @@ INLINE unsigned int mzZipEntryCount(const ZipArchive* pArchive) {
     return pArchive->numEntries;
 }
 
-/*
- * Get an entry by index.  Returns NULL if the index is out-of-bounds.
- */
-INLINE const ZipEntry*
-mzGetZipEntryAt(const ZipArchive* pArchive, unsigned int index)
-{
-    if (index < pArchive->numEntries) {
-        return pArchive->pEntries + index;
-    }
-    return NULL;
-}
-
-/*
- * Get the index number of an entry in the archive.
- */
-INLINE unsigned int
-mzGetZipEntryIndex(const ZipArchive *pArchive, const ZipEntry *pEntry) {
-    return pEntry - pArchive->pEntries;
-}
-
-/*
- * Simple accessors.
- */
-INLINE UnterminatedString mzGetZipEntryFileName(const ZipEntry* pEntry) {
-    UnterminatedString ret;
-    ret.str = pEntry->fileName;
-    ret.len = pEntry->fileNameLen;
-    return ret;
-}
 INLINE long mzGetZipEntryOffset(const ZipEntry* pEntry) {
     return pEntry->offset;
 }
 INLINE long mzGetZipEntryUncompLen(const ZipEntry* pEntry) {
     return pEntry->uncompLen;
 }
-INLINE long mzGetZipEntryModTime(const ZipEntry* pEntry) {
-    return pEntry->modTime;
-}
 INLINE long mzGetZipEntryCrc32(const ZipEntry* pEntry) {
     return pEntry->crc32;
 }
-bool mzIsZipEntrySymlink(const ZipEntry* pEntry);
-
 
 /*
  * Type definition for the callback function used by
@@ -164,12 +130,6 @@ bool mzReadZipEntry(const ZipArchive* pArchive, const ZipEntry* pEntry,
         char* buf, int bufLen);
 
 /*
- * Check the CRC on this entry; return true if it is correct.
- * May do other internal checks as well.
- */
-bool mzIsZipEntryIntact(const ZipArchive *pArchive, const ZipEntry *pEntry);
-
-/*
  * Inflate and write an entry to a file.
  */
 bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
@@ -181,17 +141,6 @@ bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
  */
 bool mzExtractZipEntryToBuffer(const ZipArchive *pArchive,
     const ZipEntry *pEntry, unsigned char* buffer);
-
-/*
- * Return a pointer and length for a given entry.  The returned region
- * should be valid until pArchive is closed, and should be treated as
- * read-only.
- *
- * Only makes sense for entries which are stored (ie, not compressed).
- * No guarantees are made regarding alignment of the returned pointer.
- */
-bool mzGetStoredEntry(const ZipArchive *pArchive,
-    const ZipEntry* pEntry, unsigned char **addr, size_t *length);
 
 /*
  * Inflate all entries under zipDir to the directory specified by
