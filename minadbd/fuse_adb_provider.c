@@ -19,9 +19,11 @@
 #include <string.h>
 #include <errno.h>
 
+#include "sysdeps.h"
+
 #include "adb.h"
+#include "adb_io.h"
 #include "fuse_sideload.h"
-#include "transport.h"
 
 struct adb_data {
     int sfd;  // file descriptor for the adb channel
@@ -35,12 +37,12 @@ static int read_block_adb(void* cookie, uint32_t block, uint8_t* buffer, uint32_
 
     char buf[10];
     snprintf(buf, sizeof(buf), "%08u", block);
-    if (writex(ad->sfd, buf, 8) < 0) {
+    if (!WriteStringFully(ad->sfd, buf)) {
         fprintf(stderr, "failed to write to adb host: %s\n", strerror(errno));
         return -EIO;
     }
 
-    if (readx(ad->sfd, buffer, fetch_size) < 0) {
+    if (!WriteFdExactly(ad->sfd, buffer, fetch_size)) {
         fprintf(stderr, "failed to read from adb host: %s\n", strerror(errno));
         return -EIO;
     }
@@ -51,7 +53,7 @@ static int read_block_adb(void* cookie, uint32_t block, uint8_t* buffer, uint32_
 static void close_adb(void* cookie) {
     struct adb_data* ad = (struct adb_data*)cookie;
 
-    writex(ad->sfd, "DONEDONE", 8);
+    WriteStringFully(ad->sfd, "DONEDONE");
 }
 
 int run_adb_fuse(int sfd, uint64_t file_size, uint32_t block_size) {
