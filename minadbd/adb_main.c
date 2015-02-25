@@ -21,8 +21,10 @@
 
 #define  TRACE_TAG   TRACE_ADB
 
-#include "adb.h"
 #include "sysdeps.h"
+
+#include "adb.h"
+#include "transport.h"
 
 int adb_main(int is_daemon, int server_port)
 {

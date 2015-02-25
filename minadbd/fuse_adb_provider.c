@@ -21,6 +21,7 @@
 
 #include "adb.h"
 #include "fuse_sideload.h"
+#include "transport.h"
 
 struct adb_data {
     int sfd;  // file descriptor for the adb channel
