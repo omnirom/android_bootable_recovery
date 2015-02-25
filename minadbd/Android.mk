@@ -13,8 +13,6 @@ LOCAL_CFLAGS := \
     -Wall -Werror \
     -Wno-unused-parameter \
     -Wimplicit-function-declaration \
-    -D_GNU_SOURCE \
-    -D_XOPEN_SOURCE \
     -DADB_HOST=0 \
 
 LOCAL_C_INCLUDES := bootable/recovery system/core/adb
