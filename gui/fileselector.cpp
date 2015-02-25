@@ -308,19 +308,23 @@ size_t GUIFileSelector::GetItemCount()
 	return folderSize + fileSize;
 }
 
-int GUIFileSelector::GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
+void GUIFileSelector::RenderItem(size_t itemindex, int yPos, bool selected)
 {
 	size_t folderSize = mShowFolders ? mFolderList.size() : 0;
 	size_t fileSize = mShowFiles ? mFileList.size() : 0;
 
-	if (item_index < folderSize) {
-		text = mFolderList.at(item_index).fileName;
+	ImageResource* icon;
+	std::string text;
+
+	if (itemindex < folderSize) {
+		text = mFolderList.at(itemindex).fileName;
 		icon = mFolderIcon;
 	} else {
-		text = mFileList.at(item_index - folderSize).fileName;
+		text = mFileList.at(itemindex - folderSize).fileName;
 		icon = mFileIcon;
 	}
-	return 0;
+
+	RenderStdItem(yPos, selected, icon, text.c_str());
 }
 
 void GUIFileSelector::NotifySelect(size_t item_selected)
