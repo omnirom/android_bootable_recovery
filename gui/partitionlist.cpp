@@ -197,14 +197,14 @@ size_t GUIPartitionList::GetItemCount()
 	return mList.size();
 }
 
-int GUIPartitionList::GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
+void GUIPartitionList::RenderItem(size_t itemindex, int yPos, bool selected)
 {
-	text = mList.at(item_index).Display_Name;
-	if (mList.at(item_index).selected)
-		icon = mIconSelected;
-	else
-		icon = mIconUnselected;
-	return 0;
+	// note: the "selected" parameter above is for the currently touched item
+	// don't confuse it with the more persistent "selected" flag per list item used below
+	ImageResource* icon = mList.at(itemindex).selected ? mIconSelected : mIconUnselected;
+	const std::string& text = mList.at(itemindex).Display_Name;
+
+	RenderStdItem(yPos, selected, icon, text.c_str());
 }
 
 void GUIPartitionList::NotifySelect(size_t item_selected)

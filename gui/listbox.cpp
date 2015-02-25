@@ -141,14 +141,14 @@ size_t GUIListBox::GetItemCount()
 	return mList.size();
 }
 
-int GUIListBox::GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
+void GUIListBox::RenderItem(size_t itemindex, int yPos, bool selected)
 {
-	text = mList.at(item_index).displayName;
-	if (mList.at(item_index).selected)
-		icon = mIconSelected;
-	else
-		icon = mIconUnselected;
-	return 0;
+	// note: the "selected" parameter above is for the currently touched item
+	// don't confuse it with the more persistent "selected" flag per list item used below
+	ImageResource* icon = mList.at(itemindex).selected ? mIconSelected : mIconUnselected;
+	const std::string& text = mList.at(itemindex).displayName;
+
+	RenderStdItem(yPos, selected, icon, text.c_str());
 }
 
 void GUIListBox::NotifySelect(size_t item_selected)

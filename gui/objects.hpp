@@ -533,11 +533,13 @@ protected:
 	// derived classes need to implement these
 	// get number of items
 	virtual size_t GetItemCount() { return 0; }
-	// get data for one item
-	virtual int GetListItem(size_t item_index, ImageResource*& icon, std::string &text)
-		{ icon = NULL; text = ""; return -1; }
+	// render a single item in rect (mRenderX, yPos, mRenderW, actualItemHeight)
+	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
 	// an item was selected
 	virtual void NotifySelect(size_t item_selected) {}
+
+	// render a standard-layout list item with optional icon and text
+	void RenderStdItem(int yPos, bool selected, ImageResource* icon, const char* text, int iconAndTextH = 0);
 
 	enum { NO_ITEM = (size_t)-1 };
 	// returns item index at coordinates or NO_ITEM if there is no item there
@@ -562,7 +564,6 @@ protected:
 	// Background
 	COLOR mBackgroundColor;
 	ImageResource* mBackground; // background image, if any, automatically centered
-	int mBackgroundW, mBackgroundH; // background width and height if using an image for the background
 
 	// Header
 	COLOR mHeaderBackgroundColor;
@@ -630,7 +631,7 @@ public:
 	virtual void SetPageFocus(int inFocus);
 
 	virtual size_t GetItemCount();
-	virtual int GetListItem(size_t item_index, ImageResource*& icon, std::string &text);
+	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
 	virtual void NotifySelect(size_t item_selected);
 
 protected:
@@ -685,7 +686,7 @@ public:
 	virtual void SetPageFocus(int inFocus);
 
 	virtual size_t GetItemCount();
-	virtual int GetListItem(size_t item_index, ImageResource*& icon, std::string &text);
+	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
 	virtual void NotifySelect(size_t item_selected);
 
 protected:
@@ -721,7 +722,7 @@ public:
 	virtual void SetPageFocus(int inFocus);
 
 	virtual size_t GetItemCount();
-	virtual int GetListItem(size_t item_index, ImageResource*& icon, std::string &text);
+	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
 	virtual void NotifySelect(size_t item_selected);
 
 protected:
