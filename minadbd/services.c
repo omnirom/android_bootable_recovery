@@ -53,8 +53,8 @@ static void sideload_host_service(int sfd, void* cookie)
     s = adb_strtok_r(NULL, ":", &saveptr);
     uint32_t block_size = strtoul(s, NULL, 10);
 
-    printf("sideload-host file size %llu block size %" PRIu32 "\n", file_size,
-           block_size);
+    printf("sideload-host file size %" PRIu64 " block size %" PRIu32 "\n",
+           file_size, block_size);
 
     int result = run_adb_fuse(sfd, file_size, block_size);
 
