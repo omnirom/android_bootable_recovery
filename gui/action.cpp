@@ -1321,6 +1321,10 @@ int GUIAction::terminalcommand(std::string arg)
 	if (simulate) {
 		simulate_progress_bar();
 		operation_end(op_status);
+	} else if (arg == "exit") {
+		LOGINFO("Exiting terminal\n");
+		operation_end(op_status);
+		page("main");
 	} else {
 		command = "cd \"" + cmdpath + "\" && " + arg + " 2>&1";;
 		LOGINFO("Actual command is: '%s'\n", command.c_str());
@@ -1369,6 +1373,7 @@ int GUIAction::terminalcommand(std::string arg)
 		DataManager::SetValue("tw_operation_state", 1);
 		DataManager::SetValue("tw_terminal_state", 0);
 		DataManager::SetValue("tw_background_thread_running", 0);
+		DataManager::SetValue("tw_terminal_command", "");
 		DataManager::SetValue(TW_ACTION_BUSY, 0);
 	}
 	return 0;
