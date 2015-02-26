@@ -29,7 +29,6 @@ extern "C" {
 
 const float SCROLLING_SPEED_DECREMENT = 0.9; // friction
 const int SCROLLING_FLOOR = 2; // minimum pixels for scrolling to stop
-const float SCROLLING_SPEED_LIMIT = 2.5; // maximum number of items to scroll per update
 
 GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 {
@@ -56,10 +55,12 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	ConvertStrToColor("white", &mFastScrollLineColor);
 	ConvertStrToColor("white", &mFastScrollRectColor);
 	hasHighlightColor = false;
+	allowSelection = true;
 	selectedItem = NO_ITEM;
 
 	// Load header text
-	child = node->first_node("text");
+	// note: node can be NULL for the emergency console
+	child = node ? node->first_node("text") : NULL;
 	if (child)  mHeaderText = child->value();
 	// Simple way to check for static state
 	mLastHeaderValue = gui_parse_text(mHeaderText);
@@ -163,7 +164,7 @@ void GUIScrollList::SetMaxIconSize(int w, int h)
 void GUIScrollList::SetVisibleListLocation(size_t list_index)
 {
 	// This will make sure that the item indicated by list_index is visible on the screen
-	size_t lines = GetDisplayItemCount(), listSize = GetItemCount();
+	size_t lines = GetDisplayItemCount();
 
 	if (list_index <= (unsigned)firstDisplayedItem) {
 		// list_index is above the currently displayed items, put the selected item at the very top
@@ -180,6 +181,8 @@ void GUIScrollList::SetVisibleListLocation(size_t list_index)
 			// There's no partial row so zero out the offset
 			y_offset = 0;
 		}
+		if (firstDisplayedItem < 0)
+			firstDisplayedItem = 0;
 	}
 	scrollingSpeed = 0; // stop kinetic scrolling on setting visible location
 	mUpdate = 1;
@@ -361,7 +364,10 @@ int GUIScrollList::Update(void)
 	}
 
 	// Handle kinetic scrolling
-	int maxScrollDistance = actualItemHeight * SCROLLING_SPEED_LIMIT;
+	// maximum number of items to scroll per update
+	float maxItemsScrolledPerFrame = std::max(2.5, float(GetDisplayItemCount() / 4) + 0.5);
+
+	int maxScrollDistance = actualItemHeight * maxItemsScrolledPerFrame;
 	int oldScrollingSpeed = scrollingSpeed;
 	if (scrollingSpeed == 0) {
 		// Do nothing
@@ -438,7 +444,7 @@ int GUIScrollList::NotifyTouch(TOUCH_STATE state, int x, int y)
 		if (scrollingSpeed != 0) {
 			selectedItem = NO_ITEM; // this allows the user to tap the list to stop the scrolling without selecting the item they tap
 			scrollingSpeed = 0; // stop scrolling on a new touch
-		} else if (!fastScroll) {
+		} else if (!fastScroll && allowSelection) {
 			// find out which item the user touched
 			selectedItem = HitTestItem(x, y);
 		}

@@ -105,6 +105,9 @@ int ConvertStrToColor(std::string str, COLOR* color)
 // Helper APIs
 xml_node<>* FindNode(xml_node<>* parent, const char* nodename, int depth /* = 0 */)
 {
+	if (!parent)
+		return NULL;
+
 	xml_node<>* child = parent->first_node(nodename);
 	if (child)
 		return child;
