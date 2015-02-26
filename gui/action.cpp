@@ -1369,6 +1369,7 @@ int GUIAction::terminalcommand(std::string arg)
 		DataManager::SetValue("tw_operation_state", 1);
 		DataManager::SetValue("tw_terminal_state", 0);
 		DataManager::SetValue("tw_background_thread_running", 0);
+		DataManager::SetValue("tw_terminal_command", "");
 		DataManager::SetValue(TW_ACTION_BUSY, 0);
 	}
 	return 0;
