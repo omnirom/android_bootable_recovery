@@ -15,6 +15,7 @@
 
 	<resources>
 		<resource name="font" type="font" filename="RobotoCondensed-Regular.ttf" size="30" fallback="Roboto-Regular-30" />
+		<resource name="fixed" type="font" filename="DroidSansMono.ttf" size="22" />
 		<resource name="base" type="image" filename="background.jpg" />
 		<resource name="main_button" type="image" filename="button" />
 		<resource name="file_icon" type="image" filename="file" />
