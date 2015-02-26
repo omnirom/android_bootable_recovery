@@ -42,7 +42,7 @@ static int read_block_adb(void* cookie, uint32_t block, uint8_t* buffer, uint32_
         return -EIO;
     }
 
-    if (!WriteFdExactly(ad->sfd, buffer, fetch_size)) {
+    if (!ReadFdExactly(ad->sfd, buffer, fetch_size)) {
         fprintf(stderr, "failed to read from adb host: %s\n", strerror(errno));
         return -EIO;
     }
