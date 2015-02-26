@@ -87,6 +87,7 @@
 		<style name="console">
 			<color foreground="%console_foreground%" background="%console_background%" scroll="%console_scroll%" />
 			<font resource="fixed" />
+			<fastscroll linecolor="%fastscroll_linecolor%" rectcolor="%fastscroll_rectcolor%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%" />
 		</style>
 
 		<style name="input">
