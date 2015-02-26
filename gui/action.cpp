@@ -1321,6 +1321,10 @@ int GUIAction::terminalcommand(std::string arg)
 	if (simulate) {
 		simulate_progress_bar();
 		operation_end(op_status);
+	} else if (arg == "exit") {
+		LOGINFO("Exiting terminal\n");
+		operation_end(op_status);
+		page("main");
 	} else {
 		command = "cd \"" + cmdpath + "\" && " + arg + " 2>&1";;
 		LOGINFO("Actual command is: '%s'\n", command.c_str());

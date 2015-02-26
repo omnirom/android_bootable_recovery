@@ -3371,6 +3371,7 @@
 				<condition var1="tw_terminal_state" var2="0" />
 				<placement x="%input_x%" y="%terminal_text_y%" w="%terminal_input_width%" h="%input_height%" placement="0" />
 				<text>%tw_terminal_command%</text>
+				<font resource="fixed" color="%text_color%" />
 				<data name="tw_terminal_command" />
 				<restrict minlen="1" />
 				<action function="terminalcommand">%tw_terminal_command%</action>
