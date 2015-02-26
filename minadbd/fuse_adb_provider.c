@@ -23,16 +23,11 @@
 
 #include "adb.h"
 #include "adb_io.h"
+#include "fuse_adb_provider.h"
 #include "fuse_sideload.h"
 
-struct adb_data {
-    int sfd;  // file descriptor for the adb channel
-
-    uint64_t file_size;
-    uint32_t block_size;
-};
-
-static int read_block_adb(void* cookie, uint32_t block, uint8_t* buffer, uint32_t fetch_size) {
+int read_block_adb(void* cookie, uint32_t block, uint8_t* buffer,
+                   uint32_t fetch_size) {
     struct adb_data* ad = (struct adb_data*)cookie;
 
     char buf[10];

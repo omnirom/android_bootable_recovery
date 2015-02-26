@@ -2,6 +2,12 @@
 
 LOCAL_PATH:= $(call my-dir)
 
+minadbd_cflags := \
+    -Wall -Werror \
+    -Wno-unused-parameter \
+    -Wno-missing-field-initializers \
+    -DADB_HOST=0 \
+
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
@@ -9,15 +15,22 @@ LOCAL_SRC_FILES := \
     fuse_adb_provider.c \
     services.c \
 
-LOCAL_CFLAGS := \
-    -Wall -Werror \
-    -Wno-unused-parameter \
-    -Wimplicit-function-declaration \
-    -DADB_HOST=0 \
-
+LOCAL_MODULE := libminadbd
+LOCAL_CFLAGS := $(minadbd_cflags)
+LOCAL_CONLY_FLAGS := -Wimplicit-function-declaration
 LOCAL_C_INCLUDES := bootable/recovery system/core/adb
 LOCAL_WHOLE_STATIC_LIBRARIES := libadbd
 
-LOCAL_MODULE := libminadbd
-
 include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+
+LOCAL_CLANG := true
+LOCAL_MODULE := minadbd_test
+LOCAL_SRC_FILES := fuse_adb_provider_test.cpp
+LOCAL_CFLAGS := $(minadbd_cflags)
+LOCAL_C_INCLUDES := $(LOCAL_PATH) system/core/adb
+LOCAL_STATIC_LIBRARIES := libminadbd
+LOCAL_SHARED_LIBRARIES := liblog libutils
+
+include $(BUILD_NATIVE_TEST)
