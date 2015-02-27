@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_e7e131ce",
+        "filename": "gui/scrolllist.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 278,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-02-27T16:41:08Z",
+      "side": 1,
+      "message": "It was intended that the text is rendered to the right border of the list and not only to the width of the separators - it makes more sense to maximize the amount of text shown on narrow screens.",
+      "revId": "141f495fc65624a2da376a124f9a8af2a0f57907",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
