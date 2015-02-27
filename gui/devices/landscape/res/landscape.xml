@@ -367,9 +367,9 @@
 					<action function="set">tw_has_action2=1</action>
 					<action function="set">tw_action2=wipe</action>
 					<action function="set">tw_action2_param=dalvik</action>
-					<action function="set">tw_text1=Wipe Cache & Dalvik?</action>
-					<action function="set">tw_action_text1=Wiping Cache & Dalvik...</action>
-					<action function="set">tw_complete_text1=Cache & Dalvik Wipe Complete</action>
+					<action function="set">tw_text1=Wipe Cache &amp; Dalvik?</action>
+					<action function="set">tw_action_text1=Wiping Cache &amp; Dalvik...</action>
+					<action function="set">tw_complete_text1=Cache &amp; Dalvik Wipe Complete</action>
 					<action function="set">tw_slider_text=Swipe to Wipe</action>
 					<action function="page">confirm_action</action>
 				</actions>
@@ -775,12 +775,12 @@
 
 		<page name="rebootcheck">
 			<object type="action">
-				<condition var1="tw_backup_system_size" op=">=" var2="%tw_min_system%" />
+				<condition var1="tw_backup_system_size" op="&gt;=" var2="%tw_min_system%" />
 				<action function="reboot">%tw_action_param%</action>
 			</object>
 
 			<object type="action">
-				<condition var1="tw_backup_system_size" op="<" var2="%tw_min_system%" />
+				<condition var1="tw_backup_system_size" op="&lt;" var2="%tw_min_system%" />
 				<action function="page">confirm_action</action>
 			</object>
 		</page>
@@ -1247,7 +1247,7 @@
 
 			<object type="action">
 				<condition var1="tw_confirm_formatdata" op="!=" var2="yes" />
-				<action function="page">formatdata</function>
+				<action function="page">formatdata</action>
 			</object>
 		</page>
 
@@ -1655,11 +1655,11 @@
 		<page name="backupname1">
 			<object type="action">
 				<condition var1="tw_backup_name" op="=" var2="(Auto Generate)" />
-				<action function="generatebackupname"></function>
+				<action function="generatebackupname"></action>
 			</object>
 
 			<object type="action">
-				<action function="page">backupname2</function>
+				<action function="page">backupname2</action>
 			</object>
 		</page>
 
@@ -2007,7 +2007,7 @@
 				<actions>
 					<action function="set">tw_back=restore</action>
 					<action function="set">tw_action=cmd</action>
-					<action function="set">tw_action_param=cd %tw_backups_folder% && rm -rf &quot;%tw_restore_name%&quot;</action>
+					<action function="set">tw_action_param=cd %tw_backups_folder% &amp;&amp; rm -rf &quot;%tw_restore_name%&quot;</action>
 					<action function="set">tw_text1=Delete Backup? %tw_restore_name%</action>
 					<action function="set">tw_text2=This cannot be undone!</action>
 					<action function="set">tw_action_text1=Deleting Backup...</action>
@@ -2113,7 +2113,7 @@
 				<actions>
 					<action function="set">tw_back=restore</action>
 					<action function="set">tw_action=cmd</action>
-					<action function="set">tw_action_param=cd %tw_backups_folder% && rm -rf &quot;%tw_restore_name%&quot;</action>
+					<action function="set">tw_action_param=cd %tw_backups_folder% &amp;&amp; rm -rf &quot;%tw_restore_name%&quot;</action>
 					<action function="set">tw_text1=Delete Backup? %tw_restore_name%</action>
 					<action function="set">tw_text2=This cannot be undone!</action>
 					<action function="set">tw_action_text1=Deleting Backup...</action>
@@ -2157,7 +2157,7 @@
 				<actions>
 					<action function="set">tw_back=restore</action>
 					<action function="set">tw_action=cmd</action>
-					<action function="set">tw_action_param=cd %tw_backups_folder% && mv &quot;%tw_restore_name%&quot; &quot;%tw_backup_rename%&quot;</action>
+					<action function="set">tw_action_param=cd %tw_backups_folder% &amp;&amp; mv &quot;%tw_restore_name%&quot; &quot;%tw_backup_rename%&quot;</action>
 					<action function="set">tw_text1=Rename Backup?</action>
 					<action function="set">tw_text2=This cannot be undone!</action>
 					<action function="set">tw_action_text1=Renaming Backup...</action>
@@ -2875,7 +2875,7 @@
 				<placement x="%col1_x%" y="%row2_y%" />
 				<text>Copy Folder</text>
 				<actions>
-					<action function="set">tw_filemanager_command=cd &quot;%tw_file_location1%&quot; && cd .. && cp -R</action>
+					<action function="set">tw_filemanager_command=cd &quot;%tw_file_location1%&quot; &amp;&amp; cd .. &amp;&amp; cp -R</action>
 					<action function="set">tw_fm_text1=Copying</action>
 					<action function="page">choosedestinationfolder</action>
 				</actions>
@@ -2951,7 +2951,7 @@
 				<actions>
 					<action function="set">tw_filemanager_rename=tw_selection1</action>
 					<action function="set">tw_fm_text1=Renaming</action>
-					<action function="set">tw_filemanager_command=cd &quot;%tw_file_location1%&quot; && cd .. && mv</action>
+					<action function="set">tw_filemanager_command=cd &quot;%tw_file_location1%&quot; &amp;&amp; cd .. &amp;&amp; mv</action>
 					<action function="page">filemanagerrenamefolder</action>
 				</actions>
 			</object>
@@ -2974,7 +2974,7 @@
 
 			<object type="text">
 				<placement x="%center_x%" y="%row1_text_y%" placement="5"/>
-				<text>Browse to Destination Folder & Press Select</text>
+				<text>Browse to Destination Folder &amp; Press Select</text>
 			</object>
 
 			<object type="fileselector">

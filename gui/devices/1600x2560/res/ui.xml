@@ -244,8 +244,8 @@
 				<placement x="650" y="132" />
 				<conditions>
 					<condition var1="tw_no_battery_percent" var2="0" />
-					<condition var1="tw_battery" op=">" var2="0" />
-					<condition var1="tw_battery" op="<" var2="101" />
+					<condition var1="tw_battery" op="&gt;" var2="0" />
+					<condition var1="tw_battery" op="&lt;" var2="101" />
 				</conditions>
 				<text>Battery Level: %tw_battery%</text>
 			</object>
@@ -394,21 +394,21 @@
 				<layout1>
 					<keysize height="238" width="160" />
 					<row1 key01="q" long01="1" key02="w" long02="2" key03="e" long03="3" key04="r" long04="4" key05="t" long05="5" key06="y" long06="6" key07="u" long07="7" key08="i" long08="8" key09="o" long09="9" key10="p" long10="0" />
-					<row2 key01="238:a" long01="@" key02="s" long02="#" key03="d" long03="$" key04="f" long04="%" key05="g" long05="&" key06="h" long06="*" key07="j" long07="-" key08="k" long08="+" key09="162:l" long09="_" />
+					<row2 key01="238:a" long01="@" key02="s" long02="#" key03="d" long03="$" key04="f" long04="%" key05="g" long05="&amp;" key06="h" long06="*" key07="j" long07="-" key08="k" long08="+" key09="162:l" long09="_" />
 					<row3 key01="238:layout2" key02="z" long02="!" key03="x" key04="c" long04="'" key05="v" long05=":" key06="b" long06=";" key07="n" long07="/" key08="m" long08="?" key09="238:c:8" />
 					<row4 key01="238:layout3" key02="160:c:47" key03="800: " key04="." key05="238:action" />
 				</layout1>
 				<layout2>
 					<keysize height="238" width="160" capslock="0" revert_layout="1" />
 					<row1 key01="Q" long01="1" key02="W" long02="2" key03="E" long03="3" key04="R" long04="4" key05="T" long05="5" key06="Y" long06="6" key07="U" long07="7" key08="I" long08="8" key09="O" long09="9" key10="P" long10="0" />
-					<row2 key01="238:A" long01="@" key02="S" long02="#" key03="D" long03="$" key04="F" long04="%" key05="G" long05="&" key06="H" long06="*" key07="J" long07="-" key08="K" long08="+" key09="162:L" long09="_" />
+					<row2 key01="238:A" long01="@" key02="S" long02="#" key03="D" long03="$" key04="F" long04="%" key05="G" long05="&amp;" key06="H" long06="*" key07="J" long07="-" key08="K" long08="+" key09="162:L" long09="_" />
 					<row3 key01="238:layout1" key02="Z" long02="!" key03="X" key04="C" long04="'" key05="V" long05=":" key06="B" long06=";" key07="N" long07="/" key08="M" long08="?" key09="238:c:8" />
 					<row4 key01="238:layout3" key02="160:c:47" key03="800: " key04="." key05="238:action" />
 				</layout2>
 				<layout3>
 					<keysize height="238" width="160" />
 					<row1 key01="1" key02="2" key03="3" key04="4" key05="5" key06="6" key07="7" key08="8" key09="9" key10="0" />
-					<row2 key01="@" key02="#" key03="$" key04="%" key05="&" key06="*" key07="-" key08="+" key09="(" key10=")" />
+					<row2 key01="@" key02="#" key03="$" key04="%" key05="&amp;" key06="*" key07="-" key08="+" key09="(" key10=")" />
 					<row3 key01="238:layout4" key02="!" key03="160:c:34" key04="'" key05=":" key06=";" key07="/" key08="?" key09="238:c:8" />
 					<row4 key01="238:layout1" key02="," key03="800: " key04="." key05="238:action" />
 				</layout3>
@@ -416,7 +416,7 @@
 					<keysize height="238" width="160" />
 					<row1 key01="~" key02="`" key03="|" key04="160:" key05="160:" key06="160:" key07="%" key08="160:" key09="{" key10="}" />
 					<row2 key01="160:" key02="160:" key03="160:" key04="160:" key05="160:" key06="^" key07="_" key08="=" key09="[" key10="]" />
-					<row3 key01="238:layout3" key02="160:" key03="160:" key04="160:" key05="160:" key06="\" key07="<" key08=">" key09="238:c:8" />
+					<row3 key01="238:layout3" key02="160:" key03="160:" key04="160:" key05="160:" key06="\" key07="&lt;" key08="&gt;" key09="238:c:8" />
 					<row4 key01="238:layout1" key02="160:c:34" key03="800: " key04="." key05="238:action" />
 				</layout4>
 			</object>
