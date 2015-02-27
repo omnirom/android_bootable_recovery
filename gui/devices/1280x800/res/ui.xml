@@ -242,8 +242,8 @@
 				<placement x="250" y="30" />
 				<conditions>
 					<condition var1="tw_no_battery_percent" var2="0" />
-					<condition var1="tw_battery" op=">" var2="0" />
-					<condition var1="tw_battery" op="<" var2="101" />
+					<condition var1="tw_battery" op="&gt;" var2="0" />
+					<condition var1="tw_battery" op="&lt;" var2="101" />
 				</conditions>
 				<text>Battery Level: %tw_battery%</text>
 			</object>
@@ -424,8 +424,8 @@
 				<layout3>
 					<keysize height="90" width="106" />
 					<row1 key01="102:" key02="1" key03="2" key04="3" key05="4" key06="5" key07="6" key08="7" key09="8" key10="9" key11="0" key12="118:c:8" />
-					<row2 key01="142:layout1" key02="104:#" key03="104:$" key04="104:%" key05="104:&" key06="104:*" key07="104:-" key08="104:+" key09="104:(" key10="104:)" key11="202:action" />
-					<row3 key01="176:layout4" key02="103:<" key03="103:>" key04="103:=" key05="103:'" key06="103:;" key07="103:," key08="103:." key09="103:!" key10="103:?" key11="177:layout4" />
+					<row2 key01="142:layout1" key02="104:#" key03="104:$" key04="104:%" key05="104:&amp;" key06="104:*" key07="104:-" key08="104:+" key09="104:(" key10="104:)" key11="202:action" />
+					<row3 key01="176:layout4" key02="103:&lt;" key03="103:&gt;" key04="103:=" key05="103:'" key06="103:;" key07="103:," key08="103:." key09="103:!" key10="103:?" key11="177:layout4" />
 					<row4 key01="190:" key02="/" key03="104:@" key04="480: " key05="102:c:34" key06="_" />
 				</layout3>
 				<layout4>
