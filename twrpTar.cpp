@@ -61,6 +61,7 @@ twrpTar::twrpTar(void) {
 	pigz_pid = 0;
 	oaes_pid = 0;
 	Total_Backup_Size = 0;
+	Archive_Current_Size = 0;
 	include_root_dir = true;
 }
 
