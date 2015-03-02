@@ -54,6 +54,9 @@
 #include "wipe.h"
 #endif
 
+#ifdef USE_UBIFS
+#include "ubi.h"
+#endif
 void uiPrint(State* state, char* buffer) {
     char* line = strtok(buffer, "\n");
     UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
@@ -87,10 +90,12 @@ char* PrintSha1(const uint8_t* digest) {
     return buffer;
 }
 
+
 // mount(fs_type, partition_type, location, mount_point)
 //
 //    fs_type="yaffs2" partition_type="MTD"     location=partition
 //    fs_type="ext4"   partition_type="EMMC"    location=device
+//    fs_type="ubifs"  partition_type="UBI"	location=device
 Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
     if (argc != 4 && argc != 5) {
@@ -270,6 +275,8 @@ static int exec_cmd(const char* path, char* const argv[]) {
 //    fs_type="ext4"   partition_type="EMMC"    location=device    fs_size=<bytes> mount_point=<location>
 //    fs_type="f2fs"   partition_type="EMMC"    location=device    fs_size=<bytes> mount_point=<location>
 //    if fs_size == 0, then make fs uses the entire partition.
+//    fs_type "ubifs"  partition_type="UBIFS"   location=device    fs_size=<bytes> mount_point=<localtion>
+//    if fs_size == 0, then make_ext4fs uses the entire partition.
 //    if fs_size > 0, that is the size to use
 //    if fs_size < 0, then reserve that many bytes at the end of the partition (not for "f2fs")
 Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -361,6 +368,15 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
             goto done;
         }
         result = location;
+#endif
+
+#ifdef USE_UBIFS
+    } else if (strcmp(fs_type, "ubifs") == 0) {
+
+            if (ubiVolumeFormat(location) != 0)
+                    goto done;
+
+            result = location;
 #endif
     } else {
         printf("%s: unsupported fs_type \"%s\" partition_type \"%s\"",

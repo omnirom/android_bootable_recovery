@@ -113,6 +113,12 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_C_INCLUDES += system/extras/ext4_utils
     LOCAL_SHARED_LIBRARIES += libext4_utils
 endif
+ifeq ($(TARGET_USERIMAGES_USE_UBIFS),true)
+    LOCAL_CFLAGS += -DUSE_UBIFS
+    LOCAL_C_INCLUDES += external/mtd-utils/new-utils/include/
+    LOCAL_STATIC_LIBRARIES += libubi
+    LOCAL_SRC_FILES += ubi.cpp
+endif
 ifneq ($(wildcard external/libselinux/Android.mk),)
     TWHAVE_SELINUX := true
 endif
@@ -131,6 +137,7 @@ ifeq ($(TWHAVE_SELINUX), true)
         LOCAL_SHARED_LIBRARIES += libext4_utils
     endif
 endif
+
 
 # This binary is in the recovery ramdisk, which is otherwise a copy of root.
 # It gets copied there in config/Makefile.  LOCAL_MODULE_TAGS suppresses
