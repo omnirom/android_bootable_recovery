@@ -286,7 +286,7 @@ int format_volume(const char* volume) {
     if (strcmp(v->fs_type, "ubifs") == 0) {
         int ret;
         LOGW("formating by ubiVolumeFormat");
-        ret = ubiVolumeFormat(v->device);
+        ret = ubiVolumeFormat(v->blk_device);
         if (ret != 0) {
             LOGE("ubiVolumeFormat return error:%d", ret);
             return -1;
