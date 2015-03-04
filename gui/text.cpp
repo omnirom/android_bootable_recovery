@@ -172,7 +172,12 @@ std::string GUIText::parseText(void)
 		else
 		{
 			std::string value;
-			if (DataManager::GetValue(var, value) == 0)
+			if (var.size() > 0 && var[0] == '@') {
+				// this is a string resource ("%@string_name%")
+				value = PageManager::GetResources()->FindString(var.substr(1));
+				str.insert(next, value);
+			}
+			else if (DataManager::GetValue(var, value) == 0)
 				str.insert(next, value);
 		}
 
