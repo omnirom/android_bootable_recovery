@@ -88,7 +88,7 @@ public:
 	Page* FindPage(std::string name);
 	int SetPage(std::string page);
 	int SetOverlay(Page* page);
-	Resource* FindResource(std::string name);
+	const ResourceManager* GetResources();
 
 	// Helper routine for identifing if we're the current page
 	int IsCurrentPage(Page* page);
@@ -131,8 +131,7 @@ public:
 	// Used for actions and pages
 	static int ChangePage(std::string name);
 	static int ChangeOverlay(std::string name);
-	static Resource* FindResource(std::string name);
-	static Resource* FindResource(std::string package, std::string name);
+	static const ResourceManager* GetResources();
 
 	// Used for console-only mode
 	static int SwitchToConsole(void);

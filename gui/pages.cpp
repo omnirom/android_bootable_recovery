@@ -208,8 +208,7 @@ FontResource* LoadAttrFont(xml_node<>* element, const char* attrname)
 	if (name.empty())
 		return NULL;
 	else
-		return (FontResource*) PageManager::FindResource(name);
-	// TODO: make resource lookup type-safe
+		return PageManager::GetResources()->FindFont(name);
 }
 
 ImageResource* LoadAttrImage(xml_node<>* element, const char* attrname)
@@ -218,8 +217,7 @@ ImageResource* LoadAttrImage(xml_node<>* element, const char* attrname)
 	if (name.empty())
 		return NULL;
 	else
-		return (ImageResource*) PageManager::FindResource(name);
-	// TODO: make resource lookup type-safe
+		return PageManager::GetResources()->FindImage(name);
 }
 
 AnimationResource* LoadAttrAnimation(xml_node<>* element, const char* attrname)
@@ -228,8 +226,7 @@ AnimationResource* LoadAttrAnimation(xml_node<>* element, const char* attrname)
 	if (name.empty())
 		return NULL;
 	else
-		return (AnimationResource*) PageManager::FindResource(name);
-	// TODO: make resource lookup type-safe
+		return PageManager::GetResources()->FindAnimation(name);
 }
 
 bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h /* = NULL */, RenderObject::Placement* placement /* = NULL */)
@@ -649,7 +646,7 @@ int Page::NotifyVarChange(std::string varName, std::string value)
 
 PageSet::PageSet(char* xmlFile)
 {
-	mResources = NULL;
+	mResources = new ResourceManager;
 	mCurrentPage = NULL;
 	mOverlayPage = NULL;
 
@@ -742,7 +739,7 @@ int PageSet::Load(ZipArchive* package)
 	LOGINFO("Loading resources...\n");
 	child = parent->first_node("resources");
 	if (child)
-		mResources = new ResourceManager(child, package);
+		mResources->LoadResources(child, package);
 
 	LOGINFO("Loading variables...\n");
 	child = parent->first_node("variables");
@@ -937,9 +934,9 @@ int PageSet::SetOverlay(Page* page)
 	return 0;
 }
 
-Resource* PageSet::FindResource(std::string name)
+const ResourceManager* PageSet::GetResources()
 {
-	return mResources ? mResources->FindResource(name) : NULL;
+	return mResources;
 }
 
 Page* PageSet::FindPage(std::string name)
@@ -1307,17 +1304,9 @@ int PageManager::ChangeOverlay(std::string name)
 	}
 }
 
-Resource* PageManager::FindResource(std::string name)
+const ResourceManager* PageManager::GetResources()
 {
-	return (mCurrentSet ? mCurrentSet->FindResource(name) : NULL);
-}
-
-Resource* PageManager::FindResource(std::string package, std::string name)
-{
-	PageSet* tmp;
-
-	tmp = FindPackage(name);
-	return (tmp ? tmp->FindResource(name) : NULL);
+	return (mCurrentSet ? mCurrentSet->GetResources() : NULL);
 }
 
 int PageManager::SwitchToConsole(void)
