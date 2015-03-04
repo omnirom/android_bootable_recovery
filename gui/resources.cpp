@@ -288,17 +288,19 @@ ResourceManager::ResourceManager()
 
 void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 {
-	xml_node<>* child;
-
 	if (!resList)
 		return;
-	child = resList->first_node("resource");
-	while (child != NULL)
+
+	for (xml_node<>* child = resList->first_node(); child; child = child->next_sibling())
 	{
-		xml_attribute<>* attr = child->first_attribute("type");
+		std::string type = child->name();
+		if (type == "resource") {
+			// legacy format : <resource type="...">
+			xml_attribute<>* attr = child->first_attribute("type");
+			type = attr ? attr->value() : "*unspecified*";
+		}
 
 		bool error = false;
-		std::string type = attr ? attr->value() : "*unspecified*";
 		if (type == "font")
 		{
 			FontResource* res = new FontResource(child, pZip);
@@ -356,8 +358,6 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 			} else
 				LOGERR("Resource type (%s) failed to load\n", type.c_str());
 		}
-
-		child = child->next_sibling("resource");
 	}
 }
 
