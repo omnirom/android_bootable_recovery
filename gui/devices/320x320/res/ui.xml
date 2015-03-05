@@ -202,6 +202,14 @@
 		<variable name="slidervalue_sliderh" value="20" />
 		<variable name="wipe_button_row1" value="240" />
 		<variable name="invalid_partition_y" value="218" />
+		<variable name="pattern_x" value="70" />
+		<variable name="pattern_y" value="22" />
+		<variable name="pattern_width" value="180" />
+		<variable name="pattern_dot_color" value="#33B5E5" />
+		<variable name="pattern_dot_color_active" value="#FFFFFF" />
+		<variable name="pattern_dot_radius" value="7" />
+		<variable name="pattern_line_color" value="#33B5E5" />
+		<variable name="pattern_line_width" value="4" />
 	</variables>
 
 	<templates>

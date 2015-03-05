@@ -214,6 +214,14 @@
 		<variable name="slidervalue_padding" value="0" />
 		<variable name="slidervalue_sliderw" value="7" />
 		<variable name="slidervalue_sliderh" value="40" />
+		<variable name="pattern_x" value="200" />
+		<variable name="pattern_y" value="110" />
+		<variable name="pattern_width" value="300" />
+		<variable name="pattern_dot_color" value="#33B5E5" />
+		<variable name="pattern_dot_color_active" value="#FFFFFF" />
+		<variable name="pattern_dot_radius" value="10" />
+		<variable name="pattern_line_color" value="#33B5E5" />
+		<variable name="pattern_line_width" value="7" />
 	</variables>
 
 	<mousecursor>
