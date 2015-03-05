@@ -144,12 +144,12 @@
 		<variable name="fileselector_highlight_color" value="#505050" />
 		<variable name="fileselector_highlight_font_color" value="#33B5E5" />
 		<variable name="fileselector_spacing" value="12" />
-		<variable name="fastscroll_linecolor" value="#808080" />
-		<variable name="fastscroll_rectcolor" value="#808080" />
+		<variable name="fastscroll_linecolor" value="#50505080" />
+		<variable name="fastscroll_rectcolor" value="#33B5E580" />
 		<variable name="fastscroll_w" value="32" />
 		<variable name="fastscroll_linew" value="1" />
-		<variable name="fastscroll_rectw" value="18" />
-		<variable name="fastscroll_recth" value="31" />
+		<variable name="fastscroll_rectw" value="7" />
+		<variable name="fastscroll_recth" value="24" />
 		<variable name="listbox_x" value="0" />
 		<variable name="listbox_width" value="280" />
 		<variable name="listbox_background" value="#303030" />
