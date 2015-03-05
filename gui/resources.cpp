@@ -4,22 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <sys/reboot.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <time.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
 
+#include "../minzip/Zip.h"
 extern "C" {
 #include "../twcommon.h"
 #include "../minuitwrp/minui.h"
@@ -282,6 +274,14 @@ AnimationResource* ResourceManager::FindAnimation(const std::string& name) const
 	return NULL;
 }
 
+std::string ResourceManager::FindString(const std::string& name) const
+{
+	std::map<std::string, std::string>::const_iterator it = mStrings.find(name);
+	if (it != mStrings.end())
+		return it->second;
+	return "[" + name + ("]");
+}
+
 ResourceManager::ResourceManager()
 {
 }
@@ -338,6 +338,13 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 				error = true;
 				delete res;
 			}
+		}
+		else if (type == "string")
+		{
+			if (xml_attribute<>* attr = child->first_attribute("name"))
+				mStrings[attr->value()] = child->value();
+			else
+				error = true;
 		}
 		else
 		{

@@ -3,7 +3,11 @@
 #ifndef _RESOURCE_HEADER
 #define _RESOURCE_HEADER
 
-#include "../minzip/Zip.h"
+#include <string>
+#include <vector>
+#include <map>
+
+struct ZipArchive;
 
 extern "C" {
 #include "../minuitwrp/minui.h"
@@ -94,11 +98,13 @@ public:
 	FontResource* FindFont(const std::string& name) const;
 	ImageResource* FindImage(const std::string& name) const;
 	AnimationResource* FindAnimation(const std::string& name) const;
+	std::string FindString(const std::string& name) const;
 
 private:
 	std::vector<FontResource*> mFonts;
 	std::vector<ImageResource*> mImages;
 	std::vector<AnimationResource*> mAnimations;
+	std::map<std::string, std::string> mStrings;
 };
 
 #endif  // _RESOURCE_HEADER

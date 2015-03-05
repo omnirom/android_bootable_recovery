@@ -217,9 +217,6 @@ protected:
 	int mFontHeight;
 	unsigned maxWidth;
 	unsigned charSkip;
-
-protected:
-	std::string parseText(void);
 };
 
 // GUIImage - Used for static image
