@@ -586,6 +586,51 @@ void gr_fill(int x, int y, int w, int h)
         gl->enable(gl, GGL_BLEND);
 }
 
+void gr_line(int x0, int y0, int x1, int y1, int width)
+{
+    GGLContext *gl = gr_context;
+
+    if(gr_is_curr_clr_opaque)
+        gl->disable(gl, GGL_BLEND);
+
+    const int coords0[2] = { x0 << 4, y0 << 4 };
+    const int coords1[2] = { x1 << 4, y1 << 4 };
+    gl->linex(gl, coords0, coords1, width << 4);
+
+    if(gr_is_curr_clr_opaque)
+        gl->enable(gl, GGL_BLEND);
+}
+
+gr_surface gr_render_circle(int radius, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+{
+    int rx, ry;
+    GGLSurface *surface;
+    const int diameter = radius*2 + 1;
+    const int radius_check = radius*radius + radius*0.8;
+    const uint32_t px = (a << 24) | (b << 16) | (g << 8) | r;
+    uint32_t *data;
+
+    surface = malloc(sizeof(GGLSurface));
+    memset(surface, 0, sizeof(GGLSurface));
+
+    data = malloc(diameter * diameter * 4);
+    memset(data, 0, diameter * diameter * 4);
+
+    surface->version = sizeof(surface);
+    surface->width = diameter;
+    surface->height = diameter;
+    surface->stride = diameter;
+    surface->data = (GGLubyte*)data;
+    surface->format = GGL_PIXEL_FORMAT_RGBA_8888;
+
+    for(ry = -radius; ry <= radius; ++ry)
+        for(rx = -radius; rx <= radius; ++rx)
+            if(rx*rx+ry*ry <= radius_check)
+                *(data + diameter*(radius + ry) + (radius+rx)) = px;
+
+    return surface;
+}
+
 void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy) {
     if (gr_context == NULL) {
         return;
