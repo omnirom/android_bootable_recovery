@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_f8f550eb",
+        "filename": "roots.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-03-05T04:43:05Z",
+      "side": 1,
+      "message": "why did you define these two?",
+      "revId": "24af6bff873943dd0f1c187477330a5c13192299",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_18fb0cdf",
+        "filename": "roots.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-03-05T04:43:05Z",
+      "side": 1,
+      "message": "this should be ifdef\u0027d",
+      "revId": "24af6bff873943dd0f1c187477330a5c13192299",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_98929ca1",
+        "filename": "updater/install.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-03-05T04:43:05Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "24af6bff873943dd0f1c187477330a5c13192299",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_b8ebd80d",
+        "filename": "updater/install.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 279,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-03-05T04:43:05Z",
+      "side": 1,
+      "message": "bad conflict resolution",
+      "revId": "24af6bff873943dd0f1c187477330a5c13192299",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
