@@ -663,10 +663,11 @@ int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
     gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
     gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
-    gl->enable(gl, GGL_TEXTURE_2D);
 
+    gl->enable(gl, GGL_TEXTURE_2D);
     gl->texCoord2i(gl, -x, -y);
     gl->recti(gl, x, y, x + e->surface.width, y_bottom);
+    gl->disable(gl, GGL_TEXTURE_2D);
 
     pthread_mutex_unlock(&font->mutex);
     return res;
