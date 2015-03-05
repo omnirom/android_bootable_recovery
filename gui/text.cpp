@@ -55,7 +55,7 @@ GUIText::GUIText(xml_node<>* node)
 	if (child)  mText = child->value();
 
 	// Simple way to check for static state
-	mLastValue = parseText();
+	mLastValue = gui_parse_text(mText);
 	if (mLastValue != mText)   mIsStatic = 0;
 
 	mFontHeight = mFont->GetHeight();
@@ -70,7 +70,7 @@ int GUIText::Render(void)
 	if (mFont)
 		fontResource = mFont->GetResource();
 
-	mLastValue = parseText();
+	mLastValue = gui_parse_text(mText);
 	string displayValue = mLastValue;
 
 	if (charSkip)
@@ -126,7 +126,7 @@ int GUIText::Update(void)
 	if (mIsStatic || !mVarChanged)
 		return 0;
 
-	std::string newValue = parseText();
+	std::string newValue = gui_parse_text(mText);
 	if (mLastValue == newValue)
 		return 0;
 	else
@@ -142,42 +142,9 @@ int GUIText::GetCurrentBounds(int& w, int& h)
 		fontResource = mFont->GetResource();
 
 	h = mFontHeight;
-	mLastValue = parseText();
+	mLastValue = gui_parse_text(mText);
 	w = gr_measureEx(mLastValue.c_str(), fontResource);
 	return 0;
-}
-
-std::string GUIText::parseText(void)
-{
-	static int counter = 0;
-	std::string str = mText;
-	size_t pos = 0;
-	size_t next = 0, end = 0;
-
-	while (1)
-	{
-		next = str.find('%', pos);
-		if (next == std::string::npos) return str;
-		end = str.find('%', next + 1);
-		if (end == std::string::npos) return str;
-
-		// We have a block of data
-		std::string var = str.substr(next + 1, (end - next) - 1);
-		str.erase(next, (end - next) + 1);
-
-		if (next + 1 == end)
-		{
-			str.insert(next, 1, '%');
-		}
-		else
-		{
-			std::string value;
-			if (DataManager::GetValue(var, value) == 0)
-				str.insert(next, value);
-		}
-
-		pos = next + 1;
-	}
 }
 
 int GUIText::NotifyVarChange(const std::string& varName, const std::string& value)
