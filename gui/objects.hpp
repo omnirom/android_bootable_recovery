@@ -1058,6 +1058,58 @@ private:
 	bool m_present;
 };
 
+class GUIPatternPassword : public GUIObject, public RenderObject, public ActionObject
+{
+public:
+	GUIPatternPassword(xml_node<>* node);
+	virtual ~GUIPatternPassword();
+
+public:
+	virtual int Render(void);
+	virtual int Update(void);
+	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
+	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
+
+protected:
+	void CalculateDotPositions();
+	void ResetActiveDots();
+	void ConnectDot(int dot_idx);
+	void ConnectIntermediateDots(int dot_idx);
+	int InDot(int x, int y);
+	bool DotUsed(int dot_idx);
+	static bool IsInRect(int x, int y, int rx, int ry, int rw, int rh);
+	void PatternDrawn();
+
+	struct Dot {
+		int x;
+		int y;
+		bool active;
+	};
+
+	Dot mDots[9];
+	int mConnectedDots[9];
+	size_t mConnectedDotsLen;
+	int mCurLineX;
+	int mCurLineY;
+	bool mTrackingTouch;
+	bool mNeedRender;
+
+	COLOR mDotColor;
+	COLOR mActiveDotColor;
+	COLOR mLineColor;
+	ImageResource *mDotImage;
+	ImageResource *mActiveDotImage;
+	gr_surface mDotCircle;
+	gr_surface mActiveDotCircle;
+	int mDotRadius;
+	int mLineWidth;
+
+	std::string mPassVar;
+	GUIAction *mAction;
+	int mUpdate;
+};
+
+
 // Helper APIs
 xml_node<>* FindNode(xml_node<>* parent, const char* nodename, int depth = 0);
 std::string LoadAttrString(xml_node<>* element, const char* attrname, const char* defaultvalue = "");
