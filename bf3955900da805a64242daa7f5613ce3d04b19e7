@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_78a240a7",
+        "filename": "minuitwrp/graphics.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 609,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-03-05T22:06:14Z",
+      "side": 1,
+      "message": "why radius*0.8?",
+      "revId": "bf3955900da805a64242daa7f5613ce3d04b19e7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
