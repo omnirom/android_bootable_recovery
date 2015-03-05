@@ -290,6 +290,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 						Current_File_System = "emmc";
 						Setup_Image(Display_Error);
 						DataManager::SetValue(TW_IS_ENCRYPTED, 1);
+						DataManager::SetValue(TW_CRYPTO_PWTYPE, cryptfs_get_password_type());
 						DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
 						DataManager::SetValue("tw_crypto_display", "");
 					} else {
