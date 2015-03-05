@@ -39,6 +39,8 @@ void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a
 void gr_clip(int x, int y, int w, int h);
 void gr_noclip();
 void gr_fill(int x, int y, int w, int h);
+void gr_line(int x0, int y0, int x1, int y1, int width);
+gr_surface gr_render_circle(int radius, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 
 int gr_textEx(int x, int y, const char *s, void* font);
 int gr_textExW(int x, int y, const char *s, void* font, int max_width);
