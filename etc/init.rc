@@ -36,6 +36,8 @@ on init
     write /proc/sys/kernel/panic_on_oops 1
 
 on fs
+    mount pstore pstore /sys/fs/pstore
+
     mkdir /dev/usb-ffs 0770 shell shell
     mkdir /dev/usb-ffs/adb 0770 shell shell
     mount functionfs adb /dev/usb-ffs/adb uid=2000,gid=2000
