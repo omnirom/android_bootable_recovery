@@ -163,12 +163,17 @@ int getFbYres (void) {
 
 static int get_framebuffer(GGLSurface *fb)
 {
-    int fd;
+    int fd, index = 0;
     void *bits;
 
     fd = open("/dev/graphics/fb0", O_RDWR);
+    while (fd < 0 && index < 10) {
+        usleep(1000);
+        fd = open("/dev/graphics/fb0", O_RDWR);
+        index++;
+    }
     if (fd < 0) {
-        perror("cannot open fb0");
+        perror("cannot open fb0\n");
         return -1;
     }
 

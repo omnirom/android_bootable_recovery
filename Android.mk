@@ -323,7 +323,11 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     mkdosfs
 
 ifneq ($(TARGET_ARCH), arm64)
-    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
+    ifneq ($(TARGET_ARCH), x86_64)
+        LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
+    else
+        LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
+    endif
 else
     LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
 endif
