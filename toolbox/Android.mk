@@ -1,7 +1,7 @@
 LOCAL_PATH:= system/core/toolbox/
 
 
-ifeq ($(PLATFORM_SDK_VERSION), 21)
+ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22))
 
 # Rule for lollipop
 common_cflags := \
