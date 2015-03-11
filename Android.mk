@@ -84,11 +84,7 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_STATIC_LIBRARIES += libext4_utils_static libz
 endif
 
-# This binary is in the recovery ramdisk, which is otherwise a copy of root.
-# It gets copied there in config/Makefile.  LOCAL_MODULE_TAGS suppresses
-# a (redundant) copy of the binary in /system/bin for user builds.
-# TODO: Build the ramdisk image in a more principled way.
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 
 ifeq ($(TARGET_RECOVERY_UI_LIB),)
   LOCAL_SRC_FILES += default_device.cpp
