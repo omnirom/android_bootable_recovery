@@ -130,7 +130,7 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIScrollList(node)
 		{
 			mSlideout = 1;
 			mSlideoutState = hidden;
-			LoadPlacement(child, &mSlideoutX, &mSlideoutY);
+			LoadPlacement(child, &mSlideoutX, &mSlideoutY, &mSlideoutW, &mSlideoutH, &mPlacement);
 
 			mSlideoutImage = LoadAttrImage(child, "resource");
 
@@ -138,6 +138,12 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIScrollList(node)
 			{
 				mSlideoutW = mSlideoutImage->GetWidth();
 				mSlideoutH = mSlideoutImage->GetHeight();
+				if (mPlacement == CENTER || mPlacement == CENTER_X_ONLY) {
+					mSlideoutX = mSlideoutX - (mSlideoutW / 2);
+					if (mPlacement == CENTER) {
+						mSlideoutY = mSlideoutY - (mSlideoutH / 2);
+					}
+				}
 			}
 		}
 	}
