@@ -15,10 +15,10 @@
 
 	<resources>
 		<resource name="font" type="font" filename="RobotoCondensed-Regular.ttf" size="16" fallback="Roboto-Condensed-16" />
-		<resource name="base" type="image" filename="background.jpg" />
+		<resource name="twrplogo" type="image" filename="twrplogo" retainaspect="1" />
 		<resource name="main_button" type="image" filename="button" />
-		<resource name="file_icon" type="image" filename="file" />
-		<resource name="folder_icon" type="image" filename="folder" />
+		<resource name="file_icon" type="image" filename="file" retainaspect="1" />
+		<resource name="folder_icon" type="image" filename="folder" retainaspect="1" />
 		<resource name="progress" type="animation" filename="indeterminate" />
 		<resource name="progress_empty" type="image" filename="progress_empty" />
 		<resource name="progress_full" type="image" filename="progress_fill" />
@@ -31,13 +31,13 @@
 		<resource name="sort_button" type="image" filename="sort-button" />
 		<resource name="minus_button" type="image" filename="minus-button" />
 		<resource name="plus_button" type="image" filename="plus-button" />
-		<resource name="home_icon" type="image" filename="home-icon" />
-		<resource name="back_icon" type="image" filename="back-icon" />
-		<resource name="console_button" type="image" filename="console-toggle" />
-		<resource name="slider" type="image" filename="slider" />
-		<resource name="slider-used" type="image" filename="slider-used" />
-		<resource name="slider-touch" type="image" filename="slider-touch" />
-		<resource name="unlock-icon" type="image" filename="unlock" />
+		<resource name="home_icon" type="image" filename="home-icon" retainaspect="1" />
+		<resource name="back_icon" type="image" filename="back-icon" retainaspect="1" />
+		<resource name="console_button" type="image" filename="console-toggle" retainaspect="1" />
+		<resource name="slider" type="image" filename="slider" retainaspect="1" />
+		<resource name="slider-used" type="image" filename="slider-used" retainaspect="1" />
+		<resource name="slider-touch" type="image" filename="slider-touch" retainaspect="1" />
+		<resource name="unlock-icon" type="image" filename="unlock" retainaspect="1" />
 		<resource name="keyboard1" type="image" filename="keyboard1" />
 		<resource name="keyboard2" type="image" filename="keyboard2" />
 		<resource name="keyboard3" type="image" filename="keyboard3" />
@@ -173,8 +173,7 @@
 		<variable name="listbox_background" value="#303030" />
 		<variable name="listbox_spacing" value="12" />
 		<variable name="sd_plus_x" value="280" />
-		<variable name="lock_x" value="250" />
-		<variable name="lock_y" value="90" />
+		<variable name="lock_y" value="150" />
 		<variable name="filemanager_select_x" value="610" />
 		<variable name="filemanager_select_y" value="413" />
 		<variable name="backup_name_text_y" value="440" />
@@ -226,20 +225,28 @@
 		<template name="header">
 			<background color="#000000FF" />
 
+			<object type="fill" color="%button_fill_color%">
+				<placement x="0" y="0" w="800" h="58" />
+			</object>
+
+			<object type="fill" color="%highlight%">
+				<placement x="0" y="58" w="800" h="2" />
+			</object>
+
 			<object type="image">
-				<image resource="base" />
-				<placement x="0" y="0" />
+				<image resource="twrplogo" />
+				<placement x="35" y="29" placement="4" />
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="250" y="2" />
+				<placement x="70" y="2" />
 				<text>Team Win Recovery Project  v%tw_version%</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="250" y="37" />
+				<placement x="70" y="37" />
 				<conditions>
 					<condition var1="tw_no_battery_percent" var2="0" />
 					<condition var1="tw_battery" op="&gt;" var2="0" />
