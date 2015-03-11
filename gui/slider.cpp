@@ -68,6 +68,12 @@ GUISlider::GUISlider(xml_node<>* node) : GUIObject(node)
 
 	mRenderW = sSlider->GetWidth();
 	mRenderH = sSlider->GetHeight();
+	if (TextPlacement == CENTER || TextPlacement == CENTER_X_ONLY) {
+		mRenderX = mRenderX - (mRenderW / 2);
+		if (TextPlacement == CENTER) {
+			mRenderY = mRenderY - (mRenderH / 2);
+		}
+	}
 	if (sSliderLabel) {
 		int sTextX = mRenderX + (mRenderW / 2);
 		int w, h;
