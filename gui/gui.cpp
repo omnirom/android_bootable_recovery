@@ -775,7 +775,7 @@ extern "C" int gui_init(void)
 
 	if (res_create_surface(curtain_path.c_str(), &source_Surface))
 	{
-		printf("Unable to locate '%s'\nDid you set a DEVICE_RESOLUTION in your config files?\n", curtain_path.c_str());
+		printf("Unable to locate '%s'\nDid you set a TW_THEME in your config files?\n", curtain_path.c_str());
 		return -1;
 	}
 	if (gr_get_width(source_Surface) != gr_fb_width() || gr_get_height(source_Surface) != gr_fb_height()) {
