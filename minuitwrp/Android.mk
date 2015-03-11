@@ -96,19 +96,36 @@ endif
 ifneq ($(BOARD_USE_CUSTOM_RECOVERY_FONT),)
   LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=$(BOARD_USE_CUSTOM_RECOVERY_FONT)
 else
-  FONT_7x16 := 240x240 280x280 320x320 320x480
-  ROBOTO_10x18 := 480x800 480x854 540x960 800x480 1024x600 1024x768 1280x800
-  ROBOTO_15x24 := 720x1280 800x1280
-  ROBOTO_23x41 := 1080x1920 1200x1920 1440x2560 1600x2560 1920x1200 2560x1600
-  ifneq ($(filter $(DEVICE_RESOLUTION), $(FONT_7x16)),)
-    LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"font_7x16.h\"
-  else ifneq ($(filter $(DEVICE_RESOLUTION), $(ROBOTO_10x18)),)
-    LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_10x18.h\"
-  else ifneq ($(filter $(DEVICE_RESOLUTION), $(ROBOTO_15x24)),)
-    LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_15x24.h\"
-  else ifneq ($(filter $(DEVICE_RESOLUTION), $(ROBOTO_23x41)),)
-    LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_23x41.h\"
-  endif
+    ifeq ($(TW_THEME),)
+        # This converts the old DEVICE_RESOLUTION flag to the new TW_THEME flag
+        PORTRAIT_MDPI := 320x480 480x800 480x854 540x960
+        PORTRAIT_HDPI := 720x1280 800x1280 1080x1920 1200x1920 1440x2560 1600x2560
+        WATCH_MDPI := 240x240 280x280 320x320
+        LANDSCAPE_MDPI := 800x480 1024x600 1024x768
+        LANDSCAPE_HDPI := 1280x800 1920x1200 2560x1600
+        ifneq ($(filter $(DEVICE_RESOLUTION), $(PORTRAIT_MDPI)),)
+            TW_THEME := portrait_mdpi
+        else ifneq ($(filter $(DEVICE_RESOLUTION), $(PORTRAIT_HDPI)),)
+            TW_THEME := portrait_hdpi
+        else ifneq ($(filter $(DEVICE_RESOLUTION), $(WATCH_MDPI)),)
+            TW_THEME := watch_mdpi
+        else ifneq ($(filter $(DEVICE_RESOLUTION), $(LANDSCAPE_MDPI)),)
+            TW_THEME := landscape_mdpi
+        else ifneq ($(filter $(DEVICE_RESOLUTION), $(LANDSCAPE_HDPI)),)
+            TW_THEME := landscape_hdpi
+        endif
+    endif
+    ifeq ($(TW_THEME), portrait_mdpi)
+        LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_10x18.h\"
+    else ifeq ($(TW_THEME), portrait_hdpi)
+        LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_15x24.h\"
+    else ifeq ($(TW_THEME), watch_mdpi)
+        LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"font_7x16.h\"
+    else ifeq ($(TW_THEME), landscape_mdpi)
+        LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_10x18.h\"
+    else ifeq ($(TW_THEME), landscape_hdpi)
+        LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_15x24.h\"
+    endif
 endif
 
 ifneq ($(TW_WHITELIST_INPUT),)
