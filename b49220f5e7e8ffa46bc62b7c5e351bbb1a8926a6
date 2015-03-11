@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_b6f68858",
+        "filename": "gui/Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-03-11T22:15:29Z",
+      "side": 1,
+      "message": "Missing closing parenthesis. This will also wrap beyond 80char, so maybe just write out the theme names in here to ensure correct width.",
+      "revId": "b49220f5e7e8ffa46bc62b7c5e351bbb1a8926a6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
