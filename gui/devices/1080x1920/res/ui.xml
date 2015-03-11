@@ -17,11 +17,11 @@
 		<resource name="font" type="font" filename="RobotoCondensed-Regular.ttf" size="40" fallback="Roboto-Condensed-40" />
 		<resource name="mediumfont" type="font" filename="RobotoCondensed-Regular.ttf" size="40" fallback="Roboto-Condensed-40" />
 		<resource name="filelist" type="font" filename="RobotoCondensed-Regular.ttf" size="40" fallback="Roboto-Condensed-40" />
-		<resource name="top_bar" type="image" filename="top-bar.jpg" />
+		<resource name="twrplogo" type="image" filename="twrplogo" retainaspect="1" />
 		<resource name="main_button" type="image" filename="menu-button" />
-		<resource name="file_icon" type="image" filename="file" />
-		<resource name="folder_icon" type="image" filename="folder" />
-		<resource name="slideout" type="image" filename="slideout" />
+		<resource name="file_icon" type="image" filename="file" retainaspect="1" />
+		<resource name="folder_icon" type="image" filename="folder" retainaspect="1" />
+		<resource name="slideout" type="image" filename="slideout" retainaspect="1" />
 		<resource name="progress" type="animation" filename="indeterminate" />
 		<resource name="progress_empty" type="image" filename="progress_empty" />
 		<resource name="progress_full" type="image" filename="progress_fill" />
@@ -33,12 +33,12 @@
 		<resource name="sort_button" type="image" filename="sort-button" />
 		<resource name="minus_button" type="image" filename="minus-button" />
 		<resource name="plus_button" type="image" filename="plus-button" />
-		<resource name="home_icon" type="image" filename="home-icon" />
-		<resource name="back_icon" type="image" filename="back-icon" />
-		<resource name="slider" type="image" filename="slider" />
-		<resource name="slider-used" type="image" filename="slider-used" />
-		<resource name="slider-touch" type="image" filename="slider-touch" />
-		<resource name="unlock-icon" type="image" filename="unlock" />
+		<resource name="home_icon" type="image" filename="home-icon" retainaspect="1" />
+		<resource name="back_icon" type="image" filename="back-icon" retainaspect="1" />
+		<resource name="slider" type="image" filename="slider" retainaspect="1" />
+		<resource name="slider-used" type="image" filename="slider-used" retainaspect="1" />
+		<resource name="slider-touch" type="image" filename="slider-touch" retainaspect="1" />
+		<resource name="unlock-icon" type="image" filename="unlock" retainaspect="1" />
 		<resource name="keyboard1" type="image" filename="keyboard1" />
 		<resource name="keyboard2" type="image" filename="keyboard2" />
 		<resource name="keyboard3" type="image" filename="keyboard3" />
@@ -98,7 +98,6 @@
 		<variable name="row5_medium_y" value="795" />
 		<variable name="row6_medium_y" value="1260" />
 		<variable name="row7_medium_y" value="730" />
-		<variable name="slider_x" value="101" />
 		<variable name="slider_y" value="1575" />
 		<variable name="slider_text_y" value="1676" />
 		<variable name="button_text_color" value="#AAAAAA" />
@@ -109,7 +108,7 @@
 		<variable name="caps_highlight_color" value="#33B5E580" />
 		<variable name="home_button_x" value="10" />
 		<variable name="home_button_y" value="1839" />
-		<variable name="back_button_x" value="944" />
+		<variable name="back_button_x" value="1070" />
 		<variable name="back_button_y" value="1839" />
 		<variable name="sort_text_x" value="10" />
 		<variable name="sort_asc_text_y" value="1635" />
@@ -167,8 +166,7 @@
 		<variable name="sdswap_text_y" value="405" />
 		<variable name="sdfilesystem_text_y" value="510" />
 		<variable name="sdfilesystem_button_y" value="570" />
-		<variable name="lock_x" value="240" />
-		<variable name="lock_y" value="600" />
+		<variable name="lock_y" value="700" />
 		<variable name="filemanager_select_x" value="840" />
 		<variable name="filemanager_select_y" value="1620" />
 		<variable name="backup_name_y" value="825" />
@@ -212,9 +210,17 @@
 		<template name="header">
 			<background color="#000000FF" />
 
+			<object type="fill" color="%button_fill_color%">
+				<placement x="0" y="0" w="1080" h="176" />
+			</object>
+
+			<object type="fill" color="%highlight%">
+				<placement x="0" y="176" w="1080" h="4" />
+			</object>
+
 			<object type="image">
-				<image resource="top_bar" />
-				<placement x="0" y="0" />
+				<image resource="twrplogo" />
+				<placement x="85" y="85" placement="4" />
 			</object>
 
 			<object type="text" color="%text_color%">
@@ -268,7 +274,7 @@
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%back_button_x%" y="%back_button_y%" />
+				<placement x="%back_button_x%" y="%back_button_y%" placement="1" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="back_icon" />
@@ -380,7 +386,7 @@
 
 		<template name="footer">
 			<object type="console">
-				<slideout resource="slideout" x="500" y="1841" />
+				<slideout resource="slideout" x="%center_x%" y="1841" placement="5" />
 				<placement x="%console_x%" y="0" w="%console_width%" h="1841" />
 				<color foreground="%console_foreground%" background="%console_background%" scroll="%console_scroll%" />
 				<font resource="fixed" />
