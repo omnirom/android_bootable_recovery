@@ -80,7 +80,7 @@
 		<style name="slider">
 			<text>Swipe to Confirm</text>
 			<font resource="font" color="%text_color%" />
-			<placement x="%slider_x%" y="%slider_y%" placement="5" />
+			<placement x="%center_x%" y="%slider_y%" placement="5" />
 			<resource base="slider" used="slider-used" touch="slider-touch" />
 		</style>
 
@@ -2771,7 +2771,7 @@
 
 			<object type="image">
 				<image resource="unlock-icon" />
-				<placement x="%lock_x%" y="%lock_y%" />
+				<placement x="%center_x%" y="%lock_y%" placement="4" />
 			</object>
 
 			<object type="slider">
