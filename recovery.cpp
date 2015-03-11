@@ -1107,6 +1107,7 @@ main(int argc, char **argv) {
         }
         if (status != INSTALL_SUCCESS) {
             ui->Print("Installation aborted.\n");
+            ui->Print("OTA failed! Please power off the device to keep it in this state and file a bug report!\n");
 
             // If this is an eng or userdebug build, then automatically
             // turn the text display on if the script fails so the error
