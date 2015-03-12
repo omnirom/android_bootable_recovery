@@ -111,14 +111,14 @@
 		<variable name="home_button_y" value="1226" />
 		<variable name="back_button_x" value="625" />
 		<variable name="back_button_y" value="1226" />
-		<variable name="sort_text_x" value="10" />
+		<variable name="sort_text_x" value="15" />
 		<variable name="sort_asc_text_y" value="1090" />
 		<variable name="sort_asc_button_y" value="1080" />
 		<variable name="sort_desc_text_y" value="1150" />
 		<variable name="sort_desc_button_y" value="1140" />
-		<variable name="sort_col1_button_x" value="260" />
-		<variable name="sort_col2_button_x" value="360" />
-		<variable name="sort_col3_button_x" value="460" />
+		<variable name="sort_col1_button_x" value="235" />
+		<variable name="sort_col2_button_x" value="335" />
+		<variable name="sort_col3_button_x" value="435" />
 		<variable name="input_width" value="700" />
 		<variable name="input_height" value="50" />
 		<variable name="input_background_color" value="#303030" />
@@ -169,8 +169,8 @@
 		<variable name="sdfilesystem_button_y" value="380" />
 		<variable name="lock_x" value="160" />
 		<variable name="lock_y" value="400" />
-		<variable name="filemanager_select_x" value="560" />
-		<variable name="filemanager_select_y" value="1080" />
+		<variable name="filemanager_select_x" value="535" />
+		<variable name="filemanager_select_y" value="1083" />
 		<variable name="backup_name_y" value="550" />
 		<variable name="terminal_console_height" value="700" />
 		<variable name="terminal_text_y" value="730" />
