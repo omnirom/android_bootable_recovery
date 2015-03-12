@@ -143,8 +143,11 @@ bool mzExtractZipEntryToBuffer(const ZipArchive *pArchive,
     const ZipEntry *pEntry, unsigned char* buffer);
 
 /*
- * Inflate all entries under zipDir to the directory specified by
+ * Inflate all files under zipDir to the directory specified by
  * targetDir, which must exist and be a writable directory.
+ *
+ * Directory entries and symlinks are not extracted.
+ *
  *
  * The immediate children of zipDir will become the immediate
  * children of targetDir; e.g., if the archive contains the entries
@@ -160,21 +163,15 @@ bool mzExtractZipEntryToBuffer(const ZipArchive *pArchive,
  *     /tmp/two
  *     /tmp/d/three
  *
- * flags is zero or more of the following:
- *
- *     MZ_EXTRACT_FILES_ONLY - only unpack files, not directories or symlinks
- *     MZ_EXTRACT_DRY_RUN - don't do anything, but do invoke the callback
- *
  * If timestamp is non-NULL, file timestamps will be set accordingly.
  *
  * If callback is non-NULL, it will be invoked with each unpacked file.
  *
  * Returns true on success, false on failure.
  */
-enum { MZ_EXTRACT_FILES_ONLY = 1, MZ_EXTRACT_DRY_RUN = 2 };
 bool mzExtractRecursive(const ZipArchive *pArchive,
         const char *zipDir, const char *targetDir,
-        int flags, const struct utimbuf *timestamp,
+        const struct utimbuf *timestamp,
         void (*callback)(const char *fn, void*), void *cookie,
         struct selabel_handle *sehnd);
 
