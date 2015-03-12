@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_1904ed17",
+        "filename": "gui/devices/1080x1920/res/ui.xml",
+        "patchSetId": 6
+      },
+      "lineNbr": 389,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-03-12T18:20:14Z",
+      "side": 1,
+      "message": "%center_x% ?",
+      "revId": "77cf4a4c887a2c13880fdeeb22df52d56b500a83",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_590e6537",
+        "filename": "gui/devices/320x320/res/ui.xml",
+        "patchSetId": 6
+      },
+      "lineNbr": 380,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-03-12T18:20:14Z",
+      "side": 1,
+      "message": "%center_x% ?",
+      "revId": "77cf4a4c887a2c13880fdeeb22df52d56b500a83",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_790b2126",
+        "filename": "gui/devices/480x800/res/ui.xml",
+        "patchSetId": 6
+      },
+      "lineNbr": 376,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-03-12T18:20:14Z",
+      "side": 1,
+      "message": "%center_x% ?",
+      "revId": "77cf4a4c887a2c13880fdeeb22df52d56b500a83",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
