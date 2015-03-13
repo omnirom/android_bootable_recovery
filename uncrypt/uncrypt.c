@@ -164,7 +164,12 @@ char* parse_recovery_command_file()
     if (f == NULL) {
         return NULL;
     }
-    FILE* fo = fopen(RECOVERY_COMMAND_FILE_TMP, "w");
+    int fd = open(RECOVERY_COMMAND_FILE_TMP, O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
+        ALOGE("failed to open %s\n", RECOVERY_COMMAND_FILE_TMP);
+        return NULL;
+    }
+    FILE* fo = fdopen(fd, "w");
 
     while (fgets(temp, sizeof(temp), f)) {
         printf("read: %s", temp);
@@ -175,6 +180,7 @@ char* parse_recovery_command_file()
         fputs(temp, fo);
     }
     fclose(f);
+    fsync(fd);
     fclose(fo);
 
     if (fn) {
@@ -190,7 +196,12 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
     struct stat sb;
     int ret;
 
-    FILE* mapf = fopen(map_file, "w");
+    int mapfd = open(map_file, O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
+    if (mapfd < 0) {
+        ALOGE("failed to open %s\n", map_file);
+        return -1;
+    }
+    FILE* mapf = fdopen(mapfd, "w");
 
     ret = stat(path, &sb);
     if (ret != 0) {
@@ -232,7 +243,7 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
 
     int wfd = -1;
     if (encrypted) {
-        wfd = open(blk_dev, O_WRONLY);
+        wfd = open(blk_dev, O_WRONLY | O_SYNC);
         if (wfd < 0) {
             ALOGE("failed to open fd for writing: %s\n", strerror(errno));
             return -1;
@@ -302,9 +313,11 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         fprintf(mapf, "%d %d\n", ranges[i*2], ranges[i*2+1]);
     }
 
+    fsync(mapfd);
     fclose(mapf);
     close(fd);
     if (encrypted) {
+        fsync(wfd);
         close(wfd);
     }
 
@@ -318,7 +331,7 @@ void wipe_misc() {
         struct fstab_rec* v = &fstab->recs[i];
         if (!v->mount_point) continue;
         if (strcmp(v->mount_point, "/misc") == 0) {
-            int fd = open(v->blk_device, O_WRONLY);
+            int fd = open(v->blk_device, O_WRONLY | O_SYNC);
             uint8_t zeroes[1088];   // sizeof(bootloader_message) from recovery
             memset(zeroes, 0, sizeof(zeroes));
 
@@ -333,7 +346,7 @@ void wipe_misc() {
                     written += w;
                 }
             }
-
+            fsync(fd);
             close(fd);
         }
     }

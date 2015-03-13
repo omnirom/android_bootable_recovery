@@ -34,6 +34,7 @@ on init
     chmod 0775 /tmp
 
     write /proc/sys/kernel/panic_on_oops 1
+    write /proc/sys/vm/max_map_count 1000000
 
 on fs
     mount pstore pstore /sys/fs/pstore
@@ -51,7 +52,6 @@ on fs
     write /sys/class/android_usb/android0/iProduct ${ro.product.model}
     write /sys/class/android_usb/android0/iSerial ${ro.serialno}
 
-
 on boot
     ifup lo
     hostname localhost
@@ -62,6 +62,9 @@ on boot
 # Load properties from /system/ + /factory after fs mount.
 on load_all_props_action
     load_all_props
+
+on firmware_mounts_complete
+   rm /dev/.booting
 
 # Mount filesystems and start core system services.
 on late-init
@@ -74,6 +77,9 @@ on late-init
     # this in another action so that the load will be scheduled after the prior
     # issued fs triggers have completed.
     trigger load_all_props_action
+
+    # Remove a file to wake up anything waiting for firmware
+    trigger firmware_mounts_complete
 
     trigger early-boot
     trigger boot
