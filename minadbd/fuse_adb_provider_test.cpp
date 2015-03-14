@@ -25,7 +25,6 @@
 #include <string>
 
 #include "adb_io.h"
-#include "utils/file.h"
 
 TEST(fuse_adb_provider, read_block_adb) {
   adb_data data = {};
