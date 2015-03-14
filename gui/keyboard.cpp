@@ -16,20 +16,8 @@
         along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <sys/reboot.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <time.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include "../data.hpp"
 
 #include <string>
@@ -61,17 +49,9 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 
 	mRendered = false;
 	currentLayout = 1;
-	mAction = NULL;
 	KeyboardHeight = KeyboardWidth = 0;
 
 	if (!node)  return;
-
-	// Load the action
-	child = FindNode(node, "action");
-	if (child)
-	{
-		mAction = new GUIAction(node);
-	}
 
 	mHighlightColor = LoadAttrColor(FindNode(node, "highlight"), "color", &hasHighlight);
 	mCapsHighlightColor = LoadAttrColor(FindNode(node, "capshighlight"), "color", &hasCapsHighlight);
@@ -330,7 +310,6 @@ int GUIKeyboard::SetRenderPos(int x, int y, int w, int h)
 		mRenderH = KeyboardHeight;
 	}
 
-	if (mAction)		mAction->SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 	return 0;
 }
@@ -468,13 +447,8 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 					} else if ((int)key.key == KEYBOARD_ACTION) {
 						// Action
 						highlightRenderCount = 0;
-						if (mAction) {
-							// Keyboard has its own action defined
-							return (mAction ? mAction->NotifyTouch(state, x, y) : 1);
-						} else {
-							// Send action notification
-							PageManager::NotifyKeyboard(key.key);
-						}
+						// Send action notification
+						PageManager::NotifyKeyboard(key.key);
 					}
 				} else if (state == TOUCH_HOLD) {
 					was_held = 1;

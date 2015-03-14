@@ -872,7 +872,6 @@ protected:
 	unsigned int KeyboardWidth, KeyboardHeight;
 	int rowY, colX, highlightRenderCount;
 	bool hasHighlight, hasCapsHighlight;
-	GUIAction* mAction;
 	COLOR mHighlightColor;
 	COLOR mCapsHighlightColor;
 };
