@@ -177,11 +177,10 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 		keylayout = FindNode(node, layout);
 	}
 
-	int x, y, w, h;
+	int x, y;
 	// Load the placement
-	LoadPlacement(FindNode(node, "placement"), &x, &y, &w, &h);
-	SetActionPos(x, y, KeyboardWidth, KeyboardHeight);
-	SetRenderPos(x, y, w, h);
+	LoadPlacement(FindNode(node, "placement"), &x, &y);
+	SetRenderPos(x, y, KeyboardWidth, KeyboardHeight);
 	return;
 }
 
@@ -189,7 +188,7 @@ GUIKeyboard::~GUIKeyboard()
 {
 }
 
-int GUIKeyboard::ParseKey(const char* keyinfo, keyboard_key_class& key, int& Xindex, int keyWidth, bool longpress)
+int GUIKeyboard::ParseKey(const char* keyinfo, Key& key, int& Xindex, int keyWidth, bool longpress)
 {
 	int keychar = 0;
 	if (strlen(keyinfo) == 1) {
@@ -304,72 +303,68 @@ int GUIKeyboard::SetRenderPos(int x, int y, int w, int h)
 {
 	mRenderX = x;
 	mRenderY = y;
-	if (w || h)
-	{
-		mRenderW = KeyboardWidth;
-		mRenderH = KeyboardHeight;
-	}
-
+	mRenderW = KeyboardWidth;
+	mRenderH = KeyboardHeight;
 	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 	return 0;
 }
 
-int GUIKeyboard::GetSelection(int x, int y)
+GUIKeyboard::Key* GUIKeyboard::HitTestKey(int x, int y)
 {
-	if (x < mRenderX || x - mRenderX > (int)KeyboardWidth || y < mRenderY || y - mRenderY > (int)KeyboardHeight) return -1;
-	return 0;
+	if (!IsInRegion(x, y))
+		return NULL;
+
+	int rely = y - mRenderY;
+	int relx = x - mRenderX;
+
+	// Find the correct row
+	int row;
+	for (row = 0; row < MAX_KEYBOARD_ROWS; ++row) {
+		if (row_heights[currentLayout - 1][row] > rely)
+			break;
+	}
+	if (row == MAX_KEYBOARD_ROWS)
+		return NULL;
+
+	// Find the correct key (column)
+	int col;
+	int x1 = 0;
+	for (col = 0; col < MAX_KEYBOARD_KEYS; ++col) {
+		Key& key = keyboard_keys[currentLayout - 1][row][col];
+		if (x1 <= relx && relx < key.end_x && key.key != 0) {
+			// This is the key that was pressed!
+			rowY = row;
+			colX = col;
+			return &key;
+		}
+		x1 = key.end_x;
+	}
+	return NULL;
 }
 
 int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
-	static int startSelection = -1, was_held = 0, startX = 0;
-	static unsigned char initial_key = 0;
-	int indexy, indexx, rely, relx, rowIndex = 0;
-
-	rely = y - mRenderY;
-	relx = x - mRenderX;
+	static int was_held = 0, startX = 0;
+	static Key* initial_key = 0;
 
 	if (!isConditionTrue())	 return -1;
 
 	switch (state)
 	{
 	case TOUCH_START:
-		if (GetSelection(x, y) == 0) {
-			startSelection = -1;
-			was_held = 0;
-			startX = x;
-			// Find the correct row
-			for (indexy=0; indexy<MAX_KEYBOARD_ROWS; indexy++) {
-				if (row_heights[currentLayout - 1][indexy] > rely) {
-					rowIndex = indexy;
-					rowY = indexy;
-					indexy = MAX_KEYBOARD_ROWS;
-				}
-			}
-
-			// Find the correct key (column)
-			for (indexx=0; indexx<MAX_KEYBOARD_KEYS; indexx++) {
-				if (keyboard_keys[currentLayout - 1][rowIndex][indexx].end_x > relx) {
-					// This is the key that was pressed!
-					initial_key = keyboard_keys[currentLayout - 1][rowIndex][indexx].key;
-					colX = indexx;
-					indexx = MAX_KEYBOARD_KEYS;
-				}
-			}
-			if (initial_key != 0)
-				highlightRenderCount = -1;
-			else
-				highlightRenderCount = 0;
-			mRendered = false;
-		} else {
-			if (highlightRenderCount != 0)
-				mRendered = false;
+		was_held = 0;
+		startX = x;
+		initial_key = HitTestKey(x, y);
+		if (initial_key)
+			highlightRenderCount = -1;
+		else
 			highlightRenderCount = 0;
-			startSelection = 0;
-		}
+		mRendered = false;
 		break;
+
 	case TOUCH_DRAG:
 		break;
+
 	case TOUCH_RELEASE:
 		if (x < startX - (KeyboardWidth * 0.5)) {
 			if (highlightRenderCount != 0) {
@@ -386,17 +381,18 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 			PageManager::NotifyKeyboard(KEYBOARD_SWIPE_RIGHT);
 			return 0;
 		}
-
+		// fall through
 	case TOUCH_HOLD:
 	case TOUCH_REPEAT:
-
-		if (startSelection == 0 || GetSelection(x, y) == -1) {
+		if (!initial_key) {
 			if (highlightRenderCount != 0) {
 				highlightRenderCount = 0;
 				mRendered = false;
 			}
 			return 0;
-		} else if (highlightRenderCount != 0) {
+		}
+
+		if (highlightRenderCount != 0) {
 			if (state == TOUCH_RELEASE)
 				highlightRenderCount = 2;
 			else
@@ -404,70 +400,60 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 			mRendered = false;
 		}
 
-		// Find the correct row
-		for (indexy=0; indexy<MAX_KEYBOARD_ROWS; indexy++) {
-			if (row_heights[currentLayout - 1][indexy] > rely) {
-				rowIndex = indexy;
-				indexy = MAX_KEYBOARD_ROWS;
+		if (HitTestKey(x, y) != initial_key) {
+			// We dragged off of the starting key
+			if (highlightRenderCount != 0) {
+				highlightRenderCount = 0;
+				mRendered = false;
 			}
-		}
-
-		// Find the correct key (column)
-		for (indexx=0; indexx<MAX_KEYBOARD_KEYS; indexx++) {
-			keyboard_key_class& key = keyboard_keys[currentLayout - 1][rowIndex][indexx];
-			if (key.end_x > relx) {
-				// This is the key that was pressed!
-				if (key.key != initial_key) {
-					// We dragged off of the starting key
-					startSelection = 0;
-					break;
-				} else if (state == TOUCH_RELEASE && was_held == 0) {
-					DataManager::Vibrate("tw_keyboard_vibrate");
-					if ((int)key.key < KEYBOARD_SPECIAL_KEYS && (int)key.key > 0) {
-						// Regular key
-						PageManager::NotifyKeyboard(key.key);
-						if (caps_tracking[currentLayout - 1].capslock == 0 && !caps_tracking[currentLayout - 1].set_capslock) {
-							// caps lock was not set, change layouts
-							currentLayout = caps_tracking[currentLayout - 1].revert_layout;
-							mRendered = false;
-						}
-					} else if ((int)key.key == KEYBOARD_LAYOUT) {
-						// Switch layouts
-						if (caps_tracking[currentLayout - 1].capslock == 0 && key.layout == caps_tracking[currentLayout - 1].revert_layout) {
-							if (!caps_tracking[currentLayout - 1].set_capslock) {
-								caps_tracking[currentLayout - 1].set_capslock = 1; // Set the caps lock
-							} else {
-								caps_tracking[currentLayout - 1].set_capslock = 0; // Unset the caps lock and change layouts
-								currentLayout = key.layout;
-							}
+			return 0;
+		} else {
+			Key& key = *initial_key;
+			if (state == TOUCH_RELEASE && was_held == 0) {
+				DataManager::Vibrate("tw_keyboard_vibrate");
+				if ((int)key.key < KEYBOARD_SPECIAL_KEYS && (int)key.key > 0) {
+					// Regular key
+					PageManager::NotifyKeyboard(key.key);
+					if (caps_tracking[currentLayout - 1].capslock == 0 && !caps_tracking[currentLayout - 1].set_capslock) {
+						// caps lock was not set, change layouts
+						currentLayout = caps_tracking[currentLayout - 1].revert_layout;
+						mRendered = false;
+					}
+				} else if ((int)key.key == KEYBOARD_LAYOUT) {
+					// Switch layouts
+					if (caps_tracking[currentLayout - 1].capslock == 0 && key.layout == caps_tracking[currentLayout - 1].revert_layout) {
+						if (!caps_tracking[currentLayout - 1].set_capslock) {
+							caps_tracking[currentLayout - 1].set_capslock = 1; // Set the caps lock
 						} else {
+							caps_tracking[currentLayout - 1].set_capslock = 0; // Unset the caps lock and change layouts
 							currentLayout = key.layout;
 						}
-						mRendered = false;
-					} else if ((int)key.key == KEYBOARD_ACTION) {
-						// Action
-						highlightRenderCount = 0;
-						// Send action notification
-						PageManager::NotifyKeyboard(key.key);
+					} else {
+						currentLayout = key.layout;
 					}
-				} else if (state == TOUCH_HOLD) {
-					was_held = 1;
-					if ((int)key.key == KEYBOARD_BACKSPACE) {
-						// Repeat backspace
-						PageManager::NotifyKeyboard(key.key);
-					} else if ((int)key.longpresskey < KEYBOARD_SPECIAL_KEYS && (int)key.longpresskey > 0) {
-						// Long Press Key
-						DataManager::Vibrate("tw_keyboard_vibrate");
-						PageManager::NotifyKeyboard(key.longpresskey);
-					}
-				} else if (state == TOUCH_REPEAT) {
-					was_held = 1;
-					if ((int)key.key == KEYBOARD_BACKSPACE) {
-						// Repeat backspace
-						PageManager::NotifyKeyboard(key.key);
-					}
+					mRendered = false;
+				} else if ((int)key.key == KEYBOARD_ACTION) {
+					// Action
+					highlightRenderCount = 0;
+					// Send action notification
+					PageManager::NotifyKeyboard(key.key);
 				}
-				indexx = MAX_KEYBOARD_KEYS;
+			} else if (state == TOUCH_HOLD) {
+				was_held = 1;
+				if ((int)key.key == KEYBOARD_BACKSPACE) {
+					// Repeat backspace
+					PageManager::NotifyKeyboard(key.key);
+				} else if ((int)key.longpresskey < KEYBOARD_SPECIAL_KEYS && (int)key.longpresskey > 0) {
+					// Long Press Key
+					DataManager::Vibrate("tw_keyboard_vibrate");
+					PageManager::NotifyKeyboard(key.longpresskey);
+				}
+			} else if (state == TOUCH_REPEAT) {
+				was_held = 1;
+				if ((int)key.key == KEYBOARD_BACKSPACE) {
+					// Repeat backspace
+					PageManager::NotifyKeyboard(key.key);
+				}
 			}
 		}
 		break;

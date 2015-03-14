@@ -844,17 +844,14 @@ public:
 	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
 
 protected:
-	virtual int GetSelection(int x, int y);
-
-protected:
-	struct keyboard_key_class
+	struct Key
 	{
-		unsigned char key;
+		unsigned char key; // ASCII code or one of the special KEYBOARD_* codes above
 		unsigned char longpresskey;
 		int end_x;
 		int layout;
 	};
-	int ParseKey(const char* keyinfo, keyboard_key_class& key, int& Xindex, int keyWidth, bool longpress);
+	int ParseKey(const char* keyinfo, Key& key, int& Xindex, int keyWidth, bool longpress);
 	struct capslock_tracking_struct
 	{
 		int capslock;
@@ -862,8 +859,11 @@ protected:
 		int revert_layout;
 	};
 
+	// Find key at screen coordinates
+	Key* HitTestKey(int x, int y);
+
 	ImageResource* keyboardImg[MAX_KEYBOARD_LAYOUTS];
-	struct keyboard_key_class keyboard_keys[MAX_KEYBOARD_LAYOUTS][MAX_KEYBOARD_ROWS][MAX_KEYBOARD_KEYS];
+	struct Key keyboard_keys[MAX_KEYBOARD_LAYOUTS][MAX_KEYBOARD_ROWS][MAX_KEYBOARD_KEYS];
 	struct capslock_tracking_struct caps_tracking[MAX_KEYBOARD_LAYOUTS];
 	bool mRendered;
 	std::string mVariable;
