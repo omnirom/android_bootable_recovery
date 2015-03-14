@@ -1029,7 +1029,7 @@ bool TWPartition::Mount(bool Display_Error) {
 		Update_Size(Display_Error);
 
 	if (!Symlink_Mount_Point.empty()) {
-		string Command = "mount '" + Symlink_Path + "' '" + Symlink_Mount_Point + "'";
+		string Command = "mount -o bind '" + Symlink_Path + "' '" + Symlink_Mount_Point + "'";
 		TWFunc::Exec_Cmd(Command);
 	}
 	return true;
