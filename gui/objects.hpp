@@ -815,9 +815,6 @@ protected:
 	int sUpdate;
 };
 
-#define MAX_KEYBOARD_LAYOUTS 5
-#define MAX_KEYBOARD_ROWS 9
-#define MAX_KEYBOARD_KEYS 20
 #define KEYBOARD_ACTION 253
 #define KEYBOARD_LAYOUT 254
 #define KEYBOARD_SWIPE_LEFT 252
@@ -852,23 +849,29 @@ protected:
 		int layout;
 	};
 	int ParseKey(const char* keyinfo, Key& key, int& Xindex, int keyWidth, bool longpress);
-	struct capslock_tracking_struct
+
+	enum {
+		MAX_KEYBOARD_LAYOUTS = 5,
+		MAX_KEYBOARD_ROWS = 9,
+		MAX_KEYBOARD_KEYS = 20
+	};
+	struct Layout
 	{
-		int capslock;
-		int set_capslock;
+		ImageResource* keyboardImg;
+		struct Key keys[MAX_KEYBOARD_ROWS][MAX_KEYBOARD_KEYS];
+		int row_end_y[MAX_KEYBOARD_ROWS];
+		bool is_caps;
 		int revert_layout;
 	};
+	Layout layouts[MAX_KEYBOARD_LAYOUTS];
 
 	// Find key at screen coordinates
 	Key* HitTestKey(int x, int y);
 
-	ImageResource* keyboardImg[MAX_KEYBOARD_LAYOUTS];
-	struct Key keyboard_keys[MAX_KEYBOARD_LAYOUTS][MAX_KEYBOARD_ROWS][MAX_KEYBOARD_KEYS];
-	struct capslock_tracking_struct caps_tracking[MAX_KEYBOARD_LAYOUTS];
 	bool mRendered;
 	std::string mVariable;
 	int currentLayout;
-	int row_heights[MAX_KEYBOARD_LAYOUTS][MAX_KEYBOARD_ROWS];
+	bool CapsLockOn;
 	unsigned int KeyboardWidth, KeyboardHeight;
 	int rowY, colX, highlightRenderCount;
 	bool hasHighlight, hasCapsHighlight;
