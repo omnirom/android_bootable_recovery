@@ -3594,7 +3594,7 @@
 			<object type="button">
 				<placement x="%col_center_x%" y="%row3_y%" />
 				<text>Do Not Install</text>
-				<image resource="main_button" />
+				<action function="set">tw_page_done=1</action>
 			</object>
 
 			<object type="slider">
