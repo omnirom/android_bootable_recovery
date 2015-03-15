@@ -369,6 +369,11 @@ static int gr_ttf_copy_glyph_to_surface(GGLSurface *dest, FT_BitmapGlyph glyph, 
 
     dest_itr += (offY + base - glyph->top)*dest->stride + (offX + glyph->left);
 
+    // FIXME: if glyph->left is negative and everything else is 0 (e.g. letter 'j' in Roboto-Regular),
+    // the result might end up being before the buffer - I'm not sure how to properly handle this.
+    if(dest_itr < dest->data)
+        dest_itr = dest->data;
+
     for(y = 0; y < glyph->bitmap.rows; ++y)
     {
         memcpy(dest_itr, src_itr, glyph->bitmap.width);
