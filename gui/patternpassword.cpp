@@ -226,19 +226,24 @@ void GUIPatternPassword::ConnectIntermediateDots(int dot_idx)
 		return;
 
 	const int last_dot = mConnectedDots[mConnectedDotsLen-1];
+	int mid = -1;
 
 	// The line is vertical and has crossed a point in the middle
-	if(dot_idx%3 == last_dot%3 && abs(dot_idx - last_dot) > 3)
-		ConnectDot(3 + dot_idx%3);
+	if(dot_idx%3 == last_dot%3 && abs(dot_idx - last_dot) > 3) {
+		mid = 3 + dot_idx%3;
 	// the line is horizontal and has crossed a point in the middle
-	else if(dot_idx/3 == last_dot/3 && abs(dot_idx - last_dot) > 1)
-		ConnectDot((dot_idx/3)*3 + 1);
+	} else if(dot_idx/3 == last_dot/3 && abs(dot_idx - last_dot) > 1) {
+		mid = (dot_idx/3)*3 + 1;
 	// the line is diagonal and has crossed the middle point
-	else if((dot_idx == 0 && last_dot == 8) || (dot_idx == 8 && last_dot == 0) ||
-			(dot_idx == 2 && last_dot == 6) || (dot_idx == 6 && last_dot == 2))
-	{
-		ConnectDot(4);
+	} else if((dot_idx == 0 && last_dot == 8) || (dot_idx == 8 && last_dot == 0) ||
+			(dot_idx == 2 && last_dot == 6) || (dot_idx == 6 && last_dot == 2)) {
+		mid = 4;
+	} else {
+		return;
 	}
+
+	if(!DotUsed(mid))
+		ConnectDot(mid);
 }
 
 int GUIPatternPassword::NotifyTouch(TOUCH_STATE state, int x, int y)
