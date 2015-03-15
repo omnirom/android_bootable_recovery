@@ -16,6 +16,9 @@
 	<resources>
 		<resource name="font" type="font" filename="RobotoCondensed-Regular.ttf" size="30" fallback="Roboto-Regular-30" />
 		<resource name="fixed" type="font" filename="DroidSansMono.ttf" size="22" />
+		<resource name="keylabel" type="font" filename="Roboto-Bold-ASCII.ttf" size="50" fallback="Roboto-Regular-30" />
+		<resource name="keylabel-small" type="font" filename="Roboto-Bold-ASCII.ttf" size="30" fallback="Roboto-Regular-30" />
+		<resource name="keylabel-longpress" type="font" filename="Roboto-Bold-ASCII.ttf" size="25" fallback="Roboto-Regular-30" />
 		<resource name="twrplogo" type="image" filename="twrplogo" retainaspect="1" />
 		<resource name="main_button" type="image" filename="button" />
 		<resource name="file_icon" type="image" filename="file" retainaspect="1" />
@@ -425,7 +428,7 @@
 				<layout1>
 					<keysize height="129" width="159" />
 					<row1 key01="153:" key02="q" long02="1" key03="w" long03="2" key04="e" long04="3" key05="r" long05="4" key06="t" long06="5" key07="y" long07="6" key08="u" long08="7" key09="i" long09="8" key10="o" long10="9" key11="p" long11="0" key12="177:c:8" />
-					<row2 key01="213:layout3" key02="156:a" key03="156:s" key04="156:d" key05="156:f" key06="156:g" key07="156:h" key08="156:j" key09="k" key10="156:l" key11="303:action" />
+					<row2 key01="213:layout3" key02="156:a" key03="156:s" key04="156:d" key05="156:f" key06="156:g" key07="156:h" key08="156:j" key09="156:k" key10="156:l" key11="303:action" />
 					<row3 key01="269:layout2" key02="154:z" key03="154:x" key04="154:c" key05="154:v" key06="154:b" key07="154:n" key08="154:m" key09="154:," long09="!" key10="154:." long10="?" key11="265:layout2" />
 					<row4 key01="600:" key02="720: " key03="/" long03=":" key04="-" long04="_" />
 				</layout1>

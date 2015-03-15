@@ -872,11 +872,18 @@ protected:
 	std::string mVariable;
 	int currentLayout;
 	bool CapsLockOn;
-	unsigned int KeyboardWidth, KeyboardHeight;
 	int rowY, colX, highlightRenderCount;
 	bool hasHighlight, hasCapsHighlight;
 	COLOR mHighlightColor;
 	COLOR mCapsHighlightColor;
+	COLOR mFontColor; // for centered key labels
+	FontResource* mFont; // for main key labels
+	FontResource* mSmallFont; // for key labels like "?123"
+	FontResource* mLongpressFont; // for the small longpress label in the upper right corner
+	COLOR mLongpressFontColor;
+	COLOR mBackgroundColor; // keyboard background color
+	COLOR mKeyColor; // key background color
+	int mKeyPaddingX, mKeyPaddingY; // space around keys
 };
 
 // GUIInput - Used for keyboard input
