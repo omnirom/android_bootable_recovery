@@ -378,6 +378,58 @@ static int gr_ttf_copy_glyph_to_surface(GGLSurface *dest, FT_BitmapGlyph glyph, 
     return 0;
 }
 
+static void gr_ttf_calcMaxFontHeight(TrueTypeFont *f)
+{
+    char c;
+    int char_idx;
+    int error;
+    FT_Glyph glyph;
+    FT_BBox bbox;
+    FT_BBox bbox_glyph;
+    TrueTypeCacheEntry *ent;
+
+    bbox.yMin = bbox_glyph.yMin = LONG_MAX;
+    bbox.yMax = bbox_glyph.yMax = LONG_MIN;
+
+    for(c = '!'; c <= '~'; ++c)
+    {
+        char_idx = FT_Get_Char_Index(f->face, c);
+        ent = gr_ttf_glyph_cache_peek(f, char_idx);
+        if(ent)
+        {
+            bbox.yMin = MIN(bbox.yMin, ent->bbox.yMin);
+            bbox.yMax = MAX(bbox.yMax, ent->bbox.yMax);
+        }
+        else
+        {
+            error = FT_Load_Glyph(f->face, char_idx, 0);
+            if(error)
+                continue;
+
+            error = FT_Get_Glyph(f->face->glyph, &glyph);
+            if(error)
+                continue;
+
+            FT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &bbox_glyph);
+            bbox.yMin = MIN(bbox.yMin, bbox_glyph.yMin);
+            bbox.yMax = MAX(bbox.yMax, bbox_glyph.yMax);
+
+            FT_Done_Glyph(glyph);
+        }
+    }
+
+    if(bbox.yMin > bbox.yMax)
+        bbox.yMin = bbox.yMax = 0;
+
+    f->max_height = bbox.yMax - bbox.yMin;
+    f->base = bbox.yMax;
+
+    // FIXME: twrp fonts have some padding on top, I'll add it here
+    // Should be fixed in the themes
+    f->max_height += f->size / 4;
+    f->base += f->size / 4;
+}
+
 // returns number of bytes from const char *text rendered to fit max_width, not number of UTF8 characters!
 static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const char *text, int max_width)
 {
@@ -426,7 +478,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
     }
 
     if(font->max_height == -1)
-        gr_ttf_getMaxFontHeight(font);
+        gr_ttf_calcMaxFontHeight(font);
 
     if(font->max_height == -1)
     {
@@ -681,57 +733,7 @@ int gr_ttf_getMaxFontHeight(void *font)
     pthread_mutex_lock(&f->mutex);
 
     if(f->max_height == -1)
-    {
-        char c;
-        int char_idx;
-        int error;
-        FT_Glyph glyph;
-        FT_BBox bbox;
-        FT_BBox bbox_glyph;
-        TrueTypeCacheEntry *ent;
-
-        bbox.yMin = bbox_glyph.yMin = LONG_MAX;
-        bbox.yMax = bbox_glyph.yMax = LONG_MIN;
-
-        for(c = '!'; c <= '~'; ++c)
-        {
-            char_idx = FT_Get_Char_Index(f->face, c);
-            ent = gr_ttf_glyph_cache_peek(f, char_idx);
-            if(ent)
-            {
-                bbox.yMin = MIN(bbox.yMin, ent->bbox.yMin);
-                bbox.yMax = MAX(bbox.yMax, ent->bbox.yMax);
-            }
-            else
-            {
-                error = FT_Load_Glyph(f->face, char_idx, 0);
-                if(error)
-                    continue;
-
-                error = FT_Get_Glyph(f->face->glyph, &glyph);
-                if(error)
-                    continue;
-
-                FT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &bbox_glyph);
-                bbox.yMin = MIN(bbox.yMin, bbox_glyph.yMin);
-                bbox.yMax = MAX(bbox.yMax, bbox_glyph.yMax);
-
-                FT_Done_Glyph(glyph);
-            }
-        }
-
-        if(bbox.yMin > bbox.yMax)
-            bbox.yMin = bbox.yMax = 0;
-
-        f->max_height = bbox.yMax - bbox.yMin;
-        f->base = bbox.yMax;
-
-        // FIXME: twrp fonts have some padding on top, I'll add it here
-        // Should be fixed in the themes
-        f->max_height += f->size / 4;
-        f->base += f->size / 4;
-    }
-
+        gr_ttf_calcMaxFontHeight(f);
     res = f->max_height;
 
     pthread_mutex_unlock(&f->mutex);
