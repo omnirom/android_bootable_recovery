@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b22818b_1cb93be6",
+        "filename": "gui/devices/portrait/res/portrait.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 3557,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-03-16T02:03:33Z",
+      "side": 1,
+      "message": "i believe you can delete this image resource. the object type has been set to button, for which the style at the top of this file already includes this resource.",
+      "revId": "5b8da2957e56c1597c09947e11b5f120d447cebb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
