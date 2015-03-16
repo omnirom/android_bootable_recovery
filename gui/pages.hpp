@@ -115,7 +115,7 @@ protected:
 	std::vector<Page*> mPages;
 	std::vector<xml_node<>*> templates;
 	Page* mCurrentPage;
-	Page* mOverlayPage; // This is a special case, used for "locking" the screen
+	std::vector<Page*> mOverlays; // Special case for popup dialogs and the lock screen
 	std::vector<xml_document<>*> mIncludedDocs;
 };
 
