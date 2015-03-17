@@ -23,7 +23,8 @@ ifeq ($(TWHAVE_SELINUX), true)
 
     # toolbox setenforce is used during init, so it needs to be included here
     # symlink is omitted at the very end if busybox already provides this
-    OUR_TOOLS += setenforce
+    SETENFORCE_TOOL := setenforce
+    OUR_TOOLS += ${SETENFORCE_TOOL}
 endif
 
 ifeq ($(TW_USE_TOOLBOX), true)
@@ -197,7 +198,7 @@ ifeq ($(TWHAVE_SELINUX), true)
 endif
 
 TOOLS_H := $(intermediates)/tools.h
-$(TOOLS_H): PRIVATE_TOOLS := $(ALL_TOOLS)
+$(TOOLS_H): PRIVATE_TOOLS := $(ALL_TOOLS) ${SETENFORCE_TOOL}
 $(TOOLS_H): PRIVATE_CUSTOM_TOOL = echo "/* file generated automatically */" > $@ ; for t in $(PRIVATE_TOOLS) ; do echo "TOOL($$t)" >> $@ ; done
 $(TOOLS_H): $(LOCAL_PATH)/Android.mk
 $(TOOLS_H):
@@ -229,5 +230,6 @@ SYMLINKS :=
 ALL_TOOLS :=
 BSD_TOOLS :=
 OUR_TOOLS :=
+SETENFORCE_TOOL :=
 TEMP_TOOLS :=
 TOOLS_FOR_SELINUX :=
