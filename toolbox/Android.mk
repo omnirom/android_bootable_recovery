@@ -188,6 +188,13 @@ else
     ALL_TOOLS := $(OUR_TOOLS)
 endif
 
+TOOLS_H := $(intermediates)/tools.h
+$(TOOLS_H): PRIVATE_TOOLS := $(ALL_TOOLS)
+$(TOOLS_H): PRIVATE_CUSTOM_TOOL = echo "/* file generated automatically */" > $@ ; for t in $(PRIVATE_TOOLS) ; do echo "TOOL($$t)" >> $@ ; done
+$(TOOLS_H): $(LOCAL_PATH)/Android.mk
+$(TOOLS_H):
+	$(transform-generated-source)
+
 ifeq ($(TWHAVE_SELINUX), true)
     # toolbox setenforce is used during init in non-symlink form, so it was
     # required to be included as part of the suite above. if busybox already
@@ -195,13 +202,6 @@ ifeq ($(TWHAVE_SELINUX), true)
     TEMP_TOOLS := $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(ALL_TOOLS))
     ALL_TOOLS := $(TEMP_TOOLS)
 endif
-
-TOOLS_H := $(intermediates)/tools.h
-$(TOOLS_H): PRIVATE_TOOLS := $(ALL_TOOLS)
-$(TOOLS_H): PRIVATE_CUSTOM_TOOL = echo "/* file generated automatically */" > $@ ; for t in $(PRIVATE_TOOLS) ; do echo "TOOL($$t)" >> $@ ; done
-$(TOOLS_H): $(LOCAL_PATH)/Android.mk
-$(TOOLS_H):
-	$(transform-generated-source)
 
 # Make /sbin/toolbox launchers for each tool
 SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(ALL_TOOLS))
