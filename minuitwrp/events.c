@@ -675,6 +675,12 @@ static int vk_modify(struct ev *e, struct input_event *ev)
     // If we have nothing useful to report, skip it
     if (x == -1 || y == -1)     return 1;
 
+    // Special case, we'll ignore touches on 0,0 because it usually means
+    // that we received extra data after our last sync and x and y were
+    // reset to 0. We should not be using 0,0 anyway.
+    if (x == 0 && y == 0)
+        return 1;
+
     // On first touch, see if we're at a virtual key
     if (downX == -1)
     {
