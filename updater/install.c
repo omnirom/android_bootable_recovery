@@ -48,7 +48,9 @@
 #include "applypatch/applypatch.h"
 #include "flashutils/flashutils.h"
 #include "install.h"
+#ifdef HAVE_LIBTUNE2FS
 #include "tune2fs.h"
+#endif
 
 #ifdef USE_EXT4
 #include "make_ext4fs.h"
@@ -1491,6 +1493,7 @@ Value* EnableRebootFn(const char* name, State* state, int argc, Expr* argv[]) {
 }
 
 Value* Tune2FsFn(const char* name, State* state, int argc, Expr* argv[]) {
+#ifdef HAVE_LIBTUNE2FS
     if (argc == 0) {
         return ErrorAbort(state, "%s() expects args, got %d", name, argc);
     }
@@ -1519,6 +1522,9 @@ Value* Tune2FsFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, "%s() returned error code %d", name, result);
     }
     return StringValue(strdup("t"));
+#else
+    return ErrorAbort(state, "%s() support not present, no libtune2fs", name);
+#endif // HAVE_LIBTUNE2FS
 }
 
 void RegisterInstallFunctions() {

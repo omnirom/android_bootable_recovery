@@ -53,7 +53,10 @@ tune2fs_static_libraries := \
  libext2_uuid_static \
  libext2_e2p \
  libext2fs
-LOCAL_STATIC_LIBRARIES += libtune2fs $(tune2fs_static_libraries)
+ifneq ($(wildcard external/e2fsprogs/misc/tune2fs.h),)
+    LOCAL_STATIC_LIBRARIES += libtune2fs $(tune2fs_static_libraries)
+    LOCAL_CFLAGS += -DHAVE_LIBTUNE2FS
+endif
 
 LOCAL_C_INCLUDES += external/e2fsprogs/misc
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
