@@ -233,8 +233,8 @@ tar_append_regfile(TAR *t, char *realname)
 {
 	char block[T_BLOCKSIZE];
 	int filefd;
-	int i, j;
-	size_t size;
+	int j;
+	size_t size, i;
 
 	filefd = open(realname, O_RDONLY);
 	if (filefd == -1)
