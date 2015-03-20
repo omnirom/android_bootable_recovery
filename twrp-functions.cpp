@@ -126,12 +126,12 @@ int TWFunc::Wait_For_Child(pid_t pid, int *status, string Child_Name) {
 
 	rc_pid = waitpid(pid, status, 0);
 	if (rc_pid > 0) {
-		if (WEXITSTATUS(*status) == 0)
-			LOGINFO("%s process ended with RC=%d\n", Child_Name.c_str(), WEXITSTATUS(*status)); // Success
-		else if (WIFSIGNALED(*status)) {
+		if (WIFSIGNALED(*status)) {
 			LOGINFO("%s process ended with signal: %d\n", Child_Name.c_str(), WTERMSIG(*status)); // Seg fault or some other non-graceful termination
 			return -1;
-		} else if (WEXITSTATUS(*status) != 0) {
+		} else if (WEXITSTATUS(*status) == 0) {
+			LOGINFO("%s process ended with RC=%d\n", Child_Name.c_str(), WEXITSTATUS(*status)); // Success
+		} else {
 			LOGINFO("%s process ended with ERROR=%d\n", Child_Name.c_str(), WEXITSTATUS(*status)); // Graceful exit, but there was an error
 			return -1;
 		}
