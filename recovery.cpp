@@ -512,7 +512,7 @@ prepend_title(const char* const* headers) {
 
     const char** new_headers = (const char**)malloc((count+1) * sizeof(char*));
     const char** h = new_headers;
-    *(h++) = "Android system recovery <" EXPAND(RECOVERY_API_VERSION) "e>";
+    *(h++) = "Android system recovery (API " EXPAND(RECOVERY_API_VERSION) ")";
     *(h++) = recovery_version;
     *(h++) = "";
     for (p = headers; *p; ++p, ++h) *h = *p;
@@ -877,7 +877,11 @@ prompt_and_wait(Device* device, int status) {
                 break;
 
             case Device::APPLY_EXT: {
-                ensure_path_mounted(SDCARD_ROOT);
+                if (ensure_path_mounted(SDCARD_ROOT) != 0) {
+                    ui->Print("\n-- Couldn't mount %s.\n", SDCARD_ROOT);
+                    break;
+                }
+
                 char* path = browse_directory(SDCARD_ROOT, device);
                 if (path == NULL) {
                     ui->Print("\n-- No package file selected.\n", path);
@@ -910,7 +914,7 @@ prompt_and_wait(Device* device, int status) {
                     } else if (!ui->IsTextVisible()) {
                         return Device::NO_ACTION;  // reboot if logs aren't visible
                     } else {
-                        ui->Print("\nInstall from sdcard complete.\n");
+                        ui->Print("\nInstall from SD card complete.\n");
                     }
                 }
                 break;

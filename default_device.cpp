@@ -20,19 +20,24 @@
 #include "device.h"
 #include "screen_ui.h"
 
-static const char* HEADERS[] = { "Volume up/down to move highlight;",
-                                 "enter button to select.",
-                                 "",
-                                 NULL };
+static const char* HEADERS[] = {
+    "Volume up/down to move highlight.",
+    "Power button to select.",
+    "",
+    NULL
+};
 
-static const char* ITEMS[] =  {"reboot system now",
-                               "apply update from ADB",
-                               "wipe data/factory reset",
-                               "wipe cache partition",
-                               "reboot to bootloader",
-                               "power down",
-                               "view recovery logs",
-                               NULL };
+static const char* ITEMS[] = {
+    "Reboot system now",
+    "Reboot to bootloader",
+    "Apply update from ADB",
+    "Apply update from SD card",
+    "Wipe data/factory reset",
+    "Wipe cache partition",
+    "View recovery logs",
+    "Power off",
+    NULL
+};
 
 class DefaultDevice : public Device {
   public:
@@ -65,12 +70,13 @@ class DefaultDevice : public Device {
     BuiltinAction InvokeMenuItem(int menu_position) {
         switch (menu_position) {
           case 0: return REBOOT;
-          case 1: return APPLY_ADB_SIDELOAD;
-          case 2: return WIPE_DATA;
-          case 3: return WIPE_CACHE;
-          case 4: return REBOOT_BOOTLOADER;
-          case 5: return SHUTDOWN;
+          case 1: return REBOOT_BOOTLOADER;
+          case 2: return APPLY_ADB_SIDELOAD;
+          case 3: return APPLY_EXT;
+          case 4: return WIPE_DATA;
+          case 5: return WIPE_CACHE;
           case 6: return READ_RECOVERY_LASTLOG;
+          case 7: return SHUTDOWN;
           default: return NO_ACTION;
         }
     }
