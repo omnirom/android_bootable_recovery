@@ -158,7 +158,7 @@ int alloc_ion_mem(unsigned int size)
     ionAllocData.flags = 0;
     ionAllocData.len = size;
     ionAllocData.align = sysconf(_SC_PAGESIZE);
-    ionAllocData.heap_mask =
+    ionAllocData.heap_id_mask =
             ION_HEAP(ION_IOMMU_HEAP_ID) |
             ION_HEAP(ION_SYSTEM_CONTIG_HEAP_ID);
 
