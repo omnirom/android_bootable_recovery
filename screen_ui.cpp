@@ -526,8 +526,11 @@ int ScreenRecoveryUI::SelectMenu(int sel) {
     if (show_menu > 0) {
         old_sel = menu_sel;
         menu_sel = sel;
-        if (menu_sel < 0) menu_sel = 0;
-        if (menu_sel >= menu_items) menu_sel = menu_items-1;
+
+        // Wrap at top and bottom.
+        if (menu_sel < 0) menu_sel = menu_items - 1;
+        if (menu_sel >= menu_items) menu_sel = 0;
+
         sel = menu_sel;
         if (menu_sel != old_sel) update_screen_locked();
     }
