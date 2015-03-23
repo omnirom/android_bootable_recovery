@@ -106,12 +106,12 @@ static void fuse_reply(struct fuse_data* fd, __u64 unique, const void *data, siz
 
     vec[0].iov_base = &hdr;
     vec[0].iov_len = sizeof(hdr);
-    vec[1].iov_base = data;
+    vec[1].iov_base = /* const_cast */(void*)(data);
     vec[1].iov_len = len;
 
     res = writev(fd->ffd, vec, 2);
     if (res < 0) {
-        printf("*** REPLY FAILED *** %d\n", errno);
+        printf("*** REPLY FAILED *** %s\n", strerror(errno));
     }
 }
 
@@ -430,7 +430,7 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
 
     char opts[256];
     snprintf(opts, sizeof(opts),
-             ("fd=%d,user_id=%d,group_id=%d,max_read=%zu,"
+             ("fd=%d,user_id=%d,group_id=%d,max_read=%u,"
               "allow_other,rootmode=040000"),
              fd.ffd, fd.uid, fd.gid, block_size);
 
