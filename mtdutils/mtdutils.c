@@ -313,8 +313,8 @@ static int read_block(const MtdPartition *partition, int fd, char *data)
             memcpy(&before, &after, sizeof(struct mtd_ecc_stats));
         } else if ((mgbb = ioctl(fd, MEMGETBADBLOCK, &pos))) {
             fprintf(stderr,
-                    "mtd: MEMGETBADBLOCK returned %d at 0x%08llx (errno=%d)\n",
-                    mgbb, pos, errno);
+                    "mtd: MEMGETBADBLOCK returned %d at 0x%08llx: %s\n",
+                    mgbb, pos, strerror(errno));
         } else {
             return 0;  // Success!
         }
@@ -419,8 +419,8 @@ static int write_block(MtdWriteContext *ctx, const char *data)
         if (ret != 0 && !(ret == -1 && errno == EOPNOTSUPP)) {
             add_bad_block_offset(ctx, pos);
             fprintf(stderr,
-                    "mtd: not writing bad block at 0x%08lx (ret %d errno %d)\n",
-                    pos, ret, errno);
+                    "mtd: not writing bad block at 0x%08lx (ret %d): %s\n",
+                    pos, ret, strerror(errno));
             pos += partition->erase_size;
             continue;  // Don't try to erase known factory-bad blocks.
         }
