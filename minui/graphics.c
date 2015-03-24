@@ -48,8 +48,6 @@ static int overscan_percent = OVERSCAN_PERCENT;
 static int overscan_offset_x = 0;
 static int overscan_offset_y = 0;
 
-static int gr_vt_fd = -1;
-
 static unsigned char gr_current_r = 255;
 static unsigned char gr_current_g = 255;
 static unsigned char gr_current_b = 255;
@@ -362,17 +360,6 @@ int gr_init(void)
 {
     gr_init_font();
 
-    gr_vt_fd = open("/dev/tty0", O_RDWR | O_SYNC);
-    if (gr_vt_fd < 0) {
-        // This is non-fatal; post-Cupcake kernels don't have tty0.
-        perror("can't open /dev/tty0");
-    } else if (ioctl(gr_vt_fd, KDSETMODE, (void*) KD_GRAPHICS)) {
-        // However, if we do open tty0, we expect the ioctl to work.
-        perror("failed KDSETMODE to KD_GRAPHICS on tty0");
-        gr_exit();
-        return -1;
-    }
-
     gr_backend = open_adf();
     if (gr_backend) {
         gr_draw = gr_backend->init(gr_backend);
@@ -401,10 +388,6 @@ int gr_init(void)
 void gr_exit(void)
 {
     gr_backend->exit(gr_backend);
-
-    ioctl(gr_vt_fd, KDSETMODE, (void*) KD_TEXT);
-    close(gr_vt_fd);
-    gr_vt_fd = -1;
 }
 
 int gr_fb_width(void)
