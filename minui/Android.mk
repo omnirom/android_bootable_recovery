@@ -1,13 +1,14 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := graphics.c graphics_adf.c graphics_fbdev.c events.c \
-	resources.c
+LOCAL_SRC_FILES := graphics.c graphics_adf.c graphics_fbdev.c events.c resources.c
 
 LOCAL_WHOLE_STATIC_LIBRARIES += libadf
 LOCAL_STATIC_LIBRARIES += libpng
 
 LOCAL_MODULE := libminui
+
+LOCAL_CFLAGS := -std=gnu11
 
 # This used to compare against values in double-quotes (which are just
 # ordinary characters in this context).  Strip double-quotes from the
