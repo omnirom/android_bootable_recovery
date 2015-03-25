@@ -369,10 +369,5 @@ int main(int argc, char **argv) {
 	else
 		TWFunc::tw_reboot(rb_system);
 
-#ifdef ANDROID_RB_RESTART
-	android_reboot(ANDROID_RB_RESTART, 0, 0);
-#else
-	reboot(RB_AUTOBOOT);
-#endif
 	return 0;
 }
