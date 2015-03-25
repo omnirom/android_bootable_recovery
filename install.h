@@ -27,7 +27,7 @@ enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE };
 // Install the package specified by root_path.  If INSTALL_SUCCESS is
 // returned and *wipe_cache is true on exit, caller should wipe the
 // cache partition.
-int install_package(const char *root_path, int* wipe_cache,
+int install_package(const char* root_path, bool* wipe_cache,
                     const char* install_file, bool needs_mount);
 
 #ifdef __cplusplus

@@ -825,7 +825,7 @@ static void choose_recovery_file(Device* device) {
     }
 }
 
-static int apply_from_sdcard(Device* device, int* wipe_cache) {
+static int apply_from_sdcard(Device* device, bool* wipe_cache) {
     if (ensure_path_mounted(SDCARD_ROOT) != 0) {
         ui->Print("\n-- Couldn't mount %s.\n", SDCARD_ROOT);
         return INSTALL_ERROR;
@@ -878,7 +878,7 @@ prompt_and_wait(Device* device, int status) {
         // statement below.
         Device::BuiltinAction chosen_action = device->InvokeMenuItem(chosen_item);
 
-        int wipe_cache = 0;
+        bool wipe_cache = false;
         switch (chosen_action) {
             case Device::NO_ACTION:
                 break;
@@ -1010,7 +1010,9 @@ main(int argc, char **argv) {
 
     const char *send_intent = NULL;
     const char *update_package = NULL;
-    int wipe_data = 0, wipe_cache = 0, show_text = 0;
+    bool wipe_data = false;
+    bool wipe_cache = false;
+    bool show_text = false;
     bool just_exit = false;
     bool shutdown_after = false;
 
@@ -1019,9 +1021,9 @@ main(int argc, char **argv) {
         switch (arg) {
         case 's': send_intent = optarg; break;
         case 'u': update_package = optarg; break;
-        case 'w': wipe_data = wipe_cache = 1; break;
-        case 'c': wipe_cache = 1; break;
-        case 't': show_text = 1; break;
+        case 'w': wipe_data = wipe_cache = true; break;
+        case 'c': wipe_cache = true; break;
+        case 't': show_text = true; break;
         case 'x': just_exit = true; break;
         case 'l': locale = optarg; break;
         case 'g': {

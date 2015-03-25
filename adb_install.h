@@ -19,6 +19,6 @@
 
 class RecoveryUI;
 
-int apply_from_adb(RecoveryUI* h, int* wipe_cache, const char* install_file);
+int apply_from_adb(RecoveryUI* h, bool* wipe_cache, const char* install_file);
 
 #endif

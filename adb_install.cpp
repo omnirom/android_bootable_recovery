@@ -73,7 +73,7 @@ maybe_restart_adbd() {
 #define ADB_INSTALL_TIMEOUT 300
 
 int
-apply_from_adb(RecoveryUI* ui_, int* wipe_cache, const char* install_file) {
+apply_from_adb(RecoveryUI* ui_, bool* wipe_cache, const char* install_file) {
     ui = ui_;
 
     stop_adbd();
