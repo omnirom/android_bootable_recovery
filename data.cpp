@@ -48,9 +48,7 @@
 #include "find_file.hpp"
 #include "set_metadata.h"
 
-#ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
-	#include "cutils/properties.h"
-#endif
+#include "cutils/properties.h"
 
 #ifndef TW_MAX_BRIGHTNESS
 #define TW_MAX_BRIGHTNESS 255
@@ -367,6 +365,15 @@ int DataManager::GetValue(const string varName, string& value)
 	// Handle magic values
 	if (GetMagicValue(localStr, value) == 0)
 		return 0;
+
+	// Handle property
+	if (localStr.length() > 9 && localStr.substr(0, 9) == "property.") {
+		char property_value[PROPERTY_VALUE_MAX];
+		property_get(localStr.substr(9).c_str(), property_value, "");
+		value = property_value;
+		return 0;
+	}
+
 	map<string, string>::iterator constPos;
 	constPos = mConstValues.find(localStr);
 	if (constPos != mConstValues.end())
@@ -443,6 +450,14 @@ int DataManager::SetValue(const string varName, string value, int persist /* = 0
 {
 	if (!mInitialized)
 		SetDefaultValues();
+
+	// Handle property
+	if (varName.length() > 9 && varName.substr(0, 9) == "property.") {
+		int ret = property_set(varName.substr(9).c_str(), value.c_str());
+		if (ret)
+			LOGERR("Error setting property '%s' to '%s'\n", varName.substr(9).c_str(), value.c_str());
+		return ret;
+	}
 
 	// Don't allow empty values or numerical starting values
 	if (varName.empty() || (varName[0] >= '0' && varName[0] <= '9'))
