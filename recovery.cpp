@@ -502,8 +502,7 @@ erase_volume(const char *volume) {
     return result;
 }
 
-static const char**
-prepend_title(const char* const* headers) {
+static const char** prepend_title(const char* const* headers) {
     // count the number of lines in our title, plus the
     // caller-provided headers.
     int count = 3;   // our title has 3 lines
@@ -578,23 +577,14 @@ static int compare_string(const void* a, const void* b) {
 }
 
 // Returns a malloc'd path, or NULL.
-static char*
-browse_directory(const char* path, Device* device) {
+static char* browse_directory(const char* path, Device* device) {
     ensure_path_mounted(path);
 
-    const char* MENU_HEADERS[] = { "Choose a package to install:",
-                                   path,
-                                   "",
-                                   NULL };
-    DIR* d;
-    struct dirent* de;
-    d = opendir(path);
+    DIR* d = opendir(path);
     if (d == NULL) {
         LOGE("error opening %s: %s\n", path, strerror(errno));
         return NULL;
     }
-
-    const char** headers = prepend_title(MENU_HEADERS);
 
     int d_size = 0;
     int d_alloc = 10;
@@ -604,6 +594,7 @@ browse_directory(const char* path, Device* device) {
     char** zips = (char**)malloc(z_alloc * sizeof(char*));
     zips[0] = strdup("../");
 
+    struct dirent* de;
     while ((de = readdir(d)) != NULL) {
         int name_len = strlen(de->d_name);
 
@@ -647,6 +638,8 @@ browse_directory(const char* path, Device* device) {
     z_size += d_size;
     zips[z_size] = NULL;
 
+    const char* headers[] = { "Choose a package to install:", path, "", NULL };
+
     char* result;
     int chosen_item = 0;
     while (true) {
@@ -677,44 +670,23 @@ browse_directory(const char* path, Device* device) {
         }
     }
 
-    int i;
-    for (i = 0; i < z_size; ++i) free(zips[i]);
+    for (int i = 0; i < z_size; ++i) free(zips[i]);
     free(zips);
-    free(headers);
 
     return result;
 }
 
-static void
-wipe_data(int confirm, Device* device) {
-    if (confirm) {
-        static const char** title_headers = NULL;
+static bool yes_no(Device* device, const char* question1, const char* question2) {
+    const char* headers[] = { question1, question2, "", NULL };
+    const char* items[] = { " No", " Yes", NULL };
 
-        if (title_headers == NULL) {
-            const char* headers[] = { "Confirm wipe of all user data?",
-                                      "  THIS CAN NOT BE UNDONE.",
-                                      "",
-                                      NULL };
-            title_headers = prepend_title((const char**)headers);
-        }
+    int chosen_item = get_menu_selection(headers, items, 1, 0, device);
+    return (chosen_item == 1);
+}
 
-        const char* items[] = { " No",
-                                " No",
-                                " No",
-                                " No",
-                                " No",
-                                " No",
-                                " No",
-                                " Yes -- delete all user data",   // [7]
-                                " No",
-                                " No",
-                                " No",
-                                NULL };
-
-        int chosen_item = get_menu_selection(title_headers, items, 1, 0, device);
-        if (chosen_item != 7) {
-            return;
-        }
+static void wipe_data(int confirm, Device* device) {
+    if (confirm && !yes_no(device, "Wipe all user data?", "  THIS CAN NOT BE UNDONE!")) {
+        return;
     }
 
     ui->Print("\n-- Wiping data...\n");
@@ -723,6 +695,16 @@ wipe_data(int confirm, Device* device) {
     erase_volume("/cache");
     erase_persistent_partition();
     ui->Print("Data wipe complete.\n");
+}
+
+static void wipe_cache(bool should_confirm, Device* device) {
+    if (should_confirm && !yes_no(device, "Wipe cache?", "  THIS CAN NOT BE UNDONE!")) {
+        return;
+    }
+
+    ui->Print("\n-- Wiping cache...\n");
+    erase_volume("/cache");
+    ui->Print("Cache wipe complete.\n");
 }
 
 static void file_to_ui(const char* fn) {
@@ -782,9 +764,6 @@ static void choose_recovery_file(Device* device) {
     unsigned int n;
     static const char** title_headers = NULL;
     char *filename;
-    const char* headers[] = { "Select file to view",
-                              "",
-                              NULL };
     // "Go back" + LAST_KMSG_FILE + KEEP_LOG_COUNT + terminating NULL entry
     char* entries[KEEP_LOG_COUNT + 3];
     memset(entries, 0, sizeof(entries));
@@ -812,10 +791,10 @@ static void choose_recovery_file(Device* device) {
         entries[n++] = filename;
     }
 
-    title_headers = prepend_title((const char**)headers);
+    const char* headers[] = { "Select file to view", "", NULL };
 
     while(1) {
-        int chosen_item = get_menu_selection(title_headers, entries, 1, 0, device);
+        int chosen_item = get_menu_selection(headers, entries, 1, 0, device);
         if (chosen_item == 0) break;
         file_to_ui(entries[chosen_item]);
     }
@@ -878,7 +857,7 @@ prompt_and_wait(Device* device, int status) {
         // statement below.
         Device::BuiltinAction chosen_action = device->InvokeMenuItem(chosen_item);
 
-        bool wipe_cache = false;
+        bool should_wipe_cache = false;
         switch (chosen_action) {
             case Device::NO_ACTION:
                 break;
@@ -894,9 +873,7 @@ prompt_and_wait(Device* device, int status) {
                 break;
 
             case Device::WIPE_CACHE:
-                ui->Print("\n-- Wiping cache...\n");
-                erase_volume("/cache");
-                ui->Print("Cache wipe complete.\n");
+                wipe_cache(ui->IsTextVisible(), device);
                 if (!ui->IsTextVisible()) return Device::NO_ACTION;
                 break;
 
@@ -905,15 +882,13 @@ prompt_and_wait(Device* device, int status) {
                 {
                     bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
                     if (adb) {
-                        status = apply_from_adb(ui, &wipe_cache, TEMPORARY_INSTALL_FILE);
+                        status = apply_from_adb(ui, &should_wipe_cache, TEMPORARY_INSTALL_FILE);
                     } else {
-                        status = apply_from_sdcard(device, &wipe_cache);
+                        status = apply_from_sdcard(device, &should_wipe_cache);
                     }
 
-                    if (status == INSTALL_SUCCESS && wipe_cache) {
-                        ui->Print("\n-- Wiping cache (at package request)...\n");
-                        bool okay = erase_volume("/cache");
-                        ui->Print("Cache wipe %s.\n", okay ? "succeeded" : "failed");
+                    if (status == INSTALL_SUCCESS && should_wipe_cache) {
+                        wipe_cache(false, device);
                     }
 
                     if (status >= 0) {
