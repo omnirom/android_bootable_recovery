@@ -61,19 +61,10 @@ struct bootloader_message {
 /* Read and write the bootloader command from the "misc" partition.
  * These return zero on success.
  */
-/*
 int get_bootloader_message(struct bootloader_message *out);
 int set_bootloader_message(const struct bootloader_message *in);
-*/
 
-void set_device_type(char new_type);
-void set_device_name(const char* new_name);
-
-int get_bootloader_message_mtd_name(struct bootloader_message *out);
-int set_bootloader_message_mtd_name(const struct bootloader_message *in, const char* mtd_name);
-int get_bootloader_message_block_name(struct bootloader_message *out);
-int set_bootloader_message_block_name(const struct bootloader_message *in, const char* block_name);
-
+void set_misc_device(const char* type, const char* name);
 void get_args(int *argc, char ***argv);
 
 #ifdef __cplusplus
