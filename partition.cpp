@@ -1764,12 +1764,21 @@ bool TWPartition::Backup_Tar(string backup_folder, const unsigned long long *ove
 }
 
 bool TWPartition::Backup_DD(string backup_folder) {
-	char back_name[255], backup_size[32];
-	string Full_FileName, Command, DD_BS;
+	char back_name[255], block_size[32], dd_count[32];
+	string Full_FileName, Command, DD_BS, DD_COUNT;
 	int use_compression;
+	unsigned long long DD_Block_Size, DD_Count;
 
-	sprintf(backup_size, "%llu", Backup_Size);
-	DD_BS = backup_size;
+	DD_Block_Size = 16 * 1024 * 1024;
+	while (Backup_Size % DD_Block_Size != 0) DD_Block_Size >>= 1;
+
+	DD_Count = Backup_Size / DD_Block_Size;
+
+	sprintf(dd_count, "%llu", DD_Count);
+	DD_COUNT = dd_count;
+
+	sprintf(block_size, "%llu", DD_Block_Size);
+	DD_BS = block_size;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, "Backing Up");
 	gui_print("Backing up %s...\n", Display_Name.c_str());
@@ -1779,7 +1788,7 @@ bool TWPartition::Backup_DD(string backup_folder) {
 
 	Full_FileName = backup_folder + "/" + Backup_FileName;
 
-	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'" + " bs=" + DD_BS + " count=1";
+	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'" + " bs=" + DD_BS + " count=" + DD_COUNT;
 	LOGINFO("Backup command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command);
 	tw_set_default_metadata(Full_FileName.c_str());
@@ -2102,7 +2111,7 @@ bool TWPartition::Flash_Image_DD(string Filename) {
 	string Command;
 
 	gui_print("Flashing %s...\n", Display_Name.c_str());
-	Command = "dd bs=4096 if='" + Filename + "' of=" + Actual_Block_Device;
+	Command = "dd bs=8388608 if='" + Filename + "' of=" + Actual_Block_Device;
 	LOGINFO("Flash command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command);
 	return true;
