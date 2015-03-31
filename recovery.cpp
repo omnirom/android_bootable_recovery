@@ -52,11 +52,13 @@ extern "C" {
 struct selabel_handle *sehandle;
 
 static const struct option OPTIONS[] = {
-  { "send_intent", required_argument, NULL, 's' },
+  { "send_intent", required_argument, NULL, 'i' },
   { "update_package", required_argument, NULL, 'u' },
   { "wipe_data", no_argument, NULL, 'w' },
   { "wipe_cache", no_argument, NULL, 'c' },
   { "show_text", no_argument, NULL, 't' },
+  { "sideload", no_argument, NULL, 's' },
+  { "sideload_auto_reboot", no_argument, NULL, 'a' },
   { "just_exit", no_argument, NULL, 'x' },
   { "locale", required_argument, NULL, 'l' },
   { "stages", required_argument, NULL, 'g' },
@@ -890,16 +892,14 @@ prompt_and_wait(Device* device, int status) {
                         wipe_cache(false, device);
                     }
 
-                    if (status >= 0) {
-                        if (status != INSTALL_SUCCESS) {
-                            ui->SetBackground(RecoveryUI::ERROR);
-                            ui->Print("Installation aborted.\n");
-                            copy_logs();
-                        } else if (!ui->IsTextVisible()) {
-                            return Device::NO_ACTION;  // reboot if logs aren't visible
-                        } else {
-                            ui->Print("\nInstall from %s complete.\n", adb ? "ADB" : "SD card");
-                        }
+                    if (status != INSTALL_SUCCESS) {
+                        ui->SetBackground(RecoveryUI::ERROR);
+                        ui->Print("Installation aborted.\n");
+                        copy_logs();
+                    } else if (!ui->IsTextVisible()) {
+                        return Device::NO_ACTION;  // reboot if logs aren't visible
+                    } else {
+                        ui->Print("\nInstall from %s complete.\n", adb ? "ADB" : "SD card");
                     }
                 }
                 break;
@@ -985,19 +985,23 @@ main(int argc, char **argv) {
     const char *send_intent = NULL;
     const char *update_package = NULL;
     bool wipe_data = false;
-    bool wipe_cache = false;
+    bool should_wipe_cache = false;
     bool show_text = false;
+    bool sideload = false;
+    bool sideload_auto_reboot = false;
     bool just_exit = false;
     bool shutdown_after = false;
 
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
         switch (arg) {
-        case 's': send_intent = optarg; break;
+        case 'i': send_intent = optarg; break;
         case 'u': update_package = optarg; break;
-        case 'w': wipe_data = wipe_cache = true; break;
-        case 'c': wipe_cache = true; break;
+        case 'w': wipe_data = true; should_wipe_cache = true; break;
+        case 'c': should_wipe_cache = true; break;
         case 't': show_text = true; break;
+        case 's': sideload = true; break;
+        case 'a': sideload = true; sideload_auto_reboot = true; break;
         case 'x': just_exit = true; break;
         case 'l': locale = optarg; break;
         case 'g': {
@@ -1079,11 +1083,9 @@ main(int argc, char **argv) {
     int status = INSTALL_SUCCESS;
 
     if (update_package != NULL) {
-        status = install_package(update_package, &wipe_cache, TEMPORARY_INSTALL_FILE, true);
-        if (status == INSTALL_SUCCESS && wipe_cache) {
-            if (erase_volume("/cache")) {
-                LOGE("Cache wipe (requested by package) failed.");
-            }
+        status = install_package(update_package, &should_wipe_cache, TEMPORARY_INSTALL_FILE, true);
+        if (status == INSTALL_SUCCESS && should_wipe_cache) {
+            wipe_cache(false, device);
         }
         if (status != INSTALL_SUCCESS) {
             ui->Print("Installation aborted.\n");
@@ -1098,24 +1100,45 @@ main(int argc, char **argv) {
     } else if (wipe_data) {
         if (device->WipeData()) status = INSTALL_ERROR;
         if (erase_volume("/data")) status = INSTALL_ERROR;
-        if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
+        if (should_wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Data wipe failed.\n");
-    } else if (wipe_cache) {
-        if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
+    } else if (should_wipe_cache) {
+        if (should_wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
+    } else if (sideload) {
+        // 'adb reboot sideload' acts the same as user presses key combinations
+        // to enter the sideload mode. When 'sideload-auto-reboot' is used, text
+        // display will NOT be turned on by default. And it will reboot after
+        // sideload finishes even if there are errors. Unless one turns on the
+        // text display during the installation. This is to enable automated
+        // testing.
+        if (!sideload_auto_reboot) {
+            ui->ShowText(true);
+        }
+        status = apply_from_adb(ui, &should_wipe_cache, TEMPORARY_INSTALL_FILE);
+        if (status == INSTALL_SUCCESS && should_wipe_cache) {
+            wipe_cache(false, device);
+        }
+        ui->Print("\nInstall from ADB complete (status: %d).\n", status);
+        if (sideload_auto_reboot) {
+            ui->Print("Rebooting automatically.\n");
+        }
     } else if (!just_exit) {
         status = INSTALL_NONE;  // No command specified
         ui->SetBackground(RecoveryUI::NO_COMMAND);
     }
 
-    if (status == INSTALL_ERROR || status == INSTALL_CORRUPT) {
+    if (!sideload_auto_reboot && (status == INSTALL_ERROR || status == INSTALL_CORRUPT)) {
         copy_logs();
         ui->SetBackground(RecoveryUI::ERROR);
     }
+
     Device::BuiltinAction after = shutdown_after ? Device::SHUTDOWN : Device::REBOOT;
-    if (status != INSTALL_SUCCESS || ui->IsTextVisible()) {
+    if ((status != INSTALL_SUCCESS && !sideload_auto_reboot) || ui->IsTextVisible()) {
         Device::BuiltinAction temp = prompt_and_wait(device, status);
-        if (temp != Device::NO_ACTION) after = temp;
+        if (temp != Device::NO_ACTION) {
+            after = temp;
+        }
     }
 
     // Save logs and clean up before rebooting or shutting down.
