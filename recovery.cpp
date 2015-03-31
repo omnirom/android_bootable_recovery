@@ -695,7 +695,6 @@ static void wipe_data(int confirm, Device* device) {
     device->WipeData();
     erase_volume("/data");
     erase_volume("/cache");
-    erase_persistent_partition();
     ui->Print("Data wipe complete.\n");
 }
 
@@ -1102,7 +1101,6 @@ main(int argc, char **argv) {
         if (device->WipeData()) status = INSTALL_ERROR;
         if (erase_volume("/data")) status = INSTALL_ERROR;
         if (should_wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
-        if (erase_persistent_partition() == -1 ) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Data wipe failed.\n");
     } else if (should_wipe_cache) {
         if (should_wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;

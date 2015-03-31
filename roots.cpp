@@ -39,8 +39,6 @@ static struct fstab *fstab = NULL;
 
 extern struct selabel_handle *sehandle;
 
-static const char* PERSISTENT_PATH = "/persistent";
-
 void load_volume_table()
 {
     int i;
@@ -264,41 +262,6 @@ int format_volume(const char* volume) {
 
     LOGE("format_volume: fs_type \"%s\" unsupported\n", v->fs_type);
     return -1;
-}
-
-int erase_persistent_partition() {
-    Volume *v = volume_for_path(PERSISTENT_PATH);
-    if (v == NULL) {
-        // most devices won't have /persistent, so this is not an error.
-        return 0;
-    }
-
-    int fd = open(v->blk_device, O_RDWR);
-    uint64_t size = get_file_size(fd);
-    if (size == 0) {
-        LOGE("failed to stat size of /persistent\n");
-        close(fd);
-        return -1;
-    }
-
-    char oem_unlock_enabled;
-    lseek(fd, size - 1, SEEK_SET);
-    read(fd, &oem_unlock_enabled, 1);
-
-    if (oem_unlock_enabled) {
-        if (wipe_block_device(fd, size)) {
-           LOGE("error wiping /persistent: %s\n", strerror(errno));
-           close(fd);
-           return -1;
-        }
-
-        lseek(fd, size - 1, SEEK_SET);
-        write(fd, &oem_unlock_enabled, 1);
-    }
-
-    close(fd);
-
-    return (int) oem_unlock_enabled;
 }
 
 int setup_install_mounts() {
