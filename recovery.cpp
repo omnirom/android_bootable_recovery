@@ -686,26 +686,36 @@ static bool yes_no(Device* device, const char* question1, const char* question2)
     return (chosen_item == 1);
 }
 
-static void wipe_data(int confirm, Device* device) {
-    if (confirm && !yes_no(device, "Wipe all user data?", "  THIS CAN NOT BE UNDONE!")) {
-        return;
+// Return true on success.
+static bool wipe_data(int should_confirm, Device* device) {
+    if (should_confirm && !yes_no(device, "Wipe all user data?", "  THIS CAN NOT BE UNDONE!")) {
+        return false;
     }
 
     ui->Print("\n-- Wiping data...\n");
-    device->WipeData();
-    erase_volume("/data");
-    erase_volume("/cache");
-    ui->Print("Data wipe complete.\n");
+    if (device->WipeData() == 0 && erase_volume("/data") == 0 && erase_volume("/cache") == 0) {
+        ui->Print("Data wipe complete.\n");
+        return true;
+    } else {
+        ui->Print("Data wipe failed.\n");
+        return false;
+    }
 }
 
-static void wipe_cache(bool should_confirm, Device* device) {
+// Return true on success.
+static bool wipe_cache(bool should_confirm, Device* device) {
     if (should_confirm && !yes_no(device, "Wipe cache?", "  THIS CAN NOT BE UNDONE!")) {
-        return;
+        return false;
     }
 
     ui->Print("\n-- Wiping cache...\n");
-    erase_volume("/cache");
-    ui->Print("Cache wipe complete.\n");
+    if (erase_volume("/cache") == 0) {
+        ui->Print("Cache wipe complete.\n");
+        return true;
+    } else {
+        ui->Print("Cache wipe failed.\n");
+        return false;
+    }
 }
 
 static void file_to_ui(const char* fn) {
@@ -889,7 +899,9 @@ prompt_and_wait(Device* device, int status) {
                     }
 
                     if (status == INSTALL_SUCCESS && should_wipe_cache) {
-                        wipe_cache(false, device);
+                        if (!wipe_cache(false, device)) {
+                            status = INSTALL_ERROR;
+                        }
                     }
 
                     if (status != INSTALL_SUCCESS) {
@@ -984,7 +996,7 @@ main(int argc, char **argv) {
 
     const char *send_intent = NULL;
     const char *update_package = NULL;
-    bool wipe_data = false;
+    bool should_wipe_data = false;
     bool should_wipe_cache = false;
     bool show_text = false;
     bool sideload = false;
@@ -997,7 +1009,7 @@ main(int argc, char **argv) {
         switch (arg) {
         case 'i': send_intent = optarg; break;
         case 'u': update_package = optarg; break;
-        case 'w': wipe_data = true; should_wipe_cache = true; break;
+        case 'w': should_wipe_data = true; break;
         case 'c': should_wipe_cache = true; break;
         case 't': show_text = true; break;
         case 's': sideload = true; break;
@@ -1097,14 +1109,14 @@ main(int argc, char **argv) {
                 ui->ShowText(true);
             }
         }
-    } else if (wipe_data) {
-        if (device->WipeData()) status = INSTALL_ERROR;
-        if (erase_volume("/data")) status = INSTALL_ERROR;
-        if (should_wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
-        if (status != INSTALL_SUCCESS) ui->Print("Data wipe failed.\n");
+    } else if (should_wipe_data) {
+        if (!wipe_data(false, device)) {
+            status = INSTALL_ERROR;
+        }
     } else if (should_wipe_cache) {
-        if (should_wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
-        if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
+        if (!wipe_cache(false, device)) {
+            status = INSTALL_ERROR;
+        }
     } else if (sideload) {
         // 'adb reboot sideload' acts the same as user presses key combinations
         // to enter the sideload mode. When 'sideload-auto-reboot' is used, text
@@ -1117,7 +1129,9 @@ main(int argc, char **argv) {
         }
         status = apply_from_adb(ui, &should_wipe_cache, TEMPORARY_INSTALL_FILE);
         if (status == INSTALL_SUCCESS && should_wipe_cache) {
-            wipe_cache(false, device);
+            if (!wipe_cache(false, device)) {
+                status = INSTALL_ERROR;
+            }
         }
         ui->Print("\nInstall from ADB complete (status: %d).\n", status);
         if (sideload_auto_reboot) {
