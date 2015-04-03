@@ -118,8 +118,8 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 			LOGINFO("Using encryption\n");
 			DIR* d;
 			struct dirent* de;
-			unsigned long long regular_size = 0, encrypt_size = 0, target_size = 0, core_count = 1, total_size;
-			unsigned enc_thread_id = 1, regular_thread_id = 0, i, start_thread_id = 1;
+			unsigned long long regular_size = 0, encrypt_size = 0, target_size = 0, total_size;
+			unsigned enc_thread_id = 1, regular_thread_id = 0, i, start_thread_id = 1, core_count = 1;
 			int item_len, ret, thread_error = 0;
 			std::vector<TarListStruct> RegularList;
 			std::vector<TarListStruct> EncryptList;
@@ -134,7 +134,7 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 			core_count = sysconf(_SC_NPROCESSORS_CONF);
 			if (core_count > 8)
 				core_count = 8;
-			LOGINFO("   Core Count      : %llu\n", core_count);
+			LOGINFO("   Core Count      : %u\n", core_count);
 			Archive_Current_Size = 0;
 
 			d = opendir(tardir.c_str());
@@ -223,7 +223,7 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 			}
 			closedir(d);
 			if (enc_thread_id != core_count) {
-				LOGERR("Error dividing up threads for encryption, %i threads for %i cores!\n", enc_thread_id, core_count);
+				LOGERR("Error dividing up threads for encryption, %u threads for %u cores!\n", enc_thread_id, core_count);
 				if (enc_thread_id > core_count) {
 					close(progress_pipe[1]);
 					_exit(-1);
@@ -311,7 +311,7 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 						_exit(-1);
 					} else {
 						LOGINFO("Joined thread %i.\n", i);
-						ret = *((int *)thread_return);
+						ret = (int)(intptr_t)thread_return;
 						if (ret != 0) {
 							thread_error = 1;
 							LOGERR("Thread %i returned an error %i.\n", i, ret);
@@ -545,7 +545,7 @@ int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned lon
 							_exit(-1);
 						} else {
 							LOGINFO("Joined thread %i.\n", i);
-							ret = *((int *)thread_return);
+							ret = (int)(intptr_t)thread_return;
 							if (ret != 0) {
 								thread_error = 1;
 								LOGERR("Thread %i returned an error %i.\n", i, ret);
