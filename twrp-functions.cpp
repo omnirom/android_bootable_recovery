@@ -125,19 +125,19 @@ int TWFunc::Wait_For_Child(pid_t pid, int *status, string Child_Name) {
 	rc_pid = waitpid(pid, status, 0);
 	if (rc_pid > 0) {
 		if (WIFSIGNALED(*status)) {
-			LOGINFO("%s process ended with signal: %d\n", Child_Name.c_str(), WTERMSIG(*status)); // Seg fault or some other non-graceful termination
+			LOGERR("%s process ended with signal: %d\n", Child_Name.c_str(), WTERMSIG(*status)); // Seg fault or some other non-graceful termination
 			return -1;
 		} else if (WEXITSTATUS(*status) == 0) {
 			LOGINFO("%s process ended with RC=%d\n", Child_Name.c_str(), WEXITSTATUS(*status)); // Success
 		} else {
-			LOGINFO("%s process ended with ERROR=%d\n", Child_Name.c_str(), WEXITSTATUS(*status)); // Graceful exit, but there was an error
+			LOGERR("%s process ended with ERROR=%d\n", Child_Name.c_str(), WEXITSTATUS(*status)); // Graceful exit, but there was an error
 			return -1;
 		}
 	} else { // no PID returned
 		if (errno == ECHILD)
-			LOGINFO("%s no child process exist\n", Child_Name.c_str());
+			LOGERR("%s no child process exist\n", Child_Name.c_str());
 		else {
-			LOGINFO("%s Unexpected error\n", Child_Name.c_str());
+			LOGERR("%s Unexpected error %d\n", Child_Name.c_str(), errno);
 			return -1;
 		}
 	}
