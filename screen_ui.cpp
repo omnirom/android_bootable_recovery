@@ -40,25 +40,26 @@ static int char_height;
 // There's only (at most) one of these objects, and global callbacks
 // (for pthread_create, and the input event system) need to find it,
 // so use a global variable.
-static ScreenRecoveryUI* self = NULL;
+static ScreenRecoveryUI* self = nullptr;
 
 // Return the current time as a double (including fractions of a second).
 static double now() {
     struct timeval tv;
-    gettimeofday(&tv, NULL);
+    gettimeofday(&tv, nullptr);
     return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
 ScreenRecoveryUI::ScreenRecoveryUI() :
     currentIcon(NONE),
     installingFrame(0),
-    locale(NULL),
+    locale(nullptr),
     rtl_locale(false),
     progressBarType(EMPTY),
     progressScopeStart(0),
     progressScopeSize(0),
     progress(0),
     pagesIdentical(false),
+    text(nullptr),
     text_cols(0),
     text_rows(0),
     text_col(0),
@@ -66,6 +67,7 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     text_top(0),
     show_text(false),
     show_text_ever(false),
+    menu(nullptr),
     show_menu(false),
     menu_top(0),
     menu_items(0),
@@ -75,12 +77,10 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     stage(-1),
     max_stage(-1) {
 
-    for (int i = 0; i < 5; i++)
-        backgroundIcon[i] = NULL;
-
-    memset(text, 0, sizeof(text));
-
-    pthread_mutex_init(&updateMutex, NULL);
+    for (int i = 0; i < 5; i++) {
+        backgroundIcon[i] = nullptr;
+    }
+    pthread_mutex_init(&updateMutex, nullptr);
     self = this;
 }
 
@@ -247,7 +247,8 @@ void ScreenRecoveryUI::draw_screen_locked()
         // screen, the bottom of the menu, or we've displayed the
         // entire text buffer.
         int row = (text_top+text_rows-1) % text_rows;
-        for (int ty = gr_fb_height() - char_height, count = 0;
+        size_t count = 0;
+        for (int ty = gr_fb_height() - char_height;
              ty > y+2 && count < text_rows;
              ty -= char_height, ++count) {
             gr_text(0, ty, text[row], 0);
@@ -281,7 +282,7 @@ void ScreenRecoveryUI::update_progress_locked()
 // Keeps the progress bar updated, even when the process is otherwise busy.
 void* ScreenRecoveryUI::progress_thread(void *cookie) {
     self->progress_loop();
-    return NULL;
+    return nullptr;
 }
 
 void ScreenRecoveryUI::progress_loop() {
@@ -344,23 +345,32 @@ void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, gr_surface* sur
     }
 }
 
+static char** Alloc2d(size_t rows, size_t cols) {
+    char** result = new char*[rows];
+    for (size_t i = 0; i < rows; ++i) {
+        result[i] = new char[cols];
+        memset(result[i], 0, cols);
+    }
+    return result;
+}
+
 void ScreenRecoveryUI::Init()
 {
     gr_init();
 
     gr_font_size(&char_width, &char_height);
+    text_rows = gr_fb_height() / char_height;
+    text_cols = gr_fb_width() / char_width;
+
+    text = Alloc2d(text_rows, text_cols + 1);
+    menu = Alloc2d(text_rows, text_cols + 1);
 
     text_col = text_row = 0;
-    text_rows = gr_fb_height() / char_height;
-    if (text_rows > kMaxRows) text_rows = kMaxRows;
     text_top = 1;
 
-    text_cols = gr_fb_width() / char_width;
-    if (text_cols > kMaxCols - 1) text_cols = kMaxCols - 1;
-
-    backgroundIcon[NONE] = NULL;
+    backgroundIcon[NONE] = nullptr;
     LoadBitmapArray("icon_installing", &installing_frames, &installation);
-    backgroundIcon[INSTALLING_UPDATE] = installing_frames ? installation[0] : NULL;
+    backgroundIcon[INSTALLING_UPDATE] = installing_frames ? installation[0] : nullptr;
     backgroundIcon[ERASING] = backgroundIcon[INSTALLING_UPDATE];
     LoadBitmap("icon_error", &backgroundIcon[ERROR]);
     backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
@@ -375,7 +385,7 @@ void ScreenRecoveryUI::Init()
     LoadLocalizedBitmap("no_command_text", &backgroundText[NO_COMMAND]);
     LoadLocalizedBitmap("error_text", &backgroundText[ERROR]);
 
-    pthread_create(&progress_t, NULL, progress_thread, NULL);
+    pthread_create(&progress_t, nullptr, progress_thread, nullptr);
 
     RecoveryUI::Init();
 }
@@ -402,7 +412,7 @@ void ScreenRecoveryUI::SetLocale(const char* new_locale) {
         }
         free(lang);
     } else {
-        new_locale = NULL;
+        new_locale = nullptr;
     }
 }
 
@@ -496,17 +506,17 @@ void ScreenRecoveryUI::Print(const char *fmt, ...)
 
 void ScreenRecoveryUI::StartMenu(const char* const * headers, const char* const * items,
                                  int initial_selection) {
-    int i;
     pthread_mutex_lock(&updateMutex);
     if (text_rows > 0 && text_cols > 0) {
+        size_t i;
         for (i = 0; i < text_rows; ++i) {
-            if (headers[i] == NULL) break;
+            if (headers[i] == nullptr) break;
             strncpy(menu[i], headers[i], text_cols-1);
             menu[i][text_cols-1] = '\0';
         }
         menu_top = i;
         for (; i < text_rows; ++i) {
-            if (items[i-menu_top] == NULL) break;
+            if (items[i-menu_top] == nullptr) break;
             strncpy(menu[i], items[i-menu_top], text_cols-1);
             menu[i][text_cols-1] = '\0';
         }
