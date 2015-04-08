@@ -92,6 +92,7 @@ char* locale = NULL;
 char recovery_version[PROPERTY_VALUE_MAX+1];
 char* stage = NULL;
 char* reason = NULL;
+bool modified_flash = false;
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -337,13 +338,18 @@ copy_log_file(const char* source, const char* destination, int append) {
 
 // Rename last_log -> last_log.1 -> last_log.2 -> ... -> last_log.$max
 // Overwrites any existing last_log.$max.
-static void
-rotate_last_logs(int max) {
+static void rotate_last_logs(int max) {
+    // Logs should only be rotated once.
+    static bool rotated = false;
+    if (rotated) {
+        return;
+    }
+    rotated = true;
+    ensure_path_mounted(LAST_LOG_FILE);
+
     char oldfn[256];
     char newfn[256];
-
-    int i;
-    for (i = max-1; i >= 0; --i) {
+    for (int i = max-1; i >= 0; --i) {
         snprintf(oldfn, sizeof(oldfn), (i==0) ? LAST_LOG_FILE : (LAST_LOG_FILE ".%d"), i);
         snprintf(newfn, sizeof(newfn), LAST_LOG_FILE ".%d", i+1);
         // ignore errors
@@ -351,8 +357,17 @@ rotate_last_logs(int max) {
     }
 }
 
-static void
-copy_logs() {
+static void copy_logs() {
+    // We only rotate and record the log of the current session if there are
+    // actual attempts to modify the flash, such as wipes, installs from BCB
+    // or menu selections. This is to avoid unnecessary rotation (and
+    // possible deletion) of log files, if it does not do anything loggable.
+    if (!modified_flash) {
+        return;
+    }
+
+    rotate_last_logs(KEEP_LOG_COUNT);
+
     // Copy logs to cache so the system can find out what happened.
     copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
     copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
@@ -692,6 +707,8 @@ static bool wipe_data(int should_confirm, Device* device) {
         return false;
     }
 
+    modified_flash = true;
+
     ui->Print("\n-- Wiping data...\n");
     if (device->WipeData() == 0 && erase_volume("/data") == 0 && erase_volume("/cache") == 0) {
         ui->Print("Data wipe complete.\n");
@@ -707,6 +724,8 @@ static bool wipe_cache(bool should_confirm, Device* device) {
     if (should_confirm && !yes_no(device, "Wipe cache?", "  THIS CAN NOT BE UNDONE!")) {
         return false;
     }
+
+    modified_flash = true;
 
     ui->Print("\n-- Wiping cache...\n");
     if (erase_volume("/cache") == 0) {
@@ -816,6 +835,8 @@ static void choose_recovery_file(Device* device) {
 }
 
 static int apply_from_sdcard(Device* device, bool* wipe_cache) {
+    modified_flash = true;
+
     if (ensure_path_mounted(SDCARD_ROOT) != 0) {
         ui->Print("\n-- Couldn't mount %s.\n", SDCARD_ROOT);
         return INSTALL_ERROR;
@@ -990,8 +1011,6 @@ main(int argc, char **argv) {
     printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
 
     load_volume_table();
-    ensure_path_mounted(LAST_LOG_FILE);
-    rotate_last_logs(KEEP_LOG_COUNT);
     get_args(&argc, &argv);
 
     const char *send_intent = NULL;

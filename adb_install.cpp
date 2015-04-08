@@ -74,6 +74,8 @@ maybe_restart_adbd() {
 
 int
 apply_from_adb(RecoveryUI* ui_, bool* wipe_cache, const char* install_file) {
+    modified_flash = true;
+
     ui = ui_;
 
     stop_adbd();

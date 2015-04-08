@@ -40,6 +40,7 @@ extern "C" {
 #define STRINGIFY(x) #x
 #define EXPAND(x) STRINGIFY(x)
 
+extern bool modified_flash;
 typedef struct fstab_rec Volume;
 
 // fopen a file, mounting volumes and making parent dirs as necessary.
