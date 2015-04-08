@@ -755,7 +755,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_COLOR_THEME_VAR, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_USE_COMPRESSION_VAR, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_SHOW_SPAM_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_TIME_ZONE_VAR, make_pair("CST6CDT", 1)));
+	mValues.insert(make_pair(TW_TIME_ZONE_VAR, make_pair("CST6CDT,M3.2.0,M11.1.0", 1)));
 	mValues.insert(make_pair(TW_SORT_FILES_BY_DATE_VAR, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_GUI_SORT_ORDER, make_pair("1", 1)));
 	mValues.insert(make_pair(TW_RM_RF_VAR, make_pair("0", 1)));
@@ -764,7 +764,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_SDEXT_SIZE, make_pair("512", 1)));
 	mValues.insert(make_pair(TW_SWAP_SIZE, make_pair("32", 1)));
 	mValues.insert(make_pair(TW_SDPART_FILE_SYSTEM, make_pair("ext3", 1)));
-	mValues.insert(make_pair(TW_TIME_ZONE_GUISEL, make_pair("CST6;CDT", 1)));
+	mValues.insert(make_pair(TW_TIME_ZONE_GUISEL, make_pair("CST6;CDT,M3.2.0,M11.1.0", 1)));
 	mValues.insert(make_pair(TW_TIME_ZONE_GUIOFFSET, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_TIME_ZONE_GUIDST, make_pair("1", 1)));
 	mValues.insert(make_pair(TW_ACTION_BUSY, make_pair("0", 0)));
