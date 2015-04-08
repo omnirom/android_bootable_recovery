@@ -63,7 +63,7 @@ class RecoveryUI {
 
     // Write a message to the on-screen log (shown if the user has
     // toggled on the text display).
-    virtual void Print(const char* fmt, ...) = 0; // __attribute__((format(printf, 1, 2))) = 0;
+    virtual void Print(const char* fmt, ...) __printflike(2, 3) = 0;
 
     // --- key handling ---
 
