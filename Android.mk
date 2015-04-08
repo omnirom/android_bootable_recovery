@@ -138,11 +138,11 @@ endif
 # TODO: Build the ramdisk image in a more principled way.
 LOCAL_MODULE_TAGS := eng
 
-#ifeq ($(TARGET_RECOVERY_UI_LIB),)
+ifeq ($(TARGET_RECOVERY_UI_LIB),)
   LOCAL_SRC_FILES += default_device.cpp
-#else
-#  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
-#endif
+else
+  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
+endif
 
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
