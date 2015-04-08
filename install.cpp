@@ -256,6 +256,8 @@ int
 install_package(const char* path, bool* wipe_cache, const char* install_file,
                 bool needs_mount)
 {
+    modified_flash = true;
+
     FILE* install_log = fopen_path(install_file, "w");
     if (install_log) {
         fputs(path, install_log);
