@@ -109,7 +109,7 @@ apply_from_adb(RecoveryUI* ui_, bool* wipe_cache, const char* install_file) {
                 sleep(1);
                 continue;
             } else {
-                ui->Print("\nTimed out waiting for package.\n\n", strerror(errno));
+                ui->Print("\nTimed out waiting for package.\n\n");
                 result = INSTALL_ERROR;
                 kill(child, SIGKILL);
                 break;
