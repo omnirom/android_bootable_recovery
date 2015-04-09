@@ -30,16 +30,17 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-    recovery.cpp \
-    bootloader.cpp \
-    install.cpp \
-    roots.cpp \
-    ui.cpp \
-    screen_ui.cpp \
-    asn1_decoder.cpp \
-    verifier.cpp \
     adb_install.cpp \
-    fuse_sdcard_provider.c
+    asn1_decoder.cpp \
+    bootloader.cpp \
+    device.cpp \
+    fuse_sdcard_provider.c \
+    install.cpp \
+    recovery.cpp \
+    roots.cpp \
+    screen_ui.cpp \
+    ui.cpp \
+    verifier.cpp \
 
 LOCAL_MODULE := recovery
 
