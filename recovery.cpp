@@ -84,9 +84,6 @@ static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 
 #define KEEP_LOG_COUNT 10
 
-// Number of lines per page when displaying a file on screen
-#define LINES_PER_PAGE 30
-
 RecoveryUI* ui = NULL;
 char* locale = NULL;
 char recovery_version[PROPERTY_VALUE_MAX+1];
@@ -737,58 +734,6 @@ static bool wipe_cache(bool should_confirm, Device* device) {
     }
 }
 
-static void file_to_ui(const char* fn) {
-    FILE *fp = fopen_path(fn, "re");
-    if (fp == NULL) {
-        ui->Print("  Unable to open %s: %s\n", fn, strerror(errno));
-        return;
-    }
-    char line[1024];
-    int ct = 0;
-    int key = 0;
-    redirect_stdio("/dev/null");
-    while(fgets(line, sizeof(line), fp) != NULL) {
-        ui->Print("%s", line);
-        ct++;
-        if (ct % LINES_PER_PAGE == 0) {
-            // give the user time to glance at the entries
-            key = ui->WaitKey();
-
-            if (key == KEY_POWER) {
-                break;
-            }
-
-            if (key == KEY_VOLUMEUP) {
-                // Go back by seeking to the beginning and dumping ct - n
-                // lines.  It's ugly, but this way we don't need to store
-                // the previous offsets.  The files we're dumping here aren't
-                // expected to be very large.
-                int i;
-
-                ct -= 2 * LINES_PER_PAGE;
-                if (ct < 0) {
-                    ct = 0;
-                }
-                fseek(fp, 0, SEEK_SET);
-                for (i = 0; i < ct; i++) {
-                    fgets(line, sizeof(line), fp);
-                }
-                ui->Print("^^^^^^^^^^\n");
-            }
-        }
-    }
-
-    // If the user didn't abort, then give the user time to glance at
-    // the end of the log, sorry, no rewind here
-    if (key != KEY_POWER) {
-        ui->Print("\n--END-- (press any key)\n");
-        ui->WaitKey();
-    }
-
-    redirect_stdio(TEMPORARY_LOG_FILE);
-    fclose(fp);
-}
-
 static void choose_recovery_file(Device* device) {
     unsigned int i;
     unsigned int n;
@@ -823,10 +768,14 @@ static void choose_recovery_file(Device* device) {
 
     const char* headers[] = { "Select file to view", "", NULL };
 
-    while(1) {
+    while (true) {
         int chosen_item = get_menu_selection(headers, entries, 1, 0, device);
         if (chosen_item == 0) break;
-        file_to_ui(entries[chosen_item]);
+
+        // TODO: do we need to redirect? ShowFile could just avoid writing to stdio.
+        redirect_stdio("/dev/null");
+        ui->ShowFile(entries[chosen_item]);
+        redirect_stdio(TEMPORARY_LOG_FILE);
     }
 
     for (i = 0; i < (sizeof(entries) / sizeof(*entries)); i++) {
