@@ -21,13 +21,14 @@
 
 class Device {
   public:
+    Device(RecoveryUI* ui) : ui_(ui) { }
     virtual ~Device() { }
 
     // Called to obtain the UI object that should be used to display
     // the recovery user interface for this device.  You should not
     // have called Init() on the UI object already, the caller will do
     // that after this method returns.
-    virtual RecoveryUI* GetUI() = 0;
+    virtual RecoveryUI* GetUI() { return ui_; }
 
     // Called when recovery starts up (after the UI has been obtained
     // and initialized and after the arguments have been parsed, but
@@ -60,6 +61,17 @@ class Device {
                          APPLY_ADB_SIDELOAD, WIPE_DATA, WIPE_CACHE,
                          REBOOT_BOOTLOADER, SHUTDOWN, READ_RECOVERY_LASTLOG };
 
+    // Return the headers (an array of strings, one per line,
+    // NULL-terminated) for the main menu.  Typically these tell users
+    // what to push to move the selection and invoke the selected
+    // item.
+    virtual const char* const* GetMenuHeaders();
+
+    // Return the list of menu items (an array of strings,
+    // NULL-terminated).  The menu_position passed to InvokeMenuItem
+    // will correspond to the indexes into this array.
+    virtual const char* const* GetMenuItems();
+
     // Perform a recovery action selected from the menu.
     // 'menu_position' will be the item number of the selected menu
     // item, or a non-negative number returned from
@@ -69,7 +81,7 @@ class Device {
     // builtin actions, you can just return the corresponding enum
     // value.  If it is an action specific to your device, you
     // actually perform it here and return NO_ACTION.
-    virtual BuiltinAction InvokeMenuItem(int menu_position) = 0;
+    virtual BuiltinAction InvokeMenuItem(int menu_position);
 
     static const int kNoAction = -1;
     static const int kHighlightUp = -2;
@@ -84,16 +96,8 @@ class Device {
     // are erased AFTER this returns (whether it returns success or not).
     virtual int WipeData() { return 0; }
 
-    // Return the headers (an array of strings, one per line,
-    // NULL-terminated) for the main menu.  Typically these tell users
-    // what to push to move the selection and invoke the selected
-    // item.
-    virtual const char* const* GetMenuHeaders() = 0;
-
-    // Return the list of menu items (an array of strings,
-    // NULL-terminated).  The menu_position passed to InvokeMenuItem
-    // will correspond to the indexes into this array.
-    virtual const char* const* GetMenuItems() = 0;
+  private:
+    RecoveryUI* ui_;
 };
 
 // The device-specific library must define this function (or the
