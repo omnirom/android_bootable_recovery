@@ -84,17 +84,14 @@ class ScreenRecoveryUI : public RecoveryUI {
     // progress bar)
     bool pagesIdentical;
 
-    static const int kMaxCols = 96;
-    static const int kMaxRows = 96;
-
     // Log text overlay, displayed when a magic key is pressed
-    char text[kMaxRows][kMaxCols];
-    int text_cols, text_rows;
-    int text_col, text_row, text_top;
+    char** text;
+    size_t text_cols, text_rows;
+    size_t text_col, text_row, text_top;
     bool show_text;
     bool show_text_ever;   // has show_text ever been true?
 
-    char menu[kMaxRows][kMaxCols];
+    char** menu;
     bool show_menu;
     int menu_top, menu_items, menu_sel;
 
@@ -102,8 +99,6 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     int animation_fps;
     int installing_frames;
-  protected:
-  private:
 
     int iconX, iconY;
 
