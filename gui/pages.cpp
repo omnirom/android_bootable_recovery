@@ -936,6 +936,13 @@ int PageSet::SetOverlay(Page* page)
 			LOGERR("Too many overlays requested, max is 10.\n");
 			return -1;
 		}
+
+		std::vector<Page*>::iterator iter;
+		for (iter = mOverlays.begin(); iter != mOverlays.end(); iter++) {
+			if ((*iter)->GetName() == page->GetName())
+				mOverlays.erase(iter--);
+		}
+
 		page->SetPageFocus(1);
 		page->NotifyVarChange("", "");
 
