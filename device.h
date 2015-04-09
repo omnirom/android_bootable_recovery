@@ -34,16 +34,6 @@ class Device {
     // before anything else).
     virtual void StartRecovery() { };
 
-    // enum KeyAction { NONE, TOGGLE, REBOOT };
-
-    // // Called in the input thread when a new key (key_code) is
-    // // pressed.  *key_pressed is an array of KEY_MAX+1 bytes
-    // // indicating which other keys are already pressed.  Return a
-    // // KeyAction to indicate action should be taken immediately.
-    // // These actions happen when recovery is not waiting for input
-    // // (eg, in the midst of installing a package).
-    // virtual KeyAction CheckImmediateKeyAction(volatile char* key_pressed, int key_code) = 0;
-
     // Called from the main thread when recovery is at the main menu
     // and waiting for input, and a key is pressed.  (Note that "at"
     // the main menu does not necessarily mean the menu is visible;
