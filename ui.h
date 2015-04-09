@@ -31,10 +31,10 @@ class RecoveryUI {
     // Initialize the object; called before anything else.
     virtual void Init();
     // Show a stage indicator.  Call immediately after Init().
-    virtual void SetStage(int current, int max) { }
+    virtual void SetStage(int current, int max) = 0;
 
     // After calling Init(), you can tell the UI what locale it is operating in.
-    virtual void SetLocale(const char* locale) { }
+    virtual void SetLocale(const char* locale) = 0;
 
     // Set the overall recovery state ("background image").
     enum Icon { NONE, INSTALLING_UPDATE, ERASING, NO_COMMAND, ERROR };
@@ -64,6 +64,8 @@ class RecoveryUI {
     // Write a message to the on-screen log (shown if the user has
     // toggled on the text display).
     virtual void Print(const char* fmt, ...) __printflike(2, 3) = 0;
+
+    virtual void ShowFile(const char* filename) = 0;
 
     // --- key handling ---
 

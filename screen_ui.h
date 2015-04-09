@@ -48,6 +48,7 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     // printing messages
     void Print(const char* fmt, ...) __printflike(2, 3);
+    void ShowFile(const char* filename);
 
     // menu display
     void StartMenu(const char* const * headers, const char* const * items,
@@ -80,11 +81,10 @@ class ScreenRecoveryUI : public RecoveryUI {
     float progressScopeStart, progressScopeSize, progress;
     double progressScopeTime, progressScopeDuration;
 
-    // true when both graphics pages are the same (except for the
-    // progress bar)
+    // true when both graphics pages are the same (except for the progress bar).
     bool pagesIdentical;
 
-    // Log text overlay, displayed when a magic key is pressed
+    // Log text overlay, displayed when a magic key is pressed.
     char** text;
     size_t text_cols, text_rows;
     size_t text_col, text_row, text_top;
@@ -111,6 +111,8 @@ class ScreenRecoveryUI : public RecoveryUI {
     void update_progress_locked();
     static void* progress_thread(void* cookie);
     void progress_loop();
+
+    void print_no_update(const char*);
 
     void LoadBitmap(const char* filename, gr_surface* surface);
     void LoadBitmapArray(const char* filename, int* frames, gr_surface** surface);
