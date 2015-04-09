@@ -936,6 +936,17 @@ int PageSet::SetOverlay(Page* page)
 			LOGERR("Too many overlays requested, max is 10.\n");
 			return -1;
 		}
+
+		std::vector<Page*>::iterator iter;
+		for (iter = mOverlays.begin(); iter != mOverlays.end(); iter++) {
+			if ((*iter)->GetName() == page->GetName()) {
+				mOverlays.erase(iter);
+				// SetOverlay() is (and should stay) the only function which
+				// adds to mOverlays. Then, each page can appear at most once.
+				break;
+			}
+		}
+
 		page->SetPageFocus(1);
 		page->NotifyVarChange("", "");
 
