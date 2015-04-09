@@ -47,11 +47,11 @@ class ScreenRecoveryUI : public RecoveryUI {
     bool WasTextEverVisible();
 
     // printing messages
-    void Print(const char* fmt, ...); // __attribute__((format(printf, 1, 2)));
+    void Print(const char* fmt, ...) __printflike(2, 3);
 
     // menu display
     void StartMenu(const char* const * headers, const char* const * items,
-                           int initial_selection);
+                   int initial_selection);
     int SelectMenu(int sel);
     void EndMenu();
 
