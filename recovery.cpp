@@ -844,7 +844,7 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
 
     char* path = browse_directory(SDCARD_ROOT, device);
     if (path == NULL) {
-        ui->Print("\n-- No package file selected.\n", path);
+        ui->Print("\n-- No package file selected.\n");
         return INSTALL_ERROR;
     }
 
