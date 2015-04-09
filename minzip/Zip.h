@@ -85,21 +85,11 @@ void mzCloseZipArchive(ZipArchive* pArchive);
 const ZipEntry* mzFindZipEntry(const ZipArchive* pArchive,
         const char* entryName);
 
-/*
- * Get the number of entries in the Zip archive.
- */
-INLINE unsigned int mzZipEntryCount(const ZipArchive* pArchive) {
-    return pArchive->numEntries;
-}
-
 INLINE long mzGetZipEntryOffset(const ZipEntry* pEntry) {
     return pEntry->offset;
 }
 INLINE long mzGetZipEntryUncompLen(const ZipEntry* pEntry) {
     return pEntry->uncompLen;
-}
-INLINE long mzGetZipEntryCrc32(const ZipEntry* pEntry) {
-    return pEntry->crc32;
 }
 
 /*
