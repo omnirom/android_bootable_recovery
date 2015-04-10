@@ -185,6 +185,9 @@ void ScreenRecoveryUI::SetColor(UIElement e) {
         case MENU_SEL_BG:
             gr_color(0, 106, 157, 255);
             break;
+        case MENU_SEL_BG_ACTIVE:
+            gr_color(0, 156, 100, 255);
+            break;
         case MENU_SEL_FG:
             gr_color(255, 255, 255, 255);
             break;
@@ -220,7 +223,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
 
                 if (i == menu_top + menu_sel) {
                     // draw the highlight bar
-                    SetColor(MENU_SEL_BG);
+                    SetColor(IsLongPress() ? MENU_SEL_BG_ACTIVE : MENU_SEL_BG);
                     gr_fill(0, y-2, gr_fb_width(), y+char_height+2);
                     // white text of selected item
                     SetColor(MENU_SEL_FG);
@@ -637,4 +640,10 @@ void ScreenRecoveryUI::Redraw() {
     pthread_mutex_lock(&updateMutex);
     update_screen_locked();
     pthread_mutex_unlock(&updateMutex);
+}
+
+void ScreenRecoveryUI::KeyLongPress(int) {
+    // Redraw so that if we're in the menu, the highlight
+    // will change color to indicate a successful long press.
+    Redraw();
 }

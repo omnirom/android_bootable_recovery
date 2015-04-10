@@ -545,12 +545,10 @@ get_menu_selection(const char* const * headers, const char* const * items,
         if (action < 0) {
             switch (action) {
                 case Device::kHighlightUp:
-                    --selected;
-                    selected = ui->SelectMenu(selected);
+                    selected = ui->SelectMenu(--selected);
                     break;
                 case Device::kHighlightDown:
-                    ++selected;
-                    selected = ui->SelectMenu(selected);
+                    selected = ui->SelectMenu(++selected);
                     break;
                 case Device::kInvokeItem:
                     chosen_item = selected;
