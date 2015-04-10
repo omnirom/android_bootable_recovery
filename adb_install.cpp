@@ -30,10 +30,8 @@
 #include "install.h"
 #include "common.h"
 #include "adb_install.h"
-extern "C" {
 #include "minadbd/fuse_adb_provider.h"
 #include "fuse_sideload.h"
-}
 
 static RecoveryUI* ui = NULL;
 

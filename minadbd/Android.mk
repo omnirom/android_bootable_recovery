@@ -11,9 +11,9 @@ minadbd_cflags := \
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-    adb_main.c \
-    fuse_adb_provider.c \
-    services.c \
+    adb_main.cpp \
+    fuse_adb_provider.cpp \
+    services.cpp \
 
 LOCAL_MODULE := libminadbd
 LOCAL_CFLAGS := $(minadbd_cflags)
