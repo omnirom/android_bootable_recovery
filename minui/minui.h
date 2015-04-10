@@ -68,13 +68,11 @@ struct input_event;
 
 typedef int (*ev_callback)(int fd, uint32_t epevents, void* data);
 typedef int (*ev_set_key_callback)(int code, int value, void* data);
-typedef void (*ev_key_callback)(int code, void* data);
 
 int ev_init(ev_callback input_cb, void* data);
 void ev_exit(void);
 int ev_add_fd(int fd, ev_callback cb, void* data);
 int ev_sync_key_state(ev_set_key_callback set_key_cb, void* data);
-void ev_iterate_available_keys(ev_key_callback cb, void* data);
 
 // 'timeout' has the same semantics as poll(2).
 //    0 : don't block
@@ -128,6 +126,13 @@ void res_free_surface(gr_surface surface);
 
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef __cplusplus
+
+#include <functional>
+void ev_iterate_available_keys(std::function<void(int)> f);
+
 #endif
 
 #endif
