@@ -16,6 +16,24 @@
       "revId": "cf105b7bb89cc38a8d1a4d64b50c2676d93af777",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6b22818b_0993ada7",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 943,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-04-10T20:51:23Z",
+      "side": 1,
+      "message": "I actually tried code which I thought would satisfy the standard you mention:\n\niter \u003d mOverlays.erase(iter);\n\nBut apparently, I\u0027m misinterpreting the return (or order of operations), because this led to \"error to allocate [lots of memory] for new\". It think your suggestion for simply breaking after erase is appropriate since duplicates aren\u0027t allowed.",
+      "parentUuid": "6b22818b_c998b5c5",
+      "revId": "cf105b7bb89cc38a8d1a4d64b50c2676d93af777",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
