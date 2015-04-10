@@ -278,6 +278,10 @@ bool RecoveryUI::IsLongPress() {
     return result;
 }
 
+bool RecoveryUI::HasThreeButtons() {
+    return has_power_key && has_up_key && has_down_key;
+}
+
 void RecoveryUI::FlushKeys() {
     pthread_mutex_lock(&key_queue_mutex);
     key_queue_len = 0;
@@ -290,7 +294,7 @@ RecoveryUI::KeyAction RecoveryUI::CheckKey(int key, bool is_long_press) {
     pthread_mutex_unlock(&key_queue_mutex);
 
     // If we have power and volume up keys, that chord is the signal to toggle the text display.
-    if (has_power_key && has_up_key) {
+    if (HasThreeButtons()) {
         if (key == KEY_VOLUMEUP && IsKeyPressed(KEY_POWER)) {
             return TOGGLE;
         }

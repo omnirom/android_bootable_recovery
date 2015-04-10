@@ -17,33 +17,6 @@
 #include "device.h"
 #include "screen_ui.h"
 
-class DefaultDevice : public Device {
- public:
-  DefaultDevice() : Device(new ScreenRecoveryUI) {
-  }
-
-  // TODO: make this handle more cases, and move the default implementation into Device too.
-  int HandleMenuKey(int key, int visible) {
-    if (visible) {
-      switch (key) {
-        case KEY_DOWN:
-        case KEY_VOLUMEDOWN:
-          return kHighlightDown;
-
-        case KEY_UP:
-        case KEY_VOLUMEUP:
-          return kHighlightUp;
-
-        case KEY_ENTER:
-        case KEY_POWER:
-          return kInvokeItem;
-      }
-    }
-
-    return kNoAction;
-  }
-};
-
 Device* make_device() {
-  return new DefaultDevice;
+  return new Device(new ScreenRecoveryUI);
 }
