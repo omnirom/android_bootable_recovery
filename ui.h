@@ -75,6 +75,10 @@ class RecoveryUI {
     virtual bool IsKeyPressed(int key);
     virtual bool IsLongPress();
 
+    // Returns true if you have the volume up/down and power trio typical
+    // of phones and tablets, false otherwise.
+    virtual bool HasThreeButtons();
+
     // Erase any queued-up keys.
     virtual void FlushKeys();
 

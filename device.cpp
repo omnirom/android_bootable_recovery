@@ -16,15 +16,21 @@
 
 #include "device.h"
 
-// TODO: this is a lie for, say, fugu.
-static const char* HEADERS[] = {
-    "Volume up/down to move highlight.",
-    "Power button to select.",
+static const char* REGULAR_HEADERS[] = {
+    "Volume up/down move highlight.",
+    "Power button activates.",
     "",
     NULL
 };
 
-static const char* ITEMS[] = {
+static const char* LONG_PRESS_HEADERS[] = {
+    "Any button cycles highlight.",
+    "Long-press activates.",
+    "",
+    NULL
+};
+
+static const char* MENU_ITEMS[] = {
     "Reboot system now",
     "Reboot to bootloader",
     "Apply update from ADB",
@@ -37,8 +43,13 @@ static const char* ITEMS[] = {
     NULL
 };
 
-const char* const* Device::GetMenuHeaders() { return HEADERS; }
-const char* const* Device::GetMenuItems() { return ITEMS; }
+const char* const* Device::GetMenuHeaders() {
+  return ui_->HasThreeButtons() ? REGULAR_HEADERS : LONG_PRESS_HEADERS;
+}
+
+const char* const* Device::GetMenuItems() {
+  return MENU_ITEMS;
+}
 
 Device::BuiltinAction Device::InvokeMenuItem(int menu_position) {
   switch (menu_position) {
@@ -52,5 +63,30 @@ Device::BuiltinAction Device::InvokeMenuItem(int menu_position) {
     case 7: return VIEW_RECOVERY_LOGS;
     case 8: return SHUTDOWN;
     default: return NO_ACTION;
+  }
+}
+
+int Device::HandleMenuKey(int key, int visible) {
+  if (!visible) {
+    return kNoAction;
+  }
+
+  switch (key) {
+    case KEY_DOWN:
+    case KEY_VOLUMEDOWN:
+      return kHighlightDown;
+
+    case KEY_UP:
+    case KEY_VOLUMEUP:
+      return kHighlightUp;
+
+    case KEY_ENTER:
+    case KEY_POWER:
+      return kInvokeItem;
+
+    default:
+      // If you have all of the above buttons, any other buttons
+      // are ignored. Otherwise, any button cycles the highlight.
+      return ui_->HasThreeButtons() ? kNoAction : kHighlightDown;
   }
 }
