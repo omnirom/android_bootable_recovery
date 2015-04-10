@@ -86,7 +86,6 @@ static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 
 RecoveryUI* ui = NULL;
 char* locale = NULL;
-char recovery_version[PROPERTY_VALUE_MAX+1];
 char* stage = NULL;
 char* reason = NULL;
 bool modified_flash = false;
@@ -516,24 +515,6 @@ erase_volume(const char *volume) {
     return result;
 }
 
-static const char** prepend_title(const char* const* headers) {
-    // count the number of lines in our title, plus the
-    // caller-provided headers.
-    int count = 3;   // our title has 3 lines
-    const char* const* p;
-    for (p = headers; *p; ++p, ++count);
-
-    const char** new_headers = (const char**)malloc((count+1) * sizeof(char*));
-    const char** h = new_headers;
-    *(h++) = "Android system recovery (API " EXPAND(RECOVERY_API_VERSION) ")";
-    *(h++) = recovery_version;
-    *(h++) = "";
-    for (p = headers; *p; ++p, ++h) *h = *p;
-    *h = NULL;
-
-    return new_headers;
-}
-
 static int
 get_menu_selection(const char* const * headers, const char* const * items,
                    int menu_only, int initial_selection, Device* device) {
@@ -814,7 +795,7 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
 // on if the --shutdown_after flag was passed to recovery.
 static Device::BuiltinAction
 prompt_and_wait(Device* device, int status) {
-    const char* const* headers = prepend_title(device->GetMenuHeaders());
+    const char* const* headers = device->GetMenuHeaders();
 
     for (;;) {
         finish_recovery(NULL);
@@ -1057,8 +1038,13 @@ main(int argc, char **argv) {
     printf("\n");
 
     property_list(print_property, NULL);
-    property_get("ro.build.display.id", recovery_version, "");
     printf("\n");
+
+    char recovery_build[PROPERTY_VALUE_MAX];
+    property_get("ro.build.display.id", recovery_build, "");
+
+    ui->Print("%s\n", recovery_build);
+    ui->Print("Supported API: %d\n", RECOVERY_API_VERSION);
 
     int status = INSTALL_SUCCESS;
 
