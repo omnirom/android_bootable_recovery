@@ -44,15 +44,14 @@
 // so use a global variable.
 static RecoveryUI* self = NULL;
 
-RecoveryUI::RecoveryUI() :
-    key_queue_len(0),
-    key_last_down(-1),
-    key_long_press(false),
-    key_down_count(0),
-    enable_reboot(true),
-    consecutive_power_keys(0),
-    consecutive_alternate_keys(0),
-    last_key(-1) {
+RecoveryUI::RecoveryUI()
+        : key_queue_len(0),
+          key_last_down(-1),
+          key_long_press(false),
+          key_down_count(0),
+          enable_reboot(true),
+          consecutive_power_keys(0),
+          last_key(-1) {
     pthread_mutex_init(&key_queue_mutex, NULL);
     pthread_cond_init(&key_queue_cond, NULL);
     self = this;
@@ -65,8 +64,7 @@ void RecoveryUI::Init() {
 }
 
 
-int RecoveryUI::input_callback(int fd, uint32_t epevents, void* data)
-{
+int RecoveryUI::input_callback(int fd, uint32_t epevents, void* data) {
     struct input_event ev;
     int ret;
 
@@ -162,13 +160,6 @@ void RecoveryUI::process_key(int key_code, int updown) {
           case RecoveryUI::ENQUEUE:
             EnqueueKey(key_code);
             break;
-
-          case RecoveryUI::MOUNT_SYSTEM:
-#ifndef NO_RECOVERY_MOUNT
-            ensure_path_mounted("/system");
-            Print("Mounted /system.");
-#endif
-            break;
         }
     }
 }
@@ -203,17 +194,16 @@ void RecoveryUI::EnqueueKey(int key_code) {
 
 
 // Reads input events, handles special hot keys, and adds to the key queue.
-void* RecoveryUI::input_thread(void *cookie)
-{
-    for (;;) {
-        if (!ev_wait(-1))
+void* RecoveryUI::input_thread(void* cookie) {
+    while (true) {
+        if (!ev_wait(-1)) {
             ev_dispatch();
+        }
     }
     return NULL;
 }
 
-int RecoveryUI::WaitKey()
-{
+int RecoveryUI::WaitKey() {
     pthread_mutex_lock(&key_queue_mutex);
 
     // Time out after UI_WAIT_KEY_TIMEOUT_SEC, unless a USB cable is
@@ -228,8 +218,7 @@ int RecoveryUI::WaitKey()
 
         int rc = 0;
         while (key_queue_len == 0 && rc != ETIMEDOUT) {
-            rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex,
-                                        &timeout);
+            rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex, &timeout);
         }
     } while (usb_connected() && key_queue_len == 0);
 
@@ -261,8 +250,7 @@ bool RecoveryUI::usb_connected() {
     return connected;
 }
 
-bool RecoveryUI::IsKeyPressed(int key)
-{
+bool RecoveryUI::IsKeyPressed(int key) {
     pthread_mutex_lock(&key_queue_mutex);
     int pressed = key_pressed[key];
     pthread_mutex_unlock(&key_queue_mutex);
@@ -301,18 +289,6 @@ RecoveryUI::KeyAction RecoveryUI::CheckKey(int key) {
         consecutive_power_keys = 0;
     }
 
-    if ((key == KEY_VOLUMEUP &&
-         (last_key == KEY_VOLUMEDOWN || last_key == -1)) ||
-        (key == KEY_VOLUMEDOWN &&
-         (last_key == KEY_VOLUMEUP || last_key == -1))) {
-        ++consecutive_alternate_keys;
-        if (consecutive_alternate_keys >= 7) {
-            consecutive_alternate_keys = 0;
-            return MOUNT_SYSTEM;
-        }
-    } else {
-        consecutive_alternate_keys = 0;
-    }
     last_key = key;
 
     return ENQUEUE;
