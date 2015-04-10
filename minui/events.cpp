@@ -39,10 +39,10 @@ struct fd_info {
 };
 
 static int g_epoll_fd;
-static struct epoll_event polledevents[MAX_DEVICES + MAX_MISC_FDS];
+static epoll_event polledevents[MAX_DEVICES + MAX_MISC_FDS];
 static int npolledevents;
 
-static struct fd_info ev_fdinfo[MAX_DEVICES + MAX_MISC_FDS];
+static fd_info ev_fdinfo[MAX_DEVICES + MAX_MISC_FDS];
 
 static unsigned ev_count = 0;
 static unsigned ev_dev_count = 0;
@@ -62,7 +62,7 @@ int ev_init(ev_callback input_cb, void* data) {
 
     DIR* dir = opendir("/dev/input");
     if (dir != NULL) {
-        struct dirent* de;
+        dirent* de;
         while ((de = readdir(dir))) {
             unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];
 
@@ -83,7 +83,7 @@ int ev_init(ev_callback input_cb, void* data) {
                 continue;
             }
 
-            struct epoll_event ev;
+            epoll_event ev;
             ev.events = EPOLLIN | EPOLLWAKEUP;
             ev.data.ptr = &ev_fdinfo[ev_count];
             if (epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
@@ -121,7 +121,7 @@ int ev_add_fd(int fd, ev_callback cb, void* data) {
         return -1;
     }
 
-    struct epoll_event ev;
+    epoll_event ev;
     ev.events = EPOLLIN | EPOLLWAKEUP;
     ev.data.ptr = (void *)&ev_fdinfo[ev_count];
     int ret = epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev);
@@ -163,7 +163,7 @@ void ev_dispatch(void) {
     }
 }
 
-int ev_get_input(int fd, uint32_t epevents, struct input_event* ev) {
+int ev_get_input(int fd, uint32_t epevents, input_event* ev) {
     if (epevents & EPOLLIN) {
         ssize_t r = read(fd, ev, sizeof(*ev));
         if (r == sizeof(*ev)) {

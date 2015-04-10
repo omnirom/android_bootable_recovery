@@ -3,10 +3,10 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
     events.cpp \
-    graphics.c \
-    graphics_adf.c \
-    graphics_fbdev.c \
-    resources.c \
+    graphics.cpp \
+    graphics_adf.cpp \
+    graphics_fbdev.cpp \
+    resources.cpp \
 
 LOCAL_WHOLE_STATIC_LIBRARIES += libadf
 LOCAL_STATIC_LIBRARIES += libpng
