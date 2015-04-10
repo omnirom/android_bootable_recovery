@@ -25,6 +25,10 @@
 extern "C" {
 #endif
 
+//
+// Graphics.
+//
+
 typedef struct {
     int width;
     int height;
@@ -56,30 +60,35 @@ void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy);
 unsigned int gr_get_width(gr_surface surface);
 unsigned int gr_get_height(gr_surface surface);
 
-// input event structure, include <linux/input.h> for the definition.
-// see http://www.mjmwired.net/kernel/Documentation/input/ for info.
+//
+// Input events.
+//
+
 struct input_event;
 
-typedef int (*ev_callback)(int fd, uint32_t epevents, void *data);
-typedef int (*ev_set_key_callback)(int code, int value, void *data);
+typedef int (*ev_callback)(int fd, uint32_t epevents, void* data);
+typedef int (*ev_set_key_callback)(int code, int value, void* data);
+typedef void (*ev_key_callback)(int code, void* data);
 
-int ev_init(ev_callback input_cb, void *data);
+int ev_init(ev_callback input_cb, void* data);
 void ev_exit(void);
-int ev_add_fd(int fd, ev_callback cb, void *data);
-int ev_sync_key_state(ev_set_key_callback set_key_cb, void *data);
+int ev_add_fd(int fd, ev_callback cb, void* data);
+int ev_sync_key_state(ev_set_key_callback set_key_cb, void* data);
+void ev_iterate_available_keys(ev_key_callback cb, void* data);
 
-/* timeout has the same semantics as for poll
- *    0 : don't block
- *  < 0 : block forever
- *  > 0 : block for 'timeout' milliseconds
- */
+// 'timeout' has the same semantics as poll(2).
+//    0 : don't block
+//  < 0 : block forever
+//  > 0 : block for 'timeout' milliseconds
 int ev_wait(int timeout);
 
 int ev_get_input(int fd, uint32_t epevents, struct input_event *ev);
 void ev_dispatch(void);
 int ev_get_epollfd(void);
 
+//
 // Resources
+//
 
 // res_create_*_surface() functions return 0 if no error, else
 // negative.
