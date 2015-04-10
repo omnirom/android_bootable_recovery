@@ -56,10 +56,19 @@ class Device {
     //   - invoke a specific action (a menu position: any non-negative number)
     virtual int HandleMenuKey(int key, int visible) = 0;
 
-    enum BuiltinAction { NO_ACTION, REBOOT, APPLY_EXT,
-                         APPLY_CACHE,   // APPLY_CACHE is deprecated; has no effect
-                         APPLY_ADB_SIDELOAD, WIPE_DATA, WIPE_CACHE,
-                         REBOOT_BOOTLOADER, SHUTDOWN, READ_RECOVERY_LASTLOG };
+    enum BuiltinAction {
+        NO_ACTION = 0,
+        REBOOT = 1,
+        APPLY_SDCARD = 2,
+        // APPLY_CACHE was 3.
+        APPLY_ADB_SIDELOAD = 4,
+        WIPE_DATA = 5,
+        WIPE_CACHE = 6,
+        REBOOT_BOOTLOADER = 7,
+        SHUTDOWN = 8,
+        VIEW_RECOVERY_LOGS = 9,
+        MOUNT_SYSTEM = 10,
+    };
 
     // Return the headers (an array of strings, one per line,
     // NULL-terminated) for the main menu.  Typically these tell users
