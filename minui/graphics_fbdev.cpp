@@ -43,7 +43,7 @@ static bool double_buffered;
 static GRSurface* gr_draw = NULL;
 static int displayed_buffer;
 
-static struct fb_var_screeninfo vi;
+static fb_var_screeninfo vi;
 static int fb_fd = -1;
 
 static minui_backend my_backend = {
@@ -80,17 +80,13 @@ static void set_displayed_framebuffer(unsigned n)
 }
 
 static gr_surface fbdev_init(minui_backend* backend) {
-    int fd;
-    void *bits;
-
-    struct fb_fix_screeninfo fi;
-
-    fd = open("/dev/graphics/fb0", O_RDWR);
-    if (fd < 0) {
+    int fd = open("/dev/graphics/fb0", O_RDWR);
+    if (fd == -1) {
         perror("cannot open fb0");
         return NULL;
     }
 
+    fb_fix_screeninfo fi;
     if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
         perror("failed to get fb0 info");
         close(fd);
@@ -124,7 +120,7 @@ static gr_surface fbdev_init(minui_backend* backend) {
            vi.green.offset, vi.green.length,
            vi.blue.offset, vi.blue.length);
 
-    bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    void* bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (bits == MAP_FAILED) {
         perror("failed to mmap framebuffer");
         close(fd);
@@ -137,7 +133,7 @@ static gr_surface fbdev_init(minui_backend* backend) {
     gr_framebuffer[0].height = vi.yres;
     gr_framebuffer[0].row_bytes = fi.line_length;
     gr_framebuffer[0].pixel_bytes = vi.bits_per_pixel / 8;
-    gr_framebuffer[0].data = bits;
+    gr_framebuffer[0].data = reinterpret_cast<uint8_t*>(bits);
     memset(gr_framebuffer[0].data, 0, gr_framebuffer[0].height * gr_framebuffer[0].row_bytes);
 
     /* check if we can use double buffering */
