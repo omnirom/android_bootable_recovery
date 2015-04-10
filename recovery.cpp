@@ -840,7 +840,7 @@ prompt_and_wait(Device* device, int status) {
                 break;
 
             case Device::APPLY_ADB_SIDELOAD:
-            case Device::APPLY_EXT:
+            case Device::APPLY_SDCARD:
                 {
                     bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
                     if (adb) {
@@ -867,12 +867,14 @@ prompt_and_wait(Device* device, int status) {
                 }
                 break;
 
-            case Device::APPLY_CACHE:
-                ui->Print("\nAPPLY_CACHE is deprecated.\n");
+            case Device::VIEW_RECOVERY_LOGS:
+                choose_recovery_file(device);
                 break;
 
-            case Device::READ_RECOVERY_LASTLOG:
-                choose_recovery_file(device);
+            case Device::MOUNT_SYSTEM:
+                if (ensure_path_mounted("/system") != -1) {
+                    ui->Print("Mounted /system.");
+                }
                 break;
         }
     }
