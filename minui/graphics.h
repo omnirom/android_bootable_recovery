@@ -17,34 +17,26 @@
 #ifndef _GRAPHICS_H_
 #define _GRAPHICS_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <stdbool.h>
 #include "minui.h"
 
-typedef struct minui_backend {
+// TODO: lose the function pointers.
+struct minui_backend {
     // Initializes the backend and returns a gr_surface to draw into.
-    gr_surface (*init)(struct minui_backend*);
+    gr_surface (*init)(minui_backend*);
 
     // Causes the current drawing surface (returned by the most recent
     // call to flip() or init()) to be displayed, and returns a new
     // drawing surface.
-    gr_surface (*flip)(struct minui_backend*);
+    gr_surface (*flip)(minui_backend*);
 
     // Blank (or unblank) the screen.
-    void (*blank)(struct minui_backend*, bool);
+    void (*blank)(minui_backend*, bool);
 
     // Device cleanup when drawing is done.
-    void (*exit)(struct minui_backend*);
-} minui_backend;
+    void (*exit)(minui_backend*);
+};
 
 minui_backend* open_fbdev();
 minui_backend* open_adf();
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
