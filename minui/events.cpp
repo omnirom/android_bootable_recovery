@@ -201,7 +201,7 @@ int ev_sync_key_state(ev_set_key_callback set_key_cb, void* data) {
     return 0;
 }
 
-void ev_iterate_available_keys(ev_key_callback cb, void* data) {
+void ev_iterate_available_keys(std::function<void(int)> f) {
     unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];
     unsigned long key_bits[BITS_TO_LONGS(KEY_MAX)];
 
@@ -224,7 +224,7 @@ void ev_iterate_available_keys(ev_key_callback cb, void* data) {
 
         for (int key_code = 0; key_code <= KEY_MAX; ++key_code) {
             if (test_bit(key_code, key_bits)) {
-                cb(key_code, data);
+                f(key_code);
             }
         }
     }
