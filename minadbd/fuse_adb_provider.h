@@ -19,10 +19,6 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct adb_data {
     int sfd;  // file descriptor for the adb channel
 
@@ -30,12 +26,7 @@ struct adb_data {
     uint32_t block_size;
 };
 
-int read_block_adb(void* cookie, uint32_t block, uint8_t* buffer,
-                   uint32_t fetch_size);
+int read_block_adb(void* cookie, uint32_t block, uint8_t* buffer, uint32_t fetch_size);
 int run_adb_fuse(int sfd, uint64_t file_size, uint32_t block_size);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
