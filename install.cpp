@@ -88,7 +88,7 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache) {
     //            fill up the next <frac> part of of the progress bar
     //            over <secs> seconds.  If <secs> is zero, use
     //            set_progress commands to manually control the
-    //            progress of this segment of the bar
+    //            progress of this segment of the bar.
     //
     //        set_progress <frac>
     //            <frac> should be between 0.0 and 1.0; sets the
@@ -106,6 +106,18 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache) {
     //
     //        ui_print <string>
     //            display <string> on the screen.
+    //
+    //        wipe_cache
+    //            a wipe of cache will be performed following a successful
+    //            installation.
+    //
+    //        clear_display
+    //            turn off the text display.
+    //
+    //        enable_reboot
+    //            packages can explicitly request that they want the user
+    //            to be able to reboot during installation (useful for
+    //            debugging packages that don't exit).
     //
     //   - the name of the package zip file.
     //
