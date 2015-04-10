@@ -44,15 +44,13 @@ struct adf_pdata {
 
     unsigned int current_surface;
     unsigned int n_surfaces;
-    struct adf_surface_pdata surfaces[2];
+    adf_surface_pdata surfaces[2];
 };
 
-static gr_surface adf_flip(struct minui_backend *backend);
-static void adf_blank(struct minui_backend *backend, bool blank);
+static gr_surface adf_flip(minui_backend *backend);
+static void adf_blank(minui_backend *backend, bool blank);
 
-static int adf_surface_init(struct adf_pdata *pdata,
-        struct drm_mode_modeinfo *mode, struct adf_surface_pdata *surf)
-{
+static int adf_surface_init(adf_pdata *pdata, drm_mode_modeinfo *mode, adf_surface_pdata *surf) {
     memset(surf, 0, sizeof(*surf));
 
     surf->fd = adf_interface_simple_buffer_alloc(pdata->intf_fd, mode->hdisplay,
@@ -65,8 +63,9 @@ static int adf_surface_init(struct adf_pdata *pdata,
     surf->base.row_bytes = surf->pitch;
     surf->base.pixel_bytes = (pdata->format == DRM_FORMAT_RGB565) ? 2 : 4;
 
-    surf->base.data = mmap(NULL, surf->pitch * surf->base.height, PROT_WRITE,
-            MAP_SHARED, surf->fd, surf->offset);
+    surf->base.data = reinterpret_cast<uint8_t*>(mmap(NULL,
+                                                      surf->pitch * surf->base.height, PROT_WRITE,
+                                                      MAP_SHARED, surf->fd, surf->offset));
     if (surf->base.data == MAP_FAILED) {
         close(surf->fd);
         return -errno;
@@ -75,9 +74,9 @@ static int adf_surface_init(struct adf_pdata *pdata,
     return 0;
 }
 
-static int adf_interface_init(struct adf_pdata *pdata)
+static int adf_interface_init(adf_pdata *pdata)
 {
-    struct adf_interface_data intf_data;
+    adf_interface_data intf_data;
     int ret = 0;
     int err;
 
@@ -107,7 +106,7 @@ done:
     return ret;
 }
 
-static int adf_device_init(struct adf_pdata *pdata, struct adf_device *dev)
+static int adf_device_init(adf_pdata *pdata, adf_device *dev)
 {
     adf_id_t intf_id;
     int intf_fd;
@@ -137,7 +136,7 @@ static int adf_device_init(struct adf_pdata *pdata, struct adf_device *dev)
 
 static gr_surface adf_init(minui_backend *backend)
 {
-    struct adf_pdata *pdata = (struct adf_pdata *)backend;
+    adf_pdata *pdata = (adf_pdata *)backend;
     adf_id_t *dev_ids = NULL;
     ssize_t n_dev_ids, i;
     gr_surface ret;
@@ -164,7 +163,7 @@ static gr_surface adf_init(minui_backend *backend)
     pdata->intf_fd = -1;
 
     for (i = 0; i < n_dev_ids && pdata->intf_fd < 0; i++) {
-        struct adf_device dev;
+        adf_device dev;
 
         int err = adf_device_open(dev_ids[i], O_RDWR, &dev);
         if (err < 0) {
@@ -194,10 +193,10 @@ static gr_surface adf_init(minui_backend *backend)
     return ret;
 }
 
-static gr_surface adf_flip(struct minui_backend *backend)
+static gr_surface adf_flip(minui_backend *backend)
 {
-    struct adf_pdata *pdata = (struct adf_pdata *)backend;
-    struct adf_surface_pdata *surf = &pdata->surfaces[pdata->current_surface];
+    adf_pdata *pdata = (adf_pdata *)backend;
+    adf_surface_pdata *surf = &pdata->surfaces[pdata->current_surface];
 
     int fence_fd = adf_interface_simple_post(pdata->intf_fd, pdata->eng_id,
             surf->base.width, surf->base.height, pdata->format, surf->fd,
@@ -209,22 +208,22 @@ static gr_surface adf_flip(struct minui_backend *backend)
     return &pdata->surfaces[pdata->current_surface].base;
 }
 
-static void adf_blank(struct minui_backend *backend, bool blank)
+static void adf_blank(minui_backend *backend, bool blank)
 {
-    struct adf_pdata *pdata = (struct adf_pdata *)backend;
+    adf_pdata *pdata = (adf_pdata *)backend;
     adf_interface_blank(pdata->intf_fd,
             blank ? DRM_MODE_DPMS_OFF : DRM_MODE_DPMS_ON);
 }
 
-static void adf_surface_destroy(struct adf_surface_pdata *surf)
+static void adf_surface_destroy(adf_surface_pdata *surf)
 {
     munmap(surf->base.data, surf->pitch * surf->base.height);
     close(surf->fd);
 }
 
-static void adf_exit(struct minui_backend *backend)
+static void adf_exit(minui_backend *backend)
 {
-    struct adf_pdata *pdata = (struct adf_pdata *)backend;
+    adf_pdata *pdata = (adf_pdata *)backend;
     unsigned int i;
 
     for (i = 0; i < pdata->n_surfaces; i++)
@@ -236,7 +235,7 @@ static void adf_exit(struct minui_backend *backend)
 
 minui_backend *open_adf()
 {
-    struct adf_pdata *pdata = calloc(1, sizeof(*pdata));
+    adf_pdata* pdata = reinterpret_cast<adf_pdata*>(calloc(1, sizeof(*pdata)));
     if (!pdata) {
         perror("allocating adf backend failed");
         return NULL;
