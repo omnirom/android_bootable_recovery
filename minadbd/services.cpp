@@ -36,19 +36,16 @@ struct stinfo {
     void *cookie;
 };
 
-
-void *service_bootstrap_func(void *x)
-{
-    stinfo *sti = x;
+void* service_bootstrap_func(void* x) {
+    stinfo* sti = reinterpret_cast<stinfo*>(x);
     sti->func(sti->fd, sti->cookie);
     free(sti);
     return 0;
 }
 
-static void sideload_host_service(int sfd, void* cookie)
-{
+static void sideload_host_service(int sfd, void* cookie) {
     char* saveptr;
-    const char* s = adb_strtok_r(cookie, ":", &saveptr);
+    const char* s = adb_strtok_r(reinterpret_cast<char*>(cookie), ":", &saveptr);
     uint64_t file_size = strtoull(s, NULL, 10);
     s = adb_strtok_r(NULL, ":", &saveptr);
     uint32_t block_size = strtoul(s, NULL, 10);
@@ -65,22 +62,20 @@ static void sideload_host_service(int sfd, void* cookie)
 
 static int create_service_thread(void (*func)(int, void *), void *cookie)
 {
-    stinfo *sti;
-    adb_thread_t t;
     int s[2];
-
     if(adb_socketpair(s)) {
         printf("cannot create service socket pair\n");
         return -1;
     }
 
-    sti = malloc(sizeof(stinfo));
+    stinfo* sti = reinterpret_cast<stinfo*>(malloc(sizeof(stinfo)));
     if(sti == 0) fatal("cannot allocate stinfo");
     sti->func = func;
     sti->cookie = cookie;
     sti->fd = s[1];
 
-    if(adb_thread_create( &t, service_bootstrap_func, sti)){
+    adb_thread_t t;
+    if (adb_thread_create( &t, service_bootstrap_func, sti)){
         free(sti);
         adb_close(s[0]);
         adb_close(s[1]);
@@ -92,8 +87,7 @@ static int create_service_thread(void (*func)(int, void *), void *cookie)
     return s[0];
 }
 
-int service_to_fd(const char *name)
-{
+int service_to_fd(const char* name) {
     int ret = -1;
 
     if (!strncmp(name, "sideload:", 9)) {

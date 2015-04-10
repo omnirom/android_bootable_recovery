@@ -43,11 +43,9 @@
 #include "screen_ui.h"
 #include "device.h"
 #include "adb_install.h"
-extern "C" {
 #include "adb.h"
 #include "fuse_sideload.h"
 #include "fuse_sdcard_provider.h"
-}
 
 struct selabel_handle *sehandle;
 
