@@ -31,6 +31,7 @@ static const char* ITEMS[] = {
     "Apply update from SD card",
     "Wipe data/factory reset",
     "Wipe cache partition",
+    "Mount /system",
     "View recovery logs",
     "Power off",
     NULL
@@ -44,11 +45,12 @@ Device::BuiltinAction Device::InvokeMenuItem(int menu_position) {
     case 0: return REBOOT;
     case 1: return REBOOT_BOOTLOADER;
     case 2: return APPLY_ADB_SIDELOAD;
-    case 3: return APPLY_EXT;
+    case 3: return APPLY_SDCARD;
     case 4: return WIPE_DATA;
     case 5: return WIPE_CACHE;
-    case 6: return READ_RECOVERY_LASTLOG;
-    case 7: return SHUTDOWN;
+    case 6: return MOUNT_SYSTEM;
+    case 7: return VIEW_RECOVERY_LOGS;
+    case 8: return SHUTDOWN;
     default: return NO_ACTION;
   }
 }
