@@ -28,6 +28,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <vector>
+
 #include "common.h"
 #include "device.h"
 #include "minui/minui.h"
@@ -203,6 +205,13 @@ void ScreenRecoveryUI::SetColor(UIElement e) {
     }
 }
 
+void ScreenRecoveryUI::DrawHorizontalRule(int* y) {
+    SetColor(MENU);
+    *y += 4;
+    gr_fill(0, *y, gr_fb_width(), *y + 2);
+    *y += 8;
+}
+
 // Redraw everything on the screen.  Does not flip pages.
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_screen_locked() {
@@ -214,12 +223,11 @@ void ScreenRecoveryUI::draw_screen_locked() {
         gr_clear();
 
         int y = 0;
-        int i = 0;
         if (show_menu) {
             SetColor(HEADER);
 
-            for (; i < menu_top + menu_items; ++i) {
-                if (i == menu_top) SetColor(MENU);
+            for (int i = 0; i < menu_top + menu_items; ++i) {
+                if (i == menu_top) DrawHorizontalRule(&y);
 
                 if (i == menu_top + menu_sel) {
                     // draw the highlight bar
@@ -234,11 +242,8 @@ void ScreenRecoveryUI::draw_screen_locked() {
                 }
                 y += char_height+4;
             }
-            SetColor(MENU);
-            y += 4;
-            gr_fill(0, y, gr_fb_width(), y+2);
-            y += 4;
-            ++i;
+
+            DrawHorizontalRule(&y);
         }
 
         SetColor(LOG);
@@ -249,7 +254,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
         int row = (text_top+text_rows-1) % text_rows;
         size_t count = 0;
         for (int ty = gr_fb_height() - char_height;
-             ty > y+2 && count < text_rows;
+             ty >= y && count < text_rows;
              ty -= char_height, ++count) {
             gr_text(0, ty, text[row], 0);
             --row;
@@ -495,23 +500,76 @@ void ScreenRecoveryUI::Print(const char *fmt, ...) {
     pthread_mutex_unlock(&updateMutex);
 }
 
-// TODO: replace this with something not line-based so we can wrap correctly without getting
-// confused about what line we're on.
-void ScreenRecoveryUI::print_no_update(const char* s) {
+void ScreenRecoveryUI::PutChar(char ch) {
     pthread_mutex_lock(&updateMutex);
-    if (text_rows > 0 && text_cols > 0) {
-        for (const char* ptr = s; *ptr != '\0'; ++ptr) {
-            if (*ptr == '\n' || text_col >= text_cols) {
-                text[text_row][text_col] = '\0';
-                text_col = 0;
-                text_row = (text_row + 1) % text_rows;
-                if (text_row == text_top) text_top = (text_top + 1) % text_rows;
-            }
-            if (*ptr != '\n') text[text_row][text_col++] = *ptr;
-        }
-        text[text_row][text_col] = '\0';
+    if (ch != '\n') text[text_row][text_col++] = ch;
+    if (ch == '\n' || text_col >= text_cols) {
+        text_col = 0;
+        ++text_row;
     }
     pthread_mutex_unlock(&updateMutex);
+}
+
+void ScreenRecoveryUI::ClearText() {
+    pthread_mutex_lock(&updateMutex);
+    text_col = 0;
+    text_row = 0;
+    text_top = 1;
+    for (size_t i = 0; i < text_rows; ++i) {
+        memset(text[i], 0, text_cols + 1);
+    }
+    pthread_mutex_unlock(&updateMutex);
+}
+
+void ScreenRecoveryUI::ShowFile(FILE* fp) {
+    std::vector<long> offsets;
+    offsets.push_back(ftell(fp));
+    ClearText();
+
+    struct stat sb;
+    fstat(fileno(fp), &sb);
+
+    bool show_prompt = false;
+    while (true) {
+        if (show_prompt) {
+            Print("--(%d%% of %d bytes)--",
+                  static_cast<int>(100 * (double(ftell(fp)) / double(sb.st_size))),
+                  static_cast<int>(sb.st_size));
+            Redraw();
+            while (show_prompt) {
+                show_prompt = false;
+                int key = WaitKey();
+                if (key == KEY_POWER) {
+                    return;
+                } else if (key == KEY_UP || key == KEY_VOLUMEUP) {
+                    if (offsets.size() <= 1) {
+                        show_prompt = true;
+                    } else {
+                        offsets.pop_back();
+                        fseek(fp, offsets.back(), SEEK_SET);
+                    }
+                } else {
+                    if (feof(fp)) {
+                        return;
+                    }
+                    offsets.push_back(ftell(fp));
+                }
+            }
+            ClearText();
+        }
+
+        int ch = getc(fp);
+        if (ch == EOF) {
+            text_row = text_top = text_rows - 2;
+            show_prompt = true;
+        } else {
+            PutChar(ch);
+            if (text_col == 0 && text_row >= text_rows - 2) {
+                text_top = text_row;
+                show_prompt = true;
+            }
+        }
+    }
 }
 
 void ScreenRecoveryUI::ShowFile(const char* filename) {
@@ -520,47 +578,7 @@ void ScreenRecoveryUI::ShowFile(const char* filename) {
         Print("  Unable to open %s: %s\n", filename, strerror(errno));
         return;
     }
-
-    char line[1024];
-    int ct = 0;
-    int key = 0;
-    while (fgets(line, sizeof(line), fp) != nullptr) {
-        print_no_update(line);
-        ct++;
-        if (ct % text_rows == 0) {
-            Redraw();
-
-            // give the user time to glance at the entries
-            key = WaitKey();
-
-            if (key == KEY_POWER) {
-                break;
-            } else if (key == KEY_VOLUMEUP) {
-                // Go back by seeking to the beginning and dumping ct - n
-                // lines.  It's ugly, but this way we don't need to store
-                // the previous offsets.  The files we're dumping here aren't
-                // expected to be very large.
-                ct -= 2 * text_rows;
-                if (ct < 0) {
-                    ct = 0;
-                }
-                fseek(fp, 0, SEEK_SET);
-                for (int i = 0; i < ct; i++) {
-                    fgets(line, sizeof(line), fp);
-                }
-                Print("^^^^^^^^^^\n");
-            } else {
-                // Next page.
-            }
-        }
-    }
-
-    // If the user didn't abort, then give the user time to glance at
-    // the end of the log, sorry, no rewind here
-    if (key != KEY_POWER) {
-        Print("\n--END-- (press any key)\n");
-        WaitKey();
-    }
+    ShowFile(fp);
     fclose(fp);
 }
 
@@ -581,7 +599,7 @@ void ScreenRecoveryUI::StartMenu(const char* const * headers, const char* const 
             menu[i][text_cols-1] = '\0';
         }
         menu_items = i - menu_top;
-        show_menu = 1;
+        show_menu = true;
         menu_sel = initial_selection;
         update_screen_locked();
     }
@@ -590,7 +608,7 @@ void ScreenRecoveryUI::StartMenu(const char* const * headers, const char* const 
 
 int ScreenRecoveryUI::SelectMenu(int sel) {
     pthread_mutex_lock(&updateMutex);
-    if (show_menu > 0) {
+    if (show_menu) {
         int old_sel = menu_sel;
         menu_sel = sel;
 
@@ -607,8 +625,8 @@ int ScreenRecoveryUI::SelectMenu(int sel) {
 
 void ScreenRecoveryUI::EndMenu() {
     pthread_mutex_lock(&updateMutex);
-    if (show_menu > 0 && text_rows > 0 && text_cols > 0) {
-        show_menu = 0;
+    if (show_menu && text_rows > 0 && text_cols > 0) {
+        show_menu = false;
         update_screen_locked();
     }
     pthread_mutex_unlock(&updateMutex);
