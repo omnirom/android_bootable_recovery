@@ -76,25 +76,19 @@ int TWFunc::Exec_Cmd(const string& cmd, string &result) {
 }
 
 int TWFunc::Exec_Cmd(const string& cmd) {
-	pid_t pid;
-	int status;
-	switch(pid = fork())
-	{
-		case -1:
-			LOGERR("Exec_Cmd(): vfork failed: %d!\n", errno);
-			return -1;
-		case 0: // child
-			execl("/sbin/sh", "sh", "-c", cmd.c_str(), NULL);
-			_exit(127);
-			break;
-		default:
-		{
-			if (TWFunc::Wait_For_Child(pid, &status, cmd) != 0)
-				return -1;
-			else
-				return 0;
+	FILE* exec;
+	char buffer[128];
+	int ret = 0;
+	LOGINFO("Running command: '%s'\n", cmd.c_str());
+	exec = __popen(cmd.c_str(), "r");
+	if (!exec) return -1;
+	while (!feof(exec)) {
+		if (fgets(buffer, 128, exec) != NULL) {
+			gui_print("%s", buffer);
 		}
 	}
+	ret = __pclose(exec);
+	return ret;
 }
 
 // Returns "file.name" from a full /path/to/file.name

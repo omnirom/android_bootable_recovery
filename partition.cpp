@@ -949,9 +949,8 @@ bool TWPartition::Mount(bool Display_Error) {
 	if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sbin/exfat-fuse")) {
 		string cmd = "/sbin/exfat-fuse -o big_writes,max_read=131072,max_write=131072 " + Actual_Block_Device + " " + Mount_Point;
 		LOGINFO("cmd: %s\n", cmd.c_str());
-		string result;
-		if (TWFunc::Exec_Cmd(cmd, result) != 0) {
-			LOGINFO("exfat-fuse failed to mount with result '%s', trying vfat\n", result.c_str());
+		if (TWFunc::Exec_Cmd(cmd) != 0) {
+			LOGINFO("exfat-fuse failed to mount, trying vfat\n");
 			Current_File_System = "vfat";
 		} else {
 #ifdef TW_NO_EXFAT_FUSE
