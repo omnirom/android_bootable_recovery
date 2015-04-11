@@ -18,6 +18,7 @@
 #define RECOVERY_SCREEN_UI_H
 
 #include <pthread.h>
+#include <stdio.h>
 
 #include "ui.h"
 #include "minui/minui.h"
@@ -114,7 +115,11 @@ class ScreenRecoveryUI : public RecoveryUI {
     static void* progress_thread(void* cookie);
     void progress_loop();
 
-    void print_no_update(const char*);
+    void ShowFile(FILE*);
+    void PutChar(char);
+    void ClearText();
+
+    void DrawHorizontalRule(int* y);
 
     void LoadBitmap(const char* filename, gr_surface* surface);
     void LoadBitmapArray(const char* filename, int* frames, gr_surface** surface);
