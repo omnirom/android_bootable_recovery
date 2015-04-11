@@ -1297,7 +1297,6 @@ int GUIAction::cmd(std::string arg)
 	int op_status = 0;
 
 	operation_start("Command");
-	LOGINFO("Running command: '%s'\n", arg.c_str());
 	if (simulate) {
 		simulate_progress_bar();
 	} else {
