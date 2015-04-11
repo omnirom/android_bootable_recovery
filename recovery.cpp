@@ -65,19 +65,19 @@ static const struct option OPTIONS[] = {
   { NULL, 0, NULL, 0 },
 };
 
-#define LAST_LOG_FILE "/cache/recovery/last_log"
 
 static const char *CACHE_LOG_DIR = "/cache/recovery";
 static const char *COMMAND_FILE = "/cache/recovery/command";
 static const char *INTENT_FILE = "/cache/recovery/intent";
 static const char *LOG_FILE = "/cache/recovery/log";
 static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
+static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
 static const char *LOCALE_FILE = "/cache/recovery/last_locale";
 static const char *CACHE_ROOT = "/cache";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
-static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
+static const char *TEMPORARY_KMSG_FILE = "/tmp/kmsg.log";
 #define KLOG_DEFAULT_LEN (64 * 1024)
 
 #define KEEP_LOG_COUNT 10
@@ -300,33 +300,36 @@ save_kernel_log(const char *destination) {
         free(buffer);
         return;
     }
+    fputs("\n\n=== KERNEL LOG ===\n", log);
     fwrite(buffer, n, 1, log);
     check_and_fclose(log, destination);
     free(buffer);
 }
 
-// How much of the temp log we have copied to the copy in cache.
-static long tmplog_offset = 0;
-
-static void
-copy_log_file(const char* source, const char* destination, int append) {
-    FILE *log = fopen_path(destination, append ? "a" : "w");
-    if (log == NULL) {
+// Copy the log file contents from source to destination. When offset is
+// nonnull, start copying from the offset of the source and append to the
+// end of the dest file. Otherwise overwrite the dest file.
+static void copy_log_file(const char* source, const char* destination, long* offset) {
+    FILE *dest_fp = fopen_path(destination, offset != nullptr ? "a" : "w");
+    if (dest_fp == nullptr) {
         LOGE("Can't open %s\n", destination);
     } else {
-        FILE *tmplog = fopen(source, "r");
-        if (tmplog != NULL) {
-            if (append) {
-                fseek(tmplog, tmplog_offset, SEEK_SET);  // Since last write
+        FILE *source_fp = fopen(source, "r");
+        if (source_fp != nullptr) {
+            if (offset) {
+                fseek(source_fp, *offset, SEEK_SET);  // Since last write
             }
             char buf[4096];
-            while (fgets(buf, sizeof(buf), tmplog)) fputs(buf, log);
-            if (append) {
-                tmplog_offset = ftell(tmplog);
+            size_t bytes;
+            while ((bytes = fread(buf, 1, sizeof(buf), source_fp)) != 0) {
+                fwrite(buf, 1, bytes, dest_fp);
             }
-            check_and_fclose(tmplog, source);
+            if (offset) {
+                *offset = ftell(source_fp);
+            }
+            check_and_fclose(source_fp, source);
         }
-        check_and_fclose(log, destination);
+        check_and_fclose(dest_fp, destination);
     }
 }
 
@@ -344,8 +347,8 @@ static void rotate_last_logs(int max) {
     char oldfn[256];
     char newfn[256];
     for (int i = max-1; i >= 0; --i) {
-        snprintf(oldfn, sizeof(oldfn), (i==0) ? LAST_LOG_FILE : (LAST_LOG_FILE ".%d"), i);
-        snprintf(newfn, sizeof(newfn), LAST_LOG_FILE ".%d", i+1);
+        snprintf(oldfn, sizeof(oldfn), (i==0) ? "%s" : "%s.%d", LAST_LOG_FILE, i);
+        snprintf(newfn, sizeof(newfn), "%s.%d", LAST_LOG_FILE, i+1);
         // ignore errors
         rename(oldfn, newfn);
     }
@@ -363,14 +366,23 @@ static void copy_logs() {
     rotate_last_logs(KEEP_LOG_COUNT);
 
     // Copy logs to cache so the system can find out what happened.
-    copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
-    copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
-    copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, false);
-    save_kernel_log(LAST_KMSG_FILE);
+
+    // How much of the temp log we have copied to the LOG_FILE in cache.
+    // The offset is saved for next sync.
+    static long tmp_log_offset = 0;
+    copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, &tmp_log_offset);
+
+    // We have to rewrite LAST_LOG_FILE since it has kmsg at the end.
+    copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, nullptr);
+
+    save_kernel_log(TEMPORARY_KMSG_FILE);
+    // We will always append the whole file to LAST_LOG_FILE.
+    long tmp_kmsg_offset = 0;
+    copy_log_file(TEMPORARY_KMSG_FILE, LAST_LOG_FILE, &tmp_kmsg_offset);
+    copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, nullptr);
+
     chmod(LOG_FILE, 0600);
     chown(LOG_FILE, 1000, 1000);   // system user
-    chmod(LAST_KMSG_FILE, 0600);
-    chown(LAST_KMSG_FILE, 1000, 1000);   // system user
     chmod(LAST_LOG_FILE, 0640);
     chmod(LAST_INSTALL_FILE, 0644);
     sync();
@@ -439,8 +451,9 @@ erase_volume(const char *volume) {
     saved_log_file* head = NULL;
 
     if (is_cache) {
-        // If we're reformatting /cache, we load any
-        // "/cache/recovery/last*" files into memory, so we can restore
+        // If we're reformatting /cache, we load any past logs
+        // (i.e. "/cache/recovery/last*") and the current log
+        // ("/cache/recovery/log") into memory, so we can restore
         // them after the reformat.
 
         ensure_path_mounted(volume);
@@ -454,7 +467,7 @@ erase_volume(const char *volume) {
             strcat(path, "/");
             int path_len = strlen(path);
             while ((de = readdir(d)) != NULL) {
-                if (strncmp(de->d_name, "last", 4) == 0) {
+                if (strncmp(de->d_name, "last_", 5) == 0 || strcmp(de->d_name, "log") == 0) {
                     saved_log_file* p = (saved_log_file*) malloc(sizeof(saved_log_file));
                     strcpy(path+path_len, de->d_name);
                     p->name = strdup(path);
@@ -503,10 +516,6 @@ erase_volume(const char *volume) {
             head = temp;
         }
 
-        // Any part of the log we'd copied to cache is now gone.
-        // Reset the pointer so we copy from the beginning of the temp
-        // log.
-        tmplog_offset = 0;
         copy_logs();
     }
 
@@ -716,22 +725,17 @@ static void choose_recovery_file(Device* device) {
     unsigned int n;
     static const char** title_headers = NULL;
     char *filename;
-    // "Go back" + LAST_KMSG_FILE + KEEP_LOG_COUNT + terminating NULL entry
-    char* entries[KEEP_LOG_COUNT + 3];
+    // "Go back" + KEEP_LOG_COUNT + terminating NULL entry
+    char* entries[KEEP_LOG_COUNT + 2];
     memset(entries, 0, sizeof(entries));
 
     n = 0;
     entries[n++] = strdup("Go back");
 
-    // Add kernel kmsg file if available
-    if ((ensure_path_mounted(LAST_KMSG_FILE) == 0) && (access(LAST_KMSG_FILE, R_OK) == 0)) {
-        entries[n++] = strdup(LAST_KMSG_FILE);
-    }
-
     // Add LAST_LOG_FILE + LAST_LOG_FILE.x
     for (i = 0; i < KEEP_LOG_COUNT; i++) {
         char *filename;
-        if (asprintf(&filename, (i==0) ? LAST_LOG_FILE : (LAST_LOG_FILE ".%d"), i) == -1) {
+        if (asprintf(&filename, (i==0) ? "%s" : "%s.%d", LAST_LOG_FILE, i) == -1) {
             // memory allocation failure - return early. Should never happen.
             return;
         }
@@ -869,7 +873,7 @@ prompt_and_wait(Device* device, int status) {
 
             case Device::MOUNT_SYSTEM:
                 if (ensure_path_mounted("/system") != -1) {
-                    ui->Print("Mounted /system.");
+                    ui->Print("Mounted /system.\n");
                 }
                 break;
         }
