@@ -103,7 +103,7 @@ static void text_blend(unsigned char* src_p, int src_row_bytes,
     }
 }
 
-void gr_text(int x, int y, const char *s, int bold)
+void gr_text(int x, int y, const char *s, bool bold)
 {
     GRFont* font = gr_font;
 
