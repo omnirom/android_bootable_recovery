@@ -98,7 +98,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     bool show_menu;
     int menu_top, menu_items, menu_sel;
 
-    pthread_t progress_t;
+    pthread_t progress_thread_;
 
     int animation_fps;
     int installing_frames;
@@ -112,8 +112,9 @@ class ScreenRecoveryUI : public RecoveryUI {
     void draw_screen_locked();
     void update_screen_locked();
     void update_progress_locked();
-    static void* progress_thread(void* cookie);
-    void progress_loop();
+
+    static void* ProgressThreadStartRoutine(void* data);
+    void ProgressThreadLoop();
 
     void ShowFile(FILE*);
     void PutChar(char);

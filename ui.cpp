@@ -39,11 +39,6 @@
 
 #define UI_WAIT_KEY_TIMEOUT_SEC    120
 
-// There's only (at most) one of these objects, and global callbacks
-// (for pthread_create, and the input event system) need to find it,
-// so use a global variable.
-static RecoveryUI* self = NULL;
-
 RecoveryUI::RecoveryUI()
         : key_queue_len(0),
           key_last_down(-1),
@@ -55,9 +50,8 @@ RecoveryUI::RecoveryUI()
           has_power_key(false),
           has_up_key(false),
           has_down_key(false) {
-    pthread_mutex_init(&key_queue_mutex, NULL);
-    pthread_cond_init(&key_queue_cond, NULL);
-    self = this;
+    pthread_mutex_init(&key_queue_mutex, nullptr);
+    pthread_cond_init(&key_queue_cond, nullptr);
     memset(key_pressed, 0, sizeof(key_pressed));
 }
 
@@ -71,16 +65,29 @@ void RecoveryUI::OnKeyDetected(int key_code) {
     }
 }
 
-void RecoveryUI::Init() {
-    ev_init(input_callback, NULL);
-
-    using namespace std::placeholders;
-    ev_iterate_available_keys(std::bind(&RecoveryUI::OnKeyDetected, this, _1));
-
-    pthread_create(&input_t, NULL, input_thread, NULL);
+int RecoveryUI::InputCallback(int fd, uint32_t epevents, void* data) {
+    return reinterpret_cast<RecoveryUI*>(data)->OnInputEvent(fd, epevents);
 }
 
-int RecoveryUI::input_callback(int fd, uint32_t epevents, void* data) {
+// Reads input events, handles special hot keys, and adds to the key queue.
+static void* InputThreadLoop(void*) {
+    while (true) {
+        if (!ev_wait(-1)) {
+            ev_dispatch();
+        }
+    }
+    return nullptr;
+}
+
+void RecoveryUI::Init() {
+    ev_init(InputCallback, this);
+
+    ev_iterate_available_keys(std::bind(&RecoveryUI::OnKeyDetected, this, std::placeholders::_1));
+
+    pthread_create(&input_thread_, nullptr, InputThreadLoop, nullptr);
+}
+
+int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
     struct input_event ev;
     if (ev_get_input(fd, epevents, &ev) == -1) {
         return -1;
@@ -94,23 +101,23 @@ int RecoveryUI::input_callback(int fd, uint32_t epevents, void* data) {
             // the trackball.  When it exceeds a threshold
             // (positive or negative), fake an up/down
             // key event.
-            self->rel_sum += ev.value;
-            if (self->rel_sum > 3) {
-                self->process_key(KEY_DOWN, 1);   // press down key
-                self->process_key(KEY_DOWN, 0);   // and release it
-                self->rel_sum = 0;
-            } else if (self->rel_sum < -3) {
-                self->process_key(KEY_UP, 1);     // press up key
-                self->process_key(KEY_UP, 0);     // and release it
-                self->rel_sum = 0;
+            rel_sum += ev.value;
+            if (rel_sum > 3) {
+                ProcessKey(KEY_DOWN, 1);   // press down key
+                ProcessKey(KEY_DOWN, 0);   // and release it
+                rel_sum = 0;
+            } else if (rel_sum < -3) {
+                ProcessKey(KEY_UP, 1);     // press up key
+                ProcessKey(KEY_UP, 0);     // and release it
+                rel_sum = 0;
             }
         }
     } else {
-        self->rel_sum = 0;
+        rel_sum = 0;
     }
 
     if (ev.type == EV_KEY && ev.code <= KEY_MAX) {
-        self->process_key(ev.code, ev.value);
+        ProcessKey(ev.code, ev.value);
     }
 
     return 0;
@@ -128,7 +135,7 @@ int RecoveryUI::input_callback(int fd, uint32_t epevents, void* data) {
 // a key is registered.
 //
 // updown == 1 for key down events; 0 for key up events
-void RecoveryUI::process_key(int key_code, int updown) {
+void RecoveryUI::ProcessKey(int key_code, int updown) {
     bool register_key = false;
     bool long_press = false;
     bool reboot_enabled;
@@ -139,13 +146,13 @@ void RecoveryUI::process_key(int key_code, int updown) {
         ++key_down_count;
         key_last_down = key_code;
         key_long_press = false;
-        pthread_t th;
         key_timer_t* info = new key_timer_t;
         info->ui = this;
         info->key_code = key_code;
         info->count = key_down_count;
-        pthread_create(&th, NULL, &RecoveryUI::time_key_helper, info);
-        pthread_detach(th);
+        pthread_t thread;
+        pthread_create(&thread, nullptr, &RecoveryUI::time_key_helper, info);
+        pthread_detach(thread);
     } else {
         if (key_last_down == key_code) {
             long_press = key_long_press;
@@ -182,7 +189,7 @@ void* RecoveryUI::time_key_helper(void* cookie) {
     key_timer_t* info = (key_timer_t*) cookie;
     info->ui->time_key(info->key_code, info->count);
     delete info;
-    return NULL;
+    return nullptr;
 }
 
 void RecoveryUI::time_key(int key_code, int count) {
@@ -206,17 +213,6 @@ void RecoveryUI::EnqueueKey(int key_code) {
     pthread_mutex_unlock(&key_queue_mutex);
 }
 
-
-// Reads input events, handles special hot keys, and adds to the key queue.
-void* RecoveryUI::input_thread(void* cookie) {
-    while (true) {
-        if (!ev_wait(-1)) {
-            ev_dispatch();
-        }
-    }
-    return NULL;
-}
-
 int RecoveryUI::WaitKey() {
     pthread_mutex_lock(&key_queue_mutex);
 
@@ -225,7 +221,7 @@ int RecoveryUI::WaitKey() {
     do {
         struct timeval now;
         struct timespec timeout;
-        gettimeofday(&now, NULL);
+        gettimeofday(&now, nullptr);
         timeout.tv_sec = now.tv_sec;
         timeout.tv_nsec = now.tv_usec * 1000;
         timeout.tv_sec += UI_WAIT_KEY_TIMEOUT_SEC;
@@ -234,7 +230,7 @@ int RecoveryUI::WaitKey() {
         while (key_queue_len == 0 && rc != ETIMEDOUT) {
             rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex, &timeout);
         }
-    } while (usb_connected() && key_queue_len == 0);
+    } while (IsUsbConnected() && key_queue_len == 0);
 
     int key = -1;
     if (key_queue_len > 0) {
@@ -245,8 +241,7 @@ int RecoveryUI::WaitKey() {
     return key;
 }
 
-// Return true if USB is connected.
-bool RecoveryUI::usb_connected() {
+bool RecoveryUI::IsUsbConnected() {
     int fd = open("/sys/class/android_usb/android0/state", O_RDONLY);
     if (fd < 0) {
         printf("failed to open /sys/class/android_usb/android0/state: %s\n",
@@ -255,7 +250,7 @@ bool RecoveryUI::usb_connected() {
     }
 
     char buf;
-    /* USB is connected if android_usb state is CONNECTED or CONFIGURED */
+    // USB is connected if android_usb state is CONNECTED or CONFIGURED.
     int connected = (read(fd, &buf, 1) == 1) && (buf == 'C');
     if (close(fd) < 0) {
         printf("failed to close /sys/class/android_usb/android0/state: %s\n",
