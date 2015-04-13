@@ -171,11 +171,9 @@ int main(int argc, char **argv) {
 		TWPartition* misc = PartitionManager.Find_Partition_By_Path("/misc");
 		if (misc != NULL) {
 			if (misc->Current_File_System == "emmc") {
-				set_device_type('e');
-				set_device_name(misc->Actual_Block_Device.c_str());
+				set_misc_device("emmc", misc->Actual_Block_Device.c_str());
 			} else if (misc->Current_File_System == "mtd") {
-				set_device_type('m');
-				set_device_name(misc->MTD_Name.c_str());
+				set_misc_device("mtd", misc->MTD_Name.c_str());
 			} else {
 				LOGERR("Unknown file system for /misc\n");
 			}
