@@ -539,7 +539,7 @@ void ScreenRecoveryUI::ShowFile(FILE* fp) {
             while (show_prompt) {
                 show_prompt = false;
                 int key = WaitKey();
-                if (key == KEY_POWER) {
+                if (key == KEY_POWER || key == KEY_ENTER) {
                     return;
                 } else if (key == KEY_UP || key == KEY_VOLUMEUP) {
                     if (offsets.size() <= 1) {
