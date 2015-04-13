@@ -39,11 +39,6 @@
 static int char_width;
 static int char_height;
 
-// There's only (at most) one of these objects, and global callbacks
-// (for pthread_create, and the input event system) need to find it,
-// so use a global variable.
-static ScreenRecoveryUI* self = nullptr;
-
 // Return the current time as a double (including fractions of a second).
 static double now() {
     struct timeval tv;
@@ -83,7 +78,6 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
         backgroundIcon[i] = nullptr;
     }
     pthread_mutex_init(&updateMutex, nullptr);
-    self = this;
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
@@ -283,14 +277,14 @@ void ScreenRecoveryUI::update_progress_locked() {
 }
 
 // Keeps the progress bar updated, even when the process is otherwise busy.
-void* ScreenRecoveryUI::progress_thread(void *cookie) {
-    self->progress_loop();
+void* ScreenRecoveryUI::ProgressThreadStartRoutine(void* data) {
+    reinterpret_cast<ScreenRecoveryUI*>(data)->ProgressThreadLoop();
     return nullptr;
 }
 
-void ScreenRecoveryUI::progress_loop() {
+void ScreenRecoveryUI::ProgressThreadLoop() {
     double interval = 1.0 / animation_fps;
-    for (;;) {
+    while (true) {
         double start = now();
         pthread_mutex_lock(&updateMutex);
 
@@ -387,7 +381,7 @@ void ScreenRecoveryUI::Init() {
     LoadLocalizedBitmap("no_command_text", &backgroundText[NO_COMMAND]);
     LoadLocalizedBitmap("error_text", &backgroundText[ERROR]);
 
-    pthread_create(&progress_t, nullptr, progress_thread, nullptr);
+    pthread_create(&progress_thread_, nullptr, ProgressThreadStartRoutine, this);
 
     RecoveryUI::Init();
 }
