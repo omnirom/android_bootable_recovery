@@ -869,7 +869,7 @@ prompt_and_wait(Device* device, int status) {
 
             case Device::MOUNT_SYSTEM:
                 if (ensure_path_mounted("/system") != -1) {
-                    ui->Print("Mounted /system.");
+                    ui->Print("Mounted /system.\n");
                 }
                 break;
         }
