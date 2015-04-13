@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2b1c0951_03c9eead",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-04-13T07:41:08Z",
+      "side": 1,
+      "message": "Indent using spaces in this file",
+      "revId": "ea7a3d9007ea9c25bd1de3e095631a1c6721e981",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b1c0951_43ea0606",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-04-13T07:41:08Z",
+      "side": 1,
+      "message": "#else",
+      "revId": "ea7a3d9007ea9c25bd1de3e095631a1c6721e981",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b1c0951_63e7023d",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-04-13T07:41:08Z",
+      "side": 1,
+      "message": "#endif\n\nMight as well indent properly here too since not aosp code",
+      "revId": "ea7a3d9007ea9c25bd1de3e095631a1c6721e981",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b1c0951_83d4fe4d",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-04-13T07:41:08Z",
+      "side": 1,
+      "message": "#else",
+      "revId": "ea7a3d9007ea9c25bd1de3e095631a1c6721e981",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b1c0951_a3d9fa84",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-04-13T07:41:08Z",
+      "side": 1,
+      "message": "#endif\n\nMight as well indent properly here too since not aosp code",
+      "revId": "ea7a3d9007ea9c25bd1de3e095631a1c6721e981",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b1c0951_23c6ea9e",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-04-13T07:41:08Z",
+      "side": 1,
+      "message": "AOSP updated this to: (int)sizeof(boot.command)",
+      "revId": "ea7a3d9007ea9c25bd1de3e095631a1c6721e981",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b1c0951_43c3e68d",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-04-13T07:41:08Z",
+      "side": 1,
+      "message": "AOSP updated this to: (int)sizeof(boot.status)",
+      "revId": "ea7a3d9007ea9c25bd1de3e095631a1c6721e981",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
