@@ -478,6 +478,7 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			}
 		} else if (strcmp(ptr, "settingsstorage") == 0) {
 			Is_Storage = true;
+			Is_Settings_Storage = true;
 		} else if (strcmp(ptr, "andsec") == 0) {
 			Has_Android_Secure = true;
 		} else if (strcmp(ptr, "canbewiped") == 0) {
