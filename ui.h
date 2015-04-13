@@ -147,14 +147,15 @@ private:
         int count;
     };
 
-    pthread_t input_t;
+    pthread_t input_thread_;
 
     void OnKeyDetected(int key_code);
 
-    static void* input_thread(void* cookie);
-    static int input_callback(int fd, uint32_t epevents, void* data);
-    void process_key(int key_code, int updown);
-    bool usb_connected();
+    static int InputCallback(int fd, uint32_t epevents, void* data);
+    int OnInputEvent(int fd, uint32_t epevents);
+    void ProcessKey(int key_code, int updown);
+
+    bool IsUsbConnected();
 
     static void* time_key_helper(void* cookie);
     void time_key(int key_code, int count);
