@@ -1366,7 +1366,6 @@ int GUIAction::terminalcommand(std::string arg)
 					keep_going = 0;
 				} else {
 					// Try to read output
-					memset(line, 0, sizeof(line));
 					if(fgets(line, sizeof(line), fp) != NULL)
 						gui_print("%s", line); // Display output
 					else
