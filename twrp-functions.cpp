@@ -64,10 +64,7 @@ int TWFunc::Exec_Cmd(const string& cmd, string &result) {
 	exec = __popen(cmd.c_str(), "r");
 	if (!exec) return -1;
 	while(!feof(exec)) {
-		memset(&buffer, 0, sizeof(buffer));
 		if (fgets(buffer, 128, exec) != NULL) {
-			buffer[128] = '\n';
-			buffer[129] = 0;
 			result += buffer;
 		}
 	}
