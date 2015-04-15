@@ -16,20 +16,6 @@
 
 #include "device.h"
 
-static const char* REGULAR_HEADERS[] = {
-    "Volume up/down move highlight.",
-    "Power button activates.",
-    "",
-    NULL
-};
-
-static const char* LONG_PRESS_HEADERS[] = {
-    "Any button cycles highlight.",
-    "Long-press activates.",
-    "",
-    NULL
-};
-
 static const char* MENU_ITEMS[] = {
     "Reboot system now",
     "Reboot to bootloader",
@@ -42,10 +28,6 @@ static const char* MENU_ITEMS[] = {
     "Power off",
     NULL
 };
-
-const char* const* Device::GetMenuHeaders() {
-  return ui_->HasThreeButtons() ? REGULAR_HEADERS : LONG_PRESS_HEADERS;
-}
 
 const char* const* Device::GetMenuItems() {
   return MENU_ITEMS;
