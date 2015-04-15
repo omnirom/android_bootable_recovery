@@ -311,6 +311,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     erase_image \
     flash_image \
     fix_permissions.sh \
+    e2fsck-wrapper.sh \
     mke2fs.conf \
     pigz \
     teamwin \

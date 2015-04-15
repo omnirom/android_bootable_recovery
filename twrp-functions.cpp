@@ -84,8 +84,26 @@ int TWFunc::Exec_Cmd(const string& cmd) {
 	if (!exec) return -1;
 	while (!feof(exec)) {
 		if (fgets(buffer, 128, exec) != NULL) {
-			gui_print("%s", buffer);
-			LOGINFO("%s", buffer);
+			if (strncmp(buffer, "progress ", sizeof("progress ") - 1) == 0) {
+				char *fraction_char;
+				char *seconds_char;
+
+				if (strtok(buffer, " \n") && (fraction_char = strtok(NULL, " \n")) && (seconds_char = strtok(NULL, " \n"))) {
+					float fraction_float = strtof(fraction_char, NULL);
+					int seconds_float = strtol(seconds_char, NULL, 10);
+
+					DataManager::ShowProgress(fraction_float, seconds_float);
+				}
+			} else if (strncmp(buffer, "set_progress ", sizeof("set_progress ") - 1) == 0) {
+				char *fraction_char;
+				if (strtok(buffer, " \n") && (fraction_char = strtok(NULL, " \n"))) {
+					float fraction_float = strtof(fraction_char, NULL);
+					DataManager::SetProgress(fraction_float);
+				}
+			} else {
+				gui_print("%s", buffer);
+				LOGINFO("%s", buffer);
+			}
 		}
 	}
 	ret = __pclose(exec);
