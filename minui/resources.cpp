@@ -36,11 +36,11 @@ extern char* locale;
 
 #define SURFACE_DATA_ALIGNMENT 8
 
-static gr_surface malloc_surface(size_t data_size) {
+static GRSurface* malloc_surface(size_t data_size) {
     size_t size = sizeof(GRSurface) + data_size + SURFACE_DATA_ALIGNMENT;
     unsigned char* temp = reinterpret_cast<unsigned char*>(malloc(size));
     if (temp == NULL) return NULL;
-    gr_surface surface = (gr_surface) temp;
+    GRSurface* surface = reinterpret_cast<GRSurface*>(temp);
     surface->data = temp + sizeof(GRSurface) +
         (SURFACE_DATA_ALIGNMENT - (sizeof(GRSurface) % SURFACE_DATA_ALIGNMENT));
     return surface;
@@ -138,12 +138,10 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
 // framebuffer pixel format; they need to be modified if the
 // framebuffer format changes (but nothing else should).
 
-// Allocate and return a gr_surface sufficient for storing an image of
+// Allocate and return a GRSurface* sufficient for storing an image of
 // the indicated size in the framebuffer pixel format.
-static gr_surface init_display_surface(png_uint_32 width, png_uint_32 height) {
-    gr_surface surface;
-
-    surface = malloc_surface(width * height * 4);
+static GRSurface* init_display_surface(png_uint_32 width, png_uint_32 height) {
+    GRSurface* surface = malloc_surface(width * height * 4);
     if (surface == NULL) return NULL;
 
     surface->width = width;
@@ -199,8 +197,8 @@ static void transform_rgb_to_draw(unsigned char* input_row,
     }
 }
 
-int res_create_display_surface(const char* name, gr_surface* pSurface) {
-    gr_surface surface = NULL;
+int res_create_display_surface(const char* name, GRSurface** pSurface) {
+    GRSurface* surface = NULL;
     int result = 0;
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
@@ -239,8 +237,8 @@ int res_create_display_surface(const char* name, gr_surface* pSurface) {
     return result;
 }
 
-int res_create_multi_display_surface(const char* name, int* frames, gr_surface** pSurface) {
-    gr_surface* surface = NULL;
+int res_create_multi_display_surface(const char* name, int* frames, GRSurface*** pSurface) {
+    GRSurface** surface = NULL;
     int result = 0;
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
@@ -275,7 +273,7 @@ int res_create_multi_display_surface(const char* name, int* frames, gr_surface**
         goto exit;
     }
 
-    surface = reinterpret_cast<gr_surface*>(malloc(*frames * sizeof(gr_surface)));
+    surface = reinterpret_cast<GRSurface**>(malloc(*frames * sizeof(GRSurface*)));
     if (surface == NULL) {
         result = -8;
         goto exit;
@@ -302,7 +300,7 @@ int res_create_multi_display_surface(const char* name, int* frames, gr_surface**
     }
     free(p_row);
 
-    *pSurface = (gr_surface*) surface;
+    *pSurface = reinterpret_cast<GRSurface**>(surface);
 
 exit:
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
@@ -318,8 +316,8 @@ exit:
     return result;
 }
 
-int res_create_alpha_surface(const char* name, gr_surface* pSurface) {
-    gr_surface surface = NULL;
+int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
+    GRSurface* surface = NULL;
     int result = 0;
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
@@ -384,8 +382,8 @@ static int matches_locale(const char* loc, const char* locale) {
 
 int res_create_localized_alpha_surface(const char* name,
                                        const char* locale,
-                                       gr_surface* pSurface) {
-    gr_surface surface = NULL;
+                                       GRSurface** pSurface) {
+    GRSurface* surface = NULL;
     int result = 0;
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
@@ -440,7 +438,7 @@ int res_create_localized_alpha_surface(const char* name,
                 memcpy(surface->data + i*w, row, w);
             }
 
-            *pSurface = (gr_surface) surface;
+            *pSurface = reinterpret_cast<GRSurface*>(surface);
             break;
         } else {
             int i;
@@ -456,6 +454,6 @@ exit:
     return result;
 }
 
-void res_free_surface(gr_surface surface) {
+void res_free_surface(GRSurface* surface) {
     free(surface);
 }
