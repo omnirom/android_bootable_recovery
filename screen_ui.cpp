@@ -89,11 +89,11 @@ void ScreenRecoveryUI::draw_background_locked(Icon icon) {
     gr_clear();
 
     if (icon) {
-        gr_surface surface = backgroundIcon[icon];
+        GRSurface* surface = backgroundIcon[icon];
         if (icon == INSTALLING_UPDATE || icon == ERASING) {
             surface = installation[installingFrame];
         }
-        gr_surface text_surface = backgroundText[icon];
+        GRSurface* text_surface = backgroundText[icon];
 
         int iconWidth = gr_get_width(surface);
         int iconHeight = gr_get_height(surface);
@@ -132,7 +132,7 @@ void ScreenRecoveryUI::draw_progress_locked() {
     if (currentIcon == ERROR) return;
 
     if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
-        gr_surface icon = installation[installingFrame];
+        GRSurface* icon = installation[installingFrame];
         gr_blit(icon, 0, 0, gr_get_width(icon), gr_get_height(icon), iconX, iconY);
     }
 
@@ -357,21 +357,21 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
     }
 }
 
-void ScreenRecoveryUI::LoadBitmap(const char* filename, gr_surface* surface) {
+void ScreenRecoveryUI::LoadBitmap(const char* filename, GRSurface** surface) {
     int result = res_create_display_surface(filename, surface);
     if (result < 0) {
         LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
     }
 }
 
-void ScreenRecoveryUI::LoadBitmapArray(const char* filename, int* frames, gr_surface** surface) {
+void ScreenRecoveryUI::LoadBitmapArray(const char* filename, int* frames, GRSurface*** surface) {
     int result = res_create_multi_display_surface(filename, frames, surface);
     if (result < 0) {
         LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
     }
 }
 
-void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, gr_surface* surface) {
+void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, GRSurface** surface) {
     int result = res_create_localized_alpha_surface(filename, locale, surface);
     if (result < 0) {
         LOGE("missing bitmap %s\n(Code %d)\n", filename, result);

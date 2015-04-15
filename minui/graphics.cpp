@@ -326,7 +326,7 @@ static void gr_test() {
         gr_clear();
 
         gr_color(255, 0, 0, 255);
-        gr_surface frame = images[x%frames];
+        GRSurface* frame = images[x%frames];
         gr_blit(frame, 0, 0, frame->width, frame->height, x, 0);
 
         gr_color(255, 0, 0, 128);

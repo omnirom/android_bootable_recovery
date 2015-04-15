@@ -47,7 +47,7 @@ struct adf_pdata {
     adf_surface_pdata surfaces[2];
 };
 
-static gr_surface adf_flip(minui_backend *backend);
+static GRSurface* adf_flip(minui_backend *backend);
 static void adf_blank(minui_backend *backend, bool blank);
 
 static int adf_surface_init(adf_pdata *pdata, drm_mode_modeinfo *mode, adf_surface_pdata *surf) {
@@ -134,12 +134,12 @@ static int adf_device_init(adf_pdata *pdata, adf_device *dev)
     return err;
 }
 
-static gr_surface adf_init(minui_backend *backend)
+static GRSurface* adf_init(minui_backend *backend)
 {
     adf_pdata *pdata = (adf_pdata *)backend;
     adf_id_t *dev_ids = NULL;
     ssize_t n_dev_ids, i;
-    gr_surface ret;
+    GRSurface* ret;
 
 #if defined(RECOVERY_ABGR)
     pdata->format = DRM_FORMAT_ABGR8888;
@@ -193,7 +193,7 @@ static gr_surface adf_init(minui_backend *backend)
     return ret;
 }
 
-static gr_surface adf_flip(minui_backend *backend)
+static GRSurface* adf_flip(minui_backend *backend)
 {
     adf_pdata *pdata = (adf_pdata *)backend;
     adf_surface_pdata *surf = &pdata->surfaces[pdata->current_surface];
