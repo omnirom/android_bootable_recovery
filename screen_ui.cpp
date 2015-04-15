@@ -30,6 +30,8 @@
 
 #include <vector>
 
+#include "base/strings.h"
+#include "cutils/properties.h"
 #include "common.h"
 #include "device.h"
 #include "minui/minui.h"
@@ -66,7 +68,6 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     show_text_ever(false),
     menu(nullptr),
     show_menu(false),
-    menu_top(0),
     menu_items(0),
     menu_sel(0),
     animation_fps(20),
@@ -174,6 +175,9 @@ void ScreenRecoveryUI::draw_progress_locked() {
 
 void ScreenRecoveryUI::SetColor(UIElement e) {
     switch (e) {
+        case INFO:
+            gr_color(249, 194, 0, 255);
+            break;
         case HEADER:
             gr_color(247, 0, 6, 255);
             break;
@@ -188,7 +192,7 @@ void ScreenRecoveryUI::SetColor(UIElement e) {
             gr_color(255, 255, 255, 255);
             break;
         case LOG:
-            gr_color(249, 194, 0, 255);
+            gr_color(196, 196, 196, 255);
             break;
         case TEXT_FILL:
             gr_color(0, 0, 0, 160);
@@ -203,8 +207,30 @@ void ScreenRecoveryUI::DrawHorizontalRule(int* y) {
     SetColor(MENU);
     *y += 4;
     gr_fill(0, *y, gr_fb_width(), *y + 2);
-    *y += 8;
+    *y += 4;
 }
+
+void ScreenRecoveryUI::DrawTextLine(int* y, const char* line, bool bold) {
+    gr_text(4, *y, line, bold);
+    *y += char_height + 4;
+}
+
+void ScreenRecoveryUI::DrawTextLines(int* y, const char* const* lines) {
+    for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
+        DrawTextLine(y, lines[i], false);
+    }
+}
+
+static const char* REGULAR_HELP[] = {
+    "Use volume up/down and power.",
+    NULL
+};
+
+static const char* LONG_PRESS_HELP[] = {
+    "Any button cycles highlight.",
+    "Long-press activates.",
+    NULL
+};
 
 // Redraw everything on the screen.  Does not flip pages.
 // Should only be called with updateMutex locked.
@@ -218,39 +244,49 @@ void ScreenRecoveryUI::draw_screen_locked() {
 
         int y = 0;
         if (show_menu) {
+            char recovery_fingerprint[PROPERTY_VALUE_MAX];
+            property_get("ro.bootimage.build.fingerprint", recovery_fingerprint, "");
+
+            SetColor(INFO);
+            DrawTextLine(&y, "Android Recovery", true);
+            for (auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
+                DrawTextLine(&y, chunk.c_str(), false);
+            }
+            DrawTextLines(&y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
+
             SetColor(HEADER);
+            DrawTextLines(&y, menu_headers);
 
-            for (int i = 0; i < menu_top + menu_items; ++i) {
-                if (i == menu_top) DrawHorizontalRule(&y);
-
-                if (i == menu_top + menu_sel) {
-                    // draw the highlight bar
+            SetColor(MENU);
+            DrawHorizontalRule(&y);
+            y += 4;
+            for (int i = 0; i < menu_items; ++i) {
+                if (i == menu_sel) {
+                    // Draw the highlight bar.
                     SetColor(IsLongPress() ? MENU_SEL_BG_ACTIVE : MENU_SEL_BG);
-                    gr_fill(0, y-2, gr_fb_width(), y+char_height+2);
-                    // white text of selected item
+                    gr_fill(0, y - 2, gr_fb_width(), y + char_height + 2);
+                    // Bold white text for the selected item.
                     SetColor(MENU_SEL_FG);
-                    if (menu[i][0]) gr_text(4, y, menu[i], 1);
+                    gr_text(4, y, menu[i], true);
                     SetColor(MENU);
                 } else {
-                    if (menu[i][0]) gr_text(4, y, menu[i], i < menu_top);
+                    gr_text(4, y, menu[i], false);
                 }
-                y += char_height+4;
+                y += char_height + 4;
             }
-
             DrawHorizontalRule(&y);
         }
-
-        SetColor(LOG);
 
         // display from the bottom up, until we hit the top of the
         // screen, the bottom of the menu, or we've displayed the
         // entire text buffer.
+        SetColor(LOG);
         int row = (text_top+text_rows-1) % text_rows;
         size_t count = 0;
         for (int ty = gr_fb_height() - char_height;
              ty >= y && count < text_rows;
              ty -= char_height, ++count) {
-            gr_text(0, ty, text[row], 0);
+            gr_text(0, ty, text[row], false);
             --row;
             if (row < 0) row = text_rows-1;
         }
@@ -580,19 +616,13 @@ void ScreenRecoveryUI::StartMenu(const char* const * headers, const char* const 
                                  int initial_selection) {
     pthread_mutex_lock(&updateMutex);
     if (text_rows > 0 && text_cols > 0) {
-        size_t i;
-        for (i = 0; i < text_rows; ++i) {
-            if (headers[i] == nullptr) break;
-            strncpy(menu[i], headers[i], text_cols-1);
+        menu_headers = headers;
+        size_t i = 0;
+        for (; i < text_rows && items[i] != nullptr; ++i) {
+            strncpy(menu[i], items[i], text_cols-1);
             menu[i][text_cols-1] = '\0';
         }
-        menu_top = i;
-        for (; i < text_rows; ++i) {
-            if (items[i-menu_top] == nullptr) break;
-            strncpy(menu[i], items[i-menu_top], text_cols-1);
-            menu[i][text_cols-1] = '\0';
-        }
-        menu_items = i - menu_top;
+        menu_items = i;
         show_menu = true;
         menu_sel = initial_selection;
         update_screen_locked();

@@ -72,6 +72,7 @@ LOCAL_STATIC_LIBRARIES := \
     libminui \
     libpng \
     libfs_mgr \
+    libbase \
     libcutils \
     liblog \
     libselinux \

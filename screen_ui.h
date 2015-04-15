@@ -61,7 +61,9 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     void Redraw();
 
-    enum UIElement { HEADER, MENU, MENU_SEL_BG, MENU_SEL_BG_ACTIVE, MENU_SEL_FG, LOG, TEXT_FILL };
+    enum UIElement {
+        HEADER, MENU, MENU_SEL_BG, MENU_SEL_BG_ACTIVE, MENU_SEL_FG, LOG, TEXT_FILL, INFO
+    };
     void SetColor(UIElement e);
 
   private:
@@ -95,8 +97,9 @@ class ScreenRecoveryUI : public RecoveryUI {
     bool show_text_ever;   // has show_text ever been true?
 
     char** menu;
+    const char* const* menu_headers;
     bool show_menu;
-    int menu_top, menu_items, menu_sel;
+    int menu_items, menu_sel;
 
     pthread_t progress_thread_;
 
@@ -121,6 +124,8 @@ class ScreenRecoveryUI : public RecoveryUI {
     void ClearText();
 
     void DrawHorizontalRule(int* y);
+    void DrawTextLine(int* y, const char* line, bool bold);
+    void DrawTextLines(int* y, const char* const* lines);
 
     void LoadBitmap(const char* filename, gr_surface* surface);
     void LoadBitmapArray(const char* filename, int* frames, gr_surface** surface);
