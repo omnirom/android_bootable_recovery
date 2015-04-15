@@ -629,7 +629,7 @@ static char* browse_directory(const char* path, Device* device) {
     z_size += d_size;
     zips[z_size] = NULL;
 
-    const char* headers[] = { "Choose a package to install:", path, "", NULL };
+    const char* headers[] = { "Choose a package to install:", path, NULL };
 
     char* result;
     int chosen_item = 0;
@@ -668,7 +668,7 @@ static char* browse_directory(const char* path, Device* device) {
 }
 
 static bool yes_no(Device* device, const char* question1, const char* question2) {
-    const char* headers[] = { question1, question2, "", NULL };
+    const char* headers[] = { question1, question2, NULL };
     const char* items[] = { " No", " Yes", NULL };
 
     int chosen_item = get_menu_selection(headers, items, 1, 0, device);
@@ -743,7 +743,7 @@ static void choose_recovery_file(Device* device) {
         entries[n++] = filename;
     }
 
-    const char* headers[] = { "Select file to view", "", NULL };
+    const char* headers[] = { "Select file to view", NULL };
 
     while (true) {
         int chosen_item = get_menu_selection(headers, entries, 1, 0, device);
@@ -791,8 +791,6 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
 // on if the --shutdown_after flag was passed to recovery.
 static Device::BuiltinAction
 prompt_and_wait(Device* device, int status) {
-    const char* const* headers = device->GetMenuHeaders();
-
     for (;;) {
         finish_recovery(NULL);
         switch (status) {
@@ -808,7 +806,7 @@ prompt_and_wait(Device* device, int status) {
         }
         ui->SetProgressType(RecoveryUI::EMPTY);
 
-        int chosen_item = get_menu_selection(headers, device->GetMenuItems(), 0, 0, device);
+        int chosen_item = get_menu_selection(nullptr, device->GetMenuItems(), 0, 0, device);
 
         // device-specific code may take some action here.  It may
         // return one of the core actions handled in the switch
@@ -1038,10 +1036,6 @@ main(int argc, char **argv) {
     property_list(print_property, NULL);
     printf("\n");
 
-    char recovery_build[PROPERTY_VALUE_MAX];
-    property_get("ro.build.display.id", recovery_build, "");
-
-    ui->Print("%s\n", recovery_build);
     ui->Print("Supported API: %d\n", RECOVERY_API_VERSION);
 
     int status = INSTALL_SUCCESS;

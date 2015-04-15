@@ -70,12 +70,6 @@ class Device {
         MOUNT_SYSTEM = 10,
     };
 
-    // Return the headers (an array of strings, one per line,
-    // NULL-terminated) for the main menu.  Typically these tell users
-    // what to push to move the selection and invoke the selected
-    // item.
-    virtual const char* const* GetMenuHeaders();
-
     // Return the list of menu items (an array of strings,
     // NULL-terminated).  The menu_position passed to InvokeMenuItem
     // will correspond to the indexes into this array.
