@@ -33,9 +33,6 @@ struct GRSurface {
     unsigned char* data;
 };
 
-// TODO: remove this.
-typedef GRSurface* gr_surface;
-
 int gr_init();
 void gr_exit();
 
@@ -49,13 +46,13 @@ void gr_clear();  // clear entire surface to current color
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 void gr_fill(int x1, int y1, int x2, int y2);
 void gr_text(int x, int y, const char *s, bool bold);
-void gr_texticon(int x, int y, gr_surface icon);
+void gr_texticon(int x, int y, GRSurface* icon);
 int gr_measure(const char *s);
 void gr_font_size(int *x, int *y);
 
-void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy);
-unsigned int gr_get_width(gr_surface surface);
-unsigned int gr_get_height(gr_surface surface);
+void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy);
+unsigned int gr_get_width(GRSurface* surface);
+unsigned int gr_get_height(GRSurface* surface);
 
 //
 // Input events.
@@ -98,17 +95,17 @@ int ev_get_epollfd();
 // All these functions load PNG images from "/res/images/${name}.png".
 
 // Load a single display surface from a PNG image.
-int res_create_display_surface(const char* name, gr_surface* pSurface);
+int res_create_display_surface(const char* name, GRSurface** pSurface);
 
 // Load an array of display surfaces from a single PNG image.  The PNG
 // should have a 'Frames' text chunk whose value is the number of
 // frames this image represents.  The pixel data itself is interlaced
 // by row.
 int res_create_multi_display_surface(const char* name,
-                                     int* frames, gr_surface** pSurface);
+                                     int* frames, GRSurface*** pSurface);
 
 // Load a single alpha surface from a grayscale PNG image.
-int res_create_alpha_surface(const char* name, gr_surface* pSurface);
+int res_create_alpha_surface(const char* name, GRSurface** pSurface);
 
 // Load part of a grayscale PNG image that is the first match for the
 // given locale.  The image is expected to be a composite of multiple
@@ -117,10 +114,10 @@ int res_create_alpha_surface(const char* name, gr_surface* pSurface);
 // development/tools/recovery_l10n for an app that will generate these
 // specialized images from Android resources.
 int res_create_localized_alpha_surface(const char* name, const char* locale,
-                                       gr_surface* pSurface);
+                                       GRSurface** pSurface);
 
 // Free a surface allocated by any of the res_create_*_surface()
 // functions.
-void res_free_surface(gr_surface surface);
+void res_free_surface(GRSurface* surface);
 
 #endif

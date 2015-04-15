@@ -73,13 +73,13 @@ class ScreenRecoveryUI : public RecoveryUI {
     bool rtl_locale;
 
     pthread_mutex_t updateMutex;
-    gr_surface backgroundIcon[5];
-    gr_surface backgroundText[5];
-    gr_surface *installation;
-    gr_surface progressBarEmpty;
-    gr_surface progressBarFill;
-    gr_surface stageMarkerEmpty;
-    gr_surface stageMarkerFill;
+    GRSurface* backgroundIcon[5];
+    GRSurface* backgroundText[5];
+    GRSurface** installation;
+    GRSurface* progressBarEmpty;
+    GRSurface* progressBarFill;
+    GRSurface* stageMarkerEmpty;
+    GRSurface* stageMarkerFill;
 
     ProgressType progressBarType;
 
@@ -127,9 +127,9 @@ class ScreenRecoveryUI : public RecoveryUI {
     void DrawTextLine(int* y, const char* line, bool bold);
     void DrawTextLines(int* y, const char* const* lines);
 
-    void LoadBitmap(const char* filename, gr_surface* surface);
-    void LoadBitmapArray(const char* filename, int* frames, gr_surface** surface);
-    void LoadLocalizedBitmap(const char* filename, gr_surface* surface);
+    void LoadBitmap(const char* filename, GRSurface** surface);
+    void LoadBitmapArray(const char* filename, int* frames, GRSurface*** surface);
+    void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
 };
 
 #endif  // RECOVERY_UI_H
