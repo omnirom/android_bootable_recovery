@@ -120,9 +120,6 @@ static inline uint32_t fnv_hash_add(uint32_t cur_hash, uint32_t word)
 
 int utf8_to_unicode(unsigned char* pIn, unsigned int *pOut)
 {
-    if(pIn == NULL || pOut == NULL)
-        return 0;
-
     int utf_bytes = 1;
     unsigned int unicode = 0;
     unsigned char tmp;
@@ -139,7 +136,11 @@ int utf8_to_unicode(unsigned char* pIn, unsigned int *pOut)
         while((tmp & 0xC0) == 0xC0)
         {
             utf_bytes ++;
-            if(utf_bytes > 6) return 0;
+            if(utf_bytes > 6)
+            {
+                *pOut = tmp;
+                return 1;
+            }
             tmp = 0xFF & (tmp << 1);
             total_bits += 6;
             high_bit_mask >>= 1;
