@@ -408,6 +408,7 @@ unsigned char* ReadImage(const char* filename,
         p[2] == 0x08 &&    // deflate compression
         p[3] == 0x00) {    // no header flags
       // 'pos' is the offset of the start of a gzip chunk.
+      size_t chunk_offset = pos;
 
       *num_chunks += 3;
       *chunks = realloc(*chunks, *num_chunks * sizeof(ImageChunk));
@@ -453,6 +454,14 @@ unsigned char* ReadImage(const char* filename,
         strm.avail_out = allocated - curr->len;
         strm.next_out = curr->data + curr->len;
         ret = inflate(&strm, Z_NO_FLUSH);
+        if (ret < 0) {
+            printf("Error: inflate failed [%s] at file offset [%zu]\n"
+                    "imgdiff only supports gzip kernel compression,"
+                    " did you try CONFIG_KERNEL_LZO?\n",
+                    strm.msg, chunk_offset);
+            free(img);
+            return NULL;
+        }
         curr->len = allocated - strm.avail_out;
         if (strm.avail_out == 0) {
           allocated *= 2;
