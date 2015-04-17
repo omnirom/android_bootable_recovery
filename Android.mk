@@ -112,6 +112,7 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_CFLAGS += -DUSE_EXT4
     LOCAL_C_INCLUDES += system/extras/ext4_utils
     LOCAL_SHARED_LIBRARIES += libext4_utils
+    LOCAL_STATIC_LIBRARIES += liblz4-static
 endif
 ifneq ($(wildcard external/libselinux/Android.mk),)
     TWHAVE_SELINUX := true
@@ -129,6 +130,7 @@ ifeq ($(TWHAVE_SELINUX), true)
         LOCAL_CFLAGS += -DUSE_EXT4
         LOCAL_C_INCLUDES += system/extras/ext4_utils
         LOCAL_SHARED_LIBRARIES += libext4_utils
+        LOCAL_STATIC_LIBRARIES += liblz4-static
     endif
 endif
 
