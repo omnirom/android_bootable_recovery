@@ -38,6 +38,9 @@ LOCAL_STATIC_LIBRARIES = \
     libsparse_static \
     libz
 endif
+ifneq ($(wildcard external/lz4/Android.mk),)
+    LOCAL_STATIC_LIBRARIES += liblz4-static
+endif
 endif
 
 LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UPDATER_LIBS) $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS)
