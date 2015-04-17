@@ -635,12 +635,13 @@ lsout:
 }
 
 static int WriteStash(const char* base, const char* id, int blocks, uint8_t* buffer,
-        int checkspace) {
+        int checkspace, int *exists) {
     char *fn = NULL;
     char *cn = NULL;
     int fd = -1;
     int rc = -1;
     int res;
+    struct stat st;
 
     if (base == NULL || buffer == NULL) {
         goto wsout;
@@ -656,6 +657,22 @@ static int WriteStash(const char* base, const char* id, int blocks, uint8_t* buf
 
     if (fn == NULL || cn == NULL) {
         goto wsout;
+    }
+
+    if (exists) {
+        res = stat(cn, &st);
+
+        if (res == 0) {
+            // The file already exists and since the name is the hash of the contents,
+            // it's safe to assume the contents are identical (accidental hash collisions
+            // are unlikely)
+            fprintf(stderr, " skipping %d existing blocks in %s\n", blocks, cn);
+            *exists = 1;
+            rc = 0;
+            goto wsout;
+        }
+
+        *exists = 0;
     }
 
     fprintf(stderr, " writing %d blocks to %s\n", blocks, cn);
@@ -821,7 +838,7 @@ static int SaveStash(const char* base, char** wordsave, uint8_t** buffer, size_t
     }
 
     fprintf(stderr, "stashing %d blocks to %s\n", blocks, id);
-    return WriteStash(base, id, blocks, *buffer, 0);
+    return WriteStash(base, id, blocks, *buffer, 0, NULL);
 }
 
 static int FreeStash(const char* base, const char* id) {
@@ -997,6 +1014,7 @@ static int LoadSrcTgtVersion3(CommandParameters* params, RangeSet** tgt, int* sr
                               int onehash, int* overlap) {
     char* srchash = NULL;
     char* tgthash = NULL;
+    int stash_exists = 0;
     int overlap_blocks = 0;
     int rc = -1;
     uint8_t* tgtbuffer = NULL;
@@ -1052,13 +1070,16 @@ static int LoadSrcTgtVersion3(CommandParameters* params, RangeSet** tgt, int* sr
             fprintf(stderr, "stashing %d overlapping blocks to %s\n", *src_blocks,
                 srchash);
 
-            if (WriteStash(params->stashbase, srchash, *src_blocks, params->buffer, 1) != 0) {
+            if (WriteStash(params->stashbase, srchash, *src_blocks, params->buffer, 1,
+                    &stash_exists) != 0) {
                 fprintf(stderr, "failed to stash overlapping source blocks\n");
                 goto v3out;
             }
 
             // Can be deleted when the write has completed
-            params->freestash = srchash;
+            if (!stash_exists) {
+                params->freestash = srchash;
+            }
         }
 
         // Source blocks have expected content, command can proceed
@@ -1068,12 +1089,9 @@ static int LoadSrcTgtVersion3(CommandParameters* params, RangeSet** tgt, int* sr
 
     if (*overlap && LoadStash(params->stashbase, srchash, 1, NULL, &params->buffer,
                         &params->bufsize, 1) == 0) {
-        // Overlapping source blocks were previously stashed, command can proceed
-        if (params->canwrite) {
-            // We didn't create the stash, so delete after write only if we will
-            // actually perform the write
-            params->freestash = srchash;
-        }
+        // Overlapping source blocks were previously stashed, command can proceed.
+        // We are recovering from an interrupted command, so we don't know if the
+        // stash can safely be deleted after this command.
         rc = 0;
         goto v3out;
     }
