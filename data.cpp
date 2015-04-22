@@ -891,6 +891,10 @@ int DataManager::GetMagicValue(const string varName, string& value)
 	}
 	else if (varName == "tw_cpu_temp")
 	{
+	   int tw_no_cpu_temp;
+	   GetValue("tw_no_cpu_temp", tw_no_cpu_temp);
+	   if (tw_no_cpu_temp == 1) return -1;
+
 	   string cpu_temp_file;
 	   static unsigned long convert_temp = 0;
 	   static time_t cpuSecCheck = 0;
