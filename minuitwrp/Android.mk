@@ -26,6 +26,10 @@ else
   LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minuitwrp/include
 endif
 
+ifeq ($(TW_NEW_ION_HEAP), true)
+  LOCAL_CFLAGS += -DNEW_ION_HEAP
+endif
+
 LOCAL_C_INCLUDES += \
     external/libpng \
     external/zlib \

@@ -29,6 +29,10 @@ else
   LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
 endif
 
+ifeq ($(TW_NEW_ION_HEAP), true)
+  LOCAL_CFLAGS += -DNEW_ION_HEAP
+endif
+
 LOCAL_STATIC_LIBRARY := libpng
 LOCAL_WHOLE_STATIC_LIBRARIES := libpixelflinger_static
 LOCAL_MODULE := libminui
