@@ -1424,7 +1424,6 @@ static int PerformCommandErase(CommandParameters* params) {
 
     if (!S_ISBLK(st.st_mode)) {
         fprintf(stderr, "not a block device; skipping erase\n");
-        rc = 0;
         goto pceout;
     }
 
@@ -1448,7 +1447,7 @@ static int PerformCommandErase(CommandParameters* params) {
 
             if (ioctl(params->fd, BLKDISCARD, &blocks) == -1) {
                 fprintf(stderr, "BLKDISCARD ioctl failed: %s\n", strerror(errno));
-                // Continue anyway, nothing we can do
+                goto pceout;
             }
         }
     }
