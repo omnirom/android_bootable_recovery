@@ -375,6 +375,7 @@ int OpenRecoveryScript::run_script_file(void) {
 					LOGINFO("Waiting for child sideload process to exit.\n");
 					waitpid(sideload_child_pid, &status, 0);
 				}
+				property_set("ctl.start", "adbd");
 				gui_print("Sideload finished.\n");
 			} else if (strcmp(command, "fixperms") == 0 || strcmp(command, "fixpermissions") == 0) {
 				ret_val = PartitionManager.Fix_Permissions();

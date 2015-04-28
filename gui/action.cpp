@@ -1511,7 +1511,7 @@ int GUIAction::adbsideload(std::string arg)
 			LOGINFO("Waiting for child sideload process to exit.\n");
 			waitpid(sideload_child_pid, &status, 0);
 		}
-
+		property_set("ctl.start", "adbd");
 		TWFunc::Toggle_MTP(mtp_was_enabled);
 		reinject_after_flash();
 		operation_end(ret);
