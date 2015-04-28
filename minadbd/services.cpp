@@ -43,15 +43,16 @@ void* service_bootstrap_func(void* x) {
     return 0;
 }
 
-static void sideload_host_service(int sfd, void* cookie) {
-    char* saveptr;
-    const char* s = adb_strtok_r(reinterpret_cast<char*>(cookie), ":", &saveptr);
-    uint64_t file_size = strtoull(s, NULL, 10);
-    s = adb_strtok_r(NULL, ":", &saveptr);
-    uint32_t block_size = strtoul(s, NULL, 10);
+static void sideload_host_service(int sfd, void* data) {
+    const char* args = reinterpret_cast<const char*>(data);
+    int file_size;
+    int block_size;
+    if (sscanf(args, "%d:%d", &file_size, &block_size) != 2) {
+        printf("bad sideload-host arguments: %s\n", args);
+        exit(1);
+    }
 
-    printf("sideload-host file size %" PRIu64 " block size %" PRIu32 "\n",
-           file_size, block_size);
+    printf("sideload-host file size %d block size %d\n", file_size, block_size);
 
     int result = run_adb_fuse(sfd, file_size, block_size);
 
