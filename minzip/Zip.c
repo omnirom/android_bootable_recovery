@@ -675,13 +675,11 @@ static bool writeProcessFunction(const unsigned char *data, int dataLen,
     }
     ssize_t soFar = 0;
     while (true) {
-        ssize_t n = write(fd, data+soFar, dataLen-soFar);
+        ssize_t n = TEMP_FAILURE_RETRY(write(fd, data+soFar, dataLen-soFar));
         if (n <= 0) {
             LOGE("Error writing %zd bytes from zip file from %p: %s\n",
                  dataLen-soFar, data+soFar, strerror(errno));
-            if (errno != EINTR) {
-              return false;
-            }
+            return false;
         } else if (n > 0) {
             soFar += n;
             if (soFar == dataLen) return true;

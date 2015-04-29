@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     if (fd < 0) die("error opening %s", argv[2]);
 
     char header[HEADER_SIZE];
-    int headerlen = read(fd, header, sizeof(header));
+    int headerlen = TEMP_FAILURE_RETRY(read(fd, header, sizeof(header)));
     if (headerlen <= 0) die("error reading %s header", argv[2]);
 
     MtdReadContext *in = mtd_read_partition(partition);
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
     if (wrote != headerlen) die("error writing %s", argv[1]);
 
     int len;
-    while ((len = read(fd, buf, sizeof(buf))) > 0) {
+    while ((len = TEMP_FAILURE_RETRY(read(fd, buf, sizeof(buf)))) > 0) {
         wrote = mtd_write_data(out, buf, len);
         if (wrote != len) die("error writing %s", argv[1]);
     }
@@ -125,13 +125,13 @@ int main(int argc, char **argv) {
     if (mtd_partition_info(partition, NULL, &block_size, NULL))
         die("error getting %s block size", argv[1]);
 
-    if (lseek(fd, headerlen, SEEK_SET) != headerlen)
+    if (TEMP_FAILURE_RETRY(lseek(fd, headerlen, SEEK_SET)) != headerlen)
         die("error rewinding %s", argv[2]);
 
     int left = block_size - headerlen;
     while (left < 0) left += block_size;
     while (left > 0) {
-        len = read(fd, buf, left > (int)sizeof(buf) ? (int)sizeof(buf) : left);
+        len = TEMP_FAILURE_RETRY(read(fd, buf, left > (int)sizeof(buf) ? (int)sizeof(buf) : left));
         if (len <= 0) die("error reading %s", argv[2]);
         if (mtd_write_data(out, buf, len) != len)
             die("error writing %s", argv[1]);
