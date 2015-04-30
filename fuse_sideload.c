@@ -442,14 +442,12 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
     }
     uint8_t request_buffer[sizeof(struct fuse_in_header) + PATH_MAX*8];
     for (;;) {
-        ssize_t len = read(fd.ffd, request_buffer, sizeof(request_buffer));
-        if (len < 0) {
-            if (errno != EINTR) {
-                perror("read request");
-                if (errno == ENODEV) {
-                    result = -1;
-                    break;
-                }
+        ssize_t len = TEMP_FAILURE_RETRY(read(fd.ffd, request_buffer, sizeof(request_buffer)));
+        if (len == -1) {
+            perror("read request");
+            if (errno == ENODEV) {
+                result = -1;
+                break;
             }
             continue;
         }
@@ -508,7 +506,7 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
             outhdr.len = sizeof(outhdr);
             outhdr.error = result;
             outhdr.unique = hdr->unique;
-            write(fd.ffd, &outhdr, sizeof(outhdr));
+            TEMP_FAILURE_RETRY(write(fd.ffd, &outhdr, sizeof(outhdr)));
         }
     }
 
