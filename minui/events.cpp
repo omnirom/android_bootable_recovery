@@ -15,6 +15,7 @@
  */
 
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -165,7 +166,7 @@ void ev_dispatch(void) {
 
 int ev_get_input(int fd, uint32_t epevents, input_event* ev) {
     if (epevents & EPOLLIN) {
-        ssize_t r = read(fd, ev, sizeof(*ev));
+        ssize_t r = TEMP_FAILURE_RETRY(read(fd, ev, sizeof(*ev)));
         if (r == sizeof(*ev)) {
             return 0;
         }

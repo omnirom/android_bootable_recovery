@@ -113,13 +113,12 @@ static int range_overlaps(RangeSet* r1, RangeSet* r2) {
 static int read_all(int fd, uint8_t* data, size_t size) {
     size_t so_far = 0;
     while (so_far < size) {
-        ssize_t r = read(fd, data+so_far, size-so_far);
-        if (r < 0 && errno != EINTR) {
+        ssize_t r = TEMP_FAILURE_RETRY(read(fd, data+so_far, size-so_far));
+        if (r == -1) {
             fprintf(stderr, "read failed: %s\n", strerror(errno));
             return -1;
-        } else {
-            so_far += r;
         }
+        so_far += r;
     }
     return 0;
 }
@@ -127,13 +126,12 @@ static int read_all(int fd, uint8_t* data, size_t size) {
 static int write_all(int fd, const uint8_t* data, size_t size) {
     size_t written = 0;
     while (written < size) {
-        ssize_t w = write(fd, data+written, size-written);
-        if (w < 0 && errno != EINTR) {
+        ssize_t w = TEMP_FAILURE_RETRY(write(fd, data+written, size-written));
+        if (w == -1) {
             fprintf(stderr, "write failed: %s\n", strerror(errno));
             return -1;
-        } else {
-            written += w;
         }
+        written += w;
     }
 
     if (fsync(fd) == -1) {
@@ -144,19 +142,13 @@ static int write_all(int fd, const uint8_t* data, size_t size) {
     return 0;
 }
 
-static int check_lseek(int fd, off64_t offset, int whence) {
-    while (true) {
-        off64_t ret = lseek64(fd, offset, whence);
-        if (ret < 0) {
-            if (errno != EINTR) {
-                fprintf(stderr, "lseek64 failed: %s\n", strerror(errno));
-                return -1;
-            }
-        } else {
-            break;
-        }
+static bool check_lseek(int fd, off64_t offset, int whence) {
+    off64_t rc = TEMP_FAILURE_RETRY(lseek64(fd, offset, whence));
+    if (rc == -1) {
+        fprintf(stderr, "lseek64 failed: %s\n", strerror(errno));
+        return false;
     }
-    return 0;
+    return true;
 }
 
 static void allocate(size_t size, uint8_t** buffer, size_t* buffer_alloc) {
@@ -213,8 +205,8 @@ static ssize_t RangeSinkWrite(const uint8_t* data, ssize_t size, void* token) {
                 rss->p_remain = (rss->tgt->pos[rss->p_block * 2 + 1] -
                                  rss->tgt->pos[rss->p_block * 2]) * BLOCKSIZE;
 
-                if (check_lseek(rss->fd, (off64_t)rss->tgt->pos[rss->p_block*2] * BLOCKSIZE,
-                        SEEK_SET) == -1) {
+                if (!check_lseek(rss->fd, (off64_t)rss->tgt->pos[rss->p_block*2] * BLOCKSIZE,
+                                 SEEK_SET)) {
                     break;
                 }
             } else {
@@ -306,7 +298,7 @@ static int ReadBlocks(RangeSet* src, uint8_t* buffer, int fd) {
     }
 
     for (i = 0; i < src->count; ++i) {
-        if (check_lseek(fd, (off64_t) src->pos[i * 2] * BLOCKSIZE, SEEK_SET) == -1) {
+        if (!check_lseek(fd, (off64_t) src->pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
             return -1;
         }
 
@@ -332,7 +324,7 @@ static int WriteBlocks(RangeSet* tgt, uint8_t* buffer, int fd) {
     }
 
     for (i = 0; i < tgt->count; ++i) {
-        if (check_lseek(fd, (off64_t) tgt->pos[i * 2] * BLOCKSIZE, SEEK_SET) == -1) {
+        if (!check_lseek(fd, (off64_t) tgt->pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
             return -1;
         }
 
@@ -1217,7 +1209,7 @@ static int PerformCommandZero(CommandParameters* params) {
 
     if (params->canwrite) {
         for (i = 0; i < tgt->count; ++i) {
-            if (check_lseek(params->fd, (off64_t) tgt->pos[i * 2] * BLOCKSIZE, SEEK_SET) == -1) {
+            if (!check_lseek(params->fd, (off64_t) tgt->pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
                 goto pczout;
             }
 
@@ -1271,7 +1263,7 @@ static int PerformCommandNew(CommandParameters* params) {
         rss.p_block = 0;
         rss.p_remain = (tgt->pos[1] - tgt->pos[0]) * BLOCKSIZE;
 
-        if (check_lseek(params->fd, (off64_t) tgt->pos[0] * BLOCKSIZE, SEEK_SET) == -1) {
+        if (!check_lseek(params->fd, (off64_t) tgt->pos[0] * BLOCKSIZE, SEEK_SET)) {
             goto pcnout;
         }
 
@@ -1367,7 +1359,7 @@ static int PerformCommandDiff(CommandParameters* params) {
             rss.p_block = 0;
             rss.p_remain = (tgt->pos[1] - tgt->pos[0]) * BLOCKSIZE;
 
-            if (check_lseek(params->fd, (off64_t) tgt->pos[0] * BLOCKSIZE, SEEK_SET) == -1) {
+            if (!check_lseek(params->fd, (off64_t) tgt->pos[0] * BLOCKSIZE, SEEK_SET)) {
                 goto pcdout;
             }
 
@@ -1906,7 +1898,7 @@ Value* RangeSha1Fn(const char* name, State* state, int argc, Expr* argv[]) {
 
     int i, j;
     for (i = 0; i < rs->count; ++i) {
-        if (check_lseek(fd, (off64_t)rs->pos[i*2] * BLOCKSIZE, SEEK_SET) == -1) {
+        if (!check_lseek(fd, (off64_t)rs->pos[i*2] * BLOCKSIZE, SEEK_SET)) {
             ErrorAbort(state, "failed to seek %s: %s", blockdev_filename->data,
                 strerror(errno));
             goto done;
