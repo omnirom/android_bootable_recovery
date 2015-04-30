@@ -251,7 +251,7 @@ bool RecoveryUI::IsUsbConnected() {
 
     char buf;
     // USB is connected if android_usb state is CONNECTED or CONFIGURED.
-    int connected = (read(fd, &buf, 1) == 1) && (buf == 'C');
+    int connected = (TEMP_FAILURE_RETRY(read(fd, &buf, 1)) == 1) && (buf == 'C');
     if (close(fd) < 0) {
         printf("failed to close /sys/class/android_usb/android0/state: %s\n",
                strerror(errno));

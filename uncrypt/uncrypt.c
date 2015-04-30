@@ -65,12 +65,15 @@ static struct fstab* fstab = NULL;
 static int write_at_offset(unsigned char* buffer, size_t size,
                            int wfd, off64_t offset)
 {
-    lseek64(wfd, offset, SEEK_SET);
+    if (TEMP_FAILURE_RETRY(lseek64(wfd, offset, SEEK_SET)) == -1) {
+        ALOGE("error seeking to offset %lld: %s\n", offset, strerror(errno));
+        return -1;
+    }
     size_t written = 0;
     while (written < size) {
-        ssize_t wrote = write(wfd, buffer + written, size - written);
-        if (wrote < 0) {
-            ALOGE("error writing offset %lld: %s\n", offset, strerror(errno));
+        ssize_t wrote = TEMP_FAILURE_RETRY(write(wfd, buffer + written, size - written));
+        if (wrote == -1) {
+            ALOGE("error writing offset %lld: %s\n", (offset + written), strerror(errno));
             return -1;
         }
         written += wrote;
@@ -275,8 +278,9 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         if (encrypted) {
             size_t so_far = 0;
             while (so_far < sb.st_blksize && pos < sb.st_size) {
-                ssize_t this_read = read(fd, buffers[tail] + so_far, sb.st_blksize - so_far);
-                if (this_read < 0) {
+                ssize_t this_read =
+                        TEMP_FAILURE_RETRY(read(fd, buffers[tail] + so_far, sb.st_blksize - so_far));
+                if (this_read == -1) {
                     ALOGE("failed to read: %s\n", strerror(errno));
                     return -1;
                 }
@@ -340,8 +344,8 @@ void wipe_misc() {
             size_t written = 0;
             size_t size = sizeof(zeroes);
             while (written < size) {
-                ssize_t w = write(fd, zeroes, size-written);
-                if (w < 0 && errno != EINTR) {
+                ssize_t w = TEMP_FAILURE_RETRY(write(fd, zeroes, size-written));
+                if (w == -1) {
                     ALOGE("zero write failed: %s\n", strerror(errno));
                     return;
                 } else {
