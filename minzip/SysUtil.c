@@ -27,11 +27,13 @@ static int getFileStartAndLength(int fd, off_t *start_, size_t *length_)
     assert(start_ != NULL);
     assert(length_ != NULL);
 
-    start = lseek(fd, 0L, SEEK_CUR);
-    end = lseek(fd, 0L, SEEK_END);
-    (void) lseek(fd, start, SEEK_SET);
+    // TODO: isn't start always 0 for the single call site? just use fstat instead?
 
-    if (start == (off_t) -1 || end == (off_t) -1) {
+    start = TEMP_FAILURE_RETRY(lseek(fd, 0L, SEEK_CUR));
+    end = TEMP_FAILURE_RETRY(lseek(fd, 0L, SEEK_END));
+
+    if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1 ||
+                start == (off_t) -1 || end == (off_t) -1) {
         LOGE("could not determine length of file\n");
         return -1;
     }

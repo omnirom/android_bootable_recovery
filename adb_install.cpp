@@ -42,7 +42,7 @@ set_usb_driver(bool enabled) {
         ui->Print("failed to open driver control: %s\n", strerror(errno));
         return;
     }
-    if (write(fd, enabled ? "1" : "0", 1) < 0) {
+    if (TEMP_FAILURE_RETRY(write(fd, enabled ? "1" : "0", 1)) == -1) {
         ui->Print("failed to set driver control: %s\n", strerror(errno));
     }
     if (close(fd) < 0) {
