@@ -20,6 +20,7 @@ LOCAL_CFLAGS := $(minadbd_cflags)
 LOCAL_CONLY_FLAGS := -Wimplicit-function-declaration
 LOCAL_C_INCLUDES := bootable/recovery system/core/adb
 LOCAL_WHOLE_STATIC_LIBRARIES := libadbd
+LOCAL_STATIC_LIBRARIES := libbase
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -31,6 +32,6 @@ LOCAL_SRC_FILES := fuse_adb_provider_test.cpp
 LOCAL_CFLAGS := $(minadbd_cflags)
 LOCAL_C_INCLUDES := $(LOCAL_PATH) system/core/adb
 LOCAL_STATIC_LIBRARIES := libminadbd
-LOCAL_SHARED_LIBRARIES := liblog
+LOCAL_SHARED_LIBRARIES := liblog libbase
 
 include $(BUILD_NATIVE_TEST)
