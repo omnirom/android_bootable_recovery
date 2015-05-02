@@ -20,6 +20,7 @@ LOCAL_CFLAGS := $(minadbd_cflags)
 LOCAL_CONLY_FLAGS := -Wimplicit-function-declaration
 LOCAL_C_INCLUDES := bootable/recovery system/core/adb
 LOCAL_WHOLE_STATIC_LIBRARIES := libadbd
+LOCAL_STATIC_LIBRARIES := libbase
 
 include $(BUILD_STATIC_LIBRARY)
 
