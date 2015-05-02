@@ -32,6 +32,6 @@ LOCAL_SRC_FILES := fuse_adb_provider_test.cpp
 LOCAL_CFLAGS := $(minadbd_cflags)
 LOCAL_C_INCLUDES := $(LOCAL_PATH) system/core/adb
 LOCAL_STATIC_LIBRARIES := libminadbd
-LOCAL_SHARED_LIBRARIES := liblog libbase
+LOCAL_SHARED_LIBRARIES := liblog libbase libcutils
 
 include $(BUILD_NATIVE_TEST)
