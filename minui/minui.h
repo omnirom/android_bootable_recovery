@@ -97,6 +97,7 @@ static inline int res_create_display_surface(const char* name, gr_surface* pSurf
 // 4.4 that are required by charger and healthd
 void gr_clear();
 
+int gr_get_pixel_format();
 
 #ifdef __cplusplus
 }
