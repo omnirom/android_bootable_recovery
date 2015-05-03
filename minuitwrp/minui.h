@@ -97,4 +97,7 @@ int ev_get_input(int fd, short revents, struct input_event *ev);
 
 int vibrate(int timeout_ms);
 
+#ifdef MSM_BSP
+int gr_get_pixel_format();
+#endif
 #endif
