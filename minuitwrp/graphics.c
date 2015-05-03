@@ -39,23 +39,10 @@
 #include "font_10x18.h"
 #endif
 
-#ifdef RECOVERY_BGRA
-#define PIXEL_FORMAT GGL_PIXEL_FORMAT_BGRA_8888
-#define PIXEL_SIZE 4
-#endif
-#ifdef RECOVERY_RGBX
-#define PIXEL_FORMAT GGL_PIXEL_FORMAT_RGBX_8888
-#define PIXEL_SIZE 4
-#endif
-#ifndef PIXEL_FORMAT
-#define PIXEL_FORMAT GGL_PIXEL_FORMAT_RGB_565
-#define PIXEL_SIZE 2
-#endif
-
 #define NUM_BUFFERS 2
 #define MAX_DISPLAY_DIM  2048
 
-// #define PRINT_SCREENINFO 1 // Enables printing of screen info to log
+ #define PRINT_SCREENINFO 1 // Enables printing of screen info to log
 
 typedef struct {
     int type;
@@ -65,6 +52,8 @@ typedef struct {
     unsigned ascent;
 } GRFont;
 
+int PIXEL_FORMAT = GGL_PIXEL_FORMAT_UNKNOWN;
+static int PIXEL_SIZE = 0;
 static GRFont *gr_font = 0;
 static GGLContext *gr_context = 0;
 static GGLSurface gr_font_texture;
@@ -94,14 +83,20 @@ int overlay_display_frame(int fd, GGLubyte* data, size_t size);
 #ifdef PRINT_SCREENINFO
 static void print_fb_var_screeninfo()
 {
-	printf("vi.xres: %d\n", vi.xres);
-	printf("vi.yres: %d\n", vi.yres);
-	printf("vi.xres_virtual: %d\n", vi.xres_virtual);
-	printf("vi.yres_virtual: %d\n", vi.yres_virtual);
-	printf("vi.xoffset: %d\n", vi.xoffset);
-	printf("vi.yoffset: %d\n", vi.yoffset);
-	printf("vi.bits_per_pixel: %d\n", vi.bits_per_pixel);
-	printf("vi.grayscale: %d\n", vi.grayscale);
+    printf("  vi.xres: %d\n", vi.xres);
+    printf("  vi.yres: %d\n", vi.yres);
+    printf("  vi.xres_virtual: %d\n", vi.xres_virtual);
+    printf("  vi.yres_virtual: %d\n", vi.yres_virtual);
+    printf("  vi.xoffset: %d\n", vi.xoffset);
+    printf("  vi.yoffset: %d\n", vi.yoffset);
+    printf("  vi.bits_per_pixel: %d\n", vi.bits_per_pixel);
+    printf("  vi.grayscale: %d\n", vi.grayscale);
+    printf("  vi.red.offset:   %3d .length: %d\n", vi.red.offset, vi.red.length);
+    printf("  vi.green.offset: %3d .length: %d\n", vi.green.offset, vi.green.length);
+    printf("  vi.blue.offset:  %3d .length: %d\n", vi.blue.offset, vi.blue.length);
+    printf("  vi.transp.offset:%3d .length: %d\n", vi.transp.offset, vi.transp.length);
+    printf("  fi.smem_len: %d\n", fi.smem_len);
+    printf("  fi.line_length: %d\n", fi.line_length);
 }
 #endif
 
@@ -182,74 +177,45 @@ static int get_framebuffer(GGLSurface *fb)
         close(fd);
         return -1;
     }
-
-    fprintf(stderr, "Pixel format: %dx%d @ %dbpp\n", vi.xres, vi.yres, vi.bits_per_pixel);
-
-    vi.bits_per_pixel = PIXEL_SIZE * 8;
-    if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_BGRA_8888) {
-        fprintf(stderr, "Pixel format: BGRA_8888\n");
-        if (PIXEL_SIZE != 4)    fprintf(stderr, "E: Pixel Size mismatch!\n");
-        vi.red.offset     = 8;
-        vi.red.length     = 8;
-        vi.green.offset   = 16;
-        vi.green.length   = 8;
-        vi.blue.offset    = 24;
-        vi.blue.length    = 8;
-        vi.transp.offset  = 0;
-        vi.transp.length  = 8;
-    } else if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_RGBX_8888) {
-        fprintf(stderr, "Pixel format: RGBX_8888\n");
-        if (PIXEL_SIZE != 4)    fprintf(stderr, "E: Pixel Size mismatch!\n");
-        vi.red.offset     = 24;
-        vi.red.length     = 8;
-        vi.green.offset   = 16;
-        vi.green.length   = 8;
-        vi.blue.offset    = 8;
-        vi.blue.length    = 8;
-        vi.transp.offset  = 0;
-        vi.transp.length  = 8;
-    } else if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_RGB_565) {
-#ifdef RECOVERY_RGB_565
-		fprintf(stderr, "Pixel format: RGB_565\n");
-		vi.blue.offset    = 0;
-		vi.green.offset   = 5;
-		vi.red.offset     = 11;
-#else
-        fprintf(stderr, "Pixel format: BGR_565\n");
-		vi.blue.offset    = 11;
-		vi.green.offset   = 5;
-		vi.red.offset     = 0;
-#endif
-		if (PIXEL_SIZE != 2)    fprintf(stderr, "E: Pixel Size mismatch!\n");
-		vi.blue.length    = 5;
-		vi.green.length   = 6;
-		vi.red.length     = 5;
-        vi.blue.msb_right = 0;
-        vi.green.msb_right = 0;
-        vi.red.msb_right = 0;
-        vi.transp.offset  = 0;
-        vi.transp.length  = 0;
-    }
-    else
-    {
-        perror("unknown pixel format");
-        close(fd);
-        return -1;
-    }
-
-    vi.vmode = FB_VMODE_NONINTERLACED;
-    vi.activate = FB_ACTIVATE_NOW | FB_ACTIVATE_FORCE;
-
-    if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
-        perror("failed to put fb0 info");
-        close(fd);
-        return -1;
-    }
-
     if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
         perror("failed to get fb0 info");
         close(fd);
         return -1;
+    }
+
+    fprintf(stderr, "\nPixel format: %dx%d @ %dbpp\n", vi.xres, vi.yres, vi.bits_per_pixel);
+
+#ifdef PRINT_SCREENINFO
+    print_fb_var_screeninfo();
+#endif
+
+    PIXEL_SIZE = vi.bits_per_pixel / 8;
+    switch(vi.bits_per_pixel)
+    {
+        case 16:
+            if (vi.green.length == 4)
+                PIXEL_FORMAT = GGL_PIXEL_FORMAT_RGBA_4444;
+            if (vi.green.length == 5)
+                PIXEL_FORMAT = GGL_PIXEL_FORMAT_RGBA_5551;
+            if (vi.green.length == 6)
+                PIXEL_FORMAT = GGL_PIXEL_FORMAT_RGB_565;
+            break;
+        case 24:
+            PIXEL_FORMAT = GGL_PIXEL_FORMAT_RGB_888;
+            break;
+        case 32:
+            if (vi.red.offset == 0 || vi.red.offset == 16)
+                PIXEL_FORMAT = GGL_PIXEL_FORMAT_RGBA_8888;
+            if (vi.red.offset == 8)
+                PIXEL_FORMAT = GGL_PIXEL_FORMAT_BGRA_8888;
+            if (vi.red.offset == 24)
+                PIXEL_FORMAT = GGL_PIXEL_FORMAT_RGBX_8888;
+            break;
+        default:
+            perror("unsupported PIXEL FORMAT");
+            close(fd);
+            return -1;
+            break;
     }
 
 #ifdef MSM_BSP
@@ -314,10 +280,6 @@ static int get_framebuffer(GGLSurface *fb)
     if (!has_overlay) {
         memset(fb->data, 0, vi.yres * fb->stride * PIXEL_SIZE);
     }
-
-#ifdef PRINT_SCREENINFO
-	print_fb_var_screeninfo();
-#endif
 
     return fd;
 }
