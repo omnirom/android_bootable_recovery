@@ -70,15 +70,27 @@ static int overlayR_id = MSMFB_NEW_REQUEST;
 
 static memInfo mem_info;
 
+static int mdp_pixel_format = -1;
 static int map_mdp_pixel_format()
 {
-    int format = MDP_RGB_565;
-#if defined(RECOVERY_BGRA)
-    format = MDP_BGRA_8888;
-#elif defined(RECOVERY_RGBX)
-    format = MDP_RGBA_8888;
-#endif
-    return format;
+    if(mdp_pixel_format > -1) return mdp_pixel_format;
+    int pixel_format = gr_get_pixel_format();
+    switch(pixel_format)
+    {
+       case GGL_PIXEL_FORMAT_RGBA_8888:
+          mdp_pixel_format = MDP_RGBA_8888;
+          break;
+       case GGL_PIXEL_FORMAT_BGRA_8888:
+          mdp_pixel_format = MDP_BGRA_8888;
+          break;
+       case GGL_PIXEL_FORMAT_RGBX_8888:
+          mdp_pixel_format = MDP_RGBX_8888;
+          break;
+       default:
+          mdp_pixel_format = MDP_RGB_565;
+          break;
+    }
+    return mdp_pixel_format;
 }
 
 static bool overlay_supported = false;
