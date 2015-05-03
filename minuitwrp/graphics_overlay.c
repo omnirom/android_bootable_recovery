@@ -69,15 +69,26 @@ static int overlayL_id = MSMFB_NEW_REQUEST;
 static int overlayR_id = MSMFB_NEW_REQUEST;
 
 static memInfo mem_info;
+extern int PIXEL_FORMAT;
 
 static int map_mdp_pixel_format()
 {
-    int format = MDP_RGB_565;
-#if defined(RECOVERY_BGRA)
-    format = MDP_BGRA_8888;
-#elif defined(RECOVERY_RGBX)
-    format = MDP_RGBA_8888;
-#endif
+    int format;
+    switch(PIXEL_FORMAT)
+    {
+       case GGL_PIXEL_FORMAT_RGBA_8888:
+          format = MDP_RGBA_8888;
+          break;
+       case GGL_PIXEL_FORMAT_BGRA_8888:
+          format = MDP_BGRA_8888;
+          break;
+       case GGL_PIXEL_FORMAT_RGBX_8888:
+          format = MDP_RGBX_8888;
+          break;
+       default:
+          format = MDP_RGB_565;
+          break;
+    }
     return format;
 }
 
