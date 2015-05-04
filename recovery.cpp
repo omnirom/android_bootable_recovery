@@ -1086,6 +1086,13 @@ main(int argc, char **argv) {
     } else if (!just_exit) {
         status = INSTALL_NONE;  // No command specified
         ui->SetBackground(RecoveryUI::NO_COMMAND);
+
+        // http://b/17489952
+        // If this is an eng or userdebug build, automatically turn on the
+        // text display if no command is specified.
+        if (is_ro_debuggable()) {
+            ui->ShowText(true);
+        }
     }
 
     if (!sideload_auto_reboot && (status == INSTALL_ERROR || status == INSTALL_CORRUPT)) {
