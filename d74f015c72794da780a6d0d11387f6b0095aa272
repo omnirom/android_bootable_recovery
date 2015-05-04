@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "18e79d95_6293565a",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 456,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-05-04T20:11:14Z",
+      "side": 1,
+      "message": "should we propagate failures from property_set?",
+      "revId": "d74f015c72794da780a6d0d11387f6b0095aa272",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
