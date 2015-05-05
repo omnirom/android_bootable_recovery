@@ -31,6 +31,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <base/file.h>
+#include <base/stringprintf.h>
+
 #include "bootloader.h"
 #include "common.h"
 #include "cutils/properties.h"
@@ -65,8 +68,6 @@ static const struct option OPTIONS[] = {
   { NULL, 0, NULL, 0 },
 };
 
-#define LAST_LOG_FILE "/cache/recovery/last_log"
-
 static const char *CACHE_LOG_DIR = "/cache/recovery";
 static const char *COMMAND_FILE = "/cache/recovery/command";
 static const char *INTENT_FILE = "/cache/recovery/intent";
@@ -78,9 +79,8 @@ static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
-#define KLOG_DEFAULT_LEN (64 * 1024)
-
-#define KEEP_LOG_COUNT 10
+static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
+static const int KEEP_LOG_COUNT = 10;
 
 RecoveryUI* ui = NULL;
 char* locale = NULL;
@@ -267,72 +267,55 @@ set_sdcard_update_bootloader_message() {
     set_bootloader_message(&boot);
 }
 
-// read from kernel log into buffer and write out to file
-static void
-save_kernel_log(const char *destination) {
-    int n;
-    char *buffer;
-    int klog_buf_len;
-    FILE *log;
-
-    klog_buf_len = klogctl(KLOG_SIZE_BUFFER, 0, 0);
+// Read from kernel log into buffer and write out to file.
+static void save_kernel_log(const char* destination) {
+    int klog_buf_len = klogctl(KLOG_SIZE_BUFFER, 0, 0);
     if (klog_buf_len <= 0) {
-        LOGE("Error getting klog size (%s), using default\n", strerror(errno));
-        klog_buf_len = KLOG_DEFAULT_LEN;
-    }
-
-    buffer = (char *)malloc(klog_buf_len);
-    if (!buffer) {
-        LOGE("Can't alloc %d bytes for klog buffer\n", klog_buf_len);
+        LOGE("Error getting klog size: %s\n", strerror(errno));
         return;
     }
 
-    n = klogctl(KLOG_READ_ALL, buffer, klog_buf_len);
-    if (n < 0) {
-        LOGE("Error in reading klog (%s)\n", strerror(errno));
-        free(buffer);
+    std::string buffer(klog_buf_len, 0);
+    int n = klogctl(KLOG_READ_ALL, &buffer[0], klog_buf_len);
+    if (n == -1) {
+        LOGE("Error in reading klog: %s\n", strerror(errno));
         return;
     }
-
-    log = fopen_path(destination, "w");
-    if (log == NULL) {
-        LOGE("Can't open %s\n", destination);
-        free(buffer);
-        return;
-    }
-    fwrite(buffer, n, 1, log);
-    check_and_fclose(log, destination);
-    free(buffer);
+    buffer.resize(n);
+    android::base::WriteStringToFile(buffer, destination);
 }
 
 // How much of the temp log we have copied to the copy in cache.
 static long tmplog_offset = 0;
 
-static void
-copy_log_file(const char* source, const char* destination, int append) {
-    FILE *log = fopen_path(destination, append ? "a" : "w");
-    if (log == NULL) {
+static void copy_log_file(const char* source, const char* destination, bool append) {
+    FILE* dest_fp = fopen_path(destination, append ? "a" : "w");
+    if (dest_fp == nullptr) {
         LOGE("Can't open %s\n", destination);
     } else {
-        FILE *tmplog = fopen(source, "r");
-        if (tmplog != NULL) {
+        FILE* source_fp = fopen(source, "r");
+        if (source_fp != nullptr) {
             if (append) {
-                fseek(tmplog, tmplog_offset, SEEK_SET);  // Since last write
+                fseek(source_fp, tmplog_offset, SEEK_SET);  // Since last write
             }
             char buf[4096];
-            while (fgets(buf, sizeof(buf), tmplog)) fputs(buf, log);
-            if (append) {
-                tmplog_offset = ftell(tmplog);
+            size_t bytes;
+            while ((bytes = fread(buf, 1, sizeof(buf), source_fp)) != 0) {
+                fwrite(buf, 1, bytes, dest_fp);
             }
-            check_and_fclose(tmplog, source);
+            if (append) {
+                tmplog_offset = ftell(source_fp);
+            }
+            check_and_fclose(source_fp, source);
         }
-        check_and_fclose(log, destination);
+        check_and_fclose(dest_fp, destination);
     }
 }
 
-// Rename last_log -> last_log.1 -> last_log.2 -> ... -> last_log.$max
-// Overwrites any existing last_log.$max.
-static void rotate_last_logs(int max) {
+// Rename last_log -> last_log.1 -> last_log.2 -> ... -> last_log.$max.
+// Similarly rename last_kmsg -> last_kmsg.1 -> ... -> last_kmsg.$max.
+// Overwrite any existing last_log.$max and last_kmsg.$max.
+static void rotate_logs(int max) {
     // Logs should only be rotated once.
     static bool rotated = false;
     if (rotated) {
@@ -340,14 +323,19 @@ static void rotate_last_logs(int max) {
     }
     rotated = true;
     ensure_path_mounted(LAST_LOG_FILE);
+    ensure_path_mounted(LAST_KMSG_FILE);
 
-    char oldfn[256];
-    char newfn[256];
     for (int i = max-1; i >= 0; --i) {
-        snprintf(oldfn, sizeof(oldfn), (i==0) ? LAST_LOG_FILE : (LAST_LOG_FILE ".%d"), i);
-        snprintf(newfn, sizeof(newfn), LAST_LOG_FILE ".%d", i+1);
-        // ignore errors
-        rename(oldfn, newfn);
+        std::string old_log = android::base::StringPrintf((i == 0) ? "%s" : "%s.%d",
+                LAST_LOG_FILE, i);
+        std::string new_log = android::base::StringPrintf("%s.%d", LAST_LOG_FILE, i+1);
+        // Ignore errors if old_log doesn't exist.
+        rename(old_log.c_str(), new_log.c_str());
+
+        std::string old_kmsg = android::base::StringPrintf((i == 0) ? "%s" : "%s.%d",
+                LAST_KMSG_FILE, i);
+        std::string new_kmsg = android::base::StringPrintf("%s.%d", LAST_KMSG_FILE, i+1);
+        rename(old_kmsg.c_str(), new_kmsg.c_str());
     }
 }
 
@@ -360,7 +348,7 @@ static void copy_logs() {
         return;
     }
 
-    rotate_last_logs(KEEP_LOG_COUNT);
+    rotate_logs(KEEP_LOG_COUNT);
 
     // Copy logs to cache so the system can find out what happened.
     copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
@@ -439,9 +427,10 @@ erase_volume(const char *volume) {
     saved_log_file* head = NULL;
 
     if (is_cache) {
-        // If we're reformatting /cache, we load any
-        // "/cache/recovery/last*" files into memory, so we can restore
-        // them after the reformat.
+        // If we're reformatting /cache, we load any past logs
+        // (i.e. "/cache/recovery/last_*") and the current log
+        // ("/cache/recovery/log") into memory, so we can restore them after
+        // the reformat.
 
         ensure_path_mounted(volume);
 
@@ -454,7 +443,7 @@ erase_volume(const char *volume) {
             strcat(path, "/");
             int path_len = strlen(path);
             while ((de = readdir(d)) != NULL) {
-                if (strncmp(de->d_name, "last", 4) == 0) {
+                if (strncmp(de->d_name, "last_", 5) == 0 || strcmp(de->d_name, "log") == 0) {
                     saved_log_file* p = (saved_log_file*) malloc(sizeof(saved_log_file));
                     strcpy(path+path_len, de->d_name);
                     p->name = strdup(path);
@@ -712,38 +701,40 @@ static bool wipe_cache(bool should_confirm, Device* device) {
 }
 
 static void choose_recovery_file(Device* device) {
-    unsigned int i;
-    unsigned int n;
-    static const char** title_headers = NULL;
-    char *filename;
-    // "Go back" + LAST_KMSG_FILE + KEEP_LOG_COUNT + terminating NULL entry
-    char* entries[KEEP_LOG_COUNT + 3];
+    // "Go back" + KEEP_LOG_COUNT * 2 + terminating nullptr entry
+    char* entries[KEEP_LOG_COUNT * 2 + 2];
     memset(entries, 0, sizeof(entries));
 
-    n = 0;
+    unsigned int n = 0;
     entries[n++] = strdup("Go back");
 
-    // Add kernel kmsg file if available
-    if ((ensure_path_mounted(LAST_KMSG_FILE) == 0) && (access(LAST_KMSG_FILE, R_OK) == 0)) {
-        entries[n++] = strdup(LAST_KMSG_FILE);
-    }
-
     // Add LAST_LOG_FILE + LAST_LOG_FILE.x
-    for (i = 0; i < KEEP_LOG_COUNT; i++) {
-        char *filename;
-        if (asprintf(&filename, (i==0) ? LAST_LOG_FILE : (LAST_LOG_FILE ".%d"), i) == -1) {
+    // Add LAST_KMSG_FILE + LAST_KMSG_FILE.x
+    for (int i = 0; i < KEEP_LOG_COUNT; i++) {
+        char* log_file;
+        if (asprintf(&log_file, (i == 0) ? "%s" : "%s.%d", LAST_LOG_FILE, i) == -1) {
             // memory allocation failure - return early. Should never happen.
             return;
         }
-        if ((ensure_path_mounted(filename) != 0) || (access(filename, R_OK) == -1)) {
-            free(filename);
-            entries[n++] = NULL;
-            break;
+        if ((ensure_path_mounted(log_file) != 0) || (access(log_file, R_OK) == -1)) {
+            free(log_file);
+        } else {
+            entries[n++] = log_file;
         }
-        entries[n++] = filename;
+
+        char* kmsg_file;
+        if (asprintf(&kmsg_file, (i == 0) ? "%s" : "%s.%d", LAST_KMSG_FILE, i) == -1) {
+            // memory allocation failure - return early. Should never happen.
+            return;
+        }
+        if ((ensure_path_mounted(kmsg_file) != 0) || (access(kmsg_file, R_OK) == -1)) {
+            free(kmsg_file);
+        } else {
+            entries[n++] = kmsg_file;
+        }
     }
 
-    const char* headers[] = { "Select file to view", NULL };
+    const char* headers[] = { "Select file to view", nullptr };
 
     while (true) {
         int chosen_item = get_menu_selection(headers, entries, 1, 0, device);
@@ -755,7 +746,7 @@ static void choose_recovery_file(Device* device) {
         redirect_stdio(TEMPORARY_LOG_FILE);
     }
 
-    for (i = 0; i < (sizeof(entries) / sizeof(*entries)); i++) {
+    for (size_t i = 0; i < (sizeof(entries) / sizeof(*entries)); i++) {
         free(entries[i]);
     }
 }
