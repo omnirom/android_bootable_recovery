@@ -61,8 +61,7 @@ static void sideload_host_service(int sfd, void* data) {
     exit(result == 0 ? 0 : 1);
 }
 
-static int create_service_thread(void (*func)(int, void *), void *cookie)
-{
+static int create_service_thread(void (*func)(int, void *), void *cookie) {
     int s[2];
     if(adb_socketpair(s)) {
         printf("cannot create service socket pair\n");
@@ -75,8 +74,7 @@ static int create_service_thread(void (*func)(int, void *), void *cookie)
     sti->cookie = cookie;
     sti->fd = s[1];
 
-    adb_thread_t t;
-    if (adb_thread_create( &t, service_bootstrap_func, sti)){
+    if (!adb_thread_create(service_bootstrap_func, sti)) {
         free(sti);
         adb_close(s[0]);
         adb_close(s[1]);
