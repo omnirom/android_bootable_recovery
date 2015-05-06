@@ -62,9 +62,7 @@
 
 static struct fstab* fstab = NULL;
 
-static int write_at_offset(unsigned char* buffer, size_t size,
-                           int wfd, off64_t offset)
-{
+static int write_at_offset(unsigned char* buffer, size_t size, int wfd, off64_t offset) {
     if (TEMP_FAILURE_RETRY(lseek64(wfd, offset, SEEK_SET)) == -1) {
         ALOGE("error seeking to offset %lld: %s\n", offset, strerror(errno));
         return -1;
@@ -81,8 +79,7 @@ static int write_at_offset(unsigned char* buffer, size_t size,
     return 0;
 }
 
-void add_block_to_ranges(int** ranges, int* range_alloc, int* range_used, int new_block)
-{
+static void add_block_to_ranges(int** ranges, int* range_alloc, int* range_used, int new_block) {
     // If the current block start is < 0, set the start to the new
     // block.  (This only happens for the very first block of the very
     // first range.)
@@ -101,7 +98,7 @@ void add_block_to_ranges(int** ranges, int* range_alloc, int* range_used, int ne
         // If there isn't enough room in the array, we need to expand it.
         if (*range_used >= *range_alloc) {
             *range_alloc *= 2;
-            *ranges = realloc(*ranges, *range_alloc * 2 * sizeof(int));
+            *ranges = reinterpret_cast<int*>(realloc(*ranges, *range_alloc * 2 * sizeof(int)));
         }
 
         ++*range_used;
@@ -110,8 +107,7 @@ void add_block_to_ranges(int** ranges, int* range_alloc, int* range_used, int ne
     }
 }
 
-static struct fstab* read_fstab()
-{
+static struct fstab* read_fstab() {
     fstab = NULL;
 
     // The fstab path is always "/fstab.${ro.hardware}".
@@ -130,26 +126,26 @@ static struct fstab* read_fstab()
     return fstab;
 }
 
-const char* find_block_device(const char* path, int* encryptable, int* encrypted)
-{
+static const char* find_block_device(const char* path, bool* encryptable, bool* encrypted) {
     // Look for a volume whose mount point is the prefix of path and
     // return its block device.  Set encrypted if it's currently
     // encrypted.
-    int i;
-    for (i = 0; i < fstab->num_entries; ++i) {
+    for (int i = 0; i < fstab->num_entries; ++i) {
         struct fstab_rec* v = &fstab->recs[i];
-        if (!v->mount_point) continue;
+        if (!v->mount_point) {
+            continue;
+        }
         int len = strlen(v->mount_point);
         if (strncmp(path, v->mount_point, len) == 0 &&
             (path[len] == '/' || path[len] == 0)) {
-            *encrypted = 0;
-            *encryptable = 0;
+            *encrypted = false;
+            *encryptable = false;
             if (fs_mgr_is_encryptable(v)) {
-                *encryptable = 1;
+                *encryptable = true;
                 char buffer[PROPERTY_VALUE_MAX+1];
                 if (property_get("ro.crypto.state", buffer, "") &&
                     strcmp(buffer, "encrypted") == 0) {
-                    *encrypted = 1;
+                    *encrypted = true;
                 }
             }
             return v->blk_device;
@@ -201,16 +197,15 @@ static char* find_update_package()
 
     if (fn) {
         char* newline = strchr(fn, '\n');
-        if (newline) *newline = 0;
+        if (newline) {
+            *newline = 0;
+        }
     }
     return fn;
 }
 
-int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
-                      int encrypted)
-{
-    struct stat sb;
-    int ret;
+static int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
+                             bool encrypted) {
 
     int mapfd = open(map_file, O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
     if (mapfd < 0) {
@@ -219,7 +214,8 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
     }
     FILE* mapf = fdopen(mapfd, "w");
 
-    ret = stat(path, &sb);
+    struct stat sb;
+    int ret = stat(path, &sb);
     if (ret != 0) {
         ALOGE("failed to stat %s\n", path);
         return -1;
@@ -230,20 +226,18 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
     int blocks = ((sb.st_size-1) / sb.st_blksize) + 1;
     ALOGI("  file size: %lld bytes, %d blocks\n", (long long)sb.st_size, blocks);
 
-    int* ranges;
     int range_alloc = 1;
     int range_used = 1;
-    ranges = malloc(range_alloc * 2 * sizeof(int));
+    int* ranges = reinterpret_cast<int*>(malloc(range_alloc * 2 * sizeof(int)));
     ranges[0] = -1;
     ranges[1] = -1;
 
     fprintf(mapf, "%s\n%lld %lu\n", blk_dev, (long long)sb.st_size, (unsigned long)sb.st_blksize);
 
     unsigned char* buffers[WINDOW_SIZE];
-    int i;
     if (encrypted) {
-        for (i = 0; i < WINDOW_SIZE; ++i) {
-            buffers[i] = malloc(sb.st_blksize);
+        for (size_t i = 0; i < WINDOW_SIZE; ++i) {
+            buffers[i] = reinterpret_cast<unsigned char*>(malloc(sb.st_blksize));
         }
     }
     int head_block = 0;
@@ -276,7 +270,8 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
             }
             add_block_to_ranges(&ranges, &range_alloc, &range_used, block);
             if (encrypted) {
-                if (write_at_offset(buffers[head], sb.st_blksize, wfd, (off64_t)sb.st_blksize * block) != 0) {
+                if (write_at_offset(buffers[head], sb.st_blksize, wfd,
+                        (off64_t)sb.st_blksize * block) != 0) {
                     return -1;
                 }
             }
@@ -316,7 +311,8 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         }
         add_block_to_ranges(&ranges, &range_alloc, &range_used, block);
         if (encrypted) {
-            if (write_at_offset(buffers[head], sb.st_blksize, wfd, (off64_t)sb.st_blksize * block) != 0) {
+            if (write_at_offset(buffers[head], sb.st_blksize, wfd,
+                    (off64_t)sb.st_blksize * block) != 0) {
                 return -1;
             }
         }
@@ -325,7 +321,7 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
     }
 
     fprintf(mapf, "%d\n", range_used);
-    for (i = 0; i < range_used; ++i) {
+    for (int i = 0; i < range_used; ++i) {
         fprintf(mapf, "%d %d\n", ranges[i*2], ranges[i*2+1]);
     }
 
@@ -346,10 +342,9 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
     return 0;
 }
 
-void wipe_misc() {
+static void wipe_misc() {
     ALOGI("removing old commands from misc");
-    int i;
-    for (i = 0; i < fstab->num_entries; ++i) {
+    for (int i = 0; i < fstab->num_entries; ++i) {
         struct fstab_rec* v = &fstab->recs[i];
         if (!v->mount_point) continue;
         if (strcmp(v->mount_point, "/misc") == 0) {
@@ -378,7 +373,7 @@ void wipe_misc() {
     }
 }
 
-void reboot_to_recovery() {
+static void reboot_to_recovery() {
     ALOGI("rebooting to recovery");
     property_set("sys.powerctl", "reboot,recovery");
     sleep(10);
@@ -389,7 +384,7 @@ int main(int argc, char** argv)
 {
     const char* input_path;
     const char* map_file;
-    int do_reboot = 1;
+    bool do_reboot = true;
 
     if (argc != 1 && argc != 3) {
         fprintf(stderr, "usage: %s [<transform_path> <map_file>]\n", argv[0]);
@@ -401,7 +396,7 @@ int main(int argc, char** argv)
         // for debugging; don't reboot to recovery at the end.
         input_path = argv[1];
         map_file = argv[2];
-        do_reboot = 0;
+        do_reboot = false;
     } else {
         input_path = find_update_package();
         if (input_path == NULL) {
@@ -425,11 +420,12 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    int encryptable;
-    int encrypted;
     if (read_fstab() == NULL) {
         return 1;
     }
+
+    bool encryptable;
+    bool encrypted;
     const char* blk_dev = find_block_device(path, &encryptable, &encrypted);
     if (blk_dev == NULL) {
         ALOGE("failed to find block device for %s", path);
@@ -462,6 +458,8 @@ int main(int argc, char** argv)
         rename(RECOVERY_COMMAND_FILE_TMP, RECOVERY_COMMAND_FILE);
     }
 
-    if (do_reboot) reboot_to_recovery();
+    if (do_reboot) {
+        reboot_to_recovery();
+    }
     return 0;
 }
