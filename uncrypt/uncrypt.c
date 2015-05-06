@@ -159,12 +159,13 @@ const char* find_block_device(const char* path, int* encryptable, int* encrypted
     return NULL;
 }
 
-char* parse_recovery_command_file()
+// Parse the command file RECOVERY_COMMAND_FILE to find the update package
+// name. If it's on the /data partition, replace the package name with the
+// block map file name and store it temporarily in RECOVERY_COMMAND_FILE_TMP.
+// It will be renamed to RECOVERY_COMMAND_FILE if uncrypt finishes
+// successfully.
+static char* find_update_package()
 {
-    char* fn = NULL;
-    int count = 0;
-    char temp[1024];
-
     FILE* f = fopen(RECOVERY_COMMAND_FILE, "r");
     if (f == NULL) {
         return NULL;
@@ -175,17 +176,27 @@ char* parse_recovery_command_file()
         return NULL;
     }
     FILE* fo = fdopen(fd, "w");
-
-    while (fgets(temp, sizeof(temp), f)) {
-        printf("read: %s", temp);
-        if (strncmp(temp, "--update_package=/data/", strlen("--update_package=/data/")) == 0) {
-            fn = strdup(temp + strlen("--update_package="));
-            strcpy(temp, "--update_package=@" CACHE_BLOCK_MAP "\n");
+    char* fn = NULL;
+    char* line = NULL;
+    size_t len = 0;
+    while (getline(&line, &len, f) != -1) {
+        if (strncmp(line, "--update_package=", strlen("--update_package=")) == 0) {
+            fn = strdup(line + strlen("--update_package="));
+            // Replace the package name with block map file if it's on /data partition.
+            if (strncmp(fn, "/data/", strlen("/data/")) == 0) {
+                fputs("--update_package=@" CACHE_BLOCK_MAP "\n", fo);
+                continue;
+            }
         }
-        fputs(temp, fo);
+        fputs(line, fo);
     }
+    free(line);
     fclose(f);
-    fsync(fd);
+    if (fsync(fd) == -1) {
+        ALOGE("failed to fsync \"%s\": %s\n", RECOVERY_COMMAND_FILE_TMP, strerror(errno));
+        fclose(fo);
+        return NULL;
+    }
     fclose(fo);
 
     if (fn) {
@@ -244,7 +255,6 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         ALOGE("failed to open fd for reading: %s\n", strerror(errno));
         return -1;
     }
-    fsync(fd);
 
     int wfd = -1;
     if (encrypted) {
@@ -319,11 +329,17 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         fprintf(mapf, "%d %d\n", ranges[i*2], ranges[i*2+1]);
     }
 
-    fsync(mapfd);
+    if (fsync(mapfd) == -1) {
+        ALOGE("failed to fsync \"%s\": %s\n", map_file, strerror(errno));
+        return -1;
+    }
     fclose(mapf);
     close(fd);
     if (encrypted) {
-        fsync(wfd);
+        if (fsync(wfd) == -1) {
+            ALOGE("failed to fsync \"%s\": %s\n", blk_dev, strerror(errno));
+            return -1;
+        }
         close(wfd);
     }
 
@@ -352,7 +368,11 @@ void wipe_misc() {
                     written += w;
                 }
             }
-            fsync(fd);
+            if (fsync(fd) == -1) {
+                ALOGE("failed to fsync \"%s\": %s\n", v->blk_device, strerror(errno));
+                close(fd);
+                return;
+            }
             close(fd);
         }
     }
@@ -383,7 +403,7 @@ int main(int argc, char** argv)
         map_file = argv[2];
         do_reboot = 0;
     } else {
-        input_path = parse_recovery_command_file();
+        input_path = find_update_package();
         if (input_path == NULL) {
             // if we're rebooting to recovery without a package (say,
             // to wipe data), then we don't need to do anything before
@@ -432,15 +452,16 @@ int main(int argc, char** argv)
     if (strncmp(path, "/data/", 6) != 0) {
         // path does not start with "/data/"; leave it alone.
         unlink(RECOVERY_COMMAND_FILE_TMP);
+        wipe_misc();
     } else {
         ALOGI("writing block map %s", map_file);
         if (produce_block_map(path, map_file, blk_dev, encrypted) != 0) {
             return 1;
         }
+        wipe_misc();
+        rename(RECOVERY_COMMAND_FILE_TMP, RECOVERY_COMMAND_FILE);
     }
 
-    wipe_misc();
-    rename(RECOVERY_COMMAND_FILE_TMP, RECOVERY_COMMAND_FILE);
     if (do_reboot) reboot_to_recovery();
     return 0;
 }
