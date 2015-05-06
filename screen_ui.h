@@ -89,17 +89,22 @@ class ScreenRecoveryUI : public RecoveryUI {
     // true when both graphics pages are the same (except for the progress bar).
     bool pagesIdentical;
 
+    size_t text_cols_, text_rows_;
+
     // Log text overlay, displayed when a magic key is pressed.
-    char** text;
-    size_t text_cols, text_rows;
-    size_t text_col, text_row, text_top;
+    char** text_;
+    size_t text_col_, text_row_, text_top_;
+
     bool show_text;
     bool show_text_ever;   // has show_text ever been true?
 
-    char** menu;
-    const char* const* menu_headers;
+    char** menu_;
+    const char* const* menu_headers_;
     bool show_menu;
     int menu_items, menu_sel;
+
+    // An alternate text screen, swapped with 'text_' when we're viewing a log file.
+    char** file_viewer_text_;
 
     pthread_t progress_thread_;
 

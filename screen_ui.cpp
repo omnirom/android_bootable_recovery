@@ -58,18 +58,19 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     progressScopeSize(0),
     progress(0),
     pagesIdentical(false),
-    text(nullptr),
-    text_cols(0),
-    text_rows(0),
-    text_col(0),
-    text_row(0),
-    text_top(0),
+    text_cols_(0),
+    text_rows_(0),
+    text_(nullptr),
+    text_col_(0),
+    text_row_(0),
+    text_top_(0),
     show_text(false),
     show_text_ever(false),
-    menu(nullptr),
+    menu_(nullptr),
     show_menu(false),
     menu_items(0),
     menu_sel(0),
+    file_viewer_text_(nullptr),
     animation_fps(20),
     installing_frames(-1),
     stage(-1),
@@ -255,7 +256,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
             DrawTextLines(&y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
 
             SetColor(HEADER);
-            DrawTextLines(&y, menu_headers);
+            DrawTextLines(&y, menu_headers_);
 
             SetColor(MENU);
             DrawHorizontalRule(&y);
@@ -267,10 +268,10 @@ void ScreenRecoveryUI::draw_screen_locked() {
                     gr_fill(0, y - 2, gr_fb_width(), y + char_height + 2);
                     // Bold white text for the selected item.
                     SetColor(MENU_SEL_FG);
-                    gr_text(4, y, menu[i], true);
+                    gr_text(4, y, menu_[i], true);
                     SetColor(MENU);
                 } else {
-                    gr_text(4, y, menu[i], false);
+                    gr_text(4, y, menu_[i], false);
                 }
                 y += char_height + 4;
             }
@@ -281,14 +282,14 @@ void ScreenRecoveryUI::draw_screen_locked() {
         // screen, the bottom of the menu, or we've displayed the
         // entire text buffer.
         SetColor(LOG);
-        int row = (text_top+text_rows-1) % text_rows;
+        int row = (text_top_ + text_rows_ - 1) % text_rows_;
         size_t count = 0;
         for (int ty = gr_fb_height() - char_height;
-             ty >= y && count < text_rows;
+             ty >= y && count < text_rows_;
              ty -= char_height, ++count) {
-            gr_text(0, ty, text[row], false);
+            gr_text(0, ty, text_[row], false);
             --row;
-            if (row < 0) row = text_rows-1;
+            if (row < 0) row = text_rows_ - 1;
         }
     }
 }
@@ -391,14 +392,15 @@ void ScreenRecoveryUI::Init() {
     gr_init();
 
     gr_font_size(&char_width, &char_height);
-    text_rows = gr_fb_height() / char_height;
-    text_cols = gr_fb_width() / char_width;
+    text_rows_ = gr_fb_height() / char_height;
+    text_cols_ = gr_fb_width() / char_width;
 
-    text = Alloc2d(text_rows, text_cols + 1);
-    menu = Alloc2d(text_rows, text_cols + 1);
+    text_ = Alloc2d(text_rows_, text_cols_ + 1);
+    file_viewer_text_ = Alloc2d(text_rows_, text_cols_ + 1);
+    menu_ = Alloc2d(text_rows_, text_cols_ + 1);
 
-    text_col = text_row = 0;
-    text_top = 1;
+    text_col_ = text_row_ = 0;
+    text_top_ = 1;
 
     backgroundIcon[NONE] = nullptr;
     LoadBitmapArray("icon_installing", &installing_frames, &installation);
@@ -514,17 +516,17 @@ void ScreenRecoveryUI::Print(const char *fmt, ...) {
     fputs(buf, stdout);
 
     pthread_mutex_lock(&updateMutex);
-    if (text_rows > 0 && text_cols > 0) {
+    if (text_rows_ > 0 && text_cols_ > 0) {
         for (const char* ptr = buf; *ptr != '\0'; ++ptr) {
-            if (*ptr == '\n' || text_col >= text_cols) {
-                text[text_row][text_col] = '\0';
-                text_col = 0;
-                text_row = (text_row + 1) % text_rows;
-                if (text_row == text_top) text_top = (text_top + 1) % text_rows;
+            if (*ptr == '\n' || text_col_ >= text_cols_) {
+                text_[text_row_][text_col_] = '\0';
+                text_col_ = 0;
+                text_row_ = (text_row_ + 1) % text_rows_;
+                if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
             }
-            if (*ptr != '\n') text[text_row][text_col++] = *ptr;
+            if (*ptr != '\n') text_[text_row_][text_col_++] = *ptr;
         }
-        text[text_row][text_col] = '\0';
+        text_[text_row_][text_col_] = '\0';
         update_screen_locked();
     }
     pthread_mutex_unlock(&updateMutex);
@@ -532,21 +534,23 @@ void ScreenRecoveryUI::Print(const char *fmt, ...) {
 
 void ScreenRecoveryUI::PutChar(char ch) {
     pthread_mutex_lock(&updateMutex);
-    if (ch != '\n') text[text_row][text_col++] = ch;
-    if (ch == '\n' || text_col >= text_cols) {
-        text_col = 0;
-        ++text_row;
+    if (ch != '\n') text_[text_row_][text_col_++] = ch;
+    if (ch == '\n' || text_col_ >= text_cols_) {
+        text_col_ = 0;
+        ++text_row_;
+
+        if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
     }
     pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::ClearText() {
     pthread_mutex_lock(&updateMutex);
-    text_col = 0;
-    text_row = 0;
-    text_top = 1;
-    for (size_t i = 0; i < text_rows; ++i) {
-        memset(text[i], 0, text_cols + 1);
+    text_col_ = 0;
+    text_row_ = 0;
+    text_top_ = 1;
+    for (size_t i = 0; i < text_rows_; ++i) {
+        memset(text_[i], 0, text_cols_ + 1);
     }
     pthread_mutex_unlock(&updateMutex);
 }
@@ -590,12 +594,11 @@ void ScreenRecoveryUI::ShowFile(FILE* fp) {
 
         int ch = getc(fp);
         if (ch == EOF) {
-            text_row = text_top = text_rows - 2;
+            while (text_row_ < text_rows_ - 1) PutChar('\n');
             show_prompt = true;
         } else {
             PutChar(ch);
-            if (text_col == 0 && text_row >= text_rows - 2) {
-                text_top = text_row;
+            if (text_col_ == 0 && text_row_ >= text_rows_ - 1) {
                 show_prompt = true;
             }
         }
@@ -608,19 +611,34 @@ void ScreenRecoveryUI::ShowFile(const char* filename) {
         Print("  Unable to open %s: %s\n", filename, strerror(errno));
         return;
     }
+
+    char** old_text = text_;
+    size_t old_text_col = text_col_;
+    size_t old_text_row = text_row_;
+    size_t old_text_top = text_top_;
+
+    // Swap in the alternate screen and clear it.
+    text_ = file_viewer_text_;
+    ClearText();
+
     ShowFile(fp);
     fclose(fp);
+
+    text_ = old_text;
+    text_col_ = old_text_col;
+    text_row_ = old_text_row;
+    text_top_ = old_text_top;
 }
 
 void ScreenRecoveryUI::StartMenu(const char* const * headers, const char* const * items,
                                  int initial_selection) {
     pthread_mutex_lock(&updateMutex);
-    if (text_rows > 0 && text_cols > 0) {
-        menu_headers = headers;
+    if (text_rows_ > 0 && text_cols_ > 0) {
+        menu_headers_ = headers;
         size_t i = 0;
-        for (; i < text_rows && items[i] != nullptr; ++i) {
-            strncpy(menu[i], items[i], text_cols-1);
-            menu[i][text_cols-1] = '\0';
+        for (; i < text_rows_ && items[i] != nullptr; ++i) {
+            strncpy(menu_[i], items[i], text_cols_ - 1);
+            menu_[i][text_cols_ - 1] = '\0';
         }
         menu_items = i;
         show_menu = true;
@@ -649,7 +667,7 @@ int ScreenRecoveryUI::SelectMenu(int sel) {
 
 void ScreenRecoveryUI::EndMenu() {
     pthread_mutex_lock(&updateMutex);
-    if (show_menu && text_rows > 0 && text_cols > 0) {
+    if (show_menu && text_rows_ > 0 && text_cols_ > 0) {
         show_menu = false;
         update_screen_locked();
     }
