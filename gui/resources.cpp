@@ -179,7 +179,7 @@ FontResource::~FontResource()
 	}
 }
 
-ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip, int retain_aspect)
+ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)
  : Resource(node, pZip)
 {
 	std::string file;
@@ -198,6 +198,8 @@ ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip, int retain_aspe
 		return;
 	}
 
+	bool retain_aspect = (node->first_attribute("retainaspect") != NULL);
+	// the value does not matter, if retainaspect is present, we assume that we want to retain it
 	LoadImage(pZip, file, &temp_surface);
 	CheckAndScaleImage(temp_surface, &mSurface, retain_aspect);
 }
@@ -208,7 +210,7 @@ ImageResource::~ImageResource()
 		res_free_surface(mSurface);
 }
 
-AnimationResource::AnimationResource(xml_node<>* node, ZipArchive* pZip, int retain_aspect)
+AnimationResource::AnimationResource(xml_node<>* node, ZipArchive* pZip)
  : Resource(node, pZip)
 {
 	std::string file;
@@ -224,6 +226,8 @@ AnimationResource::AnimationResource(xml_node<>* node, ZipArchive* pZip, int ret
 		return;
 	}
 
+	bool retain_aspect = (node->first_attribute("retainaspect") != NULL);
+	// the value does not matter, if retainaspect is present, we assume that we want to retain it
 	for (;;)
 	{
 		std::ostringstream fileName;
@@ -313,11 +317,7 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 		}
 		else if (type == "image")
 		{
-			int retain = 0;
-			xml_attribute<>* retain_aspect_ratio = child->first_attribute("retainaspect");
-			if (retain_aspect_ratio)
-				retain = 1; // the value does not matter, if retainaspect is present, we assume that we want to retain it
-			ImageResource* res = new ImageResource(child, pZip, retain);
+			ImageResource* res = new ImageResource(child, pZip);
 			if (res->GetResource())
 				mImages.push_back(res);
 			else {
@@ -327,11 +327,7 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 		}
 		else if (type == "animation")
 		{
-			int retain = 0;
-			xml_attribute<>* retain_aspect_ratio = child->first_attribute("retainaspect");
-			if (retain_aspect_ratio)
-				retain = 1; // the value does not matter, if retainaspect is present, we assume that we want to retain it
-			AnimationResource* res = new AnimationResource(child, pZip, retain);
+			AnimationResource* res = new AnimationResource(child, pZip);
 			if (res->GetResourceCount())
 				mAnimations.push_back(res);
 			else {

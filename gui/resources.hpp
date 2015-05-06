@@ -58,7 +58,7 @@ protected:
 class ImageResource : public Resource
 {
 public:
-	ImageResource(xml_node<>* node, ZipArchive* pZip, int retain_aspect);
+	ImageResource(xml_node<>* node, ZipArchive* pZip);
 	virtual ~ImageResource();
 
 public:
@@ -73,7 +73,7 @@ protected:
 class AnimationResource : public Resource
 {
 public:
-	AnimationResource(xml_node<>* node, ZipArchive* pZip, int retain_aspect);
+	AnimationResource(xml_node<>* node, ZipArchive* pZip);
 	virtual ~AnimationResource();
 
 public:
