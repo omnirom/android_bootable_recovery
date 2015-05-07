@@ -701,12 +701,11 @@ static bool wipe_cache(bool should_confirm, Device* device) {
 }
 
 static void choose_recovery_file(Device* device) {
-    // "Go back" + KEEP_LOG_COUNT * 2 + terminating nullptr entry
-    char* entries[KEEP_LOG_COUNT * 2 + 2];
+    // "Back" + KEEP_LOG_COUNT * 2 + terminating nullptr entry
+    char* entries[1 + KEEP_LOG_COUNT * 2 + 1];
     memset(entries, 0, sizeof(entries));
 
     unsigned int n = 0;
-    entries[n++] = strdup("Go back");
 
     // Add LAST_LOG_FILE + LAST_LOG_FILE.x
     // Add LAST_KMSG_FILE + LAST_KMSG_FILE.x
@@ -734,11 +733,13 @@ static void choose_recovery_file(Device* device) {
         }
     }
 
+    entries[n++] = strdup("Back");
+
     const char* headers[] = { "Select file to view", nullptr };
 
     while (true) {
         int chosen_item = get_menu_selection(headers, entries, 1, 0, device);
-        if (chosen_item == 0) break;
+        if (strcmp(entries[chosen_item], "Back") == 0) break;
 
         // TODO: do we need to redirect? ShowFile could just avoid writing to stdio.
         redirect_stdio("/dev/null");
