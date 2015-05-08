@@ -26,13 +26,9 @@
 #include "adb.h"
 #include "transport.h"
 
-int adb_main(int is_daemon, int server_port)
-{
-    atexit(usb_cleanup);
-
+int adb_main(int is_daemon, int server_port) {
     adb_device_banner = "sideload";
 
-    // No SIGCHLD. Let the service subproc handle its children.
     signal(SIGPIPE, SIG_IGN);
 
     init_transport_registration();
