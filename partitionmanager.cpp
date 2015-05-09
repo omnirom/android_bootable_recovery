@@ -519,10 +519,7 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 
 bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes) {
 	time_t start, stop;
-	int img_bps;
-	unsigned long long file_bps;
-	unsigned long total_time, remain_time, section_time;
-	int use_compression, backup_time;
+	int use_compression;
 	float pos;
 	unsigned long long total_size, current_size;
 
@@ -531,35 +528,13 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 	if (Part == NULL)
 		return true;
 
-	DataManager::GetValue(TW_BACKUP_AVG_IMG_RATE, img_bps);
-
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
-	if (use_compression)
-		DataManager::GetValue(TW_BACKUP_AVG_FILE_COMP_RATE, file_bps);
-	else
-		DataManager::GetValue(TW_BACKUP_AVG_FILE_RATE, file_bps);
 
-	// We know the speed for both, how far into the whole backup are we, based on time
-	total_time = (*img_bytes / (unsigned long)img_bps) + (*file_bytes / (unsigned long)file_bps);
-	remain_time = (*img_bytes_remaining / (unsigned long)img_bps) + (*file_bytes_remaining / (unsigned long)file_bps);
-
-	//pos = (total_time - remain_time) / (float) total_time;
 	total_size = *file_bytes + *img_bytes;
 	current_size = *file_bytes + *img_bytes - *file_bytes_remaining - *img_bytes_remaining;
+	// Set the position
 	pos = ((float)(current_size) / (float)(total_size));
 	DataManager::SetProgress(pos);
-
-	LOGINFO("Estimated total time: %lu\nEstimated remaining time: %lu\n", total_time, remain_time);
-
-	// And get the time
-	if (Part->Backup_Method == 1)
-		section_time = Part->Backup_Size / file_bps;
-	else
-		section_time = Part->Backup_Size / img_bps;
-
-	// Set the position
-	pos = section_time / (float) total_time;
-	//DataManager::ShowProgress(pos, section_time);
 
 	TWFunc::SetPerformanceMode(true);
 	time(&start);
@@ -599,7 +574,7 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 			}
 		}
 		time(&stop);
-		backup_time = (int) difftime(stop, start);
+		int backup_time = (int) difftime(stop, start);
 		LOGINFO("Partition Backup time: %d\n", backup_time);
 		if (Part->Backup_Method == 1) {
 			*file_bytes_remaining -= Part->Backup_Size;
