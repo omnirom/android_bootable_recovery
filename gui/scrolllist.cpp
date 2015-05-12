@@ -347,7 +347,7 @@ void GUIScrollList::RenderStdItem(int yPos, bool selected, ImageResource* icon, 
 	// render label text
 	int textX = mRenderX + maxIconWidth + 5;
 	int textY = yPos + (iconAndTextH - mFontHeight) / 2;
-	gr_textEx(textX, textY, text, mFont->GetResource());
+	gr_textExW(textX, textY, text, mFont->GetResource(), hasScroll ? (mRenderW - mFastScrollW) : mRenderW);
 }
 
 int GUIScrollList::Update(void)
