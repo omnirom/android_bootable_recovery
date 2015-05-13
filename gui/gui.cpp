@@ -611,6 +611,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 	DataManager::SetValue("tw_page_done", 0);
 	DataManager::SetValue("tw_gui_done", 0);
 
+#ifndef TW_NO_GRAPHICS
 	if (page_name)
 		gui_changePage(page_name);
 
@@ -626,6 +627,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 	}
 
 	gGuiRunning = 1;
+#endif //TW_NO_GRAPHICS
 
 	DataManager::SetValue("tw_loaded", 1);
 
@@ -653,7 +655,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 			}
 		}
 #endif
-
+#ifndef TW_NO_GRAPHICS
 		if (gGuiConsoleRunning.get_value()) {
 			continue;
 		}
@@ -708,6 +710,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 			gui_changePage("main");
 			break;
 		}
+#endif //TW_NO_GRAPHICS
 		if (DataManager::GetIntValue("tw_gui_done") != 0)
 			break;
 	}
@@ -787,6 +790,7 @@ std::string gui_parse_text(std::string str)
 
 extern "C" int gui_init(void)
 {
+#ifndef TW_NO_GRAPHICS
 	gr_init();
 	std::string curtain_path = TWRES "images/curtain.jpg";
 	gr_surface source_Surface = NULL;
@@ -813,11 +817,13 @@ extern "C" int gui_init(void)
 	curtainSet();
 
 	ev_init();
+#endif
 	return 0;
 }
 
 extern "C" int gui_loadResources(void)
 {
+#ifndef TW_NO_GRAPHICS
 #ifndef TW_OEM_BUILD
 	int check = 0;
 	DataManager::GetValue(TW_IS_ENCRYPTED, check);
@@ -872,6 +878,7 @@ extern "C" int gui_loadResources(void)
 	PageManager::SelectPackage("TWRP");
 
 	gGuiInitialized = 1;
+#endif // TW_NO_GRAPHICS
 	return 0;
 
 error:
@@ -882,6 +889,7 @@ error:
 
 extern "C" int gui_loadCustomResources(void)
 {
+#ifndef TW_NO_GRAPHICS
 #ifndef TW_OEM_BUILD
 	if (!PartitionManager.Mount_Settings_Storage(false)) {
 		LOGERR("Unable to mount settings storage during GUI startup.\n");
@@ -904,6 +912,7 @@ extern "C" int gui_loadCustomResources(void)
 	// Set the default package
 	PageManager::SelectPackage("TWRP");
 #endif
+#endif //TW_NO_GRAPHICS
 	return 0;
 
 error:
@@ -919,6 +928,7 @@ extern "C" int gui_start(void)
 
 extern "C" int gui_startPage(const char *page_name, const int allow_commands, int stop_on_page_done)
 {
+#ifndef TW_NO_GRAPHICS
 	if (!gGuiInitialized)
 		return -1;
 
@@ -931,6 +941,7 @@ extern "C" int gui_startPage(const char *page_name, const int allow_commands, in
 	PageManager::SelectPackage("TWRP");
 
 	input_handler.init();
+#endif //TW_NO_GRAPHICS
 #ifndef TW_OEM_BUILD
 	if (allow_commands)
 	{
@@ -948,6 +959,9 @@ extern "C" int gui_startPage(const char *page_name, const int allow_commands, in
 
 static void * console_thread(void *cookie)
 {
+#ifdef TW_NO_GRAPHICS
+	return NULL;
+#endif
 	PageManager::SwitchToConsole();
 
 	while (!gGuiConsoleTerminate.get_value())
@@ -984,6 +998,9 @@ static void * console_thread(void *cookie)
 
 extern "C" int gui_console_only(void)
 {
+#ifdef TW_NO_GRAPHICS
+	return 0;
+#endif
 	if (!gGuiInitialized)
 		return -1;
 
