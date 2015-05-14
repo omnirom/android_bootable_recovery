@@ -479,9 +479,12 @@ include $(LOCAL_PATH)/minui/Android.mk \
     $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
-    $(LOCAL_PATH)/uncrypt/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
     $(LOCAL_PATH)/applypatch/Android.mk
+
+ifeq ($(wildcard system/core/uncrypt/Android.mk),)
+    include $(commands_recovery_local_path)/uncrypt/Android.mk
+endif
 
 #includes for TWRP
 include $(commands_recovery_local_path)/injecttwrp/Android.mk \
