@@ -16,6 +16,24 @@
       "revId": "a539c1cd53d9f95ffafb1ef880b48187b65d556d",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "18e79d95_8858bbff",
+        "filename": "updater/Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-05-15T19:00:29Z",
+      "side": 1,
+      "message": "Yeah, I clearly wasn\u0027t paying very close attention when I amended this.",
+      "parentUuid": "18e79d95_88d67b51",
+      "revId": "a539c1cd53d9f95ffafb1ef880b48187b65d556d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
