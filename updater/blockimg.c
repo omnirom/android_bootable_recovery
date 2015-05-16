@@ -694,7 +694,7 @@ static int WriteStash(const char* base, const char* id, int blocks, uint8_t* buf
 
 wsout:
     if (fd != -1) {
-        TEMP_FAILURE_RETRY(close(fd));
+        close(fd);
     }
 
     if (fn) {
@@ -1732,7 +1732,7 @@ pbiudone:
         if (fsync(params.fd) == -1) {
             fprintf(stderr, "fsync failed: %s\n", strerror(errno));
         }
-        TEMP_FAILURE_RETRY(close(params.fd));
+        close(params.fd);
     }
 
     if (logcmd) {
