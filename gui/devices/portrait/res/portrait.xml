@@ -2105,6 +2105,24 @@
 				<action function="page">decrypt</action>
 			</object>
 
+			<object type="button">
+				<placement x="%col1_x%" y="%row17_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_mount_system_ro" op="=" var2="0" />
+				<text>Only mount system read-only</text>
+				<image resource="checkbox_false" />
+				<action function="mountsystemtoggle"></action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row17_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_mount_system_ro" op="!=" var2="0" />
+				<text>Only mount system read-only</text>
+				<image resource="checkbox_true" />
+				<action function="mountsystemtoggle"></action>
+			</object>
+
 			<object type="action">
 				<touch key="home" />
 				<action function="page">main</action>
