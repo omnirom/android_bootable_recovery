@@ -70,6 +70,8 @@ public:
 	bool Update_Size(bool Display_Error);                                     // Updates size information
 	void Recreate_Media_Folder();                                             // Recreates the /data/media folder
 	bool Flash_Image(string Filename);                                        // Flashes an image to the partition
+	void Change_Mount_Read_Only(bool new_value);                              // Changes Mount_Read_Only to new_value
+	int Check_Lifetime_Writes();
 
 public:
 	string Current_File_System;                                               // Current file system
@@ -167,6 +169,7 @@ private:
 	bool Ignore_Blkid;                                                        // Ignore blkid results due to superblocks lying to us on certain devices / partitions
 	bool Retain_Layout_Version;                                               // Retains the .layout_version file during a wipe (needed on devices like Sony Xperia T where /data and /data/media are separate partitions)
 	bool Can_Flash_Img;                                                       // Indicates if this partition can have images flashed to it via the GUI
+	bool Mount_Read_Only;                                                     // Only mount this partition as read-only
 
 friend class TWPartitionManager;
 friend class DataManager;
