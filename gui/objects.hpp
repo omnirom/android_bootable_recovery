@@ -359,6 +359,7 @@ protected:
 	int stopmtp(std::string arg);
 	int flashimage(std::string arg);
 	int cancelbackup(std::string arg);
+	int mountsystemtoggle(std::string arg);
 
 	int simulate;
 };

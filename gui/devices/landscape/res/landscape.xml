@@ -989,6 +989,24 @@
 				</actions>
 			</object>
 
+			<object type="button">
+				<placement x="%col3_x%" y="%row10_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_mount_system_ro" op="=" var2="0" />
+				<text>Only mount system read-only</text>
+				<image resource="checkbox_false" />
+				<action function="mountsystemtoggle"></action>
+			</object>
+
+			<object type="button">
+				<placement x="%col3_x%" y="%row10_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_mount_system_ro" op="!=" var2="0" />
+				<text>Only mount system read-only</text>
+				<image resource="checkbox_true" />
+				<action function="mountsystemtoggle"></action>
+			</object>
+
 			<object type="action">
 				<touch key="home" />
 				<action function="page">main</action>
@@ -3595,6 +3613,50 @@
 					<action function="page">singleaction_page</action>
 				</actions>
 			</object>
+		</page>
+
+		<page name="system_readonly">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>TWRP has detected an unmodified system partition.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>TWRP can leave your system partition unmodified to make it easier for you to take official updates.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>TWRP will be unable to prevent the stock ROM from replacing TWRP and will not offer to root your device.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
+				<text>Installing zips or performing adb operations may still modify the system partition.</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row6_text_y%" />
+				<text>Keep Read Only</text>
+				<actions>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">main</action>
+				</actions>
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Allow Modifications</text>
+				<actions>
+					<action function="set">tw_mount_system_ro=1</action>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">main</action>
+				</actions>
+			</object>
+
+			<object type="template" name="footer" />
 		</page>
 	</pages>
 </recovery>
