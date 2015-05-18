@@ -852,6 +852,8 @@ void DataManager::SetDefaultValues()
 	mConstValues.insert(make_pair("tw_has_mtp", "0"));
 	mConstValues.insert(make_pair("tw_mtp_enabled", "0"));
 #endif
+	mValues.insert(make_pair("tw_mount_system_ro", make_pair("1", 1)));
+	mValues.insert(make_pair("tw_never_show_system_ro_page", make_pair("0", 1)));
 
 	pthread_mutex_unlock(&m_valuesLock);
 }

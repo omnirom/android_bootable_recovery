@@ -2113,6 +2113,27 @@
 				<action function="page">decrypt</action>
 			</object>
 
+			<object type="button">
+				<placement x="%col1_x%" y="%system_ro_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_mount_system_ro" op="=" var2="0" />
+				<text>Only mount system read-only</text>
+				<image resource="checkbox_false" />
+				<action function="mountsystemtoggle"></action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%system_ro_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_mount_system_ro" op="!=" var2="0" />
+				<text>Only mount system read-only</text>
+				<image resource="checkbox_true" />
+				<actions>
+					<action function="set">tw_lifetime_writes=2</action>
+					<action function="page">system_readonly_check</action>
+				</actions>
+			</object>
+
 			<object type="action">
 				<touch key="home" />
 				<action function="page">main</action>
@@ -2165,6 +2186,31 @@
 
 			<object type="action">
 				<action function="page">mount</action>
+			</object>
+		</page>
+
+		<page name="system_readonly_check">
+			<object type="action">
+				<action function="checkpartitionlifetimewrites">/system</action>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_lifetime_writes" var2="1" />
+				</conditions>
+				<action function="page">mount</action>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_lifetime_writes" var2="0" />
+				</conditions>
+				<actions>
+					<action function="set">tw_back=mount</action>
+					<action function="page">system_readonly</action>
+				</actions>
 			</object>
 		</page>
 
@@ -3593,6 +3639,71 @@
 					<action function="set">tw_action_text1=Installing SuperSU</action>
 					<action function="set">tw_action_text2=</action>
 					<action function="page">singleaction_page</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="system_readonly">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>TWRP has detected an unmodified system partition.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>TWRP can leave your system partition unmodified</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>to make it easier for you to take official updates.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>TWRP will be unable to prevent the stock ROM from</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
+				<text>replacing TWRP and will not offer to root your device.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row5_text_y%" placement="5" />
+				<text>Installing zips or performing adb operations may still</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row6_text_y%" placement="5" />
+				<text>modify the system partition.</text>
+			</object>
+
+			<object type="checkbox">
+				<condition var1="tw_is_encrypted" var2="0" />
+				<placement x="%col1_x%" y="%row7_text_y%" />
+				<text>Never show this screen during boot again</text>
+				<data variable="tw_never_show_system_ro_page" />
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row9_text_y%" />
+				<text>Keep Read Only</text>
+				<actions>
+					<action function="set">tw_mount_system_ro=1</action>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">%tw_back%</action>
+				</actions>
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Allow Modifications</text>
+				<actions>
+					<action function="set">tw_mount_system_ro=0</action>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">%tw_back%</action>
 				</actions>
 			</object>
 		</page>

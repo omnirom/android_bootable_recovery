@@ -196,6 +196,8 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(startmtp);
 		ADD_ACTION(stopmtp);
 		ADD_ACTION(cancelbackup);
+		ADD_ACTION(checkpartitionlifetimewrites);
+		ADD_ACTION(mountsystemtoggle);
 
 		// remember actions that run in the caller thread
 		for (mapFunc::const_iterator it = mf.begin(); it != mf.end(); ++it)
@@ -1736,4 +1738,56 @@ int GUIAction::getKeyByName(std::string key)
 	}
 
 	return atol(key.c_str());
+}
+
+int GUIAction::checkpartitionlifetimewrites(std::string arg)
+{
+	int op_status = 0;
+	TWPartition* sys = PartitionManager.Find_Partition_By_Path(arg);
+
+	operation_start("Check Partition Lifetime Writes");
+	if (sys) {
+		if (sys->Check_Lifetime_Writes() != 0)
+			DataManager::SetValue("tw_lifetime_writes", 1);
+		else
+			DataManager::SetValue("tw_lifetime_writes", 0);
+		op_status = 0; // success
+	} else {
+		DataManager::SetValue("tw_lifetime_writes", 1);
+		op_status = 1; // fail
+	}
+
+	operation_end(op_status);
+	return 0;
+}
+
+int GUIAction::mountsystemtoggle(std::string arg)
+{
+	int op_status = 0;
+	bool remount_system = PartitionManager.Is_Mounted_By_Path("/system");
+
+	operation_start("Toggle System Mount");
+	if (!PartitionManager.UnMount_By_Path("/system", true)) {
+		op_status = 1; // fail
+	} else {
+		TWPartition* Part = PartitionManager.Find_Partition_By_Path("/system");
+		if (Part) {
+			if (DataManager::GetIntValue("tw_mount_system_ro")) {
+				DataManager::SetValue("tw_mount_system_ro", 0);
+				Part->Change_Mount_Read_Only(false);
+			} else {
+				DataManager::SetValue("tw_mount_system_ro", 1);
+				Part->Change_Mount_Read_Only(true);
+			}
+			if (remount_system) {
+				Part->Mount(true);
+			}
+			op_status = 0; // success
+		} else {
+			op_status = 1; // fail
+		}
+	}
+
+	operation_end(op_status);
+	return 0;
 }

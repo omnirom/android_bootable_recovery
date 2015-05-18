@@ -332,13 +332,27 @@ int main(int argc, char **argv) {
 	PartitionManager.Disable_MTP();
 #endif
 
+	// Check if system has never been changed
+	if (DataManager::GetIntValue("tw_mount_system_ro") != 0 && DataManager::GetIntValue("tw_never_show_system_ro_page") == 0) {
+		TWPartition* sys = PartitionManager.Find_Partition_By_Path("/system");
+		if (sys && sys->Check_Lifetime_Writes() == 0) {
+			LOGINFO("System writes is 0, show system_readonly page\n");
+			DataManager::SetValue("tw_back", "main");
+			if (gui_startPage("system_readonly", 1, 1) != 0) {
+				LOGERR("Failed to start system_readonly GUI page.\n");
+			}
+		} else {
+			DataManager::SetValue("tw_mount_system_ro", 0);
+		}
+	}
+
 	// Launch the main GUI
 	gui_start();
 
 	// Disable flashing of stock recovery
 	TWFunc::Disable_Stock_Recovery_Replace();
 	// Check for su to see if the device is rooted or not
-	if (PartitionManager.Mount_By_Path("/system", false)) {
+	if (PartitionManager.Mount_By_Path("/system", false) && DataManager::GetIntValue("tw_mount_system_ro") == 0) {
 		if (TWFunc::Path_Exists("/supersu/su") && !TWFunc::Path_Exists("/system/bin/su") && !TWFunc::Path_Exists("/system/xbin/su") && !TWFunc::Path_Exists("/system/bin/.ext/.su")) {
 			// Device doesn't have su installed
 			DataManager::SetValue("tw_busy", 1);

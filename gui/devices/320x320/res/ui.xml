@@ -174,6 +174,7 @@
 		<variable name="row_offset_medium_y" value="206" />
 		<variable name="tz_set_y" value="271" />
 		<variable name="tz_current_y" value="249" />
+		<variable name="system_ro_y" value="216" />
 		<variable name="button_fill_color" value="#303030" />
 		<variable name="button_fill_full_width" value="308" />
 		<variable name="button_fill_main_width" value="150" />
@@ -189,7 +190,7 @@
 		<variable name="backup_button_row1" value="214" />
 		<variable name="backup_button_row2" value="242" />
 		<variable name="mount_list_height" value="190" />
-		<variable name="mount_storage_row" value="200" />
+		<variable name="mount_storage_row" value="193" />
 		<variable name="storage_list_height" value="134" />
 		<variable name="wipe_list_height" value="216" />
 		<variable name="wipe_button_y" value="170" />
