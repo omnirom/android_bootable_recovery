@@ -880,9 +880,13 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 			restore_path = Restore_List.substr(start_pos, end_pos - start_pos);
 			restore_part = Find_Partition_By_Path(restore_path);
 			if (restore_part != NULL) {
-				partition_count++;
+				if (restore_part->Mount_Read_Only) {
+					LOGERR("Cannot restore %s -- mounted read only.\n", restore_part->Backup_Display_Name.c_str());
+					return false;
+				}
 				if (check_md5 > 0 && !restore_part->Check_MD5(Restore_Name))
 					return false;
+				partition_count++;
 				total_restore_size += restore_part->Get_Restore_Size(Restore_Name);
 				if (restore_part->Has_SubPartition) {
 					std::vector<TWPartition*>::iterator subpart;
