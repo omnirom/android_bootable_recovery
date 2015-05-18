@@ -86,6 +86,7 @@
 		<variable name="tz_selected_y" value="240" />
 		<variable name="tz_set_y" value="1500" />
 		<variable name="tz_current_y" value="1425" />
+		<variable name="system_ro_y" value="1770" />
 		<variable name="col_progressbar_x" value="351" />
 		<variable name="row_progressbar_y" value="1650" />
 		<variable name="col1_medium_x" value="10" />
