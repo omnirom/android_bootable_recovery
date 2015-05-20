@@ -49,6 +49,7 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     // printing messages
     void Print(const char* fmt, ...) __printflike(2, 3);
+    void PrintOnScreenOnly(const char* fmt, ...) __printflike(2, 3);
     void ShowFile(const char* filename);
 
     // menu display
@@ -125,6 +126,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     void ProgressThreadLoop();
 
     void ShowFile(FILE*);
+    void PrintV(const char*, bool, va_list);
     void PutChar(char);
     void ClearText();
 
