@@ -40,25 +40,29 @@
 // file data to use as an update package.
 
 #include <errno.h>
+#include <fcntl.h>
+#include <linux/fs.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <linux/fs.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#define LOG_TAG "uncrypt"
-#include <log/log.h>
+#include <base/file.h>
+#include <base/strings.h>
 #include <cutils/properties.h>
 #include <fs_mgr.h>
+#define LOG_TAG "uncrypt"
+#include <log/log.h>
 
 #define WINDOW_SIZE 5
-#define RECOVERY_COMMAND_FILE "/cache/recovery/command"
-#define RECOVERY_COMMAND_FILE_TMP "/cache/recovery/command.tmp"
-#define CACHE_BLOCK_MAP "/cache/recovery/block.map"
+
+static const std::string cache_block_map = "/cache/recovery/block.map";
+static const std::string status_file = "/cache/recovery/uncrypt_status";
+static const std::string uncrypt_file = "/cache/recovery/uncrypt_file";
 
 static struct fstab* fstab = NULL;
 
@@ -155,64 +159,34 @@ static const char* find_block_device(const char* path, bool* encryptable, bool* 
     return NULL;
 }
 
-// Parse the command file RECOVERY_COMMAND_FILE to find the update package
-// name. If it's on the /data partition, replace the package name with the
-// block map file name and store it temporarily in RECOVERY_COMMAND_FILE_TMP.
-// It will be renamed to RECOVERY_COMMAND_FILE if uncrypt finishes
-// successfully.
-static char* find_update_package()
+// Parse uncrypt_file to find the update package name.
+static bool find_uncrypt_package(std::string& package_name)
 {
-    FILE* f = fopen(RECOVERY_COMMAND_FILE, "r");
-    if (f == NULL) {
-        return NULL;
+    if (!android::base::ReadFileToString(uncrypt_file, &package_name)) {
+        ALOGE("failed to open \"%s\": %s\n", uncrypt_file.c_str(), strerror(errno));
+        return false;
     }
-    int fd = open(RECOVERY_COMMAND_FILE_TMP, O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
-    if (fd < 0) {
-        ALOGE("failed to open %s\n", RECOVERY_COMMAND_FILE_TMP);
-        return NULL;
-    }
-    FILE* fo = fdopen(fd, "w");
-    char* fn = NULL;
-    char* line = NULL;
-    size_t len = 0;
-    while (getline(&line, &len, f) != -1) {
-        if (strncmp(line, "--update_package=", strlen("--update_package=")) == 0) {
-            fn = strdup(line + strlen("--update_package="));
-            // Replace the package name with block map file if it's on /data partition.
-            if (strncmp(fn, "/data/", strlen("/data/")) == 0) {
-                fputs("--update_package=@" CACHE_BLOCK_MAP "\n", fo);
-                continue;
-            }
-        }
-        fputs(line, fo);
-    }
-    free(line);
-    fclose(f);
-    if (fsync(fd) == -1) {
-        ALOGE("failed to fsync \"%s\": %s\n", RECOVERY_COMMAND_FILE_TMP, strerror(errno));
-        fclose(fo);
-        return NULL;
-    }
-    fclose(fo);
 
-    if (fn) {
-        char* newline = strchr(fn, '\n');
-        if (newline) {
-            *newline = 0;
-        }
-    }
-    return fn;
+    // Remove the trailing '\n' if present.
+    package_name = android::base::Trim(package_name);
+
+    return true;
 }
 
 static int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
-                             bool encrypted) {
-
+                             bool encrypted, int status_fd) {
     int mapfd = open(map_file, O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
-    if (mapfd < 0) {
+    if (mapfd == -1) {
         ALOGE("failed to open %s\n", map_file);
         return -1;
     }
     FILE* mapf = fdopen(mapfd, "w");
+
+    // Make sure we can write to the status_file.
+    if (!android::base::WriteStringToFd("0\n", status_fd)) {
+        ALOGE("failed to update \"%s\"\n", status_file.c_str());
+        return -1;
+    }
 
     struct stat sb;
     int ret = stat(path, &sb);
@@ -259,7 +233,15 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         }
     }
 
+    int last_progress = 0;
     while (pos < sb.st_size) {
+        // Update the status file, progress must be between [0, 99].
+        int progress = static_cast<int>(100 * (double(pos) / double(sb.st_size)));
+        if (progress > last_progress) {
+          last_progress = progress;
+          android::base::WriteStringToFd(std::to_string(progress) + "\n", status_fd);
+        }
+
         if ((tail+1) % WINDOW_SIZE == head) {
             // write out head buffer
             int block = head_block;
@@ -380,43 +362,15 @@ static void reboot_to_recovery() {
     ALOGE("reboot didn't succeed?");
 }
 
-int main(int argc, char** argv)
-{
-    const char* input_path;
-    const char* map_file;
-    bool do_reboot = true;
+int uncrypt(const char* input_path, const char* map_file, int status_fd) {
 
-    if (argc != 1 && argc != 3) {
-        fprintf(stderr, "usage: %s [<transform_path> <map_file>]\n", argv[0]);
-        return 2;
-    }
-
-    if (argc == 3) {
-        // when command-line args are given this binary is being used
-        // for debugging; don't reboot to recovery at the end.
-        input_path = argv[1];
-        map_file = argv[2];
-        do_reboot = false;
-    } else {
-        input_path = find_update_package();
-        if (input_path == NULL) {
-            // if we're rebooting to recovery without a package (say,
-            // to wipe data), then we don't need to do anything before
-            // going to recovery.
-            ALOGI("no recovery command file or no update package arg");
-            reboot_to_recovery();
-            return 1;
-        }
-        map_file = CACHE_BLOCK_MAP;
-    }
-
-    ALOGI("update package is %s", input_path);
+    ALOGI("update package is \"%s\"", input_path);
 
     // Turn the name of the file we're supposed to convert into an
     // absolute path, so we can find what filesystem it's on.
     char path[PATH_MAX+1];
     if (realpath(input_path, path) == NULL) {
-        ALOGE("failed to convert %s to absolute path: %s", input_path, strerror(errno));
+        ALOGE("failed to convert \"%s\" to absolute path: %s", input_path, strerror(errno));
         return 1;
     }
 
@@ -445,21 +399,64 @@ int main(int argc, char** argv)
     // On /data we want to convert the file to a block map so that we
     // can read the package without mounting the partition.  On /cache
     // and /sdcard we leave the file alone.
-    if (strncmp(path, "/data/", 6) != 0) {
-        // path does not start with "/data/"; leave it alone.
-        unlink(RECOVERY_COMMAND_FILE_TMP);
-        wipe_misc();
-    } else {
+    if (strncmp(path, "/data/", 6) == 0) {
         ALOGI("writing block map %s", map_file);
-        if (produce_block_map(path, map_file, blk_dev, encrypted) != 0) {
+        if (produce_block_map(path, map_file, blk_dev, encrypted, status_fd) != 0) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int main(int argc, char** argv) {
+    const char* input_path;
+    const char* map_file;
+
+    if (argc != 3 && argc != 1 && (argc == 2 && strcmp(argv[1], "--reboot") != 0)) {
+        fprintf(stderr, "usage: %s [--reboot] [<transform_path> <map_file>]\n", argv[0]);
+        return 2;
+    }
+
+    // When uncrypt is started with "--reboot", it wipes misc and reboots.
+    // Otherwise it uncrypts the package and writes the block map.
+    if (argc == 2) {
+        if (read_fstab() == NULL) {
             return 1;
         }
         wipe_misc();
-        rename(RECOVERY_COMMAND_FILE_TMP, RECOVERY_COMMAND_FILE);
+        reboot_to_recovery();
+    } else {
+        std::string package;
+        if (argc == 3) {
+            // when command-line args are given this binary is being used
+            // for debugging.
+            input_path = argv[1];
+            map_file = argv[2];
+        } else {
+            if (!find_uncrypt_package(package)) {
+                return 1;
+            }
+            input_path = package.c_str();
+            map_file = cache_block_map.c_str();
+        }
+
+        // The pipe has been created by the system server.
+        int status_fd = open(status_file.c_str(), O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
+        if (status_fd == -1) {
+            ALOGE("failed to open pipe \"%s\": %s\n", status_file.c_str(), strerror(errno));
+            return 1;
+        }
+        int status = uncrypt(input_path, map_file, status_fd);
+        if (status != 0) {
+            android::base::WriteStringToFd("-1\n", status_fd);
+            close(status_fd);
+            return 1;
+        }
+
+        android::base::WriteStringToFd("100\n", status_fd);
+        close(status_fd);
     }
 
-    if (do_reboot) {
-        reboot_to_recovery();
-    }
     return 0;
 }
