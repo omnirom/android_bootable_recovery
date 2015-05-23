@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "18e79d95_ebc06134",
+        "filename": "minuitwrp/graphics_utils.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-05-23T22:00:11Z",
+      "side": 1,
+      "message": "why are these volatile declarations needed?",
+      "revId": "52c2bef790676d4eac62d22219e8eda6f3a913b8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
