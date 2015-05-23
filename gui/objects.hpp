@@ -852,6 +852,7 @@ protected:
 		int layout;
 	};
 	int ParseKey(const char* keyinfo, Key& key, int& Xindex, int keyWidth, bool longpress);
+	void LoadKeyLabels(xml_node<>* parent, int layout);
 
 	enum {
 		MAX_KEYBOARD_LAYOUTS = 5,
@@ -868,6 +869,16 @@ protected:
 	};
 	Layout layouts[MAX_KEYBOARD_LAYOUTS];
 
+	struct KeyLabel
+	{
+		unsigned char key; // same as in struct Key
+		int layout_from; // 1-based; 0 for labels that apply to all layouts
+		int layout_to; // same as Key.layout
+		string text; // key label text
+		ImageResource* image; // image (overrides text if defined)
+	};
+	std::vector<KeyLabel> mKeyLabels;
+
 	// Find key at screen coordinates
 	Key* HitTestKey(int x, int y);
 
@@ -875,11 +886,20 @@ protected:
 	std::string mVariable;
 	int currentLayout;
 	bool CapsLockOn;
-	unsigned int KeyboardWidth, KeyboardHeight;
 	int rowY, colX, highlightRenderCount;
 	bool hasHighlight, hasCapsHighlight;
 	COLOR mHighlightColor;
 	COLOR mCapsHighlightColor;
+	COLOR mFontColor; // for centered key labels
+	COLOR mFontColorSmall; // for centered key labels
+	FontResource* mFont; // for main key labels
+	FontResource* mSmallFont; // for key labels like "?123"
+	FontResource* mLongpressFont; // for the small longpress label in the upper right corner
+	COLOR mLongpressFontColor;
+	COLOR mBackgroundColor; // keyboard background color
+	COLOR mKeyColorAlphanumeric; // key background color
+	COLOR mKeyColorOther; // key background color
+	int mKeyMarginX, mKeyMarginY; // space around key boxes - applied to left/right and top/bottom
 };
 
 // GUIInput - Used for keyboard input
