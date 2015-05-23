@@ -28,12 +28,12 @@ GGLSurface gr_mem_surface;
 int gr_save_screenshot(const char *dest)
 {
     uint32_t y, stride_bytes;
-    int res = -1;
+    volatile int res = -1;
     GGLContext *gl = NULL;
     GGLSurface surface;
     uint8_t * volatile img_data = NULL;
     uint8_t *ptr;
-    FILE *fp = NULL;
+    FILE * volatile fp = NULL;
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
 
@@ -41,17 +41,20 @@ int gr_save_screenshot(const char *dest)
     if(!fp)
         goto exit;
 
-    img_data = malloc(vi.xres * vi.yres * 3);
+    img_data = malloc(gr_mem_surface.stride * vi.yres * 4);
     surface.version = sizeof(surface);
     surface.width = gr_mem_surface.width;
     surface.height = gr_mem_surface.height;
-    surface.stride = gr_mem_surface.width;
+    surface.stride = gr_mem_surface.stride;
     surface.data = img_data;
-    surface.format = GGL_PIXEL_FORMAT_RGB_888;
+    surface.format = GGL_PIXEL_FORMAT_RGBA_8888;
 
     gglInit(&gl);
     gl->colorBuffer(gl, &surface);
     gl->activeTexture(gl, 0);
+
+    if(gr_mem_surface.format == GGL_PIXEL_FORMAT_RGBX_8888)
+        gl->disable(gl, GGL_BLEND);
 
     gl->bindTexture(gl, &gr_mem_surface);
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
@@ -81,8 +84,11 @@ int gr_save_screenshot(const char *dest)
          PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     png_write_info(png_ptr, info_ptr);
 
+    // To remove the alpha channel for PNG_COLOR_TYPE_RGB format,
+    png_set_filler(png_ptr, 0, PNG_FILLER_AFTER);
+
     ptr = img_data;
-    stride_bytes = surface.width*3;
+    stride_bytes = surface.stride*4;
     for(y = 0; y < surface.height; ++y)
     {
         png_write_row(png_ptr, ptr);
