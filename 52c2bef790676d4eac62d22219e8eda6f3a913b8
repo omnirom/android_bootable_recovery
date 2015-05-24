@@ -16,6 +16,24 @@
       "revId": "52c2bef790676d4eac62d22219e8eda6f3a913b8",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "18e79d95_6be0d1ca",
+        "filename": "minuitwrp/graphics_utils.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1001251
+      },
+      "writtenOn": "2015-05-24T04:52:04Z",
+      "side": 1,
+      "message": "graphics_utils.c:31:9: warning: variable \u0027res\u0027 might be clobbered by \u0027longjmp\u0027 or \u0027vfork\u0027 [-Wclobbered]\n     int res \u003d -1;",
+      "parentUuid": "18e79d95_ebc06134",
+      "revId": "52c2bef790676d4eac62d22219e8eda6f3a913b8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
