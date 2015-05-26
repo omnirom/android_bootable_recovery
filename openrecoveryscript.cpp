@@ -423,12 +423,12 @@ int OpenRecoveryScript::run_script_file(void) {
 }
 
 int OpenRecoveryScript::Insert_ORS_Command(string Command) {
-	ofstream ORSfile(SCRIPT_FILE_TMP);
+	ofstream ORSfile(SCRIPT_FILE_TMP, ios_base::app | ios_base::out);
 	if (ORSfile.is_open()) {
 		//if (Command.substr(Command.size() - 1, 1) != "\n")
 		//	Command += "\n";
 		LOGINFO("Inserting '%s'\n", Command.c_str());
-		ORSfile << Command.c_str();
+		ORSfile << Command.c_str() << endl;
 		ORSfile.close();
 		return 1;
 	}
