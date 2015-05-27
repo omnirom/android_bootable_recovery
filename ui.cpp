@@ -176,7 +176,7 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
           case RecoveryUI::REBOOT:
             if (reboot_enabled) {
                 property_set(ANDROID_RB_PROPERTY, "reboot,");
-                while(1) { pause(); }
+                while (true) { pause(); }
             }
             break;
 

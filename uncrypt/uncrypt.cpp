@@ -40,18 +40,20 @@
 // file data to use as an update package.
 
 #include <errno.h>
+#include <fcntl.h>
+#include <linux/fs.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <linux/fs.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 #define LOG_TAG "uncrypt"
 #include <log/log.h>
+#include <cutils/android_reboot.h>
 #include <cutils/properties.h>
 #include <fs_mgr.h>
 
@@ -376,7 +378,9 @@ static void wipe_misc() {
 static void reboot_to_recovery() {
     ALOGI("rebooting to recovery");
     property_set("sys.powerctl", "reboot,recovery");
-    sleep(10);
+    while (true) {
+      pause();
+    }
     ALOGE("reboot didn't succeed?");
 }
 
