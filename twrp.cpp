@@ -165,7 +165,8 @@ int main(int argc, char **argv) {
 	PartitionManager.Mount_By_Path("/cache", true);
 
 	string Zip_File, Reboot_Value;
-	bool Cache_Wipe = false, Factory_Reset = false, Perform_Backup = false, Shutdown = false;
+	//bool Cache_Wipe = false, Factory_Reset = false, Perform_Backup = false, Shutdown = false;
+	bool Keep_Going = true, Shutdown = false;
 
 	{
 		TWPartition* misc = PartitionManager.Find_Partition_By_Path("/misc");
@@ -183,10 +184,10 @@ int main(int argc, char **argv) {
 		int index, index2, len;
 		char* argptr;
 		char* ptr;
-		printf("Startup Commands: ");
+		printf("Startup Commands: \n");
 		for (index = 1; index < argc; index++) {
 			argptr = argv[index];
-			printf(" '%s'", argv[index]);
+			printf(" '%s'\n", argv[index]);
 			len = strlen(argv[index]);
 			if (*argptr == '-') {argptr++; len--;}
 			if (*argptr == '-') {argptr++; len--;}
@@ -200,15 +201,24 @@ int main(int argc, char **argv) {
 					ptr++;
 				if (*ptr) {
 					Zip_File = ptr;
+					string ORSCommand = "install " + Zip_File;
+					if (Keep_Going && !OpenRecoveryScript::Insert_ORS_Command(ORSCommand))
+						Keep_Going = false;
 				} else
 					LOGERR("argument error specifying zip file\n");
 			} else if (*argptr == 'w') {
-				if (len == 9)
-					Factory_Reset = true;
-				else if (len == 10)
-					Cache_Wipe = true;
+				if (len == 9) {
+					if (Keep_Going && !OpenRecoveryScript::Insert_ORS_Command("wipe data"))
+						Keep_Going = false;
+				}
+				else if (len == 10) {
+					if (Keep_Going && !OpenRecoveryScript::Insert_ORS_Command("wipe cache"))
+						Keep_Going = false;
+				}
 			} else if (*argptr == 'n') {
-				Perform_Backup = true;
+				DataManager::SetValue(TW_BACKUP_NAME, "(Auto Generate)");
+				if (Keep_Going && !OpenRecoveryScript::Insert_ORS_Command("backup BSDCAE"))
+					Keep_Going = false;
 			} else if (*argptr == 'p') {
 				Shutdown = true;
 			} else if (*argptr == 's') {
@@ -247,28 +257,6 @@ int main(int argc, char **argv) {
 	}
 	LOGINFO("Backup of TWRP ramdisk done.\n");
 #endif
-
-	bool Keep_Going = true;
-	if (Perform_Backup) {
-		DataManager::SetValue(TW_BACKUP_NAME, "(Auto Generate)");
-		if (!OpenRecoveryScript::Insert_ORS_Command("backup BSDCAE\n"))
-			Keep_Going = false;
-	}
-	if (Keep_Going && !Zip_File.empty()) {
-		string ORSCommand = "install " + Zip_File;
-
-		if (!OpenRecoveryScript::Insert_ORS_Command(ORSCommand))
-			Keep_Going = false;
-	}
-	if (Keep_Going) {
-		if (Factory_Reset) {
-			if (!OpenRecoveryScript::Insert_ORS_Command("wipe data\n"))
-				Keep_Going = false;
-		} else if (Cache_Wipe) {
-			if (!OpenRecoveryScript::Insert_ORS_Command("wipe cache\n"))
-				Keep_Going = false;
-		}
-	}
 
 	TWFunc::Update_Log_File();
 	// Offer to decrypt if the device is encrypted

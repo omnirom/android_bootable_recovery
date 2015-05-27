@@ -1535,6 +1535,7 @@ int GUIAction::adbsideloadcancel(std::string arg)
 
 int GUIAction::openrecoveryscript(std::string arg)
 {
+	int op_status = 1;
 	operation_start("OpenRecoveryScript");
 	if (simulate) {
 		simulate_progress_bar();
@@ -1548,6 +1549,7 @@ int GUIAction::openrecoveryscript(std::string arg)
 			gui_print("Processing AOSP recovery commands...\n");
 			if (OpenRecoveryScript::run_script_file() == 0) {
 				reboot = 1;
+				op_status = 0;
 			}
 		}
 		// Check for the ORS file in /cache and attempt to run those commands.
@@ -1555,9 +1557,11 @@ int GUIAction::openrecoveryscript(std::string arg)
 			gui_print("Processing OpenRecoveryScript file...\n");
 			if (OpenRecoveryScript::run_script_file() == 0) {
 				reboot = 1;
+				op_status = 0;
 			}
 		}
 		if (reboot) {
+			copylog("Easy to debug");
 			// Disable stock recovery reflashing
 			TWFunc::Disable_Stock_Recovery_Replace();
 			usleep(2000000); // Sleep for 2 seconds before rebooting
@@ -1565,7 +1569,7 @@ int GUIAction::openrecoveryscript(std::string arg)
 		} else {
 			DataManager::SetValue("tw_page_done", 1);
 		}
-		operation_end(1);
+		operation_end(op_status);
 		return 0;
 	}
 	return 0;
