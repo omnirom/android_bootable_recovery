@@ -31,24 +31,24 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <adb.h>
 #include <base/file.h>
 #include <base/stringprintf.h>
+#include <cutils/android_reboot.h>
+#include <cutils/properties.h>
 
+#include "adb_install.h"
 #include "bootloader.h"
 #include "common.h"
-#include "cutils/properties.h"
-#include "cutils/android_reboot.h"
+#include "device.h"
+#include "fuse_sdcard_provider.h"
+#include "fuse_sideload.h"
 #include "install.h"
 #include "minui/minui.h"
 #include "minzip/DirUtil.h"
 #include "roots.h"
 #include "ui.h"
 #include "screen_ui.h"
-#include "device.h"
-#include "adb_install.h"
-#include "adb.h"
-#include "fuse_sideload.h"
-#include "fuse_sdcard_provider.h"
 
 struct selabel_handle *sehandle;
 
@@ -1119,6 +1119,9 @@ main(int argc, char **argv) {
             property_set(ANDROID_RB_PROPERTY, "reboot,");
             break;
     }
-    sleep(5); // should reboot before this finishes
+    while (true) {
+      pause();
+    }
+    // Should be unreachable.
     return EXIT_SUCCESS;
 }
