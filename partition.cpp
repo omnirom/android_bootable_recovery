@@ -534,7 +534,7 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			}
 		} else if (ptr_len > 10 && strncmp(ptr, "blocksize=", 10) == 0) {
 			ptr += 10;
-			Format_Block_Size = atoi(ptr);
+			Format_Block_Size = (unsigned long)(atol(ptr));
 		} else if (ptr_len > 7 && strncmp(ptr, "length=", 7) == 0) {
 			ptr += 7;
 			Length = atoi(ptr);
@@ -1184,6 +1184,8 @@ bool TWPartition::Wipe_AndSec(void) {
 }
 
 bool TWPartition::Can_Repair() {
+	if (Mount_Read_Only)
+		return false;
 	if (Current_File_System == "vfat" && TWFunc::Path_Exists("/sbin/dosfsck"))
 		return true;
 	else if ((Current_File_System == "ext2" || Current_File_System == "ext3" || Current_File_System == "ext4") && TWFunc::Path_Exists("/sbin/e2fsck"))
@@ -1226,7 +1228,7 @@ bool TWPartition::Repair() {
 			return false;
 		gui_print("Repairing %s using e2fsck...\n", Display_Name.c_str());
 		Find_Actual_Block_Device();
-		command = "/sbin/e2fsck -p " + Actual_Block_Device;
+		command = "/sbin/e2fsck -fp " + Actual_Block_Device;
 		LOGINFO("Repair command: %s\n", command.c_str());
 		if (TWFunc::Exec_Cmd(command) == 0) {
 			gui_print("Done.\n");
@@ -1271,6 +1273,77 @@ bool TWPartition::Repair() {
 			return true;
 		} else {
 			LOGERR("Unable to repair '%s'.\n", Mount_Point.c_str());
+			return false;
+		}
+	}
+	return false;
+}
+
+bool TWPartition::Can_Resize() {
+	if (Mount_Read_Only)
+		return false;
+	if ((Current_File_System == "ext2" || Current_File_System == "ext3" || Current_File_System == "ext4") && TWFunc::Path_Exists("/sbin/resize2fs"))
+		return true;
+	return false;
+}
+
+bool TWPartition::Resize() {
+	string command;
+
+	if (Current_File_System == "ext2" || Current_File_System == "ext3" || Current_File_System == "ext4") {
+		if (!Can_Repair()) {
+			LOGERR("Cannot resize %s because %s cannot be repaired before resizing.\n", Display_Name.c_str(), Display_Name.c_str());
+			return false;
+		}
+		if (!TWFunc::Path_Exists("/sbin/resize2fs")) {
+			gui_print("resize2fs does not exist! Cannot resize!\n");
+			return false;
+		}
+		// Repair will unmount so no need to do it twice
+		gui_print("Repairing %s before resizing.\n", Display_Name.c_str());
+		if (!Repair())
+			return false;
+		gui_print("Resizing %s using resize2fs...\n", Display_Name.c_str());
+		Find_Actual_Block_Device();
+		command = "/sbin/resize2fs " + Actual_Block_Device;
+		if (Length != 0) {
+			unsigned int block_device_size;
+			int fd, ret;
+
+			fd = open(Actual_Block_Device.c_str(), O_RDONLY);
+			if (fd < 0) {
+				LOGERR("Resize: Failed to open '%s'\n", Actual_Block_Device.c_str());
+				return false;
+			}
+			ret = ioctl(fd, BLKGETSIZE, &block_device_size);
+			close(fd);
+			if (ret) {
+				LOGERR("Resize: ioctl error\n");
+				return false;
+			}
+			unsigned long long Actual_Size = (unsigned long long)(block_device_size) * 512LLU;
+			unsigned long long Block_Count;
+			if (Length < 0) {
+				// Reduce overall size by this length
+				Block_Count = (Actual_Size / 1024LLU) - ((unsigned long long)(Length * -1) / 1024LLU);
+			} else {
+				// This is the size, not a size reduction
+				Block_Count = ((unsigned long long)(Length) / 1024LLU);
+			}
+			char temp[256];
+			sprintf(temp, "%llu", Block_Count);
+			command += " ";
+			command += temp;
+			command += "K";
+		}
+		LOGINFO("Resize command: %s\n", command.c_str());
+		if (TWFunc::Exec_Cmd(command) == 0) {
+			Update_Size(true);
+			gui_print("Done.\n");
+			return true;
+		} else {
+			Update_Size(true);
+			LOGERR("Unable to resize '%s'.\n", Mount_Point.c_str());
 			return false;
 		}
 	}

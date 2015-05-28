@@ -223,6 +223,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(installsu);
 		ADD_ACTION(decrypt_backup);
 		ADD_ACTION(repair);
+		ADD_ACTION(resize);
 		ADD_ACTION(changefilesystem);
 		ADD_ACTION(flashimage);
 	}
@@ -872,6 +873,10 @@ int GUIAction::getpartitiondetails(std::string arg)
 					DataManager::SetValue("tw_partition_can_repair", 1);
 				else
 					DataManager::SetValue("tw_partition_can_repair", 0);
+				if (Part->Can_Resize())
+					DataManager::SetValue("tw_partition_can_resize", 1);
+				else
+					DataManager::SetValue("tw_partition_can_resize", 0);
 				if (TWFunc::Path_Exists("/sbin/mkdosfs"))
 					DataManager::SetValue("tw_partition_vfat", 1);
 				else
@@ -1643,6 +1648,28 @@ int GUIAction::repair(std::string arg)
 			op_status = 0; // success
 		} else {
 			LOGERR("Error repairing file system.\n");
+			op_status = 1; // fail
+		}
+	}
+
+	operation_end(op_status);
+	return 0;
+}
+
+int GUIAction::resize(std::string arg)
+{
+	int op_status = 0;
+
+	operation_start("Resize Partition");
+	if (simulate) {
+		simulate_progress_bar();
+	} else {
+		string part_path;
+		DataManager::GetValue("tw_partition_mount_point", part_path);
+		if (PartitionManager.Resize_By_Path(part_path, true)) {
+			op_status = 0; // success
+		} else {
+			LOGERR("Error resizing file system.\n");
 			op_status = 1; // fail
 		}
 	}

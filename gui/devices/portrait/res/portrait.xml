@@ -1118,6 +1118,25 @@
 			</object>
 
 			<object type="button">
+				<condition var1="tw_partition_can_resize" op="=" var2="1" />
+				<placement x="%col1_x%" y="%row3_y%" />
+				<text>Resize</text>
+				<actions>
+					<action function="set">tw_back=partitionoptions</action>
+					<action function="set">tw_action=resize</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=getpartitiondetails</action>
+					<action function="set">tw_text1=Resize %tw_partition_name%?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Resizing...</action>
+					<action function="set">tw_complete_text1=Resize Complete</action>
+					<action function="set">tw_slider_text=Swipe to Resize</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
 				<condition var1="tw_partition_can_repair" op="=" var2="1" />
 				<placement x="%col1_x%" y="%row4_y%" />
 				<text>Repair</text>

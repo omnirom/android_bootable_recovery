@@ -59,6 +59,8 @@ public:
 	bool Can_Repair();                                                        // Checks to see if we have everything needed to be able to repair the current file system
 	uint64_t Get_Max_FileSize();					  	  //get partition maxFileSie
 	bool Repair();                                                            // Repairs the current file system
+	bool Can_Resize();                                                        // Checks to see if we have everything needed to be able to resize the current file system
+	bool Resize();                                                            // Resizes the current file system
 	bool Backup(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid); // Backs up the partition to the folder specified
 	bool Check_MD5(string restore_folder);                                    // Checks MD5 of a backup
 	bool Restore(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size); // Restores the partition using the backup folder provided
@@ -165,7 +167,7 @@ private:
 	string Fstab_File_System;                                                 // File system from the recovery.fstab
 	int Mount_Flags;                                                          // File system flags from recovery.fstab
 	string Mount_Options;                                                     // File system options from recovery.fstab
-	int Format_Block_Size;                                                    // Block size for formatting
+	unsigned long Format_Block_Size;                                          // Block size for formatting
 	bool Ignore_Blkid;                                                        // Ignore blkid results due to superblocks lying to us on certain devices / partitions
 	bool Retain_Layout_Version;                                               // Retains the .layout_version file during a wipe (needed on devices like Sony Xperia T where /data and /data/media are separate partitions)
 	bool Can_Flash_Img;                                                       // Indicates if this partition can have images flashed to it via the GUI
@@ -207,6 +209,7 @@ public:
 	int Format_Data();                                                        // Really formats data on /data/media devices -- also removes encryption
 	int Wipe_Media_From_Data();                                               // Removes and recreates the media folder on /data/media devices
 	int Repair_By_Path(string Path, bool Display_Error);                      // Repairs a partition based on path
+	int Resize_By_Path(string Path, bool Display_Error);                      // Resizes a partition based on path
 	void Update_System_Details();                                             // Updates fstab, file systems, sizes, etc.
 	int Decrypt_Device(string Password);                                      // Attempt to decrypt any encrypted partitions
 	int usb_storage_enable(void);                                             // Enable USB storage mode

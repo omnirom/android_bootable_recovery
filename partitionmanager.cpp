@@ -1259,6 +1259,34 @@ int TWPartitionManager::Repair_By_Path(string Path, bool Display_Error) {
 	return false;
 }
 
+int TWPartitionManager::Resize_By_Path(string Path, bool Display_Error) {
+	std::vector<TWPartition*>::iterator iter;
+	int ret = false;
+	bool found = false;
+	string Local_Path = TWFunc::Get_Root_Path(Path);
+
+	if (Local_Path == "/tmp" || Local_Path == "/")
+		return true;
+
+	// Iterate through all partitions
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path)) {
+			ret = (*iter)->Resize();
+			found = true;
+		} else if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Local_Path) {
+			(*iter)->Resize();
+		}
+	}
+	if (found) {
+		return ret;
+	} else if (Display_Error) {
+		LOGERR("Resize: Unable to find partition for path '%s'\n", Local_Path.c_str());
+	} else {
+		LOGINFO("Resize: Unable to find partition for path '%s'\n", Local_Path.c_str());
+	}
+	return false;
+}
+
 void TWPartitionManager::Update_System_Details(void) {
 	std::vector<TWPartition*>::iterator iter;
 	int data_size = 0;
