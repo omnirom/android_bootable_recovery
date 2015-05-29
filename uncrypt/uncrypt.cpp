@@ -427,26 +427,29 @@ int main(int argc, char** argv) {
         wipe_misc();
         reboot_to_recovery();
     } else {
-        std::string package;
-        if (argc == 3) {
-            // when command-line args are given this binary is being used
-            // for debugging.
-            input_path = argv[1];
-            map_file = argv[2];
-        } else {
-            if (!find_uncrypt_package(package)) {
-                return 1;
-            }
-            input_path = package.c_str();
-            map_file = cache_block_map.c_str();
-        }
-
         // The pipe has been created by the system server.
         int status_fd = open(status_file.c_str(), O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
         if (status_fd == -1) {
             ALOGE("failed to open pipe \"%s\": %s\n", status_file.c_str(), strerror(errno));
             return 1;
         }
+
+        if (argc == 3) {
+            // when command-line args are given this binary is being used
+            // for debugging.
+            input_path = argv[1];
+            map_file = argv[2];
+        } else {
+            std::string package;
+            if (!find_uncrypt_package(package)) {
+                android::base::WriteStringToFd("-1\n", status_fd);
+                close(status_fd);
+                return 1;
+            }
+            input_path = package.c_str();
+            map_file = cache_block_map.c_str();
+        }
+
         int status = uncrypt(input_path, map_file, status_fd);
         if (status != 0) {
             android::base::WriteStringToFd("-1\n", status_fd);
