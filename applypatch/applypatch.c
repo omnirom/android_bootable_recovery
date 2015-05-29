@@ -662,7 +662,7 @@ size_t FreeSpaceForFile(const char* filename) {
         printf("failed to statfs %s: %s\n", filename, strerror(errno));
         return -1;
     }
-    return sf.f_bsize * sf.f_bfree;
+    return sf.f_bsize * sf.f_bavail;
 }
 
 int CacheSizeCheck(size_t bytes) {
