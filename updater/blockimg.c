@@ -616,7 +616,7 @@ static int LoadStash(const char* base, const char* id, int verify, int* blocks, 
 
 lsout:
     if (fd != -1) {
-        TEMP_FAILURE_RETRY(close(fd));
+        close(fd);
     }
 
     if (fn) {
