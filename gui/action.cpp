@@ -1798,7 +1798,7 @@ int GUIAction::mountsystemtoggle(std::string arg)
 	} else {
 		TWPartition* Part = PartitionManager.Find_Partition_By_Path("/system");
 		if (Part) {
-			if (DataManager::GetIntValue("tw_mount_system_ro")) {
+			if (arg == "0") {
 				DataManager::SetValue("tw_mount_system_ro", 0);
 				Part->Change_Mount_Read_Only(false);
 			} else {
