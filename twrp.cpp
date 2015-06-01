@@ -341,9 +341,12 @@ int main(int argc, char **argv) {
 			if (gui_startPage("system_readonly", 1, 1) != 0) {
 				LOGERR("Failed to start system_readonly GUI page.\n");
 			}
-		} else {
-			DataManager::SetValue("tw_mount_system_ro", 0);
 		}
+	}
+	if (DataManager::GetIntValue("tw_mount_system_ro") == 0) {
+		TWPartition* Part = PartitionManager.Find_Partition_By_Path("/system");
+		if (Part)
+			Part->Change_Mount_Read_Only(false);
 	}
 
 	// Launch the main GUI
