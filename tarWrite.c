@@ -88,5 +88,6 @@ ssize_t write_libtar_buffer(int fd, const void *buffer, size_t size) {
 
 void flush_libtar_buffer(int fd) {
 	eot_count = 0;
-	buffer_status = 2;
+	if (buffer_status)
+		buffer_status = 2;
 }
