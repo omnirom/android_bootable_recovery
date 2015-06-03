@@ -15,6 +15,7 @@ LOCAL_SRC_FILES := \
     fuse_adb_provider.cpp \
     services.cpp \
 
+LOCAL_CLANG := true
 LOCAL_MODULE := libminadbd
 LOCAL_CFLAGS := $(minadbd_cflags)
 LOCAL_CONLY_FLAGS := -Wimplicit-function-declaration

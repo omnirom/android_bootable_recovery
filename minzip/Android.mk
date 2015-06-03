@@ -16,6 +16,8 @@ LOCAL_STATIC_LIBRARIES := libselinux
 
 LOCAL_MODULE := libminzip
 
+LOCAL_CLANG := true
+
 LOCAL_CFLAGS += -Wall
 
 include $(BUILD_STATIC_LIBRARY)
