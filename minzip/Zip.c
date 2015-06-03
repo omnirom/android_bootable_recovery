@@ -506,7 +506,6 @@ static bool processDeflatedEntry(const ZipArchive *pArchive,
     void *cookie)
 {
     long result = -1;
-    unsigned char readBuf[32 * 1024];
     unsigned char procBuf[32 * 1024];
     z_stream zstream;
     int zerr;
@@ -603,7 +602,6 @@ bool mzProcessZipEntryContents(const ZipArchive *pArchive,
     void *cookie)
 {
     bool ret = false;
-    off_t oldOff;
 
     switch (pEntry->compression) {
     case STORED:
