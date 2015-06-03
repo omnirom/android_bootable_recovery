@@ -41,6 +41,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 # Used by OEMs for factory test images.
 include $(CLEAR_VARS)
+LOCAL_CLANG := true
 LOCAL_MODULE := libminui
 LOCAL_WHOLE_STATIC_LIBRARIES += libminui
 LOCAL_SHARED_LIBRARIES := libpng

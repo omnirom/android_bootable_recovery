@@ -14,11 +14,10 @@
 
 LOCAL_PATH := $(call my-dir)
 
-
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := fuse_sideload.c
-
+LOCAL_CLANG := true
 LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 
@@ -55,6 +54,7 @@ RECOVERY_API_VERSION := 3
 RECOVERY_FSTAB_VERSION := 2
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 LOCAL_CFLAGS += -Wno-unused-parameter
+LOCAL_CLANG := true
 
 LOCAL_C_INCLUDES += \
     system/vold \
@@ -99,6 +99,7 @@ include $(BUILD_EXECUTABLE)
 
 # All the APIs for testing
 include $(CLEAR_VARS)
+LOCAL_CLANG := true
 LOCAL_MODULE := libverifier
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := \
@@ -106,6 +107,7 @@ LOCAL_SRC_FILES := \
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
+LOCAL_CLANG := true
 LOCAL_MODULE := verifier_test
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE_TAGS := tests

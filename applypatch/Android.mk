@@ -13,8 +13,10 @@
 # limitations under the License.
 
 LOCAL_PATH := $(call my-dir)
+
 include $(CLEAR_VARS)
 
+LOCAL_CLANG := true
 LOCAL_SRC_FILES := applypatch.c bspatch.c freecache.c imgpatch.c utils.c
 LOCAL_MODULE := libapplypatch
 LOCAL_MODULE_TAGS := eng
@@ -25,6 +27,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 
+LOCAL_CLANG := true
 LOCAL_SRC_FILES := main.c
 LOCAL_MODULE := applypatch
 LOCAL_C_INCLUDES += bootable/recovery
@@ -35,6 +38,7 @@ include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
 
+LOCAL_CLANG := true
 LOCAL_SRC_FILES := main.c
 LOCAL_MODULE := applypatch_static
 LOCAL_FORCE_STATIC_EXECUTABLE := true
@@ -47,6 +51,7 @@ include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
 
+LOCAL_CLANG := true
 LOCAL_SRC_FILES := imgdiff.c utils.c bsdiff.c
 LOCAL_MODULE := imgdiff
 LOCAL_FORCE_STATIC_EXECUTABLE := true

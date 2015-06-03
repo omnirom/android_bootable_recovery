@@ -17,6 +17,8 @@ include $(CLEAR_VARS)
 # needed only for OTA packages.)
 LOCAL_MODULE_TAGS := eng
 
+LOCAL_CLANG := true
+
 LOCAL_SRC_FILES := $(updater_src_files)
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
