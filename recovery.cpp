@@ -326,14 +326,18 @@ static void rotate_logs(int max) {
     ensure_path_mounted(LAST_KMSG_FILE);
 
     for (int i = max-1; i >= 0; --i) {
-        std::string old_log = android::base::StringPrintf((i == 0) ? "%s" : "%s.%d",
-                LAST_LOG_FILE, i);
+        std::string old_log = android::base::StringPrintf("%s", LAST_LOG_FILE);
+        if (i > 0) {
+          old_log += "." + std::to_string(i);
+        }
         std::string new_log = android::base::StringPrintf("%s.%d", LAST_LOG_FILE, i+1);
         // Ignore errors if old_log doesn't exist.
         rename(old_log.c_str(), new_log.c_str());
 
-        std::string old_kmsg = android::base::StringPrintf((i == 0) ? "%s" : "%s.%d",
-                LAST_KMSG_FILE, i);
+        std::string old_kmsg = android::base::StringPrintf("%s", LAST_KMSG_FILE);
+        if (i > 0) {
+          old_kmsg += "." + std::to_string(i);
+        }
         std::string new_kmsg = android::base::StringPrintf("%s.%d", LAST_KMSG_FILE, i+1);
         rename(old_kmsg.c_str(), new_kmsg.c_str());
     }
@@ -711,7 +715,10 @@ static void choose_recovery_file(Device* device) {
     // Add LAST_KMSG_FILE + LAST_KMSG_FILE.x
     for (int i = 0; i < KEEP_LOG_COUNT; i++) {
         char* log_file;
-        if (asprintf(&log_file, (i == 0) ? "%s" : "%s.%d", LAST_LOG_FILE, i) == -1) {
+        int ret;
+        ret = (i == 0) ? asprintf(&log_file, "%s", LAST_LOG_FILE) :
+                asprintf(&log_file, "%s.%d", LAST_LOG_FILE, i);
+        if (ret == -1) {
             // memory allocation failure - return early. Should never happen.
             return;
         }
@@ -722,7 +729,9 @@ static void choose_recovery_file(Device* device) {
         }
 
         char* kmsg_file;
-        if (asprintf(&kmsg_file, (i == 0) ? "%s" : "%s.%d", LAST_KMSG_FILE, i) == -1) {
+        ret = (i == 0) ? asprintf(&kmsg_file, "%s", LAST_KMSG_FILE) :
+                asprintf(&kmsg_file, "%s.%d", LAST_KMSG_FILE, i);
+        if (ret == -1) {
             // memory allocation failure - return early. Should never happen.
             return;
         }
