@@ -164,9 +164,9 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache) {
         } else if (strcmp(command, "ui_print") == 0) {
             char* str = strtok(NULL, "\n");
             if (str) {
-                ui->Print("%s", str);
+                ui->PrintOnScreenOnly("%s", str);
             } else {
-                ui->Print("\n");
+                ui->PrintOnScreenOnly("\n");
             }
             fflush(stdout);
         } else if (strcmp(command, "wipe_cache") == 0) {

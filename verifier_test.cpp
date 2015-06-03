@@ -141,6 +141,12 @@ class FakeUI : public RecoveryUI {
         vfprintf(stderr, fmt, ap);
         va_end(ap);
     }
+    void PrintOnScreenOnly(const char* fmt, ...) {
+        va_list ap;
+        va_start(ap, fmt);
+        vfprintf(stderr, fmt, ap);
+        va_end(ap);
+    }
     void ShowFile(const char*) { }
 
     void StartMenu(const char* const * headers, const char* const * items,
