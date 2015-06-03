@@ -91,7 +91,7 @@ apply_from_adb(RecoveryUI* ui_, bool* wipe_cache, const char* install_file) {
     // FUSE_SIDELOAD_HOST_PATHNAME will start to exist once the host
     // connects and starts serving a package.  Poll for its
     // appearance.  (Note that inotify doesn't work with FUSE.)
-    int result;
+    int result = INSTALL_ERROR;
     int status;
     bool waited = false;
     struct stat st;

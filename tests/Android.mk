@@ -17,6 +17,7 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
+LOCAL_CLANG := true
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_STATIC_LIBRARIES := libverifier
 LOCAL_SRC_FILES := asn1_decoder_test.cpp
