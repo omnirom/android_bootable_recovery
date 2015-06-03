@@ -30,8 +30,10 @@
 
 #include <vector>
 
-#include "base/strings.h"
-#include "cutils/properties.h"
+#include <base/strings.h>
+#include <base/stringprintf.h>
+#include <cutils/properties.h>
+
 #include "common.h"
 #include "device.h"
 #include "minui/minui.h"
@@ -506,18 +508,17 @@ void ScreenRecoveryUI::SetStage(int current, int max) {
     pthread_mutex_unlock(&updateMutex);
 }
 
-void ScreenRecoveryUI::Print(const char *fmt, ...) {
-    char buf[256];
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(buf, 256, fmt, ap);
-    va_end(ap);
+void ScreenRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) {
+    std::string str;
+    android::base::StringAppendV(&str, fmt, ap);
 
-    fputs(buf, stdout);
+    if (copy_to_stdout) {
+        fputs(str.c_str(), stdout);
+    }
 
     pthread_mutex_lock(&updateMutex);
     if (text_rows_ > 0 && text_cols_ > 0) {
-        for (const char* ptr = buf; *ptr != '\0'; ++ptr) {
+        for (const char* ptr = str.c_str(); *ptr != '\0'; ++ptr) {
             if (*ptr == '\n' || text_col_ >= text_cols_) {
                 text_[text_row_][text_col_] = '\0';
                 text_col_ = 0;
@@ -530,6 +531,20 @@ void ScreenRecoveryUI::Print(const char *fmt, ...) {
         update_screen_locked();
     }
     pthread_mutex_unlock(&updateMutex);
+}
+
+void ScreenRecoveryUI::Print(const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    PrintV(fmt, true, ap);
+    va_end(ap);
+}
+
+void ScreenRecoveryUI::PrintOnScreenOnly(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    PrintV(fmt, false, ap);
+    va_end(ap);
 }
 
 void ScreenRecoveryUI::PutChar(char ch) {
