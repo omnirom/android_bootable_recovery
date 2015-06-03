@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "18e79d95_912a262c",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2123,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-03T22:19:40Z",
+      "side": 1,
+      "message": "S_IRWXG already includes S_IWGRP and S_IXGRP",
+      "revId": "75c4d3bbe2952c0ea5845fccf4c106cdf785e975",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "18e79d95_712fa23d",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2126,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-03T22:19:40Z",
+      "side": 1,
+      "message": "S_IRWXG already includes S_IWGRP and S_IXGRP",
+      "revId": "75c4d3bbe2952c0ea5845fccf4c106cdf785e975",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "18e79d95_111e1610",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2131,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-03T22:19:40Z",
+      "side": 1,
+      "message": "When will this ever do anything useful? We just recreated /data/media[/0] so it will be empty anyway.",
+      "revId": "75c4d3bbe2952c0ea5845fccf4c106cdf785e975",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "18e79d95_51249e5d",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2135,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-03T22:19:40Z",
+      "side": 1,
+      "message": "I guess we need to do this also for /data/media/0 if we recreated it above.",
+      "revId": "75c4d3bbe2952c0ea5845fccf4c106cdf785e975",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "18e79d95_31291a36",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1217,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-03T22:19:40Z",
+      "side": 1,
+      "message": "This seems to be already done inside Recreate_Media_Folder but in a different way.",
+      "revId": "75c4d3bbe2952c0ea5845fccf4c106cdf785e975",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
