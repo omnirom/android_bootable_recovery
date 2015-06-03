@@ -65,8 +65,7 @@ void uiPrint(State* state, char* buffer) {
     // The recovery will only print the contents to screen for pipe command
     // ui_print. We need to dump the contents to stderr (which has been
     // redirected to the log file) directly.
-    fprintf(stderr, buffer);
-    fprintf(stderr, "\n");
+    fprintf(stderr, "%s", buffer);
 }
 
 __attribute__((__format__(printf, 2, 3))) __nonnull((2))
