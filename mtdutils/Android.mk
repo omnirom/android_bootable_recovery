@@ -6,10 +6,12 @@ LOCAL_SRC_FILES := \
 	mounts.c
 
 LOCAL_MODULE := libmtdutils
+LOCAL_CLANG := true
 
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
+LOCAL_CLANG := true
 LOCAL_SRC_FILES := flash_image.c
 LOCAL_MODULE := flash_image
 LOCAL_MODULE_TAGS := eng
