@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "18e79d95_51881e26",
+        "filename": "partition.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2119,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-04T07:48:08Z",
+      "side": 1,
+      "message": "Android\u0027s installd creates /data/media and /data/media/0 with perms 0770, owner and group AID_MEDIA_RW. We should do the same here and below.",
+      "revId": "a7ddd492b99e9bbf0a16d517191c7178de1414fa",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
