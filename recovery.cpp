@@ -417,8 +417,7 @@ typedef struct _saved_log_file {
     struct _saved_log_file* next;
 } saved_log_file;
 
-static int
-erase_volume(const char *volume) {
+static bool erase_volume(const char* volume) {
     bool is_cache = (strcmp(volume, CACHE_ROOT) == 0);
 
     ui->SetBackground(RecoveryUI::ERASING);
@@ -499,7 +498,7 @@ erase_volume(const char *volume) {
         copy_logs();
     }
 
-    return result;
+    return (result == 0);
 }
 
 static int
@@ -673,13 +672,13 @@ static bool wipe_data(int should_confirm, Device* device) {
     modified_flash = true;
 
     ui->Print("\n-- Wiping data...\n");
-    if (device->WipeData() == 0 && erase_volume("/data") == 0 && erase_volume("/cache") == 0) {
-        ui->Print("Data wipe complete.\n");
-        return true;
-    } else {
-        ui->Print("Data wipe failed.\n");
-        return false;
-    }
+    bool success =
+        device->PreWipeData() &&
+        erase_volume("/data") &&
+        erase_volume("/cache") &&
+        device->PostWipeData();
+    ui->Print("Data wipe %s.\n", success ? "complete" : "failed");
+    return success;
 }
 
 // Return true on success.
@@ -691,13 +690,9 @@ static bool wipe_cache(bool should_confirm, Device* device) {
     modified_flash = true;
 
     ui->Print("\n-- Wiping cache...\n");
-    if (erase_volume("/cache") == 0) {
-        ui->Print("Cache wipe complete.\n");
-        return true;
-    } else {
-        ui->Print("Cache wipe failed.\n");
-        return false;
-    }
+    bool success = erase_volume("/cache");
+    ui->Print("Cache wipe %s.\n", success ? "complete" : "failed");
+    return success;
 }
 
 static void choose_recovery_file(Device* device) {
