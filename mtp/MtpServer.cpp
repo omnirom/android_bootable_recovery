@@ -40,6 +40,16 @@
 
 #include <linux/usb/f_mtp.h>
 
+#ifdef TW_MTP_SAMSUNG
+// from android_kernel_samsung_trlte/drivers/usb/gadget/f_mtp.h:
+struct read_send_info {
+	int Fd;/* Media File fd */
+	uint64_t Length;/* the valid size, in BYTES, of the container */
+	uint16_t Code;/* Operation code, response code, or Event code */
+	uint32_t TransactionID;/* host generated number */
+};
+#endif
+
 static const MtpOperationCode kSupportedOperationCodes[] = {
 	MTP_OPERATION_GET_DEVICE_INFO,
 	MTP_OPERATION_OPEN_SESSION,
@@ -858,7 +868,17 @@ MtpResponseCode MtpServer::doGetObject() {
 	mfr.transaction_id = mRequest.getTransactionID();
 
 	// then transfer the file
+#ifdef TW_MTP_SAMSUNG
+	read_send_info rsi;
+	rsi.Fd = mfr.fd;
+	rsi.Length = mfr.length;
+	rsi.Code = mfr.command;
+	rsi.TransactionID = mfr.transaction_id;
+	int ret = ioctl(mFD, MTP_SEND_FILE_WITH_HEADER, (unsigned long)&rsi);
+#else
 	int ret = ioctl(mFD, MTP_SEND_FILE_WITH_HEADER, (unsigned long)&mfr);
+#endif
+
 	MTPD("MTP_SEND_FILE_WITH_HEADER returned %d\n", ret);
 	close(mfr.fd);
 	if (ret < 0) {

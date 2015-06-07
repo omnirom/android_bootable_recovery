@@ -34,6 +34,9 @@ LOCAL_SHARED_LIBRARIES += libz libc libusbhost libstdc++ libstlport libdl libcut
 ifneq ($(TW_MTP_DEVICE),)
 	LOCAL_CFLAGS += -DUSB_MTP_DEVICE=$(TW_MTP_DEVICE)
 endif
+ifneq ($(TW_MTP_SAMSUNG),)
+	LOCAL_CFLAGS += -DUSB_MTP_SAMSUNG
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 
