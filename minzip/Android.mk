@@ -39,7 +39,8 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES += \
 	external/zlib \
-	external/safe-iop/include
+	external/safe-iop/include \
+	external/lzma/xz-embedded
 
 ifeq ($(TWHAVE_SELINUX),true)
 LOCAL_C_INCLUDES += external/libselinux/include
@@ -51,5 +52,6 @@ LOCAL_MODULE := libminzip
 
 LOCAL_CFLAGS += -Wall
 LOCAL_STATIC_LIBRARIES += libz
+LOCAL_STATIC_LIBRARIES += libxz
 
 include $(BUILD_STATIC_LIBRARY)
