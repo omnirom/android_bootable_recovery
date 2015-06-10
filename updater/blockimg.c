@@ -39,6 +39,11 @@
 
 #define BLOCKSIZE 4096
 
+// Set this to 0 to interpret 'erase' transfers to mean do a
+// BLKDISCARD ioctl (the normal behavior).  Set to 1 to interpret
+// erase to mean fill the region with zeroes.
+#define DEBUG_ERASE  0
+
 #ifndef BLKDISCARD
 #define BLKDISCARD _IO(0x12,119)
 #endif
@@ -1278,7 +1283,8 @@ static int PerformCommandZero(CommandParameters* params) {
     }
 
     if (params->cmdname[0] == 'z') {
-        // Update only for the zero command, as the erase command will call this
+        // Update only for the zero command, as the erase command will call
+        // this if DEBUG_ERASE is defined.
         params->written += tgt->size;
     }
 
@@ -1464,10 +1470,8 @@ static int PerformCommandErase(CommandParameters* params) {
     struct stat st;
     uint64_t blocks[2];
 
-    // Always zero the blocks first to work around possibly flaky BLKDISCARD
-    // Bug: 20881595
-    if (PerformCommandZero(params) != 0) {
-        goto pceout;
+    if (DEBUG_ERASE) {
+        return PerformCommandZero(params);
     }
 
     if (!params) {
