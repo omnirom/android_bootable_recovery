@@ -91,13 +91,16 @@ class Device {
     static const int kHighlightDown = -3;
     static const int kInvokeItem = -4;
 
-    // Called when we do a wipe data/factory reset operation (either via a
-    // reboot from the main system with the --wipe_data flag, or when the
-    // user boots into recovery manually and selects the option from the
-    // menu.)  Can perform whatever device-specific wiping actions are
-    // needed.  Return 0 on success.  The userdata and cache partitions
-    // are erased AFTER this returns (whether it returns success or not).
-    virtual int WipeData() { return 0; }
+    // Called before and after we do a wipe data/factory reset operation,
+    // either via a reboot from the main system with the --wipe_data flag,
+    // or when the user boots into recovery image manually and selects the
+    // option from the menu, to perform whatever device-specific wiping
+    // actions are needed.
+    // Return true on success; returning false from PreWipeData will prevent
+    // the regular wipe, and returning false from PostWipeData will cause
+    // the wipe to be considered a failure.
+    virtual bool PreWipeData() { return true; }
+    virtual bool PostWipeData() { return true; }
 
   private:
     RecoveryUI* ui_;
