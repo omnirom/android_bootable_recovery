@@ -10,9 +10,11 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := \
 	external/zlib \
-	external/safe-iop/include
+	external/safe-iop/include \
+	external/lzma/xz-embedded
 
 LOCAL_STATIC_LIBRARIES := libselinux
+LOCAL_STATIC_LIBRARIES += libxz
 
 LOCAL_CFLAGS += -DPLATFORM_SDK_VERSION=$(PLATFORM_SDK_VERSION)
 

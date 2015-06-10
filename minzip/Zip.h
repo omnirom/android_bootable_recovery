@@ -158,6 +158,18 @@ bool mzProcessZipEntryContents(const ZipArchive *pArchive,
     void *cookie);
 
 /*
+ * Similar to mzProcessZipEntryContents, but explicitly process the stream
+ * using XZ/LZMA before calling processFunction.
+ *
+ * This is a separate function for use by the updater. LZMA provides huge
+ * size reductions vs deflate, but isn't actually supported by the ZIP format.
+ * We need to process it using as little memory as possible.
+ */
+bool mzProcessZipEntryContentsXZ(const ZipArchive *pArchive,
+    const ZipEntry *pEntry, ProcessZipEntryContentsFunction processFunction,
+    void *cookie);
+
+/*
  * Read an entry into a buffer allocated by the caller.
  */
 bool mzReadZipEntry(const ZipArchive* pArchive, const ZipEntry* pEntry,
