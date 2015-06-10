@@ -22,6 +22,6 @@ LOCAL_SRC_FILES := uncrypt.cpp
 
 LOCAL_MODULE := uncrypt
 
-LOCAL_STATIC_LIBRARIES := libfs_mgr liblog libcutils
+LOCAL_STATIC_LIBRARIES := libbase liblog libfs_mgr libcutils
 
 include $(BUILD_EXECUTABLE)
