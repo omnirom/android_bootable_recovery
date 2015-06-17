@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "18e79d95_7708b2df",
+        "filename": "mtp/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-17T18:17:45Z",
+      "side": 1,
+      "message": "must be -DTW_MTP_SAMSUNG",
+      "revId": "5e0828869eb518df878ad5320f84e5b3abf9c3e5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "18e79d95_570daeed",
+        "filename": "mtp/MtpServer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 877,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-17T18:17:45Z",
+      "side": 1,
+      "message": "The ioctl has a different number too, so MTP_SEND_FILE_WITH_HEADER needs to be replaced with something else.",
+      "revId": "5e0828869eb518df878ad5320f84e5b3abf9c3e5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
