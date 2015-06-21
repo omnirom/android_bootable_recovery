@@ -254,7 +254,7 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="405" y="114" />
+				<placement x="485" y="114" />
 				<conditions>
 					<condition var1="tw_no_battery_percent" var2="0" />
 					<condition var1="tw_battery" op="&gt;" var2="0" />
@@ -265,11 +265,11 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="760" y="114" />
+				<placement x="820" y="114" />
 				<conditions>
 					<condition var1="tw_no_cpu_temp" var2="0" />
 				</conditions>
-				<text>CPU: %tw_cpu_temp% C</text>
+				<text>CPU: %tw_cpu_temp% ℃</text>
 			</object>
 
 			<object type="button">

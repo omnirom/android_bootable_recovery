@@ -545,6 +545,12 @@ int GUIAction::reload(std::string arg)
 	int check = 0, ret_val = 0;
 	std::string theme_path;
 
+        std::string SelectedLang;
+        DataManager::GetValue("tw_lang_guisel",SelectedLang);//Read the selected lang name to SelectedLang
+
+        DataManager::SetValue("tw_lang_name",SelectedLang);
+
+
 	theme_path = DataManager::GetSettingsStoragePath();
 	if (PartitionManager.Mount_By_Path(theme_path.c_str(), 1) < 0) {
 		LOGERR("Unable to mount %s during reload function startup.\n", theme_path.c_str());
@@ -556,7 +562,7 @@ int GUIAction::reload(std::string arg)
 	{
 		// Loading the custom theme failed - try loading the stock theme
 		LOGINFO("Attempting to reload stock theme...\n");
-		if (PageManager::ReloadPackage("TWRP", TWRES "ui.xml"))
+		if (PageManager::ReloadPackage("TWRP", "/twres/ui.xml"))
 		{
 			LOGERR("Failed to load base packages.\n");
 			ret_val = 1;
