@@ -61,7 +61,14 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	// Load header text
 	// note: node can be NULL for the emergency console
 	child = node ? node->first_node("text") : NULL;
-	if (child)  mHeaderText = child->value();
+	if (child)  {
+    xml_attribute<>* id = child->first_attribute("id");
+    if (id)	mHeaderText = LanguageManager::parse(id->value());//load multi languages
+    if (mHeaderText == "")	mHeaderText = child->value();
+
+    // mHeaderText = child->value();
+    }
+
 	// Simple way to check for static state
 	mLastHeaderValue = gui_parse_text(mHeaderText);
 	mHeaderIsStatic = (mLastHeaderValue == mHeaderText);

@@ -162,6 +162,15 @@
 				<action function="page">reboot</action>
 			</object>
 
+			<object type="button" style="fillbutton">
+				<highlight color="%highlight_color%" />
+				<fill color="%button_fill_color%" />
+				<placement x="%col1_x%" y="1680" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
+				<font resource="font" color="%text_success_color%" />
+				<text>Select Language</text>
+				<action function="page">language_reload</action>
+			</object>
+
 			<object type="template" name="footer" />
 		</page>
 

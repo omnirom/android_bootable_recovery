@@ -51,8 +51,15 @@ GUIText::GUIText(xml_node<>* node)
 	// Load the placement
 	LoadPlacement(FindNode(node, "placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH, &mPlacement);
 
-	xml_node<>* child = FindNode(node, "text");
-	if (child)  mText = child->value();
+
+	xml_node<>* child = FindNode(node,"text");
+
+    if (child)  {
+    xml_attribute<>* id = child->first_attribute("id");
+    if (id)	mText = LanguageManager::parse(id->value());//load multi languages
+    if (mText == "")	mText = child->value();
+    }
+
 
 	// Simple way to check for static state
 	mLastValue = gui_parse_text(mText);

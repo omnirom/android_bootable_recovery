@@ -60,14 +60,28 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 	}
 
 	// Get the data for the list
+    //example: <listitem id="utc-9" name="(UTC -9) Alaska">AST9;ADT</listitem>
 	child = FindNode(node, "listitem");
-	if (!child) return;
-	while (child) {
-		ListData data;
+    if (!child) return;
+    while (child) {
+        ListData data;
+        //
+        xml_attribute<>* id = child->first_attribute("id");
+        //if id not null , next_attribute -> name
+        if (id) {
+        attr = id->next_attribute("name");
+        //get translate from language.xml
+        data.displayName = LanguageManager::parse(id->value());
+        if(data.displayName == "")
+            data.displayName = attr->value();
+        //LOGERR("DisplayName = %s\n",data.displayName.c_str());
+        } else {
+            attr = child->first_attribute("name");
+           if(attr)
+               data.displayName = attr->value();
+           //LOGERR("DisplayName = %s\n",data.displayName.c_str());
+        }
 
-		attr = child->first_attribute("name");
-		if (!attr) return;
-		data.displayName = attr->value();
 
 		data.variableValue = child->value();
 		if (child->value() == currentValue) {

@@ -8,6 +8,7 @@ LOCAL_SRC_FILES := \
     resources.cpp \
     pages.cpp \
     text.cpp \
+    languages.cpp \
     image.cpp \
     action.cpp \
     console.cpp \
@@ -84,6 +85,7 @@ LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 TWRP_RES_LOC := $(commands_recovery_local_path)/gui/devices/common/res
 TWRP_COMMON_XML := $(hide) echo "No common TWRP XML resources"
+TWRP_TRANSLATE_XML := $(hide) echo "No comon TWRP ui XML resources"
 
 ifeq ($(TW_CUSTOM_THEME),)
     ifeq ($(TW_THEME),)
@@ -108,18 +110,23 @@ ifeq ($(TW_CUSTOM_THEME),)
     ifeq ($(TW_THEME), portrait_mdpi)
         TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/480x800/res
         TWRP_COMMON_XML := cp -fr $(commands_recovery_local_path)/gui/devices/portrait/res/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
+        TWRP_TRANSLATE_XML := $(TWRP_RES_LOC)/../../sed_t.sh $(TWRP_RES_LOC)/../../list.xml $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)portrait.xml
     else ifeq ($(TW_THEME), portrait_hdpi)
         TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/1080x1920/res
         TWRP_COMMON_XML := cp -fr $(commands_recovery_local_path)/gui/devices/portrait/res/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
+        TWRP_TRANSLATE_XML := $(TWRP_RES_LOC)/../../sed_t.sh $(TWRP_RES_LOC)/../../list.xml $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)portrait.xml
     else ifeq ($(TW_THEME), watch_mdpi)
         TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/320x320/res
         TWRP_COMMON_XML := cp -fr $(commands_recovery_local_path)/gui/devices/watch/res/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
+        TWRP_TRANSLATE_XML := $(TWRP_RES_LOC)/../../sed_t.sh $(TWRP_RES_LOC)/../../list.xml $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)watch.xml
     else ifeq ($(TW_THEME), landscape_mdpi)
         TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/800x480/res
         TWRP_COMMON_XML := cp -fr $(commands_recovery_local_path)/gui/devices/landscape/res/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
+        TWRP_TRANSLATE_XML := $(TWRP_RES_LOC)/../../sed_t.sh $(TWRP_RES_LOC)/../../list.xml $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)landscape.xml
     else ifeq ($(TW_THEME), landscape_hdpi)
         TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/1920x1200/res
         TWRP_COMMON_XML := cp -fr $(commands_recovery_local_path)/gui/devices/landscape/res/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
+        TWRP_TRANSLATE_XML := $(TWRP_RES_LOC)/../../sed_t.sh $(TWRP_RES_LOC)/../../list.xml $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)landscape.xml
     else
         $(warning ****************************************************************************)
         $(warning * TW_THEME ($(TW_THEME)) is not valid.)
@@ -153,6 +160,9 @@ $(TWRP_RES_GEN):
 	$(TWRP_COMMON_XML)
 	$(TWRP_REMOVE_FONT)
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/
+	$(TWRP_RES_LOC)/../../sed_ui.xml.sh  $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)ui.xml
+	$(TWRP_TRANSLATE_XML)
+	$(TWRP_RES_LOC)/../../sed_t.sh $(TWRP_RES_LOC)/../../list.xml $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)ui.xml
 ifneq ($(TW_USE_TOOLBOX), true)
 	ln -sf $(TWRP_SH_TARGET) $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
 endif
