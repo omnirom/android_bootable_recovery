@@ -19,17 +19,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define  TRACE_TAG   TRACE_ADB
+#define TRACE_TAG TRACE_ADB
 
 #include "sysdeps.h"
 
 #include "adb.h"
+#include "adb_auth.h"
 #include "transport.h"
 
 int adb_main(int is_daemon, int server_port) {
     adb_device_banner = "sideload";
 
     signal(SIGPIPE, SIG_IGN);
+
+    // We can't require authentication for sideloading. http://b/22025550.
+    auth_required = false;
 
     init_transport_registration();
     usb_init();
