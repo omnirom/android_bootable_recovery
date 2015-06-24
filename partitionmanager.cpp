@@ -1471,13 +1471,24 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 
 			// Sleep for a bit so that the device will be ready
 			sleep(1);
-			if (dat->Has_Data_Media && dat->Mount(false) && TWFunc::Path_Exists("/data/media/0")) {
-				dat->Storage_Path = "/data/media/0";
+			if (dat->Has_Data_Media && dat->Mount(false)) {
+#ifdef TW_INTERNAL_STORAGE_PATH
+				dat->Storage_Path = EXPAND(TW_INTERNAL_STORAGE_PATH);
 				dat->Symlink_Path = dat->Storage_Path;
-				DataManager::SetValue("tw_storage_path", "/data/media/0");
-				DataManager::SetValue("tw_settings_path", "/data/media/0");
+				DataManager::SetValue("tw_storage_path", EXPAND(TW_INTERNAL_STORAGE_PATH));
+				DataManager::SetValue("tw_settings_path", EXPAND(TW_INTERNAL_STORAGE_PATH));
 				dat->UnMount(false);
 				Output_Partition(dat);
+#else
+				if (TWFunc::Path_Exists("/data/media/0")) {
+					dat->Storage_Path = "/data/media/0";
+					dat->Symlink_Path = dat->Storage_Path;
+					DataManager::SetValue("tw_storage_path", "/data/media/0");
+					DataManager::SetValue("tw_settings_path", "/data/media/0");
+					dat->UnMount(false);
+					Output_Partition(dat);
+				}
+#endif
 			}
 			Update_System_Details();
 			UnMount_Main_Partitions();

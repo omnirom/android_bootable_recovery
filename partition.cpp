@@ -43,6 +43,7 @@
 #include "fixPermissions.hpp"
 #include "infomanager.hpp"
 #include "set_metadata.h"
+#include "private/android_filesystem_config.h"
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
@@ -703,11 +704,21 @@ void TWPartition::Setup_Data_Media() {
 		Make_Dir("/sdcard", false);
 		Symlink_Mount_Point = "/sdcard";
 	}
-	if (Mount(false) && TWFunc::Path_Exists("/data/media/0")) {
-		Storage_Path = "/data/media/0";
+
+	if (Mount(false)) {
+#ifdef TW_INTERNAL_STORAGE_PATH
+		Storage_Path = EXPAND(TW_INTERNAL_STORAGE_PATH);
 		Symlink_Path = Storage_Path;
-		DataManager::SetValue(TW_INTERNAL_PATH, "/data/media/0");
+		DataManager::SetValue(TW_INTERNAL_PATH, EXPAND(TW_INTERNAL_STORAGE_PATH));
 		UnMount(true);
+#else
+		if ( TWFunc::Path_Exists("/data/media/0")) {
+			Storage_Path = "/data/media/0";
+			Symlink_Path = Storage_Path;
+			DataManager::SetValue(TW_INTERNAL_PATH, "/data/media/0");
+			UnMount(true);
+		}
+#endif
 	}
 	DataManager::SetValue("tw_has_internal", 1);
 	DataManager::SetValue("tw_has_data_media", 1);
@@ -2118,21 +2129,21 @@ void TWPartition::Recreate_Media_Folder(void) {
 		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
 		LOGINFO("Recreating /data/media folder.\n");
 		mkdir("/data/media", 0770);
+		// Internal Media always has same permissions
+		// Disregard possibly acquired permissions and always use defaults instead
+		chown("/data/media", AID_MEDIA_RW, AID_MEDIA_RW);
 		string Internal_path = DataManager::GetStrValue("tw_internal_path");
 		if (!Internal_path.empty()) {
 			LOGINFO("Recreating %s folder.\n", Internal_path.c_str());
 			mkdir(Internal_path.c_str(), 0770);
+			chown(Internal_path.c_str(), AID_MEDIA_RW, AID_MEDIA_RW);
 		}
-#ifdef TW_INTERNAL_STORAGE_PATH
-		mkdir(EXPAND(TW_INTERNAL_STORAGE_PATH), 0770);
-#endif
+
 #ifdef HAVE_SELINUX
-		// Afterwards, we will try to set the
-		// default metadata that we were hopefully able to get during
-		// early boot.
-		tw_set_default_metadata("/data/media");
+		setfilecon("/data/media", "u:object_r:media_rw_data_file:s0");
 		if (!Internal_path.empty())
-			tw_set_default_metadata(Internal_path.c_str());
+			setfilecon(Internal_path.c_str(), "u:object_r:media_rw_data_file:s0");
+
 #endif
 		// Toggle mount to ensure that "internal sdcard" gets mounted
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
