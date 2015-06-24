@@ -3,86 +3,46 @@
  *
  * System utilities.
  */
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <errno.h>
-#include <assert.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #define LOG_TAG "sysutil"
 #include "Log.h"
 #include "SysUtil.h"
 
-static int getFileStartAndLength(int fd, off_t *start_, size_t *length_)
-{
-    off_t start, end;
-    size_t length;
-
-    assert(start_ != NULL);
-    assert(length_ != NULL);
-
-    // TODO: isn't start always 0 for the single call site? just use fstat instead?
-
-    start = TEMP_FAILURE_RETRY(lseek(fd, 0L, SEEK_CUR));
-    end = TEMP_FAILURE_RETRY(lseek(fd, 0L, SEEK_END));
-
-    if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1 ||
-                start == (off_t) -1 || end == (off_t) -1) {
-        LOGE("could not determine length of file\n");
-        return -1;
-    }
-
-    length = end - start;
-    if (length == 0) {
-        LOGE("file is empty\n");
-        return -1;
-    }
-
-    *start_ = start;
-    *length_ = length;
-
-    return 0;
-}
-
-/*
- * Map a file (from fd's current offset) into a private, read-only memory
- * segment.  The file offset must be a multiple of the page size.
- *
- * On success, returns 0 and fills out "pMap".  On failure, returns a nonzero
- * value and does not disturb "pMap".
- */
-static int sysMapFD(int fd, MemMapping* pMap)
-{
-    off_t start;
-    size_t length;
-    void* memPtr;
-
+static bool sysMapFD(int fd, MemMapping* pMap) {
     assert(pMap != NULL);
 
-    if (getFileStartAndLength(fd, &start, &length) < 0)
-        return -1;
+    struct stat sb;
+    if (fstat(fd, &sb) == -1) {
+        LOGW("fstat(%d) failed: %s\n", fd, strerror(errno));
+        return false;
+    }
 
-    memPtr = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, start);
+    void* memPtr = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (memPtr == MAP_FAILED) {
-        LOGW("mmap(%d, R, PRIVATE, %d, %d) failed: %s\n", (int) length,
-            fd, (int) start, strerror(errno));
-        return -1;
+        LOGW("mmap(%d, R, PRIVATE, %d, 0) failed: %s\n", (int) sb.st_size, fd, strerror(errno));
+        return false;
     }
 
     pMap->addr = memPtr;
-    pMap->length = length;
+    pMap->length = sb.st_size;
     pMap->range_count = 1;
     pMap->ranges = malloc(sizeof(MappedRange));
     pMap->ranges[0].addr = memPtr;
-    pMap->ranges[0].length = length;
+    pMap->ranges[0].length = sb.st_size;
 
-    return 0;
+    return true;
 }
 
 static int sysMapBlockFile(FILE* mapf, MemMapping* pMap)
@@ -180,13 +140,13 @@ int sysMapFile(const char* fn, MemMapping* pMap)
         fclose(mapf);
     } else {
         // This is a regular file.
-        int fd = open(fn, O_RDONLY, 0);
-        if (fd < 0) {
+        int fd = open(fn, O_RDONLY);
+        if (fd == -1) {
             LOGE("Unable to open '%s': %s\n", fn, strerror(errno));
             return -1;
         }
 
-        if (sysMapFD(fd, pMap) != 0) {
+        if (!sysMapFD(fd, pMap)) {
             LOGE("Map of '%s' failed\n", fn);
             close(fd);
             return -1;
