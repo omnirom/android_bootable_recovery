@@ -43,6 +43,7 @@
 #include "fixPermissions.hpp"
 #include "infomanager.hpp"
 #include "set_metadata.h"
+#include "private/android_filesystem_config.h"
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
@@ -2123,16 +2124,21 @@ void TWPartition::Recreate_Media_Folder(void) {
 			LOGINFO("Recreating %s folder.\n", Internal_path.c_str());
 			mkdir(Internal_path.c_str(), 0770);
 		}
+
+		// Internal Media always has same permissions
+		// Disregard possibly acquired permissions and always use defaults instead
+		chown("/data/media", AID_MEDIA_RW, AID_MEDIA_RW);
+
 #ifdef TW_INTERNAL_STORAGE_PATH
 		mkdir(EXPAND(TW_INTERNAL_STORAGE_PATH), 0770);
+		chown(EXPAND(TW_INTERNAL_STORAGE_PATH), AID_MEDIA_RW, AID_MEDIA_RW);
 #endif
+
 #ifdef HAVE_SELINUX
-		// Afterwards, we will try to set the
-		// default metadata that we were hopefully able to get during
-		// early boot.
-		tw_set_default_metadata("/data/media");
+		setfilecon("/data/media", "u:object_r:media_rw_data_file:s0");
 		if (!Internal_path.empty())
-			tw_set_default_metadata(Internal_path.c_str());
+			setfilecon(Internal_path.c_str(), "u:object_r:media_rw_data_file:s0");
+		
 #endif
 		// Toggle mount to ensure that "internal sdcard" gets mounted
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
