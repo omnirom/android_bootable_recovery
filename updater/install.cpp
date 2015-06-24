@@ -80,9 +80,9 @@ void uiPrintf(State* state, const char* format, ...) {
 
 // Take a sha-1 digest and return it as a newly-allocated hex string.
 char* PrintSha1(const uint8_t* digest) {
-    char* buffer = malloc(SHA_DIGEST_SIZE*2 + 1);
-    int i;
+    char* buffer = reinterpret_cast<char*>(malloc(SHA_DIGEST_SIZE*2 + 1));
     const char* alphabet = "0123456789abcdef";
+    size_t i;
     for (i = 0; i < SHA_DIGEST_SIZE; ++i) {
         buffer[i*2] = alphabet[(digest[i] >> 4) & 0xf];
         buffer[i*2+1] = alphabet[digest[i] & 0xf];
@@ -138,18 +138,20 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
         goto done;
     }
 
-    char *secontext = NULL;
+    {
+        char *secontext = NULL;
 
-    if (sehandle) {
-        selabel_lookup(sehandle, &secontext, mount_point, 0755);
-        setfscreatecon(secontext);
-    }
+        if (sehandle) {
+            selabel_lookup(sehandle, &secontext, mount_point, 0755);
+            setfscreatecon(secontext);
+        }
 
-    mkdir(mount_point, 0755);
+        mkdir(mount_point, 0755);
 
-    if (secontext) {
-        freecon(secontext);
-        setfscreatecon(NULL);
+        if (secontext) {
+            freecon(secontext);
+            setfscreatecon(NULL);
+        }
     }
 
     if (strcmp(partition_type, "MTD") == 0) {
@@ -207,11 +209,13 @@ Value* IsMountedFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     scan_mounted_volumes();
-    const MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point);
-    if (vol == NULL) {
-        result = strdup("");
-    } else {
-        result = mount_point;
+    {
+        const MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point);
+        if (vol == NULL) {
+            result = strdup("");
+        } else {
+            result = mount_point;
+        }
     }
 
 done:
@@ -235,17 +239,19 @@ Value* UnmountFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     scan_mounted_volumes();
-    const MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point);
-    if (vol == NULL) {
-        uiPrintf(state, "unmount of %s failed; no such volume\n", mount_point);
-        result = strdup("");
-    } else {
-        int ret = unmount_mounted_volume(vol);
-        if (ret != 0) {
-           uiPrintf(state, "unmount of %s failed (%d): %s\n",
-                    mount_point, ret, strerror(errno));
+    {
+        const MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point);
+        if (vol == NULL) {
+            uiPrintf(state, "unmount of %s failed; no such volume\n", mount_point);
+            result = strdup("");
+        } else {
+            int ret = unmount_mounted_volume(vol);
+            if (ret != 0) {
+                uiPrintf(state, "unmount of %s failed (%d): %s\n",
+                         mount_point, ret, strerror(errno));
+            }
+            result = mount_point;
         }
-        result = mount_point;
     }
 
 done:
@@ -418,9 +424,8 @@ done:
 }
 
 Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char** paths = malloc(argc * sizeof(char*));
-    int i;
-    for (i = 0; i < argc; ++i) {
+    char** paths = reinterpret_cast<char**>(malloc(argc * sizeof(char*)));
+    for (int i = 0; i < argc; ++i) {
         paths[i] = Evaluate(state, argv[i]);
         if (paths[i] == NULL) {
             int j;
@@ -435,7 +440,7 @@ Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
     bool recursive = (strcmp(name, "delete_recursive") == 0);
 
     int success = 0;
-    for (i = 0; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i) {
         if ((recursive ? dirUnlinkHierarchy(paths[i]) : unlink(paths[i])) == 0)
             ++success;
         free(paths[i]);
@@ -522,8 +527,6 @@ Value* PackageExtractFileFn(const char* name, State* state,
     }
     bool success = false;
 
-    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
-
     if (argc == 2) {
         // The two-argument version extracts to a file.
 
@@ -539,14 +542,16 @@ Value* PackageExtractFileFn(const char* name, State* state,
             goto done2;
         }
 
-        FILE* f = fopen(dest_path, "wb");
-        if (f == NULL) {
-            printf("%s: can't open %s for write: %s\n",
-                    name, dest_path, strerror(errno));
-            goto done2;
+        {
+            FILE* f = fopen(dest_path, "wb");
+            if (f == NULL) {
+                printf("%s: can't open %s for write: %s\n",
+                        name, dest_path, strerror(errno));
+                goto done2;
+            }
+            success = mzExtractZipEntryToFile(za, entry, fileno(f));
+            fclose(f);
         }
-        success = mzExtractZipEntryToFile(za, entry, fileno(f));
-        fclose(f);
 
       done2:
         free(zip_path);
@@ -557,7 +562,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
         // as the result.
 
         char* zip_path;
-        Value* v = malloc(sizeof(Value));
+        Value* v = reinterpret_cast<Value*>(malloc(sizeof(Value)));
         v->type = VAL_BLOB;
         v->size = -1;
         v->data = NULL;
@@ -572,7 +577,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
         }
 
         v->size = mzGetZipEntryUncompLen(entry);
-        v->data = malloc(v->size);
+        v->data = reinterpret_cast<char*>(malloc(v->size));
         if (v->data == NULL) {
             printf("%s: failed to allocate %ld bytes for %s\n",
                     name, (long)v->size, zip_path);
@@ -871,17 +876,14 @@ static int do_SetMetadataRecursive(const char* filename, const struct stat *stat
 }
 
 static Value* SetMetadataFn(const char* name, State* state, int argc, Expr* argv[]) {
-    int i;
     int bad = 0;
-    static int nwarnings = 0;
     struct stat sb;
     Value* result = NULL;
 
     bool recursive = (strcmp(name, "set_metadata_recursive") == 0);
 
     if ((argc % 2) != 1) {
-        return ErrorAbort(state, "%s() expects an odd number of arguments, got %d",
-                          name, argc);
+        return ErrorAbort(state, "%s() expects an odd number of arguments, got %d", name, argc);
     }
 
     char** args = ReadVarArgs(state, argc, argv);
@@ -892,20 +894,22 @@ static Value* SetMetadataFn(const char* name, State* state, int argc, Expr* argv
         goto done;
     }
 
-    struct perm_parsed_args parsed = ParsePermArgs(state, argc, args);
+    {
+        struct perm_parsed_args parsed = ParsePermArgs(state, argc, args);
 
-    if (recursive) {
-        recursive_parsed_args = parsed;
-        recursive_state = state;
-        bad += nftw(args[0], do_SetMetadataRecursive, 30, FTW_CHDIR | FTW_DEPTH | FTW_PHYS);
-        memset(&recursive_parsed_args, 0, sizeof(recursive_parsed_args));
-        recursive_state = NULL;
-    } else {
-        bad += ApplyParsedPerms(state, args[0], &sb, parsed);
+        if (recursive) {
+            recursive_parsed_args = parsed;
+            recursive_state = state;
+            bad += nftw(args[0], do_SetMetadataRecursive, 30, FTW_CHDIR | FTW_DEPTH | FTW_PHYS);
+            memset(&recursive_parsed_args, 0, sizeof(recursive_parsed_args));
+            recursive_state = NULL;
+        } else {
+            bad += ApplyParsedPerms(state, args[0], &sb, parsed);
+        }
     }
 
 done:
-    for (i = 0; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i) {
         free(args[i]);
     }
     free(args);
@@ -925,8 +929,7 @@ Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 1) {
         return ErrorAbort(state, "%s() expects 1 arg, got %d", name, argc);
     }
-    char* key;
-    key = Evaluate(state, argv[0]);
+    char* key = Evaluate(state, argv[0]);
     if (key == NULL) return NULL;
 
     char value[PROPERTY_VALUE_MAX];
@@ -953,29 +956,27 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     struct stat st;
     if (stat(filename, &st) < 0) {
-        ErrorAbort(state, "%s: failed to stat \"%s\": %s",
-                   name, filename, strerror(errno));
+        ErrorAbort(state, "%s: failed to stat \"%s\": %s", name, filename, strerror(errno));
         goto done;
     }
 
 #define MAX_FILE_GETPROP_SIZE    65536
 
     if (st.st_size > MAX_FILE_GETPROP_SIZE) {
-        ErrorAbort(state, "%s too large for %s (max %d)",
-                   filename, name, MAX_FILE_GETPROP_SIZE);
+        ErrorAbort(state, "%s too large for %s (max %d)", filename, name, MAX_FILE_GETPROP_SIZE);
         goto done;
     }
 
-    buffer = malloc(st.st_size+1);
+    buffer = reinterpret_cast<char*>(malloc(st.st_size+1));
     if (buffer == NULL) {
         ErrorAbort(state, "%s: failed to alloc %lld bytes", name, (long long)st.st_size+1);
         goto done;
     }
 
-    FILE* f = fopen(filename, "rb");
+    FILE* f;
+    f = fopen(filename, "rb");
     if (f == NULL) {
-        ErrorAbort(state, "%s: failed to open %s: %s",
-                   name, filename, strerror(errno));
+        ErrorAbort(state, "%s: failed to open %s: %s", name, filename, strerror(errno));
         goto done;
     }
 
@@ -989,7 +990,8 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     fclose(f);
 
-    char* line = strtok(buffer, "\n");
+    char* line;
+    line = strtok(buffer, "\n");
     do {
         // skip whitespace at start of line
         while (*line && isspace(*line)) ++line;
@@ -1033,15 +1035,6 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     return StringValue(result);
 }
 
-
-static bool write_raw_image_cb(const unsigned char* data,
-                               int data_len, void* ctx) {
-    int r = mtd_write_data((MtdWriteContext*)ctx, (const char *)data, data_len);
-    if (r == data_len) return true;
-    printf("%s\n", strerror(errno));
-    return false;
-}
-
 // write_raw_image(filename_or_blob, partition)
 Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* result = NULL;
@@ -1068,14 +1061,16 @@ Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     mtd_scan_partitions();
-    const MtdPartition* mtd = mtd_find_partition_by_name(partition);
+    const MtdPartition* mtd;
+    mtd = mtd_find_partition_by_name(partition);
     if (mtd == NULL) {
         printf("%s: no mtd partition named \"%s\"\n", name, partition);
         result = strdup("");
         goto done;
     }
 
-    MtdWriteContext* ctx = mtd_write_partition(mtd);
+    MtdWriteContext* ctx;
+    ctx = mtd_write_partition(mtd);
     if (ctx == NULL) {
         printf("%s: can't write mtd partition \"%s\"\n",
                 name, partition);
@@ -1090,14 +1085,13 @@ Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
         char* filename = contents->data;
         FILE* f = fopen(filename, "rb");
         if (f == NULL) {
-            printf("%s: can't open %s: %s\n",
-                    name, filename, strerror(errno));
+            printf("%s: can't open %s: %s\n", name, filename, strerror(errno));
             result = strdup("");
             goto done;
         }
 
         success = true;
-        char* buffer = malloc(BUFSIZ);
+        char* buffer = reinterpret_cast<char*>(malloc(BUFSIZ));
         int read;
         while (success && (read = fread(buffer, 1, BUFSIZ, f)) > 0) {
             int wrote = mtd_write_data(ctx, buffer, read);
@@ -1144,8 +1138,7 @@ Value* ApplyPatchSpaceFn(const char* name, State* state,
     char* endptr;
     size_t bytes = strtol(bytes_str, &endptr, 10);
     if (bytes == 0 && endptr == bytes_str) {
-        ErrorAbort(state, "%s(): can't parse \"%s\" as byte count\n\n",
-                   name, bytes_str);
+        ErrorAbort(state, "%s(): can't parse \"%s\" as byte count\n\n", name, bytes_str);
         free(bytes_str);
         return NULL;
     }
@@ -1205,7 +1198,7 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
         return NULL;
     }
 
-    char** patch_sha_str = malloc(patchcount * sizeof(char*));
+    char** patch_sha_str = reinterpret_cast<char**>(malloc(patchcount * sizeof(char*)));
     for (i = 0; i < patchcount; ++i) {
         patch_sha_str[i] = patches[i*2]->data;
         patches[i*2]->data = NULL;
@@ -1264,7 +1257,7 @@ Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
     for (i = 0; i < argc; ++i) {
         size += strlen(args[i]);
     }
-    char* buffer = malloc(size+1);
+    char* buffer = reinterpret_cast<char*>(malloc(size+1));
     size = 0;
     for (i = 0; i < argc; ++i) {
         strcpy(buffer+size, args[i]);
@@ -1294,7 +1287,7 @@ Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
         return NULL;
     }
 
-    char** args2 = malloc(sizeof(char*) * (argc+1));
+    char** args2 = reinterpret_cast<char**>(malloc(sizeof(char*) * (argc+1)));
     memcpy(args2, args, sizeof(char*) * argc);
     args2[argc] = NULL;
 
@@ -1361,7 +1354,7 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     int i;
-    uint8_t* arg_digest = malloc(SHA_DIGEST_SIZE);
+    uint8_t* arg_digest = reinterpret_cast<uint8_t*>(malloc(SHA_DIGEST_SIZE));
     for (i = 1; i < argc; ++i) {
         if (args[i]->type != VAL_STRING) {
             printf("%s(): arg %d is not a string; skipping",
@@ -1397,7 +1390,7 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* filename;
     if (ReadArgs(state, argv, 1, &filename) < 0) return NULL;
 
-    Value* v = malloc(sizeof(Value));
+    Value* v = reinterpret_cast<Value*>(malloc(sizeof(Value)));
     v->type = VAL_BLOB;
 
     FileContents fc;
@@ -1555,15 +1548,14 @@ Value* Tune2FsFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, "%s() could not read args", name);
     }
 
-    int i;
-    char** args2 = malloc(sizeof(char*) * (argc+1));
+    char** args2 = reinterpret_cast<char**>(malloc(sizeof(char*) * (argc+1)));
     // Tune2fs expects the program name as its args[0]
     args2[0] = strdup(name);
-    for (i = 0; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i) {
        args2[i + 1] = args[i];
     }
     int result = tune2fs_main(argc + 1, args2);
-    for (i = 0; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i) {
         free(args[i]);
     }
     free(args);

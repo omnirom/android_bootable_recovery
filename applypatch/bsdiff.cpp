@@ -156,24 +156,24 @@ static void qsufsort(off_t *I,off_t *V,u_char *old,off_t oldsize)
 	for(i=0;i<oldsize+1;i++) I[V[i]]=i;
 }
 
-static off_t matchlen(u_char *old,off_t oldsize,u_char *new,off_t newsize)
+static off_t matchlen(u_char *olddata,off_t oldsize,u_char *newdata,off_t newsize)
 {
 	off_t i;
 
 	for(i=0;(i<oldsize)&&(i<newsize);i++)
-		if(old[i]!=new[i]) break;
+		if(olddata[i]!=newdata[i]) break;
 
 	return i;
 }
 
 static off_t search(off_t *I,u_char *old,off_t oldsize,
-		u_char *new,off_t newsize,off_t st,off_t en,off_t *pos)
+		u_char *newdata,off_t newsize,off_t st,off_t en,off_t *pos)
 {
 	off_t x,y;
 
 	if(en-st<2) {
-		x=matchlen(old+I[st],oldsize-I[st],new,newsize);
-		y=matchlen(old+I[en],oldsize-I[en],new,newsize);
+		x=matchlen(old+I[st],oldsize-I[st],newdata,newsize);
+		y=matchlen(old+I[en],oldsize-I[en],newdata,newsize);
 
 		if(x>y) {
 			*pos=I[st];
@@ -185,10 +185,10 @@ static off_t search(off_t *I,u_char *old,off_t oldsize,
 	};
 
 	x=st+(en-st)/2;
-	if(memcmp(old+I[x],new,MIN(oldsize-I[x],newsize))<0) {
-		return search(I,old,oldsize,new,newsize,x,en,pos);
+	if(memcmp(old+I[x],newdata,MIN(oldsize-I[x],newsize))<0) {
+		return search(I,old,oldsize,newdata,newsize,x,en,pos);
 	} else {
-		return search(I,old,oldsize,new,newsize,st,x,pos);
+		return search(I,old,oldsize,newdata,newsize,st,x,pos);
 	};
 }
 
@@ -212,8 +212,8 @@ static void offtout(off_t x,u_char *buf)
 
 // This is main() from bsdiff.c, with the following changes:
 //
-//    - old, oldsize, new, newsize are arguments; we don't load this
-//      data from files.  old and new are owned by the caller; we
+//    - old, oldsize, newdata, newsize are arguments; we don't load this
+//      data from files.  old and newdata are owned by the caller; we
 //      don't free them at the end.
 //
 //    - the "I" block of memory is owned by the caller, who passes a
@@ -221,7 +221,7 @@ static void offtout(off_t x,u_char *buf)
 //      bsdiff() multiple times with the same 'old' data, we only do
 //      the qsufsort() step the first time.
 //
-int bsdiff(u_char* old, off_t oldsize, off_t** IP, u_char* new, off_t newsize,
+int bsdiff(u_char* old, off_t oldsize, off_t** IP, u_char* newdata, off_t newsize,
            const char* patch_filename)
 {
 	int fd;
@@ -242,15 +242,15 @@ int bsdiff(u_char* old, off_t oldsize, off_t** IP, u_char* new, off_t newsize,
 
         if (*IP == NULL) {
             off_t* V;
-            *IP = malloc((oldsize+1) * sizeof(off_t));
-            V = malloc((oldsize+1) * sizeof(off_t));
+            *IP = reinterpret_cast<off_t*>(malloc((oldsize+1) * sizeof(off_t)));
+            V = reinterpret_cast<off_t*>(malloc((oldsize+1) * sizeof(off_t)));
             qsufsort(*IP, V, old, oldsize);
             free(V);
         }
         I = *IP;
 
-	if(((db=malloc(newsize+1))==NULL) ||
-		((eb=malloc(newsize+1))==NULL)) err(1,NULL);
+	if(((db=reinterpret_cast<u_char*>(malloc(newsize+1)))==NULL) ||
+		((eb=reinterpret_cast<u_char*>(malloc(newsize+1)))==NULL)) err(1,NULL);
 	dblen=0;
 	eblen=0;
 
@@ -284,26 +284,26 @@ int bsdiff(u_char* old, off_t oldsize, off_t** IP, u_char* new, off_t newsize,
 		oldscore=0;
 
 		for(scsc=scan+=len;scan<newsize;scan++) {
-			len=search(I,old,oldsize,new+scan,newsize-scan,
+			len=search(I,old,oldsize,newdata+scan,newsize-scan,
 					0,oldsize,&pos);
 
 			for(;scsc<scan+len;scsc++)
 			if((scsc+lastoffset<oldsize) &&
-				(old[scsc+lastoffset] == new[scsc]))
+				(old[scsc+lastoffset] == newdata[scsc]))
 				oldscore++;
 
 			if(((len==oldscore) && (len!=0)) ||
 				(len>oldscore+8)) break;
 
 			if((scan+lastoffset<oldsize) &&
-				(old[scan+lastoffset] == new[scan]))
+				(old[scan+lastoffset] == newdata[scan]))
 				oldscore--;
 		};
 
 		if((len!=oldscore) || (scan==newsize)) {
 			s=0;Sf=0;lenf=0;
 			for(i=0;(lastscan+i<scan)&&(lastpos+i<oldsize);) {
-				if(old[lastpos+i]==new[lastscan+i]) s++;
+				if(old[lastpos+i]==newdata[lastscan+i]) s++;
 				i++;
 				if(s*2-i>Sf*2-lenf) { Sf=s; lenf=i; };
 			};
@@ -312,7 +312,7 @@ int bsdiff(u_char* old, off_t oldsize, off_t** IP, u_char* new, off_t newsize,
 			if(scan<newsize) {
 				s=0;Sb=0;
 				for(i=1;(scan>=lastscan+i)&&(pos>=i);i++) {
-					if(old[pos-i]==new[scan-i]) s++;
+					if(old[pos-i]==newdata[scan-i]) s++;
 					if(s*2-i>Sb*2-lenb) { Sb=s; lenb=i; };
 				};
 			};
@@ -321,9 +321,9 @@ int bsdiff(u_char* old, off_t oldsize, off_t** IP, u_char* new, off_t newsize,
 				overlap=(lastscan+lenf)-(scan-lenb);
 				s=0;Ss=0;lens=0;
 				for(i=0;i<overlap;i++) {
-					if(new[lastscan+lenf-overlap+i]==
+					if(newdata[lastscan+lenf-overlap+i]==
 					   old[lastpos+lenf-overlap+i]) s++;
-					if(new[scan-lenb+i]==
+					if(newdata[scan-lenb+i]==
 					   old[pos-lenb+i]) s--;
 					if(s>Ss) { Ss=s; lens=i+1; };
 				};
@@ -333,9 +333,9 @@ int bsdiff(u_char* old, off_t oldsize, off_t** IP, u_char* new, off_t newsize,
 			};
 
 			for(i=0;i<lenf;i++)
-				db[dblen+i]=new[lastscan+i]-old[lastpos+i];
+				db[dblen+i]=newdata[lastscan+i]-old[lastpos+i];
 			for(i=0;i<(scan-lenb)-(lastscan+lenf);i++)
-				eb[eblen+i]=new[lastscan+lenf+i];
+				eb[eblen+i]=newdata[lastscan+lenf+i];
 
 			dblen+=lenf;
 			eblen+=(scan-lenb)-(lastscan+lenf);
