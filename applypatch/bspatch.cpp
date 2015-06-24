@@ -182,10 +182,9 @@ int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
         printf("failed to bzinit extra stream (%d)\n", bzerr);
     }
 
-    *new_data = malloc(*new_size);
+    *new_data = reinterpret_cast<unsigned char*>(malloc(*new_size));
     if (*new_data == NULL) {
-        printf("failed to allocate %ld bytes of memory for output file\n",
-               (long)*new_size);
+        printf("failed to allocate %zd bytes of memory for output file\n", *new_size);
         return 1;
     }
 

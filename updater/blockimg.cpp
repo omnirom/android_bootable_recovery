@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <libgen.h>
+#include <linux/fs.h>
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -45,10 +46,6 @@
 // erase to mean fill the region with zeroes.
 #define DEBUG_ERASE  0
 
-#ifndef BLKDISCARD
-#define BLKDISCARD _IO(0x12,119)
-#endif
-
 #define STASH_DIRECTORY_BASE "/cache/recovery"
 #define STASH_DIRECTORY_MODE 0700
 #define STASH_FILE_MODE 0600
@@ -67,7 +64,7 @@ typedef struct {
 static RangeSet* parse_range(char* text) {
     char* save;
     char* token;
-    int i, num;
+    int num;
     long int val;
     RangeSet* out = NULL;
     size_t bufsize;
@@ -93,7 +90,7 @@ static RangeSet* parse_range(char* text) {
     num = (int) val;
     bufsize = sizeof(RangeSet) + num * sizeof(int);
 
-    out = malloc(bufsize);
+    out = reinterpret_cast<RangeSet*>(malloc(bufsize));
 
     if (!out) {
         fprintf(stderr, "failed to allocate range of %zu bytes\n", bufsize);
@@ -103,7 +100,7 @@ static RangeSet* parse_range(char* text) {
     out->count = num / 2;
     out->size = 0;
 
-    for (i = 0; i < num; ++i) {
+    for (int i = 0; i < num; ++i) {
         token = strtok_r(NULL, ",", &save);
 
         if (!token) {
@@ -478,7 +475,7 @@ static char* GetStashFileName(const char* base, const char* id, const char* post
     }
 
     len = strlen(STASH_DIRECTORY_BASE) + 1 + strlen(base) + 1 + strlen(id) + strlen(postfix) + 1;
-    fn = malloc(len);
+    fn = reinterpret_cast<char*>(malloc(len));
 
     if (fn == NULL) {
         fprintf(stderr, "failed to malloc %d bytes for fn\n", len);
@@ -529,7 +526,7 @@ static void EnumerateStash(const char* dirname, StashCallback callback, void* da
         }
 
         len = strlen(dirname) + 1 + strlen(item->d_name) + 1;
-        fn = malloc(len);
+        fn = reinterpret_cast<char*>(malloc(len));
 
         if (fn == NULL) {
             fprintf(stderr, "failed to malloc %d bytes for fn\n", len);
@@ -649,7 +646,8 @@ static int LoadStash(const char* base, const char* id, int verify, int* blocks, 
     fprintf(stderr, " loading %s\n", fn);
 
     if ((st.st_size % BLOCKSIZE) != 0) {
-        fprintf(stderr, "%s size %zd not multiple of block size %d", fn, st.st_size, BLOCKSIZE);
+        fprintf(stderr, "%s size %" PRId64 " not multiple of block size %d",
+                fn, static_cast<int64_t>(st.st_size), BLOCKSIZE);
         goto lsout;
     }
 
@@ -876,7 +874,6 @@ csout:
 static int SaveStash(const char* base, char** wordsave, uint8_t** buffer, size_t* buffer_alloc,
                       int fd, int usehash, int* isunresumable) {
     char *id = NULL;
-    int res = -1;
     int blocks = 0;
 
     if (!wordsave || !buffer || !buffer_alloc || !isunresumable) {
@@ -972,7 +969,6 @@ static int LoadSrcTgtVersion2(char** wordsave, RangeSet** tgt, int* src_blocks,
     char* word;
     char* colonsave;
     char* colon;
-    int id;
     int res;
     RangeSet* locs;
     size_t stashalloc = 0;
@@ -1088,7 +1084,6 @@ static int LoadSrcTgtVersion3(CommandParameters* params, RangeSet** tgt, int* sr
     char* srchash = NULL;
     char* tgthash = NULL;
     int stash_exists = 0;
-    int overlap_blocks = 0;
     int rc = -1;
     uint8_t* tgtbuffer = NULL;
 
@@ -1511,7 +1506,7 @@ static int PerformCommandErase(CommandParameters* params) {
     range = strtok_r(NULL, " ", &params->cpos);
 
     if (range == NULL) {
-        fprintf(stderr, "missing target blocks for zero\n");
+        fprintf(stderr, "missing target blocks for erase\n");
         goto pceout;
     }
 
@@ -1686,7 +1681,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int argc, 
 
     // The data in transfer_list_value is not necessarily null-terminated, so we need
     // to copy it to a new buffer and add the null that strtok_r will need.
-    transfer_list = malloc(transfer_list_value->size + 1);
+    transfer_list = reinterpret_cast<char*>(malloc(transfer_list_value->size + 1));
 
     if (transfer_list == NULL) {
         fprintf(stderr, "failed to allocate %zd bytes for transfer list\n",
@@ -1964,13 +1959,15 @@ Value* RangeSha1Fn(const char* name, State* state, int argc, Expr* argv[]) {
         goto done;
     }
 
-    int fd = open(blockdev_filename->data, O_RDWR);
+    int fd;
+    fd = open(blockdev_filename->data, O_RDWR);
     if (fd < 0) {
         ErrorAbort(state, "open \"%s\" failed: %s", blockdev_filename->data, strerror(errno));
         goto done;
     }
 
-    RangeSet* rs = parse_range(ranges->data);
+    RangeSet* rs;
+    rs = parse_range(ranges->data);
     uint8_t buffer[BLOCKSIZE];
 
     SHA_CTX ctx;
