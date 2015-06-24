@@ -619,13 +619,6 @@ bool mzProcessZipEntryContents(const ZipArchive *pArchive,
     return ret;
 }
 
-static bool crcProcessFunction(const unsigned char *data, int dataLen,
-        void *crc)
-{
-    *(unsigned long *)crc = crc32(*(unsigned long *)crc, data, dataLen);
-    return true;
-}
-
 typedef struct {
     char *buf;
     int bufLen;
