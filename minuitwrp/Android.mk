@@ -52,6 +52,10 @@ ifeq ($(RECOVERY_GRAPHICS_USE_LINELENGTH), true)
 LOCAL_CFLAGS += -DRECOVERY_GRAPHICS_USE_LINELENGTH
 endif
 
+ifeq ($(TW_DISABLE_DOUBLE_BUFFERING), true)
+LOCAL_CFLAGS += -DTW_DISABLE_DOUBLE_BUFFERING
+endif
+
 #Remove the # from the line below to enable event logging
 #TWRP_EVENT_LOGGING := true
 ifeq ($(TWRP_EVENT_LOGGING), true)

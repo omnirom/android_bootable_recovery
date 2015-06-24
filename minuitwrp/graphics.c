@@ -295,8 +295,10 @@ static int get_framebuffer(GGLSurface *fb)
 
     fb++;
 
+#ifdef TW_DISABLE_DOUBLE_BUFFERING
     /* check if we can use double buffering */
     if (vi.yres * fi.line_length * 2 > fi.smem_len)
+#endif
         return fd;
 
     double_buffering = 1;
