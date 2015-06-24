@@ -295,8 +295,12 @@ static int get_framebuffer(GGLSurface *fb)
 
     fb++;
 
+#ifdef DISABLE_DOUBLE_BUFFERING
+    /* disable double buffering on RK3188 SoC devices */
+#else
     /* check if we can use double buffering */
     if (vi.yres * fi.line_length * 2 > fi.smem_len)
+#endif
         return fd;
 
     double_buffering = 1;

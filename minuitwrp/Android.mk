@@ -52,6 +52,10 @@ ifeq ($(RECOVERY_GRAPHICS_USE_LINELENGTH), true)
 LOCAL_CFLAGS += -DRECOVERY_GRAPHICS_USE_LINELENGTH
 endif
 
+ifneq ($(filter rk3188,$(TARGET_BOARD_PLATFORM)),)
+LOCAL_CFLAGS += -DDISABLE_DOUBLE_BUFFERING
+endif
+
 #Remove the # from the line below to enable event logging
 #TWRP_EVENT_LOGGING := true
 ifeq ($(TWRP_EVENT_LOGGING), true)
