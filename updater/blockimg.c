@@ -162,7 +162,7 @@ static int range_overlaps(RangeSet* r1, RangeSet* r2) {
             r2_0 = r2->pos[j * 2];
             r2_1 = r2->pos[j * 2 + 1];
 
-            if (!(r2_0 > r1_1 || r1_0 > r2_1)) {
+            if (!(r2_0 >= r1_1 || r1_0 >= r2_1)) {
                 return 1;
             }
         }
