@@ -46,7 +46,7 @@ class HardwareKeyboard;
 class Page
 {
 public:
-	Page(xml_node<>* page, std::vector<xml_node<>*> *templates = NULL);
+	Page(xml_node<>* page, std::vector<xml_node<>*> *templates);
 	virtual ~Page();
 
 	std::string GetName(void)   { return mName; }
@@ -72,7 +72,7 @@ protected:
 	COLOR mBackground;
 
 protected:
-	bool ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates = NULL, int depth = 0);
+	bool ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates, int depth);
 };
 
 class PageSet

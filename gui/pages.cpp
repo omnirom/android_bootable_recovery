@@ -267,7 +267,7 @@ int ActionObject::SetActionPos(int x, int y, int w, int h)
 	return 0;
 }
 
-Page::Page(xml_node<>* page, std::vector<xml_node<>*> *templates /* = NULL */)
+Page::Page(xml_node<>* page, std::vector<xml_node<>*> *templates)
 {
 	mTouchStart = NULL;
 
@@ -296,9 +296,7 @@ Page::Page(xml_node<>* page, std::vector<xml_node<>*> *templates /* = NULL */)
 	LOGINFO("Loading page %s\n", mName.c_str());
 
 	// This is a recursive routine for template handling
-	ProcessNode(page, templates);
-
-	return;
+	ProcessNode(page, templates, 0);
 }
 
 Page::~Page()
@@ -307,7 +305,7 @@ Page::~Page()
 		delete *itr;
 }
 
-bool Page::ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates /* = NULL */, int depth /* = 0 */)
+bool Page::ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates, int depth)
 {
 	if (depth == 10)
 	{
@@ -315,26 +313,20 @@ bool Page::ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates /* 
 		return false;
 	}
 
-	// Let's retrieve the background value, if any
-	xml_node<>* bg = page->first_node("background");
-	if (bg)
+	for (xml_node<>* child = page->first_node(); child; child = child->next_sibling())
 	{
-		xml_attribute<>* attr = bg->first_attribute("color");
-		if (attr)
-		{
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mBackground);
+		std::string type = child->name();
+
+		if (type == "background") {
+			mBackground = LoadAttrColor(child, "color", COLOR(0,0,0,0));
+			continue;
 		}
-	}
 
-	xml_node<>* child;
-	child = page->first_node("object");
-	while (child)
-	{
-		if (!child->first_attribute("type"))
-			break;
-
-		std::string type = child->first_attribute("type")->value();
+		if (type == "object") {
+			// legacy format : <object type="...">
+			xml_attribute<>* attr = child->first_attribute("type");
+			type = attr ? attr->value() : "*unspecified*";
+		}
 
 		if (type == "text")
 		{
@@ -486,14 +478,14 @@ bool Page::ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates /* 
 							break;
 						node = node->next_sibling("template");
 					}
+					// [check] why is there no if (node_found) here too?
 				}
 			}
 		}
 		else
 		{
-			LOGERR("Unknown object type.\n");
+			LOGERR("Unknown object type: %s.\n", type.c_str());
 		}
-		child = child->next_sibling("object");
 	}
 	return true;
 }
@@ -660,7 +652,7 @@ PageSet::PageSet(char* xmlFile)
 	if (xmlFile)
 		mDoc.parse<0>(mXmlFile);
 	else
-		mCurrentPage = new Page(NULL);
+		mCurrentPage = new Page(NULL, NULL);
 }
 
 PageSet::~PageSet()
