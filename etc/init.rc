@@ -125,6 +125,7 @@ service healthd /sbin/healthd -r
     seclabel u:r:healthd:s0
 
 service recovery /sbin/recovery
+    seclabel u:r:recovery:s0
 
 service adbd /sbin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
     disabled
