@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f8eba960_64eda48b",
+        "filename": "minuitwrp/graphics.c",
+        "patchSetId": 8
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-06-28T22:02:19Z",
+      "side": 1,
+      "message": "Maybe print to stdout that you are disabling double buffering here.",
+      "revId": "e5740fda57909bf81fc34a93e2111cc5010fa2a9",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
