@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f8eba960_44606031",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2120,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-28T19:46:29Z",
+      "side": 1,
+      "message": "Android\u0027s installd creates the dir with 0770 - where does 0775 come from?",
+      "revId": "80ab02498a9e63617606a2ae93486982b971445e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8eba960_24655c41",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2124,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-28T19:46:29Z",
+      "side": 1,
+      "message": "Android\u0027s installd creates the dir with 0770 - where does 0775 come from?",
+      "revId": "80ab02498a9e63617606a2ae93486982b971445e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8eba960_045a5883",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2129,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-28T19:46:29Z",
+      "side": 1,
+      "message": "Can we somehow include the right include file and use AID_MEDIA_RW here?",
+      "revId": "80ab02498a9e63617606a2ae93486982b971445e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8eba960_c453506b",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2139,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-06-28T19:46:29Z",
+      "side": 1,
+      "message": "This should use Internal_path and not TW_INTERNAL_STORAGE_PATH",
+      "revId": "80ab02498a9e63617606a2ae93486982b971445e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
