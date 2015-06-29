@@ -94,6 +94,40 @@ extern "C" void gui_print_color(const char *color, const char *fmt, ...)
 	return;
 }
 
+extern "C" void gui_parse_print(const char *fmt, ...)
+{
+	char buf[512];		// We're going to limit a single request to 512 bytes
+	string temp = fmt;
+	temp = gui_parse_text(temp);
+
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(buf, 512, temp.c_str(), ap);
+	va_end(ap);
+
+	fputs(buf, stdout);
+
+	__gui_print("normal", buf);
+	return;
+}
+
+extern "C" void gui_parse_print_color(const char *color, const char *fmt, ...)
+{
+	char buf[512];		// We're going to limit a single request to 512 bytes
+	string temp = fmt;
+	temp = gui_parse_text(temp);
+
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(buf, 512, temp.c_str(), ap);
+	va_end(ap);
+
+	fputs(buf, stdout);
+
+	__gui_print(color, buf);
+	return;
+}
+
 extern "C" void gui_set_FILE(FILE* f)
 {
 	ors_file = f;

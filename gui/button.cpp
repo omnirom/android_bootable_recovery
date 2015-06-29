@@ -93,6 +93,17 @@ GUIButton::GUIButton(xml_node<>* node)
 		LoadPlacement(FindNode(node, "placement"), &x, &y, &w, &h, &TextPlacement);
 	}
 	SetRenderPos(x, y, w, h);
+	if (mButtonLabel) {
+		TextPlacement = (Placement)LoadAttrInt(FindNode(node, "placement"), "textplacement", TOP_LEFT);
+		if (TextPlacement != TEXT_ONLY_RIGHT) {
+			mButtonLabel->scaleWidth = 1;
+			mButtonLabel->maxWidth = w;
+		} else {
+			mTextX = mRenderW + mRenderX + 5;
+			mRenderW += mTextW + 5;
+			mButtonLabel->SetRenderPos(mTextX, mTextY);
+		}
+	}
 }
 
 GUIButton::~GUIButton()
@@ -127,9 +138,12 @@ int GUIButton::Render(void)
 			mTextW = w;
 			if (TextPlacement == CENTER_X_ONLY) {
 				mTextX = ((mRenderW - mRenderX) / 2);
-			} else if (mTextW > mRenderW) { // As a special case, we'll allow large text which automatically moves it to the right.
+			} else if (TextPlacement == TEXT_ONLY_RIGHT) {
 				mTextX = mRenderW + mRenderX + 5;
 				mRenderW += mTextW + 5;
+			} else if (mTextW > mRenderW) {
+				// Text will be scaled to fit
+				mTextX = mRenderX;
 			} else {
 				mTextX = mRenderX + ((mRenderW - mTextW) / 2);
 			}
@@ -202,9 +216,12 @@ int GUIButton::SetRenderPos(int x, int y, int w, int h)
 	{
 		if (TextPlacement == CENTER_X_ONLY) {
 			mTextX = ((mRenderW - mRenderX) / 2);
-		} else if (mTextW > mRenderW) { // As a special case, we'll allow large text which automatically moves it to the right.
+		} else if (TextPlacement == TEXT_ONLY_RIGHT) {
 			mTextX = mRenderW + mRenderX + 5;
 			mRenderW += mTextW + 5;
+		} else if (mTextW > mRenderW) {
+			// Text will be scaled to fit
+			mTextX = mRenderX;
 		} else {
 			mTextX = mRenderX + ((mRenderW - mTextW) / 2);
 		}

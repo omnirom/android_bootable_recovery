@@ -282,7 +282,7 @@ std::string ResourceManager::FindString(const std::string& name) const
 {
 	std::map<std::string, std::string>::const_iterator it = mStrings.find(name);
 	if (it != mStrings.end())
-		return it->second;
+		return gui_parse_text(it->second);
 	return "[" + name + ("]");
 }
 

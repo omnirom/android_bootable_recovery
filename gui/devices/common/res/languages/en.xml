@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<language>
+	<display>English</display>
+
+	<resources>
+		<string name="install_button_text">Install - This is WAY TOO MUCH TEXT!</string>
+	</resources>
+</language>
