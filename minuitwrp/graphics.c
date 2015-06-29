@@ -481,6 +481,47 @@ int gr_textEx(int x, int y, const char *s, void* pFont)
     return x;
 }
 
+int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width)
+{
+    GGLContext *gl = gr_context;
+    GRFont *font = (GRFont*) pFont;
+    unsigned off;
+    unsigned cwidth;
+
+    if (!s || strlen(s) == 0)
+        return 0;
+
+    /* Handle default font */
+    if (!font)  font = gr_font;
+
+#ifndef TW_DISABLE_TTF
+    if(font->type == FONT_TYPE_TTF) {
+        int measured_width = gr_ttf_measureEx(s, pFont);
+        if (measured_width <= max_width) {
+            return gr_ttf_textExWH(gl, x, y, s, pFont, max_width + x, -1);
+        } else {
+            // Adjust font size down until the text fits
+            void *new_font = gr_ttf_scaleFont(pFont, max_width, measured_width);
+            if (!new_font) {
+                printf("gr_textEx_scaleW new_font is NULL\n");
+                return 0;
+            }
+            measured_width = gr_ttf_measureEx(s, new_font);
+            // These next 3 lines adjust the y point based on the new font's smaller height
+            int old_height = gr_getMaxFontHeight(pFont);
+            int new_height = gr_getMaxFontHeight(new_font);
+            int y_scale = (old_height - new_height) / 2;
+            return gr_ttf_textExWH(gl, x, y + y_scale, s, new_font, max_width + x, -1);
+        }
+    }
+#endif
+
+    int ret = gr_textExW(x, y, s, pFont, max_width);
+    if (ret >= max_width)
+		printf("font scaling only supported for TTF fonts\n");
+	return ret;
+}
+
 int gr_textExW(int x, int y, const char *s, void* pFont, int max_width)
 {
     GGLContext *gl = gr_context;
