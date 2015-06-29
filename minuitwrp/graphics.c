@@ -481,6 +481,40 @@ int gr_textEx(int x, int y, const char *s, void* pFont)
     return x;
 }
 
+int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width)
+{
+    GGLContext *gl = gr_context;
+    GRFont *font = (GRFont*) pFont;
+    unsigned off;
+    unsigned cwidth;
+
+    /* Handle default font */
+    if (!font)  font = gr_font;
+
+#ifndef TW_DISABLE_TTF
+    if(font->type == FONT_TYPE_TTF) {
+        int measured_width = gr_ttf_measureEx(s, pFont);
+        if (measured_width <= max_width) {
+            return gr_ttf_textExWH(gl, x, y, s, pFont, max_width, -1);
+        } else {
+            // Adjust font size down until the text fits
+            void *new_font = gr_ttf_scaleFont(pFont, max_width, measured_width);
+            if (!new_font) {
+                printf("gr_textEx_scaleW new_font is NULL\n");
+                return 0;
+            }
+            measured_width = gr_ttf_measureEx(s, new_font);
+            return gr_ttf_textExWH(gl, x, y, s, new_font, max_width, -1);
+        }
+    }
+#endif
+
+    int ret = gr_textExW(x, y, s, pFont, max_width);
+    if (ret >= max_width)
+		printf("font scaling only supported for TTF fonts\n");
+	return ret;
+}
+
 int gr_textExW(int x, int y, const char *s, void* pFont, int max_width)
 {
     GGLContext *gl = gr_context;

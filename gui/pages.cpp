@@ -47,6 +47,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "blanktimer.hpp"
+#include "stringparser.hpp"
 
 extern int gGuiRunning;
 
@@ -55,6 +56,7 @@ PageSet* PageManager::mCurrentSet;
 PageSet* PageManager::mBaseSet = NULL;
 MouseCursor *PageManager::mMouseCursor = NULL;
 HardwareKeyboard *PageManager::mHardwareKeyboard = NULL;
+std::vector<language_struct> Language_List;
 
 int tw_x_offset = 0;
 int tw_y_offset = 0;
@@ -672,7 +674,42 @@ PageSet::~PageSet()
 	}
 }
 
-int PageSet::Load(ZipArchive* package)
+int PageSet::LoadLanguage(char* languageFile, ZipArchive* package)
+{
+	xml_document<> mLang;
+	xml_node<>* parent;
+	xml_node<>* child;
+
+	if (languageFile) {
+		printf("parsing languageFile\n");
+		mLang.parse<0>(languageFile);
+	} else {
+		return -1;
+	}
+
+	parent = mLang.first_node("language");
+	if (!parent)
+		return -1;
+
+	child = parent->first_node("display");
+	if (child) {
+		LOGINFO("Setting tw_language_display to '%s'\n", child->value());
+		DataManager::SetValue("tw_language_display", child->value());
+	} else {
+		LOGERR("language file does not have a display value set\n");
+		DataManager::SetValue("tw_language_display", "Not Set");
+	}
+		
+
+	child = parent->first_node("resources");
+	if (child)
+		mResources->LoadResources(child, package);
+	else
+		return -1;
+	return 0;
+}
+
+int PageSet::Load(ZipArchive* package, char* languageFile)
 {
 	xml_node<>* parent;
 	xml_node<>* child;
@@ -735,6 +772,10 @@ int PageSet::Load(ZipArchive* package)
 	} else {
 		LOGINFO("XML contains no details tag, no scaling will be applied.\n");
 	}
+
+	if (languageFile)
+		LoadLanguage(languageFile, package);
+
 	LOGINFO("Loading resources...\n");
 	child = parent->first_node("resources");
 	if (child)
@@ -781,7 +822,6 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 	xml_node<>* child;
 	xml_node<>* xmltemplate;
 	xml_node<>* xmlstyle;
-	long len;
 	char* xmlFile = NULL;
 	string filename;
 	xml_document<> *doc = NULL;
@@ -807,48 +847,14 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 			// We can try to load the XML directly...
 			filename = TWRES;
 			filename += attr->value();
-			LOGINFO("PageSet::CheckInclude loading filename: '%s'\n", filename.c_str());
-			struct stat st;
-			if(stat(filename.c_str(),&st) != 0) {
-				LOGERR("Unable to locate '%s'\n", filename.c_str());
-				return -1;
-			}
-
-			len = st.st_size;
-			xmlFile = (char*) malloc(len + 1);
-			if (!xmlFile)
-				return -1;
-
-			int fd = open(filename.c_str(), O_RDONLY);
-			if (fd == -1)
-				return -1;
-
-			read(fd, xmlFile, len);
-			close(fd);
 		} else {
 			filename += attr->value();
-			LOGINFO("PageSet::CheckInclude loading filename: '%s'\n", filename.c_str());
-			const ZipEntry* ui_xml = mzFindZipEntry(package, filename.c_str());
-			if (ui_xml == NULL)
-			{
-				LOGERR("Unable to locate '%s' in zip file\n", filename.c_str());
-				return -1;
-			}
-
-			// Allocate the buffer for the file
-			len = mzGetZipEntryUncompLen(ui_xml);
-			xmlFile = (char*) malloc(len + 1);
-			if (!xmlFile)
-				return -1;
-
-			if (!mzExtractZipEntryToBuffer(package, ui_xml, (unsigned char*) xmlFile))
-			{
-				LOGERR("Unable to extract '%s'\n", filename.c_str());
-				return -1;
-			}
 		}
-
-		xmlFile[len] = '\0';
+		xmlFile = PageManager::LoadFileToBuffer(filename, package);
+		if (xmlFile == NULL) {
+			LOGERR("PageSet::CheckInclude unable to load '%s'\n", filename.c_str());
+			return -1;
+		}
 		doc = new xml_document<>();
 		doc->parse<0>(xmlFile);
 
@@ -889,17 +895,21 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 			templates.pop_back();
 			doc->clear();
 			delete doc;
+			free(xmlFile);
 			return -1;
 		}
 
 		mIncludedDocs.push_back(doc);
 
-		if (CheckInclude(package, doc))
+		if (CheckInclude(package, doc)) {
+			free(xmlFile);
 			return -1;
+		}
 
 		chld = chld->next_sibling("xmlfile");
 	}
-
+	if (xmlFile)
+		free(xmlFile);
 	return 0;
 }
 
@@ -1002,7 +1012,7 @@ int PageSet::LoadVariables(xml_node<>* vars)
 			}
 			p = persist ? atoi(persist->value()) : 0;
 			string temp = value->value();
-			string valstr = gui_parse_text(temp);
+			string valstr = StringParser::ParseData(temp);
 
 			if (valstr.find("+") != string::npos) {
 				string val1str = valstr;
@@ -1144,12 +1154,142 @@ int PageSet::NotifyVarChange(std::string varName, std::string value)
 	return (mCurrentPage ? mCurrentPage->NotifyVarChange(varName, value) : -1);
 }
 
+char* PageManager::LoadFileToBuffer(std::string filename, ZipArchive* package) {
+	long len;
+	char* buffer = NULL;
+
+	if (!package) {
+		// We can try to load the XML directly...
+		LOGINFO("PageManager::LoadFileToBuffer loading filename: '%s' directly\n", filename.c_str());
+		struct stat st;
+		if(stat(filename.c_str(),&st) != 0) {
+			//LOGERR("Unable to locate '%s'\n", filename.c_str());
+			return NULL;
+		}
+
+		len = st.st_size;
+
+		buffer = (char*) malloc(len + 1);
+		if (!buffer) {
+			LOGERR("PageManager::LoadFileToBuffer failed to malloc\n");
+			return NULL;
+		}
+
+		int fd = open(filename.c_str(), O_RDONLY);
+		if (fd == -1) {
+			free(buffer);
+			LOGERR("PageManager::LoadFileToBuffer failed to open '%s'\n", filename.c_str());
+			return NULL;
+		}
+
+		read(fd, buffer, len);
+		close(fd);
+	} else {
+		LOGINFO("PageManager::LoadFileToBuffer loading filename: '%s' from zip\n", filename.c_str());
+		const ZipEntry* zipentry = mzFindZipEntry(package, filename.c_str());
+		if (zipentry == NULL) {
+			LOGERR("Unable to locate '%s' in zip file\n", filename.c_str());
+			return NULL;
+		}
+
+		// Allocate the buffer for the file
+		len = mzGetZipEntryUncompLen(zipentry);
+		buffer = (char*) malloc(len + 1);
+		if (!buffer)
+			return NULL;
+
+		if (!mzExtractZipEntryToBuffer(package, zipentry, (unsigned char*) buffer)) {
+			LOGERR("Unable to extract '%s'\n", filename.c_str());
+			free(buffer);
+			return NULL;
+		}
+	}
+	// NULL-terminate the string
+	buffer[len] = 0x00;
+	return buffer;
+}
+
+void PageManager::LoadLanguageListDir(string dir) {
+	if (!TWFunc::Path_Exists(dir)) {
+		LOGERR("LoadLanguageListDir '%s' path not found\n", dir.c_str());
+		return;
+	}
+
+	DIR *d = opendir(dir.c_str());
+	struct dirent *p;
+
+	if (d == NULL) {
+		LOGERR("LoadLanguageListDir error opening dir: '%s'\n", dir.c_str());
+		return;
+	}
+
+	while ((p = readdir(d))) {
+		if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+			continue;
+
+		string path = dir + p->d_name;
+		struct language_struct language_entry;
+		language_entry.filename = p->d_name;
+		char* xmlFile = PageManager::LoadFileToBuffer(dir + p->d_name, NULL);
+		if (xmlFile == NULL) {
+			LOGERR("LoadLanguageListZip unable to load '%s'\n", language_entry.filename.c_str());
+			continue;
+		}
+		xml_document<> *doc = new xml_document<>();
+		doc->parse<0>(xmlFile);
+		free(xmlFile);
+		
+		xml_node<>* parent = doc->first_node("language");
+		if (!parent) {
+			LOGERR("Invalid language XML file '%s'\n", language_entry.filename.c_str());
+			continue;
+		}
+
+		xml_node<>* child = parent->first_node("display");
+		if (child) {
+			language_entry.displayvalue = child->value();
+		} else {
+			LOGERR("No display value for '%s'\n", language_entry.filename.c_str());
+			language_entry.displayvalue = language_entry.filename;
+		}
+		Language_List.push_back(language_entry);
+	}
+	closedir(d);
+}
+
+void PageManager::LoadLanguageList(ZipArchive* package) {
+	Language_List.clear();
+	if (TWFunc::Path_Exists(TWRES "customlanguages"))
+		TWFunc::removeDir(TWRES "customlanguages", true);
+	if (package) {
+		TWFunc::Recursive_Mkdir(TWRES "customlanguages");
+		struct utimbuf timestamp = { 1217592000, 1217592000 };  // 8/1/2008 default
+		mzExtractRecursive(package, "languages", TWRES "customlanguages/", MZ_EXTRACT_FILES_ONLY, &timestamp, NULL, NULL, NULL);
+		LoadLanguageListDir(TWRES "customlanguages/");
+	} else {
+		LoadLanguageListDir(TWRES "languages/");
+	}
+}
+
+void PageManager::LoadLanguage(string filename) {
+	string actual_filename;
+	if (TWFunc::Path_Exists(TWRES "customlanguages/" + filename))
+		actual_filename = TWRES "customlanguages/" + filename;
+	else
+		actual_filename = TWRES "languages/" + filename;
+	char* xmlFile = PageManager::LoadFileToBuffer(actual_filename, NULL);
+	if (xmlFile == NULL)
+		LOGERR("Unable to load '%s'\n", actual_filename.c_str());
+	else
+		mCurrentSet->LoadLanguage(xmlFile, NULL);
+}
+
 int PageManager::LoadPackage(std::string name, std::string package, std::string startpage)
 {
 	int fd;
 	ZipArchive zip, *pZip = NULL;
-	long len;
 	char* xmlFile = NULL;
+	char* languageFile = NULL;
 	PageSet* pageSet = NULL;
 	int ret;
 	MemMapping map;
@@ -1161,68 +1301,44 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		LOGINFO("Load XML directly\n");
 		tw_x_offset = TW_X_OFFSET;
 		tw_y_offset = TW_Y_OFFSET;
-		// We can try to load the XML directly...
-		struct stat st;
-		if(stat(package.c_str(),&st) != 0)
-			return -1;
-
-		len = st.st_size;
-		xmlFile = (char*) malloc(len + 1);
-		if (!xmlFile)
-			return -1;
-
-		fd = open(package.c_str(), O_RDONLY);
-		if (fd == -1)
-			goto error;
-
-		read(fd, xmlFile, len);
-		close(fd);
+		LoadLanguageList(NULL);
+		languageFile = LoadFileToBuffer(TWRES "languages/en.xml", pZip);
 	}
 	else
 	{
-		LOGINFO("Loading zip theme\n");
+		LOGINFO("Loading zip theme '%s'\n", package.c_str());
 		tw_x_offset = 0;
 		tw_y_offset = 0;
 		if (!TWFunc::Path_Exists(package))
 			return -1;
 		if (sysMapFile(package.c_str(), &map) != 0) {
 			LOGERR("Failed to map '%s'\n", package.c_str());
-			return -1;
+			goto error;
 		}
 		if (mzOpenZipArchive(map.addr, map.length, &zip)) {
 			LOGERR("Unable to open zip archive '%s'\n", package.c_str());
 			sysReleaseMap(&map);
-			return -1;
+			goto error;
 		}
 		pZip = &zip;
-		const ZipEntry* ui_xml = mzFindZipEntry(&zip, "ui.xml");
-		if (ui_xml == NULL)
-		{
-			LOGERR("Unable to locate ui.xml in zip file\n");
-			goto error;
-		}
-
-		// Allocate the buffer for the file
-		len = mzGetZipEntryUncompLen(ui_xml);
-		xmlFile = (char*) malloc(len + 1);
-		if (!xmlFile)
-			goto error;
-
-		if (!mzExtractZipEntryToBuffer(&zip, ui_xml, (unsigned char*) xmlFile))
-		{
-			LOGERR("Unable to extract ui.xml\n");
-			goto error;
-		}
+		package = "ui.xml";
+		LoadLanguageList(pZip);
+		languageFile = LoadFileToBuffer("languages/en.xml", pZip);
 	}
-
-	// NULL-terminate the string
-	xmlFile[len] = 0x00;
+	xmlFile = LoadFileToBuffer(package, pZip);
+	if (xmlFile == NULL) {
+		goto error;
+	}
 
 	// Before loading, mCurrentSet must be the loading package so we can find resources
 	pageSet = mCurrentSet;
 	mCurrentSet = new PageSet(xmlFile);
 
-	ret = mCurrentSet->Load(pZip);
+	ret = mCurrentSet->Load(pZip, languageFile);
+	if (languageFile) {
+		free(languageFile);
+		languageFile = NULL;
+	}
 	if (ret == 0)
 	{
 		mCurrentSet->SetPage(startpage);
@@ -1243,16 +1359,18 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		mzCloseZipArchive(pZip);
 		sysReleaseMap(&map);
 	}
+	free(xmlFile);
 	return ret;
 
 error:
-	LOGERR("An internal error has occurred.\n");
 	if (pZip) {
 		mzCloseZipArchive(pZip);
 		sysReleaseMap(&map);
 	}
 	if (xmlFile)
 		free(xmlFile);
+	if (languageFile)
+		free(languageFile);
 	return -1;
 }
 

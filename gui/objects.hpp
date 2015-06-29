@@ -52,6 +52,7 @@ public:
 		BOTTOM_RIGHT = 3,
 		CENTER = 4,
 		CENTER_X_ONLY = 5,
+		TEXT_ONLY_RIGHT = 6,
 	};
 
 public:
@@ -205,6 +206,8 @@ public:
 
 public:
 	bool isHighlighted;
+	int scaleWidth;
+	unsigned maxWidth;
 
 protected:
 	std::string mText;
@@ -215,7 +218,6 @@ protected:
 	int mIsStatic;
 	int mVarChanged;
 	int mFontHeight;
-	unsigned maxWidth;
 	unsigned charSkip;
 };
 
@@ -362,6 +364,7 @@ protected:
 	int cancelbackup(std::string arg);
 	int checkpartitionlifetimewrites(std::string arg);
 	int mountsystemtoggle(std::string arg);
+	int setlanguage(std::string arg);
 
 	int simulate;
 };
