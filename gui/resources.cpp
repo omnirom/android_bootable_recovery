@@ -100,6 +100,14 @@ void Resource::CheckAndScaleImage(gr_surface source, gr_surface* destination, in
 FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
  : Resource(node, pZip)
 {
+	mFontSize = 0;
+	origFontSize = 0;
+	origFont = NULL;
+	LoadFont(node, pZip);
+}
+
+void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
+{
 	std::string file;
 	xml_attribute<>* attr;
 
@@ -113,16 +121,23 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 
 	file = attr->value();
 
-#ifndef TW_DISABLE_TTF
 	if(file.size() >= 4 && file.compare(file.size()-4, 4, ".ttf") == 0)
 	{
 		m_type = TYPE_TTF;
 
 		attr = node->first_attribute("size");
-		if(!attr)
-			return;
+		if (attr == NULL) {
+			attr = node->first_attribute("scale");
+			if (attr == NULL)
+				return;
+		}
 
-		int size = scale_theme_min(atoi(attr->value()));
+		if (origFontSize != 0) {
+			mFontSize = origFontSize * atoi(attr->value()) / 100;
+		} else {
+			mFontSize = scale_theme_min(atoi(attr->value()));
+			origFontSize = mFontSize;
+		}
 		int dpi = 300;
 
 		attr = node->first_attribute("dpi");
@@ -131,17 +146,16 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 
 		if (ExtractResource(pZip, "fonts", file, "", TMP_RESOURCE_NAME) == 0)
 		{
-			mFont = gr_ttf_loadFont(TMP_RESOURCE_NAME, size, dpi);
+			mFont = gr_ttf_loadFont(TMP_RESOURCE_NAME, mFontSize, dpi);
 			unlink(TMP_RESOURCE_NAME);
 		}
 		else
 		{
 			file = std::string(TWRES "fonts/") + file;
-			mFont = gr_ttf_loadFont(file.c_str(), size, dpi);
+			mFont = gr_ttf_loadFont(file.c_str(), mFontSize, dpi);
 		}
 	}
 	else
-#endif
 	{
 		m_type = TYPE_TWRP;
 
@@ -154,29 +168,41 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 			file = attr->value();
 		}
 
-		if (ExtractResource(pZip, "fonts", file, ".dat", TMP_RESOURCE_NAME) == 0)
-		{
-			mFont = gr_loadFont(TMP_RESOURCE_NAME);
-			unlink(TMP_RESOURCE_NAME);
-		}
-		else
-		{
-			mFont = gr_loadFont(file.c_str());
+		LOGERR("Unable to load non-TTF font '%s' -- format no longer supported.\n", file.c_str());
+	}
+}
+
+void FontResource::DeleteFont() {
+	if(mFont)
+		gr_ttf_freeFont(mFont);
+	mFont = NULL;
+	if(origFont)
+		gr_ttf_freeFont(origFont);
+	origFont = NULL;
+}
+
+void FontResource::Override(xml_node<>* node, ZipArchive* pZip) {
+	if (!origFont) {
+		origFont = mFont;
+	} else if (mFont) {
+		gr_ttf_freeFont(mFont);
+		mFont = NULL;
+	}
+	LoadFont(node, pZip);
+}
+
+void FontResource::UnOverride() {
+	if (!origFont && origFont != mFont) {
+		if (mFont) {
+			gr_ttf_freeFont(mFont);
+			mFont = origFont;
 		}
 	}
 }
 
 FontResource::~FontResource()
 {
-	if(mFont)
-	{
-#ifndef TW_DISABLE_TTF
-		if(m_type == TYPE_TTF)
-			gr_ttf_freeFont(mFont);
-		else
-#endif
-			gr_freeFont(mFont);
-	}
+	DeleteFont();
 }
 
 ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)
@@ -308,12 +334,32 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 		if (type == "font")
 		{
 			FontResource* res = new FontResource(child, pZip);
-			if (res->GetResource())
+			if (res->GetResource()) {
 				mFonts.push_back(res);
-			else {
+			} else {
 				error = true;
 				delete res;
 			}
+		}
+		else if (type == "fontoverride")
+		{
+			if (mFonts.size() != 0 && child && child->first_attribute("name")) {
+				string FontName = child->first_attribute("name")->value();
+				size_t font_count = mFonts.size(), i;
+				bool found = false;
+
+				for (i = 0; i < font_count; i++) {
+					if (mFonts[i]->GetName() == FontName) {
+						mFonts[i]->Override(child, pZip);
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					LOGERR("Unable to locate font '%s' for override.\n", FontName.c_str());
+				}
+			} else if (mFonts.size() != 0)
+				LOGERR("Unable to locate font name for type fontoverride.\n");
 		}
 		else if (type == "image")
 		{
