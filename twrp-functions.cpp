@@ -577,7 +577,7 @@ int TWFunc::removeDir(const string path, bool skipParent) {
 	string new_path;
 
 	if (d == NULL) {
-		LOGERR("Error opening dir: '%s'\n", path.c_str());
+		LOGERR("TWFunc::removeDir: Error opening dir: '%s'\n", path.c_str());
 		return -1;
 	}
 

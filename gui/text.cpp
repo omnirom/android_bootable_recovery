@@ -34,6 +34,7 @@ GUIText::GUIText(xml_node<>* node)
 	mFontHeight = 0;
 	maxWidth = 0;
 	charSkip = 0;
+	scaleWidth = 1;
 	isHighlighted = false;
 
 	if (!node)
@@ -101,10 +102,14 @@ int GUIText::Render(void)
 	else
 		gr_color(mColor.red, mColor.green, mColor.blue, mColor.alpha);
 
-	if (maxWidth)
-		gr_textExW(x, y, displayValue.c_str(), fontResource, maxWidth + x);
-	else
+	if (maxWidth) {
+		if (scaleWidth)
+			gr_textEx_scaleW(x, y, displayValue.c_str(), fontResource, maxWidth + x);
+		else
+			gr_textExW(x, y, displayValue.c_str(), fontResource, maxWidth + x);
+	} else {
 		gr_textEx(x, y, displayValue.c_str(), fontResource);
+	}
 	return 0;
 }
 

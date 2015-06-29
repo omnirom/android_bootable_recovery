@@ -27,6 +27,13 @@ struct COLOR {
 		: red(r), green(g), blue(b), alpha(a) {}
 };
 
+struct language_struct {
+	string filename;
+	string displayvalue;
+};
+
+extern std::vector<language_struct> Language_List;
+
 // Utility Functions
 int ConvertStrToColor(std::string str, COLOR* color);
 int gui_forceRender(void);
@@ -82,6 +89,7 @@ public:
 	virtual ~PageSet();
 
 public:
+	int LoadLanguage(char* languageFile, ZipArchive* package);
 	int Load(ZipArchive* package);
 	int CheckInclude(ZipArchive* package, xml_document<> *parentDoc);
 
@@ -123,6 +131,9 @@ class PageManager
 {
 public:
 	// Used by GUI
+	static char* LoadFileToBuffer(std::string filename, ZipArchive* package);
+	static void LoadLanguageList(ZipArchive* package);
+	static void LoadLanguage(string filename);
 	static int LoadPackage(std::string name, std::string package, std::string startpage);
 	static PageSet* SelectPackage(std::string name);
 	static int ReloadPackage(std::string name, std::string package);
@@ -158,6 +169,7 @@ public:
 
 protected:
 	static PageSet* FindPackage(std::string name);
+	static void LoadLanguageListDir(string dir);
 
 protected:
 	static std::map<std::string, PageSet*> mPageSets;

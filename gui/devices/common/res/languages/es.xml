@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<language>
+	<display>Español</display>
+
+	<resources>
+		<string name="install_button_text">Instalar</string>
+	</resources>
+</language>
