@@ -336,7 +336,7 @@ int main(int argc, char **argv) {
 	TWPartition* sys = PartitionManager.Find_Partition_By_Path("/system");
 	if (sys) {
 		if (DataManager::GetIntValue("tw_mount_system_ro") != 0) {
-			if (sys->Check_Lifetime_Writes() == 0) {
+			if (DataManager::GetIntValue("tw_mount_system_ro") == 2 || sys->Check_Lifetime_Writes() == 0) {
 				if (DataManager::GetIntValue("tw_never_show_system_ro_page") == 0) {
 					DataManager::SetValue("tw_back", "main");
 					if (gui_startPage("system_readonly", 1, 1) != 0) {
