@@ -26,6 +26,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "../data.hpp"
+#include "stringparser.hpp"
 
 const float SCROLLING_SPEED_DECREMENT = 0.9; // friction
 const int SCROLLING_FLOOR = 2; // minimum pixels for scrolling to stop
@@ -63,7 +64,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	child = node ? node->first_node("text") : NULL;
 	if (child)  mHeaderText = child->value();
 	// Simple way to check for static state
-	mLastHeaderValue = gui_parse_text(mHeaderText);
+	mLastHeaderValue = StringParser::ParseAll(mHeaderText);
 	mHeaderIsStatic = (mLastHeaderValue == mHeaderText);
 
 	mHighlightColor = LoadAttrColor(FindNode(node, "highlight"), "color", &hasHighlightColor);
@@ -356,7 +357,7 @@ int GUIScrollList::Update(void)
 		return 0;
 
 	if (!mHeaderIsStatic) {
-		std::string newValue = gui_parse_text(mHeaderText);
+		std::string newValue = StringParser::ParseAll(mHeaderText);
 		if (mLastHeaderValue != newValue) {
 			mLastHeaderValue = newValue;
 			mUpdate = 1;
@@ -573,7 +574,7 @@ int GUIScrollList::NotifyVarChange(const std::string& varName, const std::string
 		return 0;
 
 	if (!mHeaderIsStatic) {
-		std::string newValue = gui_parse_text(mHeaderText);
+		std::string newValue = StringParser::ParseAll(mHeaderText);
 		if (mLastHeaderValue != newValue) {
 			mLastHeaderValue = newValue;
 			firstDisplayedItem = 0;

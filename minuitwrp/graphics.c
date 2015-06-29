@@ -32,6 +32,7 @@
 #include <pixelflinger/pixelflinger.h>
 
 #include "minui.h"
+#include "../gui/placement.h"
 
 #ifdef BOARD_USE_CUSTOM_RECOVERY_FONT
 #include BOARD_USE_CUSTOM_RECOVERY_FONT
@@ -479,6 +480,70 @@ int gr_textEx(int x, int y, const char *s, void* pFont)
     gl->disable(gl, GGL_TEXTURE_2D);
 
     return x;
+}
+
+int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width, int placement)
+{
+    GGLContext *gl = gr_context;
+    void* vfont = pFont;
+    GRFont *font = (GRFont*) pFont;
+    unsigned off;
+    unsigned cwidth;
+    int y_scale = 0, measured_width, measured_height, ret;
+
+    if (!s || strlen(s) == 0)
+        return 0;
+
+    /* Handle default font */
+    if (!font)  font = gr_font;
+
+    measured_height = gr_getMaxFontHeight(font);
+#ifndef TW_DISABLE_TTF
+    if(font->type == FONT_TYPE_TTF) {
+        measured_width = gr_ttf_measureEx(s, vfont);
+        if (measured_width > max_width) {
+            // Adjust font size down until the text fits
+            void *new_font = gr_ttf_scaleFont(vfont, max_width, measured_width);
+            if (!new_font) {
+                printf("gr_textEx_scaleW new_font is NULL\n");
+                return 0;
+            }
+            measured_width = gr_ttf_measureEx(s, new_font);
+            // These next 3 lines adjust the y point based on the new font's smaller height
+            measured_height = gr_getMaxFontHeight(vfont);
+            int new_height = gr_getMaxFontHeight(new_font);
+            y_scale = (measured_height - new_height) / 2;
+            vfont = new_font;
+            //return gr_ttf_textExWH(gl, x, y + y_scale, s, new_font, max_width + x, -1);
+        }
+    } else
+#else
+        measured_width = gr_measureEx(s, vfont);
+#endif
+    printf("%s\nbefore placement %i, x: %i ", s, placement, x);
+	if (placement != 0 && placement != 2)
+	{
+		if (placement == 4 || placement == 5)
+			x -= (measured_width / 2);
+		else
+			x -= measured_width;
+	}
+	if (placement != 0 && placement != 1)
+	{
+		if (placement == 4)
+			y -= (measured_height / 2);
+		else if (placement == 2 || placement == 3)
+			y -= measured_height;
+	}
+	printf("after: %i\n", x);
+#ifndef TW_DISABLE_TTF
+	if(font->type == FONT_TYPE_TTF)
+		return gr_ttf_textExWH(gl, x, y + y_scale, s, vfont, max_width + x, -1);
+#endif
+    ret = gr_textExW(x, y, s, vfont, max_width);
+    if (ret >= max_width)
+		printf("font scaling only supported for TTF fonts\n");
+	return ret;
 }
 
 int gr_textExW(int x, int y, const char *s, void* pFont, int max_width)

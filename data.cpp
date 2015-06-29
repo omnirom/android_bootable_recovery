@@ -49,6 +49,7 @@
 #include "find_file.hpp"
 #include "set_metadata.h"
 #include <cutils/properties.h>
+#include "gui/pages.hpp"
 
 #define DEVID_MAX 64
 #define HWID_MAX 32
@@ -303,6 +304,7 @@ int DataManager::LoadValues(const string filename)
 	}
 error:
 	fclose(in);
+	PageManager::LoadLanguage(GetStrValue("tw_language"));
 	string current = GetCurrentStoragePath();
 	TWPartition* Part = PartitionManager.Find_Partition_By_Path(current);
 	if(!Part)
@@ -883,6 +885,7 @@ void DataManager::SetDefaultValues()
 #endif
 	mValues.insert(make_pair("tw_mount_system_ro", make_pair("2", 1)));
 	mValues.insert(make_pair("tw_never_show_system_ro_page", make_pair("0", 1)));
+	mValues.insert(make_pair("tw_language", make_pair("en.xml", 1)));
 
 	pthread_mutex_unlock(&m_valuesLock);
 }

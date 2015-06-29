@@ -24,6 +24,7 @@ extern "C" {
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
+#include "stringparser.hpp"
 
 GUIText::GUIText(xml_node<>* node)
 	: GUIObject(node)
@@ -34,6 +35,7 @@ GUIText::GUIText(xml_node<>* node)
 	mFontHeight = 0;
 	maxWidth = 0;
 	charSkip = 0;
+	scaleWidth = 1;
 	isHighlighted = false;
 
 	if (!node)
@@ -54,8 +56,25 @@ GUIText::GUIText(xml_node<>* node)
 	xml_node<>* child = FindNode(node, "text");
 	if (child)  mText = child->value();
 
+	child = FindNode(node, "noscaling");
+	if (child) {
+		scaleWidth = 0;
+	} else {
+		if (mPlacement == TOP_LEFT || mPlacement == BOTTOM_LEFT) {
+			maxWidth = gr_fb_width() - mRenderX;
+		} else if (mPlacement == TOP_RIGHT || mPlacement == BOTTOM_RIGHT) {
+			maxWidth = mRenderX;
+		} else if (mPlacement == CENTER || mPlacement == CENTER_X_ONLY) {
+			if (mRenderX < gr_fb_width() / 2) {
+				maxWidth = mRenderX * 2;
+			} else {
+				maxWidth = (gr_fb_width() - mRenderX) * 2;
+			}
+		}
+	}
+
 	// Simple way to check for static state
-	mLastValue = gui_parse_text(mText);
+	mLastValue = StringParser::ParseAll(mText);
 	if (mLastValue != mText)   mIsStatic = 0;
 
 	mFontHeight = mFont->GetHeight();
@@ -70,7 +89,7 @@ int GUIText::Render(void)
 	if (mFont)
 		fontResource = mFont->GetResource();
 
-	mLastValue = gui_parse_text(mText);
+	mLastValue = StringParser::ParseAll(mText);
 	string displayValue = mLastValue;
 
 	if (charSkip)
@@ -78,33 +97,38 @@ int GUIText::Render(void)
 
 	mVarChanged = 0;
 
-	int x = mRenderX, y = mRenderY;
-	int width = gr_measureEx(displayValue.c_str(), fontResource);
-
-	if (mPlacement != TOP_LEFT && mPlacement != BOTTOM_LEFT)
-	{
-		if (mPlacement == CENTER || mPlacement == CENTER_X_ONLY)
-			x -= (width / 2);
-		else
-			x -= width;
-	}
-	if (mPlacement != TOP_LEFT && mPlacement != TOP_RIGHT)
-	{
-		if (mPlacement == CENTER)
-			y -= (mFontHeight / 2);
-		else if (mPlacement == BOTTOM_LEFT || mPlacement == BOTTOM_RIGHT)
-			y -= mFontHeight;
-	}
-
 	if (isHighlighted)
 		gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, mHighlightColor.alpha);
 	else
 		gr_color(mColor.red, mColor.green, mColor.blue, mColor.alpha);
 
-	if (maxWidth)
-		gr_textExW(x, y, displayValue.c_str(), fontResource, maxWidth + x);
-	else
-		gr_textEx(x, y, displayValue.c_str(), fontResource);
+	if (maxWidth && scaleWidth) {
+		gr_textEx_scaleW(mRenderX, mRenderY, displayValue.c_str(), fontResource, maxWidth, mPlacement);
+	} else {
+		int x = mRenderX, y = mRenderY;
+		int width = gr_measureEx(displayValue.c_str(), fontResource);
+
+		if (mPlacement != TOP_LEFT && mPlacement != BOTTOM_LEFT)
+		{
+			if (mPlacement == CENTER || mPlacement == CENTER_X_ONLY)
+				x -= (width / 2);
+			else
+				x -= width;
+		}
+		if (mPlacement != TOP_LEFT && mPlacement != TOP_RIGHT)
+		{
+			if (mPlacement == CENTER)
+				y -= (mFontHeight / 2);
+			else if (mPlacement == BOTTOM_LEFT || mPlacement == BOTTOM_RIGHT)
+				y -= mFontHeight;
+		}
+
+		if (maxWidth) {
+			gr_textExW(x, y, displayValue.c_str(), fontResource, maxWidth + x);
+		} else {
+			gr_textEx(x, y, displayValue.c_str(), fontResource);
+		}
+	}
 	return 0;
 }
 
@@ -126,7 +150,7 @@ int GUIText::Update(void)
 	if (mIsStatic || !mVarChanged)
 		return 0;
 
-	std::string newValue = gui_parse_text(mText);
+	std::string newValue = StringParser::ParseAll(mText);
 	if (mLastValue == newValue)
 		return 0;
 	else
@@ -142,7 +166,7 @@ int GUIText::GetCurrentBounds(int& w, int& h)
 		fontResource = mFont->GetResource();
 
 	h = mFontHeight;
-	mLastValue = gui_parse_text(mText);
+	mLastValue = StringParser::ParseAll(mText);
 	w = gr_measureEx(mLastValue.c_str(), fontResource);
 	return 0;
 }

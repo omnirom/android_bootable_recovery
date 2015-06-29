@@ -100,6 +100,11 @@ void Resource::CheckAndScaleImage(gr_surface source, gr_surface* destination, in
 FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
  : Resource(node, pZip)
 {
+	LoadFont(node, pZip);
+}
+
+void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
+{
 	std::string file;
 	xml_attribute<>* attr;
 
@@ -166,8 +171,7 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 	}
 }
 
-FontResource::~FontResource()
-{
+void FontResource::DeleteFont() {
 	if(mFont)
 	{
 #ifndef TW_DISABLE_TTF
@@ -177,6 +181,16 @@ FontResource::~FontResource()
 #endif
 			gr_freeFont(mFont);
 	}
+}
+
+void FontResource::Override(xml_node<>* node, ZipArchive* pZip) {
+	DeleteFont();
+	LoadFont(node, pZip);
+}
+
+FontResource::~FontResource()
+{
+	DeleteFont();
 }
 
 ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)
@@ -308,9 +322,22 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 		if (type == "font")
 		{
 			FontResource* res = new FontResource(child, pZip);
-			if (res->GetResource())
-				mFonts.push_back(res);
-			else {
+			if (res->GetResource()) {
+				std::string fontname = res->GetName();
+				size_t font_count = mFonts.size(), i;
+				bool found = false;
+
+				for (i = 0; i < font_count; i++) {
+					if (mFonts[i]->GetName() == fontname) {
+						mFonts[i]->Override(child, pZip);
+						delete res;
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+					mFonts.push_back(res);
+			} else {
 				error = true;
 				delete res;
 			}
