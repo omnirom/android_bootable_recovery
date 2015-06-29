@@ -3664,7 +3664,7 @@
 
 			<object type="text">
 				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
-				<text>TWRP has detected an unmodified system partition.</text>
+				<text>Keep System Read Only?</text>
 			</object>
 
 			<object type="text">
