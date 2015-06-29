@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<language>
+	<display>Español</display>
+
+	<resources>
+		<resource name="font" type="font" filename="RobotoCondensed-Regular.ttf" size="40" fallback="Roboto-Condensed-40" />
+		<resource name="mediumfont" type="font" filename="RobotoCondensed-Regular.ttf" size="40" fallback="Roboto-Condensed-40" />
+		<resource name="filelist" type="font" filename="RobotoCondensed-Regular.ttf" size="40" fallback="Roboto-Condensed-40" />
+		<resource name="fixed" type="font" filename="DroidSansMono.ttf" size="30" />
+		<string name="install_button_text">Instalar</string>
+	</resources>
+</language>

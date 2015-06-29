@@ -57,6 +57,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "../tw_atomic.hpp"
+#include "stringparser.hpp"
 
 void curtainClose(void);
 
@@ -198,6 +199,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(cancelbackup);
 		ADD_ACTION(checkpartitionlifetimewrites);
 		ADD_ACTION(mountsystemtoggle);
+		ADD_ACTION(setlanguage);
 
 		// remember actions that run in the caller thread
 		for (mapFunc::const_iterator it = mf.begin(); it != mf.end(); ++it)
@@ -398,7 +400,7 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 
 GUIAction::ThreadType GUIAction::getThreadType(const GUIAction::Action& action)
 {
-	string func = gui_parse_text(action.mFunction);
+	string func = StringParser::ParseData(action.mFunction);
 	bool needsThread = setActionsRunningInCallerThread.find(func) == setActionsRunningInCallerThread.end();
 	if (needsThread) {
 		if (func == "cancelbackup")
@@ -457,8 +459,8 @@ int GUIAction::doAction(Action action)
 {
 	DataManager::GetValue(TW_SIMULATE_ACTIONS, simulate);
 
-	std::string function = gui_parse_text(action.mFunction);
-	std::string arg = gui_parse_text(action.mArg);
+	std::string function = StringParser::ParseData(action.mFunction);
+	std::string arg = StringParser::ParseData(action.mArg);
 
 	// find function and execute it
 	mapFunc::const_iterator funcitr = mf.find(function);
@@ -536,7 +538,7 @@ int GUIAction::key(std::string arg)
 
 int GUIAction::page(std::string arg)
 {
-	std::string page_name = gui_parse_text(arg);
+	std::string page_name = StringParser::ParseData(arg);
 	return gui_changePage(page_name);
 }
 
@@ -688,7 +690,7 @@ int GUIAction::compute(std::string arg)
 	if (arg.find("*") != string::npos)
 	{
 		string varName = arg.substr(0, arg.find('*'));
-		string multiply_by_str = gui_parse_text(arg.substr(arg.find('*') + 1, string::npos));
+		string multiply_by_str = StringParser::ParseData(arg.substr(arg.find('*') + 1, string::npos));
 		int multiply_by = atoi(multiply_by_str.c_str());
 		int value;
 
@@ -699,7 +701,7 @@ int GUIAction::compute(std::string arg)
 	if (arg.find("/") != string::npos)
 	{
 		string varName = arg.substr(0, arg.find('/'));
-		string divide_by_str = gui_parse_text(arg.substr(arg.find('/') + 1, string::npos));
+		string divide_by_str = StringParser::ParseData(arg.substr(arg.find('/') + 1, string::npos));
 		int divide_by = atoi(divide_by_str.c_str());
 		int value;
 
@@ -1821,6 +1823,18 @@ int GUIAction::mountsystemtoggle(std::string arg)
 			op_status = 1; // fail
 		}
 	}
+
+	operation_end(op_status);
+	return 0;
+}
+
+int GUIAction::setlanguage(std::string arg)
+{
+	int op_status = 0;
+
+	operation_start("Set Language");
+	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
+	op_status = 0; // success
 
 	operation_end(op_status);
 	return 0;

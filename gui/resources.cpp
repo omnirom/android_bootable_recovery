@@ -100,6 +100,11 @@ void Resource::CheckAndScaleImage(gr_surface source, gr_surface* destination, in
 FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
  : Resource(node, pZip)
 {
+	LoadFont(node, pZip);
+}
+
+void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
+{
 	std::string file;
 	xml_attribute<>* attr;
 
@@ -113,7 +118,6 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 
 	file = attr->value();
 
-#ifndef TW_DISABLE_TTF
 	if(file.size() >= 4 && file.compare(file.size()-4, 4, ".ttf") == 0)
 	{
 		m_type = TYPE_TTF;
@@ -141,7 +145,6 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 		}
 	}
 	else
-#endif
 	{
 		m_type = TYPE_TWRP;
 
@@ -154,29 +157,25 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 			file = attr->value();
 		}
 
-		if (ExtractResource(pZip, "fonts", file, ".dat", TMP_RESOURCE_NAME) == 0)
-		{
-			mFont = gr_loadFont(TMP_RESOURCE_NAME);
-			unlink(TMP_RESOURCE_NAME);
-		}
-		else
-		{
-			mFont = gr_loadFont(file.c_str());
-		}
+		LOGERR("Unable to load non-TTF font '%s' -- format no longer supported.\n", file.c_str());
 	}
+}
+
+void FontResource::DeleteFont() {
+	if(mFont)
+	{
+		gr_ttf_freeFont(mFont);
+	}
+}
+
+void FontResource::Override(xml_node<>* node, ZipArchive* pZip) {
+	DeleteFont();
+	LoadFont(node, pZip);
 }
 
 FontResource::~FontResource()
 {
-	if(mFont)
-	{
-#ifndef TW_DISABLE_TTF
-		if(m_type == TYPE_TTF)
-			gr_ttf_freeFont(mFont);
-		else
-#endif
-			gr_freeFont(mFont);
-	}
+	DeleteFont();
 }
 
 ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)
@@ -308,9 +307,22 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip)
 		if (type == "font")
 		{
 			FontResource* res = new FontResource(child, pZip);
-			if (res->GetResource())
-				mFonts.push_back(res);
-			else {
+			if (res->GetResource()) {
+				std::string fontname = res->GetName();
+				size_t font_count = mFonts.size(), i;
+				bool found = false;
+
+				for (i = 0; i < font_count; i++) {
+					if (mFonts[i]->GetName() == fontname) {
+						mFonts[i]->Override(child, pZip);
+						delete res;
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+					mFonts.push_back(res);
+			} else {
 				error = true;
 				delete res;
 			}
