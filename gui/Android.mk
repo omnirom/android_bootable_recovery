@@ -27,7 +27,8 @@ LOCAL_SRC_FILES := \
     partitionlist.cpp \
     mousecursor.cpp \
     scrolllist.cpp \
-    patternpassword.cpp
+    patternpassword.cpp \
+    stringparser.cpp
 
 ifneq ($(TWRP_CUSTOM_KEYBOARD),)
     LOCAL_SRC_FILES += $(TWRP_CUSTOM_KEYBOARD)
@@ -57,9 +58,6 @@ ifeq ($(HAVE_SELINUX), true)
 endif
 ifeq ($(TW_OEM_BUILD), true)
     LOCAL_CFLAGS += -DTW_OEM_BUILD
-endif
-ifeq ($(TW_DISABLE_TTF), true)
-    LOCAL_CFLAGS += -DTW_DISABLE_TTF
 endif
 ifneq ($(TW_X_OFFSET),)
     LOCAL_CFLAGS += -DTW_X_OFFSET=$(TW_X_OFFSET)
@@ -150,12 +148,6 @@ else
     TWRP_THEME_LOC := $(TW_CUSTOM_THEME)
 endif
 
-ifeq ($(TW_DISABLE_TTF), true)
-    TWRP_REMOVE_FONT := rm -f $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)fonts/*.ttf
-else
-    TWRP_REMOVE_FONT := rm -f $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)fonts/*.dat
-endif
-
 TWRP_RES_GEN := $(intermediates)/twrp
 ifneq ($(TW_USE_TOOLBOX), true)
     TWRP_SH_TARGET := /sbin/busybox
@@ -167,7 +159,6 @@ $(TWRP_RES_GEN):
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 	cp -fr $(TWRP_RES) $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 	cp -fr $(TWRP_THEME_LOC)/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
-	$(TWRP_REMOVE_FONT)
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/
 ifneq ($(TW_USE_TOOLBOX), true)
 	ln -sf $(TWRP_SH_TARGET) $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh

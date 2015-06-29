@@ -24,6 +24,7 @@ extern "C" {
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
+#include "stringparser.hpp"
 
 GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 {
@@ -105,14 +106,14 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 		attr = child->first_attribute("min");
 		if (attr)
 		{
-			mMinStr = gui_parse_text(attr->value());
+			mMinStr = StringParser::ParseData(attr->value());
 			mMin = atoi(mMinStr.c_str());
 		}
 
 		attr = child->first_attribute("max");
 		if (attr)
 		{
-			mMaxStr = gui_parse_text(attr->value());
+			mMaxStr = StringParser::ParseData(attr->value());
 			mMax = atoi(mMaxStr.c_str());
 		}
 
@@ -122,7 +123,7 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 		attr = child->first_attribute("default");
 		if (attr)
 		{
-			string parsevalue = gui_parse_text(attr->value());
+			string parsevalue = StringParser::ParseData(attr->value());
 			int def = atoi(parsevalue.c_str());
 
 			if (def < mMin)
@@ -307,15 +308,15 @@ int GUISliderValue::Render(void)
 	if(mShowRange)
 	{
 		int rangeY = (mLineY - mLineH/2) - mFontHeight/2;
-		gr_textEx(mRenderX + mPadding/2, rangeY, mMinStr.c_str(), fontResource);
-		gr_textEx(mLineX + mLineW + mPadding/2, rangeY, mMaxStr.c_str(), fontResource);
+		gr_textEx_scaleW(mRenderX + mPadding/2, rangeY, mMinStr.c_str(), fontResource, mRenderW, TOP_LEFT, 0);
+		gr_textEx_scaleW(mLineX + mLineW + mPadding/2, rangeY, mMaxStr.c_str(), fontResource, mRenderW, TOP_LEFT, 0);
 	}
 
 	if(mValueStr && mShowCurr)
 	{
 		sprintf(mValueStr, "%d", mValue);
 		int textW = measureText(mValueStr);
-		gr_textEx(mRenderX + (mRenderW/2 - textW/2), mSliderY+mSliderH, mValueStr, fontResource);
+		gr_textEx_scaleW(mRenderX + (mRenderW/2 - textW/2), mSliderY+mSliderH, mValueStr, fontResource, mRenderW, TOP_LEFT, 0);
 	}
 
 	mRendered = true;
