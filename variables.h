@@ -170,7 +170,7 @@
 //#define MAX_ARCHIVE_SIZE 52428800LLU // 50MB split for testing
 
 #ifndef CUSTOM_LUN_FILE
-#define CUSTOM_LUN_FILE "/sys/devices/platform/usb_mass_storage/lun%d/file"
+#define CUSTOM_LUN_FILE "/sys/class/android_usb/android0/f_mass_storage/lun%d/file"
 #endif
 
 #ifndef TW_BRIGHTNESS_PATH
