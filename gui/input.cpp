@@ -45,6 +45,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "../data.hpp"
+#include "stringparser.hpp"
 
 GUIInput::GUIInput(xml_node<>* node)
 	: GUIObject(node)
@@ -123,7 +124,7 @@ GUIInput::GUIInput(xml_node<>* node)
 
 	child = FindNode(node, "text");
 	if (child)  mText = child->value();
-	mLastValue = gui_parse_text(mText);
+	mLastValue = StringParser::ParseData(mText);
 
 	child = FindNode(node, "data");
 	if (child)

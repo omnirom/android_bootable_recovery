@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "rapidxml.hpp"
 
 struct ZipArchive;
 
@@ -49,10 +50,15 @@ public:
 public:
 	void* GetResource() { return this ? mFont : NULL; }
 	int GetHeight() { return gr_getMaxFontHeight(this ? mFont : NULL); }
+	void Override(xml_node<>* node, ZipArchive* pZip);
 
 protected:
 	void* mFont;
 	Type m_type;
+
+private:
+	void LoadFont(xml_node<>* node, ZipArchive* pZip);
+	void DeleteFont();
 };
 
 class ImageResource : public Resource
