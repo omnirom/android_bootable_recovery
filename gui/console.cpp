@@ -67,10 +67,12 @@ extern "C" void __gui_print(const char *color, char *buf)
 extern "C" void gui_print(const char *fmt, ...)
 {
 	char buf[512];		// We're going to limit a single request to 512 bytes
+	string temp = fmt;
+	temp = gui_parse_text(temp);
 
 	va_list ap;
-	va_start(ap, fmt);
-	vsnprintf(buf, 512, fmt, ap);
+	va_start(ap, temp.c_str());
+	vsnprintf(buf, 512, temp.c_str(), ap);
 	va_end(ap);
 
 	fputs(buf, stdout);
@@ -82,10 +84,12 @@ extern "C" void gui_print(const char *fmt, ...)
 extern "C" void gui_print_color(const char *color, const char *fmt, ...)
 {
 	char buf[512];		// We're going to limit a single request to 512 bytes
+	string temp = fmt;
+	temp = gui_parse_text(temp);
 
 	va_list ap;
-	va_start(ap, fmt);
-	vsnprintf(buf, 512, fmt, ap);
+	va_start(ap, temp.c_str());
+	vsnprintf(buf, 512, temp.c_str(), ap);
 	va_end(ap);
 
 	fputs(buf, stdout);

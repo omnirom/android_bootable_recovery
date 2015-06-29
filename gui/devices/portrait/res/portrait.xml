@@ -113,7 +113,7 @@
 
 			<object type="button">
 				<placement x="%col1_x%" y="%row1_y%" />
-				<text>Install</text>
+				<text>%@install_button_text%</text>
 				<actions>
 					<action function="queueclear"></action>
 					<action function="page">install</action>
