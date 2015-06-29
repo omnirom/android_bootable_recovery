@@ -34,6 +34,7 @@ GUIText::GUIText(xml_node<>* node)
 	mFontHeight = 0;
 	maxWidth = 0;
 	charSkip = 0;
+	scaleWidth = 1;
 	isHighlighted = false;
 
 	if (!node)
@@ -53,6 +54,23 @@ GUIText::GUIText(xml_node<>* node)
 
 	xml_node<>* child = FindNode(node, "text");
 	if (child)  mText = child->value();
+
+	child = FindNode(node, "noscaling");
+	if (child) {
+		scaleWidth = 0;
+	} else {
+		if (mPlacement == TOP_LEFT || mPlacement == BOTTOM_LEFT) {
+			maxWidth = gr_fb_width() - mRenderX;
+		} else if (mPlacement == TOP_RIGHT || mPlacement == BOTTOM_RIGHT) {
+			maxWidth = mRenderX;
+		} else if (mPlacement == CENTER || mPlacement == CENTER_X_ONLY) {
+			if (mRenderX < gr_fb_width() / 2) {
+				maxWidth = mRenderX * 2;
+			} else {
+				maxWidth = (gr_fb_width() - mRenderX) * 2;
+			}
+		}
+	}
 
 	// Simple way to check for static state
 	mLastValue = gui_parse_text(mText);
@@ -101,10 +119,14 @@ int GUIText::Render(void)
 	else
 		gr_color(mColor.red, mColor.green, mColor.blue, mColor.alpha);
 
-	if (maxWidth)
-		gr_textExW(x, y, displayValue.c_str(), fontResource, maxWidth + x);
-	else
+	if (maxWidth) {
+		if (scaleWidth)
+			gr_textEx_scaleW(x, y, displayValue.c_str(), fontResource, maxWidth + x);
+		else
+			gr_textExW(x, y, displayValue.c_str(), fontResource, maxWidth + x);
+	} else {
 		gr_textEx(x, y, displayValue.c_str(), fontResource);
+	}
 	return 0;
 }
 

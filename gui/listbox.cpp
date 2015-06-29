@@ -28,6 +28,9 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "../data.hpp"
+#include "pages.hpp"
+
+extern std::vector<language_struct> Language_List;
 
 GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 {
@@ -57,6 +60,21 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 			DataManager::SetValue(mVariable, attr->value());
 		// Get the currently selected value for the list
 		DataManager::GetValue(mVariable, currentValue);
+		if (mVariable == "tw_language") {
+			std::vector<language_struct>::iterator iter;
+			for (iter = Language_List.begin(); iter != Language_List.end(); iter++) {
+				ListData data;
+				data.displayName = (*iter).displayvalue;
+				data.variableValue = (*iter).filename;
+				data.action = NULL;
+				if (currentValue == (*iter).filename) {
+					data.selected = 1;
+					DataManager::SetValue("tw_language_display", (*iter).displayvalue);
+				} else
+					data.selected = 0;
+				mList.push_back(data);
+			}
+		}
 	}
 	else
 		allowSelection = false;		// allows using listbox as a read-only list
@@ -82,7 +100,8 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 		if (action) {
 			data.action = new GUIAction(action);
 			allowSelection = true;
-		}
+		} else
+			data.action = NULL;
 
 		mList.push_back(data);
 
