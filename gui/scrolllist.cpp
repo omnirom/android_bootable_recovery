@@ -26,6 +26,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "../data.hpp"
+#include "stringparser.hpp"
 
 const float SCROLLING_SPEED_DECREMENT = 0.9; // friction
 const int SCROLLING_FLOOR = 2; // minimum pixels for scrolling to stop
@@ -63,7 +64,7 @@ GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 	child = node ? node->first_node("text") : NULL;
 	if (child)  mHeaderText = child->value();
 	// Simple way to check for static state
-	mLastHeaderValue = gui_parse_text(mHeaderText);
+	mLastHeaderValue = StringParser::ParseAll(mHeaderText);
 	mHeaderIsStatic = (mLastHeaderValue == mHeaderText);
 
 	mHighlightColor = LoadAttrColor(FindNode(node, "highlight"), "color", &hasHighlightColor);
@@ -266,7 +267,7 @@ int GUIScrollList::Render(void)
 
 		// render the text
 		gr_color(mHeaderFontColor.red, mHeaderFontColor.green, mHeaderFontColor.blue, mHeaderFontColor.alpha);
-		gr_textEx(mRenderX + IconOffsetX + 5, yPos + (int)((mHeaderH - mFontHeight) / 2), mLastHeaderValue.c_str(), mFont->GetResource());
+		gr_textEx_scaleW(mRenderX + IconOffsetX + 5, yPos + (int)((mHeaderH - mFontHeight) / 2), mLastHeaderValue.c_str(), mFont->GetResource(), mRenderW, TOP_LEFT, 0);
 
 		// Add the separator
 		gr_color(mHeaderSeparatorColor.red, mHeaderSeparatorColor.green, mHeaderSeparatorColor.blue, mHeaderSeparatorColor.alpha);
@@ -347,7 +348,7 @@ void GUIScrollList::RenderStdItem(int yPos, bool selected, ImageResource* icon, 
 	// render label text
 	int textX = mRenderX + maxIconWidth + 5;
 	int textY = yPos + (iconAndTextH - mFontHeight) / 2;
-	gr_textEx(textX, textY, text, mFont->GetResource());
+	gr_textEx_scaleW(textX, textY, text, mFont->GetResource(), mRenderW, TOP_LEFT, 0);
 }
 
 int GUIScrollList::Update(void)
@@ -356,7 +357,7 @@ int GUIScrollList::Update(void)
 		return 0;
 
 	if (!mHeaderIsStatic) {
-		std::string newValue = gui_parse_text(mHeaderText);
+		std::string newValue = StringParser::ParseAll(mHeaderText);
 		if (mLastHeaderValue != newValue) {
 			mLastHeaderValue = newValue;
 			mUpdate = 1;
@@ -573,7 +574,7 @@ int GUIScrollList::NotifyVarChange(const std::string& varName, const std::string
 		return 0;
 
 	if (!mHeaderIsStatic) {
-		std::string newValue = gui_parse_text(mHeaderText);
+		std::string newValue = StringParser::ParseAll(mHeaderText);
 		if (mLastHeaderValue != newValue) {
 			mLastHeaderValue = newValue;
 			firstDisplayedItem = 0;
