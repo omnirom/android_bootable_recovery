@@ -5,10 +5,12 @@ LOCAL_SRC_FILES := \
     events.cpp \
     graphics.cpp \
     graphics_adf.cpp \
+    graphics_drm.cpp \
     graphics_fbdev.cpp \
     resources.cpp \
 
 LOCAL_WHOLE_STATIC_LIBRARIES += libadf
+LOCAL_WHOLE_STATIC_LIBRARIES += libdrm
 LOCAL_STATIC_LIBRARIES += libpng
 
 LOCAL_MODULE := libminui
