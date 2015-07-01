@@ -1404,7 +1404,6 @@ pcdout:
 static int PerformCommandErase(CommandParameters* params) {
     char* range = NULL;
     int i;
-    int j;
     int rc = -1;
     RangeSet* tgt = NULL;
     struct stat st;
@@ -1431,7 +1430,7 @@ static int PerformCommandErase(CommandParameters* params) {
     range = strtok_r(NULL, " ", &params->cpos);
 
     if (range == NULL) {
-        fprintf(stderr, "missing target blocks for erase\n");
+        fprintf(stderr, "missing target blocks for zero\n");
         goto pceout;
     }
 
@@ -1440,22 +1439,7 @@ static int PerformCommandErase(CommandParameters* params) {
     if (params->canwrite) {
         fprintf(stderr, " erasing %d blocks\n", tgt->size);
 
-        allocate(BLOCKSIZE, &params->buffer, &params->bufsize);
-        memset(params->buffer, 0, BLOCKSIZE);
-
         for (i = 0; i < tgt->count; ++i) {
-            // Always zero the blocks first to work around possibly flaky BLKDISCARD
-            // Bug: 20881595
-            if (!check_lseek(params->fd, (off64_t) tgt->pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
-                goto pceout;
-            }
-
-            for (j = tgt->pos[i * 2]; j < tgt->pos[i * 2 + 1]; ++j) {
-                if (write_all(params->fd, params->buffer, BLOCKSIZE) == -1) {
-                    goto pceout;
-                }
-            }
-
             // offset in bytes
             blocks[0] = tgt->pos[i * 2] * (uint64_t) BLOCKSIZE;
             // length in bytes
