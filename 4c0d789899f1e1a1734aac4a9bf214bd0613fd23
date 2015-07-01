@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f8eba960_c753526b",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-07-01T20:58:44Z",
+      "side": 1,
+      "message": "construct a path using either $(LOCAL_PATH) or $(call project-path-for,recovery)",
+      "revId": "4c0d789899f1e1a1734aac4a9bf214bd0613fd23",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
