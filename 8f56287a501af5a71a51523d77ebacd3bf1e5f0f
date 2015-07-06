@@ -1,0 +1,129 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f8eba960_0a5a5f83",
+        "filename": "gui/console.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-07-06T21:06:39Z",
+      "side": 1,
+      "message": "gui_print should not silently change what it writes, better create a new function to output end user messages.",
+      "revId": "8f56287a501af5a71a51523d77ebacd3bf1e5f0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8eba960_ca53576b",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 663,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-07-06T21:06:39Z",
+      "side": 1,
+      "message": "This is not an error, it is used by SwitchToConsole.",
+      "revId": "8f56287a501af5a71a51523d77ebacd3bf1e5f0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8eba960_aa50135f",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 685,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-07-06T21:06:39Z",
+      "side": 1,
+      "message": "languageFile should be const char*",
+      "revId": "8f56287a501af5a71a51523d77ebacd3bf1e5f0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8eba960_4acbc723",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1151,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-07-06T21:06:39Z",
+      "side": 1,
+      "message": "If this returns a std::string, we can get rid of all the free() calls in the callers. I think we can afford copying a few hundred kB once since we don\u0027t have std::move yet.",
+      "revId": "8f56287a501af5a71a51523d77ebacd3bf1e5f0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8eba960_8ac1cf05",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1172,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-07-06T21:06:39Z",
+      "side": 1,
+      "message": "perror would be nice here",
+      "revId": "8f56287a501af5a71a51523d77ebacd3bf1e5f0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8eba960_ea561b5d",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1221,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-07-06T21:06:39Z",
+      "side": 1,
+      "message": "We should use ISO-639 codes for the language files (e.g. \"es.xml\").",
+      "revId": "8f56287a501af5a71a51523d77ebacd3bf1e5f0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8eba960_2ad083c9",
+        "filename": "gui/resources.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 285,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-07-06T21:06:39Z",
+      "side": 1,
+      "message": "Not sure if FindString should always parse. Maybe create a separate function.",
+      "range": {
+        "startLine": 285,
+        "startChar": 2,
+        "endLine": 285,
+        "endChar": 3
+      },
+      "revId": "8f56287a501af5a71a51523d77ebacd3bf1e5f0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
