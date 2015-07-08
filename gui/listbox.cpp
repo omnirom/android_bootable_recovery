@@ -58,6 +58,8 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 		// Get the currently selected value for the list
 		DataManager::GetValue(mVariable, currentValue);
 	}
+	else
+		allowSelection = false;		// allows using listbox as a read-only list
 
 	// Get the data for the list
 	child = FindNode(node, "listitem");
@@ -66,14 +68,20 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 		ListData data;
 
 		attr = child->first_attribute("name");
-		if (!attr) return;
-		data.displayName = attr->value();
-
-		data.variableValue = child->value();
+		if (!attr)
+			continue;
+		data.displayName = gui_parse_text(attr->value());
+		data.variableValue = gui_parse_text(child->value());
 		if (child->value() == currentValue) {
 			data.selected = 1;
 		} else {
 			data.selected = 0;
+		}
+		data.action = NULL;
+		xml_node<>* action = child->first_node("action");
+		if (action) {
+			data.action = new GUIAction(action);
+			allowSelection = true;
 		}
 
 		mList.push_back(data);
@@ -157,9 +165,12 @@ void GUIListBox::NotifySelect(size_t item_selected)
 		mList.at(i).selected = 0;
 	}
 	if (item_selected < mList.size()) {
-		mList.at(item_selected).selected = 1;
-		string str = mList.at(item_selected).variableValue;
+		ListData& data = mList.at(item_selected);
+		data.selected = 1;
+		string str = data.variableValue;	// [check] should this set currentValue instead?
 		DataManager::SetValue(mVariable, str);
+		if (data.action)
+			data.action->doActions();
 	}
 	mUpdate = 1;
 }
