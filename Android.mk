@@ -382,6 +382,12 @@ ifneq ($(TARGET_RECOVERY_DEVICE_MODULES),)
 endif
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
 LOCAL_CFLAGS += -DTWHTCD_PATH=\"$(TWHTCD_PATH)\"
+ifeq ($(TW_INCLUDE_NTFS_3G),true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += \
+        ntfs-3g \
+        ntfsfix \
+        mkntfs
+endif
 
 include $(BUILD_EXECUTABLE)
 

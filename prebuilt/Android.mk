@@ -166,6 +166,11 @@ endif
 ifneq ($(wildcard external/pcre/Android.mk),)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libpcre.so
 endif
+ifeq ($(TW_INCLUDE_NTFS_3G),true)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/ntfs-3g
+    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/ntfsfix
+    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mkntfs
+endif
 
 TWRP_AUTOGEN := $(intermediates)/teamwin
 
