@@ -108,6 +108,7 @@ private:
 	bool Wipe_MTD();                                                          // Formats as yaffs2 for MTD memory types
 	bool Wipe_RMRF();                                                         // Uses rm -rf to wipe
 	bool Wipe_F2FS();                                                         // Uses mkfs.f2fs to wipe
+	bool Wipe_NTFS();                                                         // Uses mkntfs to wipe
 	bool Wipe_Data_Without_Wiping_Media();                                    // Uses rm -rf to wipe but does not wipe /data/media
 	bool Backup_Tar(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid); // Backs up using tar for file systems
 	bool Backup_DD(string backup_folder);                                     // Backs up using dd for emmc memory types
