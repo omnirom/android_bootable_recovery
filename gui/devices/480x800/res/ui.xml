@@ -213,8 +213,6 @@
 
 	<templates>
 		<template name="header">
-			<background color="%backgroundcolor%" />
-
 			<object type="fill" color="%button_fill_color%">
 				<placement x="0" y="0" w="480" h="98" />
 			</object>
