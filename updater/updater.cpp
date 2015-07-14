@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
         return 4;
     }
 
-    char* script = malloc(script_entry->uncompLen+1);
+    char* script = reinterpret_cast<char*>(malloc(script_entry->uncompLen+1));
     if (!mzReadZipEntry(&za, script_entry, script, script_entry->uncompLen)) {
         printf("failed to read script from package\n");
         return 5;

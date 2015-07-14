@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2010 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <errno.h>
 #include <libgen.h>
 #include <stdio.h>
@@ -76,7 +92,7 @@ int FindExpendableFiles(char*** names, int* entries) {
   struct dirent* de;
   int size = 32;
   *entries = 0;
-  *names = malloc(size * sizeof(char*));
+  *names = reinterpret_cast<char**>(malloc(size * sizeof(char*)));
 
   char path[FILENAME_MAX];
 
@@ -84,8 +100,7 @@ int FindExpendableFiles(char*** names, int* entries) {
   // directories.
   const char* dirs[2] = {"/cache", "/cache/recovery/otatest"};
 
-  unsigned int i;
-  for (i = 0; i < sizeof(dirs)/sizeof(dirs[0]); ++i) {
+  for (size_t i = 0; i < sizeof(dirs)/sizeof(dirs[0]); ++i) {
     d = opendir(dirs[i]);
     if (d == NULL) {
       printf("error opening %s: %s\n", dirs[i], strerror(errno));
@@ -107,7 +122,7 @@ int FindExpendableFiles(char*** names, int* entries) {
       if (stat(path, &st) == 0 && S_ISREG(st.st_mode)) {
         if (*entries >= size) {
           size *= 2;
-          *names = realloc(*names, size * sizeof(char*));
+          *names = reinterpret_cast<char**>(realloc(*names, size * sizeof(char*)));
         }
         (*names)[(*entries)++] = strdup(path);
       }
@@ -127,8 +142,7 @@ int FindExpendableFiles(char*** names, int* entries) {
 
 int MakeFreeSpaceOnCache(size_t bytes_needed) {
   size_t free_now = FreeSpaceForFile("/cache");
-  printf("%ld bytes free on /cache (%ld needed)\n",
-         (long)free_now, (long)bytes_needed);
+  printf("%zu bytes free on /cache (%zu needed)\n", free_now, bytes_needed);
 
   if (free_now >= bytes_needed) {
     return 0;
@@ -158,7 +172,7 @@ int MakeFreeSpaceOnCache(size_t bytes_needed) {
     if (names[i]) {
       unlink(names[i]);
       free_now = FreeSpaceForFile("/cache");
-      printf("deleted %s; now %ld bytes free\n", names[i], (long)free_now);
+      printf("deleted %s; now %zu bytes free\n", names[i], free_now);
       free(names[i]);
     }
   }
