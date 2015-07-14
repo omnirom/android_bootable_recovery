@@ -131,8 +131,10 @@ set_perm() {
 
 cp_perm() {
   rm $5
-  cat $4 > $5
-  set_perm $1 $2 $3 $5 $6
+  if [ -f "$4" ]; then
+    cat $4 > $5
+    set_perm $1 $2 $3 $5 $6
+  fi
 }
 
 echo "*********************"
@@ -207,16 +209,26 @@ fi
 #cd /tmp
 #mkdir supersu
 #cd supersu
-#unzip -o "$ZIP"
+
+#if [ -z "$BIN" ]; then
+#  unzip -o "$ZIP"
+#
+#  BIN=/tmp/supersu/$ARCH
+#  COM=/tmp/supersu/common
+#fi
 
 BIN=/supersu
 COM=/supersu
 
 echo "- Disabling OTA survival"
-chmod 0755 /supersu/chattr$PIE
+chmod 0755 $BIN/chattr$PIE
 LD_LIBRARY_PATH=$SYSTEMLIB $BIN/chattr$PIE -i /system/bin/su
 LD_LIBRARY_PATH=$SYSTEMLIB $BIN/chattr$PIE -i /system/xbin/su
 LD_LIBRARY_PATH=$SYSTEMLIB $BIN/chattr$PIE -i /system/bin/.ext/.su
+LD_LIBRARY_PATH=$SYSTEMLIB $BIN/chattr$PIE -i /system/sbin/su
+LD_LIBRARY_PATH=$SYSTEMLIB $BIN/chattr$PIE -i /vendor/sbin/su
+LD_LIBRARY_PATH=$SYSTEMLIB $BIN/chattr$PIE -i /vendor/bin/su
+LD_LIBRARY_PATH=$SYSTEMLIB $BIN/chattr$PIE -i /vendor/xbin/su
 LD_LIBRARY_PATH=$SYSTEMLIB $BIN/chattr$PIE -i /system/xbin/daemonsu
 LD_LIBRARY_PATH=$SYSTEMLIB $BIN/chattr$PIE -i /system/xbin/sugote
 LD_LIBRARY_PATH=$SYSTEMLIB $BIN/chattr$PIE -i /system/xbin/sugote_mksh
@@ -243,6 +255,10 @@ fi
 
 rm -f /system/bin/su
 rm -f /system/xbin/su
+rm -f /system/sbin/su
+rm -f /vendor/sbin/su
+rm -f /vendor/bin/su
+rm -f /vendor/xbin/su
 rm -f /system/xbin/daemonsu
 rm -f /system/xbin/sugote
 rm -f /system/xbin/sugote-mksh
@@ -254,7 +270,6 @@ rm -f /system/bin/install-recovery.sh
 rm -f /system/etc/install-recovery.sh
 rm -f /system/etc/init.d/99SuperSUDaemon
 rm -f /system/etc/.installed_su_daemon
-
 rm -f /system/app/Superuser.apk
 rm -f /system/app/Superuser.odex
 rm -rf /system/app/Superuser
@@ -310,19 +325,31 @@ rm -f /data/app/eu.chainfire.supersu.apk
 
 echo "- Creating space"
 if ($APKFOLDER); then
-  cp /system/app/Maps/Maps.apk /Maps.apk
-  cp /system/app/GMS_Maps/GMS_Maps.apk /GMS_Maps.apk
-  cp /system/app/YouTube/YouTube.apk /YouTube.apk
-  rm /system/app/Maps/Maps.apk
-  rm /system/app/GMS_Maps/GMS_Maps.apk
-  rm /system/app/YouTube/YouTube.apk
+  if [ -f "/system/app/Maps/Maps.apk" ]; then
+    cp /system/app/Maps/Maps.apk /Maps.apk
+    rm /system/app/Maps/Maps.apk
+  fi
+  if [ -f "/system/app/GMS_Maps/GMS_Maps.apk" ]; then
+    cp /system/app/GMS_Maps/GMS_Maps.apk /GMS_Maps.apk
+    rm /system/app/GMS_Maps/GMS_Maps.apk
+  fi
+  if [ -f "/system/app/YouTube/YouTube.apk" ]; then
+    cp /system/app/YouTube/YouTube.apk /YouTube.apk
+    rm /system/app/YouTube/YouTube.apk
+  fi
 else
-  cp /system/app/Maps.apk /Maps.apk
-  cp /system/app/GMS_Maps.apk /GMS_Maps.apk
-  cp /system/app/YouTube.apk /YouTube.apk
-  rm /system/app/Maps.apk
-  rm /system/app/GMS_Maps.apk
-  rm /system/app/YouTube.apk
+  if [ -f "/system/app/Maps.apk" ]; then
+    cp /system/app/Maps.apk /Maps.apk
+    rm /system/app/Maps.apk
+  fi
+  if [ -f "/system/app/GMS_Maps.apk" ]; then  
+    cp /system/app/GMS_Maps.apk /GMS_Maps.apk
+    rm /system/app/GMS_Maps.apk
+  fi
+  if [ -f "/system/app/YouTube.apk" ]; then
+    cp /system/app/YouTube.apk /YouTube.apk
+    rm /system/app/YouTube.apk
+  fi
 fi
 
 echo "- Placing files"
@@ -378,19 +405,31 @@ set_perm 0 0 0644 /system/etc/.installed_su_daemon
 
 echo "- Restoring files"
 if ($APKFOLDER); then
-  cp_perm 0 0 0644 /Maps.apk /system/app/Maps/Maps.apk
-  cp_perm 0 0 0644 /GMS_Maps.apk /system/app/GMS_Maps/GMS_Maps.apk
-  cp_perm 0 0 0644 /YouTube.apk /system/app/YouTube/YouTube.apk
-  rm /Maps.apk
-  rm /GMS_Maps.apk
-  rm /YouTube.apk
+  if [ -f "/Maps.apk" ]; then
+    cp_perm 0 0 0644 /Maps.apk /system/app/Maps/Maps.apk
+    rm /Maps.apk
+  fi
+  if [ -f "/GMS_Maps.apk" ]; then
+    cp_perm 0 0 0644 /GMS_Maps.apk /system/app/GMS_Maps/GMS_Maps.apk
+    rm /GMS_Maps.apk
+  fi
+  if [ -f "/YouTube.apk" ]; then
+    cp_perm 0 0 0644 /YouTube.apk /system/app/YouTube/YouTube.apk
+    rm /YouTube.apk
+  fi
 else
-  cp_perm 0 0 0644 /Maps.apk /system/app/Maps.apk
-  cp_perm 0 0 0644 /GMS_Maps.apk /system/app/GMS_Maps.apk
-  cp_perm 0 0 0644 /YouTube.apk /system/app/YouTube.apk
-  rm /Maps.apk
-  rm /GMS_Maps.apk
-  rm /YouTube.apk
+  if [ -f "/Maps.apk" ]; then
+    cp_perm 0 0 0644 /Maps.apk /system/app/Maps.apk
+    rm /Maps.apk
+  fi
+  if [ -f "/GMS_Maps.apk" ]; then
+    cp_perm 0 0 0644 /GMS_Maps.apk /system/app/GMS_Maps.apk
+    rm /GMS_Maps.apk
+  fi
+  if [ -f "/YouTube.apk" ]; then
+    cp_perm 0 0 0644 /YouTube.apk /system/app/YouTube.apk
+    rm /YouTube.apk
+  fi
 fi
 
 echo "- Post-installation script"
