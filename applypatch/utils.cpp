@@ -39,13 +39,13 @@ void Write8(long long value, FILE* f) {
 }
 
 int Read2(void* pv) {
-    unsigned char* p = pv;
+    unsigned char* p = reinterpret_cast<unsigned char*>(pv);
     return (int)(((unsigned int)p[1] << 8) |
                  (unsigned int)p[0]);
 }
 
 int Read4(void* pv) {
-    unsigned char* p = pv;
+    unsigned char* p = reinterpret_cast<unsigned char*>(pv);
     return (int)(((unsigned int)p[3] << 24) |
                  ((unsigned int)p[2] << 16) |
                  ((unsigned int)p[1] << 8) |
@@ -53,7 +53,7 @@ int Read4(void* pv) {
 }
 
 long long Read8(void* pv) {
-    unsigned char* p = pv;
+    unsigned char* p = reinterpret_cast<unsigned char*>(pv);
     return (long long)(((unsigned long long)p[7] << 56) |
                        ((unsigned long long)p[6] << 48) |
                        ((unsigned long long)p[5] << 40) |

@@ -23,14 +23,14 @@
 #include "edify/expr.h"
 #include "mincrypt/sha.h"
 
-int CheckMode(int argc, char** argv) {
+static int CheckMode(int argc, char** argv) {
     if (argc < 3) {
         return 2;
     }
     return applypatch_check(argv[2], argc-3, argv+3);
 }
 
-int SpaceMode(int argc, char** argv) {
+static int SpaceMode(int argc, char** argv) {
     if (argc != 3) {
         return 2;
     }
@@ -45,19 +45,18 @@ int SpaceMode(int argc, char** argv) {
 
 // Parse arguments (which should be of the form "<sha1>" or
 // "<sha1>:<filename>" into the new parallel arrays *sha1s and
-// *patches (loading file contents into the patches).  Returns 0 on
+// *patches (loading file contents into the patches).  Returns true on
 // success.
-static int ParsePatchArgs(int argc, char** argv,
+static bool ParsePatchArgs(int argc, char** argv,
                           char*** sha1s, Value*** patches, int* num_patches) {
     *num_patches = argc;
-    *sha1s = malloc(*num_patches * sizeof(char*));
-    *patches = malloc(*num_patches * sizeof(Value*));
+    *sha1s = reinterpret_cast<char**>(malloc(*num_patches * sizeof(char*)));
+    *patches = reinterpret_cast<Value**>(malloc(*num_patches * sizeof(Value*)));
     memset(*patches, 0, *num_patches * sizeof(Value*));
 
     uint8_t digest[SHA_DIGEST_SIZE];
 
-    int i;
-    for (i = 0; i < *num_patches; ++i) {
+    for (int i = 0; i < *num_patches; ++i) {
         char* colon = strchr(argv[i], ':');
         if (colon != NULL) {
             *colon = '\0';
@@ -66,7 +65,7 @@ static int ParsePatchArgs(int argc, char** argv,
 
         if (ParseSha1(argv[i], digest) != 0) {
             printf("failed to parse sha1 \"%s\"\n", argv[i]);
-            return -1;
+            return false;
         }
 
         (*sha1s)[i] = argv[i];
@@ -77,17 +76,17 @@ static int ParsePatchArgs(int argc, char** argv,
             if (LoadFileContents(colon, &fc) != 0) {
                 goto abort;
             }
-            (*patches)[i] = malloc(sizeof(Value));
+            (*patches)[i] = reinterpret_cast<Value*>(malloc(sizeof(Value)));
             (*patches)[i]->type = VAL_BLOB;
             (*patches)[i]->size = fc.size;
-            (*patches)[i]->data = (char*)fc.data;
+            (*patches)[i]->data = reinterpret_cast<char*>(fc.data);
         }
     }
 
-    return 0;
+    return true;
 
   abort:
-    for (i = 0; i < *num_patches; ++i) {
+    for (int i = 0; i < *num_patches; ++i) {
         Value* p = (*patches)[i];
         if (p != NULL) {
             free(p->data);
@@ -96,7 +95,7 @@ static int ParsePatchArgs(int argc, char** argv,
     }
     free(*sha1s);
     free(*patches);
-    return -1;
+    return false;
 }
 
 int PatchMode(int argc, char** argv) {
@@ -107,7 +106,7 @@ int PatchMode(int argc, char** argv) {
             printf("failed to load bonus file %s\n", argv[2]);
             return 1;
         }
-        bonus = malloc(sizeof(Value));
+        bonus = reinterpret_cast<Value*>(malloc(sizeof(Value)));
         bonus->type = VAL_BLOB;
         bonus->size = fc.size;
         bonus->data = (char*)fc.data;
@@ -129,7 +128,7 @@ int PatchMode(int argc, char** argv) {
     char** sha1s;
     Value** patches;
     int num_patches;
-    if (ParsePatchArgs(argc-5, argv+5, &sha1s, &patches, &num_patches) != 0) {
+    if (!ParsePatchArgs(argc-5, argv+5, &sha1s, &patches, &num_patches)) {
         printf("failed to parse patch args\n");
         return 1;
     }
