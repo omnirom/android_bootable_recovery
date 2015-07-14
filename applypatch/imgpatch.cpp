@@ -132,7 +132,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size __unused,
             // must be appended from the bonus_data value.
             size_t bonus_size = (i == 1 && bonus_data != NULL) ? bonus_data->size : 0;
 
-            unsigned char* expanded_source = malloc(expanded_len);
+            unsigned char* expanded_source = reinterpret_cast<unsigned char*>(malloc(expanded_len));
             if (expanded_source == NULL) {
                 printf("failed to allocate %zu bytes for expanded_source\n",
                        expanded_len);
@@ -196,7 +196,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size __unused,
                 // ... unless the buffer is too small, in which case we'll
                 // allocate a fresh one.
                 free(temp_data);
-                temp_data = malloc(32768);
+                temp_data = reinterpret_cast<unsigned char*>(malloc(32768));
                 temp_size = 32768;
             }
 

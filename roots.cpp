@@ -30,10 +30,8 @@
 #include "roots.h"
 #include "common.h"
 #include "make_ext4fs.h"
-extern "C" {
 #include "wipe.h"
 #include "cryptfs.h"
-}
 
 static struct fstab *fstab = NULL;
 
