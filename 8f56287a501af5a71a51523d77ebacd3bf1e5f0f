@@ -53,6 +53,24 @@
     },
     {
       "key": {
+        "uuid": "f8eba960_15128462",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 685,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2015-07-14T15:32:29Z",
+      "side": 1,
+      "message": "rapidxml expects a char* and not a const char* so using const here causes a compile error.",
+      "parentUuid": "f8eba960_aa50135f",
+      "revId": "8f56287a501af5a71a51523d77ebacd3bf1e5f0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "f8eba960_4acbc723",
         "filename": "gui/pages.cpp",
         "patchSetId": 1
@@ -64,6 +82,24 @@
       "writtenOn": "2015-07-06T21:06:39Z",
       "side": 1,
       "message": "If this returns a std::string, we can get rid of all the free() calls in the callers. I think we can afford copying a few hundred kB once since we don\u0027t have std::move yet.",
+      "revId": "8f56287a501af5a71a51523d77ebacd3bf1e5f0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8eba960_f50e0040",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1151,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2015-07-14T15:32:29Z",
+      "side": 1,
+      "message": "Because rapidxml expects a char* and not a const char*, we can\u0027t easily use std::string\u0027s c_str() because it triggers a compile error.",
+      "parentUuid": "f8eba960_4acbc723",
       "revId": "8f56287a501af5a71a51523d77ebacd3bf1e5f0f",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
