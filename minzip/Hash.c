@@ -361,7 +361,7 @@ void mzHashTableProbeCount(HashTable* pHashTable, HashCalcFunc calcFunc,
     {
         const void* data = (const void*)mzHashIterData(&iter);
         int count;
-            
+
         count = countProbes(pHashTable, (*calcFunc)(data), data, cmpFunc);
 
         numEntries++;
@@ -373,7 +373,7 @@ void mzHashTableProbeCount(HashTable* pHashTable, HashCalcFunc calcFunc,
         totalProbe += count;
     }
 
-    LOGI("Probe: min=%d max=%d, total=%d in %d (%d), avg=%.3f\n",
+    LOGV("Probe: min=%d max=%d, total=%d in %d (%d), avg=%.3f\n",
         minProbe, maxProbe, totalProbe, numEntries, pHashTable->tableSize,
         (float) totalProbe / (float) numEntries);
 }
