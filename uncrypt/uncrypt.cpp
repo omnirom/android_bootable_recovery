@@ -144,7 +144,7 @@ static const char* find_block_device(const char* path, bool* encryptable, bool* 
             (path[len] == '/' || path[len] == 0)) {
             *encrypted = false;
             *encryptable = false;
-            if (fs_mgr_is_encryptable(v)) {
+            if (fs_mgr_is_encryptable(v) || fs_mgr_is_file_encrypted(v)) {
                 *encryptable = true;
                 char buffer[PROPERTY_VALUE_MAX+1];
                 if (property_get("ro.crypto.state", buffer, "") &&
