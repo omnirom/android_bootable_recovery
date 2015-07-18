@@ -279,8 +279,13 @@ static int get_framebuffer(GGLSurface *fb)
 #endif
 
     fb->version = sizeof(*fb);
+#ifdef BOARD_ROTATE_ORIENTATION_90
+    fb->width = vi.yres;
+    fb->height = vi.xres;
+#else
     fb->width = vi.xres;
     fb->height = vi.yres;
+#endif
 #ifdef BOARD_HAS_JANKY_BACKBUFFER
     printf("setting JANKY BACKBUFFER\n");
     fb->stride = fi.line_length/2;
