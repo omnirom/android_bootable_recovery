@@ -43,6 +43,7 @@ static int GenerateTarget(FileContents* source_file,
                           const uint8_t target_sha1[SHA_DIGEST_SIZE],
                           size_t target_size,
                           const Value* bonus_data);
+static std::string short_sha1(const uint8_t sha1[SHA_DIGEST_SIZE]);
 
 static bool mtd_partitions_scanned = false;
 
@@ -461,7 +462,7 @@ int WriteToPartition(unsigned char* data, size_t len, const char* target) {
                 }
 
                 if (start == len) {
-                    printf("verification read succeeded (attempt %d)\n", attempt+1);
+                    printf("verification read succeeded (attempt %zu)\n", attempt+1);
                     success = true;
                     break;
                 }
@@ -628,12 +629,14 @@ int CacheSizeCheck(size_t bytes) {
     }
 }
 
-static void print_short_sha1(const uint8_t sha1[SHA_DIGEST_SIZE]) {
+static std::string short_sha1(const uint8_t sha1[SHA_DIGEST_SIZE]) {
     const char* hex = "0123456789abcdef";
+    std::string result = "";
     for (size_t i = 0; i < 4; ++i) {
-        putchar(hex[(sha1[i]>>4) & 0xf]);
-        putchar(hex[sha1[i] & 0xf]);
+        result.push_back(hex[(sha1[i]>>4) & 0xf]);
+        result.push_back(hex[sha1[i] & 0xf]);
     }
+    return result;
 }
 
 // This function applies binary patches to files in a way that is safe
@@ -648,7 +651,7 @@ static void print_short_sha1(const uint8_t sha1[SHA_DIGEST_SIZE]) {
 //   entries in <patch_sha1_str>, the corresponding patch from
 //   <patch_data> (which must be a VAL_BLOB) is applied to produce a
 //   new file (the type of patch is automatically detected from the
-//   blob daat).  If that new file has sha1 hash <target_sha1_str>,
+//   blob data).  If that new file has sha1 hash <target_sha1_str>,
 //   moves it to replace <target_filename>, and exits successfully.
 //   Note that if <source_filename> and <target_filename> are not the
 //   same, <source_filename> is NOT deleted on success.
@@ -659,7 +662,7 @@ static void print_short_sha1(const uint8_t sha1[SHA_DIGEST_SIZE]) {
 //   status.
 //
 // <source_filename> may refer to a partition to read the source data.
-// See the comments for the LoadPartition Contents() function above
+// See the comments for the LoadPartitionContents() function above
 // for the format of such a filename.
 
 int applypatch(const char* source_filename,
@@ -694,9 +697,7 @@ int applypatch(const char* source_filename,
         if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_SIZE) == 0) {
             // The early-exit case:  the patch was already applied, this file
             // has the desired hash, nothing for us to do.
-            printf("already ");
-            print_short_sha1(target_sha1);
-            putchar('\n');
+            printf("already %s\n", short_sha1(target_sha1).c_str());
             free(source_file.data);
             return 0;
         }
@@ -751,6 +752,67 @@ int applypatch(const char* source_filename,
     free(copy_file.data);
 
     return result;
+}
+
+/*
+ * This function flashes a given image to the target partition. It verifies
+ * the target cheksum first, and will return if target has the desired hash.
+ * It checks the checksum of the given source image before flashing, and
+ * verifies the target partition afterwards. The function is idempotent.
+ * Returns zero on success.
+ */
+int applypatch_flash(const char* source_filename, const char* target_filename,
+                     const char* target_sha1_str, size_t target_size) {
+    printf("flash %s: ", target_filename);
+
+    uint8_t target_sha1[SHA_DIGEST_SIZE];
+    if (ParseSha1(target_sha1_str, target_sha1) != 0) {
+        printf("failed to parse tgt-sha1 \"%s\"\n", target_sha1_str);
+        return 1;
+    }
+
+    FileContents source_file;
+    source_file.data = NULL;
+    std::string target_str(target_filename);
+
+    std::vector<std::string> pieces = android::base::Split(target_str, ":");
+    if (pieces.size() != 2 || (pieces[0] != "MTD" && pieces[0] != "EMMC")) {
+        printf("invalid target name \"%s\"", target_filename);
+        return 1;
+    }
+
+    // Load the target into the source_file object to see if already applied.
+    pieces.push_back(std::to_string(target_size));
+    pieces.push_back(target_sha1_str);
+    std::string fullname = android::base::Join(pieces, ':');
+    if (LoadPartitionContents(fullname.c_str(), &source_file) == 0 &&
+        memcmp(source_file.sha1, target_sha1, SHA_DIGEST_SIZE) == 0) {
+        // The early-exit case: the image was already applied, this partition
+        // has the desired hash, nothing for us to do.
+        printf("already %s\n", short_sha1(target_sha1).c_str());
+        free(source_file.data);
+        return 0;
+    }
+
+    if (LoadFileContents(source_filename, &source_file) == 0) {
+        if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_SIZE) != 0) {
+            // The source doesn't have desired checksum.
+            printf("source \"%s\" doesn't have expected sha1 sum\n", source_filename);
+            printf("expected: %s, found: %s\n", short_sha1(target_sha1).c_str(),
+                    short_sha1(source_file.sha1).c_str());
+            free(source_file.data);
+            return 1;
+        }
+    }
+
+    if (WriteToPartition(source_file.data, target_size, target_filename) != 0) {
+        printf("write of copied data to %s failed\n", target_filename);
+        free(source_file.data);
+        return 1;
+    }
+
+    free(source_file.data);
+    return 0;
 }
 
 static int GenerateTarget(FileContents* source_file,
@@ -953,9 +1015,7 @@ static int GenerateTarget(FileContents* source_file,
         printf("patch did not produce expected sha1\n");
         return 1;
     } else {
-        printf("now ");
-        print_short_sha1(target_sha1);
-        putchar('\n');
+        printf("now %s\n", short_sha1(target_sha1).c_str());
     }
 
     if (output < 0) {
