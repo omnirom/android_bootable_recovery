@@ -48,6 +48,8 @@ size_t FreeSpaceForFile(const char* filename);
 int CacheSizeCheck(size_t bytes);
 int ParseSha1(const char* str, uint8_t* digest);
 
+int applypatch_flash(const char* source_filename, const char* target_filename,
+                     const char* target_sha1_str, size_t target_size);
 int applypatch(const char* source_filename,
                const char* target_filename,
                const char* target_sha1_str,

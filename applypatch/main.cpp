@@ -47,8 +47,8 @@ static int SpaceMode(int argc, char** argv) {
 // "<sha1>:<filename>" into the new parallel arrays *sha1s and
 // *patches (loading file contents into the patches).  Returns true on
 // success.
-static bool ParsePatchArgs(int argc, char** argv,
-                          char*** sha1s, Value*** patches, int* num_patches) {
+static bool ParsePatchArgs(int argc, char** argv, char*** sha1s,
+                           Value*** patches, int* num_patches) {
     *num_patches = argc;
     *sha1s = reinterpret_cast<char**>(malloc(*num_patches * sizeof(char*)));
     *patches = reinterpret_cast<Value**>(malloc(*num_patches * sizeof(Value*)));
@@ -98,7 +98,12 @@ static bool ParsePatchArgs(int argc, char** argv,
     return false;
 }
 
-int PatchMode(int argc, char** argv) {
+static int FlashMode(const char* src_filename, const char* tgt_filename,
+                     const char* tgt_sha1, size_t tgt_size) {
+    return applypatch_flash(src_filename, tgt_filename, tgt_sha1, tgt_size);
+}
+
+static int PatchMode(int argc, char** argv) {
     Value* bonus = NULL;
     if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
         FileContents fc;
@@ -114,7 +119,7 @@ int PatchMode(int argc, char** argv) {
         argv += 2;
     }
 
-    if (argc < 6) {
+    if (argc < 4) {
         return 2;
     }
 
@@ -124,6 +129,16 @@ int PatchMode(int argc, char** argv) {
         printf("can't parse \"%s\" as byte count\n\n", argv[4]);
         return 1;
     }
+
+    // If no <src-sha1>:<patch> is provided, it is in flash mode.
+    if (argc == 5) {
+        if (bonus != NULL) {
+            printf("bonus file not supported in flash mode\n");
+            return 1;
+        }
+        return FlashMode(argv[1], argv[2], argv[3], target_size);
+    }
+
 
     char** sha1s;
     Value** patches;
@@ -161,6 +176,10 @@ int PatchMode(int argc, char** argv) {
 //
 // - if the sha1 hash of <tgt-file> is <tgt-sha1>, does nothing and exits
 //   successfully.
+//
+// - otherwise, if no <src-sha1>:<patch> is provided, flashes <tgt-file> with
+//   <src-file>. <tgt-file> must be a partition name, while <src-file> must
+//   be a regular image file. <src-file> will not be deleted on success.
 //
 // - otherwise, if the sha1 hash of <src-file> is <src-sha1>, applies the
 //   bsdiff <patch> to <src-file> to produce a new file (the type of patch
