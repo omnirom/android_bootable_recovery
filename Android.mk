@@ -16,7 +16,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := fuse_sideload.c
+LOCAL_SRC_FILES := fuse_sideload.cpp
 LOCAL_CLANG := true
 LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
@@ -33,7 +33,7 @@ LOCAL_SRC_FILES := \
     asn1_decoder.cpp \
     bootloader.cpp \
     device.cpp \
-    fuse_sdcard_provider.c \
+    fuse_sdcard_provider.cpp \
     install.cpp \
     recovery.cpp \
     roots.cpp \
