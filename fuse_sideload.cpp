@@ -116,7 +116,7 @@ static void fuse_reply(struct fuse_data* fd, __u64 unique, const void *data, siz
 }
 
 static int handle_init(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
-    const struct fuse_init_in* req = data;
+    const struct fuse_init_in* req = reinterpret_cast<const struct fuse_init_in*>(data);
     struct fuse_init_out out;
     size_t fuse_struct_size;
 
@@ -170,8 +170,7 @@ static void fill_attr(struct fuse_attr* attr, struct fuse_data* fd,
     attr->mode = mode;
 }
 
-static int handle_getattr(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
-    const struct fuse_getattr_in* req = data;
+static int handle_getattr(void* /* data */, struct fuse_data* fd, const struct fuse_in_header* hdr) {
     struct fuse_attr_out out;
     memset(&out, 0, sizeof(out));
     out.attr_valid = 10;
@@ -197,12 +196,12 @@ static int handle_lookup(void* data, struct fuse_data* fd,
     out.entry_valid = 10;
     out.attr_valid = 10;
 
-    if (strncmp(FUSE_SIDELOAD_HOST_FILENAME, data,
+    if (strncmp(FUSE_SIDELOAD_HOST_FILENAME, reinterpret_cast<const char*>(data),
                 sizeof(FUSE_SIDELOAD_HOST_FILENAME)) == 0) {
         out.nodeid = PACKAGE_FILE_ID;
         out.generation = PACKAGE_FILE_ID;
         fill_attr(&(out.attr), fd, PACKAGE_FILE_ID, fd->file_size, S_IFREG | 0444);
-    } else if (strncmp(FUSE_SIDELOAD_HOST_EXIT_FLAG, data,
+    } else if (strncmp(FUSE_SIDELOAD_HOST_EXIT_FLAG, reinterpret_cast<const char*>(data),
                        sizeof(FUSE_SIDELOAD_HOST_EXIT_FLAG)) == 0) {
         out.nodeid = EXIT_FLAG_ID;
         out.generation = EXIT_FLAG_ID;
@@ -215,9 +214,7 @@ static int handle_lookup(void* data, struct fuse_data* fd,
     return (out.nodeid == EXIT_FLAG_ID) ? NO_STATUS_EXIT : NO_STATUS;
 }
 
-static int handle_open(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
-    const struct fuse_open_in* req = data;
-
+static int handle_open(void* /* data */, struct fuse_data* fd, const struct fuse_in_header* hdr) {
     if (hdr->nodeid == EXIT_FLAG_ID) return -EPERM;
     if (hdr->nodeid != PACKAGE_FILE_ID) return -ENOENT;
 
@@ -292,7 +289,7 @@ static int fetch_block(struct fuse_data* fd, uint32_t block) {
 }
 
 static int handle_read(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
-    const struct fuse_read_in* req = data;
+    const struct fuse_read_in* req = reinterpret_cast<const struct fuse_read_in*>(data);
     struct fuse_out_header outhdr;
     struct iovec vec[3];
     int vec_used;
