@@ -34,7 +34,7 @@ struct file_data {
 };
 
 static int read_block_file(void* cookie, uint32_t block, uint8_t* buffer, uint32_t fetch_size) {
-    struct file_data* fd = (struct file_data*)cookie;
+    file_data* fd = reinterpret_cast<file_data*>(cookie);
 
     off64_t offset = ((off64_t) block) * fd->block_size;
     if (TEMP_FAILURE_RETRY(lseek64(fd->fd, offset, SEEK_SET)) == -1) {
@@ -56,7 +56,7 @@ static int read_block_file(void* cookie, uint32_t block, uint8_t* buffer, uint32
 }
 
 static void close_file(void* cookie) {
-    struct file_data* fd = (struct file_data*)cookie;
+    file_data* fd = reinterpret_cast<file_data*>(cookie);
     close(fd->fd);
 }
 
@@ -67,7 +67,7 @@ struct token {
 };
 
 static void* run_sdcard_fuse(void* cookie) {
-    struct token* t = (struct token*)cookie;
+    token* t = reinterpret_cast<token*>(cookie);
 
     struct stat sb;
     if (stat(t->path, &sb) < 0) {
@@ -100,7 +100,7 @@ static void* run_sdcard_fuse(void* cookie) {
 #define SDCARD_INSTALL_TIMEOUT 10
 
 void* start_sdcard_fuse(const char* path) {
-    struct token* t = malloc(sizeof(struct token));
+    token* t = new token;
 
     t->path = path;
     pthread_create(&(t->th), NULL, run_sdcard_fuse, t);
@@ -128,7 +128,7 @@ void* start_sdcard_fuse(const char* path) {
 
 void finish_sdcard_fuse(void* cookie) {
     if (cookie == NULL) return;
-    struct token* t = (struct token*)cookie;
+    token* t = reinterpret_cast<token*>(cookie);
 
     // Calling stat() on this magic filename signals the fuse
     // filesystem to shut down.
@@ -136,5 +136,5 @@ void finish_sdcard_fuse(void* cookie) {
     stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
 
     pthread_join(t->th, NULL);
-    free(t);
+    delete t;
 }
