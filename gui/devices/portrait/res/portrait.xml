@@ -96,6 +96,12 @@
 			<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%" />
 		</style>
+
+		<style name="textbox">
+			<fastscroll linecolor="%fastscroll_linecolor%" rectcolor="%fastscroll_rectcolor%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%" />
+			<font resource="filelist" color="%text_color%" />
+			<background color="%fileselector_background%" />
+		</style>
 	</styles>
 
 	<pages>
@@ -968,23 +974,9 @@
 		<page name="formatdata">
 			<object type="template" name="header" />
 
-			<object type="text">
-				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
-				<text>Format Data will wipe all of your apps,</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
-				<text>backups, pictures, videos, media, and</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
-				<text>removes encryption on internal storage.</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+			<object type="textbox">
+				<placement x="fileselector_x" y="%row1_header_y%" w="fileselector_width" h="300" />
+				<text>Format Data will wipe all of your apps, backups, pictures, videos, media, and removes encryption on internal storage.</text>
 				<text>This cannot be undone. Press back to cancel.</text>
 			</object>
 
