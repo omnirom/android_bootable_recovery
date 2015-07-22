@@ -607,3 +607,43 @@ void GUIScrollList::SetPageFocus(int inFocus)
 		mUpdate = 1;
 	}
 }
+
+bool GUIScrollList::AddLines(std::vector<std::string>* mText, std::vector<std::string>* mColor, size_t* mLastCount, std::vector<std::string>* rText, std::vector<std::string>* rColor)
+{
+	if (*mLastCount == mText->size())
+		return false; // nothing to add
+
+	size_t prevCount = *mLastCount;
+	*mLastCount = mText->size();
+
+	// Due to word wrap, figure out what / how the newly added text needs to be added to the render vector that is word wrapped
+	// Note, that multiple consoles on different GUI pages may be different widths or use different fonts, so the word wrapping
+	// may different in different console windows
+	for (size_t i = prevCount; i < *mLastCount; i++) {
+		string curr_line = mText->at(i);
+		string curr_color;
+		if (mColor)
+			curr_color = mColor->at(i);
+		for(;;) {
+			size_t line_char_width = gr_maxExW(curr_line.c_str(), mFont->GetResource(), mRenderW);
+			if (line_char_width < curr_line.size()) {
+				string left = curr_line.substr(0, line_char_width);
+				size_t wrap_pos = left.find_last_of(" ,./:-_;");//FindWrapPos(left);
+				if (wrap_pos == string::npos)
+					wrap_pos = left.size();
+				else if (wrap_pos < left.size())
+					wrap_pos++;
+				rText->push_back(curr_line.substr(0, wrap_pos));
+				if (mColor)
+					rColor->push_back(curr_color);
+				curr_line = curr_line.substr(wrap_pos);
+			} else {
+				rText->push_back(curr_line);
+				if (mColor)
+					rColor->push_back(curr_color);
+				break;
+			}
+		}
+	}
+	return true;
+}
