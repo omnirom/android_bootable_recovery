@@ -96,6 +96,12 @@
 			<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%" />
 		</style>
+
+		<style name="textbox">
+			<fastscroll linecolor="%fastscroll_linecolor%" rectcolor="%fastscroll_rectcolor%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%" />
+			<font resource="filelist" color="%text_color%" />
+			<background color="%fileselector_background%" />
+		</style>
 	</styles>
 
 	<pages>
@@ -3678,34 +3684,11 @@
 				<text>Keep System Read Only?</text>
 			</object>
 
-			<object type="text">
-				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
-				<text>TWRP can leave your system partition unmodified</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
-				<text>to make it easier for you to take official updates.</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
-				<text>TWRP will be unable to prevent the stock ROM from</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row5_text_y%" placement="5" />
-				<text>replacing TWRP and will not offer to root your device.</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row6_text_y%" placement="5" />
-				<text>Installing zips or performing adb operations may still</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row7_text_y%" placement="5" />
-				<text>modify the system partition.</text>
+			<object type="textbox">
+				<placement x="fileselector_x" y="%row2_text_y%" w="fileselector_width" h="system_readonly_textbox_height" />
+				<text>TWRP can leave your system partition unmodified to make it easier for you to take official updates.</text>
+				<text>TWRP will be unable to prevent the stock ROM from replacing TWRP and will not offer to root your device.</text>
+				<text>Installing zips or performing adb operations may still modify the system partition.</text>
 			</object>
 
 			<object type="checkbox">

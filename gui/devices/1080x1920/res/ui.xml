@@ -208,6 +208,7 @@
 		<variable name="pattern_dot_radius" value="23" />
 		<variable name="pattern_line_color" value="#33B5E5" />
 		<variable name="pattern_line_width" value="18" />
+		<variable name="system_readonly_textbox_height" value="440" />
 	</variables>
 
 	<mousecursor>
