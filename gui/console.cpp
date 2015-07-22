@@ -175,9 +175,18 @@ bool GUIConsole::AddLines()
 		for(;;) {
 			size_t line_char_width = gr_maxExW(curr_line.c_str(), mFont->GetResource(), mRenderW);
 			if (line_char_width < curr_line.size()) {
-				rConsole.push_back(curr_line.substr(0, line_char_width));
+				string left = curr_line.substr(0, line_char_width);
+				size_t space_pos = left.rfind(" ");
+				if (space_pos == string::npos) {
+					space_pos = line_char_width;
+				} else {
+					if (curr_line.size() > space_pos) {
+						space_pos = space_pos + 1;
+					}
+				}
+				rConsole.push_back(curr_line.substr(0, space_pos));
 				rConsoleColor.push_back(curr_color);
-				curr_line = curr_line.substr(line_char_width);
+				curr_line = curr_line.substr(space_pos);
 			} else {
 				rConsole.push_back(curr_line);
 				rConsoleColor.push_back(curr_color);
