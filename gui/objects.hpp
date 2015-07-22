@@ -551,6 +551,9 @@ protected:
 	int lastY, last2Y; // last 2 touch locations, used for tracking kinetic scroll speed
 	int fastScroll; // indicates that the inital touch was inside the fastscroll region - makes for easier fast scrolling as the touches don't have to stay within the fast scroll region and you drag your finger
 	int mUpdate; // indicates that a change took place and we need to re-render
+	void FindWrapPosHelper(size_t test, size_t* wrap_pos);
+	size_t FindWrapPos(string &left);
+	bool AddLines(std::vector<std::string>* mText, std::vector<std::string>* mColor, size_t* mLastCount, std::vector<std::string>* rText, std::vector<std::string>* rColor);
 };
 
 class GUIFileSelector : public GUIScrollList
@@ -682,6 +685,55 @@ protected:
 	bool updateList;
 };
 
+class GUITextBox : public GUIScrollList
+{
+public:
+	GUITextBox(xml_node<>* node);
+
+public:
+	// Render - Render the full object to the GL surface
+	//  Return 0 on success, <0 on error
+	virtual int Render(void);
+
+	// Update - Update any UI component animations (called <= 30 FPS)
+	//  Return 0 if nothing to update, 1 on success and contiue, >1 if full render required, and <0 on error
+	virtual int Update(void);
+
+	// IsInRegion - Checks if the request is handled by this object
+	//  Return 1 if this object handles the request, 0 if not
+	virtual int IsInRegion(int x, int y);
+
+	// NotifyTouch - Notify of a touch event
+	//  Return 0 on success, >0 to ignore remainder of touch, and <0 on error (Return error to allow other handlers)
+	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
+
+	// NotifyVarChange - Notify of a variable change
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
+
+	// ScrollList interface
+	virtual size_t GetItemCount();
+	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
+	virtual void NotifySelect(size_t item_selected);
+protected:
+	enum SlideoutState
+	{
+		hidden = 0,
+		visible,
+		request_hide,
+		request_show
+	};
+
+	size_t mLastCount;
+	bool scrollToEnd; // true if we want to keep tracking the last line
+	int mIsStatic;
+	std::vector<std::string> mLastValue;
+	std::vector<std::string> mText;
+	std::vector<std::string> rText;
+
+protected:
+	int RenderBox(void);
+};
+
 class GUIConsole : public GUIScrollList
 {
 public:
@@ -727,7 +779,6 @@ protected:
 	std::vector<std::string> rConsoleColor;
 
 protected:
-	bool AddLines();
 	int RenderSlideout(void);
 	int RenderConsole(void);
 };

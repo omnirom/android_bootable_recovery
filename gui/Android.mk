@@ -27,7 +27,8 @@ LOCAL_SRC_FILES := \
     partitionlist.cpp \
     mousecursor.cpp \
     scrolllist.cpp \
-    patternpassword.cpp
+    patternpassword.cpp \
+    textbox.cpp
 
 ifneq ($(TWRP_CUSTOM_KEYBOARD),)
     LOCAL_SRC_FILES += $(TWRP_CUSTOM_KEYBOARD)

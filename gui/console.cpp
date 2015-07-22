@@ -158,48 +158,9 @@ int GUIConsole::RenderSlideout(void)
 	return 0;
 }
 
-bool GUIConsole::AddLines()
-{
-	if (mLastCount == gConsole.size())
-		return false; // nothing to add
-
-	size_t prevCount = mLastCount;
-	mLastCount = gConsole.size();
-
-	// Due to word wrap, figure out what / how the newly added text needs to be added to the render vector that is word wrapped
-	// Note, that multiple consoles on different GUI pages may be different widths or use different fonts, so the word wrapping
-	// may different in different console windows
-	for (size_t i = prevCount; i < mLastCount; i++) {
-		string curr_line = gConsole[i];
-		string curr_color = gConsoleColor[i];
-		for(;;) {
-			size_t line_char_width = gr_maxExW(curr_line.c_str(), mFont->GetResource(), mRenderW);
-			if (line_char_width < curr_line.size()) {
-				string left = curr_line.substr(0, line_char_width);
-				size_t space_pos = left.rfind(" ");
-				if (space_pos == string::npos) {
-					space_pos = line_char_width;
-				} else {
-					if (curr_line.size() > space_pos) {
-						space_pos = space_pos + 1;
-					}
-				}
-				rConsole.push_back(curr_line.substr(0, space_pos));
-				rConsoleColor.push_back(curr_color);
-				curr_line = curr_line.substr(space_pos);
-			} else {
-				rConsole.push_back(curr_line);
-				rConsoleColor.push_back(curr_color);
-				break;
-			}
-		}
-	}
-	return true;
-}
-
 int GUIConsole::RenderConsole(void)
 {
-	AddLines();
+	AddLines(&gConsole, &gConsoleColor, &mLastCount, &rConsole, &rConsoleColor);
 	GUIScrollList::Render();
 
 	// if last line is fully visible, keep tracking the last line when new lines are added
@@ -250,7 +211,7 @@ int GUIConsole::Update(void)
 		scrollToEnd = true;
 	}
 
-	if (AddLines()) {
+	if (AddLines(&gConsole, &gConsoleColor, &mLastCount, &rConsole, &rConsoleColor)) {
 		// someone added new text
 		// at least the scrollbar must be updated, even if the new lines are currently not visible
 		mUpdate = 1;
