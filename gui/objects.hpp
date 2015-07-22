@@ -545,6 +545,7 @@ protected:
 	int lastY, last2Y; // last 2 touch locations, used for tracking kinetic scroll speed
 	int fastScroll; // indicates that the inital touch was inside the fastscroll region - makes for easier fast scrolling as the touches don't have to stay within the fast scroll region and you drag your finger
 	int mUpdate; // indicates that a change took place and we need to re-render
+	bool AddLines(std::vector<std::string>* origText, std::vector<std::string>* origColor, size_t* lastCount, std::vector<std::string>* rText, std::vector<std::string>* rColor);
 };
 
 class GUIFileSelector : public GUIScrollList
@@ -680,6 +681,33 @@ protected:
 	bool updateList;
 };
 
+class GUITextBox : public GUIScrollList
+{
+public:
+	GUITextBox(xml_node<>* node);
+
+public:
+	// Update - Update any UI component animations (called <= 30 FPS)
+	//  Return 0 if nothing to update, 1 on success and contiue, >1 if full render required, and <0 on error
+	virtual int Update(void);
+
+	// NotifyVarChange - Notify of a variable change
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
+
+	// ScrollList interface
+	virtual size_t GetItemCount();
+	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
+	virtual void NotifySelect(size_t item_selected);
+protected:
+
+	size_t mLastCount;
+	bool mIsStatic;
+	std::vector<std::string> mLastValue; // Parsed text - parsed for variables but not word wrapped
+	std::vector<std::string> mText;      // Original text - not parsed for variables and not word wrapped
+	std::vector<std::string> rText;      // Rendered text - what we actually see
+
+};
+
 class GUIConsole : public GUIScrollList
 {
 public:
@@ -725,7 +753,6 @@ protected:
 	std::vector<std::string> rConsoleColor;
 
 protected:
-	bool AddLines();
 	int RenderSlideout(void);
 	int RenderConsole(void);
 };
