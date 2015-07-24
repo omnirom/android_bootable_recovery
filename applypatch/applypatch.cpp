@@ -25,6 +25,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <base/strings.h>
+
 #include "mincrypt/sha.h"
 #include "applypatch.h"
 #include "mtdutils/mtdutils.h"
@@ -42,7 +44,7 @@ static int GenerateTarget(FileContents* source_file,
                           size_t target_size,
                           const Value* bonus_data);
 
-static int mtd_partitions_scanned = 0;
+static bool mtd_partitions_scanned = false;
 
 // Read a file into memory; store the file contents and associated
 // metadata in *file.
@@ -87,21 +89,6 @@ int LoadFileContents(const char* filename, FileContents* file) {
     return 0;
 }
 
-static size_t* size_array;
-// comparison function for qsort()ing an int array of indexes into
-// size_array[].
-static int compare_size_indices(const void* a, const void* b) {
-    const int aa = *reinterpret_cast<const int*>(a);
-    const int bb = *reinterpret_cast<const int*>(b);
-    if (size_array[aa] < size_array[bb]) {
-        return -1;
-    } else if (size_array[aa] > size_array[bb]) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
 // Load the contents of an MTD or EMMC partition into the provided
 // FileContents.  filename should be a string of the form
 // "MTD:<partition_name>:<size_1>:<sha1_1>:<size_2>:<sha1_2>:..."  (or
@@ -120,53 +107,45 @@ static int compare_size_indices(const void* a, const void* b) {
 enum PartitionType { MTD, EMMC };
 
 static int LoadPartitionContents(const char* filename, FileContents* file) {
-    char* copy = strdup(filename);
-    const char* magic = strtok(copy, ":");
+    std::string copy(filename);
+    std::vector<std::string> pieces = android::base::Split(copy, ":");
+    if (pieces.size() < 4 || pieces.size() % 2 != 0) {
+        printf("LoadPartitionContents called with bad filename (%s)\n", filename);
+        return -1;
+    }
 
     enum PartitionType type;
-
-    if (strcmp(magic, "MTD") == 0) {
+    if (pieces[0] == "MTD") {
         type = MTD;
-    } else if (strcmp(magic, "EMMC") == 0) {
+    } else if (pieces[0] == "EMMC") {
         type = EMMC;
     } else {
         printf("LoadPartitionContents called with bad filename (%s)\n", filename);
         return -1;
     }
-    const char* partition = strtok(NULL, ":");
+    const char* partition = pieces[1].c_str();
 
-    int i;
-    int colons = 0;
-    for (i = 0; filename[i] != '\0'; ++i) {
-        if (filename[i] == ':') {
-            ++colons;
-        }
-    }
-    if (colons < 3 || colons%2 == 0) {
-        printf("LoadPartitionContents called with bad filename (%s)\n",
-               filename);
-    }
+    size_t pairs = (pieces.size() - 2) / 2;    // # of (size, sha1) pairs in filename
+    std::vector<size_t> index(pairs);
+    std::vector<size_t> size(pairs);
+    std::vector<std::string> sha1sum(pairs);
 
-    int pairs = (colons-1)/2;     // # of (size,sha1) pairs in filename
-    int* index = reinterpret_cast<int*>(malloc(pairs * sizeof(int)));
-    size_t* size = reinterpret_cast<size_t*>(malloc(pairs * sizeof(size_t)));
-    char** sha1sum = reinterpret_cast<char**>(malloc(pairs * sizeof(char*)));
-
-    for (i = 0; i < pairs; ++i) {
-        const char* size_str = strtok(NULL, ":");
-        size[i] = strtol(size_str, NULL, 10);
+    for (size_t i = 0; i < pairs; ++i) {
+        size[i] = strtol(pieces[i*2+2].c_str(), NULL, 10);
         if (size[i] == 0) {
             printf("LoadPartitionContents called with bad size (%s)\n", filename);
             return -1;
         }
-        sha1sum[i] = strtok(NULL, ":");
+        sha1sum[i] = pieces[i*2+3].c_str();
         index[i] = i;
     }
 
-    // sort the index[] array so it indexes the pairs in order of
-    // increasing size.
-    size_array = size;
-    qsort(index, pairs, sizeof(int), compare_size_indices);
+    // Sort the index[] array so it indexes the pairs in order of increasing size.
+    sort(index.begin(), index.end(),
+        [&](const size_t& i, const size_t& j) {
+            return (size[i] < size[j]);
+        }
+    );
 
     MtdReadContext* ctx = NULL;
     FILE* dev = NULL;
@@ -175,20 +154,18 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         case MTD: {
             if (!mtd_partitions_scanned) {
                 mtd_scan_partitions();
-                mtd_partitions_scanned = 1;
+                mtd_partitions_scanned = true;
             }
 
             const MtdPartition* mtd = mtd_find_partition_by_name(partition);
             if (mtd == NULL) {
-                printf("mtd partition \"%s\" not found (loading %s)\n",
-                       partition, filename);
+                printf("mtd partition \"%s\" not found (loading %s)\n", partition, filename);
                 return -1;
             }
 
             ctx = mtd_read_partition(mtd);
             if (ctx == NULL) {
-                printf("failed to initialize read of mtd partition \"%s\"\n",
-                       partition);
+                printf("failed to initialize read of mtd partition \"%s\"\n", partition);
                 return -1;
             }
             break;
@@ -197,8 +174,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         case EMMC:
             dev = fopen(partition, "rb");
             if (dev == NULL) {
-                printf("failed to open emmc partition \"%s\": %s\n",
-                       partition, strerror(errno));
+                printf("failed to open emmc partition \"%s\": %s\n", partition, strerror(errno));
                 return -1;
             }
     }
@@ -207,15 +183,15 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
     SHA_init(&sha_ctx);
     uint8_t parsed_sha[SHA_DIGEST_SIZE];
 
-    // allocate enough memory to hold the largest size.
+    // Allocate enough memory to hold the largest size.
     file->data = reinterpret_cast<unsigned char*>(malloc(size[index[pairs-1]]));
     char* p = (char*)file->data;
     file->size = 0;                // # bytes read so far
+    bool found = false;
 
-    for (i = 0; i < pairs; ++i) {
-        // Read enough additional bytes to get us up to the next size
-        // (again, we're trying the possibilities in order of increasing
-        // size).
+    for (size_t i = 0; i < pairs; ++i) {
+        // Read enough additional bytes to get us up to the next size. (Again,
+        // we're trying the possibilities in order of increasing size).
         size_t next = size[index[i]] - file->size;
         size_t read = 0;
         if (next > 0) {
@@ -245,8 +221,8 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         memcpy(&temp_ctx, &sha_ctx, sizeof(SHA_CTX));
         const uint8_t* sha_so_far = SHA_final(&temp_ctx);
 
-        if (ParseSha1(sha1sum[index[i]], parsed_sha) != 0) {
-            printf("failed to parse sha1 %s in %s\n", sha1sum[index[i]], filename);
+        if (ParseSha1(sha1sum[index[i]].c_str(), parsed_sha) != 0) {
+            printf("failed to parse sha1 %s in %s\n", sha1sum[index[i]].c_str(), filename);
             free(file->data);
             file->data = NULL;
             return -1;
@@ -256,7 +232,8 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
             // we have a match.  stop reading the partition; we'll return
             // the data we've read so far.
             printf("partition read matched size %zu sha %s\n",
-                   size[index[i]], sha1sum[index[i]]);
+                   size[index[i]], sha1sum[index[i]].c_str());
+            found = true;
             break;
         }
 
@@ -274,9 +251,8 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
     }
 
 
-    if (i == pairs) {
-        // Ran off the end of the list of (size,sha1) pairs without
-        // finding a match.
+    if (!found) {
+        // Ran off the end of the list of (size,sha1) pairs without finding a match.
         printf("contents of partition \"%s\" didn't match %s\n", partition, filename);
         free(file->data);
         file->data = NULL;
@@ -292,11 +268,6 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
     file->st.st_mode = 0644;
     file->st.st_uid = 0;
     file->st.st_gid = 0;
-
-    free(copy);
-    free(index);
-    free(size);
-    free(sha1sum);
 
     return 0;
 }
@@ -340,33 +311,33 @@ int SaveFileContents(const char* filename, const FileContents* file) {
 }
 
 // Write a memory buffer to 'target' partition, a string of the form
-// "MTD:<partition>[:...]" or "EMMC:<partition_device>:".  Return 0 on
+// "MTD:<partition>[:...]" or "EMMC:<partition_device>".  Return 0 on
 // success.
 int WriteToPartition(unsigned char* data, size_t len, const char* target) {
-    char* copy = strdup(target);
-    const char* magic = strtok(copy, ":");
+    std::string copy(target);
+    std::vector<std::string> pieces = android::base::Split(copy, ":");
+
+    if (pieces.size() != 2) {
+        printf("WriteToPartition called with bad target (%s)\n", target);
+        return -1;
+    }
 
     enum PartitionType type;
-    if (strcmp(magic, "MTD") == 0) {
+    if (pieces[0] == "MTD") {
         type = MTD;
-    } else if (strcmp(magic, "EMMC") == 0) {
+    } else if (pieces[0] == "EMMC") {
         type = EMMC;
     } else {
         printf("WriteToPartition called with bad target (%s)\n", target);
         return -1;
     }
-    const char* partition = strtok(NULL, ":");
-
-    if (partition == NULL) {
-        printf("bad partition target name \"%s\"\n", target);
-        return -1;
-    }
+    const char* partition = pieces[1].c_str();
 
     switch (type) {
         case MTD: {
             if (!mtd_partitions_scanned) {
                 mtd_scan_partitions();
-                mtd_partitions_scanned = 1;
+                mtd_partitions_scanned = true;
             }
 
             const MtdPartition* mtd = mtd_find_partition_by_name(partition);
@@ -410,7 +381,7 @@ int WriteToPartition(unsigned char* data, size_t len, const char* target) {
                 return -1;
             }
 
-            for (int attempt = 0; attempt < 2; ++attempt) {
+            for (size_t attempt = 0; attempt < 2; ++attempt) {
                 if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1) {
                     printf("failed seek on %s: %s\n", partition, strerror(errno));
                     return -1;
@@ -510,7 +481,6 @@ int WriteToPartition(unsigned char* data, size_t len, const char* target) {
         }
     }
 
-    free(copy);
     return 0;
 }
 
