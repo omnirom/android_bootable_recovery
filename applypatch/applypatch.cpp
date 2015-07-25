@@ -312,13 +312,14 @@ int SaveFileContents(const char* filename, const FileContents* file) {
 }
 
 // Write a memory buffer to 'target' partition, a string of the form
-// "MTD:<partition>[:...]" or "EMMC:<partition_device>".  Return 0 on
-// success.
+// "MTD:<partition>[:...]" or "EMMC:<partition_device>[:...]". The target name
+// might contain multiple colons, but WriteToPartition() only uses the first
+// two and ignores the rest. Return 0 on success.
 int WriteToPartition(unsigned char* data, size_t len, const char* target) {
     std::string copy(target);
     std::vector<std::string> pieces = android::base::Split(copy, ":");
 
-    if (pieces.size() != 2) {
+    if (pieces.size() < 2) {
         printf("WriteToPartition called with bad target (%s)\n", target);
         return -1;
     }
