@@ -1,0 +1,434 @@
+<?xml version="1.0"?>
+
+<recovery>
+	<details>
+		<resolution width="320" height="320" />
+		<roundscreen offset_x="40" offset_y="40" />
+		<author>TeamWin</author>
+		<title>Backup Naowz</title>
+		<description>Default basic theme</description>
+		<preview>preview.jpg</preview>
+	</details>
+
+	<include>
+		<xmlfile name="watch.xml" />
+	</include>
+
+	<resources>
+		<resource name="font" type="font" filename="RobotoCondensed-Regular.ttf" size="14" fallback="Roboto-Condensed-14" />
+		<resource name="mediumfont" type="font" filename="RobotoCondensed-Regular.ttf" size="14" fallback="Roboto-Condensed-14" />
+		<resource name="filelist" type="font" filename="RobotoCondensed-Regular.ttf" size="14" fallback="Roboto-Condensed-14" />
+		<resource name="fixed" type="font" filename="DroidSansMono.ttf" size="12" />
+		<resource name="twrplogo" type="image" filename="twrplogo" retainaspect="1" />
+		<resource name="main_button" type="image" filename="menu-button" />
+		<resource name="file_icon" type="image" filename="file" retainaspect="1" />
+		<resource name="folder_icon" type="image" filename="folder" retainaspect="1" />
+		<resource name="slideout" type="image" filename="slideout" retainaspect="1" />
+		<resource name="progress" type="animation" filename="indeterminate" />
+		<resource name="progress_empty" type="image" filename="progress_empty" />
+		<resource name="progress_full" type="image" filename="progress_fill" />
+		<resource name="checkbox_false" type="image" filename="checkbox_empty" retainaspect="1" />
+		<resource name="checkbox_true" type="image" filename="checkbox_checked" retainaspect="1" />
+		<resource name="radio_false" type="image" filename="radio_empty" retainaspect="1" />
+		<resource name="radio_true" type="image" filename="radio_selected" retainaspect="1" />
+		<resource name="medium_button" type="image" filename="medium-button" />
+		<resource name="sort_button" type="image" filename="sort-button" />
+		<resource name="minus_button" type="image" filename="minus-button" />
+		<resource name="plus_button" type="image" filename="plus-button" />
+		<resource name="home_icon" type="image" filename="home-icon" retainaspect="1" />
+		<resource name="back_icon" type="image" filename="back-icon" retainaspect="1" />
+		<resource name="slider" type="image" filename="slider" retainaspect="1" />
+		<resource name="slider-used" type="image" filename="slider-used" retainaspect="1" />
+		<resource name="slider-touch" type="image" filename="slider-touch" retainaspect="1" />
+		<resource name="unlock-icon" type="image" filename="unlock" retainaspect="1" />
+		<resource name="keyboard1" type="image" filename="keyboard1" />
+		<resource name="keyboard2" type="image" filename="keyboard2" />
+		<resource name="keyboard3" type="image" filename="keyboard3" />
+		<resource name="keyboard4" type="image" filename="keyboard4" />
+		<resource name="cursor" type="image" filename="cursor" retainaspect="1" />
+	</resources>
+
+	<variables>
+		<variable name="col1_x" value="6" />
+		<variable name="col2_x" value="170" />
+		<variable name="col_center_x" value="88" />
+		<variable name="col_center_medium_x" value="130" />
+		<variable name="center_x" value="160" />
+		<variable name="row1_home_y" value="50" />
+		<variable name="row2_home_y" value="110" />
+		<variable name="row3_home_y" value="170" />
+		<variable name="row4_home_y" value="230" />
+		<variable name="row1_y" value="30" />
+		<variable name="row2_y" value="100" />
+		<variable name="row3_y" value="170" />
+		<variable name="row4_y" value="240" />
+		<variable name="row_queue_y" value="184" />
+		<variable name="row1_header_y" value="0" />
+		<variable name="row1_text_y" value="22" />
+		<variable name="row2_text_y" value="44" />
+		<variable name="row3_text_y" value="66" />
+		<variable name="row4_text_y" value="88" />
+		<variable name="row5_text_y" value="110" />
+		<variable name="row6_text_y" value="132" />
+		<variable name="row7_text_y" value="154" />
+		<variable name="row8_text_y" value="176" />
+		<variable name="row9_text_y" value="198" />
+		<variable name="row10_text_y" value="220" />
+		<variable name="row11_text_y" value="242" />
+		<variable name="row12_text_y" value="284" />
+		<variable name="row13_text_y" value="306" />
+		<variable name="zip_status_y" value="300" />
+		<variable name="flash_list_height" value="160" />
+		<variable name="backup_text_y" value="60" />
+		<variable name="col_progressbar_x" value="34" />
+		<variable name="row_progressbar_y" value="285" />
+		<variable name="col1_medium_x" value="6" />
+		<variable name="col2_medium_x" value="83" />
+		<variable name="col3_medium_x" value="174" />
+		<variable name="col4_medium_x" value="254" />
+		<variable name="row1_medium_y" value="24" />
+		<variable name="row2_medium_y" value="40" />
+		<variable name="row3_medium_y" value="56" />
+		<variable name="row4_medium_y" value="72" />
+		<variable name="row5_medium_y" value="88" />
+		<variable name="row6_medium_y" value="104" />
+		<variable name="row7_medium_y" value="120" />
+		<variable name="slider_y" value="268" />
+		<variable name="slider_text_y" value="294" />
+		<variable name="button_text_color" value="#AAAAAA" />
+		<variable name="text_color" value="#FFFFFF" />
+		<variable name="text_success_color" value="#33B5E5" />
+		<variable name="text_fail_color" value="#FF0101" />
+		<variable name="highlight_color" value="#90909080" />
+		<variable name="caps_highlight_color" value="#33B5E580" />
+		<variable name="home_button_x" value="3" />
+		<variable name="home_button_y" value="300" />
+		<variable name="back_button_x" value="317" />
+		<variable name="back_button_y" value="300" />
+		<variable name="sort_text_x" value="20" />
+		<variable name="sort_asc_text_y" value="232" />
+		<variable name="sort_asc_button_y" value="230" />
+		<variable name="sort_desc_text_y" value="262" />
+		<variable name="sort_desc_button_y" value="260" />
+		<variable name="sort_col1_button_x" value="135" />
+		<variable name="sort_col2_button_x" value="195" />
+		<variable name="sort_col3_button_x" value="255" />
+		<variable name="input_width" value="308" />
+		<variable name="input_width_conf" value="10" />
+		<variable name="input_height" value="18" />
+		<variable name="input_background_color" value="#303030" />
+		<variable name="input_cursor_color" value="#33B5E5" />
+		<variable name="input_cursor_width" value="2" />
+		<variable name="console_x" value="0" />
+		<variable name="console_width" value="320" />
+		<variable name="console_foreground" value="#A0A0A0" />
+		<variable name="warning" value="#F8F8A0" />
+		<variable name="error" value="#FF4040" />
+		<variable name="highlight" value="#33B5E5" />
+		<variable name="console_background" value="#303030" />
+		<variable name="console_scroll" value="#303030" />
+		<variable name="console_action_height" value="160" />
+		<variable name="console_install_height" value="160" />
+		<variable name="console_installdone_height" value="160" />
+		<variable name="fileselector_x" value="0" />
+		<variable name="fileselector_y" value="44" />
+		<variable name="fileselector_width" value="320" />
+		<variable name="fileselector_install_height" value="182" />
+		<variable name="fileselector_header_background" value="#202020" />
+		<variable name="fileselector_header_textcolor" value="#AAAAAA" />
+		<variable name="fileselector_header_separatorcolor" value="#33B5E5" />
+		<variable name="fileselector_header_separatorheight" value="2" />
+		<variable name="fileselector_separatorcolor" value="#505050" />
+		<variable name="fileselector_separatorheight" value="1" />
+		<variable name="fileselector_background" value="#303030" />
+		<variable name="fileselector_highlight_color" value="#505050" />
+		<variable name="fileselector_highlight_font_color" value="#33B5E5" />
+		<variable name="fileselector_spacing" value="12" />
+		<variable name="fastscroll_linecolor" value="#50505080" />
+		<variable name="fastscroll_rectcolor" value="#33B5E580" />
+		<variable name="fastscroll_w" value="32" />
+		<variable name="fastscroll_linew" value="1" />
+		<variable name="fastscroll_rectw" value="7" />
+		<variable name="fastscroll_recth" value="24" />
+		<variable name="listbox_x" value="0" />
+		<variable name="listbox_width" value="320" />
+		<variable name="listbox_background" value="#303030" />
+		<variable name="listbox_spacing" value="12" />
+		<variable name="sd_plus_x" value="174" />
+		<variable name="sdext_text_x" value="56" />
+		<variable name="sdext_text_y" value="18" />
+		<variable name="sdswap_button_y" value="45" />
+		<variable name="sdswap_text_x" value="56" />
+		<variable name="sdswap_text_y" value="47" />
+		<variable name="sdfilesystem_text_y" value="92" />
+		<variable name="sdfilesystem_button_y" value="120" />
+		<variable name="lock_y" value="120" />
+		<variable name="filemanager_select_x" value="130" />
+		<variable name="filemanager_select_y" value="280" />
+		<variable name="terminal_console_height" value="126" />
+		<variable name="terminal_text_y" value="128" />
+		<variable name="terminal_button_y" value="300" />
+		<variable name="listbox_tz_height" value="159" />
+		<variable name="row_dst_text_y" value="162" />
+		<variable name="row_offset_text_y" value="184" />
+		<variable name="row_offset_medium_y" value="206" />
+		<variable name="tz_set_y" value="271" />
+		<variable name="tz_current_y" value="249" />
+		<variable name="system_ro_y" value="216" />
+		<variable name="button_fill_color" value="#303030" />
+		<variable name="button_fill_full_width" value="308" />
+		<variable name="button_fill_main_width" value="150" />
+		<variable name="button_fill_med_width" value="72" />
+		<variable name="button_fill_small_width" value="36" />
+		<variable name="button_fill_main_height" value="44" />
+		<variable name="button_fill_half_height" value="22" />
+		<variable name="button_fill_quarter_height" value="22" />
+		<variable name="button_refresh_x" value="152" />
+		<variable name="backup_list_y" value="26" />
+		<variable name="backup_list_height" value="184" />
+		<variable name="restore_list_height" value="206" />
+		<variable name="backup_button_row1" value="214" />
+		<variable name="backup_button_row2" value="242" />
+		<variable name="mount_list_height" value="190" />
+		<variable name="mount_storage_row" value="193" />
+		<variable name="storage_list_height" value="134" />
+		<variable name="wipe_list_height" value="216" />
+		<variable name="wipe_button_y" value="170" />
+		<variable name="slidervalue_w" value="308" />
+		<variable name="slidervalue_line_clr" value="#FFFFFF" />
+		<variable name="slidervalue_slider_clr" value="#33B5E5" />
+		<variable name="slidervalue_lineh" value="1" />
+		<variable name="slidervalue_padding" value="8" />
+		<variable name="slidervalue_sliderw" value="4" />
+		<variable name="slidervalue_sliderh" value="20" />
+		<variable name="wipe_button_row1" value="240" />
+		<variable name="invalid_partition_y" value="218" />
+		<variable name="pattern_x" value="70" />
+		<variable name="pattern_y" value="22" />
+		<variable name="pattern_width" value="180" />
+		<variable name="pattern_dot_color" value="#33B5E5" />
+		<variable name="pattern_dot_color_active" value="#FFFFFF" />
+		<variable name="pattern_dot_radius" value="7" />
+		<variable name="pattern_line_color" value="#33B5E5" />
+		<variable name="pattern_line_width" value="4" />
+	</variables>
+
+	<templates>
+		<template name="twrpheader">
+			<object type="fill" color="%button_fill_color%">
+				<placement x="0" y="0" w="320" h="26" />
+			</object>
+
+			<object type="fill" color="%highlight%">
+				<placement x="0" y="26" w="320" h="1" />
+			</object>
+
+			<object type="image">
+				<image resource="twrplogo" />
+				<placement x="13" y="13" placement="4" />
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="25" y="3" />
+				<text>TWRP v%tw_version%</text>
+			</object>
+
+			<object type="text" color="%text_fail_color%">
+				<condition var1="tw_simulate_actions" var2="1" />
+				<font resource="font" />
+				<placement x="25" y="21" />
+				<text>SIMULATION</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="160" y="3" placement="5" />
+				<text>%tw_time%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="316" y="3" placement="1" />
+				<conditions>
+					<condition var1="tw_no_battery_percent" var2="0" />
+					<condition var1="tw_battery" op="&gt;" var2="0" />
+					<condition var1="tw_battery" op="&lt;" var2="101" />
+				</conditions>
+				<text>%tw_battery%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="190" y="3" />
+				<conditions>
+					<condition var1="tw_no_cpu_temp" var2="0" />
+				</conditions>
+				<text>CPU: %tw_cpu_temp% C</text>
+			</object>
+		</template>
+
+		<template name="header">
+			<background color="#000000FF" />
+
+			<object type="button">
+				<placement x="%home_button_x%" y="%home_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text></text>
+				<image resource="home_icon" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="key">home</action>
+			</object>
+
+			<object type="button">
+				<placement x="%back_button_x%" y="%back_button_y%" placement="1" />
+				<font resource="font" color="%button_text_color%" />
+				<text></text>
+				<image resource="back_icon" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="key">back</action>
+			</object>
+
+			<object type="action">
+				<touch key="power" />
+				<action function="key">back</action>
+			</object>
+
+			<object type="action">
+				<touch key="power+voldown" />
+				<action function="screenshot" />
+			</object>
+		</template>
+
+		<template name="progress_bar">
+			<object type="progressbar">
+				<placement x="%col_progressbar_x%" y="%row_progressbar_y%" />
+				<resource empty="progress_empty" full="progress_full" />
+				<data name="ui_progress" />
+			</object>
+
+			<object type="animation">
+				<placement x="%col_progressbar_x%" y="%row_progressbar_y%" />
+				<resource name="progress" />
+				<speed fps="15" render="2" />
+				<loop frame="1" />
+			</object>
+		</template>
+
+		<template name="action_page_console">
+			<object type="console">
+				<placement x="%console_x%" y="%row2_y%" w="%console_width%" h="%console_action_height%" />
+				<color foreground="%console_foreground%" background="%console_background%" scroll="%console_scroll%" />
+				<font resource="fixed" />
+			</object>
+		</template>
+
+		<template name="sort_options">
+			<object type="text" color="%text_color%">
+				<font resource="mediumfont" />
+				<placement x="%sort_text_x%" y="%sort_asc_text_y%" />
+				<text>Sort Ascending:</text>
+			</object>
+
+			<object type="button">
+				<placement x="%sort_col1_button_x%" y="%sort_asc_button_y%" />
+				<font resource="mediumfont" color="%button_text_color%" />
+				<text>Name</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_sort_order=1</action>
+			</object>
+
+			<object type="button">
+				<placement x="%sort_col2_button_x%" y="%sort_asc_button_y%" />
+				<font resource="mediumfont" color="%button_text_color%" />
+				<text>Date</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_sort_order=2</action>
+			</object>
+
+			<object type="button">
+				<placement x="%sort_col3_button_x%" y="%sort_asc_button_y%" />
+				<font resource="mediumfont" color="%button_text_color%" />
+				<text>Size</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_sort_order=3</action>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="mediumfont" />
+				<placement x="%sort_text_x%" y="%sort_desc_text_y%" />
+				<text>Sort Descending:</text>
+			</object>
+
+			<object type="button">
+				<placement x="%sort_col1_button_x%" y="%sort_desc_button_y%" />
+				<font resource="mediumfont" color="%button_text_color%" />
+				<text>Name</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_sort_order=-1</action>
+			</object>
+
+			<object type="button">
+				<placement x="%sort_col2_button_x%" y="%sort_desc_button_y%" />
+				<font resource="mediumfont" color="%button_text_color%" />
+				<text>Date</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_sort_order=-2</action>
+			</object>
+
+			<object type="button">
+				<placement x="%sort_col3_button_x%" y="%sort_desc_button_y%" />
+				<font resource="mediumfont" color="%button_text_color%" />
+				<text>Size</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_sort_order=-3</action>
+			</object>
+		</template>
+
+		<template name="footer">
+			<object type="console">
+				<slideout resource="slideout" x="%center_x%" y="288" placement="5" />
+				<placement x="%console_x%" y="0" w="%console_width%" h="288" />
+				<color foreground="%console_foreground%" background="%console_background%" scroll="%console_scroll%" />
+				<font resource="fixed" />
+			</object>
+		</template>
+
+		<template name="keyboardtemplate">
+			<object type="keyboard">
+				<placement x="0" y="150" />
+				<layout resource1="keyboard1" resource2="keyboard2" resource3="keyboard3" resource4="keyboard4" />
+				<highlight color="%highlight_color%" />
+				<capshighlight color="%caps_highlight_color%" />
+				<layout1>
+					<keysize height="36" width="32" />
+					<row1 key01="q" long01="1" key02="w" long02="2" key03="e" long03="3" key04="r" long04="4" key05="t" long05="5" key06="y" long06="6" key07="u" long07="7" key08="i" long08="8" key09="o" long09="9" key10="p" long10="0" />
+					<row2 key01="48:a" key02="s" key03="d" key04="f" key05="g" key06="h" key07="j" key08="k" key09="48:l" />
+					<row3 key01="48:layout2" key02="z" key03="x" key04="c" key05="v" key06="b" key07="n" key08="m" key09="48:c:8" />
+					<row4 key01="48:layout3" key02="32:," key03="160: " key04="32:." key05="48:a:action" />
+				</layout1>
+				<layout2>
+					<keysize height="36" width="32" capslock="0" revert_layout="1" />
+					<row1 key01="Q" long01="1" key02="W" long02="2" key03="E" long03="3" key04="R" long04="4" key05="T" long05="5" key06="Y" long06="6" key07="U" long07="7" key08="I" long08="8" key09="O" long09="9" key10="P" long10="0" />
+					<row2 key01="48:A" key02="S" key03="D" key04="F" key05="G" key06="H" key07="J" key08="K" key09="48:L" />
+					<row3 key01="48:layout1" key02="Z" key03="X" key04="C" key05="V" key06="B" key07="N" key08="M" key09="48:c:8" />
+					<row4 key01="48:layout3" key02="32:," key03="160: " key04="32:." key05="48:action" />
+				</layout2>
+				<layout3>
+					<keysize height="36" width="32" />
+					<row1 key01="1" key02="2" key03="3" key04="4" key05="5" key06="6" key07="7" key08="8" key09="9" key10="0" />
+					<row2 key01="@" key02="#" key03="$" key04="%" key05="&amp;" key06="*" key07="-" key08="+" key09="(" key10=")" />
+					<row3 key01="48:layout4" key02="!" key03="32:c:34" key04="'" key05=":" key06=";" key07="/" key08="?" key09="48:c:8" />
+					<row4 key01="48:layout1" key02="32:," key03="160: " key04="32:." key05="48:action" />
+				</layout3>
+				<layout4>
+					<keysize height="36" width="32" />
+					<row1 key01="~" key02="`" key03="|" key04="32:" key05="32:" key06="32:" key07="%" key08="32:" key09="{" key10="}" />
+					<row2 key01="32:" key02="32:" key03="32:" key04="32:" key05="32:" key06="^" key07="_" key08="=" key09="[" key10="]" />
+					<row3 key01="48:layout3" key02="32:" key03="32:" key04="32:" key05="32:" key06="\" key07="&lt;" key08="&gt;" key09="48:c:8" />
+					<row4 key01="48:layout1" key02="32:c:34" key03="160: " key04="32:." key05="48:action" />
+				</layout4>
+			</object>
+		</template>
+	</templates>
+</recovery>
