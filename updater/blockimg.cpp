@@ -192,11 +192,6 @@ static int write_all(int fd, const uint8_t* data, size_t size) {
         written += w;
     }
 
-    if (fsync(fd) == -1) {
-        fprintf(stderr, "fsync failed: %s\n", strerror(errno));
-        return -1;
-    }
-
     return 0;
 }
 
@@ -728,7 +723,7 @@ static int WriteStash(const char* base, const char* id, int blocks, uint8_t* buf
 
     fprintf(stderr, " writing %d blocks to %s\n", blocks, cn);
 
-    fd = TEMP_FAILURE_RETRY(open(fn, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, STASH_FILE_MODE));
+    fd = TEMP_FAILURE_RETRY(open(fn, O_WRONLY | O_CREAT | O_TRUNC, STASH_FILE_MODE));
 
     if (fd == -1) {
         fprintf(stderr, "failed to create \"%s\": %s\n", fn, strerror(errno));
@@ -1762,6 +1757,10 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int argc, 
         }
 
         if (params.canwrite) {
+            if (fsync(params.fd) == -1) {
+                fprintf(stderr, "fsync failed: %s\n", strerror(errno));
+                goto pbiudone;
+            }
             fprintf(cmd_pipe, "set_progress %.4f\n", (double) params.written / total_blocks);
             fflush(cmd_pipe);
         }
