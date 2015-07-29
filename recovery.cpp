@@ -1036,11 +1036,15 @@ main(int argc, char **argv) {
         if (strncmp(update_package, "CACHE:", 6) == 0) {
             int len = strlen(update_package) + 10;
             char* modified_path = (char*)malloc(len);
-            strlcpy(modified_path, "/cache/", len);
-            strlcat(modified_path, update_package+6, len);
-            printf("(replacing path \"%s\" with \"%s\")\n",
-                   update_package, modified_path);
-            update_package = modified_path;
+            if (modified_path) {
+                strlcpy(modified_path, "/cache/", len);
+                strlcat(modified_path, update_package+6, len);
+                printf("(replacing path \"%s\" with \"%s\")\n",
+                       update_package, modified_path);
+                update_package = modified_path;
+            }
+            else
+                printf("modified_path allocation failed\n");
         }
     }
     printf("\n");
