@@ -2330,47 +2330,31 @@
 				<text>Settings</text>
 			</object>
 
-			<object type="checkbox">
-				<placement x="%col1_x%" y="%row1_text_y%" />
-				<text>Zip file signature verification.</text>
-				<data variable="tw_signed_zip_verify" />
-			</object>
-
-			<object type="checkbox">
-				<placement x="%col1_x%" y="%row2_text_y%" />
-				<text>Use rm -rf instead of formatting.</text>
-				<data variable="tw_rm_rf" />
-			</object>
-
-			<object type="checkbox">
-				<placement x="%col1_x%" y="%row3_text_y%" />
-				<text>Skip MD5 generation during backup.</text>
-				<data variable="tw_skip_md5_generate" />
-			</object>
-
-			<object type="checkbox">
-				<placement x="%col1_x%" y="%row4_text_y%" />
-				<text>Enable MD5 verification of backup files.</text>
-				<data variable="tw_skip_md5_check" />
-			</object>
-
-			<object type="checkbox">
-				<placement x="%col1_x%" y="%row5_text_y%" />
-				<text>Use 24-hour clock.</text>
-				<data variable="tw_military_time" />
-			</object>
-
-			<object type="checkbox">
-				<placement x="%col1_x%" y="%row6_text_y%" />
-				<text>Simulate actions for theme testing.</text>
-				<data variable="tw_simulate_actions" />
-			</object>
-
-			<object type="checkbox">
-				<condition var1="tw_simulate_actions" var2="1" />
-				<placement x="%col1_x%" y="%row7_text_y%" />
-				<text>Simulate failure for actions.</text>
-				<data variable="tw_simulate_fail" />
+			<object type="listbox" style="scrolllist">
+				<placement x="%listbox_x%" y="%row1_header_y%" w="%listbox_width%" h="%listbox_tz_height%" />
+				<text>Settings</text>
+				<icon selected="checkbox_true" unselected="checkbox_false" />
+				<listitem name="Zip file signature verification.">
+					<data variable="tw_signed_zip_verify" />
+				</listitem>
+				<listitem name="Use rm -rf instead of formatting.">
+					<data variable="tw_rm_rf" />
+				</listitem>
+				<listitem name="Skip MD5 generation during backup.">
+					<data variable="tw_skip_md5_generate" />
+				</listitem>
+				<listitem name="Enable MD5 verification of backup files.">
+					<data variable="tw_skip_md5_check" />
+				</listitem>
+				<listitem name="Use 24-hour clock.">
+					<data variable="tw_military_time" />
+				</listitem>
+				<listitem name="Simulate actions for theme testing.">
+					<data variable="tw_simulate_actions" />
+				</listitem>
+				<listitem name="Simulate failure for actions.">
+					<data variable="tw_simulate_fail" />
+				</listitem>
 			</object>
 
 			<object type="button">
