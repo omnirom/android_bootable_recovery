@@ -17,8 +17,6 @@
 */
 
 #include <string.h>
-#include <sys/stat.h>
-#include <dirent.h>
 
 extern "C" {
 #include "../twcommon.h"
@@ -35,6 +33,7 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 	xml_node<>* child;
 	mIconSelected = mIconUnselected = NULL;
 	mUpdate = 0;
+	isCheckList = false;
 
 	// Get the icons, if any
 	child = FindNode(node, "icon");
@@ -83,6 +82,19 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 			data.action = new GUIAction(action);
 			allowSelection = true;
 		}
+		xml_node<>* variable_name = child->first_node("data");
+		if (variable_name) {
+			attr = variable_name->first_attribute("variable");
+			if (attr) {
+				data.variableName = attr->value();
+				if (DataManager::GetIntValue(data.variableName) == 0)
+					data.selected = 0;
+				else
+					data.selected = 1;
+				allowSelection = true;
+				isCheckList = true;
+			}
+		}
 
 		mList.push_back(data);
 
@@ -116,6 +128,21 @@ int GUIListBox::NotifyVarChange(const std::string& varName, const std::string& v
 	if(!isConditionTrue())
 		return 0;
 
+	if (isCheckList) {
+		int i, listSize = mList.size();
+
+		for (i = 0; i < listSize; i++) {
+			if (mList.at(i).variableName == varName) {
+				if (value == "0") {
+					mList.at(i).selected = 0;
+				} else {
+					mList.at(i).selected = 1;
+				}
+			}
+		}
+		mUpdate = 1;
+		return 0;
+	}
 	// Check to see if the variable that we are using to store the list selected value has been updated
 	if (varName == mVariable) {
 		int i, listSize = mList.size();
@@ -161,14 +188,26 @@ void GUIListBox::RenderItem(size_t itemindex, int yPos, bool selected)
 
 void GUIListBox::NotifySelect(size_t item_selected)
 {
-	for (size_t i = 0; i < mList.size(); i++) {
-		mList.at(i).selected = 0;
+	if (!isCheckList) {
+		for (size_t i = 0; i < mList.size(); i++) {
+			mList.at(i).selected = 0;
+		}
 	}
 	if (item_selected < mList.size()) {
 		ListData& data = mList.at(item_selected);
-		data.selected = 1;
-		string str = data.variableValue;	// [check] should this set currentValue instead?
-		DataManager::SetValue(mVariable, str);
+		if (isCheckList) {
+			if (data.selected) {
+				data.selected = 0;
+				DataManager::SetValue(data.variableName, "0");
+			} else {
+				data.selected = 1;
+				DataManager::SetValue(data.variableName, "1");
+			}
+		} else {
+			data.selected = 1;
+			string str = data.variableValue;	// [check] should this set currentValue instead?
+			DataManager::SetValue(mVariable, str);
+		}
 		if (data.action)
 			data.action->doActions();
 	}
