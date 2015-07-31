@@ -70,7 +70,8 @@ Volume* volume_for_path(const char* path) {
     return fs_mgr_get_entry_for_mount_point(fstab, path);
 }
 
-int ensure_path_mounted(const char* path) {
+// Mount the volume specified by path at the given mount_point.
+int ensure_path_mounted_at(const char* path, const char* mount_point) {
     Volume* v = volume_for_path(path);
     if (v == NULL) {
         LOGE("unknown volume for path [%s]\n", path);
@@ -88,14 +89,18 @@ int ensure_path_mounted(const char* path) {
         return -1;
     }
 
+    if (!mount_point) {
+        mount_point = v->mount_point;
+    }
+
     const MountedVolume* mv =
-        find_mounted_volume_by_mount_point(v->mount_point);
+        find_mounted_volume_by_mount_point(mount_point);
     if (mv) {
         // volume is already mounted
         return 0;
     }
 
-    mkdir(v->mount_point, 0755);  // in case it doesn't already exist
+    mkdir(mount_point, 0755);  // in case it doesn't already exist
 
     if (strcmp(v->fs_type, "yaffs2") == 0) {
         // mount an MTD partition as a YAFFS2 filesystem.
@@ -104,23 +109,28 @@ int ensure_path_mounted(const char* path) {
         partition = mtd_find_partition_by_name(v->blk_device);
         if (partition == NULL) {
             LOGE("failed to find \"%s\" partition to mount at \"%s\"\n",
-                 v->blk_device, v->mount_point);
+                 v->blk_device, mount_point);
             return -1;
         }
-        return mtd_mount_partition(partition, v->mount_point, v->fs_type, 0);
+        return mtd_mount_partition(partition, mount_point, v->fs_type, 0);
     } else if (strcmp(v->fs_type, "ext4") == 0 ||
                strcmp(v->fs_type, "squashfs") == 0 ||
                strcmp(v->fs_type, "vfat") == 0) {
-        result = mount(v->blk_device, v->mount_point, v->fs_type,
+        result = mount(v->blk_device, mount_point, v->fs_type,
                        v->flags, v->fs_options);
         if (result == 0) return 0;
 
-        LOGE("failed to mount %s (%s)\n", v->mount_point, strerror(errno));
+        LOGE("failed to mount %s (%s)\n", mount_point, strerror(errno));
         return -1;
     }
 
-    LOGE("unknown fs_type \"%s\" for %s\n", v->fs_type, v->mount_point);
+    LOGE("unknown fs_type \"%s\" for %s\n", v->fs_type, mount_point);
     return -1;
+}
+
+int ensure_path_mounted(const char* path) {
+    // Mount at the default mount point.
+    return ensure_path_mounted_at(path, nullptr);
 }
 
 int ensure_path_unmounted(const char* path) {
