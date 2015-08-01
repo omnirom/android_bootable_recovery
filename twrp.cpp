@@ -72,6 +72,14 @@ int main(int argc, char **argv) {
 	setbuf(stdout, NULL);
 	freopen(TMP_LOG_FILE, "a", stderr);
 	setbuf(stderr, NULL);
+	
+	// andreya108
+	string command = "dmesg > /tmp/dmesg.log";
+        LOGINFO("Command is: '%s'\n", command.c_str());
+        if (TWFunc::Exec_Cmd(command) != 0) {
+                LOGERR("Unable to save dmesg.log.\n");
+        }
+	// andreya108
 
 	signal(SIGPIPE, SIG_IGN);
 

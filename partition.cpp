@@ -1174,6 +1174,16 @@ bool TWPartition::Wipe(string New_File_System) {
 		if (Mount_Point == "/data" && Has_Data_Media && recreate_media) {
 			Recreate_Media_Folder();
 		}
+
+		//andreya108
+#ifdef LENOVO_P780
+		if (Mount_Point == "/system" && Has_Data_Media && recreate_media) {
+			gui_print("Unmounting %s after format.\n", Display_Name.c_str());
+			PartitionManager.UnMount_By_Path("/system", true);
+		}
+#endif
+		//andreya108
+
 	}
 	if (Is_Storage) {
 		PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
