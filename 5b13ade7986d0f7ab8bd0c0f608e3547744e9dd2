@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f8eba960_8a254aad",
+        "filename": "gui/Android.mk",
+        "patchSetId": 24
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1000551
+      },
+      "writtenOn": "2015-08-01T14:54:53Z",
+      "side": 1,
+      "message": "enable new theme by deafault, that\u0027s why we cherry-pick this commit :)",
+      "revId": "5b13ade7986d0f7ab8bd0c0f608e3547744e9dd2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
