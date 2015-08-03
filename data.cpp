@@ -110,7 +110,7 @@ void DataManager::get_device_id(void) {
 	char* token;
 
 #ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
-#ifndef LENOVO_P780
+#ifndef LENOVO_P70A
 	// Use (product_model)_(hardware_id) as device id
 	char model_id[PROPERTY_VALUE_MAX];
 	property_get("ro.product.model", model_id, "error");
@@ -161,7 +161,7 @@ void DataManager::get_device_id(void) {
 		LOGINFO("=> using device id: '%s'\n", device_id);
 		return;
 	}
-#else
+#else //LENOVO_P70A
 	// Use (product_model)_(hardware_id) as device id
 	char model_id[DEVID_MAX] = { 0 };
 	char hw_id[PROPERTY_VALUE_MAX];
@@ -194,7 +194,7 @@ void DataManager::get_device_id(void) {
 		LOGINFO("=> using device id: '%s'\n", device_id);
 		return;
 	}
-#endif //LENOVO_P780
+#endif //LENOVO_P70A
 #endif
 
 #ifdef TW_USE_BRAND_DEVICE_HARDWARE_ID_FOR_DEVICE_ID
