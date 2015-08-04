@@ -19,6 +19,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <libgen.h>
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -632,6 +633,7 @@ static int WriteStash(const char* base, const char* id, int blocks, uint8_t* buf
     char *cn = NULL;
     int fd = -1;
     int rc = -1;
+    int dfd = -1;
     int res;
     struct stat st;
 
@@ -690,11 +692,29 @@ static int WriteStash(const char* base, const char* id, int blocks, uint8_t* buf
         goto wsout;
     }
 
+    const char* dname;
+    dname = dirname(cn);
+    dfd = TEMP_FAILURE_RETRY(open(dname, O_RDONLY | O_DIRECTORY));
+
+    if (dfd == -1) {
+        fprintf(stderr, "failed to open \"%s\" failed: %s\n", dname, strerror(errno));
+        goto wsout;
+    }
+
+    if (fsync(dfd) == -1) {
+        fprintf(stderr, "fsync \"%s\" failed: %s\n", dname, strerror(errno));
+        goto wsout;
+    }
+
     rc = 0;
 
 wsout:
     if (fd != -1) {
         close(fd);
+    }
+
+    if (dfd != -1) {
+        close(dfd);
     }
 
     if (fn) {
