@@ -768,8 +768,8 @@ static int CreateStash(State* state, int maxblocks, const char* blockdev,
 }
 
 static int SaveStash(const std::string& base, char** wordsave, uint8_t** buffer,
-                     size_t* buffer_alloc, int fd, int usehash, bool* isunresumable) {
-    if (!wordsave || !buffer || !buffer_alloc || !isunresumable) {
+                     size_t* buffer_alloc, int fd, bool usehash) {
+    if (!wordsave || !buffer || !buffer_alloc) {
         return -1;
     }
 
@@ -1129,7 +1129,7 @@ static int PerformCommandStash(CommandParameters* params) {
     }
 
     return SaveStash(params->stashbase, &params->cpos, &params->buffer, &params->bufsize,
-                params->fd, (params->version >= 3), &params->isunresumable);
+                params->fd, (params->version >= 3));
 }
 
 static int PerformCommandFree(CommandParameters* params) {
