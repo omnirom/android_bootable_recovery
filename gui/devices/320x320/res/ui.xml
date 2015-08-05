@@ -264,7 +264,7 @@
 				<conditions>
 					<condition var1="tw_no_cpu_temp" var2="0" />
 				</conditions>
-				<text>CPU: %tw_cpu_temp% C</text>
+				<text>CPU: %tw_cpu_temp% &#xB0;C</text>
 			</object>
 		</template>
 
