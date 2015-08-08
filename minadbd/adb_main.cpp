@@ -27,7 +27,7 @@
 #include "adb_auth.h"
 #include "transport.h"
 
-int adb_main(int is_daemon, int server_port) {
+int adb_main(int is_daemon, int server_port, int /* reply_fd */) {
     adb_device_banner = "sideload";
 
     signal(SIGPIPE, SIG_IGN);
