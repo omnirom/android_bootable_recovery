@@ -1560,6 +1560,7 @@ int GUIAction::openrecoveryscript(std::string arg)
 			gui_print("Processing AOSP recovery commands...\n");
 			if (OpenRecoveryScript::run_script_file() == 0) {
 				reboot = 1;
+				op_status = 0;
 			}
 		}
 		// Check for the ORS file in /cache and attempt to run those commands.
