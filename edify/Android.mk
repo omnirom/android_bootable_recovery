@@ -21,10 +21,10 @@ LOCAL_SRC_FILES := \
 		$(edify_src_files) \
 		main.c
 
-LOCAL_CFLAGS := $(edify_cflags) -g -O0
+LOCAL_CPPFLAGS := $(edify_cflags) -g -O0
 LOCAL_MODULE := edify
 LOCAL_YACCFLAGS := -v
-LOCAL_CFLAGS += -Wno-unused-parameter
+LOCAL_CPPFLAGS += -Wno-unused-parameter
 LOCAL_CLANG := true
 
 include $(BUILD_HOST_EXECUTABLE)
@@ -36,8 +36,8 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(edify_src_files)
 
-LOCAL_CFLAGS := $(edify_cflags)
-LOCAL_CFLAGS += -Wno-unused-parameter
+LOCAL_CPPFLAGS := $(edify_cflags)
+LOCAL_CPPFLAGS += -Wno-unused-parameter
 LOCAL_MODULE := libedify
 LOCAL_CLANG := true
 
