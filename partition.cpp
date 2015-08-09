@@ -1177,7 +1177,7 @@ bool TWPartition::Wipe(string New_File_System) {
 
 		//andreya108
 #ifdef LENOVO_P780
-		if (Mount_Point == "/system" && Has_Data_Media && recreate_media) {
+		if (Mount_Point == "/system") {
 			gui_print("Unmounting %s after format.\n", Display_Name.c_str());
 			PartitionManager.UnMount_By_Path("/system", true);
 		}
