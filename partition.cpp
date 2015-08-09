@@ -52,6 +52,8 @@ extern "C" {
 
 #ifdef TW_INCLUDE_CRYPTO
 	#include "crypto/lollipop/cryptfs.h"
+#else
+	#define CRYPT_FOOTER_OFFSET 0x4000
 #endif
 }
 #ifdef HAVE_SELINUX
@@ -1529,6 +1531,46 @@ bool TWPartition::Wipe_Encryption() {
 	Is_Decrypted = false;
 	Is_Encrypted = false;
 	Find_Actual_Block_Device();
+	if (Crypto_Key_Location == "footer") {
+		int newlen, fd;
+		if (Length != 0) {
+			newlen = Length;
+			if (newlen < 0)
+				newlen = newlen * -1;
+		} else {
+			newlen = CRYPT_FOOTER_OFFSET;
+		}
+		if ((fd = open(Actual_Block_Device.c_str(), O_RDWR)) < 0) {
+			gui_print_color("warning", "Unable to open '%s' to wipe crypto key\n", Actual_Block_Device.c_str());
+		} else {
+			unsigned int block_count;
+			if ((ioctl(fd, BLKGETSIZE, &block_count)) == -1) {
+				gui_print_color("warning", "Unable to get block size for wiping crypto footer.\n");
+			} else {
+				off64_t offset = ((off64_t)block_count * 512) - newlen;
+				if (lseek64(fd, offset, SEEK_SET) == -1) {
+					gui_print_color("warning", "Unable to lseek64 for wiping crypto footer.\n");
+				} else {
+					void* buffer = malloc(newlen);
+					if (!buffer) {
+						gui_print_color("warning", "Failed to malloc for wiping crypto footer.\n");
+					} else {
+						memset(buffer, 0, newlen);
+						int ret = write(fd, buffer, newlen);
+						if (ret != newlen) {
+							gui_print_color("warning", "Failed to wipe crypto footer.\n");
+						} else {
+							LOGINFO("Successfully wiped crypto footer.\n");
+						}
+					}
+				}
+			}
+			close(fd);
+		}
+	} else {
+		string Command = "flash_image " + Crypto_Key_Location + " /dev/zero";
+		TWFunc::Exec_Cmd(Command);
+	}
 	if (Wipe(Fstab_File_System)) {
 		Has_Data_Media = Save_Data_Media;
 		if (Has_Data_Media && !Symlink_Mount_Point.empty()) {
