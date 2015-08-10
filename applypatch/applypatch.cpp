@@ -31,6 +31,7 @@
 #include "applypatch.h"
 #include "mtdutils/mtdutils.h"
 #include "edify/expr.h"
+#include "print_sha1.h"
 
 static int LoadPartitionContents(const char* filename, FileContents* file);
 static ssize_t FileSink(const unsigned char* data, ssize_t len, void* token);
@@ -43,7 +44,6 @@ static int GenerateTarget(FileContents* source_file,
                           const uint8_t target_sha1[SHA_DIGEST_SIZE],
                           size_t target_size,
                           const Value* bonus_data);
-static std::string short_sha1(const uint8_t sha1[SHA_DIGEST_SIZE]);
 
 static bool mtd_partitions_scanned = false;
 
@@ -628,16 +628,6 @@ int CacheSizeCheck(size_t bytes) {
     } else {
         return 0;
     }
-}
-
-static std::string short_sha1(const uint8_t sha1[SHA_DIGEST_SIZE]) {
-    const char* hex = "0123456789abcdef";
-    std::string result = "";
-    for (size_t i = 0; i < 4; ++i) {
-        result.push_back(hex[(sha1[i]>>4) & 0xf]);
-        result.push_back(hex[sha1[i] & 0xf]);
-    }
-    return result;
 }
 
 // This function applies binary patches to files in a way that is safe
