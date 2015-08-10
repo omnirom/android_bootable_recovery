@@ -418,7 +418,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 	return true;
 }
 
-bool TWPartition::Process_FS_Flags(string& Options, int Flags) {
+bool TWPartition::Process_FS_Flags(string& Options, int& Flags) {
 	int i;
 	char *p;
 	char *savep;
