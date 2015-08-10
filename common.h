@@ -21,10 +21,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define LOGE(...) ui_print("E:" __VA_ARGS__)
 #define LOGW(...) fprintf(stdout, "W:" __VA_ARGS__)
 #define LOGI(...) fprintf(stdout, "I:" __VA_ARGS__)
@@ -49,9 +45,5 @@ FILE* fopen_path(const char *path, const char *mode);
 void ui_print(const char* format, ...);
 
 bool is_ro_debuggable();
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // RECOVERY_COMMON_H

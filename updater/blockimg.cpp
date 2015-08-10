@@ -19,7 +19,6 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include <libgen.h>
 #include <linux/fs.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -33,11 +32,17 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <memory>
+#include <string>
+
+#include <base/strings.h>
+
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
 #include "mincrypt/sha.h"
 #include "minzip/Hash.h"
 #include "updater.h"
+#include "print_sha1.h"
 
 #define BLOCKSIZE 4096
 
@@ -49,8 +54,6 @@
 #define STASH_DIRECTORY_BASE "/cache/recovery"
 #define STASH_DIRECTORY_MODE 0700
 #define STASH_FILE_MODE 0600
-
-char* PrintSha1(const uint8_t* digest);
 
 typedef struct {
     int count;
@@ -145,28 +148,22 @@ err:
     exit(1);
 }
 
-static int range_overlaps(RangeSet* r1, RangeSet* r2) {
-    int i, j, r1_0, r1_1, r2_0, r2_1;
+static bool range_overlaps(const RangeSet& r1, const RangeSet& r2) {
+    for (int i = 0; i < r1.count; ++i) {
+        int r1_0 = r1.pos[i * 2];
+        int r1_1 = r1.pos[i * 2 + 1];
 
-    if (!r1 || !r2) {
-        return 0;
-    }
-
-    for (i = 0; i < r1->count; ++i) {
-        r1_0 = r1->pos[i * 2];
-        r1_1 = r1->pos[i * 2 + 1];
-
-        for (j = 0; j < r2->count; ++j) {
-            r2_0 = r2->pos[j * 2];
-            r2_1 = r2->pos[j * 2 + 1];
+        for (int j = 0; j < r2.count; ++j) {
+            int r2_0 = r2.pos[j * 2];
+            int r2_1 = r2.pos[j * 2 + 1];
 
             if (!(r2_0 >= r1_1 || r1_0 >= r2_1)) {
-                return 1;
+                return true;
             }
         }
     }
 
-    return 0;
+    return false;
 }
 
 static int read_all(int fd, uint8_t* data, size_t size) {
@@ -405,7 +402,7 @@ static int WriteBlocks(RangeSet* tgt, uint8_t* buffer, int fd) {
 // in *tgt, if tgt is non-NULL.
 
 static int LoadSrcTgtVersion1(char** wordsave, RangeSet** tgt, int* src_blocks,
-                               uint8_t** buffer, size_t* buffer_alloc, int fd) {
+                              uint8_t** buffer, size_t* buffer_alloc, int fd) {
     char* word;
     int rc;
 
@@ -426,8 +423,7 @@ static int LoadSrcTgtVersion1(char** wordsave, RangeSet** tgt, int* src_blocks,
 }
 
 static int VerifyBlocks(const char *expected, const uint8_t *buffer,
-                        size_t blocks, int printerror) {
-    char* hexdigest = NULL;
+                        size_t blocks, bool printerror) {
     int rc = -1;
     uint8_t digest[SHA_DIGEST_SIZE];
 
@@ -436,128 +432,75 @@ static int VerifyBlocks(const char *expected, const uint8_t *buffer,
     }
 
     SHA_hash(buffer, blocks * BLOCKSIZE, digest);
-    hexdigest = PrintSha1(digest);
 
-    if (hexdigest != NULL) {
-        rc = strcmp(expected, hexdigest);
+    std::string hexdigest = print_sha1(digest);
 
-        if (rc != 0 && printerror) {
-            fprintf(stderr, "failed to verify blocks (expected %s, read %s)\n",
-                expected, hexdigest);
-        }
+    rc = hexdigest != std::string(expected);
 
-        free(hexdigest);
+    if (rc != 0 && printerror) {
+        fprintf(stderr, "failed to verify blocks (expected %s, read %s)\n",
+            expected, hexdigest.c_str());
     }
 
     return rc;
 }
 
-static char* GetStashFileName(const char* base, const char* id, const char* postfix) {
-    char* fn;
-    int len;
-    int res;
-
-    if (base == NULL) {
-        return NULL;
+static std::string GetStashFileName(const std::string& base, const std::string id,
+        const std::string postfix) {
+    if (base.empty()) {
+        return "";
     }
 
-    if (id == NULL) {
-        id = "";
-    }
-
-    if (postfix == NULL) {
-        postfix = "";
-    }
-
-    len = strlen(STASH_DIRECTORY_BASE) + 1 + strlen(base) + 1 + strlen(id) + strlen(postfix) + 1;
-    fn = reinterpret_cast<char*>(malloc(len));
-
-    if (fn == NULL) {
-        fprintf(stderr, "failed to malloc %d bytes for fn\n", len);
-        return NULL;
-    }
-
-    res = snprintf(fn, len, STASH_DIRECTORY_BASE "/%s/%s%s", base, id, postfix);
-
-    if (res < 0 || res >= len) {
-        fprintf(stderr, "failed to format file name (return value %d)\n", res);
-        free(fn);
-        return NULL;
-    }
+    std::string fn(STASH_DIRECTORY_BASE);
+    fn += "/" + base + "/" + id + postfix;
 
     return fn;
 }
 
-typedef void (*StashCallback)(const char*, void*);
+typedef void (*StashCallback)(const std::string&, void*);
 
 // Does a best effort enumeration of stash files. Ignores possible non-file
 // items in the stash directory and continues despite of errors. Calls the
 // 'callback' function for each file and passes 'data' to the function as a
 // parameter.
 
-static void EnumerateStash(const char* dirname, StashCallback callback, void* data) {
-    char* fn;
-    DIR* directory;
-    int len;
-    int res;
-    struct dirent* item;
-
-    if (dirname == NULL || callback == NULL) {
+static void EnumerateStash(const std::string& dirname, StashCallback callback, void* data) {
+    if (dirname.empty() || callback == NULL) {
         return;
     }
 
-    directory = opendir(dirname);
+    std::unique_ptr<DIR, int(*)(DIR*)> directory(opendir(dirname.c_str()), closedir);
 
     if (directory == NULL) {
         if (errno != ENOENT) {
-            fprintf(stderr, "opendir \"%s\" failed: %s\n", dirname, strerror(errno));
+            fprintf(stderr, "opendir \"%s\" failed: %s\n", dirname.c_str(), strerror(errno));
         }
         return;
     }
 
-    while ((item = readdir(directory)) != NULL) {
+    struct dirent* item;
+    while ((item = readdir(directory.get())) != NULL) {
         if (item->d_type != DT_REG) {
             continue;
         }
 
-        len = strlen(dirname) + 1 + strlen(item->d_name) + 1;
-        fn = reinterpret_cast<char*>(malloc(len));
-
-        if (fn == NULL) {
-            fprintf(stderr, "failed to malloc %d bytes for fn\n", len);
-            continue;
-        }
-
-        res = snprintf(fn, len, "%s/%s", dirname, item->d_name);
-
-        if (res < 0 || res >= len) {
-            fprintf(stderr, "failed to format file name (return value %d)\n", res);
-            free(fn);
-            continue;
-        }
-
+        std::string fn = dirname + "/" + std::string(item->d_name);
         callback(fn, data);
-        free(fn);
-    }
-
-    if (closedir(directory) == -1) {
-        fprintf(stderr, "closedir \"%s\" failed: %s\n", dirname, strerror(errno));
     }
 }
 
-static void UpdateFileSize(const char* fn, void* data) {
-    int* size = (int*) data;
+static void UpdateFileSize(const std::string& fn, void* data) {
+    if (fn.empty() || !data) {
+        return;
+    }
+
     struct stat st;
-
-    if (!fn || !data) {
+    if (stat(fn.c_str(), &st) == -1) {
+        fprintf(stderr, "stat \"%s\" failed: %s\n", fn.c_str(), strerror(errno));
         return;
     }
 
-    if (stat(fn, &st) == -1) {
-        fprintf(stderr, "stat \"%s\" failed: %s\n", fn, strerror(errno));
-        return;
-    }
-
+    int* size = reinterpret_cast<int*>(data);
     *size += st.st_size;
 }
 
@@ -565,57 +508,49 @@ static void UpdateFileSize(const char* fn, void* data) {
 // contains files. There is nothing we can do about unlikely, but possible
 // errors, so they are merely logged.
 
-static void DeleteFile(const char* fn, void* data) {
-    if (fn) {
-        fprintf(stderr, "deleting %s\n", fn);
+static void DeleteFile(const std::string& fn, void* data) {
+    if (!fn.empty()) {
+        fprintf(stderr, "deleting %s\n", fn.c_str());
 
-        if (unlink(fn) == -1 && errno != ENOENT) {
-            fprintf(stderr, "unlink \"%s\" failed: %s\n", fn, strerror(errno));
+        if (unlink(fn.c_str()) == -1 && errno != ENOENT) {
+            fprintf(stderr, "unlink \"%s\" failed: %s\n", fn.c_str(), strerror(errno));
         }
     }
 }
 
-static void DeletePartial(const char* fn, void* data) {
-    if (fn && strstr(fn, ".partial") != NULL) {
+static void DeletePartial(const std::string& fn, void* data) {
+    if (android::base::EndsWith(fn, ".partial")) {
         DeleteFile(fn, data);
     }
 }
 
-static void DeleteStash(const char* base) {
-    char* dirname;
-
-    if (base == NULL) {
+static void DeleteStash(const std::string& base) {
+    if (base.empty()) {
         return;
     }
 
-    dirname = GetStashFileName(base, NULL, NULL);
+    fprintf(stderr, "deleting stash %s\n", base.c_str());
 
-    if (dirname == NULL) {
-        return;
-    }
-
-    fprintf(stderr, "deleting stash %s\n", base);
+    std::string dirname = GetStashFileName(base, "", "");
     EnumerateStash(dirname, DeleteFile, NULL);
 
-    if (rmdir(dirname) == -1) {
+    if (rmdir(dirname.c_str()) == -1) {
         if (errno != ENOENT && errno != ENOTDIR) {
-            fprintf(stderr, "rmdir \"%s\" failed: %s\n", dirname, strerror(errno));
+            fprintf(stderr, "rmdir \"%s\" failed: %s\n", dirname.c_str(), strerror(errno));
         }
     }
-
-    free(dirname);
 }
 
-static int LoadStash(const char* base, const char* id, int verify, int* blocks, uint8_t** buffer,
-        size_t* buffer_alloc, int printnoent) {
-    char *fn = NULL;
+static int LoadStash(const std::string& base, const char* id, int verify, int* blocks,
+        uint8_t** buffer, size_t* buffer_alloc, bool printnoent) {
+    std::string fn;
     int blockcount = 0;
     int fd = -1;
     int rc = -1;
     int res;
     struct stat st;
 
-    if (!base || !id || !buffer || !buffer_alloc) {
+    if (base.empty() || !id || !buffer || !buffer_alloc) {
         goto lsout;
     }
 
@@ -623,33 +558,29 @@ static int LoadStash(const char* base, const char* id, int verify, int* blocks, 
         blocks = &blockcount;
     }
 
-    fn = GetStashFileName(base, id, NULL);
+    fn = GetStashFileName(base, std::string(id), "");
 
-    if (fn == NULL) {
-        goto lsout;
-    }
-
-    res = stat(fn, &st);
+    res = stat(fn.c_str(), &st);
 
     if (res == -1) {
         if (errno != ENOENT || printnoent) {
-            fprintf(stderr, "stat \"%s\" failed: %s\n", fn, strerror(errno));
+            fprintf(stderr, "stat \"%s\" failed: %s\n", fn.c_str(), strerror(errno));
         }
         goto lsout;
     }
 
-    fprintf(stderr, " loading %s\n", fn);
+    fprintf(stderr, " loading %s\n", fn.c_str());
 
     if ((st.st_size % BLOCKSIZE) != 0) {
         fprintf(stderr, "%s size %" PRId64 " not multiple of block size %d",
-                fn, static_cast<int64_t>(st.st_size), BLOCKSIZE);
+                fn.c_str(), static_cast<int64_t>(st.st_size), BLOCKSIZE);
         goto lsout;
     }
 
-    fd = TEMP_FAILURE_RETRY(open(fn, O_RDONLY));
+    fd = TEMP_FAILURE_RETRY(open(fn.c_str(), O_RDONLY));
 
     if (fd == -1) {
-        fprintf(stderr, "open \"%s\" failed: %s\n", fn, strerror(errno));
+        fprintf(stderr, "open \"%s\" failed: %s\n", fn.c_str(), strerror(errno));
         goto lsout;
     }
 
@@ -661,8 +592,8 @@ static int LoadStash(const char* base, const char* id, int verify, int* blocks, 
 
     *blocks = st.st_size / BLOCKSIZE;
 
-    if (verify && VerifyBlocks(id, *buffer, *blocks, 1) != 0) {
-        fprintf(stderr, "unexpected contents in %s\n", fn);
+    if (verify && VerifyBlocks(id, *buffer, *blocks, true) != 0) {
+        fprintf(stderr, "unexpected contents in %s\n", fn.c_str());
         DeleteFile(fn, NULL);
         goto lsout;
     }
@@ -674,24 +605,21 @@ lsout:
         close(fd);
     }
 
-    if (fn) {
-        free(fn);
-    }
-
     return rc;
 }
 
-static int WriteStash(const char* base, const char* id, int blocks, uint8_t* buffer,
-        int checkspace, int *exists) {
-    char *fn = NULL;
-    char *cn = NULL;
+static int WriteStash(const std::string& base, const char* id, int blocks,
+        uint8_t* buffer, bool checkspace, int *exists) {
+    std::string fn;
+    std::string cn;
+    std::string dname;
     int fd = -1;
     int rc = -1;
     int dfd = -1;
     int res;
     struct stat st;
 
-    if (base == NULL || buffer == NULL) {
+    if (base.empty() || buffer == NULL) {
         goto wsout;
     }
 
@@ -700,21 +628,17 @@ static int WriteStash(const char* base, const char* id, int blocks, uint8_t* buf
         goto wsout;
     }
 
-    fn = GetStashFileName(base, id, ".partial");
-    cn = GetStashFileName(base, id, NULL);
-
-    if (fn == NULL || cn == NULL) {
-        goto wsout;
-    }
+    fn = GetStashFileName(base, std::string(id), ".partial");
+    cn = GetStashFileName(base, std::string(id), "");
 
     if (exists) {
-        res = stat(cn, &st);
+        res = stat(cn.c_str(), &st);
 
         if (res == 0) {
             // The file already exists and since the name is the hash of the contents,
             // it's safe to assume the contents are identical (accidental hash collisions
             // are unlikely)
-            fprintf(stderr, " skipping %d existing blocks in %s\n", blocks, cn);
+            fprintf(stderr, " skipping %d existing blocks in %s\n", blocks, cn.c_str());
             *exists = 1;
             rc = 0;
             goto wsout;
@@ -723,12 +647,12 @@ static int WriteStash(const char* base, const char* id, int blocks, uint8_t* buf
         *exists = 0;
     }
 
-    fprintf(stderr, " writing %d blocks to %s\n", blocks, cn);
+    fprintf(stderr, " writing %d blocks to %s\n", blocks, cn.c_str());
 
-    fd = TEMP_FAILURE_RETRY(open(fn, O_WRONLY | O_CREAT | O_TRUNC, STASH_FILE_MODE));
+    fd = TEMP_FAILURE_RETRY(open(fn.c_str(), O_WRONLY | O_CREAT | O_TRUNC, STASH_FILE_MODE));
 
     if (fd == -1) {
-        fprintf(stderr, "failed to create \"%s\": %s\n", fn, strerror(errno));
+        fprintf(stderr, "failed to create \"%s\": %s\n", fn.c_str(), strerror(errno));
         goto wsout;
     }
 
@@ -737,26 +661,26 @@ static int WriteStash(const char* base, const char* id, int blocks, uint8_t* buf
     }
 
     if (fsync(fd) == -1) {
-        fprintf(stderr, "fsync \"%s\" failed: %s\n", fn, strerror(errno));
+        fprintf(stderr, "fsync \"%s\" failed: %s\n", fn.c_str(), strerror(errno));
         goto wsout;
     }
 
-    if (rename(fn, cn) == -1) {
-        fprintf(stderr, "rename(\"%s\", \"%s\") failed: %s\n", fn, cn, strerror(errno));
+    if (rename(fn.c_str(), cn.c_str()) == -1) {
+        fprintf(stderr, "rename(\"%s\", \"%s\") failed: %s\n", fn.c_str(), cn.c_str(),
+                strerror(errno));
         goto wsout;
     }
 
-    const char* dname;
-    dname = dirname(cn);
-    dfd = TEMP_FAILURE_RETRY(open(dname, O_RDONLY | O_DIRECTORY));
+    dname = GetStashFileName(base, "", "");
+    dfd = TEMP_FAILURE_RETRY(open(dname.c_str(), O_RDONLY | O_DIRECTORY));
 
     if (dfd == -1) {
-        fprintf(stderr, "failed to open \"%s\" failed: %s\n", dname, strerror(errno));
+        fprintf(stderr, "failed to open \"%s\" failed: %s\n", dname.c_str(), strerror(errno));
         goto wsout;
     }
 
     if (fsync(dfd) == -1) {
-        fprintf(stderr, "fsync \"%s\" failed: %s\n", dname, strerror(errno));
+        fprintf(stderr, "fsync \"%s\" failed: %s\n", dname.c_str(), strerror(errno));
         goto wsout;
     }
 
@@ -771,14 +695,6 @@ wsout:
         close(dfd);
     }
 
-    if (fn) {
-        free(fn);
-    }
-
-    if (cn) {
-        free(cn);
-    }
-
     return rc;
 }
 
@@ -786,103 +702,79 @@ wsout:
 // hash enough space for the expected amount of blocks we need to store. Returns
 // >0 if we created the directory, zero if it existed already, and <0 of failure.
 
-static int CreateStash(State* state, int maxblocks, const char* blockdev, char** base) {
-    char* dirname = NULL;
-    const uint8_t* digest;
-    int rc = -1;
-    int res;
-    int size = 0;
-    SHA_CTX ctx;
-    struct stat st;
-
-    if (blockdev == NULL || base == NULL) {
-        goto csout;
+static int CreateStash(State* state, int maxblocks, const char* blockdev,
+        std::string& base) {
+    if (blockdev == NULL) {
+        return -1;
     }
 
     // Stash directory should be different for each partition to avoid conflicts
     // when updating multiple partitions at the same time, so we use the hash of
     // the block device name as the base directory
+    SHA_CTX ctx;
     SHA_init(&ctx);
     SHA_update(&ctx, blockdev, strlen(blockdev));
-    digest = SHA_final(&ctx);
-    *base = PrintSha1(digest);
+    const uint8_t* digest = SHA_final(&ctx);
+    base = print_sha1(digest);
 
-    if (*base == NULL) {
-        goto csout;
-    }
-
-    dirname = GetStashFileName(*base, NULL, NULL);
-
-    if (dirname == NULL) {
-        goto csout;
-    }
-
-    res = stat(dirname, &st);
+    std::string dirname = GetStashFileName(base, "", "");
+    struct stat st;
+    int res = stat(dirname.c_str(), &st);
 
     if (res == -1 && errno != ENOENT) {
-        ErrorAbort(state, "stat \"%s\" failed: %s\n", dirname, strerror(errno));
-        goto csout;
+        ErrorAbort(state, "stat \"%s\" failed: %s\n", dirname.c_str(), strerror(errno));
+        return -1;
     } else if (res != 0) {
-        fprintf(stderr, "creating stash %s\n", dirname);
-        res = mkdir(dirname, STASH_DIRECTORY_MODE);
+        fprintf(stderr, "creating stash %s\n", dirname.c_str());
+        res = mkdir(dirname.c_str(), STASH_DIRECTORY_MODE);
 
         if (res != 0) {
-            ErrorAbort(state, "mkdir \"%s\" failed: %s\n", dirname, strerror(errno));
-            goto csout;
+            ErrorAbort(state, "mkdir \"%s\" failed: %s\n", dirname.c_str(), strerror(errno));
+            return -1;
         }
 
         if (CacheSizeCheck(maxblocks * BLOCKSIZE) != 0) {
             ErrorAbort(state, "not enough space for stash\n");
-            goto csout;
+            return -1;
         }
 
-        rc = 1; // Created directory
-        goto csout;
+        return 1;  // Created directory
     }
 
-    fprintf(stderr, "using existing stash %s\n", dirname);
+    fprintf(stderr, "using existing stash %s\n", dirname.c_str());
 
     // If the directory already exists, calculate the space already allocated to
     // stash files and check if there's enough for all required blocks. Delete any
     // partially completed stash files first.
 
     EnumerateStash(dirname, DeletePartial, NULL);
+    int size = 0;
     EnumerateStash(dirname, UpdateFileSize, &size);
 
     size = (maxblocks * BLOCKSIZE) - size;
 
     if (size > 0 && CacheSizeCheck(size) != 0) {
         ErrorAbort(state, "not enough space for stash (%d more needed)\n", size);
-        goto csout;
+        return -1;
     }
 
-    rc = 0; // Using existing directory
-
-csout:
-    if (dirname) {
-        free(dirname);
-    }
-
-    return rc;
+    return 0; // Using existing directory
 }
 
-static int SaveStash(const char* base, char** wordsave, uint8_t** buffer, size_t* buffer_alloc,
-                      int fd, int usehash, int* isunresumable) {
-    char *id = NULL;
-    int blocks = 0;
-
+static int SaveStash(const std::string& base, char** wordsave, uint8_t** buffer,
+                     size_t* buffer_alloc, int fd, int usehash, bool* isunresumable) {
     if (!wordsave || !buffer || !buffer_alloc || !isunresumable) {
         return -1;
     }
 
-    id = strtok_r(NULL, " ", wordsave);
-
+    char *id = strtok_r(NULL, " ", wordsave);
     if (id == NULL) {
         fprintf(stderr, "missing id field in stash command\n");
         return -1;
     }
 
-    if (usehash && LoadStash(base, id, 1, &blocks, buffer, buffer_alloc, 0) == 0) {
+    int blocks = 0;
+    if (usehash && LoadStash(base, id, 1, &blocks, buffer, buffer_alloc, false) == 0) {
         // Stash file already exists and has expected contents. Do not
         // read from source again, as the source may have been already
         // overwritten during a previous attempt.
@@ -893,7 +785,7 @@ static int SaveStash(const char* base, char** wordsave, uint8_t** buffer, size_t
         return -1;
     }
 
-    if (usehash && VerifyBlocks(id, *buffer, blocks, 1) != 0) {
+    if (usehash && VerifyBlocks(id, *buffer, blocks, true) != 0) {
         // Source blocks have unexpected contents. If we actually need this
         // data later, this is an unrecoverable error. However, the command
         // that uses the data may have already completed previously, so the
@@ -903,24 +795,17 @@ static int SaveStash(const char* base, char** wordsave, uint8_t** buffer, size_t
     }
 
     fprintf(stderr, "stashing %d blocks to %s\n", blocks, id);
-    return WriteStash(base, id, blocks, *buffer, 0, NULL);
+    return WriteStash(base, id, blocks, *buffer, false, NULL);
 }
 
-static int FreeStash(const char* base, const char* id) {
-    char *fn = NULL;
-
-    if (base == NULL || id == NULL) {
+static int FreeStash(const std::string& base, const char* id) {
+    if (base.empty() || id == NULL) {
         return -1;
     }
 
-    fn = GetStashFileName(base, id, NULL);
-
-    if (fn == NULL) {
-        return -1;
-    }
+    std::string fn = GetStashFileName(base, std::string(id), "");
 
     DeleteFile(fn, NULL);
-    free(fn);
 
     return 0;
 }
@@ -959,8 +844,8 @@ static void MoveRange(uint8_t* dest, RangeSet* locs, const uint8_t* source) {
 // target RangeSet.  Any stashes required are loaded using LoadStash.
 
 static int LoadSrcTgtVersion2(char** wordsave, RangeSet** tgt, int* src_blocks,
-                               uint8_t** buffer, size_t* buffer_alloc, int fd,
-                               const char* stashbase, int* overlap) {
+                              uint8_t** buffer, size_t* buffer_alloc, int fd,
+                              const std::string& stashbase, bool* overlap) {
     char* word;
     char* colonsave;
     char* colon;
@@ -987,7 +872,7 @@ static int LoadSrcTgtVersion2(char** wordsave, RangeSet** tgt, int* src_blocks,
         res = ReadBlocks(src, *buffer, fd);
 
         if (overlap && tgt) {
-            *overlap = range_overlaps(src, *tgt);
+            *overlap = range_overlaps(*src, **tgt);
         }
 
         free(src);
@@ -1014,7 +899,7 @@ static int LoadSrcTgtVersion2(char** wordsave, RangeSet** tgt, int* src_blocks,
         colonsave = NULL;
         colon = strtok_r(word, ":", &colonsave);
 
-        res = LoadStash(stashbase, colon, 0, NULL, &stash, &stashalloc, 1);
+        res = LoadStash(stashbase, colon, 0, NULL, &stash, &stashalloc, true);
 
         if (res == -1) {
             // These source blocks will fail verification if used later, but we
@@ -1042,12 +927,12 @@ typedef struct {
     char* cmdname;
     char* cpos;
     char* freestash;
-    char* stashbase;
-    int canwrite;
+    std::string stashbase;
+    bool canwrite;
     int createdstash;
     int fd;
     int foundwrites;
-    int isunresumable;
+    bool isunresumable;
     int version;
     int written;
     NewThreadInfo nti;
@@ -1075,7 +960,7 @@ typedef struct {
 // can be performed.
 
 static int LoadSrcTgtVersion3(CommandParameters* params, RangeSet** tgt, int* src_blocks,
-                              int onehash, int* overlap) {
+                              int onehash, bool* overlap) {
     char* srchash = NULL;
     char* tgthash = NULL;
     int stash_exists = 0;
@@ -1120,20 +1005,20 @@ static int LoadSrcTgtVersion3(CommandParameters* params, RangeSet** tgt, int* sr
         goto v3out;
     }
 
-    if (VerifyBlocks(tgthash, tgtbuffer, (*tgt)->size, 0) == 0) {
+    if (VerifyBlocks(tgthash, tgtbuffer, (*tgt)->size, false) == 0) {
         // Target blocks already have expected content, command should be skipped
         rc = 1;
         goto v3out;
     }
 
-    if (VerifyBlocks(srchash, params->buffer, *src_blocks, 1) == 0) {
+    if (VerifyBlocks(srchash, params->buffer, *src_blocks, true) == 0) {
         // If source and target blocks overlap, stash the source blocks so we can
         // resume from possible write errors
         if (*overlap) {
             fprintf(stderr, "stashing %d overlapping blocks to %s\n", *src_blocks,
                 srchash);
 
-            if (WriteStash(params->stashbase, srchash, *src_blocks, params->buffer, 1,
+            if (WriteStash(params->stashbase, srchash, *src_blocks, params->buffer, true,
                     &stash_exists) != 0) {
                 fprintf(stderr, "failed to stash overlapping source blocks\n");
                 goto v3out;
@@ -1151,7 +1036,7 @@ static int LoadSrcTgtVersion3(CommandParameters* params, RangeSet** tgt, int* sr
     }
 
     if (*overlap && LoadStash(params->stashbase, srchash, 1, NULL, &params->buffer,
-                        &params->bufsize, 1) == 0) {
+                        &params->bufsize, true) == 0) {
         // Overlapping source blocks were previously stashed, command can proceed.
         // We are recovering from an interrupted command, so we don't know if the
         // stash can safely be deleted after this command.
@@ -1161,7 +1046,7 @@ static int LoadSrcTgtVersion3(CommandParameters* params, RangeSet** tgt, int* sr
 
     // Valid source data not available, update cannot be resumed
     fprintf(stderr, "partition has unexpected contents\n");
-    params->isunresumable = 1;
+    params->isunresumable = true;
 
 v3out:
     if (tgtbuffer) {
@@ -1173,7 +1058,7 @@ v3out:
 
 static int PerformCommandMove(CommandParameters* params) {
     int blocks = 0;
-    int overlap = 0;
+    bool overlap = false;
     int rc = -1;
     int status = 0;
     RangeSet* tgt = NULL;
@@ -1364,7 +1249,7 @@ static int PerformCommandDiff(CommandParameters* params) {
     char* logparams = NULL;
     char* value = NULL;
     int blocks = 0;
-    int overlap = 0;
+    bool overlap = false;
     int rc = -1;
     int status = 0;
     RangeSet* tgt = NULL;
@@ -1570,7 +1455,7 @@ static unsigned int HashString(const char *s) {
 //    - patch stream (filename within package.zip, must be uncompressed)
 
 static Value* PerformBlockImageUpdate(const char* name, State* state, int argc, Expr* argv[],
-            const Command* commands, int cmdcount, int dryrun) {
+            const Command* commands, int cmdcount, bool dryrun) {
 
     char* line = NULL;
     char* linesave = NULL;
@@ -1725,8 +1610,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int argc, 
         }
 
         if (stash_max_blocks >= 0) {
-            res = CreateStash(state, stash_max_blocks, blockdev_filename->data,
-                    &params.stashbase);
+            res = CreateStash(state, stash_max_blocks, blockdev_filename->data, params.stashbase);
 
             if (res == -1) {
                 goto pbiudone;
@@ -1847,10 +1731,6 @@ pbiudone:
         DeleteStash(params.stashbase);
     }
 
-    if (params.stashbase) {
-        free(params.stashbase);
-    }
-
     return StringValue(rc == 0 ? strdup("t") : strdup(""));
 }
 
@@ -1922,7 +1802,7 @@ Value* BlockImageVerifyFn(const char* name, State* state, int argc, Expr* argv[]
 
     // Perform a dry run without writing to test if an update can proceed
     return PerformBlockImageUpdate(name, state, argc, argv, commands,
-                sizeof(commands) / sizeof(commands[0]), 1);
+                sizeof(commands) / sizeof(commands[0]), true);
 }
 
 Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -1938,7 +1818,7 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
     };
 
     return PerformBlockImageUpdate(name, state, argc, argv, commands,
-                sizeof(commands) / sizeof(commands[0]), 0);
+                sizeof(commands) / sizeof(commands[0]), false);
 }
 
 Value* RangeSha1Fn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -1999,7 +1879,7 @@ Value* RangeSha1Fn(const char* name, State* state, int argc, Expr* argv[]) {
     if (digest == NULL) {
         return StringValue(strdup(""));
     } else {
-        return StringValue(PrintSha1(digest));
+        return StringValue(strdup(print_sha1(digest).c_str()));
     }
 }
 
