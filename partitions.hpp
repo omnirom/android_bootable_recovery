@@ -92,7 +92,7 @@ private:
 	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
 
 	bool Process_Flags(string Flags, bool Display_Error);                     // Process custom fstab flags
-	bool Process_FS_Flags(string& Options, int Flags);                        // Process standard fstab fs flags
+	bool Process_FS_Flags(string& Options, int& Flags);                       // Process standard fstab fs flags
 	bool Is_File_System(string File_System);                                  // Checks to see if the file system given is considered a file system
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
 	void Setup_File_System(bool Display_Error);                               // Sets defaults for a file system partition
