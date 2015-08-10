@@ -51,6 +51,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <memory>
+
 #include <base/file.h>
 #include <base/strings.h>
 #include <cutils/android_reboot.h>
@@ -59,6 +61,8 @@
 
 #define LOG_TAG "uncrypt"
 #include <log/log.h>
+
+#include "unique_fd.h"
 
 #define WINDOW_SIZE 5
 
@@ -183,6 +187,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         return -1;
     }
     FILE* mapf = fdopen(mapfd, "w");
+    unique_file mapf_holder(mapf);
 
     // Make sure we can write to the status_file.
     if (!android::base::WriteStringToFd("0\n", status_fd)) {
@@ -191,8 +196,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     }
 
     struct stat sb;
-    int ret = stat(path, &sb);
-    if (ret != 0) {
+    if (stat(path, &sb) != 0) {
         ALOGE("failed to stat %s\n", path);
         return -1;
     }
@@ -221,15 +225,18 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     size_t pos = 0;
 
     int fd = open(path, O_RDONLY);
-    if (fd < 0) {
+    unique_fd fd_holder(fd);
+    if (fd == -1) {
         ALOGE("failed to open fd for reading: %s\n", strerror(errno));
         return -1;
     }
 
     int wfd = -1;
+    unique_fd wfd_holder(wfd);
     if (encrypted) {
         wfd = open(blk_dev, O_WRONLY | O_SYNC);
-        if (wfd < 0) {
+        wfd_holder = unique_fd(wfd);
+        if (wfd == -1) {
             ALOGE("failed to open fd for writing: %s\n", strerror(errno));
             return -1;
         }
@@ -247,8 +254,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         if ((tail+1) % WINDOW_SIZE == head) {
             // write out head buffer
             int block = head_block;
-            ret = ioctl(fd, FIBMAP, &block);
-            if (ret != 0) {
+            if (ioctl(fd, FIBMAP, &block) != 0) {
                 ALOGE("failed to find block %d\n", head_block);
                 return -1;
             }
@@ -288,8 +294,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     while (head != tail) {
         // write out head buffer
         int block = head_block;
-        ret = ioctl(fd, FIBMAP, &block);
-        if (ret != 0) {
+        if (ioctl(fd, FIBMAP, &block) != 0) {
             ALOGE("failed to find block %d\n", head_block);
             return -1;
         }
@@ -313,14 +318,11 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         ALOGE("failed to fsync \"%s\": %s\n", map_file, strerror(errno));
         return -1;
     }
-    fclose(mapf);
-    close(fd);
     if (encrypted) {
         if (fsync(wfd) == -1) {
             ALOGE("failed to fsync \"%s\": %s\n", blk_dev, strerror(errno));
             return -1;
         }
-        close(wfd);
     }
 
     return 0;
@@ -333,6 +335,8 @@ static void wipe_misc() {
         if (!v->mount_point) continue;
         if (strcmp(v->mount_point, "/misc") == 0) {
             int fd = open(v->blk_device, O_WRONLY | O_SYNC);
+            unique_fd fd_holder(fd);
+
             uint8_t zeroes[1088];   // sizeof(bootloader_message) from recovery
             memset(zeroes, 0, sizeof(zeroes));
 
@@ -349,10 +353,8 @@ static void wipe_misc() {
             }
             if (fsync(fd) == -1) {
                 ALOGE("failed to fsync \"%s\": %s\n", v->blk_device, strerror(errno));
-                close(fd);
                 return;
             }
-            close(fd);
         }
     }
 }
@@ -437,6 +439,7 @@ int main(int argc, char** argv) {
             ALOGE("failed to open pipe \"%s\": %s\n", status_file.c_str(), strerror(errno));
             return 1;
         }
+        unique_fd status_fd_holder(status_fd);
 
         if (argc == 3) {
             // when command-line args are given this binary is being used
@@ -447,7 +450,6 @@ int main(int argc, char** argv) {
             std::string package;
             if (!find_uncrypt_package(package)) {
                 android::base::WriteStringToFd("-1\n", status_fd);
-                close(status_fd);
                 return 1;
             }
             input_path = package.c_str();
@@ -457,12 +459,10 @@ int main(int argc, char** argv) {
         int status = uncrypt(input_path, map_file, status_fd);
         if (status != 0) {
             android::base::WriteStringToFd("-1\n", status_fd);
-            close(status_fd);
             return 1;
         }
 
         android::base::WriteStringToFd("100\n", status_fd);
-        close(status_fd);
     }
 
     return 0;
