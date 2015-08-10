@@ -17,10 +17,6 @@
 #ifndef _RECOVERY_BOOTLOADER_H
 #define _RECOVERY_BOOTLOADER_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Bootloader Message
  *
  * This structure describes the content of a block in flash
@@ -63,9 +59,5 @@ struct bootloader_message {
  */
 int get_bootloader_message(struct bootloader_message *out);
 int set_bootloader_message(const struct bootloader_message *in);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
