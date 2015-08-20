@@ -70,7 +70,7 @@ input:  expr           { *root = $1; }
 ;
 
 expr:  STRING {
-    $$ = malloc(sizeof(Expr));
+    $$ = reinterpret_cast<Expr*>(malloc(sizeof(Expr)));
     $$->fn = Literal;
     $$->name = $1;
     $$->argc = 0;
@@ -91,7 +91,7 @@ expr:  STRING {
 |  IF expr THEN expr ENDIF           { $$ = Build(IfElseFn, @$, 2, $2, $4); }
 |  IF expr THEN expr ELSE expr ENDIF { $$ = Build(IfElseFn, @$, 3, $2, $4, $6); }
 | STRING '(' arglist ')' {
-    $$ = malloc(sizeof(Expr));
+    $$ = reinterpret_cast<Expr*>(malloc(sizeof(Expr)));
     $$->fn = FindFunction($1);
     if ($$->fn == NULL) {
         char buffer[256];
@@ -113,12 +113,12 @@ arglist:    /* empty */ {
 }
 | expr {
     $$.argc = 1;
-    $$.argv = malloc(sizeof(Expr*));
+    $$.argv = reinterpret_cast<Expr**>(malloc(sizeof(Expr*)));
     $$.argv[0] = $1;
 }
 | arglist ',' expr {
     $$.argc = $1.argc + 1;
-    $$.argv = realloc($$.argv, $$.argc * sizeof(Expr*));
+    $$.argv = reinterpret_cast<Expr**>(realloc($$.argv, $$.argc * sizeof(Expr*)));
     $$.argv[$$.argc-1] = $3;
 }
 ;
