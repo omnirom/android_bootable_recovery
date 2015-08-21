@@ -21,10 +21,6 @@
 
 #include "yydefs.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define MAX_STRING_LEN 1024
 
 typedef struct Expr Expr;
@@ -59,7 +55,7 @@ typedef Value* (*Function)(const char* name, State* state,
 
 struct Expr {
     Function fn;
-    char* name;
+    const char* name;
     int argc;
     Expr** argv;
     int start, end;
@@ -165,9 +161,5 @@ Value* StringValue(char* str);
 void FreeValue(Value* v);
 
 int parse_string(const char* str, Expr** root, int* error_count);
-
-#ifdef __cplusplus
-}  // extern "C"
-#endif
 
 #endif  // _EXPRESSION_H
