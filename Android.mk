@@ -40,6 +40,7 @@ LOCAL_SRC_FILES := \
     screen_ui.cpp \
     ui.cpp \
     verifier.cpp \
+    wear_ui.cpp \
 
 LOCAL_MODULE := recovery
 
