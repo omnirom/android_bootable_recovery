@@ -56,9 +56,9 @@
 #define STASH_FILE_MODE 0600
 
 typedef struct {
-    int count;
-    int size;
-    int pos[0];
+    size_t count;
+    size_t size;
+    size_t pos[0];  // Actual limit is INT_MAX.
 } RangeSet;
 
 #define RANGESET_MAX_POINTS \
@@ -82,16 +82,17 @@ static RangeSet* parse_range(char* text) {
         goto err;
     }
 
+    errno = 0;
     val = strtol(token, NULL, 0);
 
-    if (val < 2 || val > RANGESET_MAX_POINTS) {
+    if (errno != 0 || val < 2 || val > RANGESET_MAX_POINTS) {
         goto err;
     } else if (val % 2) {
         goto err; // must be even
     }
 
     num = (int) val;
-    bufsize = sizeof(RangeSet) + num * sizeof(int);
+    bufsize = sizeof(RangeSet) + num * sizeof(size_t);
 
     out = reinterpret_cast<RangeSet*>(malloc(bufsize));
 
@@ -103,41 +104,50 @@ static RangeSet* parse_range(char* text) {
     out->count = num / 2;
     out->size = 0;
 
-    for (int i = 0; i < num; ++i) {
+    for (int i = 0; i < num; i += 2) {
         token = strtok_r(NULL, ",", &save);
 
         if (!token) {
             goto err;
         }
 
+        errno = 0;
         val = strtol(token, NULL, 0);
 
-        if (val < 0 || val > INT_MAX) {
+        if (errno != 0 || val < 0 || val > INT_MAX) {
             goto err;
         }
 
-        out->pos[i] = (int) val;
+        out->pos[i] = static_cast<size_t>(val);
 
-        if (i % 2) {
-            if (out->pos[i - 1] >= out->pos[i]) {
-                goto err; // empty or negative range
-            }
+        token = strtok_r(NULL, ",", &save);
 
-            if (out->size > INT_MAX - out->pos[i]) {
-                goto err; // overflow
-            }
-
-            out->size += out->pos[i];
-        } else {
-            if (out->size < 0) {
-                goto err;
-            }
-
-            out->size -= out->pos[i];
+        if (!token) {
+            goto err;
         }
+
+        errno = 0;
+        val = strtol(token, NULL, 0);
+
+        if (errno != 0 || val < 0 || val > INT_MAX) {
+            goto err;
+        }
+
+        out->pos[i+1] = static_cast<size_t>(val);
+
+        if (out->pos[i] >= out->pos[i+1]) {
+            goto err; // empty or negative range
+        }
+
+        size_t rs = out->pos[i+1] - out->pos[i];
+        if (out->size > SIZE_MAX - rs) {
+            goto err; // overflow
+        }
+
+        out->size += rs;
     }
 
-    if (out->size <= 0) {
+    if (out->size == 0) {
         goto err;
     }
 
@@ -149,13 +159,13 @@ err:
 }
 
 static bool range_overlaps(const RangeSet& r1, const RangeSet& r2) {
-    for (int i = 0; i < r1.count; ++i) {
-        int r1_0 = r1.pos[i * 2];
-        int r1_1 = r1.pos[i * 2 + 1];
+    for (size_t i = 0; i < r1.count; ++i) {
+        size_t r1_0 = r1.pos[i * 2];
+        size_t r1_1 = r1.pos[i * 2 + 1];
 
-        for (int j = 0; j < r2.count; ++j) {
-            int r2_0 = r2.pos[j * 2];
-            int r2_1 = r2.pos[j * 2 + 1];
+        for (size_t j = 0; j < r2.count; ++j) {
+            size_t r2_0 = r2.pos[j * 2];
+            size_t r2_1 = r2.pos[j * 2 + 1];
 
             if (!(r2_0 >= r1_1 || r1_0 >= r2_1)) {
                 return true;
@@ -219,7 +229,7 @@ static void allocate(size_t size, uint8_t** buffer, size_t* buffer_alloc) {
 typedef struct {
     int fd;
     RangeSet* tgt;
-    int p_block;
+    size_t p_block;
     size_t p_remain;
 } RangeSinkState;
 
@@ -340,20 +350,18 @@ static void* unzip_new_data(void* cookie) {
 }
 
 static int ReadBlocks(RangeSet* src, uint8_t* buffer, int fd) {
-    int i;
     size_t p = 0;
-    size_t size;
 
     if (!src || !buffer) {
         return -1;
     }
 
-    for (i = 0; i < src->count; ++i) {
+    for (size_t i = 0; i < src->count; ++i) {
         if (!check_lseek(fd, (off64_t) src->pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
             return -1;
         }
 
-        size = (src->pos[i * 2 + 1] - src->pos[i * 2]) * BLOCKSIZE;
+        size_t size = (src->pos[i * 2 + 1] - src->pos[i * 2]) * BLOCKSIZE;
 
         if (read_all(fd, buffer + p, size) == -1) {
             return -1;
@@ -366,20 +374,18 @@ static int ReadBlocks(RangeSet* src, uint8_t* buffer, int fd) {
 }
 
 static int WriteBlocks(RangeSet* tgt, uint8_t* buffer, int fd) {
-    int i;
     size_t p = 0;
-    size_t size;
 
     if (!tgt || !buffer) {
         return -1;
     }
 
-    for (i = 0; i < tgt->count; ++i) {
+    for (size_t i = 0; i < tgt->count; ++i) {
         if (!check_lseek(fd, (off64_t) tgt->pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
             return -1;
         }
 
-        size = (tgt->pos[i * 2 + 1] - tgt->pos[i * 2]) * BLOCKSIZE;
+        size_t size = (tgt->pos[i * 2 + 1] - tgt->pos[i * 2]) * BLOCKSIZE;
 
         if (write_all(fd, buffer + p, size) == -1) {
             return -1;
@@ -1140,8 +1146,6 @@ static int PerformCommandFree(CommandParameters* params) {
 
 static int PerformCommandZero(CommandParameters* params) {
     char* range = NULL;
-    int i;
-    int j;
     int rc = -1;
     RangeSet* tgt = NULL;
 
@@ -1164,12 +1168,12 @@ static int PerformCommandZero(CommandParameters* params) {
     memset(params->buffer, 0, BLOCKSIZE);
 
     if (params->canwrite) {
-        for (i = 0; i < tgt->count; ++i) {
+        for (size_t i = 0; i < tgt->count; ++i) {
             if (!check_lseek(params->fd, (off64_t) tgt->pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
                 goto pczout;
             }
 
-            for (j = tgt->pos[i * 2]; j < tgt->pos[i * 2 + 1]; ++j) {
+            for (size_t j = tgt->pos[i * 2]; j < tgt->pos[i * 2 + 1]; ++j) {
                 if (write_all(params->fd, params->buffer, BLOCKSIZE) == -1) {
                     goto pczout;
                 }
@@ -1359,7 +1363,6 @@ pcdout:
 
 static int PerformCommandErase(CommandParameters* params) {
     char* range = NULL;
-    int i;
     int rc = -1;
     RangeSet* tgt = NULL;
     struct stat st;
@@ -1395,7 +1398,7 @@ static int PerformCommandErase(CommandParameters* params) {
     if (params->canwrite) {
         fprintf(stderr, " erasing %d blocks\n", tgt->size);
 
-        for (i = 0; i < tgt->count; ++i) {
+        for (size_t i = 0; i < tgt->count; ++i) {
             // offset in bytes
             blocks[0] = tgt->pos[i * 2] * (uint64_t) BLOCKSIZE;
             // length in bytes
@@ -1852,15 +1855,14 @@ Value* RangeSha1Fn(const char* name, State* state, int argc, Expr* argv[]) {
     SHA_CTX ctx;
     SHA_init(&ctx);
 
-    int i, j;
-    for (i = 0; i < rs->count; ++i) {
+    for (size_t i = 0; i < rs->count; ++i) {
         if (!check_lseek(fd, (off64_t)rs->pos[i*2] * BLOCKSIZE, SEEK_SET)) {
             ErrorAbort(state, "failed to seek %s: %s", blockdev_filename->data,
                 strerror(errno));
             goto done;
         }
 
-        for (j = rs->pos[i*2]; j < rs->pos[i*2+1]; ++j) {
+        for (size_t j = rs->pos[i*2]; j < rs->pos[i*2+1]; ++j) {
             if (read_all(fd, buffer, BLOCKSIZE) == -1) {
                 ErrorAbort(state, "failed to read %s: %s", blockdev_filename->data,
                     strerror(errno));
