@@ -576,9 +576,14 @@ void OpenRecoveryScript::Run_OpenRecoveryScript(void) {
 	DataManager::SetValue("tw_has_action2", "0");
 	DataManager::SetValue("tw_action2", "");
 	DataManager::SetValue("tw_action2_param", "");
+#ifdef TW_OEM_BUILD
+	DataManager::SetValue("tw_action_text1", "Running Recovery Commands");
+	DataManager::SetValue("tw_complete_text1", "Recovery Commands Complete");
+#else
 	DataManager::SetValue("tw_action_text1", "Running OpenRecoveryScript");
-	DataManager::SetValue("tw_action_text2", "");
 	DataManager::SetValue("tw_complete_text1", "OpenRecoveryScript Complete");
+#endif
+	DataManager::SetValue("tw_action_text2", "");
 	DataManager::SetValue("tw_has_cancel", 0);
 	DataManager::SetValue("tw_show_reboot", 0);
 	if (gui_startPage("action_page", 0, 1) != 0) {
