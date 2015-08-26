@@ -545,6 +545,12 @@ static int vk_modify(struct ev *e, struct input_event *ev)
             break;
 
         case ABS_MT_TRACKING_ID: //39
+#ifdef TW_IGNORE_ABS_MT_TRACKING_ID
+#ifdef _EVENT_LOGGING
+            printf("EV: %s => EV_ABS ABS_MT_TRACKING_ID %d ignored\n", e->deviceName, ev->value);
+#endif
+            return 1;
+#endif
             if (ev->value < 0) {
                 e->mt_p.x = 0;
                 e->mt_p.y = 0;
@@ -581,6 +587,10 @@ static int vk_modify(struct ev *e, struct input_event *ev)
             printf("EV: %s => EV_ABS ABS_MT_DISTANCE %d\n", e->deviceName, ev->value);
 			return 1;
             break;
+        case ABS_MT_SLOT:
+            printf("EV: %s => ABS_MT_SLOT %d\n", e->deviceName, ev->value);
+			return 1;
+			break;
 #endif
 
         default:
