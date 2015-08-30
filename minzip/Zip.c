@@ -427,6 +427,8 @@ int mzOpenZipArchive(unsigned char* addr, size_t length, ZipArchive* pArchive)
 {
     int err;
 
+    memset(pArchive, 0, sizeof(ZipArchive));
+
     if (length < ENDHDR) {
         err = -1;
         LOGV("File '%s' too small to be zip (%zd)\n", fileName, map.length);
