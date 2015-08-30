@@ -50,6 +50,7 @@ static const char* properties_path_renamed = "/dev/__properties_kk__";
 static bool legacy_props_env_initd = false;
 static bool legacy_props_path_modified = false;
 
+// to support pre-KitKat update-binaries that expect properties in the legacy format
 static int switch_to_legacy_properties()
 {
 	if (!legacy_props_env_initd) {
@@ -93,7 +94,7 @@ static int switch_to_new_properties()
 
 static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache) {
 	const ZipEntry* binary_location = mzFindZipEntry(Zip, ASSUMED_UPDATE_BINARY_NAME);
-	string Temp_Binary = "/tmp/updater";
+	string Temp_Binary = "/tmp/updater"; // Note: AOSP names it /tmp/update_binary (yes, with "_")
 	int binary_fd, ret_val, pipe_fd[2], status, zip_verify;
 	char buffer[1024];
 	const char** args = (const char**)malloc(sizeof(char*) * 5);
@@ -101,18 +102,19 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 
 	if (binary_location == NULL) {
 		mzCloseZipArchive(Zip);
+		LOGERR("Could not find '" ASSUMED_UPDATE_BINARY_NAME "' in the zip file.\n");
 		return INSTALL_CORRUPT;
 	}
 
 	// Delete any existing updater
 	if (TWFunc::Path_Exists(Temp_Binary) && unlink(Temp_Binary.c_str()) != 0) {
-		LOGINFO("Unable to unlink '%s'\n", Temp_Binary.c_str());
+		LOGINFO("Unable to unlink '%s': %s\n", Temp_Binary.c_str(), strerror(errno));
 	}
 
 	binary_fd = creat(Temp_Binary.c_str(), 0755);
 	if (binary_fd < 0) {
+		LOGERR("Could not create file for updater extract in '%s': %s\n", Temp_Binary.c_str(), strerror(errno));
 		mzCloseZipArchive(Zip);
-		LOGERR("Could not create file for updater extract in '%s'\n", Temp_Binary.c_str());
 		return INSTALL_ERROR;
 	}
 
@@ -135,13 +137,13 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 		LOGINFO("Zip contains SELinux file_contexts file in its root. Extracting to %s\n", output_filename.c_str());
 		// Delete any file_contexts
 		if (TWFunc::Path_Exists(output_filename) && unlink(output_filename.c_str()) != 0) {
-			LOGINFO("Unable to unlink '%s'\n", output_filename.c_str());
+			LOGINFO("Unable to unlink '%s': %s\n", output_filename.c_str(), strerror(errno));
 		}
 
 		int file_contexts_fd = creat(output_filename.c_str(), 0644);
 		if (file_contexts_fd < 0) {
+			LOGERR("Could not extract to '%s': %s\n", output_filename.c_str(), strerror(errno));
 			mzCloseZipArchive(Zip);
-			LOGERR("Could not extract file_contexts to '%s'\n", output_filename.c_str());
 			return INSTALL_ERROR;
 		}
 
@@ -150,7 +152,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 
 		if (!ret_val) {
 			mzCloseZipArchive(Zip);
-			LOGERR("Could not extract '%s'\n", ASSUMED_UPDATE_BINARY_NAME);
+			LOGERR("Could not extract '%s'\n", output_filename.c_str());
 			return INSTALL_ERROR;
 		}
 	}
@@ -179,7 +181,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	if (pid == 0) {
 		close(pipe_fd[0]);
 		execve(Temp_Binary.c_str(), (char* const*)args, environ);
-		printf("E:Can't execute '%s'\n", Temp_Binary.c_str());
+		printf("E:Can't execute '%s': %s\n", Temp_Binary.c_str(), strerror(errno));
 		_exit(-1);
 	}
 	close(pipe_fd[1]);
@@ -224,7 +226,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	}
 	fclose(child_data);
 
-	waitpid(pid, &status, 0);
+	int waitrc = TWFunc::Wait_For_Child(pid, &status, "Updater");
 
 #ifndef TW_NO_LEGACY_PROPS
 	/* Unset legacy properties */
@@ -237,18 +239,14 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	}
 #endif
 
-	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-		LOGERR("Error executing updater binary in zip '%s'\n", path);
+	if (waitrc != 0)
 		return INSTALL_ERROR;
-	}
 
 	return INSTALL_SUCCESS;
 }
 
 extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
-	int ret_val, zip_verify = 1, md5_return, key_count;
-	twrpDigest md5sum;
-	string strpath = path;
+	int ret_val, zip_verify = 1;
 	ZipArchive Zip;
 
 	if (strcmp(path, "error") == 0) {
@@ -259,8 +257,9 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 	gui_print("Installing '%s'...\n", path);
 	if (strlen(path) < 9 || strncmp(path, "/sideload", 9) != 0) {
 		gui_print("Checking for MD5 file...\n");
-		md5sum.setfn(strpath);
-		md5_return = md5sum.verify_md5digest();
+		twrpDigest md5sum;
+		md5sum.setfn(path);
+		int md5_return = md5sum.verify_md5digest();
 		if (md5_return == -2) { // md5 did not match
 			LOGERR("Aborting zip install\n");
 			return INSTALL_CORRUPT;
@@ -275,8 +274,8 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 	MemMapping map;
 	if (sysMapFile(path, &map) != 0) {
 		LOGERR("Failed to sysMapFile '%s'\n", path);
-        return -1;
-    }
+		return -1;
+	}
 
 	if (zip_verify) {
 		gui_print("Verifying zip signature...\n");
