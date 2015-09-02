@@ -482,7 +482,12 @@ void WearRecoveryUI::StartMenu(const char* const * headers, const char* const * 
     if (text_rows > 0 && text_cols > 0) {
         menu_headers_ = headers;
         size_t i = 0;
-        for (; i < text_rows && items[i] != nullptr; i++) {
+        // "i < text_rows" is removed from the loop termination condition,
+        // which is different from the one in ScreenRecoveryUI::StartMenu().
+        // Because WearRecoveryUI supports scrollable menu, it's fine to have
+        // more entries than text_rows. The menu may be truncated otherwise.
+        // Bug: 23752519
+        for (; items[i] != nullptr; i++) {
             strncpy(menu[i], items[i], text_cols - 1);
             menu[i][text_cols - 1] = '\0';
         }
