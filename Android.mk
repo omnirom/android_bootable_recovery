@@ -51,6 +51,7 @@ LOCAL_STATIC_LIBRARIES := \
     liblog \
     libselinux \
     libstdc++ \
+    libutils \
     libm \
     libc
 
