@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d8f0a54e_8620ae9c",
+        "filename": "minzip/Zip.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 519,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-03T18:16:57Z",
+      "side": 1,
+      "message": "This looks like forgotten debug output.",
+      "revId": "a0d5eaf676b90b75303d0d6b7ae3181a662e4959",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_6625aaaa",
+        "filename": "minzip/Zip.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 551,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-03T18:16:57Z",
+      "side": 1,
+      "message": "This fails to handle error return codes properly.",
+      "revId": "a0d5eaf676b90b75303d0d6b7ae3181a662e4959",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_461aa66e",
+        "filename": "minzip/Zip.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 553,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-03T18:16:57Z",
+      "side": 1,
+      "message": "Why is this not done inside the loop?",
+      "revId": "a0d5eaf676b90b75303d0d6b7ae3181a662e4959",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_a613b25a",
+        "filename": "minzip/Zip.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 697,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-03T18:16:57Z",
+      "side": 1,
+      "message": "If XZ is \"not actually supported by the ZIP format\", why is this hack here in minzip then and not in updater?",
+      "revId": "a0d5eaf676b90b75303d0d6b7ae3181a662e4959",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_261fa25e",
+        "filename": "updater/blockimg.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-03T18:16:57Z",
+      "side": 1,
+      "message": "I think the xz unpacking should happen in receive_new_data instead of creating a new function in minzip.",
+      "revId": "a0d5eaf676b90b75303d0d6b7ae3181a662e4959",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
