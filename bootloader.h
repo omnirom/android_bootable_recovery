@@ -39,6 +39,13 @@
  * multiple times, so that the UI can reflect which invocation of the
  * package it is.  If the value is of the format "#/#" (eg, "1/3"),
  * the UI will add a simple indicator of that status.
+ *
+ * The slot_suffix field is used for A/B implementations where the
+ * bootloader does not set the androidboot.ro.boot.slot_suffix kernel
+ * commandline parameter. This is used by fs_mgr to mount /system and
+ * other partitions with the slotselect flag set in fstab. A/B
+ * implementations are free to use all 32 bytes and may store private
+ * data past the first NUL-byte in this field.
  */
 struct bootloader_message {
     char command[32];
@@ -51,7 +58,8 @@ struct bootloader_message {
     // stage string (for multistage packages) and possible future
     // expansion.
     char stage[32];
-    char reserved[224];
+    char slot_suffix[32];
+    char reserved[192];
 };
 
 /* Read and write the bootloader command from the "misc" partition.
