@@ -1,0 +1,9 @@
+service uncrypt /system/bin/uncrypt
+    class main
+    disabled
+    oneshot
+
+service pre-recovery /system/bin/uncrypt --reboot
+    class main
+    disabled
+    oneshot
