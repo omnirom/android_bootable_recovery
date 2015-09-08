@@ -628,7 +628,15 @@ unsigned char* MakePatch(ImageChunk* src, ImageChunk* tgt, size_t* size) {
   }
 
   char ptemp[] = "/tmp/imgdiff-patch-XXXXXX";
-  mkstemp(ptemp);
+  int fd = mkstemp(ptemp);
+
+  if (fd == -1) {
+    printf("MakePatch failed to create a temporary file: %s\n",
+           strerror(errno));
+    return NULL;
+  }
+  close(fd); // temporary file is created and we don't need its file
+             // descriptor
 
   int r = bsdiff(src->data, src->len, &(src->I), tgt->data, tgt->len, ptemp);
   if (r != 0) {
