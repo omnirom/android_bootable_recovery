@@ -85,6 +85,7 @@ public:
 
 protected:
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
+	bool Backup_Data_Media;                                                   // Indicates need to backup /data/media, may affect wiping, backup and restore methods
 	void Setup_Data_Media();                                                  // Sets up a partition as a /data/media emulated storage partition
 
 private:

@@ -143,6 +143,7 @@ TWPartition::TWPartition() {
 	Can_Encrypt_Backup = false;
 	Use_Userdata_Encryption = false;
 	Has_Data_Media = false;
+	Backup_Data_Media = false;
 	Has_Android_Secure = false;
 	Is_Storage = false;
 	Is_Settings_Storage = false;
@@ -713,7 +714,19 @@ void TWPartition::Setup_Data_Media() {
 	}
 	DataManager::SetValue("tw_has_internal", 1);
 	DataManager::SetValue("tw_has_data_media", 1);
-	du.add_absolute_dir("/data/media");
+
+	int backup_datamedia;
+
+	// Check if we need to exclude data/media
+	DataManager::GetValue(TW_BACKUP_DATA_MEDIA, backup_datamedia);
+	if (backup_datamedia != 0) {
+		Backup_Data_Media = true;
+		LOGINFO("Will backup data/media on emulated storage.\n");
+	} else {
+		Backup_Data_Media = false;
+		du.add_absolute_dir("/data/media");
+		LOGINFO("Will exclude data/media on emulated storage.\n");
+	}
 }
 
 void TWPartition::Find_Real_Block_Device(string& Block, bool Display_Error) {
@@ -1122,7 +1135,7 @@ bool TWPartition::Wipe(string New_File_System) {
 	else
 		unlink("/.layout_version");
 
-	if (Has_Data_Media && Current_File_System == New_File_System) {
+	if (Has_Data_Media && Backup_Data_Media && Current_File_System == New_File_System) {
 		wiped = Wipe_Data_Without_Wiping_Media();
 		recreate_media = false;
 	} else {
