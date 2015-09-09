@@ -378,19 +378,16 @@ static int WriteBlocks(const RangeSet& tgt, uint8_t* buffer, int fd) {
 //    <src_range> <tgt_range>
 //
 // The source range is loaded into the provided buffer, reallocating
-// it to make it larger if necessary.  The target ranges are returned
-// in *tgt, if tgt is non-null.
+// it to make it larger if necessary.
 
-static int LoadSrcTgtVersion1(char** wordsave, RangeSet* tgt, size_t& src_blocks,
+static int LoadSrcTgtVersion1(char** wordsave, RangeSet& tgt, size_t& src_blocks,
         uint8_t** buffer, size_t* buffer_alloc, int fd) {
     char* word = strtok_r(nullptr, " ", wordsave);
     RangeSet src;
     parse_range(word, src);
 
-    if (tgt != nullptr) {
-        word = strtok_r(nullptr, " ", wordsave);
-        parse_range(word, *tgt);
-    }
+    word = strtok_r(nullptr, " ", wordsave);
+    parse_range(word, tgt);
 
     allocate(src.size * BLOCKSIZE, buffer, buffer_alloc);
     int rc = ReadBlocks(src, *buffer, fd);
@@ -730,9 +727,15 @@ static int SaveStash(const std::string& base, char** wordsave, uint8_t** buffer,
         return 0;
     }
 
-    if (LoadSrcTgtVersion1(wordsave, nullptr, blocks, buffer, buffer_alloc, fd) == -1) {
+    char* word = strtok_r(nullptr, " ", wordsave);
+    RangeSet src;
+    parse_range(word, src);
+
+    allocate(src.size * BLOCKSIZE, buffer, buffer_alloc);
+    if (ReadBlocks(src, *buffer, fd) == -1) {
         return -1;
     }
+    blocks = src.size;
 
     if (usehash && VerifyBlocks(id, *buffer, blocks, true) != 0) {
         // Source blocks have unexpected contents. If we actually need this
@@ -791,7 +794,7 @@ static void MoveRange(uint8_t* dest, const RangeSet& locs, const uint8_t* source
 // reallocated if needed to accommodate the source data.  *tgt is the
 // target RangeSet.  Any stashes required are loaded using LoadStash.
 
-static int LoadSrcTgtVersion2(char** wordsave, RangeSet* tgt, size_t& src_blocks, uint8_t** buffer,
+static int LoadSrcTgtVersion2(char** wordsave, RangeSet& tgt, size_t& src_blocks, uint8_t** buffer,
         size_t* buffer_alloc, int fd, const std::string& stashbase, bool* overlap) {
     char* word;
     char* colonsave;
@@ -800,10 +803,8 @@ static int LoadSrcTgtVersion2(char** wordsave, RangeSet* tgt, size_t& src_blocks
     size_t stashalloc = 0;
     uint8_t* stash = nullptr;
 
-    if (tgt != nullptr) {
-        word = strtok_r(nullptr, " ", wordsave);
-        parse_range(word, *tgt);
-    }
+    word = strtok_r(nullptr, " ", wordsave);
+    parse_range(word, tgt);
 
     word = strtok_r(nullptr, " ", wordsave);
     src_blocks = strtol(word, nullptr, 0);
@@ -818,8 +819,8 @@ static int LoadSrcTgtVersion2(char** wordsave, RangeSet* tgt, size_t& src_blocks
         parse_range(word, src);
         int res = ReadBlocks(src, *buffer, fd);
 
-        if (overlap && tgt) {
-            *overlap = range_overlaps(src, *tgt);
+        if (overlap) {
+            *overlap = range_overlaps(src, tgt);
         }
 
         if (res == -1) {
@@ -902,12 +903,8 @@ struct CommandParameters {
 // If the return value is 0, source blocks have expected content and the command
 // can be performed.
 
-static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet* tgt, size_t& src_blocks,
+static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& src_blocks,
         bool onehash, bool& overlap) {
-
-    if (!tgt) {
-        return -1;
-    }
 
     char* srchash = strtok_r(nullptr, " ", &params.cpos);
     if (srchash == nullptr) {
@@ -932,13 +929,13 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet* tgt, size_t& 
         return -1;
     }
 
-    std::vector<uint8_t> tgtbuffer(tgt->size * BLOCKSIZE);
+    std::vector<uint8_t> tgtbuffer(tgt.size * BLOCKSIZE);
 
-    if (ReadBlocks(*tgt, tgtbuffer.data(), params.fd) == -1) {
+    if (ReadBlocks(tgt, tgtbuffer.data(), params.fd) == -1) {
         return -1;
     }
 
-    if (VerifyBlocks(tgthash, tgtbuffer.data(), tgt->size, false) == 0) {
+    if (VerifyBlocks(tgthash, tgtbuffer.data(), tgt.size, false) == 0) {
         // Target blocks already have expected content, command should be skipped
         fprintf(stderr, "verified, to return 1");
         return 1;
@@ -989,13 +986,13 @@ static int PerformCommandMove(CommandParameters& params) {
     RangeSet tgt;
 
     if (params.version == 1) {
-        status = LoadSrcTgtVersion1(&params.cpos, &tgt, blocks, &params.buffer,
+        status = LoadSrcTgtVersion1(&params.cpos, tgt, blocks, &params.buffer,
                     &params.bufsize, params.fd);
     } else if (params.version == 2) {
-        status = LoadSrcTgtVersion2(&params.cpos, &tgt, blocks, &params.buffer,
+        status = LoadSrcTgtVersion2(&params.cpos, tgt, blocks, &params.buffer,
                     &params.bufsize, params.fd, params.stashbase, nullptr);
     } else if (params.version >= 3) {
-        status = LoadSrcTgtVersion3(params, &tgt, blocks, true, overlap);
+        status = LoadSrcTgtVersion3(params, tgt, blocks, true, overlap);
     }
 
     if (status == -1) {
@@ -1149,13 +1146,13 @@ static int PerformCommandDiff(CommandParameters& params) {
     size_t blocks = 0;
     int status = 0;
     if (params.version == 1) {
-        status = LoadSrcTgtVersion1(&params.cpos, &tgt, blocks, &params.buffer,
+        status = LoadSrcTgtVersion1(&params.cpos, tgt, blocks, &params.buffer,
                     &params.bufsize, params.fd);
     } else if (params.version == 2) {
-        status = LoadSrcTgtVersion2(&params.cpos, &tgt, blocks, &params.buffer,
+        status = LoadSrcTgtVersion2(&params.cpos, tgt, blocks, &params.buffer,
                     &params.bufsize, params.fd, params.stashbase, nullptr);
     } else if (params.version >= 3) {
-        status = LoadSrcTgtVersion3(params, &tgt, blocks, false, overlap);
+        status = LoadSrcTgtVersion3(params, tgt, blocks, false, overlap);
     }
 
     if (status == -1) {
