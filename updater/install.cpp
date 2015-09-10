@@ -34,6 +34,9 @@
 #include <linux/xattr.h>
 #include <inttypes.h>
 
+#include <base/strings.h>
+#include <base/stringprintf.h>
+
 #include "bootloader.h"
 #include "applypatch/applypatch.h"
 #include "cutils/android_reboot.h"
@@ -53,28 +56,35 @@
 #include "wipe.h"
 #endif
 
-void uiPrint(State* state, char* buffer) {
-    char* line = strtok(buffer, "\n");
-    UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
-    while (line) {
-        fprintf(ui->cmd_pipe, "ui_print %s\n", line);
-        line = strtok(NULL, "\n");
-    }
-    fprintf(ui->cmd_pipe, "ui_print\n");
+// Send over the buffer to recovery though the command pipe.
+static void uiPrint(State* state, const std::string& buffer) {
+    UpdaterInfo* ui = reinterpret_cast<UpdaterInfo*>(state->cookie);
 
-    // The recovery will only print the contents to screen for pipe command
-    // ui_print. We need to dump the contents to stderr (which has been
-    // redirected to the log file) directly.
-    fprintf(stderr, "%s", buffer);
+    // "line1\nline2\n" will be split into 3 tokens: "line1", "line2" and "".
+    // So skip sending empty strings to UI.
+    std::vector<std::string> lines = android::base::Split(buffer, "\n");
+    for (auto& line: lines) {
+        if (!line.empty()) {
+            fprintf(ui->cmd_pipe, "ui_print %s\n", line.c_str());
+            fprintf(ui->cmd_pipe, "ui_print\n");
+        }
+    }
+
+    // On the updater side, we need to dump the contents to stderr (which has
+    // been redirected to the log file). Because the recovery will only print
+    // the contents to screen when processing pipe command ui_print.
+    fprintf(stderr, "%s", buffer.c_str());
 }
 
 __attribute__((__format__(printf, 2, 3))) __nonnull((2))
 void uiPrintf(State* state, const char* format, ...) {
-    char error_msg[1024];
+    std::string error_msg;
+
     va_list ap;
     va_start(ap, format);
-    vsnprintf(error_msg, sizeof(error_msg), format, ap);
+    android::base::StringAppendV(&error_msg, format, ap);
     va_end(ap);
+
     uiPrint(state, error_msg);
 }
 
@@ -159,7 +169,7 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
         const MtdPartition* mtd;
         mtd = mtd_find_partition_by_name(location);
         if (mtd == NULL) {
-            uiPrintf(state, "%s: no mtd partition named \"%s\"",
+            uiPrintf(state, "%s: no mtd partition named \"%s\"\n",
                     name, location);
             result = strdup("");
             goto done;
@@ -1246,28 +1256,24 @@ Value* ApplyPatchCheckFn(const char* name, State* state,
     return StringValue(strdup(result == 0 ? "t" : ""));
 }
 
+// This is the updater side handler for ui_print() in edify script. Contents
+// will be sent over to the recovery side for on-screen display.
 Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
     char** args = ReadVarArgs(state, argc, argv);
     if (args == NULL) {
         return NULL;
     }
 
-    int size = 0;
-    int i;
-    for (i = 0; i < argc; ++i) {
-        size += strlen(args[i]);
-    }
-    char* buffer = reinterpret_cast<char*>(malloc(size+1));
-    size = 0;
-    for (i = 0; i < argc; ++i) {
-        strcpy(buffer+size, args[i]);
-        size += strlen(args[i]);
+    std::string buffer;
+    for (int i = 0; i < argc; ++i) {
+        buffer += args[i];
         free(args[i]);
     }
     free(args);
-    buffer[size] = '\0';
+
+    buffer += "\n";
     uiPrint(state, buffer);
-    return StringValue(buffer);
+    return StringValue(strdup(buffer.c_str()));
 }
 
 Value* WipeCacheFn(const char* name, State* state, int argc, Expr* argv[]) {
