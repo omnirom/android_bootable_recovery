@@ -75,7 +75,11 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
 # any subsidiary static libraries required for your registered
 # extension libs.
 
+ifeq ($(TARGET_ARCH),arm64)
+inc := $(call intermediates-dir-for,PACKAGING,updater_extensions,,,32)/register.inc
+else
 inc := $(call intermediates-dir-for,PACKAGING,updater_extensions)/register.inc
+endif
 
 # Encode the value of TARGET_RECOVERY_UPDATER_LIBS into the filename of the dependency.
 # So if TARGET_RECOVERY_UPDATER_LIBS is changed, a new dependency file will be generated.
@@ -97,13 +101,18 @@ $(inc) : $(inc_dep_file)
 	$(hide) $(foreach lib,$(libs),echo "  Register_$(lib)();" >> $@;)
 	$(hide) echo "}" >> $@
 
-$(call intermediates-dir-for,EXECUTABLES,updater,,,$(TARGET_PREFER_32_BIT))/updater.o : $(inc)
+ifeq ($(TARGET_ARCH),arm64)
+$(call intermediates-dir-for,EXECUTABLES,updater,,,32)/updater.o : $(inc)
+else
+$(call intermediates-dir-for,EXECUTABLES,updater)/updater.o : $(inc)
+endif
 LOCAL_C_INCLUDES += $(dir $(inc))
 
 inc :=
 inc_dep_file :=
 
 LOCAL_MODULE := updater
+LOCAL_32_BIT_ONLY := true
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
