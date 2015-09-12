@@ -1,25 +1,12 @@
-// checkbox.cpp - GUICheckbox object
+// object.cpp - GUIObject base class
 
-#include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/reboot.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <time.h>
-#include <unistd.h>
 #include <stdlib.h>
 
 #include <string>
 
 extern "C" {
 #include "../twcommon.h"
-#include "../minuitwrp/minui.h"
 #include "../variables.h"
 }
 
@@ -30,16 +17,15 @@ extern "C" {
 GUIObject::GUIObject(xml_node<>* node)
 {
 	mConditionsResult = true;
+	if (node)
+		LoadConditions(node, mConditions);
+}
 
-	// Break out early, it's too hard to check if valid every step
-	if (!node)		return;
-
-	// First, get the action
+void GUIObject::LoadConditions(xml_node<>* node, std::vector<Condition>& conditions)
+{
 	xml_node<>* condition = FindNode(node, "conditions");
 	if (condition)  condition = FindNode(condition, "condition");
 	else			condition = FindNode(node, "condition");
-
-	if (!condition)	return;
 
 	while (condition)
 	{
@@ -57,7 +43,7 @@ GUIObject::GUIObject(xml_node<>* node)
 		attr = condition->first_attribute("var2");
 		if (attr)   cond.mVar2 = attr->value();
 
-		mConditions.push_back(cond);
+		conditions.push_back(cond);
 
 		condition = condition->next_sibling("condition");
 	}
@@ -157,11 +143,17 @@ bool GUIObject::isConditionValid()
 
 int GUIObject::NotifyVarChange(const std::string& varName, const std::string& value)
 {
-	mConditionsResult = true;
+	mConditionsResult = UpdateConditions(mConditions, varName);
+	return 0;
+}
+
+bool GUIObject::UpdateConditions(std::vector<Condition>& conditions, const std::string& varName)
+{
+	bool result = true;
 
 	const bool varNameEmpty = varName.empty();
 	std::vector<Condition>::iterator iter;
-	for (iter = mConditions.begin(); iter != mConditions.end(); ++iter)
+	for (iter = conditions.begin(); iter != conditions.end(); ++iter)
 	{
 		if(varNameEmpty && iter->mCompareOp == "modified")
 		{
@@ -180,9 +172,9 @@ int GUIObject::NotifyVarChange(const std::string& varName, const std::string& va
 			iter->mLastResult = isConditionTrue(&(*iter));
 
 		if(!iter->mLastResult)
-			mConditionsResult = false;
+			result = false;
 	}
-	return 0;
+	return result;
 }
 
 bool GUIObject::isMounted(string vol)

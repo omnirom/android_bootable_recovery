@@ -151,8 +151,10 @@ protected:
 	std::vector<Condition> mConditions;
 
 protected:
-	bool isMounted(std::string vol);
-	bool isConditionTrue(Condition* condition);
+	static void LoadConditions(xml_node<>* node, std::vector<Condition>& conditions);
+	static bool isMounted(std::string vol);
+	static bool isConditionTrue(Condition* condition);
+	static bool UpdateConditions(std::vector<Condition>& conditions, const std::string& varName);
 
 	bool mConditionsResult;
 };
