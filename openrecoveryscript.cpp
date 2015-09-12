@@ -3,7 +3,7 @@
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
+ 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -14,7 +14,7 @@
 
 	You should have received a copy of the GNU General Public License
 	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +28,11 @@
 #include <errno.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
+#include <bitset>
+#include <string>
+#include <iterator>
+#include <algorithm>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -40,10 +45,13 @@
 #include "data.hpp"
 #include "adb_install.h"
 #include "fuse_sideload.h"
+#include "partitions.hpp"
+#include "gui/pages.hpp"
+#include "orscmd/orscmd.h"
 extern "C" {
-	#include "twinstall.h"
-	#include "gui/gui.h"
-	#include "cutils/properties.h"
+#include "twinstall.h"
+#include "gui/gui.h"
+#include "cutils/properties.h"
 	int TWinstall_zip(const char* path, int* wipe_cache);
 }
 
@@ -82,10 +90,12 @@ int OpenRecoveryScript::copy_script_file(string filename) {
 int OpenRecoveryScript::run_script_file(void) {
 	FILE *fp = fopen(SCRIPT_FILE_TMP, "r");
 	int ret_val = 0, cindex, line_len, i, remove_nl, install_cmd = 0, sideload = 0;
+	int adb_control_fd, adb_write_fd;
 	char script_line[SCRIPT_COMMAND_SIZE], command[SCRIPT_COMMAND_SIZE],
-		 value[SCRIPT_COMMAND_SIZE], mount[SCRIPT_COMMAND_SIZE],
-		 value1[SCRIPT_COMMAND_SIZE], value2[SCRIPT_COMMAND_SIZE];
+	     value[SCRIPT_COMMAND_SIZE], mount[SCRIPT_COMMAND_SIZE],
+	     value1[SCRIPT_COMMAND_SIZE], value2[SCRIPT_COMMAND_SIZE];
 	char *val_start, *tok;
+	char cmd[512];
 
 	if (fp != NULL) {
 		DataManager::SetValue(TW_SIMULATE_ACTIONS, 0);
@@ -105,9 +115,9 @@ int OpenRecoveryScript::run_script_file(void) {
 			memset(command, 0, sizeof(command));
 			memset(value, 0, sizeof(value));
 			if ((int)script_line[line_len - 1] == 10)
-					remove_nl = 2;
-				else
-					remove_nl = 1;
+				remove_nl = 2;
+			else
+				remove_nl = 1;
 			if (cindex != 0) {
 				strncpy(command, script_line, cindex);
 				LOGINFO("command is: '%s'\n", command);
@@ -137,7 +147,7 @@ int OpenRecoveryScript::run_script_file(void) {
 					gui_print("-- Wiping Cache Partition...\n");
 					PartitionManager.Wipe_By_Path("/cache");
 					gui_print("-- Cache Partition Wipe Complete!\n");
-				} else if (strcmp(value, "dalvik") == 0 || strcmp(value, "dalvick") == 0 || strcmp(value, "dalvikcache") == 0 || strcmp(value, "dalvickcache") == 0) {
+				} else if (strcmp(value, "dalvik") == 0 || strcmp(value, "dalvik") == 0 || strcmp(value, "dalvikcache") == 0 || strcmp(value, "dalvickcache") == 0) {
 					gui_print("-- Wiping Dalvik Cache...\n");
 					PartitionManager.Wipe_Dalvik_Cache();
 					gui_print("-- Dalvik Cache Wipe Complete!\n");
@@ -149,6 +159,128 @@ int OpenRecoveryScript::run_script_file(void) {
 					LOGERR("Error with wipe command value: '%s'\n", value);
 					ret_val = 1;
 				}
+			} else if (strncmp(command, "adbbackup", 9) == 0) {
+				PartitionManager.adbbackup = true;
+				std::vector<std::string> args = TWFunc::Split_String(value, " ");
+				for (unsigned i = 0; i < args.size(); i++) 
+					LOGERR("arg: %s\n", args[i].c_str());
+				Backup_Command(args[1]);
+				PartitionManager.adbbackup = false;
+				ret_val = 1;
+			} else if (strcmp(command, "adbrestore") == 0) {
+				bool breakloop = false;
+				int partition_count = 0;
+				unsigned long long total_restore_size, already_restored_size = 0;
+				std::string Restore_Name;
+				std::size_t pos = 0;
+				PartitionManager.adbbackup = true;
+				struct md5trailer adbmd5;
+				struct md5trailer md5check;
+
+				PartitionManager.Mount_All_Storage();
+				DataManager::SetValue(TW_SKIP_MD5_CHECK_VAR, 0);
+				adb_control_fd = open(TW_ADB_CONTROL, O_RDONLY);
+				adb_write_fd = open(TW_ADB_RESTORE, O_RDONLY);
+
+				while (breakloop == false) {
+					if (read(adb_control_fd, cmd, sizeof(cmd)) > 1) {
+						char check[8];
+						memcpy(&check, cmd, sizeof(check));
+						std::string checkstr(check);
+						if (checkstr.substr(0, sizeof(check) - 1) == TWCNT) {
+							struct twheader twhdr;
+							memcpy(&twhdr, cmd, sizeof(cmd));
+							LOGINFO("ADB Partition count: %x\n", twhdr.count);
+							LOGINFO("ADB version: %ld\n", twhdr.version);
+							if (twhdr.version != ADB_BACKUP_VERSION) {
+								LOGERR("Incompatible adb backup version!\n");
+								breakloop = false;
+								break;
+							}
+							partition_count = twhdr.count;
+						}
+						else if (checkstr.substr(0, sizeof(check) - 1) == MD5TRAILER) {
+							memcpy(&adbmd5, cmd, sizeof(cmd));
+						}
+						else if (checkstr.substr(0, sizeof(check) - 1) == TWMD5) {
+							memcpy(&md5check, cmd, sizeof(cmd));
+							if (strcmp(md5check.md5, adbmd5.md5) != 0) {
+								LOGERR("md5 doesn't match!\n");	
+								LOGERR("file md5: %s\n", adbmd5.md5);
+								LOGERR("check md5: %s\n", md5check.md5);
+								breakloop = true;
+								break;
+							}
+							else {
+								LOGINFO("adbrestore md5 matches\n");
+								LOGINFO("adbmd5.md5: %s\n", adbmd5.md5); 
+								LOGINFO("md5check.md5: %s\n", md5check.md5); 
+							}
+						}
+						else {
+							struct twfilehdr twimghdr;
+							memcpy(&twimghdr, cmd, sizeof(cmd));
+							std::string cmdstr(twimghdr.type);
+							Restore_Name = twimghdr.name;
+							total_restore_size = twimghdr.size;
+							PartitionManager.adb_compression = twimghdr.compressed;
+							if (cmdstr.substr(0, sizeof(TWEADB) - 1) == TWEADB) {
+								breakloop = true;
+							}
+							else if (cmdstr.substr(0, sizeof(TWIMG) - 1) == TWIMG) {
+								LOGINFO("ADB Type: %s\n", twimghdr.type);
+								LOGINFO("ADB Restore_Name: %s\n", Restore_Name.c_str());
+								LOGINFO("ADB Restore_size: %d\n", total_restore_size);
+								std::string Backup_FileName;
+								std::size_t pos = Restore_Name.find_last_of("/");
+								std::string path = "/" + Restore_Name.substr(pos, Restore_Name.size());
+								pos = path.find_first_of(".");
+								path = path.substr(0, pos);
+								if (path.substr(0,1).compare("//")) {
+									path = path.substr(1, path.size());
+								}
+								
+								pos = Restore_Name.find_last_of("/");
+								Backup_FileName = Restore_Name.substr(pos, Restore_Name.size());
+								TWPartition* restore_part = PartitionManager.Find_Partition_By_Path(path);
+								PartitionManager.Set_Backup_FileName(restore_part, Backup_FileName);
+								if (!PartitionManager.Restore_Partition(restore_part, Restore_Name, partition_count, &total_restore_size, &already_restored_size)) {
+									LOGERR("ADB Restore failed.\n");
+									return -1;
+								}
+							}
+							else if (cmdstr.substr(0, sizeof(TWFN) - 1) == TWFN) {
+								LOGINFO("ADB Type: %s\n", twimghdr.type);
+								LOGINFO("ADB Restore_Name: %s\n", Restore_Name.c_str());
+								LOGINFO("ADB Restore_size: %d\n", total_restore_size);
+								LOGINFO("ADB compression: %d\n", twimghdr.compressed);
+								std::string Backup_FileName;
+								std::size_t pos = Restore_Name.find_last_of("/");
+								std::string path = "/" + Restore_Name.substr(pos, Restore_Name.size());
+								pos = path.find_first_of(".");
+								path = path.substr(0, pos);
+								if (path.substr(0,1).compare("//")) {
+									path = path.substr(1, path.size());
+								}
+								
+								pos = Restore_Name.find_last_of("/");
+								Backup_FileName = Restore_Name.substr(pos, Restore_Name.size());
+								TWPartition* restore_part = PartitionManager.Find_Partition_By_Path(path);
+								PartitionManager.Set_Backup_FileName(restore_part, Backup_FileName);
+								if (!PartitionManager.Restore_Partition(restore_part, Restore_Name, partition_count, &total_restore_size, &already_restored_size)) {
+									LOGERR("ADB Restore failed.\n");
+									return -1;
+								}
+							}
+						}
+					}
+					memset(&cmd, 0, sizeof(cmd));
+				}
+
+				PartitionManager.adbbackup = false;
+				ret_val = 1;
+				close(adb_write_fd);
+				close(adb_control_fd);
 			} else if (strcmp(command, "backup") == 0) {
 				// Backup
 				DataManager::SetValue("tw_action_text2", "Backing Up");
