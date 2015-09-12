@@ -505,6 +505,6 @@ void gr_get_memory_surface(gr_surface surface)
 // 4.4 that are required by charger and healthd
 void gr_clear()
 {
-	return;
+    gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 }
 
