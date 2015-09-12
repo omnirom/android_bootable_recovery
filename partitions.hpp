@@ -82,6 +82,8 @@ public:
 	bool Is_Present;                                                          // Indicates if the partition is currently present as a block device
 	string Crypto_Key_Location;                                               // Location of the crypto key used for decrypting encrypted data partitions
 	unsigned int MTP_Storage_ID;
+	bool adbbackup;								  // Tell twrpTar to backup to adbbackup fd
+	int adb_compression;                                                     // adb backup compression type
 
 protected:
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
@@ -233,15 +235,18 @@ public:
 	bool Remove_MTP_Storage(string Mount_Point);                              // Adds or removes an MTP Storage partition
 	bool Remove_MTP_Storage(unsigned int Storage_ID);                         // Adds or removes an MTP Storage partition
 	bool Flash_Image(string Filename);                                        // Flashes an image to a selected partition from the partition list
-
+	bool Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count, const unsigned long long *total_restore_size, unsigned long long *already_restored_size);
+	void Set_Backup_FileName(TWPartition* part, string bkupname);
 	TWAtomicInt stop_backup;
+	bool adbbackup;								  // Tell twrpTar to backup to adbbackup fd
+	int adb_compression;                                                     // adb backup compression type
+
 
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
 	void Setup_Android_Secure_Location(TWPartition* Part);                    // Sets up .android_secure if needed
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made
 	bool Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes);
-	bool Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count, const unsigned long long *total_restore_size, unsigned long long *already_restored_size);
 	void Output_Partition(TWPartition* Part);
 	TWPartition* Find_Partition_By_MTP_Storage_ID(unsigned int Storage_ID);   // Returns a pointer to a partition based on MTP Storage ID
 	bool Add_Remove_MTP_Storage(TWPartition* Part, int message_type);   // Adds or removes an MTP Storage partition

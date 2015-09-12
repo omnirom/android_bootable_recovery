@@ -10,6 +10,7 @@
 **  University of Illinois at Urbana-Champaign
 */
 
+#define DEBUG
 #include <internal.h>
 
 #include <stdio.h>
@@ -19,7 +20,6 @@
 #include <errno.h>
 #include <utime.h>
 
-#define DEBUG
 #ifdef STDC_HEADERS
 # include <stdlib.h>
 #endif
@@ -27,8 +27,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
-#define DEBUG
 
 static int
 tar_set_file_perms(TAR *t, char *realname)
@@ -145,7 +143,7 @@ tar_extract_file(TAR *t, char *realname, char *prefix, const int *progress_fd)
 	}
 
 	if (i != 0) {
-		printf("FAILED RESTORE OF FILE i: %s\n", realname);
+		printf("FAILED RESTORE OF FILE: %s\n", realname);
 		return i;
 	}
 
@@ -218,8 +216,10 @@ tar_extract_regfile(TAR *t, char *realname, const int *progress_fd)
 	//uid = th_get_uid(t);
 	//gid = th_get_gid(t);
 
-	if (mkdirhier(dirname(filename)) == -1)
+	if (mkdirhier(dirname(filename)) == -1) {
+		printf("mkdirhir failed\n");
 		return -1;
+	}
 
 #ifdef DEBUG
 	//printf("  ==> extracting: %s (mode %04o, uid %d, gid %d, %d bytes)\n",
