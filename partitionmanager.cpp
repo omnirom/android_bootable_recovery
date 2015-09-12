@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <iomanip>
+#include <bitset>
 #include <sys/wait.h>
 #include "variables.h"
 #include "twcommon.h"
@@ -40,6 +41,7 @@
 #include "twrpDU.hpp"
 #include "set_metadata.h"
 #include "tw_atomic.hpp"
+#include "orscmd/orscmd.h"
 
 #ifdef TW_HAS_MTP
 #include "mtp/mtp_MtpServer.hpp"
@@ -62,6 +64,10 @@ TWPartitionManager::TWPartitionManager(void) {
 	mtp_write_fd = -1;
 	stop_backup.set_value(0);
 	tar_fork_pid = 0;
+}
+
+void TWPartitionManager::Set_Backup_FileName(TWPartition* part, string bkupname) {
+	part->Backup_FileName = bkupname;
 }
 
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
@@ -519,7 +525,10 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 
 bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes) {
 	time_t start, stop;
-	int use_compression;
+	int img_bps;
+	unsigned long long file_bps;
+	unsigned long total_time, remain_time, section_time;
+	int use_compression, backup_time;
 	float pos;
 	unsigned long long total_size, current_size;
 
@@ -535,6 +544,20 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 	// Set the position
 	pos = ((float)(current_size) / (float)(total_size));
 	DataManager::SetProgress(pos);
+
+	LOGINFO("Estimated total time: %lu\nEstimated remaining time: %lu\n", total_time, remain_time);
+
+	Part->adbbackup = adbbackup;
+
+	// And get the time
+	if (Part->Backup_Method == 1)
+		section_time = Part->Backup_Size / file_bps;
+	else
+		section_time = Part->Backup_Size / img_bps;
+
+	// Set the position
+	pos = section_time / (float) total_time;
+	//DataManager::ShowProgress(pos, section_time);
 
 	TWFunc::SetPerformanceMode(true);
 	time(&start);
@@ -651,6 +674,8 @@ int TWPartitionManager::Cancel_Backup() {
 
 int TWPartitionManager::Run_Backup(void) {
 	int check, do_md5, partition_count = 0, disable_free_space_check = 0;
+	int adb_control_fd;
+	char cmd[512];
 	string Backup_Folder, Backup_Name, Full_Backup_Path, Backup_List, backup_path;
 	unsigned long long total_bytes = 0, file_bytes = 0, img_bytes = 0, free_space = 0, img_bytes_remaining, file_bytes_remaining, subpart_size;
 	unsigned long img_time = 0, file_time = 0;
@@ -670,6 +695,7 @@ int TWPartitionManager::Run_Backup(void) {
 
 	if (!Mount_Current_Storage(true))
 		return false;
+
 
 	DataManager::GetValue(TW_SKIP_MD5_GENERATE_VAR, do_md5);
 	if (do_md5 == 0)
@@ -727,6 +753,20 @@ int TWPartitionManager::Run_Backup(void) {
 		gui_print("No partitions selected for backup.\n");
 		return false;
 	}
+	if (adbbackup) {
+		memset(cmd, 0, sizeof(cmd));
+		adb_control_fd = open(TW_ADB_CONTROL, O_WRONLY);
+		if (adb_control_fd < 0)
+		    return -1;
+		struct twheader twhdr;
+		strncpy(twhdr.twptcnt, TWCNT, sizeof(twhdr.twptcnt));
+		twhdr.count = partition_count;
+		twhdr.version = ADB_BACKUP_VERSION;
+		memset(twhdr.space, 0, sizeof(twhdr.space));
+		if (write(adb_control_fd, &twhdr, sizeof(twhdr)) < 1) {
+		    LOGERR("Cannot write to adb control channel\n");
+		}
+	}
 	total_bytes = file_bytes + img_bytes;
 	gui_print(" * Total number of partitions to back up: %d\n", partition_count);
 	gui_print(" * Total size of all data: %lluMB\n", total_bytes / 1024 / 1024);
@@ -740,6 +780,8 @@ int TWPartitionManager::Run_Backup(void) {
 	}
 
 	DataManager::GetValue("tw_disable_free_space", disable_free_space_check);
+	if (adbbackup)
+		disable_free_space_check = true;
 	if (!disable_free_space_check) {
 		if (free_space - (32 * 1024 * 1024) < total_bytes) {
 			// We require an extra 32MB just in case
@@ -819,6 +861,17 @@ int TWPartitionManager::Run_Backup(void) {
 	string backup_log = Full_Backup_Path + "recovery.log";
 	TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
 	tw_set_default_metadata(backup_log.c_str());
+
+	if (adbbackup) {
+		adb_control_fd = open(TW_ADB_CONTROL, O_WRONLY);
+		if (adb_control_fd < 0) {
+			LOGERR("Error opening adb_control_fd\n");
+		}
+		strncpy(cmd, TWEADB, sizeof(cmd));
+		write(adb_control_fd, cmd, strlen(cmd));
+		close(adb_control_fd);
+		adbbackup = false;
+	}
 	return true;
 }
 
@@ -826,7 +879,10 @@ bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Nam
 	time_t Start, Stop;
 	TWFunc::SetPerformanceMode(true);
 	time(&Start);
-	//DataManager::ShowProgress(1.0 / (float)partition_count, 150);
+	if (adbbackup) {
+		Part->adbbackup = adbbackup;
+		Part->adb_compression = adb_compression;
+	}
 	if (!Part->Restore(Restore_Name, total_restore_size, already_restored_size)) {
 		TWFunc::SetPerformanceMode(false);
 		return false;
@@ -851,7 +907,9 @@ bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Nam
 
 int TWPartitionManager::Run_Restore(string Restore_Name) {
 	int check_md5, check, partition_count = 0;
+	int adb_control_fd;
 	TWPartition* restore_part = NULL;
+	char cmd[512];
 	time_t rStart, rStop;
 	time(&rStart);
 	string Restore_List, restore_path;
@@ -939,6 +997,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 	time(&rStop);
 	gui_print_color("highlight", "[RESTORE COMPLETED IN %d SECONDS]\n\n",(int)difftime(rStop,rStart));
 	DataManager::SetValue("tw_file_progress", "");
+
 	return true;
 }
 
