@@ -82,14 +82,14 @@ tar_append_file(TAR *t, char *realname, char *savename)
 
 	/* set header block */
 #ifdef DEBUG
-	puts("    tar_append_file(): setting header block...");
+	printf("    tar_append_file(): setting header block...");
 #endif
 	memset(&(t->th_buf), 0, sizeof(struct tar_header));
 	th_set_from_stat(t, &s);
 
 	/* set the header path */
 #ifdef DEBUG
-	puts("    tar_append_file(): setting header path...");
+	printf("    tar_append_file(): setting header path...");
 #endif
 	th_set_path(t, (savename ? savename : realname));
 
@@ -113,7 +113,7 @@ tar_append_file(TAR *t, char *realname, char *savename)
 #endif
 	/* check if it's a hardlink */
 #ifdef DEBUG
-	puts("    tar_append_file(): checking inode cache for hardlink...");
+	printf("    tar_append_file(): checking inode cache for hardlink...");
 #endif
 	libtar_hashptr_reset(&hp);
 	if (libtar_hash_getkey(t->h, &hp, &(s.st_dev),
@@ -122,8 +122,7 @@ tar_append_file(TAR *t, char *realname, char *savename)
 	else
 	{
 #ifdef DEBUG
-		printf("+++ adding hash for device (0x%lx, 0x%lx)...\n",
-		       major(s.st_dev), minor(s.st_dev));
+		printf("+++ adding hash for device (0x%lx, 0x%lx)...\n", major(s.st_dev), minor(s.st_dev));
 #endif
 		td = (tar_dev_t *)calloc(1, sizeof(tar_dev_t));
 		td->td_dev = s.st_dev;
@@ -139,8 +138,7 @@ tar_append_file(TAR *t, char *realname, char *savename)
 	{
 		ti = (tar_ino_t *)libtar_hashptr_data(&hp);
 #ifdef DEBUG
-		printf("    tar_append_file(): encoding hard link \"%s\" "
-		       "to \"%s\"...\n", realname, ti->ti_name);
+		printf("    tar_append_file(): encoding hard link \"%s\ to \"%s\"...\n", realname, ti->ti_name);
 #endif
 		t->th_buf.typeflag = LNKTYPE;
 		th_set_link(t, ti->ti_name);
@@ -148,9 +146,9 @@ tar_append_file(TAR *t, char *realname, char *savename)
 	else
 	{
 #ifdef DEBUG
-		printf("+++ adding entry: device (0x%lx,0x%lx), inode %ld "
-		       "(\"%s\")...\n", major(s.st_dev), minor(s.st_dev),
-		       s.st_ino, realname);
+		//printf("+++ adding entry: device (0x%lx,0x%lx), inode %ld "
+		//       "(\"%s\")...\n", major(s.st_dev), minor(s.st_dev),
+		//       s.st_ino, realname);
 #endif
 		ti = (tar_ino_t *)calloc(1, sizeof(tar_ino_t));
 		if (ti == NULL)
@@ -182,18 +180,18 @@ tar_append_file(TAR *t, char *realname, char *savename)
 		th_print_long_ls(t);
 
 #ifdef DEBUG
-	puts("    tar_append_file(): writing header");
+	printf("    tar_append_file(): writing header");
 #endif
 	/* write header */
 	if (th_write(t) != 0)
 	{
 #ifdef DEBUG
-		printf("t->fd = %d\n", t->fd);
+		printf("here t->fd = %d\n", t->fd);
 #endif
 		return -1;
 	}
 #ifdef DEBUG
-	puts("    tar_append_file(): back from th_write()");
+	printf("    tar_append_file(): back from th_write()");
 #endif
 
 	/* if it's a regular file, write the contents as well */
