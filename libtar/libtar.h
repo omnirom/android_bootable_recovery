@@ -151,6 +151,8 @@ int tar_append_regfile(TAR *t, char *realname);
 /***** block.c *************************************************************/
 
 /* macros for reading/writing tarchive blocks */
+//int tar_block_read(TAR *t, char *buf);
+
 #define tar_block_read(t, buf) \
 	(*((t)->type->readfunc))((t)->fd, (char *)(buf), T_BLOCKSIZE)
 #define tar_block_write(t, buf) \
