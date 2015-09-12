@@ -745,10 +745,7 @@ static void choose_recovery_file(Device* device) {
         int chosen_item = get_menu_selection(headers, entries, 1, 0, device);
         if (strcmp(entries[chosen_item], "Back") == 0) break;
 
-        // TODO: do we need to redirect? ShowFile could just avoid writing to stdio.
-        redirect_stdio("/dev/null");
         ui->ShowFile(entries[chosen_item]);
-        redirect_stdio(TEMPORARY_LOG_FILE);
     }
 
     for (size_t i = 0; i < (sizeof(entries) / sizeof(*entries)); i++) {

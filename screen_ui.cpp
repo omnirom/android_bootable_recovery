@@ -581,7 +581,7 @@ void ScreenRecoveryUI::ShowFile(FILE* fp) {
     bool show_prompt = false;
     while (true) {
         if (show_prompt) {
-            Print("--(%d%% of %d bytes)--",
+            PrintOnScreenOnly("--(%d%% of %d bytes)--",
                   static_cast<int>(100 * (double(ftell(fp)) / double(sb.st_size))),
                   static_cast<int>(sb.st_size));
             Redraw();
