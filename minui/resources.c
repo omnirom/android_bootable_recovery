@@ -183,12 +183,12 @@ static void transform_rgb_to_draw(unsigned char* input_row,
 
     switch (channels) {
         case 1:
-            // expand gray level to RGBX
+            // expand gray level to RGBA
             for (x = 0; x < width; ++x) {
                 *op++ = *ip;
                 *op++ = *ip;
                 *op++ = *ip;
-                *op++ = 0xff;
+                *op++ = *ip ? 0xff : 0;
                 ip++;
             }
             break;

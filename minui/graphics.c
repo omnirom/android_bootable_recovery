@@ -385,10 +385,10 @@ static void gr_init_font(void)
 
         gr_font->cwidth = font.cwidth;
         gr_font->cheight = font.cheight;
-    }
 
-    // interpret the grayscale as alpha
-    gr_font->texture->format = GGL_PIXEL_FORMAT_A_8;
+        // interpret the grayscale as alpha
+        gr_font->texture->format = GGL_PIXEL_FORMAT_A_8;
+    }
 }
 
 int gr_init(void)
