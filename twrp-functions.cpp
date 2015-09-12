@@ -432,7 +432,7 @@ void TWFunc::GUI_Operation_Text(string Read_Value, string Default_Text) {
 
 void TWFunc::GUI_Operation_Text(string Read_Value, string Partition_Name, string Default_Text) {
 	string Display_Text;
-
+	
 	DataManager::GetValue(Read_Value, Display_Text);
 	if (Display_Text.empty())
 		Display_Text = Default_Text;

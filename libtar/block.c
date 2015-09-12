@@ -13,6 +13,7 @@
 #include <internal.h>
 #include <stdio.h>
 #include <errno.h>
+#include <sys/ioctl.h>
 
 #ifdef STDC_HEADERS
 # include <string.h>

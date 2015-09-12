@@ -28,6 +28,7 @@ extern "C" {
 #include <string>
 #include <vector>
 #include "twrpDU.hpp"
+#include "orscmd/orscmd.h"
 
 using namespace std;
 
@@ -52,6 +53,7 @@ public:
 	void setsize(unsigned long long backup_size);
 	void setpassword(string pass);
 	unsigned long long get_size();
+	void Set_Archive_Type(int archive_type);
 
 public:
 	int use_encryption;
@@ -63,6 +65,8 @@ public:
 	int progress_pipe_fd;
 	string partition_name;
 	string backup_folder;
+	bool adbbackup;
+	int adb_compression;                                                     // adb backup compression type
 
 private:
 	int extract();
@@ -88,6 +92,7 @@ private:
 	bool include_root_dir;
 	TAR *t;
 	int fd;
+	int input_fd;
 	pid_t pigz_pid;
 	pid_t oaes_pid;
 	unsigned long long file_count;
@@ -99,4 +104,6 @@ private:
 
 	std::vector<TarListStruct> *ItemList;
 	int thread_id;
+	int output_fd;
+	int adb_control_fd;
 };
