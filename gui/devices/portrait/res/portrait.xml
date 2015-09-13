@@ -2354,6 +2354,7 @@
 				</listitem>
 				<listitem name="Simulate failure for actions.">
 					<data variable="tw_simulate_fail" />
+					<condition var1="tw_simulate_actions" var2="1" />
 				</listitem>
 			</object>
 

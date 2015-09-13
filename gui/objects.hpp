@@ -632,16 +632,18 @@ public:
 	virtual void NotifySelect(size_t item_selected);
 
 protected:
-	struct ListData {
+	struct ListItem {
 		std::string displayName;
 		std::string variableName;
 		std::string variableValue;
 		unsigned int selected;
 		GUIAction* action;
+		std::vector<Condition> mConditions;
 	};
 
 protected:
-	std::vector<ListData> mList;
+	std::vector<ListItem> mListItems;
+	std::vector<size_t> mVisibleItems; // contains indexes in mListItems of visible items only
 	std::string mVariable;
 	std::string currentValue;
 	ImageResource* mIconSelected;
