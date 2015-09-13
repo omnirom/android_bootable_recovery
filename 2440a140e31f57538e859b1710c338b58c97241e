@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d8f0a54e_e9e50d08",
+        "filename": "gui/listbox.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-13T21:19:30Z",
+      "side": 1,
+      "message": "redundant, see line 99",
+      "revId": "2440a140e31f57538e859b1710c338b58c97241e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_a9ef05e6",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 679,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-13T21:19:30Z",
+      "side": 1,
+      "message": "confusing variable name - this is not a member variable.",
+      "revId": "2440a140e31f57538e859b1710c338b58c97241e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_69c1fd59",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 692,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-13T21:19:30Z",
+      "side": 1,
+      "message": "error message?",
+      "revId": "2440a140e31f57538e859b1710c338b58c97241e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_49b639f6",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1241,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-13T21:19:30Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "2440a140e31f57538e859b1710c338b58c97241e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_29bbf5dd",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1267,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-13T21:19:30Z",
+      "side": 1,
+      "message": "why do we need to extract languages from the zip?",
+      "revId": "2440a140e31f57538e859b1710c338b58c97241e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_c9f249cc",
+        "filename": "gui/stringparser.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-13T21:19:30Z",
+      "side": 1,
+      "message": "These 3 methods should really be consolidated to a single one that is controlled by flags in parameters. The 3 public methods should call the common implementation with the right flags.\nWhy do we even need 3 different methods?",
+      "revId": "2440a140e31f57538e859b1710c338b58c97241e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_09d03120",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 580,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-13T21:19:30Z",
+      "side": 1,
+      "message": "add strerror(errno) too",
+      "revId": "2440a140e31f57538e859b1710c338b58c97241e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
