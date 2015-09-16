@@ -162,6 +162,10 @@ static int read_all(int fd, uint8_t* data, size_t size) {
     return 0;
 }
 
+static int read_all(int fd, std::vector<uint8_t>& buffer, size_t size) {
+    return read_all(fd, buffer.data(), size);
+}
+
 static int write_all(int fd, const uint8_t* data, size_t size) {
     size_t written = 0;
     while (written < size) {
@@ -176,6 +180,10 @@ static int write_all(int fd, const uint8_t* data, size_t size) {
     return 0;
 }
 
+static int write_all(int fd, const std::vector<uint8_t>& buffer, size_t size) {
+    return write_all(fd, buffer.data(), size);
+}
+
 static bool check_lseek(int fd, off64_t offset, int whence) {
     off64_t rc = TEMP_FAILURE_RETRY(lseek64(fd, offset, whence));
     if (rc == -1) {
@@ -185,18 +193,11 @@ static bool check_lseek(int fd, off64_t offset, int whence) {
     return true;
 }
 
-static void allocate(size_t size, uint8_t** buffer, size_t* buffer_alloc) {
+static void allocate(size_t size, std::vector<uint8_t>& buffer) {
     // if the buffer's big enough, reuse it.
-    if (size <= *buffer_alloc) return;
+    if (size <= buffer.size()) return;
 
-    free(*buffer);
-
-    *buffer = (uint8_t*) malloc(size);
-    if (*buffer == nullptr) {
-        fprintf(stderr, "failed to allocate %zu bytes\n", size);
-        exit(1);
-    }
-    *buffer_alloc = size;
+    buffer.resize(size);
 }
 
 struct RangeSinkState {
@@ -324,12 +325,9 @@ static void* unzip_new_data(void* cookie) {
     return nullptr;
 }
 
-static int ReadBlocks(const RangeSet& src, uint8_t* buffer, int fd) {
+static int ReadBlocks(const RangeSet& src, std::vector<uint8_t>& buffer, int fd) {
     size_t p = 0;
-
-    if (!buffer) {
-        return -1;
-    }
+    uint8_t* data = buffer.data();
 
     for (size_t i = 0; i < src.count; ++i) {
         if (!check_lseek(fd, (off64_t) src.pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
@@ -338,7 +336,7 @@ static int ReadBlocks(const RangeSet& src, uint8_t* buffer, int fd) {
 
         size_t size = (src.pos[i * 2 + 1] - src.pos[i * 2]) * BLOCKSIZE;
 
-        if (read_all(fd, buffer + p, size) == -1) {
+        if (read_all(fd, data + p, size) == -1) {
             return -1;
         }
 
@@ -348,10 +346,8 @@ static int ReadBlocks(const RangeSet& src, uint8_t* buffer, int fd) {
     return 0;
 }
 
-static int WriteBlocks(const RangeSet& tgt, uint8_t* buffer, int fd) {
-    if (!buffer) {
-        return -1;
-    }
+static int WriteBlocks(const RangeSet& tgt, const std::vector<uint8_t>& buffer, int fd) {
+    const uint8_t* data = buffer.data();
 
     size_t p = 0;
     for (size_t i = 0; i < tgt.count; ++i) {
@@ -361,7 +357,7 @@ static int WriteBlocks(const RangeSet& tgt, uint8_t* buffer, int fd) {
 
         size_t size = (tgt.pos[i * 2 + 1] - tgt.pos[i * 2]) * BLOCKSIZE;
 
-        if (write_all(fd, buffer + p, size) == -1) {
+        if (write_all(fd, data + p, size) == -1) {
             return -1;
         }
 
@@ -381,30 +377,29 @@ static int WriteBlocks(const RangeSet& tgt, uint8_t* buffer, int fd) {
 // it to make it larger if necessary.
 
 static int LoadSrcTgtVersion1(char** wordsave, RangeSet& tgt, size_t& src_blocks,
-        uint8_t** buffer, size_t* buffer_alloc, int fd) {
+        std::vector<uint8_t>& buffer, int fd) {
+    // <src_range>
     char* word = strtok_r(nullptr, " ", wordsave);
     RangeSet src;
     parse_range(word, src);
 
+    // <tgt_range>
     word = strtok_r(nullptr, " ", wordsave);
     parse_range(word, tgt);
 
-    allocate(src.size * BLOCKSIZE, buffer, buffer_alloc);
-    int rc = ReadBlocks(src, *buffer, fd);
+    allocate(src.size * BLOCKSIZE, buffer);
+    int rc = ReadBlocks(src, buffer, fd);
     src_blocks = src.size;
 
     return rc;
 }
 
-static int VerifyBlocks(const std::string& expected, const uint8_t* buffer,
+static int VerifyBlocks(const std::string& expected, const std::vector<uint8_t>& buffer,
         const size_t blocks, bool printerror) {
     uint8_t digest[SHA_DIGEST_SIZE];
+    const uint8_t* data = buffer.data();
 
-    if (!buffer) {
-        return -1;
-    }
-
-    SHA_hash(buffer, blocks * BLOCKSIZE, digest);
+    SHA_hash(data, blocks * BLOCKSIZE, digest);
 
     std::string hexdigest = print_sha1(digest);
 
@@ -516,8 +511,8 @@ static void DeleteStash(const std::string& base) {
 }
 
 static int LoadStash(const std::string& base, const std::string& id, bool verify, size_t* blocks,
-        uint8_t** buffer, size_t* buffer_alloc, bool printnoent) {
-    if (base.empty() || !buffer || !buffer_alloc) {
+        std::vector<uint8_t>& buffer, bool printnoent) {
+    if (base.empty()) {
         return -1;
     }
 
@@ -555,15 +550,15 @@ static int LoadStash(const std::string& base, const std::string& id, bool verify
         return -1;
     }
 
-    allocate(sb.st_size, buffer, buffer_alloc);
+    allocate(sb.st_size, buffer);
 
-    if (read_all(fd, *buffer, sb.st_size) == -1) {
+    if (read_all(fd, buffer, sb.st_size) == -1) {
         return -1;
     }
 
     *blocks = sb.st_size / BLOCKSIZE;
 
-    if (verify && VerifyBlocks(id, *buffer, *blocks, true) != 0) {
+    if (verify && VerifyBlocks(id, buffer, *blocks, true) != 0) {
         fprintf(stderr, "unexpected contents in %s\n", fn.c_str());
         DeleteFile(fn, nullptr);
         return -1;
@@ -572,9 +567,9 @@ static int LoadStash(const std::string& base, const std::string& id, bool verify
     return 0;
 }
 
-static int WriteStash(const std::string& base, const std::string& id, int blocks, uint8_t* buffer,
-        bool checkspace, bool *exists) {
-    if (base.empty() || buffer == nullptr) {
+static int WriteStash(const std::string& base, const std::string& id, int blocks,
+        std::vector<uint8_t>& buffer, bool checkspace, bool *exists) {
+    if (base.empty()) {
         return -1;
     }
 
@@ -706,9 +701,9 @@ static int CreateStash(State* state, int maxblocks, const char* blockdev, std::s
     return 0; // Using existing directory
 }
 
-static int SaveStash(const std::string& base, char** wordsave, uint8_t** buffer,
-        size_t* buffer_alloc, int fd, bool usehash) {
-    if (!wordsave || !buffer || !buffer_alloc) {
+static int SaveStash(const std::string& base, char** wordsave, std::vector<uint8_t>& buffer,
+        int fd, bool usehash) {
+    if (!wordsave) {
         return -1;
     }
 
@@ -720,7 +715,7 @@ static int SaveStash(const std::string& base, char** wordsave, uint8_t** buffer,
     std::string id(id_tok);
 
     size_t blocks = 0;
-    if (usehash && LoadStash(base, id, true, &blocks, buffer, buffer_alloc, false) == 0) {
+    if (usehash && LoadStash(base, id, true, &blocks, buffer, false) == 0) {
         // Stash file already exists and has expected contents. Do not
         // read from source again, as the source may have been already
         // overwritten during a previous attempt.
@@ -731,13 +726,13 @@ static int SaveStash(const std::string& base, char** wordsave, uint8_t** buffer,
     RangeSet src;
     parse_range(word, src);
 
-    allocate(src.size * BLOCKSIZE, buffer, buffer_alloc);
-    if (ReadBlocks(src, *buffer, fd) == -1) {
+    allocate(src.size * BLOCKSIZE, buffer);
+    if (ReadBlocks(src, buffer, fd) == -1) {
         return -1;
     }
     blocks = src.size;
 
-    if (usehash && VerifyBlocks(id, *buffer, blocks, true) != 0) {
+    if (usehash && VerifyBlocks(id, buffer, blocks, true) != 0) {
         // Source blocks have unexpected contents. If we actually need this
         // data later, this is an unrecoverable error. However, the command
         // that uses the data may have already completed previously, so the
@@ -747,7 +742,7 @@ static int SaveStash(const std::string& base, char** wordsave, uint8_t** buffer,
     }
 
     fprintf(stderr, "stashing %zu blocks to %s\n", blocks, id.c_str());
-    return WriteStash(base, id, blocks, *buffer, false, nullptr);
+    return WriteStash(base, id, blocks, buffer, false, nullptr);
 }
 
 static int FreeStash(const std::string& base, const char* id) {
@@ -762,16 +757,19 @@ static int FreeStash(const std::string& base, const char* id) {
     return 0;
 }
 
-static void MoveRange(uint8_t* dest, const RangeSet& locs, const uint8_t* source) {
+static void MoveRange(std::vector<uint8_t>& dest, const RangeSet& locs,
+        const std::vector<uint8_t>& source) {
     // source contains packed data, which we want to move to the
-    // locations given in *locs in the dest buffer.  source and dest
+    // locations given in locs in the dest buffer.  source and dest
     // may be the same buffer.
 
+    const uint8_t* from = source.data();
+    uint8_t* to = dest.data();
     size_t start = locs.size;
     for (int i = locs.count-1; i >= 0; --i) {
         size_t blocks = locs.pos[i*2+1] - locs.pos[i*2];
         start -= blocks;
-        memmove(dest + (locs.pos[i*2] * BLOCKSIZE), source + (start * BLOCKSIZE),
+        memmove(to + (locs.pos[i*2] * BLOCKSIZE), from + (start * BLOCKSIZE),
                 blocks * BLOCKSIZE);
     }
 }
@@ -794,30 +792,26 @@ static void MoveRange(uint8_t* dest, const RangeSet& locs, const uint8_t* source
 // reallocated if needed to accommodate the source data.  *tgt is the
 // target RangeSet.  Any stashes required are loaded using LoadStash.
 
-static int LoadSrcTgtVersion2(char** wordsave, RangeSet& tgt, size_t& src_blocks, uint8_t** buffer,
-        size_t* buffer_alloc, int fd, const std::string& stashbase, bool* overlap) {
-    char* word;
-    char* colonsave;
-    char* colon;
-    RangeSet locs;
-    size_t stashalloc = 0;
-    uint8_t* stash = nullptr;
-
-    word = strtok_r(nullptr, " ", wordsave);
+static int LoadSrcTgtVersion2(char** wordsave, RangeSet& tgt, size_t& src_blocks,
+        std::vector<uint8_t>& buffer, int fd, const std::string& stashbase, bool* overlap) {
+    // <tgt_range>
+    char* word = strtok_r(nullptr, " ", wordsave);
     parse_range(word, tgt);
 
+    // <src_block_count>
     word = strtok_r(nullptr, " ", wordsave);
     src_blocks = strtol(word, nullptr, 0);
 
-    allocate(src_blocks * BLOCKSIZE, buffer, buffer_alloc);
+    allocate(src_blocks * BLOCKSIZE, buffer);
 
+    // "-" or <src_range> [<src_loc>]
     word = strtok_r(nullptr, " ", wordsave);
     if (word[0] == '-' && word[1] == '\0') {
         // no source ranges, only stashes
     } else {
         RangeSet src;
         parse_range(word, src);
-        int res = ReadBlocks(src, *buffer, fd);
+        int res = ReadBlocks(src, buffer, fd);
 
         if (overlap) {
             *overlap = range_overlaps(src, tgt);
@@ -833,18 +827,22 @@ static int LoadSrcTgtVersion2(char** wordsave, RangeSet& tgt, size_t& src_blocks
             return 0;
         }
 
+        RangeSet locs;
         parse_range(word, locs);
-        MoveRange(*buffer, locs, *buffer);
+        MoveRange(buffer, locs, buffer);
     }
 
+    // <[stash_id:stash-range]>
+    char* colonsave;
     while ((word = strtok_r(nullptr, " ", wordsave)) != nullptr) {
         // Each word is a an index into the stash table, a colon, and
         // then a rangeset describing where in the source block that
         // stashed data should go.
         colonsave = nullptr;
-        colon = strtok_r(word, ":", &colonsave);
+        char* colon = strtok_r(word, ":", &colonsave);
 
-        int res = LoadStash(stashbase, std::string(colon), false, nullptr, &stash, &stashalloc, true);
+        std::vector<uint8_t> stash;
+        int res = LoadStash(stashbase, std::string(colon), false, nullptr, stash, true);
 
         if (res == -1) {
             // These source blocks will fail verification if used later, but we
@@ -854,13 +852,10 @@ static int LoadSrcTgtVersion2(char** wordsave, RangeSet& tgt, size_t& src_blocks
         }
 
         colon = strtok_r(nullptr, ":", &colonsave);
+        RangeSet locs;
         parse_range(colon, locs);
 
-        MoveRange(*buffer, locs, stash);
-    }
-
-    if (stash) {
-        free(stash);
+        MoveRange(buffer, locs, stash);
     }
 
     return 0;
@@ -881,8 +876,7 @@ struct CommandParameters {
     size_t written;
     NewThreadInfo nti;
     pthread_t thread;
-    size_t bufsize;
-    uint8_t* buffer;
+    std::vector<uint8_t> buffer;
     uint8_t* patch_start;
 };
 
@@ -924,20 +918,19 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
         }
     }
 
-    if (LoadSrcTgtVersion2(&params.cpos, tgt, src_blocks, &params.buffer, &params.bufsize,
-            params.fd, params.stashbase, &overlap) == -1) {
+    if (LoadSrcTgtVersion2(&params.cpos, tgt, src_blocks, params.buffer, params.fd,
+            params.stashbase, &overlap) == -1) {
         return -1;
     }
 
     std::vector<uint8_t> tgtbuffer(tgt.size * BLOCKSIZE);
 
-    if (ReadBlocks(tgt, tgtbuffer.data(), params.fd) == -1) {
+    if (ReadBlocks(tgt, tgtbuffer, params.fd) == -1) {
         return -1;
     }
 
-    if (VerifyBlocks(tgthash, tgtbuffer.data(), tgt.size, false) == 0) {
+    if (VerifyBlocks(tgthash, tgtbuffer, tgt.size, false) == 0) {
         // Target blocks already have expected content, command should be skipped
-        fprintf(stderr, "verified, to return 1");
         return 1;
     }
 
@@ -948,7 +941,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
             fprintf(stderr, "stashing %zu overlapping blocks to %s\n", src_blocks, srchash);
 
             bool stash_exists = false;
-            if (WriteStash(params.stashbase, std::string(srchash), src_blocks, params.buffer, true,
+            if (WriteStash(params.stashbase, srchash, src_blocks, params.buffer, true,
                            &stash_exists) != 0) {
                 fprintf(stderr, "failed to stash overlapping source blocks\n");
                 return -1;
@@ -964,8 +957,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
         return 0;
     }
 
-    if (overlap && LoadStash(params.stashbase, std::string(srchash), true, nullptr, &params.buffer,
-                             &params.bufsize, true) == 0) {
+    if (overlap && LoadStash(params.stashbase, srchash, true, nullptr, params.buffer, true) == 0) {
         // Overlapping source blocks were previously stashed, command can proceed.
         // We are recovering from an interrupted command, so we don't know if the
         // stash can safely be deleted after this command.
@@ -986,11 +978,10 @@ static int PerformCommandMove(CommandParameters& params) {
     RangeSet tgt;
 
     if (params.version == 1) {
-        status = LoadSrcTgtVersion1(&params.cpos, tgt, blocks, &params.buffer,
-                    &params.bufsize, params.fd);
+        status = LoadSrcTgtVersion1(&params.cpos, tgt, blocks, params.buffer, params.fd);
     } else if (params.version == 2) {
-        status = LoadSrcTgtVersion2(&params.cpos, tgt, blocks, &params.buffer,
-                    &params.bufsize, params.fd, params.stashbase, nullptr);
+        status = LoadSrcTgtVersion2(&params.cpos, tgt, blocks, params.buffer, params.fd,
+                params.stashbase, nullptr);
     } else if (params.version >= 3) {
         status = LoadSrcTgtVersion3(params, tgt, blocks, true, overlap);
     }
@@ -1030,8 +1021,8 @@ static int PerformCommandMove(CommandParameters& params) {
 }
 
 static int PerformCommandStash(CommandParameters& params) {
-    return SaveStash(params.stashbase, &params.cpos, &params.buffer, &params.bufsize,
-                params.fd, (params.version >= 3));
+    return SaveStash(params.stashbase, &params.cpos, params.buffer, params.fd,
+            (params.version >= 3));
 }
 
 static int PerformCommandFree(CommandParameters& params) {
@@ -1055,8 +1046,8 @@ static int PerformCommandZero(CommandParameters& params) {
 
     fprintf(stderr, "  zeroing %zu blocks\n", tgt.size);
 
-    allocate(BLOCKSIZE, &params.buffer, &params.bufsize);
-    memset(params.buffer, 0, BLOCKSIZE);
+    allocate(BLOCKSIZE, params.buffer);
+    memset(params.buffer.data(), 0, BLOCKSIZE);
 
     if (params.canwrite) {
         for (size_t i = 0; i < tgt.count; ++i) {
@@ -1120,12 +1111,9 @@ static int PerformCommandNew(CommandParameters& params) {
 }
 
 static int PerformCommandDiff(CommandParameters& params) {
-    char* value = nullptr;
-    bool overlap = false;
-    RangeSet tgt;
 
     const std::string logparams(params.cpos);
-    value = strtok_r(nullptr, " ", &params.cpos);
+    char* value = strtok_r(nullptr, " ", &params.cpos);
 
     if (value == nullptr) {
         fprintf(stderr, "missing patch offset for %s\n", params.cmdname);
@@ -1143,14 +1131,15 @@ static int PerformCommandDiff(CommandParameters& params) {
 
     size_t len = strtoul(value, nullptr, 0);
 
+    RangeSet tgt;
     size_t blocks = 0;
+    bool overlap = false;
     int status = 0;
     if (params.version == 1) {
-        status = LoadSrcTgtVersion1(&params.cpos, tgt, blocks, &params.buffer,
-                    &params.bufsize, params.fd);
+        status = LoadSrcTgtVersion1(&params.cpos, tgt, blocks, params.buffer, params.fd);
     } else if (params.version == 2) {
-        status = LoadSrcTgtVersion2(&params.cpos, tgt, blocks, &params.buffer,
-                    &params.bufsize, params.fd, params.stashbase, nullptr);
+        status = LoadSrcTgtVersion2(&params.cpos, tgt, blocks, params.buffer, params.fd,
+                params.stashbase, nullptr);
     } else if (params.version >= 3) {
         status = LoadSrcTgtVersion3(params, tgt, blocks, false, overlap);
     }
@@ -1185,11 +1174,11 @@ static int PerformCommandDiff(CommandParameters& params) {
             }
 
             if (params.cmdname[0] == 'i') {      // imgdiff
-                ApplyImagePatch(params.buffer, blocks * BLOCKSIZE, &patch_value,
+                ApplyImagePatch(params.buffer.data(), blocks * BLOCKSIZE, &patch_value,
                     &RangeSinkWrite, &rss, nullptr, nullptr);
             } else {
-                ApplyBSDiffPatch(params.buffer, blocks * BLOCKSIZE, &patch_value,
-                    0, &RangeSinkWrite, &rss, nullptr);
+                ApplyBSDiffPatch(params.buffer.data(), blocks * BLOCKSIZE, &patch_value, 0,
+                    &RangeSinkWrite, &rss, nullptr);
             }
 
             // We expect the output of the patcher to fill the tgt ranges exactly.
@@ -1261,10 +1250,10 @@ static int PerformCommandErase(CommandParameters& params) {
 // Definitions for transfer list command functions
 typedef int (*CommandFunction)(CommandParameters&);
 
-typedef struct {
+struct Command {
     const char* name;
     CommandFunction f;
-} Command;
+};
 
 // CompareCommands and CompareCommandNames are for the hash table
 
@@ -1297,86 +1286,76 @@ static unsigned int HashString(const char *s) {
 static Value* PerformBlockImageUpdate(const char* name, State* state, int /* argc */, Expr* argv[],
         const Command* commands, size_t cmdcount, bool dryrun) {
 
-    char* line = nullptr;
-    char* linesave = nullptr;
-    char* transfer_list = nullptr;
     CommandParameters params;
-    const Command* cmd = nullptr;
-    const ZipEntry* new_entry = nullptr;
-    const ZipEntry* patch_entry = nullptr;
-    FILE* cmd_pipe = nullptr;
-    HashTable* cmdht = nullptr;
-    int res;
-    int rc = -1;
-    int total_blocks = 0;
-    pthread_attr_t attr;
-    UpdaterInfo* ui = nullptr;
-    Value* blockdev_filename = nullptr;
-    Value* new_data_fn = nullptr;
-    Value* patch_data_fn = nullptr;
-    Value* transfer_list_value = nullptr;
-    ZipArchive* za = nullptr;
-
     memset(&params, 0, sizeof(params));
     params.canwrite = !dryrun;
 
     fprintf(stderr, "performing %s\n", dryrun ? "verification" : "update");
 
+    Value* blockdev_filename = nullptr;
+    Value* transfer_list_value = nullptr;
+    Value* new_data_fn = nullptr;
+    Value* patch_data_fn = nullptr;
     if (ReadValueArgs(state, argv, 4, &blockdev_filename, &transfer_list_value,
             &new_data_fn, &patch_data_fn) < 0) {
-        goto pbiudone;
+        return StringValue(strdup(""));
     }
+    std::unique_ptr<Value, decltype(&FreeValue)> blockdev_filename_holder(blockdev_filename,
+            FreeValue);
+    std::unique_ptr<Value, decltype(&FreeValue)> transfer_list_value_holder(transfer_list_value,
+            FreeValue);
+    std::unique_ptr<Value, decltype(&FreeValue)> new_data_fn_holder(new_data_fn, FreeValue);
+    std::unique_ptr<Value, decltype(&FreeValue)> patch_data_fn_holder(patch_data_fn, FreeValue);
 
     if (blockdev_filename->type != VAL_STRING) {
         ErrorAbort(state, "blockdev_filename argument to %s must be string", name);
-        goto pbiudone;
+        return StringValue(strdup(""));
     }
     if (transfer_list_value->type != VAL_BLOB) {
         ErrorAbort(state, "transfer_list argument to %s must be blob", name);
-        goto pbiudone;
+        return StringValue(strdup(""));
     }
     if (new_data_fn->type != VAL_STRING) {
         ErrorAbort(state, "new_data_fn argument to %s must be string", name);
-        goto pbiudone;
+        return StringValue(strdup(""));
     }
     if (patch_data_fn->type != VAL_STRING) {
         ErrorAbort(state, "patch_data_fn argument to %s must be string", name);
-        goto pbiudone;
+        return StringValue(strdup(""));
     }
 
-    ui = (UpdaterInfo*) state->cookie;
+    UpdaterInfo* ui = reinterpret_cast<UpdaterInfo*>(state->cookie);
 
     if (ui == nullptr) {
-        goto pbiudone;
+        return StringValue(strdup(""));
     }
 
-    cmd_pipe = ui->cmd_pipe;
-    za = ui->package_zip;
+    FILE* cmd_pipe = ui->cmd_pipe;
+    ZipArchive* za = ui->package_zip;
 
     if (cmd_pipe == nullptr || za == nullptr) {
-        goto pbiudone;
+        return StringValue(strdup(""));
     }
 
-    patch_entry = mzFindZipEntry(za, patch_data_fn->data);
-
+    const ZipEntry* patch_entry = mzFindZipEntry(za, patch_data_fn->data);
     if (patch_entry == nullptr) {
         fprintf(stderr, "%s(): no file \"%s\" in package", name, patch_data_fn->data);
-        goto pbiudone;
+        return StringValue(strdup(""));
     }
 
     params.patch_start = ui->package_zip_addr + mzGetZipEntryOffset(patch_entry);
-    new_entry = mzFindZipEntry(za, new_data_fn->data);
-
+    const ZipEntry* new_entry = mzFindZipEntry(za, new_data_fn->data);
     if (new_entry == nullptr) {
         fprintf(stderr, "%s(): no file \"%s\" in package", name, new_data_fn->data);
-        goto pbiudone;
+        return StringValue(strdup(""));
     }
 
     params.fd = TEMP_FAILURE_RETRY(open(blockdev_filename->data, O_RDWR));
+    unique_fd fd_holder(params.fd);
 
     if (params.fd == -1) {
         fprintf(stderr, "open \"%s\" failed: %s\n", blockdev_filename->data, strerror(errno));
-        goto pbiudone;
+        return StringValue(strdup(""));
     }
 
     if (params.canwrite) {
@@ -1385,90 +1364,86 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
 
         pthread_mutex_init(&params.nti.mu, nullptr);
         pthread_cond_init(&params.nti.cv, nullptr);
+        pthread_attr_t attr;
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
         int error = pthread_create(&params.thread, &attr, unzip_new_data, &params.nti);
         if (error != 0) {
             fprintf(stderr, "pthread_create failed: %s\n", strerror(error));
-            goto pbiudone;
+            return StringValue(strdup(""));
         }
     }
 
     // The data in transfer_list_value is not necessarily null-terminated, so we need
     // to copy it to a new buffer and add the null that strtok_r will need.
-    transfer_list = reinterpret_cast<char*>(malloc(transfer_list_value->size + 1));
-
-    if (transfer_list == nullptr) {
-        fprintf(stderr, "failed to allocate %zd bytes for transfer list\n",
-            transfer_list_value->size + 1);
-        goto pbiudone;
-    }
-
-    memcpy(transfer_list, transfer_list_value->data, transfer_list_value->size);
-    transfer_list[transfer_list_value->size] = '\0';
+    const std::string transfer_list(transfer_list_value->data, transfer_list_value->size);
+    std::vector<std::string> lines = android::base::Split(transfer_list, "\n");
 
     // First line in transfer list is the version number
-    line = strtok_r(transfer_list, "\n", &linesave);
-    params.version = strtol(line, nullptr, 0);
-
-    if (params.version < 1 || params.version > 3) {
-        fprintf(stderr, "unexpected transfer list version [%s]\n", line);
-        goto pbiudone;
+    long int val;
+    errno = 0;
+    val = strtol(lines[0].c_str(), nullptr, 0);
+    if (errno != 0 || val < 1 || val > 3) {
+        fprintf(stderr, "unexpected transfer list version [%s]\n", lines[0].c_str());
+        return StringValue(strdup(""));
     }
+    params.version = static_cast<int>(val);
 
     fprintf(stderr, "blockimg version is %d\n", params.version);
 
     // Second line in transfer list is the total number of blocks we expect to write
-    line = strtok_r(nullptr, "\n", &linesave);
-    total_blocks = strtol(line, nullptr, 0);
+    int total_blocks = strtol(lines[1].c_str(), nullptr, 0);
 
     if (total_blocks < 0) {
-        ErrorAbort(state, "unexpected block count [%s]\n", line);
-        goto pbiudone;
+        ErrorAbort(state, "unexpected block count [%s]\n", lines[1].c_str());
+        return StringValue(strdup(""));
     } else if (total_blocks == 0) {
-        rc = 0;
-        goto pbiudone;
+        return StringValue(strdup("t"));
     }
 
+    size_t start = 2;
     if (params.version >= 2) {
         // Third line is how many stash entries are needed simultaneously
-        line = strtok_r(nullptr, "\n", &linesave);
-        fprintf(stderr, "maximum stash entries %s\n", line);
+        fprintf(stderr, "maximum stash entries %s\n", lines[2].c_str());
 
         // Fourth line is the maximum number of blocks that will be stashed simultaneously
-        line = strtok_r(nullptr, "\n", &linesave);
-        int stash_max_blocks = strtol(line, nullptr, 0);
+        int stash_max_blocks = strtol(lines[3].c_str(), nullptr, 0);
 
         if (stash_max_blocks < 0) {
-            ErrorAbort(state, "unexpected maximum stash blocks [%s]\n", line);
-            goto pbiudone;
+            ErrorAbort(state, "unexpected maximum stash blocks [%s]\n", lines[3].c_str());
+            return StringValue(strdup(""));
         }
 
         if (stash_max_blocks >= 0) {
-            res = CreateStash(state, stash_max_blocks, blockdev_filename->data, params.stashbase);
+            int res = CreateStash(state, stash_max_blocks, blockdev_filename->data,
+                    params.stashbase);
 
             if (res == -1) {
-                goto pbiudone;
+                return StringValue(strdup(""));
             }
 
             params.createdstash = res;
         }
+
+        start += 2;
     }
 
     // Build a hash table of the available commands
-    cmdht = mzHashTableCreate(cmdcount, nullptr);
+    HashTable* cmdht = mzHashTableCreate(cmdcount, nullptr);
+    std::unique_ptr<HashTable, decltype(&mzHashTableFree)> cmdht_holder(cmdht, mzHashTableFree);
 
     for (size_t i = 0; i < cmdcount; ++i) {
         unsigned int cmdhash = HashString(commands[i].name);
         mzHashTableLookup(cmdht, cmdhash, (void*) &commands[i], CompareCommands, true);
     }
 
-    // Subsequent lines are all individual transfer commands
-    for (line = strtok_r(nullptr, "\n", &linesave); line;
-         line = strtok_r(nullptr, "\n", &linesave)) {
+    int rc = -1;
 
-        const std::string logcmd(line);
+    // Subsequent lines are all individual transfer commands
+    for (auto it = lines.cbegin() + start; it != lines.cend(); it++) {
+        const std::string& line_str(*it);
+        char* line = strdup(line_str.c_str());
         params.cmdname = strtok_r(line, " ", &params.cpos);
 
         if (params.cmdname == nullptr) {
@@ -1477,8 +1452,8 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         }
 
         unsigned int cmdhash = HashString(params.cmdname);
-        cmd = (const Command*) mzHashTableLookup(cmdht, cmdhash, params.cmdname,
-                                    CompareCommandNames, false);
+        const Command* cmd = reinterpret_cast<const Command*>(mzHashTableLookup(cmdht, cmdhash,
+                params.cmdname, CompareCommandNames, false));
 
         if (cmd == nullptr) {
             fprintf(stderr, "unexpected command [%s]\n", params.cmdname);
@@ -1486,7 +1461,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         }
 
         if (cmd->f != nullptr && cmd->f(params) == -1) {
-            fprintf(stderr, "failed to execute command [%s]\n", logcmd.c_str());
+            fprintf(stderr, "failed to execute command [%s]\n", line_str.c_str());
             goto pbiudone;
         }
 
@@ -1504,7 +1479,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         pthread_join(params.thread, nullptr);
 
         fprintf(stderr, "wrote %zu blocks; expected %d\n", params.written, total_blocks);
-        fprintf(stderr, "max alloc needed was %zu\n", params.bufsize);
+        fprintf(stderr, "max alloc needed was %zu\n", params.buffer.size());
 
         // Delete stash only after successfully completing the update, as it
         // may contain blocks needed to complete the update later.
@@ -1521,34 +1496,6 @@ pbiudone:
             fprintf(stderr, "fsync failed: %s\n", strerror(errno));
         }
         close(params.fd);
-    }
-
-    if (cmdht) {
-        mzHashTableFree(cmdht);
-    }
-
-    if (params.buffer) {
-        free(params.buffer);
-    }
-
-    if (transfer_list) {
-        free(transfer_list);
-    }
-
-    if (blockdev_filename) {
-        FreeValue(blockdev_filename);
-    }
-
-    if (transfer_list_value) {
-        FreeValue(transfer_list_value);
-    }
-
-    if (new_data_fn) {
-        FreeValue(new_data_fn);
-    }
-
-    if (patch_data_fn) {
-        FreeValue(patch_data_fn);
     }
 
     // Only delete the stash if the update cannot be resumed, or it's
@@ -1650,63 +1597,56 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
 Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[]) {
     Value* blockdev_filename;
     Value* ranges;
-    const uint8_t* digest = nullptr;
-    RangeSet rs;
 
     if (ReadValueArgs(state, argv, 2, &blockdev_filename, &ranges) < 0) {
-        return nullptr;
+        return StringValue(strdup(""));
     }
+    std::unique_ptr<Value, decltype(&FreeValue)> ranges_holder(ranges, FreeValue);
+    std::unique_ptr<Value, decltype(&FreeValue)> blockdev_filename_holder(blockdev_filename,
+            FreeValue);
 
     if (blockdev_filename->type != VAL_STRING) {
         ErrorAbort(state, "blockdev_filename argument to %s must be string", name);
-        goto done;
+        return StringValue(strdup(""));
     }
     if (ranges->type != VAL_STRING) {
         ErrorAbort(state, "ranges argument to %s must be string", name);
-        goto done;
+        return StringValue(strdup(""));
     }
 
-    int fd;
-    fd = open(blockdev_filename->data, O_RDWR);
+    int fd = open(blockdev_filename->data, O_RDWR);
+    unique_fd fd_holder(fd);
     if (fd < 0) {
         ErrorAbort(state, "open \"%s\" failed: %s", blockdev_filename->data, strerror(errno));
-        goto done;
+        return StringValue(strdup(""));
     }
 
+    RangeSet rs;
     parse_range(ranges->data, rs);
-    uint8_t buffer[BLOCKSIZE];
 
     SHA_CTX ctx;
     SHA_init(&ctx);
 
+    std::vector<uint8_t> buffer(BLOCKSIZE);
     for (size_t i = 0; i < rs.count; ++i) {
         if (!check_lseek(fd, (off64_t)rs.pos[i*2] * BLOCKSIZE, SEEK_SET)) {
-            ErrorAbort(state, "failed to seek %s: %s", blockdev_filename->data,
-                    strerror(errno));
-            goto done;
+            ErrorAbort(state, "failed to seek %s: %s", blockdev_filename->data, strerror(errno));
+            return StringValue(strdup(""));
         }
 
         for (size_t j = rs.pos[i*2]; j < rs.pos[i*2+1]; ++j) {
             if (read_all(fd, buffer, BLOCKSIZE) == -1) {
                 ErrorAbort(state, "failed to read %s: %s", blockdev_filename->data,
                         strerror(errno));
-                goto done;
+                return StringValue(strdup(""));
             }
 
-            SHA_update(&ctx, buffer, BLOCKSIZE);
+            SHA_update(&ctx, buffer.data(), BLOCKSIZE);
         }
     }
-    digest = SHA_final(&ctx);
-    close(fd);
+    const uint8_t* digest = SHA_final(&ctx);
 
-  done:
-    FreeValue(blockdev_filename);
-    FreeValue(ranges);
-    if (digest == nullptr) {
-        return StringValue(strdup(""));
-    } else {
-        return StringValue(strdup(print_sha1(digest).c_str()));
-    }
+    return StringValue(strdup(print_sha1(digest).c_str()));
 }
 
 void RegisterBlockImageFunctions() {
