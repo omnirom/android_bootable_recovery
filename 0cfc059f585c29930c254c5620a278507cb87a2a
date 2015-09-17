@@ -87,6 +87,24 @@
     },
     {
       "key": {
+        "uuid": "d8f0a54e_541a4c6e",
+        "filename": "libtar/extract.c",
+        "patchSetId": 15
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "We use this to show what\u0027s being backed up in recovery.log. The original code had the ifdefs for DEBUG, so the DEBUG was entered twice. I merged it to only being in once.",
+      "parentUuid": "d8f0a54e_09aef12d",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8f0a54e_e9aaad17",
         "filename": "libtar/libtar.h",
         "patchSetId": 15
@@ -115,6 +133,24 @@
       "writtenOn": "2015-09-17T20:00:03Z",
       "side": 1,
       "message": "This code is so deeply indented that I can\u0027t even read it in the side by side diff. Please create a separate function and call it here.",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_341fc85e",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "I don\u0027t think I will do this now. Personally the entire class should be refactored into functions, but that is outside this patchset.",
+      "parentUuid": "d8f0a54e_c9a7e94d",
       "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -240,6 +276,24 @@
     },
     {
       "key": {
+        "uuid": "d8f0a54e_1434c4d8",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "I am 0\u0027ing out cnt before using in line 100.",
+      "parentUuid": "d8f0a54e_e9f86d47",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8f0a54e_a9f26561",
         "filename": "orscmd/twrpback.cpp",
         "patchSetId": 15
@@ -268,6 +322,24 @@
       "writtenOn": "2015-09-17T21:29:56Z",
       "side": 1,
       "message": "If I understand this code correctly, it reads 512 bytes, not knowing if it is a header or data content, and checks if the first few bytes are one of the known block types.\n\nThis is a MAJOR design issue, as it can mistake data content as header. I have at least two ideas how to fix this - one is always correct (always use length prefixes for data blocks) and the other one (embed more magic strings and a local checksum in all the headers) is \"probably good enough\".",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_f43040e6",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "Am I not doing that in line 207 etc? I check the first N bytes depending on the size of the command. If it is equal to a command, we treat it as such, otherwise it\u0027s data.",
+      "parentUuid": "d8f0a54e_a9082532",
       "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -359,6 +431,24 @@
     },
     {
       "key": {
+        "uuid": "d8f0a54e_d42d3c90",
+        "filename": "orscmd/twrpback.hpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "I am not sure it\u0027s worth moving it.",
+      "parentUuid": "d8f0a54e_8965611e",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8f0a54e_097951c2",
         "filename": "partition.cpp",
         "patchSetId": 15
@@ -427,6 +517,24 @@
     },
     {
       "key": {
+        "uuid": "d8f0a54e_b42ab874",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "I created this to access the TWPartition from openrecoveryscript. I would have to make another indirect call which I think is inefficient.",
+      "parentUuid": "d8f0a54e_e9750dc6",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8f0a54e_894c41a6",
         "filename": "partitionmanager.cpp",
         "patchSetId": 15
@@ -478,6 +586,24 @@
     },
     {
       "key": {
+        "uuid": "d8f0a54e_944b3465",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 549,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "It is reset in openrecoveryscript setting the value when adb backup completes.",
+      "parentUuid": "d8f0a54e_c982499a",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8f0a54e_6951fd37",
         "filename": "partitionmanager.cpp",
         "patchSetId": 15
@@ -512,6 +638,24 @@
     },
     {
       "key": {
+        "uuid": "d8f0a54e_7450b00c",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 755,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "I am using the control header to send the information partition manager needs. You are saying having a separate class that partition manager queries for the control information? I am not sure if this is necessary.",
+      "parentUuid": "d8f0a54e_294bf58b",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8f0a54e_49463984",
         "filename": "partitionmanager.cpp",
         "patchSetId": 15
@@ -523,6 +667,24 @@
       "writtenOn": "2015-09-17T20:00:03Z",
       "side": 1,
       "message": "where is the close for this open?",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_143f24b1",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 757,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "Near the end of the function.",
+      "parentUuid": "d8f0a54e_49463984",
       "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -597,6 +759,24 @@
     },
     {
       "key": {
+        "uuid": "d8f0a54e_7477909a",
+        "filename": "partitions.hpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "It is how it get\u0027s passed to twrpTar.",
+      "parentUuid": "d8f0a54e_a956e529",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8f0a54e_8937a1fa",
         "filename": "partitions.hpp",
         "patchSetId": 15
@@ -614,6 +794,24 @@
     },
     {
       "key": {
+        "uuid": "d8f0a54e_546c8cce",
+        "filename": "partitions.hpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 241,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "It\u0027s how it gets passed to twrpTar.",
+      "parentUuid": "d8f0a54e_8937a1fa",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8f0a54e_092b9196",
         "filename": "twrpDigest.hpp",
         "patchSetId": 15
@@ -625,6 +823,24 @@
       "writtenOn": "2015-09-17T20:00:03Z",
       "side": 1,
       "message": "What function does this set? Or is it \"file name\"?",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_347108a3",
+        "filename": "twrpDigest.hpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "fn stands for filename. We have used this function for a while.",
+      "parentUuid": "d8f0a54e_092b9196",
       "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -693,6 +909,24 @@
       "writtenOn": "2015-09-17T20:00:03Z",
       "side": 1,
       "message": "same \"separation of concerns\" comment as in partitionmanager applies here.",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_146604ed",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "I think this is simpler then creating an entire new class.",
+      "parentUuid": "d8f0a54e_891e8172",
       "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -784,6 +1018,24 @@
     },
     {
       "key": {
+        "uuid": "d8f0a54e_f46280d6",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1343,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "I believe they are closed here because they are only used here.",
+      "parentUuid": "d8f0a54e_291d3574",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8f0a54e_e9274dc6",
         "filename": "twrpTar.hpp",
         "patchSetId": 15
@@ -795,6 +1047,24 @@
       "writtenOn": "2015-09-17T20:00:03Z",
       "side": 1,
       "message": "should use an enum type instead of int",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_b45cf81c",
+        "filename": "twrpTar.hpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-09-17T23:51:34Z",
+      "side": 1,
+      "message": "Will work on this.",
+      "parentUuid": "d8f0a54e_e9274dc6",
       "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
