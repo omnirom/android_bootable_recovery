@@ -257,6 +257,40 @@
     },
     {
       "key": {
+        "uuid": "d8f0a54e_a9082532",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-17T21:29:56Z",
+      "side": 1,
+      "message": "If I understand this code correctly, it reads 512 bytes, not knowing if it is a header or data content, and checks if the first few bytes are one of the known block types.\n\nThis is a MAJOR design issue, as it can mistake data content as header. I have at least two ideas how to fix this - one is always correct (always use length prefixes for data blocks) and the other one (embed more magic strings and a local checksum in all the headers) is \"probably good enough\".",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_c90b692e",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-17T21:29:56Z",
+      "side": 1,
+      "message": "error output missing",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8f0a54e_89932102",
         "filename": "orscmd/twrpback.cpp",
         "patchSetId": 15
@@ -285,6 +319,23 @@
       "writtenOn": "2015-09-17T20:00:03Z",
       "side": 1,
       "message": "Header files should only include stuff that is referenced by the header itself. In this case probably only \u003cfstream\u003e.",
+      "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8f0a54e_d4165c4c",
+        "filename": "orscmd/twrpback.hpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-09-17T21:29:56Z",
+      "side": 1,
+      "message": "Generally, \"(void)\" is bad C++ style. And class names usually begin with a capital letter.",
       "revId": "0cfc059f585c29930c254c5620a278507cb87a2a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
