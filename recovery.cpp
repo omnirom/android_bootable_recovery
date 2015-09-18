@@ -31,6 +31,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <chrono>
+
 #include <adb.h>
 #include <base/file.h>
 #include <base/stringprintf.h>
@@ -151,8 +153,7 @@ static const int MAX_ARG_LENGTH = 4096;
 static const int MAX_ARGS = 100;
 
 // open a given path, mounting partitions as necessary
-FILE*
-fopen_path(const char *path, const char *mode) {
+FILE* fopen_path(const char *path, const char *mode) {
     if (ensure_path_mounted(path) != 0) {
         LOGE("Can't mount %s\n", path);
         return NULL;
@@ -166,23 +167,102 @@ fopen_path(const char *path, const char *mode) {
     return fp;
 }
 
+// close a file, log an error if the error indicator is set
+static void check_and_fclose(FILE *fp, const char *name) {
+    fflush(fp);
+    if (ferror(fp)) LOGE("Error in %s\n(%s)\n", name, strerror(errno));
+    fclose(fp);
+}
+
 bool is_ro_debuggable() {
     char value[PROPERTY_VALUE_MAX+1];
     return (property_get("ro.debuggable", value, NULL) == 1 && value[0] == '1');
 }
 
 static void redirect_stdio(const char* filename) {
-    // If these fail, there's not really anywhere to complain...
-    freopen(filename, "a", stdout); setbuf(stdout, NULL);
-    freopen(filename, "a", stderr); setbuf(stderr, NULL);
-}
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        LOGE("pipe failed: %s\n", strerror(errno));
 
-// close a file, log an error if the error indicator is set
-static void
-check_and_fclose(FILE *fp, const char *name) {
-    fflush(fp);
-    if (ferror(fp)) LOGE("Error in %s\n(%s)\n", name, strerror(errno));
-    fclose(fp);
+        // Fall back to traditional logging mode without timestamps.
+        // If these fail, there's not really anywhere to complain...
+        freopen(filename, "a", stdout); setbuf(stdout, NULL);
+        freopen(filename, "a", stderr); setbuf(stderr, NULL);
+
+        return;
+    }
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        LOGE("fork failed: %s\n", strerror(errno));
+
+        // Fall back to traditional logging mode without timestamps.
+        // If these fail, there's not really anywhere to complain...
+        freopen(filename, "a", stdout); setbuf(stdout, NULL);
+        freopen(filename, "a", stderr); setbuf(stderr, NULL);
+
+        return;
+    }
+
+    if (pid == 0) {
+        /// Close the unused write end.
+        close(pipefd[1]);
+
+        auto start = std::chrono::steady_clock::now();
+
+        // Child logger to actually write to the log file.
+        FILE* log_fp = fopen(filename, "a");
+        if (log_fp == nullptr) {
+            LOGE("fopen \"%s\" failed: %s\n", filename, strerror(errno));
+            close(pipefd[0]);
+            _exit(1);
+        }
+
+        FILE* pipe_fp = fdopen(pipefd[0], "r");
+        if (pipe_fp == nullptr) {
+            LOGE("fdopen failed: %s\n", strerror(errno));
+            check_and_fclose(log_fp, filename);
+            close(pipefd[0]);
+            _exit(1);
+        }
+
+        char* line = nullptr;
+        size_t len = 0;
+        while (getline(&line, &len, pipe_fp) != -1) {
+            auto now = std::chrono::steady_clock::now();
+            double duration = std::chrono::duration_cast<std::chrono::duration<double>>(
+                    now - start).count();
+            if (line[0] == '\n') {
+                fprintf(log_fp, "[%12.6lf]\n", duration);
+            } else {
+                fprintf(log_fp, "[%12.6lf] %s", duration, line);
+            }
+            fflush(log_fp);
+        }
+
+        LOGE("getline failed: %s\n", strerror(errno));
+
+        free(line);
+        check_and_fclose(log_fp, filename);
+        close(pipefd[0]);
+        _exit(1);
+    } else {
+        // Redirect stdout/stderr to the logger process.
+        // Close the unused read end.
+        close(pipefd[0]);
+
+        setbuf(stdout, nullptr);
+        setbuf(stderr, nullptr);
+
+        if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
+            LOGE("dup2 stdout failed: %s\n", strerror(errno));
+        }
+        if (dup2(pipefd[1], STDERR_FILENO) == -1) {
+            LOGE("dup2 stderr failed: %s\n", strerror(errno));
+        }
+
+        close(pipefd[1]);
+    }
 }
 
 // command line args come from, in decreasing precedence:
@@ -927,10 +1007,6 @@ ui_print(const char* format, ...) {
 
 int
 main(int argc, char **argv) {
-    time_t start = time(NULL);
-
-    redirect_stdio(TEMPORARY_LOG_FILE);
-
     // If this binary is started with the single argument "--adbd",
     // instead of being the normal recovery binary, it turns into kind
     // of a stripped-down version of adbd that only supports the
@@ -942,6 +1018,12 @@ main(int argc, char **argv) {
         adb_main(0, DEFAULT_ADB_PORT, -1);
         return 0;
     }
+
+    time_t start = time(NULL);
+
+    // redirect_stdio should be called only in non-sideload mode. Otherwise
+    // we may have two logger instances with different timestamps.
+    redirect_stdio(TEMPORARY_LOG_FILE);
 
     printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
 
