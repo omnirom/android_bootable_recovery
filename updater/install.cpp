@@ -34,6 +34,7 @@
 #include <linux/xattr.h>
 #include <inttypes.h>
 
+#include <base/parseint.h>
 #include <base/strings.h>
 #include <base/stringprintf.h>
 
@@ -474,7 +475,8 @@ Value* ShowProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     double frac = strtod(frac_str, NULL);
-    int sec = strtol(sec_str, NULL, 10);
+    int sec;
+    android::base::ParseInt(sec_str, &sec);
 
     UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
     fprintf(ui->cmd_pipe, "progress %f %d\n", frac, sec);
@@ -1145,12 +1147,11 @@ Value* ApplyPatchSpaceFn(const char* name, State* state,
         return NULL;
     }
 
-    char* endptr;
-    size_t bytes = strtol(bytes_str, &endptr, 10);
-    if (bytes == 0 && endptr == bytes_str) {
+    size_t bytes;
+    if (!android::base::ParseUint(bytes_str, &bytes)) {
         ErrorAbort(state, "%s(): can't parse \"%s\" as byte count\n\n", name, bytes_str);
         free(bytes_str);
-        return NULL;
+        return nullptr;
     }
 
     return StringValue(strdup(CacheSizeCheck(bytes) ? "" : "t"));
@@ -1174,16 +1175,14 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
         return NULL;
     }
 
-    char* endptr;
-    size_t target_size = strtol(target_size_str, &endptr, 10);
-    if (target_size == 0 && endptr == target_size_str) {
-        ErrorAbort(state, "%s(): can't parse \"%s\" as byte count",
-                   name, target_size_str);
+    size_t target_size;
+    if (!android::base::ParseUint(target_size_str, &target_size)) {
+        ErrorAbort(state, "%s(): can't parse \"%s\" as byte count", name, target_size_str);
         free(source_filename);
         free(target_filename);
         free(target_sha1);
         free(target_size_str);
-        return NULL;
+        return nullptr;
     }
 
     int patchcount = (argc-4) / 2;
@@ -1523,7 +1522,8 @@ Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[])
     char* len_str;
     if (ReadArgs(state, argv, 2, &filename, &len_str) < 0) return NULL;
 
-    size_t len = strtoull(len_str, NULL, 0);
+    size_t len;
+    android::base::ParseUint(len_str, &len);
     int fd = open(filename, O_WRONLY, 0644);
     int success = wipe_block_device(fd, len);
 
