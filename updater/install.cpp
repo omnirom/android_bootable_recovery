@@ -990,7 +990,7 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
         goto done;
     }
 
-    if (fread(buffer, 1, st.st_size, f) != st.st_size) {
+    if (fread(buffer, 1, st.st_size, f) != static_cast<size_t>(st.st_size)) {
         ErrorAbort(state, "%s: failed to read %lld bytes from %s",
                    name, (long long)st.st_size+1, filename);
         fclose(f);
