@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
 	unsigned j;
 	string Directory, Tar_Filename;
 	unsigned long long temp1 = 0, temp2 = 0;
+	pid_t tar_fork_pid = 0;
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	string Password;
 #endif
@@ -143,7 +144,7 @@ int main(int argc, char **argv) {
 	}
 #endif
 	if (action == 1) {
-		if (tar.createTarFork(&temp1, &temp2) != 0) {
+		if (tar.createTarFork(&temp1, &temp2, tar_fork_pid) != 0) {
 			sync();
 			return -1;
 		}
