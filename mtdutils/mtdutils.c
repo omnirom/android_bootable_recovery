@@ -300,20 +300,20 @@ static int read_block(const MtdPartition *partition, int fd, char *data)
         if (TEMP_FAILURE_RETRY(lseek64(fd, pos, SEEK_SET)) != pos ||
                     TEMP_FAILURE_RETRY(read(fd, data, size)) != size) {
             printf("mtd: read error at 0x%08llx (%s)\n",
-                    pos, strerror(errno));
+                   (long long)pos, strerror(errno));
         } else if (ioctl(fd, ECCGETSTATS, &after)) {
             printf("mtd: ECCGETSTATS error (%s)\n", strerror(errno));
             return -1;
         } else if (after.failed != before.failed) {
             printf("mtd: ECC errors (%d soft, %d hard) at 0x%08llx\n",
-                    after.corrected - before.corrected,
-                    after.failed - before.failed, pos);
+                   after.corrected - before.corrected,
+                   after.failed - before.failed, (long long)pos);
             // copy the comparison baseline for the next read.
             memcpy(&before, &after, sizeof(struct mtd_ecc_stats));
         } else if ((mgbb = ioctl(fd, MEMGETBADBLOCK, &pos))) {
             fprintf(stderr,
                     "mtd: MEMGETBADBLOCK returned %d at 0x%08llx: %s\n",
-                    mgbb, pos, strerror(errno));
+                    mgbb, (long long)pos, strerror(errno));
         } else {
             return 0;  // Success!
         }
