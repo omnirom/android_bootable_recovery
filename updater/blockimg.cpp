@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include <base/parseint.h>
 #include <base/strings.h>
 
 #include "applypatch/applypatch.h"
@@ -77,40 +78,31 @@ static void parse_range(const char* range_text, RangeSet& rs) {
         goto err;
     }
 
-    errno = 0;
-    val = strtol(pieces[0].c_str(), nullptr, 0);
-
-    if (errno != 0 || val < 2 || val > INT_MAX) {
-        goto err;
-    } else if (val % 2) {
-        goto err; // must be even
-    } else if (val != static_cast<long int>(pieces.size() - 1)) {
+    size_t num;
+    if (!android::base::ParseUint(pieces[0].c_str(), &num, static_cast<size_t>(INT_MAX))) {
         goto err;
     }
 
-    size_t num;
-    num = static_cast<size_t>(val);
+    if (num == 0 || num % 2) {
+        goto err; // must be even
+    } else if (num != pieces.size() - 1) {
+        goto err;
+    }
 
     rs.pos.resize(num);
     rs.count = num / 2;
     rs.size = 0;
 
     for (size_t i = 0; i < num; i += 2) {
-        const char* token = pieces[i+1].c_str();
-        errno = 0;
-        val = strtol(token, nullptr, 0);
-        if (errno != 0 || val < 0 || val > INT_MAX) {
+        if (!android::base::ParseUint(pieces[i+1].c_str(), &rs.pos[i],
+                                      static_cast<size_t>(INT_MAX))) {
             goto err;
         }
-        rs.pos[i] = static_cast<size_t>(val);
 
-        token = pieces[i+2].c_str();
-        errno = 0;
-        val = strtol(token, nullptr, 0);
-        if (errno != 0 || val < 0 || val > INT_MAX) {
+        if (!android::base::ParseUint(pieces[i+2].c_str(), &rs.pos[i+1],
+                                      static_cast<size_t>(INT_MAX))) {
             goto err;
         }
-        rs.pos[i+1] = static_cast<size_t>(val);
 
         if (rs.pos[i] >= rs.pos[i+1]) {
             goto err; // empty or negative range
@@ -800,7 +792,7 @@ static int LoadSrcTgtVersion2(char** wordsave, RangeSet& tgt, size_t& src_blocks
 
     // <src_block_count>
     word = strtok_r(nullptr, " ", wordsave);
-    src_blocks = strtol(word, nullptr, 0);
+    android::base::ParseUint(word, &src_blocks);
 
     allocate(src_blocks * BLOCKSIZE, buffer);
 
@@ -1381,24 +1373,21 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     std::vector<std::string> lines = android::base::Split(transfer_list, "\n");
 
     // First line in transfer list is the version number
-    long int val;
-    errno = 0;
-    val = strtol(lines[0].c_str(), nullptr, 0);
-    if (errno != 0 || val < 1 || val > 3) {
+    if (!android::base::ParseInt(lines[0].c_str(), &params.version, 1, 3)) {
         fprintf(stderr, "unexpected transfer list version [%s]\n", lines[0].c_str());
         return StringValue(strdup(""));
     }
-    params.version = static_cast<int>(val);
 
     fprintf(stderr, "blockimg version is %d\n", params.version);
 
     // Second line in transfer list is the total number of blocks we expect to write
-    int total_blocks = strtol(lines[1].c_str(), nullptr, 0);
-
-    if (total_blocks < 0) {
+    int total_blocks;
+    if (!android::base::ParseInt(lines[1].c_str(), &total_blocks, 0)) {
         ErrorAbort(state, "unexpected block count [%s]\n", lines[1].c_str());
         return StringValue(strdup(""));
-    } else if (total_blocks == 0) {
+    }
+
+    if (total_blocks == 0) {
         return StringValue(strdup("t"));
     }
 
@@ -1408,23 +1397,19 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         fprintf(stderr, "maximum stash entries %s\n", lines[2].c_str());
 
         // Fourth line is the maximum number of blocks that will be stashed simultaneously
-        int stash_max_blocks = strtol(lines[3].c_str(), nullptr, 0);
-
-        if (stash_max_blocks < 0) {
+        int stash_max_blocks;
+        if (!android::base::ParseInt(lines[3].c_str(), &stash_max_blocks, 0)) {
             ErrorAbort(state, "unexpected maximum stash blocks [%s]\n", lines[3].c_str());
             return StringValue(strdup(""));
         }
 
-        if (stash_max_blocks >= 0) {
-            int res = CreateStash(state, stash_max_blocks, blockdev_filename->data,
-                    params.stashbase);
+        int res = CreateStash(state, stash_max_blocks, blockdev_filename->data, params.stashbase);
 
-            if (res == -1) {
-                return StringValue(strdup(""));
-            }
-
-            params.createdstash = res;
+        if (res == -1) {
+            return StringValue(strdup(""));
         }
+
+        params.createdstash = res;
 
         start += 2;
     }
