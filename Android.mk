@@ -28,7 +28,7 @@ ifeq ($(PROJECT_PATH_AGREES),true)
 
 include $(CLEAR_VARS)
 
-TWRES_PATH := "/twres/"
+TWRES_PATH := /twres/
 TWHTCD_PATH := $(TWRES_PATH)htcd/
 
 TARGET_RECOVERY_GUI := true
