@@ -208,32 +208,38 @@ int TWFunc::Try_Decrypting_File(string fn, string password) {
 	f = fopen(fn.c_str(), "rb");
 	if (f == NULL) {
 		LOGERR("Failed to open '%s' to try decrypt\n", fn.c_str());
+		oaes_free(&ctx);
 		return -1;
 	}
 	read_len = fread(buffer, sizeof(uint8_t), 4096, f);
 	if (read_len <= 0) {
 		LOGERR("Read size during try decrypt failed\n");
 		fclose(f);
+		oaes_free(&ctx);
 		return -1;
 	}
 	if (oaes_decrypt(ctx, buffer, read_len, NULL, &out_len) != OAES_RET_SUCCESS) {
 		LOGERR("Error: Failed to retrieve required buffer size for trying decryption.\n");
 		fclose(f);
+		oaes_free(&ctx);
 		return -1;
 	}
 	buffer_out = (uint8_t *) calloc(out_len, sizeof(char));
 	if (buffer_out == NULL) {
 		LOGERR("Failed to allocate output buffer for try decrypt.\n");
 		fclose(f);
+		oaes_free(&ctx);
 		return -1;
 	}
 	if (oaes_decrypt(ctx, buffer, read_len, buffer_out, &out_len) != OAES_RET_SUCCESS) {
 		LOGERR("Failed to decrypt file '%s'\n", fn.c_str());
 		fclose(f);
 		free(buffer_out);
+		oaes_free(&ctx);
 		return 0;
 	}
 	fclose(f);
+	oaes_free(&ctx);
 	if (out_len < 2) {
 		LOGINFO("Successfully decrypted '%s' but read length too small.\n", fn.c_str());
 		free(buffer_out);

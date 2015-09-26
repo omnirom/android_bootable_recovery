@@ -182,9 +182,12 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 		close(pipe_fd[0]);
 		execve(Temp_Binary.c_str(), (char* const*)args, environ);
 		printf("E:Can't execute '%s': %s\n", Temp_Binary.c_str(), strerror(errno));
+		free(temp);
 		_exit(-1);
 	}
 	close(pipe_fd[1]);
+	free(temp);
+	temp = NULL;
 
 	*wipe_cache = 0;
 
