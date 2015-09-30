@@ -311,6 +311,18 @@ endif
 ifneq ($(TARGET_RECOVERY_INITRC),)
     TW_EXCLUDE_DEFAULT_USB_INIT := true
 endif
+ifneq ($(TW_HAS_LED),)
+    LOCAL_CFLAGS += -DTW_HAS_LED
+endif
+ifneq ($(TW_LED_PATH),)
+	LOCAL_CFLAGS += -DTW_LED_PATH=$(TW_LED_PATH)
+endif
+ifneq ($(TW_LED_VALUE_ON),)
+        LOCAL_CFLAGS += -DTW_LED_VALUE_ON=$(TW_LED_VALUE_ON)
+endif
+ifneq ($(TW_LED_VALUE_OFF),)
+        LOCAL_CFLAGS += -DTW_LED_VALUE_OFF=$(TW_LED_VALUE_OFF)
+endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES := \
     dump_image \

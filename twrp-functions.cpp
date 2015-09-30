@@ -997,6 +997,34 @@ int TWFunc::Set_Brightness(std::string brightness_value)
 	return -1;
 }
 
+void TWFunc::Toggle_LED(bool enable) {
+#ifdef TW_HAS_LED
+	string led_path = "/sys/class/leds/white/brightness";
+	string led_value_on = "255";
+	string led_value_off = "0";
+
+	#ifdef TW_LED_PATH
+		led_path = EXPAND(TW_LED_PATH);
+	#endif
+
+	#ifdef TW_LED_VALUE_ON
+		led_value_on = EXPAND(TW_LED_VALUE_ON);
+	#endif
+
+	#ifdef TW_LED_VALUE_OFF
+		led_value_off = EXPAND(TW_LED_VALUE_OFF);
+	#endif
+
+	if (TWFunc::Path_Exists(led_path)) {
+		if (enable) {
+			TWFunc::write_file(led_path, led_value_on);
+		} else {
+			TWFunc::write_file(led_path, led_value_off);
+		}
+	}
+#endif
+}
+
 bool TWFunc::Toggle_MTP(bool enable) {
 #ifdef TW_HAS_MTP
 	static int was_enabled = false;
