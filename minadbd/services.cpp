@@ -43,13 +43,14 @@ void* service_bootstrap_func(void* x) {
 }
 
 static void sideload_host_service(int sfd, void* data) {
-    const char* args = reinterpret_cast<const char*>(data);
+    char* args = reinterpret_cast<char*>(data);
     int file_size;
     int block_size;
     if (sscanf(args, "%d:%d", &file_size, &block_size) != 2) {
         printf("bad sideload-host arguments: %s\n", args);
         exit(1);
     }
+    free(args);
 
     printf("sideload-host file size %d block size %d\n", file_size, block_size);
 
@@ -94,7 +95,8 @@ int service_to_fd(const char* name, const atransport* transport) {
         // sideload-host).
         exit(3);
     } else if (!strncmp(name, "sideload-host:", 14)) {
-        ret = create_service_thread(sideload_host_service, (void*)(name + 14));
+        char* arg = strdup(name + 14);
+        ret = create_service_thread(sideload_host_service, arg);
     }
     if (ret >= 0) {
         close_on_exec(ret);
