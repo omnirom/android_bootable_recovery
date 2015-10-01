@@ -1428,6 +1428,10 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     // Subsequent lines are all individual transfer commands
     for (auto it = lines.cbegin() + start; it != lines.cend(); it++) {
         const std::string& line_str(*it);
+        if (line_str.empty()) {
+            continue;
+        }
+
         char* line = strdup(line_str.c_str());
         params.cmdname = strtok_r(line, " ", &params.cpos);
 
