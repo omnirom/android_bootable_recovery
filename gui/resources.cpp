@@ -113,7 +113,6 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 
 	file = attr->value();
 
-#ifndef TW_DISABLE_TTF
 	if(file.size() >= 4 && file.compare(file.size()-4, 4, ".ttf") == 0)
 	{
 		m_type = TYPE_TTF;
@@ -141,28 +140,8 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 		}
 	}
 	else
-#endif
 	{
-		m_type = TYPE_TWRP;
-
-		if(file.size() >= 4 && file.compare(file.size()-4, 4, ".ttf") == 0)
-		{
-			attr = node->first_attribute("fallback");
-			if (!attr)
-				return;
-
-			file = attr->value();
-		}
-
-		if (ExtractResource(pZip, "fonts", file, ".dat", TMP_RESOURCE_NAME) == 0)
-		{
-			mFont = gr_loadFont(TMP_RESOURCE_NAME);
-			unlink(TMP_RESOURCE_NAME);
-		}
-		else
-		{
-			mFont = gr_loadFont(file.c_str());
-		}
+		LOGERR("Non-TTF fonts are no longer supported.\n");
 	}
 }
 
@@ -170,12 +149,8 @@ FontResource::~FontResource()
 {
 	if(mFont)
 	{
-#ifndef TW_DISABLE_TTF
 		if(m_type == TYPE_TTF)
 			gr_ttf_freeFont(mFont);
-		else
-#endif
-			gr_freeFont(mFont);
 	}
 }
 

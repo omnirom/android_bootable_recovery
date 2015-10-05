@@ -2,7 +2,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := events.c resources.c graphics_overlay.c graphics_utils.c
+LOCAL_SRC_FILES := events.c resources.c graphics_overlay.c graphics_utils.c truetype.c
 
 ifneq ($(TW_BOARD_CUSTOM_GRAPHICS),)
     LOCAL_SRC_FILES += $(TW_BOARD_CUSTOM_GRAPHICS)
@@ -34,7 +34,8 @@ LOCAL_C_INCLUDES += \
     external/libpng \
     external/zlib \
     system/core/include \
-    external/jpeg
+    external/jpeg \
+    external/freetype/include
 
 ifeq ($(RECOVERY_TOUCHSCREEN_SWAP_XY), true)
 LOCAL_CFLAGS += -DRECOVERY_TOUCHSCREEN_SWAP_XY
@@ -108,55 +109,19 @@ ifneq ($(TW_INPUT_BLACKLIST),)
   LOCAL_CFLAGS += -DTW_INPUT_BLACKLIST=$(TW_INPUT_BLACKLIST)
 endif
 
-ifneq ($(BOARD_USE_CUSTOM_RECOVERY_FONT),)
-  LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=$(BOARD_USE_CUSTOM_RECOVERY_FONT)
-else
-    ifeq ($(TW_THEME),)
-        # This converts the old DEVICE_RESOLUTION flag to the new TW_THEME flag
-        PORTRAIT_MDPI := 320x480 480x800 480x854 540x960
-        PORTRAIT_HDPI := 720x1280 800x1280 1080x1920 1200x1920 1440x2560 1600x2560
-        WATCH_MDPI := 240x240 280x280 320x320
-        LANDSCAPE_MDPI := 800x480 1024x600 1024x768
-        LANDSCAPE_HDPI := 1280x800 1920x1200 2560x1600
-        ifneq ($(filter $(DEVICE_RESOLUTION), $(PORTRAIT_MDPI)),)
-            TW_THEME := portrait_mdpi
-        else ifneq ($(filter $(DEVICE_RESOLUTION), $(PORTRAIT_HDPI)),)
-            TW_THEME := portrait_hdpi
-        else ifneq ($(filter $(DEVICE_RESOLUTION), $(WATCH_MDPI)),)
-            TW_THEME := watch_mdpi
-        else ifneq ($(filter $(DEVICE_RESOLUTION), $(LANDSCAPE_MDPI)),)
-            TW_THEME := landscape_mdpi
-        else ifneq ($(filter $(DEVICE_RESOLUTION), $(LANDSCAPE_HDPI)),)
-            TW_THEME := landscape_hdpi
-        endif
-    endif
-    ifeq ($(TW_THEME), portrait_mdpi)
-        LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_10x18.h\"
-    else ifeq ($(TW_THEME), portrait_hdpi)
-        LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_15x24.h\"
-    else ifeq ($(TW_THEME), watch_mdpi)
-        LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"font_7x16.h\"
-    else ifeq ($(TW_THEME), landscape_mdpi)
-        LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_10x18.h\"
-    else ifeq ($(TW_THEME), landscape_hdpi)
-        LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=\"roboto_15x24.h\"
-    endif
-endif
-
 ifneq ($(TW_WHITELIST_INPUT),)
   LOCAL_CFLAGS += -DWHITELIST_INPUT=$(TW_WHITELIST_INPUT)
 endif
 
 ifeq ($(TW_DISABLE_TTF), true)
-    LOCAL_CFLAGS += -DTW_DISABLE_TTF
-else
-    LOCAL_SHARED_LIBRARIES += libft2
-    LOCAL_C_INCLUDES += external/freetype/include
-    LOCAL_SRC_FILES += truetype.c
+    $(warning ****************************************************************************)
+    $(warning * TW_DISABLE_TTF support has been deprecated in TWRP.                      *)
+    $(warning ****************************************************************************)
+    $(error stopping)
 endif
 
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
-LOCAL_SHARED_LIBRARIES += libz libc libcutils libjpeg libpng
+LOCAL_SHARED_LIBRARIES += libft2 libz libc libcutils libjpeg libpng
 LOCAL_STATIC_LIBRARIES += libpixelflinger_twrp
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminuitwrp
