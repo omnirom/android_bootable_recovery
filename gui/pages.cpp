@@ -807,48 +807,15 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 			// We can try to load the XML directly...
 			filename = TWRES;
 			filename += attr->value();
-			LOGINFO("PageSet::CheckInclude loading filename: '%s'\n", filename.c_str());
-			struct stat st;
-			if(stat(filename.c_str(),&st) != 0) {
-				LOGERR("Unable to locate '%s'\n", filename.c_str());
-				return -1;
-			}
-
-			len = st.st_size;
-			xmlFile = (char*) malloc(len + 1);
-			if (!xmlFile)
-				return -1;
-
-			int fd = open(filename.c_str(), O_RDONLY);
-			if (fd == -1)
-				return -1;
-
-			read(fd, xmlFile, len);
-			close(fd);
 		} else {
 			filename += attr->value();
-			LOGINFO("PageSet::CheckInclude loading filename: '%s'\n", filename.c_str());
-			const ZipEntry* ui_xml = mzFindZipEntry(package, filename.c_str());
-			if (ui_xml == NULL)
-			{
-				LOGERR("Unable to locate '%s' in zip file\n", filename.c_str());
-				return -1;
-			}
-
-			// Allocate the buffer for the file
-			len = mzGetZipEntryUncompLen(ui_xml);
-			xmlFile = (char*) malloc(len + 1);
-			if (!xmlFile)
-				return -1;
-
-			if (!mzExtractZipEntryToBuffer(package, ui_xml, (unsigned char*) xmlFile))
-			{
-				LOGERR("Unable to extract '%s'\n", filename.c_str());
-				return -1;
-			}
+		}
+		xmlFile = PageManager::LoadFileToBuffer(filename, package);
+		if (xmlFile == NULL) {
+			LOGERR("PageSet::CheckInclude unable to load '%s'\n", filename.c_str());
+			return -1;
 		}
 
-		xmlFile[len] = '\0';
 		doc = new xml_document<>();
 		doc->parse<0>(xmlFile);
 
@@ -889,17 +856,21 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 			templates.pop_back();
 			doc->clear();
 			delete doc;
+			free(xmlFile);
 			return -1;
 		}
 
 		mIncludedDocs.push_back(doc);
 
-		if (CheckInclude(package, doc))
+		if (CheckInclude(package, doc)) {
+			free(xmlFile);
 			return -1;
+		}
 
 		chld = chld->next_sibling("xmlfile");
 	}
-
+	if (xmlFile)
+		free(xmlFile);
 	return 0;
 }
 
@@ -1144,6 +1115,66 @@ int PageSet::NotifyVarChange(std::string varName, std::string value)
 	return (mCurrentPage ? mCurrentPage->NotifyVarChange(varName, value) : -1);
 }
 
+char* PageManager::LoadFileToBuffer(std::string filename, ZipArchive* package) {
+	size_t len;
+	char* buffer = NULL;
+
+	if (!package) {
+		// We can try to load the XML directly...
+		LOGINFO("PageManager::LoadFileToBuffer loading filename: '%s' directly\n", filename.c_str());
+		struct stat st;
+		if(stat(filename.c_str(),&st) != 0) {
+			// This isn't always an error, sometimes we request files that don't exist.
+			return NULL;
+		}
+
+		len = (size_t)st.st_size;
+
+		buffer = (char*) malloc(len + 1);
+		if (!buffer) {
+			LOGERR("PageManager::LoadFileToBuffer failed to malloc\n");
+			return NULL;
+		}
+
+		int fd = open(filename.c_str(), O_RDONLY);
+		if (fd == -1) {
+			LOGERR("PageManager::LoadFileToBuffer failed to open '%s' - (%s)\n", filename.c_str(), strerror(errno));
+			free(buffer);
+			return NULL;
+		}
+
+		if (read(fd, buffer, len) < 0) {
+			LOGERR("PageManager::LoadFileToBuffer failed to read '%s' - (%s)\n", filename.c_str(), strerror(errno));
+			free(buffer);
+			close(fd);
+			return NULL;
+		}
+		close(fd);
+	} else {
+		LOGINFO("PageManager::LoadFileToBuffer loading filename: '%s' from zip\n", filename.c_str());
+		const ZipEntry* zipentry = mzFindZipEntry(package, filename.c_str());
+		if (zipentry == NULL) {
+			LOGERR("Unable to locate '%s' in zip file\n", filename.c_str());
+			return NULL;
+		}
+
+		// Allocate the buffer for the file
+		len = mzGetZipEntryUncompLen(zipentry);
+		buffer = (char*) malloc(len + 1);
+		if (!buffer)
+			return NULL;
+
+		if (!mzExtractZipEntryToBuffer(package, zipentry, (unsigned char*) buffer)) {
+			LOGERR("Unable to extract '%s'\n", filename.c_str());
+			free(buffer);
+			return NULL;
+		}
+	}
+	// NULL-terminate the string
+	buffer[len] = 0x00;
+	return buffer;
+}
+
 int PageManager::LoadPackage(std::string name, std::string package, std::string startpage)
 {
 	int fd;
@@ -1161,22 +1192,6 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		LOGINFO("Load XML directly\n");
 		tw_x_offset = TW_X_OFFSET;
 		tw_y_offset = TW_Y_OFFSET;
-		// We can try to load the XML directly...
-		struct stat st;
-		if(stat(package.c_str(),&st) != 0)
-			return -1;
-
-		len = st.st_size;
-		xmlFile = (char*) malloc(len + 1);
-		if (!xmlFile)
-			return -1;
-
-		fd = open(package.c_str(), O_RDONLY);
-		if (fd == -1)
-			goto error;
-
-		read(fd, xmlFile, len);
-		close(fd);
 	}
 	else
 	{
@@ -1187,36 +1202,21 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 			return -1;
 		if (sysMapFile(package.c_str(), &map) != 0) {
 			LOGERR("Failed to map '%s'\n", package.c_str());
-			return -1;
+			goto error;
 		}
 		if (mzOpenZipArchive(map.addr, map.length, &zip)) {
 			LOGERR("Unable to open zip archive '%s'\n", package.c_str());
 			sysReleaseMap(&map);
-			return -1;
+			goto error;
 		}
 		pZip = &zip;
-		const ZipEntry* ui_xml = mzFindZipEntry(&zip, "ui.xml");
-		if (ui_xml == NULL)
-		{
-			LOGERR("Unable to locate ui.xml in zip file\n");
-			goto error;
-		}
-
-		// Allocate the buffer for the file
-		len = mzGetZipEntryUncompLen(ui_xml);
-		xmlFile = (char*) malloc(len + 1);
-		if (!xmlFile)
-			goto error;
-
-		if (!mzExtractZipEntryToBuffer(&zip, ui_xml, (unsigned char*) xmlFile))
-		{
-			LOGERR("Unable to extract ui.xml\n");
-			goto error;
-		}
+		package = "ui.xml";
 	}
 
-	// NULL-terminate the string
-	xmlFile[len] = 0x00;
+	xmlFile = LoadFileToBuffer(package, pZip);
+	if (xmlFile == NULL) {
+		goto error;
+	}
 
 	// Before loading, mCurrentSet must be the loading package so we can find resources
 	pageSet = mCurrentSet;
@@ -1243,10 +1243,11 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		mzCloseZipArchive(pZip);
 		sysReleaseMap(&map);
 	}
+	free(xmlFile);
 	return ret;
 
 error:
-	LOGERR("An internal error has occurred.\n");
+	// Sometimes we get here without a real error
 	if (pZip) {
 		mzCloseZipArchive(pZip);
 		sysReleaseMap(&map);
