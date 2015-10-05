@@ -123,6 +123,7 @@ class PageManager
 {
 public:
 	// Used by GUI
+	static char* LoadFileToBuffer(std::string filename, ZipArchive* package);
 	static int LoadPackage(std::string name, std::string package, std::string startpage);
 	static PageSet* SelectPackage(std::string name);
 	static int ReloadPackage(std::string name, std::string package);
