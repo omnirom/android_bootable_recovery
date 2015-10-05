@@ -139,9 +139,11 @@ int GUICheckbox::SetRenderPos(int x, int y, int w, int h)
 	mRenderH = mCheckH;
 
 	mTextX = mRenderX + mCheckW + 5;
-	mTextY = mRenderY + ((mCheckH / 2) - (textH / 2));
+	mTextY = mRenderY + (mCheckH / 2);
 
 	mLabel->SetRenderPos(mTextX, mTextY, 0, 0);
+	mLabel->SetPlacement(TEXT_ONLY_RIGHT);
+	mLabel->SetMaxWidth(gr_fb_width() - mTextX);
 	SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 	return 0;
 }

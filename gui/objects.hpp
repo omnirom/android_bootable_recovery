@@ -34,6 +34,7 @@ using namespace rapidxml;
 #include "resources.hpp"
 #include "pages.hpp"
 #include "../partitions.hpp"
+#include "placement.h"
 
 #ifndef TW_X_OFFSET
 #define TW_X_OFFSET 0
@@ -44,16 +45,6 @@ using namespace rapidxml;
 
 class RenderObject
 {
-public:
-	enum Placement {
-		TOP_LEFT = 0,
-		TOP_RIGHT = 1,
-		BOTTOM_LEFT = 2,
-		BOTTOM_RIGHT = 3,
-		CENTER = 4,
-		CENTER_X_ONLY = 5,
-	};
-
 public:
 	RenderObject() { mRenderX = 0; mRenderY = 0; mRenderW = 0; mRenderH = 0; mPlacement = TOP_LEFT; }
 	virtual ~RenderObject() {}
@@ -207,6 +198,8 @@ public:
 
 public:
 	bool isHighlighted;
+	bool scaleWidth;
+	unsigned maxWidth;
 
 protected:
 	std::string mText;
@@ -217,7 +210,6 @@ protected:
 	int mIsStatic;
 	int mVarChanged;
 	int mFontHeight;
-	unsigned maxWidth;
 	unsigned charSkip;
 };
 
@@ -1157,7 +1149,7 @@ FontResource* LoadAttrFont(xml_node<>* element, const char* attrname);
 ImageResource* LoadAttrImage(xml_node<>* element, const char* attrname);
 AnimationResource* LoadAttrAnimation(xml_node<>* element, const char* attrname);
 
-bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w = NULL, int* h = NULL, RenderObject::Placement* placement = NULL);
+bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w = NULL, int* h = NULL, Placement* placement = NULL);
 
 #endif  // _OBJECTS_HEADER
 

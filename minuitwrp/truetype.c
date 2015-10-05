@@ -265,6 +265,21 @@ exit:
     return res;
 }
 
+void *gr_ttf_scaleFont(void *font, int max_width, int measured_width)
+{
+    if (!font)
+        return NULL;
+
+    TrueTypeFont *f = font;
+    float scale_value = (float)(max_width) / (float)(measured_width);
+    int new_size = ((int)((float)f->size * scale_value)) - 1;
+    if (new_size < 1)
+        new_size = 1;
+    const char* file = f->key->path;
+    int dpi = f->dpi;
+    return gr_ttf_loadFont(file, new_size, dpi);
+}
+
 static bool gr_ttf_freeFontCache(void *key, void *value, void *context)
 {
     TrueTypeCacheEntry *e = value;

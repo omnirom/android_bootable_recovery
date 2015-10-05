@@ -2125,7 +2125,7 @@
 			</object>
 
 			<object type="button">
-				<placement x="%col1_x%" y="%system_ro_y%" />
+				<placement x="%col1_x%" y="%system_ro_y%" textplacement="6" />
 				<font resource="font" color="%text_color%" />
 				<condition var1="tw_mount_system_ro" op="=" var2="0" />
 				<text>Only mount system read-only</text>
@@ -2134,7 +2134,7 @@
 			</object>
 
 			<object type="button">
-				<placement x="%col1_x%" y="%system_ro_y%" />
+				<placement x="%col1_x%" y="%system_ro_y%" textplacement="6" />
 				<font resource="font" color="%text_color%" />
 				<condition var1="tw_mount_system_ro" op="!=" var2="0" />
 				<text>Only mount system read-only</text>

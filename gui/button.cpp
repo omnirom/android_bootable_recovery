@@ -93,6 +93,23 @@ GUIButton::GUIButton(xml_node<>* node)
 		LoadPlacement(FindNode(node, "placement"), &x, &y, &w, &h, &TextPlacement);
 	}
 	SetRenderPos(x, y, w, h);
+	if (mButtonLabel) {
+		TextPlacement = (Placement)LoadAttrInt(FindNode(node, "placement"), "textplacement", TOP_LEFT);
+		if (TextPlacement != TEXT_ONLY_RIGHT) {
+			mButtonLabel->scaleWidth = 1;
+			mButtonLabel->SetMaxWidth(w);
+			mButtonLabel->SetPlacement(CENTER);
+			mTextX = ((mRenderW / 2) + mRenderX);
+			mTextY = mRenderY + (mRenderH / 2);
+			mButtonLabel->SetRenderPos(mTextX, mTextY);
+		} else {
+			mTextX = mRenderW + mRenderX + 5;
+			mRenderW += mTextW + 5;
+			mButtonLabel->GetCurrentBounds(mTextW, mTextH);
+			mTextY = mRenderY + (mRenderH / 2) - (mTextH / 2);
+			mButtonLabel->SetRenderPos(mTextX, mTextY);
+		}
+	}
 }
 
 GUIButton::~GUIButton()
@@ -125,15 +142,6 @@ int GUIButton::Render(void)
 		mButtonLabel->GetCurrentBounds(w, h);
 		if (w != mTextW) {
 			mTextW = w;
-			if (TextPlacement == CENTER_X_ONLY) {
-				mTextX = ((mRenderW - mRenderX) / 2);
-			} else if (mTextW > mRenderW) { // As a special case, we'll allow large text which automatically moves it to the right.
-				mTextX = mRenderW + mRenderX + 5;
-				mRenderW += mTextW + 5;
-			} else {
-				mTextX = mRenderX + ((mRenderW - mTextW) / 2);
-			}
-			mButtonLabel->SetRenderPos(mTextX, mTextY);
 		}
 		ret = mButtonLabel->Render();
 		if (ret < 0)		return ret;
@@ -198,28 +206,19 @@ int GUIButton::SetRenderPos(int x, int y, int w, int h)
 	mTextW = 0;
 	mIconX = mRenderX + ((mRenderW - mIconW) / 2);
 	if (mButtonLabel)   mButtonLabel->GetCurrentBounds(mTextW, mTextH);
-	if (mTextW)
+	if (mTextW && TextPlacement == TEXT_ONLY_RIGHT)
 	{
-		if (TextPlacement == CENTER_X_ONLY) {
-			mTextX = ((mRenderW - mRenderX) / 2);
-		} else if (mTextW > mRenderW) { // As a special case, we'll allow large text which automatically moves it to the right.
-			mTextX = mRenderW + mRenderX + 5;
-			mRenderW += mTextW + 5;
-		} else {
-			mTextX = mRenderX + ((mRenderW - mTextW) / 2);
-		}
+		mRenderW += mTextW + 5;
 	}
 
 	if (mIconH == 0 || mTextH == 0 || mIconH + mTextH > mRenderH)
 	{
 		mIconY = mRenderY + (mRenderH / 2) - (mIconH / 2);
-		mTextY = mRenderY + (mRenderH / 2) - (mTextH / 2);
 	}
 	else
 	{
 		int divisor = mRenderH - (mIconH + mTextH);
 		mIconY = mRenderY + (divisor / 3);
-		mTextY = mRenderY + (divisor * 2 / 3) + mIconH;
 	}
 
 	if (mButtonLabel)   mButtonLabel->SetRenderPos(mTextX, mTextY);
