@@ -229,7 +229,7 @@ AnimationResource* LoadAttrAnimation(xml_node<>* element, const char* attrname)
 		return PageManager::GetResources()->FindAnimation(name);
 }
 
-bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h /* = NULL */, RenderObject::Placement* placement /* = NULL */)
+bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h /* = NULL */, Placement* placement /* = NULL */)
 {
 	if (!node)
 		return false;
@@ -247,7 +247,7 @@ bool LoadPlacement(xml_node<>* node, int* x, int* y, int* w /* = NULL */, int* h
 		*h = LoadAttrIntScaleY(node, "h");
 
 	if (placement && node->first_attribute("placement"))
-		*placement = (RenderObject::Placement) LoadAttrInt(node, "placement");
+		*placement = (Placement) LoadAttrInt(node, "placement");
 
 	return true;
 }

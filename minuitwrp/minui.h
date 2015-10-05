@@ -17,6 +17,8 @@
 #ifndef _MINUI_H_
 #define _MINUI_H_
 
+#include "../gui/placement.h"
+
 typedef void* gr_surface;
 typedef unsigned short gr_pixel;
 
@@ -40,6 +42,7 @@ void gr_line(int x0, int y0, int x1, int y1, int width);
 gr_surface gr_render_circle(int radius, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 
 int gr_textEx(int x, int y, const char *s, void* font);
+int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width, int placement, int scale);
 int gr_textExW(int x, int y, const char *s, void* font, int max_width);
 int gr_textExWH(int x, int y, const char *s, void* pFont, int max_width, int max_height);
 static inline int gr_text(int x, int y, const char *s)     { return gr_textEx(x, y, s, NULL); }
@@ -50,6 +53,7 @@ int gr_maxExW(const char *s, void* font, int max_width);
 int gr_getMaxFontHeight(void *font);
 
 void *gr_ttf_loadFont(const char *filename, int size, int dpi);
+void *gr_ttf_scaleFont(void *font, int max_width, int measured_width);
 void gr_ttf_freeFont(void *font);
 int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int max_width, int max_height);
 int gr_ttf_measureEx(const char *s, void *font);

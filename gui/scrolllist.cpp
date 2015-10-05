@@ -266,7 +266,7 @@ int GUIScrollList::Render(void)
 
 		// render the text
 		gr_color(mHeaderFontColor.red, mHeaderFontColor.green, mHeaderFontColor.blue, mHeaderFontColor.alpha);
-		gr_textEx(mRenderX + IconOffsetX + 5, yPos + (int)((mHeaderH - mFontHeight) / 2), mLastHeaderValue.c_str(), mFont->GetResource());
+		gr_textEx_scaleW(mRenderX + IconOffsetX + 5, yPos + (int)(mHeaderH / 2), mLastHeaderValue.c_str(), mFont->GetResource(), mRenderW, TEXT_ONLY_RIGHT, 0);
 
 		// Add the separator
 		gr_color(mHeaderSeparatorColor.red, mHeaderSeparatorColor.green, mHeaderSeparatorColor.blue, mHeaderSeparatorColor.alpha);
@@ -346,8 +346,8 @@ void GUIScrollList::RenderStdItem(int yPos, bool selected, ImageResource* icon, 
 
 	// render label text
 	int textX = mRenderX + maxIconWidth + 5;
-	int textY = yPos + (iconAndTextH - mFontHeight) / 2;
-	gr_textEx(textX, textY, text, mFont->GetResource());
+	int textY = yPos + (iconAndTextH / 2);
+	gr_textEx_scaleW(textX, textY, text, mFont->GetResource(), mRenderW, TEXT_ONLY_RIGHT, 0);
 }
 
 int GUIScrollList::Update(void)

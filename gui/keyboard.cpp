@@ -326,7 +326,7 @@ void GUIKeyboard::DrawKey(Key& key, int keyX, int keyY, int keyW, int keyH)
 		int textH = labelFont->GetHeight();
 		int textX = keyX + (keyW - textW) / 2;
 		int textY = keyY + (keyH - textH) / 2;
-		gr_textEx(textX, textY, labelText.c_str(), fontResource);
+		gr_textEx_scaleW(textX, textY, labelText.c_str(), fontResource, keyW, TOP_LEFT, 0);
 	}
 
 	// longpress key label (only if font is defined)
@@ -339,7 +339,7 @@ void GUIKeyboard::DrawKey(Key& key, int keyX, int keyY, int keyW, int keyH)
 		int textW = gr_measureEx(text.c_str(), fontResource);
 		int textX = keyX + keyW - longpressOffsetX - textW;
 		int textY = keyY + longpressOffsetY;
-		gr_textEx(textX, textY, text.c_str(), fontResource);
+		gr_textEx_scaleW(textX, textY, text.c_str(), fontResource, keyW, TOP_LEFT, 0);
 	}
 }
 

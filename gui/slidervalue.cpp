@@ -307,15 +307,15 @@ int GUISliderValue::Render(void)
 	if(mShowRange)
 	{
 		int rangeY = (mLineY - mLineH/2) - mFontHeight/2;
-		gr_textEx(mRenderX + mPadding/2, rangeY, mMinStr.c_str(), fontResource);
-		gr_textEx(mLineX + mLineW + mPadding/2, rangeY, mMaxStr.c_str(), fontResource);
+		gr_textEx_scaleW(mRenderX + mPadding/2, rangeY, mMinStr.c_str(), fontResource, mRenderW, TOP_LEFT, 0);
+		gr_textEx_scaleW(mLineX + mLineW + mPadding/2, rangeY, mMaxStr.c_str(), fontResource, mRenderW, TOP_LEFT, 0);
 	}
 
 	if(mValueStr && mShowCurr)
 	{
 		sprintf(mValueStr, "%d", mValue);
 		int textW = measureText(mValueStr);
-		gr_textEx(mRenderX + (mRenderW/2 - textW/2), mSliderY+mSliderH, mValueStr, fontResource);
+		gr_textEx_scaleW(mRenderX + (mRenderW/2 - textW/2), mSliderY+mSliderH, mValueStr, fontResource, mRenderW, TOP_LEFT, 0);
 	}
 
 	mRendered = true;
