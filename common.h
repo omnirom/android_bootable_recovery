@@ -17,6 +17,7 @@
 #ifndef RECOVERY_COMMON_H
 #define RECOVERY_COMMON_H
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -24,13 +25,7 @@
 extern "C" {
 #endif
 
-static long tmplog_offset = 0;
-
-#define ui_print(...) printf(__VA_ARGS__)
-#define ui_print_overwrite(...) printf(__VA_ARGS__)
-
-// TODO: restore ui_print for LOGE
-#define LOGE(...) printf("E:" __VA_ARGS__)
+#define LOGE(...) fprintf(stdout, "E:" __VA_ARGS__)
 #define LOGW(...) fprintf(stdout, "W:" __VA_ARGS__)
 #define LOGI(...) fprintf(stdout, "I:" __VA_ARGS__)
 
@@ -45,12 +40,15 @@ static long tmplog_offset = 0;
 #define STRINGIFY(x) #x
 #define EXPAND(x) STRINGIFY(x)
 
+extern bool modified_flash;
 //typedef struct fstab_rec Volume;
 
 // fopen a file, mounting volumes and making parent dirs as necessary.
 FILE* fopen_path(const char *path, const char *mode);
 
-//void ui_print(const char* format, ...);
+void ui_print(const char* format, ...);
+
+bool is_ro_debuggable();
 
 #ifdef __cplusplus
 }

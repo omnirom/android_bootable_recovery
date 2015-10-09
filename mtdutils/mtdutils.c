@@ -105,7 +105,7 @@ mtd_scan_partitions()
     if (fd < 0) {
         goto bail;
     }
-    nbytes = read(fd, buf, sizeof(buf) - 1);
+    nbytes = TEMP_FAILURE_RETRY(read(fd, buf, sizeof(buf) - 1));
     close(fd);
     if (nbytes < 0) {
         goto bail;
@@ -276,12 +276,6 @@ MtdReadContext *mtd_read_partition(const MtdPartition *partition)
     return ctx;
 }
 
-// Seeks to a location in the partition.  Don't mix with reads of
-// anything other than whole blocks; unpredictable things will result.
-void mtd_read_skip_to(const MtdReadContext* ctx, size_t offset) {
-    lseek64(ctx->fd, offset, SEEK_SET);
-}
-
 static int read_block(const MtdPartition *partition, int fd, char *data)
 {
     struct mtd_ecc_stats before, after;
@@ -290,13 +284,18 @@ static int read_block(const MtdPartition *partition, int fd, char *data)
         return -1;
     }
 
-    loff_t pos = lseek64(fd, 0, SEEK_CUR);
+    loff_t pos = TEMP_FAILURE_RETRY(lseek64(fd, 0, SEEK_CUR));
+    if (pos == -1) {
+        printf("mtd: read_block: couldn't SEEK_CUR: %s\n", strerror(errno));
+        return -1;
+    }
 
     ssize_t size = partition->erase_size;
     int mgbb;
 
     while (pos + size <= (int) partition->size) {
-        if (lseek64(fd, pos, SEEK_SET) != pos || read(fd, data, size) != size) {
+        if (TEMP_FAILURE_RETRY(lseek64(fd, pos, SEEK_SET)) != pos ||
+                    TEMP_FAILURE_RETRY(read(fd, data, size)) != size) {
             printf("mtd: read error at 0x%08llx (%s)\n",
                     pos, strerror(errno));
         } else if (ioctl(fd, ECCGETSTATS, &after)) {
@@ -310,8 +309,8 @@ static int read_block(const MtdPartition *partition, int fd, char *data)
             memcpy(&before, &after, sizeof(struct mtd_ecc_stats));
         } else if ((mgbb = ioctl(fd, MEMGETBADBLOCK, &pos))) {
             fprintf(stderr,
-                    "mtd: MEMGETBADBLOCK returned %d at 0x%08llx (errno=%d)\n",
-                    mgbb, pos, errno);
+                    "mtd: MEMGETBADBLOCK returned %d at 0x%08llx: %s\n",
+                    mgbb, pos, strerror(errno));
         } else {
             return 0;  // Success!
         }
@@ -406,8 +405,11 @@ static int write_block(MtdWriteContext *ctx, const char *data)
     const MtdPartition *partition = ctx->partition;
     int fd = ctx->fd;
 
-    off_t pos = lseek(fd, 0, SEEK_CUR);
-    if (pos == (off_t) -1) return 1;
+    off_t pos = TEMP_FAILURE_RETRY(lseek(fd, 0, SEEK_CUR));
+    if (pos == (off_t) -1) {
+        printf("mtd: write_block: couldn't SEEK_CUR: %s\n", strerror(errno));
+        return -1;
+    }
 
     ssize_t size = partition->erase_size;
     while (pos + size <= (int) partition->size) {
@@ -416,8 +418,8 @@ static int write_block(MtdWriteContext *ctx, const char *data)
         if (ret != 0 && !(ret == -1 && errno == EOPNOTSUPP)) {
             add_bad_block_offset(ctx, pos);
             fprintf(stderr,
-                    "mtd: not writing bad block at 0x%08lx (ret %d errno %d)\n",
-                    pos, ret, errno);
+                    "mtd: not writing bad block at 0x%08lx (ret %d): %s\n",
+                    pos, ret, strerror(errno));
             pos += partition->erase_size;
             continue;  // Don't try to erase known factory-bad blocks.
         }
@@ -440,15 +442,15 @@ static int write_block(MtdWriteContext *ctx, const char *data)
                 continue;
             }
 #endif
-            if (lseek(fd, pos, SEEK_SET) != pos ||
-                write(fd, data, size) != size) {
+            if (TEMP_FAILURE_RETRY(lseek(fd, pos, SEEK_SET)) != pos ||
+                TEMP_FAILURE_RETRY(write(fd, data, size)) != size) {
                 printf("mtd: write error at 0x%08lx (%s)\n",
                         pos, strerror(errno));
             }
 
             char verify[size];
-            if (lseek(fd, pos, SEEK_SET) != pos ||
-                read(fd, verify, size) != size) {
+            if (TEMP_FAILURE_RETRY(lseek(fd, pos, SEEK_SET)) != pos ||
+                TEMP_FAILURE_RETRY(read(fd, verify, size)) != size) {
                 printf("mtd: re-read error at 0x%08lx (%s)\n",
                         pos, strerror(errno));
                 continue;
@@ -522,8 +524,11 @@ off_t mtd_erase_blocks(MtdWriteContext *ctx, int blocks)
         ctx->stored = 0;
     }
 
-    off_t pos = lseek(ctx->fd, 0, SEEK_CUR);
-    if ((off_t) pos == (off_t) -1) return pos;
+    off_t pos = TEMP_FAILURE_RETRY(lseek(ctx->fd, 0, SEEK_CUR));
+    if ((off_t) pos == (off_t) -1) {
+        printf("mtd_erase_blocks: couldn't SEEK_CUR: %s\n", strerror(errno));
+        return -1;
+    }
 
     const int total = (ctx->partition->size - pos) / ctx->partition->erase_size;
     if (blocks < 0) blocks = total;

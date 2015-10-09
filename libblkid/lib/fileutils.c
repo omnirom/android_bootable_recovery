@@ -14,6 +14,10 @@
 #include "fileutils.h"
 #include "pathnames.h"
 
+#ifndef _PATH_TMP
+#define _PATH_TMP   "/tmp/"
+#endif
+
 /* Create open temporary file in safe way.  Please notice that the
  * file permissions are -rw------- by default. */
 int xmkstemp(char **tmpname, char *dir)

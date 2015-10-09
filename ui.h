@@ -31,10 +31,10 @@ class RecoveryUI {
     // Initialize the object; called before anything else.
     virtual void Init();
     // Show a stage indicator.  Call immediately after Init().
-    virtual void SetStage(int current, int max) { }
+    virtual void SetStage(int current, int max) = 0;
 
     // After calling Init(), you can tell the UI what locale it is operating in.
-    virtual void SetLocale(const char* locale) { }
+    virtual void SetLocale(const char* locale) = 0;
 
     // Set the overall recovery state ("background image").
     enum Icon { NONE, INSTALLING_UPDATE, ERASING, NO_COMMAND, ERROR };
@@ -63,34 +63,37 @@ class RecoveryUI {
 
     // Write a message to the on-screen log (shown if the user has
     // toggled on the text display).
-    virtual void Print(const char* fmt, ...) = 0; // __attribute__((format(printf, 1, 2))) = 0;
+    virtual void Print(const char* fmt, ...) __printflike(2, 3) = 0;
+
+    virtual void ShowFile(const char* filename) = 0;
 
     // --- key handling ---
 
-    // Wait for keypress and return it.  May return -1 after timeout.
+    // Wait for a key and return it.  May return -1 after timeout.
     virtual int WaitKey();
 
     virtual bool IsKeyPressed(int key);
+    virtual bool IsLongPress();
+
+    // Returns true if you have the volume up/down and power trio typical
+    // of phones and tablets, false otherwise.
+    virtual bool HasThreeButtons();
 
     // Erase any queued-up keys.
     virtual void FlushKeys();
 
-    // Called on each keypress, even while operations are in progress.
+    // Called on each key press, even while operations are in progress.
     // Return value indicates whether an immediate operation should be
     // triggered (toggling the display, rebooting the device), or if
     // the key should be enqueued for use by the main thread.
-    enum KeyAction { ENQUEUE, TOGGLE, REBOOT, IGNORE, MOUNT_SYSTEM };
-    virtual KeyAction CheckKey(int key);
-
-    // Called immediately before each call to CheckKey(), tell you if
-    // the key was long-pressed.
-    virtual void NextCheckKeyIsLong(bool is_long_press);
+    enum KeyAction { ENQUEUE, TOGGLE, REBOOT, IGNORE };
+    virtual KeyAction CheckKey(int key, bool is_long_press);
 
     // Called when a key is held down long enough to have been a
     // long-press (but before the key is released).  This means that
     // if the key is eventually registered (released without any other
-    // keys being pressed in the meantime), NextCheckKeyIsLong() will
-    // be called with "true".
+    // keys being pressed in the meantime), CheckKey will be called with
+    // 'is_long_press' true.
     virtual void KeyLongPress(int key);
 
     // Normally in recovery there's a key sequence that triggers
@@ -108,8 +111,8 @@ class RecoveryUI {
     virtual void StartMenu(const char* const * headers, const char* const * items,
                            int initial_selection) = 0;
 
-    // Set the menu highlight to the given index, and return it (capped to
-    // the range [0..numitems).
+    // Set the menu highlight to the given index, wrapping if necessary.
+    // Returns the actual item selected.
     virtual int SelectMenu(int sel) = 0;
 
     // End menu mode, resetting the text overlay so that ui_print()
@@ -132,21 +135,27 @@ private:
     int rel_sum;
 
     int consecutive_power_keys;
-    int consecutive_alternate_keys;
     int last_key;
 
-    typedef struct {
+    bool has_power_key;
+    bool has_up_key;
+    bool has_down_key;
+
+    struct key_timer_t {
         RecoveryUI* ui;
         int key_code;
         int count;
-    } key_timer_t;
+    };
 
-    pthread_t input_t;
+    pthread_t input_thread_;
 
-    static void* input_thread(void* cookie);
-    static int input_callback(int fd, uint32_t epevents, void* data);
-    void process_key(int key_code, int updown);
-    bool usb_connected();
+    void OnKeyDetected(int key_code);
+
+    static int InputCallback(int fd, uint32_t epevents, void* data);
+    int OnInputEvent(int fd, uint32_t epevents);
+    void ProcessKey(int key_code, int updown);
+
+    bool IsUsbConnected();
 
     static void* time_key_helper(void* cookie);
     void time_key(int key_code, int count);

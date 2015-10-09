@@ -53,6 +53,7 @@
 #include <string.h>
 #include <sys/inotify.h>
 #include <sys/mount.h>
+#include <sys/param.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
@@ -105,27 +106,52 @@ static void fuse_reply(struct fuse_data* fd, __u64 unique, const void *data, siz
 
     vec[0].iov_base = &hdr;
     vec[0].iov_len = sizeof(hdr);
-    vec[1].iov_base = data;
+    vec[1].iov_base = /* const_cast */(void*)(data);
     vec[1].iov_len = len;
 
     res = writev(fd->ffd, vec, 2);
     if (res < 0) {
-        printf("*** REPLY FAILED *** %d\n", errno);
+        printf("*** REPLY FAILED *** %s\n", strerror(errno));
     }
 }
 
 static int handle_init(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
     const struct fuse_init_in* req = data;
     struct fuse_init_out out;
+    size_t fuse_struct_size;
+
+
+    /* Kernel 2.6.16 is the first stable kernel with struct fuse_init_out
+     * defined (fuse version 7.6). The structure is the same from 7.6 through
+     * 7.22. Beginning with 7.23, the structure increased in size and added
+     * new parameters.
+     */
+    if (req->major != FUSE_KERNEL_VERSION || req->minor < 6) {
+        printf("Fuse kernel version mismatch: Kernel version %d.%d, Expected at least %d.6",
+               req->major, req->minor, FUSE_KERNEL_VERSION);
+        return -1;
+    }
+
+    out.minor = MIN(req->minor, FUSE_KERNEL_MINOR_VERSION);
+    fuse_struct_size = sizeof(out);
+#if defined(FUSE_COMPAT_22_INIT_OUT_SIZE)
+    /* FUSE_KERNEL_VERSION >= 23. */
+
+    /* If the kernel only works on minor revs older than or equal to 22,
+     * then use the older structure size since this code only uses the 7.22
+     * version of the structure. */
+    if (req->minor <= 22) {
+        fuse_struct_size = FUSE_COMPAT_22_INIT_OUT_SIZE;
+    }
+#endif
 
     out.major = FUSE_KERNEL_VERSION;
-    out.minor = FUSE_KERNEL_MINOR_VERSION;
     out.max_readahead = req->max_readahead;
     out.flags = 0;
     out.max_background = 32;
     out.congestion_threshold = 32;
     out.max_write = 4096;
-    fuse_reply(fd, hdr->unique, &out, sizeof(out));
+    fuse_reply(fd, hdr->unique, &out, fuse_struct_size);
 
     return NO_STATUS;
 }
@@ -404,7 +430,7 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
 
     char opts[256];
     snprintf(opts, sizeof(opts),
-             ("fd=%d,user_id=%d,group_id=%d,max_read=%zu,"
+             ("fd=%d,user_id=%d,group_id=%d,max_read=%u,"
               "allow_other,rootmode=040000"),
              fd.ffd, fd.uid, fd.gid, block_size);
 
@@ -416,14 +442,12 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
     }
     uint8_t request_buffer[sizeof(struct fuse_in_header) + PATH_MAX*8];
     for (;;) {
-        ssize_t len = read(fd.ffd, request_buffer, sizeof(request_buffer));
-        if (len < 0) {
-            if (errno != EINTR) {
-                perror("read request");
-                if (errno == ENODEV) {
-                    result = -1;
-                    break;
-                }
+        ssize_t len = TEMP_FAILURE_RETRY(read(fd.ffd, request_buffer, sizeof(request_buffer)));
+        if (len == -1) {
+            perror("read request");
+            if (errno == ENODEV) {
+                result = -1;
+                break;
             }
             continue;
         }
@@ -482,7 +506,7 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
             outhdr.len = sizeof(outhdr);
             outhdr.error = result;
             outhdr.unique = hdr->unique;
-            write(fd.ffd, &outhdr, sizeof(outhdr));
+            TEMP_FAILURE_RETRY(write(fd.ffd, &outhdr, sizeof(outhdr)));
         }
     }
 

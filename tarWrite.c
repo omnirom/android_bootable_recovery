@@ -17,6 +17,9 @@
 */
 
 #include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "libtar/libtar.h"
 #include "twcommon.h"
 
@@ -71,7 +74,7 @@ ssize_t write_libtar_buffer(int fd, const void *buffer, size_t size) {
 			// nothing to write
 			return 0;
 		}
-		if (write(fd, write_buffer, buffer_loc) != buffer_loc) {
+		if (write(fd, write_buffer, buffer_loc) != (int)buffer_loc) {
 			LOGERR("Error writing tar file!\n");
 			buffer_loc = 0;
 			return -1;

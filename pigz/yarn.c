@@ -31,6 +31,7 @@
 #include <stdio.h>      /* fprintf(), stderr */
 #include <stdlib.h>     /* exit(), malloc(), free(), NULL */
 #include <pthread.h>    /* pthread_t, pthread_create(), pthread_join(), */
+#include <signal.h>     /* sigaction, SIGUSR1 */
     /* pthread_attr_t, pthread_attr_init(), pthread_attr_destroy(),
        PTHREAD_CREATE_JOINABLE, pthread_attr_setdetachstate(),
        pthread_self(), pthread_equal(),
@@ -39,6 +40,7 @@
        pthread_cond_t, PTHREAD_COND_INITIALIZER, pthread_cond_init(),
        pthread_cond_broadcast(), pthread_cond_wait(), pthread_cond_destroy() */
 #include <errno.h>      /* ENOMEM, EAGAIN, EINVAL */
+#include <string.h>     /* memset */
 
 /* interface definition */
 #include "yarn.h"
@@ -50,6 +52,11 @@
 char *yarn_prefix = "yarn";
 void (*yarn_abort)(int) = NULL;
 
+void thread_exit_handler(int sig)
+{ 
+    printf("this signal is %d \n", sig);
+    pthread_exit(0);
+}
 
 /* immediately exit -- use for errors that shouldn't ever happen */
 local void fail(int err)
@@ -263,6 +270,13 @@ thread *launch(void (*probe)(void *), void *payload)
     thread *th;
     struct capsule *capsule;
     pthread_attr_t attr;
+    struct sigaction actions;
+
+    memset(&actions, 0, sizeof(actions)); 
+    sigemptyset(&actions.sa_mask);
+    actions.sa_flags = 0; 
+    actions.sa_handler = thread_exit_handler;
+    ret = sigaction(SIGUSR1,&actions,NULL);
 
     /* construct the requested call and argument for the ignition() routine
        (allocated instead of automatic so that we're sure this will still be
@@ -369,7 +383,7 @@ void destruct(thread *off_course)
 {
     int ret;
 
-    if ((ret = pthread_cancel(off_course->id)) != 0)
+    if ((ret = pthread_kill(off_course->id, SIGUSR1)) != 0)
         fail(ret);
     join(off_course);
 }

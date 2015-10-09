@@ -453,20 +453,19 @@ int WriteToPartition(unsigned char* data, size_t len,
             int attempt;
 
             for (attempt = 0; attempt < 2; ++attempt) {
-                lseek(fd, start, SEEK_SET);
+                if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1) {
+                    printf("failed seek on %s: %s\n",
+                           partition, strerror(errno));
+                    return -1;
+                }
                 while (start < len) {
                     size_t to_write = len - start;
                     if (to_write > 1<<20) to_write = 1<<20;
 
-                    ssize_t written = write(fd, data+start, to_write);
-                    if (written < 0) {
-                        if (errno == EINTR) {
-                            written = 0;
-                        } else {
-                            printf("failed write writing to %s (%s)\n",
-                                   partition, strerror(errno));
-                            return -1;
-                        }
+                    ssize_t written = TEMP_FAILURE_RETRY(write(fd, data+start, to_write));
+                    if (written == -1) {
+                        printf("failed write writing to %s: %s\n", partition, strerror(errno));
+                        return -1;
                     }
                     start += written;
                 }
@@ -491,13 +490,20 @@ int WriteToPartition(unsigned char* data, size_t len,
                 // won't just be reading the cache.
                 sync();
                 int dc = open("/proc/sys/vm/drop_caches", O_WRONLY);
-                write(dc, "3\n", 2);
+                if (TEMP_FAILURE_RETRY(write(dc, "3\n", 2)) == -1) {
+                    printf("write to /proc/sys/vm/drop_caches failed: %s\n", strerror(errno));
+                } else {
+                    printf("  caches dropped\n");
+                }
                 close(dc);
                 sleep(1);
-                printf("  caches dropped\n");
 
                 // verify
-                lseek(fd, 0, SEEK_SET);
+                if (TEMP_FAILURE_RETRY(lseek(fd, 0, SEEK_SET)) == -1) {
+                    printf("failed to seek back to beginning of %s: %s\n",
+                           partition, strerror(errno));
+                    return -1;
+                }
                 unsigned char buffer[4096];
                 start = len;
                 size_t p;
@@ -507,15 +513,12 @@ int WriteToPartition(unsigned char* data, size_t len,
 
                     size_t so_far = 0;
                     while (so_far < to_read) {
-                        ssize_t read_count = read(fd, buffer+so_far, to_read-so_far);
-                        if (read_count < 0) {
-                            if (errno == EINTR) {
-                                read_count = 0;
-                            } else {
-                                printf("verify read error %s at %zu: %s\n",
-                                       partition, p, strerror(errno));
-                                return -1;
-                            }
+                        ssize_t read_count =
+                                TEMP_FAILURE_RETRY(read(fd, buffer+so_far, to_read-so_far));
+                        if (read_count == -1) {
+                            printf("verify read error %s at %zu: %s\n",
+                                   partition, p, strerror(errno));
+                            return -1;
                         }
                         if ((size_t)read_count < to_read) {
                             printf("short verify read %s at %zu: %zd %zu %s\n",
@@ -656,8 +659,8 @@ ssize_t FileSink(const unsigned char* data, ssize_t len, void* token) {
     ssize_t done = 0;
     ssize_t wrote;
     while (done < (ssize_t) len) {
-        wrote = write(fd, data+done, len-done);
-        if (wrote <= 0) {
+        wrote = TEMP_FAILURE_RETRY(write(fd, data+done, len-done));
+        if (wrote == -1) {
             printf("error writing %d bytes: %s\n", (int)(len-done), strerror(errno));
             return done;
         }
@@ -690,7 +693,7 @@ size_t FreeSpaceForFile(const char* filename) {
         printf("failed to statfs %s: %s\n", filename, strerror(errno));
         return -1;
     }
-    return sf.f_bsize * sf.f_bfree;
+    return sf.f_bsize * sf.f_bavail;
 }
 
 int CacheSizeCheck(size_t bytes) {

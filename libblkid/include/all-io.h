@@ -49,7 +49,7 @@ static inline int fwrite_all(const void *ptr, size_t size,
 		} else if (errno != EINTR && errno != EAGAIN)
 			return -1;
 		if (errno == EAGAIN)	/* Try later, *sigh* */
-			xusleep(250000);
+			usleep(250000);
 	}
 	return 0;
 }

@@ -467,7 +467,8 @@ int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned lon
 				twrpTar tars[9];
 				pthread_t tar_thread[9];
 				pthread_attr_t tattr;
-				int thread_count = 0, i, start_thread_id = 1, ret, thread_error = 0;
+				unsigned thread_count = 0, i, start_thread_id = 1;
+				int ret, thread_error = 0;
 				void *thread_return;
 
 				basefn = tarfn;

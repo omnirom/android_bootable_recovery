@@ -21,28 +21,19 @@
 
 class Device {
   public:
+    Device(RecoveryUI* ui) : ui_(ui) { }
     virtual ~Device() { }
 
     // Called to obtain the UI object that should be used to display
     // the recovery user interface for this device.  You should not
     // have called Init() on the UI object already, the caller will do
     // that after this method returns.
-    virtual RecoveryUI* GetUI() = 0;
+    virtual RecoveryUI* GetUI() { return ui_; }
 
     // Called when recovery starts up (after the UI has been obtained
     // and initialized and after the arguments have been parsed, but
     // before anything else).
     virtual void StartRecovery() { };
-
-    // enum KeyAction { NONE, TOGGLE, REBOOT };
-
-    // // Called in the input thread when a new key (key_code) is
-    // // pressed.  *key_pressed is an array of KEY_MAX+1 bytes
-    // // indicating which other keys are already pressed.  Return a
-    // // KeyAction to indicate action should be taken immediately.
-    // // These actions happen when recovery is not waiting for input
-    // // (eg, in the midst of installing a package).
-    // virtual KeyAction CheckImmediateKeyAction(volatile char* key_pressed, int key_code) = 0;
 
     // Called from the main thread when recovery is at the main menu
     // and waiting for input, and a key is pressed.  (Note that "at"
@@ -63,12 +54,26 @@ class Device {
     //   - invoke the highlighted item (kInvokeItem)
     //   - do nothing (kNoAction)
     //   - invoke a specific action (a menu position: any non-negative number)
-    virtual int HandleMenuKey(int key, int visible) = 0;
+    virtual int HandleMenuKey(int key, int visible);
 
-    enum BuiltinAction { NO_ACTION, REBOOT, APPLY_EXT,
-                         APPLY_CACHE,   // APPLY_CACHE is deprecated; has no effect
-                         APPLY_ADB_SIDELOAD, WIPE_DATA, WIPE_CACHE,
-                         REBOOT_BOOTLOADER, SHUTDOWN, READ_RECOVERY_LASTLOG };
+    enum BuiltinAction {
+        NO_ACTION = 0,
+        REBOOT = 1,
+        APPLY_SDCARD = 2,
+        // APPLY_CACHE was 3.
+        APPLY_ADB_SIDELOAD = 4,
+        WIPE_DATA = 5,
+        WIPE_CACHE = 6,
+        REBOOT_BOOTLOADER = 7,
+        SHUTDOWN = 8,
+        VIEW_RECOVERY_LOGS = 9,
+        MOUNT_SYSTEM = 10,
+    };
+
+    // Return the list of menu items (an array of strings,
+    // NULL-terminated).  The menu_position passed to InvokeMenuItem
+    // will correspond to the indexes into this array.
+    virtual const char* const* GetMenuItems();
 
     // Perform a recovery action selected from the menu.
     // 'menu_position' will be the item number of the selected menu
@@ -79,31 +84,26 @@ class Device {
     // builtin actions, you can just return the corresponding enum
     // value.  If it is an action specific to your device, you
     // actually perform it here and return NO_ACTION.
-    virtual BuiltinAction InvokeMenuItem(int menu_position) = 0;
+    virtual BuiltinAction InvokeMenuItem(int menu_position);
 
     static const int kNoAction = -1;
     static const int kHighlightUp = -2;
     static const int kHighlightDown = -3;
     static const int kInvokeItem = -4;
 
-    // Called when we do a wipe data/factory reset operation (either via a
-    // reboot from the main system with the --wipe_data flag, or when the
-    // user boots into recovery manually and selects the option from the
-    // menu.)  Can perform whatever device-specific wiping actions are
-    // needed.  Return 0 on success.  The userdata and cache partitions
-    // are erased AFTER this returns (whether it returns success or not).
-    virtual int WipeData() { return 0; }
+    // Called before and after we do a wipe data/factory reset operation,
+    // either via a reboot from the main system with the --wipe_data flag,
+    // or when the user boots into recovery image manually and selects the
+    // option from the menu, to perform whatever device-specific wiping
+    // actions are needed.
+    // Return true on success; returning false from PreWipeData will prevent
+    // the regular wipe, and returning false from PostWipeData will cause
+    // the wipe to be considered a failure.
+    virtual bool PreWipeData() { return true; }
+    virtual bool PostWipeData() { return true; }
 
-    // Return the headers (an array of strings, one per line,
-    // NULL-terminated) for the main menu.  Typically these tell users
-    // what to push to move the selection and invoke the selected
-    // item.
-    virtual const char* const* GetMenuHeaders() = 0;
-
-    // Return the list of menu items (an array of strings,
-    // NULL-terminated).  The menu_position passed to InvokeMenuItem
-    // will correspond to the indexes into this array.
-    virtual const char* const* GetMenuItems() = 0;
+  private:
+    RecoveryUI* ui_;
 };
 
 // The device-specific library must define this function (or the

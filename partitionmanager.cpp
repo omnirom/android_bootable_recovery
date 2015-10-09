@@ -309,7 +309,7 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 	if (!Part->Fstab_File_System.empty())
 		printf("   Fstab_File_System: %s\n", Part->Fstab_File_System.c_str());
 	if (Part->Format_Block_Size != 0)
-		printf("   Format_Block_Size: %i\n", Part->Format_Block_Size);
+		printf("   Format_Block_Size: %lu\n", Part->Format_Block_Size);
 	if (!Part->MTD_Name.empty())
 		printf("   MTD_Name: %s\n", Part->MTD_Name.c_str());
 	string back_meth = Part->Backup_Method_By_Name();

@@ -39,36 +39,43 @@
 // Recovery can take this block map file and retrieve the underlying
 // file data to use as an update package.
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <linux/fs.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#define LOG_TAG "uncrypt"
-#include <log/log.h>
+#include <base/file.h>
+#include <base/strings.h>
 #include <cutils/properties.h>
 #include <fs_mgr.h>
+#define LOG_TAG "uncrypt"
+#include <log/log.h>
 
 #define WINDOW_SIZE 5
-#define RECOVERY_COMMAND_FILE "/cache/recovery/command"
-#define RECOVERY_COMMAND_FILE_TMP "/cache/recovery/command.tmp"
-#define CACHE_BLOCK_MAP "/cache/recovery/block.map"
+
+static const std::string cache_block_map = "/cache/recovery/block.map";
+static const std::string status_file = "/cache/recovery/uncrypt_status";
+static const std::string uncrypt_file = "/cache/recovery/uncrypt_file";
 
 static struct fstab* fstab = NULL;
 
-static int write_at_offset(unsigned char* buffer, size_t size,
-                           int wfd, off64_t offset)
-{
-    lseek64(wfd, offset, SEEK_SET);
+static int write_at_offset(unsigned char* buffer, size_t size, int wfd, off64_t offset) {
+    if (TEMP_FAILURE_RETRY(lseek64(wfd, offset, SEEK_SET)) == -1) {
+        ALOGE("error seeking to offset %lld: %s\n", offset, strerror(errno));
+        return -1;
+    }
     size_t written = 0;
     while (written < size) {
-        ssize_t wrote = write(wfd, buffer + written, size - written);
-        if (wrote < 0) {
-            ALOGE("error writing offset %lld: %s\n", offset, strerror(errno));
+        ssize_t wrote = TEMP_FAILURE_RETRY(write(wfd, buffer + written, size - written));
+        if (wrote == -1) {
+            ALOGE("error writing offset %lld: %s\n", (offset + written), strerror(errno));
             return -1;
         }
         written += wrote;
@@ -76,8 +83,7 @@ static int write_at_offset(unsigned char* buffer, size_t size,
     return 0;
 }
 
-void add_block_to_ranges(int** ranges, int* range_alloc, int* range_used, int new_block)
-{
+static void add_block_to_ranges(int** ranges, int* range_alloc, int* range_used, int new_block) {
     // If the current block start is < 0, set the start to the new
     // block.  (This only happens for the very first block of the very
     // first range.)
@@ -96,7 +102,7 @@ void add_block_to_ranges(int** ranges, int* range_alloc, int* range_used, int ne
         // If there isn't enough room in the array, we need to expand it.
         if (*range_used >= *range_alloc) {
             *range_alloc *= 2;
-            *ranges = realloc(*ranges, *range_alloc * 2 * sizeof(int));
+            *ranges = reinterpret_cast<int*>(realloc(*ranges, *range_alloc * 2 * sizeof(int)));
         }
 
         ++*range_used;
@@ -105,8 +111,7 @@ void add_block_to_ranges(int** ranges, int* range_alloc, int* range_used, int ne
     }
 }
 
-static struct fstab* read_fstab()
-{
+static struct fstab* read_fstab() {
     fstab = NULL;
 
     // The fstab path is always "/fstab.${ro.hardware}".
@@ -125,26 +130,26 @@ static struct fstab* read_fstab()
     return fstab;
 }
 
-const char* find_block_device(const char* path, int* encryptable, int* encrypted)
-{
+static const char* find_block_device(const char* path, bool* encryptable, bool* encrypted) {
     // Look for a volume whose mount point is the prefix of path and
     // return its block device.  Set encrypted if it's currently
     // encrypted.
-    int i;
-    for (i = 0; i < fstab->num_entries; ++i) {
+    for (int i = 0; i < fstab->num_entries; ++i) {
         struct fstab_rec* v = &fstab->recs[i];
-        if (!v->mount_point) continue;
+        if (!v->mount_point) {
+            continue;
+        }
         int len = strlen(v->mount_point);
         if (strncmp(path, v->mount_point, len) == 0 &&
             (path[len] == '/' || path[len] == 0)) {
-            *encrypted = 0;
-            *encryptable = 0;
+            *encrypted = false;
+            *encryptable = false;
             if (fs_mgr_is_encryptable(v)) {
-                *encryptable = 1;
+                *encryptable = true;
                 char buffer[PROPERTY_VALUE_MAX+1];
                 if (property_get("ro.crypto.state", buffer, "") &&
                     strcmp(buffer, "encrypted") == 0) {
-                    *encrypted = 1;
+                    *encrypted = true;
                 }
             }
             return v->blk_device;
@@ -154,56 +159,37 @@ const char* find_block_device(const char* path, int* encryptable, int* encrypted
     return NULL;
 }
 
-char* parse_recovery_command_file()
+// Parse uncrypt_file to find the update package name.
+static bool find_uncrypt_package(std::string& package_name)
 {
-    char* fn = NULL;
-    int count = 0;
-    char temp[1024];
+    if (!android::base::ReadFileToString(uncrypt_file, &package_name)) {
+        ALOGE("failed to open \"%s\": %s\n", uncrypt_file.c_str(), strerror(errno));
+        return false;
+    }
 
-    FILE* f = fopen(RECOVERY_COMMAND_FILE, "r");
-    if (f == NULL) {
-        return NULL;
-    }
-    int fd = open(RECOVERY_COMMAND_FILE_TMP, O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
-    if (fd < 0) {
-        ALOGE("failed to open %s\n", RECOVERY_COMMAND_FILE_TMP);
-        return NULL;
-    }
-    FILE* fo = fdopen(fd, "w");
+    // Remove the trailing '\n' if present.
+    package_name = android::base::Trim(package_name);
 
-    while (fgets(temp, sizeof(temp), f)) {
-        printf("read: %s", temp);
-        if (strncmp(temp, "--update_package=/data/", strlen("--update_package=/data/")) == 0) {
-            fn = strdup(temp + strlen("--update_package="));
-            strcpy(temp, "--update_package=@" CACHE_BLOCK_MAP "\n");
-        }
-        fputs(temp, fo);
-    }
-    fclose(f);
-    fsync(fd);
-    fclose(fo);
-
-    if (fn) {
-        char* newline = strchr(fn, '\n');
-        if (newline) *newline = 0;
-    }
-    return fn;
+    return true;
 }
 
-int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
-                      int encrypted)
-{
-    struct stat sb;
-    int ret;
-
+static int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
+                             bool encrypted, int status_fd) {
     int mapfd = open(map_file, O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
-    if (mapfd < 0) {
+    if (mapfd == -1) {
         ALOGE("failed to open %s\n", map_file);
         return -1;
     }
     FILE* mapf = fdopen(mapfd, "w");
 
-    ret = stat(path, &sb);
+    // Make sure we can write to the status_file.
+    if (!android::base::WriteStringToFd("0\n", status_fd)) {
+        ALOGE("failed to update \"%s\"\n", status_file.c_str());
+        return -1;
+    }
+
+    struct stat sb;
+    int ret = stat(path, &sb);
     if (ret != 0) {
         ALOGE("failed to stat %s\n", path);
         return -1;
@@ -214,20 +200,18 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
     int blocks = ((sb.st_size-1) / sb.st_blksize) + 1;
     ALOGI("  file size: %lld bytes, %d blocks\n", (long long)sb.st_size, blocks);
 
-    int* ranges;
     int range_alloc = 1;
     int range_used = 1;
-    ranges = malloc(range_alloc * 2 * sizeof(int));
+    int* ranges = reinterpret_cast<int*>(malloc(range_alloc * 2 * sizeof(int)));
     ranges[0] = -1;
     ranges[1] = -1;
 
     fprintf(mapf, "%s\n%lld %lu\n", blk_dev, (long long)sb.st_size, (unsigned long)sb.st_blksize);
 
     unsigned char* buffers[WINDOW_SIZE];
-    int i;
     if (encrypted) {
-        for (i = 0; i < WINDOW_SIZE; ++i) {
-            buffers[i] = malloc(sb.st_blksize);
+        for (size_t i = 0; i < WINDOW_SIZE; ++i) {
+            buffers[i] = reinterpret_cast<unsigned char*>(malloc(sb.st_blksize));
         }
     }
     int head_block = 0;
@@ -239,7 +223,6 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         ALOGE("failed to open fd for reading: %s\n", strerror(errno));
         return -1;
     }
-    fsync(fd);
 
     int wfd = -1;
     if (encrypted) {
@@ -250,7 +233,15 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         }
     }
 
+    int last_progress = 0;
     while (pos < sb.st_size) {
+        // Update the status file, progress must be between [0, 99].
+        int progress = static_cast<int>(100 * (double(pos) / double(sb.st_size)));
+        if (progress > last_progress) {
+          last_progress = progress;
+          android::base::WriteStringToFd(std::to_string(progress) + "\n", status_fd);
+        }
+
         if ((tail+1) % WINDOW_SIZE == head) {
             // write out head buffer
             int block = head_block;
@@ -261,7 +252,8 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
             }
             add_block_to_ranges(&ranges, &range_alloc, &range_used, block);
             if (encrypted) {
-                if (write_at_offset(buffers[head], sb.st_blksize, wfd, (off64_t)sb.st_blksize * block) != 0) {
+                if (write_at_offset(buffers[head], sb.st_blksize, wfd,
+                        (off64_t)sb.st_blksize * block) != 0) {
                     return -1;
                 }
             }
@@ -273,8 +265,9 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         if (encrypted) {
             size_t so_far = 0;
             while (so_far < sb.st_blksize && pos < sb.st_size) {
-                ssize_t this_read = read(fd, buffers[tail] + so_far, sb.st_blksize - so_far);
-                if (this_read < 0) {
+                ssize_t this_read =
+                        TEMP_FAILURE_RETRY(read(fd, buffers[tail] + so_far, sb.st_blksize - so_far));
+                if (this_read == -1) {
                     ALOGE("failed to read: %s\n", strerror(errno));
                     return -1;
                 }
@@ -300,7 +293,8 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
         }
         add_block_to_ranges(&ranges, &range_alloc, &range_used, block);
         if (encrypted) {
-            if (write_at_offset(buffers[head], sb.st_blksize, wfd, (off64_t)sb.st_blksize * block) != 0) {
+            if (write_at_offset(buffers[head], sb.st_blksize, wfd,
+                    (off64_t)sb.st_blksize * block) != 0) {
                 return -1;
             }
         }
@@ -309,25 +303,30 @@ int produce_block_map(const char* path, const char* map_file, const char* blk_de
     }
 
     fprintf(mapf, "%d\n", range_used);
-    for (i = 0; i < range_used; ++i) {
+    for (int i = 0; i < range_used; ++i) {
         fprintf(mapf, "%d %d\n", ranges[i*2], ranges[i*2+1]);
     }
 
-    fsync(mapfd);
+    if (fsync(mapfd) == -1) {
+        ALOGE("failed to fsync \"%s\": %s\n", map_file, strerror(errno));
+        return -1;
+    }
     fclose(mapf);
     close(fd);
     if (encrypted) {
-        fsync(wfd);
+        if (fsync(wfd) == -1) {
+            ALOGE("failed to fsync \"%s\": %s\n", blk_dev, strerror(errno));
+            return -1;
+        }
         close(wfd);
     }
 
     return 0;
 }
 
-void wipe_misc() {
+static void wipe_misc() {
     ALOGI("removing old commands from misc");
-    int i;
-    for (i = 0; i < fstab->num_entries; ++i) {
+    for (int i = 0; i < fstab->num_entries; ++i) {
         struct fstab_rec* v = &fstab->recs[i];
         if (!v->mount_point) continue;
         if (strcmp(v->mount_point, "/misc") == 0) {
@@ -338,72 +337,49 @@ void wipe_misc() {
             size_t written = 0;
             size_t size = sizeof(zeroes);
             while (written < size) {
-                ssize_t w = write(fd, zeroes, size-written);
-                if (w < 0 && errno != EINTR) {
+                ssize_t w = TEMP_FAILURE_RETRY(write(fd, zeroes, size-written));
+                if (w == -1) {
                     ALOGE("zero write failed: %s\n", strerror(errno));
                     return;
                 } else {
                     written += w;
                 }
             }
-            fsync(fd);
+            if (fsync(fd) == -1) {
+                ALOGE("failed to fsync \"%s\": %s\n", v->blk_device, strerror(errno));
+                close(fd);
+                return;
+            }
             close(fd);
         }
     }
 }
 
-void reboot_to_recovery() {
+static void reboot_to_recovery() {
     ALOGI("rebooting to recovery");
     property_set("sys.powerctl", "reboot,recovery");
     sleep(10);
     ALOGE("reboot didn't succeed?");
 }
 
-int main(int argc, char** argv)
-{
-    const char* input_path;
-    const char* map_file;
-    int do_reboot = 1;
+int uncrypt(const char* input_path, const char* map_file, int status_fd) {
 
-    if (argc != 1 && argc != 3) {
-        fprintf(stderr, "usage: %s [<transform_path> <map_file>]\n", argv[0]);
-        return 2;
-    }
-
-    if (argc == 3) {
-        // when command-line args are given this binary is being used
-        // for debugging; don't reboot to recovery at the end.
-        input_path = argv[1];
-        map_file = argv[2];
-        do_reboot = 0;
-    } else {
-        input_path = parse_recovery_command_file();
-        if (input_path == NULL) {
-            // if we're rebooting to recovery without a package (say,
-            // to wipe data), then we don't need to do anything before
-            // going to recovery.
-            ALOGI("no recovery command file or no update package arg");
-            reboot_to_recovery();
-            return 1;
-        }
-        map_file = CACHE_BLOCK_MAP;
-    }
-
-    ALOGI("update package is %s", input_path);
+    ALOGI("update package is \"%s\"", input_path);
 
     // Turn the name of the file we're supposed to convert into an
     // absolute path, so we can find what filesystem it's on.
     char path[PATH_MAX+1];
     if (realpath(input_path, path) == NULL) {
-        ALOGE("failed to convert %s to absolute path: %s", input_path, strerror(errno));
+        ALOGE("failed to convert \"%s\" to absolute path: %s", input_path, strerror(errno));
         return 1;
     }
 
-    int encryptable;
-    int encrypted;
     if (read_fstab() == NULL) {
         return 1;
     }
+
+    bool encryptable;
+    bool encrypted;
     const char* blk_dev = find_block_device(path, &encryptable, &encrypted);
     if (blk_dev == NULL) {
         ALOGE("failed to find block device for %s", path);
@@ -423,18 +399,67 @@ int main(int argc, char** argv)
     // On /data we want to convert the file to a block map so that we
     // can read the package without mounting the partition.  On /cache
     // and /sdcard we leave the file alone.
-    if (strncmp(path, "/data/", 6) != 0) {
-        // path does not start with "/data/"; leave it alone.
-        unlink(RECOVERY_COMMAND_FILE_TMP);
-    } else {
+    if (strncmp(path, "/data/", 6) == 0) {
         ALOGI("writing block map %s", map_file);
-        if (produce_block_map(path, map_file, blk_dev, encrypted) != 0) {
+        if (produce_block_map(path, map_file, blk_dev, encrypted, status_fd) != 0) {
             return 1;
         }
     }
 
-    wipe_misc();
-    rename(RECOVERY_COMMAND_FILE_TMP, RECOVERY_COMMAND_FILE);
-    if (do_reboot) reboot_to_recovery();
+    return 0;
+}
+
+int main(int argc, char** argv) {
+    const char* input_path;
+    const char* map_file;
+
+    if (argc != 3 && argc != 1 && (argc == 2 && strcmp(argv[1], "--reboot") != 0)) {
+        fprintf(stderr, "usage: %s [--reboot] [<transform_path> <map_file>]\n", argv[0]);
+        return 2;
+    }
+
+    // When uncrypt is started with "--reboot", it wipes misc and reboots.
+    // Otherwise it uncrypts the package and writes the block map.
+    if (argc == 2) {
+        if (read_fstab() == NULL) {
+            return 1;
+        }
+        wipe_misc();
+        reboot_to_recovery();
+    } else {
+        // The pipe has been created by the system server.
+        int status_fd = open(status_file.c_str(), O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
+        if (status_fd == -1) {
+            ALOGE("failed to open pipe \"%s\": %s\n", status_file.c_str(), strerror(errno));
+            return 1;
+        }
+
+        if (argc == 3) {
+            // when command-line args are given this binary is being used
+            // for debugging.
+            input_path = argv[1];
+            map_file = argv[2];
+        } else {
+            std::string package;
+            if (!find_uncrypt_package(package)) {
+                android::base::WriteStringToFd("-1\n", status_fd);
+                close(status_fd);
+                return 1;
+            }
+            input_path = package.c_str();
+            map_file = cache_block_map.c_str();
+        }
+
+        int status = uncrypt(input_path, map_file, status_fd);
+        if (status != 0) {
+            android::base::WriteStringToFd("-1\n", status_fd);
+            close(status_fd);
+            return 1;
+        }
+
+        android::base::WriteStringToFd("100\n", status_fd);
+        close(status_fd);
+    }
+
     return 0;
 }

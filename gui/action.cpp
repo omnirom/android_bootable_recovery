@@ -49,7 +49,6 @@ extern "C" {
 #include "../variables.h"
 #include "../twinstall.h"
 #include "cutils/properties.h"
-#include "../minadbd/adb.h"
 #include "../adb_install.h"
 #include "../set_metadata.h"
 };

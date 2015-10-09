@@ -14,74 +14,9 @@
  * limitations under the License.
  */
 
-#include <linux/input.h>
-
-#include "common.h"
 #include "device.h"
 #include "screen_ui.h"
 
-static const char* HEADERS[] = { "Volume up/down to move highlight;",
-                                 "enter button to select.",
-                                 "",
-                                 NULL };
-
-static const char* ITEMS[] =  {"reboot system now",
-                               "apply update from ADB",
-                               "wipe data/factory reset",
-                               "wipe cache partition",
-                               "reboot to bootloader",
-                               "power down",
-                               "view recovery logs",
-                               NULL };
-
-class DefaultDevice : public Device {
-  public:
-    DefaultDevice() :
-        ui(new ScreenRecoveryUI) {
-    }
-
-    RecoveryUI* GetUI() { return ui; }
-
-    int HandleMenuKey(int key, int visible) {
-        if (visible) {
-            switch (key) {
-              case KEY_DOWN:
-              case KEY_VOLUMEDOWN:
-                return kHighlightDown;
-
-              case KEY_UP:
-              case KEY_VOLUMEUP:
-                return kHighlightUp;
-
-              case KEY_ENTER:
-              case KEY_POWER:
-                return kInvokeItem;
-            }
-        }
-
-        return kNoAction;
-    }
-
-    BuiltinAction InvokeMenuItem(int menu_position) {
-        switch (menu_position) {
-          case 0: return REBOOT;
-          case 1: return APPLY_ADB_SIDELOAD;
-          case 2: return WIPE_DATA;
-          case 3: return WIPE_CACHE;
-          case 4: return REBOOT_BOOTLOADER;
-          case 5: return SHUTDOWN;
-          case 6: return READ_RECOVERY_LASTLOG;
-          default: return NO_ACTION;
-        }
-    }
-
-    const char* const* GetMenuHeaders() { return HEADERS; }
-    const char* const* GetMenuItems() { return ITEMS; }
-
-  private:
-    RecoveryUI* ui;
-};
-
 Device* make_device() {
-    return new DefaultDevice();
+  return new Device(new ScreenRecoveryUI);
 }

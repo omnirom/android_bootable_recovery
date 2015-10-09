@@ -43,7 +43,16 @@
 #include "cryptfs.h"
 #include "cutils/properties.h"
 #include "crypto_scrypt.h"
+
+#ifndef TW_CRYPTO_HAVE_KEYMASTERX
 #include <hardware/keymaster.h>
+#else
+#include <stdbool.h>
+#include <openssl/evp.h>
+#include <openssl/sha.h>
+#include <hardware/keymaster0.h>
+#include <hardware/keymaster1.h>
+#endif
 
 #ifndef min /* already defined by windows.h */
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -76,6 +85,7 @@
 #define RSA_KEY_SIZE 2048
 #define RSA_KEY_SIZE_BYTES (RSA_KEY_SIZE / 8)
 #define RSA_EXPONENT 0x10001
+#define KEYMASTER_CRYPTFS_RATE_LIMIT 1  // Maximum one try per second
 
 #define RETRY_MOUNT_ATTEMPTS 10
 #define RETRY_MOUNT_DELAY_SECONDS 1
@@ -97,6 +107,7 @@ void set_partition_data(const char* block_device, const char* key_location, cons
   strcpy(file_system, fs);
 }
 
+#ifndef TW_CRYPTO_HAVE_KEYMASTERX
 static int keymaster_init(keymaster_device_t **keymaster_dev)
 {
     int rc;
@@ -279,6 +290,308 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
     keymaster_close(keymaster_dev);
     return rc;
 }
+#else //#ifndef TW_CRYPTO_HAVE_KEYMASTERX
+static int keymaster_init(keymaster0_device_t **keymaster0_dev,
+                          keymaster1_device_t **keymaster1_dev)
+{
+    int rc;
+
+    const hw_module_t* mod;
+    rc = hw_get_module_by_class(KEYSTORE_HARDWARE_MODULE_ID, NULL, &mod);
+    if (rc) {
+        printf("could not find any keystore module\n");
+        goto err;
+    }
+
+    printf("keymaster module name is %s\n", mod->name);
+    printf("keymaster version is %d\n", mod->module_api_version);
+
+    *keymaster0_dev = NULL;
+    *keymaster1_dev = NULL;
+    if (mod->module_api_version == KEYMASTER_MODULE_API_VERSION_1_0) {
+        printf("Found keymaster1 module, using keymaster1 API.\n");
+        rc = keymaster1_open(mod, keymaster1_dev);
+    } else {
+        printf("Found keymaster0 module, using keymaster0 API.\n");
+        rc = keymaster0_open(mod, keymaster0_dev);
+    }
+
+    if (rc) {
+        printf("could not open keymaster device in %s (%s)\n",
+              KEYSTORE_HARDWARE_MODULE_ID, strerror(-rc));
+        goto err;
+    }
+
+    return 0;
+
+err:
+    *keymaster0_dev = NULL;
+    *keymaster1_dev = NULL;
+    return rc;
+}
+
+/* Should we use keymaster? */
+static int keymaster_check_compatibility()
+{
+    keymaster0_device_t *keymaster0_dev = 0;
+    keymaster1_device_t *keymaster1_dev = 0;
+    int rc = 0;
+
+    if (keymaster_init(&keymaster0_dev, &keymaster1_dev)) {
+        printf("Failed to init keymaster\n");
+        rc = -1;
+        goto out;
+    }
+
+    if (keymaster1_dev) {
+        rc = 1;
+        goto out;
+    }
+
+    // TODO(swillden): Check to see if there's any reason to require v0.3.  I think v0.1 and v0.2
+    // should work.
+    if (keymaster0_dev->common.module->module_api_version
+            < KEYMASTER_MODULE_API_VERSION_0_3) {
+        rc = 0;
+        goto out;
+    }
+
+    if (!(keymaster0_dev->flags & KEYMASTER_SOFTWARE_ONLY) &&
+        (keymaster0_dev->flags & KEYMASTER_BLOBS_ARE_STANDALONE)) {
+        rc = 1;
+    }
+
+out:
+    if (keymaster1_dev) {
+        keymaster1_close(keymaster1_dev);
+    }
+    if (keymaster0_dev) {
+        keymaster0_close(keymaster0_dev);
+    }
+    return rc;
+}
+
+/* Create a new keymaster key and store it in this footer */
+static int keymaster_create_key(struct crypt_mnt_ftr *ftr)
+{
+    uint8_t* key = 0;
+    keymaster0_device_t *keymaster0_dev = 0;
+    keymaster1_device_t *keymaster1_dev = 0;
+
+    if (keymaster_init(&keymaster0_dev, &keymaster1_dev)) {
+        printf("Failed to init keymaster\n");
+        return -1;
+    }
+
+    int rc = 0;
+    size_t key_size = 0;
+    if (keymaster1_dev) {
+        keymaster_key_param_t params[] = {
+            /* Algorithm & size specifications.  Stick with RSA for now.  Switch to AES later. */
+            keymaster_param_enum(KM_TAG_ALGORITHM, KM_ALGORITHM_RSA),
+            keymaster_param_int(KM_TAG_KEY_SIZE, RSA_KEY_SIZE),
+            keymaster_param_long(KM_TAG_RSA_PUBLIC_EXPONENT, RSA_EXPONENT),
+
+	    /* The only allowed purpose for this key is signing. */
+	    keymaster_param_enum(KM_TAG_PURPOSE, KM_PURPOSE_SIGN),
+
+            /* Padding & digest specifications. */
+            keymaster_param_enum(KM_TAG_PADDING, KM_PAD_NONE),
+            keymaster_param_enum(KM_TAG_DIGEST, KM_DIGEST_NONE),
+
+            /* Require that the key be usable in standalone mode.  File system isn't available. */
+            keymaster_param_enum(KM_TAG_BLOB_USAGE_REQUIREMENTS, KM_BLOB_STANDALONE),
+
+            /* No auth requirements, because cryptfs is not yet integrated with gatekeeper. */
+            keymaster_param_bool(KM_TAG_NO_AUTH_REQUIRED),
+
+            /* Rate-limit key usage attempts, to rate-limit brute force */
+            keymaster_param_int(KM_TAG_MIN_SECONDS_BETWEEN_OPS, KEYMASTER_CRYPTFS_RATE_LIMIT),
+        };
+        keymaster_key_param_set_t param_set = { params, sizeof(params)/sizeof(*params) };
+        keymaster_key_blob_t key_blob;
+        keymaster_error_t error = keymaster1_dev->generate_key(keymaster1_dev, &param_set,
+                                                               &key_blob,
+                                                               NULL /* characteristics */);
+        if (error != KM_ERROR_OK) {
+            printf("Failed to generate keymaster1 key, error %d\n", error);
+            rc = -1;
+            goto out;
+        }
+
+        key = (uint8_t*)key_blob.key_material;
+        key_size = key_blob.key_material_size;
+    }
+    else if (keymaster0_dev) {
+        keymaster_rsa_keygen_params_t params;
+        memset(&params, '\0', sizeof(params));
+        params.public_exponent = RSA_EXPONENT;
+        params.modulus_size = RSA_KEY_SIZE;
+
+        if (keymaster0_dev->generate_keypair(keymaster0_dev, TYPE_RSA, &params,
+                                             &key, &key_size)) {
+            printf("Failed to generate keypair\n");
+            rc = -1;
+            goto out;
+        }
+    } else {
+        printf("Cryptfs bug: keymaster_init succeeded but didn't initialize a device\n");
+        rc = -1;
+        goto out;
+    }
+
+    if (key_size > KEYMASTER_BLOB_SIZE) {
+        printf("Keymaster key too large for crypto footer\n");
+        rc = -1;
+        goto out;
+    }
+
+    memcpy(ftr->keymaster_blob, key, key_size);
+    ftr->keymaster_blob_size = key_size;
+
+out:
+    if (keymaster0_dev)
+        keymaster0_close(keymaster0_dev);
+    if (keymaster1_dev)
+        keymaster1_close(keymaster1_dev);
+    free(key);
+    return rc;
+}
+
+/* This signs the given object using the keymaster key. */
+static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
+                                 const unsigned char *object,
+                                 const size_t object_size,
+                                 unsigned char **signature,
+                                 size_t *signature_size)
+{
+    int rc = 0;
+    keymaster0_device_t *keymaster0_dev = 0;
+    keymaster1_device_t *keymaster1_dev = 0;
+    if (keymaster_init(&keymaster0_dev, &keymaster1_dev)) {
+        printf("Failed to init keymaster\n");
+        rc = -1;
+        goto out;
+    }
+
+    unsigned char to_sign[RSA_KEY_SIZE_BYTES];
+    size_t to_sign_size = sizeof(to_sign);
+    memset(to_sign, 0, RSA_KEY_SIZE_BYTES);
+
+    // To sign a message with RSA, the message must satisfy two
+    // constraints:
+    //
+    // 1. The message, when interpreted as a big-endian numeric value, must
+    //    be strictly less than the public modulus of the RSA key.  Note
+    //    that because the most significant bit of the public modulus is
+    //    guaranteed to be 1 (else it's an (n-1)-bit key, not an n-bit
+    //    key), an n-bit message with most significant bit 0 always
+    //    satisfies this requirement.
+    //
+    // 2. The message must have the same length in bits as the public
+    //    modulus of the RSA key.  This requirement isn't mathematically
+    //    necessary, but is necessary to ensure consistency in
+    //    implementations.
+    switch (ftr->kdf_type) {
+        case KDF_SCRYPT_KEYMASTER:
+            // This ensures the most significant byte of the signed message
+            // is zero.  We could have zero-padded to the left instead, but
+            // this approach is slightly more robust against changes in
+            // object size.  However, it's still broken (but not unusably
+            // so) because we really should be using a proper deterministic
+            // RSA padding function, such as PKCS1.
+            memcpy(to_sign + 1, object, min(RSA_KEY_SIZE_BYTES - 1, object_size));
+            printf("Signing safely-padded object\n");
+            break;
+        default:
+            printf("Unknown KDF type %d\n", ftr->kdf_type);
+            rc = -1;
+            goto out;
+    }
+
+    if (keymaster0_dev) {
+        keymaster_rsa_sign_params_t params;
+        params.digest_type = DIGEST_NONE;
+        params.padding_type = PADDING_NONE;
+
+        rc = keymaster0_dev->sign_data(keymaster0_dev,
+                                      &params,
+                                      ftr->keymaster_blob,
+                                      ftr->keymaster_blob_size,
+                                      to_sign,
+                                      to_sign_size,
+                                      signature,
+                                      signature_size);
+        goto out;
+    } else if (keymaster1_dev) {
+        keymaster_key_blob_t key = { ftr->keymaster_blob, ftr->keymaster_blob_size };
+        keymaster_key_param_t params[] = {
+            keymaster_param_enum(KM_TAG_PADDING, KM_PAD_NONE),
+            keymaster_param_enum(KM_TAG_DIGEST, KM_DIGEST_NONE),
+        };
+        keymaster_key_param_set_t param_set = { params, sizeof(params)/sizeof(*params) };
+        keymaster_operation_handle_t op_handle;
+        keymaster_error_t error = keymaster1_dev->begin(keymaster1_dev, KM_PURPOSE_SIGN, &key,
+                                                        &param_set, NULL /* out_params */,
+                                                        &op_handle);
+        if (error == KM_ERROR_KEY_RATE_LIMIT_EXCEEDED) {
+            // Key usage has been rate-limited.  Wait a bit and try again.
+            sleep(KEYMASTER_CRYPTFS_RATE_LIMIT);
+            error = keymaster1_dev->begin(keymaster1_dev, KM_PURPOSE_SIGN, &key,
+                                          &param_set, NULL /* out_params */,
+                                          &op_handle);
+        }
+        if (error != KM_ERROR_OK) {
+            printf("Error starting keymaster signature transaction: %d\n", error);
+            rc = -1;
+            goto out;
+        }
+
+        keymaster_blob_t input = { to_sign, to_sign_size };
+        size_t input_consumed;
+        error = keymaster1_dev->update(keymaster1_dev, op_handle, NULL /* in_params */,
+                                       &input, &input_consumed, NULL /* out_params */,
+                                       NULL /* output */);
+        if (error != KM_ERROR_OK) {
+            printf("Error sending data to keymaster signature transaction: %d\n", error);
+            rc = -1;
+            goto out;
+        }
+        if (input_consumed != to_sign_size) {
+            // This should never happen.  If it does, it's a bug in the keymaster implementation.
+            printf("Keymaster update() did not consume all data.\n");
+            keymaster1_dev->abort(keymaster1_dev, op_handle);
+            rc = -1;
+            goto out;
+        }
+
+        keymaster_blob_t tmp_sig;
+        error = keymaster1_dev->finish(keymaster1_dev, op_handle, NULL /* in_params */,
+                                       NULL /* verify signature */, NULL /* out_params */,
+                                       &tmp_sig);
+        if (error != KM_ERROR_OK) {
+            printf("Error finishing keymaster signature transaction: %d\n", error);
+            rc = -1;
+            goto out;
+        }
+
+        *signature = (uint8_t*)tmp_sig.data;
+        *signature_size = tmp_sig.data_length;
+    } else {
+        printf("Cryptfs bug: keymaster_init succeded but didn't initialize a device.\n");
+        rc = -1;
+        goto out;
+    }
+
+    out:
+        if (keymaster1_dev)
+            keymaster1_close(keymaster1_dev);
+        if (keymaster0_dev)
+            keymaster0_close(keymaster0_dev);
+
+        return rc;
+}
+#endif //#ifndef TW_CRYPTO_HAVE_KEYMASTERX
 
 /* Store password when userdata is successfully decrypted and mounted.
  * Cleared by cryptfs_clear_password
@@ -352,7 +665,7 @@ static void get_device_scrypt_params(struct crypt_mnt_ftr *ftr) {
          * taken.
          */
         if ((i != 3) || (token != NULL)) {
-            printf("bad scrypt parameters '%s' should be like '12:8:1'; using defaults", paramstr);
+            printf("bad scrypt parameters '%s' should be like '12:8:1'; using defaults\n", paramstr);
             memcpy(params, default_params, sizeof(params));
         }
     }
@@ -526,13 +839,13 @@ static unsigned char* convert_hex_ascii_to_key(const char* master_key_ascii,
 
     size_t size = strlen (master_key_ascii);
     if (size % 2) {
-        printf("Trying to convert ascii string of odd length");
+        printf("Trying to convert ascii string of odd length\n");
         return NULL;
     }
 
     unsigned char* master_key = (unsigned char*) malloc(size / 2);
     if (master_key == 0) {
-        printf("Cannot allocate");
+        printf("Cannot allocate\n");
         return NULL;
     }
 
@@ -541,7 +854,7 @@ static unsigned char* convert_hex_ascii_to_key(const char* master_key_ascii,
         int low_nibble = hexdigit (master_key_ascii[i + 1]);
 
         if(high_nibble < 0 || low_nibble < 0) {
-            printf("Invalid hex string");
+            printf("Invalid hex string\n");
             free (master_key);
             return NULL;
         }
@@ -818,7 +1131,7 @@ errout:
 static int pbkdf2(const char *passwd, const unsigned char *salt,
                   unsigned char *ikey, void *params UNUSED)
 {
-    printf("Using pbkdf2 for cryptfs KDF");
+    printf("Using pbkdf2 for cryptfs KDF\n");
 
     /* Turn the password into a key and IV that can decrypt the master key */
     unsigned int keysize;
@@ -922,25 +1235,25 @@ static int encrypt_master_key(const char *passwd, const unsigned char *salt,
     case KDF_SCRYPT_KEYMASTER_BADLY_PADDED:
     case KDF_SCRYPT_KEYMASTER:
         if (keymaster_create_key(crypt_ftr)) {
-            printf("keymaster_create_key failed");
+            printf("keymaster_create_key failed\n");
             return -1;
         }
 
         if (scrypt_keymaster(passwd, salt, ikey, crypt_ftr)) {
-            printf("scrypt failed");
+            printf("scrypt failed\n");
             return -1;
         }
         break;
 
     case KDF_SCRYPT:
         if (scrypt(passwd, salt, ikey, crypt_ftr)) {
-            printf("scrypt failed");
+            printf("scrypt failed\n");
             return -1;
         }
         break;
 
     default:
-        printf("Invalid kdf_type");
+        printf("Invalid kdf_type\n");
         return -1;
     }
 
@@ -957,7 +1270,11 @@ static int encrypt_master_key(const char *passwd, const unsigned char *salt,
         printf("EVP_EncryptUpdate failed\n");
         return -1;
     }
+#ifndef TW_CRYPTO_HAVE_KEYMASTERX
     if (! EVP_EncryptFinal(&e_ctx, encrypted_master_key + encrypted_len, &final_len)) {
+#else
+    if (! EVP_EncryptFinal_ex(&e_ctx, encrypted_master_key + encrypted_len, &final_len)) {
+#endif
         printf("EVP_EncryptFinal failed\n");
         return -1;
     }
@@ -982,7 +1299,7 @@ static int encrypt_master_key(const char *passwd, const unsigned char *salt,
                        sizeof(crypt_ftr->scrypted_intermediate_key));
 
     if (rc) {
-      printf("encrypt_master_key: crypto_scrypt failed");
+      printf("encrypt_master_key: crypto_scrypt failed\n");
     }
 
     return 0;
@@ -1002,7 +1319,7 @@ static int decrypt_master_key_aux(char *passwd, unsigned char *salt,
   /* Turn the password into an intermediate key and IV that can decrypt the
      master key */
   if (kdf(passwd, salt, ikey, kdf_params)) {
-    printf("kdf failed");
+    printf("kdf failed\n");
     return -1;
   }
 
@@ -1016,7 +1333,11 @@ static int decrypt_master_key_aux(char *passwd, unsigned char *salt,
                             encrypted_master_key, KEY_LEN_BYTES)) {
     return -1;
   }
+#ifndef TW_CRYPTO_HAVE_KEYMASTERX
   if (! EVP_DecryptFinal(&d_ctx, decrypted_master_key + decrypted_len, &final_len)) {
+#else
+  if (! EVP_DecryptFinal_ex(&d_ctx, decrypted_master_key + decrypted_len, &final_len)) {
+#endif
     return -1;
   }
 
@@ -1066,7 +1387,7 @@ static int decrypt_master_key(char *passwd, unsigned char *decrypted_master_key,
                                  decrypted_master_key, kdf, kdf_params,
                                  intermediate_key, intermediate_key_size);
     if (ret != 0) {
-        printf("failure decrypting master key");
+        printf("failure decrypting master key\n");
     }
 
     return ret;
@@ -1396,7 +1717,7 @@ int cryptfs_check_passwd(char *passwd)
                 // cryptfs_changepw also adjusts so pass original
                 // Note that adjust_passwd only recognises patterns
                 // so we can safely use CRYPT_TYPE_PATTERN
-                printf("TWRP NOT Updating pattern to new format");
+                printf("TWRP NOT Updating pattern to new format\n");
                 //cryptfs_changepw(CRYPT_TYPE_PATTERN, passwd);
             } else if (hex_passwd) {
                 //printf("trying hex_passwd '%s'\n", hex_passwd);
@@ -1445,17 +1766,17 @@ int cryptfs_verify_passwd(char *passwd)
 
     property_get("ro.crypto.state", encrypted_state, "");
     if (strcmp(encrypted_state, "encrypted") ) {
-        printf("device not encrypted, aborting");
+        printf("device not encrypted, aborting\n");
         return -2;
     }
 
     if (!master_key_saved) {
-        printf("encrypted fs not yet mounted, aborting");
+        printf("encrypted fs not yet mounted, aborting\n");
         return -1;
     }
 
     if (!saved_mount_point) {
-        printf("encrypted fs failed to save mount point, aborting");
+        printf("encrypted fs failed to save mount point, aborting\n");
         return -1;
     }
 
@@ -1515,7 +1836,7 @@ static int cryptfs_init_crypt_mnt_ftr(struct crypt_mnt_ftr *ftr)
         break;
 
     default:
-        printf("keymaster_check_compatibility failed");
+        printf("keymaster_check_compatibility failed\n");
         return -1;
     }
 

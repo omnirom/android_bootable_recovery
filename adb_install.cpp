@@ -29,10 +29,8 @@
 #include "ui.h"
 #include "cutils/properties.h"
 #include "adb_install.h"
-extern "C" {
 #include "minadbd/fuse_adb_provider.h"
 #include "fuse_sideload.h"
-}
 
 static RecoveryUI* ui = NULL;
 
@@ -47,7 +45,8 @@ set_usb_driver(bool enabled) {
 		printf("failed to open driver control: %s\n", strerror(errno));
         return;
     }
-    if (write(fd, enabled ? "1" : "0", 1) < 0) {
+
+    if (TEMP_FAILURE_RETRY(write(fd, enabled ? "1" : "0", 1)) == -1) {
 /*
         ui->Print("failed to set driver control: %s\n", strerror(errno));
 */
@@ -67,12 +66,15 @@ stop_adbd() {
     set_usb_driver(false);
 }
 
+bool is_ro_debuggable() {
+    char value[PROPERTY_VALUE_MAX+1];
+    return (property_get("ro.debuggable", value, NULL) == 1 && value[0] == '1');
+}
 
 void
 maybe_restart_adbd() {
     char value[PROPERTY_VALUE_MAX+1];
-    int len = property_get("ro.debuggable", value, NULL);
-    if (len == 1 && value[0] == '1') {
+    if (is_ro_debuggable()) {
         printf("Restarting adbd...\n");
         set_usb_driver(true);
         property_set("ctl.start", "adbd");

@@ -25,13 +25,12 @@ extern int yyparse(Expr** root, int* error_count);
 
 int expect(const char* expr_str, const char* expected, int* errors) {
     Expr* e;
-    int error;
     char* result;
 
     printf(".");
 
     int error_count = parse_string(expr_str, &e, &error_count);
-    if (error > 0 || error_count > 0) {
+    if (error_count > 0) {
         printf("error parsing \"%s\" (%d errors)\n",
                expr_str, error_count);
         ++*errors;

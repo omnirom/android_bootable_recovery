@@ -7,9 +7,10 @@ edify_src_files := \
 	parser.y \
 	expr.c
 
-# "-x c" forces the lex/yacc files to be compiled as c;
-# the build system otherwise forces them to be c++.
-edify_cflags := -x c
+# "-x c" forces the lex/yacc files to be compiled as c the build system
+# otherwise forces them to be c++. Need to also add an explicit -std because the
+# build system will soon default C++ to -std=c++11.
+edify_cflags := -x c -std=gnu89
 
 #
 # Build the host-side command line tool

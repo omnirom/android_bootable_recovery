@@ -38,6 +38,7 @@
 #include <map>
 #include <fstream>
 #include <sstream>
+#include <pthread.h>
 
 #include "variables.h"
 #include "data.hpp"
@@ -76,7 +77,11 @@ int                                     DataManager::mInitialized = 0;
 
 extern bool datamedia;
 
+#ifndef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
 pthread_mutex_t DataManager::m_valuesLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
+#else
+pthread_mutex_t DataManager::m_valuesLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+#endif
 
 // Device ID functions
 void DataManager::sanitize_device_id(char* device_id) {

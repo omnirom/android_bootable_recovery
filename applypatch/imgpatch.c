@@ -21,6 +21,7 @@
 #include <sys/cdefs.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <malloc.h>
 #include <unistd.h>
 #include <string.h>
 

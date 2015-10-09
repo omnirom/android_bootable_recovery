@@ -30,6 +30,7 @@ extern "C" {
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 // fake Volume struct that allows us to use the AOSP code easily
 struct Volume

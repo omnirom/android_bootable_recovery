@@ -23,13 +23,10 @@
 #include "cryptfs.h"
 #include "cutils/properties.h"
 #include "crypto_scrypt.h"
-#include <hardware/keymaster.h>
 
 int main() {
-	printf("blah\n");
-	set_partition_data("/dev/block/mmcblk0p28", "/dev/block/mmcblk0p27", "ext4");
-	printf("blah2\n");
-	int ret = cryptfs_check_passwd("30303030");
-	//int ret = cryptfs_check_passwd("0000");
+	set_partition_data("/dev/block/platform/sdhci-tegra.3/by-name/UDA", "/dev/block/platform/sdhci-tegra.3/by-name/MD1", "f2fs");
+	//int ret = cryptfs_check_passwd("30303030");
+	int ret = cryptfs_check_passwd("0000");
 	return 0;
 }

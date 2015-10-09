@@ -98,5 +98,5 @@ private:
 	string password;
 
 	std::vector<TarListStruct> *ItemList;
-	int thread_id;
+	unsigned thread_id;
 };

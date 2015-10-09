@@ -154,7 +154,7 @@ endif
 
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
 LOCAL_SHARED_LIBRARIES += libz libc libcutils libjpeg libpng
-LOCAL_STATIC_LIBRARIES += libpixelflinger_static
+LOCAL_STATIC_LIBRARIES += libpixelflinger_twrp
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminuitwrp
 

@@ -24,7 +24,6 @@
 
 #include "cutils/properties.h"
 extern "C" {
-#include "minadbd/adb.h"
 #include "bootloader.h"
 }
 
@@ -45,6 +44,13 @@ extern "C" {
 #include "openrecoveryscript.hpp"
 #include "variables.h"
 #include "twrpDU.hpp"
+#ifdef TW_USE_NEW_MINADBD
+#include "adb.h"
+#else
+extern "C" {
+#include "minadbd.old/adb.h"
+}
+#endif
 
 #ifdef HAVE_SELINUX
 #include "selinux/label.h"
@@ -78,7 +84,11 @@ int main(int argc, char **argv) {
 	// Handle ADB sideload
 	if (argc == 3 && strcmp(argv[1], "--adbd") == 0) {
 		property_set("ctl.stop", "adbd");
+#ifdef TW_USE_NEW_MINADBD
+		adb_main(0, DEFAULT_ADB_PORT);
+#else
 		adb_main(argv[2]);
+#endif
 		return 0;
 	}
 

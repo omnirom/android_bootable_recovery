@@ -2,17 +2,10 @@ import /init.recovery.usb.rc
 import /init.recovery.${ro.hardware}.rc
 
 on early-init
-    # Apply strict SELinux checking of PROT_EXEC on mmap/mprotect calls.
-    write /sys/fs/selinux/checkreqprot 0
-
-    # Set the security context for the init process.
-    # This should occur before anything else (e.g. ueventd) is started.
-    setcon u:r:init:s0
-
     start ueventd
     start healthd
 
-service set_permissive /sbin/toolbox setenforce 0
+service set_permissive /sbin/permissive.sh
     oneshot
     seclabel u:r:recovery:s0
 

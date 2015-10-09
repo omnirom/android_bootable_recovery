@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <pthread.h>
 #include <sys/mount.h>
@@ -35,19 +36,17 @@ struct file_data {
 static int read_block_file(void* cookie, uint32_t block, uint8_t* buffer, uint32_t fetch_size) {
     struct file_data* fd = (struct file_data*)cookie;
 
-    if (lseek(fd->fd, block * fd->block_size, SEEK_SET) < 0) {
-        printf("seek on sdcard failed: %s\n", strerror(errno));
+    off64_t offset = ((off64_t) block) * fd->block_size;
+    if (TEMP_FAILURE_RETRY(lseek64(fd->fd, offset, SEEK_SET)) == -1) {
+        fprintf(stderr, "seek on sdcard failed: %s\n", strerror(errno));
         return -EIO;
     }
 
     while (fetch_size > 0) {
-        ssize_t r = read(fd->fd, buffer, fetch_size);
-        if (r < 0) {
-            if (r != -EINTR) {
-                printf("read on sdcard failed: %s\n", strerror(errno));
-                return -EIO;
-            }
-            r = 0;
+        ssize_t r = TEMP_FAILURE_RETRY(read(fd->fd, buffer, fetch_size));
+        if (r == -1) {
+            fprintf(stderr, "read on sdcard failed: %s\n", strerror(errno));
+            return -EIO;
         }
         fetch_size -= r;
         buffer += r;

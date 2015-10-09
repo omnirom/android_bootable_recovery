@@ -5,6 +5,8 @@
  * Written by Karel Zak <kzak@redhat.com>
  */
 #include <ctype.h>
+#include <string.h>
+#include <libgen.h>
 
 #include "c.h"
 #include "at.h"
@@ -12,6 +14,9 @@
 #include "sysfs.h"
 #include "fileutils.h"
 #include "all-io.h"
+
+#define STRINGIFY(x) #x
+#define EXPAND(x) STRINGIFY(x)
 
 char *sysfs_devno_attribute_path(dev_t devno, char *buf,
 				 size_t bufsiz, const char *attr)
@@ -436,7 +441,7 @@ int sysfs_write_string(struct sysfs_cxt *cxt, const char *attr, const char *str)
 
 int sysfs_write_u64(struct sysfs_cxt *cxt, const char *attr, uint64_t num)
 {
-	char buf[sizeof(stringify_value(ULLONG_MAX))];
+	char buf[sizeof(STRINGIFY(ULLONG_MAX))];
 	int fd, rc = 0, len, errsv;
 
 	fd = sysfs_open(cxt, attr, O_WRONLY|O_CLOEXEC);

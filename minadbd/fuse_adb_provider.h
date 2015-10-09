@@ -17,6 +17,16 @@
 #ifndef __FUSE_ADB_PROVIDER_H
 #define __FUSE_ADB_PROVIDER_H
 
+#include <stdint.h>
+
+struct adb_data {
+    int sfd;  // file descriptor for the adb channel
+
+    uint64_t file_size;
+    uint32_t block_size;
+};
+
+int read_block_adb(void* cookie, uint32_t block, uint8_t* buffer, uint32_t fetch_size);
 int run_adb_fuse(int sfd, uint64_t file_size, uint32_t block_size);
 
 #endif

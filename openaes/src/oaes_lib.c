@@ -37,6 +37,7 @@ static const char _NR[] = {
 #include "ftime.h"
 #include <malloc.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef WIN32
 #include <process.h>

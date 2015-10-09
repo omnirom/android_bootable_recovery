@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <dirent.h>
+#include <stdlib.h>
 #include "find_file.hpp"
 #include "twrp-functions.hpp"
 #include "twcommon.h"
