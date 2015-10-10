@@ -70,6 +70,10 @@
 #define NO_STATUS         1
 #define NO_STATUS_EXIT    2
 
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 struct fuse_data {
     int ffd;   // file descriptor for the fuse socket
 
