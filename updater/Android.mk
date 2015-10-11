@@ -38,7 +38,7 @@ LOCAL_STATIC_LIBRARIES = \
     libsparse_static \
     libz
 endif
-ifneq ($(wildcard external/lz4/Android.mk),)
+ifneq ($(wildcard external/lz4/lib/Android.mk),)
     LOCAL_STATIC_LIBRARIES += liblz4-static
 endif
 endif
