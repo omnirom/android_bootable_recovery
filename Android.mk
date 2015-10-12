@@ -508,14 +508,14 @@ ifeq ($(wildcard system/core/uncrypt/Android.mk),)
     include $(commands_recovery_local_path)/uncrypt/Android.mk
 endif
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
+#ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
     include $(commands_recovery_local_path)/minadbd/Android.mk \
         $(commands_recovery_local_path)/minui/Android.mk
-else
-    TARGET_GLOBAL_CFLAGS += -DTW_USE_OLD_MINUI_H
-    include $(commands_recovery_local_path)/minadbd.old/Android.mk \
-        $(commands_recovery_local_path)/minui.old/Android.mk
-endif
+#else
+#    TARGET_GLOBAL_CFLAGS += -DTW_USE_OLD_MINUI_H
+#    include $(commands_recovery_local_path)/minadbd.old/Android.mk \
+#        $(commands_recovery_local_path)/minui.old/Android.mk
+#endif
 
 #includes for TWRP
 include $(commands_recovery_local_path)/injecttwrp/Android.mk \
