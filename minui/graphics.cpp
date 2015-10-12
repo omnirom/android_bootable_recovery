@@ -52,6 +52,10 @@ static unsigned char gr_current_r = 255;
 static unsigned char gr_current_g = 255;
 static unsigned char gr_current_b = 255;
 static unsigned char gr_current_a = 255;
+static unsigned char rgb_555[2];
+static unsigned char gr_current_r5 = 31;
+static unsigned char gr_current_g5 = 31;
+static unsigned char gr_current_b5 = 31;
 
 static GRSurface* gr_draw = NULL;
 
@@ -71,6 +75,23 @@ void gr_font_size(int *x, int *y)
     *y = gr_font->cheight;
 }
 
+void blend_16bpp(unsigned char* px, unsigned r5, unsigned g5, unsigned b5, unsigned char a)
+{
+    unsigned char orig[2];
+    orig[0] = *px;
+    //++px;
+    orig[1] = *px[1];
+    //--px;
+    unsigned oldred = ((orig[0] & 0x03) << 3) + (orig[1] >> 5);
+    unsigned oldgreen = orig[1] & 0x1F;
+    unsigned oldblue = orig[0] >> 3;
+    unsigned newred = (oldred * (255-a) + gr_current_r5 * a) / 255;
+    unsigned newgreen = (oldgreen * (255-a) + gr_current_g5 * a) / 255;
+    unsigned newblue = (oldblue * (255-a) + gr_current_b5 * a) / 255;
+    *px++ = (newblue << 3) + (newred >> 3);
+    *px++ = (newred << 5) + newgreen;
+}
+
 static void text_blend(unsigned char* src_p, int src_row_bytes,
                        unsigned char* dst_p, int dst_row_bytes,
                        int width, int height)
@@ -82,20 +103,42 @@ static void text_blend(unsigned char* src_p, int src_row_bytes,
             unsigned char a = *sx++;
             if (gr_current_a < 255) a = ((int)a * gr_current_a) / 255;
             if (a == 255) {
-                *px++ = gr_current_r;
-                *px++ = gr_current_g;
-                *px++ = gr_current_b;
-                px++;
+                if (gr_draw->pixel_bytes == 2) {
+                    *px++ = rgb_555[0];
+                    *px++ = rgb_555[1];
+                } else {
+                    *px++ = gr_current_r;
+                    *px++ = gr_current_g;
+                    *px++ = gr_current_b;
+                    px++;
+                }
             } else if (a > 0) {
-                *px = (*px * (255-a) + gr_current_r * a) / 255;
-                ++px;
-                *px = (*px * (255-a) + gr_current_g * a) / 255;
-                ++px;
-                *px = (*px * (255-a) + gr_current_b * a) / 255;
-                ++px;
-                ++px;
+                if (gr_draw->pixel_bytes == 2) {
+                    blend_16bpp(px, gr_current_r5, gr_current_g5, gr_current_b5, a);
+                    /*unsigned char orig[2];
+                    orig[0] = *px;
+                    ++px;
+                    orig[1] = *px;
+                    --px;
+                    unsigned oldred = (orig[1] >> 5) + ((orig[0] & 0x03) << 3);
+                    unsigned oldgreen = orig[1] & 0x1F;
+                    unsigned oldblue = orig[0] >> 3;
+                    unsigned newred = (oldred * (255-a) + gr_current_r5 * a) / 255;
+                    unsigned newgreen = (oldgreen * (255-a) + gr_current_g5 * a) / 255;
+                    unsigned newblue = (oldblue * (255-a) + gr_current_b5 * a) / 255;
+                    *px++ = (newblue << 3) + (newred >> 3);
+                    *px++ = (newred << 5) + newgreen;*/
+                } else {
+                    *px = (*px * (255-a) + gr_current_r * a) / 255;
+                    ++px;
+                    *px = (*px * (255-a) + gr_current_g * a) / 255;
+                    ++px;
+                    *px = (*px * (255-a) + gr_current_b * a) / 255;
+                    ++px;
+                    ++px;
+                }
             } else {
-                px += 4;
+                px += gr_draw->pixel_bytes;
             }
         }
         src_p += src_row_bytes;
@@ -155,6 +198,16 @@ void gr_texticon(int x, int y, GRSurface* icon) {
                icon->width, icon->height);
 }
 
+void gr_convert_rgb_555()
+{
+    gr_current_r5 = (((gr_current_r & 0xFF) * 0x1F) + 0x7F) / 0xFF;
+    gr_current_g5 = (((gr_current_g & 0xFF) * 0x1F) + 0x7F) / 0xFF;
+    gr_current_b5 = (((gr_current_b & 0xFF) * 0x1F) + 0x7F) / 0xFF;
+
+    rgb_555[0] = (gr_current_b5 << 3) + (gr_current_r5 >> 3);
+    rgb_555[1] = (gr_current_r5 << 5) + gr_current_g5;
+}
+
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
 #if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
@@ -168,10 +221,19 @@ void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a
     gr_current_b = b;
     gr_current_a = a;
 #endif
+    if (gr_draw->pixel_bytes == 2) {
+        gr_convert_rgb_555();
+    }
 }
 
 void gr_clear()
 {
+    if (gr_draw->pixel_bytes == 2) {
+        gr_fill(0, 0, gr_fb_width(), gr_fb_height());
+        return;
+    }
+    
+    // This code only works on 32bpp devices
     if (gr_current_r == gr_current_g && gr_current_r == gr_current_b) {
         memset(gr_draw->data, gr_current_r, gr_draw->height * gr_draw->row_bytes);
     } else {
@@ -204,10 +266,15 @@ void gr_fill(int x1, int y1, int x2, int y2)
         for (y = y1; y < y2; ++y) {
             unsigned char* px = p;
             for (x = x1; x < x2; ++x) {
-                *px++ = gr_current_r;
-                *px++ = gr_current_g;
-                *px++ = gr_current_b;
-                px++;
+                if (gr_draw->pixel_bytes == 2) {
+                    *px++ = rgb_555[0];
+                    *px++ = rgb_555[1];
+                } else {
+                    *px++ = gr_current_r;
+                    *px++ = gr_current_g;
+                    *px++ = gr_current_b;
+                    px++;
+                }
             }
             p += gr_draw->row_bytes;
         }
@@ -216,13 +283,20 @@ void gr_fill(int x1, int y1, int x2, int y2)
         for (y = y1; y < y2; ++y) {
             unsigned char* px = p;
             for (x = x1; x < x2; ++x) {
-                *px = (*px * (255-gr_current_a) + gr_current_r * gr_current_a) / 255;
-                ++px;
-                *px = (*px * (255-gr_current_a) + gr_current_g * gr_current_a) / 255;
-                ++px;
-                *px = (*px * (255-gr_current_a) + gr_current_b * gr_current_a) / 255;
-                ++px;
-                ++px;
+                if (gr_draw->pixel_bytes == 2) {
+                    *px = (*px * (255-gr_current_a) + rgb_555[0] * gr_current_a) / 255;
+                    ++px;
+                    *px = (*px * (255-gr_current_a) + rgb_555[1] * gr_current_a) / 255;
+                    ++px;
+                } else {
+                    *px = (*px * (255-gr_current_a) + gr_current_r * gr_current_a) / 255;
+                    ++px;
+                    *px = (*px * (255-gr_current_a) + gr_current_g * gr_current_a) / 255;
+                    ++px;
+                    *px = (*px * (255-gr_current_a) + gr_current_b * gr_current_a) / 255;
+                    ++px;
+                    ++px;
+                }
             }
             p += gr_draw->row_bytes;
         }
@@ -359,18 +433,39 @@ void gr_flip() {
 int gr_init(void)
 {
     gr_init_font();
+    gr_draw = NULL;
 
-    gr_backend = open_adf();
+#ifdef MSM_BSP
+    gr_backend = open_overlay();
     if (gr_backend) {
         gr_draw = gr_backend->init(gr_backend);
         if (!gr_draw) {
             gr_backend->exit(gr_backend);
+        } else
+            printf("Using overlay graphics.\n");
+    }
+#endif
+
+#ifndef MSM_BSP
+    if (!gr_draw) {
+        gr_backend = open_adf();
+        if (gr_backend) {
+            gr_draw = gr_backend->init(gr_backend);
+            if (!gr_draw) {
+                gr_backend->exit(gr_backend);
+            } else
+                printf("Using adf graphics.\n");
         }
     }
+#else
+	printf("Skipping adf graphics because TW_TARGET_USES_QCOM_BSP := true\n");
+#endif
 
     if (!gr_draw) {
         gr_backend = open_drm();
         gr_draw = gr_backend->init(gr_backend);
+        if (gr_draw)
+            printf("Using drm graphics.\n");
     }
 
     if (!gr_draw) {
@@ -378,7 +473,8 @@ int gr_init(void)
         gr_draw = gr_backend->init(gr_backend);
         if (gr_draw == NULL) {
             return -1;
-        }
+        } else
+            printf("Using fbdev graphics.\n");
     }
 
     overscan_offset_x = gr_draw->width * overscan_percent / 100;
