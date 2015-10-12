@@ -237,7 +237,7 @@ minui_backend *open_adf()
 {
     adf_pdata* pdata = reinterpret_cast<adf_pdata*>(calloc(1, sizeof(*pdata)));
     if (!pdata) {
-        perror("allocating adf backend failed");
+        printf("allocating adf backend failed");
         return NULL;
     }
 
