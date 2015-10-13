@@ -19,6 +19,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 #include <sys/mount.h>
 
 #include "mounts.h"
