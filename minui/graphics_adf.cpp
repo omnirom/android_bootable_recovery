@@ -145,6 +145,8 @@ static GRSurface* adf_init(minui_backend *backend)
     pdata->format = DRM_FORMAT_ABGR8888;
 #elif defined(RECOVERY_BGRA)
     pdata->format = DRM_FORMAT_BGRA8888;
+#elif defined(RECOVERY_RGBA)
+    pdata->format = DRM_FORMAT_RGBA8888;
 #elif defined(RECOVERY_RGBX)
     pdata->format = DRM_FORMAT_RGBX8888;
 #else
