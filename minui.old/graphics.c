@@ -42,6 +42,9 @@
 #if defined(RECOVERY_BGRA)
 #define PIXEL_FORMAT GGL_PIXEL_FORMAT_BGRA_8888
 #define PIXEL_SIZE   4
+#elif defined(RECOVERY_RGBA)
+#define PIXEL_FORMAT GGL_PIXEL_FORMAT_RGBA_8888
+#define PIXEL_SIZE   4
 #elif defined(RECOVERY_RGBX)
 #define PIXEL_FORMAT GGL_PIXEL_FORMAT_RGBX_8888
 #define PIXEL_SIZE   4
@@ -110,6 +113,15 @@ static int get_framebuffer(GGLSurface *fb)
       vi.blue.offset    = 24;
       vi.blue.length    = 8;
       vi.transp.offset  = 0;
+      vi.transp.length  = 8;
+    } else if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_RGBA_8888) {
+      vi.red.offset     = 0;
+      vi.red.length     = 8;
+      vi.green.offset   = 8;
+      vi.green.length   = 8;
+      vi.blue.offset    = 16;
+      vi.blue.length    = 8;
+      vi.transp.offset  = 24;
       vi.transp.length  = 8;
     } else if (PIXEL_FORMAT == GGL_PIXEL_FORMAT_RGBX_8888) {
       vi.red.offset     = 24;
