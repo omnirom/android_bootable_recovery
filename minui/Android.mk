@@ -4,10 +4,12 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     events.cpp \
     graphics.cpp \
-    graphics_adf.cpp \
     graphics_drm.cpp \
     graphics_fbdev.cpp \
     resources.cpp \
+    graphics_overlay.cpp
+
+LOCAL_C_INCLUDES := external/libcxx/include external/libpng
 
 ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
   LOCAL_CFLAGS += -DMSM_BSP
@@ -23,13 +25,16 @@ ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
   endif
 else
   LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
+  # The header files required for adf graphics can cause compile errors
+  # with adf graphics.
+  LOCAL_SRC_FILES += graphics_adf.cpp
+  LOCAL_WHOLE_STATIC_LIBRARIES += libadf
 endif
 
 ifeq ($(TW_NEW_ION_HEAP), true)
   LOCAL_CFLAGS += -DNEW_ION_HEAP
 endif
 
-LOCAL_WHOLE_STATIC_LIBRARIES += libadf
 LOCAL_WHOLE_STATIC_LIBRARIES += libdrm
 LOCAL_STATIC_LIBRARIES += libpng
 
@@ -77,3 +82,13 @@ LOCAL_MODULE := libminui
 LOCAL_WHOLE_STATIC_LIBRARIES += libminui
 LOCAL_SHARED_LIBRARIES := libpng
 include $(BUILD_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := minuitest
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT_SBIN)
+LOCAL_SRC_FILES := main.cpp
+LOCAL_STATIC_LIBRARIES := libbinder libminui libpng libz libutils libstdc++ libcutils liblog libm libc
+LOCAL_C_INCLUDES := external/libcxx/include external/libpng
+LOCAL_FORCE_STATIC_EXECUTABLE := true
+include $(BUILD_EXECUTABLE)
