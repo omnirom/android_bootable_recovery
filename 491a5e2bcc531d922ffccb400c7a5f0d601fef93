@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_62feb800",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1127,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-15T19:30:55Z",
+      "side": 1,
+      "message": "output strerror(errno) to log?",
+      "revId": "491a5e2bcc531d922ffccb400c7a5f0d601fef93",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_1f1d0374",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1142,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-15T19:30:55Z",
+      "side": 1,
+      "message": "I suggest moving the LOGERR before the free and printing strerror(errno) too.",
+      "revId": "491a5e2bcc531d922ffccb400c7a5f0d601fef93",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_2208b02c",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1146,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-15T19:30:55Z",
+      "side": 1,
+      "message": "error handling is missing",
+      "revId": "491a5e2bcc531d922ffccb400c7a5f0d601fef93",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_e209a830",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1159,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-15T19:30:55Z",
+      "side": 1,
+      "message": "We should log the failure and also the number of bytes we tried to malloc here. If it is unreasonably high, maybe the zip is corrupt.",
+      "revId": "491a5e2bcc531d922ffccb400c7a5f0d601fef93",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
