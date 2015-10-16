@@ -17,19 +17,20 @@ LOCAL_PATH := $(call my-dir)
 ifdef project-path-for
     ifeq ($(LOCAL_PATH),$(call project-path-for,recovery))
         PROJECT_PATH_AGREES := true
-        BOARD_SEPOLICY_DIRS += bootable/recovery-twrp/sepolicy
     endif
 else
     ifeq ($(LOCAL_PATH),bootable/recovery)
         PROJECT_PATH_AGREES := true
-        BOARD_SEPOLICY_DIRS += bootable/recovery/sepolicy
     endif
 endif
 
 ifeq ($(PROJECT_PATH_AGREES),true)
 
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
 # Make recovery domain permissive for TWRP
-BOARD_SEPOLICY_UNION += twrp.te
+    BOARD_SEPOLICY_DIRS += $(LOCAL_PATH)/sepolicy
+    BOARD_SEPOLICY_UNION += twrp.te
+endif
 
 include $(CLEAR_VARS)
 
