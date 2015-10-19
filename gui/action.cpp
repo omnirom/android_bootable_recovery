@@ -43,15 +43,16 @@
 #include "../adb_install.h"
 #include "../fuse_sideload.h"
 #include "blanktimer.hpp"
+
 extern "C" {
 #include "../twcommon.h"
-#include "../minuitwrp/minui.h"
 #include "../variables.h"
 #include "../twinstall.h"
 #include "cutils/properties.h"
 #include "../adb_install.h"
 #include "../set_metadata.h"
 };
+#include "../minuitwrp/minui.h"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
