@@ -2,7 +2,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := events.c resources.c graphics_overlay.c graphics_utils.c truetype.c
+LOCAL_SRC_FILES := events.c resources.cpp graphics_overlay.c graphics_utils.c truetype.c
 
 ifneq ($(TW_BOARD_CUSTOM_GRAPHICS),)
     LOCAL_SRC_FILES += $(TW_BOARD_CUSTOM_GRAPHICS)
