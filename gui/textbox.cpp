@@ -22,8 +22,8 @@
 
 extern "C" {
 #include "../twcommon.h"
-#include "../minuitwrp/minui.h"
 }
+#include "../minuitwrp/minui.h"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
@@ -86,7 +86,7 @@ void GUITextBox::RenderItem(size_t itemindex, int yPos, bool selected __unused)
 
 	// render text
 	const char* text = rText[itemindex].c_str();
-	gr_textEx(mRenderX, yPos, text, mFont->GetResource());
+	gr_textEx_scaleW(mRenderX, yPos, text, mFont->GetResource(), mRenderW, TOP_LEFT, 0);
 }
 
 void GUITextBox::NotifySelect(size_t item_selected __unused)

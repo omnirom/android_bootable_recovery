@@ -9,9 +9,7 @@
 
 struct ZipArchive;
 
-extern "C" {
 #include "../minuitwrp/minui.h"
-}
 
 // Base Objects
 class Resource
@@ -48,7 +46,7 @@ public:
 
 public:
 	void* GetResource() { return this ? mFont : NULL; }
-	int GetHeight() { return gr_getMaxFontHeight(this ? mFont : NULL); }
+	int GetHeight() { return gr_ttf_getMaxFontHeight(this ? mFont : NULL); }
 
 protected:
 	void* mFont;
