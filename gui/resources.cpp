@@ -14,9 +14,9 @@
 #include "../minzip/Zip.h"
 extern "C" {
 #include "../twcommon.h"
-#include "../minuitwrp/minui.h"
 #include "gui.h"
 }
+#include "../minuitwrp/minui.h"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"

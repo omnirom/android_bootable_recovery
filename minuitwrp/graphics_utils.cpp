@@ -23,7 +23,7 @@
 #include "minui.h"
 
 struct fb_var_screeninfo vi;
-GGLSurface gr_mem_surface;
+extern GGLSurface gr_mem_surface;
 
 int gr_save_screenshot(const char *dest)
 {
@@ -41,7 +41,7 @@ int gr_save_screenshot(const char *dest)
     if(!fp)
         goto exit;
 
-    img_data = malloc(gr_mem_surface.stride * vi.yres * 4);
+    img_data = (uint8_t *)malloc(gr_mem_surface.stride * vi.yres * 4);
     surface.version = sizeof(surface);
     surface.width = gr_mem_surface.width;
     surface.height = gr_mem_surface.height;
