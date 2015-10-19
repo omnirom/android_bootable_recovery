@@ -88,8 +88,8 @@ static const uint32_t offset_basis = 2166136261U;
 
 static uint32_t fnv_hash(void *data, uint32_t len)
 {
-    uint8_t *d8 = data;
-    uint32_t *d32 = data;
+    uint8_t *d8 = (uint8_t *)data;
+    uint32_t *d32 = (uint32_t *)data;
     uint32_t i, max;
     uint32_t hash = offset_basis;
 
@@ -118,12 +118,12 @@ static inline uint32_t fnv_hash_add(uint32_t cur_hash, uint32_t word)
     return cur_hash;
 }
 
-int utf8_to_unicode(unsigned char* pIn, unsigned int *pOut)
+int utf8_to_unicode(const char* pIn, unsigned int *pOut)
 {
     int utf_bytes = 1;
     unsigned int unicode = 0;
     unsigned char tmp;
-    tmp = *pIn++;
+    tmp = (unsigned char)*pIn++;
     if (tmp < 0x80)
     {
         *pOut = tmp;
@@ -157,27 +157,27 @@ int utf8_to_unicode(unsigned char* pIn, unsigned int *pOut)
 
 static bool gr_ttf_string_cache_equals(void *keyA, void *keyB)
 {
-    StringCacheKey *a = keyA;
-    StringCacheKey *b = keyB;
+    StringCacheKey *a = (StringCacheKey *)keyA;
+    StringCacheKey *b = (StringCacheKey *)keyB;
     return a->max_width == b->max_width && strcmp(a->text, b->text) == 0;
 }
 
 static int gr_ttf_string_cache_hash(void *key)
 {
-    StringCacheKey *k = key;
+    StringCacheKey *k = (StringCacheKey *)key;
     return fnv_hash(k->text, strlen(k->text));
 }
 
 static bool gr_ttf_font_cache_equals(void *keyA, void *keyB)
 {
-    TrueTypeFontKey *a = keyA;
-    TrueTypeFontKey *b = keyB;
+    TrueTypeFontKey *a = (TrueTypeFontKey *)keyA;
+    TrueTypeFontKey *b = (TrueTypeFontKey *)keyB;
     return (a->size == b->size) && (a->dpi == b->dpi) && !strcmp(a->path, b->path);
 }
 
 static int gr_ttf_font_cache_hash(void *key)
 {
-    TrueTypeFontKey *k = key;
+    TrueTypeFontKey *k = (TrueTypeFontKey *)key;
 
     uint32_t hash = fnv_hash(k->path, strlen(k->path));
     hash = fnv_hash_add(hash, k->size);
@@ -189,6 +189,7 @@ void *gr_ttf_loadFont(const char *filename, int size, int dpi)
 {
     int error;
     TrueTypeFont *res = NULL;
+    TrueTypeFontKey *key = NULL;
 
     pthread_mutex_lock(&font_data.mutex);
 
@@ -200,7 +201,7 @@ void *gr_ttf_loadFont(const char *filename, int size, int dpi)
             .path = (char*)filename
         };
 
-        res = hashmapGet(font_data.fonts, &k);
+        res = (TrueTypeFont *)hashmapGet(font_data.fonts, &k);
         if(res)
         {
             ++res->refcount;
@@ -234,7 +235,7 @@ void *gr_ttf_loadFont(const char *filename, int size, int dpi)
          goto exit;
     }
 
-    res = malloc(sizeof(TrueTypeFont));
+    res = (TrueTypeFont *)malloc(sizeof(TrueTypeFont));
     memset(res, 0, sizeof(TrueTypeFont));
     res->type = FONT_TYPE_TTF;
     res->size = size;
@@ -250,7 +251,7 @@ void *gr_ttf_loadFont(const char *filename, int size, int dpi)
     if(!font_data.fonts)
         font_data.fonts = hashmapCreate(4, gr_ttf_font_cache_hash, gr_ttf_font_cache_equals);
 
-    TrueTypeFontKey *key = malloc(sizeof(TrueTypeFontKey));
+    key = (TrueTypeFontKey *)malloc(sizeof(TrueTypeFontKey));
     memset(key, 0, sizeof(TrueTypeFontKey));
     key->path = strdup(filename);
     key->size = size;
@@ -270,7 +271,7 @@ void *gr_ttf_scaleFont(void *font, int max_width, int measured_width)
     if (!font)
         return NULL;
 
-    TrueTypeFont *f = font;
+    TrueTypeFont *f = (TrueTypeFont *)font;
     float scale_value = (float)(max_width) / (float)(measured_width);
     int new_size = ((int)((float)f->size * scale_value)) - 1;
     if (new_size < 1)
@@ -280,22 +281,22 @@ void *gr_ttf_scaleFont(void *font, int max_width, int measured_width)
     return gr_ttf_loadFont(file, new_size, dpi);
 }
 
-static bool gr_ttf_freeFontCache(void *key, void *value, void *context)
+static bool gr_ttf_freeFontCache(void *key, void *value, void *context __unused)
 {
-    TrueTypeCacheEntry *e = value;
+    TrueTypeCacheEntry *e = (TrueTypeCacheEntry *)value;
     FT_Done_Glyph((FT_Glyph)e->glyph);
     free(e);
     free(key);
     return true;
 }
 
-static bool gr_ttf_freeStringCache(void *key, void *value, void *context)
+static bool gr_ttf_freeStringCache(void *key, void *value, void *context __unused)
 {
-    StringCacheKey *k = key;
+    StringCacheKey *k = (StringCacheKey *)key;
     free(k->text);
     free(k);
 
-    StringCacheEntry *e = value;
+    StringCacheEntry *e = (StringCacheEntry *)value;
     free(e->surface.data);
     free(e);
     return true;
@@ -305,7 +306,7 @@ void gr_ttf_freeFont(void *font)
 {
     pthread_mutex_lock(&font_data.mutex);
 
-    TrueTypeFont *d = font;
+    TrueTypeFont *d = (TrueTypeFont *)font;
 
     if(--d->refcount == 0)
     {
@@ -334,12 +335,12 @@ void gr_ttf_freeFont(void *font)
 
 static TrueTypeCacheEntry *gr_ttf_glyph_cache_peek(TrueTypeFont *font, int char_index)
 {
-    return hashmapGet(font->glyph_cache, &char_index);
+    return (TrueTypeCacheEntry *)hashmapGet(font->glyph_cache, &char_index);
 }
 
 static TrueTypeCacheEntry *gr_ttf_glyph_cache_get(TrueTypeFont *font, int char_index)
 {
-    TrueTypeCacheEntry *res = hashmapGet(font->glyph_cache, &char_index);
+    TrueTypeCacheEntry *res = (TrueTypeCacheEntry *)hashmapGet(font->glyph_cache, &char_index);
     if(!res)
     {
         int error = FT_Load_Glyph(font->face, char_index, FT_LOAD_RENDER);
@@ -357,12 +358,12 @@ static TrueTypeCacheEntry *gr_ttf_glyph_cache_get(TrueTypeFont *font, int char_i
             return NULL;
         }
 
-        res = malloc(sizeof(TrueTypeCacheEntry));
+        res = (TrueTypeCacheEntry *)malloc(sizeof(TrueTypeCacheEntry));
         memset(res, 0, sizeof(TrueTypeCacheEntry));
         res->glyph = glyph;
         FT_Glyph_Get_CBox((FT_Glyph)glyph, FT_GLYPH_BBOX_PIXELS, &res->bbox);
 
-        int *key = malloc(sizeof(int));
+        int *key = (int *)malloc(sizeof(int));
         *key = char_index;
 
         hashmapPut(font->glyph_cache, key, res);
@@ -373,7 +374,7 @@ static TrueTypeCacheEntry *gr_ttf_glyph_cache_get(TrueTypeFont *font, int char_i
 
 static int gr_ttf_copy_glyph_to_surface(GGLSurface *dest, FT_BitmapGlyph glyph, int offX, int offY, int base)
 {
-    int y;
+    unsigned y;
     uint8_t *src_itr = glyph->bitmap.buffer;
     uint8_t *dest_itr = dest->data;
 
@@ -467,7 +468,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
     int *char_idxs;
     int char_idxs_len = 0;
 
-    char_idxs = malloc(strlen(text) * sizeof(int));
+    char_idxs = (int *)malloc(strlen(text) * sizeof(int));
 
     while(*text_itr)
     {
@@ -509,7 +510,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
 
     height = font->max_height;
 
-    data = malloc(total_w*height);
+    data = (uint8_t *)malloc(total_w*height);
     memset(data, 0, total_w*height);
     x = 0;
     prev_idx = 0;
@@ -518,7 +519,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
     surface->width = total_w;
     surface->height = height;
     surface->stride = total_w;
-    surface->data = (void*)data;
+    surface->data = (GGLubyte*)data;
     surface->format = GGL_PIXEL_FORMAT_A_8;
 
     for(i = 0; i < char_idxs_len; ++i)
@@ -552,7 +553,7 @@ static StringCacheEntry *gr_ttf_string_cache_peek(TrueTypeFont *font, const char
         .max_width = max_width
     };
 
-    return hashmapGet(font->string_cache, &k);
+    return (StringCacheEntry *)hashmapGet(font->string_cache, &k);
 }
 
 static StringCacheEntry *gr_ttf_string_cache_get(TrueTypeFont *font, const char *text, int max_width)
@@ -563,10 +564,10 @@ static StringCacheEntry *gr_ttf_string_cache_get(TrueTypeFont *font, const char 
         .max_width = max_width
     };
 
-    res = hashmapGet(font->string_cache, &k);
+    res = (StringCacheEntry *)hashmapGet(font->string_cache, &k);
     if(!res)
     {
-        res = malloc(sizeof(StringCacheEntry));
+        res = (StringCacheEntry *)malloc(sizeof(StringCacheEntry));
         memset(res, 0, sizeof(StringCacheEntry));
         res->rendered_bytes = gr_ttf_render_text(font, &res->surface, text, max_width);
         if(res->rendered_bytes < 0)
@@ -575,7 +576,7 @@ static StringCacheEntry *gr_ttf_string_cache_get(TrueTypeFont *font, const char 
             return NULL;
         }
 
-        StringCacheKey *new_key = malloc(sizeof(StringCacheKey));
+        StringCacheKey *new_key = (StringCacheKey *)malloc(sizeof(StringCacheKey));
         memset(new_key, 0, sizeof(StringCacheKey));
         new_key->max_width = max_width;
         new_key->text = strdup(text);
@@ -633,11 +634,11 @@ static StringCacheEntry *gr_ttf_string_cache_get(TrueTypeFont *font, const char 
 
 int gr_ttf_measureEx(const char *s, void *font)
 {
-    TrueTypeFont *f = font;
+    TrueTypeFont *f = (TrueTypeFont *)font;
     int res = -1;
 
     pthread_mutex_lock(&f->mutex);
-    StringCacheEntry *e = gr_ttf_string_cache_get(font, s, -1);
+    StringCacheEntry *e = gr_ttf_string_cache_get(f, s, -1);
     if(e)
         res = e->surface.width;
     pthread_mutex_unlock(&f->mutex);
@@ -647,7 +648,7 @@ int gr_ttf_measureEx(const char *s, void *font)
 
 int gr_ttf_maxExW(const char *s, void *font, int max_width)
 {
-    TrueTypeFont *f = font;
+    TrueTypeFont *f = (TrueTypeFont *)font;
     TrueTypeCacheEntry *ent;
     int max_bytes = 0, total_w = 0;
     int utf_bytes, prev_utf_bytes = 0;
@@ -658,7 +659,7 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
 
     pthread_mutex_lock(&f->mutex);
 
-    e = gr_ttf_string_cache_peek(font, s, max_width);
+    e = gr_ttf_string_cache_peek(f, s, max_width);
     if(e)
     {
         max_bytes = e->rendered_bytes;
@@ -699,8 +700,8 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
 
 int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int max_width, int max_height)
 {
-    GGLContext *gl = context;
-    TrueTypeFont *font = pFont;
+    GGLContext *gl = (GGLContext *)context;
+    TrueTypeFont *font = (TrueTypeFont *)pFont;
 
     // not actualy max width, but max_width + x
     if(max_width != -1)
@@ -749,7 +750,7 @@ int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int
 int gr_ttf_getMaxFontHeight(void *font)
 {
     int res;
-    TrueTypeFont *f = font;
+    TrueTypeFont *f = (TrueTypeFont *)font;
 
     pthread_mutex_lock(&f->mutex);
 
@@ -761,19 +762,19 @@ int gr_ttf_getMaxFontHeight(void *font)
     return res;
 }
 
-static bool gr_ttf_dump_stats_count_string_cache(void *key, void *value, void *context)
+static bool gr_ttf_dump_stats_count_string_cache(void *key __unused, void *value, void *context)
 {
-    int *string_cache_size = context;
-    StringCacheEntry *e = value;
+    int *string_cache_size = (int *)context;
+    StringCacheEntry *e = (StringCacheEntry *)value;
     *string_cache_size += e->surface.height*e->surface.width + sizeof(StringCacheEntry);
     return true;
 }
 
 static bool gr_ttf_dump_stats_font(void *key, void *value, void *context)
 {
-    TrueTypeFontKey *k = key;
-    TrueTypeFont *f = value;
-    int *total_string_cache_size = context;
+    TrueTypeFontKey *k = (TrueTypeFontKey *)key;
+    TrueTypeFont *f = (TrueTypeFont *)value;
+    int *total_string_cache_size = (int *)context;
     int string_cache_size = 0;
 
     pthread_mutex_lock(&f->mutex);
