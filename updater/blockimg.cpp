@@ -31,6 +31,7 @@
 #include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
+#include <fec/io.h>
 
 #include <memory>
 #include <string>
@@ -1638,8 +1639,83 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
     return StringValue(strdup(print_sha1(digest).c_str()));
 }
 
+Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[]) {
+    Value* arg_filename;
+    Value* arg_ranges;
+
+    if (ReadValueArgs(state, argv, 2, &arg_filename, &arg_ranges) < 0) {
+        return NULL;
+    }
+
+    std::unique_ptr<Value, decltype(&FreeValue)> filename(arg_filename, FreeValue);
+    std::unique_ptr<Value, decltype(&FreeValue)> ranges(arg_ranges, FreeValue);
+
+    if (filename->type != VAL_STRING) {
+        ErrorAbort(state, "filename argument to %s must be string", name);
+        return StringValue(strdup(""));
+    }
+    if (ranges->type != VAL_STRING) {
+        ErrorAbort(state, "ranges argument to %s must be string", name);
+        return StringValue(strdup(""));
+    }
+
+    // When opened with O_RDWR, libfec rewrites corrupted blocks when they are read
+    fec::io fh(filename->data, O_RDWR);
+
+    if (!fh) {
+        ErrorAbort(state, "fec_open \"%s\" failed: %s", filename->data, strerror(errno));
+        return StringValue(strdup(""));
+    }
+
+    if (!fh.has_ecc() || !fh.has_verity()) {
+        ErrorAbort(state, "unable to use metadata to correct errors");
+        return StringValue(strdup(""));
+    }
+
+    fec_status status;
+
+    if (!fh.get_status(status)) {
+        ErrorAbort(state, "failed to read FEC status");
+        return StringValue(strdup(""));
+    }
+
+    RangeSet rs;
+    parse_range(ranges->data, rs);
+
+    uint8_t buffer[BLOCKSIZE];
+
+    for (size_t i = 0; i < rs.count; ++i) {
+        for (size_t j = rs.pos[i * 2]; j < rs.pos[i * 2 + 1]; ++j) {
+            // Stay within the data area, libfec validates and corrects metadata
+            if (status.data_size <= (uint64_t)j * BLOCKSIZE) {
+                continue;
+            }
+
+            if (fh.pread(buffer, BLOCKSIZE, (off64_t)j * BLOCKSIZE) != BLOCKSIZE) {
+                ErrorAbort(state, "failed to recover %s (block %d): %s", filename->data,
+                    j, strerror(errno));
+                return StringValue(strdup(""));
+            }
+
+            // If we want to be able to recover from a situation where rewriting a corrected
+            // block doesn't guarantee the same data will be returned when re-read later, we
+            // can save a copy of corrected blocks to /cache. Note:
+            //
+            //  1. Maximum space required from /cache is the same as the maximum number of
+            //     corrupted blocks we can correct. For RS(255, 253) and a 2 GiB partition,
+            //     this would be ~16 MiB, for example.
+            //
+            //  2. To find out if this block was corrupted, call fec_get_status after each
+            //     read and check if the errors field value has increased.
+        }
+    }
+
+    return StringValue(strdup("t"));
+}
+
 void RegisterBlockImageFunctions() {
     RegisterFunction("block_image_verify", BlockImageVerifyFn);
     RegisterFunction("block_image_update", BlockImageUpdateFn);
+    RegisterFunction("block_image_recover", BlockImageRecoverFn);
     RegisterFunction("range_sha1", RangeSha1Fn);
 }
