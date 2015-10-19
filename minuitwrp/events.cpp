@@ -243,7 +243,7 @@ static int vk_init(struct ev *e)
     printf("EV: MT minX: %d  maxX: %d  minY: %d  maxY: %d\n", e->mt_p.xi.minimum, e->mt_p.xi.maximum, e->mt_p.yi.minimum, e->mt_p.yi.maximum);
 #endif
 
-    e->vks = malloc(sizeof(*e->vks) * e->vk_count);
+    e->vks = (virtualkey *)malloc(sizeof(*e->vks) * e->vk_count);
 
     for (i = 0; i < e->vk_count; ++i) {
         char *token[6];
