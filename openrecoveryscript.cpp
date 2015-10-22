@@ -54,13 +54,19 @@ int OpenRecoveryScript::check_for_script_file(void) {
 		LOGERR("Unable to mount /cache for OpenRecoveryScript support.\n");
 		return 0;
 	}
+	unlink(SCRIPT_FILE_TMP);
 	if (TWFunc::Path_Exists(SCRIPT_FILE_CACHE)) {
-		LOGINFO("Script file found: '%s'\n", SCRIPT_FILE_CACHE);
-		// Copy script file to /tmp
-		TWFunc::copy_file(SCRIPT_FILE_CACHE, SCRIPT_FILE_TMP, 0755);
-		// Delete the file from /cache
-		unlink(SCRIPT_FILE_CACHE);
-		return 1;
+		if (TWFunc::Is_Owned_By_Root(SCRIPT_FILE_CACHE)) {
+			LOGINFO("Script file found: '%s'\n", SCRIPT_FILE_CACHE);
+			// Copy script file to /tmp
+			TWFunc::copy_file(SCRIPT_FILE_CACHE, SCRIPT_FILE_TMP, 0755);
+			// Delete the file from /cache
+			unlink(SCRIPT_FILE_CACHE);
+			return 1;
+		} else {
+			LOGERR("ORS command file '%s' is not owned by root.\n", SCRIPT_FILE_CACHE);
+			unlink(SCRIPT_FILE_CACHE);
+		}
 	}
 	return 0;
 }

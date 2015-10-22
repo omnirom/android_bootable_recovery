@@ -1043,4 +1043,17 @@ void TWFunc::Disable_Stock_Recovery_Replace(void) {
 	}
 }
 
+bool TWFunc::Is_Owned_By_Root(const char* filename) {
+	struct stat st;
+	if (stat(filename, &st) != 0) {
+		return false;
+	} else {
+		if (st.st_uid == 0 && st.st_gid == 0)
+			return true;
+		else
+			return false;
+	}
+	return false;
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN
