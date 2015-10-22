@@ -85,6 +85,7 @@ public:
 	static std::string to_string(unsigned long value); //convert ul to string
 	static void SetPerformanceMode(bool mode); // support recovery.perf.mode
 	static void Disable_Stock_Recovery_Replace(); // Disable stock ROMs from replacing TWRP with stock recovery
+	static bool Is_Owned_By_Root(const char* filename); // Checks to see if the uid and gid of filename are both 0
 
 private:
 	static void Copy_Log(string Source, string Destination);

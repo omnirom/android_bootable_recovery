@@ -173,6 +173,10 @@ int main(int argc, char **argv) {
 #endif
 
 	PartitionManager.Mount_By_Path("/cache", true);
+	if (TWFunc::Path_Exists("/cache/recovery/command") && !TWFunc::Is_Owned_By_Root("/cache/recovery/command")) {
+		LOGERR("AOSP /cache/recovery/command is not owned by root!\n");
+		unlink("/cache/recovery/command");
+	}
 
 	string Zip_File, Reboot_Value;
 	bool Cache_Wipe = false, Factory_Reset = false, Perform_Backup = false, Shutdown = false;
