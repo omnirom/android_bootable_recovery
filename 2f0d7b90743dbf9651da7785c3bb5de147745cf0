@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_3357e0cd",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2015-10-22T03:24:05Z",
+      "side": 1,
+      "message": "This should be -gt 20 so it can also work in 5.0+ trees instead of just 6.0.",
+      "revId": "2f0d7b90743dbf9651da7785c3bb5de147745cf0",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_535264dd",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2015-10-22T03:24:05Z",
+      "side": 1,
+      "message": "The $(LOCAL_PATH) variable doesn\u0027t work for this for some dumb reason which is why I did things manually in the original patch. Basically, this doesn\u0027t work.",
+      "revId": "2f0d7b90743dbf9651da7785c3bb5de147745cf0",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
