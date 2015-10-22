@@ -235,7 +235,7 @@ int TWFunc::Try_Decrypting_File(string fn, string password) {
 	}
 	fclose(f);
 	if (out_len < 2) {
-		LOGINFO("Successfully decrypted '%s' but read length %i too small.\n", fn.c_str(), out_len);
+		LOGINFO("Successfully decrypted '%s' but read length too small.\n", fn.c_str());
 		free(buffer_out);
 		return 1; // Decrypted successfully
 	}

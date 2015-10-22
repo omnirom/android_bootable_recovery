@@ -141,7 +141,7 @@ bool GUIObject::isConditionValid()
 	return !mConditions.empty();
 }
 
-int GUIObject::NotifyVarChange(const std::string& varName, const std::string& value)
+int GUIObject::NotifyVarChange(const std::string& varName, const std::string& value __unused)
 {
 	mConditionsResult = UpdateConditions(mConditions, varName);
 	return 0;

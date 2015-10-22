@@ -72,7 +72,7 @@ public:
 	virtual int SetPlacement(Placement placement) { mPlacement = placement; return 0; }
 
 	// SetPageFocus - Notify when a page gains or loses focus
-	virtual void SetPageFocus(int inFocus) { return; }
+	virtual void SetPageFocus(int inFocus __unused) { return; }
 
 protected:
 	int mRenderX, mRenderY, mRenderW, mRenderH;
@@ -88,11 +88,11 @@ public:
 public:
 	// NotifyTouch - Notify of a touch event
 	//  Return 0 on success, >0 to ignore remainder of touch, and <0 on error
-	virtual int NotifyTouch(TOUCH_STATE state, int x, int y) { return 0; }
+	virtual int NotifyTouch(TOUCH_STATE state __unused, int x __unused, int y __unused) { return 0; }
 
 	// NotifyKey - Notify of a key press
 	//  Return 0 on success (and consume key), >0 to pass key to next handler, and <0 on error
-	virtual int NotifyKey(int key, bool down) { return 1; }
+	virtual int NotifyKey(int key __unused, bool down __unused) { return 1; }
 
 	// GetRenderPos - Returns the current position of the object
 	virtual int GetActionPos(int& x, int& y, int& w, int& h) { x = mActionX; y = mActionY; w = mActionW; h = mActionH; return 0; }
@@ -159,7 +159,7 @@ public:
 public:
 	// NotifyKeyboard - Notify of keyboard input
 	//  Return 0 on success (and consume key), >0 to pass key to next handler, and <0 on error
-	virtual int NotifyKeyboard(int key) { return 1; }
+	virtual int NotifyKeyboard(int key __unused) { return 1; }
 
 	virtual int SetInputFocus(int focus) { HasInputFocus = focus; return 1; }
 
@@ -469,7 +469,7 @@ protected:
 	// render a single item in rect (mRenderX, yPos, mRenderW, actualItemHeight)
 	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
 	// an item was selected
-	virtual void NotifySelect(size_t item_selected) {}
+	virtual void NotifySelect(size_t item_selected __unused) {}
 
 	// render a standard-layout list item with optional icon and text
 	void RenderStdItem(int yPos, bool selected, ImageResource* icon, const char* text, int iconAndTextH = 0);

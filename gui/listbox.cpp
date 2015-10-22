@@ -158,7 +158,7 @@ int GUIListBox::NotifyVarChange(const std::string& varName, const std::string& v
 
 	if (mVisibleItemsOld != mVisibleItems) {
 		mUpdate = 1; // some item's visibility has changed
-		if (firstDisplayedItem >= mVisibleItems.size()) {
+		if (firstDisplayedItem >= (int)mVisibleItems.size()) {
 			// all items in the view area were removed - make last item visible
 			SetVisibleListLocation(mVisibleItems.empty() ? 0 : mVisibleItems.size()-1);
 		}

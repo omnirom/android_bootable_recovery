@@ -796,7 +796,7 @@ extern "C" int gui_init(void)
 		printf("Unable to locate '%s'\nDid you set a TW_THEME in your config files?\n", curtain_path.c_str());
 		return -1;
 	}
-	if (gr_get_width(source_Surface) != gr_fb_width() || gr_get_height(source_Surface) != gr_fb_height()) {
+	if (gr_get_width(source_Surface) != (unsigned)gr_fb_width() || gr_get_height(source_Surface) != (unsigned)gr_fb_height()) {
 		// We need to scale the curtain to fit the screen
 		float scale_w = (float)gr_fb_width() / (float)gr_get_width(source_Surface);
 		float scale_h = (float)gr_fb_height() / (float)gr_get_height(source_Surface);
@@ -946,7 +946,7 @@ extern "C" int gui_startPage(const char *page_name, const int allow_commands, in
 	return runPages(page_name, stop_on_page_done);
 }
 
-static void * console_thread(void *cookie)
+static void * console_thread(void *cookie __unused)
 {
 	PageManager::SwitchToConsole();
 
