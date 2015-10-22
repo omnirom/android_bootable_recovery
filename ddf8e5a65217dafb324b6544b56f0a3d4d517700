@@ -1,0 +1,361 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_7319e8d8",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 548,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "rename arguments to not look like members",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_530ee494",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "copied from console, unneeded, delete",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_331360b9",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 722,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "unneeded",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_13285cdf",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 723,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "also unneeded",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_f36f3827",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 724,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "use a bool here",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_f324d80c",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 725,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "these 3 need some short comments how they are used",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_d321d4fa",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 730,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_b31e50bb",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 452,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "do we have actions in textbox?",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_937fccdb",
+        "filename": "gui/scrolllist.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 611,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "rename arguments to not look like members",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_738448db",
+        "filename": "gui/scrolllist.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 630,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "no need to copy, you can pass line_char_width to find_last_of",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_338ec0fb",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "it\u0027s still 2015...",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_538944f1",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "we can remove most includes here. The listbox doesn\u0027t reboot. Hopefully. :)",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_1373bc13",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "caution when merging the new minuitwrp",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_b379b0f1",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "unneeded, the \"while\" already checks that.",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_d37c34e3",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "unused, remove",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_9366ac4f",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "remove this function, it\u0027s not needed since we don\u0027t add lines dynamically.",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_53602431",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "The base class impl should be just fine, so we can remove this too.",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_135a9c83",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "unneeded, that is only for console",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_f356185d",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "remove, the base class already does that",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_d353146b",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "remove, we don\u0027t need anything special here.",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_93c10c06",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-22T21:39:23Z",
+      "side": 1,
+      "message": "we might need to re-wrap here - consider simply deleting the rendered lines",
+      "revId": "ddf8e5a65217dafb324b6544b56f0a3d4d517700",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
