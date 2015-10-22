@@ -274,16 +274,18 @@ int DataManager::LoadValues(const string filename)
 		string Name;
 		string Value;
 		unsigned short length;
-		char array[512];
+		char array[513];
 
 		if (fread(&length, 1, sizeof(unsigned short), in) != sizeof(unsigned short))	goto error;
 		if (length >= 512)																goto error;
 		if (fread(array, 1, length, in) != length)										goto error;
+		array[length+1] = '\0';
 		Name = array;
 
 		if (fread(&length, 1, sizeof(unsigned short), in) != sizeof(unsigned short))	goto error;
 		if (length >= 512)																goto error;
 		if (fread(array, 1, length, in) != length)										goto error;
+		array[length+1] = '\0';
 		Value = array;
 
 		map<string, TStrIntPair>::iterator pos;
