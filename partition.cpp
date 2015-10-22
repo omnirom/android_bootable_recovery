@@ -2276,7 +2276,7 @@ uint64_t TWPartition::Get_Max_FileSize() {
 		maxFileSize = 3.94 * constTB; //3.94 TB
 	else
 		maxFileSize = 100000000L;
-	LOGINFO("Get_Max_FileSize::maxFileSize: %llu\n", maxFileSize);
+	LOGINFO("Get_Max_FileSize::maxFileSize: %lu\n", maxFileSize);
 	return maxFileSize - 1;
 }
 

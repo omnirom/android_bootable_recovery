@@ -23,7 +23,7 @@ extern "C" {
 
 #define TMP_RESOURCE_NAME   "/tmp/extract.bin"
 
-Resource::Resource(xml_node<>* node, ZipArchive* pZip)
+Resource::Resource(xml_node<>* node, ZipArchive* pZip __unused)
 {
 	if (node && node->first_attribute("name"))
 		mName = node->first_attribute("name")->value();

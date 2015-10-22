@@ -311,7 +311,7 @@ int GUIScrollList::Render(void)
 	return 0;
 }
 
-void GUIScrollList::RenderItem(size_t itemindex, int yPos, bool selected)
+void GUIScrollList::RenderItem(size_t itemindex __unused, int yPos, bool selected)
 {
 	RenderStdItem(yPos, selected, NULL, "implement RenderItem!");
 }
@@ -397,7 +397,7 @@ int GUIScrollList::Update(void)
 	return 0;
 }
 
-size_t GUIScrollList::HitTestItem(int x, int y)
+size_t GUIScrollList::HitTestItem(int x __unused, int y)
 {
 	// We only care about y position
 	if (y < mRenderY || y - mRenderY <= mHeaderH || y - mRenderY > mRenderH)

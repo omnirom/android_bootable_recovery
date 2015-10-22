@@ -280,7 +280,7 @@ GUIAction::GUIAction(xml_node<>* node)
 	}
 }
 
-int GUIAction::NotifyTouch(TOUCH_STATE state, int x, int y)
+int GUIAction::NotifyTouch(TOUCH_STATE state __unused, int x __unused, int y __unused)
 {
 	if (state == TOUCH_RELEASE)
 		doActions();
@@ -518,7 +518,7 @@ int GUIAction::reboot(std::string arg)
 	return 0;
 }
 
-int GUIAction::home(std::string arg)
+int GUIAction::home(std::string arg __unused)
 {
 	PageManager::SelectPackage("TWRP");
 	gui_changePage("main");
@@ -539,7 +539,7 @@ int GUIAction::page(std::string arg)
 	return gui_changePage(page_name);
 }
 
-int GUIAction::reload(std::string arg)
+int GUIAction::reload(std::string arg __unused)
 {
 	int check = 0, ret_val = 0;
 	std::string theme_path;
@@ -564,7 +564,7 @@ int GUIAction::reload(std::string arg)
 	return 0;
 }
 
-int GUIAction::readBackup(std::string arg)
+int GUIAction::readBackup(std::string arg __unused)
 {
 	string Restore_Name;
 	DataManager::GetValue("tw_restore", Restore_Name);
@@ -624,7 +624,7 @@ int GUIAction::unmount(std::string arg)
 	return 0;
 }
 
-int GUIAction::restoredefaultsettings(std::string arg)
+int GUIAction::restoredefaultsettings(std::string arg __unused)
 {
 	operation_start("Restore Defaults");
 	if (simulate) // Simulated so that people don't accidently wipe out the "simulation is on" setting
@@ -638,7 +638,7 @@ int GUIAction::restoredefaultsettings(std::string arg)
 	return 0;
 }
 
-int GUIAction::copylog(std::string arg)
+int GUIAction::copylog(std::string arg __unused)
 {
 	operation_start("Copy Log");
 	if (!simulate)
@@ -713,7 +713,7 @@ int GUIAction::compute(std::string arg)
 	return -1;
 }
 
-int GUIAction::setguitimezone(std::string arg)
+int GUIAction::setguitimezone(std::string arg __unused)
 {
 	string SelectedZone;
 	DataManager::GetValue(TW_TIME_ZONE_GUISEL, SelectedZone); // read the selected time zone into SelectedZone
@@ -743,7 +743,7 @@ int GUIAction::overlay(std::string arg)
 	return gui_changeOverlay(arg);
 }
 
-int GUIAction::queuezip(std::string arg)
+int GUIAction::queuezip(std::string arg __unused)
 {
 	if (zip_queue_index >= 10) {
 		gui_print("Maximum zip queue reached!\n");
@@ -757,7 +757,7 @@ int GUIAction::queuezip(std::string arg)
 	return 0;
 }
 
-int GUIAction::cancelzip(std::string arg)
+int GUIAction::cancelzip(std::string arg __unused)
 {
 	if (zip_queue_index <= 0) {
 		gui_print("Minimum zip queue reached!\n");
@@ -769,7 +769,7 @@ int GUIAction::cancelzip(std::string arg)
 	return 0;
 }
 
-int GUIAction::queueclear(std::string arg)
+int GUIAction::queueclear(std::string arg __unused)
 {
 	zip_queue_index = 0;
 	DataManager::SetValue(TW_ZIP_QUEUE_COUNT, zip_queue_index);
@@ -784,7 +784,7 @@ int GUIAction::sleep(std::string arg)
 	return 0;
 }
 
-int GUIAction::appenddatetobackupname(std::string arg)
+int GUIAction::appenddatetobackupname(std::string arg __unused)
 {
 	operation_start("AppendDateToBackupName");
 	string Backup_Name;
@@ -797,7 +797,7 @@ int GUIAction::appenddatetobackupname(std::string arg)
 	return 0;
 }
 
-int GUIAction::generatebackupname(std::string arg)
+int GUIAction::generatebackupname(std::string arg __unused)
 {
 	operation_start("GenerateBackupName");
 	TWFunc::Auto_Generate_Backup_Name();
@@ -805,7 +805,7 @@ int GUIAction::generatebackupname(std::string arg)
 	return 0;
 }
 
-int GUIAction::checkpartitionlist(std::string arg)
+int GUIAction::checkpartitionlist(std::string arg __unused)
 {
 	string Wipe_List, wipe_path;
 	int count = 0;
@@ -832,7 +832,7 @@ int GUIAction::checkpartitionlist(std::string arg)
 		return 0;
 }
 
-int GUIAction::getpartitiondetails(std::string arg)
+int GUIAction::getpartitiondetails(std::string arg __unused)
 {
 	string Wipe_List, wipe_path;
 	int count = 0;
@@ -903,7 +903,7 @@ int GUIAction::getpartitiondetails(std::string arg)
 	return 0;
 }
 
-int GUIAction::screenshot(std::string arg)
+int GUIAction::screenshot(std::string arg __unused)
 {
 	time_t tm;
 	char path[256];
@@ -1140,7 +1140,7 @@ int GUIAction::wipe(std::string arg)
 	return 0;
 }
 
-int GUIAction::refreshsizes(std::string arg)
+int GUIAction::refreshsizes(std::string arg __unused)
 {
 	operation_start("Refreshing Sizes");
 	if (simulate) {
@@ -1200,7 +1200,7 @@ int GUIAction::nandroid(std::string arg)
 	return 0;
 }
 
-int GUIAction::cancelbackup(std::string arg) {
+int GUIAction::cancelbackup(std::string arg __unused) {
 	if (simulate) {
 		PartitionManager.stop_backup.set_value(1);
 	}
@@ -1213,7 +1213,7 @@ int GUIAction::cancelbackup(std::string arg) {
 	return 0;
 }
 
-int GUIAction::fixpermissions(std::string arg)
+int GUIAction::fixpermissions(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1244,7 +1244,7 @@ int GUIAction::dd(std::string arg)
 	return 0;
 }
 
-int GUIAction::partitionsd(std::string arg)
+int GUIAction::partitionsd(std::string arg __unused)
 {
 	operation_start("Partition SD Card");
 	int ret_val = 0;
@@ -1266,7 +1266,7 @@ int GUIAction::partitionsd(std::string arg)
 
 }
 
-int GUIAction::installhtcdumlock(std::string arg)
+int GUIAction::installhtcdumlock(std::string arg __unused)
 {
 	operation_start("Install HTC Dumlock");
 	if (simulate) {
@@ -1278,7 +1278,7 @@ int GUIAction::installhtcdumlock(std::string arg)
 	return 0;
 }
 
-int GUIAction::htcdumlockrestoreboot(std::string arg)
+int GUIAction::htcdumlockrestoreboot(std::string arg __unused)
 {
 	operation_start("HTC Dumlock Restore Boot");
 	if (simulate) {
@@ -1290,7 +1290,7 @@ int GUIAction::htcdumlockrestoreboot(std::string arg)
 	return 0;
 }
 
-int GUIAction::htcdumlockreflashrecovery(std::string arg)
+int GUIAction::htcdumlockreflashrecovery(std::string arg __unused)
 {
 	operation_start("HTC Dumlock Reflash Recovery");
 	if (simulate) {
@@ -1386,7 +1386,7 @@ int GUIAction::terminalcommand(std::string arg)
 	return 0;
 }
 
-int GUIAction::killterminal(std::string arg)
+int GUIAction::killterminal(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1400,7 +1400,7 @@ int GUIAction::killterminal(std::string arg)
 	return 0;
 }
 
-int GUIAction::reinjecttwrp(std::string arg)
+int GUIAction::reinjecttwrp(std::string arg __unused)
 {
 	int op_status = 0;
 	operation_start("ReinjectTWRP");
@@ -1416,7 +1416,7 @@ int GUIAction::reinjecttwrp(std::string arg)
 	return 0;
 }
 
-int GUIAction::checkbackupname(std::string arg)
+int GUIAction::checkbackupname(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1433,7 +1433,7 @@ int GUIAction::checkbackupname(std::string arg)
 	return 0;
 }
 
-int GUIAction::decrypt(std::string arg)
+int GUIAction::decrypt(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1468,7 +1468,7 @@ int GUIAction::decrypt(std::string arg)
 	return 0;
 }
 
-int GUIAction::adbsideload(std::string arg)
+int GUIAction::adbsideload(std::string arg __unused)
 {
 	operation_start("Sideload");
 	if (simulate) {
@@ -1518,7 +1518,7 @@ int GUIAction::adbsideload(std::string arg)
 	return 0;
 }
 
-int GUIAction::adbsideloadcancel(std::string arg)
+int GUIAction::adbsideloadcancel(std::string arg __unused)
 {
 	struct stat st;
 	DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui
@@ -1542,7 +1542,7 @@ int GUIAction::adbsideloadcancel(std::string arg)
 	return 0;
 }
 
-int GUIAction::openrecoveryscript(std::string arg)
+int GUIAction::openrecoveryscript(std::string arg __unused)
 {
 	int op_status = 1;
 
@@ -1584,7 +1584,7 @@ int GUIAction::openrecoveryscript(std::string arg)
 	return 0;
 }
 
-int GUIAction::installsu(std::string arg)
+int GUIAction::installsu(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1600,7 +1600,7 @@ int GUIAction::installsu(std::string arg)
 	return 0;
 }
 
-int GUIAction::fixsu(std::string arg)
+int GUIAction::fixsu(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1616,7 +1616,7 @@ int GUIAction::fixsu(std::string arg)
 	return 0;
 }
 
-int GUIAction::decrypt_backup(std::string arg)
+int GUIAction::decrypt_backup(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1640,7 +1640,7 @@ int GUIAction::decrypt_backup(std::string arg)
 	return 0;
 }
 
-int GUIAction::repair(std::string arg)
+int GUIAction::repair(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1662,7 +1662,7 @@ int GUIAction::repair(std::string arg)
 	return 0;
 }
 
-int GUIAction::resize(std::string arg)
+int GUIAction::resize(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1684,7 +1684,7 @@ int GUIAction::resize(std::string arg)
 	return 0;
 }
 
-int GUIAction::changefilesystem(std::string arg)
+int GUIAction::changefilesystem(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1707,7 +1707,7 @@ int GUIAction::changefilesystem(std::string arg)
 	return 0;
 }
 
-int GUIAction::startmtp(std::string arg)
+int GUIAction::startmtp(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1721,7 +1721,7 @@ int GUIAction::startmtp(std::string arg)
 	return 0;
 }
 
-int GUIAction::stopmtp(std::string arg)
+int GUIAction::stopmtp(std::string arg __unused)
 {
 	int op_status = 0;
 
@@ -1735,7 +1735,7 @@ int GUIAction::stopmtp(std::string arg)
 	return 0;
 }
 
-int GUIAction::flashimage(std::string arg)
+int GUIAction::flashimage(std::string arg __unused)
 {
 	int op_status = 0;
 

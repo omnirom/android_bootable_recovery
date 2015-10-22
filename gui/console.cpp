@@ -195,7 +195,7 @@ int GUIConsole::RenderConsole(void)
 
 	// if last line is fully visible, keep tracking the last line when new lines are added
 	int bottom_offset = GetDisplayRemainder() - actualItemHeight;
-	bool isAtBottom = firstDisplayedItem == GetItemCount() - GetDisplayItemCount() - (bottom_offset != 0) && y_offset == bottom_offset;
+	bool isAtBottom = firstDisplayedItem == (int)GetItemCount() - GetDisplayItemCount() - (bottom_offset != 0) && y_offset == bottom_offset;
 	if (isAtBottom)
 		scrollToEnd = true;
 #if 0
@@ -304,7 +304,7 @@ size_t GUIConsole::GetItemCount()
 	return rConsole.size();
 }
 
-void GUIConsole::RenderItem(size_t itemindex, int yPos, bool selected)
+void GUIConsole::RenderItem(size_t itemindex, int yPos, bool selected __unused)
 {
 	// Set the color for the font
 	if (rConsoleColor[itemindex] == "normal") {
@@ -322,7 +322,7 @@ void GUIConsole::RenderItem(size_t itemindex, int yPos, bool selected)
 	gr_textEx_scaleW(mRenderX, yPos, text, mFont->GetResource(), mRenderW, TOP_LEFT, 0);
 }
 
-void GUIConsole::NotifySelect(size_t item_selected)
+void GUIConsole::NotifySelect(size_t item_selected __unused)
 {
 	// do nothing - console ignores selections
 }

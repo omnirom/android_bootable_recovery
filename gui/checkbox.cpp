@@ -148,7 +148,7 @@ int GUICheckbox::SetRenderPos(int x, int y, int w, int h)
 	return 0;
 }
 
-int GUICheckbox::NotifyTouch(TOUCH_STATE state, int x, int y)
+int GUICheckbox::NotifyTouch(TOUCH_STATE state, int x __unused, int y __unused)
 {
 	if (!isConditionTrue())
 		return -1;
