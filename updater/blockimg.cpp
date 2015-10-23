@@ -1374,7 +1374,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     std::vector<std::string> lines = android::base::Split(transfer_list, "\n");
 
     // First line in transfer list is the version number
-    if (!android::base::ParseInt(lines[0].c_str(), &params.version, 1, 3)) {
+    if (!android::base::ParseInt(lines[0].c_str(), &params.version, 1, 4)) {
         fprintf(stderr, "unexpected transfer list version [%s]\n", lines[0].c_str());
         return StringValue(strdup(""));
     }
