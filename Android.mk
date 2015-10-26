@@ -344,7 +344,8 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     dosfsck \
     dosfslabel \
     fsck_msdos_symlink \
-    mkdosfs
+    mkdosfs \
+    permissive.sh
 
 ifneq ($(TARGET_ARCH), arm64)
     ifneq ($(TARGET_ARCH), x86_64)
