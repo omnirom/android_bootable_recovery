@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_8e932302",
+        "filename": "gui/textbox.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-26T16:52:00Z",
+      "side": 1,
+      "message": "unneeded, the \"while\" already checks that.",
+      "revId": "49818e835c462f0db668fda1472e2d082071b2ee",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
