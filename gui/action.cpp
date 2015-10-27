@@ -43,6 +43,7 @@
 #include "../adb_install.h"
 #include "../fuse_sideload.h"
 #include "blanktimer.hpp"
+#include "stringparser.hpp"
 extern "C" {
 #include "../twcommon.h"
 #include "../minuitwrp/minui.h"
@@ -397,7 +398,7 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 
 GUIAction::ThreadType GUIAction::getThreadType(const GUIAction::Action& action)
 {
-	string func = gui_parse_text(action.mFunction);
+	string func = StringParser::ParseData(action.mFunction);
 	bool needsThread = setActionsRunningInCallerThread.find(func) == setActionsRunningInCallerThread.end();
 	if (needsThread) {
 		if (func == "cancelbackup")
@@ -456,8 +457,8 @@ int GUIAction::doAction(Action action)
 {
 	DataManager::GetValue(TW_SIMULATE_ACTIONS, simulate);
 
-	std::string function = gui_parse_text(action.mFunction);
-	std::string arg = gui_parse_text(action.mArg);
+	std::string function = StringParser::ParseData(action.mFunction);
+	std::string arg = StringParser::ParseData(action.mArg);
 
 	// find function and execute it
 	mapFunc::const_iterator funcitr = mf.find(function);
@@ -535,7 +536,7 @@ int GUIAction::key(std::string arg)
 
 int GUIAction::page(std::string arg)
 {
-	std::string page_name = gui_parse_text(arg);
+	std::string page_name = StringParser::ParseData(arg);
 	return gui_changePage(page_name);
 }
 
@@ -670,7 +671,7 @@ int GUIAction::compute(std::string arg)
 	if (arg.find("*") != string::npos)
 	{
 		string varName = arg.substr(0, arg.find('*'));
-		string multiply_by_str = gui_parse_text(arg.substr(arg.find('*') + 1, string::npos));
+		string multiply_by_str = StringParser::ParseData(arg.substr(arg.find('*') + 1, string::npos));
 		int multiply_by = atoi(multiply_by_str.c_str());
 		int value;
 
@@ -681,7 +682,7 @@ int GUIAction::compute(std::string arg)
 	if (arg.find("/") != string::npos)
 	{
 		string varName = arg.substr(0, arg.find('/'));
-		string divide_by_str = gui_parse_text(arg.substr(arg.find('/') + 1, string::npos));
+		string divide_by_str = StringParser::ParseData(arg.substr(arg.find('/') + 1, string::npos));
 		int divide_by = atoi(divide_by_str.c_str());
 		int value;
 

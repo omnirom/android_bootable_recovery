@@ -32,7 +32,6 @@ int ConvertStrToColor(std::string str, COLOR* color);
 int gui_forceRender(void);
 int gui_changePage(std::string newPage);
 int gui_changeOverlay(std::string newPage);
-std::string gui_parse_text(string inText);
 
 class Resource;
 class ResourceManager;

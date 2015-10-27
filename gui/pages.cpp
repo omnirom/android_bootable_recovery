@@ -47,6 +47,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "blanktimer.hpp"
+#include "stringparser.hpp"
 
 extern int gGuiRunning;
 
@@ -979,7 +980,7 @@ int PageSet::LoadVariables(xml_node<>* vars)
 			}
 			p = persist ? atoi(persist->value()) : 0;
 			string temp = value->value();
-			string valstr = gui_parse_text(temp);
+			string valstr = StringParser::ParseData(temp);
 
 			if (valstr.find("+") != string::npos) {
 				string val1str = valstr;

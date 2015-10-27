@@ -24,6 +24,7 @@ extern "C" {
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
+#include "stringparser.hpp"
 
 GUIText::GUIText(xml_node<>* node)
 	: GUIObject(node)
@@ -74,7 +75,7 @@ GUIText::GUIText(xml_node<>* node)
 	}
 
 	// Simple way to check for static state
-	mLastValue = gui_parse_text(mText);
+	mLastValue = StringParser::ParseAll(mText);
 	if (mLastValue != mText)   mIsStatic = 0;
 
 	mFontHeight = mFont->GetHeight();
@@ -89,7 +90,7 @@ int GUIText::Render(void)
 	if (mFont)
 		fontResource = mFont->GetResource();
 
-	mLastValue = gui_parse_text(mText);
+	mLastValue = StringParser::ParseAll(mText);
 	string displayValue = mLastValue;
 
 	if (charSkip)
@@ -128,7 +129,7 @@ int GUIText::Update(void)
 	if (mIsStatic || !mVarChanged)
 		return 0;
 
-	std::string newValue = gui_parse_text(mText);
+	std::string newValue = StringParser::ParseAll(mText);
 	if (mLastValue == newValue)
 		return 0;
 	else
@@ -144,7 +145,7 @@ int GUIText::GetCurrentBounds(int& w, int& h)
 		fontResource = mFont->GetResource();
 
 	h = mFontHeight;
-	mLastValue = gui_parse_text(mText);
+	mLastValue = StringParser::ParseAll(mText);
 	w = gr_measureEx(mLastValue.c_str(), fontResource);
 	return 0;
 }

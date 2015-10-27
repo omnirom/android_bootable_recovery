@@ -26,6 +26,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "../data.hpp"
+#include "stringparser.hpp"
 
 GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 {
@@ -69,8 +70,8 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 		attr = child->first_attribute("name");
 		if (!attr)
 			continue;
-		item.displayName = gui_parse_text(attr->value());
-		item.variableValue = gui_parse_text(child->value());
+		item.displayName = StringParser::ParseAll(attr->value());
+		item.variableValue = StringParser::ParseData(child->value());
 		item.selected = (child->value() == currentValue);
 		item.action = NULL;
 		xml_node<>* action = child->first_node("action");
