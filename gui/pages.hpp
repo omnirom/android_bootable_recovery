@@ -78,11 +78,11 @@ protected:
 class PageSet
 {
 public:
-	PageSet(char* xmlFile);
+	PageSet(const char* xmlFile);
 	virtual ~PageSet();
 
 public:
-	int Load(ZipArchive* package);
+	int Load(ZipArchive* package, char* xmlFile);
 	int CheckInclude(ZipArchive* package, xml_document<> *parentDoc);
 
 	Page* FindPage(std::string name);
@@ -109,14 +109,11 @@ protected:
 	int LoadVariables(xml_node<>* vars);
 
 protected:
-	char* mXmlFile;
-	xml_document<> mDoc;
 	ResourceManager* mResources;
 	std::vector<Page*> mPages;
 	std::vector<xml_node<>*> templates;
 	Page* mCurrentPage;
 	std::vector<Page*> mOverlays; // Special case for popup dialogs and the lock screen
-	std::vector<xml_document<>*> mIncludedDocs;
 };
 
 class PageManager
@@ -128,6 +125,8 @@ public:
 	static PageSet* SelectPackage(std::string name);
 	static int ReloadPackage(std::string name, std::string package);
 	static void ReleasePackage(std::string name);
+	static int RunReload();
+	static void RequestReload();
 
 	// Used for actions and pages
 	static int ChangePage(std::string name);
@@ -166,6 +165,8 @@ protected:
 	static PageSet* mBaseSet;
 	static MouseCursor *mMouseCursor;
 	static HardwareKeyboard *mHardwareKeyboard;
+	static bool mReloadTheme;
+	static std::string mStartPage;
 };
 
 #endif  // _PAGES_HEADER_HPP
