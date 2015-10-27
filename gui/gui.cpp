@@ -663,14 +663,18 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 			int ret = PageManager::Update();
 			if (ret == 0)
 				++idle_frames;
+			else if (ret == -2)
+				break; // Theme reload failure
 			else
 				idle_frames = 0;
 			// due to possible animation objects, we need to delay activating the input timeout
 			input_timeout_ms = idle_frames > 15 ? 1000 : 0;
 
 #ifndef PRINT_RENDER_TIME
-			if (ret > 1)
-				PageManager::Render();
+			if (ret > 1) {
+				if (PageManager::Render() < -1)
+					break; // Theme reload failure
+			}
 
 			if (ret > 0)
 				flip();
@@ -697,7 +701,8 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 		else
 		{
 			gForceRender.set_value(0);
-			PageManager::Render();
+			if (PageManager::Render() < -1)
+				break;
 			flip();
 			input_timeout_ms = 0;
 		}
