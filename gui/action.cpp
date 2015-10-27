@@ -1798,6 +1798,7 @@ int GUIAction::mountsystemtoggle(std::string arg)
 {
 	int op_status = 0;
 	bool remount_system = PartitionManager.Is_Mounted_By_Path("/system");
+	bool remount_vendor = PartitionManager.Is_Mounted_By_Path("/vendor");
 
 	operation_start("Toggle System Mount");
 	if (!PartitionManager.UnMount_By_Path("/system", true)) {
@@ -1813,6 +1814,20 @@ int GUIAction::mountsystemtoggle(std::string arg)
 				Part->Change_Mount_Read_Only(true);
 			}
 			if (remount_system) {
+				Part->Mount(true);
+			}
+			op_status = 0; // success
+		} else {
+			op_status = 1; // fail
+		}
+		Part = PartitionManager.Find_Partition_By_Path("/vendor");
+		if (Part) {
+			if (arg == "0") {
+				Part->Change_Mount_Read_Only(false);
+			} else {
+				Part->Change_Mount_Read_Only(true);
+			}
+			if (remount_vendor) {
 				Part->Mount(true);
 			}
 			op_status = 0; // success

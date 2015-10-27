@@ -354,6 +354,11 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Backup_Display_Name = Display_Name;
 			DataManager::SetValue("tw_boot_is_mountable", 1);
 			Can_Be_Backed_Up = true;
+		} else if (Mount_Point == "/vendor") {
+			Display_Name = "Vendor";
+			Backup_Display_Name = Display_Name;
+			Storage_Name = Display_Name;
+			Mount_Read_Only = true;
 		}
 #ifdef TW_EXTERNAL_STORAGE_PATH
 		if (Mount_Point == EXPAND(TW_EXTERNAL_STORAGE_PATH)) {
@@ -396,6 +401,11 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Can_Flash_Img = true;
 		} else if (Mount_Point == "/system_image") {
 			Display_Name = "System Image";
+			Backup_Display_Name = Display_Name;
+			Can_Flash_Img = false;
+			Can_Be_Backed_Up = true;
+		} else if (Mount_Point == "/vendor_image") {
+			Display_Name = "Vendor Image";
 			Backup_Display_Name = Display_Name;
 			Can_Flash_Img = false;
 			Can_Be_Backed_Up = true;
