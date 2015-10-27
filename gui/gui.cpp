@@ -663,6 +663,8 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 			int ret = PageManager::Update();
 			if (ret == 0)
 				++idle_frames;
+			else if (ret == -2)
+				break; // Theme reload failure
 			else
 				idle_frames = 0;
 			// due to possible animation objects, we need to delay activating the input timeout
