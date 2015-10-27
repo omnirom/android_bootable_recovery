@@ -562,6 +562,30 @@ static void ors_command_read()
 	return;
 }
 
+static int gui_reload_theme() {
+	int ret_val = 0;
+	std::string theme_path;
+
+	theme_path = DataManager::GetSettingsStoragePath();
+	if (PartitionManager.Mount_By_Path(theme_path.c_str(), 1) < 0) {
+		LOGERR("Unable to mount %s during gui_reload_theme function.\n", theme_path.c_str());
+		ret_val = 1;
+	}
+
+	theme_path += "/TWRP/theme/ui.zip";
+	if (ret_val != 0 || PageManager::ReloadPackage("TWRP", theme_path) != 0)
+	{
+		// Loading the custom theme failed - try loading the stock theme
+		LOGINFO("Attempting to reload stock theme...\n");
+		if (PageManager::ReloadPackage("TWRP", TWRES "ui.xml"))
+		{
+			LOGERR("Failed to load base packages.\n");
+			ret_val = 1;
+		}
+	}
+	return ret_val;
+}
+
 // This special function will return immediately the first time, but then
 // always returns 1/30th of a second (or immediately if called later) from
 // the last time it was called
@@ -624,7 +648,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 		curtainRaise(surface);
 		gr_free_surface(surface);
 	}
-
+reload:
 	gGuiRunning = 1;
 
 	DataManager::SetValue("tw_loaded", 1);
@@ -715,6 +739,15 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 		close(ors_read_fd);
 	ors_read_fd = -1;
 	gGuiRunning = 0;
+	if (DataManager::GetIntValue("tw_reload_theme") != 0) {
+		DataManager::SetValue("tw_gui_done", 0);
+		DataManager::SetValue("tw_reload_theme", 0);
+		if (gui_reload_theme() == 0) {
+			goto reload;
+		} else {
+			LOGERR("Failed to reload any theme.\n");
+		}
+	}
 	return 0;
 }
 

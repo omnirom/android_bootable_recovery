@@ -541,26 +541,9 @@ int GUIAction::page(std::string arg)
 
 int GUIAction::reload(std::string arg __unused)
 {
-	int check = 0, ret_val = 0;
-	std::string theme_path;
-
-	theme_path = DataManager::GetSettingsStoragePath();
-	if (PartitionManager.Mount_By_Path(theme_path.c_str(), 1) < 0) {
-		LOGERR("Unable to mount %s during reload function startup.\n", theme_path.c_str());
-		check = 1;
-	}
-
-	theme_path += "/TWRP/theme/ui.zip";
-	if (check != 0 || PageManager::ReloadPackage("TWRP", theme_path) != 0)
-	{
-		// Loading the custom theme failed - try loading the stock theme
-		LOGINFO("Attempting to reload stock theme...\n");
-		if (PageManager::ReloadPackage("TWRP", TWRES "ui.xml"))
-		{
-			LOGERR("Failed to load base packages.\n");
-			ret_val = 1;
-		}
-	}
+	DataManager::SetValue("tw_reload_theme", 1);
+	DataManager::SetValue("tw_gui_done", 1);
+	// The actual reload is handled in gui.cpp in gui_reload_theme()
 	return 0;
 }
 

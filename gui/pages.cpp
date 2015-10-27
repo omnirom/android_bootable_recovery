@@ -669,7 +669,6 @@ PageSet::~PageSet()
 		delete *itr;
 
 	delete mResources;
-	free(mXmlFile);
 
 	mDoc.clear();
 
