@@ -538,6 +538,8 @@ static void ors_command_read()
 					if (PartitionManager.Decrypt_Device(pass) == 0) {
 						set_page_done = 1;
 					}
+				} else if (strlen(command) == 11 && strncmp(command, "dumpstrings", 11) == 0) {
+					PageManager::GetResources()->DumpStrings();
 				} else if (OpenRecoveryScript::Insert_ORS_Command(command)) {
 					OpenRecoveryScript::run_script_file();
 				}
@@ -754,6 +756,19 @@ std::string gui_parse_text(std::string str)
 	// This function parses text for DataManager values encompassed by %value% in the XML
 	// and string resources (%@resource_name%)
 	size_t pos = 0;
+
+	if (str.size() > 3 && str.substr(0, 2) == "{@" && str.substr(str.size() - 1) == "}") {
+		size_t default_loc = str.find('=', 0);
+		std::string lookup;
+		if (default_loc == std::string::npos) {
+			lookup = str.substr(2, str.size() - 3);
+			str = PageManager::GetResources()->FindString(lookup);
+		} else {
+			lookup = str.substr(2, default_loc - 2);
+			std::string default_string = str.substr(default_loc + 1, str.size() - default_loc - 2);
+			str = PageManager::GetResources()->FindString(lookup, default_string);
+		}
+	}
 
 	while (1)
 	{

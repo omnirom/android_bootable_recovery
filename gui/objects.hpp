@@ -43,6 +43,15 @@ using namespace rapidxml;
 #define TW_Y_OFFSET 0
 #endif
 
+struct translate_later_struct {
+	std::string lookup;
+	std::string default_value;
+	std::string color;
+	std::string format;
+	std::string text;
+	bool inline_format;
+};
+
 class RenderObject
 {
 public:
@@ -356,6 +365,7 @@ protected:
 	int cancelbackup(std::string arg);
 	int checkpartitionlifetimewrites(std::string arg);
 	int mountsystemtoggle(std::string arg);
+	int setlanguage(std::string arg);
 
 	int simulate;
 };
@@ -734,6 +744,7 @@ public:
 	virtual size_t GetItemCount();
 	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
 	virtual void NotifySelect(size_t item_selected);
+	static void Translate_Later();
 protected:
 	enum SlideoutState
 	{

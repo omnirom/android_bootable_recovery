@@ -1,3 +1,21 @@
+/*
+	Copyright 2015 bigbiff/Dees_Troy TeamWin
+	This file is part of TWRP/TeamWin Recovery Project.
+
+	TWRP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	TWRP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 // console.cpp - GUIConsole object
 
 #include <stdarg.h>
@@ -24,10 +42,15 @@ extern "C" {
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
+#include "gui.hpp"
 
+#define GUI_CONSOLE_BUFFER_SIZE 512
 
-static std::vector<std::string> gConsole;
-static std::vector<std::string> gConsoleColor;
+size_t last_translated_line = 0;
+std::vector<translate_later_struct> translate_later;
+
+std::vector<std::string> gConsole;
+std::vector<std::string> gConsoleColor;
 static FILE* ors_file;
 
 extern "C" void __gui_print(const char *color, char *buf)
@@ -66,37 +89,170 @@ extern "C" void __gui_print(const char *color, char *buf)
 
 extern "C" void gui_print(const char *fmt, ...)
 {
-	char buf[512];		// We're going to limit a single request to 512 bytes
+	char buf[GUI_CONSOLE_BUFFER_SIZE];		// We're going to limit a single request to 512 bytes
 
 	va_list ap;
 	va_start(ap, fmt);
-	vsnprintf(buf, 512, fmt, ap);
+	vsnprintf(buf, GUI_CONSOLE_BUFFER_SIZE, fmt, ap);
 	va_end(ap);
 
 	fputs(buf, stdout);
 
-	__gui_print("normal", buf);
+	struct translate_later_struct trans;
+	trans.text = buf;
+	trans.color = "normal";
+	trans.inline_format = false;
+	translate_later.push_back(trans);
 	return;
 }
 
 extern "C" void gui_print_color(const char *color, const char *fmt, ...)
 {
-	char buf[512];		// We're going to limit a single request to 512 bytes
+	char buf[GUI_CONSOLE_BUFFER_SIZE];		// We're going to limit a single request to 512 bytes
 
 	va_list ap;
 	va_start(ap, fmt);
-	vsnprintf(buf, 512, fmt, ap);
+	vsnprintf(buf, GUI_CONSOLE_BUFFER_SIZE, fmt, ap);
 	va_end(ap);
 
 	fputs(buf, stdout);
 
-	__gui_print(color, buf);
+	struct translate_later_struct trans;
+	trans.text = buf;
+	trans.color = color;
+	trans.inline_format = false;
+	translate_later.push_back(trans);
+	return;
+}
+
+void gui_translate_va(const char *lookup, const char* default_value, const char *fmt, ...)
+{
+	char buf[GUI_CONSOLE_BUFFER_SIZE];		// We're going to limit a single request to 512 bytes
+	va_list ap;
+	struct translate_later_struct trans;
+
+	if (!lookup)
+		return;
+
+	if (fmt) {
+		va_start(ap, fmt);
+		vsnprintf(buf, GUI_CONSOLE_BUFFER_SIZE, fmt, ap);
+		va_end(ap);
+
+		trans.format = buf;
+	}
+
+	trans.lookup = lookup;
+	if (default_value)
+		trans.default_value = default_value;
+	trans.color = "normal";
+	trans.inline_format = false;
+	translate_later.push_back(trans);
+
+	std::string output = default_value + trans.format + "\n";
+	fputs(output.c_str(), stdout);
+	return;
+}
+
+void gui_translate_color(const char *color, const char *lookup, const char* default_value, const char *fmt, ...)
+{
+	char buf[GUI_CONSOLE_BUFFER_SIZE];		// We're going to limit a single request to 512 bytes
+	va_list ap;
+	struct translate_later_struct trans;
+
+	if (!lookup)
+		return;
+
+	if (fmt) {
+		va_start(ap, fmt);
+		vsnprintf(buf, GUI_CONSOLE_BUFFER_SIZE, fmt, ap);
+		va_end(ap);
+
+		trans.format = buf;
+	}
+
+	trans.lookup = lookup;
+	if (default_value)
+		trans.default_value = default_value;
+	trans.color = color;
+	trans.inline_format = false;
+	translate_later.push_back(trans);
+	return;
+}
+
+void gui_translate(const char *lookup, const char* default_value, const int val)
+{
+	gui_translate("normal", lookup, default_value, val);
+}
+
+void gui_translate(const char *lookup, const char* default_value, const char* val)
+{
+	gui_translate("normal", lookup, default_value, val);
+}
+
+void gui_translate(const char *color, const char *lookup, const char* default_value, const int val)
+{
+	char buf[GUI_CONSOLE_BUFFER_SIZE];
+	sprintf(buf, "%i", val);
+	gui_translate(color, lookup, default_value, buf);
+}
+
+void gui_translate(const char *color, const char *lookup, const char* default_value, const char* val)
+{
+	char buf[GUI_CONSOLE_BUFFER_SIZE];		// We're going to limit a single request to 512 bytes
+	struct translate_later_struct trans;
+
+	if (!lookup)
+		return;
+
+	trans.format = val;
+
+	trans.lookup = lookup;
+	if (default_value)
+		trans.default_value = default_value;
+	trans.color = color;
+	trans.inline_format = true;
+	translate_later.push_back(trans);
+
+	memset(buf, 0, sizeof(char) * GUI_CONSOLE_BUFFER_SIZE);
+	sprintf(buf, default_value, trans.format.c_str());
+	std::string output = buf;
+	output += "\n";
+	fputs(output.c_str(), stdout);
 	return;
 }
 
 extern "C" void gui_set_FILE(FILE* f)
 {
 	ors_file = f;
+}
+
+void GUIConsole::Translate_Later() {
+	size_t trans_size = translate_later.size();
+	if (trans_size <= last_translated_line)
+		return;
+
+	for (size_t i = last_translated_line; i < trans_size; i++) {
+		if (translate_later[i].text.empty()) {
+			if (translate_later[i].default_value.empty())
+				translate_later[i].text = PageManager::GetResources()->FindString(translate_later[i].lookup);
+			else
+				translate_later[i].text = PageManager::GetResources()->FindString(translate_later[i].lookup, translate_later[i].default_value);
+		}
+		char buf[GUI_CONSOLE_BUFFER_SIZE];
+		if (!translate_later[i].format.empty()) {
+			if (translate_later[i].inline_format) {
+				sprintf(buf, translate_later[i].text.c_str(), translate_later[i].format.c_str());
+				translate_later[i].text = buf;
+				memset(buf, 0, sizeof(char) * GUI_CONSOLE_BUFFER_SIZE);
+			} else {
+				translate_later[i].text += translate_later[i].format;
+			}
+		}
+		strcpy(buf, translate_later[i].text.c_str());
+		__gui_print(translate_later[i].color.c_str(), buf);
+	}
+	last_translated_line = trans_size;
 }
 
 GUIConsole::GUIConsole(xml_node<>* node) : GUIScrollList(node)
@@ -160,6 +316,7 @@ int GUIConsole::RenderSlideout(void)
 
 int GUIConsole::RenderConsole(void)
 {
+	Translate_Later();
 	AddLines(&gConsole, &gConsoleColor, &mLastCount, &rConsole, &rConsoleColor);
 	GUIScrollList::Render();
 
