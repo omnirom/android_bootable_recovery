@@ -178,6 +178,7 @@ friend class TWPartitionManager;
 friend class DataManager;
 friend class GUIPartitionList;
 friend class GUIAction;
+friend class PageManager;
 };
 
 class TWPartitionManager
@@ -233,6 +234,9 @@ public:
 	bool Remove_MTP_Storage(string Mount_Point);                              // Adds or removes an MTP Storage partition
 	bool Remove_MTP_Storage(unsigned int Storage_ID);                         // Adds or removes an MTP Storage partition
 	bool Flash_Image(string Filename);                                        // Flashes an image to a selected partition from the partition list
+	void Translate_Partition(const char* path, const char* resource_name, const char* default_value);
+	void Translate_Partition(const char* path, const char* resource_name, const char* default_value, const char* storage_resource_name, const char* storage_default_value);
+	void Translate_Partition_Display_Names();                                 // Updates display names based on translations
 
 	TWAtomicInt stop_backup;
 

@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "rapidxml.hpp"
 
 struct ZipArchive;
 
@@ -49,10 +50,19 @@ public:
 public:
 	void* GetResource() { return this ? mFont : NULL; }
 	int GetHeight() { return gr_getMaxFontHeight(this ? mFont : NULL); }
+	void Override(xml_node<>* node, ZipArchive* pZip);
 
 protected:
 	void* mFont;
 	Type m_type;
+
+private:
+	void LoadFont(xml_node<>* node, ZipArchive* pZip);
+	void DeleteFont();
+
+private:
+	int origFontSize;
+	void* origFont;
 };
 
 class ImageResource : public Resource
@@ -92,19 +102,26 @@ class ResourceManager
 public:
 	ResourceManager();
 	virtual ~ResourceManager();
-	void LoadResources(xml_node<>* resList, ZipArchive* pZip);
+	void AddStringResource(std::string resource_source, std::string resource_name, std::string value);
+	void LoadResources(xml_node<>* resList, ZipArchive* pZip, std::string resource_source);
 
 public:
 	FontResource* FindFont(const std::string& name) const;
 	ImageResource* FindImage(const std::string& name) const;
 	AnimationResource* FindAnimation(const std::string& name) const;
 	std::string FindString(const std::string& name) const;
+	std::string FindString(const std::string& name, const std::string& default_string) const;
+	void DumpStrings() const;
 
 private:
+	struct string_resource_struct {
+		std::string value;
+		std::string source;
+	};
 	std::vector<FontResource*> mFonts;
 	std::vector<ImageResource*> mImages;
 	std::vector<AnimationResource*> mAnimations;
-	std::map<std::string, std::string> mStrings;
+	std::map<std::string, string_resource_struct> mStrings;
 };
 
 #endif  // _RESOURCE_HEADER

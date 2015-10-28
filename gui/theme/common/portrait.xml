@@ -158,7 +158,7 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Team Win Recovery Project</text>
+				<text>{@twrp_header=Team Win Recovery Project}</text>
 			</text>
 
 			<text style="text_m">
@@ -169,7 +169,7 @@
 
 			<button style="main_button">
 				<placement x="%indent%" y="%row2a_y%"/>
-				<text>Install</text>
+				<text>{@install_btn=Install}</text>
 				<actions>
 					<action function="queueclear"/>
 					<action function="set">tw_selectimage=0</action>
@@ -179,43 +179,43 @@
 
 			<button style="main_button">
 				<placement x="%center_x%" y="%row2a_y%"/>
-				<text>Wipe</text>
+				<text>{@wipe_btn=Wipe}</text>
 				<action function="page">wipe</action>
 			</button>
 
 			<button style="main_button">
 				<placement x="%indent%" y="%row8_y%"/>
-				<text>Backup</text>
+				<text>{@backup_btn=Backup}</text>
 				<action function="page">backup</action>
 			</button>
 
 			<button style="main_button">
 				<placement x="%center_x%" y="%row8_y%"/>
-				<text>Restore</text>
+				<text>{@restore_btn=Restore}</text>
 				<action function="page">restore</action>
 			</button>
 
 			<button style="main_button">
 				<placement x="%indent%" y="%row13a_y%"/>
-				<text>Mount</text>
+				<text>{@mount_btn=Mount}</text>
 				<action function="page">mount</action>
 			</button>
 
 			<button style="main_button">
 				<placement x="%center_x%" y="%row13a_y%"/>
-				<text>Settings</text>
+				<text>{@settings_btn=Settings}</text>
 				<action function="page">settings</action>
 			</button>
 
 			<button style="main_button">
 				<placement x="%indent%" y="%row19_y%"/>
-				<text>Advanced</text>
+				<text>{@advanced_btn=Advanced}</text>
 				<action function="page">advanced</action>
 			</button>
 
 			<button style="main_button">
 				<placement x="%center_x%" y="%row19_y%"/>
-				<text>Reboot</text>
+				<text>{@reboot_btn=Reboot}</text>
 				<action function="page">reboot</action>
 			</button>
 		</page>
@@ -226,18 +226,18 @@
 			<text style="text_l">
 				<condition var1="tw_selectimage" var2="0"/>
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Install Zip</text>
+				<text>{@install_zip_hdr=Install Zip}</text>
 			</text>
 
 			<text style="text_l">
 				<condition var1="tw_selectimage" var2="1"/>
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Install Image</text>
+				<text>{@install_image_hdr=Install Image}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Select File from %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<text>{@select_file_from_storage=Select File from %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
 			</text>
 
 			<template name="sort_options"/>
@@ -264,7 +264,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
-				<text>Select Storage</text>
+				<text>{@select_storage_btn=Select Storage}</text>
 				<actions>
 					<action function="set">tw_back=install</action>
 					<action function="overlay">select_storage</action>
@@ -274,7 +274,7 @@
 			<button style="main_button_half_height">
 				<condition var1="tw_selectimage" var2="0"/>
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Install Image</text>
+				<text>{@install_image_btn=Install Image}</text>
 				<actions>
 					<action function="set">tw_selectimage=1</action>
 					<action function="page">install</action>
@@ -284,7 +284,7 @@
 			<button style="main_button_half_height">
 				<condition var1="tw_selectimage" var2="1"/>
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Install Zip</text>
+				<text>{@install_zip_btn=Install Zip}</text>
 				<actions>
 					<action function="set">tw_selectimage=0</action>
 					<action function="page">install</action>
@@ -326,32 +326,32 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Install Zip</text>
+				<text>{@install_zip_hdr=Install Zip}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>%tw_zip_queue_count% of max of 10 Files queued</text>
+				<text>{@zip_queue_count=%tw_zip_queue_count% of max of 10 Files queued}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>This operation may install incompatible</text>
+				<text>{@zip_warn1=This operation may install incompatible}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row3_y%" placement="5"/>
-				<text>software and render your device unusable.</text>
+				<text>{@zip_warn2=software and render your device unusable.}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row5_y%" placement="5"/>
-				<text>Press back to cancel adding this zip.</text>
+				<text>{@zip_back_cancel=Press back to cancel adding this zip.}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row7_y%"/>
-				<text>Folder:</text>
+				<text>{@folder=Folder:}</text>
 			</text>
 
 			<text style="text_m">
@@ -361,7 +361,7 @@
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row9a_y%"/>
-				<text>File:</text>
+				<text>{@file=File:}</text>
 			</text>
 
 			<text style="text_m">
@@ -371,26 +371,26 @@
 
 			<checkbox>
 				<placement x="%indent%" y="%row12_y%"/>
-				<text>Zip file signature verification</text>
+				<text>{@zip_sig_chk=Zip signature verification}</text>
 				<data variable="tw_signed_zip_verify"/>
 			</checkbox>
 
 			<checkbox>
 				<condition var1="tw_has_injecttwrp" var2="1"/>
 				<placement x="%indent%" y="%row13_y%"/>
-				<text>Inject TWRP after install</text>
+				<text>{@inject_twrp_chk=Inject TWRP after install}</text>
 				<data variable="tw_inject_after_zip"/>
 			</checkbox>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>Add more Zips</text>
+				<text>{@zip_add_btn=Add more Zips}</text>
 				<action function="page">install</action>
 			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row18a_y%"/>
-				<text>Clear Zip Queue</text>
+				<text>{@zip_clear_btn=Clear Zip Queue}</text>
 				<actions>
 					<action function="queueclear"/>
 					<action function="page">install</action>
@@ -398,7 +398,7 @@
 			</button>
 
 			<slider>
-				<text>Swipe to confirm Flash</text>
+				<text>{@swipe_flash=Swipe to confirm Flash}</text>
 				<action function="flash">flash_zip</action>
 			</slider>
 
@@ -421,7 +421,7 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Install Zip %tw_zip_index% of %tw_zip_queue_count%</text>
+				<text>{@install_zip_count_hdr=Install Zip %tw_zip_index% of %tw_zip_queue_count%}</text>
 			</text>
 
 			<text style="text_m">
@@ -444,26 +444,26 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Install Zip</text>
+				<text>{@install_zip_hdr=Install Zip}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<condition var1="tw_operation_status" op="!=" var2="0"/>
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Failed</text>
+				<text>{@failed=Failed}</text>
 			</text>
 
 			<text style="text_m">
 				<condition var1="tw_operation_status" var2="0"/>
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Successful</text>
+				<text>{@successful=Successful}</text>
 			</text>
 
 			<template name="console"/>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
-				<text>Wipe cache/dalvik</text>
+				<text>{@wipe_cache_dalvik_btn=Wipe cache/dalvik}</text>
 				<actions>
 					<action function="set">tw_back=flash_done</action>
 					<action function="set">tw_action=wipe</action>
@@ -471,30 +471,30 @@
 					<action function="set">tw_has_action2=1</action>
 					<action function="set">tw_action2=wipe</action>
 					<action function="set">tw_action2_param=dalvik</action>
-					<action function="set">tw_text1=Wipe Cache &amp; Dalvik?</action>
-					<action function="set">tw_action_text1=Wiping Cache &amp; Dalvik...</action>
-					<action function="set">tw_complete_text1=Cache &amp; Dalvik Wipe Complete</action>
-					<action function="set">tw_slider_text=Swipe to Wipe</action>
+					<action function="set">tw_text1={@wipe_cache_dalvik_confirm=Wipe Cache &amp; Dalvik?}</action>
+					<action function="set">tw_action_text1={@wiping_cache_dalvik=Wiping Cache &amp; Dalvik...}</action>
+					<action function="set">tw_complete_text1={@wipe_cache_dalvik_complete=Cache &amp; Dalvik Wipe Complete}</action>
+					<action function="set">tw_slider_text={@swipe_wipe=Swipe to Wipe}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Reboot System</text>
+				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
 					<action function="set">tw_back=main2</action>
 					<action function="set">tw_action=reboot</action>
 					<action function="set">tw_action_param=system</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=No OS Installed! Are you</action>
-					<action function="set">tw_text2=sure you wish to reboot?</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
 					<action function="set">tw_text3=</action>
 					<action function="set">tw_text4=</action>
-					<action function="set">tw_action_text1=Rebooting...</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_action_text2=</action>
-					<action function="set">tw_complete_text1=Rebooting...</action>
-					<action function="set">tw_slider_text=Swipe to Reboot</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
 					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
@@ -521,17 +521,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Install Image</text>
+				<text>{@install_image_hdr=Install Image}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Select Target Partition</text>
+				<text>{@install_sel_target=Select Target Partition}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row2_y%"/>
-				<text>Folder:</text>
+				<text>{@folder=Folder:}</text>
 			</text>
 
 			<text style="text_m">
@@ -541,7 +541,7 @@
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row4a_y%"/>
-				<text>File:</text>
+				<text>{@file=File:}</text>
 			</text>
 
 			<text style="text_m">
@@ -552,20 +552,20 @@
 			<partitionlist>
 				<placement x="%indent%" y="%row7_y%" w="%content_width%" h="%partitionlist_flashimage_height%"/>
 				<icon selected="radio_true" unselected="radio_false"/>
-				<text>Select Partition to Flash Image:</text>
+				<text>{@flash_image_select=Select Partition to Flash Image:}</text>
 				<data name="tw_flash_partition"/>
 				<listtype name="flashimg"/>
 			</partitionlist>
 
 			<slider>
-				<text>Swipe to confirm Flash</text>
+				<text>{@swipe_flash=Swipe to confirm Flash}</text>
 				<actions>
 					<action function="set">tw_back=flashimage_confirm</action>
 					<action function="set">tw_action=flashimage</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_action_text1=Flashing Image...</action>
+					<action function="set">tw_action_text1={@flashing_image=Flashing Image...}</action>
 					<action function="set">tw_action_text2=</action>
-					<action function="set">tw_complete_text1=Image Flashed</action>
+					<action function="set">tw_complete_text1={@image_flashed=Image Flashed}</action>
 					<action function="page">action_page</action>
 				</actions>
 				<action function="flashimage"/>
@@ -615,7 +615,7 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Confirm Action</text>
+				<text>{@confirm_action=Confirm Action}</text>
 			</text>
 
 			<text style="text_m">
@@ -645,7 +645,7 @@
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row7_y%" placement="5"/>
-				<text>Press back button to cancel.</text>
+				<text>{@back_cancel=Press back button to cancel.}</text>
 			</text>
 
 			<slider>
@@ -687,7 +687,7 @@
 			<button style="main_button_half_height">
 				<condition var1="tw_has_cancel" var2="1"/>
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<action function="%tw_cancel_action%">%tw_cancel_param%</action>
 			</button>
 
@@ -765,20 +765,20 @@
 			<text style="text_m_fail">
 				<condition var1="tw_operation_status" op="!=" var2="0"/>
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Failed</text>
+				<text>{@failed=Failed}</text>
 			</text>
 
 			<text style="text_m">
 				<condition var1="tw_operation_status" var2="0"/>
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Successful</text>
+				<text>{@successful=Successful}</text>
 			</text>
 
 			<template name="console"/>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
-				<text>Back</text>
+				<text>{@back_btn=Back}</text>
 				<actions>
 					<action function="set">tw_clear_destination=%tw_back%</action>
 					<action function="page">clear_vars</action>
@@ -787,20 +787,20 @@
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Reboot System</text>
+				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
 					<action function="set">tw_back=main2</action>
 					<action function="set">tw_action=reboot</action>
 					<action function="set">tw_action_param=system</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=No OS Installed! Are you</action>
-					<action function="set">tw_text2=sure you wish to reboot?</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
 					<action function="set">tw_text3=</action>
 					<action function="set">tw_text4=</action>
-					<action function="set">tw_action_text1=Rebooting...</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_action_text2=</action>
-					<action function="set">tw_complete_text1=Rebooting...</action>
-					<action function="set">tw_slider_text=Swipe to Reboot</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
 					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
@@ -867,23 +867,23 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Wipe</text>
+				<text>{@wipe_hdr=Wipe}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Factory Reset</text>
+				<text>{@factory_reset_hdr=Factory Reset}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Wipes Data, Cache, and Dalvik</text>
+				<text>{@factory_reset1=Wipes Data, Cache, and Dalvik}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<condition var1="tw_has_data_media" var2="1"/>
 				<placement x="%center_x%" y="%row3_y%" placement="5"/>
-				<text>(not including internal storage)</text>
+				<text>{@factory_reset2=(not including internal storage)}</text>
 			</text>
 
 			<text style="text_m_accent">
@@ -892,33 +892,33 @@
 					<condition var1="fileexists" var2="/and-sec"/>
 				</conditions>
 				<placement x="%center_x%" y="%row4_y%" placement="5"/>
-				<text>Android Secure</text>
+				<text>{@android_secure=Android Secure}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<condition var1="tw_has_sdext_partition" var2="1"/>
 				<placement x="%center_x%" y="%row5_y%" placement="5"/>
-				<text>SD-EXT</text>
+				<text>{@sdext=SD-EXT}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row7_y%" placement="5"/>
-				<text>Most of the time this is</text>
+				<text>{@factory_reset3=Most of the time this is}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row8_y%" placement="5"/>
-				<text>the only wipe that you need.</text>
+				<text>{@factory_reset4=the only wipe that you need.}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row10_y%" placement="5"/>
-				<text>Press back button to cancel.</text>
+				<text>{@back_cancel=Press back button to cancel.}</text>
 			</text>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>Advanced Wipe</text>
+				<text>{@advanced_wipe_btn=Advanced Wipe}</text>
 				<actions>
 					<action function="set">partitionlisterror=0</action>
 					<action function="page">advancedwipe</action>
@@ -928,7 +928,7 @@
 			<button style="main_button_half_height">
 				<condition var1="tw_has_data_media" var2="1"/>
 				<placement x="%center_x%" y="%row18a_y%"/>
-				<text>Format Data</text>
+				<text>{@format_data_btn=Format Data}</text>
 				<action function="page">formatdata</action>
 			</button>
 
@@ -938,29 +938,29 @@
 					<condition var1="tw_has_data_media" var2="0"/>
 				</conditions>
 				<placement x="%center_x%" y="%row18a_y%"/>
-				<text>Wipe Encryption</text>
+				<text>{@wipe_enc_btn=Wipe Encryption}</text>
 				<actions>
 					<action function="set">tw_back=wipe</action>
 					<action function="set">tw_action=wipe</action>
 					<action function="set">tw_action_param=DATAMEDIA</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=Wipe Encryption from Data?</action>
+					<action function="set">tw_text1={@wipe_enc_confirm=Wipe Encryption from Data?}</action>
 					<action function="set">tw_text2=</action>
-					<action function="set">tw_action_text1=Formatting Data...</action>
-					<action function="set">tw_complete_text1=Data Format Complete</action>
-					<action function="set">tw_slider_text=Swipe to Format Data</action>
+					<action function="set">tw_action_text1={@formatting_data=Formatting Data...}</action>
+					<action function="set">tw_complete_text1={@format_data_complete=Data Format Complete}</action>
+					<action function="set">tw_slider_text={@swipe_format_data=Swipe to Format Data}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
 
 			<slider>
-				<text>Swipe to Factory Reset</text>
+				<text>{@swipe_factory_reset=Swipe to Factory Reset}</text>
 				<actions>
 					<action function="set">tw_back=wipe</action>
 					<action function="set">tw_action=wipe</action>
 					<action function="set">tw_action_param=data</action>
-					<action function="set">tw_action_text1=Factory Reset...</action>
-					<action function="set">tw_complete_text1=Factory Reset Complete</action>
+					<action function="set">tw_action_text1={@factory_resetting=Factory Reset...}</action>
+					<action function="set">tw_complete_text1={@factory_reset_complete=Factory Reset Complete}</action>
 					<action function="page">action_page</action>
 				</actions>
 			</slider>
@@ -985,17 +985,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Wipe</text>
+				<text>{@wipe_hdr=Wipe}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Advanced Wipe</text>
+				<text>{@advanced_wipe_hdr=Advanced Wipe}</text>
 			</text>
 
 			<partitionlist>
 				<placement x="%indent%" y="%row1a_y%" w="%content_width%" h="%partitionlist_wipe_height%"/>
-				<text>Select Partitions to Wipe:</text>
+				<text>{@sel_part_wipe=Select Partitions to Wipe:}</text>
 				<data name="tw_wipe_list"/>
 				<listtype name="wipe"/>
 			</partitionlist>
@@ -1003,12 +1003,12 @@
 			<text style="text_m_fail">
 				<condition var1="partitionlisterror" var2="1"/>
 				<placement x="%center_x%" y="%row17_y%" placement="5"/>
-				<text>Invalid partition selection</text>
+				<text>{@invalid_part_sel=Invalid partition selection}</text>
 			</text>
 
 			<button style="main_button_half_height_full_width">
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>Repair or Change File System</text>
+				<text>{@repair_change_btn=Repair or Change File System}</text>
 				<actions>
 					<action function="checkpartitionlist"/>
 					<action function="page">checkpartitionlist</action>
@@ -1016,14 +1016,14 @@
 			</button>
 
 			<slider>
-				<text>Swipe to Wipe</text>
+				<text>{@swipe_wipe=Swipe to Wipe}</text>
 				<actions>
 					<action function="set">tw_back=advancedwipe</action>
 					<action function="set">tw_action=wipe</action>
 					<action function="set">tw_action_param=LIST</action>
-					<action function="set">tw_text1=Wipe Selected Partition(s)?</action>
-					<action function="set">tw_action_text1=Wiping Partition(s)...</action>
-					<action function="set">tw_complete_text1=Wipe Complete</action>
+					<action function="set">tw_text1={@wipe_sel_confirm=Wipe Selected Partition(s)?}</action>
+					<action function="set">tw_action_text1={@wiping_part=Wiping Partition(s)...}</action>
+					<action function="set">tw_complete_text1={@wipe_complete=Wipe Complete}</action>
 					<action function="page">action_page</action>
 				</actions>
 			</slider>
@@ -1044,37 +1044,37 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Wipe</text>
+				<text>{@wipe_hdr=Wipe}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Format Data</text>
+				<text>{@format_data_hdr=Format Data}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Format Data will wipe all of your apps,</text>
+				<text>{@format_data_ptr1=Format Data will wipe all of your apps,}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row3_y%" placement="5"/>
-				<text>backups, pictures, videos, media, and</text>
+				<text>{@format_data_ptr2=backups, pictures, videos, media, and}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row4_y%" placement="5"/>
-				<text>removes encryption on internal storage.</text>
+				<text>{@format_data_ptr3=removes encryption on internal storage.}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row6_y%" placement="5"/>
-				<text>This cannot be undone. Press back to cancel.</text>
+				<text>{@format_data_undo=This cannot be undone.}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row8_y%" placement="5"/>
-				<text>Type yes to continue.</text>
+				<text>{@yes_continue=Type yes to continue.  Press back to cancel.}</text>
 			</text>
 
 			<input>
@@ -1109,8 +1109,8 @@
 					<action function="set">tw_back=formatdata</action>
 					<action function="set">tw_action=wipe</action>
 					<action function="set">tw_action_param=DATAMEDIA</action>
-					<action function="set">tw_action_text1=Formatting Data...</action>
-					<action function="set">tw_complete_text1=Data Format Complete</action>
+					<action function="set">tw_action_text1={@formatting_data=Formatting Data...}</action>
+					<action function="set">tw_complete_text1={@format_data_complete=Data Format Complete}</action>
 					<action function="page">action_page</action>
 				</actions>
 			</action>
@@ -1146,83 +1146,83 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Wipe</text>
+				<text>{@wipe_hdr=Wipe}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Partition Options for: %tw_partition_name%</text>
+				<text>{@part_opt_hdr=Partition Options for: %tw_partition_name%}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Mount Point: %tw_partition_mount_point%</text>
+				<text>{@part_mount_point=Mount Point: %tw_partition_mount_point%}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row3_y%" placement="5"/>
-				<text>Current file system: %tw_partition_file_system%</text>
+				<text>{@part_curr_fs=File system: %tw_partition_file_system%}</text>
 			</text>
 
 			<text style="text_m">
 				<condition var1="tw_partition_is_present" var2="1"/>
 				<placement x="%indent%" y="%row5_y%"/>
-				<text>Present: Yes</text>
+				<text>{@part_present_yes=Present: Yes}</text>
 			</text>
 
 			<text style="text_m">
 				<condition var1="tw_partition_is_present" var2="0"/>
 				<placement x="%indent%" y="%row5_y%"/>
-				<text>Present: No</text>
+				<text>{@part_present_no=Present: No}</text>
 			</text>
 
 			<text style="text_m">
 				<condition var1="tw_partition_removable" var2="1"/>
 				<placement x="%center_x%" y="%row5_y%"/>
-				<text>Removable: Yes</text>
+				<text>{@part_removable_yes=Removable: Yes}</text>
 			</text>
 
 			<text style="text_m">
 				<condition var1="tw_partition_removable" var2="0"/>
 				<placement x="%center_x%" y="%row5_y%"/>
-				<text>Removable: No</text>
+				<text>{@part_removable_no=Removable: No}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%indent%" y="%row7_y%"/>
-				<text>Size: %tw_partition_size%MB</text>
+				<text>{@part_size=Size: %tw_partition_size%MB}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row7_y%"/>
-				<text>Used: %tw_partition_used%MB</text>
+				<text>{@part_used=Used: %tw_partition_used%MB}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%indent%" y="%row9_y%"/>
-				<text>Free: %tw_partition_free%MB</text>
+				<text>{@part_free=Free: %tw_partition_free%MB}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row9_y%"/>
-				<text>Backup Size: %tw_partition_backup_size%MB</text>
+				<text>{@part_backup_size=Backup Size: %tw_partition_backup_size%MB}</text>
 			</text>
 
 			<button style="main_button_half_height">
 				<condition var1="tw_partition_can_resize" op="=" var2="1"/>
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>Resize File System</text>
+				<text>{@resize_btn=Resize File System}</text>
 				<actions>
 					<action function="set">tw_back=partitionoptions</action>
 					<action function="set">tw_action=resize</action>
 					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
 					<action function="set">tw_has_action2=1</action>
 					<action function="set">tw_action2=getpartitiondetails</action>
-					<action function="set">tw_text1=Resize %tw_partition_name%?</action>
+					<action function="set">tw_text1={@resize_confirm=Resize %tw_partition_name%?}</action>
 					<action function="set">tw_text2=</action>
-					<action function="set">tw_action_text1=Resizing...</action>
-					<action function="set">tw_complete_text1=Resize Complete</action>
-					<action function="set">tw_slider_text=Swipe to Resize</action>
+					<action function="set">tw_action_text1={@resizing=Resizing...}</action>
+					<action function="set">tw_complete_text1={@resize_complete=Resize Complete}</action>
+					<action function="set">tw_slider_text={@swipe_resize=Swipe to Resize}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -1230,24 +1230,24 @@
 			<button style="main_button_half_height">
 				<condition var1="tw_partition_can_repair" op="=" var2="1"/>
 				<placement x="%indent%" y="%row21a_y%"/>
-				<text>Repair File System</text>
+				<text>{@repair_btn=Repair File System}</text>
 				<actions>
 					<action function="set">tw_back=partitionoptions</action>
 					<action function="set">tw_action=repair</action>
 					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=Repair %tw_partition_name%?</action>
+					<action function="set">tw_text1={@repair_confirm=Repair %tw_partition_name%?}</action>
 					<action function="set">tw_text2=</action>
-					<action function="set">tw_action_text1=Repairing...</action>
-					<action function="set">tw_complete_text1=Repair Complete</action>
-					<action function="set">tw_slider_text=Swipe to Repair</action>
+					<action function="set">tw_action_text1={@repairing=Repairing...}</action>
+					<action function="set">tw_complete_text1={@repair_complete=Repair Complete}</action>
+					<action function="set">tw_slider_text={@swipe_repair=Swipe to Repair}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Change File System</text>
+				<text>{@change_fs_btn=Change File System}</text>
 				<action function="page">selectfilesystem</action>
 			</button>
 
@@ -1287,32 +1287,32 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Wipe</text>
+				<text>{@wipe_hdr=Wipe}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Change File System for: %tw_partition_name%</text>
+				<text>{@change_fs_for_hdr=Change File System for: %tw_partition_name%}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Mount Point: %tw_partition_mount_point%</text>
+				<text>{@part_mount_point=Mount Point: %tw_partition_mount_point%}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row3_y%" placement="5"/>
-				<text>Current file system: %tw_partition_file_system%</text>
+				<text>{@part_curr_fs=File system: %tw_partition_file_system%}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row5_y%" placement="5"/>
-				<text>Some ROMs or kernels may not support some</text>
+				<text>{@change_fs_warn1=Some ROMs or kernels may not support some}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row6_y%" placement="5"/>
-				<text>file systems. Proceed with caution!</text>
+				<text>{@change_fs_warn2=file systems. Proceed with caution!}</text>
 			</text>
 
 			<button style="main_button_half_height">
@@ -1325,11 +1325,11 @@
 					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
 					<action function="set">tw_action_new_file_system=ext2</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=Change %tw_partition_name% to EXT2?</action>
-					<action function="set">tw_text2=</action>
-					<action function="set">tw_action_text1=Formatting...</action>
-					<action function="set">tw_complete_text1=Format Complete</action>
-					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="set">tw_text1={@change_fs_confirm=Change %tw_partition_name%?}</action>
+					<action function="set">tw_text2=EXT2</action>
+					<action function="set">tw_action_text1={@formatting=Formatting...}</action>
+					<action function="set">tw_complete_text1={@format_complete=Format Complete}</action>
+					<action function="set">tw_slider_text={@swipe_change_fs=Swipe to Change}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -1344,11 +1344,11 @@
 					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
 					<action function="set">tw_action_new_file_system=ext3</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=Change %tw_partition_name% to EXT3?</action>
-					<action function="set">tw_text2=</action>
-					<action function="set">tw_action_text1=Formatting...</action>
-					<action function="set">tw_complete_text1=Format Complete</action>
-					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="set">tw_text1={@change_fs_confirm=Change %tw_partition_name%?}</action>
+					<action function="set">tw_text2=EXT3</action>
+					<action function="set">tw_action_text1={@formatting=Formatting...}</action>
+					<action function="set">tw_complete_text1={@format_complete=Format Complete}</action>
+					<action function="set">tw_slider_text={@swipe_change_fs=Swipe to Change}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -1363,11 +1363,11 @@
 					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
 					<action function="set">tw_action_new_file_system=ext4</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=Change %tw_partition_name% to EXT4?</action>
-					<action function="set">tw_text2=</action>
-					<action function="set">tw_action_text1=Formatting...</action>
-					<action function="set">tw_complete_text1=Format Complete</action>
-					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="set">tw_text1={@change_fs_confirm=Change %tw_partition_name%?}</action>
+					<action function="set">tw_text2=EXT4</action>
+					<action function="set">tw_action_text1={@formatting=Formatting...}</action>
+					<action function="set">tw_complete_text1={@format_complete=Format Complete}</action>
+					<action function="set">tw_slider_text={@swipe_change_fs=Swipe to Change}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -1382,11 +1382,11 @@
 					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
 					<action function="set">tw_action_new_file_system=vfat</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=Change %tw_partition_name% to FAT?</action>
-					<action function="set">tw_text2=</action>
-					<action function="set">tw_action_text1=Formatting...</action>
-					<action function="set">tw_complete_text1=Format Complete</action>
-					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="set">tw_text1={@change_fs_confirm=Change %tw_partition_name%?}</action>
+					<action function="set">tw_text2=FAT</action>
+					<action function="set">tw_action_text1={@formatting=Formatting...}</action>
+					<action function="set">tw_complete_text1={@format_complete=Format Complete}</action>
+					<action function="set">tw_slider_text={@swipe_change_fs=Swipe to Change}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -1401,11 +1401,11 @@
 					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
 					<action function="set">tw_action_new_file_system=exfat</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=Change %tw_partition_name% to exFAT?</action>
-					<action function="set">tw_text2=</action>
-					<action function="set">tw_action_text1=Formatting...</action>
-					<action function="set">tw_complete_text1=Format Complete</action>
-					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="set">tw_text1={@change_fs_confirm=Change %tw_partition_name%?}</action>
+					<action function="set">tw_text2=exFAT</action>
+					<action function="set">tw_action_text1={@formatting=Formatting...}</action>
+					<action function="set">tw_complete_text1={@format_complete=Format Complete}</action>
+					<action function="set">tw_slider_text={@swipe_change_fs=Swipe to Change}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -1420,11 +1420,11 @@
 					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
 					<action function="set">tw_action_new_file_system=f2fs</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=Change %tw_partition_name% to F2FS?</action>
-					<action function="set">tw_text2=</action>
-					<action function="set">tw_action_text1=Formatting...</action>
-					<action function="set">tw_complete_text1=Format Complete</action>
-					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="set">tw_text1={@change_fs_confirm=Change %tw_partition_name%?}</action>
+					<action function="set">tw_text2=F2FS</action>
+					<action function="set">tw_action_text1={@formatting=Formatting...}</action>
+					<action function="set">tw_complete_text1={@format_complete=Format Complete}</action>
+					<action function="set">tw_slider_text={@swipe_change_fs=Swipe to Change}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -1445,12 +1445,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Backup</text>
+				<text>{@backup_hdr=Backup}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<text>{@storage_hdr=Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
 			</text>
 
 			<template name="tabs_backup"/>
@@ -1465,7 +1465,7 @@
 					<condition var1="tw_encrypt_backup" var2="0"/>
 				</conditions>
 				<placement x="%tab3_col3_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
-				<text>ENCRYPTION</text>
+				<text>{@encryption_tab=ENCRYPTION}</text>
 				<font resource="font_s" color="%text_color%"/>
 				<actions>
 					<action function="set">tw_password_not_match=0</action>
@@ -1479,7 +1479,7 @@
 					<condition var1="tw_encrypt_backup" var2="1"/>
 				</conditions>
 				<placement x="%tab3_col3_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
-				<text>ENCRYPTION</text>
+				<text>{@encryption_tab=ENCRYPTION}</text>
 				<font resource="font_s" color="%text_success_color%"/>
 				<actions>
 					<action function="set">tw_password_not_match=0</action>
@@ -1489,7 +1489,7 @@
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row3a_y%"/>
-				<text>Name:</text>
+				<text>{@name=Name:}</text>
 			</text>
 
 			<text style="text_m">
@@ -1512,14 +1512,14 @@
 
 			<partitionlist>
 				<placement x="%indent%" y="%row6_y%" w="%content_width%" h="%partitionlist_backup_height%"/>
-				<text>Select Partitions to Backup:</text>
+				<text>{@sel_part_backup=Select Partitions to Backup:}</text>
 				<data name="tw_backup_list"/>
 				<listtype name="backup"/>
 			</partitionlist>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>Select Storage</text>
+				<text>{@select_storage_btn=Select Storage}</text>
 				<actions>
 					<action function="set">tw_back=backup</action>
 					<action function="overlay">select_storage</action>
@@ -1528,7 +1528,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row18a_y%"/>
-				<text>Refresh Sizes</text>
+				<text>{@refresh_sizes_btn=Refresh Sizes}</text>
 				<actions>
 					<action function="refreshsizes"/>
 					<action function="page">backup</action>
@@ -1536,7 +1536,7 @@
 			</button>
 
 			<slider>
-				<text>Swipe to Backup</text>
+				<text>{@swipe_backup=Swipe to Backup}</text>
 				<action function="page">backup_run</action>
 			</slider>
 
@@ -1556,12 +1556,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Backup</text>
+				<text>{@backup_hdr=Backup}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<text>{@storage_hdr=Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
 			</text>
 
 			<template name="tabs_backup"/>
@@ -1576,7 +1576,7 @@
 					<condition var1="tw_encrypt_backup" var2="0"/>
 				</conditions>
 				<placement x="%tab3_col3_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
-				<text>ENCRYPTION</text>
+				<text>{@encryption_tab=ENCRYPTION}</text>
 				<font resource="font_s" color="%text_color%"/>
 				<actions>
 					<action function="set">tw_password_not_match=0</action>
@@ -1590,7 +1590,7 @@
 					<condition var1="tw_encrypt_backup" var2="1"/>
 				</conditions>
 				<placement x="%tab3_col3_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
-				<text>ENCRYPTION</text>
+				<text>{@encryption_tab=ENCRYPTION}</text>
 				<font resource="font_s" color="%text_success_color%"/>
 				<actions>
 					<action function="set">tw_password_not_match=0</action>
@@ -1600,19 +1600,19 @@
 
 			<checkbox>
 				<placement x="%indent%" y="%row3a_y%"/>
-				<text>Enable compression</text>
+				<text>{@enable_backup_comp_chk=Enable compression}</text>
 				<data variable="tw_use_compression"/>
 			</checkbox>
 
 			<checkbox>
 				<placement x="%indent%" y="%row5_y%"/>
-				<text>Skip MD5 generation during backup</text>
+				<text>{@skip_md5_backup_chk=Skip MD5 generation during backup}</text>
 				<data variable="tw_skip_md5_generate"/>
 			</checkbox>
 
 			<checkbox>
 				<placement x="%indent%" y="%row6a_y%"/>
-				<text>Disable Free Space Check</text>
+				<text>{@disable_backup_space_chk=Disable Free Space Check}</text>
 				<data variable="tw_disable_free_space"/>
 			</checkbox>
 
@@ -1629,7 +1629,7 @@
 
 		<page name="backupname1">
 			<action>
-				<condition var1="tw_backup_name" op="=" var2="(Auto Generate)"/>
+				<condition var1="tw_backup_name" op="=" var2="{@auto_generate=(Auto Generate)}"/>
 				<action function="generatebackupname"/>
 			</action>
 
@@ -1643,12 +1643,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Backup</text>
+				<text>{@backup_hdr=Backup}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<text>{@storage_hdr=Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
 			</text>
 
 			<template name="tabs_backup"/>
@@ -1663,7 +1663,7 @@
 					<condition var1="tw_encrypt_backup" var2="0"/>
 				</conditions>
 				<placement x="%tab3_col3_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
-				<text>ENCRYPTION</text>
+				<text>{@encryption_tab=ENCRYPTION}</text>
 				<font resource="font_s" color="%text_color%"/>
 				<actions>
 					<action function="set">tw_password_not_match=0</action>
@@ -1677,7 +1677,7 @@
 					<condition var1="tw_encrypt_backup" var2="1"/>
 				</conditions>
 				<placement x="%tab3_col3_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
-				<text>ENCRYPTION</text>
+				<text>{@encryption_tab=ENCRYPTION}</text>
 				<font resource="font_s" color="%text_success_color%"/>
 				<actions>
 					<action function="set">tw_password_not_match=0</action>
@@ -1687,7 +1687,7 @@
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row3a_y%"/>
-				<text>Name:</text>
+				<text>{@name=Name:}</text>
 			</text>
 
 			<input>
@@ -1715,21 +1715,21 @@
 			<text style="text_m_fail">
 				<condition var1="tw_fileexists" var2="1"/>
 				<placement x="%indent%" y="%row6_y%"/>
-				<text>A backup with that name already exists!</text>
+				<text>{@backup_name_exists=A backup with that name already exists!}</text>
 			</text>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row10_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<actions>
-					<action function="set">tw_backup_name=(Auto Generate)</action>
+					<action function="set">tw_backup_name={@auto_generate=(Auto Generate)}</action>
 					<action function="page">backup</action>
 				</actions>
 			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row10_y%"/>
-				<text>Append Date</text>
+				<text>{@append_date_btn=Append Date}</text>
 				<action function="appenddatetobackupname"/>
 			</button>
 
@@ -1738,7 +1738,7 @@
 			<action>
 				<touch key="home"/>
 				<actions>
-					<action function="set">tw_backup_name=(Auto Generate)</action>
+					<action function="set">tw_backup_name={@auto_generate=(Auto Generate)}</action>
 					<action function="page">main</action>
 				</actions>
 			</action>
@@ -1746,7 +1746,7 @@
 			<action>
 				<touch key="back"/>
 				<actions>
-					<action function="set">tw_backup_name=(Auto Generate)</action>
+					<action function="set">tw_backup_name={@auto_generate=(Auto Generate)}</action>
 					<action function="page">backup</action>
 				</actions>
 			</action>
@@ -1757,12 +1757,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Backup</text>
+				<text>{@backup_hdr=Backup}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<text>{@storage_hdr=Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
 			</text>
 
 			<template name="tabs_backup"/>
@@ -1773,7 +1773,7 @@
 					<condition var1="tw_encrypt_backup" var2="0"/>
 				</conditions>
 				<placement x="%tab3_col3_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
-				<text>ENCRYPTION</text>
+				<text>{@encryption_tab=ENCRYPTION}</text>
 				<font resource="font_s" color="%text_color%"/>
 				<actions>
 					<action function="set">tw_password_not_match=0</action>
@@ -1787,7 +1787,7 @@
 					<condition var1="tw_encrypt_backup" var2="1"/>
 				</conditions>
 				<placement x="%tab3_col3_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
-				<text>ENCRYPTION</text>
+				<text>{@encryption_tab=ENCRYPTION}</text>
 				<font resource="font_s" color="%text_success_color%"/>
 				<actions>
 					<action function="set">tw_password_not_match=0</action>
@@ -1801,12 +1801,12 @@
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row3a_y%" placement="5"/>
-				<text>Encrypt your Backup?</text>
+				<text>{@encrypt_backup=Encrypt your Backup?}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row5_y%" placement="5"/>
-				<text>Enter a Password:</text>
+				<text>{@enter_pass=Enter Password:}</text>
 			</text>
 
 			<input>
@@ -1829,12 +1829,12 @@
 			<text style="text_m_fail">
 				<condition var1="tw_password_not_match" var2="1"/>
 				<placement x="%indent%" y="%row8a_y%"/>
-				<text>Passwords do not match!</text>
+				<text>{@pass_not_match=Passwords do not match!}</text>
 			</text>
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row10_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<actions>
 					<action function="set">tw_encrypt_backup=0</action>
 					<action function="set">tw_backup_password=</action>
@@ -1863,12 +1863,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Backup</text>
+				<text>{@backup_hdr=Backup}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<text>{@storage_hdr=Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
 			</text>
 
 			<template name="tabs_backup"/>
@@ -1879,7 +1879,7 @@
 					<condition var1="tw_encrypt_backup" var2="0"/>
 				</conditions>
 				<placement x="%tab3_col3_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
-				<text>ENCRYPTION</text>
+				<text>{@encryption_tab=ENCRYPTION}</text>
 				<font resource="font_s" color="%text_color%"/>
 				<actions>
 					<action function="set">tw_password_not_match=0</action>
@@ -1893,7 +1893,7 @@
 					<condition var1="tw_encrypt_backup" var2="1"/>
 				</conditions>
 				<placement x="%tab3_col3_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
-				<text>ENCRYPTION</text>
+				<text>{@encryption_tab=ENCRYPTION}</text>
 				<font resource="font_s" color="%text_success_color%"/>
 				<actions>
 					<action function="set">tw_password_not_match=0</action>
@@ -1907,12 +1907,12 @@
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row3a_y%" placement="5"/>
-				<text>Encrypt your Backup?</text>
+				<text>{@encrypt_backup=Encrypt your Backup?}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row5_y%" placement="5"/>
-				<text>Enter Password again:</text>
+				<text>{@enter_pass2=Enter Password again:}</text>
 			</text>
 
 			<input>
@@ -1929,7 +1929,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row10_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<actions>
 					<action function="set">tw_encrypt_backup=0</action>
 					<action function="set">tw_backup_password=</action>
@@ -1995,7 +1995,7 @@
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row19_y%"/>
-				<text>Progress:</text>
+				<text>{@progress=Progress:}</text>
 			</text>
 
 			<text style="text_m">
@@ -2010,7 +2010,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<action function="cancelbackup"/>
 			</button>
 
@@ -2023,7 +2023,7 @@
 				<condition var1="tw_cancel_backup" var2="0"/>
 				<actions>
 					<action function="set">tw_back=backup</action>
-					<action function="set">tw_complete_text1=Backup Complete</action>
+					<action function="set">tw_complete_text1={@backup_complete=Backup Complete}</action>
 					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_complete</action>
 				</actions>
@@ -2034,7 +2034,7 @@
 				<condition var1="tw_cancel_backup" var2="1"/>
 				<actions>
 					<action function="set">tw_back=backup</action>
-					<action function="set">tw_complete_text1=Backup Cancelled</action>
+					<action function="set">tw_complete_text1={@backup_cancel=Backup Cancelled}</action>
 					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_complete</action>
 				</actions>
@@ -2046,19 +2046,19 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Restore</text>
+				<text>{@restore_hdr=Restore}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Select Backup from %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<text>{@restore_sel_store_hdr=Select Backup from %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
 			</text>
 
 			<template name="sort_options"/>
 
 			<fileselector>
 				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
-				<text>Select Package to Restore:</text>
+				<text>{@restore_sel_pack_fs=Select Package to Restore:}</text>
 				<filter folders="1" files="0" nav="0"/>
 				<path name="tw_backups_folder"/>
 				<data name="tw_restore" default=""/>
@@ -2067,7 +2067,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
-				<text>Select Storage</text>
+				<text>{@select_storage_btn=Select Storage}</text>
 				<actions>
 					<action function="set">tw_back=restore</action>
 					<action function="overlay">select_storage</action>
@@ -2115,17 +2115,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Restore</text>
+				<text>{@restore_hdr=Restore}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Encrypted Backup</text>
+				<text>{@restore_enc_backup_hdr=Encrypted Backup}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Enter Password:</text>
+				<text>{@enter_pass=Enter Password:}</text>
 			</text>
 
 			<input>
@@ -2148,12 +2148,12 @@
 			<text style="text_m_fail">
 				<condition var1="tw_password_fail" var2="1"/>
 				<placement x="%indent%" y="%row5_y%"/>
-				<text>Password failed, please try again!</text>
+				<text>{@restore_dec_fail=Password failed, please try again!}</text>
 			</text>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row10_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<actions>
 					<action function="set">tw_page_done=1</action>
 					<action function="page">restore</action>
@@ -2162,16 +2162,17 @@
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row10_y%"/>
-				<text>Delete Backup</text>
+				<text>{@del_backup_btn=Delete Backup}</text>
 				<actions>
 					<action function="set">tw_back=restore</action>
 					<action function="set">tw_action=cmd</action>
 					<action function="set">tw_action_param=cd %tw_backups_folder% &amp;&amp; rm -rf "%tw_restore_name%"</action>
-					<action function="set">tw_text1=Delete Backup? %tw_restore_name%</action>
-					<action function="set">tw_text2=This cannot be undone!</action>
-					<action function="set">tw_action_text1=Deleting Backup...</action>
-					<action function="set">tw_complete_text1=Backup Delete Complete</action>
-					<action function="set">tw_slider_text=Swipe to Delete</action>
+					<action function="set">tw_text1={@del_backup_confirm=Delete Backup?}</action>
+					<action function="set">tw_text2=%tw_restore_name%</action>
+					<action function="set">tw_text4={@del_backup_confirm2=This cannot be undone!}</action>
+					<action function="set">tw_action_text1={@deleting_backup=Deleting Backup...}</action>
+					<action function="set">tw_complete_text1={@backup_deleted=Backup Delete Complete}</action>
+					<action function="set">tw_slider_text={@swipe_delete=Swipe to Delete}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -2194,12 +2195,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Restore</text>
+				<text>{@restore_hdr=Restore}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Encrypted Backup - Trying Decryption</text>
+				<text>{@restore_try_decrypt=Encrypted Backup - Trying Decryption}</text>
 			</text>
 
 			<template name="console"/>
@@ -2238,17 +2239,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Restore</text>
+				<text>{@restore_hdr=Restore}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Backup made on %tw_restore_file_date%</text>
+				<text>{@restore_backup_date=Backup made on %tw_restore_file_date%}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row2_y%"/>
-				<text>Name:</text>
+				<text>{@name=Name:}</text>
 			</text>
 
 			<text style="text_m">
@@ -2272,36 +2273,36 @@
 
 			<partitionlist>
 				<placement x="%indent%" y="%row4a_y%" w="%content_width%" h="%partitionlist_backup_height%"/>
-				<text>Select Partitions to Restore:</text>
+				<text>{@restore_sel_part=Select Partitions to Restore:}</text>
 				<data name="tw_restore_list" selectedlist="tw_restore_selected"/>
 				<listtype name="restore"/>
 			</partitionlist>
 
 			<checkbox>
 				<placement x="%indent%" y="%row17_y%"/>
-				<text>Enable MD5 Verification of Backup Files</text>
+				<text>{@retore_enable_md5_chk=Enable MD5 Verification of Backup Files}</text>
 				<data variable="tw_skip_md5_check"/>
 			</checkbox>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>Delete Backup</text>
+				<text>{@del_backup_btn=Delete Backup}</text>
 				<actions>
 					<action function="set">tw_back=restore</action>
 					<action function="set">tw_action=cmd</action>
 					<action function="set">tw_action_param=cd %tw_backups_folder% &amp;&amp; rm -rf "%tw_restore_name%"</action>
-					<action function="set">tw_text1=Delete Backup?</action>
+					<action function="set">tw_text1={@del_backup_confirm=Delete Backup?}</action>
 					<action function="set">tw_text2=%tw_restore_name%</action>
-					<action function="set">tw_text4=This cannot be undone!</action>
-					<action function="set">tw_action_text1=Deleting Backup...</action>
-					<action function="set">tw_complete_text1=Backup Delete Complete</action>
-					<action function="set">tw_slider_text=Swipe to Delete</action>
+					<action function="set">tw_text4={@del_backup_confirm2=This cannot be undone!}</action>
+					<action function="set">tw_action_text1={@deleting_backup=Deleting Backup...}</action>
+					<action function="set">tw_complete_text1={@backup_deleted=Backup Delete Complete}</action>
+					<action function="set">tw_slider_text={@swipe_delete=Swipe to Delete}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
 
 			<slider>
-				<text>Swipe to Restore</text>
+				<text>{@swipe_restore=Swipe to Restore}</text>
 				<action function="page">restore_run</action>
 			</slider>
 
@@ -2321,17 +2322,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Restore</text>
+				<text>{@restore_hdr=Restore}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Rename Backup</text>
+				<text>{@rename_backup_hdr=Rename Backup}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row2_y%"/>
-				<text>Name:</text>
+				<text>{@name=Name:}</text>
 			</text>
 
 			<input>
@@ -2343,11 +2344,11 @@
 					<action function="set">tw_back=restore</action>
 					<action function="set">tw_action=cmd</action>
 					<action function="set">tw_action_param=cd %tw_backups_folder% &amp;&amp; mv "%tw_restore_name%" "%tw_backup_rename%"</action>
-					<action function="set">tw_text1=Rename Backup?</action>
-					<action function="set">tw_text2=This cannot be undone!</action>
-					<action function="set">tw_action_text1=Renaming Backup...</action>
-					<action function="set">tw_complete_text1=Backup Rename Complete</action>
-					<action function="set">tw_slider_text=Swipe to Rename</action>
+					<action function="set">tw_text1={@rename_backup_confirm=Rename Backup?}</action>
+					<action function="set">tw_text2={@rename_backup_confirm2=This cannot be undone!}</action>
+					<action function="set">tw_action_text1={@renaming_backup=Renaming Backup...}</action>
+					<action function="set">tw_complete_text1={@rename_backup_complete=Backup Rename Complete}</action>
+					<action function="set">tw_slider_text={@swipe_to_rename=Swipe to Rename}</action>
 					<action function="set">tw_filecheck=%tw_backups_folder%/%tw_backup_rename%</action>
 					<action function="set">tw_existpage=renamebackup</action>
 					<action function="set">tw_notexistpage=confirm_action</action>
@@ -2367,12 +2368,12 @@
 			<text style="text_m_fail">
 				<condition var1="tw_fileexists" var2="1"/>
 				<placement x="%indent%" y="%row4a_y%"/>
-				<text>A backup with that name already exists!</text>
+				<text>{@backup_name_exists=A backup with that name already exists!}</text>
 			</text>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row10_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<action function="page">restore_select</action>
 			</button>
 
@@ -2394,7 +2395,7 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Restore</text>
+				<text>{@restore_hdr=Restore}</text>
 			</text>
 
 			<text style="text_m">
@@ -2408,7 +2409,7 @@
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row19_y%"/>
-				<text>Progress:</text>
+				<text>{@progress=Progress:}</text>
 			</text>
 
 			<text style="text_m">
@@ -2420,7 +2421,7 @@
 				<condition var1="tw_operation_state" var2="1"/>
 				<actions>
 					<action function="set">tw_back=restore_select</action>
-					<action function="set">tw_complete_text1=Restore Complete</action>
+					<action function="set">tw_complete_text1={@restore_complete=Restore Complete}</action>
 					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_complete</action>
 				</actions>
@@ -2436,24 +2437,24 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Mount</text>
+				<text>{@mount_hdr=Mount}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<text>{@storage_hdr=Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
 			</text>
 
 			<partitionlist>
 				<placement x="%indent%" y="%row1a_y%" w="%content_width%" h="%partitionlist_mount_height%"/>
-				<text>Select Partitions to Mount:</text>
+				<text>{@mount_sel_part=Select Partitions to Mount:}</text>
 				<listtype name="mount"/>
 			</partitionlist>
 
 			<button style="checkbox">
 				<condition var1="tw_mount_system_ro" op="=" var2="0"/>
 				<placement x="%indent%" y="%row15a_y%" textplacement="6"/>
-				<text>Mount system partition read-only</text>
+				<text>{@mount_sys_ro_chk=Mount system partition read-only}</text>
 				<image resource="checkbox_false"/>
 				<action function="mountsystemtoggle">1</action>
 			</button>
@@ -2461,7 +2462,7 @@
 			<button style="checkbox">
 				<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
 				<placement x="%indent%" y="%row15a_y%" textplacement="6"/>
-				<text>Mount system partition read-only</text>
+				<text>{@mount_sys_ro_chk=Mount system partition read-only}</text>
 				<image resource="checkbox_true"/>
 				<actions>
 					<action function="set">tw_lifetime_writes=2</action>
@@ -2472,7 +2473,7 @@
 			<button style="main_button_half_height">
 				<condition var1="tw_has_usb_storage" var2="1"/>
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>Mount USB Storage</text>
+				<text>{@mount_usb_storage_btn=Mount USB Storage}</text>
 				<action function="page">usb_mount</action>
 			</button>
 
@@ -2482,13 +2483,13 @@
 					<condition var1="tw_is_decrypted" var2="0"/>
 				</conditions>
 				<placement x="%center_x%" y="%row18a_y%"/>
-				<text>Decrypt Data</text>
+				<text>{@decrypt_data_btn=Decrypt Data}</text>
 				<action function="page">decrypt</action>
 			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
-				<text>Select Storage</text>
+				<text>{@select_storage_btn=Select Storage}</text>
 				<actions>
 					<action function="set">tw_back=mount</action>
 					<action function="overlay">select_storage</action>
@@ -2501,7 +2502,7 @@
 					<condition var1="tw_mtp_enabled" var2="0"/>
 				</conditions>
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Enable MTP</text>
+				<text>{@enable_mtp_btn=Enable MTP}</text>
 				<action function="startmtp"/>
 			</button>
 
@@ -2511,7 +2512,7 @@
 					<condition var1="tw_mtp_enabled" var2="1"/>
 				</conditions>
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Disable MTP</text>
+				<text>{@disable_mtp_btn=Disable MTP}</text>
 				<action function="stopmtp"/>
 			</button>
 
@@ -2531,32 +2532,32 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Mount</text>
+				<text>{@mount_hdr=Mount}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>USB Storage</text>
+				<text>{usb_storage_hdr=USB Storage}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>USB Storage Mounted</text>
+				<text>{@usb_stor_mnt1=USB Storage Mounted}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row4_y%" placement="5"/>
-				<text>Be sure to safely remove your device</text>
+				<text>{@usb_stor_mnt2=Be sure to safely remove your device}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row5_y%" placement="5"/>
-				<text>from your computer before unmounting!</text>
+				<text>{@usb_stor_mnt3=from your computer before unmounting!}</text>
 			</text>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
-				<text>Unmount</text>
+				<text>{@unmount_btn=Unmount}</text>
 				<action function="page">usb_umount</action>
 			</button>
 
@@ -2604,23 +2605,23 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Reboot Menu</text>
+				<text>{@reboot_hdr=Reboot Menu}</text>
 			</text>
 
 			<button style="main_button">
 				<condition var1="tw_reboot_system" var2="1"/>
 				<placement x="%indent%" y="%row2a_y%"/>
-				<text>System</text>
+				<text>{@rb_system_btn=System}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
 					<action function="set">tw_action=reboot</action>
 					<action function="set">tw_action_param=system</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=No OS Installed! Are you</action>
-					<action function="set">tw_text2=sure you wish to reboot?</action>
-					<action function="set">tw_action_text1=Rebooting...</action>
-					<action function="set">tw_complete_text1=Rebooting...</action>
-					<action function="set">tw_slider_text=Swipe to Reboot</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
 					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
@@ -2628,17 +2629,17 @@
 			<button style="main_button">
 				<condition var1="tw_reboot_poweroff" var2="1"/>
 				<placement x="%center_x%" y="%row2a_y%"/>
-				<text>Power Off</text>
+				<text>{@rb_poweroff_btn=Power Off}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
 					<action function="set">tw_action=reboot</action>
 					<action function="set">tw_action_param=poweroff</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=No OS Installed! Are you</action>
-					<action function="set">tw_text2=sure you wish to power off?</action>
-					<action function="set">tw_action_text1=Turning Off...</action>
-					<action function="set">tw_complete_text1=Turning Off...</action>
-					<action function="set">tw_slider_text=Swipe to Power Off</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_ospo=sure you wish to power off?}</action>
+					<action function="set">tw_action_text1={@turning_off=Turning Off...}</action>
+					<action function="set">tw_complete_text1={@turning_off=Turning Off...}</action>
+					<action function="set">tw_slider_text={@swipe_power_off=Swipe to Power Off}</action>
 					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
@@ -2646,17 +2647,17 @@
 			<button style="main_button">
 				<condition var1="tw_reboot_recovery" var2="1"/>
 				<placement x="%indent%" y="%row8_y%"/>
-				<text>Recovery</text>
+				<text>{@rb_recovery_btn=Recovery}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
 					<action function="set">tw_action=reboot</action>
 					<action function="set">tw_action_param=recovery</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=No OS Installed! Are you</action>
-					<action function="set">tw_text2=sure you wish to reboot?</action>
-					<action function="set">tw_action_text1=Rebooting...</action>
-					<action function="set">tw_complete_text1=Rebooting...</action>
-					<action function="set">tw_slider_text=Swipe to Reboot</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
 					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
@@ -2664,17 +2665,17 @@
 			<button style="main_button">
 				<condition var1="tw_reboot_bootloader" var2="1"/>
 				<placement x="%center_x%" y="%row8_y%"/>
-				<text>Bootloader</text>
+				<text>{@rb_bootloader_btn=Bootloader}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
 					<action function="set">tw_action=reboot</action>
 					<action function="set">tw_action_param=bootloader</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=No OS Installed! Are you</action>
-					<action function="set">tw_text2=sure you wish to reboot?</action>
-					<action function="set">tw_action_text1=Rebooting...</action>
-					<action function="set">tw_complete_text1=Rebooting...</action>
-					<action function="set">tw_slider_text=Swipe to Reboot</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
 					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
@@ -2682,17 +2683,17 @@
 			<button style="main_button">
 				<condition var1="tw_download_mode" var2="1"/>
 				<placement x="%indent%" y="%row13a_y%"/>
-				<text>Download</text>
+				<text>{@rb_download_btn=Download}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
 					<action function="set">tw_action=reboot</action>
 					<action function="set">tw_action_param=download</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1=No OS Installed! Are you</action>
-					<action function="set">tw_text2=sure you wish to reboot?</action>
-					<action function="set">tw_action_text1=Rebooting...</action>
-					<action function="set">tw_complete_text1=Rebooting...</action>
-					<action function="set">tw_slider_text=Swipe to Reboot</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
 					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
@@ -2713,54 +2714,54 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Unmodified System Partition</text>
+				<text>{@sys_ro_hdr=Unmodified System Partition}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Keep System Read only?</text>
+				<text>{@sys_ro_keep=Keep System Read only?}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row4_y%" placement="5"/>
-				<text>TWRP can leave your system partition unmodified</text>
+				<text>{@sys_rop1=TWRP can leave your system partition unmodified}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row5_y%" placement="5"/>
-				<text>to make it easier for you to take official updates.</text>
+				<text>{@sys_rop2=to make it easier for you to take official updates.}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row6_y%" placement="5"/>
-				<text>TWRP will be unable to prevent the stock ROM from</text>
+				<text>{@sys_rop3=TWRP will be unable to prevent the stock ROM from}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row7_y%" placement="5"/>
-				<text>replacing TWRP and will not offer to root your device.</text>
+				<text>{@sys_rop4=replacing TWRP and will not offer to root your device.}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row9_y%" placement="5"/>
-				<text>Installing zips or performing adb operations may still</text>
+				<text>{@sys_rop5=Installing zips or performing adb operations may still}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row10_y%" placement="5"/>
-				<text>modify the system partition.</text>
+				<text>{@sys_rop6=modify the system partition.}</text>
 			</text>
 
 			<checkbox>
 				<condition var1="tw_is_encrypted" var2="0"/>
 				<placement x="%indent%" y="%row15_y%"/>
-				<text>Never show this screen during boot again</text>
+				<text>{@sys_ro_never_show_chk=Never show this screen during boot again}</text>
 				<data variable="tw_never_show_system_ro_page"/>
 			</checkbox>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>Keep Read Only</text>
+				<text>{@sys_ro_keep_ro_btn=Keep Read Only}</text>
 				<actions>
 					<action function="mountsystemtoggle">1</action>
 					<action function="set">tw_page_done=1</action>
@@ -2769,7 +2770,7 @@
 			</button>
 
 			<slider>
-				<text>Swipe to Allow Modifications</text>
+				<text>{@swipe_allow_mod=Swipe to Allow Modifications}</text>
 				<actions>
 					<action function="mountsystemtoggle">0</action>
 					<action function="set">tw_page_done=1</action>
@@ -2783,45 +2784,45 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Settings</text>
+				<text>{@settings_hdr=Settings}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>General Settings</text>
+				<text>{@settings_gen_hdr=General Settings}</text>
 			</text>
 
 			<template name="tabs_settings"/>
 
 			<fill color="%text_color%">
-				<placement x="0" y="%row_tab_y%" w="%tab4_width%" h="%tab_indicator_height%"/>
+				<placement x="0" y="%row_tab_y%" w="%tab5_width%" h="%tab_indicator_height%"/>
 			</fill>
 
 			<listbox style="scrolllist">
 				<placement x="%indent%" y="%row3a_y%" w="%content_width%" h="%listbox_settings_height%"/>
 				<icon selected="checkbox_true" unselected="checkbox_false"/>
-				<listitem name="Zip file signature verification">
+				<listitem name="{@zip_sig_chk=Zip signature verification}">
 					<data variable="tw_signed_zip_verify"/>
 				</listitem>
-				<listitem name="Use rm -rf instead of formatting">
+				<listitem name="{@use_rmrf_chk=Use rm -rf instead of formatting}">
 					<data variable="tw_rm_rf"/>
 				</listitem>
-				<listitem name="Skip MD5 generation during backup">
+				<listitem name="{@skip_md5_backup_chk=Skip MD5 generation during backup}">
 					<data variable="tw_skip_md5_generate"/>
 				</listitem>
-				<listitem name="Enable MD5 verification of backup files">
+				<listitem name="{@retore_enable_md5_chk=Enable MD5 verification of backup files}">
 					<data variable="tw_skip_md5_check"/>
 				</listitem>
-				<listitem name="Use 24-hour clock">
+				<listitem name="{@use24clock_chk=Use 24-hour clock}">
 					<data variable="tw_military_time"/>
 				</listitem>
-				<listitem name="Reversed navbar layout">
+				<listitem name="{@rev_navbar_chk=Reversed navbar layout}">
 					<data variable="tw_samsung_navbar"/>
 				</listitem>
-				<listitem name="Simulate actions for theme testing">
+				<listitem name="{@simact_chk=Simulate actions for theme testing}">
 					<data variable="tw_simulate_actions"/>
 				</listitem>
-				<listitem name="Simulate failure for actions">
+				<listitem name="{@simfail_chk=Simulate failure for actions}">
 					<condition var1="tw_simulate_actions" var2="1"/>
 					<data variable="tw_simulate_fail"/>
 				</listitem>
@@ -2829,7 +2830,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Restore Defaults</text>
+				<text>{@restore_defaults_btn=Restore Defaults}</text>
 				<action function="restoredefaultsettings"/>
 			</button>
 
@@ -2849,83 +2850,83 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Settings</text>
+				<text>{@settings_hdr=Settings}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Time Zone Settings</text>
+				<text>{@time_zone_hdr=Time Zone}</text>
 			</text>
 
 			<template name="tabs_settings"/>
 
 			<fill color="%text_color%">
-				<placement x="%tab4_col2_x%" y="%row_tab_y%" w="%tab4_width%" h="%tab_indicator_height%"/>
+				<placement x="%tab5_col2_x%" y="%row_tab_y%" w="%tab5_width%" h="%tab_indicator_height%"/>
 			</fill>
 
 			<listbox>
 				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%listbox_timezone_height%"/>
-				<text>Select Time Zone:</text>
+				<text>{@sel_tz_list=Select Time Zone:}</text>
 				<data name="tw_time_zone_guisel"/>
-				<listitem name="(UTC -11) Samoa, Midway Island">BST11;BDT</listitem>
-				<listitem name="(UTC -10) Hawaii">HST10;HDT</listitem>
-				<listitem name="(UTC -9) Alaska">AST9;ADT</listitem>
-				<listitem name="(UTC -8) Pacific Time">PST8;PDT,M3.2.0,M11.1.0</listitem>
-				<listitem name="(UTC -7) Mountain Time">MST7;MDT,M3.2.0,M11.1.0</listitem>
-				<listitem name="(UTC -6) Central Time">CST6;CDT,M3.2.0,M11.1.0</listitem>
-				<listitem name="(UTC -5) Eastern Time">EST5;EDT,M3.2.0,M11.1.0</listitem>
-				<listitem name="(UTC -4) Atlantic Time">AST4;ADT</listitem>
-				<listitem name="(UTC -3) Brazil, Buenos Aires">GRNLNDST3;GRNLNDDT</listitem>
-				<listitem name="(UTC -2) Mid-Atlantic">FALKST2;FALKDT</listitem>
-				<listitem name="(UTC -1) Azores, Cape Verde">AZOREST1;AZOREDT</listitem>
-				<listitem name="(UTC  0) London, Dublin, Lisbon">GMT0;BST,M3.5.0,M10.5.0</listitem>
-				<listitem name="(UTC +1) Berlin, Brussels, Paris">CET-1;CEST,M3.5.0,M10.5.0</listitem>
-				<listitem name="(UTC +2) Athens, Istanbul, South Africa">WET-2;WET,M3.5.0,M10.5.0</listitem>
-				<listitem name="(UTC +3) Moscow, Baghdad">SAUST-3;SAUDT</listitem>
-				<listitem name="(UTC +4) Abu Dhabi, Tbilisi, Muscat">WST-4;WDT</listitem>
-				<listitem name="(UTC +5) Yekaterinburg, Islamabad">PAKST-5;PAKDT</listitem>
-				<listitem name="(UTC +6) Almaty, Dhaka, Colombo">TASHST-6;TASHDT</listitem>
-				<listitem name="(UTC +7) Bangkok, Hanoi, Jakarta">THAIST-7;THAIDT</listitem>
-				<listitem name="(UTC +8) Beijing, Singapore, Hong Kong">TAIST-8;TAIDT</listitem>
-				<listitem name="(UTC +9) Tokyo, Seoul, Yakutsk">JST-9;JSTDT</listitem>
-				<listitem name="(UTC +10) Eastern Australia, Guam">EET-10;EETDT</listitem>
-				<listitem name="(UTC +11) Vladivostok, Solomon Islands">MET-11;METDT</listitem>
-				<listitem name="(UTC +12) Auckland, Wellington, Fiji">NZST-12;NZDT</listitem>
+				<listitem name="{@utcm11=(UTC -11) Samoa, Midway Island}">BST11;BDT</listitem>
+				<listitem name="{@utcm10=(UTC -10) Hawaii}">HST10;HDT</listitem>
+				<listitem name="{@utcm9=(UTC -9) Alaska}">AST9;ADT</listitem>
+				<listitem name="{@utcm8=(UTC -8) Pacific Time}">PST8;PDT,M3.2.0,M11.1.0</listitem>
+				<listitem name="{@utcm7=(UTC -7) Mountain Time}">MST7;MDT,M3.2.0,M11.1.0</listitem>
+				<listitem name="{@utcm6=(UTC -6) Central Time}">CST6;CDT,M3.2.0,M11.1.0</listitem>
+				<listitem name="{@utcm5=(UTC -5) Eastern Time}">EST5;EDT,M3.2.0,M11.1.0</listitem>
+				<listitem name="{@utcm4=(UTC -4) Atlantic Time}">AST4;ADT</listitem>
+				<listitem name="{@utcm3=(UTC -3) Brazil, Buenos Aires}">GRNLNDST3;GRNLNDDT</listitem>
+				<listitem name="{@utcm2=(UTC -2) Mid-Atlantic}">FALKST2;FALKDT</listitem>
+				<listitem name="{@utcm1=(UTC -1) Azores, Cape Verde}">AZOREST1;AZOREDT</listitem>
+				<listitem name="{@utc0=(UTC  0) London, Dublin, Lisbon}">GMT0;BST,M3.5.0,M10.5.0</listitem>
+				<listitem name="{@utcp1=(UTC +1) Berlin, Brussels, Paris}">CET-1;CEST,M3.5.0,M10.5.0</listitem>
+				<listitem name="{@utcp2=(UTC +2) Athens, Istanbul, South Africa}">WET-2;WET,M3.5.0,M10.5.0</listitem>
+				<listitem name="{@utcp3=(UTC +3) Moscow, Baghdad}">SAUST-3;SAUDT</listitem>
+				<listitem name="{@utcp4=(UTC +4) Abu Dhabi, Tbilisi, Muscat}">WST-4;WDT</listitem>
+				<listitem name="{@utcp5=(UTC +5) Yekaterinburg, Islamabad}">PAKST-5;PAKDT</listitem>
+				<listitem name="{@utcp6=(UTC +6) Almaty, Dhaka, Colombo}">TASHST-6;TASHDT</listitem>
+				<listitem name="{@utcp7=(UTC +7) Bangkok, Hanoi, Jakarta}">THAIST-7;THAIDT</listitem>
+				<listitem name="{@utcp8=(UTC +8) Beijing, Singapore, Hong Kong}">TAIST-8;TAIDT</listitem>
+				<listitem name="{@utcp9=(UTC +9) Tokyo, Seoul, Yakutsk}">JST-9;JSTDT</listitem>
+				<listitem name="{@utcp10=(UTC +10) Eastern Australia, Guam}">EET-10;EETDT</listitem>
+				<listitem name="{@utcp11=(UTC +11) Vladivostok, Solomon Islands}">MET-11;METDT</listitem>
+				<listitem name="{@utcp12=(UTC +12) Auckland, Wellington, Fiji}">NZST-12;NZDT</listitem>
 			</listbox>
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row15a_y%"/>
-				<text>Select Offset (usually 0): %tw_time_zone_guioffset%</text>
+				<text>{@sel_tz_offset=Select Offset (usually 0): %tw_time_zone_guioffset%}</text>
 			</text>
 
 			<button style="button_quarter_width">
 				<placement x="%indent%" y="%row16a_y%"/>
-				<text>None</text>
+				<text>{@tz_offset_none=None}</text>
 				<action function="set">tw_time_zone_guioffset=0</action>
 			</button>
 
 			<button style="button_quarter_width">
 				<placement x="%btn4_col2_x%" y="%row16a_y%"/>
-				<text>15</text>
+				<text>{@tz_offset_15=15}</text>
 				<action function="set">tw_time_zone_guioffset=15</action>
 			</button>
 
 			<button style="button_quarter_width">
 				<placement x="%btn4_col3_x%" y="%row16a_y%"/>
-				<text>30</text>
+				<text>{@tz_offset_30=30}</text>
 				<action function="set">tw_time_zone_guioffset=30</action>
 			</button>
 
 			<button style="button_quarter_width">
 				<placement x="%btn4_col4_x%" y="%row16a_y%"/>
-				<text>45</text>
+				<text>{@tz_offset_45=45}</text>
 				<action function="set">tw_time_zone_guioffset=45</action>
 			</button>
 
 			<checkbox>
 				<placement x="%indent%" y="%row18a_y%"/>
 				<font resource="font_m" color="%text_color%"/>
-				<text>Use daylight savings time (DST)</text>
+				<text>{@use_dst_chk=Use daylight savings time (DST)}</text>
 				<data variable="tw_time_zone_guidst"/>
 				<image checked="checkbox_true" unchecked="checkbox_false"/>
 			</checkbox>
@@ -2933,14 +2934,14 @@
 			<text color="%text_color%">
 				<font resource="font_m"/>
 				<placement x="%indent%" y="%row20_y%"/>
-				<text>Current Time Zone: %tw_time_zone%</text>
+				<text>{@curr_tz=Current Time Zone: %tw_time_zone%}</text>
 			</text>
 
 			<button>
 				<highlight color="%highlight_color%"/>
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<font resource="font_m" color="%text_button_color%"/>
-				<text>Set Time Zone</text>
+				<text>{@set_tz_btn=Set Time Zone}</text>
 				<image resource="main_button_half_height"/>
 				<action function="setguitimezone"/>
 			</button>
@@ -2961,18 +2962,18 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Settings</text>
+				<text>{@settings_hdr=Settings}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Screen Settings</text>
+				<text>{@settings_screen_hdr=Screen Settings}</text>
 			</text>
 
 			<template name="tabs_settings"/>
 
 			<fill color="%text_color%">
-				<placement x="%center_x%" y="%row_tab_y%" w="%tab4_width%" h="%tab_indicator_height%"/>
+				<placement x="%tab5_col3_x%" y="%row_tab_y%" w="%tab5_width%" h="%tab_indicator_height%"/>
 			</fill>
 
 			<button>
@@ -2980,7 +2981,7 @@
 				<font resource="font_m" color="%text_color%"/>
 				<condition var1="tw_screen_timeout_secs" op="=" var2="0"/>
 				<condition var1="tw_no_screen_timeout" op="!=" var2="1"/>
-				<text>Enable screen timeout</text>
+				<text>{@enable_timeout_chk=Enable screen timeout}</text>
 				<image resource="checkbox_false"/>
 				<action function="set">tw_screen_timeout_secs=60</action>
 			</button>
@@ -2990,7 +2991,7 @@
 				<font resource="font_m" color="%text_color%"/>
 				<condition var1="tw_screen_timeout_secs" op="!=" var2="0"/>
 				<condition var1="tw_no_screen_timeout" op="!=" var2="1"/>
-				<text>Enable screen timeout</text>
+				<text>{@enable_timeout_chk=Enable screen timeout}</text>
 				<image resource="checkbox_true"/>
 				<action function="set">tw_screen_timeout_secs=0</action>
 			</button>
@@ -2999,14 +3000,14 @@
 				<condition var1="tw_screen_timeout_secs" op="!=" var2="0"/>
 				<condition var1="tw_no_screen_timeout" op="!=" var2="1"/>
 				<placement x="indent" y="%row5_y%" w="%content_width%"/>
-				<text>Screen timeout in seconds:</text>
+				<text>{@screen_to_slider=Screen timeout in seconds:}</text>
 				<data variable="tw_screen_timeout_secs" min="15" max="300"/>
 			</slidervalue>
 
 			<slidervalue>
 				<condition var1="tw_has_brightnesss_file" var2="1"/>
 				<placement x="indent" y="%row10_y%" w="%content_width%"/>
-				<text>Brightness: %tw_brightness_pct%%</text>
+				<text>{@screen_bright_slider=Brightness: %tw_brightness_pct%%}</text>
 				<data variable="tw_brightness_pct" min="10" max="100"/>
 				<actions>
 					<action function="set">tw_brightness=%tw_brightness_max%</action>
@@ -3032,35 +3033,35 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Settings</text>
+				<text>{@settings_hdr=Settings}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Vibration Settings</text>
+				<text>{@vibration_hdr=Vibration}</text>
 			</text>
 
 			<template name="tabs_settings"/>
 
 			<fill color="%text_color%">
-				<placement x="%tab4_col4_x%" y="%row_tab_y%" w="%tab4_width%" h="%tab_indicator_height%"/>
+				<placement x="%tab5_col4_x%" y="%row_tab_y%" w="%tab5_width%" h="%tab_indicator_height%"/>
 			</fill>
 
 			<slidervalue>
 				<placement x="indent" y="%row4_y%" w="%content_width%"/>
-				<text>Button Vibration:</text>
+				<text>{@button_vibration=Button Vibration:}</text>
 				<data variable="tw_button_vibrate" min="0" max="300"/>
 			</slidervalue>
 
 			<slidervalue>
 				<placement x="indent" y="%row9_y%" w="%content_width%"/>
-				<text>Keyboard Vibration:</text>
+				<text>{@kb_vibration=Keyboard Vibration:}</text>
 				<data variable="tw_keyboard_vibrate" min="0" max="300"/>
 			</slidervalue>
 
 			<slidervalue>
 				<placement x="indent" y="%row14_y%" w="%content_width%"/>
-				<text>Action Vibration:</text>
+				<text>{@act_vibration=Action Vibration:}</text>
 				<data variable="tw_action_vibrate" min="0" max="500"/>
 			</slidervalue>
 
@@ -3075,83 +3076,126 @@
 			</action>
 		</page>
 
+		<page name="settings_language">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@settings_hdr=Settings}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@language_hdr=Language - %tw_language_display%}</text>
+			</text>
+
+			<template name="tabs_settings"/>
+
+			<fill color="%text_color%">
+				<placement x="%tab5_col5_x%" y="%row_tab_y%" w="%tab5_width%" h="%tab_indicator_height%"/>
+			</fill>
+
+			<listbox>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%listbox_settings_height%"/>
+				<text>{@select_language=Select Language:}</text>
+				<icon selected="radio_true" unselected="radio_false" />
+				<data name="tw_language" />
+			</listbox>
+
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row21a_y%"/>
+				<text>{@set_language_btn=Set Language}</text>
+				<action function="setlanguage"></action>
+			</button>
+
+			<action>
+				<touch key="home" />
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back" />
+				<action function="page">settings</action>
+			</action>
+		</page>
+
 		<page name="advanced">
 			<template name="page"/>
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Advanced</text>
+				<text>{@advanced_hdr=Advanced}</text>
 			</text>
 
 			<button style="main_button">
 				<placement x="%indent%" y="%row2a_y%"/>
-				<text>Copy Log to SD</text>
+				<text>{@copy_log_btn=Copy Log}</text>
 				<actions>
 					<action function="set">tw_back=advanced</action>
 					<action function="set">tw_action=copylog</action>
-					<action function="set">tw_text1=Copy Log to SD Card?</action>
-					<action function="set">tw_action_text1=Copying Log to SD Card...</action>
-					<action function="set">tw_complete_text1=Log Copy Complete</action>
-					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_text1={@copy_log_confirm=Copy Log to SD Card?}</action>
+					<action function="set">tw_action_text1={@copying_log=Copying Log to SD Card...}</action>
+					<action function="set">tw_complete_text1={@copy_log_complete=Log Copy Complete}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
 
 			<button style="main_button">
 				<placement x="%center_x%" y="%row2a_y%"/>
-				<text>Fix Permissions</text>
+				<text>{@fix_perm_btn=Fix Permissions}</text>
 				<action function="page">fixperms</action>
 			</button>
 
 			<button style="main_button">
 				<condition var1="tw_allow_partition_sdcard" var2="1"/>
 				<placement x="%indent%" y="%row8_y%"/>
-				<text>Partition SD Card</text>
+				<text>{@part_sd_btn=Partition SD Card}</text>
 				<action function="page">partsdcard</action>
 			</button>
 
 			<button style="main_button">
 				<placement x="%center_x%" y="%row8_y%"/>
-				<text>File Manager</text>
+				<text>{@file_manager_btn=File Manager}</text>
 				<action function="page">filemanagerlist</action>
 			</button>
 
 			<button style="main_button">
 				<placement x="%indent%" y="%row13a_y%"/>
-				<text>Terminal</text>
+				<text>{@terminal_btn=Terminal}</text>
 				<action function="page">terminalfolder</action>
 			</button>
 
 			<button style="main_button">
 				<placement x="%center_x%" y="%row13a_y%"/>
-				<text>Reload Theme</text>
+				<text>{@reload_theme_btn=Reload Theme}</text>
 				<action function="reload"/>
 			</button>
 
 			<button style="main_button">
 				<placement x="%indent%" y="%row19_y%"/>
-				<text>ADB Sideload</text>
+				<text>{@adb_sideload_btn=ADB Sideload}</text>
 				<action function="page">sideload</action>
 			</button>
 
 			<button style="main_button">
 				<condition var1="tw_show_dumlock" var2="1"/>
 				<placement x="%center_x%" y="%row19_y%"/>
-				<text>HTC Dumlock</text>
+				<text>{@dumlock_btn=HTC Dumlock}</text>
 				<action function="page">htcdumlock</action>
 			</button>
 
 			<button style="main_button">
 				<condition var1="tw_has_injecttwrp" var2="1"/>
 				<placement x="%center_x%" y="%row19_y%"/>
-				<text>Re-Inject TWRP</text>
+				<text>{@inject_twrp_btn=Inject TWRP}</text>
 				<actions>
 					<action function="set">tw_back=advanced</action>
 					<action function="set">tw_action=reinjecttwrp</action>
-					<action function="set">tw_text1=Re-Inject TWRP?</action>
-					<action function="set">tw_action_text1=Re-Injecting TWRP...</action>
-					<action function="set">tw_complete_text1=TWRP Injection Complete</action>
-					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_text1={@inject_twrp_confirm=Re-Inject TWRP?}</action>
+					<action function="set">tw_action_text1={@injecting_twrp=Re-Injecting TWRP...}</action>
+					<action function="set">tw_complete_text1={@inject_twrp_complete=TWRP Injection Complete}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -3172,27 +3216,27 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Advanced</text>
+				<text>{@advanced_hdr=Advanced}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Partition SD Card</text>
+				<text>{@part_sd_hdr=Partition SD Card}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>You will lose all files on your SD card!</text>
+				<text>{@part_sd_lose=You will lose all files on your SD card!}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row3_y%" placement="5"/>
-				<text>This action cannot be undone!</text>
+				<text>{@part_sd_undo=This action cannot be undone!}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row5_y%" placement="5"/>
-				<text>EXT Size:</text>
+				<text>{@part_sd_ext_sz=EXT Size:}</text>
 			</text>
 
 			<text style="text_m">
@@ -3202,19 +3246,19 @@
 
 			<button style="button_quarter_width">
 				<placement x="%indent%" y="%row6_y%"/>
-				<text>-</text>
+				<text>{@part_sd_m=-}</text>
 				<action function="addsubtract">tw_sdext_size-128</action>
 			</button>
 
 			<button style="button_quarter_width">
 				<placement x="%btn4_col4_x%" y="%row6_y%"/>
-				<text>+</text>
+				<text>{@part_sd_p=+}</text>
 				<action function="addsubtract">tw_sdext_size+128</action>
 			</button>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row9_y%" placement="5"/>
-				<text>Swap Size:</text>
+				<text>{@part_sd_swap_sz=Swap Size:}</text>
 			</text>
 
 			<text style="text_m">
@@ -3224,19 +3268,19 @@
 
 			<button style="button_quarter_width">
 				<placement x="%indent%" y="%row10_y%"/>
-				<text>-</text>
+				<text>{@part_sd_m=-}</text>
 				<action function="addsubtract">tw_swap_size-32</action>
 			</button>
 
 			<button style="button_quarter_width">
 				<placement x="%btn4_col4_x%" y="%row10_y%"/>
-				<text>+</text>
+				<text>{@part_sd_p=+}</text>
 				<action function="addsubtract">tw_swap_size+32</action>
 			</button>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row13_y%" placement="5"/>
-				<text>File System:</text>
+				<text>{@file_system=File System:}</text>
 			</text>
 
 			<text style="text_m">
@@ -3257,7 +3301,7 @@
 			</button>
 
 			<slider>
-				<text>Swipe to Partition</text>
+				<text>{@swipe_part_sd=Swipe to Partition}</text>
 				<action function="page">partsdcardaction</action>
 				<actions>
 					<action function="set">tw_back=partsdcard</action>
@@ -3265,9 +3309,9 @@
 					<action function="set">tw_has_action2=1</action>
 					<action function="set">tw_action2=set</action>
 					<action function="set">tw_action2_param=tw_zip_location=/sdcard</action>
-					<action function="set">tw_action_text1=Partitioning SD Card...</action>
-					<action function="set">tw_action_text2=This will take a few minutes.</action>
-					<action function="set">tw_complete_text1=Partitioning Complete</action>
+					<action function="set">tw_action_text1={@partitioning_sd=Partitioning SD Card...}</action>
+					<action function="set">tw_action_text2={@partitioning_sd2=This will take a few minutes.}</action>
+					<action function="set">tw_complete_text1={@part_sd_complete=Partitioning Complete}</action>
 					<action function="page">action_page</action>
 				</actions>
 			</slider>
@@ -3288,52 +3332,52 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Advanced</text>
+				<text>{@advanced_hdr=Advanced}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>HTC Dumlock</text>
+				<text>{@dumlock_hdr=HTC Dumlock}</text>
 			</text>
 
 			<button style="main_button_half_height_full_width">
 				<placement x="%indent%" y="%row15a_y%"/>
-				<text>Restore Original Boot</text>
+				<text>{@dumlock_restore_btn=Restore Original Boot}</text>
 				<actions>
 					<action function="set">tw_back=htcdumlock</action>
 					<action function="set">tw_action=htcdumlockrestoreboot</action>
-					<action function="set">tw_text1=Restore original boot image?</action>
-					<action function="set">tw_action_text1=Restoring Original Boot...</action>
-					<action function="set">tw_complete_text1=Restore Original Boot Complete</action>
-					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_text1={@dumlock_restore_confirm=Restore original boot image?}</action>
+					<action function="set">tw_action_text1={@dumlock_restoring=Restoring Original Boot...}</action>
+					<action function="set">tw_complete_text1={@dumlock_restore_complete=Restore Original Boot Complete}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
 
 			<button style="main_button_half_height_full_width">
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>Reflash Recovery</text>
+				<text>{@dumlock_reflash_btn=Reflash Recovery}</text>
 				<actions>
 					<action function="set">tw_back=htcdumlock</action>
 					<action function="set">tw_action=htcdumlockreflashrecovery</action>
-					<action function="set">tw_text1=Reflash recovery to boot?</action>
-					<action function="set">tw_action_text1=Flashing recovery to boot...</action>
-					<action function="set">tw_complete_text1=Recovery Flash to Boot Complete</action>
-					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_text1={@dumlock_reflash_confirm=Reflash recovery to boot?}</action>
+					<action function="set">tw_action_text1={@dumlock_reflashing=Flashing recovery to boot...}</action>
+					<action function="set">tw_complete_text1={@dumlock_reflash_complete=Recovery Flash to Boot Complete}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
 
 			<button style="main_button_half_height_full_width">
 				<placement x="%indent%" y="%row21a_y%"/>
-				<text>Install HTC Dumlock</text>
+				<text>{@dumlock_install_btn=Install HTC Dumlock}</text>
 				<actions>
 					<action function="set">tw_back=htcdumlock</action>
 					<action function="set">tw_action=installhtcdumlock</action>
-					<action function="set">tw_text1=Install HTC dumlock files to ROM?</action>
-					<action function="set">tw_action_text1=Installing HTC Dumlock...</action>
-					<action function="set">tw_complete_text1=HTC Dumlock Install Complete</action>
-					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_text1={@dumlock_install_confirm=Install HTC dumlock files to ROM?}</action>
+					<action function="set">tw_action_text1={@dumlock_installing=Installing HTC Dumlock...}</action>
+					<action function="set">tw_complete_text1={@dumlock_install_complete=HTC Dumlock Install Complete}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -3358,7 +3402,7 @@
 			</image>
 
 			<slider>
-				<text>Swipe to Unlock</text>
+				<text>{@swipe_to_unlock=Swipe to Unlock}</text>
 				<action function="overlay"/>
 			</slider>
 		</page>
@@ -3368,12 +3412,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>File Manager</text>
+				<text>{@fm_hdr=File Manager}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Select a File or Folder</text>
+				<text>{@fm_sel_file=Select a File or Folder}</text>
 			</text>
 
 			<template name="sort_options"/>
@@ -3392,14 +3436,14 @@
 				<actions>
 					<action function="set">tw_filename1=tw_file_location1</action>
 					<action function="set">tw_fm_isfolder=1</action>
-					<action function="set">tw_fm_type=Folder</action>
+					<action function="set">tw_fm_type={@fm_type_folder=Folder}</action>
 					<action function="page">filemanageroptions</action>
 				</actions>
 			</button>
 
 			<action>
 				<actions>
-					<action function="set">tw_fm_type=File</action>
+					<action function="set">tw_fm_type={@fm_type_file=File}</action>
 					<action function="set">tw_fm_isfolder=0</action>
 				</actions>
 			</action>
@@ -3425,17 +3469,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>File Manager</text>
+				<text>{@fm_hdr=File Manager}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Choose Action</text>
+				<text>{@fm_choose_act=Choose Action}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row2_y%"/>
-				<text>%tw_fm_type% selected:</text>
+				<text>{@fm_selected=%tw_fm_type% selected:}</text>
 			</text>
 
 			<text style="text_m">
@@ -3446,10 +3490,10 @@
 			<button style="main_button_half_height">
 				<condition var1="tw_fm_isfolder" var2="0"/>
 				<placement x="%indent%" y="%row15a_y%"/>
-				<text>Copy File</text>
+				<text>{@fm_copy_file_btn=Copy File}</text>
 				<actions>
 					<action function="set">tw_filemanager_command=cp</action>
-					<action function="set">tw_fm_text1=Copying</action>
+					<action function="set">tw_fm_text1={@fm_copying=Copying}</action>
 					<action function="page">choosedestinationfolder</action>
 				</actions>
 			</button>
@@ -3457,30 +3501,30 @@
 			<button style="main_button_half_height">
 				<condition var1="tw_fm_isfolder" var2="1"/>
 				<placement x="%indent%" y="%row15a_y%"/>
-				<text>Copy Folder</text>
+				<text>{@fm_copy_folder_btn=Copy Folder}</text>
 				<actions>
 					<action function="set">tw_filemanager_command=cd "%tw_file_location1%" &amp;&amp; cd .. &amp;&amp; cp -R</action>
-					<action function="set">tw_fm_text1=Copying</action>
+					<action function="set">tw_fm_text1={@fm_copying=Copying}</action>
 					<action function="page">choosedestinationfolder</action>
 				</actions>
 			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row15a_y%"/>
-				<text>Move</text>
+				<text>{@fm_move_btn=Move}</text>
 				<actions>
 					<action function="set">tw_filemanager_command=mv</action>
-					<action function="set">tw_fm_text1=Moving</action>
+					<action function="set">tw_fm_text1={@fm_moving=Moving}</action>
 					<action function="page">choosedestinationfolder</action>
 				</actions>
 			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>chmod 755</text>
+				<text>{@fm_chmod755_btn=chmod 755}</text>
 				<actions>
 					<action function="set">tw_filemanager_command=chmod 755</action>
-					<action function="set">tw_fm_text1=chmod 755</action>
+					<action function="set">tw_fm_text1={@fm_chmod755ing=chmod 755}</action>
 					<action function="set">tw_fm_text2=</action>
 					<action function="set">tw_fm_text3=</action>
 					<action function="set">tw_include_text3=0</action>
@@ -3491,7 +3535,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row18a_y%"/>
-				<text>chmod</text>
+				<text>{@fm_chmod_btn=chmod}</text>
 				<actions>
 					<action function="set">tw_filemanager_rename=0000</action>
 					<action function="set">tw_fm_text2=</action>
@@ -3504,10 +3548,10 @@
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
-				<text>Delete</text>
+				<text>{@fm_delete_btn=Delete}</text>
 				<actions>
 					<action function="set">tw_filemanager_command=rm -rf</action>
-					<action function="set">tw_fm_text1=Deleting</action>
+					<action function="set">tw_fm_text1={@fm_deleting=Deleting}</action>
 					<action function="set">tw_fm_text2=</action>
 					<action function="set">tw_fm_text3=</action>
 					<action function="set">tw_include_text3=0</action>
@@ -3519,10 +3563,10 @@
 			<button style="main_button_half_height">
 				<condition var1="tw_fm_isfolder" var2="0"/>
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Rename File</text>
+				<text>{@fm_rename_file_btn=Rename File}</text>
 				<actions>
 					<action function="set">tw_filemanager_rename=tw_selection1</action>
-					<action function="set">tw_fm_text1=Renaming</action>
+					<action function="set">tw_fm_text1={@fm_renaming=Renaming}</action>
 					<action function="set">tw_filemanager_command=mv</action>
 					<action function="page">filemanagerrenamefile</action>
 				</actions>
@@ -3531,10 +3575,10 @@
 			<button style="main_button_half_height">
 				<condition var1="tw_fm_isfolder" var2="1"/>
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Rename Folder</text>
+				<text>{@fm_rename_folder_btn=Rename Folder}</text>
 				<actions>
 					<action function="set">tw_filemanager_rename=tw_selection1</action>
-					<action function="set">tw_fm_text1=Renaming</action>
+					<action function="set">tw_fm_text1={@fm_renaming=Renaming}</action>
 					<action function="set">tw_filemanager_command=cd "%tw_file_location1%" &amp;&amp; cd .. &amp;&amp; mv</action>
 					<action function="page">filemanagerrenamefolder</action>
 				</actions>
@@ -3556,12 +3600,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>File Manager</text>
+				<text>{@fm_hdr=File Manager}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Select Destination Folder</text>
+				<text>{@fm_sel_dest=Select Destination Folder}</text>
 			</text>
 
 			<template name="sort_options"/>
@@ -3602,17 +3646,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>File Manager</text>
+				<text>{@fm_hdr=File Manager}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Rename %tw_fm_type%</text>
+				<text>{@fm_rename_hdr=Rename} %tw_fm_type%</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row2_y%"/>
-				<text>Name:</text>
+				<text>{@name=Name:}</text>
 			</text>
 
 			<input>
@@ -3635,7 +3679,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row10_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<action function="page">filemanageroptions</action>
 			</button>
 
@@ -3657,17 +3701,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>File Manager</text>
+				<text>{@fm_hdr=File Manager}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Rename %tw_fm_type%</text>
+				<text>{@fm_rename_hdr=Rename} %tw_fm_type%</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row2_y%"/>
-				<text>Name:</text>
+				<text>{@name=Name:}</text>
 			</text>
 
 			<input>
@@ -3690,7 +3734,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row10_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<action function="page">filemanageroptions</action>
 			</button>
 
@@ -3712,17 +3756,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>File Manager</text>
+				<text>{@fm_hdr=File Manager}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Set Permissions</text>
+				<text>{@fm_set_perms_hdr=Set Permissions}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row2_y%"/>
-				<text>Permissions:</text>
+				<text>{@fm_perms=Permissions:}</text>
 			</text>
 
 			<input>
@@ -3744,7 +3788,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row10_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<action function="page">filemanageroptions</action>
 			</button>
 
@@ -3766,12 +3810,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>File Manager</text>
+				<text>{@fm_hdr=File Manager}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Confirm Action</text>
+				<text>{@confirm_action=Confirm Action}</text>
 			</text>
 
 			<text style="text_m_accent">
@@ -3796,11 +3840,11 @@
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row8_y%" placement="5"/>
-				<text>Press back button to cancel.</text>
+				<text>{@back_cancel=Press back button to cancel.}</text>
 			</text>
 
 			<slider>
-				<text>Swipe to Confirm</text>
+				<text>{@swipe_to_confirm=Swipe to Confirm}</text>
 				<action function="page">filemanageraction</action>
 			</slider>
 
@@ -3820,7 +3864,7 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>File Manager</text>
+				<text>{@fm_hdr=File Manager}</text>
 			</text>
 
 			<text style="text_m">
@@ -3839,7 +3883,7 @@
 				</conditions>
 				<actions>
 					<action function="set">tw_back=filemanagerlist</action>
-					<action function="set">tw_complete_text1=File Operation Complete</action>
+					<action function="set">tw_complete_text1={@fm_complete=File Operation Complete}</action>
 					<action function="page">action_complete</action>
 				</actions>
 			</action>
@@ -3850,7 +3894,7 @@
 					<condition var1="tw_operation_status" op="!=" var2="0"/>
 				</conditions>
 				<actions>
-					<action function="set">tw_complete_text1=File Operation Complete</action>
+					<action function="set">tw_complete_text1={@fm_complete=File Operation Complete}</action>
 					<action function="page">action_complete</action>
 				</actions>
 			</action>
@@ -3876,17 +3920,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Mount</text>
+				<text>{@mount_hdr=Mount}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Decrypt Data</text>
+				<text>{@decrypt_data_hdr=Decrypt Data}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Enter Password:</text>
+				<text>{@decrypt_data_enter_pass=Enter Password:}</text>
 			</text>
 
 			<input>
@@ -3909,12 +3953,12 @@
 			<text style="text_m_fail">
 				<condition var1="tw_password_fail" var2="1"/>
 				<placement x="%indent%" y="%row5_y%"/>
-				<text>Password failed, please try again!</text>
+				<text>{@decryt_data_failed=Password failed, please try again!}</text>
 			</text>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row10_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<actions>
 					<action function="set">tw_page_done=1</action>
 					<action function="page">main</action>
@@ -3929,17 +3973,17 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Mount</text>
+				<text>{@mount_hdr=Mount}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Decrypt Data</text>
+				<text>{@decrypt_data_hdr=Decrypt Data}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Enter Pattern:</text>
+				<text>{@decrypt_data_enter_pattern=Enter Pattern.}</text>
 			</text>
 
 			<patternpassword>
@@ -3953,7 +3997,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
-				<text>Cancel</text>
+				<text>{@cancel_btn=Cancel}</text>
 				<actions>
 					<action function="set">tw_page_done=1</action>
 					<action function="page">main</action>
@@ -3966,12 +4010,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Mount</text>
+				<text>{@mount_hdr=Mount}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Decrypt Data - Trying Decryption</text>
+				<text>{@decrypt_data_trying=Trying Decryption}</text>
 			</text>
 
 			<template name="console"/>
@@ -4010,12 +4054,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Terminal Command</text>
+				<text>{@term_hdr=Terminal Command}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Browse to Starting Folder</text>
+				<text>{@term_sel_folder_hdr=Browse to Starting Folder}</text>
 			</text>
 
 			<template name="sort_options"/>
@@ -4050,7 +4094,7 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Terminal Command</text>
+				<text>{term_hdr=Terminal Command}</text>
 			</text>
 
 			<text style="text_m">
@@ -4077,7 +4121,7 @@
 				<highlight color="%highlight_color%"/>
 				<placement x="%btn4_col4_x%" y="%row12a_y%"/>
 				<font resource="font_m" color="%text_button_color%"/>
-				<text>Kill</text>
+				<text>{@term_kill_btn=Kill}</text>
 				<image resource="tab_4"/>
 				<action function="killterminal"/>
 			</button>
@@ -4100,35 +4144,35 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Advanced</text>
+				<text>{@advanced_hdr=Advanced}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>ADB Sideload</text>
+				<text>{@adb_sideload_hdr=ADB Sideload}</text>
 			</text>
 
 			<checkbox>
 				<placement x="%indent%" y="%row2_y%"/>
-				<text>Wipe Dalvik Cache</text>
+				<text>{@sideload_wipe_dalvik_chk=Wipe Dalvik Cache}</text>
 				<data variable="tw_wipe_dalvik"/>
 			</checkbox>
 
 			<checkbox>
 				<placement x="%indent%" y="%row3a_y%"/>
-				<text>Wipe Cache</text>
+				<text>{@sideload_wipe_cache_chk=Wipe Cache}</text>
 				<data variable="tw_wipe_cache"/>
 			</checkbox>
 
 			<slider>
-				<text>Swipe to start Sideload</text>
+				<text>{@swipe_to_sideload=Swipe to Start Sideload}</text>
 				<action function="page">partsdcardaction</action>
 				<actions>
 					<action function="set">tw_back=advanced</action>
 					<action function="set">tw_action=adbsideload</action>
-					<action function="set">tw_action_text1=ADB Sideload</action>
-					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
-					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
+					<action function="set">tw_action_text1={@sideload_confirm=ADB Sideload}</action>
+					<action function="set">tw_action_text2={@sideload_usage=Usage: adb sideload filename.zip}</action>
+					<action function="set">tw_complete_text1={@sideload_complete=ADB Sideload Complete}</action>
 					<action function="set">tw_has_cancel=1</action>
 					<action function="set">tw_show_reboot=1</action>
 					<action function="set">tw_cancel_action=adbsideloadcancel</action>
@@ -4152,43 +4196,43 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Advanced</text>
+				<text>{@advanced_hdr=Advanced}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Fix Permissions</text>
+				<text>{@fix_perms_hdr=Fix Permissions}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Note: Fixing permissions is rarely needed.</text>
+				<text>{@fix_perms_note=Note: Fixing permissions is rarely needed.}</text>
 			</text>
 
 			<checkbox>
 				<placement x="%indent%" y="%row4_y%"/>
-				<text>Also fix SELinux Contexts</text>
+				<text>{@fix_perms_selinux_chk=Also fix SELinux Contexts}</text>
 				<data variable="tw_fixperms_restorecon"/>
 			</checkbox>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row6_y%" placement="5"/>
-				<text>Fixing SELinux Contexts may cause</text>
+				<text>{@fix_perms_sel_note1=Fixing SELinux Contexts may cause}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row7_y%" placement="5"/>
-				<text>your device to not boot properly.</text>
+				<text>{@fix_perms_sel_note2=your device to not boot properly.}</text>
 			</text>
 
 			<slider>
-				<text>Swipe to Fix Permissions</text>
+				<text>{@swipe_to_fix_perms=Swipe to Fix Permissions}</text>
 				<actions>
 					<action function="set">tw_back=advanced</action>
 					<action function="set">tw_action=fixpermissions</action>
-					<action function="set">tw_action_text1=Fixing Permissions...</action>
-					<action function="set">tw_complete_text1=Fix Permissions Complete</action>
-					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_action_text1={@fixing_perms=Fixing Permissions...}</action>
+					<action function="set">tw_complete_text1={@fix_perms_complete=Fix Permissions Complete}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
 					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_page</action>
 				</actions>
@@ -4210,40 +4254,40 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Reboot</text>
+				<text>{@reboot_hdr=Reboot}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>SuperSU Check</text>
+				<text>{@su_hdr=SuperSU Check}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Your device does not appear to be rooted.</text>
+				<text>{@su_note1=Your device does not appear to be rooted.}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row4_y%" placement="5"/>
-				<text>Install SuperSU now?</text>
+				<text>{@su_note2=Install SuperSU now?}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row5_y%" placement="5"/>
-				<text>This will root your device.</text>
+				<text>{@su_note3=This will root your device.}</text>
 			</text>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row18a_y%"/>
-				<text>Do not Install</text>
+				<text>{@su_cancel=Do not Install}</text>
 				<action function="set">tw_page_done=1</action>
 			</button>
 
 			<slider>
-				<text>Swipe to Install</text>
+				<text>{@swipe_su_to_install=Swipe to Install}</text>
 				<actions>
 					<action function="set">tw_action=installsu</action>
-					<action function="set">tw_action_text1=Installing SuperSU</action>
+					<action function="set">tw_action_text1={@su_installing=Installing SuperSU}</action>
 					<action function="set">tw_action_text2=</action>
 					<action function="page">singleaction_page</action>
 				</actions>
@@ -4281,14 +4325,14 @@
 			</fill>
 
 			<partitionlist style="partitionlist_storage">
-				<text>Select Storage</text>
+				<text>{@sel_storage_list=Select Storage}</text>
 				<data name="tw_storage_path"/>
 				<listtype name="storage"/>
 			</partitionlist>
 
 			<button style="button_third_width">
 				<placement x="%dialog_button_x%" y="%row14_y%"/>
-				<text>OK</text>
+				<text>{@ok_btn=OK}</text>
 				<actions>
 					<action function="set">tw_clear_destination=%tw_back%</action>
 					<action function="overlay"/>

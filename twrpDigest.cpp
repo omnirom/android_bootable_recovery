@@ -19,7 +19,6 @@
 extern "C"
 {
 	#include "digest/md5.h"
-	#include "gui/gui.h"
 	#include "libcrecovery/common.h"
 }
 
@@ -41,6 +40,7 @@ extern "C"
 #include "twrp-functions.hpp"
 #include "twrpDigest.hpp"
 #include "set_metadata.h"
+#include "gui/gui.hpp"
 
 using namespace std;
 
@@ -103,10 +103,10 @@ int twrpDigest::read_md5digest(void) {
 	}
 
 	if (!foundMd5File) {
-		gui_print("Skipping MD5 check: no MD5 file found\n");
+		gui_msg("no_md5=Skipping MD5 check: no MD5 file found");
 		return -1;
 	} else if (TWFunc::read_file(md5file, line) != 0) {
-		gui_print("Skipping MD5 check: MD5 file unreadable\n");
+		LOGERR("Skipping MD5 check: MD5 file unreadable %s\n", strerror(errno));
 		return 1;
 	}
 
@@ -139,10 +139,10 @@ int twrpDigest::verify_md5digest(void) {
 		md5string += hex;
 	}
 	if (tokens.at(0) != md5string) {
-		LOGERR("MD5 does not match\n");
+		gui_err("md5_fail=MD5 does not match");
 		return -2;
 	}
 
-	gui_print("MD5 matched\n");
+	gui_msg("md5_match=MD5 matched");
 	return 0;
 }

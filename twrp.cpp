@@ -15,12 +15,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
+#include "gui/twmsg.h"
 
 #include "cutils/properties.h"
 extern "C" {
@@ -37,6 +38,9 @@ extern "C" {
 #include "gui/gui.h"
 #include "set_metadata.h"
 }
+#include "gui/gui.hpp"
+#include "gui/pages.hpp"
+#include "gui/objects.hpp"
 #include "twcommon.h"
 #include "twrp-functions.hpp"
 #include "data.hpp"
@@ -162,14 +166,14 @@ int main(int argc, char **argv) {
 			lgetfilecon("/sbin/teamwin", &contexts);
 		}
 		if (!contexts) {
-			gui_print_color("warning", "Kernel does not have support for reading SELinux contexts.\n");
+			gui_warn("no_kernel_selinux=Kernel does not have support for reading SELinux contexts.");
 		} else {
 			free(contexts);
-			gui_print("Full SELinux support is present.\n");
+			gui_msg("full_selinux=Full SELinux support is present.");
 		}
 	}
 #else
-	gui_print_color("warning", "No SELinux support (no libselinux).\n");
+	gui_warn("no_selinux=No SELinux support (no libselinux).");
 #endif
 
 	PartitionManager.Mount_By_Path("/cache", true);
@@ -307,6 +311,8 @@ int main(int argc, char **argv) {
 	DataManager::SetValue("tw_mtp_enabled", 1);
 #endif
 	DataManager::ReadSettingsFile();
+	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
+	GUIConsole::Translate_Now();
 
 	// Fixup the RTC clock on devices which require it
 	if(crash_counter == 0)
@@ -328,13 +334,13 @@ int main(int argc, char **argv) {
 			if (!PartitionManager.Enable_MTP())
 				PartitionManager.Disable_MTP();
 			else
-				gui_print("MTP Enabled\n");
+				gui_msg("mtp_enabled=MTP Enabled");
 		} else {
 			PartitionManager.Disable_MTP();
 		}
 		property_set("mtp.crash_check", "0");
 	} else {
-		gui_print_color("warning", "MTP Crashed, not starting MTP on boot.\n");
+		gui_warn("mtp_crash=MTP Crashed, not starting MTP on boot.");
 		DataManager::SetValue("tw_mtp_enabled", 0);
 		PartitionManager.Disable_MTP();
 	}
@@ -367,7 +373,6 @@ int main(int argc, char **argv) {
 		}
 	}
 #endif
-
 	// Launch the main GUI
 	gui_start();
 
@@ -391,7 +396,7 @@ int main(int argc, char **argv) {
 	// Reboot
 	TWFunc::Update_Intent_File(Reboot_Value);
 	TWFunc::Update_Log_File();
-	gui_print("Rebooting...\n");
+	gui_msg(Msg("rebooting=Rebooting..."));
 	string Reboot_Arg;
 	DataManager::GetValue("tw_reboot_arg", Reboot_Arg);
 	if (Reboot_Arg == "recovery")

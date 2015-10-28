@@ -94,8 +94,13 @@
 		<variable name="tab_height" value="30" />
 		<variable name="tab_indicator_height" value="2" />
 		<variable name="tab4_width" value="200" />
+		<variable name="tab5_width" value="160" />
 		<variable name="tab4_col2_x" value="200" />
 		<variable name="tab4_col4_x" value="600" />
+		<variable name="tab5_col2_x" value="160" />
+		<variable name="tab5_col3_x" value="320" />
+		<variable name="tab5_col4_x" value="480" />
+		<variable name="tab5_col5_x" value="640" />
 		<variable name="btn4_col2_x_left" value="117" />
 		<variable name="btn4_col3_x_left" value="216" />
 		<variable name="btn4_col4_x_left" value="313" />
@@ -255,7 +260,7 @@
 				<condition var1="tw_no_cpu_temp" var2="0" />
 				<font resource="font_m" />
 				<placement x="%indent%" y="%row1_header_y%" />
-				<text>CPU: %tw_cpu_temp% &#xB0;C</text>
+				<text>{@cpu_temp=CPU: %tw_cpu_temp% &#xB0;C}</text>
 			</object>
 
 			<object type="text" color="%text_color%">
@@ -272,7 +277,7 @@
 				</conditions>
 				<font resource="font_m" />
 				<placement x="%indent_right%" y="%row1_header_y%" placement="1" />
-				<text>Battery: %tw_battery%</text>
+				<text>{@battery_pct=Battery: %tw_battery%}</text>
 			</object>
 
 			<object type="fill" color="#000000">
@@ -456,14 +461,14 @@
 			<object type="button" style="sort_asc">
 				<condition var1="tw_gui_sort_order" op="=" var2="1" />
 				<placement x="%col_button_right%" y="%row1a_y%" />
-				<text>Sort by Name</text>
+				<text>{@sort_by_name=Sort by Name}</text>
 				<action function="set">tw_gui_sort_order=-1</action>
 			</object>
 
 			<object type="button" style="sort_desc">
 				<condition var1="tw_gui_sort_order" op="=" var2="-1" />
 				<placement x="%col_button_right%" y="%row1a_y%" />
-				<text>Sort by Name</text>
+				<text>{@sort_by_name=Sort by Name}</text>
 				<action function="set">tw_gui_sort_order=1</action>
 			</object>
 
@@ -473,21 +478,21 @@
 					<condition var1="tw_gui_sort_order" op="!=" var2="-1" />
 				</conditions>
 				<placement x="%col_button_right%" y="%row1a_y%" />
-				<text>Sort by Name</text>
+				<text>{@sort_by_name=Sort by Name}</text>
 				<action function="set">tw_gui_sort_order=1</action>
 			</object>
 
 			<object type="button" style="sort_asc">
 				<condition var1="tw_gui_sort_order" op="=" var2="2" />
 				<placement x="%col_button_right%" y="%row4a_y%" />
-				<text>Sort by Date</text>
+				<text>{@sort_by_date=Sort by Date}</text>
 				<action function="set">tw_gui_sort_order=-2</action>
 			</object>
 
 			<object type="button" style="sort_desc">
 				<condition var1="tw_gui_sort_order" op="=" var2="-2" />
 				<placement x="%col_button_right%" y="%row4a_y%" />
-				<text>Sort by Date</text>
+				<text>{@sort_by_date=Sort by Date}</text>
 				<action function="set">tw_gui_sort_order=2</action>
 			</object>
 
@@ -497,21 +502,21 @@
 					<condition var1="tw_gui_sort_order" op="!=" var2="-2" />
 				</conditions>
 				<placement x="%col_button_right%" y="%row4a_y%" />
-				<text>Sort by Date</text>
+				<text>{@sort_by_date=Sort by Date}</text>
 				<action function="set">tw_gui_sort_order=2</action>
 			</object>
 
 			<object type="button" style="sort_asc">
 				<condition var1="tw_gui_sort_order" op="=" var2="3" />
 				<placement x="%col_button_right%" y="%row7a_y%" />
-				<text>Sort by Size</text>
+				<text>{@sort_by_size=Sort by Size}</text>
 				<action function="set">tw_gui_sort_order=-3</action>
 			</object>
 
 			<object type="button" style="sort_desc">
 				<condition var1="tw_gui_sort_order" op="=" var2="-3" />
 				<placement x="%col_button_right%" y="%row7a_y%" />
-				<text>Sort by Size</text>
+				<text>{@sort_by_size=Sort by Size}</text>
 				<action function="set">tw_gui_sort_order=3</action>
 			</object>
 
@@ -521,34 +526,40 @@
 					<condition var1="tw_gui_sort_order" op="!=" var2="-3" />
 				</conditions>
 				<placement x="%col_button_right%" y="%row7a_y%" />
-				<text>Sort by Size</text>
+				<text>{@sort_by_size=Sort by Size}</text>
 				<action function="set">tw_gui_sort_order=3</action>
 			</object>
 		</template>
 
 		<template name="tabs_settings">
 			<object type="button" style="tab">
-				<placement x="0" y="%row1_y%" w="%tab4_width%" h="%tab_height%" />
-				<text>GENERAL</text>
+				<placement x="0" y="%row1_y%" w="%tab5_width%" h="%tab_height%" />
+				<text>{@tab_general=GENERAL}</text>
 				<action function="page">settings</action>
 			</object>
 
 			<object type="button" style="tab">
-				<placement x="%tab4_col2_x%" y="%row1_y%" w="%tab4_width%" h="%tab_height%" />
-				<text>TIME ZONE</text>
+				<placement x="%tab5_col2_x%" y="%row1_y%" w="%tab5_width%" h="%tab_height%" />
+				<text>{@tab_time_zone=TIME ZONE}</text>
 				<action function="page">settings_timezone</action>
 			</object>
 
 			<object type="button" style="tab">
-				<placement x="%center_x%" y="%row1_y%" w="%tab4_width%" h="%tab_height%" />
-				<text>SCREEN</text>
+				<placement x="%tab5_col3_x%" y="%row1_y%" w="%tab5_width%" h="%tab_height%" />
+				<text>{@tab_screen=SCREEN}</text>
 				<action function="page">settings_screen</action>
 			</object>
 
 			<object type="button" style="tab">
-				<placement x="%tab4_col4_x%" y="%row1_y%" w="%tab4_width%" h="%tab_height%" />
-				<text>VIBRATION</text>
+				<placement x="%tab5_col4_x%" y="%row1_y%" w="%tab5_width%" h="%tab_height%" />
+				<text>{@tab_vibration=VIBRATION}</text>
 				<action function="page">settings_vibration</action>
+			</object>
+
+			<object type="button" style="tab">
+				<placement x="%tab5_col5_x%" y="%row1_y%" w="%tab5_width%" h="%tab_height%" />
+				<text>{@tab_language=LANGUAGE}</text>
+				<action function="page">settings_language</action>
 			</object>
 		</template>
 
