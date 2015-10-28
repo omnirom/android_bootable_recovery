@@ -1,0 +1,174 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_d96573af",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 660,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T19:43:43Z",
+      "side": 1,
+      "message": "see comment in header - move into Load(). (caution when handling the null pointer case)",
+      "revId": "f1800fb7c8446ed82694bc8a25fe5823aea6b30d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_99036bc4",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 774,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T19:43:43Z",
+      "side": 1,
+      "message": "we should clear styles and templates here too, they are dead anyway and would cause undefined behavior when used.",
+      "revId": "f1800fb7c8446ed82694bc8a25fe5823aea6b30d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_7908a7df",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 867,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T19:43:43Z",
+      "side": 1,
+      "message": "Is it really necessary to clear a doc before deleting it? Apparently ~memory_pool() in the base class of xml_document clears everything anyway.",
+      "revId": "f1800fb7c8446ed82694bc8a25fe5823aea6b30d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_590de3ed",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 875,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T19:43:43Z",
+      "side": 1,
+      "message": "see comment above",
+      "revId": "f1800fb7c8446ed82694bc8a25fe5823aea6b30d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_d900d3b3",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1313,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T19:43:43Z",
+      "side": 1,
+      "message": "It would be awesome if we could return to the current page instead (if it still exists after reloading). That would make the theming experience much nicer - just edit something, trigger a reload, see results immediately.",
+      "revId": "f1800fb7c8446ed82694bc8a25fe5823aea6b30d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_19f75bd0",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1352,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T19:43:43Z",
+      "side": 1,
+      "message": "I think we don\u0027t want to drop out of the GUI loop in this case if we can still load the stock theme.",
+      "revId": "f1800fb7c8446ed82694bc8a25fe5823aea6b30d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_f9f397df",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1363,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T19:43:43Z",
+      "side": 1,
+      "message": "Even here it would be nice to fall back to the full screen console so that we can still display the error message and stay in the GUI loop. So theme reloading should basically never fail, just fall back to a very boring theme. :)",
+      "revId": "f1800fb7c8446ed82694bc8a25fe5823aea6b30d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_39121f0c",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1424,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T19:43:43Z",
+      "side": 1,
+      "message": "I think we should only reload in Update(), not in Render(), otherwise this would be the first case where we get Render() calls on new objects before a call to Update().",
+      "revId": "f1800fb7c8446ed82694bc8a25fe5823aea6b30d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_b9fd0fae",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1466,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T19:43:43Z",
+      "side": 1,
+      "message": "If we\u0027re reloading, where is the old mouse cursor removed so that we can load the new one?",
+      "revId": "f1800fb7c8446ed82694bc8a25fe5823aea6b30d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_f9683789",
+        "filename": "gui/pages.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T19:43:43Z",
+      "side": 1,
+      "message": "We should be able to get rid of this too, by moving the rest of the ctor into Load().",
+      "revId": "f1800fb7c8446ed82694bc8a25fe5823aea6b30d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
