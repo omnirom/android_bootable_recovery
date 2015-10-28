@@ -46,8 +46,10 @@ LOCAL_MODULE := recovery
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
+ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
 ifeq ($(HOST_OS),linux)
 LOCAL_REQUIRED_MODULES := mkfs.f2fs
+endif
 endif
 
 RECOVERY_API_VERSION := 3
