@@ -517,7 +517,13 @@ static void ors_command_read()
 			fprintf(orsout, "%s", result);
 			LOGINFO("Command cannot be performed, operation in progress.\n");
 		} else {
-			if (gui_console_only() == 0) {
+			if (strlen(command) == 11 && strncmp(command, "dumpstrings", 11) == 0) {
+				// This cannot be done safely with gui_console_only because gui_console_only updates mCurrentSet
+				// which makes the resources that we are trying to read unreachable.
+				gui_set_FILE(orsout);
+				PageManager::GetResources()->DumpStrings();
+				gui_set_FILE(NULL);
+			} else if (gui_console_only() == 0) {
 				LOGINFO("Console started successfully\n");
 				gui_set_FILE(orsout);
 				if (strlen(command) > 11 && strncmp(command, "runscript", 9) == 0) {
@@ -753,15 +759,39 @@ std::string gui_parse_text(std::string str)
 {
 	// This function parses text for DataManager values encompassed by %value% in the XML
 	// and string resources (%@resource_name%)
-	size_t pos = 0;
+	size_t pos = 0, next, end;
 
 	while (1)
 	{
-		size_t next = str.find('%', pos);
+		next = str.find("{@", pos);
+		if (next == std::string::npos)
+			break;
+
+		end = str.find('}', next + 1);
+		if (end == std::string::npos)
+			break;
+
+		std::string var = str.substr(next + 2, (end - next) - 2);
+		str.erase(next, (end - next) + 1);
+
+		size_t default_loc = var.find('=', 0);
+		std::string lookup;
+		if (default_loc == std::string::npos) {
+			str.insert(next, PageManager::GetResources()->FindString(var));
+		} else {
+			lookup = var.substr(0, default_loc);
+			std::string default_string = var.substr(default_loc + 1, var.size() - default_loc - 1);
+			str.insert(next, PageManager::GetResources()->FindString(lookup, default_string));
+		}
+	}
+	pos = 0;
+	while (1)
+	{
+		next = str.find('%', pos);
 		if (next == std::string::npos)
 			return str;
 
-		size_t end = str.find('%', next + 1);
+		end = str.find('%', next + 1);
 		if (end == std::string::npos)
 			return str;
 
