@@ -48,7 +48,7 @@ string Find_File::Find_Internal(const string& filename, const string& starting_p
 
 	d = opendir(starting_path.c_str());
 	if (d == NULL) {
-		LOGERR("Find_File: Error opening '%s'\n", starting_path.c_str());
+		LOGINFO("Find_File: Error opening '%s'\n", starting_path.c_str());
 		return "";
 	}
 
