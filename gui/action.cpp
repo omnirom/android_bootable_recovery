@@ -197,6 +197,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(cancelbackup);
 		ADD_ACTION(checkpartitionlifetimewrites);
 		ADD_ACTION(mountsystemtoggle);
+		ADD_ACTION(setlanguage);
 
 		// remember actions that run in the caller thread
 		for (mapFunc::const_iterator it = mf.begin(); it != mf.end(); ++it)
@@ -1807,6 +1808,19 @@ int GUIAction::mountsystemtoggle(std::string arg)
 			op_status = 1; // fail
 		}
 	}
+
+	operation_end(op_status);
+	return 0;
+}
+
+int GUIAction::setlanguage(std::string arg __unused)
+{
+	int op_status = 0;
+
+	operation_start("Set Language");
+	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
+	PageManager::RequestReload();
+	op_status = 0; // success
 
 	operation_end(op_status);
 	return 0;

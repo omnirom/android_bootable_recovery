@@ -57,6 +57,7 @@ MouseCursor *PageManager::mMouseCursor = NULL;
 HardwareKeyboard *PageManager::mHardwareKeyboard = NULL;
 bool PageManager::mReloadTheme = false;
 std::string PageManager::mStartPage = "main";
+std::vector<language_struct> Language_List;
 
 int tw_x_offset = 0;
 int tw_y_offset = 0;
@@ -672,7 +673,45 @@ PageSet::~PageSet()
 	delete mResources;
 }
 
-int PageSet::Load(ZipArchive* package)
+int PageSet::LoadLanguage(char* languageFile, ZipArchive* package)
+{
+	xml_document<> lang;
+	xml_node<>* parent;
+	xml_node<>* child;
+
+	if (languageFile) {
+		printf("parsing languageFile\n");
+		lang.parse<0>(languageFile);
+		printf("parsing languageFile done\n");
+	} else {
+		return -1;
+	}
+
+	parent = lang.first_node("language");
+	if (!parent) {
+		LOGERR("Unable to locate language node in language file.\n");
+		lang.clear();
+		return -1;
+	}
+
+	child = parent->first_node("display");
+	if (child) {
+		DataManager::SetValue("tw_language_display", child->value());
+	} else {
+		LOGERR("language file does not have a display value set\n");
+		DataManager::SetValue("tw_language_display", "Not Set");
+	}
+
+	child = parent->first_node("resources");
+	if (child)
+		mResources->LoadResources(child, package);
+	else
+		return -1;
+	lang.clear();
+	return 0;
+}
+
+int PageSet::Load(ZipArchive* package, char* languageFile)
 {
 	xml_node<>* parent;
 	xml_node<>* child;
@@ -735,6 +774,10 @@ int PageSet::Load(ZipArchive* package)
 	} else {
 		LOGINFO("XML contains no details tag, no scaling will be applied.\n");
 	}
+
+	if (languageFile)
+		LoadLanguage(languageFile, package);
+
 	LOGINFO("Loading resources...\n");
 	child = parent->first_node("resources");
 	if (child)
@@ -869,13 +912,12 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 			free(xmlFile);
 			return -1;
 		}
+		doc->clear();
+		delete doc;
+		free(xmlFile);
 
 		chld = chld->next_sibling("xmlfile");
 	}
-	doc->clear();
-	delete doc;
-	if (xmlFile)
-		free(xmlFile);
 	return 0;
 }
 
@@ -1180,12 +1222,95 @@ char* PageManager::LoadFileToBuffer(std::string filename, ZipArchive* package) {
 	return buffer;
 }
 
+void PageManager::LoadLanguageListDir(string dir) {
+	if (!TWFunc::Path_Exists(dir)) {
+		LOGERR("LoadLanguageListDir '%s' path not found\n", dir.c_str());
+		return;
+	}
+
+	DIR *d = opendir(dir.c_str());
+	struct dirent *p;
+
+	if (d == NULL) {
+		LOGERR("LoadLanguageListDir error opening dir: '%s'\n", dir.c_str());
+		return;
+	}
+
+	while ((p = readdir(d))) {
+		if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+			continue;
+
+		string path = dir + p->d_name;
+		struct language_struct language_entry;
+		language_entry.filename = p->d_name;
+		char* xmlFile = PageManager::LoadFileToBuffer(dir + p->d_name, NULL);
+		if (xmlFile == NULL) {
+			LOGERR("LoadLanguageListZip unable to load '%s'\n", language_entry.filename.c_str());
+			continue;
+		}
+		xml_document<> *doc = new xml_document<>();
+		doc->parse<0>(xmlFile);
+
+		xml_node<>* parent = doc->first_node("language");
+		if (!parent) {
+			LOGERR("Invalid language XML file '%s'\n", language_entry.filename.c_str());
+			doc->clear();
+			delete doc;
+			free(xmlFile);
+			continue;
+		}
+
+		xml_node<>* child = parent->first_node("display");
+		if (child) {
+			language_entry.displayvalue = child->value();
+		} else {
+			LOGERR("No display value for '%s'\n", language_entry.filename.c_str());
+			language_entry.displayvalue = language_entry.filename;
+		}
+		Language_List.push_back(language_entry);
+		doc->clear();
+		delete doc;
+		free(xmlFile);
+	}
+	closedir(d);
+}
+
+void PageManager::LoadLanguageList(ZipArchive* package) {
+	Language_List.clear();
+	if (TWFunc::Path_Exists(TWRES "customlanguages"))
+		TWFunc::removeDir(TWRES "customlanguages", true);
+	if (package) {
+		TWFunc::Recursive_Mkdir(TWRES "customlanguages");
+		struct utimbuf timestamp = { 1217592000, 1217592000 };  // 8/1/2008 default
+		mzExtractRecursive(package, "languages", TWRES "customlanguages/", &timestamp, NULL, NULL, NULL);
+		LoadLanguageListDir(TWRES "customlanguages/");
+	} else {
+		LoadLanguageListDir(TWRES "languages/");
+	}
+}
+
+void PageManager::LoadLanguage(string filename) {
+	string actual_filename;
+	if (TWFunc::Path_Exists(TWRES "customlanguages/" + filename))
+		actual_filename = TWRES "customlanguages/" + filename;
+	else
+		actual_filename = TWRES "languages/" + filename;
+	char* xmlFile = PageManager::LoadFileToBuffer(actual_filename, NULL);
+	if (xmlFile == NULL)
+		LOGERR("Unable to load '%s'\n", actual_filename.c_str());
+	else {
+		mCurrentSet->LoadLanguage(xmlFile, NULL);
+		free(xmlFile);
+	}
+}
+
 int PageManager::LoadPackage(std::string name, std::string package, std::string startpage)
 {
 	int fd;
 	ZipArchive zip, *pZip = NULL;
 	long len;
 	char* xmlFile = NULL;
+	char* languageFile = NULL;
 	PageSet* pageSet = NULL;
 	int ret;
 	MemMapping map;
@@ -1200,6 +1325,8 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		LOGINFO("Load XML directly\n");
 		tw_x_offset = TW_X_OFFSET;
 		tw_y_offset = TW_Y_OFFSET;
+		LoadLanguageList(NULL);
+		languageFile = LoadFileToBuffer(TWRES "languages/en.xml", pZip);
 	}
 	else
 	{
@@ -1219,6 +1346,8 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		}
 		pZip = &zip;
 		package = "ui.xml";
+		LoadLanguageList(pZip);
+		languageFile = LoadFileToBuffer("languages/en.xml", pZip);
 	}
 
 	xmlFile = LoadFileToBuffer(package, pZip);
@@ -1230,7 +1359,11 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	pageSet = mCurrentSet;
 	mCurrentSet = new PageSet(xmlFile);
 
-	ret = mCurrentSet->Load(pZip);
+	ret = mCurrentSet->Load(pZip, languageFile);
+	if (languageFile) {
+		free(languageFile);
+		languageFile = NULL;
+	}
 	if (ret == 0)
 	{
 		mCurrentSet->SetPage(startpage);
@@ -1252,6 +1385,8 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		sysReleaseMap(&map);
 	}
 	free(xmlFile);
+	if (languageFile)
+		free(languageFile);
 	return ret;
 
 error:
@@ -1361,6 +1496,12 @@ int PageManager::RunReload() {
 		{
 			LOGERR("Failed to load base packages.\n");
 			ret_val = 1;
+		}
+	}
+	if (ret_val == 0) {
+		if (DataManager::GetStrValue("tw_language") != "en.xml") {
+			LOGINFO("Loading language '%s'\n", DataManager::GetStrValue("tw_language").c_str());
+			LoadLanguage(DataManager::GetStrValue("tw_language"));
 		}
 	}
 	return ret_val;
