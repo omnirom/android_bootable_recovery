@@ -193,14 +193,14 @@
 				<condition var1="tw_no_cpu_temp" var2="1" />
 				<font resource="font_m" />
 				<placement x="%indent%" y="%row1_header_y%" />
-				<text>TWRP %tw_version%</text>
+				<text>{@twrp_watch_header=TWRP %tw_version%}</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<condition var1="tw_no_cpu_temp" var2="0" />
 				<font resource="font_m" />
 				<placement x="%indent%" y="%row1_header_y%" />
-				<text>CPU: %tw_cpu_temp% &#xB0;C</text>
+				<text>{@cpu_temp=CPU: %tw_cpu_temp% &#xB0;C}</text>
 			</object>
 
 			<object type="text" color="%text_color%">
@@ -217,7 +217,7 @@
 				</conditions>
 				<font resource="font_m" />
 				<placement x="%indent_right%" y="%row1_header_y%" placement="1" />
-				<text>Battery: %tw_battery%</text>
+				<text>{@battery_pct=Battery: %tw_battery%}</text>
 			</object>
 
 			<object type="fill" color="#000000">

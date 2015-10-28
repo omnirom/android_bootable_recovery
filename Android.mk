@@ -329,6 +329,11 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
     LOCAL_CFLAGS += -DTW_USE_NEW_MINADBD
 endif
+ifneq ($(TW_DEFAULT_LANGUAGE),)
+    LOCAL_CFLAGS += -DTW_DEFAULT_LANGUAGE=$(TW_DEFAULT_LANGUAGE)
+else
+    LOCAL_CFLAGS += -DTW_DEFAULT_LANGUAGE=en
+endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES := \
     dump_image \
