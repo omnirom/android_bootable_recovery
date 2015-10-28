@@ -1,0 +1,208 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_3929ff35",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "DataManager should manage data, not load languages.\n\nCan we move this out of DataManager, e.g. call it in twrp.cpp after ReadSettingsFile()?",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_5924c35d",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 896,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "I think it\u0027s cleaner to store only the language code in tw_language and not the file name. Or rename the variable to tw_language_file.",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_191e3b10",
+        "filename": "gui/devices/portrait/res/portrait.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "For the real deal we should come up with a good and compact naming convention for those resource string names. Maybe something like \"btn_install\" is enough here.",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_b914efeb",
+        "filename": "gui/listbox.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "This is really ugly. But we can clean up how list boxes are filled in a later version (the partition list is equally ugly).",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_b9c62f6c",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 778,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "Does this need to happen here, or could it be done after calling Load()?",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_59df233e",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1235,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "add strerror(errno)",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_39e45f0c",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1243,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "do we want to filter out non-xml files here?",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_f9e5d707",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1248,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "this is LoadLanguageListDir",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_99bc8bd8",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1257,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "instead of repeating the per-file cleanup code here, it may make more sense to put the rest (1263 to 1370) into an \"else\" branch.",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_79c1c759",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1329,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "should we pass NULL instead of pZip here?",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_79dae74f",
+        "filename": "gui/pages.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "What about calling it simply \"Language\"?",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_d9c9f37f",
+        "filename": "gui/resources.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-10-28T20:30:20Z",
+      "side": 1,
+      "message": "Why do we need two attributes that do the same?",
+      "revId": "c95f39b9cde3b4ab1f8895935f5a3dd972b2f9d3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
