@@ -113,7 +113,7 @@
 
 			<object type="button">
 				<placement x="%col1_x%" y="%row1_y%" />
-				<text>Install</text>
+				<text>%@install_button_text%</text>
 				<actions>
 					<action function="queueclear"></action>
 					<action function="page">install</action>
@@ -2374,6 +2374,12 @@
 			</object>
 
 			<object type="button">
+				<placement x="%col2_x%" y="%row2_y%" />
+				<text>Language</text>
+				<action function="page">language</action>
+			</object>
+
+			<object type="button">
 				<placement x="%col1_x%" y="%row3_y%" />
 				<text>Time Zone</text>
 				<action function="page">timezone</action>
@@ -2405,6 +2411,40 @@
 			<object type="action">
 				<touch key="back" />
 				<action function="page">main</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="language">
+			<object type="template" name="header" />
+
+			<object type="listbox" style="scrolllist">
+				<placement x="%listbox_x%" y="%row1_header_y%" w="%listbox_width%" h="%listbox_tz_height%" />
+				<text>Select Language:</text>
+				<icon selected="radio_true" unselected="radio_false" />
+				<data name="tw_language" />
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%tz_set_y%" />
+				<text>Set Language</text>
+				<action function="setlanguage"></action>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%tz_current_y%" placement="5" />
+				<text>Current Language: %tw_language_display%</text>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">settings</action>
 			</object>
 
 			<object type="template" name="footer" />

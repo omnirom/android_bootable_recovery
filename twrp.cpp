@@ -15,7 +15,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -37,6 +37,7 @@ extern "C" {
 #include "gui/gui.h"
 #include "set_metadata.h"
 }
+#include "gui/pages.hpp"
 #include "twcommon.h"
 #include "twrp-functions.hpp"
 #include "data.hpp"
@@ -307,6 +308,7 @@ int main(int argc, char **argv) {
 	DataManager::SetValue("tw_mtp_enabled", 1);
 #endif
 	DataManager::ReadSettingsFile();
+	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
 
 	// Fixup the RTC clock on devices which require it
 	if(crash_counter == 0)
