@@ -30,6 +30,7 @@ extern "C" {
 #include <algorithm>
 #include "twrpDU.hpp"
 #include "twrp-functions.hpp"
+#include "gui/gui.hpp"
 
 using namespace std;
 
@@ -73,8 +74,7 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 
 	d = opendir(Path.c_str());
 	if (d == NULL) {
-		LOGERR("error opening '%s'\n", Path.c_str());
-		LOGERR("error: %s\n", strerror(errno));
+		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Path)(strerror(errno)));
 		return 0;
 	}
 
@@ -82,7 +82,8 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 		FullPath = Path + "/";
 		FullPath += de->d_name;
 		if (lstat(FullPath.c_str(), &st)) {
-			LOGERR("Unable to stat '%s'\n", FullPath.c_str());
+			gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(FullPath)(strerror(errno)));
+			LOGINFO("Real error: Unable to stat '%s'\n", FullPath.c_str());
 			continue;
 		}
 		if ((st.st_mode & S_IFDIR) && !check_skip_dirs(FullPath) && de->d_type != DT_SOCK) {

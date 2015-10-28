@@ -43,6 +43,15 @@ using namespace rapidxml;
 #define TW_Y_OFFSET 0
 #endif
 
+struct translate_later_struct {
+	std::string resource_name; // Name of the string resource for looking up
+	std::string default_value; // Default in case we don't find the string resource
+	std::string color;         // Color for the console... normal, highlight, warning, error
+	std::string format;        // Formatted extra variables like %i, %s
+	std::string text;          // Final, translated, formatted text
+	bool inline_format;        // Indicates if the final text includes an inlined format variable
+};
+
 class RenderObject
 {
 public:
@@ -356,6 +365,7 @@ protected:
 	int cancelbackup(std::string arg);
 	int checkpartitionlifetimewrites(std::string arg);
 	int mountsystemtoggle(std::string arg);
+	int setlanguage(std::string arg);
 
 	int simulate;
 };
@@ -734,6 +744,7 @@ public:
 	virtual size_t GetItemCount();
 	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
 	virtual void NotifySelect(size_t item_selected);
+	static void Translate_Now();
 protected:
 	enum SlideoutState
 	{

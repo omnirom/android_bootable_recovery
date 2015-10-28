@@ -40,6 +40,7 @@
 #include "partitions.hpp"
 #include "twrpDigest.hpp"
 #include "twrp-functions.hpp"
+#include "gui/gui.hpp"
 extern "C" {
 	#include "gui/gui.h"
 	#include "legacy_property_service.h"
@@ -102,7 +103,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 
 	if (binary_location == NULL) {
 		mzCloseZipArchive(Zip);
-		LOGERR("Could not find '" ASSUMED_UPDATE_BINARY_NAME "' in the zip file.\n");
+		gui_msg(Msg(msg::kError, "no_updater_binary=Could not find '{1}' in the zip file.")(ASSUMED_UPDATE_BINARY_NAME));
 		return INSTALL_CORRUPT;
 	}
 
@@ -257,9 +258,9 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 		return INSTALL_CORRUPT;
 	}
 
-	gui_print("Installing '%s'...\n", path);
+	gui_msg(Msg("installing_zip=Installing zip file '{1}'")(path));
 	if (strlen(path) < 9 || strncmp(path, "/sideload", 9) != 0) {
-		gui_print("Checking for MD5 file...\n");
+		gui_msg("check_for_md5=Checking for MD5 file...");
 		twrpDigest md5sum;
 		md5sum.setfn(path);
 		int md5_return = md5sum.verify_md5digest();
@@ -276,24 +277,25 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 
 	MemMapping map;
 	if (sysMapFile(path, &map) != 0) {
-		LOGERR("Failed to sysMapFile '%s'\n", path);
+		gui_msg(Msg(msg::kError, "fail_sysmap=Failed to map file '{1}'")(path));
 		return -1;
 	}
 
 	if (zip_verify) {
-		gui_print("Verifying zip signature...\n");
+		gui_msg("verify_zip_sig=Verifying zip signature...");
 		ret_val = verify_file(map.addr, map.length);
 		if (ret_val != VERIFY_SUCCESS) {
-			LOGERR("Zip signature verification failed: %i\n", ret_val);
+			LOGINFO("Zip signature verification failed: %i\n", ret_val);
+			gui_err("verify_zip_fail=Zip signature verification failed!");
 			sysReleaseMap(&map);
 			return -1;
 		} else {
-			gui_print("Zip signature verified successfully.\n");
+			gui_msg("verify_zip_done=Zip signature verified successfully.");
 		}
 	}
 	ret_val = mzOpenZipArchive(map.addr, map.length, &Zip);
 	if (ret_val != 0) {
-		LOGERR("Zip file is corrupt!\n", path);
+		gui_err("zip_corrupt=Zip file is corrupt!");
 		sysReleaseMap(&map);
 		return INSTALL_CORRUPT;
 	}

@@ -1,3 +1,21 @@
+/*
+	Copyright 2015 bigbiff/Dees_Troy TeamWin
+	This file is part of TWRP/TeamWin Recovery Project.
+
+	TWRP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	TWRP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 // console.cpp - GUIConsole object
 
 #include <stdarg.h>
@@ -24,10 +42,16 @@ extern "C" {
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
+#include "gui.hpp"
+#include "twmsg.h"
 
+#define GUI_CONSOLE_BUFFER_SIZE 512
 
-static std::vector<std::string> gConsole;
-static std::vector<std::string> gConsoleColor;
+size_t last_message_count = 0;
+std::vector<Message> gMessages;
+
+std::vector<std::string> gConsole;
+std::vector<std::string> gConsoleColor;
 static FILE* ors_file;
 
 extern "C" void __gui_print(const char *color, char *buf)
@@ -58,22 +82,22 @@ extern "C" void __gui_print(const char *color, char *buf)
 		gConsole.push_back(start);
 		gConsoleColor.push_back(color);
 	}
-	if (ors_file) {
-		fprintf(ors_file, "%s\n", buf);
-		fflush(ors_file);
-	}
 }
 
 extern "C" void gui_print(const char *fmt, ...)
 {
-	char buf[512];		// We're going to limit a single request to 512 bytes
+	char buf[GUI_CONSOLE_BUFFER_SIZE];		// We're going to limit a single request to 512 bytes
 
 	va_list ap;
 	va_start(ap, fmt);
-	vsnprintf(buf, 512, fmt, ap);
+	vsnprintf(buf, GUI_CONSOLE_BUFFER_SIZE, fmt, ap);
 	va_end(ap);
 
 	fputs(buf, stdout);
+	if (ors_file) {
+		fprintf(ors_file, "%s", buf);
+		fflush(ors_file);
+	}
 
 	__gui_print("normal", buf);
 	return;
@@ -81,14 +105,18 @@ extern "C" void gui_print(const char *fmt, ...)
 
 extern "C" void gui_print_color(const char *color, const char *fmt, ...)
 {
-	char buf[512];		// We're going to limit a single request to 512 bytes
+	char buf[GUI_CONSOLE_BUFFER_SIZE];		// We're going to limit a single request to 512 bytes
 
 	va_list ap;
 	va_start(ap, fmt);
-	vsnprintf(buf, 512, fmt, ap);
+	vsnprintf(buf, GUI_CONSOLE_BUFFER_SIZE, fmt, ap);
 	va_end(ap);
 
 	fputs(buf, stdout);
+	if (ors_file) {
+		fprintf(ors_file, "%s", buf);
+		fflush(ors_file);
+	}
 
 	__gui_print(color, buf);
 	return;
@@ -97,6 +125,70 @@ extern "C" void gui_print_color(const char *color, const char *fmt, ...)
 extern "C" void gui_set_FILE(FILE* f)
 {
 	ors_file = f;
+}
+
+void gui_msg(const char* text)
+{
+	if (text) {
+		Message msg = Msg(text);
+		gui_msg(msg);
+	}
+}
+
+void gui_warn(const char* text)
+{
+	if (text) {
+		Message msg = Msg(msg::kWarning, text);
+		gui_msg(msg);
+	}
+}
+
+void gui_err(const char* text)
+{
+	if (text) {
+		Message msg = Msg(msg::kError, text);
+		gui_msg(msg);
+	}
+}
+
+void gui_highlight(const char* text)
+{
+	if (text) {
+		Message msg = Msg(msg::kHighlight, text);
+		gui_msg(msg);
+	}
+}
+
+void gui_msg(Message msg)
+{
+	std::string output = msg;
+	output += "\n";
+	fputs(output.c_str(), stdout);
+	if (ors_file) {
+		fprintf(ors_file, "%s", output.c_str());
+		fflush(ors_file);
+	}
+	gMessages.push_back(msg);
+}
+
+void GUIConsole::Translate_Now() {
+	size_t message_count = gMessages.size();
+	if (message_count <= last_message_count)
+		return;
+
+	for (size_t m = last_message_count; m < message_count; m++) {
+		std::string message = gMessages[m];
+		std::string color = "normal";
+		if (gMessages[m].GetKind() == msg::kError)
+			color = "error";
+		else if (gMessages[m].GetKind() == msg::kHighlight)
+			color = "highlight";
+		else if (gMessages[m].GetKind() == msg::kWarning)
+			color = "warning";
+		gConsole.push_back(message);
+		gConsoleColor.push_back(color);
+	}
+	last_message_count = message_count;
 }
 
 GUIConsole::GUIConsole(xml_node<>* node) : GUIScrollList(node)
@@ -160,6 +252,7 @@ int GUIConsole::RenderSlideout(void)
 
 int GUIConsole::RenderConsole(void)
 {
+	Translate_Now();
 	AddLines(&gConsole, &gConsoleColor, &mLastCount, &rConsole, &rConsoleColor);
 	GUIScrollList::Render();
 
