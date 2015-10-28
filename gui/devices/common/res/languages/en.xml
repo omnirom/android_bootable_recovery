@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<language>
+	<display>English</display>
+
+	<resources>
+		<resource name="font" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="mediumfont" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="filelist" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
+		<string name="install_button_text">Install - This is WAY TOO MUCH TEXT!</string>
+		<string name="btn_restore">Restore</string>
+		<string name="update_part_details">This is English...</string>
+		<string name="testnd">Testing No Default</string>
+		<string name="testd">Testing Default</string>
+		<string name="testi">Testing %s Integer</string>
+		<string name="testndi">Testing No Default Integer %i</string>
+		<string name="tests">Testing '%s' String</string>
+		<string name="unable_to_mount">Unable to mount English: </string>
+		<string name="factory_reset_action">Factory Reset...</string>
+		<string name="factory_reset_complete">Factory Reset Complete %tw_version%</string>
+	</resources>
+</language>

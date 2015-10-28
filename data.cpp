@@ -890,6 +890,8 @@ void DataManager::SetDefaultValues()
 #endif
 	mValues.insert(make_pair("tw_mount_system_ro", make_pair("2", 1)));
 	mValues.insert(make_pair("tw_never_show_system_ro_page", make_pair("0", 1)));
+	mValues.insert(make_pair("tw_language", make_pair(EXPAND(TW_DEFAULT_LANGUAGE), 1)));
+	LOGINFO("LANG: %s\n", EXPAND(TW_DEFAULT_LANGUAGE));
 
 	pthread_mutex_unlock(&m_valuesLock);
 }

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<language>
+	<display>Español</display>
+
+	<resources>
+		<resource name="font" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="mediumfont" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="filelist" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
+		<string name="install_button_text">Instalar</string>
+		<string name="update_part_details">This is in Spanish...</string>
+		<string name="unable_to_mount">Unable to mount Spanish: </string>
+	</resources>
+</language>

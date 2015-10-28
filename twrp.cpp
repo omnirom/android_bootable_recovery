@@ -15,7 +15,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -37,6 +37,9 @@ extern "C" {
 #include "gui/gui.h"
 #include "set_metadata.h"
 }
+#include "gui/gui.hpp"
+#include "gui/pages.hpp"
+#include "gui/objects.hpp"
 #include "twcommon.h"
 #include "twrp-functions.hpp"
 #include "data.hpp"
@@ -306,7 +309,12 @@ int main(int argc, char **argv) {
 	// file, assuming that an entry for tw_mtp_enabled is set.
 	DataManager::SetValue("tw_mtp_enabled", 1);
 #endif
+	gui_translate_va("unable_to_mount", "Unable to mount: ", "%s", "system");
+	gui_translate("testi", "%s testing", 18);
+	gui_translate("tests", "%s testing", "YAY!");
 	DataManager::ReadSettingsFile();
+	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
+	GUIConsole::Translate_Later();
 
 	// Fixup the RTC clock on devices which require it
 	if(crash_counter == 0)
