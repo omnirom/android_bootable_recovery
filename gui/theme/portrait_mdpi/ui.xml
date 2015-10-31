@@ -14,14 +14,14 @@
 	</include>
 
 	<resources>
-		<resource name="font_l" type="font"  filename="RobotoCondensed-Regular.ttf" size="24" fallback="Roboto-Condensed-24" />
-		<resource name="font_m" type="font" filename="RobotoCondensed-Regular.ttf" size="18" fallback="Roboto-Condensed-18" />
-		<resource name="font_s" type="font" filename="RobotoCondensed-Regular.ttf" size="14" fallback="Roboto-Condensed-14" />
+		<resource name="font_l" type="font"  filename="RobotoCondensed-Regular.ttf" size="24" />
+		<resource name="font_m" type="font" filename="RobotoCondensed-Regular.ttf" size="18" />
+		<resource name="font_s" type="font" filename="RobotoCondensed-Regular.ttf" size="14" />
 		<resource name="fixed" type="font" filename="DroidSansMono.ttf" size="12" />
 
-		<resource name="keylabel" type="font" filename="RobotoCondensed-Regular.ttf" size="30" fallback="Roboto-Condensed-30" />
-		<resource name="keylabel-small" type="font" filename="RobotoCondensed-Regular.ttf" size="20" fallback="Roboto-Condensed-20" />
-		<resource name="keylabel-longpress" type="font" filename="RobotoCondensed-Regular.ttf" size="14" fallback="Roboto-Condensed-14" />
+		<resource name="keylabel" type="font" filename="RobotoCondensed-Regular.ttf" size="30" />
+		<resource name="keylabel-small" type="font" filename="RobotoCondensed-Regular.ttf" size="20" />
+		<resource name="keylabel-longpress" type="font" filename="RobotoCondensed-Regular.ttf" size="14" />
 
 		<resource name="logo" type="image" filename="logo" retainaspect="1" />
 		<resource name="main_button" type="image" filename="main_button" />
@@ -246,7 +246,7 @@
 				<condition var1="tw_no_cpu_temp" var2="0" />
 				<font resource="font_m" />
 				<placement x="%indent%" y="%row1_header_y%" />
-				<text>CPU: %tw_cpu_temp% C</text>
+				<text>CPU: %tw_cpu_temp% &#xB0;C</text>
 			</object>
 
 			<object type="text" color="%text_color%">
