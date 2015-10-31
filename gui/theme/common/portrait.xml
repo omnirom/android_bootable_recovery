@@ -2448,7 +2448,7 @@
 
 			<object type="button" style="checkbox">
 				<condition var1="tw_mount_system_ro" op="=" var2="0" />
-				<placement x="%indent%" y="%row15a_y%" />
+				<placement x="%indent%" y="%row15a_y%" textplacement="6" />
 				<text>Mount system partition read-only</text>
 				<image resource="checkbox_false" />
 				<action function="mountsystemtoggle">1</action>
@@ -2456,7 +2456,7 @@
 
 			<object type="button" style="checkbox">
 				<condition var1="tw_mount_system_ro" op="!=" var2="0" />
-				<placement x="%indent%" y="%row15a_y%" />
+				<placement x="%indent%" y="%row15a_y%" textplacement="6" />
 				<text>Mount system partition read-only</text>
 				<image resource="checkbox_true" />
 				<actions>
@@ -2991,7 +2991,7 @@
 			</object>
 
 			<object type="button">
-				<placement x="%indent%" y="%row3a_y%" />
+				<placement x="%indent%" y="%row3a_y%" textplacement="6" />
 				<font resource="font_m" color="%text_color%" />
 				<condition var1="tw_screen_timeout_secs" op="=" var2="0" />
 				<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
@@ -3001,7 +3001,7 @@
 			</object>
 
 			<object type="button">
-				<placement x="%indent%" y="%row3a_y%" />
+				<placement x="%indent%" y="%row3a_y%" textplacement="6" />
 				<font resource="font_m" color="%text_color%" />
 				<condition var1="tw_screen_timeout_secs" op="!=" var2="0" />
 				<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
