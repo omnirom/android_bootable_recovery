@@ -1,0 +1,3727 @@
+<?xml version="1.0"?>
+
+<recovery>
+	<styles>
+		<style name="buttontext">
+			<highlight color="%highlight_color%" />
+			<font resource="font" color="%button_text_color%" />
+		</style>
+
+		<style name="button">
+			<style name="buttontext" />
+			<image resource="main_button" />
+		</style>
+
+		<style name="mediumbutton">
+			<style name="buttontext" />
+			<image resource="medium_button" />
+		</style>
+
+		<style name="fillbutton">
+			<style name="buttontext" />
+			<fill color="%button_fill_color%" />
+		</style>
+
+		<style name="rebootsystem">
+			<condition var1="tw_reboot_system" var2="1" />
+			<style name="button" />
+			<text>Reboot System</text>
+			<actions>
+				<action function="set">tw_back=main2</action>
+				<action function="set">tw_action=reboot</action>
+				<action function="set">tw_action_param=system</action>
+				<action function="set">tw_has_action2=0</action>
+				<action function="set">tw_text1=No OS Installed! Are you</action>
+				<action function="set">tw_text2=sure you wish to reboot?</action>
+				<action function="set">tw_text3=</action>
+				<action function="set">tw_text4=</action>
+				<action function="set">tw_action_text1=Rebooting...</action>
+				<action function="set">tw_action_text2=</action>
+				<action function="set">tw_complete_text1=Rebooting...</action>
+				<action function="set">tw_slider_text=Swipe to Reboot</action>
+				<action function="page">rebootcheck</action>
+			</actions>
+		</style>
+
+		<style name="scrolllist">
+			<highlight color="%fileselector_highlight_color%" />
+			<header background="%fileselector_header_background%" textcolor="%fileselector_header_textcolor%" separatorcolor="%fileselector_header_separatorcolor%" separatorheight="%fileselector_header_separatorheight%" />
+			<fastscroll linecolor="%fastscroll_linecolor%" rectcolor="%fastscroll_rectcolor%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%" />
+			<separator color="%fileselector_separatorcolor%" height="%fileselector_separatorheight%" />
+			<background color="%fileselector_background%" />
+			<font resource="filelist" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%" />
+		</style>
+
+		<style name="fileselector">
+			<style name="scrolllist" />
+			<icon folder="folder_icon" file="file_icon" />
+			<sort name="tw_gui_sort_order" />
+		</style>
+
+		<style name="partitionlist">
+			<style name="scrolllist" />
+			<icon selected="checkbox_true" unselected="checkbox_false" />
+		</style>
+
+		<style name="text">
+			<font resource="font" color="%text_color%" />
+		</style>
+
+		<style name="checkbox">
+			<font resource="font" color="%text_color%" />
+			<image checked="checkbox_true" unchecked="checkbox_false" />
+		</style>
+
+		<style name="slider">
+			<text>Swipe to Confirm</text>
+			<font resource="font" color="%text_color%" />
+			<placement x="%center_x%" y="%slider_y%" placement="5" />
+			<resource base="slider" used="slider-used" touch="slider-touch" />
+		</style>
+
+		<style name="console">
+			<color foreground="%console_foreground%" background="%console_background%" scroll="%console_scroll%" />
+			<font resource="fixed" />
+			<fastscroll linecolor="%fastscroll_linecolor%" rectcolor="%fastscroll_rectcolor%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%" />
+		</style>
+
+		<style name="input">
+			<background color="%input_background_color%" />
+			<cursor color="%input_cursor_color%" hasfocus="1" width="%input_cursor_width%" />
+			<font resource="font" color="%text_color%" />
+		</style>
+
+		<style name="slidervalue">
+			<font resource="font" color="%text_color%" />
+			<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />
+			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%" />
+		</style>
+	</styles>
+
+	<pages>
+		<page name="main">
+			<object type="action">
+				<actions>
+					<action function="set">tw_clear_destination=main2</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="main2">
+			<object type="template" name="twrpheader" />
+
+			<object type="template" name="header" />
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row1_home_y%" />
+				<text>Install</text>
+				<action function="page">install_select</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row1_home_y%" />
+				<text>Wipe</text>
+				<action function="page">wipe</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row2_home_y%" />
+				<text>Backup</text>
+				<action function="page">backup</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row2_home_y%" />
+				<text>Restore</text>
+				<action function="page">restore</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row3_home_y%" />
+				<text>Mount</text>
+				<action function="page">mount</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row3_home_y%" />
+				<text>Settings</text>
+				<action function="page">settings</action>
+			</object>
+
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row4_home_y%" />
+				<text>Advanced</text>
+				<action function="page">advanced</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row4_home_y%" />
+				<text>Reboot</text>
+				<action function="page">reboot</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="install_select">
+			<object type="template" name="twrpheader" />
+
+			<object type="template" name="header" />
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row1_home_y%" />
+				<text>Install Zips</text>
+				<actions>
+					<action function="queueclear"></action>
+					<action function="page">install</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row1_home_y%" />
+				<text>Install Images</text>
+				<action function="page">install_image</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="install">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Select Zip to Install</text>
+			</object>
+
+			<object type="button" style="fillbutton">
+				<placement x="%col1_x%" y="%row1_text_y%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
+				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<actions>
+					<action function="set">tw_back=install</action>
+					<action function="page">selectstorage</action>
+				</actions>
+			</object>
+
+			<object type="fileselector">
+				<placement x="%fileselector_x%" y="%fileselector_y%" w="%fileselector_width%" h="%fileselector_install_height%" />
+				<text>%tw_zip_location%</text>
+				<filter extn=".zip" folders="1" files="1" />
+				<path name="tw_zip_location" default="/sdcard" />
+				<data name="tw_filename" />
+				<selection name="tw_file" />
+			</object>
+
+			<object type="template" name="sort_options" />
+
+			<object type="action">
+				<condition var1="tw_filename" op="modified" />
+				<actions>
+					<action function="queuezip"></action>
+					<action function="page">flash_confirm</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">install_select</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="flash_confirm">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>This operation may install incompatible</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>software and render your device unusable.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Folder and File:</text>
+			</object>
+
+			<object type="text">
+				<font resource="mediumfont" color="%text_color%" />
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>%tw_zip_location%</text>
+			</object>
+
+			<object type="text">
+				<font resource="mediumfont" color="%text_color%" />
+				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
+				<text>%tw_file%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row5_text_y%" placement="5" />
+				<text>Press back to cancel adding this zip.</text>
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row6_text_y%" />
+				<text>Zip file signature verification.</text>
+				<data variable="tw_signed_zip_verify" />
+			</object>
+
+			<object type="checkbox">
+				<condition var1="tw_has_injecttwrp" var2="1" />
+				<placement x="%col1_x%" y="%row7_text_y%" />
+				<text>Inject TWRP after install.</text>
+				<data variable="tw_inject_after_zip" />
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row11_text_y%" placement="5" />
+				<text>File %tw_zip_queue_count% of max of 10</text>
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Confirm Flash</text>
+				<action function="flash">flash_zip</action>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_zip_queue_count" op="!=" var2="10"></condition>
+				<placement x="%col1_x%" y="%row_queue_y%" />
+				<text>Add More Zips</text>
+				<action function="page">install</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row_queue_y%" />
+				<text>Clear Zip Queue</text>
+				<actions>
+					<action function="queueclear"></action>
+					<action function="page">install</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<actions>
+					<action function="cancelzip"></action>
+					<action function="page">install</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+		</page>
+
+		<page name="flash_zip">
+			<object type="template" name="header" />
+
+			<object type="console">
+				<placement x="%console_x%" y="%row1_y%" w="%console_width%" h="%console_install_height%" />
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row10_text_y%" placement="5" />
+				<text>Flashing file %tw_zip_index% of %tw_zip_queue_count%</text>
+			</object>
+
+			<object type="text">
+				<font resource="mediumfont" color="%text_color%"/>
+				<placement x="%center_x%" y="%row11_text_y%" placement="5" />
+				<text>%tw_filename%</text>
+			</object>
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<condition var1="tw_operation_state" var2="1" />
+				<action function="page">flash_done</action>
+			</object>
+		</page>
+
+		<page name="flash_done">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Zip Install Complete</text>
+			</object>
+
+			<object type="console">
+				<placement x="%console_x%" y="%row1_y%" w="%console_width%" h="%console_installdone_height%" />
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row4_y%" />
+				<text>Wipe cache/dalvik</text>
+				<actions>
+					<action function="set">tw_back=flash_done</action>
+					<action function="set">tw_action=wipe</action>
+					<action function="set">tw_action_param=/cache</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=wipe</action>
+					<action function="set">tw_action2_param=dalvik</action>
+					<action function="set">tw_text1=Wipe Cache &amp; Dalvik?</action>
+					<action function="set">tw_action_text1=Wiping Cache &amp; Dalvik...</action>
+					<action function="set">tw_complete_text1=Cache &amp; Dalvik Wipe Complete</action>
+					<action function="set">tw_slider_text=Swipe to Wipe</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button" style="rebootsystem">
+				<placement x="%col2_x%" y="%row4_y%" />
+			</object>
+
+			<object type="text">
+				<condition var1="tw_operation_status" op="!=" var2="0" />
+				<font resource="font" color="%text_fail_color%" />
+				<placement x="%center_x%" y="%zip_status_y%" placement="5" />
+				<text>Failed</text>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_operation_status" var2="0" />
+				<font resource="font" color="%text_success_color%" />
+				<placement x="%center_x%" y="%zip_status_y%" placement="5" />
+				<text>Successful</text>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<actions>
+					<action function="set">tw_clear_destination=install</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<actions>
+					<action function="set">tw_clear_destination=main2</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="install_image">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Select Image to Install</text>
+			</object>
+
+			<object type="button" style="fillbutton">
+				<placement x="%col1_x%" y="%row1_text_y%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
+				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<actions>
+					<action function="set">tw_back=install_image</action>
+					<action function="page">selectstorage</action>
+				</actions>
+			</object>
+
+			<object type="fileselector">
+				<placement x="%fileselector_x%" y="%row3_text_y%" w="%fileselector_width%" h="%fileselector_install_height%" />
+				<text>%tw_zip_location%</text>
+				<filter extn=".img" folders="1" files="1" />
+				<path name="tw_zip_location" default="/sdcard" />
+				<data name="tw_filename" />
+				<selection name="tw_file" />
+			</object>
+
+			<object type="template" name="sort_options" />
+
+			<object type="action">
+				<condition var1="tw_filename" op="modified" />
+				<action function="page">flashimage_confirm</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">install_select</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="flashimage_confirm">
+			<object type="template" name="header" />
+
+			<object type="partitionlist">
+				<placement x="%listbox_x%" y="%row1_header_y%" w="%listbox_width%" h="%flash_list_height%" />
+				<text>Select Partition to Flash Image:</text>
+				<icon selected="radio_true" unselected="radio_false" />
+				<data name="tw_flash_partition" />
+				<listtype name="flashimg" />
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row8_text_y%" placement="5" />
+				<text>Folder:</text>
+			</object>
+
+			<object type="text">
+				<font resource="mediumfont" color="%text_color%" />
+				<placement x="%center_x%" y="%row9_text_y%" placement="5" />
+				<text>%tw_zip_location%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row10_text_y%" placement="5" />
+				<text>File to flash:</text>
+			</object>
+
+			<object type="text" >
+				<font resource="mediumfont" color="%text_color%" />
+				<placement x="%center_x%" y="%row11_text_y%" placement="5" />
+				<text>%tw_file%</text>
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Confirm Flash</text>
+				<actions>
+					<action function="set">tw_back=flashimage_confirm</action>
+					<action function="set">tw_action=flashimage</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_action_text1=Flashing Image...</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1=Image Flashed</action>
+					<action function="page">action_page</action>
+				</actions>
+				<action function="flashimage"></action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<actions>
+					<action function="set">tw_clear_destination=install_image</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<actions>
+					<action function="set">tw_clear_destination=main2</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="clear_vars">
+			<object type="action">
+				<action function="set">tw_operation_state=0</action>
+				<action function="set">tw_text1=</action>
+				<action function="set">tw_text2=</action>
+				<action function="set">tw_text3=</action>
+				<action function="set">tw_text4=</action>
+				<action function="set">tw_action_text1=</action>
+				<action function="set">tw_action_text2=</action>
+				<action function="set">tw_action_param=</action>
+				<action function="set">tw_has_action2=0</action>
+				<action function="set">tw_action2=</action>
+				<action function="set">tw_action2_param=</action>
+				<action function="set">tw_has_cancel=0</action>
+				<action function="set">tw_cancel_action=</action>
+				<action function="set">tw_cancel_param=</action>
+				<action function="set">tw_show_exclamation=0</action>
+				<action function="set">tw_show_reboot=0</action>
+				<action function="page">%tw_clear_destination%</action>
+			</object>
+		</page>
+
+		<page name="confirm_action">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>%tw_text1%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>%tw_text2%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>%tw_text3%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
+				<text>%tw_text4%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row15_text_y%" placement="5" />
+				<text>Press back button to cancel.</text>
+			</object>
+
+			<object type="slider">
+				<text>%tw_slider_text%</text>
+				<action function="page">action_page</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<actions>
+					<action function="set">tw_clear_destination=%tw_back%</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+		</page>
+
+		<page name="action_page">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>%tw_action_text1%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>%tw_action_text2%</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+			<object type="button" style="mediumbutton">
+				<condition var1="tw_has_cancel" var2="1" />
+				<placement x="%col_center_medium_x%" y="%row4_y%" />
+				<text>Cancel</text>
+				<action function="%tw_cancel_action%">%tw_cancel_param%</action>
+			</object>
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<condition var1="tw_operation_state" var2="1" />
+				<actions>
+					<action function="page">action_complete</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_has_action2" var2="0" />
+				<actions>
+					<action function="%tw_action%">%tw_action_param%</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_has_action2" var2="1" />
+				<actions>
+					<action function="%tw_action%">%tw_action_param%</action>
+					<action function="%tw_action2%">%tw_action2_param%</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="singleaction_page">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>%tw_action_text1%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>%tw_action_text2%</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<condition var1="tw_operation_state" var2="1" />
+				<actions>
+					<action function="set">tw_page_done=1</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_has_action2" var2="0" />
+				<actions>
+					<action function="%tw_action%">%tw_action_param%</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_has_action2" var2="1" />
+				<actions>
+					<action function="%tw_action%">%tw_action_param%</action>
+					<action function="%tw_action2%">%tw_action2_param%</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="action_complete">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>%tw_complete_text1%</text>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_operation_status" op="!=" var2="0" />
+				<font resource="font" color="%text_fail_color%" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Failed</text>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_operation_status" var2="0" />
+				<font resource="font" color="%text_success_color%" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Successful</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+			<object type="action">
+				<touch key="home" />
+				<actions>
+					<action function="set">tw_clear_destination=main2</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<actions>
+					<action function="set">tw_clear_destination=%tw_back%</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="filecheck">
+			<object type="action">
+				<action function="fileexists">%tw_filecheck%</action>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" var2="0" />
+				</conditions>
+				<actions>
+					<action function="set">tw_fileexists=1</action>
+					<action function="page">%tw_existpage%</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" var2="1" />
+				</conditions>
+				<actions>
+					<action function="set">tw_fileexists=0</action>
+					<action function="page">%tw_notexistpage%</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="rebootcheck">
+			<object type="action">
+				<condition var1="tw_backup_system_size" op="&gt;=" var2="%tw_min_system%" />
+				<action function="reboot">%tw_action_param%</action>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_backup_system_size" op="&lt;" var2="%tw_min_system%" />
+				<action function="page">confirm_action</action>
+			</object>
+		</page>
+
+		<page name="wipe">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Factory Reset</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Wipes Data, Cache, and Dalvik</text>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_has_data_media" var2="1" />
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>(not including internal storage)</text>
+			</object>
+
+			<object type="text">
+				<conditions>
+					<condition var1="tw_has_android_secure" var2="1" />
+					<condition var1="fileexists" var2="/and-sec" />
+				</conditions>
+				<placement x="%col2_x%" y="%row4_text_y%" placement="1" />
+				<text>Android Secure  </text>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_has_sdext_partition" var2="1" />
+				<placement x="%col2_x%" y="%row4_text_y%" />
+				<text>  SD-EXT</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row5_text_y%" placement="5" />
+				<text>Most of the time this is</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row6_text_y%" placement="5" />
+				<text>the only wipe that you need.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row16_text_y%" placement="5" />
+				<text>Press back button to cancel.</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%wipe_button_y%" />
+				<text>Advanced Wipe</text>
+				<actions>
+					<action function="set">partitionlisterror=0</action>
+					<action function="page">advancedwipe</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_has_data_media" var2="1" />
+				<placement x="%col2_x%" y="%wipe_button_y%" />
+				<text>Format Data</text>
+				<actions>
+					<action function="page">formatdata</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<conditions>
+					<condition var1="tw_is_encrypted" var2="1" />
+					<condition var1="tw_has_data_media" var2="0" />
+				</conditions>
+				<placement x="%col2_x%" y="%wipe_button_y%" />
+				<text>Wipe Encryption</text>
+				<actions>
+					<action function="set">tw_back=wipe</action>
+					<action function="set">tw_action=wipe</action>
+					<action function="set">tw_action_param=DATAMEDIA</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Wipe Encryption from Data?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting Data...</action>
+					<action function="set">tw_complete_text1=Data Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Format Data</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Factory Reset</text>
+				<actions>
+					<action function="set">tw_back=wipe</action>
+					<action function="set">tw_action=wipe</action>
+					<action function="set">tw_action_param=data</action>
+					<action function="set">tw_action_text1=Factory Reset...</action>
+					<action function="set">tw_complete_text1=Factory Reset Complete</action>
+					<action function="page">action_page</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+		</page>
+
+		<page name="advancedwipe">
+			<object type="template" name="header" />
+
+			<object type="action">
+				<action function="set">tw_wipe_list=</action>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Wipe Menu</text>
+			</object>
+
+			<object type="partitionlist">
+				<placement x="%listbox_x%" y="%row1_header_y%" w="%listbox_width%" h="%wipe_list_height%" />
+				<text>Select Partitions to Wipe:</text>
+				<data name="tw_wipe_list" />
+				<listtype name="wipe" />
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Wipe</text>
+				<actions>
+					<action function="set">tw_back=advancedwipe</action>
+					<action function="set">tw_action=wipe</action>
+					<action function="set">tw_action_param=LIST</action>
+					<action function="set">tw_text1=Wipe Selected Partition(s)?</action>
+					<action function="set">tw_action_text1=Wiping Partition(s)...</action>
+					<action function="set">tw_complete_text1=Wipe Complete</action>
+					<action function="page">action_page</action>
+				</actions>
+			</object>
+
+			<object type="button" style="fillbutton">
+				<placement x="%col1_x%" y="%wipe_button_row1%" w="%button_fill_full_width%" h="%button_fill_half_height%" />
+				<text>Repair or Change File System</text>
+				<actions>
+					<action function="checkpartitionlist"></action>
+					<action function="page">checkpartitionlist</action>
+				</actions>
+			</object>
+
+			<object type="text">
+				<condition var1="partitionlisterror" var2="1" />
+				<font resource="font" color="%text_fail_color%" />
+				<placement x="%center_x%" y="%invalid_partition_y%" placement="5" />
+				<text>Invalid partition selection</text>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">wipe</action>
+			</object>
+		</page>
+
+		<page name="formatdata">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Format Data will wipe all of your apps,</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>backups, pictures, videos, media, and</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>removes encryption on internal storage.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>This cannot be undone. Press back to cancel.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
+				<text>Type yes to continue.</text>
+			</object>
+
+			<object type="input">
+				<placement x="%col1_x%" y="%row6_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_confirm_formatdata%</text>
+				<data name="tw_confirm_formatdata" />
+				<restrict minlen="3" maxlen="3" allow="yes" />
+				<action function="page">formatdata_confirm</action>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">wipe</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="formatdata_confirm">
+			<object type="action">
+				<condition var1="tw_confirm_formatdata" op="=" var2="yes" />
+				<actions>
+					<action function="set">tw_back=formatdata</action>
+					<action function="set">tw_action=wipe</action>
+					<action function="set">tw_action_param=DATAMEDIA</action>
+					<action function="set">tw_action_text1=Formatting Data...</action>
+					<action function="set">tw_complete_text1=Data Format Complete</action>
+					<action function="page">action_page</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_confirm_formatdata" op="!=" var2="yes" />
+				<action function="page">formatdata</action>
+			</object>
+		</page>
+
+		<page name="checkpartitionlist">
+			<object type="action">
+				<condition var1="tw_check_partition_list" op="=" var2="1" />
+				<actions>
+					<action function="set">partitionlisterror=0</action>
+					<action function="getpartitiondetails"></action>
+					<action function="page">partitionoptions</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_check_partition_list" op="!=" var2="1" />
+				<actions>
+					<action function="set">partitionlisterror=1</action>
+					<action function="set">tw_wipe_list=</action>
+					<action function="page">advancedwipe</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="partitionoptions">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Partition Options for: %tw_partition_name%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Mount Point: %tw_partition_mount_point%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Current file system: %tw_partition_file_system%</text>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_partition_is_present" op="!=" var2="0" />
+				<placement x="%col1_x%" y="%row3_text_y%" />
+				<text>Present: Yes</text>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_partition_is_present" op="=" var2="0" />
+				<placement x="%col1_x%" y="%row3_text_y%" />
+				<text>Present: No</text>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_partition_removable" op="!=" var2="0" />
+				<placement x="%col2_x%" y="%row3_text_y%" />
+				<text>Removable: Yes</text>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_partition_removable" op="=" var2="0" />
+				<placement x="%col2_x%" y="%row3_text_y%" />
+				<text>Removable: No</text>
+			</object>
+
+			<object type="text">
+				<placement x="%col1_x%" y="%row4_text_y%" />
+				<text>Size: %tw_partition_size%MB</text>
+			</object>
+
+			<object type="text">
+				<placement x="%col2_x%" y="%row4_text_y%" />
+				<text>Used: %tw_partition_used%MB</text>
+			</object>
+
+			<object type="text">
+				<placement x="%col1_x%" y="%row5_text_y%" />
+				<text>Free: %tw_partition_free%MB</text>
+			</object>
+
+			<object type="text">
+				<placement x="%col2_x%" y="%row5_text_y%" />
+				<text>Backup Size: %tw_partition_backup_size%MB</text>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_can_resize" op="=" var2="1" />
+				<placement x="%col1_x%" y="%row3_y%" />
+				<text>Resize</text>
+				<actions>
+					<action function="set">tw_back=partitionoptions</action>
+					<action function="set">tw_action=resize</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=getpartitiondetails</action>
+					<action function="set">tw_text1=Resize %tw_partition_name%?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Resizing...</action>
+					<action function="set">tw_complete_text1=Resize Complete</action>
+					<action function="set">tw_slider_text=Swipe to Resize</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_can_repair" op="=" var2="1" />
+				<placement x="%col1_x%" y="%row4_y%" />
+				<text>Repair</text>
+				<actions>
+					<action function="set">tw_back=partitionoptions</action>
+					<action function="set">tw_action=repair</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Repair %tw_partition_name%?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Repairing...</action>
+					<action function="set">tw_complete_text1=Repair Complete</action>
+					<action function="set">tw_slider_text=Swipe to Repair</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row4_y%" />
+				<text>Change File Sys</text>
+				<action function="page">selectfilesystem</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advancedwipe</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="refreshfilesystem">
+			<object type="action">
+				<condition var1="tw_check_partition_list" op="=" var2="1" />
+				<actions>
+					<action function="set">partitionlisterror=0</action>
+					<action function="getpartitiondetails"></action>
+					<action function="page">selectfilesystem</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_check_partition_list" op="!=" var2="1" />
+				<actions>
+					<action function="set">partitionlisterror=1</action>
+					<action function="set">tw_wipe_list=</action>
+					<action function="page">advancedwipe</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="selectfilesystem">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Change file system for: %tw_partition_name%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Mount Point: %tw_partition_mount_point%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Current file system: %tw_partition_file_system%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>Proceed with caution!</text>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_ext" op="=" var2="1" />
+				<placement x="%col1_x%" y="%row2_y%" />
+				<text>EXT2</text>
+				<actions>
+					<action function="set">tw_back=refreshfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=ext2</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to EXT2?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_ext" op="=" var2="1" />
+				<placement x="%col2_x%" y="%row2_y%" />
+				<text>EXT3</text>
+				<actions>
+					<action function="set">tw_back=refreshfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=ext3</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to EXT3?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_ext" op="=" var2="1" />
+				<placement x="%col1_x%" y="%row3_y%" />
+				<text>EXT4</text>
+				<actions>
+					<action function="set">tw_back=refreshfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=ext4</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to EXT4?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_f2fs" op="=" var2="1" />
+				<placement x="%col2_x%" y="%row3_y%" />
+				<text>F2FS</text>
+				<actions>
+					<action function="set">tw_back=refreshfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=f2fs</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to F2FS?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_vfat" op="=" var2="1" />
+				<placement x="%col1_x%" y="%row4_y%" />
+				<text>FAT</text>
+				<actions>
+					<action function="set">tw_back=refreshfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=vfat</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to FAT?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_partition_exfat" op="=" var2="1" />
+				<placement x="%col2_x%" y="%row4_y%" />
+				<text>exFAT</text>
+				<actions>
+					<action function="set">tw_back=refreshfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=exfat</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=Change %tw_partition_name% to exFAT?</action>
+					<action function="set">tw_text2=</action>
+					<action function="set">tw_action_text1=Formatting...</action>
+					<action function="set">tw_complete_text1=Format Complete</action>
+					<action function="set">tw_slider_text=Swipe to Change</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">partitionoptions</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="backup">
+			<object type="template" name="header" />
+
+			<object type="button" style="fillbutton">
+				<placement x="%col1_x%" y="%row1_header_y%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
+				<text>Backup Name: %tw_backup_name%</text>
+				<actions>
+					<action function="set">tw_fileexists=0</action>
+					<action function="page">backupname1</action>
+				</actions>
+			</object>
+
+			<object type="partitionlist">
+				<placement x="%listbox_x%" y="%backup_list_y%" w="%listbox_width%" h="%backup_list_height%" />
+				<text>Select Partitions to Back Up:</text>
+				<data name="tw_backup_list" />
+				<listtype name="backup" />
+			</object>
+
+			<object type="button" style="fillbutton">
+				<placement x="%col2_x%" y="%backup_button_row1%" w="%button_fill_main_width%" h="%button_fill_quarter_height%" />
+				<text>More...</text>
+				<action function="page">backupoptions</action>
+			</object>
+
+			<object type="button" style="fillbutton">
+				<placement x="%col1_x%" y="%backup_button_row2%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
+				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<actions>
+					<action function="set">tw_back=backup</action>
+					<action function="page">selectstorage</action>
+				</actions>
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%backup_button_row1%" />
+				<text>Compression</text>
+				<data variable="tw_use_compression" />
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Back Up</text>
+				<action function="page">backup_run</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">main</action>
+			</object>
+		</page>
+
+		<page name="backupoptions">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>More Backup Options</text>
+			</object>
+
+			<object type="button" style="fillbutton">
+				<conditions>
+					<condition var1="tw_include_encrypted_backup" var2="1" />
+					<condition var1="tw_encrypt_backup" var2="0" />
+				</conditions>
+				<placement x="%col1_x%" y="%row6_text_y%" w="%button_fill_main_width%" h="%button_fill_quarter_height%" />
+				<text>No Encryption</text>
+				<actions>
+					<action function="page">backupencryption</action>
+				</actions>
+			</object>
+
+			<object type="button" style="fillbutton">
+				<conditions>
+					<condition var1="tw_include_encrypted_backup" var2="1" />
+					<condition var1="tw_encrypt_backup" var2="1" />
+				</conditions>
+				<placement x="%col1_x%" y="%row6_text_y%" w="%button_fill_main_width%" h="%button_fill_quarter_height%" />
+				<text>Using Encryption</text>
+				<actions>
+					<action function="set">tw_password_not_match=0</action>
+					<action function="page">backupencryption</action>
+				</actions>
+			</object>
+
+			<object type="button" style="fillbutton">
+				<placement x="%col2_x%" y="%row6_text_y%" w="%button_fill_main_width%" h="%button_fill_quarter_height%" />
+				<text>Refresh Sizes</text>
+				<actions>
+					<action function="refreshsizes"></action>
+					<action function="page">backupoptions</action>
+				</actions>
+			</object>
+
+			<object type="button" style="fillbutton">
+				<placement x="%col1_x%" y="%backup_button_row2%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
+				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<actions>
+					<action function="set">tw_back=backupotions</action>
+					<action function="page">selectstorage</action>
+				</actions>
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<text>Enable compression.</text>
+				<data variable="tw_use_compression" />
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row3_text_y%" />
+				<text>Skip MD5 generation during backup.</text>
+				<data variable="tw_skip_md5_generate" />
+			</object>
+
+                        <object type="checkbox">
+                                <placement x="%col1_x%" y="%row4_text_y%" />
+                                <font resource="font" color="%text_color%" />
+                                <text>Disable Free Space Check.</text>
+                                <data variable="tw_disable_free_space" />
+                                <image checked="checkbox_true" unchecked="checkbox_false" />
+                        </object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">backup</action>
+			</object>
+		</page>
+
+		<page name="backupname1">
+			<object type="action">
+				<condition var1="tw_backup_name" op="=" var2="(Auto Generate)" />
+				<action function="generatebackupname"></action>
+			</object>
+
+			<object type="action">
+				<action function="page">backupname2</action>
+			</object>
+		</page>
+
+		<page name="backupname2">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Please Enter a Backup Name</text>
+			</object>
+
+			<object type="input">
+				<placement x="%col1_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_backup_name%</text>
+				<data name="tw_backup_name" />
+				<restrict minlen="1" maxlen="64" allow=" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_.{}[]" />
+				<actions>
+					<action function="set">tw_filecheck=%tw_backups_folder%/%tw_backup_name%</action>
+					<action function="set">tw_existpage=backupname2</action>
+					<action function="set">tw_notexistpage=backup</action>
+					<action function="page">filecheck</action>
+				</actions>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_fileexists" var2="1" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<font resource="font" color="%text_fail_color%" />
+				<text>A backup with that name already exists!</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row2_y%" />
+				<text>Append Date</text>
+				<action function="appenddatetobackupname"></action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row2_y%" />
+				<text>Cancel</text>
+				<actions>
+					<action function="set">tw_backup_name=(Auto Generate)</action>
+					<action function="page">backup</action>
+				</actions>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<actions>
+					<action function="set">tw_backup_name=(Auto Generate)</action>
+					<action function="page">main</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<actions>
+					<action function="set">tw_backup_name=(Auto Generate)</action>
+					<action function="page">backup</action>
+				</actions>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="backupencryption">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Encrypt your backup?</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Please Enter A Password:</text>
+			</object>
+
+			<object type="input">
+				<placement x="%col1_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_backup_encrypt_display%</text>
+				<data name="tw_backup_password" mask="*" maskvariable="tw_backup_encrypt_display" />
+				<restrict minlen="1" maxlen="32" allow="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_" />
+				<action function="page">backupencryption2</action>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_password_not_match" var2="1" />
+				<font resource="font" color="%text_fail_color%" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Passwords Do Not Match</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row2_y%" />
+				<text>Cancel</text>
+				<actions>
+					<action function="set">tw_encrypt_backup=0</action>
+					<action function="set">tw_backup_password=</action>
+					<action function="set">tw_backup_password2=</action>
+					<action function="set">tw_backup_encrypt_display=</action>
+					<action function="set">tw_backup_encrypt_display2=</action>
+					<action function="page">backupoptions</action>
+				</actions>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">backupoptions</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="backupencryption2">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Encrypt your backup?</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Please Enter Password Again:</text>
+			</object>
+
+			<object type="input">
+				<placement x="%col1_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_backup_encrypt_display2%</text>
+				<data name="tw_backup_password2" mask="*" maskvariable="tw_backup_encrypt_display2" />
+				<restrict minlen="1" maxlen="32" allow="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_" />
+				<actions>
+					<action function="page">checkbackuppassword</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row2_y%" />
+				<text>Cancel</text>
+				<actions>
+					<action function="set">tw_encrypt_backup=0</action>
+					<action function="set">tw_backup_password=</action>
+					<action function="set">tw_backup_password2=</action>
+					<action function="set">tw_backup_encrypt_display=</action>
+					<action function="set">tw_backup_encrypt_display2=</action>
+					<action function="page">backupoptions</action>
+				</actions>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">backupoptions</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="checkbackuppassword">
+			<object type="action">
+				<condition var1="tw_backup_password2" var2="tw_backup_password" />
+				<actions>
+					<action function="set">tw_encrypt_backup=1</action>
+					<action function="page">backupoptions</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_backup_password2" op="!=" var2="tw_backup_password" />
+				<actions>
+					<action function="set">tw_encrypt_backup=0</action>
+					<action function="set">tw_password_not_match=1</action>
+					<action function="set">tw_backup_password=</action>
+					<action function="set">tw_backup_password2=</action>
+					<action function="set">tw_backup_encrypt_display=</action>
+					<action function="set">tw_backup_encrypt_display2=</action>
+					<action function="page">backupencryption</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="backup_run">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>%tw_operation% %tw_partition%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>%tw_file_progress%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>%tw_size_progress%</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+
+
+			<object type="template" name="progress_bar" />
+
+			<object type="button" style="mediumbutton">
+				<placement x="%col_center_medium_x%" y="%row4_y%" />
+				<text>Cancel</text>
+				<actions>
+					<action function="cancelbackup"></action>
+				</actions>
+			</object>
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<action function="nandroid">backup</action>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_operation_state" var2="1" />
+				<condition var1="tw_cancel_backup" var2="0" />
+				<actions>
+					<action function="set">tw_back=backup</action>
+					<action function="set">tw_complete_text1=Backup Complete</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">action_complete</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_operation_state" var2="1" />
+				<condition var1="tw_cancel_backup" var2="1" />
+				<actions>
+					<action function="set">tw_back=backup</action>
+					<action function="set">tw_complete_text1=Backup Cancelled</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">action_complete</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="restore">
+			<object type="template" name="header" />
+
+			<object type="button" style="fillbutton">
+				<placement x="%col1_x%" y="%row1_header_y%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
+				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<actions>
+					<action function="set">tw_back=restore</action>
+					<action function="page">selectstorage</action>
+				</actions>
+			</object>
+
+			<object type="fileselector">
+				<placement x="%fileselector_x%" y="%row2_text_y%" w="%fileselector_width%" h="%fileselector_install_height%" />
+				<text>Select Package to Restore:</text>
+				<filter folders="1" files="0" nav="0" />
+				<path name="tw_backups_folder" />
+				<data name="tw_restore" default="" />
+				<selection name="tw_restore_name" />
+			</object>
+
+			<object type="template" name="sort_options" />
+
+			<object type="action">
+				<condition var1="tw_restore" op="modified" />
+				<actions>
+					<action function="readBackup"></action>
+					<action function="page">restore_read</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="restore_read">
+			<object type="action">
+				<condition var1="tw_restore_encrypted" var2="1" />
+				<actions>
+					<action function="set">tw_password_fail=0</action>
+					<action function="page">restore_decrypt</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_restore_encrypted" var2="0" />
+				<actions>
+					<action function="page">restore_select</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="restore_decrypt">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Backup Encrypted</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Please Enter Your Password:</text>
+			</object>
+
+			<object type="input">
+				<placement x="%col1_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_restore_display%</text>
+				<data name="tw_restore_password" mask="*" maskvariable="tw_restore_display" />
+				<restrict minlen="1" maxlen="32" allow="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_" />
+				<actions>
+					<action function="page">try_restore_decrypt</action>
+				</actions>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_password_fail" var2="1" />
+				<font resource="font" color="%text_fail_color%" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Password Failed, Please Try Again</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row2_y%" />
+				<text>Cancel</text>
+				<actions>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">restore</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row2_y%" />
+				<text>Delete</text>
+				<actions>
+					<action function="set">tw_back=restore</action>
+					<action function="set">tw_action=cmd</action>
+					<action function="set">tw_action_param=cd %tw_backups_folder% &amp;&amp; rm -rf &quot;%tw_restore_name%&quot;</action>
+					<action function="set">tw_text1=Delete Backup? %tw_restore_name%</action>
+					<action function="set">tw_text2=This cannot be undone!</action>
+					<action function="set">tw_action_text1=Deleting Backup...</action>
+					<action function="set">tw_complete_text1=Backup Delete Complete</action>
+					<action function="set">tw_slider_text=Swipe to Delete</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">restore</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="try_restore_decrypt">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Trying Decryption with Your Password</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<action function="decrypt_backup"></action>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" op="!=" var2="0" />
+				</conditions>
+				<actions>
+					<action function="set">tw_password_fail=1</action>
+					<action function="page">restore_decrypt</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" op="=" var2="0" />
+				</conditions>
+				<actions>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">restore_select</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="restore_select">
+			<object type="template" name="header" />
+
+			<object type="partitionlist">
+				<placement x="%listbox_x%" y="%row1_header_y%" w="%listbox_width%" h="%restore_list_height%" />
+				<text>Restoring: %tw_restore_name%</text>
+				<data name="tw_restore_list" selectedlist="tw_restore_selected" />
+				<listtype name="restore" />
+			</object>
+
+			<object type="button" style="fillbutton">
+				<placement x="%col1_x%" y="%backup_button_row2%" w="%button_fill_main_width%" h="%button_fill_quarter_height%" />
+				<text>Rename Backup</text>
+				<actions>
+					<action function="set">tw_backup_rename=</action>
+					<action function="set">tw_fileexists=0</action>
+					<action function="page">renamebackup</action>
+				</actions>
+			</object>
+
+			<object type="button" style="fillbutton">
+				<placement x="%col2_x%" y="%backup_button_row2%" w="%button_fill_main_width%" h="%button_fill_quarter_height%" />
+				<text>Delete Backup</text>
+				<actions>
+					<action function="set">tw_back=restore</action>
+					<action function="set">tw_action=cmd</action>
+					<action function="set">tw_action_param=cd %tw_backups_folder% &amp;&amp; rm -rf &quot;%tw_restore_name%&quot;</action>
+					<action function="set">tw_text1=Delete Backup? %tw_restore_name%</action>
+					<action function="set">tw_text2=This cannot be undone!</action>
+					<action function="set">tw_action_text1=Deleting Backup...</action>
+					<action function="set">tw_complete_text1=Backup Delete Complete</action>
+					<action function="set">tw_slider_text=Swipe to Delete</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%backup_button_row1%" />
+				<text>Enable MD5 verification of backup.</text>
+				<data variable="tw_skip_md5_check" />
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Restore</text>
+				<action function="page">restore_run</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">restore</action>
+			</object>
+		</page>
+
+		<page name="renamebackup">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Please Enter a New Backup Name</text>
+			</object>
+
+			<object type="input">
+				<placement x="%col1_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_backup_rename%</text>
+				<data name="tw_backup_rename" />
+				<restrict minlen="1" maxlen="64" allow=" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_.{}[]" />
+				<actions>
+					<action function="set">tw_back=restore</action>
+					<action function="set">tw_action=cmd</action>
+					<action function="set">tw_action_param=cd %tw_backups_folder% &amp;&amp; mv &quot;%tw_restore_name%&quot; &quot;%tw_backup_rename%&quot;</action>
+					<action function="set">tw_text1=Rename Backup?</action>
+					<action function="set">tw_text2=This cannot be undone!</action>
+					<action function="set">tw_action_text1=Renaming Backup...</action>
+					<action function="set">tw_complete_text1=Backup Rename Complete</action>
+					<action function="set">tw_slider_text=Swipe to Rename</action>
+					<action function="set">tw_filecheck=%tw_backups_folder%/%tw_backup_rename%</action>
+					<action function="set">tw_existpage=renamebackup</action>
+					<action function="set">tw_notexistpage=confirm_action</action>
+					<action function="page">filecheck</action>
+				</actions>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_fileexists" var2="1" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<font resource="font" color="%text_fail_color%" />
+				<text>A backup with that name already exists!</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row2_y%" />
+				<text>Cancel</text>
+				<action function="page">restore_select</action>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">restore_select</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="restore_run">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>%tw_operation% %tw_partition%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>%tw_size_progress%</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<condition var1="tw_operation_state" var2="1" />
+				<actions>
+					<action function="set">tw_back=restore_select</action>
+					<action function="set">tw_complete_text1=Restore Complete</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">action_complete</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<action function="nandroid">restore</action>
+			</object>
+		</page>
+
+		<page name="selectstorage">
+			<object type="template" name="header" />
+
+			<object type="partitionlist">
+				<placement x="%listbox_x%" y="%row1_header_y%" w="%listbox_width%" h="%storage_list_height%" />
+				<text>Select Storage:</text>
+				<icon selected="radio_true" unselected="radio_false" />
+				<data name="tw_storage_path" />
+				<listtype name="storage" />
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row4_y%" />
+				<text>OK</text>
+				<actions>
+					<action function="set">tw_clear_destination=%tw_back%</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<actions>
+					<action function="page">%tw_back%</action>
+				</actions>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="mount">
+			<object type="template" name="header" />
+
+			<object type="partitionlist">
+				<placement x="%listbox_x%" y="%row1_header_y%" w="%listbox_width%" h="%mount_list_height%" />
+				<text>Select Partitions to Mount:</text>
+				<listtype name="mount" />
+			</object>
+
+			<object type="button" style="fillbutton">
+				<placement x="%col1_x%" y="%mount_storage_row%" w="%button_fill_full_width%" h="%button_fill_quarter_height%" />
+				<text>Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+				<actions>
+					<action function="set">tw_back=mount</action>
+					<action function="page">selectstorage</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_has_usb_storage" var2="1" />
+				<placement x="%col1_x%" y="row4_y" />
+				<text>USB Storage</text>
+				<action function="page">usb_mount</action>
+			</object>
+
+			<object type="button">
+				<conditions>
+					<condition var1="tw_has_mtp" var2="1" />
+					<condition var1="tw_mtp_enabled" var2="0" />
+				</conditions>
+				<placement x="%col2_x%" y="row4_y" />
+				<text>Enable MTP</text>
+				<action function="startmtp"></action>
+			</object>
+
+			<object type="button">
+				<conditions>
+					<condition var1="tw_has_mtp" var2="1" />
+					<condition var1="tw_mtp_enabled" var2="1" />
+				</conditions>
+				<placement x="%col2_x%" y="row4_y" />
+				<text>Disable MTP</text>
+				<action function="stopmtp"></action>
+			</object>
+
+			<object type="button">
+				<conditions>
+					<condition var1="tw_is_encrypted" var2="1" />
+					<condition var1="tw_is_decrypted" var2="0" />
+				</conditions>
+				<placement x="%col2_x%" y="row4_y" />
+				<text>Decrypt Data</text>
+				<action function="page">decrypt</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%system_ro_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_mount_system_ro" op="=" var2="0" />
+				<text>Only mount system read-only</text>
+				<image resource="checkbox_false" />
+				<action function="mountsystemtoggle">1</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%system_ro_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_mount_system_ro" op="!=" var2="0" />
+				<text>Only mount system read-only</text>
+				<image resource="checkbox_true" />
+				<actions>
+					<action function="set">tw_lifetime_writes=2</action>
+					<action function="page">system_readonly_check</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="usb_mount">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>USB Storage Mounted</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<placement x="%col1_x%" y="%row1_text_y%" />
+				<font resource="font" />
+				<text>Be sure to safely remove your device</text>
+			</object>
+
+			<object type="text">
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<text>from your computer before unmounting!</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row3_y%" />
+				<text>Unmount</text>
+				<action function="page">usb_umount</action>
+			</object>
+
+			<object type="action">
+				<action function="mount">usb</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="usb_umount">
+			<object type="action">
+				<action function="unmount">usb</action>
+			</object>
+
+			<object type="action">
+				<action function="page">mount</action>
+			</object>
+		</page>
+
+		<page name="system_readonly_check">
+			<object type="action">
+				<action function="checkpartitionlifetimewrites">/system</action>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_lifetime_writes" var2="1" />
+				<actions>
+					<action function="mountsystemtoggle">0</action>
+					<action function="page">mount</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_lifetime_writes" var2="0" />
+				<actions>
+					<action function="set">tw_back=mount</action>
+					<action function="page">system_readonly</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="reboot">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Reboot Menu</text>
+			</object>
+
+			<object type="button" style="rebootsystem">
+				<placement x="%col1_x%" y="%row1_y%" />
+				<text>System</text>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_reboot_poweroff" var2="1" />
+				<placement x="%col2_x%" y="%row1_y%" />
+				<text>Power Off</text>
+				<actions>
+					<action function="set">tw_back=reboot</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=poweroff</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=No OS Installed! Are you</action>
+					<action function="set">tw_text2=sure you wish to power off?</action>
+					<action function="set">tw_action_text1=Turning Off...</action>
+					<action function="set">tw_complete_text1=Turning Off...</action>
+					<action function="set">tw_slider_text=Swipe to Power Off</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_reboot_recovery" var2="1" />
+				<placement x="%col1_x%" y="%row2_y%" />
+				<text>Recovery</text>
+				<actions>
+					<action function="set">tw_back=reboot</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=recovery</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=No OS Installed! Are you</action>
+					<action function="set">tw_text2=sure you wish to reboot?</action>
+					<action function="set">tw_action_text1=Rebooting...</action>
+					<action function="set">tw_complete_text1=Rebooting...</action>
+					<action function="set">tw_slider_text=Swipe to Reboot</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_reboot_bootloader" var2="1" />
+				<placement x="%col2_x%" y="%row2_y%" />
+				<text>Bootloader</text>
+				<actions>
+					<action function="set">tw_back=reboot</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=bootloader</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=No OS Installed! Are you</action>
+					<action function="set">tw_text2=sure you wish to reboot?</action>
+					<action function="set">tw_action_text1=Rebooting...</action>
+					<action function="set">tw_complete_text1=Rebooting...</action>
+					<action function="set">tw_slider_text=Swipe to Reboot</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_download_mode" var2="1" />
+				<placement x="%col1_x%" y="%row3_y%" />
+				<text>Download</text>
+				<actions>
+					<action function="set">tw_back=reboot</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=download</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1=No OS Installed! Are you</action>
+					<action function="set">tw_text2=sure you wish to reboot?</action>
+					<action function="set">tw_action_text1=Rebooting...</action>
+					<action function="set">tw_complete_text1=Rebooting...</action>
+					<action function="set">tw_slider_text=Swipe to Reboot</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="settings">
+			<object type="template" name="header" />
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row1_header_y%" />
+				<text>Zip file signature verification.</text>
+				<data variable="tw_signed_zip_verify" />
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row1_text_y%" />
+				<text>Use rm -rf instead of formatting.</text>
+				<data variable="tw_rm_rf" />
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<text>Skip MD5 generation during backup.</text>
+				<data variable="tw_skip_md5_generate" />
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row3_text_y%" />
+				<text>Enable MD5 verification of backup files.</text>
+				<data variable="tw_skip_md5_check" />
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row4_text_y%" />
+				<text>Use 24-hour clock.</text>
+				<data variable="tw_military_time" />
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row5_text_y%" />
+				<text>Simulate actions for theme testing.</text>
+				<data variable="tw_simulate_actions" />
+			</object>
+
+			<object type="checkbox">
+				<condition var1="tw_simulate_actions" var2="1" />
+				<placement x="%col1_x%" y="%row6_text_y%" />
+				<text>Simulate failure for actions.</text>
+				<data variable="tw_simulate_fail" />
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row3_y%" />
+				<text>Time Zone</text>
+				<action function="page">timezone</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row3_y%" />
+				<text>Screen</text>
+				<action function="page">screen</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row4_y%" />
+				<text>Restore Defaults</text>
+				<action function="restoredefaultsettings"></action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row4_y%" />
+				<text>Vibration</text>
+				<action function="page">vibrate</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="timezone">
+			<object type="template" name="header" />
+
+			<object type="listbox" style="scrolllist">
+				<placement x="%listbox_x%" y="%row1_header_y%" w="%listbox_width%" h="%listbox_tz_height%" />
+				<text>Select Time Zone:</text>
+				<icon selected="radio_true" unselected="radio_false" />
+				<data name="tw_time_zone_guisel" />
+				<listitem name="(UTC -11) Samoa, Midway Island">BST11;BDT</listitem>
+				<listitem name="(UTC -10) Hawaii">HST10;HDT</listitem>
+				<listitem name="(UTC -9) Alaska">AST9;ADT</listitem>
+				<listitem name="(UTC -8) Pacific Time">PST8;PDT,M3.2.0,M11.1.0</listitem>
+				<listitem name="(UTC -7) Mountain Time">MST7;MDT,M3.2.0,M11.1.0</listitem>
+				<listitem name="(UTC -6) Central Time">CST6;CDT,M3.2.0,M11.1.0</listitem>
+				<listitem name="(UTC -5) Eastern Time">EST5;EDT,M3.2.0,M11.1.0</listitem>
+				<listitem name="(UTC -4) Atlantic Time">AST4;ADT</listitem>
+				<listitem name="(UTC -3) Brazil, Buenos Aires">GRNLNDST3;GRNLNDDT</listitem>
+				<listitem name="(UTC -2) Mid-Atlantic">FALKST2;FALKDT</listitem>
+				<listitem name="(UTC -1) Azores, Cape Verde">AZOREST1;AZOREDT</listitem>
+				<listitem name="(UTC  0) London, Dublin, Lisbon">GMT0;BST,M3.5.0,M10.5.0</listitem>
+				<listitem name="(UTC +1) Berlin, Brussels, Paris">CET-1;CEST,M3.5.0,M10.5.0</listitem>
+				<listitem name="(UTC +2) Athens, Istanbul, South Africa">WET-2;WET,M3.5.0,M10.5.0</listitem>
+				<listitem name="(UTC +3) Moscow, Baghdad">SAUST-3;SAUDT</listitem>
+				<listitem name="(UTC +4) Abu Dhabi, Tbilisi, Muscat">WST-4;WDT</listitem>
+				<listitem name="(UTC +5) Yekaterinburg, Islamabad">PAKST-5;PAKDT</listitem>
+				<listitem name="(UTC +6) Almaty, Dhaka, Colombo">TASHST-6;TASHDT</listitem>
+				<listitem name="(UTC +7) Bangkok, Hanoi, Jakarta">THAIST-7;THAIDT</listitem>
+				<listitem name="(UTC +8) Beijing, Singapore, Hong Kong">TAIST-8;TAIDT</listitem>
+				<listitem name="(UTC +9) Tokyo, Seoul, Yakutsk">JST-9;JSTDT</listitem>
+				<listitem name="(UTC +10) Eastern Australia, Guam">EET-10;EETDT</listitem>
+				<listitem name="(UTC +11) Vladivostok, Solomon Islands">MET-11;METDT</listitem>
+				<listitem name="(UTC +12) Auckland, Wellington, Fiji">NZST-12;NZDT</listitem>
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row_dst_text_y%" />
+				<text>Do you use daylight savings time (DST)?</text>
+				<data variable="tw_time_zone_guidst" />
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row_offset_text_y%" placement="5" />
+				<text>Offset (usually 0): %tw_time_zone_guioffset%</text>
+			</object>
+
+			<object type="button" style="mediumbutton">
+				<placement x="%col1_medium_x%" y="%row_offset_medium_y%" />
+				<text>None</text>
+				<action function="set">tw_time_zone_guioffset=0</action>
+			</object>
+
+			<object type="button" style="mediumbutton">
+				<placement x="%col2_medium_x%" y="%row_offset_medium_y%" />
+				<text>15</text>
+				<action function="set">tw_time_zone_guioffset=15</action>
+			</object>
+
+			<object type="button" style="mediumbutton">
+				<placement x="%col3_medium_x%" y="%row_offset_medium_y%" />
+				<text>30</text>
+				<action function="set">tw_time_zone_guioffset=30</action>
+			</object>
+
+			<object type="button" style="mediumbutton">
+				<placement x="%col4_medium_x%" y="%row_offset_medium_y%" />
+				<text>45</text>
+				<action function="set">tw_time_zone_guioffset=45</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%tz_set_y%" />
+				<text>Set Time Zone</text>
+				<action function="setguitimezone"></action>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%tz_current_y%" placement="5" />
+				<text>Current Time Zone: %tw_time_zone%</text>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">settings</action>
+			</object>
+		</page>
+
+		<page name="screen">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Screen Settings</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_screen_timeout_secs" op="=" var2="0" />
+				<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
+				<text>Enable screen timeout.</text>
+				<image resource="checkbox_false" />
+				<action function="set">tw_screen_timeout_secs=60</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<font resource="font" color="%text_color%" />
+				<condition var1="tw_screen_timeout_secs" op="!=" var2="0" />
+				<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
+				<text>Enable screen timeout.</text>
+				<image resource="checkbox_true" />
+				<action function="set">tw_screen_timeout_secs=0</action>
+			</object>
+
+			<object type="slidervalue">
+				<conditions>
+					<condition var1="tw_screen_timeout_secs" op="!=" var2="0" />
+					<condition var1="tw_no_screen_timeout" op="!=" var2="1" />
+				</conditions>
+				<placement x="col1_x" y="%row4_text_y%" w="%slidervalue_w%" />
+				<text>Screen timeout in seconds:</text>
+				<data variable="tw_screen_timeout_secs" min="15" max="300" />
+			</object>
+
+			<object type="slidervalue">
+				<condition var1="tw_has_brightnesss_file" var2="1" />
+				<placement x="col1_x" y="%row8_text_y%" w="%slidervalue_w%" />
+				<text>Brightness: %tw_brightness_pct%%</text>
+				<data variable="tw_brightness_pct" min="10" max="100" />
+				<actions>
+					<action function="set">tw_brightness=%tw_brightness_max%</action>
+					<action function="compute">tw_brightness*%tw_brightness_pct%</action>
+					<action function="compute">tw_brightness/100</action>
+					<action function="setbrightness">%tw_brightness%</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">settings</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="vibrate">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Vibration Settings :</text>
+			</object>
+
+			<object type="slidervalue">
+				<placement x="col1_x" y="%row1_text_y%" w="%slidervalue_w%" />
+				<text>Button Vibration:</text>
+				<data variable="tw_button_vibrate" min="0" max="300" />
+			</object>
+
+			<object type="slidervalue">
+				<placement x="col1_x" y="%row5_text_y%" w="%slidervalue_w%" />
+				<text>Keyboard Vibration:</text>
+				<data variable="tw_keyboard_vibrate" min="0" max="300" />
+			</object>
+
+			<object type="slidervalue">
+				<placement x="col1_x" y="%row9_text_y%" w="%slidervalue_w%" />
+				<text>Action Vibration:</text>
+				<data variable="tw_action_vibrate" min="0" max="500" />
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">settings</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="advanced">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Advanced</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row1_y%" />
+				<text>Copy Log to SD</text>
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=copylog</action>
+					<action function="set">tw_text1=Copy Log to SD Card?</action>
+					<action function="set">tw_action_text1=Copying Log to SD Card...</action>
+					<action function="set">tw_complete_text1=Log Copy Complete</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row1_y%" />
+				<text>Fix Permissions</text>
+				<action function="page">fixperms</action>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_allow_partition_sdcard" var2="1" />
+				<placement x="%col1_x%" y="%row2_y%" />
+				<text>Partition SD Card</text>
+				<action function="page">partsdcard</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row2_y%" />
+				<text>File Manager</text>
+				<action function="page">filemanagerlist</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row3_y%" />
+				<text>Terminal Command</text>
+				<action function="page">terminalfolder</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row3_y%" />
+				<text>Reload Theme</text>
+				<action function="reload"></action>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row4_y%" />
+				<text>ADB Sideload</text>
+				<action function="page">sideload</action>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_show_dumlock" var2="1" />
+				<placement x="%col2_x%" y="%row4_y%" />
+				<text>HTC Dumlock</text>
+				<action function="page">htcdumlock</action>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_has_injecttwrp" var2="1" />
+				<placement x="%col2_x%" y="%row4_y%" />
+				<text>Re-Inject TWRP</text>
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=reinjecttwrp</action>
+					<action function="set">tw_text1=Re-Inject TWRP?</action>
+					<action function="set">tw_action_text1=Re-Injecting TWRP...</action>
+					<action function="set">tw_complete_text1=TWRP Injection Complete</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="partsdcard">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Partition SD Card</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row1_y%" />
+				<text></text>
+				<image resource="minus_button" />
+				<action function="addsubtract">tw_sdext_size-128</action>
+			</object>
+
+			<object type="button">
+				<placement x="%sd_plus_x%" y="%row1_y%" />
+				<text></text>
+				<image resource="plus_button" />
+				<action function="addsubtract">tw_sdext_size+128</action>
+			</object>
+
+			<object type="text">
+				<placement x="%sdext_text_x%" y="%sdext_text_y%" />
+				<text>EXT Size: %tw_sdext_size%</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%sdswap_button_y%" />
+				<text></text>
+				<image resource="minus_button" />
+				<action function="addsubtract">tw_swap_size-32</action>
+			</object>
+
+			<object type="button">
+				<placement x="%sd_plus_x%" y="%sdswap_button_y%" />
+				<text></text>
+				<image resource="plus_button" />
+				<action function="addsubtract">tw_swap_size+32</action>
+			</object>
+
+			<object type="text">
+				<placement x="%sdswap_text_x%" y="%sdswap_text_y%" />
+				<text>Swap Size: %tw_swap_size%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%col1_x%" y="%sdfilesystem_text_y%" />
+				<text>File system: %tw_sdpart_file_system%</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%sdfilesystem_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>EXT3</text>
+				<action function="set">tw_sdpart_file_system=ext3</action>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_sdext_disable_ext4" var2="0" />
+				<placement x="%col2_x%" y="%sdfilesystem_button_y%" />
+				<text>EXT4</text>
+				<image resource="main_button" />
+				<action function="set">tw_sdpart_file_system=ext4</action>
+			</object>
+
+			<object type="text">
+				<placement x="%col1_x%" y="%row10_text_y%" />
+				<text>You will lose all files on your SD card!</text>
+			</object>
+
+			<object type="text">
+				<placement x="%col1_x%" y="%row11_text_y%" />
+				<text>This action cannot be undone!</text>
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Partition</text>
+				<actions>
+					<action function="set">tw_back=partsdcard</action>
+					<action function="set">tw_action=partitionsd</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=set</action>
+					<action function="set">tw_action2_param=tw_zip_location=/sdcard</action>
+					<action function="set">tw_action_text1=Partitioning SD Card...</action>
+					<action function="set">tw_action_text2=This will take a few minutes.</action>
+					<action function="set">tw_complete_text1=Partitioning Complete</action>
+					<action function="page">action_page</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advanced</action>
+			</object>
+		</page>
+
+		<page name="htcdumlock">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>HTC Dumlock</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row1_y%" />
+				<text>Restore Original Boot</text>
+				<actions>
+					<action function="set">tw_back=htcdumlock</action>
+					<action function="set">tw_action=htcdumlockrestoreboot</action>
+					<action function="set">tw_text1=Restore original boot image?</action>
+					<action function="set">tw_action_text1=Restoring Original Boot...</action>
+					<action function="set">tw_complete_text1=Restore Original Boot Complete</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row1_y%" />
+				<text>Reflash Recovery</text>
+				<actions>
+					<action function="set">tw_back=htcdumlock</action>
+					<action function="set">tw_action=htcdumlockreflashrecovery</action>
+					<action function="set">tw_text1=Reflash recovery to boot?</action>
+					<action function="set">tw_action_text1=Flashing recovery to boot...</action>
+					<action function="set">tw_complete_text1=Recovery Flash to Boot Complete</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row2_y%" />
+				<text>Install HTC Dumlock</text>
+				<actions>
+					<action function="set">tw_back=htcdumlock</action>
+					<action function="set">tw_action=installhtcdumlock</action>
+					<action function="set">tw_text1=Install HTC dumlock files to ROM?</action>
+					<action function="set">tw_action_text1=Installing HTC Dumlock...</action>
+					<action function="set">tw_complete_text1=HTC Dumlock Install Complete</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advanced</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="lock">
+			<background color="#000000A0" />
+
+			<object type="image">
+				<image resource="unlock-icon" />
+				<placement x="%center_x%" y="%lock_y%" placement="4" />
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Unlock</text>
+				<action function="overlay"></action>
+			</object>
+		</page>
+
+		<page name="filemanagerlist">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>File Manager: Select a File or Folder</text>
+			</object>
+
+			<object type="fileselector">
+				<placement x="%fileselector_x%" y="%row1_y%" w="%fileselector_width%" h="%fileselector_install_height%" />
+				<text>%tw_file_location1%</text>
+				<filter folders="1" files="1" />
+				<path name="tw_file_location1" default="/" />
+				<data name="tw_filename1" />
+				<selection name="tw_selection1" />
+			</object>
+
+			<object type="template" name="sort_options" />
+
+			<object type="action">
+				<actions>
+					<action function="set">tw_fm_type=File</action>
+					<action function="set">tw_fm_isfolder=0</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advanced</action>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_filename1" op="modified" />
+				<actions>
+					<action function="page">filemanageroptions</action>
+				</actions>
+			</object>
+
+			<object type="button" style="mediumbutton">
+				<placement x="%filemanager_select_x%" y="%filemanager_select_y%" />
+				<text>Select</text>
+				<actions>
+					<action function="set">tw_filename1=tw_file_location1</action>
+					<action function="set">tw_fm_isfolder=1</action>
+					<action function="set">tw_fm_type=Folder</action>
+					<action function="page">filemanageroptions</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="filemanageroptions">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5"/>
+				<text>%tw_fm_type% Selected:</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5"/>
+				<text>%tw_filename1%</text>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_fm_isfolder" var2="0" />
+				<placement x="%col1_x%" y="%row2_y%" />
+				<text>Copy File</text>
+				<actions>
+					<action function="set">tw_filemanager_command=cp</action>
+					<action function="set">tw_fm_text1=Copying</action>
+					<action function="page">choosedestinationfolder</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_fm_isfolder" var2="1" />
+				<placement x="%col1_x%" y="%row2_y%" />
+				<text>Copy Folder</text>
+				<actions>
+					<action function="set">tw_filemanager_command=cd &quot;%tw_file_location1%&quot; &amp;&amp; cd .. &amp;&amp; cp -R</action>
+					<action function="set">tw_fm_text1=Copying</action>
+					<action function="page">choosedestinationfolder</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row2_y%" />
+				<text>Move</text>
+				<actions>
+					<action function="set">tw_filemanager_command=mv</action>
+					<action function="set">tw_fm_text1=Moving</action>
+					<action function="page">choosedestinationfolder</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row3_y%" />
+				<text>chmod 755</text>
+				<actions>
+					<action function="set">tw_filemanager_command=chmod 755</action>
+					<action function="set">tw_fm_text1=chmod 755</action>
+					<action function="set">tw_fm_text2=</action>
+					<action function="set">tw_fm_text3=</action>
+					<action function="set">tw_include_text3=0</action>
+					<action function="set">tw_back=filemanageroptions</action>
+					<action function="page">filemanagerconfirm</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_x%" y="%row3_y%" />
+				<text>chmod</text>
+				<actions>
+					<action function="set">tw_filemanager_rename=0000</action>
+					<action function="set">tw_fm_text2=</action>
+					<action function="set">tw_fm_text3=</action>
+					<action function="set">tw_include_text3=0</action>
+					<action function="set">tw_back=filemanageroptions</action>
+					<action function="page">filemanagerchmod</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col1_x%" y="%row4_y%" />
+				<text>Delete</text>
+				<actions>
+					<action function="set">tw_filemanager_command=rm -rf</action>
+					<action function="set">tw_fm_text1=Deleting</action>
+					<action function="set">tw_fm_text2=</action>
+					<action function="set">tw_fm_text3=</action>
+					<action function="set">tw_include_text3=0</action>
+					<action function="set">tw_back=filemanageroptions</action>
+					<action function="page">filemanagerconfirm</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_fm_isfolder" var2="0" />
+				<placement x="%col2_x%" y="%row4_y%" />
+				<text>Rename File</text>
+				<actions>
+					<action function="set">tw_filemanager_rename=tw_selection1</action>
+					<action function="set">tw_fm_text1=Renaming</action>
+					<action function="set">tw_filemanager_command=mv</action>
+					<action function="page">filemanagerrenamefile</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_fm_isfolder" var2="1" />
+				<placement x="%col2_x%" y="%row4_y%" />
+				<text>Rename Folder</text>
+				<actions>
+					<action function="set">tw_filemanager_rename=tw_selection1</action>
+					<action function="set">tw_fm_text1=Renaming</action>
+					<action function="set">tw_filemanager_command=cd &quot;%tw_file_location1%&quot; &amp;&amp; cd .. &amp;&amp; mv</action>
+					<action function="page">filemanagerrenamefolder</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">filemanagerlist</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="choosedestinationfolder">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5"/>
+				<text>Browse to Destination &amp; Press Select</text>
+			</object>
+
+			<object type="fileselector">
+				<placement x="%fileselector_x%" y="%row1_y%" w="%fileselector_width%" h="%fileselector_install_height%" />
+				<text>%tw_file_location2%</text>
+				<filter folders="1" files="0" />
+				<path name="tw_file_location2" default="/" />
+				<data name="tw_filename2" />
+				<selection name="tw_selection2" />
+			</object>
+
+			<object type="template" name="sort_options" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">filemanageroptions</action>
+			</object>
+
+			<object type="button" style="mediumbutton">
+				<placement x="%filemanager_select_x%" y="%filemanager_select_y%" />
+				<text>Select</text>
+				<actions>
+					<action function="set">tw_fm_text2=to</action>
+					<action function="set">tw_fm_text3=%tw_file_location2%</action>
+					<action function="set">tw_include_text3=1</action>
+					<action function="set">tw_back=filemanageroptions</action>
+					<action function="page">filemanagerconfirm</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="filemanagerrenamefile">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Please Enter a New %tw_fm_type% Name</text>
+			</object>
+
+			<object type="input">
+				<placement x="%col1_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_filemanager_rename%</text>
+				<data name="tw_filemanager_rename" />
+				<restrict minlen="1" maxlen="128" />
+				<actions>
+					<action function="set">tw_fm_text2=to</action>
+					<action function="set">tw_fm_text3=&quot;%tw_file_location1%/%tw_filemanager_rename%&quot;</action>
+					<action function="set">tw_include_text3=1</action>
+					<action function="set">tw_back=filemanageroptions</action>
+					<action function="page">filemanagerconfirm</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row2_y%" />
+				<text>Cancel</text>
+				<action function="page">filemanageroptions</action>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">filemanageroptions</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="filemanagerrenamefolder">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Please Enter a New %tw_fm_type% Name</text>
+			</object>
+
+			<object type="input">
+				<placement x="%col1_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_filemanager_rename%</text>
+				<data name="tw_filemanager_rename" />
+				<restrict minlen="1" maxlen="128" />
+				<actions>
+					<action function="set">tw_fm_text2=to</action>
+					<action function="set">tw_fm_text3=%tw_filemanager_rename%</action>
+					<action function="set">tw_include_text3=1</action>
+					<action function="set">tw_back=filemanageroptions</action>
+					<action function="page">filemanagerconfirm</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row2_y%" />
+				<text>Cancel</text>
+				<action function="page">filemanageroptions</action>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">filemanageroptions</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="filemanagerchmod">
+			<object type="template" name="header" />
+
+			<object type="text" color="%text_color%">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<font resource="font" />
+				<text>Please Enter New Permissions</text>
+			</object>
+
+			<object type="input">
+				<placement x="%col1_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_filemanager_rename%</text>
+				<data name="tw_filemanager_rename" />
+				<restrict minlen="3" maxlen="4" allow="0123456789" />
+				<actions>
+					<action function="set">tw_filemanager_command=chmod %tw_filemanager_rename%</action>
+					<action function="set">tw_fm_text1=chmod %tw_filemanager_rename%</action>
+					<action function="set">tw_back=filemanageroptions</action>
+					<action function="page">filemanagerconfirm</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row2_y%" />
+				<text>Cancel</text>
+				<action function="page">filemanageroptions</action>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">filemanageroptions</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="filemanagerconfirm">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5"/>
+				<text>%tw_fm_text1%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5"/>
+				<text>%tw_filename1%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row3_text_y%" placement="5"/>
+				<text>%tw_fm_text2%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row4_text_y%" placement="5"/>
+				<text>%tw_fm_text3%</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row10_text_y%" placement="5"/>
+				<text>Press back button to cancel.</text>
+			</object>
+
+			<object type="slider">
+				<action function="page">filemanageracction</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">%tw_back%</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+		</page>
+
+		<page name="filemanageracction">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>%tw_fm_text1%</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" var2="0" />
+				</conditions>
+				<actions>
+					<action function="set">tw_back=filemanagerlist</action>
+					<action function="set">tw_complete_text1=File Operation Complete</action>
+					<action function="page">action_complete</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" op="!=" var2="0" />
+				</conditions>
+				<actions>
+					<action function="set">tw_complete_text1=File Operation Complete</action>
+					<action function="page">action_complete</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_include_text3" var2="0" />
+				<actions>
+					<action function="cmd">%tw_filemanager_command% &quot;%tw_filename1%&quot;</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<condition var1="tw_include_text3" var2="1" />
+				<actions>
+					<action function="cmd">%tw_filemanager_command% &quot;%tw_filename1%&quot; &quot;%tw_fm_text3%&quot;</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="decrypt">
+			<object type="template" name="header" />
+
+			<object type="action">
+				<condition var1="tw_crypto_pwtype" var2="2" />
+				<action function="page">decrypt_pattern</action>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Please Enter Your Password</text>
+			</object>
+
+			<object type="input">
+				<placement x="%col1_x%" y="%row3_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_crypto_display%</text>
+				<data name="tw_crypto_password" mask="*" maskvariable="tw_crypto_display" />
+				<restrict minlen="1" maxlen="254" />
+				<actions>
+					<action function="page">trydecrypt</action>
+				</actions>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_password_fail" var2="1" />
+				<font resource="font" color="%text_fail_color%" />
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>Password Failed, Please Try Again</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row2_y%" />
+				<text>Cancel</text>
+				<actions>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">main</action>
+				</actions>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="decrypt_pattern">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Please Enter Your Pattern</text>
+			</object>
+
+			<object type="text">
+				<condition var1="tw_password_fail" var2="1" />
+				<font resource="font" color="%text_fail_color%"/>
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Pattern Failed, Please Try Again</text>
+			</object>
+
+			<object type="patternpassword">
+				<placement x="%pattern_x%" y="%pattern_y%" w="%pattern_width%" h="%pattern_width%" />
+				<dot color="%pattern_dot_color%" activecolor="%pattern_dot_color_active%" radius="%pattern_dot_radius%" />
+				<line color="%pattern_line_color%" width="%pattern_line_width%" />
+				<data name="tw_crypto_password"/>
+				<action function="page">trydecrypt</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row4_y%" />
+				<text>Cancel</text>
+				<actions>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">main</action>
+				</actions>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="trydecrypt">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>Trying Decryption with Your Password</text>
+			</object>
+
+			<object type="template" name="action_page_console" />
+
+			<object type="template" name="progress_bar" />
+
+			<object type="action">
+				<action function="decrypt"></action>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" op="!=" var2="0" />
+				</conditions>
+				<actions>
+					<action function="set">tw_password_fail=1</action>
+					<action function="page">decrypt</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_operation_state" var2="1" />
+					<condition var1="tw_operation_status" op="=" var2="0" />
+				</conditions>
+				<actions>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">main</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="terminalfolder">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5"/>
+				<text>Browse to Starting Folder</text>
+			</object>
+
+			<object type="fileselector">
+				<placement x="%fileselector_x%" y="%row1_y%" w="%fileselector_width%" h="%fileselector_install_height%" />
+				<text>%tw_terminal_location%</text>
+				<filter folders="1" files="0" />
+				<path name="tw_terminal_location" default="/" />
+				<data name="tw_terminal" />
+				<selection name="tw_terminal_selection" />
+			</object>
+
+			<object type="template" name="sort_options" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advanced</action>
+			</object>
+
+			<object type="button" style="mediumbutton">
+				<placement x="%filemanager_select_x%" y="%filemanager_select_y%" />
+				<text>Select</text>
+				<actions>
+					<action function="page">terminalcommand</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="terminalcommand">
+			<object type="template" name="header" />
+
+			<object type="console">
+				<placement x="%console_x%" y="0" w="%console_width%" h="%terminal_console_height%" />
+			</object>
+
+			<object type="text">
+				<placement x="%col1_x%" y="%terminal_text_y%" placement="0" />
+				<text>Starting Path: %tw_terminal_location%</text>
+			</object>
+
+			<object type="input">
+				<condition var1="tw_terminal_state" var2="0" />
+				<placement x="%col1_x%" y="%terminal_text_y%" w="%input_width%" h="%input_height%" placement="0" />
+				<text>%tw_terminal_command%</text>
+				<font resource="fixed" color="%text_color%" />
+				<data name="tw_terminal_command" />
+				<restrict minlen="1" />
+				<action function="terminalcommand">%tw_terminal_command%</action>
+			</object>
+
+			<object type="button" style="mediumbutton">
+				<condition var1="tw_terminal_state" var2="1" />
+				<placement x="%filemanager_select_x%" y="%terminal_button_y%" />
+				<text>KILL</text>
+				<action function="killterminal"></action>
+			</object>
+
+			<object type="template" name="keyboardtemplate" />
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">terminalfolder</action>
+			</object>
+		</page>
+
+		<page name="sideload">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5"/>
+				<text>ADB Sideload</text>
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<text>Wipe Dalvik Cache.</text>
+				<data variable="tw_wipe_dalvik" />
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row3_text_y%" />
+				<text>Wipe Cache.</text>
+				<data variable="tw_wipe_cache" />
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Start Sideload</text>
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=adbsideload</action>
+					<action function="set">tw_action_text1=ADB Sideload</action>
+					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
+					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
+					<action function="set">tw_has_cancel=1</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="set">tw_cancel_action=adbsideloadcancel</action>
+					<action function="page">action_page</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advanced</action>
+			</object>
+		</page>
+
+		<page name="fixperms">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5"/>
+				<text>Fix Permissions</text>
+			</object>
+
+			<object type="text">
+				<placement x="%col1_x%" y="%row2_text_y%" />
+				<text>Note: Fixing permissions is rarely needed.</text>
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row3_text_y%" />
+				<text>Also fix SELinux contexts</text>
+				<data variable="tw_fixperms_restorecon" />
+			</object>
+
+			<object type="text">
+				<placement x="%col1_x%" y="%row4_text_y%" />
+				<text>Fixing SELinux contexts may cause</text>
+			</object>
+
+			<object type="text">
+				<placement x="%col1_x%" y="%row5_text_y%" />
+				<text>your device to not boot properly.</text>
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Fix Permissions</text>
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=fixpermissions</action>
+					<action function="set">tw_action_text1=Fixing Permissions...</action>
+					<action function="set">tw_complete_text1=Fix Permissions Complete</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">action_page</action>
+				</actions>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advanced</action>
+			</object>
+
+			<object type="template" name="footer" />
+		</page>
+
+		<page name="installsu">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5"/>
+				<text>Install SuperSU?</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5"/>
+				<text>Your device does not appear to be rooted.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row3_text_y%" placement="5"/>
+				<text>Install SuperSU now?</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row4_text_y%" placement="5"/>
+				<text>This will root your device.</text>
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row3_y%" />
+				<text>Do Not Install</text>
+				<action function="set">tw_page_done=1</action>
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Install</text>
+				<actions>
+					<action function="set">tw_action=installsu</action>
+					<action function="set">tw_action_text1=Installing SuperSU</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="page">singleaction_page</action>
+				</actions>
+			</object>
+		</page>
+
+		<page name="system_readonly">
+			<object type="template" name="header" />
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
+				<text>Keep System Read Only?</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
+				<text>TWRP can leave your system partition unmodified</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<text>to make it easier for you to take official updates.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
+				<text>TWRP will be unable to prevent the stock ROM from</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row4_text_y%" placement="5" />
+				<text>replacing TWRP and will not offer to root your device.</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row5_text_y%" placement="5" />
+				<text>Installing zips or performing adb operations may still</text>
+			</object>
+
+			<object type="text">
+				<placement x="%center_x%" y="%row6_text_y%" placement="5" />
+				<text>modify the system partition.</text>
+			</object>
+
+			<object type="checkbox">
+				<condition var1="tw_is_encrypted" var2="0" />
+				<placement x="%col1_x%" y="%row7_text_y%" />
+				<text>Never show this screen during boot again</text>
+				<data variable="tw_never_show_system_ro_page" />
+			</object>
+
+			<object type="button">
+				<placement x="%col_center_x%" y="%row9_text_y%" />
+				<text>Keep Read Only</text>
+				<actions>
+					<action function="mountsystemtoggle">1</action>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">%tw_back%</action>
+				</actions>
+			</object>
+
+			<object type="slider">
+				<text>Swipe to Allow Modifications</text>
+				<actions>
+					<action function="mountsystemtoggle">0</action>
+					<action function="set">tw_page_done=1</action>
+					<action function="page">%tw_back%</action>
+				</actions>
+			</object>
+		</page>
+	</pages>
+</recovery>
