@@ -141,8 +141,10 @@ int GUIListBox::NotifyVarChange(const std::string& varName, const std::string& v
 
 		if (isCheckList)
 		{
-			if (item.variableName == varName) {
-				item.selected = (value != "0");
+			if (item.variableName == varName || varName.empty()) {
+				std::string val;
+				DataManager::GetValue(item.variableName, val);
+				item.selected = (val != "0");
 				mUpdate = 1;
 			}
 		}
