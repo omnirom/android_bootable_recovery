@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_68fc526d",
+        "filename": "Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1001102
+      },
+      "writtenOn": "2015-11-03T17:59:03Z",
+      "side": 1,
+      "message": "In CM trees the sepolicy dir will always be bootable/recovery-twrp/sepolicy, even if recovery path is bootable/recovery",
+      "revId": "11309e912dbd960ed30c26735bac02a7dd70a022",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_88079687",
+        "filename": "sepolicy/twrp.te",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1001102
+      },
+      "writtenOn": "2015-11-03T17:59:03Z",
+      "side": 1,
+      "message": "I think that this should be \"recovery_only(`permissive recovery;\u0027). Look at recovery.te",
+      "revId": "11309e912dbd960ed30c26735bac02a7dd70a022",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
