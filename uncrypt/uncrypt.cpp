@@ -234,7 +234,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     int wfd = -1;
     unique_fd wfd_holder(wfd);
     if (encrypted) {
-        wfd = open(blk_dev, O_WRONLY | O_SYNC);
+        wfd = open(blk_dev, O_WRONLY);
         wfd_holder = unique_fd(wfd);
         if (wfd == -1) {
             ALOGE("failed to open fd for writing: %s\n", strerror(errno));
