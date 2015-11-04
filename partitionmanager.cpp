@@ -1436,17 +1436,22 @@ void TWPartitionManager::Update_System_Details(void) {
 int TWPartitionManager::Decrypt_Device(string Password) {
 #ifdef TW_INCLUDE_CRYPTO
 	int ret_val, password_len;
-	char crypto_blkdev[255], cPassword[255];
+	char crypto_state[PROPERTY_VALUE_MAX], crypto_blkdev[PROPERTY_VALUE_MAX], cPassword[255];
 	size_t result;
 	std::vector<TWPartition*>::iterator iter;
-
-	property_set("ro.crypto.state", "encrypted");
 
 	// Mount any partitions that need to be mounted for decrypt
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Mount_To_Decrypt) {
 			(*iter)->Mount(true);
 		}
+	}
+
+	property_get("ro.crypto.state", crypto_state, "error");
+	if (strcmp(crypto_state, "error") == 0) {
+		property_set("ro.crypto.state", "encrypted");
+		// Sleep for a bit so that services can start if needed
+		sleep(1);
 	}
 
 	strcpy(cPassword, Password.c_str());
