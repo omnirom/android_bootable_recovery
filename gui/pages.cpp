@@ -137,20 +137,20 @@ xml_node<>* FindNode(xml_node<>* parent, const char* nodename, int depth /* = 0 
 			style = style->next_sibling("style");
 		}
 	} else {
-		// Search for stylename in the parent node <object type="foo" stylename="foo2">
+		// Search for stylename in the parent node <object type="foo" style="foo2">
 		xml_attribute<>* attr = parent->first_attribute("style");
 		// If no style is found anywhere else and the node wasn't found in the object itself
 		// as a special case we will search for a style that uses the same style name as the
 		// object type, so <object type="button"> would search for a style named "button"
 		if (!attr)
 			attr = parent->first_attribute("type");
-		if (attr) {
-			xml_node<>* node = PageManager::FindStyle(attr->value());
-			if (node) {
-				xml_node<>* stylenode = FindNode(node, nodename, depth + 1);
-				if (stylenode)
-					return stylenode;
-			}
+		// if there's no attribute type, the object type must be the element name
+		std::string stylename = attr ? attr->value() : parent->name();
+		xml_node<>* node = PageManager::FindStyle(stylename);
+		if (node) {
+			xml_node<>* stylenode = FindNode(node, nodename, depth + 1);
+			if (stylenode)
+				return stylenode;
 		}
 	}
 	return NULL;
