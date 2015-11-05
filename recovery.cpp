@@ -76,7 +76,10 @@ static const char *INTENT_FILE = "/cache/recovery/intent";
 static const char *LOG_FILE = "/cache/recovery/log";
 static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
 static const char *LOCALE_FILE = "/cache/recovery/last_locale";
+static const char *CONVERT_FBE_DIR = "/cache/recovery/convert_fbe";
+static const char *CONVERT_FBE_FILE = "/cache/recovery/convert_fbe/convert_fbe";
 static const char *CACHE_ROOT = "/cache";
+static const char *DATA_ROOT = "/data";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
@@ -503,6 +506,7 @@ typedef struct _saved_log_file {
 
 static bool erase_volume(const char* volume) {
     bool is_cache = (strcmp(volume, CACHE_ROOT) == 0);
+    bool is_data = (strcmp(volume, DATA_ROOT) == 0);
 
     ui->SetBackground(RecoveryUI::ERASING);
     ui->SetProgressType(RecoveryUI::INDETERMINATE);
@@ -557,7 +561,25 @@ static bool erase_volume(const char* volume) {
     ui->Print("Formatting %s...\n", volume);
 
     ensure_path_unmounted(volume);
-    int result = format_volume(volume);
+
+    int result;
+
+    if (is_data && reason && strcmp(reason, "convert_fbe") == 0) {
+        // Create convert_fbe breadcrumb file to signal to init
+        // to convert to file based encryption, not full disk encryption
+        mkdir(CONVERT_FBE_DIR, 0700);
+        FILE* f = fopen(CONVERT_FBE_FILE, "wb");
+        if (!f) {
+            ui->Print("Failed to convert to file encryption\n");
+            return true;
+        }
+        fclose(f);
+        result = format_volume(volume, CONVERT_FBE_DIR);
+        remove(CONVERT_FBE_FILE);
+        rmdir(CONVERT_FBE_DIR);
+    } else {
+        result = format_volume(volume);
+    }
 
     if (is_cache) {
         while (head) {
