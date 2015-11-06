@@ -15,8 +15,8 @@ endif
 
 PIXELFLINGER_SRC_FILES += \
     codeflinger/CodeCache.cpp \
-    codeflinger/tinyutils/SharedBuffer.cpp \
-    codeflinger/tinyutils/VectorImpl.cpp \
+    ../libutils/SharedBuffer.cpp \
+    ../libutils/VectorImpl.cpp \
     format.cpp \
     clear.cpp \
     raster.cpp \
@@ -96,6 +96,7 @@ ifneq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
 endif
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES += $(LOCAL_EXPORT_C_INCLUDE_DIRS)
+LOCAL_C_INCLUDES += external/safe-iop/include
 LOCAL_CFLAGS := $(PIXELFLINGER_CFLAGS)
 LOCAL_C_INCLUDES_x86 := $(PIXELFLINGER_C_INCLUDES_x86)
 ifeq ($(TW_HAVE_X86_ACCELERATED_PIXELFLINGER),true)
