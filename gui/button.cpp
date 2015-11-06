@@ -104,10 +104,13 @@ GUIButton::GUIButton(xml_node<>* node)
 			mButtonLabel->SetRenderPos(mTextX, mTextY);
 		} else {
 			mTextX = mRenderW + mRenderX + 5;
-			mRenderW += mTextW + 5;
 			mButtonLabel->GetCurrentBounds(mTextW, mTextH);
+			mRenderW += mTextW + 5;
 			mTextY = mRenderY + (mRenderH / 2) - (mTextH / 2);
 			mButtonLabel->SetRenderPos(mTextX, mTextY);
+			if (mAction)
+				mAction->SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
+			SetActionPos(mRenderX, mRenderY, mRenderW, mRenderH);
 		}
 	}
 }
