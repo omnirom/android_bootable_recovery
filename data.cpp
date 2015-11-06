@@ -689,6 +689,12 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_HAS_DATA_MEDIA, make_pair("0", 0)));
 	mValues.insert(make_pair("tw_has_internal", make_pair("0", 0)));
 #endif
+#ifdef TW_BACKUP_DATA_MEDIA
+	printf("TW_BACKUP_DATA_MEDIA := true\n");
+	mConstValues.insert(make_pair(TW_BACKUP_DATA_MEDIA, "1"));
+#else
+	mConstValues.insert(make_pair(TW_BACKUP_DATA_MEDIA, "0"));
+#endif
 #ifdef TW_NO_BATT_PERCENT
 	printf("TW_NO_BATT_PERCENT := true\n");
 	mConstValues.insert(make_pair(TW_NO_BATTERY_PERCENT, "1"));

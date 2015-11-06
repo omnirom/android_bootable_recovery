@@ -123,6 +123,7 @@
 #define TW_EXTERNAL_LABEL           "tw_external_label"        // sdcard or external
 
 #define TW_HAS_DATA_MEDIA           "tw_has_data_media"
+#define TW_BACKUP_DATA_MEDIA        "tw_backup_data_media"
 
 #define TW_HAS_BOOT_PARTITION       "tw_has_boot_partition"
 #define TW_HAS_RECOVERY_PARTITION   "tw_has_recovery_partition"
