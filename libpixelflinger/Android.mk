@@ -15,12 +15,16 @@ endif
 
 PIXELFLINGER_SRC_FILES += \
     codeflinger/CodeCache.cpp \
-    codeflinger/tinyutils/SharedBuffer.cpp \
-    codeflinger/tinyutils/VectorImpl.cpp \
     format.cpp \
     clear.cpp \
     raster.cpp \
     buffer.cpp
+
+ifneq ($(wildcard system/core/libpixelflinger/codeflinger/tinyutils/VectorImpl.cpp),)
+    PIXELFLINGER_SRC_FILES += \
+        codeflinger/tinyutils/SharedBuffer.cpp \
+        codeflinger/tinyutils/VectorImpl.cpp
+endif
 
 ifneq ($(TW_HAVE_X86_ACCELERATED_PIXELFLINGER),true)
 PIXELFLINGER_SRC_FILES += \
