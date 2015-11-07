@@ -130,6 +130,7 @@ private:
 	bool Can_Be_Mounted;                                                      // Indicates that the partition can be mounted
 	bool Can_Be_Wiped;                                                        // Indicates that the partition can be wiped
 	bool Can_Be_Backed_Up;                                                    // Indicates that the partition will show up in the backup list
+	bool Can_Be_Restored;                                                     // Indicates that the partition will show up in the restore list
 	bool Use_Rm_Rf;                                                           // Indicates that the partition will always be formatted w/ "rm -rf *"
 	bool Wipe_During_Factory_Reset;                                           // Indicates that this partition is wiped during a factory reset
 	bool Wipe_Available_in_GUI;                                               // Inidcates that the wipe can be user initiated in the GUI system
