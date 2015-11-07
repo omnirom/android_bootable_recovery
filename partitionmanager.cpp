@@ -236,6 +236,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Use_Rm_Rf ");
 	if (Part->Can_Be_Backed_Up)
 		printf("Can_Be_Backed_Up ");
+	if (Part->Can_Be_Restored)
+		printf("Can_Be_Restored ");
 	if (Part->Wipe_During_Factory_Reset)
 		printf("Wipe_During_Factory_Reset ");
 	if (Part->Wipe_Available_in_GUI)
@@ -1865,8 +1867,7 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 			while (end_pos != string::npos && start_pos < Restore_List.size()) {
 				restore_path = Restore_List.substr(start_pos, end_pos - start_pos);
 				if ((restore_part = Find_Partition_By_Path(restore_path)) != NULL) {
-					if ((restore_part->Backup_Name == "recovery" && !restore_part->Can_Be_Backed_Up) || restore_part->Is_SubPartition) {
-						// Don't allow restore of recovery (causes problems on some devices)
+					if ( !restore_part->Can_Be_Restored || restore_part->Is_SubPartition) {
 						// Don't add subpartitions to the list of items
 					} else {
 						struct PartitionList part;
