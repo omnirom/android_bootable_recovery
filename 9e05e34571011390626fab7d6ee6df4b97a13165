@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_ab65b41d",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-11-07T09:46:36Z",
+      "side": 1,
+      "message": "If this doesn\u0027t add anything to CFLAGS, how does the build flag have any effect?",
+      "revId": "9e05e34571011390626fab7d6ee6df4b97a13165",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
