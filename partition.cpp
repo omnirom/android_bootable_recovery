@@ -2273,6 +2273,11 @@ void TWPartition::Change_Mount_Read_Only(bool new_value) {
 }
 
 int TWPartition::Check_Lifetime_Writes() {
+#ifdef TW_SKIP_CHECK_SYSTEM_RW
+	int ret = 1;
+	LOGINFO("Check_Lifetime_Writes - Bypassed\n");
+	return ret;
+#else
 	bool original_read_only = Mount_Read_Only;
 	int ret = 1;
 
@@ -2300,4 +2305,5 @@ int TWPartition::Check_Lifetime_Writes() {
 	}
 	Mount_Read_Only = original_read_only;
 	return ret;
+#endif
 }
