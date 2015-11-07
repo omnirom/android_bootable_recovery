@@ -107,6 +107,7 @@ TWPartition::TWPartition() {
 	Can_Be_Mounted = false;
 	Can_Be_Wiped = false;
 	Can_Be_Backed_Up = false;
+	Can_Be_Restored = false;
 	Use_Rm_Rf = false;
 	Wipe_During_Factory_Reset = false;
 	Wipe_Available_in_GUI = false;
@@ -260,6 +261,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Storage_Name = Display_Name;
 			Wipe_Available_in_GUI = true;
 			Can_Be_Backed_Up = true;
+			Can_Be_Restored = true;
 			Mount_Read_Only = true;
 		} else if (Mount_Point == "/data") {
 			UnMount(false); // added in case /data is mounted as tmpfs for qcom hardware decrypt
@@ -269,6 +271,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
 			Can_Be_Backed_Up = true;
+			Can_Be_Restored = true;
 			Can_Encrypt_Backup = true;
 			Use_Userdata_Encryption = true;
 			if (datamedia)
@@ -322,6 +325,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
 			Can_Be_Backed_Up = true;
+			Can_Be_Restored = true;
 			if (Mount(false) && !TWFunc::Path_Exists("/cache/recovery/.")) {
 				LOGINFO("Recreating /cache/recovery folder.\n");
 				if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0)
@@ -336,6 +340,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			SubPartition_Of = "/data";
 			DataManager::SetValue(TW_HAS_DATADATA, 1);
 			Can_Be_Backed_Up = true;
+			Can_Be_Restored = true;
 			Can_Encrypt_Backup = true;
 			Use_Userdata_Encryption = false; // This whole partition should be encrypted
 		} else if (Mount_Point == "/sd-ext") {
@@ -346,6 +351,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Wipe_Available_in_GUI = true;
 			Removable = true;
 			Can_Be_Backed_Up = true;
+			Can_Be_Restored = true;
 			Can_Encrypt_Backup = true;
 			Use_Userdata_Encryption = true;
 		} else if (Mount_Point == "/boot") {
@@ -353,6 +359,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Backup_Display_Name = Display_Name;
 			DataManager::SetValue("tw_boot_is_mountable", 1);
 			Can_Be_Backed_Up = true;
+			Can_Be_Restored = true;
 		}
 #ifdef TW_EXTERNAL_STORAGE_PATH
 		if (Mount_Point == EXPAND(TW_EXTERNAL_STORAGE_PATH)) {
@@ -388,16 +395,21 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Display_Name = "Boot";
 			Backup_Display_Name = Display_Name;
 			Can_Be_Backed_Up = true;
+			Can_Be_Restored = true;
 			Can_Flash_Img = true;
 		} else if (Mount_Point == "/recovery") {
 			Display_Name = "Recovery";
 			Backup_Display_Name = Display_Name;
+			Can_Be_Backed_Up = true;
+			// Don't allow restore of recovery (causes problems on some devices)
+			Can_Be_Restored = false;
 			Can_Flash_Img = true;
 		} else if (Mount_Point == "/system_image") {
 			Display_Name = "System Image";
 			Backup_Display_Name = Display_Name;
 			Can_Flash_Img = false;
 			Can_Be_Backed_Up = true;
+			Can_Be_Restored = true;
 		}
 	}
 
@@ -488,10 +500,20 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			Use_Rm_Rf = true;
 		} else if (ptr_len > 7 && strncmp(ptr, "backup=", 7) == 0) {
 			ptr += 7;
-			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y')
+			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y') {
 				Can_Be_Backed_Up = true;
-			else
+				Can_Be_Restored = true;
+			}
+			else {
 				Can_Be_Backed_Up = false;
+				Can_Be_Restored = false;
+			}
+		} else if (ptr_len > 8 && strncmp(ptr, "restore=", 8) == 0) {
+			ptr += 8;
+			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y')
+				Can_Be_Restored = true;
+			else
+				Can_Be_Restored = false;
 		} else if (strcmp(ptr, "wipeingui") == 0) {
 			Can_Be_Wiped = true;
 			Wipe_Available_in_GUI = true;
@@ -680,6 +702,7 @@ void TWPartition::Setup_AndSec(void) {
 	Backup_Display_Name = "Android Secure";
 	Backup_Name = "and-sec";
 	Can_Be_Backed_Up = true;
+	Can_Be_Restored = true;
 	Has_Android_Secure = true;
 	Symlink_Path = Mount_Point + "/.android_secure";
 	Symlink_Mount_Point = "/and-sec";
