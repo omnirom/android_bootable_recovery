@@ -865,8 +865,24 @@ void DataManager::SetDefaultValues()
 			LOGINFO("Specified secondary brightness file '%s' not found.\n", secondfindbright.c_str());
 		}
 #endif
-		string max_bright = maxVal.str();
-		TWFunc::Set_Brightness(max_bright);
+#ifdef TW_DEFAULT_BRIGHTNESS
+		int defValInt = TW_DEFAULT_BRIGHTNESS;
+		int maxValInt = TW_MAX_BRIGHTNESS;
+		// Deliberately int so the % is always a whole number
+		int defPctInt = ( ( (double)defValInt / maxValInt ) * 100 );
+		ostringstream defPct;
+		defPct << defPctInt;
+		mValues.erase("tw_brightness_pct");
+		mValues.insert(make_pair("tw_brightness_pct", make_pair(defPct.str(), 1)));
+
+		ostringstream defVal;
+		defVal << TW_DEFAULT_BRIGHTNESS;
+		mValues.erase("tw_brightness");
+		mValues.insert(make_pair("tw_brightness", make_pair(defVal.str(), 1)));
+		TWFunc::Set_Brightness(defVal.str());	
+#else
+		TWFunc::Set_Brightness(maxVal.str());
+#endif
 	}
 #endif
 	mValues.insert(make_pair(TW_MILITARY_TIME, make_pair("0", 1)));
