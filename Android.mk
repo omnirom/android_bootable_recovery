@@ -109,7 +109,7 @@ LOCAL_STATIC_LIBRARIES += libguitwrp
 LOCAL_SHARED_LIBRARIES += libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libaosprecovery
 LOCAL_SHARED_LIBRARIES += libcrecovery
 
-ifneq ($(wildcard external/stlport/Android.mk),)
+ifeq (,$(filter $(PLATFORM_SDK_VERSION), 23))
     LOCAL_SHARED_LIBRARIES += libstlport
 else
     LOCAL_SHARED_LIBRARIES += libc++
