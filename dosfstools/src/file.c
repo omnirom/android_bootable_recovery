@@ -2,6 +2,7 @@
 
    Copyright (C) 1993 Werner Almesberger <werner.almesberger@lrc.di.epfl.ch>
    Copyright (C) 1998 Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
+   Copyright (C) 2008-2014 Daniel Baumann <mail@daniel-baumann.ch>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-   On Debian systems, the complete text of the GNU General Public License
+   The complete text of the GNU General Public License
    can be found in /usr/share/common-licenses/GPL-3 file.
 */
 
@@ -29,16 +30,9 @@
 #include <ctype.h>
 #include <unistd.h>
 
-#define _LINUX_STAT_H		/* hack to avoid inclusion of <linux/stat.h> */
-#define _LINUX_STRING_H_	/* hack to avoid inclusion of <linux/string.h> */
-#define _LINUX_FS_H		/* hack to avoid inclusion of <linux/fs.h> */
-
-#include <asm/types.h>
-
-#include <linux/msdos_fs.h>
-
 #include "common.h"
 #include "file.h"
+#include "msdos_fs.h"
 
 FDSC *fp_root = NULL;
 

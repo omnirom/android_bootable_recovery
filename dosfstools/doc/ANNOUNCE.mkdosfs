@@ -27,7 +27,7 @@ Announcing the release of mkdosfs version 0.2
 
 
 I've just uploaded mkdosfs to sunsite.unc.edu.  It works in a similar way
-to Remy Card's mke2fs, but creates an MS-DOS file system.
+to Remy Card's mke2fs, but creates an MS-DOS filesystem.
 
 The filename is mkdosfs-0.2.tar.gz.
 

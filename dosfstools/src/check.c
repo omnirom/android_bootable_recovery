@@ -1,7 +1,8 @@
-/* check.c - Check and repair a PC/MS-DOS file system
+/* check.c - Check and repair a PC/MS-DOS filesystem
 
    Copyright (C) 1993 Werner Almesberger <werner.almesberger@lrc.di.epfl.ch>
    Copyright (C) 1998 Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
+   Copyright (C) 2008-2014 Daniel Baumann <mail@daniel-baumann.ch>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-   On Debian systems, the complete text of the GNU General Public License
+   The complete text of the GNU General Public License
    can be found in /usr/share/common-licenses/GPL-3 file.
 */
 
@@ -30,7 +31,7 @@
 #include <time.h>
 
 #include "common.h"
-#include "dosfsck.h"
+#include "fsck.fat.h"
 #include "io.h"
 #include "fat.h"
 #include "file.h"
@@ -41,8 +42,8 @@ static DOS_FILE *root;
 
 /* get start field of a dir entry */
 #define FSTART(p,fs) \
-  ((unsigned long)CF_LE_W(p->dir_ent.start) | \
-   (fs->fat_bits == 32 ? CF_LE_W(p->dir_ent.starthi) << 16 : 0))
+  ((uint32_t)le16toh(p->dir_ent.start) | \
+   (fs->fat_bits == 32 ? le16toh(p->dir_ent.starthi) << 16 : 0))
 
 #define MODIFY(p,i,v)					\
   do {							\
@@ -55,22 +56,22 @@ static DOS_FILE *root;
 
 #define MODIFY_START(p,v,fs)						\
   do {									\
-    unsigned long __v = (v);						\
+    uint32_t __v = (v);						\
     if (!p->offset) {							\
 	/* writing to fake entry for FAT32 root dir */			\
 	if (!__v) die("Oops, deleting FAT32 root dir!");		\
 	fs->root_cluster = __v;						\
-	p->dir_ent.start = CT_LE_W(__v&0xffff);				\
-	p->dir_ent.starthi = CT_LE_W(__v>>16);				\
-	__v = CT_LE_L(__v);						\
+	p->dir_ent.start = htole16(__v&0xffff);				\
+	p->dir_ent.starthi = htole16(__v>>16);				\
+	__v = htole32(__v);						\
 	fs_write((loff_t)offsetof(struct boot_sector,root_cluster),	\
 	         sizeof(((struct boot_sector *)0)->root_cluster),	\
 		 &__v);							\
     }									\
     else {								\
-	MODIFY(p,start,CT_LE_W((__v)&0xffff));				\
+	MODIFY(p,start,htole16((__v)&0xffff));				\
 	if (fs->fat_bits == 32)						\
-	    MODIFY(p,starthi,CT_LE_W((__v)>>16));			\
+	    MODIFY(p,starthi,htole16((__v)>>16));			\
     }									\
   } while(0)
 
@@ -82,7 +83,7 @@ loff_t alloc_rootdir_entry(DOS_FS * fs, DIR_ENT * de, const char *pattern)
     if (fs->root_cluster) {
 	DIR_ENT d2;
 	int i = 0, got = 0;
-	unsigned long clu_num, prev = 0;
+	uint32_t clu_num, prev = 0;
 	loff_t offset2;
 
 	clu_num = fs->root_cluster;
@@ -131,8 +132,8 @@ loff_t alloc_rootdir_entry(DOS_FS * fs, DIR_ENT * de, const char *pattern)
 	while (1) {
 	    char expanded[12];
 	    sprintf(expanded, pattern, curr_num);
-	    memcpy(de->name + 4, expanded, 4);
-	    memcpy(de->ext, expanded + 4, 3);
+	    memcpy(de->name, expanded, 8);
+	    memcpy(de->ext, expanded + 8, 3);
 	    clu_num = fs->root_cluster;
 	    i = 0;
 	    offset2 = cluster_start(fs, clu_num);
@@ -174,7 +175,10 @@ loff_t alloc_rootdir_entry(DOS_FS * fs, DIR_ENT * de, const char *pattern)
 	offset = fs->root_start + next_free * sizeof(DIR_ENT);
 	memset(de, 0, sizeof(DIR_ENT));
 	while (1) {
-	    sprintf((char *)de->name, pattern, curr_num);
+	    char expanded[12];
+	    sprintf(expanded, pattern, curr_num);
+	    memcpy(de->name, expanded, 8);
+	    memcpy(de->ext, expanded + 8, 3);
 	    for (scan = 0; scan < fs->root_entries; scan++)
 		if (scan != next_free &&
 		    !strncmp((const char *)root[scan].name,
@@ -220,18 +224,22 @@ static char *path_name(DOS_FILE * file)
     return path;
 }
 
-static int day_n[] =
-    { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 0, 0, 0, 0 };
-		  /* JanFebMarApr May Jun Jul Aug Sep Oct Nov Dec */
+static const int day_n[] =
+    {   0,  31,  59,  90, 120, 151, 181, 212, 243, 273, 304, 334, 0, 0, 0, 0 };
+/*    Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec              */
 
 /* Convert a MS-DOS time/date pair to a UNIX date (seconds since 1 1 70). */
 
-time_t date_dos2unix(unsigned short time, unsigned short date)
+static time_t date_dos2unix(unsigned short time, unsigned short date)
 {
     int month, year;
     time_t secs;
 
     month = ((date >> 5) & 15) - 1;
+    if (month < 0) {
+	/* make sure that nothing bad happens if the month bits were zero */
+	month = 0;
+    }
     year = date >> 9;
     secs =
 	(time & 31) * 2 + 60 * ((time >> 5) & 63) + (time >> 11) * 3600 +
@@ -249,24 +257,30 @@ static char *file_stat(DOS_FILE * file)
     time_t date;
 
     date =
-	date_dos2unix(CF_LE_W(file->dir_ent.time), CF_LE_W(file->dir_ent.date));
+	date_dos2unix(le16toh(file->dir_ent.time), le16toh(file->dir_ent.date));
     tm = localtime(&date);
     strftime(tmp, 99, "%H:%M:%S %b %d %Y", tm);
-    sprintf(temp, "  Size %u bytes, date %s", CF_LE_L(file->dir_ent.size), tmp);
+    sprintf(temp, "  Size %u bytes, date %s", le32toh(file->dir_ent.size), tmp);
     return temp;
 }
 
 static int bad_name(DOS_FILE * file)
 {
     int i, spc, suspicious = 0;
-    char *bad_chars = atari_format ? "*?\\/:" : "*?<>|\"\\/:";
-    unsigned char *name = file->dir_ent.name;
+    const char *bad_chars = atari_format ? "*?\\/:" : "*?<>|\"\\/:";
+    const unsigned char *name = file->dir_ent.name;
+    const unsigned char *ext = file->dir_ent.ext;
 
     /* Do not complain about (and auto-correct) the extended attribute files
      * of OS/2. */
     if (strncmp((const char *)name, "EA DATA  SF", 11) == 0 ||
 	strncmp((const char *)name, "WP ROOT  SF", 11) == 0)
 	return 0;
+
+    /* check if we have neither a long filename nor a short name */
+    if ((file->lfn == NULL) && (file->dir_ent.lcase & FAT_NO_83NAME)) {
+	return 1;
+    }
 
     /* don't complain about the dummy 11 bytes used by patched Linux
        kernels */
@@ -282,12 +296,12 @@ static int bad_name(DOS_FILE * file)
 	    return 1;
     }
 
-    for (i = 8; i < 11; i++) {
-	if (name[i] < ' ' || name[i] == 0x7f)
+    for (i = 0; i < 3; i++) {
+	if (ext[i] < ' ' || ext[i] == 0x7f)
 	    return 1;
-	if (name[i] > 0x7f)
+	if (ext[i] > 0x7f)
 	    ++suspicious;
-	if (strchr(bad_chars, name[i]))
+	if (strchr(bad_chars, ext[i]))
 	    return 1;
     }
 
@@ -302,11 +316,11 @@ static int bad_name(DOS_FILE * file)
     }
 
     spc = 0;
-    for (i = 8; i < 11; i++) {
-	if (name[i] == ' ')
+    for (i = 0; i < 3; i++) {
+	if (ext[i] == ' ')
 	    spc = 1;
 	else if (spc)
-	    /* non-space after a space not allowed, space terminates the name
+	    /* non-space after a space not allowed, space terminates the ext
 	     * part */
 	    return 1;
     }
@@ -340,7 +354,7 @@ static void lfn_remove(loff_t from, loff_t to)
 
 static void drop_file(DOS_FS * fs, DOS_FILE * file)
 {
-    unsigned long cluster;
+    uint32_t cluster;
 
     MODIFY(file, name[0], DELETED_FLAG);
     if (file->lfn)
@@ -351,13 +365,12 @@ static void drop_file(DOS_FS * fs, DOS_FILE * file)
     --n_files;
 }
 
-static void truncate_file(DOS_FS * fs, DOS_FILE * file, unsigned long clusters)
+static void truncate_file(DOS_FS * fs, DOS_FILE * file, uint32_t clusters)
 {
     int deleting;
-    unsigned long walk, next, prev;
+    uint32_t walk, next;
 
     walk = FSTART(file, fs);
-    prev = 0;
     if ((deleting = !clusters))
 	MODIFY_START(file, 0, fs);
     while (walk > 0 && walk != -1) {
@@ -366,7 +379,6 @@ static void truncate_file(DOS_FS * fs, DOS_FILE * file, unsigned long clusters)
 	    set_fat(fs, walk, 0);
 	else if ((deleting = !--clusters))
 	    set_fat(fs, walk, -1);
-	prev = walk;
 	walk = next;
     }
 }
@@ -374,7 +386,7 @@ static void truncate_file(DOS_FS * fs, DOS_FILE * file, unsigned long clusters)
 static void auto_rename(DOS_FILE * file)
 {
     DOS_FILE *first, *walk;
-    unsigned long int number;
+    uint32_t number;
 
     if (!file->offset)
 	return;			/* cannot rename FAT32 root dir */
@@ -382,7 +394,7 @@ static void auto_rename(DOS_FILE * file)
     number = 0;
     while (1) {
 	char num[8];
-	sprintf(num, "%07lu", number);
+	sprintf(num, "%07lu", (unsigned long)number);
 	memcpy(file->dir_ent.name, "FSCK", 4);
 	memcpy(file->dir_ent.name + 4, num, 4);
 	memcpy(file->dir_ent.ext, num + 4, 3);
@@ -392,7 +404,16 @@ static void auto_rename(DOS_FILE * file)
 			    (const char *)file->dir_ent.name, MSDOS_NAME))
 		break;
 	if (!walk) {
-	    fs_write(file->offset, MSDOS_NAME, file->dir_ent.name);
+	    if (file->dir_ent.lcase & FAT_NO_83NAME) {
+		/* as we only assign a new 8.3 filename, reset flag that 8.3 name is not
+		   present */
+		file->dir_ent.lcase &= ~FAT_NO_83NAME;
+		/* reset the attributes, only keep DIR and VOLUME */
+		file->dir_ent.attr &= ~(ATTR_DIR | ATTR_VOLUME);
+		fs_write(file->offset, MSDOS_NAME + 2, file->dir_ent.name);
+	    } else {
+		fs_write(file->offset, MSDOS_NAME, file->dir_ent.name);
+	    }
 	    if (file->lfn)
 		lfn_fix_checksum(file->lfn_offset, file->offset,
 				 (const char *)file->dir_ent.name);
@@ -426,7 +447,16 @@ static void rename_file(DOS_FILE * file)
 	    walk[1] = 0;
 	    for (walk = name; *walk == ' ' || *walk == '\t'; walk++) ;
 	    if (file_cvt(walk, file->dir_ent.name)) {
-		fs_write(file->offset, MSDOS_NAME, file->dir_ent.name);
+		if (file->dir_ent.lcase & FAT_NO_83NAME) {
+		    /* as we only assign a new 8.3 filename, reset flag that 8.3 name is not
+		       present */
+		    file->dir_ent.lcase &= ~FAT_NO_83NAME;
+		    /* reset the attributes, only keep DIR and VOLUME */
+		    file->dir_ent.attr &= ~(ATTR_DIR | ATTR_VOLUME);
+		    fs_write(file->offset, MSDOS_NAME + 2, file->dir_ent.name);
+		} else {
+		    fs_write(file->offset, MSDOS_NAME, file->dir_ent.name);
+		}
 		if (file->lfn)
 		    lfn_fix_checksum(file->lfn_offset, file->offset,
 				     (const char *)file->dir_ent.name);
@@ -438,7 +468,7 @@ static void rename_file(DOS_FILE * file)
 
 static int handle_dot(DOS_FS * fs, DOS_FILE * file, int dots)
 {
-    char *name;
+    const char *name;
 
     name =
 	strncmp((const char *)file->dir_ent.name, MSDOS_DOT,
@@ -462,7 +492,7 @@ static int handle_dot(DOS_FS * fs, DOS_FILE * file, int dots)
 	    rename_file(file);
 	    return 0;
 	case '4':
-	    MODIFY(file, size, CT_LE_L(0));
+	    MODIFY(file, size, htole32(0));
 	    MODIFY(file, attr, file->dir_ent.attr | ATTR_DIR);
 	    break;
 	}
@@ -479,21 +509,21 @@ static int check_file(DOS_FS * fs, DOS_FILE * file)
 {
     DOS_FILE *owner;
     int restart;
-    unsigned long expect, curr, this, clusters, prev, walk, clusters2;
+    uint32_t expect, curr, this, clusters, prev, walk, clusters2;
 
     if (file->dir_ent.attr & ATTR_DIR) {
-	if (CF_LE_L(file->dir_ent.size)) {
+	if (le32toh(file->dir_ent.size)) {
 	    printf("%s\n  Directory has non-zero size. Fixing it.\n",
 		   path_name(file));
-	    MODIFY(file, size, CT_LE_L(0));
+	    MODIFY(file, size, htole32(0));
 	}
 	if (file->parent
 	    && !strncmp((const char *)file->dir_ent.name, MSDOS_DOT,
 			MSDOS_NAME)) {
 	    expect = FSTART(file->parent, fs);
 	    if (FSTART(file, fs) != expect) {
-		printf("%s\n  Start (%ld) does not point to parent (%ld)\n",
-		       path_name(file), FSTART(file, fs), expect);
+		printf("%s\n  Start (%lu) does not point to parent (%lu)\n",
+		       path_name(file), (unsigned long)FSTART(file, fs), (long)expect);
 		MODIFY_START(file, expect, fs);
 	    }
 	    return 0;
@@ -507,7 +537,7 @@ static int check_file(DOS_FS * fs, DOS_FILE * file)
 		expect = 0;
 	    if (FSTART(file, fs) != expect) {
 		printf("%s\n  Start (%lu) does not point to .. (%lu)\n",
-		       path_name(file), FSTART(file, fs), expect);
+		       path_name(file), (unsigned long)FSTART(file, fs), (unsigned long)expect);
 		MODIFY_START(file, expect, fs);
 	    }
 	    return 0;
@@ -519,12 +549,20 @@ static int check_file(DOS_FS * fs, DOS_FILE * file)
 	    return 0;
 	}
     }
+    if (FSTART(file, fs) == 1) {
+	printf("%s\n  Bad start cluster 1. Truncating file.\n",
+	       path_name(file));
+	if (!file->offset)
+	    die("Bad FAT32 root directory! (bad start cluster 1)\n");
+	MODIFY_START(file, 0, fs);
+    }
     if (FSTART(file, fs) >= fs->clusters + 2) {
 	printf
 	    ("%s\n  Start cluster beyond limit (%lu > %lu). Truncating file.\n",
-	     path_name(file), FSTART(file, fs), fs->clusters + 1);
+	     path_name(file), (unsigned long)FSTART(file, fs), (unsigned long)(fs->clusters + 1));
 	if (!file->offset)
-	    die("Bad FAT32 root directory! (bad start cluster)\n");
+	    die("Bad FAT32 root directory! (start cluster beyond limit: %lu > %lu)\n",
+		(unsigned long)FSTART(file, fs), (unsigned long)(fs->clusters + 1));
 	MODIFY_START(file, 0, fs);
     }
     clusters = prev = 0;
@@ -535,7 +573,7 @@ static int check_file(DOS_FS * fs, DOS_FILE * file)
 
 	if (!curEntry.value || bad_cluster(fs, curr)) {
 	    printf("%s\n  Contains a %s cluster (%lu). Assuming EOF.\n",
-		   path_name(file), curEntry.value ? "bad" : "free", curr);
+		   path_name(file), curEntry.value ? "bad" : "free", (unsigned long)curr);
 	    if (prev)
 		set_fat(fs, prev, -1);
 	    else if (!file->offset)
@@ -544,14 +582,14 @@ static int check_file(DOS_FS * fs, DOS_FILE * file)
 		MODIFY_START(file, 0, fs);
 	    break;
 	}
-	if (!(file->dir_ent.attr & ATTR_DIR) && CF_LE_L(file->dir_ent.size) <=
-	    (unsigned long long)clusters * fs->cluster_size) {
+	if (!(file->dir_ent.attr & ATTR_DIR) && le32toh(file->dir_ent.size) <=
+	    (uint64_t)clusters * fs->cluster_size) {
 	    printf
-		("%s\n  File size is %u bytes, cluster chain length is > %llu "
+		("%s\n  File size is %u bytes, cluster chain length is > %lu "
 		 "bytes.\n  Truncating file to %u bytes.\n", path_name(file),
-		 CF_LE_L(file->dir_ent.size),
-		 (unsigned long long)clusters * fs->cluster_size,
-		 CF_LE_L(file->dir_ent.size));
+		 le32toh(file->dir_ent.size),
+		 (uint64_t)clusters * fs->cluster_size,
+		 le32toh(file->dir_ent.size));
 	    truncate_file(fs, file, clusters);
 	    break;
 	}
@@ -599,7 +637,7 @@ static int check_file(DOS_FS * fs, DOS_FILE * file)
 			else
 			    MODIFY_START(owner, 0, fs);
 			MODIFY(owner, size,
-			       CT_LE_L((unsigned long long)clusters *
+			       htole32((uint64_t)clusters *
 				       fs->cluster_size));
 			if (restart)
 			    return 1;
@@ -628,16 +666,16 @@ static int check_file(DOS_FS * fs, DOS_FILE * file)
 	clusters++;
 	prev = curr;
     }
-    if (!(file->dir_ent.attr & ATTR_DIR) && CF_LE_L(file->dir_ent.size) >
-	(unsigned long long)clusters * fs->cluster_size) {
+    if (!(file->dir_ent.attr & ATTR_DIR) && le32toh(file->dir_ent.size) >
+	(uint64_t)clusters * fs->cluster_size) {
 	printf
 	    ("%s\n  File size is %u bytes, cluster chain length is %llu bytes."
 	     "\n  Truncating file to %llu bytes.\n", path_name(file),
-	     CF_LE_L(file->dir_ent.size),
+	     le32toh(file->dir_ent.size),
 	     (unsigned long long)clusters * fs->cluster_size,
 	     (unsigned long long)clusters * fs->cluster_size);
 	MODIFY(file, size,
-	       CT_LE_L((unsigned long long)clusters * fs->cluster_size));
+	       htole32((uint64_t)clusters * fs->cluster_size));
     }
     return 0;
 }
@@ -807,10 +845,10 @@ static int check_dir(DOS_FS * fs, DOS_FILE ** root, int dots)
 static void test_file(DOS_FS * fs, DOS_FILE * file, int read_test)
 {
     DOS_FILE *owner;
-    unsigned long walk, prev, clusters, next_clu;
+    uint32_t walk, prev, clusters, next_clu;
 
     prev = clusters = 0;
-    for (walk = FSTART(file, fs); walk > 0 && walk < fs->clusters + 2;
+    for (walk = FSTART(file, fs); walk > 1 && walk < fs->clusters + 2;
 	 walk = next_clu) {
 	next_clu = next_cluster(fs, walk);
 
@@ -821,7 +859,7 @@ static void test_file(DOS_FS * fs, DOS_FILE * file, int read_test)
 	if ((owner = get_owner(fs, walk))) {
 	    if (owner == file) {
 		printf("%s\n  Circular cluster chain. Truncating to %lu "
-		       "cluster%s.\n", path_name(file), clusters,
+		       "cluster%s.\n", path_name(file), (unsigned long)clusters,
 		       clusters == 1 ? "" : "s");
 		if (prev)
 		    set_fat(fs, prev, -1);
@@ -840,7 +878,7 @@ static void test_file(DOS_FS * fs, DOS_FILE * file, int read_test)
 		clusters++;
 	    } else {
 		printf("%s\n  Cluster %lu (%lu) is unreadable. Skipping it.\n",
-		       path_name(file), clusters, walk);
+		       path_name(file), (unsigned long)clusters, (unsigned long)walk);
 		if (prev)
 		    set_fat(fs, prev, next_cluster(fs, walk));
 		else
@@ -851,7 +889,7 @@ static void test_file(DOS_FS * fs, DOS_FILE * file, int read_test)
 	set_owner(fs, walk, file);
     }
     /* Revert ownership (for now) */
-    for (walk = FSTART(file, fs); walk > 0 && walk < fs->clusters + 2;
+    for (walk = FSTART(file, fs); walk > 1 && walk < fs->clusters + 2;
 	 walk = next_cluster(fs, walk))
 	if (bad_cluster(fs, walk))
 	    break;
@@ -863,9 +901,9 @@ static void test_file(DOS_FS * fs, DOS_FILE * file, int read_test)
 
 static void undelete(DOS_FS * fs, DOS_FILE * file)
 {
-    unsigned long clusters, left, prev, walk;
+    uint32_t clusters, left, prev, walk;
 
-    clusters = left = (CF_LE_L(file->dir_ent.size) + fs->cluster_size - 1) /
+    clusters = left = (le32toh(file->dir_ent.size) + fs->cluster_size - 1) /
 	fs->cluster_size;
     prev = 0;
 
@@ -891,7 +929,7 @@ static void undelete(DOS_FS * fs, DOS_FILE * file)
 	MODIFY_START(file, 0, fs);
     if (left)
 	printf("Warning: Did only undelete %lu of %lu cluster%s.\n",
-	       clusters - left, clusters, clusters == 1 ? "" : "s");
+	       (unsigned long)clusters - left, (unsigned long)clusters, clusters == 1 ? "" : "s");
 
 }
 
@@ -924,11 +962,11 @@ static void add_file(DOS_FS * fs, DOS_FILE *** chain, DOS_FILE * parent,
 	fs_read(offset, sizeof(DIR_ENT), &de);
     else {
 	/* Construct a DIR_ENT for the root directory */
+	memset(&de, 0, sizeof de);
 	memcpy(de.name, "           ", MSDOS_NAME);
 	de.attr = ATTR_DIR;
-	de.size = de.time = de.date = 0;
-	de.start = CT_LE_W(fs->root_cluster & 0xffff);
-	de.starthi = CT_LE_W((fs->root_cluster >> 16) & 0xffff);
+	de.start = htole16(fs->root_cluster & 0xffff);
+	de.starthi = htole16((fs->root_cluster >> 16) & 0xffff);
     }
     if ((type = file_type(cp, (char *)de.name)) != fdt_none) {
 	if (type == fdt_undelete && (de.attr & ATTR_DIR))
@@ -974,7 +1012,7 @@ static int scan_dir(DOS_FS * fs, DOS_FILE * this, FDSC ** cp)
 {
     DOS_FILE **chain;
     int i;
-    unsigned long clu_num;
+    uint32_t clu_num;
 
     chain = &this->first;
     i = 0;

@@ -1,4 +1,4 @@
-mkdosfs - Make DOS file system utilty.
+mkdosfs - Make DOS filesystem utilty.
 
 
 I wrote this, partially to complement the dosfsck utility written by Werner
@@ -7,7 +7,7 @@ advice about writing this code), and also to avoid me having to boot DOS
 just to create data partitions (I use Linux to back up DOS :-) ).
 
 The code is really derived from Remy Card's mke2fs utility - I used this as a
-framework, although all of the file system specific stuff was removed and the
+framework, although all of the filesystem specific stuff was removed and the
 DOS stuff inserted.  I believe originally mke2fs was based on Linus' mkfs
 code, hence the acknowledgements in the source code.
 

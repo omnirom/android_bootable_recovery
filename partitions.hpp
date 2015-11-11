@@ -103,7 +103,7 @@ private:
 	unsigned long long Get_Size_Via_du(string Path, bool Display_Error);      // Uses du to get sizes
 	bool Wipe_EXT23(string File_System);                                      // Formats as ext3 or ext2
 	bool Wipe_EXT4();                                                         // Formats using ext4, uses make_ext4fs when present
-	bool Wipe_FAT();                                                          // Formats as FAT if mkdosfs exits otherwise rm -rf wipe
+	bool Wipe_FAT();                                                          // Formats as FAT if mkfs.fat exits otherwise rm -rf wipe
 	bool Wipe_EXFAT();                                                        // Formats as EXFAT
 	bool Wipe_MTD();                                                          // Formats as yaffs2 for MTD memory types
 	bool Wipe_RMRF();                                                         // Uses rm -rf to wipe

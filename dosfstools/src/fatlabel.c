@@ -1,8 +1,9 @@
-/* dosfslabel.c - User interface
+/* fatlabel.c - User interface
 
    Copyright (C) 1993 Werner Almesberger <werner.almesberger@lrc.di.epfl.ch>
    Copyright (C) 1998 Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
    Copyright (C) 2007 Red Hat, Inc.
+   Copyright (C) 2008-2014 Daniel Baumann <mail@daniel-baumann.ch>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-   On Debian systems, the complete text of the GNU General Public License
+   The complete text of the GNU General Public License
    can be found in /usr/share/common-licenses/GPL-3 file.
 */
 
@@ -29,13 +30,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <getopt.h>
-
-#ifdef _USING_BIONIC_
-#include <linux/fs.h>
-#endif
+#include <ctype.h>
 
 #include "common.h"
-#include "dosfsck.h"
+#include "fsck.fat.h"
 #include "io.h"
 #include "boot.h"
 #include "fat.h"
@@ -52,7 +50,7 @@ static void usage(int error)
     FILE *f = error ? stderr : stdout;
     int status = error ? 1 : 0;
 
-    fprintf(f, "usage: dosfslabel device [label]\n");
+    fprintf(f, "usage: fatlabel device [label]\n");
     exit(status);
 }
 
@@ -86,11 +84,16 @@ static void check_atari(void)
 
 int main(int argc, char *argv[])
 {
-    DOS_FS fs;
+    DOS_FS fs = { 0 };
     rw = 0;
 
+    int i;
+
     char *device = NULL;
-    char *label = NULL;
+    char label[12] = { 0 };
+
+    loff_t offset;
+    DIR_ENT de;
 
     check_atari();
 
@@ -100,25 +103,38 @@ int main(int argc, char *argv[])
     if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))
 	usage(0);
     else if (!strcmp(argv[1], "-V") || !strcmp(argv[1], "--version")) {
-	printf("dosfslabel " VERSION ", " VERSION_DATE ", FAT32, LFN\n");
+	printf("fatlabel " VERSION " (" VERSION_DATE ")\n");
 	exit(0);
     }
 
     device = argv[1];
     if (argc == 3) {
-	label = argv[2];
-	if (strlen(label) > 11) {
+	strncpy(label, argv[2], 11);
+	if (strlen(argv[2]) > 11) {
 	    fprintf(stderr,
-		    "dosfslabel: labels can be no longer than 11 characters\n");
+		    "fatlabel: labels can be no longer than 11 characters\n");
 	    exit(1);
 	}
+	for (i = 0; label[i] && i < 11; i++)
+	    /* don't know if here should be more strict !uppercase(label[i]) */
+	    if (islower(label[i])) {
+		fprintf(stderr,
+			"fatlabel: warning - lowercase labels might not work properly with DOS or Windows\n");
+		break;
+	    }
 	rw = 1;
     }
 
     fs_open(device, rw);
     read_boot(&fs);
+    if (fs.fat_bits == 32)
+	read_fat(&fs);
     if (!rw) {
-	fprintf(stdout, "%s\n", fs.label);
+	offset = find_volume_de(&fs, &de);
+	if (offset == 0)
+	    fprintf(stdout, "%s\n", fs.label);
+	else
+	    fprintf(stdout, "%.8s%.3s\n", de.name, de.ext);
 	exit(0);
     }
 

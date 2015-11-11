@@ -341,10 +341,9 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     toolbox_symlinks \
     twrp \
     unpigz_symlink \
-    dosfsck \
-    dosfslabel \
-    fsck_msdos_symlink \
-    mkdosfs \
+    fsck.fat \
+    fatlabel \
+    mkfs.fat \
     permissive.sh
 
 ifneq ($(TARGET_ARCH), arm64)
@@ -418,7 +417,7 @@ ifneq ($(TW_USE_TOOLBOX), true)
 include $(CLEAR_VARS)
 # Create busybox symlinks... gzip and gunzip are excluded because those need to link to pigz instead
 BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
-exclude := tune2fs mke2fs mkdosfs gzip gunzip
+exclude := tune2fs mke2fs mkdosfs mkfs.vfat gzip gunzip
 
 # If busybox does not have restorecon, assume it does not have SELinux support.
 # Then, let toolbox provide 'ls' so -Z is available to list SELinux contexts.

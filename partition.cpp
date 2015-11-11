@@ -1215,7 +1215,7 @@ bool TWPartition::Wipe_AndSec(void) {
 bool TWPartition::Can_Repair() {
 	if (Mount_Read_Only)
 		return false;
-	if (Current_File_System == "vfat" && TWFunc::Path_Exists("/sbin/dosfsck"))
+	if (Current_File_System == "vfat" && TWFunc::Path_Exists("/sbin/fsck.fat"))
 		return true;
 	else if ((Current_File_System == "ext2" || Current_File_System == "ext3" || Current_File_System == "ext4") && TWFunc::Path_Exists("/sbin/e2fsck"))
 		return true;
@@ -1232,15 +1232,15 @@ bool TWPartition::Repair() {
 	string command;
 
 	if (Current_File_System == "vfat") {
-		if (!TWFunc::Path_Exists("/sbin/dosfsck")) {
-			gui_print("dosfsck does not exist! Cannot repair!\n");
+		if (!TWFunc::Path_Exists("/sbin/fsck.fat")) {
+			gui_print("fsck.fat does not exist! Cannot repair!\n");
 			return false;
 		}
 		if (!UnMount(true))
 			return false;
-		gui_print("Repairing %s using dosfsck...\n", Display_Name.c_str());
+		gui_print("Repairing %s using fsck.fat...\n", Display_Name.c_str());
 		Find_Actual_Block_Device();
-		command = "/sbin/dosfsck -y " + Actual_Block_Device;
+		command = "/sbin/fsck.fat -y " + Actual_Block_Device;
 		LOGINFO("Repair command: %s\n", command.c_str());
 		if (TWFunc::Exec_Cmd(command) == 0) {
 			gui_print("Done.\n");
@@ -1726,13 +1726,13 @@ bool TWPartition::Wipe_EXT4() {
 bool TWPartition::Wipe_FAT() {
 	string command;
 
-	if (TWFunc::Path_Exists("/sbin/mkdosfs")) {
+	if (TWFunc::Path_Exists("/sbin/mkfs.fat")) {
 		if (!UnMount(true))
 			return false;
 
-		gui_print("Formatting %s using mkdosfs...\n", Display_Name.c_str());
+		gui_print("Formatting %s using mkfs.fat...\n", Display_Name.c_str());
 		Find_Actual_Block_Device();
-		command = "mkdosfs " + Actual_Block_Device;
+		command = "mkfs.fat " + Actual_Block_Device;
 		if (TWFunc::Exec_Cmd(command) == 0) {
 			Current_File_System = "vfat";
 			Recreate_AndSec_Folder();
