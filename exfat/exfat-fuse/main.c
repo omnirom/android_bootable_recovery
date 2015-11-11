@@ -428,8 +428,7 @@ int main(int argc, char* argv[])
 	struct fuse* fh = NULL;
 	int opt;
 
-	printf("FUSE exfat %u.%u.%u\n",
-			EXFAT_VERSION_MAJOR, EXFAT_VERSION_MINOR, EXFAT_VERSION_PATCH);
+	printf("FUSE exfat %s\n", VERSION);
 
 	mount_options = strdup(default_options);
 	if (mount_options == NULL)
