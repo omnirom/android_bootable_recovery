@@ -62,9 +62,9 @@ LOCAL_MODULE := recovery
 
 #LOCAL_FORCE_STATIC_EXECUTABLE := true
 
-#ifeq ($(HOST_OS),linux)
-#LOCAL_REQUIRED_MODULES := mkfs.f2fs
-#endif
+ifeq ($(HOST_OS),linux)
+LOCAL_REQUIRED_MODULES := mkfs.f2fs
+endif
 
 RECOVERY_API_VERSION := 3
 RECOVERY_FSTAB_VERSION := 2
