@@ -175,7 +175,6 @@ static void fill_attr(struct fuse_attr* attr, struct fuse_data* fd,
 }
 
 static int handle_getattr(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
-    const struct fuse_getattr_in* req = data;
     struct fuse_attr_out out;
     memset(&out, 0, sizeof(out));
     out.attr_valid = 10;
@@ -220,8 +219,6 @@ static int handle_lookup(void* data, struct fuse_data* fd,
 }
 
 static int handle_open(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
-    const struct fuse_open_in* req = data;
-
     if (hdr->nodeid == EXIT_FLAG_ID) return -EPERM;
     if (hdr->nodeid != PACKAGE_FILE_ID) return -ENOENT;
 
