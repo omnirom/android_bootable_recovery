@@ -89,6 +89,7 @@ endif
 #
 
 include $(CLEAR_VARS)
+LOCAL_CLANG := false
 LOCAL_MODULE:= libpixelflinger_twrp
 LOCAL_SRC_FILES := $(PIXELFLINGER_SRC_FILES)
 LOCAL_SRC_FILES_arm := $(PIXELFLINGER_SRC_FILES_arm)
