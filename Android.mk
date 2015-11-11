@@ -559,8 +559,7 @@ ifeq ($(BUILD_ID), GINGERBREAD)
 endif
 ifneq ($(TW_NO_EXFAT), true)
     include $(commands_recovery_local_path)/exfat/mkfs/Android.mk \
-            $(commands_recovery_local_path)/fuse/Android.mk \
-            $(commands_recovery_local_path)/exfat/libexfat/Android.mk
+            $(commands_recovery_local_path)/fuse/Android.mk
 endif
 ifneq ($(TW_NO_EXFAT_FUSE), true)
     include $(commands_recovery_local_path)/exfat/exfat-fuse/Android.mk
