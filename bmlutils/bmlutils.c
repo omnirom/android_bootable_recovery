@@ -134,7 +134,7 @@ int cmd_bml_backup_raw_partition(const char *partition, const char *out_file)
         }
     }
 
-    fsync(out);
+    fsync(fileno(out));
     ret = 0;
 ERROR1:
     fclose ( out );
