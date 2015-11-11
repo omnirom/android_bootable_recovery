@@ -355,9 +355,6 @@ void *blkid_probe_get_binary_data(blkid_probe pr, struct blkid_chain *chn)
 	int rc, org_prob_flags;
 	struct blkid_chain *org_chn;
 
-	if (!pr || !chn)
-		return NULL;
-
 	/* save the current setting -- the binary API has to be completely
 	 * independent on the current probing status
 	 */
@@ -445,7 +442,7 @@ unsigned long *blkid_probe_get_filter(blkid_probe pr, int chain, int create)
 {
 	struct blkid_chain *chn;
 
-	if (!pr || chain < 0 || chain >= BLKID_NCHAINS)
+	if (chain < 0 || chain >= BLKID_NCHAINS)
 		return NULL;
 
 	chn = &pr->chains[chain];
@@ -475,9 +472,6 @@ int __blkid_probe_invert_filter(blkid_probe pr, int chain)
 {
 	size_t i;
 	struct blkid_chain *chn;
-
-	if (!pr)
-		return -1;
 
 	chn = &pr->chains[chain];
 
@@ -647,7 +641,7 @@ static void blkid_probe_reset_buffer(blkid_probe pr)
  */
 int blkid_probe_is_tiny(blkid_probe pr)
 {
-	return pr && (pr->flags & BLKID_FL_TINY_DEV);
+	return pr->flags & BLKID_FL_TINY_DEV;
 }
 
 /*
@@ -655,7 +649,7 @@ int blkid_probe_is_tiny(blkid_probe pr)
  */
 int blkid_probe_is_cdrom(blkid_probe pr)
 {
-	return pr && (pr->flags & BLKID_FL_CDROM_DEV);
+	return pr->flags & BLKID_FL_CDROM_DEV;
 }
 
 /**
@@ -767,9 +761,6 @@ err:
 int blkid_probe_get_dimension(blkid_probe pr,
 		blkid_loff_t *off, blkid_loff_t *size)
 {
-	if (!pr)
-		return -1;
-
 	*off = pr->off;
 	*size = pr->size;
 	return 0;
@@ -778,9 +769,6 @@ int blkid_probe_get_dimension(blkid_probe pr,
 int blkid_probe_set_dimension(blkid_probe pr,
 		blkid_loff_t off, blkid_loff_t size)
 {
-	if (!pr)
-		return -1;
-
 	DBG(LOWPROBE, ul_debug(
 		"changing probing area pr=%p: size=%llu, off=%llu "
 		"-to-> size=%llu, off=%llu",
@@ -1275,8 +1263,6 @@ struct blkid_prval *blkid_probe_assign_value(
 {
 	struct blkid_prval *v;
 
-	if (!name)
-		return NULL;
 	if (pr->nvals >= BLKID_NVALS)
 		return NULL;
 
@@ -1293,7 +1279,7 @@ int blkid_probe_reset_last_value(blkid_probe pr)
 {
 	struct blkid_prval *v;
 
-	if (pr == NULL || pr->nvals == 0)
+	if (pr->nvals == 0)
 		return -1;
 
 	v = &pr->vals[pr->nvals - 1];
@@ -1363,7 +1349,7 @@ int blkid_probe_set_magic(blkid_probe pr, blkid_loff_t offset,
 	int rc = 0;
 	struct blkid_chain *chn = blkid_probe_get_chain(pr);
 
-	if (!chn || !magic || !len || chn->binary)
+	if (!chn || !len || chn->binary)
 		return 0;
 
 	switch (chn->driver->id) {
@@ -1665,7 +1651,7 @@ int blkid_probe_has_value(blkid_probe pr, const char *name)
 
 struct blkid_prval *__blkid_probe_get_value(blkid_probe pr, int num)
 {
-	if (!pr || num < 0 || num >= pr->nvals)
+	if (num < 0 || num >= pr->nvals)
 		return NULL;
 
 	return &pr->vals[num];
@@ -1675,7 +1661,7 @@ struct blkid_prval *__blkid_probe_lookup_value(blkid_probe pr, const char *name)
 {
 	int i;
 
-	if (!pr || !pr->nvals || !name)
+	if (!pr->nvals)
 		return NULL;
 
 	for (i = 0; i < pr->nvals; i++) {
@@ -1772,9 +1758,6 @@ void blkid_probe_set_wiper(blkid_probe pr, blkid_loff_t off, blkid_loff_t size)
 {
 	struct blkid_chain *chn;
 
-	if (!pr)
-		return;
-
 	if (!size) {
 		DBG(LOWPROBE, ul_debug("zeroize wiper"));
 		pr->wipe_size = pr->wipe_off = 0;
@@ -1806,12 +1789,11 @@ void blkid_probe_set_wiper(blkid_probe pr, blkid_loff_t off, blkid_loff_t size)
 int blkid_probe_is_wiped(blkid_probe pr, struct blkid_chain **chn,
 		     blkid_loff_t off, blkid_loff_t size)
 {
-	if (!pr || !size)
+	if (!size)
 		return 0;
 
 	if (pr->wipe_off <= off && off + size <= pr->wipe_off + pr->wipe_size) {
-		if (chn)
-			*chn = pr->wipe_chain;
+		*chn = pr->wipe_chain;
 		return 1;
 	}
 	return 0;
