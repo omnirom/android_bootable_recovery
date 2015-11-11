@@ -127,13 +127,21 @@ ifeq ($(BUILD_ID), GINGERBREAD)
     TW_NO_EXFAT := true
 endif
 ifneq ($(TW_NO_EXFAT), true)
+ifneq (,$(filter $(CM_PLATFORM_SDK_VERSION),4))
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkfs.exfat
+else
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkexfatfs
+endif
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libexfat.so
 else
     TW_NO_EXFAT_FUSE := true
 endif
 ifneq ($(TW_NO_EXFAT_FUSE), true)
+ifneq (,$(filter $(CM_PLATFORM_SDK_VERSION),4))
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mount.exfat
+else
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/exfat-fuse
+endif
 endif
 ifeq ($(TW_INCLUDE_BLOBPACK), true)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/blobpack

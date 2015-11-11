@@ -363,9 +363,6 @@ else
         LOCAL_ADDITIONAL_DEPENDENCIES += toybox_symlinks
     endif
 endif
-ifneq ($(TW_NO_EXFAT), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += mkexfatfs
-endif
 ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
     LOCAL_ADDITIONAL_DEPENDENCIES += parted
 endif
@@ -381,7 +378,16 @@ ifneq ($(TW_EXCLUDE_SUPERSU), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += \
         su install-recovery.sh 99SuperSUDaemon Superuser.apk
 endif
+ifneq ($(TW_NO_EXFAT), true)
+ifneq (,$(filter $(CM_PLATFORM_SDK_VERSION),4))
+    LOCAL_ADDITIONAL_DEPENDENCIES += mkfs.exfat
+endif
+    LOCAL_ADDITIONAL_DEPENDENCIES += mkexfatfs
+endif
 ifneq ($(TW_NO_EXFAT_FUSE), true)
+ifneq (,$(filter $(CM_PLATFORM_SDK_VERSION),4))
+    LOCAL_ADDITIONAL_DEPENDENCIES += mount.exfat
+endif
     LOCAL_ADDITIONAL_DEPENDENCIES += exfat-fuse
 endif
 ifeq ($(TW_INCLUDE_FB2PNG), true)
@@ -447,6 +453,44 @@ endif
 include $(BUILD_PHONY_PACKAGE)
 RECOVERY_BUSYBOX_SYMLINKS :=
 endif # !TW_USE_TOOLBOX
+
+ifneq ($(TW_NO_EXFAT), true)
+ifneq (,$(filter $(CM_PLATFORM_SDK_VERSION),4))
+RECOVERY_MKEXFATFS_SYMLINK := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/, mkexfatfs)
+$(RECOVERY_MKEXFATFS_SYMLINK): $(LOCAL_INSTALLED_MODULE)
+	@echo "Symlink: $@ -> mkfs.exfat"
+	@mkdir -p $(dir $@)
+	@rm -rf $@
+	$(hide) ln -sf mkfs.exfat $@
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := mkexfatfs
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+LOCAL_ADDITIONAL_DEPENDENCIES := $(RECOVERY_MKEXFATFS_SYMLINK)
+include $(BUILD_PHONY_PACKAGE)
+RECOVERY_MKEXFATFS_SYMLINK :=
+endif
+endif
+
+ifneq ($(TW_NO_EXFAT_FUSE), true)
+ifneq (,$(filter $(CM_PLATFORM_SDK_VERSION),4))
+RECOVERY_EXFATFUSE_SYMLINK := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/, exfat-fuse)
+$(RECOVERY_EXFATFUSE_SYMLINK): $(LOCAL_INSTALLED_MODULE)
+	@echo "Symlink: $@ -> mount.exfat"
+	@mkdir -p $(dir $@)
+	@rm -rf $@
+	$(hide) ln -sf mount.exfat $@
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := exfat-fuse
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+LOCAL_ADDITIONAL_DEPENDENCIES := $(RECOVERY_EXFATFUSE_SYMLINK)
+include $(BUILD_PHONY_PACKAGE)
+RECOVERY_EXFATFUSE_SYMLINK :=
+endif
+endif
 
 # All the APIs for testing
 include $(CLEAR_VARS)
@@ -559,8 +603,10 @@ ifeq ($(BUILD_ID), GINGERBREAD)
 endif
 ifneq ($(TW_NO_EXFAT), true)
     include $(commands_recovery_local_path)/exfat/mkfs/Android.mk \
-            $(commands_recovery_local_path)/fuse/Android.mk \
-            $(commands_recovery_local_path)/exfat/libexfat/Android.mk
+            $(commands_recovery_local_path)/fuse/Android.mk
+ifeq (,$(filter $(CM_PLATFORM_SDK_VERSION),4))
+    include $(commands_recovery_local_path)/exfat/libexfat/Android.mk
+endif
 endif
 ifneq ($(TW_NO_EXFAT_FUSE), true)
     include $(commands_recovery_local_path)/exfat/exfat-fuse/Android.mk
