@@ -2,6 +2,7 @@
 
    Copyright (C) 1993 Werner Almesberger <werner.almesberger@lrc.di.epfl.ch>
    Copyright (C) 1998 Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
+   Copyright (C) 2008-2014 Daniel Baumann <mail@daniel-baumann.ch>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-   On Debian systems, the complete text of the GNU General Public License
+   The complete text of the GNU General Public License
    can be found in /usr/share/common-licenses/GPL-3 file.
 */
 
@@ -30,7 +31,6 @@
  * by Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de> */
 
 #define _LARGEFILE64_SOURCE
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -41,7 +41,7 @@
 #include <fcntl.h>
 #include <linux/fd.h>
 
-#include "dosfsck.h"
+#include "fsck.fat.h"
 #include "common.h"
 #include "io.h"
 
@@ -132,9 +132,11 @@ void fs_read(loff_t pos, int size, void *data)
 	if (walk->pos < pos + size && walk->pos + walk->size > pos) {
 	    if (walk->pos < pos)
 		memcpy(data, (char *)walk->data + pos - walk->pos, min(size,
-								       walk->size
-								       - pos +
-								       walk->pos));
+								       walk->
+								       size -
+								       pos +
+								       walk->
+								       pos));
 	    else
 		memcpy((char *)data + walk->pos - pos, walk->data,
 		       min(walk->size, size + pos - walk->pos));
@@ -220,7 +222,7 @@ int fs_close(int write)
 	    changes = next;
 	}
     if (close(fd) < 0)
-	pdie("closing file system");
+	pdie("closing filesystem");
     return changed || did_change;
 }
 

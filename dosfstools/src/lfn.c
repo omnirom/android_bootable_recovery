@@ -1,6 +1,7 @@
 /* lfn.c - Functions for handling VFAT long filenames
 
    Copyright (C) 1998 Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
+   Copyright (C) 2008-2014 Daniel Baumann <mail@daniel-baumann.ch>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,11 +16,12 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-   On Debian systems, the complete text of the GNU General Public License
+   The complete text of the GNU General Public License
    can be found in /usr/share/common-licenses/GPL-3 file.
 */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -27,19 +29,19 @@
 
 #include "common.h"
 #include "io.h"
-#include "dosfsck.h"
+#include "fsck.fat.h"
 #include "lfn.h"
 #include "file.h"
 
 typedef struct {
-    __u8 id;			/* sequence number for slot */
-    __u8 name0_4[10];		/* first 5 characters in name */
-    __u8 attr;			/* attribute byte */
-    __u8 reserved;		/* always 0 */
-    __u8 alias_checksum;	/* checksum for 8.3 alias */
-    __u8 name5_10[12];		/* 6 more characters in name */
-    __u16 start;		/* starting cluster number, 0 in long slots */
-    __u8 name11_12[4];		/* last 2 characters in name */
+    uint8_t id;			/* sequence number for slot */
+    uint8_t name0_4[10];	/* first 5 characters in name */
+    uint8_t attr;		/* attribute byte */
+    uint8_t reserved;		/* always 0 */
+    uint8_t alias_checksum;	/* checksum for 8.3 alias */
+    uint8_t name5_10[12];	/* 6 more characters in name */
+    uint16_t start;		/* starting cluster number, 0 in long slots */
+    uint8_t name11_12[4];	/* last 2 characters in name */
 } LFN_ENT;
 
 #define LFN_ID_START	0x40
@@ -85,6 +87,22 @@ static unsigned char fat_uni2esc[64] = {
 	(cnv_unicode( lfn_unicode+(lfn_slot*CHARS_PER_LFN*2),	\
 		      lfn_parts*CHARS_PER_LFN, 0 ))
 
+#define BYTES_TO_WCHAR(cl,ch) ((wchar_t)((unsigned)(cl) + ((unsigned)(ch) << 8)))
+static size_t mbslen(wchar_t x)
+{
+    wchar_t wstr[] = { x, 0 };
+    return wcstombs(NULL, wstr, 0);
+}
+
+static size_t wctombs(char *dest, wchar_t x)
+{
+    wchar_t wstr[] = { x, 0 };
+    size_t size = wcstombs(NULL, wstr, 0);
+    if (size != (size_t) - 1)
+	size = wcstombs(dest, wstr, size + 1);
+    return size;
+}
+
 /* This function converts an unicode string to a normal ASCII string, assuming
  * ISO-8859-1 charset. Characters not in 8859-1 are converted to the same
  * escape notation as used by the kernel, i.e. the uuencode-like ":xxx" */
@@ -93,10 +111,13 @@ static char *cnv_unicode(const unsigned char *uni, int maxlen, int use_q)
     const unsigned char *up;
     unsigned char *out, *cp;
     int len, val;
+    size_t x;
 
     for (len = 0, up = uni; (up - uni) / 2 < maxlen && (up[0] || up[1]);
 	 up += 2) {
-	if (UNICODE_CONVERTABLE(up[0], up[1]))
+	if ((x = mbslen(BYTES_TO_WCHAR(up[0], up[1]))) != (size_t) - 1)
+	    len += x;
+	else if (UNICODE_CONVERTABLE(up[0], up[1]))
 	    ++len;
 	else
 	    len += 4;
@@ -104,7 +125,10 @@ static char *cnv_unicode(const unsigned char *uni, int maxlen, int use_q)
     cp = out = use_q ? qalloc(&mem_queue, len + 1) : alloc(len + 1);
 
     for (up = uni; (up - uni) / 2 < maxlen && (up[0] || up[1]); up += 2) {
-	if (UNICODE_CONVERTABLE(up[0], up[1]))
+	if ((x =
+	     wctombs((char *)cp, BYTES_TO_WCHAR(up[0], up[1]))) != (size_t) - 1)
+	    cp += x;
+	else if (UNICODE_CONVERTABLE(up[0], up[1]))
 	    *cp++ = up[0];
 	else {
 	    /* here the same escape notation is used as in the Linux kernel */
@@ -150,7 +174,7 @@ static void clear_lfn_slots(int start, int end)
 void lfn_fix_checksum(loff_t from, loff_t to, const char *short_name)
 {
     int i;
-    __u8 sum;
+    uint8_t sum;
     for (sum = 0, i = 0; i < 11; i++)
 	sum = (((sum & 1) << 7) | ((sum & 0xfe) >> 1)) + short_name[i];
 
@@ -366,7 +390,7 @@ void lfn_add_slot(DIR_ENT * de, loff_t dir_offset)
 		     sizeof(lfn->reserved), &lfn->reserved);
 	}
     }
-    if (lfn->start != CT_LE_W(0)) {
+    if (lfn->start != htole16(0)) {
 	printf("Start cluster field in VFAT long filename slot is not 0 "
 	       "(but 0x%04x).\n", lfn->start);
 	if (interactive)
@@ -374,7 +398,7 @@ void lfn_add_slot(DIR_ENT * de, loff_t dir_offset)
 	else
 	    printf("Auto-setting to 0.\n");
 	if (!interactive || get_key("12", "?") == '1') {
-	    lfn->start = CT_LE_W(0);
+	    lfn->start = htole16(0);
 	    fs_write(dir_offset + offsetof(LFN_ENT, start),
 		     sizeof(lfn->start), &lfn->start);
 	}
@@ -386,7 +410,7 @@ void lfn_add_slot(DIR_ENT * de, loff_t dir_offset)
 char *lfn_get(DIR_ENT * de, loff_t * lfn_offset)
 {
     char *lfn;
-    __u8 sum;
+    uint8_t sum;
     int i;
 
     *lfn_offset = 0;
@@ -430,7 +454,7 @@ char *lfn_get(DIR_ENT * de, loff_t * lfn_offset)
 	    return NULL;
 	case '3':
 	    for (i = 0; i < lfn_parts; ++i) {
-		__u8 id = (lfn_parts - i) | (i == 0 ? LFN_ID_START : 0);
+		uint8_t id = (lfn_parts - i) | (i == 0 ? LFN_ID_START : 0);
 		fs_write(lfn_offsets[i] + offsetof(LFN_ENT, id),
 			 sizeof(id), &id);
 	    }
@@ -440,8 +464,10 @@ char *lfn_get(DIR_ENT * de, loff_t * lfn_offset)
 	}
     }
 
-    for (sum = 0, i = 0; i < 11; i++)
+    for (sum = 0, i = 0; i < 8; i++)
 	sum = (((sum & 1) << 7) | ((sum & 0xfe) >> 1)) + de->name[i];
+    for (i = 0; i < 3; i++)
+	sum = (((sum & 1) << 7) | ((sum & 0xfe) >> 1)) + de->ext[i];
     if (sum != lfn_checksum) {
 	/* checksum doesn't match, long name doesn't apply to this alias */
 	/* Causes: 1) alias renamed */

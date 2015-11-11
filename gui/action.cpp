@@ -863,7 +863,7 @@ int GUIAction::getpartitiondetails(std::string arg __unused)
 					DataManager::SetValue("tw_partition_can_resize", 1);
 				else
 					DataManager::SetValue("tw_partition_can_resize", 0);
-				if (TWFunc::Path_Exists("/sbin/mkdosfs"))
+				if (TWFunc::Path_Exists("/sbin/mkfs.fat"))
 					DataManager::SetValue("tw_partition_vfat", 1);
 				else
 					DataManager::SetValue("tw_partition_vfat", 0);

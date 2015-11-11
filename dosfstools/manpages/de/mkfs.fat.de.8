@@ -1,0 +1,172 @@
+.\" mkfs.fat.8 - manpage for fs.fatck
+.\"
+.\" Copyright (C) 2006-2014 Daniel Baumann <daniel@debian.org>
+.\"
+.\" This program is free software: you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation, either version 3 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program. If not, see <http://www.gnu.org/licenses/>.
+.\"
+.\" The complete text of the GNU General Public License
+.\" can be found in /usr/share/common-licenses/GPL-3 file.
+.\"
+.\"
+.\"*******************************************************************
+.\"
+.\" This file was generated with po4a. Translate the source file.
+.\"
+.\"*******************************************************************
+.TH MKFS.FAT 8 2015\-05\-16 3.0.28 dosfstools
+.SH NAME
+.\" ----------------------------------------------------------------------------
+\fBmkfs.fat\fP \- create an MS\-DOS filesystem under Linux
+.SH SYNOPSIS
+.\" ----------------------------------------------------------------------------
+\fBmkfs.fat\fP [\fIOPTIONS\fP] \fIDEVICE\fP [\fIBLOCK\-COUNT\fP]
+.SH DESCRIPTION
+.\" ----------------------------------------------------------------------------
+\fBmkfs.fat\fP is used to create an MS\-DOS filesystem under Linux on a device
+(usually a disk partition).  \fIDEVICE\fP is the special file corresponding to
+the device (e.g. /dev/sdXX).  \fIBLOCK\-COUNT\fP is the number of blocks on the
+device.  If omitted, \fBmkfs.fat\fP automatically determines the filesystem
+size.
+.SH OPTIONS
+.IP \fB\-a\fP 4
+Normally, for any filesystem except very small ones, \fBmkfs.fat\fP will align
+all the data structures to cluster size, to make sure that as long as the
+partition is properly aligned, so will all the data structures in the
+filesystem.  This option disables alignment; this may provide a handful of
+additional clusters of storage at the expense of a significant performance
+degradation on RAIDs, flash media or large\-sector hard disks.
+.IP "\fB \-A\fP" 4
+Use Atari variation of the MS\-DOS filesystem.  This is default if
+\fBmkfs.fat\fP is run on an Atari, then this option turns off Atari format.
+There are some differences when using Atari format: If not directed
+otherwise by the user, \fBmkfs.fat\fP will always use 2 sectors per cluster,
+since GEMDOS doesn't like other values very much.  It will also obey the
+maximum number of sectors GEMDOS can handle.  Larger filesystems are managed
+by raising the logical sector size.  Under Atari format, an Atari\-compatible
+serial number for the filesystem is generated, and a 12 bit FAT is used only
+for filesystems that have one of the usual floppy sizes (720k, 1.2M, 1.44M,
+2.88M), a 16 bit FAT otherwise.  This can be overridden with the \fB\-F\fP
+option.  Some PC\-specific boot sector fields aren't written, and a boot
+message (option \fB\-m\fP) is ignored.
+.IP "\fB\-b\fP \fISECTOR\-OF\-BACKUP\fP" 4
+Selects the location of the backup boot sector for FAT32.  Default depends
+on number of reserved sectors, but usually is sector 6.  The backup must be
+within the range of reserved sectors.
+.IP \fB\-c\fP 4
+Check the device for bad blocks before creating the filesystem.
+.IP \fB\-C\fP 4
+Create the file given as \fIDEVICE\fP on the command line, and write the
+to\-be\-created filesystem to it.  This can be used to create the new
+filesystem in a file instead of on a real device, and to avoid using \fBdd\fP
+in advance to create a file of appropriate size.  With this option, the
+\fIBLOCK\-COUNT\fP must be given, because otherwise the intended size of the
+filesystem wouldn't be known.  The file created is a sparse file, which
+actually only contains the meta\-data areas (boot sector, FATs, and root
+directory).  The data portions won't be stored on the disk, but the file
+nevertheless will have the correct size.  The resulting file can be copied
+later to a floppy disk or other device, or mounted through a loop device.
+.IP "\fB\-D\fP \fIDRIVE\-NUMBER\fP" 4
+Specify the BIOS drive number to be stored in the FAT boot sector.  This
+value is usually 0x80 for hard disks and 0x00 for floppy devices or
+partitions to be used for floppy emulation.
+.IP "\fB\-f\fP \fINUMBER\-OF\-FATS\fP" 4
+Specify the number of file allocation tables in the filesystem.  The default
+is 2.
+.IP "\fB\-F\fP \fIFAT\-SIZE\fP" 4
+Specifies the type of file allocation tables used (12, 16 or 32 bit).  If
+nothing is specified, \fBmkfs.fat\fP will automatically select between 12, 16
+and 32 bit, whatever fits better for the filesystem size.
+.IP "\fB\-h\fP \fINUMBER\-OF\-HIDDEN\-SECTORS\fP" 4
+Select the number of hidden sectors in the volume.  Apparently some digital
+cameras get indigestion if you feed them a CF card without such hidden
+sectors, this option allows you to satisfy them.
+.IP "\fB\-i\fP \fIVOLUME\-ID\fP" 4
+Sets the volume ID of the newly created filesystem; \fIVOLUME\-ID\fP is a 32\-bit
+hexadecimal number (for example, 2e24ec82).  The default is a number which
+depends on the filesystem creation time.
+.IP \fB\-I\fP 4
+It is typical for fixed disk devices to be partitioned so, by default, you
+are not permitted to create a filesystem across the entire device.
+\fBmkfs.fat\fP will complain and tell you that it refuses to work.  This is
+different when using MO disks.  One doesn't always need partitions on MO
+disks.  The filesystem can go directly to the whole disk.  Under other OSes
+this is known as the 'superfloppy' format.  This switch will force
+\fBmkfs.fat\fP to work properly.
+.IP "\fB\-l\fP \fIFILENAME\fP" 4
+Read the bad blocks list from \fIFILENAME\fP.
+.IP "\fB\-m\fP \fIMESSAGE\-FILE\fP" 4
+Sets the message the user receives on attempts to boot this filesystem
+without having properly installed an operating system.  The message file
+must not exceed 418 bytes once line feeds have been converted to carriage
+return\-line feed combinations, and tabs have been expanded.  If the filename
+is a hyphen (\-), the text is taken from standard input.
+.IP "\fB\-M\fP \fIFAT\-MEDIA\-TYPE\fP" 4
+Specify the media type to be stored in the FAT boot sector.  This value is
+usually 0xF8 for hard disks and is 0xF0 or a value from 0xF9 to 0xFF for
+floppies or partitions to be used for floppy emulation.
+.IP "\fB\-n\fP \fIVOLUME\-NAME\fP" 4
+Sets the volume name (label) of the filesystem.  The volume name can be up
+to 11 characters long.  The default is no label.
+.IP "\fB\-r\fP \fIROOT\-DIR\-ENTRIES\fP" 4
+Select the number of entries available in the root directory.  The default
+is 112 or 224 for floppies and 512 for hard disks.
+.IP "\fB\-R\fP \fINUMBER\-OF\-RESERVED\-SECTORS\fP" 4
+Select the number of reserved sectors.  With FAT32 format at least 2
+reserved sectors are needed, the default is 32.  Otherwise the default is 1
+(only the boot sector).
+.IP "\fB\-s\fP \fISECTORS\-PER\-CLUSTER\fP" 4
+Specify the number of disk sectors per cluster.  Must be a power of 2,
+i.e. 1, 2, 4, 8, ... 128.
+.IP "\fB\-S\fP \fILOGICAL\-SECTOR\-SIZE\fP" 4
+Specify the number of bytes per logical sector.  Must be a power of 2 and
+greater than or equal to 512, i.e. 512, 1024, 2048, 4096, 8192, 16384, or
+32768.
+.IP \fB\-v\fP 4
+Verbose execution.
+.IP \fB\-\-invariant\fP 4
+Use constants for normally randomly generated or time based data such as
+volume ID and creation time.  Multiple runs of \fBmkfs.fat\fP on the same
+device create identical results with this option.  Its main purpose is
+testing \fBmkfs.fat\fP.
+.IP \fB\-\-help\fP 4
+.\" ----------------------------------------------------------------------------
+Display option summary and exit.
+.SH BUGS
+.\" ----------------------------------------------------------------------------
+\fBmkfs.fat\fP can not create boot\-able filesystems.  This isn't as easy as you
+might think at first glance for various reasons and has been discussed a lot
+already.  \fBmkfs.fat\fP simply will not support it ;)
+.SH "SEE ALSO"
+\fBfatlabel\fP(8)
+.br
+.\" ----------------------------------------------------------------------------
+\fBfsck.fat\fP(8)
+.SH HOMEPAGE
+.\" ----------------------------------------------------------------------------
+The home for the \fBdosfstools\fP project is its
+.UR https://github.com/dosfstools/dosfstools
+GitHub project page
+.UE .
+.SH AUTHORS
+\fBdosfstools\fP were written by
+.MT werner.almesberger@\:lrc.di.epfl.ch
+Werner Almesberger
+.ME ,
+.MT Roman.Hodek@\:informatik.\:uni-erlangen.de
+Roman Hodek
+.ME ,
+and others.  The current maintainer is
+.MT aeb@\:debian.org
+Andreas Bombe
+.ME .

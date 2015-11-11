@@ -1,6 +1,7 @@
-/* check.h - Check and repair a PC/MS-DOS file system
+/* check.h - Check and repair a PC/MS-DOS filesystem
 
    Copyright (C) 1993 Werner Almesberger <werner.almesberger@lrc.di.epfl.ch>
+   Copyright (C) 2008-2014 Daniel Baumann <mail@daniel-baumann.ch>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-   On Debian systems, the complete text of the GNU General Public License
+   The complete text of the GNU General Public License
    can be found in /usr/share/common-licenses/GPL-3 file.
 */
 
@@ -33,7 +34,7 @@ loff_t alloc_rootdir_entry(DOS_FS * fs, DIR_ENT * de, const char *pattern);
 int scan_root(DOS_FS * fs);
 
 /* Scans the root directory and recurses into all subdirectories. See check.c
-   for all the details. Returns a non-zero integer if the file system has to
+   for all the details. Returns a non-zero integer if the filesystem has to
    be checked again. */
 
 #endif
