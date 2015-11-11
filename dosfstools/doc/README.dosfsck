@@ -4,12 +4,12 @@ dosfsck, version 1
 WARNING: This is ALPHA test software. Use at your own risk.
 
 dosfsck is the Linux equivalent of PC/MS-DOS' CHKDSK. It checks the
-consistency of PC/MS-DOS file systems and optionally tries to repair
+consistency of PC/MS-DOS filesystems and optionally tries to repair
 them. The tests dosfsck performs are described in the man page.
 
 dosfsck needs header files from dosfs.9 (or later) to compile.
 
-Before using dosfsck to repair a file system that contains data of any
+Before using dosfsck to repair a filesystem that contains data of any
 value, you should verify that dosfsck is able to correct all reported
 errors. (Except fatal errors and those reported as unfixable, of
 course.) In order to do this, run it with the -V option, e.g.

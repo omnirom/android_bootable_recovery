@@ -1,0 +1,68 @@
+.\" fatlabel.8 - manpage for fatlabel
+.\"
+.\" Copyright (C) 2006-2014 Daniel Baumann <daniel@debian.org>
+.\"
+.\" This program is free software: you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation, either version 3 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program. If not, see <http://www.gnu.org/licenses/>.
+.\"
+.\" The complete text of the GNU General Public License
+.\" can be found in /usr/share/common-licenses/GPL-3 file.
+.\"
+.\"
+.\"*******************************************************************
+.\"
+.\" This file was generated with po4a. Translate the source file.
+.\"
+.\"*******************************************************************
+.TH FATLABEL 8 2015\-05\-16 3.0.28 dosfstools
+.SH NAME
+.\" ----------------------------------------------------------------------------
+\fBfatlabel\fP \- set or get MS\-DOS filesystem label
+.SH SYNOPSIS
+.\" ----------------------------------------------------------------------------
+\fBfatlabel\fP \fIDEVICE\fP [\fILABEL\fP]
+.SH DESCRIPTION
+\fBfatlabel\fP set or gets a MS\-DOS filesystem label from a given device.
+.PP
+.\" ----------------------------------------------------------------------------
+If \fILABEL\fP is omitted, then the label name of the specified device is
+written on the standard output.  A label can't be longer than 11 bytes.
+.SH OPTIONS
+.IP "\fB\-h\fP, \fB\-\-help\fP" 4
+Displays a help message.
+.IP "\fB\-V\fP, \fB\-\-version\fP" 4
+.\" ----------------------------------------------------------------------------
+Shows version.
+.SH "SEE ALSO"
+\fBfsck.fat\fP(8)
+.br
+.\" ----------------------------------------------------------------------------
+\fBmkfs.fat\fP(8)
+.SH HOMEPAGE
+.\" ----------------------------------------------------------------------------
+The home for the \fBdosfstools\fP project is its
+.UR https://github.com/dosfstools/dosfstools
+GitHub project page
+.UE .
+.SH AUTHORS
+\fBdosfstools\fP were written by
+.MT werner.almesberger@\:lrc.di.epfl.ch
+Werner Almesberger
+.ME ,
+.MT Roman.Hodek@\:informatik.\:uni-erlangen.de
+Roman Hodek
+.ME ,
+and others.  The current maintainer is
+.MT aeb@\:debian.org
+Andreas Bombe
+.ME .

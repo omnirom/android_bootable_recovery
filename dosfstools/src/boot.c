@@ -2,6 +2,7 @@
 
    Copyright (C) 1993 Werner Almesberger <werner.almesberger@lrc.di.epfl.ch>
    Copyright (C) 1998 Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
+   Copyright (C) 2008-2014 Daniel Baumann <mail@daniel-baumann.ch>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-   On Debian systems, the complete text of the GNU General Public License
+   The complete text of the GNU General Public License
    can be found in /usr/share/common-licenses/GPL-3 file.
 */
 
@@ -24,16 +25,17 @@
  * by Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de> */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <time.h>
 
 #include "common.h"
-#include "dosfsck.h"
+#include "fsck.fat.h"
 #include "fat.h"
 #include "io.h"
 #include "boot.h"
+#include "check.h"
 
 #define ROUND_TO_MULTIPLE(n,m) ((n) && (m) ? (n)+(m)-1-((n)-1)%(m) : 0)
     /* don't divide by zero */
@@ -43,8 +45,8 @@
 #define FAT16_THRESHOLD 65525
 
 static struct {
-    __u8 media;
-    char *descr;
+    uint8_t media;
+    const char *descr;
 } mediabytes[] = {
     {
     0xf0, "5.25\" or 3.5\" HD floppy"}, {
@@ -58,20 +60,11 @@ static struct {
     0xfe, "5.25\" 160k floppy 1s/40tr/8sec"}, {
 0xff, "5.25\" 320k floppy 2s/40tr/8sec"},};
 
-#if defined __alpha || defined __arm || defined __arm__ || defined __ia64__ || defined __x86_64__ \
- || defined __ppc64__ || defined __bfin__ || defined __MICROBLAZE__
-/* Unaligned fields must first be copied byte-wise */
+/* Unaligned fields must first be accessed byte-wise */
 #define GET_UNALIGNED_W(f)			\
-    ({						\
-	unsigned short __v;			\
-	memcpy( &__v, &f, sizeof(__v) );	\
-	CF_LE_W( *(unsigned short *)&__v );	\
-    })
-#else
-#define GET_UNALIGNED_W(f) CF_LE_W( *(unsigned short *)&f )
-#endif
+    ( (uint16_t)f[0] | ((uint16_t)f[1]<<8) )
 
-static char *get_media_descr(unsigned char media)
+static const char *get_media_descr(unsigned char media)
 {
     int i;
 
@@ -96,14 +89,14 @@ static void dump_boot(DOS_FS * fs, struct boot_sector *b, unsigned lss)
 	/* On Atari, a 24 bit serial number is stored at offset 8 of the boot
 	 * sector */
 	printf("Serial number 0x%x\n",
-	       b->system_id[5] | (b->
-				  system_id[6] << 8) | (b->system_id[7] << 16));
+	       b->system_id[5] | (b->system_id[6] << 8) | (b->
+							   system_id[7] << 16));
     }
     printf("Media byte 0x%02x (%s)\n", b->media, get_media_descr(b->media));
     printf("%10d bytes per logical sector\n", GET_UNALIGNED_W(b->sector_size));
     printf("%10d bytes per cluster\n", fs->cluster_size);
-    printf("%10d reserved sector%s\n", CF_LE_W(b->reserved),
-	   CF_LE_W(b->reserved) == 1 ? "" : "s");
+    printf("%10d reserved sector%s\n", le16toh(b->reserved),
+	   le16toh(b->reserved) == 1 ? "" : "s");
     printf("First FAT starts at byte %llu (sector %llu)\n",
 	   (unsigned long long)fs->fat_start,
 	   (unsigned long long)fs->fat_start / lss);
@@ -117,21 +110,21 @@ static void dump_boot(DOS_FS * fs, struct boot_sector *b, unsigned lss)
 	printf("%10d root directory entries\n", fs->root_entries);
     } else {
 	printf("Root directory start at cluster %lu (arbitrary size)\n",
-	       fs->root_cluster);
+	       (unsigned long)fs->root_cluster);
     }
     printf("Data area starts at byte %llu (sector %llu)\n",
 	   (unsigned long long)fs->data_start,
 	   (unsigned long long)fs->data_start / lss);
-    printf("%10lu data clusters (%llu bytes)\n", fs->clusters,
+    printf("%10lu data clusters (%llu bytes)\n", (unsigned long)fs->clusters,
 	   (unsigned long long)fs->clusters * fs->cluster_size);
-    printf("%u sectors/track, %u heads\n", CF_LE_W(b->secs_track),
-	   CF_LE_W(b->heads));
+    printf("%u sectors/track, %u heads\n", le16toh(b->secs_track),
+	   le16toh(b->heads));
     printf("%10u hidden sectors\n", atari_format ?
 	   /* On Atari, the hidden field is only 16 bit wide and unused */
 	   (((unsigned char *)&b->hidden)[0] |
-	    ((unsigned char *)&b->hidden)[1] << 8) : CF_LE_L(b->hidden));
+	    ((unsigned char *)&b->hidden)[1] << 8) : le32toh(b->hidden));
     sectors = GET_UNALIGNED_W(b->sectors);
-    printf("%10u sectors total\n", sectors ? sectors : CF_LE_L(b->total_sect));
+    printf("%10u sectors total\n", sectors ? sectors : le32toh(b->total_sect));
 }
 
 static void check_backup_boot(DOS_FS * fs, struct boot_sector *b, int lss)
@@ -140,7 +133,7 @@ static void check_backup_boot(DOS_FS * fs, struct boot_sector *b, int lss)
 
     if (!fs->backupboot_start) {
 	printf("There is no backup boot sector.\n");
-	if (CF_LE_W(b->reserved) < 3) {
+	if (le16toh(b->reserved) < 3) {
 	    printf("And there is no space for creating one!\n");
 	    return;
 	}
@@ -152,15 +145,15 @@ static void check_backup_boot(DOS_FS * fs, struct boot_sector *b, int lss)
 	    int bbs;
 	    /* The usual place for the backup boot sector is sector 6. Choose
 	     * that or the last reserved sector. */
-	    if (CF_LE_W(b->reserved) >= 7 && CF_LE_W(b->info_sector) != 6)
+	    if (le16toh(b->reserved) >= 7 && le16toh(b->info_sector) != 6)
 		bbs = 6;
 	    else {
-		bbs = CF_LE_W(b->reserved) - 1;
-		if (bbs == CF_LE_W(b->info_sector))
+		bbs = le16toh(b->reserved) - 1;
+		if (bbs == le16toh(b->info_sector))
 		    --bbs;	/* this is never 0, as we checked reserved >= 3! */
 	    }
 	    fs->backupboot_start = bbs * lss;
-	    b->backup_boot = CT_LE_W(bbs);
+	    b->backup_boot = htole16(bbs);
 	    fs_write(fs->backupboot_start, sizeof(*b), b);
 	    fs_write((loff_t) offsetof(struct boot_sector, backup_boot),
 		     sizeof(b->backup_boot), &b->backup_boot);
@@ -173,18 +166,18 @@ static void check_backup_boot(DOS_FS * fs, struct boot_sector *b, int lss)
     fs_read(fs->backupboot_start, sizeof(b2), &b2);
     if (memcmp(b, &b2, sizeof(b2)) != 0) {
 	/* there are any differences */
-	__u8 *p, *q;
+	uint8_t *p, *q;
 	int i, pos, first = 1;
 	char buf[20];
 
 	printf("There are differences between boot sector and its backup.\n");
-	printf("Differences: (offset:original/backup)\n  ");
+	printf("This is mostly harmless. Differences: (offset:original/backup)\n  ");
 	pos = 2;
-	for (p = (__u8 *) b, q = (__u8 *) & b2, i = 0; i < sizeof(b2);
+	for (p = (uint8_t *) b, q = (uint8_t *) & b2, i = 0; i < sizeof(b2);
 	     ++p, ++q, ++i) {
 	    if (*p != *q) {
 		sprintf(buf, "%s%u:%02x/%02x", first ? "" : ", ",
-			(unsigned)(p - (__u8 *) b), *p, *q);
+			(unsigned)(p - (uint8_t *) b), *p, *q);
 		if (pos + strlen(buf) > 78)
 		    printf("\n  "), pos = 2;
 		printf("%s", buf);
@@ -214,11 +207,11 @@ static void check_backup_boot(DOS_FS * fs, struct boot_sector *b, int lss)
 
 static void init_fsinfo(struct info_sector *i)
 {
-    i->magic = CT_LE_L(0x41615252);
-    i->signature = CT_LE_L(0x61417272);
-    i->free_clusters = CT_LE_L(-1);
-    i->next_cluster = CT_LE_L(2);
-    i->boot_sign = CT_LE_W(0xaa55);
+    i->magic = htole32(0x41615252);
+    i->signature = htole32(0x61417272);
+    i->free_clusters = htole32(-1);
+    i->next_cluster = htole32(2);
+    i->boot_sign = htole16(0xaa55);
 }
 
 static void read_fsinfo(DOS_FS * fs, struct boot_sector *b, int lss)
@@ -234,14 +227,14 @@ static void read_fsinfo(DOS_FS * fs, struct boot_sector *b, int lss)
 	if (interactive && get_key("12", "?") == '1') {
 	    /* search for a free reserved sector (not boot sector and not
 	     * backup boot sector) */
-	    __u32 s;
-	    for (s = 1; s < CF_LE_W(b->reserved); ++s)
-		if (s != CF_LE_W(b->backup_boot))
+	    uint32_t s;
+	    for (s = 1; s < le16toh(b->reserved); ++s)
+		if (s != le16toh(b->backup_boot))
 		    break;
-	    if (s > 0 && s < CF_LE_W(b->reserved)) {
+	    if (s > 0 && s < le16toh(b->reserved)) {
 		init_fsinfo(&i);
 		fs_write((loff_t) s * lss, sizeof(i), &i);
-		b->info_sector = CT_LE_W(s);
+		b->info_sector = htole16(s);
 		fs_write((loff_t) offsetof(struct boot_sector, info_sector),
 			 sizeof(b->info_sector), &b->info_sector);
 		if (fs->backupboot_start)
@@ -257,24 +250,24 @@ static void read_fsinfo(DOS_FS * fs, struct boot_sector *b, int lss)
 	    return;
     }
 
-    fs->fsinfo_start = CF_LE_W(b->info_sector) * lss;
+    fs->fsinfo_start = le16toh(b->info_sector) * lss;
     fs_read(fs->fsinfo_start, sizeof(i), &i);
 
-    if (i.magic != CT_LE_L(0x41615252) ||
-	i.signature != CT_LE_L(0x61417272) || i.boot_sign != CT_LE_W(0xaa55)) {
+    if (i.magic != htole32(0x41615252) ||
+	i.signature != htole32(0x61417272) || i.boot_sign != htole16(0xaa55)) {
 	printf("FSINFO sector has bad magic number(s):\n");
-	if (i.magic != CT_LE_L(0x41615252))
+	if (i.magic != htole32(0x41615252))
 	    printf("  Offset %llu: 0x%08x != expected 0x%08x\n",
 		   (unsigned long long)offsetof(struct info_sector, magic),
-		   CF_LE_L(i.magic), 0x41615252);
-	if (i.signature != CT_LE_L(0x61417272))
+		   le32toh(i.magic), 0x41615252);
+	if (i.signature != htole32(0x61417272))
 	    printf("  Offset %llu: 0x%08x != expected 0x%08x\n",
 		   (unsigned long long)offsetof(struct info_sector, signature),
-		   CF_LE_L(i.signature), 0x61417272);
-	if (i.boot_sign != CT_LE_W(0xaa55))
+		   le32toh(i.signature), 0x61417272);
+	if (i.boot_sign != htole16(0xaa55))
 	    printf("  Offset %llu: 0x%04x != expected 0x%04x\n",
 		   (unsigned long long)offsetof(struct info_sector, boot_sign),
-		   CF_LE_W(i.boot_sign), 0xaa55);
+		   le16toh(i.boot_sign), 0xaa55);
 	if (interactive)
 	    printf("1) Correct\n2) Don't correct (FSINFO invalid then)\n");
 	else
@@ -287,7 +280,45 @@ static void read_fsinfo(DOS_FS * fs, struct boot_sector *b, int lss)
     }
 
     if (fs->fsinfo_start)
-	fs->free_clusters = CF_LE_L(i.free_clusters);
+	fs->free_clusters = le32toh(i.free_clusters);
+}
+
+static char print_fat_dirty_state(void)
+{
+    printf("Dirty bit is set. Fs was not properly unmounted and"
+	   " some data may be corrupt.\n");
+
+    if (interactive) {
+	printf("1) Remove dirty bit\n" "2) No action\n");
+	return get_key("12", "?");
+    } else
+	printf(" Automatically removing dirty bit.\n");
+    return '1';
+}
+
+static void check_fat_state_bit(DOS_FS * fs, void *b)
+{
+    if (fs->fat_bits == 32) {
+	struct boot_sector *b32 = b;
+
+	if (b32->reserved3 & FAT_STATE_DIRTY) {
+	    printf("0x41: ");
+	    if (print_fat_dirty_state() == '1') {
+		b32->reserved3 &= ~FAT_STATE_DIRTY;
+		fs_write(0, sizeof(*b32), b32);
+	    }
+	}
+    } else {
+	struct boot_sector_16 *b16 = b;
+
+	if (b16->reserved2 & FAT_STATE_DIRTY) {
+	    printf("0x25: ");
+	    if (print_fat_dirty_state() == '1') {
+		b16->reserved2 &= ~FAT_STATE_DIRTY;
+		fs_write(0, sizeof(*b16), b16);
+	    }
+	}
+    }
 }
 
 void read_boot(DOS_FS * fs)
@@ -317,16 +348,16 @@ void read_boot(DOS_FS * fs)
 	die("Currently, only 1 or 2 FATs are supported, not %d.\n", b.fats);
     fs->nfats = b.fats;
     sectors = GET_UNALIGNED_W(b.sectors);
-    total_sectors = sectors ? sectors : CF_LE_L(b.total_sect);
+    total_sectors = sectors ? sectors : le32toh(b.total_sect);
     if (verbose)
 	printf("Checking we can access the last sector of the filesystem\n");
     /* Can't access last odd sector anyway, so round down */
     fs_test((loff_t) ((total_sectors & ~1) - 1) * (loff_t) logical_sector_size,
 	    logical_sector_size);
-    fat_length = CF_LE_W(b.fat_length) ?
-	CF_LE_W(b.fat_length) : CF_LE_L(b.fat32_length);
-    fs->fat_start = (loff_t) CF_LE_W(b.reserved) * logical_sector_size;
-    fs->root_start = ((loff_t) CF_LE_W(b.reserved) + b.fats * fat_length) *
+    fat_length = le16toh(b.fat_length) ?
+	le16toh(b.fat_length) : le32toh(b.fat32_length);
+    fs->fat_start = (loff_t) le16toh(b.reserved) * logical_sector_size;
+    fs->root_start = ((loff_t) le16toh(b.reserved) + b.fats * fat_length) *
 	logical_sector_size;
     fs->root_entries = GET_UNALIGNED_W(b.dir_entries);
     fs->data_start = fs->root_start + ROUND_TO_MULTIPLE(fs->root_entries <<
@@ -339,7 +370,7 @@ void read_boot(DOS_FS * fs)
     fs->free_clusters = -1;	/* unknown */
     if (!b.fat_length && b.fat32_length) {
 	fs->fat_bits = 32;
-	fs->root_cluster = CF_LE_L(b.root_cluster);
+	fs->root_cluster = le32toh(b.root_cluster);
 	if (!fs->root_cluster && fs->root_entries)
 	    /* M$ hasn't specified this, but it looks reasonable: If
 	     * root_cluster is 0 but there is a separate root dir
@@ -360,9 +391,10 @@ void read_boot(DOS_FS * fs)
 		   "  but has only %lu clusters, less than the required "
 		   "minimum of %d.\n"
 		   "  This may lead to problems on some systems.\n",
-		   fs->clusters, FAT16_THRESHOLD);
+		   (unsigned long)fs->clusters, FAT16_THRESHOLD);
 
-	fs->backupboot_start = CF_LE_W(b.backup_boot) * logical_sector_size;
+	check_fat_state_bit(fs, &b);
+	fs->backupboot_start = le16toh(b.backup_boot) * logical_sector_size;
 	check_backup_boot(fs, &b, logical_sector_size);
 
 	read_fsinfo(fs, &b, logical_sector_size);
@@ -372,6 +404,7 @@ void read_boot(DOS_FS * fs)
 	fs->fat_bits = (fs->clusters >= FAT12_THRESHOLD) ? 16 : 12;
 	if (fs->clusters >= FAT16_THRESHOLD)
 	    die("Too many clusters (%lu) for FAT16 filesystem.", fs->clusters);
+	check_fat_state_bit(fs, &b);
     } else {
 	/* On Atari, things are more difficult: GEMDOS always uses 12bit FATs
 	 * on floppies, and always 16 bit on harddisks. */
@@ -392,7 +425,7 @@ void read_boot(DOS_FS * fs)
     fs->eff_fat_bits = (fs->fat_bits == 32) ? 28 : fs->fat_bits;
     fs->fat_size = fat_length * logical_sector_size;
 
-    fs->label = calloc(12, sizeof(__u8));
+    fs->label = calloc(12, sizeof(uint8_t));
     if (fs->fat_bits == 12 || fs->fat_bits == 16) {
 	struct boot_sector_16 *b16 = (struct boot_sector_16 *)&b;
 	if (b16->extended_sig == 0x29)
@@ -407,8 +440,8 @@ void read_boot(DOS_FS * fs)
     }
 
     if (fs->clusters >
-	((unsigned long long)fs->fat_size * 8 / fs->fat_bits) - 2)
-	die("File system has %d clusters but only space for %d FAT entries.",
+	((uint64_t)fs->fat_size * 8 / fs->fat_bits) - 2)
+	die("Filesystem has %d clusters but only space for %d FAT entries.",
 	    fs->clusters,
 	    ((unsigned long long)fs->fat_size * 8 / fs->fat_bits) - 2);
     if (!fs->root_entries && !fs->root_cluster)
@@ -430,34 +463,37 @@ void read_boot(DOS_FS * fs)
 
 static void write_boot_label(DOS_FS * fs, char *label)
 {
-    struct boot_sector b;
-    struct boot_sector_16 *b16 = (struct boot_sector_16 *)&b;
-
-    fs_read(0, sizeof(b), &b);
     if (fs->fat_bits == 12 || fs->fat_bits == 16) {
-	if (b16->extended_sig != 0x29) {
-	    b16->extended_sig = 0x29;
-	    b16->serial = 0;
-	    memmove(b16->fs_type, fs->fat_bits == 12 ? "FAT12   " : "FAT16   ",
+	struct boot_sector_16 b16;
+
+	fs_read(0, sizeof(b16), &b16);
+	if (b16.extended_sig != 0x29) {
+	    b16.extended_sig = 0x29;
+	    b16.serial = 0;
+	    memmove(b16.fs_type, fs->fat_bits == 12 ? "FAT12   " : "FAT16   ",
 		    8);
 	}
-	memmove(b16->label, label, 11);
+	memmove(b16.label, label, 11);
+	fs_write(0, sizeof(b16), &b16);
     } else if (fs->fat_bits == 32) {
+	struct boot_sector b;
+
+	fs_read(0, sizeof(b), &b);
 	if (b.extended_sig != 0x29) {
 	    b.extended_sig = 0x29;
 	    b.serial = 0;
 	    memmove(b.fs_type, "FAT32   ", 8);
 	}
 	memmove(b.label, label, 11);
+	fs_write(0, sizeof(b), &b);
+	if (fs->backupboot_start)
+	    fs_write(fs->backupboot_start, sizeof(b), &b);
     }
-    fs_write(0, sizeof(b), &b);
-    if (fs->fat_bits == 32 && fs->backupboot_start)
-	fs_write(fs->backupboot_start, sizeof(b), &b);
 }
 
-static loff_t find_volume_de(DOS_FS * fs, DIR_ENT * de)
+loff_t find_volume_de(DOS_FS * fs, DIR_ENT * de)
 {
-    unsigned long cluster;
+    uint32_t cluster;
     loff_t offset;
     int i;
 
@@ -468,7 +504,7 @@ static loff_t find_volume_de(DOS_FS * fs, DIR_ENT * de)
 	    offset = cluster_start(fs, cluster);
 	    for (i = 0; i * sizeof(DIR_ENT) < fs->cluster_size; i++) {
 		fs_read(offset, sizeof(DIR_ENT), de);
-		if (de->attr & ATTR_VOLUME)
+		if (de->attr != VFAT_LN_ATTR && de->attr & ATTR_VOLUME)
 		    return offset;
 		offset += sizeof(DIR_ENT);
 	    }
@@ -477,7 +513,7 @@ static loff_t find_volume_de(DOS_FS * fs, DIR_ENT * de)
 	for (i = 0; i < fs->root_entries; i++) {
 	    offset = fs->root_start + i * sizeof(DIR_ENT);
 	    fs_read(offset, sizeof(DIR_ENT), de);
-	    if (de->attr & ATTR_VOLUME)
+	    if (de->attr != VFAT_LN_ATTR && de->attr & ATTR_VOLUME)
 		return offset;
 	}
     }
@@ -490,19 +526,33 @@ static void write_volume_label(DOS_FS * fs, char *label)
     time_t now = time(NULL);
     struct tm *mtime = localtime(&now);
     loff_t offset;
+    int created;
     DIR_ENT de;
 
+    created = 0;
     offset = find_volume_de(fs, &de);
-    if (offset == 0)
-	return;
-
+    if (offset == 0) {
+	created = 1;
+	offset = alloc_rootdir_entry(fs, &de, label);
+    }
     memcpy(de.name, label, 11);
-    de.time = CT_LE_W((unsigned short)((mtime->tm_sec >> 1) +
+    de.time = htole16((unsigned short)((mtime->tm_sec >> 1) +
 				       (mtime->tm_min << 5) +
 				       (mtime->tm_hour << 11)));
-    de.date = CT_LE_W((unsigned short)(mtime->tm_mday +
+    de.date = htole16((unsigned short)(mtime->tm_mday +
 				       ((mtime->tm_mon + 1) << 5) +
 				       ((mtime->tm_year - 80) << 9)));
+    if (created) {
+	de.attr = ATTR_VOLUME;
+	de.ctime_ms = 0;
+	de.ctime = de.time;
+	de.cdate = de.date;
+	de.adate = de.date;
+	de.starthi = 0;
+	de.start = 0;
+	de.size = 0;
+    }
+
     fs_write(offset, sizeof(DIR_ENT), &de);
 }
 

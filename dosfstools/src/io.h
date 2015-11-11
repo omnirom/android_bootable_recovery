@@ -2,6 +2,7 @@
 
    Copyright (C) 1993 Werner Almesberger <werner.almesberger@lrc.di.epfl.ch>
    Copyright (C) 1998 Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
+   Copyright (C) 2008-2014 Daniel Baumann <mail@daniel-baumann.ch>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-   On Debian systems, the complete text of the GNU General Public License
+   The complete text of the GNU General Public License
    can be found in /usr/share/common-licenses/GPL-3 file.
 */
 
@@ -26,7 +27,7 @@
 #ifndef _IO_H
 #define _IO_H
 
-#include <sys/types.h>		/* for loff_t */
+#include <fcntl.h>		/* for loff_t */
 
 loff_t llseek(int fd, loff_t offset, int whence);
 
@@ -34,7 +35,7 @@ loff_t llseek(int fd, loff_t offset, int whence);
 
 void fs_open(char *path, int rw);
 
-/* Opens the file system PATH. If RW is zero, the file system is opened
+/* Opens the filesystem PATH. If RW is zero, the filesystem is opened
    read-only, otherwise, it is opened read-write. */
 
 void fs_read(loff_t pos, int size, void *data);
@@ -55,13 +56,13 @@ void fs_write(loff_t pos, int size, void *data);
 
 int fs_close(int write);
 
-/* Closes the file system, performs all pending changes if WRITE is non-zero
+/* Closes the filesystem, performs all pending changes if WRITE is non-zero
    and removes the list of changes. Returns a non-zero integer if the file
    system has been changed since the last fs_open, zero otherwise. */
 
 int fs_changed(void);
 
-/* Determines whether the file system has changed. See fs_close. */
+/* Determines whether the filesystem has changed. See fs_close. */
 
 extern unsigned device_no;
 
