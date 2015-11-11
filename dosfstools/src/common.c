@@ -2,6 +2,7 @@
 
    Copyright (C) 1993 Werner Almesberger <werner.almesberger@lrc.di.epfl.ch>
    Copyright (C) 1998 Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
+   Copyright (C) 2008-2014 Daniel Baumann <mail@daniel-baumann.ch>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-   On Debian systems, the complete text of the GNU General Public License
+   The complete text of the GNU General Public License
    can be found in /usr/share/common-licenses/GPL-3 file.
 */
 
@@ -36,7 +37,7 @@ typedef struct _link {
     struct _link *next;
 } LINK;
 
-void die(char *msg, ...)
+void die(const char *msg, ...)
 {
     va_list args;
 
@@ -47,7 +48,7 @@ void die(char *msg, ...)
     exit(1);
 }
 
-void pdie(char *msg, ...)
+void pdie(const char *msg, ...)
 {
     va_list args;
 
@@ -95,7 +96,7 @@ int min(int a, int b)
     return a < b ? a : b;
 }
 
-char get_key(char *valid, char *prompt)
+char get_key(const char *valid, const char *prompt)
 {
     int ch, okay;
 

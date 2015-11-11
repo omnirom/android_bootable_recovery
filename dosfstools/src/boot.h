@@ -1,6 +1,7 @@
 /* boot.h - Read and analyze ia PC/MS-DOS boot sector
 
    Copyright (C) 1993 Werner Almesberger <werner.almesberger@lrc.di.epfl.ch>
+   Copyright (C) 2008-2014 Daniel Baumann <mail@daniel-baumann.ch>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-   On Debian systems, the complete text of the GNU General Public License
+   The complete text of the GNU General Public License
    can be found in /usr/share/common-licenses/GPL-3 file.
 */
 
@@ -24,6 +25,7 @@
 
 void read_boot(DOS_FS * fs);
 void write_label(DOS_FS * fs, char *label);
+loff_t find_volume_de(DOS_FS * fs, DIR_ENT * de);
 
 /* Reads the boot sector from the currently open device and initializes *FS */
 
