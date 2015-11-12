@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
 }
 #endif //def TWRPMTP
 
-twrpMtp::twrpMtp(int debug_enabled = 0) {
+twrpMtp::twrpMtp(int debug_enabled) {
 	if (debug_enabled)
 		MtpDebug::enableDebug();
 	mtpstorages = new storages;
