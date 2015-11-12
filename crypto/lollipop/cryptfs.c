@@ -1465,7 +1465,7 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
      * the footer, not the key. */
     sprintf(tmp_mount_point, "%s/tmp_mnt", mount_point);
     mkdir(tmp_mount_point, 0755);
-    if (mount(crypto_blkdev, tmp_mount_point, file_system, NULL, NULL) != 0) {
+    if (mount(crypto_blkdev, tmp_mount_point, file_system, 0, NULL) != 0) {
       printf("Error temp mounting decrypted block device '%s'\n", crypto_blkdev);
       delete_crypto_blk_dev(label);
 
