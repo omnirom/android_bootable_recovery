@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_41fe09ce",
+        "filename": "dosfstools/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-11-12T01:33:36Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "620e39b18e630124c0d34b736db8e35ef1e138bb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
