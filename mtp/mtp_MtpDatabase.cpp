@@ -836,8 +836,8 @@ MtpProperty* MyMtpDatabase::getDevicePropertyDesc(MtpDeviceProperty property) {
 
 			// get current value
 			// TODO: add actual values
-			result->setCurrentValue('\0');
-			result->setDefaultValue('\0');
+			result->setCurrentValue(0);
+			result->setDefaultValue(0);
 			break;
 		}
 

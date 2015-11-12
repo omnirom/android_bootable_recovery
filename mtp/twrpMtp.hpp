@@ -33,7 +33,7 @@
 
 class twrpMtp {
 	public:
-		twrpMtp(int debug_enabled /* = 0 */);
+		twrpMtp(int debug_enabled = 0);
 		pthread_t threadserver(void);
 		pid_t forkserver(int mtppipe[2]);
 		void addStorage(std::string display, std::string path, int mtpid, uint64_t maxFileSize);
