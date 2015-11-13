@@ -186,8 +186,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         ALOGE("failed to open %s\n", map_file);
         return -1;
     }
-    FILE* mapf = fdopen(mapfd, "w");
-    unique_file mapf_holder(mapf);
+    std::unique_ptr<FILE, int(*)(FILE*)> mapf(fdopen(mapfd, "w"), fclose);
 
     // Make sure we can write to the status_file.
     if (!android::base::WriteStringToFd("0\n", status_fd)) {
@@ -212,7 +211,8 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     ranges[0] = -1;
     ranges[1] = -1;
 
-    fprintf(mapf, "%s\n%lld %lu\n", blk_dev, (long long)sb.st_size, (unsigned long)sb.st_blksize);
+    fprintf(mapf.get(), "%s\n%lld %lu\n",
+            blk_dev, (long long)sb.st_size, (unsigned long)sb.st_blksize);
 
     unsigned char* buffers[WINDOW_SIZE];
     if (encrypted) {
@@ -309,9 +309,9 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         ++head_block;
     }
 
-    fprintf(mapf, "%d\n", range_used);
+    fprintf(mapf.get(), "%d\n", range_used);
     for (int i = 0; i < range_used; ++i) {
-        fprintf(mapf, "%d %d\n", ranges[i*2], ranges[i*2+1]);
+        fprintf(mapf.get(), "%d %d\n", ranges[i*2], ranges[i*2+1]);
     }
 
     if (fsync(mapfd) == -1) {
