@@ -175,7 +175,7 @@ static int exec_cmd(const char* path, char* const argv[]) {
     return WEXITSTATUS(status);
 }
 
-int format_volume(const char* volume) {
+int format_volume(const char* volume, const char* directory) {
     Volume* v = volume_for_path(volume);
     if (v == NULL) {
         LOGE("unknown volume \"%s\"\n", volume);
@@ -241,7 +241,7 @@ int format_volume(const char* volume) {
         }
         int result;
         if (strcmp(v->fs_type, "ext4") == 0) {
-            result = make_ext4fs(v->blk_device, length, volume, sehandle);
+            result = make_ext4fs_directory(v->blk_device, length, volume, sehandle, directory);
         } else {   /* Has to be f2fs because we checked earlier. */
             if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0 && length < 0) {
                 LOGE("format_volume: crypt footer + negative length (%zd) not supported on %s\n", length, v->fs_type);
@@ -271,6 +271,10 @@ int format_volume(const char* volume) {
 
     LOGE("format_volume: fs_type \"%s\" unsupported\n", v->fs_type);
     return -1;
+}
+
+int format_volume(const char* volume) {
+    return format_volume(volume, NULL);
 }
 
 int setup_install_mounts() {
