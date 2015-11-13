@@ -52,8 +52,11 @@ on boot
     class_start default
 
 # Load properties from /system/ + /factory after fs mount.
-on load_all_props_action
-    load_all_props
+on load_system_props_action
+    load_system_props
+
+on load_persist_props_action
+    load_persist_props
 
 on firmware_mounts_complete
    rm /dev/.booting
@@ -65,10 +68,10 @@ on late-init
     trigger post-fs
     trigger post-fs-data
 
-    # Load properties from /system/ + /factory after fs mount. Place
-    # this in another action so that the load will be scheduled after the prior
-    # issued fs triggers have completed.
-    trigger load_all_props_action
+    trigger load_system_props_action
+
+    # Vendor init lives here
+    trigger load_persist_props_action
 
     # Remove a file to wake up anything waiting for firmware
     trigger firmware_mounts_complete
