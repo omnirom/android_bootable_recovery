@@ -59,15 +59,4 @@ class unique_fd {
     unique_fd& operator=(const unique_fd&) = delete;
 };
 
-// Custom deleter for unique_file to avoid fclose(NULL).
-struct safe_fclose {
-    void operator()(FILE *fp) const {
-        if (fp) {
-            fclose(fp);
-        };
-    }
-};
-
-using unique_file = std::unique_ptr<FILE, safe_fclose>;
-
 #endif  // UNIQUE_FD_H
