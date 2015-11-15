@@ -3619,46 +3619,6 @@
 			<object type="template" name="footer" />
 		</page>
 
-		<page name="installsu">
-			<object type="template" name="header" />
-
-			<object type="text">
-				<placement x="%center_x%" y="%row1_header_y%" placement="5"/>
-				<text>Install SuperSU?</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row2_text_y%" placement="5"/>
-				<text>Your device does not appear to be rooted.</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row3_text_y%" placement="5"/>
-				<text>Install SuperSU now?</text>
-			</object>
-
-			<object type="text">
-				<placement x="%center_x%" y="%row4_text_y%" placement="5"/>
-				<text>This will root your device.</text>
-			</object>
-
-			<object type="button">
-				<placement x="%col_center_x%" y="%row3_y%" />
-				<text>Do Not Install</text>
-				<action function="set">tw_page_done=1</action>
-			</object>
-
-			<object type="slider">
-				<text>Swipe to Install</text>
-				<actions>
-					<action function="set">tw_action=installsu</action>
-					<action function="set">tw_action_text1=Installing SuperSU</action>
-					<action function="set">tw_action_text2=</action>
-					<action function="page">singleaction_page</action>
-				</actions>
-			</object>
-		</page>
-
 		<page name="system_readonly">
 			<object type="template" name="header" />
 
