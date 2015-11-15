@@ -57,7 +57,7 @@ public:
 	bool Wipe();                                                              // Wipes the partition
 	bool Wipe_AndSec();                                                       // Wipes android secure
 	bool Can_Repair();                                                        // Checks to see if we have everything needed to be able to repair the current file system
-	uint64_t Get_Max_FileSize();					  	  //get partition maxFileSie
+	uint64_t Get_Max_FileSize();                                              // get partition maxFileSie
 	bool Repair();                                                            // Repairs the current file system
 	bool Can_Resize();                                                        // Checks to see if we have everything needed to be able to resize the current file system
 	bool Resize();                                                            // Resizes the current file system
@@ -185,7 +185,7 @@ friend class PageManager;
 class TWPartitionManager
 {
 public:
-	TWPartitionManager();													  // Constructor for TWRPartionManager
+	TWPartitionManager();                                                     // Constructor for TWRPartionManager
 	~TWPartitionManager() {}
 
 public:
@@ -222,7 +222,7 @@ public:
 	int Partition_SDCard(void);                                               // Repartitions the sdcard
 	TWPartition *Get_Default_Storage_Partition();                             // Returns a pointer to a default storage partition
 	int Cancel_Backup();                                                      // Signals partition backup to cancel
-	void Clean_Backup_Folder(string Backup_Folder);				  // Clean Backup Folder on Error
+	void Clean_Backup_Folder(string Backup_Folder);                           // Clean Backup Folder on Error
 	int Fix_Permissions();
 	void Get_Partition_List(string ListType, std::vector<PartitionList> *Partition_List);
 	int Fstab_Processed();                                                    // Indicates if the fstab has been processed or not
@@ -249,7 +249,7 @@ private:
 	bool Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count, const unsigned long long *total_restore_size, unsigned long long *already_restored_size);
 	void Output_Partition(TWPartition* Part);
 	TWPartition* Find_Partition_By_MTP_Storage_ID(unsigned int Storage_ID);   // Returns a pointer to a partition based on MTP Storage ID
-	bool Add_Remove_MTP_Storage(TWPartition* Part, int message_type);   // Adds or removes an MTP Storage partition
+	bool Add_Remove_MTP_Storage(TWPartition* Part, int message_type);         // Adds or removes an MTP Storage partition
 	TWPartition* Find_Next_Storage(string Path, string Exclude);
 	int Open_Lun_File(string Partition_Path, string Lun_File);
 	pid_t mtppid;
