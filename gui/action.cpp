@@ -191,7 +191,6 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(killterminal);
 		ADD_ACTION(checkbackupname);
 		ADD_ACTION(adbsideloadcancel);
-		ADD_ACTION(fixsu);
 		ADD_ACTION(startmtp);
 		ADD_ACTION(stopmtp);
 		ADD_ACTION(cancelbackup);
@@ -219,7 +218,6 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(decrypt);
 		ADD_ACTION(adbsideload);
 		ADD_ACTION(openrecoveryscript);
-		ADD_ACTION(installsu);
 		ADD_ACTION(decrypt_backup);
 		ADD_ACTION(repair);
 		ADD_ACTION(resize);
@@ -1568,38 +1566,6 @@ int GUIAction::openrecoveryscript(std::string arg __unused)
 		}
 		operation_end(op_status);
 	}
-	return 0;
-}
-
-int GUIAction::installsu(std::string arg __unused)
-{
-	int op_status = 0;
-
-	operation_start("Install SuperSU");
-	if (simulate) {
-		simulate_progress_bar();
-	} else {
-		if (!TWFunc::Install_SuperSU())
-			op_status = 1;
-	}
-
-	operation_end(op_status);
-	return 0;
-}
-
-int GUIAction::fixsu(std::string arg __unused)
-{
-	int op_status = 0;
-
-	operation_start("Fixing Superuser Permissions");
-	if (simulate) {
-		simulate_progress_bar();
-	} else {
-		LOGERR("Fixing su permissions was deprecated from TWRP.\n");
-		LOGERR("4.3+ ROMs with SELinux will always lose su perms.\n");
-	}
-
-	operation_end(op_status);
 	return 0;
 }
 

@@ -721,14 +721,6 @@ int32_t TWFunc::timespec_diff_ms(timespec& start, timespec& end)
 			((start.tv_sec * 1000) + start.tv_nsec/1000000);
 }
 
-bool TWFunc::Install_SuperSU(void) {
-	if (!PartitionManager.Mount_By_Path("/system", true))
-		return false;
-
-	check_and_run_script("/supersu/install-supersu.sh", "SuperSU");
-	return true;
-}
-
 bool TWFunc::Try_Decrypting_Backup(string Restore_Path, string Password) {
 	DIR* d;
 
