@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_376c639c",
+        "filename": "partitions.hpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-11-15T22:35:07Z",
+      "side": 1,
+      "message": "can you even up the spacing before the comment?",
+      "range": {
+        "startLine": 95,
+        "startChar": 75,
+        "endLine": 95,
+        "endChar": 76
+      },
+      "revId": "1b967ead8ebe330afa19f7a1949f69b1055f2777",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
