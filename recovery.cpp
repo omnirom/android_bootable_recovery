@@ -1015,7 +1015,7 @@ main(int argc, char **argv) {
     // only way recovery should be run with this argument is when it
     // starts a copy of itself from the apply_from_adb() function.
     if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
-        adb_main(0, DEFAULT_ADB_PORT, -1);
+        adb_server_main(0, DEFAULT_ADB_PORT, -1);
         return 0;
     }
 
