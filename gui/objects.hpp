@@ -1097,6 +1097,7 @@ public:
 	virtual int Render(void);
 	virtual int Update(void);
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
 
 protected:
@@ -1117,7 +1118,9 @@ protected:
 		bool active;
 	};
 
+	std::string mSizeVar;
 	size_t mGridSize;
+
 	Dot* mDots;
 	int* mConnectedDots;
 	size_t mConnectedDotsLen;
