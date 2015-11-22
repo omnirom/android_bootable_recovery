@@ -63,6 +63,10 @@
 			<sort name="tw_gui_sort_order" />
 		</style>
 
+		<style name="patternpassword">
+			<size name="tw_gui_pattern_grid_size" default="3" />
+		</style>
+
 		<style name="partitionlist">
 			<style name="scrolllist" />
 			<icon selected="checkbox_true" unselected="checkbox_false" />
@@ -3358,6 +3362,8 @@
 				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
 				<text>Pattern Failed, Please Try Again</text>
 			</object>
+
+			<object type="template" name="pattern_options" />
 
 			<object type="patternpassword">
 				<placement x="%pattern_x%" y="%pattern_y%" w="%pattern_width%" h="%pattern_width%" />
