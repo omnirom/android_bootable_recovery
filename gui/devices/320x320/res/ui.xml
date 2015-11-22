@@ -211,6 +211,7 @@
 		<variable name="pattern_dot_radius" value="7" />
 		<variable name="pattern_line_color" value="#33B5E5" />
 		<variable name="pattern_line_width" value="4" />
+		<variable name="pattern_button_y" value="33" />
 	</variables>
 
 	<templates>
@@ -320,6 +321,40 @@
 				<placement x="%console_x%" y="%row2_y%" w="%console_width%" h="%console_action_height%" />
 				<color foreground="%console_foreground%" background="%console_background%" scroll="%console_scroll%" />
 				<font resource="fixed" />
+			</object>
+		</template>
+
+		<template name="pattern_options">
+			<object type="button">
+				<placement x="%col1_medium_x%" y="%pattern_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>3x3</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_pattern_grid_size=3</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col2_medium_x%" y="%pattern_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>4x4</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_pattern_grid_size=4</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col3_medium_x%" y="%pattern_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>5x5</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_pattern_grid_size=5</action>
+			</object>
+
+			<object type="button">
+				<placement x="%col4_medium_x%" y="%pattern_button_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>6x6</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_pattern_grid_size=6</action>
 			</object>
 		</template>
 

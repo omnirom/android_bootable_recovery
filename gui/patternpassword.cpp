@@ -74,6 +74,14 @@ GUIPatternPassword::GUIPatternPassword(xml_node<>* node)
 	if(child)
 		mPassVar = LoadAttrString(child, "name", "");
 
+	child = FindNode(node, "size");
+	if(child) {
+		mSizeVar = LoadAttrString(child, "name", "");
+
+		// Use the configured default, if set.
+		size_t size = LoadAttrInt(child, "default", mGridSize);
+		Resize(size);
+	}
 
 	if(!mDotImage || !mDotImage->GetResource() || !mActiveDotImage || !mActiveDotImage->GetResource())
 	{
@@ -130,8 +138,9 @@ int GUIPatternPassword::SetRenderPos(int x, int y, int w, int h)
 
 void GUIPatternPassword::CalculateDotPositions(void)
 {
-	const int step_x = (mRenderW - mDotRadius*2) / 2;
-	const int step_y = (mRenderH - mDotRadius*2) / 2;
+	const int num_gaps = mGridSize - 1;
+	const int step_x = (mRenderW - mDotRadius*2) / num_gaps;
+	const int step_y = (mRenderH - mDotRadius*2) / num_gaps;
 	int x = mRenderX;
 	int y = mRenderY;
 
@@ -370,6 +379,18 @@ int GUIPatternPassword::NotifyTouch(TOUCH_STATE state, int x, int y)
 		}
 		default:
 			break;
+	}
+	return 0;
+}
+
+int GUIPatternPassword::NotifyVarChange(const std::string& varName, const std::string& value)
+{
+	if(!isConditionTrue())
+		return 0;
+
+	if(varName == mSizeVar) {
+		Resize(atoi(value.c_str()));
+		mUpdate = true;
 	}
 	return 0;
 }
