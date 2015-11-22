@@ -1132,6 +1132,7 @@ protected:
 	int InDot(int x, int y);
 	bool DotUsed(int dot_idx);
 	static bool IsInRect(int x, int y, int rx, int ry, int rw, int rh);
+	std::string GeneratePassphrase();
 	void PatternDrawn();
 
 	struct Dot {
@@ -1140,8 +1141,9 @@ protected:
 		bool active;
 	};
 
-	Dot mDots[9];
-	int mConnectedDots[9];
+	size_t mGridSize;
+	Dot* mDots;
+	int* mConnectedDots;
 	size_t mConnectedDotsLen;
 	int mCurLineX;
 	int mCurLineY;
