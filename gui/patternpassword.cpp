@@ -185,6 +185,23 @@ int GUIPatternPassword::Update(void)
 	return res;
 }
 
+void GUIPatternPassword::Resize(size_t n) {
+	if(mGridSize == n)
+		return;
+
+	delete[] mDots;
+	delete[] mConnectedDots;
+
+	mGridSize = n;
+	mDots = new Dot[n*n];
+	mConnectedDots = new int[n*n];
+
+	ResetActiveDots();
+	CalculateDotPositions();
+	mTrackingTouch = false;
+	mNeedRender = true;
+}
+
 bool GUIPatternPassword::IsInRect(int x, int y, int rx, int ry, int rw, int rh)
 {
 	return x >= rx && y >= ry && x <= rx+rw && y <= ry+rh;
