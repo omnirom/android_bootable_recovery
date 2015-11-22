@@ -58,6 +58,10 @@
 			<sort name="tw_gui_sort_order" />
 		</style>
 
+		<style name="patternpassword">
+			<size name="tw_gui_pattern_grid_size" default="3" />
+		</style>
+
 		<style name="partitionlist">
 			<style name="scrolllist" />
 			<icon selected="checkbox_true" unselected="checkbox_false" />
@@ -3382,9 +3386,11 @@
 			<object type="text">
 				<condition var1="tw_password_fail" var2="1" />
 				<font resource="font" color="%text_fail_color%"/>
-				<placement x="%center_x%" y="%row2_text_y%" placement="5" />
+				<placement x="%center_x%" y="%row1_text_y%" placement="5" />
 				<text>Pattern Failed, Please Try Again</text>
 			</object>
+
+			<object type="template" name="pattern_options" />
 
 			<object type="patternpassword">
 				<placement x="%pattern_x%" y="%pattern_y%" w="%pattern_width%" h="%pattern_width%" />
@@ -3395,7 +3401,7 @@
 			</object>
 
 			<object type="button">
-				<placement x="%col_center_x%" y="%row4_y%" />
+				<placement x="%col_center_x%" y="%pattern_cancel_y%" />
 				<text>Cancel</text>
 				<actions>
 					<action function="set">tw_page_done=1</action>

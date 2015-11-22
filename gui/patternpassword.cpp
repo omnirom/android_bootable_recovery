@@ -75,6 +75,14 @@ GUIPatternPassword::GUIPatternPassword(xml_node<>* node)
 	if(child)
 		mPassVar = LoadAttrString(child, "name", "");
 
+	child = FindNode(node, "size");
+	if(child) {
+		mSizeVar = LoadAttrString(child, "name", "");
+
+		// Use the configured default, if set.
+		size_t size = LoadAttrInt(child, "default", mGridSize);
+		Resize(size);
+	}
 
 	if(!mDotImage || !mDotImage->GetResource() || !mActiveDotImage || !mActiveDotImage->GetResource())
 	{
@@ -131,8 +139,9 @@ int GUIPatternPassword::SetRenderPos(int x, int y, int w, int h)
 
 void GUIPatternPassword::CalculateDotPositions(void)
 {
-	const int step_x = (mRenderW - mDotRadius*2) / 2;
-	const int step_y = (mRenderH - mDotRadius*2) / 2;
+	const int num_gaps = mGridSize - 1;
+	const int step_x = (mRenderW - mDotRadius*2) / num_gaps;
+	const int step_y = (mRenderH - mDotRadius*2) / num_gaps;
 	int x = mRenderX;
 	int y = mRenderY;
 
@@ -221,15 +230,22 @@ void GUIPatternPassword::Resize(size_t n) {
 	mNeedRender = true;
 }
 
-bool GUIPatternPassword::IsInRect(int x, int y, int rx, int ry, int rw, int rh)
+static int pow(int x, int i)
 {
-	return x >= rx && y >= ry && x <= rx+rw && y <= ry+rh;
+	while(i-- > 1)
+		x *= x;
+	return x;
+}
+
+static bool IsInCircle(int x, int y, int ox, int oy, int r)
+{
+	return pow(x - ox, 2) + pow(y - oy, 2) <= pow(r, 2);
 }
 
 int GUIPatternPassword::InDot(int x, int y)
 {
 	for(size_t i = 0; i < mGridSize * mGridSize; ++i) {
-		if(IsInRect(x, y, mDots[i].x - mDotRadius*1.5, mDots[i].y - mDotRadius*1.5, mDotRadius*6, mDotRadius*6))
+		if(IsInCircle(x, y, mDots[i].x + mDotRadius, mDots[i].y + mDotRadius, mDotRadius*1.5))
 			return i;
 	}
 	return -1;
@@ -371,6 +387,18 @@ int GUIPatternPassword::NotifyTouch(TOUCH_STATE state, int x, int y)
 		}
 		default:
 			break;
+	}
+	return 0;
+}
+
+int GUIPatternPassword::NotifyVarChange(const std::string& varName, const std::string& value)
+{
+	if(!isConditionTrue())
+		return 0;
+
+	if(varName == mSizeVar) {
+		Resize(atoi(value.c_str()));
+		mUpdate = true;
 	}
 	return 0;
 }
