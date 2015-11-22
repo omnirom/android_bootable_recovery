@@ -1104,6 +1104,7 @@ protected:
 	void ResetActiveDots();
 	void ConnectDot(int dot_idx);
 	void ConnectIntermediateDots(int dot_idx);
+	void Resize(size_t size);
 	int InDot(int x, int y);
 	bool DotUsed(int dot_idx);
 	static bool IsInRect(int x, int y, int rx, int ry, int rw, int rh);
