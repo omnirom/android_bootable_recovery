@@ -1115,8 +1115,9 @@ protected:
 		bool active;
 	};
 
-	Dot mDots[9];
-	int mConnectedDots[9];
+	size_t mGridSize;
+	Dot* mDots;
+	int* mConnectedDots;
 	size_t mConnectedDotsLen;
 	int mCurLineX;
 	int mCurLineY;
