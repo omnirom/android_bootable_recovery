@@ -11,8 +11,15 @@ LOCAL_SRC_FILES:= \
 	../twrpDU.cpp
 LOCAL_CFLAGS:= -g -c -W -DBUILD_TWRPTAR_MAIN
 
-LOCAL_C_INCLUDES += bionic external/stlport/stlport
-LOCAL_STATIC_LIBRARIES := libc libtar_static libstlport_static libstdc++
+LOCAL_C_INCLUDES += bionic
+ifeq (,$(filter $(PLATFORM_SDK_VERSION), 23))
+    LOCAL_C_INCLUDES += external/stlport/stlport
+endif
+
+LOCAL_STATIC_LIBRARIES := libc libtar_static libstdc++
+ifeq (,$(filter $(PLATFORM_SDK_VERSION), 23))
+    LOCAL_STATIC_LIBRARIES += libstlport_static
+endif
 
 ifeq ($(TWHAVE_SELINUX), true)
     LOCAL_C_INCLUDES += external/libselinux/include

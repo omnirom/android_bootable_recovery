@@ -7,7 +7,11 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libtwrpmtp
 LOCAL_MODULE_TAGS := optional
 LOCAL_CFLAGS = -D_FILE_OFFSET_BITS=64 -DMTP_DEVICE -DMTP_HOST -fno-strict-aliasing
-LOCAL_C_INCLUDES += $(LOCAL_PATH) bionic external/stlport/stlport frameworks/base/include system/core/include bionic/libc/private/
+LOCAL_C_INCLUDES += $(LOCAL_PATH) bionic frameworks/base/include system/core/include bionic/libc/private/
+ifeq (,$(filter $(PLATFORM_SDK_VERSION), 23))
+    LOCAL_C_INCLUDES += external/stlport/stlport
+endif
+
 LOCAL_SRC_FILES = \
     btree.cpp \
     MtpDataPacket.cpp \
