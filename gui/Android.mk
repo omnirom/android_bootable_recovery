@@ -70,7 +70,11 @@ ifeq ($(TW_ROUND_SCREEN), true)
     LOCAL_CFLAGS += -DTW_ROUND_SCREEN
 endif
 
-LOCAL_C_INCLUDES += bionic external/stlport/stlport system/core/libpixelflinger/include
+LOCAL_C_INCLUDES += bionic system/core/libpixelflinger/include
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
+    LOCAL_C_INCLUDES += external/stlport/stlport
+endif
+
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
 
 include $(BUILD_STATIC_LIBRARY)
