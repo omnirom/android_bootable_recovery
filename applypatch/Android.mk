@@ -39,19 +39,6 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 
 LOCAL_CLANG := true
-LOCAL_SRC_FILES := main.cpp
-LOCAL_MODULE := applypatch_static
-LOCAL_FORCE_STATIC_EXECUTABLE := true
-LOCAL_MODULE_TAGS := eng
-LOCAL_C_INCLUDES += bootable/recovery
-LOCAL_STATIC_LIBRARIES += libapplypatch libbase libmtdutils libmincrypt libbz
-LOCAL_STATIC_LIBRARIES += libz libcutils libc
-
-include $(BUILD_EXECUTABLE)
-
-include $(CLEAR_VARS)
-
-LOCAL_CLANG := true
 LOCAL_SRC_FILES := imgdiff.cpp utils.cpp bsdiff.cpp
 LOCAL_MODULE := imgdiff
 LOCAL_FORCE_STATIC_EXECUTABLE := true
