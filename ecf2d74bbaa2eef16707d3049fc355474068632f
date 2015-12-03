@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_f7139659",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 709,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-03T00:13:09Z",
+      "side": 1,
+      "message": "This doesn\u0027t make sense. Why are you messing with non-data-media storage inside the Setup_Data_Media() function?",
+      "revId": "ecf2d74bbaa2eef16707d3049fc355474068632f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_7708a62d",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2133,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-03T00:13:09Z",
+      "side": 1,
+      "message": "Comments not needed, drop them.",
+      "revId": "ecf2d74bbaa2eef16707d3049fc355474068632f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_d720929d",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2134,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-03T00:13:09Z",
+      "side": 1,
+      "message": "if this needs to be changed, it should be done inside tw_set_default_metadata()",
+      "revId": "ecf2d74bbaa2eef16707d3049fc355474068632f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_b7250ead",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2143,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-03T00:13:09Z",
+      "side": 1,
+      "message": "I don\u0027t see this as being a real issue. Are there totally messed-up android trees out there that actually override the default file_contexts of /data/media at external/sepolicy (for ANY version of android)?",
+      "revId": "ecf2d74bbaa2eef16707d3049fc355474068632f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_971a0a6c",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2145,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-03T00:13:09Z",
+      "side": 1,
+      "message": "same as comment above",
+      "revId": "ecf2d74bbaa2eef16707d3049fc355474068632f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
