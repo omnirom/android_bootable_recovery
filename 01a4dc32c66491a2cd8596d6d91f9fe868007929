@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_97556afe",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-03T01:38:45Z",
+      "side": 1,
+      "message": "Please don\u0027t move LOCAL_C_INCLUDES down here. Create a new ifeq above.",
+      "revId": "01a4dc32c66491a2cd8596d6d91f9fe868007929",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_775ae62d",
+        "filename": "gui/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-03T01:38:45Z",
+      "side": 1,
+      "message": "Keep this right next to the previous LOCAL_C_INCLUDES",
+      "revId": "01a4dc32c66491a2cd8596d6d91f9fe868007929",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_573fe2af",
+        "filename": "mtp/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-03T01:38:45Z",
+      "side": 1,
+      "message": "Please don\u0027t move LOCAL_C_INCLUDES down here. Create a new ifeq above.",
+      "revId": "01a4dc32c66491a2cd8596d6d91f9fe868007929",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
