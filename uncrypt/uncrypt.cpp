@@ -53,8 +53,8 @@
 
 #include <memory>
 
-#include <base/file.h>
-#include <base/strings.h>
+#include <android-base/file.h>
+#include <android-base/strings.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
 #include <fs_mgr.h>
