@@ -163,6 +163,22 @@ int fixPermissions::fixDataInternalContexts(void) {
 	selabel_close(sehandle);
 	return 0;
 }
+
+int fixPermissions::fixSingleContext(string path) {
+	int ret = -1;
+	struct stat sb;
+
+	sehandle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
+	if (!sehandle) {
+		LOGINFO("Unable to open /file_contexts\n");
+		return -1;
+	}
+	if (TWFunc::Path_Exists(path))
+		ret = restorecon(path, &sb); // non-recursive
+
+	selabel_close(sehandle);
+	return ret;
+}
 #endif
 
 int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_apps) {
@@ -254,6 +270,37 @@ int fixPermissions::fixContexts()
 	fixDataInternalContexts();
 	gui_print("Done fixing contexts.\n");
 	return 0;
+#endif
+	gui_print("Not fixing SELinux contexts; support not compiled in.\n");
+	return -1;
+}
+
+int fixPermissions::fixContext(string path, bool recursive)
+{
+#ifdef HAVE_SELINUX
+	int ret = -1;
+
+	// fixContextsRecursively() only targets dirs inside path, so start
+	// by restoring the context for path itself
+	ret = fixSingleContext(path);
+
+	if (!ret && recursive) {
+		gui_print("Fixing contexts recursively for %s\n", path.c_str());
+		sehandle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
+
+		if (!sehandle) {
+			LOGINFO("Unable to open /file_contexts\n");
+			return -1;
+		}
+		if (TWFunc::Path_Exists(path))
+			ret = fixContextsRecursively(path, 0);
+
+		selabel_close(sehandle);
+	} else {
+		gui_print("Fixing context for %s\n", path.c_str());
+		ret = fixSingleContext(path);
+	}
+	return ret;
 #endif
 	gui_print("Not fixing SELinux contexts; support not compiled in.\n");
 	return -1;

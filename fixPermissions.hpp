@@ -20,6 +20,7 @@ class fixPermissions {
 		~fixPermissions();
 		int fixPerms(bool enable_debug, bool remove_data_for_missing_apps);
 		int fixContexts();
+		int fixContext(string path, bool recursive);
 		int fixDataInternalContexts(void);
 
 	private:
@@ -36,6 +37,7 @@ class fixPermissions {
 		int restorecon(string entry, struct stat *sb);
 		int fixDataDataContexts(void);
 		int fixContextsRecursively(string path, int level);
+		int fixSingleContext(string path);
 
 		struct package {
 			string pkgName;
