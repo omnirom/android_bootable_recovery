@@ -523,13 +523,7 @@ int DataManager::SetValue(const string varName, int value, int persist /* = 0 */
 	if (varName == "tw_use_external_storage") {
 		string str;
 
-		if (GetIntValue(TW_HAS_DUAL_STORAGE) == 1) {
-			if (value == 0) {
-				str = GetStrValue(TW_INTERNAL_PATH);
-			} else {
-				str = GetStrValue(TW_EXTERNAL_PATH);
-			}
-		} else if (GetIntValue(TW_HAS_INTERNAL) == 1)
+		if (GetIntValue(TW_HAS_INTERNAL) == 1)
 			str = GetStrValue(TW_INTERNAL_PATH);
 		else
 			str = GetStrValue(TW_EXTERNAL_PATH);
