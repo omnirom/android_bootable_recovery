@@ -2224,6 +2224,9 @@ void TWPartition::Find_Actual_Block_Device(void) {
 
 void TWPartition::Recreate_Media_Folder(void) {
 	string Command;
+#ifdef HAVE_SELINUX
+	fixPermissions perms;
+#endif
 
 	if (!Mount(true)) {
 		LOGERR("Unable to recreate /data/media folder.\n");
@@ -2240,12 +2243,12 @@ void TWPartition::Recreate_Media_Folder(void) {
 		mkdir(EXPAND(TW_INTERNAL_STORAGE_PATH), 0770);
 #endif
 #ifdef HAVE_SELINUX
-		// Afterwards, we will try to set the
-		// default metadata that we were hopefully able to get during
-		// early boot.
+		// default metadata hopefully obtained during early boot
 		tw_set_default_metadata("/data/media");
 		if (!Internal_path.empty())
 			tw_set_default_metadata(Internal_path.c_str());
+
+		perms.fixContext("/data", true);
 #endif
 		// Toggle mount to ensure that "internal sdcard" gets mounted
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
