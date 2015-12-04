@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "b8f5b13e_172efa8b",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 709,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2015-12-04T00:46:26Z",
+      "side": 1,
+      "message": "I was under the impression INTERNAL_STORAGE_PATH was the path for /data/media",
+      "parentUuid": "b8f5b13e_f7139659",
+      "revId": "ecf2d74bbaa2eef16707d3049fc355474068632f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b8f5b13e_7708a62d",
         "filename": "partition.cpp",
         "patchSetId": 4
@@ -64,6 +82,24 @@
       "writtenOn": "2015-12-03T00:13:09Z",
       "side": 1,
       "message": "I don\u0027t see this as being a real issue. Are there totally messed-up android trees out there that actually override the default file_contexts of /data/media at external/sepolicy (for ANY version of android)?",
+      "revId": "ecf2d74bbaa2eef16707d3049fc355474068632f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_f72a7675",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2143,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2015-12-04T00:46:26Z",
+      "side": 1,
+      "message": "When one converts /data to f2fs or ext4 (whichever), everything in /data is wiped.  Upon reboot into TWRP, the /data/media folder is recreated and tw_set_default_metadata does NOT retrieve the correct metadata because there is nothing to retrieve.  If one then proceeds to install ROM or whatever, ROM will indefinitely hand (not boot) due to the improper metadata.  This was the reason I was making any of the changes, I was going crazy trying to figure out why things weren\u0027t booting.",
+      "parentUuid": "b8f5b13e_b7250ead",
       "revId": "ecf2d74bbaa2eef16707d3049fc355474068632f",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
