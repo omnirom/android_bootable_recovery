@@ -34,9 +34,9 @@
 #include <linux/xattr.h>
 #include <inttypes.h>
 
-#include <base/parseint.h>
-#include <base/strings.h>
-#include <base/stringprintf.h>
+#include <android-base/parseint.h>
+#include <android-base/strings.h>
+#include <android-base/stringprintf.h>
 
 #include "bootloader.h"
 #include "applypatch/applypatch.h"

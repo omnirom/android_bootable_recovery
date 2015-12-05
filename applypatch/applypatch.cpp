@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <base/strings.h>
+#include <android-base/strings.h>
 
 #include "mincrypt/sha.h"
 #include "applypatch.h"

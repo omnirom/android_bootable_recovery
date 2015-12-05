@@ -35,7 +35,7 @@
 #include "wear_ui.h"
 #include "ui.h"
 #include "cutils/properties.h"
-#include "base/strings.h"
+#include "android-base/strings.h"
 
 static int char_width;
 static int char_height;

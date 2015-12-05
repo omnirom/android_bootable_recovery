@@ -30,8 +30,8 @@
 
 #include <vector>
 
-#include <base/strings.h>
-#include <base/stringprintf.h>
+#include <android-base/strings.h>
+#include <android-base/stringprintf.h>
 #include <cutils/properties.h>
 
 #include "common.h"
