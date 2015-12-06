@@ -136,4 +136,5 @@ include $(LOCAL_PATH)/minui/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/uncrypt/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
+    $(LOCAL_PATH)/update_verifier/Android.mk \
     $(LOCAL_PATH)/applypatch/Android.mk
