@@ -498,6 +498,8 @@ static uint64_t count_blocks(char *filename, int *remainder)
 
 static void check_mount(char *device_name)
 {
+/* older versions of Bionic don't have setmntent (4.x) or an incomplete impl (5.x) */
+#ifdef MOUNTED
     FILE *f;
     struct mntent *mnt;
 
@@ -507,6 +509,7 @@ static void check_mount(char *device_name)
 	if (strcmp(device_name, mnt->mnt_fsname) == 0)
 	    die("%s contains a mounted filesystem.");
     endmntent(f);
+#endif
 }
 
 /* Establish the geometry and media parameters for the device */
