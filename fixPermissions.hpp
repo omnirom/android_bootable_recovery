@@ -35,7 +35,6 @@ class fixPermissions {
 		int fixDir(const string& dir, int diruid, int dirgid, mode_t dirmode, int fileuid, int filegid, mode_t filemode);
 		int fixDataData(string dataDir);
 		int restorecon(string entry, struct stat *sb);
-		int fixDataDataContexts(void);
 		int fixContextsRecursively(string path, int level);
 		int fixPathContextHandler(string path, bool recursive);
 

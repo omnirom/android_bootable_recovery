@@ -83,20 +83,6 @@ int fixPermissions::restorecon(string entry, struct stat *sb) {
 	return 0;
 }
 
-int fixPermissions::fixDataDataContexts(void) {
-	string dir = "/data/data/";
-	sehandle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
-	if (!sehandle) {
-		LOGINFO("Unable to open /file_contexts\n");
-		return 0;
-	}
-	if (TWFunc::Path_Exists(dir)) {
-		fixContextsRecursively(dir, 0);
-	}
-	selabel_close(sehandle);
-	return 0;
-}
-
 int fixPermissions::fixContextsRecursively(string name, int level) {
 	DIR *d;
 	struct dirent *de;
@@ -268,8 +254,7 @@ int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_app
 int fixPermissions::fixContexts()
 {
 #ifdef HAVE_SELINUX
-	gui_print("Fixing /data/data/ contexts.\n");
-	fixDataDataContexts();
+	gui_print("Fixing /data/media contexts.\n");
 	fixDataInternalContexts();
 	gui_print("Done fixing contexts.\n");
 	return 0;
