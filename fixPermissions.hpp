@@ -19,8 +19,7 @@ class fixPermissions {
 		fixPermissions();
 		~fixPermissions();
 		int fixPerms(bool enable_debug, bool remove_data_for_missing_apps);
-		int fixContexts();
-		int fixDataInternalContexts(void);
+		int fixDataContexts();
 		int fixPathContext(string path, bool recursive);
 
 	private:
@@ -34,9 +33,11 @@ class fixPermissions {
 		int fixAllFiles(string directory, int uid, int gid, mode_t file_perms);
 		int fixDir(const string& dir, int diruid, int dirgid, mode_t dirmode, int fileuid, int filegid, mode_t filemode);
 		int fixDataData(string dataDir);
+#ifdef HAVE_SELINUX
 		int restorecon(string entry, struct stat *sb);
 		int fixContextsRecursively(string path, int level);
 		int fixPathContextHandler(string path, bool recursive);
+#endif
 
 		struct package {
 			string pkgName;

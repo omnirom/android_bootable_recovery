@@ -21,7 +21,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <string.h>
+#include <stdio.h>
 #include <libgen.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -101,52 +101,12 @@ int fixPermissions::fixContextsRecursively(string name, int level) {
 			path = name + "/" + de->d_name;
 			restorecon(path, &sb);
 			fixContextsRecursively(path, level + 1);
-		}
-		else {
+		} else {
 			path = name + "/" + de->d_name;
 			restorecon(path, &sb);
 		}
 	} while ((de = readdir(d)));
 	closedir(d);
-	return 0;
-}
-
-int fixPermissions::fixDataInternalContexts(void) {
-	DIR *d;
-	struct dirent *de;
-	struct stat sb;
-	string dir, androiddir;
-	sehandle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
-	if (!sehandle) {
-		LOGINFO("Unable to open /file_contexts\n");
-		return 0;
-	}
-	// TODO: what about /data/media/1 etc.?
-	if (TWFunc::Path_Exists("/data/media/0"))
-		dir = "/data/media/0";
-	else
-		dir = "/data/media";
-	if (!TWFunc::Path_Exists(dir)) {
-		LOGINFO("fixDataInternalContexts: '%s' does not exist!\n", dir.c_str());
-		return 0;
-	}
-	LOGINFO("Fixing %s contexts\n", dir.c_str());
-	restorecon(dir, &sb);
-	d = opendir(dir.c_str());
-
-	while (( de = readdir(d)) != NULL) {
-		stat(de->d_name, &sb);
-		string f;
-		f = dir + "/" + de->d_name;
-		restorecon(f, &sb);
-	}
-	closedir(d);
-
-	androiddir = dir + "/Android/";
-	if (TWFunc::Path_Exists(androiddir)) {
-		fixContextsRecursively(androiddir, 0);
-	}
-	selabel_close(sehandle);
 	return 0;
 }
 
@@ -251,18 +211,6 @@ int fixPermissions::fixPerms(bool enable_debug, bool remove_data_for_missing_app
 	return 0;
 }
 
-int fixPermissions::fixContexts()
-{
-#ifdef HAVE_SELINUX
-	gui_print("Fixing /data/media contexts.\n");
-	fixDataInternalContexts();
-	gui_print("Done fixing contexts.\n");
-	return 0;
-#endif
-	gui_print("Not fixing SELinux contexts; support not compiled in.\n");
-	return -1;
-}
-
 int fixPermissions::fixPathContext(string path, bool recursive)
 {
 #ifdef HAVE_SELINUX
@@ -277,6 +225,32 @@ int fixPermissions::fixPathContext(string path, bool recursive)
 		gui_print("Fixing context for %s\n", path.c_str());
 
 	return fixPathContextHandler(path, recursive);
+#else
+	gui_print("Not fixing SELinux contexts; support not compiled in.\n");
+	return -1;
+#endif
+}
+
+int fixPermissions::fixDataContexts()
+{
+#ifdef HAVE_SELINUX
+	int i = 0, ret = -1;
+	char str[15];
+	string dir;
+
+	do {
+		/* to_string() is buggy in some g++ versions */
+		snprintf(str, 15, "/data/media/%d", i);
+		dir = std::string(str);
+		ret = fixPathContext(dir, true);
+	} while (!ret && i++ < 10); // Assumes maximum of 10 Android users
+
+	/* Path /data/media/0 does not exist -- assume pre-Android 4.2 */
+	if (!i)
+		ret = fixPathContext("/data/media", true);
+
+	gui_print("Done fixing contexts.\n");
+	return 0;
 #else
 	gui_print("Not fixing SELinux contexts; support not compiled in.\n");
 	return -1;
