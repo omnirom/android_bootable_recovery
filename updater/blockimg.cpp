@@ -65,16 +65,9 @@ struct RangeSet {
     std::vector<size_t> pos;  // Actual limit is INT_MAX.
 };
 
-static void parse_range(const char* range_text, RangeSet& rs) {
+static void parse_range(const std::string& range_text, RangeSet& rs) {
 
-    if (range_text == nullptr) {
-        fprintf(stderr, "failed to parse range: null range\n");
-        exit(1);
-    }
-
-    std::vector<std::string> pieces = android::base::Split(std::string(range_text), ",");
-    long int val;
-
+    std::vector<std::string> pieces = android::base::Split(range_text, ",");
     if (pieces.size() < 3) {
         goto err;
     }
@@ -120,7 +113,7 @@ static void parse_range(const char* range_text, RangeSet& rs) {
     return;
 
 err:
-    fprintf(stderr, "failed to parse range '%s'\n", range_text);
+    fprintf(stderr, "failed to parse range '%s'\n", range_text.c_str());
     exit(1);
 }
 
@@ -360,25 +353,49 @@ static int WriteBlocks(const RangeSet& tgt, const std::vector<uint8_t>& buffer, 
     return 0;
 }
 
+// Parameters for transfer list command functions
+struct CommandParameters {
+    std::vector<std::string> tokens;
+    size_t cpos;
+    const char* cmdname;
+    const char* cmdline;
+    std::string freestash;
+    std::string stashbase;
+    bool canwrite;
+    int createdstash;
+    int fd;
+    bool foundwrites;
+    bool isunresumable;
+    int version;
+    size_t written;
+    NewThreadInfo nti;
+    pthread_t thread;
+    std::vector<uint8_t> buffer;
+    uint8_t* patch_start;
+};
+
 // Do a source/target load for move/bsdiff/imgdiff in version 1.
-// 'wordsave' is the save_ptr of a strtok_r()-in-progress.  We expect
-// to parse the remainder of the string as:
+// We expect to parse the remainder of the parameter tokens as:
 //
 //    <src_range> <tgt_range>
 //
 // The source range is loaded into the provided buffer, reallocating
 // it to make it larger if necessary.
 
-static int LoadSrcTgtVersion1(char** wordsave, RangeSet& tgt, size_t& src_blocks,
+static int LoadSrcTgtVersion1(CommandParameters& params, RangeSet& tgt, size_t& src_blocks,
         std::vector<uint8_t>& buffer, int fd) {
+
+    if (params.cpos + 1 >= params.tokens.size()) {
+        fprintf(stderr, "invalid parameters\n");
+        return -1;
+    }
+
     // <src_range>
-    char* word = strtok_r(nullptr, " ", wordsave);
     RangeSet src;
-    parse_range(word, src);
+    parse_range(params.tokens[params.cpos++], src);
 
     // <tgt_range>
-    word = strtok_r(nullptr, " ", wordsave);
-    parse_range(word, tgt);
+    parse_range(params.tokens[params.cpos++], tgt);
 
     allocate(src.size * BLOCKSIZE, buffer);
     int rc = ReadBlocks(src, buffer, fd);
@@ -694,18 +711,15 @@ static int CreateStash(State* state, int maxblocks, const char* blockdev, std::s
     return 0; // Using existing directory
 }
 
-static int SaveStash(const std::string& base, char** wordsave, std::vector<uint8_t>& buffer,
-        int fd, bool usehash) {
-    if (!wordsave) {
-        return -1;
-    }
+static int SaveStash(CommandParameters& params, const std::string& base,
+        std::vector<uint8_t>& buffer, int fd, bool usehash) {
 
-    char *id_tok = strtok_r(nullptr, " ", wordsave);
-    if (id_tok == nullptr) {
-        fprintf(stderr, "missing id field in stash command\n");
+    // <stash_id> <src_range>
+    if (params.cpos + 1 >= params.tokens.size()) {
+        fprintf(stderr, "missing id and/or src range fields in stash command\n");
         return -1;
     }
-    std::string id(id_tok);
+    const std::string& id = params.tokens[params.cpos++];
 
     size_t blocks = 0;
     if (usehash && LoadStash(base, id, true, &blocks, buffer, false) == 0) {
@@ -715,9 +729,8 @@ static int SaveStash(const std::string& base, char** wordsave, std::vector<uint8
         return 0;
     }
 
-    char* word = strtok_r(nullptr, " ", wordsave);
     RangeSet src;
-    parse_range(word, src);
+    parse_range(params.tokens[params.cpos++], src);
 
     allocate(src.size * BLOCKSIZE, buffer);
     if (ReadBlocks(src, buffer, fd) == -1) {
@@ -738,13 +751,12 @@ static int SaveStash(const std::string& base, char** wordsave, std::vector<uint8
     return WriteStash(base, id, blocks, buffer, false, nullptr);
 }
 
-static int FreeStash(const std::string& base, const char* id) {
-    if (base.empty() || id == nullptr) {
+static int FreeStash(const std::string& base, const std::string& id) {
+    if (base.empty() || id.empty()) {
         return -1;
     }
 
-    std::string fn = GetStashFileName(base, std::string(id), "");
-
+    std::string fn = GetStashFileName(base, id, "");
     DeleteFile(fn, nullptr);
 
     return 0;
@@ -768,8 +780,7 @@ static void MoveRange(std::vector<uint8_t>& dest, const RangeSet& locs,
 }
 
 // Do a source/target load for move/bsdiff/imgdiff in version 2.
-// 'wordsave' is the save_ptr of a strtok_r()-in-progress.  We expect
-// to parse the remainder of the string as one of:
+// We expect to parse the remainder of the parameter tokens as one of:
 //
 //    <tgt_range> <src_block_count> <src_range>
 //        (loads data from source image only)
@@ -785,25 +796,35 @@ static void MoveRange(std::vector<uint8_t>& dest, const RangeSet& locs,
 // reallocated if needed to accommodate the source data.  *tgt is the
 // target RangeSet.  Any stashes required are loaded using LoadStash.
 
-static int LoadSrcTgtVersion2(char** wordsave, RangeSet& tgt, size_t& src_blocks,
+static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& src_blocks,
         std::vector<uint8_t>& buffer, int fd, const std::string& stashbase, bool* overlap) {
+
+    // At least it needs to provide three parameters: <tgt_range>,
+    // <src_block_count> and "-"/<src_range>.
+    if (params.cpos + 2 >= params.tokens.size()) {
+        fprintf(stderr, "invalid parameters\n");
+        return -1;
+    }
+
     // <tgt_range>
-    char* word = strtok_r(nullptr, " ", wordsave);
-    parse_range(word, tgt);
+    parse_range(params.tokens[params.cpos++], tgt);
 
     // <src_block_count>
-    word = strtok_r(nullptr, " ", wordsave);
-    android::base::ParseUint(word, &src_blocks);
+    const std::string& token = params.tokens[params.cpos++];
+    if (!android::base::ParseUint(token.c_str(), &src_blocks)) {
+        fprintf(stderr, "invalid src_block_count \"%s\"\n", token.c_str());
+        return -1;
+    }
 
     allocate(src_blocks * BLOCKSIZE, buffer);
 
     // "-" or <src_range> [<src_loc>]
-    word = strtok_r(nullptr, " ", wordsave);
-    if (word[0] == '-' && word[1] == '\0') {
+    if (params.tokens[params.cpos] == "-") {
         // no source ranges, only stashes
+        params.cpos++;
     } else {
         RangeSet src;
-        parse_range(word, src);
+        parse_range(params.tokens[params.cpos++], src);
         int res = ReadBlocks(src, buffer, fd);
 
         if (overlap) {
@@ -814,64 +835,45 @@ static int LoadSrcTgtVersion2(char** wordsave, RangeSet& tgt, size_t& src_blocks
             return -1;
         }
 
-        word = strtok_r(nullptr, " ", wordsave);
-        if (word == nullptr) {
+        if (params.cpos >= params.tokens.size()) {
             // no stashes, only source range
             return 0;
         }
 
         RangeSet locs;
-        parse_range(word, locs);
+        parse_range(params.tokens[params.cpos++], locs);
         MoveRange(buffer, locs, buffer);
     }
 
-    // <[stash_id:stash-range]>
-    char* colonsave;
-    while ((word = strtok_r(nullptr, " ", wordsave)) != nullptr) {
+    // <[stash_id:stash_range]>
+    while (params.cpos < params.tokens.size()) {
         // Each word is a an index into the stash table, a colon, and
         // then a rangeset describing where in the source block that
         // stashed data should go.
-        colonsave = nullptr;
-        char* colon = strtok_r(word, ":", &colonsave);
+        std::vector<std::string> tokens = android::base::Split(params.tokens[params.cpos++], ":");
+        if (tokens.size() != 2) {
+            fprintf(stderr, "invalid parameter\n");
+            return -1;
+        }
 
         std::vector<uint8_t> stash;
-        int res = LoadStash(stashbase, std::string(colon), false, nullptr, stash, true);
+        int res = LoadStash(stashbase, tokens[0], false, nullptr, stash, true);
 
         if (res == -1) {
             // These source blocks will fail verification if used later, but we
             // will let the caller decide if this is a fatal failure
-            fprintf(stderr, "failed to load stash %s\n", colon);
+            fprintf(stderr, "failed to load stash %s\n", tokens[0].c_str());
             continue;
         }
 
-        colon = strtok_r(nullptr, ":", &colonsave);
         RangeSet locs;
-        parse_range(colon, locs);
+        parse_range(tokens[1], locs);
 
         MoveRange(buffer, locs, stash);
     }
 
     return 0;
 }
-
-// Parameters for transfer list command functions
-struct CommandParameters {
-    char* cmdname;
-    char* cpos;
-    char* freestash;
-    std::string stashbase;
-    bool canwrite;
-    int createdstash;
-    int fd;
-    bool foundwrites;
-    bool isunresumable;
-    int version;
-    size_t written;
-    NewThreadInfo nti;
-    pthread_t thread;
-    std::vector<uint8_t> buffer;
-    uint8_t* patch_start;
-};
 
 // Do a source/target load for move/bsdiff/imgdiff in version 3.
 //
@@ -893,26 +895,26 @@ struct CommandParameters {
 static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& src_blocks,
         bool onehash, bool& overlap) {
 
-    char* srchash = strtok_r(nullptr, " ", &params.cpos);
-    if (srchash == nullptr) {
+    if (params.cpos >= params.tokens.size()) {
         fprintf(stderr, "missing source hash\n");
         return -1;
     }
 
-    char* tgthash = nullptr;
+    std::string srchash = params.tokens[params.cpos++];
+    std::string tgthash;
+
     if (onehash) {
         tgthash = srchash;
     } else {
-        tgthash = strtok_r(nullptr, " ", &params.cpos);
-
-        if (tgthash == nullptr) {
+        if (params.cpos >= params.tokens.size()) {
             fprintf(stderr, "missing target hash\n");
             return -1;
         }
+        tgthash = params.tokens[params.cpos++];
     }
 
-    if (LoadSrcTgtVersion2(&params.cpos, tgt, src_blocks, params.buffer, params.fd,
-            params.stashbase, &overlap) == -1) {
+    if (LoadSrcTgtVersion2(params, tgt, src_blocks, params.buffer, params.fd, params.stashbase,
+            &overlap) == -1) {
         return -1;
     }
 
@@ -931,7 +933,8 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
         // If source and target blocks overlap, stash the source blocks so we can
         // resume from possible write errors
         if (overlap) {
-            fprintf(stderr, "stashing %zu overlapping blocks to %s\n", src_blocks, srchash);
+            fprintf(stderr, "stashing %zu overlapping blocks to %s\n", src_blocks,
+                    srchash.c_str());
 
             bool stash_exists = false;
             if (WriteStash(params.stashbase, srchash, src_blocks, params.buffer, true,
@@ -971,9 +974,9 @@ static int PerformCommandMove(CommandParameters& params) {
     RangeSet tgt;
 
     if (params.version == 1) {
-        status = LoadSrcTgtVersion1(&params.cpos, tgt, blocks, params.buffer, params.fd);
+        status = LoadSrcTgtVersion1(params, tgt, blocks, params.buffer, params.fd);
     } else if (params.version == 2) {
-        status = LoadSrcTgtVersion2(&params.cpos, tgt, blocks, params.buffer, params.fd,
+        status = LoadSrcTgtVersion2(params, tgt, blocks, params.buffer, params.fd,
                 params.stashbase, nullptr);
     } else if (params.version >= 3) {
         status = LoadSrcTgtVersion3(params, tgt, blocks, true, overlap);
@@ -1003,9 +1006,9 @@ static int PerformCommandMove(CommandParameters& params) {
 
     }
 
-    if (params.freestash) {
+    if (!params.freestash.empty()) {
         FreeStash(params.stashbase, params.freestash);
-        params.freestash = nullptr;
+        params.freestash.clear();
     }
 
     params.written += tgt.size;
@@ -1014,28 +1017,33 @@ static int PerformCommandMove(CommandParameters& params) {
 }
 
 static int PerformCommandStash(CommandParameters& params) {
-    return SaveStash(params.stashbase, &params.cpos, params.buffer, params.fd,
+    return SaveStash(params, params.stashbase, params.buffer, params.fd,
             (params.version >= 3));
 }
 
 static int PerformCommandFree(CommandParameters& params) {
+    // <stash_id>
+    if (params.cpos >= params.tokens.size()) {
+        fprintf(stderr, "missing stash id in free command\n");
+        return -1;
+    }
+
     if (params.createdstash || params.canwrite) {
-        return FreeStash(params.stashbase, params.cpos);
+        return FreeStash(params.stashbase, params.tokens[params.cpos++]);
     }
 
     return 0;
 }
 
 static int PerformCommandZero(CommandParameters& params) {
-    char* range = strtok_r(nullptr, " ", &params.cpos);
 
-    if (range == nullptr) {
+    if (params.cpos >= params.tokens.size()) {
         fprintf(stderr, "missing target blocks for zero\n");
         return -1;
     }
 
     RangeSet tgt;
-    parse_range(range, tgt);
+    parse_range(params.tokens[params.cpos++], tgt);
 
     fprintf(stderr, "  zeroing %zu blocks\n", tgt.size);
 
@@ -1066,14 +1074,14 @@ static int PerformCommandZero(CommandParameters& params) {
 }
 
 static int PerformCommandNew(CommandParameters& params) {
-    char* range = strtok_r(nullptr, " ", &params.cpos);
 
-    if (range == nullptr) {
+    if (params.cpos >= params.tokens.size()) {
+        fprintf(stderr, "missing target blocks for new\n");
         return -1;
     }
 
     RangeSet tgt;
-    parse_range(range, tgt);
+    parse_range(params.tokens[params.cpos++], tgt);
 
     if (params.canwrite) {
         fprintf(stderr, " writing %zu blocks of new data\n", tgt.size);
@@ -1105,33 +1113,32 @@ static int PerformCommandNew(CommandParameters& params) {
 
 static int PerformCommandDiff(CommandParameters& params) {
 
-    const std::string logparams(params.cpos);
-    char* value = strtok_r(nullptr, " ", &params.cpos);
-
-    if (value == nullptr) {
-        fprintf(stderr, "missing patch offset for %s\n", params.cmdname);
+    // <offset> <length>
+    if (params.cpos + 1 >= params.tokens.size()) {
+        fprintf(stderr, "missing patch offset or length for %s\n", params.cmdname);
         return -1;
     }
 
-    size_t offset = strtoul(value, nullptr, 0);
-
-    value = strtok_r(nullptr, " ", &params.cpos);
-
-    if (value == nullptr) {
-        fprintf(stderr, "missing patch length for %s\n", params.cmdname);
+    size_t offset;
+    if (!android::base::ParseUint(params.tokens[params.cpos++].c_str(), &offset)) {
+        fprintf(stderr, "invalid patch offset\n");
         return -1;
     }
 
-    size_t len = strtoul(value, nullptr, 0);
+    size_t len;
+    if (!android::base::ParseUint(params.tokens[params.cpos++].c_str(), &len)) {
+        fprintf(stderr, "invalid patch offset\n");
+        return -1;
+    }
 
     RangeSet tgt;
     size_t blocks = 0;
     bool overlap = false;
     int status = 0;
     if (params.version == 1) {
-        status = LoadSrcTgtVersion1(&params.cpos, tgt, blocks, params.buffer, params.fd);
+        status = LoadSrcTgtVersion1(params, tgt, blocks, params.buffer, params.fd);
     } else if (params.version == 2) {
-        status = LoadSrcTgtVersion2(&params.cpos, tgt, blocks, params.buffer, params.fd,
+        status = LoadSrcTgtVersion2(params, tgt, blocks, params.buffer, params.fd,
                 params.stashbase, nullptr);
     } else if (params.version >= 3) {
         status = LoadSrcTgtVersion3(params, tgt, blocks, false, overlap);
@@ -1180,13 +1187,13 @@ static int PerformCommandDiff(CommandParameters& params) {
             }
         } else {
             fprintf(stderr, "skipping %zu blocks already patched to %zu [%s]\n",
-                blocks, tgt.size, logparams.c_str());
+                blocks, tgt.size, params.cmdline);
         }
     }
 
-    if (params.freestash) {
+    if (!params.freestash.empty()) {
         FreeStash(params.stashbase, params.freestash);
-        params.freestash = nullptr;
+        params.freestash.clear();
     }
 
     params.written += tgt.size;
@@ -1210,15 +1217,13 @@ static int PerformCommandErase(CommandParameters& params) {
         return -1;
     }
 
-    char* range = strtok_r(nullptr, " ", &params.cpos);
-
-    if (range == nullptr) {
+    if (params.cpos >= params.tokens.size()) {
         fprintf(stderr, "missing target blocks for erase\n");
         return -1;
     }
 
     RangeSet tgt;
-    parse_range(range, tgt);
+    parse_range(params.tokens[params.cpos++], tgt);
 
     if (params.canwrite) {
         fprintf(stderr, " erasing %zu blocks\n", tgt.size);
@@ -1278,7 +1283,6 @@ static unsigned int HashString(const char *s) {
 
 static Value* PerformBlockImageUpdate(const char* name, State* state, int /* argc */, Expr* argv[],
         const Command* commands, size_t cmdcount, bool dryrun) {
-
     CommandParameters params;
     memset(&params, 0, sizeof(params));
     params.canwrite = !dryrun;
@@ -1368,10 +1372,14 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         }
     }
 
-    // The data in transfer_list_value is not necessarily null-terminated, so we need
-    // to copy it to a new buffer and add the null that strtok_r will need.
+    // Copy all the lines in transfer_list_value into std::string for
+    // processing.
     const std::string transfer_list(transfer_list_value->data, transfer_list_value->size);
     std::vector<std::string> lines = android::base::Split(transfer_list, "\n");
+    if (lines.size() < 2) {
+        ErrorAbort(state, "too few lines in the transfer list [%zd]\n", lines.size());
+        return StringValue(strdup(""));
+    }
 
     // First line in transfer list is the version number
     if (!android::base::ParseInt(lines[0].c_str(), &params.version, 1, 4)) {
@@ -1394,6 +1402,11 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
 
     size_t start = 2;
     if (params.version >= 2) {
+        if (lines.size() < 4) {
+            ErrorAbort(state, "too few lines in the transfer list [%zu]\n", lines.size());
+            return StringValue(strdup(""));
+        }
+
         // Third line is how many stash entries are needed simultaneously
         fprintf(stderr, "maximum stash entries %s\n", lines[2].c_str());
 
@@ -1405,7 +1418,6 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         }
 
         int res = CreateStash(state, stash_max_blocks, blockdev_filename->data, params.stashbase);
-
         if (res == -1) {
             return StringValue(strdup(""));
         }
@@ -1433,17 +1445,15 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
             continue;
         }
 
-        char* line = strdup(line_str.c_str());
-        params.cmdname = strtok_r(line, " ", &params.cpos);
-
-        if (params.cmdname == nullptr) {
-            fprintf(stderr, "missing command [%s]\n", line);
-            goto pbiudone;
-        }
+        params.tokens = android::base::Split(line_str, " ");
+        params.cpos = 0;
+        params.cmdname = params.tokens[params.cpos++].c_str();
+        params.cmdline = line_str.c_str();
 
         unsigned int cmdhash = HashString(params.cmdname);
         const Command* cmd = reinterpret_cast<const Command*>(mzHashTableLookup(cmdht, cmdhash,
-                params.cmdname, CompareCommandNames, false));
+                const_cast<char*>(params.cmdname), CompareCommandNames,
+                false));
 
         if (cmd == nullptr) {
             fprintf(stderr, "unexpected command [%s]\n", params.cmdname);
@@ -1481,12 +1491,10 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     rc = 0;
 
 pbiudone:
-    if (params.fd != -1) {
-        if (fsync(params.fd) == -1) {
-            fprintf(stderr, "fsync failed: %s\n", strerror(errno));
-        }
-        close(params.fd);
+    if (fsync(params.fd) == -1) {
+        fprintf(stderr, "fsync failed: %s\n", strerror(errno));
     }
+    // params.fd will be automatically closed because of the fd_holder above.
 
     // Only delete the stash if the update cannot be resumed, or it's
     // a verification run and we created the stash.
@@ -1525,6 +1533,9 @@ pbiudone:
 //    stash <stash_id> <src_range>
 //      - (version 2+ only) load the given source range and stash
 //        the data in the given slot of the stash table.
+//
+//    free <stash_id>
+//      - (version 3+ only) free the given stash data.
 //
 // The creator of the transfer list will guarantee that no block
 // is read (ie, used as the source for a patch or move) after it
@@ -1692,7 +1703,7 @@ Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[
             }
 
             if (fh.pread(buffer, BLOCKSIZE, (off64_t)j * BLOCKSIZE) != BLOCKSIZE) {
-                ErrorAbort(state, "failed to recover %s (block %d): %s", filename->data,
+                ErrorAbort(state, "failed to recover %s (block %zu): %s", filename->data,
                     j, strerror(errno));
                 return StringValue(strdup(""));
             }
