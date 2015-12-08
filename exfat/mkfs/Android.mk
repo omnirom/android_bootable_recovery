@@ -10,7 +10,7 @@ LOCAL_SRC_FILES =  cbm.c fat.c main.c mkexfat.c rootdir.c uct.c uctc.c vbr.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 					$(commands_recovery_local_path)/exfat/libexfat \
 					$(commands_recovery_local_path)/fuse/include
-LOCAL_SHARED_LIBRARIES += libz libc libexfat libdl 
+LOCAL_SHARED_LIBRARIES += libz libc libexfat_twrp libdl
 LOCAL_STATIC_LIBRARIES += libfusetwrp
 
 include $(BUILD_EXECUTABLE)
