@@ -32,25 +32,21 @@
  * A/B OTA package format in place.
  */
 
-#include <cutils/klog.h>
 #include <string.h>
 
 #include <hardware/boot_control.h>
 
 #define LOG_TAG       "update_verifier"
-#define INFO(x...)    KLOG_INFO(LOG_TAG, x)
-#define ERROR(x...)   KLOG_ERROR(LOG_TAG, x)
+#include <log/log.h>
 
 int main(int argc, char** argv) {
-  klog_init();
-  klog_set_level(6);
   for (int i = 1; i < argc; i++) {
-    INFO("Started with arg %d: %s\n", i, argv[i]);
+    SLOGI("Started with arg %d: %s\n", i, argv[i]);
   }
 
   const hw_module_t* hw_module;
   if (hw_get_module("bootctrl", &hw_module) != 0) {
-    ERROR("Error getting bootctrl module.\n");
+    SLOGE("Error getting bootctrl module.\n");
     return -1;
   }
 
@@ -60,7 +56,7 @@ int main(int argc, char** argv) {
 
   unsigned current_slot = module->getCurrentSlot(module);
   int bootable = module->isSlotBootable(module, current_slot);
-  INFO("Booting slot %u: isSlotBootable=%d\n", current_slot, bootable);
+  SLOGI("Booting slot %u: isSlotBootable=%d\n", current_slot, bootable);
 
   if (bootable == 0) {
     // The current slot has not booted successfully.
@@ -73,12 +69,12 @@ int main(int argc, char** argv) {
 
     int ret = module->markBootSuccessful(module);
     if (ret != 0) {
-      ERROR("Error marking booted successfully: %s\n", strerror(-ret));
+      SLOGE("Error marking booted successfully: %s\n", strerror(-ret));
       return -1;
     }
-    INFO("Marked slot %u as booted successfully.\n", current_slot);
+    SLOGI("Marked slot %u as booted successfully.\n", current_slot);
   }
 
-  INFO("Leaving update_verifier.\n");
+  SLOGI("Leaving update_verifier.\n");
   return 0;
 }
