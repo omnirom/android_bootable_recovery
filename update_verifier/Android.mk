@@ -19,6 +19,6 @@ include $(CLEAR_VARS)
 LOCAL_CLANG := true
 LOCAL_SRC_FILES := update_verifier.cpp
 LOCAL_MODULE := update_verifier
-LOCAL_SHARED_LIBRARIES := libcutils libhardware
+LOCAL_SHARED_LIBRARIES := libhardware liblog
 
 include $(BUILD_EXECUTABLE)
