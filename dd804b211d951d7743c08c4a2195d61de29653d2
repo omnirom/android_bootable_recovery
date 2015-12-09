@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_9a0d8ff1",
+        "filename": "Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-09T02:30:03Z",
+      "side": 1,
+      "message": "ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)",
+      "revId": "dd804b211d951d7743c08c4a2195d61de29653d2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_7a12cb0c",
+        "filename": "gui/Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-09T02:30:03Z",
+      "side": 1,
+      "message": "ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)",
+      "revId": "dd804b211d951d7743c08c4a2195d61de29653d2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_5af707cf",
+        "filename": "mtp/Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-09T02:30:03Z",
+      "side": 1,
+      "message": "ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)",
+      "revId": "dd804b211d951d7743c08c4a2195d61de29653d2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_3af443c8",
+        "filename": "twrpTarMain/Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-09T02:30:03Z",
+      "side": 1,
+      "message": "ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)",
+      "revId": "dd804b211d951d7743c08c4a2195d61de29653d2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_1a017fb5",
+        "filename": "twrpTarMain/Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-09T02:30:03Z",
+      "side": 1,
+      "message": "ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)",
+      "revId": "dd804b211d951d7743c08c4a2195d61de29653d2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
