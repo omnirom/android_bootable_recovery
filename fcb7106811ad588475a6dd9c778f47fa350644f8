@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_9a246f5f",
+        "filename": "fixPermissions.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 285,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-09T02:48:21Z",
+      "side": 1,
+      "message": "This could be made into LOGINFO if preferred.",
+      "revId": "fcb7106811ad588475a6dd9c778f47fa350644f8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
