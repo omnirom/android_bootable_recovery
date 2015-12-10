@@ -1451,6 +1451,7 @@ int GUIAction::decrypt(std::string arg __unused)
 					LOGINFO("Got default contexts and file mode for storage files.\n");
 				}
 			}
+			PartitionManager.Decrypt_Adopted();
 		}
 	}
 

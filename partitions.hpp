@@ -74,6 +74,7 @@ public:
 	bool Flash_Image(string Filename);                                        // Flashes an image to the partition
 	void Change_Mount_Read_Only(bool new_value);                              // Changes Mount_Read_Only to new_value
 	int Check_Lifetime_Writes();
+	int Decrypt_Adopted();
 
 public:
 	string Current_File_System;                                               // Current file system
@@ -111,6 +112,7 @@ private:
 	bool Wipe_F2FS();                                                         // Uses mkfs.f2fs to wipe
 	bool Wipe_NTFS();                                                         // Uses mkntfs to wipe
 	bool Wipe_Data_Without_Wiping_Media();                                    // Uses rm -rf to wipe but does not wipe /data/media
+	bool Wipe_Data_Without_Wiping_Media_Func(const string& parent);           // Uses rm -rf to wipe but does not wipe /data/media
 	bool Backup_Tar(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid); // Backs up using tar for file systems
 	bool Backup_DD(string backup_folder);                                     // Backs up using dd for emmc memory types
 	bool Backup_Dump_Image(string backup_folder);                             // Backs up using dump_image for MTD memory types
@@ -174,6 +176,7 @@ private:
 	bool Retain_Layout_Version;                                               // Retains the .layout_version file during a wipe (needed on devices like Sony Xperia T where /data and /data/media are separate partitions)
 	bool Can_Flash_Img;                                                       // Indicates if this partition can have images flashed to it via the GUI
 	bool Mount_Read_Only;                                                     // Only mount this partition as read-only
+	bool Is_Adopted_Storage;                                                  // Indicates that this partition is for adopted storage (android_expand)
 
 friend class TWPartitionManager;
 friend class DataManager;
@@ -238,6 +241,7 @@ public:
 	void Translate_Partition(const char* path, const char* resource_name, const char* default_value);
 	void Translate_Partition(const char* path, const char* resource_name, const char* default_value, const char* storage_resource_name, const char* storage_default_value);
 	void Translate_Partition_Display_Names();                                 // Updates display names based on translations
+	void Decrypt_Adopted();
 
 	TWAtomicInt stop_backup;
 
