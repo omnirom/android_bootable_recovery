@@ -165,6 +165,9 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			DataManager::SetValue("TW_CRYPTO_TYPE", password_type);
 		}
 	}
+	if (Decrypt_Data && (!Decrypt_Data->Is_Encrypted || Decrypt_Data->Is_Decrypted) && Decrypt_Data->Mount(false)) {
+		Decrypt_Adopted();
+	}
 #endif
 	Update_System_Details();
 	UnMount_Main_Partitions();
@@ -274,6 +277,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Mount_To_Decrypt ");
 	if (Part->Can_Flash_Img)
 		printf("Can_Flash_Img ");
+	if (Part->Is_Adopted_Storage)
+		printf("Is_Adopted_Storage ");
 	printf("\n");
 	if (!Part->SubPartition_Of.empty())
 		printf("   SubPartition_Of: %s\n", Part->SubPartition_Of.c_str());
@@ -2283,4 +2288,24 @@ void TWPartitionManager::Translate_Partition_Display_Names() {
 
 	// This updates the text on all of the storage selection buttons in the GUI
 	DataManager::SetBackupFolder();
+}
+
+void TWPartitionManager::Decrypt_Adopted() {
+#ifdef TW_INCLUDE_CRYPTO
+	if (!Mount_By_Path("/data", false)) {
+		LOGERR("Cannot decrypt adopted storage because /data will not mount\n");
+		return;
+	}
+	LOGINFO("Decrypt adopted storage starting\n");
+	std::vector<TWPartition*>::iterator adopt;
+	for (adopt = Partitions.begin(); adopt != Partitions.end(); adopt++) {
+		if ((*adopt)->Removable && (*adopt)->Is_Present) {
+			if ((*adopt)->Decrypt_Adopted() == 0)
+				Output_Partition((*adopt));
+		}
+	}
+#else
+	LOGINFO("Decrypt_Adopted: no crypto support\n");
+	return;
+#endif
 }
