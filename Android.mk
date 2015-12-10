@@ -415,6 +415,13 @@ ifeq ($(TW_INCLUDE_NTFS_3G),true)
         ntfsfix \
         mkntfs
 endif
+ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
+ifeq ($(shell test $(CM_PLATFORM_SDK_VERSION) -ge 3; echo $$?),0)
+    LOCAL_ADDITIONAL_DEPENDENCIES += \
+        fsck.f2fs \
+        mkfs.f2fs
+endif
+endif
 
 include $(BUILD_EXECUTABLE)
 
