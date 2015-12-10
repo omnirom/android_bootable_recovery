@@ -221,6 +221,9 @@ extern "C" {
   int cryptfs_verify_passwd(char *newpw);
   int cryptfs_get_password_type(void);
   int delete_crypto_blk_dev(char *name);
+  int cryptfs_setup_ext_volume(const char* label, const char* real_blkdev,
+          const unsigned char* key, int keysize, char* out_crypto_blkdev);
+  int cryptfs_revert_ext_volume(const char* label);
 #ifdef __cplusplus
 }
 #endif

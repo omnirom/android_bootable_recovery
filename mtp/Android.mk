@@ -3,7 +3,6 @@ LOCAL_PATH := $(call my-dir)
 # Build libtwrpmtp library
 
 include $(CLEAR_VARS)
-
 LOCAL_MODULE := libtwrpmtp
 LOCAL_MODULE_TAGS := optional
 LOCAL_CFLAGS = -D_FILE_OFFSET_BITS=64 -DMTP_DEVICE -DMTP_HOST -fno-strict-aliasing

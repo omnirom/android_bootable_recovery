@@ -1077,6 +1077,12 @@
 				<text>{@format_data_ptr3=removes encryption on internal storage.}</text>
 			</text>
 
+			<text style="text_m_fail">
+				<condition var1="tw_has_adopted_storage" var2="1"/>
+				<placement x="%center_x%" y="%row5_y%" placement="5"/>
+				<text>{@format_data_adopted=Including Adopted Storage}</text>
+			</text>
+
 			<text style="text_m">
 				<placement x="%center_x%" y="%row6_y%" placement="5"/>
 				<text>{@format_data_undo=This cannot be undone.}</text>
