@@ -26,6 +26,7 @@
 #include <dirent.h>
 #include <iostream>
 #include <sstream>
+#include <sys/param.h>
 
 #ifdef TW_INCLUDE_CRYPTO
 	#include "cutils/properties.h"
@@ -52,6 +53,7 @@ extern "C" {
 
 #ifdef TW_INCLUDE_CRYPTO
 	#include "crypto/lollipop/cryptfs.h"
+	#include "gpt/gpt.h"
 #else
 	#define CRYPT_FOOTER_OFFSET 0x4000
 #endif
@@ -158,6 +160,7 @@ TWPartition::TWPartition() {
 	MTP_Storage_ID = 0;
 	Can_Flash_Img = false;
 	Mount_Read_Only = false;
+	Is_Adopted_Storage = false;
 }
 
 TWPartition::~TWPartition(void) {
@@ -359,6 +362,24 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Backup_Display_Name = Display_Name;
 			Storage_Name = Display_Name;
 			Mount_Read_Only = true;
+		} else if (Mount_Point == "/adopted_sd") {
+			UnMount(false); // added in case /data is mounted as tmpfs for qcom hardware decrypt
+			Display_Name = "Adopted SD";
+			Backup_Display_Name = Display_Name;
+			Storage_Name = Display_Name;
+			Wipe_Available_in_GUI = true;
+			Wipe_During_Factory_Reset = true;
+			Can_Be_Backed_Up = true;
+			Can_Encrypt_Backup = true;
+			Use_Userdata_Encryption = true;
+			Is_Storage = true;
+			/*if (datamedia)
+				Setup_Data_Media();*/
+			/*if (datamedia)
+				Recreate_Media_Folder();*/
+			Symlink_Mount_Point = "/adopted_sdcard";
+			Storage_Name = "Adopted Storage";
+			Is_Adopted_Storage = true;
 		}
 #ifdef TW_EXTERNAL_STORAGE_PATH
 		if (Mount_Point == EXPAND(TW_EXTERNAL_STORAGE_PATH)) {
@@ -702,28 +723,38 @@ void TWPartition::Setup_AndSec(void) {
 
 void TWPartition::Setup_Data_Media() {
 	LOGINFO("Setting up '%s' as data/media emulated storage.\n", Mount_Point.c_str());
-	Storage_Name = "Internal Storage";
+	if (Storage_Name.empty() || Storage_Name == "Data")
+		Storage_Name = "Internal Storage";
 	Has_Data_Media = true;
 	Is_Storage = true;
 	Is_Settings_Storage = true;
-	Storage_Path = "/data/media";
+	Storage_Path = Mount_Point + "/media";
 	Symlink_Path = Storage_Path;
-	if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
-		Make_Dir("/emmc", false);
-		Symlink_Mount_Point = "/emmc";
-	} else {
-		Make_Dir("/sdcard", false);
-		Symlink_Mount_Point = "/sdcard";
+	if (Mount_Point == "/data") {
+		if (strcmp(EXPAND(TW_EXTERNAL_STORAGE_PATH), "/sdcard") == 0) {
+			Make_Dir("/emmc", false);
+			Symlink_Mount_Point = "/emmc";
+		} else {
+			Make_Dir("/sdcard", false);
+			Symlink_Mount_Point = "/sdcard";
+		}
+		if (Mount(false) && TWFunc::Path_Exists(Mount_Point + "/media/0")) {
+			Storage_Path = Mount_Point + "/media/0";
+			Symlink_Path = Storage_Path;
+			DataManager::SetValue(TW_INTERNAL_PATH, Mount_Point + "/media/0");
+			UnMount(true);
+		}
+		DataManager::SetValue("tw_has_internal", 1);
+		DataManager::SetValue("tw_has_data_media", 1);
+	} else if (!Symlink_Mount_Point.empty()) {
+		Make_Dir(Symlink_Mount_Point, false);
+		if (Mount(false) && TWFunc::Path_Exists(Mount_Point + "/media/0")) {
+			Storage_Path = Mount_Point + "/media/0";
+			Symlink_Path = Storage_Path;
+			UnMount(true);
+		}
 	}
-	if (Mount(false) && TWFunc::Path_Exists("/data/media/0")) {
-		Storage_Path = "/data/media/0";
-		Symlink_Path = Storage_Path;
-		DataManager::SetValue(TW_INTERNAL_PATH, "/data/media/0");
-		UnMount(true);
-	}
-	DataManager::SetValue("tw_has_internal", 1);
-	DataManager::SetValue("tw_has_data_media", 1);
-	du.add_absolute_dir("/data/media");
+	du.add_absolute_dir(Mount_Point + "/media");
 }
 
 void TWPartition::Find_Real_Block_Device(string& Block, bool Display_Error) {
@@ -2179,7 +2210,7 @@ bool TWPartition::Update_Size(bool Display_Error) {
 	if (Has_Data_Media) {
 		if (Mount(Display_Error)) {
 			unsigned long long data_media_used, actual_data;
-			Used = du.Get_Folder_Size("/data");
+			Used = du.Get_Folder_Size(Mount_Point);
 			Backup_Size = Used;
 			int bak = (int)(Used / 1048576LLU);
 			int fre = (int)(Free / 1048576LLU);
@@ -2224,13 +2255,14 @@ void TWPartition::Find_Actual_Block_Device(void) {
 
 void TWPartition::Recreate_Media_Folder(void) {
 	string Command;
+	string Media_Path = Mount_Point + "/media";
 
 	if (!Mount(true)) {
-		LOGERR("Unable to recreate /data/media folder.\n");
-	} else if (!TWFunc::Path_Exists("/data/media")) {
+		LOGERR("Unable to recreate '%s' folder.\n", Media_Path.c_str());
+	} else if (!TWFunc::Path_Exists(Media_Path)) {
 		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
-		LOGINFO("Recreating /data/media folder.\n");
-		mkdir("/data/media", 0770);
+		LOGINFO("Recreating %s folder.\n", Media_Path.c_str());
+		mkdir(Media_Path.c_str(), 0770);
 		string Internal_path = DataManager::GetStrValue("tw_internal_path");
 		if (!Internal_path.empty()) {
 			LOGINFO("Recreating %s folder.\n", Internal_path.c_str());
@@ -2243,7 +2275,7 @@ void TWPartition::Recreate_Media_Folder(void) {
 		// Afterwards, we will try to set the
 		// default metadata that we were hopefully able to get during
 		// early boot.
-		tw_set_default_metadata("/data/media");
+		tw_set_default_metadata(Media_Path.c_str());
 		if (!Internal_path.empty())
 			tw_set_default_metadata(Internal_path.c_str());
 #endif
@@ -2378,4 +2410,65 @@ int TWPartition::Check_Lifetime_Writes() {
 	}
 	Mount_Read_Only = original_read_only;
 	return ret;
+}
+
+int TWPartition::Decrypt_Adopted() {
+	int ret = 0;
+	LOGINFO("starting Decrypt_Adopted\n");
+	int fd = open(Primary_Block_Device.c_str(), O_RDONLY);
+	if (fd < 0) {
+		LOGINFO("failed to open '%s'\n", Primary_Block_Device.c_str());
+		return 1;
+	}
+	char type_guid[80];
+	char part_guid[80];
+	ret = gpt_disk_get_partition_info(fd, 2, type_guid, part_guid);
+	if (ret == 0) {
+		LOGINFO("type: '%s'\n", type_guid);
+		LOGINFO("part: '%s'\n", part_guid);
+		if (strcmp(type_guid, TWGptAndroidExpand) == 0) {
+			LOGINFO("android_expand found\n");
+			std::string expand_key_file = "/data/misc/vold/expand_";
+			expand_key_file += part_guid;
+			expand_key_file += ".key";
+			LOGINFO("key file is '%s'\n", expand_key_file.c_str());
+			char crypto_blkdev[MAXPATHLEN];
+			std::string thekey;
+			int fdkey = open(expand_key_file.c_str(), O_RDONLY);
+			if (fdkey < 0) {
+				LOGINFO("failed to open key file\n");
+				close(fd);
+				return 1;
+			}
+			char buf[512];
+			ssize_t n;
+			while ((n = read(fdkey, &buf[0], sizeof(buf))) > 0) {
+				thekey.append(buf, n);
+			}
+			close(fdkey);
+			unsigned char* key = (unsigned char*) thekey.data();
+			cryptfs_revert_ext_volume(part_guid);
+			ret = cryptfs_setup_ext_volume(part_guid, "/dev/block/mmcblk1p2", key, thekey.size(), crypto_blkdev);
+			if (ret == 0) {
+				LOGINFO("adopted storage new block device: '%s'\n", crypto_blkdev);
+				Decrypted_Block_Device = crypto_blkdev;
+				Is_Decrypted = true;
+				Is_Encrypted = true;
+				Setup_Data_Media();
+				Recreate_Media_Folder();
+				if (!Mount(false)) {
+					LOGERR("Failed to mount decrypted adopted storage device\n");
+					cryptfs_revert_ext_volume(part_guid);
+				} else {
+					PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
+				}
+			} else {
+				LOGERR("Failed to setup adopted storage decryption\n");
+			}
+		}
+	} else {
+		LOGINFO("Failed to get gpt disk partition info\n");
+	}
+	close(fd);
+	return 0;
 }

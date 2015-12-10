@@ -164,6 +164,9 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			DataManager::SetValue("TW_CRYPTO_TYPE", password_type);
 		}
 	}
+	if (Decrypt_Data && (!Decrypt_Data->Is_Encrypted || Decrypt_Data->Is_Decrypted) && Decrypt_Data->Mount(false)) {
+		Decrypt_Adopted();
+	}
 #endif
 	Update_System_Details();
 	UnMount_Main_Partitions();
@@ -2260,4 +2263,18 @@ bool TWPartitionManager::Flash_Image(string Filename) {
 	}
 	gui_print_color("highlight", "[IMAGE FLASH COMPLETED]\n\n");
 	return true;
+}
+
+void TWPartitionManager::Decrypt_Adopted() {
+	if (!Mount_By_Path("/data", false)) {
+		LOGERR("Cannot decrypt adopted storage because /data will not mount\n");
+		return;
+	}
+	std::vector<TWPartition*>::iterator adopt;
+	for (adopt = Partitions.begin(); adopt != Partitions.end(); adopt++) {
+		if ((*adopt)->Is_Adopted_Storage) {
+			(*adopt)->Decrypt_Adopted();
+			Output_Partition((*adopt));
+		}
+	}
 }

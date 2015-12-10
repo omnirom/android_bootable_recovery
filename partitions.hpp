@@ -74,6 +74,7 @@ public:
 	bool Flash_Image(string Filename);                                        // Flashes an image to the partition
 	void Change_Mount_Read_Only(bool new_value);                              // Changes Mount_Read_Only to new_value
 	int Check_Lifetime_Writes();
+	int Decrypt_Adopted();
 
 public:
 	string Current_File_System;                                               // Current file system
@@ -173,6 +174,7 @@ private:
 	bool Retain_Layout_Version;                                               // Retains the .layout_version file during a wipe (needed on devices like Sony Xperia T where /data and /data/media are separate partitions)
 	bool Can_Flash_Img;                                                       // Indicates if this partition can have images flashed to it via the GUI
 	bool Mount_Read_Only;                                                     // Only mount this partition as read-only
+	bool Is_Adopted_Storage;                                                  // Indicates that this partition is for adopted storage (android_expand)
 
 friend class TWPartitionManager;
 friend class DataManager;
@@ -233,6 +235,7 @@ public:
 	bool Remove_MTP_Storage(string Mount_Point);                              // Adds or removes an MTP Storage partition
 	bool Remove_MTP_Storage(unsigned int Storage_ID);                         // Adds or removes an MTP Storage partition
 	bool Flash_Image(string Filename);                                        // Flashes an image to a selected partition from the partition list
+	void Decrypt_Adopted();
 
 	TWAtomicInt stop_backup;
 
