@@ -57,6 +57,8 @@ extern "C" {
 
 #ifdef TW_INCLUDE_CRYPTO
 	#include "crypto/lollipop/cryptfs.h"
+	#include "gui/rapidxml.hpp"
+	#include "gui/pages.hpp"
 #endif
 
 extern bool datamedia;
@@ -167,6 +169,9 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			DataManager::SetValue("TW_CRYPTO_TYPE", password_type);
 		}
 	}
+	if (Decrypt_Data && (!Decrypt_Data->Is_Encrypted || Decrypt_Data->Is_Decrypted) && Decrypt_Data->Mount(false)) {
+		Decrypt_Adopted();
+	}
 #endif
 	Update_System_Details();
 	UnMount_Main_Partitions();
@@ -276,6 +281,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Mount_To_Decrypt ");
 	if (Part->Can_Flash_Img)
 		printf("Can_Flash_Img ");
+	if (Part->Is_Adopted_Storage)
+		printf("Is_Adopted_Storage ");
 	printf("\n");
 	if (!Part->SubPartition_Of.empty())
 		printf("   SubPartition_Of: %s\n", Part->SubPartition_Of.c_str());
@@ -1504,13 +1511,13 @@ int TWPartitionManager::Fix_Permissions(void) {
 	return result;
 }
 
-TWPartition* TWPartitionManager::Find_Next_Storage(string Path, string Exclude) {
+TWPartition* TWPartitionManager::Find_Next_Storage(string Path, bool Exclude_Data_Media) {
 	std::vector<TWPartition*>::iterator iter = Partitions.begin();
 
 	if (!Path.empty()) {
 		string Search_Path = TWFunc::Get_Root_Path(Path);
 		for (; iter != Partitions.end(); iter++) {
-			if ((*iter)->Mount_Point == Search_Path) {
+			if (Exclude_Data_Media && (*iter)->Has_Data_Media) {
 				iter++;
 				break;
 			}
@@ -1518,7 +1525,9 @@ TWPartition* TWPartitionManager::Find_Next_Storage(string Path, string Exclude) 
 	}
 
 	for (; iter != Partitions.end(); iter++) {
-		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount_Point != Exclude) {
+		if (Exclude_Data_Media && (*iter)->Has_Data_Media) {
+			// do nothing, do not return this type of partition
+		} else if ((*iter)->Is_Storage && (*iter)->Is_Present) {
 			return (*iter);
 		}
 	}
@@ -1563,7 +1572,7 @@ int TWPartitionManager::usb_storage_enable(void) {
 		LOGINFO("Device doesn't have multiple lun files, mount current storage\n");
 		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
 		if (TWFunc::Get_Root_Path(DataManager::GetCurrentStoragePath()) == "/data") {
-			TWPartition* Mount = Find_Next_Storage("", "/data");
+			TWPartition* Mount = Find_Next_Storage("", true);
 			if (Mount) {
 				if (!Open_Lun_File(Mount->Mount_Point, lun_file)) {
 					goto error_handle;
@@ -1580,13 +1589,13 @@ int TWPartitionManager::usb_storage_enable(void) {
 		TWPartition* Mount1;
 		TWPartition* Mount2;
 		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
-		Mount1 = Find_Next_Storage("", "/data");
+		Mount1 = Find_Next_Storage("", true);
 		if (Mount1) {
 			if (!Open_Lun_File(Mount1->Mount_Point, lun_file)) {
 				goto error_handle;
 			}
 			sprintf(lun_file, CUSTOM_LUN_FILE, 1);
-			Mount2 = Find_Next_Storage(Mount1->Mount_Point, "/data");
+			Mount2 = Find_Next_Storage(Mount1->Mount_Point, true);
 			if (Mount2) {
 				Open_Lun_File(Mount2->Mount_Point, lun_file);
 			}
@@ -1667,6 +1676,9 @@ int TWPartitionManager::Partition_SDCard(void) {
 
 	// Locate and validate device to partition
 	TWPartition* SDCard = Find_Partition_By_Path(DataManager::GetCurrentStoragePath());
+
+	if (SDCard->Is_Adopted_Storage)
+		SDCard->Revert_Adopted();
 
 	if (SDCard == NULL || !SDCard->Removable || SDCard->Has_Data_Media) {
 		gui_err("partition_sd_locate=Unable to locate device to partition.");
@@ -2263,22 +2275,35 @@ bool TWPartitionManager::Flash_Image(string Filename) {
 void TWPartitionManager::Translate_Partition(const char* path, const char* resource_name, const char* default_value) {
 	TWPartition* part = PartitionManager.Find_Partition_By_Path(path);
 	if (part) {
-		part->Display_Name = gui_lookup(resource_name, default_value);
-		part->Backup_Display_Name = part->Display_Name;
+		if (part->Is_Adopted_Storage) {
+			part->Display_Name = part->Display_Name + " - " + gui_lookup("data", "Data");
+			part->Backup_Display_Name = part->Display_Name;
+			part->Storage_Name = part->Storage_Name + " - " + gui_lookup("adopted_storage", "Adopted Storage");
+		} else {
+			part->Display_Name = gui_lookup(resource_name, default_value);
+			part->Backup_Display_Name = part->Display_Name;
+		}
 	}
 }
 
 void TWPartitionManager::Translate_Partition(const char* path, const char* resource_name, const char* default_value, const char* storage_resource_name, const char* storage_default_value) {
 	TWPartition* part = PartitionManager.Find_Partition_By_Path(path);
 	if (part) {
-		part->Display_Name = gui_lookup(resource_name, default_value);
-		part->Backup_Display_Name = part->Display_Name;
-		if (part->Is_Storage)
-			part->Storage_Name = gui_lookup(storage_resource_name, storage_default_value);
+		if (part->Is_Adopted_Storage) {
+			part->Display_Name = part->Display_Name + " - " + gui_lookup("data", "Data");
+			part->Backup_Display_Name = part->Display_Name;
+			part->Storage_Name = part->Storage_Name + " - " + gui_lookup("adopted_storage", "Adopted Storage");
+		} else {
+			part->Display_Name = gui_lookup(resource_name, default_value);
+			part->Backup_Display_Name = part->Display_Name;
+			if (part->Is_Storage)
+				part->Storage_Name = gui_lookup(storage_resource_name, storage_default_value);
+		}
 	}
 }
 
 void TWPartitionManager::Translate_Partition_Display_Names() {
+	LOGINFO("Translating partition display names\n");
 	Translate_Partition("/system", "system", "System");
 	Translate_Partition("/system_image", "system_image", "System Image");
 	Translate_Partition("/vendor", "vendor", "Vendor");
@@ -2305,4 +2330,87 @@ void TWPartitionManager::Translate_Partition_Display_Names() {
 
 	// This updates the text on all of the storage selection buttons in the GUI
 	DataManager::SetBackupFolder();
+}
+
+void TWPartitionManager::Decrypt_Adopted() {
+#ifdef TW_INCLUDE_CRYPTO
+	if (!Mount_By_Path("/data", false)) {
+		LOGERR("Cannot decrypt adopted storage because /data will not mount\n");
+		return;
+	}
+	LOGINFO("Decrypt adopted storage starting\n");
+	char* xmlFile = PageManager::LoadFileToBuffer("/data/system/storage.xml", NULL);
+	xml_document<> *doc = NULL;
+	xml_node<>* volumes = NULL;
+	xml_node<>* volume = NULL;
+	string Primary_Storage_UUID = "";
+	if (xmlFile != NULL) {
+		LOGINFO("successfully loaded storage.xml\n");
+		doc = new xml_document<>();
+		doc->parse<0>(xmlFile);
+		volumes = doc->first_node("volumes");
+		if (volumes) {
+			xml_attribute<>* psuuid = volumes->first_attribute("primaryStorageUuid");
+			if (psuuid) {
+				Primary_Storage_UUID = psuuid->value();
+			}
+		}
+	}
+	std::vector<TWPartition*>::iterator adopt;
+	for (adopt = Partitions.begin(); adopt != Partitions.end(); adopt++) {
+		if ((*adopt)->Removable && (*adopt)->Is_Present) {
+			if ((*adopt)->Decrypt_Adopted() == 0) {
+				if (volumes) {
+					xml_node<>* volume = volumes->first_node("volume");
+					while (volume) {
+						xml_attribute<>* guid = volume->first_attribute("partGuid");
+						if (guid) {
+							string GUID = (*adopt)->Adopted_GUID.c_str();
+							GUID.insert(8, "-");
+							GUID.insert(13, "-");
+							GUID.insert(18, "-");
+							GUID.insert(23, "-");
+
+							if (strcasecmp(GUID.c_str(), guid->value()) == 0) {
+								xml_attribute<>* attr = volume->first_attribute("nickname");
+								if (attr) {
+									(*adopt)->Storage_Name = attr->value();
+									(*adopt)->Display_Name = (*adopt)->Storage_Name;
+									(*adopt)->Backup_Display_Name = (*adopt)->Storage_Name;
+									LOGINFO("storage name from storage.xml is '%s'\n", attr->value());
+								}
+								attr = volume->first_attribute("fsUuid");
+								if (attr && !Primary_Storage_UUID.empty() && strcmp(Primary_Storage_UUID.c_str(), attr->value()) == 0) {
+									TWPartition* Dat = Find_Partition_By_Path("/data");
+									if (Dat) {
+										LOGINFO("Internal storage is found on adopted storage '%s'\n", (*adopt)->Display_Name.c_str());
+										LOGINFO("Changing '%s' to point to '%s'\n", Dat->Symlink_Mount_Point.c_str(), (*adopt)->Storage_Path.c_str());
+										(*adopt)->Symlink_Mount_Point = Dat->Symlink_Mount_Point;
+										Dat->Symlink_Mount_Point = "";
+										// Toggle mounts to ensure that the symlink mount point (probably /sdcard) is mounted to the right location
+										Dat->UnMount(false);
+										Dat->Mount(false);
+										(*adopt)->UnMount(false);
+										(*adopt)->Mount(false);
+										Output_Partition((*adopt));
+									}
+								}
+								break;
+							}
+						}
+						volume = volume->next_sibling("volume");
+					}
+				}
+			}
+		}
+	}
+	if (xmlFile) {
+		doc->clear();
+		delete doc;
+		free(xmlFile);
+	}
+#else
+	LOGINFO("Decrypt_Adopted: no crypto support\n");
+	return;
+#endif
 }

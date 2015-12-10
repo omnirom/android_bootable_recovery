@@ -1060,6 +1060,7 @@ static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr, unsigned c
     if (! ioctl(fd, DM_TABLE_LOAD, io)) {
       break;
     }
+    printf("%i\n", errno);
     usleep(500000);
   }
 
@@ -1145,7 +1146,7 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, unsigned char 
 
   ioctl_init(io, DM_CRYPT_BUF_SIZE, name, 0);
   if (ioctl(fd, DM_DEV_CREATE, io)) {
-    printf("Cannot create dm-crypt device\n");
+    printf("Cannot create dm-crypt device %i\n", errno);
     goto errout;
   }
 
@@ -2016,4 +2017,46 @@ int cryptfs_get_password_type(void)
     }
 
     return crypt_ftr.crypt_type;
+}
+
+/*
+ * Called by vold when it's asked to mount an encrypted external
+ * storage volume. The incoming partition has no crypto header/footer,
+ * as any metadata is been stored in a separate, small partition.
+ *
+ * out_crypto_blkdev must be MAXPATHLEN.
+ */
+int cryptfs_setup_ext_volume(const char* label, const char* real_blkdev,
+        const unsigned char* key, int keysize, char* out_crypto_blkdev) {
+    int fd = open(real_blkdev, O_RDONLY|O_CLOEXEC);
+    if (fd == -1) {
+        printf("Failed to open %s: %s", real_blkdev, strerror(errno));
+        return -1;
+    }
+
+    unsigned long nr_sec = 0;
+    nr_sec = get_blkdev_size(fd);
+    close(fd);
+
+    if (nr_sec == 0) {
+        printf("Failed to get size of %s: %s", real_blkdev, strerror(errno));
+        return -1;
+    }
+
+    struct crypt_mnt_ftr ext_crypt_ftr;
+    memset(&ext_crypt_ftr, 0, sizeof(ext_crypt_ftr));
+    ext_crypt_ftr.fs_size = nr_sec;
+    ext_crypt_ftr.keysize = keysize;
+    strcpy((char*) ext_crypt_ftr.crypto_type_name, "aes-cbc-essiv:sha256");
+
+    return create_crypto_blk_dev(&ext_crypt_ftr, key, real_blkdev,
+            out_crypto_blkdev, label);
+}
+
+/*
+ * Called by vold when it's asked to unmount an encrypted external
+ * storage volume.
+ */
+int cryptfs_revert_ext_volume(const char* label) {
+    return delete_crypto_blk_dev((char*) label);
 }
