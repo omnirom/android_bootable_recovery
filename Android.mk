@@ -28,7 +28,7 @@ endif
 
 ifeq ($(PROJECT_PATH_AGREES),true)
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 20; echo $$?),0)
+ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22))
 # Make recovery domain permissive for TWRP
     BOARD_SEPOLICY_UNION += twrp.te
 endif
