@@ -906,6 +906,8 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair("tw_language", make_pair(EXPAND(TW_DEFAULT_LANGUAGE), 1)));
 	LOGINFO("LANG: %s\n", EXPAND(TW_DEFAULT_LANGUAGE));
 
+	mValues.insert(make_pair("tw_has_adopted_storage", make_pair("0", 0)));
+
 	pthread_mutex_unlock(&m_valuesLock);
 }
 
