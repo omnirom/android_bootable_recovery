@@ -165,6 +165,9 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			DataManager::SetValue("TW_CRYPTO_TYPE", password_type);
 		}
 	}
+	if (Decrypt_Data && (!Decrypt_Data->Is_Encrypted || Decrypt_Data->Is_Decrypted) && Decrypt_Data->Mount(false)) {
+		Decrypt_Adopted();
+	}
 #endif
 	Update_System_Details();
 	UnMount_Main_Partitions();
@@ -274,6 +277,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Mount_To_Decrypt ");
 	if (Part->Can_Flash_Img)
 		printf("Can_Flash_Img ");
+	if (Part->Is_Adopted_Storage)
+		printf("Is_Adopted_Storage ");
 	printf("\n");
 	if (!Part->SubPartition_Of.empty())
 		printf("   SubPartition_Of: %s\n", Part->SubPartition_Of.c_str());
@@ -1502,13 +1507,13 @@ int TWPartitionManager::Fix_Permissions(void) {
 	return result;
 }
 
-TWPartition* TWPartitionManager::Find_Next_Storage(string Path, string Exclude) {
+TWPartition* TWPartitionManager::Find_Next_Storage(string Path, bool Exclude_Data_Media) {
 	std::vector<TWPartition*>::iterator iter = Partitions.begin();
 
 	if (!Path.empty()) {
 		string Search_Path = TWFunc::Get_Root_Path(Path);
 		for (; iter != Partitions.end(); iter++) {
-			if ((*iter)->Mount_Point == Search_Path) {
+			if (Exclude_Data_Media && (*iter)->Has_Data_Media) {
 				iter++;
 				break;
 			}
@@ -1516,7 +1521,9 @@ TWPartition* TWPartitionManager::Find_Next_Storage(string Path, string Exclude) 
 	}
 
 	for (; iter != Partitions.end(); iter++) {
-		if ((*iter)->Is_Storage && (*iter)->Is_Present && (*iter)->Mount_Point != Exclude) {
+		if (Exclude_Data_Media && (*iter)->Has_Data_Media) {
+			// do nothing, do not return this type of partition
+		} else if ((*iter)->Is_Storage && (*iter)->Is_Present) {
 			return (*iter);
 		}
 	}
@@ -1561,7 +1568,7 @@ int TWPartitionManager::usb_storage_enable(void) {
 		LOGINFO("Device doesn't have multiple lun files, mount current storage\n");
 		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
 		if (TWFunc::Get_Root_Path(DataManager::GetCurrentStoragePath()) == "/data") {
-			TWPartition* Mount = Find_Next_Storage("", "/data");
+			TWPartition* Mount = Find_Next_Storage("", true);
 			if (Mount) {
 				if (!Open_Lun_File(Mount->Mount_Point, lun_file)) {
 					goto error_handle;
@@ -1578,13 +1585,13 @@ int TWPartitionManager::usb_storage_enable(void) {
 		TWPartition* Mount1;
 		TWPartition* Mount2;
 		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
-		Mount1 = Find_Next_Storage("", "/data");
+		Mount1 = Find_Next_Storage("", true);
 		if (Mount1) {
 			if (!Open_Lun_File(Mount1->Mount_Point, lun_file)) {
 				goto error_handle;
 			}
 			sprintf(lun_file, CUSTOM_LUN_FILE, 1);
-			Mount2 = Find_Next_Storage(Mount1->Mount_Point, "/data");
+			Mount2 = Find_Next_Storage(Mount1->Mount_Point, true);
 			if (Mount2) {
 				Open_Lun_File(Mount2->Mount_Point, lun_file);
 			}
@@ -2241,22 +2248,35 @@ bool TWPartitionManager::Flash_Image(string Filename) {
 void TWPartitionManager::Translate_Partition(const char* path, const char* resource_name, const char* default_value) {
 	TWPartition* part = PartitionManager.Find_Partition_By_Path(path);
 	if (part) {
-		part->Display_Name = gui_lookup(resource_name, default_value);
-		part->Backup_Display_Name = part->Display_Name;
+		if (part->Is_Adopted_Storage) {
+			part->Display_Name = part->Display_Name + " - " + gui_lookup("data", "Data");
+			part->Backup_Display_Name = part->Display_Name;
+			part->Storage_Name = part->Storage_Name + " - " + gui_lookup("internal", "Internal Storage");
+		} else {
+			part->Display_Name = gui_lookup(resource_name, default_value);
+			part->Backup_Display_Name = part->Display_Name;
+		}
 	}
 }
 
 void TWPartitionManager::Translate_Partition(const char* path, const char* resource_name, const char* default_value, const char* storage_resource_name, const char* storage_default_value) {
 	TWPartition* part = PartitionManager.Find_Partition_By_Path(path);
 	if (part) {
-		part->Display_Name = gui_lookup(resource_name, default_value);
-		part->Backup_Display_Name = part->Display_Name;
-		if (part->Is_Storage)
-			part->Storage_Name = gui_lookup(storage_resource_name, storage_default_value);
+		if (part->Is_Adopted_Storage) {
+			part->Display_Name = part->Display_Name + " - " + gui_lookup("data", "Data");
+			part->Backup_Display_Name = part->Display_Name;
+			part->Storage_Name = part->Storage_Name + " - " + gui_lookup("internal", "Internal Storage");
+		} else {
+			part->Display_Name = gui_lookup(resource_name, default_value);
+			part->Backup_Display_Name = part->Display_Name;
+			if (part->Is_Storage)
+				part->Storage_Name = gui_lookup(storage_resource_name, storage_default_value);
+		}
 	}
 }
 
 void TWPartitionManager::Translate_Partition_Display_Names() {
+	LOGINFO("Translating partition display names\n");
 	Translate_Partition("/system", "system", "System");
 	Translate_Partition("/system_image", "system_image", "System Image");
 	Translate_Partition("/vendor", "vendor", "Vendor");
@@ -2283,4 +2303,24 @@ void TWPartitionManager::Translate_Partition_Display_Names() {
 
 	// This updates the text on all of the storage selection buttons in the GUI
 	DataManager::SetBackupFolder();
+}
+
+void TWPartitionManager::Decrypt_Adopted() {
+#ifdef TW_INCLUDE_CRYPTO
+	if (!Mount_By_Path("/data", false)) {
+		LOGERR("Cannot decrypt adopted storage because /data will not mount\n");
+		return;
+	}
+	LOGINFO("Decrypt adopted storage starting\n");
+	std::vector<TWPartition*>::iterator adopt;
+	for (adopt = Partitions.begin(); adopt != Partitions.end(); adopt++) {
+		if ((*adopt)->Removable && (*adopt)->Is_Present) {
+			if ((*adopt)->Decrypt_Adopted() == 0)
+				Output_Partition((*adopt));
+		}
+	}
+#else
+	LOGINFO("Decrypt_Adopted: no crypto support\n");
+	return;
+#endif
 }
