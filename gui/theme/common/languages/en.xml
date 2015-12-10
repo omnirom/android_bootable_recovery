@@ -143,6 +143,7 @@
 		<string name="format_data_ptr1">Format Data will wipe all of your apps,</string>
 		<string name="format_data_ptr2">backups, pictures, videos, media, and</string>
 		<string name="format_data_ptr3">removes encryption on internal storage.</string>
+		<string name="format_data_adopted">Including Adopted Storage</string>
 		<string name="format_data_lcp1">Format Data will wipe all of your apps, backups, pictures, videos, media, and</string>
 		<string name="format_data_lcp2">removes encryption on internal storage.</string>
 		<string name="format_data_wtc1">Format Data will wipe all of your apps,</string>
