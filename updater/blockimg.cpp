@@ -1670,6 +1670,9 @@ Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[
         return StringValue(strdup(""));
     }
 
+    // Output notice to log when recover is attempted
+    fprintf(stderr, "%s image corrupted, attempting to recover...\n", filename->data);
+
     // When opened with O_RDWR, libfec rewrites corrupted blocks when they are read
     fec::io fh(filename->data, O_RDWR);
 
@@ -1720,7 +1723,7 @@ Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[
             //     read and check if the errors field value has increased.
         }
     }
-
+    fprintf(stderr, "...%s image recovered successfully.\n", filename->data);
     return StringValue(strdup("t"));
 }
 
