@@ -41,6 +41,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <linux/fs.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -74,14 +75,15 @@ static struct fstab* fstab = NULL;
 
 static int write_at_offset(unsigned char* buffer, size_t size, int wfd, off64_t offset) {
     if (TEMP_FAILURE_RETRY(lseek64(wfd, offset, SEEK_SET)) == -1) {
-        ALOGE("error seeking to offset %lld: %s\n", offset, strerror(errno));
+        ALOGE("error seeking to offset %" PRId64 ": %s\n", offset, strerror(errno));
         return -1;
     }
     size_t written = 0;
     while (written < size) {
         ssize_t wrote = TEMP_FAILURE_RETRY(write(wfd, buffer + written, size - written));
         if (wrote == -1) {
-            ALOGE("error writing offset %lld: %s\n", (offset + written), strerror(errno));
+            ALOGE("error writing offset %" PRId64 ": %s\n",
+                  offset + static_cast<off64_t>(written), strerror(errno));
             return -1;
         }
         written += wrote;
@@ -200,10 +202,10 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         return -1;
     }
 
-    ALOGI(" block size: %ld bytes\n", (long)sb.st_blksize);
+    ALOGI(" block size: %ld bytes\n", static_cast<long>(sb.st_blksize));
 
     int blocks = ((sb.st_size-1) / sb.st_blksize) + 1;
-    ALOGI("  file size: %lld bytes, %d blocks\n", (long long)sb.st_size, blocks);
+    ALOGI("  file size: %" PRId64 " bytes, %d blocks\n", sb.st_size, blocks);
 
     int range_alloc = 1;
     int range_used = 1;
@@ -211,8 +213,8 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     ranges[0] = -1;
     ranges[1] = -1;
 
-    fprintf(mapf.get(), "%s\n%lld %lu\n",
-            blk_dev, (long long)sb.st_size, (unsigned long)sb.st_blksize);
+    fprintf(mapf.get(), "%s\n%" PRId64 " %ld\n",
+            blk_dev, sb.st_size, static_cast<long>(sb.st_blksize));
 
     unsigned char* buffers[WINDOW_SIZE];
     if (encrypted) {
@@ -222,7 +224,6 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     }
     int head_block = 0;
     int head = 0, tail = 0;
-    size_t pos = 0;
 
     int fd = open(path, O_RDONLY);
     unique_fd fd_holder(fd);
@@ -242,6 +243,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         }
     }
 
+    off64_t pos = 0;
     int last_progress = 0;
     while (pos < sb.st_size) {
         // Update the status file, progress must be between [0, 99].
@@ -261,7 +263,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
             add_block_to_ranges(&ranges, &range_alloc, &range_used, block);
             if (encrypted) {
                 if (write_at_offset(buffers[head], sb.st_blksize, wfd,
-                        (off64_t)sb.st_blksize * block) != 0) {
+                        static_cast<off64_t>(sb.st_blksize) * block) != 0) {
                     return -1;
                 }
             }
@@ -272,7 +274,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         // read next block to tail
         if (encrypted) {
             size_t so_far = 0;
-            while (so_far < sb.st_blksize && pos < sb.st_size) {
+            while (so_far < static_cast<size_t>(sb.st_blksize) && pos < sb.st_size) {
                 ssize_t this_read =
                         TEMP_FAILURE_RETRY(read(fd, buffers[tail] + so_far, sb.st_blksize - so_far));
                 if (this_read == -1) {
@@ -301,7 +303,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         add_block_to_ranges(&ranges, &range_alloc, &range_used, block);
         if (encrypted) {
             if (write_at_offset(buffers[head], sb.st_blksize, wfd,
-                    (off64_t)sb.st_blksize * block) != 0) {
+                    static_cast<off64_t>(sb.st_blksize) * block) != 0) {
                 return -1;
             }
         }
