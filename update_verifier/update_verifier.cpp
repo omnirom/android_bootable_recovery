@@ -23,7 +23,8 @@
  * verified. dm-verity must be in enforcing mode, so that it will reboot the
  * device on dm-verity failures. When that happens, the bootloader should
  * mark the slot as unbootable and stops trying. We should never see a device
- * started in dm-verity logging mode but with isSlotBootable equals to 0.
+ * started in dm-verity logging mode but with isSlotMarkedSuccessful equals to
+ * 0.
  *
  * The current slot will be marked as having booted successfully if the
  * verifier reaches the end after the verification.
@@ -55,17 +56,17 @@ int main(int argc, char** argv) {
   module->init(module);
 
   unsigned current_slot = module->getCurrentSlot(module);
-  int bootable = module->isSlotBootable(module, current_slot);
-  SLOGI("Booting slot %u: isSlotBootable=%d\n", current_slot, bootable);
+  int is_successful= module->isSlotMarkedSuccessful(module, current_slot);
+  SLOGI("Booting slot %u: isSlotMarkedSuccessful=%d\n", current_slot, is_successful);
 
-  if (bootable == 0) {
+  if (is_successful == 0) {
     // The current slot has not booted successfully.
 
     // TODO: Add the actual verification after we have the A/B OTA package
     // format in place.
 
     // TODO: Assert the dm-verity mode. Bootloader should never boot a newly
-    // flashed slot (isSlotBootable == 0) with dm-verity logging mode.
+    // flashed slot (isSlotMarkedSuccessful == 0) with dm-verity logging mode.
 
     int ret = module->markBootSuccessful(module);
     if (ret != 0) {
