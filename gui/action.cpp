@@ -1173,7 +1173,7 @@ int GUIAction::nandroid(std::string arg)
 			DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
 			string auto_gen = gui_lookup("auto_generate", "(Auto Generate)");
 			if (Backup_Name == auto_gen || Backup_Name == gui_lookup("curr_date", "(Current Date)") || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0) {
-				ret = PartitionManager.Run_Backup();
+				ret = PartitionManager.Run_Backup(false);
 			}
 			else {
 				operation_end(1);
@@ -1726,7 +1726,7 @@ int GUIAction::flashimage(std::string arg __unused)
 	DataManager::GetValue("tw_zip_location", path);
 	DataManager::GetValue("tw_file", filename);
 	full_filename = path + "/" + filename;
-	if (PartitionManager.Flash_Image(full_filename))
+	if (PartitionManager.Flash_Image(full_filename, false))
 		op_status = 0; // success
 	else
 		op_status = 1; // fail
