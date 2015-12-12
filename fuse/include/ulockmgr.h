@@ -6,6 +6,8 @@
   See the file COPYING.LIB.
 */
 
+#include "fuse_lowlevel.h"
+
 #include <stdint.h>
 #include <fcntl.h>
 #include <sys/types.h>

@@ -1,3 +1,52 @@
+1.2.2 (2015-11-09)
+
+* Improved reliability in case of a sudden unplug: FS will be in a clean state
+after closing all files and performing sync(1).
+* Fixed compilation on Debian GNU/kFreeBSD and GNU/Hurd platforms.
+* Updated mount.exfat-fuse man page.
+
+1.2.1 (2015-09-24)
+
+* Fixed compatibility with Zalman VE-200: now newly created directories do not
+have archive bit set.
+* Fixed heap corruption: malformed FS can use invalid sector or cluster size.
+* Fixed hang on mount: malformed FS can have cyclic references in the clusters
+map.
+
+1.2.0 (2015-08-26)
+
+* Switched from SCons to autotools.
+* Added musl libc support [Brendan Heading].
+* Worked around "FS is larger than device" error for memory cards formatted by
+Panasonic Lumix cameras.
+* Worked around "unknown entry type 0xe1" error for memory cards formatted by
+Sony cameras.
+
+1.1.1 (2014-11-15)
+
+* Fixed mkfs crash on some sectors-per-cluster (-s option) values.
+
+1.1.0 (2014-07-08)
+
+* Relicensed the project from GPLv3+ to GPLv2+.
+* OpenBSD support [Helg Bredow].
+* Improved I/O errors handling.
+* Implemented fsync() and fsyncdir().
+* Fixed crash on Mac OS X 10.5 caused by non-standard use of realpath(). Also
+fixed TrueCrypt disks unmounting.
+* Avoid extra erase on writes to the end of a file. This should improve linear
+write speed.
+* Allow arbitrary changing of lower 9 bits of mode. Allow owner/group changing
+to the same owner/group. This fixes rsync.
+* Fixed buffers overflows when handling lengthy file names.
+* Fixed "real size does not equal to size" error on volumes with pagefile.sys.
+* Fixed negative IUsed in "df -i" output.
+
+1.0.1 (2013-02-02)
+
+* Fixed unexpected removal of a directory if it is moved into itself.
+* Fixed "Operation not permitted" error on reading an empty file.
+
 1.0.0 (2013-01-19)
 
 * Fixed crash when renaming a file within a single directory and a new name

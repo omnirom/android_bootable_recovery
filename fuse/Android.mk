@@ -33,38 +33,21 @@ LOCAL_SRC_FILES := \
 	ulockmgr.c
 
 LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/android \
 	$(LOCAL_PATH)/include
 
 LOCAL_SHARED_LIBRARIES := \
-	libutils libdl
+	libutils
 
 LOCAL_CFLAGS := \
 	-D_FILE_OFFSET_BITS=64 \
 	-DFUSE_USE_VERSION=26 \
 	-fno-strict-aliasing
 
+LOCAL_LDFLAGS := \
+	-Wl,--version-script,$(LOCAL_PATH)/fuse_versionscript
+
 LOCAL_MODULE := libfusetwrp
 LOCAL_MODULE_TAGS := optional
 
-include $(BUILD_STATIC_LIBRARY)
-#include $(BUILD_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := \
-	fusexmp.c
-
-LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/include
-
-LOCAL_CFLAGS := -D_FILE_OFFSET_BITS=64
-
-LOCAL_MODULE := fusexmp
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_STATIC_LIBRARIES := libfusetwrp
-
-LOCAL_SHARED_LIBRARIES := \
-	libutils libdl
-
-include $(BUILD_EXECUTABLE)
+include $(BUILD_SHARED_LIBRARY)

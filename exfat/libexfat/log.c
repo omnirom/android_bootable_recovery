@@ -3,7 +3,7 @@
 	exFAT file system implementation library.
 
 	Free exFAT implementation.
-	Copyright (C) 2010-2013  Andrew Nayenko
+	Copyright (C) 2010-2015  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -47,7 +47,11 @@ void exfat_bug(const char* format, ...)
 		vsyslog(LOG_CRIT, format, aq);
 	va_end(aq);
 
+#if defined(__ANDROID__)
+    exit(-1);
+#else
 	abort();
+#endif
 }
 
 /*

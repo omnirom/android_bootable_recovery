@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <assert.h>
+#include <sys/file.h>
 
 #ifndef F_LINUX_SPECIFIC_BASE
 #define F_LINUX_SPECIFIC_BASE       1024
@@ -247,7 +248,7 @@ size_t fuse_dirent_size(size_t namelen)
 }
 
 char *fuse_add_dirent(char *buf, const char *name, const struct stat *stbuf,
-		      off64_t off)
+		      loff_t off)
 {
 	unsigned namelen = strlen(name);
 	unsigned entlen = FUSE_NAME_OFFSET + namelen;
@@ -267,7 +268,7 @@ char *fuse_add_dirent(char *buf, const char *name, const struct stat *stbuf,
 }
 
 size_t fuse_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
-			 const char *name, const struct stat *stbuf, off64_t off)
+			 const char *name, const struct stat *stbuf, loff_t off)
 {
 	size_t entsize;
 
@@ -1979,7 +1980,7 @@ int fuse_lowlevel_notify_poll(struct fuse_pollhandle *ph)
 }
 
 int fuse_lowlevel_notify_inval_inode(struct fuse_chan *ch, fuse_ino_t ino,
-                                     off64_t off, off64_t len)
+                                     loff_t off, loff_t len)
 {
 	struct fuse_notify_inval_inode_out outarg;
 	struct fuse_ll *f;
@@ -2060,7 +2061,7 @@ int fuse_lowlevel_notify_delete(struct fuse_chan *ch,
 }
 
 int fuse_lowlevel_notify_store(struct fuse_chan *ch, fuse_ino_t ino,
-			       off64_t offset, struct fuse_bufvec *bufv,
+			       loff_t offset, struct fuse_bufvec *bufv,
 			       enum fuse_buf_copy_flags flags)
 {
 	struct fuse_out_header out;
@@ -2144,7 +2145,7 @@ out:
 }
 
 int fuse_lowlevel_notify_retrieve(struct fuse_chan *ch, fuse_ino_t ino,
-				  size_t size, off64_t offset, void *cookie)
+				  size_t size, loff_t offset, void *cookie)
 {
 	struct fuse_notify_retrieve_out outarg;
 	struct fuse_ll *f;
@@ -2302,12 +2303,12 @@ static const char *opname(enum fuse_opcode opcode)
 static int fuse_ll_copy_from_pipe(struct fuse_bufvec *dst,
 				  struct fuse_bufvec *src)
 {
-	int res = fuse_buf_copy(dst, src, 0);
+	ssize_t res = fuse_buf_copy(dst, src, 0);
 	if (res < 0) {
 		fprintf(stderr, "fuse: copy from pipe: %s\n", strerror(-res));
 		return res;
 	}
-	if (res < fuse_buf_size(dst)) {
+	if (res < (ssize_t)fuse_buf_size(dst)) {
 		fprintf(stderr, "fuse: copy from pipe: short read\n");
 		return -1;
 	}
@@ -2422,7 +2423,7 @@ static void fuse_ll_process_buf(void *data, const struct fuse_buf *buf,
 		mbuf = newmbuf;
 
 		tmpbuf = FUSE_BUFVEC_INIT(buf->size - write_header_size);
-		tmpbuf.buf[0].mem = mbuf + write_header_size;
+		tmpbuf.buf[0].mem = (intptr_t *)mbuf + write_header_size;
 
 		res = fuse_ll_copy_from_pipe(&tmpbuf, &bufv);
 		err = -res;
@@ -2777,7 +2778,7 @@ int fuse_req_getgroups(fuse_req_t req, int size, gid_t list[])
 	char *buf;
 	size_t bufsize = 1024;
 	char path[128];
-	int ret;
+	ssize_t ret;
 	int fd;
 	unsigned long pid = req->ctx.pid;
 	char *s;
@@ -2801,7 +2802,7 @@ retry:
 		goto out_free;
 	}
 
-	if (ret == bufsize) {
+	if (ret == (ssize_t)bufsize) {
 		free(buf);
 		bufsize *= 4;
 		goto retry;

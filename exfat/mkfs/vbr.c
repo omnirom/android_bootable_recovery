@@ -3,7 +3,7 @@
 	Volume Boot Record creation code.
 
 	Free exFAT implementation.
-	Copyright (C) 2011-2013  Andrew Nayenko
+	Copyright (C) 2011-2015  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -20,19 +20,19 @@
 	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <string.h>
 #include "vbr.h"
 #include "fat.h"
 #include "cbm.h"
 #include "uct.h"
 #include "rootdir.h"
+#include <string.h>
 
-static off64_t vbr_alignment(void)
+static off_t vbr_alignment(void)
 {
 	return get_sector_size();
 }
 
-static off64_t vbr_size(void)
+static off_t vbr_size(void)
 {
 	return 12 * get_sector_size();
 }
@@ -43,7 +43,7 @@ static void init_sb(struct exfat_super_block* sb)
 	uint32_t fat_sectors;
 
 	clusters_max = get_volume_size() / get_cluster_size();
-	fat_sectors = DIV_ROUND_UP((off64_t) clusters_max * sizeof(cluster_t),
+	fat_sectors = DIV_ROUND_UP((off_t) clusters_max * sizeof(cluster_t),
 			get_sector_size());
 
 	memset(sb, 0, sizeof(struct exfat_super_block));

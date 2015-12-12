@@ -45,10 +45,10 @@ static ssize_t fuse_buf_write(const struct fuse_buf *dst, size_t dst_off,
 
 	while (len) {
 		if (dst->flags & FUSE_BUF_FD_SEEK) {
-			res = pwrite(dst->fd, src->mem + src_off, len,
+			res = pwrite64(dst->fd, (const intptr_t *)src->mem + src_off, len,
 				     dst->pos + dst_off);
 		} else {
-			res = write(dst->fd, src->mem + src_off, len);
+			res = write(dst->fd, (const intptr_t *)src->mem + src_off, len);
 		}
 		if (res == -1) {
 			if (!copied)
@@ -79,10 +79,10 @@ static ssize_t fuse_buf_read(const struct fuse_buf *dst, size_t dst_off,
 
 	while (len) {
 		if (src->flags & FUSE_BUF_FD_SEEK) {
-			res = pread(src->fd, dst->mem + dst_off, len,
+			res = pread(src->fd, (intptr_t *)dst->mem + dst_off, len,
 				     src->pos + src_off);
 		} else {
-			res = read(src->fd, dst->mem + dst_off, len);
+			res = read(src->fd, (intptr_t *)dst->mem + dst_off, len);
 		}
 		if (res == -1) {
 			if (!copied)
@@ -119,7 +119,7 @@ static ssize_t fuse_buf_fd_to_fd(const struct fuse_buf *dst, size_t dst_off,
 	tmp.mem = buf;
 
 	while (len) {
-		size_t this_len = min_size(tmp.size, len);
+		ssize_t this_len = min_size(tmp.size, len);
 		size_t read_len;
 
 		res = fuse_buf_read(&tmp, 0, src, src_off, this_len);
@@ -160,10 +160,10 @@ static ssize_t fuse_buf_splice(const struct fuse_buf *dst, size_t dst_off,
 			       size_t len, enum fuse_buf_copy_flags flags)
 {
 	int splice_flags = 0;
-	off64_t *srcpos = NULL;
-	off64_t *dstpos = NULL;
-	off64_t srcpos_val;
-	off64_t dstpos_val;
+	loff_t *srcpos = NULL;
+	loff_t *dstpos = NULL;
+	loff_t srcpos_val;
+	loff_t dstpos_val;
 	ssize_t res;
 	size_t copied = 0;
 
@@ -229,11 +229,12 @@ static ssize_t fuse_buf_copy_one(const struct fuse_buf *dst, size_t dst_off,
 	int dst_is_fd = dst->flags & FUSE_BUF_IS_FD;
 
 	if (!src_is_fd && !dst_is_fd) {
-		void *dstmem = dst->mem + dst_off;
-		void *srcmem = src->mem + src_off;
+		void *dstmem = (intptr_t *)dst->mem + dst_off;
+		void *srcmem = (intptr_t *)src->mem + src_off;
 
 		if (dstmem != srcmem) {
-			if (dstmem + len <= srcmem || srcmem + len <= dstmem)
+			if ((intptr_t *)dstmem + len <= (intptr_t *)srcmem 
+                    || (intptr_t *)srcmem + len <= (intptr_t *)dstmem)
 				memcpy(dstmem, srcmem, len);
 			else
 				memmove(dstmem, srcmem, len);
@@ -288,7 +289,7 @@ ssize_t fuse_buf_copy(struct fuse_bufvec *dstv, struct fuse_bufvec *srcv,
 		const struct fuse_buf *dst = fuse_bufvec_current(dstv);
 		size_t src_len;
 		size_t dst_len;
-		size_t len;
+		ssize_t len;
 		ssize_t res;
 
 		if (src == NULL || dst == NULL)
