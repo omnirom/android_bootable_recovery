@@ -45,7 +45,7 @@ private:
 	unsigned long long current_size;                   // Size of the current partition's already backed up data
 	unsigned long long current_count;                  // Count of files that have already been backed up for the current partition
 
-	unsigned long long previous_partitions_size;       // Total data already backed up from previous partitions (for the progress bar)
+	uint64_t previous_partitions_size;                 // Total data already backed up from previous partitions (for the progress bar)
 
 	bool display_file_count;                           // Inidicates if we will display the file count text
 	timespec last_update;                              // Tracks last update of the displayed progress (frequent updates tax the CPU and slow us down)
