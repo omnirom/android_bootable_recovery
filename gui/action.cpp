@@ -868,7 +868,7 @@ int GUIAction::getpartitiondetails(std::string arg __unused)
 					DataManager::SetValue("tw_partition_vfat", 1);
 				else
 					DataManager::SetValue("tw_partition_vfat", 0);
-				if (TWFunc::Path_Exists("/sbin/mkfs.exfat"))
+				if (TWFunc::Path_Exists("/sbin/mkexfatfs"))
 					DataManager::SetValue("tw_partition_exfat", 1);
 				else
 					DataManager::SetValue("tw_partition_exfat", 0);
