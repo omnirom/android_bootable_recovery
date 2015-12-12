@@ -373,7 +373,6 @@
 		<string name="language_hdr">Nyelv</string>
 		<string name="terminal_btn">Terminál</string>
 		<string name="reload_theme_btn">Téma újratöltése</string>
-		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">TWRP injektálása</string>
 		<string name="inject_twrp_confirm">TWRP újrainjektálása?</string>
 		<string name="injecting_twrp">TWRP újrainjektálása...</string>
@@ -393,19 +392,6 @@
 		<string name="partitioning_sd">SD-kártya particionálása...</string>
 		<string name="partitioning_sd2">Ez néhány percet igénybe vesz.</string>
 		<string name="part_sd_complete">Particionálás kész</string>
-		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">Eredeti boot visszaállítása</string>
-		<string name="dumlock_restore_confirm">Visszaállítja az eredeti boot lemezképet?</string>
-		<string name="dumlock_restoring">Eredeti boot visszaállítása...</string>
-		<string name="dumlock_restore_complete">Eredeti boot visszaállítása kész</string>
-		<string name="dumlock_reflash_btn">Recovery újraflashelése</string>
-		<string name="dumlock_reflash_confirm">Recovery újraflashelése bootba?</string>
-		<string name="dumlock_reflashing">Recovery újraflashelése bootba...</string>
-		<string name="dumlock_reflash_complete">Recovery flashelése bootba kész</string>
-		<string name="dumlock_install_btn">HTC Dumlock telepítése</string>
-		<string name="dumlock_install_confirm">HTC Dumlock telepítése a ROM-hoz?</string>
-		<string name="dumlock_installing">HTC Dumlock telepítése...</string>
-		<string name="dumlock_install_complete">HTC Dumlock telepítése kész</string>
 		<string name="swipe_to_unlock">Csúsztasson a feloldáshoz</string>
 		<string name="swipe_unlock">   Feloldás</string>
 		<string name="fm_hdr">Fájlkezelő</string>
@@ -625,9 +611,6 @@
 		<string name="md5_match">MD5 egyezik</string>
 		<string name="pid_signal">{1} folyamat véget ért a következő jellel: {2}</string>
 		<string name="pid_error">{1} folyamat véget ért a következő HIBÁVAL: {2}</string>
-		<string name="install_dumlock">HTC Dumlock telepítése a rendszerbe...</string>
-		<string name="dumlock_restore">Eredeti boot visszaállítása...</string>
-		<string name="dumlock_reflash">Recovery újraflashelése a bootba...</string>
 		<string name="run_script">{1} script futtatása...</string>
 		<string name="rename_stock">Gyári recovery fájl a /rendszer partíción átnevezve, annak megakadályozására, hogy a gyári ROM lecserélje TWRP-t.</string>
 		<string name="split_backup">Biztonsági mentés fájljának tördelése több archívumba...</string>

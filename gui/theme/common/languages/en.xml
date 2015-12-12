@@ -386,7 +386,6 @@
 		<string name="language_hdr">Language</string>
 		<string name="terminal_btn">Terminal</string>
 		<string name="reload_theme_btn">Reload Theme</string>
-		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">Inject TWRP</string>
 		<string name="inject_twrp_confirm">Re-Inject TWRP?</string>
 		<string name="injecting_twrp">Re-Injecting TWRP...</string>
@@ -406,19 +405,6 @@
 		<string name="partitioning_sd">Partitioning SD Card...</string>
 		<string name="partitioning_sd2">This will take a few minutes.</string>
 		<string name="part_sd_complete">Partitioning Complete</string>
-		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">Restore Original Boot</string>
-		<string name="dumlock_restore_confirm">Restore original boot image?</string>
-		<string name="dumlock_restoring">Restoring Original Boot...</string>
-		<string name="dumlock_restore_complete">Restore Original Boot Complete</string>
-		<string name="dumlock_reflash_btn">Reflash Recovery</string>
-		<string name="dumlock_reflash_confirm">Reflash recovery to boot?</string>
-		<string name="dumlock_reflashing">Flashing recovery to boot...</string>
-		<string name="dumlock_reflash_complete">Recovery Flash to Boot Complete</string>
-		<string name="dumlock_install_btn">Install HTC Dumlock</string>
-		<string name="dumlock_install_confirm">Install HTC dumlock files to ROM?</string>
-		<string name="dumlock_installing">Installing HTC Dumlock...</string>
-		<string name="dumlock_install_complete">HTC Dumlock Install Complete</string>
 		<string name="swipe_to_unlock">Swipe to Unlock</string>
 		<string name="swipe_unlock">   Unlock</string>
 		<string name="fm_hdr">File Manager</string>
@@ -640,9 +626,6 @@
 		<string name="md5_match">MD5 matched</string>
 		<string name="pid_signal">{1} process ended with signal: {2}</string>
 		<string name="pid_error">{1} process ended with ERROR: {2}</string>
-		<string name="install_dumlock">Installing HTC Dumlock to system...</string>
-		<string name="dumlock_restore">Restoring original boot...</string>
-		<string name="dumlock_reflash">Reflashing recovery to boot...</string>
 		<string name="run_script">Running {1} script...</string>
 		<string name="rename_stock">Renamed stock recovery file in /system to prevent the stock ROM from replacing TWRP.</string>
 		<string name="split_backup">Breaking backup file into multiple archives...</string>

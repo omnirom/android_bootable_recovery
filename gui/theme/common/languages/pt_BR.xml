@@ -362,7 +362,6 @@
 		<string name="language_hdr">Idioma</string>
 		<string name="terminal_btn">Terminal</string>
 		<string name="reload_theme_btn">Tema carregado</string>
-		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">Injetar TWRP</string>
 		<string name="inject_twrp_confirm">Re-injetar TWRP?</string>
 		<string name="injecting_twrp">Re-injetar TWRP...</string>
@@ -382,19 +381,6 @@
 		<string name="partitioning_sd">Particionando o cartão SD...</string>
 		<string name="partitioning_sd2">Isso levará alguns minutos.</string>
 		<string name="part_sd_complete">Particionamento completo</string>
-		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">Restaurar a Inicialização Original</string>
-		<string name="dumlock_restore_confirm">Restaurar a imagem de inicialização original?</string>
-		<string name="dumlock_restoring">Restauração de inicialização Original...</string>
-		<string name="dumlock_restore_complete">Restauração completa de inicialização Original</string>
-		<string name="dumlock_reflash_btn">Reflash recuperação</string>
-		<string name="dumlock_reflash_confirm">Reflash recuperação para arrancar?</string>
-		<string name="dumlock_reflashing">Reflash recuperação para arrancar...</string>
-		<string name="dumlock_reflash_complete">Flash de recuperação de inicialização completa</string>
-		<string name="dumlock_install_btn">Instalar o HTC Dumlock</string>
-		<string name="dumlock_install_confirm">Instalar HTC dumlock arquivos de ROM?</string>
-		<string name="dumlock_installing">Instalando o HTC Dumlock...</string>
-		<string name="dumlock_install_complete">HTC Dumlock instalação completa</string>
 		<string name="swipe_to_unlock">Deslize para desbloquear</string>
 		<string name="swipe_unlock">   Desbloquear</string>
 		<string name="fm_hdr">Gerenciador de arquivos</string>
@@ -595,9 +581,6 @@
 		<string name="md5_match">Correspondência de MD5</string>
 		<string name="pid_signal">{1} processo terminou com sinal: {2}</string>
 		<string name="pid_error">{1} processo terminou com erro: {2}</string>
-		<string name="install_dumlock">Instalação HTC Dumlock sistema...</string>
-		<string name="dumlock_restore">Restauração de inicialização Original...</string>
-		<string name="dumlock_reflash">Regravando recuperação para arrancar...</string>
 		<string name="run_script">Executando o script {1}...</string>
 		<string name="rename_stock">Renomeado o arquivo de recuperação das ações em / / sistema para impedir que o stock ROM substituindo TWRP.</string>
 		<string name="split_backup">Quebrando o arquivo de cópia de segurança em vários arquivos...</string>

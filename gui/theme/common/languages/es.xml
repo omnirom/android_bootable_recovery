@@ -364,7 +364,6 @@
 		<string name="language_hdr">Idioma</string>
 		<string name="terminal_btn">Terminal</string>
 		<string name="reload_theme_btn">Recargar Tema</string>
-		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">Injectar TWRP</string>
 		<string name="inject_twrp_confirm">Re-Injectar TWRP?</string>
 		<string name="injecting_twrp">Re-Injectando TWRP...</string>
@@ -384,19 +383,6 @@
 		<string name="partitioning_sd">Particionando Tarjeta SD...</string>
 		<string name="partitioning_sd2">Esto puede tomar unos Minutos.</string>
 		<string name="part_sd_complete">Particionar Completado</string>
-		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">Restaurar Boot Original</string>
-		<string name="dumlock_restore_confirm">¿Restaurar imagen de boot original?</string>
-		<string name="dumlock_restoring">Restaurando boot Original...</string>
-		<string name="dumlock_restore_complete">Restauración del Boot Original Completado</string>
-		<string name="dumlock_reflash_btn">Reflashear Recovery</string>
-		<string name="dumlock_reflash_confirm">¿Reflashear recovery a boot?</string>
-		<string name="dumlock_reflashing">Flasheando recovery a boot...</string>
-		<string name="dumlock_reflash_complete">Flasheo del Recovery a Boot Completado</string>
-		<string name="dumlock_install_btn">Instalar HTC Dumlock</string>
-		<string name="dumlock_install_confirm">¿Instalar los archivos de HTC dumlock en la ROM?</string>
-		<string name="dumlock_installing">Instalando HTC Dumlock...</string>
-		<string name="dumlock_install_complete">Instalación de HTC Dumlock Completada</string>
 		<string name="swipe_to_unlock">Desliza para Desbloquear</string>
 		<string name="swipe_unlock">   Desbloquear</string>
 		<string name="fm_hdr">Administrador de Archivos </string>
@@ -608,9 +594,6 @@
 		<string name="md5_match">MD5 coincide</string>
 		<string name="pid_signal">Proceso {1} terminó con señal: {2}</string>
 		<string name="pid_error">Proceso {1} terminó con ERROR: {2}</string>
-		<string name="install_dumlock">Instalando HTC Dumlock en el sistema…</string>
-		<string name="dumlock_restore">Restaurando el boot original...</string>
-		<string name="dumlock_reflash">Reflasheando el recovery en boot...</string>
 		<string name="run_script">Ejecutando script {1} ...</string>
 		<string name="rename_stock">Renombrado stock recovery en /system para prevenir que la ROM stock remplace TWRP.</string>
 		<string name="split_backup">Dividiendo copia de seguridad en múltiples archivos...</string>

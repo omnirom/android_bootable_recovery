@@ -361,7 +361,6 @@
         <string name="language_hdr">Γλώσσα</string>
         <string name="terminal_btn">Τερματικό</string>
         <string name="reload_theme_btn">Εκ νέου φόρτ. θέματ.</string>
-        <string name="dumlock_btn">HTC Dumlock</string>
         <string name="inject_twrp_btn">Εισαγωγή TWRP</string>
         <string name="inject_twrp_confirm">Επανεισαγωγή TWRP;</string>
         <string name="injecting_twrp">Επανεισαγωγή TWRP...</string>
@@ -381,19 +380,6 @@
         <string name="partitioning_sd">Διαχώριση κάρτας SD...</string>
         <string name="partitioning_sd2">Αυτό θα διαρκέσει μερικά λεπτά.</string>
         <string name="part_sd_complete">Η Διαχώριση ολοκληρώθηκε</string>
-        <string name="dumlock_hdr">HTC Dumlock</string>
-        <string name="dumlock_restore_btn">Επαναφέρετε το Αρχικό Boot</string>
-        <string name="dumlock_restore_confirm">Επαναφορά την αρχικής εικόνας boot;</string>
-        <string name="dumlock_restoring">Επαναφορά του Αρχικού Boot...</string>
-        <string name="dumlock_restore_complete">Επαναφορά του Αρχικού Boot Ολοκληρώθηκε</string>
-        <string name="dumlock_reflash_btn">Επανεγγραφή Recovery</string>
-        <string name="dumlock_reflash_confirm">Επανεγγραφή Recovery στο boot;</string>
-        <string name="dumlock_reflashing">Εγγραφή recovery στο boot...</string>
-        <string name="dumlock_reflash_complete">Η Εγγραφή Recovery στο Boot Ολοκληρώθηκε</string>
-        <string name="dumlock_install_btn">Εγκατάσταση του HTC Dumlock</string>
-        <string name="dumlock_install_confirm">Εγκατάσταση αρχείων HTC dumlock στο λειτουργικό;</string>
-        <string name="dumlock_installing">Εγκατάσταση του HTC Dumlock...</string>
-        <string name="dumlock_install_complete">Η εγκατάσταση HTC Dumlock Ολοκληρώθηκε</string>
         <string name="swipe_to_unlock">Σύρετε για ξεκλείδωμα</string>
         <string name="swipe_unlock">   Ξεκλείδωμα</string>
         <string name="fm_hdr">Διαχείριση αρχείων</string>
@@ -605,9 +591,6 @@
         <string name="md5_match">Τα MD5 ταυτίζονται</string>
         <string name="pid_signal">{1} διαδικασία τερματίστηκε με σήμα: {2}</string>
         <string name="pid_error">{1} διαδικασία τερματίστηκε με ΣΦΑΛΜΑ: {2}</string>
-        <string name="install_dumlock">Εγκατάσταση HTC Dumlock στο σύστημα...</string>
-        <string name="dumlock_restore">Επαναφορά του Αρχικού Boot...</string>
-        <string name="dumlock_reflash">Επανεγγραφή recovery στο boot...</string>
         <string name="run_script">Εκτέλεση {1} script...</string>
         <string name="rename_stock">Μετονομασία αρχικού recovery στο /system για να αποτρέψετε την αντικατάσταση του TWRP από το λειτουργικό.</string>
         <string name="split_backup">Σπάσιμο αντίγραφου ασφαλείας σε πολλαπλά αρχεία...</string>

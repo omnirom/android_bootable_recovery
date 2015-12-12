@@ -376,7 +376,6 @@
 		<string name="language_hdr">Мова</string>
 		<string name="terminal_btn">Термінал</string>
 		<string name="reload_theme_btn">Завантажити тему</string>
-		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">Інтегрувати TWRP</string>
 		<string name="inject_twrp_confirm">Інтегрувати TWRP наново?</string>
 		<string name="injecting_twrp">Інтегрування TWRP...</string>
@@ -396,19 +395,6 @@
 		<string name="partitioning_sd">Розмітка SD карти...</string>
 		<string name="partitioning_sd2">Це може зайняти кілька хвилин.</string>
 		<string name="part_sd_complete">Розмітка завершена</string>
-		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">Відновлення оригінального Boot</string>
-		<string name="dumlock_restore_confirm">Відновити оригінальний образ Boot?</string>
-		<string name="dumlock_restoring">Відновлення оригінального Boot...</string>
-		<string name="dumlock_restore_complete">Відновлення оригінального Boot завершено</string>
-		<string name="dumlock_reflash_btn">Перепрошивка Recovery</string>
-		<string name="dumlock_reflash_confirm">Прошити recovery в boot?</string>
-		<string name="dumlock_reflashing">Прошивка recovery в boot...</string>
-		<string name="dumlock_reflash_complete">Прошивка recovery в boot завершена</string>
-		<string name="dumlock_install_btn">Встановлення HTC Dumlock</string>
-		<string name="dumlock_install_confirm">Встановити HTC dumlock до прошивки?</string>
-		<string name="dumlock_installing">Встановлення HTC Dumlock...</string>
-		<string name="dumlock_install_complete">Встановлення HTC Dumlock завершено</string>
 		<string name="swipe_to_unlock">Розблокувати</string>
 		<string name="swipe_unlock">   Разблокування</string>
 		<string name="fm_hdr">Файловий менеджер</string>
@@ -626,9 +612,6 @@
 		<string name="md5_match">MD5 співпадає</string>
 		<string name="pid_signal">{1} процес завершився з кодом: {2}</string>
 		<string name="pid_error">{1} процес завершився з ПОМИЛКОЮ: {2}</string>
-		<string name="install_dumlock">Встановлення HTC Dumlock у систему...</string>
-		<string name="dumlock_restore">Відновлення оригінального boot...</string>
-		<string name="dumlock_reflash">Прошивка recovery до boot...</string>
 		<string name="run_script">Виконання сценарію {1}...</string>
 		<string name="rename_stock">Перейменування файлу стокового рекавері у /system для попередження відновлення стокового замість TWRP.</string>
 		<string name="split_backup">Розбиття резервної копії на частини...</string>

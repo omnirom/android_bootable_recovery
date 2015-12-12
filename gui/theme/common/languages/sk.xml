@@ -362,7 +362,6 @@
 		<string name="language_hdr">Jazyk</string>
 		<string name="terminal_btn">Terminál</string>
 		<string name="reload_theme_btn">Načítať tému</string>
-		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">Vložiť TWRP</string>
 		<string name="inject_twrp_confirm">Znova vložiť TWRP?</string>
 		<string name="injecting_twrp">Vkladanie TWRP...</string>
@@ -382,19 +381,6 @@
 		<string name="partitioning_sd">Delenie SD karty...</string>
 		<string name="partitioning_sd2">Môže to trvať niekoľko minút.</string>
 		<string name="part_sd_complete">Rozdelenie kompletné</string>
-		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">Obnoviť pôvodný boot.img</string>
-		<string name="dumlock_restore_confirm">Obnoviť pôvodný boot.img?</string>
-		<string name="dumlock_restoring">Obnovenie pôvodného boot.img...</string>
-		<string name="dumlock_restore_complete">Obnova pôvodného boot.img dokončená</string>
-		<string name="dumlock_reflash_btn">Prepísanie recovery</string>
-		<string name="dumlock_reflash_confirm">Prepísať recovery pri štarte?</string>
-		<string name="dumlock_reflashing">Prepísanie recovery pri štarte...</string>
-		<string name="dumlock_reflash_complete">Prepísanie recovery pri štarte dokončené</string>
-		<string name="dumlock_install_btn">Inštalovať HTC Dumlock</string>
-		<string name="dumlock_install_confirm">Inštalovať súbory HTC Dumlock do ROM?</string>
-		<string name="dumlock_installing">Inštalácia HTC Dumlock...</string>
-		<string name="dumlock_install_complete">Inštalácia HTC Dumlock dokončená</string>
 		<string name="swipe_to_unlock">Potiahnutím odomknúť</string>
 		<string name="swipe_unlock">   Odomknúť</string>
 		<string name="fm_hdr">Súborový manažér</string>
@@ -595,9 +581,6 @@
 		<string name="md5_match">MD5 sa zhoduje</string>
 		<string name="pid_signal">Proces {1} skončil so signálom: {2}</string>
 		<string name="pid_error">Proces {1} skončil s CHYBOU: {2}</string>
-		<string name="install_dumlock">Inštalovanie HTC Dumlock do systému...</string>
-		<string name="dumlock_restore">Obnovenie pôvodného boot.img...</string>
-		<string name="dumlock_reflash">Zapisovanie recovery do boot.img...</string>
 		<string name="run_script">Beh skriptu {1}...</string>
 		<string name="rename_stock">Premenovaný originál recovery súbor v /system pre zabránenie prepísania TWRP originál ROM.</string>
 		<string name="split_backup">Rozdelenie zálohy do viacerých archívov...</string>

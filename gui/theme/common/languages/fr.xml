@@ -361,7 +361,6 @@
         <string name="language_hdr">Langue</string>
         <string name="terminal_btn">Terminal</string>
         <string name="reload_theme_btn">Recharger le thème</string>
-        <string name="dumlock_btn">HTC Dumlock</string>
         <string name="inject_twrp_btn">Injecter TWRP</string>
         <string name="inject_twrp_confirm">Réinjecter TWRP ?</string>
         <string name="injecting_twrp">Réinjection de TWRP en cours...</string>
@@ -380,19 +379,6 @@
         <string name="partitioning_sd">Partitionnement de la carte SD en cours...</string>
         <string name="partitioning_sd2">Cela va durer quelques minutes.</string>
         <string name="part_sd_complete">Partitionnement Terminé</string>
-        <string name="dumlock_hdr">HTC Dumlock</string>
-        <string name="dumlock_restore_btn">Restaurer l'image de démarrage originale</string>
-        <string name="dumlock_restore_confirm">Restaurer l'image de démarrage originale ?</string>
-        <string name="dumlock_restoring">Restauration de l'image de démarrage originale en cours...</string>
-        <string name="dumlock_restore_complete">Restauration de l'image de démarrage originale effectué</string>
-        <string name="dumlock_reflash_btn">Réinstaller le mode de Récupération</string>
-        <string name="dumlock_reflash_confirm">Réinstaller le mode de Récupération sur le Démarrage ?</string>
-        <string name="dumlock_reflashing">Réinstallation du mode de Récupération sur Démarrage...</string>
-        <string name="dumlock_reflash_complete">Réinstallation du mode de Récupération sur Démarrage effectuée</string>
-        <string name="dumlock_install_btn">Installer HTC Dumlock</string>
-        <string name="dumlock_install_confirm">Installer les fichiers HTC Dumlock sur la ROM?</string>
-        <string name="dumlock_installing">Installation de HTC Dumlock...</string>
-        <string name="dumlock_install_complete">Installation de HTC Dumlock complétée</string>
         <string name="swipe_to_unlock">Glisser pour déverrouiller</string>
         <string name="swipe_unlock">Dévérrouiller</string>
         <string name="fm_hdr">Gestionnaire de fichiers</string>
@@ -606,9 +592,6 @@
         <string name="md5_match">Le MD5 correspond</string>
         <string name="pid_signal">Le processus {1} s'est terminé avec le signal: {2}</string>
         <string name="pid_error">Le processus {1} s'est terminé avec ERREUR: {2}</string>
-        <string name="install_dumlock">Installation de HTC Dumlock...</string>
-        <string name="dumlock_restore">Restauration de l'image de démarrage originale en cours...</string>
-        <string name="dumlock_reflash">Réécriture de l'image de récupération sur celle de démarrage...</string>
         <string name="run_script">Exécution du script {1}...</string>
         <string name="rename_stock">Renommé le fichier de récupération original dans /system pour empêcher le système d'exploitation original de remplacer TWRP.</string>
         <string name="split_backup">Morcellement des fichiers de sauvegarde en plusieurs archives...</string>

@@ -368,7 +368,6 @@
 		<string name="language_hdr">言語</string>
 		<string name="terminal_btn">ターミナル</string>
 		<string name="reload_theme_btn">テーマの再読み込み</string>
-		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">TWRP の組み込み</string>
 		<string name="inject_twrp_confirm">TWRP を再度組み込みますか?</string>
 		<string name="injecting_twrp">TWRP を組み込み中...</string>
@@ -388,19 +387,6 @@
 		<string name="partitioning_sd">SD カードの分割中...</string>
 		<string name="partitioning_sd2">完了まで数分かかります。</string>
 		<string name="part_sd_complete">分割しました</string>
-		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">元の Boot をリストアする</string>
-		<string name="dumlock_restore_confirm">元の Boot イメージをリストアしますか?</string>
-		<string name="dumlock_restoring">元の Boot をリストア中...</string>
-		<string name="dumlock_restore_complete">元の Boot をリストアしました</string>
-		<string name="dumlock_reflash_btn">リカバリの再書き込み</string>
-		<string name="dumlock_reflash_confirm">boot にリカバリを再書き込みしますか?</string>
-		<string name="dumlock_reflashing">boot にリカバリを書き込み中...</string>
-		<string name="dumlock_reflash_complete">リカバリを書き込みました</string>
-		<string name="dumlock_install_btn">HTC Dumlock のインストール</string>
-		<string name="dumlock_install_confirm">ROM に HTC dumlock をインストールしますか?</string>
-		<string name="dumlock_installing">HTC Dumlock のインストール中...</string>
-		<string name="dumlock_install_complete">HTC Dumlock をインストールしました</string>
 		<string name="swipe_to_unlock">スワイプでロック解除</string>
 		<string name="swipe_unlock">   ロック解除</string>
 		<string name="fm_hdr">ファイルマネージャ</string>
@@ -619,9 +605,6 @@
 		<string name="md5_match">MD5 が一致しました</string>
 		<string name="pid_signal">{1} プロセスはこのシグナルで終了しました: {2}</string>
 		<string name="pid_error">{1} プロセスはこのエラーで終了しました: {2}</string>
-		<string name="install_dumlock">HTC Dumlock を system にインストール中...</string>
-		<string name="dumlock_restore">元の Boot をリストア中...</string>
-		<string name="dumlock_reflash">boot にリカバリを書き込み中...</string>
 		<string name="run_script">{1} スクリプトを実行しています...</string>
 		<string name="rename_stock">stock ROM が TWRP を置き換えるのを防ぐため、 /system の stock リカバリファイルの名前を変更しました。</string>
 		<string name="split_backup">バックアップファイルを複数の書庫に分割中...</string>

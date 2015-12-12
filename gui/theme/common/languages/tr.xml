@@ -362,7 +362,6 @@
 		<string name="language_hdr">Dil</string>
 		<string name="terminal_btn">Terminal</string>
 		<string name="reload_theme_btn">Temayı Yeniden Yükle</string>
-		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">TWRP Ekle</string>
 		<string name="inject_twrp_confirm">TWRP yeniden eklensin mi?</string>
 		<string name="injecting_twrp">TWRP yeniden ekleniyor...</string>
@@ -382,19 +381,6 @@
 		<string name="partitioning_sd">SD Kart Bölümleniyor...</string>
 		<string name="partitioning_sd2">Bu işlem birkaç dakika sürecek.</string>
 		<string name="part_sd_complete">Bölümleme Tamamlandı</string>
-		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">Orijinal Boot\'u Geri Yükle</string>
-		<string name="dumlock_restore_confirm">Orijinal boot imajı geri yüklensin mi?</string>
-		<string name="dumlock_restoring">Orijinal Boot Geri Yükleniyor...</string>
-		<string name="dumlock_restore_complete">Orijinal Boot Geri Yüklemesi Tamamlandı</string>
-		<string name="dumlock_reflash_btn">Recovery\'i Yeniden Flashla</string>
-		<string name="dumlock_reflash_confirm">Cihazın açılması için kurtarma yazılımı tekrar yüklensin mi?</string>
-		<string name="dumlock_reflashing">Cihazın açılması için kurtarma yazılımı tekrar yükleniyor...</string>
-		<string name="dumlock_reflash_complete">Cihazın açılması için kurtarma yazılımı tekrar yükleme tamamlandı</string>
-		<string name="dumlock_install_btn">HTC Dumlock Yükle</string>
-		<string name="dumlock_install_confirm">HTC dumlock dosyaları ROM\'a yüklensin mi?</string>
-		<string name="dumlock_installing">HTC Dumlock Yükleniyor...</string>
-		<string name="dumlock_install_complete">HTC Dumlock Yüklemesi Tamamlandı</string>
 		<string name="swipe_to_unlock">Kilidi Açmak için Kaydır</string>
 		<string name="swipe_unlock">   Kilidi Aç</string>
 		<string name="fm_hdr">Dosya Yöneticisi</string>

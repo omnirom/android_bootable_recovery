@@ -385,7 +385,6 @@
 		<string name="language_hdr">语言</string>
 		<string name="terminal_btn">终端命令</string>
 		<string name="reload_theme_btn">重载主题</string>
-		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">注入 TWRP</string>
 		<string name="inject_twrp_confirm">是否重新注入 TWRP？</string>
 		<string name="injecting_twrp">正在重新注入 TWRP…</string>
@@ -405,19 +404,6 @@
 		<string name="partitioning_sd">正在对 SD 卡分区…</string>
 		<string name="partitioning_sd2">这将需要几分钟的时间。</string>
 		<string name="part_sd_complete">分区完成</string>
-		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">恢复原版 Boot 镜像</string>
-		<string name="dumlock_restore_confirm">是否恢复原版 Boot 镜像？</string>
-		<string name="dumlock_restoring">正在恢复原版 Boot 镜像…</string>
-		<string name="dumlock_restore_complete">恢复原版 Boot 镜像完成</string>
-		<string name="dumlock_reflash_btn">重新刷入 Recovery</string>
-		<string name="dumlock_reflash_confirm">是否重新刷入 Recovery 至 Boot 分区？</string>
-		<string name="dumlock_reflashing">正在刷入 Recovery 至 Boot 分区…</string>
-		<string name="dumlock_reflash_complete">Recovery 刷入完成</string>
-		<string name="dumlock_install_btn">安装 HTC Dumlock</string>
-		<string name="dumlock_install_confirm">是否安装 HTC Dumlock 文件到系统中？</string>
-		<string name="dumlock_installing">正在安装 HTC Dumlock…</string>
-		<string name="dumlock_install_complete">HTC Dumlock 安装完成</string>
 		<string name="swipe_to_unlock">滑动按钮解锁</string>
 		<string name="swipe_unlock">   解锁</string>
 		<string name="fm_hdr">文件管理</string>
@@ -638,9 +624,6 @@
 		<string name="md5_match">MD5 校验成功</string>
 		<string name="pid_signal">{1} 过程结束，标志：{2}</string>
 		<string name="pid_error">{1} 过程结束，错误：{2}</string>
-		<string name="install_dumlock">安装 HTC Dumlock 到系统…</string>
-		<string name="dumlock_restore">正在恢复原版 Boot…</string>
-		<string name="dumlock_reflash">正在重新刷入 Recovery 到 Boot…</string>
 		<string name="run_script">正在运行 {1} 脚本…</string>
 		<string name="rename_stock">重命名/system 下原版 Recovery 的补丁文件，避免原厂固件替换 TWRP。</string>
 		<string name="split_backup">分解备份文件为多个压缩文件…</string>
