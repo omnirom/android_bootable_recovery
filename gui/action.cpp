@@ -1726,7 +1726,7 @@ int GUIAction::flashimage(std::string arg __unused)
 	DataManager::GetValue("tw_zip_location", path);
 	DataManager::GetValue("tw_file", filename);
 	full_filename = path + "/" + filename;
-	if (PartitionManager.Flash_Image(full_filename))
+	if (PartitionManager.Flash_Image(full_filename, false))
 		op_status = 0; // success
 	else
 		op_status = 1; // fail
