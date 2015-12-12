@@ -3,7 +3,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:= \
 	orscmd.cpp
-LOCAL_CFLAGS:= -g -c -W
+LOCAL_CFLAGS:= -c -W
 LOCAL_MODULE:=orscmd
 LOCAL_MODULE_STEM := twrp
 LOCAL_MODULE_TAGS:= eng
