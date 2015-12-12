@@ -18,5 +18,58 @@
 
 #define ORS_INPUT_FILE "/sbin/orsin"
 #define ORS_OUTPUT_FILE "/sbin/orsout"
+#define TW_ADB_BACKUP "/tmp/twadbbackup"
+#define TW_ADB_RESTORE "/tmp/twadbrestore"
+#define TW_ADB_CONTROL "/tmp/twadbcontrol"
+#define TWRP "TWRP"
+#define TWENDADB "twendadb"
+#define TWCNT "twcnt"
+#define TWFN "twfn"
+#define TWIMG "twimg"
+#define TWEOF "tweof"
+#define MD5TRAILER "md5tr"
+#define TWMD5 "twmd5"
+#define ADB_BACKUP_VERSION 0x01
+#define TWERROR "twerror"
+
+//structs for adb backup need to align to 512 bytes for reading 512
+//bytes at a time
+
+//generic cmd structure to align fields
+struct twcmd {
+	char start_of_header[6];
+	char type[10];
+	uint32_t crc;
+	char space[492];
+};
+
+//general info for files
+struct twfilehdr {
+	char start_of_header[6];
+	char type[10];
+	uint32_t crc;
+	uint64_t size;
+	uint64_t compressed;
+	char name[476];
+};
+
+//md5 for files
+struct md5trailer {
+	char start_of_trailer[6];
+	char type[10];
+	uint32_t crc;
+	char md5[33];
+	char space[457];
+};
+
+//info for version and number of partitions backed up
+struct twheader {
+	char start_of_header[6];
+	char type[10];
+	uint32_t crc;
+	uint64_t partition_count;
+	uint64_t version;
+	char space[476];
+};
 
 #endif //__ORSCMD_H
