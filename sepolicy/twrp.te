@@ -1,4 +1,0 @@
-recovery_only(`
-  # Allow recovery to set permissive mode
-  permissive recovery;
-')
