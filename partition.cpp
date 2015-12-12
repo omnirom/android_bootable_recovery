@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <libgen.h>
+#include <zlib.h>
 #include <iostream>
 #include <sstream>
 #include <sys/param.h>
@@ -46,6 +47,7 @@
 #include "infomanager.hpp"
 #include "set_metadata.h"
 #include "gui/gui.hpp"
+#include "adbbu/twadbstream.h"
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
@@ -145,7 +147,7 @@ TWPartition::TWPartition() {
 	Backup_Name = "";
 	Backup_FileName = "";
 	MTD_Name = "";
-	Backup_Method = NONE;
+	Backup_Method = BM_NONE;
 	Can_Encrypt_Backup = false;
 	Use_Userdata_Encryption = false;
 	Has_Data_Media = false;
@@ -671,16 +673,16 @@ void TWPartition::Setup_File_System(bool Display_Error) {
 	Make_Dir(Mount_Point, Display_Error);
 	Display_Name = Mount_Point.substr(1, Mount_Point.size() - 1);
 	Backup_Name = Display_Name;
-	Backup_Method = FILES;
+	Backup_Method = BM_FILES;
 }
 
 void TWPartition::Setup_Image(bool Display_Error) {
 	Display_Name = Mount_Point.substr(1, Mount_Point.size() - 1);
 	Backup_Name = Display_Name;
 	if (Current_File_System == "emmc")
-		Backup_Method = DD;
+		Backup_Method = BM_DD;
 	else if (Current_File_System == "mtd" || Current_File_System == "bml")
-		Backup_Method = FLASH_UTILS;
+		Backup_Method = BM_FLASH_UTILS;
 	else
 		LOGINFO("Unhandled file system '%s' on image '%s'\n", Current_File_System.c_str(), Display_Name.c_str());
 	if (Find_Partition_Size()) {
@@ -1468,14 +1470,13 @@ bool TWPartition::Resize() {
 	return false;
 }
 
-bool TWPartition::Backup(const string& backup_folder, pid_t &tar_fork_pid, ProgressTracking *progress) {
-	if (Backup_Method == FILES) {
-		return Backup_Tar(backup_folder, progress, tar_fork_pid);
-	}
-	else if (Backup_Method == DD)
-		return Backup_Image(backup_folder, progress);
-	else if (Backup_Method == FLASH_UTILS)
-		return Backup_Dump_Image(backup_folder, progress);
+bool TWPartition::Backup(BackupSettings *backup_settings) {
+	if (Backup_Method == BM_FILES)
+		return Backup_Tar(backup_settings);
+	else if (Backup_Method == BM_DD)
+		return Backup_Image(backup_settings->Full_Backup_Path, backup_settings->progress, backup_settings->adbbackup);
+	else if (Backup_Method == BM_FLASH_UTILS)
+		return Backup_Dump_Image(backup_settings->Full_Backup_Path, backup_settings->progress, backup_settings->adbbackup);
 	LOGERR("Unknown backup method for '%s'\n", Mount_Point.c_str());
 	return false;
 }
@@ -1528,35 +1529,32 @@ bool TWPartition::Check_MD5(string restore_folder) {
 	return false;
 }
 
-bool TWPartition::Restore(const string& restore_folder, ProgressTracking *progress) {
-	string Restore_File_System;
-
+bool TWPartition::Restore(RestorePartitionSettings *part_settings) {
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, gui_parse_text("{@restoring_hdr}"));
-	LOGINFO("Restore filename is: %s\n", Backup_FileName.c_str());
+	LOGINFO("Restore filename is: %s/%s\n", part_settings->Restore_Name.c_str(), part_settings->Backup_FileName.c_str());
 
-	Restore_File_System = Get_Restore_File_System(restore_folder);
+	string Restore_File_System = Get_Restore_File_System(part_settings);
 
 	if (Is_File_System(Restore_File_System))
-		return Restore_Tar(restore_folder, Restore_File_System, progress);
-	else if (Is_Image(Restore_File_System)) {
-		return Restore_Image(restore_folder, Restore_File_System, progress);
-	}
+		return Restore_Tar(part_settings);
+	else if (Is_Image(Restore_File_System))
+		return Restore_Image(part_settings);
 
 	LOGERR("Unknown restore method for '%s'\n", Mount_Point.c_str());
 	return false;
 }
 
-string TWPartition::Get_Restore_File_System(const string& restore_folder) {
+string TWPartition::Get_Restore_File_System(RestorePartitionSettings *part_settings) {
 	size_t first_period, second_period;
 	string Restore_File_System;
 
 	// Parse backup filename to extract the file system before wiping
-	first_period = Backup_FileName.find(".");
+	first_period = part_settings->Backup_FileName.find(".");
 	if (first_period == string::npos) {
 		LOGERR("Unable to find file system (first period).\n");
 		return string();
 	}
-	Restore_File_System = Backup_FileName.substr(first_period + 1, Backup_FileName.size() - first_period - 1);
+	Restore_File_System = part_settings->Backup_FileName.substr(first_period + 1, part_settings->Backup_FileName.size() - first_period - 1);
 	second_period = Restore_File_System.find(".");
 	if (second_period == string::npos) {
 		LOGERR("Unable to find file system (second period).\n");
@@ -1568,13 +1566,13 @@ string TWPartition::Get_Restore_File_System(const string& restore_folder) {
 }
 
 string TWPartition::Backup_Method_By_Name() {
-	if (Backup_Method == NONE)
+	if (Backup_Method == BM_NONE)
 		return "none";
-	else if (Backup_Method == FILES)
+	else if (Backup_Method == BM_FILES)
 		return "files";
-	else if (Backup_Method == DD)
+	else if (Backup_Method == BM_DD)
 		return "dd";
-	else if (Backup_Method == FLASH_UTILS)
+	else if (Backup_Method == BM_FLASH_UTILS)
 		return "flash_utils";
 	else
 		return "undefined";
@@ -2011,7 +2009,7 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media_Func(const string& parent __unu
 	return false;
 }
 
-bool TWPartition::Backup_Tar(const string& backup_folder, ProgressTracking *progress, pid_t &tar_fork_pid) {
+bool TWPartition::Backup_Tar(BackupSettings *part_settings) {
 	string Full_FileName;
 	twrpTar tar;
 
@@ -2039,35 +2037,69 @@ bool TWPartition::Backup_Tar(const string& backup_folder, ProgressTracking *prog
 #endif
 
 	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
-	Full_FileName = backup_folder + "/" + Backup_FileName;
+	Full_FileName = part_settings->Full_Backup_Path + Backup_FileName;
 	tar.has_data_media = Has_Data_Media;
-	Full_FileName = backup_folder + "/" + Backup_FileName;
+	tar.adbbackup = part_settings->adbbackup;
 	tar.setdir(Backup_Path);
 	tar.setfn(Full_FileName);
 	tar.setsize(Backup_Size);
 	tar.partition_name = Backup_Name;
-	tar.backup_folder = backup_folder;
-	if (tar.createTarFork(progress, tar_fork_pid) != 0)
+	tar.backup_folder = part_settings->Full_Backup_Path;
+	if (tar.createTarFork(part_settings) != 0)
 		return false;
 	return true;
 }
 
-bool TWPartition::Backup_Image(const string& backup_folder, ProgressTracking *progress) {
+bool TWPartition::Backup_Image(const string& backup_folder, ProgressTracking *progress, bool adbbackup) {
 	string Full_FileName;
+	int adb_control_bu_fd, compressed;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
 
 	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
-	Full_FileName = backup_folder + "/" + Backup_FileName;
+	
+	if (adbbackup)
+		Full_FileName = TW_ADB_BACKUP;
+	else
+		Full_FileName = backup_folder + "/" + Backup_FileName;
 
+	if (adbbackup) {
+		adb_control_bu_fd = open(TW_ADB_BU_CONTROL, O_WRONLY | O_NONBLOCK);
+		struct twfilehdr twimghdr;
+		strncpy(twimghdr.start_of_header, TWRP, sizeof(twimghdr.start_of_header));
+		strncpy(twimghdr.type, TWIMG, sizeof(twimghdr.type));
+		twimghdr.size = Backup_Size;
+		compressed = twimghdr.compressed;
+		DataManager::GetValue(TW_USE_COMPRESSION_VAR, compressed);
+		strncpy(twimghdr.name, Full_FileName.c_str(), sizeof(twimghdr.name));
+		twimghdr.crc = crc32(0L, Z_NULL, 0);
+		twimghdr.crc = crc32(twimghdr.crc, (const unsigned char*) &twimghdr, sizeof(twimghdr));
+		LOGINFO("Sending TWIMG to adb\n");
+		if (write(adb_control_bu_fd, &twimghdr, sizeof(twimghdr)) < 1) {
+			LOGERR("Cannot write to adb control channel\n");
+		}
+	}
+	
 	if (!Raw_Read_Write(Actual_Block_Device, Full_FileName, Backup_Size, progress))
 		return false;
 
-	tw_set_default_metadata(Full_FileName.c_str());
-	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
-		gui_msg(Msg(msg::kError, "backup_size=Backup file size for '{1}' is 0 bytes.")(Full_FileName));
-		return false;
+	if (adbbackup) {
+		struct AdbBackupControlType tweof;
+
+		adb_control_bu_fd = open(TW_ADB_BU_CONTROL, O_WRONLY | O_NONBLOCK);
+		memset(&tweof, 0, sizeof(tweof));
+		strncpy(tweof.start_of_header, TWRP, sizeof(tweof.start_of_header));
+		strncpy(tweof.type, TWEOF, sizeof(tweof.type));
+		tweof.crc = crc32(0L, Z_NULL, 0);
+		tweof.crc = crc32(tweof.crc, (const unsigned char*) &tweof, sizeof(tweof));
+		LOGINFO("Sending TWEOF to adb backup\n");
+		if (write(adb_control_bu_fd, &tweof, sizeof(tweof)) < 0) {
+			LOGINFO("Cannot write to this adb_control_bu_fd: %s.\n", strerror(errno));
+			close(adb_control_bu_fd);
+			return -1;
+		}
+		close(adb_control_bu_fd);
 	}
 	return true;
 }
@@ -2133,8 +2165,10 @@ exit:
 	return ret;
 }
 
-bool TWPartition::Backup_Dump_Image(const string& backup_folder, ProgressTracking *progress) {
+bool TWPartition::Backup_Dump_Image(const string& backup_folder, ProgressTracking *progress, bool adbbackup) {
 	string Full_FileName, Command;
+	int use_compression, adb_control_bu_fd;
+	unsigned long long compressed;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
@@ -2145,7 +2179,26 @@ bool TWPartition::Backup_Dump_Image(const string& backup_folder, ProgressTrackin
 	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
 	Full_FileName = backup_folder + "/" + Backup_FileName;
 
-	Command = "dump_image " + MTD_Name + " '" + Full_FileName + "'";
+	if (adbbackup) {
+		adb_control_bu_fd = open(TW_ADB_BU_CONTROL, O_WRONLY | O_NONBLOCK);
+		struct twfilehdr twimghdr;
+		strncpy(twimghdr.start_of_header, TWRP, sizeof(twimghdr.start_of_header));
+		strncpy(twimghdr.type, TWIMG, sizeof(twimghdr.type));
+		twimghdr.size = Backup_Size;
+		compressed = twimghdr.compressed;
+		DataManager::GetValue(TW_USE_COMPRESSION_VAR, compressed);
+		strncpy(twimghdr.name, Full_FileName.c_str(), sizeof(twimghdr.name));
+		twimghdr.crc = crc32(0L, Z_NULL, 0);
+		twimghdr.crc = crc32(twimghdr.crc, (const unsigned char*) &twimghdr, sizeof(twimghdr));
+		if (write(adb_control_bu_fd, &twimghdr, sizeof(twimghdr)) < 1) {
+			LOGERR("Cannot write to ADB_CONTROL_BU_FD\n");
+		}
+		Command = "dump_image " + MTD_Name + " '" + TW_ADB_BACKUP + "'";
+	}
+	else {
+		Command = "dump_image " + MTD_Name + " '" + Full_FileName + "'";
+	}
+	
 	LOGINFO("Backup command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command);
 	tw_set_default_metadata(Full_FileName.c_str());
@@ -2156,30 +2209,55 @@ bool TWPartition::Backup_Dump_Image(const string& backup_folder, ProgressTrackin
 	}
 	if (progress)
 		progress->UpdateSize(Backup_Size);
+
+	if (adbbackup) {
+		struct AdbBackupControlType tweof;
+
+		adb_control_bu_fd = open(TW_ADB_BU_CONTROL, O_WRONLY | O_NONBLOCK);
+		memset(&tweof, 0, sizeof(tweof));
+		strncpy(tweof.start_of_header, TWRP, sizeof(tweof.start_of_header));
+		strncpy(tweof.type, TWEOF, sizeof(tweof.type));
+		memset(&tweof.space, 0, sizeof(tweof.space));
+		tweof.crc = crc32(0L, Z_NULL, 0);
+		tweof.crc = crc32(tweof.crc, (const unsigned char*) &tweof, sizeof(tweof));
+		LOGINFO("Sending TWEOF to adb backup\n");
+		if (write(adb_control_bu_fd, &tweof, sizeof(tweof)) < 0) {
+			LOGINFO("Cannot write to this adb_control_bu_fd: %s.\n", strerror(errno));
+			close(adb_control_bu_fd);
+			return -1;
+		}
+		close(adb_control_bu_fd);
+	}
 	return true;
 }
 
-unsigned long long TWPartition::Get_Restore_Size(const string& restore_folder) {
-	InfoManager restore_info(restore_folder + "/" + Backup_Name + ".info");
+unsigned long long TWPartition::Get_Restore_Size(RestorePartitionSettings *part_settings) {
+	if (part_settings->adbbackup) {
+		return part_settings->total_restore_size;
+	}
+
+	InfoManager restore_info(part_settings->Restore_Name + "/" + part_settings->Backup_FileName + ".info");
 	if (restore_info.LoadValues() == 0) {
 		if (restore_info.GetValue("backup_size", Restore_Size) == 0) {
 			LOGINFO("Read info file, restore size is %llu\n", Restore_Size);
 			return Restore_Size;
 		}
 	}
-	string Full_FileName, Restore_File_System = Get_Restore_File_System(restore_folder);
 
-	Full_FileName = restore_folder + "/" + Backup_FileName;
+	string Full_FileName, Restore_File_System = Get_Restore_File_System(part_settings);
+
+	Full_FileName = part_settings->Restore_Name + "/" + part_settings->Part->Backup_FileName;
 
 	if (Is_Image(Restore_File_System)) {
 		Restore_Size = TWFunc::Get_File_Size(Full_FileName);
 		return Restore_Size;
 	}
-
+	
 	twrpTar tar;
 	tar.setdir(Backup_Path);
+	tar.adbbackup = part_settings->adbbackup;
 	tar.setfn(Full_FileName);
-	tar.backup_name = Backup_Name;
+	tar.backup_name = Full_FileName;
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	string Password;
 	DataManager::GetValue("tw_restore_password", Password);
@@ -2187,14 +2265,16 @@ unsigned long long TWPartition::Get_Restore_Size(const string& restore_folder) {
 		tar.setpassword(Password);
 #endif
 	tar.partition_name = Backup_Name;
-	tar.backup_folder = restore_folder;
+	tar.backup_folder = part_settings->Restore_Name;
 	Restore_Size = tar.get_size();
+	LOGINFO("Get_Restore_Size::Restore_Size: %lld\n", Restore_Size);
 	return Restore_Size;
 }
 
-bool TWPartition::Restore_Tar(const string& restore_folder, const string& Restore_File_System, ProgressTracking *progress) {
+bool TWPartition::Restore_Tar(RestorePartitionSettings *part_settings) {
 	string Full_FileName;
 	bool ret = false;
+	string Restore_File_System = Get_Restore_File_System(part_settings);
 
 	if (Has_Android_Secure) {
 		if (!Wipe_AndSec())
@@ -2217,8 +2297,12 @@ bool TWPartition::Restore_Tar(const string& restore_folder, const string& Restor
 	if (!ReMount_RW(true))
 		return false;
 
-	Full_FileName = restore_folder + "/" + Backup_FileName;
+	Full_FileName = part_settings->Restore_Name + "/" + part_settings->Backup_FileName;
 	twrpTar tar;
+	if (part_settings->adbbackup) {
+		tar.adbbackup = part_settings->adbbackup;
+		tar.adb_compression = part_settings->adb_compression;
+	}
 	tar.setdir(Backup_Path);
 	tar.setfn(Full_FileName);
 	tar.backup_name = Backup_Name;
@@ -2228,8 +2312,8 @@ bool TWPartition::Restore_Tar(const string& restore_folder, const string& Restor
 	if (!Password.empty())
 		tar.setpassword(Password);
 #endif
-	progress->SetPartitionSize(Get_Restore_Size(restore_folder));
-	if (tar.extractTarFork(progress) != 0)
+	part_settings->progress->SetPartitionSize(Get_Restore_Size(part_settings));
+	if (tar.extractTarFork(part_settings) != 0)
 		ret = false;
 	else
 		ret = true;
@@ -2259,19 +2343,20 @@ bool TWPartition::Restore_Tar(const string& restore_folder, const string& Restor
 	return ret;
 }
 
-bool TWPartition::Restore_Image(const string& restore_folder, const string& Restore_File_System, ProgressTracking *progress) {
+bool TWPartition::Restore_Image(RestorePartitionSettings *part_settings) {
 	string Full_FileName;
+	string Restore_File_System = Get_Restore_File_System(part_settings);
 
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restoring_hdr}"));
 	gui_msg(Msg("restoring=Restoring {1}...")(Backup_Display_Name));
-	Full_FileName = restore_folder + "/" + Backup_FileName;
+	Full_FileName = part_settings->Restore_Name + "/" + part_settings->Backup_FileName;
 
 	if (Restore_File_System == "emmc") {
 		unsigned long long file_size = (unsigned long long)(TWFunc::Get_File_Size(Full_FileName));
-		if (!Raw_Read_Write(Full_FileName, Actual_Block_Device, file_size, progress))
+		if (!Raw_Read_Write(Full_FileName, Actual_Block_Device, file_size, part_settings->progress))
 			return false;
 	} else if (Restore_File_System == "mtd" || Restore_File_System == "bml") {
-		if (!Flash_Image_FI(Full_FileName, progress))
+		if (!Flash_Image_FI(Full_FileName, part_settings->progress, part_settings->adbbackup))
 			return false;
 	}
 	return true;
@@ -2414,12 +2499,12 @@ uint64_t TWPartition::Get_Max_FileSize() {
 	return maxFileSize - 1;
 }
 
-bool TWPartition::Flash_Image(const string& Filename) {
+bool TWPartition::Flash_Image(const string& Filename, bool adbbackup) {
 	string Restore_File_System;
 
 	LOGINFO("Image filename is: %s\n", Filename.c_str());
 
-	if (Backup_Method == FILES) {
+	if (Backup_Method == BM_FILES) {
 		LOGERR("Cannot flash images to file systems\n");
 		return false;
 	} else if (!Can_Flash_Img) {
@@ -2437,15 +2522,17 @@ bool TWPartition::Flash_Image(const string& Filename) {
 			gui_err("img_size_err=Size of image is larger than target device");
 			return false;
 		}
-		if (Backup_Method == DD) {
-			if (Is_Sparse_Image(Filename)) {
-				return Flash_Sparse_Image(Filename);
+		if (Backup_Method == BM_DD) {
+			if (!adbbackup) {
+				if (Is_Sparse_Image(Filename)) {
+					return Flash_Sparse_Image(Filename, adbbackup);
+				}
 			}
 			unsigned long long file_size = (unsigned long long)(TWFunc::Get_File_Size(Filename));
 			ProgressTracking pt(file_size);
 			return Raw_Read_Write(Filename, Actual_Block_Device, file_size, &pt);
-		} else if (Backup_Method == FLASH_UTILS) {
-			return Flash_Image_FI(Filename, NULL);
+		} else if (Backup_Method == BM_FLASH_UTILS) {
+			return Flash_Image_FI(Filename, NULL, adbbackup);
 		}
 	}
 
@@ -2460,6 +2547,7 @@ bool TWPartition::Is_Sparse_Image(const string& Filename) {
 		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Filename)(strerror(errno)));
 		return false;
 	}
+
 	if (read(fd, &magic, sizeof(magic)) != sizeof(magic)) {
 		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Filename)(strerror(errno)));
 		close(fd);
@@ -2471,18 +2559,45 @@ bool TWPartition::Is_Sparse_Image(const string& Filename) {
 	return false;
 }
 
-bool TWPartition::Flash_Sparse_Image(const string& Filename) {
+bool TWPartition::Flash_Sparse_Image(const string& Filename, bool adbbackup) {
 	string Command;
 
 	gui_msg(Msg("flashing=Flashing {1}...")(Display_Name));
+	if (adbbackup) {
+		std::string adbfn = TW_ADB_RESTORE;
+		Command = "dd bs=8388608 if='" + adbfn + "' of=" + Actual_Block_Device;
+	}
+	else {
+		gui_msg(Msg("flashing=Flashing {1}...")(Display_Name));
+	
+		Command = "simg2img '" + Filename + "' '" + Actual_Block_Device + "'";
+		LOGINFO("Flash command: '%s'\n", Command.c_str());
+		TWFunc::Exec_Cmd(Command);
+	}
 
-	Command = "simg2img '" + Filename + "' '" + Actual_Block_Device + "'";
-	LOGINFO("Flash command: '%s'\n", Command.c_str());
-	TWFunc::Exec_Cmd(Command);
+	if (adbbackup) {
+		struct AdbBackupControlType tweof;
+		int adb_control_bu_fd;
+
+		adb_control_bu_fd = open(TW_ADB_BU_CONTROL, O_WRONLY | O_NONBLOCK);
+		memset(&tweof, 0, sizeof(tweof));
+		strncpy(tweof.start_of_header, TWRP, sizeof(tweof.start_of_header));
+		strncpy(tweof.type, TWEOF, sizeof(tweof.type));
+		memset(&tweof.space, 0, sizeof(tweof.space));
+		tweof.crc = crc32(0L, Z_NULL, 0);
+		tweof.crc = crc32(tweof.crc, (const unsigned char*) &tweof, sizeof(tweof));
+		LOGINFO("Sending TWEOF to adb backup\n");
+		if (write(adb_control_bu_fd, &tweof, sizeof(tweof)) < 0) {
+			LOGINFO("Cannot write to this adb_control_bu_fd: %s.\n", strerror(errno));
+			close(adb_control_bu_fd);
+			return -1;
+		}
+		close(adb_control_bu_fd);
+	}
 	return true;
 }
 
-bool TWPartition::Flash_Image_FI(const string& Filename, ProgressTracking *progress) {
+bool TWPartition::Flash_Image_FI(const string& Filename, ProgressTracking *progress, bool adbbackup) {
 	string Command;
 	unsigned long long file_size;
 
@@ -2505,6 +2620,10 @@ bool TWPartition::Flash_Image_FI(const string& Filename, ProgressTracking *progr
 
 void TWPartition::Change_Mount_Read_Only(bool new_value) {
 	Mount_Read_Only = new_value;
+}
+
+bool TWPartition::Is_Read_Only() {
+	return Mount_Read_Only;
 }
 
 int TWPartition::Check_Lifetime_Writes() {
