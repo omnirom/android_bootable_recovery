@@ -55,6 +55,7 @@ extern "C" {
  * 2 - Theme handles power button as action togglebacklight
  * 3 - Create generalized sleep_and_reboot page and use for ORS
  *     Remove SuperSU
+ *     Remove HTC Dumlock
  */
 #define TW_THEME_VERSION 3
 
