@@ -82,6 +82,11 @@ extern "C" void __gui_print(const char *color, char *buf)
 		gConsole.push_back(start);
 		gConsoleColor.push_back(color);
 	}
+
+	if (ors_file != NULL) {
+		fprintf(ors_file, "%s\n", buf);
+		fflush(ors_file);
+	}
 }
 
 extern "C" void gui_print(const char *fmt, ...)
