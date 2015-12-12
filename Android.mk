@@ -99,6 +99,7 @@ LOCAL_C_INCLUDES += \
     system/vold \
     system/extras/ext4_utils \
     system/core/adb \
+    external/zlib
 
 LOCAL_C_INCLUDES += bionic external/stlport/stlport external/openssl/include $(LOCAL_PATH)/libmincrypt/includes
 
