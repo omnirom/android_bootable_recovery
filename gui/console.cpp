@@ -382,7 +382,8 @@ void GUIConsole::RenderItem(size_t itemindex, int yPos, bool selected __unused)
 
 	// render text
 	const char* text = rConsole[itemindex].c_str();
-	gr_textEx_scaleW(mRenderX, yPos, text, mFont->GetResource(), mRenderW, TOP_LEFT, 0);
+	if (mFont)
+		gr_textEx_scaleW(mRenderX, yPos, text, mFont->GetResource(), mRenderW, TOP_LEFT, 0);
 }
 
 void GUIConsole::NotifySelect(size_t item_selected __unused)
