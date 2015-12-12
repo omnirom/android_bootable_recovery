@@ -45,6 +45,7 @@ using namespace std;
 
 InfoManager::InfoManager(const string filename) {
 	File = filename;
+	LOGINFO("Setting filename: %s\n", File.c_str());
 }
 
 InfoManager::~InfoManager(void) {

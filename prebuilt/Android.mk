@@ -4,6 +4,7 @@ RELINK := $(LOCAL_PATH)/relink.sh
 
 #dummy file to trigger required modules
 include $(CLEAR_VARS)
+
 LOCAL_MODULE := teamwin
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
@@ -13,6 +14,7 @@ LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dump_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/flash_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/erase_image
+RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/bu
 ifneq ($(TW_USE_TOOLBOX), true)
 	RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/busybox
 else
@@ -128,7 +130,7 @@ ifeq ($(BUILD_ID), GINGERBREAD)
 endif
 ifneq ($(TW_NO_EXFAT), true)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkexfatfs
-    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libexfat_twrp.so
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libexfat.so
 else
     TW_NO_EXFAT_FUSE := true
 endif
@@ -193,7 +195,6 @@ ifeq ($(TW_INCLUDE_NTFS_3G),true)
 endif
 
 TWRP_AUTOGEN := $(intermediates)/teamwin
-
 GEN := $(intermediates)/teamwin
 $(GEN): $(RELINK)
 $(GEN): $(RELINK_SOURCE_FILES) $(call intermediates-dir-for,EXECUTABLES,recovery)/recovery
