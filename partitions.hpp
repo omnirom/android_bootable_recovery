@@ -34,17 +34,53 @@ struct PartitionList {
 	unsigned int selected;
 };
 
+class TWPartition;
+
+struct BackupSettings {
+	TWPartition* Part;
+	std::string Full_Backup_Path;
+	uint64_t overall_size;
+	uint64_t other_backups_size;
+	pid_t tar_fork_pid;
+	bool adbbackup;
+	int adb_compression;
+};
+
+struct BackupPartitionSettings {
+	TWPartition* Part;
+	std::string Backup_Folder;
+	bool generate_md5;
+	uint64_t img_bytes_remaining;
+	uint64_t file_bytes_remaining;
+	uint64_t img_time;
+	uint64_t file_time;
+	uint64_t img_bytes;
+	uint64_t file_bytes;
+	bool adbbackup;
+	int adb_compression;
+};
+
+struct RestorePartitionSettings {
+	TWPartition* Part;
+	std::string Restore_Name;
+	int partition_count;
+	uint64_t total_restore_size;
+	uint64_t already_restored_size;
+	bool adbbackup;
+	int adb_compression;
+	std::string Backup_FileName;
+};
+
+enum Backup_Method_enum {
+	NONE = 0,
+	FILES = 1,
+	DD = 2,
+	FLASH_UTILS = 3,
+};
+
 // Partition class
 class TWPartition
 {
-public:
-	enum Backup_Method_enum {
-		NONE = 0,
-		FILES = 1,
-		DD = 2,
-		FLASH_UTILS = 3,
-	};
-
 public:
 	TWPartition();
 	virtual ~TWPartition();
@@ -61,17 +97,17 @@ public:
 	bool Repair();                                                            // Repairs the current file system
 	bool Can_Resize();                                                        // Checks to see if we have everything needed to be able to resize the current file system
 	bool Resize();                                                            // Resizes the current file system
-	bool Backup(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid); // Backs up the partition to the folder specified
+	bool Backup(BackupSettings *backup_settings); 				  // Backs up the partition to the folder specified
 	bool Check_MD5(string restore_folder);                                    // Checks MD5 of a backup
-	bool Restore(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size); // Restores the partition using the backup folder provided
-	unsigned long long Get_Restore_Size(string restore_folder);               // Returns the overall restore size of the backup
+	bool Restore(RestorePartitionSettings *part_settings); 				  // Restores the partition using the backup folder provided
+	unsigned long long Get_Restore_Size(RestorePartitionSettings *part_settings);// Returns the overall restore size of the backup
 	string Backup_Method_By_Name();                                           // Returns a string of the backup method for human readable output
 	bool Decrypt(string Password);                                            // Decrypts the partition, return 0 for failure and -1 for success
 	bool Wipe_Encryption();                                                   // Ignores wipe commands for /data/media devices and formats the original block device
 	void Check_FS_Type();                                                     // Checks the fs type using blkid, does not do anything on MTD / yaffs2 because this crashes on some devices
 	bool Update_Size(bool Display_Error);                                     // Updates size information
 	void Recreate_Media_Folder();                                             // Recreates the /data/media folder
-	bool Flash_Image(string Filename);                                        // Flashes an image to the partition
+	bool Flash_Image(string Filename, bool adbbackup);                                        // Flashes an image to the partition
 	void Change_Mount_Read_Only(bool new_value);                              // Changes Mount_Read_Only to new_value
 	int Check_Lifetime_Writes();
 
@@ -111,19 +147,19 @@ private:
 	bool Wipe_F2FS();                                                         // Uses mkfs.f2fs to wipe
 	bool Wipe_NTFS();                                                         // Uses mkntfs to wipe
 	bool Wipe_Data_Without_Wiping_Media();                                    // Uses rm -rf to wipe but does not wipe /data/media
-	bool Backup_Tar(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid); // Backs up using tar for file systems
-	bool Backup_DD(string backup_folder);                                     // Backs up using dd for emmc memory types
+	bool Backup_Tar(BackupSettings *part_settings); 			  			  // Backs up using tar for file systems
+	bool Backup_DD(string backup_folder, bool adbbackup);                     // Backs up using dd for emmc memory types
 	bool Backup_Dump_Image(string backup_folder);                             // Backs up using dump_image for MTD memory types
-	string Get_Restore_File_System(string restore_folder);                    // Returns the file system that was in place at the time of the backup
-	bool Restore_Tar(string restore_folder, string Restore_File_System, const unsigned long long *total_restore_size, unsigned long long *already_restored_size); // Restore using tar for file systems
-	bool Restore_Image(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size, string Restore_File_System); // Restore using dd for images
+	string Get_Restore_File_System(RestorePartitionSettings *part_settings);        // Returns the file system that was in place at the time of the backup
+	bool Restore_Tar(RestorePartitionSettings *part_settings, string Restore_File_System);  // Restore using tar for file systems
+	bool Restore_Image(RestorePartitionSettings *part_settings, string Restore_File_System);  // Restore using dd for images
 	bool Get_Size_Via_statfs(bool Display_Error);                             // Get Partition size, used, and free space using statfs
 	bool Get_Size_Via_df(bool Display_Error);                                 // Get Partition size, used, and free space using df command
 	bool Make_Dir(string Path, bool Display_Error);                           // Creates a directory if it doesn't already exist
 	bool Find_MTD_Block_Device(string MTD_Name);                              // Finds the mtd block device based on the name from the fstab
 	void Recreate_AndSec_Folder(void);                                        // Recreates the .android_secure folder
 	void Mount_Storage_Retry(void);                                           // Tries multiple times with a half second delay to mount a device in case storage is slow to mount
-	bool Flash_Image_DD(string Filename);                                     // Flashes an image to the partition using dd
+	bool Flash_Image_DD(string Filename, bool adbbackup);                                     // Flashes an image to the partition using dd
 	bool Flash_Image_FI(string Filename);                                     // Flashes an image to the partition using flash_image for mtd nand
 
 private:
@@ -199,7 +235,7 @@ public:
 	int Mount_Settings_Storage(bool Display_Error);                           // Mounts the settings file storage location (usually internal)
 	TWPartition* Find_Partition_By_Path(string Path);                         // Returns a pointer to a partition based on path
 	int Check_Backup_Name(bool Display_Error);                                // Checks the current backup name to ensure that it is valid
-	int Run_Backup();                                                         // Initiates a backup in the current storage
+	int Run_Backup(bool adbbackup);                                                         // Initiates a backup in the current storage
 	int Run_Restore(string Restore_Name);                                     // Restores a backup
 	void Set_Restore_Files(string Restore_Name);                              // Used to gather a list of available backup partitions for the user to select for a restore
 	int Wipe_By_Path(string Path);                                            // Wipes a partition based on path
@@ -234,19 +270,19 @@ public:
 	bool Add_MTP_Storage(unsigned int Storage_ID);                            // Adds or removes an MTP Storage partition
 	bool Remove_MTP_Storage(string Mount_Point);                              // Adds or removes an MTP Storage partition
 	bool Remove_MTP_Storage(unsigned int Storage_ID);                         // Adds or removes an MTP Storage partition
-	bool Flash_Image(string Filename);                                        // Flashes an image to a selected partition from the partition list
 	void Translate_Partition(const char* path, const char* resource_name, const char* default_value);
 	void Translate_Partition(const char* path, const char* resource_name, const char* default_value, const char* storage_resource_name, const char* storage_default_value);
 	void Translate_Partition_Display_Names();                                 // Updates display names based on translations
-
+	bool Flash_Image(string Filename, bool adbbackup);                        // Flashes an image to a selected partition from the partition list
+	bool Restore_Partition(struct RestorePartitionSettings *part_settings);
 	TWAtomicInt stop_backup;
+
 
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
 	void Setup_Android_Secure_Location(TWPartition* Part);                    // Sets up .android_secure if needed
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made
-	bool Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes);
-	bool Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count, const unsigned long long *total_restore_size, unsigned long long *already_restored_size);
+	bool Backup_Partition(BackupPartitionSettings *part_settings);
 	void Output_Partition(TWPartition* Part);
 	TWPartition* Find_Partition_By_MTP_Storage_ID(unsigned int Storage_ID);   // Returns a pointer to a partition based on MTP Storage ID
 	bool Add_Remove_MTP_Storage(TWPartition* Part, int message_type);   // Adds or removes an MTP Storage partition
@@ -256,6 +292,7 @@ private:
 	bool mtp_was_enabled;
 	int mtp_write_fd;
 	pid_t tar_fork_pid;
+	Backup_Method_enum Backup_Method;                                         // Method used for backup
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions
