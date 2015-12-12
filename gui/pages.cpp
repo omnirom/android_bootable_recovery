@@ -57,6 +57,7 @@ extern "C" {
  *     Do not nest sleep action inside sleepcounter action
  *     Use sleep_and_reboot page for ORS
  *     Remove SuperSU
+ *     Remove HTC Dumlock
  */
 #define TW_THEME_VERSION 3
 

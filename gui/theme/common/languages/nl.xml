@@ -373,7 +373,6 @@
 		<string name="language_hdr">Taal</string>
 		<string name="terminal_btn">Terminal</string>
 		<string name="reload_theme_btn">Thema herladen</string>
-		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">TWRP Injecteren</string>
 		<string name="inject_twrp_confirm">TWRP opnieuw injecteren?</string>
 		<string name="injecting_twrp">TWRP Opnieuw injecteren...</string>
@@ -393,19 +392,6 @@
 		<string name="partitioning_sd">SD-kaart partitioneren...</string>
 		<string name="partitioning_sd2">Dit duurt een paar minuten.</string>
 		<string name="part_sd_complete">Partitionering voltooid</string>
-		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">Originele boot herstellen</string>
-		<string name="dumlock_restore_confirm">De originele boot image herstellen?</string>
-		<string name="dumlock_restoring">Originele boot herstellen...</string>
-		<string name="dumlock_restore_complete">Originele Boot herstellen voltooid</string>
-		<string name="dumlock_reflash_btn">Recovery herflashen</string>
-		<string name="dumlock_reflash_confirm">Recovery naar boot herflashen?</string>
-		<string name="dumlock_reflashing">Recovery naar boot flashen...</string>
-		<string name="dumlock_reflash_complete">Recovery naar boot flashen voltooid</string>
-		<string name="dumlock_install_btn">HTC Dumlock installeren</string>
-		<string name="dumlock_install_confirm">HTC Dumlock bestanden in de ROM installeren?</string>
-		<string name="dumlock_installing">HTC Dumlock installeren...</string>
-		<string name="dumlock_install_complete">HTC Dumlock installatie voltooid</string>
 		<string name="swipe_to_unlock">Veeg om te ontgrendelen</string>
 		<string name="swipe_unlock">   Ontgrendelen</string>
 		<string name="fm_hdr">Bestandsbeheer</string>
@@ -626,9 +612,6 @@
 		<string name="md5_match">MD5 komt overeen</string>
 		<string name="pid_signal">{1} proces eindigde met signaal: {2}</string>
 		<string name="pid_error">{1} proces beëindigd met fout: {2}</string>
-		<string name="install_dumlock">HTC Dumlock installeren op het systeem...</string>
-		<string name="dumlock_restore">Originele boot herstellen...</string>
-		<string name="dumlock_reflash">Recovery herflashen op boot...</string>
 		<string name="run_script">Script {1} word uitgevoerd...</string>
 		<string name="rename_stock">Originele recovery bestand hernoemt in /system om te voorkomen dat de ROM TWRP vervangt.</string>
 		<string name="split_backup">Back-up bestand in meerdere archieven opbreken...</string>
