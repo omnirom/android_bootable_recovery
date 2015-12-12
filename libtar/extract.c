@@ -29,7 +29,7 @@
 # include <unistd.h>
 #endif
 
-#define DEBUG
+#define DEBUG 1
 
 static int
 tar_set_file_perms(TAR *t, char *realname)
