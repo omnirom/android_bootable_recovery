@@ -1557,6 +1557,7 @@
 				<conditions>
 					<condition var1="tw_include_encrypted_backup" var2="1"/>
 					<condition var1="tw_encrypt_backup" var2="0"/>
+					<condition var1="tw_enable_adb_backup" op="!=" var2="1"/>
 				</conditions>
 				<placement x="%col1_x_right%" y="%row3_y%"/>
 				<text>{@enc_disabled=disabled - set a password to enable}</text>
@@ -1566,6 +1567,7 @@
 				<conditions>
 					<condition var1="tw_include_encrypted_backup" var2="1"/>
 					<condition var1="tw_encrypt_backup" var2="1"/>
+					<condition var1="tw_enable_adb_backup" op="!=" var2="1"/>
 				</conditions>
 				<placement x="%col1_x_right%" y="%row3_y%"/>
 				<text>{@enc_enabled=enabled}</text>
@@ -1608,6 +1610,7 @@
 			</checkbox>
 
 			<button style="main_button_half_width">
+				<condition var1="tw_enable_adb_backup" op="!=" var2="1"/>
 				<placement x="%col1_x_left%" y="%row15a_y%"/>
 				<text>{@select_storage_btn=Select Storage}</text>
 				<actions>

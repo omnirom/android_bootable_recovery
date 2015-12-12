@@ -34,6 +34,13 @@ typedef enum
 	rb_download,
 } RebootCommand;
 
+enum Archive_Type {
+	UNCOMPRESSED = 0,
+	COMPRESSED,
+	ENCRYPTED,
+	COMPRESSED_ENCRYPTED
+};
+
 // Partition class
 class TWFunc
 {
@@ -46,7 +53,7 @@ public:
 	static int Exec_Cmd(const string& cmd);                                     //execute a command
 	static int Wait_For_Child(pid_t pid, int *status, string Child_Name);       // Waits for pid to exit and checks exit status
 	static bool Path_Exists(string Path);                                       // Returns true if the path exists
-	static int Get_File_Type(string fn); // Determines file type, 0 for unknown, 1 for gzip, 2 for OAES encrypted
+	static Archive_Type Get_File_Type(string fn);                               // Determines file type, 0 for unknown, 1 for gzip, 2 for OAES encrypted
 	static int Try_Decrypting_File(string fn, string password); // -1 for some error, 0 for failed to decrypt, 1 for decrypted, 3 for decrypted and found gzip format
 	static unsigned long Get_File_Size(const string& Path);                            // Returns the size of a file
 	static std::string Remove_Trailing_Slashes(const std::string& path, bool leaveLast = false); // Normalizes the path, e.g /data//media/ -> /data/media
