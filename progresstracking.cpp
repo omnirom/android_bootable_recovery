@@ -43,12 +43,14 @@ ProgressTracking::ProgressTracking(const unsigned long long backup_size) {
 
 void ProgressTracking::SetPartitionSize(const unsigned long long part_size) {
 	previous_partitions_size += partition_size;
+	LOGINFO("SetPartitionSize::previous_paritions_size: %llu\n", previous_partitions_size);
 	partition_size = part_size;
 	UpdateDisplayDetails(true);
 }
 
 void ProgressTracking::SetSizeCount(const unsigned long long part_size, unsigned long long f_count) {
 	previous_partitions_size += partition_size;
+	LOGINFO("SetSizeCount::previous_paritions_size: %llu\n", previous_partitions_size);
 	partition_size = part_size;
 	file_count = f_count;
 	display_file_count = (file_count != 0);
@@ -89,6 +91,10 @@ void ProgressTracking::UpdateDisplayDetails(const bool force) {
 
 	if (total_backup_size != 0) // prevent division by 0
 		display_percent = (double)(current_size + previous_partitions_size) / (double)(total_backup_size) * 100;
+	LOGINFO("current_size: %llu\n", current_size);
+	LOGINFO("UpdateDisplayDetails::previous_paritions_size: %llu\n", previous_partitions_size);
+	LOGINFO("total_backup_size: %llu\n", total_backup_size);
+	LOGINFO("display_percent: %llu\n", display_percent);
 	sprintf(size_progress, size_prog.c_str(), (current_size + previous_partitions_size) / 1048576, total_backup_size / 1048576, (int)(display_percent));
 	DataManager::SetValue("tw_size_progress", size_progress);
 	progress_percent = (display_percent / 100);
