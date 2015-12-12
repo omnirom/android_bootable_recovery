@@ -1180,7 +1180,7 @@ int GUIAction::nandroid(std::string arg)
 			DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
 			string auto_gen = gui_lookup("auto_generate", "(Auto Generate)");
 			if (Backup_Name == auto_gen || Backup_Name == gui_lookup("curr_date", "(Current Date)") || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0) {
-				ret = PartitionManager.Run_Backup();
+				ret = PartitionManager.Run_Backup(false);
 			}
 			else {
 				operation_end(1);
@@ -1728,12 +1728,13 @@ int GUIAction::flashimage(std::string arg __unused)
 {
 	int op_status = 0;
 
+	PartitionSettings part_settings;
 	operation_start("Flash Image");
-	string path, filename, full_filename;
-	DataManager::GetValue("tw_zip_location", path);
-	DataManager::GetValue("tw_file", filename);
-	full_filename = path + "/" + filename;
-	if (PartitionManager.Flash_Image(full_filename))
+	DataManager::GetValue("tw_zip_location", part_settings.Restore_Name);
+	DataManager::GetValue("tw_file", part_settings.Backup_FileName);
+	part_settings.adbbackup = false;
+	part_settings.PM_Method = PM_RESTORE;
+	if (PartitionManager.Flash_Image(&part_settings))
 		op_status = 0; // success
 	else
 		op_status = 1; // fail
