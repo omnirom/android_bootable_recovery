@@ -460,6 +460,14 @@ static void ors_command_read()
 				gui_set_FILE(orsout);
 				PageManager::GetResources()->DumpStrings();
 				ors_command_done();
+			//check to see if we should show backup page for parsing adbbackup partitions
+			} else if (strlen(command) == 23 && strncmp(command, "adbbackup", 9) == 0) {
+				gui_set_FILE(orsout);
+				DataManager::SetValue("tw_action", "twcmd");
+				DataManager::SetValue("tw_action_param", command);
+				DataManager::SetValue("tw_enable_adb_backup", 1);
+				gui_changePage("backup");
+				ors_command_done();
 			} else {
 				// mirror output messages
 				gui_set_FILE(orsout);
@@ -480,8 +488,6 @@ static void ors_command_read()
 				// put all things that need to be done after the command is finished into ors_command_done, not here
 			}
 		}
-	} else {
-		LOGINFO("ORS command line read returned an error: %i, %i, %s\n", read_ret, errno, strerror(errno));
 	}
 }
 
