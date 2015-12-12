@@ -512,6 +512,9 @@ bool Page::ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates, in
 int Page::Render(void)
 {
 	// Render background
+	//LOGINFO("mBackground.red: %x\n". mBackground.red);
+	//LOGINFO("mBackground.red: %x\n". mBackground.green);
+	//LOGINFO("mBackground.red: %x\n". mBackground.blue);
 	gr_color(mBackground.red, mBackground.green, mBackground.blue, mBackground.alpha);
 	gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 
