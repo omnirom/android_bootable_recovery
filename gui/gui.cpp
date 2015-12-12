@@ -651,6 +651,8 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 				ors_command_read();
 			}
 		}
+		else
+			ors_read_fd = 0;
 #endif
 
 		if (!gForceRender.get_value())
