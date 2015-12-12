@@ -505,7 +505,7 @@
 		<string name="restore_started">[RESTORE STARTED]</string>
 		<string name="restore_folder">Restore folder: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
-		<string name="restore_part_done">[{1} done ({2} seconds)]</string>
+		<string name="restort_part_done">[{1} done ({2} seconds)]</string>
 		<string name="verifying_md5">Verifying MD5</string>
 		<string name="skip_md5">Skipping MD5 check based on user setting.</string>
 		<string name="calc_restore">Calculating restore details...</string>
@@ -666,5 +666,7 @@
 		<string name="change_fs_err">Error changing file system.</string>
 		<string name="theme_ver_err">Custom theme version does not match TWRP version. Using stock theme.</string>
 		<string name="up_a_level">(Up A Level)</string>
+		<string name="adbbackup_error">Error with ADB Backup. Quitting..."</string>
+		<string name="adbbackup_control_error">Cannot write to adb control channel</string>
 	</resources>
 </language>
