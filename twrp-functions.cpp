@@ -151,7 +151,7 @@ bool TWFunc::Path_Exists(string Path) {
 		return true;
 }
 
-int TWFunc::Get_File_Type(string fn) {
+Archive_Type TWFunc::Get_File_Type(string fn) {
 	string::size_type i = 0;
 	int firstbyte = 0, secondbyte = 0;
 	char header[3];
@@ -164,13 +164,10 @@ int TWFunc::Get_File_Type(string fn) {
 	secondbyte = header[++i] & 0xff;
 
 	if (firstbyte == 0x1f && secondbyte == 0x8b)
-		return 1; // Compressed
+		return COMPRESSED;
 	else if (firstbyte == 0x4f && secondbyte == 0x41)
-		return 2; // Encrypted
-	else
-		return 0; // Unknown
-
-	return 0;
+		return ENCRYPTED;
+	return UNCOMPRESSED; // default
 }
 
 int TWFunc::Try_Decrypting_File(string fn, string password) {
@@ -752,7 +749,7 @@ bool TWFunc::Try_Decrypting_Backup(string Restore_Path, string Password) {
 	while ((de = readdir(d)) != NULL) {
 		Filename = Restore_Path;
 		Filename += de->d_name;
-		if (TWFunc::Get_File_Type(Filename) == 2) {
+		if (TWFunc::Get_File_Type(Filename) == ENCRYPTED) {
 			if (TWFunc::Try_Decrypting_File(Filename, Password) < 2) {
 				DataManager::SetValue("tw_restore_password", ""); // Clear the bad password
 				DataManager::SetValue("tw_restore_display", "");  // Also clear the display mask
