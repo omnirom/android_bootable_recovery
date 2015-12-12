@@ -33,8 +33,11 @@ public:
 	static int Insert_ORS_Command(string Command);                                 // Inserts the Command into the SCRIPT_FILE_TMP file
 	static int Install_Command(string Zip);                                        // Installs a zip
 	static string Locate_Zip_File(string Path, string File);                       // Attempts to locate the zip file in storage
-	static int Backup_Command(string Options);                                     // Runs a backup
+	static int Backup_Command(string Options);		                       // Runs a backup
+	static int Backup_ADB_Command(string Options); 		 	               // Runs adbbackup
 	static void Run_OpenRecoveryScript();                                          // Starts the GUI Page for running OpenRecoveryScript
+	static int Restore_ADB_Backup();                         	               // Restore adb backup through ors
+	static int remountrw();		                         	               // Remount system and vendor rw
 };
 
 #endif // _OPENRECOVERYSCRIPT_HPP

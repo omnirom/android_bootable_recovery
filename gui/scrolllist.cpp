@@ -347,7 +347,8 @@ void GUIScrollList::RenderStdItem(int yPos, bool selected, ImageResource* icon, 
 	// render label text
 	int textX = mRenderX + maxIconWidth + 5;
 	int textY = yPos + (iconAndTextH / 2);
-	gr_textEx_scaleW(textX, textY, text, mFont->GetResource(), mRenderW, TEXT_ONLY_RIGHT, 0);
+	if (mFont != NULL)
+		gr_textEx_scaleW(textX, textY, text, mFont->GetResource(), mRenderW, TEXT_ONLY_RIGHT, 0);
 }
 
 int GUIScrollList::Update(void)
@@ -625,6 +626,8 @@ bool GUIScrollList::AddLines(std::vector<std::string>* origText, std::vector<std
 		if (origColor)
 			curr_color = origColor->at(i);
 		for(;;) {
+			if (mFont == NULL)
+				continue;
 			size_t line_char_width = gr_ttf_maxExW(curr_line.c_str(), mFont->GetResource(), mRenderW);
 			if (line_char_width < curr_line.size()) {
 				//string left = curr_line.substr(0, line_char_width);

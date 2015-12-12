@@ -28,6 +28,9 @@ extern "C" {
 #include <string>
 #include <vector>
 #include "twrpDU.hpp"
+#include "orscmd/orscmd.h"
+#include "twrpTar.h"
+#include "twrp-functions.hpp"
 
 using namespace std;
 
@@ -41,17 +44,19 @@ struct thread_data_struct {
 	unsigned thread_id;
 };
 
+
 class twrpTar {
 public:
 	twrpTar();
 	virtual ~twrpTar();
-	int createTarFork(const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &fork_pid);
-	int extractTarFork(const unsigned long long *overall_size, unsigned long long *other_backups_size);
+	int createTarFork(const uint64_t *overall_size, const uint64_t *other_backups_size, pid_t *fork_pid);
+	int extractTarFork(const uint64_t *overall_size, uint64_t *other_backups_size);
 	void setfn(string fn);
 	void setdir(string dir);
 	void setsize(unsigned long long backup_size);
 	void setpassword(string pass);
 	unsigned long long get_size();
+	void Set_Archive_Type(Current_Archive_Type archive_type);
 
 public:
 	int use_encryption;
@@ -63,6 +68,9 @@ public:
 	int progress_pipe_fd;
 	string partition_name;
 	string backup_folder;
+	enum Current_Archive_Type current_archive_type;
+	bool adbbackup;
+	bool adb_compression;
 
 private:
 	int extract();
@@ -79,15 +87,15 @@ private:
 	static void* createList(void *cookie);
 	static void* extractMulti(void *cookie);
 	int tarList(std::vector<TarListStruct> *TarList, unsigned thread_id);
-	unsigned long long uncompressedSize(string filename, int *archive_type);
+	unsigned long long uncompressedSize(string filename);
 	static void Signal_Kill(int signum);
 
-	int Archive_Current_Type;
 	unsigned long long Archive_Current_Size;
 	unsigned long long Total_Backup_Size;
 	bool include_root_dir;
 	TAR *t;
 	int fd;
+	int input_fd;
 	pid_t pigz_pid;
 	pid_t oaes_pid;
 	unsigned long long file_count;
@@ -98,5 +106,7 @@ private:
 	string password;
 
 	std::vector<TarListStruct> *ItemList;
+	int output_fd;
+	int adb_control_fd;
 	unsigned thread_id;
 };
