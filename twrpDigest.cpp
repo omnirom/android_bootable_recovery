@@ -48,13 +48,44 @@ void twrpDigest::setfn(string fn) {
 	md5fn = fn;
 }
 
+void twrpDigest::initMD5(void) {
+	MD5Init(&md5c);
+}
+
+int twrpDigest::updateMD5stream(unsigned char* stream, int len) {
+	if (md5fn.empty()) {
+		MD5Update(&md5c, stream, len);
+	}
+	else {
+		return -1;
+	}
+	return 0;
+}
+
+void twrpDigest::finalizeMD5stream() {
+	MD5Final(md5sum, &md5c);
+}
+
+string twrpDigest::createMD5string() {
+	int i;
+	char hex[3];
+
+	for (i = 0; i < 16; ++i) {
+		snprintf(hex, 3, "%02x", md5sum[i]);
+		md5string += hex;
+	}
+	md5string += "  ";
+	md5string += basename((char*) md5fn.c_str());
+	md5string +=  + "\n";
+	return md5string;
+}
+
 int twrpDigest::computeMD5(void) {
 	string line;
-	struct MD5Context md5c;
 	FILE *file;
 	int len;
 	unsigned char buf[1024];
-	MD5Init(&md5c);
+	initMD5();
 	file = fopen(md5fn.c_str(), "rb");
 	if (file == NULL)
 		return -1;
@@ -67,18 +98,10 @@ int twrpDigest::computeMD5(void) {
 }
 
 int twrpDigest::write_md5digest(void) {
-	int i;
-	string md5string, md5file;
-	char hex[3];
+	string md5file;
 	md5file = md5fn + ".md5";
-
-	for (i = 0; i < 16; ++i) {
-		snprintf(hex, 3, "%02x", md5sum[i]);
-		md5string += hex;
-	}
-	md5string += "  ";
-	md5string += basename((char*) md5fn.c_str());
-	md5string +=  + "\n";
+	
+	createMD5string();
 	TWFunc::write_file(md5file, md5string);
 	tw_set_default_metadata(md5file.c_str());
 	LOGINFO("MD5 for %s: %s\n", md5fn.c_str(), md5string.c_str());
