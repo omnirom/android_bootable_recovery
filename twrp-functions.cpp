@@ -405,61 +405,6 @@ string TWFunc::Get_Root_Path(string Path) {
 	return Local_Path;
 }
 
-void TWFunc::install_htc_dumlock(void) {
-	int need_libs = 0;
-
-	if (!PartitionManager.Mount_By_Path("/system", true))
-		return;
-
-	if (!PartitionManager.Mount_By_Path("/data", true))
-		return;
-
-	gui_msg("install_dumlock=Installing HTC Dumlock to system...");
-	copy_file(TWHTCD_PATH "htcdumlocksys", "/system/bin/htcdumlock", 0755);
-	if (!Path_Exists("/system/bin/flash_image")) {
-		LOGINFO("Installing flash_image...\n");
-		copy_file(TWHTCD_PATH "flash_imagesys", "/system/bin/flash_image", 0755);
-		need_libs = 1;
-	} else
-		LOGINFO("flash_image is already installed, skipping...\n");
-	if (!Path_Exists("/system/bin/dump_image")) {
-		LOGINFO("Installing dump_image...\n");
-		copy_file(TWHTCD_PATH "dump_imagesys", "/system/bin/dump_image", 0755);
-		need_libs = 1;
-	} else
-		LOGINFO("dump_image is already installed, skipping...\n");
-	if (need_libs) {
-		LOGINFO("Installing libs needed for flash_image and dump_image...\n");
-		copy_file(TWHTCD_PATH "libbmlutils.so", "/system/lib/libbmlutils.so", 0644);
-		copy_file(TWHTCD_PATH "libflashutils.so", "/system/lib/libflashutils.so", 0644);
-		copy_file(TWHTCD_PATH "libmmcutils.so", "/system/lib/libmmcutils.so", 0644);
-		copy_file(TWHTCD_PATH "libmtdutils.so", "/system/lib/libmtdutils.so", 0644);
-	}
-	LOGINFO("Installing HTC Dumlock app...\n");
-	mkdir("/data/app", 0777);
-	unlink("/data/app/com.teamwin.htcdumlock*");
-	copy_file(TWHTCD_PATH "HTCDumlock.apk", "/data/app/com.teamwin.htcdumlock.apk", 0777);
-	sync();
-	gui_msg("done=Done.");
-}
-
-void TWFunc::htc_dumlock_restore_original_boot(void) {
-	if (!PartitionManager.Mount_By_Path("/sdcard", true))
-		return;
-
-	gui_msg("dumlock_restore=Restoring original boot...");
-	Exec_Cmd("htcdumlock restore");
-	gui_msg("done=Done.");
-}
-
-void TWFunc::htc_dumlock_reflash_recovery_to_boot(void) {
-	if (!PartitionManager.Mount_By_Path("/sdcard", true))
-		return;
-	gui_msg("dumlock_reflash=Reflashing recovery to boot...");
-	Exec_Cmd("htcdumlock recovery noreboot");
-	gui_msg("done=Done.");
-}
-
 int TWFunc::Recursive_Mkdir(string Path) {
 	std::vector<std::string> parts = Split_String(Path, "/", true);
 	std::string cur_path;
