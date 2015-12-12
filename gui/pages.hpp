@@ -101,6 +101,7 @@ public:
 
 	// Helper routine for identifing if we're the current page
 	int IsCurrentPage(Page* page);
+	std::string GetCurrentPage() const;
 
 	// These are routing routines
 	int Render(void);
@@ -144,10 +145,7 @@ public:
 	static int ChangePage(std::string name);
 	static int ChangeOverlay(std::string name);
 	static const ResourceManager* GetResources();
-
-	// Used for console-only mode
-	static int SwitchToConsole(void);
-	static int EndConsole(void);
+	static std::string GetCurrentPage();
 
 	// Helper to identify if a particular page is the active page
 	static int IsCurrentPage(Page* page);
