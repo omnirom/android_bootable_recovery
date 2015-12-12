@@ -40,6 +40,7 @@ void print_usage(void) {
 	printf("  set variable value\n");
 	printf("  get variable\n");
 	printf("  decrypt password\n");
+	printf("  remountrw\n");
 	printf("\nSee more documentation at http://teamw.in/openrecoveryscript\n");
 }
 
