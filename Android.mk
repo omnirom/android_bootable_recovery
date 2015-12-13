@@ -575,7 +575,7 @@ ifneq ($(TW_NO_EXFAT), true)
             $(commands_recovery_local_path)/exfat/libexfat/Android.mk
 endif
 ifneq ($(TW_NO_EXFAT_FUSE), true)
-    include $(commands_recovery_local_path)/exfat/exfat-fuse/Android.mk
+    include $(commands_recovery_local_path)/exfat/fuse/Android.mk
 endif
 ifneq ($(TW_OEM_BUILD),true)
     include $(commands_recovery_local_path)/orscmd/Android.mk

@@ -3,7 +3,7 @@
 	exFAT file system implementation library.
 
 	Free exFAT implementation.
-	Copyright (C) 2010-2013  Andrew Nayenko
+	Copyright (C) 2010-2015  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -161,8 +161,8 @@ void exfat_print_info(const struct exfat_super_block* sb,
 		uint32_t free_clusters)
 {
 	struct exfat_human_bytes hb;
-	off64_t total_space = le64_to_cpu(sb->sector_count) * SECTOR_SIZE(*sb);
-	off64_t avail_space = (off64_t) free_clusters * CLUSTER_SIZE(*sb);
+	off_t total_space = le64_to_cpu(sb->sector_count) * SECTOR_SIZE(*sb);
+	off_t avail_space = (off_t) free_clusters * CLUSTER_SIZE(*sb);
 
 	printf("File system version           %hhu.%hhu\n",
 			sb->version.major, sb->version.minor);
