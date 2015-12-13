@@ -30,9 +30,11 @@
 #include <utime.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#if defined(__ANDROID__)
+#include <pthread.h>
+#endif
 #include <sys/statvfs.h>
 #include <sys/uio.h>
-#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,7 +59,7 @@ struct fuse_cmd;
  * @return 1 if buffer is full, zero otherwise
  */
 typedef int (*fuse_fill_dir_t) (void *buf, const char *name,
-				const struct stat *stbuf, off64_t off);
+				const struct stat *stbuf, loff_t off);
 
 /* Used by deprecated getdir() method */
 typedef struct fuse_dirhandle *fuse_dirh_t;
@@ -146,7 +148,7 @@ struct fuse_operations {
 	int (*chown) (const char *, uid_t, gid_t);
 
 	/** Change the size of a file */
-	int (*truncate) (const char *, off64_t);
+	int (*truncate) (const char *, loff_t);
 
 	/** Change the access and/or modification times of a file
 	 *
@@ -184,7 +186,7 @@ struct fuse_operations {
 	 *
 	 * Changed in version 2.2
 	 */
-	int (*read) (const char *, char *, size_t, off64_t,
+	int (*read) (const char *, char *, size_t, loff_t,
 		     struct fuse_file_info *);
 
 	/** Write data to an open file
@@ -195,7 +197,7 @@ struct fuse_operations {
 	 *
 	 * Changed in version 2.2
 	 */
-	int (*write) (const char *, const char *, size_t, off64_t,
+	int (*write) (const char *, const char *, size_t, loff_t,
 		      struct fuse_file_info *);
 
 	/** Get file system statistics
@@ -302,7 +304,7 @@ struct fuse_operations {
 	 *
 	 * Introduced in version 2.3
 	 */
-	int (*readdir) (const char *, void *, fuse_fill_dir_t, off64_t,
+	int (*readdir) (const char *, void *, fuse_fill_dir_t, loff_t,
 			struct fuse_file_info *);
 
 	/** Release directory
@@ -380,7 +382,7 @@ struct fuse_operations {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int (*ftruncate) (const char *, off64_t, struct fuse_file_info *);
+	int (*ftruncate) (const char *, loff_t, struct fuse_file_info *);
 
 	/**
 	 * Get attributes from an open file
@@ -501,6 +503,9 @@ struct fuse_operations {
 	 * _IOC_READ in area and if both are set in/out area.  In all
 	 * non-NULL cases, the area is of _IOC_SIZE(cmd) bytes.
 	 *
+	 * If flags has FUSE_IOCTL_DIR then the fuse_file_info refers to a
+	 * directory file handle.
+	 *
 	 * Introduced in version 2.8
 	 */
 	int (*ioctl) (const char *, int cmd, void *arg,
@@ -534,7 +539,7 @@ struct fuse_operations {
 	 *
 	 * Introduced in version 2.9
 	 */
-	int (*write_buf) (const char *, struct fuse_bufvec *buf, off64_t off,
+	int (*write_buf) (const char *, struct fuse_bufvec *buf, loff_t off,
 			  struct fuse_file_info *);
 
 	/** Store data from an open file in a buffer
@@ -554,7 +559,7 @@ struct fuse_operations {
 	 * Introduced in version 2.9
 	 */
 	int (*read_buf) (const char *, struct fuse_bufvec **bufp,
-			 size_t size, off64_t off, struct fuse_file_info *);
+			 size_t size, loff_t off, struct fuse_file_info *);
 	/**
 	 * Perform BSD file locking operation
 	 *
@@ -587,7 +592,7 @@ struct fuse_operations {
 	 *
 	 * Introduced in version 2.9.1
 	 */
-	int (*fallocate) (const char *, int, off64_t, off64_t,
+	int (*fallocate) (const char *, int, loff_t, loff_t,
 			  struct fuse_file_info *);
 };
 
@@ -827,14 +832,14 @@ int fuse_fs_release(struct fuse_fs *fs,	 const char *path,
 int fuse_fs_open(struct fuse_fs *fs, const char *path,
 		 struct fuse_file_info *fi);
 int fuse_fs_read(struct fuse_fs *fs, const char *path, char *buf, size_t size,
-		 off64_t off, struct fuse_file_info *fi);
+		 loff_t off, struct fuse_file_info *fi);
 int fuse_fs_read_buf(struct fuse_fs *fs, const char *path,
-		     struct fuse_bufvec **bufp, size_t size, off64_t off,
+		     struct fuse_bufvec **bufp, size_t size, loff_t off,
 		     struct fuse_file_info *fi);
 int fuse_fs_write(struct fuse_fs *fs, const char *path, const char *buf,
-		  size_t size, off64_t off, struct fuse_file_info *fi);
+		  size_t size, loff_t off, struct fuse_file_info *fi);
 int fuse_fs_write_buf(struct fuse_fs *fs, const char *path,
-		      struct fuse_bufvec *buf, off64_t off,
+		      struct fuse_bufvec *buf, loff_t off,
 		      struct fuse_file_info *fi);
 int fuse_fs_fsync(struct fuse_fs *fs, const char *path, int datasync,
 		  struct fuse_file_info *fi);
@@ -844,7 +849,7 @@ int fuse_fs_statfs(struct fuse_fs *fs, const char *path, struct statvfs *buf);
 int fuse_fs_opendir(struct fuse_fs *fs, const char *path,
 		    struct fuse_file_info *fi);
 int fuse_fs_readdir(struct fuse_fs *fs, const char *path, void *buf,
-		    fuse_fill_dir_t filler, off64_t off,
+		    fuse_fill_dir_t filler, loff_t off,
 		    struct fuse_file_info *fi);
 int fuse_fs_fsyncdir(struct fuse_fs *fs, const char *path, int datasync,
 		     struct fuse_file_info *fi);
@@ -858,8 +863,8 @@ int fuse_fs_flock(struct fuse_fs *fs, const char *path,
 		  struct fuse_file_info *fi, int op);
 int fuse_fs_chmod(struct fuse_fs *fs, const char *path, mode_t mode);
 int fuse_fs_chown(struct fuse_fs *fs, const char *path, uid_t uid, gid_t gid);
-int fuse_fs_truncate(struct fuse_fs *fs, const char *path, off64_t size);
-int fuse_fs_ftruncate(struct fuse_fs *fs, const char *path, off64_t size,
+int fuse_fs_truncate(struct fuse_fs *fs, const char *path, loff_t size);
+int fuse_fs_ftruncate(struct fuse_fs *fs, const char *path, loff_t size,
 		      struct fuse_file_info *fi);
 int fuse_fs_utimens(struct fuse_fs *fs, const char *path,
 		    const struct timespec tv[2]);
@@ -885,7 +890,7 @@ int fuse_fs_poll(struct fuse_fs *fs, const char *path,
 		 struct fuse_file_info *fi, struct fuse_pollhandle *ph,
 		 unsigned *reventsp);
 int fuse_fs_fallocate(struct fuse_fs *fs, const char *path, int mode,
-		 off64_t offset, off64_t length, struct fuse_file_info *fi);
+		 loff_t offset, loff_t length, struct fuse_file_info *fi);
 void fuse_fs_init(struct fuse_fs *fs, struct fuse_conn_info *conn);
 void fuse_fs_destroy(struct fuse_fs *fs);
 

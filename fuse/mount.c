@@ -36,12 +36,15 @@
 #define MS_SYNCHRONOUS 	MNT_SYNCHRONOUS
 #define MS_NOATIME 	MNT_NOATIME
 
-
 #define umount2(mnt, flags) unmount(mnt, (flags == 2) ? MNT_FORCE : 0)
 #endif
 
 #define FUSERMOUNT_PROG		"fusermount"
 #define FUSE_COMMFD_ENV		"_FUSE_COMMFD"
+
+#if defined(__ANDROID__) && !defined(FUSERMOUNT_DIR)
+# define FUSERMOUNT_DIR "/system/xbin"
+#endif
 
 #ifndef HAVE_FORK
 #define fork() vfork()
@@ -138,7 +141,6 @@ static void mount_help(void)
 "\n");
 }
 
-#define FUSERMOUNT_DIR "/usr/bin"
 static void exec_fusermount(const char *argv[])
 {
 	execv(FUSERMOUNT_DIR "/" FUSERMOUNT_PROG, (char **) argv);
@@ -302,14 +304,18 @@ void fuse_kern_unmount(const char *mountpoint, int fd)
 		pfd.fd = fd;
 		pfd.events = 0;
 		res = poll(&pfd, 1, 0);
+
+		/* Need to close file descriptor, otherwise synchronous umount
+		   would recurse into filesystem, and deadlock.
+
+		   Caller expects fuse_kern_unmount to close the fd, so close it
+		   anyway. */
+		close(fd);
+
 		/* If file poll returns POLLERR on the device file descriptor,
 		   then the filesystem is already unmounted */
 		if (res == 1 && (pfd.revents & POLLERR))
 			return;
-
-		/* Need to close file descriptor, otherwise synchronous umount
-		   would recurse into filesystem, and deadlock */
-		close(fd);
 	}
 
 	if (geteuid() == 0) {
@@ -465,7 +471,7 @@ static int fuse_mount_sys(const char *mnt, struct mount_opts *mo,
 		return -1;
 	}
 
-	snprintf(tmp, sizeof(tmp),  "fd=%i,rootmode=%o,user_id=%i,group_id=%i",
+	snprintf(tmp, sizeof(tmp),  "fd=%i,rootmode=%o,user_id=%u,group_id=%u",
 		 fd, stbuf.st_mode & S_IFMT, getuid(), getgid());
 
 	res = fuse_opt_add_opt(&mo->kernel_opts, tmp);
