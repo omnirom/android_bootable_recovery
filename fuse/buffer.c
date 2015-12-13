@@ -45,7 +45,7 @@ static ssize_t fuse_buf_write(const struct fuse_buf *dst, size_t dst_off,
 
 	while (len) {
 		if (dst->flags & FUSE_BUF_FD_SEEK) {
-			res = pwrite(dst->fd, src->mem + src_off, len,
+			res = pwrite64(dst->fd, src->mem + src_off, len,
 				     dst->pos + dst_off);
 		} else {
 			res = write(dst->fd, src->mem + src_off, len);
@@ -160,10 +160,10 @@ static ssize_t fuse_buf_splice(const struct fuse_buf *dst, size_t dst_off,
 			       size_t len, enum fuse_buf_copy_flags flags)
 {
 	int splice_flags = 0;
-	off64_t *srcpos = NULL;
-	off64_t *dstpos = NULL;
-	off64_t srcpos_val;
-	off64_t dstpos_val;
+	loff_t *srcpos = NULL;
+	loff_t *dstpos = NULL;
+	loff_t srcpos_val;
+	loff_t dstpos_val;
 	ssize_t res;
 	size_t copied = 0;
 

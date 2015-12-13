@@ -15,5 +15,5 @@ int fuse_mnt_umount(const char *progname, const char *abs_mnt,
 		    const char *rel_mnt, int lazy);
 char *fuse_mnt_resolve_path(const char *progname, const char *orig);
 int fuse_mnt_check_empty(const char *progname, const char *mnt,
-			 mode_t rootmode, off64_t rootsize);
+			 mode_t rootmode, loff_t rootsize);
 int fuse_mnt_check_fuseblk(void);

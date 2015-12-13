@@ -19,7 +19,6 @@
 #include <semaphore.h>
 #include <errno.h>
 #include <sys/time.h>
-#include <pthread.h>
 
 /* Environment var controlling the thread stack size */
 #define ENVNAME_THREAD_STACK "FUSE_THREAD_STACK"
@@ -62,15 +61,31 @@ static void list_del_worker(struct fuse_worker *w)
 	next->prev = prev;
 }
 
-#define PTHREAD_CANCEL_ENABLE 0
-#define PTHREAD_CANCEL_DISABLE 1
-
 static int fuse_loop_start_thread(struct fuse_mt *mt);
+
+static void thread_exit_handler(int sig)
+{
+	pthread_exit(0);
+}
 
 static void *fuse_do_work(void *data)
 {
 	struct fuse_worker *w = (struct fuse_worker *) data;
 	struct fuse_mt *mt = w->mt;
+
+#if defined(__ANDROID__)
+	struct sigaction actions;
+	memset(&actions, 0, sizeof(actions));
+	sigemptyset(&actions.sa_mask);
+	actions.sa_flags = 0;
+	actions.sa_handler = thread_exit_handler;
+	sigaction(SIGUSR1, &actions, NULL);
+
+	sigset_t setusr1;
+	sigemptyset(&setusr1);
+	sigaddset(&setusr1, SIGUSR1);
+	pthread_sigmask(SIG_BLOCK, &setusr1, NULL);
+#endif
 
 	while (!fuse_session_exited(mt->se)) {
 		int isforget = 0;
@@ -81,11 +96,15 @@ static void *fuse_do_work(void *data)
 		};
 		int res;
 
-#ifndef ANDROID
+#if defined(__ANDROID__)
+		pthread_sigmask(SIG_UNBLOCK, &setusr1, NULL);
+#else
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 #endif
 		res = fuse_session_receive_buf(mt->se, &fbuf, &ch);
-#ifndef ANDROID
+#if defined(__ANDROID__)
+		pthread_sigmask(SIG_BLOCK, &setusr1, NULL);
+#else
 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 #endif
 		if (res == -EINTR)
@@ -249,14 +268,15 @@ int fuse_session_loop_mt(struct fuse_session *se)
 		while (!fuse_session_exited(se))
 			sem_wait(&mt.finish);
 
-#ifndef ANDROID
+		pthread_mutex_lock(&mt.lock);
 		for (w = mt.main.next; w != &mt.main; w = w->next)
-			pthread_cancel(w->thread_id);
-#else
-                for (w = mt.main.next; w != &mt.main; w = w->next)
+#if defined(__ANDROID__)
 			pthread_kill(w->thread_id, SIGUSR1);
+#else
+			pthread_cancel(w->thread_id);
 #endif
 		mt.exit = 1;
+		pthread_mutex_unlock(&mt.lock);
 
 		while (mt.main.next != &mt.main)
 			fuse_join_worker(&mt, mt.main.next);
