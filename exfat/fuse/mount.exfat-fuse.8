@@ -1,4 +1,4 @@
-.\" Copyright (C) 2010  Andrew Nayenko
+.\" Copyright (C) 2010-2015  Andrew Nayenko
 .\"
 .TH EXFAT-FUSE 8 "July 2010"
 .SH NAME
@@ -56,7 +56,7 @@ Ignored.
 Set the umask (the bitmask of the permissions that are
 .B not
 present, in octal).
-The default is the umask of the current process.
+The default is 0.
 .TP
 .BI dmask= value
 Set the umask for directories only.
@@ -80,6 +80,26 @@ Do not update access time when file is read.
 
 .SH EXIT CODES
 Zero is returned on successful mount. Any other code means an error.
+
+.SH BUGS
+exFAT is a case-insensitive file system. Some things can behave unexpectedly,
+e.g. directory renaming that changes only case of some characters:
+
+.B \t$ mv FOO Foo
+.br
+.B \tmv: cannot move \(cqFOO\(cq to a subdirectory of itself, \(cqFoo/FOO\(cq
+
+This happens because
+.B mv
+finds that destination exists (for case-insensitive file
+systems
+.B FOO
+and
+.B Foo
+are the same thing) and adds source basename to the destination. The file
+system gets
+.B rename(\(dqFOO\(dq,\ \(dqFoo/FOO\(dq)
+syscall and returns an error.
 
 .SH AUTHOR
 Andrew Nayenko

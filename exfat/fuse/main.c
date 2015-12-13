@@ -3,7 +3,7 @@
 	FUSE-based exFAT implementation. Requires FUSE 2.6 or later.
 
 	Free exFAT implementation.
-	Copyright (C) 2010-2013  Andrew Nayenko
+	Copyright (C) 2010-2015  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include <exfat.h>
 #define FUSE_USE_VERSION 26
 #include <fuse.h>
 #include <errno.h>
@@ -27,21 +28,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <exfat.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
 
-#define exfat_debug(format, ...)
+#ifndef DEBUG
+	#define exfat_debug(format, ...)
+#endif
 
 #if !defined(FUSE_VERSION) || (FUSE_VERSION < 26)
 	#error FUSE 2.6 or later is required
 #endif
 
 const char* default_options = "ro_fallback,allow_other,blkdev,big_writes,"
-		"defer_permissions";
+		"default_permissions";
 
 struct exfat ef;
 
@@ -53,6 +55,7 @@ static struct exfat_node* get_node(const struct fuse_file_info* fi)
 static void set_node(struct fuse_file_info* fi, struct exfat_node* node)
 {
 	fi->fh = (uint64_t) (size_t) node;
+	fi->keep_cache = 1;
 }
 
 static int fuse_exfat_getattr(const char* path, struct stat* stbuf)
@@ -71,7 +74,7 @@ static int fuse_exfat_getattr(const char* path, struct stat* stbuf)
 	return 0;
 }
 
-static int fuse_exfat_truncate(const char* path, off64_t size)
+static int fuse_exfat_truncate(const char* path, off_t size)
 {
 	struct exfat_node* node;
 	int rc;
@@ -83,12 +86,19 @@ static int fuse_exfat_truncate(const char* path, off64_t size)
 		return rc;
 
 	rc = exfat_truncate(&ef, node, size, true);
+	if (rc != 0)
+	{
+		exfat_flush_node(&ef, node);	/* ignore return code */
+		exfat_put_node(&ef, node);
+		return rc;
+	}
+	rc = exfat_flush_node(&ef, node);
 	exfat_put_node(&ef, node);
 	return rc;
 }
 
 static int fuse_exfat_readdir(const char* path, void* buffer,
-		fuse_fill_dir_t filler, off64_t offset, struct fuse_file_info* fi)
+		fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi)
 {
 	struct exfat_node* parent;
 	struct exfat_node* node;
@@ -104,7 +114,7 @@ static int fuse_exfat_readdir(const char* path, void* buffer,
 	if (!(parent->flags & EXFAT_ATTRIB_DIR))
 	{
 		exfat_put_node(&ef, parent);
-		exfat_error("`%s' is not a directory (0x%x)", path, parent->flags);
+		exfat_error("'%s' is not a directory (0x%x)", path, parent->flags);
 		return -ENOTDIR;
 	}
 
@@ -115,7 +125,7 @@ static int fuse_exfat_readdir(const char* path, void* buffer,
 	if (rc != 0)
 	{
 		exfat_put_node(&ef, parent);
-		exfat_error("failed to open directory `%s'", path);
+		exfat_error("failed to open directory '%s'", path);
 		return rc;
 	}
 	while ((node = exfat_readdir(&ef, &it)))
@@ -143,15 +153,51 @@ static int fuse_exfat_open(const char* path, struct fuse_file_info* fi)
 	if (rc != 0)
 		return rc;
 	set_node(fi, node);
-	fi->keep_cache = 1;
+	return 0;
+}
+
+static int fuse_exfat_create(const char* path, mode_t mode,
+		struct fuse_file_info* fi)
+{
+	struct exfat_node* node;
+	int rc;
+
+	exfat_debug("[%s] %s 0%ho", __func__, path, mode);
+
+	rc = exfat_mknod(&ef, path);
+	if (rc != 0)
+		return rc;
+	rc = exfat_lookup(&ef, &node, path);
+	if (rc != 0)
+		return rc;
+	set_node(fi, node);
 	return 0;
 }
 
 static int fuse_exfat_release(const char* path, struct fuse_file_info* fi)
 {
+	/*
+	   This handler is called by FUSE on close() syscall. If the FUSE
+	   implementation does not call flush handler, we will flush node here.
+	   But in this case we will not be able to return an error to the caller.
+	   See fuse_exfat_flush() below.
+	*/
 	exfat_debug("[%s] %s", __func__, path);
+ 	exfat_flush_node(&ef, get_node(fi));
 	exfat_put_node(&ef, get_node(fi));
-	return 0;
+	return 0; /* FUSE ignores this return value */
+}
+
+static int fuse_exfat_flush(const char* path, struct fuse_file_info* fi)
+{
+	/*
+	   This handler may be called by FUSE on close() syscall. FUSE also deals
+	   with removals of open files, so we don't free clusters on close but
+	   only on rmdir and unlink. If the FUSE implementation does not call this
+	   handler we will flush node on release. See fuse_exfat_relase() above.
+	*/
+	exfat_debug("[%s] %s", __func__, path);
+	return exfat_flush_node(&ef, get_node(fi));
 }
 
 static int fuse_exfat_fsync(const char* path, int datasync,
@@ -160,7 +206,7 @@ static int fuse_exfat_fsync(const char* path, int datasync,
 	int rc;
 
 	exfat_debug("[%s] %s", __func__, path);
-	rc = exfat_flush_node(&ef, get_node(fi));
+	rc = exfat_flush_nodes(&ef);
 	if (rc != 0)
 		return rc;
 	rc = exfat_flush(&ef);
@@ -170,7 +216,7 @@ static int fuse_exfat_fsync(const char* path, int datasync,
 }
 
 static int fuse_exfat_read(const char* path, char* buffer, size_t size,
-		off64_t offset, struct fuse_file_info* fi)
+		off_t offset, struct fuse_file_info* fi)
 {
 	ssize_t ret;
 
@@ -182,7 +228,7 @@ static int fuse_exfat_read(const char* path, char* buffer, size_t size,
 }
 
 static int fuse_exfat_write(const char* path, const char* buffer, size_t size,
-		off64_t offset, struct fuse_file_info* fi)
+		off_t offset, struct fuse_file_info* fi)
 {
 	ssize_t ret;
 
@@ -206,7 +252,9 @@ static int fuse_exfat_unlink(const char* path)
 
 	rc = exfat_unlink(&ef, node);
 	exfat_put_node(&ef, node);
-	return rc;
+	if (rc != 0)
+		return rc;
+	return exfat_cleanup_node(&ef, node);
 }
 
 static int fuse_exfat_rmdir(const char* path)
@@ -222,7 +270,9 @@ static int fuse_exfat_rmdir(const char* path)
 
 	rc = exfat_rmdir(&ef, node);
 	exfat_put_node(&ef, node);
-	return rc;
+	if (rc != 0)
+		return rc;
+	return exfat_cleanup_node(&ef, node);
 }
 
 static int fuse_exfat_mknod(const char* path, mode_t mode, dev_t dev)
@@ -255,8 +305,9 @@ static int fuse_exfat_utimens(const char* path, const struct timespec tv[2])
 		return rc;
 
 	exfat_utimes(node, tv);
+	rc = exfat_flush_node(&ef, node);
 	exfat_put_node(&ef, node);
-	return 0;
+	return rc;
 }
 
 static int fuse_exfat_chmod(const char* path, mode_t mode)
@@ -295,7 +346,7 @@ static int fuse_exfat_statfs(const char* path, struct statvfs* sfs)
 	   b) no such thing as inode;
 	   So here we assume that inode = cluster.
 	*/
-	sfs->f_files = (sfs->f_blocks - sfs->f_bfree) >> ef.sb->spc_bits;
+	sfs->f_files = le32_to_cpu(ef.sb->cluster_count);
 	sfs->f_favail = sfs->f_bfree >> ef.sb->spc_bits;
 	sfs->f_ffree = sfs->f_bavail;
 
@@ -329,7 +380,9 @@ static struct fuse_operations fuse_exfat_ops =
 	.truncate	= fuse_exfat_truncate,
 	.readdir	= fuse_exfat_readdir,
 	.open		= fuse_exfat_open,
+	.create		= fuse_exfat_create,
 	.release	= fuse_exfat_release,
+	.flush		= fuse_exfat_flush,
 	.fsync		= fuse_exfat_fsync,
 	.fsyncdir	= fuse_exfat_fsync,
 	.read		= fuse_exfat_read,
@@ -350,6 +403,7 @@ static struct fuse_operations fuse_exfat_ops =
 static char* add_option(char* options, const char* name, const char* value)
 {
 	size_t size;
+	char* optionsf = options;
 
 	if (value)
 		size = strlen(options) + strlen(name) + strlen(value) + 3;
@@ -359,6 +413,7 @@ static char* add_option(char* options, const char* name, const char* value)
 	options = realloc(options, size);
 	if (options == NULL)
 	{
+		free(optionsf);
 		exfat_error("failed to reallocate options string");
 		return NULL;
 	}
@@ -428,8 +483,7 @@ int main(int argc, char* argv[])
 	struct fuse* fh = NULL;
 	int opt;
 
-	printf("FUSE exfat %u.%u.%u\n",
-			EXFAT_VERSION_MAJOR, EXFAT_VERSION_MINOR, EXFAT_VERSION_PATCH);
+	printf("FUSE exfat %s\n", VERSION);
 
 	mount_options = strdup(default_options);
 	if (mount_options == NULL)
@@ -454,7 +508,7 @@ int main(int argc, char* argv[])
 			break;
 		case 'V':
 			free(mount_options);
-			puts("Copyright (C) 2010-2013  Andrew Nayenko");
+			puts("Copyright (C) 2010-2015  Andrew Nayenko");
 			return 0;
 		case 'v':
 			break;
