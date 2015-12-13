@@ -356,10 +356,10 @@ static uint32_t owner_hash(const unsigned char *id, size_t id_len)
 
 static int ulockmgr_canonicalize(int fd, struct flock *lock)
 {
-	off64_t offset;
+	loff_t offset;
 	if (lock->l_whence == SEEK_CUR) {
 		offset = lseek(fd, 0, SEEK_CUR);
-		if (offset == (off64_t) -1)
+		if (offset == (loff_t) -1)
 			return -errno;
 	} else if (lock->l_whence == SEEK_END) {
 		struct stat stbuf;

@@ -43,14 +43,14 @@ static void cuse_fll_open(fuse_req_t req, fuse_ino_t ino,
 }
 
 static void cuse_fll_read(fuse_req_t req, fuse_ino_t ino, size_t size,
-			  off64_t off, struct fuse_file_info *fi)
+			  loff_t off, struct fuse_file_info *fi)
 {
 	(void)ino;
 	req_clop(req)->read(req, size, off, fi);
 }
 
 static void cuse_fll_write(fuse_req_t req, fuse_ino_t ino, const char *buf,
-			   size_t size, off64_t off, struct fuse_file_info *fi)
+			   size_t size, loff_t off, struct fuse_file_info *fi)
 {
 	(void)ino;
 	req_clop(req)->write(req, buf, size, off, fi);
