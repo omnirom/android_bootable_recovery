@@ -9,6 +9,8 @@
 /* these definitions provide source compatibility to prior versions.
    Do not include this file directly! */
 
+#include "fuse_lowlevel.h"
+
 struct fuse_operations_compat25 {
 	int (*getattr) (const char *, struct stat *);
 	int (*readlink) (const char *, char *, size_t);
@@ -22,12 +24,12 @@ struct fuse_operations_compat25 {
 	int (*link) (const char *, const char *);
 	int (*chmod) (const char *, mode_t);
 	int (*chown) (const char *, uid_t, gid_t);
-	int (*truncate) (const char *, off64_t);
+	int (*truncate) (const char *, loff_t);
 	int (*utime) (const char *, struct utimbuf *);
 	int (*open) (const char *, struct fuse_file_info *);
-	int (*read) (const char *, char *, size_t, off64_t,
+	int (*read) (const char *, char *, size_t, loff_t,
 		     struct fuse_file_info *);
-	int (*write) (const char *, const char *, size_t, off64_t,
+	int (*write) (const char *, const char *, size_t, loff_t,
 		      struct fuse_file_info *);
 	int (*statfs) (const char *, struct statvfs *);
 	int (*flush) (const char *, struct fuse_file_info *);
@@ -38,7 +40,7 @@ struct fuse_operations_compat25 {
 	int (*listxattr) (const char *, char *, size_t);
 	int (*removexattr) (const char *, const char *);
 	int (*opendir) (const char *, struct fuse_file_info *);
-	int (*readdir) (const char *, void *, fuse_fill_dir_t, off64_t,
+	int (*readdir) (const char *, void *, fuse_fill_dir_t, loff_t,
 			struct fuse_file_info *);
 	int (*releasedir) (const char *, struct fuse_file_info *);
 	int (*fsyncdir) (const char *, int, struct fuse_file_info *);
@@ -46,7 +48,7 @@ struct fuse_operations_compat25 {
 	void (*destroy) (void *);
 	int (*access) (const char *, int);
 	int (*create) (const char *, mode_t, struct fuse_file_info *);
-	int (*ftruncate) (const char *, off64_t, struct fuse_file_info *);
+	int (*ftruncate) (const char *, loff_t, struct fuse_file_info *);
 	int (*fgetattr) (const char *, struct stat *, struct fuse_file_info *);
 };
 
@@ -81,12 +83,12 @@ struct fuse_operations_compat22 {
 	int (*link) (const char *, const char *);
 	int (*chmod) (const char *, mode_t);
 	int (*chown) (const char *, uid_t, gid_t);
-	int (*truncate) (const char *, off64_t);
+	int (*truncate) (const char *, loff_t);
 	int (*utime) (const char *, struct utimbuf *);
 	int (*open) (const char *, struct fuse_file_info_compat *);
-	int (*read) (const char *, char *, size_t, off64_t,
+	int (*read) (const char *, char *, size_t, loff_t,
 		     struct fuse_file_info_compat *);
-	int (*write) (const char *, const char *, size_t, off64_t,
+	int (*write) (const char *, const char *, size_t, loff_t,
 		      struct fuse_file_info_compat *);
 	int (*statfs) (const char *, struct statfs *);
 	int (*flush) (const char *, struct fuse_file_info_compat *);
@@ -97,7 +99,7 @@ struct fuse_operations_compat22 {
 	int (*listxattr) (const char *, char *, size_t);
 	int (*removexattr) (const char *, const char *);
 	int (*opendir) (const char *, struct fuse_file_info_compat *);
-	int (*readdir) (const char *, void *, fuse_fill_dir_t, off64_t,
+	int (*readdir) (const char *, void *, fuse_fill_dir_t, loff_t,
 			struct fuse_file_info_compat *);
 	int (*releasedir) (const char *, struct fuse_file_info_compat *);
 	int (*fsyncdir) (const char *, int, struct fuse_file_info_compat *);
@@ -132,11 +134,11 @@ struct fuse_operations_compat2 {
 	int (*link)	   (const char *, const char *);
 	int (*chmod)	   (const char *, mode_t);
 	int (*chown)	   (const char *, uid_t, gid_t);
-	int (*truncate)	   (const char *, off64_t);
+	int (*truncate)	   (const char *, loff_t);
 	int (*utime)	   (const char *, struct utimbuf *);
 	int (*open)	   (const char *, int);
-	int (*read)	   (const char *, char *, size_t, off64_t);
-	int (*write)	   (const char *, const char *, size_t, off64_t);
+	int (*read)	   (const char *, char *, size_t, loff_t);
+	int (*write)	   (const char *, const char *, size_t, loff_t);
 	int (*statfs)	   (const char *, struct statfs *);
 	int (*flush)	   (const char *);
 	int (*release)	   (const char *, int);
@@ -180,11 +182,11 @@ struct fuse_operations_compat1 {
 	int (*link)	(const char *, const char *);
 	int (*chmod)	(const char *, mode_t);
 	int (*chown)	(const char *, uid_t, gid_t);
-	int (*truncate) (const char *, off64_t);
+	int (*truncate) (const char *, loff_t);
 	int (*utime)	(const char *, struct utimbuf *);
 	int (*open)	(const char *, int);
-	int (*read)	(const char *, char *, size_t, off64_t);
-	int (*write)	(const char *, const char *, size_t, off64_t);
+	int (*read)	(const char *, char *, size_t, loff_t);
+	int (*write)	(const char *, const char *, size_t, loff_t);
 	int (*statfs)	(struct fuse_statfs_compat1 *);
 	int (*release)	(const char *, int);
 	int (*fsync)	(const char *, int);

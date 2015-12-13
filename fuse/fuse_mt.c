@@ -119,4 +119,4 @@ int fuse_loop_mt(struct fuse *f)
 	return res;
 }
 
-FUSE_SYMVER(".symver fuse_loop_mt_proc,__fuse_loop_mt@");
+FUSE_SYMVER(".symver fuse_loop_mt_proc,__fuse_loop_mt@FUSE_UNVERSIONED");

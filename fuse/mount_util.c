@@ -16,15 +16,22 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <mntent.h>
 #include <paths.h>
+#ifndef __NetBSD__
+#include <mntent.h>
+#endif
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/mount.h>
 #include <sys/param.h>
+#if defined(__ANDROID__)
+#include <paths.h>
+#endif
 
 #ifdef __NetBSD__
 #define umount2(mnt, flags) unmount(mnt, (flags == 2) ? MNT_FORCE : 0)
+#define mtab_needs_update(mnt) 0
+#elif defined(__ANDROID__)
 #define mtab_needs_update(mnt) 0
 #else
 static int mtab_needs_update(const char *mnt)
@@ -94,10 +101,12 @@ static int add_mount(const char *progname, const char *fsname,
 		goto out_restore;
 	}
 	if (res == 0) {
+		char *env = NULL;
+
 		sigprocmask(SIG_SETMASK, &oldmask, NULL);
 		setuid(geteuid());
-		execl("/bin/mount", "/bin/mount", "--no-canonicalize", "-i",
-		      "-f", "-t", type, "-o", opts, fsname, mnt, NULL);
+		execle("/bin/mount", "/bin/mount", "--no-canonicalize", "-i",
+		       "-f", "-t", type, "-o", opts, fsname, mnt, NULL, &env);
 		fprintf(stderr, "%s: failed to execute /bin/mount: %s\n",
 			progname, strerror(errno));
 		exit(1);
@@ -145,10 +154,17 @@ static int exec_umount(const char *progname, const char *rel_mnt, int lazy)
 		goto out_restore;
 	}
 	if (res == 0) {
+		char *env = NULL;
+
 		sigprocmask(SIG_SETMASK, &oldmask, NULL);
 		setuid(geteuid());
-		execl("/bin/umount", "/bin/umount", "-i", rel_mnt,
-		      lazy ? "-l" : NULL, NULL);
+		if (lazy) {
+			execle("/bin/umount", "/bin/umount", "-i", rel_mnt,
+			       "-l", NULL, &env);
+		} else {
+			execle("/bin/umount", "/bin/umount", "-i", rel_mnt,
+			       NULL, &env);
+		}
 		fprintf(stderr, "%s: failed to execute /bin/umount: %s\n",
 			progname, strerror(errno));
 		exit(1);
@@ -204,10 +220,12 @@ static int remove_mount(const char *progname, const char *mnt)
 		goto out_restore;
 	}
 	if (res == 0) {
+		char *env = NULL;
+
 		sigprocmask(SIG_SETMASK, &oldmask, NULL);
 		setuid(geteuid());
-		execl("/bin/umount", "/bin/umount", "--no-canonicalize", "-i",
-		      "--fake", mnt, NULL);
+		execle("/bin/umount", "/bin/umount", "--no-canonicalize", "-i",
+		       "--fake", mnt, NULL, &env);
 		fprintf(stderr, "%s: failed to execute /bin/umount: %s\n",
 			progname, strerror(errno));
 		exit(1);
@@ -300,7 +318,7 @@ char *fuse_mnt_resolve_path(const char *progname, const char *orig)
 }
 
 int fuse_mnt_check_empty(const char *progname, const char *mnt,
-			 mode_t rootmode, off64_t rootsize)
+			 mode_t rootmode, loff_t rootsize)
 {
 	int isempty = 1;
 

@@ -249,10 +249,12 @@ struct fuse_chan *fuse_mount(const char *mountpoint, struct fuse_args *args)
 
 static void fuse_unmount_common(const char *mountpoint, struct fuse_chan *ch)
 {
-	int fd = ch ? fuse_chan_fd(ch) : -1;
-	fuse_kern_unmount(mountpoint, fd);
-	if (ch)
-		fuse_chan_destroy(ch);
+	if (mountpoint) {
+		int fd = ch ? fuse_chan_clearfd(ch) : -1;
+		fuse_kern_unmount(mountpoint, fd);
+		if (ch)
+			fuse_chan_destroy(ch);
+	}
 }
 
 void fuse_unmount(const char *mountpoint, struct fuse_chan *ch)
@@ -434,10 +436,10 @@ int fuse_mount_compat1(const char *mountpoint, const char *args[])
 	return fuse_mount_compat22(mountpoint, NULL);
 }
 
-FUSE_SYMVER(".symver fuse_setup_compat2,__fuse_setup@");
+FUSE_SYMVER(".symver fuse_setup_compat2,__fuse_setup@FUSE_UNVERSIONED");
 FUSE_SYMVER(".symver fuse_setup_compat22,fuse_setup@FUSE_2.2");
-FUSE_SYMVER(".symver fuse_teardown,__fuse_teardown@");
-FUSE_SYMVER(".symver fuse_main_compat2,fuse_main@");
+FUSE_SYMVER(".symver fuse_teardown,__fuse_teardown@FUSE_UNVERSIONED");
+FUSE_SYMVER(".symver fuse_main_compat2,fuse_main@FUSE_UNVERSIONED");
 FUSE_SYMVER(".symver fuse_main_real_compat22,fuse_main_real@FUSE_2.2");
 
 #endif /* __FreeBSD__ || __NetBSD__ */
