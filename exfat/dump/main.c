@@ -3,7 +3,7 @@
 	Prints detailed information about exFAT volume.
 
 	Free exFAT implementation.
-	Copyright (C) 2011-2013  Andrew Nayenko
+	Copyright (C) 2011-2015  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -20,12 +20,12 @@
 	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include <exfat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-#include <exfat.h>
 
 static void print_generic_info(const struct exfat_super_block* sb)
 {
@@ -85,13 +85,13 @@ static int dump_sb(const char* spec)
 	if (exfat_read(dev, &sb, sizeof(struct exfat_super_block)) < 0)
 	{
 		exfat_close(dev);
-		exfat_error("failed to read from `%s'", spec);
+		exfat_error("failed to read from '%s'", spec);
 		return 1;
 	}
 	if (memcmp(sb.oem_name, "EXFAT   ", sizeof(sb.oem_name)) != 0)
 	{
 		exfat_close(dev);
-		exfat_error("exFAT file system is not found on `%s'", spec);
+		exfat_error("exFAT file system is not found on '%s'", spec);
 		return 1;
 	}
 
@@ -153,8 +153,7 @@ int main(int argc, char* argv[])
 	bool sb_only = false;
 	bool used_sectors = false;
 
-	printf("dumpexfat %u.%u.%u\n",
-			EXFAT_VERSION_MAJOR, EXFAT_VERSION_MINOR, EXFAT_VERSION_PATCH);
+	printf("dumpexfat %s\n", VERSION);
 
 	while ((opt = getopt(argc, argv, "suV")) != -1)
 	{
@@ -167,7 +166,7 @@ int main(int argc, char* argv[])
 			used_sectors = true;
 			break;
 		case 'V':
-			puts("Copyright (C) 2011-2013  Andrew Nayenko");
+			puts("Copyright (C) 2011-2015  Andrew Nayenko");
 			return 0;
 		default:
 			usage(argv[0]);
