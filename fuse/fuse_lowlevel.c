@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <assert.h>
+#include <sys/file.h>
 
 #ifndef F_LINUX_SPECIFIC_BASE
 #define F_LINUX_SPECIFIC_BASE       1024
@@ -247,7 +248,7 @@ size_t fuse_dirent_size(size_t namelen)
 }
 
 char *fuse_add_dirent(char *buf, const char *name, const struct stat *stbuf,
-		      off64_t off)
+		      loff_t off)
 {
 	unsigned namelen = strlen(name);
 	unsigned entlen = FUSE_NAME_OFFSET + namelen;
@@ -267,7 +268,7 @@ char *fuse_add_dirent(char *buf, const char *name, const struct stat *stbuf,
 }
 
 size_t fuse_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
-			 const char *name, const struct stat *stbuf, off64_t off)
+			 const char *name, const struct stat *stbuf, loff_t off)
 {
 	size_t entsize;
 
@@ -1979,7 +1980,7 @@ int fuse_lowlevel_notify_poll(struct fuse_pollhandle *ph)
 }
 
 int fuse_lowlevel_notify_inval_inode(struct fuse_chan *ch, fuse_ino_t ino,
-                                     off64_t off, off64_t len)
+                                     loff_t off, loff_t len)
 {
 	struct fuse_notify_inval_inode_out outarg;
 	struct fuse_ll *f;
@@ -2060,7 +2061,7 @@ int fuse_lowlevel_notify_delete(struct fuse_chan *ch,
 }
 
 int fuse_lowlevel_notify_store(struct fuse_chan *ch, fuse_ino_t ino,
-			       off64_t offset, struct fuse_bufvec *bufv,
+			       loff_t offset, struct fuse_bufvec *bufv,
 			       enum fuse_buf_copy_flags flags)
 {
 	struct fuse_out_header out;
@@ -2144,7 +2145,7 @@ out:
 }
 
 int fuse_lowlevel_notify_retrieve(struct fuse_chan *ch, fuse_ino_t ino,
-				  size_t size, off64_t offset, void *cookie)
+				  size_t size, loff_t offset, void *cookie)
 {
 	struct fuse_notify_retrieve_out outarg;
 	struct fuse_ll *f;
