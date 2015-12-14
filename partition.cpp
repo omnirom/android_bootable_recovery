@@ -906,6 +906,25 @@ bool TWPartition::Find_Partition_Size(void) {
 		}
 	}
 
+	unsigned long block_device_size;
+	int ret = 0;
+
+	Find_Actual_Block_Device();
+	int fd = open(Actual_Block_Device.c_str(), O_RDONLY);
+	if (fd < 0) {
+		LOGINFO("Find_Partition_Size: Failed to open '%s', (%s)\n", Actual_Block_Device.c_str(), strerror(errno));
+	} else {
+		ret = ioctl(fd, BLKGETSIZE, &block_device_size);
+		close(fd);
+		if (ret) {
+			LOGINFO("Find_Partition_Size: ioctl error: (%s)\n", strerror(errno));
+		} else {
+			Size = (unsigned long long)(block_device_size) * 512LLU;
+			LOGINFO("Got partition size using ioctl: %llu\n", Size);
+			return true;
+		}
+	}
+
 	// In this case, we'll first get the partitions we care about (with labels)
 	fp = fopen("/proc/partitions", "rt");
 	if (fp == NULL)
@@ -1357,7 +1376,7 @@ bool TWPartition::Resize() {
 		Find_Actual_Block_Device();
 		command = "/sbin/resize2fs " + Actual_Block_Device;
 		if (Length != 0) {
-			unsigned int block_device_size;
+			unsigned long block_device_size;
 			int fd, ret;
 
 			fd = open(Actual_Block_Device.c_str(), O_RDONLY);
