@@ -906,6 +906,25 @@ bool TWPartition::Find_Partition_Size(void) {
 		}
 	}
 
+	unsigned int block_device_size;
+	int ret = 0;
+
+	Find_Actual_Block_Device();
+	int fd = open(Actual_Block_Device.c_str(), O_RDONLY);
+	if (fd < 0) {
+		LOGINFO("Find_Partition_Size: Failed to open '%s'\n", Actual_Block_Device.c_str());
+	} else {
+		ret = ioctl(fd, BLKGETSIZE, &block_device_size);
+		close(fd);
+		if (ret) {
+			LOGINFO("Find_Partition_Size: ioctl error\n");
+		} else {
+			Size = (unsigned long long)(block_device_size) * 512LLU;
+			LOGINFO("Got partition size using ioctl: %llu\n", Size);
+			return true;
+		}
+	}
+
 	// In this case, we'll first get the partitions we care about (with labels)
 	fp = fopen("/proc/partitions", "rt");
 	if (fp == NULL)
