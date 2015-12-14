@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_65659040",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 909,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-14T18:38:13Z",
+      "side": 1,
+      "message": "According to \"man ioctl_list\", BLKGETSIZE fills an unsigned long, not int.\nAnd these declarations should be moved into the block where they are used.",
+      "revId": "105eee175575ca4ce09a88633724c5d4502fe663",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_455a8c84",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 915,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-14T18:38:13Z",
+      "side": 1,
+      "message": "add strerror(errno)",
+      "revId": "105eee175575ca4ce09a88633724c5d4502fe663",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_2557885b",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 920,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-14T18:38:13Z",
+      "side": 1,
+      "message": "add strerror(errno)",
+      "revId": "105eee175575ca4ce09a88633724c5d4502fe663",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
