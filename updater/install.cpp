@@ -555,14 +555,21 @@ Value* PackageExtractFileFn(const char* name, State* state,
         }
 
         {
-            FILE* f = fopen(dest_path, "wb");
-            if (f == NULL) {
-                printf("%s: can't open %s for write: %s\n",
-                        name, dest_path, strerror(errno));
+            int fd = TEMP_FAILURE_RETRY(open(dest_path, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC,
+                  S_IRUSR | S_IWUSR));
+            if (fd == -1) {
+                printf("%s: can't open %s for write: %s\n", name, dest_path, strerror(errno));
                 goto done2;
             }
-            success = mzExtractZipEntryToFile(za, entry, fileno(f));
-            fclose(f);
+            success = mzExtractZipEntryToFile(za, entry, fd);
+            if (fsync(fd) == -1) {
+                printf("fsync of \"%s\" failed: %s\n", dest_path, strerror(errno));
+                success = false;
+            }
+            if (close(fd) == -1) {
+                printf("close of \"%s\" failed: %s\n", dest_path, strerror(errno));
+                success = false;
+            }
         }
 
       done2:
