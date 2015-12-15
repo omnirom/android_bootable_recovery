@@ -29,13 +29,20 @@ endif
 ifeq ($(TW_NEW_ION_HEAP), true)
   LOCAL_CFLAGS += -DNEW_ION_HEAP
 endif
+ifneq ($(TW_REDUCED_GRAPHICS), true)
+  LOCAL_CFLAGS += -DINCLUDE_JPEG_GRAPHICS
+endif
+
 
 LOCAL_C_INCLUDES += \
     external/libpng \
     external/zlib \
     system/core/include \
-    external/jpeg \
     external/freetype/include
+
+ifneq ($(TW_REDUCED_GRAPHICS), true)
+  LOCAL_C_INCLUDES += external/jpeg
+endif
 
 ifeq ($(RECOVERY_TOUCHSCREEN_SWAP_XY), true)
 LOCAL_CFLAGS += -DRECOVERY_TOUCHSCREEN_SWAP_XY
@@ -121,7 +128,10 @@ ifeq ($(TW_DISABLE_TTF), true)
 endif
 
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
-LOCAL_SHARED_LIBRARIES += libft2 libz libc libcutils libjpeg libpng libutils
+LOCAL_SHARED_LIBRARIES += libft2 libz libc libcutils libpng libutils
+ifneq ($(TW_REDUCED_GRAPHICS), true)
+  LOCAL_SHARED_LIBRARIES += libjpeg
+endif
 LOCAL_STATIC_LIBRARIES += libpixelflinger_twrp
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminuitwrp

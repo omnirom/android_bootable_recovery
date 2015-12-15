@@ -84,6 +84,11 @@ TWRP_RES := $(commands_recovery_local_path)/gui/devices/common/res/*
 # enable this to use new themes:
 #TWRP_NEW_THEME := true
 
+# TODO: When new theme is finalized, create low-graphics variant
+ifeq ($(TWRP_NEW_THEME), true)
+	TW_REDUCED_GRAPHICS :=
+endif
+
 ifeq ($(TW_CUSTOM_THEME),)
     ifeq ($(TW_THEME),)
         # This converts the old DEVICE_RESOLUTION flag to the new TW_THEME flag
@@ -125,14 +130,19 @@ else
     TWRP_RES += $(commands_recovery_local_path)/gui/devices/$(word 1,$(subst _, ,$(TW_THEME)))/res/*
     ifeq ($(TW_THEME), portrait_mdpi)
         TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/480x800/res
+        TWRP_CURTAIN_LOC := $(commands_recovery_local_path)/gui/devices/alt-images/curtain/480x800
     else ifeq ($(TW_THEME), portrait_hdpi)
         TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/1080x1920/res
+        TWRP_CURTAIN_LOC := $(commands_recovery_local_path)/gui/devices/alt-images/curtain/1080x1920
     else ifeq ($(TW_THEME), watch_mdpi)
         TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/320x320/res
+        TWRP_CURTAIN_LOC := $(commands_recovery_local_path)/gui/devices/alt-images/curtain/320x320
     else ifeq ($(TW_THEME), landscape_mdpi)
         TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/800x480/res
+        TWRP_CURTAIN_LOC := $(commands_recovery_local_path)/gui/devices/alt-images/curtain/800x480
     else ifeq ($(TW_THEME), landscape_hdpi)
         TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/1920x1200/res
+        TWRP_CURTAIN_LOC := $(commands_recovery_local_path)/gui/devices/alt-images/curtain/1920x1200
     else
         $(warning ****************************************************************************)
         $(warning * TW_THEME ($(TW_THEME)) is not valid.)
@@ -146,6 +156,11 @@ endif
 else
     TWRP_THEME_LOC := $(TW_CUSTOM_THEME)
 endif
+ifeq ($(TW_REDUCED_GRAPHICS), true)
+    TWRP_CURTAIN_IMAGE := $(TWRP_CURTAIN_LOC)/curtain.png
+else
+    TWRP_CURTAIN_IMAGE := $(TWRP_CURTAIN_LOC)/curtain.jpg
+endif
 
 TWRP_RES_GEN := $(intermediates)/twrp
 ifneq ($(TW_USE_TOOLBOX), true)
@@ -158,6 +173,7 @@ $(TWRP_RES_GEN):
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 	cp -fr $(TWRP_RES) $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 	cp -fr $(TWRP_THEME_LOC)/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
+	cp -f $(TWRP_CURTAIN_IMAGE) $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)/images
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/
 ifneq ($(TW_USE_TOOLBOX), true)
 	ln -sf $(TWRP_SH_TARGET) $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
