@@ -44,6 +44,7 @@
 #include "edify/expr.h"
 #include "mincrypt/sha.h"
 #include "minzip/Hash.h"
+#include "otafault/ota_io.h"
 #include "print_sha1.h"
 #include "unique_fd.h"
 #include "updater.h"
@@ -138,7 +139,7 @@ static bool range_overlaps(const RangeSet& r1, const RangeSet& r2) {
 static int read_all(int fd, uint8_t* data, size_t size) {
     size_t so_far = 0;
     while (so_far < size) {
-        ssize_t r = TEMP_FAILURE_RETRY(read(fd, data+so_far, size-so_far));
+        ssize_t r = TEMP_FAILURE_RETRY(ota_read(fd, data+so_far, size-so_far));
         if (r == -1) {
             fprintf(stderr, "read failed: %s\n", strerror(errno));
             return -1;
@@ -155,7 +156,7 @@ static int read_all(int fd, std::vector<uint8_t>& buffer, size_t size) {
 static int write_all(int fd, const uint8_t* data, size_t size) {
     size_t written = 0;
     while (written < size) {
-        ssize_t w = TEMP_FAILURE_RETRY(write(fd, data+written, size-written));
+        ssize_t w = TEMP_FAILURE_RETRY(ota_write(fd, data+written, size-written));
         if (w == -1) {
             fprintf(stderr, "write failed: %s\n", strerror(errno));
             return -1;
@@ -621,7 +622,7 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
         return -1;
     }
 
-    if (fsync(fd) == -1) {
+    if (ota_fsync(fd) == -1) {
         fprintf(stderr, "fsync \"%s\" failed: %s\n", fn.c_str(), strerror(errno));
         return -1;
     }
@@ -641,7 +642,7 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
         return -1;
     }
 
-    if (fsync(dfd) == -1) {
+    if (ota_fsync(dfd) == -1) {
         fprintf(stderr, "fsync \"%s\" failed: %s\n", dname.c_str(), strerror(errno));
         return -1;
     }
@@ -1466,7 +1467,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         }
 
         if (params.canwrite) {
-            if (fsync(params.fd) == -1) {
+            if (ota_fsync(params.fd) == -1) {
                 fprintf(stderr, "fsync failed: %s\n", strerror(errno));
                 goto pbiudone;
             }
@@ -1491,7 +1492,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     rc = 0;
 
 pbiudone:
-    if (fsync(params.fd) == -1) {
+    if (ota_fsync(params.fd) == -1) {
         fprintf(stderr, "fsync failed: %s\n", strerror(errno));
     }
     // params.fd will be automatically closed because of the fd_holder above.
