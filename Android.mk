@@ -355,6 +355,9 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     permissive.sh \
     simg2img_twrp
 
+ifneq ($(TW_USE_TOOLBOX),true)
+    LOCAL_ADDITIONAL_DEPENDENCIES += busyboxtwrp
+endif
 ifneq ($(TARGET_ARCH), arm64)
     ifneq ($(TARGET_ARCH), x86_64)
         LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
@@ -463,7 +466,7 @@ include $(BUILD_EXECUTABLE)
 ifneq ($(TW_USE_TOOLBOX), true)
 include $(CLEAR_VARS)
 # Create busybox symlinks... gzip and gunzip are excluded because those need to link to pigz instead
-BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
+BUSYBOX_LINKS := $(shell cat $(LOCAL_PATH)/busybox/busybox-full.links)
 exclude := tune2fs mke2fs mkdosfs mkfs.vfat gzip gunzip
 
 # If busybox does not have restorecon, assume it does not have SELinux support.
@@ -476,7 +479,7 @@ endif
 
 RECOVERY_BUSYBOX_TOOLS := $(filter-out $(exclude), $(notdir $(BUSYBOX_LINKS)))
 RECOVERY_BUSYBOX_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/, $(RECOVERY_BUSYBOX_TOOLS))
-$(RECOVERY_BUSYBOX_SYMLINKS): BUSYBOX_BINARY := busybox
+$(RECOVERY_BUSYBOX_SYMLINKS): BUSYBOX_BINARY := busyboxtwrp
 $(RECOVERY_BUSYBOX_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "Symlink: $@ -> $(BUSYBOX_BINARY)"
 	@mkdir -p $(dir $@)
@@ -594,6 +597,7 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/dosfstools/Android.mk \
     $(commands_recovery_local_path)/etc/Android.mk \
     $(commands_recovery_local_path)/toybox/Android.mk \
+    $(commands_recovery_local_path)/busybox/Android.mk \
     $(commands_recovery_local_path)/simg2img/Android.mk \
     $(commands_recovery_local_path)/libpixelflinger/Android.mk
 
