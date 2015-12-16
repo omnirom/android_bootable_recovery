@@ -45,7 +45,7 @@
 #include "install.h"
 #include "openssl/sha.h"
 #include "minzip/Hash.h"
-#include "otafault/ota_io.h"
+#include "ota_io.h"
 #include "print_sha1.h"
 #include "unique_fd.h"
 #include "updater.h"
