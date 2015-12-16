@@ -21,7 +21,7 @@ LOCAL_SRC_FILES := applypatch.cpp bspatch.cpp freecache.cpp imgpatch.cpp utils.c
 LOCAL_MODULE := libapplypatch
 LOCAL_MODULE_TAGS := eng
 LOCAL_C_INCLUDES += bootable/recovery
-LOCAL_STATIC_LIBRARIES += libbase libmtdutils libcrypto_static libbz libz
+LOCAL_STATIC_LIBRARIES += libbase libotafault libmtdutils libcrypto_static libbz libz
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -55,7 +55,7 @@ LOCAL_CLANG := true
 LOCAL_SRC_FILES := main.cpp
 LOCAL_MODULE := applypatch
 LOCAL_C_INCLUDES += bootable/recovery
-LOCAL_STATIC_LIBRARIES += libapplypatch libbase libmtdutils libcrypto_static libbz libedify
+LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libmtdutils libcrypto_static libbz libedify
 LOCAL_SHARED_LIBRARIES += libz libcutils libc
 
 include $(BUILD_EXECUTABLE)

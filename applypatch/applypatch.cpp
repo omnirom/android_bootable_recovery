@@ -35,6 +35,7 @@
 #include "mtdutils/mtdutils.h"
 #include "edify/expr.h"
 #include "print_sha1.h"
+#include "otafault/ota_io.h"
 
 static int LoadPartitionContents(const char* filename, FileContents* file);
 static ssize_t FileSink(const unsigned char* data, ssize_t len, void* token);
@@ -79,19 +80,19 @@ int LoadFileContents(const char* filename, FileContents* file) {
         return -1;
     }
 
-    FILE* f = fopen(filename, "rb");
+    FILE* f = ota_fopen(filename, "rb");
     if (f == NULL) {
         printf("failed to open \"%s\": %s\n", filename, strerror(errno));
         return -1;
     }
 
-    size_t bytes_read = fread(data.get(), 1, file->size, f);
+    size_t bytes_read = ota_fread(data.get(), 1, file->size, f);
     if (bytes_read != static_cast<size_t>(file->size)) {
         printf("short read of \"%s\" (%zu bytes of %zd)\n", filename, bytes_read, file->size);
-        fclose(f);
+        ota_fclose(f);
         return -1;
     }
-    fclose(f);
+    ota_fclose(f);
     file->data = data.release();
     SHA1(file->data, file->size, file->sha1);
     return 0;
@@ -180,7 +181,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         }
 
         case EMMC:
-            dev = fopen(partition, "rb");
+            dev = ota_fopen(partition, "rb");
             if (dev == NULL) {
                 printf("failed to open emmc partition \"%s\": %s\n", partition, strerror(errno));
                 return -1;
@@ -209,7 +210,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
                     break;
 
                 case EMMC:
-                    read = fread(p, 1, next, dev);
+                    read = ota_fread(p, 1, next, dev);
                     break;
             }
             if (next != read) {
@@ -255,7 +256,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
             break;
 
         case EMMC:
-            fclose(dev);
+            ota_fclose(dev);
             break;
     }
 
@@ -282,7 +283,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
 // Save the contents of the given FileContents object under the given
 // filename.  Return 0 on success.
 int SaveFileContents(const char* filename, const FileContents* file) {
-    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR);
+    int fd = ota_open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR);
     if (fd < 0) {
         printf("failed to open \"%s\" for write: %s\n", filename, strerror(errno));
         return -1;
@@ -292,14 +293,14 @@ int SaveFileContents(const char* filename, const FileContents* file) {
     if (bytes_written != file->size) {
         printf("short write of \"%s\" (%zd bytes of %zd) (%s)\n",
                filename, bytes_written, file->size, strerror(errno));
-        close(fd);
+        ota_close(fd);
         return -1;
     }
-    if (fsync(fd) != 0) {
+    if (ota_fsync(fd) != 0) {
         printf("fsync of \"%s\" failed: %s\n", filename, strerror(errno));
         return -1;
     }
-    if (close(fd) != 0) {
+    if (ota_close(fd) != 0) {
         printf("close of \"%s\" failed: %s\n", filename, strerror(errno));
         return -1;
     }
@@ -382,7 +383,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
         case EMMC: {
             size_t start = 0;
             bool success = false;
-            int fd = open(partition, O_RDWR | O_SYNC);
+            int fd = ota_open(partition, O_RDWR | O_SYNC);
             if (fd < 0) {
                 printf("failed to open %s: %s\n", partition, strerror(errno));
                 return -1;
@@ -397,22 +398,22 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
                     size_t to_write = len - start;
                     if (to_write > 1<<20) to_write = 1<<20;
 
-                    ssize_t written = TEMP_FAILURE_RETRY(write(fd, data+start, to_write));
+                    ssize_t written = TEMP_FAILURE_RETRY(ota_write(fd, data+start, to_write));
                     if (written == -1) {
                         printf("failed write writing to %s: %s\n", partition, strerror(errno));
                         return -1;
                     }
                     start += written;
                 }
-                if (fsync(fd) != 0) {
+                if (ota_fsync(fd) != 0) {
                    printf("failed to sync to %s (%s)\n", partition, strerror(errno));
                    return -1;
                 }
-                if (close(fd) != 0) {
+                if (ota_close(fd) != 0) {
                    printf("failed to close %s (%s)\n", partition, strerror(errno));
                    return -1;
                 }
-                fd = open(partition, O_RDONLY);
+                fd = ota_open(partition, O_RDONLY);
                 if (fd < 0) {
                    printf("failed to reopen %s for verify (%s)\n", partition, strerror(errno));
                    return -1;
@@ -421,13 +422,13 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
                 // Drop caches so our subsequent verification read
                 // won't just be reading the cache.
                 sync();
-                int dc = open("/proc/sys/vm/drop_caches", O_WRONLY);
-                if (TEMP_FAILURE_RETRY(write(dc, "3\n", 2)) == -1) {
+                int dc = ota_open("/proc/sys/vm/drop_caches", O_WRONLY);
+                if (TEMP_FAILURE_RETRY(ota_write(dc, "3\n", 2)) == -1) {
                     printf("write to /proc/sys/vm/drop_caches failed: %s\n", strerror(errno));
                 } else {
                     printf("  caches dropped\n");
                 }
-                close(dc);
+                ota_close(dc);
                 sleep(1);
 
                 // verify
@@ -447,7 +448,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
                     size_t so_far = 0;
                     while (so_far < to_read) {
                         ssize_t read_count =
-                                TEMP_FAILURE_RETRY(read(fd, buffer+so_far, to_read-so_far));
+                                TEMP_FAILURE_RETRY(ota_read(fd, buffer+so_far, to_read-so_far));
                         if (read_count == -1) {
                             printf("verify read error %s at %zu: %s\n",
                                    partition, p, strerror(errno));
@@ -479,7 +480,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
                 return -1;
             }
 
-            if (close(fd) != 0) {
+            if (ota_close(fd) != 0) {
                 printf("error closing %s (%s)\n", partition, strerror(errno));
                 return -1;
             }
@@ -589,7 +590,7 @@ ssize_t FileSink(const unsigned char* data, ssize_t len, void* token) {
     ssize_t done = 0;
     ssize_t wrote;
     while (done < len) {
-        wrote = TEMP_FAILURE_RETRY(write(fd, data+done, len-done));
+        wrote = TEMP_FAILURE_RETRY(ota_write(fd, data+done, len-done));
         if (wrote == -1) {
             printf("error writing %zd bytes: %s\n", (len-done), strerror(errno));
             return done;
@@ -934,8 +935,8 @@ static int GenerateTarget(FileContents* source_file,
             token = &memory_sink_str;
         } else {
             // We write the decoded output to "<tgt-file>.patch".
-            output_fd = open(tmp_target_filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC,
-                          S_IRUSR | S_IWUSR);
+            output_fd = ota_open(tmp_target_filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC,
+                                 S_IRUSR | S_IWUSR);
             if (output_fd < 0) {
                 printf("failed to open output file %s: %s\n", tmp_target_filename.c_str(),
                        strerror(errno));
@@ -958,12 +959,12 @@ static int GenerateTarget(FileContents* source_file,
         }
 
         if (!target_is_partition) {
-            if (fsync(output_fd) != 0) {
+            if (ota_fsync(output_fd) != 0) {
                 printf("failed to fsync file \"%s\" (%s)\n", tmp_target_filename.c_str(),
                        strerror(errno));
                 result = 1;
             }
-            if (close(output_fd) != 0) {
+            if (ota_close(output_fd) != 0) {
                 printf("failed to close file \"%s\" (%s)\n", tmp_target_filename.c_str(),
                        strerror(errno));
                 result = 1;
