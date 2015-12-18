@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_a0c6e619",
+        "filename": "gui/console.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-18T15:30:58Z",
+      "side": 1,
+      "message": "unrelated to commit",
+      "revId": "69f247b59f0842771e860952ffe35cc8b1ef4246",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_80cbe222",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 507,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-18T15:30:58Z",
+      "side": 1,
+      "message": "unrelated to commit",
+      "revId": "69f247b59f0842771e860952ffe35cc8b1ef4246",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_60d0deca",
+        "filename": "openrecoveryscript.hpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2015-12-18T15:30:58Z",
+      "side": 1,
+      "message": "spaces, not tabs on all of these",
+      "revId": "69f247b59f0842771e860952ffe35cc8b1ef4246",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
