@@ -73,7 +73,7 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     menu_items(0),
     menu_sel(0),
     file_viewer_text_(nullptr),
-    animation_fps(20),
+    animation_fps(-1),
     installing_frames(-1),
     stage(-1),
     max_stage(-1) {
@@ -367,8 +367,9 @@ void ScreenRecoveryUI::LoadBitmap(const char* filename, GRSurface** surface) {
     }
 }
 
-void ScreenRecoveryUI::LoadBitmapArray(const char* filename, int* frames, GRSurface*** surface) {
-    int result = res_create_multi_display_surface(filename, frames, surface);
+void ScreenRecoveryUI::LoadBitmapArray(const char* filename, int* frames, int* fps,
+        GRSurface*** surface) {
+    int result = res_create_multi_display_surface(filename, frames, fps, surface);
     if (result < 0) {
         LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
     }
@@ -405,7 +406,7 @@ void ScreenRecoveryUI::Init() {
     text_top_ = 1;
 
     backgroundIcon[NONE] = nullptr;
-    LoadBitmapArray("icon_installing", &installing_frames, &installation);
+    LoadBitmapArray("icon_installing", &installing_frames, &animation_fps, &installation);
     backgroundIcon[INSTALLING_UPDATE] = installing_frames ? installation[0] : nullptr;
     backgroundIcon[ERASING] = backgroundIcon[INSTALLING_UPDATE];
     LoadBitmap("icon_error", &backgroundIcon[ERROR]);
