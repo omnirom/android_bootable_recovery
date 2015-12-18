@@ -79,14 +79,15 @@ class WearRecoveryUI : public RecoveryUI {
     int intro_frames;
     int loop_frames;
 
+    // Number of frames per sec (default: 30) for both of intro and loop.
+    int animation_fps;
+
   private:
     Icon currentIcon;
 
     bool intro_done;
 
     int current_frame;
-
-    int animation_fps;
 
     bool rtl_locale;
 
