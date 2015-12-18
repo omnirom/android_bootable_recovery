@@ -109,6 +109,8 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     pthread_t progress_thread_;
 
+    // The following two are parsed from the image file
+    // (e.g. '/res/images/icon_installing.png').
     int animation_fps;
     int installing_frames;
 
@@ -135,7 +137,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     void DrawTextLines(int* y, const char* const* lines);
 
     void LoadBitmap(const char* filename, GRSurface** surface);
-    void LoadBitmapArray(const char* filename, int* frames, GRSurface*** surface);
+    void LoadBitmapArray(const char* filename, int* frames, int* fps, GRSurface*** surface);
     void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
 };
 
