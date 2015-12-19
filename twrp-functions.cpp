@@ -25,6 +25,7 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sendfile.h>
@@ -824,6 +825,31 @@ void TWFunc::Auto_Generate_Backup_Name() {
 	}
 }
 
+uint64_t TWFunc::Get_Persist_Sys_Timeadjust() {
+	FILE *f;
+	static const char *pst_path = "/data/property/persist.sys.timeadjust";
+	uint64_t pst_offset = 0;
+
+	LOGINFO("TWFunc::Fixup_Time: will attempt to use persist.sys.timeadjust now.\n");
+
+	f = fopen(pst_path, "r");
+	if(!f)
+	{
+		LOGINFO("TWFunc::Fixup_Time: failed to open file %s\n", pst_path);
+		return 0;
+	}
+
+	if(fscanf(f, "%" SCNu64 "", &pst_offset) != 1)
+	{
+		LOGINFO("TWFunc::Fixup_Time: failed load uint64 from file %s\n", pst_path);
+		fclose(f);
+		return 0;
+	}
+	fclose(f);
+	return pst_offset;
+}
+
+
 void TWFunc::Fixup_Time_On_Boot()
 {
 #ifdef QCOM_RTC_FIX
@@ -857,6 +883,14 @@ void TWFunc::Fixup_Time_On_Boot()
 
 	}
 
+	if(!PartitionManager.Mount_By_Path("/data", false))
+		return;
+
+	// First try to read offset from persist.sys.timeadjust property
+	// which is used by Sony's timekeep (unit here: seconds).
+
+	uint64_t pst_offset = TWFunc::Get_Persist_Sys_Timeadjust() * 1000; // seconds -> microseconds
+
 	LOGINFO("TWFunc::Fixup_Time: will attempt to use the ats files now.\n");
 
 	// Devices with Qualcomm Snapdragon 800 do some shenanigans with RTC.
@@ -875,9 +909,6 @@ void TWFunc::Fixup_Time_On_Boot()
 	offset = 0;
 	struct dirent *dt;
 	std::string ats_path;
-
-	if(!PartitionManager.Mount_By_Path("/data", false))
-		return;
 
 	// Prefer ats_2, it seems to be the one we want according to logcat on hammerhead
 	// - it is the one for ATS_TOD (time of day?).
@@ -900,28 +931,33 @@ void TWFunc::Fixup_Time_On_Boot()
 		closedir(d);
 	}
 
-	if(ats_path.empty())
+	if(ats_path.empty() && pst_offset == 0)
 	{
-		LOGINFO("TWFunc::Fixup_Time: no ats files found, leaving untouched!\n");
+		LOGINFO("TWFunc::Fixup_Time: no persist.sys.timeadjust or ats files found, leaving untouched!\n");
 		return;
-	}
-
-	f = fopen(ats_path.c_str(), "r");
-	if(!f)
-	{
-		LOGINFO("TWFunc::Fixup_Time: failed to open file %s\n", ats_path.c_str());
-		return;
-	}
-
-	if(fread(&offset, sizeof(offset), 1, f) != 1)
-	{
-		LOGINFO("TWFunc::Fixup_Time: failed load uint64 from file %s\n", ats_path.c_str());
+	} else if(!ats_path.empty()) {
+		f = fopen(ats_path.c_str(), "r");
+		if(!f)
+		{
+				LOGINFO("TWFunc::Fixup_Time: failed to open file %s\n", ats_path.c_str());
+				return;
+		}
+		if(fread(&offset, sizeof(offset), 1, f) != 1)
+		{
+				LOGINFO("TWFunc::Fixup_Time: failed load uint64 from file %s\n", ats_path.c_str());
+				fclose(f);
+				return;
+		}
 		fclose(f);
-		return;
 	}
-	fclose(f);
 
-	LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s, offset %llu\n", ats_path.c_str(), offset);
+	// if pst-offset is larger then ats-offset, then ats-offset is invalid or stale
+	if(pst_offset > offset) {
+		offset = pst_offset;
+		LOGINFO("TWFunc::Fixup_Time: Setting time offset from persist.sys.timeadjust, offset %llu\n", offset);
+	} else {
+		LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s, offset %llu\n", ats_path.c_str(), offset);
+	}
 
 	gettimeofday(&tv, NULL);
 
