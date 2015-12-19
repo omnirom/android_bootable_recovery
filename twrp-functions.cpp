@@ -25,6 +25,7 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sendfile.h>
@@ -864,6 +865,35 @@ void TWFunc::Fixup_Time_On_Boot()
 
 	}
 
+	if(!PartitionManager.Mount_By_Path("/data", false))
+		return;
+
+	// First try to read offset from persist.sys.timeadjust property
+	// which is used by Sony's timekeep (unit here: seconds).
+
+	FILE *f;
+	static const std::string pst_path = "/data/property/persist.sys.timeadjust";
+	uint64_t pst_offset = 0;
+
+	LOGINFO("TWFunc::Fixup_Time: will attempt to use persist.sys.timeadjust now.\n");
+
+	f = fopen(pst_path.c_str(), "r");
+	if(!f)
+	{
+		LOGINFO("TWFunc::Fixup_Time: failed to open file %s\n", pst_path.c_str());
+		goto read_from_ats;
+	}
+
+	if(fscanf(f, "%" SCNu64 "", &pst_offset) != 1)
+	{
+		LOGINFO("TWFunc::Fixup_Time: failed load uint64 from file %s\n", pst_path.c_str());
+		fclose(f);
+		goto read_from_ats;
+	}
+	fclose(f);
+	pst_offset *= 1000; // seconds -> microseconds
+
+ read_from_ats:
 	LOGINFO("TWFunc::Fixup_Time: will attempt to use the ats files now.\n");
 
 	// Devices with Qualcomm Snapdragon 800 do some shenanigans with RTC.
@@ -877,14 +907,10 @@ void TWFunc::Fixup_Time_On_Boot()
 
 	static const char *paths[] = { "/data/system/time/", "/data/time/"  };
 
-	FILE *f;
 	DIR *d;
 	offset = 0;
 	struct dirent *dt;
 	std::string ats_path;
-
-	if(!PartitionManager.Mount_By_Path("/data", false))
-		return;
 
 	// Prefer ats_2, it seems to be the one we want according to logcat on hammerhead
 	// - it is the one for ATS_TOD (time of day?).
@@ -909,8 +935,12 @@ void TWFunc::Fixup_Time_On_Boot()
 
 	if(ats_path.empty())
 	{
-		LOGINFO("TWFunc::Fixup_Time: no ats files found, leaving untouched!\n");
-		return;
+		if(pst_offset > 0)
+			goto set_offset;
+		else {
+			LOGINFO("TWFunc::Fixup_Time: no persist.sys.timeadjust or ats files found, leaving untouched!\n");
+			return;
+		}
 	}
 
 	f = fopen(ats_path.c_str(), "r");
@@ -928,7 +958,14 @@ void TWFunc::Fixup_Time_On_Boot()
 	}
 	fclose(f);
 
-	LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s, offset %llu\n", ats_path.c_str(), offset);
+ set_offset:
+	// if pst-offset is larger then ast-offset, then ast-offset is invalid or stale
+	if(pst_offset > offset) {
+		offset = pst_offset;
+		LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s, offset %llu\n", pst_path.c_str(), offset);
+	} else {
+		LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s, offset %llu\n", ats_path.c_str(), offset);
+	}
 
 	gettimeofday(&tv, NULL);
 
