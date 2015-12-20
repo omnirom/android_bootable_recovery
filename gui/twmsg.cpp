@@ -21,6 +21,7 @@
 #include "resources.hpp"
 
 #include "twmsg.h"
+#include <cctype>
 
 std::string Message::GetFormatString(const std::string& name) const
 {
