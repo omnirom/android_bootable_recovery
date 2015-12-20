@@ -1,0 +1,174 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_4b873bbd",
+        "filename": "gui/scrolllist.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 629,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-20T22:49:58Z",
+      "side": 1,
+      "message": "bad, bad idea in an infinite loop",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_8b9d430f",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-20T22:49:58Z",
+      "side": 1,
+      "message": "please fix indentation starting here",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_6ba2ff4a",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 806,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-20T22:49:58Z",
+      "side": 1,
+      "message": "looks like a merge derp",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_cbba2b6b",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-20T22:49:58Z",
+      "side": 1,
+      "message": "which of these are for the \"type\" field?",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_eb8defda",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-20T22:49:58Z",
+      "side": 1,
+      "message": "why 6 bytes for \"TWRP\"?",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_abbfe759",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-20T22:49:58Z",
+      "side": 1,
+      "message": "be careful with mixing an odd number of 32 bit integers with 64 bit integers - alignment requirements could add additional unwanted bytes to your struct.",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_8bb4237d",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-20T22:49:58Z",
+      "side": 1,
+      "message": "same alignment issues as in twfilehdr",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_2b84f7b5",
+        "filename": "partitions.hpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-20T22:49:58Z",
+      "side": 1,
+      "message": "why do we have a partition here, but there is another struct named BackupPartitionSettings?",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_0b9133f3",
+        "filename": "partitions.hpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-20T22:49:58Z",
+      "side": 1,
+      "message": "add some prefixes or put the enum into a namespace to avoid having things like \"NONE\" or \"FILES\" in the global namespace.",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_6bb9df72",
+        "filename": "twrp-functions.hpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-20T22:49:58Z",
+      "side": 1,
+      "message": "rename to Archive_Type - \"current\" isn\u0027t a property of a type, only where it\u0027s used.",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
