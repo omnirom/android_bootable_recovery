@@ -3,6 +3,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libcryptfslollipop
+LOCAL_CLANG := false
 LOCAL_MODULE_TAGS := eng optional
 LOCAL_CFLAGS :=
 LOCAL_SRC_FILES = cryptfs.c
