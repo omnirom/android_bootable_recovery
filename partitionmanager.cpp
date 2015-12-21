@@ -816,7 +816,7 @@ int TWPartitionManager::Run_Backup(void) {
 	gui_msg(Msg("total_backed_size=[{1} MB TOTAL BACKED UP]")(actual_backup_size));
 	Update_System_Details();
 	UnMount_Main_Partitions();
-	gui_msg(Msg(msg::kHighlight, "backup_completed=[BACKUP COMPLETED IN %s SECONDS]")(total_time)); // the end
+	gui_msg(Msg(msg::kHighlight, "backup_completed=[BACKUP COMPLETED IN {1} SECONDS]")(total_time)); // the end
 	string backup_log = Full_Backup_Path + "recovery.log";
 	TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
 	tw_set_default_metadata(backup_log.c_str());
