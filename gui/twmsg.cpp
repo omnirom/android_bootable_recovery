@@ -33,7 +33,7 @@ std::string Message::GetFormatString(const std::string& name) const
 		resname = name.substr(0, pos);
 
 	std::string formatstr = resourceLookup(resname);
-	bool notfound = formatstr.empty() || formatstr[0] == '[';  // HACK: TODO: integrate this with resource-not-found logic
+	bool notfound = formatstr.empty() || formatstr.substr(0, 2) == "{@";  // HACK: TODO: integrate this with resource-not-found logic
 	if (notfound && pos != std::string::npos)
 		// resource not found - use the default format string specified after "="
 		formatstr = name.substr(pos + 1);
