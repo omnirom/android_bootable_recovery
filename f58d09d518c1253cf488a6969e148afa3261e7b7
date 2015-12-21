@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "b8f5b13e_665a362e",
+        "filename": "gui/scrolllist.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 629,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-12-21T20:37:32Z",
+      "side": 1,
+      "message": "Currently a hack until I get console fixed.",
+      "parentUuid": "b8f5b13e_4b873bbd",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b8f5b13e_8b9d430f",
         "filename": "openrecoveryscript.cpp",
         "patchSetId": 6
@@ -53,6 +71,24 @@
     },
     {
       "key": {
+        "uuid": "b8f5b13e_463f32b0",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 806,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-12-21T20:37:32Z",
+      "side": 1,
+      "message": "This is a test function so I can remountrw on the CLI. I was thinking of leaving it in.",
+      "parentUuid": "b8f5b13e_6ba2ff4a",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b8f5b13e_cbba2b6b",
         "filename": "orscmd/orscmd.h",
         "patchSetId": 6
@@ -64,6 +100,24 @@
       "writtenOn": "2015-12-20T22:49:58Z",
       "side": 1,
       "message": "which of these are for the \"type\" field?",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_c67222aa",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-12-21T20:37:32Z",
+      "side": 1,
+      "message": "Each struct has it\u0027s own type field.",
+      "parentUuid": "b8f5b13e_cbba2b6b",
       "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -87,6 +141,24 @@
     },
     {
       "key": {
+        "uuid": "b8f5b13e_a6771e99",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-12-21T20:37:32Z",
+      "side": 1,
+      "message": "I have found it easier to have the string already null terminated for checking strings.",
+      "parentUuid": "b8f5b13e_eb8defda",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b8f5b13e_abbfe759",
         "filename": "orscmd/orscmd.h",
         "patchSetId": 6
@@ -98,6 +170,24 @@
       "writtenOn": "2015-12-20T22:49:58Z",
       "side": 1,
       "message": "be careful with mixing an odd number of 32 bit integers with 64 bit integers - alignment requirements could add additional unwanted bytes to your struct.",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_866c1ad0",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-12-21T20:37:32Z",
+      "side": 1,
+      "message": "Testing seems fine on alignment so far.",
+      "parentUuid": "b8f5b13e_abbfe759",
       "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -138,6 +228,24 @@
     },
     {
       "key": {
+        "uuid": "b8f5b13e_06600acc",
+        "filename": "partitions.hpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-12-21T20:37:32Z",
+      "side": 1,
+      "message": "Different argument lists for partition.cpp and partitionmanager.cpp functions. I am getting the pointer from the partitionmanager and storing it for arguments in the functions that are called with these partitions.",
+      "parentUuid": "b8f5b13e_2b84f7b5",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b8f5b13e_0b9133f3",
         "filename": "partitions.hpp",
         "patchSetId": 6
@@ -149,6 +257,24 @@
       "writtenOn": "2015-12-20T22:49:58Z",
       "side": 1,
       "message": "add some prefixes or put the enum into a namespace to avoid having things like \"NONE\" or \"FILES\" in the global namespace.",
+      "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_e65c061e",
+        "filename": "partitions.hpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2015-12-21T20:37:32Z",
+      "side": 1,
+      "message": "I didn\u0027t create this enum for this patchset. Perhaps this can be done in another patchset?",
+      "parentUuid": "b8f5b13e_0b9133f3",
       "revId": "f58d09d518c1253cf488a6969e148afa3261e7b7",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
