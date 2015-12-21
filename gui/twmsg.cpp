@@ -25,19 +25,7 @@
 
 std::string Message::GetFormatString(const std::string& name) const
 {
-	std::string resname;
-	size_t pos = name.find('=');
-	if (pos == std::string::npos)
-		resname = name;
-	else
-		resname = name.substr(0, pos);
-
-	std::string formatstr = resourceLookup(resname);
-	bool notfound = formatstr.empty() || formatstr.substr(0, 2) == "{@";  // HACK: TODO: integrate this with resource-not-found logic
-	if (notfound && pos != std::string::npos)
-		// resource not found - use the default format string specified after "="
-		formatstr = name.substr(pos + 1);
-	return formatstr;
+	return resourceLookup(name);
 }
 
 // Look up in local replacement vars first, if not found then use outer lookup object
@@ -91,9 +79,25 @@ class ResourceLookup : public StringLookup
 public:
 	virtual std::string operator()(const std::string& name) const
 	{
+		std::string resname;
+		std::string default_value;
+
+		size_t pos = name.find('=');
+		if (pos == std::string::npos) {
+			resname = name;
+		} else {
+			resname = name.substr(0, pos);
+			default_value = name.substr(pos + 1);
+		}
 		const ResourceManager* res = PageManager::GetResources();
-		if (res)
-			return res->FindString(name);
+		if (res) {
+			if (default_value.empty())
+				return res->FindString(resname);
+			else
+				return res->FindString(resname, default_value);
+		} else if (!default_value.empty()) {
+			return default_value;
+		}
 		return name;
 	}
 };
