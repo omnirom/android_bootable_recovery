@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_e6788625",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 875,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-22T16:47:08Z",
+      "side": 1,
+      "message": "Since you\u0027re never using this as C++ string, change to static const char* and avoid all the c_str calls.",
+      "revId": "fb94645257e425133a0f6886ce1e9f1631ac5762",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_c6890226",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 883,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-22T16:47:08Z",
+      "side": 1,
+      "message": "add strerror(errno)",
+      "revId": "fb94645257e425133a0f6886ce1e9f1631ac5762",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_a68efe2a",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 884,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-22T16:47:08Z",
+      "side": 1,
+      "message": "can we avoid those gotos?",
+      "revId": "fb94645257e425133a0f6886ce1e9f1631ac5762",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8f5b13e_6698f66b",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2015-12-22T16:47:08Z",
+      "side": 1,
+      "message": "ast-offset?",
+      "revId": "fb94645257e425133a0f6886ce1e9f1631ac5762",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
