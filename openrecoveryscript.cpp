@@ -50,6 +50,10 @@ extern "C" {
 
 #define SCRIPT_COMMAND_SIZE 512
 
+void OpenRecoveryScript::clear_tmp_script() {
+	unlink(SCRIPT_FILE_TMP);
+}
+
 int OpenRecoveryScript::check_for_script_file(void) {
 	if (!PartitionManager.Mount_By_Path(SCRIPT_FILE_CACHE, false)) {
 		LOGINFO("Unable to mount /cache for OpenRecoveryScript support.\n");

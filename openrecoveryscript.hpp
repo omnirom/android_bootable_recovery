@@ -27,6 +27,7 @@ using namespace std;
 class OpenRecoveryScript
 {
 public:
+	static void clear_tmp_script();
 	static int check_for_script_file();                                            // Checks to see if the ORS file is present in /cache
 	static int copy_script_file(string filename);                                  // Copies a script file to the temp folder
 	static int run_script_file();                                                  // Executes the commands in the ORS file

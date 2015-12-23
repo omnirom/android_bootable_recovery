@@ -176,6 +176,8 @@ int main(int argc, char **argv) {
 	gui_warn("no_selinux=No SELinux support (no libselinux).");
 #endif
 
+	OpenRecoveryScript::clear_tmp_script();
+
 	PartitionManager.Mount_By_Path("/cache", true);
 
 	string Reboot_Value;
