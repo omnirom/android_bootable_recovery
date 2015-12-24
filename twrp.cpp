@@ -339,20 +339,33 @@ int main(int argc, char **argv) {
 	// Check if system has never been changed
 	TWPartition* sys = PartitionManager.Find_Partition_By_Path("/system");
 	TWPartition* ven = PartitionManager.Find_Partition_By_Path("/vendor");
+#ifdef TW_SKIP_RO_PARTITION_CHECK
+	if (DataManager::GetIntValue("tw_bypass_system_ro") == 0)
+		DataManager::SetValue("tw_bypass_system_ro", "1");
+#else
+	if (DataManager::GetIntValue("tw_bypass_system_ro") == 1)
+		DataManager::SetValue("tw_bypass_system_ro", "0");
+#endif
 	if (sys) {
-		if ((DataManager::GetIntValue("tw_mount_system_ro") == 0 && sys->Check_Lifetime_Writes() == 0) || DataManager::GetIntValue("tw_mount_system_ro") == 2) {
-			if (DataManager::GetIntValue("tw_never_show_system_ro_page") == 0) {
-				DataManager::SetValue("tw_back", "main");
-				if (gui_startPage("system_readonly", 1, 1) != 0) {
+		if (DataManager::GetIntValue("tw_bypass_system_ro") == 0) {
+			if ((DataManager::GetIntValue("tw_mount_system_ro") == 0 && sys->Check_Lifetime_Writes() == 0) || DataManager::GetIntValue("tw_mount_system_ro") == 2) {
+				if (DataManager::GetIntValue("tw_never_show_system_ro_page") == 0) {
+					DataManager::SetValue("tw_back", "main");
+					if (gui_startPage("system_readonly", 1, 1) != 0) {
 					LOGERR("Failed to start system_readonly GUI page.\n");
+					}
+				} else if (DataManager::GetIntValue("tw_mount_system_ro") == 0) {
+					sys->Change_Mount_Read_Only(false);
+					if (ven)
+						ven->Change_Mount_Read_Only(false);
 				}
-			} else if (DataManager::GetIntValue("tw_mount_system_ro") == 0) {
+			} else if (DataManager::GetIntValue("tw_mount_system_ro") == 1) {
+				// Do nothing, user selected to leave system read only
+			} else {
 				sys->Change_Mount_Read_Only(false);
 				if (ven)
 					ven->Change_Mount_Read_Only(false);
 			}
-		} else if (DataManager::GetIntValue("tw_mount_system_ro") == 1) {
-			// Do nothing, user selected to leave system read only
 		} else {
 			sys->Change_Mount_Read_Only(false);
 			if (ven)
