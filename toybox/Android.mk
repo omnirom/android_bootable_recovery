@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2015 Mokee Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,6 +60,7 @@ LOCAL_SRC_FILES := \
     lib/lib.c \
     lib/llist.c \
     lib/net.c \
+    lib/password.c \
     lib/portability.c \
     lib/xwrap.c \
     main.c \
@@ -90,13 +92,16 @@ LOCAL_SRC_FILES := \
     toys/other/clear.c \
     toys/other/dos2unix.c \
     toys/other/fallocate.c \
+    toys/other/flock.c \
     toys/other/free.c \
     toys/other/freeramdisk.c \
     toys/other/fsfreeze.c \
     toys/other/help.c \
+    toys/other/hwclock.c \
     toys/other/ifconfig.c \
     toys/other/inotifyd.c \
     toys/other/insmod.c \
+    toys/other/ionice.c \
     toys/other/losetup.c \
     toys/other/lsattr.c \
     toys/other/lsmod.c \
@@ -112,8 +117,10 @@ LOCAL_SRC_FILES := \
     toys/other/pmap.c \
     toys/other/printenv.c \
     toys/other/pwdx.c \
+    toys/other/readahead.c \
     toys/other/readlink.c \
     toys/other/realpath.c \
+    toys/other/reset.c \
     toys/other/rev.c \
     toys/other/rfkill.c \
     toys/other/rmmod.c \
@@ -127,22 +134,34 @@ LOCAL_SRC_FILES := \
     toys/other/taskset.c \
     toys/other/timeout.c \
     toys/other/truncate.c \
+    toys/other/uptime.c \
     toys/other/usleep.c \
     toys/other/vconfig.c \
     toys/other/vmstat.c \
     toys/other/which.c \
+    toys/other/xxd.c \
     toys/other/yes.c \
+    toys/pending/arp.c \
     toys/pending/dd.c \
+    toys/pending/diff.c \
     toys/pending/expr.c \
-    toys/pending/hwclock.c \
+    toys/pending/fdisk.c \
+    toys/pending/ftpget.c \
+    toys/pending/host.c \
+    toys/pending/lsof.c \
     toys/pending/more.c \
-    toys/pending/pgrep.c \
     toys/pending/netstat.c \
+    toys/pending/pgrep.c \
+    toys/pending/resize.c \
     toys/pending/route.c \
     toys/pending/tar.c \
+    toys/pending/telnet.c \
+    toys/pending/test.c \
     toys/pending/top.c \
     toys/pending/tr.c \
     toys/pending/traceroute.c \
+    toys/pending/watch.c \
+    toys/pending/xzcat.c \
     toys/posix/basename.c \
     toys/posix/cal.c \
     toys/posix/cat.c \
@@ -178,6 +197,7 @@ LOCAL_SRC_FILES := \
     toys/posix/paste.c \
     toys/posix/patch.c \
     toys/posix/printf.c \
+    toys/posix/ps.c \
     toys/posix/pwd.c \
     toys/posix/renice.c \
     toys/posix/rm.c \
@@ -196,7 +216,7 @@ LOCAL_SRC_FILES := \
     toys/posix/uname.c \
     toys/posix/uniq.c \
     toys/posix/wc.c \
-    toys/posix/xargs.c \
+    toys/posix/xargs.c
 
 LOCAL_CFLAGS += \
     -std=c99 \
@@ -217,14 +237,22 @@ LOCAL_CLANG := true
 
 LOCAL_SHARED_LIBRARIES := libcutils libselinux
 
+# This doesn't actually prevent us from dragging in libc++ at runtime
+# because libnetd_client.so is C++.
+LOCAL_CXX_STL := none
+
+LOCAL_C_INCLUDES += bionic/libc/dns/include
+
 LOCAL_MODULE := toybox_recovery
 LOCAL_MODULE_STEM := toybox
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 LOCAL_MODULE_TAGS := optional
 
-# dupes: dd df du ls mount renice
-# useless?: freeramdisk fsfreeze install makedevs mkfifo nbd-client
-#           partprobe pivot_root pwdx rev rfkill switch_root tty vconfig
+# dupes: dd ls
+# useless?: arp diff flock freeramdisk fsfreeze ftpget host install
+#           makedevs mkfifo nbd-client partprobe pivot_root pwdx readahead
+#           reset resize rev rfkill switch_root telnet test tty vconfig
+#           watch xxd xzcat
 # prefer BSD netcat instead?: nc netcat
 # prefer efs2progs instead?: blkid chattr lsattr
 
@@ -249,9 +277,11 @@ ALL_TOOLS := \
     cpio \
     cut \
     date \
+    df \
     dirname \
     dmesg \
     dos2unix \
+    du \
     echo \
     env \
     expand \
@@ -262,6 +292,7 @@ ALL_TOOLS := \
     free \
     getenforce \
     getprop \
+    grep \
     groups \
     head \
     hostname \
@@ -270,12 +301,14 @@ ALL_TOOLS := \
     ifconfig \
     inotifyd \
     insmod \
+    ionice \
     kill \
     load_policy \
     ln \
     logname \
     losetup \
     lsmod \
+    lsof \
     lsusb \
     md5sum \
     mkdir \
@@ -284,6 +317,7 @@ ALL_TOOLS := \
     mktemp \
     modinfo \
     more \
+    mount \
     mountpoint \
     mv \
     netstat \
@@ -302,6 +336,7 @@ ALL_TOOLS := \
     pwd \
     readlink \
     realpath \
+    renice \
     restorecon \
     rm \
     rmdir \
@@ -338,13 +373,14 @@ ALL_TOOLS := \
     uname \
     uniq \
     unix2dos \
+    uptime \
     usleep \
     vmstat \
     wc \
     which \
     whoami \
     xargs \
-    yes \
+    yes
 
 # Install the symlinks.
 LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(ALL_TOOLS),ln -sf toybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/$(t);)

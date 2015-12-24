@@ -42,28 +42,20 @@ ifeq ($(TW_USE_TOOLBOX), true)
         # These are the only toolbox tools in M. The rest are now in toybox.
         BSD_TOOLS := \
             dd \
-            du \
 
         OUR_TOOLS := \
-            df \
             iftop \
             ioctl \
-            ionice \
             log \
             ls \
-            lsof \
-            mount \
             nandread \
             newfs_msdos \
             ps \
             prlimit \
-            renice \
             sendevent \
             start \
             stop \
             top \
-            uptime \
-            watchprops \
 
     else
         ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22))
