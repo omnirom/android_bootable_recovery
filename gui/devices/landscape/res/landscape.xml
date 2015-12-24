@@ -996,7 +996,10 @@
 			<object type="button">
 				<placement x="%col3_x%" y="%row10_text_y%" textplacement="6" />
 				<font resource="font" color="%text_color%" />
-				<condition var1="tw_mount_system_ro" op="=" var2="0" />
+				<conditions>
+					<condition var1="tw_mount_system_ro" op="=" var2="0" />
+					<condition var1="tw_bypass_system_ro" op="!=" var2="1" />
+				</conditions>
 				<text>Only mount system read-only</text>
 				<image resource="checkbox_false" />
 				<action function="mountsystemtoggle">1</action>
@@ -1005,7 +1008,10 @@
 			<object type="button">
 				<placement x="%col3_x%" y="%row10_text_y%" textplacement="6" />
 				<font resource="font" color="%text_color%" />
-				<condition var1="tw_mount_system_ro" op="!=" var2="0" />
+				<conditions>
+					<condition var1="tw_mount_system_ro" op="!=" var2="0" />
+					<condition var1="tw_bypass_system_ro" op="!=" var2="1" />
+				</conditions>
 				<text>Only mount system read-only</text>
 				<image resource="checkbox_true" />
 				<actions>

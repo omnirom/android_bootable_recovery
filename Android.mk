@@ -388,6 +388,9 @@ ifneq ($(TW_EXCLUDE_SUPERSU), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += \
         su install-recovery.sh 99SuperSUDaemon Superuser.apk
 endif
+ifeq ($(TW_SKIP_RO_PARTITION_CHECK), true)
+	LOCAL_CFLAGS += -DTW_SKIP_RO_PARTITION_CHECK
+endif
 ifneq ($(TW_NO_EXFAT_FUSE), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += exfat-fuse
 endif
