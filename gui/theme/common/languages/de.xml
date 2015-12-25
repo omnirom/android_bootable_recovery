@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+
+<language>
+	<display>English</display>
+
+	<resources>
+		<!-- Partition display names -->
+		<string name="system">System</string>
+		<string name="system_image">Systemabbild</string>
+		<string name="sdcard">SD-Karte</string>
+		<string name="internal">Interer Speicher</string>
+		<string name="microsd">Micro SD-Karte</string>
+
+		<!-- GUI XML strings -->
+		<string name="twrp_header">Team Win Recovery Project</string>
+		<string name="twrp_watch_header">TWRP %tw_version%</string>
+		<string name="cpu_temp">CPU: %tw_cpu_temp% &#xB0;C</string>
+		<string name="battery_pct">Akku: %tw_battery%</string>
+		<string name="sort_by_name">Nach Namen sortieren</string>
+		<string name="sort_by_date">Nach Datum sortieren</string>
+		<string name="sort_by_size">Nach Größe sortieren</string>
+		<string name="sort_by_name_only">Name</string>
+		<string name="sort_by_date_only">Datum</string>
+		<string name="sort_by_size_only">Größe</string>
+		<string name="tab_general">ALLGMEIN</string>
+		<string name="tab_options">EINSTELLUNGEN</string>
+		<string name="tab_backup">SICHERUNG</string>
+		<string name="tab_time_zone">ZEITZONE</string>
+		<string name="tab_screen">BILDSCHIRM</string>
+		<string name="tab_language">SPRACHE</string>
+
+		<string name="install_btn">Installieren</string>
+		<string name="wipe_btn">Löschen</string>
+		<string name="backup_btn">Sichern</string>
+		<string name="restore_btn">Wiederherstellen</string>
+		<string name="mount_btn">Einbinden</string>
+		<string name="settings_btn">Einstellungen</string>
+		<string name="advanced_btn">Erweitert</string>
+		<string name="reboot_btn">Neustart</string>
+		<string name="files_btn">Dateien</string>
+		<string name="copy_log_btn">Log kopieren</string>
+		<string name="select_type_hdr">Typ wählen</string>
+		<string name="install_zip_hdr">Zip installieren</string>
+		<string name="install_zip_btn">Zip installieren</string>
+		<string name="install_image_hdr">Abbild installieren</string>
+		<string name="install_image_btn">Abbild installieren</string>
+		<string name="install_select_file_hdr">Datei auswählen</string>
+		<string name="file_selector_folders_hdr">Ordner</string>
+		<string name="select_file_from_storage">Datein von %tw_storage_display_name% (%tw_storage_free_size% MB) auswählen</string>
+		<string name="install_hdr">Installieren</string>
+		<string name="select_storage_hdr">Speicher auswählen</string>
+		<string name="select_storage_btn">Speicher auswählen</string>
+		<string name="queue_hdr">Einreihen</string>
+		<string name="zip_queue_count">%tw_zip_queue_count% von 10 Dateien eingereiht</string>
+		<string name="zip_queue_count_s">File %tw_zip_queue_count% von 10:</string>
+		<string name="zip_warn1">Dieser Vorgang kann möglicherweise nicht kompatibele</string>
+		<string name="zip_warn2">Software installieren und Sie Ihr Gerät unbrauchbar machen.</string>
+		<string name="zip_back_cancel">Drücken Sie zurück um das Hinzufügen dieser zip abzubrechen.</string>
+		<string name="zip_back_clear">Drücken Sie zurück um die Warteschlange zu löschen.</string>
+		<string name="folder">Ordner:</string>
+		<string name="file">Datei:</string>
+		<string name="zip_sig_chk">ZIP-Signaturprüfung</string>
+		<string name="inject_twrp_chk">TWRP nach der Installation injizieren</string>
+		<string name="options_hdr">Einstellungen</string>
+		<string name="confirm_flash_hdr">Flashvorgang bestätigen</string>
+		<string name="zip_queue">Warteschlange:</string>
+		<string name="options">Einstellungen:</string>
+		<string name="swipe_confirm">   bestätigen</string>
+		<string name="zip_add_btn">Mehr Zips hinzufügen</string>
+		<string name="zip_clear_btn">Zip-Warteschlange löschen</string>
+		<string name="install_zip_count_hdr">Installiere Zip %tw_zip_index% von %tw_zip_queue_count%</string>
+		<string name="installing_zip">Installiiere Zip: %tw_file%</string>
+		<string name="failed">Fehlgeschlagen</string>
+		<string name="successful">Erfolgreich</string>
+		<string name="install_failed">Installation fehlgeschlagen</string>
+		<string name="install_successful">Installation erfolgreich</string>
+		<string name="wipe_cache_dalvik_btn">Cache/Dalvik löschen</string>
+		<string name="reboot_system_btn">System neustarten</string>
+		<string name="install_sel_target">Ziel-Partition auswählen</string>
+		<string name="flash_image_select">Wählen sie eine Partition um das Abbild zu einzuspielen:</string>
+		<string name="target_partition">Ziel-Partition:</string>
+		<string name="flashing_image">Spiele Abbild ein...</string>
+		<string name="image_flashed">Abbild eingespielt</string>
+		<string name="wipe_cache_dalvik_confirm">Cache &amp; Dalvik löschen?</string>
+		<string name="wiping_cache_dalvik">Lösche Cache &amp; Dalvik...</string>
+		<string name="wipe_cache_dalvik_complete">Cache &amp; Dalvik löschen abgeschlossen</string>
+		<string name="swipe_wipe">Wischen um zu löschen</string>
+		<string name="swipe_wipe_s">   löschen</string>
+		<string name="no_os1">Kein OS installiert! Sind Sie</string>
+		<string name="no_osrb">sicher, dass Sie neu starten möchten?</string>
+		<string name="no_ospo">sicher, dass Sie ausschalten möchten?</string>
+		<string name="rebooting">Neustart...</string>
+		<string name="swipe_reboot_s">   Neustart</string>
+		<string name="swipe_flash">Wischen um das Eispielen zu bestätigen</string>
+		<string name="confirm_action">Aktion bestätigen</string>
+		<string name="back_cancel">Drücken Sie die Zurück-Taste, um den Vorgang abzubrechen.</string>
+		<string name="cancel_btn">Abbruch</string>
+		<string name="wipe_hdr">Löschen</string>
+		<string name="factory_reset1">Löscht Data, Cache, und Dalvik</string>
+		<string name="factory_reset2">(ohne internen Speicher)</string>
+		<string name="factory_reset3">Die meiste Zeit ist dies die einzige</string>
+		<string name="factory_reset4">Lösch-Aktion, die Sie brauchen</string>
+		<string name="advanced_wipe_hdr">Erweitertes Löschen</string>
+		<string name="advanced_wipe_btn">Erweitertes Löschen</string>
+		<string name="wipe_enc_confirm">Verschlüsselung von Data löschen?</string>
+		<string name="formatting_data">Data wird formatiert...</string>
+		<string name="swipe_format_data">Wischen um Data zu formatieren</string>
+		<string name="swipe_format_data_s">   Data formatieren </string>
+		<string name="sel_part_hdr">Partitionen auswählen</string>
+		<string name="wipe_sel_confirm">Auswählte Partition(en) löschen?</string>
+		<string name="wiping_part">Lösche Partition(en)...</string>
+		<string name="wipe_complete">Löschen abgeschlossen </string>
+		<string name="sel_part_wipe">Partitionen zum Löschen auswählen:</string>
+		<string name="invalid_part_sel">Ungültige Partitionsauswahl</string>
+		<string name="format_data_hdr">Data formatieren</string>
+		<string name="format_data_btn">Data formatieren</string>
+
+	</resources>
+</language>
