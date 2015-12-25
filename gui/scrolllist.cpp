@@ -610,7 +610,7 @@ void GUIScrollList::SetPageFocus(int inFocus)
 
 bool GUIScrollList::AddLines(std::vector<std::string>* origText, std::vector<std::string>* origColor, size_t* lastCount, std::vector<std::string>* rText, std::vector<std::string>* rColor)
 {
-	if (*lastCount == origText->size())
+	if (!mFont || *lastCount == origText->size())
 		return false; // nothing to add
 
 	size_t prevCount = *lastCount;
