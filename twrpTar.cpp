@@ -1322,7 +1322,7 @@ int twrpTar::closeTar() {
 		}
 	}
 	if (TWFunc::Get_File_Size(tarfn) == 0) {
-		gui_msg(Msg(msg::kError, "backup_size=Backup file size for '%s' is 0 bytes.")(tarfn));
+		gui_msg(Msg(msg::kError, "backup_size=Backup file size for '{1}' is 0 bytes.")(tarfn));
 		return -1;
 	}
 #ifndef BUILD_TWRPTAR_MAIN

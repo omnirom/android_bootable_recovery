@@ -166,7 +166,7 @@ int OpenRecoveryScript::run_script_file(void) {
 						remove_nl = 0;
 					strncpy(value2, tok, line_len - remove_nl);
 					DataManager::SetValue(TW_BACKUP_NAME, value2);
-					gui_msg(Msg("backup_folder=Backup folder set to '{1}'")(value2));
+					gui_msg(Msg("backup_folder_set=Backup folder set to '{1}'")(value2));
 					if (PartitionManager.Check_Backup_Name(true) != 0) {
 						ret_val = 1;
 						continue;
@@ -568,7 +568,7 @@ int OpenRecoveryScript::Backup_Command(string Options) {
 		gui_err("backup_fail=Backup Failed");
 		return 1;
 	}
-	gui_msg("backup_complete=Backup complete!");
+	gui_msg("backup_complete=Backup Complete");
 	return 0;
 }
 
