@@ -21,7 +21,6 @@
 
 #include <stdio.h>
 
-int gui_console_only();
 int gui_init();
 int gui_loadResources();
 int gui_loadCustomResources();
