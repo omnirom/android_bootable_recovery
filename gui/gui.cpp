@@ -69,12 +69,11 @@ using namespace rapidxml;
 // Global values
 static gr_surface gCurtain = NULL;
 static int gGuiInitialized = 0;
-static TWAtomicInt gGuiConsoleRunning;
-static TWAtomicInt gGuiConsoleTerminate;
 static TWAtomicInt gForceRender;
 const int gNoAnimation = 1;
 blanktimer blankTimer;
 int ors_read_fd = -1;
+static FILE* orsout = NULL;
 static float scale_theme_w = 1;
 static float scale_theme_h = 1;
 
@@ -493,13 +492,28 @@ static void setup_ors_command()
 	}
 }
 
+// callback called after a CLI command was executed
+static void ors_command_done()
+{
+	gui_set_FILE(NULL);
+	fclose(orsout);
+	orsout = NULL;
+
+	if (DataManager::GetIntValue("tw_page_done") == 0) {
+		// The select function will return ready to read and the
+		// read function will return errno 19 no such device unless
+		// we set everything up all over again.
+		close(ors_read_fd);
+		setup_ors_command();
+	}
+}
+
 static void ors_command_read()
 {
-	FILE* orsout;
-	char command[1024], result[512];
-	int set_page_done = 0, read_ret = 0;
+	char command[1024];
+	int read_ret = read(ors_read_fd, &command, sizeof(command));
 
-	if ((read_ret = read(ors_read_fd, &command, sizeof(command))) > 0) {
+	if (read_ret > 0) {
 		command[1022] = '\n';
 		command[1023] = '\0';
 		LOGINFO("Command '%s' received\n", command);
@@ -513,61 +527,40 @@ static void ors_command_read()
 			return;
 		}
 		if (DataManager::GetIntValue("tw_busy") != 0) {
-			strcpy(result, "Failed, operation in progress\n");
-			fprintf(orsout, "%s", result);
+			fputs("Failed, operation in progress\n", orsout);
 			LOGINFO("Command cannot be performed, operation in progress.\n");
+			fclose(orsout);
 		} else {
 			if (strlen(command) == 11 && strncmp(command, "dumpstrings", 11) == 0) {
-				// This cannot be done safely with gui_console_only because gui_console_only updates mCurrentSet
-				// which makes the resources that we are trying to read unreachable.
 				gui_set_FILE(orsout);
 				PageManager::GetResources()->DumpStrings();
-				gui_set_FILE(NULL);
-			} else if (gui_console_only() == 0) {
-				LOGINFO("Console started successfully\n");
+				ors_command_done();
+			} else {
+				// mirror output messages
 				gui_set_FILE(orsout);
-				if (strlen(command) > 11 && strncmp(command, "runscript", 9) == 0) {
-					char* filename = command + 11;
-					if (OpenRecoveryScript::copy_script_file(filename) == 0) {
-						LOGINFO("Unable to copy script file\n");
-					} else {
-						OpenRecoveryScript::run_script_file();
-					}
-				} else if (strlen(command) > 5 && strncmp(command, "get", 3) == 0) {
-					char* varname = command + 4;
-					string temp;
-					DataManager::GetValue(varname, temp);
-					gui_print("%s = %s\n", varname, temp.c_str());
-				} else if (strlen(command) > 9 && strncmp(command, "decrypt", 7) == 0) {
-					char* pass = command + 8;
-					gui_msg("decrypt_cmd=Attempting to decrypt data partition via command line.");
-					if (PartitionManager.Decrypt_Device(pass) == 0) {
-						set_page_done = 1;
-					}
-				} else if (OpenRecoveryScript::Insert_ORS_Command(command)) {
-					OpenRecoveryScript::run_script_file();
-				}
-				gui_set_FILE(NULL);
-				gGuiConsoleTerminate.set_value(1);
+				// close orsout and restart listener after command is done
+				OpenRecoveryScript::Call_After_CLI_Command(ors_command_done);
+				// run the command in a threaded action...
+				DataManager::SetValue("tw_action", "twcmd");
+				DataManager::SetValue("tw_action_param", command);
+				// ...and switch back to the current page when finished
+				std::string currentPage = PageManager::GetCurrentPage();
+				DataManager::SetValue("tw_has_action2", "1");
+				DataManager::SetValue("tw_action2", "page");
+				DataManager::SetValue("tw_action2_param", currentPage);
+				DataManager::SetValue("tw_action_text1", gui_lookup("running_recovery_commands", "Running Recovery Commands"));
+				DataManager::SetValue("tw_action_text2", "");
+				gui_changePage("singleaction_page");
+				// now immediately return to the GUI main loop (the action runs in the background thread)
+				// put all things that need to be done after the command is finished into ors_command_done, not here
 			}
-		}
-		fclose(orsout);
-		LOGINFO("Done reading ORS command from command line\n");
-		if (set_page_done) {
-			DataManager::SetValue("tw_page_done", 1);
-		} else {
-			// The select function will return ready to read and the
-			// read function will return errno 19 no such device unless
-			// we set everything up all over again.
-			close(ors_read_fd);
-			setup_ors_command();
 		}
 	} else {
 		LOGINFO("ORS command line read returned an error: %i, %i, %s\n", read_ret, errno, strerror(errno));
 	}
-	return;
 }
 
+// Get and dispatch input events until it's time to draw the next frame
 // This special function will return immediately the first time, but then
 // always returns 1/30th of a second (or immediately if called later) from
 // the last time it was called
@@ -648,7 +641,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 	{
 		loopTimer(input_timeout_ms);
 #ifndef TW_OEM_BUILD
-		if (ors_read_fd > 0) {
+		if (ors_read_fd > 0 && !orsout) { // orsout is non-NULL if a command is still running
 			FD_ZERO(&fdset);
 			FD_SET(ors_read_fd, &fdset);
 			timeout.tv_sec = 0;
@@ -659,10 +652,6 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 			}
 		}
 #endif
-
-		if (gGuiConsoleRunning.get_value()) {
-			continue;
-		}
 
 		if (!gForceRender.get_value())
 		{
@@ -744,13 +733,6 @@ int gui_changeOverlay(std::string overlay)
 {
 	LOGINFO("Set overlay: '%s'\n", overlay.c_str());
 	PageManager::ChangeOverlay(overlay);
-	gForceRender.set_value(1);
-	return 0;
-}
-
-int gui_changePackage(std::string newPackage)
-{
-	PageManager::SelectPackage(newPackage);
 	gForceRender.set_value(1);
 	return 0;
 }
@@ -957,11 +939,6 @@ extern "C" int gui_startPage(const char *page_name, const int allow_commands, in
 	if (!gGuiInitialized)
 		return -1;
 
-	gGuiConsoleTerminate.set_value(1);
-
-	while (gGuiConsoleRunning.get_value())
-		usleep(10000);
-
 	// Set the default package
 	PageManager::SelectPackage("TWRP");
 
@@ -981,60 +958,6 @@ extern "C" int gui_startPage(const char *page_name, const int allow_commands, in
 	return runPages(page_name, stop_on_page_done);
 }
 
-static void * console_thread(void *cookie __unused)
-{
-	PageManager::SwitchToConsole();
-
-	while (!gGuiConsoleTerminate.get_value())
-	{
-		loopTimer(0);
-
-		if (!gForceRender.get_value())
-		{
-			int ret;
-
-			ret = PageManager::Update();
-			if (ret > 1)
-				PageManager::Render();
-
-			if (ret > 0)
-				flip();
-
-			if (ret < 0)
-				LOGERR("An update request has failed.\n");
-		}
-		else
-		{
-			gForceRender.set_value(0);
-			PageManager::Render();
-			flip();
-		}
-	}
-	gGuiConsoleRunning.set_value(0);
-	gForceRender.set_value(1); // this will kickstart the GUI to render again
-	PageManager::EndConsole();
-	LOGINFO("Console stopping\n");
-	return NULL;
-}
-
-extern "C" int gui_console_only(void)
-{
-	if (!gGuiInitialized)
-		return -1;
-
-	gGuiConsoleTerminate.set_value(0);
-
-	if (gGuiConsoleRunning.get_value())
-		return 0;
-
-	gGuiConsoleRunning.set_value(1);
-
-	// Start by spinning off an input handler.
-	pthread_t t;
-	pthread_create(&t, NULL, console_thread, NULL);
-
-	return 0;
-}
 
 extern "C" void set_scale_values(float w, float h)
 {

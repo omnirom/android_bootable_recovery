@@ -48,6 +48,8 @@ extern "C" {
 	int TWinstall_zip(const char* path, int* wipe_cache);
 }
 
+OpenRecoveryScript::VoidFunction OpenRecoveryScript::call_after_cli_command;
+
 #define SCRIPT_COMMAND_SIZE 512
 
 int OpenRecoveryScript::check_for_script_file(void) {
@@ -398,6 +400,7 @@ int OpenRecoveryScript::run_script_file(void) {
 			}
 		}
 		fclose(fp);
+		unlink(SCRIPT_FILE_TMP);
 		gui_msg("done_ors=Done processing script file");
 	} else {
 		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(SCRIPT_FILE_TMP)(strerror(errno)));
@@ -569,9 +572,11 @@ int OpenRecoveryScript::Backup_Command(string Options) {
 	return 0;
 }
 
+// this is called by main()
 void OpenRecoveryScript::Run_OpenRecoveryScript(void) {
 	DataManager::SetValue("tw_back", "main");
 	DataManager::SetValue("tw_action", "openrecoveryscript");
+	DataManager::SetValue("tw_action_param", "");
 	DataManager::SetValue("tw_has_action2", "0");
 	DataManager::SetValue("tw_action2", "");
 	DataManager::SetValue("tw_action2_param", "");
@@ -588,4 +593,67 @@ void OpenRecoveryScript::Run_OpenRecoveryScript(void) {
 	if (gui_startPage("action_page", 0, 1) != 0) {
 		LOGERR("Failed to load OpenRecoveryScript GUI page.\n");
 	}
+}
+
+// this is called by the "openrecoveryscript" GUI action called via action page from Run_OpenRecoveryScript
+int OpenRecoveryScript::Run_OpenRecoveryScript_Action() {
+	int op_status = 1;
+	// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
+	// that we converted to ORS commands during boot in recovery.cpp.
+	// Run those first.
+	int reboot = 0;
+	if (TWFunc::Path_Exists(SCRIPT_FILE_TMP)) {
+		gui_msg("running_recovery_commands=Running Recovery Commands");
+		if (OpenRecoveryScript::run_script_file() == 0) {
+			reboot = 1;
+			op_status = 0;
+		}
+	}
+	// Check for the ORS file in /cache and attempt to run those commands.
+	if (OpenRecoveryScript::check_for_script_file()) {
+		gui_msg("running_ors=Running OpenRecoveryScript");
+		if (OpenRecoveryScript::run_script_file() == 0) {
+			reboot = 1;
+			op_status = 0;
+		}
+	}
+	if (reboot) {
+		// Disable stock recovery reflashing
+		TWFunc::Disable_Stock_Recovery_Replace();
+		usleep(2000000); // Sleep for 2 seconds before rebooting
+		TWFunc::tw_reboot(rb_system);
+		usleep(5000000); // Sleep for 5 seconds to allow reboot to occur
+	} else {
+		DataManager::SetValue("tw_page_done", 1);
+	}
+	return op_status;
+}
+
+// this is called by the "twcmd" GUI action when a command is received via FIFO from the "twrp" command line tool
+void OpenRecoveryScript::Run_CLI_Command(const char* command) {
+	if (strlen(command) > 11 && strncmp(command, "runscript", 9) == 0) {
+		const char* filename = command + 10;
+		if (OpenRecoveryScript::copy_script_file(filename) == 0) {
+			LOGINFO("Unable to copy script file\n");
+		} else {
+			OpenRecoveryScript::run_script_file();
+		}
+	} else if (strlen(command) > 5 && strncmp(command, "get", 3) == 0) {
+		const char* varname = command + 4;
+		string value;
+		DataManager::GetValue(varname, value);
+		gui_print("%s = %s\n", varname, value.c_str());
+	} else if (strlen(command) > 9 && strncmp(command, "decrypt", 7) == 0) {
+		const char* pass = command + 8;
+		gui_msg("decrypt_cmd=Attempting to decrypt data partition via command line.");
+		if (PartitionManager.Decrypt_Device(pass) == 0) {
+			// set_page_done = 1;  // done by singleaction_page anyway
+		}
+	} else if (OpenRecoveryScript::Insert_ORS_Command(command)) {
+		OpenRecoveryScript::run_script_file();
+	}
+
+	// let the GUI close the output fd and restart the command listener
+	call_after_cli_command();
+	LOGINFO("Done reading ORS command from command line\n");
 }

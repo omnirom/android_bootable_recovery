@@ -366,6 +366,7 @@ protected:
 	int checkpartitionlifetimewrites(std::string arg);
 	int mountsystemtoggle(std::string arg);
 	int setlanguage(std::string arg);
+	int twcmd(std::string arg);
 
 	int simulate;
 };
