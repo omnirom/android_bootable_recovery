@@ -650,6 +650,7 @@
 		<string name="copy_log">Copied recovery log to {1}.</string>
 		<string name="max_queue">Maximum zip queue reached!</string>
 		<string name="min_queue">Minimum zip queue reached!</string>
+		<string name="screenshot_saved">Screenshot was saved to {1}</string>
 		<string name="screenshot_err">Failed to take a screenshot!</string>
 		<string name="zip_wipe_cache">One or more zip requested a cache wipe -- Wiping cache now.</string>
 		<string name="and_sec_wipe_err">Unable to wipe android secure</string>

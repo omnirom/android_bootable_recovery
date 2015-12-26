@@ -928,7 +928,7 @@ int GUIAction::screenshot(std::string arg __unused)
 		chmod(path, 0666);
 		chown(path, uid, gid);
 
-		gui_msg(Msg("screenshot_saved=Screenshot was saved to %s")(path));
+		gui_msg(Msg("screenshot_saved=Screenshot was saved to {1}")(path));
 
 		// blink to notify that the screenshow was taken
 		gr_color(255, 255, 255, 255);
