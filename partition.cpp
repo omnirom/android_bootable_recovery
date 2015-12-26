@@ -1141,7 +1141,7 @@ bool TWPartition::Wipe(string New_File_System) {
 	string Layout_Filename = Mount_Point + "/.layout_version";
 
 	if (!Can_Be_Wiped) {
-		gui_msg(Msg(msg::kError, "cannot_wipe=Partition {1} cannot be wiped.\n")(Display_Name));
+		gui_msg(Msg(msg::kError, "cannot_wipe=Partition {1} cannot be wiped.")(Display_Name));
 		return false;
 	}
 
@@ -1480,7 +1480,7 @@ bool TWPartition::Check_MD5(string restore_folder) {
 bool TWPartition::Restore(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size) {
 	string Restore_File_System;
 
-	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, gui_parse_text("{@restoring}"));
+	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, gui_parse_text("{@restoring_hdr}"));
 	LOGINFO("Restore filename is: %s\n", Backup_FileName.c_str());
 
 	Restore_File_System = Get_Restore_File_System(restore_folder);
@@ -2048,7 +2048,7 @@ bool TWPartition::Backup_Dump_Image(string backup_folder) {
 	tw_set_default_metadata(Full_FileName.c_str());
 	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
 		// Actual size may not match backup size due to bad blocks on MTD devices so just check for 0 bytes
-		gui_msg(Msg(msg::kError, "backup_size=Backup file size for '%s' is 0 bytes.")(Full_FileName));
+		gui_msg(Msg(msg::kError, "backup_size=Backup file size for '{1}' is 0 bytes.")(Full_FileName));
 		return false;
 	}
 	return true;
@@ -2107,7 +2107,7 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System,
 				return false;
 		}
 	}
-	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restore}"));
+	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restoring_hdr}"));
 	gui_msg(Msg("restoring=Restoring {1}...")(Backup_Display_Name));
 
 	if (!Mount(true))
@@ -2155,7 +2155,7 @@ bool TWPartition::Restore_Image(string restore_folder, const unsigned long long 
 	double display_percent, progress_percent;
 	char size_progress[1024];
 
-	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restore}"));
+	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restoring_hdr}"));
 	gui_msg(Msg("restoring=Restoring {1}...")(Backup_Display_Name));
 	Full_FileName = restore_folder + "/" + Backup_FileName;
 

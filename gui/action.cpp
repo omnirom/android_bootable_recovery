@@ -347,7 +347,7 @@ void GUIAction::simulate_progress_bar(void)
 	{
 		if (PartitionManager.stop_backup.get_value()) {
 			DataManager::SetValue("tw_cancel_backup", 1);
-			gui_msg("backup_cancel=Backup Canceled.");
+			gui_msg("backup_cancel=Backup Cancelled");
 			DataManager::SetValue("ui_progress", 0);
 			PartitionManager.stop_backup.set_value(0);
 			return;
@@ -1197,7 +1197,7 @@ int GUIAction::nandroid(std::string arg)
 		}
 		else {
 			DataManager::SetValue("tw_cancel_backup", 1);
-			gui_msg("backup_cancel=Backup Canceled.");
+			gui_msg("backup_cancel=Backup Cancelled");
 			ret = 0;
 		}
 		operation_end(ret);
