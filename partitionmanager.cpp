@@ -458,7 +458,7 @@ int TWPartitionManager::Check_Backup_Name(bool Display_Error) {
 	sprintf(tw_image_dir,"%s/%s", backup_loc, Backup_Name.c_str());
 	if (TWFunc::Path_Exists(tw_image_dir)) {
 		if (Display_Error)
-			gui_err("backup_name_exists=A backup with this name already exists.");
+			gui_err("backup_name_exists=A backup with that name already exists!");
 		return -4;
 	}
 	// No problems found, return 0
@@ -940,7 +940,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 	Update_System_Details();
 	UnMount_Main_Partitions();
 	time(&rStop);
-	gui_msg(Msg(msg::kHighlight, "restore_complete=[RESTORE COMPLETED IN {1} SECONDS]")((int)difftime(rStop,rStart)));
+	gui_msg(Msg(msg::kHighlight, "restore_completed=[RESTORE COMPLETED IN {1} SECONDS]")((int)difftime(rStop,rStart)));
 	DataManager::SetValue("tw_file_progress", "");
 	return true;
 }
@@ -1204,7 +1204,7 @@ int TWPartitionManager::Format_Data(void) {
 
 		return dat->Wipe_Encryption();
 	} else {
-		gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1].")("/data"));
+		gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1}.")("/data"));
 		return false;
 	}
 	return false;
@@ -1228,7 +1228,7 @@ int TWPartitionManager::Wipe_Media_From_Data(void) {
 		Add_MTP_Storage(dat->MTP_Storage_ID);
 		return true;
 	} else {
-		gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1].")("/data"));
+		gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1}.")("/data"));
 		return false;
 	}
 	return false;
@@ -1458,7 +1458,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 			dat->Decrypted_Block_Device = crypto_blkdev;
 			dat->Setup_File_System(false);
 			dat->Current_File_System = dat->Fstab_File_System; // Needed if we're ignoring blkid because encrypted devices start out as emmc
-			gui_msg(Msg("decrypt_success=Data successfully decrypted, new block device: '{1}'")(crypto_blkdev));
+			gui_msg(Msg("decrypt_success_dev=Data successfully decrypted, new block device: '{1}'")(crypto_blkdev));
 
 			// Sleep for a bit so that the device will be ready
 			sleep(1);

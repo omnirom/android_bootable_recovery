@@ -643,7 +643,7 @@
 
 			<text style="text_m">
 				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@installing_zip=Installing Zip: %tw_file%}</text>
+				<text>{@installing_zip_xml=Installing Zip: %tw_file%}</text>
 			</text>
 
 			<template name="console"/>
@@ -737,7 +737,7 @@
 
 			<text style="text_m">
 				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@install_image_hdr=Install Image} &gt; {install_sel_target=Select Target Partition}</text>
+				<text>{@install_image_hdr=Install Image} &gt; {@install_sel_target=Select Target Partition}</text>
 			</text>
 
 			<partitionlist style="partitionlist_headerless_rb">
@@ -2922,7 +2922,7 @@
 				<condition var1="tw_operation_state" var2="1"/>
 				<actions>
 					<action function="set">tw_back=restore</action>
-					<action function="set">tw_complete_text1={@restore_completed=Restore Complete}</action>
+					<action function="set">tw_complete_text1={@restore_complete=Restore Complete}</action>
 					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_complete</action>
 				</actions>
@@ -3074,7 +3074,7 @@
 
 			<text style="text_m">
 				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@mount_hdr=Mount} &gt; {usb_storage_hdr=USB Storage}</text>
+				<text>{@mount_hdr=Mount} &gt; {@usb_storage_hdr=USB Storage}</text>
 			</text>
 
 			<text style="text_m_accent">
@@ -3144,7 +3144,7 @@
 
 			<text style="text_m">
 				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@reboot_hdr=Reboot Menu}</text>
+				<text>{@reboot_hdr=Reboot}</text>
 			</text>
 
 			<button style="main_button">

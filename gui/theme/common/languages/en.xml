@@ -90,7 +90,7 @@
 		<string name="zip_add_btn">Add more Zips</string>
 		<string name="zip_clear_btn">Clear Zip Queue</string>
 		<string name="install_zip_count_hdr">Install Zip %tw_zip_index% of %tw_zip_queue_count%</string>
-		<string name="installing_zip">Installing Zip: %tw_file%</string>
+		<string name="installing_zip_xml">Installing Zip: %tw_file%</string>
 		<string name="failed">Failed</string>
 		<string name="successful">Successful</string>
 		<string name="install_failed">Installation Failed</string>
@@ -219,7 +219,6 @@
 		<string name="backup_name_hdr">Set Backup Name</string>
 		<string name="progress">Progress:</string>
 		<string name="backup_complete">Backup Complete</string>
-		<string name="backup_cancel">Backup Cancelled</string>
 		<string name="restore_hdr">Restore</string>
 		<string name="sel_backup_hdr">Select Backup</string>
 		<string name="restore_sel_store_hdr">Select Backup from %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
@@ -238,7 +237,7 @@
 		<string name="restore_backup_date">Backup made on %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Select Partitions to Restore:</string>
 		<string name="restore_enable_md5_chk">Enable MD5 Verification of Backup Files</string>
-		<string name="restore_completed">Restore Complete</string>
+		<string name="restore_complete">Restore Complete</string>
 		<string name="swipe_restore">Swipe to Restore</string>
 		<string name="swipe_restore_s">   Restore</string>
 		<string name="rename_backup_hdr">Rename Backup</string>
@@ -250,7 +249,6 @@
 		<string name="swipe_rename">   Rename</string>
 		<string name="confirm_hdr">Confirm</string>
 		<string name="mount_hdr">Mount</string>
-		<string name="mount_sel_part"></string>
 		<string name="mount_sel_part">Select Partitions to Mount:</string>
 		<string name="mount_sys_ro_chk">Mount system partition read-only</string>
 		<string name="mount_sys_ro_s_chk">Mount System RO</string>
@@ -263,7 +261,6 @@
 		<string name="usb_stor_mnt2">Be sure to safely remove your device</string>
 		<string name="usb_stor_mnt3">from your computer before unmounting!</string>
 		<string name="unmount_btn">Unmount</string>
-		<string name="reboot_hdr">Reboot Menu</string>
 		<string name="rb_system_btn">System</string>
 		<string name="rb_poweroff_btn">Power Off</string>
 		<string name="rb_recovery_btn">Recovery</string>
@@ -479,7 +476,6 @@
 		<string name="no_selinux">No SELinux support (no libselinux).</string>
 		<string name="mtp_enabled">MTP Enabled</string>
 		<string name="mtp_crash">MTP Crashed, not starting MTP on boot.</string>
-		<string name="rebooting">Rebooting...</string>
 		<string name="decrypt_success">Successfully decrypted with default password.</string>
 		<string name="unable_to_decrypt">Unable to decrypt with default password. You may need to perform a Format Data.</string>
 		<string name="generating_md51">Generating MD5</string>
@@ -488,7 +484,6 @@
 		<string name="md5_created"> * MD5 Created.</string>
 		<string name="md5_error"> * MD5 Error!</string>
 		<string name="md5_compute_error"> * Error computing MD5.</string>
-		<string name="md5_created"> * MD5 Created.</string>
 		<string name="current_date">(Current Date)</string>
 		<string name="auto_generate">(Auto Generate)</string>
 		<string name="unable_to_locate_partition">Unable to locate '{1}' partition for backup calculations.</string>
@@ -497,7 +492,7 @@
 		<string name="total_backup_size"> * Total size of all data: {1}MB</string>
 		<string name="available_space"> * Available space: {1}MB</string>
 		<string name="unable_locate_storage">Unable to locate storage device.</string>
-		<string name="Not enough free space on storage.">Not enough free space on storage.</string>
+		<string name="no_space">Not enough free space on storage.</string>
 		<string name="backup_started">[BACKUP STARTED]</string>
 		<string name="backup_folder"> * Backup Folder: {1}</string>
 		<string name="fail_backup_folder">Failed to make backup folder.</string>
@@ -518,7 +513,7 @@
 		<string name="restore_part_count">Restoring {1} partitions...</string>
 		<string name="total_restore_size">Total restore size is {1}MB</string>
 		<string name="updating_system_details">Updating System Details</string>
-		<string name="restore_complete">[RESTORE COMPLETED IN {1} SECONDS]</string>
+		<string name="restore_completed">[RESTORE COMPLETED IN {1} SECONDS]</string>
 		<!-- {1} is the path we could not open, {2} is strerror output -->
 		<string name="error_opening_strerr">Error opening: '{1}' ({2})</string>
 		<string name="unable_locate_part_backup_name">Unable to locate partition by backup name: '{1}'</string>
@@ -536,7 +531,7 @@
 		<string name="unable_to_mount_storage">Unable to mount storage</string>
 		<string name="fail_decrypt">Failed to decrypt data.</string>
 		<string name="no_crypto_support">No crypto support was compiled into this build.</string>
-		<string name="decrypt_success">Data successfully decrypted, new block device: '{1}'</string>
+		<string name="decrypt_success_dev">Data successfully decrypted, new block device: '{1}'</string>
 		<string name="done">Done.</string>
 		<string name="start_partition_sd">Partitioning SD Card...</string>
 		<string name="partition_sd_locate">Unable to locate device to partition.</string>
@@ -568,17 +563,18 @@
 		<!-- {1} is the folder name that we could not mount, {2} is strerror output -->
 		<string name="fail_mount">Failed to mount '{1}' ({2})</string>
 		<!-- {1} is the folder name that we could not unmount, {2} is strerror output -->
-		<string name="fail_mount">Failed to unmount '{1}' ({2})</string>
+		<string name="fail_unmount">Failed to unmount '{1}' ({2})</string>
 		<string name="cannot_resize">Cannot resize {1}.</string>
 		<string name="repair_resize">Repairing {1} before resizing.</string>
 		<string name="unable_resize">Unable to resize {1}.</string>
 		<string name="no_md5_found">No md5 file found for '{1}'. Please unselect Enable MD5 verification to restore.</string>
 		<string name="md5_fail_match">MD5 failed to match on '{1}'.</string>
-		<string name="restoring">Restoring</string>
+		<string name="fail_decrypt_tar">Failed to decrypt tar file '{1}'</string>
 		<string name="format_data_msg">You may need to reboot recovery to be able to use /data again.</string>
 		<string name="format_data_err">Unable to format to remove encryption.</string>
 		<string name="formatting_using">Formatting {1} using {2}...</string>
 		<string name="unable_to_wipe">Unable to wipe {1}.</string>
+		<string name="cannot_wipe">Partition {1} cannot be wiped.</string>
 		<string name="remove_all">Removing all files under '{1}'</string>
 		<string name="wiping_data">Wiping data without wiping /data/media ...</string>
 		<string name="backing_up">Backing up {1}...</string>
@@ -586,11 +582,11 @@
 		<string name="backup_size">Backup file size for '{1}' is 0 bytes.</string>
 		<string name="datamedia_fs_restore">WARNING: This /data backup was made with {1} file system! The backup may not boot unless you change back to {1}.</string>
 		<string name="restoring">Restoring {1}...</string>
-		<string name="restore">Restoring</string>
+		<string name="restoring_hdr">Restoring</string>
 		<string name="recreate_folder_err">Unable to recreate {1} folder.</string>
 		<string name="img_size_err">Size of image is larger than target device</string>
 		<string name="flashing">Flashing {1}...</string>
-		<string name="backup_folder">Backup folder set to '{1}'</string>
+		<string name="backup_folder_set">Backup folder set to '{1}'</string>
 		<string name="locate_backup_err">Unable to locate backup '{1}'</string>
 		<string name="set_restore_opt">Setting restore options: '{1}':</string>
 		<string name="md5_check_skip">MD5 check skip is on</string>
@@ -616,7 +612,7 @@
 		<string name="compression_on">Compression is on</string>
 		<string name="md5_off">MD5 Generation is off</string>
 		<string name="backup_fail">Backup Failed</string>
-		<string name="backup_complete">Backup complete!</string>
+		<string name="backup_clean">Backup Failed. Cleaning Backup Folder.</string>
 		<string name="running_recovery_commands">Running Recovery Commands</string>
 		<string name="recovery_commands_complete">Recovery Commands Complete</string>
 		<string name="running_ors">Running OpenRecoveryScript</string>
@@ -648,7 +644,7 @@
 		<string name="decrypt_cmd">Attempting to decrypt data partition via command line.</string>
 		<string name="base_pkg_err">Failed to load base packages.</string>
 		<string name="simulating">Simulating actions...</string>
-		<string name="backup_cancel">Backup Canceled.</string>
+		<string name="backup_cancel">Backup Cancelled</string>
 		<string name="config_twrp">Configuring TWRP...</string>
 		<string name="config_twrp_err">Unable to configure TWRP with this kernel.</string>
 		<string name="copy_log">Copied recovery log to {1}.</string>
@@ -663,7 +659,6 @@
 		<string name="curr_date">(Current Date)</string>
 		<string name="backup_name_len">Backup name is too long.</string>
 		<string name="backup_name_invalid">Backup name '{1}' contains invalid character: '{1}'</string>
-		<string name="backup_name_exists">A backup with this name already exists.</string>
 		<string name="no_real_sdcard">This device does not have a real SD Card! Aborting!</string>
 		<string name="cancel_sideload">Cancelling ADB sideload...</string>
 		<string name="change_fs_err">Error changing file system.</string>

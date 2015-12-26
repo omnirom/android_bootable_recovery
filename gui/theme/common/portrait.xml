@@ -2431,7 +2431,7 @@
 				<condition var1="tw_operation_state" var2="1"/>
 				<actions>
 					<action function="set">tw_back=restore_select</action>
-					<action function="set">tw_complete_text1={@restore_completed=Restore Complete}</action>
+					<action function="set">tw_complete_text1={@restore_complete=Restore Complete}</action>
 					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_complete</action>
 				</actions>
@@ -2547,7 +2547,7 @@
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>{usb_storage_hdr=USB Storage}</text>
+				<text>{@usb_storage_hdr=USB Storage}</text>
 			</text>
 
 			<text style="text_m_accent">
@@ -2615,7 +2615,7 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>{@reboot_hdr=Reboot Menu}</text>
+				<text>{@reboot_hdr=Reboot}</text>
 			</text>
 
 			<button style="main_button">

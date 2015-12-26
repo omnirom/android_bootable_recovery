@@ -409,7 +409,7 @@ int TWFunc::Recursive_Mkdir(string Path) {
 		cur_path += "/" + parts[i];
 		if (!TWFunc::Path_Exists(cur_path)) {
 			if (mkdir(cur_path.c_str(), 0777)) {
-				gui_msg(Msg(msg::kError, "create_folder_strerr=Can not create '{1}' folder ({2})")(cur_path)(strerror(errno)));
+				gui_msg(Msg(msg::kError, "create_folder_strerr=Can not create '{1}' folder ({2}).")(cur_path)(strerror(errno)));
 				return false;
 			} else {
 				tw_set_default_metadata(cur_path.c_str());
