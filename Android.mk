@@ -369,6 +369,12 @@ else
     ifneq ($(wildcard external/toybox/Android.mk),)
         LOCAL_ADDITIONAL_DEPENDENCIES += toybox_symlinks
     endif
+    ifneq ($(wildcard external/zip/Android.mk),)
+        LOCAL_ADDITIONAL_DEPENDENCIES += zip
+    endif
+    ifneq ($(wildcard external/unzip/Android.mk),)
+        LOCAL_ADDITIONAL_DEPENDENCIES += unzip
+    endif
 endif
 ifneq ($(TW_NO_EXFAT), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += mkexfatfs fsckexfat
