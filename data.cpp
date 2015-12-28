@@ -59,9 +59,9 @@ extern "C"
 {
 	#include "twcommon.h"
 	#include "gui/pages.h"
-	#include "minuitwrp/minui.h"
 	void gui_notifyVarChange(const char *name, const char* value);
 }
+#include "minuitwrp/minui.h"
 
 #define FILE_VERSION 0x00010010
 
