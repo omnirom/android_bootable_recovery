@@ -2,12 +2,20 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := events.c resources.c graphics_overlay.c graphics_utils.c truetype.c
+LOCAL_SRC_FILES := \
+    graphics.cpp \
+    graphics_fbdev.cpp \
+    resources.cpp \
+    graphics_overlay.cpp \
+    truetype.cpp \
+    graphics_utils.cpp \
+    events.cpp
 
 ifneq ($(TW_BOARD_CUSTOM_GRAPHICS),)
-    LOCAL_SRC_FILES += $(TW_BOARD_CUSTOM_GRAPHICS)
-else
-    LOCAL_SRC_FILES += graphics.c
+    $(warning ****************************************************************************)
+    $(warning * TW_BOARD_CUSTOM_GRAPHICS support has been deprecated in TWRP.            *)
+    $(warning ****************************************************************************)
+    $(error stopping)
 endif
 
 ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
@@ -17,17 +25,30 @@ ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
     LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
   else
     ifeq ($(TARGET_CUSTOM_KERNEL_HEADERS),)
-      LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minuitwrp/include
+      LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
     else
       LOCAL_C_INCLUDES += $(TARGET_CUSTOM_KERNEL_HEADERS)
     endif
   endif
 else
-  LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minuitwrp/include
+  LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
+  # The header files required for adf graphics can cause compile errors
+  # with adf graphics.
+  ifneq ($(wildcard system/core/adf/Android.mk),)
+    LOCAL_CFLAGS += -DHAS_ADF
+    LOCAL_SRC_FILES += graphics_adf.cpp
+    LOCAL_WHOLE_STATIC_LIBRARIES += libadf
+  endif
 endif
 
 ifeq ($(TW_NEW_ION_HEAP), true)
   LOCAL_CFLAGS += -DNEW_ION_HEAP
+endif
+
+ifneq ($(wildcard external/libdrm/Android.mk),)
+  LOCAL_CFLAGS += -DHAS_DRM
+  LOCAL_SRC_FILES += graphics_drm.cpp
+  LOCAL_WHOLE_STATIC_LIBRARIES += libdrm
 endif
 
 LOCAL_C_INCLUDES += \
@@ -35,7 +56,8 @@ LOCAL_C_INCLUDES += \
     external/zlib \
     system/core/include \
     external/jpeg \
-    external/freetype/include
+    external/freetype/include \
+    external/libcxx/include
 
 ifeq ($(RECOVERY_TOUCHSCREEN_SWAP_XY), true)
 LOCAL_CFLAGS += -DRECOVERY_TOUCHSCREEN_SWAP_XY
@@ -74,6 +96,12 @@ ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),BGRA_8888)
 endif
 ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),RGB_565)
   LOCAL_CFLAGS += -DRECOVERY_RGB_565
+endif
+
+ifneq ($(TARGET_RECOVERY_OVERSCAN_PERCENT),)
+  LOCAL_CFLAGS += -DOVERSCAN_PERCENT=$(TARGET_RECOVERY_OVERSCAN_PERCENT)
+else
+  LOCAL_CFLAGS += -DOVERSCAN_PERCENT=0
 endif
 
 ifeq ($(TARGET_RECOVERY_PIXEL_FORMAT),"RGBX_8888")
@@ -119,6 +147,8 @@ ifeq ($(TW_DISABLE_TTF), true)
     $(warning ****************************************************************************)
     $(error stopping)
 endif
+
+LOCAL_CLANG := true
 
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
 LOCAL_SHARED_LIBRARIES += libft2 libz libc libcutils libjpeg libpng libutils
