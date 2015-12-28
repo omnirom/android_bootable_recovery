@@ -81,16 +81,13 @@ void blanktimer::checkForTimeout() {
 
 string blanktimer::getBrightness(void) {
 	string result;
-	string brightness_path;
-	DataManager::GetValue("tw_brightness_file", brightness_path);
-	if (brightness_path == "/nobrightness")
-		return brightness_path;
-	DataManager::GetValue("tw_brightness", result);
-	if (result == "") {
-		result = "255";
+
+	if (DataManager::GetIntValue("tw_has_brightnesss_file")) {
+		DataManager::GetValue("tw_brightness", result);
+		if (result.empty())
+			result = "255";
 	}
 	return result;
-
 }
 
 void blanktimer::resetTimerAndUnblank(void) {
@@ -112,7 +109,7 @@ void blanktimer::resetTimerAndUnblank(void) {
 			gui_forceRender();
 			// No break here, we want to keep going
 		case kDim:
-			if (orig_brightness != "/nobrightness")
+			if (!orig_brightness.empty())
 				TWFunc::Set_Brightness(orig_brightness);
 			state = kOn;
 		case kOn:
