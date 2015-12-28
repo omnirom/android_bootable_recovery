@@ -26,9 +26,9 @@ using namespace std;
 #include "blanktimer.hpp"
 #include "../data.hpp"
 extern "C" {
-#include "../minuitwrp/minui.h"
 #include "../twcommon.h"
 }
+#include "../minuitwrp/minui.h"
 #include "../twrp-functions.hpp"
 #include "../variables.h"
 
@@ -71,7 +71,8 @@ void blanktimer::checkForTimeout() {
 		PageManager::ChangeOverlay("lock");
 	}
 #ifndef TW_NO_SCREEN_BLANK
-	if (state == kOff && gr_fb_blank(1) >= 0) {
+	if (state == kOff) {
+		gr_fb_blank(true);
 		state = kBlanked;
 	}
 #endif
@@ -97,10 +98,7 @@ void blanktimer::resetTimerAndUnblank(void) {
 	switch (state) {
 		case kBlanked:
 #ifndef TW_NO_SCREEN_BLANK
-			if (gr_fb_blank(0) < 0) {
-				LOGINFO("blanktimer::resetTimerAndUnblank failed to gr_fb_blank(0)\n");
-				break;
-			}
+			gr_fb_blank(false);
 #endif
 			// TODO: this is asymmetric with postscreenblank.sh - shouldn't it be under the next case label?
 			TWFunc::check_and_run_script("/sbin/postscreenunblank.sh", "unblank");

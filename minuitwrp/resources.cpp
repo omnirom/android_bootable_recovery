@@ -15,6 +15,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <fcntl.h>
@@ -23,32 +24,25 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#include <string.h>
 
 #include <linux/fb.h>
 #include <linux/kd.h>
 
-#include <pixelflinger/pixelflinger.h>
-
 #include <png.h>
+
+#include <pixelflinger/pixelflinger.h>
+extern "C" {
 #include "jpeglib.h"
-
-#include "minui.h"
-
-// libpng gives "undefined reference to 'pow'" errors, and I have no
-// idea how to convince the build system to link with -lm.  We don't
-// need this functionality (it's used for gamma adjustment) so provide
-// a dummy implementation to satisfy the linker.
-double pow(double x, double y) {
-    return x;
 }
+#include "minui.h"
 
 #define SURFACE_DATA_ALIGNMENT 8
 
 static GGLSurface* malloc_surface(size_t data_size) {
-    unsigned char* temp = malloc(sizeof(GGLSurface) + data_size + SURFACE_DATA_ALIGNMENT);
+    size_t size = sizeof(GGLSurface) + data_size + SURFACE_DATA_ALIGNMENT;
+    unsigned char* temp = reinterpret_cast<unsigned char*>(malloc(size));
     if (temp == NULL) return NULL;
-    GGLSurface* surface = (GGLSurface*) temp;
+    GGLSurface* surface = reinterpret_cast<GGLSurface*>(temp);
     surface->data = temp + sizeof(GGLSurface) +
         (SURFACE_DATA_ALIGNMENT - (sizeof(GGLSurface) % SURFACE_DATA_ALIGNMENT));
     return surface;
@@ -59,9 +53,10 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
     char resPath[256];
     unsigned char header[8];
     int result = 0;
+    int color_type, bit_depth;
+    size_t bytesRead;
 
     snprintf(resPath, sizeof(resPath)-1, TWRES "images/%s.png", name);
-    printf("open_png %s\n", resPath);
     resPath[sizeof(resPath)-1] = '\0';
     FILE* fp = fopen(resPath, "rb");
     if (fp == NULL) {
@@ -72,7 +67,7 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
         }
     }
 
-    size_t bytesRead = fread(header, 1, sizeof(header), fp);
+    bytesRead = fread(header, 1, sizeof(header), fp);
     if (bytesRead != sizeof(header)) {
         result = -2;
         goto exit;
@@ -104,13 +99,12 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
     png_set_sig_bytes(*png_ptr, sizeof(header));
     png_read_info(*png_ptr, *info_ptr);
 
-    int color_type, bit_depth;
     png_get_IHDR(*png_ptr, *info_ptr, width, height, &bit_depth,
             &color_type, NULL, NULL, NULL);
 
     *channels = png_get_channels(*png_ptr, *info_ptr);
 
-    /*if (bit_depth == 8 && *channels == 3 && color_type == PNG_COLOR_TYPE_RGB) {
+    if (bit_depth == 8 && *channels == 3 && color_type == PNG_COLOR_TYPE_RGB) {
         // 8-bit RGB images: great, nothing to do.
     } else if (bit_depth <= 8 && *channels == 1 && color_type == PNG_COLOR_TYPE_GRAY) {
         // 1-, 2-, 4-, or 8-bit gray images: expand to 8-bit gray.
@@ -122,14 +116,8 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
         // general.
         png_set_palette_to_rgb(*png_ptr);
         *channels = 3;
-    } else {
-        fprintf(stderr, "minui doesn't support PNG depth %d channels %d color_type %d\n",
-                bit_depth, *channels, color_type);
-        result = -7;
-        goto exit;
-    }*/
-    if (color_type == PNG_COLOR_TYPE_PALETTE) {
-        png_set_palette_to_rgb(png_ptr);
+    } else if (color_type == PNG_COLOR_TYPE_PALETTE) {
+        png_set_palette_to_rgb(*png_ptr);
     }
 
     *fpp = fp;
@@ -153,12 +141,10 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
 // framebuffer pixel format; they need to be modified if the
 // framebuffer format changes (but nothing else should).
 
-// Allocate and return a gr_surface sufficient for storing an image of
+// Allocate and return a GRSurface* sufficient for storing an image of
 // the indicated size in the framebuffer pixel format.
 static GGLSurface* init_display_surface(png_uint_32 width, png_uint_32 height) {
-    GGLSurface* surface;
-
-    surface = (GGLSurface*) malloc_surface(width * height * 4);
+    GGLSurface* surface = malloc_surface(width * height * 4);
     if (surface == NULL) return NULL;
 
     surface->version = sizeof(GGLSurface);
@@ -222,6 +208,8 @@ int res_create_surface_png(const char* name, gr_surface* pSurface) {
     png_uint_32 width, height;
     png_byte channels;
     FILE* fp;
+    unsigned char* p_row;
+    unsigned int y;
 
     *pSurface = NULL;
 
@@ -234,8 +222,15 @@ int res_create_surface_png(const char* name, gr_surface* pSurface) {
         goto exit;
     }
 
-    unsigned char* p_row = malloc(width * 4);
-    unsigned int y;
+#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
+    png_set_bgr(png_ptr);
+#endif
+
+    p_row = reinterpret_cast<unsigned char*>(malloc(width * 4));
+    if (p_row == NULL) {
+        result = -9;
+        goto exit;
+    }
     for (y = 0; y < height; ++y) {
         png_read_row(png_ptr, p_row, NULL);
         transform_rgb_to_draw(p_row, surface->data + y * width * 4, channels, width);
@@ -258,9 +253,11 @@ int res_create_surface_png(const char* name, gr_surface* pSurface) {
 
 int res_create_surface_jpg(const char* name, gr_surface* pSurface) {
     GGLSurface* surface = NULL;
-    int result = 0;
+    int result = 0, y;
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
+    unsigned char* pData;
+    size_t width, height, stride, pixelSize;
 
     FILE* fp = fopen(name, "rb");
     if (fp == NULL) {
@@ -288,18 +285,19 @@ int res_create_surface_jpg(const char* name, gr_surface* pSurface) {
     /* Start decompressor */
     (void) jpeg_start_decompress(&cinfo);
 
-    size_t width = cinfo.image_width;
-    size_t height = cinfo.image_height;
-    size_t stride = 4 * width;
-    size_t pixelSize = stride * height;
+    width = cinfo.image_width;
+    height = cinfo.image_height;
+    stride = 4 * width;
+    pixelSize = stride * height;
 
-    surface = malloc(sizeof(GGLSurface) + pixelSize);
+    surface = reinterpret_cast<GGLSurface*>(malloc(sizeof(GGLSurface) + pixelSize));
+    //p_row = reinterpret_cast<unsigned char*>(malloc(width * 4));
     if (surface == NULL) {
         result = -8;
         goto exit;
     }
 
-    unsigned char* pData = (unsigned char*) (surface + 1);
+    pData = (unsigned char*) (surface + 1);
     surface->version = sizeof(GGLSurface);
     surface->width = width;
     surface->height = height;
@@ -307,7 +305,6 @@ int res_create_surface_jpg(const char* name, gr_surface* pSurface) {
     surface->data = pData;
     surface->format = GGL_PIXEL_FORMAT_RGBX_8888;
 
-    int y;
     for (y = 0; y < (int) height; ++y) {
         unsigned char* pRow = pData + y * stride;
         jpeg_read_scanlines(&cinfo, &pRow, 1);
@@ -320,10 +317,17 @@ int res_create_surface_jpg(const char* name, gr_surface* pSurface) {
             unsigned char g = pRow[sx + 1];
             unsigned char b = pRow[sx + 2];
             unsigned char a = 0xff;
+#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
+            pRow[dx    ] = b; // r
+            pRow[dx + 1] = g; // g
+            pRow[dx + 2] = r; // b
+            pRow[dx + 3] = a;
+#else
             pRow[dx    ] = r; // r
             pRow[dx + 1] = g; // g
             pRow[dx + 2] = b; // b
             pRow[dx + 3] = a;
+#endif
         }
     }
     *pSurface = (gr_surface) surface;
