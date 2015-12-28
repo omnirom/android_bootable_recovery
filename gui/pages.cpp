@@ -39,11 +39,11 @@
 
 extern "C" {
 #include "../twcommon.h"
-#include "../minuitwrp/minui.h"
 #include "../minzip/SysUtil.h"
 #include "../minzip/Zip.h"
 #include "gui.h"
 }
+#include "../minuitwrp/minui.h"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
