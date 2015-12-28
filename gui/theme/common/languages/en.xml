@@ -9,7 +9,7 @@
 		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
 		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
 		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
-		
+
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System Image</string>
@@ -37,7 +37,7 @@
 		<string name="battery_pct">Battery: %tw_battery%</string>
 		<string name="sort_by_name">Sort by Name</string>
 		<string name="sort_by_date">Sort by Date</string>
-		<string name="sort_by_size">Sorty by Size</string>
+		<string name="sort_by_size">Sort by Size</string>
 		<string name="sort_by_name_only">Name</string>
 		<string name="sort_by_date_only">Date</string>
 		<string name="sort_by_size_only">Size</string>
