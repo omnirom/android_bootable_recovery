@@ -413,10 +413,17 @@ endif
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
 LOCAL_CFLAGS += -DTWHTCD_PATH=\"$(TWHTCD_PATH)\"
 ifeq ($(TW_INCLUDE_NTFS_3G),true)
+ifeq ($(shell test $(CM_PLATFORM_SDK_VERSION) -ge 4; echo $$?),0)
+    LOCAL_ADDITIONAL_DEPENDENCIES += \
+        mount.ntfs \
+        fsck.ntfs \
+        mkfs.ntfs
+else
     LOCAL_ADDITIONAL_DEPENDENCIES += \
         ntfs-3g \
         ntfsfix \
         mkntfs
+endif
 endif
 ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
 ifeq ($(shell test $(CM_PLATFORM_SDK_VERSION) -ge 3; echo $$?),0)
