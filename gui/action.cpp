@@ -882,6 +882,10 @@ int GUIAction::getpartitiondetails(std::string arg __unused)
 					DataManager::SetValue("tw_partition_ext", 1);
 				else
 					DataManager::SetValue("tw_partition_ext", 0);
+				if (TWFunc::Path_Exists("/sbin/mkntfs") || TWFunc::Path_Exists("/sbin/mkfs.ntfs"))
+					DataManager::SetValue("tw_partition_ntfs", 1);
+				else
+					DataManager::SetValue("tw_partition_ntfs", 0);
 				return 0;
 			} else {
 				LOGERR("Unable to locate partition: '%s'\n", wipe_path.c_str());
