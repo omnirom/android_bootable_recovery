@@ -1273,7 +1273,7 @@ bool TWPartition::Repair() {
 		}
 		if (!UnMount(true))
 			return false;
-		gui_msg(Msg("reparing=Repairing {1} using {2}...")(Display_Name)("fsck.fat"));
+		gui_msg(Msg("repairing_using=Repairing {1} using {2}...")(Display_Name)("fsck.fat"));
 		Find_Actual_Block_Device();
 		command = "/sbin/fsck.fat -y " + Actual_Block_Device;
 		LOGINFO("Repair command: %s\n", command.c_str());
@@ -1292,7 +1292,7 @@ bool TWPartition::Repair() {
 		}
 		if (!UnMount(true))
 			return false;
-		gui_msg(Msg("reparing=Repairing {1} using {2}...")(Display_Name)("e2fsck"));
+		gui_msg(Msg("repairing_using=Repairing {1} using {2}...")(Display_Name)("e2fsck"));
 		Find_Actual_Block_Device();
 		command = "/sbin/e2fsck -fp " + Actual_Block_Device;
 		LOGINFO("Repair command: %s\n", command.c_str());
@@ -1311,7 +1311,7 @@ bool TWPartition::Repair() {
 		}
 		if (!UnMount(true))
 			return false;
-		gui_msg(Msg("reparing=Repairing {1} using {2}...")(Display_Name)("fsck.exfat"));
+		gui_msg(Msg("repairing_using=Repairing {1} using {2}...")(Display_Name)("fsck.exfat"));
 		Find_Actual_Block_Device();
 		command = "/sbin/fsck.exfat " + Actual_Block_Device;
 		LOGINFO("Repair command: %s\n", command.c_str());
@@ -1330,7 +1330,7 @@ bool TWPartition::Repair() {
 		}
 		if (!UnMount(true))
 			return false;
-		gui_msg(Msg("reparing=Repairing {1} using {2}...")(Display_Name)("fsck.f2fs"));
+		gui_msg(Msg("repairing_using=Repairing {1} using {2}...")(Display_Name)("fsck.f2fs"));
 		Find_Actual_Block_Device();
 		command = "/sbin/fsck.f2fs " + Actual_Block_Device;
 		LOGINFO("Repair command: %s\n", command.c_str());
@@ -1354,7 +1354,7 @@ bool TWPartition::Repair() {
 		}
 		if (!UnMount(true))
 			return false;
-		gui_msg(Msg("reparing=Repairing {1} using {2}...")(Display_Name)(Ntfsfix_Binary));
+		gui_msg(Msg("repairing_using=Repairing {1} using {2}...")(Display_Name)(Ntfsfix_Binary));
 		Find_Actual_Block_Device();
 		command = "/sbin/" + Ntfsfix_Binary + " " + Actual_Block_Device;
 		LOGINFO("Repair command: %s\n", command.c_str());

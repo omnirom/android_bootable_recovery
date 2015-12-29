@@ -118,6 +118,7 @@
 		<string name="flash_done">IMAGE FLASH COMPLETED]</string>
 		<string name="wiping">Wiping {1}</string>
 		<string name="repair_not_exist">{1} does not exist! Cannot repair!</string>
+		<string name="repairing_using">Repairing {1} using {2}...</string>
 		<string name="unable_repair">Unable to repair {1}.</string>
 		<string name="mount_data_footer">Could not mount /data and unable to find crypto footer.</string>
 		<!-- {1} is the folder name that we could not create, {2} is strerror output -->
