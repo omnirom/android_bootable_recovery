@@ -134,7 +134,7 @@
 		<string name="restoring">Restoring</string>
 		<string name="format_data_msg">You may need to reboot recovery to be able to use /data again.</string>
 		<string name="format_data_err">Unable to format to remove encryption.</string>
-		<string name="formating_using">Formatting {1} using {2}...</string>
+		<string name="formatting_using">Formatting {1} using {2}...</string>
 		<string name="unable_to_wipe">Unable to wipe {1}.</string>
 		<string name="remove_all">Removing all files under '{1}'</string>
 		<string name="wiping_data">Wiping data without wiping /data/media ...</string>

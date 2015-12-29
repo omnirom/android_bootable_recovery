@@ -1668,7 +1668,7 @@ bool TWPartition::Wipe_EXT23(string File_System) {
 	if (TWFunc::Path_Exists("/sbin/mke2fs")) {
 		string command;
 
-		gui_msg(Msg("formating_using=Formatting {1} using {2}...")(Display_Name)("mke2fs"));
+		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mke2fs"));
 		Find_Actual_Block_Device();
 		command = "mke2fs -t " + File_System + " -m 0 " + Actual_Block_Device;
 		LOGINFO("mke2fs command: %s\n", command.c_str());
@@ -1701,7 +1701,7 @@ bool TWPartition::Wipe_EXT4() {
 	int ret;
 	char *secontext = NULL;
 
-	gui_msg(Msg("formating_using=Formatting {1} using {2}...")(Display_Name)("make_ext4fs"));
+	gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("make_ext4fs"));
 
 	if (!selinux_handle || selabel_lookup(selinux_handle, &secontext, Mount_Point.c_str(), S_IFDIR) < 0) {
 		LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
@@ -1723,7 +1723,7 @@ bool TWPartition::Wipe_EXT4() {
 	if (TWFunc::Path_Exists("/sbin/make_ext4fs")) {
 		string Command;
 
-		gui_msg(Msg("formating_using=Formatting {1} using {2}...")(Display_Name)("make_ext4fs"));
+		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("make_ext4fs"));
 		Find_Actual_Block_Device();
 		Command = "make_ext4fs";
 		if (!Is_Decrypted && Length != 0) {
@@ -1760,7 +1760,7 @@ bool TWPartition::Wipe_FAT() {
 		if (!UnMount(true))
 			return false;
 
-		gui_msg(Msg("formating_using=Formatting {1} using {2}...")(Display_Name)("mkfs.fat"));
+		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mkfs.fat"));
 		Find_Actual_Block_Device();
 		command = "mkfs.fat " + Actual_Block_Device;
 		if (TWFunc::Exec_Cmd(command) == 0) {
@@ -1787,7 +1787,7 @@ bool TWPartition::Wipe_EXFAT() {
 		if (!UnMount(true))
 			return false;
 
-		gui_msg(Msg("formating_using=Formatting {1} using {2}...")(Display_Name)("mkexfatfs"));
+		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mkexfatfs"));
 		Find_Actual_Block_Device();
 		command = "mkexfatfs " + Actual_Block_Device;
 		if (TWFunc::Exec_Cmd(command) == 0) {
@@ -1807,7 +1807,7 @@ bool TWPartition::Wipe_MTD() {
 	if (!UnMount(true))
 		return false;
 
-	gui_msg(Msg("formating_using=Formatting {1} using {2}...")(Display_Name)("MTD"));
+	gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("MTD"));
 
 	mtd_scan_partitions();
 	const MtdPartition* mtd = mtd_find_partition_by_name(MTD_Name.c_str());
@@ -1858,7 +1858,7 @@ bool TWPartition::Wipe_F2FS() {
 		if (!UnMount(true))
 			return false;
 
-		gui_msg(Msg("formating_using=Formatting {1} using {2}...")(Display_Name)("mkfs.f2fs"));
+		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mkfs.f2fs"));
 		Find_Actual_Block_Device();
 		command = "mkfs.f2fs -t 1";
 		if (!Is_Decrypted && Length != 0) {
@@ -1902,7 +1902,7 @@ bool TWPartition::Wipe_NTFS() {
 	if (!UnMount(true))
 		return false;
 
-	gui_msg(Msg("formating_using=Formatting {1} using {2}...")(Display_Name)(Ntfsmake_Binary));
+	gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)(Ntfsmake_Binary));
 	Find_Actual_Block_Device();
 	command = "/sbin/" + Ntfsmake_Binary + " " + Actual_Block_Device;
 	if (TWFunc::Exec_Cmd(command) == 0) {
