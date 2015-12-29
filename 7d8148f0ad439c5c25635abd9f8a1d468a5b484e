@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_3d543853",
+        "filename": "gui/theme/common/landscape.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 1436,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2015-12-29T19:44:14Z",
+      "side": 1,
+      "message": "Extra space, will remove later.",
+      "revId": "7d8148f0ad439c5c25635abd9f8a1d468a5b484e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
