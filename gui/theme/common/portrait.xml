@@ -1377,6 +1377,25 @@
 			</button>
 
 			<button style="main_button_half_height">
+				<condition var1="tw_partition_ntfs" op="=" var2="1"/>
+				<placement x="%center_x%" y="%row12a_y%"/>
+				<text>NTFS</text>
+				<actions>
+					<action function="set">tw_back=refreshfilesystem</action>
+					<action function="set">tw_action=changefilesystem</action>
+					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
+					<action function="set">tw_action_new_file_system=ntfs</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1={@change_fs_confirm=Change %tw_partition_name%?}</action>
+					<action function="set">tw_text2=NTFS</action>
+					<action function="set">tw_action_text1={@formatting=Formatting...}</action>
+					<action function="set">tw_complete_text1={@format_complete=Format Complete}</action>
+					<action function="set">tw_slider_text={@swipe_change_fs=Swipe to Change}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
 				<condition var1="tw_partition_vfat" op="=" var2="1"/>
 				<placement x="%center_x%" y="%row15a_y%"/>
 				<text>FAT</text>
