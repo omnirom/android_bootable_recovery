@@ -68,6 +68,10 @@
 			<image resource="tab_3"/>
 		</style>
 
+		<style name="button_navbar">
+			<font resource="font_m" color="%text_button_color%"/>
+		</style>
+
 		<style name="console">
 			<color foreground="%text_color%" background="%background_color%" scroll="%background_color%"/>
 			<font resource="fixed"/>
@@ -166,6 +170,10 @@
 			<font resource="font_m" color="%text_color%"/>
 			<colors line="%fileselector_linecolor%"/>
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
+		</style>
+
+		<style name="patternpassword">
+			<size name="tw_gui_pattern_grid_size" default="3"/>
 		</style>
 	</styles>
 
@@ -4780,14 +4788,25 @@
 
 			<template name="statusbar"/>
 
+			<action>
+				<action function="set">tw_gui_pattern_grid_size=3</action>
+			</action>
+
 			<text style="text_m">
 				<placement x="%col1_x_left%" y="%row1_header_y%"/>
 				<text>{@mount_hdr=Mount} &gt; {@decrypt_data_hdr=Decrypt Data}</text>
 			</text>
 
 			<text style="text_m_accent">
+				<condition var1="tw_password_fail" op="!=" var2="1"/>
 				<placement x="%center_x%" y="%row5_y%" placement="5"/>
 				<text>{@decrypt_data_enter_pattern=Enter Pattern.}</text>
+			</text>
+
+			<text style="text_m_fail">
+				<condition var1="tw_password_fail" var2="1"/>
+				<placement x="%center_x%" y="%row5_y%" placement="5"/>
+				<text>{@decryt_data_failed_pattern=Pattern failed, please try again!}</text>
 			</text>
 
 			<text style="text_m">
@@ -4797,7 +4816,6 @@
 
 			<patternpassword>
 				<placement x="%pattern_x%" y="%row2_y%" w="%pattern_size%" h="%pattern_size%"/>
-				<size name="tw_pattern_grid_size" default="3"/>
 				<dot color="%fileselector_linecolor%" activecolor="%accent_color%" radius="%pattern_dot_dia%"/>
 				<line color="%fileselector_linecolor%" width="%pattern_line_w%"/>
 				<data name="tw_crypto_password"/>
@@ -4816,6 +4834,62 @@
 					<action function="set">tw_page_done=1</action>
 					<action function="page">main</action>
 				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_gui_pattern_grid_size" var2="3"/>
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="grid_less"/>
+				<action function="set">tw_gui_pattern_grid_size=3</action>
+			</button>
+
+			<button>
+				<condition var1="tw_gui_pattern_grid_size" var2="4"/>
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="grid_less"/>
+				<action function="set">tw_gui_pattern_grid_size=3</action>
+			</button>
+
+			<button>
+				<condition var1="tw_gui_pattern_grid_size" var2="5"/>
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="grid_less"/>
+				<action function="set">tw_gui_pattern_grid_size=4</action>
+			</button>
+
+			<button>
+				<condition var1="tw_gui_pattern_grid_size" var2="6"/>
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="grid_less"/>
+				<action function="set">tw_gui_pattern_grid_size=5</action>
+			</button>
+
+			<button>
+				<condition var1="tw_gui_pattern_grid_size" var2="3"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="grid_more"/>
+				<action function="set">tw_gui_pattern_grid_size=4</action>
+			</button>
+
+			<button>
+				<condition var1="tw_gui_pattern_grid_size" var2="4"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="grid_more"/>
+				<action function="set">tw_gui_pattern_grid_size=5</action>
+			</button>
+
+			<button>
+				<condition var1="tw_gui_pattern_grid_size" var2="5"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="grid_more"/>
+				<action function="set">tw_gui_pattern_grid_size=6</action>
+			</button>
+
+			<button>
+				<condition var1="tw_gui_pattern_grid_size" var2="6"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="grid_more"/>
+				<action function="set">tw_gui_pattern_grid_size=6</action>
 			</button>
 		</page>
 

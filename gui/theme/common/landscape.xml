@@ -176,6 +176,10 @@
 			<colors line="%fileselector_linecolor%"/>
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
 		</style>
+
+		<style name="patternpassword">
+			<size name="tw_gui_pattern_grid_size" default="3"/>
+		</style>
 	</styles>
 
 	<pages>
@@ -3911,18 +3915,47 @@
 			</text>
 
 			<text style="text_m_accent">
-				<placement x="%center_x%" y="%row2_y%" placement="5"/>
+				<placement x="%col2_x_left%" y="%row2_y%" placement="5"/>
 				<text>{@decrypt_data_enter_pattern=Enter Pattern.}</text>
 			</text>
 
+			<text style="text_m_fail">
+				<condition var1="tw_password_fail" var2="1"/>
+				<placement x="%col2_x_left%" y="%row3_y%" placement="5"/>
+				<text>{@decryt_data_failed_pattern=Pattern failed, please try again!}</text>
+			</text>
+
 			<patternpassword>
-				<placement x="%pattern_x%" y="%row4_y%" w="%pattern_size%" h="%pattern_size%"/>
-				<size name="tw_pattern_grid_size" default="3"/>
+				<placement x="%pattern_x%" y="%row4a_y%" w="%pattern_size%" h="%pattern_size%"/>
 				<dot color="%fileselector_linecolor%" activecolor="%accent_color%" radius="%pattern_dot_dia%"/>
 				<line color="%fileselector_linecolor%" width="%pattern_line_w%"/>
 				<data name="tw_crypto_password"/>
 				<action function="page">trydecrypt</action>
 			</patternpassword>
+
+			<button style="main_button_half_width_low">
+				<placement x="%col_button_right%" y="%row1a_y%"/>
+				<text>3x3</text>
+				<action function="set">tw_gui_pattern_grid_size=3</action>
+			</button>
+
+			<button style="main_button_half_width_low">
+				<placement x="%col_button_right%" y="%row4a_y%"/>
+				<text>4x4</text>
+				<action function="set">tw_gui_pattern_grid_size=4</action>
+			</button>
+
+			<button style="main_button_half_width_low">
+				<placement x="%col_button_right%" y="%row7a_y%"/>
+				<text>5x5</text>
+				<action function="set">tw_gui_pattern_grid_size=5</action>
+			</button>
+
+			<button style="main_button_half_width_low">
+				<placement x="%col_button_right%" y="%row10a_y%"/>
+				<text>6x6</text>
+				<action function="set">tw_gui_pattern_grid_size=6</action>
+			</button>
 
 			<button style="main_button_half_width">
 				<placement x="%col2_x_right%" y="%row15a_y%"/>

@@ -206,10 +206,10 @@
 		<variable name="progress_x" value="230" />
 		<variable name="progress_text_x" value="40" />
 		<variable name="progress_text_y" value="348" />
-		<variable name="pattern_x" value="300" />
+		<variable name="pattern_x" value="84" />
 		<variable name="pattern_dot_dia" value="12" />
 		<variable name="pattern_line_w" value="4" />
-		<variable name="pattern_size" value="200" />
+		<variable name="pattern_size" value="252" />
 	</variables>
 
 	<mousecursor>

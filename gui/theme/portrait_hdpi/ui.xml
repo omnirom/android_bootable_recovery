@@ -198,10 +198,10 @@
 		<variable name="console_height" value="960" />
 		<variable name="console_terminal_height" value="576" />
 		<variable name="dialog_button_x" value="696" />
-		<variable name="pattern_x" value="216" />
+		<variable name="pattern_x" value="126" />
 		<variable name="pattern_dot_dia" value="32" />
 		<variable name="pattern_line_w" value="12" />
-		<variable name="pattern_size" value="648" />
+		<variable name="pattern_size" value="828" />
 	</variables>
 
 	<mousecursor>

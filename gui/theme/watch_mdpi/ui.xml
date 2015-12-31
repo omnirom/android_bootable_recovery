@@ -46,6 +46,8 @@
 		<resource name="home" type="image" filename="home" retainaspect="1" />
 		<resource name="back" type="image" filename="back" retainaspect="1" />
 		<resource name="console" type="image" filename="console" retainaspect="1" />
+		<resource name="grid_less" type="image" filename="grid_less" retainaspect="1" />
+		<resource name="grid_more" type="image" filename="grid_more" retainaspect="1" />
 		<resource name="checkbox_false" type="image" filename="checkbox_false" retainaspect="1" />
 		<resource name="checkbox_false_small" type="image" filename="checkbox_false_small" retainaspect="1" />
 		<resource name="checkbox_true" type="image" filename="checkbox_true" retainaspect="1" />
@@ -167,8 +169,8 @@
 		<variable name="console_terminal_height" value="64" />
 		<variable name="close_btn_x" value="280" />
 		<variable name="pattern_x" value="60" />
-		<variable name="pattern_dot_dia" value="20" />
-		<variable name="pattern_line_w" value="8" />
+		<variable name="pattern_dot_dia" value="12" />
+		<variable name="pattern_line_w" value="4" />
 		<variable name="pattern_size" value="200" />
 	</variables>
 

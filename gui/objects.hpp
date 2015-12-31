@@ -1134,6 +1134,7 @@ public:
 	virtual int Render(void);
 	virtual int Update(void);
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
+	virtual int NotifyVarChange(const std::string& varName, const std::string& value);
 	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
 
 protected:
@@ -1141,9 +1142,10 @@ protected:
 	void ResetActiveDots();
 	void ConnectDot(int dot_idx);
 	void ConnectIntermediateDots(int dot_idx);
+	void Resize(size_t size);
 	int InDot(int x, int y);
 	bool DotUsed(int dot_idx);
-	static bool IsInRect(int x, int y, int rx, int ry, int rw, int rh);
+	std::string GeneratePassphrase();
 	void PatternDrawn();
 
 	struct Dot {
@@ -1152,8 +1154,11 @@ protected:
 		bool active;
 	};
 
-	Dot mDots[9];
-	int mConnectedDots[9];
+	std::string mSizeVar;
+	size_t mGridSize;
+
+	Dot* mDots;
+	int* mConnectedDots;
 	size_t mConnectedDotsLen;
 	int mCurLineX;
 	int mCurLineY;

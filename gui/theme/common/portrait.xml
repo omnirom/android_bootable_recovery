@@ -141,6 +141,10 @@
 			<colors line="%fileselector_linecolor%"/>
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
 		</style>
+
+		<style name="patternpassword">
+			<size name="tw_gui_pattern_grid_size" default="3"/>
+		</style>
 	</styles>
 
 	<pages>
@@ -3986,14 +3990,43 @@
 				<text>{@decrypt_data_enter_pattern=Enter Pattern.}</text>
 			</text>
 
+			<text style="text_m_fail">
+				<condition var1="tw_password_fail" var2="1"/>
+				<placement x="%center_x%" y="%row3_y%" placement="5"/>
+				<text>{@decryt_data_failed_pattern=Pattern failed, please try again!}</text>
+			</text>
+
 			<patternpassword>
-				<placement x="%pattern_x%" y="%row6_y%" w="%pattern_size%" h="%pattern_size%"/>
-				<size name="tw_pattern_grid_size" default="3"/>
+				<placement x="%pattern_x%" y="%row5_y%" w="%pattern_size%" h="%pattern_size%"/>
 				<dot color="%fileselector_linecolor%" activecolor="%accent_color%" radius="%pattern_dot_dia%"/>
 				<line color="%fileselector_linecolor%" width="%pattern_line_w%"/>
 				<data name="tw_crypto_password"/>
 				<action function="page">trydecrypt</action>
 			</patternpassword>
+
+			<button style="button_quarter_width">
+				<placement x="%indent%" y="%row19a_y%"/>
+				<text>3x3</text>
+				<action function="set">tw_gui_pattern_grid_size=3</action>
+			</button>
+
+			<button style="button_quarter_width">
+				<placement x="%btn4_col2_x%" y="%row19a_y%"/>
+				<text>4x4</text>
+				<action function="set">tw_gui_pattern_grid_size=4</action>
+			</button>
+
+			<button style="button_quarter_width">
+				<placement x="%btn4_col3_x%" y="%row19a_y%"/>
+				<text>5x5</text>
+				<action function="set">tw_gui_pattern_grid_size=5</action>
+			</button>
+
+			<button style="button_quarter_width">
+				<placement x="%btn4_col4_x%" y="%row19a_y%"/>
+				<text>6x6</text>
+				<action function="set">tw_gui_pattern_grid_size=6</action>
+			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>

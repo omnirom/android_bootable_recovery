@@ -435,6 +435,7 @@
 		<string name="decrypt_data_hdr">Decrypt Data</string>
 		<string name="decrypt_data_enter_pass"></string>
 		<string name="decryt_data_failed">Password failed, please try again!</string>
+		<string name="decryt_data_failed_pattern">Pattern failed, please try again!</string>
 		<string name="decrypt_data_enter_pattern">Enter Pattern.</string>
 		<string name="decrypt_data_trying">Trying Decryption</string>
 		<string name="term_hdr">Terminal Command</string>
