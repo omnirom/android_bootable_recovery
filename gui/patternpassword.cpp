@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include <string>
+#include <sstream>
 
 extern "C" {
 #include "../twcommon.h"
@@ -23,6 +24,11 @@ GUIPatternPassword::GUIPatternPassword(xml_node<>* node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;
+
+	// 3x3 is the default.
+	mGridSize = 3;
+	mDots = new Dot[mGridSize * mGridSize];
+	mConnectedDots = new int[mGridSize * mGridSize];
 
 	ResetActiveDots();
 	mTrackingTouch = false;
@@ -69,6 +75,14 @@ GUIPatternPassword::GUIPatternPassword(xml_node<>* node)
 	if(child)
 		mPassVar = LoadAttrString(child, "name", "");
 
+	child = FindNode(node, "size");
+	if(child) {
+		mSizeVar = LoadAttrString(child, "name", "");
+
+		// Use the configured default, if set.
+		size_t size = LoadAttrInt(child, "default", mGridSize);
+		Resize(size);
+	}
 
 	if(!mDotImage || !mDotImage->GetResource() || !mActiveDotImage || !mActiveDotImage->GetResource())
 	{
@@ -87,6 +101,9 @@ GUIPatternPassword::~GUIPatternPassword()
 	delete mActiveDotImage;
 	delete mAction;
 
+	delete[] mDots;
+	delete[] mConnectedDots;
+
 	if(mDotCircle)
 		gr_free_surface(mDotCircle);
 
@@ -98,7 +115,7 @@ void GUIPatternPassword::ResetActiveDots()
 {
 	mConnectedDotsLen = 0;
 	mCurLineX = mCurLineY = -1;
-	for(int i = 0; i < 9; ++i)
+	for(size_t i = 0; i < mGridSize * mGridSize; ++i)
 		mDots[i].active = false;
 }
 
@@ -122,17 +139,28 @@ int GUIPatternPassword::SetRenderPos(int x, int y, int w, int h)
 
 void GUIPatternPassword::CalculateDotPositions(void)
 {
-	const int step_x = (mRenderW - mDotRadius*2) / 2;
-	const int step_y = (mRenderH - mDotRadius*2) / 2;
+	const int num_gaps = mGridSize - 1;
+	const int step_x = (mRenderW - mDotRadius*2) / num_gaps;
+	const int step_y = (mRenderH - mDotRadius*2) / num_gaps;
 	int x = mRenderX;
 	int y = mRenderY;
 
-	for(int r = 0; r < 3; ++r)
+	/* Order is important for keyphrase generation:
+	 *
+	 *   0    1    2    3 ...  n-1
+	 *   n  n+1  n+2  n+3 ... 2n-1
+	 *  2n 2n+1 2n+2 2n+3 ... 3n-1
+	 *  3n 3n+1 3n+2 3n+3 ... 4n-1
+	 *   :  :    :    :
+	 *                       n*n-1
+	 */
+
+	for(size_t r = 0; r < mGridSize; ++r)
 	{
-		for(int c = 0; c < 3; ++c)
+		for(size_t c = 0; c < mGridSize; ++c)
 		{
-			mDots[3*r+c].x = x;
-			mDots[3*r+c].y = y;
+			mDots[mGridSize*r + c].x = x;
+			mDots[mGridSize*r + c].y = y;
 			x += step_x;
 		}
 		x = mRenderX;
@@ -157,7 +185,7 @@ int GUIPatternPassword::Render(void)
 		gr_line(dc.x + mDotRadius, dc.y + mDotRadius, mCurLineX, mCurLineY, mLineWidth);
 	}
 
-	for(int i = 0; i < 9; ++i) {
+	for(size_t i = 0; i < mGridSize * mGridSize; ++i) {
 		if(mDotCircle) {
 			gr_blit(mDotCircle, 0, 0, gr_get_width(mDotCircle), gr_get_height(mDotCircle), mDots[i].x, mDots[i].y);
 			if(mDots[i].active) {
@@ -185,15 +213,39 @@ int GUIPatternPassword::Update(void)
 	return res;
 }
 
-bool GUIPatternPassword::IsInRect(int x, int y, int rx, int ry, int rw, int rh)
+void GUIPatternPassword::Resize(size_t n) {
+	if(mGridSize == n)
+		return;
+
+	delete[] mDots;
+	delete[] mConnectedDots;
+
+	mGridSize = n;
+	mDots = new Dot[n*n];
+	mConnectedDots = new int[n*n];
+
+	ResetActiveDots();
+	CalculateDotPositions();
+	mTrackingTouch = false;
+	mNeedRender = true;
+}
+
+static int pow(int x, int i)
 {
-	return x >= rx && y >= ry && x <= rx+rw && y <= ry+rh;
+	while(i-- > 1)
+		x *= x;
+	return x;
+}
+
+static bool IsInCircle(int x, int y, int ox, int oy, int r)
+{
+	return pow(x - ox, 2) + pow(y - oy, 2) <= pow(r, 2);
 }
 
 int GUIPatternPassword::InDot(int x, int y)
 {
-	for(int i = 0; i < 9; ++i) {
-		if(IsInRect(x, y, mDots[i].x - mDotRadius*1.5, mDots[i].y - mDotRadius*1.5, mDotRadius*6, mDotRadius*6))
+	for(size_t i = 0; i < mGridSize * mGridSize; ++i) {
+		if(IsInCircle(x, y, mDots[i].x + mDotRadius, mDots[i].y + mDotRadius, mDotRadius*3))
 			return i;
 	}
 	return -1;
@@ -210,7 +262,7 @@ bool GUIPatternPassword::DotUsed(int dot_idx)
 
 void GUIPatternPassword::ConnectDot(int dot_idx)
 {
-	if(mConnectedDotsLen >= 9)
+	if(mConnectedDotsLen >= mGridSize * mGridSize)
 	{
 		LOGERR("mConnectedDots in GUIPatternPassword has overflown!\n");
 		return;
@@ -220,30 +272,66 @@ void GUIPatternPassword::ConnectDot(int dot_idx)
 	mDots[dot_idx].active = true;
 }
 
-void GUIPatternPassword::ConnectIntermediateDots(int dot_idx)
+void GUIPatternPassword::ConnectIntermediateDots(int next_dot_idx)
 {
 	if(mConnectedDotsLen == 0)
 		return;
 
-	const int last_dot = mConnectedDots[mConnectedDotsLen-1];
-	int mid = -1;
+	const int prev_dot_idx = mConnectedDots[mConnectedDotsLen-1];
 
-	// The line is vertical and has crossed a point in the middle
-	if(dot_idx%3 == last_dot%3 && abs(dot_idx - last_dot) > 3) {
-		mid = 3 + dot_idx%3;
-	// the line is horizontal and has crossed a point in the middle
-	} else if(dot_idx/3 == last_dot/3 && abs(dot_idx - last_dot) > 1) {
-		mid = (dot_idx/3)*3 + 1;
-	// the line is diagonal and has crossed the middle point
-	} else if((dot_idx == 0 && last_dot == 8) || (dot_idx == 8 && last_dot == 0) ||
-			(dot_idx == 2 && last_dot == 6) || (dot_idx == 6 && last_dot == 2)) {
-		mid = 4;
-	} else {
+	int px = prev_dot_idx % mGridSize;
+	int py = prev_dot_idx / mGridSize;
+
+	int nx = next_dot_idx % mGridSize;
+	int ny = next_dot_idx / mGridSize;
+
+	/*
+	 * We connect all dots that are in a straight line between the previous dot
+	 * and the next one. This is simple for 3x3, but is more complicated for
+	 * larger grids.
+	 *
+	 * Weirdly, Android doesn't do the logical thing when it comes to connecting
+	 * dots between two points. Rather than simply adding all points that lie
+	 * on the line between the start and end points, it instead only connects
+	 * dots that are adjacent in only three directions -- horizontal, vertical
+	 * and diagonal (45°).
+	 *
+	 * So we can just iterate over the correct axes, taking care to ensure that
+	 * the order in which the intermediate points are added to the pattern is
+	 * correct.
+	 */
+
+	int x = px;
+	int y = py;
+
+	int Dx = (nx > px) ? 1 : -1;
+	int Dy = (ny > py) ? 1 : -1;
+
+	// Vertical lines.
+	if(px == nx)
+		Dx = 0;
+
+	// Horizontal lines.
+	else if(py == ny)
+		Dy = 0;
+
+	// Diagonal lines (|∆x| = |∆y|).
+	else if(abs(px - nx) == abs(py - ny))
+		;
+
+	// No valid intermediate dots.
+	else
 		return;
-	}
 
-	if(!DotUsed(mid))
-		ConnectDot(mid);
+	// Iterate along axis, adding dots in the correct order.
+	while((Dy == 0 || y != ny - Dy) && (Dx == 0 || x != nx - Dx)) {
+		x += Dx;
+		y += Dy;
+
+		int idx = mGridSize * y + x;
+		if(!DotUsed(idx))
+			ConnectDot(idx);
+	}
 }
 
 int GUIPatternPassword::NotifyTouch(TOUCH_STATE state, int x, int y)
@@ -303,15 +391,65 @@ int GUIPatternPassword::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return 0;
 }
 
+int GUIPatternPassword::NotifyVarChange(const std::string& varName, const std::string& value)
+{
+	if(!isConditionTrue())
+		return 0;
+
+	if(varName == mSizeVar) {
+		Resize(atoi(value.c_str()));
+		mUpdate = true;
+	}
+	return 0;
+}
+
+std::string GUIPatternPassword::GeneratePassphrase()
+{
+	char pattern[mConnectedDotsLen];
+	for(size_t i = 0; i < mConnectedDotsLen; i++) {
+		 pattern[i] = (char) mConnectedDots[i];
+	}
+
+	std::stringstream pass;
+
+	for(size_t i = 0; i < mConnectedDotsLen; i++) {
+		int digit = pattern[i] & 0xff;
+
+		/*
+		 * Okay, rant time.
+		 * It turns out that Android and CyanogenMod have *two* separate methods
+		 * for generating passphrases from patterns. This is a legacy issue, as
+		 * Android only supports 3x3 grids, and so we need to support both.
+		 * Luckily, CyanogenMod is in the same boat as us and needs to support
+		 * Android's 3x3 encryption style.
+		 *
+		 * In order to generate a 3x3 passphrase, add 1 to each dot index
+		 * and concatenate the string representation of the integers. No
+		 * padding should be added.
+		 *
+		 * For *all* other NxN passphrases (until a 16x16 grid comes along),
+		 * they are generated by taking "%.2x" for each dot index and
+		 * concatenating the results (without adding 1).
+		 */
+
+		if(mGridSize == 3)
+			// Android (legacy) 3x3 grids.
+			pass << digit + 1;
+		else {
+			// Other NxN grids.
+			char buffer[3];
+			snprintf(buffer, 3, "%.2x", digit);
+			pass << std::string(buffer);
+		}
+	}
+
+	return pass.str();
+}
+
 void GUIPatternPassword::PatternDrawn()
 {
 	if(!mPassVar.empty() && mConnectedDotsLen > 0)
-	{
-		std::string pass;
-		for(size_t i = 0; i < mConnectedDotsLen; ++i)
-			pass += '1' + mConnectedDots[i];
-		DataManager::SetValue(mPassVar, pass);
-	}
+		DataManager::SetValue(mPassVar, GeneratePassphrase());
 
 	if(mAction)
 		mAction->doActions();

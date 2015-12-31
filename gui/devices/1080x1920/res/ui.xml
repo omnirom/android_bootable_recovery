@@ -200,14 +200,19 @@
 		<variable name="slidervalue_padding" value="30" />
 		<variable name="slidervalue_sliderw" value="15" />
 		<variable name="slidervalue_sliderh" value="90" />
-		<variable name="pattern_x" value="216" />
+		<variable name="pattern_button3_x" value="275" />
+		<variable name="pattern_button4_x" value="409" />
+		<variable name="pattern_button5_x" value="543" />
+		<variable name="pattern_button6_x" value="677" />
+		<variable name="pattern_x" value="92" />
 		<variable name="pattern_y" value="508" />
-		<variable name="pattern_width" value="648" />
+		<variable name="pattern_width" value="896" />
 		<variable name="pattern_dot_color" value="#33B5E5" />
 		<variable name="pattern_dot_color_active" value="#FFFFFF" />
 		<variable name="pattern_dot_radius" value="23" />
 		<variable name="pattern_line_color" value="#33B5E5" />
 		<variable name="pattern_line_width" value="18" />
+		<variable name="pattern_cancel_y" value="1440" />
 	</variables>
 
 	<mousecursor>
@@ -315,6 +320,40 @@
 				<resource name="progress" />
 				<speed fps="15" render="2" />
 				<loop frame="1" />
+			</object>
+		</template>
+
+		<template name="pattern_options">
+			<object type="button">
+				<placement x="%pattern_button3_x%" y="%row2_text_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>3x3</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_pattern_grid_size=3</action>
+			</object>
+
+			<object type="button">
+				<placement x="%pattern_button4_x%" y="%row2_text_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>4x4</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_pattern_grid_size=4</action>
+			</object>
+
+			<object type="button">
+				<placement x="%pattern_button5_x%" y="%row2_text_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>5x5</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_pattern_grid_size=5</action>
+			</object>
+
+			<object type="button">
+				<placement x="%pattern_button6_x%" y="%row2_text_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text>6x6</text>
+				<image resource="sort_button" />
+				<action function="set">tw_gui_pattern_grid_size=6</action>
 			</object>
 		</template>
 

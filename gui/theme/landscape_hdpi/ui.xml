@@ -206,7 +206,7 @@
 		<variable name="progress_x" value="552" />
 		<variable name="progress_text_x" value="96" />
 		<variable name="progress_text_y" value="900" />
-		<variable name="pattern_x" value="636" />
+		<variable name="pattern_x" value="180" />
 		<variable name="pattern_dot_dia" value="32" />
 		<variable name="pattern_line_w" value="12" />
 		<variable name="pattern_size" value="648" />
