@@ -27,8 +27,8 @@ extern "C" {
 #include "objects.hpp"
 #include "../data.hpp"
 
-const float SCROLLING_SPEED_DECREMENT = 0.9; // friction
-const int SCROLLING_FLOOR = 2; // minimum pixels for scrolling to stop
+#define SCROLLING_SPEED_DECREMENT 0.9f // friction
+#define SCROLLING_FLOOR 2 // minimum pixels for scrolling to stop
 
 GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 {
