@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_13ea8506",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-01-02T11:37:34Z",
+      "side": 1,
+      "message": "We should be able to use the new code unconditionally. Without actually reading the code, I assume that busybox is compatible with the standard format as documented in fstab(5).",
+      "revId": "98a691968dfbd7ad46cdb13074ba50ce4ea83b56",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
