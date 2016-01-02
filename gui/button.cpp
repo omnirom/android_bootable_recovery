@@ -85,7 +85,7 @@ GUIButton::GUIButton(xml_node<>* node)
 
 	mHighlightColor = LoadAttrColor(FindNode(node, "highlight"), "color", &hasHighlightColor);
 
-	int x, y, w, h;
+	int x = 0, y = 0, w = 0, h = 0;
 	TextPlacement = TOP_LEFT;
 	if (mButtonImg) {
 		mButtonImg->GetRenderPos(x, y, w, h);
