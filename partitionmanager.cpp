@@ -183,7 +183,11 @@ int TWPartitionManager::Write_Fstab(void) {
 	}
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Can_Be_Mounted) {
+#ifdef TW_USE_TOOLBOX
+			Line = (*iter)->Actual_Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw 0 0\n";
+#else
 			Line = (*iter)->Actual_Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw\n";
+#endif
 			fputs(Line.c_str(), fp);
 		}
 		// Handle subpartition tracking
