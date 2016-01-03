@@ -403,26 +403,19 @@ void TWFunc::htc_dumlock_reflash_recovery_to_boot(void) {
 }
 
 int TWFunc::Recursive_Mkdir(string Path) {
-	string pathCpy = Path;
-	string wholePath;
-	size_t pos = pathCpy.find("/", 2);
-
-	while (pos != string::npos)
-	{
-		wholePath = pathCpy.substr(0, pos);
-		if (!TWFunc::Path_Exists(wholePath)) {
-			if (mkdir(wholePath.c_str(), 0777)) {
-				gui_msg(Msg(msg::kError, "create_folder_strerr=Can not create '{1}' folder ({2})")(wholePath)(strerror(errno)));
+	std::vector<std::string> parts = Split_String(Path, "/", true);
+	std::string cur_path;
+	for (size_t i = 0; i < parts.size(); ++i) {
+		cur_path += "/" + parts[i];
+		if (!TWFunc::Path_Exists(cur_path)) {
+			if (mkdir(cur_path.c_str(), 0777)) {
+				gui_msg(Msg(msg::kError, "create_folder_strerr=Can not create '{1}' folder ({2})")(cur_path)(strerror(errno)));
 				return false;
 			} else {
-				tw_set_default_metadata(wholePath.c_str());
+				tw_set_default_metadata(cur_path.c_str());
 			}
 		}
-
-		pos = pathCpy.find("/", pos + 1);
 	}
-	if (mkdir(wholePath.c_str(), 0777) && errno != EEXIST)
-		return false;
 	return true;
 }
 
