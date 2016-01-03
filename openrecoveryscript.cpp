@@ -323,8 +323,8 @@ int OpenRecoveryScript::run_script_file(void) {
 				// Make directory (recursive)
 				DataManager::SetValue("tw_action_text2", gui_parse_text("{@making_dir1}"));
 				gui_msg(Msg("making_dir2=Making directory: '{1}'")(value));
-				if (TWFunc::Recursive_Mkdir(value)) {
-					gui_msg(Msg(msg::kError, "create_folder_strerr=Can not create '{1}' folder ({2}).")(value)(strerror(errno)));
+				if (!TWFunc::Recursive_Mkdir(value)) {
+					// error message already displayed by Recursive_Mkdir
 					ret_val = 1;
 				}
 			} else if (strcmp(command, "reboot") == 0) {
