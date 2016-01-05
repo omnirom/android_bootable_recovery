@@ -35,6 +35,8 @@
 		<resource name="home" type="image" filename="home" retainaspect="1" />
 		<resource name="back" type="image" filename="back" retainaspect="1" />
 		<resource name="console" type="image" filename="console" retainaspect="1" />
+		<resource name="kb_hide" type="image" filename="kb_hide" retainaspect="1" />
+		<resource name="kb_show" type="image" filename="kb_show" retainaspect="1" />
 		<resource name="checkbox_false" type="image" filename="checkbox_false" retainaspect="1" />
 		<resource name="checkbox_true" type="image" filename="checkbox_true" retainaspect="1" />
 		<resource name="radio_false" type="image" filename="radio_false" retainaspect="1" />
@@ -52,15 +54,25 @@
 		<resource name="cursor" type="image" filename="cursor" retainaspect="1" />
 
 		<resource name="backspace" type="image" filename="backspace" retainaspect="1" />
+		<resource name="backspace_terminal" type="image" filename="backspace_terminal" retainaspect="1" />
 		<resource name="enter" type="image" filename="enter" retainaspect="1" />
+		<resource name="enter_terminal" type="image" filename="enter_terminal" retainaspect="1" />
 		<resource name="shift" type="image" filename="shift" retainaspect="1" />
+		<resource name="shift_terminal" type="image" filename="shift_terminal" retainaspect="1" />
 		<resource name="shift_fill" type="image" filename="shift_fill" retainaspect="1" />
+		<resource name="shift_terminal_fill" type="image" filename="shift_terminal_fill" retainaspect="1" />
 		<resource name="space" type="image" filename="space" retainaspect="1" />
+		<resource name="space_terminal" type="image" filename="space_terminal" retainaspect="1" />
+		<resource name="kb_arrow_left" type="image" filename="kb_arrow_left" retainaspect="1" />
+		<resource name="kb_arrow_right" type="image" filename="kb_arrow_right" retainaspect="1" />
+		<resource name="kb_arrow_up" type="image" filename="kb_arrow_up" retainaspect="1" />
+		<resource name="kb_arrow_down" type="image" filename="kb_arrow_down" retainaspect="1" />
 	</resources>
 
 	<variables>
 		<variable name="tw_samsung_navbar" value="0" persist="1" />
 		<variable name="tw_navbar_button_position" value="0" persist="1" />
+		<variable name="tw_hide_kb" value="0" persist="1" />
 
 		<variable name="screen_width" value="1920" />
 		<variable name="screen_height" value="1200" />
@@ -201,6 +213,8 @@
 		<variable name="input_line_width" value="3" />
 		<variable name="console_height" value="624" />
 		<variable name="console_terminal_height" value="420" />
+		<variable name="terminal_s_height" value="520" />
+		<variable name="terminal_l_height" value="1032" />
 		<variable name="dialog_button_x" value="1176" />
 		<variable name="date_button_x" value="552" />
 		<variable name="progress_x" value="552" />
@@ -588,6 +602,67 @@
 
 			<object type="fill" color="%fileselector_linecolor%">
 				<placement x="%col1_x_left%" y="row7_y" w="%content_width%" h="input_line_width" />
+			</object>
+		</template>
+
+		<template name="keyboardterminaltemplate">
+			<object type="keyboard">
+				<condition var1="tw_hide_kb" op="=" var2="0" />
+				<placement x="0" y="%keyboard_y%" w="1920" h="512" />
+				<keymargin x="6" y="6"/>
+				<background color="#111111"/>
+				<key-alphanumeric color="#111111" font="keylabel" textcolor="#EEEEEE"/>
+				<key-other color="#111111" font="keylabel-small" textcolor="#5b5b5bff"/>
+				<longpress font="keylabel-longpress" textcolor="#5b5b5bff" x="40" y="4"/>
+				<keylabel key="0:c:8" text="Bksp" resource="backspace_terminal"/>
+				<keylabel key="0:action" text="Enter" resource="enter_terminal"/>
+				<keylabel key=" " text="Space" resource="space_terminal"/>
+				<keylabel key="0:k:29" text="Ctrl"/>
+				<keylabel key="0:c:27" text="Esc"/>
+				<keylabel key="0:c:9" text="Tab"/>
+				<keylabel key="0:k:105" text="&lt;" resource="kb_arrow_left"/>
+				<keylabel key="0:k:108" text="v" resource="kb_arrow_down"/>
+				<keylabel key="0:k:103" text="^" resource="kb_arrow_up"/>
+				<keylabel key="0:k:106" text="&gt;" resource="kb_arrow_right"/>
+				<highlight color="%highlight_color%" />
+				<capshighlight color="%highlight_color%" />
+				<ctrlhighlight color="#0090CA80" />
+				<layout1>
+					<keysize height="128" width="160" />
+					<row1 key01="160:c:27" long01=":c:3" key02="q" long02="1" key03="w" long03="2" key04="e" long04="3" key05="r" long05="4" key06="t" long06="5" key07="y" long07="6" key08="u" long08="7" key09="i" long09="8" key10="o" long10="9" key11="p" long11="0" key12="160:k:103" />
+					<row2 key01="160:c:9" key02="80:" key03="a" long03="@" key04="s" long04="#" key05="d" long05="$" key06="f" long06="%" key07="g" long07="&amp;" key08="h" long08="*" key09="j" long09="-" key10="k" long10="+" key11="l" long11="_" key12="80:" key13="160:k:105" />
+					<row3 key01="160:" key02="240:layout2" key03="z" long03="!" key04="x" long04='"' key05="c" long05="'" key06="v" long06=":" key07="b" long07=";" key08="n" long08="/" key09="m" long09="?" key10="240:c:8" key11="160:k:106" />
+					<row4 key01="160:k:29" key02="240:layout3" key03="/" key04="800: " key05="." key06="240:action" key07="160:k:108" />
+					<keylabel key="0:layout2" text="Shift" resource="shift_terminal"/>
+					<keylabel key="0:layout3" text="?123"/>
+				</layout1>
+				<layout2>
+					<keysize height="128" width="160" capslock="0" revert_layout="1"/>
+					<row1 key01="160:c:27" long01=":c:3" key02="Q" long02="1" key03="W" long03="2" key04="E" long04="3" key05="R" long05="4" key06="T" long06="5" key07="Y" long07="6" key08="U" long08="7" key09="I" long09="8" key10="O" long10="9" key11="P" long11="0" key12="160:k:103" />
+					<row2 key01="160:c:9" key02="80:" key03="A" long03="@" key04="S" long04="#" key05="D" long05="$" key06="F" long06="%" key07="G" long07="&amp;" key08="H" long08="*" key09="J" long09="-" key10="K" long10="+" key11="L" long11="_" key12="80:" key13="160:k:105" />
+					<row3 key01="160:" key02="240:layout1" key03="Z" long03="!" key04="X" long04='"' key05="C" long05="'" key06="V" long06=":" key07="B" long07=";" key08="N" long08="/" key09="M" long09="?" key10="240:c:8" key11="160:k:106" />
+					<row4 key01="160:k:29" key02="240:layout3" key03="/" key04="800: " key05="." key06="240:action" key07="160:k:108" />
+					<keylabel key="0:layout1" text="Shift" resource="shift_terminal_fill"/>
+					<keylabel key="0:layout3" text="?123"/>
+				</layout2>
+				<layout3>
+					<keysize height="128" width="160" />
+					<row1 key01="160:c:27" long01=":c:3" key02="1" key03="2" key04="3" key05="4" key06="5" key07="6" key08="7" key09="8" key10="9" key11="0" key12="160:k:103" />
+					<row2 key01="160:c:9" key02="@" key03="#" key04="$" key05="%" key06="&amp;" key07="*" key08="-" key09="+" key10="(" key11=")" key12="160:k:105" />
+					<row3 key01="160:" key02="240:layout4" key03="!" key04="160:c:34" key05="'" key06=":" key07=";" key08="/" key09="?" key10="240:c:8" key11="160:k:106" />
+					<row4 key01="160:k:29" key02="240:layout1" key03="," key04="800: " key05="." key06="240:action" key07="160:k:108" />
+					<keylabel key="0:layout1" text="ABC"/>
+					<keylabel key="0:layout4" text="~\{"/>
+				</layout3>
+				<layout4>
+					<keysize height="128" width="160" />
+					<row1 key01="160:c:27" long01=":c:3" key02="~" key03="`" key04="|" key05="160:" key06="160:" key07="160:" key08="%" key09="160:" key10="{" key11="}" key12="160:k:103" />
+					<row2 key01="160:c:9" key02="160:" key03="160:" key04="160:" key05="160:" key06="160:" key07="^" key08="_" key09="=" key10="[" key11="]" key12="160:k:105" />
+					<row3 key01="160:" key02="240:layout3" key03="160:" key04="160:" key05="160:" key06="160:" key07="\" key08="&lt;" key09="&gt;" key10="240:c:8" key11="160:k:106" />
+					<row4 key01="160:k:29" key02="240:layout1" key03="160:c:34" key04="800: " key05="." key06="240:action" key07="160:k:108" />
+					<keylabel key="0:layout1" text="ABC"/>
+					<keylabel key="0:layout3" text="?123"/>
+				</layout4>
 			</object>
 		</template>
 

@@ -3467,7 +3467,8 @@
 		<page name="terminalcommand">
 			<background color="#000000FF" />
 
-			<object type="console">
+			<object type="terminal" style="console">
+				<font resource="fixed" spacing="3" color="%text_color%" />
 				<placement x="%console_x%" y="%terminal_console_y%" w="%console_width%" h="%terminal_console_height%" />
 			</object>
 
@@ -3475,7 +3476,7 @@
 				<placement x="%input_x%" y="%terminal_text_y%" placement="0" />
 				<text>Starting Path: %tw_terminal_location%</text>
 			</object>
-
+<!--
 			<object type="input">
 				<condition var1="tw_terminal_state" var2="0" />
 				<placement x="%input_x%" y="%terminal_text_y%" w="%terminal_input_width%" h="%input_height%" placement="0" />
@@ -3485,7 +3486,7 @@
 				<restrict minlen="1" />
 				<action function="terminalcommand">%tw_terminal_command%</action>
 			</object>
-
+-->
 			<object type="button" style="mediumbutton">
 				<condition var1="tw_terminal_state" var2="1" />
 				<placement x="%filemanager_select_x%" y="%terminal_button_y%" />
