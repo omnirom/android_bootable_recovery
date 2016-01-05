@@ -29,6 +29,7 @@ LOCAL_SRC_FILES := \
     scrolllist.cpp \
     patternpassword.cpp \
     textbox.cpp \
+    terminal.cpp \
     twmsg.cpp
 
 ifneq ($(TWRP_CUSTOM_KEYBOARD),)

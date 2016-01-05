@@ -372,6 +372,14 @@ bool Page::ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates, in
 			mRenders.push_back(element);
 			mActions.push_back(element);
 		}
+		else if (type == "terminal")
+		{
+			GUITerminal* element = new GUITerminal(child);
+			mObjects.push_back(element);
+			mRenders.push_back(element);
+			mActions.push_back(element);
+			mInputs.push_back(element);
+		}
 		else if (type == "button")
 		{
 			GUIButton* element = new GUIButton(child);
