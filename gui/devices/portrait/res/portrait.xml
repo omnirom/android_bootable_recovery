@@ -2653,8 +2653,8 @@
 
 			<object type="button">
 				<placement x="%col1_x%" y="%row3_y%" />
-				<text>Terminal Command</text>
-				<action function="page">terminalfolder</action>
+				<text>Terminal Emulator</text>
+				<action function="page">terminalcommand</action>
 			</object>
 
 			<object type="button">
@@ -3450,7 +3450,7 @@
 				</actions>
 			</object>
 		</page>
-
+<!--
 		<page name="terminalfolder">
 			<object type="template" name="header" />
 
@@ -3490,14 +3490,15 @@
 
 			<object type="template" name="footer" />
 		</page>
-
+-->
 		<page name="terminalcommand">
 			<object type="template" name="header" />
 
-			<object type="console">
-				<placement x="%console_x%" y="0" w="%console_width%" h="%terminal_console_height%" />
+			<object type="terminal" style="console">
+				<font resource="fixed" spacing="3" color="%text_color%" />
+				<placement x="%console_x%" y="%terminal_console_y%" w="%console_width%" h="%terminal_console_height%" />
 			</object>
-
+<!--
 			<object type="text">
 				<placement x="%col1_x%" y="%terminal_text_y%" placement="0" />
 				<text>Starting Path: %tw_terminal_location%</text>
@@ -3512,15 +3513,37 @@
 				<restrict minlen="1" />
 				<action function="terminalcommand">%tw_terminal_command%</action>
 			</object>
-
 			<object type="button" style="mediumbutton">
 				<condition var1="tw_terminal_state" var2="1" />
 				<placement x="%filemanager_select_x%" y="%terminal_button_y%" />
 				<text>KILL</text>
 				<action function="killterminal"></action>
 			</object>
+-->
 
 			<object type="template" name="keyboardtemplate" />
+
+			<object type="keyboard">
+				<placement x="120" y="1840" w="840" h="80" />
+				<keymargin x="6" y="6"/>
+				<background color="#202020"/>
+				<key-alphanumeric color="#282828" font="keylabel" textcolor="#ffffff"/>
+				<key-other color="#242424" font="keylabel-small" textcolor="#c0c0c0"/>
+				<longpress font="keylabel-longpress" textcolor="#808080"/>
+				<keylabel key="0:k:29" text="Ctrl"/>
+				<keylabel key="0:c:27" text="Esc"/>
+				<keylabel key="0:c:9" text="Tab"/>
+				<keylabel key="0:k:105" text="&lt;"/>
+				<keylabel key="0:k:108" text="v"/>
+				<keylabel key="0:k:103" text="^"/>
+				<keylabel key="0:k:106" text="&gt;"/>
+				<highlight color="%highlight_color%" />
+				<ctrlhighlight color="#E5333380" />
+				<layout1>
+					<keysize height="80" width="120" />
+					<row1 key01="120:k:29" key02="120:c:27" long02=":c:3" key03="120:c:9" key04="120:k:105" key05="120:k:108" key06="120:k:103" key07="120:k:106"/>
+				</layout1>
+			</object>
 
 			<object type="action">
 				<touch key="home" />
@@ -3529,7 +3552,7 @@
 
 			<object type="action">
 				<touch key="back" />
-				<action function="page">terminalfolder</action>
+				<action function="page">advanced</action>
 			</object>
 		</page>
 
