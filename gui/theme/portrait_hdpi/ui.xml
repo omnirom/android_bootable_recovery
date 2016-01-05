@@ -36,6 +36,8 @@
 		<resource name="home" type="image" filename="home" retainaspect="1" />
 		<resource name="back" type="image" filename="back" retainaspect="1" />
 		<resource name="console" type="image" filename="console" retainaspect="1" />
+		<resource name="kb_hide" type="image" filename="kb_hide" retainaspect="1" />
+		<resource name="kb_show" type="image" filename="kb_show" retainaspect="1" />
 		<resource name="checkbox_false" type="image" filename="checkbox_false" retainaspect="1" />
 		<resource name="checkbox_true" type="image" filename="checkbox_true" retainaspect="1" />
 		<resource name="radio_false" type="image" filename="radio_false" retainaspect="1" />
@@ -57,10 +59,15 @@
 		<resource name="shift" type="image" filename="shift" retainaspect="1" />
 		<resource name="shift_fill" type="image" filename="shift_fill" retainaspect="1" />
 		<resource name="space" type="image" filename="space" retainaspect="1" />
+		<resource name="kb_arrow_left" type="image" filename="kb_arrow_left" retainaspect="1" />
+		<resource name="kb_arrow_right" type="image" filename="kb_arrow_right" retainaspect="1" />
+		<resource name="kb_arrow_up" type="image" filename="kb_arrow_up" retainaspect="1" />
+		<resource name="kb_arrow_down" type="image" filename="kb_arrow_down" retainaspect="1" />
 	</resources>
 
 	<variables>
 		<variable name="tw_samsung_navbar" value="0" persist="1" />
+		<variable name="tw_hide_kb" value="0" persist="1" />
 
 		<variable name="screen_width" value="1080" />
 		<variable name="screen_height" value="1920" />
@@ -156,6 +163,7 @@
 		<variable name="navbar_y" value="1792" />
 		<variable name="navbar_btn_y" value="1856" />
 		<variable name="keyboard_y" value="1149" />
+		<variable name="keyboard_terminal_y" value="1053" />
 		<variable name="background_color" value="#1A1A1A" />
 		<variable name="accent_color" value="#0090CA" />
 		<variable name="text_color" value="#EEEEEE" />
@@ -191,12 +199,12 @@
 		<variable name="slidervalue_padding" value="0" />
 		<variable name="slidervalue_sliderw" value="72" />
 		<variable name="slidervalue_sliderh" value="108" />
-		<variable name="slideout_height" value="1670" />
+		<variable name="slideout_height" value="1686" />
 		<variable name="slideout_bg_height" value="1720" />
 		<variable name="input_height" value="64" />
 		<variable name="input_line_width" value="3" />
 		<variable name="console_height" value="960" />
-		<variable name="console_terminal_height" value="576" />
+		<variable name="console_terminal_height" value="950" />
 		<variable name="dialog_button_x" value="696" />
 		<variable name="pattern_x" value="126" />
 		<variable name="pattern_dot_dia" value="32" />
@@ -531,8 +539,34 @@
 			</object>
 		</template>
 
+		<template name="keyboardterminaltemplate">
+			<object type="keyboard">
+				<condition var1="tw_hide_kb" var2="0"/>
+				<placement x="0" y="%keyboard_terminal_y%" w="%screen_width%" h="96" />
+				<keymargin x="0" y="0"/>
+				<background color="#111111"/>
+				<key-alphanumeric color="#111111" font="keylabel" textcolor="#EEEEEE"/>
+				<key-other color="#111111" font="keylabel-small" textcolor="#5b5b5bff"/>
+				<longpress font="keylabel-longpress" textcolor="#5b5b5bff" x="12" y="0"/>
+				<keylabel key="0:k:29" text="Ctrl"/>
+				<keylabel key="0:c:27" text="Esc"/>
+				<keylabel key="0:c:9" text="Tab"/>
+				<keylabel key="0:k:105" text="&lt;" resource="kb_arrow_left"/>
+				<keylabel key="0:k:108" text="v" resource="kb_arrow_down"/>
+				<keylabel key="0:k:103" text="^" resource="kb_arrow_up"/>
+				<keylabel key="0:k:106" text="&gt;" resource="kb_arrow_right"/>
+				<highlight color="%highlight_color%" />
+				<ctrlhighlight color="#0090CA80" />
+				<layout1>
+					<keysize height="96" width="154" />
+					<row1 key01="155:k:29" key02="155:c:27" long02=":c:3" key03="154:c:9" key04="154:k:105" key05="154:k:108" key06="154:k:103" key07="154:k:106"/>
+				</layout1>
+			</object>
+		</template>
+
 		<template name="keyboardtemplate">
 			<object type="keyboard">
+				<condition var1="tw_hide_kb" var2="0"/>
 				<placement x="0" y="%keyboard_y%" w="1080" h="644" />
 				<keymargin x="8" y="8"/>
 				<background color="#111111"/>

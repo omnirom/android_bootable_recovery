@@ -46,6 +46,8 @@
 		<resource name="home" type="image" filename="home" retainaspect="1" />
 		<resource name="back" type="image" filename="back" retainaspect="1" />
 		<resource name="console" type="image" filename="console" retainaspect="1" />
+		<resource name="kb_hide" type="image" filename="kb_hide" retainaspect="1" />
+		<resource name="kb_show" type="image" filename="kb_show" retainaspect="1" />
 		<resource name="grid_less" type="image" filename="grid_less" retainaspect="1" />
 		<resource name="grid_more" type="image" filename="grid_more" retainaspect="1" />
 		<resource name="checkbox_false" type="image" filename="checkbox_false" retainaspect="1" />
@@ -67,9 +69,15 @@
 		<resource name="shift_fill" type="image" filename="shift_fill" retainaspect="1" />
 		<resource name="space" type="image" filename="space" retainaspect="1" />
 		<resource name="close" type="image" filename="close" retainaspect="1" />
+		<resource name="kb_arrow_left" type="image" filename="kb_arrow_left" retainaspect="1" />
+		<resource name="kb_arrow_right" type="image" filename="kb_arrow_right" retainaspect="1" />
+		<resource name="kb_arrow_up" type="image" filename="kb_arrow_up" retainaspect="1" />
+		<resource name="kb_arrow_down" type="image" filename="kb_arrow_down" retainaspect="1" />
 	</resources>
 
 	<variables>
+		<variable name="tw_hide_kb" value="0" persist="1" />
+
 		<variable name="screen_width" value="320" />
 		<variable name="screen_half_width" value="160" />
 		<variable name="screen_height" value="320" />
@@ -128,6 +136,7 @@
 		<variable name="navbar_y" value="268" />
 		<variable name="navbar_btn_y" value="294" />
 		<variable name="keyboard_y" value="124" />
+		<variable name="keyboard_terminal_y" value="100" />
 		<variable name="background_color" value="#1A1A1A" />
 		<variable name="accent_color" value="#0090CA" />
 		<variable name="text_color" value="#EEEEEE" />
@@ -166,7 +175,8 @@
 		<variable name="input_line_width" value="1" />
 		<variable name="input_line_console" value="272" />
 		<variable name="console_height" value="152" />
-		<variable name="console_terminal_height" value="64" />
+		<variable name="console_terminal_s_height" value="100" />
+		<variable name="console_terminal_l_height" value="268" />
 		<variable name="close_btn_x" value="280" />
 		<variable name="pattern_x" value="60" />
 		<variable name="pattern_dot_dia" value="12" />
@@ -301,8 +311,34 @@
 			</object>
 		</template>
 
+		<template name="keyboardterminaltemplate">
+			<object type="keyboard">
+				<condition var1="tw_hide_kb" var2="0"/>
+				<placement x="0" y="%keyboard_terminal_y%" w="%screen_width%" h="24" />
+				<keymargin x="0" y="0"/>
+				<background color="#111111"/>
+				<key-alphanumeric color="#111111" font="keylabel" textcolor="#EEEEEE"/>
+				<key-other color="#111111" font="keylabel-small" textcolor="#5b5b5bff"/>
+				<longpress font="keylabel-longpress" textcolor="#5b5b5bff" x="0" y="0"/>
+				<keylabel key="0:k:29" text="Ctrl"/>
+				<keylabel key="0:c:27" text="Esc"/>
+				<keylabel key="0:c:9" text="Tab"/>
+				<keylabel key="0:k:105" text="&lt;" resource="kb_arrow_left"/>
+				<keylabel key="0:k:108" text="v" resource="kb_arrow_down"/>
+				<keylabel key="0:k:103" text="^" resource="kb_arrow_up"/>
+				<keylabel key="0:k:106" text="&gt;" resource="kb_arrow_right"/>
+				<highlight color="%highlight_color%" />
+				<ctrlhighlight color="#0090CA80" />
+				<layout1>
+					<keysize height="24" width="44" />
+					<row1 key01="48:k:29" key02="48:c:27" long02=":c:3" key03="48:c:9" key04="44:k:105" key05="44:k:108" key06="44:k:103" key07="44:k:106"/>
+				</layout1>
+			</object>
+		</template>
+
 		<template name="keyboardtemplate">
 			<object type="keyboard">
+				<condition var1="tw_hide_kb" var2="0"/>
 				<placement x="0" y="%keyboard_y%" w="320" h="144" />
 				<keymargin x="2" y="2"/>
 				<background color="#111111"/>
