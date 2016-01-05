@@ -54,7 +54,7 @@
                       (((x) & 0xFF00000000000000ULL) >> 56))
 #endif
 
-//#ifndef htobe16
+#ifndef htobe16
 //# if !defined(WORDS_BIGENDIAN)
 //#  define htobe16(x) bswap_16 (x)
 #  define htole16(x) (x)
@@ -83,8 +83,8 @@
 #  define be64toh(x) (x)
 #  define le64toh(x) bswap_64 (x)
 # endif
-#endif
 */
+#endif
 /*
  * Byte swab macros (based on linux/byteorder/swab.h)
  */
