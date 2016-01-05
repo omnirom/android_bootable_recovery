@@ -2693,7 +2693,7 @@
 
 			<listbox style="scrolllist">
 				<placement x="%col1_x_left%" y="%row2_header_y%" w="%content_width%" h="%partitionlist_wipe_height%"/>
-				<listitem name="{@retore_enable_md5_chk=Enable MD5 Verification of Backup Files}">
+				<listitem name="{@restore_enable_md5_chk=Enable MD5 Verification of Backup Files}">
 					<data variable="tw_skip_md5_check"/>
 				</listitem>
 			</listbox>
@@ -2858,7 +2858,7 @@
 
 			<listbox style="listbox_options">
 				<placement x="%col1_x_right%" y="%row4a_y%" w="%content_half_width%" h="80"/>
-				<listitem name="{@retore_enable_md5_chk=Enable MD5 Verification of Backup Files}">
+				<listitem name="{@restore_enable_md5_chk=Enable MD5 Verification of Backup Files}">
 					<data variable="tw_skip_md5_check"/>
 				</listitem>
 			</listbox>
@@ -2916,7 +2916,7 @@
 				<condition var1="tw_operation_state" var2="1"/>
 				<actions>
 					<action function="set">tw_back=restore</action>
-					<action function="set">tw_complete_text1={@restore_complete=Restore Complete}</action>
+					<action function="set">tw_complete_text1={@restore_completed=Restore Complete}</action>
 					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_complete</action>
 				</actions>
@@ -3394,7 +3394,7 @@
 				<listitem name="{@skip_md5_backup_chk=Skip MD5 generation during backup}">
 					<data variable="tw_skip_md5_generate"/>
 				</listitem>
-				<listitem name="{@retore_enable_md5_chk=Enable MD5 verification of backup files}">
+				<listitem name="{@restore_enable_md5_chk=Enable MD5 verification of backup files}">
 					<data variable="tw_skip_md5_check"/>
 				</listitem>
 				<listitem name="{@use24clock_chk=Use 24-hour clock}">

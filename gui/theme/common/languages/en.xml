@@ -237,7 +237,8 @@
 		<string name="restore_try_decrypt_s">Trying Decryption</string>
 		<string name="restore_backup_date">Backup made on %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Select Partitions to Restore:</string>
-		<string name="retore_enable_md5_chk">Enable MD5 Verification of Backup Files</string>
+		<string name="restore_enable_md5_chk">Enable MD5 Verification of Backup Files</string>
+		<string name="restore_completed">Restore Complete</string>
 		<string name="swipe_restore">Swipe to Restore</string>
 		<string name="swipe_restore_s">   Restore</string>
 		<string name="rename_backup_hdr">Rename Backup</string>
