@@ -35,31 +35,14 @@ HardwareKeyboard::~HardwareKeyboard()
 static int TranslateKeyCode(int key_code)
 {
 	switch (key_code) {
-		case KEY_HOMEPAGE: // Home key on Asus Transformer hardware keyboard
-			return KEY_HOME;
 		case KEY_SLEEP: // Lock key on Asus Transformer hardware keyboard
 			return KEY_POWER;
 	}
 	return key_code;
 }
 
-int HardwareKeyboard::KeyDown(int key_code)
+static int KeyCodeToChar(int key_code, bool shiftkey, bool ctrlkey)
 {
-#ifdef _EVENT_LOGGING
-	LOGE("HardwareKeyboard::KeyDown %i\n", key_code);
-#endif
-	key_code = TranslateKeyCode(key_code);
-
-	// determine if any Shift key is held down
-	bool shiftkey = false;
-	std::set<int>::iterator it = mPressedKeys.find(KEY_LEFTSHIFT);
-	if (it == mPressedKeys.end())
-		it = mPressedKeys.find(KEY_RIGHTSHIFT);
-	if (it != mPressedKeys.end())
-		shiftkey = true;
-
-	mPressedKeys.insert(key_code);
-
 	int keyboard = -1;
 
 	switch (key_code) {
@@ -285,6 +268,9 @@ int HardwareKeyboard::KeyDown(int key_code)
 		case KEY_BACKSPACE:
 			keyboard = KEYBOARD_BACKSPACE;
 			break;
+		case KEY_TAB:
+			keyboard = KEYBOARD_TAB;
+			break;
 		case KEY_ENTER:
 			keyboard = KEYBOARD_ACTION;
 			break;
@@ -354,18 +340,6 @@ int HardwareKeyboard::KeyDown(int key_code)
 			else
 				keyboard = '\'';
 			break;
-		case KEY_UP: // Up arrow
-			keyboard = KEYBOARD_ARROW_UP;
-			break;
-		case KEY_DOWN: // Down arrow
-			keyboard = KEYBOARD_ARROW_DOWN;
-			break;
-		case KEY_LEFT: // Left arrow
-			keyboard = KEYBOARD_ARROW_LEFT;
-			break;
-		case KEY_RIGHT: // Right arrow
-			keyboard = KEYBOARD_ARROW_RIGHT;
-			break;
 
 #ifdef _EVENT_LOGGING
 		default:
@@ -373,14 +347,44 @@ int HardwareKeyboard::KeyDown(int key_code)
 			break;
 #endif
 	}
-	if (keyboard != -1) {
-		mLastKeyChar = keyboard;
-		// NotifyKeyboard means: "report character to input widget". KEYBOARD_* codes are special, others are ASCII chars.
-		if (!PageManager::NotifyKeyboard(keyboard))
+	if (ctrlkey)
+	{
+		if (keyboard >= 96)
+			keyboard -= 96;
+		else
+			keyboard = -1;
+	}
+	return keyboard;
+}
+
+bool HardwareKeyboard::IsKeyDown(int key_code)
+{
+	std::set<int>::iterator it = mPressedKeys.find(key_code);
+	return (it != mPressedKeys.end());
+}
+
+int HardwareKeyboard::KeyDown(int key_code)
+{
+#ifdef _EVENT_LOGGING
+	LOGE("HardwareKeyboard::KeyDown %i\n", key_code);
+#endif
+	key_code = TranslateKeyCode(key_code);
+	mPressedKeys.insert(key_code);
+
+	bool ctrlkey = IsKeyDown(KEY_LEFTCTRL) || IsKeyDown(KEY_RIGHTCTRL);
+	bool shiftkey = IsKeyDown(KEY_LEFTSHIFT) || IsKeyDown(KEY_RIGHTSHIFT);
+
+	int ch = KeyCodeToChar(key_code, shiftkey, ctrlkey);
+
+	if (ch != -1) {
+		mLastKeyChar = ch;
+		if (!PageManager::NotifyCharInput(ch))
 			return 1;  // Return 1 to enable key repeat
 	} else {
 		mLastKeyChar = 0;
-		PageManager::NotifyKey(key_code, true);
+		mLastKey = key_code;
+		if (!PageManager::NotifyKey(key_code, true))
+			return 1;  // Return 1 to enable key repeat
 	}
 	return 0;
 }
@@ -405,7 +409,9 @@ int HardwareKeyboard::KeyRepeat()
 	LOGE("HardwareKeyboard::KeyRepeat: %i\n", mLastKeyChar);
 #endif
 	if (mLastKeyChar)
-		PageManager::NotifyKeyboard(mLastKeyChar);
+		PageManager::NotifyCharInput(mLastKeyChar);
+	else if (mLastKey)
+		PageManager::NotifyKey(mLastKey, true);
 	return 0;
 }
 

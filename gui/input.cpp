@@ -469,7 +469,7 @@ int GUIInput::NotifyTouch(TOUCH_STATE state, int x, int y)
 		if (GetSelection(x, y) >= 0) {
 			// When changing focus, we don't scroll or change the cursor location
 			PageManager::SetKeyBoardFocus(0);
-			PageManager::NotifyKeyboard(0);
+			PageManager::NotifyCharInput(0);
 			SetInputFocus(1);
 			DrawCursor = true;
 			mRendered = false;
@@ -561,7 +561,66 @@ int GUIInput::NotifyVarChange(const std::string& varName, const std::string& val
 	return 0;
 }
 
-int GUIInput::NotifyKeyboard(int key)
+int GUIInput::NotifyKey(int key, bool down)
+{
+	if (!HasInputFocus || !down)
+		return 1;
+
+	string variableValue;
+	switch (key)
+	{
+		case KEY_LEFT:
+			if (mCursorLocation == 0 && skipChars == 0)
+				return 0; // we're already at the beginning
+			if (mCursorLocation == -1) {
+				DataManager::GetValue(mVariable, variableValue);
+				if (variableValue.size() == 0)
+					return 0;
+				mCursorLocation = variableValue.size() - skipChars - 1;
+			} else if (mCursorLocation == 0) {
+				skipChars--;
+				HandleTextLocation(-1002);
+			} else {
+				mCursorLocation--;
+				HandleTextLocation(-1002);
+			}
+			mRendered = false;
+			return 0;
+
+		case KEY_RIGHT:
+			if (mCursorLocation == -1)
+				return 0; // we're already at the end
+			mCursorLocation++;
+			DataManager::GetValue(mVariable, variableValue);
+			if (variableValue.size() <= mCursorLocation + skipChars)
+				mCursorLocation = -1;
+			HandleTextLocation(-1001);
+			mRendered = false;
+			return 0;
+
+		case KEY_HOME:
+		case KEY_UP:
+			DataManager::GetValue(mVariable, variableValue);
+			if (variableValue.size() == 0)
+				return 0;
+			mCursorLocation = 0;
+			skipChars = 0;
+			mRendered = false;
+			HandleTextLocation(-1002);
+			return 0;
+
+		case KEY_END:
+		case KEY_DOWN:
+			mCursorLocation = -1;
+			mRendered = false;
+			HandleTextLocation(-1003);
+			return 0;
+	}
+
+	return 1;
+}
+
+int GUIInput::NotifyCharInput(int key)
 {
 	string variableValue;
 
@@ -617,48 +676,7 @@ int GUIInput::NotifyKeyboard(int key)
 			isLocalChange = false;
 			mRendered = false;
 			return 0;
-		} else if (key == KEYBOARD_ARROW_LEFT) {
-			if (mCursorLocation == 0 && skipChars == 0)
-				return 0; // we're already at the beginning
-			if (mCursorLocation == -1) {
-				DataManager::GetValue(mVariable, variableValue);
-				if (variableValue.size() == 0)
-					return 0;
-				mCursorLocation = variableValue.size() - skipChars - 1;
-			} else if (mCursorLocation == 0) {
-				skipChars--;
-				HandleTextLocation(-1002);
-			} else {
-				mCursorLocation--;
-				HandleTextLocation(-1002);
-			}
-			mRendered = false;
-			return 0;
-		} else if (key == KEYBOARD_ARROW_RIGHT) {
-			if (mCursorLocation == -1)
-				return 0; // we're already at the end
-			mCursorLocation++;
-			DataManager::GetValue(mVariable, variableValue);
-			if (variableValue.size() <= mCursorLocation + skipChars)
-				mCursorLocation = -1;
-			HandleTextLocation(-1001);
-			mRendered = false;
-			return 0;
-		} else if (key == KEYBOARD_HOME || key == KEYBOARD_ARROW_UP) {
-			DataManager::GetValue(mVariable, variableValue);
-			if (variableValue.size() == 0)
-				return 0;
-			mCursorLocation = 0;
-			skipChars = 0;
-			mRendered = false;
-			HandleTextLocation(-1002);
-			return 0;
-		} else if (key == KEYBOARD_END || key == KEYBOARD_ARROW_DOWN) {
-			mCursorLocation = -1;
-			mRendered = false;
-			HandleTextLocation(-1003);
-			return 0;
-		} else if (key < KEYBOARD_SPECIAL_KEYS && key > 0) {
+		} else if (key >= 32) {
 			// Regular key
 			if (HasAllowed && AllowedList.find((char)key) == string::npos) {
 				return 0;

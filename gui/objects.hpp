@@ -103,10 +103,8 @@ public:
 	//  Return 0 on success (and consume key), >0 to pass key to next handler, and <0 on error
 	virtual int NotifyKey(int key __unused, bool down __unused) { return 1; }
 
-	// GetRenderPos - Returns the current position of the object
 	virtual int GetActionPos(int& x, int& y, int& w, int& h) { x = mActionX; y = mActionY; w = mActionW; h = mActionH; return 0; }
 
-	// SetRenderPos - Update the position of the object
 	//  Return 0 on success, <0 on error
 	virtual int SetActionPos(int x, int y, int w = 0, int h = 0);
 
@@ -166,9 +164,9 @@ public:
 	virtual ~InputObject() {}
 
 public:
-	// NotifyKeyboard - Notify of keyboard input
+	// NotifyCharInput - Notify of character input (usually from the onscreen or hardware keyboard)
 	//  Return 0 on success (and consume key), >0 to pass key to next handler, and <0 on error
-	virtual int NotifyKeyboard(int key __unused) { return 1; }
+	virtual int NotifyCharInput(int ch __unused) { return 1; }
 
 	virtual int SetInputFocus(int focus) { HasInputFocus = focus; return 1; }
 
@@ -856,18 +854,13 @@ protected:
 	int sUpdate;
 };
 
-#define KEYBOARD_ACTION 253
-#define KEYBOARD_LAYOUT 254
-#define KEYBOARD_SWIPE_LEFT 252
-#define KEYBOARD_SWIPE_RIGHT 251
-#define KEYBOARD_ARROW_LEFT 250
-#define KEYBOARD_ARROW_RIGHT 249
-#define KEYBOARD_HOME 248
-#define KEYBOARD_END 247
-#define KEYBOARD_ARROW_UP 246
-#define KEYBOARD_ARROW_DOWN 245
-#define KEYBOARD_SPECIAL_KEYS 245
-#define KEYBOARD_BACKSPACE 8
+// these are ASCII codes reported via NotifyCharInput
+// other special keys (arrows etc.) are reported via NotifyKey
+#define KEYBOARD_ACTION 13	// CR
+#define KEYBOARD_BACKSPACE 8	// Backspace
+#define KEYBOARD_TAB 9		// Tab
+#define KEYBOARD_SWIPE_LEFT 21	// Ctrl+U to delete line, same as in readline (used by shell etc.)
+#define KEYBOARD_SWIPE_RIGHT 11	// Ctrl+K, same as in readline
 
 class GUIKeyboard : public GUIObject, public RenderObject, public ActionObject
 {
@@ -880,18 +873,20 @@ public:
 	virtual int Update(void);
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
 	virtual int SetRenderPos(int x, int y, int w = 0, int h = 0);
+	virtual void SetPageFocus(int inFocus);
 
 protected:
 	struct Key
 	{
-		unsigned char key; // ASCII code or one of the special KEYBOARD_* codes above
-		unsigned char longpresskey;
+		int key; // positive: ASCII/Unicode code; negative: Linux key code (KEY_*)
+		int longpresskey;
 		int end_x;
 		int layout;
 	};
 	int ParseKey(const char* keyinfo, Key& key, int& Xindex, int keyWidth, bool longpress);
 	void LoadKeyLabels(xml_node<>* parent, int layout);
 	void DrawKey(Key& key, int keyX, int keyY, int keyW, int keyH);
+	int KeyCharToCtrlChar(int key);
 
 	enum {
 		MAX_KEYBOARD_LAYOUTS = 5,
@@ -901,7 +896,7 @@ protected:
 	struct Layout
 	{
 		ImageResource* keyboardImg;
-		struct Key keys[MAX_KEYBOARD_ROWS][MAX_KEYBOARD_KEYS];
+		Key keys[MAX_KEYBOARD_ROWS][MAX_KEYBOARD_KEYS];
 		int row_end_y[MAX_KEYBOARD_ROWS];
 		bool is_caps;
 		int revert_layout;
@@ -910,7 +905,7 @@ protected:
 
 	struct KeyLabel
 	{
-		unsigned char key; // same as in struct Key
+		int key; // same as in struct Key
 		int layout_from; // 1-based; 0 for labels that apply to all layouts
 		int layout_to; // same as Key.layout
 		string text; // key label text
@@ -925,11 +920,13 @@ protected:
 	std::string mVariable;
 	int currentLayout;
 	bool CapsLockOn;
+	static bool CtrlActive; // all keyboards share a common Control key state so that the Control key can be on a separate keyboard instance
 	int highlightRenderCount;
 	Key* currentKey;
-	bool hasHighlight, hasCapsHighlight;
+	bool hasHighlight, hasCapsHighlight, hasCtrlHighlight;
 	COLOR mHighlightColor;
 	COLOR mCapsHighlightColor;
+	COLOR mCtrlHighlightColor;
 	COLOR mFontColor; // for centered key labels
 	COLOR mFontColorSmall; // for centered key labels
 	FontResource* mFont; // for main key labels
@@ -966,7 +963,8 @@ public:
 	//  Return 0 on success, >0 to ignore remainder of touch, and <0 on error
 	virtual int NotifyTouch(TOUCH_STATE state, int x, int y);
 
-	virtual int NotifyKeyboard(int key);
+	virtual int NotifyKey(int key, bool down);
+	virtual int NotifyCharInput(int ch);
 
 protected:
 	virtual int GetSelection(int x, int y);
@@ -1024,7 +1022,9 @@ public:
 	// called by multi-key actions to suppress key-release notifications
 	void ConsumeKeyRelease(int key);
 
+	bool IsKeyDown(int key_code);
 private:
+	int mLastKey;
 	int mLastKeyChar;
 	std::set<int> mPressedKeys;
 };
