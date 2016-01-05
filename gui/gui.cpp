@@ -80,6 +80,9 @@ static float scale_theme_h = 1;
 // Needed by pages.cpp too
 int gGuiRunning = 0;
 
+int g_pty_fd = -1;  // set by terminal on init
+void terminal_pty_read();
+
 static int gRecorder = -1;
 
 extern "C" void gr_write_frame_to_file(int fd);
@@ -640,6 +643,17 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 	for (;;)
 	{
 		loopTimer(input_timeout_ms);
+		if (g_pty_fd > 0) {
+			// TODO: this is not nice, we should have one central select for input, pty, and ors
+			FD_ZERO(&fdset);
+			FD_SET(g_pty_fd, &fdset);
+			timeout.tv_sec = 0;
+			timeout.tv_usec = 1;
+			has_data = select(g_pty_fd+1, &fdset, NULL, NULL, &timeout);
+			if (has_data > 0) {
+				terminal_pty_read();
+			}
+		}
 #ifndef TW_OEM_BUILD
 		if (ors_read_fd > 0 && !orsout) { // orsout is non-NULL if a command is still running
 			FD_ZERO(&fdset);
