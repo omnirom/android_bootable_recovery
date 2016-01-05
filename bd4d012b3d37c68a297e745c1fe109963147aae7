@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_53f92d48",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 861,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-01-05T09:41:12Z",
+      "side": 1,
+      "message": "If reading from the file failed for some reason, we might get maxValInt \u003d\u003d 0 in line 882 and crash with a division by zero in line 884. So instead of \"else\", check here if maxBrightness has a usable value, and if not, fall back into setting the default.",
+      "revId": "bd4d012b3d37c68a297e745c1fe109963147aae7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
