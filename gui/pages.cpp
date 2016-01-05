@@ -592,15 +592,13 @@ int Page::NotifyKey(int key, bool down)
 {
 	std::vector<ActionObject*>::reverse_iterator iter;
 
-	// Don't try to handle a lack of handlers
-	if (mActions.size() == 0)
-		return 1;
-
 	int ret = 1;
 	// We work backwards, from top-most element to bottom-most element
 	for (iter = mActions.rbegin(); iter != mActions.rend(); iter++)
 	{
 		ret = (*iter)->NotifyKey(key, down);
+		if (ret == 0)
+			return 0;
 		if (ret < 0) {
 			LOGERR("An action handler has returned an error\n");
 			ret = 1;
@@ -609,22 +607,18 @@ int Page::NotifyKey(int key, bool down)
 	return ret;
 }
 
-int Page::NotifyKeyboard(int key)
+int Page::NotifyCharInput(int ch)
 {
 	std::vector<InputObject*>::reverse_iterator iter;
-
-	// Don't try to handle a lack of handlers
-	if (mInputs.size() == 0)
-		return 1;
 
 	// We work backwards, from top-most element to bottom-most element
 	for (iter = mInputs.rbegin(); iter != mInputs.rend(); iter++)
 	{
-		int ret = (*iter)->NotifyKeyboard(key);
+		int ret = (*iter)->NotifyCharInput(ch);
 		if (ret == 0)
 			return 0;
 		else if (ret < 0)
-			LOGERR("A keyboard handler has returned an error");
+			LOGERR("A char input handler has returned an error");
 	}
 	return 1;
 }
@@ -632,10 +626,6 @@ int Page::NotifyKeyboard(int key)
 int Page::SetKeyBoardFocus(int inFocus)
 {
 	std::vector<InputObject*>::reverse_iterator iter;
-
-	// Don't try to handle a lack of handlers
-	if (mInputs.size() == 0)
-		return 1;
 
 	// We work backwards, from top-most element to bottom-most element
 	for (iter = mInputs.rbegin(); iter != mInputs.rend(); iter++)
@@ -1163,12 +1153,12 @@ int PageSet::NotifyKey(int key, bool down)
 	return (mCurrentPage ? mCurrentPage->NotifyKey(key, down) : -1);
 }
 
-int PageSet::NotifyKeyboard(int key)
+int PageSet::NotifyCharInput(int ch)
 {
 	if (!mOverlays.empty())
-		return mOverlays.back()->NotifyKeyboard(key);
+		return mOverlays.back()->NotifyCharInput(ch);
 
-	return (mCurrentPage ? mCurrentPage->NotifyKeyboard(key) : -1);
+	return (mCurrentPage ? mCurrentPage->NotifyCharInput(ch) : -1);
 }
 
 int PageSet::SetKeyBoardFocus(int inFocus)
@@ -1662,9 +1652,9 @@ int PageManager::NotifyKey(int key, bool down)
 	return (mCurrentSet ? mCurrentSet->NotifyKey(key, down) : -1);
 }
 
-int PageManager::NotifyKeyboard(int key)
+int PageManager::NotifyCharInput(int ch)
 {
-	return (mCurrentSet ? mCurrentSet->NotifyKeyboard(key) : -1);
+	return (mCurrentSet ? mCurrentSet->NotifyCharInput(ch) : -1);
 }
 
 int PageManager::SetKeyBoardFocus(int inFocus)

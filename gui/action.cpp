@@ -292,12 +292,9 @@ int GUIAction::NotifyTouch(TOUCH_STATE state __unused, int x __unused, int y __u
 
 int GUIAction::NotifyKey(int key, bool down)
 {
-	if (mKeys.empty())
-		return 0;
-
 	std::map<int, bool>::iterator itr = mKeys.find(key);
 	if(itr == mKeys.end())
-		return 0;
+		return 1;
 
 	bool prevState = itr->second;
 	itr->second = down;
@@ -312,7 +309,7 @@ int GUIAction::NotifyKey(int key, bool down)
 	} else if(down) {
 		for(itr = mKeys.begin(); itr != mKeys.end(); ++itr) {
 			if(!itr->second)
-				return 0;
+				return 1;
 		}
 
 		// Passed, all req buttons are pressed, reset them and consume release events
@@ -1727,7 +1724,7 @@ int GUIAction::twcmd(std::string arg)
 
 int GUIAction::getKeyByName(std::string key)
 {
-	if (key == "home")			return KEY_HOME;
+	if (key == "home")		return KEY_HOMEPAGE;  // note: KEY_HOME is cursor movement (like KEY_END)
 	else if (key == "menu")		return KEY_MENU;
 	else if (key == "back")	 	return KEY_BACK;
 	else if (key == "search")	return KEY_SEARCH;
