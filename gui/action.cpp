@@ -1157,7 +1157,7 @@ int GUIAction::nandroid(std::string arg)
 			DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
 			string auto_gen = gui_lookup("auto_gen", "(Auto Generate)");
 			string curr_date = gui_lookup("curr_date", "(Current Date)");
-			if (Backup_Name == "(Auto Generate)" || Backup_Name == "(Current Date)" || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0) {
+			if (Backup_Name == auto_gen || Backup_Name == curr_date || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0) {
 				ret = PartitionManager.Run_Backup();
 			}
 			else {

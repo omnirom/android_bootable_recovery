@@ -1343,6 +1343,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	mReloadTheme = false;
 	mStartPage = startpage;
 
+	DataManager::ReadSettingsFile();
 	// Open the XML file
 	LOGINFO("Loading package: %s (%s)\n", name.c_str(), package.c_str());
 	if (package.size() > 4 && package.substr(package.size() - 4) != ".zip")
@@ -1351,7 +1352,8 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		tw_x_offset = TW_X_OFFSET;
 		tw_y_offset = TW_Y_OFFSET;
 		LoadLanguageList(NULL);
-		languageFile = LoadFileToBuffer(TWRES "languages/en.xml", NULL);
+		LOGINFO("CURR LANG: %s\n", DataManager::GetStrValue("tw_language").c_str());
+		languageFile = LoadFileToBuffer(TWRES "languages/" + DataManager::GetStrValue("tw_language") + ".xml", NULL);
 	}
 	else
 	{
@@ -1372,7 +1374,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		pZip = &zip;
 		package = "ui.xml";
 		LoadLanguageList(pZip);
-		languageFile = LoadFileToBuffer("languages/en.xml", pZip);
+		languageFile = LoadFileToBuffer("languages/" + DataManager::GetStrValue("tw_language") + ".xml", pZip);
 	}
 
 	xmlFile = LoadFileToBuffer(package, pZip);
@@ -1524,7 +1526,7 @@ int PageManager::RunReload() {
 		}
 	}
 	if (ret_val == 0) {
-		if (DataManager::GetStrValue("tw_language") != "en.xml") {
+		if (DataManager::GetStrValue("tw_language") != "en") {
 			LOGINFO("Loading language '%s'\n", DataManager::GetStrValue("tw_language").c_str());
 			LoadLanguage(DataManager::GetStrValue("tw_language"));
 		}

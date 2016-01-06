@@ -188,6 +188,7 @@
 				<actions>
 					<action function="set">tw_clear_destination=main2</action>
 					<action function="page">clear_vars</action>
+					<action function="set">tw_backup_name={@auto_generate=(Auto Generate)}</action>
 				</actions>
 			</action>
 		</page>
