@@ -19,6 +19,9 @@
 
 void RegisterInstallFunctions();
 
+// uiPrintf function prints msg to screen as well as logs
+void uiPrintf(State* state, const char* format, ...);
+
 static int make_parents(char* name);
 
 #endif
