@@ -42,6 +42,7 @@
 
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
+#include "install.h"
 #include "mincrypt/sha.h"
 #include "minzip/Hash.h"
 #include "print_sha1.h"
@@ -1650,6 +1651,59 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
     return StringValue(strdup(print_sha1(digest).c_str()));
 }
 
+// This function checks if a device has been remounted R/W prior to an incremental
+// OTA update. This is an common cause of update abortion. The function reads the
+// 1st block of each partition and check for mounting time/count. It return string "t"
+// if executes successfully and an empty string otherwise.
+
+Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[]) {
+    Value* arg_filename;
+
+    if (ReadValueArgs(state, argv, 1, &arg_filename) < 0) {
+        return nullptr;
+    }
+    std::unique_ptr<Value, decltype(&FreeValue)> filename(arg_filename, FreeValue);
+
+    if (filename->type != VAL_STRING) {
+        ErrorAbort(state, "filename argument to %s must be string", name);
+        return StringValue(strdup(""));
+    }
+
+    int fd = open(arg_filename->data, O_RDONLY);
+    unique_fd fd_holder(fd);
+    if (fd == -1) {
+        ErrorAbort(state, "open \"%s\" failed: %s", arg_filename->data, strerror(errno));
+        return StringValue(strdup(""));
+    }
+
+    RangeSet blk0 {1 /*count*/, 1/*size*/, std::vector<size_t> {0, 1}/*position*/};
+    std::vector<uint8_t> block0_buffer(BLOCKSIZE);
+
+    if (ReadBlocks(blk0, block0_buffer, fd) == -1) {
+        ErrorAbort(state, "failed to read %s: %s", arg_filename->data,
+                strerror(errno));
+        return StringValue(strdup(""));
+    }
+
+    // https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout
+    // Super block starts from block 0, offset 0x400
+    //   0x2C: len32 Mount time
+    //   0x30: len32 Write time
+    //   0x34: len16 Number of mounts since the last fsck
+    //   0x38: len16 Magic signature 0xEF53
+
+    time_t mount_time = *reinterpret_cast<uint32_t*>(&block0_buffer[0x400+0x2C]);
+    uint16_t mount_count = *reinterpret_cast<uint16_t*>(&block0_buffer[0x400+0x34]);
+
+    if (mount_count > 0) {
+        uiPrintf(state, "Device was remounted R/W %d times\n", mount_count);
+        uiPrintf(state, "Last remount happened on %s", ctime(&mount_time));
+    }
+
+    return StringValue(strdup("t"));
+}
+
+
 Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[]) {
     Value* arg_filename;
     Value* arg_ranges;
@@ -1731,5 +1785,6 @@ void RegisterBlockImageFunctions() {
     RegisterFunction("block_image_verify", BlockImageVerifyFn);
     RegisterFunction("block_image_update", BlockImageUpdateFn);
     RegisterFunction("block_image_recover", BlockImageRecoverFn);
+    RegisterFunction("check_first_block", CheckFirstBlockFn);
     RegisterFunction("range_sha1", RangeSha1Fn);
 }
