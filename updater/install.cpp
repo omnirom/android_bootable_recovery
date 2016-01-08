@@ -48,6 +48,7 @@
 #include "minzip/DirUtil.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
+#include "otafault/ota_io.h"
 #include "updater.h"
 #include "install.h"
 #include "tune2fs.h"
@@ -555,18 +556,18 @@ Value* PackageExtractFileFn(const char* name, State* state,
         }
 
         {
-            int fd = TEMP_FAILURE_RETRY(open(dest_path, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC,
+            int fd = TEMP_FAILURE_RETRY(ota_open(dest_path, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC,
                   S_IRUSR | S_IWUSR));
             if (fd == -1) {
                 printf("%s: can't open %s for write: %s\n", name, dest_path, strerror(errno));
                 goto done2;
             }
             success = mzExtractZipEntryToFile(za, entry, fd);
-            if (fsync(fd) == -1) {
+            if (ota_fsync(fd) == -1) {
                 printf("fsync of \"%s\" failed: %s\n", dest_path, strerror(errno));
                 success = false;
             }
-            if (close(fd) == -1) {
+            if (ota_close(fd) == -1) {
                 printf("close of \"%s\" failed: %s\n", dest_path, strerror(errno));
                 success = false;
             }
@@ -999,7 +1000,7 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
         goto done;
     }
 
-    if (fread(buffer, 1, st.st_size, f) != static_cast<size_t>(st.st_size)) {
+    if (ota_fread(buffer, 1, st.st_size, f) != static_cast<size_t>(st.st_size)) {
         ErrorAbort(state, "%s: failed to read %lld bytes from %s",
                    name, (long long)st.st_size+1, filename);
         fclose(f);
@@ -1102,7 +1103,7 @@ Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (contents->type == VAL_STRING) {
         // we're given a filename as the contents
         char* filename = contents->data;
-        FILE* f = fopen(filename, "rb");
+        FILE* f = ota_fopen(filename, "rb");
         if (f == NULL) {
             printf("%s: can't open %s: %s\n", name, filename, strerror(errno));
             result = strdup("");
@@ -1112,12 +1113,12 @@ Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
         success = true;
         char* buffer = reinterpret_cast<char*>(malloc(BUFSIZ));
         int read;
-        while (success && (read = fread(buffer, 1, BUFSIZ, f)) > 0) {
+        while (success && (read = ota_fread(buffer, 1, BUFSIZ, f)) > 0) {
             int wrote = mtd_write_data(ctx, buffer, read);
             success = success && (wrote == read);
         }
         free(buffer);
-        fclose(f);
+        ota_fclose(f);
     } else {
         // we're given a blob as the contents
         ssize_t wrote = mtd_write_data(ctx, contents->data, contents->size);
@@ -1445,7 +1446,7 @@ Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
     memset(buffer, 0, sizeof(((struct bootloader_message*)0)->command));
     FILE* f = fopen(filename, "r+b");
     fseek(f, offsetof(struct bootloader_message, command), SEEK_SET);
-    fwrite(buffer, sizeof(((struct bootloader_message*)0)->command), 1, f);
+    ota_fwrite(buffer, sizeof(((struct bootloader_message*)0)->command), 1, f);
     fclose(f);
     free(filename);
 
@@ -1493,7 +1494,7 @@ Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
         to_write = max_size;
         stagestr[max_size-1] = 0;
     }
-    fwrite(stagestr, to_write, 1, f);
+    ota_fwrite(stagestr, to_write, 1, f);
     fclose(f);
 
     free(stagestr);
@@ -1513,7 +1514,7 @@ Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
     char buffer[sizeof(((struct bootloader_message*)0)->stage)];
     FILE* f = fopen(filename, "rb");
     fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
-    fread(buffer, sizeof(buffer), 1, f);
+    ota_fread(buffer, sizeof(buffer), 1, f);
     fclose(f);
     buffer[sizeof(buffer)-1] = '\0';
 
@@ -1531,13 +1532,13 @@ Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[])
 
     size_t len;
     android::base::ParseUint(len_str, &len);
-    int fd = open(filename, O_WRONLY, 0644);
+    int fd = ota_open(filename, O_WRONLY, 0644);
     int success = wipe_block_device(fd, len);
 
     free(filename);
     free(len_str);
 
-    close(fd);
+    ota_close(fd);
 
     return StringValue(strdup(success ? "t" : ""));
 }
