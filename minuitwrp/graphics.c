@@ -106,6 +106,8 @@ static void print_fb_var_screeninfo()
 #endif
 
 #ifdef MSM_BSP
+extern bool isTargetMdp5();
+
 int getLeftSplit(void) {
    //Default even split for all displays with high res
    int lSplit = vi.xres / 2;

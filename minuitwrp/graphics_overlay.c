@@ -30,6 +30,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -55,6 +56,10 @@
 
 #ifdef MSM_BSP
 #define ALIGN(x, align) (((x) + ((align)-1)) & ~((align)-1))
+
+extern bool isDisplaySplit(void);
+extern int getFbXres(void);
+extern int getLeftSplit(void);
 
 typedef struct {
     unsigned char *mem_buf;
