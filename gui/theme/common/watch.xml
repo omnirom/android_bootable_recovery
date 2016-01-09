@@ -731,7 +731,7 @@
 
 			<text style="text_m">
 				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@install_image_hdr=Install Image} &gt; {install_sel_target=Select Target Partition}</text>
+				<text>{@install_image_hdr=Install Image} &gt; {@install_sel_target=Select Target Partition}</text>
 			</text>
 
 			<partitionlist style="partitionlist_headerless_rb">
@@ -3278,18 +3278,24 @@
 			</text>
 
 			<text style="text_m_fail">
-				<placement x="%center_x%" y="%row7_y%" placement="5"/>
+				<placement x="%center_x%" y="%row6_y%" placement="5"/>
 				<text>{@sys_rop5=Installing zips or performing adb operations may still}</text>
 			</text>
 
 			<text style="text_m_fail">
-				<placement x="%center_x%" y="%row8_y%" placement="5"/>
+				<placement x="%center_x%" y="%row7_y%" placement="5"/>
 				<text>{@sys_rop6=modify the system partition.}</text>
 			</text>
 
+			<button style="main_button_half_height">
+				<placement x="%col1_x_right%" y="%row8a_y%"/>
+				<text>{@sel_lang_btn=Select Language}</text>
+				<action function="page">settings_language</action>
+			</button>
+
 			<checkbox>
 				<condition var1="tw_is_encrypted" var2="0"/>
-				<placement x="%indent%" y="%row10_y%"/>
+				<placement x="%indent%" y="%row11_y%"/>
 				<text>{@sys_ro_never_show_chk=Never show this screen during boot again}</text>
 				<data variable="tw_never_show_system_ro_page"/>
 			</checkbox>
@@ -3843,7 +3849,7 @@
 			<button>
 				<placement x="%btn4_col4_x%" y="%row11_y%"/>
 				<highlight color="%highlight_color%"/>
-				<image resource="q_btn_folder"/>
+				<image resource="q_btn_accept_transp"/>
 				<action function="setlanguage"></action>
 			</button>
 
@@ -4770,6 +4776,12 @@
 				<placement x="%col1_x_left%" y="%row3_input_y%"/>
 				<text>{@decryt_data_failed=Password failed, please try again!}</text>
 			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%col1_x_left%" y="%row4_y%"/>
+				<text>{@sel_lang_btn=Select Language}</text>
+				<action function="page">settings_language</action>
+			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%col1_x_right%" y="%row4_y%"/>
