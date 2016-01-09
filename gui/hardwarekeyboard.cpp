@@ -37,6 +37,7 @@ extern "C" {
 #include "../common.h"
 }
 
+#include "../twcommon.h"
 #include "objects.hpp"
 #include <linux/input.h>
 
@@ -361,7 +362,7 @@ static int KeyCodeToChar(int key_code, bool shiftkey, bool ctrlkey)
 
 #ifdef _EVENT_LOGGING
 		default:
-			LOGE("Unmapped keycode: %i\n", key_code);
+			LOGERR("Unmapped keycode: %i\n", key_code);
 			break;
 #endif
 	}
@@ -384,7 +385,7 @@ bool HardwareKeyboard::IsKeyDown(int key_code)
 int HardwareKeyboard::KeyDown(int key_code)
 {
 #ifdef _EVENT_LOGGING
-	LOGE("HardwareKeyboard::KeyDown %i\n", key_code);
+	LOGERR("HardwareKeyboard::KeyDown %i\n", key_code);
 #endif
 	key_code = TranslateKeyCode(key_code);
 	mPressedKeys.insert(key_code);
@@ -410,7 +411,7 @@ int HardwareKeyboard::KeyDown(int key_code)
 int HardwareKeyboard::KeyUp(int key_code)
 {
 #ifdef _EVENT_LOGGING
-	LOGE("HardwareKeyboard::KeyUp %i\n", key_code);
+	LOGERR("HardwareKeyboard::KeyUp %i\n", key_code);
 #endif
 	key_code = TranslateKeyCode(key_code);
 	std::set<int>::iterator itr = mPressedKeys.find(key_code);
@@ -424,7 +425,7 @@ int HardwareKeyboard::KeyUp(int key_code)
 int HardwareKeyboard::KeyRepeat()
 {
 #ifdef _EVENT_LOGGING
-	LOGE("HardwareKeyboard::KeyRepeat: %i\n", mLastKeyChar);
+	LOGERR("HardwareKeyboard::KeyRepeat: %i\n", mLastKeyChar);
 #endif
 	if (mLastKeyChar)
 		PageManager::NotifyCharInput(mLastKeyChar);
