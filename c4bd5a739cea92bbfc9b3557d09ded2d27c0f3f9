@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8f5b13e_8ea2ec47",
+        "filename": "data.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1116,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-01-10T06:18:58Z",
+      "side": 1,
+      "message": "if (GetIntValue(\"tw_has_brightnesss_file\")) {",
+      "revId": "c4bd5a739cea92bbfc9b3557d09ded2d27c0f3f9",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
