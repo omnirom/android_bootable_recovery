@@ -28,6 +28,7 @@
 #include <string>
 #include <cctype>
 #include <linux/input.h>
+#include <sys/wait.h>
 
 extern "C" {
 #include "../twcommon.h"
@@ -124,11 +125,10 @@ public:
 		int rc = ::read(fdMaster, buffer, size);
 		debug_printf("pty read: %d bytes\n", rc);
 		if (rc < 0) {
-			LOGINFO("pty read failed: %d\n", errno);
-			// assume child has died
-			close(fdMaster);
-			g_pty_fd = fdMaster = -1;
-			pid = 0;
+			// assume child has died (usual errno when shell exits seems to be EIO == 5)
+			if (errno != EIO)
+				LOGERR("pty read failed: %d\n", errno);
+			stop();
 		}
 		return rc;
 	}
@@ -142,11 +142,9 @@ public:
 		int rc = ::write(fdMaster, buffer, size);
 		debug_printf("pty write: %d bytes -> %d\n", size, rc);
 		if (rc < 0) {
-			LOGINFO("pty write failed: %d\n", errno);
+			LOGERR("pty write failed: %d\n", errno);
 			// assume child has died
-			close(fdMaster);
-			g_pty_fd = fdMaster = -1;
-			pid = 0;
+			stop();
 		}
 		return rc;
 	}
@@ -168,9 +166,22 @@ public:
 			LOGERR("failed to set window size, error %d\n", errno);
 	}
 
+	void stop()
+	{
+		if (!started()) {
+			LOGERR("someone tried to stop pty, but it was not started\n");
+			return;
+		}
+		close(fdMaster);
+		g_pty_fd = fdMaster = -1;
+		int status;
+		waitpid(pid, &status, WNOHANG); // avoid zombies but don't hang if the child is still alive and we got here due to some error
+		pid = 0;
+	}
+
 private:
 	int fdMaster;
-	int pid;
+	pid_t pid;
 };
 
 // UTF-8 decoder
