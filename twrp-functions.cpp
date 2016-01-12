@@ -1043,4 +1043,23 @@ void TWFunc::Disable_Stock_Recovery_Replace(void) {
 	}
 }
 
+unsigned long long TWFunc::IOCTL_Get_Block_Size(const char* block_device) {
+	unsigned long block_device_size;
+	int ret = 0;
+
+	int fd = open(block_device, O_RDONLY);
+	if (fd < 0) {
+		LOGINFO("Find_Partition_Size: Failed to open '%s', (%s)\n", block_device, strerror(errno));
+	} else {
+		ret = ioctl(fd, BLKGETSIZE, &block_device_size);
+		close(fd);
+		if (ret) {
+			LOGINFO("Find_Partition_Size: ioctl error: (%s)\n", strerror(errno));
+		} else {
+			return (unsigned long long)(block_device_size) * 512LLU;
+		}
+	}
+	return 0;
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN
