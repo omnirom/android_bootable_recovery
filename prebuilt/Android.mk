@@ -201,6 +201,11 @@ else
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mkntfs
 endif
 endif
+ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sgdisk
+    endif
+endif
 
 TWRP_AUTOGEN := $(intermediates)/teamwin
 
@@ -241,14 +246,25 @@ LOCAL_SRC_FILES := $(LOCAL_MODULE)
 include $(BUILD_PREBUILT)
 
 ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
+	ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
+	    #prebuilt, static sgdisk
+	    include $(CLEAR_VARS)
+	    LOCAL_MODULE := sgdisk_static
+	    LOCAL_MODULE_STEM := sgdisk
+	    LOCAL_MODULE_TAGS := eng
+	    LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+	    LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+	    LOCAL_SRC_FILES := $(LOCAL_MODULE)
+	    include $(BUILD_PREBUILT)
+	endif
 	#parted
-	include $(CLEAR_VARS)
-	LOCAL_MODULE := parted
-	LOCAL_MODULE_TAGS := eng
-	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
-	LOCAL_SRC_FILES := $(LOCAL_MODULE)
-	include $(BUILD_PREBUILT)
+	#include $(CLEAR_VARS)
+	#LOCAL_MODULE := parted
+	#LOCAL_MODULE_TAGS := eng
+	#LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+	#LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+	#LOCAL_SRC_FILES := $(LOCAL_MODULE)
+	#include $(BUILD_PREBUILT)
 endif
 
 # copy license file for OpenAES
