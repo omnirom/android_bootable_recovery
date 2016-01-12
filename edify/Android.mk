@@ -3,8 +3,8 @@
 LOCAL_PATH := $(call my-dir)
 
 edify_src_files := \
-	lexer.l \
-	parser.y \
+	lexer.ll \
+	parser.yy \
 	expr.cpp
 
 #
