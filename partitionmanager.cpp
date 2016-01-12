@@ -30,6 +30,8 @@
 #include <iostream>
 #include <iomanip>
 #include <sys/wait.h>
+#include <linux/fs.h>
+#include <sys/mount.h>
 #include "variables.h"
 #include "twcommon.h"
 #include "partitions.hpp"
@@ -1658,20 +1660,20 @@ void TWPartitionManager::UnMount_Main_Partitions(void) {
 
 int TWPartitionManager::Partition_SDCard(void) {
 	char mkdir_path[255], temp[255], line[512];
-	string Command, Device, fat_str, ext_str, swap_str, start_loc, end_loc, ext_format, sd_path, tmpdevice;
+	string Storage_Path, Command, Device, fat_str, ext_str, start_loc, end_loc, ext_format, sd_path, tmpdevice;
 	int ext, swap, total_size = 0, fat_size;
-	FILE* fp;
 
 	gui_msg("start_partition_sd=Partitioning SD Card...");
-#ifdef TW_EXTERNAL_STORAGE_PATH
-	TWPartition* SDCard = Find_Partition_By_Path(EXPAND(TW_EXTERNAL_STORAGE_PATH));
-#else
-	TWPartition* SDCard = Find_Partition_By_Path("/sdcard");
-#endif
+
+	// Locate and validate device to partition
+	TWPartition* SDCard = Find_Partition_By_Path(DataManager::GetCurrentStoragePath());
+
 	if (SDCard == NULL || !SDCard->Removable || SDCard->Has_Data_Media) {
 		gui_err("partition_sd_locate=Unable to locate device to partition.");
 		return false;
 	}
+
+	// Unmount everything
 	if (!SDCard->UnMount(true))
 		return false;
 	TWPartition* SDext = Find_Partition_By_Path("/sd-ext");
@@ -1679,58 +1681,57 @@ int TWPartitionManager::Partition_SDCard(void) {
 		if (!SDext->UnMount(true))
 			return false;
 	}
+	char* swappath = getenv("SWAPPATH");
+	if (swappath != NULL) {
+		LOGINFO("Unmounting swap at '%s'\n", swappath);
+		umount(swappath);
+	}
 
-	TWFunc::Exec_Cmd("umount \"$SWAPPATH\"");
-	Device = SDCard->Actual_Block_Device;
-	// Just use the root block device
-	Device.resize(strlen("/dev/block/mmcblkX"));
+	// Determine block device
+	if (SDCard->Alternate_Block_Device.empty()) {
+		SDCard->Find_Actual_Block_Device();
+		Device = SDCard->Actual_Block_Device;
+		// Just use the root block device
+		Device.resize(strlen("/dev/block/mmcblkX"));
+	} else {
+		Device = SDCard->Alternate_Block_Device;
+	}
 
 	// Find the size of the block device:
-	fp = fopen("/proc/partitions", "rt");
-	if (fp == NULL) {
-		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")("/proc/partitions")(strerror(errno)));
-		return false;
-	}
-
-	while (fgets(line, sizeof(line), fp) != NULL)
-	{
-		unsigned long major, minor, blocks;
-		char device[512];
-		char tmpString[64];
-
-		if (strlen(line) < 7 || line[0] == 'm')	 continue;
-		sscanf(line + 1, "%lu %lu %lu %s", &major, &minor, &blocks, device);
-
-		tmpdevice = "/dev/block/";
-		tmpdevice += device;
-		if (tmpdevice == Device) {
-			// Adjust block size to byte size
-			total_size = (int)(blocks * 1024ULL / 1000000LLU);
-			break;
-		}
-	}
-	fclose(fp);
+	total_size = (int)(TWFunc::IOCTL_Get_Block_Size(Device.c_str()) / (1048576));
 
 	DataManager::GetValue("tw_sdext_size", ext);
 	DataManager::GetValue("tw_swap_size", swap);
 	DataManager::GetValue("tw_sdpart_file_system", ext_format);
 	fat_size = total_size - ext - swap;
-	LOGINFO("sd card block device is '%s', sdcard size is: %iMB, fat size: %iMB, ext size: %iMB, ext system: '%s', swap size: %iMB\n", Device.c_str(), total_size, fat_size, ext, ext_format.c_str(), swap);
-	memset(temp, 0, sizeof(temp));
-	sprintf(temp, "%i", fat_size);
-	fat_str = temp;
-	memset(temp, 0, sizeof(temp));
-	sprintf(temp, "%i", fat_size + ext);
-	ext_str = temp;
-	memset(temp, 0, sizeof(temp));
-	sprintf(temp, "%i", fat_size + ext + swap);
-	swap_str = temp;
+	LOGINFO("sd card mount point %s block device is '%s', sdcard size is: %iMB, fat size: %iMB, ext size: %iMB, ext system: '%s', swap size: %iMB\n", DataManager::GetCurrentStoragePath().c_str(), Device.c_str(), total_size, fat_size, ext, ext_format.c_str(), swap);
+
+	// Determine partition sizes
+	if (swap == 0 && ext == 0) {
+		fat_str = "-0";
+	} else {
+		memset(temp, 0, sizeof(temp));
+		sprintf(temp, "%i", fat_size);
+		fat_str = temp;
+		fat_str += "MB";
+	}
+	if (swap == 0) {
+		ext_str = "-0";
+	} else {
+		memset(temp, 0, sizeof(temp));
+		sprintf(temp, "%i", ext);
+		ext_str = "+";
+		ext_str += temp;
+		ext_str += "MB";
+	}
+
 	if (ext + swap > total_size) {
 		gui_err("ext_swap_size=EXT + Swap size is larger than sdcard size.");
 		return false;
 	}
+
 	gui_msg("remove_part_table=Removing partition table...");
-	Command = "parted -s " + Device + " mklabel msdos";
+	Command = "sgdisk --zap-all " + Device;
 	LOGINFO("Command is: '%s'\n", Command.c_str());
 	if (TWFunc::Exec_Cmd(Command) != 0) {
 		gui_err("unable_rm_part=Unable to remove partition table.");
@@ -1738,7 +1739,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 		return false;
 	}
 	gui_msg(Msg("create_part=Creating {1} partition...")("FAT32"));
-	Command = "parted " + Device + " mkpartfs primary fat32 0 " + fat_str + "MB";
+	Command = "sgdisk  --new=0:0:" + fat_str + " --change-name=0:\"Microsoft basic data\" " + Device;
 	LOGINFO("Command is: '%s'\n", Command.c_str());
 	if (TWFunc::Exec_Cmd(Command) != 0) {
 		gui_msg(Msg(msg::kError, "unable_to_create_part=Unable to create {1} partition.")("FAT32"));
@@ -1746,7 +1747,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 	}
 	if (ext > 0) {
 		gui_msg(Msg("create_part=Creating {1} partition...")("EXT"));
-		Command = "parted " + Device + " mkpartfs primary ext2 " + fat_str + "MB " + ext_str + "MB";
+		Command = "sgdisk --new=0:0:" + ext_str + " --change-name=0:\"Linux filesystem\" " + Device;
 		LOGINFO("Command is: '%s'\n", Command.c_str());
 		if (TWFunc::Exec_Cmd(Command) != 0) {
 			gui_msg(Msg(msg::kError, "unable_to_create_part=Unable to create {1} partition.")("EXT"));
@@ -1756,7 +1757,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 	}
 	if (swap > 0) {
 		gui_msg(Msg("create_part=Creating {1} partition...")("swap"));
-		Command = "parted " + Device + " mkpartfs primary linux-swap " + ext_str + "MB " + swap_str + "MB";
+		Command = "sgdisk --new=0:0:-0 --change-name=0:\"Linux swap\" --typecode=0:0657FD6D-A4AB-43C4-84E5-0933C84B4F4F " + Device;
 		LOGINFO("Command is: '%s'\n", Command.c_str());
 		if (TWFunc::Exec_Cmd(Command) != 0) {
 			gui_msg(Msg(msg::kError, "unable_to_create_part=Unable to create {1} partition.")("swap"));
@@ -1764,36 +1765,50 @@ int TWPartitionManager::Partition_SDCard(void) {
 			return false;
 		}
 	}
-	// recreate TWRP folder and rewrite settings - these will be gone after sdcard is partitioned
-#ifdef TW_EXTERNAL_STORAGE_PATH
-	Mount_By_Path(EXPAND(TW_EXTERNAL_STORAGE_PATH), 1);
-	DataManager::GetValue(TW_EXTERNAL_PATH, sd_path);
-	memset(mkdir_path, 0, sizeof(mkdir_path));
-	sprintf(mkdir_path, "%s/TWRP", sd_path.c_str());
-#else
-	Mount_By_Path("/sdcard", 1);
-	strcpy(mkdir_path, "/sdcard/TWRP");
-#endif
-	mkdir(mkdir_path, 0777);
-	DataManager::Flush();
-#ifdef TW_EXTERNAL_STORAGE_PATH
-	DataManager::SetValue(TW_ZIP_EXTERNAL_VAR, EXPAND(TW_EXTERNAL_STORAGE_PATH));
-	if (DataManager::GetIntValue(TW_USE_EXTERNAL_STORAGE) == 1)
-		DataManager::SetValue(TW_ZIP_LOCATION_VAR, EXPAND(TW_EXTERNAL_STORAGE_PATH));
-#else
-	DataManager::SetValue(TW_ZIP_EXTERNAL_VAR, "/sdcard");
-	if (DataManager::GetIntValue(TW_USE_EXTERNAL_STORAGE) == 1)
-		DataManager::SetValue(TW_ZIP_LOCATION_VAR, "/sdcard");
-#endif
+
+	// Convert GPT to MBR
+	Command = "sgdisk --gpttombr " + Device;
+	if (TWFunc::Exec_Cmd(Command) != 0)
+		LOGINFO("Failed to covert partition GPT to MBR\n");
+
+	// Tell the kernel to rescan the partition table
+	int fd = open(Device.c_str(), O_RDONLY);
+	ioctl(fd, BLKRRPART, 0);
+	close(fd);
+
+	string format_device = Device;
+	if (Device.substr(0, 17) == "/dev/block/mmcblk")
+		format_device += "p";
+
+	// Format new partitions to proper file system
+	if (fat_size > 0) {
+		Command = "mkfs.fat " + format_device + "1";
+		TWFunc::Exec_Cmd(Command);
+	}
 	if (ext > 0) {
 		if (SDext == NULL) {
-			LOGERR("Unable to locate sd-ext partition.\n");
-			return false;
+			Command = "mke2fs -t " + ext_format + " -m 0 " + format_device + "2";
+			gui_msg(Msg("format_sdext_as=Formatting sd-ext as {1}...")(ext_format));
+			LOGINFO("Formatting sd-ext after partitioning, command: '%s'\n", Command.c_str());
+			TWFunc::Exec_Cmd(Command);
+		} else {
+			SDext->Wipe(ext_format);
 		}
-		Command = "mke2fs -t " + ext_format + " -m 0 " + SDext->Actual_Block_Device;
-		gui_msg(Msg("format_sdext_as=Formatting sd-ext as {1}...")(ext_format));
-		LOGINFO("Formatting sd-ext after partitioning, command: '%s'\n", Command.c_str());
+	}
+	if (swap > 0) {
+		Command = "mkswap " + format_device;
+		if (ext > 0)
+			Command += "3";
+		else
+			Command += "2";
 		TWFunc::Exec_Cmd(Command);
+	}
+
+	// recreate TWRP folder and rewrite settings - these will be gone after sdcard is partitioned
+	if (SDCard->Mount(true)) {
+		string TWRP_Folder = SDCard->Mount_Point + "/TWRP";
+		mkdir(TWRP_Folder.c_str(), 0777);
+		DataManager::Flush();
 	}
 
 	Update_System_Details();
