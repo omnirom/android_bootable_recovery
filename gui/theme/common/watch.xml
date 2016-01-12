@@ -1422,7 +1422,7 @@
 				<condition var1="tw_check_partition_list" op="=" var2="1"/>
 				<actions>
 					<action function="set">partitionlisterror=0</action>
-					<action function="getpartitiondetails"/>
+					<action function="getpartitiondetails">tw_wipe_list</action>
 					<action function="page">partitionoptions</action>
 				</actions>
 			</action>
@@ -1431,7 +1431,6 @@
 				<condition var1="tw_check_partition_list" op="!=" var2="1"/>
 				<actions>
 					<action function="set">partitionlisterror=1</action>
-					<action function="set">tw_wipe_list=</action>
 					<action function="page">partitionoptions_select</action>
 				</actions>
 			</action>
@@ -1471,7 +1470,7 @@
 				<placement x="%btn4_col4_x%" y="%row11_y%"/>
 				<highlight color="%highlight_color%"/>
 				<image resource="q_btn_arrow_right"/><actions>
-					<action function="checkpartitionlist"/>
+					<action function="checkpartitionlist">tw_wipe_list</action>
 					<action function="page">checkpartitionlist</action>
 				</actions>
 			</button>
@@ -1562,6 +1561,7 @@
 					<action function="set">tw_action_param=%tw_partition_mount_point%</action>
 					<action function="set">tw_has_action2=1</action>
 					<action function="set">tw_action2=getpartitiondetails</action>
+					<action function="set">tw_action2_param=tw_wipe_list</action>
 					<action function="set">tw_text1={@resize_confirm=Resize %tw_partition_name%?}</action>
 					<action function="set">tw_text2=</action>
 					<action function="set">tw_action_text1={@resizing=Resizing...}</action>
@@ -1618,7 +1618,7 @@
 				<condition var1="tw_check_partition_list" op="=" var2="1"/>
 				<actions>
 					<action function="set">partitionlisterror=0</action>
-					<action function="getpartitiondetails"/>
+					<action function="getpartitiondetails">tw_wipe_list</action>
 					<action function="page">selectfilesystem</action>
 				</actions>
 			</action>
@@ -3896,7 +3896,10 @@
 				<condition var1="tw_allow_partition_sdcard" var2="1"/>
 				<placement x="%col1_x_right%" y="%row6_y%"/>
 				<text>{@part_sd_s_btn=SD Card}</text>
-				<action function="page">partsdcard</action>
+				<actions>
+					<action function="set">partitionlisterror=0</action>
+					<action function="page">partsdcardsel</action>
+				</actions>
 			</button>
 
 			<button style="main_button">
@@ -3929,6 +3932,73 @@
 			<action>
 				<touch key="back"/>
 				<action function="page">main3</action>
+			</action>
+		</page>
+
+		<page name="partsdcardsel">
+			<template name="page"/>
+
+			<template name="statusbar"/>
+
+			<text style="text_m">
+				<placement x="%col1_x_left%" y="%row1_header_y%"/>
+				<text>{@advanced_hdr=Advanced} &gt; {@part_sd_hdr=Partition SD Card}</text>
+			</text>
+
+			<partitionlist style="partitionlist_headerless_rb">
+				<data name="tw_storage_path"/>
+				<listtype name="storage"/>
+			</partitionlist>
+
+			<text style="text_m_fail">
+				<condition var1="partitionlisterror" var2="1"/>
+				<placement x="%center_x%" y="%row9_y%" placement="5"/>
+				<text>{@invalid_partsd_sel=You must select a removable device}</text>
+			</text>
+
+			<button>
+				<placement x="%btn4_col2_x%" y="%row11_y%"/>
+				<highlight color="%highlight_color%"/>
+				<image resource="q_btn_refresh"/>
+				<action function="refreshsizes"/>
+			</button>
+
+			<button>
+				<placement x="%btn4_col3_x%" y="%row11_y%"/>
+				<highlight color="%highlight_color%"/>
+				<image resource="q_btn_accept"/>
+				<actions>
+					<action function="getpartitiondetails">tw_storage_path</action>
+					<action function="page">partsdcardcheck</action>
+				</actions>
+			</button>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">advanced</action>
+			</action>
+		</page>
+
+		<page name="partsdcardcheck">
+			<action>
+				<condition var1="tw_partition_removable" op="=" var2="1"/>
+				<actions>
+					<action function="set">partitionlisterror=0</action>
+					<action function="page">partsdcard</action>
+				</actions>
+			</action>
+
+			<action>
+				<condition var1="tw_partition_removable" op="!=" var2="1"/>
+				<actions>
+					<action function="set">partitionlisterror=1</action>
+					<action function="page">partsdcardsel</action>
+				</actions>
 			</action>
 		</page>
 
@@ -3965,13 +4035,13 @@
 			<button style="main_button_quarter_width">
 				<placement x="%indent%" y="%row6_y%"/>
 				<text>{@part_sd_m=-}</text>
-				<action function="addsubtract">tw_sdext_size-128</action>
+				<action function="addsubtract">tw_sdext_size-256</action>
 			</button>
 
 			<button style="main_button_quarter_width">
 				<placement x="%btn4_col4_x%" y="%row6_y%"/>
 				<text>{@part_sd_p=+}</text>
-				<action function="addsubtract">tw_sdext_size+128</action>
+				<action function="addsubtract">tw_sdext_size+256</action>
 			</button>
 
 			<button>
@@ -3988,7 +4058,7 @@
 
 			<action>
 				<touch key="back"/>
-				<action function="page">advanced</action>
+				<action function="page">partsdcardsel</action>
 			</action>
 		</page>
 
@@ -4025,13 +4095,13 @@
 			<button style="main_button_quarter_width">
 				<placement x="%indent%" y="%row6_y%"/>
 				<text>{@part_sd_m=-}</text>
-				<action function="addsubtract">tw_swap_size-32</action>
+				<action function="addsubtract">tw_swap_size-64</action>
 			</button>
 
 			<button style="main_button_quarter_width">
 				<placement x="%btn4_col4_x%" y="%row6_y%"/>
 				<text>{@part_sd_p=+}</text>
-				<action function="addsubtract">tw_swap_size+32</action>
+				<action function="addsubtract">tw_swap_size+64</action>
 			</button>
 
 			<button>
@@ -5052,7 +5122,6 @@
 
 			<slider>
 				<text>{@swipe_sideload=   Start}</text>
-				<action function="page">partsdcardaction</action>
 				<actions>
 					<action function="set">tw_back=install_type</action>
 					<action function="set">tw_action=adbsideload</action>
