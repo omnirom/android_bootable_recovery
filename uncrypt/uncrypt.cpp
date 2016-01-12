@@ -418,8 +418,6 @@ int uncrypt(const char* input_path, const char* map_file, int status_fd) {
 }
 
 int main(int argc, char** argv) {
-    const char* input_path;
-    const char* map_file;
 
     if (argc != 3 && argc != 1 && (argc == 2 && strcmp(argv[1], "--reboot") != 0)) {
         fprintf(stderr, "usage: %s [--reboot] [<transform_path> <map_file>]\n", argv[0]);
@@ -443,13 +441,16 @@ int main(int argc, char** argv) {
         }
         unique_fd status_fd_holder(status_fd);
 
+        std::string package;
+        const char* input_path;
+        const char* map_file;
+
         if (argc == 3) {
             // when command-line args are given this binary is being used
             // for debugging.
             input_path = argv[1];
             map_file = argv[2];
         } else {
-            std::string package;
             if (!find_uncrypt_package(package)) {
                 android::base::WriteStringToFd("-1\n", status_fd);
                 return 1;
