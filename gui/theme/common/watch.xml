@@ -77,6 +77,12 @@
 			<font resource="fixed"/>
 		</style>
 
+		<style name="terminal">
+			<fastscroll linecolor="%transparent%" rectcolor="%accent_color%" w="%fastscroll_w%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<background color="%background_color%"/>
+			<font resource="fixed" spacing="2" color="%text_color%"/>
+		</style>
+
 		<style name="fileselector">
 			<highlight color="%fileselector_highlight_color%"/>
 			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
@@ -3871,7 +3877,7 @@
 			<button style="main_button">
 				<placement x="%col1_x_left%" y="%row1_y%"/>
 				<text>{@terminal_btn=Terminal}</text>
-				<action function="page">terminalfolder</action>
+				<action function="page">terminalcommand</action>
 			</button>
 
 			<button style="main_button">
@@ -4934,87 +4940,87 @@
 			</action>
 		</page>
 
-		<page name="terminalfolder">
-			<template name="page"/>
-
-			<template name="statusbar"/>
-
-			<text style="text_m">
-				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@term_s_hdr=Terminal} &gt; {@term_sel_folder_hdr=Browse to Starting Folder}</text>
-			</text>
-
-			<fileselector>
-				<placement x="%col1_x_left%" y="%row2_header_y%" w="%content_width%" h="%fileselector_install_height%"/>
-				<text>%tw_terminal_location%</text>
-				<filter folders="1" files="0"/>
-				<path name="tw_terminal_location" default="/"/>
-				<data name="tw_terminal"/>
-				<selection name="tw_terminal_selection"/>
-			</fileselector>
-
-			<button>
-				<placement x="%btn4_col4_x%" y="%row11_y%"/>
-				<highlight color="%highlight_color%"/>
-				<image resource="q_btn_accept_transp"/>
-				<action function="page">terminalcommand</action>
-			</button>
-
-			<action>
-				<touch key="home"/>
-				<action function="page">main</action>
-			</action>
-
-			<action>
-				<touch key="back"/>
-				<action function="page">advanced</action>
-			</action>
-		</page>
-
 		<page name="terminalcommand">
-			<template name="page"/>
+			<terminal>
+				<condition var1="tw_hide_kb" var2="0"/>
+				<placement x="0" y="0" w="%screen_width%" h="%console_terminal_s_height%"/>
+			</terminal>
 
-			<template name="statusbar"/>
+			<terminal>
+				<condition var1="tw_hide_kb" var2="1"/>
+				<placement x="0" y="0" w="%screen_width%" h="%console_terminal_l_height%"/>
+			</terminal>
 
-			<text style="text_m">
-				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@term_s_hdr=Terminal} &gt; %tw_terminal_location%</text>
-			</text>
-
-			<template name="console_terminal"/>
-
-			<input>
-				<placement x="%col1_x_left%" y="%row5a_y%" w="%input_line_console%" h="%input_height%"/>
-				<text>%tw_terminal_command%</text>
-				<data name="tw_terminal_command"/>
-				<restrict minlen="1"/>
-				<action function="terminalcommand">%tw_terminal_command%</action>
-			</input>
-
-			<fill color="%accent_color%">
-				<placement x="%col1_x_left%" y="row6a_input_y" w="%input_line_console%" h="input_line_width" placement="1"/>
-			</fill>
-
-			<button>
-				<condition var1="tw_terminal_state" var2="1"/>
-				<highlight color="%highlight_color%"/>
-				<placement x="%close_btn_x%" y="%row5_y%"/>
-				<font resource="font_m" color="%text_button_color%"/>
-				<image resource="close"/>
-				<action function="killterminal"/>
-			</button>
+			<template name="keyboardterminaltemplate"/>
 
 			<template name="keyboardtemplate"/>
 
+			<object type="fill" color="#000000">
+				<placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%" />
+			</object>
+
+			<object type="button">
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="set">tw_hide_kb=0</action>
+					<action function="key">back</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="home" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="set">tw_hide_kb=0</action>
+					<action function="key">home</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_hide_kb" var2="0"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="kb_hide" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="set">tw_hide_kb=1</action>
+					<action function="page">terminalcommand</action>
+				</actions>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_hide_kb" var2="1"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="kb_show" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="set">tw_hide_kb=0</action>
+					<action function="page">terminalcommand</action>
+				</actions>
+			</object>
+
 			<action>
 				<touch key="home"/>
-				<action function="page">main</action>
+				<actions>
+					<action function="set">tw_hide_kb=0</action>
+					<action function="page">main</action>
+				</actions>
 			</action>
 
 			<action>
 				<touch key="back"/>
-				<action function="page">terminalfolder</action>
+				<actions>
+					<action function="set">tw_hide_kb=0</action>
+					<action function="page">advanced</action>
+				</actions>
 			</action>
+
+			<object type="action">
+				<touch key="power+voldown" />
+				<action function="screenshot" />
+			</object>
 		</page>
 
 		<page name="sideload">
