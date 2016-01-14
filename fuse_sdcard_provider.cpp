@@ -18,7 +18,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <pthread.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -60,81 +59,30 @@ static void close_file(void* cookie) {
     close(fd->fd);
 }
 
-struct token {
-    pthread_t th;
-    const char* path;
-    int result;
-};
-
-static void* run_sdcard_fuse(void* cookie) {
-    token* t = reinterpret_cast<token*>(cookie);
-
+bool start_sdcard_fuse(const char* path) {
     struct stat sb;
-    if (stat(t->path, &sb) < 0) {
-        fprintf(stderr, "failed to stat %s: %s\n", t->path, strerror(errno));
-        t->result = -1;
-        return NULL;
+    if (stat(path, &sb) == -1) {
+        fprintf(stderr, "failed to stat %s: %s\n", path, strerror(errno));
+        return false;
     }
 
-    struct file_data fd;
-    struct provider_vtab vtab;
-
-    fd.fd = open(t->path, O_RDONLY);
-    if (fd.fd < 0) {
-        fprintf(stderr, "failed to open %s: %s\n", t->path, strerror(errno));
-        t->result = -1;
-        return NULL;
+    file_data fd;
+    fd.fd = open(path, O_RDONLY);
+    if (fd.fd == -1) {
+        fprintf(stderr, "failed to open %s: %s\n", path, strerror(errno));
+        return false;
     }
     fd.file_size = sb.st_size;
     fd.block_size = 65536;
 
+    provider_vtab vtab;
     vtab.read_block = read_block_file;
     vtab.close = close_file;
-
-    t->result = run_fuse_sideload(&vtab, &fd, fd.file_size, fd.block_size);
-    return NULL;
-}
-
-// How long (in seconds) we wait for the fuse-provided package file to
-// appear, before timing out.
-#define SDCARD_INSTALL_TIMEOUT 10
-
-void* start_sdcard_fuse(const char* path) {
-    token* t = new token;
-
-    t->path = path;
-    pthread_create(&(t->th), NULL, run_sdcard_fuse, t);
-
-    struct stat st;
-    int i;
-    for (i = 0; i < SDCARD_INSTALL_TIMEOUT; ++i) {
-        if (stat(FUSE_SIDELOAD_HOST_PATHNAME, &st) != 0) {
-            if (errno == ENOENT && i < SDCARD_INSTALL_TIMEOUT-1) {
-                sleep(1);
-                continue;
-            } else {
-                return NULL;
-            }
-        }
-    }
 
     // The installation process expects to find the sdcard unmounted.
     // Unmount it with MNT_DETACH so that our open file continues to
     // work but new references see it as unmounted.
     umount2("/sdcard", MNT_DETACH);
 
-    return t;
-}
-
-void finish_sdcard_fuse(void* cookie) {
-    if (cookie == NULL) return;
-    token* t = reinterpret_cast<token*>(cookie);
-
-    // Calling stat() on this magic filename signals the fuse
-    // filesystem to shut down.
-    struct stat st;
-    stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &st);
-
-    pthread_join(t->th, NULL);
-    delete t;
+    return run_fuse_sideload(&vtab, &fd, fd.file_size, fd.block_size) == 0;
 }

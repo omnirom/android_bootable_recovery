@@ -17,7 +17,6 @@
 #ifndef __FUSE_SDCARD_PROVIDER_H
 #define __FUSE_SDCARD_PROVIDER_H
 
-void* start_sdcard_fuse(const char* path);
-void finish_sdcard_fuse(void* token);
+bool start_sdcard_fuse(const char* path);
 
 #endif
