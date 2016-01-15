@@ -2211,8 +2211,15 @@ bool TWPartitionManager::Flash_Image(string Filename) {
 	gui_msg("image_flash_start=[IMAGE FLASH STARTED]");
 	gui_msg(Msg("img_to_flash=Image to flash: '{1}'")(Filename));
 
-	if (!Mount_Current_Storage(true))
-		return false;
+	if (!TWFunc::Path_Exists(Filename)) {
+		if (!Mount_By_Path(Filename, true)) {
+			return false;
+		}
+		if (!TWFunc::Path_Exists(Filename)) {
+			gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1}.")(Filename));
+			return false;
+		}
+	}
 
 	gui_msg("calc_restore=Calculating restore details...");
 	DataManager::GetValue("tw_flash_partition", Flash_List);
