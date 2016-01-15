@@ -49,6 +49,8 @@ extern "C" {
 #include "objects.hpp"
 #include "blanktimer.hpp"
 
+#define TW_THEME_VERSION 1
+
 extern int gGuiRunning;
 
 // From ../twrp.cpp
@@ -735,11 +737,28 @@ int PageSet::Load(ZipArchive* package, char* xmlFile, char* languageFile)
 	set_scale_values(1, 1); // Reset any previous scaling values
 
 	// Now, let's parse the XML
-	LOGINFO("Checking resolution...\n");
 	child = parent->first_node("details");
 	if (child) {
+		int theme_ver = 0;
+		xml_node<>* themeversion = child->first_node("themeversion");
+		if (themeversion && themeversion->value()) {
+			theme_ver = atoi(themeversion->value());
+		} else {
+			LOGINFO("No themeversion in theme.\n");
+		}
+		if (theme_ver != TW_THEME_VERSION) {
+			LOGINFO("theme version from xml: %i, expected %i\n", theme_ver, TW_THEME_VERSION);
+			if (package) {
+				gui_err("theme_ver_err=Custom theme version does not match TWRP version. Using stock theme.");
+				mDoc.clear();
+				return -1;
+			} else {
+				gui_print_color("warning", "Stock theme version does not match TWRP version.\n");
+			}
+		}
 		xml_node<>* resolution = child->first_node("resolution");
 		if (resolution) {
+			LOGINFO("Checking resolution...\n");
 			xml_attribute<>* width_attr = resolution->first_attribute("width");
 			xml_attribute<>* height_attr = resolution->first_attribute("height");
 			xml_attribute<>* noscale_attr = resolution->first_attribute("noscaling");
@@ -1558,7 +1577,7 @@ int PageManager::ChangeOverlay(std::string name)
 		return mCurrentSet->SetOverlay(NULL);
 	else
 	{
-		Page* page = mBaseSet ? mBaseSet->FindPage(name) : NULL;
+		Page* page = mCurrentSet ? mCurrentSet->FindPage(name) : NULL;
 		return mCurrentSet->SetOverlay(page);
 	}
 }
