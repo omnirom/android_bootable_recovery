@@ -298,7 +298,7 @@ loff_t exfat_seek(struct exfat_dev* dev, loff_t offset, int whence)
 	/* XXX SEEK_CUR will be handled incorrectly */
 	return dev->pos = lseek(dev->fd, offset, whence);
 #else
-	return lseek(dev->fd, offset, whence);
+	return lseek64(dev->fd, offset, whence);
 #endif
 }
 
@@ -332,7 +332,7 @@ ssize_t exfat_pread(struct exfat_dev* dev, void* buffer, size_t size,
 #ifdef USE_UBLIO
 	return ublio_pread(dev->ufh, buffer, size, offset);
 #else
-	return pread(dev->fd, buffer, size, offset);
+	return pread64(dev->fd, buffer, size, offset);
 #endif
 }
 
@@ -342,7 +342,7 @@ ssize_t exfat_pwrite(struct exfat_dev* dev, const void* buffer, size_t size,
 #ifdef USE_UBLIO
 	return ublio_pwrite(dev->ufh, buffer, size, offset);
 #else
-	return pwrite(dev->fd, buffer, size, offset);
+	return pwrite64(dev->fd, buffer, size, offset);
 #endif
 }
 
