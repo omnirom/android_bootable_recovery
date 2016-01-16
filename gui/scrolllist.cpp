@@ -637,6 +637,9 @@ bool GUIScrollList::AddLines(std::vector<std::string>* origText, std::vector<std
 				if (origColor)
 					rColor->push_back(curr_color);
 				curr_line = curr_line.substr(wrap_pos);
+				/* After word wrapping, delete any leading spaces. Note that the word wrapping is not smart enough to know not
+				 * to wrap in the middle of something like ... so some of the ... could appear on the following line. */
+				curr_line.erase(0, curr_line.find_first_not_of(" "));
 			} else {
 				rText->push_back(curr_line);
 				if (origColor)
