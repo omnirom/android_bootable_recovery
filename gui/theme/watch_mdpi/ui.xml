@@ -75,8 +75,6 @@
 	</resources>
 
 	<variables>
-		<variable name="tw_hide_kb" value="0" persist="1"/>
-
 		<variable name="screen_width" value="320"/>
 		<variable name="screen_half_width" value="160"/>
 		<variable name="screen_height" value="320"/>
