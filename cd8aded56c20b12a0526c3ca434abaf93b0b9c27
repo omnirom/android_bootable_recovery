@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_3e89e9f2",
+        "filename": "gui/scrolllist.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 640,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-01-16T10:05:58Z",
+      "side": 1,
+      "message": "instead of this O(n²) loop:\ncurr_line.erase(0, curr.line.find_first_not_of(\" \"));",
+      "revId": "cd8aded56c20b12a0526c3ca434abaf93b0b9c27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
