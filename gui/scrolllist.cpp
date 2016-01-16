@@ -637,6 +637,8 @@ bool GUIScrollList::AddLines(std::vector<std::string>* origText, std::vector<std
 				if (origColor)
 					rColor->push_back(curr_color);
 				curr_line = curr_line.substr(wrap_pos);
+				while (curr_line.substr(0, 1) == " ")
+					curr_line.erase(0, 1);
 			} else {
 				rText->push_back(curr_line);
 				if (origColor)
