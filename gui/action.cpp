@@ -366,8 +366,15 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 		return -1;
 	}
 
-	if (!PartitionManager.Mount_By_Path(filename, true))
-		return -1;
+	if (!TWFunc::Path_Exists(filename)) {
+		if (!PartitionManager.Mount_By_Path(filename, true)) {
+			return -1;
+		}
+		if (!TWFunc::Path_Exists(filename)) {
+			gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1}.")(filename));
+			return -1;
+		}
+	}
 
 	if (simulate) {
 		simulate_progress_bar();
