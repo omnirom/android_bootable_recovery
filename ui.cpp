@@ -33,7 +33,9 @@
 #endif
 
 #include "common.h"
+/*
 #include "roots.h"
+*/
 #include "device.h"
 #include "minui/minui.h"
 #include "screen_ui.h"
