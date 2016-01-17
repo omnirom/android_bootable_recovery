@@ -368,7 +368,13 @@ int main(int argc, char **argv) {
 	TWFunc::Disable_Stock_Recovery_Replace();
 	// Check for su to see if the device is rooted or not
 	if (DataManager::GetIntValue("tw_mount_system_ro") == 0 && PartitionManager.Mount_By_Path("/system", false)) {
-		if (TWFunc::Path_Exists("/supersu/su") && TWFunc::Path_Exists("/system/bin") && !TWFunc::Path_Exists("/system/bin/su") && !TWFunc::Path_Exists("/system/xbin/su") && !TWFunc::Path_Exists("/system/bin/.ext/.su")) {
+		// read /system/build.prop to get sdk version and do not offer to root if running M or higher (sdk version 23 == M)
+		string sdkverstr = TWFunc::System_Property_Get("ro.build.version.sdk");
+		int sdkver = 23;
+		if (!sdkverstr.empty()) {
+			sdkver = atoi(sdkverstr.c_str());
+		}
+		if (TWFunc::Path_Exists("/supersu/su") && TWFunc::Path_Exists("/system/bin") && !TWFunc::Path_Exists("/system/bin/su") && !TWFunc::Path_Exists("/system/xbin/su") && !TWFunc::Path_Exists("/system/bin/.ext/.su") && sdkver < 23) {
 			// Device doesn't have su installed
 			DataManager::SetValue("tw_busy", 1);
 			if (gui_startPage("installsu", 1, 1) != 0) {
