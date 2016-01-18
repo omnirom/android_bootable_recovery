@@ -304,8 +304,10 @@ int GUIAction::NotifyKey(int key, bool down)
 	// Else, check if all buttons are pressed, then consume their release events
 	// so they don't trigger one-button actions and reset mKeys pressed status
 	if(mKeys.size() == 1) {
-		if(!down && prevState)
+		if(!down && prevState) {
 			doActions();
+			return 0;
+		}
 	} else if(down) {
 		for(itr = mKeys.begin(); itr != mKeys.end(); ++itr) {
 			if(!itr->second)
@@ -320,9 +322,10 @@ int GUIAction::NotifyKey(int key, bool down)
 		}
 
 		doActions();
+		return 0;
 	}
 
-	return 0;
+	return 1;
 }
 
 int GUIAction::NotifyVarChange(const std::string& varName, const std::string& value)
