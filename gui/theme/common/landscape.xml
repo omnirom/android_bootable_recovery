@@ -2655,6 +2655,12 @@
 				</actions>
 			</button>
 
+			<button style="main_button_half_width">
+				<placement x="%col2_x_left%" y="%row15a_y%"/>
+				<text>{@sel_lang_btn=Select Language}</text>
+				<action function="overlay">select_language</action>
+			</button>
+
 			<slider>
 				<text>{@swipe_allow_mod=Swipe to Allow Modifications}</text>
 				<actions>
@@ -3973,6 +3979,12 @@
 				</actions>
 			</button>
 
+			<button style="main_button_half_width_low">
+				<placement x="%indent_right%" y="%row6_y%" placement="1"/>
+				<text>{@sel_lang_btn=Select Language}</text>
+				<action function="overlay">select_language</action>
+			</button>
+
 			<template name="keyboardtemplate"/>
 		</page>
 
@@ -4030,6 +4042,12 @@
 				<placement x="%col_button_right%" y="%row10a_y%"/>
 				<text>6x6</text>
 				<action function="set">tw_gui_pattern_grid_size=6</action>
+			</button>
+
+			<button style="main_button_half_width">
+				<placement x="%col1_x_right%" y="%row15a_y%"/>
+				<text>{@sel_lang_btn=Select Language}</text>
+				<action function="overlay">select_language</action>
 			</button>
 
 			<button style="main_button_half_width">
@@ -4109,7 +4127,7 @@
 				<placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%" />
 			</object>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="0" />
 				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
 				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4" />
@@ -4119,9 +4137,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">advanced</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="0" />
 				<condition var1="tw_samsung_navbar" op="=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="0" />
@@ -4132,9 +4150,9 @@
 					<action function="set">tw_hide_kb=1</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="0" />
 				<condition var1="tw_samsung_navbar" op="=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="1" />
@@ -4145,9 +4163,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="0" />
 				<placement x="%center_x%" y="%navbar_btn_y%" placement="4" />
 				<image resource="home" />
@@ -4156,9 +4174,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="key">home</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="0" />
 				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="0" />
@@ -4169,9 +4187,9 @@
 					<action function="set">tw_hide_kb=1</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="0" />
 				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="1" />
@@ -4182,9 +4200,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="0" />
 				<condition var1="tw_samsung_navbar" op="=" var2="1" />
 				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4" />
@@ -4194,9 +4212,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">advanced</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="1" />
 				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
 				<placement x="%back_button_x_1%" y="%navbar_btn_y%" placement="4" />
@@ -4206,9 +4224,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">advanced</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="1" />
 				<condition var1="tw_samsung_navbar" op="=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="0" />
@@ -4219,9 +4237,9 @@
 					<action function="set">tw_hide_kb=1</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="1" />
 				<condition var1="tw_samsung_navbar" op="=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="1" />
@@ -4232,9 +4250,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="1" />
 				<placement x="%home_button_x_1%" y="%navbar_btn_y%" placement="4" />
 				<image resource="home" />
@@ -4243,9 +4261,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="key">home</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="1" />
 				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="0" />
@@ -4256,9 +4274,9 @@
 					<action function="set">tw_hide_kb=1</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="1" />
 				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="1" />
@@ -4269,9 +4287,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="1" />
 				<condition var1="tw_samsung_navbar" op="=" var2="1" />
 				<placement x="%console_button_x_1%" y="%navbar_btn_y%" placement="4" />
@@ -4281,9 +4299,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">advanced</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="2" />
 				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
 				<placement x="%back_button_x_2%" y="%navbar_btn_y%" placement="4" />
@@ -4293,9 +4311,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">advanced</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="2" />
 				<condition var1="tw_samsung_navbar" op="=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="0" />
@@ -4306,9 +4324,9 @@
 					<action function="set">tw_hide_kb=1</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="2" />
 				<condition var1="tw_samsung_navbar" op="=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="1" />
@@ -4319,9 +4337,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="2" />
 				<placement x="%home_button_x_2%" y="%navbar_btn_y%" placement="4" />
 				<image resource="home" />
@@ -4330,9 +4348,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="key">home</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="2" />
 				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="0" />
@@ -4343,9 +4361,9 @@
 					<action function="set">tw_hide_kb=1</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="2" />
 				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
 				<condition var1="tw_hide_kb" op="=" var2="1" />
@@ -4356,9 +4374,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_navbar_button_position" op="=" var2="2" />
 				<condition var1="tw_samsung_navbar" op="=" var2="1" />
 				<placement x="%console_button_x_2%" y="%navbar_btn_y%" placement="4" />
@@ -4368,7 +4386,7 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">advanced</action>
 				</actions>
-			</object>
+			</button>
 
 			<action>
 				<touch key="home"/>
@@ -4597,10 +4615,11 @@
 			</fill>
 
 			<button>
-				<condition var1="tw_samsung_navbar" op="!=" var2="1"/>
-				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4"/>
-				<image resource="back"/>
-				<condition var1="tw_busy" var2="0"/>
+				<condition var1="tw_navbar_button_position" op="=" var2="0" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
 				<actions>
 					<action function="overlay"/>
 					<action function="key">%tw_back%</action>
@@ -4608,17 +4627,19 @@
 			</button>
 
 			<button>
-				<condition var1="tw_samsung_navbar" op="=" var2="1"/>
-				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4"/>
-				<image resource="console"/>
-				<condition var1="tw_busy" var2="0"/>
+				<condition var1="tw_navbar_button_position" op="=" var2="0" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
 				<action function="overlay">slideout</action>
 			</button>
 
 			<button>
-				<placement x="%center_x%" y="%navbar_btn_y%" placement="4"/>
-				<image resource="home"/>
-				<condition var1="tw_busy" var2="0"/>
+				<condition var1="tw_navbar_button_position" op="=" var2="0" />
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="home" />
+				<condition var1="tw_busy" var2="0" />
 				<actions>
 					<action function="overlay"/>
 					<action function="key">home</action>
@@ -4626,18 +4647,320 @@
 			</button>
 
 			<button>
-				<condition var1="tw_samsung_navbar" op="!=" var2="1"/>
-				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
-				<image resource="console"/>
-				<condition var1="tw_busy" var2="0"/>
+				<condition var1="tw_navbar_button_position" op="=" var2="0" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
 				<action function="overlay">slideout</action>
 			</button>
 
 			<button>
-				<condition var1="tw_samsung_navbar" op="=" var2="1"/>
-				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
-				<image resource="back"/>
-				<condition var1="tw_busy" var2="0"/>
+				<condition var1="tw_navbar_button_position" op="=" var2="0" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="1" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%back_button_x_1%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="1" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%back_button_x_1%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="1" />
+				<placement x="%home_button_x_1%" y="%navbar_btn_y%" placement="4" />
+				<image resource="home" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">home</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="1" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%console_button_x_1%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="1" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%console_button_x_1%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="2" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%back_button_x_2%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="2" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%back_button_x_2%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="2" />
+				<placement x="%home_button_x_2%" y="%navbar_btn_y%" placement="4" />
+				<image resource="home" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">home</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="2" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%console_button_x_2%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="2" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%console_button_x_2%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<action>
+				<touch key="power+voldown"/>
+				<action function="screenshot"/>
+			</action>
+		</page>
+
+		<page name="select_language">
+			<fill color="%semi_transparent%">
+				<placement x="0" y="0" w="%screen_width%" h="%screen_height%"/>
+			</fill>
+
+			<fill color="%background_color%">
+				<placement x="%col2_x_left%" y="row4_y" w="%dialog_width%" h="%dialog_height%"/>
+			</fill>
+
+			<listbox>
+				<placement x="%dialog_content_x%" y="%row4_y%" w="%content_overlay_width%" h="%partitionlist_storage_height%"/>
+				<text>{@select_language=Select Language:}</text>
+				<icon selected="radio_true" unselected="radio_false" />
+				<data name="tw_language" />
+			</listbox>
+
+			<button style="button_third_width">
+				<placement x="%dialog_button_x%" y="%row13_y%"/>
+				<text>{@ok_btn=OK}</text>
+				<actions>
+					<action function="overlay"/>
+					<action function="setlanguage"></action>
+				</actions>
+			</button>
+
+			<fill color="#000000">
+				<placement x="0" y="navbar_y" w="%screen_width%" h="%navbar_height"/>
+			</fill>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="0" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="0" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="0" />
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="home" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">home</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="0" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="0" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="1" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%back_button_x_1%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="1" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%back_button_x_1%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="1" />
+				<placement x="%home_button_x_1%" y="%navbar_btn_y%" placement="4" />
+				<image resource="home" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">home</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="1" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%console_button_x_1%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="1" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%console_button_x_1%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="2" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%back_button_x_2%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="2" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%back_button_x_2%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="2" />
+				<placement x="%home_button_x_2%" y="%navbar_btn_y%" placement="4" />
+				<image resource="home" />
+				<condition var1="tw_busy" var2="0" />
+				<actions>
+					<action function="overlay"/>
+					<action function="key">home</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="2" />
+				<condition var1="tw_samsung_navbar" op="!=" var2="1" />
+				<placement x="%console_button_x_2%" y="%navbar_btn_y%" placement="4" />
+				<image resource="console" />
+				<condition var1="tw_busy" var2="0" />
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_navbar_button_position" op="=" var2="2" />
+				<condition var1="tw_samsung_navbar" op="=" var2="1" />
+				<placement x="%console_button_x_2%" y="%navbar_btn_y%" placement="4" />
+				<image resource="back" />
+				<condition var1="tw_busy" var2="0" />
 				<actions>
 					<action function="overlay"/>
 					<action function="key">%tw_back%</action>
