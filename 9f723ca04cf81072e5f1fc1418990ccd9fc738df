@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_41f974e3",
+        "filename": "gui/theme/common/landscape.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 4322,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-01-18T16:53:38Z",
+      "side": 1,
+      "message": "Looks like we have some regressions here to the old object method of defining elements",
+      "range": {
+        "startLine": 4322,
+        "startChar": 11,
+        "endLine": 4322,
+        "endChar": 15
+      },
+      "revId": "9f723ca04cf81072e5f1fc1418990ccd9fc738df",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_21fe68cd",
+        "filename": "gui/theme/common/watch.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 3293,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-01-18T16:53:38Z",
+      "side": 1,
+      "message": "Since this is not an overlay, I think there will be no way to get back to the original page once you tap the language select button.",
+      "revId": "9f723ca04cf81072e5f1fc1418990ccd9fc738df",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
