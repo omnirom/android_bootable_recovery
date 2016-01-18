@@ -52,7 +52,14 @@
                                         correctly marked partial encryption */
 #define CRYPT_DATA_CORRUPT 0x8 /* Set when encryption is fine, but the
                                   underlying volume is corrupt */
-
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+/* This flag is used to transition from L->M upgrade. L release passed
+ * a byte for every nible of user password while M release is passing
+ * ascii value of user password.
+ * Random flag value is chosen so that it does not conflict with other use cases
+ */
+#define CRYPT_ASCII_PASSWORD_UPDATED 0x1000
+#endif
 /* Allowed values for type in the structure below */
 #define CRYPT_TYPE_PASSWORD 0 /* master_key is encrypted with a password
                                * Must be zero to be compatible with pre-L
