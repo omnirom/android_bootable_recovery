@@ -358,6 +358,7 @@
 		<string name="kb_vibration">Keyboard Vibration:</string>
 		<string name="act_vibration">Action Vibration:</string>
 		<string name="select_language">Select Language:</string>
+		<string name="sel_lang_btn">Select Language</string>
 		<string name="set_language_btn">Set Language</string>
 		<string name="advanced_hdr">Advanced</string>
 		<string name="copy_log_confirm">Copy Log to SD Card?</string>
@@ -434,7 +435,7 @@
 		<string name="fm_perms">Permissions:</string>
 		<string name="fm_complete">File Operation Complete</string>
 		<string name="decrypt_data_hdr">Decrypt Data</string>
-		<string name="decrypt_data_enter_pass"></string>
+		<string name="decrypt_data_enter_pass">Enter Password.</string>
 		<string name="decryt_data_failed">Password failed, please try again!</string>
 		<string name="decryt_data_failed_pattern">Pattern failed, please try again!</string>
 		<string name="decrypt_data_enter_pattern">Enter Pattern.</string>

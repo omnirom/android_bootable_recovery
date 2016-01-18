@@ -3284,18 +3284,24 @@
 			</text>
 
 			<text style="text_m_fail">
-				<placement x="%center_x%" y="%row7_y%" placement="5"/>
+				<placement x="%center_x%" y="%row6_y%" placement="5"/>
 				<text>{@sys_rop5=Installing zips or performing adb operations may still}</text>
 			</text>
 
 			<text style="text_m_fail">
-				<placement x="%center_x%" y="%row8_y%" placement="5"/>
+				<placement x="%center_x%" y="%row7_y%" placement="5"/>
 				<text>{@sys_rop6=modify the system partition.}</text>
 			</text>
 
+			<button style="main_button_half_height">
+				<placement x="%col1_x_right%" y="%row8a_y%"/>
+				<text>{@sel_lang_btn=Select Language}</text>
+				<action function="page">settings_language</action>
+			</button>
+
 			<checkbox>
 				<condition var1="tw_is_encrypted" var2="0"/>
-				<placement x="%indent%" y="%row10_y%"/>
+				<placement x="%indent%" y="%row11_y%"/>
 				<text>{@sys_ro_never_show_chk=Never show this screen during boot again}</text>
 				<data variable="tw_never_show_system_ro_page"/>
 			</checkbox>
@@ -3840,28 +3846,28 @@
 				<text>{@settings_hdr=Settings} &gt; {@language_hdr=Language} - %tw_language_display%</text>
 			</text>
 
-			<object type="listbox" style="scrolllist">
+			<listbox style="scrolllist">
 				<placement x="%col1_x_left%" y="%row2_header_y%" w="%content_width%" h="%fileselector_filemanager_height%"/>
 				<icon selected="radio_true" unselected="radio_false" />
 				<data name="tw_language" />
-			</object>
+			</listbox>
 
 			<button>
 				<placement x="%btn4_col4_x%" y="%row11_y%"/>
 				<highlight color="%highlight_color%"/>
-				<image resource="q_btn_folder"/>
+				<image resource="q_btn_accept_transp"/>
 				<action function="setlanguage"></action>
 			</button>
 
-			<object type="action">
+			<action>
 				<touch key="home" />
 				<action function="page">main</action>
-			</object>
+			</action>
 
-			<object type="action">
+			<action>
 				<touch key="back" />
 				<action function="page">settings</action>
-			</object>
+			</action>
 		</page>
 
 		<page name="advanced">
@@ -4848,6 +4854,12 @@
 			</text>
 
 			<button style="main_button_half_height">
+				<placement x="%col1_x_left%" y="%row4_y%"/>
+				<text>{@sel_lang_btn=Select Language}</text>
+				<action function="page">settings_language</action>
+			</button>
+
+			<button style="main_button_half_height">
 				<placement x="%col1_x_right%" y="%row4_y%"/>
 				<text>{@cancel_btn=Cancel}</text>
 				<actions>
@@ -5025,11 +5037,11 @@
 
 			<template name="keyboardtemplate"/>
 
-			<object type="fill" color="#000000">
+			<fill color="#000000">
 				<placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%" />
-			</object>
+			</fill>
 
-			<object type="button">
+			<button>
 				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4" />
 				<image resource="back" />
 				<condition var1="tw_busy" var2="0" />
@@ -5037,9 +5049,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="key">back</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<placement x="%center_x%" y="%navbar_btn_y%" placement="4" />
 				<image resource="home" />
 				<condition var1="tw_busy" var2="0" />
@@ -5047,9 +5059,9 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="key">home</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_hide_kb" var2="0"/>
 				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4" />
 				<image resource="kb_hide" />
@@ -5058,9 +5070,9 @@
 					<action function="set">tw_hide_kb=1</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
-			<object type="button">
+			<button>
 				<condition var1="tw_hide_kb" var2="1"/>
 				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4" />
 				<image resource="kb_show" />
@@ -5069,7 +5081,7 @@
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">terminalcommand</action>
 				</actions>
-			</object>
+			</button>
 
 			<action>
 				<touch key="home"/>
@@ -5087,10 +5099,10 @@
 				</actions>
 			</action>
 
-			<object type="action">
+			<action>
 				<touch key="power+voldown" />
 				<action function="screenshot" />
-			</object>
+			</action>
 		</page>
 
 		<page name="sideload">
