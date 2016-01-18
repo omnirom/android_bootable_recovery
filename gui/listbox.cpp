@@ -36,7 +36,7 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 	xml_node<>* child;
 	mIconSelected = mIconUnselected = NULL;
 	mUpdate = 0;
-	isCheckList = false;
+	isCheckList = isTextParsed = false;
 
 	// Get the icons, if any
 	child = FindNode(node, "icon");
@@ -87,7 +87,8 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 		attr = child->first_attribute("name");
 		if (!attr)
 			continue;
-		item.displayName = gui_parse_text(attr->value());
+		// We will parse display names when we get page focus to ensure that translating takes place
+		item.displayName = attr->value();
 		item.variableValue = gui_parse_text(child->value());
 		item.selected = (child->value() == currentValue);
 		item.action = NULL;
@@ -191,6 +192,13 @@ void GUIListBox::SetPageFocus(int inFocus)
 {
 	GUIScrollList::SetPageFocus(inFocus);
 	if (inFocus) {
+		if (!isTextParsed) {
+			isTextParsed = true;
+			for (size_t i = 0; i < mListItems.size(); i++) {
+				ListItem& item = mListItems[i];
+				item.displayName = gui_parse_text(item.displayName);
+			}
+		}
 		DataManager::GetValue(mVariable, currentValue);
 		NotifyVarChange(mVariable, currentValue);
 	}
