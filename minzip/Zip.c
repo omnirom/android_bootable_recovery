@@ -366,7 +366,7 @@ static bool parseZipArchive(ZipArchive* pArchive)
         }
         pEntry->offset = localHdrOffset + LOCHDR
             + get2LE(localHdr + LOCNAM) + get2LE(localHdr + LOCEXT);
-        if (!safe_add(NULL, pEntry->offset, pEntry->compLen)) {
+        if (!safe_add(NULL, pEntry->offset, (typeof(pEntry->offset))pEntry->compLen)) {
             LOGW("Integer overflow adding in parseZipArchive\n");
             goto bail;
         }
