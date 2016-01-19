@@ -1,15 +1,6 @@
 <?xml version="1.0"?>
 
-<language>
-	<display>English</display>
-
 	<resources>
-		<!-- Font overrides - only change these if your language requires special characters -->
-		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
-
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System Image</string>
@@ -667,4 +658,3 @@
 		<string name="theme_ver_err">Custom theme version does not match TWRP version. Using stock theme.</string>
 		<string name="up_a_level">(Up A Level)</string>
 	</resources>
-</language>
