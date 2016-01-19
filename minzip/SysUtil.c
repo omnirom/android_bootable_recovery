@@ -19,9 +19,9 @@
 #include "Log.h"
 #include "SysUtil.h"
 
-static int getFileStartAndLength(int fd, off_t *start_, size_t *length_)
+static int getFileStartAndLength(int fd, loff_t *start_, size_t *length_)
 {
-    off_t start, end;
+    loff_t start, end;
     size_t length;
 
     assert(start_ != NULL);
@@ -29,11 +29,11 @@ static int getFileStartAndLength(int fd, off_t *start_, size_t *length_)
 
     // TODO: isn't start always 0 for the single call site? just use fstat instead?
 
-    start = TEMP_FAILURE_RETRY(lseek(fd, 0L, SEEK_CUR));
-    end = TEMP_FAILURE_RETRY(lseek(fd, 0L, SEEK_END));
+    start = TEMP_FAILURE_RETRY(lseek64(fd, 0L, SEEK_CUR));
+    end = TEMP_FAILURE_RETRY(lseek64(fd, 0L, SEEK_END));
 
-    if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1 ||
-                start == (off_t) -1 || end == (off_t) -1) {
+    if (TEMP_FAILURE_RETRY(lseek64(fd, start, SEEK_SET)) == -1 ||
+                start == (loff_t) -1 || end == (loff_t) -1) {
         LOGE("could not determine length of file\n");
         return -1;
     }
@@ -59,7 +59,7 @@ static int getFileStartAndLength(int fd, off_t *start_, size_t *length_)
  */
 static int sysMapFD(int fd, MemMapping* pMap)
 {
-    off_t start;
+    loff_t start;
     size_t length;
     void* memPtr;
 
@@ -68,7 +68,12 @@ static int sysMapFD(int fd, MemMapping* pMap)
     if (getFileStartAndLength(fd, &start, &length) < 0)
         return -1;
 
+#if (PLATFORM_SDK_VERSION >= 21)
+    memPtr = mmap64(NULL, length, PROT_READ, MAP_PRIVATE, fd, start);
+#else
+    // Older versions of Android do not have mmap64 so we will just use mmap instead
     memPtr = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, start);
+#endif
     if (memPtr == MAP_FAILED) {
         LOGW("mmap(%d, R, PRIVATE, %d, %d) failed: %s\n", (int) length,
             fd, (int) start, strerror(errno));
