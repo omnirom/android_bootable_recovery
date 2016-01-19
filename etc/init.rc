@@ -1,3 +1,4 @@
+import /init.recovery.logd.rc
 import /init.recovery.usb.rc
 import /init.recovery.${ro.hardware}.rc
 
