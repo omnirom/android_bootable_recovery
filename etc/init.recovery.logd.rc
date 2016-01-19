@@ -1,0 +1,28 @@
+on load_all_props_action
+    start logd
+    start logd-reinit
+
+on load_persist_props_action
+    start logd
+    start logd-reinit
+
+on post-fs
+    start logd
+
+on post-fs-data
+    start logd
+
+on property:vold.decrypt=trigger_load_persist_props
+    start logd
+    start logd-reinit
+
+service logd /sbin/logd
+    class core
+    socket logd stream 0666 logd logd
+    socket logdr seqpacket 0666 logd logd
+    socket logdw dgram 0222 logd logd
+    group root system
+
+service logd-reinit /sbin/logd --reinit
+    oneshot
+    disabled
