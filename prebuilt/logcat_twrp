@@ -1,0 +1,3 @@
+#!/sbin/sh
+
+tail -fn+1 /tmp/recovery.log
