@@ -1862,7 +1862,7 @@ bool TWPartition::Wipe_F2FS() {
 
 		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mkfs.f2fs"));
 		Find_Actual_Block_Device();
-		command = "mkfs.f2fs -t 1";
+		command = "mkfs.f2fs -t 0";
 		if (!Is_Decrypted && Length != 0) {
 			// Only use length if we're not decrypted
 			char len[32];
