@@ -1224,10 +1224,10 @@ bool TWPartition::Wipe(string New_File_System) {
 		if (Has_Data_Media && recreate_media) {
 			Recreate_Media_Folder();
 		}
+		if (Is_Storage && Mount(false))
+			PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
 	}
-	if (Is_Storage) {
-		PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
-	}
+
 	return wiped;
 }
 
