@@ -390,7 +390,15 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 endif
 ifneq ($(TW_EXCLUDE_SUPERSU), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += \
-        su install-recovery.sh 99SuperSUDaemon Superuser.apk
+        install-recovery.sh 99SuperSUDaemon Superuser.apk
+    ifeq ($(TARGET_ARCH), arm)
+        LOCAL_ADDITIONAL_DEPENDENCIES += \
+            chattr.pie libsupol.so suarm supolicy
+    endif
+    ifeq ($(TARGET_ARCH), arm64)
+        LOCAL_ADDITIONAL_DEPENDENCIES += \
+            libsupol.soarm64 suarm64 supolicyarm64
+    endif
 endif
 ifneq ($(TW_NO_EXFAT_FUSE), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += exfat-fuse
