@@ -116,3 +116,37 @@ void blanktimer::resetTimerAndUnblank(void) {
 	pthread_mutex_unlock(&mutex);
 #endif
 }
+
+void blanktimer::blank(void) {
+/*  1) No need for timer handling since checkForTimeout() verifies
+ *     state of screen before performing screen-off
+ *  2) Assume screen-off causes issues for devices that set
+ *     TW_NO_SCREEN_TIMEOUT and do not blank screen here either
+ */
+
+#ifndef TW_NO_SCREEN_TIMEOUT
+	pthread_mutex_lock(&mutex);
+	if (state == kOn) {
+		orig_brightness = getBrightness();
+		state = kOff;
+		TWFunc::Set_Brightness("0");
+		TWFunc::check_and_run_script("/sbin/postscreenblank.sh", "blank");
+	}
+#ifndef TW_NO_SCREEN_BLANK
+	if (state == kOff) {
+		gr_fb_blank(true);
+		state = kBlanked;
+	}
+#endif
+	pthread_mutex_unlock(&mutex);
+#endif
+}
+
+void blanktimer::toggleBlank(void) {
+	if (state == kOn) {
+		blank();
+		PageManager::ChangeOverlay("lock");
+	} else {
+		resetTimerAndUnblank();
+	}
+}

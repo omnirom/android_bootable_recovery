@@ -3517,6 +3517,11 @@
 				<text>{@swipe_to_unlock=Swipe to Unlock}</text>
 				<action function="overlay"/>
 			</slider>
+
+			<action>
+				<touch key="power"/>
+				<action function="togglebacklight"/>
+			</action>
 		</page>
 
 		<page name="filemanagerlist">

@@ -37,11 +37,15 @@ public:
 	// call this when an input event is received or when an operation is finished
 	void resetTimerAndUnblank();
 
+	// call this when power button is pressed
+	void toggleBlank(void);
+
 	bool isScreenOff();
 
 private:
 	void setTimer(void);
 	string getBrightness(void);
+	void blank(void);
 
 	pthread_mutex_t mutex;
 	enum State { kOn = 0, kDim = 1, kOff = 2, kBlanked = 3 };

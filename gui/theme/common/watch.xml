@@ -4424,6 +4424,11 @@
 				<text>{@swipe_unlock=   Unlock}</text>
 				<action function="overlay"/>
 			</slider>
+
+			<action>
+				<touch key="power"/>
+				<action function="togglebacklight"/>
+			</action>
 		</page>
 
 		<page name="filemanagerlist">
