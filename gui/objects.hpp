@@ -363,6 +363,7 @@ protected:
 	int checkpartitionlifetimewrites(std::string arg);
 	int mountsystemtoggle(std::string arg);
 	int setlanguage(std::string arg);
+	int setbacklight(std::string arg);
 	int twcmd(std::string arg);
 	int setbootslot(std::string arg);
 	int installapp(std::string arg);
