@@ -50,6 +50,7 @@ extern "C" {
 #include "blanktimer.hpp"
 
 #define TW_THEME_VERSION 1
+#define TW_THEME_VER_ERR -2
 
 extern int gGuiRunning;
 
@@ -721,7 +722,7 @@ int PageSet::LoadLanguage(char* languageFile, ZipArchive* package)
 	return 0;
 }
 
-int PageSet::Load(ZipArchive* package, char* xmlFile, char* languageFile)
+int PageSet::Load(ZipArchive* package, char* xmlFile, char* languageFile, char* baseLanguageFile)
 {
 	xml_document<> mDoc;
 	xml_node<>* parent;
@@ -735,6 +736,9 @@ int PageSet::Load(ZipArchive* package, char* xmlFile, char* languageFile)
 		parent = mDoc.first_node("install");
 
 	set_scale_values(1, 1); // Reset any previous scaling values
+
+	if (baseLanguageFile)
+		LoadLanguage(baseLanguageFile, NULL);
 
 	// Now, let's parse the XML
 	child = parent->first_node("details");
@@ -751,7 +755,7 @@ int PageSet::Load(ZipArchive* package, char* xmlFile, char* languageFile)
 			if (package) {
 				gui_err("theme_ver_err=Custom theme version does not match TWRP version. Using stock theme.");
 				mDoc.clear();
-				return -1;
+				return TW_THEME_VER_ERR;
 			} else {
 				gui_print_color("warning", "Stock theme version does not match TWRP version.\n");
 			}
@@ -1353,6 +1357,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	long len;
 	char* xmlFile = NULL;
 	char* languageFile = NULL;
+	char* baseLanguageFile = NULL;
 	PageSet* pageSet = NULL;
 	int ret;
 	MemMapping map;
@@ -1390,6 +1395,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		package = "ui.xml";
 		LoadLanguageList(pZip);
 		languageFile = LoadFileToBuffer("languages/en.xml", pZip);
+		baseLanguageFile = LoadFileToBuffer(TWRES "languages/en.xml", NULL);
 	}
 
 	xmlFile = LoadFileToBuffer(package, pZip);
@@ -1400,19 +1406,17 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	// Before loading, mCurrentSet must be the loading package so we can find resources
 	pageSet = mCurrentSet;
 	mCurrentSet = new PageSet(xmlFile);
-	ret = mCurrentSet->Load(pZip, xmlFile, languageFile);
+	ret = mCurrentSet->Load(pZip, xmlFile, languageFile, baseLanguageFile);
 	if (languageFile) {
 		free(languageFile);
 		languageFile = NULL;
 	}
-	if (ret == 0)
-	{
+	if (ret == 0) {
 		mCurrentSet->SetPage(startpage);
 		mPageSets.insert(std::pair<std::string, PageSet*>(name, mCurrentSet));
-	}
-	else
-	{
-		LOGERR("Package %s failed to load.\n", name.c_str());
+	} else {
+		if (ret != TW_THEME_VER_ERR)
+			LOGERR("Package %s failed to load.\n", name.c_str());
 	}
 
 	// The first successful package we loaded is the base

@@ -91,7 +91,7 @@ public:
 
 public:
 	int LoadLanguage(char* languageFile, ZipArchive* package);
-	int Load(ZipArchive* package, char* xmlFile, char* languageFile);
+	int Load(ZipArchive* package, char* xmlFile, char* languageFile, char* baseLanguageFile);
 	int CheckInclude(ZipArchive* package, xml_document<> *parentDoc);
 
 	Page* FindPage(std::string name);
