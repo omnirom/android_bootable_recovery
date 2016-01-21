@@ -258,7 +258,7 @@
 
 			<action>
 				<touch key="power"/>
-				<action function="overlay">lock</action>
+				<action function="togglebacklight"/>
 			</action>
 
 			<action>

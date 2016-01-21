@@ -205,7 +205,9 @@ bool InputHandler::processInput(int timeout_ms)
 		break;
 	}
 
-	blankTimer.resetTimerAndUnblank();
+	if (ev.code != KEY_POWER && ev.code > KEY_RESERVED)
+		blankTimer.resetTimerAndUnblank();
+
 	return true;  // we got an event, so there might be more in the queue
 }
 
