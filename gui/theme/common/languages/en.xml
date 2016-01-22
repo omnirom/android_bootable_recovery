@@ -111,6 +111,7 @@
 		<string name="no_osrb">sure you wish to reboot?</string>
 		<string name="no_ospo">sure you wish to power off?</string>
 		<string name="rebooting">Rebooting...</string>
+		<string name="swipe_reboot">Swipe to Reboot</string>
 		<string name="swipe_reboot_s">   Reboot</string>
 		<string name="swipe_flash">Swipe to confirm Flash</string>
 		<string name="confirm_action">Confirm Action</string>
@@ -148,6 +149,7 @@
 		<string name="format_data_wtc2">backups and media. This cannot be undone.</string>
 		<string name="format_data_undo">This cannot be undone.</string>
 		<string name="format_data_complete">Data Format Complete</string>
+		<!-- Translator note: the word "yes" must remain English! -->
 		<string name="yes_continue">Type yes to continue.  Press back to cancel.</string>
 		<string name="part_opt_hdr">Partition Options for: %tw_partition_name%</string>
 		<string name="sel_act_hdr">Select Action</string>
@@ -285,7 +287,7 @@
 		<string name="swipe_allow_mod">Swipe to Allow Modifications</string>
 		<string name="swipe_allow_mod_s">Allow Modifications</string>
 		<string name="settings_hdr">Settings</string>
-		<string name="settings_gen_hdr">General Settings</string>
+		<string name="settings_gen_hdr">General</string>
 		<string name="settings_gen_s_hdr">General</string>
 		<string name="settings_gen_btn">General</string>
 		<string name="use_rmrf_chk">Use rm -rf instead of formatting</string>
@@ -340,7 +342,7 @@
 		<string name="curr_tz">Current Time Zone: %tw_time_zone%</string>
 		<string name="curr_tz_s">Current Time Zone:</string>
 		<string name="set_tz_btn">Set Time Zone</string>
-		<string name="settings_screen_hdr">Screen Settings</string>
+		<string name="settings_screen_hdr">Screen</string>
 		<string name="settings_screen_timeout_hdr">Screen Timeout</string>
 		<string name="enable_timeout_chk">Enable screen timeout</string>
 		<string name="screen_to_slider">Screen timeout in seconds:</string>
