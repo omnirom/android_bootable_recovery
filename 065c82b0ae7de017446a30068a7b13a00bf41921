@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_84d66a51",
+        "filename": "partition.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 2466,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-01-22T04:05:13Z",
+      "side": 1,
+      "message": "won\u0027t work: TW_HAS_USB_STORAGE is in mConstValues",
+      "revId": "065c82b0ae7de017446a30068a7b13a00bf41921",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
