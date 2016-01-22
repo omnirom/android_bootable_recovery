@@ -855,7 +855,7 @@ void DataManager::SetDefaultValues()
 		// Attempt to locate the max_brightness file
 		string maxbrightpath = findbright.insert(findbright.rfind('/') + 1, "max_");
 		if (TWFunc::Path_Exists(maxbrightpath)) {
-			ifstream maxVal(maxbrightpath);
+			ifstream maxVal(maxbrightpath.c_str());
 			if(maxVal >> maxBrightness) {
 				LOGINFO("Got max brightness %s from '%s'\n", maxBrightness.c_str(), maxbrightpath.c_str());
 			} else {
@@ -863,7 +863,7 @@ void DataManager::SetDefaultValues()
 				maxBrightness = "-1";
 			}
 		}
-		if(stoi(maxBrightness) <= 0)
+		if (atoi(maxBrightness.c_str()) <= 0)
 		{
 			// Fallback into default
 			ostringstream maxVal;
@@ -885,7 +885,7 @@ void DataManager::SetDefaultValues()
 #endif
 #ifdef TW_DEFAULT_BRIGHTNESS
 		int defValInt = TW_DEFAULT_BRIGHTNESS;
-		int maxValInt = stoi(maxBrightness);
+		int maxValInt = atoi(maxBrightness.c_str());
 		// Deliberately int so the % is always a whole number
 		int defPctInt = ( ( (double)defValInt / maxValInt ) * 100 );
 		ostringstream defPct;
