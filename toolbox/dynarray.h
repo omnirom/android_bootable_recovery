@@ -1,6 +1,8 @@
 #ifndef DYNARRAY_H
 #define DYNARRAY_H
 
+// These functions are now found in system/core/toolbox/ls.c
+
 #include <stddef.h>
 
 /* simple dynamic array of pointers */
