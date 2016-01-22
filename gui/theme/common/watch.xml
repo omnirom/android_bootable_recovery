@@ -5363,6 +5363,11 @@
 			</button>
 
 			<action>
+				<touch key="power"/>
+				<action function="togglebacklight"/>
+			</action>
+
+			<action>
 				<touch key="power+voldown"/>
 				<action function="screenshot"/>
 			</action>
