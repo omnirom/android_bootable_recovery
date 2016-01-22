@@ -111,6 +111,7 @@
 		<string name="no_osrb">sure you wish to reboot?</string>
 		<string name="no_ospo">sure you wish to power off?</string>
 		<string name="rebooting">Rebooting...</string>
+		<string name="swipe_reboot">Swipe to Reboot</string>
 		<string name="swipe_reboot_s">   Reboot</string>
 		<string name="swipe_flash">Swipe to confirm Flash</string>
 		<string name="confirm_action">Confirm Action</string>
@@ -148,6 +149,7 @@
 		<string name="format_data_wtc2">backups and media. This cannot be undone.</string>
 		<string name="format_data_undo">This cannot be undone.</string>
 		<string name="format_data_complete">Data Format Complete</string>
+		<!-- Translator note: the word "yes" must remain English! -->
 		<string name="yes_continue">Type yes to continue.  Press back to cancel.</string>
 		<string name="part_opt_hdr">Partition Options for: %tw_partition_name%</string>
 		<string name="sel_act_hdr">Select Action</string>
