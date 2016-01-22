@@ -928,7 +928,7 @@ int GUIAction::screenshot(std::string arg __unused)
 		strcpy(path, "/tmp/");
 	}
 
-	if(!TWFunc::Create_Dir_Recursive(path, 0666, uid, gid))
+	if(!TWFunc::Create_Dir_Recursive(path, 0775, uid, gid))
 		return 0;
 
 	tm = time(NULL);
