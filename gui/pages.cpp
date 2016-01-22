@@ -687,6 +687,7 @@ int PageSet::LoadLanguage(char* languageFile, ZipArchive* package)
 	xml_node<>* parent;
 	xml_node<>* child;
 	std::string resource_source;
+	int ret = 0;
 
 	if (languageFile) {
 		printf("parsing languageFile\n");
@@ -717,9 +718,10 @@ int PageSet::LoadLanguage(char* languageFile, ZipArchive* package)
 	if (child)
 		mResources->LoadResources(child, package, resource_source);
 	else
-		return -1;
+		ret = -1;
+	DataManager::SetValue("tw_backup_name", gui_lookup("auto_generate", "(Auto Generate)"));
 	lang.clear();
-	return 0;
+	return ret;
 }
 
 int PageSet::Load(ZipArchive* package, char* xmlFile, char* languageFile, char* baseLanguageFile)
