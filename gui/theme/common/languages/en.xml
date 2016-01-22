@@ -291,6 +291,7 @@
 		<string name="use_rmrf_chk">Use rm -rf instead of formatting</string>
 		<string name="use24clock_chk">Use 24-hour clock</string>
 		<string name="rev_navbar_chk">Reversed navbar layout</string>
+		<string name="rev_tabicons_chk">Use Icons for settings tabs</string>
 		<string name="simact_chk">Simulate actions for theme testing</string>
 		<string name="simfail_chk">Simulate failure for actions</string>
 		<string name="ctr_navbar_rdo">Center navbar buttons</string>
