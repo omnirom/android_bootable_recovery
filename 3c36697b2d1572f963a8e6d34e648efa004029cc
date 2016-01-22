@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_e4f3eedf",
+        "filename": "gui/theme/common/languages/en.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-01-22T07:14:53Z",
+      "side": 1,
+      "message": "I missed one; should be added above this line:\n\u003cstring name\u003d\"swipe_reboot\"\u003eSwipe to Reboot\u003c/string\u003e",
+      "revId": "3c36697b2d1572f963a8e6d34e648efa004029cc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
