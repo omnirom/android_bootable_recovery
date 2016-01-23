@@ -70,7 +70,7 @@
 
 		<style name="tab">
 			<highlight color="%highlight_color%"/>
-			<fill color="%accent_color%"/>
+			<fill color="%transparent%"/>
 			<font resource="font_s" color="%text_button_color%"/>
 		</style>
 
@@ -2847,7 +2847,11 @@
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@restore_defaults_btn=Restore Defaults}</text>
-				<action function="restoredefaultsettings"/>
+				<actions>
+					<action function="set">tw_samsung_navbar=0</action>
+					<action function="set">tw_tab_icons=0</action>
+					<action function="restoredefaultsettings"/>
+				</actions>
 			</button>
 
 			<action>
