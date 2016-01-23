@@ -613,8 +613,10 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 	DataManager::SetValue("tw_page_done", 0);
 	DataManager::SetValue("tw_gui_done", 0);
 
-	if (page_name)
+	if (page_name) {
+		PageManager::SetStartPage(page_name);
 		gui_changePage(page_name);
+	}
 
 	// Raise the curtain
 	if (gCurtain != NULL)
@@ -945,7 +947,7 @@ error:
 
 extern "C" int gui_start(void)
 {
-	return gui_startPage(NULL, 1, 0);
+	return gui_startPage("main", 1, 0);
 }
 
 extern "C" int gui_startPage(const char *page_name, const int allow_commands, int stop_on_page_done)

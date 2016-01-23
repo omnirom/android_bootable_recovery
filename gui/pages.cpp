@@ -1565,6 +1565,10 @@ void PageManager::RequestReload() {
 	mReloadTheme = true;
 }
 
+void PageManager::SetStartPage(const std::string& page_name) {
+	mStartPage = page_name;
+}
+
 int PageManager::ChangePage(std::string name)
 {
 	DataManager::SetValue("tw_operation_state", 0);

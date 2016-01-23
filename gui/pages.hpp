@@ -140,6 +140,7 @@ public:
 	static void ReleasePackage(std::string name);
 	static int RunReload();
 	static void RequestReload();
+	static void SetStartPage(const std::string& page_name);
 
 	// Used for actions and pages
 	static int ChangePage(std::string name);
