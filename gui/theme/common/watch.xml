@@ -1999,7 +1999,7 @@
 
 			<text style="text_m">
 				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@backup_hdr=Backup} &gt; {@backup_confirm_hdr=Confirm Backup{</text>
+				<text>{@backup_hdr=Backup} &gt; {@backup_confirm_hdr=Confirm Backup}</text>
 			</text>
 
 			<text style="text_m_accent">
