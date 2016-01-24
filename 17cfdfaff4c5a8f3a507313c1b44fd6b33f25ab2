@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_e4f88e47",
+        "filename": "partition.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 2496,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-01-24T17:12:16Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "17cfdfaff4c5a8f3a507313c1b44fd6b33f25ab2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_24e796ab",
         "filename": "partitionmanager.cpp",
         "patchSetId": 12
