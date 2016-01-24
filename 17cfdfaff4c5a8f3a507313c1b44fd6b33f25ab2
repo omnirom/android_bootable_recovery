@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_44cbc223",
+        "filename": "mtp/Android.mk",
+        "patchSetId": 12
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-01-24T17:07:39Z",
+      "side": 1,
+      "message": "unrelated to commit, and why?",
+      "revId": "17cfdfaff4c5a8f3a507313c1b44fd6b33f25ab2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_24d0b6c9",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 1310,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-01-24T17:07:39Z",
+      "side": 1,
+      "message": "can probably go now?",
+      "revId": "17cfdfaff4c5a8f3a507313c1b44fd6b33f25ab2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_04d5bab9",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 2380,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-01-24T17:07:39Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "17cfdfaff4c5a8f3a507313c1b44fd6b33f25ab2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
