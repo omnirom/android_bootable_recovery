@@ -31,7 +31,6 @@
 #include <pixelflinger/pixelflinger.h>
 
 #include <png.h>
-#include "jpeglib.h"
 
 #include "minui.h"
 
@@ -256,106 +255,12 @@ int res_create_surface_png(const char* name, gr_surface* pSurface) {
     return result;
 }
 
-int res_create_surface_jpg(const char* name, gr_surface* pSurface) {
-    GGLSurface* surface = NULL;
-    int result = 0;
-    struct jpeg_decompress_struct cinfo;
-    struct jpeg_error_mgr jerr;
-
-    FILE* fp = fopen(name, "rb");
-    if (fp == NULL) {
-        char resPath[256];
-
-        snprintf(resPath, sizeof(resPath)-1, TWRES "images/%s", name);
-        resPath[sizeof(resPath)-1] = '\0';
-        fp = fopen(resPath, "rb");
-        if (fp == NULL) {
-            result = -1;
-            goto exit;
-        }
-    }
-
-    cinfo.err = jpeg_std_error(&jerr);
-    jpeg_create_decompress(&cinfo);
-
-    /* Specify data source for decompression */
-    jpeg_stdio_src(&cinfo, fp);
-
-    /* Read file header, set default decompression parameters */
-    if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK)
-        goto exit;
-
-    /* Start decompressor */
-    (void) jpeg_start_decompress(&cinfo);
-
-    size_t width = cinfo.image_width;
-    size_t height = cinfo.image_height;
-    size_t stride = 4 * width;
-    size_t pixelSize = stride * height;
-
-    surface = malloc(sizeof(GGLSurface) + pixelSize);
-    if (surface == NULL) {
-        result = -8;
-        goto exit;
-    }
-
-    unsigned char* pData = (unsigned char*) (surface + 1);
-    surface->version = sizeof(GGLSurface);
-    surface->width = width;
-    surface->height = height;
-    surface->stride = width; /* Yes, pixels, not bytes */
-    surface->data = pData;
-    surface->format = GGL_PIXEL_FORMAT_RGBX_8888;
-
-    int y;
-    for (y = 0; y < (int) height; ++y) {
-        unsigned char* pRow = pData + y * stride;
-        jpeg_read_scanlines(&cinfo, &pRow, 1);
-
-        int x;
-        for(x = width - 1; x >= 0; x--) {
-            int sx = x * 3;
-            int dx = x * 4;
-            unsigned char r = pRow[sx];
-            unsigned char g = pRow[sx + 1];
-            unsigned char b = pRow[sx + 2];
-            unsigned char a = 0xff;
-            pRow[dx    ] = r; // r
-            pRow[dx + 1] = g; // g
-            pRow[dx + 2] = b; // b
-            pRow[dx + 3] = a;
-        }
-    }
-    *pSurface = (gr_surface) surface;
-
-exit:
-    if (fp != NULL)
-    {
-        if (surface)
-        {
-            (void) jpeg_finish_decompress(&cinfo);
-            if (result < 0)
-            {
-                free(surface);
-            }
-        }
-        jpeg_destroy_decompress(&cinfo);
-        fclose(fp);
-    }
-    return result;
-}
-
 int res_create_surface(const char* name, gr_surface* pSurface) {
     int ret;
 
     if (!name)      return -1;
 
-    if (strlen(name) > 4 && strcmp(name + strlen(name) - 4, ".jpg") == 0)
-        return res_create_surface_jpg(name,pSurface);
-
     ret = res_create_surface_png(name,pSurface);
-    if (ret < 0)
-        ret = res_create_surface_jpg(name,pSurface);
 
     return ret;
 }
