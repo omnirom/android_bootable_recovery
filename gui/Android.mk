@@ -115,6 +115,10 @@ ifeq ($(TWRP_NEW_THEME),true)
     TWRP_RES := $(commands_recovery_local_path)/gui/theme/common/fonts
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/languages
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/$(word 1,$(subst _, ,$(TW_THEME))).xml
+ifeq ($(TW_EXTRA_LANGUAGES),true)
+    TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/fonts
+    TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/languages
+endif
 # for future copying of used include xmls and fonts:
 # UI_XML := $(TWRP_THEME_LOC)/ui.xml
 # TWRP_INCLUDE_XMLS := $(shell xmllint --xpath '/recovery/include/xmlfile/@name' $(UI_XML)|sed -n 's/[^\"]*\"\([^\"]*\)\"[^\"]*/\1\n/gp'|sort|uniq)
