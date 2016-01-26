@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_07e93ce4",
+        "filename": "minuitwrp/graphics_overlay.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 419,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-01-26T19:17:50Z",
+      "side": 1,
+      "message": "Arguments to perror should never have a trailing newline - perror appends \": \" and the error text. Not only here, also in many other places in this patch.",
+      "revId": "fe3b1c947fefa3967a4d82c102dcd58e7099fb40",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_e7e53008",
+        "filename": "minuitwrp/graphics_overlay.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 578,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-01-26T19:17:50Z",
+      "side": 1,
+      "message": "Since we now definitely need only one frame as intermediate buffer, we should not use fi.smem_len (which can be two frames for double buffering) but something like x*y*depth. Also for the memset in line 585 - best is to create some variable for the frame size.",
+      "revId": "fe3b1c947fefa3967a4d82c102dcd58e7099fb40",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
