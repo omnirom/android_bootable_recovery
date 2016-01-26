@@ -53,6 +53,23 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_2740b80b",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 886,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2016-01-26T04:39:56Z",
+      "side": 1,
+      "message": "Could use else{ for this piece and remove the goto",
+      "revId": "fb94645257e425133a0f6886ce1e9f1631ac5762",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b8f5b13e_6698f66b",
         "filename": "twrp-functions.cpp",
         "patchSetId": 2
