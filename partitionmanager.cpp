@@ -1595,7 +1595,7 @@ int TWPartitionManager::usb_storage_enable(void) {
 			}
 			sprintf(lun_file, CUSTOM_LUN_FILE, 1);
 			Mount2 = Find_Next_Storage(Mount1->Mount_Point, true);
-			if (Mount2) {
+			if (Mount2 && Mount2->Mount_Point != Mount1->Mount_Point) {
 				Open_Lun_File(Mount2->Mount_Point, lun_file);
 			}
 		} else {
