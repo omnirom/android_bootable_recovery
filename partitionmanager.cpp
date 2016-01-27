@@ -37,7 +37,6 @@
 #include "partitions.hpp"
 #include "data.hpp"
 #include "twrp-functions.hpp"
-#include "fixPermissions.hpp"
 #include "twrpDigest.hpp"
 #include "twrpDU.hpp"
 #include "set_metadata.h"
@@ -1491,24 +1490,8 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 }
 
 int TWPartitionManager::Fix_Permissions(void) {
-	int result = 0;
-	if (!Mount_By_Path("/data", true))
-		return false;
-
-	if (!Mount_By_Path("/system", true))
-		return false;
-
-	Mount_By_Path("/sd-ext", false);
-
-	fixPermissions perms;
-	result = perms.fixPerms(true, false);
-#ifdef HAVE_SELINUX
-	if (result == 0 && DataManager::GetIntValue("tw_fixperms_restorecon") == 1)
-		result = perms.fixContexts();
-#endif
-	UnMount_Main_Partitions();
-	gui_msg("done=Done.");
-	return result;
+	LOGERR("Fix permissions is no longer supported\n");
+	return -1;
 }
 
 TWPartition* TWPartitionManager::Find_Next_Storage(string Path, bool Exclude_Data_Media) {
