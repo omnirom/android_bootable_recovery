@@ -7,3 +7,13 @@ service pre-recovery /system/bin/uncrypt --reboot
     class main
     disabled
     oneshot
+
+service setup-bcb /system/bin/uncrypt --setup-bcb
+    class main
+    disabled
+    oneshot
+
+service clear-bcb /system/bin/uncrypt --clear-bcb
+    class main
+    disabled
+    oneshot
