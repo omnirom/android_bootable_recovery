@@ -337,6 +337,12 @@ ifneq ($(TW_DEFAULT_LANGUAGE),)
 else
     LOCAL_CFLAGS += -DTW_DEFAULT_LANGUAGE=en
 endif
+ifneq ($(TW_USE_VER2_THEME),)
+    TW_INCLUDE_JPEG := true
+    TWRP_VER3_THEME := false
+else
+    TWRP_VER3_THEME := true
+endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES := \
     dump_image \
