@@ -58,7 +58,11 @@ LOCAL_C_INCLUDES += \
     external/freetype/include \
     external/libcxx/include
 
-#external/jpeg \
+ifneq ($(TW_INCLUDE_JPEG),)
+    LOCAL_C_INCLUDES += \
+        external/jpeg
+    LOCAL_CFLAGS += -DTW_INCLUDE_JPEG
+endif
 
 ifeq ($(RECOVERY_TOUCHSCREEN_SWAP_XY), true)
 LOCAL_CFLAGS += -DRECOVERY_TOUCHSCREEN_SWAP_XY
@@ -169,7 +173,9 @@ LOCAL_CLANG := true
 
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
 LOCAL_SHARED_LIBRARIES += libft2 libz libc libcutils libpng libutils
-#libjpeg
+ifneq ($(TW_INCLUDE_JPEG),)
+    LOCAL_SHARED_LIBRARIES += libjpeg
+endif
 LOCAL_STATIC_LIBRARIES += libpixelflinger_twrp
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminuitwrp
