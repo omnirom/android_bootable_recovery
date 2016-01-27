@@ -16,6 +16,7 @@
  */
 
 #include <string.h>
+#include <string>
 
 #include "expr.h"
 #include "yydefs.h"
@@ -25,9 +26,7 @@ int gLine = 1;
 int gColumn = 1;
 int gPos = 0;
 
-// TODO: enforce MAX_STRING_LEN during lexing
-char string_buffer[MAX_STRING_LEN];
-char* string_pos;
+std::string string_buffer;
 
 #define ADVANCE do {yylloc.start=gPos; yylloc.end=gPos+yyleng; \
                     gColumn+=yyleng; gPos+=yyleng;} while(0)
@@ -43,7 +42,7 @@ char* string_pos;
 
 \" {
     BEGIN(STR);
-    string_pos = string_buffer;
+    string_buffer.clear();
     yylloc.start = gPos;
     ++gColumn;
     ++gPos;
@@ -54,36 +53,35 @@ char* string_pos;
       ++gColumn;
       ++gPos;
       BEGIN(INITIAL);
-      *string_pos = '\0';
-      yylval.str = strdup(string_buffer);
+      yylval.str = strdup(string_buffer.c_str());
       yylloc.end = gPos;
       return STRING;
   }
 
-  \\n   { gColumn += yyleng; gPos += yyleng; *string_pos++ = '\n'; }
-  \\t   { gColumn += yyleng; gPos += yyleng;  *string_pos++ = '\t'; }
-  \\\"  { gColumn += yyleng; gPos += yyleng;  *string_pos++ = '\"'; }
-  \\\\  { gColumn += yyleng; gPos += yyleng;  *string_pos++ = '\\'; }
+  \\n   { gColumn += yyleng; gPos += yyleng; string_buffer.push_back('\n'); }
+  \\t   { gColumn += yyleng; gPos += yyleng; string_buffer.push_back('\t'); }
+  \\\"  { gColumn += yyleng; gPos += yyleng; string_buffer.push_back('\"'); }
+  \\\\  { gColumn += yyleng; gPos += yyleng; string_buffer.push_back('\\'); }
 
   \\x[0-9a-fA-F]{2} {
       gColumn += yyleng;
       gPos += yyleng;
       int val;
       sscanf(yytext+2, "%x", &val);
-      *string_pos++ = val;
+      string_buffer.push_back(static_cast<char>(val));
   }
 
   \n {
       ++gLine;
       ++gPos;
       gColumn = 1;
-      *string_pos++ = yytext[0];
+      string_buffer.push_back(yytext[0]);
   }
 
   . {
       ++gColumn;
       ++gPos;
-      *string_pos++ = yytext[0];
+      string_buffer.push_back(yytext[0]);
   }
 }
 
