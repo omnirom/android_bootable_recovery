@@ -87,8 +87,6 @@ LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 TWRP_RES := $(commands_recovery_local_path)/gui/devices/common/res/*
-# enable this to use new themes:
-TWRP_NEW_THEME := true
 
 ifeq ($(TW_CUSTOM_THEME),)
     ifeq ($(TW_THEME),)
@@ -110,7 +108,7 @@ ifeq ($(TW_CUSTOM_THEME),)
             TW_THEME := landscape_hdpi
         endif
     endif
-ifeq ($(TWRP_NEW_THEME),true)
+ifeq ($(TWRP_VER3_THEME),true)
     TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/theme/$(TW_THEME)
     TWRP_RES := $(commands_recovery_local_path)/gui/theme/common/fonts
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/languages
@@ -128,6 +126,7 @@ ifeq ($(wildcard $(TWRP_THEME_LOC)/ui.xml),)
     $(warning ****************************************************************************)
     $(error stopping)
 endif
+# TWRP VER2 Theme
 else
     TWRP_RES += $(commands_recovery_local_path)/gui/devices/$(word 1,$(subst _, ,$(TW_THEME)))/res/*
     ifeq ($(TW_THEME), portrait_mdpi)
