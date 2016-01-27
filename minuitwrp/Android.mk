@@ -25,13 +25,13 @@ ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
     LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
   else
     ifeq ($(TARGET_CUSTOM_KERNEL_HEADERS),)
-      LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
+      LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minuitwrp/include
     else
       LOCAL_C_INCLUDES += $(TARGET_CUSTOM_KERNEL_HEADERS)
     endif
   endif
 else
-  LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
+  LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minuitwrp/include
   # The header files required for adf graphics can cause compile errors
   # with adf graphics.
   ifneq ($(wildcard system/core/adf/Android.mk),)
