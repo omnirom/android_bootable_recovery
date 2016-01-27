@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <string>
+
 #include "expr.h"
 #include "parser.h"
 
@@ -150,6 +152,9 @@ int test() {
     expect("greater_than_int(14, 3)", "t", &errors);
     expect("greater_than_int(x, 3)", "", &errors);
     expect("greater_than_int(3, x)", "", &errors);
+
+    // big string
+    expect(std::string(8192, 's').c_str(), std::string(8192, 's').c_str(), &errors);
 
     printf("\n");
 
