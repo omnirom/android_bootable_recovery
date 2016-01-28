@@ -3973,7 +3973,7 @@
 			<text style="text_m_fail">
 				<condition var1="tw_password_fail" var2="1"/>
 				<placement x="%col1_x_left%" y="%row5_y%"/>
-				<text>{@decryt_data_failed=Password failed, please try again!}</text>
+				<text>{@decrypt_data_failed=Password failed, please try again!}</text>
 			</text>
 
 			<button style="main_button_half_width_low">
@@ -4015,7 +4015,7 @@
 			<text style="text_m_fail">
 				<condition var1="tw_password_fail" var2="1"/>
 				<placement x="%col2_x_left%" y="%row3_y%" placement="5"/>
-				<text>{@decryt_data_failed_pattern=Pattern failed, please try again!}</text>
+				<text>{@decrypt_data_failed_pattern=Pattern failed, please try again!}</text>
 			</text>
 
 			<patternpassword>
