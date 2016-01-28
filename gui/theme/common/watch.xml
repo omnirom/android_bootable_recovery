@@ -3887,9 +3887,10 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="tw_has_data_media" var2="1"/>
 				<placement x="%col1_x_right%" y="%row1_y%"/>
-				<text>{@fix_perm_s_btn=Fix Perms}</text>
-				<action function="page">fixperms</action>
+				<text>{@fix_context_btn=Fix Contexts}</text>
+				<action function="page">fixcontexts</action>
 			</button>
 
 			<button style="main_button">
@@ -5158,44 +5159,38 @@
 			</action>
 		</page>
 
-		<page name="fixperms">
+		<page name="fixcontexts">
 			<template name="page"/>
 
 			<template name="statusbar"/>
 
 			<text style="text_m">
 				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@advanced_hdr=Advanced} &gt; {@fix_perms_hdr=Fix Permissions}</text>
+				<text>{@advanced_hdr=Advanced} &gt; {@fix_contexts_hdr=Fix Contexts}</text>
 			</text>
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>{@fix_perms_note=Note: Fixing permissions is rarely needed.}</text>
+				<text>{@fix_contexts_note1=Note: Fixing contexts is rarely needed.}</text>
 			</text>
-
-			<checkbox>
-				<placement x="%indent%" y="%row4_y%"/>
-				<text>{@fix_perms_selinux_chk=Also fix SELinux Contexts}</text>
-				<data variable="tw_fixperms_restorecon"/>
-			</checkbox>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row6a_y%" placement="5"/>
-				<text>{@fix_perms_sel_note1=Fixing SELinux Contexts may cause}</text>
+				<text>{@fix_contexts_note2=Fixing SELinux Contexts may cause}</text>
 			</text>
 
 			<text style="text_m_fail">
 				<placement x="%center_x%" y="%row7a_y%" placement="5"/>
-				<text>{@fix_perms_sel_note2=your device to not boot properly.}</text>
+				<text>{@fix_contexts_note3=your device to not boot properly.}</text>
 			</text>
 
 			<slider>
-				<text>{@swipe_fix_perms=   Fix Perms}</text>
+				<text>{@swipe_fix_contexts=   Fix Contexts}</text>
 				<actions>
 					<action function="set">tw_back=advanced</action>
-					<action function="set">tw_action=fixpermissions</action>
-					<action function="set">tw_action_text1={@fixing_perms=Fixing Permissions...}</action>
-					<action function="set">tw_complete_text1={@fix_perms_complete=Fix Permissions Complete}</action>
+					<action function="set">tw_action=fixcontexts</action>
+					<action function="set">tw_action_text1={@fixing_contexts=Fixing Contexts...}</action>
+					<action function="set">tw_complete_text1={@fix_contexts_complete=Fix Contexts Complete}</action>
 					<action function="set">tw_slider_text={@swipe_confirm=   Confirm}</action>
 					<action function="set">tw_show_reboot=1</action>
 					<action function="page">action_page</action>

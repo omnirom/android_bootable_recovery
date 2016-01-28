@@ -37,7 +37,7 @@
 #include "partitions.hpp"
 #include "data.hpp"
 #include "twrp-functions.hpp"
-#include "fixPermissions.hpp"
+#include "fixContexts.hpp"
 #include "twrpDigest.hpp"
 #include "twrpDU.hpp"
 #include "set_metadata.h"
@@ -1490,25 +1490,24 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	return 1;
 }
 
-int TWPartitionManager::Fix_Permissions(void) {
-	int result = 0;
-	if (!Mount_By_Path("/data", true))
-		return false;
-
-	if (!Mount_By_Path("/system", true))
-		return false;
-
-	Mount_By_Path("/sd-ext", false);
-
-	fixPermissions perms;
-	result = perms.fixPerms(true, false);
+int TWPartitionManager::Fix_Contexts(void) {
 #ifdef HAVE_SELINUX
-	if (result == 0 && DataManager::GetIntValue("tw_fixperms_restorecon") == 1)
-		result = perms.fixContexts();
-#endif
+	std::vector<TWPartition*>::iterator iter;
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Has_Data_Media) {
+			if ((*iter)->Mount(true)) {
+				if (fixContexts::fixDataMediaContexts((*iter)->Mount_Point) != 0)
+					return -1;
+			}
+		}
+	}
 	UnMount_Main_Partitions();
 	gui_msg("done=Done.");
-	return result;
+	return 0;
+#else
+	LOGERR("Cannot fix contexts, no selinux support present.\n");
+	return -1;
+#endif
 }
 
 TWPartition* TWPartitionManager::Find_Next_Storage(string Path, bool Exclude_Data_Media) {
