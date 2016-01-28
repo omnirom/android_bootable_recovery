@@ -437,8 +437,8 @@
 		<string name="fm_complete">File Operation Complete</string>
 		<string name="decrypt_data_hdr">Decrypt Data</string>
 		<string name="decrypt_data_enter_pass">Enter Password.</string>
-		<string name="decryt_data_failed">Password failed, please try again!</string>
-		<string name="decryt_data_failed_pattern">Pattern failed, please try again!</string>
+		<string name="decrypt_data_failed">Password failed, please try again!</string>
+		<string name="decrypt_data_failed_pattern">Pattern failed, please try again!</string>
 		<string name="decrypt_data_enter_pattern">Enter Pattern.</string>
 		<string name="decrypt_data_trying">Trying Decryption</string>
 		<string name="term_hdr">Terminal Command</string>
