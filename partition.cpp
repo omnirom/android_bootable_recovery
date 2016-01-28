@@ -41,7 +41,6 @@
 #include "twrpDigest.hpp"
 #include "twrpTar.hpp"
 #include "twrpDU.hpp"
-#include "fixPermissions.hpp"
 #include "infomanager.hpp"
 #include "set_metadata.h"
 #include "gui/gui.hpp"

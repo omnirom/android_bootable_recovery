@@ -381,8 +381,8 @@ int OpenRecoveryScript::run_script_file(void) {
 				}
 				property_set("ctl.start", "adbd");
 				gui_msg("done=Done.");
-			} else if (strcmp(command, "fixperms") == 0 || strcmp(command, "fixpermissions") == 0) {
-				ret_val = PartitionManager.Fix_Permissions();
+			} else if (strcmp(command, "fixperms") == 0 || strcmp(command, "fixpermissions") == 0 || strcmp(command, "fixcontexts") == 0) {
+				ret_val = PartitionManager.Fix_Contexts();
 				if (ret_val != 0)
 					ret_val = 1; // failure
 			} else if (strcmp(command, "decrypt") == 0) {
