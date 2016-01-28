@@ -583,7 +583,7 @@ static GRSurface* overlay_init(minui_backend* backend) {
     if (vi.bits_per_pixel == 16) {
         printf("setting GGL_PIXEL_FORMAT_RGB_565\n");
         gr_framebuffer.format = GGL_PIXEL_FORMAT_RGB_565;
-    } else if (vi.red.offset == 8) {
+    } else if (vi.red.offset == 8 || vi.red.offset == 16) {
         printf("setting GGL_PIXEL_FORMAT_BGRA_8888\n");
         gr_framebuffer.format = GGL_PIXEL_FORMAT_BGRA_8888;
     } else if (vi.red.offset == 0) {
