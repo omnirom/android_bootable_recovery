@@ -1114,9 +1114,7 @@ void DataManager::ReadSettingsFile(void)
 #endif // ifdef TW_OEM_BUILD
 	PartitionManager.Mount_All_Storage();
 	update_tz_environment_variables();
-#ifdef TW_MAX_BRIGHTNESS
 	TWFunc::Set_Brightness(GetStrValue("tw_brightness"));
-#endif
 }
 
 string DataManager::GetCurrentStoragePath(void)
