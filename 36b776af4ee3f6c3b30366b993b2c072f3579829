@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_274b188c",
+        "filename": "gui/theme/common/languages/en.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 369,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-01-28T20:22:49Z",
+      "side": 1,
+      "message": "If this is unused, delete it. If it is used, rename it. :)",
+      "revId": "36b776af4ee3f6c3b30366b993b2c072f3579829",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
