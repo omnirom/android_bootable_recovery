@@ -20,10 +20,32 @@ LOCAL_CLANG := true
 LOCAL_SRC_FILES := applypatch.cpp bspatch.cpp freecache.cpp imgpatch.cpp utils.cpp
 LOCAL_MODULE := libapplypatch
 LOCAL_MODULE_TAGS := eng
-LOCAL_C_INCLUDES += external/bzip2 external/zlib bootable/recovery
+LOCAL_C_INCLUDES += bootable/recovery
 LOCAL_STATIC_LIBRARIES += libbase libotafault libmtdutils libmincrypt libbz libz
 
 include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+
+LOCAL_CLANG := true
+LOCAL_SRC_FILES := bspatch.cpp imgpatch.cpp utils.cpp
+LOCAL_MODULE := libimgpatch
+LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+LOCAL_STATIC_LIBRARIES += libmincrypt libbz libz
+
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+
+LOCAL_CLANG := true
+LOCAL_SRC_FILES := bspatch.cpp imgpatch.cpp utils.cpp
+LOCAL_MODULE := libimgpatch
+LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+LOCAL_STATIC_LIBRARIES += libmincrypt libbz libz
+
+include $(BUILD_HOST_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 
