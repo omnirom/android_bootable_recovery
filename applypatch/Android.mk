@@ -36,6 +36,7 @@ LOCAL_STATIC_LIBRARIES += libmincrypt libbz libz
 
 include $(BUILD_STATIC_LIBRARY)
 
+ifeq ($(HOST_OS),linux)
 include $(CLEAR_VARS)
 
 LOCAL_CLANG := true
@@ -46,6 +47,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES += libmincrypt libbz libz
 
 include $(BUILD_HOST_STATIC_LIBRARY)
+endif  # HOST_OS == linux
 
 include $(CLEAR_VARS)
 
