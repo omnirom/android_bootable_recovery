@@ -72,8 +72,8 @@ ifeq ($(RECOVERY_TOUCHSCREEN_FLIP_Y), true)
 LOCAL_CFLAGS += -DRECOVERY_TOUCHSCREEN_FLIP_Y
 endif
 
-ifeq ($(RECOVERY_GRAPHICS_USE_LINELENGTH), true)
-LOCAL_CFLAGS += -DRECOVERY_GRAPHICS_USE_LINELENGTH
+ifeq ($(RECOVERY_GRAPHICS_FORCE_USE_LINELENGTH), true)
+LOCAL_CFLAGS += -DRECOVERY_GRAPHICS_FORCE_USE_LINELENGTH
 endif
 
 ifeq ($(TW_DISABLE_DOUBLE_BUFFERING), true)
@@ -86,8 +86,37 @@ ifeq ($(TWRP_EVENT_LOGGING), true)
 LOCAL_CFLAGS += -D_EVENT_LOGGING
 endif
 
-ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),RGBA_8888)
+ifeq ($(subst ",,$(TARGET_RECOVERY_FORCE_PIXEL_FORMAT)),RGBA_8888)
+  $(warning ****************************************************************************)
+  $(warning * TARGET_RECOVERY_FORCE_PIXEL_FORMAT := RGBA_8888 not implemented yet      *)
+  $(warning ****************************************************************************)
+  $(error stopping)
   LOCAL_CFLAGS += -DRECOVERY_RGBA
+endif
+ifeq ($(subst ",,$(TARGET_RECOVERY_FORCE_PIXEL_FORMAT)),RGBX_8888)
+  $(warning ****************************************************************************)
+  $(warning * TARGET_RECOVERY_FORCE_PIXEL_FORMAT := RGBX_8888 not implemented yet      *)
+  $(warning ****************************************************************************)
+  $(error stopping)
+  LOCAL_CFLAGS += -DRECOVERY_RGBX
+endif
+ifeq ($(subst ",,$(TARGET_RECOVERY_FORCE_PIXEL_FORMAT)),BGRA_8888)
+  $(warning ****************************************************************************)
+  $(warning * TARGET_RECOVERY_FORCE_PIXEL_FORMAT := BGRA_8888 not implemented yet      *)
+  $(warning ****************************************************************************)
+  $(error stopping)
+  LOCAL_CFLAGS += -DRECOVERY_BGRA
+endif
+ifeq ($(subst ",,$(TARGET_RECOVERY_FORCE_PIXEL_FORMAT)),RGB_565)
+  LOCAL_CFLAGS += -DRECOVERY_FORCE_RGB_565
+endif
+
+# This used to compare against values in double-quotes (which are just
+# ordinary characters in this context).  Strip double-quotes from the
+# value so that either will work.
+
+ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),ABGR_8888)
+  LOCAL_CFLAGS += -DRECOVERY_ABGR
 endif
 ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),RGBX_8888)
   LOCAL_CFLAGS += -DRECOVERY_RGBX
@@ -95,24 +124,11 @@ endif
 ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),BGRA_8888)
   LOCAL_CFLAGS += -DRECOVERY_BGRA
 endif
-ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),RGB_565)
-  LOCAL_CFLAGS += -DRECOVERY_RGB_565
-endif
 
 ifneq ($(TARGET_RECOVERY_OVERSCAN_PERCENT),)
   LOCAL_CFLAGS += -DOVERSCAN_PERCENT=$(TARGET_RECOVERY_OVERSCAN_PERCENT)
 else
   LOCAL_CFLAGS += -DOVERSCAN_PERCENT=0
-endif
-
-ifeq ($(TARGET_RECOVERY_PIXEL_FORMAT),"RGBX_8888")
-  LOCAL_CFLAGS += -DRECOVERY_RGBX
-endif
-ifeq ($(TARGET_RECOVERY_PIXEL_FORMAT),"BGRA_8888")
-  LOCAL_CFLAGS += -DRECOVERY_BGRA
-endif
-ifeq ($(TARGET_RECOVERY_PIXEL_FORMAT),"RGB_565")
-  LOCAL_CFLAGS += -DRECOVERY_RGB_565
 endif
 ifeq ($(TW_SCREEN_BLANK_ON_BOOT), true)
     LOCAL_CFLAGS += -DTW_SCREEN_BLANK_ON_BOOT

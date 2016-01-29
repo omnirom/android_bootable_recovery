@@ -147,7 +147,7 @@ static GRSurface* fbdev_init(minui_backend* backend) {
 
     memset(bits, 0, fi.smem_len);
 
-#ifdef RECOVERY_RGB_565
+#ifdef RECOVERY_FORCE_RGB_565
     printf("Forcing pixel format: RGB_565\n");
     vi.blue.offset    = 0;
     vi.green.offset   = 5;
@@ -167,7 +167,8 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     gr_framebuffer[0].height = vi.yres;
     gr_framebuffer[0].row_bytes = fi.line_length;
     gr_framebuffer[0].pixel_bytes = vi.bits_per_pixel / 8;
-#ifdef RECOVERY_GRAPHICS_USE_LINELENGTH
+#ifdef RECOVERY_GRAPHICS_FORCE_USE_LINELENGTH
+    printf("Forcing line length\n");
     vi.xres_virtual = fi.line_length / gr_framebuffer[0].pixel_bytes;
 #endif
     gr_framebuffer[0].data = reinterpret_cast<uint8_t*>(bits);
