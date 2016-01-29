@@ -31,13 +31,22 @@
 #include "imgdiff.h"
 #include "utils.h"
 
+int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
+                    const unsigned char* patch_data, ssize_t patch_size,
+                    SinkFn sink, void* token) {
+  Value patch = {VAL_BLOB, patch_size,
+      reinterpret_cast<char*>(const_cast<unsigned char*>(patch_data))};
+  return ApplyImagePatch(
+      old_data, old_size, &patch, sink, token, nullptr, nullptr);
+}
+
 /*
  * Apply the patch given in 'patch_filename' to the source data given
  * by (old_data, old_size).  Write the patched output to the 'output'
  * file, and update the SHA context with the output data as well.
  * Return 0 on success.
  */
-int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size __unused,
+int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                     const Value* patch,
                     SinkFn sink, void* token, SHA_CTX* ctx,
                     const Value* bonus_data) {
@@ -80,6 +89,10 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size __unused,
             size_t src_len = Read8(normal_header+8);
             size_t patch_offset = Read8(normal_header+16);
 
+            if (src_start + src_len > static_cast<size_t>(old_size)) {
+                printf("source data too short\n");
+                return -1;
+            }
             ApplyBSDiffPatch(old_data + src_start, src_len,
                              patch, patch_offset, sink, token, ctx);
         } else if (type == CHUNK_RAW) {
@@ -122,6 +135,11 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size __unused,
             int windowBits = Read4(deflate_header+48);
             int memLevel = Read4(deflate_header+52);
             int strategy = Read4(deflate_header+56);
+
+            if (src_start + src_len > static_cast<size_t>(old_size)) {
+                printf("source data too short\n");
+                return -1;
+            }
 
             // Decompress the source data; the chunk header tells us exactly
             // how big we expect it to be when decompressed.
