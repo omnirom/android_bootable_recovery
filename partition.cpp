@@ -24,6 +24,7 @@
 #include <sys/mount.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <libgen.h>
 #include <iostream>
 #include <sstream>
 #include <sys/param.h>
