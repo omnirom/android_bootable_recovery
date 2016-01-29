@@ -320,6 +320,9 @@ ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),)
 else ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),true)
     LOCAL_CFLAGS += -DQCOM_RTC_FIX
 endif
+ifeq ($(TARGET_USES_QCOM_BSP), true)
+    TW_TARGET_USES_QCOM_BSP := true
+endif
 ifneq ($(TW_NO_LEGACY_PROPS),)
 	LOCAL_CFLAGS += -DTW_NO_LEGACY_PROPS
 endif
