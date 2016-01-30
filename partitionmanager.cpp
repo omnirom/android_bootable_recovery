@@ -29,6 +29,8 @@
 #include <fcntl.h>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
+#include <sstream>
 #include <sys/wait.h>
 #include <linux/fs.h>
 #include <sys/mount.h>
@@ -2230,6 +2232,30 @@ bool TWPartitionManager::Flash_Image(string Filename) {
 			gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1}.")(Filename));
 			return false;
 		}
+	}
+
+	// Check if Filename is a sparse image
+	std:ifstream imagefile (Filename);
+	std::ostringstream filemagic;
+	for (int i = 0; i < 4; i++) {
+		filemagic << hex << imagefile.get();
+	}
+	imagefile.close();
+	if (filemagic.str().compare("3aff26ed") == 0) {
+		gui_msg("image_is_sparse=Image is sparse, creating new raw image");
+		size_t dot = Filename.find_last_of(".");
+		std::ostringstream raw_image_name;
+		std::ostringstream command;
+		if (dot != std::string::npos) {
+			raw_image_name << Filename.substr(0, dot) << ".raw.img";
+		}
+		else {
+			raw_image_name << Filename;
+		}
+		command << "simg2img " << Filename << " " << raw_image_name.str();
+		LOGINFO("simg2img command: '%s'\n", command.str().c_str());
+		TWFunc::Exec_Cmd(command.str());
+		Filename = raw_image_name.str();
 	}
 
 	gui_msg("calc_restore=Calculating restore details...");
