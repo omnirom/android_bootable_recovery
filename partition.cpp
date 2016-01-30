@@ -26,6 +26,7 @@
 #include <dirent.h>
 #include <libgen.h>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <sys/param.h>
 
@@ -2375,7 +2376,20 @@ bool TWPartition::Flash_Image_DD(string Filename) {
 	string Command;
 
 	gui_msg(Msg("flashing=Flashing {1}...")(Display_Name));
-	Command = "dd bs=8388608 if='" + Filename + "' of=" + Actual_Block_Device;
+
+	// Check if Filename is a sparse image
+	std::ifstream imagefile (Filename);
+	std::ostringstream filemagic;
+	for (int i = 0; i < 4; i++) {
+		filemagic << hex << imagefile.get();
+	}
+	imagefile.close();
+	if (filemagic.str().compare("3aff26ed") == 0) {
+		Command = "simg2img '" + Filename + "' " + Actual_Block_Device;
+	}
+	else {
+		Command = "dd bs=8388608 if='" + Filename + "' of=" + Actual_Block_Device;
+	}
 	LOGINFO("Flash command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command);
 	return true;
