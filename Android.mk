@@ -99,6 +99,7 @@ LOCAL_C_INCLUDES += \
     system/vold \
     system/extras/ext4_utils \
     system/core/adb \
+    system/core/libsparse
 
 LOCAL_C_INCLUDES += bionic external/openssl/include $(LOCAL_PATH)/libmincrypt/includes
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
@@ -351,7 +352,8 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     fsck.fat \
     fatlabel \
     mkfs.fat \
-    permissive.sh
+    permissive.sh \
+    simg2img_twrp
 
 ifneq ($(TARGET_ARCH), arm64)
     ifneq ($(TARGET_ARCH), x86_64)
@@ -586,6 +588,7 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/dosfstools/Android.mk \
     $(commands_recovery_local_path)/etc/Android.mk \
     $(commands_recovery_local_path)/toybox/Android.mk \
+    $(commands_recovery_local_path)/simg2img/Android.mk \
     $(commands_recovery_local_path)/libpixelflinger/Android.mk
 
 ifeq ($(TW_INCLUDE_CRYPTO), true)
