@@ -455,8 +455,8 @@
 		<string name="fix_perms_hdr">修復許可權</string>
 		<string name="fix_perms_note">注意：很少情況下需要修復許可權。</string>
 		<string name="fix_perms_selinux_chk">同時修復SELinux Contexts</string>
-		<string name="fix_perms_sel_note1">修復SELinux Contexts可能會導致</string>
-		<string name="fix_perms_sel_note2">您的設備無法正常啟動。</string>
+		<string name="fix_contexts_note2">修復SELinux Contexts可能會導致</string>
+		<string name="fix_contexts_note3">您的設備無法正常啟動。</string>
 		<string name="swipe_to_fix_perms">滑動按鈕確認修復許可權</string>
 		<string name="swipe_fix_perms">   修復許可權</string>
 		<string name="fixing_perms">正在修復許可權…</string>
@@ -534,7 +534,7 @@
 		<string name="unable_to_mount_storage">無法掛載存儲</string>
 		<string name="fail_decrypt">解密數據失敗。</string>
 		<string name="no_crypto_support">此版本不支持加密。</string>
-		<string name="decrypt_success">Data分區成功解密，新增塊設備：'{1}'</string>
+		<string name="decrypt_success_dev">Data分區成功解密，新增塊設備：'{1}'</string>
 		<string name="done">完成。</string>
 		<string name="start_partition_sd">正在給SD卡分區…</string>
 		<string name="partition_sd_locate">無法找到設備進行分區。</string>
