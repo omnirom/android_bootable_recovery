@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_ada4a949",
+        "filename": "minuitwrp/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-01-30T18:58:27Z",
+      "side": 1,
+      "message": "typo",
+      "revId": "81863703d8ec3cc0c48d20a91d9a51565af06f88",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
