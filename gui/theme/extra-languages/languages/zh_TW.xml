@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <language>
-	<display>Chinese Traditional</display>
+	<display>Traditional Chinese</display>
 
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
@@ -9,7 +9,7 @@
 		<resource name="font_m" type="fontoverride" filename="DroidSansFallback.ttf" scale="100" />
 		<resource name="font_s" type="fontoverride" filename="DroidSansFallback.ttf" scale="100" />
 		<resource name="fixed" type="fontoverride" filename="DroidSansFallback.ttf" scale="100" />
-
+		
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System鏡像</string>
@@ -28,7 +28,7 @@
 		<!-- This is a rarely used partition on a Micro SD card for a very old app2sd system -->
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
-		<string name="adopted_storage">Adopted 存儲</string>
+		<string name="adopted_storage">Adopted Storage</string>
 
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
@@ -80,7 +80,7 @@
 		<string name="zip_back_clear">按返回按鈕清除Zip刷入隊列。</string>
 		<string name="folder">目錄:</string>
 		<string name="file">檔案:</string>
-		<string name="zip_sig_chk">Zip刷機包簽名校驗</string>
+		<string name="zip_sig_chk">Zip包簽名校驗</string>
 		<string name="inject_twrp_chk">安裝完成後注入TWRP</string>
 		<string name="options_hdr">選項</string>
 		<string name="confirm_flash_hdr">確認刷入</string>
@@ -120,7 +120,7 @@
 		<string name="wipe_hdr">清除</string>
 		<string name="factory_reset_hdr">恢復出廠設置(雙清)</string>
 		<string name="factory_reset_btn">恢復出廠</string>
-		<string name="factory_reset1">這將會清空 Data、Cache分區和Dalvik緩存</string>
+		<string name="factory_reset1">這將會清空 Data，Cache分區和Dalvik緩存</string>
 		<string name="factory_reset2">(不會清除內置存儲/sdcard)</string>
 		<string name="factory_reset3">在大多數情況下，您只需要</string>
 		<string name="factory_reset4">執行此操作即可。</string>
@@ -143,13 +143,14 @@
 		<string name="format_data_ptr1">格式化 Data 分區將會清空您安裝的所有</string>
 		<string name="format_data_ptr2">軟體、圖片、視頻媒體、短信和通話記錄</string>
 		<string name="format_data_ptr3">以及對內置存儲所做的加密等。</string>
-		<string name="format_data_adopted">包括Adopted存儲</string>
+		<string name="format_data_adopted">也包括Adopted Storage</string>
 		<string name="format_data_lcp1">格式化 Data 分區將會清空您安裝的所有軟體、圖片、視頻媒體、短信和通話記錄</string>
 		<string name="format_data_lcp2">以及對內置存儲所做的加密等。</string>
 		<string name="format_data_wtc1">格式化Data分區會清除您的所有軟體</string>
 		<string name="format_data_wtc2">備份和媒體數據，無法撤銷。</string>
 		<string name="format_data_undo">執行此操作後將無法恢復。</string>
 		<string name="format_data_complete">格式化Data分區完成</string>
+		<!-- Translator note: the word "yes" must remain English! -->
 		<string name="yes_continue">輸入 yes 繼續，按返回按鈕取消。</string>
 		<string name="part_opt_hdr">分區名：%tw_partition_name%</string>
 		<string name="sel_act_hdr">選擇操作</string>
@@ -308,19 +309,19 @@
 		<string name="sel_tz_list">選擇時區：</string>
 		<!-- Translator note: if it does not make sense to translate the locations or if it makes more sense,
 				feel free to change the location listed or drop the location entirely and just call it UTC -6 -->
-		<string name="utcm11">(UTC -11) 薩摩亞，中途島</string>
+		<string name="utcm11">(UTC -11) 美屬薩摩亞，中途島</string>
 		<string name="utcm10">(UTC -10) 夏威夷</string>
 		<string name="utcm9">(UTC -9) 阿拉斯加</string>
-		<string name="utcm8">(UTC -8) 太平洋時間</string>
-		<string name="utcm7">(UTC -7) 山地時間</string>
-		<string name="utcm6">(UTC -6) 中部時間</string>
-		<string name="utcm5">(UTC -5) 東部時間</string>
-		<string name="utcm4">(UTC -4) 大西洋時間</string>
-		<string name="utcm3">(UTC -3) 巴西，布宜諾斯艾利斯</string>
+		<string name="utcm8">(UTC -8) 太平洋標準時間</string>
+		<string name="utcm7">(UTC -7) 北美山區標準時間</string>
+		<string name="utcm6">(UTC -6) 北美中部標準時間</string>
+		<string name="utcm5">(UTC -5) 北美東部標準時間</string>
+		<string name="utcm4">(UTC -4) 大西洋標準時間</string>
+		<string name="utcm3">(UTC -3) 巴西，阿根廷(布宜諾斯)</string>
 		<string name="utcm2">(UTC -2) 大西洋中部</string>
-		<string name="utcm1">(UTC -1) 亞速爾群島、佛得角</string>
+		<string name="utcm1">(UTC -1) 葡萄牙(亞速爾群島)，佛得角</string>
 		<string name="utc0">(UTC  0) 倫敦，都柏林，里斯本</string>
-		<string name="utcp1">(UTC +1) 柏林、布魯塞爾、巴黎</string>
+		<string name="utcp1">(UTC +1) 柏林，布魯塞爾，巴黎</string>
 		<string name="utcp2">(UTC +2) 雅典，伊斯坦布爾，南非</string>
 		<string name="utcp3">(UTC +3) 莫斯科，巴格達</string>
 		<string name="utcp4">(UTC +4) 阿布扎比，第比利斯，馬斯喀特</string>
@@ -364,8 +365,7 @@
 		<string name="copy_log_confirm">是否導出日誌到內置存儲？</string>
 		<string name="copying_log">正在複製…</string>
 		<string name="copy_log_complete">日誌導出完成。</string>
-		<string name="fix_perm_btn">修復許可權</string>
-		<string name="fix_perm_s_btn">修復許可權</string>
+		<string name="fix_context_btn">修復上下文</string>
 		<string name="part_sd_btn">分區SD卡</string>
 		<string name="part_sd_s_btn">SD卡</string>
 		<string name="file_manager_btn">檔案管理</string>
@@ -399,7 +399,7 @@
 		<string name="dumlock_restore_complete">恢復原版Boot鏡像完成。</string>
 		<string name="dumlock_reflash_btn">重新刷入Recovery</string>
 		<string name="dumlock_reflash_confirm">是否重新刷入Recovery至boot分區？</string>
-		<string name="dumlock_reflashing">正在刷入recovery至boot分區…</string>
+		<string name="dumlock_reflashing">正在刷入Recovery至boot分區…</string>
 		<string name="dumlock_reflash_complete">Recovery刷入完成。</string>
 		<string name="dumlock_install_btn">安裝HTC Dumlock</string>
 		<string name="dumlock_install_confirm">是否安裝HTC dumlock檔案到系統中？</string>
@@ -435,7 +435,7 @@
 		<string name="fm_perms">許可權：</string>
 		<string name="fm_complete">操作完成。</string>
 		<string name="decrypt_data_hdr">解密Data分區</string>
-		<string name="decrypt_data_enter_pass">輸入密碼.</string>
+		<string name="decrypt_data_enter_pass">請輸入密碼。</string>
 		<string name="decrypt_data_failed">密碼錯誤，請重試！</string>
 		<string name="decrypt_data_failed_pattern">圖案錯誤，請重試！</string>
 		<string name="decrypt_data_enter_pattern">繪製解鎖圖案</string>
@@ -452,15 +452,14 @@
 		<string name="sideload_confirm">ADB Sideload</string>
 		<string name="sideload_usage">使用方式：電腦CMD輸入adb sideload xxxx(刷機包名).zip</string>
 		<string name="sideload_complete">ADB Sideload完成。</string>
-		<string name="fix_perms_hdr">修復許可權</string>
-		<string name="fix_perms_note">注意：很少情況下需要修復許可權。</string>
-		<string name="fix_perms_selinux_chk">同時修復SELinux Contexts</string>
-		<string name="fix_perms_sel_note1">修復SELinux Contexts可能會導致</string>
-		<string name="fix_perms_sel_note2">您的設備無法正常啟動。</string>
-		<string name="swipe_to_fix_perms">滑動按鈕確認修復許可權</string>
-		<string name="swipe_fix_perms">   修復許可權</string>
-		<string name="fixing_perms">正在修復許可權…</string>
-		<string name="fix_perms_complete">修復許可權完成。</string>
+		<string name="fix_contexts_hdr">修復上下文</string>
+		<string name="fix_contexts_note1">注意：很少情況下需要修復SELinux上下文。</string>
+		<string name="fix_contexts_note2">修復SELinux上下文可能會導致</string>
+		<string name="fix_contexts_note3">您的設備無法正常啓動。</string>
+		<string name="swipe_to_fix_contexts">滑動按鈕確認修復</string>
+		<string name="swipe_fix_contexts">   修復上下文</string>
+		<string name="fixing_contexts">正在修復…</string>
+		<string name="fix_contexts_complete">修復SELinux上下文完成。</string>
 		<string name="reboot_hdr">重啟選項</string>
 		<string name="su_hdr">SuperSU檢測</string>
 		<string name="su_note1">系統目前沒有Root。</string>
@@ -474,12 +473,12 @@
 		<string name="ok_btn">確定</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
-		<string name="no_kernel_selinux">內核不支持讀取SELinux contexts。</string>
+		<string name="no_kernel_selinux">內核不支持讀取SELinux上下文。</string>
 		<string name="full_selinux">完整SELinux支持。</string>
 		<string name="no_selinux">無SELinux支持(無libselinux)。</string>
 		<string name="mtp_enabled">MTP已啟用</string>
 		<string name="mtp_crash">MTP已崩潰。啟動時不再加載MTP。</string>
-		<string name="decrypt_success">已使用默認密碼解密成功。</string>
+		<string name="decrypt_success_dev">已使用默認密碼解密成功。</string>
 		<string name="unable_to_decrypt">無法使用默認密碼來解密，你可能需要格式化Data分區。</string>
 		<string name="generating_md51">正在生成MD5</string>
 		<!-- Message displayed during a backup if we are generating an MD5, ideally, leave the leading " * " to help align and separate this text from other console text -->
@@ -570,7 +569,7 @@
 		<string name="cannot_resize">無法更改{1}大小。</string>
 		<string name="repair_resize">在調整大小之前修復{1}。</string>
 		<string name="unable_resize">無法調整{1}大小。</string>
-		<string name="no_md5_found">未找到'{1}'MD5校驗檔案，請取消啟用MD5驗證備份檔案選項。</string>
+		<string name="no_md5_found">未找到'{1}'MD5校驗檔案，請取消“啟用MD5驗證備份檔案”選項。</string>
 		<string name="md5_fail_match">'{1}'MD5校驗失敗。</string>
 		<string name="fail_decrypt_tar">無法解密tar檔案：'{1}'</string>
 		<string name="format_data_msg">您可能需要重啟recovery才能使用/data。</string>
@@ -615,7 +614,7 @@
 		<string name="compression_on">壓縮選項已開啟</string>
 		<string name="md5_off">MD5生成已關閉</string>
 		<string name="backup_fail">備份失敗</string>
-		<string name="backup_complete">備份完成！</string>
+		<string name="backup_clean">備份失敗，正在清理備份檔案夾。</string>
 		<string name="running_recovery_commands">運行Recovery命令</string>
 		<string name="recovery_commands_complete">Recovery命令執行完成。</string>
 		<string name="running_ors">運行OpenRecoveryScript腳本</string>
@@ -666,5 +665,6 @@
 		<string name="cancel_sideload">取消ADB sideload…</string>
 		<string name="change_fs_err">更換檔案系統出錯。</string>
 		<string name="theme_ver_err">自定義主題和TWRP版本不匹配，正使用默認主題。</string>
+		<string name="up_a_level">(返回上級目錄)</string>
 	</resources>
 </language>
