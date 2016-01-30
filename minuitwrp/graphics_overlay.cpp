@@ -386,7 +386,7 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayR.dst_rect.h = height;
             overlayR.alpha = 0xFF;
 #if defined(BOARD_HAS_FLIPPED_SCREEN)
-	    overlayL.flags = MDSS_MDP_RIGHT_MIXER | MDP_ROT_180;
+	    overlayR.flags = MDSS_MDP_RIGHT_MIXER | MDP_ROT_180;
 #else
 	    overlayR.flags = MDSS_MDP_RIGHT_MIXER;
 #endif
