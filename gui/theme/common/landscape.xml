@@ -3180,26 +3180,27 @@
 				<text>{@part_sd_hdr=Partition SD Card}</text>
 			</text>
 
-			<partitionlist style="partitionlist_storage">
+			<partitionlist>
+				<placement x="%col1_x_left%" y="%row1a_y%" w="%content_width%" h="%partitionlist_mount_height%"/>
 				<text>{@sel_storage_list=Select Storage}</text>
 				<data name="tw_storage_path"/>
 				<listtype name="storage"/>
 			</partitionlist>
 
-			<button style="button_third_width">
-				<placement x="%dialog_button_x%" y="%row13_y%"/>
+			<text style="text_m_fail">
+				<condition var1="partitionlisterror" var2="1"/>
+				<placement x="%center_x%" y="%row14_y%" placement="5"/>
+				<text>{@invalid_partsd_sel=You must select a removable device}</text>
+			</text>
+
+			<button style="main_button_half_width">
+				<placement x="%col2_x_right%" y="%row15a_y%"/>
 				<text>{@ok_btn=OK}</text>
 				<actions>
 					<action function="getpartitiondetails">tw_storage_path</action>
 					<action function="page">partsdcardcheck</action>
 				</actions>
 			</button>
-
-			<text style="text_m_fail">
-				<condition var1="partitionlisterror" var2="1"/>
-				<placement x="%center_x%" y="%row17_y%" placement="5"/>
-				<text>{@invalid_partsd_sel=You must select a removable device}</text>
-			</text>
 
 			<action>
 				<touch key="home"/>
