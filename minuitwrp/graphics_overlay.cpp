@@ -315,8 +315,11 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.dst_rect.w = gr_fb.width;
             overlayL.dst_rect.h = gr_fb.height;
             overlayL.alpha = 0xFF;
+#if defined(BOARD_HAS_FLIPPED_SCREEN)
+	    overlayL.flags = MDP_ROT_180;
+#endif            
             overlayL.transp_mask = MDP_TRANSP_NOP;
-            overlayL.id = MSMFB_NEW_REQUEST;
+	    overlayL.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayL);
             if (ret < 0) {
                 perror("Overlay Set Failed");
@@ -352,8 +355,11 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.dst_rect.w = lWidth;
             overlayL.dst_rect.h = height;
             overlayL.alpha = 0xFF;
+#if defined(BOARD_HAS_FLIPPED_SCREEN)
+	    overlayL.flags = MDP_ROT_180;
+#endif
             overlayL.transp_mask = MDP_TRANSP_NOP;
-            overlayL.id = MSMFB_NEW_REQUEST;
+	    overlayL.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayL);
             if (ret < 0) {
                 perror("OverlayL Set Failed");
@@ -379,9 +385,13 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayR.dst_rect.w = rWidth;
             overlayR.dst_rect.h = height;
             overlayR.alpha = 0xFF;
-            overlayR.flags = MDSS_MDP_RIGHT_MIXER;
+#if defined(BOARD_HAS_FLIPPED_SCREEN)
+	    overlayL.flags = MDSS_MDP_RIGHT_MIXER | MDP_ROT_180;
+#else
+	    overlayR.flags = MDSS_MDP_RIGHT_MIXER;
+#endif
             overlayR.transp_mask = MDP_TRANSP_NOP;
-            overlayR.id = MSMFB_NEW_REQUEST;
+	    overlayR.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayR);
             if (ret < 0) {
                 perror("OverlayR Set Failed");
