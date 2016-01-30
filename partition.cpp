@@ -68,6 +68,7 @@ extern "C" {
 #include <sys/xattr.h>
 #include <linux/xattr.h>
 #endif
+#include <sparse_format.h>
 
 using namespace std;
 
@@ -407,12 +408,12 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 		} else if (Mount_Point == "/system_image") {
 			Display_Name = "System Image";
 			Backup_Display_Name = Display_Name;
-			Can_Flash_Img = false;
+			Can_Flash_Img = true;
 			Can_Be_Backed_Up = true;
 		} else if (Mount_Point == "/vendor_image") {
 			Display_Name = "Vendor Image";
 			Backup_Display_Name = Display_Name;
-			Can_Flash_Img = false;
+			Can_Flash_Img = true;
 			Can_Be_Backed_Up = true;
 		}
 	}
@@ -2375,7 +2376,26 @@ bool TWPartition::Flash_Image_DD(string Filename) {
 	string Command;
 
 	gui_msg(Msg("flashing=Flashing {1}...")(Display_Name));
-	Command = "dd bs=8388608 if='" + Filename + "' of=" + Actual_Block_Device;
+
+	uint32_t magic = 0;
+	int fd = open(Filename.c_str(), O_RDONLY);
+	if (fd < 0) {
+		gui_msg(Msg(msg::kError, "unable_to_open=Unable to open '{1}'.")(Filename));
+		LOGINFO("Unable to open '%s' (%s)\n", Filename.c_str(), strerror(errno));
+		return false;
+	}
+	if (read(fd, &magic, sizeof(magic)) != sizeof(magic)) {
+		gui_msg(Msg(msg::kError, "unable_to_open=Unable to open '{1}'.")(Filename));
+		LOGINFO("Unable to read '%s' (%s)\n", Filename.c_str(), strerror(errno));
+		close(fd);
+		return false;
+	}
+	close(fd);
+	if (magic == SPARSE_HEADER_MAGIC) {
+		Command = "simg2img '" + Filename + "' " + Actual_Block_Device;
+	} else {
+		Command = "dd bs=8388608 if='" + Filename + "' of=" + Actual_Block_Device;
+	}
 	LOGINFO("Flash command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command);
 	return true;
