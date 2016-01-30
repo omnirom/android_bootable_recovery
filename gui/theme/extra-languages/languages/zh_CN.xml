@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <language>
-	<display>Chinese Simplified</display>
+	<display>Chinese (Simplified)</display>
 
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
@@ -27,8 +27,8 @@
 		<string name="dalvik">Dalvik / ART Cache</string>
 		<!-- This is a rarely used partition on a Micro SD card for a very old app2sd system -->
 		<string name="sdext">SD-EXT</string>
-		<string name="adopted_data">使用DATA</string>
-		<string name="adopted_storage">使用存储</string>
+		<string name="adopted_data">适配的 Data</string>
+		<string name="adopted_storage">适配的存储</string>
 
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
@@ -90,7 +90,7 @@
 		<string name="zip_add_btn">添加更多卡刷包</string>
 		<string name="zip_clear_btn">清除卡刷包队列</string>
 		<string name="install_zip_count_hdr">刷入文件%tw_zip_index%，共%tw_zip_queue_count%个</string>
-		<string name="installing_zip">正在安装刷机包: %tw_file%</string>
+		<string name="installing_zip_xml">正在安装刷机包: %tw_file%</string>
 		<string name="failed">失败</string>
 		<string name="successful">成功</string>
 		<string name="install_failed">安装失败</string>
@@ -143,6 +143,7 @@
 		<string name="format_data_ptr1">格式化 Data 分区将擦除您安装的所有软件,</string>
 		<string name="format_data_ptr2">备份，图片，视频，媒体文件，以及</string>
 		<string name="format_data_ptr3">以及内置存储上的加密设置等。</string>
+		<string name="format_data_adopted">包括适配的存储</string>
 		<string name="format_data_lcp1">格式化 Data 分区将擦除您安装的所有软件备份，图片，</string>
 		<string name="format_data_lcp2">视频，媒体文件，以及以及内置存储上的加密设置等。</string>
 		<string name="format_data_wtc1">格式化 Data 将擦除所有软件备份，</string>
@@ -239,7 +240,7 @@
 		<string name="restore_backup_date">备份包日期: %tw_restore_file_date%</string>
 		<string name="restore_sel_part">选择还原分区:</string>
 		<string name="restore_enable_md5_chk">打开备份文件的MD5验证</string>
-		<string name="restore_completed">[耗时 {1} 秒还原完成]</string>
+		<string name="restore_complete">还原完毕</string>
 		<string name="swipe_restore">滑动确认还原</string>
 		<string name="swipe_restore_s">   还原</string>
 		<string name="rename_backup_hdr">重命名备份</string>
@@ -364,10 +365,9 @@
 		<string name="copy_log_confirm">确定复制日志到 SD 卡?</string>
 		<string name="copying_log">复制日志到 SD 卡中...</string>
 		<string name="copy_log_complete">日志复制完成</string>
-		<string name="fix_perm_btn">修复权限</string>
-		<string name="fix_perm_s_btn">修复权限</string>
+		<string name="fix_context_btn">修复 Context</string>
 		<string name="part_sd_btn">SD 卡分区</string>
-		<string name="part_sd_s_btn">SD Card</string>
+		<string name="part_sd_s_btn">SD 卡分区</string>
 		<string name="file_manager_btn">文件管理器</string>
 		<string name="language_hdr">语言</string>
 		<string name="terminal_btn">终端命令行</string>
@@ -452,15 +452,14 @@
 		<string name="sideload_confirm">ADB Sideload 线刷模式</string>
 		<string name="sideload_usage">使用方法: adb sideload 卡刷包文件名.zip</string>
 		<string name="sideload_complete">ADB Sideload 线刷完成</string>
-		<string name="fix_perms_hdr">修复权限</string>
-		<string name="fix_perms_note">注：固定的权限很少需要。</string>
-		<string name="fix_perms_selinux_chk">同时修复 SELinux</string>
-		<string name="fix_perms_sel_note1">修复 SELinux 可能导致</string>
-		<string name="fix_perms_sel_note2">您的设备无法正常启动</string>
-		<string name="swipe_to_fix_perms">滑动确认修复权限</string>
-		<string name="swipe_fix_perms">   修复权限</string>
-		<string name="fixing_perms">修复权限中...</string>
-		<string name="fix_perms_complete">修复权限完毕</string>
+		<string name="fix_contexts_hdr">修复 Context</string>
+		<string name="fix_contexts_note1">注：很少情況下需要修复 Context。</string>
+		<string name="fix_contexts_note2">修复 SELinux Context 可能</string>
+		<string name="fix_contexts_note3">导致您的设备无法正常启动</string>
+		<string name="swipe_to_fix_contexts">滑动确认修复 Context</string>
+		<string name="swipe_fix_contexts">   修复 Context</string>
+		<string name="fixing_contexts">修复 Context 中...</string>
+		<string name="fix_contexts_complete">修复 Context 完毕</string>
 		<string name="reboot_hdr">重启菜单</string>
 		<string name="su_hdr">SuperSU 检测</string>
 		<string name="su_note1">系统看起来尚未 root。</string>
@@ -516,7 +515,7 @@
 		<string name="restore_part_count">还原{1}个分区...</string>
 		<string name="total_restore_size">总还原大小 {1}MB</string>
 		<string name="updating_system_details">更新系统详细信息</string>
-		<string name="restore_completed">还原完毕</string>
+		<string name="restore_completed">[耗时 {1} 秒还原完成]</string>
 		<!-- {1} is the path we could not open, {2} is strerror output -->
 		<string name="error_opening_strerr">打开出错: '{1}' ({2})</string>
 		<string name="unable_locate_part_backup_name">无法通过备份名称来查找分区: '{1}'</string>
@@ -534,7 +533,7 @@
 		<string name="unable_to_mount_storage">无法挂载存储</string>
 		<string name="fail_decrypt">解密数据失败.</string>
 		<string name="no_crypto_support">此版本不支持加密.</string>
-		<string name="decrypt_success">Data 成功解密，新增块设备: '{1}'</string>
+		<string name="decrypt_success_dev">Data 成功解密，新增块设备: '{1}'</string>
 		<string name="done">完成.</string>
 		<string name="start_partition_sd">分区 SD 卡中...</string>
 		<string name="partition_sd_locate">无法找到设备进行分区.</string>
@@ -666,5 +665,6 @@
 		<string name="cancel_sideload">取消ADB sideload...</string>
 		<string name="change_fs_err">更换文件系统出错.</string>
 		<string name="theme_ver_err">自定义主题不兼容 TWRP 版本. 请使用官方主题.</string>
+		<string name="up_a_level">(返回上级目录)</string>
 	</resources>
 </language>
