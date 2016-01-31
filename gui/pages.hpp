@@ -34,6 +34,11 @@ struct language_struct {
 	std::string displayvalue;
 };
 
+inline bool operator < (const language_struct& language1, const language_struct& language2)
+{
+	return language1.displayvalue < language2.displayvalue;
+}
+
 extern std::vector<language_struct> Language_List;
 
 // Utility Functions
