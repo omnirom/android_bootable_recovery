@@ -36,6 +36,7 @@
 #include "../partitions.hpp"
 
 #include <string>
+#include <algorithm>
 
 extern "C" {
 #include "../twcommon.h"
@@ -1333,6 +1334,8 @@ void PageManager::LoadLanguageList(ZipArchive* package) {
 	} else {
 		LoadLanguageListDir(TWRES "languages/");
 	}
+
+	std::sort(Language_List.begin(), Language_List.end());
 }
 
 void PageManager::LoadLanguage(string filename) {
