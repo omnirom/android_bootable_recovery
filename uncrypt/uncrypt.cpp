@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <libgen.h>
 #include <linux/fs.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -52,9 +53,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <memory>
+#include <vector>
 
 #include <android-base/file.h>
+#include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
@@ -78,44 +82,22 @@ static int write_at_offset(unsigned char* buffer, size_t size, int wfd, off64_t 
         ALOGE("error seeking to offset %" PRId64 ": %s\n", offset, strerror(errno));
         return -1;
     }
-    size_t written = 0;
-    while (written < size) {
-        ssize_t wrote = TEMP_FAILURE_RETRY(write(wfd, buffer + written, size - written));
-        if (wrote == -1) {
-            ALOGE("error writing offset %" PRId64 ": %s\n",
-                  offset + static_cast<off64_t>(written), strerror(errno));
-            return -1;
-        }
-        written += wrote;
+    if (!android::base::WriteFully(wfd, buffer, size)) {
+        ALOGE("error writing offset %" PRId64 ": %s\n", offset, strerror(errno));
+        return -1;
     }
     return 0;
 }
 
-static void add_block_to_ranges(int** ranges, int* range_alloc, int* range_used, int new_block) {
-    // If the current block start is < 0, set the start to the new
-    // block.  (This only happens for the very first block of the very
-    // first range.)
-    if ((*ranges)[*range_used*2-2] < 0) {
-        (*ranges)[*range_used*2-2] = new_block;
-        (*ranges)[*range_used*2-1] = new_block;
-    }
-
-    if (new_block == (*ranges)[*range_used*2-1]) {
+static void add_block_to_ranges(std::vector<int>& ranges, int new_block) {
+    if (!ranges.empty() && new_block == ranges.back()) {
         // If the new block comes immediately after the current range,
         // all we have to do is extend the current range.
-        ++(*ranges)[*range_used*2-1];
+        ++ranges.back();
     } else {
         // We need to start a new range.
-
-        // If there isn't enough room in the array, we need to expand it.
-        if (*range_used >= *range_alloc) {
-            *range_alloc *= 2;
-            *ranges = reinterpret_cast<int*>(realloc(*ranges, *range_alloc * 2 * sizeof(int)));
-        }
-
-        ++*range_used;
-        (*ranges)[*range_used*2-2] = new_block;
-        (*ranges)[*range_used*2-1] = new_block+1;
+        ranges.push_back(new_block);
+        ranges.push_back(new_block + 1);
     }
 }
 
@@ -183,12 +165,17 @@ static bool find_uncrypt_package(std::string& package_name)
 
 static int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
                              bool encrypted, int status_fd) {
-    int mapfd = open(map_file, O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
-    if (mapfd == -1) {
-        ALOGE("failed to open %s\n", map_file);
+    std::string err;
+    if (!android::base::RemoveFileIfExists(map_file, &err)) {
+        ALOGE("failed to remove the existing map file %s: %s\n", map_file, err.c_str());
         return -1;
     }
-    std::unique_ptr<FILE, int(*)(FILE*)> mapf(fdopen(mapfd, "w"), fclose);
+    std::string tmp_map_file = std::string(map_file) + ".tmp";
+    unique_fd mapfd(open(tmp_map_file.c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR));
+    if (!mapfd) {
+        ALOGE("failed to open %s: %s\n", tmp_map_file.c_str(), strerror(errno));
+        return -1;
+    }
 
     // Make sure we can write to the status_file.
     if (!android::base::WriteStringToFd("0\n", status_fd)) {
@@ -207,37 +194,32 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     int blocks = ((sb.st_size-1) / sb.st_blksize) + 1;
     ALOGI("  file size: %" PRId64 " bytes, %d blocks\n", sb.st_size, blocks);
 
-    int range_alloc = 1;
-    int range_used = 1;
-    int* ranges = reinterpret_cast<int*>(malloc(range_alloc * 2 * sizeof(int)));
-    ranges[0] = -1;
-    ranges[1] = -1;
+    std::vector<int> ranges;
 
-    fprintf(mapf.get(), "%s\n%" PRId64 " %ld\n",
-            blk_dev, sb.st_size, static_cast<long>(sb.st_blksize));
+    std::string s = android::base::StringPrintf("%s\n%" PRId64 " %ld\n",
+                       blk_dev, sb.st_size, static_cast<long>(sb.st_blksize));
+    if (!android::base::WriteStringToFd(s, mapfd.get())) {
+        ALOGE("failed to write %s: %s\n", tmp_map_file.c_str(), strerror(errno));
+        return -1;
+    }
 
-    unsigned char* buffers[WINDOW_SIZE];
+    std::vector<std::vector<unsigned char>> buffers;
     if (encrypted) {
-        for (size_t i = 0; i < WINDOW_SIZE; ++i) {
-            buffers[i] = reinterpret_cast<unsigned char*>(malloc(sb.st_blksize));
-        }
+        buffers.resize(WINDOW_SIZE, std::vector<unsigned char>(sb.st_blksize));
     }
     int head_block = 0;
     int head = 0, tail = 0;
 
-    int fd = open(path, O_RDONLY);
-    unique_fd fd_holder(fd);
-    if (fd == -1) {
-        ALOGE("failed to open fd for reading: %s\n", strerror(errno));
+    unique_fd fd(open(path, O_RDONLY));
+    if (!fd) {
+        ALOGE("failed to open %s for reading: %s\n", path, strerror(errno));
         return -1;
     }
 
-    int wfd = -1;
-    unique_fd wfd_holder(wfd);
+    unique_fd wfd(-1);
     if (encrypted) {
         wfd = open(blk_dev, O_WRONLY);
-        wfd_holder = unique_fd(wfd);
-        if (wfd == -1) {
+        if (!wfd) {
             ALOGE("failed to open fd for writing: %s\n", strerror(errno));
             return -1;
         }
@@ -256,13 +238,13 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         if ((tail+1) % WINDOW_SIZE == head) {
             // write out head buffer
             int block = head_block;
-            if (ioctl(fd, FIBMAP, &block) != 0) {
+            if (ioctl(fd.get(), FIBMAP, &block) != 0) {
                 ALOGE("failed to find block %d\n", head_block);
                 return -1;
             }
-            add_block_to_ranges(&ranges, &range_alloc, &range_used, block);
+            add_block_to_ranges(ranges, block);
             if (encrypted) {
-                if (write_at_offset(buffers[head], sb.st_blksize, wfd,
+                if (write_at_offset(buffers[head].data(), sb.st_blksize, wfd.get(),
                         static_cast<off64_t>(sb.st_blksize) * block) != 0) {
                     return -1;
                 }
@@ -273,17 +255,13 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 
         // read next block to tail
         if (encrypted) {
-            size_t so_far = 0;
-            while (so_far < static_cast<size_t>(sb.st_blksize) && pos < sb.st_size) {
-                ssize_t this_read =
-                        TEMP_FAILURE_RETRY(read(fd, buffers[tail] + so_far, sb.st_blksize - so_far));
-                if (this_read == -1) {
-                    ALOGE("failed to read: %s\n", strerror(errno));
-                    return -1;
-                }
-                so_far += this_read;
-                pos += this_read;
+            size_t to_read = static_cast<size_t>(
+                    std::min(static_cast<off64_t>(sb.st_blksize), sb.st_size - pos));
+            if (!android::base::ReadFully(fd.get(), buffers[tail].data(), to_read)) {
+                ALOGE("failed to read: %s\n", strerror(errno));
+                return -1;
             }
+            pos += to_read;
         } else {
             // If we're not encrypting; we don't need to actually read
             // anything, just skip pos forward as if we'd read a
@@ -296,13 +274,13 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     while (head != tail) {
         // write out head buffer
         int block = head_block;
-        if (ioctl(fd, FIBMAP, &block) != 0) {
+        if (ioctl(fd.get(), FIBMAP, &block) != 0) {
             ALOGE("failed to find block %d\n", head_block);
             return -1;
         }
-        add_block_to_ranges(&ranges, &range_alloc, &range_used, block);
+        add_block_to_ranges(ranges, block);
         if (encrypted) {
-            if (write_at_offset(buffers[head], sb.st_blksize, wfd,
+            if (write_at_offset(buffers[head].data(), sb.st_blksize, wfd.get(),
                     static_cast<off64_t>(sb.st_blksize) * block) != 0) {
                 return -1;
             }
@@ -311,22 +289,62 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         ++head_block;
     }
 
-    fprintf(mapf.get(), "%d\n", range_used);
-    for (int i = 0; i < range_used; ++i) {
-        fprintf(mapf.get(), "%d %d\n", ranges[i*2], ranges[i*2+1]);
-    }
-
-    if (fsync(mapfd) == -1) {
-        ALOGE("failed to fsync \"%s\": %s\n", map_file, strerror(errno));
+    if (!android::base::WriteStringToFd(
+            android::base::StringPrintf("%zu\n", ranges.size() / 2), mapfd.get())) {
+        ALOGE("failed to write %s: %s\n", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
-    if (encrypted) {
-        if (fsync(wfd) == -1) {
-            ALOGE("failed to fsync \"%s\": %s\n", blk_dev, strerror(errno));
+    for (size_t i = 0; i < ranges.size(); i += 2) {
+        if (!android::base::WriteStringToFd(
+                android::base::StringPrintf("%d %d\n", ranges[i], ranges[i+1]), mapfd.get())) {
+            ALOGE("failed to write %s: %s\n", tmp_map_file.c_str(), strerror(errno));
             return -1;
         }
     }
 
+    if (fsync(mapfd.get()) == -1) {
+        ALOGE("failed to fsync \"%s\": %s\n", tmp_map_file.c_str(), strerror(errno));
+        return -1;
+    }
+    if (close(mapfd.get() == -1)) {
+        ALOGE("failed to close %s: %s\n", tmp_map_file.c_str(), strerror(errno));
+        return -1;
+    }
+    mapfd = -1;
+
+    if (encrypted) {
+        if (fsync(wfd.get()) == -1) {
+            ALOGE("failed to fsync \"%s\": %s\n", blk_dev, strerror(errno));
+            return -1;
+        }
+        if (close(wfd.get()) == -1) {
+            ALOGE("failed to close %s: %s\n", blk_dev, strerror(errno));
+            return -1;
+        }
+        wfd = -1;
+    }
+
+    if (rename(tmp_map_file.c_str(), map_file) == -1) {
+        ALOGE("failed to rename %s to %s: %s\n", tmp_map_file.c_str(), map_file, strerror(errno));
+        return -1;
+    }
+    // Sync dir to make rename() result written to disk.
+    std::string file_name = map_file;
+    std::string dir_name = dirname(&file_name[0]);
+    unique_fd dfd(open(dir_name.c_str(), O_RDONLY | O_DIRECTORY));
+    if (!dfd) {
+        ALOGE("failed to open dir %s: %s\n", dir_name.c_str(), strerror(errno));
+        return -1;
+    }
+    if (fsync(dfd.get()) == -1) {
+        ALOGE("failed to fsync %s: %s\n", dir_name.c_str(), strerror(errno));
+        return -1;
+    }
+    if (close(dfd.get() == -1)) {
+        ALOGE("failed to close %s: %s\n", dir_name.c_str(), strerror(errno));
+        return -1;
+    }
+    dfd = -1;
     return 0;
 }
 
