@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_58b4c57b",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2381,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-02T21:28:56Z",
+      "side": 1,
+      "message": "I think this needs to be Filename.c_str() for compatibility with stlport",
+      "revId": "4264481a6a5975112e47859a549fc2812c4071d7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_78bf815b",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2383,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-02T21:28:56Z",
+      "side": 1,
+      "message": "Reading a single 32 bit integer and comparing that with  SPARSE_HEADER_MAGIC (from sparse_format.h) would be simpler than this.",
+      "revId": "4264481a6a5975112e47859a549fc2812c4071d7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
