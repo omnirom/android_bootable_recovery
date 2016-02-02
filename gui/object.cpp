@@ -94,6 +94,10 @@ bool GUIObject::isConditionTrue(Condition* condition)
 	if (DataManager::GetValue(condition->mVar2, var2))
 		var2 = condition->mVar2;
 
+	if (var2.substr(0, 2) == "{@")
+		// translate resource string in value
+		var2 = gui_parse_text(var2);
+
 	// This is a special case, we stat the file and that determines our result
 	if (var1 == "fileexists")
 	{
