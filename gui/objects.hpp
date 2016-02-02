@@ -43,15 +43,6 @@ using namespace rapidxml;
 #define TW_Y_OFFSET 0
 #endif
 
-struct translate_later_struct {
-	std::string resource_name; // Name of the string resource for looking up
-	std::string default_value; // Default in case we don't find the string resource
-	std::string color;         // Color for the console... normal, highlight, warning, error
-	std::string format;        // Formatted extra variables like %i, %s
-	std::string text;          // Final, translated, formatted text
-	bool inline_format;        // Indicates if the final text includes an inlined format variable
-};
-
 class RenderObject
 {
 public:
