@@ -598,7 +598,6 @@ int ReconstructDeflateChunk(ImageChunk* chunk) {
     return -1;
   }
 
-  size_t p = 0;
   unsigned char* out = reinterpret_cast<unsigned char*>(malloc(BUFFER_SIZE));
 
   // We only check two combinations of encoder parameters:  level 6
@@ -844,7 +843,6 @@ int main(int argc, char** argv) {
   }
 
   if (argc != 4) {
-    usage:
     printf("usage: %s [-z] [-b <bonus-file>] <src-img> <tgt-img> <patch-file>\n",
             argv[0]);
     return 2;
