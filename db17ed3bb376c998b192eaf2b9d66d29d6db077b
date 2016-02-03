@@ -70,6 +70,23 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_b3788a24",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 551,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-03T20:06:24Z",
+      "side": 1,
+      "message": "inconsistent caps",
+      "revId": "db17ed3bb376c998b192eaf2b9d66d29d6db077b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_f3973248",
         "filename": "gui/theme/common/languages/de.xml",
         "patchSetId": 1
