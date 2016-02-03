@@ -58,6 +58,7 @@
 #include <vector>
 
 #include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <cutils/android_reboot.h>
@@ -67,23 +68,25 @@
 #define LOG_TAG "uncrypt"
 #include <log/log.h>
 
+#include "bootloader.h"
 #include "unique_fd.h"
 
 #define WINDOW_SIZE 5
 
-static const std::string cache_block_map = "/cache/recovery/block.map";
-static const std::string status_file = "/cache/recovery/uncrypt_status";
-static const std::string uncrypt_file = "/cache/recovery/uncrypt_file";
+static const std::string CACHE_BLOCK_MAP = "/cache/recovery/block.map";
+static const std::string COMMAND_FILE = "/cache/recovery/command";
+static const std::string STATUS_FILE = "/cache/recovery/uncrypt_status";
+static const std::string UNCRYPT_PATH_FILE = "/cache/recovery/uncrypt_file";
 
 static struct fstab* fstab = NULL;
 
 static int write_at_offset(unsigned char* buffer, size_t size, int wfd, off64_t offset) {
     if (TEMP_FAILURE_RETRY(lseek64(wfd, offset, SEEK_SET)) == -1) {
-        ALOGE("error seeking to offset %" PRId64 ": %s\n", offset, strerror(errno));
+        ALOGE("error seeking to offset %" PRId64 ": %s", offset, strerror(errno));
         return -1;
     }
     if (!android::base::WriteFully(wfd, buffer, size)) {
-        ALOGE("error writing offset %" PRId64 ": %s\n", offset, strerror(errno));
+        ALOGE("error writing offset %" PRId64 ": %s", offset, strerror(errno));
         return -1;
     }
     return 0;
@@ -107,13 +110,13 @@ static struct fstab* read_fstab() {
     // The fstab path is always "/fstab.${ro.hardware}".
     char fstab_path[PATH_MAX+1] = "/fstab.";
     if (!property_get("ro.hardware", fstab_path+strlen(fstab_path), "")) {
-        ALOGE("failed to get ro.hardware\n");
+        ALOGE("failed to get ro.hardware");
         return NULL;
     }
 
     fstab = fs_mgr_read_fstab(fstab_path);
     if (!fstab) {
-        ALOGE("failed to read %s\n", fstab_path);
+        ALOGE("failed to read %s", fstab_path);
         return NULL;
     }
 
@@ -150,16 +153,16 @@ static const char* find_block_device(const char* path, bool* encryptable, bool* 
 }
 
 // Parse uncrypt_file to find the update package name.
-static bool find_uncrypt_package(std::string& package_name)
-{
-    if (!android::base::ReadFileToString(uncrypt_file, &package_name)) {
-        ALOGE("failed to open \"%s\": %s\n", uncrypt_file.c_str(), strerror(errno));
+static bool find_uncrypt_package(const std::string& uncrypt_path_file, std::string* package_name) {
+    CHECK(package_name != nullptr);
+    std::string uncrypt_path;
+    if (!android::base::ReadFileToString(uncrypt_path_file, &uncrypt_path)) {
+        ALOGE("failed to open \"%s\": %s", uncrypt_path_file.c_str(), strerror(errno));
         return false;
     }
 
     // Remove the trailing '\n' if present.
-    package_name = android::base::Trim(package_name);
-
+    *package_name = android::base::Trim(uncrypt_path);
     return true;
 }
 
@@ -167,7 +170,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
                              bool encrypted, int status_fd) {
     std::string err;
     if (!android::base::RemoveFileIfExists(map_file, &err)) {
-        ALOGE("failed to remove the existing map file %s: %s\n", map_file, err.c_str());
+        ALOGE("failed to remove the existing map file %s: %s", map_file, err.c_str());
         return -1;
     }
     std::string tmp_map_file = std::string(map_file) + ".tmp";
@@ -179,27 +182,27 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 
     // Make sure we can write to the status_file.
     if (!android::base::WriteStringToFd("0\n", status_fd)) {
-        ALOGE("failed to update \"%s\"\n", status_file.c_str());
+        ALOGE("failed to update \"%s\"\n", STATUS_FILE.c_str());
         return -1;
     }
 
     struct stat sb;
     if (stat(path, &sb) != 0) {
-        ALOGE("failed to stat %s\n", path);
+        ALOGE("failed to stat %s", path);
         return -1;
     }
 
-    ALOGI(" block size: %ld bytes\n", static_cast<long>(sb.st_blksize));
+    ALOGI(" block size: %ld bytes", static_cast<long>(sb.st_blksize));
 
     int blocks = ((sb.st_size-1) / sb.st_blksize) + 1;
-    ALOGI("  file size: %" PRId64 " bytes, %d blocks\n", sb.st_size, blocks);
+    ALOGI("  file size: %" PRId64 " bytes, %d blocks", sb.st_size, blocks);
 
     std::vector<int> ranges;
 
     std::string s = android::base::StringPrintf("%s\n%" PRId64 " %ld\n",
                        blk_dev, sb.st_size, static_cast<long>(sb.st_blksize));
     if (!android::base::WriteStringToFd(s, mapfd.get())) {
-        ALOGE("failed to write %s: %s\n", tmp_map_file.c_str(), strerror(errno));
+        ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
 
@@ -212,7 +215,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 
     unique_fd fd(open(path, O_RDONLY));
     if (!fd) {
-        ALOGE("failed to open %s for reading: %s\n", path, strerror(errno));
+        ALOGE("failed to open %s for reading: %s", path, strerror(errno));
         return -1;
     }
 
@@ -220,7 +223,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     if (encrypted) {
         wfd = open(blk_dev, O_WRONLY);
         if (!wfd) {
-            ALOGE("failed to open fd for writing: %s\n", strerror(errno));
+            ALOGE("failed to open fd for writing: %s", strerror(errno));
             return -1;
         }
     }
@@ -239,7 +242,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
             // write out head buffer
             int block = head_block;
             if (ioctl(fd.get(), FIBMAP, &block) != 0) {
-                ALOGE("failed to find block %d\n", head_block);
+                ALOGE("failed to find block %d", head_block);
                 return -1;
             }
             add_block_to_ranges(ranges, block);
@@ -258,7 +261,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
             size_t to_read = static_cast<size_t>(
                     std::min(static_cast<off64_t>(sb.st_blksize), sb.st_size - pos));
             if (!android::base::ReadFully(fd.get(), buffers[tail].data(), to_read)) {
-                ALOGE("failed to read: %s\n", strerror(errno));
+                ALOGE("failed to read: %s", strerror(errno));
                 return -1;
             }
             pos += to_read;
@@ -275,7 +278,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         // write out head buffer
         int block = head_block;
         if (ioctl(fd.get(), FIBMAP, &block) != 0) {
-            ALOGE("failed to find block %d\n", head_block);
+            ALOGE("failed to find block %d", head_block);
             return -1;
         }
         add_block_to_ranges(ranges, block);
@@ -291,41 +294,41 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 
     if (!android::base::WriteStringToFd(
             android::base::StringPrintf("%zu\n", ranges.size() / 2), mapfd.get())) {
-        ALOGE("failed to write %s: %s\n", tmp_map_file.c_str(), strerror(errno));
+        ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
     for (size_t i = 0; i < ranges.size(); i += 2) {
         if (!android::base::WriteStringToFd(
                 android::base::StringPrintf("%d %d\n", ranges[i], ranges[i+1]), mapfd.get())) {
-            ALOGE("failed to write %s: %s\n", tmp_map_file.c_str(), strerror(errno));
+            ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
             return -1;
         }
     }
 
     if (fsync(mapfd.get()) == -1) {
-        ALOGE("failed to fsync \"%s\": %s\n", tmp_map_file.c_str(), strerror(errno));
+        ALOGE("failed to fsync \"%s\": %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
     if (close(mapfd.get() == -1)) {
-        ALOGE("failed to close %s: %s\n", tmp_map_file.c_str(), strerror(errno));
+        ALOGE("failed to close %s: %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
     mapfd = -1;
 
     if (encrypted) {
         if (fsync(wfd.get()) == -1) {
-            ALOGE("failed to fsync \"%s\": %s\n", blk_dev, strerror(errno));
+            ALOGE("failed to fsync \"%s\": %s", blk_dev, strerror(errno));
             return -1;
         }
         if (close(wfd.get()) == -1) {
-            ALOGE("failed to close %s: %s\n", blk_dev, strerror(errno));
+            ALOGE("failed to close %s: %s", blk_dev, strerror(errno));
             return -1;
         }
         wfd = -1;
     }
 
     if (rename(tmp_map_file.c_str(), map_file) == -1) {
-        ALOGE("failed to rename %s to %s: %s\n", tmp_map_file.c_str(), map_file, strerror(errno));
+        ALOGE("failed to rename %s to %s: %s", tmp_map_file.c_str(), map_file, strerror(errno));
         return -1;
     }
     // Sync dir to make rename() result written to disk.
@@ -333,50 +336,74 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     std::string dir_name = dirname(&file_name[0]);
     unique_fd dfd(open(dir_name.c_str(), O_RDONLY | O_DIRECTORY));
     if (!dfd) {
-        ALOGE("failed to open dir %s: %s\n", dir_name.c_str(), strerror(errno));
+        ALOGE("failed to open dir %s: %s", dir_name.c_str(), strerror(errno));
         return -1;
     }
     if (fsync(dfd.get()) == -1) {
-        ALOGE("failed to fsync %s: %s\n", dir_name.c_str(), strerror(errno));
+        ALOGE("failed to fsync %s: %s", dir_name.c_str(), strerror(errno));
         return -1;
     }
     if (close(dfd.get() == -1)) {
-        ALOGE("failed to close %s: %s\n", dir_name.c_str(), strerror(errno));
+        ALOGE("failed to close %s: %s", dir_name.c_str(), strerror(errno));
         return -1;
     }
     dfd = -1;
     return 0;
 }
 
-static void wipe_misc() {
-    ALOGI("removing old commands from misc");
+static std::string get_misc_blk_device() {
+    struct fstab* fstab = read_fstab();
+    if (fstab == nullptr) {
+        return "";
+    }
     for (int i = 0; i < fstab->num_entries; ++i) {
-        struct fstab_rec* v = &fstab->recs[i];
-        if (!v->mount_point) continue;
-        if (strcmp(v->mount_point, "/misc") == 0) {
-            int fd = open(v->blk_device, O_WRONLY | O_SYNC);
-            unique_fd fd_holder(fd);
-
-            uint8_t zeroes[1088];   // sizeof(bootloader_message) from recovery
-            memset(zeroes, 0, sizeof(zeroes));
-
-            size_t written = 0;
-            size_t size = sizeof(zeroes);
-            while (written < size) {
-                ssize_t w = TEMP_FAILURE_RETRY(write(fd, zeroes, size-written));
-                if (w == -1) {
-                    ALOGE("zero write failed: %s\n", strerror(errno));
-                    return;
-                } else {
-                    written += w;
-                }
-            }
-            if (fsync(fd) == -1) {
-                ALOGE("failed to fsync \"%s\": %s\n", v->blk_device, strerror(errno));
-                return;
-            }
+        fstab_rec* v = &fstab->recs[i];
+        if (v->mount_point != nullptr && strcmp(v->mount_point, "/misc") == 0) {
+            return v->blk_device;
         }
     }
+    return "";
+}
+
+static int read_bootloader_message(bootloader_message* out) {
+    std::string misc_blk_device = get_misc_blk_device();
+    if (misc_blk_device.empty()) {
+        ALOGE("failed to find /misc partition.");
+        return -1;
+    }
+    unique_fd fd(open(misc_blk_device.c_str(), O_RDONLY));
+    if (!fd) {
+        ALOGE("failed to open %s: %s", misc_blk_device.c_str(), strerror(errno));
+        return -1;
+    }
+    if (!android::base::ReadFully(fd.get(), out, sizeof(*out))) {
+        ALOGE("failed to read %s: %s", misc_blk_device.c_str(), strerror(errno));
+        return -1;
+    }
+    return 0;
+}
+
+static int write_bootloader_message(const bootloader_message* in) {
+    std::string misc_blk_device = get_misc_blk_device();
+    if (misc_blk_device.empty()) {
+        ALOGE("failed to find /misc partition.");
+        return -1;
+    }
+    unique_fd fd(open(misc_blk_device.c_str(), O_WRONLY | O_SYNC));
+    if (!fd) {
+        ALOGE("failed to open %s: %s", misc_blk_device.c_str(), strerror(errno));
+        return -1;
+    }
+    if (!android::base::WriteFully(fd.get(), in, sizeof(*in))) {
+        ALOGE("failed to write %s: %s", misc_blk_device.c_str(), strerror(errno));
+        return -1;
+    }
+    // TODO: O_SYNC and fsync() duplicates each other?
+    if (fsync(fd.get()) == -1) {
+        ALOGE("failed to fsync %s: %s", misc_blk_device.c_str(), strerror(errno));
+        return -1;
+    }
+    return 0;
 }
 
 static void reboot_to_recovery() {
@@ -388,7 +415,7 @@ static void reboot_to_recovery() {
     ALOGE("reboot didn't succeed?");
 }
 
-int uncrypt(const char* input_path, const char* map_file, int status_fd) {
+static int uncrypt(const char* input_path, const char* map_file, int status_fd) {
 
     ALOGI("update package is \"%s\"", input_path);
 
@@ -415,8 +442,8 @@ int uncrypt(const char* input_path, const char* map_file, int status_fd) {
     // If the filesystem it's on isn't encrypted, we only produce the
     // block map, we don't rewrite the file contents (it would be
     // pointless to do so).
-    ALOGI("encryptable: %s\n", encryptable ? "yes" : "no");
-    ALOGI("  encrypted: %s\n", encrypted ? "yes" : "no");
+    ALOGI("encryptable: %s", encryptable ? "yes" : "no");
+    ALOGI("  encrypted: %s", encrypted ? "yes" : "no");
 
     // Recovery supports installing packages from 3 paths: /cache,
     // /data, and /sdcard.  (On a particular device, other locations
@@ -435,56 +462,113 @@ int uncrypt(const char* input_path, const char* map_file, int status_fd) {
     return 0;
 }
 
-int main(int argc, char** argv) {
-
-    if (argc != 3 && argc != 1 && (argc == 2 && strcmp(argv[1], "--reboot") != 0)) {
-        fprintf(stderr, "usage: %s [--reboot] [<transform_path> <map_file>]\n", argv[0]);
-        return 2;
+static int uncrypt_wrapper(const char* input_path, const char* map_file,
+                           const std::string& status_file) {
+    // The pipe has been created by the system server.
+    unique_fd status_fd(open(status_file.c_str(), O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR));
+    if (!status_fd) {
+        ALOGE("failed to open pipe \"%s\": %s", status_file.c_str(), strerror(errno));
+        return 1;
     }
 
-    // When uncrypt is started with "--reboot", it wipes misc and reboots.
-    // Otherwise it uncrypts the package and writes the block map.
+    std::string package;
+    if (input_path == nullptr) {
+        if (!find_uncrypt_package(UNCRYPT_PATH_FILE, &package)) {
+            android::base::WriteStringToFd("-1\n", status_fd.get());
+            return 1;
+        }
+        input_path = package.c_str();
+    }
+    CHECK(map_file != nullptr);
+    int status = uncrypt(input_path, map_file, status_fd.get());
+    if (status != 0) {
+        android::base::WriteStringToFd("-1\n", status_fd.get());
+        return 1;
+    }
+    android::base::WriteStringToFd("100\n", status_fd.get());
+    return 0;
+}
+
+static int clear_bcb(const std::string& status_file) {
+    unique_fd status_fd(open(status_file.c_str(), O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR));
+    if (!status_fd) {
+        ALOGE("failed to open pipe \"%s\": %s", status_file.c_str(), strerror(errno));
+        return 1;
+    }
+    bootloader_message boot = {};
+    if (write_bootloader_message(&boot) != 0) {
+        android::base::WriteStringToFd("-1\n", status_fd.get());
+        return 1;
+    }
+    android::base::WriteStringToFd("100\n", status_fd.get());
+    return 0;
+}
+
+static int setup_bcb(const std::string& command_file, const std::string& status_file) {
+    unique_fd status_fd(open(status_file.c_str(), O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR));
+    if (!status_fd) {
+        ALOGE("failed to open pipe \"%s\": %s", status_file.c_str(), strerror(errno));
+        return 1;
+    }
+    std::string content;
+    if (!android::base::ReadFileToString(command_file, &content)) {
+        ALOGE("failed to read \"%s\": %s", command_file.c_str(), strerror(errno));
+        android::base::WriteStringToFd("-1\n", status_fd.get());
+        return 1;
+    }
+    bootloader_message boot = {};
+    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
+    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
+    strlcat(boot.recovery, content.c_str(), sizeof(boot.recovery));
+    if (write_bootloader_message(&boot) != 0) {
+        ALOGE("failed to set bootloader message");
+        android::base::WriteStringToFd("-1\n", status_fd.get());
+        return 1;
+    }
+    android::base::WriteStringToFd("100\n", status_fd.get());
+    return 0;
+}
+
+static int read_bcb() {
+    bootloader_message boot;
+    if (read_bootloader_message(&boot) != 0) {
+        ALOGE("failed to get bootloader message");
+        return 1;
+    }
+    printf("bcb command: %s\n", boot.command);
+    printf("bcb recovery:\n%s\n", boot.recovery);
+    return 0;
+}
+
+static void usage(const char* exename) {
+    fprintf(stderr, "Usage of %s:\n", exename);
+    fprintf(stderr, "%s [<package_path> <map_file>]  Uncrypt ota package.\n", exename);
+    fprintf(stderr, "%s --reboot  Clear BCB data and reboot to recovery.\n", exename);
+    fprintf(stderr, "%s --clear-bcb  Clear BCB data in misc partition.\n", exename);
+    fprintf(stderr, "%s --setup-bcb  Setup BCB data by command file.\n", exename);
+    fprintf(stderr, "%s --read-bcb   Read BCB data from misc partition.\n", exename);
+}
+
+int main(int argc, char** argv) {
     if (argc == 2) {
-        if (read_fstab() == NULL) {
-            return 1;
+        if (strcmp(argv[1], "--reboot") == 0) {
+            reboot_to_recovery();
+        } else if (strcmp(argv[1], "--clear-bcb") == 0) {
+            return clear_bcb(STATUS_FILE);
+        } else if (strcmp(argv[1], "--setup-bcb") == 0) {
+            return setup_bcb(COMMAND_FILE, STATUS_FILE);
+        } else if (strcmp(argv[1], "--read-bcb") == 0) {
+            return read_bcb();
         }
-        wipe_misc();
-        reboot_to_recovery();
-    } else {
-        // The pipe has been created by the system server.
-        int status_fd = open(status_file.c_str(), O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
-        if (status_fd == -1) {
-            ALOGE("failed to open pipe \"%s\": %s\n", status_file.c_str(), strerror(errno));
-            return 1;
-        }
-        unique_fd status_fd_holder(status_fd);
-
-        std::string package;
-        const char* input_path;
-        const char* map_file;
-
+    } else if (argc == 1 || argc == 3) {
+        const char* input_path = nullptr;
+        const char* map_file = CACHE_BLOCK_MAP.c_str();
         if (argc == 3) {
-            // when command-line args are given this binary is being used
-            // for debugging.
             input_path = argv[1];
             map_file = argv[2];
-        } else {
-            if (!find_uncrypt_package(package)) {
-                android::base::WriteStringToFd("-1\n", status_fd);
-                return 1;
-            }
-            input_path = package.c_str();
-            map_file = cache_block_map.c_str();
         }
-
-        int status = uncrypt(input_path, map_file, status_fd);
-        if (status != 0) {
-            android::base::WriteStringToFd("-1\n", status_fd);
-            return 1;
-        }
-
-        android::base::WriteStringToFd("100\n", status_fd);
+        return uncrypt_wrapper(input_path, map_file, STATUS_FILE);
     }
-
-    return 0;
+    usage(argv[0]);
+    return 2;
 }
