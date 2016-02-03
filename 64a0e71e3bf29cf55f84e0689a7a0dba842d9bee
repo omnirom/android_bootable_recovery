@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_733682af",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 484,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 0,
+      "message": "Why did you remove this error handling?",
+      "revId": "64a0e71e3bf29cf55f84e0689a7a0dba842d9bee",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}

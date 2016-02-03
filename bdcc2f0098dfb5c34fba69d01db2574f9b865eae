@@ -1,0 +1,305 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_f341720f",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "Should adbbackup be in the regular ORS processing or should it be handled like a special command more along the lines of the set and get commands that are processed directly in gui/gui.cpp? What will happen if someone puts \"adbbackup\" into /cache/recovery/openrecoveryscript?",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_3340fa0b",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 305,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "Should this be translated?",
+      "range": {
+        "startLine": 305,
+        "startChar": 5,
+        "endLine": 305,
+        "endChar": 11
+      },
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_1345fe1b",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 314,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "Should this be translated?",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_533b8695",
+        "filename": "openrecoveryscript.hpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "usually we use spaces after the function declaration",
+      "range": {
+        "startLine": 43,
+        "startChar": 47,
+        "endLine": 43,
+        "endChar": 67
+      },
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d34e763f",
+        "filename": "orscmd/Android.mk",
+        "patchSetId": 33
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "Maybe twrpDigest and digest/md5.c need to become a shared library? We should do some quick testing to see how much the ramdisk is growing from the addition of twrpbu",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_9358eeff",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "You mkfifo here, but there are a lot of error paths with return -1 where you don\u0027t unlink.\n\nYou should probably keep a return value and use a goto setup and handle all of the cleanup in one spot at the end of the function.",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b34bea2d",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "There should probably be a sleep and a retry counter and we should stop and fail completely after a set number of retries.",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_735d62ed",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "We\u0027re not unlinking the TW_ADB_BACKUP fifo or closing the write_fd on this error.",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_3357dacd",
+        "filename": "partition.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 1444,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "We should do something for adb backup / restore for MTD nand, even if it\u0027s just spitting an error.",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_535266dd",
+        "filename": "partition.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 2398,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "We should do something for adb backup / restore for MTD nand, even if it\u0027s just spitting an error.",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b362caa3",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 797,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "If we can\u0027t write the header, shouldn\u0027t we stop?",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_93034ec4",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 908,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "Not entirely your fault, but we probably should change this function to a bool and return true or false. I noticed other inconsistencies in the way we\u0027re handling the return values in the existing code too.",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_7308c2df",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 920,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "See above",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_530dc6ed",
+        "filename": "partitions.hpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "Should be using spaces instead of tabs after the function declaration",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_33123a0c",
+        "filename": "twrp-functions.hpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "Spaces instead of tabs after function declaration",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_13f73ed0",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 1450,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "Tabs instead of spaces in this area.",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f3f3b2df",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 1536,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-03T16:04:45Z",
+      "side": 1,
+      "message": "Looks like you started out with 4 spaces then added a tab on a few lines here",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
