@@ -17,6 +17,9 @@
 #ifndef _RECOVERY_VERIFIER_H
 #define _RECOVERY_VERIFIER_H
 
+#include <memory>
+#include <vector>
+
 #include "mincrypt/p256.h"
 #include "mincrypt/rsa.h"
 
@@ -25,17 +28,25 @@ typedef struct {
     p256_int y;
 } ECPublicKey;
 
-typedef struct {
+struct Certificate {
     typedef enum {
         RSA,
         EC,
     } KeyType;
 
+    Certificate(int hash_len_, KeyType key_type_,
+            std::unique_ptr<RSAPublicKey>&& rsa_,
+            std::unique_ptr<ECPublicKey>&& ec_) :
+        hash_len(hash_len_),
+        key_type(key_type_),
+        rsa(std::move(rsa_)),
+        ec(std::move(ec_)) { }
+
     int hash_len;  // SHA_DIGEST_SIZE (SHA-1) or SHA256_DIGEST_SIZE (SHA-256)
     KeyType key_type;
-    RSAPublicKey* rsa;
-    ECPublicKey* ec;
-} Certificate;
+    std::unique_ptr<RSAPublicKey> rsa;
+    std::unique_ptr<ECPublicKey> ec;
+};
 
 /* addr and length define a an update package file that has been
  * loaded (or mmap'ed, or whatever) into memory.  Verify that the file
@@ -43,9 +54,9 @@ typedef struct {
  * one of the constants below.
  */
 int verify_file(unsigned char* addr, size_t length,
-                const Certificate *pKeys, unsigned int numKeys);
+                const std::vector<Certificate>& keys);
 
-Certificate* load_keys(const char* filename, int* numKeys);
+bool load_keys(const char* filename, std::vector<Certificate>& certs);
 
 #define VERIFY_SUCCESS        0
 #define VERIFY_FAILURE        1

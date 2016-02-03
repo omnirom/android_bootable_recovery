@@ -23,6 +23,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <memory>
+#include <vector>
+
 #include "common.h"
 #include "verifier.h"
 #include "ui.h"
@@ -163,56 +166,43 @@ ui_print(const char* format, ...) {
     va_end(ap);
 }
 
-static Certificate* add_certificate(Certificate** certsp, int* num_keys,
-        Certificate::KeyType key_type) {
-    int i = *num_keys;
-    *num_keys = *num_keys + 1;
-    *certsp = (Certificate*) realloc(*certsp, *num_keys * sizeof(Certificate));
-    Certificate* certs = *certsp;
-    certs[i].rsa = NULL;
-    certs[i].ec = NULL;
-    certs[i].key_type = key_type;
-    certs[i].hash_len = SHA_DIGEST_SIZE;
-    return &certs[i];
-}
-
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     if (argc < 2) {
         fprintf(stderr, "Usage: %s [-sha256] [-ec | -f4 | -file <keys>] <package>\n", argv[0]);
         return 2;
     }
-    Certificate* certs = NULL;
-    int num_keys = 0;
 
+    std::vector<Certificate> certs;
     int argn = 1;
     while (argn < argc) {
         if (strcmp(argv[argn], "-sha256") == 0) {
-            if (num_keys == 0) {
+            if (certs.empty()) {
                 fprintf(stderr, "May only specify -sha256 after key type\n");
                 return 2;
             }
             ++argn;
-            Certificate* cert = &certs[num_keys - 1];
-            cert->hash_len = SHA256_DIGEST_SIZE;
+            certs.back().hash_len = SHA256_DIGEST_SIZE;
         } else if (strcmp(argv[argn], "-ec") == 0) {
             ++argn;
-            Certificate* cert = add_certificate(&certs, &num_keys, Certificate::EC);
-            cert->ec = &test_ec_key;
+            certs.emplace_back(SHA_DIGEST_SIZE, Certificate::EC,
+                    nullptr, std::unique_ptr<ECPublicKey>(new ECPublicKey(test_ec_key)));
         } else if (strcmp(argv[argn], "-e3") == 0) {
             ++argn;
-            Certificate* cert = add_certificate(&certs, &num_keys, Certificate::RSA);
-            cert->rsa = &test_key;
+            certs.emplace_back(SHA_DIGEST_SIZE, Certificate::RSA,
+                    std::unique_ptr<RSAPublicKey>(new RSAPublicKey(test_key)), nullptr);
         } else if (strcmp(argv[argn], "-f4") == 0) {
             ++argn;
-            Certificate* cert = add_certificate(&certs, &num_keys, Certificate::RSA);
-            cert->rsa = &test_f4_key;
+            certs.emplace_back(SHA_DIGEST_SIZE, Certificate::RSA,
+                    std::unique_ptr<RSAPublicKey>(new RSAPublicKey(test_f4_key)), nullptr);
         } else if (strcmp(argv[argn], "-file") == 0) {
-            if (certs != NULL) {
+            if (!certs.empty()) {
                 fprintf(stderr, "Cannot specify -file with other certs specified\n");
                 return 2;
             }
             ++argn;
-            certs = load_keys(argv[argn], &num_keys);
+            if (!load_keys(argv[argn], certs)) {
+                fprintf(stderr, "Cannot load keys from %s\n", argv[argn]);
+            }
             ++argn;
         } else if (argv[argn][0] == '-') {
             fprintf(stderr, "Unknown argument %s\n", argv[argn]);
@@ -227,17 +217,9 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    if (num_keys == 0) {
-        certs = (Certificate*) calloc(1, sizeof(Certificate));
-        if (certs == NULL) {
-            fprintf(stderr, "Failure allocating memory for default certificate\n");
-            return 1;
-        }
-        certs->key_type = Certificate::RSA;
-        certs->rsa = &test_key;
-        certs->ec = NULL;
-        certs->hash_len = SHA_DIGEST_SIZE;
-        num_keys = 1;
+    if (certs.empty()) {
+        certs.emplace_back(SHA_DIGEST_SIZE, Certificate::RSA,
+                std::unique_ptr<RSAPublicKey>(new RSAPublicKey(test_key)), nullptr);
     }
 
     ui = new FakeUI();
@@ -248,7 +230,7 @@ int main(int argc, char **argv) {
         return 4;
     }
 
-    int result = verify_file(map.addr, map.length, certs, num_keys);
+    int result = verify_file(map.addr, map.length, certs);
     if (result == VERIFY_SUCCESS) {
         printf("VERIFIED\n");
         return 0;
