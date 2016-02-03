@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_13829e04",
+        "filename": "partition.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 2383,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-03T20:05:40Z",
+      "side": 1,
+      "message": "IMHO we should display strerror(errno) also to the user, even if it is not translated.",
+      "revId": "4382a15a0544338eda5cb11c65b8597d3adc8fe1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f37e1212",
+        "filename": "partition.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 2388,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-03T20:05:40Z",
+      "side": 1,
+      "message": "should be \"unable to read\"",
+      "revId": "4382a15a0544338eda5cb11c65b8597d3adc8fe1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
