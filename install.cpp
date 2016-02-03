@@ -23,6 +23,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <vector>
+
 #include "common.h"
 #include "install.h"
 #include "mincrypt/rsa.h"
@@ -221,19 +223,16 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount)
         return INSTALL_CORRUPT;
     }
 
-    int numKeys;
-    Certificate* loadedKeys = load_keys(PUBLIC_KEYS_FILE, &numKeys);
-    if (loadedKeys == NULL) {
+    std::vector<Certificate> loadedKeys;
+    if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
         LOGE("Failed to load keys\n");
         return INSTALL_CORRUPT;
     }
-    LOGI("%d key(s) loaded from %s\n", numKeys, PUBLIC_KEYS_FILE);
+    LOGI("%zu key(s) loaded from %s\n", loadedKeys.size(), PUBLIC_KEYS_FILE);
 
     ui->Print("Verifying update package...\n");
 
-    int err;
-    err = verify_file(map.addr, map.length, loadedKeys, numKeys);
-    free(loadedKeys);
+    int err = verify_file(map.addr, map.length, loadedKeys);
     LOGI("verify_file returned %d\n", err);
     if (err != VERIFY_SUCCESS) {
         LOGE("signature verification failed\n");

@@ -113,7 +113,7 @@ static bool read_pkcs7(uint8_t* pkcs7_der, size_t pkcs7_der_len, uint8_t** sig_d
 // or no key matches the signature).
 
 int verify_file(unsigned char* addr, size_t length,
-                const Certificate* pKeys, unsigned int numKeys) {
+                const std::vector<Certificate>& keys) {
     ui->SetProgress(0.0);
 
     // An archive with a whole-file signature will end in six bytes:
@@ -176,8 +176,7 @@ int verify_file(unsigned char* addr, size_t length,
         return VERIFY_FAILURE;
     }
 
-    size_t i;
-    for (i = 4; i < eocd_size-3; ++i) {
+    for (size_t i = 4; i < eocd_size-3; ++i) {
         if (eocd[i  ] == 0x50 && eocd[i+1] == 0x4b &&
             eocd[i+2] == 0x05 && eocd[i+3] == 0x06) {
             // if the sequence $50 $4b $05 $06 appears anywhere after
@@ -193,8 +192,8 @@ int verify_file(unsigned char* addr, size_t length,
 
     bool need_sha1 = false;
     bool need_sha256 = false;
-    for (i = 0; i < numKeys; ++i) {
-        switch (pKeys[i].hash_len) {
+    for (const auto& key : keys) {
+        switch (key.hash_len) {
             case SHA_DIGEST_SIZE: need_sha1 = true; break;
             case SHA256_DIGEST_SIZE: need_sha256 = true; break;
         }
@@ -225,7 +224,7 @@ int verify_file(unsigned char* addr, size_t length,
     const uint8_t* sha1 = SHA_final(&sha1_ctx);
     const uint8_t* sha256 = SHA256_final(&sha256_ctx);
 
-    uint8_t* sig_der = NULL;
+    uint8_t* sig_der = nullptr;
     size_t sig_der_length = 0;
 
     size_t signature_size = signature_start - FOOTER_SIZE;
@@ -240,9 +239,10 @@ int verify_file(unsigned char* addr, size_t length,
      * any key can match, we need to try each before determining a verification
      * failure has happened.
      */
-    for (i = 0; i < numKeys; ++i) {
+    size_t i = 0;
+    for (const auto& key : keys) {
         const uint8_t* hash;
-        switch (pKeys[i].hash_len) {
+        switch (key.hash_len) {
             case SHA_DIGEST_SIZE: hash = sha1; break;
             case SHA256_DIGEST_SIZE: hash = sha256; break;
             default: continue;
@@ -250,15 +250,15 @@ int verify_file(unsigned char* addr, size_t length,
 
         // The 6 bytes is the "(signature_start) $ff $ff (comment_size)" that
         // the signing tool appends after the signature itself.
-        if (pKeys[i].key_type == Certificate::RSA) {
+        if (key.key_type == Certificate::RSA) {
             if (sig_der_length < RSANUMBYTES) {
                 // "signature" block isn't big enough to contain an RSA block.
                 LOGI("signature is too short for RSA key %zu\n", i);
                 continue;
             }
 
-            if (!RSA_verify(pKeys[i].rsa, sig_der, RSANUMBYTES,
-                            hash, pKeys[i].hash_len)) {
+            if (!RSA_verify(key.rsa.get(), sig_der, RSANUMBYTES,
+                            hash, key.hash_len)) {
                 LOGI("failed to verify against RSA key %zu\n", i);
                 continue;
             }
@@ -266,8 +266,8 @@ int verify_file(unsigned char* addr, size_t length,
             LOGI("whole-file signature verified against RSA key %zu\n", i);
             free(sig_der);
             return VERIFY_SUCCESS;
-        } else if (pKeys[i].key_type == Certificate::EC
-                && pKeys[i].hash_len == SHA256_DIGEST_SIZE) {
+        } else if (key.key_type == Certificate::EC
+                && key.hash_len == SHA256_DIGEST_SIZE) {
             p256_int r, s;
             if (!dsa_sig_unpack(sig_der, sig_der_length, &r, &s)) {
                 LOGI("Not a DSA signature block for EC key %zu\n", i);
@@ -276,7 +276,7 @@ int verify_file(unsigned char* addr, size_t length,
 
             p256_int p256_hash;
             p256_from_bin(hash, &p256_hash);
-            if (!p256_ecdsa_verify(&(pKeys[i].ec->x), &(pKeys[i].ec->y),
+            if (!p256_ecdsa_verify(&(key.ec->x), &(key.ec->y),
                                    &p256_hash, &r, &s)) {
                 LOGI("failed to verify against EC key %zu\n", i);
                 continue;
@@ -286,8 +286,9 @@ int verify_file(unsigned char* addr, size_t length,
             free(sig_der);
             return VERIFY_SUCCESS;
         } else {
-            LOGI("Unknown key type %d\n", pKeys[i].key_type);
+            LOGI("Unknown key type %d\n", key.key_type);
         }
+        i++;
     }
     free(sig_der);
     LOGE("failed to verify whole-file signature\n");
@@ -323,140 +324,122 @@ int verify_file(unsigned char* addr, size_t length,
 //       4: 2048-bit RSA key with e=65537 and SHA-256 hash
 //       5: 256-bit EC key using the NIST P-256 curve parameters and SHA-256 hash
 //
-// Returns NULL if the file failed to parse, or if it contain zero keys.
-Certificate*
-load_keys(const char* filename, int* numKeys) {
-    Certificate* out = NULL;
-    *numKeys = 0;
-
-    FILE* f = fopen(filename, "r");
-    if (f == NULL) {
+// Returns true on success, and appends the found keys (at least one) to certs.
+// Otherwise returns false if the file failed to parse, or if it contains zero
+// keys. The contents in certs would be unspecified on failure.
+bool load_keys(const char* filename, std::vector<Certificate>& certs) {
+    std::unique_ptr<FILE, decltype(&fclose)> f(fopen(filename, "r"), fclose);
+    if (!f) {
         LOGE("opening %s: %s\n", filename, strerror(errno));
-        goto exit;
+        return false;
     }
 
-    {
-        int i;
-        bool done = false;
-        while (!done) {
-            ++*numKeys;
-            out = (Certificate*)realloc(out, *numKeys * sizeof(Certificate));
-            Certificate* cert = out + (*numKeys - 1);
-            memset(cert, '\0', sizeof(Certificate));
+    while (true) {
+        certs.emplace_back(0, Certificate::RSA, nullptr, nullptr);
+        Certificate& cert = certs.back();
 
-            char start_char;
-            if (fscanf(f, " %c", &start_char) != 1) goto exit;
-            if (start_char == '{') {
-                // a version 1 key has no version specifier.
-                cert->key_type = Certificate::RSA;
-                cert->rsa = (RSAPublicKey*)malloc(sizeof(RSAPublicKey));
-                cert->rsa->exponent = 3;
-                cert->hash_len = SHA_DIGEST_SIZE;
-            } else if (start_char == 'v') {
-                int version;
-                if (fscanf(f, "%d {", &version) != 1) goto exit;
-                switch (version) {
-                    case 2:
-                        cert->key_type = Certificate::RSA;
-                        cert->rsa = (RSAPublicKey*)malloc(sizeof(RSAPublicKey));
-                        cert->rsa->exponent = 65537;
-                        cert->hash_len = SHA_DIGEST_SIZE;
-                        break;
-                    case 3:
-                        cert->key_type = Certificate::RSA;
-                        cert->rsa = (RSAPublicKey*)malloc(sizeof(RSAPublicKey));
-                        cert->rsa->exponent = 3;
-                        cert->hash_len = SHA256_DIGEST_SIZE;
-                        break;
-                    case 4:
-                        cert->key_type = Certificate::RSA;
-                        cert->rsa = (RSAPublicKey*)malloc(sizeof(RSAPublicKey));
-                        cert->rsa->exponent = 65537;
-                        cert->hash_len = SHA256_DIGEST_SIZE;
-                        break;
-                    case 5:
-                        cert->key_type = Certificate::EC;
-                        cert->ec = (ECPublicKey*)calloc(1, sizeof(ECPublicKey));
-                        cert->hash_len = SHA256_DIGEST_SIZE;
-                        break;
-                    default:
-                        goto exit;
-                }
+        char start_char;
+        if (fscanf(f.get(), " %c", &start_char) != 1) return false;
+        if (start_char == '{') {
+            // a version 1 key has no version specifier.
+            cert.key_type = Certificate::RSA;
+            cert.rsa = std::unique_ptr<RSAPublicKey>(new RSAPublicKey);
+            cert.rsa->exponent = 3;
+            cert.hash_len = SHA_DIGEST_SIZE;
+        } else if (start_char == 'v') {
+            int version;
+            if (fscanf(f.get(), "%d {", &version) != 1) return false;
+            switch (version) {
+                case 2:
+                    cert.key_type = Certificate::RSA;
+                    cert.rsa = std::unique_ptr<RSAPublicKey>(new RSAPublicKey);
+                    cert.rsa->exponent = 65537;
+                    cert.hash_len = SHA_DIGEST_SIZE;
+                    break;
+                case 3:
+                    cert.key_type = Certificate::RSA;
+                    cert.rsa = std::unique_ptr<RSAPublicKey>(new RSAPublicKey);
+                    cert.rsa->exponent = 3;
+                    cert.hash_len = SHA256_DIGEST_SIZE;
+                    break;
+                case 4:
+                    cert.key_type = Certificate::RSA;
+                    cert.rsa = std::unique_ptr<RSAPublicKey>(new RSAPublicKey);
+                    cert.rsa->exponent = 65537;
+                    cert.hash_len = SHA256_DIGEST_SIZE;
+                    break;
+                case 5:
+                    cert.key_type = Certificate::EC;
+                    cert.ec = std::unique_ptr<ECPublicKey>(new ECPublicKey);
+                    cert.hash_len = SHA256_DIGEST_SIZE;
+                    break;
+                default:
+                    return false;
             }
+        }
 
-            if (cert->key_type == Certificate::RSA) {
-                RSAPublicKey* key = cert->rsa;
-                if (fscanf(f, " %i , 0x%x , { %u",
-                           &(key->len), &(key->n0inv), &(key->n[0])) != 3) {
-                    goto exit;
-                }
-                if (key->len != RSANUMWORDS) {
-                    LOGE("key length (%d) does not match expected size\n", key->len);
-                    goto exit;
-                }
-                for (i = 1; i < key->len; ++i) {
-                    if (fscanf(f, " , %u", &(key->n[i])) != 1) goto exit;
-                }
-                if (fscanf(f, " } , { %u", &(key->rr[0])) != 1) goto exit;
-                for (i = 1; i < key->len; ++i) {
-                    if (fscanf(f, " , %u", &(key->rr[i])) != 1) goto exit;
-                }
-                fscanf(f, " } } ");
-
-                LOGI("read key e=%d hash=%d\n", key->exponent, cert->hash_len);
-            } else if (cert->key_type == Certificate::EC) {
-                ECPublicKey* key = cert->ec;
-                int key_len;
-                unsigned int byte;
-                uint8_t x_bytes[P256_NBYTES];
-                uint8_t y_bytes[P256_NBYTES];
-                if (fscanf(f, " %i , { %u", &key_len, &byte) != 2) goto exit;
-                if (key_len != P256_NBYTES) {
-                    LOGE("Key length (%d) does not match expected size %d\n", key_len, P256_NBYTES);
-                    goto exit;
-                }
-                x_bytes[P256_NBYTES - 1] = byte;
-                for (i = P256_NBYTES - 2; i >= 0; --i) {
-                    if (fscanf(f, " , %u", &byte) != 1) goto exit;
-                    x_bytes[i] = byte;
-                }
-                if (fscanf(f, " } , { %u", &byte) != 1) goto exit;
-                y_bytes[P256_NBYTES - 1] = byte;
-                for (i = P256_NBYTES - 2; i >= 0; --i) {
-                    if (fscanf(f, " , %u", &byte) != 1) goto exit;
-                    y_bytes[i] = byte;
-                }
-                fscanf(f, " } } ");
-                p256_from_bin(x_bytes, &key->x);
-                p256_from_bin(y_bytes, &key->y);
-            } else {
-                LOGE("Unknown key type %d\n", cert->key_type);
-                goto exit;
+        if (cert.key_type == Certificate::RSA) {
+            RSAPublicKey* key = cert.rsa.get();
+            if (fscanf(f.get(), " %i , 0x%x , { %u", &(key->len), &(key->n0inv),
+                    &(key->n[0])) != 3) {
+                return false;
             }
-
-            // if the line ends in a comma, this file has more keys.
-            switch (fgetc(f)) {
-            case ',':
-                // more keys to come.
-                break;
-
-            case EOF:
-                done = true;
-                break;
-
-            default:
-                LOGE("unexpected character between keys\n");
-                goto exit;
+            if (key->len != RSANUMWORDS) {
+                LOGE("key length (%d) does not match expected size\n", key->len);
+                return false;
             }
+            for (int i = 1; i < key->len; ++i) {
+                if (fscanf(f.get(), " , %u", &(key->n[i])) != 1) return false;
+            }
+            if (fscanf(f.get(), " } , { %u", &(key->rr[0])) != 1) return false;
+            for (int i = 1; i < key->len; ++i) {
+                if (fscanf(f.get(), " , %u", &(key->rr[i])) != 1) return false;
+            }
+            fscanf(f.get(), " } } ");
+
+            LOGI("read key e=%d hash=%d\n", key->exponent, cert.hash_len);
+        } else if (cert.key_type == Certificate::EC) {
+            ECPublicKey* key = cert.ec.get();
+            int key_len;
+            unsigned int byte;
+            uint8_t x_bytes[P256_NBYTES];
+            uint8_t y_bytes[P256_NBYTES];
+            if (fscanf(f.get(), " %i , { %u", &key_len, &byte) != 2) return false;
+            if (key_len != P256_NBYTES) {
+                LOGE("Key length (%d) does not match expected size %d\n", key_len, P256_NBYTES);
+                return false;
+            }
+            x_bytes[P256_NBYTES - 1] = byte;
+            for (int i = P256_NBYTES - 2; i >= 0; --i) {
+                if (fscanf(f.get(), " , %u", &byte) != 1) return false;
+                x_bytes[i] = byte;
+            }
+            if (fscanf(f.get(), " } , { %u", &byte) != 1) return false;
+            y_bytes[P256_NBYTES - 1] = byte;
+            for (int i = P256_NBYTES - 2; i >= 0; --i) {
+                if (fscanf(f.get(), " , %u", &byte) != 1) return false;
+                y_bytes[i] = byte;
+            }
+            fscanf(f.get(), " } } ");
+            p256_from_bin(x_bytes, &key->x);
+            p256_from_bin(y_bytes, &key->y);
+        } else {
+            LOGE("Unknown key type %d\n", cert.key_type);
+            return false;
+        }
+
+        // if the line ends in a comma, this file has more keys.
+        int ch = fgetc(f.get());
+        if (ch == ',') {
+            // more keys to come.
+            continue;
+        } else if (ch == EOF) {
+            break;
+        } else {
+            LOGE("unexpected character between keys\n");
+            return false;
         }
     }
 
-    fclose(f);
-    return out;
-
-exit:
-    if (f) fclose(f);
-    free(out);
-    *numKeys = 0;
-    return NULL;
+    return true;
 }
