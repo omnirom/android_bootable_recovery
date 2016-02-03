@@ -1,0 +1,208 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_b38e4a7d",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 369,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "fix permissions now is fix contexts, should be fix_context_btn",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_93efce1d",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 370,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "fix_context_btn is alos used on watch ui, so this one can be deleted",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_73f442ed",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 457,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "fix permissions now is fix contexts, should be fix_context_hdr",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_53f946e3",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "should be fix_context_note1",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f3df3269",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 459,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "obsoloete, checkbox no longer exists",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_33febacd",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 460,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "should be fix_context_note2",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_13e3be35",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 461,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "should be fix_context_note3",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d3ec3625",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 462,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "swipe_to_fix_contexts",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b3e9aa13",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "swipe_fix_contexts",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_93d6ae51",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 464,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "fixing_contexts",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_73db227b",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 465,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "fix_contexts_complete",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_53d02653",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 670,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-02-03T11:53:10Z",
+      "side": 1,
+      "message": "add below: \u003cstring name\u003d\"up_a_level\"\u003e(Up A Level)\u003c/string\u003e",
+      "revId": "16d4a1feb7847f0df608cd41ae812b342cecf448",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
