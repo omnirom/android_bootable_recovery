@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_5324a65d",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-03T16:47:17Z",
+      "side": 1,
+      "message": "Should we create a whole new fifo commandset for adbbackup. I was using ORS because it existed and reuse the same functionality.\n\nIf someone adds adbbackup to /cache/recovery/openrecoveryscript TWRP will error out because none of the metadata will be passed to TWRP.",
+      "parentUuid": "98faad2e_f341720f",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_3340fa0b",
         "filename": "openrecoveryscript.cpp",
         "patchSetId": 33
@@ -99,6 +117,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_33291a36",
+        "filename": "orscmd/Android.mk",
+        "patchSetId": 33
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-03T16:47:17Z",
+      "side": 1,
+      "message": "I thought about it. If we wait until the next release 3.1 this can be done.",
+      "parentUuid": "98faad2e_d34e763f",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_9358eeff",
         "filename": "orscmd/twrpback.cpp",
         "patchSetId": 33
@@ -110,6 +146,24 @@
       "writtenOn": "2016-02-03T16:04:45Z",
       "side": 1,
       "message": "You mkfifo here, but there are a lot of error paths with return -1 where you don\u0027t unlink.\n\nYou should probably keep a return value and use a goto setup and handle all of the cleanup in one spot at the end of the function.",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d31796ef",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-03T16:47:17Z",
+      "side": 1,
+      "message": "We return to the main function where TW_ADB_BACKUP_FIFO is unlinked.",
+      "parentUuid": "98faad2e_9358eeff",
       "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -133,6 +187,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_131e1e10",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-03T16:47:17Z",
+      "side": 1,
+      "message": "If so, this should be done in orscmd.cpp as well.",
+      "parentUuid": "98faad2e_b34bea2d",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_735d62ed",
         "filename": "orscmd/twrpback.cpp",
         "patchSetId": 33
@@ -150,6 +222,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_f31a9219",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-03T16:47:17Z",
+      "side": 1,
+      "message": "We return to the main function where TW_ADB_BACKUP_FIFO is unlinked.",
+      "parentUuid": "98faad2e_735d62ed",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_3357dacd",
         "filename": "partition.cpp",
         "patchSetId": 33
@@ -161,6 +251,24 @@
       "writtenOn": "2016-02-03T16:04:45Z",
       "side": 1,
       "message": "We should do something for adb backup / restore for MTD nand, even if it\u0027s just spitting an error.",
+      "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b3140aec",
+        "filename": "partition.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 1444,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-03T16:47:17Z",
+      "side": 1,
+      "message": "I will add error messaging for now since I don\u0027t have a testing device.",
+      "parentUuid": "98faad2e_3357dacd",
       "revId": "bdcc2f0098dfb5c34fba69d01db2574f9b865eae",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
