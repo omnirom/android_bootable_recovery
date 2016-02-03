@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_938eae34",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-03T19:59:10Z",
+      "side": 1,
+      "message": "not happy with this translation, but I don\u0027t know any better.",
+      "revId": "db17ed3bb376c998b192eaf2b9d66d29d6db077b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_53882626",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-03T19:59:10Z",
+      "side": 1,
+      "message": "should be restore_complete",
+      "revId": "db17ed3bb376c998b192eaf2b9d66d29d6db077b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b3a1aaa2",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 324,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-03T19:59:10Z",
+      "side": 1,
+      "message": "inconsistent: either use spaces after minus too, or remove the spaces after + again.",
+      "revId": "db17ed3bb376c998b192eaf2b9d66d29d6db077b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d3a436b4",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 508,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-03T19:59:10Z",
+      "side": 1,
+      "message": "typo \"restort\", should be changed in code and all language files",
+      "revId": "db17ed3bb376c998b192eaf2b9d66d29d6db077b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f3973248",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 568,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-03T19:59:10Z",
+      "side": 1,
+      "message": "should be fail_unmount",
+      "revId": "db17ed3bb376c998b192eaf2b9d66d29d6db077b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
