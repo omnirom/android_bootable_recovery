@@ -502,7 +502,7 @@
 		<string name="backup_folder"> * Папка для резервной копии: {1}</string>
 		<string name="fail_backup_folder">Не удается создать папку для резервной копии.</string>
 		<string name="avg_backup_fs">Средняя скорость копирования для файлов: {1} МБ/сек</string>
-		<string name="avg_backup_img">Средняя скорость копирования для образов: {1} МБ/секc</string>
+		<string name="avg_backup_img">Средняя скорость копирования для образов: {1} МБ/сек</string>
 		<string name="total_backed_size">[{1} МБ TOTAL BACKED UP]</string>
 		<string name="backup_completed">[КОПИРОВАНИЕ ЗАВЕРШЕНО ЗА {1} СЕК.]</string>
 		<string name="restore_started">[ВОССТАНОВЛЕНИЕ НАЧАТО]</string>
