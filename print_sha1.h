@@ -20,9 +20,9 @@
 #include <stdint.h>
 #include <string>
 
-#include "mincrypt/sha.h"
+#include "openssl/sha.h"
 
-static std::string print_sha1(const uint8_t sha1[SHA_DIGEST_SIZE], size_t len) {
+static std::string print_sha1(const uint8_t sha1[SHA_DIGEST_LENGTH], size_t len) {
     const char* hex = "0123456789abcdef";
     std::string result = "";
     for (size_t i = 0; i < len; ++i) {
@@ -32,11 +32,11 @@ static std::string print_sha1(const uint8_t sha1[SHA_DIGEST_SIZE], size_t len) {
     return result;
 }
 
-static std::string print_sha1(const uint8_t sha1[SHA_DIGEST_SIZE]) {
-    return print_sha1(sha1, SHA_DIGEST_SIZE);
+static std::string print_sha1(const uint8_t sha1[SHA_DIGEST_LENGTH]) {
+    return print_sha1(sha1, SHA_DIGEST_LENGTH);
 }
 
-static std::string short_sha1(const uint8_t sha1[SHA_DIGEST_SIZE]) {
+static std::string short_sha1(const uint8_t sha1[SHA_DIGEST_LENGTH]) {
     return print_sha1(sha1, 4);
 }
 

@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "zlib.h"
-#include "mincrypt/sha.h"
+#include "openssl/sha.h"
 #include "applypatch.h"
 #include "imgdiff.h"
 #include "utils.h"
@@ -109,7 +109,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                 printf("failed to read chunk %d raw data\n", i);
                 return -1;
             }
-            if (ctx) SHA_update(ctx, patch->data + pos, data_len);
+            if (ctx) SHA1_Update(ctx, patch->data + pos, data_len);
             if (sink((unsigned char*)patch->data + pos,
                      data_len, token) != data_len) {
                 printf("failed to write chunk %d raw data\n", i);
@@ -236,7 +236,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                            (long)have);
                     return -1;
                 }
-                if (ctx) SHA_update(ctx, temp_data, have);
+                if (ctx) SHA1_Update(ctx, temp_data, have);
             } while (ret != Z_STREAM_END);
             deflateEnd(&strm);
 

@@ -18,16 +18,16 @@
 #define _APPLYPATCH_H
 
 #include <sys/stat.h>
-#include "mincrypt/sha.h"
+#include "openssl/sha.h"
 #include "edify/expr.h"
 
 typedef struct _Patch {
-  uint8_t sha1[SHA_DIGEST_SIZE];
+  uint8_t sha1[SHA_DIGEST_LENGTH];
   const char* patch_filename;
 } Patch;
 
 typedef struct _FileContents {
-  uint8_t sha1[SHA_DIGEST_SIZE];
+  uint8_t sha1[SHA_DIGEST_LENGTH];
   unsigned char* data;
   ssize_t size;
   struct stat st;

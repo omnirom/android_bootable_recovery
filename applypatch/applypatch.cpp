@@ -27,7 +27,7 @@
 
 #include <android-base/strings.h>
 
-#include "mincrypt/sha.h"
+#include "openssl/sha.h"
 #include "applypatch.h"
 #include "mtdutils/mtdutils.h"
 #include "edify/expr.h"
@@ -41,7 +41,7 @@ static int GenerateTarget(FileContents* source_file,
                           const Value* copy_patch_value,
                           const char* source_filename,
                           const char* target_filename,
-                          const uint8_t target_sha1[SHA_DIGEST_SIZE],
+                          const uint8_t target_sha1[SHA_DIGEST_LENGTH],
                           size_t target_size,
                           const Value* bonus_data);
 
@@ -86,7 +86,7 @@ int LoadFileContents(const char* filename, FileContents* file) {
     }
     fclose(f);
 
-    SHA_hash(file->data, file->size, file->sha1);
+    SHA1(file->data, file->size, file->sha1);
     return 0;
 }
 
@@ -181,8 +181,8 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
     }
 
     SHA_CTX sha_ctx;
-    SHA_init(&sha_ctx);
-    uint8_t parsed_sha[SHA_DIGEST_SIZE];
+    SHA1_Init(&sha_ctx);
+    uint8_t parsed_sha[SHA_DIGEST_LENGTH];
 
     // Allocate enough memory to hold the largest size.
     file->data = reinterpret_cast<unsigned char*>(malloc(size[index[pairs-1]]));
@@ -212,7 +212,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
                 file->data = NULL;
                 return -1;
             }
-            SHA_update(&sha_ctx, p, read);
+            SHA1_Update(&sha_ctx, p, read);
             file->size += read;
         }
 
@@ -220,7 +220,8 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         // check it against this pair's expected hash.
         SHA_CTX temp_ctx;
         memcpy(&temp_ctx, &sha_ctx, sizeof(SHA_CTX));
-        const uint8_t* sha_so_far = SHA_final(&temp_ctx);
+        uint8_t sha_so_far[SHA_DIGEST_LENGTH];
+        SHA1_Final(sha_so_far, &temp_ctx);
 
         if (ParseSha1(sha1sum[index[i]].c_str(), parsed_sha) != 0) {
             printf("failed to parse sha1 %s in %s\n", sha1sum[index[i]].c_str(), filename);
@@ -229,7 +230,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
             return -1;
         }
 
-        if (memcmp(sha_so_far, parsed_sha, SHA_DIGEST_SIZE) == 0) {
+        if (memcmp(sha_so_far, parsed_sha, SHA_DIGEST_LENGTH) == 0) {
             // we have a match.  stop reading the partition; we'll return
             // the data we've read so far.
             printf("partition read matched size %zu sha %s\n",
@@ -260,10 +261,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         return -1;
     }
 
-    const uint8_t* sha_final = SHA_final(&sha_ctx);
-    for (size_t i = 0; i < SHA_DIGEST_SIZE; ++i) {
-        file->sha1[i] = sha_final[i];
-    }
+    SHA1_Final(file->sha1, &sha_ctx);
 
     // Fake some stat() info.
     file->st.st_mode = 0644;
@@ -494,7 +492,7 @@ int WriteToPartition(unsigned char* data, size_t len, const char* target) {
 int ParseSha1(const char* str, uint8_t* digest) {
     const char* ps = str;
     uint8_t* pd = digest;
-    for (int i = 0; i < SHA_DIGEST_SIZE * 2; ++i, ++ps) {
+    for (int i = 0; i < SHA_DIGEST_LENGTH * 2; ++i, ++ps) {
         int digit;
         if (*ps >= '0' && *ps <= '9') {
             digit = *ps - '0';
@@ -521,10 +519,10 @@ int ParseSha1(const char* str, uint8_t* digest) {
 // found.
 int FindMatchingPatch(uint8_t* sha1, char* const * const patch_sha1_str,
                       int num_patches) {
-    uint8_t patch_sha1[SHA_DIGEST_SIZE];
+    uint8_t patch_sha1[SHA_DIGEST_LENGTH];
     for (int i = 0; i < num_patches; ++i) {
         if (ParseSha1(patch_sha1_str[i], patch_sha1) == 0 &&
-            memcmp(patch_sha1, sha1, SHA_DIGEST_SIZE) == 0) {
+            memcmp(patch_sha1, sha1, SHA_DIGEST_LENGTH) == 0) {
             return i;
         }
     }
@@ -670,7 +668,7 @@ int applypatch(const char* source_filename,
         target_filename = source_filename;
     }
 
-    uint8_t target_sha1[SHA_DIGEST_SIZE];
+    uint8_t target_sha1[SHA_DIGEST_LENGTH];
     if (ParseSha1(target_sha1_str, target_sha1) != 0) {
         printf("failed to parse tgt-sha1 \"%s\"\n", target_sha1_str);
         return 1;
@@ -685,7 +683,7 @@ int applypatch(const char* source_filename,
 
     // We try to load the target file into the source_file object.
     if (LoadFileContents(target_filename, &source_file) == 0) {
-        if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_SIZE) == 0) {
+        if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) == 0) {
             // The early-exit case:  the patch was already applied, this file
             // has the desired hash, nothing for us to do.
             printf("already %s\n", short_sha1(target_sha1).c_str());
@@ -756,7 +754,7 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
                      const char* target_sha1_str, size_t target_size) {
     printf("flash %s: ", target_filename);
 
-    uint8_t target_sha1[SHA_DIGEST_SIZE];
+    uint8_t target_sha1[SHA_DIGEST_LENGTH];
     if (ParseSha1(target_sha1_str, target_sha1) != 0) {
         printf("failed to parse tgt-sha1 \"%s\"\n", target_sha1_str);
         return 1;
@@ -777,7 +775,7 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
     pieces.push_back(target_sha1_str);
     std::string fullname = android::base::Join(pieces, ':');
     if (LoadPartitionContents(fullname.c_str(), &source_file) == 0 &&
-        memcmp(source_file.sha1, target_sha1, SHA_DIGEST_SIZE) == 0) {
+        memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) == 0) {
         // The early-exit case: the image was already applied, this partition
         // has the desired hash, nothing for us to do.
         printf("already %s\n", short_sha1(target_sha1).c_str());
@@ -786,7 +784,7 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
     }
 
     if (LoadFileContents(source_filename, &source_file) == 0) {
-        if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_SIZE) != 0) {
+        if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
             // The source doesn't have desired checksum.
             printf("source \"%s\" doesn't have expected sha1 sum\n", source_filename);
             printf("expected: %s, found: %s\n", short_sha1(target_sha1).c_str(),
@@ -812,7 +810,7 @@ static int GenerateTarget(FileContents* source_file,
                           const Value* copy_patch_value,
                           const char* source_filename,
                           const char* target_filename,
-                          const uint8_t target_sha1[SHA_DIGEST_SIZE],
+                          const uint8_t target_sha1[SHA_DIGEST_LENGTH],
                           size_t target_size,
                           const Value* bonus_data) {
     int retry = 1;
@@ -957,7 +955,7 @@ static int GenerateTarget(FileContents* source_file,
         char* header = patch->data;
         ssize_t header_bytes_read = patch->size;
 
-        SHA_init(&ctx);
+        SHA1_Init(&ctx);
 
         int result;
 
@@ -1001,8 +999,9 @@ static int GenerateTarget(FileContents* source_file,
         }
     } while (retry-- > 0);
 
-    const uint8_t* current_target_sha1 = SHA_final(&ctx);
-    if (memcmp(current_target_sha1, target_sha1, SHA_DIGEST_SIZE) != 0) {
+    uint8_t current_target_sha1[SHA_DIGEST_LENGTH];
+    SHA1_Final(current_target_sha1, &ctx);
+    if (memcmp(current_target_sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
         printf("patch did not produce expected sha1\n");
         return 1;
     } else {
