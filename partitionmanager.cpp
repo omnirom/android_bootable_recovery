@@ -855,7 +855,7 @@ bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Nam
 	}
 	time(&Stop);
 	TWFunc::SetPerformanceMode(false);
-	gui_msg(Msg("restort_part_done=[{1} done ({2} seconds)]")(Part->Backup_Display_Name)((int)difftime(Stop, Start)));
+	gui_msg(Msg("restore_part_done=[{1} done ({2} seconds)]")(Part->Backup_Display_Name)((int)difftime(Stop, Start)));
 	return true;
 }
 

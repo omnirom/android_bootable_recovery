@@ -505,7 +505,7 @@
 		<string name="restore_started">[已開始恢復]</string>
 		<string name="restore_folder">恢復檔案夾：'{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
-		<string name="restort_part_done">[{1}恢復完成({2}秒)]</string>
+		<string name="restore_part_done">[{1}恢復完成({2}秒)]</string>
 		<string name="verifying_md5">正在校驗MD5</string>
 		<string name="skip_md5">基於用戶設置，已跳過MD5檢查。</string>
 		<string name="calc_restore">正在計算恢復詳情…</string>

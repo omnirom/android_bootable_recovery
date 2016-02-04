@@ -508,7 +508,7 @@
 		<string name="restore_started">[ВОССТАНОВЛЕНИЕ НАЧАТО]</string>
 		<string name="restore_folder">Папка восстановления: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
-		<string name="restort_part_done">[{1} готово ({2} секунд)]</string>
+		<string name="restore_part_done">[{1} готово ({2} секунд)]</string>
 		<string name="verifying_md5">Проверка MD5</string>
 		<string name="skip_md5">Пропуск проверки MD5 согласно настроек.</string>
 		<string name="calc_restore">Вычисление информации о восстановлении...</string>
