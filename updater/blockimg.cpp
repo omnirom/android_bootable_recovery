@@ -43,7 +43,7 @@
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
 #include "install.h"
-#include "mincrypt/sha.h"
+#include "openssl/sha.h"
 #include "minzip/Hash.h"
 #include "otafault/ota_io.h"
 #include "print_sha1.h"
@@ -408,10 +408,10 @@ static int LoadSrcTgtVersion1(CommandParameters& params, RangeSet& tgt, size_t& 
 
 static int VerifyBlocks(const std::string& expected, const std::vector<uint8_t>& buffer,
         const size_t blocks, bool printerror) {
-    uint8_t digest[SHA_DIGEST_SIZE];
+    uint8_t digest[SHA_DIGEST_LENGTH];
     const uint8_t* data = buffer.data();
 
-    SHA_hash(data, blocks * BLOCKSIZE, digest);
+    SHA1(data, blocks * BLOCKSIZE, digest);
 
     std::string hexdigest = print_sha1(digest);
 
@@ -663,10 +663,8 @@ static int CreateStash(State* state, int maxblocks, const char* blockdev, std::s
     // Stash directory should be different for each partition to avoid conflicts
     // when updating multiple partitions at the same time, so we use the hash of
     // the block device name as the base directory
-    SHA_CTX ctx;
-    SHA_init(&ctx);
-    SHA_update(&ctx, blockdev, strlen(blockdev));
-    const uint8_t* digest = SHA_final(&ctx);
+    uint8_t digest[SHA_DIGEST_LENGTH];
+    SHA1(reinterpret_cast<const uint8_t*>(blockdev), strlen(blockdev), digest);
     base = print_sha1(digest);
 
     std::string dirname = GetStashFileName(base, "", "");
@@ -1628,7 +1626,7 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
     parse_range(ranges->data, rs);
 
     SHA_CTX ctx;
-    SHA_init(&ctx);
+    SHA1_Init(&ctx);
 
     std::vector<uint8_t> buffer(BLOCKSIZE);
     for (size_t i = 0; i < rs.count; ++i) {
@@ -1644,10 +1642,11 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
                 return StringValue(strdup(""));
             }
 
-            SHA_update(&ctx, buffer.data(), BLOCKSIZE);
+            SHA1_Update(&ctx, buffer.data(), BLOCKSIZE);
         }
     }
-    const uint8_t* digest = SHA_final(&ctx);
+    uint8_t digest[SHA_DIGEST_LENGTH];
+    SHA1_Final(digest, &ctx);
 
     return StringValue(strdup(print_sha1(digest).c_str()));
 }
