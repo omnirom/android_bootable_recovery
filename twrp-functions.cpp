@@ -57,6 +57,25 @@ extern "C" {
 	#include "set_metadata.h"
 }
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+    #include <ctype.h>
+
+    #include "gui/objects.hpp"
+
+    #ifdef HAVE_SELINUX
+        #include <selinux/selinux.h>
+        #include <selinux/label.h>
+        #include <selinux/android.h>
+        #include <selinux/label.h>
+    #endif
+
+    extern "C" {
+        #include "minuitwrp/minui.h"
+    }
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
+
+
 /* Execute a command */
 int TWFunc::Exec_Cmd(const string& cmd, string &result) {
 	FILE* exec;
@@ -94,6 +113,29 @@ int TWFunc::Exec_Cmd(const string& cmd) {
 		}
 	}
 }
+
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+int TWFunc::Exec_Cmd_Show_Output(const string& cmd) {
+	FILE* exec;
+	char buffer[130];
+	int ret = 0;
+	exec = __popen(cmd.c_str(), "r");
+
+	if (!exec)
+		return -1;
+
+	while(!feof(exec)) {
+		memset(buffer, 0, sizeof(buffer));
+		if (fgets(buffer, 128, exec) != NULL) {
+			buffer[128] = '\n';
+			buffer[129] = NULL;
+			gui_print(buffer);
+		}
+	}
+	ret = __pclose(exec);
+	return ret;
+}
+#endif //TARGET_RECOVERY_IS_MULTIROM
 
 // Returns "file.name" from a full /path/to/file.name
 string TWFunc::Get_Filename(string Path) {
@@ -702,6 +744,24 @@ int TWFunc::write_file(string fn, string& line) {
 	return -1;
 }
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+int TWFunc::write_file(string fn, const string& line) {
+	return write_file(fn, line, "we");
+}
+
+int TWFunc::write_file(string fn, const string& line, const char *mode) {
+	FILE *file;
+	file = fopen(fn.c_str(), mode);
+	if (file != NULL) {
+		fwrite(line.c_str(), line.size(), 1, file);
+		fclose(file);
+		return 0;
+	}
+	LOGINFO("Cannot find file %s\n", fn.c_str());
+	return -1;
+}
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
 timespec TWFunc::timespec_diff(timespec& start, timespec& end)
 {
 	timespec temp;
@@ -1041,6 +1101,256 @@ void TWFunc::Disable_Stock_Recovery_Replace(void) {
 		PartitionManager.UnMount_By_Path("/system", false);
 	}
 }
+
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+bool TWFunc::loadTheme()
+{
+    return true;
+}
+
+bool TWFunc::reloadTheme()
+{
+    return true;
+}
+
+std::string TWFunc::getDefaultThemePath(int rotation)
+{
+    return TWRES;
+}
+
+std::string TWFunc::getZIPThemePath(int rotation)
+{
+	return "/TWRP/theme/ui.zip";
+}
+
+/*
+bool TWFunc::loadTheme()
+{
+#ifndef TW_HAS_LANDSCAPE
+	DataManager::SetValue(TW_ENABLE_ROTATION, 0);
+#endif
+
+	std::string base_xml = getDefaultThemePath(gr_get_rotation()) + "ui.xml";
+
+	if (DataManager::GetIntValue(TW_IS_ENCRYPTED))
+	{
+		if(PageManager::LoadPackage ("TWRP", base_xml, "decrypt") != 0)
+		{
+			LOGERR("Failed to load base packages.\n");
+			return false;
+		}
+		else
+		{
+#ifdef TW_HAS_LANDSCAPE
+			DataManager::SetValue(TW_ENABLE_ROTATION, 1);
+#endif
+			return true;
+		}
+	}
+
+	// This is for kindle fire apparently.
+	// It is used to flash fire fire fire bootloader
+	if (PageManager::LoadPackage("TWRP", "/script/ui.xml", "main") == 0)
+	{
+		DataManager::SetValue(TW_ENABLE_ROTATION, 0);
+		return true;
+	}
+
+	std::string theme_path = DataManager::GetSettingsStoragePath();
+	if (!PartitionManager.Mount_Settings_Storage(false))
+	{
+		int retry_count = 5;
+		while (retry_count > 0 && !PartitionManager.Mount_Settings_Storage(false))
+		{
+			usleep (500000);
+			retry_count--;
+		}
+	}
+
+#ifndef TW_OEM_BUILD
+	if (PartitionManager.Mount_Settings_Storage(false))
+	{
+		theme_path += getZIPThemePath(gr_get_rotation());
+		if(PageManager::LoadPackage("TWRP", theme_path, "main") == 0)
+		{
+#ifdef TW_HAS_LANDSCAPE
+			DataManager::SetValue(TW_ENABLE_ROTATION, 1);
+#endif
+			return true;
+		}
+	}
+	else
+		LOGERR("Unable to mount %s during GUI startup.\n", theme_path.c_str());
+#endif
+
+	if(PageManager::LoadPackage("TWRP", base_xml, "main") != 0)
+	{
+		LOGERR("Failed to load base packages.\n");
+		return false;
+	}
+	else
+	{
+#ifdef TW_HAS_LANDSCAPE
+		DataManager::SetValue(TW_ENABLE_ROTATION, 1);
+#endif
+		return true;
+	}
+}
+
+bool TWFunc::reloadTheme()
+{
+	std::string theme_path = DataManager::GetSettingsStoragePath();
+	if (PartitionManager.Mount_By_Path(theme_path.c_str(), 1))
+	{
+		theme_path += getZIPThemePath(gr_get_rotation());
+		if(PageManager::ReloadPackage("TWRP", theme_path) == 0)
+		{
+#ifdef TW_HAS_LANDSCAPE
+			DataManager::SetValue(TW_ENABLE_ROTATION, 1);
+#endif
+			return true;
+		}
+	}
+	else
+		LOGERR("Unable to mount %s during reload function startup.\n", theme_path.c_str());
+
+	// Loading the custom theme failed - try loading the stock theme
+	LOGINFO("Attempting to reload stock theme...\n");
+	theme_path = getDefaultThemePath(gr_get_rotation()) + "ui.xml";
+	if (PageManager::ReloadPackage("TWRP", theme_path) != 0)
+	{
+		LOGERR("Failed to load base packages.\n");
+		return false;
+	}
+	return true;
+}
+
+std::string TWFunc::getDefaultThemePath(int rotation)
+{
+#ifndef TW_HAS_LANDSCAPE
+	return TWRES;
+#else
+	if(rotation%180 == 0)
+		return TWRES;
+	else
+		return TWRES "landscape/";
+#endif
+}
+
+std::string TWFunc::getZIPThemePath(int rotation)
+{
+#ifndef TW_HAS_LANDSCAPE
+	return "/TWRP/theme/ui.zip";
+#else
+	if(rotation%180 == 0)
+		return "/TWRP/theme/ui.zip";
+	else
+		return "/TWRP/theme/ui_landscape.zip";
+#endif
+}
+*/
+
+std::string TWFunc::getROMName()
+{
+	std::string res;
+	bool mount_state = PartitionManager.Is_Mounted_By_Path("/system");
+	std::vector<string> buildprop;
+	if (!PartitionManager.Mount_By_Path("/system", true)) {
+		return res;
+	}
+	if (TWFunc::read_file("/system/build.prop", buildprop) != 0) {
+		LOGINFO("Unable to open /system/build.prop for getting backup name.\n");
+		if (!mount_state)
+			PartitionManager.UnMount_By_Path("/system", false);
+		return res;
+	}
+	int line_count = buildprop.size();
+	int index;
+	size_t start_pos = 0, end_pos;
+	string propname;
+	for (index = 0; index < line_count; index++) {
+		end_pos = buildprop.at(index).find("=", start_pos);
+		propname = buildprop.at(index).substr(start_pos, end_pos);
+		if (propname == "ro.build.display.id") {
+			res = buildprop.at(index).substr(end_pos + 1, buildprop.at(index).size());
+			if (res.size() > MAX_BACKUP_NAME_LEN)
+				res.resize(MAX_BACKUP_NAME_LEN);
+			break;
+		}
+	}
+	if (res.empty()) {
+		LOGINFO("ro.build.display.id not found in build.prop\n");
+	}
+	if (!mount_state)
+		PartitionManager.UnMount_By_Path("/system", false);
+	return res;
+}
+
+void TWFunc::stringReplace(std::string& str, char before, char after)
+{
+	const size_t size = str.size();
+	for(size_t i = 0; i < size; ++i)
+	{
+		char& c = str[i];
+		if(c == before)
+			c = after;
+	}
+}
+
+void TWFunc::trim(std::string& str)
+{
+	size_t start = 0, len;
+	for(size_t i = 0; i < str.size() && isspace(str[i]); ++i)
+		++start;
+
+	if(start >= str.size())
+	{
+		str = "";
+		return;
+	}
+
+	len = str.size() - start;
+	for(size_t i = str.size() - 1; i > start && isspace(str[i]); --i)
+		--len;
+	str = str.substr(start, len);
+}
+
+int64_t TWFunc::getFreeSpace(const std::string& path)
+{
+	struct statfs buf; /* allocate a buffer */
+	int rc;
+
+	if (statfs(path.c_str(), &buf) < 0)
+		return -1;
+
+	return int64_t(buf.f_bsize) * int64_t(buf.f_bavail);
+}
+
+#ifdef HAVE_SELINUX
+bool TWFunc::restorecon(const std::string& path, struct selabel_handle *sh)
+{
+	struct stat info;
+	char *oldcontext, *newcontext;
+	if (lgetfilecon(path.c_str(), &oldcontext) < 0 || stat(path.c_str(), &info) < 0) {
+		LOGINFO("Couldn't get selinux context and stat() for %s\n", path.c_str());
+		return false;
+	}
+	if (selabel_lookup(sh, &newcontext, path.c_str(), info.st_mode) < 0) {
+		LOGINFO("Couldn't lookup selinux context for %s\n", path.c_str());
+		return false;
+	}
+	if (strcmp(oldcontext, newcontext) != 0) {
+		LOGINFO("Relabeling %s from %s to %s\n", path.c_str(), oldcontext, newcontext);
+		if (lsetfilecon(path.c_str(), newcontext) < 0) {
+			LOGINFO("Couldn't label %s with %s: %s\n", path.c_str(), newcontext, strerror(errno));
+		}
+	}
+	freecon(oldcontext);
+	freecon(newcontext);
+	return true;
+}
+#endif
+#endif //TARGET_RECOVERY_IS_MULTIROM
 
 unsigned long long TWFunc::IOCTL_Get_Block_Size(const char* block_device) {
 	unsigned long block_device_size;

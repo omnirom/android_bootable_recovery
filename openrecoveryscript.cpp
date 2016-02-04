@@ -617,7 +617,11 @@ int OpenRecoveryScript::Run_OpenRecoveryScript_Action() {
 			op_status = 0;
 		}
 	}
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if (reboot && DataManager::GetIntValue(TW_ORS_IS_SECONDARY_ROM) != 1) {
+#else
 	if (reboot) {
+#endif
 		// Disable stock recovery reflashing
 		TWFunc::Disable_Stock_Recovery_Replace();
 		usleep(2000000); // Sleep for 2 seconds before rebooting
