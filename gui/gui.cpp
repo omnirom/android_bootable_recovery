@@ -733,6 +733,9 @@ std::string gui_lookup(const std::string& resource_name, const std::string& defa
 extern "C" int gui_init(void)
 {
 	gr_init();
+#ifdef TW_BRIGHTNESS_AFTER_GR_INIT
+	TWFunc::Set_Brightness(DataManager::GetStrValue("tw_brightness"));
+#endif
 
 	// load and show splash screen
 	if (PageManager::LoadPackage("splash", TWRES "splash.xml", "splash")) {
