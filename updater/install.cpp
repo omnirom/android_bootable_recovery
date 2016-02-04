@@ -44,7 +44,7 @@
 #include "cutils/misc.h"
 #include "cutils/properties.h"
 #include "edify/expr.h"
-#include "mincrypt/sha.h"
+#include "openssl/sha.h"
 #include "minzip/DirUtil.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
@@ -91,10 +91,10 @@ void uiPrintf(State* state, const char* format, ...) {
 
 // Take a sha-1 digest and return it as a newly-allocated hex string.
 char* PrintSha1(const uint8_t* digest) {
-    char* buffer = reinterpret_cast<char*>(malloc(SHA_DIGEST_SIZE*2 + 1));
+    char* buffer = reinterpret_cast<char*>(malloc(SHA_DIGEST_LENGTH*2 + 1));
     const char* alphabet = "0123456789abcdef";
     size_t i;
-    for (i = 0; i < SHA_DIGEST_SIZE; ++i) {
+    for (i = 0; i < SHA_DIGEST_LENGTH; ++i) {
         buffer[i*2] = alphabet[(digest[i] >> 4) & 0xf];
         buffer[i*2+1] = alphabet[digest[i] & 0xf];
     }
@@ -1357,8 +1357,8 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (args[0]->size < 0) {
         return StringValue(strdup(""));
     }
-    uint8_t digest[SHA_DIGEST_SIZE];
-    SHA_hash(args[0]->data, args[0]->size, digest);
+    uint8_t digest[SHA_DIGEST_LENGTH];
+    SHA1(reinterpret_cast<uint8_t*>(args[0]->data), args[0]->size, digest);
     FreeValue(args[0]);
 
     if (argc == 1) {
@@ -1366,7 +1366,7 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     int i;
-    uint8_t* arg_digest = reinterpret_cast<uint8_t*>(malloc(SHA_DIGEST_SIZE));
+    uint8_t* arg_digest = reinterpret_cast<uint8_t*>(malloc(SHA_DIGEST_LENGTH));
     for (i = 1; i < argc; ++i) {
         if (args[i]->type != VAL_STRING) {
             printf("%s(): arg %d is not a string; skipping",
@@ -1375,7 +1375,7 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
             // Warn about bad args and skip them.
             printf("%s(): error parsing \"%s\" as sha-1; skipping",
                    name, args[i]->data);
-        } else if (memcmp(digest, arg_digest, SHA_DIGEST_SIZE) == 0) {
+        } else if (memcmp(digest, arg_digest, SHA_DIGEST_LENGTH) == 0) {
             break;
         }
         FreeValue(args[i]);
