@@ -505,7 +505,7 @@
 		<string name="restore_started">[还原已经开始]</string>
 		<string name="restore_folder">还原目录：'{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
-		<string name="restort_part_done">[{1} 完成 ({2} 秒)]</string>
+		<string name="restore_part_done">[{1} 完成 ({2} 秒)]</string>
 		<string name="verifying_md5">正在校验 MD5</string>
 		<string name="skip_md5">正在跳过 MD5 检测基于用户设置。</string>
 		<string name="calc_restore">正在计算还原详情…</string>
