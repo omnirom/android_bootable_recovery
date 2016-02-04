@@ -138,13 +138,13 @@ class MockUI : public RecoveryUI {
     void Init() { }
     void SetStage(int, int) { }
     void SetLocale(const char*) { }
-    void SetBackground(Icon icon) { }
+    void SetBackground(Icon /*icon*/) { }
 
-    void SetProgressType(ProgressType determinate) { }
-    void ShowProgress(float portion, float seconds) { }
-    void SetProgress(float fraction) { }
+    void SetProgressType(ProgressType /*determinate*/) { }
+    void ShowProgress(float /*portion*/, float /*seconds*/) { }
+    void SetProgress(float /*fraction*/) { }
 
-    void ShowText(bool visible) { }
+    void ShowText(bool /*visible*/) { }
     bool IsTextVisible() { return false; }
     bool WasTextEverVisible() { return false; }
     void Print(const char* fmt, ...) {
@@ -161,9 +161,10 @@ class MockUI : public RecoveryUI {
     }
     void ShowFile(const char*) { }
 
-    void StartMenu(const char* const * headers, const char* const * items,
-                           int initial_selection) { }
-    int SelectMenu(int sel) { return 0; }
+    void StartMenu(const char* const* /*headers*/,
+                   const char* const* /*items*/,
+                   int /*initial_selection*/) { }
+    int SelectMenu(int /*sel*/) { return 0; }
     void EndMenu() { }
 };
 
