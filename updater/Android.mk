@@ -46,7 +46,7 @@ endif
 
 LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UPDATER_LIBS) $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS)
 LOCAL_STATIC_LIBRARIES += libapplypatch libbase libedify libmtdutils libminzip libz
-LOCAL_STATIC_LIBRARIES += libmincrypt libbz
+LOCAL_STATIC_LIBRARIES += libbz
 LOCAL_STATIC_LIBRARIES += libcutils liblog libc
 LOCAL_STATIC_LIBRARIES += libselinux
 tune2fs_static_libraries := \

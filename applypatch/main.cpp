@@ -21,7 +21,7 @@
 
 #include "applypatch.h"
 #include "edify/expr.h"
-#include "mincrypt/sha.h"
+#include "openssl/sha.h"
 
 static int CheckMode(int argc, char** argv) {
     if (argc < 3) {
@@ -54,7 +54,7 @@ static bool ParsePatchArgs(int argc, char** argv, char*** sha1s,
     *patches = reinterpret_cast<Value**>(malloc(*num_patches * sizeof(Value*)));
     memset(*patches, 0, *num_patches * sizeof(Value*));
 
-    uint8_t digest[SHA_DIGEST_SIZE];
+    uint8_t digest[SHA_DIGEST_LENGTH];
 
     for (int i = 0; i < *num_patches; ++i) {
         char* colon = strchr(argv[i], ':');

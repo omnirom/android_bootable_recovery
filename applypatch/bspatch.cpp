@@ -30,7 +30,7 @@
 
 #include <bzlib.h>
 
-#include "mincrypt/sha.h"
+#include "openssl/sha.h"
 #include "applypatch.h"
 
 void ShowBSDiffLicense() {
@@ -114,7 +114,7 @@ int ApplyBSDiffPatch(const unsigned char* old_data, ssize_t old_size,
         printf("short write of output: %d (%s)\n", errno, strerror(errno));
         return 1;
     }
-    if (ctx) SHA_update(ctx, new_data, new_size);
+    if (ctx) SHA1_Update(ctx, new_data, new_size);
     free(new_data);
 
     return 0;
