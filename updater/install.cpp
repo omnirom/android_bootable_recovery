@@ -34,6 +34,9 @@
 #include <linux/xattr.h>
 #include <inttypes.h>
 
+#include <memory>
+#include <vector>
+
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <android-base/stringprintf.h>
@@ -439,8 +442,7 @@ Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
     for (int i = 0; i < argc; ++i) {
         paths[i] = Evaluate(state, argv[i]);
         if (paths[i] == NULL) {
-            int j;
-            for (j = 0; j < i; ++i) {
+            for (int j = 0; j < i; ++j) {
                 free(paths[j]);
             }
             free(paths);
@@ -581,12 +583,12 @@ Value* PackageExtractFileFn(const char* name, State* state,
         // as the result.
 
         char* zip_path;
+        if (ReadArgs(state, argv, 1, &zip_path) < 0) return NULL;
+
         Value* v = reinterpret_cast<Value*>(malloc(sizeof(Value)));
         v->type = VAL_BLOB;
         v->size = -1;
         v->data = NULL;
-
-        if (ReadArgs(state, argv, 1, &zip_path) < 0) return NULL;
 
         ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
         const ZipEntry* entry = mzFindZipEntry(za, zip_path);
@@ -1193,44 +1195,40 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     int patchcount = (argc-4) / 2;
-    Value** patches = ReadValueVarArgs(state, argc-4, argv+4);
+    std::unique_ptr<Value*, decltype(&free)> arg_values(ReadValueVarArgs(state, argc-4, argv+4),
+                                                        free);
+    if (!arg_values) {
+        return nullptr;
+    }
+    std::vector<std::unique_ptr<Value, decltype(&FreeValue)>> patch_shas;
+    std::vector<std::unique_ptr<Value, decltype(&FreeValue)>> patches;
+    // Protect values by unique_ptrs first to get rid of memory leak.
+    for (int i = 0; i < patchcount * 2; i += 2) {
+        patch_shas.emplace_back(arg_values.get()[i], FreeValue);
+        patches.emplace_back(arg_values.get()[i+1], FreeValue);
+    }
 
-    int i;
-    for (i = 0; i < patchcount; ++i) {
-        if (patches[i*2]->type != VAL_STRING) {
+    for (int i = 0; i < patchcount; ++i) {
+        if (patch_shas[i]->type != VAL_STRING) {
             ErrorAbort(state, "%s(): sha-1 #%d is not string", name, i);
-            break;
+            return nullptr;
         }
-        if (patches[i*2+1]->type != VAL_BLOB) {
+        if (patches[i]->type != VAL_BLOB) {
             ErrorAbort(state, "%s(): patch #%d is not blob", name, i);
-            break;
+            return nullptr;
         }
-    }
-    if (i != patchcount) {
-        for (i = 0; i < patchcount*2; ++i) {
-            FreeValue(patches[i]);
-        }
-        free(patches);
-        return NULL;
     }
 
-    char** patch_sha_str = reinterpret_cast<char**>(malloc(patchcount * sizeof(char*)));
-    for (i = 0; i < patchcount; ++i) {
-        patch_sha_str[i] = patches[i*2]->data;
-        patches[i*2]->data = NULL;
-        FreeValue(patches[i*2]);
-        patches[i] = patches[i*2+1];
+    std::vector<char*> patch_sha_str;
+    std::vector<Value*> patch_ptrs;
+    for (int i = 0; i < patchcount; ++i) {
+        patch_sha_str.push_back(patch_shas[i]->data);
+        patch_ptrs.push_back(patches[i].get());
     }
 
     int result = applypatch(source_filename, target_filename,
                             target_sha1, target_size,
-                            patchcount, patch_sha_str, patches, NULL);
-
-    for (i = 0; i < patchcount; ++i) {
-        FreeValue(patches[i]);
-    }
-    free(patch_sha_str);
-    free(patches);
+                            patchcount, patch_sha_str.data(), patch_ptrs.data(), NULL);
 
     return StringValue(strdup(result == 0 ? "t" : ""));
 }
@@ -1349,9 +1347,13 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, "%s() expects at least 1 arg", name);
     }
 
-    Value** args = ReadValueVarArgs(state, argc, argv);
-    if (args == NULL) {
-        return NULL;
+    std::unique_ptr<Value*, decltype(&free)> arg_values(ReadValueVarArgs(state, argc, argv), free);
+    if (arg_values == nullptr) {
+        return nullptr;
+    }
+    std::vector<std::unique_ptr<Value, decltype(&FreeValue)>> args;
+    for (int i = 0; i < argc; ++i) {
+        args.emplace_back(arg_values.get()[i], FreeValue);
     }
 
     if (args[0]->size < 0) {
@@ -1359,14 +1361,13 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
     uint8_t digest[SHA_DIGEST_LENGTH];
     SHA1(reinterpret_cast<uint8_t*>(args[0]->data), args[0]->size, digest);
-    FreeValue(args[0]);
 
     if (argc == 1) {
         return StringValue(PrintSha1(digest));
     }
 
     int i;
-    uint8_t* arg_digest = reinterpret_cast<uint8_t*>(malloc(SHA_DIGEST_LENGTH));
+    uint8_t arg_digest[SHA_DIGEST_LENGTH];
     for (i = 1; i < argc; ++i) {
         if (args[i]->type != VAL_STRING) {
             printf("%s(): arg %d is not a string; skipping",
@@ -1378,19 +1379,13 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
         } else if (memcmp(digest, arg_digest, SHA_DIGEST_LENGTH) == 0) {
             break;
         }
-        FreeValue(args[i]);
     }
     if (i >= argc) {
         // Didn't match any of the hex strings; return false.
         return StringValue(strdup(""));
     }
-    // Found a match; free all the remaining arguments and return the
-    // matched one.
-    int j;
-    for (j = i+1; j < argc; ++j) {
-        FreeValue(args[j]);
-    }
-    return args[i];
+    // Found a match.
+    return args[i].release();
 }
 
 // Read a local file and return its contents (the Value* returned
