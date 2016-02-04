@@ -55,7 +55,7 @@ LOCAL_CLANG := true
 LOCAL_SRC_FILES := main.cpp
 LOCAL_MODULE := applypatch
 LOCAL_C_INCLUDES += bootable/recovery
-LOCAL_STATIC_LIBRARIES += libapplypatch libbase libmtdutils libcrypto_static libbz
+LOCAL_STATIC_LIBRARIES += libapplypatch libbase libmtdutils libcrypto_static libbz libedify
 LOCAL_SHARED_LIBRARIES += libz libcutils libc
 
 include $(BUILD_EXECUTABLE)
