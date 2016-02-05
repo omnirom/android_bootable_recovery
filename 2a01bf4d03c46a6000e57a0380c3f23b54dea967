@@ -1,0 +1,208 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_8550a10d",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "there is no \".\" at the end of original English text. but it\u0027s ok",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_a5203d9c",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "spaces are removed with out obvious reason?",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_451f395d",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "inconsistent (), double or single width?",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_852541ad",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "inconsistent (), double or single width?",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_651a356f",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "missing space after \"从\"",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_655595fb",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 415,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "missing spaces before and after %tw_fm_type%",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_053131e8",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 478,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "inconsistent (), double or single width?",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_25342dd9",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 489,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "inconsistent (), double or single width?",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_e52d2590",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 524,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "it is done, no more \"...\" after done. \"...\" means something is in progress. original text is \"...done\"",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_455a992d",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "no \"：\" in original text, nor in other similar Chinese translations for \"*ing\"",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_c52a2976",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 642,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "the indention before \"\u003cstring\", it should be \"\\t\\t\u003cstring\" while you have \"    \\t\u003cstring\"",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_a54b9d64",
+        "filename": "gui/theme/extra-languages/languages/zh_CN.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 665,
+      "author": {
+        "id": 1001313
+      },
+      "writtenOn": "2016-02-05T03:58:28Z",
+      "side": 1,
+      "message": "ditto",
+      "revId": "2a01bf4d03c46a6000e57a0380c3f23b54dea967",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
