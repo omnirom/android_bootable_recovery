@@ -65,7 +65,7 @@
 		<string name="restore_started">[RESTORE STARTED]</string>
 		<string name="restore_folder">Restore folder: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
-		<string name="restort_part_done">[{1} done ({2} seconds)]</string>
+		<string name="restore_part_done">[{1} done ({2} seconds)]</string>
 		<string name="verifying_md5">Verifying MD5</string>
 		<string name="skip_md5">Skipping MD5 check based on user setting.</string>
 		<string name="calc_restore">Calculating restore details...</string>
