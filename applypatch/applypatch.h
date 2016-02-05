@@ -18,6 +18,9 @@
 #define _APPLYPATCH_H
 
 #include <sys/stat.h>
+
+#include <vector>
+
 #include "openssl/sha.h"
 #include "edify/expr.h"
 
@@ -68,22 +71,22 @@ void FreeFileContents(FileContents* file);
 int FindMatchingPatch(uint8_t* sha1, char* const * const patch_sha1_str,
                       int num_patches);
 
-// bsdiff.c
+// bsdiff.cpp
 void ShowBSDiffLicense();
 int ApplyBSDiffPatch(const unsigned char* old_data, ssize_t old_size,
                      const Value* patch, ssize_t patch_offset,
                      SinkFn sink, void* token, SHA_CTX* ctx);
 int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
                         const Value* patch, ssize_t patch_offset,
-                        unsigned char** new_data, ssize_t* new_size);
+                        std::vector<unsigned char>* new_data);
 
-// imgpatch.c
+// imgpatch.cpp
 int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                     const Value* patch,
                     SinkFn sink, void* token, SHA_CTX* ctx,
                     const Value* bonus_data);
 
-// freecache.c
+// freecache.cpp
 int MakeFreeSpaceOnCache(size_t bytes_needed);
 
 #endif
