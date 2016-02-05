@@ -25,119 +25,90 @@
 #include <dirent.h>
 #include <ctype.h>
 
+#include <memory>
+#include <set>
+#include <string>
+
+#include <android-base/parseint.h>
+#include <android-base/stringprintf.h>
+
 #include "applypatch.h"
 
-static int EliminateOpenFiles(char** files, int file_count) {
-  DIR* d;
-  struct dirent* de;
-  d = opendir("/proc");
-  if (d == NULL) {
+static int EliminateOpenFiles(std::set<std::string>* files) {
+  std::unique_ptr<DIR, decltype(&closedir)> d(opendir("/proc"), closedir);
+  if (!d) {
     printf("error opening /proc: %s\n", strerror(errno));
     return -1;
   }
-  while ((de = readdir(d)) != 0) {
-    int i;
-    for (i = 0; de->d_name[i] != '\0' && isdigit(de->d_name[i]); ++i);
-    if (de->d_name[i]) continue;
+  struct dirent* de;
+  while ((de = readdir(d.get())) != 0) {
+    unsigned int pid;
+    if (!android::base::ParseUint(de->d_name, &pid)) {
+        continue;
+    }
+    std::string path = android::base::StringPrintf("/proc/%s/fd/", de->d_name);
 
-    // de->d_name[i] is numeric
-
-    char path[FILENAME_MAX];
-    strcpy(path, "/proc/");
-    strcat(path, de->d_name);
-    strcat(path, "/fd/");
-
-    DIR* fdd;
     struct dirent* fdde;
-    fdd = opendir(path);
-    if (fdd == NULL) {
-      printf("error opening %s: %s\n", path, strerror(errno));
+    std::unique_ptr<DIR, decltype(&closedir)> fdd(opendir(path.c_str()), closedir);
+    if (!fdd) {
+      printf("error opening %s: %s\n", path.c_str(), strerror(errno));
       continue;
     }
-    while ((fdde = readdir(fdd)) != 0) {
-      char fd_path[FILENAME_MAX];
+    while ((fdde = readdir(fdd.get())) != 0) {
+      std::string fd_path = path + fdde->d_name;
       char link[FILENAME_MAX];
-      strcpy(fd_path, path);
-      strcat(fd_path, fdde->d_name);
 
-      int count;
-      count = readlink(fd_path, link, sizeof(link)-1);
+      int count = readlink(fd_path.c_str(), link, sizeof(link)-1);
       if (count >= 0) {
         link[count] = '\0';
-
-        // This is inefficient, but it should only matter if there are
-        // lots of files in /cache, and lots of them are open (neither
-        // of which should be true, especially in recovery).
         if (strncmp(link, "/cache/", 7) == 0) {
-          int j;
-          for (j = 0; j < file_count; ++j) {
-            if (files[j] && strcmp(files[j], link) == 0) {
-              printf("%s is open by %s\n", link, de->d_name);
-              free(files[j]);
-              files[j] = NULL;
-            }
+          if (files->erase(link) > 0) {
+            printf("%s is open by %s\n", link, de->d_name);
           }
         }
       }
     }
-    closedir(fdd);
   }
-  closedir(d);
-
   return 0;
 }
 
-int FindExpendableFiles(char*** names, int* entries) {
-  DIR* d;
-  struct dirent* de;
-  int size = 32;
-  *entries = 0;
-  *names = reinterpret_cast<char**>(malloc(size * sizeof(char*)));
-
-  char path[FILENAME_MAX];
-
+static std::set<std::string> FindExpendableFiles() {
+  std::set<std::string> files;
   // We're allowed to delete unopened regular files in any of these
   // directories.
   const char* dirs[2] = {"/cache", "/cache/recovery/otatest"};
 
   for (size_t i = 0; i < sizeof(dirs)/sizeof(dirs[0]); ++i) {
-    d = opendir(dirs[i]);
-    if (d == NULL) {
+    std::unique_ptr<DIR, decltype(&closedir)> d(opendir(dirs[i]), closedir);
+    if (!d) {
       printf("error opening %s: %s\n", dirs[i], strerror(errno));
       continue;
     }
 
     // Look for regular files in the directory (not in any subdirectories).
-    while ((de = readdir(d)) != 0) {
-      strcpy(path, dirs[i]);
-      strcat(path, "/");
-      strcat(path, de->d_name);
+    struct dirent* de;
+    while ((de = readdir(d.get())) != 0) {
+      std::string path = std::string(dirs[i]) + "/" + de->d_name;
 
       // We can't delete CACHE_TEMP_SOURCE; if it's there we might have
       // restarted during installation and could be depending on it to
       // be there.
-      if (strcmp(path, CACHE_TEMP_SOURCE) == 0) continue;
+      if (path == CACHE_TEMP_SOURCE) {
+        continue;
+      }
 
       struct stat st;
-      if (stat(path, &st) == 0 && S_ISREG(st.st_mode)) {
-        if (*entries >= size) {
-          size *= 2;
-          *names = reinterpret_cast<char**>(realloc(*names, size * sizeof(char*)));
-        }
-        (*names)[(*entries)++] = strdup(path);
+      if (stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
+        files.insert(path);
       }
     }
-
-    closedir(d);
   }
 
-  printf("%d regular files in deletable directories\n", *entries);
-
-  if (EliminateOpenFiles(*names, *entries) < 0) {
-    return -1;
+  printf("%zu regular files in deletable directories\n", files.size());
+  if (EliminateOpenFiles(&files) < 0) {
+    return std::set<std::string>();
   }
-
-  return 0;
+  return files;
 }
 
 int MakeFreeSpaceOnCache(size_t bytes_needed) {
@@ -147,15 +118,8 @@ int MakeFreeSpaceOnCache(size_t bytes_needed) {
   if (free_now >= bytes_needed) {
     return 0;
   }
-
-  char** names;
-  int entries;
-
-  if (FindExpendableFiles(&names, &entries) < 0) {
-    return -1;
-  }
-
-  if (entries == 0) {
+  std::set<std::string> files = FindExpendableFiles();
+  if (files.empty()) {
     // nothing we can delete to free up space!
     printf("no files can be deleted to free space on /cache\n");
     return -1;
@@ -167,20 +131,13 @@ int MakeFreeSpaceOnCache(size_t bytes_needed) {
   //
   // Instead, we'll be dumb.
 
-  int i;
-  for (i = 0; i < entries && free_now < bytes_needed; ++i) {
-    if (names[i]) {
-      unlink(names[i]);
-      free_now = FreeSpaceForFile("/cache");
-      printf("deleted %s; now %zu bytes free\n", names[i], free_now);
-      free(names[i]);
+  for (const auto& file : files) {
+    unlink(file.c_str());
+    free_now = FreeSpaceForFile("/cache");
+    printf("deleted %s; now %zu bytes free\n", file.c_str(), free_now);
+    if (free_now < bytes_needed) {
+        break;
     }
   }
-
-  for (; i < entries; ++i) {
-    free(names[i]);
-  }
-  free(names);
-
   return (free_now >= bytes_needed) ? 0 : -1;
 }

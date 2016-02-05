@@ -19,6 +19,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <memory>
+#include <vector>
+
 #include "applypatch.h"
 #include "edify/expr.h"
 #include "openssl/sha.h"
@@ -47,16 +50,11 @@ static int SpaceMode(int argc, char** argv) {
 // "<sha1>:<filename>" into the new parallel arrays *sha1s and
 // *patches (loading file contents into the patches).  Returns true on
 // success.
-static bool ParsePatchArgs(int argc, char** argv, char*** sha1s,
-                           Value*** patches, int* num_patches) {
-    *num_patches = argc;
-    *sha1s = reinterpret_cast<char**>(malloc(*num_patches * sizeof(char*)));
-    *patches = reinterpret_cast<Value**>(malloc(*num_patches * sizeof(Value*)));
-    memset(*patches, 0, *num_patches * sizeof(Value*));
-
+static bool ParsePatchArgs(int argc, char** argv, std::vector<char*>* sha1s,
+                           std::vector<std::unique_ptr<Value, decltype(&FreeValue)>>* patches) {
     uint8_t digest[SHA_DIGEST_LENGTH];
 
-    for (int i = 0; i < *num_patches; ++i) {
+    for (int i = 0; i < argc; ++i) {
         char* colon = strchr(argv[i], ':');
         if (colon != NULL) {
             *colon = '\0';
@@ -68,34 +66,22 @@ static bool ParsePatchArgs(int argc, char** argv, char*** sha1s,
             return false;
         }
 
-        (*sha1s)[i] = argv[i];
+        sha1s->push_back(argv[i]);
         if (colon == NULL) {
-            (*patches)[i] = NULL;
+            patches->emplace_back(nullptr, FreeValue);
         } else {
             FileContents fc;
             if (LoadFileContents(colon, &fc) != 0) {
-                goto abort;
+                return false;
             }
-            (*patches)[i] = reinterpret_cast<Value*>(malloc(sizeof(Value)));
-            (*patches)[i]->type = VAL_BLOB;
-            (*patches)[i]->size = fc.size;
-            (*patches)[i]->data = reinterpret_cast<char*>(fc.data);
+            std::unique_ptr<Value, decltype(&FreeValue)> value(new Value, FreeValue);
+            value->type = VAL_BLOB;
+            value->size = fc.size;
+            value->data = reinterpret_cast<char*>(fc.data);
+            patches->push_back(std::move(value));
         }
     }
-
     return true;
-
-  abort:
-    for (int i = 0; i < *num_patches; ++i) {
-        Value* p = (*patches)[i];
-        if (p != NULL) {
-            free(p->data);
-            free(p);
-        }
-    }
-    free(*sha1s);
-    free(*patches);
-    return false;
 }
 
 static int FlashMode(const char* src_filename, const char* tgt_filename,
@@ -104,17 +90,17 @@ static int FlashMode(const char* src_filename, const char* tgt_filename,
 }
 
 static int PatchMode(int argc, char** argv) {
-    Value* bonus = NULL;
+    std::unique_ptr<Value, decltype(&FreeValue)> bonus(nullptr, FreeValue);
     if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
         FileContents fc;
         if (LoadFileContents(argv[2], &fc) != 0) {
             printf("failed to load bonus file %s\n", argv[2]);
             return 1;
         }
-        bonus = reinterpret_cast<Value*>(malloc(sizeof(Value)));
+        bonus.reset(new Value);
         bonus->type = VAL_BLOB;
         bonus->size = fc.size;
-        bonus->data = (char*)fc.data;
+        bonus->data = reinterpret_cast<char*>(fc.data);
         argc -= 2;
         argv += 2;
     }
@@ -140,33 +126,20 @@ static int PatchMode(int argc, char** argv) {
     }
 
 
-    char** sha1s;
-    Value** patches;
-    int num_patches;
-    if (!ParsePatchArgs(argc-5, argv+5, &sha1s, &patches, &num_patches)) {
+    std::vector<char*> sha1s;
+    std::vector<std::unique_ptr<Value, decltype(&FreeValue)>> patches;
+    if (!ParsePatchArgs(argc-5, argv+5, &sha1s, &patches)) {
         printf("failed to parse patch args\n");
         return 1;
     }
 
-    int result = applypatch(argv[1], argv[2], argv[3], target_size,
-                            num_patches, sha1s, patches, bonus);
-
-    int i;
-    for (i = 0; i < num_patches; ++i) {
-        Value* p = patches[i];
-        if (p != NULL) {
-            free(p->data);
-            free(p);
-        }
+    std::vector<Value*> patch_ptrs;
+    for (const auto& p : patches) {
+        patch_ptrs.push_back(p.get());
     }
-    if (bonus) {
-        free(bonus->data);
-        free(bonus);
-    }
-    free(sha1s);
-    free(patches);
-
-    return result;
+    return applypatch(argv[1], argv[2], argv[3], target_size,
+                      patch_ptrs.size(), sha1s.data(),
+                      patch_ptrs.data(), bonus.get());
 }
 
 // This program applies binary patches to files in a way that is safe
