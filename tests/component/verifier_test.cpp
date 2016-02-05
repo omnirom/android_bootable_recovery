@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
+ * Unless required by applicable law or agree to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -16,22 +16,33 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <stdarg.h>
+#include <gtest/gtest.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
+#include <android-base/stringprintf.h>
+
 #include "common.h"
-#include "verifier.h"
-#include "ui.h"
 #include "mincrypt/sha.h"
 #include "mincrypt/sha256.h"
 #include "minzip/SysUtil.h"
+#include "ui.h"
+#include "verifier.h"
+
+#if defined(__LP64__)
+#define NATIVE_TEST_PATH "/nativetest64"
+#else
+#define NATIVE_TEST_PATH "/nativetest"
+#endif
+
+static const char* DATA_PATH = getenv("ANDROID_DATA");
+static const char* TESTDATA_PATH = "/recovery_component_test/testdata/";
 
 // This is build/target/product/security/testkey.x509.pem after being
 // dumped out by dumpkey.jar.
@@ -123,9 +134,7 @@ ECPublicKey test_ec_key =
 
 RecoveryUI* ui = NULL;
 
-// verifier expects to find a UI object; we provide one that does
-// nothing but print.
-class FakeUI : public RecoveryUI {
+class MockUI : public RecoveryUI {
     void Init() { }
     void SetStage(int, int) { }
     void SetLocale(const char*) { }
@@ -166,79 +175,93 @@ ui_print(const char* format, ...) {
     va_end(ap);
 }
 
-int main(int argc, char** argv) {
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s [-sha256] [-ec | -f4 | -file <keys>] <package>\n", argv[0]);
-        return 2;
-    }
-
+class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
+  public:
+    MemMapping memmap;
     std::vector<Certificate> certs;
-    int argn = 1;
-    while (argn < argc) {
-        if (strcmp(argv[argn], "-sha256") == 0) {
-            if (certs.empty()) {
-                fprintf(stderr, "May only specify -sha256 after key type\n");
-                return 2;
+
+    virtual void SetUp() {
+        std::vector<std::string> args = GetParam();
+        std::string package = android::base::StringPrintf("%s%s%s%s", DATA_PATH, NATIVE_TEST_PATH,
+                TESTDATA_PATH, args[0].c_str());
+        for (auto it = ++(args.cbegin()); it != args.cend(); ++it) {
+            if (it->substr(it->length() - 3, it->length()) == "256") {
+                if (certs.empty()) {
+                    FAIL() << "May only specify -sha256 after key type\n";
+                }
+                certs.back().hash_len = SHA256_DIGEST_SIZE;
+            } else if (*it == "ec") {
+                certs.emplace_back(SHA_DIGEST_SIZE, Certificate::EC,
+                        nullptr, std::unique_ptr<ECPublicKey>(new ECPublicKey(test_ec_key)));
+            } else if (*it == "e3") {
+                certs.emplace_back(SHA_DIGEST_SIZE, Certificate::RSA,
+                        std::unique_ptr<RSAPublicKey>(new RSAPublicKey(test_key)), nullptr);
+            } else if (*it == "f4") {
+                certs.emplace_back(SHA_DIGEST_SIZE, Certificate::RSA,
+                        std::unique_ptr<RSAPublicKey>(new RSAPublicKey(test_f4_key)), nullptr);
             }
-            ++argn;
-            certs.back().hash_len = SHA256_DIGEST_SIZE;
-        } else if (strcmp(argv[argn], "-ec") == 0) {
-            ++argn;
-            certs.emplace_back(SHA_DIGEST_SIZE, Certificate::EC,
-                    nullptr, std::unique_ptr<ECPublicKey>(new ECPublicKey(test_ec_key)));
-        } else if (strcmp(argv[argn], "-e3") == 0) {
-            ++argn;
+        }
+        if (certs.empty()) {
             certs.emplace_back(SHA_DIGEST_SIZE, Certificate::RSA,
                     std::unique_ptr<RSAPublicKey>(new RSAPublicKey(test_key)), nullptr);
-        } else if (strcmp(argv[argn], "-f4") == 0) {
-            ++argn;
-            certs.emplace_back(SHA_DIGEST_SIZE, Certificate::RSA,
-                    std::unique_ptr<RSAPublicKey>(new RSAPublicKey(test_f4_key)), nullptr);
-        } else if (strcmp(argv[argn], "-file") == 0) {
-            if (!certs.empty()) {
-                fprintf(stderr, "Cannot specify -file with other certs specified\n");
-                return 2;
-            }
-            ++argn;
-            if (!load_keys(argv[argn], certs)) {
-                fprintf(stderr, "Cannot load keys from %s\n", argv[argn]);
-            }
-            ++argn;
-        } else if (argv[argn][0] == '-') {
-            fprintf(stderr, "Unknown argument %s\n", argv[argn]);
-            return 2;
-        } else {
-            break;
+        }
+        if (sysMapFile(package.c_str(), &memmap) != 0) {
+            FAIL() << "Failed to mmap " << package << ": " << strerror(errno) << "\n";
         }
     }
 
-    if (argn == argc) {
-        fprintf(stderr, "Must specify package to verify\n");
-        return 2;
+    static void SetUpTestCase() {
+        ui = new MockUI();
     }
+};
 
-    if (certs.empty()) {
-        certs.emplace_back(SHA_DIGEST_SIZE, Certificate::RSA,
-                std::unique_ptr<RSAPublicKey>(new RSAPublicKey(test_key)), nullptr);
-    }
+class VerifierSuccessTest : public VerifierTest {
+};
 
-    ui = new FakeUI();
+class VerifierFailureTest : public VerifierTest {
+};
 
-    MemMapping map;
-    if (sysMapFile(argv[argn], &map) != 0) {
-        fprintf(stderr, "failed to mmap %s: %s\n", argv[argn], strerror(errno));
-        return 4;
-    }
-
-    int result = verify_file(map.addr, map.length, certs);
-    if (result == VERIFY_SUCCESS) {
-        printf("VERIFIED\n");
-        return 0;
-    } else if (result == VERIFY_FAILURE) {
-        printf("NOT VERIFIED\n");
-        return 1;
-    } else {
-        printf("bad return value\n");
-        return 3;
-    }
+TEST_P(VerifierSuccessTest, VerifySucceed) {
+    ASSERT_EQ(verify_file(memmap.addr, memmap.length, certs), VERIFY_SUCCESS);
 }
+
+TEST_P(VerifierFailureTest, VerifyFailure) {
+    ASSERT_EQ(verify_file(memmap.addr, memmap.length, certs), VERIFY_FAILURE);
+}
+
+INSTANTIATE_TEST_CASE_P(SingleKeySuccess, VerifierSuccessTest,
+        ::testing::Values(
+            std::vector<std::string>({"otasigned.zip", "e3"}),
+            std::vector<std::string>({"otasigned_f4.zip", "f4"}),
+            std::vector<std::string>({"otasigned_sha256.zip", "e3", "sha256"}),
+            std::vector<std::string>({"otasigned_f4_sha256.zip", "f4", "sha256"}),
+            std::vector<std::string>({"otasigned_ecdsa_sha256.zip", "ec", "sha256"})));
+
+INSTANTIATE_TEST_CASE_P(MultiKeySuccess, VerifierSuccessTest,
+        ::testing::Values(
+            std::vector<std::string>({"otasigned.zip", "f4", "e3"}),
+            std::vector<std::string>({"otasigned_f4.zip", "ec", "f4"}),
+            std::vector<std::string>({"otasigned_sha256.zip", "ec", "e3", "e3", "sha256"}),
+            std::vector<std::string>({"otasigned_f4_sha256.zip", "ec", "sha256", "e3", "f4", "sha256"}),
+            std::vector<std::string>({"otasigned_ecdsa_sha256.zip", "f4", "sha256", "e3", "ec", "sha256"})));
+
+INSTANTIATE_TEST_CASE_P(WrongKey, VerifierFailureTest,
+        ::testing::Values(
+            std::vector<std::string>({"otasigned.zip", "f4"}),
+            std::vector<std::string>({"otasigned_f4.zip", "e3"}),
+            std::vector<std::string>({"otasigned_ecdsa_sha256.zip", "e3", "sha256"})));
+
+INSTANTIATE_TEST_CASE_P(WrongHash, VerifierFailureTest,
+        ::testing::Values(
+            std::vector<std::string>({"otasigned.zip", "e3", "sha256"}),
+            std::vector<std::string>({"otasigned_f4.zip", "f4", "sha256"}),
+            std::vector<std::string>({"otasigned_sha256.zip"}),
+            std::vector<std::string>({"otasigned_f4_sha256.zip", "f4"}),
+            std::vector<std::string>({"otasigned_ecdsa_sha256.zip"})));
+
+INSTANTIATE_TEST_CASE_P(BadPackage, VerifierFailureTest,
+        ::testing::Values(
+            std::vector<std::string>({"random.zip"}),
+            std::vector<std::string>({"fake-eocd.zip"}),
+            std::vector<std::string>({"alter-metadata.zip"}),
+            std::vector<std::string>({"alter-footer.zip"})));

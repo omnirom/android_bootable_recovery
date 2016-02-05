@@ -104,28 +104,10 @@ LOCAL_CLANG := true
 LOCAL_MODULE := libverifier
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := \
-    asn1_decoder.cpp
-include $(BUILD_STATIC_LIBRARY)
-
-include $(CLEAR_VARS)
-LOCAL_CLANG := true
-LOCAL_MODULE := verifier_test
-LOCAL_FORCE_STATIC_EXECUTABLE := true
-LOCAL_MODULE_TAGS := tests
-LOCAL_CFLAGS += -Wno-unused-parameter
-LOCAL_SRC_FILES := \
-    verifier_test.cpp \
     asn1_decoder.cpp \
     verifier.cpp \
     ui.cpp
-LOCAL_STATIC_LIBRARIES := \
-    libmincrypt \
-    libminui \
-    libminzip \
-    libcutils \
-    libc
-include $(BUILD_EXECUTABLE)
-
+include $(BUILD_STATIC_LIBRARY)
 
 include $(LOCAL_PATH)/minui/Android.mk \
     $(LOCAL_PATH)/minzip/Android.mk \
