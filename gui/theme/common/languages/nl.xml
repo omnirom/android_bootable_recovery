@@ -3,6 +3,12 @@
 <language>
 	<display>Dutch</display>
 	<resources>
+		<!-- Font overrides - only change these if your language requires special characters -->
+		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
+
 		<string name="system">Systeem</string>
 		<string name="system_image">Systeem-Image</string>
 		<string name="vendor">Leverancier</string>
