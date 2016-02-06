@@ -108,7 +108,11 @@ static struct flag_list mount_flags[] = {
 	{ 0,            0 },
 };
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+TWPartition::TWPartition(const string& fstab_line) {
+#else
 TWPartition::TWPartition() {
+#endif
 	Can_Be_Mounted = false;
 	Can_Be_Wiped = false;
 	Can_Be_Backed_Up = false;
@@ -161,14 +165,43 @@ TWPartition::TWPartition() {
 	Crypto_Key_Location = "footer";
 	MTP_Storage_ID = 0;
 	Can_Flash_Img = false;
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	Is_ImageMount = false;
+	Size_Raw = 0;
+
+    if(!fstab_line.empty())
+		Process_Fstab_Line(fstab_line, true);
+#endif //TARGET_RECOVERY_IS_MULTIROM
 	Mount_Read_Only = false;
 	Is_Adopted_Storage = false;
 	Adopted_GUID = "";
 }
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+TWPartition::TWPartition(const TWPartition& p)
+{
+	// Use default copy constructor, as this class has no pointers
+	// and strings are handled fine by this
+	*this = p;
+}
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
 TWPartition::~TWPartition(void) {
 	// Do nothing
 }
+
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+TWPartition *TWPartition::makePartFromFstab(const char *fmt, ...)
+{
+	char line[MAX_FSTAB_LINE_LENGTH];
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(line, sizeof(line), fmt, ap);
+	va_end(ap);
+
+	return new TWPartition(line);
+}
+#endif //TARGET_RECOVERY_IS_MULTIROM
 
 bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 	char full_line[MAX_FSTAB_LINE_LENGTH], item[MAX_FSTAB_LINE_LENGTH];
@@ -602,6 +635,17 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 					Can_Flash_Img = false;
 				}
 			}
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+		} else if (ptr_len > (int)sizeof("bindof=") && strncmp(ptr, "bindof=", sizeof("bindof=")-1) == 0) {
+			ptr += sizeof("bindof=")-1;
+			Bind_Of = ptr;
+			Ignore_Blkid = true;
+			Use_Rm_Rf = true;
+		} else if(strcmp(ptr, "imagemount") == 0) {
+			Ignore_Blkid = true;
+			Use_Rm_Rf = true;
+			Is_ImageMount = true;
+#endif //TARGET_RECOVERY_IS_MULTIROM
 		} else {
 			if (Display_Error)
 				LOGERR("Unhandled flag: '%s'\n", ptr);
@@ -987,6 +1031,12 @@ bool TWPartition::Is_Mounted(void) {
 bool TWPartition::Mount(bool Display_Error) {
 	int exfat_mounted = 0;
 	unsigned long flags = Mount_Flags;
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+    //perhaps redundant and we could use/change exfat_mounted, 
+    //but this should make merges easier
+    //TODO: reconsider using exfat_mounted
+	int mounted = 0;
+#endif //TARGET_RECOVERY_IS_MULTIROM
 
 	if (Is_Mounted()) {
 		return true;
@@ -996,9 +1046,63 @@ bool TWPartition::Mount(bool Display_Error) {
 
 	Find_Actual_Block_Device();
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if(!Bind_Of.empty())
+	{
+		TWPartition *p = PartitionManager.Find_Partition_By_Path(Bind_Of);
+		if(!p)
+		{
+			if(Display_Error)
+				LOGERR("Couldn't find bindof partition %s\n", Bind_Of.c_str());
+			else
+				LOGINFO("Couldn't find bindof partition %s\n", Bind_Of.c_str());
+			return false;
+		}
+
+		if(!p->Mount(Display_Error))
+			return false;
+
+		if(mount(Primary_Block_Device.c_str(), Mount_Point.c_str(), Fstab_File_System.c_str(), MS_BIND, NULL) < 0)
+		{
+			if(Display_Error)
+				LOGERR("Couldn't bind %s to %s\n", Primary_Block_Device.c_str(), Mount_Point.c_str());
+			else
+				LOGINFO("Couldn't bind %s to %s\n", Primary_Block_Device.c_str(), Mount_Point.c_str());
+			return false;
+		}
+		mounted = 1;
+	}
+	else if(Is_ImageMount)
+	{
+		PartitionManager.Mount_By_Path(Primary_Block_Device, false);
+
+		std::string cmd = "mount -o loop -t ";
+		cmd += Fstab_File_System + " " + Primary_Block_Device + " " + Mount_Point.c_str();
+		if(TWFunc::Exec_Cmd(cmd) != 0)
+		{
+			if(Display_Error)
+				LOGERR("Failed to mount image %s!\n", Primary_Block_Device.c_str());
+			else
+				LOGINFO("Failed to mount image %s!\n", Primary_Block_Device.c_str());
+			return false;
+		}
+		mounted = 1;
+	}
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
 	// Check the current file system before mounting
 	Check_FS_Type();
+
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	std::string mnt_opts = Get_Mount_Options_With_Defaults();
+#endif
+
+
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sbin/exfat-fuse") && !mounted) {
+#else
 	if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sbin/exfat-fuse")) {
+#endif
 		string cmd = "/sbin/exfat-fuse -o big_writes,max_read=131072,max_write=131072 " + Actual_Block_Device + " " + Mount_Point;
 		LOGINFO("cmd: %s\n", cmd.c_str());
 		string result;
@@ -1012,6 +1116,9 @@ bool TWPartition::Mount(bool Display_Error) {
 			// Some kernels let us mount vfat as exfat which doesn't work out too well
 #else
 			exfat_mounted = 1;
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+			mounted = 1;
+#endif //TARGET_RECOVERY_IS_MULTIROM
 #endif
 		}
 	}
@@ -1041,7 +1148,11 @@ bool TWPartition::Mount(bool Display_Error) {
 	if (Mount_Read_Only)
 		flags |= MS_RDONLY;
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if (Fstab_File_System == "yaffs2" && !mounted) {
+#else
 	if (Fstab_File_System == "yaffs2") {
+#endif
 		// mount an MTD partition as a YAFFS2 filesystem.
 		flags = MS_NOATIME | MS_NODEV | MS_NODIRATIME;
 		if (Mount_Read_Only)
@@ -1086,9 +1197,15 @@ bool TWPartition::Mount(bool Display_Error) {
 	if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sys/module/texfat"))
 		mount_fs = "texfat";
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if (!mounted &&
+		mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), mount_fs.c_str(), flags, mnt_opts.c_str()) != 0 &&
+		mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), mount_fs.c_str(), flags, NULL) != 0) {
+#else
 	if (!exfat_mounted &&
 		mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), mount_fs.c_str(), flags, Mount_Options.c_str()) != 0 &&
 		mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), mount_fs.c_str(), flags, NULL) != 0) {
+#endif
 #ifdef TW_NO_EXFAT_FUSE
 		if (Current_File_System == "exfat") {
 			LOGINFO("Mounting exfat failed, trying vfat...\n");
@@ -1097,7 +1214,11 @@ bool TWPartition::Mount(bool Display_Error) {
 					gui_msg(Msg(msg::kError, "fail_mount=Failed to mount '{1}' ({2})")(Mount_Point)(strerror(errno)));
 				else
 					LOGINFO("Unable to mount '%s'\n", Mount_Point.c_str());
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+				LOGINFO("Actual block device: '%s', current file system: '%s', flags: 0x%8x, options: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str(), flags, mnt_opts.c_str());
+#else
 				LOGINFO("Actual block device: '%s', current file system: '%s', flags: 0x%8x, options: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str(), flags, Mount_Options.c_str());
+#endif
 				return false;
 			}
 		} else {
@@ -1137,7 +1258,14 @@ bool TWPartition::UnMount(bool Display_Error) {
 		if (!Symlink_Mount_Point.empty())
 			umount(Symlink_Mount_Point.c_str());
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+		if(!Is_ImageMount)
+			umount(Mount_Point.c_str());
+		else
+			TWFunc::Exec_Cmd(string("umount -d ") + Mount_Point);
+#else
 		umount(Mount_Point.c_str());
+#endif
 		if (Is_Mounted()) {
 			if (Display_Error)
 				gui_msg(Msg(msg::kError, "fail_unmount=Failed to unmount '{1}' ({2})")(Mount_Point)(strerror(errno)));
@@ -1654,6 +1782,12 @@ void TWPartition::Check_FS_Type() {
 		return;
 	}
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	blkid_loff_t size = blkid_get_dev_size(blkid_probe_get_fd(pr));
+	if(size > 0)
+		Size_Raw = size;
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
 	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) < 0) {
 		blkid_free_probe(pr);
 		LOGINFO("can't find filesystem on device %s\n", Actual_Block_Device.c_str());
@@ -1663,6 +1797,18 @@ void TWPartition::Check_FS_Type() {
 	Current_File_System = type;
 	blkid_free_probe(pr);
 }
+
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+std::string TWPartition::Get_Mount_Options_With_Defaults()
+{
+	std::string res = Mount_Options;
+	if(Current_File_System == "f2fs") {
+		if(res.find("inline_xattr") == std::string::npos)
+			res += ",inline_xattr";
+	}
+	return res;
+}
+#endif //TARGET_RECOVERY_IS_MULTIROM
 
 bool TWPartition::Wipe_EXT23(string File_System) {
 	if (!UnMount(true))
@@ -1883,6 +2029,18 @@ bool TWPartition::Wipe_F2FS() {
 			gui_msg(Msg(msg::kError, "unable_to_wipe=Unable to wipe {1}.")(Display_Name));
 			return false;
 		}
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+#ifdef HAVE_SELINUX
+		char *secontext = NULL;
+		if (!selinux_handle || selabel_lookup(selinux_handle, &secontext, Mount_Point.c_str(), S_IFDIR) < 0) {
+			LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
+		} else if(Mount(false)) {
+			LOGINFO("Running restorecon on %s\n", Mount_Point.c_str());
+			TWFunc::restorecon(Mount_Point, selinux_handle);
+			UnMount(false);
+		}
+#endif
+#endif //TARGET_RECOVERY_IS_MULTIROM
 		return true;
 	} else {
 		LOGINFO("mkfs.f2fs binary not found, using rm -rf to wipe.\n");
@@ -2223,6 +2381,13 @@ bool TWPartition::Update_Size(bool Display_Error) {
 			return false;
 		}
 	}
+
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if(!Bind_Of.empty()) {
+		Used = du.Get_Folder_Size(Actual_Block_Device);
+		Backup_Size = Used;
+	}
+#endif //TARGET_RECOVERY_IS_MULTIROM
 
 	if (Has_Data_Media) {
 		if (Mount(Display_Error)) {

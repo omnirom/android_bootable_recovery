@@ -34,6 +34,12 @@ typedef enum
 	rb_download,
 } RebootCommand;
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+#ifdef HAVE_SELINUX
+struct selabel_handle;
+#endif
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
 // Partition class
 class TWFunc
 {
@@ -44,6 +50,9 @@ public:
 
 	static int Exec_Cmd(const string& cmd, string &result);                     //execute a command and return the result as a string by reference
 	static int Exec_Cmd(const string& cmd);                                     //execute a command
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	static int Exec_Cmd_Show_Output(const string& cmd);
+#endif //TARGET_RECOVERY_IS_MULTIROM
 	static int Wait_For_Child(pid_t pid, int *status, string Child_Name);       // Waits for pid to exit and checks exit status
 	static bool Path_Exists(string Path);                                       // Returns true if the path exists
 	static int Get_File_Type(string fn); // Determines file type, 0 for unknown, 1 for gzip, 2 for OAES encrypted
@@ -72,6 +81,10 @@ public:
 	static int read_file(string fn, string& results); //read from file
 	static int read_file(string fn, uint64_t& results); //read from file
 	static int write_file(string fn, string& line); //write from file
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	static int write_file(string fn, const string& line); //write from file
+	static int write_file(string fn, const string& line, const char *mode); //write from file
+#endif //TARGET_RECOVERY_IS_MULTIROM
 	static bool Install_SuperSU(void); // Installs su binary and apk and sets proper permissions
 	static bool Try_Decrypting_Backup(string Restore_Path, string Password); // true for success, false for failed to decrypt
 	static string System_Property_Get(string Prop_Name);                // Returns value of Prop_Name from reading /system/build.prop
@@ -85,6 +98,19 @@ public:
 	static std::string to_string(unsigned long value); //convert ul to string
 	static void SetPerformanceMode(bool mode); // support recovery.perf.mode
 	static void Disable_Stock_Recovery_Replace(); // Disable stock ROMs from replacing TWRP with stock recovery
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	static bool loadTheme();
+	static bool reloadTheme();
+	static std::string getDefaultThemePath(int rotation);
+	static std::string getZIPThemePath(int rotation);
+	static std::string getROMName();
+	static void stringReplace(std::string& str, char before, char after);
+	static void trim(std::string& str);
+	static int64_t getFreeSpace(const std::string& path);
+#ifdef HAVE_SELINUX
+	static bool restorecon(const std::string& path, struct selabel_handle *sh);
+#endif
+#endif //TARGET_RECOVERY_IS_MULTIROM
 	static unsigned long long IOCTL_Get_Block_Size(const char* block_device);
 
 private:

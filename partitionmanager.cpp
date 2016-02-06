@@ -189,6 +189,12 @@ int TWPartitionManager::Write_Fstab(void) {
 		return false;
 	}
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+		if (!(*iter)->Bind_Of.empty()) {
+			Line = (*iter)->Primary_Block_Device + " " + (*iter)->Mount_Point + " bind bind\n";
+			fputs(Line.c_str(), fp);
+		} else
+#endif //TARGET_RECOVERY_IS_MULTIROM
 		if ((*iter)->Can_Be_Mounted) {
 			Line = (*iter)->Actual_Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw 0 0\n";
 			fputs(Line.c_str(), fp);
@@ -234,6 +240,9 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 	if (Part->Can_Be_Mounted) {
 		printf(" Used: %iMB Free: %iMB Backup Size: %iMB", (int)(Part->Used / mb), (int)(Part->Free / mb), (int)(Part->Backup_Size / mb));
 	}
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	printf(" Raw size: %llu\n", Part->Size_Raw);
+#endif //TARGET_RECOVERY_IS_MULTIROM
 	printf("\n   Flags: ");
 	if (Part->Can_Be_Mounted)
 		printf("Can_Be_Mounted ");
@@ -322,6 +331,10 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("   Format_Block_Size: %lu\n", Part->Format_Block_Size);
 	if (!Part->MTD_Name.empty())
 		printf("   MTD_Name: %s\n", Part->MTD_Name.c_str());
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if (!Part->Bind_Of.empty())
+		printf("   Bind_Of: %s\n", Part->Bind_Of.c_str());
+#endif //TARGET_RECOVERY_IS_MULTIROM
 	string back_meth = Part->Backup_Method_By_Name();
 	printf("   Backup_Method: %s\n", back_meth.c_str());
 	if (Part->Mount_Flags || !Part->Mount_Options.empty())
@@ -1417,6 +1430,67 @@ void TWPartitionManager::Update_System_Details(void) {
 	return;
 }
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+//TODO: merge with above code
+void TWPartitionManager::Update_Storage_Sizes()
+{
+	string current_storage_path = DataManager::GetCurrentStoragePath();
+	TWPartition* FreeStorage = Find_Partition_By_Path(current_storage_path);
+	if (FreeStorage != NULL) {
+		// Attempt to mount storage
+		if (!FreeStorage->Mount(false)) {
+			gui_msg(Msg(msg::kError, "unable_to_mount_storage=Unable to mount storage"));
+			DataManager::SetValue(TW_STORAGE_FREE_SIZE, 0);
+		} else {
+			DataManager::SetValue(TW_STORAGE_FREE_SIZE, (int)(FreeStorage->Free / 1048576LLU));
+		}
+	} else {
+		LOGINFO("Unable to find storage partition '%s'.\n", current_storage_path.c_str());
+	}
+/* OLD CODE--
+	string current_storage_path = DataManager::GetCurrentStoragePath();
+	TWPartition* FreeStorage = Find_Partition_By_Path(current_storage_path);
+	if (FreeStorage != NULL) {
+		// Attempt to mount storage
+		if (!FreeStorage->Mount(false)) {
+			// We couldn't mount storage... check to see if we have dual storage
+			int has_dual_storage;
+			DataManager::GetValue(TW_HAS_DUAL_STORAGE, has_dual_storage);
+			if (has_dual_storage == 1) {
+				// We have dual storage, see if we're using the internal storage that should always be present
+				if (current_storage_path == DataManager::GetSettingsStoragePath()) {
+					if (!FreeStorage->Is_Encrypted) {
+						// Not able to use internal, so error!
+						LOGERR("Unable to mount internal storage.\n");
+					}
+					DataManager::SetValue(TW_STORAGE_FREE_SIZE, 0);
+				} else {
+					// We were using external, flip to internal
+					DataManager::SetValue(TW_USE_EXTERNAL_STORAGE, 0);
+					current_storage_path = DataManager::GetCurrentStoragePath();
+					FreeStorage = Find_Partition_By_Path(current_storage_path);
+					if (FreeStorage != NULL) {
+						DataManager::SetValue(TW_STORAGE_FREE_SIZE, (int)(FreeStorage->Free / 1048576LLU));
+					} else {
+						LOGERR("Unable to locate internal storage partition.\n");
+						DataManager::SetValue(TW_STORAGE_FREE_SIZE, 0);
+					}
+				}
+			} else {
+				// No dual storage and unable to mount storage, error!
+				LOGERR("Unable to mount storage.\n");
+				DataManager::SetValue(TW_STORAGE_FREE_SIZE, 0);
+			}
+		} else {
+			DataManager::SetValue(TW_STORAGE_FREE_SIZE, (int)(FreeStorage->Free / 1048576LLU));
+		}
+	} else {
+		LOGINFO("Unable to find storage partition '%s'.\n", current_storage_path.c_str());
+	}
+*/
+}
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
 int TWPartitionManager::Decrypt_Device(string Password) {
 #ifdef TW_INCLUDE_CRYPTO
 	int ret_val, password_len;
@@ -2270,6 +2344,67 @@ bool TWPartitionManager::Flash_Image(string Filename) {
 	gui_highlight("flash_done=IMAGE FLASH COMPLETED]");
 	return true;
 }
+
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+bool TWPartitionManager::Push_Context()
+{
+	sync();
+
+	for(size_t i = 0; i < Partitions.size(); ++i)
+		if(Partitions[i]->Is_Mounted())
+			LOGINFO("Partition %s is mounted during TWPartitionManager::Push_Context()\n", Partitions[i]->Mount_Point.c_str());
+
+	std::vector<TWPartition*> parts;
+	Partitions.swap(parts);
+
+	Contexts.push_back(parts);
+	return true;
+}
+
+void TWPartitionManager::Copy_And_Push_Context()
+{
+	std::vector<TWPartition*> parts;
+	for(size_t i = 0; i < Partitions.size(); ++i)
+		parts.push_back(new TWPartition(*Partitions[i]));
+
+	Partitions.swap(parts);
+	Contexts.push_back(parts);
+}
+
+bool TWPartitionManager::Pop_Context()
+{
+	if(Contexts.empty())
+		return false;
+
+	sync();
+
+	for(size_t i = 0; i < Partitions.size(); ++i)
+	{
+		if(Partitions[i]->Is_Mounted())
+			LOGINFO("Partition %s is mounted during TWPartitionManager::Pop_Context()\n", Partitions[i]->Mount_Point.c_str());
+		delete Partitions[i];
+	}
+
+	Partitions = Contexts.back();
+	Contexts.pop_back();
+	return true;
+}
+
+TWPartition* TWPartitionManager::Find_Original_Partition_By_Path(string Path) {
+	std::vector<TWPartition*>::iterator iter;
+	string Local_Path = TWFunc::Get_Root_Path(Path);
+
+	std::vector<TWPartition*> *parts = &Partitions;
+	if(!Contexts.empty())
+		parts = &Contexts.front();
+
+	for (iter = parts->begin(); iter != parts->end(); iter++) {
+		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path))
+			return (*iter);
+	}
+	return NULL;
+}
+#endif //TARGET_RECOVERY_IS_MULTIROM
 
 void TWPartitionManager::Translate_Partition(const char* path, const char* resource_name, const char* default_value) {
 	TWPartition* part = PartitionManager.Find_Partition_By_Path(path);
