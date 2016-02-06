@@ -36,6 +36,7 @@
 
 #include <adb.h>
 #include <android-base/file.h>
+#include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
@@ -60,6 +61,7 @@ struct selabel_handle *sehandle;
 static const struct option OPTIONS[] = {
   { "send_intent", required_argument, NULL, 'i' },
   { "update_package", required_argument, NULL, 'u' },
+  { "retry_count", required_argument, NULL, 'n' },
   { "wipe_data", no_argument, NULL, 'w' },
   { "wipe_cache", no_argument, NULL, 'c' },
   { "show_text", no_argument, NULL, 't' },
@@ -86,6 +88,7 @@ static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
 static const int KEEP_LOG_COUNT = 10;
+static const int EIO_RETRY_COUNT = 2;
 static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
 // GmsCore enters recovery mode to install package when having enough battery
 // percentage. Normally, the threshold is 40% without charger and 20% with charger.
@@ -1120,6 +1123,29 @@ static bool is_battery_ok() {
     }
 }
 
+static void set_retry_bootloader_message(int retry_count, int argc, char** argv) {
+    struct bootloader_message boot {};
+    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
+    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
+
+    for (int i = 1; i < argc; ++i) {
+        if (strstr(argv[i], "retry_count") == nullptr) {
+            strlcat(boot.recovery, argv[i], sizeof(boot.recovery));
+            strlcat(boot.recovery, "\n", sizeof(boot.recovery));
+        }
+    }
+
+    // Initialize counter to 1 if it's not in BCB, otherwise increment it by 1.
+    if (retry_count == 0) {
+        strlcat(boot.recovery, "--retry_count=1\n", sizeof(boot.recovery));
+    } else {
+        char buffer[20];
+        snprintf(buffer, sizeof(buffer), "--retry_count=%d\n", retry_count+1);
+        strlcat(boot.recovery, buffer, sizeof(boot.recovery));
+    }
+    set_bootloader_message(&boot);
+}
+
 int main(int argc, char **argv) {
     // If this binary is started with the single argument "--adbd",
     // instead of being the normal recovery binary, it turns into kind
@@ -1153,11 +1179,13 @@ int main(int argc, char **argv) {
     bool sideload_auto_reboot = false;
     bool just_exit = false;
     bool shutdown_after = false;
+    int retry_count = 0;
 
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
         switch (arg) {
         case 'i': send_intent = optarg; break;
+        case 'n': android::base::ParseInt(optarg, &retry_count, 0); break;
         case 'u': update_package = optarg; break;
         case 'w': should_wipe_data = true; break;
         case 'c': should_wipe_cache = true; break;
@@ -1262,7 +1290,24 @@ int main(int argc, char **argv) {
             }
             if (status != INSTALL_SUCCESS) {
                 ui->Print("Installation aborted.\n");
+                // When I/O error happens, reboot and retry installation EIO_RETRY_COUNT
+                // times before we abandon this OTA update.
+                if (status == INSTALL_RETRY && retry_count < EIO_RETRY_COUNT) {
+                    copy_logs();
+                    set_retry_bootloader_message(retry_count, argc, argv);
+                    // Print retry count on screen.
+                    ui->Print("Retry attempt %d\n", retry_count);
 
+                    // Reboot and retry the update
+                    int ret = property_set(ANDROID_RB_PROPERTY, "reboot,recovery");
+                    if (ret < 0) {
+                        ui->Print("Reboot failed\n");
+                    } else {
+                        while (true) {
+                            pause();
+                        }
+                    }
+                }
                 // If this is an eng or userdebug build, then automatically
                 // turn the text display on if the script fails so the error
                 // message is visible.
