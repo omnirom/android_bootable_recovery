@@ -38,6 +38,8 @@ static std::string FaultFileName =
 #endif // defined (TARGET_READ_FAULT)
 #endif // defined (TARGET_INJECT_FAULTS)
 
+bool have_eio_error = false;
+
 int ota_open(const char* path, int oflags) {
 #if defined (TARGET_INJECT_FAULTS)
     // Let the caller handle errors; we do not care if open succeeds or fails
@@ -90,12 +92,22 @@ size_t ota_fread(void* ptr, size_t size, size_t nitems, FILE* stream) {
             && FilenameCache[(intptr_t)stream] == FaultFileName) {
         FaultFileName = "";
         errno = EIO;
+        have_eio_error = true;
         return 0;
     } else {
-        return fread(ptr, size, nitems, stream);
+        size_t status = fread(ptr, size, nitems, stream);
+        // If I/O error occurs, set the retry-update flag.
+        if (status != nitems && errno == EIO) {
+            have_eio_error = true;
+        }
+        return status;
     }
 #else
-    return fread(ptr, size, nitems, stream);
+    size_t status = fread(ptr, size, nitems, stream);
+    if (status != nitems && errno == EIO) {
+        have_eio_error = true;
+    }
+    return status;
 #endif
 }
 
@@ -105,12 +117,21 @@ ssize_t ota_read(int fd, void* buf, size_t nbyte) {
             && FilenameCache[fd] == FaultFileName) {
         FaultFileName = "";
         errno = EIO;
+        have_eio_error = true;
         return -1;
     } else {
-        return read(fd, buf, nbyte);
+        ssize_t status = read(fd, buf, nbyte);
+        if (status == -1 && errno == EIO) {
+            have_eio_error = true;
+        }
+        return status;
     }
 #else
-    return read(fd, buf, nbyte);
+    ssize_t status = read(fd, buf, nbyte);
+    if (status == -1 && errno == EIO) {
+        have_eio_error = true;
+    }
+    return status;
 #endif
 }
 
@@ -120,12 +141,21 @@ size_t ota_fwrite(const void* ptr, size_t size, size_t count, FILE* stream) {
             && FilenameCache[(intptr_t)stream] == FaultFileName) {
         FaultFileName = "";
         errno = EIO;
+        have_eio_error = true;
         return 0;
     } else {
-        return fwrite(ptr, size, count, stream);
+        size_t status = fwrite(ptr, size, count, stream);
+        if (status != count && errno == EIO) {
+            have_eio_error = true;
+        }
+        return status;
     }
 #else
-    return fwrite(ptr, size, count, stream);
+    size_t status = fwrite(ptr, size, count, stream);
+    if (status != count && errno == EIO) {
+        have_eio_error = true;
+    }
+    return status;
 #endif
 }
 
@@ -135,12 +165,21 @@ ssize_t ota_write(int fd, const void* buf, size_t nbyte) {
             && FilenameCache[fd] == FaultFileName) {
         FaultFileName = "";
         errno = EIO;
+        have_eio_error = true;
         return -1;
     } else {
-        return write(fd, buf, nbyte);
+        ssize_t status = write(fd, buf, nbyte);
+        if (status == -1 && errno == EIO) {
+            have_eio_error = true;
+        }
+        return status;
     }
 #else
-    return write(fd, buf, nbyte);
+    ssize_t status = write(fd, buf, nbyte);
+    if (status == -1 && errno == EIO) {
+        have_eio_error = true;
+    }
+    return status;
 #endif
 }
 
@@ -151,10 +190,19 @@ int ota_fsync(int fd) {
         FaultFileName = "";
         errno = EIO;
         return -1;
+        have_eio_error = true;
     } else {
-        return fsync(fd);
+        int status = fsync(fd);
+        if (status == -1 && errno == EIO) {
+            have_eio_error = true;
+        }
+        return status;
     }
 #else
-    return fsync(fd);
+    int status = fsync(fd);
+    if (status == -1 && errno == EIO) {
+        have_eio_error = true;
+    }
+    return status;
 #endif
 }
