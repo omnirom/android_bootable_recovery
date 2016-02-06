@@ -897,9 +897,6 @@ void DataManager::SetDefaultValues()
 		defVal << TW_DEFAULT_BRIGHTNESS;
 		mValues.erase("tw_brightness");
 		mValues.insert(make_pair("tw_brightness", make_pair(defVal.str(), 1)));
-		TWFunc::Set_Brightness(defVal.str());
-#else
-		TWFunc::Set_Brightness(maxBrightness);
 #endif
 	}
 	mValues.insert(make_pair(TW_MILITARY_TIME, make_pair("0", 1)));
