@@ -379,6 +379,9 @@ else
 endif
 ifneq ($(TW_NO_EXFAT), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += mkexfatfs fsckexfat
+    ifneq ($(TW_NO_EXFAT_FUSE), true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += exfat-fuse
+    endif
 endif
 ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
@@ -406,9 +409,6 @@ ifneq ($(TW_EXCLUDE_SUPERSU), true)
         LOCAL_ADDITIONAL_DEPENDENCIES += \
             libsupol.soarm64 suarm64 supolicyarm64
     endif
-endif
-ifneq ($(TW_NO_EXFAT_FUSE), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += exfat-fuse
 endif
 ifeq ($(TW_INCLUDE_FB2PNG), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += fb2png
@@ -610,9 +610,9 @@ ifneq ($(TW_NO_EXFAT), true)
             $(commands_recovery_local_path)/exfat/fsck/Android.mk \
             $(commands_recovery_local_path)/fuse/Android.mk \
             $(commands_recovery_local_path)/exfat/libexfat/Android.mk
-endif
-ifneq ($(TW_NO_EXFAT_FUSE), true)
-    include $(commands_recovery_local_path)/exfat/fuse/Android.mk
+    ifneq ($(TW_NO_EXFAT_FUSE), true)
+        include $(commands_recovery_local_path)/exfat/fuse/Android.mk
+    endif
 endif
 ifneq ($(TW_OEM_BUILD),true)
     include $(commands_recovery_local_path)/orscmd/Android.mk
