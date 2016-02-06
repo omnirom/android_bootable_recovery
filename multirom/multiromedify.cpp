@@ -200,6 +200,13 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
             addArg(new EdifyValue("\"\""));
         }
     }
+    else if(m_name == "range_sha1")
+    {
+        res |= OFF_CHANGED;
+        m_name = "true || " + m_name;
+        lastNewlineRef = (*parentList)->insert(++lastNewlineRef, new EdifyValue(std::string("# MultiROM made if on the next line always pass")));
+        lastNewlineRef = (*parentList)->insert(++lastNewlineRef, new EdifyNewline());
+    }
 
     for(std::list<EdifyElement*>::iterator itr = m_args.begin(); itr != m_args.end(); ++itr)
     {
