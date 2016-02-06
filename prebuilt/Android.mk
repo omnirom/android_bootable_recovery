@@ -229,6 +229,7 @@ TWRP_AUTOGEN := $(intermediates)/teamwin
 ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/cp_xattrs
     RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/ls_xattrs
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/bbootimg
 endif
 
 GEN := $(intermediates)/teamwin
