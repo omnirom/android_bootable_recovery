@@ -226,6 +226,11 @@ ifeq ($(TWRP_INCLUDE_LOGCAT), true)
 endif
 TWRP_AUTOGEN := $(intermediates)/teamwin
 
+ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/cp_xattrs
+    RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/ls_xattrs
+endif
+
 GEN := $(intermediates)/teamwin
 $(GEN): $(RELINK)
 $(GEN): $(RELINK_SOURCE_FILES) $(call intermediates-dir-for,EXECUTABLES,recovery)/recovery
