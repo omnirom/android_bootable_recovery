@@ -353,10 +353,18 @@ public:
 		utf8state = utf8codepoint = 0;
 	}
 
-	void setSize(int xChars, int yChars, int w, int h)
+	void setSize(int xChars, int yChars, int w, int h, FontResource* f, int t)
 	{
+		mFont = f;
+		if (t == 0)
+			isMonoFont = 1;
+		else {
+			isMonoFont = 0;
+			maxCharWidth = t;
+		}
 		width = xChars;
 		height = yChars;
+		mRenderW = w;
 		if (pty.started())
 			pty.resize(width, height, w, h);
 		debug_printf("setSize: %d*%d chars, %d*%d pixels\n", xChars, yChars, w, h);
@@ -507,8 +515,10 @@ private:
 			if (rc == UTF8_ACCEPT)
 				unpackedLine.cells.push_back(Cell(u8cp));
 		}
-		if (unpackedLine.cells.size() < (size_t)width)
-			unpackedLine.cells.resize(width);
+		if (isMonoFont) {
+			if (unpackedLine.cells.size() < (size_t)width)
+				unpackedLine.cells.resize(width);
+		}
 		unpackedY = y;
 	}
 
@@ -590,12 +600,24 @@ private:
 		unpackedLine.cells[cursorX].cp = cp;
 
 		right();
-		if (cursorX >= width)
-		{
-			// TODO: configurable line wrapping
-			// TODO: don't go down immediately but only on next char?
-			down();
-			setX(0);
+		if (isMonoFont) {
+			if (cursorX >= width) {
+				// TODO: configurable line wrapping
+				// TODO: don't go down immediately but only on next char?
+				down();
+				setX(0);
+			}
+		}
+		else {
+			packLine();
+			std::string& s = lines[cursorY].text;
+			size_t line_char_width = gr_ttf_maxExW(s.c_str(), mFont->GetResource(), mRenderW - maxCharWidth);
+			debug_printf("%s size:%d line_char_width:%d cursorX:%d\n", s.c_str(), s.size(), line_char_width, cursorX);
+			if (line_char_width < s.size()) {
+				// TODO: configurable line wrapping
+				down();
+				setX(0);
+			}
 		}
 		// TODO: update all GUI objects that display this terminal engine
 	}
@@ -745,6 +767,8 @@ private:
 	}
 
 private:
+	FontResource* mFont;
+	int mRenderW, isMonoFont, maxCharWidth;
 	int cursorX, cursorY; // 0-based, char based. TODO: decide how to handle scrollback
 	int width, height; // window size in chars
 	std::vector<Line> lines; // the text buffer
@@ -891,7 +915,13 @@ void GUITerminal::InitAndResize()
 	engine->initPty();
 	// send window resize
 	int charWidth = gr_ttf_measureEx("N", mFont->GetResource());
-	engine->setSize(mRenderW / charWidth, GetDisplayItemCount(), mRenderW, mRenderH);
+	int maxCharWidth = gr_ttf_getMaxCharWidth(mFont->GetResource());
+	if (charWidth == maxCharWidth) //monospaced font.
+		engine->setSize(mRenderW/charWidth, GetDisplayItemCount(), mRenderW, mRenderH, mFont, 0);			
+	else {
+		int charMinWidth = gr_ttf_measureEx("'", mFont->GetResource());
+		engine->setSize(mRenderW/charMinWidth, GetDisplayItemCount(), mRenderW, mRenderH, mFont, maxCharWidth);
+	}
 }
 
 void GUITerminal::SetPageFocus(int inFocus)
