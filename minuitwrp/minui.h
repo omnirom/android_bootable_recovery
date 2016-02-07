@@ -62,6 +62,7 @@ int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int
 int gr_ttf_measureEx(const char *s, void *font);
 int gr_ttf_maxExW(const char *s, void *font, int max_width);
 int gr_ttf_getMaxFontHeight(void *font);
+int gr_ttf_getMaxCharWidth(void *font);
 void gr_ttf_dump_stats(void);
 
 void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy);

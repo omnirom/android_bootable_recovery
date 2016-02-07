@@ -762,6 +762,23 @@ int gr_ttf_getMaxFontHeight(void *font)
     return res;
 }
 
+int gr_ttf_getMaxCharWidth(void *font)
+{
+    if (!font)
+        return NULL;
+
+    TrueTypeFont *f = (TrueTypeFont *)font;
+
+    pthread_mutex_lock(&f->mutex);
+
+
+    int ret = f->face->size->metrics.max_advance / 64;
+
+    pthread_mutex_unlock(&f->mutex);
+
+    return ret;
+}
+
 static bool gr_ttf_dump_stats_count_string_cache(void *key __unused, void *value, void *context)
 {
     int *string_cache_size = (int *)context;
