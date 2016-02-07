@@ -120,7 +120,7 @@ void MultiROM::findPath()
 	m_boot_dev = boot->Actual_Block_Device;
 
 	TWPartition *fw = PartitionManager.Find_Partition_By_Path("/firmware");
-	m_has_firmware = (fw && fw->Current_File_System == "vfat");
+	m_has_firmware = (fw && (fw->Current_File_System == "vfat" || fw->Current_File_System == "ext4"));
 
 	static const char *paths[] = {
 		"/data/media/multirom",
