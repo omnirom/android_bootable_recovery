@@ -7,6 +7,7 @@
 #include <linux/xattr.h>
 #include <sys/xattr.h>
 #include <sys/vfs.h>
+#include <errno.h>
 
 #include "libcp_xattrs.h"
 
