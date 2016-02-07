@@ -799,10 +799,6 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_ACTION_BUSY, make_pair("0", 0)));
 	mValues.insert(make_pair("tw_wipe_cache", make_pair("0", 0)));
 	mValues.insert(make_pair("tw_wipe_dalvik", make_pair("0", 0)));
-	if (GetIntValue(TW_HAS_INTERNAL) == 1 && GetIntValue(TW_HAS_DATA_MEDIA) == 1 && GetIntValue(TW_HAS_EXTERNAL) == 0)
-		SetValue(TW_HAS_USB_STORAGE, 0, 0);
-	else
-		SetValue(TW_HAS_USB_STORAGE, 1, 0);
 	mValues.insert(make_pair(TW_ZIP_INDEX, make_pair("0", 0)));
 	mValues.insert(make_pair(TW_ZIP_QUEUE_COUNT, make_pair("0", 0)));
 	mValues.insert(make_pair(TW_FILENAME, make_pair("/sdcard", 0)));
