@@ -729,6 +729,10 @@ bool MultiROM::changeMounts(std::string name)
 	// recovery.fstab and manages to mount the real /system
 	system("mv /etc/recovery.fstab /etc/recovery.fstab.bak");
 
+	// This shim prevents everything from mounting anything as read-only
+	system("mv /sbin/mount /sbin/mount_real");
+	system("cp -a /sbin/mount_shim.sh /sbin/mount");
+
 	return true;
 }
 
@@ -741,6 +745,7 @@ void MultiROM::restoreMounts()
 
 	//system("mv /sbin/umount.bak /sbin/umount");
 	system("mv /etc/recovery.fstab.bak /etc/recovery.fstab");
+	system("if [ -e /sbin/mount_real ]; then mv /sbin/mount_real /sbin/mount; fi;");
 
 	// script might have mounted it several times over, we _have_ to umount it all
 	system("sync;"
