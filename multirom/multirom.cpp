@@ -329,17 +329,11 @@ bool MultiROM::restorecon(std::string name)
 	if(!changeMounts(name))
 		goto exit;
 
-#if PLATFORM_SDK_VERSION >= 21
-  #define RESTORECON_ARGS "-RFDv"
-#else
-  #define RESTORECON_ARGS "-RFv"
-#endif
-
 	static const char * const parts[] = { "/system", "/data", "/cache", NULL };
 	for(int i = 0; parts[i]; ++i)
 	{
 		gui_print("Running restorecon on ROM's %s\n", parts[i]);
-		system_args("restorecon %s %s", RESTORECON_ARGS, parts[i]);
+		system_args("cd /system/lib && ../bin/restorecon -RFDv %s", parts[i]);
 	}
 
 	// SuperSU moves the real app_process into _original
