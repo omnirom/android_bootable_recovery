@@ -164,6 +164,16 @@ static void overlay_blank(minui_backend* backend __unused, bool blank)
     }
     write(fd, blank ? "000" : brightness, 3);
     close(fd);
+
+#ifdef TW_SECONDARY_BRIGHTNESS_PATH
+    fd = open(TW_SECONDARY_BRIGHTNESS_PATH, O_RDWR);
+    if (fd < 0) {
+        perror("cannot open LCD backlight 2");
+        return;
+    }
+    write(fd, blank ? "000" : brightness, 3);
+    close(fd);
+#endif
 #else
     int ret;
 
