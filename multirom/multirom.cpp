@@ -333,7 +333,7 @@ bool MultiROM::restorecon(std::string name)
 	for(int i = 0; parts[i]; ++i)
 	{
 		gui_print("Running restorecon on ROM's %s\n", parts[i]);
-		system_args("cd /system/lib && ../bin/restorecon -RFDv %s", parts[i]);
+		system_args("restorecon -RFDv %s", parts[i]);
 	}
 
 	// SuperSU moves the real app_process into _original
