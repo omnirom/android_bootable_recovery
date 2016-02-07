@@ -2185,7 +2185,7 @@ const base_folder& MultiROM::addBaseFolder(const std::string& name, int min, int
 const base_folder& MultiROM::addBaseFolder(const base_folder& b)
 {
 	LOGINFO("MROMInstaller: base folder: %s (min: %dMB def: %dMB)\n", b.name.c_str(), b.min_size, b.size);
-	return m_base_folders.insert(std::make_pair<std::string, base_folder>(b.name, b)).first->second;
+	return m_base_folders.insert(std::make_pair(b.name, b)).first->second;
 }
 
 MultiROM::baseFolders& MultiROM::getBaseFolders()
