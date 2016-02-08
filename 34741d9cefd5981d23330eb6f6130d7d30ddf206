@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_68cb2c24",
+        "filename": "data.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 747,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-08T05:46:44Z",
+      "side": 0,
+      "message": "ah, this changed when adopted storage was committed",
+      "revId": "34741d9cefd5981d23330eb6f6130d7d30ddf206",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
