@@ -18,24 +18,24 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <ftw.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/capability.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <time.h>
-#include <ftw.h>
-#include <sys/capability.h>
 #include <sys/xattr.h>
-#include <linux/xattr.h>
-#include <inttypes.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <android-base/parseint.h>
@@ -45,6 +45,7 @@
 #include <cutils/android_reboot.h>
 #include <ext4_utils/make_ext4fs.h>
 #include <ext4_utils/wipe.h>
+#include <openssl/sha.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
 
@@ -54,8 +55,8 @@
 #include "error_code.h"
 #include "minzip/DirUtil.h"
 #include "mounts.h"
-#include "openssl/sha.h"
 #include "ota_io.h"
+#include "print_sha1.h"
 #include "tune2fs.h"
 #include "updater/updater.h"
 
@@ -109,19 +110,6 @@ static int make_parents(char* name) {
         }
     }
     return 0;
-}
-
-// Take a sha-1 digest and return it as a newly-allocated hex string.
-char* PrintSha1(const uint8_t* digest) {
-    char* buffer = reinterpret_cast<char*>(malloc(SHA_DIGEST_LENGTH*2 + 1));
-    const char* alphabet = "0123456789abcdef";
-    size_t i;
-    for (i = 0; i < SHA_DIGEST_LENGTH; ++i) {
-        buffer[i*2] = alphabet[(digest[i] >> 4) & 0xf];
-        buffer[i*2+1] = alphabet[digest[i] & 0xf];
-    }
-    buffer[i*2] = '\0';
-    return buffer;
 }
 
 // mount(fs_type, partition_type, location, mount_point)
@@ -1227,29 +1215,24 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
     SHA1(reinterpret_cast<uint8_t*>(args[0]->data), args[0]->size, digest);
 
     if (argc == 1) {
-        return StringValue(PrintSha1(digest));
+        return StringValue(strdup(print_sha1(digest).c_str()));
     }
 
-    int i;
-    uint8_t arg_digest[SHA_DIGEST_LENGTH];
-    for (i = 1; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i) {
+        uint8_t arg_digest[SHA_DIGEST_LENGTH];
         if (args[i]->type != VAL_STRING) {
-            printf("%s(): arg %d is not a string; skipping",
-                    name, i);
+            printf("%s(): arg %d is not a string; skipping", name, i);
         } else if (ParseSha1(args[i]->data, arg_digest) != 0) {
             // Warn about bad args and skip them.
-            printf("%s(): error parsing \"%s\" as sha-1; skipping",
-                   name, args[i]->data);
+            printf("%s(): error parsing \"%s\" as sha-1; skipping", name, args[i]->data);
         } else if (memcmp(digest, arg_digest, SHA_DIGEST_LENGTH) == 0) {
-            break;
+            // Found a match.
+            return args[i].release();
         }
     }
-    if (i >= argc) {
-        // Didn't match any of the hex strings; return false.
-        return StringValue(strdup(""));
-    }
-    // Found a match.
-    return args[i].release();
+
+    // Didn't match any of the hex strings; return false.
+    return StringValue(strdup(""));
 }
 
 // Read a local file and return its contents (the Value* returned
