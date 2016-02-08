@@ -43,7 +43,7 @@ LOCAL_STATIC_LIBRARIES := \
     libcutils \
     libc
 
-testdata_out_path := $(TARGET_OUT_DATA_NATIVE_TESTS)/$(LOCAL_MODULE)
+testdata_out_path := $(TARGET_OUT_DATA_NATIVE_TESTS)/recovery
 testdata_files := $(call find-subdir-files, testdata/*)
 
 GEN := $(addprefix $(testdata_out_path)/, $(testdata_files))
