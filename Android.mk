@@ -666,7 +666,8 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
 #MultiROM
 ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
     include $(commands_recovery_local_path)/multirom/prebuilt/Android.mk \
-            $(commands_recovery_local_path)/multirom/cp_xattrs/Android.mk
+            $(commands_recovery_local_path)/multirom/cp_xattrs/Android.mk \
+            $(commands_recovery_local_path)/multirom/phablet/Android.mk
 endif
 
 ifeq ($(TW_INCLUDE_CRYPTO), true)
