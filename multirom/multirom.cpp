@@ -786,6 +786,10 @@ void MultiROM::restoreMounts()
 		DataManager::SetValue(TW_INTERNAL_PATH, path);
 	}
 
+	// The storage path gets set to wrong fake data when restored above, call it again
+	// with the the path to call Data::SetBackupFolder() again.
+	DataManager::SetValue("tw_storage_path", DataManager::GetStrValue("tw_storage_path"));
+
 	restoreROMPath();
 }
 
