@@ -667,12 +667,6 @@ bool MultiROM::changeMounts(std::string name)
 		path.replace(0, sizeof("/data")-1, REALDATA);
 		DataManager::SetValue(TW_INTERNAL_PATH, path);
 	}
-	if(DataManager::GetStrValue("tw_storage_path").find("/data/media") == 0)
-	{
-		std::string path = DataManager::GetStrValue("tw_storage_path");
-		path.replace(0, sizeof("/data")-1, REALDATA);
-		DataManager::SetValue("tw_storage_path", path);
-	}
 
 	if(!data->Mount(true))
 	{
@@ -705,6 +699,13 @@ bool MultiROM::changeMounts(std::string name)
 	parts.push_back(data);
 	parts.push_back(sys);
 	parts.push_back(cache);
+
+	if(DataManager::GetStrValue("tw_storage_path").find("/data/media") == 0)
+	{
+		std::string path = DataManager::GetStrValue("tw_storage_path");
+		path.replace(0, sizeof("/data")-1, REALDATA);
+		DataManager::SetValue("tw_storage_path", path);
+	}
 
 	PartitionManager.Output_Partition_Logging();
 	PartitionManager.Update_Storage_Sizes();
@@ -743,6 +744,13 @@ void MultiROM::restoreMounts()
 
 	gui_print("Restoring mounts...\n");
 
+	if(DataManager::GetStrValue("tw_storage_path").find("/realdata/media") == 0)
+	{
+		std::string path = DataManager::GetStrValue("tw_storage_path");
+		path.replace(0, sizeof("/realdata")-1, "/data");
+		DataManager::SetValue("tw_storage_path", path);
+	}
+
 	//system("mv /sbin/umount.bak /sbin/umount");
 	system("mv /etc/recovery.fstab.bak /etc/recovery.fstab");
 	system("if [ -e /sbin/mount_real ]; then mv /sbin/mount_real /sbin/mount; fi;");
@@ -776,12 +784,6 @@ void MultiROM::restoreMounts()
 		std::string path = DataManager::GetStrValue(TW_INTERNAL_PATH);
 		path.replace(0, sizeof("/realdata")-1, "/data");
 		DataManager::SetValue(TW_INTERNAL_PATH, path);
-	}
-	if(DataManager::GetStrValue("tw_storage_path").find("/realdata/media") == 0)
-	{
-		std::string path = DataManager::GetStrValue("tw_storage_path");
-		path.replace(0, sizeof("/realdata")-1, "/data");
-		DataManager::SetValue("tw_storage_path", path);
 	}
 
 	restoreROMPath();
