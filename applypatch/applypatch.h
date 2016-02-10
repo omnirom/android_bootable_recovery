@@ -17,6 +17,7 @@
 #ifndef _APPLYPATCH_H
 #define _APPLYPATCH_H
 
+#include <stdint.h>
 #include <sys/stat.h>
 
 #include <vector>
