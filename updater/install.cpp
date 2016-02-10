@@ -996,7 +996,7 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     FILE* f;
-    f = fopen(filename, "rb");
+    f = ota_fopen(filename, "rb");
     if (f == NULL) {
         ErrorAbort(state, "%s: failed to open %s: %s", name, filename, strerror(errno));
         goto done;
@@ -1005,12 +1005,12 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (ota_fread(buffer, 1, st.st_size, f) != static_cast<size_t>(st.st_size)) {
         ErrorAbort(state, "%s: failed to read %lld bytes from %s",
                    name, (long long)st.st_size+1, filename);
-        fclose(f);
+        ota_fclose(f);
         goto done;
     }
     buffer[st.st_size] = '\0';
 
-    fclose(f);
+    ota_fclose(f);
 
     char* line;
     line = strtok(buffer, "\n");
@@ -1439,10 +1439,10 @@ Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     // zero out the 'command' field of the bootloader message.
     memset(buffer, 0, sizeof(((struct bootloader_message*)0)->command));
-    FILE* f = fopen(filename, "r+b");
+    FILE* f = ota_fopen(filename, "r+b");
     fseek(f, offsetof(struct bootloader_message, command), SEEK_SET);
     ota_fwrite(buffer, sizeof(((struct bootloader_message*)0)->command), 1, f);
-    fclose(f);
+    ota_fclose(f);
     free(filename);
 
     strcpy(buffer, "reboot,");
@@ -1481,7 +1481,7 @@ Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
     // bootloader message that the main recovery uses to save its
     // arguments in case of the device restarting midway through
     // package installation.
-    FILE* f = fopen(filename, "r+b");
+    FILE* f = ota_fopen(filename, "r+b");
     fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
     int to_write = strlen(stagestr)+1;
     int max_size = sizeof(((struct bootloader_message*)0)->stage);
@@ -1490,7 +1490,7 @@ Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
         stagestr[max_size-1] = 0;
     }
     ota_fwrite(stagestr, to_write, 1, f);
-    fclose(f);
+    ota_fclose(f);
 
     free(stagestr);
     return StringValue(filename);
@@ -1507,10 +1507,10 @@ Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (ReadArgs(state, argv, 1, &filename) < 0) return NULL;
 
     char buffer[sizeof(((struct bootloader_message*)0)->stage)];
-    FILE* f = fopen(filename, "rb");
+    FILE* f = ota_fopen(filename, "rb");
     fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
     ota_fread(buffer, sizeof(buffer), 1, f);
-    fclose(f);
+    ota_fclose(f);
     buffer[sizeof(buffer)-1] = '\0';
 
     return StringValue(strdup(buffer));

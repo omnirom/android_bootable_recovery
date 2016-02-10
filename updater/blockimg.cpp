@@ -554,7 +554,7 @@ static int LoadStash(const std::string& base, const std::string& id, bool verify
         return -1;
     }
 
-    int fd = TEMP_FAILURE_RETRY(open(fn.c_str(), O_RDONLY));
+    int fd = TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_RDONLY));
     unique_fd fd_holder(fd);
 
     if (fd == -1) {
@@ -611,7 +611,7 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
 
     fprintf(stderr, " writing %d blocks to %s\n", blocks, cn.c_str());
 
-    int fd = TEMP_FAILURE_RETRY(open(fn.c_str(), O_WRONLY | O_CREAT | O_TRUNC, STASH_FILE_MODE));
+    int fd = TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_WRONLY | O_CREAT | O_TRUNC, STASH_FILE_MODE));
     unique_fd fd_holder(fd);
 
     if (fd == -1) {
@@ -635,7 +635,7 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
     }
 
     std::string dname = GetStashFileName(base, "", "");
-    int dfd = TEMP_FAILURE_RETRY(open(dname.c_str(), O_RDONLY | O_DIRECTORY));
+    int dfd = TEMP_FAILURE_RETRY(ota_open(dname.c_str(), O_RDONLY | O_DIRECTORY));
     unique_fd dfd_holder(dfd);
 
     if (dfd == -1) {
@@ -1347,7 +1347,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         return StringValue(strdup(""));
     }
 
-    params.fd = TEMP_FAILURE_RETRY(open(blockdev_filename->data, O_RDWR));
+    params.fd = TEMP_FAILURE_RETRY(ota_open(blockdev_filename->data, O_RDWR));
     unique_fd fd_holder(params.fd);
 
     if (params.fd == -1) {
@@ -1615,7 +1615,7 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
         return StringValue(strdup(""));
     }
 
-    int fd = open(blockdev_filename->data, O_RDWR);
+    int fd = ota_open(blockdev_filename->data, O_RDWR);
     unique_fd fd_holder(fd);
     if (fd < 0) {
         ErrorAbort(state, "open \"%s\" failed: %s", blockdev_filename->data, strerror(errno));
@@ -1669,7 +1669,7 @@ Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[])
         return StringValue(strdup(""));
     }
 
-    int fd = open(arg_filename->data, O_RDONLY);
+    int fd = ota_open(arg_filename->data, O_RDONLY);
     unique_fd fd_holder(fd);
     if (fd == -1) {
         ErrorAbort(state, "open \"%s\" failed: %s", arg_filename->data, strerror(errno));

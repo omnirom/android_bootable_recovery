@@ -89,7 +89,7 @@ int LoadFileContents(const char* filename, FileContents* file) {
     size_t bytes_read = ota_fread(data.get(), 1, file->size, f);
     if (bytes_read != static_cast<size_t>(file->size)) {
         printf("short read of \"%s\" (%zu bytes of %zd)\n", filename, bytes_read, file->size);
-        fclose(f);
+        ota_fclose(f);
         return -1;
     }
     ota_fclose(f);
@@ -936,7 +936,7 @@ static int GenerateTarget(FileContents* source_file,
         } else {
             // We write the decoded output to "<tgt-file>.patch".
             output_fd = ota_open(tmp_target_filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC,
-                          S_IRUSR | S_IWUSR);
+                                 S_IRUSR | S_IWUSR);
             if (output_fd < 0) {
                 printf("failed to open output file %s: %s\n", tmp_target_filename.c_str(),
                        strerror(errno));
