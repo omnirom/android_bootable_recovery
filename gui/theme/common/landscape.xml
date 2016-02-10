@@ -106,7 +106,7 @@
 		<style name="console">
 			<fastscroll rectcolor="%accent_color%" w="%fastscroll_w%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 			<color foreground="%text_color%" background="%background_color%" scroll="%background_color%"/>
-			<font resource="fixed"/>
+			<font resource="font_t"/>
 		</style>
 
 		<style name="terminal">
