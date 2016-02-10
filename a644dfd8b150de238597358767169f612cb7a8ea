@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_fe6256d6",
+        "filename": "gui/theme/common/languages/it.xml",
+        "patchSetId": 4
+      },
+      "lineNbr": 511,
+      "author": {
+        "id": 1001417
+      },
+      "writtenOn": "2016-02-10T23:54:44Z",
+      "side": 1,
+      "message": "You are missing \u003c/string\u003e here",
+      "range": {
+        "startLine": 511,
+        "startChar": 2,
+        "endLine": 511,
+        "endChar": 54
+      },
+      "revId": "a644dfd8b150de238597358767169f612cb7a8ea",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
