@@ -182,7 +182,6 @@ int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
 
     off_t oldpos = 0, newpos = 0;
     off_t ctrl[3];
-    off_t len_read;
     int i;
     unsigned char buf[24];
     while (newpos < new_size) {

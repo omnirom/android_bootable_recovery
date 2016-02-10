@@ -130,6 +130,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
             size_t src_len = Read8(deflate_header+8);
             size_t patch_offset = Read8(deflate_header+16);
             size_t expanded_len = Read8(deflate_header+24);
+            size_t target_len = Read8(deflate_header+32);
             int level = Read4(deflate_header+40);
             int method = Read4(deflate_header+44);
             int windowBits = Read4(deflate_header+48);
@@ -193,6 +194,11 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
             if (ApplyBSDiffPatchMem(expanded_source.data(), expanded_len,
                                     patch, patch_offset,
                                     &uncompressed_target_data) != 0) {
+                return -1;
+            }
+            if (uncompressed_target_data.size() != target_len) {
+                printf("expected target len to be %zu, but it's %zu\n",
+                       target_len, uncompressed_target_data.size());
                 return -1;
             }
 

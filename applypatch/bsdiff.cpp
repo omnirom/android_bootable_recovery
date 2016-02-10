@@ -224,7 +224,6 @@ static void offtout(off_t x,u_char *buf)
 int bsdiff(u_char* old, off_t oldsize, off_t** IP, u_char* newdata, off_t newsize,
            const char* patch_filename)
 {
-	int fd;
 	off_t *I;
 	off_t scan,pos,len;
 	off_t lastscan,lastpos,lastoffset;
