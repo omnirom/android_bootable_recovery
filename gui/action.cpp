@@ -651,6 +651,15 @@ int GUIAction::copylog(std::string arg)
 		tw_set_default_metadata(dst.c_str());
 		sync();
 		gui_print("Copied recovery log to %s.\n", DataManager::GetCurrentStoragePath().c_str());
+
+		// andreya108
+		dst = DataManager::GetCurrentStoragePath() + "/dmesg.log";
+		TWFunc::copy_file("/tmp/dmesg.log", dst.c_str(), 0755);
+		tw_set_default_metadata(dst.c_str());
+		sync();
+		gui_print("Copied kernel log to %s.\n", DataManager::GetCurrentStoragePath().c_str());
+		// andreya108
+
 	} else
 		simulate_progress_bar();
 	operation_end(0);

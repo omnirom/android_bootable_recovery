@@ -1066,6 +1066,97 @@ Value* WriteRawImageFn(const char* name, State* state, int argc, Expr* argv[]) {
         goto done;
     }
 
+#if 1 //wschen 2011-11-24 for eMMC update logo/dsp_bl/uboot/preloader
+    if (!strcmp(partition, "logo") || !strcmp(partition, "preloader") || !strcmp(partition, "uboot") || !strcmp(partition, "dsp_bl") || !strcmp(partition, "bootimg") || !strcmp(partition, "boot")|| !strcmp(partition, "tee1")) {
+        FILE *fp = fopen("/proc/dumchar_info", "r");
+        if (fp) {
+            char buf[512], p_name[32], p_size[32], p_addr[32], p_actname[64];
+            int p_type = 0;
+            if (fgets(buf, sizeof(buf), fp) == NULL) {
+                fclose(fp);
+                goto done;
+            }
+            while (fgets(buf, sizeof(buf), fp)) {
+                if (sscanf(buf, "%s %s %s %d %s", p_name, p_size, p_addr, &p_type, p_actname) == 5) {
+                    if (!strcmp(p_name, "bmtpool")) {
+                        break;
+                    }
+
+                    if (strlen(p_name) && (!strcmp(p_name, "boot") || !strcmp(p_name, "bootimg"))) {
+
+                        //phone is eMMC but recovery.fstab is NAND
+                        if ((p_type == 2) && !strcmp(partition, "boot")) {
+                            free(partition);
+                            partition = strdup("bootimg");
+                            partition_value->data = partition;
+                        } else if ((p_type == 1) && !strcmp(partition, "boot")) {
+                            //phone is NAND and recovery.fstab is NAND
+                            break;
+                        } else if ((p_type == 1) && !strcmp(partition, "bootimg")) {
+                            //phone is NAND but recovery.fstab is eMMC
+                            free(partition);
+                            partition = strdup("boot");
+                            partition_value->data = partition;
+                            break;
+                        }
+                    }
+
+                    if (strlen(p_name) && !strcmp(partition, p_name)) {
+                        if (p_type == 2) {
+                            char part_name[128];
+                            snprintf(part_name, 128, "/dev/%s", p_name);
+                            int fd = open(part_name, O_WRONLY | O_SYNC);
+                            if (fd != -1) {
+                                char rbuf[512];
+                                int len;
+                                int in_fd;
+                                int ok = 1;
+
+                                if (contents->type == VAL_STRING) {
+
+                                    in_fd = open(contents->data, O_RDONLY);
+                                    if (in_fd != -1) {
+                                        while ((len = read(in_fd, rbuf, 512)) > 0) {
+                                            if (write(fd, rbuf, len) == -1) {
+                                                ok = 0;
+                                                break;
+                                            }
+                                        }
+                                        close(in_fd);
+                                    } else {
+                                        ok = 0;
+                                    }
+                                    close(fd);
+                                    if (ok) {
+                                        sync();
+                                        result = partition;
+                                    }
+                                } else {
+
+                                    if (write(fd, contents->data, contents->size) != contents->size) {
+                                        close(fd);
+                                        break;
+                                    } else {
+                                        close(fd);
+                                        sync();
+                                        result = partition;
+                                    }
+                                }
+                            }
+
+                            fclose(fp);
+                            goto done;
+                        }
+                    }
+                }
+            }
+            fclose(fp);
+        } else {
+            goto done;
+        }
+    }
+#endif
+
     char* filename = contents->data;
     if (0 == restore_raw_partition(NULL, partition, filename))
         result = strdup(partition);

@@ -110,16 +110,21 @@ void DataManager::get_device_id(void) {
 	char* token;
 
 #ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
+#ifndef LENOVO_P70A
 	// Use (product_model)_(hardware_id) as device id
 	char model_id[PROPERTY_VALUE_MAX];
 	property_get("ro.product.model", model_id, "error");
 	if (strcmp(model_id, "error") != 0) {
 		LOGINFO("=> product model: '%s'\n", model_id);
+
+		mConstValues.insert(make_pair(TW_PRODUCT_MODEL_VAR, model_id));
+
 		// Replace spaces with underscores
 		for (i = 0; i < strlen(model_id); i++) {
 			if (model_id[i] == ' ')
 				model_id[i] = '_';
 		}
+
 		snprintf(device_id, DEVID_MAX, "%s", model_id);
 
 		if (strlen(device_id) < DEVID_MAX) {
@@ -151,6 +156,78 @@ void DataManager::get_device_id(void) {
 		if (hardware_id[0] != 0)
 			snprintf(device_id, DEVID_MAX, "%s_%s", model_id, hardware_id);
 
+		sanitize_device_id(device_id);
+		mConstValues.insert(make_pair("device_id", device_id));
+		LOGINFO("=> using device id: '%s'\n", device_id);
+		return;
+	}
+#else //LENOVO_P70A
+	// Use (product_model)_(hardware_id) as device id
+	char model_id[DEVID_MAX] = { 0 };
+	char hw_id[PROPERTY_VALUE_MAX];
+	char product_model_id[PROPERTY_VALUE_MAX];
+	property_get("ro.product.model", product_model_id, "error");
+	property_get("ro.board.platform", hw_id, "");
+
+	strcpy(model_id, product_model_id);
+	if (strlen(model_id) > 0)
+		strcat(model_id, " ");
+
+	mConstValues.insert(make_pair(TW_PRODUCT_MODEL_VAR, model_id));
+
+	if (strcmp(model_id,"error") != 0) {
+		LOGINFO("=> product model: '%s'\n", model_id);
+		// Replace spaces with underscores
+		for (i = 0; i < strlen(model_id); i++) {
+			if (model_id[i] == ' ')
+				model_id[i] = '_';
+		}
+
+		snprintf(device_id, DEVID_MAX, "%s", model_id);
+
+		if (hw_id[0] != 0) {
+			strcat(device_id, "_");
+			strcat(device_id, hw_id);
+		}
+		sanitize_device_id(device_id);
+		mConstValues.insert(make_pair("device_id", device_id));
+		LOGINFO("=> using device id: '%s'\n", device_id);
+		return;
+	}
+#endif //LENOVO_P70A
+#endif
+
+#ifdef TW_USE_BRAND_DEVICE_HARDWARE_ID_FOR_DEVICE_ID
+	// Use (product_brand)_(product_device)_(hardware_id) as device id
+	char model_id[DEVID_MAX] = { 0 };
+	char brand_id[PROPERTY_VALUE_MAX];
+	char product_device_id[PROPERTY_VALUE_MAX];
+	char hw_id[PROPERTY_VALUE_MAX];
+	property_get("ro.product.brand", brand_id, "");
+	property_get("ro.product.device", product_device_id, "error");
+	property_get("ro.board.platform", hw_id, "");
+
+	strcpy(model_id, brand_id);
+	if (strlen(model_id) > 0)
+		strcat(model_id, " ");
+	strcat(model_id, product_device_id);
+
+	mConstValues.insert(make_pair(TW_PRODUCT_MODEL_VAR, model_id));
+
+	if (strcmp(model_id,"error") != 0) {
+		LOGINFO("=> product model: '%s'\n", model_id);
+		// Replace spaces with underscores
+		for (i = 0; i < strlen(model_id); i++) {
+			if (model_id[i] == ' ')
+				model_id[i] = '_';
+		}
+
+		snprintf(device_id, DEVID_MAX, "%s", model_id);
+
+		if (hw_id[0] != 0) {
+			strcat(device_id, "_");
+			strcat(device_id, hw_id);
+		}
 		sanitize_device_id(device_id);
 		mConstValues.insert(make_pair("device_id", device_id));
 		LOGINFO("=> using device id: '%s'\n", device_id);
@@ -628,6 +705,7 @@ void DataManager::SetDefaultValues()
 	mConstValues.insert(make_pair("false", "0"));
 
 	mConstValues.insert(make_pair(TW_VERSION_VAR, TW_VERSION_STR));
+	mConstValues.insert(make_pair(TW_BUILT_VAR, TW_BUILT_STR));
 	mValues.insert(make_pair("tw_button_vibrate", make_pair("80", 1)));
 	mValues.insert(make_pair("tw_keyboard_vibrate", make_pair("40", 1)));
 	mValues.insert(make_pair("tw_action_vibrate", make_pair("160", 1)));
@@ -784,7 +862,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_COLOR_THEME_VAR, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_USE_COMPRESSION_VAR, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_SHOW_SPAM_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_TIME_ZONE_VAR, make_pair("CST6CDT,M3.2.0,M11.1.0", 1)));
+	mValues.insert(make_pair(TW_TIME_ZONE_VAR, make_pair("SAUST-3SAUDT", 1)));
 	mValues.insert(make_pair(TW_SORT_FILES_BY_DATE_VAR, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_GUI_SORT_ORDER, make_pair("1", 1)));
 	mValues.insert(make_pair(TW_RM_RF_VAR, make_pair("0", 1)));
@@ -793,7 +871,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_SDEXT_SIZE, make_pair("512", 1)));
 	mValues.insert(make_pair(TW_SWAP_SIZE, make_pair("32", 1)));
 	mValues.insert(make_pair(TW_SDPART_FILE_SYSTEM, make_pair("ext3", 1)));
-	mValues.insert(make_pair(TW_TIME_ZONE_GUISEL, make_pair("CST6;CDT,M3.2.0,M11.1.0", 1)));
+	mValues.insert(make_pair(TW_TIME_ZONE_GUISEL, make_pair("SAUST-3;SAUDT", 1)));
 	mValues.insert(make_pair(TW_TIME_ZONE_GUIOFFSET, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_TIME_ZONE_GUIDST, make_pair("1", 1)));
 	mValues.insert(make_pair(TW_ACTION_BUSY, make_pair("0", 0)));
@@ -815,7 +893,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair("tw_terminal_state", make_pair("0", 0)));
 	mValues.insert(make_pair("tw_background_thread_running", make_pair("0", 0)));
 	mValues.insert(make_pair(TW_RESTORE_FILE_DATE, make_pair("0", 0)));
-	mValues.insert(make_pair("tw_military_time", make_pair("0", 1)));
+	mValues.insert(make_pair("tw_military_time", make_pair("1", 1)));
 #ifdef TW_NO_SCREEN_TIMEOUT
 	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("0", 1)));
 	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("1", 1)));
