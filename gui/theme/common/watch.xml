@@ -74,7 +74,7 @@
 
 		<style name="console">
 			<color foreground="%text_color%" background="%background_color%" scroll="%background_color%"/>
-			<font resource="fixed"/>
+			<font resource="font_t"/>
 		</style>
 
 		<style name="terminal">
