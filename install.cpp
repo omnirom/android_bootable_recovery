@@ -124,20 +124,20 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache) {
     //   - the name of the package zip file.
     //
 
-    const char** args = (const char**)malloc(sizeof(char*) * 5);
+    const char* args[5];
     args[0] = binary;
     args[1] = EXPAND(RECOVERY_API_VERSION);   // defined in Android.mk
-    char* temp = (char*)malloc(10);
-    sprintf(temp, "%d", pipefd[1]);
+    char temp[16];
+    snprintf(temp, sizeof(temp), "%d", pipefd[1]);
     args[2] = temp;
-    args[3] = (char*)path;
+    args[3] = path;
     args[4] = NULL;
 
     pid_t pid = fork();
     if (pid == 0) {
         umask(022);
         close(pipefd[0]);
-        execv(binary, (char* const*)args);
+        execv(binary, const_cast<char**>(args));
         fprintf(stdout, "E:Can't run %s (%s)\n", binary, strerror(errno));
         _exit(-1);
     }

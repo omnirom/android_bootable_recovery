@@ -24,6 +24,8 @@
 #include <dirent.h>
 #include <limits.h>
 
+#include <string>
+
 #include "DirUtil.h"
 
 typedef enum { DMISSING, DDIR, DILLEGAL } DirStatus;
@@ -66,43 +68,25 @@ dirCreateHierarchy(const char *path, int mode,
         errno = ENOENT;
         return -1;
     }
-
-    /* Allocate a path that we can modify; stick a slash on
-     * the end to make things easier.
-     */
-    size_t pathLen = strlen(path);
-    char *cpath = (char *)malloc(pathLen + 2);
-    if (cpath == NULL) {
-        errno = ENOMEM;
-        return -1;
-    }
-    memcpy(cpath, path, pathLen);
+    // Allocate a path that we can modify; stick a slash on
+    // the end to make things easier.
+    std::string cpath = path;
     if (stripFileName) {
-        /* Strip everything after the last slash.
-         */
-        char *c = cpath + pathLen - 1;
-        while (c != cpath && *c != '/') {
-            c--;
-        }
-        if (c == cpath) {
-            //xxx test this path
-            /* No directory component.  Act like the path was empty.
-             */
+        // Strip everything after the last slash.
+        size_t pos = cpath.rfind('/');
+        if (pos == std::string::npos) {
             errno = ENOENT;
-            free(cpath);
             return -1;
         }
-        c[1] = '\0';    // Terminate after the slash we found.
+        cpath.resize(pos + 1);
     } else {
-        /* Make sure that the path ends in a slash.
-         */
-        cpath[pathLen] = '/';
-        cpath[pathLen + 1] = '\0';
+        // Make sure that the path ends in a slash.
+        cpath.push_back('/');
     }
 
     /* See if it already exists.
      */
-    ds = getPathDirStatus(cpath);
+    ds = getPathDirStatus(cpath.c_str());
     if (ds == DDIR) {
         return 0;
     } else if (ds == DILLEGAL) {
@@ -112,7 +96,8 @@ dirCreateHierarchy(const char *path, int mode,
     /* Walk up the path from the root and make each level.
      * If a directory already exists, no big deal.
      */
-    char *p = cpath;
+    const char *path_start = &cpath[0];
+    char *p = &cpath[0];
     while (*p != '\0') {
         /* Skip any slashes, watching out for the end of the string.
          */
@@ -135,12 +120,11 @@ dirCreateHierarchy(const char *path, int mode,
         /* Check this part of the path and make a new directory
          * if necessary.
          */
-        ds = getPathDirStatus(cpath);
+        ds = getPathDirStatus(path_start);
         if (ds == DILLEGAL) {
             /* Could happen if some other process/thread is
              * messing with the filesystem.
              */
-            free(cpath);
             return -1;
         } else if (ds == DMISSING) {
             int err;
@@ -148,11 +132,11 @@ dirCreateHierarchy(const char *path, int mode,
             char *secontext = NULL;
 
             if (sehnd) {
-                selabel_lookup(sehnd, &secontext, cpath, mode);
+                selabel_lookup(sehnd, &secontext, path_start, mode);
                 setfscreatecon(secontext);
             }
 
-            err = mkdir(cpath, mode);
+            err = mkdir(path_start, mode);
 
             if (secontext) {
                 freecon(secontext);
@@ -160,22 +144,17 @@ dirCreateHierarchy(const char *path, int mode,
             }
 
             if (err != 0) {
-                free(cpath);
                 return -1;
             }
-            if (timestamp != NULL && utime(cpath, timestamp)) {
-                free(cpath);
+            if (timestamp != NULL && utime(path_start, timestamp)) {
                 return -1;
             }
         }
         // else, this directory already exists.
-        
-        /* Repair the path and continue.
-         */
+
+        // Repair the path and continue.
         *p = '/';
     }
-    free(cpath);
-
     return 0;
 }
 
