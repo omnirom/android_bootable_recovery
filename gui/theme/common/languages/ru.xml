@@ -2,7 +2,7 @@
 
 <language>
 	<display>Русский</display>
-	<!-- Translated by Jemmini, 2016 -->
+	<!-- Translated by Jemmini; modified by agur4ik, SevenMaxs, S-trace 2016 -->
 
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
@@ -21,11 +21,11 @@
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
 		<string name="sdcard">SDcard</string>
-		<string name="internal">Внутр.память</string>
+		<string name="internal">Память устройства</string>
 		<string name="microsd">Micro SDCard</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android Secure</string>
-		<string name="dalvik">Dalvik / ART Cache</string>
+		<string name="dalvik">Dalvik/ART Cache</string>
 		<!-- This is a rarely used partition on a Micro SD card for a very old app2sd system -->
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
@@ -50,7 +50,7 @@
 		<string name="tab_vibration">ВИБРАЦИЯ</string>
 		<string name="tab_language">ЯЗЫК</string>
 
-		<string name="install_btn">Установить</string>
+		<string name="install_btn">Установка</string>
 		<string name="wipe_btn">Очистка</string>
 		<string name="backup_btn">Резервное коп-ние</string>
 		<string name="restore_btn">Восстановление</string>
@@ -63,14 +63,14 @@
 		<string name="select_type_hdr">Выбор типа</string>
 		<string name="install_zip_hdr">Установка Zip</string>
 		<string name="install_zip_btn">Установка Zip</string>
-		<string name="install_image_hdr">Установка образа</string>
-		<string name="install_image_btn">Установка образа</string>
+		<string name="install_image_hdr">Установка Img-образа</string>
+		<string name="install_image_btn">Установка Img</string>
 		<string name="install_select_file_hdr">Выбор файла</string>
 		<string name="file_selector_folders_hdr">Папки</string>
-		<string name="select_file_from_storage">Выбор файла из %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
+		<string name="select_file_from_storage">Текущий накопитель: %tw_storage_display_name% (%tw_storage_free_size% МБ)</string>
 		<string name="adb_sideload_btn">ADB sideload</string>
 		<string name="install_hdr">Установка</string>
-		<string name="select_storage_hdr">Выбор накопителя</string>
+		<string name="select_storage_hdr">Выберите накопитель</string>
 		<string name="select_storage_btn">Выбор накопителя</string>
 		<string name="queue_hdr">Очередь</string>
 		<string name="zip_queue_count">Файлов в очереди: %tw_zip_queue_count% из 10 возможных</string>
@@ -81,10 +81,10 @@
 		<string name="zip_back_clear">Нажмите назад для очистки очереди.</string>
 		<string name="folder">Папка:</string>
 		<string name="file">Файл:</string>
-		<string name="zip_sig_chk">Проверка Zip сигнатуры</string>
+		<string name="zip_sig_chk">Проверка подписи Zip</string>
 		<string name="inject_twrp_chk">Интегрировать TWRP после установки</string>
 		<string name="options_hdr">Опции</string>
-		<string name="confirm_flash_hdr">Confirm Flash</string>
+		<string name="confirm_flash_hdr">Подтвердите установку</string>
 		<string name="zip_queue">Очередь:</string>
 		<string name="options">Опции:</string>
 		<string name="swipe_confirm">   Подтвердить</string>
@@ -97,7 +97,7 @@
 		<string name="install_failed">Установка не удалась</string>
 		<string name="install_successful">Установка выполнена успешно</string>
 		<string name="wipe_cache_dalvik_btn">Очистка cache/dalvik</string>
-		<string name="reboot_system_btn">Перезагрузка в сист.</string>
+		<string name="reboot_system_btn">Перезагрузка в ОС</string>
 		<string name="install_sel_target">Выбор раздела</string>
 		<string name="flash_image_select">Выберите раздел для прошивки образа:</string>
 		<string name="target_partition">Целевой раздел:</string>
@@ -163,17 +163,17 @@
 		<string name="part_present_no">Присутствует: нет</string>
 		<string name="part_removable_yes">Съемное: да</string>
 		<string name="part_removable_no">Съемное: нет</string>
-		<string name="part_size">Размер: %tw_partition_size%MB</string>
-		<string name="part_used">Использовано: %tw_partition_used%MB</string>
-		<string name="part_free">Свободно: %tw_partition_free%MB</string>
-		<string name="part_backup_size">Размер резервных копий: %tw_partition_backup_size%MB</string>
-		<string name="resize_btn">Исправ. размер</string>
-		<string name="resize_btn_s">Испр. размер</string>
-		<string name="resize_confirm">Исправить размер %tw_partition_name%?</string>
-		<string name="resizing">Исправление размера...</string>
-		<string name="resize_complete">Размер партиции исправлен</string>
-		<string name="swipe_resize">Свайп для испр-ния размера</string>
-		<string name="swipe_resize_s">   Испр. размер</string>
+		<string name="part_size">Размер: %tw_partition_size% МБ</string>
+		<string name="part_used">Использовано: %tw_partition_used% МБ</string>
+		<string name="part_free">Свободно: %tw_partition_free% МБ</string>
+		<string name="part_backup_size">Размер резервных копий: %tw_partition_backup_size% МБ</string>
+		<string name="resize_btn">Измен. размер</string>
+		<string name="resize_btn_s">Изм. размер</string>
+		<string name="resize_confirm">Изменить размер %tw_partition_name%?</string>
+		<string name="resizing">Изменение размера...</string>
+		<string name="resize_complete">Размер раздела изменён</string>
+		<string name="swipe_resize">Свайп для изменения размера</string>
+		<string name="swipe_resize_s">   Измен. размер</string>
 		<string name="repair_btn">Восст-ть файл. систему</string>
 		<string name="repair_btn_s">Восстановление</string>
 		<string name="repair_confirm">Восстановить %tw_partition_name%?</string>
@@ -196,7 +196,7 @@
 		<string name="wipe_enc_btn">Стереть шифрование</string>
 		<string name="swipe_factory_reset">Свайп для подтверждения</string>
 		<string name="repair_change_btn">Восстановить или изменить файловую систему</string>
-		<string name="storage_hdr">Хранилище: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
+		<string name="storage_hdr">Текущий накопитель: %tw_storage_display_name% (%tw_storage_free_size% МБ)</string>
 		<string name="backup_hdr">Резервное копирование</string>
 		<string name="backup_confirm_hdr">Подтверждение резервного копирования</string>
 		<string name="encryption_tab">ШИФРОВАНИЕ</string>
@@ -225,7 +225,7 @@
 		<string name="backup_complete">Резервное копирование завершено</string>
 		<string name="restore_hdr">Восстановление</string>
 		<string name="sel_backup_hdr">Выбор резервной копии</string>
-		<string name="restore_sel_store_hdr">Выбор резервной копии из %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
+		<string name="restore_sel_store_hdr">Текущий накопитель: %tw_storage_display_name% (%tw_storage_free_size% МБ)</string>
 		<string name="restore_sel_pack_fs">Выбор резервной копии для восстановления:</string>
 		<string name="restore_enc_backup_hdr">Зашифрованная резервная копия</string>
 		<string name="restore_dec_fail">Пароль неверный, попробуйте снова!</string>
@@ -238,7 +238,7 @@
 		<string name="swipe_delete_s">   Удаление</string>
 		<string name="restore_try_decrypt">Зашифрованная резервная копия - попытка расшифровки</string>
 		<string name="restore_try_decrypt_s">Попытка расшифровки</string>
-		<string name="restore_backup_date">Резервная копия создана %tw_restore_file_date%</string>
+		<string name="restore_backup_date">Резервная копия создана: %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Выбор раздела для восстановления:</string>
 		<string name="restore_enable_md5_chk">Включить проверку MD5 файлов резервной копии</string>
 		<string name="restore_complete">Восстановление завершено</string>
@@ -259,12 +259,12 @@
 		<string name="decrypt_data_btn">Расшифровать данные</string>
 		<string name="disable_mtp_btn">Выключить MTP</string>
 		<string name="enable_mtp_btn">Включить MTP</string>
-		<string name="mount_usb_storage_btn">Смонтировать как USB-накопит.</string>
+		<string name="mount_usb_storage_btn">Включить UMS</string>
 		<string name="usb_storage_hdr">USB накопитель</string>
-		<string name="usb_stor_mnt1">USB накопитель смонтирован</string>
-		<string name="usb_stor_mnt2">Для безопасного отключения вашего устройства</string>
-		<string name="usb_stor_mnt3">от компьютера, выполните размонтирование!</string>
-		<string name="unmount_btn">Размонтировать</string>
+		<string name="usb_stor_mnt1">Режим USB накопителя включен</string>
+		<string name="usb_stor_mnt2">Перед отключением вашего устройства от компьютера,</string>
+		<string name="usb_stor_mnt3">выполните размонтирование (выключите UMS)!</string>
+		<string name="unmount_btn">Выключить UMS</string>
 		<string name="rb_system_btn">Система</string>
 		<string name="rb_poweroff_btn">Выключение</string>
 		<string name="rb_recovery_btn">Рекавери</string>
@@ -300,7 +300,7 @@
 		<string name="ctr_navbar_rdo">Кнопки нав.панели по центру</string>
 		<string name="lft_navbar_rdo">Выровнять кнопки нав.панели слева</string>
 		<string name="rht_navbar_rdo">Выровнять кнопки нав.панели справа</string>
-		<string name="restore_defaults_btn">Восстановить настр-ки</string>
+		<string name="restore_defaults_btn">Сброс настроек</string>
 		<string name="settings_tz_btn">Часовой пояс</string>
 		<string name="settings_screen_btn">Экран</string>
 		<string name="settings_screen_bright_btn">Яркость</string>
@@ -329,9 +329,9 @@
 		<string name="utcp5">(UTC +5) Ташкент, Исламабад, Карачи</string>
 		<string name="utcp6">(UTC +6) Алматы, Астана, Дхака, Екатеринбург</string>
 		<string name="utcp7">(UTC +7) Омск, Новосибирск, Бангкок, Джакарта, Ханой</string>
-		<string name="utcp8">(UTC +8) Красноярск, Гонконг, Пекин, Улан-Батор</string>
-		<string name="utcp9">(UTC +9) Иркутск, Осака, Саппоро, Токио, Сеул</string>
-		<string name="utcp10">(UTC +10) Якутск, Гуам, Канберра, Мельбурн, Сидней</string>
+		<string name="utcp8">(UTC +8) Красноярск, Пекин, Улан-Батор, Иркутск</string>
+		<string name="utcp9">(UTC +9) Осака, Саппоро, Токио, Сеул, Якутск</string>
+		<string name="utcp10">(UTC +10) Гуам, Канберра, Мельбурн, Сидней</string>
 		<string name="utcp11">(UTC +11) Владивосток, Сахалин, Соломоновы о-ва</string>
 		<string name="utcp12">(UTC +12) Магадан, Камчатка, Фиджи, Маршаловы о-ва</string>
 		<string name="sel_tz_offset">Выбор смещения (как правило 0): %tw_time_zone_guioffset%</string>
@@ -437,8 +437,8 @@
 		<string name="fm_complete">Операция завершена</string>
 		<string name="decrypt_data_hdr">Расшифровать данные</string>
 		<string name="decrypt_data_enter_pass">Введите пароль.</string>
-		<string name="decryt_data_failed">Пароль неверный, попробуйте снова!</string>
-		<string name="decryt_data_failed_pattern">Шаблон неверный, попробуйте снова!</string>
+		<string name="decrypt_data_failed">Пароль неверный, попробуйте снова!</string>
+		<string name="decrypt_data_failed_pattern">Шаблон неверный, попробуйте снова!</string>
 		<string name="decrypt_data_enter_pattern">Введите шаблон.</string>
 		<string name="decrypt_data_trying">Попытка расшифровки</string>
 		<string name="term_hdr">Команда терминала</string>
@@ -470,7 +470,7 @@
 		<string name="swipe_su_to_install">Свайп для установки</string>
 		<string name="swipe_su_install">   Установка</string>
 		<string name="su_installing">Установка SuperSU</string>
-		<string name="sel_storage_list">Выбор хранилища</string>
+		<string name="sel_storage_list">Выберите накопитель</string>
 		<string name="ok_btn">OK</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
@@ -492,17 +492,17 @@
 		<string name="unable_to_locate_partition">Не удается найти '{1}' раздел для расчета копирования.</string>
 		<string name="no_partition_selected">Не выбраны разделы для резервного копирования.</string>
 		<string name="total_partitions_backup"> * Общее количество разделов для резервного копирования: {1}</string>
-		<string name="total_backup_size"> * Общий объем данных: {1}MB</string>
-		<string name="available_space"> * Доступный объем: {1}MB</string>
+		<string name="total_backup_size"> * Общий объем данных: {1} МБ</string>
+		<string name="available_space"> * Доступный объем: {1} МБ</string>
 		<string name="unable_locate_storage">Не удается найти накопитель для хранения.</string>
 		<string name="no_space">В накопителе для хранения недостаточно свободного места.</string>
 		<string name="backup_started">[РЕЗЕРВНОЕ КОПИРОВАНИЕ НАЧАТО]</string>
 		<string name="backup_folder"> * Папка для резервной копии: {1}</string>
 		<string name="fail_backup_folder">Не удается создать папку для резервной копии.</string>
-		<string name="avg_backup_fs">Средняя скорость копирования для файлов: {1} MB/sec</string>
-		<string name="avg_backup_img">Средняя скорость копирования для образов: {1} MB/sec</string>
-		<string name="total_backed_size">[{1} MB ВСЕГО СКОПИРОВАНО]</string>
-		<string name="backup_completed">[КОПИРОВАНИЕ ЗАВЕРШЕНО ЗА {1} СЕКУНД]</string>
+		<string name="avg_backup_fs">Средняя скорость копирования для файлов: {1} МБ/сек</string>
+		<string name="avg_backup_img">Средняя скорость копирования для образов: {1} МБ/сек</string>
+		<string name="total_backed_size">[ВСЕГО СКОПИРОВАНО {1} МБ]</string>
+		<string name="backup_completed">[КОПИРОВАНИЕ ЗАВЕРШЕНО ЗА {1} СЕКУНД(Ы)]</string>
 		<string name="restore_started">[ВОССТАНОВЛЕНИЕ НАЧАТО]</string>
 		<string name="restore_folder">Папка для восстановления: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
@@ -514,9 +514,9 @@
 		<string name="restore_unable_locate">Не удается найти '{1}' раздел для восстановления.</string>
 		<string name="no_part_restore">Не выбраны разделы для восстановления.</string>
 		<string name="restore_part_count">Восстановление {1} разделов...</string>
-		<string name="total_restore_size">Общий размер для восстановления: {1}MB</string>
+		<string name="total_restore_size">Общий размер для восстановления: {1} МБ</string>
 		<string name="updating_system_details">Обновление информации о системе</string>
-		<string name="restore_completed">[ВОССТАНОВЛЕНИЕ ЗАВЕРШЕНО ЗА {1} СЕКУНД]</string>
+		<string name="restore_completed">[ВОССТАНОВЛЕНИЕ ЗАВЕРШЕНО ЗА {1} СЕКУНД(Ы)]</string>
 		<!-- {1} is the path we could not open, {2} is strerror output -->
 		<string name="error_opening_strerr">Ошибка открытия: '{1}' ({2})</string>
 		<string name="unable_locate_part_backup_name">Не удается найти раздел для копирования: '{1}'</string>
@@ -533,9 +533,9 @@
 		<string name="unable_to_mount_internal">Не удается смонтировать internal_storage</string>
 		<string name="unable_to_mount_storage">Не удается смонтировать накопитель</string>
 		<string name="fail_decrypt">Не удается расшифровать data.</string>
-		<string name="no_crypto_support">Шифрование не добавлено в эту сборки, пинайте разработчика.</string>
+		<string name="no_crypto_support">Шифрование не добавлено в эту сборку, пинайте разработчика.</string>
 		<string name="decrypt_success_dev">Data успешно расшифрован, новое блочное устройство: '{1}'</string>
-		<string name="done">Done.</string>
+		<string name="done">Готово.</string>
 		<string name="start_partition_sd">Разметка SD-карты...</string>
 		<string name="partition_sd_locate">Не удалось найти устройство для разметки.</string>
 		<string name="ext_swap_size">Размер EXT + Swap превышает размер sdcard.</string>
@@ -622,10 +622,10 @@
 		<string name="ors_complete">OpenRecoveryScript выполнен</string>
 		<string name="no_updater_binary">'{1}' не найден в zip файле.</string>
 		<string name="check_for_md5">Проверка MD5-файлов...</string>
-		<string name="fail_sysmap">Failed to map file '{1}'</string>
-		<string name="verify_zip_sig">Проверка zip сигнатуры...</string>
-		<string name="verify_zip_fail">Zip сигнатура не прошла проверку!</string>
-		<string name="verify_zip_done">Zip сигнатура проверена успешно.</string>
+		<string name="fail_sysmap">Не удалось отобразить в память файл '{1}'</string>
+		<string name="verify_zip_sig">Проверка подписи zip...</string>
+		<string name="verify_zip_fail">Подпись Zip не прошла проверку!</string>
+		<string name="verify_zip_done">Подпись Zip проверена успешно.</string>
 		<string name="zip_corrupt">Zip-файл поврежден!</string>
 		<string name="no_md5">Пропуск проверки MD5: не найден MD5-файл</string>
 		<string name="md5_fail">MD5 не соответствует</string>
@@ -643,7 +643,7 @@
 		<string name="split_thread">Разделение идентификатора потока {1} в архив {2}</string>
 		<!-- These 2 items are saved in the data manager instead of resource manager, so %llu, etc is correct instead of {1} -->
 		<string name="file_progress">%llu из %llu файлов, %i%%</string>
-		<string name="size_progress">%lluMB из %lluMB, %i%%</string>
+		<string name="size_progress">%llu МБ из %llu МБ, %i%%</string>
 		<string name="decrypt_cmd">Попытка расшифровать раздел данных с помощью командной строки.</string>
 		<string name="base_pkg_err">Неудача при загрузке базовых пакетов.</string>
 		<string name="simulating">Имитация действий...</string>
