@@ -7,7 +7,8 @@
 		<resource name="font_l" type="fontoverride" filename="DroidSansFallback.ttf" scale="100" />
 		<resource name="font_m" type="fontoverride" filename="DroidSansFallback.ttf" scale="100" />
 		<resource name="font_s" type="fontoverride" filename="DroidSansFallback.ttf" scale="100" />
-		<resource name="fixed" type="fontoverride" filename="DroidSansFallback.ttf" scale="100" />
+		<resource name="font_t" type="fontoverride" filename="DroidSansFallback.ttf" scale="100" />
+		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
 
 		<string name="system">System</string>
 		<string name="system_image">System イメージ</string>
