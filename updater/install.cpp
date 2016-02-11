@@ -1398,21 +1398,22 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* filename;
     if (ReadArgs(state, argv, 1, &filename) < 0) return NULL;
 
-    Value* v = reinterpret_cast<Value*>(malloc(sizeof(Value)));
+    Value* v = static_cast<Value*>(malloc(sizeof(Value)));
+    if (v == nullptr) {
+        return nullptr;
+    }
     v->type = VAL_BLOB;
+    v->size = -1;
+    v->data = nullptr;
 
     FileContents fc;
     if (LoadFileContents(filename, &fc) != 0) {
-        free(filename);
-        v->size = -1;
-        v->data = NULL;
-        free(fc.data);
-        return v;
+        v->data = static_cast<char*>(malloc(fc.data.size()));
+        if (v->data != nullptr) {
+            memcpy(v->data, fc.data.data(), fc.data.size());
+            v->size = fc.data.size();
+        }
     }
-
-    v->size = fc.size;
-    v->data = (char*)fc.data;
-
     free(filename);
     return v;
 }

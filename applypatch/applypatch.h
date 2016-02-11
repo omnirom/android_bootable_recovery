@@ -24,17 +24,11 @@
 #include "openssl/sha.h"
 #include "edify/expr.h"
 
-typedef struct _Patch {
+struct FileContents {
   uint8_t sha1[SHA_DIGEST_LENGTH];
-  const char* patch_filename;
-} Patch;
-
-typedef struct _FileContents {
-  uint8_t sha1[SHA_DIGEST_LENGTH];
-  unsigned char* data;
-  ssize_t size;
+  std::vector<unsigned char> data;
   struct stat st;
-} FileContents;
+};
 
 // When there isn't enough room on the target filesystem to hold the
 // patched version of the file, we copy the original here and delete

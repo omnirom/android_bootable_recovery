@@ -56,8 +56,6 @@ static bool mtd_partitions_scanned = false;
 //
 // Return 0 on success.
 int LoadFileContents(const char* filename, FileContents* file) {
-    file->data = NULL;
-
     // A special 'filename' beginning with "MTD:" or "EMMC:" means to
     // load the contents of a partition.
     if (strncmp(filename, "MTD:", 4) == 0 ||
@@ -70,31 +68,22 @@ int LoadFileContents(const char* filename, FileContents* file) {
         return -1;
     }
 
-    file->size = file->st.st_size;
-    file->data = nullptr;
-
-    std::unique_ptr<unsigned char, decltype(&free)> data(
-            static_cast<unsigned char*>(malloc(file->size)), free);
-    if (data == nullptr) {
-        printf("failed to allocate memory: %s\n", strerror(errno));
-        return -1;
-    }
-
+    std::vector<unsigned char> data(file->st.st_size);
     FILE* f = ota_fopen(filename, "rb");
     if (f == NULL) {
         printf("failed to open \"%s\": %s\n", filename, strerror(errno));
         return -1;
     }
 
-    size_t bytes_read = ota_fread(data.get(), 1, file->size, f);
-    if (bytes_read != static_cast<size_t>(file->size)) {
-        printf("short read of \"%s\" (%zu bytes of %zd)\n", filename, bytes_read, file->size);
-        fclose(f);
+    size_t bytes_read = ota_fread(data.data(), 1, data.size(), f);
+    if (bytes_read != data.size()) {
+        printf("short read of \"%s\" (%zu bytes of %zd)\n", filename, bytes_read, data.size());
+        ota_fclose(f);
         return -1;
     }
     ota_fclose(f);
-    file->data = data.release();
-    SHA1(file->data, file->size, file->sha1);
+    file->data = std::move(data);
+    SHA1(file->data.data(), file->data.size(), file->sha1);
     return 0;
 }
 
@@ -193,17 +182,17 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
     uint8_t parsed_sha[SHA_DIGEST_LENGTH];
 
     // Allocate enough memory to hold the largest size.
-    file->data = static_cast<unsigned char*>(malloc(size[index[pairs-1]]));
-    char* p = (char*)file->data;
-    file->size = 0;                // # bytes read so far
+    std::vector<unsigned char> data(size[index[pairs-1]]);
+    char* p = reinterpret_cast<char*>(data.data());
+    size_t data_size = 0;                // # bytes read so far
     bool found = false;
 
     for (size_t i = 0; i < pairs; ++i) {
         // Read enough additional bytes to get us up to the next size. (Again,
         // we're trying the possibilities in order of increasing size).
-        size_t next = size[index[i]] - file->size;
-        size_t read = 0;
+        size_t next = size[index[i]] - data_size;
         if (next > 0) {
+            size_t read = 0;
             switch (type) {
                 case MTD:
                     read = mtd_read_data(ctx, p, next);
@@ -216,12 +205,11 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
             if (next != read) {
                 printf("short read (%zu bytes of %zu) for partition \"%s\"\n",
                        read, next, partition);
-                free(file->data);
-                file->data = NULL;
                 return -1;
             }
             SHA1_Update(&sha_ctx, p, read);
-            file->size += read;
+            data_size += read;
+            p += read;
         }
 
         // Duplicate the SHA context and finalize the duplicate so we can
@@ -233,8 +221,6 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
 
         if (ParseSha1(sha1sum[index[i]].c_str(), parsed_sha) != 0) {
             printf("failed to parse sha1 %s in %s\n", sha1sum[index[i]].c_str(), filename);
-            free(file->data);
-            file->data = NULL;
             return -1;
         }
 
@@ -246,8 +232,6 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
             found = true;
             break;
         }
-
-        p += read;
     }
 
     switch (type) {
@@ -264,13 +248,13 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
     if (!found) {
         // Ran off the end of the list of (size,sha1) pairs without finding a match.
         printf("contents of partition \"%s\" didn't match %s\n", partition, filename);
-        free(file->data);
-        file->data = NULL;
         return -1;
     }
 
     SHA1_Final(file->sha1, &sha_ctx);
 
+    data.resize(data_size);
+    file->data = std::move(data);
     // Fake some stat() info.
     file->st.st_mode = 0644;
     file->st.st_uid = 0;
@@ -289,10 +273,10 @@ int SaveFileContents(const char* filename, const FileContents* file) {
         return -1;
     }
 
-    ssize_t bytes_written = FileSink(file->data, file->size, &fd);
-    if (bytes_written != file->size) {
-        printf("short write of \"%s\" (%zd bytes of %zd) (%s)\n",
-               filename, bytes_written, file->size, strerror(errno));
+    ssize_t bytes_written = FileSink(file->data.data(), file->data.size(), &fd);
+    if (bytes_written != static_cast<ssize_t>(file->data.size())) {
+        printf("short write of \"%s\" (%zd bytes of %zu) (%s)\n",
+               filename, bytes_written, file->data.size(), strerror(errno));
         ota_close(fd);
         return -1;
     }
@@ -543,7 +527,6 @@ int FindMatchingPatch(uint8_t* sha1, char* const * const patch_sha1_str,
 int applypatch_check(const char* filename, int num_patches,
                      char** const patch_sha1_str) {
     FileContents file;
-    file.data = NULL;
 
     // It's okay to specify no sha1s; the check will pass if the
     // LoadFileContents is successful.  (Useful for reading
@@ -554,9 +537,6 @@ int applypatch_check(const char* filename, int num_patches,
          FindMatchingPatch(file.sha1, patch_sha1_str, num_patches) < 0)) {
         printf("file \"%s\" doesn't have any of expected "
                "sha1 sums; checking cache\n", filename);
-
-        free(file.data);
-        file.data = NULL;
 
         // If the source file is missing or corrupted, it might be because
         // we were killed in the middle of patching it.  A copy of it
@@ -571,12 +551,9 @@ int applypatch_check(const char* filename, int num_patches,
 
         if (FindMatchingPatch(file.sha1, patch_sha1_str, num_patches) < 0) {
             printf("cache bits don't match any sha1 for \"%s\"\n", filename);
-            free(file.data);
             return 1;
         }
     }
-
-    free(file.data);
     return 0;
 }
 
@@ -674,8 +651,6 @@ int applypatch(const char* source_filename,
 
     FileContents copy_file;
     FileContents source_file;
-    copy_file.data = NULL;
-    source_file.data = NULL;
     const Value* source_patch_value = NULL;
     const Value* copy_patch_value = NULL;
 
@@ -685,22 +660,20 @@ int applypatch(const char* source_filename,
             // The early-exit case:  the patch was already applied, this file
             // has the desired hash, nothing for us to do.
             printf("already %s\n", short_sha1(target_sha1).c_str());
-            free(source_file.data);
             return 0;
         }
     }
 
-    if (source_file.data == NULL ||
+    if (source_file.data.empty() ||
         (target_filename != source_filename &&
          strcmp(target_filename, source_filename) != 0)) {
         // Need to load the source file:  either we failed to load the
         // target file, or we did but it's different from the source file.
-        free(source_file.data);
-        source_file.data = NULL;
+        source_file.data.clear();
         LoadFileContents(source_filename, &source_file);
     }
 
-    if (source_file.data != NULL) {
+    if (!source_file.data.empty()) {
         int to_use = FindMatchingPatch(source_file.sha1, patch_sha1_str, num_patches);
         if (to_use >= 0) {
             source_patch_value = patch_data[to_use];
@@ -708,8 +681,7 @@ int applypatch(const char* source_filename,
     }
 
     if (source_patch_value == NULL) {
-        free(source_file.data);
-        source_file.data = NULL;
+        source_file.data.clear();
         printf("source file is bad; trying copy\n");
 
         if (LoadFileContents(CACHE_TEMP_SOURCE, &copy_file) < 0) {
@@ -726,19 +698,14 @@ int applypatch(const char* source_filename,
         if (copy_patch_value == NULL) {
             // fail.
             printf("copy file doesn't match source SHA-1s either\n");
-            free(copy_file.data);
             return 1;
         }
     }
 
-    int result = GenerateTarget(&source_file, source_patch_value,
-                                &copy_file, copy_patch_value,
-                                source_filename, target_filename,
-                                target_sha1, target_size, bonus_data);
-    free(source_file.data);
-    free(copy_file.data);
-
-    return result;
+    return GenerateTarget(&source_file, source_patch_value,
+                          &copy_file, copy_patch_value,
+                          source_filename, target_filename,
+                          target_sha1, target_size, bonus_data);
 }
 
 /*
@@ -759,7 +726,6 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
     }
 
     FileContents source_file;
-    source_file.data = NULL;
     std::string target_str(target_filename);
 
     std::vector<std::string> pieces = android::base::Split(target_str, ":");
@@ -777,7 +743,6 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
         // The early-exit case: the image was already applied, this partition
         // has the desired hash, nothing for us to do.
         printf("already %s\n", short_sha1(target_sha1).c_str());
-        free(source_file.data);
         return 0;
     }
 
@@ -787,18 +752,14 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
             printf("source \"%s\" doesn't have expected sha1 sum\n", source_filename);
             printf("expected: %s, found: %s\n", short_sha1(target_sha1).c_str(),
                     short_sha1(source_file.sha1).c_str());
-            free(source_file.data);
             return 1;
         }
     }
 
-    if (WriteToPartition(source_file.data, target_size, target_filename) != 0) {
+    if (WriteToPartition(source_file.data.data(), target_size, target_filename) != 0) {
         printf("write of copied data to %s failed\n", target_filename);
-        free(source_file.data);
         return 1;
     }
-
-    free(source_file.data);
     return 0;
 }
 
@@ -867,7 +828,7 @@ static int GenerateTarget(FileContents* source_file,
 
             // We still write the original source to cache, in case
             // the partition write is interrupted.
-            if (MakeFreeSpaceOnCache(source_file->size) < 0) {
+            if (MakeFreeSpaceOnCache(source_file->data.size()) < 0) {
                 printf("not enough free space on /cache\n");
                 return 1;
             }
@@ -908,7 +869,7 @@ static int GenerateTarget(FileContents* source_file,
                     return 1;
                 }
 
-                if (MakeFreeSpaceOnCache(source_file->size) < 0) {
+                if (MakeFreeSpaceOnCache(source_file->data.size()) < 0) {
                     printf("not enough free space on /cache\n");
                     return 1;
                 }
@@ -951,10 +912,10 @@ static int GenerateTarget(FileContents* source_file,
 
         int result;
         if (use_bsdiff) {
-            result = ApplyBSDiffPatch(source_to_use->data, source_to_use->size,
+            result = ApplyBSDiffPatch(source_to_use->data.data(), source_to_use->data.size(),
                                       patch, 0, sink, token, &ctx);
         } else {
-            result = ApplyImagePatch(source_to_use->data, source_to_use->size,
+            result = ApplyImagePatch(source_to_use->data.data(), source_to_use->data.size(),
                                      patch, sink, token, &ctx, bonus_data);
         }
 
