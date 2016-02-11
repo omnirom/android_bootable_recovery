@@ -28,6 +28,7 @@
 #include <linux/fb.h>
 #include <linux/kd.h>
 
+#include <vector>
 #include <png.h>
 
 #include "minui.h"
@@ -398,18 +399,13 @@ int res_create_localized_alpha_surface(const char* name,
     png_infop info_ptr = NULL;
     png_uint_32 width, height;
     png_byte channels;
-    unsigned char* row;
     png_uint_32 y;
+    std::vector<unsigned char> row;
 
     *pSurface = NULL;
 
     if (locale == NULL) {
-        surface = malloc_surface(0);
-        surface->width = 0;
-        surface->height = 0;
-        surface->row_bytes = 0;
-        surface->pixel_bytes = 1;
-        goto exit;
+        return result;
     }
 
     result = open_png(name, &png_ptr, &info_ptr, &width, &height, &channels);
@@ -420,13 +416,13 @@ int res_create_localized_alpha_surface(const char* name,
         goto exit;
     }
 
-    row = reinterpret_cast<unsigned char*>(malloc(width));
+    row.resize(width);
     for (y = 0; y < height; ++y) {
-        png_read_row(png_ptr, row, NULL);
+        png_read_row(png_ptr, row.data(), NULL);
         int w = (row[1] << 8) | row[0];
         int h = (row[3] << 8) | row[2];
         int len = row[4];
-        char* loc = (char*)row+5;
+        char* loc = reinterpret_cast<char*>(&row[5]);
 
         if (y+1+h >= height || matches_locale(loc, locale)) {
             printf("  %20s: %s (%d x %d @ %d)\n", name, loc, w, h, y);
@@ -443,8 +439,8 @@ int res_create_localized_alpha_surface(const char* name,
 
             int i;
             for (i = 0; i < h; ++i, ++y) {
-                png_read_row(png_ptr, row, NULL);
-                memcpy(surface->data + i*w, row, w);
+                png_read_row(png_ptr, row.data(), NULL);
+                memcpy(surface->data + i*w, row.data(), w);
             }
 
             *pSurface = reinterpret_cast<GRSurface*>(surface);
@@ -452,7 +448,7 @@ int res_create_localized_alpha_surface(const char* name,
         } else {
             int i;
             for (i = 0; i < h; ++i, ++y) {
-                png_read_row(png_ptr, row, NULL);
+                png_read_row(png_ptr, row.data(), NULL);
             }
         }
     }

@@ -4,7 +4,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	Hash.c \
 	SysUtil.c \
-	DirUtil.c \
+	DirUtil.cpp \
 	Inlines.c \
 	Zip.c
 
