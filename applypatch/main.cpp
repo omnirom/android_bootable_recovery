@@ -46,40 +46,32 @@ static int SpaceMode(int argc, char** argv) {
     return CacheSizeCheck(bytes);
 }
 
-// Parse arguments (which should be of the form "<sha1>" or
-// "<sha1>:<filename>" into the new parallel arrays *sha1s and
-// *patches (loading file contents into the patches).  Returns true on
+// Parse arguments (which should be of the form "<sha1>:<filename>"
+// into the new parallel arrays *sha1s and *files.Returns true on
 // success.
 static bool ParsePatchArgs(int argc, char** argv, std::vector<char*>* sha1s,
-                           std::vector<std::unique_ptr<Value, decltype(&FreeValue)>>* patches) {
+                           std::vector<FileContents>* files) {
     uint8_t digest[SHA_DIGEST_LENGTH];
 
     for (int i = 0; i < argc; ++i) {
         char* colon = strchr(argv[i], ':');
-        if (colon != NULL) {
-            *colon = '\0';
-            ++colon;
+        if (colon == nullptr) {
+            printf("no ':' in patch argument \"%s\"\n", argv[i]);
+            return false;
         }
-
+        *colon = '\0';
+        ++colon;
         if (ParseSha1(argv[i], digest) != 0) {
             printf("failed to parse sha1 \"%s\"\n", argv[i]);
             return false;
         }
 
         sha1s->push_back(argv[i]);
-        if (colon == NULL) {
-            patches->emplace_back(nullptr, FreeValue);
-        } else {
-            FileContents fc;
-            if (LoadFileContents(colon, &fc) != 0) {
-                return false;
-            }
-            std::unique_ptr<Value, decltype(&FreeValue)> value(new Value, FreeValue);
-            value->type = VAL_BLOB;
-            value->size = fc.size;
-            value->data = reinterpret_cast<char*>(fc.data);
-            patches->push_back(std::move(value));
+        FileContents fc;
+        if (LoadFileContents(colon, &fc) != 0) {
+            return false;
         }
+        files->push_back(std::move(fc));
     }
     return true;
 }
@@ -90,17 +82,19 @@ static int FlashMode(const char* src_filename, const char* tgt_filename,
 }
 
 static int PatchMode(int argc, char** argv) {
-    std::unique_ptr<Value, decltype(&FreeValue)> bonus(nullptr, FreeValue);
+    FileContents bonusFc;
+    Value bonusValue;
+    Value* bonus = nullptr;
+
     if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
-        FileContents fc;
-        if (LoadFileContents(argv[2], &fc) != 0) {
+        if (LoadFileContents(argv[2], &bonusFc) != 0) {
             printf("failed to load bonus file %s\n", argv[2]);
             return 1;
         }
-        bonus.reset(new Value);
+        bonus = &bonusValue;
         bonus->type = VAL_BLOB;
-        bonus->size = fc.size;
-        bonus->data = reinterpret_cast<char*>(fc.data);
+        bonus->size = bonusFc.data.size();
+        bonus->data = reinterpret_cast<char*>(bonusFc.data.data());
         argc -= 2;
         argv += 2;
     }
@@ -118,28 +112,29 @@ static int PatchMode(int argc, char** argv) {
 
     // If no <src-sha1>:<patch> is provided, it is in flash mode.
     if (argc == 5) {
-        if (bonus != NULL) {
+        if (bonus != nullptr) {
             printf("bonus file not supported in flash mode\n");
             return 1;
         }
         return FlashMode(argv[1], argv[2], argv[3], target_size);
     }
-
-
     std::vector<char*> sha1s;
-    std::vector<std::unique_ptr<Value, decltype(&FreeValue)>> patches;
-    if (!ParsePatchArgs(argc-5, argv+5, &sha1s, &patches)) {
+    std::vector<FileContents> files;
+    if (!ParsePatchArgs(argc-5, argv+5, &sha1s, &files)) {
         printf("failed to parse patch args\n");
         return 1;
     }
-
-    std::vector<Value*> patch_ptrs;
-    for (const auto& p : patches) {
-        patch_ptrs.push_back(p.get());
+    std::vector<Value> patches(files.size());
+    std::vector<Value*> patch_ptrs(files.size());
+    for (size_t i = 0; i < files.size(); ++i) {
+        patches[i].type = VAL_BLOB;
+        patches[i].size = files[i].data.size();
+        patches[i].data = reinterpret_cast<char*>(files[i].data.data());
+        patch_ptrs[i] = &patches[i];
     }
     return applypatch(argv[1], argv[2], argv[3], target_size,
                       patch_ptrs.size(), sha1s.data(),
-                      patch_ptrs.data(), bonus.get());
+                      patch_ptrs.data(), bonus);
 }
 
 // This program applies binary patches to files in a way that is safe
