@@ -407,7 +407,6 @@ unsigned char* ReadImage(const char* filename,
   while (pos < sz) {
     unsigned char* p = img+pos;
 
-    bool processed_deflate = false;
     if (sz - pos >= 4 &&
         p[0] == 0x1f && p[1] == 0x8b &&
         p[2] == 0x08 &&    // deflate compression
@@ -461,28 +460,27 @@ unsigned char* ReadImage(const char* filename,
         strm.next_out = curr->data + curr->len;
         ret = inflate(&strm, Z_NO_FLUSH);
         if (ret < 0) {
-          if (!processed_deflate) {
-            // This is the first chunk, assume that it's just a spurious
-            // gzip header instead of a real one.
-            break;
-          }
-          printf("Error: inflate failed [%s] at file offset [%zu]\n"
-                 "imgdiff only supports gzip kernel compression,"
-                 " did you try CONFIG_KERNEL_LZO?\n",
+          printf("Warning: inflate failed [%s] at offset [%zu],"
+                 " treating as a normal chunk\n",
                  strm.msg, chunk_offset);
-          free(img);
-          return NULL;
+          break;
         }
         curr->len = allocated - strm.avail_out;
         if (strm.avail_out == 0) {
           allocated *= 2;
           curr->data = reinterpret_cast<unsigned char*>(realloc(curr->data, allocated));
         }
-        processed_deflate = true;
       } while (ret != Z_STREAM_END);
 
       curr->deflate_len = sz - strm.avail_in - pos;
       inflateEnd(&strm);
+
+      if (ret < 0) {
+        free(curr->data);
+        *num_chunks -= 2;
+        continue;
+      }
+
       pos += curr->deflate_len;
       p += curr->deflate_len;
       ++curr;
