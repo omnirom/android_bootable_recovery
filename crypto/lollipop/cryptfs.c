@@ -74,9 +74,6 @@
 
 #define KEY_IN_FOOTER  "footer"
 
-// "default_password" encoded into hex (d=0x64 etc)
-#define DEFAULT_PASSWORD "64656661756c745f70617373776f7264"
-
 #define EXT4_FS 1
 #define F2FS_FS 2
 
@@ -101,13 +98,10 @@ static char real_blkdev[PROPERTY_VALUE_MAX] = "";
 static char file_system[PROPERTY_VALUE_MAX] = "";
 
 #ifdef CONFIG_HW_DISK_ENCRYPTION
-#define DEFAULT_HEX_PASSWORD "64656661756c745f70617373776f7264"
 static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
                             unsigned char *ikey, void *params);
 static void convert_key_to_hex_ascii(const unsigned char *master_key,
                                      unsigned int keysize, char *master_key_ascii);
-static int put_crypt_ftr_and_key(struct crypt_mnt_ftr *crypt_ftr);
-
 static int get_keymaster_hw_fde_passwd(const char* passwd, unsigned char* newpw,
                                   unsigned char* salt,
                                   const struct crypt_mnt_ftr *ftr)
@@ -138,82 +132,6 @@ static int verify_hw_fde_passwd(char *passwd, struct crypt_mnt_ftr* crypt_ftr)
     else
         key_index = set_hw_device_encryption_key((const char*)newpw,
                                            (char*) crypt_ftr->crypto_type_name);
-    return key_index;
-}
-
-static int verify_and_update_hw_fde_passwd(char *passwd,
-                                           struct crypt_mnt_ftr* crypt_ftr)
-{
-    char* new_passwd = NULL;
-    unsigned char newpw[32] = {0};
-    int key_index = -1;
-    int passwd_updated = -1;
-    int ascii_passwd_updated = (crypt_ftr->flags & CRYPT_ASCII_PASSWORD_UPDATED);
-
-    key_index = verify_hw_fde_passwd(passwd, crypt_ftr);
-    if (key_index < 0) {
-        ++crypt_ftr->failed_decrypt_count;
-
-        if (ascii_passwd_updated) {
-            printf("Ascii password was updated");
-        } else {
-            /* Code in else part would execute only once:
-             * When device is upgraded from L->M release.
-             * Once upgraded, code flow should never come here.
-             * L release passed actual password in hex, so try with hex
-             * Each nible of passwd was encoded as a byte, so allocate memory
-             * twice of password len plus one more byte for null termination
-             */
-            if (crypt_ftr->crypt_type == CRYPT_TYPE_DEFAULT) {
-                new_passwd = (char*)malloc(strlen(DEFAULT_HEX_PASSWORD) + 1);
-                if (new_passwd == NULL) {
-                    printf("System out of memory. Password verification  incomplete");
-                    goto out;
-                }
-                strlcpy(new_passwd, DEFAULT_HEX_PASSWORD, strlen(DEFAULT_HEX_PASSWORD) + 1);
-            } else {
-                new_passwd = (char*)malloc(strlen(passwd) * 2 + 1);
-                if (new_passwd == NULL) {
-                    printf("System out of memory. Password verification  incomplete");
-                    goto out;
-                }
-                convert_key_to_hex_ascii((const unsigned char*)passwd,
-                                       strlen(passwd), new_passwd);
-            }
-            key_index = set_hw_device_encryption_key((const char*)new_passwd,
-                                       (char*) crypt_ftr->crypto_type_name);
-            if (key_index >=0) {
-                crypt_ftr->failed_decrypt_count = 0;
-                printf("Hex password verified...will try to update with Ascii value");
-                /* Before updating password, tie that with keymaster to tie with ROT */
-
-                if (get_keymaster_hw_fde_passwd(passwd, newpw,
-                                                crypt_ftr->salt, crypt_ftr)) {
-                    passwd_updated = update_hw_device_encryption_key(new_passwd,
-                                     passwd, (char*)crypt_ftr->crypto_type_name);
-                } else {
-                    passwd_updated = update_hw_device_encryption_key(new_passwd,
-                                     (const char*)newpw, (char*)crypt_ftr->crypto_type_name);
-                }
-
-                if (passwd_updated >= 0) {
-                    crypt_ftr->flags |= CRYPT_ASCII_PASSWORD_UPDATED;
-                    printf("Ascii password recorded and updated");
-                } else {
-                    printf("Passwd verified, could not update...Will try next time");
-                }
-            } else {
-                ++crypt_ftr->failed_decrypt_count;
-            }
-            free(new_passwd);
-        }
-    } else {
-        if (!ascii_passwd_updated)
-            crypt_ftr->flags |= CRYPT_ASCII_PASSWORD_UPDATED;
-    }
-out:
-    // DO NOT update footer before leaving
-    // put_crypt_ftr_and_key(crypt_ftr);
     return key_index;
 }
 #endif
@@ -853,23 +771,6 @@ static int get_crypt_ftr_info(char **metadata_fname, off64_t *off)
   return rc;
 }
 
-static inline int unix_read(int  fd, void*  buff, int  len)
-{
-    return TEMP_FAILURE_RETRY(read(fd, buff, len));
-}
-
-static inline int unix_write(int  fd, const void*  buff, int  len)
-{
-    return TEMP_FAILURE_RETRY(write(fd, buff, len));
-}
-
-static void init_empty_persist_data(struct crypt_persist_data *pdata, int len)
-{
-    memset(pdata, 0, len);
-    pdata->persist_magic = PERSIST_DATA_MAGIC;
-    pdata->persist_valid_entries = 0;
-}
-
 static int get_crypt_ftr_and_key(struct crypt_mnt_ftr *crypt_ftr)
 {
   int fd;
@@ -941,49 +842,6 @@ errout:
   return rc;
 }
 
-static int hexdigit (char c)
-{
-    if (c >= '0' && c <= '9') return c - '0';
-    c = tolower(c);
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    return -1;
-}
-
-static unsigned char* convert_hex_ascii_to_key(const char* master_key_ascii,
-                                               unsigned int* out_keysize)
-{
-    unsigned int i;
-    *out_keysize = 0;
-
-    size_t size = strlen (master_key_ascii);
-    if (size % 2) {
-        printf("Trying to convert ascii string of odd length\n");
-        return NULL;
-    }
-
-    unsigned char* master_key = (unsigned char*) malloc(size / 2);
-    if (master_key == 0) {
-        printf("Cannot allocate\n");
-        return NULL;
-    }
-
-    for (i = 0; i < size; i += 2) {
-        int high_nibble = hexdigit (master_key_ascii[i]);
-        int low_nibble = hexdigit (master_key_ascii[i + 1]);
-
-        if(high_nibble < 0 || low_nibble < 0) {
-            printf("Invalid hex string\n");
-            free (master_key);
-            return NULL;
-        }
-
-        master_key[*out_keysize] = high_nibble * 16 + low_nibble;
-        (*out_keysize)++;
-    }
-
-    return master_key;
-}
-
 /* Convert a binary key of specified length into an ascii hex string equivalent,
  * without the leading 0x and with null termination
  */
@@ -1006,8 +864,8 @@ static void convert_key_to_hex_ascii(const unsigned char *master_key,
 
 }
 
-static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr, unsigned char *master_key,
-                                     char *real_blk_name, const char *name, int fd,
+static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr, const unsigned char *master_key,
+                                     const char *real_blk_name, const char *name, int fd,
                                      char *extra_params)
 {
   char buffer[DM_CRYPT_BUF_SIZE];
@@ -1117,8 +975,8 @@ static int get_dm_crypt_version(int fd, const char *name,  int *version)
     return -1;
 }
 
-static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, unsigned char *master_key,
-                                    char *real_blk_name, char *crypto_blk_name, const char *name)
+static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, const unsigned char *master_key,
+                                 const char *real_blk_name, char *crypto_blk_name, const char *name)
 {
   char buffer[DM_CRYPT_BUF_SIZE];
   char master_key_ascii[129]; /* Large enough to hold 512 bit key and null */
@@ -1256,14 +1114,9 @@ static int pbkdf2(const char *passwd, const unsigned char *salt,
     printf("Using pbkdf2 for cryptfs KDF\n");
 
     /* Turn the password into a key and IV that can decrypt the master key */
-    unsigned int keysize;
-    char* master_key = (char*)convert_hex_ascii_to_key(passwd, &keysize);
-    if (!master_key) return -1;
-    PKCS5_PBKDF2_HMAC_SHA1(master_key, keysize, salt, SALT_LEN,
+    PKCS5_PBKDF2_HMAC_SHA1(passwd, strlen(passwd), salt, SALT_LEN,
                            HASH_COUNT, KEY_LEN_BYTES+IV_LEN_BYTES, ikey);
 
-    memset(master_key, 0, keysize);
-    free (master_key);
     return 0;
 }
 
@@ -1279,14 +1132,9 @@ static int scrypt(const char *passwd, const unsigned char *salt,
     int p = 1 << ftr->p_factor;
 
     /* Turn the password into a key and IV that can decrypt the master key */
-    unsigned int keysize;
-    unsigned char* master_key = convert_hex_ascii_to_key(passwd, &keysize);
-    if (!master_key) return -1;
-    crypto_scrypt(master_key, keysize, salt, SALT_LEN, N, r, p, ikey,
-            KEY_LEN_BYTES + IV_LEN_BYTES);
+    crypto_scrypt((const uint8_t *)passwd, strlen(passwd), salt, SALT_LEN,
+            N, r, p, ikey, KEY_LEN_BYTES + IV_LEN_BYTES);
 
-    memset(master_key, 0, keysize);
-    free (master_key);
     return 0;
 }
 
@@ -1305,16 +1153,8 @@ static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
     int r = 1 << ftr->r_factor;
     int p = 1 << ftr->p_factor;
 
-    unsigned char* master_key = convert_hex_ascii_to_key(passwd, &key_size);
-    if (!master_key) {
-        printf("Failed to convert passwd from hex\n");
-        return -1;
-    }
-
-    rc = crypto_scrypt(master_key, key_size, salt, SALT_LEN,
+    rc = crypto_scrypt((const uint8_t *)passwd, strlen(passwd), salt, SALT_LEN,
                        N, r, p, ikey, KEY_LEN_BYTES + IV_LEN_BYTES);
-    memset(master_key, 0, key_size);
-    free(master_key);
 
     if (rc) {
         printf("scrypt failed\n");
@@ -1334,94 +1174,6 @@ static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
     if (rc) {
         printf("scrypt failed\n");
         return -1;
-    }
-
-    return 0;
-}
-
-static int encrypt_master_key(const char *passwd, const unsigned char *salt,
-                              const unsigned char *decrypted_master_key,
-                              unsigned char *encrypted_master_key,
-                              struct crypt_mnt_ftr *crypt_ftr)
-{
-    unsigned char ikey[32+32] = { 0 }; /* Big enough to hold a 256 bit key and 256 bit IV */
-    EVP_CIPHER_CTX e_ctx;
-    int encrypted_len, final_len;
-    int rc = 0;
-
-    /* Turn the password into an intermediate key and IV that can decrypt the master key */
-    get_device_scrypt_params(crypt_ftr);
-
-    switch (crypt_ftr->kdf_type) {
-    case KDF_SCRYPT_KEYMASTER_UNPADDED:
-    case KDF_SCRYPT_KEYMASTER_BADLY_PADDED:
-    case KDF_SCRYPT_KEYMASTER:
-        if (keymaster_create_key(crypt_ftr)) {
-            printf("keymaster_create_key failed\n");
-            return -1;
-        }
-
-        if (scrypt_keymaster(passwd, salt, ikey, crypt_ftr)) {
-            printf("scrypt failed\n");
-            return -1;
-        }
-        break;
-
-    case KDF_SCRYPT:
-        if (scrypt(passwd, salt, ikey, crypt_ftr)) {
-            printf("scrypt failed\n");
-            return -1;
-        }
-        break;
-
-    default:
-        printf("Invalid kdf_type\n");
-        return -1;
-    }
-
-    /* Initialize the decryption engine */
-    if (! EVP_EncryptInit(&e_ctx, EVP_aes_128_cbc(), ikey, ikey+KEY_LEN_BYTES)) {
-        printf("EVP_EncryptInit failed\n");
-        return -1;
-    }
-    EVP_CIPHER_CTX_set_padding(&e_ctx, 0); /* Turn off padding as our data is block aligned */
-
-    /* Encrypt the master key */
-    if (! EVP_EncryptUpdate(&e_ctx, encrypted_master_key, &encrypted_len,
-                              decrypted_master_key, KEY_LEN_BYTES)) {
-        printf("EVP_EncryptUpdate failed\n");
-        return -1;
-    }
-#ifndef TW_CRYPTO_HAVE_KEYMASTERX
-    if (! EVP_EncryptFinal(&e_ctx, encrypted_master_key + encrypted_len, &final_len)) {
-#else
-    if (! EVP_EncryptFinal_ex(&e_ctx, encrypted_master_key + encrypted_len, &final_len)) {
-#endif
-        printf("EVP_EncryptFinal failed\n");
-        return -1;
-    }
-
-    if (encrypted_len + final_len != KEY_LEN_BYTES) {
-        printf("EVP_Encryption length check failed with %d, %d bytes\n", encrypted_len, final_len);
-        return -1;
-    }
-
-    /* Store the scrypt of the intermediate key, so we can validate if it's a
-       password error or mount error when things go wrong.
-       Note there's no need to check for errors, since if this is incorrect, we
-       simply won't wipe userdata, which is the correct default behavior
-    */
-    int N = 1 << crypt_ftr->N_factor;
-    int r = 1 << crypt_ftr->r_factor;
-    int p = 1 << crypt_ftr->p_factor;
-
-    rc = crypto_scrypt(ikey, KEY_LEN_BYTES,
-                       crypt_ftr->salt, sizeof(crypt_ftr->salt), N, r, p,
-                       crypt_ftr->scrypted_intermediate_key,
-                       sizeof(crypt_ftr->scrypted_intermediate_key));
-
-    if (rc) {
-      printf("encrypt_master_key: crypto_scrypt failed\n");
     }
 
     return 0;
@@ -1522,7 +1274,6 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   unsigned char decrypted_master_key[32];
   char crypto_blkdev[MAXPATHLEN];
   char tmp_mount_point[64];
-  unsigned int orig_failed_decrypt_count;
   int rc = 0;
   kdf_func kdf;
   void *kdf_params;
@@ -1532,7 +1283,6 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   size_t intermediate_key_size = 0;
 
   printf("crypt_ftr->fs_size = %lld\n", crypt_ftr->fs_size);
-  orig_failed_decrypt_count = crypt_ftr->failed_decrypt_count;
 
   if (! (crypt_ftr->flags & CRYPT_MNT_KEY_UNENCRYPTED) ) {
     if (decrypt_master_key(passwd, decrypted_master_key, crypt_ftr,
@@ -1546,9 +1296,10 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
 #ifdef CONFIG_HW_DISK_ENCRYPTION
   int key_index = 0;
   if(is_hw_disk_encryption((char*)crypt_ftr->crypto_type_name)) {
-    key_index = verify_and_update_hw_fde_passwd(passwd, crypt_ftr);
+    key_index = verify_hw_fde_passwd(passwd, crypt_ftr);
+
     if (key_index < 0) {
-      rc = crypt_ftr->failed_decrypt_count;
+      rc = 1;
       goto errout;
     }
     else {
@@ -1617,9 +1368,7 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
     if (mount(crypto_blkdev, tmp_mount_point, file_system, 0, NULL) != 0) {
       printf("Error temp mounting decrypted block device '%s'\n", crypto_blkdev);
       delete_crypto_blk_dev(label);
-
-      rc = ++crypt_ftr->failed_decrypt_count;
-      //put_crypt_ftr_and_key(crypt_ftr); // Do not penalize for attempting to decrypt in recovery
+      rc = 1;
     } else {
       /* Success! */
       printf("Password did not match but decrypted drive mounted - continue\n");
@@ -1629,54 +1378,14 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   }
 
   if (rc == 0) {
-    /*crypt_ftr->failed_decrypt_count = 0;
-    if (orig_failed_decrypt_count != 0) {
-      put_crypt_ftr_and_key(crypt_ftr);
-    }*/
+    // Don't increment the failed attempt counter as it doesn't
+    // make sense to do so in TWRP
 
     /* Save the name of the crypto block device
      * so we can mount it when restarting the framework. */
     property_set("ro.crypto.fs_crypto_blkdev", crypto_blkdev);
 
-    /* Also save a the master key so we can reencrypted the key
-     * the key when we want to change the password on it. */
-    /*memcpy(saved_master_key, decrypted_master_key, KEY_LEN_BYTES);
-    saved_mount_point = strdup(mount_point);
-    master_key_saved = 1;
-    printf("%s(): Master key saved\n", __FUNCTION__);*/
-    rc = 0;
-
-    // Upgrade if we're not using the latest KDF.
-    /*use_keymaster = keymaster_check_compatibility();
-    if (crypt_ftr->kdf_type == KDF_SCRYPT_KEYMASTER) {
-        // Don't allow downgrade
-    } else if (use_keymaster == 1 && crypt_ftr->kdf_type != KDF_SCRYPT_KEYMASTER) {
-        crypt_ftr->kdf_type = KDF_SCRYPT_KEYMASTER;
-        upgrade = 1;
-    } else if (use_keymaster == 0 && crypt_ftr->kdf_type != KDF_SCRYPT) {
-        crypt_ftr->kdf_type = KDF_SCRYPT;
-        upgrade = 1;
-    }
-
-    if (upgrade) {
-        rc = encrypt_master_key(passwd, crypt_ftr->salt, saved_master_key,
-                                crypt_ftr->master_key, crypt_ftr);
-        if (!rc) {
-            rc = put_crypt_ftr_and_key(crypt_ftr);
-        }
-        printf("Key Derivation Function upgrade: rc=%d\n", rc);
-
-        // Do not fail even if upgrade failed - machine is bootable
-        // Note that if this code is ever hit, there is a *serious* problem
-        // since KDFs should never fail. You *must* fix the kdf before
-        // proceeding!
-        if (rc) {
-          printf("Upgrade failed with error %d,"
-                " but continuing with previous state\n",
-                rc);
-          rc = 0;
-        }
-    }*/
+    // TWRP shouldn't change the stored key
   }
 
  errout:
@@ -1685,15 +1394,6 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
     free(intermediate_key);
   }
   return rc;
-}
-
-/* Called by vold when it wants to undo the crypto mapping of a volume it
- * manages.  This is usually in response to a factory reset, when we want
- * to undo the crypto mapping so the volume is formatted in the clear.
- */
-int cryptfs_revert_volume(const char *label)
-{
-    return delete_crypto_blk_dev((char *)label);
 }
 
 int check_unmounted_and_get_ftr(struct crypt_mnt_ftr* crypt_ftr)
@@ -1714,107 +1414,6 @@ int check_unmounted_and_get_ftr(struct crypt_mnt_ftr* crypt_ftr)
     return 0;
 }
 
-/*
- * TODO - transition patterns to new format in calling code
- *        and remove this vile hack, and the use of hex in
- *        the password passing code.
- *
- * Patterns are passed in zero based (i.e. the top left dot
- * is represented by zero, the top middle one etc), but we want
- * to store them '1' based.
- * This is to allow us to migrate the calling code to use this
- * convention. It also solves a nasty problem whereby scrypt ignores
- * trailing zeros, so patterns ending at the top left could be
- * truncated, and similarly, you could add the top left to any
- * pattern and still match.
- * adjust_passwd is a hack function that returns the alternate representation
- * if the password appears to be a pattern (hex numbers all less than 09)
- * If it succeeds we need to try both, and in particular try the alternate
- * first. If the original matches, then we need to update the footer
- * with the alternate.
- * All code that accepts passwords must adjust them first. Since
- * cryptfs_check_passwd is always the first function called after a migration
- * (and indeed on any boot) we only need to do the double try in this
- * function.
- */
-char* adjust_passwd(const char* passwd)
-{
-    size_t index, length;
-
-    if (!passwd) {
-        return 0;
-    }
-
-    // Check even length. Hex encoded passwords are always
-    // an even length, since each character encodes to two characters.
-    length = strlen(passwd);
-    if (length % 2) {
-        printf("Password not correctly hex encoded.\n");
-        return 0;
-    }
-
-    // Check password is old-style pattern - a collection of hex
-    // encoded bytes less than 9 (00 through 08)
-    for (index = 0; index < length; index +=2) {
-        if (passwd[index] != '0'
-            || passwd[index + 1] < '0' || passwd[index + 1] > '8') {
-            return 0;
-        }
-    }
-
-    // Allocate room for adjusted passwd and null terminate
-    char* adjusted = malloc(length + 1);
-    adjusted[length] = 0;
-
-    // Add 0x31 ('1') to each character
-    for (index = 0; index < length; index += 2) {
-        // output is 31 through 39 so set first byte to three, second to src + 1
-        adjusted[index] = '3';
-        adjusted[index + 1] = passwd[index + 1] + 1;
-    }
-
-    return adjusted;
-}
-
-/*
- * Passwords in L get passed from Android to cryptfs in hex, so a '1'
- * gets converted to '31' where 31 is 0x31 which is the ascii character
- * code in hex of the character '1'. This function will convert the
- * regular character codes to their hexadecimal representation to make
- * decrypt work properly with Android 5.0 lollipop decryption.
- */
-char* hexadj_passwd(const char* passwd, int has_hw_crypto)
-{
-    size_t index, length;
-    const char* ptr = passwd;
-
-    if (!passwd) {
-        return 0;
-    }
-
-    length = strlen(passwd);
-
-    // Allocate room for hex passwd and null terminate
-    char* hex = malloc((length * 2) + 1);
-    hex[length * 2] = 0;
-
-    // Convert to hex
-    for (index = 0; index < length; index++) {
-        sprintf(hex + (index * 2), "%02X", *ptr);
-        ptr++;
-    }
-#ifdef CONFIG_HW_DISK_ENCRYPTION
-    if (has_hw_crypto) {
-        printf("hexadj_passwd converting to lower case for hardware disk crypto.\n");
-        length *= 2;
-        for (index = 0; index < length; index++) {
-            hex[index] = tolower(hex[index]);
-        }
-    }
-#endif
-    return hex;
-}
-
 int cryptfs_check_footer()
 {
     int rc = -1;
@@ -1829,176 +1428,34 @@ int cryptfs_check_passwd(char *passwd)
 {
     struct crypt_mnt_ftr crypt_ftr;
     int rc;
-    int has_hw_crypto = 0;
+
+    if (!passwd) {
+        printf("cryptfs_check_passwd: passwd is NULL!\n");
+        return -1;
+    }
 
     rc = check_unmounted_and_get_ftr(&crypt_ftr);
     if (rc)
         return rc;
 
-#ifdef CONFIG_HW_DISK_ENCRYPTION
-    printf("CONFIG_HW_DISK_ENCRYPTION present\n");
-    if (is_hw_fde_enabled() && is_hw_disk_encryption((char*) crypt_ftr.crypto_type_name))
-        has_hw_crypto = 1;
-#endif
+    rc = test_mount_encrypted_fs(&crypt_ftr, passwd,
+                                DATA_MNT_POINT, "userdata");
 
-    //if (passwd) printf("passwd: '%s'\n", passwd);
-    char* adjusted_passwd;
-    if (!has_hw_crypto)
-        adjusted_passwd = adjust_passwd(passwd);
-    //if (adjusted_passwd) printf("adjusted_passwd: '%s'\n", adjusted_passwd);
-    char* hex_passwd = hexadj_passwd(passwd, has_hw_crypto);
-    //if (hex_passwd) printf("hex_passwd: '%s'\n", hex_passwd);
-    printf("has_hw_crypto is %i\n", has_hw_crypto);
-    if (!has_hw_crypto && adjusted_passwd) {
-        int failed_decrypt_count = crypt_ftr.failed_decrypt_count;
-        //printf("trying adjusted password '%s'\n", adjusted_passwd);
-        rc = test_mount_encrypted_fs(&crypt_ftr, hex_passwd,
-                                     DATA_MNT_POINT, "userdata");
-
-        // Maybe the original one still works?
-        if (rc) {
-            // Don't double count this failure
-            //printf("trying passwd '%s'\n", passwd);
-            crypt_ftr.failed_decrypt_count = failed_decrypt_count;
-            rc = test_mount_encrypted_fs(&crypt_ftr, passwd,
-                                         DATA_MNT_POINT, "userdata");
-            if (!rc) {
-                // cryptfs_changepw also adjusts so pass original
-                // Note that adjust_passwd only recognises patterns
-                // so we can safely use CRYPT_TYPE_PATTERN
-                printf("TWRP NOT Updating pattern to new format\n");
-                //cryptfs_changepw(CRYPT_TYPE_PATTERN, passwd);
-            } else if (hex_passwd) {
-                //printf("trying hex_passwd '%s'\n", hex_passwd);
-                rc = test_mount_encrypted_fs(&crypt_ftr, hex_passwd,
-                                         DATA_MNT_POINT, "userdata");
-            }
-        }
-        free(adjusted_passwd);
-    } else {
+    // try falling back to Lollipop hex passwords
+    if (rc) {
+        int hex_pass_len = strlen(passwd) * 2 + 1;
+        char *hex_passwd = (char *)malloc(hex_pass_len);
         if (hex_passwd) {
-            //printf("2trying hex_passwd '%s'\n", hex_passwd);
+            convert_key_to_hex_ascii((unsigned char *)passwd,
+                                   strlen(passwd), hex_passwd);
             rc = test_mount_encrypted_fs(&crypt_ftr, hex_passwd,
-                                         DATA_MNT_POINT, "userdata");
-        } else {
-            rc = 1;
+                                DATA_MNT_POINT, "userdata");
+            memset(hex_passwd, 0, hex_pass_len);
+            free(hex_passwd);
         }
-        if (rc && passwd) {
-            //printf("2trying passwd '%s'\n", passwd);
-            rc = test_mount_encrypted_fs(&crypt_ftr, passwd,
-                                     DATA_MNT_POINT, "userdata");
-        }
-    }
-
-    if (hex_passwd)
-        free(hex_passwd);
-
-    /*if (rc == 0 && crypt_ftr.crypt_type != CRYPT_TYPE_DEFAULT) {
-        printf("cryptfs_check_passwd update expiry time?\n");
-        cryptfs_clear_password();
-        password = strdup(passwd);
-        struct timespec now;
-        clock_gettime(CLOCK_BOOTTIME, &now);
-        password_expiry_time = now.tv_sec + password_max_age_seconds;
-    }*/
-
-    return rc;
-}
-
-int cryptfs_verify_passwd(char *passwd)
-{
-    struct crypt_mnt_ftr crypt_ftr;
-    /* Allocate enough space for a 256 bit key, but we may use less */
-    unsigned char decrypted_master_key[32];
-    char encrypted_state[PROPERTY_VALUE_MAX];
-    int rc;
-
-    property_get("ro.crypto.state", encrypted_state, "");
-    if (strcmp(encrypted_state, "encrypted") ) {
-        printf("device not encrypted, aborting\n");
-        return -2;
-    }
-
-    if (!master_key_saved) {
-        printf("encrypted fs not yet mounted, aborting\n");
-        return -1;
-    }
-
-    if (!saved_mount_point) {
-        printf("encrypted fs failed to save mount point, aborting\n");
-        return -1;
-    }
-
-    if (get_crypt_ftr_and_key(&crypt_ftr)) {
-        printf("Error getting crypt footer and key\n");
-        return -1;
-    }
-
-    if (crypt_ftr.flags & CRYPT_MNT_KEY_UNENCRYPTED) {
-        /* If the device has no password, then just say the password is valid */
-        rc = 0;
-    } else {
-        char* adjusted_passwd = adjust_passwd(passwd);
-        if (adjusted_passwd) {
-            passwd = adjusted_passwd;
-        }
-
-        decrypt_master_key(passwd, decrypted_master_key, &crypt_ftr, 0, 0);
-        if (!memcmp(decrypted_master_key, saved_master_key, crypt_ftr.keysize)) {
-            /* They match, the password is correct */
-            rc = 0;
-        } else {
-            /* If incorrect, sleep for a bit to prevent dictionary attacks */
-            sleep(1);
-            rc = 1;
-        }
-
-        free(adjusted_passwd);
     }
 
     return rc;
-}
-
-/* Initialize a crypt_mnt_ftr structure.  The keysize is
- * defaulted to 16 bytes, and the filesystem size to 0.
- * Presumably, at a minimum, the caller will update the
- * filesystem size and crypto_type_name after calling this function.
- */
-static int cryptfs_init_crypt_mnt_ftr(struct crypt_mnt_ftr *ftr)
-{
-    off64_t off;
-
-    memset(ftr, 0, sizeof(struct crypt_mnt_ftr));
-    ftr->magic = CRYPT_MNT_MAGIC;
-    ftr->major_version = CURRENT_MAJOR_VERSION;
-    ftr->minor_version = CURRENT_MINOR_VERSION;
-    ftr->ftr_size = sizeof(struct crypt_mnt_ftr);
-    ftr->keysize = KEY_LEN_BYTES;
-
-    switch (keymaster_check_compatibility()) {
-    case 1:
-        ftr->kdf_type = KDF_SCRYPT_KEYMASTER;
-        break;
-
-    case 0:
-        ftr->kdf_type = KDF_SCRYPT;
-        break;
-
-    default:
-        printf("keymaster_check_compatibility failed\n");
-        return -1;
-    }
-
-    get_device_scrypt_params(ftr);
-
-    ftr->persist_data_size = CRYPT_PERSIST_DATA_SIZE;
-    if (get_crypt_ftr_info(NULL, &off) == 0) {
-        ftr->persist_data_offset[0] = off + CRYPT_FOOTER_TO_PERSIST_OFFSET;
-        ftr->persist_data_offset[1] = off + CRYPT_FOOTER_TO_PERSIST_OFFSET +
-                                    ftr->persist_data_size;
-    }
-
-    return 0;
 }
 
 /* Returns type of the password, default, pattern, pin or password.
