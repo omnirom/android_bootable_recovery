@@ -35,11 +35,10 @@ struct stinfo {
     void *cookie;
 };
 
-void* service_bootstrap_func(void* x) {
+void service_bootstrap_func(void* x) {
     stinfo* sti = reinterpret_cast<stinfo*>(x);
     sti->func(sti->fd, sti->cookie);
     free(sti);
-    return 0;
 }
 
 static void sideload_host_service(int sfd, void* data) {
