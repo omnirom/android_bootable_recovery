@@ -415,7 +415,8 @@ ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
         lz4 \
         ntfs-3g \
         cp_xattrs \
-        ls_xattrs
+        ls_xattrs \
+        mount_shim.sh
 endif
 
 ifneq ($(TARGET_ARCH), arm64)
