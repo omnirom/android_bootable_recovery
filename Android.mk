@@ -425,11 +425,11 @@ endif
 ifneq ($(TW_EXCLUDE_DEFAULT_USB_INIT), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += init.recovery.usb.rc
 endif
-ifeq ($(TARGET_USES_LOGD), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += logd libsysutils libnl init.recovery.logd.rc
-endif
 ifeq ($(TWRP_INCLUDE_LOGCAT), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += logcat
+    ifeq ($(TARGET_USES_LOGD), true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += logd libsysutils libnl init.recovery.logd.rc
+    endif
 endif
 # Allow devices to specify device-specific recovery dependencies
 ifneq ($(TARGET_RECOVERY_DEVICE_MODULES),)
