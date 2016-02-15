@@ -93,12 +93,15 @@ TWRP_NEW_THEME := true
 ifeq ($(TW_CUSTOM_THEME),)
     ifeq ($(TW_THEME),)
         # This converts the old DEVICE_RESOLUTION flag to the new TW_THEME flag
+        PORTRAIT_LDPI := 240x320
         PORTRAIT_MDPI := 320x480 480x800 480x854 540x960
         PORTRAIT_HDPI := 720x1280 800x1280 1080x1920 1200x1920 1440x2560 1600x2560
         WATCH_MDPI := 240x240 280x280 320x320
         LANDSCAPE_MDPI := 800x480 1024x600 1024x768
         LANDSCAPE_HDPI := 1280x800 1920x1200 2560x1600
-        ifneq ($(filter $(DEVICE_RESOLUTION), $(PORTRAIT_MDPI)),)
+        ifneq ($(filter $(DEVICE_RESOLUTION), $(PORTRAIT_LDPI)),)
+            TW_THEME := portrait_ldpi
+        else ifneq ($(filter $(DEVICE_RESOLUTION), $(PORTRAIT_MDPI)),)
             TW_THEME := portrait_mdpi
         else ifneq ($(filter $(DEVICE_RESOLUTION), $(PORTRAIT_HDPI)),)
             TW_THEME := portrait_hdpi
@@ -148,7 +151,7 @@ else
         $(warning ****************************************************************************)
         $(warning * TW_THEME ($(TW_THEME)) is not valid.)
         $(warning * Please choose an appropriate TW_THEME or create a new one for your device.)
-        $(warning * Valid options are portrait_mdpi portrait_hdpi watch_mdpi)
+        $(warning * Valid options are portrait_ldpi portrait_mdpi portrait_hdpi watch_mdpi)
         $(warning *                   landscape_mdpi landscape_hdpi)
         $(warning ****************************************************************************)
         $(error stopping)
