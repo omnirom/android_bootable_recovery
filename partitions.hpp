@@ -243,7 +243,8 @@ public:
 	void Translate_Partition(const char* path, const char* resource_name, const char* default_value);
 	void Translate_Partition(const char* path, const char* resource_name, const char* default_value, const char* storage_resource_name, const char* storage_default_value);
 	void Translate_Partition_Display_Names();                                 // Updates display names based on translations
-	void Decrypt_Adopted();
+	void Decrypt_Adopted();                                                   // Attempt to identy and decrypt any adopted storage partitions
+	void Remove_Partition_By_Path(string Path);                               // Removes / erases a partition entry from the partition list
 
 	TWAtomicInt stop_backup;
 
