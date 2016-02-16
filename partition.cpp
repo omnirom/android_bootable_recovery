@@ -2526,6 +2526,11 @@ int TWPartition::Decrypt_Adopted() {
 				cryptfs_revert_ext_volume(part_guid);
 				ret = 1;
 			} else {
+				UnMount(false);
+				Has_Android_Secure = false;
+				Symlink_Path = "";
+				Symlink_Mount_Point = "";
+				Backup_Path = Mount_Point;
 				Setup_Data_Media();
 				Recreate_Media_Folder();
 				Wipe_Available_in_GUI = true;
