@@ -2413,3 +2413,16 @@ void TWPartitionManager::Decrypt_Adopted() {
 	return;
 #endif
 }
+
+void TWPartitionManager::Remove_Partition_By_Path(string Path) {
+	std::vector<TWPartition*>::iterator iter;
+	string Local_Path = TWFunc::Get_Root_Path(Path);
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path)) {
+			LOGINFO("Found and erasing '%s' from partition list\n", Local_Path.c_str());
+			Partitions.erase(iter);
+			return;
+		}
+	}
+}
