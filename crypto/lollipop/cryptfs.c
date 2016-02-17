@@ -842,6 +842,49 @@ errout:
   return rc;
 }
 
+static int hexdigit (char c)
+{
+    if (c >= '0' && c <= '9') return c - '0';
+    c = tolower(c);
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    return -1;
+}
+
+static unsigned char* convert_hex_ascii_to_key(const char* master_key_ascii,
+                                               unsigned int* out_keysize)
+{
+    unsigned int i;
+    *out_keysize = 0;
+
+    size_t size = strlen (master_key_ascii);
+    if (size % 2) {
+        printf("Trying to convert ascii string of odd length\n");
+        return NULL;
+    }
+
+    unsigned char* master_key = (unsigned char*) malloc(size / 2);
+    if (master_key == 0) {
+        printf("Cannot allocate\n");
+        return NULL;
+    }
+
+    for (i = 0; i < size; i += 2) {
+        int high_nibble = hexdigit (master_key_ascii[i]);
+        int low_nibble = hexdigit (master_key_ascii[i + 1]);
+
+        if(high_nibble < 0 || low_nibble < 0) {
+            printf("Invalid hex string\n");
+            free (master_key);
+            return NULL;
+        }
+
+        master_key[*out_keysize] = high_nibble * 16 + low_nibble;
+        (*out_keysize)++;
+    }
+
+    return master_key;
+}
+
 /* Convert a binary key of specified length into an ascii hex string equivalent,
  * without the leading 0x and with null termination
  */
@@ -1114,9 +1157,14 @@ static int pbkdf2(const char *passwd, const unsigned char *salt,
     printf("Using pbkdf2 for cryptfs KDF\n");
 
     /* Turn the password into a key and IV that can decrypt the master key */
-    PKCS5_PBKDF2_HMAC_SHA1(passwd, strlen(passwd), salt, SALT_LEN,
+    unsigned int keysize;
+    char* master_key = (char*)convert_hex_ascii_to_key(passwd, &keysize);
+    if (!master_key) return -1;
+    PKCS5_PBKDF2_HMAC_SHA1(master_key, keysize, salt, SALT_LEN,
                            HASH_COUNT, KEY_LEN_BYTES+IV_LEN_BYTES, ikey);
 
+    memset(master_key, 0, keysize);
+    free (master_key);
     return 0;
 }
 
@@ -1132,9 +1180,14 @@ static int scrypt(const char *passwd, const unsigned char *salt,
     int p = 1 << ftr->p_factor;
 
     /* Turn the password into a key and IV that can decrypt the master key */
-    crypto_scrypt((const uint8_t *)passwd, strlen(passwd), salt, SALT_LEN,
-            N, r, p, ikey, KEY_LEN_BYTES + IV_LEN_BYTES);
+    unsigned int keysize;
+    unsigned char* master_key = convert_hex_ascii_to_key(passwd, &keysize);
+    if (!master_key) return -1;
+    crypto_scrypt(master_key, keysize, salt, SALT_LEN, N, r, p, ikey,
+            KEY_LEN_BYTES + IV_LEN_BYTES);
 
+    memset(master_key, 0, keysize);
+    free (master_key);
     return 0;
 }
 
@@ -1153,8 +1206,16 @@ static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
     int r = 1 << ftr->r_factor;
     int p = 1 << ftr->p_factor;
 
-    rc = crypto_scrypt((const uint8_t *)passwd, strlen(passwd), salt, SALT_LEN,
+    unsigned char* master_key = convert_hex_ascii_to_key(passwd, &key_size);
+    if (!master_key) {
+        printf("Failed to convert passwd from hex\n");
+        return -1;
+    }
+
+    rc = crypto_scrypt(master_key, key_size, salt, SALT_LEN,
                        N, r, p, ikey, KEY_LEN_BYTES + IV_LEN_BYTES);
+    memset(master_key, 0, key_size);
+    free(master_key);
 
     if (rc) {
         printf("scrypt failed\n");
