@@ -1,0 +1,163 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_740d45ee",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:39:53Z",
+      "side": 1,
+      "message": "tab_vibration",
+      "revId": "1ba7aadb6b45d4446916c6d09ec3304d54cda9e8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_5412490c",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 306,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:39:53Z",
+      "side": 1,
+      "message": "settings_vibration_btn",
+      "revId": "1ba7aadb6b45d4446916c6d09ec3304d54cda9e8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_7424255e",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 354,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:39:53Z",
+      "side": 1,
+      "message": "vibration_hdr",
+      "revId": "1ba7aadb6b45d4446916c6d09ec3304d54cda9e8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_34f7bdd0",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 355,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:39:53Z",
+      "side": 1,
+      "message": "button_vibration_hdr",
+      "revId": "1ba7aadb6b45d4446916c6d09ec3304d54cda9e8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f40035b3",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 356,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:39:53Z",
+      "side": 1,
+      "message": "kb_vibration_hdr",
+      "revId": "1ba7aadb6b45d4446916c6d09ec3304d54cda9e8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d4fd39ad",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 357,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:39:53Z",
+      "side": 1,
+      "message": "act_vibration_hdr",
+      "revId": "1ba7aadb6b45d4446916c6d09ec3304d54cda9e8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_14f4c1c7",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 358,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:39:53Z",
+      "side": 1,
+      "message": "button_vibration",
+      "revId": "1ba7aadb6b45d4446916c6d09ec3304d54cda9e8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b42aad2b",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:39:53Z",
+      "side": 1,
+      "message": "kb_vibration",
+      "range": {
+        "startLine": 359,
+        "startChar": 21,
+        "endLine": 359,
+        "endChar": 22
+      },
+      "revId": "1ba7aadb6b45d4446916c6d09ec3304d54cda9e8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_942fb13c",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 360,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:39:53Z",
+      "side": 1,
+      "message": "act_vibration",
+      "revId": "1ba7aadb6b45d4446916c6d09ec3304d54cda9e8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
