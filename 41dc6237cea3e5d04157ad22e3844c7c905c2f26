@@ -1,0 +1,745 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_349d7d5b",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Copia de seguridad es la expresión correcta, no respaldo.",
+      "range": {
+        "startLine": 41,
+        "startChar": 44,
+        "endLine": 41,
+        "endChar": 45
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_149a8162",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Aquí igual.",
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f4a6f5a9",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Es ADB, está puesto correctamente.",
+      "range": {
+        "startLine": 64,
+        "startChar": 40,
+        "endLine": 64,
+        "endChar": 47
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d4a3f997",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Copia de seguridad",
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b4b06dda",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Contraseña en minúscula, por favor.",
+      "range": {
+        "startLine": 206,
+        "startChar": 42,
+        "endLine": 206,
+        "endChar": 52
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_74aae56c",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Desactivado",
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_94b571cb",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Activado",
+      "range": {
+        "startLine": 211,
+        "startChar": 25,
+        "endLine": 211,
+        "endChar": 32
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_54afe97a",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Seleccionar Copia de Seguridad",
+      "range": {
+        "startLine": 217,
+        "startChar": 51,
+        "endLine": 217,
+        "endChar": 56
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_34c45d47",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "deshacer.",
+      "range": {
+        "startLine": 223,
+        "startChar": 54,
+        "endLine": 223,
+        "endChar": 62
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_14c16136",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Deslize",
+      "range": {
+        "startLine": 226,
+        "startChar": 30,
+        "endLine": 226,
+        "endChar": 37
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f4bdd5ad",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Seleccione",
+      "range": {
+        "startLine": 231,
+        "startChar": 34,
+        "endLine": 231,
+        "endChar": 44
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d4bad9b3",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Deslize",
+      "range": {
+        "startLine": 232,
+        "startChar": 31,
+        "endLine": 232,
+        "endChar": 38
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b4dbcd22",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "¡Esto no se puede deshacer!",
+      "range": {
+        "startLine": 236,
+        "startChar": 57,
+        "endLine": 236,
+        "endChar": 65
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_94e0d1cb",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Deslize",
+      "range": {
+        "startLine": 239,
+        "startChar": 33,
+        "endLine": 239,
+        "endChar": 40
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_74e545d9",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Seleccione",
+      "range": {
+        "startLine": 243,
+        "startChar": 32,
+        "endLine": 243,
+        "endChar": 42
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_54ea49ab",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Montar partición de sistema en modo lectura",
+      "range": {
+        "startLine": 244,
+        "startChar": 34,
+        "endLine": 244,
+        "endChar": 74
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_34cfbd5f",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Montar",
+      "range": {
+        "startLine": 249,
+        "startChar": 39,
+        "endLine": 249,
+        "endChar": 45
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_14ccc166",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "¡Asegúrese....",
+      "range": {
+        "startLine": 252,
+        "startChar": 31,
+        "endLine": 252,
+        "endChar": 41
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f4d83522",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 263,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "modificar",
+      "range": {
+        "startLine": 263,
+        "startChar": 53,
+        "endLine": 263,
+        "endChar": 62
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d4d539e8",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "para que sea más fácil para usted instalar actualizaciones oficiales.",
+      "range": {
+        "startLine": 266,
+        "startChar": 26,
+        "endLine": 266,
+        "endChar": 99
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b402ad76",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 271,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "TWRP puede dejar sin modificar la partición del sistema para que sea más fácil para usted instalar actualizaciones oficiales.",
+      "range": {
+        "startLine": 271,
+        "startChar": 26,
+        "endLine": 271,
+        "endChar": 156
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_9407b187",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 274,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "No mostrar nunca más esta pantalla durante el inicio",
+      "range": {
+        "startLine": 274,
+        "startChar": 39,
+        "endLine": 274,
+        "endChar": 93
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_74fc256d",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Mantener modo lectura",
+      "range": {
+        "startLine": 275,
+        "startChar": 36,
+        "endLine": 275,
+        "endChar": 57
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_5401296f",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Deslize",
+      "range": {
+        "startLine": 276,
+        "startChar": 33,
+        "endLine": 276,
+        "endChar": 40
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_34f69d8b",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 287,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Diseño",
+      "range": {
+        "startLine": 287,
+        "startChar": 32,
+        "endLine": 287,
+        "endChar": 38
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_14f3a19a",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Diseño",
+      "range": {
+        "startLine": 288,
+        "startChar": 32,
+        "endLine": 288,
+        "endChar": 38
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f4ef15ae",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 291,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Pantalla",
+      "range": {
+        "startLine": 291,
+        "startChar": 37,
+        "endLine": 291,
+        "endChar": 45
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d4ec19bc",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Seleccione",
+      "range": {
+        "startLine": 296,
+        "startChar": 29,
+        "endLine": 296,
+        "endChar": 40
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b42d0dff",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 321,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Variación",
+      "range": {
+        "startLine": 321,
+        "startChar": 42,
+        "endLine": 321,
+        "endChar": 51
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_94321158",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 361,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Deslize",
+      "range": {
+        "startLine": 361,
+        "startChar": 34,
+        "endLine": 361,
+        "endChar": 41
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_74378549",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 370,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Deslize",
+      "range": {
+        "startLine": 370,
+        "startChar": 31,
+        "endLine": 370,
+        "endChar": 38
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_543c892b",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Seleccione",
+      "range": {
+        "startLine": 391,
+        "startChar": 29,
+        "endLine": 391,
+        "endChar": 39
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_3441fdaf",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 394,
+      "author": {
+        "id": 1000174
+      },
+      "writtenOn": "2016-02-18T21:55:27Z",
+      "side": 1,
+      "message": "Elija",
+      "range": {
+        "startLine": 394,
+        "startChar": 31,
+        "endLine": 394,
+        "endChar": 36
+      },
+      "revId": "41dc6237cea3e5d04157ad22e3844c7c905c2f26",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
