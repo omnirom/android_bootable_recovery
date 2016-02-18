@@ -16,6 +16,40 @@
       "revId": "6a65cdd357d40034ee01bc7c5270e30daa155db2",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_141ba11f",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 440,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:42:47Z",
+      "side": 1,
+      "message": "decrypt_data_failed",
+      "revId": "6a65cdd357d40034ee01bc7c5270e30daa155db2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f41715ef",
+        "filename": "gui/theme/common/languages/ru.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 441,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-02-18T16:42:47Z",
+      "side": 1,
+      "message": "decrypt_data_failed_pattern",
+      "revId": "6a65cdd357d40034ee01bc7c5270e30daa155db2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
