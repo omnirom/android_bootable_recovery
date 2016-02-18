@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <string>
+
 #include "edify/expr.h"
 #include "updater.h"
 #include "install.h"
@@ -89,12 +91,11 @@ int main(int argc, char** argv) {
         return 4;
     }
 
-    char* script = reinterpret_cast<char*>(malloc(script_entry->uncompLen+1));
-    if (!mzReadZipEntry(&za, script_entry, script, script_entry->uncompLen)) {
+    std::string script(script_entry->uncompLen, '\0');
+    if (!mzReadZipEntry(&za, script_entry, &script[0], script_entry->uncompLen)) {
         printf("failed to read script from package\n");
         return 5;
     }
-    script[script_entry->uncompLen] = '\0';
 
     // Configure edify's functions.
 
@@ -108,7 +109,7 @@ int main(int argc, char** argv) {
 
     Expr* root;
     int error_count = 0;
-    int error = parse_string(script, &root, &error_count);
+    int error = parse_string(script.c_str(), &root, &error_count);
     if (error != 0 || error_count > 0) {
         printf("%d parse errors\n", error_count);
         return 6;
@@ -135,7 +136,7 @@ int main(int argc, char** argv) {
 
     State state;
     state.cookie = &updater_info;
-    state.script = script;
+    state.script = &script[0];
     state.errmsg = NULL;
 
     char* result = Evaluate(&state, root);
@@ -163,7 +164,5 @@ int main(int argc, char** argv) {
         mzCloseZipArchive(updater_info.package_zip);
     }
     sysReleaseMap(&map);
-    free(script);
-
     return 0;
 }
