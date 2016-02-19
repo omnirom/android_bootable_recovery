@@ -21,9 +21,12 @@
 #include "roots.h"
 
 #include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 static int get_bootloader_message_mtd(struct bootloader_message *out, const Volume* v);
@@ -185,18 +188,30 @@ static int get_bootloader_message_block(struct bootloader_message *out,
 static int set_bootloader_message_block(const struct bootloader_message *in,
                                         const Volume* v) {
     wait_for_device(v->blk_device);
-    FILE* f = fopen(v->blk_device, "wb");
-    if (f == NULL) {
+    int fd = open(v->blk_device, O_WRONLY | O_SYNC);
+    if (fd == -1) {
         LOGE("Can't open %s\n(%s)\n", v->blk_device, strerror(errno));
         return -1;
     }
-    int count = fwrite(in, sizeof(*in), 1, f);
-    if (count != 1) {
-        LOGE("Failed writing %s\n(%s)\n", v->blk_device, strerror(errno));
+    size_t written = 0;
+    const uint8_t* start = reinterpret_cast<const uint8_t*>(in);
+    size_t total = sizeof(*in);
+    while (written < total) {
+        ssize_t wrote = TEMP_FAILURE_RETRY(write(fd, start + written, total - written));
+        if (wrote == -1) {
+            LOGE("failed to write %" PRId64 " bytes: %s\n",
+                 static_cast<off64_t>(written), strerror(errno));
+            return -1;
+        }
+        written += wrote;
+    }
+
+    if (fsync(fd) == -1) {
+        LOGE("failed to fsync \"%s\": %s\n", v->blk_device, strerror(errno));
         return -1;
     }
-    if (fclose(f) != 0) {
-        LOGE("Failed closing %s\n(%s)\n", v->blk_device, strerror(errno));
+    if (close(fd) == -1) {
+        LOGE("failed to close %s: %s\n", v->blk_device, strerror(errno));
         return -1;
     }
     return 0;
