@@ -544,11 +544,9 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 
 	DataManager::SetValue("tw_loaded", 1);
 
-#ifndef TW_OEM_BUILD
 	struct timeval timeout;
 	fd_set fdset;
 	int has_data = 0;
-#endif
 
 	int input_timeout_ms = 0;
 	int idle_frames = 0;
