@@ -1,0 +1,888 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_2f3f66b1",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "I\u0027m not an expert, but do we need a range of years in the copyright statement?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0f314ae8",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "we already include partitions.hpp in this file, see line 42",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_af4b7664",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 547,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "no sleep here? Also translation is missing",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8f50ba0d",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 573,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "no sleep here?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6f556efb",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 583,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "no sleep here?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4f5ab22d",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 619,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "is this ever set to true in this function?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_cf2a4276",
+        "filename": "openrecoveryscript.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "use spaces between ; and //",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f40b952d",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "all these defines and structs are not related to orscmd at all, should be a separate header file (I\u0027d call it twadbstream.h). The CRC calculation could also be moved there because you need it for both backup and restore.",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6f1a0e6f",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "use meaningful abbreviations that match the name of the structures",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d4089933",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "this assertion should be protected by a static_assert (or some equivalent construct in pre-C++11)",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6f032e13",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "A short documentation of the overall stream format should go here, I guess it\u0027s like: Stream header, { File header, File data, File trailer }*, Stream trailer",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4f08722d",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "\"twcmd\" is a bad name. This is not a command. It\u0027s something like a control block in a backup stream. Maybe \"AdbBackupControlBlock\"?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_aff93618",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "\"TWRP\" is 4 bytes, with terminating zero it\u0027s 5 bytes. What is byte 6?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8ffe7afd",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "CRC for the whole block? with the crc field set to 0 before?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2f0d263d",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "maybe rename to AdbBackupFileHeader",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ef161e4c",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "Instead of redefining the common fields, maybe combine all the blocks to a union.",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_cf13625a",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "we should align all 64 bit values to 64 bit offsets to avoid surprises with 64 bit builds.",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0f0a6a24",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "maybe rename to AdbBackupFileTrailer",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_af20169c",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "\"twheader\" is a bad name, maybe rename to AdbBackupStreamHeader",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8f255aad",
+        "filename": "orscmd/orscmd.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "we should align all 64 bit values to 64 bit offsets to avoid surprises with 64 bit builds.\npartition_count and version can be 32 bit values anyway - Android devices sometimes have a surprisingly large number of partitions, but more than 32 bit seems excessive. :)",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4f1f525d",
+        "filename": "orscmd/twrpback.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "This function is way too long. Maybe you can shorten it if you move the error handling to a common wrapper function.",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b44ceda5",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "why does partitionmanager depend on the header file for the \"twrp\" command line tool?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d47f79a3",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 544,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "where is this code coming from? merge issue?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f4827599",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 689,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "variables should be declared in the smallest scope and at the latest point possible.",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_147601d2",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 702,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "move these into a constructor for BackupPartitionSettings",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_3479fdc2",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 775,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "This method is already WAY too long. Can you extract the adb-specific blocks to separate methods? e.g. something like if (adbbackup) WriteAdbStreamHeader(...);",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_9451f13a",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 955,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "merge derp, this typo was already fixed",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_54b92972",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "If BackupSettings are for a whole backup job and BackupPartitionSettings are for a single partition, this partition pointer doesn\u0027t belong here.",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_14aba11d",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "what is \"other_backups_size\"?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_34ae9d2e",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "what are the possible values for this int?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_74466584",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "what\u0027s a Restore_Name?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_544b698a",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "RestorePartitionSettings has one partition, so why do we need a partition count here?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f4a7154d",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "Either put this enum back into TWPartition or add prefixes to the enum values. We don\u0027t want symbols like \"NONE\" or \"DD\" in the global namespace.",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d4a4194b",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "why not BackupPartitionSettings?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_3460ddfe",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "Why is Restore_File_System not inside RestorePartitionSettings?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b4650d1e",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 304,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "Backup_Method can\u0027t be a property of the partition manager because it is per partition",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d431b9ff",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "typo in comment, also comment is redundant now due to better code :)",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f434b5f1",
+        "filename": "twrp-functions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "use spaces between ; and //",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b41e2d72",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "where are we using ioctl in this file?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_14284196",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "if twrpTar is a lower level than the partitionmanager, it can\u0027t depend on partitions.hpp.",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_145de149",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "This method is already WAY too long. Can you extract the adb-specific blocks to separate methods?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b4374dfa",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 498,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "twrpTar, being a lower level than PartitionManager, should not depend on PartitionManager structures",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d456592b",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 744,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "extract block to separate function of possible",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_943c51df",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 1142,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "error handling missing",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_7441c560",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 1336,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "any reason why you swapped these lines?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_5446c97a",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 1348,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "whitespace after O_LARGEFILE",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_342b3d97",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 1446,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "inconsistent indent chars in this block. also extract to a separate method if possible",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_942331b7",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 1573,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "the old code checked for type\u003d\u003d2 here - where is this handled now?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_7418a584",
+        "filename": "twrpTar.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "twrpTar should not depend on partitionmanager",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_541da972",
+        "filename": "twrpTar.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "twrpTar should not depend on the header for the twrp command line program",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_34121d63",
+        "filename": "twrpTar.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "member variables should not be public",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_140f213e",
+        "filename": "twrpTar.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-19T21:43:51Z",
+      "side": 1,
+      "message": "fd, input_fd and output_fd need comments to explain what they are",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
