@@ -283,7 +283,7 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
         goto exit;
     }
 
-    surface = reinterpret_cast<GRSurface**>(malloc(*frames * sizeof(GRSurface*)));
+    surface = reinterpret_cast<GRSurface**>(calloc(*frames, sizeof(GRSurface*)));
     if (surface == NULL) {
         result = -8;
         goto exit;
@@ -318,7 +318,7 @@ exit:
     if (result < 0) {
         if (surface) {
             for (int i = 0; i < *frames; ++i) {
-                if (surface[i]) free(surface[i]);
+                free(surface[i]);
             }
             free(surface);
         }
@@ -421,7 +421,7 @@ int res_create_localized_alpha_surface(const char* name,
         png_read_row(png_ptr, row.data(), NULL);
         int w = (row[1] << 8) | row[0];
         int h = (row[3] << 8) | row[2];
-        int len = row[4];
+        __unused int len = row[4];
         char* loc = reinterpret_cast<char*>(&row[5]);
 
         if (y+1+h >= height || matches_locale(loc, locale)) {
