@@ -108,21 +108,31 @@ static void set_displayed_framebuffer(unsigned n)
 }
 
 static GRSurface* fbdev_init(minui_backend* backend) {
-    int fd = open("/dev/graphics/fb0", O_RDWR);
-    if (fd == -1) {
-        perror("cannot open fb0");
-        return NULL;
+    int retry = 20;
+    int fd = -1;
+    while (fd == -1) {
+        fd = open("/dev/graphics/fb0", O_RDWR);
+        if (fd == -1) {
+            if (--retry) {
+                // wait for init to create the device node
+                perror("cannot open fb0 (retrying)");
+                usleep(100000);
+            } else {
+                perror("cannot open fb0 (giving up)");
+                return NULL;
+            }
+        }
     }
 
     fb_fix_screeninfo fi;
     if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
-        perror("failed to get fb0 info");
+        perror("failed to get fb0 info (FBIOGET_FSCREENINFO)");
         close(fd);
         return NULL;
     }
 
     if (ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
-        perror("failed to get fb0 info");
+        perror("failed to get fb0 info (FBIOGET_VSCREENINFO)");
         close(fd);
         return NULL;
     }
