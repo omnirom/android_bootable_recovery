@@ -40,6 +40,8 @@
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
 
+#include <healthd/BatteryMonitor.h>
+
 #include "adb_install.h"
 #include "bootloader.h"
 #include "common.h"
@@ -84,6 +86,12 @@ static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
 static const int KEEP_LOG_COUNT = 10;
+static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
+// GmsCore enters recovery mode to install package when having enough battery
+// percentage. Normally, the threshold is 40% without charger and 20% with charger.
+// So we should check battery with a slightly lower limitation.
+static const int BATTERY_OK_PERCENTAGE = 20;
+static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
 
 RecoveryUI* ui = NULL;
 char* locale = NULL;
@@ -1058,8 +1066,61 @@ ui_print(const char* format, ...) {
     }
 }
 
-int
-main(int argc, char **argv) {
+static bool is_battery_ok() {
+    struct healthd_config healthd_config = {
+            .batteryStatusPath = android::String8(android::String8::kEmptyString),
+            .batteryHealthPath = android::String8(android::String8::kEmptyString),
+            .batteryPresentPath = android::String8(android::String8::kEmptyString),
+            .batteryCapacityPath = android::String8(android::String8::kEmptyString),
+            .batteryVoltagePath = android::String8(android::String8::kEmptyString),
+            .batteryTemperaturePath = android::String8(android::String8::kEmptyString),
+            .batteryTechnologyPath = android::String8(android::String8::kEmptyString),
+            .batteryCurrentNowPath = android::String8(android::String8::kEmptyString),
+            .batteryCurrentAvgPath = android::String8(android::String8::kEmptyString),
+            .batteryChargeCounterPath = android::String8(android::String8::kEmptyString),
+            .batteryFullChargePath = android::String8(android::String8::kEmptyString),
+            .batteryCycleCountPath = android::String8(android::String8::kEmptyString),
+            .energyCounter = NULL,
+            .boot_min_cap = 0,
+            .screen_on = NULL
+    };
+    healthd_board_init(&healthd_config);
+
+    android::BatteryMonitor monitor;
+    monitor.init(&healthd_config);
+
+    int wait_second = 0;
+    while (true) {
+        int charge_status = monitor.getChargeStatus();
+        // Treat unknown status as charged.
+        bool charged = (charge_status != android::BATTERY_STATUS_DISCHARGING &&
+                        charge_status != android::BATTERY_STATUS_NOT_CHARGING);
+        android::BatteryProperty capacity;
+        android::status_t status = monitor.getProperty(android::BATTERY_PROP_CAPACITY, &capacity);
+        ui_print("charge_status %d, charged %d, status %d, capacity %lld\n", charge_status,
+                 charged, status, capacity.valueInt64);
+        // At startup, the battery drivers in devices like N5X/N6P take some time to load
+        // the battery profile. Before the load finishes, it reports value 50 as a fake
+        // capacity. BATTERY_READ_TIMEOUT_IN_SEC is set that the battery drivers are expected
+        // to finish loading the battery profile earlier than 10 seconds after kernel startup.
+        if (status == 0 && capacity.valueInt64 == 50) {
+            if (wait_second < BATTERY_READ_TIMEOUT_IN_SEC) {
+                sleep(1);
+                wait_second++;
+                continue;
+            }
+        }
+        // If we can't read battery percentage, it may be a device without battery. In this
+        // situation, use 100 as a fake battery percentage.
+        if (status != 0) {
+            capacity.valueInt64 = 100;
+        }
+        return (charged && capacity.valueInt64 >= BATTERY_WITH_CHARGER_OK_PERCENTAGE) ||
+                (!charged && capacity.valueInt64 >= BATTERY_OK_PERCENTAGE);
+    }
+}
+
+int main(int argc, char **argv) {
     // If this binary is started with the single argument "--adbd",
     // instead of being the normal recovery binary, it turns into kind
     // of a stripped-down version of adbd that only supports the
@@ -1189,18 +1250,25 @@ main(int argc, char **argv) {
     int status = INSTALL_SUCCESS;
 
     if (update_package != NULL) {
-        status = install_package(update_package, &should_wipe_cache, TEMPORARY_INSTALL_FILE, true);
-        if (status == INSTALL_SUCCESS && should_wipe_cache) {
-            wipe_cache(false, device);
-        }
-        if (status != INSTALL_SUCCESS) {
-            ui->Print("Installation aborted.\n");
+        if (!is_battery_ok()) {
+            ui->Print("battery capacity is not enough for installing package, needed is %d%%\n",
+                      BATTERY_OK_PERCENTAGE);
+            status = INSTALL_SKIPPED;
+        } else {
+            status = install_package(update_package, &should_wipe_cache,
+                                     TEMPORARY_INSTALL_FILE, true);
+            if (status == INSTALL_SUCCESS && should_wipe_cache) {
+                wipe_cache(false, device);
+            }
+            if (status != INSTALL_SUCCESS) {
+                ui->Print("Installation aborted.\n");
 
-            // If this is an eng or userdebug build, then automatically
-            // turn the text display on if the script fails so the error
-            // message is visible.
-            if (is_ro_debuggable()) {
-                ui->ShowText(true);
+                // If this is an eng or userdebug build, then automatically
+                // turn the text display on if the script fails so the error
+                // message is visible.
+                if (is_ro_debuggable()) {
+                    ui->ShowText(true);
+                }
             }
         }
     } else if (should_wipe_data) {
@@ -1249,7 +1317,8 @@ main(int argc, char **argv) {
     }
 
     Device::BuiltinAction after = shutdown_after ? Device::SHUTDOWN : Device::REBOOT;
-    if ((status != INSTALL_SUCCESS && !sideload_auto_reboot) || ui->IsTextVisible()) {
+    if ((status != INSTALL_SUCCESS && status != INSTALL_SKIPPED && !sideload_auto_reboot) ||
+            ui->IsTextVisible()) {
         Device::BuiltinAction temp = prompt_and_wait(device, status);
         if (temp != Device::NO_ACTION) {
             after = temp;
