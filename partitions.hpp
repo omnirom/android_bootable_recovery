@@ -290,6 +290,8 @@ public:
 	bool Push_Context();
 	void Copy_And_Push_Context();
 	bool Pop_Context();
+	bool Update_tw_multirom_variables(TWPartition* partition);
+	bool Update_tw_multirom_variables(std::string loc);
 	bool Has_Extra_Contexts() const { return !Contexts.empty(); }
 #endif //TARGET_RECOVERY_IS_MULTIROM
 	void Translate_Partition(const char* path, const char* resource_name, const char* default_value);

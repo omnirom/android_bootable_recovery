@@ -1932,6 +1932,76 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 				Partition_List->push_back(part);
 			}
 		}
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	} else if (ListType == "multirom_storage") {
+		Update_tw_multirom_variables(DataManager::GetStrValue("tw_multirom_install_loc").c_str());
+
+		char free_space[255];
+		string Current_Storage = DataManager::GetStrValue("tw_multirom_storage_path");
+		bool multirom_capable_storage;
+
+		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+			// what partitions are capable of being multirom_capabable_storage?
+			// all :D
+			// * has_data_media -> yes  (internal & adopted storage)
+			// * not on mmcblk0 -> yes  (external sd / ext4 partitions)
+			multirom_capable_storage = false;
+			multirom_capable_storage |= (*iter)->Has_Data_Media != 0;
+			multirom_capable_storage |= ((*iter)->Primary_Block_Device.compare(0, 18, "/dev/block/mmcblk0") != 0)
+										&& ((*iter)->Primary_Block_Device.compare(0, 14, "/dev/block/dm-"));
+
+			if (multirom_capable_storage) {
+				struct PartitionList part;
+				sprintf(free_space, "%llu", (*iter)->Free / 1024 / 1024);
+				part.Display_Name = (*iter)->Storage_Name + " (";
+				part.Display_Name += free_space;
+				part.Display_Name += "MB)";
+				part.Mount_Point = (*iter)->Storage_Path;
+				if ((*iter)->Storage_Path == Current_Storage)
+					part.selected = 1;
+				else
+					part.selected = 0;
+				Partition_List->push_back(part);
+			}
+/* Original MultiROM method from multirom.cpp (keep for reference):
+std::string MultiROM::listInstallLocations()
+{
+	std::string res = INTERNAL_MEM_LOC_TXT"\n";
+	blkid_probe pr;
+	const char *type;
+	struct dirent *dt;
+	char path[64];
+	DIR *d = opendir("/dev/block/");
+	if(!d)
+		return res;
+
+	while((dt = readdir(d)))
+	{
+		if(strncmp(dt->d_name, "mmcblk0", 7) == 0 || strncmp(dt->d_name, "dm-", 3) == 0)
+			continue;
+		snprintf(path, sizeof(path), "/dev/block/%s", dt->d_name);
+
+		pr = blkid_new_probe_from_filename(path);
+		if(!pr)
+			continue;
+
+		blkid_do_safeprobe(pr);
+		if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) >= 0)
+		{
+			res += "/dev/block/";
+			res += dt->d_name;
+			res += " (";
+			res += type;
+			res += ")\n";
+		}
+		blkid_free_probe(pr);
+	}
+	closedir(d);
+	return res;
+}
+*/
+		}
+#endif //TARGET_RECOVERY_IS_MULTIROM
 	} else if (ListType == "backup") {
 		char backup_size[255];
 		unsigned long long Backup_Size;
@@ -2404,6 +2474,70 @@ TWPartition* TWPartitionManager::Find_Original_Partition_By_Path(string Path) {
 			return (*iter);
 	}
 	return NULL;
+}
+
+// copy this from multirom.h to avoid include
+#define INTERNAL_MEM_LOC_TXT "Internal memory"
+
+bool TWPartitionManager::Update_tw_multirom_variables(TWPartition* partition) {
+	// Variables
+	// ---------
+	// tw_multirom_install_loc          -> (org) either "Internal memory" or "/dev/block/... (type)" eg
+	//                                                   USB-OTG = "/dev/block/sda1 (vfat)"
+	// tw_multirom_storage_path         -> (new) TWPartition->Storage_Path
+	// tw_multirom_storage_display_name -> (new) TWPartition->Storage_Name
+	// tw_multirom_storage_free_size    -> (new) TWPartition->Free
+	//
+	// in order to minimize code changes and preserve the original multirom code
+	// we'll just keep using all of the above variables
+
+	if (partition == NULL) {
+		//error, now what?
+		DataManager::SetValue("tw_multirom_storage_path", "");
+		DataManager::SetValue("tw_multirom_install_loc", "");
+		DataManager::SetValue("tw_multirom_storage_display_name", "");
+		DataManager::SetValue("tw_multirom_storage_free_size", "");
+		return false;
+	}
+
+	// tw_multirom_storage_path
+	DataManager::SetValue("tw_multirom_storage_path", partition->Storage_Path);
+
+	// tw_multirom_install_loc
+	std::string str;
+	if (partition->Is_Storage && partition->Is_Settings_Storage) {
+		str = INTERNAL_MEM_LOC_TXT;
+	} else {
+		str = partition->Actual_Block_Device + " (" + partition->Current_File_System + ")";
+	}
+	DataManager::SetValue("tw_multirom_install_loc", str);
+
+	// tw_multirom_storage_display_name and tw_multirom_storage_free_size
+	DataManager::SetValue("tw_multirom_storage_display_name", partition->Storage_Name);
+	char free_space[255];
+	sprintf(free_space, "%llu", partition->Free / 1024 / 1024);
+	DataManager::SetValue("tw_multirom_storage_free_size", free_space);
+
+	return true;
+}
+
+bool TWPartitionManager::Update_tw_multirom_variables(std::string loc) {
+	//location given, find the partition then fill
+	TWPartition* partition = NULL;
+
+	if(loc.compare(INTERNAL_MEM_LOC_TXT) == 0) {
+		// set partition to internal
+		partition = TWPartitionManager::Get_Default_Storage_Partition();
+	} else {
+		// find partition from "/dev/block/... (type)" style used by tw_multirom_install_loc
+		for (std::vector<TWPartition*>::iterator iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+			if (loc.compare(0, (*iter)->Actual_Block_Device.size(), (*iter)->Actual_Block_Device) == 0) {
+				partition = (*iter);
+				break;
+			}
+		}
+	}
+	return Update_tw_multirom_variables(partition);
 }
 #endif //TARGET_RECOVERY_IS_MULTIROM
 

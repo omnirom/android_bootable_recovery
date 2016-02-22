@@ -134,6 +134,11 @@ int GUIPartitionList::NotifyVarChange(const std::string& varName, const std::str
 		if (ListType == "storage") {
 			currentValue = value;
 			SetPosition();
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+		} else if (ListType == "multirom_storage") {
+			currentValue = value;
+			SetPosition();
+#endif //TARGET_RECOVERY_IS_MULTIROM
 		} else if (ListType == "backup") {
 			MatchList();
 		} else if (ListType == "restore") {
@@ -154,6 +159,11 @@ void GUIPartitionList::SetPageFocus(int inFocus)
 		if (ListType == "storage" || ListType == "flashimg") {
 			DataManager::GetValue(mVariable, currentValue);
 			SetPosition();
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+		} else if (ListType == "multirom_storage") {
+			DataManager::GetValue(mVariable, currentValue);
+			SetPosition();
+#endif //TARGET_RECOVERY_IS_MULTIROM
 		}
 		updateList = true;
 		mUpdate = 1;
@@ -256,6 +266,40 @@ void GUIPartitionList::NotifySelect(size_t item_selected)
 
 					DataManager::SetValue(mVariable, str);
 				}
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+			} else if (ListType == "multirom_storage") {
+				int i;
+				std::string str = mList.at(item_selected).Mount_Point;
+				bool update_size = false;
+				TWPartition* Part = PartitionManager.Find_Partition_By_Path(str);
+				if (Part == NULL) {
+					LOGERR("Unable to locate partition for '%s'\n", str.c_str());
+					return;
+				}
+				if (!Part->Is_Mounted() && Part->Removable)
+					update_size = true;
+				if (!Part->Mount(true)) {
+					// Do Nothing
+				} else if (update_size && !Part->Update_Size(true)) {
+					// Do Nothing
+				} else {
+					for (i=0; i<listSize; i++)
+						mList.at(i).selected = 0;
+
+					if (update_size) {
+						char free_space[255];
+						sprintf(free_space, "%llu", Part->Free / 1024 / 1024);
+						mList.at(item_selected).Display_Name = Part->Storage_Name + " (";
+						mList.at(item_selected).Display_Name += free_space;
+						mList.at(item_selected).Display_Name += "MB)";
+					}
+					mList.at(item_selected).selected = 1;
+					mUpdate = 1;
+
+					DataManager::SetValue(mVariable, str);
+					PartitionManager.Update_tw_multirom_variables(Part);
+				}
+#endif //TARGET_RECOVERY_IS_MULTIROM
 			} else {
 				if (ListType == "flashimg") { // only one item can be selected for flashing images
 					for (int i=0; i<listSize; i++)

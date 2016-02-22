@@ -145,11 +145,87 @@ bool MultiROM::setRomsPath(std::string loc)
 {
 	umount("/mnt"); // umount last thing mounted there
 
+	TWPartition* partition = NULL;
+
+	if(loc.compare(INTERNAL_MEM_LOC_TXT) == 0) {
+		// set partition to internal
+		partition = PartitionManager.Get_Default_Storage_Partition();
+	} else {
+		// find partition from "/dev/block/... (type)" style used by tw_multirom_install_loc
+		std::vector<TWPartition*>& Partitions = PartitionManager.getPartitions();
+		for (std::vector<TWPartition*>::iterator iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+			if (loc.compare(0, (*iter)->Actual_Block_Device.size(), (*iter)->Actual_Block_Device) == 0) {
+				partition = (*iter);
+				break;
+			}
+		}
+	}
+
+	if (partition == NULL) {
+		//no suitable path found
+		m_curr_roms_path.clear();
+		PartitionManager.Update_tw_multirom_variables(partition);
+		return false;
+	}
+
 	if(loc.compare(INTERNAL_MEM_LOC_TXT) == 0)
 	{
 		m_curr_roms_path = m_path + "/roms/";
+		PartitionManager.Update_tw_multirom_variables(loc);
 		return true;
 	}
+	else if (partition->Has_Data_Media)
+	{
+		std::string lnk_path = partition->Storage_Path;
+
+		mkdir("/mnt", 0777); // in case it does not exist
+
+		char cmd[256];
+		sprintf(cmd, "mount %s /mnt", lnk_path.c_str());
+
+		if(system(cmd) != 0)
+		{
+			LOGERR("Failed to mount location \"%s\"!\n", lnk_path.c_str());
+			return false;
+		}
+		m_curr_roms_path = "/mnt/multirom-"TARGET_DEVICE"/";
+		mkdir("/mnt/multirom-"TARGET_DEVICE"/", 0777);
+		PartitionManager.Update_tw_multirom_variables(partition);
+		return true;
+	}
+	// support legacy style for easier merges, otherwise the code could look like this:
+	/*
+	else
+	{
+		std::string dev = partition->Actual_Block_Device;
+		std::string type = partition->Current_File_System;
+
+		mkdir("/mnt", 0777); // in case it does not exist
+
+		char cmd[256];
+		if (type.compare("ntfs") == 0)
+			sprintf(cmd, "ntfs-3g %s /mnt", dev.c_str());
+#ifndef TW_NO_EXFAT_FUSE
+		else if(type.compare("exfat") == 0)
+			sprintf(cmd, "exfat-fuse -o big_writes,max_read=131072,max_write=131072,nonempty %s /mnt", dev.c_str());
+#endif
+		else
+			sprintf(cmd, "mount %s /mnt", dev.c_str());
+
+		if(system(cmd) != 0)
+		{
+			LOGERR("Failed to mount location \"%s\"(%s)!\n", dev.c_str(), type.c_str());
+			return false;
+		}
+		m_curr_roms_path = "/mnt/multirom-"TARGET_DEVICE"/";
+		mkdir("/mnt/multirom-"TARGET_DEVICE"/", 0777);
+		PartitionManager.Update_tw_multirom_variables(partition);
+		return true;
+	}
+	*/
+	
+	// legacy 'loc' style for easier merges
+	loc = partition->Actual_Block_Device + " (" + partition->Current_File_System + ")";
 
 	size_t idx = loc.find(' ');
 	if(idx == std::string::npos)
@@ -179,11 +255,13 @@ bool MultiROM::setRomsPath(std::string loc)
 
 	m_curr_roms_path = "/mnt/multirom-"TARGET_DEVICE"/";
 	mkdir("/mnt/multirom-"TARGET_DEVICE"/", 0777);
+	PartitionManager.Update_tw_multirom_variables(partition);
 	return true;
 }
 
 std::string MultiROM::listInstallLocations()
 {
+// legacy code, no longer used
 	std::string res = INTERNAL_MEM_LOC_TXT"\n";
 	blkid_probe pr;
 	const char *type;
