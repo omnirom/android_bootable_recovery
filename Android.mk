@@ -64,6 +64,7 @@ LOCAL_C_INCLUDES += \
     system/core/adb \
 
 LOCAL_STATIC_LIBRARIES := \
+    libbatterymonitor \
     libext4_utils_static \
     libsparse_static \
     libminzip \
@@ -77,10 +78,13 @@ LOCAL_STATIC_LIBRARIES := \
     libfs_mgr \
     libbase \
     libcutils \
+    libutils \
     liblog \
     libselinux \
     libm \
     libc
+
+LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_CFLAGS += -DUSE_EXT4
