@@ -42,7 +42,7 @@
 #endif
 
 static const char* DATA_PATH = getenv("ANDROID_DATA");
-static const char* TESTDATA_PATH = "/recovery_component_test/testdata/";
+static const char* TESTDATA_PATH = "/recovery/testdata/";
 
 // This is build/target/product/security/testkey.x509.pem after being
 // dumped out by dumpkey.jar.
