@@ -141,7 +141,7 @@
 			<object type="text" color="%text%">
 				<font resource="body2" />
 				<placement x="%col1_x%" y="%row2_3_y%" />
-				<text>%tw_multirom_install_loc% (%tw_storage_free_size% MB)</text>
+				<text>%tw_multirom_storage_display_name% (%tw_multirom_storage_free_size% MB)</text>
 			</object>
 
 			<object type="button">
@@ -2353,14 +2353,14 @@
 				</actions>
 			</object>
 
-			<object type="listbox">
+			<object type="partitionlist">
 				<fastscroll linecolor="%fastscroll_linecolor%" rectcolor="%fastscroll_rectcolor%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%" />
 				<placement x="%col1_x%" y="%row5_2_y%" w="%content_w%" h="%fileselector_part_height%" />
 				<icon selected="radio_true" unselected="radio_false" />
 				<background color="%background%" />
 				<font resource="body2" spacing="%fileselector_spacing%" color="%text%" highlightcolor="%highlight%" />
-				<data name="tw_multirom_install_loc" />
-				<items>tw_multirom_install_loc_list</items>
+				<data name="tw_multirom_storage_path" />
+				<listtype name="multirom_storage" />
 			</object>
 
 			<object type="text" color="%text_dark%">
@@ -4366,13 +4366,14 @@
 				<image resource="dialog_bg" />
 			</object>
 
-			<object type="listbox">
-				<placement x="%storage_indent_x%" y="%storage_indent_y%" w="%storage_width%" h="%storage_height%" />
+			<object type="partitionlist">
+<!--				<placement x="%storage_indent_x%" y="%storage_indent_y%" w="%storage_width%" h="%storage_height%" /> -->
+				<placement x="%storage_indent_x%" y="%storage_indent_y%" w="%storage_width%" h="%fileselector_wipe_height%" />
 				<icon selected="radio_true_d" unselected="radio_false_d" />
 				<background color="%background%" />
 				<font resource="body2" spacing="0" color="%text%" highlightcolor="%text_highlight%" />
-				<data name="tw_multirom_install_loc" />
-				<items>tw_multirom_install_loc_list</items>
+				<data name="tw_multirom_storage_path" />
+				<listtype name="multirom_storage" />
 			</object>
 
 			<object type="button">
