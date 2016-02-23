@@ -509,9 +509,6 @@ static bool processDeflatedEntry(const ZipArchive *pArchive,
     unsigned char procBuf[32 * 1024];
     z_stream zstream;
     int zerr;
-    long compRemaining;
-
-    compRemaining = pEntry->compLen;
 
     /*
      * Initialize the zlib stream.
@@ -759,7 +756,7 @@ static const char *targetEntryPath(MzPathHelper *helper, ZipEntry *pEntry)
      */
     needLen = helper->targetDirLen + 1 +
             pEntry->fileNameLen - helper->zipDirLen + 1;
-    if (needLen > helper->bufLen) {
+    if (firstTime || needLen > helper->bufLen) {
         char *newBuf;
 
         needLen *= 2;
