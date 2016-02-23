@@ -478,6 +478,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_8fc67a1a",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-23T16:48:32Z",
+      "side": 1,
+      "message": "Partitions are genearted in partitionmanager\nBackupSettings are set in partitionmanager and the partition is added to BackupPartitionSettings before passing into the backup system for partition.cpp",
+      "parentUuid": "98faad2e_54b92972",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_14aba11d",
         "filename": "partitions.hpp",
         "patchSetId": 44
@@ -489,6 +507,24 @@
       "writtenOn": "2016-02-19T21:43:51Z",
       "side": 1,
       "message": "what is \"other_backups_size\"?",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6fcb2e24",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-23T16:48:32Z",
+      "side": 1,
+      "message": "Total backup size of all partitions. Kept the variable name from original code.",
+      "parentUuid": "98faad2e_14aba11d",
       "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -580,6 +616,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_4fd072ca",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-23T16:48:32Z",
+      "side": 1,
+      "message": "Backup Settings are for the Backup Session, BackupPartitionSettings are for the partition functions.",
+      "parentUuid": "98faad2e_d4a4194b",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_3460ddfe",
         "filename": "partitions.hpp",
         "patchSetId": 44
@@ -608,6 +662,24 @@
       "writtenOn": "2016-02-19T21:43:51Z",
       "side": 1,
       "message": "Backup_Method can\u0027t be a property of the partition manager because it is per partition",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_afe8167d",
+        "filename": "partitions.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 304,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-23T16:48:32Z",
+      "side": 1,
+      "message": "It uses the enum however.",
+      "parentUuid": "98faad2e_b4650d1e",
       "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -676,6 +748,24 @@
       "writtenOn": "2016-02-19T21:43:51Z",
       "side": 1,
       "message": "if twrpTar is a lower level than the partitionmanager, it can\u0027t depend on partitions.hpp.",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8fed5a8e",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-23T16:48:32Z",
+      "side": 1,
+      "message": "we use the backup method enum from partitions.hpp",
+      "parentUuid": "98faad2e_14284196",
       "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -818,6 +908,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_4fe752aa",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 1573,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-23T16:48:32Z",
+      "side": 1,
+      "message": "See line 1553 for setting the current archive type.",
+      "parentUuid": "98faad2e_942331b7",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_7418a584",
         "filename": "twrpTar.hpp",
         "patchSetId": 44
@@ -829,6 +937,24 @@
       "writtenOn": "2016-02-19T21:43:51Z",
       "side": 1,
       "message": "twrpTar should not depend on partitionmanager",
+      "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2ffc063a",
+        "filename": "twrpTar.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-23T16:48:32Z",
+      "side": 1,
+      "message": "i am using the enum from partitions.hpp",
+      "parentUuid": "98faad2e_7418a584",
       "revId": "3bf953da0f17d1e2e3d6e1c2982618c4de1200bd",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
