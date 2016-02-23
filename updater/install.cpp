@@ -51,7 +51,7 @@
 #include "minzip/DirUtil.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
-#include "otafault/ota_io.h"
+#include "ota_io.h"
 #include "updater.h"
 #include "install.h"
 #include "tune2fs.h"
