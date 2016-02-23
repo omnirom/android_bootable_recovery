@@ -3,11 +3,6 @@ service uncrypt /system/bin/uncrypt
     disabled
     oneshot
 
-service pre-recovery /system/bin/uncrypt --reboot
-    class main
-    disabled
-    oneshot
-
 service setup-bcb /system/bin/uncrypt --setup-bcb
     class main
     disabled

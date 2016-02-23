@@ -406,15 +406,6 @@ static int write_bootloader_message(const bootloader_message* in) {
     return 0;
 }
 
-static void reboot_to_recovery() {
-    ALOGI("rebooting to recovery");
-    property_set("sys.powerctl", "reboot,recovery");
-    while (true) {
-      pause();
-    }
-    ALOGE("reboot didn't succeed?");
-}
-
 static int uncrypt(const char* input_path, const char* map_file, int status_fd) {
 
     ALOGI("update package is \"%s\"", input_path);
@@ -543,7 +534,6 @@ static int read_bcb() {
 static void usage(const char* exename) {
     fprintf(stderr, "Usage of %s:\n", exename);
     fprintf(stderr, "%s [<package_path> <map_file>]  Uncrypt ota package.\n", exename);
-    fprintf(stderr, "%s --reboot  Clear BCB data and reboot to recovery.\n", exename);
     fprintf(stderr, "%s --clear-bcb  Clear BCB data in misc partition.\n", exename);
     fprintf(stderr, "%s --setup-bcb  Setup BCB data by command file.\n", exename);
     fprintf(stderr, "%s --read-bcb   Read BCB data from misc partition.\n", exename);
@@ -551,9 +541,7 @@ static void usage(const char* exename) {
 
 int main(int argc, char** argv) {
     if (argc == 2) {
-        if (strcmp(argv[1], "--reboot") == 0) {
-            reboot_to_recovery();
-        } else if (strcmp(argv[1], "--clear-bcb") == 0) {
+        if (strcmp(argv[1], "--clear-bcb") == 0) {
             return clear_bcb(STATUS_FILE);
         } else if (strcmp(argv[1], "--setup-bcb") == 0) {
             return setup_bcb(COMMAND_FILE, STATUS_FILE);
