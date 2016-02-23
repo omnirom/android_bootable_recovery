@@ -1516,7 +1516,7 @@ TWPartition* TWPartitionManager::Find_Next_Storage(string Path, bool Exclude_Dat
 	if (!Path.empty()) {
 		string Search_Path = TWFunc::Get_Root_Path(Path);
 		for (; iter != Partitions.end(); iter++) {
-			if (Exclude_Data_Media && (*iter)->Has_Data_Media) {
+			if ((*iter)->Mount_Point == Search_Path) {
 				iter++;
 				break;
 			}
