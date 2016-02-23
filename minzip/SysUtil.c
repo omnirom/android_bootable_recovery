@@ -3,6 +3,8 @@
  *
  * System utilities.
  */
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -79,6 +81,11 @@ static int sysMapFD(int fd, MemMapping* pMap)
     pMap->length = length;
     pMap->range_count = 1;
     pMap->ranges = malloc(sizeof(MappedRange));
+    if (pMap->ranges == NULL) {
+        LOGE("malloc failed: %s\n", strerror(errno));
+        munmap(memPtr, length);
+        return -1;
+    }
     pMap->ranges[0].addr = memPtr;
     pMap->ranges[0].length = length;
 
@@ -90,7 +97,7 @@ static int sysMapBlockFile(FILE* mapf, MemMapping* pMap)
     char block_dev[PATH_MAX+1];
     size_t size;
     unsigned int blksize;
-    unsigned int blocks;
+    size_t blocks;
     unsigned int range_count;
     unsigned int i;
 
@@ -109,49 +116,80 @@ static int sysMapBlockFile(FILE* mapf, MemMapping* pMap)
         LOGW("failed to parse block map header\n");
         return -1;
     }
-
-    blocks = ((size-1) / blksize) + 1;
+    if (blksize != 0) {
+        blocks = ((size-1) / blksize) + 1;
+    }
+    if (size == 0 || blksize == 0 || blocks > SIZE_MAX / blksize || range_count == 0) {
+        LOGE("invalid data in block map file: size %zu, blksize %u, range_count %u\n",
+             size, blksize, range_count);
+        return -1;
+    }
 
     pMap->range_count = range_count;
-    pMap->ranges = malloc(range_count * sizeof(MappedRange));
-    memset(pMap->ranges, 0, range_count * sizeof(MappedRange));
+    pMap->ranges = calloc(range_count, sizeof(MappedRange));
+    if (pMap->ranges == NULL) {
+        LOGE("calloc(%u, %zu) failed: %s\n", range_count, sizeof(MappedRange), strerror(errno));
+        return -1;
+    }
 
     // Reserve enough contiguous address space for the whole file.
     unsigned char* reserve;
     reserve = mmap64(NULL, blocks * blksize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
     if (reserve == MAP_FAILED) {
         LOGW("failed to reserve address space: %s\n", strerror(errno));
+        free(pMap->ranges);
         return -1;
     }
-
-    pMap->ranges[range_count-1].addr = reserve;
-    pMap->ranges[range_count-1].length = blocks * blksize;
 
     int fd = open(block_dev, O_RDONLY);
     if (fd < 0) {
         LOGW("failed to open block device %s: %s\n", block_dev, strerror(errno));
+        munmap(reserve, blocks * blksize);
+        free(pMap->ranges);
         return -1;
     }
 
     unsigned char* next = reserve;
+    size_t remaining_size = blocks * blksize;
+    bool success = true;
     for (i = 0; i < range_count; ++i) {
-        int start, end;
-        if (fscanf(mapf, "%d %d\n", &start, &end) != 2) {
+        size_t start, end;
+        if (fscanf(mapf, "%zu %zu\n", &start, &end) != 2) {
             LOGW("failed to parse range %d in block map\n", i);
-            return -1;
+            success = false;
+            break;
+        }
+        size_t length = (end - start) * blksize;
+        if (end <= start || (end - start) > SIZE_MAX / blksize || length > remaining_size) {
+          LOGE("unexpected range in block map: %zu %zu\n", start, end);
+          success = false;
+          break;
         }
 
-        void* addr = mmap64(next, (end-start)*blksize, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, ((off64_t)start)*blksize);
+        void* addr = mmap64(next, length, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, ((off64_t)start)*blksize);
         if (addr == MAP_FAILED) {
             LOGW("failed to map block %d: %s\n", i, strerror(errno));
-            return -1;
+            success = false;
+            break;
         }
         pMap->ranges[i].addr = addr;
-        pMap->ranges[i].length = (end-start)*blksize;
+        pMap->ranges[i].length = length;
 
-        next += pMap->ranges[i].length;
+        next += length;
+        remaining_size -= length;
+    }
+    if (success && remaining_size != 0) {
+      LOGE("ranges in block map are invalid: remaining_size = %zu\n", remaining_size);
+      success = false;
+    }
+    if (!success) {
+      close(fd);
+      munmap(reserve, blocks * blksize);
+      free(pMap->ranges);
+      return -1;
     }
 
+    close(fd);
     pMap->addr = reserve;
     pMap->length = size;
 
@@ -174,6 +212,7 @@ int sysMapFile(const char* fn, MemMapping* pMap)
 
         if (sysMapBlockFile(mapf, pMap) != 0) {
             LOGW("Map of '%s' failed\n", fn);
+            fclose(mapf);
             return -1;
         }
 
