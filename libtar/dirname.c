@@ -67,7 +67,7 @@ openbsd_dirname(path)
 		} while (endp > path && *endp == '/');
 	}
 
-	if (endp - path + 1 > sizeof(bname)) {
+	if (endp - path + 1 > (int)sizeof(bname)) {
 		errno = ENAMETOOLONG;
 		return(NULL);
 	}

@@ -5,15 +5,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <stdarg.h>
-#include <stddef.h>
+#ifdef STDC_HEADERS
+# include <stdarg.h>
+# include <stddef.h>
+#else
+# include <varargs.h>
+#endif
 
 #ifdef HAVE_LIBGEN_H
 # include <libgen.h>
-#endif
-
-#ifdef HAVE_SELINUX
-#include "selinux/selinux.h"
 #endif
 
 
