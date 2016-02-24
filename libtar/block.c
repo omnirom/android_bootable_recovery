@@ -11,13 +11,14 @@
 */
 
 #include <internal.h>
-#include <stdio.h>
+
 #include <errno.h>
 
 #ifdef STDC_HEADERS
 # include <string.h>
 # include <stdlib.h>
 #endif
+
 
 #define BIT_ISSET(bitmask, bit) ((bitmask) & (bit))
 
@@ -263,41 +264,6 @@ th_read(TAR *t)
 	}
 #endif
 
-#if 0
-	/*
-	** work-around for old archive files with broken typeflag fields
-	** NOTE: I fixed this in the TH_IS*() macros instead
-	*/
-
-	/*
-	** (directories are signified with a trailing '/')
-	*/
-	if (t->th_buf.typeflag == AREGTYPE
-	    && t->th_buf.name[strlen(t->th_buf.name) - 1] == '/')
-		t->th_buf.typeflag = DIRTYPE;
-
-	/*
-	** fallback to using mode bits
-	*/
-	if (t->th_buf.typeflag == AREGTYPE)
-	{
-		mode = (mode_t)oct_to_int(t->th_buf.mode);
-
-		if (S_ISREG(mode))
-			t->th_buf.typeflag = REGTYPE;
-		else if (S_ISDIR(mode))
-			t->th_buf.typeflag = DIRTYPE;
-		else if (S_ISFIFO(mode))
-			t->th_buf.typeflag = FIFOTYPE;
-		else if (S_ISCHR(mode))
-			t->th_buf.typeflag = CHRTYPE;
-		else if (S_ISBLK(mode))
-			t->th_buf.typeflag = BLKTYPE;
-		else if (S_ISLNK(mode))
-			t->th_buf.typeflag = SYMTYPE;
-	}
-#endif
-
 	return 0;
 }
 
@@ -308,7 +274,7 @@ th_write(TAR *t)
 {
 	int i, j;
 	char type2;
-	size_t sz, sz2;
+	uint64_t sz, sz2;
 	char *ptr;
 	char buf[T_BLOCKSIZE];
 
@@ -457,7 +423,7 @@ th_write(TAR *t)
 		}
 
 		memset(buf, 0, T_BLOCKSIZE);
-		snprintf(buf, T_BLOCKSIZE, "%d "SELINUX_TAG"%s\n", sz, t->th_buf.selinux_context);
+		snprintf(buf, T_BLOCKSIZE, "%d "SELINUX_TAG"%s\n", (int)sz, t->th_buf.selinux_context);
 		i = tar_block_write(t, &buf);
 		if (i != T_BLOCKSIZE)
 		{

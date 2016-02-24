@@ -28,10 +28,8 @@ th_get_pathname(TAR *t)
 {
 	char filename[MAXPATHLEN];
 
-	if (t->th_buf.gnu_longname) {
-		printf("returning gnu longname\n");
-		return t->th_buf.gnu_longname;
-	}
+	if (t->th_buf.gnu_longname)
+		return strdup(t->th_buf.gnu_longname);
 
 	if (t->th_buf.prefix[0] != '\0')
 	{
@@ -51,9 +49,11 @@ th_get_uid(TAR *t)
 	int uid;
 	struct passwd *pw;
 
-	pw = getpwnam(t->th_buf.uname);
-	if (pw != NULL)
-		return pw->pw_uid;
+	if (!(t->options & TAR_USE_NUMERIC_ID)) {
+		pw = getpwnam(t->th_buf.uname);
+		if (pw != NULL)
+			return pw->pw_uid;
+	}
 
 	/* if the password entry doesn't exist */
 	sscanf(t->th_buf.uid, "%o", &uid);
@@ -67,9 +67,11 @@ th_get_gid(TAR *t)
 	int gid;
 	struct group *gr;
 
-	gr = getgrnam(t->th_buf.gname);
-	if (gr != NULL)
-		return gr->gr_gid;
+	if (!(t->options & TAR_USE_NUMERIC_ID)) {
+		gr = getgrnam(t->th_buf.gname);
+		if (gr != NULL)
+			return gr->gr_gid;
+	}
 
 	/* if the group entry doesn't exist */
 	sscanf(t->th_buf.gid, "%o", &gid);
@@ -77,12 +79,12 @@ th_get_gid(TAR *t)
 }
 
 
-mode_t
+unsigned int
 th_get_mode(TAR *t)
 {
-	mode_t mode;
+	unsigned int mode;
 
-	mode = (mode_t)oct_to_int(t->th_buf.mode);
+	mode = (unsigned int)oct_to_int(t->th_buf.mode, sizeof(t->th_buf.mode));
 	if (! (mode & S_IFMT))
 	{
 		switch (t->th_buf.typeflag)
@@ -103,7 +105,7 @@ th_get_mode(TAR *t)
 			mode |= S_IFIFO;
 			break;
 		case AREGTYPE:
-			if (t->th_buf.name[strlen(t->th_buf.name) - 1] == '/')
+			if (t->th_buf.name[strnlen(t->th_buf.name, T_NAMELEN) - 1] == '/')
 			{
 				mode |= S_IFDIR;
 				break;
