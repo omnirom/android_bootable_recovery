@@ -221,8 +221,9 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
     # including busybox.
     LOCAL_SRC_FILES += \
         ../../../$(TWRP_TOOLBOX_PATH)/getprop.c \
-        ../../../$(TWRP_TOOLBOX_PATH)/setprop.c
-    OUR_TOOLS += getprop setprop
+        ../../../$(TWRP_TOOLBOX_PATH)/setprop.c \
+        ../../../$(TWRP_TOOLBOX_PATH)/ln.c
+    OUR_TOOLS += getprop setprop ln
     ifneq ($(TW_USE_TOOLBOX), true)
         LOCAL_SRC_FILES += ls.c
     endif
