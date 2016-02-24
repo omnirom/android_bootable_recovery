@@ -23,6 +23,8 @@
 extern "C" {
 #endif
 
+typedef struct fstab_rec Volume;
+
 // Load and parse volume data from /etc/recovery.fstab.
 void load_volume_table();
 
