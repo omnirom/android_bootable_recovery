@@ -1,6 +1,6 @@
 
 /*
-	Copyright 2013 TeamWin
+	Copyright 2013 to 2016 bigbiff/Dees_Troy TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -46,6 +46,7 @@ extern "C" {
 #include "data.hpp"
 #include "infomanager.hpp"
 #include "gui/gui.hpp"
+#include "progresstracking.hpp"
 extern "C" {
 	#include "set_metadata.h"
 }
@@ -90,7 +91,11 @@ void twrpTar::Signal_Kill(int signum) {
 	_exit(255);
 }
 
-int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &fork_pid) {
+#ifndef BUILD_TWRPTAR_MAIN
+int twrpTar::createTarFork(ProgressTracking *pt, pid_t &fork_pid) {
+#else
+int twrpTar::createTarFork(pid_t &fork_pid) {
+#endif
 	int status = 0;
 	pid_t rc_pid, tar_fork_pid;
 	int progress_pipe[2], ret;
@@ -389,15 +394,8 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 		}
 	} else {
 		// Parent side
-		unsigned long long fs, size_backup, files_backup, total_backup_size;
+		unsigned long long fs, size_backup = 0, files_backup = 0, file_count = 0;
 		int first_data = 0;
-		double display_percent, progress_percent;
-		char file_progress[1024];
-		char size_progress[1024];
-		files_backup = 0;
-		size_backup = 0;
-		string file_prog = gui_lookup("file_progress", "%llu of %llu files, %i%%");
-		string size_prog = gui_lookup("size_progress", "%lluMB of %lluMB, %i%%");
 
 		fork_pid = tar_fork_pid;
 
@@ -413,20 +411,15 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 				first_data = 1;
 			} else if (first_data == 1) {
 				// Second incoming data is total size
-				total_backup_size = fs;
 				first_data = 2;
+#ifndef BUILD_TWRPTAR_MAIN
+				pt->SetSizeCount(fs, file_count);
+#endif
 			} else {
 				files_backup++;
 				size_backup += fs;
-				display_percent = (double)(files_backup) / (double)(file_count) * 100;
-				sprintf(file_progress, file_prog.c_str(), files_backup, file_count, (int)(display_percent));
 #ifndef BUILD_TWRPTAR_MAIN
-				DataManager::SetValue("tw_file_progress", file_progress);
-				display_percent = (double)(size_backup + *other_backups_size) / (double)(*overall_size) * 100;
-				sprintf(size_progress, size_prog.c_str(), (size_backup + *other_backups_size) / 1048576, *overall_size / 1048576, (int)(display_percent));
-				DataManager::SetValue("tw_size_progress", size_progress);
-				progress_percent = (display_percent / 100);
-				DataManager::SetProgress((float)(progress_percent));
+				pt->UpdateSizeCount(size_backup, files_backup);
 #endif //ndef BUILD_TWRPTAR_MAIN
 			}
 		}
@@ -434,6 +427,8 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 #ifndef BUILD_TWRPTAR_MAIN
 		DataManager::SetValue("tw_file_progress", "");
 		DataManager::SetValue("tw_size_progress", "");
+		pt->DisplayFileCount(false);
+		pt->UpdateDisplayDetails(true);
 
 		InfoManager backup_info(backup_folder + partition_name + ".info");
 		backup_info.SetValue("backup_size", size_backup);
@@ -454,7 +449,11 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 	return 0;
 }
 
-int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned long long *other_backups_size) {
+#ifndef BUILD_TWRPTAR_MAIN
+int twrpTar::extractTarFork(ProgressTracking *pt) {
+#else
+int twrpTar::extractTarFork() {
+#endif
 	int status = 0;
 	pid_t rc_pid, tar_fork_pid;
 	int progress_pipe[2], ret;
@@ -597,11 +596,7 @@ int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned lon
 		}
 		else // parent process
 		{
-			unsigned long long fs, size_backup;
-			double display_percent, progress_percent;
-			char size_progress[1024];
-			size_backup = 0;
-			string size_prog = gui_lookup("size_progress", "%lluMB of %lluMB, %i%%");
+			unsigned long long fs, size_backup = 0;
 
 			// Parent closes output side
 			close(progress_pipe[1]);
@@ -609,19 +604,14 @@ int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned lon
 			// Read progress data from children
 			while (read(progress_pipe[0], &fs, sizeof(fs)) > 0) {
 				size_backup += fs;
-				display_percent = (double)(size_backup + *other_backups_size) / (double)(*overall_size) * 100;
-				sprintf(size_progress, size_prog.c_str(), (size_backup + *other_backups_size) / 1048576, *overall_size / 1048576, (int)(display_percent));
-				progress_percent = (display_percent / 100);
 #ifndef BUILD_TWRPTAR_MAIN
-				DataManager::SetValue("tw_size_progress", size_progress);
-				DataManager::SetProgress((float)(progress_percent));
+				pt->UpdateSize(size_backup);
 #endif //ndef BUILD_TWRPTAR_MAIN
 			}
 			close(progress_pipe[0]);
 #ifndef BUILD_TWRPTAR_MAIN
-			DataManager::SetValue("tw_file_progress", "");
+			pt->UpdateDisplayDetails(true);
 #endif //ndef BUILD_TWRPTAR_MAIN
-			*other_backups_size += size_backup;
 
 			if (TWFunc::Wait_For_Child(tar_fork_pid, &status, "extractTarFork()") != 0)
 				return -1;

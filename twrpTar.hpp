@@ -1,5 +1,5 @@
 /*
-        Copyright 2012 bigbiff/Dees_Troy TeamWin
+        Copyright 2012 to 2016 bigbiff/Dees_Troy TeamWin
         This file is part of TWRP/TeamWin Recovery Project.
 
         TWRP is free software: you can redistribute it and/or modify
@@ -28,6 +28,7 @@ extern "C" {
 #include <string>
 #include <vector>
 #include "twrpDU.hpp"
+#include "progresstracking.hpp"
 
 using namespace std;
 
@@ -45,8 +46,13 @@ class twrpTar {
 public:
 	twrpTar();
 	virtual ~twrpTar();
-	int createTarFork(const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &fork_pid);
-	int extractTarFork(const unsigned long long *overall_size, unsigned long long *other_backups_size);
+#ifndef BUILD_TWRPTAR_MAIN
+	int createTarFork(ProgressTracking *pt, pid_t &fork_pid);
+	int extractTarFork(ProgressTracking *pt);
+#else
+	int createTarFork(pid_t &fork_pid);
+	int extractTarFork();
+#endif
 	void setfn(string fn);
 	void setdir(string dir);
 	void setsize(unsigned long long backup_size);
