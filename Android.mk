@@ -464,7 +464,7 @@ ifneq ($(TW_USE_TOOLBOX), true)
 include $(CLEAR_VARS)
 # Create busybox symlinks... gzip and gunzip are excluded because those need to link to pigz instead
 BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
-exclude := tune2fs mke2fs mkdosfs mkfs.vfat gzip gunzip
+exclude := tune2fs mke2fs mkdosfs mkfs.vfat gzip gunzip modprobe
 
 # If busybox does not have restorecon, assume it does not have SELinux support.
 # Then, let toolbox provide 'ls' so -Z is available to list SELinux contexts.
