@@ -20,9 +20,12 @@
 #define _TARWRITE_HEADER
 
 void reinit_libtar_buffer();
-void init_libtar_buffer(unsigned new_buff_size);
+void init_libtar_buffer(unsigned new_buff_size, int pipe_fd);
 void free_libtar_buffer();
 writefunc_t write_libtar_buffer(int fd, const void *buffer, size_t size);
 void flush_libtar_buffer(int fd);
+
+void init_libtar_no_buffer(int pipe_fd);
+writefunc_t write_libtar_no_buffer(int fd, const void *buffer, size_t size);
 
 #endif  // _TARWRITE_HEADER

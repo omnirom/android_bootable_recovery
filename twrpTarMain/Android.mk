@@ -8,18 +8,21 @@ LOCAL_SRC_FILES:= \
 	../twrp-functions.cpp \
 	../twrpTar.cpp \
 	../tarWrite.c \
-	../twrpDU.cpp
+	../twrpDU.cpp \
+	../progresstracking.cpp \
+	../gui/twmsg.cpp
 LOCAL_CFLAGS:= -g -c -W -DBUILD_TWRPTAR_MAIN
 
 LOCAL_C_INCLUDES += bionic
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-    LOCAL_C_INCLUDES += external/stlport/stlport
+    LOCAL_C_INCLUDES += external/stlport/stlport bionic/libstdc++/include
 endif
 
-LOCAL_STATIC_LIBRARIES := libc libtar_static libstdc++
+LOCAL_STATIC_LIBRARIES := libc libtar_static
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_STATIC_LIBRARIES += libstlport_static
 endif
+LOCAL_STATIC_LIBRARIES += libstdc++
 
 ifeq ($(TWHAVE_SELINUX), true)
     LOCAL_C_INCLUDES += external/libselinux/include
@@ -51,7 +54,9 @@ LOCAL_SRC_FILES:= \
 	../twrp-functions.cpp \
 	../twrpTar.cpp \
 	../tarWrite.c \
-	../twrpDU.cpp
+	../twrpDU.cpp \
+	../progresstracking.cpp \
+	../gui/twmsg.cpp
 LOCAL_CFLAGS:= -g -c -W -DBUILD_TWRPTAR_MAIN
 
 LOCAL_C_INCLUDES += bionic external/stlport/stlport
