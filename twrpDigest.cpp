@@ -1,5 +1,5 @@
 /*
-	Copyright 2012 bigbiff/Dees_Troy TeamWin
+	Copyright 2012 to 2016 bigbiff/Dees_Troy TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -44,7 +44,7 @@ extern "C"
 
 using namespace std;
 
-void twrpDigest::setfn(string fn) {
+void twrpDigest::setfn(const string& fn) {
 	md5fn = fn;
 }
 
