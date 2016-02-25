@@ -79,8 +79,8 @@ static const char *INTENT_FILE = "/cache/recovery/intent";
 static const char *LOG_FILE = "/cache/recovery/log";
 static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
 static const char *LOCALE_FILE = "/cache/recovery/last_locale";
-static const char *CONVERT_FBE_DIR = "/cache/recovery/convert_fbe";
-static const char *CONVERT_FBE_FILE = "/cache/recovery/convert_fbe/convert_fbe";
+static const char *CONVERT_FBE_DIR = "/tmp/convert_fbe";
+static const char *CONVERT_FBE_FILE = "/tmp/convert_fbe/convert_fbe";
 static const char *CACHE_ROOT = "/cache";
 static const char *DATA_ROOT = "/data";
 static const char *SDCARD_ROOT = "/sdcard";
@@ -576,10 +576,13 @@ static bool erase_volume(const char* volume) {
     if (is_data && reason && strcmp(reason, "convert_fbe") == 0) {
         // Create convert_fbe breadcrumb file to signal to init
         // to convert to file based encryption, not full disk encryption
-        mkdir(CONVERT_FBE_DIR, 0700);
+        if (mkdir(CONVERT_FBE_DIR, 0700) != 0) {
+            ui->Print("Failed to make convert_fbe dir %s\n", strerror(errno));
+            return true;
+        }
         FILE* f = fopen(CONVERT_FBE_FILE, "wb");
         if (!f) {
-            ui->Print("Failed to convert to file encryption\n");
+            ui->Print("Failed to convert to file encryption %s\n", strerror(errno));
             return true;
         }
         fclose(f);
