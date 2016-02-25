@@ -28,6 +28,8 @@ unsigned char *write_buffer;
 unsigned buffer_size = 4096;
 unsigned buffer_loc = 0;
 int buffer_status = 0;
+int prog_pipe = -1;
+const unsigned long long progress_size = (unsigned long long)(T_BLOCKSIZE);
 
 void reinit_libtar_buffer(void) {
 	flush = 0;
@@ -36,18 +38,20 @@ void reinit_libtar_buffer(void) {
 	buffer_status = 1;
 }
 
-void init_libtar_buffer(unsigned new_buff_size) {
+void init_libtar_buffer(unsigned new_buff_size, int pipe_fd) {
 	if (new_buff_size != 0)
 		buffer_size = new_buff_size;
 
 	reinit_libtar_buffer();
 	write_buffer = (unsigned char*) malloc(sizeof(char *) * buffer_size);
+	prog_pipe = pipe_fd;
 }
 
 void free_libtar_buffer(void) {
 	if (buffer_status > 0)
 		free(write_buffer);
 	buffer_status = 0;
+	prog_pipe = -1;
 }
 
 ssize_t write_libtar_buffer(int fd, const void *buffer, size_t size) {
@@ -79,6 +83,8 @@ ssize_t write_libtar_buffer(int fd, const void *buffer, size_t size) {
 			buffer_loc = 0;
 			return -1;
 		} else {
+			unsigned long long fs = (unsigned long long)(buffer_loc);
+			write(prog_pipe, &fs, sizeof(fs));
 			buffer_loc = 0;
 			return size;
 		}
@@ -93,4 +99,15 @@ void flush_libtar_buffer(int fd) {
 	eot_count = 0;
 	if (buffer_status)
 		buffer_status = 2;
+}
+
+void init_libtar_no_buffer(int pipe_fd) {
+	buffer_size = T_BLOCKSIZE;
+	prog_pipe = pipe_fd;
+	buffer_status = 0;
+}
+
+ssize_t write_libtar_no_buffer(int fd, const void *buffer, size_t size) {
+	write(prog_pipe, &progress_size, sizeof(progress_size));
+	return write(fd, buffer, size);
 }

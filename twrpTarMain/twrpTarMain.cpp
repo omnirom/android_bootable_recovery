@@ -20,9 +20,51 @@
 #include "../twrp-functions.hpp"
 #include "../twrpTar.hpp"
 #include "../twrpDU.hpp"
+#include "../progresstracking.hpp"
+#include "../gui/gui.hpp"
+#include "../gui/twmsg.h"
 #include <string.h>
 
 twrpDU du;
+
+void gui_msg(const char* text)
+{
+	if (text) {
+		Message msg = Msg(text);
+		gui_msg(msg);
+	}
+}
+
+void gui_warn(const char* text)
+{
+	if (text) {
+		Message msg = Msg(msg::kWarning, text);
+		gui_msg(msg);
+	}
+}
+
+void gui_err(const char* text)
+{
+	if (text) {
+		Message msg = Msg(msg::kError, text);
+		gui_msg(msg);
+	}
+}
+
+void gui_highlight(const char* text)
+{
+	if (text) {
+		Message msg = Msg(msg::kHighlight, text);
+		gui_msg(msg);
+	}
+}
+
+void gui_msg(Message msg)
+{
+	std::string output = msg;
+	output += "\n";
+	fputs(output.c_str(), stdout);
+}
 
 void usage() {
 	printf("twrpTar <action> [options]\n\n");
@@ -34,7 +76,7 @@ void usage() {
 	printf(" -z    compress backup (/sbin/pigz must be present)\n");
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	printf(" -e    encrypt/decrypt backup followed by password (/sbin/openaes must be present)\n");
-	printf(" -u    encrypt using userdata encryption (must be used with -e\n");
+	printf(" -u    encrypt using userdata encryption (must be used with -e)\n");
 #endif
 	printf("\n\n");
 	printf("Example: twrpTar -c -d /cache -t /sdcard/test.tar\n");
@@ -47,7 +89,7 @@ int main(int argc, char **argv) {
 	int i, action = 0;
 	unsigned j;
 	string Directory, Tar_Filename;
-	unsigned long long temp1 = 0, temp2 = 0;
+	ProgressTracking progress(1);
 	pid_t tar_fork_pid = 0;
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	string Password;
@@ -144,14 +186,14 @@ int main(int argc, char **argv) {
 	}
 #endif
 	if (action == 1) {
-		if (tar.createTarFork(&temp1, &temp2, tar_fork_pid) != 0) {
+		if (tar.createTarFork(&progress, tar_fork_pid) != 0) {
 			sync();
 			return -1;
 		}
 		sync();
 		printf("\n\ntar created successfully.\n");
 	} else if (action == 2) {
-		if (tar.extractTarFork(&temp1, &temp2) != 0) {
+		if (tar.extractTarFork(&progress) != 0) {
 			sync();
 			return -1;
 		}

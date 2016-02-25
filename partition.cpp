@@ -1,5 +1,5 @@
 /*
-	Copyright 2013 TeamWin
+	Copyright 2013 to 2016 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -28,6 +28,7 @@
 #include <iostream>
 #include <sstream>
 #include <sys/param.h>
+#include <fcntl.h>
 
 #ifdef TW_INCLUDE_CRYPTO
 	#include "cutils/properties.h"
@@ -69,6 +70,7 @@ extern "C" {
 #include <linux/xattr.h>
 #endif
 #include <sparse_format.h>
+#include "progresstracking.hpp"
 
 using namespace std;
 
@@ -1466,14 +1468,14 @@ bool TWPartition::Resize() {
 	return false;
 }
 
-bool TWPartition::Backup(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid) {
+bool TWPartition::Backup(const string& backup_folder, pid_t &tar_fork_pid, ProgressTracking *progress) {
 	if (Backup_Method == FILES) {
-		return Backup_Tar(backup_folder, overall_size, other_backups_size, tar_fork_pid);
+		return Backup_Tar(backup_folder, progress, tar_fork_pid);
 	}
 	else if (Backup_Method == DD)
-		return Backup_DD(backup_folder);
+		return Backup_Image(backup_folder, progress);
 	else if (Backup_Method == FLASH_UTILS)
-		return Backup_Dump_Image(backup_folder);
+		return Backup_Dump_Image(backup_folder, progress);
 	LOGERR("Unknown backup method for '%s'\n", Mount_Point.c_str());
 	return false;
 }
@@ -1526,7 +1528,7 @@ bool TWPartition::Check_MD5(string restore_folder) {
 	return false;
 }
 
-bool TWPartition::Restore(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size) {
+bool TWPartition::Restore(const string& restore_folder, ProgressTracking *progress) {
 	string Restore_File_System;
 
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, gui_parse_text("{@restoring_hdr}"));
@@ -1535,16 +1537,16 @@ bool TWPartition::Restore(string restore_folder, const unsigned long long *total
 	Restore_File_System = Get_Restore_File_System(restore_folder);
 
 	if (Is_File_System(Restore_File_System))
-		return Restore_Tar(restore_folder, Restore_File_System, total_restore_size, already_restored_size);
+		return Restore_Tar(restore_folder, Restore_File_System, progress);
 	else if (Is_Image(Restore_File_System)) {
-		return Restore_Image(restore_folder, total_restore_size, already_restored_size, Restore_File_System);
+		return Restore_Image(restore_folder, Restore_File_System, progress);
 	}
 
 	LOGERR("Unknown restore method for '%s'\n", Mount_Point.c_str());
 	return false;
 }
 
-string TWPartition::Get_Restore_File_System(string restore_folder) {
+string TWPartition::Get_Restore_File_System(const string& restore_folder) {
 	size_t first_period, second_period;
 	string Restore_File_System;
 
@@ -2009,14 +2011,9 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media_Func(const string& parent __unu
 	return false;
 }
 
-bool TWPartition::Backup_Tar(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid) {
-	char back_name[255], split_index[5];
-	string Full_FileName, Split_FileName, Tar_Args, Command;
-	int use_compression, use_encryption = 0, index, backup_count;
-	struct stat st;
-	unsigned long long total_bsize = 0, file_size;
+bool TWPartition::Backup_Tar(const string& backup_folder, ProgressTracking *progress, pid_t &tar_fork_pid) {
+	string Full_FileName;
 	twrpTar tar;
-	vector <string> files;
 
 	if (!Mount(true))
 		return false;
@@ -2024,25 +2021,24 @@ bool TWPartition::Backup_Tar(string backup_folder, const unsigned long long *ove
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Backup_Display_Name, "Backing Up");
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
 
-	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
-	tar.use_compression = use_compression;
+	DataManager::GetValue(TW_USE_COMPRESSION_VAR, tar.use_compression);
 
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-	DataManager::GetValue("tw_encrypt_backup", use_encryption);
-	if (use_encryption && Can_Encrypt_Backup) {
-		tar.use_encryption = use_encryption;
-		if (Use_Userdata_Encryption)
-			tar.userdata_encryption = use_encryption;
-		string Password;
-		DataManager::GetValue("tw_backup_password", Password);
-		tar.setpassword(Password);
-	} else {
-		use_encryption = false;
+	if (Can_Encrypt_Backup) {
+		DataManager::GetValue("tw_encrypt_backup", tar.use_encryption);
+		if (tar.use_encryption) {
+			if (Use_Userdata_Encryption)
+				tar.userdata_encryption = tar.use_encryption;
+			string Password;
+			DataManager::GetValue("tw_backup_password", Password);
+			tar.setpassword(Password);
+		} else {
+			tar.use_encryption = 0;
+		}
 	}
 #endif
 
-	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Current_File_System.c_str());
-	Backup_FileName = back_name;
+	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
 	Full_FileName = backup_folder + "/" + Backup_FileName;
 	tar.has_data_media = Has_Data_Media;
 	Full_FileName = backup_folder + "/" + Backup_FileName;
@@ -2051,39 +2047,23 @@ bool TWPartition::Backup_Tar(string backup_folder, const unsigned long long *ove
 	tar.setsize(Backup_Size);
 	tar.partition_name = Backup_Name;
 	tar.backup_folder = backup_folder;
-	if (tar.createTarFork(overall_size, other_backups_size, tar_fork_pid) != 0)
+	if (tar.createTarFork(progress, tar_fork_pid) != 0)
 		return false;
 	return true;
 }
 
-bool TWPartition::Backup_DD(string backup_folder) {
-	char back_name[255], block_size[32], dd_count[32];
-	string Full_FileName, Command, DD_BS, DD_COUNT;
-	int use_compression;
-	unsigned long long DD_Block_Size, DD_Count;
-
-	DD_Block_Size = 16 * 1024 * 1024;
-	while (Backup_Size % DD_Block_Size != 0) DD_Block_Size >>= 1;
-
-	DD_Count = Backup_Size / DD_Block_Size;
-
-	sprintf(dd_count, "%llu", DD_Count);
-	DD_COUNT = dd_count;
-
-	sprintf(block_size, "%llu", DD_Block_Size);
-	DD_BS = block_size;
+bool TWPartition::Backup_Image(const string& backup_folder, ProgressTracking *progress) {
+	string Full_FileName;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
 
-	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Current_File_System.c_str());
-	Backup_FileName = back_name;
-
+	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
 	Full_FileName = backup_folder + "/" + Backup_FileName;
 
-	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'" + " bs=" + DD_BS + " count=" + DD_COUNT;
-	LOGINFO("Backup command: '%s'\n", Command.c_str());
-	TWFunc::Exec_Cmd(Command);
+	if (!Raw_Read_Write(Actual_Block_Device, Full_FileName, Backup_Size, progress))
+		return false;
+
 	tw_set_default_metadata(Full_FileName.c_str());
 	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
 		gui_msg(Msg(msg::kError, "backup_size=Backup file size for '{1}' is 0 bytes.")(Full_FileName));
@@ -2092,17 +2072,77 @@ bool TWPartition::Backup_DD(string backup_folder) {
 	return true;
 }
 
-bool TWPartition::Backup_Dump_Image(string backup_folder) {
-	char back_name[255];
+bool TWPartition::Raw_Read_Write(const string& input_file, const string& output_file, const unsigned long long input_size, ProgressTracking *progress) {
+	unsigned long long RW_Block_Size, Remain;
+	int src_fd = -1, dest_fd = -1, bs;
+	bool ret = false;
+	void* buffer = NULL;
+	unsigned long long backedup_size = 0;
+
+	RW_Block_Size = 1048576LLU; // 1MB
+	Remain = input_size;
+
+	src_fd = open(input_file.c_str(), O_RDONLY | O_LARGEFILE);
+	if (src_fd < 0) {
+		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(input_file)(strerror(errno)));
+		return false;
+	}
+	dest_fd = open(output_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE, S_IRUSR | S_IWUSR);
+	if (dest_fd < 0) {
+		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(output_file)(strerror(errno)));
+		goto exit;
+	}
+	bs = (int)(RW_Block_Size);
+	buffer = malloc((size_t)bs);
+	if (!buffer) {
+		LOGINFO("Raw_Read_Write failed to malloc\n");
+		goto exit;
+	}
+	LOGINFO("Reading '%s', writing '%s'\n", input_file.c_str(), output_file.c_str());
+	if (progress)
+		progress->SetPartitionSize(input_size);
+	while (Remain > 0) {
+		if (Remain < RW_Block_Size)
+			bs = (int)(Remain);
+		if (read(src_fd, buffer, bs) != bs) {
+			LOGINFO("Error reading source fd (%s)\n", strerror(errno));
+			goto exit;
+		}
+		if (write(dest_fd, buffer, bs) != bs) {
+			LOGINFO("Error writing destination fd (%s)\n", strerror(errno));
+			goto exit;
+		}
+		backedup_size += (unsigned long long)(bs);
+		Remain -= (unsigned long long)(bs);
+		if (progress)
+			progress->UpdateSize(backedup_size);
+		if (PartitionManager.Check_Backup_Cancel() != 0)
+			goto exit;
+	}
+	if (progress)
+		progress->UpdateDisplayDetails(true);
+	fsync(dest_fd);
+	ret = true;
+exit:
+	if (src_fd >= 0)
+		close(src_fd);
+	if (dest_fd >= 0)
+		close(dest_fd);
+	if (buffer)
+		free(buffer);
+	return ret;
+}
+
+bool TWPartition::Backup_Dump_Image(const string& backup_folder, ProgressTracking *progress) {
 	string Full_FileName, Command;
-	int use_compression;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
 
-	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Current_File_System.c_str());
-	Backup_FileName = back_name;
+	if (progress)
+		progress->SetPartitionSize(Backup_Size);
 
+	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
 	Full_FileName = backup_folder + "/" + Backup_FileName;
 
 	Command = "dump_image " + MTD_Name + " '" + Full_FileName + "'";
@@ -2114,10 +2154,12 @@ bool TWPartition::Backup_Dump_Image(string backup_folder) {
 		gui_msg(Msg(msg::kError, "backup_size=Backup file size for '{1}' is 0 bytes.")(Full_FileName));
 		return false;
 	}
+	if (progress)
+		progress->UpdateSize(Backup_Size);
 	return true;
 }
 
-unsigned long long TWPartition::Get_Restore_Size(string restore_folder) {
+unsigned long long TWPartition::Get_Restore_Size(const string& restore_folder) {
 	InfoManager restore_info(restore_folder + "/" + Backup_Name + ".info");
 	if (restore_info.LoadValues() == 0) {
 		if (restore_info.GetValue("backup_size", Restore_Size) == 0) {
@@ -2150,10 +2192,8 @@ unsigned long long TWPartition::Get_Restore_Size(string restore_folder) {
 	return Restore_Size;
 }
 
-bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System, const unsigned long long *total_restore_size, unsigned long long *already_restored_size) {
-	string Full_FileName, Command;
-	int index = 0;
-	char split_index[5];
+bool TWPartition::Restore_Tar(const string& restore_folder, const string& Restore_File_System, ProgressTracking *progress) {
+	string Full_FileName;
 	bool ret = false;
 
 	if (Has_Android_Secure) {
@@ -2188,7 +2228,8 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System,
 	if (!Password.empty())
 		tar.setpassword(Password);
 #endif
-	if (tar.extractTarFork(total_restore_size, already_restored_size) != 0)
+	progress->SetPartitionSize(Get_Restore_Size(restore_folder));
+	if (tar.extractTarFork(progress) != 0)
 		ret = false;
 	else
 		ret = true;
@@ -2218,28 +2259,21 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System,
 	return ret;
 }
 
-bool TWPartition::Restore_Image(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size, string Restore_File_System) {
+bool TWPartition::Restore_Image(const string& restore_folder, const string& Restore_File_System, ProgressTracking *progress) {
 	string Full_FileName;
-	double display_percent, progress_percent;
-	char size_progress[1024];
 
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restoring_hdr}"));
 	gui_msg(Msg("restoring=Restoring {1}...")(Backup_Display_Name));
 	Full_FileName = restore_folder + "/" + Backup_FileName;
 
 	if (Restore_File_System == "emmc") {
-		if (!Flash_Image_DD(Full_FileName))
+		unsigned long long file_size = (unsigned long long)(TWFunc::Get_File_Size(Full_FileName));
+		if (!Raw_Read_Write(Full_FileName, Actual_Block_Device, file_size, progress))
 			return false;
 	} else if (Restore_File_System == "mtd" || Restore_File_System == "bml") {
-		if (!Flash_Image_FI(Full_FileName))
+		if (!Flash_Image_FI(Full_FileName, progress))
 			return false;
 	}
-	display_percent = (double)(Restore_Size + *already_restored_size) / (double)(*total_restore_size) * 100;
-	sprintf(size_progress, "%lluMB of %lluMB, %i%%", (Restore_Size + *already_restored_size) / 1048576, *total_restore_size / 1048576, (int)(display_percent));
-	DataManager::SetValue("tw_size_progress", size_progress);
-	progress_percent = (display_percent / 100);
-	DataManager::SetProgress((float)(progress_percent));
-	*already_restored_size += Restore_Size;
 	return true;
 }
 
@@ -2380,7 +2414,7 @@ uint64_t TWPartition::Get_Max_FileSize() {
 	return maxFileSize - 1;
 }
 
-bool TWPartition::Flash_Image(string Filename) {
+bool TWPartition::Flash_Image(const string& Filename) {
 	string Restore_File_System;
 
 	LOGINFO("Image filename is: %s\n", Filename.c_str());
@@ -2403,21 +2437,23 @@ bool TWPartition::Flash_Image(string Filename) {
 			gui_err("img_size_err=Size of image is larger than target device");
 			return false;
 		}
-		if (Backup_Method == DD)
-			return Flash_Image_DD(Filename);
-		else if (Backup_Method == FLASH_UTILS)
-			return Flash_Image_FI(Filename);
+		if (Backup_Method == DD) {
+			if (Is_Sparse_Image(Filename)) {
+				return Flash_Sparse_Image(Filename);
+			}
+			unsigned long long file_size = (unsigned long long)(TWFunc::Get_File_Size(Filename));
+			ProgressTracking pt(file_size);
+			return Raw_Read_Write(Filename, Actual_Block_Device, file_size, &pt);
+		} else if (Backup_Method == FLASH_UTILS) {
+			return Flash_Image_FI(Filename, NULL);
+		}
 	}
 
 	LOGERR("Unknown flash method for '%s'\n", Mount_Point.c_str());
 	return false;
 }
 
-bool TWPartition::Flash_Image_DD(string Filename) {
-	string Command;
-
-	gui_msg(Msg("flashing=Flashing {1}...")(Display_Name));
-
+bool TWPartition::Is_Sparse_Image(const string& Filename) {
 	uint32_t magic = 0;
 	int fd = open(Filename.c_str(), O_RDONLY);
 	if (fd < 0) {
@@ -2430,20 +2466,31 @@ bool TWPartition::Flash_Image_DD(string Filename) {
 		return false;
 	}
 	close(fd);
-	if (magic == SPARSE_HEADER_MAGIC) {
-		Command = "simg2img '" + Filename + "' " + Actual_Block_Device;
-	} else {
-		Command = "dd bs=8388608 if='" + Filename + "' of=" + Actual_Block_Device;
-	}
+	if (magic == SPARSE_HEADER_MAGIC)
+		return true;
+	return false;
+}
+
+bool TWPartition::Flash_Sparse_Image(const string& Filename) {
+	string Command;
+
+	gui_msg(Msg("flashing=Flashing {1}...")(Display_Name));
+
+	Command = "simg2img '" + Filename + "' '" + Actual_Block_Device + "'";
 	LOGINFO("Flash command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command);
 	return true;
 }
 
-bool TWPartition::Flash_Image_FI(string Filename) {
+bool TWPartition::Flash_Image_FI(const string& Filename, ProgressTracking *progress) {
 	string Command;
+	unsigned long long file_size;
 
 	gui_msg(Msg("flashing=Flashing {1}...")(Display_Name));
+	if (progress) {
+		file_size = (unsigned long long)(TWFunc::Get_File_Size(Filename));
+		progress->SetPartitionSize(file_size);
+	}
 	// Sometimes flash image doesn't like to flash due to the first 2KB matching, so we erase first to ensure that it flashes
 	Command = "erase_image " + MTD_Name;
 	LOGINFO("Erase command: '%s'\n", Command.c_str());
@@ -2451,6 +2498,8 @@ bool TWPartition::Flash_Image_FI(string Filename) {
 	Command = "flash_image " + MTD_Name + " '" + Filename + "'";
 	LOGINFO("Flash command: '%s'\n", Command.c_str());
 	TWFunc::Exec_Cmd(Command);
+	if (progress)
+		progress->UpdateSize(file_size);
 	return true;
 }
 

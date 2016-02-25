@@ -1,5 +1,5 @@
 /*
-	Copyright 2014 TeamWin
+	Copyright 2014 to 2016 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #include <string>
 #include "twrpDU.hpp"
 #include "tw_atomic.hpp"
+#include "progresstracking.hpp"
 
 #define MAX_FSTAB_LINE_LENGTH 2048
 
@@ -64,17 +65,17 @@ public:
 	bool Repair();                                                            // Repairs the current file system
 	bool Can_Resize();                                                        // Checks to see if we have everything needed to be able to resize the current file system
 	bool Resize();                                                            // Resizes the current file system
-	bool Backup(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid); // Backs up the partition to the folder specified
+	bool Backup(const string& backup_folder, pid_t &tar_fork_pid, ProgressTracking *progress); // Backs up the partition to the folder specified
 	bool Check_MD5(string restore_folder);                                    // Checks MD5 of a backup
-	bool Restore(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size); // Restores the partition using the backup folder provided
-	unsigned long long Get_Restore_Size(string restore_folder);               // Returns the overall restore size of the backup
+	bool Restore(const string& restore_folder, ProgressTracking *progress);   // Restores the partition using the backup folder provided
+	unsigned long long Get_Restore_Size(const string& restore_folder);        // Returns the overall restore size of the backup
 	string Backup_Method_By_Name();                                           // Returns a string of the backup method for human readable output
 	bool Decrypt(string Password);                                            // Decrypts the partition, return 0 for failure and -1 for success
 	bool Wipe_Encryption();                                                   // Ignores wipe commands for /data/media devices and formats the original block device
 	void Check_FS_Type();                                                     // Checks the fs type using blkid, does not do anything on MTD / yaffs2 because this crashes on some devices
 	bool Update_Size(bool Display_Error);                                     // Updates size information
 	void Recreate_Media_Folder();                                             // Recreates the /data/media folder
-	bool Flash_Image(string Filename);                                        // Flashes an image to the partition
+	bool Flash_Image(const string& Filename);                                        // Flashes an image to the partition
 	void Change_Mount_Read_Only(bool new_value);                              // Changes Mount_Read_Only to new_value
 	int Check_Lifetime_Writes();
 	int Decrypt_Adopted();
@@ -118,20 +119,22 @@ private:
 	bool Wipe_NTFS();                                                         // Uses mkntfs to wipe
 	bool Wipe_Data_Without_Wiping_Media();                                    // Uses rm -rf to wipe but does not wipe /data/media
 	bool Wipe_Data_Without_Wiping_Media_Func(const string& parent);           // Uses rm -rf to wipe but does not wipe /data/media
-	bool Backup_Tar(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid); // Backs up using tar for file systems
-	bool Backup_DD(string backup_folder);                                     // Backs up using dd for emmc memory types
-	bool Backup_Dump_Image(string backup_folder);                             // Backs up using dump_image for MTD memory types
-	string Get_Restore_File_System(string restore_folder);                    // Returns the file system that was in place at the time of the backup
-	bool Restore_Tar(string restore_folder, string Restore_File_System, const unsigned long long *total_restore_size, unsigned long long *already_restored_size); // Restore using tar for file systems
-	bool Restore_Image(string restore_folder, const unsigned long long *total_restore_size, unsigned long long *already_restored_size, string Restore_File_System); // Restore using dd for images
+	bool Backup_Tar(const string& backup_folder, ProgressTracking *progress, pid_t &tar_fork_pid); // Backs up using tar for file systems
+	bool Backup_Image(const string& backup_folder, ProgressTracking *progress); // Backs up using raw read/write for emmc memory types
+	bool Raw_Read_Write(const string& input_file, const string& output_file, const unsigned long long input_size, ProgressTracking *progress);
+	bool Backup_Dump_Image(const string& backup_folder, ProgressTracking *progress); // Backs up using dump_image for MTD memory types
+	string Get_Restore_File_System(const string& restore_folder);             // Returns the file system that was in place at the time of the backup
+	bool Restore_Tar(const string& restore_folder, const string& Restore_File_System, ProgressTracking *progress); // Restore using tar for file systems
+	bool Restore_Image(const string& restore_folder, const string& Restore_File_System, ProgressTracking *progress); // Restore using raw read/write for images
 	bool Get_Size_Via_statfs(bool Display_Error);                             // Get Partition size, used, and free space using statfs
 	bool Get_Size_Via_df(bool Display_Error);                                 // Get Partition size, used, and free space using df command
 	bool Make_Dir(string Path, bool Display_Error);                           // Creates a directory if it doesn't already exist
 	bool Find_MTD_Block_Device(string MTD_Name);                              // Finds the mtd block device based on the name from the fstab
 	void Recreate_AndSec_Folder(void);                                        // Recreates the .android_secure folder
 	void Mount_Storage_Retry(void);                                           // Tries multiple times with a half second delay to mount a device in case storage is slow to mount
-	bool Flash_Image_DD(string Filename);                                     // Flashes an image to the partition using dd
-	bool Flash_Image_FI(string Filename);                                     // Flashes an image to the partition using flash_image for mtd nand
+	bool Is_Sparse_Image(const string& Filename);                             // Determines if a file is in sparse image format
+	bool Flash_Sparse_Image(const string& Filename);                          // Flashes a sparse image using simg2img
+	bool Flash_Image_FI(const string& Filename, ProgressTracking *progress);  // Flashes an image to the partition using flash_image for mtd nand
 
 private:
 	bool Can_Be_Mounted;                                                      // Indicates that the partition can be mounted
@@ -208,7 +211,7 @@ public:
 	TWPartition* Find_Partition_By_Path(string Path);                         // Returns a pointer to a partition based on path
 	int Check_Backup_Name(bool Display_Error);                                // Checks the current backup name to ensure that it is valid
 	int Run_Backup();                                                         // Initiates a backup in the current storage
-	int Run_Restore(string Restore_Name);                                     // Restores a backup
+	int Run_Restore(const string& Restore_Name);                              // Restores a backup
 	void Set_Restore_Files(string Restore_Name);                              // Used to gather a list of available backup partitions for the user to select for a restore
 	int Wipe_By_Path(string Path);                                            // Wipes a partition based on path
 	int Wipe_By_Path(string Path, string New_File_System);                    // Wipes a partition based on path
@@ -229,6 +232,7 @@ public:
 	void UnMount_Main_Partitions(void);                                       // Unmounts system and data if not data/media and boot if boot is mountable
 	int Partition_SDCard(void);                                               // Repartitions the sdcard
 	TWPartition *Get_Default_Storage_Partition();                             // Returns a pointer to a default storage partition
+	int Check_Backup_Cancel();                                                // Returns the value of stop_backup
 	int Cancel_Backup();                                                      // Signals partition backup to cancel
 	void Clean_Backup_Folder(string Backup_Folder);                           // Clean Backup Folder on Error
 	int Fix_Contexts();
@@ -255,9 +259,9 @@ private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
 	void Setup_Android_Secure_Location(TWPartition* Part);                    // Sets up .android_secure if needed
 	bool Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename); // Generates an MD5 after a backup is made
-	bool Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes);
-	bool Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count, const unsigned long long *total_restore_size, unsigned long long *already_restored_size);
-	void Output_Partition(TWPartition* Part);
+	bool Backup_Partition(TWPartition* Part, const string& Backup_Folder, bool generate_md5, unsigned long *img_time, unsigned long *file_time, ProgressTracking *progress);
+	bool Restore_Partition(TWPartition* Part, const string& Restore_Name, ProgressTracking *progress);
+	void Output_Partition(TWPartition* Part);                                 // Outputs partition details to the log
 	TWPartition* Find_Partition_By_MTP_Storage_ID(unsigned int Storage_ID);   // Returns a pointer to a partition based on MTP Storage ID
 	bool Add_Remove_MTP_Storage(TWPartition* Part, int message_type);         // Adds or removes an MTP Storage partition
 	TWPartition* Find_Next_Storage(string Path, bool Exclude_Data_Media);
