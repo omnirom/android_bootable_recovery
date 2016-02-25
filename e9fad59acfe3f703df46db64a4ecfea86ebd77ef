@@ -733,6 +733,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_eaa60caa",
+        "filename": "partitions.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-25T16:59:53Z",
+      "side": 1,
+      "message": "These structs are to support the existing backup code, partitionmanager creates a bunch of metadata under backupsettings, then creates backup partition settings data for partition.cpp to backup each partition.",
+      "parentUuid": "98faad2e_aa3124b7",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_cac0f082",
         "filename": "partitions.hpp",
         "patchSetId": 51
@@ -767,6 +785,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_aab004da",
+        "filename": "partitions.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-25T16:59:53Z",
+      "side": 1,
+      "message": "Yes it does. It generates the objects.",
+      "parentUuid": "98faad2e_8a3668ac",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_6a3b1c96",
         "filename": "partitions.hpp",
         "patchSetId": 51
@@ -784,6 +820,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_8ab548cb",
+        "filename": "partitions.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-25T16:59:53Z",
+      "side": 1,
+      "message": "Tells the partition restore routine how many partitions to loop.",
+      "parentUuid": "98faad2e_6a3b1c96",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_0a425813",
         "filename": "twrpTar.hpp",
         "patchSetId": 51
@@ -795,6 +849,24 @@
       "writtenOn": "2016-02-25T00:00:10Z",
       "side": 1,
       "message": "if libtar is writing to this fd, then why is it called input_fd and why is it only opened for reading?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2ac4f446",
+        "filename": "twrpTar.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-02-25T16:59:53Z",
+      "side": 1,
+      "message": "it is needed by multiple class functions so i moved it here.",
+      "parentUuid": "98faad2e_0a425813",
       "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
