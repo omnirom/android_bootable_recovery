@@ -89,13 +89,16 @@ public:
 			resname = name.substr(0, pos);
 			default_value = name.substr(pos + 1);
 		}
+#ifndef BUILD_TWRPTAR_MAIN
 		const ResourceManager* res = PageManager::GetResources();
 		if (res) {
 			if (default_value.empty())
 				return res->FindString(resname);
 			else
 				return res->FindString(resname, default_value);
-		} else if (!default_value.empty()) {
+		}
+#endif
+		if (!default_value.empty()) {
 			return default_value;
 		}
 		return name;
@@ -112,10 +115,12 @@ class DataLookup : public StringLookup
 public:
 	virtual std::string operator()(const std::string& name) const
 	{
+#ifndef BUILD_TWRPTAR_MAIN
 		std::string value;
 		if (DataManager::GetValue(name, value) == 0)
 			return value;
 		else
+#endif
 			return "";
 	}
 };

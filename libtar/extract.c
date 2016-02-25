@@ -32,6 +32,8 @@
 # include "selinux/selinux.h"
 #endif
 
+const unsigned long long progress_size = (unsigned long long)(T_BLOCKSIZE);
+
 static int
 tar_set_file_perms(TAR *t, const char *realname)
 {
@@ -245,6 +247,11 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 			close(fdout);
 			return -1;
 		}
+		else
+		{
+			if (*progress_fd != 0)
+				write(*progress_fd, &progress_size, sizeof(progress_size));
+		}
 	}
 
 	/* close output file */
@@ -254,12 +261,6 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 #ifdef DEBUG
 	printf("### done extracting %s\n", filename);
 #endif
-
-	if (*progress_fd != 0)
-	{
-		unsigned long long file_size = (unsigned long long)(size);
-		write(*progress_fd, &file_size, sizeof(file_size));
-	}
 
 	return 0;
 }

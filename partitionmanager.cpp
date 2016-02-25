@@ -1,5 +1,5 @@
 /*
-	Copyright 2014 TeamWin
+	Copyright 2014 to 2016 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -43,6 +43,7 @@
 #include "set_metadata.h"
 #include "tw_atomic.hpp"
 #include "gui/gui.hpp"
+#include "progresstracking.hpp"
 
 #ifdef TW_HAS_MTP
 #include "mtp/mtp_MtpServer.hpp"
@@ -527,11 +528,9 @@ bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, strin
 	return true;
 }
 
-bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folder, bool generate_md5, unsigned long long* img_bytes_remaining, unsigned long long* file_bytes_remaining, unsigned long *img_time, unsigned long *file_time, unsigned long long *img_bytes, unsigned long long *file_bytes) {
+bool TWPartitionManager::Backup_Partition(TWPartition* Part, const string& Backup_Folder, bool generate_md5, unsigned long *img_time, unsigned long *file_time, ProgressTracking *progress) {
 	time_t start, stop;
 	int use_compression;
-	float pos;
-	unsigned long long total_size, current_size;
 
 	string backup_log = Backup_Folder + "recovery.log";
 
@@ -540,26 +539,17 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 
-	total_size = *file_bytes + *img_bytes;
-	current_size = *file_bytes + *img_bytes - *file_bytes_remaining - *img_bytes_remaining;
-	// Set the position
-	pos = ((float)(current_size) / (float)(total_size));
-	DataManager::SetProgress(pos);
-
 	TWFunc::SetPerformanceMode(true);
 	time(&start);
 
-	if (Part->Backup(Backup_Folder, &total_size, &current_size, tar_fork_pid)) {
+	if (Part->Backup(Backup_Folder, tar_fork_pid, progress)) {
 		bool md5Success = false;
-		current_size += Part->Backup_Size;
-		pos = (float)((float)(current_size) / (float)(total_size));
-		DataManager::SetProgress(pos);
 		if (Part->Has_SubPartition) {
 			std::vector<TWPartition*>::iterator subpart;
 
 			for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
 				if ((*subpart)->Can_Be_Backed_Up && (*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point) {
-					if (!(*subpart)->Backup(Backup_Folder, &total_size, &current_size, tar_fork_pid)) {
+					if (!(*subpart)->Backup(Backup_Folder, tar_fork_pid, progress)) {
 						TWFunc::SetPerformanceMode(false);
 						Clean_Backup_Folder(Backup_Folder);
 						TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
@@ -572,14 +562,6 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 						TWFunc::SetPerformanceMode(false);
 						return false;
 					}
-					if (Part->Backup_Method == 1) {
-						*file_bytes_remaining -= (*subpart)->Backup_Size;
-					} else {
-						*img_bytes_remaining -= (*subpart)->Backup_Size;
-					}
-					current_size += Part->Backup_Size;
-					pos = (float)(current_size / total_size);
-					DataManager::SetProgress(pos);
 				}
 			}
 		}
@@ -587,10 +569,8 @@ bool TWPartitionManager::Backup_Partition(TWPartition* Part, string Backup_Folde
 		int backup_time = (int) difftime(stop, start);
 		LOGINFO("Partition Backup time: %d\n", backup_time);
 		if (Part->Backup_Method == 1) {
-			*file_bytes_remaining -= Part->Backup_Size;
 			*file_time += backup_time;
 		} else {
-			*img_bytes_remaining -= Part->Backup_Size;
 			*img_time += backup_time;
 		}
 
@@ -634,6 +614,10 @@ void TWPartitionManager::Clean_Backup_Folder(string Backup_Folder) {
 		}
 	}
 	closedir(d);
+}
+
+int TWPartitionManager::Check_Backup_Cancel() {
+	return stop_backup.get_value();
 }
 
 int TWPartitionManager::Cancel_Backup() {
@@ -738,6 +722,7 @@ int TWPartitionManager::Run_Backup(void) {
 		return false;
 	}
 	total_bytes = file_bytes + img_bytes;
+	ProgressTracking progress(total_bytes);
 	gui_msg(Msg("total_partitions_backup= * Total number of partitions to back up: {1}")(partition_count));
 	gui_msg(Msg("total_backup_size= * Total size of all data: {1}MB")(total_bytes / 1024 / 1024));
 	storage = Find_Partition_By_Path(DataManager::GetCurrentStoragePath());
@@ -777,7 +762,7 @@ int TWPartitionManager::Run_Backup(void) {
 		backup_path = Backup_List.substr(start_pos, end_pos - start_pos);
 		backup_part = Find_Partition_By_Path(backup_path);
 		if (backup_part != NULL) {
-			if (!Backup_Partition(backup_part, Full_Backup_Path, do_md5, &img_bytes_remaining, &file_bytes_remaining, &img_time, &file_time, &img_bytes, &file_bytes))
+			if (!Backup_Partition(backup_part, Full_Backup_Path, do_md5, &img_time, &file_time, &progress))
 				return false;
 		} else {
 			gui_msg(Msg(msg::kError, "unable_to_locate_partition=Unable to locate '{1}' partition for backup calculations.")(backup_path));
@@ -794,8 +779,10 @@ int TWPartitionManager::Run_Backup(void) {
 	int img_bps = (int)img_bytes / (int)img_time;
 	unsigned long long file_bps = file_bytes / (int)file_time;
 
-	gui_msg(Msg("avg_backup_fs=Average backup rate for file systems: {1} MB/sec")(file_bps / (1024 * 1024)));
-	gui_msg(Msg("avg_backup_img=Average backup rate for imaged drives: {1} MB/sec")(img_bps / (1024 * 1024)));
+	if (file_bytes != 0)
+		gui_msg(Msg("avg_backup_fs=Average backup rate for file systems: {1} MB/sec")(file_bps / (1024 * 1024)));
+	if (img_bytes != 0)
+		gui_msg(Msg("avg_backup_img=Average backup rate for imaged drives: {1} MB/sec")(img_bps / (1024 * 1024)));
 
 	time(&total_stop);
 	int total_time = (int) difftime(total_stop, total_start);
@@ -832,12 +819,12 @@ int TWPartitionManager::Run_Backup(void) {
 	return true;
 }
 
-bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Name, int partition_count, const unsigned long long *total_restore_size, unsigned long long *already_restored_size) {
+bool TWPartitionManager::Restore_Partition(TWPartition* Part, const string& Restore_Name, ProgressTracking *progress) {
 	time_t Start, Stop;
 	TWFunc::SetPerformanceMode(true);
 	time(&Start);
-	//DataManager::ShowProgress(1.0 / (float)partition_count, 150);
-	if (!Part->Restore(Restore_Name, total_restore_size, already_restored_size)) {
+
+	if (!Part->Restore(Restore_Name, progress)) {
 		TWFunc::SetPerformanceMode(false);
 		return false;
 	}
@@ -846,7 +833,7 @@ bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Nam
 
 		for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
 			if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == Part->Mount_Point) {
-				if (!(*subpart)->Restore(Restore_Name, total_restore_size, already_restored_size)) {
+				if (!(*subpart)->Restore(Restore_Name, progress)) {
 					TWFunc::SetPerformanceMode(false);
 					return false;
 				}
@@ -859,7 +846,7 @@ bool TWPartitionManager::Restore_Partition(TWPartition* Part, string Restore_Nam
 	return true;
 }
 
-int TWPartitionManager::Run_Restore(string Restore_Name) {
+int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 	int check_md5, check, partition_count = 0;
 	TWPartition* restore_part = NULL;
 	time_t rStart, rStop;
@@ -925,6 +912,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 	gui_msg(Msg("restore_part_count=Restoring {1} partitions...")(partition_count));
 	gui_msg(Msg("total_restore_size=Total restore size is {1}MB")(total_restore_size / 1048576));
 	DataManager::SetProgress(0.0);
+	ProgressTracking progress(total_restore_size);
 
 	start_pos = 0;
 	if (!Restore_List.empty()) {
@@ -934,7 +922,7 @@ int TWPartitionManager::Run_Restore(string Restore_Name) {
 			restore_part = Find_Partition_By_Path(restore_path);
 			if (restore_part != NULL) {
 				partition_count++;
-				if (!Restore_Partition(restore_part, Restore_Name, partition_count, &total_restore_size, &already_restored_size))
+				if (!Restore_Partition(restore_part, Restore_Name, &progress))
 					return false;
 			} else {
 				gui_msg(Msg(msg::kError, "restore_unable_locate=Unable to locate '{1}' partition for restoring.")(restore_path));

@@ -48,9 +48,11 @@ public:
 	static bool Path_Exists(string Path);                                       // Returns true if the path exists
 	static int Get_File_Type(string fn); // Determines file type, 0 for unknown, 1 for gzip, 2 for OAES encrypted
 	static int Try_Decrypting_File(string fn, string password); // -1 for some error, 0 for failed to decrypt, 1 for decrypted, 3 for decrypted and found gzip format
-	static unsigned long Get_File_Size(string Path);                            // Returns the size of a file
+	static unsigned long Get_File_Size(const string& Path);                            // Returns the size of a file
 	static std::string Remove_Trailing_Slashes(const std::string& path, bool leaveLast = false); // Normalizes the path, e.g /data//media/ -> /data/media
 	static vector<string> split_string(const string &in, char del, bool skip_empty);
+	static timespec timespec_diff(timespec& start, timespec& end);	            // Return a diff for 2 times
+	static int32_t timespec_diff_ms(timespec& start, timespec& end);            // Returns diff in ms
 
 #ifndef BUILD_TWRPTAR_MAIN
 	static void install_htc_dumlock(void);                                      // Installs HTC Dumlock
@@ -66,8 +68,6 @@ public:
 	static int removeDir(const string path, bool removeParent); //recursively remove a directory
 	static int copy_file(string src, string dst, int mode); //copy file from src to dst with mode permissions
 	static unsigned int Get_D_Type_From_Stat(string Path);                      // Returns a dirent dt_type value using stat instead of dirent
-	static timespec timespec_diff(timespec& start, timespec& end);	            // Return a diff for 2 times
-	static int32_t timespec_diff_ms(timespec& start, timespec& end);            // Returns diff in ms
 	static int read_file(string fn, vector<string>& results); //read from file
 	static int read_file(string fn, string& results); //read from file
 	static int read_file(string fn, uint64_t& results); //read from file
