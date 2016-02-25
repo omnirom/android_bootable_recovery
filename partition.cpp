@@ -28,6 +28,7 @@
 #include <iostream>
 #include <sstream>
 #include <sys/param.h>
+#include <fcntl.h>
 
 #ifdef TW_INCLUDE_CRYPTO
 	#include "cutils/properties.h"
@@ -1439,7 +1440,7 @@ bool TWPartition::Backup(string backup_folder, const unsigned long long *overall
 		return Backup_Tar(backup_folder, overall_size, other_backups_size, tar_fork_pid);
 	}
 	else if (Backup_Method == DD)
-		return Backup_DD(backup_folder);
+		return Backup_DD(backup_folder, overall_size, other_backups_size);
 	else if (Backup_Method == FLASH_UTILS)
 		return Backup_Dump_Image(backup_folder);
 	LOGERR("Unknown backup method for '%s'\n", Mount_Point.c_str());
@@ -2020,40 +2021,78 @@ bool TWPartition::Backup_Tar(string backup_folder, const unsigned long long *ove
 	return true;
 }
 
-bool TWPartition::Backup_DD(string backup_folder) {
-	char back_name[255], block_size[32], dd_count[32];
-	string Full_FileName, Command, DD_BS, DD_COUNT;
-	int use_compression;
+bool TWPartition::Backup_DD(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size) {
+	string Full_FileName;
 	unsigned long long DD_Block_Size, DD_Count;
+	int src_fd = -1, dest_fd = -1, bs;
+	bool ret = false;
+	void* buffer = NULL;
+	unsigned long long backedup_size = 0;
+	double display_percent = 0, progress_percent = 0;
+	char size_progress[1024];
 
 	DD_Block_Size = 16 * 1024 * 1024;
 	while (Backup_Size % DD_Block_Size != 0) DD_Block_Size >>= 1;
 
 	DD_Count = Backup_Size / DD_Block_Size;
 
-	sprintf(dd_count, "%llu", DD_Count);
-	DD_COUNT = dd_count;
-
-	sprintf(block_size, "%llu", DD_Block_Size);
-	DD_BS = block_size;
-
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
 
-	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Current_File_System.c_str());
-	Backup_FileName = back_name;
+	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
 
 	Full_FileName = backup_folder + "/" + Backup_FileName;
 
-	Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'" + " bs=" + DD_BS + " count=" + DD_COUNT;
-	LOGINFO("Backup command: '%s'\n", Command.c_str());
-	TWFunc::Exec_Cmd(Command);
+	//Command = "dd if=" + Actual_Block_Device + " of='" + Full_FileName + "'" + " bs=" + DD_BS + " count=" + DD_COUNT;
+	src_fd = open(Actual_Block_Device.c_str(), O_RDONLY | O_LARGEFILE);
+	if (src_fd < 0) {
+		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Actual_Block_Device)(strerror(errno)));
+		return false;
+	}
+	dest_fd = open(Full_FileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE, S_IRUSR | S_IWUSR);
+	if (dest_fd < 0) {
+		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Full_FileName)(strerror(errno)));
+		goto exit;
+	}
+	bs = (int)(DD_Block_Size);
+	buffer = malloc((size_t)bs);
+	if (!buffer) {
+		LOGINFO("Backup_DD failed to malloc\n");
+		goto exit;
+	}
+	LOGINFO("Reading '%s', writing '%s', bs %llu, count %llu\n", Actual_Block_Device.c_str(), Full_FileName.c_str(), DD_Block_Size, DD_Count);
+	for (unsigned long long index = 0; index < DD_Count; index++) {
+		if (read(src_fd, buffer, bs) != bs) {
+			LOGINFO("Error reading source fd (%s)\n", strerror(errno));
+			goto exit;
+		}
+		if (write(dest_fd, buffer, bs) != bs) {
+			LOGINFO("Error writing destination fd (%s)\n", strerror(errno));
+			goto exit;
+		}
+		backedup_size += (unsigned long long)(bs);
+		display_percent = (double)(backedup_size) / (double)(Backup_Size) * 100;
+		sprintf(size_progress, "%lluMB of %lluMB, %i%%", backedup_size / 1048576, Backup_Size / 1048576, (int)(display_percent));
+		// Updating this value redraws text which takes quite a bit of CPU time so we should only do this a few times per second
+		DataManager::SetValue("tw_size_progress", size_progress);
+		progress_percent = (double)(backedup_size + *other_backups_size) / (double)(*overall_size);
+		DataManager::SetProgress((float)(progress_percent));
+	}
+	fsync(dest_fd);
 	tw_set_default_metadata(Full_FileName.c_str());
 	if (TWFunc::Get_File_Size(Full_FileName) == 0) {
 		gui_msg(Msg(msg::kError, "backup_size=Backup file size for '{1}' is 0 bytes.")(Full_FileName));
-		return false;
+	} else {
+		ret = true;
 	}
-	return true;
+exit:
+	if (src_fd >= 0)
+		close(src_fd);
+	if (dest_fd >= 0)
+		close(dest_fd);
+	if (buffer)
+		free(buffer);
+	return ret;
 }
 
 bool TWPartition::Backup_Dump_Image(string backup_folder) {

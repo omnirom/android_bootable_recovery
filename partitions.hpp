@@ -116,7 +116,7 @@ private:
 	bool Wipe_Data_Without_Wiping_Media();                                    // Uses rm -rf to wipe but does not wipe /data/media
 	bool Wipe_Data_Without_Wiping_Media_Func(const string& parent);           // Uses rm -rf to wipe but does not wipe /data/media
 	bool Backup_Tar(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &tar_fork_pid); // Backs up using tar for file systems
-	bool Backup_DD(string backup_folder);                                     // Backs up using dd for emmc memory types
+	bool Backup_DD(string backup_folder, const unsigned long long *overall_size, const unsigned long long *other_backups_size); // Backs up using dd for emmc memory types
 	bool Backup_Dump_Image(string backup_folder);                             // Backs up using dump_image for MTD memory types
 	string Get_Restore_File_System(string restore_folder);                    // Returns the file system that was in place at the time of the backup
 	bool Restore_Tar(string restore_folder, string Restore_File_System, const unsigned long long *total_restore_size, unsigned long long *already_restored_size); // Restore using tar for file systems
