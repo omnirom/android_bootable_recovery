@@ -1,0 +1,803 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_aa4b6464",
+        "filename": "adbbu/twadbstream.h",
+        "patchSetId": 51
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "Since this whole file is about ADB backup, you don\u0027t need to mention it in every single comment, that only adds noise.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8a50a80d",
+        "filename": "adbbu/twadbstream.h",
+        "patchSetId": 51
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "It would really be useful to order the control block names according to their occurrence in the actual backup stream.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ca2a3076",
+        "filename": "adbbu/twadbstream.h",
+        "patchSetId": 51
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "The name \"twcnt\" is not only quite cryptic; if this is actually the stream header block that contains the partition count and the stream version, and since we have up to 16 bytes, why not call it something like \"streamheader\"?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6a555cfb",
+        "filename": "adbbu/twadbstream.h",
+        "patchSetId": 51
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "Is this actually for TAR files, and \"twimg\" is for raw images? Then use descriptive names.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4a5aa02d",
+        "filename": "adbbu/twadbstream.h",
+        "patchSetId": 51
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "The difference between \"md5tr\" and \"twmd5\" is unclear. The comment doesn\u0027t help either.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2a3f54b1",
+        "filename": "adbbu/twadbstream.h",
+        "patchSetId": 51
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "Is this also a stream control block name?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0a3c98b8",
+        "filename": "adbbu/twadbstream.h",
+        "patchSetId": 51
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "Why hexadecimal?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ea2dec8f",
+        "filename": "adbbu/twadbstream.h",
+        "patchSetId": 51
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "If this comment is true, there is no stream header and trailer at all - either this comment is wrong or I totally misunderstood the purpose of the struct that I suggested to rename to AdbBackupStreamHeader. And wasn\u0027t there some \"ENDADB\" stuff too?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ea484c64",
+        "filename": "adbbu/twadbstream.h",
+        "patchSetId": 51
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "\"structure\" is actually a boolean condition. And as written, you can\u0027t assert more than one thing in the same containing block due to name collisions.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4a7180a1",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "bug: closing the same fd twice",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6a6c3ccf",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "count? of what?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2a6634ed",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "delete the TW_ADB_BACKUP fifo here?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8a89c87d",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "what do we actually need this for? I can\u0027t find any code that is reading from this fd. If TWRP is writing something to it, I guess we need to read it eventually to prevent the pipe buffer from becoming full.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0a6378dc",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "delete the TW_ADB_BACKUP fifo here?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4aace0ed",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "If this fails, we have already sent a command to TWRP - and this code doesn\u0027t clean up anything at all.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6aa79c0b",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "!breakloop is shorter and reads more naturally",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0aaed8e4",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "Is there any guarantee that we can really always read sizeof(cmd) bytes from the FIFO? \"man 2 read\" says:\n\n On success, the number of bytes read is returned (zero indicates end of file), and the file position is advanced by this\n       number.   It  is  not an error if this number is smaller than the number of bytes requested; this may happen for example\n       because fewer bytes are actually available right now (maybe because we were close to  end-of-file,  or  because  we  are\n       reading  from a pipe, or from a terminal), or because read() was interrupted by a signal.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0a95b888",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "Why do we need to compare substrings here? Does TWRP concatenate something to these names? And why are some conditions using sizeof(xxx)-1 and some not?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_eaba8c1c",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "Variable is not used anywhere between here and return",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4afe20ce",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "if we are overwriting the whole struct in the next line anyway, the memset is redundant.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0ae01825",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "maybe we can move all the fwrites to a central place after all the \"if\"s to make this huge function a bit shorter.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2ae3d435",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "\"compressed \u003d twfilehdr.compressed \u003d\u003d 1\" is enough.\nBut why do we need this flag at all? writedata is always set to true in line 204.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_eaeccc24",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "integer overflow if totalbytes \u003e 2 GB",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_cae91013",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "It should be possible to just set some flag here and reuse the loop in line 282, then add the padding code after that loop.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_eac3ac8c",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "totalbytes should not be reset only when there is padding, it should be reset when a file is starting.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6ad0bc53",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "Is this only for images?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4ad50042",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 256,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "debug output?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2acab4a5",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "we already set the whole struct to 0 in line 248",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0ac7f89c",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "It should be much easier to calculate the crc for the whole block instead of doing each member separately. It would also match what the comment in the header says.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8adb087a",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "why copy the data again here? just write from \"result\"...",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_aa9da4c0",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 617,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "nbytes is unused",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ca5c701e",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 618,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "result, operation and cmd are unused.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8aa2e8f9",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 629,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "unlink TW_ADB_BU_CONTROL too",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ea5f2c10",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 633,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "use std::string instead of sprintf to concatenate strings, this also fixes the buffer overflow.\n\nAlso as discussed on IRC, this doesn\u0027t work with Android 4.4 because its adbd backup_service.c passes a \"port number\" as the first argument, and I assume that is where the actual data must be sent to - currently I\u0027m always getting an empty backup file.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_aa7244a8",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "You don\u0027t need most of these #includes in the header file. Only direct dependencies used in the header file should be here, e.g. \u003cstring\u003e and \u003cfstream\u003e.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ca45904a",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "It\u0027s called \"destructor\", any the comment is redundant anyway.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_cab7d032",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "unused",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_aa848464",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "use descriptive names - \"write_fd\" in the context of twrpback is meaningless.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8a778899",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "This should not be a member variable - it\u0027s only used locally in the methods. Maybe other variables too.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_aad6c450",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "this is actually a very temporary data buffer, not a result. and it should be declared locally where needed, not here.",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ea4e0c3f",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 573,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "typo",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ca4b502d",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 730,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "don\u0027t mindlessly replace all the things - this is really \"twcmd\"",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_aa3124b7",
+        "filename": "partitions.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "Apparently I misunderstood the purpose of this struct due to its name, and now the comment says it\u0027s for the backup session - what is a backup session? one single partition? then why do we need two structs for the same purpose?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_cac0f082",
+        "filename": "partitions.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "should be a bool",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8a3668ac",
+        "filename": "partitions.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "Partitionmanager does not generate partitions...",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6a3b1c96",
+        "filename": "partitions.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "...and it\u0027s still unclear why we have a number of partitions in a struct called \"RestorePartitionSettings\".",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0a425813",
+        "filename": "twrpTar.hpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-02-25T00:00:10Z",
+      "side": 1,
+      "message": "if libtar is writing to this fd, then why is it called input_fd and why is it only opened for reading?",
+      "revId": "e9fad59acfe3f703df46db64a4ecfea86ebd77ef",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
