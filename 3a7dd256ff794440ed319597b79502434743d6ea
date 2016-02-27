@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_8c89e5f4",
+        "filename": "gui/theme/common/languages/nl.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 1001425
+      },
+      "writtenOn": "2016-02-27T15:29:32Z",
+      "side": 1,
+      "message": "Slepen om te wissen",
+      "revId": "3a7dd256ff794440ed319597b79502434743d6ea",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
