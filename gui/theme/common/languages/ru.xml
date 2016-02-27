@@ -52,7 +52,7 @@
 
 		<string name="install_btn">Установить</string>
 		<string name="wipe_btn">Очистка</string>
-		<string name="backup_btn">Резервное коп-ние</string>
+		<string name="backup_btn">Рез. копирование</string>
 		<string name="restore_btn">Восстановление</string>
 		<string name="mount_btn">Монтирование</string>
 		<string name="settings_btn">Настройки</string>
@@ -259,12 +259,12 @@
 		<string name="decrypt_data_btn">Расшифровать данные</string>
 		<string name="disable_mtp_btn">Выключить MTP</string>
 		<string name="enable_mtp_btn">Включить MTP</string>
-		<string name="mount_usb_storage_btn">Смонтировать как USB-накопит.</string>
+		<string name="mount_usb_storage_btn">Режим USB-накопителя</string>
 		<string name="usb_storage_hdr">USB накопитель</string>
-		<string name="usb_stor_mnt1">USB накопитель смонтирован</string>
-		<string name="usb_stor_mnt2">Для безопасного отключения вашего устройства</string>
-		<string name="usb_stor_mnt3">от компьютера, выполните размонтирование!</string>
-		<string name="unmount_btn">Размонтировать</string>
+		<string name="usb_stor_mnt1">Режим USB накопителя включен</string>
+		<string name="usb_stor_mnt2">Перед отключением вашего устройства от компьютера, </string>
+		<string name="usb_stor_mnt3">выполните размонтирование (безопасное извлечение)!</string>
+		<string name="unmount_btn">Выкл. USB-накопитель</string>
 		<string name="rb_system_btn">Система</string>
 		<string name="rb_poweroff_btn">Выключение</string>
 		<string name="rb_recovery_btn">Рекавери</string>
