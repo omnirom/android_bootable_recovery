@@ -329,9 +329,9 @@
 		<string name="utcp5">(UTC +5) Ташкент, Исламабад, Карачи</string>
 		<string name="utcp6">(UTC +6) Алматы, Астана, Дхака, Екатеринбург</string>
 		<string name="utcp7">(UTC +7) Омск, Новосибирск, Бангкок, Джакарта, Ханой</string>
-		<string name="utcp8">(UTC +8) Красноярск, Гонконг, Пекин, Улан-Батор</string>
-		<string name="utcp9">(UTC +9) Иркутск, Осака, Саппоро, Токио, Сеул</string>
-		<string name="utcp10">(UTC +10) Якутск, Гуам, Канберра, Мельбурн, Сидней</string>
+		<string name="utcp8">(UTC +8) Красноярск, Пекин, Улан-Батор, Иркутск</string>
+		<string name="utcp9">(UTC +9) Осака, Саппоро, Токио, Сеул, Якутск</string>
+		<string name="utcp10">(UTC +10) Гуам, Канберра, Мельбурн, Сидней</string>
 		<string name="utcp11">(UTC +11) Владивосток, Сахалин, Соломоновы о-ва</string>
 		<string name="utcp12">(UTC +12) Магадан, Камчатка, Фиджи, Маршаловы о-ва</string>
 		<string name="sel_tz_offset">Выбор смещения (как правило 0): %tw_time_zone_guioffset%</string>
