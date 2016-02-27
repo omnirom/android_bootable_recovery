@@ -33,6 +33,24 @@
       "revId": "3a7dd256ff794440ed319597b79502434743d6ea",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ec506960",
+        "filename": "gui/theme/common/languages/nl.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1000049
+      },
+      "writtenOn": "2016-02-27T19:43:11Z",
+      "side": 1,
+      "message": "Is Yes also translated? I mean if TWRP checks for Yes then it should not be translated to Ja.",
+      "parentUuid": "98faad2e_2c709103",
+      "revId": "3a7dd256ff794440ed319597b79502434743d6ea",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
