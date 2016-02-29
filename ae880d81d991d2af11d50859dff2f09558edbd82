@@ -1,0 +1,327 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_af50130d",
+        "filename": "adbbu/Android.mk",
+        "patchSetId": 53
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "Change the tab to spaces.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8f5557fe",
+        "filename": "adbbu/Android.mk",
+        "patchSetId": 53
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "This can be added under the if block above instead of performing the check twice. Also use spaces instead of tabs.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4f3f4fb0",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "We don\u0027t need the if statement. The while function will do all the things for us.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2f3c03b9",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "Maybe there should be a sleep and a retry count and an eventual error instead of a potential infinite loop?",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_cf723faa",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "we should probably close_backup_fds(); here",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_af77f398",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "Same as before, the if statement is unneeded. Also might want to consider a sleep and retry count to prevent infinite loop.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8f6c37d0",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 352,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "Forgot to close(write_fd); or maybe just call close_restore_fds();",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6f71eba1",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 634,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "Should also probably unlink(TW_ADB_BU_CONTROL);",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4f662fee",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 917,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "This should be a gui_msg and have translation. There\u0027s probably already a gui_msg for this item.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ef5cdb1d",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 2021,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "ret isn\u0027t being used anywhere that I can tell.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0f6027cc",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 2023,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "This variable is only being used in the memset below. I think both can be eliminated.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_cf9d9fc0",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 2082,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "Looks like this is unused again except for the memset.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_afa253f9",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 2471,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "A sleep and a retry count to prevent an infinite loop might be a good idea.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6fac4bee",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 679,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "cmd appears to be unused except for the memset",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4fb18f40",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 682,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "Should you be memsetting twhdr instead?",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2fae43e5",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 709,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "Most of this block of code is double tabbed.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0fbb8722",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 721,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "We already memset the whole thing above, wiping twice is probably a bit much.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_efb73b32",
+        "filename": "partitions.hpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "Got some minor white space issues in the comments here on the right",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_cf847f66",
+        "filename": "twrpTar.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 749,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-02-29T15:47:31Z",
+      "side": 1,
+      "message": "A sleep and retry count would probably be good.",
+      "revId": "ae880d81d991d2af11d50859dff2f09558edbd82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
