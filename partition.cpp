@@ -507,7 +507,13 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			ptr += 7;
 			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y')
 				Can_Be_Backed_Up = true;
-			else
+			else if (strncmp(ptr, "dd", 2) == 0) {
+				Can_Be_Backed_Up = true;
+				Backup_Method = DD;
+			} else if (strncmp(ptr, "flash_utils", 11) == 0) {
+				Can_Be_Backed_Up = true;
+				Backup_Method = FLASH_UTILS;
+			} else
 				Can_Be_Backed_Up = false;
 		} else if (strcmp(ptr, "wipeingui") == 0) {
 			Can_Be_Wiped = true;
@@ -670,18 +676,21 @@ void TWPartition::Setup_File_System(bool Display_Error) {
 	Make_Dir(Mount_Point, Display_Error);
 	Display_Name = Mount_Point.substr(1, Mount_Point.size() - 1);
 	Backup_Name = Display_Name;
-	Backup_Method = FILES;
+	if (Backup_Method == NONE)
+		Backup_Method = FILES;
 }
 
 void TWPartition::Setup_Image(bool Display_Error) {
 	Display_Name = Mount_Point.substr(1, Mount_Point.size() - 1);
 	Backup_Name = Display_Name;
-	if (Current_File_System == "emmc")
-		Backup_Method = DD;
-	else if (Current_File_System == "mtd" || Current_File_System == "bml")
-		Backup_Method = FLASH_UTILS;
-	else
-		LOGINFO("Unhandled file system '%s' on image '%s'\n", Current_File_System.c_str(), Display_Name.c_str());
+	if (Backup_Method == NONE) {
+		if (Current_File_System == "emmc")
+			Backup_Method = DD;
+		else if (Current_File_System == "mtd" || Current_File_System == "bml")
+			Backup_Method = FLASH_UTILS;
+		else
+			LOGINFO("Unhandled file system '%s' on image '%s'\n", Current_File_System.c_str(), Display_Name.c_str());
+	}
 	if (Find_Partition_Size()) {
 		Used = Size;
 		Backup_Size = Size;
@@ -2026,6 +2035,9 @@ bool TWPartition::Backup_DD(string backup_folder) {
 	int use_compression;
 	unsigned long long DD_Block_Size, DD_Count;
 
+	if (!UnMount(true))
+		return false;
+
 	DD_Block_Size = 16 * 1024 * 1024;
 	while (Backup_Size % DD_Block_Size != 0) DD_Block_Size >>= 1;
 
@@ -2060,6 +2072,9 @@ bool TWPartition::Backup_Dump_Image(string backup_folder) {
 	char back_name[255];
 	string Full_FileName, Command;
 	int use_compression;
+
+	if (!UnMount(true))
+		return false;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
@@ -2181,6 +2196,9 @@ bool TWPartition::Restore_Image(string restore_folder, const unsigned long long 
 	string Full_FileName;
 	double display_percent, progress_percent;
 	char size_progress[1024];
+
+	if (!UnMount(true))
+		return false;
 
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restoring_hdr}"));
 	gui_msg(Msg("restoring=Restoring {1}...")(Backup_Display_Name));
