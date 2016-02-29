@@ -163,6 +163,8 @@ private:
 	string Backup_Display_Name;                                               // Name displayed in the partition list for backup selection
 	string Storage_Name;                                                      // Name displayed in the partition list for storage selection
 	string Backup_FileName;                                                   // Actual backup filename
+	string Backup_Type;                                                       // Extension used for backup filename (ex. emmc, mtd, bml)
+	bool Force_Backup_Type;                                                   // Indicates if backup type should not be changed after being set
 	Backup_Method_enum Backup_Method;                                         // Method used for backup
 	bool Can_Encrypt_Backup;                                                  // Indicates if this item can be encrypted during backup
 	bool Use_Userdata_Encryption;                                             // Indicates if we will use userdata encryption splitting on an encrypted backup
