@@ -36,6 +36,7 @@
 #include "ui.h"
 #include "cutils/properties.h"
 #include "android-base/strings.h"
+#include "android-base/stringprintf.h"
 
 static int char_width;
 static int char_height;
@@ -650,6 +651,38 @@ void WearRecoveryUI::ClearText() {
     text_top = 1;
     for (size_t i = 0; i < text_rows; ++i) {
         memset(text[i], 0, text_cols + 1);
+    }
+    pthread_mutex_unlock(&updateMutex);
+}
+
+void WearRecoveryUI::PrintOnScreenOnly(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    PrintV(fmt, false, ap);
+    va_end(ap);
+}
+
+void WearRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) {
+    std::string str;
+    android::base::StringAppendV(&str, fmt, ap);
+
+    if (copy_to_stdout) {
+        fputs(str.c_str(), stdout);
+    }
+
+    pthread_mutex_lock(&updateMutex);
+    if (text_rows > 0 && text_cols > 0) {
+        for (const char* ptr = str.c_str(); *ptr != '\0'; ++ptr) {
+            if (*ptr == '\n' || text_col >= text_cols) {
+                text[text_row][text_col] = '\0';
+                text_col = 0;
+                text_row = (text_row + 1) % text_rows;
+                if (text_row == text_top) text_top = (text_top + 1) % text_rows;
+            }
+            if (*ptr != '\n') text[text_row][text_col++] = *ptr;
+        }
+        text[text_row][text_col] = '\0';
+        update_screen_locked();
     }
     pthread_mutex_unlock(&updateMutex);
 }

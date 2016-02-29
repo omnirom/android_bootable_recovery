@@ -47,6 +47,7 @@ class WearRecoveryUI : public RecoveryUI {
 
     // printing messages
     void Print(const char* fmt, ...);
+    void PrintOnScreenOnly(const char* fmt, ...) __printflike(2, 3);
     void ShowFile(const char* filename);
     void ShowFile(FILE* fp);
 
@@ -133,6 +134,7 @@ class WearRecoveryUI : public RecoveryUI {
     void ClearText();
     void DrawTextLine(int x, int* y, const char* line, bool bold);
     void DrawTextLines(int x, int* y, const char* const* lines);
+    void PrintV(const char*, bool, va_list);
 };
 
 #endif  // RECOVERY_WEAR_UI_H
