@@ -1039,7 +1039,8 @@ void TWPartitionManager::Set_Restore_Files(string Restore_Name) {
 			Part->Backup_FileName.resize(Part->Backup_FileName.size() - strlen(extn) + 3);
 		}
 
-		Restore_List += Part->Backup_Path + ";";
+		if (!Part->Is_SubPartition)
+			Restore_List += Part->Backup_Path + ";";
 	}
 	closedir(d);
 
