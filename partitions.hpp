@@ -98,6 +98,7 @@ private:
 	bool Process_FS_Flags(string& Options, int& Flags);                       // Process standard fstab fs flags
 	bool Is_File_System(string File_System);                                  // Checks to see if the file system given is considered a file system
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
+	void Setup_Backup(bool Display_Error);                                    // Sets up backup settings for a partition
 	void Setup_File_System(bool Display_Error);                               // Sets defaults for a file system partition
 	void Setup_Image(bool Display_Error);                                     // Sets defaults for an image partition
 	void Setup_AndSec(void);                                                  // Sets up .android_secure settings
@@ -163,6 +164,8 @@ private:
 	string Backup_Display_Name;                                               // Name displayed in the partition list for backup selection
 	string Storage_Name;                                                      // Name displayed in the partition list for storage selection
 	string Backup_FileName;                                                   // Actual backup filename
+	string Backup_File_System;                                                // File system used for backup of partition (ex. emmc, mtd, ext4)
+	bool Force_Backup_File_System;                                            // Indicates if backup file system should stay constant (as set using backup= in recovery fstab)
 	Backup_Method_enum Backup_Method;                                         // Method used for backup
 	bool Can_Encrypt_Backup;                                                  // Indicates if this item can be encrypted during backup
 	bool Use_Userdata_Encryption;                                             // Indicates if we will use userdata encryption splitting on an encrypted backup

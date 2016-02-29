@@ -142,6 +142,8 @@ TWPartition::TWPartition() {
 	Storage_Name = "";
 	Backup_Name = "";
 	Backup_FileName = "";
+	Backup_File_System = "";
+	Force_Backup_File_System = false;
 	MTD_Name = "";
 	Backup_Method = NONE;
 	Can_Encrypt_Backup = false;
@@ -505,9 +507,13 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			Use_Rm_Rf = true;
 		} else if (ptr_len > 7 && strncmp(ptr, "backup=", 7) == 0) {
 			ptr += 7;
-			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y')
+			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y' || strcmp(ptr, "auto") == 0)
 				Can_Be_Backed_Up = true;
-			else
+			else if (Is_Image(ptr) || Is_File_System(ptr)) {
+				Backup_File_System = ptr;
+				Force_Backup_File_System = true;
+				Can_Be_Backed_Up = true;
+			} else
 				Can_Be_Backed_Up = false;
 		} else if (strcmp(ptr, "wipeingui") == 0) {
 			Can_Be_Wiped = true;
@@ -660,6 +666,39 @@ bool TWPartition::Make_Dir(string Path, bool Display_Error) {
 	return true;
 }
 
+void TWPartition::Setup_Backup(bool Display_Error) {
+	Backup_Name = Display_Name;
+
+	if (!Force_Backup_File_System)
+		Backup_File_System = Current_File_System;
+
+	if (Backup_File_System == "emmc")
+		Backup_Method = DD;
+	else if (Backup_File_System == "mtd" || Backup_File_System == "bml")
+		Backup_Method = FLASH_UTILS;
+	else if (Is_File_System(Backup_File_System))
+		Backup_Method = FILES;
+	else {
+		if (Display_Error)
+			LOGERR("Unhandled backup file system '%s' on image '%s'\n", Backup_File_System.c_str(), Backup_Name.c_str());
+		else
+			LOGINFO("Unhandled backup file system '%s' on image '%s'\n", Backup_File_System.c_str(), Backup_Name.c_str());
+	}
+
+	if (Is_Image(Backup_File_System)) {
+		if (Find_Partition_Size()) {
+			if (Is_Image(Current_File_System))
+				Used = Size;
+			Backup_Size = Size;
+		} else {
+			if (Display_Error)
+				LOGERR("Unable to find partition size for '%s'\n", Mount_Point.c_str());
+			else
+				LOGINFO("Unable to find partition size for '%s'\n", Mount_Point.c_str());
+		}
+	}
+}
+
 void TWPartition::Setup_File_System(bool Display_Error) {
 	struct statfs st;
 
@@ -669,28 +708,12 @@ void TWPartition::Setup_File_System(bool Display_Error) {
 	// Make the mount point folder if it doesn't exist
 	Make_Dir(Mount_Point, Display_Error);
 	Display_Name = Mount_Point.substr(1, Mount_Point.size() - 1);
-	Backup_Name = Display_Name;
-	Backup_Method = FILES;
+	Setup_Backup(Display_Error);
 }
 
 void TWPartition::Setup_Image(bool Display_Error) {
 	Display_Name = Mount_Point.substr(1, Mount_Point.size() - 1);
-	Backup_Name = Display_Name;
-	if (Current_File_System == "emmc")
-		Backup_Method = DD;
-	else if (Current_File_System == "mtd" || Current_File_System == "bml")
-		Backup_Method = FLASH_UTILS;
-	else
-		LOGINFO("Unhandled file system '%s' on image '%s'\n", Current_File_System.c_str(), Display_Name.c_str());
-	if (Find_Partition_Size()) {
-		Used = Size;
-		Backup_Size = Size;
-	} else {
-		if (Display_Error)
-			LOGERR("Unable to find partition size for '%s'\n", Mount_Point.c_str());
-		else
-			LOGINFO("Unable to find partition size for '%s'\n", Mount_Point.c_str());
-	}
+	Setup_Backup(Display_Error);
 }
 
 void TWPartition::Setup_AndSec(void) {
@@ -841,7 +864,8 @@ bool TWPartition::Get_Size_Via_statfs(bool Display_Error) {
 	Size = (st.f_blocks * st.f_bsize);
 	Used = ((st.f_blocks - st.f_bfree) * st.f_bsize);
 	Free = (st.f_bfree * st.f_bsize);
-	Backup_Size = Used;
+	if (!Is_Image(Backup_File_System))
+		Backup_Size = Used;
 	return true;
 }
 
@@ -890,7 +914,8 @@ bool TWPartition::Get_Size_Via_df(bool Display_Error) {
 		Size = blocks * 1024ULL;
 		Used = used * 1024ULL;
 		Free = available * 1024ULL;
-		Backup_Size = Used;
+		if (!Is_Image(Backup_File_System))
+			Backup_Size = Used;
 	}
 	fclose(fp);
 	return true;
@@ -2005,7 +2030,7 @@ bool TWPartition::Backup_Tar(string backup_folder, const unsigned long long *ove
 	}
 #endif
 
-	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Current_File_System.c_str());
+	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Backup_File_System.c_str());
 	Backup_FileName = back_name;
 	Full_FileName = backup_folder + "/" + Backup_FileName;
 	tar.has_data_media = Has_Data_Media;
@@ -2026,6 +2051,9 @@ bool TWPartition::Backup_DD(string backup_folder) {
 	int use_compression;
 	unsigned long long DD_Block_Size, DD_Count;
 
+	if (!UnMount(true))
+		return false;
+
 	DD_Block_Size = 16 * 1024 * 1024;
 	while (Backup_Size % DD_Block_Size != 0) DD_Block_Size >>= 1;
 
@@ -2040,7 +2068,7 @@ bool TWPartition::Backup_DD(string backup_folder) {
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
 
-	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Current_File_System.c_str());
+	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Backup_File_System.c_str());
 	Backup_FileName = back_name;
 
 	Full_FileName = backup_folder + "/" + Backup_FileName;
@@ -2061,10 +2089,13 @@ bool TWPartition::Backup_Dump_Image(string backup_folder) {
 	string Full_FileName, Command;
 	int use_compression;
 
+	if (!UnMount(true))
+		return false;
+
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
 
-	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Current_File_System.c_str());
+	sprintf(back_name, "%s.%s.win", Backup_Name.c_str(), Backup_File_System.c_str());
 	Backup_FileName = back_name;
 
 	Full_FileName = backup_folder + "/" + Backup_FileName;
@@ -2181,6 +2212,9 @@ bool TWPartition::Restore_Image(string restore_folder, const unsigned long long 
 	string Full_FileName;
 	double display_percent, progress_percent;
 	char size_progress[1024];
+
+	if (!UnMount(true))
+		return false;
 
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restoring_hdr}"));
 	gui_msg(Msg("restoring=Restoring {1}...")(Backup_Display_Name));

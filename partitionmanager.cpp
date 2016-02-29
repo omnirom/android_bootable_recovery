@@ -243,6 +243,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Use_Rm_Rf ");
 	if (Part->Can_Be_Backed_Up)
 		printf("Can_Be_Backed_Up ");
+	if (Part->Force_Backup_File_System)
+		printf("Force_Backup_File_System ");
 	if (Part->Wipe_During_Factory_Reset)
 		printf("Wipe_During_Factory_Reset ");
 	if (Part->Wipe_Available_in_GUI)
@@ -318,6 +320,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("   Current_File_System: %s\n", Part->Current_File_System.c_str());
 	if (!Part->Fstab_File_System.empty())
 		printf("   Fstab_File_System: %s\n", Part->Fstab_File_System.c_str());
+	if (!Part->Backup_File_System.empty())
+		printf("   Backup_File_System: %s\n", Part->Backup_File_System.c_str());
 	if (Part->Format_Block_Size != 0)
 		printf("   Format_Block_Size: %lu\n", Part->Format_Block_Size);
 	if (!Part->MTD_Name.empty())
