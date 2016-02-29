@@ -51,8 +51,11 @@ public:
 
 public:
 	bool Is_Mounted();                                                        // Checks mount to see if the partition is currently mounted
+	bool Is_File_System_Writable();                                           // Checks if the root directory of the file system can be written to
 	bool Mount(bool Display_Error);                                           // Mounts the partition if it is not mounted
 	bool UnMount(bool Display_Error);                                         // Unmounts the partition if it is mounted
+	bool ReMount(bool Display_Error);                                         // Remounts the partition
+	bool ReMount_RW(bool Display_Error);                                      // Remounts the partition with read/write access
 	bool Wipe(string New_File_System);                                        // Wipes the partition
 	bool Wipe();                                                              // Wipes the partition
 	bool Wipe_AndSec();                                                       // Wipes android secure

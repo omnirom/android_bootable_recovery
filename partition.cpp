@@ -984,6 +984,14 @@ bool TWPartition::Is_Mounted(void) {
 	return ret;
 }
 
+bool TWPartition::Is_File_System_Writable(void) {
+	if (!Is_File_System(Current_File_System) || !Is_Mounted())
+		return false;
+
+	string test_path = Mount_Point + "/.";
+	return (access(test_path.c_str(), W_OK) == 0);
+}
+
 bool TWPartition::Mount(bool Display_Error) {
 	int exfat_mounted = 0;
 	unsigned long flags = Mount_Flags;
@@ -1150,6 +1158,31 @@ bool TWPartition::UnMount(bool Display_Error) {
 	} else {
 		return true;
 	}
+}
+
+bool TWPartition::ReMount(bool Display_Error) {
+	if (UnMount(Display_Error))
+		return Mount(Display_Error);
+	return false;
+}
+
+bool TWPartition::ReMount_RW(bool Display_Error) {
+	// No need to remount if already mounted rw
+	if (Is_File_System_Writable())
+		return true;
+
+	bool ro = Mount_Read_Only;
+	int flags = Mount_Flags;
+
+	Mount_Read_Only = false;
+	Mount_Flags &= ~MS_RDONLY;
+
+	bool ret = ReMount(Display_Error);
+
+	Mount_Read_Only = ro;
+	Mount_Flags = flags;
+
+	return ret;
 }
 
 bool TWPartition::Wipe(string New_File_System) {
@@ -2141,7 +2174,8 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System,
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restoring_hdr}"));
 	gui_msg(Msg("restoring=Restoring {1}...")(Backup_Display_Name));
 
-	if (!Mount(true))
+	// Remount as read/write as needed so we can restore the backup
+	if (!ReMount_RW(true))
 		return false;
 
 	Full_FileName = restore_folder + "/" + Backup_FileName;
@@ -2178,6 +2212,10 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System,
 		}
 	}
 #endif
+	if (Mount_Read_Only || Mount_Flags & MS_RDONLY)
+		// Remount as read only when restoration is complete
+		ReMount(true);
+
 	return ret;
 }
 
