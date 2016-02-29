@@ -122,6 +122,8 @@ tar_close(TAR *t)
 		libtar_hash_free(t->h, ((t->oflags & O_ACCMODE) == O_RDONLY
 					? free
 					: (libtar_freefunc_t)tar_dev_free));
+	if (t->th_pathname != NULL)
+		free(t->th_pathname);
 	free(t);
 
 	return i;

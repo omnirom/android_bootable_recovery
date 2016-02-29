@@ -27,12 +27,15 @@
 void
 th_finish(TAR *t)
 {
-	int i, sum = 0;
-
 	if (t->options & TAR_GNU)
 	{
-		memcpy(t->th_buf.magic, "ustar ", 6);
-		memcpy(t->th_buf.version, " \0", 2);
+		/* we're aiming for this result, but must do it in
+		 * two calls to avoid FORTIFY segfaults on some Linux
+		 * systems:
+		 *      strncpy(t->th_buf.magic, "ustar  ", 8);
+		 */
+		strncpy(t->th_buf.magic, "ustar ", 6);
+		strncpy(t->th_buf.version, " ", 2);
 	}
 	else
 	{
@@ -40,11 +43,7 @@ th_finish(TAR *t)
 		strncpy(t->th_buf.magic, TMAGIC, TMAGLEN);
 	}
 
-	for (i = 0; i < T_BLOCKSIZE; i++)
-		sum += ((char *)(&(t->th_buf)))[i];
-	for (i = 0; i < 8; i++)
-		sum += (' ' - t->th_buf.chksum[i]);
-	int_to_oct(sum, t->th_buf.chksum, 8);
+	int_to_oct(th_crc_calc(t), t->th_buf.chksum, 8);
 }
 
 
@@ -211,7 +210,7 @@ th_set_group(TAR *t, gid_t gid)
 
 /* encode file mode */
 void
-th_set_mode(TAR *t, unsigned int fmode)
+th_set_mode(TAR *t, mode_t fmode)
 {
 	if (S_ISSOCK(fmode))
 	{

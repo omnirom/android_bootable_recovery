@@ -213,13 +213,7 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 
 	/* print file info */
 	if (t->options & TAR_VERBOSE)
-	{
-		//th_print_long_ls(t);
-		char *f = th_get_pathname(t);
-		printf("%s\n", f);
-		free(f);
-	}
-
+		printf("%s\n", th_get_pathname(t));
 
 #ifdef DEBUG
 	puts("    tar_append_file(): writing header");
@@ -275,8 +269,13 @@ tar_append_regfile(TAR *t, const char *realname)
 	int filefd;
 	int64_t i, size;
 	ssize_t j;
+	int rv = -1;
 
+#if defined(O_BINARY)
+	filefd = open(realname, O_RDONLY|O_BINARY);
+#else
 	filefd = open(realname, O_RDONLY);
+#endif
 	if (filefd == -1)
 	{
 #ifdef DEBUG
@@ -293,30 +292,34 @@ tar_append_regfile(TAR *t, const char *realname)
 		{
 			if (j != -1)
 				errno = EINVAL;
-			return -1;
+			goto fail;
 		}
 		if (tar_block_write(t, &block) == -1)
-			return -1;
+			goto fail;
 	}
 
 	if (i > 0)
 	{
 		j = read(filefd, &block, i);
 		if (j == -1)
-			return -1;
+			goto fail;
 		memset(&(block[i]), 0, T_BLOCKSIZE - i);
 		if (tar_block_write(t, &block) == -1)
-			return -1;
+			goto fail;
 	}
 
+	/* success! */
+	rv = 0;
+fail:
 	close(filefd);
 
-	return 0;
+	return rv;
 }
+
 
 /* add file contents to a tarchive */
 int
-tar_append_file_contents(TAR *t, const char *savename, unsigned int mode,
+tar_append_file_contents(TAR *t, const char *savename, mode_t mode,
                          uid_t uid, gid_t gid, void *buf, size_t len)
 {
 	struct stat st;
@@ -349,9 +352,8 @@ tar_append_buffer(TAR *t, void *buf, size_t len)
 	char block[T_BLOCKSIZE];
 	int filefd;
 	int i, j;
-	size_t size;
+	size_t size = len;
 
-	size = len;
 	for (i = size; i > T_BLOCKSIZE; i -= T_BLOCKSIZE)
 	{
 		if (tar_block_write(t, buf) == -1)

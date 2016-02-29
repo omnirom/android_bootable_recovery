@@ -5,12 +5,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifdef STDC_HEADERS
-# include <stdarg.h>
-# include <stddef.h>
-#else
-# include <varargs.h>
-#endif
+#include <stdarg.h>
+#include <stddef.h>
 
 #ifdef HAVE_LIBGEN_H
 # include <libgen.h>

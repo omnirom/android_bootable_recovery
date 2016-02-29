@@ -28,6 +28,17 @@
 #define SELINUX_TAG_LEN 21
 
 /* read a header block */
+/* FIXME: the return value of this function should match the return value
+	  of tar_block_read(), which is a macro which references a prototype
+	  that returns a ssize_t.  So far, this is safe, since tar_block_read()
+	  only ever reads 512 (T_BLOCKSIZE) bytes at a time, so any difference
+	  in size of ssize_t and int is of negligible risk.  BUT, if
+	  T_BLOCKSIZE ever changes, or ever becomes a variable parameter
+	  controllable by the user, all the code that calls it,
+	  including this function and all code that calls it, should be
+	  fixed for security reasons.
+	  Thanks to Chris Palmer for the critique.
+*/
 int
 th_read_internal(TAR *t)
 {
@@ -94,8 +105,8 @@ th_read_internal(TAR *t)
 int
 th_read(TAR *t)
 {
-	int i, j;
-	size_t sz;
+	int i;
+	size_t sz, j, blocks;
 	char *ptr;
 
 #ifdef DEBUG
@@ -127,21 +138,26 @@ th_read(TAR *t)
 	if (TH_ISLONGLINK(t))
 	{
 		sz = th_get_size(t);
-		j = (sz / T_BLOCKSIZE) + (sz % T_BLOCKSIZE ? 1 : 0);
+		blocks = (sz / T_BLOCKSIZE) + (sz % T_BLOCKSIZE ? 1 : 0);
+		if (blocks > ((size_t)-1 / T_BLOCKSIZE))
+		{
+			errno = E2BIG;
+			return -1;
+		}
 #ifdef DEBUG
 		printf("    th_read(): GNU long linkname detected "
-		       "(%ld bytes, %d blocks)\n", sz, j);
+		       "(%ld bytes, %d blocks)\n", sz, blocks);
 #endif
-		t->th_buf.gnu_longlink = (char *)malloc(j * T_BLOCKSIZE);
+		t->th_buf.gnu_longlink = (char *)malloc(blocks * T_BLOCKSIZE);
 		if (t->th_buf.gnu_longlink == NULL)
 			return -1;
 
-		for (ptr = t->th_buf.gnu_longlink; j > 0;
-		     j--, ptr += T_BLOCKSIZE)
+		for (j = 0, ptr = t->th_buf.gnu_longlink; j < blocks;
+		     j++, ptr += T_BLOCKSIZE)
 		{
 #ifdef DEBUG
 			printf("    th_read(): reading long linkname "
-			       "(%d blocks left, ptr == %ld)\n", j, ptr);
+			       "(%d blocks left, ptr == %ld)\n", blocks-j, ptr);
 #endif
 			i = tar_block_read(t, ptr);
 			if (i != T_BLOCKSIZE)
@@ -172,21 +188,26 @@ th_read(TAR *t)
 	if (TH_ISLONGNAME(t))
 	{
 		sz = th_get_size(t);
-		j = (sz / T_BLOCKSIZE) + (sz % T_BLOCKSIZE ? 1 : 0);
+		blocks = (sz / T_BLOCKSIZE) + (sz % T_BLOCKSIZE ? 1 : 0);
+		if (blocks > ((size_t)-1 / T_BLOCKSIZE))
+		{
+			errno = E2BIG;
+			return -1;
+		}
 #ifdef DEBUG
 		printf("    th_read(): GNU long filename detected "
-		       "(%ld bytes, %d blocks)\n", sz, j);
+		       "(%ld bytes, %d blocks)\n", sz, blocks);
 #endif
-		t->th_buf.gnu_longname = (char *)malloc(j * T_BLOCKSIZE);
+		t->th_buf.gnu_longname = (char *)malloc(blocks * T_BLOCKSIZE);
 		if (t->th_buf.gnu_longname == NULL)
 			return -1;
 
-		for (ptr = t->th_buf.gnu_longname; j > 0;
-		     j--, ptr += T_BLOCKSIZE)
+		for (j = 0, ptr = t->th_buf.gnu_longname; j < blocks;
+		     j++, ptr += T_BLOCKSIZE)
 		{
 #ifdef DEBUG
 			printf("    th_read(): reading long filename "
-			       "(%d blocks left, ptr == %ld)\n", j, ptr);
+			       "(%d blocks left, ptr == %ld)\n", blocks-j, ptr);
 #endif
 			i = tar_block_read(t, ptr);
 			if (i != T_BLOCKSIZE)

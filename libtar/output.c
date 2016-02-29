@@ -72,7 +72,6 @@ th_print_long_ls(TAR *t)
 	char groupname[_POSIX_LOGIN_NAME_MAX];
 	time_t mtime;
 	struct tm *mtm;
-	char *pathname;
 
 #ifdef HAVE_STRFTIME
 	char timebuf[18];
@@ -116,9 +115,7 @@ th_print_long_ls(TAR *t)
 	       mtm->tm_mday, mtm->tm_hour, mtm->tm_min, mtm->tm_year + 1900);
 #endif
 
-	pathname = th_get_pathname(t);
-	printf(" %s", pathname);
-	free(pathname);
+	printf(" %s", th_get_pathname(t));
 
 	if (TH_ISSYM(t) || TH_ISLNK(t))
 	{

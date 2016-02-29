@@ -13,6 +13,7 @@
 #include <internal.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -21,7 +22,6 @@
 
 #ifdef STDC_HEADERS
 # include <stdlib.h>
-# include <string.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -36,18 +36,10 @@
 #include <linux/fs.h>
 #endif
 
-struct linkname
-{
-	char ln_save[MAXPATHLEN];
-	char ln_real[MAXPATHLEN];
-};
-typedef struct linkname linkname_t;
-
-
 static int
 tar_set_file_perms(TAR *t, const char *realname)
 {
-	unsigned int mode;
+	mode_t mode;
 	uid_t uid;
 	gid_t gid;
 	struct utimbuf ut;
@@ -82,7 +74,6 @@ tar_set_file_perms(TAR *t, const char *realname)
 				filename, uid, gid, strerror(errno));
 # endif
 #endif /* HAVE_LCHOWN */
-			free (pn);
 			return -1;
 		}
 
@@ -92,7 +83,6 @@ tar_set_file_perms(TAR *t, const char *realname)
 #ifdef DEBUG
 		perror("utime()");
 #endif
-		free (pn);
 		return -1;
 	}
 
@@ -102,7 +92,6 @@ tar_set_file_perms(TAR *t, const char *realname)
 #ifdef DEBUG
 		perror("chmod()");
 #endif
-		free (pn);
 		return -1;
 	}
 
@@ -122,7 +111,6 @@ tar_set_file_perms(TAR *t, const char *realname)
 	}
 #endif
 
-	free (pn);
 	return 0;
 }
 
@@ -132,8 +120,10 @@ int
 tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *progress_fd)
 {
 	int i;
-	linkname_t *lnp;
-	char *pathname;
+	char *lnp;
+	char *pn;
+	int pathname_len;
+	int realname_len;
 
 	if (t->options & TAR_NOOVERWRITE)
 	{
@@ -176,24 +166,25 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 	if((t->options & TAR_STORE_SELINUX) && t->th_buf.selinux_context != NULL)
 	{
 #ifdef DEBUG
-		printf("    Restoring SELinux context %s to file %s\n", t->th_buf.selinux_context, realname);
+		printf("tar_extract_file(): restoring SELinux context %s to file %s\n", t->th_buf.selinux_context, realname);
 #endif
-		if(lsetfilecon(realname, t->th_buf.selinux_context) < 0)
-			fprintf(stderr, "Failed to restore SELinux context %s!\n", strerror(errno));
+		if (lsetfilecon(realname, t->th_buf.selinux_context) < 0)
+			fprintf(stderr, "tar_extract_file(): failed to restore SELinux context %s!\n", strerror(errno));
 	}
 #endif
 
-	lnp = (linkname_t *)calloc(1, sizeof(linkname_t));
+	pn = th_get_pathname(t);
+	pathname_len = strlen(pn) + 1;
+	realname_len = strlen(realname) + 1;
+	lnp = (char *)calloc(1, pathname_len + realname_len);
 	if (lnp == NULL)
 		return -1;
-	pathname = th_get_pathname(t);
-	strlcpy(lnp->ln_save, pathname, sizeof(lnp->ln_save));
-	strlcpy(lnp->ln_real, realname, sizeof(lnp->ln_real));
+	strcpy(&lnp[0], pn);
+	strcpy(&lnp[pathname_len], realname);
 #ifdef DEBUG
 	printf("tar_extract_file(): calling libtar_hash_add(): key=\"%s\", "
-	       "value=\"%s\"\n", pathname, realname);
+	       "value=\"%s\"\n", pn, realname);
 #endif
-	free(pathname);
 	if (libtar_hash_add(t->h, lnp) != 0)
 		return -1;
 
@@ -213,8 +204,7 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 	char *pn;
 
 #ifdef DEBUG
-	printf("==> tar_extract_regfile(t=0x%lx, realname=\"%s\")\n", t,
-	       realname);
+	printf("==> tar_extract_regfile(realname=\"%s\")\n", realname);
 #endif
 
 	if (!TH_ISREG(t))
@@ -228,13 +218,10 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 	size = th_get_size(t);
 
 	if (mkdirhier(dirname(filename)) == -1)
-	{
-		free (pn);
 		return -1;
-	}
 
 #ifdef DEBUG
-	printf("  ==> extracting: %s (file size %d bytes)\n",
+	printf("  ==> extracting: %s (file size %lld bytes)\n",
 			filename, size);
 #endif
 	fdout = open(filename, O_WRONLY | O_CREAT | O_TRUNC
@@ -247,7 +234,6 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 #ifdef DEBUG
 		perror("open()");
 #endif
-		free (pn);
 		return -1;
 	}
 
@@ -259,7 +245,7 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 		{
 			if (k != -1)
 				errno = EINVAL;
-			free (pn);
+			close(fdout);
 			return -1;
 		}
 
@@ -267,17 +253,14 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 		if (write(fdout, buf,
 			  ((i > T_BLOCKSIZE) ? T_BLOCKSIZE : i)) == -1)
 		{
-			free (pn);
+			close(fdout);
 			return -1;
 		}
 	}
 
 	/* close output file */
 	if (close(fdout) == -1)
-	{
-		free (pn);
 		return -1;
-	}
 
 #ifdef DEBUG
 	printf("### done extracting %s\n", filename);
@@ -289,7 +272,6 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 		write(*progress_fd, &file_size, sizeof(file_size));
 	}
 
-	free (pn);
 	return 0;
 }
 
@@ -332,7 +314,7 @@ tar_extract_hardlink(TAR * t, const char *realname, const char *prefix)
 	char *pn;
 	char *linktgt = NULL;
 	char *newtgt = NULL;
-	linkname_t *lnp;
+	char *lnp;
 	libtar_hashptr_t hp;
 
 	if (!TH_ISLNK(t))
@@ -344,21 +326,15 @@ tar_extract_hardlink(TAR * t, const char *realname, const char *prefix)
 	pn = th_get_pathname(t);
 	filename = (realname ? realname : pn);
 	if (mkdirhier(dirname(filename)) == -1)
-	{
-		free (pn);
 		return -1;
-	}
 	if (unlink(filename) == -1 && errno != ENOENT)
-	{
-		free (pn);
 		return -1;
-	}
 	libtar_hashptr_reset(&hp);
 	if (libtar_hash_getkey(t->h, &hp, th_get_linkname(t),
 			       (libtar_matchfunc_t)libtar_str_match) != 0)
 	{
-		lnp = (linkname_t *)libtar_hashptr_data(&hp);
-		linktgt = lnp->ln_real;
+		lnp = (char *)libtar_hashptr_data(&hp);
+		linktgt = &lnp[strlen(lnp) + 1];
 	}
 	else
 		linktgt = th_get_linkname(t);
@@ -366,19 +342,16 @@ tar_extract_hardlink(TAR * t, const char *realname, const char *prefix)
 	newtgt = strdup(linktgt);
 	sprintf(linktgt, "%s/%s", prefix, newtgt);
 
-#ifdef DEBUG
 	printf("  ==> extracting: %s (link to %s)\n", filename, linktgt);
-#endif
+
 	if (link(linktgt, filename) == -1)
 	{
 #ifdef DEBUG
 		perror("link()");
 #endif
-		free (pn);
 		return -1;
 	}
 
-	free (pn);
 	return 0;
 }
 
@@ -399,30 +372,22 @@ tar_extract_symlink(TAR *t, const char *realname)
 	pn = th_get_pathname(t);
 	filename = (realname ? realname : pn);
 	if (mkdirhier(dirname(filename)) == -1)
-	{
-		free (pn);
 		return -1;
-	}
 
-	if (unlink(filename) == -1 && errno != ENOENT) {
-		free (pn);
+	if (unlink(filename) == -1 && errno != ENOENT)
 		return -1;
-	}
 
-#ifdef DEBUG
 	printf("  ==> extracting: %s (symlink to %s)\n",
 	       filename, th_get_linkname(t));
-#endif
+
 	if (symlink(th_get_linkname(t), filename) == -1)
 	{
 #ifdef DEBUG
 		perror("symlink()");
 #endif
-		free (pn);
 		return -1;
 	}
 
-	free (pn);
 	return 0;
 }
 
@@ -449,26 +414,20 @@ tar_extract_chardev(TAR *t, const char *realname)
 	devmin = th_get_devminor(t);
 
 	if (mkdirhier(dirname(filename)) == -1)
-	{
-		free (pn);
 		return -1;
-	}
-	
-#ifdef DEBUG
+
 	printf("  ==> extracting: %s (character device %ld,%ld)\n",
 	       filename, devmaj, devmin);
-#endif
+
 	if (mknod(filename, mode | S_IFCHR,
 		  compat_makedev(devmaj, devmin)) == -1)
 	{
 #ifdef DEBUG
 		perror("mknod()");
 #endif
-		free (pn);
 		return -1;
 	}
 
-	free (pn);
 	return 0;
 }
 
@@ -495,26 +454,20 @@ tar_extract_blockdev(TAR *t, const char *realname)
 	devmin = th_get_devminor(t);
 
 	if (mkdirhier(dirname(filename)) == -1)
-	{
-		free (pn);
 		return -1;
-	}
 
-#ifdef DEBUG
 	printf("  ==> extracting: %s (block device %ld,%ld)\n",
 	       filename, devmaj, devmin);
-#endif
+
 	if (mknod(filename, mode | S_IFBLK,
 		  compat_makedev(devmaj, devmin)) == -1)
 	{
 #ifdef DEBUG
 		perror("mknod()");
 #endif
-		free (pn);
 		return -1;
 	}
 
-	free (pn);
 	return 0;
 }
 
@@ -537,15 +490,11 @@ tar_extract_dir(TAR *t, const char *realname)
 	mode = th_get_mode(t);
 
 	if (mkdirhier(dirname(filename)) == -1)
-	{
-		free (pn);
 		return -1;
-	}
 
-#ifdef DEBUG
 	printf("  ==> extracting: %s (mode %04o, directory)\n", filename,
 	       mode);
-#endif
+
 	if (mkdir(filename, mode) == -1)
 	{
 		if (errno == EEXIST)
@@ -555,7 +504,6 @@ tar_extract_dir(TAR *t, const char *realname)
 #ifdef DEBUG
 				perror("chmod()");
 #endif
-				free (pn);
 				return -1;
 			}
 			else
@@ -563,7 +511,6 @@ tar_extract_dir(TAR *t, const char *realname)
 #ifdef DEBUG
 				puts("  *** using existing directory");
 #endif
-				free (pn);
 				return 1;
 			}
 		}
@@ -572,12 +519,10 @@ tar_extract_dir(TAR *t, const char *realname)
 #ifdef DEBUG
 			perror("mkdir()");
 #endif
-			free (pn);
 			return -1;
 		}
 	}
-	
-	free (pn);
+
 	return 0;
 }
 
@@ -601,24 +546,19 @@ tar_extract_fifo(TAR *t, const char *realname)
 	mode = th_get_mode(t);
 
 	if (mkdirhier(dirname(filename)) == -1)
-	{
-		free (pn);
 		return -1;
-	}
 
-#ifdef DEBUG
+
 	printf("  ==> extracting: %s (fifo)\n", filename);
-#endif
+
 	if (mkfifo(filename, mode) == -1)
 	{
 #ifdef DEBUG
 		perror("mkfifo()");
 #endif
-		free (pn);
 		return -1;
 	}
 
-	free (pn);
 	return 0;
 }
 
@@ -631,8 +571,7 @@ tar_extract_file_contents(TAR *t, void *buf, size_t *lenp)
 	ssize_t k;
 
 #ifdef DEBUG
-	printf("==> tar_extract_file_contents(t=0x%lx, buf=%p)\n", t,
-	       buf);
+	printf("==> tar_extract_file_contents\n");
 #endif
 
 	if (!TH_ISREG(t))
@@ -677,4 +616,3 @@ tar_extract_file_contents(TAR *t, void *buf, size_t *lenp)
 #endif
 	return 0;
 }
-

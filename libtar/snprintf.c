@@ -38,6 +38,9 @@
  *    missing.  Some systems only have snprintf() but not vsnprintf(), so
  *    the code is now broken down under HAVE_SNPRINTF and HAVE_VSNPRINTF.
  *
+ *  Chris Frey <cdfrey@foursquare.net> 2012/09/05
+ *    Removed varargs.h and all dependency on it.
+ *
  **************************************************************/
 
 #include <config.h>
@@ -48,31 +51,11 @@
 # include <ctype.h>
 #include <sys/types.h>
 
-/* Define this as a fall through, HAVE_STDARG_H is probably already set */
-
-#define HAVE_VARARGS_H
-
-/* varargs declarations: */
-
-#if defined(HAVE_STDARG_H)
-# include <stdarg.h>
-# define HAVE_STDARGS    /* let's hope that works everywhere (mj) */
-# define VA_LOCAL_DECL   va_list ap
-# define VA_START(f)     va_start(ap, f)
-# define VA_SHIFT(v,t)  ;   /* no-op for ANSI */
-# define VA_END          va_end(ap)
-#else
-# if defined(HAVE_VARARGS_H)
-#  include <varargs.h>
-#  undef HAVE_STDARGS
-#  define VA_LOCAL_DECL   va_list ap
-#  define VA_START(f)     va_start(ap)      /* f is ignored! */
-#  define VA_SHIFT(v,t) v = va_arg(ap,t)
-#  define VA_END        va_end(ap)
-# else
-/*XX ** NO VARARGS ** XX*/
-# endif
-#endif
+#include <stdarg.h>
+#define VA_LOCAL_DECL   va_list ap
+#define VA_START(f)     va_start(ap, f)
+#define VA_SHIFT(v,t)  ;   /* no-op for ANSI */
+#define VA_END          va_end(ap)
 
 /*int snprintf (char *str, size_t count, const char *fmt, ...);*/
 /*int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);*/
@@ -246,7 +229,7 @@ static void dopr (char *buffer, size_t maxlen, const char *format, va_list args)
       case 'd':
       case 'i':
 	if (cflags == DP_C_SHORT) 
-	  value = va_arg (args, short int);
+	  value = va_arg (args, int);
 	else if (cflags == DP_C_LONG)
 	  value = va_arg (args, long int);
 	else
@@ -256,7 +239,7 @@ static void dopr (char *buffer, size_t maxlen, const char *format, va_list args)
       case 'o':
 	flags |= DP_F_UNSIGNED;
 	if (cflags == DP_C_SHORT)
-	  value = va_arg (args, unsigned short int);
+	  value = va_arg (args, unsigned int);
 	else if (cflags == DP_C_LONG)
 	  value = va_arg (args, unsigned long int);
 	else
@@ -266,7 +249,7 @@ static void dopr (char *buffer, size_t maxlen, const char *format, va_list args)
       case 'u':
 	flags |= DP_F_UNSIGNED;
 	if (cflags == DP_C_SHORT)
-	  value = va_arg (args, unsigned short int);
+	  value = va_arg (args, unsigned int);
 	else if (cflags == DP_C_LONG)
 	  value = va_arg (args, unsigned long int);
 	else
@@ -278,7 +261,7 @@ static void dopr (char *buffer, size_t maxlen, const char *format, va_list args)
       case 'x':
 	flags |= DP_F_UNSIGNED;
 	if (cflags == DP_C_SHORT)
-	  value = va_arg (args, unsigned short int);
+	  value = va_arg (args, unsigned int);
 	else if (cflags == DP_C_LONG)
 	  value = va_arg (args, unsigned long int);
 	else
@@ -510,7 +493,7 @@ static long double abs_val (long double value)
   return result;
 }
 
-static long double pow10 (int exp)
+static long double pow10_ (int exp)
 {
   long double result = 1;
 
@@ -523,7 +506,7 @@ static long double pow10 (int exp)
   return result;
 }
 
-static long round (long double value)
+static long round_ (long double value)
 {
   long intpart;
 
@@ -584,12 +567,12 @@ static void fmtfp (char *buffer, size_t *currlen, size_t maxlen,
   /* We "cheat" by converting the fractional part to integer by
    * multiplying by a factor of 10
    */
-  fracpart = round ((pow10 (max)) * (ufvalue - intpart));
+  fracpart = round_ ((pow10_ (max)) * (ufvalue - intpart));
 
-  if (fracpart >= pow10 (max))
+  if (fracpart >= pow10_ (max))
   {
     intpart++;
-    fracpart -= pow10 (max);
+    fracpart -= pow10_ (max);
   }
 
 #ifdef DEBUG_SNPRINTF
@@ -688,20 +671,10 @@ int mutt_vsnprintf (char *str, size_t count, const char *fmt, va_list args)
 #endif /* !HAVE_VSNPRINTF */
 
 #ifndef HAVE_SNPRINTF
-/* VARARGS3 */
-#ifdef HAVE_STDARGS
 int mutt_snprintf (char *str,size_t count,const char *fmt,...)
-#else
-int mutt_snprintf (va_alist) va_dcl
-#endif
 {
-#ifndef HAVE_STDARGS
-  char *str;
-  size_t count;
-  char *fmt;
-#endif
   VA_LOCAL_DECL;
-    
+
   VA_START (fmt);
   VA_SHIFT (str, char *);
   VA_SHIFT (count, size_t );

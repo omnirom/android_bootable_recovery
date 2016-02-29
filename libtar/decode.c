@@ -13,6 +13,7 @@
 #include <internal.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/param.h>
 #include <pwd.h>
 #include <grp.h>
@@ -26,20 +27,30 @@
 char *
 th_get_pathname(TAR *t)
 {
-	char filename[MAXPATHLEN];
-
 	if (t->th_buf.gnu_longname)
-		return strdup(t->th_buf.gnu_longname);
+		return t->th_buf.gnu_longname;
 
-	if (t->th_buf.prefix[0] != '\0')
+	/* allocate the th_pathname buffer if not already */
+	if (t->th_pathname == NULL)
 	{
-		snprintf(filename, sizeof(filename), "%.155s/%.100s",
-			 t->th_buf.prefix, t->th_buf.name);
-		return strdup(filename);
+		t->th_pathname = malloc(MAXPATHLEN * sizeof(char));
+		if (t->th_pathname == NULL)
+			/* out of memory */
+			return NULL;
 	}
 
-	snprintf(filename, sizeof(filename), "%.100s", t->th_buf.name);
-	return strdup(filename);
+	if (t->th_buf.prefix[0] == '\0')
+	{
+		snprintf(t->th_pathname, MAXPATHLEN, "%.100s", t->th_buf.name);
+	}
+	else
+	{
+		snprintf(t->th_pathname, MAXPATHLEN, "%.155s/%.100s",
+			 t->th_buf.prefix, t->th_buf.name);
+	}
+
+	/* will be deallocated in tar_close() */
+	return t->th_pathname;
 }
 
 
@@ -79,12 +90,12 @@ th_get_gid(TAR *t)
 }
 
 
-unsigned int
+mode_t
 th_get_mode(TAR *t)
 {
-	unsigned int mode;
+	mode_t mode;
 
-	mode = (unsigned int)oct_to_int(t->th_buf.mode, sizeof(t->th_buf.mode));
+	mode = (mode_t)oct_to_int(t->th_buf.mode, sizeof(t->th_buf.mode));
 	if (! (mode & S_IFMT))
 	{
 		switch (t->th_buf.typeflag)

@@ -15,6 +15,9 @@
 #ifndef libtar_LISTHASH_H
 #define libtar_LISTHASH_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /***** list.c **********************************************************/
 
@@ -191,6 +194,10 @@ int libtar_hash_add(libtar_hash_t *, void *);
 /* delete an entry */
 int libtar_hash_del(libtar_hash_t *,
 			       libtar_hashptr_t *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! libtar_LISTHASH_H */
 

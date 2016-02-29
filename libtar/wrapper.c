@@ -36,11 +36,7 @@ tar_extract_glob(TAR *t, char *globname, char *prefix)
 		if (fnmatch(globname, filename, FNM_PATHNAME | FNM_PERIOD))
 		{
 			if (TH_ISREG(t) && tar_skip_regfile(t))
-			{
-				free (filename);
 				return -1;
-			}
-			free (filename);
 			continue;
 		}
 		if (t->options & TAR_VERBOSE)
@@ -49,12 +45,8 @@ tar_extract_glob(TAR *t, char *globname, char *prefix)
 			snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
 		else
 			strlcpy(buf, filename, sizeof(buf));
-		if (tar_extract_file(t, filename, prefix, &fd) != 0)
-		{
-			free (filename);
+		if (tar_extract_file(t, buf, prefix, &fd) != 0)
 			return -1;
-		}
-		free (filename);
 	}
 
 	return (i == 1 ? 0 : -1);
@@ -90,11 +82,7 @@ tar_extract_all(TAR *t, char *prefix, const int *progress_fd)
 		       "\"%s\")\n", buf);
 #endif
 		if (tar_extract_file(t, buf, prefix, progress_fd) != 0)
-		{
-			free (filename);
 			return -1;
-		}
-		free (filename);
 	}
 
 	return (i == 1 ? 0 : -1);
