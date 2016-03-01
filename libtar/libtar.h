@@ -26,6 +26,7 @@ extern "C"
 
 
 /* useful constants */
+/* see FIXME note in block.c regarding T_BLOCKSIZE */
 #define T_BLOCKSIZE		512
 #define T_NAMELEN		100
 #define T_PREFIXLEN		155
@@ -85,12 +86,15 @@ tartype_t;
 typedef struct
 {
 	tartype_t *type;
-	char *pathname;
+	const char *pathname;
 	long fd;
 	int oflags;
 	int options;
 	struct tar_header th_buf;
 	libtar_hash_t *h;
+
+	/* introduced in libtar 1.2.21 */
+	char *th_pathname;
 }
 TAR;
 
@@ -103,6 +107,7 @@ TAR;
 #define TAR_CHECK_VERSION	32	/* check version in file header */
 #define TAR_IGNORE_CRC		64	/* ignore CRC in file header */
 #define TAR_STORE_SELINUX	128	/* store selinux context */
+#define TAR_USE_NUMERIC_ID	256	/* favor numeric owner over names */
 
 /* this is obsolete - it's here for backwards-compatibility only */
 #define TAR_IGNORE_MAGIC	0
@@ -111,11 +116,11 @@ extern const char libtar_version[];
 
 
 /* open a new tarfile handle */
-int tar_open(TAR **t, char *pathname, tartype_t *type,
+int tar_open(TAR **t, const char *pathname, tartype_t *type,
 	     int oflags, int mode, int options);
 
 /* make a tarfile handle out of a previously-opened descriptor */
-int tar_fdopen(TAR **t, int fd, char *pathname, tartype_t *type,
+int tar_fdopen(TAR **t, int fd, const char *pathname, tartype_t *type,
 	       int oflags, int mode, int options);
 
 /* returns the descriptor associated with t */
@@ -139,14 +144,27 @@ void tar_dev_free(struct tar_dev *tdp);
  *    realname = path of file to append
  *    savename = name to save the file under in the archive
  */
-int tar_append_file(TAR *t, char *realname, char *savename);
+int tar_append_file(TAR *t, const char *realname, const char *savename);
 
 /* write EOF indicator */
 int tar_append_eof(TAR *t);
 
 /* add file contents to a tarchive */
-int tar_append_regfile(TAR *t, char *realname);
+int tar_append_regfile(TAR *t, const char *realname);
 
+/* Appends in-memory file contents to a tarchive.
+ * Arguments:
+ *    t        = TAR handle to append to
+ *    savename = name to save the file under in the archive
+ *    mode     = mode
+ *    uid, gid = owner
+ *    buf, len = in-memory buffer
+ */
+int tar_append_file_contents(TAR *t, const char *savename, mode_t mode,
+                             uid_t uid, gid_t gid, void *buf, size_t len);
+
+/* add buffer to a tarchive */
+int tar_append_buffer(TAR *t, void *buf, size_t len);
 
 /***** block.c *************************************************************/
 
@@ -167,31 +185,32 @@ int th_write(TAR *t);
 #define TH_ISREG(t)	((t)->th_buf.typeflag == REGTYPE \
 			 || (t)->th_buf.typeflag == AREGTYPE \
 			 || (t)->th_buf.typeflag == CONTTYPE \
-			 || (S_ISREG((mode_t)oct_to_int((t)->th_buf.mode)) \
+			 || (S_ISREG((mode_t)oct_to_int((t)->th_buf.mode, sizeof((t)->th_buf.mode))) \
 			     && (t)->th_buf.typeflag != LNKTYPE))
 #define TH_ISLNK(t)	((t)->th_buf.typeflag == LNKTYPE)
 #define TH_ISSYM(t)	((t)->th_buf.typeflag == SYMTYPE \
-			 || S_ISLNK((mode_t)oct_to_int((t)->th_buf.mode)))
+			 || S_ISLNK((mode_t)oct_to_int((t)->th_buf.mode, sizeof((t)->th_buf.mode))))
 #define TH_ISCHR(t)	((t)->th_buf.typeflag == CHRTYPE \
-			 || S_ISCHR((mode_t)oct_to_int((t)->th_buf.mode)))
+			 || S_ISCHR((mode_t)oct_to_int((t)->th_buf.mode, sizeof((t)->th_buf.mode))))
 #define TH_ISBLK(t)	((t)->th_buf.typeflag == BLKTYPE \
-			 || S_ISBLK((mode_t)oct_to_int((t)->th_buf.mode)))
+			 || S_ISBLK((mode_t)oct_to_int((t)->th_buf.mode, sizeof((t)->th_buf.mode))))
 #define TH_ISDIR(t)	((t)->th_buf.typeflag == DIRTYPE \
-			 || S_ISDIR((mode_t)oct_to_int((t)->th_buf.mode)) \
+			 || S_ISDIR((mode_t)oct_to_int((t)->th_buf.mode, sizeof((t)->th_buf.mode))) \
 			 || ((t)->th_buf.typeflag == AREGTYPE \
-			     && ((t)->th_buf.name[strlen((t)->th_buf.name) - 1] == '/')))
+			     && strnlen((t)->th_buf.name, T_NAMELEN) \
+			     && ((t)->th_buf.name[strnlen((t)->th_buf.name, T_NAMELEN) - 1] == '/')))
 #define TH_ISFIFO(t)	((t)->th_buf.typeflag == FIFOTYPE \
-			 || S_ISFIFO((mode_t)oct_to_int((t)->th_buf.mode)))
+			 || S_ISFIFO((mode_t)oct_to_int((t)->th_buf.mode, sizeof((t)->th_buf.mode))))
 #define TH_ISLONGNAME(t)	((t)->th_buf.typeflag == GNU_LONGNAME_TYPE)
 #define TH_ISLONGLINK(t)	((t)->th_buf.typeflag == GNU_LONGLINK_TYPE)
 #define TH_ISEXTHEADER(t)	((t)->th_buf.typeflag == TH_EXT_TYPE)
 
 /* decode tar header info */
-#define th_get_crc(t) oct_to_int((t)->th_buf.chksum)
-#define th_get_size(t) oct_to_int((t)->th_buf.size)
-#define th_get_mtime(t) oct_to_int((t)->th_buf.mtime)
-#define th_get_devmajor(t) oct_to_int((t)->th_buf.devmajor)
-#define th_get_devminor(t) oct_to_int((t)->th_buf.devminor)
+#define th_get_crc(t) oct_to_int((t)->th_buf.chksum, sizeof((t)->th_buf.chksum))
+#define th_get_size(t) oct_to_int_ex((t)->th_buf.size, sizeof((t)->th_buf.size))
+#define th_get_mtime(t) oct_to_int_ex((t)->th_buf.mtime, sizeof((t)->th_buf.mtime))
+#define th_get_devmajor(t) oct_to_int((t)->th_buf.devmajor, sizeof((t)->th_buf.devmajor))
+#define th_get_devminor(t) oct_to_int((t)->th_buf.devminor, sizeof((t)->th_buf.devminor))
 #define th_get_linkname(t) ((t)->th_buf.gnu_longlink \
                             ? (t)->th_buf.gnu_longlink \
                             : (t)->th_buf.linkname)
@@ -205,16 +224,16 @@ gid_t th_get_gid(TAR *t);
 
 /* encode file info in th_header */
 void th_set_type(TAR *t, mode_t mode);
-void th_set_path(TAR *t, char *pathname);
-void th_set_link(TAR *t, char *linkname);
+void th_set_path(TAR *t, const char *pathname);
+void th_set_link(TAR *t, const char *linkname);
 void th_set_device(TAR *t, dev_t device);
 void th_set_user(TAR *t, uid_t uid);
 void th_set_group(TAR *t, gid_t gid);
 void th_set_mode(TAR *t, mode_t fmode);
 #define th_set_mtime(t, fmtime) \
-	int_to_oct_nonull((fmtime), (t)->th_buf.mtime, 12)
+	int_to_oct_ex((fmtime), (t)->th_buf.mtime, sizeof((t)->th_buf.mtime))
 #define th_set_size(t, fsize) \
-	int_to_oct_nonull((fsize), (t)->th_buf.size, 12)
+	int_to_oct_ex((fsize), (t)->th_buf.size, sizeof((t)->th_buf.size))
 
 /* encode everything at once (except the pathname and linkname) */
 void th_set_from_stat(TAR *t, struct stat *s);
@@ -226,20 +245,22 @@ void th_finish(TAR *t);
 /***** extract.c ***********************************************************/
 
 /* sequentially extract next file from t */
-int tar_extract_file(TAR *t, char *realname, char *prefix, const int *progress_fd);
+int tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *progress_fd);
 
 /* extract different file types */
-int tar_extract_dir(TAR *t, char *realname);
-int tar_extract_hardlink(TAR *t, char *realname, char *prefix);
-int tar_extract_symlink(TAR *t, char *realname);
-int tar_extract_chardev(TAR *t, char *realname);
-int tar_extract_blockdev(TAR *t, char *realname);
-int tar_extract_fifo(TAR *t, char *realname);
+int tar_extract_dir(TAR *t, const char *realname);
+int tar_extract_hardlink(TAR *t, const char *realname, const char *prefix);
+int tar_extract_symlink(TAR *t, const char *realname);
+int tar_extract_chardev(TAR *t, const char *realname);
+int tar_extract_blockdev(TAR *t, const char *realname);
+int tar_extract_fifo(TAR *t, const char *realname);
 
 /* for regfiles, we need to extract the content blocks as well */
-int tar_extract_regfile(TAR *t, char *realname, const int *progress_fd);
+int tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd);
 int tar_skip_regfile(TAR *t);
 
+/* extract regfile to buffer */
+int tar_extract_file_contents(TAR *t, void *buf, size_t *lenp);
 
 /***** output.c ************************************************************/
 
@@ -280,16 +301,17 @@ int th_signed_crc_calc(TAR *t);
 #define th_crc_ok(t) (th_get_crc(t) == th_crc_calc(t) || th_get_crc(t) == th_signed_crc_calc(t))
 
 /* string-octal to integer conversion */
-int oct_to_int(char *oct);
+int64_t oct_to_int(char *oct, size_t len);
+
+/* string-octal or binary to integer conversion */
+int64_t oct_to_int_ex(char *oct, size_t len);
 
 /* integer to NULL-terminated string-octal conversion */
-#define int_to_oct(num, oct, octlen) \
-	snprintf((oct), (octlen), "%*lo ", (octlen) - 2, (unsigned long)(num))
+void int_to_oct(int64_t num, char *oct, size_t octlen);
 
-/* integer to string-octal conversion, no NULL */
-void int_to_oct_nonull(int num, char *oct, size_t octlen);
+/* integer to string-octal conversion, or binary as necessary */
+void int_to_oct_ex(int64_t num, char *oct, size_t octlen);
 
-#define tar_min(x, y) (x < y ? x : y)
 
 /***** wrapper.c **********************************************************/
 
@@ -298,7 +320,7 @@ int tar_extract_glob(TAR *t, char *globname, char *prefix);
 int tar_extract_all(TAR *t, char *prefix, const int *progress_fd);
 
 /* add a whole tree of files */
-int tar_append_tree(TAR *t, char *realdir, char *savedir, char *exclude);
+int tar_append_tree(TAR *t, char *realdir, char *savedir);
 
 /* find an entry */
 int tar_find(TAR *t, char *searchstr);
