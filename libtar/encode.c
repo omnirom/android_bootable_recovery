@@ -68,10 +68,11 @@ th_set_type(TAR *t, mode_t mode)
 
 /* encode file path */
 void
-th_set_path(TAR *t, char *pathname)
+th_set_path(TAR *t, const char *pathname)
 {
 	char suffix[2] = "";
 	char *tmp;
+	size_t pathname_len = strlen(pathname);
 
 #ifdef DEBUG
 	printf("in th_set_path(th, pathname=\"%s\")\n", pathname);
@@ -81,32 +82,49 @@ th_set_path(TAR *t, char *pathname)
 		free(t->th_buf.gnu_longname);
 	t->th_buf.gnu_longname = NULL;
 
-	if (pathname[strlen(pathname) - 1] != '/' && TH_ISDIR(t))
+	/* old archive compatibility (not needed for gnu): add trailing / to directories */
+	if (pathname[pathname_len - 1] != '/' && TH_ISDIR(t))
 		strcpy(suffix, "/");
 
-	if (strlen(pathname) > T_NAMELEN-1 && (t->options & TAR_GNU))
+	if (pathname_len >= T_NAMELEN && (t->options & TAR_GNU))
 	{
-		/* GNU-style long name */
+		/* GNU-style long name (no file name length limit) */
 		t->th_buf.gnu_longname = strdup(pathname);
 		strncpy(t->th_buf.name, t->th_buf.gnu_longname, T_NAMELEN);
 	}
-	else if (strlen(pathname) > T_NAMELEN)
+	else if (pathname_len >= T_NAMELEN)
 	{
-		/* POSIX-style prefix field */
-		tmp = strchr(&(pathname[strlen(pathname) - T_NAMELEN - 1]), '/');
+		/* POSIX-style prefix field:
+		 *   The maximum length of a file name is limited to 256 characters,
+		 *   provided that the file name can be split at a directory separator
+		 *   in two parts.  The first part being at most 155 bytes long and
+		 *   the second part being at most 100 bytes long.  So, in most cases
+		 *   the maximum file name length will be shorter than 256 characters.
+		 */
+		char tail_path[T_NAMELEN + 1];
+		tmp = strchr(&(pathname[pathname_len - T_NAMELEN]), '/');
 		if (tmp == NULL)
 		{
 			printf("!!! '/' not found in \"%s\"\n", pathname);
 			return;
 		}
-		snprintf(t->th_buf.name, 100, "%s%s", &(tmp[1]), suffix);
-		snprintf(t->th_buf.prefix,
-			 ((tmp - pathname + 1) <
-			  155 ? (tmp - pathname + 1) : 155), "%s", pathname);
+		snprintf(tail_path, T_NAMELEN + 1, "%s%s", &tmp[1], suffix);
+		strncpy(t->th_buf.name, tail_path, T_NAMELEN);
+
+		/*
+		 * first part, max = 155 == sizeof(t->th_buf.prefix) , include NULL if it fits
+		 * trailing '/' is added during decode: decode.c/th_get_pathname()
+		 */
+		if (tmp - pathname >= 155) {
+			strncpy(t->th_buf.prefix, pathname, 155);
+		} else {
+			snprintf(t->th_buf.prefix, (tmp - pathname + 1), "%s", pathname);
+		}
 	}
-	else
-		/* classic tar format */
-		snprintf(t->th_buf.name, 100, "%s%s", pathname, suffix);
+	else {
+		/* any short name for all formats, or classic tar format (99 chars max) */
+		snprintf(t->th_buf.name, T_NAMELEN, "%s%s", pathname, suffix);
+	}
 
 #ifdef DEBUG
 	puts("returning from th_set_path()...");
@@ -116,23 +134,28 @@ th_set_path(TAR *t, char *pathname)
 
 /* encode link path */
 void
-th_set_link(TAR *t, char *linkname)
+th_set_link(TAR *t, const char *linkname)
 {
 #ifdef DEBUG
 	printf("==> th_set_link(th, linkname=\"%s\")\n", linkname);
 #endif
 
-	if (strlen(linkname) > T_NAMELEN-1 && (t->options & TAR_GNU))
+	if (strlen(linkname) >= T_NAMELEN && (t->options & TAR_GNU))
 	{
-		/* GNU longlink format */
+		/* --format=gnu: GNU-style long name (no file name length limit) */
 		t->th_buf.gnu_longlink = strdup(linkname);
 		strcpy(t->th_buf.linkname, "././@LongLink");
 	}
-	else
+	else if (strlen(linkname) >= T_NAMELEN)
 	{
-		/* classic tar format */
-		strlcpy(t->th_buf.linkname, linkname,
-			sizeof(t->th_buf.linkname));
+		/* --format=ustar: 100 chars max limit for symbolic links */
+		strncpy(t->th_buf.linkname, linkname, T_NAMELEN);
+		if (t->th_buf.gnu_longlink != NULL)
+			free(t->th_buf.gnu_longlink);
+		t->th_buf.gnu_longlink = NULL;
+	} else {
+		/* all short links or v7 tar format: The maximum length of a symbolic link name is limited to 99 characters */
+		snprintf(t->th_buf.linkname, T_NAMELEN, "%s", linkname);
 		if (t->th_buf.gnu_longlink != NULL)
 			free(t->th_buf.gnu_longlink);
 		t->th_buf.gnu_longlink = NULL;
@@ -159,9 +182,11 @@ th_set_user(TAR *t, uid_t uid)
 {
 	struct passwd *pw;
 
-	pw = getpwuid(uid);
-	if (pw != NULL)
-		strlcpy(t->th_buf.uname, pw->pw_name, sizeof(t->th_buf.uname));
+	if (!(t->options & TAR_USE_NUMERIC_ID)) {
+		pw = getpwuid(uid);
+		if (pw != NULL)
+			strlcpy(t->th_buf.uname, pw->pw_name, sizeof(t->th_buf.uname));
+	}
 
 	int_to_oct(uid, t->th_buf.uid, 8);
 }
@@ -173,9 +198,11 @@ th_set_group(TAR *t, gid_t gid)
 {
 	struct group *gr;
 
-	gr = getgrgid(gid);
-	if (gr != NULL)
-		strlcpy(t->th_buf.gname, gr->gr_name, sizeof(t->th_buf.gname));
+	if (!(t->options & TAR_USE_NUMERIC_ID)) {
+		gr = getgrgid(gid);
+		if (gr != NULL)
+			strlcpy(t->th_buf.gname, gr->gr_name, sizeof(t->th_buf.gname));
+	}
 
 	int_to_oct(gid, t->th_buf.gid, 8);
 }
@@ -209,5 +236,3 @@ th_set_from_stat(TAR *t, struct stat *s)
 	else
 		th_set_size(t, 0);
 }
-
-

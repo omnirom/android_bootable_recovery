@@ -1,15 +1,335 @@
-2002-12-09	added list_empty() and hash_empty() functions
+	NOTE:
+	All releases below marked (Chris Frey) are maintenance releases
+	done by Chris Frey, temporarily stepping in for Mark Roth.
+	These releases are git-based only and can be found at:
+		http://repo.or.cz/w/libtar.git
 
-2002-09-12	fixed list_iterate function to return -1 if it gets
-		an invalid argument
+	Both git downloads and tarball downloads are possible at this site.
 
-		include <config.h> and <compat.h> from source files, not
-		from header file, since header file is sometimes
-		installed as part of a user-visible API
-		(those APIs should eventually be redesigned without the
-		listhash code being publicly visible, but for now we
-		need to accomodate this)
 
-2002-07-07	modified list iterate function to return int
-		(returns -1 if plugin function returns -1)
+libtar 1.2.20 - 2013/10/09 (Chris Frey)
+-------------
+      Added extern "C" protectors to listhash.h
+      Added autoconf checks for __thread compiler support
+      Fixed size_t overflow bug, as reported by Timo Warns
+      Fixed thread-safe bug in th_get_pathname() (Sergey Zhitomirsky)
+
+
+libtar 1.2.19 - 2012/12/11 (Chris Frey)
+-------------
+      Removed varargs.h and all dependencies, to avoid user compile errors
+
+      Fixed some short int / int compiler warnings in va_arg() usage
+
+      Fixed some gcc built-in compiler warnings
+
+      Changed autoconf support code from AC_RUN_ to AC_COMPILE_ to fix
+      issues reported during cross-compiling.
+
+      Applied most of Jan Cermak's const char* function argument patch.
+
+
+libtar 1.2.18 - 2012/08/02 (Chris Frey)
+-------------
+      Added more forgiving CRC checking logic when reading tar files
+
+      Note: If your application uses the macro th_crc_ok(), then to gain full
+      advantage of the changes in this version, you will need to recompile
+      your application against the new headers.  Otherwise, the library is
+      drop-in replaceable, as usual.
+
+
+libtar 1.2.17 - 2012/07/24 (Chris Frey)
+-------------
+      Applied Tim Band's checksum patch from mailing list (thanks!)
+
+
+libtar 1.2.16 - 2012/05/17 (Chris Frey)
+-------------
+      Fixed build system to allow for out-of-source tree builds
+
+
+libtar 1.2.15 - 2012/05/10 (Chris Frey)
+-------------
+Chris Frey (1):
+      Fixed harmless buffer overflow which is caught by FORTIFY on some systems
+
+
+libtar 1.2.14 - 2011/12/22 (Chris Frey)
+-------------
+Chris Frey (1):
+      Fixed truncation check, so 100 char names get GNU extension support when enabled
+
+
+libtar 1.2.13 - 2011/06/13 (Chris Frey)
+-------------
+Chris Frey (10):
+      Fixed incorrect URL in readme
+      Added autoconf/ as macro dir
+      Added autogen.sh script to build a fresh configure
+      Renamed autoconf/aclocal.m4 to psg.m4 so aclocal isn't so confused
+      Removed m4 includes, and straightened out [] m4 quoting for modern autoconfs
+      Removed auto-generated files
+      Added datarootdir to Makefile.in's
+      Fixed header warnings
+      Applied Marcin Gibula's patch fixing tar_extract_glob()
+      Changed root Makefile.in to Makefile.am, which make autoreconf workable
+
+Glenn McGrath (1):
+      Use libtool to build dynamic library
+
+James Morrison (1):
+      Document stupidity of tartype_t in libtar.c.
+
+Magnus Holmgren (1):
+      Escape hyphens that should be minus signs in man pages.
+
+Per Lidén (2):
+      Fix memory leak in th_get_pathname
+      Reduce memory used by libtar when extracting files.
+
+------------------------------------------------------------------------------
+
+libtar 1.2.11 - 3/2/03
+-------------
+
+- updated autoconf macros, compat code, and listhash code
+- fixed tar_extract_regfile() to pass mode argument to open()
+  (caused EPERM on Solaris NFS clients)
+- updated README
+
+------------------------------------------------------------------------------
+
+libtar 1.2.10 - 12/15/02
+-------------
+
+- updated README
+- minor Makefile fixes
+- fixed TH_ISREG() macro to not return true for hard links
+
+------------------------------------------------------------------------------
+
+libtar 1.2.9 - 11/19/02
+------------
+
+- fixed th_read() to return 1 on EOF
+  (thanks to Yves Crespin <Crespin.Quartz@WANADOO.FR> for the bug report)
+- minor portability fixes
+  (thanks to Yves Crespin <Crespin.Quartz@WANADOO.FR> for the bug report)
+- fixed segfault on extracting filenames with 8-bit ASCII characters
+  (thanks to Per Liden <per@FUKT.BTH.SE> for the patch)
+- fixed TH_ISDIR() macro and th_get_mode() function to handle old
+  archives that don't set the typeflag field right for directories
+- use 0777 instead of 0755 in mkdirhier()
+  (thanks to Yves Crespin <Crespin.Quartz@WANADOO.FR> for the bug report)
+
+------------------------------------------------------------------------------
+
+libtar 1.2.8 - 9/13/02
+------------
+
+- added "-I../listhash" to CPPFLAGS in libtar/Makefile.in
+  (thanks to Kris Warkentin <kewarken@QNX.COM> for the bug report)
+- added .PHONY target to Makefile.in
+  (thanks to Steven Engelhardt <sengelha@YAHOO.COM> for the bug report)
+
+------------------------------------------------------------------------------
+
+libtar 1.2.7 - 9/12/02
+------------
+
+- fixed minor bugs in listhash code
+  (thanks to Jim Knoble <jmknoble@pobox.com> for the bug reports)
+
+------------------------------------------------------------------------------
+
+libtar 1.2.6 - 9/10/02
+------------
+
+- updated COPYRIGHT file
+- do not check magic field by default
+  (replaced TAR_IGNORE_MAGIC option with TAR_CHECK_MAGIC to enable check)
+- fixed th_get_mode() not to modify S_IFMT bits if they were already set
+- fixed TH_IS*() macros to check the S_IFMT mode bits in addition to typeflag
+  (this allows us to handle old tar archives that set mode bits but not
+  typeflag field for directories and other special files)
+- updated to autoconf-2.53
+- restructured autoconf macros
+- added "b" to gzoflags in gzopen_frontend() for win32 compatibility
+  (thanks to Kris Eric Warkentin <kewarken@QNX.COM> for reporting this)
+- if O_BINARY is defined (as on win32), set that bit in oflags in tar_open()
+  (thanks to Kris Eric Warkentin <kewarken@QNX.COM> for reporting this)
+- also use O_BINARY in when calling open() from tar_extract_regfile()
+  (based on patch from Graeme Peterson <gp@qnx.com>)
+- added COMPAT_FUNC_MAKEDEV macro to handle 3-arg version of makedev()
+  (based on patch from Graeme Peterson <gp@qnx.com>)
+
+------------------------------------------------------------------------------
+
+libtar 1.2.5 - 2/20/02
+------------
+
+- updated to autoconf-2.52
+- improved Makefile portability
+- fixed memory leak in hard-link detection code
+  (thanks to Michael Kamp <kamp@HITT.NL> for the bug report)
+- fixed memory leak in symlink handling code
+  (thanks to Michael Kamp <kamp@HITT.NL> for the bug report)
+- fixed memory leak in GNU long filename code
+
+------------------------------------------------------------------------------
+
+libtar 1.2.4 - 7/24/01
+------------
+
+- code cleanups to make gcc -Wall happy
+  (thanks to Jim Knoble <jmknoble@POBOX.COM> for the patch)
+- call utime() before chmod() in tar_set_file_perms() for cygwin
+  (thanks to Kris Eric Warkentin <kewarken@QNX.COM> for reporting this)
+- added "-g" flag to trigger GNU extensions in libtar binary
+- fixed buffer termination bugs in POSIX filename prefix encoding
+  (thanks to Joerg Schilling <schilling@fokus.gmd.de> for reporting this)
+- fixed bug in th_crc_calc() for filenames with 8-bit ASCII characters
+  (thanks to Hamdouni El Bachir <bach@zehc.net> for reporting the bug
+   and Antoniu-George SAVU <santoniu@libertysurf.fr> for the patch)
+- fixed backwards conditional expression in th_read()
+  (thanks to Antoniu-George SAVU <santoniu@LIBERTYSURF.FR> for the patch)
+- added new tar_open() options to replace compile-time settings:
+  TAR_IGNORE_EOT, TAR_IGNORE_MAGIC, TAR_CHECK_VERSION, TAR_IGNORE_CRC
+  (based on feedback from Kris Eric Warkentin <kewarken@QNX.COM>)
+
+------------------------------------------------------------------------------
+
+libtar 1.2.3 - 6/26/01
+------------
+
+- misc portability fixes for OpenBSD
+- fixed libtar.h to work with C++ programs
+- fixed tar_extract_file() to properly check for pre-existing symlinks
+  (based on patch from Per Lid?n <per@fukt.hk-r.se>)
+- fixed hash creation in tar_init()
+- replaced mkdirhier() with non-recursive version
+- updated autoconf macros, compat code, and listhash code
+- reformatted code for readability
+
+------------------------------------------------------------------------------
+
+libtar 1.2.2 - 1/12/01
+------------
+
+- fixed th_print_long_ls() to not truncate user and group names
+- code cleanups to make -Wall happy
+
+------------------------------------------------------------------------------
+
+libtar 1.2.1 - 1/8/01
+------------
+
+- updated WSG_ENCAP autoconf macro
+- fixed autoconf macros to behave properly when a config.cache file
+  is present
+- fixed doc/Makefile.in to create links during compilation, not
+  installation
+- fixed listhash manpage .so link lists
+
+------------------------------------------------------------------------------
+
+libtar 1.2 - 1/4/01
+----------
+
+- minor code cleanups
+
+------------------------------------------------------------------------------
+
+libtar 1.1.b8 - 1/2/01
+-------------
+
+- updated WSG_ENCAP autoconf macro
+
+------------------------------------------------------------------------------
+
+libtar 1.1.b7 - 12/13/00
+-------------
+
+- fixed autoconf snprintf() test to make sure it NUL-terminates
+
+------------------------------------------------------------------------------
+
+libtar 1.1.b6 - 11/30/00
+-------------
+
+- added $(DESTDIR) to Makefiles
+- Makefile changes to support WSG_PKG and WSG_ENCAP autoconf macros
+- changed lib/output.c to use strftime() where available
+
+------------------------------------------------------------------------------
+
+libtar 1.1.b5 - 10/29/00
+-------------
+
+- Makefile fix
+
+------------------------------------------------------------------------------
+
+libtar 1.1.b4 - 10/29/00
+-------------
+
+- more directory reorganization
+- minor Makefile cleanups
+- minor portability fixes
+- added function typecasting to avoid compiler warnings
+
+------------------------------------------------------------------------------
+
+libtar 1.1.b3 - 10/26/00
+-------------
+
+- updated aclocal.m4
+- updated README
+- updated manpages
+- minor directory structure changes because of CVS setup
+
+------------------------------------------------------------------------------
+
+libtar 1.1.b2 - 10/5/00
+-------------
+
+- added --without-zlib configure option
+- minor portability fixes
+
+------------------------------------------------------------------------------
+
+libtar 1.1.b1 - 8/21/00
+-------------
+
+- API changes:
+  - implemented tar_fdopen()
+  - implemented tar_fd()
+  - added TAR **t argument to tar_open() instead of returning dynamic memory
+  - if TAR_NOOVERWRITE is set in options and O_CREAT is set in oflags,
+    tar_open() automatically sets O_EXCL as well
+
+------------------------------------------------------------------------------
+
+libtar 1.1.b0 - 7/10/00
+-------------
+
+- API changes:
+  - replaced internal table of tar file types with a tartype_t passed to
+    tar_open() by the caller
+    (allows file access methods to be defined dynamically)
+  - fixed tar_append_tree() to grok normal files as well as directories
+  - replaced mk_dirs_for_file() with mkdirhier() from epkg
+  - replaced strtok_r() with strsep()
+  - updated list/hash code to new interface
+
+- autoconf changes:
+  - added aclocal.m4 to clean up configure.in
+  - minor portability fixes related to lib/fnmatch.c
+
+- fixed a bug in tar_open() where the result of open() was being
+  checked for 0 instead of -1 to detect error
+
+- updated libtar driver program to handle both .tar.gz and ordinary .tar
+  via the -z option
 

@@ -10,17 +10,18 @@
 **  University of Illinois at Urbana-Champaign
 */
 
-#define DEBUG
 #include <internal.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/param.h>
 #include <dirent.h>
 #include <errno.h>
-#include <stdlib.h>
+
 #ifdef STDC_HEADERS
 # include <string.h>
 #endif
+
 
 int
 tar_extract_glob(TAR *t, char *globname, char *prefix)
@@ -44,7 +45,7 @@ tar_extract_glob(TAR *t, char *globname, char *prefix)
 			snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
 		else
 			strlcpy(buf, filename, sizeof(buf));
-		if (tar_extract_file(t, filename, prefix, &fd) != 0)
+		if (tar_extract_file(t, buf, prefix, &fd) != 0)
 			return -1;
 	}
 
@@ -58,11 +59,12 @@ tar_extract_all(TAR *t, char *prefix, const int *progress_fd)
 	char *filename;
 	char buf[MAXPATHLEN];
 	int i;
-	printf("prefix: %s\n", prefix);
+
 #ifdef DEBUG
 	printf("==> tar_extract_all(TAR *t, \"%s\")\n",
 	       (prefix ? prefix : "(null)"));
 #endif
+
 	while ((i = th_read(t)) == 0)
 	{
 #ifdef DEBUG
@@ -79,10 +81,10 @@ tar_extract_all(TAR *t, char *prefix, const int *progress_fd)
 		printf("    tar_extract_all(): calling tar_extract_file(t, "
 		       "\"%s\")\n", buf);
 #endif
-		printf("item name: '%s'\n", filename);
 		if (tar_extract_file(t, buf, prefix, progress_fd) != 0)
 			return -1;
 	}
+
 	return (i == 1 ? 0 : -1);
 }
 
@@ -90,15 +92,21 @@ tar_extract_all(TAR *t, char *prefix, const int *progress_fd)
 int
 tar_append_tree(TAR *t, char *realdir, char *savedir, char *exclude)
 {
+	int i, skip = 0, n_spaces = 0;
+	char temp[1024];
+	char **excluded = NULL;
+	char *p = NULL;
+	char realpath[MAXPATHLEN];
+	char savepath[MAXPATHLEN];
+	struct dirent *dent;
+	DIR *dp;
+	struct stat s;
+
 #ifdef DEBUG
-	printf("==> tar_append_tree(0x%lx, \"%s\", \"%s\")\n",
-	       (long unsigned int)t, realdir, (savedir ? savedir : "[NULL]"));
+	printf("==> tar_append_tree(\"%s\", \"%s\")\n",
+	       realdir, (savedir ? savedir : "[NULL]"));
 #endif
 
-	char temp[1024];
-	int skip = 0, i, n_spaces = 0;
-	char ** excluded = NULL;
-	char * p = NULL;
 	if (exclude) {
 		strcpy(temp, exclude);
 		p = strtok(exclude, " ");
@@ -116,7 +124,7 @@ tar_append_tree(TAR *t, char *realdir, char *savedir, char *exclude)
 		excluded[n_spaces] = 0;
 		for (i = 0; i < (n_spaces+1); i++) {
 			if (realdir == excluded[i]) {
-				printf("    excluding '%s'\n", excluded[i]);
+				printf("  ==> excluding '%s'\n", excluded[i]);
 				skip = 1;
 				break;
 			}
@@ -127,12 +135,6 @@ tar_append_tree(TAR *t, char *realdir, char *savedir, char *exclude)
 			return -1;
 	}
 
-	char realpath[MAXPATHLEN];
-	char savepath[MAXPATHLEN];
-	struct dirent *dent;
-	DIR *dp;
-	struct stat s;
-
 	dp = opendir(realdir);
 	if (dp == NULL) {
 		if (errno == ENOTDIR)
@@ -140,19 +142,18 @@ tar_append_tree(TAR *t, char *realdir, char *savedir, char *exclude)
 		return -1;
 	}
 	while ((dent = readdir(dp)) != NULL) {
-		if(strcmp(dent->d_name, ".") == 0
-		|| strcmp(dent->d_name, "..") == 0)
+		if(strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0)
 			continue;
 
 		if (exclude) {
 			int omit = 0;
 			for (i = 0; i < (n_spaces+1); i++) {
 				if (excluded[i] != NULL) {
-						if (strcmp(dent->d_name, excluded[i]) == 0 || strcmp(excluded[i], realdir) == 0) {
-							printf("    excluding '%s'\n", excluded[i]);
-							omit = 1;
-							break;
-						}
+					if (strcmp(dent->d_name, excluded[i]) == 0 || strcmp(excluded[i], realdir) == 0) {
+						printf("  ==> excluding '%s'\n", excluded[i]);
+						omit = 1;
+						break;
+					}
 				}
 			}
 			if (omit)

@@ -126,7 +126,6 @@ th_crc_calc(TAR *t)
 	return sum;
 }
 
-
 /* calculate a signed header checksum */
 int
 th_signed_crc_calc(TAR *t)
@@ -141,25 +140,73 @@ th_signed_crc_calc(TAR *t)
 	return sum;
 }
 
-
 /* string-octal to integer conversion */
-int
-oct_to_int(char *oct)
+int64_t
+oct_to_int(char *oct, size_t octlen)
 {
-	int i;
+	long long int val;
+	char tmp[octlen + 1];
 
-	sscanf(oct, "%o", &i);
-
-	return i;
+	memcpy(tmp, oct, octlen);
+	tmp[octlen] = '\0';
+	return sscanf(oct, "%llo", &val) == 1 ? (int64_t)val : 0;
 }
 
 
-/* integer to string-octal conversion, no NULL */
+/* string-octal or binary to integer conversion */
+int64_t oct_to_int_ex(char *oct, size_t octlen)
+{
+	if (*(unsigned char *)oct & 0x80) {
+		int64_t val = 0;
+		char tmp[octlen];
+		unsigned char *p;
+		unsigned int i;
+
+		memcpy(tmp, oct, octlen);
+		*tmp &= 0x7f;
+		p = (unsigned char *)tmp + octlen - sizeof(val);
+		for (i = 0; i < sizeof(val); ++i) {
+			val <<= 8;
+			val |= *(p++);
+		}
+		return val;
+	}
+	return oct_to_int(oct, octlen);
+}
+
+
+/* integer to NULL-terminated string-octal conversion */
+void int_to_oct(int64_t num, char *oct, size_t octlen)
+{
+	char tmp[sizeof(num)*3 + 1];
+	int olen;
+
+	olen = sprintf(tmp, "%0*llo", (int)octlen, (long long)num);
+	memcpy(oct, tmp + olen - octlen + 1, octlen);
+}
+
+
+/* integer to string-octal conversion, or binary as necessary */
 void
-int_to_oct_nonull(int num, char *oct, size_t octlen)
+int_to_oct_ex(int64_t num, char *oct, size_t octlen)
 {
-	snprintf(oct, octlen, "%*lo", octlen - 1, (unsigned long)num);
-	oct[octlen - 1] = ' ';
+	if (num < 0 || num >= ((int64_t)1 << ((octlen - 1) * 3))) {
+		unsigned char *p;
+		unsigned int i;
+
+		memset(oct, 0, octlen);
+		p = (unsigned char *)oct + octlen;
+		for (i = 0; i < sizeof(num); ++i) {
+			*(--p) = num & 0xff;
+			num >>= 8;
+		}
+		if (num < 0) {
+			for (; i < octlen; ++i) {
+				*(--p) = 0xff;
+			}
+		}
+		*(unsigned char *)oct |= 0x80;
+		return;
+	}
+	int_to_oct(num, oct, octlen);
 }
-
-

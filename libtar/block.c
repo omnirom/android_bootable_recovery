@@ -11,7 +11,6 @@
 */
 
 #include <internal.h>
-#include <stdio.h>
 #include <errno.h>
 
 #ifdef STDC_HEADERS
@@ -27,6 +26,17 @@
 #define SELINUX_TAG_LEN 21
 
 /* read a header block */
+/* FIXME: the return value of this function should match the return value
+	  of tar_block_read(), which is a macro which references a prototype
+	  that returns a ssize_t.  So far, this is safe, since tar_block_read()
+	  only ever reads 512 (T_BLOCKSIZE) bytes at a time, so any difference
+	  in size of ssize_t and int is of negligible risk.  BUT, if
+	  T_BLOCKSIZE ever changes, or ever becomes a variable parameter
+	  controllable by the user, all the code that calls it,
+	  including this function and all code that calls it, should be
+	  fixed for security reasons.
+	  Thanks to Chris Palmer for the critique.
+*/
 int
 th_read_internal(TAR *t)
 {
@@ -93,8 +103,8 @@ th_read_internal(TAR *t)
 int
 th_read(TAR *t)
 {
-	int i, j;
-	size_t sz;
+	int i;
+	size_t sz, j, blocks;
 	char *ptr;
 
 #ifdef DEBUG
@@ -126,21 +136,26 @@ th_read(TAR *t)
 	if (TH_ISLONGLINK(t))
 	{
 		sz = th_get_size(t);
-		j = (sz / T_BLOCKSIZE) + (sz % T_BLOCKSIZE ? 1 : 0);
+		blocks = (sz / T_BLOCKSIZE) + (sz % T_BLOCKSIZE ? 1 : 0);
+		if (blocks > ((size_t)-1 / T_BLOCKSIZE))
+		{
+			errno = E2BIG;
+			return -1;
+		}
 #ifdef DEBUG
 		printf("    th_read(): GNU long linkname detected "
-		       "(%ld bytes, %d blocks)\n", sz, j);
+		       "(%ld bytes, %d blocks)\n", sz, blocks);
 #endif
-		t->th_buf.gnu_longlink = (char *)malloc(j * T_BLOCKSIZE);
+		t->th_buf.gnu_longlink = (char *)malloc(blocks * T_BLOCKSIZE);
 		if (t->th_buf.gnu_longlink == NULL)
 			return -1;
 
-		for (ptr = t->th_buf.gnu_longlink; j > 0;
-		     j--, ptr += T_BLOCKSIZE)
+		for (j = 0, ptr = t->th_buf.gnu_longlink; j < blocks;
+		     j++, ptr += T_BLOCKSIZE)
 		{
 #ifdef DEBUG
 			printf("    th_read(): reading long linkname "
-			       "(%d blocks left, ptr == %ld)\n", j, ptr);
+			       "(%d blocks left, ptr == %ld)\n", blocks-j, ptr);
 #endif
 			i = tar_block_read(t, ptr);
 			if (i != T_BLOCKSIZE)
@@ -171,21 +186,26 @@ th_read(TAR *t)
 	if (TH_ISLONGNAME(t))
 	{
 		sz = th_get_size(t);
-		j = (sz / T_BLOCKSIZE) + (sz % T_BLOCKSIZE ? 1 : 0);
+		blocks = (sz / T_BLOCKSIZE) + (sz % T_BLOCKSIZE ? 1 : 0);
+		if (blocks > ((size_t)-1 / T_BLOCKSIZE))
+		{
+			errno = E2BIG;
+			return -1;
+		}
 #ifdef DEBUG
 		printf("    th_read(): GNU long filename detected "
-		       "(%ld bytes, %d blocks)\n", sz, j);
+		       "(%ld bytes, %d blocks)\n", sz, blocks);
 #endif
-		t->th_buf.gnu_longname = (char *)malloc(j * T_BLOCKSIZE);
+		t->th_buf.gnu_longname = (char *)malloc(blocks * T_BLOCKSIZE);
 		if (t->th_buf.gnu_longname == NULL)
 			return -1;
 
-		for (ptr = t->th_buf.gnu_longname; j > 0;
-		     j--, ptr += T_BLOCKSIZE)
+		for (j = 0, ptr = t->th_buf.gnu_longname; j < blocks;
+		     j++, ptr += T_BLOCKSIZE)
 		{
 #ifdef DEBUG
 			printf("    th_read(): reading long filename "
-			       "(%d blocks left, ptr == %ld)\n", j, ptr);
+			       "(%d blocks left, ptr == %ld)\n", blocks-j, ptr);
 #endif
 			i = tar_block_read(t, ptr);
 			if (i != T_BLOCKSIZE)
@@ -263,41 +283,6 @@ th_read(TAR *t)
 	}
 #endif
 
-#if 0
-	/*
-	** work-around for old archive files with broken typeflag fields
-	** NOTE: I fixed this in the TH_IS*() macros instead
-	*/
-
-	/*
-	** (directories are signified with a trailing '/')
-	*/
-	if (t->th_buf.typeflag == AREGTYPE
-	    && t->th_buf.name[strlen(t->th_buf.name) - 1] == '/')
-		t->th_buf.typeflag = DIRTYPE;
-
-	/*
-	** fallback to using mode bits
-	*/
-	if (t->th_buf.typeflag == AREGTYPE)
-	{
-		mode = (mode_t)oct_to_int(t->th_buf.mode);
-
-		if (S_ISREG(mode))
-			t->th_buf.typeflag = REGTYPE;
-		else if (S_ISDIR(mode))
-			t->th_buf.typeflag = DIRTYPE;
-		else if (S_ISFIFO(mode))
-			t->th_buf.typeflag = FIFOTYPE;
-		else if (S_ISCHR(mode))
-			t->th_buf.typeflag = CHRTYPE;
-		else if (S_ISBLK(mode))
-			t->th_buf.typeflag = BLKTYPE;
-		else if (S_ISLNK(mode))
-			t->th_buf.typeflag = SYMTYPE;
-	}
-#endif
-
 	return 0;
 }
 
@@ -308,7 +293,7 @@ th_write(TAR *t)
 {
 	int i, j;
 	char type2;
-	size_t sz, sz2;
+	uint64_t sz, sz2;
 	char *ptr;
 	char buf[T_BLOCKSIZE];
 
@@ -457,7 +442,7 @@ th_write(TAR *t)
 		}
 
 		memset(buf, 0, T_BLOCKSIZE);
-		snprintf(buf, T_BLOCKSIZE, "%d "SELINUX_TAG"%s\n", sz, t->th_buf.selinux_context);
+		snprintf(buf, T_BLOCKSIZE, "%d "SELINUX_TAG"%s\n", (int)sz, t->th_buf.selinux_context);
 		i = tar_block_write(t, &buf);
 		if (i != T_BLOCKSIZE)
 		{

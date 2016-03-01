@@ -13,6 +13,7 @@
 #include <internal.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
@@ -83,14 +84,14 @@ th_print_long_ls(TAR *t)
 
 	uid = th_get_uid(t);
 	pw = getpwuid(uid);
-	if (pw == NULL)
+	if ((t->options & TAR_USE_NUMERIC_ID) || pw == NULL)
 		snprintf(username, sizeof(username), "%d", uid);
 	else
 		strlcpy(username, pw->pw_name, sizeof(username));
 
 	gid = th_get_gid(t);
 	gr = getgrgid(gid);
-	if (gr == NULL)
+	if ((t->options & TAR_USE_NUMERIC_ID) || gr == NULL)
 		snprintf(groupname, sizeof(groupname), "%d", gid);
 	else
 		strlcpy(groupname, gr->gr_name, sizeof(groupname));
@@ -99,7 +100,7 @@ th_print_long_ls(TAR *t)
 	printf("%.10s %-8.8s %-8.8s ", modestring, username, groupname);
 
 	if (TH_ISCHR(t) || TH_ISBLK(t))
-		printf(" %3d, %3d ", th_get_devmajor(t), th_get_devminor(t));
+		printf(" %3d, %3d ", (int)th_get_devmajor(t), (int)th_get_devminor(t));
 	else
 		printf("%9ld ", (long)th_get_size(t));
 
