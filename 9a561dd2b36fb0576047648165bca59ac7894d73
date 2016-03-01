@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_6f656b40",
+        "filename": "libtar/wrapper.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-01T14:55:13Z",
+      "side": 0,
+      "message": "Looks like we\u0027re losing the exclude functionality here. Need to determine if we still need this.",
+      "revId": "9a561dd2b36fb0576047648165bca59ac7894d73",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
