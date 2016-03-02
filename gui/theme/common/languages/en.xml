@@ -82,6 +82,7 @@
 		<string name="file">File:</string>
 		<string name="zip_sig_chk">Zip signature verification</string>
 		<string name="inject_twrp_chk">Inject TWRP after install</string>
+		<string name="install_reboot_chk">Reboot after installation is complete</string>
 		<string name="options_hdr">Options</string>
 		<string name="confirm_flash_hdr">Confirm Flash</string>
 		<string name="zip_queue">Queue:</string>
@@ -666,5 +667,6 @@
 		<string name="change_fs_err">Error changing file system.</string>
 		<string name="theme_ver_err">Custom theme version does not match TWRP version. Using stock theme.</string>
 		<string name="up_a_level">(Up A Level)</string>
+		<string name="install_reboot">Rebooting in 5 seconds</string>
 	</resources>
 </language>
