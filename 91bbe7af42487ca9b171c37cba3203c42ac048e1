@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_32634add",
+        "filename": "libtar/wrapper.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-02T16:22:33Z",
+      "side": 1,
+      "message": "We can probably safely dump the exclude code either during this patch set or in a separate patch set. We\u0027re not using it anymore. It would probably be best to bring us back to mainline.",
+      "revId": "91bbe7af42487ca9b171c37cba3203c42ac048e1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
