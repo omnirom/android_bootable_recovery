@@ -996,7 +996,7 @@ void GUIAction::reinject_after_flash()
 
 int GUIAction::flash(std::string arg)
 {
-	int i, ret_val = 0, wipe_cache = 0;
+	int i, ret_val = 0, wipe_cache = 0, install_reboot = 0;
 	// We're going to jump to this page first, like a loading page
 	gui_changePage(arg);
 	for (i=0; i<zip_queue_index; i++) {
@@ -1028,6 +1028,12 @@ int GUIAction::flash(std::string arg)
 	PartitionManager.Update_System_Details();
 	operation_end(ret_val);
 	DataManager::SetValue(TW_ZIP_QUEUE_COUNT, zip_queue_index);
+	DataManager::GetValue("tw_install_reboot", install_reboot);
+	if (install_reboot) {
+		gui_msg("install_reboot=Rebooting in 5 seconds");
+		usleep(5000000);
+		TWFunc::tw_reboot(rb_system);
+	}
 	return 0;
 }
 
