@@ -385,9 +385,15 @@
 				<data variable="tw_signed_zip_verify"/>
 			</checkbox>
 
+                        <checkbox>
+                                <placement x="%indent%" y="%row13a_y%" />
+                                <text>{@tw_install_reboot=Reboot after installation is complete}</text>
+                                <data variable="tw_install_reboot" />
+                        </checkbox>
+
 			<checkbox>
 				<condition var1="tw_has_injecttwrp" var2="1"/>
-				<placement x="%indent%" y="%row13_y%"/>
+				<placement x="%indent%" y="%row15_y%"/>
 				<text>{@inject_twrp_chk=Inject TWRP after install}</text>
 				<data variable="tw_inject_after_zip"/>
 			</checkbox>
