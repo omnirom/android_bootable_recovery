@@ -1026,7 +1026,14 @@ int GUIAction::flash(std::string arg)
 
 	reinject_after_flash();
 	PartitionManager.Update_System_Details();
+	if (DataManager::GetIntValue("tw_install_reboot") > 0 && ret_val == 0) {
+		gui_msg("install_reboot=Rebooting in 5 seconds");
+		usleep(5000000);
+		TWFunc::tw_reboot(rb_system);
+		usleep(5000000); // another sleep while we wait for the reboot to occur
+	}
 	operation_end(ret_val);
+	// This needs to be after the operation_end call so we change pages before we change variables that we display on the screen
 	DataManager::SetValue(TW_ZIP_QUEUE_COUNT, zip_queue_index);
 	return 0;
 }
