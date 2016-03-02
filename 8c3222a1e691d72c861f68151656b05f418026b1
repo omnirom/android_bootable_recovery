@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_32aeaae5",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2174,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-02T18:59:08Z",
+      "side": 1,
+      "message": "So first we remount, then we mount? Wouldn\u0027t it be cleaner to introduce a Mount_Writable() method instead of first doing remount (with the hidden side effect of mounting if it wasn\u0027t already mounted) and then mount (with the hidden side effect of doing nothing if it was already mounted)?",
+      "revId": "8c3222a1e691d72c861f68151656b05f418026b1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
