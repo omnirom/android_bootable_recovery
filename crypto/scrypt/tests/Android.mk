@@ -8,9 +8,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_SRC_FILES:= \
     scrypt_test.cpp
 
-LOCAL_C_INCLUDES := \
-    external/gtest/include \
-    external/scrypt/lib/crypto
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../lib/crypto
 
 LOCAL_SHARED_LIBRARIES := \
     libcrypto
