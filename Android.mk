@@ -14,18 +14,20 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# libfusesideload (static library)
+# ===============================
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := fuse_sideload.cpp
 LOCAL_CLANG := true
 LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
-
 LOCAL_MODULE := libfusesideload
-
 LOCAL_STATIC_LIBRARIES := libcutils libc libmincrypt
 include $(BUILD_STATIC_LIBRARY)
 
+# recovery (static executable)
+# ===============================
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
@@ -102,7 +104,8 @@ endif
 
 include $(BUILD_EXECUTABLE)
 
-# All the APIs for testing
+# libverifier (static library)
+# ===============================
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
 LOCAL_MODULE := libverifier
