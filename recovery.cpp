@@ -98,6 +98,7 @@ char* locale = NULL;
 char* stage = NULL;
 char* reason = NULL;
 bool modified_flash = false;
+static bool has_cache = false;
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -310,8 +311,8 @@ get_args(int *argc, char ***argv) {
         }
     }
 
-    // --- if that doesn't work, try the command file
-    if (*argc <= 1) {
+    // --- if that doesn't work, try the command file (if we have /cache).
+    if (*argc <= 1 && has_cache) {
         FILE *fp = fopen_path(COMMAND_FILE, "r");
         if (fp != NULL) {
             char *token;
@@ -433,6 +434,11 @@ static void rotate_logs(int max) {
 }
 
 static void copy_logs() {
+    // We can do nothing for now if there's no /cache partition.
+    if (!has_cache) {
+        return;
+    }
+
     // We only rotate and record the log of the current session if there are
     // actual attempts to modify the flash, such as wipes, installs from BCB
     // or menu selections. This is to avoid unnecessary rotation (and
@@ -464,7 +470,7 @@ static void copy_logs() {
 static void
 finish_recovery(const char *send_intent) {
     // By this point, we're ready to return to the main system...
-    if (send_intent != NULL) {
+    if (send_intent != NULL && has_cache) {
         FILE *fp = fopen_path(INTENT_FILE, "w");
         if (fp == NULL) {
             LOGE("Can't open %s\n", INTENT_FILE);
@@ -477,7 +483,7 @@ finish_recovery(const char *send_intent) {
     // Save the locale to cache, so if recovery is next started up
     // without a --locale argument (eg, directly from the bootloader)
     // it will use the last-known locale.
-    if (locale != NULL) {
+    if (locale != NULL && has_cache) {
         LOGI("Saving locale \"%s\"\n", locale);
         FILE* fp = fopen_path(LOCALE_FILE, "w");
         fwrite(locale, 1, strlen(locale), fp);
@@ -494,12 +500,13 @@ finish_recovery(const char *send_intent) {
     set_bootloader_message(&boot);
 
     // Remove the command file, so recovery won't repeat indefinitely.
-    if (ensure_path_mounted(COMMAND_FILE) != 0 ||
-        (unlink(COMMAND_FILE) && errno != ENOENT)) {
-        LOGW("Can't unlink %s\n", COMMAND_FILE);
+    if (has_cache) {
+        if (ensure_path_mounted(COMMAND_FILE) != 0 || (unlink(COMMAND_FILE) && errno != ENOENT)) {
+            LOGW("Can't unlink %s\n", COMMAND_FILE);
+        }
+        ensure_path_unmounted(CACHE_ROOT);
     }
 
-    ensure_path_unmounted(CACHE_ROOT);
     sync();  // For good measure.
 }
 
@@ -768,7 +775,7 @@ static bool wipe_data(int should_confirm, Device* device) {
     bool success =
         device->PreWipeData() &&
         erase_volume("/data") &&
-        erase_volume("/cache") &&
+        (has_cache ? erase_volume("/cache") : true) &&
         device->PostWipeData();
     ui->Print("Data wipe %s.\n", success ? "complete" : "failed");
     return success;
@@ -776,6 +783,11 @@ static bool wipe_data(int should_confirm, Device* device) {
 
 // Return true on success.
 static bool wipe_cache(bool should_confirm, Device* device) {
+    if (!has_cache) {
+        ui->Print("No /cache partition found.\n");
+        return false;
+    }
+
     if (should_confirm && !yes_no(device, "Wipe cache?", "  THIS CAN NOT BE UNDONE!")) {
         return false;
     }
@@ -789,6 +801,11 @@ static bool wipe_cache(bool should_confirm, Device* device) {
 }
 
 static void choose_recovery_file(Device* device) {
+    if (!has_cache) {
+        ui->Print("No /cache partition found.\n");
+        return;
+    }
+
     // "Back" + KEEP_LOG_COUNT * 2 + terminating nullptr entry
     char* entries[1 + KEEP_LOG_COUNT * 2 + 1];
     memset(entries, 0, sizeof(entries));
@@ -1142,6 +1159,8 @@ int main(int argc, char **argv) {
     printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
 
     load_volume_table();
+    has_cache = volume_for_path(CACHE_ROOT) != nullptr;
+
     get_args(&argc, &argv);
 
     const char *send_intent = NULL;
@@ -1182,7 +1201,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (locale == NULL) {
+    if (locale == nullptr && has_cache) {
         load_locale_from_cache();
     }
     printf("locale is [%s]\n", locale);
