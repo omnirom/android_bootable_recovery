@@ -22,7 +22,7 @@
 #include <memory>
 #include <vector>
 
-#include "applypatch.h"
+#include "applypatch/applypatch.h"
 #include "edify/expr.h"
 #include "openssl/sha.h"
 

@@ -14,29 +14,34 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# otafault (static library)
+# ===============================
 include $(CLEAR_VARS)
 
 otafault_static_libs := \
     libminzip \
-    libz \
     libselinux \
+    libz
 
 LOCAL_SRC_FILES := config.cpp ota_io.cpp
-LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libotafault
 LOCAL_CLANG := true
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
-LOCAL_WHOLE_STATIC_LIBRARIES := $(otafault_static_libs)
+LOCAL_STATIC_LIBRARIES := $(otafault_static_libs)
 
 include $(BUILD_STATIC_LIBRARY)
 
+# otafault_test (static executable)
+# ===============================
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := config.cpp ota_io.cpp test.cpp
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := otafault_test
-LOCAL_STATIC_LIBRARIES := $(otafault_static_libs)
+LOCAL_STATIC_LIBRARIES := \
+    libotafault \
+    $(otafault_static_libs)
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
