@@ -39,6 +39,53 @@
 // Recovery can take this block map file and retrieve the underlying
 // file data to use as an update package.
 
+/**
+ * In addition to the uncrypt work, uncrypt also takes care of setting and
+ * clearing the bootloader control block (BCB) at /misc partition.
+ *
+ * uncrypt is triggered as init services on demand. It uses socket to
+ * communicate with its caller (i.e. system_server). The socket is managed by
+ * init (i.e. created prior to the service starts, and destroyed when uncrypt
+ * exits).
+ *
+ * Below is the uncrypt protocol.
+ *
+ *    a. caller                 b. init                    c. uncrypt
+ * ---------------            ------------               --------------
+ *  a1. ctl.start:
+ *    setup-bcb /
+ *    clear-bcb /
+ *    uncrypt
+ *
+ *                         b2. create socket at
+ *                           /dev/socket/uncrypt
+ *
+ *                                                   c3. listen and accept
+ *
+ *  a4. send a 4-byte int
+ *    (message length)
+ *                                                   c5. receive message length
+ *  a6. send message
+ *                                                   c7. receive message
+ *                                                   c8. <do the work; may send
+ *                                                      the progress>
+ *  a9. <may handle progress>
+ *                                                   c10. <upon finishing>
+ *                                                     send "100" or "-1"
+ *
+ *  a11. receive status code
+ *  a12. send a 4-byte int to
+ *    ack the receive of the
+ *    final status code
+ *                                                   c13. receive and exit
+ *
+ *                          b14. destroy the socket
+ *
+ * Note that a12 and c13 are necessary to ensure a11 happens before the socket
+ * gets destroyed in b14.
+ */
+
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -49,6 +96,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -63,6 +111,7 @@
 #include <android-base/strings.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
+#include <cutils/sockets.h>
 #include <fs_mgr.h>
 
 #define LOG_TAG "uncrypt"
@@ -73,12 +122,21 @@
 
 #define WINDOW_SIZE 5
 
+// uncrypt provides three services: SETUP_BCB, CLEAR_BCB and UNCRYPT.
+//
+// SETUP_BCB and CLEAR_BCB services use socket communication and do not rely
+// on /cache partitions. They will handle requests to reboot into recovery
+// (for applying updates for non-A/B devices, or factory resets for all
+// devices).
+//
+// UNCRYPT service still needs files on /cache partition (UNCRYPT_PATH_FILE
+// and CACHE_BLOCK_MAP). It will be working (and needed) only for non-A/B
+// devices, on which /cache partitions always exist.
 static const std::string CACHE_BLOCK_MAP = "/cache/recovery/block.map";
-static const std::string COMMAND_FILE = "/cache/recovery/command";
-static const std::string STATUS_FILE = "/cache/recovery/uncrypt_status";
 static const std::string UNCRYPT_PATH_FILE = "/cache/recovery/uncrypt_file";
+static const std::string UNCRYPT_SOCKET = "uncrypt";
 
-static struct fstab* fstab = NULL;
+static struct fstab* fstab = nullptr;
 
 static int write_at_offset(unsigned char* buffer, size_t size, int wfd, off64_t offset) {
     if (TEMP_FAILURE_RETRY(lseek64(wfd, offset, SEEK_SET)) == -1) {
@@ -152,6 +210,11 @@ static const char* find_block_device(const char* path, bool* encryptable, bool* 
     return NULL;
 }
 
+static bool write_status_to_socket(int status, int socket) {
+    int status_out = htonl(status);
+    return android::base::WriteFully(socket, &status_out, sizeof(int));
+}
+
 // Parse uncrypt_file to find the update package name.
 static bool find_uncrypt_package(const std::string& uncrypt_path_file, std::string* package_name) {
     CHECK(package_name != nullptr);
@@ -167,7 +230,7 @@ static bool find_uncrypt_package(const std::string& uncrypt_path_file, std::stri
 }
 
 static int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
-                             bool encrypted, int status_fd) {
+                             bool encrypted, int socket) {
     std::string err;
     if (!android::base::RemoveFileIfExists(map_file, &err)) {
         ALOGE("failed to remove the existing map file %s: %s", map_file, err.c_str());
@@ -180,9 +243,9 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         return -1;
     }
 
-    // Make sure we can write to the status_file.
-    if (!android::base::WriteStringToFd("0\n", status_fd)) {
-        ALOGE("failed to update \"%s\"\n", STATUS_FILE.c_str());
+    // Make sure we can write to the socket.
+    if (!write_status_to_socket(0, socket)) {
+        ALOGE("failed to write to socket %d\n", socket);
         return -1;
     }
 
@@ -234,8 +297,8 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         // Update the status file, progress must be between [0, 99].
         int progress = static_cast<int>(100 * (double(pos) / double(sb.st_size)));
         if (progress > last_progress) {
-          last_progress = progress;
-          android::base::WriteStringToFd(std::to_string(progress) + "\n", status_fd);
+            last_progress = progress;
+            write_status_to_socket(progress, socket);
         }
 
         if ((tail+1) % WINDOW_SIZE == head) {
@@ -352,15 +415,12 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 }
 
 static std::string get_misc_blk_device() {
-    struct fstab* fstab = read_fstab();
     if (fstab == nullptr) {
         return "";
     }
-    for (int i = 0; i < fstab->num_entries; ++i) {
-        fstab_rec* v = &fstab->recs[i];
-        if (v->mount_point != nullptr && strcmp(v->mount_point, "/misc") == 0) {
-            return v->blk_device;
-        }
+    struct fstab_rec* rec = fs_mgr_get_entry_for_mount_point(fstab, "/misc");
+    if (rec != nullptr) {
+        return rec->blk_device;
     }
     return "";
 }
@@ -406,8 +466,7 @@ static int write_bootloader_message(const bootloader_message* in) {
     return 0;
 }
 
-static int uncrypt(const char* input_path, const char* map_file, int status_fd) {
-
+static int uncrypt(const char* input_path, const char* map_file, const int socket) {
     ALOGI("update package is \"%s\"", input_path);
 
     // Turn the name of the file we're supposed to convert into an
@@ -415,10 +474,6 @@ static int uncrypt(const char* input_path, const char* map_file, int status_fd) 
     char path[PATH_MAX+1];
     if (realpath(input_path, path) == NULL) {
         ALOGE("failed to convert \"%s\" to absolute path: %s", input_path, strerror(errno));
-        return 1;
-    }
-
-    if (read_fstab() == NULL) {
         return 1;
     }
 
@@ -445,7 +500,7 @@ static int uncrypt(const char* input_path, const char* map_file, int status_fd) 
     // and /sdcard we leave the file alone.
     if (strncmp(path, "/data/", 6) == 0) {
         ALOGI("writing block map %s", map_file);
-        if (produce_block_map(path, map_file, blk_dev, encrypted, status_fd) != 0) {
+        if (produce_block_map(path, map_file, blk_dev, encrypted, socket) != 0) {
             return 1;
         }
     }
@@ -453,71 +508,66 @@ static int uncrypt(const char* input_path, const char* map_file, int status_fd) 
     return 0;
 }
 
-static int uncrypt_wrapper(const char* input_path, const char* map_file,
-                           const std::string& status_file) {
-    // The pipe has been created by the system server.
-    unique_fd status_fd(open(status_file.c_str(), O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR));
-    if (!status_fd) {
-        ALOGE("failed to open pipe \"%s\": %s", status_file.c_str(), strerror(errno));
-        return 1;
-    }
-
+static bool uncrypt_wrapper(const char* input_path, const char* map_file, const int socket) {
     std::string package;
     if (input_path == nullptr) {
         if (!find_uncrypt_package(UNCRYPT_PATH_FILE, &package)) {
-            android::base::WriteStringToFd("-1\n", status_fd.get());
-            return 1;
+            write_status_to_socket(-1, socket);
+            return false;
         }
         input_path = package.c_str();
     }
     CHECK(map_file != nullptr);
-    int status = uncrypt(input_path, map_file, status_fd.get());
+    int status = uncrypt(input_path, map_file, socket);
     if (status != 0) {
-        android::base::WriteStringToFd("-1\n", status_fd.get());
-        return 1;
+        write_status_to_socket(-1, socket);
+        return false;
     }
-    android::base::WriteStringToFd("100\n", status_fd.get());
-    return 0;
+    write_status_to_socket(100, socket);
+    return true;
 }
 
-static int clear_bcb(const std::string& status_file) {
-    unique_fd status_fd(open(status_file.c_str(), O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR));
-    if (!status_fd) {
-        ALOGE("failed to open pipe \"%s\": %s", status_file.c_str(), strerror(errno));
-        return 1;
-    }
+static bool clear_bcb(const int socket) {
     bootloader_message boot = {};
     if (write_bootloader_message(&boot) != 0) {
-        android::base::WriteStringToFd("-1\n", status_fd.get());
-        return 1;
+        write_status_to_socket(-1, socket);
+        return false;
     }
-    android::base::WriteStringToFd("100\n", status_fd.get());
-    return 0;
+    write_status_to_socket(100, socket);
+    return true;
 }
 
-static int setup_bcb(const std::string& command_file, const std::string& status_file) {
-    unique_fd status_fd(open(status_file.c_str(), O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR));
-    if (!status_fd) {
-        ALOGE("failed to open pipe \"%s\": %s", status_file.c_str(), strerror(errno));
-        return 1;
+static bool setup_bcb(const int socket) {
+    // c5. receive message length
+    int length;
+    if (!android::base::ReadFully(socket, &length, 4)) {
+        ALOGE("failed to read the length: %s", strerror(errno));
+        return false;
     }
+    length = ntohl(length);
+
+    // c7. receive message
     std::string content;
-    if (!android::base::ReadFileToString(command_file, &content)) {
-        ALOGE("failed to read \"%s\": %s", command_file.c_str(), strerror(errno));
-        android::base::WriteStringToFd("-1\n", status_fd.get());
-        return 1;
+    content.resize(length);
+    if (!android::base::ReadFully(socket, &content[0], length)) {
+        ALOGE("failed to read the length: %s", strerror(errno));
+        return false;
     }
+    ALOGI("  received command: [%s] (%zu)", content.c_str(), content.size());
+
+    // c8. setup the bcb command
     bootloader_message boot = {};
     strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
     strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
     strlcat(boot.recovery, content.c_str(), sizeof(boot.recovery));
     if (write_bootloader_message(&boot) != 0) {
         ALOGE("failed to set bootloader message");
-        android::base::WriteStringToFd("-1\n", status_fd.get());
-        return 1;
+        write_status_to_socket(-1, socket);
+        return false;
     }
-    android::base::WriteStringToFd("100\n", status_fd.get());
-    return 0;
+    // c10. send "100" status
+    write_status_to_socket(100, socket);
+    return true;
 }
 
 static int read_bcb() {
@@ -540,23 +590,75 @@ static void usage(const char* exename) {
 }
 
 int main(int argc, char** argv) {
-    if (argc == 2) {
-        if (strcmp(argv[1], "--clear-bcb") == 0) {
-            return clear_bcb(STATUS_FILE);
-        } else if (strcmp(argv[1], "--setup-bcb") == 0) {
-            return setup_bcb(COMMAND_FILE, STATUS_FILE);
-        } else if (strcmp(argv[1], "--read-bcb") == 0) {
-            return read_bcb();
-        }
-    } else if (argc == 1 || argc == 3) {
-        const char* input_path = nullptr;
-        const char* map_file = CACHE_BLOCK_MAP.c_str();
-        if (argc == 3) {
-            input_path = argv[1];
-            map_file = argv[2];
-        }
-        return uncrypt_wrapper(input_path, map_file, STATUS_FILE);
+    enum { UNCRYPT, SETUP_BCB, CLEAR_BCB } action;
+    const char* input_path = nullptr;
+    const char* map_file = CACHE_BLOCK_MAP.c_str();
+
+    if (argc == 2 && strcmp(argv[1], "--clear-bcb") == 0) {
+        action = CLEAR_BCB;
+    } else if (argc == 2 && strcmp(argv[1], "--setup-bcb") == 0) {
+        action = SETUP_BCB;
+    } else if (argc ==2 && strcmp(argv[1], "--read-bcb") == 0) {
+        return read_bcb();
+    } else if (argc == 1) {
+        action = UNCRYPT;
+    } else if (argc == 3) {
+        input_path = argv[1];
+        map_file = argv[2];
+        action = UNCRYPT;
+    } else {
+        usage(argv[0]);
+        return 2;
     }
-    usage(argv[0]);
-    return 2;
+
+    if ((fstab = read_fstab()) == nullptr) {
+        return 1;
+    }
+
+    // c3. The socket is created by init when starting the service. uncrypt
+    // will use the socket to communicate with its caller.
+    unique_fd service_socket(android_get_control_socket(UNCRYPT_SOCKET.c_str()));
+    if (!service_socket) {
+        ALOGE("failed to open socket \"%s\": %s", UNCRYPT_SOCKET.c_str(), strerror(errno));
+        return 1;
+    }
+    fcntl(service_socket.get(), F_SETFD, FD_CLOEXEC);
+
+    if (listen(service_socket.get(), 1) == -1) {
+        ALOGE("failed to listen on socket %d: %s", service_socket.get(), strerror(errno));
+        return 1;
+    }
+
+    unique_fd socket_fd(accept4(service_socket.get(), nullptr, nullptr, SOCK_CLOEXEC));
+    if (!socket_fd) {
+        ALOGE("failed to accept on socket %d: %s", service_socket.get(), strerror(errno));
+        return 1;
+    }
+
+    bool success = false;
+    switch (action) {
+        case UNCRYPT:
+            success = uncrypt_wrapper(input_path, map_file, socket_fd.get());
+            break;
+        case SETUP_BCB:
+            success = setup_bcb(socket_fd.get());
+            break;
+        case CLEAR_BCB:
+            success = clear_bcb(socket_fd.get());
+            break;
+        default:  // Should never happen.
+            ALOGE("Invalid uncrypt action code: %d", action);
+            return 1;
+    }
+
+    // c13. Read a 4-byte code from the client before uncrypt exits. This is to
+    // ensure the client to receive the last status code before the socket gets
+    // destroyed.
+    int code;
+    if (android::base::ReadFully(socket_fd.get(), &code, 4)) {
+        ALOGI("  received %d, exiting now", code);
+    } else {
+        ALOGE("failed to read the code: %s", strerror(errno));
+    }
+    return success ? 0 : 1;
 }
