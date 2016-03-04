@@ -14,26 +14,50 @@
 
 LOCAL_PATH := $(call my-dir)
 
-updater_src_files := \
-	install.cpp \
-	blockimg.cpp \
-	updater.cpp
-
-#
-# Build a statically-linked binary to include in OTA packages
-#
+# updater (static executable)
+# ===============================
+# Build a statically-linked binary to include in OTA packages.
 include $(CLEAR_VARS)
 
-# Build only in eng, so we don't end up with a copy of this in /system
-# on user builds.  (TODO: find a better way to build device binaries
-# needed only for OTA packages.)
-LOCAL_MODULE_TAGS := eng
+updater_src_files := \
+    install.cpp \
+    blockimg.cpp \
+    updater.cpp
 
 LOCAL_CLANG := true
-
 LOCAL_SRC_FILES := $(updater_src_files)
 
-LOCAL_STATIC_LIBRARIES += libfec libfec_rs libext4_utils_static libsquashfs_utils libcrypto_static
+LOCAL_STATIC_LIBRARIES += \
+    $(TARGET_RECOVERY_UPDATER_LIBS) \
+    $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS) \
+    libfec \
+    libfec_rs \
+    libext4_utils_static \
+    libsquashfs_utils \
+    libcrypto_static \
+    libapplypatch \
+    libbase \
+    libotafault \
+    libedify \
+    libmtdutils \
+    libminzip \
+    libz \
+    libbz \
+    libcutils \
+    liblog \
+    libselinux
+
+tune2fs_static_libraries := \
+    libext2_com_err \
+    libext2_blkid \
+    libext2_quota \
+    libext2_uuid_static \
+    libext2_e2p \
+    libext2fs
+
+LOCAL_STATIC_LIBRARIES += \
+    libtune2fs \
+    $(tune2fs_static_libraries)
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
 LOCAL_CFLAGS += -DUSE_EXT4
@@ -43,20 +67,6 @@ LOCAL_STATIC_LIBRARIES += \
     libsparse_static \
     libz
 endif
-
-LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UPDATER_LIBS) $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS)
-LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libedify libmtdutils libminzip libz
-LOCAL_STATIC_LIBRARIES += libbz
-LOCAL_STATIC_LIBRARIES += libcutils liblog libc
-LOCAL_STATIC_LIBRARIES += libselinux
-tune2fs_static_libraries := \
- libext2_com_err \
- libext2_blkid \
- libext2_quota \
- libext2_uuid_static \
- libext2_e2p \
- libext2fs
-LOCAL_STATIC_LIBRARIES += libtune2fs $(tune2fs_static_libraries)
 
 LOCAL_C_INCLUDES += external/e2fsprogs/misc
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..

@@ -28,7 +28,7 @@
 
 #include "zlib.h"
 #include "openssl/sha.h"
-#include "applypatch.h"
+#include "applypatch/applypatch.h"
 #include "imgdiff.h"
 #include "utils.h"
 
