@@ -1,6 +1,9 @@
 import /init.recovery.${ro.hardware}.rc
 
 on early-init
+    # Set the security context of /postinstall if present.
+    restorecon /postinstall
+
     start ueventd
     start healthd
 
