@@ -14,59 +14,83 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# libapplypatch (static library)
+# ===============================
 include $(CLEAR_VARS)
-
 LOCAL_CLANG := true
-LOCAL_SRC_FILES := applypatch.cpp bspatch.cpp freecache.cpp imgpatch.cpp utils.cpp
+LOCAL_SRC_FILES := \
+    applypatch.cpp \
+    bspatch.cpp \
+    freecache.cpp \
+    imgpatch.cpp \
+    utils.cpp
 LOCAL_MODULE := libapplypatch
 LOCAL_MODULE_TAGS := eng
-LOCAL_C_INCLUDES += bootable/recovery
-LOCAL_STATIC_LIBRARIES += libbase libotafault libmtdutils libcrypto_static libbz libz
-
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/include \
+    bootable/recovery
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+LOCAL_STATIC_LIBRARIES += \
+    libotafault \
+    libmtdutils \
+    libbase \
+    libcrypto_static \
+    libbz \
+    libz
 include $(BUILD_STATIC_LIBRARY)
 
+# libimgpatch (static library)
+# ===============================
 include $(CLEAR_VARS)
-
 LOCAL_CLANG := true
 LOCAL_SRC_FILES := bspatch.cpp imgpatch.cpp utils.cpp
 LOCAL_MODULE := libimgpatch
-LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/include \
+    bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES += libcrypto_static libbz libz
-
 include $(BUILD_STATIC_LIBRARY)
 
-ifeq ($(HOST_OS),linux)
+# libimgpatch (host static library)
+# ===============================
 include $(CLEAR_VARS)
-
 LOCAL_CLANG := true
 LOCAL_SRC_FILES := bspatch.cpp imgpatch.cpp utils.cpp
 LOCAL_MODULE := libimgpatch
-LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_MODULE_HOST_OS := linux
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/include \
+    bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES += libcrypto_static libbz libz
-
 include $(BUILD_HOST_STATIC_LIBRARY)
-endif  # HOST_OS == linux
 
+# applypatch (executable)
+# ===============================
 include $(CLEAR_VARS)
-
 LOCAL_CLANG := true
 LOCAL_SRC_FILES := main.cpp
 LOCAL_MODULE := applypatch
 LOCAL_C_INCLUDES += bootable/recovery
-LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libmtdutils libcrypto_static libbz libedify
+LOCAL_STATIC_LIBRARIES += \
+    libapplypatch \
+    libbase \
+    libedify \
+    libotafault \
+    libminzip \
+    libmtdutils \
+    libcrypto_static \
+    libbz
 LOCAL_SHARED_LIBRARIES += libz libcutils libc
-
 include $(BUILD_EXECUTABLE)
 
+# imgdiff (host static executable)
+# ===============================
 include $(CLEAR_VARS)
-
 LOCAL_CLANG := true
 LOCAL_SRC_FILES := imgdiff.cpp utils.cpp bsdiff.cpp
 LOCAL_MODULE := imgdiff
-LOCAL_FORCE_STATIC_EXECUTABLE := true
-LOCAL_C_INCLUDES += external/zlib external/bzip2
 LOCAL_STATIC_LIBRARIES += libz libbz
-
+LOCAL_FORCE_STATIC_EXECUTABLE := true
 include $(BUILD_HOST_EXECUTABLE)

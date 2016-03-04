@@ -31,7 +31,7 @@
 #include <android-base/strings.h>
 
 #include "openssl/sha.h"
-#include "applypatch.h"
+#include "applypatch/applypatch.h"
 #include "mtdutils/mtdutils.h"
 #include "edify/expr.h"
 #include "ota_io.h"

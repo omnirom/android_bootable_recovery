@@ -30,7 +30,7 @@
 #include <bzlib.h>
 
 #include "openssl/sha.h"
-#include "applypatch.h"
+#include "applypatch/applypatch.h"
 
 void ShowBSDiffLicense() {
     puts("The bsdiff library used herein is:\n"
