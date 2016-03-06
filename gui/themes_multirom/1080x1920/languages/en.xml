@@ -5,9 +5,9 @@
 
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
-		<resource name="font_l" type="fontoverride" filename="RobotoRegular.ttf" scale="100" />
-		<resource name="font_m" type="fontoverride" filename="RobotoRegular.ttf" scale="100" />
-		<resource name="font_s" type="fontoverride" filename="RobotoRegular.ttf" scale="100" />
+		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
+		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
 		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
 
 		<!-- Partition display names -->
@@ -505,7 +505,7 @@
 		<string name="restore_started">[RESTORE STARTED]</string>
 		<string name="restore_folder">Restore folder: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
-		<string name="restort_part_done">[{1} done ({2} seconds)]</string>
+		<string name="restore_part_done">[{1} done ({2} seconds)]</string>
 		<string name="verifying_md5">Verifying MD5</string>
 		<string name="skip_md5">Skipping MD5 check based on user setting.</string>
 		<string name="calc_restore">Calculating restore details...</string>
