@@ -37,6 +37,9 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 {
 	xml_attribute<>* attr;
 	xml_node<>* child;
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	xml_node<>* parent;
+#endif
 
 	mFolderIcon = mFileIcon = NULL;
 	mShowFolders = mShowFiles = mShowNavFolders = 1;
@@ -49,7 +52,26 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	if (child) {
 		attr = child->first_attribute("extn");
 		if (attr)
+#ifndef TARGET_RECOVERY_IS_MULTIROM
 			mExtn = attr->value();
+#else
+		{
+			std::string str = attr->value();
+			const char delimiter = ';';
+			size_t idx = 0, idx_next = 0, len;
+			do
+			{
+				idx_next = str.find(delimiter, idx+1);
+				if(idx != 0 && idx != std::string::npos)
+					++idx;
+
+				len = std::min(idx_next, str.size()) - idx;
+
+				mExtn.push_back(str.substr(idx, len));
+				idx = idx_next;
+			} while(idx != std::string::npos);
+		}
+#endif //TARGET_RECOVERY_IS_MULTIROM
 		attr = child->first_attribute("folders");
 		if (attr)
 			mShowFolders = atoi(attr->value());
@@ -114,6 +136,19 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	int iconWidth = std::max(mFolderIcon->GetWidth(), mFileIcon->GetWidth());
 	int iconHeight = std::max(mFolderIcon->GetHeight(), mFileIcon->GetHeight());
 	SetMaxIconSize(iconWidth, iconHeight);
+
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	// Load excludes
+	parent = node->first_node("excludes");
+	if (parent) child = parent->first_node("exclude");
+	else        child = node->first_node("exclude");
+
+	while (child)
+	{
+		mExcludeFiles.push_back(child->value());
+		child = child->next_sibling("exclude");
+	}
+#endif //TARGET_RECOVERY_IS_MULTIROM
 
 	// Fetch the file/folder list
 	std::string value;
@@ -262,6 +297,12 @@ int GUIFileSelector::GetFileList(const std::string folder)
 		data.lastModified = st.st_mtime;
 		data.lastStatChange = st.st_ctime;
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+		// skip excludes
+		if(std::find(mExcludeFiles.begin(), mExcludeFiles.end(), data.fileName) != mExcludeFiles.end())
+			continue;
+#endif
+
 		if (data.fileType == DT_UNKNOWN) {
 			data.fileType = TWFunc::Get_D_Type_From_Stat(path);
 		}
@@ -269,9 +310,25 @@ int GUIFileSelector::GetFileList(const std::string folder)
 			if (mShowNavFolders || (data.fileName != "." && data.fileName != ".."))
 				mFolderList.push_back(data);
 		} else if (data.fileType == DT_REG || data.fileType == DT_LNK || data.fileType == DT_BLK) {
+#ifndef TARGET_RECOVERY_IS_MULTIROM
 			if (mExtn.empty() || (data.fileName.length() > mExtn.length() && data.fileName.substr(data.fileName.length() - mExtn.length()) == mExtn)) {
 				mFileList.push_back(data);
 			}
+#else
+			if(mExtn.empty()) {
+				mFileList.push_back(data);
+			} else {
+				for(size_t i = 0; i < mExtn.size(); ++i)
+				{
+					const std::string& ext = mExtn[i];
+					if (ext.empty() || (data.fileName.length() > ext.length() && data.fileName.substr(data.fileName.length() - ext.length()) == ext))
+					{
+						mFileList.push_back(data);
+						break;
+					}
+				}
+			}
+#endif //TARGET_RECOVERY_IS_MULTIROM
 		}
 	}
 	closedir(d);

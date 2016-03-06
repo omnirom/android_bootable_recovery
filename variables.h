@@ -177,4 +177,16 @@
 #define SCRIPT_FILE_TMP "/tmp/openrecoveryscript"
 #define TMP_LOG_FILE "/tmp/recovery.log"
 
+// For MultiROM
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+#define TW_MROM_REC_VERSION_VAR     "tw_mrom_rec_version"
+
+#define TW_ROTATION                 "tw_rotation"
+#define TW_ENABLE_ROTATION          "tw_enable_rotation"
+#define TW_AUTO_INJECT_MROM         "tw_auto_inject_mrom"
+#define TW_ORS_IS_SECONDARY_ROM     "tw_ors_is_secondary_rom"
+
+#define UBUNTU_COMMAND_FILE "/cache/recovery/ubuntu_command"
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
 #endif  // _VARIABLES_HEADER_

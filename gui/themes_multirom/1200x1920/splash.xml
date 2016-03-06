@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<recovery>
+	<details>
+		<resolution width="1200" height="1920"/>
+		<author>z31s1g</author>
+		<title>MultiROM TWRP</title>
+		<description>Custom Splash</description>
+		<themeversion>1</themeversion>
+	</details>
+
+	<resources>
+		<font name="font_l" filename="RobotoMedium.ttf" size="40"/>
+		<image name="splashlogo" filename="splashlogo" retainaspect="1"/>
+		<image name="splashmiri" filename="splashmiri" retainaspect="1"/>
+	</resources>
+
+	<variables>
+		<variable name="screen_width" value="1200"/>
+		<variable name="screen_height" value="1920"/>
+		<variable name="background_color" value="#EEEEEE"/>
+		<variable name="text_color" value="#3B3B3B"/>
+	</variables>
+
+	<pages>
+		<page name="splash">
+			<background color="%background_color%"/>
+
+			<image>
+				<image resource="splashlogo"/>
+				<placement x="600" y="560" placement="4"/>
+			</image>
+
+			<image>
+				<image resource="splashmiri"/>
+				<placement x="600" y="1360" placement="4"/>
+			</image>
+
+			<text color="%text_color%">
+				<font resource="font_l"/>
+				<placement x="600" y="960" placement="5"/>
+				<text>MultiROM TWRP v%tw_version%</text>
+			</text>
+		</page>
+	</pages>
+</recovery>
+

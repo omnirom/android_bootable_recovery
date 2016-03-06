@@ -78,6 +78,20 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 	else
 		allowSelection = false;		// allows using listbox as a read-only list or menu
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	// Note: I'm adding this here, before the next section, because 'if (!child) return;' sounds redundant below
+
+	// Load dynamic data
+	child = node->first_node("items");
+	if (child)
+		mItemsVar = child->value();
+
+	// Call this to get the selected item to be shown in the list on first render
+	// don't think this is needed anymore: NotifyVarChange(mVariable, currentValue);
+	if(!mItemsVar.empty())
+		NotifyVarChange(mItemsVar, DataManager::GetStrValue(mItemsVar));
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
 	// Get the data for the list
 	child = FindNode(node, "listitem");
 	if (!child) return;
@@ -143,6 +157,39 @@ int GUIListBox::NotifyVarChange(const std::string& varName, const std::string& v
 	if(!isConditionTrue())
 		return 0;
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if(!mItemsVar.empty() && mItemsVar == varName) {
+		std::string n;
+		char *cstr = new char[value.size()+1];
+		strcpy(cstr, value.c_str());
+		mListItems.clear();
+		char *p = strtok(cstr, "\n");
+		while(p)
+		{
+			n = std::string(p);
+			ListItem data;
+			data.displayName = n;		//item.displayName = attr->value();
+			data.variableValue = n;		//item.variableValue = gui_parse_text(child->value());
+			if(n == currentValue)
+				data.selected = 1;		//item.selected = (child->value() == currentValue);
+			else
+				data.selected = 0;
+			data.action = NULL; 		//item.action = NULL;
+			mListItems.push_back(data);
+			mVisibleItems.push_back(mListItems.size()-1);
+			p = strtok(NULL, "\n");
+		}
+		delete[] cstr;
+		mUpdate = 1;
+	}
+
+	// in case we ever move the above code elsewhere
+	if(!mItemsVar.empty() && mItemsVar == varName) {
+		currentValue = value;
+		mUpdate = 1;
+	}
+#endif
+
 	// Check to see if the variable that we are using to store the list selected value has been updated
 	if (varName == mVariable) {
 		currentValue = value;
@@ -199,6 +246,10 @@ void GUIListBox::SetPageFocus(int inFocus)
 				item.displayName = gui_parse_text(item.displayName);
 			}
 		}
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+		if(!mItemsVar.empty())
+			NotifyVarChange(mItemsVar, DataManager::GetStrValue(mItemsVar));
+#endif
 		DataManager::GetValue(mVariable, currentValue);
 		NotifyVarChange(mVariable, currentValue);
 	}
