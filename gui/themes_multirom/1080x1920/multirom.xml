@@ -1411,12 +1411,12 @@
 				</actions>
 			</button>
 
-			<listbox>
+			<partitionlist style="listbox">
 				<text>Install to:</text>
 				<placement x="%indent%" y="%row8_y%" w="%content_width%" h="%partitionlist_mount_height%"/>
-				<data name="tw_multirom_install_loc" />
-				<items>tw_multirom_install_loc_list</items>
-			</listbox>
+				<data name="tw_multirom_storage_path" />
+				<listtype name="multirom_storage"/>
+			</partitionlist>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
@@ -2014,11 +2014,11 @@
 				<placement x="%indent%" y="row5_y" w="%content_width%" h="%dialog_height%"/>
 			</fill>
 
-			<listbox style="partitionlist_storage">
+			<partitionlist style="partitionlist_storage">
 				<text>{@sel_storage_list=Select Storage}</text>
-				<data name="tw_multirom_install_loc" />
-				<items>tw_multirom_install_loc_list</items>
-			</listbox>
+				<data name="tw_multirom_storage_path"/>
+				<listtype name="multirom_storage"/>
+			</partitionlist>
 
 			<button style="button_third_width">
 				<placement x="%col1_x_left%" y="%row14_y%"/>
