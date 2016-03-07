@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<recovery>
+	<styles>
+		<style name="text_l">
+			<font resource="font_l" color="%text_color%"/>
+		</style>
+
+		<style name="text_m">
+			<font resource="font_m" color="%text_color%"/>
+		</style>
+
+		<style name="text_m_accent">
+			<font resource="font_m" color="%accent_color%"/>
+		</style>
+
+		<style name="text_m_fail">
+			<font resource="font_m" color="%text_fail_color%"/>
+		</style>
+
+		<style name="text_s">
+			<font resource="font_s" color="%text_color%"/>
+		</style>
+
+		<style name="input">
+			<background color="%background_color%"/>
+			<cursor color="%accent_color%" hasfocus="1" width="%input_line_width%"/>
+			<font resource="font_m" color="%text_color%"/>
+		</style>
+
+		<style name="checkbox">
+			<font resource="font_m" color="%text_color%"/>
+			<image checked="checkbox_true" unchecked="checkbox_false"/>
+		</style>
+
+		<style name="radio">
+			<font resource="font_m" color="%text_color%"/>
+			<image checked="radio_true" unchecked="radio_false"/>
+		</style>
+
+		<style name="main_button">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="main_button"/>
+		</style>
+
+		<style name="main_button_half_height">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_m" color="%text_button_color%"/>
+			<image resource="main_button_half_height"/>
+		</style>
+
+		<style name="main_button_half_height_full_width">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_m" color="%text_button_color%"/>
+			<image resource="main_button_half_height_full_width"/>
+		</style>
+
+		<style name="button_third_width">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_m" color="%text_button_color%"/>
+			<image resource="tab_3"/>
+		</style>
+
+		<style name="button_quarter_width">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_m" color="%text_button_color%"/>
+			<image resource="tab_4"/>
+		</style>
+
+		<style name="fab">
+			<highlight color="%highlight_color%"/>
+			<placement x="%indent_right%" y="%row21a_y%" placement="1"/>
+			<font resource="font_m" color="%button_text_color%"/>
+		</style>
+
+		<style name="tab">
+			<highlight color="%highlight_color%"/>
+			<fill color="%transparent%"/>
+			<font resource="font_s" color="%text_button_color%"/>
+		</style>
+
+		<style name="console">
+			<fastscroll rectcolor="%accent_color%" w="%fastscroll_w%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<color foreground="%text_color%" background="%background_color%" scroll="%background_color%"/>
+			<font resource="fixed"/>
+		</style>
+
+		<style name="terminal">
+			<fastscroll linecolor="%transparent%" rectcolor="%accent_color%" w="%fastscroll_w%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<background color="%background_color%"/>
+			<font resource="fixed" spacing="3" color="%text_color%"/>
+		</style>
+
+		<style name="fileselector">
+			<highlight color="%fileselector_highlight_color%"/>
+			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
+			<sort name="tw_gui_sort_order"/>
+			<icon folder="folder" file="file"/>
+			<background color="%background_color%"/>
+			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%accent_color%"/>
+		</style>
+
+		<style name="listbox">
+			<highlight color="%fileselector_highlight_color%"/>
+			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
+			<icon selected="radio_true" unselected="radio_false"/>
+			<background color="%background_color%"/>
+			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%accent_color%"/>
+		</style>
+
+		<style name="scrolllist">
+			<background color="%background_color%"/>
+			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%"/>
+		</style>
+
+		<style name="partitionlist">
+			<highlight color="%fileselector_highlight_color%"/>
+			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
+			<icon selected="checkbox_true" unselected="checkbox_false"/>
+			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
+			<background color="%background_color%"/>
+			<font resource="font_m" spacing="%partitionlist_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%"/>
+		</style>
+
+		<style name="partitionlist_storage">
+			<highlight color="%fileselector_highlight_color%"/>
+			<placement x="%col1_x_left%" y="%row5_y%" w="%content_overlay_width%" h="%partitionlist_storage_height%"/>
+			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
+			<icon selected="radio_true" unselected="radio_false"/>
+			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
+			<background color="%background_color%"/>
+			<font resource="font_m" spacing="%partitionlist_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%"/>
+		</style>
+
+		<style name="slider">
+			<placement x="%center_x%" y="%row23_y%"/>
+			<font resource="font_s" color="%text_color%"/>
+			<resource base="slider" used="slider_used" touch="slider_touch"/>
+		</style>
+
+		<style name="slidervalue">
+			<resource handle="handle"/>
+			<font resource="font_m" color="%text_color%"/>
+			<colors line="%fileselector_linecolor%"/>
+			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
+		</style>
+
+		<style name="patternpassword">
+			<size name="tw_gui_pattern_grid_size" default="3"/>
+		</style>
+	</styles>
+
+	<include>
+		<xmlfile name="portrait.xml"/>
+	</include>
+</recovery>

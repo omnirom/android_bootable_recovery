@@ -10,8 +10,7 @@
 	</details>
 
 	<include>
-		<xmlfile name="portrait.xml"/>
-		<xmlfile name="multirom.xml"/>
+		<xmlfile name="styles.xml"/>
 	</include>
 
 	<resources>
