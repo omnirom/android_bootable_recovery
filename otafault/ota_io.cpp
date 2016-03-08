@@ -29,6 +29,7 @@ static std::map<intptr_t, const char*> filename_cache;
 static std::string read_fault_file_name = "";
 static std::string write_fault_file_name = "";
 static std::string fsync_fault_file_name = "";
+bool have_eio_error = false;
 
 static bool get_hit_file(const char* cached_path, std::string ffn) {
     return should_hit_cache()
@@ -85,10 +86,16 @@ size_t ota_fread(void* ptr, size_t size, size_t nitems, FILE* stream) {
                 get_hit_file(cached_path, read_fault_file_name)) {
             read_fault_file_name = "";
             errno = EIO;
+            have_eio_error = true;
             return 0;
         }
     }
-    return fread(ptr, size, nitems, stream);
+    size_t status = fread(ptr, size, nitems, stream);
+    // If I/O error occurs, set the retry-update flag.
+    if (status != nitems && errno == EIO) {
+        have_eio_error = true;
+    }
+    return status;
 }
 
 ssize_t ota_read(int fd, void* buf, size_t nbyte) {
@@ -99,10 +106,15 @@ ssize_t ota_read(int fd, void* buf, size_t nbyte) {
                 && get_hit_file(cached_path, read_fault_file_name)) {
             read_fault_file_name = "";
             errno = EIO;
+            have_eio_error = true;
             return -1;
         }
     }
-    return read(fd, buf, nbyte);
+    ssize_t status = read(fd, buf, nbyte);
+    if (status == -1 && errno == EIO) {
+        have_eio_error = true;
+    }
+    return status;
 }
 
 size_t ota_fwrite(const void* ptr, size_t size, size_t count, FILE* stream) {
@@ -113,10 +125,15 @@ size_t ota_fwrite(const void* ptr, size_t size, size_t count, FILE* stream) {
                 get_hit_file(cached_path, write_fault_file_name)) {
             write_fault_file_name = "";
             errno = EIO;
+            have_eio_error = true;
             return 0;
         }
     }
-    return fwrite(ptr, size, count, stream);
+    size_t status = fwrite(ptr, size, count, stream);
+    if (status != count && errno == EIO) {
+        have_eio_error = true;
+    }
+    return status;
 }
 
 ssize_t ota_write(int fd, const void* buf, size_t nbyte) {
@@ -127,10 +144,15 @@ ssize_t ota_write(int fd, const void* buf, size_t nbyte) {
                 get_hit_file(cached_path, write_fault_file_name)) {
             write_fault_file_name = "";
             errno = EIO;
+            have_eio_error = true;
             return -1;
         }
     }
-    return write(fd, buf, nbyte);
+    ssize_t status = write(fd, buf, nbyte);
+    if (status == -1 && errno == EIO) {
+        have_eio_error = true;
+    }
+    return status;
 }
 
 int ota_fsync(int fd) {
@@ -141,9 +163,14 @@ int ota_fsync(int fd) {
                 get_hit_file(cached_path, fsync_fault_file_name)) {
             fsync_fault_file_name = "";
             errno = EIO;
+            have_eio_error = true;
             return -1;
         }
     }
-    return fsync(fd);
+    int status = fsync(fd);
+    if (status == -1 && errno == EIO) {
+        have_eio_error = true;
+    }
+    return status;
 }
 
