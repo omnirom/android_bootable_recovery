@@ -833,6 +833,16 @@ void MultiROM::restoreMounts()
 	system("mv /etc/recovery.fstab.bak /etc/recovery.fstab");
 	system("if [ -e /sbin/mount_real ]; then mv /sbin/mount_real /sbin/mount; fi;");
 
+	// various versions of 'systemless root' and/or installer scripts keep the unmount, but keep the loop device, so get rid of it first
+	system("sync;"
+		"i=0;"
+		"while [ $i -le 10 ]; do"
+		"    if [ -e \"/dev/block/loop$i\" ]; then"
+		"        losetup -d  \"/dev/block/loop$i\";"
+		"    fi;"
+		"    i=$(( $i + 1 ));"
+		"done;");
+
 	// script might have mounted it several times over, we _have_ to umount it all
 	system("sync;"
 		"i=0;"
