@@ -144,6 +144,7 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache) {
     close(pipefd[1]);
 
     *wipe_cache = false;
+    bool retry_update = false;
 
     char buffer[1024];
     FILE* from_child = fdopen(pipefd[0], "r");
@@ -180,6 +181,8 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache) {
             // to be able to reboot during installation (useful for
             // debugging packages that don't exit).
             ui->SetEnableReboot(true);
+        } else if (strcmp(command, "retry_update") == 0) {
+            retry_update = true;
         } else {
             LOGE("unknown command [%s]\n", command);
         }
@@ -188,6 +191,9 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache) {
 
     int status;
     waitpid(pid, &status, 0);
+    if (retry_update) {
+        return INSTALL_RETRY;
+    }
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
         LOGE("Error in %s\n(Status %d)\n", path, WEXITSTATUS(status));
         return INSTALL_ERROR;

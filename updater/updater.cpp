@@ -38,6 +38,8 @@
 // (Note it's "updateR-script", not the older "update-script".)
 #define SCRIPT_NAME "META-INF/com/google/android/updater-script"
 
+extern bool have_eio_error;
+
 struct selabel_handle *sehandle;
 
 int main(int argc, char** argv) {
@@ -142,6 +144,11 @@ int main(int argc, char** argv) {
     state.errmsg = NULL;
 
     char* result = Evaluate(&state, root);
+
+    if (have_eio_error) {
+        fprintf(cmd_pipe, "retry_update\n");
+    }
+
     if (result == NULL) {
         if (state.errmsg == NULL) {
             printf("script aborted (no error message)\n");
