@@ -16,9 +16,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <pthread.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -31,9 +29,7 @@
 
 #include "common.h"
 #include "device.h"
-#include "minui/minui.h"
 #include "wear_ui.h"
-#include "ui.h"
 #include "cutils/properties.h"
 #include "android-base/strings.h"
 #include "android-base/stringprintf.h"
@@ -368,29 +364,6 @@ void WearRecoveryUI::Init()
 
     pthread_create(&progress_t, NULL, progress_thread, NULL);
     RecoveryUI::Init();
-}
-
-void WearRecoveryUI::SetLocale(const char* locale) {
-    if (locale) {
-        char* lang = strdup(locale);
-        for (char* p = lang; *p; ++p) {
-            if (*p == '_') {
-                *p = '\0';
-                break;
-            }
-        }
-
-        // A bit cheesy: keep an explicit list of supported languages
-        // that are RTL.
-        if (strcmp(lang, "ar") == 0 ||   // Arabic
-            strcmp(lang, "fa") == 0 ||   // Persian (Farsi)
-            strcmp(lang, "he") == 0 ||   // Hebrew (new language code)
-            strcmp(lang, "iw") == 0 ||   // Hebrew (old language code)
-            strcmp(lang, "ur") == 0) {   // Urdu
-            rtl_locale = true;
-        }
-        free(lang);
-    }
 }
 
 void WearRecoveryUI::SetBackground(Icon icon)

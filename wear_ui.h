@@ -17,19 +17,13 @@
 #ifndef RECOVERY_WEAR_UI_H
 #define RECOVERY_WEAR_UI_H
 
-#include <pthread.h>
-#include <stdio.h>
+#include "screen_ui.h"
 
-#include "ui.h"
-#include "minui/minui.h"
-
-class WearRecoveryUI : public RecoveryUI {
+class WearRecoveryUI : public ScreenRecoveryUI {
   public:
     WearRecoveryUI();
 
     void Init();
-    void SetLocale(const char* locale);
-
     // overall recovery state ("background image")
     void SetBackground(Icon icon);
 
