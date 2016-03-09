@@ -35,11 +35,14 @@
 #include <chrono>
 
 #include <adb.h>
+#include <android/log.h> /* Android Log Priority Tags */
 #include <android-base/file.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
+#include <log/logger.h> /* Android Log packet format */
+#include <private/android_logger.h> /* private pmsg functions */
 
 #include <healthd/BatteryMonitor.h>
 
@@ -381,6 +384,18 @@ static void save_kernel_log(const char* destination) {
     android::base::WriteStringToFile(buffer, destination);
 }
 
+// write content to the current pmsg session.
+static ssize_t __pmsg_write(const char *filename, const char *buf, size_t len) {
+    return __android_log_pmsg_file_write(LOG_ID_SYSTEM, ANDROID_LOG_INFO,
+                                         filename, buf, len);
+}
+
+static void copy_log_file_to_pmsg(const char* source, const char* destination) {
+    std::string content;
+    android::base::ReadFileToString(source, &content);
+    __pmsg_write(destination, content.c_str(), content.length());
+}
+
 // How much of the temp log we have copied to the copy in cache.
 static long tmplog_offset = 0;
 
@@ -440,16 +455,20 @@ static void rotate_logs(int max) {
 }
 
 static void copy_logs() {
-    // We can do nothing for now if there's no /cache partition.
-    if (!has_cache) {
-        return;
-    }
-
     // We only rotate and record the log of the current session if there are
     // actual attempts to modify the flash, such as wipes, installs from BCB
     // or menu selections. This is to avoid unnecessary rotation (and
     // possible deletion) of log files, if it does not do anything loggable.
     if (!modified_flash) {
+        return;
+    }
+
+    // Always write to pmsg, this allows the OTA logs to be caught in logcat -L
+    copy_log_file_to_pmsg(TEMPORARY_LOG_FILE, LAST_LOG_FILE);
+    copy_log_file_to_pmsg(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE);
+
+    // We can do nothing for now if there's no /cache partition.
+    if (!has_cache) {
         return;
     }
 
@@ -489,13 +508,17 @@ finish_recovery(const char *send_intent) {
     // Save the locale to cache, so if recovery is next started up
     // without a --locale argument (eg, directly from the bootloader)
     // it will use the last-known locale.
-    if (locale != NULL && has_cache) {
-        LOGI("Saving locale \"%s\"\n", locale);
-        FILE* fp = fopen_path(LOCALE_FILE, "w");
-        fwrite(locale, 1, strlen(locale), fp);
-        fflush(fp);
-        fsync(fileno(fp));
-        check_and_fclose(fp, LOCALE_FILE);
+    if (locale != NULL) {
+        size_t len = strlen(locale);
+        __pmsg_write(LOCALE_FILE, locale, len);
+        if (has_cache) {
+            LOGI("Saving locale \"%s\"\n", locale);
+            FILE* fp = fopen_path(LOCALE_FILE, "w");
+            fwrite(locale, 1, len, fp);
+            fflush(fp);
+            fsync(fileno(fp));
+            check_and_fclose(fp, LOCALE_FILE);
+        }
     }
 
     copy_logs();
@@ -1188,7 +1211,69 @@ static void set_retry_bootloader_message(int retry_count, int argc, char** argv)
     set_bootloader_message(&boot);
 }
 
+static ssize_t logbasename(
+        log_id_t /* logId */,
+        char /* prio */,
+        const char *filename,
+        const char * /* buf */, size_t len,
+        void *arg) {
+    if (strstr(LAST_KMSG_FILE, filename) ||
+            strstr(LAST_LOG_FILE, filename)) {
+        bool *doRotate = reinterpret_cast<bool *>(arg);
+        *doRotate = true;
+    }
+    return len;
+}
+
+static ssize_t logrotate(
+        log_id_t logId,
+        char prio,
+        const char *filename,
+        const char *buf, size_t len,
+        void *arg) {
+    bool *doRotate = reinterpret_cast<bool *>(arg);
+    if (!*doRotate) {
+        return __android_log_pmsg_file_write(logId, prio, filename, buf, len);
+    }
+
+    std::string name(filename);
+    size_t dot = name.find_last_of(".");
+    std::string sub = name.substr(0, dot);
+
+    if (!strstr(LAST_KMSG_FILE, sub.c_str()) &&
+                !strstr(LAST_LOG_FILE, sub.c_str())) {
+        return __android_log_pmsg_file_write(logId, prio, filename, buf, len);
+    }
+
+    // filename rotation
+    if (dot == std::string::npos) {
+        name += ".1";
+    } else {
+        std::string number = name.substr(dot + 1);
+        if (!isdigit(number.data()[0])) {
+            name += ".1";
+        } else {
+            unsigned long long i = std::stoull(number);
+            name = sub + "." + std::to_string(i + 1);
+        }
+    }
+
+    return __android_log_pmsg_file_write(logId, prio, name.c_str(), buf, len);
+}
+
 int main(int argc, char **argv) {
+    // Take last pmsg contents and rewrite it to the current pmsg session.
+    static const char filter[] = "recovery/";
+    // Do we need to rotate?
+    bool doRotate = false;
+    __android_log_pmsg_file_read(
+        LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter,
+        logbasename, &doRotate);
+    // Take action to refresh pmsg contents
+    __android_log_pmsg_file_read(
+        LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter,
+        logrotate, &doRotate);
+
     // If this binary is started with the single argument "--adbd",
     // instead of being the normal recovery binary, it turns into kind
     // of a stripped-down version of adbd that only supports the

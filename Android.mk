@@ -101,6 +101,30 @@ else
   LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
 endif
 
+ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
+LOCAL_REQUIRED_MODULES := recovery-persist recovery-refresh
+endif
+
+include $(BUILD_EXECUTABLE)
+
+# recovery-persist (system partition dynamic executable run after /data mounts)
+# ===============================
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := recovery-persist.cpp
+LOCAL_MODULE := recovery-persist
+LOCAL_SHARED_LIBRARIES := liblog libbase
+LOCAL_CFLAGS := -Werror
+LOCAL_INIT_RC := recovery-persist.rc
+include $(BUILD_EXECUTABLE)
+
+# recovery-refresh (system partition dynamic executable run at init)
+# ===============================
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := recovery-refresh.cpp
+LOCAL_MODULE := recovery-refresh
+LOCAL_SHARED_LIBRARIES := liblog
+LOCAL_CFLAGS := -Werror
+LOCAL_INIT_RC := recovery-refresh.rc
 include $(BUILD_EXECUTABLE)
 
 # All the APIs for testing
