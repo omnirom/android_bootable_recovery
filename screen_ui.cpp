@@ -51,7 +51,6 @@ static double now() {
 }
 
 ScreenRecoveryUI::ScreenRecoveryUI() :
-    currentIcon(NONE),
     installingFrame(0),
     locale(nullptr),
     rtl_locale(false),
@@ -76,7 +75,8 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     animation_fps(-1),
     installing_frames(-1),
     stage(-1),
-    max_stage(-1) {
+    max_stage(-1),
+    currentIcon(NONE) {
 
     for (int i = 0; i < 5; i++) {
         backgroundIcon[i] = nullptr;
