@@ -28,5 +28,6 @@ clean:
 imgdiff: imgdiff.o bsdiff.o utils.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDLIBS) -o $@ $^
 
+libimgpatch.a utils.o: CXXFLAGS += -fPIC
 libimgpatch.a: imgpatch.o bspatch.o utils.o
 	${AR} rcs $@ $^
