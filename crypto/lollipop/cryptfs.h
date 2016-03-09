@@ -28,6 +28,9 @@
 
 #include <cutils/properties.h>
 #include "openssl/sha.h"
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+#include <libcrypt_samsung.h>
+#endif
 
 /* The current cryptfs version */
 #define CURRENT_MAJOR_VERSION 1
@@ -70,6 +73,9 @@
 #define CRYPT_TYPE_PIN      3 /* master_key is encrypted with a pin */
 #define CRYPT_TYPE_MAX_TYPE 3 /* type cannot be larger than this value */
 
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+#define CRYPT_MNT_MAGIC_SAMSUNG 0xD0B5B1C5
+#endif
 #define CRYPT_MNT_MAGIC 0xD0B5B1C4
 #define PERSIST_DATA_MAGIC 0xE950CD44
 
@@ -106,6 +112,9 @@ struct crypt_mnt_ftr {
   unsigned char crypto_type_name[MAX_CRYPTO_TYPE_NAME_LEN]; /* The type of encryption
                                                                needed to decrypt this
                                                                partition, null terminated */
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+  edk_payload_t edk_payload;
+#endif
   __le32 spare2;        /* ignored */
   unsigned char master_key[MAX_KEY_LEN]; /* The encrypted key for decrypting the filesystem */
   unsigned char salt[SALT_LEN];   /* The salt used for this encryption */

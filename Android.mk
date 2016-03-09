@@ -270,6 +270,11 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO
     LOCAL_SHARED_LIBRARIES += libcryptfslollipop libgpt_twrp
     LOCAL_C_INCLUDES += external/boringssl/src/include
+    ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
+        LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO_SAMSUNG
+        LOCAL_STATIC_LIBRARIES += libcrypt_samsung
+        LOCAL_C_INCLUDES += $(LOCAL_PATH)/crypto/libcrypt_samsung
+    endif
 endif
 ifeq ($(TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID), true)
     LOCAL_CFLAGS += -DTW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
@@ -594,6 +599,9 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/lollipop/Android.mk
     include $(commands_recovery_local_path)/crypto/scrypt/Android.mk
     include $(commands_recovery_local_path)/gpt/Android.mk
+    ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
+        include $(commands_recovery_local_path)/crypto/libcrypt_samsung/Android.mk
+    endif
 endif
 ifeq ($(BUILD_ID), GINGERBREAD)
     TW_NO_EXFAT := true

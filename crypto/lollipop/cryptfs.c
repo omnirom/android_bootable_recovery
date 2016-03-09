@@ -72,6 +72,10 @@
 #define KEY_LEN_BYTES 16
 #define IV_LEN_BYTES 16
 
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+#define KEY_LEN_BYTES_SAMSUNG (sizeof(edk_t))
+#endif
+
 #define KEY_IN_FOOTER  "footer"
 
 #define EXT4_FS 1
@@ -89,7 +93,13 @@
 
 char *me = "cryptfs";
 
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+static int  using_samsung_encryption = 0;
+static unsigned char saved_master_key[KEY_LEN_BYTES_SAMSUNG];
+edk_payload_t edk_payload;
+#else
 static unsigned char saved_master_key[KEY_LEN_BYTES];
+#endif
 static char *saved_mount_point;
 static int  master_key_saved = 0;
 static struct crypt_persist_data *persist_data = NULL;
@@ -795,7 +805,11 @@ static int get_crypt_ftr_and_key(struct crypt_mnt_ftr *crypt_ftr)
 
   /* Make sure it's 16 Kbytes in length */
   fstat(fd, &statbuf);
-  if (S_ISREG(statbuf.st_mode) && (statbuf.st_size != 0x4000)) {
+  if (S_ISREG(statbuf.st_mode) && (statbuf.st_size != 0x4000
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+        && statbuf.st_size != 0x8000
+#endif
+      )) {
     printf("footer file %s is not the expected size!\n", fname);
     goto errout;
   }
@@ -812,8 +826,27 @@ static int get_crypt_ftr_and_key(struct crypt_mnt_ftr *crypt_ftr)
   }
 
   if (crypt_ftr->magic != CRYPT_MNT_MAGIC) {
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+    if (crypt_ftr->magic != CRYPT_MNT_MAGIC_SAMSUNG) {
+      printf("Bad magic for real block device %s\n", fname);
+      goto errout;
+    } else {
+      printf("Using Samsung encryption.\n");
+      using_samsung_encryption = 1;
+      if ( (cnt = read(fd, &edk_payload, sizeof(edk_payload_t))) != sizeof(edk_payload_t)) {
+        printf("Cannot read EDK payload from real block device footer\n");
+        goto errout;
+      }
+      if (lseek64(fd, sizeof(__le32), SEEK_CUR) == -1) {
+        printf("Cannot seek past unknown data from real block device footer\n");
+        goto errout;
+      }
+      memcpy(crypt_ftr->master_key, &edk_payload, sizeof(edk_payload_t));
+    }
+#else
     printf("Bad magic for real block device %s\n", fname);
     goto errout;
+#endif
   }
 
   if (crypt_ftr->major_version != CURRENT_MAJOR_VERSION) {
@@ -1317,6 +1350,13 @@ static int decrypt_master_key(char *passwd, unsigned char *decrypted_master_key,
     void *kdf_params;
     int ret;
 
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+    if (using_samsung_encryption) {
+        property_set("rw.km_fips_status", "ready");
+        return decrypt_EDK((dek_t*)decrypted_master_key, (edk_payload_t*)crypt_ftr->master_key, passwd);
+    }
+#endif
+
     get_kdf_func(crypt_ftr, &kdf, &kdf_params);
     ret = decrypt_master_key_aux(passwd, crypt_ftr->salt, crypt_ftr->master_key,
                                  decrypted_master_key, kdf, kdf_params,
@@ -1565,7 +1605,16 @@ int cryptfs_setup_ext_volume(const char* label, const char* real_blkdev,
     memset(&ext_crypt_ftr, 0, sizeof(ext_crypt_ftr));
     ext_crypt_ftr.fs_size = nr_sec;
     ext_crypt_ftr.keysize = keysize;
+
+#ifdef TW_INCLUDE_CRYPTO_SAMSUNG
+    if (using_samsung_encryption && !access("/efs/essiv", R_OK)) {
+       strcpy((char*) ext_crypt_ftr.crypto_type_name, "aes-cbc-plain:sha1");
+    } else {
+       strcpy((char*) ext_crypt_ftr.crypto_type_name, "aes-cbc-essiv:sha256");
+    }
+#else
     strcpy((char*) ext_crypt_ftr.crypto_type_name, "aes-cbc-essiv:sha256");
+#endif
 
     return create_crypto_blk_dev(&ext_crypt_ftr, key, real_blkdev,
             out_crypto_blkdev, label);

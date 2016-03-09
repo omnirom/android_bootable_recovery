@@ -15,6 +15,13 @@ ifeq ($(TARGET_HW_DISK_ENCRYPTION),true)
     LOCAL_CFLAGS += -DCONFIG_HW_DISK_ENCRYPTION
 endif
 
+ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
+    LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO_SAMSUNG
+    LOCAL_C_INCLUDES += $(commands_recovery_local_path)/crypto/libcrypt_samsung
+    LOCAL_LDFLAGS += -ldl
+    LOCAL_STATIC_LIBRARIES += libcrypt_samsung
+endif
+
 ifneq ($(wildcard hardware/libhardware/include/hardware/keymaster0.h),)
     LOCAL_CFLAGS += -DTW_CRYPTO_HAVE_KEYMASTERX
     LOCAL_C_INCLUDES +=  external/boringssl/src/include
@@ -39,6 +46,13 @@ ifeq ($(TARGET_HW_DISK_ENCRYPTION),true)
     LOCAL_C_INCLUDES += device/qcom/common/cryptfs_hw
     LOCAL_SHARED_LIBRARIES += libcryptfs_hw
     LOCAL_CFLAGS += -DCONFIG_HW_DISK_ENCRYPTION
+endif
+
+ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
+    LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO_SAMSUNG
+    LOCAL_C_INCLUDES += $(commands_recovery_local_path)/crypto/libcrypt_samsung
+    LOCAL_LDFLAGS += -ldl
+    LOCAL_STATIC_LIBRARIES += libcrypt_samsung
 endif
 
 ifneq ($(wildcard hardware/libhardware/include/hardware/keymaster0.h),)
