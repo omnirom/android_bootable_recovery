@@ -68,6 +68,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     void SetColor(UIElement e);
 
   private:
+    Icon currentIcon;
     int installingFrame;
     const char* locale;
     bool rtl_locale;
@@ -138,8 +139,6 @@ class ScreenRecoveryUI : public RecoveryUI {
     void LoadBitmap(const char* filename, GRSurface** surface);
     void LoadBitmapArray(const char* filename, int* frames, int* fps, GRSurface*** surface);
     void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
-  protected:
-    Icon currentIcon;
 };
 
 #endif  // RECOVERY_UI_H
