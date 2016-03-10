@@ -29,17 +29,12 @@
 #include <android-base/stringprintf.h>
 
 #include "common.h"
+#include "common/test_constants.h"
 #include "mincrypt/sha.h"
 #include "mincrypt/sha256.h"
 #include "minzip/SysUtil.h"
 #include "ui.h"
 #include "verifier.h"
-
-#if defined(__LP64__)
-#define NATIVE_TEST_PATH "/nativetest64"
-#else
-#define NATIVE_TEST_PATH "/nativetest"
-#endif
 
 static const char* DATA_PATH = getenv("ANDROID_DATA");
 static const char* TESTDATA_PATH = "/recovery/testdata/";
