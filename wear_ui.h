@@ -84,9 +84,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
 
     int current_frame;
 
-    bool rtl_locale;
-
-    pthread_mutex_t updateMutex;
     GRSurface* backgroundIcon[5];
     GRSurface* *introFrames;
     GRSurface* *loopFrames;
@@ -123,7 +120,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
     void update_screen_locked();
     static void* progress_thread(void* cookie);
     void progress_loop();
-    void LoadBitmap(const char* filename, GRSurface** surface);
     void PutChar(char);
     void ClearText();
     void DrawTextLine(int x, int* y, const char* line, bool bold);
