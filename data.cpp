@@ -916,6 +916,24 @@ void DataManager::SetDefaultValues()
 #endif
 	mValues.insert(make_pair("tw_mount_system_ro", make_pair("2", 1)));
 	mValues.insert(make_pair("tw_never_show_system_ro_page", make_pair("0", 1)));
+
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	// rotation is unused, keep for info
+	/*
+	#if defined(TW_HAS_LANDSCAPE) && defined(TW_DEFAULT_ROTATION)
+		mValues.insert(make_pair(TW_ROTATION, make_pair(EXPAND(TW_DEFAULT_ROTATION), 1)));
+	#else
+		mValues.insert(make_pair(TW_ROTATION, make_pair("0", 1)));
+	#endif
+		mValues.insert(make_pair(TW_ENABLE_ROTATION, make_pair("0", 0)));
+	*/
+
+	// doesn't seem to be used but add it back anyway
+	mConstValues.insert(make_pair("tw_device_name", TARGET_DEVICE));
+
+	mValues.insert(make_pair(TW_AUTO_INJECT_MROM, make_pair("1", 1)));
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
 	mValues.insert(make_pair("tw_language", make_pair(EXPAND(TW_DEFAULT_LANGUAGE), 1)));
 	LOGINFO("LANG: %s\n", EXPAND(TW_DEFAULT_LANGUAGE));
 
