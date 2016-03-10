@@ -24,6 +24,13 @@ class WearRecoveryUI : public ScreenRecoveryUI {
     WearRecoveryUI();
 
     void Init();
+    // overall recovery state ("background image")
+    void SetBackground(Icon icon);
+
+    // progress indicator
+    void SetProgressType(ProgressType type);
+    void ShowProgress(float portion, float seconds);
+    void SetProgress(float fraction);
 
     void SetStage(int current, int max);
 
@@ -42,6 +49,9 @@ class WearRecoveryUI : public ScreenRecoveryUI {
     void StartMenu(const char* const * headers, const char* const * items,
                            int initial_selection);
     int SelectMenu(int sel);
+    void EndMenu();
+
+    void Redraw();
 
     enum UIElement { HEADER, MENU, MENU_SEL_BG, MENU_SEL_FG, LOG, TEXT_FILL };
     virtual void SetColor(UIElement e);
@@ -68,6 +78,8 @@ class WearRecoveryUI : public ScreenRecoveryUI {
     int animation_fps;
 
   private:
+    Icon currentIcon;
+
     bool intro_done;
 
     int current_frame;
