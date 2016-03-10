@@ -59,6 +59,7 @@ WearRecoveryUI::WearRecoveryUI() :
     intro_frames(22),
     loop_frames(60),
     animation_fps(30),
+    currentIcon(NONE),
     intro_done(false),
     current_frame(0),
     rtl_locale(false),
@@ -365,6 +366,57 @@ void WearRecoveryUI::Init()
     RecoveryUI::Init();
 }
 
+void WearRecoveryUI::SetBackground(Icon icon)
+{
+    pthread_mutex_lock(&updateMutex);
+    currentIcon = icon;
+    update_screen_locked();
+    pthread_mutex_unlock(&updateMutex);
+}
+
+void WearRecoveryUI::SetProgressType(ProgressType type)
+{
+    pthread_mutex_lock(&updateMutex);
+    if (progressBarType != type) {
+        progressBarType = type;
+    }
+    progressScopeStart = 0;
+    progressScopeSize = 0;
+    progress = 0;
+    update_screen_locked();
+    pthread_mutex_unlock(&updateMutex);
+}
+
+void WearRecoveryUI::ShowProgress(float portion, float seconds)
+{
+    pthread_mutex_lock(&updateMutex);
+    progressBarType = DETERMINATE;
+    progressScopeStart += progressScopeSize;
+    progressScopeSize = portion;
+    progressScopeTime = now();
+    progressScopeDuration = seconds;
+    progress = 0;
+    update_screen_locked();
+    pthread_mutex_unlock(&updateMutex);
+}
+
+void WearRecoveryUI::SetProgress(float fraction)
+{
+    pthread_mutex_lock(&updateMutex);
+    if (fraction < 0.0) fraction = 0.0;
+    if (fraction > 1.0) fraction = 1.0;
+    if (progressBarType == DETERMINATE && fraction > progress) {
+        // Skip updates that aren't visibly different.
+        int width = progress_bar_width;
+        float scale = width * progressScopeSize;
+        if ((int) (progress * scale) != (int) (fraction * scale)) {
+            progress = fraction;
+            update_screen_locked();
+        }
+    }
+    pthread_mutex_unlock(&updateMutex);
+}
+
 void WearRecoveryUI::SetStage(int current, int max)
 {
 }
@@ -447,6 +499,16 @@ int WearRecoveryUI::SelectMenu(int sel) {
     return sel;
 }
 
+void WearRecoveryUI::EndMenu() {
+    int i;
+    pthread_mutex_lock(&updateMutex);
+    if (show_menu > 0 && text_rows > 0 && text_cols > 0) {
+        show_menu = 0;
+        update_screen_locked();
+    }
+    pthread_mutex_unlock(&updateMutex);
+}
+
 bool WearRecoveryUI::IsTextVisible()
 {
     pthread_mutex_lock(&updateMutex);
@@ -473,6 +535,13 @@ void WearRecoveryUI::ShowText(bool visible)
     }
     show_text = visible;
     if (show_text) show_text_ever = 1;
+    update_screen_locked();
+    pthread_mutex_unlock(&updateMutex);
+}
+
+void WearRecoveryUI::Redraw()
+{
+    pthread_mutex_lock(&updateMutex);
     update_screen_locked();
     pthread_mutex_unlock(&updateMutex);
 }
