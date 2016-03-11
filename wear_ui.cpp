@@ -34,9 +34,6 @@
 #include "android-base/strings.h"
 #include "android-base/stringprintf.h"
 
-static int char_width;
-static int char_height;
-
 // There's only (at most) one of these objects, and global callbacks
 // (for pthread_create, and the input event system) need to find it,
 // so use a global variable.
@@ -143,41 +140,6 @@ void WearRecoveryUI::draw_progress_locked()
     }
 }
 
-void WearRecoveryUI::SetColor(UIElement e) {
-    switch (e) {
-        case HEADER:
-            gr_color(247, 0, 6, 255);
-            break;
-        case MENU:
-        case MENU_SEL_BG:
-            gr_color(0, 106, 157, 255);
-            break;
-        case MENU_SEL_FG:
-            gr_color(255, 255, 255, 255);
-            break;
-        case LOG:
-            gr_color(249, 194, 0, 255);
-            break;
-        case TEXT_FILL:
-            gr_color(0, 0, 0, 160);
-            break;
-        default:
-            gr_color(255, 255, 255, 255);
-            break;
-    }
-}
-
-void WearRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) {
-    gr_text(x, *y, line, bold);
-    *y += char_height + 4;
-}
-
-void WearRecoveryUI::DrawTextLines(int x, int* y, const char* const* lines) {
-    for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
-        DrawTextLine(x, y, lines[i], false);
-    }
-}
-
 static const char* HEADERS[] = {
     "Swipe up/down to move.",
     "Swipe left/right to select.",
@@ -216,7 +178,7 @@ void WearRecoveryUI::draw_screen_locked()
             if (menu_items > menu_end - menu_start) {
                 sprintf(cur_selection_str, "Current item: %d/%d", menu_sel + 1, menu_items);
                 gr_text(x+4, y, cur_selection_str, 1);
-                y += char_height+4;
+                y += char_height_+4;
             }
 
             // Menu begins here
@@ -227,7 +189,7 @@ void WearRecoveryUI::draw_screen_locked()
                 if (i == menu_sel) {
                     // draw the highlight bar
                     SetColor(MENU_SEL_BG);
-                    gr_fill(x, y-2, gr_fb_width()-x, y+char_height+2);
+                    gr_fill(x, y-2, gr_fb_width()-x, y+char_height_+2);
                     // white text of selected item
                     SetColor(MENU_SEL_FG);
                     if (menu[i][0]) gr_text(x+4, y, menu[i], 1);
@@ -235,7 +197,7 @@ void WearRecoveryUI::draw_screen_locked()
                 } else {
                     if (menu[i][0]) gr_text(x+4, y, menu[i], 0);
                 }
-                y += char_height+4;
+                y += char_height_+4;
             }
             SetColor(MENU);
             y += 4;
@@ -251,9 +213,9 @@ void WearRecoveryUI::draw_screen_locked()
         int ty;
         int row = (text_top+text_rows-1) % text_rows;
         size_t count = 0;
-        for (int ty = gr_fb_height() - char_height - outer_height;
+        for (int ty = gr_fb_height() - char_height_ - outer_height;
              ty > y+2 && count < text_rows;
-             ty -= char_height, ++count) {
+             ty -= char_height_, ++count) {
             gr_text(x+4, ty, text[row], 0);
             --row;
             if (row < 0) row = text_rows-1;
@@ -323,15 +285,15 @@ void WearRecoveryUI::Init()
 {
     gr_init();
 
-    gr_font_size(&char_width, &char_height);
+    gr_font_size(&char_width_, &char_height_);
 
     text_col = text_row = 0;
-    text_rows = (gr_fb_height()) / char_height;
-    visible_text_rows = (gr_fb_height() - (outer_height * 2)) / char_height;
+    text_rows = (gr_fb_height()) / char_height_;
+    visible_text_rows = (gr_fb_height() - (outer_height * 2)) / char_height_;
     if (text_rows > kMaxRows) text_rows = kMaxRows;
     text_top = 1;
 
-    text_cols = (gr_fb_width() - (outer_width * 2)) / char_width;
+    text_cols = (gr_fb_width() - (outer_width * 2)) / char_width_;
     if (text_cols > kMaxCols - 1) text_cols = kMaxCols - 1;
 
     LoadBitmap("icon_installing", &backgroundIcon[INSTALLING_UPDATE]);

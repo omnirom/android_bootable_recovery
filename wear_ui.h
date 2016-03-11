@@ -53,9 +53,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
 
     void Redraw();
 
-    enum UIElement { HEADER, MENU, MENU_SEL_BG, MENU_SEL_FG, LOG, TEXT_FILL };
-    virtual void SetColor(UIElement e);
-
   protected:
     int progress_bar_height, progress_bar_width;
 
@@ -122,8 +119,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
     void progress_loop();
     void PutChar(char);
     void ClearText();
-    void DrawTextLine(int x, int* y, const char* line, bool bold);
-    void DrawTextLines(int x, int* y, const char* const* lines);
     void PrintV(const char*, bool, va_list);
 };
 
