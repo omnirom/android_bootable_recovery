@@ -54,7 +54,6 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     currentIcon(NONE),
     installingFrame(0),
     locale(nullptr),
-    rtl_locale(false),
     progressBarType(EMPTY),
     progressScopeStart(0),
     progressScopeSize(0),
@@ -76,7 +75,8 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     animation_fps(-1),
     installing_frames(-1),
     stage(-1),
-    max_stage(-1) {
+    max_stage(-1),
+    rtl_locale(false) {
 
     for (int i = 0; i < 5; i++) {
         backgroundIcon[i] = nullptr;

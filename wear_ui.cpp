@@ -62,7 +62,6 @@ WearRecoveryUI::WearRecoveryUI() :
     currentIcon(NONE),
     intro_done(false),
     current_frame(0),
-    rtl_locale(false),
     progressBarType(EMPTY),
     progressScopeStart(0),
     progressScopeSize(0),
@@ -81,7 +80,6 @@ WearRecoveryUI::WearRecoveryUI() :
     for (size_t i = 0; i < 5; i++)
         backgroundIcon[i] = NULL;
 
-    pthread_mutex_init(&updateMutex, NULL);
     self = this;
 }
 
@@ -318,13 +316,6 @@ void WearRecoveryUI::progress_loop() {
         double delay = interval - (end-start);
         if (delay < 0.02) delay = 0.02;
         usleep((long)(delay * 1000000));
-    }
-}
-
-void WearRecoveryUI::LoadBitmap(const char* filename, GRSurface** surface) {
-    int result = res_create_display_surface(filename, surface);
-    if (result < 0) {
-        LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
     }
 }
 

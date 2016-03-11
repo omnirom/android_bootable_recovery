@@ -71,9 +71,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     Icon currentIcon;
     int installingFrame;
     const char* locale;
-    bool rtl_locale;
 
-    pthread_mutex_t updateMutex;
     GRSurface* backgroundIcon[5];
     GRSurface* backgroundText[5];
     GRSurface** installation;
@@ -136,9 +134,12 @@ class ScreenRecoveryUI : public RecoveryUI {
     void DrawTextLine(int* y, const char* line, bool bold);
     void DrawTextLines(int* y, const char* const* lines);
 
-    void LoadBitmap(const char* filename, GRSurface** surface);
     void LoadBitmapArray(const char* filename, int* frames, int* fps, GRSurface*** surface);
     void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
+  protected:
+    pthread_mutex_t updateMutex;
+    bool rtl_locale;
+    void LoadBitmap(const char* filename, GRSurface** surface);
 };
 
 #endif  // RECOVERY_UI_H
