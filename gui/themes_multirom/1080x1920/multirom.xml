@@ -718,12 +718,13 @@
 			</button>
 
 			<text style="text_m_accent">
-				<placement x="%indent%" y="%row7_y%"/>
+				<placement x="%indent%" y="%row13_y%"/>
 				<text>Options:</text>
 			</text>
 
 			<listbox style="scrolllist">
-				<placement x="%indent%" y="%row8_y%" w="%content_width%" h="%listbox_settings_mr_height%"/>
+				<placement x="%indent%" y="%row14_y%" w="%content_width%" h="%listbox_settings_mr_height%"/>
+				<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 				<icon selected="checkbox_true" unselected="checkbox_false"/>
 				<listitem name="Enable ADB">
 					<data variable="tw_multirom_enable_adb"/>
@@ -734,25 +735,28 @@
 				<listitem name="Force using generic screen drawing code">
 					<data variable="tw_multirom_force_generic_fb"/>
 				</listitem>
+				<listitem name="Enable advanced kernel logging + history">
+					<data variable="tw_multirom_enable_kmsg_logging"/>
+				</listitem>
 			</listbox>
 
 			<text style="text_m_accent">
-				<placement x="%indent%" y="%row13a_y%"/>
+				<placement x="%indent%" y="%row7_y%"/>
 				<text>Screen Brightness: %tw_multirom_brightness%</text>
 			</text>
 
 			<slidervalue>
-				<placement x="indent" y="%row14_y%" w="%content_width%"/>
+				<placement x="indent" y="%row7_y%" w="%content_width%"/>
 				<data variable="tw_multirom_brightness" min="30" max="255" showcurr="0" changeondrag="1" />
 			</slidervalue>
 
 			<text style="text_m_accent">
-				<placement x="%indent%" y="%row17a_y%"/>
+				<placement x="%indent%" y="%row10_y%"/>
 				<text>Animation Duration: %tw_anim_duration_coef_pct%%</text>
 			</text>
 
 			<slidervalue>
-				<placement x="indent" y="%row18_y%" w="%content_width%"/>
+				<placement x="indent" y="%row10_y%" w="%content_width%"/>
 				<data variable="tw_anim_duration_coef_pct" min="50" max="125" showcurr="0" changeondrag="1" />
 			</slidervalue>
 

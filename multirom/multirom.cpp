@@ -79,6 +79,7 @@ MultiROM::config::config()
 	int_display_name = INTERNAL_NAME;
 	rotation = TW_DEFAULT_ROTATION;
 	enable_adb = 0;
+	enable_kmsg_logging = 0;
 	force_generic_fb = 0;
 	anim_duration_coef_pct = 100;
 }
@@ -646,6 +647,8 @@ MultiROM::config MultiROM::loadConfig()
 				cfg.brightness = atoi(val.c_str());
 			else if(name == "enable_adb")
 				cfg.enable_adb = atoi(val.c_str());
+			else if(name == "enable_kmsg_logging")
+				cfg.enable_kmsg_logging = atoi(val.c_str());
 			else if(name == "hide_internal")
 				cfg.hide_internal = atoi(val.c_str());
 			else if(name == "int_display_name")
@@ -677,6 +680,7 @@ void MultiROM::saveConfig(const MultiROM::config& cfg)
 	fprintf(f, "colors_v2=%d\n", cfg.colors);
 	fprintf(f, "brightness=%d\n", cfg.brightness);
 	fprintf(f, "enable_adb=%d\n", cfg.enable_adb);
+	fprintf(f, "enable_kmsg_logging=%d\n", cfg.enable_kmsg_logging);
 	fprintf(f, "hide_internal=%d\n", cfg.hide_internal);
 	fprintf(f, "int_display_name=%s\n", cfg.int_display_name.c_str());
 	fprintf(f, "rotation=%d\n", cfg.rotation);

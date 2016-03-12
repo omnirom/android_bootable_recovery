@@ -1938,6 +1938,7 @@ int GUIAction::multirom_settings(std::string arg)
 	DataManager::SetValue("tw_multirom_colors", cfg.colors);
 	DataManager::SetValue("tw_multirom_brightness", cfg.brightness);
 	DataManager::SetValue("tw_multirom_enable_adb", cfg.enable_adb);
+	DataManager::SetValue("tw_multirom_enable_kmsg_logging", cfg.enable_kmsg_logging);
 	DataManager::SetValue("tw_multirom_hide_internal", cfg.hide_internal);
 	DataManager::SetValue("tw_multirom_int_display_name", cfg.int_display_name);
 	DataManager::SetValue("tw_multirom_rotation", cfg.rotation);
@@ -1971,6 +1972,7 @@ int GUIAction::multirom_settings_save(std::string arg)
 	cfg.colors = DataManager::GetIntValue("tw_multirom_colors");
 	cfg.brightness = DataManager::GetIntValue("tw_multirom_brightness");
 	cfg.enable_adb = DataManager::GetIntValue("tw_multirom_enable_adb");
+	cfg.enable_kmsg_logging = DataManager::GetIntValue("tw_multirom_enable_kmsg_logging");
 	cfg.hide_internal = DataManager::GetIntValue("tw_multirom_hide_internal");
 	cfg.int_display_name = DataManager::GetStrValue("tw_multirom_int_display_name");
 	cfg.rotation = DataManager::GetIntValue("tw_multirom_rotation");
