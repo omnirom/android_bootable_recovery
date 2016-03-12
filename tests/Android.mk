@@ -29,18 +29,27 @@ include $(BUILD_NATIVE_TEST)
 # Component tests
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
+LOCAL_CFLAGS += -Wno-unused-parameter
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_MODULE := recovery_component_test
 LOCAL_C_INCLUDES := bootable/recovery
-LOCAL_SRC_FILES := component/verifier_test.cpp
+LOCAL_SRC_FILES := \
+    component/verifier_test.cpp \
+    component/applypatch_test.cpp
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_STATIC_LIBRARIES := \
+    libapplypatch \
+    libotafault \
+    libmtdutils \
     libbase \
     libverifier \
     libmincrypt \
+    libcrypto_static \
     libminui \
     libminzip \
     libcutils \
+    libbz \
+    libz \
     libc
 
 testdata_out_path := $(TARGET_OUT_DATA_NATIVE_TESTS)/recovery
