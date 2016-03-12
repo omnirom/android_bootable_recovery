@@ -40,8 +40,7 @@
 #include "screen_ui.h"
 #include "ui.h"
 
-static int char_width;
-static int char_height;
+#define TEXT_INDENT     4
 
 // Return the current time as a double (including fractions of a second).
 static double now() {
@@ -213,14 +212,14 @@ void ScreenRecoveryUI::DrawHorizontalRule(int* y) {
     *y += 4;
 }
 
-void ScreenRecoveryUI::DrawTextLine(int* y, const char* line, bool bold) {
-    gr_text(4, *y, line, bold);
-    *y += char_height + 4;
+void ScreenRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) {
+    gr_text(x, *y, line, bold);
+    *y += char_height_ + 4;
 }
 
-void ScreenRecoveryUI::DrawTextLines(int* y, const char* const* lines) {
+void ScreenRecoveryUI::DrawTextLines(int x, int* y, const char* const* lines) {
     for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
-        DrawTextLine(y, lines[i], false);
+        DrawTextLine(x, y, lines[i], false);
     }
 }
 
@@ -251,14 +250,15 @@ void ScreenRecoveryUI::draw_screen_locked() {
             property_get("ro.bootimage.build.fingerprint", recovery_fingerprint, "");
 
             SetColor(INFO);
-            DrawTextLine(&y, "Android Recovery", true);
+            DrawTextLine(TEXT_INDENT, &y, "Android Recovery", true);
             for (auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
-                DrawTextLine(&y, chunk.c_str(), false);
+                DrawTextLine(TEXT_INDENT, &y, chunk.c_str(), false);
             }
-            DrawTextLines(&y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
+            DrawTextLines(TEXT_INDENT, &y,
+                    HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
 
             SetColor(HEADER);
-            DrawTextLines(&y, menu_headers_);
+            DrawTextLines(TEXT_INDENT, &y, menu_headers_);
 
             SetColor(MENU);
             DrawHorizontalRule(&y);
@@ -267,7 +267,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
                 if (i == menu_sel) {
                     // Draw the highlight bar.
                     SetColor(IsLongPress() ? MENU_SEL_BG_ACTIVE : MENU_SEL_BG);
-                    gr_fill(0, y - 2, gr_fb_width(), y + char_height + 2);
+                    gr_fill(0, y - 2, gr_fb_width(), y + char_height_ + 2);
                     // Bold white text for the selected item.
                     SetColor(MENU_SEL_FG);
                     gr_text(4, y, menu_[i], true);
@@ -275,7 +275,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
                 } else {
                     gr_text(4, y, menu_[i], false);
                 }
-                y += char_height + 4;
+                y += char_height_ + 4;
             }
             DrawHorizontalRule(&y);
         }
@@ -286,9 +286,9 @@ void ScreenRecoveryUI::draw_screen_locked() {
         SetColor(LOG);
         int row = (text_top_ + text_rows_ - 1) % text_rows_;
         size_t count = 0;
-        for (int ty = gr_fb_height() - char_height;
+        for (int ty = gr_fb_height() - char_height_;
              ty >= y && count < text_rows_;
-             ty -= char_height, ++count) {
+             ty -= char_height_, ++count) {
             gr_text(0, ty, text_[row], false);
             --row;
             if (row < 0) row = text_rows_ - 1;
@@ -394,9 +394,9 @@ static char** Alloc2d(size_t rows, size_t cols) {
 void ScreenRecoveryUI::Init() {
     gr_init();
 
-    gr_font_size(&char_width, &char_height);
-    text_rows_ = gr_fb_height() / char_height;
-    text_cols_ = gr_fb_width() / char_width;
+    gr_font_size(&char_width_, &char_height_);
+    text_rows_ = gr_fb_height() / char_height_;
+    text_cols_ = gr_fb_width() / char_width_;
 
     text_ = Alloc2d(text_rows_, text_cols_ + 1);
     file_viewer_text_ = Alloc2d(text_rows_, text_cols_ + 1);
