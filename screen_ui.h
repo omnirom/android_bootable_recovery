@@ -131,15 +131,17 @@ class ScreenRecoveryUI : public RecoveryUI {
     void ClearText();
 
     void DrawHorizontalRule(int* y);
-    void DrawTextLine(int* y, const char* line, bool bold);
-    void DrawTextLines(int* y, const char* const* lines);
 
     void LoadBitmapArray(const char* filename, int* frames, int* fps, GRSurface*** surface);
     void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
   protected:
+    int char_width_;
+    int char_height_;
     pthread_mutex_t updateMutex;
     bool rtl_locale;
     void LoadBitmap(const char* filename, GRSurface** surface);
+    void DrawTextLine(int x, int* y, const char* line, bool bold);
+    void DrawTextLines(int x, int* y, const char* const* lines);
 };
 
 #endif  // RECOVERY_UI_H
