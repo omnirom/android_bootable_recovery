@@ -2633,6 +2633,14 @@ bool MultiROM::fakeBootPartition(const char *fakeImg)
 
 void MultiROM::restoreBootPartition()
 {
+#ifdef BOARD_BOOTIMAGE_PARTITION_SIZE
+	if(access(m_boot_dev.c_str(), F_OK) == 0)
+	{
+		LOGINFO("Truncating fake boot.img to %d bytes\n", BOARD_BOOTIMAGE_PARTITION_SIZE);
+		truncate(m_boot_dev.c_str(), BOARD_BOOTIMAGE_PARTITION_SIZE);
+	}
+#endif
+
 	if(access((m_boot_dev + "-orig").c_str(), F_OK) < 0)
 	{
 		gui_print("Failed to restore boot partition, %s-orig does not exist!\n", m_boot_dev.c_str());
