@@ -98,7 +98,7 @@ TWRP_NEW_THEME := true
 ifeq ($(TW_CUSTOM_THEME),)
 ifeq ($(TARGET_RECOVERY_IS_MULTIROM),true)
     MR_THEME := $(DEVICE_RESOLUTION)
-    ifeq ($(MR_THEME),1440x2560)
+    ifeq ($(filter-out 1440x2560 720x1280,$(MR_THEME)),)
         MR_THEME := 1080x1920
     endif
 
