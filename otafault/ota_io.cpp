@@ -189,8 +189,8 @@ int ota_fsync(int fd) {
             && FilenameCache[fd] == FaultFileName) {
         FaultFileName = "";
         errno = EIO;
-        return -1;
         have_eio_error = true;
+        return -1;
     } else {
         int status = fsync(fd);
         if (status == -1 && errno == EIO) {
