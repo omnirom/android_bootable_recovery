@@ -1460,7 +1460,6 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	} else {
 		TWPartition* dat = Find_Partition_By_Path("/data");
 		if (dat != NULL) {
-			DataManager::SetValue(TW_DATA_BLK_DEVICE, dat->Primary_Block_Device);
 			DataManager::SetValue(TW_IS_DECRYPTED, 1);
 			dat->Is_Decrypted = true;
 			dat->Decrypted_Block_Device = crypto_blkdev;

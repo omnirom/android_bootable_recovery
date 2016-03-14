@@ -1,5 +1,5 @@
 /*
-	Copyright 2012 bigbiff/Dees_Troy TeamWin
+	Copyright 2012 to 2016 bigbiff/Dees_Troy TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -16,29 +16,12 @@
 	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <linux/input.h>
 #include <pthread.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
 #include <time.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <ctype.h>
-
 #include <string>
-#include <utility>
-#include <map>
-#include <fstream>
 #include <sstream>
-#include <pthread.h>
+#include <cctype>
+#include <cutils/properties.h>
 
 #include "variables.h"
 #include "data.hpp"
@@ -49,8 +32,8 @@
 #endif
 #include "find_file.hpp"
 #include "set_metadata.h"
-#include <cutils/properties.h>
 #include "gui/gui.hpp"
+#include "infomanager.hpp"
 
 #define DEVID_MAX 64
 #define HWID_MAX 32
@@ -63,14 +46,15 @@ extern "C"
 }
 #include "minuitwrp/minui.h"
 
-#define FILE_VERSION 0x00010010
+#define FILE_VERSION 0x00010010 // Do not set to 0
 
 using namespace std;
 
-map<string, DataManager::TStrIntPair>   DataManager::mValues;
-map<string, string>                     DataManager::mConstValues;
 string                                  DataManager::mBackingFile;
 int                                     DataManager::mInitialized = 0;
+InfoManager                             DataManager::mPersist;  // Data that that is not constant and will be saved to the settings file
+InfoManager                             DataManager::mData;     // Data that is not constant and will not be saved to settings file
+InfoManager                             DataManager::mConst;    // Data that is constant and will not be saved to settings file
 
 extern bool datamedia;
 
@@ -154,7 +138,7 @@ void DataManager::get_device_id(void) {
 			snprintf(device_id, DEVID_MAX, "%s_%s", model_id, hardware_id);
 
 		sanitize_device_id(device_id);
-		mConstValues.insert(make_pair("device_id", device_id));
+		mConst.SetValue("device_id", device_id);
 		LOGINFO("=> using device id: '%s'\n", device_id);
 		return;
 	}
@@ -173,7 +157,7 @@ void DataManager::get_device_id(void) {
 				token += CMDLINE_SERIALNO_LEN;
 				snprintf(device_id, DEVID_MAX, "%s", token);
 				sanitize_device_id(device_id); // also removes newlines
-				mConstValues.insert(make_pair("device_id", device_id));
+				mConst.SetValue("device_id", device_id);
 				return;
 			}
 			token = strtok(NULL, " ");
@@ -195,7 +179,7 @@ void DataManager::get_device_id(void) {
 					snprintf(device_id, DEVID_MAX, "%s", token);
 					sanitize_device_id(device_id); // also removes newlines
 					LOGINFO("=> serial from cpuinfo: '%s'\n", device_id);
-					mConstValues.insert(make_pair("device_id", device_id));
+					mConst.SetValue("device_id", device_id);
 					fclose(fp);
 					return;
 				}
@@ -221,28 +205,29 @@ void DataManager::get_device_id(void) {
 		LOGINFO("\nusing hardware id for device id: '%s'\n", hardware_id);
 		snprintf(device_id, DEVID_MAX, "%s", hardware_id);
 		sanitize_device_id(device_id);
-		mConstValues.insert(make_pair("device_id", device_id));
+		mConst.SetValue("device_id", device_id);
 		return;
 	}
 
 	strcpy(device_id, "serialno");
 	LOGINFO("=> device id not found, using '%s'\n", device_id);
-	mConstValues.insert(make_pair("device_id", device_id));
+	mConst.SetValue("device_id", device_id);
 	return;
 }
 
 int DataManager::ResetDefaults()
 {
 	pthread_mutex_lock(&m_valuesLock);
-	mValues.clear();
+	mPersist.Clear();
+	mData.Clear();
+	mConst.Clear();
 	pthread_mutex_unlock(&m_valuesLock);
 
-	mConstValues.clear();
 	SetDefaultValues();
 	return 0;
 }
 
-int DataManager::LoadValues(const string filename)
+int DataManager::LoadValues(const string& filename)
 {
 	string str, dev_id;
 
@@ -252,61 +237,18 @@ int DataManager::LoadValues(const string filename)
 	GetValue("device_id", dev_id);
 	// Save off the backing file for set operations
 	mBackingFile = filename;
+	mPersist.SetFile(filename);
+	mPersist.SetFileVersion(FILE_VERSION);
 
 	// Read in the file, if possible
-	FILE* in = fopen(filename.c_str(), "rb");
-	if (!in) {
-		LOGINFO("Settings file '%s' not found.\n", filename.c_str());
-		return 0;
-	} else {
-		LOGINFO("Loading settings from '%s'.\n", filename.c_str());
-	}
-
-	int file_version;
-	if (fread(&file_version, 1, sizeof(int), in) != sizeof(int))	goto error;
-	if (file_version != FILE_VERSION)								goto error;
-
-	while (!feof(in))
-	{
-		string Name;
-		string Value;
-		unsigned short length;
-		char array[513];
-
-		if (fread(&length, 1, sizeof(unsigned short), in) != sizeof(unsigned short))	goto error;
-		if (length >= 512)																goto error;
-		if (fread(array, 1, length, in) != length)										goto error;
-		array[length+1] = '\0';
-		Name = array;
-
-		if (fread(&length, 1, sizeof(unsigned short), in) != sizeof(unsigned short))	goto error;
-		if (length >= 512)																goto error;
-		if (fread(array, 1, length, in) != length)										goto error;
-		array[length+1] = '\0';
-		Value = array;
-
-		map<string, TStrIntPair>::iterator pos;
-
-		pthread_mutex_lock(&m_valuesLock);
-
-		pos = mValues.find(Name);
-		if (pos != mValues.end())
-		{
-			pos->second.first = Value;
-			pos->second.second = 1;
-		}
-		else
-			mValues.insert(TNameValuePair(Name, TStrIntPair(Value, 1)));
-
-		pthread_mutex_unlock(&m_valuesLock);
+	pthread_mutex_lock(&m_valuesLock);
+	mPersist.LoadValues();
 
 #ifndef TW_NO_SCREEN_TIMEOUT
-		if (Name == "tw_screen_timeout_secs")
-			blankTimer.setTime(atoi(Value.c_str()));
+	blankTimer.setTime(mPersist.GetIntValue("tw_screen_timeout_secs"));
 #endif
-	}
-error:
-	fclose(in);
+
+	pthread_mutex_unlock(&m_valuesLock);
 	string current = GetCurrentStoragePath();
 	TWPartition* Part = PartitionManager.Find_Partition_By_Path(current);
 	if(!Part)
@@ -334,41 +276,22 @@ int DataManager::SaveValues()
 	string mount_path = GetSettingsStoragePath();
 	PartitionManager.Mount_By_Path(mount_path.c_str(), 1);
 
-	FILE* out = fopen(mBackingFile.c_str(), "wb");
-	if (!out)
-		return -1;
-
-	int file_version = FILE_VERSION;
-	fwrite(&file_version, 1, sizeof(int), out);
-
+	mPersist.SetFile(mBackingFile);
+	mPersist.SetFileVersion(FILE_VERSION);
 	pthread_mutex_lock(&m_valuesLock);
-
-	map<string, TStrIntPair>::iterator iter;
-	for (iter = mValues.begin(); iter != mValues.end(); ++iter)
-	{
-		// Save only the persisted data
-		if (iter->second.second != 0)
-		{
-			unsigned short length = (unsigned short) iter->first.length() + 1;
-			fwrite(&length, 1, sizeof(unsigned short), out);
-			fwrite(iter->first.c_str(), 1, length, out);
-			length = (unsigned short) iter->second.first.length() + 1;
-			fwrite(&length, 1, sizeof(unsigned short), out);
-			fwrite(iter->second.first.c_str(), 1, length, out);
-		}
-	}
-
+	mPersist.SaveValues();
 	pthread_mutex_unlock(&m_valuesLock);
 
-	fclose(out);
 	tw_set_default_metadata(mBackingFile.c_str());
+	LOGINFO("Saved settings file values\n");
 #endif // ifdef TW_OEM_BUILD
 	return 0;
 }
 
-int DataManager::GetValue(const string varName, string& value)
+int DataManager::GetValue(const string& varName, string& value)
 {
 	string localStr = varName;
+	int ret = 0;
 
 	if (!mInitialized)
 		SetDefaultValues();
@@ -392,28 +315,22 @@ int DataManager::GetValue(const string varName, string& value)
 		return 0;
 	}
 
-	map<string, string>::iterator constPos;
-	constPos = mConstValues.find(localStr);
-	if (constPos != mConstValues.end())
-	{
-		value = constPos->second;
-		return 0;
-	}
-
 	pthread_mutex_lock(&m_valuesLock);
-	map<string, TStrIntPair>::iterator pos;
-	pos = mValues.find(localStr);
-	if (pos == mValues.end()){
-		pthread_mutex_unlock(&m_valuesLock);
-		return -1;
-	}
+	ret = mConst.GetValue(localStr, value);
+	if (ret == 0)
+		goto exit;
 
-	value = pos->second.first;
+	ret = mPersist.GetValue(localStr, value);
+	if (ret == 0)
+		goto exit;
+
+	ret = mData.GetValue(localStr, value);
+exit:
 	pthread_mutex_unlock(&m_valuesLock);
-	return 0;
+	return ret;
 }
 
-int DataManager::GetValue(const string varName, int& value)
+int DataManager::GetValue(const string& varName, int& value)
 {
 	string data;
 
@@ -424,7 +341,7 @@ int DataManager::GetValue(const string varName, int& value)
 	return 0;
 }
 
-int DataManager::GetValue(const string varName, float& value)
+int DataManager::GetValue(const string& varName, float& value)
 {
 	string data;
 
@@ -435,7 +352,7 @@ int DataManager::GetValue(const string varName, float& value)
 	return 0;
 }
 
-unsigned long long DataManager::GetValue(const string varName, unsigned long long& value)
+unsigned long long DataManager::GetValue(const string& varName, unsigned long long& value)
 {
 	string data;
 
@@ -447,7 +364,7 @@ unsigned long long DataManager::GetValue(const string varName, unsigned long lon
 }
 
 // This function will return an empty string if the value doesn't exist
-string DataManager::GetStrValue(const string varName)
+string DataManager::GetStrValue(const string& varName)
 {
 	string retVal;
 
@@ -456,7 +373,7 @@ string DataManager::GetStrValue(const string varName)
 }
 
 // This function will return 0 if the value doesn't exist
-int DataManager::GetIntValue(const string varName)
+int DataManager::GetIntValue(const string& varName)
 {
 	string retVal;
 
@@ -464,7 +381,7 @@ int DataManager::GetIntValue(const string varName)
 	return atoi(retVal.c_str());
 }
 
-int DataManager::SetValue(const string varName, string value, int persist /* = 0 */)
+int DataManager::SetValue(const string& varName, const string& value, const int persist /* = 0 */)
 {
 	if (!mInitialized)
 		SetDefaultValues();
@@ -481,22 +398,24 @@ int DataManager::SetValue(const string varName, string value, int persist /* = 0
 	if (varName.empty() || (varName[0] >= '0' && varName[0] <= '9'))
 		return -1;
 
-	map<string, string>::iterator constChk;
-	constChk = mConstValues.find(varName);
-	if (constChk != mConstValues.end())
-		return -1;
-
+	string test;
 	pthread_mutex_lock(&m_valuesLock);
+	int constChk = mConst.GetValue(varName, test);
+	if (constChk == 0) {
+		pthread_mutex_unlock(&m_valuesLock);
+		return -1;
+	}
 
-	map<string, TStrIntPair>::iterator pos;
-	pos = mValues.find(varName);
-	if (pos == mValues.end())
-		pos = (mValues.insert(TNameValuePair(varName, TStrIntPair(value, persist)))).first;
-	else
-		pos->second.first = value;
-
-	if (pos->second.second != 0)
-		SaveValues();
+	if (persist) {
+		mPersist.SetValue(varName, value);
+	} else {
+		int persistChk = mPersist.GetValue(varName, test);
+		if (persistChk == 0) {
+			mPersist.SetValue(varName, value);
+		} else {
+			mData.SetValue(varName, value);
+		}
+	}
 
 	pthread_mutex_unlock(&m_valuesLock);
 
@@ -512,42 +431,32 @@ int DataManager::SetValue(const string varName, string value, int persist /* = 0
 	return 0;
 }
 
-int DataManager::SetValue(const string varName, int value, int persist /* = 0 */)
+int DataManager::SetValue(const string& varName, const int value, const int persist /* = 0 */)
 {
 	ostringstream valStr;
 	valStr << value;
-	if (varName == "tw_use_external_storage") {
-		string str;
-
-		if (GetIntValue(TW_HAS_INTERNAL) == 1)
-			str = GetStrValue(TW_INTERNAL_PATH);
-		else
-			str = GetStrValue(TW_EXTERNAL_PATH);
-
-		SetValue("tw_storage_path", str);
-	}
 	return SetValue(varName, valStr.str(), persist);
 }
 
-int DataManager::SetValue(const string varName, float value, int persist /* = 0 */)
+int DataManager::SetValue(const string& varName, const float value, const int persist /* = 0 */)
 {
 	ostringstream valStr;
 	valStr << value;
 	return SetValue(varName, valStr.str(), persist);;
 }
 
-int DataManager::SetValue(const string varName, unsigned long long value, int persist /* = 0 */)
+int DataManager::SetValue(const string& varName, const unsigned long long& value, const int persist /* = 0 */)
 {
 	ostringstream valStr;
 	valStr << value;
 	return SetValue(varName, valStr.str(), persist);
 }
 
-int DataManager::SetProgress(float Fraction) {
+int DataManager::SetProgress(const float Fraction) {
 	return SetValue("ui_progress", (float) (Fraction * 100.0));
 }
 
-int DataManager::ShowProgress(float Portion, float Seconds)
+int DataManager::ShowProgress(const float Portion, const float Seconds)
 {
 	float Starting_Portion;
 	GetValue("ui_progress_portion", Starting_Portion);
@@ -556,16 +465,6 @@ int DataManager::ShowProgress(float Portion, float Seconds)
 	if (SetValue("ui_progress_frames", Seconds * 30) != 0)
 		return -1;
 	return 0;
-}
-
-void DataManager::DumpValues()
-{
-	map<string, TStrIntPair>::iterator iter;
-	gui_print("Data Manager dump - Values with leading X are persisted.\n");
-	pthread_mutex_lock(&m_valuesLock);
-	for (iter = mValues.begin(); iter != mValues.end(); ++iter)
-		gui_print("%c %s=%s\n", iter->second.second ? 'X' : ' ', iter->first.c_str(), iter->second.first.c_str());
-	pthread_mutex_unlock(&m_valuesLock);
 }
 
 void DataManager::update_tz_environment_variables(void)
@@ -618,25 +517,27 @@ void DataManager::SetDefaultValues()
 {
 	string str, path;
 
+	mConst.SetConst();
+
 	get_device_id();
 
 	pthread_mutex_lock(&m_valuesLock);
 
 	mInitialized = 1;
 
-	mConstValues.insert(make_pair("true", "1"));
-	mConstValues.insert(make_pair("false", "0"));
+	mConst.SetValue("true", "1");
+	mConst.SetValue("false", "0");
 
-	mConstValues.insert(make_pair(TW_VERSION_VAR, TW_VERSION_STR));
-	mValues.insert(make_pair("tw_button_vibrate", make_pair("80", 1)));
-	mValues.insert(make_pair("tw_keyboard_vibrate", make_pair("40", 1)));
-	mValues.insert(make_pair("tw_action_vibrate", make_pair("160", 1)));
+	mConst.SetValue(TW_VERSION_VAR, TW_VERSION_STR);
+	mPersist.SetValue("tw_button_vibrate", "80");
+	mPersist.SetValue("tw_keyboard_vibrate", "40");
+	mPersist.SetValue("tw_action_vibrate", "160");
 
 	TWPartition *store = PartitionManager.Get_Default_Storage_Partition();
 	if(store)
-		mValues.insert(make_pair("tw_storage_path", make_pair(store->Storage_Path.c_str(), 1)));
+		mPersist.SetValue("tw_storage_path", store->Storage_Path);
 	else
-		mValues.insert(make_pair("tw_storage_path", make_pair("/", 1)));
+		mPersist.SetValue("tw_storage_path", "/");
 
 #ifdef TW_FORCE_CPUINFO_FOR_DEVICE_ID
 	printf("TW_FORCE_CPUINFO_FOR_DEVICE_ID := true\n");
@@ -644,60 +545,58 @@ void DataManager::SetDefaultValues()
 
 #ifdef BOARD_HAS_NO_REAL_SDCARD
 	printf("BOARD_HAS_NO_REAL_SDCARD := true\n");
-	mConstValues.insert(make_pair(TW_ALLOW_PARTITION_SDCARD, "0"));
+	mConst.SetValue(TW_ALLOW_PARTITION_SDCARD, "0");
 #else
-	mConstValues.insert(make_pair(TW_ALLOW_PARTITION_SDCARD, "1"));
+	mConst.SetValue(TW_ALLOW_PARTITION_SDCARD, "1");
 #endif
 
 #ifdef TW_INCLUDE_DUMLOCK
 	printf("TW_INCLUDE_DUMLOCK := true\n");
-	mConstValues.insert(make_pair(TW_SHOW_DUMLOCK, "1"));
+	mConst.SetValue(TW_SHOW_DUMLOCK, "1");
 #else
-	mConstValues.insert(make_pair(TW_SHOW_DUMLOCK, "0"));
+	mConst.SetValue(TW_SHOW_DUMLOCK, "0");
 #endif
 
 	str = GetCurrentStoragePath();
-	SetValue(TW_ZIP_LOCATION_VAR, str.c_str(), 1);
+	mPersist.SetValue(TW_ZIP_LOCATION_VAR, str);
 	str += "/TWRP/BACKUPS/";
 
 	string dev_id;
-	GetValue("device_id", dev_id);
+	mConst.GetValue("device_id", dev_id);
 
 	str += dev_id;
-	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
+	mData.SetValue(TW_BACKUPS_FOLDER_VAR, str);
 
-	mConstValues.insert(make_pair(TW_REBOOT_SYSTEM, "1"));
+	mConst.SetValue(TW_REBOOT_SYSTEM, "1");
 #ifdef TW_NO_REBOOT_RECOVERY
 	printf("TW_NO_REBOOT_RECOVERY := true\n");
-	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, "0"));
+	mConst.SetValue(TW_REBOOT_RECOVERY, "0");
 #else
-	mConstValues.insert(make_pair(TW_REBOOT_RECOVERY, "1"));
+	mConst.SetValue(TW_REBOOT_RECOVERY, "1");
 #endif
-	mConstValues.insert(make_pair(TW_REBOOT_POWEROFF, "1"));
+	mConst.SetValue(TW_REBOOT_POWEROFF, "1");
 #ifdef TW_NO_REBOOT_BOOTLOADER
 	printf("TW_NO_REBOOT_BOOTLOADER := true\n");
-	mConstValues.insert(make_pair(TW_REBOOT_BOOTLOADER, "0"));
+	mConst.SetValue(TW_REBOOT_BOOTLOADER, "0");
 #else
-	mConstValues.insert(make_pair(TW_REBOOT_BOOTLOADER, "1"));
+	mConst.SetValue(TW_REBOOT_BOOTLOADER, "1");
 #endif
 #ifdef RECOVERY_SDCARD_ON_DATA
 	printf("RECOVERY_SDCARD_ON_DATA := true\n");
-	mConstValues.insert(make_pair(TW_HAS_DATA_MEDIA, "1"));
-	mConstValues.insert(make_pair("tw_has_internal", "1"));
+	mConst.SetValue(TW_HAS_DATA_MEDIA, "1");
 	datamedia = true;
 #else
-	mValues.insert(make_pair(TW_HAS_DATA_MEDIA, make_pair("0", 0)));
-	mValues.insert(make_pair("tw_has_internal", make_pair("0", 0)));
+	mData.SetValue(TW_HAS_DATA_MEDIA, "0");
 #endif
 #ifdef TW_NO_BATT_PERCENT
 	printf("TW_NO_BATT_PERCENT := true\n");
-	mConstValues.insert(make_pair(TW_NO_BATTERY_PERCENT, "1"));
+	mConst.SetValue(TW_NO_BATTERY_PERCENT, "1");
 #else
-	mConstValues.insert(make_pair(TW_NO_BATTERY_PERCENT, "0"));
+	mConst.SetValue(TW_NO_BATTERY_PERCENT, "0");
 #endif
 #ifdef TW_NO_CPU_TEMP
 	printf("TW_NO_CPU_TEMP := true\n");
-	mConstValues.insert(make_pair("tw_no_cpu_temp", "1"));
+	mConst.SetValue("tw_no_cpu_temp", "1");
 #else
 	string cpu_temp_file;
 #ifdef TW_CUSTOM_CPU_TEMP_PATH
@@ -706,31 +605,31 @@ void DataManager::SetDefaultValues()
 	cpu_temp_file = "/sys/class/thermal/thermal_zone0/temp";
 #endif
 	if (TWFunc::Path_Exists(cpu_temp_file)) {
-		mConstValues.insert(make_pair("tw_no_cpu_temp", "0"));
+		mConst.SetValue("tw_no_cpu_temp", "0");
 	} else {
 		LOGINFO("CPU temperature file '%s' not found, disabling CPU temp.\n", cpu_temp_file.c_str());
-		mConstValues.insert(make_pair("tw_no_cpu_temp", "1"));
+		mConst.SetValue("tw_no_cpu_temp", "1");
 	}
 #endif
 #ifdef TW_CUSTOM_POWER_BUTTON
 	printf("TW_POWER_BUTTON := %s\n", EXPAND(TW_CUSTOM_POWER_BUTTON));
-	mConstValues.insert(make_pair(TW_POWER_BUTTON, EXPAND(TW_CUSTOM_POWER_BUTTON)));
+	mConst.SetValue(TW_POWER_BUTTON, EXPAND(TW_CUSTOM_POWER_BUTTON));
 #else
-	mConstValues.insert(make_pair(TW_POWER_BUTTON, "0"));
+	mConst.SetValue(TW_POWER_BUTTON, "0");
 #endif
 #ifdef TW_ALWAYS_RMRF
 	printf("TW_ALWAYS_RMRF := true\n");
-	mConstValues.insert(make_pair(TW_RM_RF_VAR, "1"));
+	mConst.SetValue(TW_RM_RF_VAR, "1");
 #endif
 #ifdef TW_NEVER_UNMOUNT_SYSTEM
 	printf("TW_NEVER_UNMOUNT_SYSTEM := true\n");
-	mConstValues.insert(make_pair(TW_DONT_UNMOUNT_SYSTEM, "1"));
+	mConst.SetValue(TW_DONT_UNMOUNT_SYSTEM, "1");
 #else
-	mConstValues.insert(make_pair(TW_DONT_UNMOUNT_SYSTEM, "0"));
+	mConst.SetValue(TW_DONT_UNMOUNT_SYSTEM, "0");
 #endif
 #ifdef TW_NO_USB_STORAGE
 	printf("TW_NO_USB_STORAGE := true\n");
-	mConstValues.insert(make_pair(TW_HAS_USB_STORAGE, "0"));
+	mConst.SetValue(TW_HAS_USB_STORAGE, "0");
 #else
 	char lun_file[255];
 	string Lun_File_str = CUSTOM_LUN_FILE;
@@ -741,86 +640,83 @@ void DataManager::SetDefaultValues()
 	}
 	if (!TWFunc::Path_Exists(Lun_File_str)) {
 		LOGINFO("Lun file '%s' does not exist, USB storage mode disabled\n", Lun_File_str.c_str());
-		mConstValues.insert(make_pair(TW_HAS_USB_STORAGE, "0"));
+		mConst.SetValue(TW_HAS_USB_STORAGE, "0");
 	} else {
 		LOGINFO("Lun file '%s'\n", Lun_File_str.c_str());
-		mValues.insert(make_pair(TW_HAS_USB_STORAGE, make_pair("1", 0)));
+		mData.SetValue(TW_HAS_USB_STORAGE, "1");
 	}
 #endif
 #ifdef TW_INCLUDE_INJECTTWRP
 	printf("TW_INCLUDE_INJECTTWRP := true\n");
-	mConstValues.insert(make_pair(TW_HAS_INJECTTWRP, "1"));
-	mValues.insert(make_pair(TW_INJECT_AFTER_ZIP, make_pair("1", 1)));
+	mConst.SetValue(TW_HAS_INJECTTWRP, "1");
+	mPersist(TW_INJECT_AFTER_ZIP, "1");
 #else
-	mConstValues.insert(make_pair(TW_HAS_INJECTTWRP, "0"));
-	mValues.insert(make_pair(TW_INJECT_AFTER_ZIP, make_pair("0", 1)));
+	mConst.SetValue(TW_HAS_INJECTTWRP, "0");
 #endif
 #ifdef TW_HAS_DOWNLOAD_MODE
 	printf("TW_HAS_DOWNLOAD_MODE := true\n");
-	mConstValues.insert(make_pair(TW_DOWNLOAD_MODE, "1"));
+	mConst.SetValue(TW_DOWNLOAD_MODE, "1");
 #endif
 #ifdef TW_INCLUDE_CRYPTO
-	mConstValues.insert(make_pair(TW_HAS_CRYPTO, "1"));
+	mConst.SetValue(TW_HAS_CRYPTO, "1");
 	printf("TW_INCLUDE_CRYPTO := true\n");
 #endif
 #ifdef TW_SDEXT_NO_EXT4
 	printf("TW_SDEXT_NO_EXT4 := true\n");
-	mConstValues.insert(make_pair(TW_SDEXT_DISABLE_EXT4, "1"));
+	mConst.SetValue(TW_SDEXT_DISABLE_EXT4, "1");
 #else
-	mConstValues.insert(make_pair(TW_SDEXT_DISABLE_EXT4, "0"));
+	mConst.SetValue(TW_SDEXT_DISABLE_EXT4, "0");
 #endif
 
 #ifdef TW_HAS_NO_BOOT_PARTITION
-	mValues.insert(make_pair("tw_backup_list", make_pair("/system;/data;", 1)));
+	mPersist.SetValue("tw_backup_list", "/system;/data;");
 #else
-	mValues.insert(make_pair("tw_backup_list", make_pair("/system;/data;/boot;", 1)));
+	mPersist.SetValue("tw_backup_list", "/system;/data;/boot;");
 #endif
-	mConstValues.insert(make_pair(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE));
-	mValues.insert(make_pair(TW_BACKUP_NAME, make_pair("(Auto Generate)", 0)));
+	mConst.SetValue(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE);
+	mData.SetValue(TW_BACKUP_NAME, "(Auto Generate)");
 
-	mValues.insert(make_pair(TW_REBOOT_AFTER_FLASH_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_SIGNED_ZIP_VERIFY_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_FORCE_MD5_CHECK_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_COLOR_THEME_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_USE_COMPRESSION_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_SHOW_SPAM_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_TIME_ZONE_VAR, make_pair("CST6CDT,M3.2.0,M11.1.0", 1)));
-	mValues.insert(make_pair(TW_SORT_FILES_BY_DATE_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_GUI_SORT_ORDER, make_pair("1", 1)));
-	mValues.insert(make_pair(TW_RM_RF_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_SKIP_MD5_CHECK_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_SKIP_MD5_GENERATE_VAR, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_SDEXT_SIZE, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_SWAP_SIZE, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_SDPART_FILE_SYSTEM, make_pair("ext3", 1)));
-	mValues.insert(make_pair(TW_TIME_ZONE_GUISEL, make_pair("CST6;CDT,M3.2.0,M11.1.0", 1)));
-	mValues.insert(make_pair(TW_TIME_ZONE_GUIOFFSET, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_TIME_ZONE_GUIDST, make_pair("1", 1)));
-	mValues.insert(make_pair(TW_ACTION_BUSY, make_pair("0", 0)));
-	mValues.insert(make_pair("tw_wipe_cache", make_pair("0", 0)));
-	mValues.insert(make_pair("tw_wipe_dalvik", make_pair("0", 0)));
-	mValues.insert(make_pair(TW_ZIP_INDEX, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_ZIP_QUEUE_COUNT, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_FILENAME, make_pair("/sdcard", 0)));
-	mValues.insert(make_pair(TW_SIMULATE_ACTIONS, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_SIMULATE_FAIL, make_pair("0", 1)));
-	mValues.insert(make_pair(TW_IS_ENCRYPTED, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_IS_DECRYPTED, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_CRYPTO_PASSWORD, make_pair("0", 0)));
-	mValues.insert(make_pair(TW_DATA_BLK_DEVICE, make_pair("0", 0)));
-	mValues.insert(make_pair("tw_terminal_state", make_pair("0", 0)));
-	mValues.insert(make_pair("tw_background_thread_running", make_pair("0", 0)));
-	mValues.insert(make_pair(TW_RESTORE_FILE_DATE, make_pair("0", 0)));
-	mValues.insert(make_pair("tw_military_time", make_pair("0", 1)));
+	mPersist.SetValue(TW_REBOOT_AFTER_FLASH_VAR, "0");
+	mPersist.SetValue(TW_SIGNED_ZIP_VERIFY_VAR, "0");
+	mPersist.SetValue(TW_FORCE_MD5_CHECK_VAR, "0");
+	mPersist.SetValue(TW_USE_COMPRESSION_VAR, "0");
+	mPersist.SetValue(TW_TIME_ZONE_VAR, "CST6CDT,M3.2.0,M11.1.0");
+	mPersist.SetValue(TW_GUI_SORT_ORDER, "1");
+	mPersist.SetValue(TW_RM_RF_VAR, "0");
+	mPersist.SetValue(TW_SKIP_MD5_CHECK_VAR, "0");
+	mPersist.SetValue(TW_SKIP_MD5_GENERATE_VAR, "0");
+	mPersist.SetValue(TW_SDEXT_SIZE, "0");
+	mPersist.SetValue(TW_SWAP_SIZE, "0");
+	mPersist.SetValue(TW_SDPART_FILE_SYSTEM, "ext3");
+	mPersist.SetValue(TW_TIME_ZONE_GUISEL, "CST6;CDT,M3.2.0,M11.1.0");
+	mPersist.SetValue(TW_TIME_ZONE_GUIOFFSET, "0");
+	mPersist.SetValue(TW_TIME_ZONE_GUIDST, "1");
+	mData.SetValue(TW_ACTION_BUSY, "0");
+	mData.SetValue("tw_wipe_cache", "0");
+	mData.SetValue("tw_wipe_dalvik", "0");
+	mData.SetValue(TW_ZIP_INDEX, "0");
+	mData.SetValue(TW_ZIP_QUEUE_COUNT, "0");
+	mData.SetValue(TW_FILENAME, "/sdcard");
+	mData.SetValue(TW_SIMULATE_ACTIONS, "0");
+	mData.SetValue(TW_SIMULATE_FAIL, "0");
+	mData.SetValue(TW_IS_ENCRYPTED, "0");
+	mData.SetValue(TW_IS_DECRYPTED, "0");
+	mData.SetValue(TW_CRYPTO_PASSWORD, "0");
+	mData.SetValue("tw_terminal_state", "0");
+	mData.SetValue("tw_background_thread_running", "0");
+	mData.SetValue(TW_RESTORE_FILE_DATE, "0");
+	mPersist.SetValue("tw_military_time", "0");
 #ifdef TW_NO_SCREEN_TIMEOUT
-	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("0", 1)));
-	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("1", 1)));
+	mConst.SetValue("tw_screen_timeout_secs", "0");
+	mConst.SetValue("tw_no_screen_timeout", "1");
 #else
-	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("60", 1)));
-	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("0", 1)));
+	mPersist.SetValue("tw_screen_timeout_secs", "60");
+	mPersist.SetValue("tw_no_screen_timeout", "0");
 #endif
-	mValues.insert(make_pair("tw_gui_done", make_pair("0", 0)));
-	mValues.insert(make_pair("tw_encrypt_backup", make_pair("0", 0)));
+	mData.SetValue("tw_gui_done", "0");
+	mData.SetValue("tw_encrypt_backup", "0");
+
+	// Brightness handling
 	string findbright;
 #ifdef TW_BRIGHTNESS_PATH
 	findbright = EXPAND(TW_BRIGHTNESS_PATH);
@@ -837,11 +733,11 @@ void DataManager::SetDefaultValues()
 	}
 	if (findbright.empty()) {
 		LOGINFO("Unable to locate brightness file\n");
-		mConstValues.insert(make_pair("tw_has_brightnesss_file", "0"));
+		mConst.SetValue("tw_has_brightnesss_file", "0");
 	} else {
 		LOGINFO("Found brightness file at '%s'\n", findbright.c_str());
-		mConstValues.insert(make_pair("tw_has_brightnesss_file", "1"));
-		mConstValues.insert(make_pair("tw_brightness_file", findbright));
+		mConst.SetValue("tw_has_brightnesss_file", "1");
+		mConst.SetValue("tw_brightness_file", findbright);
 		string maxBrightness;
 #ifdef TW_MAX_BRIGHTNESS
 		ostringstream maxVal;
@@ -867,14 +763,14 @@ void DataManager::SetDefaultValues()
 			maxBrightness = maxVal.str();
 		}
 #endif
-		mConstValues.insert(make_pair("tw_brightness_max", maxBrightness));
-		mValues.insert(make_pair("tw_brightness", make_pair(maxBrightness, 1)));
-		mValues.insert(make_pair("tw_brightness_pct", make_pair("100", 1)));
+		mConst.SetValue("tw_brightness_max", maxBrightness);
+		mPersist.SetValue("tw_brightness", maxBrightness);
+		mPersist.SetValue("tw_brightness_pct", "100");
 #ifdef TW_SECONDARY_BRIGHTNESS_PATH
 		string secondfindbright = EXPAND(TW_SECONDARY_BRIGHTNESS_PATH);
 		if (secondfindbright != "" && TWFunc::Path_Exists(secondfindbright)) {
 			LOGINFO("Will use a second brightness file at '%s'\n", secondfindbright.c_str());
-			mConstValues.insert(make_pair("tw_secondary_brightness_file", secondfindbright));
+			mConst.SetValue("tw_secondary_brightness_file", secondfindbright);
 		} else {
 			LOGINFO("Specified secondary brightness file '%s' not found.\n", secondfindbright.c_str());
 		}
@@ -886,46 +782,44 @@ void DataManager::SetDefaultValues()
 		int defPctInt = ( ( (double)defValInt / maxValInt ) * 100 );
 		ostringstream defPct;
 		defPct << defPctInt;
-		mValues.erase("tw_brightness_pct");
-		mValues.insert(make_pair("tw_brightness_pct", make_pair(defPct.str(), 1)));
+		mPersist.SetValue("tw_brightness_pct", defPct.str());
 
 		ostringstream defVal;
 		defVal << TW_DEFAULT_BRIGHTNESS;
-		mValues.erase("tw_brightness");
-		mValues.insert(make_pair("tw_brightness", make_pair(defVal.str(), 1)));
+		mPersist.SetValue("tw_brightness", defVal.str());
 		TWFunc::Set_Brightness(defVal.str());
 #else
 		TWFunc::Set_Brightness(maxBrightness);
 #endif
 	}
-	mValues.insert(make_pair(TW_MILITARY_TIME, make_pair("0", 1)));
+
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-	mValues.insert(make_pair("tw_include_encrypted_backup", make_pair("1", 0)));
+	mConst.SetValue("tw_include_encrypted_backup", "1");
 #else
 	LOGINFO("TW_EXCLUDE_ENCRYPTED_BACKUPS := true\n");
-	mValues.insert(make_pair("tw_include_encrypted_backup", make_pair("0", 0)));
+	mConst.SetValue("tw_include_encrypted_backup", "0");
 #endif
 #ifdef TW_HAS_MTP
-	mConstValues.insert(make_pair("tw_has_mtp", "1"));
-	mValues.insert(make_pair("tw_mtp_enabled", make_pair("1", 1)));
-	mValues.insert(make_pair("tw_mtp_debug", make_pair("0", 1)));
+	mConst.SetValue("tw_has_mtp", "1");
+	mPersist.SetValue("tw_mtp_enabled", "1");
+	mPersist.SetValue("tw_mtp_debug", "0");
 #else
 	LOGINFO("TW_EXCLUDE_MTP := true\n");
-	mConstValues.insert(make_pair("tw_has_mtp", "0"));
-	mConstValues.insert(make_pair("tw_mtp_enabled", "0"));
+	mConst.SetValue("tw_has_mtp", "0");
+	mConst.SetValue("tw_mtp_enabled", "0");
 #endif
-	mValues.insert(make_pair("tw_mount_system_ro", make_pair("2", 1)));
-	mValues.insert(make_pair("tw_never_show_system_ro_page", make_pair("0", 1)));
-	mValues.insert(make_pair("tw_language", make_pair(EXPAND(TW_DEFAULT_LANGUAGE), 1)));
+	mPersist.SetValue("tw_mount_system_ro", "2");
+	mPersist.SetValue("tw_never_show_system_ro_page", "0");
+	mPersist.SetValue("tw_language", EXPAND(TW_DEFAULT_LANGUAGE));
 	LOGINFO("LANG: %s\n", EXPAND(TW_DEFAULT_LANGUAGE));
 
-	mValues.insert(make_pair("tw_has_adopted_storage", make_pair("0", 0)));
+	mData.SetValue("tw_has_adopted_storage", "0");
 
 	pthread_mutex_unlock(&m_valuesLock);
 }
 
 // Magic Values
-int DataManager::GetMagicValue(const string varName, string& value)
+int DataManager::GetMagicValue(const string& varName, string& value)
 {
 	// Handle special dynamic cases
 	if (varName == "tw_time")
@@ -1123,7 +1017,7 @@ string DataManager::GetSettingsStoragePath(void)
 	return GetStrValue("tw_settings_path");
 }
 
-void DataManager::Vibrate(const string varName)
+void DataManager::Vibrate(const string& varName)
 {
 	int vib_value = 0;
 	GetValue(varName, vib_value);

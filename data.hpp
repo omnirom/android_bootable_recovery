@@ -20,9 +20,8 @@
 #define _DATAMANAGER_HPP_HEADER
 
 #include <string>
-#include <utility>
-#include <map>
 #include <pthread.h>
+#include "infomanager.hpp"
 
 using namespace std;
 
@@ -30,30 +29,30 @@ class DataManager
 {
 public:
 	static int ResetDefaults();
-	static int LoadValues(const string filename);
+	static int LoadValues(const string& filename);
 	static int Flush();
 
 	// Core get routines
-	static int GetValue(const string varName, string& value);
-	static int GetValue(const string varName, int& value);
-	static int GetValue(const string varName, float& value);
-	static unsigned long long GetValue(const string varName, unsigned long long& value);
+	static int GetValue(const string& varName, string& value);
+	static int GetValue(const string& varName, int& value);
+	static int GetValue(const string& varName, float& value);
+	static unsigned long long GetValue(const string& varName, unsigned long long& value);
 
 	// Helper functions
-	static string GetStrValue(const string varName);
-	static int GetIntValue(const string varName);
+	static string GetStrValue(const string& varName);
+	static int GetIntValue(const string& varName);
 
 	// Core set routines
-	static int SetValue(const string varName, string value, int persist = 0);
-	static int SetValue(const string varName, int value, int persist = 0);
-	static int SetValue(const string varName, float value, int persist = 0);
-	static int SetValue(const string varName, unsigned long long value, int persist = 0);
-	static int SetProgress(float Fraction);
-	static int ShowProgress(float Portion, float Seconds);
+	static int SetValue(const string& varName, const string& value, const int persist = 0);
+	static int SetValue(const string& varName, const int value, const int persist = 0);
+	static int SetValue(const string& varName, const float value, const int persist = 0);
+	static int SetValue(const string& varName, const unsigned long long& value, const int persist = 0);
+	static int SetProgress(const float Fraction);
+	static int ShowProgress(const float Portion, const float Seconds);
 
 	static void DumpValues();
 	static void update_tz_environment_variables();
-	static void Vibrate(const string varName);
+	static void Vibrate(const string& varName);
 	static void SetBackupFolder();
 	static void SetDefaultValues();
 	static void Output_Version(void); // Outputs the version to a file in the TWRP folder
@@ -63,18 +62,18 @@ public:
 	static string GetSettingsStoragePath(void);
 
 protected:
-	typedef pair<string, int> TStrIntPair;
-	typedef pair<string, TStrIntPair> TNameValuePair;
-	static map<string, TStrIntPair> mValues;
 	static string mBackingFile;
 	static int mInitialized;
+	static InfoManager mPersist;
+	static InfoManager mData;
+	static InfoManager mConst;
 
 	static map<string, string> mConstValues;
 
 protected:
 	static int SaveValues();
 
-	static int GetMagicValue(string varName, string& value);
+	static int GetMagicValue(const string& varName, string& value);
 
 private:
 	static void sanitize_device_id(char* device_id);
