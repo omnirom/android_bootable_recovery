@@ -14,7 +14,7 @@
 
 # This file is for building imgdiff in Chrome OS.
 
-CPPFLAGS += -iquote..
+CPPFLAGS += -iquote.. -Iinclude
 CXXFLAGS += -std=c++11 -O3 -Wall -Werror
 LDLIBS += -lbz2 -lz
 
