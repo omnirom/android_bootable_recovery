@@ -54,24 +54,27 @@ int Resource::ExtractResource(ZipArchive* pZip, std::string folderName, std::str
 	return ret;
 }
 
-void Resource::LoadImage(ZipArchive* pZip, std::string file, gr_surface* source)
+void Resource::LoadImage(ZipArchive* pZip, std::string file, gr_surface* surface)
 {
+	int rc = 0;
 	if (ExtractResource(pZip, "images", file, ".png", TMP_RESOURCE_NAME) == 0)
 	{
-		res_create_surface(TMP_RESOURCE_NAME, source);
+		rc = res_create_surface(TMP_RESOURCE_NAME, surface);
 		unlink(TMP_RESOURCE_NAME);
 	}
 	else if (ExtractResource(pZip, "images", file, "", TMP_RESOURCE_NAME) == 0)
 	{
 		// JPG includes the .jpg extension in the filename so extension should be blank
-		res_create_surface(TMP_RESOURCE_NAME, source);
+		rc = res_create_surface(TMP_RESOURCE_NAME, surface);
 		unlink(TMP_RESOURCE_NAME);
 	}
 	else if (!pZip)
 	{
 		// File name in xml may have included .png so try without adding .png
-		res_create_surface(file.c_str(), source);
+		rc = res_create_surface(file.c_str(), surface);
 	}
+	if (rc != 0)
+		LOGINFO("Failed to load image from %s%s, error %d\n", file.c_str(), pZip ? " (zip)" : "", rc);
 }
 
 void Resource::CheckAndScaleImage(gr_surface source, gr_surface* destination, int retain_aspect)
@@ -122,7 +125,6 @@ void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
 
 	if(file.size() >= 4 && file.compare(file.size()-4, 4, ".ttf") == 0)
 	{
-		m_type = TYPE_TTF;
 		int font_size = 0;
 
 		if (origFontSize != 0) {
@@ -144,10 +146,11 @@ void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
 		if(attr)
 			dpi = atoi(attr->value());
 
-		if (ExtractResource(pZip, "fonts", file, "", TMP_RESOURCE_NAME) == 0)
+		// we can't use TMP_RESOURCE_NAME here because the ttf subsystem is caching the name and scaling needs to reload the font
+		std::string tmpname = "/tmp/" + file;
+		if (ExtractResource(pZip, "fonts", file, "", tmpname) == 0)
 		{
-			mFont = gr_ttf_loadFont(TMP_RESOURCE_NAME, font_size, dpi);
-			unlink(TMP_RESOURCE_NAME);
+			mFont = gr_ttf_loadFont(tmpname.c_str(), font_size, dpi);
 		}
 		else
 		{
