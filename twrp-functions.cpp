@@ -506,9 +506,10 @@ void TWFunc::Update_Intent_File(string Intent) {
 // reboot: Reboot the system. Return -1 on error, no return on success
 int TWFunc::tw_reboot(RebootCommand command)
 {
+	DataManager::Flush();
+	Update_Log_File();
 	// Always force a sync before we reboot
 	sync();
-	Update_Log_File();
 
 	switch (command) {
 		case rb_current:
