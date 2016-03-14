@@ -1,5 +1,5 @@
 /*
-        Copyright 2012 bigbiff/Dees_Troy TeamWin
+        Copyright 2012 to 2016 bigbiff/Dees_Troy TeamWin
         This file is part of TWRP/TeamWin Recovery Project.
 
         TWRP is free software: you can redistribute it and/or modify
@@ -63,12 +63,13 @@ GUIInput::GUIInput(xml_node<>* node)
 	isLocalChange = true;
 	HasAllowed = false;
 	HasDisabled = false;
-	skipChars = scrollingX = mFontHeight = mFontY = lastX = 0;
+	cursorX = textWidth = scrollingX = mFontHeight = mFontY = lastX = 0;
 	mBackgroundX = mBackgroundY = mBackgroundW = mBackgroundH = MinLen = MaxLen = 0;
 	mCursorLocation = -1; // -1 is always the end of the string
 	CursorWidth = 3;
 	ConvertStrToColor("black", &mBackgroundColor);
 	ConvertStrToColor("white", &mCursorColor);
+	displayValue = "";
 
 	if (!node)
 		return;
@@ -166,10 +167,10 @@ GUIInput::GUIInput(xml_node<>* node)
 		mFontY = mRenderY;
 
 	if (mInputText)
-		mInputText->SetMaxWidth(mRenderW);
+		mInputText->SetMaxWidth(0);
 
 	isLocalChange = false;
-	HandleTextLocation(-3);
+	HandleTextLocation(0);
 }
 
 GUIInput::~GUIInput()
@@ -178,17 +179,48 @@ GUIInput::~GUIInput()
 	delete mAction;
 }
 
-int GUIInput::HandleTextLocation(int x)
+void GUIInput::HandleTextLocation(int x)
 {
-	int textWidth;
-	string displayValue, originalValue, insertChar;
+	mRendered = false;
+	if (textWidth <= mRenderW) {
+		lastX = x;
+		scrollingX = 0;
+		return;
+	}
+	if (scrollingX + textWidth < mRenderW) {
+		scrollingX = mRenderW - textWidth;
+	}
+
+	int deltaX = 0;
+	if (x > lastX) {
+		// Dragging to right, scrolling left
+		deltaX = x - lastX;
+		scrollingX += deltaX;
+		if (scrollingX > 0)
+			scrollingX = 0;
+		lastX = x;
+	} else if (x < lastX) {
+		// Dragging to left, scrolling right
+		deltaX = lastX - x;
+		scrollingX -= deltaX;
+		if (scrollingX + textWidth < mRenderW) {
+			scrollingX = mRenderW - textWidth;
+		}
+		lastX = x;
+	}
+}
+
+void GUIInput::UpdateTextWidth() {
 	void* fontResource = NULL;
 
-	if (mFont)
+	if (mFont) {
 		fontResource = mFont->GetResource();
+	} else {
+		textWidth = 0;
+		return;
+	}
 
-	DataManager::GetValue(mVariable, originalValue);
-	displayValue = originalValue;
+	DataManager::GetValue(mVariable, displayValue);
 	if (HasMask) {
 		int index, string_size = displayValue.size();
 		string maskedValue;
@@ -197,153 +229,67 @@ int GUIInput::HandleTextLocation(int x)
 		displayValue = maskedValue;
 	}
 	textWidth = gr_ttf_measureEx(displayValue.c_str(), fontResource);
-	if (textWidth <= mRenderW) {
-		lastX = x;
-		scrollingX = 0;
-		skipChars = 0;
-		mInputText->SkipCharCount(skipChars);
-		mRendered = false;
-		return 0;
+}
+
+void GUIInput::HandleCursorByTouch(int x) {
+// Uses x to find mCursorLocation and cursorX
+	if (displayValue.size() == 0) {
+		mCursorLocation = -1;
+		cursorX = mRenderX;
+		return;
 	}
 
-	if (skipChars && skipChars < displayValue.size())
-		displayValue.erase(0, skipChars);
+	void* fontResource = NULL;
+	if (mFont) {
+		fontResource = mFont->GetResource();
+	} else {
+		return;
+	}
 
-	textWidth = gr_ttf_measureEx(displayValue.c_str(), fontResource);
-	mRendered = false;
+	string cursorString;
+	unsigned index = 0, displaySize = displayValue.size();
 
-	int deltaX, deltaText, newWidth;
-
-	if (x < -1000) {
-		// No change in scrolling
-		if (x == -1003)
-			mCursorLocation = -1;
-
-		if (mCursorLocation == -1) {
-			displayValue = originalValue;
-			skipChars = 0;
-			textWidth = gr_ttf_measureEx(displayValue.c_str(), fontResource);
-			while (textWidth > mRenderW) {
-				displayValue.erase(0, 1);
-				skipChars++;
-				textWidth = gr_ttf_measureEx(displayValue.c_str(), fontResource);
-			}
-			scrollingX = mRenderW - textWidth;
-			mInputText->SkipCharCount(skipChars);
-		} else if (x == -1001) {
-			// Added a new character
-			int adjust_scrollingX = 0;
-			string cursorLocate;
-
-			cursorLocate = displayValue;
-			cursorLocate.resize(mCursorLocation);
-			textWidth = gr_ttf_measureEx(cursorLocate.c_str(), fontResource);
-			while (textWidth > mRenderW) {
-				skipChars++;
-				mCursorLocation--;
-				cursorLocate.erase(0, 1);
-				textWidth = gr_ttf_measureEx(cursorLocate.c_str(), fontResource);
-				adjust_scrollingX = -1;
-			}
-			if (adjust_scrollingX) {
-				scrollingX = mRenderW - textWidth;
-				if (scrollingX < 0)
-					scrollingX = 0;
-			}
-			mInputText->SkipCharCount(skipChars);
-		} else if (x == -1002) {
-			// Deleted a character
-			while (-1) {
-				if (skipChars == 0) {
-					scrollingX = 0;
-					mInputText->SkipCharCount(skipChars);
-					return 0;
-				}
-				insertChar = originalValue.substr(skipChars - 1, 1);
-				displayValue.insert(0, insertChar);
-				newWidth = gr_ttf_measureEx(displayValue.c_str(), fontResource);
-				deltaText = newWidth - textWidth;
-				if (newWidth > mRenderW) {
-					scrollingX = mRenderW - textWidth;
-					if (scrollingX < 0)
-						scrollingX = 0;
-					mInputText->SkipCharCount(skipChars);
-					return 0;
-				} else {
-					textWidth = newWidth;
-					skipChars--;
-					mCursorLocation++;
-				}
-			}
-		} else
-			LOGINFO("GUIInput::HandleTextLocation -> We really shouldn't ever get here...\n");
-	} else if (x > lastX) {
-		// Dragging to right, scrolling left
-		while (-1) {
-			deltaX = x - lastX + scrollingX;
-			if (skipChars == 0 || deltaX == 0) {
-				scrollingX = 0;
-				lastX = x;
-				mInputText->SkipCharCount(skipChars);
-				return 0;
-			}
-			insertChar = originalValue.substr(skipChars - 1, 1);
-			displayValue.insert(0, insertChar);
-			newWidth = gr_ttf_measureEx(displayValue.c_str(), fontResource);
-			deltaText = newWidth - textWidth;
-			if (deltaText < deltaX) {
-				lastX += deltaText;
-				textWidth = newWidth;
-				skipChars--;
-			} else {
-				scrollingX = deltaX;
-				lastX = x;
-				mInputText->SkipCharCount(skipChars);
-				return 0;
-			}
-		}
-	} else if (x < lastX) {
-		// Dragging to left, scrolling right
-		if (textWidth <= mRenderW) {
-			lastX = x;
-			scrollingX = mRenderW - textWidth;
-			return 0;
-		}
-		if (scrollingX) {
-			deltaX = lastX - x;
-			if (scrollingX > deltaX) {
-				scrollingX -= deltaX;
-				lastX = x;
-				return 0;
-			} else {
-				lastX -= deltaX;
-				scrollingX = 0;
-			}
-		}
-		while (-1) {
-			deltaX = lastX - x;
-			displayValue.erase(0, 1);
-			skipChars++;
-			newWidth = gr_ttf_measureEx(displayValue.c_str(), fontResource);
-			deltaText = textWidth - newWidth;
-			if (newWidth <= mRenderW) {
-				scrollingX = mRenderW - newWidth;
-				lastX = x;
-				mInputText->SkipCharCount(skipChars);
-				return 0;
-			}
-			if (deltaText < deltaX) {
-				lastX -= deltaText;
-				textWidth = newWidth;
-			} else {
-				scrollingX = deltaText - deltaX;
-				lastX = x;
-				mInputText->SkipCharCount(skipChars);
-				return 0;
-			}
+	for(index = 0; index < displaySize; index++) {
+		cursorString = displayValue.substr(0, index);
+		cursorX = gr_ttf_measureEx(cursorString.c_str(), fontResource) + mRenderX + scrollingX;
+		if (cursorX > x) {
+			if (index > 0)
+				mCursorLocation = index - 1;
+			else
+				mCursorLocation = index;
+			return;
 		}
 	}
-	return 0;
+	mCursorLocation = -1;
+}
+
+void GUIInput::HandleCursorByText() {
+// Uses mCursorLocation to find cursorX 
+	if (!DrawCursor)
+		return;
+
+	void* fontResource = NULL;
+	if (mFont) {
+		fontResource = mFont->GetResource();
+	} else {
+		return;
+	}
+
+	int cursorWidth = textWidth;
+
+	if (mCursorLocation != -1) {
+		string cursorDisplay = displayValue;
+		cursorDisplay.resize(mCursorLocation);
+		cursorWidth = gr_ttf_measureEx(cursorDisplay.c_str(), fontResource);
+	}
+	cursorX = mRenderX + cursorWidth + scrollingX;
+	if (cursorX >= mRenderX + mRenderW || mCursorLocation == -1) {
+		scrollingX = mRenderW - cursorWidth;
+		cursorX = mRenderX + mRenderW - CursorWidth;
+	} else if (cursorX < mRenderX) {
+		scrollingX = cursorWidth * -1;
+		cursorX = mRenderX;
+	}
 }
 
 int GUIInput::Render(void)
@@ -372,58 +318,17 @@ int GUIInput::Render(void)
 	int ret = 0;
 
 	// Render the text
-	mInputText->SetRenderPos(mRenderX + scrollingX, mFontY);
-	mInputText->SetMaxWidth(mRenderW - scrollingX);
-	if (mInputText)	 ret = mInputText->Render();
-	if (ret < 0)		return ret;
+	if (mInputText) {
+		mInputText->SetRenderPos(mRenderX + scrollingX, mFontY);
+		gr_clip(mRenderX, mRenderY, mRenderW, mRenderH);
+		ret = mInputText->Render();
+		gr_noclip();
+	}
+	if (ret < 0)
+		return ret;
 
 	if (HasInputFocus && DrawCursor) {
 		// Render the cursor
-		string displayValue;
-		int cursorX;
-		DataManager::GetValue(mVariable, displayValue);
-		if (HasMask) {
-			int index, string_size = displayValue.size();
-			string maskedValue;
-			for (index=0; index<string_size; index++)
-				maskedValue += mMask;
-			displayValue = maskedValue;
-		}
-		if (displayValue.size() == 0) {
-			skipChars = 0;
-			mCursorLocation = -1;
-			cursorX = mRenderX;
-		} else {
-			if (skipChars && skipChars < displayValue.size()) {
-				displayValue.erase(0, skipChars);
-			}
-			if (mCursorLocation == 0) {
-				// Cursor is at the beginning
-				cursorX = mRenderX;
-			} else if (mCursorLocation > 0) {
-				// Cursor is in the middle
-				if (displayValue.size() > (unsigned)mCursorLocation) {
-					string cursorDisplay;
-
-					cursorDisplay = displayValue;
-					cursorDisplay.resize(mCursorLocation);
-					cursorX = gr_ttf_measureEx(cursorDisplay.c_str(), fontResource) + mRenderX;
-				} else {
-					// Cursor location is after the end of the text  - reset to -1
-					mCursorLocation = -1;
-					cursorX = gr_ttf_measureEx(displayValue.c_str(), fontResource) + mRenderX;
-				}
-			} else {
-				// Cursor is at the end (-1)
-				cursorX = gr_ttf_measureEx(displayValue.c_str(), fontResource) + mRenderX;
-			}
-		}
-		cursorX += scrollingX;
-		// Make sure that the cursor doesn't go past the boundaries of the box
-		if (cursorX + (int)CursorWidth > mRenderX + mRenderW)
-			cursorX = mRenderX + mRenderW - CursorWidth;
-
-		// Set the color for the cursor
 		gr_color(mCursorColor.red, mCursorColor.green, mCursorColor.blue, 255);
 		gr_fill(cursorX, mFontY, CursorWidth, mFontHeight);
 	}
@@ -454,8 +359,6 @@ int GUIInput::GetSelection(int x, int y)
 int GUIInput::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
 	static int startSelection = -1;
-	int textWidth;
-	string displayValue, originalValue;
 	void* fontResource = NULL;
 
 	if (mFont)  fontResource = mFont->GetResource();
@@ -507,43 +410,9 @@ int GUIInput::NotifyTouch(TOUCH_STATE state, int x, int y)
 
 		case TOUCH_RELEASE:
 			// We've moved the cursor location
-			int relativeX = x - mRenderX;
-
 			mRendered = false;
 			DrawCursor = true;
-			DataManager::GetValue(mVariable, displayValue);
-			if (HasMask) {
-				int index, string_size = displayValue.size();
-				string maskedValue;
-				for (index=0; index<string_size; index++)
-					maskedValue += mMask;
-				displayValue = maskedValue;
-			}
-			if (displayValue.size() == 0) {
-				skipChars = 0;
-				mCursorLocation = -1;
-				return 0;
-			} else if (skipChars && skipChars < displayValue.size()) {
-				displayValue.erase(0, skipChars);
-			}
-
-			string cursorString;
-			int cursorX = 0;
-			unsigned index = 0;
-
-			for(index=0; index<displayValue.size(); index++)
-			{
-				cursorString = displayValue.substr(0, index);
-				cursorX = gr_ttf_measureEx(cursorString.c_str(), fontResource) + mRenderX;
-				if (cursorX > x) {
-					if (index > 0)
-						mCursorLocation = index - 1;
-					else
-						mCursorLocation = index;
-					return 0;
-				}
-			}
-			mCursorLocation = -1;
+			HandleCursorByTouch(x);
 			break;
 		}
 	}
@@ -554,9 +423,17 @@ int GUIInput::NotifyVarChange(const std::string& varName, const std::string& val
 {
 	GUIObject::NotifyVarChange(varName, value);
 
-	if (varName == mVariable && !isLocalChange) {
-		HandleTextLocation(-1003);
+	if (varName == mVariable) {
+		if (!isLocalChange) {
+			UpdateTextWidth();
+			HandleTextLocation(0);
+		} else
+			isLocalChange = false;
 		return 0;
+	}
+	if (varName.empty()) {
+		UpdateTextWidth();
+		HandleCursorByText();
 	}
 	return 0;
 }
@@ -566,54 +443,48 @@ int GUIInput::NotifyKey(int key, bool down)
 	if (!HasInputFocus || !down)
 		return 1;
 
-	string variableValue;
 	switch (key)
 	{
 		case KEY_LEFT:
-			if (mCursorLocation == 0 && skipChars == 0)
+			if (mCursorLocation == 0)
 				return 0; // we're already at the beginning
 			if (mCursorLocation == -1) {
-				DataManager::GetValue(mVariable, variableValue);
-				if (variableValue.size() == 0)
+				if (displayValue.size() == 0) {
+					cursorX = mRenderX;
 					return 0;
-				mCursorLocation = variableValue.size() - skipChars - 1;
-			} else if (mCursorLocation == 0) {
-				skipChars--;
-				HandleTextLocation(-1002);
+				}
+				mCursorLocation = displayValue.size() - 1;
 			} else {
 				mCursorLocation--;
-				HandleTextLocation(-1002);
 			}
 			mRendered = false;
+			HandleCursorByText();
 			return 0;
 
 		case KEY_RIGHT:
 			if (mCursorLocation == -1)
 				return 0; // we're already at the end
 			mCursorLocation++;
-			DataManager::GetValue(mVariable, variableValue);
-			if (variableValue.size() <= mCursorLocation + skipChars)
+			if (displayValue.size() <= mCursorLocation)
 				mCursorLocation = -1;
-			HandleTextLocation(-1001);
+			HandleCursorByText();
 			mRendered = false;
 			return 0;
 
 		case KEY_HOME:
 		case KEY_UP:
-			DataManager::GetValue(mVariable, variableValue);
-			if (variableValue.size() == 0)
+			if (displayValue.size() == 0)
 				return 0;
 			mCursorLocation = 0;
-			skipChars = 0;
 			mRendered = false;
-			HandleTextLocation(-1002);
+			cursorX = mRenderX;
 			return 0;
 
 		case KEY_END:
 		case KEY_DOWN:
 			mCursorLocation = -1;
 			mRendered = false;
-			HandleTextLocation(-1003);
+			HandleCursorByText();
 			return 0;
 	}
 
@@ -628,19 +499,15 @@ int GUIInput::NotifyCharInput(int key)
 		if (key == KEYBOARD_BACKSPACE) {
 			//Backspace
 			DataManager::GetValue(mVariable, variableValue);
-			if (variableValue.size() > 0 && (mCursorLocation + skipChars != 0 || mCursorLocation == -1)) {
+			if (variableValue.size() > 0 && mCursorLocation != 0) {
 				if (mCursorLocation == -1) {
 					variableValue.resize(variableValue.size() - 1);
 				} else {
-					variableValue.erase(mCursorLocation + skipChars - 1, 1);
-					if (mCursorLocation > 0)
-						mCursorLocation--;
-					else if (skipChars > 0)
-						skipChars--;
+					variableValue.erase(mCursorLocation - 1, 1);
+					mCursorLocation--;
 				}
 				isLocalChange = true;
 				DataManager::SetValue(mVariable, variableValue);
-				isLocalChange = false;
 
 				if (HasMask) {
 					int index, string_size = variableValue.size();
@@ -649,7 +516,9 @@ int GUIInput::NotifyCharInput(int key)
 						maskedValue += mMask;
 					DataManager::SetValue(mMaskVariable, maskedValue);
 				}
-				HandleTextLocation(-1002);
+				UpdateTextWidth();
+				HandleCursorByText();
+				HandleTextLocation(0);
 			}
 		} else if (key == KEYBOARD_SWIPE_LEFT) {
 			// Delete all
@@ -658,22 +527,23 @@ int GUIInput::NotifyCharInput(int key)
 				DataManager::SetValue (mVariable, "");
 				if (HasMask)
 					DataManager::SetValue(mMaskVariable, "");
+				textWidth = 0;
 				mCursorLocation = -1;
+				cursorX = mRenderX;
 			} else {
 				DataManager::GetValue(mVariable, variableValue);
-				variableValue.erase(0, mCursorLocation + skipChars);
+				variableValue.erase(0, mCursorLocation);
 				DataManager::SetValue(mVariable, variableValue);
 				if (HasMask) {
 					DataManager::GetValue(mMaskVariable, variableValue);
-					variableValue.erase(0, mCursorLocation + skipChars);
+					variableValue.erase(0, mCursorLocation);
 					DataManager::SetValue(mMaskVariable, variableValue);
 				}
+				UpdateTextWidth();
 				mCursorLocation = 0;
+				HandleCursorByText();
 			}
-			skipChars = 0;
 			scrollingX = 0;
-			mInputText->SkipCharCount(skipChars);
-			isLocalChange = false;
 			mRendered = false;
 			return 0;
 		} else if (key >= 32) {
@@ -691,13 +561,11 @@ int GUIInput::NotifyCharInput(int key)
 			if (mCursorLocation == -1) {
 				variableValue += key;
 			} else {
-				variableValue.insert(mCursorLocation + skipChars, 1, key);
+				variableValue.insert(mCursorLocation, 1, key);
 				mCursorLocation++;
 			}
 			isLocalChange = true;
 			DataManager::SetValue(mVariable, variableValue);
-			HandleTextLocation(-1001);
-			isLocalChange = false;
 
 			if (HasMask) {
 				int index, string_size = variableValue.size();
@@ -706,6 +574,9 @@ int GUIInput::NotifyCharInput(int key)
 					maskedValue += mMask;
 				DataManager::SetValue(mMaskVariable, maskedValue);
 			}
+			UpdateTextWidth();
+			HandleCursorByText();
+			HandleTextLocation(0);
 		} else if (key == KEYBOARD_ACTION) {
 			// Action
 			DataManager::GetValue(mVariable, variableValue);
