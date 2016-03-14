@@ -192,8 +192,7 @@ public:
 	// Set maximum width in pixels
 	virtual int SetMaxWidth(unsigned width);
 
-	// Set number of characters to skip (for scrolling)
-	virtual int SkipCharCount(unsigned skip);
+	void SetText(string newtext);
 
 public:
 	bool isHighlighted;
@@ -209,7 +208,6 @@ protected:
 	int mIsStatic;
 	int mVarChanged;
 	int mFontHeight;
-	unsigned charSkip;
 };
 
 // GUIImage - Used for static image
@@ -1001,7 +999,10 @@ protected:
 	virtual int GetSelection(int x, int y);
 
 	// Handles displaying the text properly when chars are added, deleted, or for scrolling
-	virtual int HandleTextLocation(int x);
+	void HandleTextLocation(int x);
+	void UpdateTextWidth();
+	void HandleCursorByTouch(int x);
+	void HandleCursorByText();
 
 protected:
 	GUIText* mInputText;
@@ -1013,15 +1014,16 @@ protected:
 	std::string mLastValue;
 	std::string mVariable;
 	std::string mMask;
-	std::string mMaskVariable;
+	std::string displayValue;
 	COLOR mBackgroundColor;
 	COLOR mCursorColor;
 	int scrollingX;
+	int cursorX;
 	int lastX;
 	int mCursorLocation;
 	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH;
 	int mFontY;
-	unsigned skipChars;
+	int textWidth;
 	unsigned mFontHeight;
 	unsigned CursorWidth;
 	bool mRendered;
