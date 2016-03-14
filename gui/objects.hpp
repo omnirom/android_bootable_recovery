@@ -192,9 +192,6 @@ public:
 	// Set maximum width in pixels
 	virtual int SetMaxWidth(unsigned width);
 
-	// Set number of characters to skip (for scrolling)
-	virtual int SkipCharCount(unsigned skip);
-
 public:
 	bool isHighlighted;
 	bool scaleWidth;
@@ -209,7 +206,6 @@ protected:
 	int mIsStatic;
 	int mVarChanged;
 	int mFontHeight;
-	unsigned charSkip;
 };
 
 // GUIImage - Used for static image
@@ -1017,11 +1013,11 @@ protected:
 	COLOR mBackgroundColor;
 	COLOR mCursorColor;
 	int scrollingX;
+	int cursorX;
 	int lastX;
 	int mCursorLocation;
 	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH;
 	int mFontY;
-	unsigned skipChars;
 	unsigned mFontHeight;
 	unsigned CursorWidth;
 	bool mRendered;
