@@ -166,7 +166,7 @@ GUIInput::GUIInput(xml_node<>* node)
 		mFontY = mRenderY;
 
 	if (mInputText)
-		mInputText->SetMaxWidth(mRenderW);
+		mInputText->SetMaxWidth(0);
 
 	isLocalChange = false;
 	HandleTextLocation(-3);
@@ -373,7 +373,7 @@ int GUIInput::Render(void)
 
 	// Render the text
 	mInputText->SetRenderPos(mRenderX + scrollingX, mFontY);
-	mInputText->SetMaxWidth(mRenderW - scrollingX);
+	mInputText->SetMaxWidth(0);
 	if (mInputText)	 ret = mInputText->Render();
 	if (ret < 0)		return ret;
 

@@ -164,6 +164,8 @@ int GUIText::NotifyVarChange(const std::string& varName, const std::string& valu
 int GUIText::SetMaxWidth(unsigned width)
 {
 	maxWidth = width;
+	if (!maxWidth)
+		scaleWidth = false;
 	mVarChanged = 1;
 	return 0;
 }
