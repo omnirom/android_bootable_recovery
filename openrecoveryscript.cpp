@@ -254,12 +254,6 @@ int OpenRecoveryScript::run_script_file(void) {
 						} else if ((value2[i] == 'R' || value2[i] == 'r') && Partition_List.find("/recovery;") != string::npos) {
 							Restore_List += "/recovery;";
 							gui_msg("recovery=Recovery");
-						} else if (value2[i] == '1' && DataManager::GetIntValue(TW_RESTORE_SP1_VAR) > 0) {
-							gui_print("%s\n", "Special1 -- No Longer Supported...");
-						} else if (value2[i] == '2' && DataManager::GetIntValue(TW_RESTORE_SP2_VAR) > 0) {
-							gui_print("%s\n", "Special2 -- No Longer Supported...");
-						} else if (value2[i] == '3' && DataManager::GetIntValue(TW_RESTORE_SP3_VAR) > 0) {
-							gui_print("%s\n", "Special3 -- No Longer Supported...");
 						} else if ((value2[i] == 'B' || value2[i] == 'b') && Partition_List.find("/boot;") != string::npos) {
 							Restore_List += "/boot;";
 							gui_msg("boot=Boot");
