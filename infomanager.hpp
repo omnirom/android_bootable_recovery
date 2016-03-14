@@ -28,8 +28,13 @@ using namespace std;
 class InfoManager
 {
 public:
-	InfoManager(const string filename);
+	InfoManager();
+	InfoManager(const string& filename);
 	virtual ~InfoManager();
+	void SetFile(const string& filename);
+	void SetFileVersion(int version);
+	void SetConst();
+	void Clear();
 	int LoadValues();
 	int SaveValues();
 
@@ -51,6 +56,8 @@ public:
 private:
 	string File;
 	map<string, string> mValues;
+	int file_version;
+	bool is_const;
 
 };
 

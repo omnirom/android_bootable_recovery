@@ -23,6 +23,7 @@
 #include <utility>
 #include <map>
 #include <pthread.h>
+#include "infomanager.hpp"
 
 using namespace std;
 
@@ -63,11 +64,11 @@ public:
 	static string GetSettingsStoragePath(void);
 
 protected:
-	typedef pair<string, int> TStrIntPair;
-	typedef pair<string, TStrIntPair> TNameValuePair;
-	static map<string, TStrIntPair> mValues;
 	static string mBackingFile;
 	static int mInitialized;
+	static InfoManager mPersist;
+	static InfoManager mData;
+	static InfoManager mConst;
 
 	static map<string, string> mConstValues;
 

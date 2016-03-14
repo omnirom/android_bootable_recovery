@@ -285,7 +285,6 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			char crypto_blkdev[255];
 			property_get("ro.crypto.fs_crypto_blkdev", crypto_blkdev, "error");
 			if (strcmp(crypto_blkdev, "error") != 0) {
-				DataManager::SetValue(TW_DATA_BLK_DEVICE, Primary_Block_Device);
 				DataManager::SetValue(TW_IS_DECRYPTED, 1);
 				Is_Encrypted = true;
 				Is_Decrypted = true;

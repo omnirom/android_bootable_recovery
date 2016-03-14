@@ -43,11 +43,34 @@
 
 using namespace std;
 
-InfoManager::InfoManager(const string filename) {
-	File = filename;
+InfoManager::InfoManager() {
+	file_version = 0;
+	is_const = false;
+}
+
+InfoManager::InfoManager(const string& filename) {
+	file_version = 0;
+	is_const = false;
+	SetFile(filename);
 }
 
 InfoManager::~InfoManager(void) {
+	Clear();
+}
+
+void InfoManager::SetFile(const string& filename) {
+	File = filename;
+}
+
+void InfoManager::SetFileVersion(int version) {
+	file_version = version;
+}
+
+void InfoManager::SetConst(void) {
+	is_const = true;
+}
+
+void InfoManager::Clear(void) {
 	mValues.clear();
 }
 
@@ -61,6 +84,16 @@ int InfoManager::LoadValues(void) {
 		return -1;
 	} else {
 		LOGINFO("InfoManager loading from '%s'.\n", File.c_str());
+	}
+
+	if (file_version) {
+		int read_file_version;
+		if (fread(&read_file_version, 1, sizeof(int), in) != sizeof(int))
+			goto error;
+		if (read_file_version != file_version) {
+			LOGINFO("InfoManager file version has changed, not reading file\n");
+			goto error;
+		}
 	}
 
 	while (!feof(in)) {
@@ -104,6 +137,10 @@ int InfoManager::SaveValues(void) {
 	FILE* out = fopen(File.c_str(), "wb");
 	if (!out)
 		return -1;
+
+	if (file_version) {
+		fwrite(&file_version, 1, sizeof(int), out);
+	}
 
 	map<string, string>::iterator iter;
 	for (iter = mValues.begin(); iter != mValues.end(); ++iter) {
@@ -185,7 +222,7 @@ int InfoManager::SetValue(const string varName, string value) {
 	pos = mValues.find(varName);
 	if (pos == mValues.end())
 		mValues.insert(make_pair(varName, value));
-	else
+	else if (!is_const)
 		pos->second = value;
 
 	return 0;
