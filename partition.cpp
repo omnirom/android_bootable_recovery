@@ -1611,8 +1611,12 @@ bool TWPartition::Wipe_Encryption() {
 			close(fd);
 		}
 	} else {
-		string Command = "flash_image " + Crypto_Key_Location + " /dev/zero";
-		TWFunc::Exec_Cmd(Command);
+		if (TWFunc::IOCTL_Get_Block_Size(Crypto_Key_Location.c_str()) >= 16384LLU) {
+			string Command = "dd of='" + Crypto_Key_Location + "' if=/dev/zero bs=16384 count=1";
+			TWFunc::Exec_Cmd(Command);
+		} else {
+			LOGINFO("Crypto key location reports size < 16K so not wiping crypto footer.\n");
+		}
 	}
 	if (Wipe(Fstab_File_System)) {
 		Has_Data_Media = Save_Data_Media;
