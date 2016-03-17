@@ -26,10 +26,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#define OTAIO_CACHE_FNAME "/cache/saved.file"
-
-void ota_set_fault_files();
-
 int ota_open(const char* path, int oflags);
 
 int ota_open(const char* path, int oflags, mode_t mode);

@@ -17,18 +17,16 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #include "ota_io.h"
 
-int main(int /* argc */, char** /* argv */) {
+int main(int argc, char **argv) {
     int fd = open("testdata/test.file", O_RDWR);
     char buf[8];
-    const char* out = "321";
+    char *out = "321";
     int readv = ota_read(fd, buf, 4);
     printf("Read returned %d\n", readv);
     int writev = ota_write(fd, out, 4);
     printf("Write returned %d\n", writev);
-    close(fd);
     return 0;
 }
