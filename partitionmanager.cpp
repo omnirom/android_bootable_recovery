@@ -32,6 +32,7 @@
 #include <sys/wait.h>
 #include <linux/fs.h>
 #include <sys/mount.h>
+#include <libbootimg.h>
 #include "variables.h"
 #include "twcommon.h"
 #include "partitions.hpp"
@@ -2426,4 +2427,55 @@ void TWPartitionManager::Remove_Partition_By_Path(string Path) {
 			return;
 		}
 	}
+}
+
+int TWPartitionManager::Has_Dm_Verity() {
+	TWPartition *p = Find_Partition_By_Path("/boot");
+	LOGINFO("[verity] Checking if device has dm-verity...\n");
+	if(!p)
+		return 0;
+	LOGINFO("[verity] Found /boot partition: %s\n", p->Primary_Block_Device.c_str());
+	static bool found;
+	static bool hasVerity;
+	found = hasVerity = false;
+	int ret = bootimg_parse(p->Primary_Block_Device.c_str(), [](int flags, uint8_t *ptr, long size) {
+		//We only want to parse ramdisk
+		if( (flags & BOOT_TYPE) != BOOT_RAMDISK)
+			return 0;
+
+		int r = bootimg_parse_ramdisk("pigz", flags, ptr, size, [](const char *filename, int fd, long len) {
+			if(!strstr(filename, "fstab"))
+				return 0;
+
+			FILE *f = fdopen(fd, "r");
+			LOGINFO("[verity] [ramdisk] Got fstab %s\n", filename);
+
+			char *line = NULL;
+			size_t l = 0;
+			while(getline(&line, &l, f) != -1) {
+				if(!strstr(line, "/system") && !strstr(line, "/vendor"))
+					continue;
+				found = true;
+				if(strstr(line, "verify"))
+					hasVerity = true;
+			}
+			fclose(f);
+			return 0;
+		});
+
+		LOGINFO("[verity] Got a ramdisk\n");
+		if(r)
+			return 1;
+		return 0;
+
+	});
+	LOGINFO("[verity] Done parsing bootimg\n");
+	// 0 = don't know, 1 = has verity, -1 = doesn't have verity
+	if(ret)
+		return 0;
+	if(found && hasVerity)
+		return 1;
+	if(found && !hasVerity)
+		return -1;
+	return 0;
 }

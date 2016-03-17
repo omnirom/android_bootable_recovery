@@ -339,7 +339,17 @@ int main(int argc, char **argv) {
 	// Check if system has never been changed
 	TWPartition* sys = PartitionManager.Find_Partition_By_Path("/system");
 	TWPartition* ven = PartitionManager.Find_Partition_By_Path("/vendor");
-	if (sys) {
+	int hasVerity = PartitionManager.Has_Dm_Verity();
+	if(hasVerity == 1) {
+		LOGINFO("Found verity is enabled");
+		sys->Change_Mount_Read_Only(false);
+		if (ven)
+			ven->Change_Mount_Read_Only(false);
+	} else if(hasVerity == -1) {
+		LOGINFO("Found verity is disabled");
+		//dm-verity not present in fstab, do nothing
+	} else if (sys) {
+		LOGINFO("Couldn't find verity state\n");
 		if ((DataManager::GetIntValue("tw_mount_system_ro") == 0 && sys->Check_Lifetime_Writes() == 0) || DataManager::GetIntValue("tw_mount_system_ro") == 2) {
 			if (DataManager::GetIntValue("tw_never_show_system_ro_page") == 0) {
 				DataManager::SetValue("tw_back", "main");
