@@ -245,6 +245,7 @@ public:
 	void Translate_Partition_Display_Names();                                 // Updates display names based on translations
 	void Decrypt_Adopted();                                                   // Attempt to identy and decrypt any adopted storage partitions
 	void Remove_Partition_By_Path(string Path);                               // Removes / erases a partition entry from the partition list
+	int Has_Dm_Verity();                                                      // Checks boot.img to know if dm-verity is enabled
 
 	TWAtomicInt stop_backup;
 

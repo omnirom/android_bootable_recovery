@@ -119,6 +119,11 @@ else
     LOCAL_SHARED_LIBRARIES += libc++
 endif
 
+ifeq ($(TW_SUPPORTED_BOOTIMG),true)
+    LOCAL_SHARED_LIBRARIES += libbootimg
+    LOCAL_CFLAGS += -DSUPPORTED_BOOTIMG
+endif
+
 ifneq ($(wildcard system/core/libsparse/Android.mk),)
 LOCAL_SHARED_LIBRARIES += libsparse
 endif
