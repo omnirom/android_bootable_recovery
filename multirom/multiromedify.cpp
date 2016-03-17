@@ -81,23 +81,23 @@ std::string EdifyFunc::getArgsStr() const
 
 bool is_word(const std::string& text_string, const char * word, const char * additional_pre_allowed = "", const char * additional_post_allowed = "")
 {
-	size_t pos = text_string.find(word);
-	bool pre_check  = true;
-	bool post_check = true;
-	
-	if (strcmp(additional_pre_allowed, "dont_check") !=0)
-	{
-		char pre_word_char  = text_string[pos - 1];
-		pre_check  = isspace(pre_word_char)  || ( strchr(additional_pre_allowed, pre_word_char) != NULL );
-	}
-	
-	if (strcmp(additional_post_allowed, "dont_check") !=0)
-	{
-		char post_word_char = text_string[pos + strlen(word) + 1];
-		post_check = isspace(post_word_char) || ( strchr(additional_post_allowed, post_word_char) != NULL );
-	}
-	
-	return pre_check && post_check;
+    size_t pos = text_string.find(word);
+    bool pre_check  = true;
+    bool post_check = true;
+
+    if (strcmp(additional_pre_allowed, "dont_check") !=0)
+    {
+        char pre_word_char  = text_string[pos - 1];
+        pre_check  = isspace(pre_word_char)  || ( strchr(additional_pre_allowed, pre_word_char) != NULL );
+    }
+
+    if (strcmp(additional_post_allowed, "dont_check") !=0)
+    {
+        char post_word_char = text_string[pos + strlen(word) + 1];
+        post_check = isspace(post_word_char) || ( strchr(additional_post_allowed, post_word_char) != NULL );
+    }
+
+    return pre_check && post_check;
 }
 
 int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::list<EdifyElement*>::iterator& lastNewlineRef)
@@ -106,13 +106,13 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
 
     if(m_name == "mount" || m_name == "unmount" || m_name == "format")
     {
-		// we only care about certain partitions, disregard the rest (eg systemless root 'su')
+        // we only care about certain partitions, disregard the rest (eg systemless root 'su')
         int found = 0;
         static const char *offending_mounts[] = {
-			"/cache",
-			"/system",
-			"/data",
-			"/userdata",
+            "/cache",
+            "/system",
+            "/data",
+            "/userdata",
             NULL
         };
 
@@ -121,24 +121,24 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
             if((*itr)->getType() != EDF_VALUE)
                 continue;
 
-			for(int i = 0; offending_mounts[i]; ++i)
-			{
-				const std::string& t = ((EdifyValue*)(*itr))->getText();
-				if(t.find(offending_mounts[i]) != NPOS)
-				{
-					// we found one, but make sure it's not embedded such as "/data/su.img"
-					if ( is_word(t, offending_mounts[i], "dont_check", "\"") )
-					{
-						found = 1;
-						break;
-					}
-				}
-			}
-			if (found) break;
+            for(int i = 0; offending_mounts[i]; ++i)
+            {
+                const std::string& t = ((EdifyValue*)(*itr))->getText();
+                if(t.find(offending_mounts[i]) != NPOS)
+                {
+                    // we found one, but make sure it's not embedded such as "/data/su.img"
+                    if ( is_word(t, offending_mounts[i], "dont_check", "\"") )
+                    {
+                        found = 1;
+                        break;
+                    }
+                }
+            }
+            if (found) break;
         }
-        
+
         if (!found)
-			return res; // we didn't find an offending partition, so abort change
+            return res; // we didn't find an offending partition, so abort change
 
 
         lastNewlineRef = (*parentList)->insert(++lastNewlineRef, new EdifyValue(
@@ -165,7 +165,7 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
         res |= OFF_CHANGED;
         m_name = "ui_print";
         clearArgs();
-        addArg(new EdifyValue("\"\""));
+        addArg(new EdifyValue("\" \""));
         return res;
     }
     else if(m_name == "block_image_update")
@@ -184,12 +184,12 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
             const std::string& t = ((EdifyValue*)(*itr))->getText();
             if(t.find("mount") != std::string::npos)
             {
-				// check it's the actual mount command, and not part of something longer such as: run_program("/tmp/mount_su_image.sh");
-				if ( is_word(t, "mount", "\"`/;", "\"`/;") )
-				{
-					rem = true;
-					break;
-				}
+                // check it's the actual mount command, and not part of something longer such as: run_program("/tmp/mount_su_image.sh");
+                if ( is_word(t, "mount", "\"`/;", "\"`/;") )
+                {
+                    rem = true;
+                    break;
+                }
             }
             else if(t.find("boot.img") != NPOS || t.find(MultiROM::getBootDev()) != NPOS ||
                 t.find("zImage") != NPOS || t.find("bootimg") != NPOS)
@@ -257,7 +257,7 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
             res |= OFF_CHANGED;
             m_name = "ui_print";
             clearArgs();
-            addArg(new EdifyValue("\"\""));
+            addArg(new EdifyValue("\" \""));
         }
     }
     else if(m_name == "range_sha1")
