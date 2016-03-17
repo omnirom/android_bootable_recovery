@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+#if defined (TARGET_INJECT_FAULTS)
 #include <map>
+#endif
 
 #include <errno.h>
 #include <fcntl.h>
@@ -22,155 +24,186 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "ota_io.h"
 
-static std::map<intptr_t, const char*> filename_cache;
-static std::string read_fault_file_name = "";
-static std::string write_fault_file_name = "";
-static std::string fsync_fault_file_name = "";
+#if defined (TARGET_INJECT_FAULTS)
+static std::map<int, const char*> FilenameCache;
+static std::string FaultFileName =
+#if defined (TARGET_READ_FAULT)
+        TARGET_READ_FAULT;
+#elif defined (TARGET_WRITE_FAULT)
+        TARGET_WRITE_FAULT;
+#elif defined (TARGET_FSYNC_FAULT)
+        TARGET_FSYNC_FAULT;
+#endif // defined (TARGET_READ_FAULT)
+#endif // defined (TARGET_INJECT_FAULTS)
+
 bool have_eio_error = false;
 
-static bool get_hit_file(const char* cached_path, std::string ffn) {
-    return should_hit_cache()
-        ? !strncmp(cached_path, OTAIO_CACHE_FNAME, strlen(cached_path))
-        : !strncmp(cached_path, ffn.c_str(), strlen(cached_path));
-}
-
-void ota_set_fault_files() {
-    if (should_fault_inject(OTAIO_READ)) {
-        read_fault_file_name = fault_fname(OTAIO_READ);
-    }
-    if (should_fault_inject(OTAIO_WRITE)) {
-        write_fault_file_name = fault_fname(OTAIO_WRITE);
-    }
-    if (should_fault_inject(OTAIO_FSYNC)) {
-        fsync_fault_file_name = fault_fname(OTAIO_FSYNC);
-    }
-}
-
 int ota_open(const char* path, int oflags) {
+#if defined (TARGET_INJECT_FAULTS)
     // Let the caller handle errors; we do not care if open succeeds or fails
     int fd = open(path, oflags);
-    filename_cache[fd] = path;
+    FilenameCache[fd] = path;
     return fd;
+#else
+    return open(path, oflags);
+#endif
 }
 
 int ota_open(const char* path, int oflags, mode_t mode) {
+#if defined (TARGET_INJECT_FAULTS)
     int fd = open(path, oflags, mode);
-    filename_cache[fd] = path;
-    return fd; }
+    FilenameCache[fd] = path;
+    return fd;
+#else
+    return open(path, oflags, mode);
+#endif
+}
 
 FILE* ota_fopen(const char* path, const char* mode) {
+#if defined (TARGET_INJECT_FAULTS)
     FILE* fh = fopen(path, mode);
-    filename_cache[(intptr_t)fh] = path;
+    FilenameCache[(intptr_t)fh] = path;
     return fh;
+#else
+    return fopen(path, mode);
+#endif
 }
 
 int ota_close(int fd) {
-    // descriptors can be reused, so make sure not to leave them in the cache
-    filename_cache.erase(fd);
+#if defined (TARGET_INJECT_FAULTS)
+    // descriptors can be reused, so make sure not to leave them in the cahce
+    FilenameCache.erase(fd);
+#endif
     return close(fd);
 }
 
 int ota_fclose(FILE* fh) {
-    filename_cache.erase((intptr_t)fh);
+#if defined (TARGET_INJECT_FAULTS)
+    FilenameCache.erase((intptr_t)fh);
+#endif
     return fclose(fh);
 }
 
 size_t ota_fread(void* ptr, size_t size, size_t nitems, FILE* stream) {
-    if (should_fault_inject(OTAIO_READ)) {
-        auto cached = filename_cache.find((intptr_t)stream);
-        const char* cached_path = cached->second;
-        if (cached != filename_cache.end() &&
-                get_hit_file(cached_path, read_fault_file_name)) {
-            read_fault_file_name = "";
-            errno = EIO;
+#if defined (TARGET_READ_FAULT)
+    if (FilenameCache.find((intptr_t)stream) != FilenameCache.end()
+            && FilenameCache[(intptr_t)stream] == FaultFileName) {
+        FaultFileName = "";
+        errno = EIO;
+        have_eio_error = true;
+        return 0;
+    } else {
+        size_t status = fread(ptr, size, nitems, stream);
+        // If I/O error occurs, set the retry-update flag.
+        if (status != nitems && errno == EIO) {
             have_eio_error = true;
-            return 0;
         }
+        return status;
     }
+#else
     size_t status = fread(ptr, size, nitems, stream);
     // If I/O error occurs, set the retry-update flag.
     if (status != nitems && errno == EIO) {
         have_eio_error = true;
     }
     return status;
+#endif
 }
 
 ssize_t ota_read(int fd, void* buf, size_t nbyte) {
-    if (should_fault_inject(OTAIO_READ)) {
-        auto cached = filename_cache.find(fd);
-        const char* cached_path = cached->second;
-        if (cached != filename_cache.end()
-                && get_hit_file(cached_path, read_fault_file_name)) {
-            read_fault_file_name = "";
-            errno = EIO;
+#if defined (TARGET_READ_FAULT)
+    if (FilenameCache.find(fd) != FilenameCache.end()
+            && FilenameCache[fd] == FaultFileName) {
+        FaultFileName = "";
+        errno = EIO;
+        have_eio_error = true;
+        return -1;
+    } else {
+        ssize_t status = read(fd, buf, nbyte);
+        if (status == -1 && errno == EIO) {
             have_eio_error = true;
-            return -1;
         }
+        return status;
     }
+#else
     ssize_t status = read(fd, buf, nbyte);
     if (status == -1 && errno == EIO) {
         have_eio_error = true;
     }
     return status;
+#endif
 }
 
 size_t ota_fwrite(const void* ptr, size_t size, size_t count, FILE* stream) {
-    if (should_fault_inject(OTAIO_WRITE)) {
-        auto cached = filename_cache.find((intptr_t)stream);
-        const char* cached_path = cached->second;
-        if (cached != filename_cache.end() &&
-                get_hit_file(cached_path, write_fault_file_name)) {
-            write_fault_file_name = "";
-            errno = EIO;
+#if defined (TARGET_WRITE_FAULT)
+    if (FilenameCache.find((intptr_t)stream) != FilenameCache.end()
+            && FilenameCache[(intptr_t)stream] == FaultFileName) {
+        FaultFileName = "";
+        errno = EIO;
+        have_eio_error = true;
+        return 0;
+    } else {
+        size_t status = fwrite(ptr, size, count, stream);
+        if (status != count && errno == EIO) {
             have_eio_error = true;
-            return 0;
         }
+        return status;
     }
+#else
     size_t status = fwrite(ptr, size, count, stream);
     if (status != count && errno == EIO) {
         have_eio_error = true;
     }
     return status;
+#endif
 }
 
 ssize_t ota_write(int fd, const void* buf, size_t nbyte) {
-    if (should_fault_inject(OTAIO_WRITE)) {
-        auto cached = filename_cache.find(fd);
-        const char* cached_path = cached->second;
-        if (cached != filename_cache.end() &&
-                get_hit_file(cached_path, write_fault_file_name)) {
-            write_fault_file_name = "";
-            errno = EIO;
+#if defined (TARGET_WRITE_FAULT)
+    if (FilenameCache.find(fd) != FilenameCache.end()
+            && FilenameCache[fd] == FaultFileName) {
+        FaultFileName = "";
+        errno = EIO;
+        have_eio_error = true;
+        return -1;
+    } else {
+        ssize_t status = write(fd, buf, nbyte);
+        if (status == -1 && errno == EIO) {
             have_eio_error = true;
-            return -1;
         }
+        return status;
     }
+#else
     ssize_t status = write(fd, buf, nbyte);
     if (status == -1 && errno == EIO) {
         have_eio_error = true;
     }
     return status;
+#endif
 }
 
 int ota_fsync(int fd) {
-    if (should_fault_inject(OTAIO_FSYNC)) {
-        auto cached = filename_cache.find(fd);
-        const char* cached_path = cached->second;
-        if (cached != filename_cache.end() &&
-                get_hit_file(cached_path, fsync_fault_file_name)) {
-            fsync_fault_file_name = "";
-            errno = EIO;
+#if defined (TARGET_FSYNC_FAULT)
+    if (FilenameCache.find(fd) != FilenameCache.end()
+            && FilenameCache[fd] == FaultFileName) {
+        FaultFileName = "";
+        errno = EIO;
+        have_eio_error = true;
+        return -1;
+    } else {
+        int status = fsync(fd);
+        if (status == -1 && errno == EIO) {
             have_eio_error = true;
-            return -1;
         }
+        return status;
     }
+#else
     int status = fsync(fd);
     if (status == -1 && errno == EIO) {
         have_eio_error = true;
     }
     return status;
+#endif
 }
-
