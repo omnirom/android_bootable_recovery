@@ -34,8 +34,8 @@
 #include "applypatch.h"
 #include "mtdutils/mtdutils.h"
 #include "edify/expr.h"
-#include "ota_io.h"
 #include "print_sha1.h"
+#include "otafault/ota_io.h"
 
 static int LoadPartitionContents(const char* filename, FileContents* file);
 static ssize_t FileSink(const unsigned char* data, ssize_t len, void* token);
