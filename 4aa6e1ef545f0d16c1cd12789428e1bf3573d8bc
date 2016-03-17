@@ -1,0 +1,157 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_9bdb597a",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-17T23:47:44Z",
+      "side": 1,
+      "message": "There\u0027s a problem with GUIText\u0027s parsing of variables - try renaming a file to \"x%tw_version%\" to see what I mean. :)",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_5b839159",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-17T23:47:44Z",
+      "side": 1,
+      "message": "This seems to be completely unused. The value of \u003ctext\u003e is already read by the mInputText member.",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_3b98c5c1",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-17T23:47:44Z",
+      "side": 1,
+      "message": "This looks like an inelegant way to handle masked text - can\u0027t we simply get rid of \u003ctext\u003e in the themes and pass the masked text to mText directly?",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_1b950989",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-17T23:47:44Z",
+      "side": 1,
+      "message": "we already called a method of mInputText - it can\u0027t be null here.",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_bbef351d",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-17T23:47:44Z",
+      "side": 1,
+      "message": "Apparently calling this function with x \u003d\u003d 0 means something special ... do we want to store lastX in this case too?\nAlso, x \u003d\u003d 0 is a valid coordinate...",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_9bf479ee",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-17T23:47:44Z",
+      "side": 1,
+      "message": "I still need to find out what mCursorLocation \u003d\u003d 0 means. -1 is apparently \"after the text\", but what is 0?",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_1be06925",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-17T23:47:44Z",
+      "side": 1,
+      "message": "here we set scrollingX, and below (after deltaX) we are setting it again - is this intentional?",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_bbd61551",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-17T23:47:44Z",
+      "side": 1,
+      "message": "These code branches do almost the same. You can always use deltaX \u003d x - lastX and add it. Adding a negative number will subtract automatically. :) Only the tests for the limits need to be done both.",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_5bd5d141",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-17T23:47:44Z",
+      "side": 1,
+      "message": "Something is wrong in the touch code (don\u0027t know where yet) - clicking a half scrolled out character on the left side puts the cursor to the left of the input box, and you can\u0027t put the cursor before the last character in the string.",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
