@@ -98,7 +98,6 @@ static void set_displayed_framebuffer(unsigned n)
 {
     if (n > 1 || !double_buffered) return;
 
-    vi.yres_virtual = gr_framebuffer[0].height * 2;
     vi.yoffset = n * gr_framebuffer[0].height;
     vi.bits_per_pixel = gr_framebuffer[0].pixel_bytes * 8;
     if (ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
