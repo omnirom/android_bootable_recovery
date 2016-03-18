@@ -1874,7 +1874,7 @@ int GUIAction::multirom(std::string arg)
 		DataManager::SetValue("tw_mrom_title", "MultiROM is not installed!");
 		DataManager::SetValue("tw_mrom_text1", "/data/media/multirom not found.");
 		DataManager::SetValue("tw_mrom_text2", "/data/media/0/multirom not found.");
-		DataManager::SetValue("tw_mrom_back", "advanced");
+		DataManager::SetValue("tw_mrom_back", "main");
 		return gui_changePage("multirom_msg");
 	}
 }
