@@ -43,7 +43,7 @@
 			<text color="%header_color%">
 				<font resource="font_l"/>
 				<placement x="540" y="1590" placement="5"/>
-				<text>MultiROM TWRP %tw_version%</text>
+				<text>MultiROM TWRP %tw_version%%tw_mrom_rec_version%</text>
 			</text>
 		</page>
 	</pages>

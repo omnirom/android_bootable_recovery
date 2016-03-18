@@ -181,6 +181,10 @@
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 #define TW_MROM_REC_VERSION_VAR     "tw_mrom_rec_version"
 
+#ifdef MR_REC_VERSION
+#define TW_MROM_REC_VERSION_STR     MR_REC_VERSION
+#endif
+
 #define TW_ROTATION                 "tw_rotation"
 #define TW_ENABLE_ROTATION          "tw_enable_rotation"
 #define TW_AUTO_INJECT_MROM         "tw_auto_inject_mrom"

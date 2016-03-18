@@ -931,6 +931,27 @@ void DataManager::SetDefaultValues()
 	// doesn't seem to be used but add it back anyway
 	mConstValues.insert(make_pair("tw_device_name", TARGET_DEVICE));
 
+#ifdef TW_MROM_REC_VERSION_STR
+	// mrom build version needed by splash (parse it just like in multirom.cpp)
+	if(strlen(TW_MROM_REC_VERSION_STR) == sizeof("YYYYMMDD-PP")-1)
+	{
+		int patch = atoi(TW_MROM_REC_VERSION_STR+sizeof("YYYYMMDD-")-1);
+		std::string res(TW_MROM_REC_VERSION_STR, sizeof("YYYYMMDD")-1);
+
+		res.insert(6, "-");
+		res.insert(4, "-");
+
+		if(patch > 0)
+		{
+			char buff[5];
+			snprintf(buff, sizeof(buff), " p%d", patch);
+			res += buff;
+		}
+		res.insert(0, "_"); //we dont want that forced in the xml
+		mValues.insert(make_pair(TW_MROM_REC_VERSION_VAR, make_pair(res, 1)));
+	}
+#endif
+
 	mValues.insert(make_pair(TW_AUTO_INJECT_MROM, make_pair("1", 1)));
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
