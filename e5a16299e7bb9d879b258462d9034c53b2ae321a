@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_7b3bed95",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2438,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-18T00:01:22Z",
+      "side": 1,
+      "message": "no need for static (2*)",
+      "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_5b40310c",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2441,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-18T00:01:22Z",
+      "side": 1,
+      "message": "C++11 lambdas may not work in older Android trees, or we may just need to enable -std\u003dgnu++11 (if all our supported gcc versions understand that).",
+      "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_3b45651c",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2446,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-18T00:01:22Z",
+      "side": 1,
+      "message": "I guess this will need support for other decompression methods.",
+      "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_1b42a913",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2450,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-18T00:01:22Z",
+      "side": 1,
+      "message": "can this fail?",
+      "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_fb4edd3e",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2455,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-18T00:01:22Z",
+      "side": 1,
+      "message": "memory leak?",
+      "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_9b36b9ac",
+        "filename": "twrp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-18T00:01:22Z",
+      "side": 1,
+      "message": "don\u0027t we want to set read only to true if verity is enabled?",
+      "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
