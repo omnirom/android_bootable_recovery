@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_bb14d5a2",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2438,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-19T11:52:10Z",
+      "side": 1,
+      "message": "Only true function pointers can be passed to a C library, not a closure",
+      "parentUuid": "98faad2e_7b3bed95",
+      "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_5b40310c",
         "filename": "partitionmanager.cpp",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2016-03-18T00:01:22Z",
       "side": 1,
       "message": "C++11 lambdas may not work in older Android trees, or we may just need to enable -std\u003dgnu++11 (if all our supported gcc versions understand that).",
+      "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_9b1919dc",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2441,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-19T11:52:10Z",
+      "side": 1,
+      "message": "If it works on android-5.1 branch it\u0027s ok?",
+      "parentUuid": "98faad2e_5b40310c",
       "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -64,6 +100,24 @@
       "writtenOn": "2016-03-18T00:01:22Z",
       "side": 1,
       "message": "can this fail?",
+      "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_db47a1c0",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2450,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-19T11:52:10Z",
+      "side": 1,
+      "message": "The only possible reason of fail I cam think of is that it couldn\u0027t allocate memory.",
+      "parentUuid": "98faad2e_1b42a913",
       "revId": "e5a16299e7bb9d879b258462d9034c53b2ae321a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
