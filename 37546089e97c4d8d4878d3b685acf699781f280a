@@ -1,0 +1,232 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_c620e49d",
+        "filename": "adbbu/twadbstream.h",
+        "patchSetId": 68
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "Perhaps best would be to use an union here?\nThis will make easier access to various possibilities, and drop the use of char space[];",
+      "range": {
+        "startLine": 59,
+        "startChar": 1,
+        "endLine": 95,
+        "endChar": 2
+      },
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_a625d8ac",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "It feels like all those error handling would deserve a goto implementation to prevent having too much redundant code.",
+      "range": {
+        "startLine": 159,
+        "startChar": 2,
+        "endLine": 164,
+        "endChar": 3
+      },
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4634d4d9",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "Same comments about this loop that the one in openrecoveryscript.cpp",
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_661fd05d",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 370,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "Wouldn\u0027t you want to wait a bit between every attempt?",
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8603fc11",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 779,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "I don\u0027t see any nested loops, it looks like you don\u0027t need this breakloop variable",
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_861adc6b",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 781,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "I wonder if it would be useful to check the return is indeed 512",
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_460df43b",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 784,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "This memset is useless, since it is followed by memcpy of the same size",
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_260ae824",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 785,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "How about having \"cmd\" being of type AdbBackupControlType from start instead of copying it?",
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6608f02d",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 787,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "You may create a variable constructed by this instead of having the same substr executed 6 times",
+      "range": {
+        "startLine": 787,
+        "startChar": 7,
+        "endLine": 787,
+        "endChar": 50
+      },
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2631c8e8",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 808,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "This type of code would benefit from switching to an union type in twadbstream.h",
+      "range": {
+        "startLine": 804,
+        "startChar": 2,
+        "endLine": 808,
+        "endChar": 40
+      },
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_062ecc8b",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 831,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "Sounds like this new cmdstr is actually the same as the previous one, no?",
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_e62ac075",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 961,
+      "author": {
+        "id": 1001588
+      },
+      "writtenOn": "2016-03-20T20:28:31Z",
+      "side": 1,
+      "message": "Doesn\u0027t this mean that remountrw will fail if the device doesn\u0027t have a /vendor partition?\nIs this expected?",
+      "revId": "37546089e97c4d8d4878d3b685acf699781f280a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
