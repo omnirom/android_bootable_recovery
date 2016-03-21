@@ -36,6 +36,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_a6a278f9",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-21T16:35:58Z",
+      "side": 1,
+      "message": "I think mLastValue is used in other places later on, but I will inspect the code and see.",
+      "parentUuid": "98faad2e_5b839159",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_3b98c5c1",
         "filename": "gui/input.cpp",
         "patchSetId": 3
@@ -47,6 +65,24 @@
       "writtenOn": "2016-03-17T23:47:44Z",
       "side": 1,
       "message": "This looks like an inelegant way to handle masked text - can\u0027t we simply get rid of \u003ctext\u003e in the themes and pass the masked text to mText directly?",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_86a77c0a",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-21T16:35:58Z",
+      "side": 1,
+      "message": "Maybe... It gets tricky sometimes getting the 2 GUI objects to interact the way we want, but there may be a better way.",
+      "parentUuid": "98faad2e_3b98c5c1",
       "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -70,6 +106,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_466614ee",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-21T16:35:58Z",
+      "side": 1,
+      "message": "mInputText can be null as per line 84 if it fails to render. However, it\u0027s unlikely that it will fail to render and we probably aren\u0027t handling mInputText properly throughout the rest of the code if it fails. However, if the text fails to render, we\u0027ve done something pretty horribly wrong anyway.",
+      "parentUuid": "98faad2e_1b950989",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_bbef351d",
         "filename": "gui/input.cpp",
         "patchSetId": 3
@@ -87,6 +141,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_06600ccc",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-21T16:35:58Z",
+      "side": 1,
+      "message": "I used some magic values before, and yes, it seems that I should continue to use a magic value for this again. A negative number should work fine. I think I was using 0 to call the function without a change in scrolling.",
+      "parentUuid": "98faad2e_bbef351d",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_9bf479ee",
         "filename": "gui/input.cpp",
         "patchSetId": 3
@@ -98,6 +170,24 @@
       "writtenOn": "2016-03-17T23:47:44Z",
       "side": 1,
       "message": "I still need to find out what mCursorLocation \u003d\u003d 0 means. -1 is apparently \"after the text\", but what is 0?",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_266308dd",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-21T16:35:58Z",
+      "side": 1,
+      "message": "mCursorLocation \u003d\u003d 0 would put the cursor at the very beginning of the string, before the first character.",
+      "parentUuid": "98faad2e_9bf479ee",
       "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -149,6 +239,24 @@
       "writtenOn": "2016-03-17T23:47:44Z",
       "side": 1,
       "message": "Something is wrong in the touch code (don\u0027t know where yet) - clicking a half scrolled out character on the left side puts the cursor to the left of the input box, and you can\u0027t put the cursor before the last character in the string.",
+      "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_c69d84c0",
+        "filename": "gui/input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-21T16:35:58Z",
+      "side": 1,
+      "message": "Most of the time a touch is going to fall somewhere on top of a character instead of perfectly in between them. The trick then is to decide where the cursor should go. Clearly it shouldn\u0027t be off the screen, but it can be tough to decide if it should go before the touched character or after while still making sure that you can place the cursor after the very last character easily and before the first character.",
+      "parentUuid": "98faad2e_5bd5d141",
       "revId": "4aa6e1ef545f0d16c1cd12789428e1bf3573d8bc",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
