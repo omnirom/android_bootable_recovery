@@ -32,9 +32,9 @@ extern "C" {
 typedef struct ZipEntry {
     unsigned int fileNameLen;
     const char*  fileName;       // not null-terminated
-    long         offset;
-    long         compLen;
-    long         uncompLen;
+    uint32_t     offset;
+    uint32_t     compLen;
+    uint32_t     uncompLen;
     int          compression;
     long         modTime;
     long         crc32;
@@ -85,10 +85,10 @@ void mzCloseZipArchive(ZipArchive* pArchive);
 const ZipEntry* mzFindZipEntry(const ZipArchive* pArchive,
         const char* entryName);
 
-INLINE long mzGetZipEntryOffset(const ZipEntry* pEntry) {
+INLINE uint32_t mzGetZipEntryOffset(const ZipEntry* pEntry) {
     return pEntry->offset;
 }
-INLINE long mzGetZipEntryUncompLen(const ZipEntry* pEntry) {
+INLINE uint32_t mzGetZipEntryUncompLen(const ZipEntry* pEntry) {
     return pEntry->uncompLen;
 }
 

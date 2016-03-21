@@ -91,7 +91,7 @@ enum {
 static void dumpEntry(const ZipEntry* pEntry)
 {
     LOGI(" %p '%.*s'\n", pEntry->fileName,pEntry->fileNameLen,pEntry->fileName);
-    LOGI("   off=%ld comp=%ld uncomp=%ld how=%d\n", pEntry->offset,
+    LOGI("   off=%u comp=%u uncomp=%u how=%d\n", pEntry->offset,
         pEntry->compLen, pEntry->uncompLen, pEntry->compression);
 }
 #endif
@@ -505,7 +505,8 @@ static bool processDeflatedEntry(const ZipArchive *pArchive,
     const ZipEntry *pEntry, ProcessZipEntryContentsFunction processFunction,
     void *cookie)
 {
-    long result = -1;
+    bool success = false;
+    unsigned long totalOut = 0;
     unsigned char procBuf[32 * 1024];
     z_stream zstream;
     int zerr;
@@ -569,16 +570,17 @@ static bool processDeflatedEntry(const ZipArchive *pArchive,
     assert(zerr == Z_STREAM_END);       /* other errors should've been caught */
 
     // success!
-    result = zstream.total_out;
+    totalOut = zstream.total_out;
+    success = true;
 
 z_bail:
     inflateEnd(&zstream);        /* free up any allocated structures */
 
 bail:
-    if (result != pEntry->uncompLen) {
-        if (result != -1)        // error already shown?
-            LOGW("Size mismatch on inflated file (%ld vs %ld)\n",
-                result, pEntry->uncompLen);
+    if (totalOut != pEntry->uncompLen) {
+        if (success) {       // error already shown?
+            LOGW("Size mismatch on inflated file (%lu vs %u)\n", totalOut, pEntry->uncompLen);
+        }
         return false;
     }
     return true;
