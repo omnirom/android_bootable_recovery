@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_a6939858",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 241,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-22T20:56:02Z",
+      "side": 1,
+      "message": "We were clearing this before, but should we be clearing const values?",
+      "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_668d9035",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-22T20:56:02Z",
+      "side": 1,
+      "message": "Would it make more sense to retain the mutex lock and call mPersist.SetValue directly instead of SetValue?",
+      "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_46829405",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 718,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-22T20:56:02Z",
+      "side": 1,
+      "message": "Maybe we should make the simulation of actions non-persistent as there are some users who select this item without realizing what it\u0027s for and email us.",
+      "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_e6788025",
+        "filename": "infomanager.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-22T20:56:02Z",
+      "side": 1,
+      "message": "Should we pass varName by ref instead of by val?",
+      "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
