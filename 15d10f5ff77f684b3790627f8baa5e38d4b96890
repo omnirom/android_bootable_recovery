@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_e6bac0b3",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 241,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-22T22:29:28Z",
+      "side": 1,
+      "message": "yes, because we\u0027re setting them in SetDefaultValues() called below.",
+      "parentUuid": "98faad2e_a6939858",
+      "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_668d9035",
         "filename": "data.cpp",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2016-03-22T20:56:02Z",
       "side": 1,
       "message": "Would it make more sense to retain the mutex lock and call mPersist.SetValue directly instead of SetValue?",
+      "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_c6db4422",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-22T22:29:28Z",
+      "side": 1,
+      "message": "IMHO not worth it.",
+      "parentUuid": "98faad2e_668d9035",
       "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -53,6 +89,58 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_a6e038cb",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 718,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-22T22:29:28Z",
+      "side": 1,
+      "message": "Good idea. Only themers need to remember to enable it after every boot when they want to test...",
+      "parentUuid": "98faad2e_46829405",
+      "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_46cf345e",
+        "filename": "infomanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-22T22:29:28Z",
+      "side": 1,
+      "message": "actually this is about names, not values",
+      "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_66ea30ac",
+        "filename": "infomanager.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-22T22:29:28Z",
+      "side": 1,
+      "message": "should be an explicit ctor",
+      "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_e6788025",
         "filename": "infomanager.hpp",
         "patchSetId": 1
@@ -64,6 +152,24 @@
       "writtenOn": "2016-03-22T20:56:02Z",
       "side": 1,
       "message": "Should we pass varName by ref instead of by val?",
+      "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_86e53cdc",
+        "filename": "infomanager.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-03-22T22:29:28Z",
+      "side": 1,
+      "message": "yes, here and everywhere else when we pass a string for a function to read only.",
+      "parentUuid": "98faad2e_e6788025",
       "revId": "15d10f5ff77f684b3790627f8baa5e38d4b96890",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
