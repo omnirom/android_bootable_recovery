@@ -948,7 +948,7 @@ void DataManager::SetDefaultValues()
 			res += buff;
 		}
 		res.insert(0, "_"); //we dont want that forced in the xml
-		mValues.insert(make_pair(TW_MROM_REC_VERSION_VAR, make_pair(res, 1)));
+		SetValue(TW_MROM_REC_VERSION_VAR, res);
 	}
 #endif
 
