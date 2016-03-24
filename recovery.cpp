@@ -59,7 +59,6 @@
 struct selabel_handle *sehandle;
 
 static const struct option OPTIONS[] = {
-  { "send_intent", required_argument, NULL, 'i' },
   { "update_package", required_argument, NULL, 'u' },
   { "retry_count", required_argument, NULL, 'n' },
   { "wipe_data", no_argument, NULL, 'w' },
@@ -77,7 +76,6 @@ static const struct option OPTIONS[] = {
 
 static const char *CACHE_LOG_DIR = "/cache/recovery";
 static const char *COMMAND_FILE = "/cache/recovery/command";
-static const char *INTENT_FILE = "/cache/recovery/intent";
 static const char *LOG_FILE = "/cache/recovery/log";
 static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
 static const char *LOCALE_FILE = "/cache/recovery/last_locale";
@@ -107,10 +105,8 @@ static bool has_cache = false;
  * The recovery tool communicates with the main system through /cache files.
  *   /cache/recovery/command - INPUT - command line for tool, one arg per line
  *   /cache/recovery/log - OUTPUT - combined log file from recovery run(s)
- *   /cache/recovery/intent - OUTPUT - intent that was passed in
  *
  * The arguments which may be supplied in the recovery.command file:
- *   --send_intent=anystring - write the text out to recovery.intent
  *   --update_package=path - verify install an OTA package file
  *   --wipe_data - erase user data (and cache), then reboot
  *   --wipe_cache - wipe cache (but not user data), then reboot
@@ -467,22 +463,10 @@ static void copy_logs() {
 }
 
 // clear the recovery command and prepare to boot a (hopefully working) system,
-// copy our log file to cache as well (for the system to read), and
-// record any intent we were asked to communicate back to the system.
-// this function is idempotent: call it as many times as you like.
+// copy our log file to cache as well (for the system to read). This function is
+// idempotent: call it as many times as you like.
 static void
-finish_recovery(const char *send_intent) {
-    // By this point, we're ready to return to the main system...
-    if (send_intent != NULL && has_cache) {
-        FILE *fp = fopen_path(INTENT_FILE, "w");
-        if (fp == NULL) {
-            LOGE("Can't open %s\n", INTENT_FILE);
-        } else {
-            fputs(send_intent, fp);
-            check_and_fclose(fp, INTENT_FILE);
-        }
-    }
-
+finish_recovery() {
     // Save the locale to cache, so if recovery is next started up
     // without a --locale argument (eg, directly from the bootloader)
     // it will use the last-known locale.
@@ -947,7 +931,7 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
 static Device::BuiltinAction
 prompt_and_wait(Device* device, int status) {
     for (;;) {
-        finish_recovery(NULL);
+        finish_recovery();
         switch (status) {
             case INSTALL_SUCCESS:
             case INSTALL_NONE:
@@ -1189,7 +1173,6 @@ int main(int argc, char **argv) {
 
     get_args(&argc, &argv);
 
-    const char *send_intent = NULL;
     const char *update_package = NULL;
     bool should_wipe_data = false;
     bool should_wipe_cache = false;
@@ -1203,7 +1186,6 @@ int main(int argc, char **argv) {
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
         switch (arg) {
-        case 'i': send_intent = optarg; break;
         case 'n': android::base::ParseInt(optarg, &retry_count, 0); break;
         case 'u': update_package = optarg; break;
         case 'w': should_wipe_data = true; break;
@@ -1390,7 +1372,7 @@ int main(int argc, char **argv) {
     }
 
     // Save logs and clean up before rebooting or shutting down.
-    finish_recovery(send_intent);
+    finish_recovery();
 
     switch (after) {
         case Device::SHUTDOWN:
