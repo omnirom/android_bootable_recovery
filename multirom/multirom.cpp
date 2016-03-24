@@ -44,6 +44,7 @@ std::string MultiROM::m_mount_rom_paths[2] = { "", "" };
 std::string MultiROM::m_curr_roms_path = "";
 MROMInstaller *MultiROM::m_installer = NULL;
 MultiROM::baseFolders MultiROM::m_base_folders;
+bool mtp_was_enabled = false;
 int MultiROM::m_base_folder_cnt = 0;
 bool MultiROM::m_has_firmware = false;
 
@@ -79,6 +80,7 @@ MultiROM::config::config()
 	int_display_name = INTERNAL_NAME;
 	rotation = TW_DEFAULT_ROTATION;
 	enable_adb = 0;
+	enable_kmsg_logging = 0;
 	force_generic_fb = 0;
 	anim_duration_coef_pct = 100;
 }
@@ -145,11 +147,87 @@ bool MultiROM::setRomsPath(std::string loc)
 {
 	umount("/mnt"); // umount last thing mounted there
 
+	TWPartition* partition = NULL;
+
+	if(loc.compare(INTERNAL_MEM_LOC_TXT) == 0) {
+		// set partition to internal
+		partition = PartitionManager.Get_Default_Storage_Partition();
+	} else {
+		// find partition from "/dev/block/... (type)" style used by tw_multirom_install_loc
+		std::vector<TWPartition*>& Partitions = PartitionManager.getPartitions();
+		for (std::vector<TWPartition*>::iterator iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+			if (loc.compare(0, (*iter)->Actual_Block_Device.size(), (*iter)->Actual_Block_Device) == 0) {
+				partition = (*iter);
+				break;
+			}
+		}
+	}
+
+	if (partition == NULL) {
+		//no suitable path found
+		m_curr_roms_path.clear();
+		PartitionManager.Update_tw_multirom_variables(partition);
+		return false;
+	}
+
 	if(loc.compare(INTERNAL_MEM_LOC_TXT) == 0)
 	{
 		m_curr_roms_path = m_path + "/roms/";
+		PartitionManager.Update_tw_multirom_variables(loc);
 		return true;
 	}
+	else if (partition->Has_Data_Media)
+	{
+		std::string lnk_path = partition->Storage_Path;
+
+		mkdir("/mnt", 0777); // in case it does not exist
+
+		char cmd[256];
+		sprintf(cmd, "mount %s /mnt", lnk_path.c_str());
+
+		if(system(cmd) != 0)
+		{
+			LOGERR("Failed to mount location \"%s\"!\n", lnk_path.c_str());
+			return false;
+		}
+		m_curr_roms_path = "/mnt/multirom-"TARGET_DEVICE"/";
+		mkdir("/mnt/multirom-"TARGET_DEVICE"/", 0777);
+		PartitionManager.Update_tw_multirom_variables(partition);
+		return true;
+	}
+	// support legacy style for easier merges, otherwise the code could look like this:
+	/*
+	else
+	{
+		std::string dev = partition->Actual_Block_Device;
+		std::string type = partition->Current_File_System;
+
+		mkdir("/mnt", 0777); // in case it does not exist
+
+		char cmd[256];
+		if (type.compare("ntfs") == 0)
+			sprintf(cmd, "ntfs-3g %s /mnt", dev.c_str());
+#ifndef TW_NO_EXFAT_FUSE
+		else if(type.compare("exfat") == 0)
+			sprintf(cmd, "exfat-fuse -o big_writes,max_read=131072,max_write=131072,nonempty %s /mnt", dev.c_str());
+#endif
+		else
+			sprintf(cmd, "mount %s /mnt", dev.c_str());
+
+		if(system(cmd) != 0)
+		{
+			LOGERR("Failed to mount location \"%s\"(%s)!\n", dev.c_str(), type.c_str());
+			return false;
+		}
+		m_curr_roms_path = "/mnt/multirom-"TARGET_DEVICE"/";
+		mkdir("/mnt/multirom-"TARGET_DEVICE"/", 0777);
+		PartitionManager.Update_tw_multirom_variables(partition);
+		return true;
+	}
+	*/
+	
+	// legacy 'loc' style for easier merges
+	loc = partition->Actual_Block_Device + " (" + partition->Current_File_System + ")";
 
 	size_t idx = loc.find(' ');
 	if(idx == std::string::npos)
@@ -179,11 +257,13 @@ bool MultiROM::setRomsPath(std::string loc)
 
 	m_curr_roms_path = "/mnt/multirom-"TARGET_DEVICE"/";
 	mkdir("/mnt/multirom-"TARGET_DEVICE"/", 0777);
+	PartitionManager.Update_tw_multirom_variables(partition);
 	return true;
 }
 
 std::string MultiROM::listInstallLocations()
 {
+// legacy code, no longer used
 	std::string res = INTERNAL_MEM_LOC_TXT"\n";
 	blkid_probe pr;
 	const char *type;
@@ -568,6 +648,8 @@ MultiROM::config MultiROM::loadConfig()
 				cfg.brightness = atoi(val.c_str());
 			else if(name == "enable_adb")
 				cfg.enable_adb = atoi(val.c_str());
+			else if(name == "enable_kmsg_logging")
+				cfg.enable_kmsg_logging = atoi(val.c_str());
 			else if(name == "hide_internal")
 				cfg.hide_internal = atoi(val.c_str());
 			else if(name == "int_display_name")
@@ -599,6 +681,7 @@ void MultiROM::saveConfig(const MultiROM::config& cfg)
 	fprintf(f, "colors_v2=%d\n", cfg.colors);
 	fprintf(f, "brightness=%d\n", cfg.brightness);
 	fprintf(f, "enable_adb=%d\n", cfg.enable_adb);
+	fprintf(f, "enable_kmsg_logging=%d\n", cfg.enable_kmsg_logging);
 	fprintf(f, "hide_internal=%d\n", cfg.hide_internal);
 	fprintf(f, "int_display_name=%s\n", cfg.int_display_name.c_str());
 	fprintf(f, "rotation=%d\n", cfg.rotation);
@@ -612,6 +695,8 @@ void MultiROM::saveConfig(const MultiROM::config& cfg)
 bool MultiROM::changeMounts(std::string name)
 {
 	gui_print("Changing mounts to ROM %s...\n", name.c_str());
+
+	mtp_was_enabled = TWFunc::Toggle_MTP(false);
 
 	int type = getType(name);
 	std::string base = getRomsPath() + name;
@@ -649,6 +734,7 @@ bool MultiROM::changeMounts(std::string name)
 		m_path.clear();
 		PartitionManager.Pop_Context();
 		PartitionManager.Update_System_Details();
+		TWFunc::Toggle_MTP(mtp_was_enabled);
 		return false;
 	}
 
@@ -673,6 +759,7 @@ bool MultiROM::changeMounts(std::string name)
 		gui_print("Failed to mount realdata, canceling!\n");
 		PartitionManager.Pop_Context();
 		PartitionManager.Update_System_Details();
+		TWFunc::Toggle_MTP(mtp_was_enabled);
 		return false;
 	}
 
@@ -720,6 +807,7 @@ bool MultiROM::changeMounts(std::string name)
 		realdata->UnMount(false);
 		PartitionManager.Pop_Context();
 		PartitionManager.Update_System_Details();
+		TWFunc::Toggle_MTP(mtp_was_enabled);
 		return false;
 	}
 
@@ -755,6 +843,16 @@ void MultiROM::restoreMounts()
 	system("mv /etc/recovery.fstab.bak /etc/recovery.fstab");
 	system("if [ -e /sbin/mount_real ]; then mv /sbin/mount_real /sbin/mount; fi;");
 
+	// various versions of 'systemless root' and/or installer scripts keep the unmount, but keep the loop device, so get rid of it first
+	system("sync;"
+		"i=0;"
+		"while [ $i -le 10 ]; do"
+		"    if [ -e \"/dev/block/loop$i\" ]; then"
+		"        losetup -d  \"/dev/block/loop$i\";"
+		"    fi;"
+		"    i=$(( $i + 1 ));"
+		"done;");
+
 	// script might have mounted it several times over, we _have_ to umount it all
 	system("sync;"
 		"i=0;"
@@ -789,6 +887,8 @@ void MultiROM::restoreMounts()
 	// The storage path gets set to wrong fake data when restored above, call it again
 	// with the the path to call Data::SetBackupFolder() again.
 	DataManager::SetValue("tw_storage_path", DataManager::GetStrValue("tw_storage_path"));
+
+	TWFunc::Toggle_MTP(mtp_was_enabled);
 
 	restoreROMPath();
 }
@@ -2541,6 +2641,14 @@ bool MultiROM::fakeBootPartition(const char *fakeImg)
 
 void MultiROM::restoreBootPartition()
 {
+#ifdef BOARD_BOOTIMAGE_PARTITION_SIZE
+	if(access(m_boot_dev.c_str(), F_OK) == 0)
+	{
+		LOGINFO("Truncating fake boot.img to %d bytes\n", BOARD_BOOTIMAGE_PARTITION_SIZE);
+		truncate(m_boot_dev.c_str(), BOARD_BOOTIMAGE_PARTITION_SIZE);
+	}
+#endif
+
 	if(access((m_boot_dev + "-orig").c_str(), F_OK) < 0)
 	{
 		gui_print("Failed to restore boot partition, %s-orig does not exist!\n", m_boot_dev.c_str());

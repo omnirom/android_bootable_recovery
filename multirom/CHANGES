@@ -3,20 +3,21 @@ Build flag (in BoardConfig)
 - add TARGET_RECOVERY_IS_MULTIROM := true
   to enable multirom version of twrp
 
-- TODO: check for this flag in system/extras/multirom
-  and libbootimg, and disable building them if the flag
-  is not set, otherwise multirom binaries always get
-  built and added into recovery
-
+strike: - TODO: check for this flag in system/extras/multirom
+strike:   and libbootimg, and disable building them if the flag
+strike:   is not set, otherwise multirom binaries always get
+strike:   built and added into recovery
+fixed by sub77 here: https://github.com/Tasssadar/multirom/commit/1cad0efa84967a12ccaa7ffc4898d4808a3d0f67
 
 
 Folder changes
 ==============
-- move multirom files to separate sub-folder   recovery/multirom
+- move multirom files to separate sub-folder  recovery/multirom
 - move multirom specific prebuilts to         recovery/multirom/prebuilt  (1)
-- move multirom specific cp_xattrs to         recovery/multirom/cp_xattrs (1)
+- move multirom specific cp_xattrs to         recovery/multirom/cp_xattrs (1)(2)
+- move phablet folder to                      recovery/multirom/phablet   (1)
 Notes: (1) update/create Android.mk files
-
+       (2) update Android.mk to for proper relink
 
 
 multirom Code changes
@@ -33,9 +34,13 @@ multirom Code changes
 
 minzip Code changes
 ===================
-- add function 'read_data' needed by multirom in Zip.h and Zip.c
-- update Android.mk with build flag TARGET_RECOVERY_IS_MULTIROM
-Note: i guess this could get moved out of minzip and into multirom itself
+strike: - add function 'read_data' needed by multirom in Zip.h and Zip.c
+strike: - update Android.mk with build flag TARGET_RECOVERY_IS_MULTIROM
+strike: Note: i guess this could get moved out of minzip and into multirom itself
+- Update: the above is no longer true, minzip is no longer touched,
+  the read_data function has been moved to multirom_Zip.h and
+  multirom_Zip.c in the recovery/multirom folder
+  includes updated accordingly
 
 
 
@@ -45,6 +50,13 @@ gui Code changes
 - action.cpp    add multirom actions and functions
     Note: TW_ORS_IS_SECONDARY_ROM code moved to openrecoveryscript.cpp
 - update Android.mk with build flag TARGET_RECOVERY_IS_MULTIROM
+
+- fileselector.cpp   needed by multirom
+    + add <excludes> tag for multirom
+    + add support for multiple file extensions
+
+- listbox.cpp	add support for dynamic <items> tag
+
 
 
 main Code changes
@@ -75,6 +87,9 @@ main Code changes
 - update Android.mk
     + add new build flag TARGET_RECOVERY_IS_MULTIROM
     + add multirom source files, libraries, etc.
+
+- Note: code changes in twrp.cpp, partitions.hpp, partition.cpp, partitionmanager.cpp,
+        and twrp-functions(hpp/cpp), has been reordered for easier merges
 
 
 
@@ -116,7 +131,71 @@ General notes
 
 BUGS
 ====
-- is restorecon still broken? due to the -D flag in multirom.cpp
-    + #if PLATFORM_SDK_VERSION >= 21  #define RESTORECON_ARGS "-RFDv"
+strike: - is restorecon still broken? due to the -D flag in multirom.cpp
+strike:     + #if PLATFORM_SDK_VERSION >= 21  #define RESTORECON_ARGS "-RFDv"
+- Update: Android.mk has been updated to use toolbox restorecon if 
+          TARGET_RECOVERY_IS_MULTIROM is set
+
+TODO
+====
+* disable adb in second boot
+* fix workaround
+
+* delete_recursive("/tmp"); in installer script (eg HTC_One_M8_GPe_Marshmallow-6.0_MRA58K.H10_AROMA-Install.zip)
+* package_extract_xxx("", "/dev/block/.../by-name/system")
+
+* all the other stuff, i forgot
 
 
+
+New partitionlist type: "multirom_storage"
+==========================================
+In order to minimize code changes I reverted all migrations to full TWPartition 
+structure back to original multirom style "tw_multirom_install_loc" variable.
+
+Instead I just added additional support for the following variables:
+	tw_multirom_storage_path
+	tw_multirom_storage_display_name
+	tw_multirom_storage_free_size
+
+Now partitionmanager.cpp + gui/partitionlist.cpp supports new multirom_storage
+partitionlist:
+	<object type="partitionlist">
+		<data name="tw_multirom_storage_path" />
+		<listtype name="multirom_storage" />
+	</object>
+
+	<text>%tw_multirom_storage_display_name% (%tw_multirom_storage_free_size% MB)</text>
+
+So the following files/functions (amongst others), don't need to be patched:
+	multirom/multirom.h/cpp
+		static bool installLocNeedsImages(const std::string& loc);
+		static bool addROM(std::string zip, int os, std::string loc);
+		static bool setRomsPath(std::string loc);
+		static bool disableFlashKernelAct(std::string name, std::string loc);
+		static int getType(int os, std::string loc);
+
+	gui/action.cpp
+		GUIAction::multirom_reset_roms_paths
+		GUIAction::multirom_add
+		GUIAction::multirom_set_list_loc
+		GUIAction::multirom_list_loc_selected
+
+Instead, all changes have been added in:
+	partitionmanager.cpp
+	gui/partitionlist.cpp
+	multirom/multirom.cpp -> setRomsPath
+
+The core functions needed
+	TWPartitionManager::Update_tw_multirom_variables(TWPartition* partition);
+	TWPartitionManager::Update_tw_multirom_variables(std::string loc);
+allow for the coexistance of 'tw_multirom_storage_path' and original
+style 'tw_multirom_install_loc'.
+
+TWRP code will use 'tw_multirom_storage_path' however the underlying multirom code
+will still rely on "tw_multirom_install_loc" for flashing/etc.
+and visually "tw_multirom_storage_display_name" and "tw_multirom_storage_free_size"
+will be used to for properly GUI display.
+
+Completely unused, but kept for legacy:
+	std::string MultiROM::listInstallLocations();

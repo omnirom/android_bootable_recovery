@@ -1,0 +1,2360 @@
+<?xml version="1.0"?>
+<recovery>
+	<pages>
+		<page name="multirom_msg">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>%tw_mrom_title%</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text></text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%center_x%" y="%row2_y%" placement="5"/>
+				<text>%tw_mrom_text1%</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%center_x%" y="%row3_y%" placement="5"/>
+				<text>%tw_mrom_text2%</text>
+			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row18a_y%"/>
+				<text>{@back_btn=Back}</text>
+				<action function="page">%tw_mrom_back%</action>
+			</button>
+
+			<action>
+				<touch key="home" />
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back" />
+				<action function="page">%tw_mrom_back%</action>
+			</action>
+		</page>
+
+		<page name="multirom_main">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Main Menu</text>
+			</text>
+
+			<button style="main_button">
+				<placement x="%indent%" y="%row2a_y%"/>
+				<text>Add ROM</text>
+				<actions>
+					<action function="set">tw_multirom_type=1</action>
+					<action function="set">tw_multirom_share_kernel=0</action>
+					<action function="multirom_add"/>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<placement x="%center_x%" y="%row2a_y%"/>
+				<text>List ROMs</text>
+				<actions>
+					<action function="multirom_reset_roms_paths"/>
+					<action function="page">multirom_list</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<placement x="%indent%" y="%row8_y%"/>
+				<text>Inject boot.img</text>
+				<actions>
+					<action function="set">tw_multirom_add_bootimg=0</action>
+					<action function="set">tw_back=multirom_main</action>
+					<action function="set">tw_action=multirom_inject</action>
+					<action function="set">tw_text1=Inject boot image </action>
+					<action function="set">tw_text3=?</action>
+					<action function="set">tw_multirom_set_fw=0</action>
+					<action function="page">multirom_inject_select</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<placement x="%center_x%" y="%row8_y%"/>
+				<text>Inject boot sector</text>
+				<image resource="main_button" />
+				<actions>
+					<action function="set">tw_back=multirom_main</action>
+					<action function="set">tw_action=multirom_inject_curr_boot</action>
+					<action function="set">tw_text1=Inject current boot partition?</action>
+					<action function="set">tw_action_text1=Injecting...</action>
+					<action function="set">tw_complete_text1=Boot partition injected.</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<placement x="%indent%" y="%row13a_y%"/>
+				<text>Settings</text>
+				<action function="multirom_settings"/>
+			</button>
+
+			<button style="main_button">
+				<placement x="%center_x%" y="%row13a_y%"/>
+				<text>Swap ROMs</text>
+				<actions>
+					<action function="set">tw_multirom_swap_type=0</action>
+					<action function="set">tw_multirom_swap_rom=</action>
+					<action function="multirom_reset_roms_paths"/>
+					<action function="multirom_list_roms_for_swap">tw_multirom_roms</action>
+					<action function="multirom_create_internal_rom_name">tw_multirom_swap_internal_name</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_list">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>List ROMs from %tw_multirom_install_loc%</text>
+			</text>
+
+			<template name="sort_options"/>
+
+			<fileselector>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>Select ROM to manage it:</text>
+				<filter folders="1" files="0" nav="0"/>
+				<path name="tw_multirom_folder"/>
+				<data name="tw_multirom_rom" default=""/>
+				<excludes>
+					<exclude>Internal</exclude>
+				</excludes>
+				<selection name="tw_multirom_rom_name"/>
+			</fileselector>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row21a_y%"/>
+				<text>{@select_storage_btn=Select Storage}</text>
+				<action function="overlay">multirom_set_list_loc</action>
+			</button>
+
+			<action>
+				<condition var1="tw_multirom_rom" op="modified"/>
+				<actions>
+					<action function="multirom_manage"/>
+				</actions>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_main</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_manage">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Manage %tw_multirom_rom_name%</text>
+			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row2a_y%"/>
+				<text>Delete</text>
+				<font resource="font_m" color="%text_fail_color%"/>
+				<actions>
+					<action function="set">tw_back=multirom_list</action>
+					<action function="set">tw_action=multirom_delete</action>
+					<action function="set">tw_text1=Delete ROM "%tw_multirom_rom_name%"?</action>
+					<action function="set">tw_action_text1=Deleting ROM...</action>
+					<action function="set">tw_complete_text1=ROM deleted</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row2a_y%"/>
+				<text>Rename</text>
+				<actions>
+					<action function="set">tw_multirom_new_rom_name=%tw_multirom_rom_name%</action>
+					<action function="set">tw_fileexists=0</action>
+					<action function="page">multirom_rename</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_multirom_is_android" var2="1"/>
+				<placement x="%indent%" y="%row5a_y%"/>
+				<text>Wipe Data</text>
+				<font resource="font_m" color="%text_fail_color%"/>
+				<actions>
+					<action function="set">tw_multirom_wipe=data</action>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_wipe</action>
+					<action function="set">tw_text1=Wipe data for ROM:</action>
+					<action function="set">tw_text2=%tw_multirom_rom_name%</action>
+					<action function="set">tw_action_text1=Wiping..</action>
+					<action function="set">tw_complete_text1=/data wiped!</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<conditions>
+					<condition var1="tw_multirom_is_android" var2="1"/>
+					<condition var1="tw_multirom_has_bootimg" var2="1"/>
+				</conditions>
+				<placement x="%center_x%" y="%row5a_y%"/>
+				<text>Backup</text>
+				<actions>
+					<action function="set">tw_backup_name=%tw_multirom_rom_name%</action>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_backup_rom</action>
+					<action function="set">tw_action_text1=MultiROM</action>
+					<action function="set">tw_action_text2=Preparing backup...</action>
+					<action function="page">action_page</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<conditions>
+					<condition var1="tw_multirom_is_android" var2="1"/>
+					<condition var1="tw_multirom_has_bootimg" var2="0"/>
+				</conditions>
+				<placement x="%indent%" y="%row8a_y%"/>
+				<text>Add Boot.img</text>
+				<actions>
+					<action function="set">tw_multirom_add_bootimg=1</action>
+					<action function="set">tw_back=multirom_list</action>
+					<action function="set">tw_action=multirom_inject</action>
+					<action function="set">tw_text1=Add/replace boot.img</action>
+					<action function="set">tw_text3=to rom %tw_multirom_rom%?</action>
+					<action function="set">tw_multirom_set_fw=0</action>
+					<action function="page">multirom_inject_select</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<conditions>
+					<condition var1="tw_multirom_is_android" var2="1"/>
+					<condition var1="tw_multirom_has_bootimg" var2="1"/>
+				</conditions>
+				<placement x="%indent%" y="%row8a_y%"/>
+				<text>Remove Boot.img</text>
+				<actions>
+					<action function="set">tw_back=multirom_list</action>
+					<action function="set">tw_action=multirom_rm_bootimg</action>
+					<action function="set">tw_text1=Remove boot.img from ROM:</action>
+					<action function="set">tw_text2=%tw_multirom_rom_name%</action>
+					<action function="set">tw_action_text1=Removing...</action>
+					<action function="set">tw_complete_text1=boot.img was removed!</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_multirom_is_android" var2="1"/>
+				<placement x="%center_x%" y="%row8a_y%"/>
+				<text>Wipe Dalvik</text>
+				<actions>
+					<action function="set">tw_multirom_wipe=dalvik</action>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_wipe</action>
+					<action function="set">tw_text1=Wipe dalvik-cache for ROM:</action>
+					<action function="set">tw_text2=%tw_multirom_rom_name%</action>
+					<action function="set">tw_action_text1=Wiping..</action>
+					<action function="set">tw_complete_text1=dalvik-cache wiped!</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<conditions>
+					<condition var1="tw_multirom_has_fw_partition" var2="1"/>
+					<condition var1="tw_multirom_has_fw_image" var2="0"/>
+				</conditions>
+				<placement x="%indent%" y="%row11a_y%"/>
+				<text>Set Radio.img</text>
+				<actions>
+					<action function="set">tw_multirom_add_bootimg=0</action>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_set_fw</action>
+					<action function="set">tw_text1=Set radio image</action>
+					<action function="set">tw_text3=?</action>
+					<action function="set">tw_multirom_set_fw=1</action>
+					<action function="page">multirom_inject_select</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<conditions>
+					<condition var1="tw_multirom_has_fw_partition" var2="1"/>
+					<condition var1="tw_multirom_has_fw_image" var2="1"/>
+				</conditions>
+				<placement x="%indent%" y="%row11a_y%"/>
+				<text>Remove Radio.img</text>
+				<actions>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_remove_fw</action>
+					<action function="set">tw_action_text1=Removing radio.img...</action>
+					<action function="set">tw_complete_text1=Please wait.</action>
+					<action function="page">action_page</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_multirom_is_android" var2="1"/>
+				<placement x="%center_x%" y="%row11a_y%"/>
+				<text>Wipe Cache</text>
+				<actions>
+					<action function="set">tw_multirom_wipe=cache</action>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_wipe</action>
+					<action function="set">tw_text1=Wipe cache for ROM:</action>
+					<action function="set">tw_text2=%tw_multirom_rom_name%</action>
+					<action function="set">tw_action_text1=Wiping..</action>
+					<action function="set">tw_complete_text1=/cache wiped!</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_multirom_is_android" var2="1"/>
+				<placement x="%indent%" y="%row14a_y%"/>
+				<text>{@adb_sideload_btn=ADB Sideload}</text>
+				<actions>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_sideload</action>
+					<action function="set">tw_action_text1=ADB Sideload</action>
+					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
+					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
+					<action function="set">tw_has_cancel=1</action>
+					<action function="set">tw_cancel_action=adbsideloadcancel</action>
+					<action function="set">tw_mrom_next_page=multirom_sideload_complete</action>
+					<action function="page">action_page</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_multirom_is_android" var2="1"/>
+				<placement x="%center_x%" y="%row14a_y%"/>
+				<text>{@install_zip_btn=Install Zip}</text>
+				<actions>
+					<action function="set">tw_mrom_flash_action=multirom_flash_zip</action>
+					<action function="page">multirom_flash_select</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_multirom_is_android" var2="1"/>
+				<placement x="%indent%" y="%row17a_y%"/>
+				<text>Run Restorecon</text>
+				<actions>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_restorecon</action>
+					<action function="set">tw_text1=Run restorecon on "%tw_multirom_rom_name%"?</action>
+					<action function="set">tw_action_text1=Running restorecon</action>
+					<action function="set">tw_complete_text1=SELinux contexts were restored</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_multirom_is_ubuntu" var2="1"/>
+				<placement x="%center_x%" y="%row17a_y%"/>
+				<text>Re-patch init</text>
+				<actions>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_ubuntu_patch_init</action>
+					<action function="set">tw_text1=Patch ubuntu's init?</action>
+					<action function="set">tw_action_text1=Patching...</action>
+					<action function="set">tw_complete_text1=Init patched</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_multirom_is_touch" var2="1"/>
+				<placement x="%center_x%" y="%row17a_y%"/>
+				<text>Re-patch init</text>
+				<actions>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_touch_patch_init</action>
+					<action function="set">tw_text1=Patch Ubuntu Touch's init?</action>
+					<action function="set">tw_action_text1=Patching...</action>
+					<action function="set">tw_complete_text1=Init patched</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_multirom_is_ubuntu" var2="1"/>
+				<placement x="%center_x%" y="%row20a_y%"/>
+				<text>Disable flash-kernel</text>
+				<actions>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action=multirom_disable_flash_kernel</action>
+					<action function="set">tw_text1=Disable flash-kernel?</action>
+					<action function="set">tw_action_text1=Working...</action>
+					<action function="set">tw_complete_text1=Flash-kernel patched</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<text style="text_m">
+				<conditions>
+					<condition var1="tw_multirom_is_android" var2="1"/>
+					<condition var1="tw_multirom_has_bootimg" var2="0"/>
+				</conditions>
+				<placement x="%center_x%" y="%row20a_y%" placement="5"/>
+				<text>Backup is only available if secondary ROM</text>
+			</text>
+
+			<text style="text_m">
+				<conditions>
+					<condition var1="tw_multirom_is_android" var2="1"/>
+					<condition var1="tw_multirom_has_bootimg" var2="0"/>
+				</conditions>
+				<placement x="%center_x%" y="%row21a_y%" placement="5"/>
+				<text>does not share the kernel with internal ROM.</text>
+			</text>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_list</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_rename">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Rename %tw_multirom_rom_name%</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row2_y%"/>
+				<text>{@name=Name:}</text>
+			</text>
+
+			<input>
+				<placement x="%indent%" y="%row2_input_y%" w="%content_width%" h="%input_height%"/>
+				<text>%tw_multirom_new_rom_name%</text>
+				<data name="tw_multirom_new_rom_name"/>
+				<restrict minlen="1" maxlen="26" allow=" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_.{}[]"/>
+				<actions>
+					<action function="set">tw_filecheck=%tw_multirom_folder%/%tw_multirom_new_rom_name%</action>
+					<action function="set">tw_existpage=multirom_rename</action>
+					<action function="set">tw_notexistpage=multirom_do_rename</action>
+					<action function="page">filecheck</action>
+				</actions>
+			</input>
+
+			<fill color="%accent_color%">
+				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<fill color="%text_fail_color%">
+				<condition var1="tw_fileexists" var2="1"/>
+				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<text style="text_m_fail">
+				<condition var1="tw_fileexists" var2="1"/>
+				<placement x="%indent%" y="%row4a_y%"/>
+				<text>A ROM with that name already exists!</text>
+			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row10_y%"/>
+				<text>{@cancel_btn=Cancel}</text>
+				<action function="page">multirom_manage</action>
+			</button>
+
+			<template name="keyboardtemplate"/>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_manage</action>
+			</action>
+		</page>
+
+		<page name="multirom_do_rename">
+			<action>
+				<action function="multirom_rename">%tw_multirom_new_rom_name%</action>
+			</action>
+		</page>
+
+		<page name="multirom_flash_select">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@select_file_from_storage=Select File from %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
+			</text>
+
+			<template name="sort_options"/>
+
+			<fileselector>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter extn=".zip" folders="1" files="1"/>
+				<path name="tw_zip_location" default="/sdcard"/>
+				<data name="tw_filename"/>
+				<selection name="tw_file"/>
+			</fileselector>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row21a_y%"/>
+				<text>{@select_storage_btn=Select Storage}</text>
+				<actions>
+					<action function="set">tw_back=multirom_flash_select</action>
+					<action function="overlay">select_storage</action>
+				</actions>
+			</button>
+
+			<action>
+				<condition var1="tw_filename" op="modified"/>
+				<action function="page">multirom_flash_confirm</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_manage</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_flash_confirm">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>ROM: %tw_multirom_rom_name%</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%center_x%" y="%row2_y%" placement="5"/>
+				<text>{@zip_warn1=This operation may install incompatible}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%center_x%" y="%row3_y%" placement="5"/>
+				<text>{@zip_warn2=software and render your device unusable.}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%center_x%" y="%row5_y%" placement="5"/>
+				<text>{@zip_back_cancel=Press back to cancel adding this zip.}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row7_y%"/>
+				<text>{@folder=Folder:}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row8_y%"/>
+				<text>%tw_zip_location%</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row9a_y%"/>
+				<text>{@file=File:}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row10a_y%"/>
+				<text>%tw_file%</text>
+			</text>
+
+			<slider>
+				<text>{@swipe_flash=Swipe to confirm Flash}</text>
+				<actions>
+					<action function="set">tw_back=multirom_manage</action>
+					<action function="set">tw_action_text1=Flashing ZIP...</action>
+					<action function="set">tw_complete_text1=ZIP flashed</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="set">tw_action=%tw_mrom_flash_action%</action>
+					<action function="page">action_page</action>
+				</actions>
+			</slider>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_manage</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_settings">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Settings</text>
+			</text>
+
+			<template name="tabs_multirom_settings"/>
+
+			<fill color="%text_color%">
+				<placement x="0" y="%row_tab_y%" w="%tab2_width%" h="%tab_indicator_height%"/>
+			</fill>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row3a_y%"/>
+				<text>Internal ROM Name:</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row4a_y%"/>
+				<text>%tw_multirom_int_display_name%</text>
+			</text>
+
+			<fill color="%fileselector_linecolor%">
+				<placement x="%indent%" y="row5a_y" w="%content_width%" h="input_line_width"/>
+			</fill>
+
+			<button>
+				<placement x="indent" y="%row3a_y%" w="%content_width%" h="%navbar_height%"/>
+				<fill color="%transparent%"/>
+				<action function="page">multirom_settings_rename_internal</action>
+			</button>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row13_y%"/>
+				<text>Options:</text>
+			</text>
+
+			<listbox style="scrolllist">
+				<placement x="%indent%" y="%row14_y%" w="%content_width%" h="%listbox_settings_mr_height%"/>
+				<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+				<icon selected="checkbox_true" unselected="checkbox_false"/>
+				<listitem name="Enable ADB">
+					<data variable="tw_multirom_enable_adb"/>
+				</listitem>
+				<listitem name="Hide internal ROM">
+					<data variable="tw_multirom_hide_internal"/>
+				</listitem>
+				<listitem name="Force using generic screen drawing code">
+					<data variable="tw_multirom_force_generic_fb"/>
+				</listitem>
+				<listitem name="Enable advanced kernel logging + history">
+					<data variable="tw_multirom_enable_kmsg_logging"/>
+				</listitem>
+			</listbox>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row7_y%"/>
+				<text>Screen Brightness: %tw_multirom_brightness%</text>
+			</text>
+
+			<slidervalue>
+				<placement x="indent" y="%row7_y%" w="%content_width%"/>
+				<data variable="tw_multirom_brightness" min="30" max="255" showcurr="0" changeondrag="1" />
+			</slidervalue>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row10_y%"/>
+				<text>Animation Duration: %tw_anim_duration_coef_pct%%</text>
+			</text>
+
+			<slidervalue>
+				<placement x="indent" y="%row10_y%" w="%content_width%"/>
+				<data variable="tw_anim_duration_coef_pct" min="50" max="125" showcurr="0" changeondrag="1" />
+			</slidervalue>
+
+			<action>
+				<touch key="home"/>
+				<actions>
+					<action function="multirom_settings_save" />
+					<action function="page">main</action>
+				</actions>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<actions>
+					<action function="multirom_settings_save" />
+					<action function="page">multirom_main</action>
+				</actions>
+			</action>
+		</page>
+
+		<page name="multirom_settings_autoboot">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Settings</text>
+			</text>
+
+			<template name="tabs_multirom_settings"/>
+
+			<fill color="%text_color%">
+				<placement x="%center_x%" y="%row_tab_y%" w="%tab2_width%" h="%tab_indicator_height%"/>
+			</fill>
+
+			<button style="radio">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="0"/>
+				<placement x="%indent%" y="%row3a_y%" textplacement="6"/>
+				<text>Disabled</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_auto_boot_trigger=0</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="0" op="!="/>
+				<placement x="%indent%" y="%row3a_y%" textplacement="6"/>
+				<text>Disabled</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_auto_boot_trigger=0</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="2"/>
+				<placement x="%indent%" y="%row5_y%" textplacement="6"/>
+				<text>Keypress-based boot</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_auto_boot_trigger=2</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="2" op="!="/>
+				<placement x="%indent%" y="%row5_y%" textplacement="6"/>
+				<text>Keypress-based boot</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_auto_boot_trigger=2</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="1"/>
+				<placement x="%indent%" y="%row6a_y%" textplacement="6"/>
+				<text>Time-based boot</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_auto_boot_trigger=1</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="1" op="!="/>
+				<placement x="%indent%" y="%row6a_y%" textplacement="6"/>
+				<text>Time-based boot</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_auto_boot_trigger=1</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<text style="text_m_accent">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="1"/>
+				<placement x="%indent%" y="%row8a_y%"/>
+				<text>Delay:</text>
+			</text>
+
+			<button style="button_quarter_width">
+				<conditions>
+					<condition var1="tw_multirom_auto_boot_trigger" var2="1"/>
+					<condition var1="tw_multirom_delay" op=">" var2="1"/>
+				</conditions>
+				<placement x="%indent%" y="%row9a_y%"/>
+				<text>-</text>
+				<actions>
+					<action function="addsubtract">tw_multirom_delay-1</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<text style="text_m">
+				<conditions>
+					<condition var1="tw_multirom_auto_boot_trigger" var2="1"/>
+					<condition var1="tw_multirom_delay" var2="1"/>
+				</conditions>
+				<placement x="%center_x%" y="%row10_y%" placement="5"/>
+				<text>%tw_multirom_delay% second</text>
+			</text>
+
+			<text style="text_m">
+				<conditions>
+					<condition var1="tw_multirom_auto_boot_trigger" var2="1"/>
+					<condition var1="tw_multirom_delay" op=">" var2="1"/>
+				</conditions>
+				<placement x="%center_x%" y="%row10_y%" placement="5"/>
+				<text>%tw_multirom_delay% seconds</text>
+			</text>
+
+			<button style="button_quarter_width">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="1"/>
+				<placement x="%tab4_col4_x%" y="%row9a_y%"/>
+				<text>+</text>
+				<actions>
+					<action function="addsubtract">tw_multirom_delay+1</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<text style="text_m">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="2"/>
+				<placement x="%center_x%" y="%row9_y%" placement="5"/>
+				<text>Press and hold volume up or down</text>
+			</text>
+
+			<text style="text_m">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="2"/>
+				<placement x="%center_x%" y="%row10_y%" placement="5"/>
+				<text>during boot to enter the MultiROM menu.</text>
+			</text>
+
+			<text style="text_m_accent">
+				<condition var1="tw_multirom_auto_boot_trigger" var2="0" op="!="/>
+				<placement x="%indent%" y="%row12_y%"/>
+				<text>Type:</text>
+			</text>
+
+			<button style="radio">
+				<conditions>
+					<condition var1="tw_multirom_auto_boot_trigger" var2="0" op="!="/>
+					<condition var1="tw_multirom_auto_boot_type" var2="1"/>
+				</conditions>
+				<placement x="%indent%" y="%row13_y%" textplacement="6"/>
+				<text>Use last booted ROM</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_auto_boot_type=1</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<conditions>
+					<condition var1="tw_multirom_auto_boot_trigger" var2="0" op="!="/>
+					<condition var1="tw_multirom_auto_boot_type" var2="1" op="!="/>
+				</conditions>
+				<placement x="%indent%" y="%row13_y%" textplacement="6"/>
+				<text>Use last booted ROM</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_auto_boot_type=1</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<listbox>
+				<conditions>
+					<condition var1="tw_multirom_auto_boot_trigger" var2="0" op="!="/>
+					<condition var1="tw_multirom_auto_boot_type" var2="0"/>
+				</conditions>
+				<placement x="%indent%" y="%row14a_y%" w="%content_width%" h="%listbox_romselect_mr_height%"/>
+				<data name="tw_multirom_auto_boot_rom" />
+				<items>tw_multirom_roms</items>
+			</listbox>
+
+			<button style="radio">
+				<conditions>
+					<condition var1="tw_multirom_auto_boot_trigger" var2="0" op="!="/>
+					<condition var1="tw_multirom_auto_boot_type" var2="0"/>
+				</conditions>
+				<placement x="%indent%" y="%row14a_y%" textplacement="6"/>
+				<text>Select ROM</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_auto_boot_type=0</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<conditions>
+					<condition var1="tw_multirom_auto_boot_trigger" var2="0" op="!="/>
+					<condition var1="tw_multirom_auto_boot_type" var2="0" op="!="/>
+				</conditions>
+				<placement x="%indent%" y="%row14a_y%" textplacement="6"/>
+				<text>Select ROM</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_auto_boot_type=0</action>
+					<action function="page">multirom_settings_autoboot</action>
+				</actions>
+			</button>
+
+			<action>
+				<touch key="home"/>
+				<actions>
+					<action function="multirom_settings_save"/>
+					<action function="page">main</action>
+				</actions>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<actions>
+					<action function="multirom_settings_save"/>
+					<action function="page">multirom_main</action>
+				</actions>
+			</action>
+		</page>
+
+		<page name="multirom_settings_rename_internal">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Settings</text>
+			</text>
+
+			<template name="tabs_multirom_settings"/>
+
+			<fill color="%text_color%">
+				<placement x="0" y="%row_tab_y%" w="%tab2_width%" h="%tab_indicator_height%"/>
+			</fill>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row3a_y%"/>
+				<text>Internal ROM Name:</text>
+			</text>
+
+			<input>
+				<placement x="%indent%" y="%row4_input_y%" w="%content_width%" h="%input_height%"/>
+				<text>%tw_multirom_int_display_name%</text>
+				<data name="tw_multirom_int_display_name" />
+				<restrict minlen="1" maxlen="26" disable=" " />
+				<action function="page">multirom_settings</action>
+			</input>
+
+			<fill color="%accent_color%">
+				<placement x="%indent%" y="row5a_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row10_y%"/>
+				<text>{@cancel_btn=Cancel}</text>
+				<action function="page">multirom_settings</action>
+			</button>
+
+			<template name="keyboardtemplate"/>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_settings</action>
+			</action>
+		</page>
+
+		<page name="multirom_inject_select">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM - Inject Boot.img</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Select Boot.img from %tw_storage_display_name% (%tw_storage_free_size% MB)</text>
+			</text>
+
+			<template name="sort_options"/>
+
+			<fileselector>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter extn=".img" folders="1" files="1"/>
+				<path name="tw_zip_location" default="/sdcard"/>
+				<data name="tw_filename"/>
+				<selection name="tw_file"/>
+			</fileselector>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row21a_y%"/>
+				<text>{@select_storage_btn=Select Storage}</text>
+				<actions>
+					<action function="set">tw_back=multirom_inject_select</action>
+					<action function="overlay">select_storage</action>
+				</actions>
+			</button>
+
+			<action>
+				<conditions>
+					<condition var1="tw_multirom_set_fw" var2="1" op="!="/>
+					<condition var1="tw_filename" op="modified"/>
+				</conditions>
+				<actions>
+					<action function="set">tw_text2=%tw_filename%</action>
+					<action function="set">tw_action_text1=Injecting...</action>
+					<action function="set">tw_complete_text1=Image injected</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</action>
+
+			<action>
+				<conditions>
+					<condition var1="tw_multirom_set_fw" var2="1"/>
+					<condition var1="tw_filename" op="modified"/>
+				</conditions>
+				<actions>
+					<action function="set">tw_text2=%tw_filename%</action>
+					<action function="set">tw_action_text1=Copying...</action>
+					<action function="set">tw_complete_text1=FW file copied</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_main</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_add">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Add secondary ROM</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row2_y%"/>
+				<text>ROM type:</text>
+			</text>
+
+			<button style="radio">
+				<condition var1="tw_multirom_type" var2="1" />
+				<placement x="%indent%" y="%row3_y%" textplacement="6"/>
+				<text>Android</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_type=1</action>
+					<action function="page">multirom_add</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_type" var2="1" op="!="/>
+				<placement x="%indent%" y="%row3_y%" textplacement="6"/>
+				<text>Android</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_type=1</action>
+					<action function="page">multirom_add</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_type" var2="3"/>
+				<placement x="%indent%" y="%row4a_y%" textplacement="6"/>
+				<text>MultiROM installer (*.mrom files)</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_type=3</action>
+					<action function="page">multirom_add</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_type" var2="3" op="!="/>
+				<placement x="%indent%" y="%row4a_y%" textplacement="6"/>
+				<text>MultiROM installer (*.mrom files)</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_type=3</action>
+					<action function="page">multirom_add</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<conditions>
+					<condition var1="tw_multirom_ubuntu_supported" var2="1"/>
+					<condition var1="tw_multirom_type" var2="2"/>
+				</conditions>
+				<placement x="%indent%" y="%row6_y%" textplacement="6"/>
+				<text>Ubuntu Desktop</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_type=2</action>
+					<action function="page">multirom_add</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<conditions>
+					<condition var1="tw_multirom_ubuntu_supported" var2="1"/>
+					<condition var1="tw_multirom_type" var2="2" op="!="/>
+				</conditions>
+				<placement x="%indent%" y="%row6_y%" textplacement="6"/>
+				<text>Ubuntu Desktop</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_type=2</action>
+					<action function="page">multirom_add</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<conditions>
+					<condition var1="tw_multirom_sailfish_supported" var2="1"/>
+					<condition var1="tw_multirom_type" var2="5"/>
+				</conditions>
+				<placement x="%indent%" y="%row6_y%" textplacement="6"/>
+				<text>SailfishOS</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_type=5</action>
+					<action function="page">multirom_add</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<conditions>
+					<condition var1="tw_multirom_sailfish_supported" var2="1"/>
+					<condition var1="tw_multirom_type" var2="5" op="!="/>
+				</conditions>
+				<placement x="%indent%" y="%row6_y%" textplacement="6"/>
+				<text>SailfishOS</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_type=5</action>
+					<action function="page">multirom_add</action>
+				</actions>
+			</button>
+
+			<partitionlist style="listbox">
+				<text>Install to:</text>
+				<placement x="%indent%" y="%row8_y%" w="%content_width%" h="%partitionlist_mount_height%"/>
+				<data name="tw_multirom_storage_path" />
+				<listtype name="multirom_storage"/>
+			</partitionlist>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row21a_y%"/>
+				<text>Refresh</text>
+				<action function="multirom_add"/>
+			</button>
+
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row21a_y%"/>
+				<text>Next</text>
+				<action function="multirom_add_second"/>
+			</button>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_main</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_add_source">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Add secondary ROM</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row2_y%"/>
+				<text>ROM source:</text>
+			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row3_y%"/>
+				<text>ZIP file</text>
+				<actions>
+					<action function="set">tw_multirom_add_source=zip</action>
+					<action function="page">multirom_add_select</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row3_y%"/>
+				<text>Backup</text>
+				<actions>
+					<action function="set">tw_multirom_add_source=backup</action>
+					<action function="page">multirom_add_select</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row6_y%"/>
+				<text>{@adb_sideload_btn=ADB Sideload}</text>
+				<actions>
+					<action function="set">tw_multirom_add_source=zip</action>
+					<action function="set">tw_back=multirom_add</action>
+					<action function="set">tw_action=multirom_sideload</action>
+					<action function="set">tw_action_text1=ADB Sideload</action>
+					<action function="set">tw_action_text2=Usage: adb sideload filename.zip</action>
+					<action function="set">tw_complete_text1=ADB Sideload Complete</action>
+					<action function="set">tw_has_cancel=1</action>
+					<action function="set">tw_cancel_action=adbsideloadcancel</action>
+					<action function="set">tw_mrom_next_page=multirom_sideload_complete</action>
+					<action function="page">action_page</action>
+				</actions>
+			</button>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_add</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_add_select">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<conditions>
+					<condition var1="tw_multirom_type" var2="1"/>
+					<condition var1="tw_multirom_add_source" var2="zip"/>
+				</conditions>
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Select ZIP from %tw_storage_display_name%</text>
+			</text>
+
+			<text style="text_m">
+				<conditions>
+					<condition var1="tw_multirom_type" var2="1"/>
+					<condition var1="tw_multirom_add_source" var2="backup"/>
+				</conditions>
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Select Backup from %tw_storage_display_name%</text>
+			</text>
+
+			<text style="text_m">
+				<condition var1="tw_multirom_type" var2="2"/>
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Select Ubuntu Image from %tw_storage_display_name%</text>
+			</text>
+
+			<text style="text_m">
+				<condition var1="tw_multirom_type" var2="3"/>
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Select Ubuntu Image from %tw_storage_display_name%</text>
+			</text>
+
+			<text style="text_m">
+				<conditions>
+					<condition var1="tw_multirom_type" var2="5"/>
+					<condition var1="tw_multirom_sailfish_add_zip" var2="1"/>
+				</conditions>
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Select CyanogenMOD ZIP from %tw_storage_display_name%</text>
+			</text>
+
+			<text style="text_m">
+				<conditions>
+					<condition var1="tw_multirom_type" var2="5"/>
+					<condition var1="tw_multirom_sailfish_add_zip" var2="2"/>
+				</conditions>
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Select SailfishOS from %tw_storage_display_name%</text>
+			</text>
+
+			<template name="sort_options"/>
+
+			<fileselector>
+				<conditions>
+					<condition var1="tw_multirom_type" var2="1"/>
+					<condition var1="tw_multirom_add_source" var2="zip"/>
+				</conditions>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter extn=".zip" folders="1" files="1"/>
+				<path name="tw_zip_location" default="/sdcard"/>
+				<data name="tw_filename"/>
+				<selection name="tw_file"/>
+			</fileselector>
+
+			<fileselector>
+				<conditions>
+					<condition var1="tw_multirom_type" var2="1"/>
+					<condition var1="tw_multirom_add_source" var2="backup"/>
+				</conditions>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter folders="1" files="0" nav="0"/>
+				<path name="tw_backups_folder" />
+				<data name="tw_filename" default=""/>
+				<selection name="tw_restore_name"/>
+			</fileselector>
+
+			<fileselector>
+				<condition var1="tw_multirom_type" var2="2"/>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter extn="img.gz;img" folders="1" files="1"/>
+				<path name="tw_zip_location" default="/sdcard"/>
+				<data name="tw_filename"/>
+				<selection name="tw_file"/>
+			</fileselector>
+
+			<fileselector>
+				<condition var1="tw_multirom_type" var2="3"/>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter extn=".mrom" folders="1" files="1"/>
+				<path name="tw_zip_location" default="/sdcard"/>
+				<data name="tw_filename"/>
+				<selection name="tw_file"/>
+			</fileselector>
+
+			<fileselector>
+				<conditions>
+					<condition var1="tw_multirom_type" var2="5"/>
+					<condition var1="tw_multirom_sailfish_add_zip" var2="1"/>
+				</conditions>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter extn=".zip" folders="1" files="1"/>
+				<path name="tw_zip_location" default="/sdcard"/>
+				<data name="tw_sailfish_filename_base"/>
+				<selection name="tw_file"/>
+			</fileselector>
+
+			<fileselector>
+				<conditions>
+					<condition var1="tw_multirom_type" var2="5"/>
+					<condition var1="tw_multirom_sailfish_add_zip" var2="2"/>
+				</conditions>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter extn=".zip" folders="1" files="1"/>
+				<path name="tw_zip_location" default="/sdcard"/>
+				<data name="tw_sailfish_filename_rootfs"/>
+				<selection name="tw_file"/>
+			</fileselector>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row21a_y%"/>
+				<text>{@select_storage_btn=Select Storage}</text>
+				<actions>
+					<action function="set">tw_back=multirom_add_select</action>
+					<action function="overlay">select_storage</action>
+				</actions>
+			</button>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_filename" op="modified"/>
+					<condition var1="tw_multirom_type" var2="5" op="!="/>
+				</conditions>
+				<action function="multirom_add_file_selected"/>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_sailfish_filename_base" op="modified"/>
+					<condition var1="tw_multirom_type" var2="5"/>
+				</conditions>
+				<action function="page">multirom_add_sailfish</action>
+			</object>
+
+			<object type="action">
+				<conditions>
+					<condition var1="tw_sailfish_filename_rootfs" op="modified"/>
+					<condition var1="tw_multirom_type" var2="5"/>
+				</conditions>
+				<action function="page">multirom_add_sailfish</action>
+			</object>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_add</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_add_sailfish">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Add secondary ROM - SailfishOS</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row2_y%"/>
+				<text>CyanogenMod ZIP file:</text>
+			</text>
+
+			<text style="text_m_fail">
+				<condition var1="tw_sailfish_filename_base" op="!="/>
+				<placement x="%indent%" y="%row3_y%"/>
+				<text>Select both files to install!</text>
+			</text>
+
+			<text style="text_m">
+				<condition var1="tw_sailfish_filename_base"/>
+				<placement x="%indent%" y="%row3_y%"/>
+				<text>%tw_sailfish_filename_base%</text>
+			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row4_y%"/>
+				<text>Select File</text>
+				<actions>
+					<action function="set">tw_multirom_sailfish_add_zip=1</action>
+					<action function="page">multirom_add_select</action>
+				</actions>
+			</button>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row8_y%"/>
+				<text>Rootfs ZIP file (sailfishos-*.zip)</text>
+			</text>
+
+			<text style="text_m_fail">
+				<condition var1="tw_sailfish_filename_rootfs" op="!="/>
+				<placement x="%indent%" y="%row9_y%"/>
+				<text>Select both files to install!</text>
+			</text>
+
+			<text style="text_m">
+				<condition var1="tw_sailfish_filename_rootfs"/>
+				<placement x="%indent%" y="%row9_y%"/>
+				<text>%tw_sailfish_filename_rootfs%</text>
+			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row10_y%"/>
+				<text>Select File</text>
+				<actions>
+					<action function="set">tw_multirom_sailfish_add_zip=2</action>
+					<action function="page">multirom_add_select</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<conditions>
+					<condition var1="tw_sailfish_filename_base"/>
+					<condition var1="tw_sailfish_filename_rootfs"/>
+				</conditions>
+				<placement x="%center_x%" y="%row21a_y%"/>
+				<text>Install</text>
+				<actions>
+					<action function="set">tw_filename=%tw_sailfish_filename_rootfs%</action>
+					<action function="multirom_add_file_selected" />
+				</actions>
+			</button>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_add</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_add_start_process">
+			<action>
+				<condition var1="tw_multirom_type" var2="1"/>
+				<actions>
+					<action function="set">tw_back=multirom_add</action>
+					<action function="set">tw_action=multirom_add_rom</action>
+					<action function="set">tw_text1=Install ROM</action>
+					<action function="set">tw_text2=%tw_filename%</action>
+					<action function="set">tw_text3=?</action>
+					<action function="set">tw_action_text1=Installing ROM...</action>
+					<action function="set">tw_complete_text1=ROM installed</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</action>
+
+			<action>
+				<condition var1="tw_multirom_type" var2="2"/>
+				<actions>
+					<action function="set">tw_back=multirom_add</action>
+					<action function="set">tw_action=multirom_add_rom</action>
+					<action function="set">tw_text1=Install Ubuntu image</action>
+					<action function="set">tw_text2=%tw_filename%</action>
+					<action function="set">tw_text3=?</action>
+					<action function="set">tw_action_text1=Installing Ubuntu...</action>
+					<action function="set">tw_complete_text1=Ubuntu installed</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</action>
+
+			<action>
+				<condition var1="tw_multirom_type" var2="3"/>
+				<actions>
+					<action function="set">tw_back=multirom_add</action>
+					<action function="set">tw_action=multirom_add_rom</action>
+					<action function="set">tw_text1=Install file</action>
+					<action function="set">tw_text2=%tw_filename%</action>
+					<action function="set">tw_text3=?</action>
+					<action function="set">tw_action_text1=Installing ROM...</action>
+					<action function="set">tw_complete_text1=ROM installed</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</action>
+
+			<action>
+				<condition var1="tw_multirom_type" var2="5"/>
+				<actions>
+					<action function="set">tw_back=multirom_add</action>
+					<action function="set">tw_action=multirom_add_rom</action>
+					<action function="set">tw_text1=Install SailfishOS files</action>
+					<action function="set">tw_text2=%tw_sailfish_filename_base%</action>
+					<action function="set">tw_text3=%tw_sailfish_filename_rootfs%</action>
+					<action function="set">tw_action_text1=Installing Sailfish OS..</action>
+					<action function="set">tw_complete_text1=SailfishOS installed</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</action>
+		</page>
+
+		<page name="multirom_add_image_size">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Add secondary ROM to %tw_multirom_install_loc%</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%center_x%" y="%row2_y%" placement="5"/>
+				<text>Set up the size of disk images.</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%center_x%" y="%row3a_y%" placement="5"/>
+				<text>If a FAT32 partition is used,</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%center_x%" y="%row4a_y%" placement="5"/>
+				<text>size of the image is limited to 4095MB.</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row6_y%"/>
+				<text>%tw_mrom_image1%: %tw_mrom_image1_size% MB</text>
+			</text>
+
+			<button style="button_quarter_width">
+				<placement x="%tab4_col4_x%" y="%row5a_y%"/>
+				<text>Change</text>
+				<action function="multirom_change_img_size">%tw_mrom_image1%</action>
+			</button>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row8_y%"/>
+				<text>%tw_mrom_image2%: %tw_mrom_image2_size% MB</text>
+			</text>
+
+			<button style="button_quarter_width">
+				<placement x="%tab4_col4_x%" y="%row7a_y%"/>
+				<text>Change</text>
+				<action function="multirom_change_img_size">%tw_mrom_image2%</action>
+			</button>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row10_y%"/>
+				<text>%tw_mrom_image3%: %tw_mrom_image3_size% MB</text>
+			</text>
+
+			<button style="button_quarter_width">
+				<placement x="%tab4_col4_x%" y="%row9a_y%"/>
+				<text>Change</text>
+				<action function="multirom_change_img_size">%tw_mrom_image3%</action>
+			</button>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row12_y%"/>
+				<text>%tw_mrom_image4%: %tw_mrom_image4_size% MB</text>
+			</text>
+
+			<button style="button_quarter_width">
+				<placement x="%tab4_col4_x%" y="%row11a_y%"/>
+				<text>Change</text>
+				<action function="multirom_change_img_size">%tw_mrom_image4%</action>
+			</button>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row14_y%"/>
+				<text>%tw_mrom_image5%: %tw_mrom_image5_size% MB</text>
+			</text>
+
+			<button style="button_quarter_width">
+				<placement x="%tab4_col4_x%" y="%row13a_y%"/>
+				<text>Change</text>
+				<action function="multirom_change_img_size">%tw_mrom_image5%</action>
+			</button>
+
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row21a_y%"/>
+				<text>Next</text>
+				<action function="page">multirom_add_start_process</action>
+			</button>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_add</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_add_change_img_size">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Set image size for %tw_multirom_image_name%</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%center_x%" y="%row2_y%" placement="5"/>
+				<text>Size:</text>
+			</text>
+
+			<input>
+				<placement x="%indent%" y="%row2_input_y%" w="%content_width%" h="%input_height%"/>
+				<text>%tw_multirom_image_size%</text>
+				<data name="tw_multirom_image_size" />
+				<restrict minlen="1" maxlen="4" allow="1234567890"/>
+				<action function="multirom_change_img_size_act"/>
+			</input>
+
+			<fill color="%accent_color%">
+				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<fill color="%text_fail_color%">
+				<condition var1="tw_multirom_image_too_small" var2="1"/>
+				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<fill color="%text_fail_color%">
+				<condition var1="tw_multirom_image_too_big" var2="1"/>
+				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<text style="text_m_fail">
+				<condition var1="tw_multirom_image_too_small" var2="1"/>
+				<placement x="%indent%" y="%row4a_y%"/>
+				<text>Value is too small (min %tw_multirom_min_size%MB)!</text>
+			</text>
+
+			<text style="text_m_fail">
+				<condition var1="tw_multirom_image_too_big" var2="1"/>
+				<placement x="%indent%" y="%row4a_y%"/>
+				<text>Value is too big (max 4095MB)!</text>
+			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row10_y%"/>
+				<text>{@cancel_btn=Cancel}</text>
+				<action function="page">multirom_add_image_size</action>
+			</button>
+
+			<template name="keyboardtemplate"/>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_add_image_size</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_set_list_loc">
+			<fill color="%semi_transparent%">
+				<placement x="0" y="0" w="%screen_width%" h="%screen_height%"/>
+			</fill>
+
+			<fill color="%background_color%">
+				<placement x="%indent%" y="row5_y" w="%content_width%" h="%dialog_height%"/>
+			</fill>
+
+			<partitionlist style="partitionlist_storage">
+				<text>{@sel_storage_list=Select Storage}</text>
+				<data name="tw_multirom_storage_path"/>
+				<listtype name="multirom_storage"/>
+			</partitionlist>
+
+			<button style="button_third_width">
+				<placement x="%col1_x_left%" y="%row14_y%"/>
+				<text>Refresh</text>
+				<actions>
+					<action function="overlay"/>
+					<action function="overlay">multirom_set_list_loc</action>
+				</actions>
+			</button>
+
+			<button style="button_third_width">
+				<placement x="%dialog_button_x%" y="%row14_y%"/>
+				<text>{@ok_btn=OK}</text>
+				<actions>
+					<action function="overlay"/>
+					<action function="multirom_list_loc_selected"/>
+				</actions>
+			</button>
+
+			<fill color="#000000">
+				<placement x="0" y="row25_y" w="%screen_width%" h="%navbar_height"/>
+			</fill>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="!=" var2="1"/>
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="back"/>
+				<condition var1="tw_busy" var2="0"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="page">multirom_list</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="=" var2="1"/>
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="console"/>
+				<condition var1="tw_busy" var2="0"/>
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="home"/>
+				<condition var1="tw_busy" var2="0"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="key">home</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="!=" var2="1"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="console"/>
+				<condition var1="tw_busy" var2="0"/>
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="=" var2="1"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="back"/>
+				<condition var1="tw_busy" var2="0"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="page">multirom_list</action>
+				</actions>
+			</button>
+
+			<action>
+				<touch key="power+voldown"/>
+				<action function="screenshot"/>
+			</action>
+		</page>
+
+		<page name="multirom_sideload_complete">
+			<action>
+				<condition var1="tw_back" var2="multirom_add" />
+				<actions>
+					<action function="set">tw_action=multirom_add_rom</action>
+					<action function="set">tw_action_text1=Installing ROM...</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1=ROM installed</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="page">action_page</action>
+				</actions>
+			</action>
+
+			<action>
+				<condition var1="tw_back" var2="multirom_manage" />
+				<actions>
+					<action function="set">tw_back=multirom_list</action>
+					<action function="set">tw_action_text1=Flashing ZIP...</action>
+					<action function="set">tw_complete_text1=ZIP flashed</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_show_reboot=1</action>
+					<action function="set">tw_action=multirom_flash_zip</action>
+					<action function="page">action_page</action>
+				</actions>
+			</action>
+		</page>
+
+		<page name="multirom_swap">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Swap ROMs</text>
+			</text>
+
+			<button style="radio">
+				<condition var1="tw_multirom_swap_type" var2="0"/>
+				<placement x="%indent%" y="%row2_y%" textplacement="6"/>
+				<text>Swap primary (Internal) ROM with secondary</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_swap_type=0</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_swap_type" var2="0" op="!="/>
+				<placement x="%indent%" y="%row2_y%" textplacement="6"/>
+				<text>Swap primary (Internal) ROM with secondary</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_swap_type=0</action>
+					<action function="set">tw_multirom_swap_rom=</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_swap_type" var2="2"/>
+				<placement x="%indent%" y="%row3a_y%" textplacement="6"/>
+				<text>Copy primary ROM to secondaries</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_swap_type=2</action>
+					<action function="set">tw_multirom_swap_rom=Internal</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_swap_type" var2="2" op="!="/>
+				<placement x="%indent%" y="%row3a_y%" textplacement="6"/>
+				<text>Copy primary ROM to secondaries</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_swap_type=2</action>
+					<action function="set">tw_multirom_swap_rom=Internal</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_swap_type" var2="3"/>
+				<placement x="%indent%" y="%row5_y%" textplacement="6"/>
+				<text>Move primary ROM to secondaries</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_swap_type=3</action>
+					<action function="set">tw_multirom_swap_rom=Internal</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_swap_type" var2="3" op="!="/>
+				<placement x="%indent%" y="%row5_y%" textplacement="6"/>
+				<text>Move primary ROM to secondaries</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_swap_type=3</action>
+					<action function="set">tw_multirom_swap_rom=Internal</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_swap_type" var2="1"/>
+				<placement x="%indent%" y="%row6a_y%" textplacement="6"/>
+				<text>Copy secondary ROM to primary slot</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_swap_type=0</action>
+					<action function="set">tw_multirom_swap_rom=</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_swap_type" var2="1" op="!="/>
+				<placement x="%indent%" y="%row6a_y%" textplacement="6"/>
+				<text>Copy secondary ROM to primary slot</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_swap_type=1</action>
+					<action function="set">tw_multirom_swap_rom=Internal</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_swap_type" var2="4"/>
+				<placement x="%indent%" y="%row8_y%" textplacement="6"/>
+				<text>Duplicate secondary ROM</text>
+				<image resource="radio_true"/>
+				<actions>
+					<action function="set">tw_multirom_swap_type=4</action>
+					<action function="set">tw_multirom_swap_rom=</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<button style="radio">
+				<condition var1="tw_multirom_swap_type" var2="4" op="!="/>
+				<placement x="%indent%" y="%row8_y%" textplacement="6"/>
+				<text>Duplicate secondary ROM</text>
+				<image resource="radio_false"/>
+				<actions>
+					<action function="set">tw_multirom_swap_type=4</action>
+					<action function="set">tw_multirom_swap_rom=</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<listbox>
+				<condition var1="tw_multirom_swap_type" var2="1" op="&lt;=" />
+				<text>Select secondary ROM to swap with:</text>
+				<placement x="%indent%" y="%row10_y%" w="%content_width%" h="%listbox_swapselect_mr_height%"/>
+				<data name="tw_multirom_swap_rom" />
+				<items>tw_multirom_roms</items>
+			</listbox>
+
+			<listbox>
+				<condition var1="tw_multirom_swap_type" var2="4" op="="/>
+				<text>Select secondary ROM to duplicate:</text>
+				<placement x="%indent%" y="%row10_y%" w="%content_width%" h="%listbox_swapselect_mr_height%"/>
+				<data name="tw_multirom_swap_rom" />
+				<items>tw_multirom_roms</items>
+			</listbox>
+
+			<text style="text_m_accent">
+				<condition var1="tw_multirom_swap_type" var2="2"/>
+				<placement x="%center_x%" y="%row11_y%" placement="5"/>
+				<text>This action will create a copy of your current</text>
+			</text>
+
+			<text style="text_m_accent">
+				<condition var1="tw_multirom_swap_type" var2="3"/>
+				<placement x="%center_x%" y="%row11_y%" placement="5"/>
+				<text>This action will remove your current</text>
+			</text>
+
+			<text style="text_m_accent">
+				<conditions>
+					<condition var1="tw_multirom_swap_type" var2="1" op="&gt;"/>
+					<condition var1="tw_multirom_swap_type" var2="3" op="&lt;="/>
+				</conditions>
+				<placement x="%center_x%" y="%row12_y%" placement="5"/>
+				<text>primary ROM and then add it to secondary ROMs.</text>
+			</text>
+
+			<text style="text_m">
+				<conditions>
+					<condition var1="tw_multirom_swap_type" var2="1" op="&gt;"/>
+					<condition var1="tw_multirom_swap_type" var2="3" op="&lt;="/>
+				</conditions>
+				<placement x="%center_x%" y="%row14_y%" placement="5"/>
+				<text>You can choose name of this new ROM below.</text>
+			</text>
+
+			<text style="text_m_accent">
+				<condition var1="tw_multirom_swap_type" var2="1" op="!="/>
+				<placement x="%indent%" y="%row19_y%"/>
+				<text>New ROM's name:</text>
+			</text>
+
+			<text style="text_m">
+				<condition var1="tw_multirom_swap_type" var2="1" op="!="/>
+				<placement x="%indent%" y="%row20_y%"/>
+				<text>%tw_multirom_swap_internal_name%</text>
+			</text>
+
+			<fill color="%fileselector_linecolor%">
+				<condition var1="tw_multirom_swap_type" var2="1" op="!="/>
+				<placement x="%indent%" y="row21_y" w="%content_width%" h="input_line_width"/>
+			</fill>
+
+			<button>
+				<condition var1="tw_multirom_swap_type" var2="1" op="!="/>
+				<placement x="indent" y="%row19_y%" w="%content_width%" h="%navbar_height%"/>
+				<fill color="%transparent%"/>
+				<actions>
+					<action function="set">tw_fileexists=0</action>
+					<action function="set">tw_multirom_swap_internal_name_orig=%tw_multirom_swap_internal_name%</action>
+					<action function="page">multirom_swap_set_internal_name</action>
+				</actions>
+			</button>
+
+			<slider>
+				<condition var1="tw_multirom_swap_rom" var2=""/>
+				<text>Swipe to swap ROMs</text>
+				<actions>
+					<action function="set">tw_back=multirom_main</action>
+					<action function="set">tw_action=multirom_execute_swap</action>
+					<action function="set">tw_action_text1=Swapping ROMs...</action>
+					<action function="set">tw_complete_text1=Complete</action>
+					<action function="set">tw_multirom_swap_calculating=1</action>
+					<action function="overlay">multirom_swap_space_info</action>
+					<action function="multirom_swap_calc_space"></action>
+				</actions>
+			</slider>
+
+			<text style="text_m_accent">
+				<conditions>
+					<condition var1="tw_multirom_swap_rom" var2="" op="!="/>
+					<condition var1="tw_multirom_swap_type" var2="0"/>
+				</conditions>
+				<placement x="%center_x%" y="%row22a_y%" placement="5"/>
+				<text>Select secondary ROM to swap primary with.</text>
+			</text>
+
+			<text style="text_m_accent">
+				<conditions>
+					<condition var1="tw_multirom_swap_rom" var2="" op="!="/>
+					<condition var1="tw_multirom_swap_type" var2="1"/>
+				</conditions>
+				<placement x="%center_x%" y="%row22a_y%" placement="5"/>
+				<text>Select secondary ROM to copy into primary slot.</text>
+			</text>
+
+			<text style="text_m_accent">
+				<conditions>
+					<condition var1="tw_multirom_swap_rom" var2="" op="!="/>
+					<condition var1="tw_multirom_swap_type" var2="4"/>
+				</conditions>
+				<placement x="%center_x%" y="%row22a_y%" placement="5"/>
+				<text>Select secondary ROM to duplicate.</text>
+			</text>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_main</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multirom_swap_set_internal_name">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Swap ROMs</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row2_y%"/>
+				<text>New Internal ROM Name:</text>
+			</text>
+
+			<input>
+				<placement x="%indent%" y="%row2_input_y%" w="%content_width%" h="%input_height%"/>
+				<text>%tw_multirom_swap_internal_name%</text>
+				<data name="tw_multirom_swap_internal_name" />
+				<restrict minlen="1" maxlen="26" allow=" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_.{}[]" />
+				<actions>
+					<action function="set">tw_filecheck=%tw_multirom_folder%/%tw_multirom_swap_internal_name%</action>
+					<action function="set">tw_existpage=multirom_swap_set_internal_name</action>
+					<action function="set">tw_notexistpage=multirom_swap</action>
+					<action function="page">filecheck</action>
+				</actions>
+			</input>
+
+			<fill color="%accent_color%">
+				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<fill color="%text_fail_color%">
+				<condition var1="tw_fileexists" var2="1"/>
+				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<text style="text_m_fail">
+				<condition var1="tw_fileexists" var2="1"/>
+				<placement x="%indent%" y="%row4a_y%"/>
+				<text>This name is already taken!</text>
+			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row10_y%"/>
+				<text>{@cancel_btn=Cancel}</text>
+				<actions>
+					<action function="set">tw_multirom_swap_internal_name=%tw_multirom_swap_internal_name_orig%</action>
+					<action function="page">multirom_swap</action>
+				</actions>
+			</button>
+
+			<template name="keyboardtemplate"/>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">multirom_swap</action>
+			</action>
+		</page>
+
+		<page name="multirom_swap_space_info">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>MultiROM</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Swap ROMs</text>
+			</text>
+
+			<fill color="%text_color%">
+				<placement x="0" y="%row_tab_y%" w="%tab2_width%" h="%tab_indicator_height%"/>
+			</fill>
+
+			<text style="text_m_accent">
+				<condition var1="tw_multirom_swap_calculating" var2="1"/>
+				<placement x="%center_x%" y="%row3a_y%" placement="5"/>
+				<text>Calculating required free space...</text>
+			</text>
+
+			<text style="text_m_fail">
+				<conditions>
+					<condition var1="tw_multirom_swap_calculating" var2="0"/>
+					<condition var1="tw_multirom_swap_needed" var2="tw_multirom_swap_free" op=">="/>
+				</conditions>
+				<placement x="%center_x%" y="%row3a_y%" placement="5"/>
+				<text>Not enough free space!</text>
+			</text>
+
+			<text style="text_m_fail">
+				<conditions>
+					<condition var1="tw_multirom_swap_calculating" var2="0"/>
+					<condition var1="tw_multirom_swap_needed" var2="tw_multirom_swap_free" op=">="/>
+				</conditions>
+				<placement x="%center_x%" y="%row5_y%" placement="5"/>
+				<text>Needed: %tw_multirom_swap_needed% MB  Free: %tw_multirom_swap_free% MB</text>
+			</text>
+
+			<template name="progress_bar"/>
+
+			<button style="main_button_half_height">
+				<conditions>
+					<condition var1="tw_multirom_swap_calculating" var2="0"/>
+					<condition var1="tw_multirom_swap_needed" var2="tw_multirom_swap_free" op=">="/>
+				</conditions>
+				<placement x="%indent%" y="%row21a_y%"/>
+				<text>{@back_btn=Back}</text>
+				<actions>
+					<action function="overlay" />
+					<action function="set">tw_clear_destination=multirom_swap</action>
+					<action function="page">clear_vars</action>
+				</actions>
+			</button>
+
+			<fill color="#000000">
+				<placement x="0" y="row25_y" w="%screen_width%" h="%navbar_height"/>
+			</fill>
+		</page>
+	</pages>
+</recovery>

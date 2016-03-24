@@ -890,6 +890,7 @@ int PageSet::CheckInclude(ZipArchive* package, xml_document<> *parentDoc)
 			filename = TWRES;
 			filename += attr->value();
 		} else {
+			filename = "";
 			filename += attr->value();
 		}
 		xmlFile = PageManager::LoadFileToBuffer(filename, package);

@@ -119,6 +119,7 @@ public:
 		int colors;
 		int brightness;
 		int enable_adb;
+		int enable_kmsg_logging;
 		int hide_internal;
 		std::string int_display_name;
 		int rotation;

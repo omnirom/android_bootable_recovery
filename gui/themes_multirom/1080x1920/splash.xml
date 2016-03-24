@@ -2,43 +2,48 @@
 <recovery>
 	<details>
 		<resolution width="1080" height="1920"/>
-		<author>z31s1g</author>
-		<title>MultiROM TWRP</title>
-		<description>Custom Splash</description>
+		<author>TeamWin</author>
+		<title>TWRP</title>
+		<description>splash screen</description>
 		<themeversion>1</themeversion>
 	</details>
 
 	<resources>
-		<font name="font_l" filename="RobotoMedium.ttf" size="40"/>
+		<font name="font_l" filename="RobotoCondensed-Regular.ttf" size="52"/>
 		<image name="splashlogo" filename="splashlogo" retainaspect="1"/>
-		<image name="splashmiri" filename="splashmiri" retainaspect="1"/>
+		<image name="splashteamwin" filename="splashteamwin" retainaspect="1"/>
 	</resources>
 
 	<variables>
-		<variable name="screen_width" value="1200"/>
+		<variable name="screen_width" value="1080"/>
 		<variable name="screen_height" value="1920"/>
-		<variable name="background_color" value="#EEEEEE"/>
-		<variable name="text_color" value="#3B3B3B"/>
+		<variable name="background_color" value="#222222"/>
+		<variable name="header_color" value="#555555"/>
+		<variable name="accent_color" value="#0090CA"/>
 	</variables>
 
 	<pages>
 		<page name="splash">
 			<background color="%background_color%"/>
 
+			<fill color="%header_color%">
+				<placement x="0" y="0" w="%screen_width%" h="456"/>
+			</fill>
+
 			<image>
 				<image resource="splashlogo"/>
-				<placement x="540" y="560" placement="4"/>
+				<placement x="540" y="456" placement="4"/>
 			</image>
 
 			<image>
-				<image resource="splashmiri"/>
-				<placement x="540" y="1360" placement="4"/>
+				<image resource="splashteamwin"/>
+				<placement x="540" y="1540" placement="4"/>
 			</image>
 
-			<text color="%text_color%">
+			<text color="%header_color%">
 				<font resource="font_l"/>
-				<placement x="540" y="960" placement="5"/>
-				<text>MultiROM TWRP v%tw_version%</text>
+				<placement x="540" y="1590" placement="5"/>
+				<text>MultiROM TWRP %tw_version%%tw_mrom_rec_version%</text>
 			</text>
 		</page>
 	</pages>
