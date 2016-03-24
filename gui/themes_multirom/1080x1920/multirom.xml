@@ -1709,55 +1709,65 @@
 			</text>
 
 			<text style="text_m">
+				<condition var1="tw_mrom_image1" />
 				<placement x="%indent%" y="%row6_y%"/>
 				<text>%tw_mrom_image1%: %tw_mrom_image1_size% MB</text>
 			</text>
 
 			<button style="button_quarter_width">
+				<condition var1="tw_mrom_image1" />
 				<placement x="%tab4_col4_x%" y="%row5a_y%"/>
 				<text>Change</text>
 				<action function="multirom_change_img_size">%tw_mrom_image1%</action>
 			</button>
 
 			<text style="text_m">
+				<condition var1="tw_mrom_image2" />
 				<placement x="%indent%" y="%row8_y%"/>
 				<text>%tw_mrom_image2%: %tw_mrom_image2_size% MB</text>
 			</text>
 
 			<button style="button_quarter_width">
+				<condition var1="tw_mrom_image2" />
 				<placement x="%tab4_col4_x%" y="%row7a_y%"/>
 				<text>Change</text>
 				<action function="multirom_change_img_size">%tw_mrom_image2%</action>
 			</button>
 
 			<text style="text_m">
+				<condition var1="tw_mrom_image3" />
 				<placement x="%indent%" y="%row10_y%"/>
 				<text>%tw_mrom_image3%: %tw_mrom_image3_size% MB</text>
 			</text>
 
 			<button style="button_quarter_width">
+				<condition var1="tw_mrom_image3" />
 				<placement x="%tab4_col4_x%" y="%row9a_y%"/>
 				<text>Change</text>
 				<action function="multirom_change_img_size">%tw_mrom_image3%</action>
 			</button>
 
 			<text style="text_m">
+				<condition var1="tw_mrom_image4" />
 				<placement x="%indent%" y="%row12_y%"/>
 				<text>%tw_mrom_image4%: %tw_mrom_image4_size% MB</text>
 			</text>
 
 			<button style="button_quarter_width">
+				<condition var1="tw_mrom_image4" />
 				<placement x="%tab4_col4_x%" y="%row11a_y%"/>
 				<text>Change</text>
 				<action function="multirom_change_img_size">%tw_mrom_image4%</action>
 			</button>
 
 			<text style="text_m">
+				<condition var1="tw_mrom_image5" />
 				<placement x="%indent%" y="%row14_y%"/>
 				<text>%tw_mrom_image5%: %tw_mrom_image5_size% MB</text>
 			</text>
 
 			<button style="button_quarter_width">
+				<condition var1="tw_mrom_image5" />
 				<placement x="%tab4_col4_x%" y="%row13a_y%"/>
 				<text>Change</text>
 				<action function="multirom_change_img_size">%tw_mrom_image5%</action>
@@ -1780,7 +1790,7 @@
 			</action>
 		</page>
 
-		<page name="multirom_add_change_img_size">
+		<page name="multirom_change_img_size">
 			<template name="page"/>
 
 			<text style="text_l">
