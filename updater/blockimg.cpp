@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <fec/io.h>
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -66,6 +67,8 @@ struct RangeSet {
     size_t size;
     std::vector<size_t> pos;  // Actual limit is INT_MAX.
 };
+
+static std::map<std::string, RangeSet> stash_map;
 
 static void parse_range(const std::string& range_text, RangeSet& rs) {
 
@@ -522,8 +525,28 @@ static void DeleteStash(const std::string& base) {
     }
 }
 
-static int LoadStash(const std::string& base, const std::string& id, bool verify, size_t* blocks,
-        std::vector<uint8_t>& buffer, bool printnoent) {
+static int LoadStash(CommandParameters& params, const std::string& base, const std::string& id,
+        bool verify, size_t* blocks, std::vector<uint8_t>& buffer, bool printnoent) {
+    // In verify mode, if source range_set was saved for the given hash,
+    // check contents in the source blocks first. If the check fails,
+    // search for the stashed files on /cache as usual.
+    if (!params.canwrite) {
+        if (stash_map.find(id) != stash_map.end()) {
+            const RangeSet& src = stash_map[id];
+            allocate(src.size * BLOCKSIZE, buffer);
+
+            if (ReadBlocks(src, buffer, params.fd) == -1) {
+                fprintf(stderr, "failed to read source blocks in stash map.\n");
+                return -1;
+            }
+            if (VerifyBlocks(id, buffer, src.size, true) != 0) {
+                fprintf(stderr, "failed to verify loaded source blocks in stash map.\n");
+                return -1;
+            }
+            return 0;
+        }
+    }
+
     if (base.empty()) {
         return -1;
     }
@@ -722,7 +745,7 @@ static int SaveStash(CommandParameters& params, const std::string& base,
     const std::string& id = params.tokens[params.cpos++];
 
     size_t blocks = 0;
-    if (usehash && LoadStash(base, id, true, &blocks, buffer, false) == 0) {
+    if (usehash && LoadStash(params, base, id, true, &blocks, buffer, false) == 0) {
         // Stash file already exists and has expected contents. Do not
         // read from source again, as the source may have been already
         // overwritten during a previous attempt.
@@ -744,6 +767,12 @@ static int SaveStash(CommandParameters& params, const std::string& base,
         // that uses the data may have already completed previously, so the
         // possible failure will occur during source block verification.
         fprintf(stderr, "failed to load source blocks for stash %s\n", id.c_str());
+        return 0;
+    }
+
+    // In verify mode, save source range_set instead of stashing blocks.
+    if (!params.canwrite && usehash) {
+        stash_map[id] = src;
         return 0;
     }
 
@@ -857,7 +886,7 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
         }
 
         std::vector<uint8_t> stash;
-        int res = LoadStash(stashbase, tokens[0], false, nullptr, stash, true);
+        int res = LoadStash(params, stashbase, tokens[0], false, nullptr, stash, true);
 
         if (res == -1) {
             // These source blocks will fail verification if used later, but we
@@ -931,8 +960,9 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
 
     if (VerifyBlocks(srchash, params.buffer, src_blocks, true) == 0) {
         // If source and target blocks overlap, stash the source blocks so we can
-        // resume from possible write errors
-        if (overlap) {
+        // resume from possible write errors. In verify mode, we can skip stashing
+        // because the source blocks won't be overwritten.
+        if (overlap && params.canwrite) {
             fprintf(stderr, "stashing %zu overlapping blocks to %s\n", src_blocks,
                     srchash.c_str());
 
@@ -953,7 +983,8 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
         return 0;
     }
 
-    if (overlap && LoadStash(params.stashbase, srchash, true, nullptr, params.buffer, true) == 0) {
+    if (overlap && LoadStash(params, params.stashbase, srchash, true, nullptr, params.buffer,
+                             true) == 0) {
         // Overlapping source blocks were previously stashed, command can proceed.
         // We are recovering from an interrupted command, so we don't know if the
         // stash can safely be deleted after this command.
@@ -1028,8 +1059,15 @@ static int PerformCommandFree(CommandParameters& params) {
         return -1;
     }
 
+    const std::string& id = params.tokens[params.cpos++];
+
+    if (!params.canwrite && stash_map.find(id) != stash_map.end()) {
+        stash_map.erase(id);
+        return 0;
+    }
+
     if (params.createdstash || params.canwrite) {
-        return FreeStash(params.stashbase, params.tokens[params.cpos++]);
+        return FreeStash(params.stashbase, id);
     }
 
     return 0;
