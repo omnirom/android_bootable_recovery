@@ -1,0 +1,993 @@
+<?xml version="1.0"?>
+
+<recovery>
+	<details>
+		<resolution width="1080" height="1920" />
+		<author>z31s1g</author>
+		<title>TWRP Materialised MultiROM Light</title>
+		<description>Material Design theme for TWRP recovery</description>
+		<preview>preview.png</preview>
+		<themeversion>1</themeversion>
+	</details>
+
+	<resources>
+		<resource name="font" type="font" filename="RobotoRegular.ttf" size="40" />
+		<resource name="mediumfont" type="font" filename="RobotoRegular.ttf" size="40" />
+		<resource name="filelist" type="font" filename="RobotoRegular.ttf" size="40" />
+		<resource name="status" type="font" filename="RobotoMedium.ttf" size="40" />
+		<resource name="caption" type="font" filename="RobotoMedium.ttf" size="36" />
+		<resource name="body1" type="font" filename="RobotoRegular.ttf" size="42" />
+		<resource name="body2" type="font" filename="RobotoMedium.ttf" size="42" />
+		<resource name="subhead" type="font" filename="RobotoRegular.ttf" size="52" />
+		<resource name="menu" type="font" filename="RobotoMedium.ttf" size="42" />
+		<resource name="title" type="font" filename="RobotoMedium.ttf" size="60" />
+		<resource name="fixed" type="font" filename="DroidSansMono.ttf" size="30" />
+		<resource name="font_l" type="font"  filename="RobotoMedium.ttf" size="52" />
+		<resource name="font_m" type="font" filename="RobotoMedium.ttf" size="42" />
+		<resource name="font_s" type="font" filename="RobotoMedium.ttf" size="36" />
+
+		<font name="keylabel" filename="RobotoRegular.ttf" size="64"/>
+		<font name="keylabel-small" filename="RobotoRegular.ttf" size="46"/>
+		<font name="keylabel-longpress" filename="RobotoRegular.ttf" size="32"/>
+
+		<resource name="statusbar" type="image" filename="statusbar" />
+		<resource name="actionbar" type="image" filename="actionbar" />
+		<resource name="actionbar_tab" type="image" filename="actionbar_tab" />
+		<resource name="actionbar_ex" type="image" filename="actionbar_ex" />
+		<resource name="actionbar_logo" type="image" filename="actionbar_logo" />
+		<resource name="actionbar_back" type="image" filename="actionbar_back" />
+		<resource name="actionbar_back_hl" type="image" filename="actionbar_back_hl" />
+		<resource name="actionbar_settings" type="image" filename="actionbar_settings" />
+		<resource name="actionbar_settings_hl" type="image" filename="actionbar_settings_hl" />
+		<resource name="actionbar_overflow" type="image" filename="actionbar_overflow" />
+		<resource name="actionbar_overflow_hl" type="image" filename="actionbar_overflow_hl" />
+		<resource name="actionbar_pin" type="image" filename="actionbar_pin" />
+		<resource name="actionbar_pin_hl" type="image" filename="actionbar_pin_hl" />
+		<resource name="actionbar_pinned" type="image" filename="actionbar_pinned" />
+		<resource name="actionbar_pinned_hl" type="image" filename="actionbar_pinned_hl" />
+		<resource name="actionbar_refresh" type="image" filename="actionbar_refresh" />
+		<resource name="actionbar_refresh_hl" type="image" filename="actionbar_refresh_hl" />
+		<resource name="actionbar_sort" type="image" filename="actionbar_sort" />
+		<resource name="actionbar_sort_hl" type="image" filename="actionbar_sort_hl" />
+		<resource name="actionbar_reset" type="image" filename="actionbar_reset" />
+		<resource name="actionbar_reset_hl" type="image" filename="actionbar_reset_hl" />
+		<resource name="actionbar_font_big" type="image" filename="actionbar_font_big" />
+		<resource name="actionbar_font_big_hl" type="image" filename="actionbar_font_big_hl" />
+		<resource name="actionbar_font_small" type="image" filename="actionbar_font_small" />
+		<resource name="actionbar_font_small_hl" type="image" filename="actionbar_font_small_hl" />
+		<resource name="actionbar_theme" type="image" filename="actionbar_theme" />
+		<resource name="actionbar_theme_hl" type="image" filename="actionbar_theme_hl" />
+		<resource name="actionbar_encr_dis" type="image" filename="actionbar_encr_dis" />
+		<resource name="actionbar_encr_dis_hl" type="image" filename="actionbar_encr_dis_hl" />
+		<resource name="actionbar_encr_ena" type="image" filename="actionbar_encr_ena" />
+		<resource name="actionbar_encr_ena_hl" type="image" filename="actionbar_encr_ena_hl" />
+		<resource name="actionbar_delete" type="image" filename="actionbar_delete" />
+		<resource name="actionbar_delete_hl" type="image" filename="actionbar_delete_hl" />
+		<resource name="actionbar_edit" type="image" filename="actionbar_edit" />
+		<resource name="actionbar_edit_hl" type="image" filename="actionbar_edit_hl" />
+		<resource name="actionbar_close" type="image" filename="actionbar_close" />
+		<resource name="actionbar_close_hl" type="image" filename="actionbar_close_hl" />
+
+		<resource name="btn_float_addtoqueue" type="image" filename="btn_float_addtoqueue" />
+		<resource name="btn_float_addtoqueue_hl" type="image" filename="btn_float_addtoqueue_hl" />
+		<resource name="btn_float_flashifyinfo" type="image" filename="btn_float_flashifyinfo" />
+		<resource name="btn_float_flashifyinfo_hl" type="image" filename="btn_float_flashifyinfo_hl" />
+		<resource name="btn_float_accept" type="image" filename="btn_float_accept" />
+		<resource name="btn_float_folder" type="image" filename="btn_float_folder" />
+
+		<resource name="btn_menu_zip" type="image" filename="btn_menu_zip" />
+		<resource name="btn_menu_zip_sel" type="image" filename="btn_menu_zip_sel" />
+		<resource name="btn_menu_img" type="image" filename="btn_menu_img" />
+		<resource name="btn_menu_img_sel" type="image" filename="btn_menu_img_sel" />
+		<resource name="btn_menu_name_a" type="image" filename="btn_menu_name_a" />
+		<resource name="btn_menu_name_a_sel" type="image" filename="btn_menu_name_a_sel" />
+		<resource name="btn_menu_name_d" type="image" filename="btn_menu_name_d" />
+		<resource name="btn_menu_name_d_sel" type="image" filename="btn_menu_name_d_sel" />
+		<resource name="btn_menu_date_a" type="image" filename="btn_menu_date_a" />
+		<resource name="btn_menu_date_a_sel" type="image" filename="btn_menu_date_a_sel" />
+		<resource name="btn_menu_date_d" type="image" filename="btn_menu_date_d" />
+		<resource name="btn_menu_date_d_sel" type="image" filename="btn_menu_date_d_sel" />
+		<resource name="btn_menu_size_a" type="image" filename="btn_menu_size_a" />
+		<resource name="btn_menu_size_a_sel" type="image" filename="btn_menu_size_a_sel" />
+		<resource name="btn_menu_size_d" type="image" filename="btn_menu_size_d" />
+		<resource name="btn_menu_size_d_sel" type="image" filename="btn_menu_size_d_sel" />
+		<resource name="btn_menu_inject" type="image" filename="btn_menu_inject" />
+		<resource name="btn_menu_settings" type="image" filename="btn_menu_settings" />
+
+		<resource name="btn_flat_less" type="image" filename="btn_flat_less" />
+		<resource name="btn_flat_more" type="image" filename="btn_flat_more" />
+		<resource name="btn_flat_ext3" type="image" filename="btn_flat_ext3" />
+		<resource name="btn_flat_ext4" type="image" filename="btn_flat_ext4" />
+		<resource name="btn_flat_installdumlock" type="image" filename="btn_flat_installdumlock" />
+		<resource name="btn_flat_reflashrecovery" type="image" filename="btn_flat_reflashrecovery" />
+		<resource name="btn_flat_restoreboot" type="image" filename="btn_flat_restoreboot" />
+		<resource name="btn_flat_injectbootsector" type="image" filename="btn_flat_injectbootsector" />
+		<resource name="btn_flat_rot0" type="image" filename="btn_flat_rot0" />
+		<resource name="btn_flat_rot90" type="image" filename="btn_flat_rot90" />
+		<resource name="btn_flat_rot180" type="image" filename="btn_flat_rot180" />
+		<resource name="btn_flat_rot270" type="image" filename="btn_flat_rot270" />
+		<resource name="btn_flat_3" type="image" filename="btn_flat_3" />
+		<resource name="btn_flat_4" type="image" filename="btn_flat_4" />
+		<resource name="btn_flat_5" type="image" filename="btn_flat_5" />
+		<resource name="btn_flat_6" type="image" filename="btn_flat_6" />
+
+		<resource name="btn_raised_clearqueue" type="image" filename="btn_raised_clearqueue" />
+		<resource name="btn_raised_viewqueue" type="image" filename="btn_raised_viewqueue" />
+		<resource name="btn_raised_installscript" type="image" filename="btn_raised_installscript" />
+		<resource name="btn_raised_wipecaches" type="image" filename="btn_raised_wipecaches" />
+		<resource name="btn_raised_rebootsystem" type="image" filename="btn_raised_rebootsystem" />
+		<resource name="btn_raised_rebootrecovery" type="image" filename="btn_raised_rebootrecovery" />
+		<resource name="btn_raised_formatdata" type="image" filename="btn_raised_formatdata" />
+		<resource name="btn_raised_filesystem" type="image" filename="btn_raised_filesystem" />
+		<resource name="btn_raised_fsoptions" type="image" filename="btn_raised_fsoptions" />
+		<resource name="btn_raised_fsrepair" type="image" filename="btn_raised_fsrepair" />
+		<resource name="btn_raised_fschange" type="image" filename="btn_raised_fschange" />
+		<resource name="btn_raised_fsresize" type="image" filename="btn_raised_fsresize" />
+		<resource name="btn_raised_keepreadonly" type="image" filename="btn_raised_keepreadonly" />
+		<resource name="btn_raised_disconnect" type="image" filename="btn_raised_disconnect" />
+		<resource name="btn_raised_advancedwipe" type="image" filename="btn_raised_advancedwipe" />
+		<resource name="btn_raised_back" type="image" filename="btn_raised_back" />
+		<resource name="btn_raised_ok" type="image" filename="btn_raised_ok" />
+		<resource name="btn_raised_decryptdata" type="image" filename="btn_raised_decryptdata" />
+		<resource name="btn_raised_enablemtp" type="image" filename="btn_raised_enablemtp" />
+		<resource name="btn_raised_disablemtp" type="image" filename="btn_raised_disablemtp" />
+		<resource name="btn_raised_usbstorage" type="image" filename="btn_raised_usbstorage" />
+		<resource name="btn_raised_cancel" type="image" filename="btn_raised_cancel" />
+		<resource name="btn_raised_noinstall" type="image" filename="btn_raised_noinstall" />
+		<resource name="btn_raised_changetheme" type="image" filename="btn_raised_changetheme" />
+		<resource name="btn_raised_changesplash" type="image" filename="btn_raised_changesplash" />
+		<resource name="btn_raised_wipeencryption" type="image" filename="btn_raised_wipeencryption" />
+		<resource name="btn_raised_mr_addrom" type="image" filename="btn_raised_mr_addrom" />
+		<resource name="btn_raised_mr_swaproms" type="image" filename="btn_raised_mr_swaproms" />
+		<resource name="btn_raised_mr_delete" type="image" filename="btn_raised_mr_delete" />
+		<resource name="btn_raised_mr_rename" type="image" filename="btn_raised_mr_rename" />
+		<resource name="btn_raised_mr_backup" type="image" filename="btn_raised_mr_backup" />
+		<resource name="btn_raised_mr_wipedata" type="image" filename="btn_raised_mr_wipedata" />
+		<resource name="btn_raised_mr_wipedalvik" type="image" filename="btn_raised_mr_wipedalvik" />
+		<resource name="btn_raised_mr_wipecache" type="image" filename="btn_raised_mr_wipecache" />
+		<resource name="btn_raised_mr_addboot" type="image" filename="btn_raised_mr_addboot" />
+		<resource name="btn_raised_mr_remboot" type="image" filename="btn_raised_mr_remboot" />
+		<resource name="btn_raised_mr_addradio" type="image" filename="btn_raised_mr_addradio" />
+		<resource name="btn_raised_mr_remradio" type="image" filename="btn_raised_mr_remradio" />
+		<resource name="btn_raised_mr_flashzip" type="image" filename="btn_raised_mr_flashzip" />
+		<resource name="btn_raised_mr_sideload" type="image" filename="btn_raised_mr_sideload" />
+		<resource name="btn_raised_mr_repatchinit" type="image" filename="btn_raised_mr_repatchinit" />
+		<resource name="btn_raised_mr_next" type="image" filename="btn_raised_mr_next" />
+		<resource name="btn_raised_mr_zipfile" type="image" filename="btn_raised_mr_zipfile" />
+		<resource name="btn_raised_mr_addfile" type="image" filename="btn_raised_mr_addfile" />
+		<resource name="btn_raised_mr_selectimage" type="image" filename="btn_raised_mr_selectimage" />
+		<resource name="btn_raised_mr_restorecon" type="image" filename="btn_raised_mr_restorecon" />
+
+		<resource name="btn_appenddate" type="image" filename="btn_appenddate" />
+
+		<resource name="background" type="image" filename="background" />
+		<resource name="divider" type="image" filename="divider" />
+		<resource name="divider_list" type="image" filename="divider_list" />
+		<resource name="divider_wide" type="image" filename="divider_wide" />
+		<resource name="hider_ab_ex" type="image" filename="hider_ab_ex" />
+
+		<resource name="dialog_bg" type="image" filename="dialog_bg" />
+		<resource name="dialog_label_storage" type="image" filename="dialog_label_storage" />
+		<resource name="dialog_label_bookmark" type="image" filename="dialog_label_bookmark" />
+		<resource name="dialog_label_restoresettings" type="image" filename="dialog_label_restoresettings" />
+		<resource name="dialog_label_settheme" type="image" filename="dialog_label_settheme" />
+		<resource name="dialog_label_color" type="image" filename="dialog_label_color" />
+		<resource name="dialog_label_encryption" type="image" filename="dialog_label_encryption" />
+		<resource name="dialog_label_decryption" type="image" filename="dialog_label_decryption" />
+		<resource name="dialog_label_offset" type="image" filename="dialog_label_offset" />
+		<resource name="dialog_label_removetheme" type="image" filename="dialog_label_removetheme" />
+		<resource name="dialog_label_warning" type="image" filename="dialog_label_warning" />
+
+		<resource name="menu_install" type="image" filename="menu_install" />
+		<resource name="menu_sort" type="image" filename="menu_sort" />
+
+		<resource name="db_ok" type="image" filename="db_ok" />
+		<resource name="db_ok_hl" type="image" filename="db_ok_hl" />
+		<resource name="db_cancel" type="image" filename="db_cancel" />
+		<resource name="db_cancel_hl" type="image" filename="db_cancel_hl" />
+
+		<resource name="bs_bg" type="image" filename="bs_bg" />
+		<resource name="bs_btn_copy" type="image" filename="bs_btn_copy" />
+		<resource name="bs_btn_cut" type="image" filename="bs_btn_cut" />
+		<resource name="bs_btn_chmod755" type="image" filename="bs_btn_chmod755" />
+		<resource name="bs_btn_chmod644" type="image" filename="bs_btn_chmod644" />
+		<resource name="bs_btn_chmod" type="image" filename="bs_btn_chmod" />
+		<resource name="bs_btn_delete" type="image" filename="bs_btn_delete" />
+		<resource name="bs_btn_rename" type="image" filename="bs_btn_rename" />
+		<resource name="bs_close" type="image" filename="bs_close" />
+
+		<resource name="bc_install" type="image" filename="bc_install" />
+		<resource name="bc_install_zip" type="image" filename="bc_install_zip" />
+		<resource name="bc_install_zip_m" type="image" filename="bc_install_zip_m" />
+		<resource name="bc_install_image" type="image" filename="bc_install_image" />
+		<resource name="bc_install_image_m" type="image" filename="bc_install_image_m" />
+		<resource name="bc_wipe" type="image" filename="bc_wipe" />
+		<resource name="bc_backup" type="image" filename="bc_backup" />
+		<resource name="bc_restore" type="image" filename="bc_restore" />
+		<resource name="bc_mount" type="image" filename="bc_mount" />
+		<resource name="bc_advanced" type="image" filename="bc_advanced" />
+		<resource name="bc_filemanager" type="image" filename="bc_filemanager" />
+		<resource name="bc_restart" type="image" filename="bc_restart" />
+		<resource name="bc_confirmaction" type="image" filename="bc_confirmaction" />
+		<resource name="bc_working" type="image" filename="bc_working" />
+		<resource name="bc_done" type="image" filename="bc_done" />
+		<resource name="bc_settings" type="image" filename="bc_settings" />
+		<resource name="bc_settings_theme" type="image" filename="bc_settings_theme" />
+		<resource name="bc_terminal" type="image" filename="bc_terminal" />
+		<resource name="bc_sideload" type="image" filename="bc_sideload" />
+		<resource name="bc_installsu" type="image" filename="bc_installsu" />
+		<resource name="bc_about" type="image" filename="bc_about" />
+		<resource name="bc_partsdcard" type="image" filename="bc_partsdcard" />
+		<resource name="bc_dumlock" type="image" filename="bc_dumlock" />
+		<resource name="bc_multirom" type="image" filename="bc_multirom" />
+		<resource name="bc_multiromsettings" type="image" filename="bc_multiromsettings" />
+
+		<resource name="mb_empty" type="image" filename="mb_empty" />
+		<resource name="mb_empty_s" type="image" filename="mb_empty_s" />
+		<resource name="mb_install" type="image" filename="mb_install" />
+		<resource name="mb_wipe" type="image" filename="mb_wipe" />
+		<resource name="mb_backup" type="image" filename="mb_backup" />
+		<resource name="mb_restore" type="image" filename="mb_restore" />
+		<resource name="mb_mount" type="image" filename="mb_mount" />
+		<resource name="mb_filemanager" type="image" filename="mb_filemanager" />
+		<resource name="mb_advanced" type="image" filename="mb_advanced" />
+		<resource name="mb_restart" type="image" filename="mb_restart" />
+		<resource name="mb_system" type="image" filename="mb_system" />
+		<resource name="mb_recovery" type="image" filename="mb_recovery" />
+		<resource name="mb_bootloader" type="image" filename="mb_bootloader" />
+		<resource name="mb_theme" type="image" filename="mb_theme" />
+		<resource name="mb_poweroff" type="image" filename="mb_poweroff" />
+		<resource name="mb_download" type="image" filename="mb_download" />
+		<resource name="mb_logtosd" type="image" filename="mb_logtosd" />
+		<resource name="mb_fixpermissions" type="image" filename="mb_fixpermissions" />
+		<resource name="mb_terminalcommand" type="image" filename="mb_terminalcommand" />
+		<resource name="mb_adbsideload" type="image" filename="mb_adbsideload" />
+		<resource name="mb_dumlock" type="image" filename="mb_dumlock" />
+		<resource name="mb_reinjecttwrp" type="image" filename="mb_reinjecttwrp" />
+		<resource name="mb_partsdcard" type="image" filename="mb_partsdcard" />
+		<resource name="mb_multirom" type="image" filename="mb_multirom" />
+
+		<resource name="mb_install_color" type="image" filename="mb_install_color" />
+		<resource name="mb_wipe_color" type="image" filename="mb_wipe_color" />
+		<resource name="mb_backup_color" type="image" filename="mb_backup_color" />
+		<resource name="mb_restore_color" type="image" filename="mb_restore_color" />
+		<resource name="mb_mount_color" type="image" filename="mb_mount_color" />
+		<resource name="mb_filemanager_color" type="image" filename="mb_filemanager_color" />
+		<resource name="mb_advanced_color" type="image" filename="mb_advanced_color" />
+		<resource name="mb_restart_color" type="image" filename="mb_restart_color" />
+		<resource name="mb_system_color" type="image" filename="mb_system_color" />
+		<resource name="mb_recovery_color" type="image" filename="mb_recovery_color" />
+		<resource name="mb_bootloader_color" type="image" filename="mb_bootloader_color" />
+		<resource name="mb_theme_color" type="image" filename="mb_theme_color" />
+		<resource name="mb_poweroff_color" type="image" filename="mb_poweroff_color" />
+		<resource name="mb_download_color" type="image" filename="mb_download_color" />
+		<resource name="mb_logtosd_color" type="image" filename="mb_logtosd_color" />
+		<resource name="mb_fixpermissions_color" type="image" filename="mb_fixpermissions_color" />
+		<resource name="mb_terminalcommand_color" type="image" filename="mb_terminalcommand_color" />
+		<resource name="mb_adbsideload_color" type="image" filename="mb_adbsideload_color" />
+		<resource name="mb_dumlock_color" type="image" filename="mb_dumlock_color" />
+		<resource name="mb_reinjecttwrp_color" type="image" filename="mb_reinjecttwrp_color" />
+		<resource name="mb_partsdcard_color" type="image" filename="mb_partsdcard_color" />
+		<resource name="mb_multirom_color" type="image" filename="mb_multirom_color" />
+
+		<resource name="icon_info" type="image" filename="icon_info" />
+		<resource name="icon_warning" type="image" filename="icon_warning" />
+		<resource name="icon_person" type="image" filename="icon_person" />
+		<resource name="icon_mail" type="image" filename="icon_mail" />
+		<resource name="icon_palette" type="image" filename="icon_palette" />
+		<resource name="icon_cake" type="image" filename="icon_cake" />
+		<resource name="icon_color" type="image" filename="icon_color" />
+		<resource name="icon_confirm" type="image" filename="icon_confirm" />
+
+		<resource name="file_icon" type="image" filename="file" />
+		<resource name="folder_icon" type="image" filename="folder" />
+		<resource name="unlock_icon" type="image" filename="unlock_icon" />
+		<resource name="folder_icon_mr" type="image" filename="folder_mr" />
+
+		<resource name="progress" type="animation" filename="indeterminate" />
+		<resource name="progress_empty" type="image" filename="progress_empty" />
+		<resource name="progress_fill" type="image" filename="progress_fill" />
+
+		<resource name="checkbox_false" type="image" filename="checkbox_false" />
+		<resource name="checkbox_true" type="image" filename="checkbox_true" />
+		<resource name="checkbox_false_d" type="image" filename="checkbox_false_d" />
+		<resource name="checkbox_true_d" type="image" filename="checkbox_true_d" />
+		<resource name="radio_false" type="image" filename="radio_false" />
+		<resource name="radio_true" type="image" filename="radio_true" />
+		<resource name="radio_false_d" type="image" filename="radio_false_d" />
+		<resource name="radio_true_d" type="image" filename="radio_true_d" />
+
+		<resource name="home" type="image" filename="home" />
+		<resource name="home_hl" type="image" filename="home_hl" />
+		<resource name="back" type="image" filename="back" />
+		<resource name="back_hl" type="image" filename="back_hl" />
+		<resource name="slideout" type="image" filename="slideout" />
+		<resource name="slideout_hl" type="image" filename="slideout_hl" />
+
+		<resource name="slider" type="image" filename="slider" />
+		<resource name="slider_used" type="image" filename="slider_used" />
+		<resource name="handle" type="image" filename="handle" />
+		<resource name="handle_h" type="image" filename="handle_h" />
+
+		<image name="backspace" filename="backspace" retainaspect="1"/>
+		<image name="enter" filename="enter" retainaspect="1"/>
+		<image name="shift" filename="shift" retainaspect="1"/>
+		<image name="shift_fill" filename="shift_fill" retainaspect="1"/>
+		<image name="space" filename="space" retainaspect="1"/>
+		<image name="kb_arrow_left" filename="kb_arrow_left" retainaspect="1"/>
+		<image name="kb_arrow_right" filename="kb_arrow_right" retainaspect="1"/>
+		<image name="kb_arrow_up" filename="kb_arrow_up" retainaspect="1"/>
+		<image name="kb_arrow_down" filename="kb_arrow_down" retainaspect="1"/>
+		<resource name="keyboard_shadow" type="image" filename="keyboard_shadow" />
+
+		<resource name="usb" type="image" filename="usb" />
+		<resource name="input_line" type="image" filename="input_line" />
+		<resource name="input_line_dialog" type="image" filename="input_line_dialog" />
+		<resource name="input_line_fail_backupname" type="image" filename="input_line_fail_backupname" />
+		<resource name="input_line_fail_dialog_encr" type="image" filename="input_line_fail_dialog_encr" />
+		<resource name="input_line_fail_decr" type="image" filename="input_line_fail_decr" />
+		<resource name="input_line_fail_romname" type="image" filename="input_line_fail_romname" />
+
+		<resource name="tab_misc" type="image" filename="tab_misc" />
+		<resource name="tab_misc_a" type="image" filename="tab_misc_a" />
+		<resource name="tab_display" type="image" filename="tab_display" />
+		<resource name="tab_display_a" type="image" filename="tab_display_a" />
+		<resource name="tab_time" type="image" filename="tab_time" />
+		<resource name="tab_time_a" type="image" filename="tab_time_a" />
+		<resource name="tab_vibration" type="image" filename="tab_vibration" />
+		<resource name="tab_vibration_a" type="image" filename="tab_vibration_a" />
+		<resource name="tab_mr_bootmenu" type="image" filename="tab_mr_bootmenu" />
+		<resource name="tab_mr_bootmenu_a" type="image" filename="tab_mr_bootmenu_a" />
+		<resource name="tab_mr_autoboot" type="image" filename="tab_mr_autoboot" />
+		<resource name="tab_mr_autoboot_a" type="image" filename="tab_mr_autoboot_a" />
+
+		<resource name="cursor" type="image" filename="cursor" />
+	</resources>
+
+	<variables>
+		<!--theme settings-->
+		<variable name="theme_version" value="300X_v1" />
+		<variable name="tw_hide_kb" value="0" />
+		<variable name="use_flashify" value="0" persist="1" />
+		<variable name="alt_lock" value="1" persist="1" />
+		<variable name="inject_theme" value="0" persist="1" />
+		<variable name="show_mrom_rec_version" value="0" persist="1" />
+		<variable name="auto_flash_repack" value="0" persist="1" />
+		<variable name="aromafm" value="0" persist="1" />
+		<variable name="tw_skipsucheck" value="0" persist="1" />
+		<variable name="auto_generate" value="0" persist="1" />
+		<variable name="show_cpu_temp" value="0" persist="1" />
+		<variable name="center_clock" value="0" persist="1" />
+		<variable name="dialog_hide_folder" value="0" persist="1" />
+		<variable name="dialog_hide_color" value="0" persist="1" />
+		<variable name="dialog_context" value="none" persist="1" />
+		<variable name="list_font" value="small" persist="1" />
+		<variable name="bookmark" value="0" persist="1" />
+		<variable name="navbar_sams" value="0" persist="1" />
+		<variable name="menu_btn_solid" value="0" persist="1" />
+		<variable name="hl_color" value="Light Blue" persist="1" />
+		<variable name="location_install" value="/sdcard/Download" persist="1" />
+		<variable name="location_install_image" value="/sdcard/Download" persist="1" />
+		<variable name="location_addfile" value="/sdcard/Download" persist="1" />
+		<variable name="location_themes" value="/sdcard/Download" persist="1" />
+		<variable name="location_install_splash_image" value="/sdcard/Download" persist="1" />
+		<variable name="location_install_splash_jpg" value="/sdcard/Download" persist="1" />
+		<variable name="location_install_mr" value="/sdcard/Download" persist="1" />
+		<variable name="location_flash_mr" value="/sdcard/Download" persist="1" />
+
+		<variable name="screen_w" value="1080" />
+		<variable name="screen_h" value="1920" />
+		<variable name="content_w" value="984" />
+		<variable name="indent" value="0" />
+		<variable name="center_x" value="540" />
+		<variable name="col1_x" value="48" />
+		<variable name="col1_x_neg" value="1032" />
+		<variable name="col1_x_indent" value="216" />
+		<variable name="col_col_center_x" value="386" />
+		<variable name="col2_x" value="541" />
+		<variable name="version_x" value="20" />
+		<variable name="battery_x" value="840" />
+		<variable name="battery_x_m" value="900" />
+		<variable name="time_x" value="1060" />
+		<variable name="status_info_y" value="5" />
+
+		<variable name="ab_back_x" value="12" />
+		<variable name="ab_bc_x" value="156" />
+		<variable name="ab_btn1_x" value="924" />
+		<variable name="ab_btn2_x" value="780" />
+		<variable name="ab_btn3_x" value="636" />
+		<variable name="ab_btn1m_x" value="960" />
+		<variable name="ab_btn2m_x" value="816" />
+		<variable name="ab_btn3m_x" value="672" />
+		<variable name="ab_y" value="84" />
+
+		<variable name="ab_menu_y" value="72" />
+		<variable name="ab_menu_inst_x" value="180" />
+		<variable name="ab_menu_sort_x" value="900" />
+		<variable name="ab_menu_mr_x" value="588" />
+		<variable name="ab_menu_inst_1_y" value="120" />
+		<variable name="ab_menu_inst_2_y" value="264" />
+		<variable name="ab_menu_inst_3_y" value="408" />
+		<variable name="ab_menu_inst_4_y" value="552" />
+		<variable name="ab_menu_inst_5_y" value="696" />
+		<variable name="ab_menu_inst_6_y" value="840" />
+
+		<variable name="btn_float_x" value="852" />
+
+		<variable name="plusdate_x" value="1032" />
+		<variable name="mr_change_x" value="860" />
+		<variable name="mr_change_w" value="180" />
+		<variable name="mr_change_h" value="40" />
+
+		<variable name="btn_raised_left_x" value="27" />
+		<variable name="btn_raised_right_x" value="1053" />
+		<variable name="btn_rot_2_x" value="535" />
+		<variable name="btn_rot_3_x" value="545" />
+
+		<variable name="row0_y" value="240" />
+		<variable name="row0_a_y" value="270" />
+		<variable name="row1_1_y" value="300" />
+		<variable name="row1_1a_y" value="330" />
+		<variable name="row1_2_y" value="360" />
+		<variable name="row1_2a_y" value="390" />
+		<variable name="row1_3_y" value="420" />
+		<variable name="row1_3a_y" value="450" />
+		<variable name="row2_1_y" value="480" />
+		<variable name="row2_1a_y" value="510" />
+		<variable name="row2_2_y" value="540" />
+		<variable name="row2_2a_y" value="570" />
+		<variable name="row2_3_y" value="600" />
+		<variable name="row2_3a_y" value="630" />
+		<variable name="row3_1_y" value="660" />
+		<variable name="row3_1a_y" value="690" />
+		<variable name="row3_2_y" value="720" />
+		<variable name="row3_2a_y" value="750" />
+		<variable name="row3_3_y" value="780" />
+		<variable name="row3_3a_y" value="810" />
+		<variable name="row4_1_y" value="840" />
+		<variable name="row4_1a_y" value="870" />
+		<variable name="row4_2_y" value="900" />
+		<variable name="row4_2a_y" value="930" />
+		<variable name="row4_3_y" value="960" />
+		<variable name="row4_3a_y" value="990" />
+		<variable name="row5_1_y" value="1020" />
+		<variable name="row5_1a_y" value="1050" />
+		<variable name="row5_2_y" value="1080" />
+		<variable name="row5_2a_y" value="1110" />
+		<variable name="row5_3_y" value="1140" />
+		<variable name="row5_3a_y" value="1170" />
+		<variable name="row6_1_y" value="1200" />
+		<variable name="row6_1a_y" value="1230" />
+		<variable name="row6_2_y" value="1260" />
+		<variable name="row6_2a_y" value="1290" />
+		<variable name="row6_3_y" value="1320" />
+		<variable name="row6_3a_y" value="1350" />
+		<variable name="row7_1_y" value="1380" />
+		<variable name="row7_1a_y" value="1410" />
+		<variable name="row7_2_y" value="1440" />
+		<variable name="row7_2a_y" value="1470" />
+		<variable name="row7_3_y" value="1500" />
+		<variable name="row7_3a_y" value="1530" />
+		<variable name="row8_1_y" value="1560" />
+		<variable name="row8_1a_y" value="1590" />
+		<variable name="row8_2_y" value="1620" />
+		<variable name="row8_2a_y" value="1650" />
+		<variable name="row8_3_y" value="1680" />
+		<variable name="row8_3a_y" value="1710" />
+		<variable name="row9_1_y" value="1740" />
+		<variable name="row_btn_y" value="1632" />
+		<variable name="row_nav_y" value="1776" />
+		<variable name="row_tz_y" value="384" />
+		<variable name="row_ab_ex_y" value="456" />
+		<variable name="row_bs_console_y" value="600" />
+
+		<variable name="mb_row1_y" value="285" />
+		<variable name="mb_row2_y" value="465" />
+		<variable name="mb_row3_y" value="645" />
+		<variable name="mb_row4_y" value="825" />
+		<variable name="mb_row5_y" value="1005" />
+		<variable name="mb_row6_y" value="1185" />
+		<variable name="mb_row7_y" value="1365" />
+		<variable name="mb_row8_y" value="1545" />
+		<variable name="mb_row9_y" value="1725" />
+
+		<variable name="bs_row1_y" value="744" />
+		<variable name="bs_row2_y" value="888" />
+		<variable name="bs_row3_y" value="1032" />
+		<variable name="bs_row4_y" value="1176" />
+		<variable name="bs_row5_y" value="1320" />
+		<variable name="bs_row6_y" value="1464" />
+		<variable name="bs_row7_y" value="1608" />
+
+		<variable name="progressbar_x" value="0" />
+		<variable name="progressbar_y" value="456" />
+
+		<variable name="keyboard_y" value="1128" />
+		<variable name="keyboard_terminal_y" value="1032" />
+		<variable name="keyboard_bg_y" value="1108" />
+		<variable name="keyboard_bg_terminal_y" value="1012" />
+
+		<variable name="home_button_x" value="381" />
+		<variable name="back_button_x" value="78" />
+		<variable name="slideout_button_x" value="684" />
+
+		<variable name="background" value="#F3F3F3FF" />
+		<variable name="darktransparent" value="#000000bb" />
+		<variable name="lightransparent" value="#00000033" />
+		<variable name="transparent" value="#00000000" />
+		<variable name="text" value="#3B3B3BFF" />
+		<variable name="text_actionbar" value="#E7EBEFFF" />
+		<variable name="text_button" value="#3B3B3BFF" />
+		<variable name="text_light" value="#F3F3F3FF" />
+		<variable name="text_dark" value="#6F6F6FFF" />
+		<variable name="text_highlight" value="#607D8BFF" />
+		<variable name="text_success" value="#68B60B" />
+		<variable name="text_fail" value="#FF0101" />
+		<variable name="highlight_color" value="#F3F3F366"  />
+		<variable name="console_foreground" value="#3B3B3BFF" />
+		<variable name="linecolor" value="#D0D0D0FF" />
+		<variable name="warning" value="#F8F8A0FF" />
+		<variable name="error" value="#FF4040FF" />
+		<variable name="highlight" value="#607D8BFF" />
+
+		<variable name="tab4_col1_x" value="0" />
+		<variable name="tab4_col2_x" value="270" />
+		<variable name="tab4_col3_x" value="540" />
+		<variable name="tab4_col4_x" value="810" />
+
+		<variable name="input_width" value="984" />
+		<variable name="input_backup_width" value="850" />
+		<variable name="input_encr_width" value="696" />
+		<variable name="input_height" value="60" />
+		<variable name="input_backup_y" value="359" />
+		<variable name="input_encr_y" value="629" />
+		<variable name="input_decr_y" value="899" />
+		<variable name="input_format_y" value="959" />
+		<variable name="input_rename_y" value="599" />
+		<variable name="input_terminal_y" value="989" />
+		<variable name="input_imagesize_y" value="779" />
+		<variable name="input_mr_rename_y" value="539" />
+		<variable name="input_cursor_width" value="2" />
+		<variable name="input_backup_bg_height" value="1296" />
+		<variable name="input_internal_bg_height" value="1116" />
+
+		<variable name="console_width" value="984" />
+		<variable name="console_height" value="1080" />
+		<variable name="console_t_height" value="690" />
+		<variable name="console_action_height" value="900" />
+
+		<variable name="storage_width" value="716" />
+		<variable name="storage_height" value="274" />
+		<variable name="storage_indent_x" value="192" />
+		<variable name="storage_indent_y" value="832" />
+		<variable name="bg_storage_x" value="36" />
+		<variable name="bg_storage_y" value="592" />
+		<variable name="bg_encrypt_y" value="302" />
+		<variable name="db_left_x" value="380" />
+		<variable name="db_right_x" value="644" />
+		<variable name="db_y" value="1129" />
+		<variable name="db_encrypt_y" value="839" />
+		<variable name="db_text1_y" value="832" />
+		<variable name="db_text2_y" value="892" />
+		<variable name="db_text2a_y" value="922" />
+		<variable name="db_text3_y" value="952" />
+		<variable name="db_text3a_y" value="982" />
+		<variable name="db_checkbox_y" value="1012" />
+
+		<variable name="fileselector_width" value="1032" />
+		<variable name="fileselector_install_height" value="1175" />
+		<variable name="fileselector_part_height" value="540" />
+		<variable name="fileselector_wipe_height" value="450" />
+		<variable name="fileselector_mount_height" value="540" />
+		<variable name="fileselector_terminal_height" value="1319" />
+		<variable name="fileselector_listrom_height" value="720" />
+		<variable name="fileselector_swaprom_height" value="270" />
+		<variable name="fileselector_autoboot_height" value="450" />
+		<variable name="fileselector_separatorheight" value="2" />
+		<variable name="fileselector_spacing" value="0" />
+
+		<variable name="fastscroll_w" value="48" />
+		<variable name="fastscroll_linew" value="2" />
+		<variable name="fastscroll_rectw" value="24" />
+		<variable name="fastscroll_recth" value="120" />
+
+		<variable name="listbox_tz_height" value="630" />
+		<variable name="listbox_tz_width" value="984" />
+		<variable name="listbox_spacing" value="0" />
+
+		<variable name="textbox_spacing" value="8" />
+
+		<variable name="slider_x" value="48" />
+		<variable name="slider_y" value="1560" />
+		<variable name="slider_text_y" value="1590" />
+		<variable name="slidervalue_w" value="984" />
+		<variable name="slidervalue_lineh" value="6" />
+		<variable name="slidervalue_padding" value="72" />
+		<variable name="slidervalue_sliderw" value="120" />
+		<variable name="slidervalue_sliderh" value="180" />
+
+		<variable name="pattern_x" value="216" />
+		<variable name="pattern_dot_dia" value="32" />
+		<variable name="pattern_line_w" value="12" />
+		<variable name="pattern_size" value="648" />
+	</variables>
+
+	<mousecursor>
+		<placement w="15" h="15" />
+		<background color="#FFFF00FF" resource="cursor" />
+		<speed multiplier="2.5" />
+	</mousecursor>
+
+	<templates>
+		<template name="body">
+			<background color="%background%" />
+
+			<!--object type="image">
+				<image resource="background" />
+				<placement x="0" y="0" />
+			</object-->
+
+			<object type="image">
+				<image resource="divider_wide" />
+				<placement x="%center_x%" y="%row_nav_y%" placement="4" />
+			</object>
+
+			<object type="button">
+				<condition var1="tw_busy" var2="0" />
+				<placement x="%home_button_x%" y="%row_nav_y%" />
+				<font resource="body1" color="%text_button%" />
+				<image resource="home" highlightresource="home_hl" />
+				<action function="key">home</action>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_busy" var2="0" />
+				<condition var1="navbar_sams" var2="0" />
+				<placement x="%back_button_x%" y="%row_nav_y%" />
+				<font resource="body1" color="%text_button%" />
+				<image resource="back" highlightresource="back_hl" />
+				<action function="key">back</action>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_busy" var2="0" />
+				<condition var1="navbar_sams" var2="1" />
+				<placement x="%slideout_button_x%" y="%row_nav_y%" />
+				<font resource="body1" color="%text_button%" />
+				<image resource="back" highlightresource="back_hl" />
+				<action function="key">back</action>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_busy" var2="0" />
+				<condition var1="navbar_sams" var2="0" />
+				<placement x="%slideout_button_x%" y="%row_nav_y%" />
+				<font resource="body1" color="%text_button%" />
+				<image resource="slideout" highlightresource="slideout_hl" />
+				<action function="overlay">console</action>
+			</object>
+
+			<object type="button">
+				<condition var1="tw_busy" var2="0" />
+				<condition var1="navbar_sams" var2="1" />
+				<placement x="%back_button_x%" y="%row_nav_y%" />
+				<font resource="body1" color="%text_button%" />
+				<image resource="slideout" highlightresource="slideout_hl" />
+				<action function="overlay">console</action>
+			</object>
+
+			<object type="action">
+				<touch key="power" />
+				<action function="overlay">lock</action>
+			</object>
+
+			<object type="action">
+				<touch key="power+voldown" />
+				<action function="screenshot" />
+			</object>
+		</template>
+
+		<template name="statusbarinfo">
+			<object type="text" color="%text_light%">
+				<conditions>
+					<condition var1="show_cpu_temp" var2="0" />
+					<condition var1="multirom_rom_name_title" var2="1" op="!=" />
+				</conditions>
+				<font resource="status" />
+				<placement x="%version_x%" y="%status_info_y%" />
+				<text>%tw_version%</text>
+			</object>
+
+			<object type="text" color="%text_light%">
+				<conditions>
+					<condition var1="show_cpu_temp" var2="0" />
+					<condition var1="show_mrom_rec_version" var2="1" />
+					<condition var1="multirom_rom_name_title" var2="1" op="!=" />
+				</conditions>
+				<font resource="status" />
+				<placement x="%version_x%" y="%status_info_y%" />
+				<text>%tw_version%_%tw_mrom_rec_version%</text>
+			</object>
+
+			<object type="text" color="%text_light%">
+				<conditions>
+					<condition var1="show_cpu_temp" var2="1" />
+					<condition var1="multirom_rom_name_title" var2="1" op="!=" />
+				</conditions>
+				<font resource="status" />
+				<placement x="%version_x%" y="%status_info_y%" />
+				<text>CPU: %tw_cpu_temp% &#xB0;C</text>
+			</object>
+
+			<object type="text" color="%text_light%">
+				<condition var1="multirom_rom_name_title" var2="1" />
+				<font resource="status" />
+				<placement x="%version_x%" y="%status_info_y%" />
+				<text>ROM: %tw_multirom_rom_name%</text>
+			</object>
+
+			<object type="text" color="%text_fail%">
+				<condition var1="tw_simulate_actions" var2="1" />
+				<font resource="status" />
+				<placement x="%center_x%" y="%status_info_y%" placement="5" />
+				<text>SIMULATING ACTIONS</text>
+			</object>
+
+			<object type="text" color="%text_light%">
+				<font resource="status" />
+				<placement x="%battery_x%" y="%status_info_y%" placement="1" />
+				<conditions>
+					<condition var1="multirom_rom_name_title" var2="1" op="!=" />
+					<condition var1="center_clock" op="!=" var2="1" />
+					<condition var1="tw_military_time" var2="0" />
+					<condition var1="tw_no_battery_percent" var2="0" />
+					<condition var1="tw_battery" op="&gt;" var2="16" />
+					<condition var1="tw_battery" op="&lt;" var2="101" />
+				</conditions>
+				<text>%tw_battery%</text>
+			</object>
+
+			<object type="text" color="#FF0000">
+				<font resource="status" />
+				<placement x="%battery_x%" y="%status_info_y%" placement="1" />
+				<conditions>
+					<condition var1="multirom_rom_name_title" var2="1" op="!=" />
+					<condition var1="center_clock" op="!=" var2="1" />
+					<condition var1="tw_military_time" var2="0" />
+					<condition var1="tw_battery" op="&gt;" var2="0" />
+					<condition var1="tw_battery" op="&lt;" var2="15" />
+				</conditions>
+				<text>%tw_battery%</text>
+			</object>
+
+			<object type="text" color="%text_light%">
+				<font resource="status" />
+				<placement x="%battery_x_m%" y="%status_info_y%" placement="1" />
+				<conditions>
+					<condition var1="multirom_rom_name_title" var2="1" op="!=" />
+					<condition var1="center_clock" op="!=" var2="1" />
+					<condition var1="tw_military_time" var2="1" />
+					<condition var1="tw_no_battery_percent" var2="0" />
+					<condition var1="tw_battery" op="&gt;" var2="16" />
+					<condition var1="tw_battery" op="&lt;" var2="101" />
+				</conditions>
+				<text>%tw_battery%</text>
+			</object>
+
+			<object type="text" color="#FF0000">
+				<font resource="status" />
+				<placement x="%battery_x_m%" y="%status_info_y%" placement="1" />
+				<conditions>
+					<condition var1="multirom_rom_name_title" var2="1" op="!=" />
+					<condition var1="center_clock" op="!=" var2="1" />
+					<condition var1="tw_military_time" var2="1" />
+					<condition var1="tw_battery" op="&gt;" var2="0" />
+					<condition var1="tw_battery" op="&lt;" var2="15" />
+				</conditions>
+				<text>%tw_battery%</text>
+			</object>
+
+			<object type="text" color="%text_light%">
+				<font resource="status" />
+				<placement x="%time_x%" y="%status_info_y%" placement="1" />
+				<conditions>
+					<condition var1="multirom_rom_name_title" var2="1" op="!=" />
+					<condition var1="center_clock" op="=" var2="1" />
+					<condition var1="tw_no_battery_percent" var2="0" />
+					<condition var1="tw_battery" op="&gt;" var2="16" />
+					<condition var1="tw_battery" op="&lt;" var2="101" />
+				</conditions>
+				<text>%tw_battery%</text>
+			</object>
+
+			<object type="text" color="#FF0000">
+				<font resource="status" />
+				<placement x="%time_x%" y="%status_info_y%" placement="1" />
+				<conditions>
+					<condition var1="multirom_rom_name_title" var2="1" op="!=" />
+					<condition var1="center_clock" op="=" var2="1" />
+					<condition var1="tw_battery" op="&gt;" var2="0" />
+					<condition var1="tw_battery" op="&lt;" var2="15" />
+				</conditions>
+				<text>%tw_battery%</text>
+			</object>
+
+			<object type="text" color="%text_light%">
+				<font resource="status" />
+				<placement x="%time_x%" y="%status_info_y%" placement="1" /> <!--right align-->
+				<conditions>
+					<condition var1="center_clock" op="!=" var2="1" />
+				</conditions>
+				<text>%tw_time%</text>
+			</object>
+
+			<object type="text" color="%text_light%">
+				<font resource="status" />
+				<placement x="%center_x%" y="%status_info_y%" placement="5" /> <!--centered-->
+				<conditions>
+					<condition var1="multirom_rom_name_title" var2="1" op="!=" />
+					<condition var1="center_clock" var2="1" />
+					<condition var1="tw_simulate_actions" op="!=" var2="1" />
+				</conditions>
+				<text>%tw_time%</text>
+			</object>
+		</template>
+
+		<template name="ab">
+			<object type="image">
+				<image resource="actionbar" />
+				<placement x="0" y="0" />
+			</object>
+
+			<object type="image">
+				<image resource="statusbar" />
+				<placement x="0" y="0" />
+			</object>
+		</template>
+
+		<template name="ab_ex">
+			<object type="image">
+				<image resource="actionbar_ex" />
+				<placement x="0" y="0" />
+			</object>
+
+			<object type="image">
+				<image resource="statusbar" />
+				<placement x="0" y="0" />
+			</object>
+		</template>
+
+		<template name="ab_tab">
+			<object type="image">
+				<image resource="actionbar_tab" />
+				<placement x="0" y="0" />
+			</object>
+
+			<object type="image">
+				<image resource="statusbar" />
+				<placement x="0" y="0" />
+			</object>
+		</template>
+
+		<template name="progress_bar">
+			<object type="progressbar">
+				<placement x="%progressbar_x%" y="%progressbar_y%" />
+				<resource empty="progress_empty" full="progress_fill" />
+				<data name="ui_progress" />
+			</object>
+
+			<object type="animation">
+				<placement x="%progressbar_x%" y="%progressbar_y%" />
+				<resource name="progress" />
+				<speed fps="24" render="2" />
+				<loop frame="1" />
+			</object>
+		</template>
+
+		<template name="action_page_console">
+			<object type="image">
+				<image resource="divider" />
+				<placement x="%center_x%" y="%row2_1_y%" placement="4" />
+			</object>
+
+			<object type="console">
+				<placement x="%col1_x%" y="%row2_1_y%" w="%console_width%" h="%console_action_height%" /> 
+				<color foreground="%console_foreground%" background="%background%" scroll="%background%" />
+				<font resource="fixed" />
+			</object>
+
+			<object type="image">
+				<image resource="divider" />
+				<placement x="%center_x%" y="%row7_1_y%" placement="4" />
+			</object>
+		</template>
+
+		<template name="keyboardterminaltemplate">
+			<object type="keyboard">
+				<condition var1="tw_hide_kb" var2="0"/>
+				<placement x="0" y="%keyboard_terminal_y%" w="%screen_width%" h="96"/>
+				<keymargin x="0" y="0"/>
+				<background color="%background%"/>
+				<key-alphanumeric color="%background%" font="keylabel" textcolor="%text%"/>
+				<key-other color="%background%" font="keylabel-small" textcolor="%text_dark%"/>
+				<longpress font="keylabel-longpress" textcolor="%text_dark%" x="12" y="0"/>
+				<keylabel key="0:k:29" text="Ctrl"/>
+				<keylabel key="0:c:27" text="Esc"/>
+				<keylabel key="0:c:9" text="Tab"/>
+				<keylabel key="0:k:105" text="&lt;" resource="kb_arrow_left"/>
+				<keylabel key="0:k:108" text="v" resource="kb_arrow_down"/>
+				<keylabel key="0:k:103" text="^" resource="kb_arrow_up"/>
+				<keylabel key="0:k:106" text="&gt;" resource="kb_arrow_right"/>
+				<highlight color="%highlight_color%"/>
+				<ctrlhighlight color="%highlight_color%"/>
+				<layout1>
+					<keysize height="96" width="154"/>
+					<row1 key01="155:k:29" key02="155:c:27" long02=":c:3" key03="154:c:9" key04="154:k:105" key05="154:k:108" key06="154:k:103" key07="154:k:106"/>
+				</layout1>
+			</object>
+		</template>
+
+		<template name="keyboardtemplate">
+			<object type="image">
+				<placement x="0" y="1108" />
+				<image resource="keyboard_shadow" />
+			</object>
+
+			<object type="keyboard">
+				<condition var1="tw_hide_kb" var2="0" />
+				<placement x="0" y="%keyboard_y%" w="1080" h="644" />
+				<keymargin x="8" y="8" />
+				<background color="%background%" />
+				<key-alphanumeric color="%background%" font="keylabel" textcolor="%text%" />
+				<key-other color="%background%" font="keylabel-small" textcolor="%text_dark%" />
+				<longpress font="keylabel-longpress" textcolor="%text_dark%" x="12" y="0" />
+				<keylabel key="0:c:8" text="Bksp" resource="backspace" />
+				<keylabel key="0:action" text="Enter" resource="enter" />
+				<keylabel key=" " text="Space" resource="space" />
+				<highlight color="%highlight_color%" />
+				<capshighlight color="%highlight_color%" />
+				<layout1>
+					<keysize height="161" width="108" />
+					<row1 key01="q" long01="1" key02="w" long02="2" key03="e" long03="3" key04="r" long04="4" key05="t" long05="5" key06="y" long06="6" key07="u" long07="7" key08="i" long08="8" key09="o" long09="9" key10="p" long10="0" />
+					<row2 key01="54:" key02="a" long02="@" key03="s" long03="#" key04="d" long04="$" key05="f" long05="%" key06="g" long06="&amp;" key07="h" long07="*" key08="j" long08="-" key09="k" long09="+" key10="l" long10="_" key11="54:" />
+					<row3 key01="162:layout2" key02="z" long02="!" key03="x" long03="&quot;" key04="c" long04="'" key05="v" long05=":" key06="b" long06=";" key07="n" long07="/" key08="m" long08="?" key09="162:c:8" />
+					<row4 key01="162:layout3" key02="/" key03="540: " key04="." key05="162:action" />
+					<keylabel key="0:layout2" text="Shift" resource="shift" />
+					<keylabel key="0:layout3" text="?123" />
+				</layout1>
+				<layout2>
+					<keysize height="161" width="108" capslock="0" revert_layout="1" />
+					<row1 key01="Q" long01="1" key02="W" long02="2" key03="E" long03="3" key04="R" long04="4" key05="T" long05="5" key06="Y" long06="6" key07="U" long07="7" key08="I" long08="8" key09="O" long09="9" key10="P" long10="0" />
+					<row2 key01="54:" key02="A" long02="@" key03="S" long03="#" key04="D" long04="$" key05="F" long05="%" key06="G" long06="&amp;" key07="H" long07="*" key08="J" long08="-" key09="K" long09="+" key10="L" long10="_" key11="54:" />
+					<row3 key01="162:layout1" key02="Z" long02="!" key03="X" long03="&quot;" key04="C" long04="'" key05="V" long05=":" key06="B" long06=";" key07="N" long07="/" key08="M" long08="?" key09="162:c:8" />
+					<row4 key01="162:layout3" key02="/" key03="540: " key04="." key05="162:action" />
+					<keylabel key="0:layout1" text="Shift" resource="shift_fill" />
+					<keylabel key="0:layout3" text="?123" />
+				</layout2>
+				<layout3>
+					<keysize height="161" width="108" />
+					<row1 key01="1" key02="2" key03="3" key04="4" key05="5" key06="6" key07="7" key08="8" key09="9" key10="0" />
+					<row2 key01="@" key02="#" key03="$" key04="%" key05="&amp;" key06="*" key07="-" key08="+" key09="(" key10=")" />
+					<row3 key01="162:layout4" key02="!" key03="108:c:34" key04="'" key05=":" key06=";" key07="/" key08="?" key09="162:c:8" />
+					<row4 key01="162:layout1" key02="," key03="540: " key04="." key05="162:action" />
+					<keylabel key="0:layout1" text="ABC" />
+					<keylabel key="0:layout4" text="~\{" />
+				</layout3>
+				<layout4>
+					<keysize height="161" width="108" />
+					<row1 key01="~" key02="`" key03="|" key04="108:" key05="108:" key06="108:" key07="%" key08="108:" key09="{" key10="}" />
+					<row2 key01="108:" key02="108:" key03="108:" key04="108:" key05="108:" key06="^" key07="_" key08="=" key09="[" key10="]" />
+					<row3 key01="162:layout3" key02="108:" key03="108:" key04="108:" key05="108:" key06="\" key07="&lt;" key08="&gt;" key09="162:c:8" />
+					<row4 key01="162:layout1" key02="108:c:34" key03="540: " key04="." key05="162:action" />
+					<keylabel key="0:layout1" text="ABC" />
+					<keylabel key="0:layout3" text="?123" />
+				</layout4>
+			</object>
+		</template>
+	</templates>
+
+	<include>
+		<xmlfile name="light.xml" />
+		<xmlfile name="light_mr.xml" />
+	</include>
+</recovery>

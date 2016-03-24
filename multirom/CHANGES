@@ -1,0 +1,122 @@
+Build flag (in BoardConfig)
+===========================
+- add TARGET_RECOVERY_IS_MULTIROM := true
+  to enable multirom version of twrp
+
+- TODO: check for this flag in system/extras/multirom
+  and libbootimg, and disable building them if the flag
+  is not set, otherwise multirom binaries always get
+  built and added into recovery
+
+
+
+Folder changes
+==============
+- move multirom files to separate sub-folder   recovery/multirom
+- move multirom specific prebuilts to         recovery/multirom/prebuilt  (1)
+- move multirom specific cp_xattrs to         recovery/multirom/cp_xattrs (1)
+Notes: (1) update/create Android.mk files
+
+
+
+multirom Code changes
+=====================
+- fix #include statements (where needed) to look in parent folder
+  i.e. append "../" where necessary
+
+- remove deprecated 'flags' in function call to mzExtractRecursive
+  in mrominstaller.cpp (line 317)
+  deprecated in this commit
+    https://github.com/omnirom/android_bootable_recovery/commit/9c0f5d6b348e37533bdcccf1166d6cbf1ca5c50b
+
+
+
+minzip Code changes
+===================
+- add function 'read_data' needed by multirom in Zip.h and Zip.c
+- update Android.mk with build flag TARGET_RECOVERY_IS_MULTIROM
+Note: i guess this could get moved out of minzip and into multirom itself
+
+
+
+gui Code changes
+================
+- objects.hpp   add multirom action definitions
+- action.cpp    add multirom actions and functions
+    Note: TW_ORS_IS_SECONDARY_ROM code moved to openrecoveryscript.cpp
+- update Android.mk with build flag TARGET_RECOVERY_IS_MULTIROM
+
+
+main Code changes
+=================
+- variables.h   add multirom specific defines
+- twrp.cpp      add/embed multirom specific code
+
+- partitions.hpp, partition.cpp, partitionmanager.cpp
+    + add and embed multirom specific code
+
+- twrp-functions(hpp/cpp) add functions needed by multirom
+    + static int Exec_Cmd_Show_Output(const string& cmd);
+    + static int write_file(string fn, const string& line);
+    + static int write_file(string fn, const string& line, const char *mode);
+    + static bool loadTheme();
+    + static bool reloadTheme();
+    + static std::string getDefaultThemePath(int rotation);
+    + static std::string getZIPThemePath(int rotation);
+    + static std::string getROMName();
+    + static void stringReplace(std::string& str, char before, char after);
+    + static void trim(std::string& str);
+    + static int64_t getFreeSpace(const std::string& path);
+    + static bool restorecon(const std::string& path, struct selabel_handle *sh);
+
+- openrecoveryscript.cpp
+    + TW_ORS_IS_SECONDARY_ROM code moved here from gui/action.cpp
+
+- update Android.mk
+    + add new build flag TARGET_RECOVERY_IS_MULTIROM
+    + add multirom source files, libraries, etc.
+
+
+
+General notes
+=============
+- the theme files have not been updated; instead a multirom twrp theme should be
+  declared and added in the device folder
+  TODO: fix this
+
+- rotation is currently not used (commented out), and set to false in Android.mk
+  which also affects the following function in twrp-functions.zpp
+    + static bool loadTheme();
+    + static bool reloadTheme();
+    + static std::string getDefaultThemePath(int rotation);
+    + static std::string getZIPThemePath(int rotation);
+  these are just dummy functions at the moment; the original code is still in
+  twrp-functions.cpp, but commented out
+
+- partitions.hpp, partition.cpp, partitionmanager.cpp: code could be reviewed
+  for cleanup; many #ifdef...#endif statements can be recoded to a neater style
+  (since it's being more or less just duplicated) but for the time being i'm
+  keeping it as is, since it may make future merges easier to cope with.
+  TODO: reconsider this
+
+- partitionmanager.cpp: deprecated function
+    + void TWPartitionManager::Update_Storage_Sizes()
+  has been directly integrated into
+    + void TWPartitionManager::Update_System_Details(void)
+  we could create the function with a suitable #ifdef...#else...#endif
+  instead of duplicating the code
+  for now, i'm keeping it as is, since the old code is also there, but
+  commented out (for reference)
+
+- partition.cpp: use 'exfat_mounted' instead of 'mounted'
+  we don't want to rename exfat_mounted (for future merges), but we could
+    + #define mounted exfat_mounted
+  to keep both visually intact
+
+
+BUGS
+====
+- is restorecon still broken? due to the -D flag in multirom.cpp
+    + #if PLATFORM_SDK_VERSION >= 21  #define RESTORECON_ARGS "-RFDv"
+
+

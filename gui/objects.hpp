@@ -321,6 +321,26 @@ protected:
 	int getpartitiondetails(std::string arg);
 	int screenshot(std::string arg);
 	int setbrightness(std::string arg);
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	int rotation(std::string arg);
+	int timeout(std::string arg);
+	int multirom(std::string arg);
+	int multirom_reset_roms_paths(std::string arg);
+	int multirom_rename(std::string arg);
+	int multirom_manage(std::string arg);
+	int multirom_settings(std::string arg);
+	int multirom_settings_save(std::string arg);
+	int multirom_add(std::string arg);
+	int multirom_add_second(std::string arg);
+	int multirom_add_file_selected(std::string arg);
+	int multirom_change_img_size(std::string arg);
+	int multirom_change_img_size_act(std::string arg);
+	int multirom_set_list_loc(std::string arg);
+	int multirom_list_loc_selected(std::string arg);
+	int multirom_exit_backup(std::string arg);
+	int multirom_create_internal_rom_name(std::string arg);
+	int multirom_list_roms_for_swap(std::string arg);
+#endif //TARGET_RECOVERY_IS_MULTIROM
 
 	// (originally) threaded actions
 	int fileexists(std::string arg);
@@ -356,6 +376,27 @@ protected:
 	int cancelbackup(std::string arg);
 	int checkpartitionlifetimewrites(std::string arg);
 	int mountsystemtoggle(std::string arg);
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	int multirom_delete(std::string arg);
+	int multirom_flash_zip(std::string arg);
+	int multirom_flash_zip_sailfish(std::string arg);
+	int multirom_inject(std::string arg);
+	int multirom_inject_curr_boot(std::string arg);
+	int multirom_add_rom(std::string arg);
+	int multirom_ubuntu_patch_init(std::string arg);
+	int multirom_touch_patch_init(std::string arg);
+	int multirom_wipe(std::string arg);
+	int multirom_disable_flash_kernel(std::string arg);
+	int multirom_rm_bootimg(std::string arg);
+	int multirom_backup_rom(std::string arg);
+	int multirom_sideload(std::string arg);
+	int multirom_swap_calc_space(std::string arg);
+	int multirom_execute_swap(std::string arg);
+	int multirom_set_fw(std::string arg);
+	int multirom_remove_fw(std::string arg);
+	int multirom_restorecon(std::string arg);
+	int system_image_upgrader(std::string arg);
+#endif //TARGET_RECOVERY_IS_MULTIROM
 	int setlanguage(std::string arg);
 	int twcmd(std::string arg);
 
@@ -593,7 +634,12 @@ protected:
 	std::vector<FileData> mFileList;
 	std::string mPathVar; // current path displayed, saved in the data manager
 	std::string mPathDefault; // default value for the path if none is set in mPathVar
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	std::vector<std::string> mExcludeFiles;
+	std::vector<std::string> mExtn; // used for filtering the file list, for example, *.zip
+#else
 	std::string mExtn; // used for filtering the file list, for example, *.zip
+#endif
 	std::string mVariable; // set when the user selects an item, pull path like /path/to/foo
 	std::string mSortVariable; // data manager variable used to change the sorting of files
 	std::string mSelection; // set when the user selects an item without the full path like selecting /path/to/foo would just be set to foo
@@ -641,6 +687,9 @@ protected:
 	std::vector<size_t> mVisibleItems; // contains indexes in mListItems of visible items only
 	std::string mVariable;
 	std::string currentValue;
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	std::string mItemsVar;
+#endif
 	ImageResource* mIconSelected;
 	ImageResource* mIconUnselected;
 	bool isCheckList;
