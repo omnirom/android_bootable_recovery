@@ -1805,11 +1805,16 @@
 
 			<text style="text_m_accent">
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>Size:</text>
+				<text>%tw_multirom_image_name%.img</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%center_x%" y="%row3_y%" placement="5"/>
+				<text>Manual Keyboard Input:</text>
 			</text>
 
 			<input>
-				<placement x="%indent%" y="%row2_input_y%" w="%content_width%" h="%input_height%"/>
+				<placement x="%indent%" y="%row4_y%" w="%content_width%" h="%input_height%"/>
 				<text>%tw_multirom_image_size%</text>
 				<data name="tw_multirom_image_size" />
 				<restrict minlen="1" maxlen="4" allow="1234567890"/>
@@ -1817,38 +1822,69 @@
 			</input>
 
 			<fill color="%accent_color%">
-				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+				<placement x="%indent%" y="row5_y" w="%content_width%" h="input_line_width" placement="1"/>
 			</fill>
 
 			<fill color="%text_fail_color%">
 				<condition var1="tw_multirom_image_too_small" var2="1"/>
-				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+				<placement x="%indent%" y="row5_y" w="%content_width%" h="input_line_width" placement="1"/>
 			</fill>
 
 			<fill color="%text_fail_color%">
 				<condition var1="tw_multirom_image_too_big" var2="1"/>
-				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+				<placement x="%indent%" y="row5_y" w="%content_width%" h="input_line_width" placement="1"/>
 			</fill>
 
 			<text style="text_m_fail">
 				<condition var1="tw_multirom_image_too_small" var2="1"/>
-				<placement x="%indent%" y="%row4a_y%"/>
+				<placement x="%indent%" y="%row5a_y%"/>
 				<text>Value is too small (min %tw_multirom_min_size%MB)!</text>
 			</text>
 
 			<text style="text_m_fail">
 				<condition var1="tw_multirom_image_too_big" var2="1"/>
-				<placement x="%indent%" y="%row4a_y%"/>
+				<placement x="%indent%" y="%row5a_y%"/>
 				<text>Value is too big (max 4095MB)!</text>
 			</text>
 
 			<button style="main_button_half_height">
-				<placement x="%indent%" y="%row10_y%"/>
+				<placement x="%indent%" y="%row11_y%"/>
 				<text>{@cancel_btn=Cancel}</text>
 				<action function="page">multirom_add_image_size</action>
 			</button>
 
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row11_y%"/>
+				<text>{@ok_btn=OK}</text>
+				<actions>
+					<action function="multirom_change_img_size_act"/>
+					<action function="page">multirom_add_image_size</action>
+				</actions>
+			</button>
+
 			<template name="keyboardtemplate"/>
+
+			<text style="text_m_accent">
+				<placement x="%center_x%" y="%row6_y%" placement="5"/>
+				<text>Or in 256KB Increments/Decrements:</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%center_x%" y="%row7a_y%" placement="5"/>
+				<text>%tw_multirom_image_size%</text>
+			</text>
+
+			<button style="button_quarter_width">
+				<placement x="%indent%" y="%row7_y%"/>
+				<text>{@part_sd_m=-}</text>
+				<action function="addsubtract">tw_multirom_image_size-256</action>
+			</button>
+
+			<button style="button_quarter_width">
+				<placement x="%btn4_col4_x%" y="%row7_y%"/>
+				<text>{@part_sd_p=+}</text>
+				<action function="addsubtract">tw_multirom_image_size+256</action>
+			</button>
 
 			<action>
 				<touch key="back"/>
