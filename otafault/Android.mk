@@ -19,9 +19,10 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 otafault_static_libs := \
+    libbase \
     libminzip \
-    libselinux \
-    libz
+    libz \
+    libselinux
 
 LOCAL_SRC_FILES := config.cpp ota_io.cpp
 LOCAL_MODULE := libotafault
