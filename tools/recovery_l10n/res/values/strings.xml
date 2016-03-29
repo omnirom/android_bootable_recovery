@@ -31,4 +31,8 @@
        LIMIT=60] -->
   <string name="recovery_error">Error!</string>
 
+  <!-- Displayed on the screen beneath the animation while the
+       system is installing a security update. [CHAR LIMIT=60] -->
+  <string name="recovery_installing_security">Installing security update\u2026</string>
+
 </resources>
