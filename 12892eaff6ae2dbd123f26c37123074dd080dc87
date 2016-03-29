@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_21989278",
+        "filename": "gui/action.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1032,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-29T14:49:06Z",
+      "side": 1,
+      "message": "We should be checking ret_val here and only reboot if all zips installed successfully.",
+      "revId": "12892eaff6ae2dbd123f26c37123074dd080dc87",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_01a596ad",
+        "filename": "gui/theme/common/languages/en.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 669,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-29T14:49:06Z",
+      "side": 1,
+      "message": "I think you also need to add an entry for tw_install_reboot\u003dReboot after installation is complete which should go up towards the top of this file along with the other zip install strings.",
+      "revId": "12892eaff6ae2dbd123f26c37123074dd080dc87",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
