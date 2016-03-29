@@ -372,7 +372,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         ALOGE("failed to fsync \"%s\": %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
-    if (close(mapfd.get() == -1)) {
+    if (close(mapfd.get()) == -1) {
         ALOGE("failed to close %s: %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
@@ -406,7 +406,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         ALOGE("failed to fsync %s: %s", dir_name.c_str(), strerror(errno));
         return -1;
     }
-    if (close(dfd.get() == -1)) {
+    if (close(dfd.get()) == -1) {
         ALOGE("failed to close %s: %s", dir_name.c_str(), strerror(errno));
         return -1;
     }
