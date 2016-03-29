@@ -40,6 +40,7 @@
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include <android-base/unique_fd.h>
 
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
@@ -48,7 +49,6 @@
 #include "minzip/Hash.h"
 #include "ota_io.h"
 #include "print_sha1.h"
-#include "unique_fd.h"
 #include "updater.h"
 
 #define BLOCKSIZE 4096
@@ -368,7 +368,7 @@ struct CommandParameters {
     std::string stashbase;
     bool canwrite;
     int createdstash;
-    int fd;
+    android::base::unique_fd fd;
     bool foundwrites;
     bool isunresumable;
     int version;
@@ -577,9 +577,7 @@ static int LoadStash(CommandParameters& params, const std::string& base, const s
         return -1;
     }
 
-    int fd = TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_RDONLY));
-    unique_fd fd_holder(fd);
-
+    android::base::unique_fd fd(TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_RDONLY)));
     if (fd == -1) {
         fprintf(stderr, "open \"%s\" failed: %s\n", fn.c_str(), strerror(errno));
         return -1;
@@ -634,9 +632,9 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
 
     fprintf(stderr, " writing %d blocks to %s\n", blocks, cn.c_str());
 
-    int fd = TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_WRONLY | O_CREAT | O_TRUNC, STASH_FILE_MODE));
-    unique_fd fd_holder(fd);
-
+    android::base::unique_fd fd(TEMP_FAILURE_RETRY(ota_open(fn.c_str(),
+                                                            O_WRONLY | O_CREAT | O_TRUNC,
+                                                            STASH_FILE_MODE)));
     if (fd == -1) {
         fprintf(stderr, "failed to create \"%s\": %s\n", fn.c_str(), strerror(errno));
         return -1;
@@ -658,9 +656,8 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
     }
 
     std::string dname = GetStashFileName(base, "", "");
-    int dfd = TEMP_FAILURE_RETRY(ota_open(dname.c_str(), O_RDONLY | O_DIRECTORY));
-    unique_fd dfd_holder(dfd);
-
+    android::base::unique_fd dfd(TEMP_FAILURE_RETRY(ota_open(dname.c_str(),
+                                                             O_RDONLY | O_DIRECTORY)));
     if (dfd == -1) {
         fprintf(stderr, "failed to open \"%s\" failed: %s\n", dname.c_str(), strerror(errno));
         return -1;
@@ -942,8 +939,8 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
         tgthash = params.tokens[params.cpos++];
     }
 
-    if (LoadSrcTgtVersion2(params, tgt, src_blocks, params.buffer, params.fd, params.stashbase,
-            &overlap) == -1) {
+    if (LoadSrcTgtVersion2(params, tgt, src_blocks, params.buffer, params.fd,
+                           params.stashbase, &overlap) == -1) {
         return -1;
     }
 
@@ -1385,9 +1382,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         return StringValue(strdup(""));
     }
 
-    params.fd = TEMP_FAILURE_RETRY(ota_open(blockdev_filename->data, O_RDWR));
-    unique_fd fd_holder(params.fd);
-
+    params.fd.reset(TEMP_FAILURE_RETRY(ota_open(blockdev_filename->data, O_RDWR)));
     if (params.fd == -1) {
         fprintf(stderr, "open \"%s\" failed: %s\n", blockdev_filename->data, strerror(errno));
         return StringValue(strdup(""));
@@ -1532,7 +1527,7 @@ pbiudone:
     if (ota_fsync(params.fd) == -1) {
         fprintf(stderr, "fsync failed: %s\n", strerror(errno));
     }
-    // params.fd will be automatically closed because of the fd_holder above.
+    // params.fd will be automatically closed because it's a unique_fd.
 
     // Only delete the stash if the update cannot be resumed, or it's
     // a verification run and we created the stash.
@@ -1653,9 +1648,8 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
         return StringValue(strdup(""));
     }
 
-    int fd = ota_open(blockdev_filename->data, O_RDWR);
-    unique_fd fd_holder(fd);
-    if (fd < 0) {
+    android::base::unique_fd fd(ota_open(blockdev_filename->data, O_RDWR));
+    if (fd == -1) {
         ErrorAbort(state, "open \"%s\" failed: %s", blockdev_filename->data, strerror(errno));
         return StringValue(strdup(""));
     }
@@ -1676,7 +1670,7 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
         for (size_t j = rs.pos[i*2]; j < rs.pos[i*2+1]; ++j) {
             if (read_all(fd, buffer, BLOCKSIZE) == -1) {
                 ErrorAbort(state, "failed to read %s: %s", blockdev_filename->data,
-                        strerror(errno));
+                           strerror(errno));
                 return StringValue(strdup(""));
             }
 
@@ -1707,8 +1701,7 @@ Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[])
         return StringValue(strdup(""));
     }
 
-    int fd = ota_open(arg_filename->data, O_RDONLY);
-    unique_fd fd_holder(fd);
+    android::base::unique_fd fd(ota_open(arg_filename->data, O_RDONLY));
     if (fd == -1) {
         ErrorAbort(state, "open \"%s\" failed: %s", arg_filename->data, strerror(errno));
         return StringValue(strdup(""));
@@ -1718,8 +1711,7 @@ Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[])
     std::vector<uint8_t> block0_buffer(BLOCKSIZE);
 
     if (ReadBlocks(blk0, block0_buffer, fd) == -1) {
-        ErrorAbort(state, "failed to read %s: %s", arg_filename->data,
-                strerror(errno));
+        ErrorAbort(state, "failed to read %s: %s", arg_filename->data, strerror(errno));
         return StringValue(strdup(""));
     }
 
