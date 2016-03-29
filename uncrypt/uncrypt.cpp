@@ -615,20 +615,20 @@ int main(int argc, char** argv) {
 
     // c3. The socket is created by init when starting the service. uncrypt
     // will use the socket to communicate with its caller.
-    unique_fd service_socket(android_get_control_socket(UNCRYPT_SOCKET.c_str()));
-    if (!service_socket) {
+    android::base::unique_fd service_socket(android_get_control_socket(UNCRYPT_SOCKET.c_str()));
+    if (service_socket == -1) {
         ALOGE("failed to open socket \"%s\": %s", UNCRYPT_SOCKET.c_str(), strerror(errno));
         return 1;
     }
-    fcntl(service_socket.get(), F_SETFD, FD_CLOEXEC);
+    fcntl(service_socket, F_SETFD, FD_CLOEXEC);
 
-    if (listen(service_socket.get(), 1) == -1) {
+    if (listen(service_socket, 1) == -1) {
         ALOGE("failed to listen on socket %d: %s", service_socket.get(), strerror(errno));
         return 1;
     }
 
-    unique_fd socket_fd(accept4(service_socket.get(), nullptr, nullptr, SOCK_CLOEXEC));
-    if (!socket_fd) {
+    android::base::unique_fd socket_fd(accept4(service_socket, nullptr, nullptr, SOCK_CLOEXEC));
+    if (socket_fd == -1) {
         ALOGE("failed to accept on socket %d: %s", service_socket.get(), strerror(errno));
         return 1;
     }
@@ -636,13 +636,13 @@ int main(int argc, char** argv) {
     bool success = false;
     switch (action) {
         case UNCRYPT:
-            success = uncrypt_wrapper(input_path, map_file, socket_fd.get());
+            success = uncrypt_wrapper(input_path, map_file, socket_fd);
             break;
         case SETUP_BCB:
-            success = setup_bcb(socket_fd.get());
+            success = setup_bcb(socket_fd);
             break;
         case CLEAR_BCB:
-            success = clear_bcb(socket_fd.get());
+            success = clear_bcb(socket_fd);
             break;
         default:  // Should never happen.
             ALOGE("Invalid uncrypt action code: %d", action);
@@ -653,7 +653,7 @@ int main(int argc, char** argv) {
     // ensure the client to receive the last status code before the socket gets
     // destroyed.
     int code;
-    if (android::base::ReadFully(socket_fd.get(), &code, 4)) {
+    if (android::base::ReadFully(socket_fd, &code, 4)) {
         ALOGI("  received %d, exiting now", code);
     } else {
         ALOGE("failed to read the code: %s", strerror(errno));
