@@ -109,6 +109,7 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <android-base/unique_fd.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
 #include <cutils/sockets.h>
@@ -118,7 +119,6 @@
 #include <log/log.h>
 
 #include "bootloader.h"
-#include "unique_fd.h"
 
 #define WINDOW_SIZE 5
 
@@ -237,8 +237,9 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         return -1;
     }
     std::string tmp_map_file = std::string(map_file) + ".tmp";
-    unique_fd mapfd(open(tmp_map_file.c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR));
-    if (!mapfd) {
+    android::base::unique_fd mapfd(open(tmp_map_file.c_str(),
+                                        O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR));
+    if (mapfd == -1) {
         ALOGE("failed to open %s: %s\n", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
@@ -264,7 +265,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 
     std::string s = android::base::StringPrintf("%s\n%" PRId64 " %ld\n",
                        blk_dev, sb.st_size, static_cast<long>(sb.st_blksize));
-    if (!android::base::WriteStringToFd(s, mapfd.get())) {
+    if (!android::base::WriteStringToFd(s, mapfd)) {
         ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
@@ -276,16 +277,16 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     int head_block = 0;
     int head = 0, tail = 0;
 
-    unique_fd fd(open(path, O_RDONLY));
-    if (!fd) {
+    android::base::unique_fd fd(open(path, O_RDONLY));
+    if (fd == -1) {
         ALOGE("failed to open %s for reading: %s", path, strerror(errno));
         return -1;
     }
 
-    unique_fd wfd(-1);
+    android::base::unique_fd wfd;
     if (encrypted) {
-        wfd = open(blk_dev, O_WRONLY);
-        if (!wfd) {
+        wfd.reset(open(blk_dev, O_WRONLY));
+        if (wfd == -1) {
             ALOGE("failed to open fd for writing: %s", strerror(errno));
             return -1;
         }
@@ -304,14 +305,14 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         if ((tail+1) % WINDOW_SIZE == head) {
             // write out head buffer
             int block = head_block;
-            if (ioctl(fd.get(), FIBMAP, &block) != 0) {
+            if (ioctl(fd, FIBMAP, &block) != 0) {
                 ALOGE("failed to find block %d", head_block);
                 return -1;
             }
             add_block_to_ranges(ranges, block);
             if (encrypted) {
-                if (write_at_offset(buffers[head].data(), sb.st_blksize, wfd.get(),
-                        static_cast<off64_t>(sb.st_blksize) * block) != 0) {
+                if (write_at_offset(buffers[head].data(), sb.st_blksize, wfd,
+                                    static_cast<off64_t>(sb.st_blksize) * block) != 0) {
                     return -1;
                 }
             }
@@ -323,7 +324,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         if (encrypted) {
             size_t to_read = static_cast<size_t>(
                     std::min(static_cast<off64_t>(sb.st_blksize), sb.st_size - pos));
-            if (!android::base::ReadFully(fd.get(), buffers[tail].data(), to_read)) {
+            if (!android::base::ReadFully(fd, buffers[tail].data(), to_read)) {
                 ALOGE("failed to read: %s", strerror(errno));
                 return -1;
             }
@@ -340,14 +341,14 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     while (head != tail) {
         // write out head buffer
         int block = head_block;
-        if (ioctl(fd.get(), FIBMAP, &block) != 0) {
+        if (ioctl(fd, FIBMAP, &block) != 0) {
             ALOGE("failed to find block %d", head_block);
             return -1;
         }
         add_block_to_ranges(ranges, block);
         if (encrypted) {
-            if (write_at_offset(buffers[head].data(), sb.st_blksize, wfd.get(),
-                    static_cast<off64_t>(sb.st_blksize) * block) != 0) {
+            if (write_at_offset(buffers[head].data(), sb.st_blksize, wfd,
+                                static_cast<off64_t>(sb.st_blksize) * block) != 0) {
                 return -1;
             }
         }
@@ -356,38 +357,36 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     }
 
     if (!android::base::WriteStringToFd(
-            android::base::StringPrintf("%zu\n", ranges.size() / 2), mapfd.get())) {
+            android::base::StringPrintf("%zu\n", ranges.size() / 2), mapfd)) {
         ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
     for (size_t i = 0; i < ranges.size(); i += 2) {
         if (!android::base::WriteStringToFd(
-                android::base::StringPrintf("%d %d\n", ranges[i], ranges[i+1]), mapfd.get())) {
+                android::base::StringPrintf("%d %d\n", ranges[i], ranges[i+1]), mapfd)) {
             ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
             return -1;
         }
     }
 
-    if (fsync(mapfd.get()) == -1) {
+    if (fsync(mapfd) == -1) {
         ALOGE("failed to fsync \"%s\": %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
-    if (close(mapfd.get() == -1)) {
+    if (close(mapfd.release()) == -1) {
         ALOGE("failed to close %s: %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
     }
-    mapfd = -1;
 
     if (encrypted) {
-        if (fsync(wfd.get()) == -1) {
+        if (fsync(wfd) == -1) {
             ALOGE("failed to fsync \"%s\": %s", blk_dev, strerror(errno));
             return -1;
         }
-        if (close(wfd.get()) == -1) {
+        if (close(wfd.release()) == -1) {
             ALOGE("failed to close %s: %s", blk_dev, strerror(errno));
             return -1;
         }
-        wfd = -1;
     }
 
     if (rename(tmp_map_file.c_str(), map_file) == -1) {
@@ -397,20 +396,19 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     // Sync dir to make rename() result written to disk.
     std::string file_name = map_file;
     std::string dir_name = dirname(&file_name[0]);
-    unique_fd dfd(open(dir_name.c_str(), O_RDONLY | O_DIRECTORY));
-    if (!dfd) {
+    android::base::unique_fd dfd(open(dir_name.c_str(), O_RDONLY | O_DIRECTORY));
+    if (dfd == -1) {
         ALOGE("failed to open dir %s: %s", dir_name.c_str(), strerror(errno));
         return -1;
     }
-    if (fsync(dfd.get()) == -1) {
+    if (fsync(dfd) == -1) {
         ALOGE("failed to fsync %s: %s", dir_name.c_str(), strerror(errno));
         return -1;
     }
-    if (close(dfd.get() == -1)) {
+    if (close(dfd.release()) == -1) {
         ALOGE("failed to close %s: %s", dir_name.c_str(), strerror(errno));
         return -1;
     }
-    dfd = -1;
     return 0;
 }
 
@@ -431,12 +429,12 @@ static int read_bootloader_message(bootloader_message* out) {
         ALOGE("failed to find /misc partition.");
         return -1;
     }
-    unique_fd fd(open(misc_blk_device.c_str(), O_RDONLY));
-    if (!fd) {
+    android::base::unique_fd fd(open(misc_blk_device.c_str(), O_RDONLY));
+    if (fd == -1) {
         ALOGE("failed to open %s: %s", misc_blk_device.c_str(), strerror(errno));
         return -1;
     }
-    if (!android::base::ReadFully(fd.get(), out, sizeof(*out))) {
+    if (!android::base::ReadFully(fd, out, sizeof(*out))) {
         ALOGE("failed to read %s: %s", misc_blk_device.c_str(), strerror(errno));
         return -1;
     }
@@ -449,17 +447,17 @@ static int write_bootloader_message(const bootloader_message* in) {
         ALOGE("failed to find /misc partition.");
         return -1;
     }
-    unique_fd fd(open(misc_blk_device.c_str(), O_WRONLY | O_SYNC));
-    if (!fd) {
+    android::base::unique_fd fd(open(misc_blk_device.c_str(), O_WRONLY | O_SYNC));
+    if (fd == -1) {
         ALOGE("failed to open %s: %s", misc_blk_device.c_str(), strerror(errno));
         return -1;
     }
-    if (!android::base::WriteFully(fd.get(), in, sizeof(*in))) {
+    if (!android::base::WriteFully(fd, in, sizeof(*in))) {
         ALOGE("failed to write %s: %s", misc_blk_device.c_str(), strerror(errno));
         return -1;
     }
     // TODO: O_SYNC and fsync() duplicates each other?
-    if (fsync(fd.get()) == -1) {
+    if (fsync(fd) == -1) {
         ALOGE("failed to fsync %s: %s", misc_blk_device.c_str(), strerror(errno));
         return -1;
     }
