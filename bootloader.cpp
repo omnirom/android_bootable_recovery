@@ -29,7 +29,7 @@
 #include "common.h"
 #include "mtdutils/mtdutils.h"
 #include "roots.h"
-#include "unique_fd.h"
+#include <android-base/unique_fd.h>
 
 static int get_bootloader_message_mtd(bootloader_message* out, const Volume* v);
 static int set_bootloader_message_mtd(const bootloader_message* in, const Volume* v);
@@ -191,8 +191,8 @@ static int get_bootloader_message_block(bootloader_message* out,
 static int set_bootloader_message_block(const bootloader_message* in,
                                         const Volume* v) {
     wait_for_device(v->blk_device);
-    unique_fd fd(open(v->blk_device, O_WRONLY | O_SYNC));
-    if (fd.get() == -1) {
+    android::base::unique_fd fd(open(v->blk_device, O_WRONLY | O_SYNC));
+    if (fd == -1) {
         LOGE("failed to open \"%s\": %s\n", v->blk_device, strerror(errno));
         return -1;
     }
@@ -201,7 +201,7 @@ static int set_bootloader_message_block(const bootloader_message* in,
     const uint8_t* start = reinterpret_cast<const uint8_t*>(in);
     size_t total = sizeof(*in);
     while (written < total) {
-        ssize_t wrote = TEMP_FAILURE_RETRY(write(fd.get(), start + written, total - written));
+        ssize_t wrote = TEMP_FAILURE_RETRY(write(fd, start + written, total - written));
         if (wrote == -1) {
             LOGE("failed to write %" PRId64 " bytes: %s\n",
                  static_cast<off64_t>(written), strerror(errno));
@@ -210,7 +210,7 @@ static int set_bootloader_message_block(const bootloader_message* in,
         written += wrote;
     }
 
-    if (fsync(fd.get()) == -1) {
+    if (fsync(fd) == -1) {
         LOGE("failed to fsync \"%s\": %s\n", v->blk_device, strerror(errno));
         return -1;
     }
