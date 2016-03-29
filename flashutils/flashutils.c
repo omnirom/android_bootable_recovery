@@ -54,7 +54,7 @@ static int detect_partition(const char *partitionType, const char *partition)
     int type = device_flash_type();
     if (strstr(partition, "/dev/block/mtd") != NULL)
         type = MTD;
-    else if (strstr(partition, "/dev/block/mmc") != NULL)
+    else if (strstr(partition, "/dev/block/mmc") != NULL || strstr(partition, "/dev/block/sd") != NULL)
         type = MMC;
     else if (strstr(partition, "/dev/block/bml") != NULL)
         type = BML;
