@@ -363,24 +363,6 @@ static std::string get_misc_blk_device() {
     return "";
 }
 
-static int read_bootloader_message(bootloader_message* out) {
-    std::string misc_blk_device = get_misc_blk_device();
-    if (misc_blk_device.empty()) {
-        ALOGE("failed to find /misc partition.");
-        return -1;
-    }
-    android::base::unique_fd fd(open(misc_blk_device.c_str(), O_RDONLY));
-    if (fd == -1) {
-        ALOGE("failed to open %s: %s", misc_blk_device.c_str(), strerror(errno));
-        return -1;
-    }
-    if (!android::base::ReadFully(fd, out, sizeof(*out))) {
-        ALOGE("failed to read %s: %s", misc_blk_device.c_str(), strerror(errno));
-        return -1;
-    }
-    return 0;
-}
-
 static int write_bootloader_message(const bootloader_message* in) {
     std::string misc_blk_device = get_misc_blk_device();
     if (misc_blk_device.empty()) {
@@ -530,24 +512,12 @@ static int setup_bcb(const std::string& command_file, const std::string& status_
     return 0;
 }
 
-static int read_bcb() {
-    bootloader_message boot;
-    if (read_bootloader_message(&boot) != 0) {
-        ALOGE("failed to get bootloader message");
-        return 1;
-    }
-    printf("bcb command: %s\n", boot.command);
-    printf("bcb recovery:\n%s\n", boot.recovery);
-    return 0;
-}
-
 static void usage(const char* exename) {
     fprintf(stderr, "Usage of %s:\n", exename);
     fprintf(stderr, "%s [<package_path> <map_file>]  Uncrypt ota package.\n", exename);
     fprintf(stderr, "%s --reboot  Clear BCB data and reboot to recovery.\n", exename);
     fprintf(stderr, "%s --clear-bcb  Clear BCB data in misc partition.\n", exename);
     fprintf(stderr, "%s --setup-bcb  Setup BCB data by command file.\n", exename);
-    fprintf(stderr, "%s --read-bcb   Read BCB data from misc partition.\n", exename);
 }
 
 int main(int argc, char** argv) {
@@ -558,8 +528,6 @@ int main(int argc, char** argv) {
             return clear_bcb(STATUS_FILE);
         } else if (strcmp(argv[1], "--setup-bcb") == 0) {
             return setup_bcb(COMMAND_FILE, STATUS_FILE);
-        } else if (strcmp(argv[1], "--read-bcb") == 0) {
-            return read_bcb();
         }
     } else if (argc == 1 || argc == 3) {
         const char* input_path = nullptr;
