@@ -328,7 +328,7 @@
 		<string name="utcp5">(UTC +5) Yekaterinburg, Islamabad</string>
 		<string name="utcp6">(UTC +6) Almaty, Dhaka, Colombo</string>
 		<string name="utcp7">(UTC +7) Bangkok, Hanoi, Jakarta</string>
-		<string name="utcp8">(UTC +8) Beijing, Singapore, Hong Kong</string>
+		<string name="utcp8">(UTC +8) Beijing, Singapore, Hong Kong, Irkutsk</string>
 		<string name="utcp9">(UTC +9) Tokyo, Seoul, Yakutsk</string>
 		<string name="utcp10">(UTC +10) Eastern Australia, Guam</string>
 		<string name="utcp11">(UTC +11) Vladivostok, Solomon Islands</string>
