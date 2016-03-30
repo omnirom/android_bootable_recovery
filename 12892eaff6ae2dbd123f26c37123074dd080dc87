@@ -56,6 +56,75 @@
       "revId": "12892eaff6ae2dbd123f26c37123074dd080dc87",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_c14c4ea7",
+        "filename": "gui/theme/common/portrait.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 390,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-03-30T09:20:08Z",
+      "side": 1,
+      "message": "should be row13a_y",
+      "range": {
+        "startLine": 390,
+        "startChar": 58,
+        "endLine": 390,
+        "endChar": 64
+      },
+      "revId": "12892eaff6ae2dbd123f26c37123074dd080dc87",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_a151423a",
+        "filename": "gui/theme/common/portrait.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-03-30T09:20:08Z",
+      "side": 1,
+      "message": "should be row15_y",
+      "range": {
+        "startLine": 396,
+        "startChar": 32,
+        "endLine": 396,
+        "endChar": 39
+      },
+      "revId": "12892eaff6ae2dbd123f26c37123074dd080dc87",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_e17f4aa3",
+        "filename": "gui/theme/common/watch.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 529,
+      "author": {
+        "id": 1001268
+      },
+      "writtenOn": "2016-03-30T09:20:08Z",
+      "side": 1,
+      "message": "must be row4_y. checkboxes have a \"150% grid line height\". so the placement is: 1, 2a, 4, 5a etc.\n\nI can make this options a list after this patch has been merged, makes future additions easier.",
+      "range": {
+        "startLine": 529,
+        "startChar": 60,
+        "endLine": 529,
+        "endChar": 66
+      },
+      "revId": "12892eaff6ae2dbd123f26c37123074dd080dc87",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
