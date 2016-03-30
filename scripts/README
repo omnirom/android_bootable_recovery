@@ -25,3 +25,17 @@ Usage:
 
 python compare_xml.py -o target.xml
 
+
+
+language_helper.py
+
+This script reads the English and supplied other language files and
+compares the 2 and reorders and rewrites the other language to a new
+XML file such that all the strings are placed in the same order as
+the English file. It will place commented out string lines for items
+that are not present in the new file and will not include any strings
+in the new file that are no longer present in the English source.
+There is also a version tag that may be compared if present between
+the English and other language in case a translation string changes.
+
+python language_helper.py -o ../gui/theme/common/languages/es.xml
