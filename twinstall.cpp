@@ -1,5 +1,5 @@
 /*
-	Copyright 2012 bigbiff/Dees_Troy TeamWin
+	Copyright 2012 to 2016 bigbiff/Dees_Troy TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -41,6 +41,7 @@
 #include "twrpDigest.hpp"
 #include "twrp-functions.hpp"
 #include "gui/gui.hpp"
+#include "gui/pages.hpp"
 extern "C" {
 	#include "gui/gui.h"
 	#include "legacy_property_service.h"
@@ -93,6 +94,36 @@ static int switch_to_new_properties()
 	return 0;
 }
 
+static int Install_Theme(const char* path, ZipArchive *Zip) {
+#ifdef TW_OEM_BUILD // We don't do custom themes in OEM builds
+	mzCloseZipArchive(Zip);
+	return INSTALL_CORRUPT;
+#else
+	const ZipEntry* xml_location = mzFindZipEntry(Zip, "ui.xml");
+
+	mzCloseZipArchive(Zip);
+	if (xml_location == NULL) {
+		return INSTALL_CORRUPT;
+	}
+	if (!PartitionManager.Mount_Settings_Storage(true))
+		return INSTALL_ERROR;
+	string theme_path = DataManager::GetSettingsStoragePath();
+	theme_path += "/TWRP/theme";
+	if (!TWFunc::Path_Exists(theme_path)) {
+		if (!TWFunc::Recursive_Mkdir(theme_path)) {
+			return INSTALL_ERROR;
+		}
+	}
+	theme_path += "/ui.zip";
+	if (TWFunc::copy_file(path, theme_path, 0644) != 0) {
+		return INSTALL_ERROR;
+	}
+	LOGINFO("Installing custom theme '%s' to '%s'\n", path, theme_path.c_str());
+	PageManager::RequestReload();
+	return INSTALL_SUCCESS;
+#endif
+}
+
 static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache) {
 	const ZipEntry* binary_location = mzFindZipEntry(Zip, ASSUMED_UPDATE_BINARY_NAME);
 	string Temp_Binary = "/tmp/updater"; // Note: AOSP names it /tmp/update_binary (yes, with "_")
@@ -102,8 +133,6 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	FILE* child_data;
 
 	if (binary_location == NULL) {
-		mzCloseZipArchive(Zip);
-		gui_msg(Msg(msg::kError, "no_updater_binary=Could not find '{1}' in the zip file.")(ASSUMED_UPDATE_BINARY_NAME));
 		return INSTALL_CORRUPT;
 	}
 
@@ -300,6 +329,12 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 		return INSTALL_CORRUPT;
 	}
 	ret_val = Run_Update_Binary(path, &Zip, wipe_cache);
+	if (ret_val == INSTALL_CORRUPT) {
+		// If no updater binary is found, check for ui.xml
+		ret_val = Install_Theme(path, &Zip);
+		if (ret_val == INSTALL_CORRUPT)
+			gui_msg(Msg(msg::kError, "no_updater_binary=Could not find '{1}' in the zip file.")(ASSUMED_UPDATE_BINARY_NAME));
+	}
 	sysReleaseMap(&map);
 	return ret_val;
 }
