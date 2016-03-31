@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="recovery_installing" msgid="7864047928003865598">"سسٹم اپ ڈیٹ انسٹال ہو رہا ہے…"</string>
-    <string name="recovery_erasing" msgid="4612809744968710197">"صاف کر رہا ہے…"</string>
-    <string name="recovery_no_command" msgid="1915703879031023455">"کوئی کمانڈ نہیں ہے۔"</string>
-    <string name="recovery_error" msgid="4550265746256727080">"خرابی!"</string>
+    <string name="recovery_installing" msgid="4995089002339765600">"سسٹم اپ ڈیٹ انسٹال ہو رہی ہے…"</string>
+    <string name="recovery_erasing" msgid="3454811999717520920">"مٹایا جا رہا ہے…"</string>
+    <string name="recovery_no_command" msgid="3005798864326873414">"کوئی کمانڈ نہیں ہے۔"</string>
+    <string name="recovery_error" msgid="5748178989622716736">"خرابی!"</string>
+    <!-- no translation found for recovery_installing_security (241961948312007086) -->
+    <skip />
 </resources>
