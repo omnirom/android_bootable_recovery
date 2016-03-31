@@ -82,6 +82,7 @@
 		<string name="file">Plik:</string>
 		<string name="zip_sig_chk">Weryfikacja sygnatury pliku zip</string>
 		<string name="inject_twrp_chk">Zaszczep TWRP po instalacji</string>
+		<string name="install_reboot_chk">Uruchom ponownie po instalacji</string>
 		<string name="options_hdr">Opcje</string>
 		<string name="confirm_flash_hdr">Potwierdź instalację</string>
 		<string name="zip_queue">Kolejka:</string>
@@ -666,5 +667,6 @@
 		<string name="change_fs_err">Niepowodzenie zmiany systemu plików.</string>
 		<string name="theme_ver_err">Wersja niestandardowego motywu nie zgadza się z wersją TWRP. Użyto domyślnego motywu.</string>
 		<string name="up_a_level">(Cofnij)</string>
+		<string name="install_reboot">Ponowne uruchomienie za 5 sekund</string>
 	</resources>
 </language>
