@@ -82,6 +82,7 @@
 		<string name="file">Datei:</string>
 		<string name="zip_sig_chk">ZIP-Signaturprüfung</string>
 		<string name="inject_twrp_chk">TWRP nach der Installation injizieren</string>
+		<string name="install_reboot_chk">Automatischer Neustart nach Installation</string>
 		<string name="options_hdr">Einstellungen</string>
 		<string name="confirm_flash_hdr">Flashvorgang bestätigen</string>
 		<string name="zip_queue">Warteschlange:</string>
@@ -665,6 +666,7 @@
 		<string name="cancel_sideload">ADB Sideload wird abgebrochen...</string>
 		<string name="change_fs_err">Fehler beim Ändern des Dateisystems.</string>
 		<string name="theme_ver_err">Theme-Version inkompatibel zu TWRP-Version. Standard-Theme wird verwendet.</string>
+		<string name="install_reboot">Neustart in 5 Sekunden</string>
 		<string name="up_a_level">(Übergeordneter Ordner)</string>
 	</resources>
 </language>
