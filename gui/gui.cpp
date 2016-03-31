@@ -765,7 +765,7 @@ extern "C" int gui_loadResources(void)
 			check = 1;
 	}
 
-	if (check == 0 && PageManager::LoadPackage("TWRP", "/script/ui.xml", "main"))
+	if (check == 0)
 	{
 		std::string theme_path;
 
