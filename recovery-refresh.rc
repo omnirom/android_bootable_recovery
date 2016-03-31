@@ -1,0 +1,2 @@
+on post-fs
+    exec - system log -- /system/bin/recovery-refresh
