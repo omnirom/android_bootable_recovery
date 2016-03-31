@@ -896,6 +896,10 @@ void GUITerminal::InitAndResize()
 
 void GUITerminal::SetPageFocus(int inFocus)
 {
-	if (inFocus && isConditionTrue())
+	if (inFocus && isConditionTrue()) {
+		// TODO: grab focus correctly, this hack grabs focus and insists that the terminal be the focus regardless of other elements
+		// It's highly unlikely that there will be any other visible input elements on the page anyway...
+		SetInputFocus(1);
 		InitAndResize();
+	}
 }
