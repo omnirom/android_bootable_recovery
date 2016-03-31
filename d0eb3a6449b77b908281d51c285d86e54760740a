@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_135ded17",
+        "filename": "partition.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2033,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-03-31T14:48:56Z",
+      "side": 1,
+      "message": "If we force the backup file system to ext4 and the partition is currently using vfat, this would result in restoring as ext4. I\u0027m not sure if this is a huge concern as it is unlikely that we\u0027ll change the file system of a partition like \"modem\". However, I think with the way the change is right now, Backup_File_System isn\u0027t being updated after initial boot, which may have some unintended consequences even for partitions that do not have a forced backup file system.",
+      "revId": "d0eb3a6449b77b908281d51c285d86e54760740a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
