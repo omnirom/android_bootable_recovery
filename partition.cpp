@@ -1676,6 +1676,7 @@ bool TWPartition::Wipe_Encryption() {
 void TWPartition::Check_FS_Type() {
 	const char* type;
 	blkid_probe pr;
+	int status;
 
 	if (Fstab_File_System == "yaffs2" || Fstab_File_System == "mtd" || Fstab_File_System == "bml" || Ignore_Blkid)
 		return; // Running blkid on some mtd devices causes a massive crash or needs to be skipped
@@ -1685,7 +1686,8 @@ void TWPartition::Check_FS_Type() {
 		return;
 
 	pr = blkid_new_probe_from_filename(Actual_Block_Device.c_str());
-	if (blkid_do_fullprobe(pr)) {
+	status = blkid_do_fullprobe(pr);
+	if (status) {
 		blkid_free_probe(pr);
 		LOGINFO("Can't probe device %s\n", Actual_Block_Device.c_str());
 		return;
