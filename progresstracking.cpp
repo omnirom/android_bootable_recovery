@@ -83,7 +83,7 @@ void ProgressTracking::UpdateDisplayDetails(const bool force) {
 			return;
 	}
 	clock_gettime(CLOCK_MONOTONIC, &last_update);
-	double display_percent, progress_percent;
+	double display_percent = 0.0, progress_percent;
 	string size_prog = gui_lookup("size_progress", "%lluMB of %lluMB, %i%%");
 	char size_progress[1024];
 
