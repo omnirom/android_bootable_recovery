@@ -820,7 +820,7 @@ void DataManager::SetDefaultValues()
 	*/
 
 	// doesn't seem to be used but add it back anyway
-	mConstValues.insert(make_pair("tw_device_name", TARGET_DEVICE));
+	mConst.SetValue("tw_device_name", TARGET_DEVICE);
 
 #ifdef TW_MROM_REC_VERSION_STR
 	// mrom build version needed by splash (parse it just like in multirom.cpp)
@@ -843,7 +843,6 @@ void DataManager::SetDefaultValues()
 	}
 #endif
 
-	// mValues.insert(make_pair(TW_AUTO_INJECT_MROM, make_pair("1", 1))); // pre-DataManager updates
 	mPersist.SetValue(TW_AUTO_INJECT_MROM, "1");
 #endif //TARGET_RECOVERY_IS_MULTIROM
 	mPersist.SetValue("tw_mount_system_ro", "2");
