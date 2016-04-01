@@ -82,6 +82,7 @@
 		<string name="file">File:</string>
 		<string name="zip_sig_chk">Verifica della firma del file Zip</string>
 		<string name="inject_twrp_chk">Esegui TWRP Inject dopo l'installazione</string>
+		<string name="install_reboot_chk">Riavvia dopo che l'installazione è completata</string>
 		<string name="options_hdr">Opzioni</string>
 		<string name="confirm_flash_hdr">Conferma installazione</string>
 		<string name="zip_queue">Coda:</string>
@@ -666,5 +667,6 @@
 		<string name="change_fs_err">Errore nella modifica del filesystem.</string>
 		<string name="theme_ver_err">La versione del tema personalizzato non corrisponde alla versione di TWRP. Sarà utilizzato il tema predefinito.</string>
 		<string name="up_a_level">(Livello superiore)</string>
+		<string name="install_reboot">Riavvio in 5 secondi</string>
 	</resources>
 </language>
