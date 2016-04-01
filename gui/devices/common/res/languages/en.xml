@@ -226,5 +226,6 @@
 		<string name="cancel_sideload">Cancelling ADB sideload...</string>
 		<string name="change_fs_err">Error changing file system.</string>
 		<string name="theme_ver_err">Custom theme version does not match TWRP version. Using stock theme.</string>
+		<string name="install_reboot">Rebooting in 5 seconds</string>
 	</resources>
 </language>

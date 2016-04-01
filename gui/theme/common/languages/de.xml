@@ -82,6 +82,7 @@
 		<string name="file">Datei:</string>
 		<string name="zip_sig_chk">ZIP-Signaturprüfung</string>
 		<string name="inject_twrp_chk">TWRP nach der Installation injizieren</string>
+		<string name="install_reboot_chk">Automatischer Neustart nach Installation</string>
 		<string name="options_hdr">Einstellungen</string>
 		<string name="confirm_flash_hdr">Flashvorgang bestätigen</string>
 		<string name="zip_queue">Warteschlange:</string>
@@ -291,7 +292,7 @@
 		<string name="settings_gen_hdr">Allgemein</string>
 		<string name="settings_gen_s_hdr">Allgemein</string>
 		<string name="settings_gen_btn">Allgemein</string>
-		<string name="use_rmrf_chk">rm -rf anstatt formatieren verwenden</string>
+		<string name="use_rmrf_chk">rekursiv löschen anstatt formatieren</string>
 		<string name="use24clock_chk">24-Stunden-Format</string>
 		<string name="rev_navbar_chk">Navigationsleiste umkehren</string>
 		<string name="simact_chk">Benutzeraktionen für Design-Test simulieren</string>
@@ -609,7 +610,7 @@
 		<string name="done_ors">Skript wurde verarbeitet</string>
 		<string name="injecttwrp">Injiziere TWRP in das Boot-Image...</string>
 		<string name="zip_err">Fehler beim Installieren von ZIP '{1}'</string>
-		<string name="installing_zip">Installiere Zip: %tw_file%</string>
+		<string name="installing_zip">Installiere Zip '{1}'</string>
 		<string name="select_backup_opt">Setze Sicherungs-Optionen:</string>
 		<string name="compression_on">Komprimierung ist aktiviert</string>
 		<string name="md5_off">MD5-Generierung ist deaktiviert</string>
@@ -665,6 +666,7 @@
 		<string name="cancel_sideload">ADB Sideload wird abgebrochen...</string>
 		<string name="change_fs_err">Fehler beim Ändern des Dateisystems.</string>
 		<string name="theme_ver_err">Theme-Version inkompatibel zu TWRP-Version. Standard-Theme wird verwendet.</string>
+		<string name="install_reboot">Neustart in 5 Sekunden</string>
 		<string name="up_a_level">(Übergeordneter Ordner)</string>
 	</resources>
 </language>

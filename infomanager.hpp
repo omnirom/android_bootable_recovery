@@ -28,29 +28,36 @@ using namespace std;
 class InfoManager
 {
 public:
-	InfoManager(const string filename);
+	InfoManager();
+	explicit InfoManager(const string& filename);
 	virtual ~InfoManager();
+	void SetFile(const string& filename);
+	void SetFileVersion(int version);
+	void SetConst();
+	void Clear();
 	int LoadValues();
 	int SaveValues();
 
 	// Core get routines
-	int GetValue(const string varName, string& value);
-	int GetValue(const string varName, int& value);
-	int GetValue(const string varName, float& value);
-	unsigned long long GetValue(const string varName, unsigned long long& value);
+	int GetValue(const string& varName, string& value);
+	int GetValue(const string& varName, int& value);
+	int GetValue(const string& varName, float& value);
+	unsigned long long GetValue(const string& varName, unsigned long long& value);
 
-	string GetStrValue(const string varName);
-	int GetIntValue(const string varName);
+	string GetStrValue(const string& varName);
+	int GetIntValue(const string& varName);
 
 	// Core set routines
-	int SetValue(const string varName, string value);
-	int SetValue(const string varName, int value);
-	int SetValue(const string varName, float value);
-	int SetValue(const string varName, unsigned long long value);
+	int SetValue(const string& varName, const string& value);
+	int SetValue(const string& varName, const int value);
+	int SetValue(const string& varName, const float value);
+	int SetValue(const string& varName, const unsigned long long& value);
 
 private:
 	string File;
 	map<string, string> mValues;
+	int file_version;
+	bool is_const;
 
 };
 

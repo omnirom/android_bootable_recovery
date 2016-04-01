@@ -38,6 +38,7 @@
 #include <algorithm>
 #include "twrp-functions.hpp"
 #include "twcommon.h"
+#include "gui/gui.hpp"
 #ifndef BUILD_TWRPTAR_MAIN
 #include "data.hpp"
 #include "partitions.hpp"
@@ -45,7 +46,6 @@
 #include "bootloader.h"
 #include "cutils/properties.h"
 #include "cutils/android_reboot.h"
-#include "gui/gui.hpp"
 #include <sys/reboot.h>
 #endif // ndef BUILD_TWRPTAR_MAIN
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
@@ -314,7 +314,7 @@ int TWFunc::Try_Decrypting_File(string fn, string password) {
 #endif
 }
 
-unsigned long TWFunc::Get_File_Size(string Path) {
+unsigned long TWFunc::Get_File_Size(const string& Path) {
 	struct stat st;
 
 	if (stat(Path.c_str(), &st) != 0)
@@ -369,6 +369,25 @@ vector<string> TWFunc::split_string(const string &in, char del, bool skip_empty)
 		}
 	}
 	return res;
+}
+
+timespec TWFunc::timespec_diff(timespec& start, timespec& end)
+{
+	timespec temp;
+	if ((end.tv_nsec-start.tv_nsec)<0) {
+		temp.tv_sec = end.tv_sec-start.tv_sec-1;
+		temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+	} else {
+		temp.tv_sec = end.tv_sec-start.tv_sec;
+		temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+	}
+	return temp;
+}
+
+int32_t TWFunc::timespec_diff_ms(timespec& start, timespec& end)
+{
+	return ((end.tv_sec * 1000) + end.tv_nsec/1000000) -
+			((start.tv_sec * 1000) + start.tv_nsec/1000000);
 }
 
 #ifndef BUILD_TWRPTAR_MAIN
@@ -548,9 +567,10 @@ void TWFunc::Update_Intent_File(string Intent) {
 // reboot: Reboot the system. Return -1 on error, no return on success
 int TWFunc::tw_reboot(RebootCommand command)
 {
+	DataManager::Flush();
+	Update_Log_File();
 	// Always force a sync before we reboot
 	sync();
-	Update_Log_File();
 
 	switch (command) {
 		case rb_current:
@@ -761,25 +781,6 @@ int TWFunc::write_file(string fn, const string& line, const char *mode) {
 	return -1;
 }
 #endif //TARGET_RECOVERY_IS_MULTIROM
-
-timespec TWFunc::timespec_diff(timespec& start, timespec& end)
-{
-	timespec temp;
-	if ((end.tv_nsec-start.tv_nsec)<0) {
-		temp.tv_sec = end.tv_sec-start.tv_sec-1;
-		temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
-	} else {
-		temp.tv_sec = end.tv_sec-start.tv_sec;
-		temp.tv_nsec = end.tv_nsec-start.tv_nsec;
-	}
-	return temp;
-}
-
-int32_t TWFunc::timespec_diff_ms(timespec& start, timespec& end)
-{
-	return ((end.tv_sec * 1000) + end.tv_nsec/1000000) -
-			((start.tv_sec * 1000) + start.tv_nsec/1000000);
-}
 
 bool TWFunc::Install_SuperSU(void) {
 	if (!PartitionManager.Mount_By_Path("/system", true))

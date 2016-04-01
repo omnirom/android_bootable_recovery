@@ -1,6 +1,6 @@
 
 /*
-	Copyright 2013 TeamWin
+	Copyright 2013 to 2016 bigbiff/Dees_Troy TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -42,10 +42,11 @@ extern "C" {
 #include "twcommon.h"
 #include "variables.h"
 #include "twrp-functions.hpp"
+#include "gui/gui.hpp"
+#include "progresstracking.hpp"
 #ifndef BUILD_TWRPTAR_MAIN
 #include "data.hpp"
 #include "infomanager.hpp"
-#include "gui/gui.hpp"
 extern "C" {
 	#include "set_metadata.h"
 }
@@ -90,7 +91,7 @@ void twrpTar::Signal_Kill(int signum) {
 	_exit(255);
 }
 
-int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigned long long *other_backups_size, pid_t &fork_pid) {
+int twrpTar::createTarFork(ProgressTracking *progress, pid_t &fork_pid) {
 	int status = 0;
 	pid_t rc_pid, tar_fork_pid;
 	int progress_pipe[2], ret;
@@ -389,15 +390,8 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 		}
 	} else {
 		// Parent side
-		unsigned long long fs, size_backup, files_backup, total_backup_size;
+		unsigned long long fs, size_backup = 0, files_backup = 0, file_count = 0;
 		int first_data = 0;
-		double display_percent, progress_percent;
-		char file_progress[1024];
-		char size_progress[1024];
-		files_backup = 0;
-		size_backup = 0;
-		string file_prog = gui_lookup("file_progress", "%llu of %llu files, %i%%");
-		string size_prog = gui_lookup("size_progress", "%lluMB of %lluMB, %i%%");
 
 		fork_pid = tar_fork_pid;
 
@@ -413,27 +407,24 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 				first_data = 1;
 			} else if (first_data == 1) {
 				// Second incoming data is total size
-				total_backup_size = fs;
 				first_data = 2;
+				progress->SetSizeCount(fs, file_count);
 			} else {
-				files_backup++;
-				size_backup += fs;
-				display_percent = (double)(files_backup) / (double)(file_count) * 100;
-				sprintf(file_progress, file_prog.c_str(), files_backup, file_count, (int)(display_percent));
-#ifndef BUILD_TWRPTAR_MAIN
-				DataManager::SetValue("tw_file_progress", file_progress);
-				display_percent = (double)(size_backup + *other_backups_size) / (double)(*overall_size) * 100;
-				sprintf(size_progress, size_prog.c_str(), (size_backup + *other_backups_size) / 1048576, *overall_size / 1048576, (int)(display_percent));
-				DataManager::SetValue("tw_size_progress", size_progress);
-				progress_percent = (display_percent / 100);
-				DataManager::SetProgress((float)(progress_percent));
-#endif //ndef BUILD_TWRPTAR_MAIN
+				if (fs > 0) {
+					size_backup += fs;
+					progress->UpdateSize(size_backup);
+				} else { // fs == 0 increments the file counter
+					files_backup++;
+					progress->UpdateSizeCount(size_backup, files_backup);
+				}
 			}
 		}
 		close(progress_pipe[0]);
 #ifndef BUILD_TWRPTAR_MAIN
 		DataManager::SetValue("tw_file_progress", "");
 		DataManager::SetValue("tw_size_progress", "");
+		progress->DisplayFileCount(false);
+		progress->UpdateDisplayDetails(true);
 
 		InfoManager backup_info(backup_folder + partition_name + ".info");
 		backup_info.SetValue("backup_size", size_backup);
@@ -454,7 +445,7 @@ int twrpTar::createTarFork(const unsigned long long *overall_size, const unsigne
 	return 0;
 }
 
-int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned long long *other_backups_size) {
+int twrpTar::extractTarFork(ProgressTracking *progress) {
 	int status = 0;
 	pid_t rc_pid, tar_fork_pid;
 	int progress_pipe[2], ret;
@@ -597,11 +588,7 @@ int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned lon
 		}
 		else // parent process
 		{
-			unsigned long long fs, size_backup;
-			double display_percent, progress_percent;
-			char size_progress[1024];
-			size_backup = 0;
-			string size_prog = gui_lookup("size_progress", "%lluMB of %lluMB, %i%%");
+			unsigned long long fs, size_backup = 0;
 
 			// Parent closes output side
 			close(progress_pipe[1]);
@@ -609,19 +596,10 @@ int twrpTar::extractTarFork(const unsigned long long *overall_size, unsigned lon
 			// Read progress data from children
 			while (read(progress_pipe[0], &fs, sizeof(fs)) > 0) {
 				size_backup += fs;
-				display_percent = (double)(size_backup + *other_backups_size) / (double)(*overall_size) * 100;
-				sprintf(size_progress, size_prog.c_str(), (size_backup + *other_backups_size) / 1048576, *overall_size / 1048576, (int)(display_percent));
-				progress_percent = (display_percent / 100);
-#ifndef BUILD_TWRPTAR_MAIN
-				DataManager::SetValue("tw_size_progress", size_progress);
-				DataManager::SetProgress((float)(progress_percent));
-#endif //ndef BUILD_TWRPTAR_MAIN
+				progress->UpdateSize(size_backup);
 			}
 			close(progress_pipe[0]);
-#ifndef BUILD_TWRPTAR_MAIN
-			DataManager::SetValue("tw_file_progress", "");
-#endif //ndef BUILD_TWRPTAR_MAIN
-			*other_backups_size += size_backup;
+			progress->UpdateDisplayDetails(true);
 
 			if (TWFunc::Wait_For_Child(tar_fork_pid, &status, "extractTarFork()") != 0)
 				return -1;
@@ -786,6 +764,7 @@ int twrpTar::tarList(std::vector<TarListStruct> *TarList, unsigned thread_id) {
 					Archive_Current_Size = 0;
 				}
 				Archive_Current_Size += fs;
+				fs = 0; // Sending a 0 size to the pipe tells it to increment the file counter
 				write(progress_pipe_fd, &fs, sizeof(fs));
 			}
 			LOGINFO("addFile '%s' including root: %i\n", buf, include_root_dir);
@@ -862,7 +841,6 @@ int twrpTar::addFilesToExistingTar(vector <string> files, string fn) {
 int twrpTar::createTar() {
 	char* charTarFile = (char*) tarfn.c_str();
 	char* charRootDir = (char*) tardir.c_str();
-	static tartype_t type = { open, close, read, write_tar };
 
 	if (use_encryption && use_compression) {
 		// Compressed and encrypted
@@ -945,7 +923,9 @@ int twrpTar::createTar() {
 				close(pipes[2]);
 				close(pipes[3]);
 				fd = pipes[1];
-				if(tar_fdopen(&t, fd, charRootDir, NULL, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TAR_GNU | TAR_STORE_SELINUX) != 0) {
+				init_libtar_no_buffer(progress_pipe_fd);
+				tar_type = { open, close, read, write_tar_no_buffer };
+				if(tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TAR_GNU | TAR_STORE_SELINUX) != 0) {
 					close(fd);
 					LOGINFO("tar_fdopen failed\n");
 					gui_err("backup_error=Error creating backup.");
@@ -997,7 +977,9 @@ int twrpTar::createTar() {
 			// Parent
 			close(pigzfd[0]); // close parent input
 			fd = pigzfd[1];   // copy parent output
-			if(tar_fdopen(&t, fd, charRootDir, NULL, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TAR_GNU | TAR_STORE_SELINUX) != 0) {
+			init_libtar_no_buffer(progress_pipe_fd);
+			tar_type = { open, close, read, write_tar_no_buffer };
+			if(tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TAR_GNU | TAR_STORE_SELINUX) != 0) {
 				close(fd);
 				LOGINFO("tar_fdopen failed\n");
 				gui_err("backup_error=Error creating backup.");
@@ -1045,7 +1027,9 @@ int twrpTar::createTar() {
 			// Parent
 			close(oaesfd[0]); // close parent input
 			fd = oaesfd[1];   // copy parent output
-			if(tar_fdopen(&t, fd, charRootDir, NULL, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TAR_GNU | TAR_STORE_SELINUX) != 0) {
+			init_libtar_no_buffer(progress_pipe_fd);
+			tar_type = { open, close, read, write_tar_no_buffer };
+			if(tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TAR_GNU | TAR_STORE_SELINUX) != 0) {
 				close(fd);
 				LOGINFO("tar_fdopen failed\n");
 				gui_err("backup_error=Error creating backup.");
@@ -1055,8 +1039,9 @@ int twrpTar::createTar() {
 		}
 	} else {
 		// Not compressed or encrypted
-		init_libtar_buffer(0);
-		if (tar_open(&t, charTarFile, &type, O_WRONLY | O_CREAT | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TAR_GNU | TAR_STORE_SELINUX) == -1) {
+		init_libtar_buffer(0, progress_pipe_fd);
+		tar_type = { open, close, read, write_tar };
+		if (tar_open(&t, charTarFile, &tar_type, O_WRONLY | O_CREAT | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TAR_GNU | TAR_STORE_SELINUX) == -1) {
 			LOGINFO("tar_open error opening '%s'\n", tarfn.c_str());
 			gui_err("backup_error=Error creating backup.");
 			return -1;
@@ -1475,4 +1460,8 @@ unsigned long long twrpTar::uncompressedSize(string filename, int *archive_type)
 
 extern "C" ssize_t write_tar(int fd, const void *buffer, size_t size) {
 	return (ssize_t) write_libtar_buffer(fd, buffer, size);
+}
+
+extern "C" ssize_t write_tar_no_buffer(int fd, const void *buffer, size_t size) {
+	return (ssize_t) write_libtar_no_buffer(fd, buffer, size);
 }

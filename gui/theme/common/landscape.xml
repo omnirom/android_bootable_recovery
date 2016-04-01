@@ -440,6 +440,12 @@
 				<data variable="tw_inject_after_zip"/>
 			</checkbox>
 
+			<checkbox>
+				<placement x="%col1_x_right%" y="%row12_y%" />
+				<text>{@install_reboot_chk=Reboot after installation is complete}</text>
+				<data variable="tw_install_reboot" />
+			</checkbox>
+
 			<button style="main_button_half_width">
 				<placement x="%col1_x_left%" y="%row15a_y%"/>
 				<text>{@zip_add_btn=Add more Zips}</text>
