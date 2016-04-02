@@ -23,6 +23,9 @@
 #undef NDEBUG   // do this after including Log.h
 #include <assert.h>
 
+#include <selinux/label.h>
+#include <selinux/selinux.h>
+
 #define SORT_ENTRIES 1
 
 /*
