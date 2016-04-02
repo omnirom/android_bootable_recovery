@@ -20,9 +20,6 @@
 #include <stdio.h>
 #include "minzip/Zip.h"
 
-#include <selinux/selinux.h>
-#include <selinux/label.h>
-
 typedef struct {
     FILE* cmd_pipe;
     ZipArchive* package_zip;
@@ -32,6 +29,7 @@ typedef struct {
     size_t package_zip_len;
 } UpdaterInfo;
 
+struct selabel_handle;
 extern struct selabel_handle *sehandle;
 
 #endif
