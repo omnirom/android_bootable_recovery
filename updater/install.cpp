@@ -27,7 +27,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
-#include <selinux/selinux.h>
 #include <ftw.h>
 #include <sys/capability.h>
 #include <sys/xattr.h>
@@ -40,6 +39,8 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <android-base/stringprintf.h>
+#include <selinux/label.h>
+#include <selinux/selinux.h>
 
 #include "bootloader.h"
 #include "applypatch/applypatch.h"

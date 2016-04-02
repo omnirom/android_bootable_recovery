@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "DirUtil.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -26,7 +28,8 @@
 
 #include <string>
 
-#include "DirUtil.h"
+#include <selinux/label.h>
+#include <selinux/selinux.h>
 
 typedef enum { DMISSING, DDIR, DILLEGAL } DirStatus;
 
