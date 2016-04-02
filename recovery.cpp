@@ -41,10 +41,11 @@
 #include <android-base/stringprintf.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
+#include <healthd/BatteryMonitor.h>
 #include <log/logger.h> /* Android Log packet format */
 #include <private/android_logger.h> /* private pmsg functions */
-
-#include <healthd/BatteryMonitor.h>
+#include <selinux/label.h>
+#include <selinux/selinux.h>
 
 #include "adb_install.h"
 #include "bootloader.h"

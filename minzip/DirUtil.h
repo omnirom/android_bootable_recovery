@@ -24,8 +24,7 @@
 extern "C" {
 #endif
 
-#include <selinux/selinux.h>
-#include <selinux/label.h>
+struct selabel_handle;
 
 /* Like "mkdir -p", try to guarantee that all directories
  * specified in path are present, creating as many directories
