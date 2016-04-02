@@ -77,10 +77,6 @@
 
 #define TW_BACKUPS_FOLDER_VAR       "tw_backups_folder"
 
-#define TW_SP1_PARTITION_NAME_VAR   "tw_sp1_name"
-#define TW_SP2_PARTITION_NAME_VAR   "tw_sp2_name"
-#define TW_SP3_PARTITION_NAME_VAR   "tw_sp3_name"
-
 #define TW_SDEXT_SIZE               "tw_sdext_size"
 #define TW_SWAP_SIZE                "tw_swap_size"
 #define TW_SDPART_FILE_SYSTEM       "tw_sdpart_file_system"
