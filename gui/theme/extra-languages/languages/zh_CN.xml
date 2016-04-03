@@ -95,7 +95,7 @@
 		<string name="successful">成功</string>
 		<string name="install_failed">安装失败</string>
 		<string name="install_successful">安装完成</string>
-		<string name="wipe_cache_dalvik_btn">清除 cache/dalvik (缓存)</string>
+		<string name="wipe_cache_dalvik_btn">清除 cache/dalvik</string>
 		<string name="reboot_system_btn">重启系统</string>
 		<string name="install_sel_target">选择目标分区</string>
 		<string name="flash_image_select">选择要刷入镜像的分区：</string>
@@ -258,7 +258,7 @@
 		<string name="decrypt_data_btn">解密数据</string>
 		<string name="disable_mtp_btn">关闭 MTP 模式</string>
 		<string name="enable_mtp_btn">打开 MTP 模式</string>
-		<string name="mount_usb_storage_btn">挂载 USB 大容量存储器</string>
+		<string name="mount_usb_storage_btn">挂载 USB 存储</string>
 		<string name="usb_storage_hdr">USB 大容量存储器</string>
 		<string name="usb_stor_mnt1">USB 大容量存储已挂载</string>
 		<string name="usb_stor_mnt2">确保卸载前从您的电脑</string>
