@@ -1014,6 +1014,7 @@ protected:
 	std::string mLastValue;
 	std::string mVariable;
 	std::string mMask;
+	std::string mValue;
 	std::string displayValue;
 	COLOR mBackgroundColor;
 	COLOR mCursorColor;
