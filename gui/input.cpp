@@ -71,6 +71,7 @@ GUIInput::GUIInput(xml_node<>* node)
 	CursorWidth = 3;
 	ConvertStrToColor("black", &mBackgroundColor);
 	ConvertStrToColor("white", &mCursorColor);
+	mValue = "";
 	displayValue = "";
 
 	if (!node)
@@ -206,14 +207,16 @@ void GUIInput::UpdateTextWidth() {
 		return;
 	}
 
-	DataManager::GetValue(mVariable, displayValue);
 	if (HasMask) {
-		int index, string_size = displayValue.size();
+		int index, string_size = mValue.size();
 		string maskedValue;
 		for (index=0; index<string_size; index++)
 			maskedValue += mMask;
 		displayValue = maskedValue;
+	} else {
+		displayValue = mValue;
 	}
+
 	textWidth = gr_ttf_measureEx(displayValue.c_str(), fontResource);
 }
 
@@ -497,15 +500,15 @@ int GUIInput::NotifyCharInput(int key)
 	if (HasInputFocus) {
 		if (key == KEYBOARD_BACKSPACE) {
 			//Backspace
-			if (displayValue.size() > 0 && mCursorLocation != 0) {
+			if (mValue.size() > 0 && mCursorLocation != 0) {
 				if (mCursorLocation == -1) {
-					displayValue.resize(displayValue.size() - 1);
+					mValue.resize(mValue.size() - 1);
 				} else {
-					displayValue.erase(mCursorLocation - 1, 1);
+					mValue.erase(mCursorLocation - 1, 1);
 					mCursorLocation--;
 				}
 				isLocalChange = true;
-				DataManager::SetValue(mVariable, displayValue);
+				DataManager::SetValue(mVariable, mValue);
 				UpdateTextWidth();
 				HandleTextLocation(TW_INPUT_NO_UPDATE);
 				HandleCursorByText();
@@ -515,15 +518,15 @@ int GUIInput::NotifyCharInput(int key)
 			isLocalChange = true;
 			if (mCursorLocation == -1) {
 				DataManager::SetValue (mVariable, "");
-				displayValue = "";
+				mValue = "";
 				textWidth = 0;
 				mCursorLocation = -1;
 			} else {
-				displayValue.erase(0, mCursorLocation);
-				DataManager::SetValue(mVariable, displayValue);
-				UpdateTextWidth();
+				mValue.erase(0, mCursorLocation);
+				DataManager::SetValue(mVariable, mValue);
 				mCursorLocation = 0;
 			}
+			UpdateTextWidth();
 			cursorX = mRenderX;
 			scrollingX = 0;
 			mRendered = false;
@@ -536,24 +539,24 @@ int GUIInput::NotifyCharInput(int key)
 			if (HasDisabled && DisabledList.find((char)key) != string::npos) {
 				return 0;
 			}
-			if (MaxLen != 0 && displayValue.size() >= MaxLen) {
+			if (MaxLen != 0 && mValue.size() >= MaxLen) {
 				return 0;
 			}
 			if (mCursorLocation == -1) {
-				displayValue += key;
+				mValue += key;
 			} else {
-				displayValue.insert(mCursorLocation, 1, key);
+				mValue.insert(mCursorLocation, 1, key);
 				mCursorLocation++;
 			}
 			isLocalChange = true;
-			DataManager::SetValue(mVariable, displayValue);
+			DataManager::SetValue(mVariable, mValue);
 			UpdateTextWidth();
 			HandleTextLocation(TW_INPUT_NO_UPDATE);
 			HandleCursorByText();
 		} else if (key == KEYBOARD_ACTION) {
 			// Action
 			if (mAction) {
-				unsigned inputLen = displayValue.length();
+				unsigned inputLen = mValue.length();
 				if (inputLen < MinLen)
 					return 0;
 				else if (MaxLen != 0 && inputLen > MaxLen)
