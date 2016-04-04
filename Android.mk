@@ -23,7 +23,7 @@ LOCAL_CLANG := true
 LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 LOCAL_MODULE := libfusesideload
-LOCAL_STATIC_LIBRARIES := libcutils libc libmincrypt
+LOCAL_STATIC_LIBRARIES := libcutils libc libcrypto_static
 include $(BUILD_STATIC_LIBRARY)
 
 # recovery (static executable)
@@ -72,12 +72,13 @@ LOCAL_STATIC_LIBRARIES := \
     libminzip \
     libz \
     libmtdutils \
-    libmincrypt \
     libminadbd \
     libfusesideload \
     libminui \
     libpng \
     libfs_mgr \
+    libcrypto_utils_static \
+    libcrypto_static \
     libbase \
     libcutils \
     libutils \
@@ -138,6 +139,7 @@ LOCAL_SRC_FILES := \
     asn1_decoder.cpp \
     verifier.cpp \
     ui.cpp
+LOCAL_STATIC_LIBRARIES := libcrypto_utils_static libcrypto_static
 include $(BUILD_STATIC_LIBRARY)
 
 include $(LOCAL_PATH)/minui/Android.mk \

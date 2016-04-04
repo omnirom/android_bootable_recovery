@@ -34,6 +34,7 @@ LOCAL_STATIC_LIBRARIES += \
     libfec_rs \
     libext4_utils_static \
     libsquashfs_utils \
+    libcrypto_utils_static \
     libcrypto_static \
     libapplypatch \
     libbase \
