@@ -77,12 +77,13 @@
 		<string name="zip_queue_count_s">Файл %tw_zip_queue_count% из 10:</string>
 		<string name="zip_warn1">Эта операция может установить несовместимое ПО на</string>
 		<string name="zip_warn2">ваше устройство и сделать загрузку системы невозможной.</string>
-		<string name="zip_back_cancel">Нажмите назад для для отмены добавления этого zip.</string>
+		<string name="zip_back_cancel">Нажмите назад для отмены установки этого zip.</string>
 		<string name="zip_back_clear">Нажмите назад для очистки очереди.</string>
 		<string name="folder">Папка:</string>
 		<string name="file">Файл:</string>
 		<string name="zip_sig_chk">Проверка подписи Zip</string>
 		<string name="inject_twrp_chk">Интегрировать TWRP после установки</string>
+		<string name="install_reboot_chk">Автоматическая перезагрузка после установки</string>
 		<string name="options_hdr">Опции</string>
 		<string name="confirm_flash_hdr">Подтвердите установку</string>
 		<string name="zip_queue">Очередь:</string>
@@ -666,6 +667,7 @@
 		<string name="cancel_sideload">Отмена ADB Sideload...</string>
 		<string name="change_fs_err">Ошибка при изменении файловой системы.</string>
 		<string name="theme_ver_err">Версия темы не соответствует версии TWRP. Используется тема по умолчанию.</string>
+		<string name="install_reboot">Устройство будет перезагружено через 5 секунд.</string>
 		<string name="up_a_level">(в родительский каталог)</string>
 	</resources>
 </language>

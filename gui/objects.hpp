@@ -1049,7 +1049,7 @@ protected:
 
 	// Handles displaying the text properly when chars are added, deleted, or for scrolling
 	void HandleTextLocation(int x);
-	void UpdateTextWidth();
+	void UpdateDisplayText();
 	void HandleCursorByTouch(int x);
 	void HandleCursorByText();
 
@@ -1059,15 +1059,14 @@ protected:
 	ImageResource* mBackground;
 	ImageResource* mCursor;
 	FontResource* mFont;
-	std::string mText;
-	std::string mLastValue;
 	std::string mVariable;
 	std::string mMask;
+	std::string mValue;
 	std::string displayValue;
 	COLOR mBackgroundColor;
 	COLOR mCursorColor;
 	int scrollingX;
-	int cursorX;
+	int cursorX;     // actual x axis location of the cursor
 	int lastX;
 	int mCursorLocation;
 	int mBackgroundX, mBackgroundY, mBackgroundW, mBackgroundH;
