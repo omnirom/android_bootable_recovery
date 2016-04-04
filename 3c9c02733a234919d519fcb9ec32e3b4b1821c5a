@@ -1,0 +1,78 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_13f3ad68",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-04T21:15:49Z",
+      "side": 1,
+      "message": "despues -\u003e después",
+      "range": {
+        "startLine": 79,
+        "startChar": 0,
+        "endLine": 79,
+        "endChar": 9
+      },
+      "revId": "3c9c02733a234919d519fcb9ec32e3b4b1821c5a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f393a100",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-04T21:15:49Z",
+      "side": 1,
+      "message": "Creo que \"desliza\" queda mejor que \"deslice\" ya que no hay porque usar el trato \"de usted\"",
+      "revId": "3c9c02733a234919d519fcb9ec32e3b4b1821c5a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d398a51f",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-04T21:15:49Z",
+      "side": 1,
+      "message": "elimina -\u003e eliminará",
+      "revId": "3c9c02733a234919d519fcb9ec32e3b4b1821c5a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b39d190f",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 447,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-04T21:15:49Z",
+      "side": 1,
+      "message": "Desde la línea 447 a la 455 sin traducir",
+      "revId": "3c9c02733a234919d519fcb9ec32e3b4b1821c5a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
