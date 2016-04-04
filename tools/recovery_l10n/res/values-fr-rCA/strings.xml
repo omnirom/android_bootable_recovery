@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="recovery_installing" msgid="4995089002339765600">"Installation de la mise à jour système en cours..."</string>
-    <string name="recovery_erasing" msgid="3454811999717520920">"Suppression en cours..."</string>
+    <string name="recovery_installing" msgid="4995089002339765600">"Installation de la mise à jour du système en cours…"</string>
+    <string name="recovery_erasing" msgid="3454811999717520920">"Effacement en cours…"</string>
     <string name="recovery_no_command" msgid="3005798864326873414">"Aucune commande."</string>
     <string name="recovery_error" msgid="5748178989622716736">"Erreur!"</string>
-    <!-- no translation found for recovery_installing_security (241961948312007086) -->
-    <skip />
+    <string name="recovery_installing_security" msgid="241961948312007086">"Installation de la mise à jour de sécurité en cours..."</string>
 </resources>

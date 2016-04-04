@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="recovery_installing" msgid="4995089002339765600">"កំពុងអាប់ដេតប្រព័ន្ធ…"</string>
-    <string name="recovery_erasing" msgid="3454811999717520920">"កំពុងលុប…"</string>
-    <string name="recovery_no_command" msgid="3005798864326873414">"គ្មានពាក្យបញ្ជាទេ"</string>
+    <string name="recovery_installing" msgid="4995089002339765600">"កំពុង​ដំឡើង​បច្ចុប្បន្នភាព​ប្រព័ន្ធ…"</string>
+    <string name="recovery_erasing" msgid="3454811999717520920">"កំពុង​លុប…"</string>
+    <string name="recovery_no_command" msgid="3005798864326873414">"គ្មាន​ពាក្យ​បញ្ជា។"</string>
     <string name="recovery_error" msgid="5748178989622716736">"កំហុស!"</string>
-    <!-- no translation found for recovery_installing_security (241961948312007086) -->
-    <skip />
+    <string name="recovery_installing_security" msgid="241961948312007086">"កំពុងដំឡើងការអាប់ដេតសុវត្ថិភាព…"</string>
 </resources>
