@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_f6202f9d",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 7
+      },
+      "lineNbr": 563,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-05T22:35:35Z",
+      "side": 1,
+      "message": "Particion -\u003e Partición",
+      "revId": "4978cb6b2efdd0be78b8a3e0f2ddd76a1cb48a04",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_1614bb41",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 7
+      },
+      "lineNbr": 575,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-05T22:35:35Z",
+      "side": 1,
+      "message": "Carpeta de copia de seguridad seteada a",
+      "revId": "4978cb6b2efdd0be78b8a3e0f2ddd76a1cb48a04",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_3617b74a",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 7
+      },
+      "lineNbr": 601,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-05T22:35:35Z",
+      "side": 1,
+      "message": "La copia de seguridad falló. Limpiando carpeta de la copia de seguridad.",
+      "revId": "4978cb6b2efdd0be78b8a3e0f2ddd76a1cb48a04",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_9608cb2e",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 7
+      },
+      "lineNbr": 638,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-05T22:35:35Z",
+      "side": 1,
+      "message": "guardata -\u003e guardada",
+      "revId": "4978cb6b2efdd0be78b8a3e0f2ddd76a1cb48a04",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_760d3f3c",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 7
+      },
+      "lineNbr": 650,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-05T22:35:35Z",
+      "side": 1,
+      "message": "version -\u003e versión",
+      "revId": "4978cb6b2efdd0be78b8a3e0f2ddd76a1cb48a04",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_560a4325",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 7
+      },
+      "lineNbr": 651,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-05T22:35:35Z",
+      "side": 1,
+      "message": "(Subir Un Nivel)",
+      "revId": "4978cb6b2efdd0be78b8a3e0f2ddd76a1cb48a04",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
