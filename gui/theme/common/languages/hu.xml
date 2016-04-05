@@ -82,6 +82,7 @@
 		<string name="file">Fájl:</string>
 		<string name="zip_sig_chk">Zip aláírás ellenőrzése</string>
 		<string name="inject_twrp_chk">TWRP injektálása telepítés után</string>
+		<string name="install_reboot_chk">Újraindítás telepítés vége után</string>
 		<string name="options_hdr">Beállítások</string>
 		<string name="confirm_flash_hdr">Flashelés megerősítése</string>
 		<string name="zip_queue">Várólista:</string>
@@ -666,5 +667,6 @@
 		<string name="change_fs_err">Fájlrendszer módosítási hiba.</string>
 		<string name="theme_ver_err">Egyéni téma verziója nem egyezik a TWRP verziójával. Gyári téma használata.</string>
 		<string name="up_a_level">(Egy szinttel feljebb)</string>
+		<string name="install_reboot">Újraindítás 5 mp múlva</string>
 	</resources>
 </language>
