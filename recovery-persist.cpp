@@ -50,6 +50,7 @@ static const char *LAST_LOG_FILE = "/data/misc/recovery/last_log";
 static const char *LAST_PMSG_FILE = "/sys/fs/pstore/pmsg-ramoops-0";
 static const char *LAST_KMSG_FILE = "/data/misc/recovery/last_kmsg";
 static const char *LAST_CONSOLE_FILE = "/sys/fs/pstore/console-ramoops-0";
+static const char *ALT_LAST_CONSOLE_FILE = "/sys/fs/pstore/console-ramoops";
 
 static const int KEEP_LOG_COUNT = 10;
 
@@ -192,8 +193,12 @@ int main(int argc, char **argv) {
         LOG_ID_SYSTEM, ANDROID_LOG_INFO, "recovery/", logsave, NULL);
 
     /* Is there a last console log too? */
-    if (rotated && !access(LAST_CONSOLE_FILE, R_OK)) {
-        copy_file(LAST_CONSOLE_FILE, LAST_KMSG_FILE);
+    if (rotated) {
+        if (!access(LAST_CONSOLE_FILE, R_OK)) {
+            copy_file(LAST_CONSOLE_FILE, LAST_KMSG_FILE);
+        } else if (!access(ALT_LAST_CONSOLE_FILE, R_OK)) {
+            copy_file(ALT_LAST_CONSOLE_FILE, LAST_KMSG_FILE);
+        }
     }
 
     return 0;
