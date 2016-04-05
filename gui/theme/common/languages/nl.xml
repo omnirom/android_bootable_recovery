@@ -665,6 +665,6 @@
 		<string name="cancel_sideload">ADB sideload annuleren...</string>
 		<string name="change_fs_err">Fout tijdens het veranderen van het bestandssysteem.</string>
 		<string name="theme_ver_err">Aangepaste thema versie komt niet overeen met TWRP versie. Stock thema gebruiken.</string>
-		<string name="up_a_level">(Nivo omhoog)</string>
+		<string name="up_a_level">(Niveau omhoog)</string>
 	</resources>
 </language>

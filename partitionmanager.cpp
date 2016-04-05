@@ -1327,24 +1327,6 @@ void TWPartitionManager::Update_System_Details(void) {
 				} else
 					DataManager::SetValue("tw_has_boot_partition", 1);
 			}
-#ifdef SP1_NAME
-			if ((*iter)->Backup_Name == EXPAND(SP1_NAME)) {
-				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
-				DataManager::SetValue(TW_BACKUP_SP1_SIZE, backup_display_size);
-			}
-#endif
-#ifdef SP2_NAME
-			if ((*iter)->Backup_Name == EXPAND(SP2_NAME)) {
-				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
-				DataManager::SetValue(TW_BACKUP_SP2_SIZE, backup_display_size);
-			}
-#endif
-#ifdef SP3_NAME
-			if ((*iter)->Backup_Name == EXPAND(SP3_NAME)) {
-				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
-				DataManager::SetValue(TW_BACKUP_SP3_SIZE, backup_display_size);
-			}
-#endif
 		} else {
 			// Handle unmountable partitions in case we reset defaults
 			if ((*iter)->Mount_Point == "/boot") {
@@ -1366,24 +1348,6 @@ void TWPartitionManager::Update_System_Details(void) {
 			} else if ((*iter)->Mount_Point == "/data") {
 				data_size += (int)((*iter)->Backup_Size / 1048576LLU);
 			}
-#ifdef SP1_NAME
-			if ((*iter)->Backup_Name == EXPAND(SP1_NAME)) {
-				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
-				DataManager::SetValue(TW_BACKUP_SP1_SIZE, backup_display_size);
-			}
-#endif
-#ifdef SP2_NAME
-			if ((*iter)->Backup_Name == EXPAND(SP2_NAME)) {
-				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
-				DataManager::SetValue(TW_BACKUP_SP2_SIZE, backup_display_size);
-			}
-#endif
-#ifdef SP3_NAME
-			if ((*iter)->Backup_Name == EXPAND(SP3_NAME)) {
-				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
-				DataManager::SetValue(TW_BACKUP_SP3_SIZE, backup_display_size);
-			}
-#endif
 		}
 	}
 	gui_msg("update_part_details_done=...done");

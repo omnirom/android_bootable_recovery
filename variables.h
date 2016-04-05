@@ -17,7 +17,7 @@
 #ifndef _VARIABLES_HEADER_
 #define _VARIABLES_HEADER_
 
-#define TW_VERSION_STR              "3.0.1-0"
+#define TW_VERSION_STR              "3.0.2-0"
 
 #define TW_USE_COMPRESSION_VAR      "tw_use_compression"
 #define TW_FILENAME                 "tw_filename"
@@ -76,10 +76,6 @@
 #define TW_RM_RF_VAR                "tw_rm_rf"
 
 #define TW_BACKUPS_FOLDER_VAR       "tw_backups_folder"
-
-#define TW_SP1_PARTITION_NAME_VAR   "tw_sp1_name"
-#define TW_SP2_PARTITION_NAME_VAR   "tw_sp2_name"
-#define TW_SP3_PARTITION_NAME_VAR   "tw_sp3_name"
 
 #define TW_SDEXT_SIZE               "tw_sdext_size"
 #define TW_SWAP_SIZE                "tw_swap_size"
