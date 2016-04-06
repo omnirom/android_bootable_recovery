@@ -109,6 +109,7 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <bootloader_message_writer.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
 #include <cutils/sockets.h>
@@ -117,7 +118,6 @@
 #define LOG_TAG "uncrypt"
 #include <log/log.h>
 
-#include "bootloader.h"
 #include "unique_fd.h"
 
 #define WINDOW_SIZE 5
@@ -414,40 +414,6 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     return 0;
 }
 
-static std::string get_misc_blk_device() {
-    if (fstab == nullptr) {
-        return "";
-    }
-    struct fstab_rec* rec = fs_mgr_get_entry_for_mount_point(fstab, "/misc");
-    if (rec != nullptr) {
-        return rec->blk_device;
-    }
-    return "";
-}
-
-static int write_bootloader_message(const bootloader_message* in) {
-    std::string misc_blk_device = get_misc_blk_device();
-    if (misc_blk_device.empty()) {
-        ALOGE("failed to find /misc partition.");
-        return -1;
-    }
-    unique_fd fd(open(misc_blk_device.c_str(), O_WRONLY | O_SYNC));
-    if (!fd) {
-        ALOGE("failed to open %s: %s", misc_blk_device.c_str(), strerror(errno));
-        return -1;
-    }
-    if (!android::base::WriteFully(fd.get(), in, sizeof(*in))) {
-        ALOGE("failed to write %s: %s", misc_blk_device.c_str(), strerror(errno));
-        return -1;
-    }
-    // TODO: O_SYNC and fsync() duplicates each other?
-    if (fsync(fd.get()) == -1) {
-        ALOGE("failed to fsync %s: %s", misc_blk_device.c_str(), strerror(errno));
-        return -1;
-    }
-    return 0;
-}
-
 static int uncrypt(const char* input_path, const char* map_file, const int socket) {
     ALOGI("update package is \"%s\"", input_path);
 
@@ -510,8 +476,9 @@ static bool uncrypt_wrapper(const char* input_path, const char* map_file, const 
 }
 
 static bool clear_bcb(const int socket) {
-    bootloader_message boot = {};
-    if (write_bootloader_message(&boot) != 0) {
+    std::string err;
+    if (!clear_bootloader_message(&err)) {
+        ALOGE("failed to clear bootloader message: %s", err.c_str());
         write_status_to_socket(-1, socket);
         return false;
     }
@@ -538,12 +505,9 @@ static bool setup_bcb(const int socket) {
     ALOGI("  received command: [%s] (%zu)", content.c_str(), content.size());
 
     // c8. setup the bcb command
-    bootloader_message boot = {};
-    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
-    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
-    strlcat(boot.recovery, content.c_str(), sizeof(boot.recovery));
-    if (write_bootloader_message(&boot) != 0) {
-        ALOGE("failed to set bootloader message");
+    std::string err;
+    if (!write_bootloader_message({content}, &err)) {
+        ALOGE("failed to set bootloader message: %s", err.c_str());
         write_status_to_socket(-1, socket);
         return false;
     }
