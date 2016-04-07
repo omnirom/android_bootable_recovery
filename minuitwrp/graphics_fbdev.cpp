@@ -103,10 +103,16 @@ static void set_displayed_framebuffer(unsigned n)
     vi.bits_per_pixel = gr_framebuffer[0].pixel_bytes * 8;
     if (ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
         perror("active fb swap failed");
+    } else {
+#ifdef TW_HISI_FBIOPAN
+        printf("TW_HISI_FBIOPAN := true\n");
+        if (ioctl(fb_fd, FBIOPAN_DISPLAY, &vi) < 0) {
+            perror("pan failed");
+        }
+#endif
     }
     displayed_buffer = n;
 }
-
 static GRSurface* fbdev_init(minui_backend* backend) {
     int retry = 20;
     int fd = -1;
