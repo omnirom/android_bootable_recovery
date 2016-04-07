@@ -102,7 +102,13 @@ static void set_displayed_framebuffer(unsigned n)
     vi.yoffset = n * gr_framebuffer[0].height;
     vi.bits_per_pixel = gr_framebuffer[0].pixel_bytes * 8;
     if (ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
-        perror("active fb swap failed");
+      perror("active fb swap failed"); 
+    }
+    else  
+    { 
+    if (ioctl(fb_fd, FBIOPAN_DISPLAY, &vi) < 0) {
+      perror("pan failed");
+    }
     }
     displayed_buffer = n;
 }
