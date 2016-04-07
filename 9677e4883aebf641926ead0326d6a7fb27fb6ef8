@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_f6314fb6",
+        "filename": "minuitwrp/graphics_fbdev.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-07T19:41:04Z",
+      "side": 1,
+      "message": "With this code we always run both FBIOPUT_VSCREENINFO and FBIOPAN_DISPLAY - shouldn\u0027t FBIOPAN_DISPLAY only be called when FBIOPUT_VSCREENINFO failed?",
+      "revId": "9677e4883aebf641926ead0326d6a7fb27fb6ef8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
