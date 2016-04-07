@@ -104,6 +104,10 @@ static void set_displayed_framebuffer(unsigned n)
     if (ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
         perror("active fb swap failed");
     }
+  /* Black screen patch for newer HiSilicon based SoC */
+    if (ioctl(fb_fd, FBIOPAN_DISPLAY, &vi) < 0) {
+      perror("pan failed");
+    }
     displayed_buffer = n;
 }
 
