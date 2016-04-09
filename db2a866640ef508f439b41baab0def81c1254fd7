@@ -1,0 +1,1370 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_f614afa3",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "inusable -\u003e inutilizable",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d619b3da",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "atras -\u003e atrás",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b60e2792",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Limpar -\u003e Limpiar\nZip -\u003e Zips",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_96132bb7",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_76289fe0",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_5625a305",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Caché, y -\u003e Caché y",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_362217ff",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Quitar la encriptación de Datos?",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_161f1bba",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f67f0fda",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Particiones -\u003e Partición(es)",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d68413dd",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Particiones -\u003e Partición(es)",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b68987f4",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "media, y -\u003e media y",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_968e8bf9",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_7673ff12",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_56700304",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Borrar \"File\"",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_367d77dd",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Proceda -\u003e Procede",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_167a7be4",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f666ef4f",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d66bf316",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Particiones -\u003e Partición(es)",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b6606732",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "generacion -\u003e generación",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_96656b43",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 204,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "comprobacion -\u003e comprobación",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_765adf84",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Refrescar Tamaños",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_5657e359",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Adjuntar -\u003e Ajustar",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_36545753",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "su -\u003e tú",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_16515b62",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "su -\u003e tú",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f6c14f04",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "su -\u003e tú",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d6c6531b",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 220,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Seleccione -\u003e Selecciona",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b6cbc722",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Seleccione -\u003e Selecciona",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_96d0cbcb",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 224,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "intente -\u003e inténtelo",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_76d53fb9",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_56d243d2",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Desencriptar -\u003e Desencriptarla",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_36dfb7db",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Desencriptar -\u003e Desencriptarla",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_16dcbbe2",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 235,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Seleccione -\u003e Selecciona\nParticiones -\u003e Partición(es)",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f6e82f7e",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 238,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d6ed338d",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_16327b03",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 265,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Descargas",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_363577ec",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Seleccione -\u003e Selecciona",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_56280397",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Ajustes de tiempo de espera de la pantalla no disponibles",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_762bff95",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Configuracion -\u003e Configuración",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_96468b78",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 347,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Botónes -\u003e Botones",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b6418763",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 353,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Seleccione -\u003e Selecciona",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d63c13e0",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Copia del Log Completada",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f6370ff9",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 360,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Reparar Contextos",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_16571b29",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 372,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_365a1752",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 374,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Debe -\u003e Debes",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_565da348",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 376,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Accion -\u003e Acción",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_76609fff",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 377,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Tamaño de EXT:",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_964b2b8a",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 378,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Tamaño de Intercambio:",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b6462781",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 382,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d651b339",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 389,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "sobra una \"?\"",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f64cafa6",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "de -\u003e del",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_16803b8f",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 393,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Reflashear recovery a boot?",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_368337a0",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 394,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Flasheando recovery a boot...",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_5676c3d2",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 395,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Flasheo del Recovery a Boot Completado",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_7679bfc1",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Instalar HTC Dumlock",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_96744bcc",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 397,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Instalar los archivos de HTC dumlock en la ROM?",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b66f47fb",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 398,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Instalando HTC Dumlock...",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d66ad3eb",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 399,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Instalación de HTC Dumlock Completada",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f665cf1c",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_16a5db44",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Seleccione -\u003e Selecciona",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_36a8d71d",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 424,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Seleccione -\u003e Selecciona",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_56ab631c",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 429,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Desencriptar Datos",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_76ae5f2f",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Patron -\u003e Patrón",
+      "range": {
+        "startLine": 432,
+        "startChar": 52,
+        "endLine": 432,
+        "endChar": 62
+      },
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_96b9eb75",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 433,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Introduzca un patrón.",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b6b4e77c",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 434,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Tratando de Desencriptar",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d6bf7359",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 437,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "MATAR",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f6ba6f6a",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 438,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Navegar hasta la Carpeta de Inicio",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_168efbd6",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_3691f7f3",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 445,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "filename -\u003e nombredearchivo",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_568483b6",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 450,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "su -\u003e tú",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_76877fbd",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_96a20b48",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 457,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "su -\u003e tú",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b69d070f",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 461,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Deslice -\u003e Desliza",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_d698931f",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 470,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "MTP falló, no se iniciará MTP en el arranque.",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_f6938f00",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 490,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Tasa media de copia de seguridad para sistemas de archivo: {1} MB/seg",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_16f39b68",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 491,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Tasa media de copia de seguridad para imágenes de unidades: {1} MB/seg",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_36f69759",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 496,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "[{1} completado ({2} segundos)]",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_56f92348",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 523,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Datos desencriptados satisfactoriamente, nuevo bloque de dispositivo: \u0027{1}\u0027",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_76fc1f3b",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 547,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Reparando {1} usando {2}...",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_96e7aba9",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Fallo al desmontar \u0027{1}\u0027 ({2})",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_b6e2a798",
+        "filename": "gui/theme/common/languages/es.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 1000402
+      },
+      "writtenOn": "2016-04-09T19:11:44Z",
+      "side": 1,
+      "message": "Fallo al desencriptar el archivo tar \u0027{1}\u0027",
+      "revId": "db2a866640ef508f439b41baab0def81c1254fd7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
