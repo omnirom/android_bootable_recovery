@@ -486,7 +486,7 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			if (ptr_len == 7) {
 				Is_Storage = true;
 			} else if (ptr_len == 9) {
-				ptr += 9;
+				ptr += 8;
 				if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y') {
 					LOGINFO("storage set to true\n");
 					Is_Storage = true;
@@ -536,17 +536,17 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			if (Display_Name.substr(Display_Name.size() - 1, 1) == "\"") {
 				Display_Name.resize(Display_Name.size() - 1);
 			}
-		} else if (ptr_len > 11 && strncmp(ptr, "storagename=", 11) == 0) {
+		} else if (ptr_len > 12 && strncmp(ptr, "storagename=", 12) == 0) {
 			has_storage_name = true;
-			ptr += 11;
+			ptr += 12;
 			if (*ptr == '\"') ptr++;
 			Storage_Name = ptr;
 			if (Storage_Name.substr(Storage_Name.size() - 1, 1) == "\"") {
 				Storage_Name.resize(Storage_Name.size() - 1);
 			}
-		} else if (ptr_len > 11 && strncmp(ptr, "backupname=", 10) == 0) {
+		} else if (ptr_len > 11 && strncmp(ptr, "backupname=", 11) == 0) {
 			has_backup_name = true;
-			ptr += 10;
+			ptr += 11;
 			if (*ptr == '\"') ptr++;
 			Backup_Display_Name = ptr;
 			if (Backup_Display_Name.substr(Backup_Display_Name.size() - 1, 1) == "\"") {
@@ -564,8 +564,8 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 				Can_Encrypt_Backup = true;
 			else
 				Can_Encrypt_Backup = false;
-		} else if (ptr_len > 21 && strncmp(ptr, "userdataencryptbackup=", 21) == 0) {
-			ptr += 21;
+		} else if (ptr_len > 22 && strncmp(ptr, "userdataencryptbackup=", 22) == 0) {
+			ptr += 22;
 			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y') {
 				Can_Encrypt_Backup = true;
 				Use_Userdata_Encryption = true;
@@ -581,11 +581,16 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 				Mount_Options.resize(Mount_Options.size() - 1);
 			}
 			Process_FS_Flags(Mount_Options, Mount_Flags);
-		} else if ((ptr_len > 12 && strncmp(ptr, "encryptable=", 12) == 0) || (ptr_len > 13 && strncmp(ptr, "forceencrypt=", 13) == 0)) {
+		} else if (ptr_len > 12 && strncmp(ptr, "encryptable=", 12) == 0) {
 			ptr += 12;
-			if (*ptr == '=') ptr++;
 			if (*ptr == '\"') ptr++;
-
+			Crypto_Key_Location = ptr;
+			if (Crypto_Key_Location.substr(Crypto_Key_Location.size() - 1, 1) == "\"") {
+				Crypto_Key_Location.resize(Crypto_Key_Location.size() - 1);
+			}
+		} else if (ptr_len > 13 && strncmp(ptr, "forceencrypt=", 13) == 0) {
+			ptr += 13;
+			if (*ptr == '\"') ptr++;
 			Crypto_Key_Location = ptr;
 			if (Crypto_Key_Location.substr(Crypto_Key_Location.size() - 1, 1) == "\"") {
 				Crypto_Key_Location.resize(Crypto_Key_Location.size() - 1);
