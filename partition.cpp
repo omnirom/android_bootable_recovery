@@ -536,17 +536,17 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			if (Display_Name.substr(Display_Name.size() - 1, 1) == "\"") {
 				Display_Name.resize(Display_Name.size() - 1);
 			}
-		} else if (ptr_len > 11 && strncmp(ptr, "storagename=", 11) == 0) {
+		} else if (ptr_len > 12 && strncmp(ptr, "storagename=", 12) == 0) {
 			has_storage_name = true;
-			ptr += 11;
+			ptr += 12;
 			if (*ptr == '\"') ptr++;
 			Storage_Name = ptr;
 			if (Storage_Name.substr(Storage_Name.size() - 1, 1) == "\"") {
 				Storage_Name.resize(Storage_Name.size() - 1);
 			}
-		} else if (ptr_len > 11 && strncmp(ptr, "backupname=", 10) == 0) {
+		} else if (ptr_len > 11 && strncmp(ptr, "backupname=", 11) == 0) {
 			has_backup_name = true;
-			ptr += 10;
+			ptr += 11;
 			if (*ptr == '\"') ptr++;
 			Backup_Display_Name = ptr;
 			if (Backup_Display_Name.substr(Backup_Display_Name.size() - 1, 1) == "\"") {
