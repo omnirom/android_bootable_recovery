@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_a924885e",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 567,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-11T14:33:28Z",
+      "side": 0,
+      "message": "22",
+      "revId": "b894cd2a89d19f0645899dba7bb04442fa1bcfd8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8929cc37",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 568,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-11T14:33:28Z",
+      "side": 0,
+      "message": "22",
+      "revId": "b894cd2a89d19f0645899dba7bb04442fa1bcfd8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
