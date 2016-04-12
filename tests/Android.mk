@@ -39,7 +39,8 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_STATIC_LIBRARIES := \
     libbase \
     libverifier \
-    libmincrypt \
+    libcrypto_utils_static \
+    libcrypto_static \
     libminui \
     libminzip \
     libcutils \
