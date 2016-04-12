@@ -53,7 +53,7 @@ PIXELFLINGER_SRC_FILES_x86 := \
 	scanline.cpp
 
 PIXELFLINGER_C_INCLUDES_x86 := \
-	external/libenc
+	$(LOCAL_PATH)/codeflinger/x86/libenc
 
 endif
 
@@ -105,6 +105,6 @@ LOCAL_CFLAGS := $(PIXELFLINGER_CFLAGS)
 LOCAL_C_INCLUDES_x86 := $(PIXELFLINGER_C_INCLUDES_x86)
 ifeq ($(TW_HAVE_X86_ACCELERATED_PIXELFLINGER),true)
 LOCAL_WHOLE_STATIC_LIBRARIES += libenc
-LOCAL_C_INCLUDES += external/libenc
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/codeflinger/x86/libenc
 endif
 include $(BUILD_STATIC_LIBRARY)
