@@ -98,7 +98,8 @@ private:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
 	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
 
-	bool Process_Flags(string Flags, bool Display_Error);                     // Process custom fstab flags
+	void Apply_TW_Flag(const unsigned flag, const char* str, const bool val); // Apply custom twrp fstab flags
+	void Process_TW_Flags(char *flags, bool Display_Error);                   // Process custom twrp fstab flags
 	bool Process_FS_Flags(string& Options, int& Flags);                       // Process standard fstab fs flags
 	bool Is_File_System(string File_System);                                  // Checks to see if the file system given is considered a file system
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image

@@ -110,6 +110,69 @@ static struct flag_list mount_flags[] = {
 	{ 0,            0 },
 };
 
+enum TW_FSTAB_FLAGS {
+	TWFLAG_DEFAULTS, // Retain position
+	TWFLAG_ANDSEC,
+	TWFLAG_BACKUP,
+	TWFLAG_BACKUPNAME,
+	TWFLAG_BLOCKSIZE,
+	TWFLAG_CANBEWIPED,
+	TWFLAG_CANENCRYPTBACKUP,
+	TWFLAG_DISPLAY,
+	TWFLAG_ENCRYPTABLE,
+	TWFLAG_FLASHIMG,
+	TWFLAG_FORCEENCRYPT,
+	TWFLAG_FSFLAGS,
+	TWFLAG_IGNOREBLKID,
+	TWFLAG_LENGTH,
+	TWFLAG_MOUNTTODECRYPT,
+	TWFLAG_REMOVABLE,
+	TWFLAG_RETAINLAYOUTVERSION,
+	TWFLAG_SETTINGSSTORAGE,
+	TWFLAG_STORAGE,
+	TWFLAG_STORAGENAME,
+	TWFLAG_SUBPARTITIONOF,
+	TWFLAG_SYMLINK,
+	TWFLAG_USERDATAENCRYPTBACKUP,
+	TWFLAG_USERMRF,
+	TWFLAG_WIPEDURINGFACTORYRESET,
+	TWFLAG_WIPEINGUI,
+};
+
+/* Flags without a trailing '=' are considered dual format flags and can be
+ * written as either 'flagname' or 'flagname=', where the character following
+ * the '=' is Y,y,1 for true and false otherwise.
+ */
+const struct flag_list tw_flags[] = {
+	{ "andsec",                 TWFLAG_ANDSEC },
+	{ "backup",                 TWFLAG_BACKUP },
+	{ "backupname=",            TWFLAG_BACKUPNAME },
+	{ "blocksize=",             TWFLAG_BLOCKSIZE },
+	{ "canbewiped",             TWFLAG_CANBEWIPED },
+	{ "canencryptbackup",       TWFLAG_CANENCRYPTBACKUP },
+	{ "defaults",               TWFLAG_DEFAULTS },
+	{ "display=",               TWFLAG_DISPLAY },
+	{ "encryptable=",           TWFLAG_ENCRYPTABLE },
+	{ "flashimg",               TWFLAG_FLASHIMG },
+	{ "forceencrypt=",          TWFLAG_FORCEENCRYPT },
+	{ "fsflags=",               TWFLAG_FSFLAGS },
+	{ "ignoreblkid",            TWFLAG_IGNOREBLKID },
+	{ "length=",                TWFLAG_LENGTH },
+	{ "mounttodecrypt",         TWFLAG_MOUNTTODECRYPT },
+	{ "removable",              TWFLAG_REMOVABLE },
+	{ "retainlayoutversion",    TWFLAG_RETAINLAYOUTVERSION },
+	{ "settingsstorage",        TWFLAG_SETTINGSSTORAGE },
+	{ "storage",                TWFLAG_STORAGE },
+	{ "storagename=",           TWFLAG_STORAGENAME },
+	{ "subpartitionof=",        TWFLAG_SUBPARTITIONOF },
+	{ "symlink=",               TWFLAG_SYMLINK },
+	{ "userdataencryptbackup",  TWFLAG_USERDATAENCRYPTBACKUP },
+	{ "usermrf",                TWFLAG_USERMRF },
+	{ "wipeduringfactoryreset", TWFLAG_WIPEDURINGFACTORYRESET },
+	{ "wipeingui",              TWFLAG_WIPEINGUI },
+	{ 0,                        0 },
+};
+
 TWPartition::TWPartition() {
 	Can_Be_Mounted = false;
 	Can_Be_Wiped = false;
@@ -174,9 +237,9 @@ TWPartition::~TWPartition(void) {
 
 bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 	char full_line[MAX_FSTAB_LINE_LENGTH], item[MAX_FSTAB_LINE_LENGTH];
+	char twflags[MAX_FSTAB_LINE_LENGTH] = "";
 	int line_len = Line.size(), index = 0, item_index = 0;
 	char* ptr;
-	string Flags;
 	strncpy(full_line, Line.c_str(), line_len);
 	bool skip = false;
 
@@ -241,8 +304,8 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			} else if (strlen(ptr) > 6 && strncmp(ptr, "flags=", 6) == 0) {
 				// Custom flags, save for later so that new values aren't overwritten by defaults
 				ptr += 6;
-				Flags = ptr;
-				Process_Flags(Flags, Display_Error);
+				strlcpy(twflags, ptr, sizeof(twflags));
+				Process_TW_Flags(twflags, Display_Error);
 			} else if (strlen(ptr) == 4 && (strncmp(ptr, "NULL", 4) == 0 || strncmp(ptr, "null", 4) == 0 || strncmp(ptr, "null", 4) == 0)) {
 				// Do nothing
 			} else {
@@ -419,9 +482,33 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 		}
 	}
 
-	// Process any custom flags
-	if (Flags.size() > 0)
-		Process_Flags(Flags, Display_Error);
+	// Process TWRP fstab flags
+	if (strlen(twflags) > 0) {
+		string Prev_Display_Name = Display_Name;
+		string Prev_Storage_Name = Storage_Name;
+		string Prev_Backup_Display_Name = Backup_Display_Name;
+		Display_Name = "";
+		Storage_Name = "";
+		Backup_Display_Name = "";
+
+		Process_TW_Flags(twflags, Display_Error);
+
+		bool has_display_name = !Display_Name.empty();
+		bool has_storage_name = !Storage_Name.empty();
+		bool has_backup_name = !Backup_Display_Name.empty();
+		if (!has_display_name) Display_Name = Prev_Display_Name;
+		if (!has_storage_name) Storage_Name = Prev_Storage_Name;
+		if (!has_backup_name) Backup_Display_Name = Prev_Backup_Display_Name;
+
+		if (has_display_name && !has_storage_name)
+			Storage_Name = Display_Name;
+		if (!has_display_name && has_storage_name)
+			Display_Name = Storage_Name;
+		if (has_display_name && !has_backup_name && Backup_Display_Name != "Android Secure")
+			Backup_Display_Name = Display_Name;
+		if (!has_display_name && has_backup_name)
+			Display_Name = Backup_Display_Name;
+	}
 	return true;
 }
 
@@ -457,175 +544,184 @@ bool TWPartition::Process_FS_Flags(string& Options, int& Flags) {
 	return true;
 }
 
-bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
-	char flags[MAX_FSTAB_LINE_LENGTH];
-	int flags_len, index = 0, ptr_len;
-	char* ptr;
-	bool skip = false, has_display_name = false, has_storage_name = false, has_backup_name = false;
+void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool val) {
+	switch (flag) {
+		case TWFLAG_ANDSEC:
+			Has_Android_Secure = val;
+			break;
+		case TWFLAG_BACKUP:
+			Can_Be_Backed_Up = val;
+			break;
+		case TWFLAG_BACKUPNAME:
+			Backup_Display_Name = str;
+			break;
+		case TWFLAG_BLOCKSIZE:
+			Format_Block_Size = (unsigned long)(atol(str));
+			break;
+		case TWFLAG_CANBEWIPED:
+			Can_Be_Wiped = val;
+			break;
+		case TWFLAG_CANENCRYPTBACKUP:
+			Can_Encrypt_Backup = val;
+			break;
+		case TWFLAG_DEFAULTS:
+			// Do nothing
+			break;
+		case TWFLAG_DISPLAY:
+			Display_Name = str;
+			break;
+		case TWFLAG_ENCRYPTABLE:
+		case TWFLAG_FORCEENCRYPT:
+			Crypto_Key_Location = str;
+			break;
+		case TWFLAG_FLASHIMG:
+			Can_Flash_Img = val;
+			break;
+		case TWFLAG_FSFLAGS:
+			Mount_Options = str;
+			Process_FS_Flags(Mount_Options, Mount_Flags);
+			break;
+		case TWFLAG_IGNOREBLKID:
+			Ignore_Blkid = val;
+			break;
+		case TWFLAG_LENGTH:
+			Length = atoi(str);
+			break;
+		case TWFLAG_MOUNTTODECRYPT:
+			Mount_To_Decrypt = val;
+			break;
+		case TWFLAG_REMOVABLE:
+			Removable = val;
+			break;
+		case TWFLAG_RETAINLAYOUTVERSION:
+			Retain_Layout_Version = val;
+			break;
+		case TWFLAG_SETTINGSSTORAGE:
+			Is_Settings_Storage = val;
+			if (Is_Settings_Storage)
+				Is_Storage = true;
+			break;
+		case TWFLAG_STORAGE:
+			Is_Storage = val;
+			break;
+		case TWFLAG_STORAGENAME:
+			Storage_Name = str;
+			break;
+		case TWFLAG_SUBPARTITIONOF:
+			Is_SubPartition = true;
+			SubPartition_Of = str;
+			break;
+		case TWFLAG_SYMLINK:
+			Symlink_Path = str;
+			break;
+		case TWFLAG_USERDATAENCRYPTBACKUP:
+			Use_Userdata_Encryption = val;
+			if (Use_Userdata_Encryption)
+				Can_Encrypt_Backup = true;
+			break;
+		case TWFLAG_USERMRF:
+			Use_Rm_Rf = val;
+			break;
+		case TWFLAG_WIPEDURINGFACTORYRESET:
+			Wipe_During_Factory_Reset = val;
+			if (Wipe_During_Factory_Reset) {
+				Can_Be_Wiped = true;
+				Wipe_Available_in_GUI = true;
+			}
+			break;
+		case TWFLAG_WIPEINGUI:
+			Wipe_Available_in_GUI = val;
+			if (Wipe_Available_in_GUI)
+				Can_Be_Wiped = true;
+			break;
+		default:
+			// Should not get here
+			LOGINFO("Flag identified for processing, but later unmatched: %i\n", flag);
+			break;
+	}
+}
 
-	strcpy(flags, Flags.c_str());
-	flags_len = Flags.size();
-	for (index = 0; index < flags_len; index++) {
-		if (flags[index] == 34)
+void TWPartition::Process_TW_Flags(char *flags, bool Display_Error) {
+	char separator[2] = {'\n', 0};
+	char *ptr, *savep;
+
+	// Semicolons within double-quotes are not forbidden, so replace
+	// only the semicolons intended as separators with '\n' for strtok
+	for (unsigned i = 0, skip = 0; i < strlen(flags); i++) {
+		if (flags[i] == '\"')
 			skip = !skip;
-		if (!skip && flags[index] == ';')
-			flags[index] = '\0';
+		if (!skip && flags[i] == ';')
+			flags[i] = separator[0];
 	}
 
-	index = 0;
-	while (index < flags_len) {
-		while (index < flags_len && flags[index] == '\0')
-			index++;
-		if (index >= flags_len)
-			continue;
-		ptr = flags + index;
-		ptr_len = strlen(ptr);
-		if (strcmp(ptr, "removable") == 0) {
-			Removable = true;
-		} else if (strncmp(ptr, "storage", 7) == 0) {
-			if (ptr_len == 7) {
-				Is_Storage = true;
-			} else if (ptr_len == 9) {
-				ptr += 8;
-				if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y') {
-					LOGINFO("storage set to true\n");
-					Is_Storage = true;
-				} else {
-					LOGINFO("storage set to false\n");
-					Is_Storage = false;
-				}
-			}
-		} else if (strcmp(ptr, "settingsstorage") == 0) {
-			Is_Storage = true;
-			Is_Settings_Storage = true;
-		} else if (strcmp(ptr, "andsec") == 0) {
-			Has_Android_Secure = true;
-		} else if (strcmp(ptr, "canbewiped") == 0) {
-			Can_Be_Wiped = true;
-		} else if (strcmp(ptr, "usermrf") == 0) {
-			Use_Rm_Rf = true;
-		} else if (ptr_len > 7 && strncmp(ptr, "backup=", 7) == 0) {
-			ptr += 7;
-			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y')
-				Can_Be_Backed_Up = true;
-			else
-				Can_Be_Backed_Up = false;
-		} else if (strcmp(ptr, "wipeingui") == 0) {
-			Can_Be_Wiped = true;
-			Wipe_Available_in_GUI = true;
-		} else if (strcmp(ptr, "wipeduringfactoryreset") == 0) {
-			Can_Be_Wiped = true;
-			Wipe_Available_in_GUI = true;
-			Wipe_During_Factory_Reset = true;
-		} else if (ptr_len > 15 && strncmp(ptr, "subpartitionof=", 15) == 0) {
-			ptr += 15;
-			Is_SubPartition = true;
-			SubPartition_Of = ptr;
-		} else if (strcmp(ptr, "ignoreblkid") == 0) {
-			Ignore_Blkid = true;
-		} else if (strcmp(ptr, "retainlayoutversion") == 0) {
-			Retain_Layout_Version = true;
-		} else if (ptr_len > 8 && strncmp(ptr, "symlink=", 8) == 0) {
-			ptr += 8;
-			Symlink_Path = ptr;
-		} else if (ptr_len > 8 && strncmp(ptr, "display=", 8) == 0) {
-			has_display_name = true;
-			ptr += 8;
-			if (*ptr == '\"') ptr++;
-			Display_Name = ptr;
-			if (Display_Name.substr(Display_Name.size() - 1, 1) == "\"") {
-				Display_Name.resize(Display_Name.size() - 1);
-			}
-		} else if (ptr_len > 12 && strncmp(ptr, "storagename=", 12) == 0) {
-			has_storage_name = true;
-			ptr += 12;
-			if (*ptr == '\"') ptr++;
-			Storage_Name = ptr;
-			if (Storage_Name.substr(Storage_Name.size() - 1, 1) == "\"") {
-				Storage_Name.resize(Storage_Name.size() - 1);
-			}
-		} else if (ptr_len > 11 && strncmp(ptr, "backupname=", 11) == 0) {
-			has_backup_name = true;
-			ptr += 11;
-			if (*ptr == '\"') ptr++;
-			Backup_Display_Name = ptr;
-			if (Backup_Display_Name.substr(Backup_Display_Name.size() - 1, 1) == "\"") {
-				Backup_Display_Name.resize(Backup_Display_Name.size() - 1);
-			}
-		} else if (ptr_len > 10 && strncmp(ptr, "blocksize=", 10) == 0) {
-			ptr += 10;
-			Format_Block_Size = (unsigned long)(atol(ptr));
-		} else if (ptr_len > 7 && strncmp(ptr, "length=", 7) == 0) {
-			ptr += 7;
-			Length = atoi(ptr);
-		} else if (ptr_len > 17 && strncmp(ptr, "canencryptbackup=", 17) == 0) {
-			ptr += 17;
-			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y')
-				Can_Encrypt_Backup = true;
-			else
-				Can_Encrypt_Backup = false;
-		} else if (ptr_len > 22 && strncmp(ptr, "userdataencryptbackup=", 22) == 0) {
-			ptr += 22;
-			if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y') {
-				Can_Encrypt_Backup = true;
-				Use_Userdata_Encryption = true;
-			} else {
-				Use_Userdata_Encryption = false;
-			}
-		} else if (ptr_len > 8 && strncmp(ptr, "fsflags=", 8) == 0) {
-			ptr += 8;
-			if (*ptr == '\"') ptr++;
+	// Avoid issues with potentially nested strtok by using strtok_r
+	ptr = strtok_r(flags, separator, &savep);
+	while (ptr) {
+		int ptr_len = strlen(ptr);
+		const struct flag_list* tw_flag = tw_flags;
 
-			Mount_Options = ptr;
-			if (Mount_Options.substr(Mount_Options.size() - 1, 1) == "\"") {
-				Mount_Options.resize(Mount_Options.size() - 1);
-			}
-			Process_FS_Flags(Mount_Options, Mount_Flags);
-		} else if (ptr_len > 12 && strncmp(ptr, "encryptable=", 12) == 0) {
-			ptr += 12;
-			if (*ptr == '\"') ptr++;
-			Crypto_Key_Location = ptr;
-			if (Crypto_Key_Location.substr(Crypto_Key_Location.size() - 1, 1) == "\"") {
-				Crypto_Key_Location.resize(Crypto_Key_Location.size() - 1);
-			}
-		} else if (ptr_len > 13 && strncmp(ptr, "forceencrypt=", 13) == 0) {
-			ptr += 13;
-			if (*ptr == '\"') ptr++;
-			Crypto_Key_Location = ptr;
-			if (Crypto_Key_Location.substr(Crypto_Key_Location.size() - 1, 1) == "\"") {
-				Crypto_Key_Location.resize(Crypto_Key_Location.size() - 1);
-			}
-		} else if (ptr_len > 8 && strncmp(ptr, "mounttodecrypt", 14) == 0) {
-			Mount_To_Decrypt = true;
-		} else if (strncmp(ptr, "flashimg", 8) == 0) {
-			if (ptr_len == 8) {
-				Can_Flash_Img = true;
-			} else if (ptr_len == 10) {
-				ptr += 9;
-				if (*ptr == '1' || *ptr == 'y' || *ptr == 'Y') {
-					Can_Flash_Img = true;
+		for (; tw_flag->name; tw_flag++) {
+			int flag_len = strlen(tw_flag->name);
+
+			if (strncmp(ptr, tw_flag->name, flag_len) == 0) {
+				bool flag_val = false;
+
+				if (ptr_len > flag_len && (tw_flag->name)[flag_len-1] != '='
+						&& ptr[flag_len] != '=') {
+					// Handle flags with same starting string
+					// (e.g. backup and backupname)
+					continue;
+				} else if (ptr_len > flag_len && ptr[flag_len] == '=') {
+					// Handle flags with dual format: Part 1
+					// (e.g. backup and backup=y. backup=y handled here)
+					ptr += flag_len + 1;
+					TWFunc::Strip_Quotes(ptr);
+					// Skip flags with empty argument
+					// (e.g. backup=)
+					if (strlen(ptr) == 0) {
+						LOGINFO("Flag missing argument or should not include '=': %s=\n", tw_flag->name);
+						break;
+					}
+					flag_val = strchr("yY1", *ptr) != NULL;
+				} else if (ptr_len == flag_len
+						&& (tw_flag->name)[flag_len-1] == '=') {
+					// Skip flags missing argument after =
+					// (e.g. backupname=)
+					LOGINFO("Flag missing argument: %s\n", tw_flag->name);
+					break;
+				} else if (ptr_len > flag_len
+						&& (tw_flag->name)[flag_len-1] == '=') {
+					// Handle arguments to flags
+					// (e.g. backupname="My Stuff")
+					ptr += flag_len;
+					TWFunc::Strip_Quotes(ptr);
+					// Skip flags with empty argument
+					// (e.g. backupname="")
+					if (strlen(ptr) == 0) {
+						LOGINFO("Flag missing argument: %s\n", tw_flag->name);
+						break;
+					}
+				} else if (ptr_len == flag_len) {
+					// Handle flags with dual format: Part 2
+					// (e.g. backup and backup=y. backup handled here)
+					flag_val = true;
 				} else {
-					Can_Flash_Img = false;
+					LOGINFO("Flag matched, but could not be processed: %s\n", ptr);
+					break;
 				}
+
+				Apply_TW_Flag(tw_flag->flag, ptr, flag_val);
+				break;
 			}
-		} else {
+		}
+		if (tw_flag->name == 0) {
 			if (Display_Error)
 				LOGERR("Unhandled flag: '%s'\n", ptr);
 			else
 				LOGINFO("Unhandled flag: '%s'\n", ptr);
 		}
-		while (index < flags_len && flags[index] != '\0')
-			index++;
+		ptr = strtok_r(NULL, separator, &savep);
 	}
-	if (has_display_name && !has_storage_name)
-		Storage_Name = Display_Name;
-	if (!has_display_name && has_storage_name)
-		Display_Name = Storage_Name;
-	if (has_display_name && !has_backup_name && Backup_Display_Name != "Android Secure")
-		Backup_Display_Name = Display_Name;
-	if (!has_display_name && has_backup_name)
-		Display_Name = Backup_Display_Name;
-	return true;
 }
 
 bool TWPartition::Is_File_System(string File_System) {
