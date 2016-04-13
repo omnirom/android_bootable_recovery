@@ -20,32 +20,42 @@
 #include <memory>
 #include <vector>
 
-#include "mincrypt/p256.h"
-#include "mincrypt/rsa.h"
+#include <openssl/ec_key.h>
+#include <openssl/rsa.h>
+#include <openssl/sha.h>
 
-typedef struct {
-    p256_int x;
-    p256_int y;
-} ECPublicKey;
+struct RSADeleter {
+  void operator()(RSA* rsa) {
+    RSA_free(rsa);
+  }
+};
+
+struct ECKEYDeleter {
+  void operator()(EC_KEY* ec_key) {
+    EC_KEY_free(ec_key);
+  }
+};
 
 struct Certificate {
     typedef enum {
-        RSA,
-        EC,
+        KEY_TYPE_RSA,
+        KEY_TYPE_EC,
     } KeyType;
 
-    Certificate(int hash_len_, KeyType key_type_,
-            std::unique_ptr<RSAPublicKey>&& rsa_,
-            std::unique_ptr<ECPublicKey>&& ec_) :
-        hash_len(hash_len_),
-        key_type(key_type_),
-        rsa(std::move(rsa_)),
-        ec(std::move(ec_)) { }
+    Certificate(int hash_len_,
+                KeyType key_type_,
+                std::unique_ptr<RSA, RSADeleter>&& rsa_,
+                std::unique_ptr<EC_KEY, ECKEYDeleter>&& ec_)
+        : hash_len(hash_len_),
+          key_type(key_type_),
+          rsa(std::move(rsa_)),
+          ec(std::move(ec_)) {}
 
-    int hash_len;  // SHA_DIGEST_SIZE (SHA-1) or SHA256_DIGEST_SIZE (SHA-256)
+    // SHA_DIGEST_LENGTH (SHA-1) or SHA256_DIGEST_LENGTH (SHA-256)
+    int hash_len;
     KeyType key_type;
-    std::unique_ptr<RSAPublicKey> rsa;
-    std::unique_ptr<ECPublicKey> ec;
+    std::unique_ptr<RSA, RSADeleter> rsa;
+    std::unique_ptr<EC_KEY, ECKEYDeleter> ec;
 };
 
 /* addr and length define a an update package file that has been
