@@ -50,6 +50,7 @@ public:
 	static int Try_Decrypting_File(string fn, string password); // -1 for some error, 0 for failed to decrypt, 1 for decrypted, 3 for decrypted and found gzip format
 	static unsigned long Get_File_Size(const string& Path);                            // Returns the size of a file
 	static std::string Remove_Trailing_Slashes(const std::string& path, bool leaveLast = false); // Normalizes the path, e.g /data//media/ -> /data/media
+	static void Strip_Quotes(char* &str);                                       // Remove leading & trailing double-quotes from a string
 	static vector<string> split_string(const string &in, char del, bool skip_empty);
 	static timespec timespec_diff(timespec& start, timespec& end);	            // Return a diff for 2 times
 	static int32_t timespec_diff_ms(timespec& start, timespec& end);            // Returns diff in ms
