@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-#include "asn1_decoder.h"
-#include "common.h"
-#include "ui.h"
-#include "verifier.h"
-
-#include "mincrypt/dsa_sig.h"
-#include "mincrypt/p256.h"
-#include "mincrypt/p256_ecdsa.h"
-#include "mincrypt/rsa.h"
-#include "mincrypt/sha.h"
-#include "mincrypt/sha256.h"
-
 #include <errno.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <algorithm>
+#include <memory>
+
+#include <openssl/ecdsa.h>
+#include <openssl/obj_mac.h>
+
+#include "asn1_decoder.h"
+#include "common.h"
+#include "ui.h"
+#include "verifier.h"
 
 extern RecoveryUI* ui;
 
@@ -194,15 +193,15 @@ int verify_file(unsigned char* addr, size_t length,
     bool need_sha256 = false;
     for (const auto& key : keys) {
         switch (key.hash_len) {
-            case SHA_DIGEST_SIZE: need_sha1 = true; break;
-            case SHA256_DIGEST_SIZE: need_sha256 = true; break;
+            case SHA_DIGEST_LENGTH: need_sha1 = true; break;
+            case SHA256_DIGEST_LENGTH: need_sha256 = true; break;
         }
     }
 
     SHA_CTX sha1_ctx;
     SHA256_CTX sha256_ctx;
-    SHA_init(&sha1_ctx);
-    SHA256_init(&sha256_ctx);
+    SHA1_Init(&sha1_ctx);
+    SHA256_Init(&sha256_ctx);
 
     double frac = -1.0;
     size_t so_far = 0;
@@ -210,8 +209,8 @@ int verify_file(unsigned char* addr, size_t length,
         size_t size = signed_len - so_far;
         if (size > BUFFER_SIZE) size = BUFFER_SIZE;
 
-        if (need_sha1) SHA_update(&sha1_ctx, addr + so_far, size);
-        if (need_sha256) SHA256_update(&sha256_ctx, addr + so_far, size);
+        if (need_sha1) SHA1_Update(&sha1_ctx, addr + so_far, size);
+        if (need_sha256) SHA256_Update(&sha256_ctx, addr + so_far, size);
         so_far += size;
 
         double f = so_far / (double)signed_len;
@@ -221,8 +220,10 @@ int verify_file(unsigned char* addr, size_t length,
         }
     }
 
-    const uint8_t* sha1 = SHA_final(&sha1_ctx);
-    const uint8_t* sha256 = SHA256_final(&sha256_ctx);
+    uint8_t sha1[SHA_DIGEST_LENGTH];
+    SHA1_Final(sha1, &sha1_ctx);
+    uint8_t sha256[SHA256_DIGEST_LENGTH];
+    SHA256_Final(sha256, &sha256_ctx);
 
     uint8_t* sig_der = nullptr;
     size_t sig_der_length = 0;
@@ -242,23 +243,25 @@ int verify_file(unsigned char* addr, size_t length,
     size_t i = 0;
     for (const auto& key : keys) {
         const uint8_t* hash;
+        int hash_nid;
         switch (key.hash_len) {
-            case SHA_DIGEST_SIZE: hash = sha1; break;
-            case SHA256_DIGEST_SIZE: hash = sha256; break;
-            default: continue;
+            case SHA_DIGEST_LENGTH:
+                hash = sha1;
+                hash_nid = NID_sha1;
+                break;
+            case SHA256_DIGEST_LENGTH:
+                hash = sha256;
+                hash_nid = NID_sha256;
+                break;
+            default:
+                continue;
         }
 
         // The 6 bytes is the "(signature_start) $ff $ff (comment_size)" that
         // the signing tool appends after the signature itself.
-        if (key.key_type == Certificate::RSA) {
-            if (sig_der_length < RSANUMBYTES) {
-                // "signature" block isn't big enough to contain an RSA block.
-                LOGI("signature is too short for RSA key %zu\n", i);
-                continue;
-            }
-
-            if (!RSA_verify(key.rsa.get(), sig_der, RSANUMBYTES,
-                            hash, key.hash_len)) {
+        if (key.key_type == Certificate::KEY_TYPE_RSA) {
+            if (!RSA_verify(hash_nid, hash, key.hash_len, sig_der,
+                            sig_der_length, key.rsa.get())) {
                 LOGI("failed to verify against RSA key %zu\n", i);
                 continue;
             }
@@ -266,18 +269,10 @@ int verify_file(unsigned char* addr, size_t length,
             LOGI("whole-file signature verified against RSA key %zu\n", i);
             free(sig_der);
             return VERIFY_SUCCESS;
-        } else if (key.key_type == Certificate::EC
-                && key.hash_len == SHA256_DIGEST_SIZE) {
-            p256_int r, s;
-            if (!dsa_sig_unpack(sig_der, sig_der_length, &r, &s)) {
-                LOGI("Not a DSA signature block for EC key %zu\n", i);
-                continue;
-            }
-
-            p256_int p256_hash;
-            p256_from_bin(hash, &p256_hash);
-            if (!p256_ecdsa_verify(&(key.ec->x), &(key.ec->y),
-                                   &p256_hash, &r, &s)) {
+        } else if (key.key_type == Certificate::KEY_TYPE_EC
+                && key.hash_len == SHA256_DIGEST_LENGTH) {
+            if (!ECDSA_verify(0, hash, key.hash_len, sig_der,
+                              sig_der_length, key.ec.get())) {
                 LOGI("failed to verify against EC key %zu\n", i);
                 continue;
             }
@@ -293,6 +288,144 @@ int verify_file(unsigned char* addr, size_t length,
     free(sig_der);
     LOGE("failed to verify whole-file signature\n");
     return VERIFY_FAILURE;
+}
+
+std::unique_ptr<RSA, RSADeleter> parse_rsa_key(FILE* file, uint32_t exponent) {
+    // Read key length in words and n0inv. n0inv is a precomputed montgomery
+    // parameter derived from the modulus and can be used to speed up
+    // verification. n0inv is 32 bits wide here, assuming the verification logic
+    // uses 32 bit arithmetic. However, BoringSSL may use a word size of 64 bits
+    // internally, in which case we don't have a valid n0inv. Thus, we just
+    // ignore the montgomery parameters and have BoringSSL recompute them
+    // internally. If/When the speedup from using the montgomery parameters
+    // becomes relevant, we can add more sophisticated code here to obtain a
+    // 64-bit n0inv and initialize the montgomery parameters in the key object.
+    uint32_t key_len_words = 0;
+    uint32_t n0inv = 0;
+    if (fscanf(file, " %i , 0x%x", &key_len_words, &n0inv) != 2) {
+        return nullptr;
+    }
+
+    if (key_len_words > 8192 / 32) {
+        LOGE("key length (%d) too large\n", key_len_words);
+        return nullptr;
+    }
+
+    // Read the modulus.
+    std::unique_ptr<uint32_t[]> modulus(new uint32_t[key_len_words]);
+    if (fscanf(file, " , { %u", &modulus[0]) != 1) {
+        return nullptr;
+    }
+    for (uint32_t i = 1; i < key_len_words; ++i) {
+        if (fscanf(file, " , %u", &modulus[i]) != 1) {
+            return nullptr;
+        }
+    }
+
+    // Cconvert from little-endian array of little-endian words to big-endian
+    // byte array suitable as input for BN_bin2bn.
+    std::reverse((uint8_t*)modulus.get(),
+                 (uint8_t*)(modulus.get() + key_len_words));
+
+    // The next sequence of values is the montgomery parameter R^2. Since we
+    // generally don't have a valid |n0inv|, we ignore this (see comment above).
+    uint32_t rr_value;
+    if (fscanf(file, " } , { %u", &rr_value) != 1) {
+        return nullptr;
+    }
+    for (uint32_t i = 1; i < key_len_words; ++i) {
+        if (fscanf(file, " , %u", &rr_value) != 1) {
+            return nullptr;
+        }
+    }
+    if (fscanf(file, " } } ") != 0) {
+        return nullptr;
+    }
+
+    // Initialize the key.
+    std::unique_ptr<RSA, RSADeleter> key(RSA_new());
+    if (!key) {
+      return nullptr;
+    }
+
+    key->n = BN_bin2bn((uint8_t*)modulus.get(),
+                       key_len_words * sizeof(uint32_t), NULL);
+    if (!key->n) {
+      return nullptr;
+    }
+
+    key->e = BN_new();
+    if (!key->e || !BN_set_word(key->e, exponent)) {
+      return nullptr;
+    }
+
+    return key;
+}
+
+struct BNDeleter {
+  void operator()(BIGNUM* bn) {
+    BN_free(bn);
+  }
+};
+
+std::unique_ptr<EC_KEY, ECKEYDeleter> parse_ec_key(FILE* file) {
+    uint32_t key_len_bytes = 0;
+    if (fscanf(file, " %i", &key_len_bytes) != 1) {
+        return nullptr;
+    }
+
+    std::unique_ptr<EC_GROUP, void (*)(EC_GROUP*)> group(
+        EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1), EC_GROUP_free);
+    if (!group) {
+        return nullptr;
+    }
+
+    // Verify that |key_len| matches the group order.
+    if (key_len_bytes != BN_num_bytes(EC_GROUP_get0_order(group.get()))) {
+        return nullptr;
+    }
+
+    // Read the public key coordinates. Note that the byte order in the file is
+    // little-endian, so we convert to big-endian here.
+    std::unique_ptr<uint8_t[]> bytes(new uint8_t[key_len_bytes]);
+    std::unique_ptr<BIGNUM, BNDeleter> point[2];
+    for (int i = 0; i < 2; ++i) {
+        unsigned int byte = 0;
+        if (fscanf(file, " , { %u", &byte) != 1) {
+            return nullptr;
+        }
+        bytes[key_len_bytes - 1] = byte;
+
+        for (size_t i = 1; i < key_len_bytes; ++i) {
+            if (fscanf(file, " , %u", &byte) != 1) {
+                return nullptr;
+            }
+            bytes[key_len_bytes - i - 1] = byte;
+        }
+
+        point[i].reset(BN_bin2bn(bytes.get(), key_len_bytes, nullptr));
+        if (!point[i]) {
+            return nullptr;
+        }
+
+        if (fscanf(file, " }") != 0) {
+            return nullptr;
+        }
+    }
+
+    if (fscanf(file, " } ") != 0) {
+        return nullptr;
+    }
+
+    // Create and initialize the key.
+    std::unique_ptr<EC_KEY, ECKEYDeleter> key(EC_KEY_new());
+    if (!key || !EC_KEY_set_group(key.get(), group.get()) ||
+        !EC_KEY_set_public_key_affine_coordinates(key.get(), point[0].get(),
+                                                  point[1].get())) {
+        return nullptr;
+    }
+
+    return key;
 }
 
 // Reads a file containing one or more public keys as produced by
@@ -335,94 +468,57 @@ bool load_keys(const char* filename, std::vector<Certificate>& certs) {
     }
 
     while (true) {
-        certs.emplace_back(0, Certificate::RSA, nullptr, nullptr);
+        certs.emplace_back(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
         Certificate& cert = certs.back();
+        uint32_t exponent = 0;
 
         char start_char;
         if (fscanf(f.get(), " %c", &start_char) != 1) return false;
         if (start_char == '{') {
             // a version 1 key has no version specifier.
-            cert.key_type = Certificate::RSA;
-            cert.rsa = std::unique_ptr<RSAPublicKey>(new RSAPublicKey);
-            cert.rsa->exponent = 3;
-            cert.hash_len = SHA_DIGEST_SIZE;
+            cert.key_type = Certificate::KEY_TYPE_RSA;
+            exponent = 3;
+            cert.hash_len = SHA_DIGEST_LENGTH;
         } else if (start_char == 'v') {
             int version;
             if (fscanf(f.get(), "%d {", &version) != 1) return false;
             switch (version) {
                 case 2:
-                    cert.key_type = Certificate::RSA;
-                    cert.rsa = std::unique_ptr<RSAPublicKey>(new RSAPublicKey);
-                    cert.rsa->exponent = 65537;
-                    cert.hash_len = SHA_DIGEST_SIZE;
+                    cert.key_type = Certificate::KEY_TYPE_RSA;
+                    exponent = 65537;
+                    cert.hash_len = SHA_DIGEST_LENGTH;
                     break;
                 case 3:
-                    cert.key_type = Certificate::RSA;
-                    cert.rsa = std::unique_ptr<RSAPublicKey>(new RSAPublicKey);
-                    cert.rsa->exponent = 3;
-                    cert.hash_len = SHA256_DIGEST_SIZE;
+                    cert.key_type = Certificate::KEY_TYPE_RSA;
+                    exponent = 3;
+                    cert.hash_len = SHA256_DIGEST_LENGTH;
                     break;
                 case 4:
-                    cert.key_type = Certificate::RSA;
-                    cert.rsa = std::unique_ptr<RSAPublicKey>(new RSAPublicKey);
-                    cert.rsa->exponent = 65537;
-                    cert.hash_len = SHA256_DIGEST_SIZE;
+                    cert.key_type = Certificate::KEY_TYPE_RSA;
+                    exponent = 65537;
+                    cert.hash_len = SHA256_DIGEST_LENGTH;
                     break;
                 case 5:
-                    cert.key_type = Certificate::EC;
-                    cert.ec = std::unique_ptr<ECPublicKey>(new ECPublicKey);
-                    cert.hash_len = SHA256_DIGEST_SIZE;
+                    cert.key_type = Certificate::KEY_TYPE_EC;
+                    cert.hash_len = SHA256_DIGEST_LENGTH;
                     break;
                 default:
                     return false;
             }
         }
 
-        if (cert.key_type == Certificate::RSA) {
-            RSAPublicKey* key = cert.rsa.get();
-            if (fscanf(f.get(), " %i , 0x%x , { %u", &(key->len), &(key->n0inv),
-                    &(key->n[0])) != 3) {
-                return false;
+        if (cert.key_type == Certificate::KEY_TYPE_RSA) {
+            cert.rsa = parse_rsa_key(f.get(), exponent);
+            if (!cert.rsa) {
+              return false;
             }
-            if (key->len != RSANUMWORDS) {
-                LOGE("key length (%d) does not match expected size\n", key->len);
-                return false;
-            }
-            for (int i = 1; i < key->len; ++i) {
-                if (fscanf(f.get(), " , %u", &(key->n[i])) != 1) return false;
-            }
-            if (fscanf(f.get(), " } , { %u", &(key->rr[0])) != 1) return false;
-            for (int i = 1; i < key->len; ++i) {
-                if (fscanf(f.get(), " , %u", &(key->rr[i])) != 1) return false;
-            }
-            fscanf(f.get(), " } } ");
 
-            LOGI("read key e=%d hash=%d\n", key->exponent, cert.hash_len);
-        } else if (cert.key_type == Certificate::EC) {
-            ECPublicKey* key = cert.ec.get();
-            int key_len;
-            unsigned int byte;
-            uint8_t x_bytes[P256_NBYTES];
-            uint8_t y_bytes[P256_NBYTES];
-            if (fscanf(f.get(), " %i , { %u", &key_len, &byte) != 2) return false;
-            if (key_len != P256_NBYTES) {
-                LOGE("Key length (%d) does not match expected size %d\n", key_len, P256_NBYTES);
-                return false;
+            LOGI("read key e=%d hash=%d\n", exponent, cert.hash_len);
+        } else if (cert.key_type == Certificate::KEY_TYPE_EC) {
+            cert.ec = parse_ec_key(f.get());
+            if (!cert.ec) {
+              return false;
             }
-            x_bytes[P256_NBYTES - 1] = byte;
-            for (int i = P256_NBYTES - 2; i >= 0; --i) {
-                if (fscanf(f.get(), " , %u", &byte) != 1) return false;
-                x_bytes[i] = byte;
-            }
-            if (fscanf(f.get(), " } , { %u", &byte) != 1) return false;
-            y_bytes[P256_NBYTES - 1] = byte;
-            for (int i = P256_NBYTES - 2; i >= 0; --i) {
-                if (fscanf(f.get(), " , %u", &byte) != 1) return false;
-                y_bytes[i] = byte;
-            }
-            fscanf(f.get(), " } } ");
-            p256_from_bin(x_bytes, &key->x);
-            p256_from_bin(y_bytes, &key->y);
         } else {
             LOGE("Unknown key type %d\n", cert.key_type);
             return false;

@@ -27,15 +27,14 @@
 
 #include "common.h"
 #include "install.h"
-#include "mincrypt/rsa.h"
 #include "minui/minui.h"
 #include "minzip/SysUtil.h"
 #include "minzip/Zip.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
 #include "roots.h"
-#include "verifier.h"
 #include "ui.h"
+#include "verifier.h"
 
 extern RecoveryUI* ui;
 

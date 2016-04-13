@@ -45,7 +45,7 @@ LOCAL_STATIC_LIBRARIES := \
     libmtdutils \
     libbase \
     libverifier \
-    libmincrypt \
+    libcrypto_utils_static \
     libcrypto_static \
     libminui \
     libminzip \

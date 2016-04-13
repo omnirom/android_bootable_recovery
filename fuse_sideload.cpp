@@ -61,7 +61,8 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#include "mincrypt/sha256.h"
+#include <openssl/sha.h>
+
 #include "fuse_sideload.h"
 
 #define PACKAGE_FILE_ID   (FUSE_ROOT_ID+1)
@@ -269,22 +270,22 @@ static int fetch_block(struct fuse_data* fd, uint32_t block) {
     //   block).
     // - Otherwise, return -EINVAL for the read.
 
-    uint8_t hash[SHA256_DIGEST_SIZE];
-    SHA256_hash(fd->block_data, fd->block_size, hash);
-    uint8_t* blockhash = fd->hashes + block * SHA256_DIGEST_SIZE;
-    if (memcmp(hash, blockhash, SHA256_DIGEST_SIZE) == 0) {
+    uint8_t hash[SHA256_DIGEST_LENGTH];
+    SHA256(fd->block_data, fd->block_size, hash);
+    uint8_t* blockhash = fd->hashes + block * SHA256_DIGEST_LENGTH;
+    if (memcmp(hash, blockhash, SHA256_DIGEST_LENGTH) == 0) {
         return 0;
     }
 
     int i;
-    for (i = 0; i < SHA256_DIGEST_SIZE; ++i) {
+    for (i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
         if (blockhash[i] != 0) {
             fd->curr_block = -1;
             return -EIO;
         }
     }
 
-    memcpy(blockhash, hash, SHA256_DIGEST_SIZE);
+    memcpy(blockhash, hash, SHA256_DIGEST_LENGTH);
     return 0;
 }
 
@@ -393,10 +394,10 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
         goto done;
     }
 
-    fd.hashes = (uint8_t*)calloc(fd.file_blocks, SHA256_DIGEST_SIZE);
+    fd.hashes = (uint8_t*)calloc(fd.file_blocks, SHA256_DIGEST_LENGTH);
     if (fd.hashes == NULL) {
         fprintf(stderr, "failed to allocate %d bites for hashes\n",
-                fd.file_blocks * SHA256_DIGEST_SIZE);
+                fd.file_blocks * SHA256_DIGEST_LENGTH);
         result = -1;
         goto done;
     }
