@@ -35,6 +35,67 @@ struct PartitionList {
 	unsigned int selected;
 };
 
+struct flag_list {
+	const char *name;
+	unsigned flag;
+};
+
+#define TWFLAG_REMOVABLE                0x1
+#define TWFLAG_STORAGE                  0x2
+#define TWFLAG_SETTINGSSTORAGE          0x3
+#define TWFLAG_ANDSEC                   0x4
+#define TWFLAG_CANBEWIPED               0x5
+#define TWFLAG_USERMRF                  0x6
+#define TWFLAG_BACKUP                   0x7
+#define TWFLAG_WIPEINGUI                0x8
+#define TWFLAG_WIPEDURINGFACTORYRESET   0x9
+#define TWFLAG_SUBPARTITIONOF           0xa
+#define TWFLAG_IGNOREBLKID              0xb
+#define TWFLAG_RETAINLAYOUTVERSION      0xc
+#define TWFLAG_SYMLINK                  0xd
+#define TWFLAG_DISPLAY                  0xe
+#define TWFLAG_STORAGENAME              0xf
+#define TWFLAG_BACKUPNAME               0x10
+#define TWFLAG_BLOCKSIZE                0x11
+#define TWFLAG_LENGTH                   0x12
+#define TWFLAG_CANENCRYPTBACKUP         0x13
+#define TWFLAG_USERDATAENCRYPTBACKUP    0x14
+#define TWFLAG_ENCRYPTABLE              0x15
+#define TWFLAG_FORCEENCRYPT             0x16
+#define TWFLAG_MOUNTTODECRYPT           0x17
+#define TWFLAG_FLASHIMG                 0x18
+#define TWFLAG_FSFLAGS                  0x19
+
+const struct flag_list tw_flags[] = {
+	{ "andsec",                 TWFLAG_ANDSEC },
+	{ "backup",                 TWFLAG_BACKUP },
+	{ "backupname=",            TWFLAG_BACKUPNAME },
+	{ "blocksize=",             TWFLAG_BLOCKSIZE },
+	{ "canbewiped",             TWFLAG_CANBEWIPED },
+	{ "canencryptbackup",       TWFLAG_CANENCRYPTBACKUP },
+	{ "display=",               TWFLAG_DISPLAY },
+	{ "encryptable=",           TWFLAG_ENCRYPTABLE },
+	{ "flashimg",               TWFLAG_FLASHIMG },
+	{ "forceencrypt=",          TWFLAG_FORCEENCRYPT },
+	{ "fsflags=",               TWFLAG_FSFLAGS },
+	{ "ignoreblkid",            TWFLAG_IGNOREBLKID },
+	{ "length=",                TWFLAG_LENGTH },
+	{ "mounttodecrypt",         TWFLAG_MOUNTTODECRYPT },
+	{ "removable",              TWFLAG_REMOVABLE },
+	{ "retainlayoutversion",    TWFLAG_RETAINLAYOUTVERSION },
+	{ "settingsstorage",        TWFLAG_SETTINGSSTORAGE },
+	{ "storage",                TWFLAG_STORAGE },
+	{ "storagename=",           TWFLAG_STORAGENAME },
+	{ "subpartitionof=",        TWFLAG_SUBPARTITIONOF },
+	{ "symlink=",               TWFLAG_SYMLINK },
+	{ "userdataencryptbackup",  TWFLAG_USERDATAENCRYPTBACKUP },
+	{ "usermrf",                TWFLAG_USERMRF },
+	{ "wipeduringfactoryreset", TWFLAG_WIPEDURINGFACTORYRESET },
+	{ "wipeingui",              TWFLAG_WIPEINGUI },
+	{ "defaults",     			0 },
+	{ 0,              			0 },
+};
+
 // Partition class
 class TWPartition
 {
@@ -98,7 +159,7 @@ private:
 	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
 	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
 
-	bool Process_Flags(string Flags, bool Display_Error);                     // Process custom fstab flags
+	void Process_TW_Flags(string Flags, bool Display_Error);                   // Process custom twrp fstab flags
 	bool Process_FS_Flags(string& Options, int& Flags);                       // Process standard fstab fs flags
 	bool Is_File_System(string File_System);                                  // Checks to see if the file system given is considered a file system
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
