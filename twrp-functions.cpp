@@ -305,6 +305,13 @@ std::string TWFunc::Remove_Trailing_Slashes(const std::string& path, bool leaveL
 	return res;
 }
 
+void TWFunc::Strip_Quotes(char **str) {
+	if ((*str)[0] == '\"')
+		(*str)++;
+	if ((*str)[strlen(*str)-1] == '\"')
+		(*str)[strlen(*str)-1] = 0;
+}
+
 vector<string> TWFunc::split_string(const string &in, char del, bool skip_empty) {
 	vector<string> res;
 
