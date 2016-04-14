@@ -32,6 +32,8 @@
 
 extern RecoveryUI* ui;
 
+static constexpr size_t MiB = 1024 * 1024;
+
 /*
  * Simple version of PKCS#7 SignedData extraction. This extracts the
  * signature OCTET STRING to be used for signature verification.
@@ -187,8 +189,6 @@ int verify_file(unsigned char* addr, size_t length,
         }
     }
 
-#define BUFFER_SIZE 4096
-
     bool need_sha1 = false;
     bool need_sha256 = false;
     for (const auto& key : keys) {
@@ -206,8 +206,10 @@ int verify_file(unsigned char* addr, size_t length,
     double frac = -1.0;
     size_t so_far = 0;
     while (so_far < signed_len) {
-        size_t size = signed_len - so_far;
-        if (size > BUFFER_SIZE) size = BUFFER_SIZE;
+        // On a Nexus 9, experiment didn't show any performance improvement with
+        // larger sizes past 1MiB, and they reduce the granularity of the progress
+        // bar. http://b/28135231.
+        size_t size = std::min(signed_len - so_far, 1 * MiB);
 
         if (need_sha1) SHA1_Update(&sha1_ctx, addr + so_far, size);
         if (need_sha256) SHA256_Update(&sha256_ctx, addr + so_far, size);

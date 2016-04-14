@@ -23,6 +23,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <chrono>
 #include <vector>
 
 #include "common.h"
@@ -228,6 +229,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount)
         return INSTALL_CORRUPT;
     }
 
+    // Load keys.
     std::vector<Certificate> loadedKeys;
     if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
         LOGE("Failed to load keys\n");
@@ -235,18 +237,19 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount)
     }
     LOGI("%zu key(s) loaded from %s\n", loadedKeys.size(), PUBLIC_KEYS_FILE);
 
+    // Verify package.
     ui->Print("Verifying update package...\n");
-
+    auto t0 = std::chrono::system_clock::now();
     int err = verify_file(map.addr, map.length, loadedKeys);
-    LOGI("verify_file returned %d\n", err);
+    std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
+    ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
     if (err != VERIFY_SUCCESS) {
         LOGE("signature verification failed\n");
         sysReleaseMap(&map);
         return INSTALL_CORRUPT;
     }
 
-    /* Try to open the package.
-     */
+    // Try to open the package.
     ZipArchive zip;
     err = mzOpenZipArchive(map.addr, map.length, &zip);
     if (err != 0) {
@@ -255,8 +258,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount)
         return INSTALL_CORRUPT;
     }
 
-    /* Verify and install the contents of the package.
-     */
+    // Verify and install the contents of the package.
     ui->Print("Installing update...\n");
     ui->SetEnableReboot(false);
     int result = try_update_binary(path, &zip, wipe_cache);
