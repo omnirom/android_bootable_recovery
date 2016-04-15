@@ -67,14 +67,23 @@ class ScreenRecoveryUI : public RecoveryUI {
     };
     void SetColor(UIElement e);
 
-  private:
+  protected:
     Icon currentIcon;
-    int installingFrame;
-    const char* locale;
 
-    GRSurface* backgroundIcon[5];
-    GRSurface* backgroundText[5];
-    GRSurface** installation;
+    const char* locale;
+    bool intro_done;
+    int current_frame;
+
+    GRSurface* error_icon;
+
+    GRSurface* erasing_text;
+    GRSurface* error_text;
+    GRSurface* installing_text;
+    GRSurface* no_command_text;
+
+    GRSurface** introFrames;
+    GRSurface** loopFrames;
+
     GRSurface* progressBarEmpty;
     GRSurface* progressBarFill;
     GRSurface* stageMarkerEmpty;
@@ -107,20 +116,30 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     pthread_t progress_thread_;
 
-    // The following two are parsed from the image file
-    // (e.g. '/res/images/icon_installing.png').
+    // Number of intro frames and loop frames in the animation.
+    int intro_frames;
+    int loop_frames;
+
+    // Number of frames per sec (default: 30) for both parts of the animation.
     int animation_fps;
-    int installing_frames;
 
     int iconX, iconY;
 
     int stage, max_stage;
 
-    void draw_background_locked(Icon icon);
+    int char_width_;
+    int char_height_;
+    pthread_mutex_t updateMutex;
+    bool rtl_locale;
+
+    void draw_background_locked();
     void draw_progress_locked();
     void draw_screen_locked();
     void update_screen_locked();
     void update_progress_locked();
+
+    GRSurface* GetCurrentFrame();
+    GRSurface* GetCurrentText();
 
     static void* ProgressThreadStartRoutine(void* data);
     void ProgressThreadLoop();
@@ -130,16 +149,11 @@ class ScreenRecoveryUI : public RecoveryUI {
     void PutChar(char);
     void ClearText();
 
-    void DrawHorizontalRule(int* y);
-
-    void LoadBitmapArray(const char* filename, int* frames, int* fps, GRSurface*** surface);
-    void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
-  protected:
-    int char_width_;
-    int char_height_;
-    pthread_mutex_t updateMutex;
-    bool rtl_locale;
+    void LoadAnimation();
     void LoadBitmap(const char* filename, GRSurface** surface);
+    void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
+
+    void DrawHorizontalRule(int* y);
     void DrawTextLine(int x, int* y, const char* line, bool bold);
     void DrawTextLines(int x, int* y, const char* const* lines);
 };
