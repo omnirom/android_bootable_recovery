@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/input.h>
@@ -51,8 +52,9 @@ static double now() {
 
 ScreenRecoveryUI::ScreenRecoveryUI() :
     currentIcon(NONE),
-    installingFrame(0),
     locale(nullptr),
+    intro_done(false),
+    current_frame(0),
     progressBarType(EMPTY),
     progressScopeStart(0),
     progressScopeSize(0),
@@ -71,31 +73,43 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     menu_items(0),
     menu_sel(0),
     file_viewer_text_(nullptr),
-    animation_fps(-1),
-    installing_frames(-1),
+    intro_frames(0),
+    loop_frames(0),
+    animation_fps(30), // TODO: there's currently no way to infer this.
     stage(-1),
     max_stage(-1),
     rtl_locale(false) {
 
-    for (int i = 0; i < 5; i++) {
-        backgroundIcon[i] = nullptr;
-    }
     pthread_mutex_init(&updateMutex, nullptr);
+}
+
+GRSurface* ScreenRecoveryUI::GetCurrentFrame() {
+    if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
+        return intro_done ? loopFrames[current_frame] : introFrames[current_frame];
+    }
+    return error_icon;
+}
+
+GRSurface* ScreenRecoveryUI::GetCurrentText() {
+    switch (currentIcon) {
+        case ERASING: return erasing_text;
+        case ERROR: return error_text;
+        case INSTALLING_UPDATE: return installing_text;
+        case NO_COMMAND: return no_command_text;
+        case NONE: abort();
+    }
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
 // Should only be called with updateMutex locked.
-void ScreenRecoveryUI::draw_background_locked(Icon icon) {
+void ScreenRecoveryUI::draw_background_locked() {
     pagesIdentical = false;
     gr_color(0, 0, 0, 255);
     gr_clear();
 
-    if (icon) {
-        GRSurface* surface = backgroundIcon[icon];
-        if (icon == INSTALLING_UPDATE || icon == ERASING) {
-            surface = installation[installingFrame];
-        }
-        GRSurface* text_surface = backgroundText[icon];
+    if (currentIcon != NONE) {
+        GRSurface* surface = GetCurrentFrame();
+        GRSurface* text_surface = GetCurrentText();
 
         int iconWidth = gr_get_width(surface);
         int iconHeight = gr_get_height(surface);
@@ -132,14 +146,15 @@ void ScreenRecoveryUI::draw_background_locked(Icon icon) {
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_progress_locked() {
     if (currentIcon == ERROR) return;
+    if (progressBarType != DETERMINATE) return;
 
     if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
-        GRSurface* icon = installation[installingFrame];
-        gr_blit(icon, 0, 0, gr_get_width(icon), gr_get_height(icon), iconX, iconY);
+        GRSurface* frame = GetCurrentFrame();
+        gr_blit(frame, 0, 0, gr_get_width(frame), gr_get_height(frame), iconX, iconY);
     }
 
     if (progressBarType != EMPTY) {
-        int iconHeight = gr_get_height(backgroundIcon[INSTALLING_UPDATE]);
+        int iconHeight = gr_get_height(loopFrames[0]);
         int width = gr_get_width(progressBarEmpty);
         int height = gr_get_height(progressBarEmpty);
 
@@ -238,7 +253,7 @@ static const char* LONG_PRESS_HELP[] = {
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_screen_locked() {
     if (!show_text) {
-        draw_background_locked(currentIcon);
+        draw_background_locked();
         draw_progress_locked();
     } else {
         gr_color(0, 0, 0, 255);
@@ -254,8 +269,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
             for (auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
                 DrawTextLine(TEXT_INDENT, &y, chunk.c_str(), false);
             }
-            DrawTextLines(TEXT_INDENT, &y,
-                    HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
+            DrawTextLines(TEXT_INDENT, &y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
 
             SetColor(HEADER);
             DrawTextLines(TEXT_INDENT, &y, menu_headers_);
@@ -327,14 +341,23 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
         double start = now();
         pthread_mutex_lock(&updateMutex);
 
-        int redraw = 0;
+        bool redraw = false;
 
         // update the installation animation, if active
         // skip this if we have a text overlay (too expensive to update)
-        if ((currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) &&
-            installing_frames > 0 && !show_text) {
-            installingFrame = (installingFrame + 1) % installing_frames;
-            redraw = 1;
+        if ((currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) && !show_text) {
+            if (!intro_done) {
+                if (current_frame == intro_frames - 1) {
+                    intro_done = true;
+                    current_frame = 0;
+                } else {
+                    ++current_frame;
+                }
+            } else {
+                current_frame = (current_frame + 1) % loop_frames;
+            }
+
+            redraw = true;
         }
 
         // move the progress bar forward on timed intervals, if configured
@@ -345,7 +368,7 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
             if (p > 1.0) p = 1.0;
             if (p > progress) {
                 progress = p;
-                redraw = 1;
+                redraw = true;
             }
         }
 
@@ -363,22 +386,14 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
 void ScreenRecoveryUI::LoadBitmap(const char* filename, GRSurface** surface) {
     int result = res_create_display_surface(filename, surface);
     if (result < 0) {
-        LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
-    }
-}
-
-void ScreenRecoveryUI::LoadBitmapArray(const char* filename, int* frames, int* fps,
-        GRSurface*** surface) {
-    int result = res_create_multi_display_surface(filename, frames, fps, surface);
-    if (result < 0) {
-        LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
+        LOGE("missing bitmap %s (error %d)\n", filename, result);
     }
 }
 
 void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, GRSurface** surface) {
     int result = res_create_localized_alpha_surface(filename, locale, surface);
     if (result < 0) {
-        LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
+        LOGE("missing bitmap %s (error %d)\n", filename, result);
     }
 }
 
@@ -405,31 +420,60 @@ void ScreenRecoveryUI::Init() {
     text_col_ = text_row_ = 0;
     text_top_ = 1;
 
-    backgroundIcon[NONE] = nullptr;
-    LoadBitmapArray("icon_installing", &installing_frames, &animation_fps, &installation);
-    backgroundIcon[INSTALLING_UPDATE] = installing_frames ? installation[0] : nullptr;
-    backgroundIcon[ERASING] = backgroundIcon[INSTALLING_UPDATE];
-    LoadBitmap("icon_error", &backgroundIcon[ERROR]);
-    backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
+    LoadBitmap("icon_error", &error_icon);
 
     LoadBitmap("progress_empty", &progressBarEmpty);
     LoadBitmap("progress_fill", &progressBarFill);
+
     LoadBitmap("stage_empty", &stageMarkerEmpty);
     LoadBitmap("stage_fill", &stageMarkerFill);
 
-    LoadLocalizedBitmap("installing_text", &backgroundText[INSTALLING_UPDATE]);
-    LoadLocalizedBitmap("erasing_text", &backgroundText[ERASING]);
-    LoadLocalizedBitmap("no_command_text", &backgroundText[NO_COMMAND]);
-    LoadLocalizedBitmap("error_text", &backgroundText[ERROR]);
+    LoadLocalizedBitmap("installing_text", &installing_text);
+    LoadLocalizedBitmap("erasing_text", &erasing_text);
+    LoadLocalizedBitmap("no_command_text", &no_command_text);
+    LoadLocalizedBitmap("error_text", &error_text);
+
+    LoadAnimation();
 
     pthread_create(&progress_thread_, nullptr, ProgressThreadStartRoutine, this);
 
     RecoveryUI::Init();
 }
 
+void ScreenRecoveryUI::LoadAnimation() {
+    // How many frames of intro and loop do we have?
+    std::unique_ptr<DIR, decltype(&closedir)> dir(opendir("/res/images"), closedir);
+    dirent* de;
+    while ((de = readdir(dir.get())) != nullptr) {
+        int value;
+        if (sscanf(de->d_name, "intro%d", &value) == 1 && intro_frames < (value + 1)) {
+            intro_frames = value + 1;
+        } else if (sscanf(de->d_name, "loop%d", &value) == 1 && loop_frames < (value + 1)) {
+            loop_frames = value + 1;
+        }
+    }
+
+    // It's okay to not have an intro.
+    if (intro_frames == 0) intro_done = true;
+    // But you must have an animation.
+    if (loop_frames == 0) abort();
+
+    introFrames = new GRSurface*[intro_frames];
+    for (int i = 0; i < intro_frames; ++i) {
+        LoadBitmap(android::base::StringPrintf("intro%02d", i).c_str(), &introFrames[i]);
+    }
+
+    loopFrames = new GRSurface*[loop_frames];
+    for (int i = 0; i < loop_frames; ++i) {
+        LoadBitmap(android::base::StringPrintf("loop%02d", i).c_str(), &loopFrames[i]);
+    }
+}
+
 void ScreenRecoveryUI::SetLocale(const char* new_locale) {
-    if (new_locale) {
-        this->locale = new_locale;
+    this->locale = new_locale;
+    this->rtl_locale = false;
+
+    if (locale) {
         char* lang = strdup(locale);
         for (char* p = lang; *p; ++p) {
             if (*p == '_') {
@@ -438,8 +482,7 @@ void ScreenRecoveryUI::SetLocale(const char* new_locale) {
             }
         }
 
-        // A bit cheesy: keep an explicit list of supported languages
-        // that are RTL.
+        // A bit cheesy: keep an explicit list of supported RTL languages.
         if (strcmp(lang, "ar") == 0 ||   // Arabic
             strcmp(lang, "fa") == 0 ||   // Persian (Farsi)
             strcmp(lang, "he") == 0 ||   // Hebrew (new language code)
@@ -448,8 +491,6 @@ void ScreenRecoveryUI::SetLocale(const char* new_locale) {
             rtl_locale = true;
         }
         free(lang);
-    } else {
-        new_locale = nullptr;
     }
 }
 

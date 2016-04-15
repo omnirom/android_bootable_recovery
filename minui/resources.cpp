@@ -33,8 +33,6 @@
 
 #include "minui.h"
 
-extern char* locale;
-
 #define SURFACE_DATA_ALIGNMENT 8
 
 static GRSurface* malloc_surface(size_t data_size) {

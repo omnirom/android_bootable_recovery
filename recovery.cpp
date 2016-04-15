@@ -102,7 +102,7 @@ static const int BATTERY_OK_PERCENTAGE = 20;
 static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
 
 RecoveryUI* ui = NULL;
-char* locale = NULL;
+static const char* locale = "en_US";
 char* stage = NULL;
 char* reason = NULL;
 bool modified_flash = false;
@@ -895,6 +895,37 @@ static void choose_recovery_file(Device* device) {
     }
 }
 
+static void run_graphics_test(Device* device) {
+    // Switch to graphics screen.
+    ui->ShowText(false);
+
+    ui->SetProgressType(RecoveryUI::INDETERMINATE);
+    ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
+    sleep(1);
+
+    ui->SetBackground(RecoveryUI::ERROR);
+    sleep(1);
+
+    ui->SetBackground(RecoveryUI::NO_COMMAND);
+    sleep(1);
+
+    ui->SetBackground(RecoveryUI::ERASING);
+    sleep(1);
+
+    ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
+
+    ui->SetProgressType(RecoveryUI::DETERMINATE);
+    ui->ShowProgress(1.0, 10.0);
+    float fraction = 0.0;
+    for (size_t i = 0; i < 100; ++i) {
+      fraction += .01;
+      ui->SetProgress(fraction);
+      usleep(100000);
+    }
+
+    ui->ShowText(true);
+}
+
 // How long (in seconds) we wait for the fuse-provided package file to
 // appear, before timing out.
 #define SDCARD_INSTALL_TIMEOUT 10
@@ -1051,6 +1082,10 @@ prompt_and_wait(Device* device, int status) {
 
             case Device::VIEW_RECOVERY_LOGS:
                 choose_recovery_file(device);
+                break;
+
+            case Device::RUN_GRAPHICS_TEST:
+                run_graphics_test(device);
                 break;
 
             case Device::MOUNT_SYSTEM:
