@@ -149,12 +149,9 @@ public class Main extends Activity {
         String[] localeNames = getAssets().getLocales();
         Arrays.sort(localeNames);
         ArrayList<Locale> locales = new ArrayList<Locale>();
-        for (String ln : localeNames) {
-            int u = ln.indexOf('_');
-            if (u >= 0) {
-                Log.i(TAG, "locale = " + ln);
-                locales.add(new Locale(ln.substring(0, u), ln.substring(u+1)));
-            }
+        for (String localeName : localeNames) {
+            Log.i(TAG, "locale = " + localeName);
+            locales.add(Locale.forLanguageTag(localeName));
         }
 
         final Runnable seq = buildSequence(locales.toArray(new Locale[0]));
