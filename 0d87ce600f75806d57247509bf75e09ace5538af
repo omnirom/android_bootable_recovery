@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_8c579acb",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 462,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_ec317eb6",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_2cc40695",
         "filename": "partition.cpp",
         "patchSetId": 2
@@ -30,6 +48,24 @@
       "writtenOn": "2016-04-16T20:04:22Z",
       "side": 1,
       "message": "The old code here ignored semicolons inside quotes - where is this functionality now?",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6c6c4e9d",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "I\u0027m strongly of the opinion that ; should be treated as a reserved character",
+      "parentUuid": "98faad2e_2cc40695",
       "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_4c69928a",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 473,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_4c42b214",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_8c40ba0d",
         "filename": "partition.cpp",
         "patchSetId": 2
@@ -64,6 +118,24 @@
       "writtenOn": "2016-04-16T20:04:22Z",
       "side": 1,
       "message": "strlen can\u0027t be \u003c 0",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2c6646bb",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 490,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_8c40ba0d",
       "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -87,6 +159,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_0c638aaa",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 494,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_ac3b7694",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_cc36c2ad",
         "filename": "partition.cpp",
         "patchSetId": 2
@@ -98,6 +188,24 @@
       "writtenOn": "2016-04-16T20:04:22Z",
       "side": 1,
       "message": "this switch is long enough to extract to another method",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ec03bec2",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 513,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "In principle I agree, but this \"apply_twflags\" function would need to accept many arguments, mostly due to has_diplay_name, has_backup_name, and has_storage_name. Can you think of an elegant way to reduce the number of arguments to just three? (twflag-\u003eflag, ptr, flag_val)",
+      "parentUuid": "98faad2e_cc36c2ad",
       "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -121,6 +229,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_cc0802e2",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 616,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_6c456e1b",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_8cd55a45",
         "filename": "partitions.hpp",
         "patchSetId": 2
@@ -132,6 +258,24 @@
       "writtenOn": "2016-04-16T20:04:22Z",
       "side": 1,
       "message": "This should be local to TWPartition",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ac0db6f0",
+        "filename": "partitions.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "Deleted, already exists in partition.cpp",
+      "parentUuid": "98faad2e_8cd55a45",
       "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -155,6 +299,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_8c12fa09",
+        "filename": "partitions.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_6cca0ea7",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_4cc7529c",
         "filename": "partitions.hpp",
         "patchSetId": 2
@@ -172,6 +334,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_6cf7aecf",
+        "filename": "partitions.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_4cc7529c",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_2c4f663d",
         "filename": "twrp-functions.cpp",
         "patchSetId": 2
@@ -183,6 +363,24 @@
       "writtenOn": "2016-04-16T20:04:22Z",
       "side": 1,
       "message": "A C++ implementation would be nicer here.",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4cf4f2c8",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-16T23:22:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_2c4f663d",
       "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
