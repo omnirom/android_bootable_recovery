@@ -1,0 +1,191 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_ec317eb6",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 462,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "move declarations to the scope where they are really used",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2cc40695",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "The old code here ignored semicolons inside quotes - where is this functionality now?",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4c42b214",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 473,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "use a pointer instead of an index to walk through the array, so you can write something like flagdef instead of tw_flags[i] everywhere below",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8c40ba0d",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 490,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "strlen can\u0027t be \u003c 0",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ac3b7694",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 494,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "\"? true : false\" is pointless",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_cc36c2ad",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 513,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "this switch is long enough to extract to another method",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6c456e1b",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 616,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "I think this code is in the wrong place - if the fstab contains an unknown flag, you don\u0027t even get here.",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8cd55a45",
+        "filename": "partitions.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "This should be local to TWPartition",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6cca0ea7",
+        "filename": "partitions.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "use an enum declaration instead of preprocessor. And move it to partition.cpp since it\u0027s an implementation detail and not part of the interface.",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_4cc7529c",
+        "filename": "partitions.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "move to partition.cpp",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_2c4f663d",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-16T20:04:22Z",
+      "side": 1,
+      "message": "A C++ implementation would be nicer here.",
+      "revId": "0d87ce600f75806d57247509bf75e09ace5538af",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
