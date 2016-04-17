@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_0ca4aa9f",
+        "filename": "partition.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 688,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-17T20:01:33Z",
+      "side": 1,
+      "message": "This does not match the original logic. Needs to be reconsidered.",
+      "revId": "fdb9fbee6dc9bef8063be2692c81a964a6b687a8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
