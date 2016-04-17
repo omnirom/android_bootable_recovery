@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_4ccd128b",
+        "filename": "partition.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-17T05:18:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_acdff63c",
+      "revId": "7b7543e5cbcff29f6caba1dd55ec50b74f2e8a7a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_ecd5fe1e",
         "filename": "partition.cpp",
         "patchSetId": 3
@@ -30,6 +48,24 @@
       "writtenOn": "2016-04-17T01:30:45Z",
       "side": 1,
       "message": "case TWFLAG_DEFAULTS:\n  // Do nothing\n  break;",
+      "revId": "7b7543e5cbcff29f6caba1dd55ec50b74f2e8a7a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_0cc70a6b",
+        "filename": "partition.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 577,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-17T05:18:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_ecd5fe1e",
       "revId": "7b7543e5cbcff29f6caba1dd55ec50b74f2e8a7a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_eca73ebb",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-17T05:18:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_ecbcded8",
+      "revId": "7b7543e5cbcff29f6caba1dd55ec50b74f2e8a7a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_ccc1225c",
         "filename": "twrp-functions.cpp",
         "patchSetId": 3
@@ -64,6 +118,24 @@
       "writtenOn": "2016-04-17T04:26:52Z",
       "side": 1,
       "message": "if (strlen(str) \u003e 0 \u0026\u0026 str[strlen(str)-1] \u003d\u003d \u0027\\\"\u0027)",
+      "revId": "7b7543e5cbcff29f6caba1dd55ec50b74f2e8a7a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_ccac82a2",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 311,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-17T05:18:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_ccc1225c",
       "revId": "7b7543e5cbcff29f6caba1dd55ec50b74f2e8a7a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
