@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_ecd5fe1e",
+        "filename": "partition.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 577,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-17T01:30:45Z",
+      "side": 1,
+      "message": "case TWFLAG_DEFAULTS:\n  // Do nothing\n  break;",
+      "revId": "7b7543e5cbcff29f6caba1dd55ec50b74f2e8a7a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
