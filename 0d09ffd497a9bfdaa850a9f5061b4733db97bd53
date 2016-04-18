@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_acfc966d",
+        "filename": "partition.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 494,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-18T16:33:05Z",
+      "side": 1,
+      "message": "These 3 conditions will cover most relevant cases, but I admit there is a regression from the existing behavior. If a user specifies a Display_Name which happens to be the same as the auto generated one (and that person really wants this name applied), then has_display_name is assigned false here and Display_Name will pick up whatever the user specified for Storage_Name. I really don\u0027t want to create global temporary variables, but have not yet figured out how to handle this issue more elegantly.",
+      "revId": "0d09ffd497a9bfdaa850a9f5061b4733db97bd53",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_8c01da72",
+        "filename": "partition.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 540,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-18T16:33:05Z",
+      "side": 1,
+      "message": "The cases below can be alphabetized",
+      "revId": "0d09ffd497a9bfdaa850a9f5061b4733db97bd53",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_6cf68e8c",
+        "filename": "partition.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 644,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-18T16:33:05Z",
+      "side": 1,
+      "message": "While I really, really prefer this behavior, let me know if the change to making \u0027;\u0027 a reserved character is unacceptable and I will restore the older string processing behavior.",
+      "revId": "0d09ffd497a9bfdaa850a9f5061b4733db97bd53",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
