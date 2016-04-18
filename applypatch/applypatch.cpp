@@ -596,7 +596,7 @@ size_t FreeSpaceForFile(const char* filename) {
 
 int CacheSizeCheck(size_t bytes) {
     if (MakeFreeSpaceOnCache(bytes) < 0) {
-        printf("unable to make %ld bytes available on /cache\n", (long)bytes);
+        printf("unable to make %zu bytes available on /cache\n", bytes);
         return 1;
     } else {
         return 0;
