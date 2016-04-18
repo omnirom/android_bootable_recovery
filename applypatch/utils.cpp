@@ -27,7 +27,7 @@ void Write4(int value, FILE* f) {
 }
 
 /** Write an 8-byte value to f in little-endian order. */
-void Write8(long long value, FILE* f) {
+void Write8(int64_t value, FILE* f) {
   fputc(value & 0xff, f);
   fputc((value >> 8) & 0xff, f);
   fputc((value >> 16) & 0xff, f);
@@ -52,14 +52,14 @@ int Read4(void* pv) {
                  (unsigned int)p[0]);
 }
 
-long long Read8(void* pv) {
+int64_t Read8(void* pv) {
     unsigned char* p = reinterpret_cast<unsigned char*>(pv);
-    return (long long)(((unsigned long long)p[7] << 56) |
-                       ((unsigned long long)p[6] << 48) |
-                       ((unsigned long long)p[5] << 40) |
-                       ((unsigned long long)p[4] << 32) |
-                       ((unsigned long long)p[3] << 24) |
-                       ((unsigned long long)p[2] << 16) |
-                       ((unsigned long long)p[1] << 8) |
-                       (unsigned long long)p[0]);
+    return (int64_t)(((uint64_t)p[7] << 56) |
+                       ((uint64_t)p[6] << 48) |
+                       ((uint64_t)p[5] << 40) |
+                       ((uint64_t)p[4] << 32) |
+                       ((uint64_t)p[3] << 24) |
+                       ((uint64_t)p[2] << 16) |
+                       ((uint64_t)p[1] << 8) |
+                       (uint64_t)p[0]);
 }

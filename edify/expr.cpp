@@ -286,13 +286,14 @@ Value* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
     bool result = false;
     char* end;
 
-    long l_int = strtol(left, &end, 10);
+    // Parse up to at least long long or 64-bit integers.
+    int64_t l_int = static_cast<int64_t>(strtoll(left, &end, 10));
     if (left[0] == '\0' || *end != '\0') {
         goto done;
     }
 
-    long r_int;
-    r_int = strtol(right, &end, 10);
+    int64_t r_int;
+    r_int = static_cast<int64_t>(strtoll(right, &end, 10));
     if (right[0] == '\0' || *end != '\0') {
         goto done;
     }
