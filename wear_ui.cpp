@@ -277,7 +277,7 @@ void WearRecoveryUI::progress_loop() {
         // minimum of 20ms delay between frames
         double delay = interval - (end-start);
         if (delay < 0.02) delay = 0.02;
-        usleep((long)(delay * 1000000));
+        usleep(static_cast<useconds_t>(delay * 1000000));
     }
 }
 
@@ -500,8 +500,8 @@ void WearRecoveryUI::Redraw()
 }
 
 void WearRecoveryUI::ShowFile(FILE* fp) {
-    std::vector<long> offsets;
-    offsets.push_back(ftell(fp));
+    std::vector<off_t> offsets;
+    offsets.push_back(ftello(fp));
     ClearText();
 
     struct stat sb;
@@ -511,7 +511,7 @@ void WearRecoveryUI::ShowFile(FILE* fp) {
     while (true) {
         if (show_prompt) {
             Print("--(%d%% of %d bytes)--",
-                  static_cast<int>(100 * (double(ftell(fp)) / double(sb.st_size))),
+                  static_cast<int>(100 * (double(ftello(fp)) / double(sb.st_size))),
                   static_cast<int>(sb.st_size));
             Redraw();
             while (show_prompt) {
@@ -530,7 +530,7 @@ void WearRecoveryUI::ShowFile(FILE* fp) {
                     if (feof(fp)) {
                         return;
                     }
-                    offsets.push_back(ftell(fp));
+                    offsets.push_back(ftello(fp));
                 }
             }
             ClearText();

@@ -92,7 +92,7 @@ static ssize_t logrotate(
         if (!isdigit(number.data()[0])) {
             name += ".1";
         } else {
-            unsigned long long i = std::stoull(number);
+            auto i = std::stoull(number);
             name = sub + "." + std::to_string(i + 1);
         }
     }

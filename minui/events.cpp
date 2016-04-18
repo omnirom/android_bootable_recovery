@@ -49,7 +49,7 @@ static unsigned ev_count = 0;
 static unsigned ev_dev_count = 0;
 static unsigned ev_misc_count = 0;
 
-static bool test_bit(size_t bit, unsigned long* array) {
+static bool test_bit(size_t bit, unsigned long* array) { // NOLINT
     return (array[bit/BITS_PER_LONG] & (1UL << (bit % BITS_PER_LONG))) != 0;
 }
 
@@ -65,7 +65,8 @@ int ev_init(ev_callback input_cb, void* data) {
     if (dir != NULL) {
         dirent* de;
         while ((de = readdir(dir))) {
-            unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];
+            // Use unsigned long to match ioctl's parameter type.
+            unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)]; // NOLINT
 
 //            fprintf(stderr,"/dev/input/%s\n", de->d_name);
             if (strncmp(de->d_name, "event", 5)) continue;
@@ -175,8 +176,9 @@ int ev_get_input(int fd, uint32_t epevents, input_event* ev) {
 }
 
 int ev_sync_key_state(ev_set_key_callback set_key_cb, void* data) {
-    unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];
-    unsigned long key_bits[BITS_TO_LONGS(KEY_MAX)];
+    // Use unsigned long to match ioctl's parameter type.
+    unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)]; // NOLINT
+    unsigned long key_bits[BITS_TO_LONGS(KEY_MAX)]; // NOLINT
 
     for (size_t i = 0; i < ev_dev_count; ++i) {
         memset(ev_bits, 0, sizeof(ev_bits));
@@ -203,8 +205,9 @@ int ev_sync_key_state(ev_set_key_callback set_key_cb, void* data) {
 }
 
 void ev_iterate_available_keys(std::function<void(int)> f) {
-    unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];
-    unsigned long key_bits[BITS_TO_LONGS(KEY_MAX)];
+    // Use unsigned long to match ioctl's parameter type.
+    unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)]; // NOLINT
+    unsigned long key_bits[BITS_TO_LONGS(KEY_MAX)]; // NOLINT
 
     for (size_t i = 0; i < ev_dev_count; ++i) {
         memset(ev_bits, 0, sizeof(ev_bits));
