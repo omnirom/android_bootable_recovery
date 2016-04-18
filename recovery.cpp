@@ -391,7 +391,7 @@ static void copy_log_file_to_pmsg(const char* source, const char* destination) {
 }
 
 // How much of the temp log we have copied to the copy in cache.
-static long tmplog_offset = 0;
+static off_t tmplog_offset = 0;
 
 static void copy_log_file(const char* source, const char* destination, bool append) {
     FILE* dest_fp = fopen_path(destination, append ? "a" : "w");
@@ -401,7 +401,7 @@ static void copy_log_file(const char* source, const char* destination, bool appe
         FILE* source_fp = fopen(source, "r");
         if (source_fp != nullptr) {
             if (append) {
-                fseek(source_fp, tmplog_offset, SEEK_SET);  // Since last write
+                fseeko(source_fp, tmplog_offset, SEEK_SET);  // Since last write
             }
             char buf[4096];
             size_t bytes;
@@ -409,7 +409,7 @@ static void copy_log_file(const char* source, const char* destination, bool appe
                 fwrite(buf, 1, bytes, dest_fp);
             }
             if (append) {
-                tmplog_offset = ftell(source_fp);
+                tmplog_offset = ftello(source_fp);
             }
             check_and_fclose(source_fp, source);
         }
@@ -1213,7 +1213,7 @@ static ssize_t logrotate(
         if (!isdigit(number.data()[0])) {
             name += ".1";
         } else {
-            unsigned long long i = std::stoull(number);
+            auto i = std::stoull(number);
             name = sub + "." + std::to_string(i + 1);
         }
     }

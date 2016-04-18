@@ -602,8 +602,8 @@ Value* PackageExtractFileFn(const char* name, State* state,
         v->size = mzGetZipEntryUncompLen(entry);
         v->data = reinterpret_cast<char*>(malloc(v->size));
         if (v->data == NULL) {
-            printf("%s: failed to allocate %ld bytes for %s\n",
-                    name, (long)v->size, zip_path);
+            printf("%s: failed to allocate %zd bytes for %s\n",
+                    name, v->size, zip_path);
             goto done1;
         }
 
@@ -992,7 +992,8 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     buffer = reinterpret_cast<char*>(malloc(st.st_size+1));
     if (buffer == NULL) {
-        ErrorAbort(state, "%s: failed to alloc %lld bytes", name, (long long)st.st_size+1);
+        ErrorAbort(state, "%s: failed to alloc %zu bytes", name,
+                   static_cast<size_t>(st.st_size+1));
         goto done;
     }
 
@@ -1004,8 +1005,8 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     if (ota_fread(buffer, 1, st.st_size, f) != static_cast<size_t>(st.st_size)) {
-        ErrorAbort(state, "%s: failed to read %lld bytes from %s",
-                   name, (long long)st.st_size+1, filename);
+        ErrorAbort(state, "%s: failed to read %zu bytes from %s",
+                   name, static_cast<size_t>(st.st_size), filename);
         ota_fclose(f);
         goto done;
     }

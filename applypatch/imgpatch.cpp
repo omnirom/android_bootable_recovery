@@ -229,8 +229,8 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                 ssize_t have = temp_data.size() - strm.avail_out;
 
                 if (sink(temp_data.data(), have, token) != have) {
-                    printf("failed to write %ld compressed bytes to output\n",
-                           (long)have);
+                    printf("failed to write %zd compressed bytes to output\n",
+                           have);
                     return -1;
                 }
                 if (ctx) SHA1_Update(ctx, temp_data.data(), have);

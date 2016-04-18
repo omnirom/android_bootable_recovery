@@ -200,8 +200,9 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 
     std::vector<int> ranges;
 
-    std::string s = android::base::StringPrintf("%s\n%" PRId64 " %ld\n",
-                       blk_dev, sb.st_size, static_cast<long>(sb.st_blksize));
+    std::string s = android::base::StringPrintf("%s\n%" PRId64 " %" PRId64 "\n",
+                       blk_dev, static_cast<int64_t>(sb.st_size),
+                       static_cast<int64_t>(sb.st_blksize));
     if (!android::base::WriteStringToFd(s, mapfd)) {
         ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
         return -1;
