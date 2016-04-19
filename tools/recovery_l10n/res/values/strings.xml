@@ -13,18 +13,18 @@
 
   <!-- Displayed on the screen beneath the animated android while the
        system is installing an update. [CHAR LIMIT=60] -->
-  <string name="recovery_installing">Installing system update\u2026</string>
+  <string name="recovery_installing">Installing system update</string>
 
   <!-- Displayed on the screen beneath the animated android while the
        system is erasing a partition (either a data wipe aka "factory
        reset", or a cache wipe). [CHAR LIMIT=60] -->
-  <string name="recovery_erasing">Erasing\u2026</string>
+  <string name="recovery_erasing">Erasing</string>
 
   <!-- Displayed on the screen when the user has gotten into recovery
        mode without a command to run.  Will not normally happen, but
        users (especially developers) may boot into recovery mode
        manually via special key combinations.  [CHAR LIMIT=60] -->
-  <string name="recovery_no_command">No command.</string>
+  <string name="recovery_no_command">No command</string>
 
   <!-- Displayed on the triangle-! screen when a system update
        installation or data wipe procedure encounters an error.  [CHAR
@@ -33,6 +33,6 @@
 
   <!-- Displayed on the screen beneath the animation while the
        system is installing a security update. [CHAR LIMIT=60] -->
-  <string name="recovery_installing_security">Installing security update\u2026</string>
+  <string name="recovery_installing_security">Installing security update</string>
 
 </resources>
