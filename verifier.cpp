@@ -206,10 +206,10 @@ int verify_file(unsigned char* addr, size_t length,
     double frac = -1.0;
     size_t so_far = 0;
     while (so_far < signed_len) {
-        // On a Nexus 9, experiment didn't show any performance improvement with
-        // larger sizes past 1MiB, and they reduce the granularity of the progress
-        // bar. http://b/28135231.
-        size_t size = std::min(signed_len - so_far, 1 * MiB);
+        // On a Nexus 5X, experiment showed 16MiB beat 1MiB by 6% faster for a
+        // 1196MiB full OTA and 60% for an 89MiB incremental OTA.
+        // http://b/28135231.
+        size_t size = std::min(signed_len - so_far, 16 * MiB);
 
         if (need_sha1) SHA1_Update(&sha1_ctx, addr + so_far, size);
         if (need_sha256) SHA256_Update(&sha256_ctx, addr + so_far, size);
