@@ -21,9 +21,13 @@ include $(CLEAR_VARS)
 LOCAL_CLANG := true
 LOCAL_MODULE := recovery_unit_test
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
-LOCAL_STATIC_LIBRARIES := libverifier
+LOCAL_STATIC_LIBRARIES := \
+    libverifier \
+    libminui
+
 LOCAL_SRC_FILES := unit/asn1_decoder_test.cpp
 LOCAL_SRC_FILES += unit/recovery_test.cpp
+LOCAL_SRC_FILES += unit/locale_test.cpp
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SHARED_LIBRARIES := liblog
 include $(BUILD_NATIVE_TEST)
