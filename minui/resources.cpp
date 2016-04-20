@@ -371,21 +371,16 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
     return result;
 }
 
-static int matches_locale(const char* loc, const char* locale) {
-    if (locale == NULL) return 0;
+// This function tests if a locale string stored in PNG (prefix) matches
+// the locale string provided by the system (locale).
+bool matches_locale(const char* prefix, const char* locale) {
+    if (locale == NULL) return false;
 
-    if (strcmp(loc, locale) == 0) return 1;
+    // Return true if the whole string of prefix matches the top part of
+    // locale. For instance, prefix == "en" matches locale == "en_US";
+    // and prefix == "zh_CN" matches locale == "zh_CN_#Hans".
 
-    // if loc does *not* have an underscore, and it matches the start
-    // of locale, and the next character in locale *is* an underscore,
-    // that's a match.  For instance, loc == "en" matches locale ==
-    // "en_US".
-
-    int i;
-    for (i = 0; loc[i] != 0 && loc[i] != '_'; ++i);
-    if (loc[i] == '_') return 0;
-
-    return (strncmp(locale, loc, i) == 0 && locale[i] == '_');
+    return (strncmp(prefix, locale, strlen(prefix)) == 0);
 }
 
 int res_create_localized_alpha_surface(const char* name,
