@@ -27,6 +27,7 @@
 
 #include "asn1_decoder.h"
 #include "common.h"
+#include "print_sha1.h"
 #include "ui.h"
 #include "verifier.h"
 
@@ -230,9 +231,14 @@ int verify_file(unsigned char* addr, size_t length,
     uint8_t* sig_der = nullptr;
     size_t sig_der_length = 0;
 
+    uint8_t* signature = eocd + eocd_size - signature_start;
     size_t signature_size = signature_start - FOOTER_SIZE;
-    if (!read_pkcs7(eocd + eocd_size - signature_start, signature_size, &sig_der,
-            &sig_der_length)) {
+
+    LOGI("signature (offset: 0x%zx, length: %zu): %s\n",
+            length - signature_start, signature_size,
+            print_hex(signature, signature_size).c_str());
+
+    if (!read_pkcs7(signature, signature_size, &sig_der, &sig_der_length)) {
         LOGE("Could not find signature DER block\n");
         return VERIFY_FAILURE;
     }
@@ -286,6 +292,13 @@ int verify_file(unsigned char* addr, size_t length,
             LOGI("Unknown key type %d\n", key.key_type);
         }
         i++;
+    }
+
+    if (need_sha1) {
+        LOGI("SHA-1 digest: %s\n", print_hex(sha1, SHA_DIGEST_LENGTH).c_str());
+    }
+    if (need_sha256) {
+        LOGI("SHA-256 digest: %s\n", print_hex(sha256, SHA256_DIGEST_LENGTH).c_str());
     }
     free(sig_der);
     LOGE("failed to verify whole-file signature\n");
