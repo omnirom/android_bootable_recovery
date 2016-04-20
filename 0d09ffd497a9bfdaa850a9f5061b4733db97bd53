@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_6c87aebd",
+        "filename": "partition.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 494,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-20T05:43:06Z",
+      "side": 1,
+      "message": "it is not elegant, but something like this should work:\n\nif (Flags.size() \u003e 0) {\n\tstring Prev_Display_Name \u003d Display_Name;\n\tstring Prev_Storage_Name \u003d Storage_Name;\n\tstring Prev_Backup_Display_Name \u003d Backup_Display_Name;\n\tDisplay_Name \u003d \"\";\n\tStorage_Name \u003d \"\";\n\tBackup_Display_Name \u003d \"\";\n\n\tProcess_TW_Flags(Flags, Display_Error);\n\n\tbool has_display_name \u003d !Display_Name.empty();\n\tbool has_storage_name \u003d !Storage_Name.empty();\n\tbool has_backup_name \u003d !Backup_Display_Name.empty();\n\tDisplay_Name \u003d Prev_Display_Name;\n\tStorage_Name \u003d Prev_Storage_Name;\n\tBackup_Display_Name \u003d Prev_Backup_Display_Name;\n\n\tif (has_display_name \u0026\u0026 !has_storage_name)\n\t\tStorage_Name \u003d Display_Name;\n\tif (!has_display_name \u0026\u0026 has_storage_name)\n\t\tDisplay_Name \u003d Storage_Name;\n\tif (has_display_name \u0026\u0026 !has_backup_name \u0026\u0026 Backup_Display_Name !\u003d \"Android Secure\")\n\t\tBackup_Display_Name \u003d Display_Name;\n\tif (!has_display_name \u0026\u0026 has_backup_name)\n\t\tDisplay_Name \u003d Backup_Display_Name;\n}",
+      "parentUuid": "98faad2e_acfc966d",
+      "revId": "0d09ffd497a9bfdaa850a9f5061b4733db97bd53",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_8c01da72",
         "filename": "partition.cpp",
         "patchSetId": 7
