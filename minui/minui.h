@@ -84,6 +84,8 @@ int ev_get_epollfd();
 // Resources
 //
 
+bool matches_locale(const char* prefix, const char* locale);
+
 // res_create_*_surface() functions return 0 if no error, else
 // negative.
 //
