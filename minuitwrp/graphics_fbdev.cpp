@@ -33,9 +33,12 @@
 #include "minui.h"
 #include "graphics.h"
 #include <pixelflinger/pixelflinger.h>
-
+#ifdef USES_DOUBLEFLIP_FB
+static GRSurface* fbdev_doubleflip(minui_backend*);
+#endif
 static GRSurface* fbdev_init(minui_backend*);
 static GRSurface* fbdev_flip(minui_backend*);
+
 static void fbdev_blank(minui_backend*, bool);
 static void fbdev_exit(minui_backend*);
 
@@ -50,7 +53,11 @@ static __u32 smem_len;
 
 static minui_backend my_backend = {
     .init = fbdev_init,
+#ifdef USES_DOUBLEFLIP_FB
+    .flip = fbdev_doubleflip,
+#else
     .flip = fbdev_flip,
+#endif
     .blank = fbdev_blank,
     .exit = fbdev_exit,
 };
@@ -315,6 +322,13 @@ static GRSurface* fbdev_flip(minui_backend* backend __unused) {
 #endif
     return gr_draw;
 }
+
+#ifdef USES_DOUBLEFLIP_FB
+  static GRSurface* fbdev_doubleflip(minui_backend* backend) {
+      fbdev_flip(backend);
+      return fbdev_flip(backend);
+}
+ #endif
 
 static void fbdev_exit(minui_backend* backend __unused) {
     close(fb_fd);
