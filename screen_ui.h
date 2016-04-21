@@ -74,6 +74,11 @@ class ScreenRecoveryUI : public RecoveryUI {
     bool intro_done;
     int current_frame;
 
+    // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
+    float density_;
+    // True if we should use the large layout.
+    bool is_large_;
+
     GRSurface* error_icon;
 
     GRSurface* erasing_text;
@@ -123,8 +128,6 @@ class ScreenRecoveryUI : public RecoveryUI {
     // Number of frames per sec (default: 30) for both parts of the animation.
     int animation_fps;
 
-    int iconX, iconY;
-
     int stage, max_stage;
 
     int char_width_;
@@ -133,7 +136,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     bool rtl_locale;
 
     void draw_background_locked();
-    void draw_progress_locked();
+    void draw_foreground_locked();
     void draw_screen_locked();
     void update_screen_locked();
     void update_progress_locked();
@@ -152,6 +155,11 @@ class ScreenRecoveryUI : public RecoveryUI {
     void LoadAnimation();
     void LoadBitmap(const char* filename, GRSurface** surface);
     void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
+
+    int PixelsFromDp(int dp);
+    int GetAnimationBaseline();
+    int GetProgressBaseline();
+    int GetTextBaseline();
 
     void DrawHorizontalRule(int* y);
     void DrawTextLine(int x, int* y, const char* line, bool bold);
