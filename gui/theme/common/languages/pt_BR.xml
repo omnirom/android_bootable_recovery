@@ -22,7 +22,7 @@
 		<string name="microsd">Micro SDCard</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android Seguro</string>
-		<string name="dalvik">Dalvik / Cache ART</string>
+		<string name="dalvik">Cache Dalvik / ART</string>
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Dados adotados</string>
 		<string name="adopted_storage">Armazenamento adotado</string>
