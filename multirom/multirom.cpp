@@ -203,7 +203,7 @@ bool MultiROM::setRomsPath(std::string loc)
 		// find partition from "/dev/block/... (type)" style used by tw_multirom_install_loc
 		std::vector<TWPartition*>& Partitions = PartitionManager.getPartitions();
 		for (std::vector<TWPartition*>::iterator iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-			if ((*iter)->Actual_Block_Device.size() > 0 && loc.compare(0, (*iter)->Actual_Block_Device.size(), (*iter)->Actual_Block_Device) == 0) {
+			if (loc == ((*iter)->Actual_Block_Device + " (" + (*iter)->Current_File_System + ")")) {
 				partition = (*iter);
 				break;
 			}
