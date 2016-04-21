@@ -100,7 +100,7 @@ private:
 
 	void Apply_TW_Flag(const unsigned flag, const char* str, const bool val); // Apply custom twrp fstab flags
 	void Process_TW_Flags(char *flags, bool Display_Error);                   // Process custom twrp fstab flags
-	bool Process_FS_Flags(string& Options, int& Flags);                       // Process standard fstab fs flags
+	void Process_FS_Flags(const char *str);                                   // Process standard fstab fs flags
 	bool Is_File_System(string File_System);                                  // Checks to see if the file system given is considered a file system
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
 	void Setup_File_System(bool Display_Error);                               // Sets defaults for a file system partition
