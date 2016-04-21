@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright (C) 2014 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +14,16 @@
 # limitations under the License.
 
 """
-Script to take a set of frames (PNG files) for a recovery animation and turn
-it into a single output image which contains the input frames interlaced by
-row. Run with the names of all the input frames on the command line. Specify
-the name of the output file with -o (or --output), and optionally specify the
-number of frames per second (FPS) with --fps (default: 20).
-
-e.g.
-interlace-frames.py --fps 20 --output output.png frame0.png frame1.png frame3.png
+Script to take a set of frames (PNG files) for a recovery animation
+and turn it into a single output image which contains the input frames
+interlaced by row.  Run with the names of all the input frames on the
+command line, in order, followed by the name of the output file.
 """
 
 from __future__ import print_function
 
 import argparse
+import os.path
 import sys
 try:
   import Image
@@ -35,7 +33,7 @@ except ImportError:
   sys.exit(1)
 
 
-def interlace(output, fps, inputs):
+def interlace(output, inputs):
   frames = [Image.open(fn).convert("RGB") for fn in inputs]
   assert len(frames) > 0, "Must have at least one input frame."
   sizes = set()
@@ -60,21 +58,57 @@ def interlace(output, fps, inputs):
 
   meta = PngImagePlugin.PngInfo()
   meta.add_text("Frames", str(N))
-  meta.add_text("FPS", str(fps))
 
   out.save(output, pnginfo=meta)
 
 
+def deinterlace(output, input):
+  # Truncate the output filename extension if it's '.png'.
+  if os.path.splitext(output)[1].lower() == '.png':
+    output = output[:-4]
+
+  img2 = Image.open(input)
+  print(img2.mode)
+  palette = img2.getpalette()
+  img = img2.convert("RGB")
+  num_frames = int(img.info.get('Frames', 1))
+  print('Found %d frames in %s.' % (num_frames, input))
+  assert num_frames > 0, 'Invalid Frames meta.'
+
+  # palette = img.getpalette()
+  print(palette)
+
+  width, height = img.size
+  height /= num_frames
+  for k in range(num_frames):
+    out = Image.new('RGB', (width, height))
+    out.info = img.info
+    for i in range(width):
+      for j in range(height):
+        out.putpixel((i, j), img.getpixel((i, j * num_frames + k)))
+    # out.putpalette(img.getpalette(), rawmode='RGB')
+    out2 = out.convert(mode='P', palette=palette)
+    #out2 = out
+    print(out2.mode)
+    # out2.putpalette(palette)
+    filename = '%s%02d.png' % (output, k)
+    out2.save(filename)
+    print('Frame %d written to %s.' % (k, filename))
+
+
 def main(argv):
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--fps', default=20)
+  parser = argparse.ArgumentParser(description='Parse')
+  parser.add_argument('--deinterlace', '-d', action='store_true')
   parser.add_argument('--output', '-o', required=True)
   parser.add_argument('input', nargs='+')
   args = parser.parse_args(argv)
 
-  interlace(args.output, args.fps, args.input)
+  if args.deinterlace:
+    # args.input is a list, and we only process the first when deinterlacing.
+    deinterlace(args.output, args.input[0])
+  else:
+    interlace(args.output, args.input)
 
 
 if __name__ == '__main__':
   main(sys.argv[1:])
-

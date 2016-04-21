@@ -146,7 +146,6 @@ void ScreenRecoveryUI::draw_background_locked() {
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_progress_locked() {
     if (currentIcon == ERROR) return;
-    if (progressBarType != DETERMINATE) return;
 
     if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
         GRSurface* frame = GetCurrentFrame();
