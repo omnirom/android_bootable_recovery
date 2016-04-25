@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="recovery_installing" msgid="4995089002339765600">"正在安装系统更新…"</string>
-    <string name="recovery_erasing" msgid="3454811999717520920">"正在清空…"</string>
-    <string name="recovery_no_command" msgid="3005798864326873414">"无命令。"</string>
+    <!-- no translation found for recovery_installing (2013591905463558223) -->
+    <skip />
+    <!-- no translation found for recovery_erasing (7334826894904037088) -->
+    <skip />
+    <!-- no translation found for recovery_no_command (4465476568623024327) -->
+    <skip />
     <string name="recovery_error" msgid="5748178989622716736">"出错了！"</string>
-    <string name="recovery_installing_security" msgid="241961948312007086">"正在安装安全更新…"</string>
+    <!-- no translation found for recovery_installing_security (9184031299717114342) -->
+    <skip />
 </resources>
