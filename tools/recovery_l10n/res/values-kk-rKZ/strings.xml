@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="recovery_installing" msgid="4995089002339765600">"Жүйе жаңартуларын орнатуда…"</string>
-    <string name="recovery_erasing" msgid="3454811999717520920">"Өшіруде..."</string>
-    <string name="recovery_no_command" msgid="3005798864326873414">"Пәрмен берілген жоқ."</string>
+    <string name="recovery_installing" msgid="2013591905463558223">"Жүйе жаңартуы орнатылуда"</string>
+    <string name="recovery_erasing" msgid="7334826894904037088">"Өшірілуде"</string>
+    <string name="recovery_no_command" msgid="4465476568623024327">"Пәрмен жоқ"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Қате!"</string>
-    <string name="recovery_installing_security" msgid="241961948312007086">"Қауіпсіздік жаңартуы орнатылуда…"</string>
+    <string name="recovery_installing_security" msgid="9184031299717114342">"Қауіпсіздік жаңартуы орнатылуда"</string>
 </resources>
