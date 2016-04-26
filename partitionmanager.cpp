@@ -734,7 +734,7 @@ int TWPartitionManager::Run_Backup(void) {
 		return false;
 	}
 
-	DataManager::GetValue("tw_disable_free_space", disable_free_space_check);
+	DataManager::GetValue(TW_DISABLE_FREE_SPACE_VAR, disable_free_space_check);
 	if (!disable_free_space_check) {
 		if (free_space - (32 * 1024 * 1024) < total_bytes) {
 			// We require an extra 32MB just in case
