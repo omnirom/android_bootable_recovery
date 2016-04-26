@@ -235,14 +235,14 @@ TWPartition::~TWPartition(void) {
 	// Do nothing
 }
 
-bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
-	char full_line[MAX_FSTAB_LINE_LENGTH], item[MAX_FSTAB_LINE_LENGTH];
+bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error) {
+	char full_line[MAX_FSTAB_LINE_LENGTH];
 	char twflags[MAX_FSTAB_LINE_LENGTH] = "";
-	int line_len = Line.size(), index = 0, item_index = 0;
 	char* ptr;
-	strncpy(full_line, Line.c_str(), line_len);
+	int line_len = strlen(fstab_line), index = 0, item_index = 0;
 	bool skip = false;
 
+	strlcpy(full_line, fstab_line, sizeof(full_line));
 	for (index = 0; index < line_len; index++) {
 		if (full_line[index] == 34)
 			skip = !skip;
@@ -283,9 +283,9 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 					LOGERR("Until we get better BML support, you will have to find and provide the full block device path to the BML devices e.g. /dev/block/bml9 instead of the partition name\n");
 			} else if (*ptr != '/') {
 				if (Display_Error)
-					LOGERR("Invalid block device on '%s', '%s', %i\n", Line.c_str(), ptr, index);
+					LOGERR("Invalid block device '%s' in fstab line '%s'", ptr, fstab_line);
 				else
-					LOGINFO("Invalid block device on '%s', '%s', %i\n", Line.c_str(), ptr, index);
+					LOGINFO("Invalid block device '%s' in fstab line '%s'", ptr, fstab_line);
 				return 0;
 			} else {
 				Primary_Block_Device = ptr;
@@ -310,7 +310,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 				// Do nothing
 			} else {
 				// Unhandled data
-				LOGINFO("Unhandled fstab information: '%s', %i, line: '%s'\n", ptr, index, Line.c_str());
+				LOGINFO("Unhandled fstab information '%s' in fstab line '%s'\n", ptr, fstab_line);
 			}
 		}
 		while (index < line_len && full_line[index] != '\0')
