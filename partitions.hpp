@@ -96,6 +96,7 @@ protected:
 
 private:
 	bool Process_Fstab_Line(const char *fstab_line, bool Display_Error);      // Processes a fstab line
+	void Post_Fstab_Process_Data_Partition(bool Display_Error);               // Setup data partition after fstab processed
 	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
 
 	void Apply_TW_Flag(const unsigned flag, const char* str, const bool val); // Apply custom twrp fstab flags

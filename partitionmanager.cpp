@@ -115,6 +115,22 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		memset(fstab_line, 0, sizeof(fstab_line));
 	}
 	fclose(fstabFile);
+
+	std::vector<TWPartition*>::iterator iter;
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Mount_Point == "/data") {
+			 // Ensure /data not mounted as tmpfs for qcom hardware decrypt
+			(*iter)->UnMount(false);
+			(*iter)->Post_Fstab_Process_Data_Partition(Display_Error);
+		} else if ((*iter)->Mount_Point == "/cache" && (*iter)->Mount(false)) {
+			if (!TWFunc::Path_Exists("/cache/recovery/.")) {
+				LOGINFO("Recreating /cache/recovery folder\n");
+				if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0)
+					LOGERR("Could not create /cache/recovery\n");
+			}
+		}
+	}
+
 	if (!datamedia && !settings_partition && Find_Partition_By_Path("/sdcard") == NULL && Find_Partition_By_Path("/internal_sd") == NULL && Find_Partition_By_Path("/internal_sdcard") == NULL && Find_Partition_By_Path("/emmc") == NULL) {
 		// Attempt to automatically identify /data/media emulated storage devices
 		TWPartition* Dat = Find_Partition_By_Path("/data");
@@ -129,7 +145,6 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		}
 	}
 	if (!settings_partition) {
-		std::vector<TWPartition*>::iterator iter;
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 			if ((*iter)->Is_Storage) {
 				settings_partition = (*iter);
