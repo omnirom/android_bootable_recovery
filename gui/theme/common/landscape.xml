@@ -441,9 +441,9 @@
 			</checkbox>
 
 			<checkbox>
-				<placement x="%col1_x_right%" y="%row12_y%" />
+				<placement x="%col1_x_right%" y="%row12_y%"/>
 				<text>{@install_reboot_chk=Reboot after installation is complete}</text>
-				<data variable="tw_install_reboot" />
+				<data variable="tw_install_reboot"/>
 			</checkbox>
 
 			<button style="main_button_half_width">
@@ -2770,6 +2770,9 @@
 				<icon selected="checkbox_true" unselected="checkbox_false"/>
 				<listitem name="{@zip_sig_chk=Zip signature verification}">
 					<data variable="tw_signed_zip_verify"/>
+				</listitem>
+				<listitem name="{@install_reboot_chk=Reboot after installation is complete}">
+					<data variable="tw_install_reboot"/>
 				</listitem>
 				<listitem name="{@use_rmrf_chk=Use rm -rf instead of formatting}">
 					<data variable="tw_rm_rf"/>
