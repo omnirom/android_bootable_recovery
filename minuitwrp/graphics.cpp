@@ -360,6 +360,12 @@ int gr_init(void)
     gr_flip();
     gr_flip();
 
+#ifdef TW_SCREEN_BLANK_ON_BOOT
+    printf("TW_SCREEN_BLANK_ON_BOOT := true\n");
+    gr_fb_blank(true);
+    gr_fb_blank(false);
+#endif
+
     return 0;
 }
 
