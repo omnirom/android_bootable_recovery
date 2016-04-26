@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_c2db2979",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-04-26T18:55:51Z",
+      "side": 1,
+      "message": "unused",
+      "range": {
+        "startLine": 239,
+        "startChar": 40,
+        "endLine": 239,
+        "endChar": 67
+      },
+      "revId": "c0700df4e141b1e16705134d80a726f79dffd167",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
