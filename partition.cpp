@@ -286,7 +286,7 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 					LOGERR("Invalid block device '%s' in fstab line '%s'", ptr, fstab_line);
 				else
 					LOGINFO("Invalid block device '%s' in fstab line '%s'", ptr, fstab_line);
-				return 0;
+				return false;
 			} else {
 				Primary_Block_Device = ptr;
 				Find_Real_Block_Device(Primary_Block_Device, Display_Error);
@@ -305,7 +305,6 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 				// Custom flags, save for later so that new values aren't overwritten by defaults
 				ptr += 6;
 				strlcpy(twflags, ptr, sizeof(twflags));
-				Process_TW_Flags(twflags, Display_Error);
 			} else if (strlen(ptr) == 4 && (strncmp(ptr, "NULL", 4) == 0 || strncmp(ptr, "null", 4) == 0 || strncmp(ptr, "null", 4) == 0)) {
 				// Do nothing
 			} else {
@@ -322,7 +321,7 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 			LOGERR("Unknown File System: '%s'\n", Fstab_File_System.c_str());
 		else
 			LOGINFO("Unknown File System: '%s'\n", Fstab_File_System.c_str());
-		return 0;
+		return false;
 	} else if (Is_File_System(Fstab_File_System)) {
 		Find_Actual_Block_Device();
 		Setup_File_System(Display_Error);
@@ -334,7 +333,6 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 			Can_Be_Backed_Up = true;
 			Mount_Read_Only = true;
 		} else if (Mount_Point == "/data") {
-			UnMount(false); // added in case /data is mounted as tmpfs for qcom hardware decrypt
 			Display_Name = "Data";
 			Backup_Display_Name = Display_Name;
 			Storage_Name = Display_Name;
@@ -343,49 +341,6 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 			Can_Be_Backed_Up = true;
 			Can_Encrypt_Backup = true;
 			Use_Userdata_Encryption = true;
-			if (datamedia)
-				Setup_Data_Media();
-#ifdef TW_INCLUDE_CRYPTO
-			Can_Be_Encrypted = true;
-			char crypto_blkdev[255];
-			property_get("ro.crypto.fs_crypto_blkdev", crypto_blkdev, "error");
-			if (strcmp(crypto_blkdev, "error") != 0) {
-				DataManager::SetValue(TW_IS_DECRYPTED, 1);
-				Is_Encrypted = true;
-				Is_Decrypted = true;
-				Decrypted_Block_Device = crypto_blkdev;
-				LOGINFO("Data already decrypted, new block device: '%s'\n", crypto_blkdev);
-			} else if (!Mount(false)) {
-				if (Is_Present) {
-					set_partition_data(Actual_Block_Device.c_str(), Crypto_Key_Location.c_str(), Fstab_File_System.c_str());
-					if (cryptfs_check_footer() == 0) {
-						Is_Encrypted = true;
-						Is_Decrypted = false;
-						Can_Be_Mounted = false;
-						Current_File_System = "emmc";
-						Setup_Image(Display_Error);
-						DataManager::SetValue(TW_IS_ENCRYPTED, 1);
-						DataManager::SetValue(TW_CRYPTO_PWTYPE, cryptfs_get_password_type());
-						DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
-						DataManager::SetValue("tw_crypto_display", "");
-					} else {
-						gui_err("mount_data_footer=Could not mount /data and unable to find crypto footer.");
-					}
-				} else {
-					LOGERR("Primary block device '%s' for mount point '%s' is not present!\n", Primary_Block_Device.c_str(), Mount_Point.c_str());
-				}
-			} else {
-				// Filesystem is not encrypted and the mount
-				// succeeded, so get it back to the original
-				// unmounted state
-				UnMount(false);
-			}
-			if (datamedia && (!Is_Encrypted || (Is_Encrypted && Is_Decrypted)))
-				Recreate_Media_Folder();
-#else
-			if (datamedia)
-				Recreate_Media_Folder();
-#endif
 		} else if (Mount_Point == "/cache") {
 			Display_Name = "Cache";
 			Backup_Display_Name = Display_Name;
@@ -393,11 +348,6 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 			Wipe_Available_in_GUI = true;
 			Wipe_During_Factory_Reset = true;
 			Can_Be_Backed_Up = true;
-			if (Mount(false) && !TWFunc::Path_Exists("/cache/recovery/.")) {
-				LOGINFO("Recreating /cache/recovery folder.\n");
-				if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0)
-					return -1;
-			}
 		} else if (Mount_Point == "/datadata") {
 			Wipe_During_Factory_Reset = true;
 			Display_Name = "DataData";
@@ -510,6 +460,82 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 			Display_Name = Backup_Display_Name;
 	}
 	return true;
+}
+
+void TWPartition::Partition_Post_Processing(bool Display_Error) {
+	if (Mount_Point == "/data")
+		Setup_Data_Partition(Display_Error);
+	else if (Mount_Point == "/cache")
+		Setup_Cache_Partition(Display_Error);
+}
+
+void TWPartition::Setup_Data_Partition(bool Display_Error) {
+	if (Mount_Point != "/data")
+		return;
+
+	// Ensure /data is not mounted as tmpfs for qcom hardware decrypt
+	UnMount(false);
+
+#ifdef TW_INCLUDE_CRYPTO
+	if (datamedia)
+		Setup_Data_Media();
+	Can_Be_Encrypted = true;
+	char crypto_blkdev[255];
+	property_get("ro.crypto.fs_crypto_blkdev", crypto_blkdev, "error");
+	if (strcmp(crypto_blkdev, "error") != 0) {
+		DataManager::SetValue(TW_IS_DECRYPTED, 1);
+		Is_Encrypted = true;
+		Is_Decrypted = true;
+		Decrypted_Block_Device = crypto_blkdev;
+		LOGINFO("Data already decrypted, new block device: '%s'\n", crypto_blkdev);
+	} else if (!Mount(false)) {
+		if (Is_Present) {
+			set_partition_data(Actual_Block_Device.c_str(), Crypto_Key_Location.c_str(), Fstab_File_System.c_str());
+			if (cryptfs_check_footer() == 0) {
+				Is_Encrypted = true;
+				Is_Decrypted = false;
+				Can_Be_Mounted = false;
+				Current_File_System = "emmc";
+				Setup_Image(Display_Error);
+				DataManager::SetValue(TW_IS_ENCRYPTED, 1);
+				DataManager::SetValue(TW_CRYPTO_PWTYPE, cryptfs_get_password_type());
+				DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
+				DataManager::SetValue("tw_crypto_display", "");
+			} else {
+				gui_err("mount_data_footer=Could not mount /data and unable to find crypto footer.");
+			}
+		} else {
+			LOGERR("Primary block device '%s' for mount point '%s' is not present!\n", Primary_Block_Device.c_str(), Mount_Point.c_str());
+		}
+	} else {
+		// Filesystem is not encrypted and the mount succeeded, so return to
+		// the original unmounted state
+		UnMount(false);
+	}
+	if (datamedia && (!Is_Encrypted || (Is_Encrypted && Is_Decrypted))) {
+		Setup_Data_Media();
+		Recreate_Media_Folder();
+	}
+#else
+	if (datamedia) {
+		Setup_Data_Media();
+		Recreate_Media_Folder();
+	}
+#endif
+}
+
+void TWPartition::Setup_Cache_Partition(bool Display_Error __unused) {
+	if (Mount_Point != "/cache")
+		return;
+
+	if (!Mount(true))
+		return;
+
+	if (!TWFunc::Path_Exists("/cache/recovery/.")) {
+		LOGINFO("Recreating /cache/recovery folder\n");
+		if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0)
+			LOGERR("Could not create /cache/recovery\n");
+	}
 }
 
 void TWPartition::Process_FS_Flags(const char *str) {
