@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_a26c9dcf",
+        "filename": "partition.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 578,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-26T16:31:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_821f615c",
+      "revId": "828a00736f6c2aa5cacc80cab53f027d39ce95ab",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_623455da",
         "filename": "partition.cpp",
         "patchSetId": 9
@@ -36,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "98faad2e_8271a1a4",
+        "filename": "partition.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 639,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-26T16:31:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_623455da",
+      "revId": "828a00736f6c2aa5cacc80cab53f027d39ce95ab",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "98faad2e_423159e7",
         "filename": "partition.cpp",
         "patchSetId": 9
@@ -47,6 +83,24 @@
       "writtenOn": "2016-04-26T14:17:55Z",
       "side": 1,
       "message": "Maybe we should log an error for skipped items? Does not need to be translated.",
+      "revId": "828a00736f6c2aa5cacc80cab53f027d39ce95ab",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_626695ee",
+        "filename": "partition.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 679,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-26T16:31:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98faad2e_423159e7",
       "revId": "828a00736f6c2aa5cacc80cab53f027d39ce95ab",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
