@@ -772,7 +772,7 @@ int TWPartitionManager::Run_Backup(bool adbbackup) {
 		return false;
 	}
 
-	DataManager::GetValue("tw_disable_free_space", disable_free_space_check);
+	DataManager::GetValue(TW_DISABLE_FREE_SPACE_VAR, disable_free_space_check);
 
 	if (adbbackup)
 		disable_free_space_check = true;

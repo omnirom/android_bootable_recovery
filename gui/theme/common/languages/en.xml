@@ -208,7 +208,7 @@
 		<string name="enc_enabled">enabled</string>
 		<string name="enable_backup_comp_chk">Enable compression</string>
 		<string name="skip_md5_backup_chk">Skip MD5 generation during backup</string>
-		<string name="disable_backup_space_chk">Disable Free Space Check</string>
+		<string name="disable_backup_space_chk" version="2">Disable free space check before backup</string>
 		<string name="refresh_sizes_btn">Refresh Sizes</string>
 		<string name="swipe_backup">Swipe to Backup</string>
 		<string name="append_date_btn">Append Date</string>

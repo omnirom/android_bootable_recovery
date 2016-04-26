@@ -70,6 +70,7 @@
 #define TW_FORCE_MD5_CHECK_VAR      "tw_force_md5_check"
 #define TW_SKIP_MD5_CHECK_VAR       "tw_skip_md5_check"
 #define TW_SKIP_MD5_GENERATE_VAR    "tw_skip_md5_generate"
+#define TW_DISABLE_FREE_SPACE_VAR   "tw_disable_free_space"
 #define TW_SIGNED_ZIP_VERIFY_VAR    "tw_signed_zip_verify"
 #define TW_REBOOT_AFTER_FLASH_VAR   "tw_reboot_after_flash_option"
 #define TW_TIME_ZONE_VAR            "tw_time_zone"

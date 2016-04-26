@@ -1605,7 +1605,7 @@
 
 			<checkbox>
 				<placement x="%col1_x_right%" y="%row9_y%"/>
-				<text>{@disable_backup_space_chk=Disable Free Space Check}</text>
+				<text>{@disable_backup_space_chk=Disable free space check before backup}</text>
 				<data variable="tw_disable_free_space"/>
 			</checkbox>
 
@@ -2713,6 +2713,9 @@
 				</listitem>
 				<listitem name="{@use_rmrf_chk=Use rm -rf instead of formatting}">
 					<data variable="tw_rm_rf"/>
+				</listitem>
+				<listitem name="{@disable_backup_space_chk=Disable free space check before backup}">
+					<data variable="tw_disable_free_space"/>
 				</listitem>
 				<listitem name="{@skip_md5_backup_chk=Skip MD5 generation during backup}">
 					<data variable="tw_skip_md5_generate"/>
