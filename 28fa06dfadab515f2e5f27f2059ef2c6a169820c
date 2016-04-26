@@ -33,6 +33,24 @@
       "revId": "28fa06dfadab515f2e5f27f2059ef2c6a169820c",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_02ea3106",
+        "filename": "partition.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-04-26T18:45:30Z",
+      "side": 0,
+      "message": "A somewhat closer inspection of the code indicates that we probably need to move most of the special handling for /data to somewhere after processing the flags. I think most other partitions will be fine though.",
+      "parentUuid": "98faad2e_62e33535",
+      "revId": "28fa06dfadab515f2e5f27f2059ef2c6a169820c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
