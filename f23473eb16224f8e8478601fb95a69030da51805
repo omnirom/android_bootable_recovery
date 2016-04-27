@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_22a52dae",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-27T15:48:33Z",
+      "side": 1,
+      "message": "Perhaps this if/else-if block should be moved into a function in partitions.cpp instead of directly checking mount_points here.",
+      "revId": "f23473eb16224f8e8478601fb95a69030da51805",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
