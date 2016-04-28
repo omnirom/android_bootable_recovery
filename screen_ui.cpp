@@ -105,16 +105,18 @@ int ScreenRecoveryUI::PixelsFromDp(int dp) {
 
 // Here's the intended layout:
 
-//           162dp
-// icon     (200dp)
-//            62dp
-// text      (14sp)
-//            24dp
-// progress   (2dp)
-//           172dp
+//          | regular     large
+// ---------+--------------------
+//          |   220dp     366dp
+// icon     |  (200dp)   (200dp)
+//          |    68dp      68dp
+// text     |   (14sp)    (14sp)
+//          |    32dp      32dp
+// progress |    (2dp)     (2dp)
+//          |   194dp     340dp
 
 // Note that "baseline" is actually the *top* of each icon (because that's how our drawing
-// routines work), so that's the more useful measurement.
+// routines work), so that's the more useful measurement for calling code.
 
 int ScreenRecoveryUI::GetAnimationBaseline() {
     return GetTextBaseline() - PixelsFromDp(68) - gr_get_height(loopFrames[0]);
