@@ -78,9 +78,8 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     animation_fps(30), // TODO: there's currently no way to infer this.
     stage(-1),
     max_stage(-1),
+    updateMutex(PTHREAD_MUTEX_INITIALIZER),
     rtl_locale(false) {
-
-    pthread_mutex_init(&updateMutex, nullptr);
 }
 
 GRSurface* ScreenRecoveryUI::GetCurrentFrame() {
@@ -100,6 +99,35 @@ GRSurface* ScreenRecoveryUI::GetCurrentText() {
     }
 }
 
+int ScreenRecoveryUI::PixelsFromDp(int dp) {
+    return dp * density_;
+}
+
+// Here's the intended layout:
+
+//           162dp
+// icon     (200dp)
+//            62dp
+// text      (14sp)
+//            24dp
+// progress   (2dp)
+//           172dp
+
+// Note that "baseline" is actually the *top* of each icon (because that's how our drawing
+// routines work), so that's the more useful measurement.
+
+int ScreenRecoveryUI::GetAnimationBaseline() {
+    return GetTextBaseline() - PixelsFromDp(68) - gr_get_height(loopFrames[0]);
+}
+
+int ScreenRecoveryUI::GetTextBaseline() {
+    return GetProgressBaseline() - PixelsFromDp(32) - gr_get_height(installing_text);
+}
+
+int ScreenRecoveryUI::GetProgressBaseline() {
+    return gr_fb_height() - PixelsFromDp(is_large_ ? 340 : 194) - gr_get_height(progressBarFill);
+}
+
 // Clear the screen and draw the currently selected background icon (if any).
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_background_locked() {
@@ -108,61 +136,49 @@ void ScreenRecoveryUI::draw_background_locked() {
     gr_clear();
 
     if (currentIcon != NONE) {
-        GRSurface* surface = GetCurrentFrame();
-        GRSurface* text_surface = GetCurrentText();
-
-        int iconWidth = gr_get_width(surface);
-        int iconHeight = gr_get_height(surface);
-        int textWidth = gr_get_width(text_surface);
-        int textHeight = gr_get_height(text_surface);
-        int stageHeight = gr_get_height(stageMarkerEmpty);
-
-        int sh = (max_stage >= 0) ? stageHeight : 0;
-
-        iconX = (gr_fb_width() - iconWidth) / 2;
-        iconY = (gr_fb_height() - (iconHeight+textHeight+40+sh)) / 2;
-
-        int textX = (gr_fb_width() - textWidth) / 2;
-        int textY = ((gr_fb_height() - (iconHeight+textHeight+40+sh)) / 2) + iconHeight + 40;
-
-        gr_blit(surface, 0, 0, iconWidth, iconHeight, iconX, iconY);
-        if (stageHeight > 0) {
-            int sw = gr_get_width(stageMarkerEmpty);
+        if (max_stage != -1) {
+            int stage_height = gr_get_height(stageMarkerEmpty);
+            int stage_width = gr_get_width(stageMarkerEmpty);
             int x = (gr_fb_width() - max_stage * gr_get_width(stageMarkerEmpty)) / 2;
-            int y = iconY + iconHeight + 20;
+            int y = gr_fb_height() - stage_height;
             for (int i = 0; i < max_stage; ++i) {
-                gr_blit((i < stage) ? stageMarkerFill : stageMarkerEmpty,
-                        0, 0, sw, stageHeight, x, y);
-                x += sw;
+                GRSurface* stage_surface = (i < stage) ? stageMarkerFill : stageMarkerEmpty;
+                gr_blit(stage_surface, 0, 0, stage_width, stage_height, x, y);
+                x += stage_width;
             }
         }
 
+        GRSurface* text_surface = GetCurrentText();
+        int text_x = (gr_fb_width() - gr_get_width(text_surface)) / 2;
+        int text_y = GetTextBaseline();
         gr_color(255, 255, 255, 255);
-        gr_texticon(textX, textY, text_surface);
+        gr_texticon(text_x, text_y, text_surface);
     }
 }
 
-// Draw the progress bar (if any) on the screen.  Does not flip pages.
+// Draws the animation and progress bar (if any) on the screen.
+// Does not flip pages.
 // Should only be called with updateMutex locked.
-void ScreenRecoveryUI::draw_progress_locked() {
-    if (currentIcon == ERROR) return;
-
-    if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
+void ScreenRecoveryUI::draw_foreground_locked() {
+    if (currentIcon != NONE) {
         GRSurface* frame = GetCurrentFrame();
-        gr_blit(frame, 0, 0, gr_get_width(frame), gr_get_height(frame), iconX, iconY);
+        int frame_width = gr_get_width(frame);
+        int frame_height = gr_get_height(frame);
+        int frame_x = (gr_fb_width() - frame_width) / 2;
+        int frame_y = GetAnimationBaseline();
+        gr_blit(frame, 0, 0, frame_width, frame_height, frame_x, frame_y);
     }
 
     if (progressBarType != EMPTY) {
-        int iconHeight = gr_get_height(loopFrames[0]);
         int width = gr_get_width(progressBarEmpty);
         int height = gr_get_height(progressBarEmpty);
 
-        int dx = (gr_fb_width() - width)/2;
-        int dy = (3*gr_fb_height() + iconHeight - 2*height)/4;
+        int progress_x = (gr_fb_width() - width)/2;
+        int progress_y = GetProgressBaseline();
 
         // Erase behind the progress bar (in case this was a progress-only update)
         gr_color(0, 0, 0, 255);
-        gr_fill(dx, dy, width, height);
+        gr_fill(progress_x, progress_y, width, height);
 
         if (progressBarType == DETERMINATE) {
             float p = progressScopeStart + progress * progressScopeSize;
@@ -171,18 +187,20 @@ void ScreenRecoveryUI::draw_progress_locked() {
             if (rtl_locale) {
                 // Fill the progress bar from right to left.
                 if (pos > 0) {
-                    gr_blit(progressBarFill, width-pos, 0, pos, height, dx+width-pos, dy);
+                    gr_blit(progressBarFill, width-pos, 0, pos, height,
+                            progress_x+width-pos, progress_y);
                 }
                 if (pos < width-1) {
-                    gr_blit(progressBarEmpty, 0, 0, width-pos, height, dx, dy);
+                    gr_blit(progressBarEmpty, 0, 0, width-pos, height, progress_x, progress_y);
                 }
             } else {
                 // Fill the progress bar from left to right.
                 if (pos > 0) {
-                    gr_blit(progressBarFill, 0, 0, pos, height, dx, dy);
+                    gr_blit(progressBarFill, 0, 0, pos, height, progress_x, progress_y);
                 }
                 if (pos < width-1) {
-                    gr_blit(progressBarEmpty, pos, 0, width-pos, height, dx+pos, dy);
+                    gr_blit(progressBarEmpty, pos, 0, width-pos, height,
+                            progress_x+pos, progress_y);
                 }
             }
         }
@@ -253,7 +271,7 @@ static const char* LONG_PRESS_HELP[] = {
 void ScreenRecoveryUI::draw_screen_locked() {
     if (!show_text) {
         draw_background_locked();
-        draw_progress_locked();
+        draw_foreground_locked();
     } else {
         gr_color(0, 0, 0, 255);
         gr_clear();
@@ -323,7 +341,7 @@ void ScreenRecoveryUI::update_progress_locked() {
         draw_screen_locked();    // Must redraw the whole screen
         pagesIdentical = true;
     } else {
-        draw_progress_locked();  // Draw only the progress bar and overlays
+        draw_foreground_locked();  // Draw only the progress bar and overlays
     }
     gr_flip();
 }
@@ -385,14 +403,14 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
 void ScreenRecoveryUI::LoadBitmap(const char* filename, GRSurface** surface) {
     int result = res_create_display_surface(filename, surface);
     if (result < 0) {
-        LOGE("missing bitmap %s (error %d)\n", filename, result);
+        LOGE("couldn't load bitmap %s (error %d)\n", filename, result);
     }
 }
 
 void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, GRSurface** surface) {
     int result = res_create_localized_alpha_surface(filename, locale, surface);
     if (result < 0) {
-        LOGE("missing bitmap %s (error %d)\n", filename, result);
+        LOGE("couldn't load bitmap %s (error %d)\n", filename, result);
     }
 }
 
@@ -407,6 +425,9 @@ static char** Alloc2d(size_t rows, size_t cols) {
 
 void ScreenRecoveryUI::Init() {
     gr_init();
+
+    density_ = static_cast<float>(property_get_int32("ro.sf.lcd_density", 160)) / 160.f;
+    is_large_ = gr_fb_height() > PixelsFromDp(800);
 
     gr_font_size(&char_width_, &char_height_);
     text_rows_ = gr_fb_height() / char_height_;
@@ -459,12 +480,13 @@ void ScreenRecoveryUI::LoadAnimation() {
 
     introFrames = new GRSurface*[intro_frames];
     for (int i = 0; i < intro_frames; ++i) {
-        LoadBitmap(android::base::StringPrintf("intro%02d", i).c_str(), &introFrames[i]);
+        // TODO: remember the names above, so we don't have to hard-code the number of 0s.
+        LoadBitmap(android::base::StringPrintf("intro%05d", i).c_str(), &introFrames[i]);
     }
 
     loopFrames = new GRSurface*[loop_frames];
     for (int i = 0; i < loop_frames; ++i) {
-        LoadBitmap(android::base::StringPrintf("loop%02d", i).c_str(), &loopFrames[i]);
+        LoadBitmap(android::base::StringPrintf("loop%05d", i).c_str(), &loopFrames[i]);
     }
 }
 
