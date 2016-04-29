@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_22df6ddb",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 529,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-29T16:35:03Z",
+      "side": 1,
+      "message": "if (!Mount(false)) {\n    gui_msg(Msg(msg::kError, \"unable_to_mount\u003dUnable to mount {1}\")(\"/cache\"));\n} else if (!TWFunc::Path_Exists(\"/cache/recovery/.\")) {",
+      "revId": "52ab2fb143cc08a44767e0a649a25a939f5052fb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
