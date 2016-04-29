@@ -192,7 +192,7 @@ static void allocate(size_t size, std::vector<uint8_t>& buffer) {
 }
 
 struct RangeSinkState {
-    RangeSinkState(RangeSet& rs) : tgt(rs) { };
+    explicit RangeSinkState(RangeSet& rs) : tgt(rs) { };
 
     int fd;
     const RangeSet& tgt;
