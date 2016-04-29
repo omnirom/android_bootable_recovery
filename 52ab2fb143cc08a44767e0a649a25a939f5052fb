@@ -16,6 +16,24 @@
       "revId": "52ab2fb143cc08a44767e0a649a25a939f5052fb",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_e2e8657e",
+        "filename": "partition.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 529,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-04-29T16:37:28Z",
+      "side": 1,
+      "message": "Derp, Mount(true) will print the error. So, this instead:\n\nif (!Mount(true))\n    return;\n\nif (!TWFunc::Path_Exists(\"/cache/recovery/.\")) {",
+      "parentUuid": "98faad2e_22df6ddb",
+      "revId": "52ab2fb143cc08a44767e0a649a25a939f5052fb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
