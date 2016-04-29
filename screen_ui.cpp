@@ -425,6 +425,16 @@ static char** Alloc2d(size_t rows, size_t cols) {
     return result;
 }
 
+// Choose the right background string to display during update.
+void ScreenRecoveryUI::SetSystemUpdateText(bool security_update) {
+    if (security_update) {
+        LoadLocalizedBitmap("installing_security_text", &installing_text);
+    } else {
+        LoadLocalizedBitmap("installing_text", &installing_text);
+    }
+    Redraw();
+}
+
 void ScreenRecoveryUI::Init() {
     gr_init();
 
@@ -450,7 +460,10 @@ void ScreenRecoveryUI::Init() {
     LoadBitmap("stage_empty", &stageMarkerEmpty);
     LoadBitmap("stage_fill", &stageMarkerFill);
 
-    LoadLocalizedBitmap("installing_text", &installing_text);
+    // Background text for "installing_update" could be "installing update"
+    // or "installing security update". It will be set after UI init according
+    // to commands in BCB.
+    installing_text = nullptr;
     LoadLocalizedBitmap("erasing_text", &erasing_text);
     LoadLocalizedBitmap("no_command_text", &no_command_text);
     LoadLocalizedBitmap("error_text", &error_text);
