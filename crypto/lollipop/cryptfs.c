@@ -1208,8 +1208,8 @@ static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
 
     unsigned char* master_key = convert_hex_ascii_to_key(passwd, &key_size);
     if (!master_key) {
-        printf("Failed to convert passwd from hex\n");
-        return -1;
+        printf("Failed to convert passwd from hex, using passwd instead\n");
+        master_key = strdup(passwd);
     }
 
     rc = crypto_scrypt(master_key, key_size, salt, SALT_LEN,

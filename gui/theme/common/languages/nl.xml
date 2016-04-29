@@ -82,6 +82,7 @@
 		<string name="file">Bestand:</string>
 		<string name="zip_sig_chk">Verificatie van de ondertekening van de zip</string>
 		<string name="inject_twrp_chk">TWRP injecteren na installeren</string>
+		<string name="install_reboot_chk">Herstart nadat de installatie compleet is</string>
 		<string name="options_hdr">Opties</string>
 		<string name="confirm_flash_hdr">Flash bevestigen</string>
 		<string name="zip_queue">Wachtrij:</string>
@@ -666,5 +667,6 @@
 		<string name="change_fs_err">Fout tijdens het veranderen van het bestandssysteem.</string>
 		<string name="theme_ver_err">Aangepaste thema versie komt niet overeen met TWRP versie. Stock thema gebruiken.</string>
 		<string name="up_a_level">(Niveau omhoog)</string>
+		<string name="install_reboot">Herstarten in 5 seconden</string>
 	</resources>
 </language>
