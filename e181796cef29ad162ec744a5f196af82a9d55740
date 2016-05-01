@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_9d034612",
+        "filename": "gui/theme/common/portrait.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-05-01T01:49:04Z",
+      "side": 1,
+      "message": "variable name is tw_install_reboot",
+      "revId": "e181796cef29ad162ec744a5f196af82a9d55740",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
