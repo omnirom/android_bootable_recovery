@@ -46,6 +46,7 @@ class MockUI : public RecoveryUI {
     void SetStage(int, int) { }
     void SetLocale(const char*) { }
     void SetBackground(Icon /*icon*/) { }
+    void SetSystemUpdateText(bool /*security_update*/) { }
 
     void SetProgressType(ProgressType /*determinate*/) { }
     void ShowProgress(float /*portion*/, float /*seconds*/) { }
