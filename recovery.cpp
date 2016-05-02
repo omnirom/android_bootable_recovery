@@ -75,6 +75,7 @@ static const struct option OPTIONS[] = {
   { "stages", required_argument, NULL, 'g' },
   { "shutdown_after", no_argument, NULL, 'p' },
   { "reason", required_argument, NULL, 'r' },
+  { "security", no_argument, NULL, 'e'},
   { NULL, 0, NULL, 0 },
 };
 
@@ -1328,6 +1329,7 @@ int main(int argc, char **argv) {
     bool just_exit = false;
     bool shutdown_after = false;
     int retry_count = 0;
+    bool security_update = false;
 
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
@@ -1351,6 +1353,7 @@ int main(int argc, char **argv) {
         }
         case 'p': shutdown_after = true; break;
         case 'r': reason = optarg; break;
+        case 'e': security_update = true; break;
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -1370,6 +1373,9 @@ int main(int argc, char **argv) {
 
     ui->SetLocale(locale);
     ui->Init();
+    // Set background string to "installing security update" for security update,
+    // otherwise set it to "installing system update".
+    ui->SetSystemUpdateText(security_update);
 
     int st_cur, st_max;
     if (stage != NULL && sscanf(stage, "%d/%d", &st_cur, &st_max) == 2) {
