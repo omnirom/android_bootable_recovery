@@ -34,6 +34,7 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     // overall recovery state ("background image")
     void SetBackground(Icon icon);
+    void SetSystemUpdateText(bool security_update);
 
     // progress indicator
     void SetProgressType(ProgressType type);
