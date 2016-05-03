@@ -1365,6 +1365,10 @@ int main(int argc, char **argv) {
     int status = INSTALL_SUCCESS;
 
     if (update_package != NULL) {
+        // It's not entirely true that we will modify the flash. But we want
+        // to log the update attempt since update_package is non-NULL.
+        modified_flash = true;
+
         if (!is_battery_ok()) {
             ui->Print("battery capacity is not enough for installing package, needed is %d%%\n",
                       BATTERY_OK_PERCENTAGE);
