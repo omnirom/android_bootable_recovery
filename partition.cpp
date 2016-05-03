@@ -512,10 +512,8 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 		// the original unmounted state
 		UnMount(false);
 	}
-	if (datamedia && (!Is_Encrypted || (Is_Encrypted && Is_Decrypted))) {
-		Setup_Data_Media();
+	if (datamedia && (!Is_Encrypted || (Is_Encrypted && Is_Decrypted)))
 		Recreate_Media_Folder();
-	}
 #else
 	if (datamedia) {
 		Setup_Data_Media();
