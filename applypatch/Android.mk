@@ -89,8 +89,13 @@ include $(BUILD_EXECUTABLE)
 # ===============================
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
-LOCAL_SRC_FILES := imgdiff.cpp utils.cpp bsdiff.cpp
+LOCAL_SRC_FILES := imgdiff.cpp utils.cpp
 LOCAL_MODULE := imgdiff
-LOCAL_STATIC_LIBRARIES += libz libbz
+LOCAL_STATIC_LIBRARIES += \
+    libbsdiff \
+    libbz \
+    libdivsufsort64 \
+    libdivsufsort \
+    libz
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 include $(BUILD_HOST_EXECUTABLE)

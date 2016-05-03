@@ -130,6 +130,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#include <bsdiff.h>
+
 #include "zlib.h"
 #include "imgdiff.h"
 #include "utils.h"
@@ -143,8 +145,6 @@ typedef struct {
 
   size_t source_start;
   size_t source_len;
-
-  off_t* I;             // used by bsdiff
 
   // --- for CHUNK_DEFLATE chunks only: ---
 
@@ -178,10 +178,6 @@ static int fileentry_compare(const void* a, const void* b) {
     return 0;
   }
 }
-
-// from bsdiff.c
-int bsdiff(u_char* old, off_t oldsize, off_t** IP, u_char* newdata, off_t newsize,
-           const char* patch_filename);
 
 unsigned char* ReadZip(const char* filename,
                        int* num_chunks, ImageChunk** chunks,
@@ -296,7 +292,6 @@ unsigned char* ReadZip(const char* filename,
     curr->len = st.st_size;
     curr->data = img;
     curr->filename = NULL;
-    curr->I = NULL;
     ++curr;
     ++*num_chunks;
   }
@@ -311,7 +306,6 @@ unsigned char* ReadZip(const char* filename,
       curr->deflate_len = temp_entries[nextentry].deflate_len;
       curr->deflate_data = img + pos;
       curr->filename = temp_entries[nextentry].filename;
-      curr->I = NULL;
 
       curr->len = temp_entries[nextentry].uncomp_len;
       curr->data = reinterpret_cast<unsigned char*>(malloc(curr->len));
@@ -356,7 +350,6 @@ unsigned char* ReadZip(const char* filename,
     }
     curr->data = img + pos;
     curr->filename = NULL;
-    curr->I = NULL;
     pos += curr->len;
 
     ++*num_chunks;
@@ -424,7 +417,6 @@ unsigned char* ReadImage(const char* filename,
       curr->type = CHUNK_NORMAL;
       curr->len = GZIP_HEADER_LEN;
       curr->data = p;
-      curr->I = NULL;
 
       pos += curr->len;
       p += curr->len;
@@ -432,7 +424,6 @@ unsigned char* ReadImage(const char* filename,
 
       curr->type = CHUNK_DEFLATE;
       curr->filename = NULL;
-      curr->I = NULL;
 
       // We must decompress this chunk in order to discover where it
       // ends, and so we can put the uncompressed data and its length
@@ -491,7 +482,6 @@ unsigned char* ReadImage(const char* filename,
       curr->start = pos;
       curr->len = GZIP_FOOTER_LEN;
       curr->data = img+pos;
-      curr->I = NULL;
 
       pos += curr->len;
       p += curr->len;
@@ -515,7 +505,6 @@ unsigned char* ReadImage(const char* filename,
       *chunks = reinterpret_cast<ImageChunk*>(realloc(*chunks, *num_chunks * sizeof(ImageChunk)));
       ImageChunk* curr = *chunks + (*num_chunks-1);
       curr->start = pos;
-      curr->I = NULL;
 
       // 'pos' is not the offset of the start of a gzip chunk, so scan
       // forward until we find a gzip header.
@@ -642,7 +631,7 @@ unsigned char* MakePatch(ImageChunk* src, ImageChunk* tgt, size_t* size) {
   close(fd); // temporary file is created and we don't need its file
              // descriptor
 
-  int r = bsdiff(src->data, src->len, &(src->I), tgt->data, tgt->len, ptemp);
+  int r = bsdiff::bsdiff(src->data, src->len, tgt->data, tgt->len, ptemp);
   if (r != 0) {
     printf("bsdiff() failed: %d\n", r);
     return NULL;
