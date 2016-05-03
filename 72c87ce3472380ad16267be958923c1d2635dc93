@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_5d6c9e9c",
+        "filename": "partition.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-05-03T19:41:41Z",
+      "side": 1,
+      "message": "This was necessary, otherwise, if the device was encrypted, USB-OTG or some other storage partition was being selected for settings storage.",
+      "revId": "72c87ce3472380ad16267be958923c1d2635dc93",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
