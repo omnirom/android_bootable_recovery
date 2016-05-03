@@ -16,6 +16,40 @@
       "revId": "72c87ce3472380ad16267be958923c1d2635dc93",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_1d0176b5",
+        "filename": "partition.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 516,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-05-03T20:15:43Z",
+      "side": 1,
+      "message": "Since you re-implemented this at Line 481, this instance should be deleted.",
+      "revId": "72c87ce3472380ad16267be958923c1d2635dc93",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_fdfdaaac",
+        "filename": "partition.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 521,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-05-03T20:15:43Z",
+      "side": 1,
+      "message": "Same",
+      "revId": "72c87ce3472380ad16267be958923c1d2635dc93",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
