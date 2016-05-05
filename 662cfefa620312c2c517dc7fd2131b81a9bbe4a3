@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98faad2e_dd030ec3",
+        "filename": "partition.cpp",
+        "patchSetId": 77
+      },
+      "lineNbr": 2607,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-05-05T18:54:06Z",
+      "side": 1,
+      "message": "I don\u0027t think that Flash_Sparse_Image needs adb backup support. We\u0027re not backing up in sparse image format anywhere, so we can\u0027t ever be flashing / restoring a sparse image.",
+      "revId": "662cfefa620312c2c517dc7fd2131b81a9bbe4a3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "98faad2e_bd0842e0",
+        "filename": "partitions.hpp",
+        "patchSetId": 77
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-05-05T18:54:06Z",
+      "side": 1,
+      "message": "Couple of white space issues here",
+      "revId": "662cfefa620312c2c517dc7fd2131b81a9bbe4a3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
