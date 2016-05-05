@@ -838,7 +838,7 @@ void DataManager::SetDefaultValues()
 			snprintf(buff, sizeof(buff), " p%d", patch);
 			res += buff;
 		}
-		res.insert(0, "_"); //we dont want that forced in the xml
+		//res.insert(0, "_"); //we dont want that forced in the xml
 		SetValue(TW_MROM_REC_VERSION_VAR, res);
 	}
 #endif

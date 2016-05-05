@@ -28,7 +28,7 @@
 			<text style="text_m">
 				<condition var1="tw_no_cpu_temp" var2="0"/>
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>%tw_version%_%tw_mrom_rec_version%</text>
+				<text>%tw_version% (%tw_mrom_rec_version%)</text>
 			</text>
 
 			<button style="main_button">
