@@ -4980,5 +4980,9 @@
 				<action function="screenshot"/>
 			</action>
 		</page>
+
+		<page name="black_out">
+			<background color="#000000"/>
+		</page>
 	</pages>
 </recovery>

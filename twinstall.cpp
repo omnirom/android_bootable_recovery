@@ -219,6 +219,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	free(temp);
 	temp = NULL;
 
+	int aroma = 1;  // TO-DO:  Detect aroma-config file in the zip
 	*wipe_cache = 0;
 
 	DataManager::GetValue(TW_SIGNED_ZIP_VERIFY_VAR, zip_verify);
@@ -245,7 +246,17 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 		} else if (strcmp(command, "ui_print") == 0) {
 			char* display_value = strtok(NULL, "\n");
 			if (display_value) {
+				// Handle AROMA GUI End
+				if ((strcmp(display_value, "Exit Installer...") == 0) && (aroma == 1)) {
+					gui_changeOverlay(""); // Clear the overlay
+					gui_print("Special1\n");
+				}
 				gui_print("%s", display_value);
+				// Handle AROMA GUI Start
+				if ((strcmp(display_value, "(c) 2013 by amarullz xda-developers") == 0) && (aroma == 1)) {
+					gui_print("Special2\n");
+					gui_changeOverlay("black_out"); // Make the overlay BLACK
+				}
 			} else {
 				gui_print("\n");
 			}
@@ -260,6 +271,11 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	fclose(child_data);
 
 	int waitrc = TWFunc::Wait_For_Child(pid, &status, "Updater");
+	
+	// In case something weird happened and the overlay got set and not cleared
+	if (aroma == 1) {
+		gui_changeOverlay(""); // Clear the overlay
+	}
 
 #ifndef TW_NO_LEGACY_PROPS
 	/* Unset legacy properties */
