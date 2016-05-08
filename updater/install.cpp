@@ -559,7 +559,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
         }
 
         {
-            int fd = TEMP_FAILURE_RETRY(ota_open(dest_path, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC,
+            int fd = TEMP_FAILURE_RETRY(ota_open(dest_path, O_WRONLY | O_CREAT | O_TRUNC,
                   S_IRUSR | S_IWUSR));
             if (fd == -1) {
                 printf("%s: can't open %s for write: %s\n", name, dest_path, strerror(errno));
