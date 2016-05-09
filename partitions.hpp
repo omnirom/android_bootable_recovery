@@ -80,6 +80,7 @@ public:
 	int Check_Lifetime_Writes();
 	int Decrypt_Adopted();
 	void Revert_Adopted();
+	void Partition_Post_Processing(bool Display_Error);                       // Apply partition specific settings after fstab processed
 
 public:
 	string Current_File_System;                                               // Current file system
@@ -95,11 +96,14 @@ protected:
 	void Setup_Data_Media();                                                  // Sets up a partition as a /data/media emulated storage partition
 
 private:
-	bool Process_Fstab_Line(string Line, bool Display_Error);                 // Processes a fstab line
+	bool Process_Fstab_Line(const char *fstab_line, bool Display_Error);      // Processes a fstab line
+	void Setup_Data_Partition(bool Display_Error);                            // Setup data partition after fstab processed
+	void Setup_Cache_Partition(bool Display_Error);                           // Setup cache partition after fstab processed
 	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
 
-	bool Process_Flags(string Flags, bool Display_Error);                     // Process custom fstab flags
-	bool Process_FS_Flags(string& Options, int& Flags);                       // Process standard fstab fs flags
+	void Apply_TW_Flag(const unsigned flag, const char* str, const bool val); // Apply custom twrp fstab flags
+	void Process_TW_Flags(char *flags, bool Display_Error);                   // Process custom twrp fstab flags
+	void Process_FS_Flags(const char *str);                                   // Process standard fstab fs flags
 	bool Is_File_System(string File_System);                                  // Checks to see if the file system given is considered a file system
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
 	void Setup_File_System(bool Display_Error);                               // Sets defaults for a file system partition

@@ -90,31 +90,37 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 
 		if (fstab_line[strlen(fstab_line) - 1] != '\n')
 			fstab_line[strlen(fstab_line)] = '\n';
-		TWPartition* partition = new TWPartition();
-		string line = fstab_line;
-		memset(fstab_line, 0, sizeof(fstab_line));
 
-		if (partition->Process_Fstab_Line(line, Display_Error)) {
-			if (partition->Is_Storage) {
-				++storageid;
-				partition->MTP_Storage_ID = storageid;
-			}
-			if (!settings_partition && partition->Is_Settings_Storage && partition->Is_Present) {
-				settings_partition = partition;
-			} else {
-				partition->Is_Settings_Storage = false;
-			}
-			if (!andsec_partition && partition->Has_Android_Secure && partition->Is_Present) {
-				andsec_partition = partition;
-			} else {
-				partition->Has_Android_Secure = false;
-			}
+		TWPartition* partition = new TWPartition();
+		if (partition->Process_Fstab_Line(fstab_line, Display_Error))
 			Partitions.push_back(partition);
-		} else {
+		else
 			delete partition;
-		}
+
+		memset(fstab_line, 0, sizeof(fstab_line));
 	}
 	fclose(fstabFile);
+
+	std::vector<TWPartition*>::iterator iter;
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		(*iter)->Partition_Post_Processing(Display_Error);
+
+		if ((*iter)->Is_Storage) {
+			++storageid;
+			(*iter)->MTP_Storage_ID = storageid;
+		}
+
+		if (!settings_partition && (*iter)->Is_Settings_Storage && (*iter)->Is_Present)
+			settings_partition = (*iter);
+		else
+			(*iter)->Is_Settings_Storage = false;
+
+		if (!andsec_partition && (*iter)->Has_Android_Secure && (*iter)->Is_Present)
+			andsec_partition = (*iter);
+		else
+			(*iter)->Has_Android_Secure = false;
+	}
+
 	if (!datamedia && !settings_partition && Find_Partition_By_Path("/sdcard") == NULL && Find_Partition_By_Path("/internal_sd") == NULL && Find_Partition_By_Path("/internal_sdcard") == NULL && Find_Partition_By_Path("/emmc") == NULL) {
 		// Attempt to automatically identify /data/media emulated storage devices
 		TWPartition* Dat = Find_Partition_By_Path("/data");
@@ -129,7 +135,6 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		}
 	}
 	if (!settings_partition) {
-		std::vector<TWPartition*>::iterator iter;
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 			if ((*iter)->Is_Storage) {
 				settings_partition = (*iter);
@@ -326,7 +331,7 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 	string back_meth = Part->Backup_Method_By_Name();
 	printf("   Backup_Method: %s\n", back_meth.c_str());
 	if (Part->Mount_Flags || !Part->Mount_Options.empty())
-		printf("   Mount_Flags=0x%8x, Mount_Options=%s\n", Part->Mount_Flags, Part->Mount_Options.c_str());
+		printf("   Mount_Options: %s\n", Part->Mount_Options.c_str());
 	if (Part->MTP_Storage_ID)
 		printf("   MTP_Storage_ID: %i\n", Part->MTP_Storage_ID);
 	printf("\n");
