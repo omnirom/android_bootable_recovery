@@ -1028,6 +1028,8 @@ int GUIAction::flash(std::string arg)
 	PartitionManager.Update_System_Details();
 	if (DataManager::GetIntValue("tw_install_reboot") > 0 && ret_val == 0) {
 		gui_msg("install_reboot=Rebooting in 5 seconds");
+		// Disable stock recovery reflashing
+		TWFunc::Disable_Stock_Recovery_Replace();
 		usleep(5000000);
 		TWFunc::tw_reboot(rb_system);
 		usleep(5000000); // another sleep while we wait for the reboot to occur
