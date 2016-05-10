@@ -93,9 +93,9 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
     png_set_sig_bytes(png_ptr, sizeof(header));
     png_read_info(png_ptr, info_ptr);
 
-    int color_type = info_ptr->color_type;
-    int bit_depth = info_ptr->bit_depth;
-    int channels = info_ptr->channels;
+    int color_type = png_get_color_type(png_ptr, info_ptr);
+    int bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+    int channels = png_get_channels(png_ptr, info_ptr);
     if (!(bit_depth == 8 &&
           ((channels == 3 && color_type == PNG_COLOR_TYPE_RGB) ||
            (channels == 4 && color_type == PNG_COLOR_TYPE_RGBA) ||
@@ -105,8 +105,8 @@ int res_create_surface(const char* name, gr_surface* pSurface) {
         goto exit;
     }
 
-    size_t width = info_ptr->width;
-    size_t height = info_ptr->height;
+    size_t width = png_get_image_width(png_ptr, info_ptr);
+    size_t height = png_get_image_height(png_ptr, info_ptr);
     size_t stride = (color_type == PNG_COLOR_TYPE_GRAY ? 1 : 4) * width;
     size_t pixelSize = stride * height;
 
@@ -246,13 +246,13 @@ int res_create_localized_surface(const char* name, gr_surface* pSurface) {
     png_set_sig_bytes(png_ptr, sizeof(header));
     png_read_info(png_ptr, info_ptr);
 
-    size_t width = info_ptr->width;
-    size_t height = info_ptr->height;
+    size_t width = png_get_image_width(png_ptr, info_ptr);
+    size_t height = png_get_image_height(png_ptr, info_ptr);
     size_t stride = 4 * width;
 
-    int color_type = info_ptr->color_type;
-    int bit_depth = info_ptr->bit_depth;
-    int channels = info_ptr->channels;
+    int color_type = png_get_color_type(png_ptr, info_ptr);
+    int bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+    int channels = png_get_channels(png_ptr, info_ptr);
 
     if (!(bit_depth == 8 &&
           (channels == 1 && color_type == PNG_COLOR_TYPE_GRAY))) {
