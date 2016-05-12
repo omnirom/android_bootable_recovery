@@ -199,7 +199,7 @@ ifneq ($(wildcard external/pcre/Android.mk),)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libpcre.so
 endif
 ifeq ($(TW_INCLUDE_NTFS_3G),true)
-ifeq ($(shell test $(CM_PLATFORM_SDK_VERSION) -ge 4; echo $$?),0)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mount.ntfs
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/fsck.ntfs
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mkfs.ntfs
