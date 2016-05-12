@@ -42,6 +42,8 @@ struct adf_pdata {
     adf_id_t eng_id;
     __u32 format;
 
+    adf_device dev;
+
     unsigned int current_surface;
     unsigned int n_surfaces;
     adf_surface_pdata surfaces[2];
@@ -163,21 +165,20 @@ static GRSurface* adf_init(minui_backend *backend)
     pdata->intf_fd = -1;
 
     for (i = 0; i < n_dev_ids && pdata->intf_fd < 0; i++) {
-        adf_device dev;
 
-        int err = adf_device_open(dev_ids[i], O_RDWR, &dev);
+        int err = adf_device_open(dev_ids[i], O_RDWR, &pdata->dev);
         if (err < 0) {
             fprintf(stderr, "opening adf device %u failed: %s\n", dev_ids[i],
                     strerror(-err));
             continue;
         }
 
-        err = adf_device_init(pdata, &dev);
-        if (err < 0)
+        err = adf_device_init(pdata, &pdata->dev);
+        if (err < 0) {
             fprintf(stderr, "initializing adf device %u failed: %s\n",
                     dev_ids[i], strerror(-err));
-
-        adf_device_close(&dev);
+            adf_device_close(&pdata->dev);
+        }
     }
 
     free(dev_ids);
@@ -226,6 +227,7 @@ static void adf_exit(minui_backend *backend)
     adf_pdata *pdata = (adf_pdata *)backend;
     unsigned int i;
 
+    adf_device_close(&pdata->dev);
     for (i = 0; i < pdata->n_surfaces; i++)
         adf_surface_destroy(&pdata->surfaces[i]);
     if (pdata->intf_fd >= 0)
