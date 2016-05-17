@@ -129,7 +129,7 @@ new file mode 100644
 index 0000000..a3bf052
 --- /dev/null
 +++ b/lib/crypto/crypto_scrypt-neon.c
-@@ -0,0 +1,305 @@
+@@ -0,0 +1,304 @@
 +/*-
 + * Copyright 2009 Colin Percival
 + * All rights reserved.
@@ -160,7 +160,6 @@ index 0000000..a3bf052
 + */
 +#include "scrypt_platform.h"
 +
-+#include <machine/cpu-features.h>
 +#include <arm_neon.h>
 +
 +#include <errno.h>
