@@ -946,7 +946,6 @@ static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr, const unsi
 #endif
 
   crypt_params = buffer + sizeof(struct dm_ioctl) + sizeof(struct dm_target_spec);
-  convert_key_to_hex_ascii(master_key, crypt_ftr->keysize, master_key_ascii);
   sprintf(crypt_params, "%s %s 0 %s 0 %s", crypt_ftr->crypto_type_name,
           master_key_ascii, real_blk_name, extra_params);
 
