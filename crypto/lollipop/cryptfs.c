@@ -928,6 +928,8 @@ static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr, const unsi
   tgt->status = 0;
   tgt->sector_start = 0;
   tgt->length = crypt_ftr->fs_size;
+  crypt_params = buffer + sizeof(struct dm_ioctl) + sizeof(struct dm_target_spec);
+
 #ifdef CONFIG_HW_DISK_ENCRYPTION
   if(is_hw_disk_encryption((char*)crypt_ftr->crypto_type_name)) {
     strlcpy(tgt->target_type, "req-crypt",DM_MAX_TYPE_NAME);
@@ -945,8 +947,6 @@ static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr, const unsi
   strlcpy(tgt->target_type, "crypt", DM_MAX_TYPE_NAME);
 #endif
 
-  crypt_params = buffer + sizeof(struct dm_ioctl) + sizeof(struct dm_target_spec);
-  convert_key_to_hex_ascii(master_key, crypt_ftr->keysize, master_key_ascii);
   sprintf(crypt_params, "%s %s 0 %s 0 %s", crypt_ftr->crypto_type_name,
           master_key_ascii, real_blk_name, extra_params);
 
