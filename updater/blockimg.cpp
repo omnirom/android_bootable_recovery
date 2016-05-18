@@ -373,6 +373,7 @@ struct CommandParameters {
     bool isunresumable;
     int version;
     size_t written;
+    size_t stashed;
     NewThreadInfo nti;
     pthread_t thread;
     std::vector<uint8_t> buffer;
@@ -774,6 +775,7 @@ static int SaveStash(CommandParameters& params, const std::string& base,
     }
 
     fprintf(stderr, "stashing %zu blocks to %s\n", blocks, id.c_str());
+    params.stashed += blocks;
     return WriteStash(base, id, blocks, buffer, false, nullptr);
 }
 
@@ -970,6 +972,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
                 return -1;
             }
 
+            params.stashed += src_blocks;
             // Can be deleted when the write has completed
             if (!stash_exists) {
                 params.freestash = srchash;
@@ -1511,8 +1514,17 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         pthread_join(params.thread, nullptr);
 
         fprintf(stderr, "wrote %zu blocks; expected %d\n", params.written, total_blocks);
+        fprintf(stderr, "stashed %zu blocks\n", params.stashed);
         fprintf(stderr, "max alloc needed was %zu\n", params.buffer.size());
 
+        const char* partition = strrchr(blockdev_filename->data, '/');
+        if (partition != nullptr && *(partition+1) != 0) {
+            fprintf(cmd_pipe, "log bytes_written_%s: %zu\n", partition + 1,
+                    params.written * BLOCKSIZE);
+            fprintf(cmd_pipe, "log bytes_stashed_%s: %zu\n", partition + 1,
+                    params.stashed * BLOCKSIZE);
+            fflush(cmd_pipe);
+        }
         // Delete stash only after successfully completing the update, as it
         // may contain blocks needed to complete the update later.
         DeleteStash(params.stashbase);
