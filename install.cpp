@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <string>
 #include <vector>
 
 #include "common.h"
@@ -50,7 +51,9 @@ static const float DEFAULT_IMAGE_PROGRESS_FRACTION = 0.1;
 
 // If the package contains an update binary, extract it and run it.
 static int
-try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache) {
+try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
+                  std::vector<std::string>& log_buffer)
+{
     const ZipEntry* binary_entry =
             mzFindZipEntry(zip, ASSUMED_UPDATE_BINARY_NAME);
     if (binary_entry == NULL) {
@@ -183,6 +186,10 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache) {
             ui->SetEnableReboot(true);
         } else if (strcmp(command, "retry_update") == 0) {
             retry_update = true;
+        } else if (strcmp(command, "log") == 0) {
+            // Save the logging request from updater and write to
+            // last_install later.
+            log_buffer.push_back(std::string(strtok(NULL, "\n")));
         } else {
             LOGE("unknown command [%s]\n", command);
         }
@@ -203,7 +210,8 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache) {
 }
 
 static int
-really_install_package(const char *path, bool* wipe_cache, bool needs_mount)
+really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
+                       std::vector<std::string>& log_buffer)
 {
     ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
     ui->Print("Finding update package...\n");
@@ -261,7 +269,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount)
     // Verify and install the contents of the package.
     ui->Print("Installing update...\n");
     ui->SetEnableReboot(false);
-    int result = try_update_binary(path, &zip, wipe_cache);
+    int result = try_update_binary(path, &zip, wipe_cache, log_buffer);
     ui->SetEnableReboot(true);
     ui->Print("\n");
 
@@ -275,6 +283,7 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
                 bool needs_mount)
 {
     modified_flash = true;
+    auto start = std::chrono::system_clock::now();
 
     FILE* install_log = fopen_path(install_file, "w");
     if (install_log) {
@@ -284,15 +293,25 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
         LOGE("failed to open last_install: %s\n", strerror(errno));
     }
     int result;
+    std::vector<std::string> log_buffer;
     if (setup_install_mounts() != 0) {
         LOGE("failed to set up expected mounts for install; aborting\n");
         result = INSTALL_ERROR;
     } else {
-        result = really_install_package(path, wipe_cache, needs_mount);
+        result = really_install_package(path, wipe_cache, needs_mount, log_buffer);
     }
     if (install_log) {
         fputc(result == INSTALL_SUCCESS ? '1' : '0', install_log);
         fputc('\n', install_log);
+        std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
+        int count = static_cast<int>(duration.count());
+        // Report the time spent to apply OTA update in seconds.
+        fprintf(install_log, "time_total: %d\n", count);
+
+        for (const auto& s : log_buffer) {
+            fprintf(install_log, "%s\n", s.c_str());
+        }
+
         fclose(install_log);
     }
     return result;
