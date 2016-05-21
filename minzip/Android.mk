@@ -18,6 +18,11 @@ LOCAL_SHARED_LIBRARIES += libselinux
 LOCAL_CFLAGS += -DHAVE_SELINUX
 endif
 
+ifneq ($(wildcard external/lzma/xz-embedded/Android.mk),)
+LOCAL_C_INCLUDES += external/lzma/xz-embedded
+LOCAL_STATIC_LIBRARIES += libxz
+endif
+
 LOCAL_CFLAGS += -DPLATFORM_SDK_VERSION=$(PLATFORM_SDK_VERSION)
 
 LOCAL_MODULE := libminzip
@@ -45,6 +50,11 @@ ifeq ($(TWHAVE_SELINUX),true)
 LOCAL_C_INCLUDES += external/libselinux/include
 LOCAL_STATIC_LIBRARIES += libselinux
 LOCAL_CFLAGS += -DHAVE_SELINUX
+endif
+
+ifneq ($(wildcard external/lzma/xz-embedded/Android.mk),)
+LOCAL_C_INCLUDES += external/lzma/xz-embedded
+LOCAL_STATIC_LIBRARIES += libxz
 endif
 
 LOCAL_MODULE := libminzip
