@@ -37,6 +37,7 @@
 #include <sys/inotify.h>
 #include <fcntl.h>
 #include "../tw_atomic.hpp"
+#include "unused.h"
 
 #define WATCH_FLAGS ( IN_CREATE | IN_DELETE | IN_MOVE | IN_MODIFY )
 
@@ -156,6 +157,7 @@ int MtpStorage::createDB() {
 }
 
 MtpObjectHandleList* MtpStorage::getObjectList(MtpStorageID storageID, MtpObjectHandle parent) {
+	UNUSED(storageID);
 	MTPD("MtpStorage::getObjectList, parent: %u\n", parent);
 	//append object id  (numerical #s) of database to int array
 	MtpObjectHandleList* list = new MtpObjectHandleList();
@@ -218,6 +220,8 @@ MtpObjectHandle MtpStorage::beginSendObject(const char* path,
 											MtpObjectHandle parent,
 											uint64_t size,
 											time_t modified) {
+	UNUSED(size);
+	UNUSED(modified);
 	MTPD("MtpStorage::beginSendObject(), path: '%s', parent: %u, format: %04x\n", path, parent, format);
 	iter it = mtpmap.find(parent);
 	if (it == mtpmap.end()) {
@@ -250,6 +254,8 @@ MtpObjectHandle MtpStorage::beginSendObject(const char* path,
 
 void MtpStorage::endSendObject(const char* path, MtpObjectHandle handle, MtpObjectFormat format, bool succeeded)
 {
+	UNUSED(format);
+	UNUSED(succeeded);
 	Node* node = findNode(handle);
 	if (!node)
 		return;	// just ignore if this is for another storage
@@ -347,6 +353,7 @@ int MtpStorage::deleteFile(MtpObjectHandle handle) {
 
 void MtpStorage::queryNodeProperties(std::vector<MtpStorage::PropEntry>& results, Node* node, uint32_t property, int groupCode, MtpStorageID storageID)
 {
+	UNUSED(groupCode);
 	MTPD("queryNodeProperties handle %u, path: %s\n", node->Mtpid(), getNodePath(node).c_str());
 	PropEntry pe;
 	pe.handle = node->Mtpid();
@@ -418,6 +425,7 @@ void MtpStorage::queryNodeProperties(std::vector<MtpStorage::PropEntry>& results
 }
 
 int MtpStorage::getObjectPropertyList(MtpObjectHandle handle, uint32_t format, uint32_t property, int groupCode, int depth, MtpDataPacket& packet) {
+	UNUSED(depth);
 	MTPD("MtpStorage::getObjectPropertyList handle: %u, format: %x, property: %x\n", handle, format, property);
 	if (groupCode != 0)
 	{
@@ -849,6 +857,7 @@ void MtpStorage::lockMutex(int thread_type) {
 }
 
 void MtpStorage::unlockMutex(int thread_type) {
+	UNUSED(thread_type);
 	if (!use_mutex)
 		return; // mutex is disabled
 	pthread_mutex_unlock(&inMutex);

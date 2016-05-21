@@ -43,6 +43,7 @@
 #include "mtp.h"
 #include "mtp_MtpDatabase.hpp"
 //#include "btree.hpp"
+#include "unused.h"
 
 MyMtpDatabase::MyMtpDatabase()
 {
@@ -247,6 +248,7 @@ void MyMtpDatabase::destroyDB(MtpStorageID storageID) {
 MtpObjectHandleList* MyMtpDatabase::getObjectList(MtpStorageID storageID,
 									MtpObjectFormat format,
 									MtpObjectHandle parent) {
+	UNUSED(format);
 	MTPD("storageID: %d\n", storageID);
 	MtpObjectHandleList* list = storagemap[storageID]->getObjectList(storageID, parent);
 	MTPD("list: %d\n", list->size());
@@ -256,6 +258,7 @@ MtpObjectHandleList* MyMtpDatabase::getObjectList(MtpStorageID storageID,
 int MyMtpDatabase::getNumObjects(MtpStorageID storageID,
 									MtpObjectFormat format,
 									MtpObjectHandle parent) {
+	UNUSED(format);
 	MtpObjectHandleList* list = storagemap[storageID]->getObjectList(storageID, parent);
 	int size = list->size();
 	delete list;
@@ -624,12 +627,15 @@ MtpResponseCode MyMtpDatabase::getDevicePropertyValue(MtpDeviceProperty property
 }
 
 MtpResponseCode MyMtpDatabase::setDevicePropertyValue(MtpDeviceProperty property, MtpDataPacket& packet) {
+	UNUSED(property);
+	UNUSED(packet);
    	int type;
 	MTPE("MyMtpDatabase::setDevicePropertyValue not implemented, returning 0\n");
 	return 0;
 }
 
 MtpResponseCode MyMtpDatabase::resetDeviceProperty(MtpDeviceProperty property) {
+	UNUSED(property);
 	MTPE("MyMtpDatabase::resetDeviceProperty not implemented, returning -1\n");
    	return -1;
 }
@@ -662,6 +668,7 @@ MtpResponseCode MyMtpDatabase::getObjectInfo(MtpObjectHandle handle, MtpObjectIn
 }
 
 void* MyMtpDatabase::getThumbnail(MtpObjectHandle handle, size_t& outThumbSize) {
+	UNUSED(handle);
 	MtpString path;
 	int64_t length;
 	MtpObjectFormat format;
@@ -769,6 +776,7 @@ MtpObjectHandleList* MyMtpDatabase::getObjectReferences(MtpObjectHandle handle) 
 
 MtpResponseCode MyMtpDatabase::setObjectReferences(MtpObjectHandle handle,
 													MtpObjectHandleList* references) {
+	UNUSED(handle);
 	int count = references->size();
 	MTPE("MyMtpDatabase::setObjectReferences not implemented, returning 0\n");
 	return 0;
