@@ -160,11 +160,28 @@ int main(int argc, char** argv) {
             printf("script aborted: %s\n", state.errmsg);
             char* line = strtok(state.errmsg, "\n");
             while (line) {
+                // Parse the error code in abort message.
+                // Example: "E30: This package is for bullhead devices."
+                if (*line == 'E') {
+                    if (sscanf(line, "E%u: ", &state.error_code) != 1) {
+                         printf("Failed to parse error code: [%s]\n", line);
+                    }
+                }
                 fprintf(cmd_pipe, "ui_print %s\n", line);
                 line = strtok(NULL, "\n");
             }
             fprintf(cmd_pipe, "ui_print\n");
         }
+
+        if (state.error_code != kNoError) {
+            fprintf(cmd_pipe, "log error: %d\n", state.error_code);
+            // Cause code should provide additional information about the abort;
+            // report only when an error exists.
+            if (state.cause_code != kNoCause) {
+                fprintf(cmd_pipe, "log cause: %d\n", state.cause_code);
+            }
+        }
+
         free(state.errmsg);
         return 7;
     } else {

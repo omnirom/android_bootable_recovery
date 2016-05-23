@@ -44,6 +44,7 @@
 
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
+#include "error_code.h"
 #include "install.h"
 #include "openssl/sha.h"
 #include "minzip/Hash.h"
@@ -68,6 +69,7 @@ struct RangeSet {
     std::vector<size_t> pos;  // Actual limit is INT_MAX.
 };
 
+static CauseCode failure_type = kNoCause;
 static std::map<std::string, RangeSet> stash_map;
 
 static void parse_range(const std::string& range_text, RangeSet& rs) {
@@ -145,6 +147,7 @@ static int read_all(int fd, uint8_t* data, size_t size) {
     while (so_far < size) {
         ssize_t r = TEMP_FAILURE_RETRY(ota_read(fd, data+so_far, size-so_far));
         if (r == -1) {
+            failure_type = kFreadFailure;
             fprintf(stderr, "read failed: %s\n", strerror(errno));
             return -1;
         }
@@ -162,6 +165,7 @@ static int write_all(int fd, const uint8_t* data, size_t size) {
     while (written < size) {
         ssize_t w = TEMP_FAILURE_RETRY(ota_write(fd, data+written, size-written));
         if (w == -1) {
+            failure_type = kFwriteFailure;
             fprintf(stderr, "write failed: %s\n", strerror(errno));
             return -1;
         }
@@ -178,6 +182,7 @@ static int write_all(int fd, const std::vector<uint8_t>& buffer, size_t size) {
 static bool check_lseek(int fd, off64_t offset, int whence) {
     off64_t rc = TEMP_FAILURE_RETRY(lseek64(fd, offset, whence));
     if (rc == -1) {
+        failure_type = kLseekFailure;
         fprintf(stderr, "lseek64 failed: %s\n", strerror(errno));
         return false;
     }
@@ -646,6 +651,7 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
     }
 
     if (ota_fsync(fd) == -1) {
+        failure_type = kFsyncFailure;
         fprintf(stderr, "fsync \"%s\" failed: %s\n", fn.c_str(), strerror(errno));
         return -1;
     }
@@ -660,11 +666,13 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
     android::base::unique_fd dfd(TEMP_FAILURE_RETRY(ota_open(dname.c_str(),
                                                              O_RDONLY | O_DIRECTORY)));
     if (dfd == -1) {
+        failure_type = kFileOpenFailure;
         fprintf(stderr, "failed to open \"%s\" failed: %s\n", dname.c_str(), strerror(errno));
         return -1;
     }
 
     if (ota_fsync(dfd) == -1) {
+        failure_type = kFsyncFailure;
         fprintf(stderr, "fsync \"%s\" failed: %s\n", dname.c_str(), strerror(errno));
         return -1;
     }
@@ -693,19 +701,21 @@ static int CreateStash(State* state, int maxblocks, const char* blockdev, std::s
     int res = stat(dirname.c_str(), &sb);
 
     if (res == -1 && errno != ENOENT) {
-        ErrorAbort(state, "stat \"%s\" failed: %s\n", dirname.c_str(), strerror(errno));
+        ErrorAbort(state, kStashCreationFailure, "stat \"%s\" failed: %s\n",
+                   dirname.c_str(), strerror(errno));
         return -1;
     } else if (res != 0) {
         fprintf(stderr, "creating stash %s\n", dirname.c_str());
         res = mkdir(dirname.c_str(), STASH_DIRECTORY_MODE);
 
         if (res != 0) {
-            ErrorAbort(state, "mkdir \"%s\" failed: %s\n", dirname.c_str(), strerror(errno));
+            ErrorAbort(state, kStashCreationFailure, "mkdir \"%s\" failed: %s\n",
+                       dirname.c_str(), strerror(errno));
             return -1;
         }
 
         if (CacheSizeCheck(maxblocks * BLOCKSIZE) != 0) {
-            ErrorAbort(state, "not enough space for stash\n");
+            ErrorAbort(state, kStashCreationFailure, "not enough space for stash\n");
             return -1;
         }
 
@@ -725,7 +735,8 @@ static int CreateStash(State* state, int maxblocks, const char* blockdev, std::s
     size = maxblocks * BLOCKSIZE - size;
 
     if (size > 0 && CacheSizeCheck(size) != 0) {
-        ErrorAbort(state, "not enough space for stash (%d more needed)\n", size);
+        ErrorAbort(state, kStashCreationFailure, "not enough space for stash (%d more needed)\n",
+                   size);
         return -1;
     }
 
@@ -1342,19 +1353,21 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     std::unique_ptr<Value, decltype(&FreeValue)> patch_data_fn_holder(patch_data_fn, FreeValue);
 
     if (blockdev_filename->type != VAL_STRING) {
-        ErrorAbort(state, "blockdev_filename argument to %s must be string", name);
+        ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string",
+                   name);
         return StringValue(strdup(""));
     }
     if (transfer_list_value->type != VAL_BLOB) {
-        ErrorAbort(state, "transfer_list argument to %s must be blob", name);
+        ErrorAbort(state, kArgsParsingFailure, "transfer_list argument to %s must be blob", name);
         return StringValue(strdup(""));
     }
     if (new_data_fn->type != VAL_STRING) {
-        ErrorAbort(state, "new_data_fn argument to %s must be string", name);
+        ErrorAbort(state, kArgsParsingFailure, "new_data_fn argument to %s must be string", name);
         return StringValue(strdup(""));
     }
     if (patch_data_fn->type != VAL_STRING) {
-        ErrorAbort(state, "patch_data_fn argument to %s must be string", name);
+        ErrorAbort(state, kArgsParsingFailure, "patch_data_fn argument to %s must be string",
+                   name);
         return StringValue(strdup(""));
     }
 
@@ -1412,7 +1425,8 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     const std::string transfer_list(transfer_list_value->data, transfer_list_value->size);
     std::vector<std::string> lines = android::base::Split(transfer_list, "\n");
     if (lines.size() < 2) {
-        ErrorAbort(state, "too few lines in the transfer list [%zd]\n", lines.size());
+        ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zd]\n",
+                   lines.size());
         return StringValue(strdup(""));
     }
 
@@ -1427,7 +1441,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     // Second line in transfer list is the total number of blocks we expect to write
     int total_blocks;
     if (!android::base::ParseInt(lines[1].c_str(), &total_blocks, 0)) {
-        ErrorAbort(state, "unexpected block count [%s]\n", lines[1].c_str());
+        ErrorAbort(state, kArgsParsingFailure, "unexpected block count [%s]\n", lines[1].c_str());
         return StringValue(strdup(""));
     }
 
@@ -1438,7 +1452,8 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     size_t start = 2;
     if (params.version >= 2) {
         if (lines.size() < 4) {
-            ErrorAbort(state, "too few lines in the transfer list [%zu]\n", lines.size());
+            ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]\n",
+                       lines.size());
             return StringValue(strdup(""));
         }
 
@@ -1448,7 +1463,8 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         // Fourth line is the maximum number of blocks that will be stashed simultaneously
         int stash_max_blocks;
         if (!android::base::ParseInt(lines[3].c_str(), &stash_max_blocks, 0)) {
-            ErrorAbort(state, "unexpected maximum stash blocks [%s]\n", lines[3].c_str());
+            ErrorAbort(state, kArgsParsingFailure, "unexpected maximum stash blocks [%s]\n",
+                       lines[3].c_str());
             return StringValue(strdup(""));
         }
 
@@ -1502,6 +1518,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
 
         if (params.canwrite) {
             if (ota_fsync(params.fd) == -1) {
+                failure_type = kFsyncFailure;
                 fprintf(stderr, "fsync failed: %s\n", strerror(errno));
                 goto pbiudone;
             }
@@ -1536,6 +1553,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
 
 pbiudone:
     if (ota_fsync(params.fd) == -1) {
+        failure_type = kFsyncFailure;
         fprintf(stderr, "fsync failed: %s\n", strerror(errno));
     }
     // params.fd will be automatically closed because it's a unique_fd.
@@ -1544,6 +1562,10 @@ pbiudone:
     // a verification run and we created the stash.
     if (params.isunresumable || (!params.canwrite && params.createdstash)) {
         DeleteStash(params.stashbase);
+    }
+
+    if (failure_type != kNoCause && state->cause_code == kNoCause) {
+        state->cause_code = failure_type;
     }
 
     return StringValue(rc == 0 ? strdup("t") : strdup(""));
@@ -1651,17 +1673,19 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
             FreeValue);
 
     if (blockdev_filename->type != VAL_STRING) {
-        ErrorAbort(state, "blockdev_filename argument to %s must be string", name);
+        ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string",
+                   name);
         return StringValue(strdup(""));
     }
     if (ranges->type != VAL_STRING) {
-        ErrorAbort(state, "ranges argument to %s must be string", name);
+        ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
         return StringValue(strdup(""));
     }
 
     android::base::unique_fd fd(ota_open(blockdev_filename->data, O_RDWR));
     if (fd == -1) {
-        ErrorAbort(state, "open \"%s\" failed: %s", blockdev_filename->data, strerror(errno));
+        ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s", blockdev_filename->data,
+                   strerror(errno));
         return StringValue(strdup(""));
     }
 
@@ -1674,14 +1698,15 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
     std::vector<uint8_t> buffer(BLOCKSIZE);
     for (size_t i = 0; i < rs.count; ++i) {
         if (!check_lseek(fd, (off64_t)rs.pos[i*2] * BLOCKSIZE, SEEK_SET)) {
-            ErrorAbort(state, "failed to seek %s: %s", blockdev_filename->data, strerror(errno));
+            ErrorAbort(state, kLseekFailure, "failed to seek %s: %s", blockdev_filename->data,
+                       strerror(errno));
             return StringValue(strdup(""));
         }
 
         for (size_t j = rs.pos[i*2]; j < rs.pos[i*2+1]; ++j) {
             if (read_all(fd, buffer, BLOCKSIZE) == -1) {
-                ErrorAbort(state, "failed to read %s: %s", blockdev_filename->data,
-                           strerror(errno));
+                ErrorAbort(state, kFreadFailure, "failed to read %s: %s", blockdev_filename->data,
+                        strerror(errno));
                 return StringValue(strdup(""));
             }
 
@@ -1708,13 +1733,14 @@ Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[])
     std::unique_ptr<Value, decltype(&FreeValue)> filename(arg_filename, FreeValue);
 
     if (filename->type != VAL_STRING) {
-        ErrorAbort(state, "filename argument to %s must be string", name);
+        ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
         return StringValue(strdup(""));
     }
 
     android::base::unique_fd fd(ota_open(arg_filename->data, O_RDONLY));
     if (fd == -1) {
-        ErrorAbort(state, "open \"%s\" failed: %s", arg_filename->data, strerror(errno));
+        ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s", arg_filename->data,
+                   strerror(errno));
         return StringValue(strdup(""));
     }
 
@@ -1722,7 +1748,8 @@ Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[])
     std::vector<uint8_t> block0_buffer(BLOCKSIZE);
 
     if (ReadBlocks(blk0, block0_buffer, fd) == -1) {
-        ErrorAbort(state, "failed to read %s: %s", arg_filename->data, strerror(errno));
+        ErrorAbort(state, kFreadFailure, "failed to read %s: %s", arg_filename->data,
+                strerror(errno));
         return StringValue(strdup(""));
     }
 
@@ -1757,11 +1784,11 @@ Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[
     std::unique_ptr<Value, decltype(&FreeValue)> ranges(arg_ranges, FreeValue);
 
     if (filename->type != VAL_STRING) {
-        ErrorAbort(state, "filename argument to %s must be string", name);
+        ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
         return StringValue(strdup(""));
     }
     if (ranges->type != VAL_STRING) {
-        ErrorAbort(state, "ranges argument to %s must be string", name);
+        ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
         return StringValue(strdup(""));
     }
 
@@ -1772,19 +1799,20 @@ Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[
     fec::io fh(filename->data, O_RDWR);
 
     if (!fh) {
-        ErrorAbort(state, "fec_open \"%s\" failed: %s", filename->data, strerror(errno));
+        ErrorAbort(state, kLibfecFailure, "fec_open \"%s\" failed: %s", filename->data,
+                   strerror(errno));
         return StringValue(strdup(""));
     }
 
     if (!fh.has_ecc() || !fh.has_verity()) {
-        ErrorAbort(state, "unable to use metadata to correct errors");
+        ErrorAbort(state, kLibfecFailure, "unable to use metadata to correct errors");
         return StringValue(strdup(""));
     }
 
     fec_status status;
 
     if (!fh.get_status(status)) {
-        ErrorAbort(state, "failed to read FEC status");
+        ErrorAbort(state, kLibfecFailure, "failed to read FEC status");
         return StringValue(strdup(""));
     }
 
@@ -1801,8 +1829,8 @@ Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[
             }
 
             if (fh.pread(buffer, BLOCKSIZE, (off64_t)j * BLOCKSIZE) != BLOCKSIZE) {
-                ErrorAbort(state, "failed to recover %s (block %zu): %s", filename->data,
-                    j, strerror(errno));
+                ErrorAbort(state, kLibfecFailure, "failed to recover %s (block %zu): %s",
+                           filename->data, j, strerror(errno));
                 return StringValue(strdup(""));
             }
 
