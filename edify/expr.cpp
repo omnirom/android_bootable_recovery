@@ -21,6 +21,11 @@
 #include <stdarg.h>
 #include <unistd.h>
 
+#include <string>
+
+#include <android-base/stringprintf.h>
+#include <android-base/strings.h>
+
 #include "expr.h"
 
 // Functions should:
@@ -36,7 +41,7 @@ char* Evaluate(State* state, Expr* expr) {
     Value* v = expr->fn(expr->name, state, expr->argc, expr->argv);
     if (v == NULL) return NULL;
     if (v->type != VAL_STRING) {
-        ErrorAbort(state, "expecting string, got value type %d", v->type);
+        ErrorAbort(state, kArgsParsingFailure, "expecting string, got value type %d", v->type);
         FreeValue(v);
         return NULL;
     }
@@ -494,15 +499,29 @@ Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]) {
     return args;
 }
 
-// Use printf-style arguments to compose an error message to put into
-// *state.  Returns NULL.
-Value* ErrorAbort(State* state, const char* format, ...) {
-    char* buffer = reinterpret_cast<char*>(malloc(4096));
-    va_list v;
-    va_start(v, format);
-    vsnprintf(buffer, 4096, format, v);
-    va_end(v);
+static void ErrorAbortV(State* state, const char* format, va_list ap) {
+    std::string buffer;
+    android::base::StringAppendV(&buffer, format, ap);
     free(state->errmsg);
-    state->errmsg = buffer;
-    return NULL;
+    state->errmsg = strdup(buffer.c_str());
+    return;
+}
+
+// Use printf-style arguments to compose an error message to put into
+// *state.  Returns nullptr.
+Value* ErrorAbort(State* state, const char* format, ...) {
+    va_list ap;
+    va_start(ap, format);
+    ErrorAbortV(state, format, ap);
+    va_end(ap);
+    return nullptr;
+}
+
+Value* ErrorAbort(State* state, CauseCode cause_code, const char* format, ...) {
+    va_list ap;
+    va_start(ap, format);
+    ErrorAbortV(state, format, ap);
+    va_end(ap);
+    state->cause_code = cause_code;
+    return nullptr;
 }
