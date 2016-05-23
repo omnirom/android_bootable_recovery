@@ -27,7 +27,11 @@
 #include <string>
 #include <vector>
 
+#include <android-base/stringprintf.h>
+#include <android-base/strings.h>
+
 #include "common.h"
+#include "error_code.h"
 #include "install.h"
 #include "minui/minui.h"
 #include "minzip/SysUtil.h"
@@ -253,6 +257,8 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
     if (err != VERIFY_SUCCESS) {
         LOGE("signature verification failed\n");
+        log_buffer.push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
+
         sysReleaseMap(&map);
         return INSTALL_CORRUPT;
     }
@@ -262,6 +268,8 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     err = mzOpenZipArchive(map.addr, map.length, &zip);
     if (err != 0) {
         LOGE("Can't open %s\n(%s)\n", path, err != -1 ? strerror(err) : "bad");
+        log_buffer.push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
+
         sysReleaseMap(&map);
         return INSTALL_CORRUPT;
     }
@@ -280,7 +288,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
 
 int
 install_package(const char* path, bool* wipe_cache, const char* install_file,
-                bool needs_mount)
+                bool needs_mount, int retry_count)
 {
     modified_flash = true;
     auto start = std::chrono::system_clock::now();
@@ -300,13 +308,14 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
     } else {
         result = really_install_package(path, wipe_cache, needs_mount, log_buffer);
     }
-    if (install_log) {
+    if (install_log != nullptr) {
         fputc(result == INSTALL_SUCCESS ? '1' : '0', install_log);
         fputc('\n', install_log);
         std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
         int count = static_cast<int>(duration.count());
         // Report the time spent to apply OTA update in seconds.
         fprintf(install_log, "time_total: %d\n", count);
+        fprintf(install_log, "retry: %d\n", retry_count);
 
         for (const auto& s : log_buffer) {
             fprintf(install_log, "%s\n", s.c_str());
