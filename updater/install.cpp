@@ -1013,7 +1013,6 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     if (ota_fread(buffer, 1, st.st_size, f) != static_cast<size_t>(st.st_size)) {
-        ota_fclose(f);
         ErrorAbort(state, kFreadFailure, "%s: failed to read %zu bytes from %s",
                    name, static_cast<size_t>(st.st_size), filename);
         ota_fclose(f);
