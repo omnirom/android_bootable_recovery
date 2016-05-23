@@ -50,6 +50,7 @@
 #include "bootloader.h"
 #include "common.h"
 #include "device.h"
+#include "error_code.h"
 #include "fuse_sdcard_provider.h"
 #include "fuse_sideload.h"
 #include "install.h"
@@ -1000,7 +1001,7 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
         }
 
         result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache,
-                                 TEMPORARY_INSTALL_FILE, false);
+                                 TEMPORARY_INSTALL_FILE, false, 0/*retry_count*/);
         break;
     }
 
@@ -1455,10 +1456,21 @@ int main(int argc, char **argv) {
         if (!is_battery_ok()) {
             ui->Print("battery capacity is not enough for installing package, needed is %d%%\n",
                       BATTERY_OK_PERCENTAGE);
+            // Log the error code to last_install when installation skips due to
+            // low battery.
+            FILE* install_log = fopen_path(LAST_INSTALL_FILE, "w");
+            if (install_log != nullptr) {
+                fprintf(install_log, "%s\n", update_package);
+                fprintf(install_log, "0\n");
+                fprintf(install_log, "error: %d\n", kLowBattery);
+                fclose(install_log);
+            } else {
+                LOGE("failed to open last_install: %s\n", strerror(errno));
+            }
             status = INSTALL_SKIPPED;
         } else {
             status = install_package(update_package, &should_wipe_cache,
-                                     TEMPORARY_INSTALL_FILE, true);
+                                     TEMPORARY_INSTALL_FILE, true, retry_count);
             if (status == INSTALL_SUCCESS && should_wipe_cache) {
                 wipe_cache(false, device);
             }
