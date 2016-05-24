@@ -74,8 +74,11 @@ struct slot_metadata {
     uint8_t tries_remaining : 3;
     // 1 if this slot has booted successfully, 0 otherwise.
     uint8_t successful_boot : 1;
+    // 1 if this slot is corrupted from a dm-verity corruption, 0
+    // otherwise.
+    uint8_t verity_corrupted : 1;
     // Reserved for further use.
-    uint8_t reserved;
+    uint8_t reserved : 7;
 } __attribute__((packed));
 
 /* Bootloader Control AB
