@@ -22,10 +22,12 @@ int device_flash_type()
     if (the_flash_type == UNKNOWN) {
         if (access(BOARD_BML_BOOT, F_OK) == 0) {
             the_flash_type = BML;
-        } else if (access("/proc/emmc", F_OK) == 0) {
-            the_flash_type = MMC;
         } else if (access("/proc/mtd", F_OK) == 0) {
             the_flash_type = MTD;
+        } else if (access("/proc/emmc", F_OK) == 0 ||
+                   access("/dev/block/mmcblk0", F_OK) == 0 ||
+                   access("/dev/block/sda", F_OK) == 0) {
+            the_flash_type = MMC;
         } else {
             the_flash_type = UNSUPPORTED;
         }
