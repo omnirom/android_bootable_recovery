@@ -548,18 +548,7 @@
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
 					<action function="set">tw_back=main2</action>
-					<action function="set">tw_action=reboot</action>
-					<action function="set">tw_action_param=system</action>
-					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
-					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
-					<action function="set">tw_text3=</action>
-					<action function="set">tw_text4=</action>
-					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_action_text2=</action>
-					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
-					<action function="page">rebootcheck</action>
+					<action function="page">reboot_system_routine</action>
 				</actions>
 			</button>
 
@@ -731,6 +720,23 @@
 				<action function="set">tw_show_exclamation=0</action>
 				<action function="set">tw_show_reboot=0</action>
 				<action function="page">%tw_clear_destination%</action>
+			</action>
+		</page>
+
+		<page name="reboot_system_routine">
+			<action>
+				<action function="set">tw_action=reboot</action>
+				<action function="set">tw_action_param=system</action>
+				<action function="set">tw_has_action2=0</action>
+				<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+				<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+				<action function="set">tw_text3=</action>
+				<action function="set">tw_text4=</action>
+				<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+				<action function="set">tw_action_text2=</action>
+				<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+				<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+				<action function="page">rebootcheck</action>
 			</action>
 		</page>
 
@@ -914,18 +920,7 @@
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
 					<action function="set">tw_back=main2</action>
-					<action function="set">tw_action=reboot</action>
-					<action function="set">tw_action_param=system</action>
-					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
-					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
-					<action function="set">tw_text3=</action>
-					<action function="set">tw_text4=</action>
-					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_action_text2=</action>
-					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
-					<action function="page">rebootcheck</action>
+					<action function="page">reboot_system_routine</action>
 				</actions>
 			</button>
 
@@ -2589,16 +2584,7 @@
 				<text>{@rb_system_btn=System}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
-					<action function="set">tw_action=reboot</action>
-					<action function="set">tw_action_param=system</action>
-					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
-					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
-					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_action_text2=</action>
-					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
-					<action function="page">rebootcheck</action>
+					<action function="page">reboot_system_routine</action>
 				</actions>
 			</button>
 
