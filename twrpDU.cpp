@@ -41,6 +41,7 @@ twrpDU::twrpDU() {
 	add_relative_dir("..");
 	add_relative_dir("lost+found");
 	add_absolute_dir("/data/data/com.google.android.music/files");
+	add_absolute_dir("/data/hrdmp.rdmp");
 }
 
 void twrpDU::add_relative_dir(const string& dir) {
