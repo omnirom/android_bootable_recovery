@@ -882,10 +882,6 @@ int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 			restore_path = Restore_List.substr(start_pos, end_pos - start_pos);
 			restore_part = Find_Partition_By_Path(restore_path);
 			if (restore_part != NULL) {
-				if (restore_part->Mount_Read_Only) {
-					gui_msg(Msg(msg::kError, "restore_read_only=Cannot restore {1} -- mounted read only.")(restore_part->Backup_Display_Name));
-					return false;
-				}
 				if (check_md5 > 0 && !restore_part->Check_MD5(Restore_Name))
 					return false;
 				partition_count++;

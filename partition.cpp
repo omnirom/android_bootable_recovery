@@ -2340,12 +2340,15 @@ bool TWPartition::Restore_Tar(const string& restore_folder, const string& Restor
 				return false;
 		}
 	}
-	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restoring_hdr}"));
-	gui_msg(Msg("restoring=Restoring {1}...")(Backup_Display_Name));
 
 	// Remount as read/write as needed so we can restore the backup
-	if (!ReMount_RW(true))
+	if (!ReMount_RW(true)) {
+		gui_msg(Msg(msg::kError, "restore_read_only=Cannot restore {1} -- mounted read only.")(Backup_Display_Name));
 		return false;
+	}
+
+	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restoring_hdr}"));
+	gui_msg(Msg("restoring=Restoring {1}...")(Backup_Display_Name));
 
 	Full_FileName = restore_folder + "/" + Backup_FileName;
 	twrpTar tar;
