@@ -1707,7 +1707,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 		return false;
 	}
 	gui_msg(Msg("create_part=Creating {1} partition...")("FAT32"));
-	Command = "sgdisk  --new=0:0:" + fat_str + " --change-name=0:\"Microsoft basic data\" " + Device;
+	Command = "sgdisk  --new=0:0:" + fat_str + " --change-name=0:\"Microsoft basic data\" --typecode=0:0700 " + Device;
 	LOGINFO("Command is: '%s'\n", Command.c_str());
 	if (TWFunc::Exec_Cmd(Command) != 0) {
 		gui_msg(Msg(msg::kError, "unable_to_create_part=Unable to create {1} partition.")("FAT32"));
@@ -1725,7 +1725,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 	}
 	if (swap > 0) {
 		gui_msg(Msg("create_part=Creating {1} partition...")("swap"));
-		Command = "sgdisk --new=0:0:-0 --change-name=0:\"Linux swap\" --typecode=0:0657FD6D-A4AB-43C4-84E5-0933C84B4F4F " + Device;
+		Command = "sgdisk --new=0:0:-0 --change-name=0:\"Linux swap\" --typecode=0:8200 " + Device;
 		LOGINFO("Command is: '%s'\n", Command.c_str());
 		if (TWFunc::Exec_Cmd(Command) != 0) {
 			gui_msg(Msg(msg::kError, "unable_to_create_part=Unable to create {1} partition.")("swap"));
