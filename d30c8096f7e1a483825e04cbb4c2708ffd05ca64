@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78f7b947_8003f8c3",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1710,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-05-27T18:46:25Z",
+      "side": 1,
+      "message": "0700",
+      "range": {
+        "startLine": 1710,
+        "startChar": 100,
+        "endLine": 1710,
+        "endChar": 136
+      },
+      "revId": "d30c8096f7e1a483825e04cbb4c2708ffd05ca64",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
