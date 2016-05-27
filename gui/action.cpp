@@ -182,6 +182,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(cancelzip);
 		ADD_ACTION(queueclear);
 		ADD_ACTION(sleep);
+		ADD_ACTION(sleepcounter);
 		ADD_ACTION(appenddatetobackupname);
 		ADD_ACTION(generatebackupname);
 		ADD_ACTION(checkpartitionlist);
@@ -783,6 +784,16 @@ int GUIAction::sleep(std::string arg)
 	return 0;
 }
 
+int GUIAction::sleepcounter(std::string arg)
+{
+	int t = atoi(arg.c_str());
+	LOGINFO("Sleep counter: %i s\n", t);
+	::sleep(t);
+	if (t > 0)
+		DataManager::SetValue("tw_sleep", t-1);
+	return 0;
+}
+
 int GUIAction::appenddatetobackupname(std::string arg __unused)
 {
 	operation_start("AppendDateToBackupName");
@@ -1026,10 +1037,6 @@ int GUIAction::flash(std::string arg)
 
 	reinject_after_flash();
 	PartitionManager.Update_System_Details();
-	if (DataManager::GetIntValue("tw_install_reboot") > 0 && ret_val == 0) {
-		gui_msg("install_reboot=Rebooting in 5 seconds");
-		usleep(5000000);
-	}
 	operation_end(ret_val);
 	// This needs to be after the operation_end call so we change pages before we change variables that we display on the screen
 	DataManager::SetValue(TW_ZIP_QUEUE_COUNT, zip_queue_index);

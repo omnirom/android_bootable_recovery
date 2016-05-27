@@ -715,6 +715,7 @@ void DataManager::SetDefaultValues()
 #endif
 	mData.SetValue("tw_gui_done", "0");
 	mData.SetValue("tw_encrypt_backup", "0");
+	mData.SetValue("tw_sleep", "5");
 
 	// Brightness handling
 	string findbright;
