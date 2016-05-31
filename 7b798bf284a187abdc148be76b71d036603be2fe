@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78f7b947_231f8e5e",
+        "filename": "gui/theme/common/portrait.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 576,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-05-31T20:37:48Z",
+      "side": 1,
+      "message": "notice this patchset has debugging enabled (to prevent actually rebooting the device)",
+      "revId": "7b798bf284a187abdc148be76b71d036603be2fe",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
