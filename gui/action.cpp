@@ -109,7 +109,7 @@ ActionThread::ActionThread()
 ActionThread::~ActionThread()
 {
 	pthread_mutex_lock(&m_act_lock);
-	if(m_thread_running) {
+	if (m_thread_running) {
 		pthread_mutex_unlock(&m_act_lock);
 		pthread_join(m_thread, NULL);
 	} else {
@@ -260,7 +260,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		if (attr)
 		{
 			std::vector<std::string> keys = TWFunc::Split_String(attr->value(), "+");
-			for(size_t i = 0; i < keys.size(); ++i)
+			for (size_t i = 0; i < keys.size(); ++i)
 			{
 				const int key = getKeyByName(keys[i]);
 				mKeys[key] = false;
@@ -295,7 +295,7 @@ int GUIAction::NotifyTouch(TOUCH_STATE state __unused, int x __unused, int y __u
 int GUIAction::NotifyKey(int key, bool down)
 {
 	std::map<int, bool>::iterator itr = mKeys.find(key);
-	if(itr == mKeys.end())
+	if (itr == mKeys.end())
 		return 1;
 
 	bool prevState = itr->second;
@@ -305,20 +305,20 @@ int GUIAction::NotifyKey(int key, bool down)
 	// doesn't trigger with multi-key actions.
 	// Else, check if all buttons are pressed, then consume their release events
 	// so they don't trigger one-button actions and reset mKeys pressed status
-	if(mKeys.size() == 1) {
-		if(!down && prevState) {
+	if (mKeys.size() == 1) {
+		if (!down && prevState) {
 			doActions();
 			return 0;
 		}
-	} else if(down) {
-		for(itr = mKeys.begin(); itr != mKeys.end(); ++itr) {
-			if(!itr->second)
+	} else if (down) {
+		for (itr = mKeys.begin(); itr != mKeys.end(); ++itr) {
+			if (!itr->second)
 				return 1;
 		}
 
 		// Passed, all req buttons are pressed, reset them and consume release events
 		HardwareKeyboard *kb = PageManager::GetHardwareKeyboard();
-		for(itr = mKeys.begin(); itr != mKeys.end(); ++itr) {
+		for (itr = mKeys.begin(); itr != mKeys.end(); ++itr) {
 			kb->ConsumeKeyRelease(itr->first);
 			itr->second = false;
 		}
@@ -336,7 +336,7 @@ int GUIAction::NotifyVarChange(const std::string& varName, const std::string& va
 
 	if (varName.empty() && !isConditionValid() && mKeys.empty() && !mActionW)
 		doActions();
-	else if((varName.empty() || IsConditionVariable(varName)) && isConditionValid() && isConditionTrue())
+	else if ((varName.empty() || IsConditionVariable(varName)) && isConditionValid() && isConditionTrue())
 		doActions();
 
 	return 0;
@@ -701,7 +701,7 @@ int GUIAction::compute(std::string arg)
 		int divide_by = atoi(divide_by_str.c_str());
 		int value;
 
-		if(divide_by != 0)
+		if (divide_by != 0)
 		{
 			DataManager::GetValue(varName, value);
 			DataManager::SetValue(varName, value/divide_by);
@@ -830,7 +830,7 @@ int GUIAction::checkpartitionlist(std::string arg)
 	} else {
 		DataManager::SetValue("tw_check_partition_list", 0);
 	}
-		return 0;
+	return 0;
 }
 
 int GUIAction::getpartitiondetails(std::string arg)
@@ -918,19 +918,19 @@ int GUIAction::screenshot(std::string arg __unused)
 	gid_t gid = -1;
 
 	struct passwd *pwd = getpwnam("media_rw");
-	if(pwd) {
+	if (pwd) {
 		uid = pwd->pw_uid;
 		gid = pwd->pw_gid;
 	}
 
 	const std::string storage = DataManager::GetCurrentStoragePath();
-	if(PartitionManager.Is_Mounted_By_Path(storage)) {
+	if (PartitionManager.Is_Mounted_By_Path(storage)) {
 		snprintf(path, sizeof(path), "%s/Pictures/Screenshots/", storage.c_str());
 	} else {
 		strcpy(path, "/tmp/");
 	}
 
-	if(!TWFunc::Create_Dir_Recursive(path, 0775, uid, gid))
+	if (!TWFunc::Create_Dir_Recursive(path, 0775, uid, gid))
 		return 0;
 
 	tm = time(NULL);
@@ -940,7 +940,7 @@ int GUIAction::screenshot(std::string arg __unused)
 	strftime(path+path_len, sizeof(path)-path_len, "Screenshot_%Y-%m-%d-%H-%M-%S.png", localtime(&tm));
 
 	int res = gr_save_screenshot(path);
-	if(res == 0) {
+	if (res == 0) {
 		chmod(path, 0666);
 		chown(path, uid, gid);
 
@@ -1370,7 +1370,7 @@ int GUIAction::terminalcommand(std::string arg)
 			struct timeval timeout;
 			fd_set fdset;
 
-			while(keep_going)
+			while (keep_going)
 			{
 				FD_ZERO(&fdset);
 				FD_SET(fd, &fdset);
@@ -1388,7 +1388,7 @@ int GUIAction::terminalcommand(std::string arg)
 					keep_going = 0;
 				} else {
 					// Try to read output
-					if(fgets(line, sizeof(line), fp) != NULL)
+					if (fgets(line, sizeof(line), fp) != NULL)
 						gui_print("%s", line); // Display output
 					else
 						keep_going = 0; // Done executing

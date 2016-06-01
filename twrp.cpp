@@ -302,7 +302,7 @@ int main(int argc, char **argv) {
 	GUIConsole::Translate_Now();
 
 	// Fixup the RTC clock on devices which require it
-	if(crash_counter == 0)
+	if (crash_counter == 0)
 		TWFunc::Fixup_Time_On_Boot();
 
 	// Run any outstanding OpenRecoveryScript

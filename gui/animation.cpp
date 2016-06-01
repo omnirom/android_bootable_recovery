@@ -88,7 +88,7 @@ GUIAnimation::GUIAnimation(xml_node<>* node) : GUIObject(node)
 
 int GUIAnimation::Render(void)
 {
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	if (!mAnimation || !mAnimation->GetResource(mFrame))	return -1;
@@ -99,7 +99,7 @@ int GUIAnimation::Render(void)
 
 int GUIAnimation::Update(void)
 {
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	if (!mAnimation)		return -1;

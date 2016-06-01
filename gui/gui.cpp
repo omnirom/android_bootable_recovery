@@ -300,15 +300,15 @@ void InputHandler::process_EV_KEY(input_event& ev)
 	// Handle key-press here
 	LOGEVENT("TOUCH_KEY: %d\n", ev.code);
 	// Left mouse button is treated as a touch
-	if(ev.code == BTN_LEFT)
+	if (ev.code == BTN_LEFT)
 	{
 		MouseCursor *cursor = PageManager::GetMouseCursor();
-		if(ev.value == 1)
+		if (ev.value == 1)
 		{
 			cursor->GetPos(x, y);
 			doTouchStart();
 		}
-		else if(touch_status)
+		else if (touch_status)
 		{
 			// Left mouse button was previously pressed and now is
 			// being released so send a TOUCH_RELEASE
@@ -323,9 +323,9 @@ void InputHandler::process_EV_KEY(input_event& ev)
 		}
 	}
 	// side mouse button, often used for "back" function
-	else if(ev.code == BTN_SIDE)
+	else if (ev.code == BTN_SIDE)
 	{
-		if(ev.value == 1)
+		if (ev.value == 1)
 			kb->KeyDown(KEY_BACK);
 		else
 			kb->KeyUp(KEY_BACK);
@@ -366,12 +366,12 @@ void InputHandler::process_EV_REL(input_event& ev)
 	// Mouse movement
 	MouseCursor *cursor = PageManager::GetMouseCursor();
 	LOGEVENT("EV_REL %d %d\n", ev.code, ev.value);
-	if(ev.code == REL_X)
+	if (ev.code == REL_X)
 		cursor->Move(ev.value, 0);
-	else if(ev.code == REL_Y)
+	else if (ev.code == REL_Y)
 		cursor->Move(0, ev.value);
 
-	if(touch_status) {
+	if (touch_status) {
 		cursor->GetPos(x, y);
 		LOGEVENT("Mouse TOUCH_DRAG: %d, %d\n", x, y);
 		key_status = KS_NONE;

@@ -33,7 +33,7 @@ class LocalLookup : public StringLookup
 {
 	const std::vector<std::string>& vars;
 	const StringLookup& next;
-	public:
+public:
 	LocalLookup(const std::vector<std::string>& vars, const StringLookup& next) : vars(vars), next(next) {}
 	virtual std::string operator()(const std::string& name) const
 	{
