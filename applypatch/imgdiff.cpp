@@ -130,6 +130,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#include <algorithm>
+#include <memory>
+#include <vector>
+
 #include <bsdiff.h>
 
 #include "zlib.h"
@@ -167,16 +171,8 @@ typedef struct {
   char* filename;
 } ZipFileEntry;
 
-static int fileentry_compare(const void* a, const void* b) {
-  int ao = ((ZipFileEntry*)a)->data_offset;
-  int bo = ((ZipFileEntry*)b)->data_offset;
-  if (ao < bo) {
-    return -1;
-  } else if (ao > bo) {
-    return 1;
-  } else {
-    return 0;
-  }
+static bool fileentry_compare(const ZipFileEntry& a, const ZipFileEntry& b) {
+  return a.data_offset < b.data_offset;
 }
 
 unsigned char* ReadZip(const char* filename,
@@ -189,9 +185,9 @@ unsigned char* ReadZip(const char* filename,
   }
 
   size_t sz = static_cast<size_t>(st.st_size);
-  unsigned char* img = reinterpret_cast<unsigned char*>(malloc(sz));
+  std::unique_ptr<unsigned char[]> img(new unsigned char[sz]);
   FILE* f = fopen(filename, "rb");
-  if (fread(img, 1, sz, f) != sz) {
+  if (fread(img.get(), 1, sz, f) != sz) {
     printf("failed to read \"%s\" %s\n", filename, strerror(errno));
     fclose(f);
     return NULL;
@@ -213,14 +209,13 @@ unsigned char* ReadZip(const char* filename,
     return NULL;
   }
 
-  int cdcount = Read2(img+i+8);
-  int cdoffset = Read4(img+i+16);
+  int cdcount = Read2(&img[i+8]);
+  int cdoffset = Read4(&img[i+16]);
 
-  ZipFileEntry* temp_entries = reinterpret_cast<ZipFileEntry*>(malloc(
-      cdcount * sizeof(ZipFileEntry)));
+  std::vector<ZipFileEntry> temp_entries(cdcount);
   int entrycount = 0;
 
-  unsigned char* cd = img+cdoffset;
+  unsigned char* cd = &img[cdoffset];
   for (i = 0; i < cdcount; ++i) {
     if (!(cd[0] == 0x50 && cd[1] == 0x4b && cd[2] == 0x01 && cd[3] == 0x02)) {
       printf("bad central directory entry %d\n", i);
@@ -247,7 +242,7 @@ unsigned char* ReadZip(const char* filename,
       continue;
     }
 
-    unsigned char* lh = img + hoffset;
+    unsigned char* lh = &img[hoffset];
 
     if (!(lh[0] == 0x50 && lh[1] == 0x4b && lh[2] == 0x03 && lh[3] == 0x04)) {
       printf("bad local file header entry %d\n", i);
@@ -268,7 +263,7 @@ unsigned char* ReadZip(const char* filename,
     ++entrycount;
   }
 
-  qsort(temp_entries, entrycount, sizeof(ZipFileEntry), fileentry_compare);
+  std::sort(temp_entries.begin(), temp_entries.end(), fileentry_compare);
 
 #if 0
   printf("found %d deflated entries\n", entrycount);
@@ -290,7 +285,7 @@ unsigned char* ReadZip(const char* filename,
     curr->type = CHUNK_NORMAL;
     curr->start = 0;
     curr->len = st.st_size;
-    curr->data = img;
+    curr->data = img.get();
     curr->filename = NULL;
     ++curr;
     ++*num_chunks;
@@ -304,7 +299,7 @@ unsigned char* ReadZip(const char* filename,
       curr->type = CHUNK_DEFLATE;
       curr->start = pos;
       curr->deflate_len = temp_entries[nextentry].deflate_len;
-      curr->deflate_data = img + pos;
+      curr->deflate_data = &img[pos];
       curr->filename = temp_entries[nextentry].filename;
 
       curr->len = temp_entries[nextentry].uncomp_len;
@@ -348,7 +343,7 @@ unsigned char* ReadZip(const char* filename,
     } else {
       curr->len = st.st_size - pos;
     }
-    curr->data = img + pos;
+    curr->data = &img[pos];
     curr->filename = NULL;
     pos += curr->len;
 
@@ -356,8 +351,7 @@ unsigned char* ReadZip(const char* filename,
     ++curr;
   }
 
-  free(temp_entries);
-  return img;
+  return img.release();
 }
 
 /*
@@ -378,9 +372,9 @@ unsigned char* ReadImage(const char* filename,
   }
 
   size_t sz = static_cast<size_t>(st.st_size);
-  unsigned char* img = reinterpret_cast<unsigned char*>(malloc(sz + 4));
+  std::unique_ptr<unsigned char[]> img(new unsigned char[sz+4]);
   FILE* f = fopen(filename, "rb");
-  if (fread(img, 1, sz, f) != sz) {
+  if (fread(img.get(), 1, sz, f) != sz) {
     printf("failed to read \"%s\" %s\n", filename, strerror(errno));
     fclose(f);
     return NULL;
@@ -390,7 +384,7 @@ unsigned char* ReadImage(const char* filename,
   // append 4 zero bytes to the data so we can always search for the
   // four-byte string 1f8b0800 starting at any point in the actual
   // file data, without special-casing the end of the data.
-  memset(img+sz, 0, 4);
+  memset(&img[sz], 0, 4);
 
   size_t pos = 0;
 
@@ -398,7 +392,7 @@ unsigned char* ReadImage(const char* filename,
   *chunks = NULL;
 
   while (pos < sz) {
-    unsigned char* p = img+pos;
+    unsigned char* p = &img[pos];
 
     if (sz - pos >= 4 &&
         p[0] == 0x1f && p[1] == 0x8b &&
@@ -481,7 +475,7 @@ unsigned char* ReadImage(const char* filename,
       curr->type = CHUNK_NORMAL;
       curr->start = pos;
       curr->len = GZIP_FOOTER_LEN;
-      curr->data = img+pos;
+      curr->data = &img[pos];
 
       pos += curr->len;
       p += curr->len;
@@ -495,7 +489,6 @@ unsigned char* ReadImage(const char* filename,
       if (footer_size != curr[-2].len) {
         printf("Error: footer size %zu != decompressed size %zu\n",
             footer_size, curr[-2].len);
-        free(img);
         return NULL;
       }
     } else {
@@ -523,7 +516,7 @@ unsigned char* ReadImage(const char* filename,
     }
   }
 
-  return img;
+  return img.release();
 }
 
 #define BUFFER_SIZE 32768
@@ -645,8 +638,7 @@ unsigned char* MakePatch(ImageChunk* src, ImageChunk* tgt, size_t* size) {
   }
 
   size_t sz = static_cast<size_t>(st.st_size);
-  // TODO: Memory leak on error return.
-  unsigned char* data = reinterpret_cast<unsigned char*>(malloc(sz));
+  std::unique_ptr<unsigned char[]> data(new unsigned char[sz]);
 
   if (tgt->type == CHUNK_NORMAL && tgt->len <= sz) {
     unlink(ptemp);
@@ -663,8 +655,9 @@ unsigned char* MakePatch(ImageChunk* src, ImageChunk* tgt, size_t* size) {
     printf("failed to open patch %s: %s\n", ptemp, strerror(errno));
     return NULL;
   }
-  if (fread(data, 1, sz, f) != sz) {
+  if (fread(data.get(), 1, sz, f) != sz) {
     printf("failed to read patch %s: %s\n", ptemp, strerror(errno));
+    fclose(f);
     return NULL;
   }
   fclose(f);
@@ -682,7 +675,7 @@ unsigned char* MakePatch(ImageChunk* src, ImageChunk* tgt, size_t* size) {
       break;
   }
 
-  return data;
+  return data.release();
 }
 
 /*
@@ -805,7 +798,7 @@ int main(int argc, char** argv) {
   }
 
   size_t bonus_size = 0;
-  unsigned char* bonus_data = NULL;
+  std::vector<unsigned char> bonus_data;
   if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
     struct stat st;
     if (stat(argv[2], &st) != 0) {
@@ -813,14 +806,15 @@ int main(int argc, char** argv) {
       return 1;
     }
     bonus_size = st.st_size;
-    bonus_data = reinterpret_cast<unsigned char*>(malloc(bonus_size));
+    bonus_data.resize(bonus_size);
     FILE* f = fopen(argv[2], "rb");
     if (f == NULL) {
       printf("failed to open bonus file %s: %s\n", argv[2], strerror(errno));
       return 1;
     }
-    if (fread(bonus_data, 1, bonus_size, f) != bonus_size) {
+    if (fread(bonus_data.data(), 1, bonus_size, f) != bonus_size) {
       printf("failed to read bonus file %s: %s\n", argv[2], strerror(errno));
+      fclose(f);
       return 1;
     }
     fclose(f);
@@ -973,11 +967,11 @@ int main(int argc, char** argv) {
         patch_data[i] = MakePatch(src_chunks, tgt_chunks+i, patch_size+i);
       }
     } else {
-      if (i == 1 && bonus_data) {
+      if (i == 1 && !bonus_data.empty()) {
         printf("  using %zu bytes of bonus data for chunk %d\n", bonus_size, i);
         src_chunks[i].data = reinterpret_cast<unsigned char*>(realloc(src_chunks[i].data,
             src_chunks[i].len + bonus_size));
-        memcpy(src_chunks[i].data+src_chunks[i].len, bonus_data, bonus_size);
+        memcpy(src_chunks[i].data+src_chunks[i].len, bonus_data.data(), bonus_size);
         src_chunks[i].len += bonus_size;
      }
 
@@ -1063,6 +1057,10 @@ int main(int argc, char** argv) {
   }
 
   fclose(f);
+  for (i = 0; i < num_tgt_chunks; ++i) {
+    free(patch_data[i]);
+  }
+  free(patch_data);
 
   return 0;
 }
