@@ -97,6 +97,5 @@ LOCAL_STATIC_LIBRARIES += \
     libdivsufsort64 \
     libdivsufsort \
     libz
-LOCAL_NO_FPIE := true
-LOCAL_LDFLAGS := -static
+LOCAL_FORCE_STATIC_EXECUTABLE := true
 include $(BUILD_HOST_EXECUTABLE)
