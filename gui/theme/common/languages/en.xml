@@ -667,7 +667,7 @@
 		<string name="change_fs_err">Error changing file system.</string>
 		<string name="theme_ver_err">Custom theme version does not match TWRP version. Using stock theme.</string>
 		<string name="up_a_level">(Up A Level)</string>
-		<string name="install_reboot">Rebooting in 5 seconds</string>
+		<string name="install_reboot" version="2">Rebooting in %tw_sleep% second(s)</string>
 		<string name="adbbackup_error">Error with ADB Backup. Quitting..."</string>
 		<string name="adbbackup_control_error">Cannot write to adb control channel</string>
 		<string name="twrp_adbbu_option">--twrp option is required to enable twrp adb backup</string>
