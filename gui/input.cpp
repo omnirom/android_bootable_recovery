@@ -236,7 +236,7 @@ void GUIInput::HandleCursorByTouch(int x) {
 	unsigned index = 0, displaySize = displayValue.size();
 	int prevX = mRenderX + scrollingX;
 
-	for(index = 0; index <= displaySize; index++) {
+	for (index = 0; index <= displaySize; index++) {
 		cursorString = displayValue.substr(0, index);
 		cursorX = gr_ttf_measureEx(cursorString.c_str(), fontResource) + mRenderX + scrollingX;
 		if (cursorX > x) {
@@ -263,7 +263,7 @@ void GUIInput::HandleCursorByTouch(int x) {
 }
 
 void GUIInput::HandleCursorByText() {
-// Uses mCursorLocation to find cursorX 
+// Uses mCursorLocation to find cursorX
 	if (!DrawCursor)
 		return;
 

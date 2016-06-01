@@ -67,7 +67,7 @@ GUIProgressBar::GUIProgressBar(xml_node<>* node) : GUIObject(node)
 
 int GUIProgressBar::Render(void)
 {
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	// This handles making sure timing updates occur
@@ -90,7 +90,7 @@ int GUIProgressBar::RenderInternal(void)
 
 int GUIProgressBar::Update(void)
 {
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	std::string str;
@@ -165,7 +165,7 @@ int GUIProgressBar::NotifyVarChange(const std::string& varName, const std::strin
 {
 	GUIObject::NotifyVarChange(varName, value);
 
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	static int nextPush = 0;

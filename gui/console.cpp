@@ -78,7 +78,7 @@ extern "C" void __gui_print(const char *color, char *buf)
 	}
 
 	// The text after last \n (or whole string if there is no \n)
-	if(*start) {
+	if (*start) {
 		gConsole.push_back(start);
 		gConsoleColor.push_back(color);
 	}
@@ -205,7 +205,10 @@ GUIConsole::GUIConsole(xml_node<>* node) : GUIScrollList(node)
 
 	if (!node)
 	{
-		mRenderX = 0; mRenderY = 0; mRenderW = gr_fb_width(); mRenderH = gr_fb_height();
+		mRenderX = 0;
+		mRenderY = 0;
+		mRenderW = gr_fb_width();
+		mRenderH = gr_fb_height();
 	}
 	else
 	{
@@ -276,7 +279,7 @@ int GUIConsole::RenderConsole(void)
 
 int GUIConsole::Render(void)
 {
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	if (mSlideout && mSlideoutState == hidden)
@@ -346,7 +349,7 @@ int GUIConsole::IsInRegion(int x, int y)
 //  Return 0 on success, >0 to ignore remainder of touch, and <0 on error
 int GUIConsole::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return -1;
 
 	if (mSlideout && x >= mSlideoutX && x < mSlideoutX + mSlideoutW && y >= mSlideoutY && y < mSlideoutY + mSlideoutH) {

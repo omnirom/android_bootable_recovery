@@ -98,8 +98,8 @@ int OpenRecoveryScript::run_script_file(void) {
 	FILE *fp = fopen(SCRIPT_FILE_TMP, "r");
 	int ret_val = 0, cindex, line_len, i, remove_nl, install_cmd = 0, sideload = 0;
 	char script_line[SCRIPT_COMMAND_SIZE], command[SCRIPT_COMMAND_SIZE],
-		 value[SCRIPT_COMMAND_SIZE], mount[SCRIPT_COMMAND_SIZE],
-		 value1[SCRIPT_COMMAND_SIZE], value2[SCRIPT_COMMAND_SIZE];
+	     value[SCRIPT_COMMAND_SIZE], mount[SCRIPT_COMMAND_SIZE],
+	     value1[SCRIPT_COMMAND_SIZE], value2[SCRIPT_COMMAND_SIZE];
 	char *val_start, *tok;
 
 	if (fp != NULL) {
@@ -120,9 +120,9 @@ int OpenRecoveryScript::run_script_file(void) {
 			memset(command, 0, sizeof(command));
 			memset(value, 0, sizeof(value));
 			if ((int)script_line[line_len - 1] == 10)
-					remove_nl = 2;
-				else
-					remove_nl = 1;
+				remove_nl = 2;
+			else
+				remove_nl = 1;
 			if (cindex != 0) {
 				strncpy(command, script_line, cindex);
 				LOGINFO("command is: '%s'\n", command);
