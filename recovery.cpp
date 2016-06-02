@@ -19,7 +19,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <inttypes.h>
 #include <limits.h>
+#include <linux/fs.h>
 #include <linux/input.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -33,12 +35,15 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <string>
+#include <vector>
 
 #include <adb.h>
 #include <android/log.h> /* Android Log Priority Tags */
 #include <android-base/file.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
 #include <log/logger.h> /* Android Log packet format */
@@ -58,6 +63,7 @@
 #include "minzip/DirUtil.h"
 #include "roots.h"
 #include "ui.h"
+#include "unique_fd.h"
 #include "screen_ui.h"
 
 struct selabel_handle *sehandle;
@@ -77,6 +83,7 @@ static const struct option OPTIONS[] = {
   { "shutdown_after", no_argument, NULL, 'p' },
   { "reason", required_argument, NULL, 'r' },
   { "security", no_argument, NULL, 'e'},
+  { "brick", no_argument, NULL, 0 },
   { NULL, 0, NULL, 0 },
 };
 
@@ -103,6 +110,7 @@ static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
 // So we should check battery with a slightly lower limitation.
 static const int BATTERY_OK_PERCENTAGE = 20;
 static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
+constexpr const char* RECOVERY_BRICK = "/etc/recovery.brick";
 
 RecoveryUI* ui = NULL;
 static const char* locale = "en_US";
@@ -853,6 +861,75 @@ static bool wipe_cache(bool should_confirm, Device* device) {
     return success;
 }
 
+// Secure-wipe a given partition. It uses BLKSECDISCARD, if supported.
+// Otherwise, it goes with BLKDISCARD (if device supports BLKDISCARDZEROES) or
+// BLKZEROOUT.
+static bool secure_wipe_partition(const std::string& partition) {
+    unique_fd fd(TEMP_FAILURE_RETRY(open(partition.c_str(), O_WRONLY)));
+    if (fd.get() == -1) {
+        LOGE("failed to open \"%s\": %s\n", partition.c_str(), strerror(errno));
+        return false;
+    }
+
+    uint64_t range[2] = {0, 0};
+    if (ioctl(fd.get(), BLKGETSIZE64, &range[1]) == -1 || range[1] == 0) {
+        LOGE("failed to get partition size: %s\n", strerror(errno));
+        return false;
+    }
+    printf("Secure-wiping \"%s\" from %" PRIu64 " to %" PRIu64 ".\n",
+           partition.c_str(), range[0], range[1]);
+
+    printf("Trying BLKSECDISCARD...\t");
+    if (ioctl(fd.get(), BLKSECDISCARD, &range) == -1) {
+        printf("failed: %s\n", strerror(errno));
+
+        // Use BLKDISCARD if it zeroes out blocks, otherwise use BLKZEROOUT.
+        unsigned int zeroes;
+        if (ioctl(fd.get(), BLKDISCARDZEROES, &zeroes) == 0 && zeroes != 0) {
+            printf("Trying BLKDISCARD...\t");
+            if (ioctl(fd.get(), BLKDISCARD, &range) == -1) {
+                printf("failed: %s\n", strerror(errno));
+                return false;
+            }
+        } else {
+            printf("Trying BLKZEROOUT...\t");
+            if (ioctl(fd.get(), BLKZEROOUT, &range) == -1) {
+                printf("failed: %s\n", strerror(errno));
+                return false;
+            }
+        }
+    }
+
+    printf("done\n");
+    return true;
+}
+
+// Brick the current device, with a secure wipe of all the partitions in
+// RECOVERY_BRICK.
+static bool brick_device() {
+    ui->SetBackground(RecoveryUI::ERASING);
+    ui->SetProgressType(RecoveryUI::INDETERMINATE);
+
+    std::string partition_list;
+    if (!android::base::ReadFileToString(RECOVERY_BRICK, &partition_list)) {
+        LOGE("failed to read \"%s\".\n", RECOVERY_BRICK);
+        return false;
+    }
+
+    std::vector<std::string> lines = android::base::Split(partition_list, "\n");
+    for (const std::string& line : lines) {
+        std::string partition = android::base::Trim(line);
+        // Ignore '#' comment or empty lines.
+        if (android::base::StartsWith(partition, "#") || partition.empty()) {
+            continue;
+        }
+
+        // Proceed anyway even if it fails to wipe some partition.
+        secure_wipe_partition(partition);
+    }
+    return true;
+}
+
 static void choose_recovery_file(Device* device) {
     if (!has_cache) {
         ui->Print("No /cache partition found.\n");
@@ -1340,6 +1417,7 @@ int main(int argc, char **argv) {
     const char *update_package = NULL;
     bool should_wipe_data = false;
     bool should_wipe_cache = false;
+    bool should_brick = false;
     bool show_text = false;
     bool sideload = false;
     bool sideload_auto_reboot = false;
@@ -1349,7 +1427,8 @@ int main(int argc, char **argv) {
     bool security_update = false;
 
     int arg;
-    while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
+    int option_index;
+    while ((arg = getopt_long(argc, argv, "", OPTIONS, &option_index)) != -1) {
         switch (arg) {
         case 'i': send_intent = optarg; break;
         case 'n': android::base::ParseInt(optarg, &retry_count, 0); break;
@@ -1372,6 +1451,13 @@ int main(int argc, char **argv) {
         case 'p': shutdown_after = true; break;
         case 'r': reason = optarg; break;
         case 'e': security_update = true; break;
+        case 0: {
+            if (strcmp(OPTIONS[option_index].name, "brick") == 0) {
+                should_brick = true;
+                break;
+            }
+            break;
+        }
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -1508,6 +1594,10 @@ int main(int argc, char **argv) {
         }
     } else if (should_wipe_cache) {
         if (!wipe_cache(false, device)) {
+            status = INSTALL_ERROR;
+        }
+    } else if (should_brick) {
+        if (!brick_device()) {
             status = INSTALL_ERROR;
         }
     } else if (sideload) {
