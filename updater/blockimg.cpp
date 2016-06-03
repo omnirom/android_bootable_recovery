@@ -70,6 +70,7 @@ struct RangeSet {
 };
 
 static CauseCode failure_type = kNoCause;
+static bool is_retry = false;
 static std::map<std::string, RangeSet> stash_map;
 
 static void parse_range(const std::string& range_text, RangeSet& rs) {
@@ -179,6 +180,21 @@ static int write_all(int fd, const std::vector<uint8_t>& buffer, size_t size) {
     return write_all(fd, buffer.data(), size);
 }
 
+static bool discard_blocks(int fd, off64_t offset, uint64_t size) {
+    // Don't discard blocks unless the update is a retry run.
+    if (!is_retry) {
+        return true;
+    }
+
+    uint64_t args[2] = {static_cast<uint64_t>(offset), size};
+    int status = ioctl(fd, BLKDISCARD, &args);
+    if (status == -1) {
+        fprintf(stderr, "BLKDISCARD ioctl failed: %s\n", strerror(errno));
+        return false;
+    }
+    return true;
+}
+
 static bool check_lseek(int fd, off64_t offset, int whence) {
     off64_t rc = TEMP_FAILURE_RETRY(lseek64(fd, offset, whence));
     if (rc == -1) {
@@ -238,10 +254,15 @@ static ssize_t RangeSinkWrite(const uint8_t* data, ssize_t size, void* token) {
                 rss->p_remain = (rss->tgt.pos[rss->p_block * 2 + 1] -
                                  rss->tgt.pos[rss->p_block * 2]) * BLOCKSIZE;
 
-                if (!check_lseek(rss->fd, (off64_t)rss->tgt.pos[rss->p_block*2] * BLOCKSIZE,
-                                 SEEK_SET)) {
+                off64_t offset = static_cast<off64_t>(rss->tgt.pos[rss->p_block*2]) * BLOCKSIZE;
+                if (!discard_blocks(rss->fd, offset, rss->p_remain)) {
                     break;
                 }
+
+                if (!check_lseek(rss->fd, offset, SEEK_SET)) {
+                    break;
+                }
+
             } else {
                 // we can't write any more; return how many bytes have
                 // been written so far.
@@ -347,11 +368,15 @@ static int WriteBlocks(const RangeSet& tgt, const std::vector<uint8_t>& buffer, 
 
     size_t p = 0;
     for (size_t i = 0; i < tgt.count; ++i) {
-        if (!check_lseek(fd, (off64_t) tgt.pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
+        off64_t offset = static_cast<off64_t>(tgt.pos[i * 2]) * BLOCKSIZE;
+        size_t size = (tgt.pos[i * 2 + 1] - tgt.pos[i * 2]) * BLOCKSIZE;
+        if (!discard_blocks(fd, offset, size)) {
             return -1;
         }
 
-        size_t size = (tgt.pos[i * 2 + 1] - tgt.pos[i * 2]) * BLOCKSIZE;
+        if (!check_lseek(fd, offset, SEEK_SET)) {
+            return -1;
+        }
 
         if (write_all(fd, data + p, size) == -1) {
             return -1;
@@ -1101,7 +1126,13 @@ static int PerformCommandZero(CommandParameters& params) {
 
     if (params.canwrite) {
         for (size_t i = 0; i < tgt.count; ++i) {
-            if (!check_lseek(params.fd, (off64_t) tgt.pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
+            off64_t offset = static_cast<off64_t>(tgt.pos[i * 2]) * BLOCKSIZE;
+            size_t size = (tgt.pos[i * 2 + 1] - tgt.pos[i * 2]) * BLOCKSIZE;
+            if (!discard_blocks(params.fd, offset, size)) {
+                return -1;
+            }
+
+            if (!check_lseek(params.fd, offset, SEEK_SET)) {
                 return -1;
             }
 
@@ -1140,7 +1171,12 @@ static int PerformCommandNew(CommandParameters& params) {
         rss.p_block = 0;
         rss.p_remain = (tgt.pos[1] - tgt.pos[0]) * BLOCKSIZE;
 
-        if (!check_lseek(params.fd, (off64_t) tgt.pos[0] * BLOCKSIZE, SEEK_SET)) {
+        off64_t offset = static_cast<off64_t>(tgt.pos[0]) * BLOCKSIZE;
+        if (!discard_blocks(params.fd, offset, tgt.size * BLOCKSIZE)) {
+            return -1;
+        }
+
+        if (!check_lseek(params.fd, offset, SEEK_SET)) {
             return -1;
         }
 
@@ -1218,7 +1254,12 @@ static int PerformCommandDiff(CommandParameters& params) {
             rss.p_block = 0;
             rss.p_remain = (tgt.pos[1] - tgt.pos[0]) * BLOCKSIZE;
 
-            if (!check_lseek(params.fd, (off64_t) tgt.pos[0] * BLOCKSIZE, SEEK_SET)) {
+            off64_t offset = static_cast<off64_t>(tgt.pos[0]) * BLOCKSIZE;
+            if (!discard_blocks(params.fd, offset, rss.p_remain)) {
+                return -1;
+            }
+
+            if (!check_lseek(params.fd, offset, SEEK_SET)) {
                 return -1;
             }
 
@@ -1336,6 +1377,10 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     params.canwrite = !dryrun;
 
     fprintf(stderr, "performing %s\n", dryrun ? "verification" : "update");
+    if (state->is_retry) {
+        is_retry = true;
+        fprintf(stderr, "This update is a retry.\n");
+    }
 
     Value* blockdev_filename = nullptr;
     Value* transfer_list_value = nullptr;
