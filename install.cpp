@@ -56,7 +56,7 @@ static const float DEFAULT_IMAGE_PROGRESS_FRACTION = 0.1;
 // If the package contains an update binary, extract it and run it.
 static int
 try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
-                  std::vector<std::string>& log_buffer)
+                  std::vector<std::string>& log_buffer, int retry_count)
 {
     const ZipEntry* binary_entry =
             mzFindZipEntry(zip, ASSUMED_UPDATE_BINARY_NAME);
@@ -130,15 +130,19 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
     //
     //   - the name of the package zip file.
     //
+    //   - an optional argument "retry" if this update is a retry of a failed
+    //   update attempt.
+    //
 
-    const char* args[5];
+    const char* args[6];
     args[0] = binary;
     args[1] = EXPAND(RECOVERY_API_VERSION);   // defined in Android.mk
     char temp[16];
     snprintf(temp, sizeof(temp), "%d", pipefd[1]);
     args[2] = temp;
     args[3] = path;
-    args[4] = NULL;
+    args[4] = retry_count > 0 ? "retry" : NULL;
+    args[5] = NULL;
 
     pid_t pid = fork();
     if (pid == 0) {
@@ -215,7 +219,7 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
 
 static int
 really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
-                       std::vector<std::string>& log_buffer)
+                       std::vector<std::string>& log_buffer, int retry_count)
 {
     ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
     ui->Print("Finding update package...\n");
@@ -276,8 +280,11 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
 
     // Verify and install the contents of the package.
     ui->Print("Installing update...\n");
+    if (retry_count > 0) {
+        ui->Print("Retry attempt: %d\n", retry_count);
+    }
     ui->SetEnableReboot(false);
-    int result = try_update_binary(path, &zip, wipe_cache, log_buffer);
+    int result = try_update_binary(path, &zip, wipe_cache, log_buffer, retry_count);
     ui->SetEnableReboot(true);
     ui->Print("\n");
 
@@ -306,7 +313,7 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
         LOGE("failed to set up expected mounts for install; aborting\n");
         result = INSTALL_ERROR;
     } else {
-        result = really_install_package(path, wipe_cache, needs_mount, log_buffer);
+        result = really_install_package(path, wipe_cache, needs_mount, log_buffer, retry_count);
     }
     if (install_log != nullptr) {
         fputc(result == INSTALL_SUCCESS ? '1' : '0', install_log);

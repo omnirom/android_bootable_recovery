@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
 
-    if (argc != 4) {
+    if (argc != 4 && argc != 5) {
         printf("unexpected number of arguments (%d)\n", argc);
         return 1;
     }
@@ -144,6 +144,14 @@ int main(int argc, char** argv) {
     state.cookie = &updater_info;
     state.script = script;
     state.errmsg = NULL;
+
+    if (argc == 5) {
+        if (strcmp(argv[4], "retry") == 0) {
+            state.is_retry = true;
+        } else {
+            printf("unexpected argument: %s", argv[4]);
+        }
+    }
 
     char* result = Evaluate(&state, root);
 

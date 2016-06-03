@@ -49,6 +49,8 @@ typedef struct {
     // in addition to the error code.
     CauseCode cause_code = kNoCause;
 
+    bool is_retry = false;
+
 } State;
 
 #define VAL_STRING  1  // data will be NULL-terminated; size doesn't count null
