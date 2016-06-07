@@ -288,7 +288,7 @@ void WearRecoveryUI::progress_loop() {
         if ((currentIcon == INSTALLING_UPDATE || currentIcon == ERASING)
                                                             && !show_text) {
             if (!intro_done) {
-                if (current_frame == intro_frames - 1) {
+                if (current_frame >= intro_frames - 1) {
                     intro_done = true;
                     current_frame = 0;
                 } else {
