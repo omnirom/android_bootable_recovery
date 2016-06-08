@@ -812,6 +812,8 @@ void DataManager::SetDefaultValues()
 	mPersist.SetValue("tw_never_show_system_ro_page", "0");
 	mPersist.SetValue("tw_language", EXPAND(TW_DEFAULT_LANGUAGE));
 	LOGINFO("LANG: %s\n", EXPAND(TW_DEFAULT_LANGUAGE));
+	mPersist.SetValue("tw_theme", EXPAND(TW_DEFAULT_THEME));
+	LOGINFO("THEME: %s\n", EXPAND(TW_DEFAULT_THEME));
 
 	mData.SetValue("tw_has_adopted_storage", "0");
 
@@ -1005,6 +1007,7 @@ void DataManager::ReadSettingsFile(void)
 	PartitionManager.Mount_All_Storage();
 	update_tz_environment_variables();
 	TWFunc::Set_Brightness(GetStrValue("tw_brightness"));
+ 	TWFunc::Set_Theme(GetStrValue("tw_theme"));
 }
 
 string DataManager::GetCurrentStoragePath(void)

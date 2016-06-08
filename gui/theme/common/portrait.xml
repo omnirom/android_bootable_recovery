@@ -62,6 +62,10 @@
 			<image resource="tab_4"/>
 		</style>
 
+ 		<style name="theme_button">
+			<font resource="font_m" color="%text_button_color%"/>
+		</style>
+
 		<style name="fab">
 			<highlight color="%highlight_color%"/>
 			<placement x="%indent_right%" y="%row21a_y%" placement="1"/>
@@ -3049,6 +3053,12 @@
 				</actions>
 			</slidervalue>
 
+ 			<button style="main_button_half_height_full_width">
+				<placement x="%indent%" y="%row18a_y%"/>
+				<text>{@theme_engine=Theme engine}</text>
+				<action function="page">theme_engine</action>
+			</button>
+
 			<action>
 				<touch key="home"/>
 				<action function="page">main</action>
@@ -3138,6 +3148,133 @@
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@set_language_btn=Set Language}</text>
 				<action function="setlanguage"></action>
+			</button>
+
+			<action>
+				<touch key="home" />
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back" />
+				<action function="page">settings</action>
+			</action>
+		</page>
+
+		<page name="theme_engine">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@theme_engine=Theme engine}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%" />
+				<text>{@rom_slot_header=ROM Slot: %tw_bootslot%}</text>
+			</text>
+
+			<button>
+				<font resource="font_s" color="%text_button_color%"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%maroon%"/>
+				<text>{@maroon=Maroon}</text>
+				<placement x="0" y="%row2a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%maroon%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%olive%"/>
+				<text>{@olive=Olive}</text>
+				<placement x="0" y="%row4a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%olive%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%yellow%"/>
+				<text>{@yellow=Yellow}</text>
+				<placement x="0" y="%row6a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%yellow%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%green%"/>
+				<text>{@green=Green}</text>
+				<placement x="0" y="%row8a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%green%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%lime%"/>
+				<text>{@lime=Lime}</text>
+				<placement x="0" y="%row10a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%lime%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%dark_mat%"/>
+				<text>{@dark_mat=Dark mat}</text>
+				<placement x="0" y="%row12a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%dark_mat%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%teal%"/>
+				<text>{@teal=Teal}</text>
+				<placement x="0" y="%row14a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%teal%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%aqua%"/>
+				<text>{@aqua=Aqua}</text>
+				<placement x="0" y="%row16a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%aqua%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%navy%"/>
+				<text>{@navy=Navy}</text>
+				<placement x="0" y="%row18a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%navy%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%blue%"/>
+				<text>{@blue=Blue}</text>
+				<placement x="0" y="%row20a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%blue%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
+			</button>
+
+			<button style="theme_button">
+				<fill color="%purple%"/>
+				<text>{@purple=Purple}</text>
+				<placement x="0" y="%row22a_y%" w="%screen_width%" h="100"/>
+                                <action function="set">tw_theme=%purple%</action>
+                                <action function="settheme"></action>
+				<action function="reload"/>
 			</button>
 
 			<action>

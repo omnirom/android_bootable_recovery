@@ -321,6 +321,11 @@ ifneq ($(TW_DEFAULT_LANGUAGE),)
 else
     LOCAL_CFLAGS += -DTW_DEFAULT_LANGUAGE=en
 endif
+ifneq ($(TW_DEFAULT_THEME),)
+    LOCAL_CFLAGS += -DTW_DEFAULT_THEME=$(TW_DEFAULT_THEME)
+else
+    LOCAL_CFLAGS += -DTW_DEFAULT_THEME=default_color
+endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES := \
     dump_image \
