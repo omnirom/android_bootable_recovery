@@ -27,6 +27,7 @@
 #include <string>
 #include <vector>
 
+#include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
@@ -46,6 +47,7 @@ extern RecoveryUI* ui;
 
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
 #define PUBLIC_KEYS_FILE "/res/keys"
+static constexpr const char* METADATA_PATH = "META-INF/com/android/metadata";
 
 // Default allocation of progress bar segments to operations
 static const int VERIFICATION_PROGRESS_TIME = 60;
@@ -53,11 +55,64 @@ static const float VERIFICATION_PROGRESS_FRACTION = 0.25;
 static const float DEFAULT_FILES_PROGRESS_FRACTION = 0.4;
 static const float DEFAULT_IMAGE_PROGRESS_FRACTION = 0.1;
 
+// This function parses and returns the build.version.incremental
+static int parse_build_number(std::string str) {
+    size_t pos = str.find("=");
+    if (pos != std::string::npos) {
+        std::string num_string = android::base::Trim(str.substr(pos+1));
+        int build_number;
+        if (android::base::ParseInt(num_string.c_str(), &build_number, 0)) {
+            return build_number;
+        }
+    }
+
+    LOGE("Failed to parse build number in %s.\n", str.c_str());
+    return -1;
+}
+
+// Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
+static void read_source_target_build(ZipArchive* zip, std::vector<std::string>& log_buffer) {
+    const ZipEntry* meta_entry = mzFindZipEntry(zip, METADATA_PATH);
+    if (meta_entry == nullptr) {
+        LOGE("Failed to find %s in update package.\n", METADATA_PATH);
+        return;
+    }
+
+    std::string meta_data(meta_entry->uncompLen, '\0');
+    if (!mzReadZipEntry(zip, meta_entry, &meta_data[0], meta_entry->uncompLen)) {
+        LOGE("Failed to read metadata in update package.\n");
+        return;
+    }
+
+    // Examples of the pre-build and post-build strings in metadata:
+    // pre-build-incremental=2943039
+    // post-build-incremental=2951741
+    std::vector<std::string> lines = android::base::Split(meta_data, "\n");
+    for (const std::string& line : lines) {
+        std::string str = android::base::Trim(line);
+        if (android::base::StartsWith(str, "pre-build-incremental")){
+            int source_build = parse_build_number(str);
+            if (source_build != -1) {
+                log_buffer.push_back(android::base::StringPrintf("source_build: %d",
+                        source_build));
+            }
+        } else if (android::base::StartsWith(str, "post-build-incremental")) {
+            int target_build = parse_build_number(str);
+            if (target_build != -1) {
+                log_buffer.push_back(android::base::StringPrintf("target_build: %d",
+                        target_build));
+            }
+        }
+    }
+}
+
 // If the package contains an update binary, extract it and run it.
 static int
 try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
                   std::vector<std::string>& log_buffer, int retry_count)
 {
+    read_source_target_build(zip, log_buffer);
+
     const ZipEntry* binary_entry =
             mzFindZipEntry(zip, ASSUMED_UPDATE_BINARY_NAME);
     if (binary_entry == NULL) {
