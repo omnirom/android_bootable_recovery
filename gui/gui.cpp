@@ -732,6 +732,7 @@ extern "C" int gui_init(void)
 {
 	gr_init();
 	TWFunc::Set_Brightness(DataManager::GetStrValue("tw_brightness"));
+	TWFunc::Set_Theme(DataManager::GetStrValue("tw_theme")); 
 
 	// load and show splash screen
 	if (PageManager::LoadPackage("splash", TWRES "splash.xml", "splash")) {
