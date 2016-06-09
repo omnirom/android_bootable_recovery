@@ -86,6 +86,7 @@ static const struct option OPTIONS[] = {
   { "reason", required_argument, NULL, 'r' },
   { "security", no_argument, NULL, 'e'},
   { "wipe_ab", no_argument, NULL, 0 },
+  { "wipe_package_size", required_argument, NULL, 0 },
   { NULL, 0, NULL, 0 },
 };
 
@@ -902,12 +903,76 @@ static bool secure_wipe_partition(const std::string& partition) {
     return true;
 }
 
+// Check if the wipe package matches expectation:
+// 1. verify the package.
+// 2. check metadata (ota-type, pre-device and serial number if having one).
+static bool check_wipe_package(size_t wipe_package_size) {
+    if (wipe_package_size == 0) {
+        LOG(ERROR) << "wipe_package_size is zero";
+        return false;
+    }
+    std::string wipe_package;
+    std::string err_str;
+    if (!read_wipe_package(&wipe_package, wipe_package_size, &err_str)) {
+        PLOG(ERROR) << "Failed to read wipe package";
+        return false;
+    }
+    if (!verify_package(reinterpret_cast<const unsigned char*>(wipe_package.data()),
+                        wipe_package.size())) {
+        LOG(ERROR) << "Failed to verify package";
+        return false;
+    }
+
+    // Extract metadata
+    ZipArchiveHandle zip;
+    int err = OpenArchiveFromMemory(reinterpret_cast<void*>(&wipe_package[0]),
+                                    wipe_package.size(), "wipe_package", &zip);
+    if (err != 0) {
+        LOG(ERROR) << "Can't open wipe package : " << ErrorCodeString(err);
+        return false;
+    }
+    std::string metadata;
+    if (!read_metadata_from_package(&zip, &metadata)) {
+        CloseArchive(zip);
+        return false;
+    }
+    CloseArchive(zip);
+
+    // Check metadata
+    std::vector<std::string> lines = android::base::Split(metadata, "\n");
+    bool ota_type_matched = false;
+    bool device_type_matched = false;
+    bool has_serial_number = false;
+    bool serial_number_matched = false;
+    for (const auto& line : lines) {
+        if (line == "ota-type=BRICK") {
+            ota_type_matched = true;
+        } else if (android::base::StartsWith(line, "pre-device=")) {
+            std::string device_type = line.substr(strlen("pre-device="));
+            char real_device_type[PROPERTY_VALUE_MAX];
+            property_get("ro.build.product", real_device_type, "");
+            device_type_matched = (device_type == real_device_type);
+        } else if (android::base::StartsWith(line, "serialno=")) {
+            std::string serial_no = line.substr(strlen("serialno="));
+            char real_serial_no[PROPERTY_VALUE_MAX];
+            property_get("ro.serialno", real_serial_no, "");
+            has_serial_number = true;
+            serial_number_matched = (serial_no == real_serial_no);
+        }
+    }
+    return ota_type_matched && device_type_matched && (!has_serial_number || serial_number_matched);
+}
+
 // Wipe the current A/B device, with a secure wipe of all the partitions in
 // RECOVERY_WIPE.
-static bool wipe_ab_device() {
+static bool wipe_ab_device(size_t wipe_package_size) {
     ui->SetBackground(RecoveryUI::ERASING);
     ui->SetProgressType(RecoveryUI::INDETERMINATE);
 
+    if (!check_wipe_package(wipe_package_size)) {
+        LOG(ERROR) << "Failed to verify wipe package";
+        return false;
+    }
     std::string partition_list;
     if (!android::base::ReadFileToString(RECOVERY_WIPE, &partition_list)) {
         LOG(ERROR) << "failed to read \"" << RECOVERY_WIPE << "\"";
@@ -1426,6 +1491,7 @@ int main(int argc, char **argv) {
     bool should_wipe_data = false;
     bool should_wipe_cache = false;
     bool should_wipe_ab = false;
+    size_t wipe_package_size = 0;
     bool show_text = false;
     bool sideload = false;
     bool sideload_auto_reboot = false;
@@ -1461,6 +1527,9 @@ int main(int argc, char **argv) {
         case 0: {
             if (strcmp(OPTIONS[option_index].name, "wipe_ab") == 0) {
                 should_wipe_ab = true;
+                break;
+            } else if (strcmp(OPTIONS[option_index].name, "wipe_package_size") == 0) {
+                android::base::ParseUint(optarg, &wipe_package_size);
                 break;
             }
             break;
@@ -1607,7 +1676,7 @@ int main(int argc, char **argv) {
             status = INSTALL_ERROR;
         }
     } else if (should_wipe_ab) {
-        if (!wipe_ab_device()) {
+        if (!wipe_ab_device(wipe_package_size)) {
             status = INSTALL_ERROR;
         }
     } else if (sideload) {
