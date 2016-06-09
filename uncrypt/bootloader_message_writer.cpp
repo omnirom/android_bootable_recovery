@@ -58,7 +58,7 @@ static std::string get_misc_blk_device(std::string* err) {
   return record->blk_device;
 }
 
-static bool write_bootloader_message(const bootloader_message& boot, std::string* err) {
+static bool write_misc_partition(const void* p, size_t size, size_t misc_offset, std::string* err) {
   std::string misc_blk_device = get_misc_blk_device(err);
   if (misc_blk_device.empty()) {
     return false;
@@ -69,11 +69,18 @@ static bool write_bootloader_message(const bootloader_message& boot, std::string
                                        strerror(errno));
     return false;
   }
-  if (!android::base::WriteFully(fd.get(), &boot, sizeof(boot))) {
+  if (lseek(fd.get(), static_cast<off_t>(misc_offset), SEEK_SET) !=
+      static_cast<off_t>(misc_offset)) {
+    *err = android::base::StringPrintf("failed to lseek %s: %s", misc_blk_device.c_str(),
+                                       strerror(errno));
+    return false;
+  }
+  if (!android::base::WriteFully(fd.get(), p, size)) {
     *err = android::base::StringPrintf("failed to write %s: %s", misc_blk_device.c_str(),
                                        strerror(errno));
     return false;
   }
+
   // TODO: O_SYNC and fsync duplicates each other?
   if (fsync(fd.get()) == -1) {
     *err = android::base::StringPrintf("failed to fsync %s: %s", misc_blk_device.c_str(),
@@ -81,6 +88,10 @@ static bool write_bootloader_message(const bootloader_message& boot, std::string
     return false;
   }
   return true;
+}
+
+static bool write_bootloader_message(const bootloader_message& boot, std::string* err) {
+  return write_misc_partition(&boot, sizeof(boot), BOOTLOADER_MESSAGE_OFFSET_IN_MISC, err);
 }
 
 bool clear_bootloader_message(std::string* err) {
@@ -99,6 +110,11 @@ bool write_bootloader_message(const std::vector<std::string>& options, std::stri
     }
   }
   return write_bootloader_message(boot, err);
+}
+
+bool write_wipe_package(const std::string& package_data, std::string* err) {
+  return write_misc_partition(package_data.data(), package_data.size(),
+                              WIPE_PACKAGE_OFFSET_IN_MISC, err);
 }
 
 extern "C" bool write_bootloader_message(const char* options) {
