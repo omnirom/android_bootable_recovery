@@ -80,6 +80,7 @@
 		<variable name="header_height" value="256"/>
 		<variable name="navbar_height" value="130"/>
 		<variable name="content_width" value="1008"/>
+		<variable name="theme_button_height" value="100"/>
 		<variable name="content_overlay_width" value="936"/>
 		<variable name="dialog_height" value="704"/>
 		<variable name="back_button_x" value="240"/>
@@ -175,8 +176,20 @@
 		<variable name="keyboard_y" value="1149"/>
 		<variable name="keyboard_terminal_y" value="1053"/>
 		<variable name="background_color" value="#1A1A1A"/>
-		<variable name="accent_color" value="#0090CA"/>
-		<variable name="accent_color_semitransparent" value="#0090CA30"/>
+		<variable name="default_color" value="#0090CA"/>
+ 		<variable name="maroon" value="#800000"/>
+		<variable name="olive" value="#808000"/>
+		<variable name="yellow" value="#FFFF00"/>
+		<variable name="green" value="#008000"/>
+		<variable name="lime" value="#00FF00"/>
+		<variable name="dark_mat" value="#006064"/>
+		<variable name="teal" value="#008080"/>
+		<variable name="aqua" value="#00FFFF"/>
+		<variable name="navy" value="#000080"/>
+		<variable name="blue" value="#0000FF"/>
+		<variable name="purple" value="#800080"/>
+		<variable name="accent_color" value="%tw_theme%"/>
+		<variable name="accent_color_semitransparent" value="%tw_theme%30"/>
 		<variable name="text_color" value="#EEEEEE"/>
 		<variable name="text_button_color" value="#EEEEEE"/>
 		<variable name="text_success_color" value="#76FF03"/>

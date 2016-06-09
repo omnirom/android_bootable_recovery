@@ -1004,6 +1004,17 @@ int TWFunc::Set_Brightness(std::string brightness_value)
 	return result;
 }
 
+int TWFunc::Set_Theme(std::string theme_value)
+{
+	int result = -1;
+
+	if (DataManager::GetIntValue("tw_has_theme_file")) {
+		LOGINFO("TWFunc::Set_Theme: Setting theme to %s\n", theme_value.c_str());
+		result = TWFunc::write_file(DataManager::GetStrValue("tw_theme_file"), theme_value);
+	}
+	return result;
+}
+
 bool TWFunc::Toggle_MTP(bool enable) {
 #ifdef TW_HAS_MTP
 	static int was_enabled = false;
