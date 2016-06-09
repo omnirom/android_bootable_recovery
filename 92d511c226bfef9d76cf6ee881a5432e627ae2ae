@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78f7b947_91722ca9",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 93
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1000979
+      },
+      "writtenOn": "2016-06-09T13:17:26Z",
+      "side": 1,
+      "message": "Whitespaces",
+      "revId": "92d511c226bfef9d76cf6ee881a5432e627ae2ae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78f7b947_7177a09a",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 93
+      },
+      "lineNbr": 908,
+      "author": {
+        "id": 1000979
+      },
+      "writtenOn": "2016-06-09T13:17:26Z",
+      "side": 1,
+      "message": "Whitespaces",
+      "revId": "92d511c226bfef9d76cf6ee881a5432e627ae2ae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78f7b947_516ca4ce",
+        "filename": "partition.cpp",
+        "patchSetId": 93
+      },
+      "lineNbr": 2318,
+      "author": {
+        "id": 1000979
+      },
+      "writtenOn": "2016-06-09T13:17:26Z",
+      "side": 1,
+      "message": "Whitespaces",
+      "revId": "92d511c226bfef9d76cf6ee881a5432e627ae2ae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78f7b947_11661ced",
+        "filename": "partitions.hpp",
+        "patchSetId": 93
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1000979
+      },
+      "writtenOn": "2016-06-09T13:17:26Z",
+      "side": 1,
+      "message": "Whitespaces",
+      "revId": "92d511c226bfef9d76cf6ee881a5432e627ae2ae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78f7b947_f16290d6",
+        "filename": "partitions.hpp",
+        "patchSetId": 93
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1000979
+      },
+      "writtenOn": "2016-06-09T13:17:26Z",
+      "side": 1,
+      "message": "Whitespaces",
+      "revId": "92d511c226bfef9d76cf6ee881a5432e627ae2ae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
