@@ -83,7 +83,7 @@ static const struct option OPTIONS[] = {
   { "shutdown_after", no_argument, NULL, 'p' },
   { "reason", required_argument, NULL, 'r' },
   { "security", no_argument, NULL, 'e'},
-  { "brick", no_argument, NULL, 0 },
+  { "wipe_ab", no_argument, NULL, 0 },
   { NULL, 0, NULL, 0 },
 };
 
@@ -110,7 +110,7 @@ static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
 // So we should check battery with a slightly lower limitation.
 static const int BATTERY_OK_PERCENTAGE = 20;
 static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
-constexpr const char* RECOVERY_BRICK = "/etc/recovery.brick";
+constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
 
 RecoveryUI* ui = NULL;
 static const char* locale = "en_US";
@@ -904,15 +904,15 @@ static bool secure_wipe_partition(const std::string& partition) {
     return true;
 }
 
-// Brick the current device, with a secure wipe of all the partitions in
-// RECOVERY_BRICK.
-static bool brick_device() {
+// Wipe the current A/B device, with a secure wipe of all the partitions in
+// RECOVERY_WIPE.
+static bool wipe_ab_device() {
     ui->SetBackground(RecoveryUI::ERASING);
     ui->SetProgressType(RecoveryUI::INDETERMINATE);
 
     std::string partition_list;
-    if (!android::base::ReadFileToString(RECOVERY_BRICK, &partition_list)) {
-        LOGE("failed to read \"%s\".\n", RECOVERY_BRICK);
+    if (!android::base::ReadFileToString(RECOVERY_WIPE, &partition_list)) {
+        LOGE("failed to read \"%s\".\n", RECOVERY_WIPE);
         return false;
     }
 
@@ -1417,7 +1417,7 @@ int main(int argc, char **argv) {
     const char *update_package = NULL;
     bool should_wipe_data = false;
     bool should_wipe_cache = false;
-    bool should_brick = false;
+    bool should_wipe_ab = false;
     bool show_text = false;
     bool sideload = false;
     bool sideload_auto_reboot = false;
@@ -1452,8 +1452,8 @@ int main(int argc, char **argv) {
         case 'r': reason = optarg; break;
         case 'e': security_update = true; break;
         case 0: {
-            if (strcmp(OPTIONS[option_index].name, "brick") == 0) {
-                should_brick = true;
+            if (strcmp(OPTIONS[option_index].name, "wipe_ab") == 0) {
+                should_wipe_ab = true;
                 break;
             }
             break;
@@ -1596,8 +1596,8 @@ int main(int argc, char **argv) {
         if (!wipe_cache(false, device)) {
             status = INSTALL_ERROR;
         }
-    } else if (should_brick) {
-        if (!brick_device()) {
+    } else if (should_wipe_ab) {
+        if (!wipe_ab_device()) {
             status = INSTALL_ERROR;
         }
     } else if (sideload) {
