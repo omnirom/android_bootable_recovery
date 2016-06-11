@@ -1417,7 +1417,7 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
     v->data = nullptr;
 
     FileContents fc;
-    if (LoadFileContents(filename, &fc) != 0) {
+    if (LoadFileContents(filename, &fc) == 0) {
         v->data = static_cast<char*>(malloc(fc.data.size()));
         if (v->data != nullptr) {
             memcpy(v->data, fc.data.data(), fc.data.size());
