@@ -152,40 +152,45 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
             size_t bonus_size = (i == 1 && bonus_data != NULL) ? bonus_data->size : 0;
 
             std::vector<unsigned char> expanded_source(expanded_len);
-            z_stream strm;
-            strm.zalloc = Z_NULL;
-            strm.zfree = Z_NULL;
-            strm.opaque = Z_NULL;
-            strm.avail_in = src_len;
-            strm.next_in = (unsigned char*)(old_data + src_start);
-            strm.avail_out = expanded_len;
-            strm.next_out = expanded_source.data();
 
-            int ret;
-            ret = inflateInit2(&strm, -15);
-            if (ret != Z_OK) {
-                printf("failed to init source inflation: %d\n", ret);
-                return -1;
-            }
+            // inflate() doesn't like strm.next_out being a nullptr even with
+            // avail_out being zero (Z_STREAM_ERROR).
+            if (expanded_len != 0) {
+                z_stream strm;
+                strm.zalloc = Z_NULL;
+                strm.zfree = Z_NULL;
+                strm.opaque = Z_NULL;
+                strm.avail_in = src_len;
+                strm.next_in = (unsigned char*)(old_data + src_start);
+                strm.avail_out = expanded_len;
+                strm.next_out = expanded_source.data();
 
-            // Because we've provided enough room to accommodate the output
-            // data, we expect one call to inflate() to suffice.
-            ret = inflate(&strm, Z_SYNC_FLUSH);
-            if (ret != Z_STREAM_END) {
-                printf("source inflation returned %d\n", ret);
-                return -1;
-            }
-            // We should have filled the output buffer exactly, except
-            // for the bonus_size.
-            if (strm.avail_out != bonus_size) {
-                printf("source inflation short by %zu bytes\n", strm.avail_out-bonus_size);
-                return -1;
-            }
-            inflateEnd(&strm);
+                int ret;
+                ret = inflateInit2(&strm, -15);
+                if (ret != Z_OK) {
+                    printf("failed to init source inflation: %d\n", ret);
+                    return -1;
+                }
 
-            if (bonus_size) {
-                memcpy(expanded_source.data() + (expanded_len - bonus_size),
-                       bonus_data->data, bonus_size);
+                // Because we've provided enough room to accommodate the output
+                // data, we expect one call to inflate() to suffice.
+                ret = inflate(&strm, Z_SYNC_FLUSH);
+                if (ret != Z_STREAM_END) {
+                    printf("source inflation returned %d\n", ret);
+                    return -1;
+                }
+                // We should have filled the output buffer exactly, except
+                // for the bonus_size.
+                if (strm.avail_out != bonus_size) {
+                    printf("source inflation short by %zu bytes\n", strm.avail_out-bonus_size);
+                    return -1;
+                }
+                inflateEnd(&strm);
+
+                if (bonus_size) {
+                    memcpy(expanded_source.data() + (expanded_len - bonus_size),
+                           bonus_data->data, bonus_size);
+                }
             }
 
             // Next, apply the bsdiff patch (in memory) to the uncompressed
@@ -209,33 +214,37 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
             if (expanded_source.size() < 32768U) {
                 expanded_source.resize(32768U);
             }
-            std::vector<unsigned char>& temp_data = expanded_source;
 
-            // now the deflate stream
-            strm.zalloc = Z_NULL;
-            strm.zfree = Z_NULL;
-            strm.opaque = Z_NULL;
-            strm.avail_in = uncompressed_target_data.size();
-            strm.next_in = uncompressed_target_data.data();
-            ret = deflateInit2(&strm, level, method, windowBits, memLevel, strategy);
-            if (ret != Z_OK) {
-                printf("failed to init uncompressed data deflation: %d\n", ret);
-                return -1;
-            }
-            do {
-                strm.avail_out = temp_data.size();
-                strm.next_out = temp_data.data();
-                ret = deflate(&strm, Z_FINISH);
-                ssize_t have = temp_data.size() - strm.avail_out;
+            {
+                std::vector<unsigned char>& temp_data = expanded_source;
 
-                if (sink(temp_data.data(), have, token) != have) {
-                    printf("failed to write %zd compressed bytes to output\n",
-                           have);
+                // now the deflate stream
+                z_stream strm;
+                strm.zalloc = Z_NULL;
+                strm.zfree = Z_NULL;
+                strm.opaque = Z_NULL;
+                strm.avail_in = uncompressed_target_data.size();
+                strm.next_in = uncompressed_target_data.data();
+                int ret = deflateInit2(&strm, level, method, windowBits, memLevel, strategy);
+                if (ret != Z_OK) {
+                    printf("failed to init uncompressed data deflation: %d\n", ret);
                     return -1;
                 }
-                if (ctx) SHA1_Update(ctx, temp_data.data(), have);
-            } while (ret != Z_STREAM_END);
-            deflateEnd(&strm);
+                do {
+                    strm.avail_out = temp_data.size();
+                    strm.next_out = temp_data.data();
+                    ret = deflate(&strm, Z_FINISH);
+                    ssize_t have = temp_data.size() - strm.avail_out;
+
+                    if (sink(temp_data.data(), have, token) != have) {
+                        printf("failed to write %zd compressed bytes to output\n",
+                               have);
+                        return -1;
+                    }
+                    if (ctx) SHA1_Update(ctx, temp_data.data(), have);
+                } while (ret != Z_STREAM_END);
+                deflateEnd(&strm);
+            }
         } else {
             printf("patch chunk %d is unknown type %d\n", i, type);
             return -1;
