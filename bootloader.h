@@ -17,7 +17,9 @@
 #ifndef _RECOVERY_BOOTLOADER_H
 #define _RECOVERY_BOOTLOADER_H
 
-/* Bootloader Message
+#include <assert.h>
+
+/* Bootloader Message (2-KiB)
  *
  * This structure describes the content of a block in flash
  * that is used for recovery and the bootloader to talk to
@@ -40,13 +42,10 @@
  * package it is.  If the value is of the format "#/#" (eg, "1/3"),
  * the UI will add a simple indicator of that status.
  *
- * The slot_suffix field is used for A/B implementations where the
- * bootloader does not set the androidboot.ro.boot.slot_suffix kernel
- * commandline parameter. This is used by fs_mgr to mount /system and
- * other partitions with the slotselect flag set in fstab. A/B
- * implementations are free to use all 32 bytes and may store private
- * data past the first NUL-byte in this field. It is encouraged, but
- * not mandatory, to use 'struct bootloader_control' described below.
+ * We used to have slot_suffix field for A/B boot control metadata in
+ * this struct, which gets unintentionally cleared by recovery or
+ * uncrypt. Move it into struct bootloader_message_ab to avoid the
+ * issue.
  */
 struct bootloader_message {
     char command[32];
@@ -59,9 +58,55 @@ struct bootloader_message {
     // stage string (for multistage packages) and possible future
     // expansion.
     char stage[32];
-    char slot_suffix[32];
-    char reserved[192];
+
+    // The 'reserved' field used to be 224 bytes when it was initially
+    // carved off from the 1024-byte recovery field. Bump it up to
+    // 1184-byte so that the entire bootloader_message struct rounds up
+    // to 2048-byte.
+    char reserved[1184];
 };
+
+/**
+ * We must be cautious when changing the bootloader_message struct size,
+ * because A/B-specific fields may end up with different offsets.
+ */
+#if (__STDC_VERSION__ >= 201112L) || defined(__cplusplus)
+static_assert(sizeof(struct bootloader_message) == 2048,
+              "struct bootloader_message size changes, which may break A/B devices");
+#endif
+
+/**
+ * The A/B-specific bootloader message structure (4-KiB).
+ *
+ * We separate A/B boot control metadata from the regular bootloader
+ * message struct and keep it here. Everything that's A/B-specific
+ * stays after struct bootloader_message, which should be managed by
+ * the A/B-bootloader or boot control HAL.
+ *
+ * The slot_suffix field is used for A/B implementations where the
+ * bootloader does not set the androidboot.ro.boot.slot_suffix kernel
+ * commandline parameter. This is used by fs_mgr to mount /system and
+ * other partitions with the slotselect flag set in fstab. A/B
+ * implementations are free to use all 32 bytes and may store private
+ * data past the first NUL-byte in this field. It is encouraged, but
+ * not mandatory, to use 'struct bootloader_control' described below.
+ */
+struct bootloader_message_ab {
+    struct bootloader_message message;
+    char slot_suffix[32];
+
+    // Round up the entire struct to 4096-byte.
+    char reserved[2016];
+};
+
+/**
+ * Be cautious about the struct size change, in case we put anything post
+ * bootloader_message_ab struct (b/29159185).
+ */
+#if (__STDC_VERSION__ >= 201112L) || defined(__cplusplus)
+static_assert(sizeof(struct bootloader_message_ab) == 4096,
+              "struct bootloader_message_ab size changes");
+#endif
 
 #define BOOT_CTRL_MAGIC   0x42414342 /* Bootloader Control AB */
 #define BOOT_CTRL_VERSION 1
@@ -111,10 +156,10 @@ struct bootloader_control {
     uint32_t crc32_le;
 } __attribute__((packed));
 
-#if (__STDC_VERSION__ >= 201112L)
-_Static_assert(sizeof(struct bootloader_control) ==
-               sizeof(((struct bootloader_message *)0)->slot_suffix),
-               "struct bootloader_control has wrong size");
+#if (__STDC_VERSION__ >= 201112L) || defined(__cplusplus)
+static_assert(sizeof(struct bootloader_control) ==
+              sizeof(((struct bootloader_message_ab *)0)->slot_suffix),
+              "struct bootloader_control has wrong size");
 #endif
 
 /* Read and write the bootloader command from the "misc" partition.
