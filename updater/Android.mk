@@ -40,8 +40,8 @@ LOCAL_STATIC_LIBRARIES += \
     libbase \
     libotafault \
     libedify \
-    libmtdutils \
     libminzip \
+    libmounts \
     libz \
     libbz \
     libcutils \
@@ -60,14 +60,11 @@ LOCAL_STATIC_LIBRARIES += \
     libtune2fs \
     $(tune2fs_static_libraries)
 
-ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
-LOCAL_CFLAGS += -DUSE_EXT4
 LOCAL_CFLAGS += -Wno-unused-parameter
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 LOCAL_STATIC_LIBRARIES += \
     libsparse_static \
     libz
-endif
 
 LOCAL_C_INCLUDES += external/e2fsprogs/misc
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
