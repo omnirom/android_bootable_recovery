@@ -33,10 +33,7 @@
 #include "minadbd/fuse_adb_provider.h"
 #include "fuse_sideload.h"
 
-static RecoveryUI* ui = NULL;
-
-static void
-set_usb_driver(bool enabled) {
+static void set_usb_driver(RecoveryUI* ui, bool enabled) {
     int fd = open("/sys/class/android_usb/android0/enable", O_WRONLY);
     if (fd < 0) {
         ui->Print("failed to open driver control: %s\n", strerror(errno));
@@ -50,18 +47,16 @@ set_usb_driver(bool enabled) {
     }
 }
 
-static void
-stop_adbd() {
+static void stop_adbd(RecoveryUI* ui) {
+    ui->Print("Stopping adbd...\n");
     property_set("ctl.stop", "adbd");
-    set_usb_driver(false);
+    set_usb_driver(ui, false);
 }
 
-
-static void
-maybe_restart_adbd() {
+static void maybe_restart_adbd(RecoveryUI* ui) {
     if (is_ro_debuggable()) {
         ui->Print("Restarting adbd...\n");
-        set_usb_driver(true);
+        set_usb_driver(ui, true);
         property_set("ctl.start", "adbd");
     }
 }
@@ -70,14 +65,11 @@ maybe_restart_adbd() {
 // package, before timing out.
 #define ADB_INSTALL_TIMEOUT 300
 
-int
-apply_from_adb(RecoveryUI* ui_, bool* wipe_cache, const char* install_file) {
+int apply_from_adb(RecoveryUI* ui, bool* wipe_cache, const char* install_file) {
     modified_flash = true;
 
-    ui = ui_;
-
-    stop_adbd();
-    set_usb_driver(true);
+    stop_adbd(ui);
+    set_usb_driver(ui, true);
 
     ui->Print("\n\nNow send the package you want to apply\n"
               "to the device with \"adb sideload <filename>\"...\n");
@@ -137,8 +129,8 @@ apply_from_adb(RecoveryUI* ui_, bool* wipe_cache, const char* install_file) {
         }
     }
 
-    set_usb_driver(false);
-    maybe_restart_adbd();
+    set_usb_driver(ui, false);
+    maybe_restart_adbd(ui);
 
     return result;
 }
