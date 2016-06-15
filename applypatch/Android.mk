@@ -32,7 +32,6 @@ LOCAL_C_INCLUDES += \
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES += \
     libotafault \
-    libmtdutils \
     libbase \
     libcrypto_static \
     libbz \
@@ -79,7 +78,6 @@ LOCAL_STATIC_LIBRARIES += \
     libedify \
     libotafault \
     libminzip \
-    libmtdutils \
     libcrypto_static \
     libbz
 LOCAL_SHARED_LIBRARIES += libz libcutils libc

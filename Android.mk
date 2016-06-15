@@ -17,13 +17,21 @@ LOCAL_PATH := $(call my-dir)
 # libfusesideload (static library)
 # ===============================
 include $(CLEAR_VARS)
-
 LOCAL_SRC_FILES := fuse_sideload.cpp
 LOCAL_CLANG := true
-LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
+LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter -Werror
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 LOCAL_MODULE := libfusesideload
 LOCAL_STATIC_LIBRARIES := libcutils libc libcrypto_static
+include $(BUILD_STATIC_LIBRARY)
+
+# libmounts (static library)
+# ===============================
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := mounts.cpp
+LOCAL_CLANG := true
+LOCAL_CFLAGS := -Wall -Wno-unused-parameter -Werror
+LOCAL_MODULE := libmounts
 include $(BUILD_STATIC_LIBRARY)
 
 # recovery (static executable)
@@ -71,8 +79,8 @@ LOCAL_STATIC_LIBRARIES := \
     libext4_utils_static \
     libsparse_static \
     libminzip \
+    libmounts \
     libz \
-    libmtdutils \
     libminadbd \
     libfusesideload \
     libminui \
@@ -90,11 +98,8 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
-ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
-    LOCAL_CFLAGS += -DUSE_EXT4
-    LOCAL_C_INCLUDES += system/extras/ext4_utils
-    LOCAL_STATIC_LIBRARIES += libext4_utils_static libz
-endif
+LOCAL_C_INCLUDES += system/extras/ext4_utils
+LOCAL_STATIC_LIBRARIES += libext4_utils_static libz
 
 ifeq ($(AB_OTA_UPDATER),true)
     LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
@@ -150,7 +155,6 @@ include $(BUILD_STATIC_LIBRARY)
 include $(LOCAL_PATH)/minui/Android.mk \
     $(LOCAL_PATH)/minzip/Android.mk \
     $(LOCAL_PATH)/minadbd/Android.mk \
-    $(LOCAL_PATH)/mtdutils/Android.mk \
     $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \

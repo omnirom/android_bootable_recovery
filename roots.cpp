@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "roots.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/mount.h>
@@ -25,11 +27,9 @@
 #include <fcntl.h>
 
 #include <fs_mgr.h>
-#include "mtdutils/mtdutils.h"
-#include "mtdutils/mounts.h"
-#include "roots.h"
 #include "common.h"
 #include "make_ext4fs.h"
+#include "mounts.h"
 #include "wipe.h"
 #include "cryptfs.h"
 
@@ -82,9 +82,7 @@ int ensure_path_mounted_at(const char* path, const char* mount_point) {
         return 0;
     }
 
-    int result;
-    result = scan_mounted_volumes();
-    if (result < 0) {
+    if (!scan_mounted_volumes()) {
         LOGE("failed to scan mounted volumes\n");
         return -1;
     }
@@ -93,8 +91,7 @@ int ensure_path_mounted_at(const char* path, const char* mount_point) {
         mount_point = v->mount_point;
     }
 
-    const MountedVolume* mv =
-        find_mounted_volume_by_mount_point(mount_point);
+    MountedVolume* mv = find_mounted_volume_by_mount_point(mount_point);
     if (mv) {
         // volume is already mounted
         return 0;
@@ -102,26 +99,14 @@ int ensure_path_mounted_at(const char* path, const char* mount_point) {
 
     mkdir(mount_point, 0755);  // in case it doesn't already exist
 
-    if (strcmp(v->fs_type, "yaffs2") == 0) {
-        // mount an MTD partition as a YAFFS2 filesystem.
-        mtd_scan_partitions();
-        const MtdPartition* partition;
-        partition = mtd_find_partition_by_name(v->blk_device);
-        if (partition == NULL) {
-            LOGE("failed to find \"%s\" partition to mount at \"%s\"\n",
-                 v->blk_device, mount_point);
-            return -1;
-        }
-        return mtd_mount_partition(partition, mount_point, v->fs_type, 0);
-    } else if (strcmp(v->fs_type, "ext4") == 0 ||
+    if (strcmp(v->fs_type, "ext4") == 0 ||
                strcmp(v->fs_type, "squashfs") == 0 ||
                strcmp(v->fs_type, "vfat") == 0) {
-        result = mount(v->blk_device, mount_point, v->fs_type,
-                       v->flags, v->fs_options);
-        if (result == 0) return 0;
-
-        LOGE("failed to mount %s (%s)\n", mount_point, strerror(errno));
-        return -1;
+        if (mount(v->blk_device, mount_point, v->fs_type, v->flags, v->fs_options) == -1) {
+            LOGE("failed to mount %s (%s)\n", mount_point, strerror(errno));
+            return -1;
+        }
+        return 0;
     }
 
     LOGE("unknown fs_type \"%s\" for %s\n", v->fs_type, mount_point);
@@ -144,15 +129,12 @@ int ensure_path_unmounted(const char* path) {
         return -1;
     }
 
-    int result;
-    result = scan_mounted_volumes();
-    if (result < 0) {
+    if (!scan_mounted_volumes()) {
         LOGE("failed to scan mounted volumes\n");
         return -1;
     }
 
-    const MountedVolume* mv =
-        find_mounted_volume_by_mount_point(v->mount_point);
+    MountedVolume* mv = find_mounted_volume_by_mount_point(v->mount_point);
     if (mv == NULL) {
         // volume is already unmounted
         return 0;
@@ -194,29 +176,6 @@ int format_volume(const char* volume, const char* directory) {
     if (ensure_path_unmounted(volume) != 0) {
         LOGE("format_volume failed to unmount \"%s\"\n", v->mount_point);
         return -1;
-    }
-
-    if (strcmp(v->fs_type, "yaffs2") == 0 || strcmp(v->fs_type, "mtd") == 0) {
-        mtd_scan_partitions();
-        const MtdPartition* partition = mtd_find_partition_by_name(v->blk_device);
-        if (partition == NULL) {
-            LOGE("format_volume: no MTD partition \"%s\"\n", v->blk_device);
-            return -1;
-        }
-
-        MtdWriteContext *write = mtd_write_partition(partition);
-        if (write == NULL) {
-            LOGW("format_volume: can't open MTD \"%s\"\n", v->blk_device);
-            return -1;
-        } else if (mtd_erase_blocks(write, -1) == (off_t) -1) {
-            LOGW("format_volume: can't erase MTD \"%s\"\n", v->blk_device);
-            mtd_write_close(write);
-            return -1;
-        } else if (mtd_write_close(write)) {
-            LOGW("format_volume: can't close MTD \"%s\"\n", v->blk_device);
-            return -1;
-        }
-        return 0;
     }
 
     if (strcmp(v->fs_type, "ext4") == 0 || strcmp(v->fs_type, "f2fs") == 0) {

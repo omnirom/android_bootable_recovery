@@ -32,7 +32,6 @@
 
 #include "openssl/sha.h"
 #include "applypatch/applypatch.h"
-#include "mtdutils/mtdutils.h"
 #include "edify/expr.h"
 #include "ota_io.h"
 #include "print_sha1.h"
@@ -49,17 +48,14 @@ static int GenerateTarget(FileContents* source_file,
                           size_t target_size,
                           const Value* bonus_data);
 
-static bool mtd_partitions_scanned = false;
-
 // Read a file into memory; store the file contents and associated
 // metadata in *file.
 //
 // Return 0 on success.
 int LoadFileContents(const char* filename, FileContents* file) {
-    // A special 'filename' beginning with "MTD:" or "EMMC:" means to
+    // A special 'filename' beginning with "EMMC:" means to
     // load the contents of a partition.
-    if (strncmp(filename, "MTD:", 4) == 0 ||
-        strncmp(filename, "EMMC:", 5) == 0) {
+    if (strncmp(filename, "EMMC:", 5) == 0) {
         return LoadPartitionContents(filename, file);
     }
 
@@ -87,10 +83,9 @@ int LoadFileContents(const char* filename, FileContents* file) {
     return 0;
 }
 
-// Load the contents of an MTD or EMMC partition into the provided
+// Load the contents of an EMMC partition into the provided
 // FileContents.  filename should be a string of the form
-// "MTD:<partition_name>:<size_1>:<sha1_1>:<size_2>:<sha1_2>:..."  (or
-// "EMMC:<partition_device>:...").  The smallest size_n bytes for
+// "EMMC:<partition_device>:...".  The smallest size_n bytes for
 // which that prefix of the partition contents has the corresponding
 // sha1 hash will be loaded.  It is acceptable for a size value to be
 // repeated with different sha1s.  Will return 0 on success.
@@ -102,8 +97,6 @@ int LoadFileContents(const char* filename, FileContents* file) {
 // "end-of-file" marker), so the caller must specify the possible
 // lengths and the hash of the data, and we'll do the load expecting
 // to find one of those hashes.
-enum PartitionType { MTD, EMMC };
-
 static int LoadPartitionContents(const char* filename, FileContents* file) {
     std::string copy(filename);
     std::vector<std::string> pieces = android::base::Split(copy, ":");
@@ -112,12 +105,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         return -1;
     }
 
-    enum PartitionType type;
-    if (pieces[0] == "MTD") {
-        type = MTD;
-    } else if (pieces[0] == "EMMC") {
-        type = EMMC;
-    } else {
+    if (pieces[0] != "EMMC") {
         printf("LoadPartitionContents called with bad filename (%s)\n", filename);
         return -1;
     }
@@ -145,36 +133,10 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         }
     );
 
-    MtdReadContext* ctx = NULL;
-    FILE* dev = NULL;
-
-    switch (type) {
-        case MTD: {
-            if (!mtd_partitions_scanned) {
-                mtd_scan_partitions();
-                mtd_partitions_scanned = true;
-            }
-
-            const MtdPartition* mtd = mtd_find_partition_by_name(partition);
-            if (mtd == NULL) {
-                printf("mtd partition \"%s\" not found (loading %s)\n", partition, filename);
-                return -1;
-            }
-
-            ctx = mtd_read_partition(mtd);
-            if (ctx == NULL) {
-                printf("failed to initialize read of mtd partition \"%s\"\n", partition);
-                return -1;
-            }
-            break;
-        }
-
-        case EMMC:
-            dev = ota_fopen(partition, "rb");
-            if (dev == NULL) {
-                printf("failed to open emmc partition \"%s\": %s\n", partition, strerror(errno));
-                return -1;
-            }
+    FILE* dev = ota_fopen(partition, "rb");
+    if (dev == NULL) {
+        printf("failed to open emmc partition \"%s\": %s\n", partition, strerror(errno));
+        return -1;
     }
 
     SHA_CTX sha_ctx;
@@ -192,16 +154,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         // we're trying the possibilities in order of increasing size).
         size_t next = size[index[i]] - data_size;
         if (next > 0) {
-            size_t read = 0;
-            switch (type) {
-                case MTD:
-                    read = mtd_read_data(ctx, p, next);
-                    break;
-
-                case EMMC:
-                    read = ota_fread(p, 1, next, dev);
-                    break;
-            }
+            size_t read = ota_fread(p, 1, next, dev);
             if (next != read) {
                 printf("short read (%zu bytes of %zu) for partition \"%s\"\n",
                        read, next, partition);
@@ -234,16 +187,7 @@ static int LoadPartitionContents(const char* filename, FileContents* file) {
         }
     }
 
-    switch (type) {
-        case MTD:
-            mtd_read_close(ctx);
-            break;
-
-        case EMMC:
-            ota_fclose(dev);
-            break;
-    }
-
+    ota_fclose(dev);
 
     if (!found) {
         // Ran off the end of the list of (size,sha1) pairs without finding a match.
@@ -302,7 +246,7 @@ int SaveFileContents(const char* filename, const FileContents* file) {
 }
 
 // Write a memory buffer to 'target' partition, a string of the form
-// "MTD:<partition>[:...]" or "EMMC:<partition_device>[:...]". The target name
+// "EMMC:<partition_device>[:...]". The target name
 // might contain multiple colons, but WriteToPartition() only uses the first
 // two and ignores the rest. Return 0 on success.
 int WriteToPartition(const unsigned char* data, size_t len, const char* target) {
@@ -314,164 +258,116 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
         return -1;
     }
 
-    enum PartitionType type;
-    if (pieces[0] == "MTD") {
-        type = MTD;
-    } else if (pieces[0] == "EMMC") {
-        type = EMMC;
-    } else {
+    if (pieces[0] != "EMMC") {
         printf("WriteToPartition called with bad target (%s)\n", target);
         return -1;
     }
     const char* partition = pieces[1].c_str();
 
-    switch (type) {
-        case MTD: {
-            if (!mtd_partitions_scanned) {
-                mtd_scan_partitions();
-                mtd_partitions_scanned = true;
-            }
+    size_t start = 0;
+    bool success = false;
+    int fd = ota_open(partition, O_RDWR | O_SYNC);
+    if (fd < 0) {
+        printf("failed to open %s: %s\n", partition, strerror(errno));
+        return -1;
+    }
 
-            const MtdPartition* mtd = mtd_find_partition_by_name(partition);
-            if (mtd == NULL) {
-                printf("mtd partition \"%s\" not found for writing\n", partition);
+    for (size_t attempt = 0; attempt < 2; ++attempt) {
+        if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1) {
+            printf("failed seek on %s: %s\n", partition, strerror(errno));
+            return -1;
+        }
+        while (start < len) {
+            size_t to_write = len - start;
+            if (to_write > 1<<20) to_write = 1<<20;
+
+            ssize_t written = TEMP_FAILURE_RETRY(ota_write(fd, data+start, to_write));
+            if (written == -1) {
+                printf("failed write writing to %s: %s\n", partition, strerror(errno));
                 return -1;
             }
-
-            MtdWriteContext* ctx = mtd_write_partition(mtd);
-            if (ctx == NULL) {
-                printf("failed to init mtd partition \"%s\" for writing\n", partition);
-                return -1;
-            }
-
-            size_t written = mtd_write_data(ctx, reinterpret_cast<const char*>(data), len);
-            if (written != len) {
-                printf("only wrote %zu of %zu bytes to MTD %s\n", written, len, partition);
-                mtd_write_close(ctx);
-                return -1;
-            }
-
-            if (mtd_erase_blocks(ctx, -1) < 0) {
-                printf("error finishing mtd write of %s\n", partition);
-                mtd_write_close(ctx);
-                return -1;
-            }
-
-            if (mtd_write_close(ctx)) {
-                printf("error closing mtd write of %s\n", partition);
-                return -1;
-            }
-            break;
+            start += written;
+        }
+        if (ota_fsync(fd) != 0) {
+            printf("failed to sync to %s (%s)\n", partition, strerror(errno));
+            return -1;
+        }
+        if (ota_close(fd) != 0) {
+            printf("failed to close %s (%s)\n", partition, strerror(errno));
+            return -1;
+        }
+        fd = ota_open(partition, O_RDONLY);
+        if (fd < 0) {
+            printf("failed to reopen %s for verify (%s)\n", partition, strerror(errno));
+            return -1;
         }
 
-        case EMMC: {
-            size_t start = 0;
-            bool success = false;
-            int fd = ota_open(partition, O_RDWR | O_SYNC);
-            if (fd < 0) {
-                printf("failed to open %s: %s\n", partition, strerror(errno));
-                return -1;
+        // Drop caches so our subsequent verification read
+        // won't just be reading the cache.
+        sync();
+        int dc = ota_open("/proc/sys/vm/drop_caches", O_WRONLY);
+        if (TEMP_FAILURE_RETRY(ota_write(dc, "3\n", 2)) == -1) {
+            printf("write to /proc/sys/vm/drop_caches failed: %s\n", strerror(errno));
+        } else {
+            printf("  caches dropped\n");
+        }
+        ota_close(dc);
+        sleep(1);
+
+        // verify
+        if (TEMP_FAILURE_RETRY(lseek(fd, 0, SEEK_SET)) == -1) {
+            printf("failed to seek back to beginning of %s: %s\n",
+                   partition, strerror(errno));
+            return -1;
+        }
+        unsigned char buffer[4096];
+        start = len;
+        for (size_t p = 0; p < len; p += sizeof(buffer)) {
+            size_t to_read = len - p;
+            if (to_read > sizeof(buffer)) {
+                to_read = sizeof(buffer);
             }
 
-            for (size_t attempt = 0; attempt < 2; ++attempt) {
-                if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1) {
-                    printf("failed seek on %s: %s\n", partition, strerror(errno));
+            size_t so_far = 0;
+            while (so_far < to_read) {
+                ssize_t read_count =
+                    TEMP_FAILURE_RETRY(ota_read(fd, buffer+so_far, to_read-so_far));
+                if (read_count == -1) {
+                    printf("verify read error %s at %zu: %s\n",
+                           partition, p, strerror(errno));
                     return -1;
                 }
-                while (start < len) {
-                    size_t to_write = len - start;
-                    if (to_write > 1<<20) to_write = 1<<20;
-
-                    ssize_t written = TEMP_FAILURE_RETRY(ota_write(fd, data+start, to_write));
-                    if (written == -1) {
-                        printf("failed write writing to %s: %s\n", partition, strerror(errno));
-                        return -1;
-                    }
-                    start += written;
+                if (static_cast<size_t>(read_count) < to_read) {
+                    printf("short verify read %s at %zu: %zd %zu %s\n",
+                           partition, p, read_count, to_read, strerror(errno));
                 }
-                if (ota_fsync(fd) != 0) {
-                   printf("failed to sync to %s (%s)\n", partition, strerror(errno));
-                   return -1;
-                }
-                if (ota_close(fd) != 0) {
-                   printf("failed to close %s (%s)\n", partition, strerror(errno));
-                   return -1;
-                }
-                fd = ota_open(partition, O_RDONLY);
-                if (fd < 0) {
-                   printf("failed to reopen %s for verify (%s)\n", partition, strerror(errno));
-                   return -1;
-                }
-
-                // Drop caches so our subsequent verification read
-                // won't just be reading the cache.
-                sync();
-                int dc = ota_open("/proc/sys/vm/drop_caches", O_WRONLY);
-                if (TEMP_FAILURE_RETRY(ota_write(dc, "3\n", 2)) == -1) {
-                    printf("write to /proc/sys/vm/drop_caches failed: %s\n", strerror(errno));
-                } else {
-                    printf("  caches dropped\n");
-                }
-                ota_close(dc);
-                sleep(1);
-
-                // verify
-                if (TEMP_FAILURE_RETRY(lseek(fd, 0, SEEK_SET)) == -1) {
-                    printf("failed to seek back to beginning of %s: %s\n",
-                           partition, strerror(errno));
-                    return -1;
-                }
-                unsigned char buffer[4096];
-                start = len;
-                for (size_t p = 0; p < len; p += sizeof(buffer)) {
-                    size_t to_read = len - p;
-                    if (to_read > sizeof(buffer)) {
-                        to_read = sizeof(buffer);
-                    }
-
-                    size_t so_far = 0;
-                    while (so_far < to_read) {
-                        ssize_t read_count =
-                                TEMP_FAILURE_RETRY(ota_read(fd, buffer+so_far, to_read-so_far));
-                        if (read_count == -1) {
-                            printf("verify read error %s at %zu: %s\n",
-                                   partition, p, strerror(errno));
-                            return -1;
-                        }
-                        if (static_cast<size_t>(read_count) < to_read) {
-                            printf("short verify read %s at %zu: %zd %zu %s\n",
-                                   partition, p, read_count, to_read, strerror(errno));
-                        }
-                        so_far += read_count;
-                    }
-
-                    if (memcmp(buffer, data+p, to_read) != 0) {
-                        printf("verification failed starting at %zu\n", p);
-                        start = p;
-                        break;
-                    }
-                }
-
-                if (start == len) {
-                    printf("verification read succeeded (attempt %zu)\n", attempt+1);
-                    success = true;
-                    break;
-                }
+                so_far += read_count;
             }
 
-            if (!success) {
-                printf("failed to verify after all attempts\n");
-                return -1;
+            if (memcmp(buffer, data+p, to_read) != 0) {
+                printf("verification failed starting at %zu\n", p);
+                start = p;
+                break;
             }
+        }
 
-            if (ota_close(fd) != 0) {
-                printf("error closing %s (%s)\n", partition, strerror(errno));
-                return -1;
-            }
-            sync();
+        if (start == len) {
+            printf("verification read succeeded (attempt %zu)\n", attempt+1);
+            success = true;
             break;
         }
     }
+
+    if (!success) {
+        printf("failed to verify after all attempts\n");
+        return -1;
+    }
+
+    if (ota_close(fd) != 0) {
+        printf("error closing %s (%s)\n", partition, strerror(errno));
+        return -1;
+    }
+    sync();
 
     return 0;
 }
@@ -729,7 +625,7 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
     std::string target_str(target_filename);
 
     std::vector<std::string> pieces = android::base::Split(target_str, ":");
-    if (pieces.size() != 2 || (pieces[0] != "MTD" && pieces[0] != "EMMC")) {
+    if (pieces.size() != 2 || pieces[0] != "EMMC") {
         printf("invalid target name \"%s\"", target_filename);
         return 1;
     }
@@ -778,8 +674,7 @@ static int GenerateTarget(FileContents* source_file,
     FileContents* source_to_use;
     int made_copy = 0;
 
-    bool target_is_partition = (strncmp(target_filename, "MTD:", 4) == 0 ||
-                                strncmp(target_filename, "EMMC:", 5) == 0);
+    bool target_is_partition = (strncmp(target_filename, "EMMC:", 5) == 0);
     const std::string tmp_target_filename = std::string(target_filename) + ".patch";
 
     // assume that target_filename (eg "/system/app/Foo.apk") is located
@@ -860,8 +755,7 @@ static int GenerateTarget(FileContents* source_file,
                 // copy the source file to cache, then delete it from the original
                 // location.
 
-                if (strncmp(source_filename, "MTD:", 4) == 0 ||
-                    strncmp(source_filename, "EMMC:", 5) == 0) {
+                if (strncmp(source_filename, "EMMC:", 5) == 0) {
                     // It's impossible to free space on the target filesystem by
                     // deleting the source if the source is a partition.  If
                     // we're ever in a state where we need to do this, fail.
