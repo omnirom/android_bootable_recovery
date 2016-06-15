@@ -160,9 +160,9 @@ static int PatchMode(int argc, char** argv) {
 // - otherwise, or if any error is encountered, exits with non-zero
 //   status.
 //
-// <src-file> (or <file> in check mode) may refer to an MTD partition
+// <src-file> (or <file> in check mode) may refer to an EMMC partition
 // to read the source data.  See the comments for the
-// LoadMTDContents() function above for the format of such a filename.
+// LoadPartitionContents() function for the format of such a filename.
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -175,8 +175,8 @@ int main(int argc, char** argv) {
             "   or  %s -l\n"
             "\n"
             "Filenames may be of the form\n"
-            "  MTD:<partition>:<len_1>:<sha1_1>:<len_2>:<sha1_2>:...\n"
-            "to specify reading from or writing to an MTD partition.\n\n",
+            "  EMMC:<partition>:<len_1>:<sha1_1>:<len_2>:<sha1_2>:...\n"
+            "to specify reading from or writing to an EMMC partition.\n\n",
             argv[0], argv[0], argv[0], argv[0]);
         return 2;
     }
