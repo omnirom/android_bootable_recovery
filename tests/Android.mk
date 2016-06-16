@@ -46,7 +46,6 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_STATIC_LIBRARIES := \
     libapplypatch \
     libotafault \
-    libmtdutils \
     libbase \
     libverifier \
     libcrypto_utils_static \
