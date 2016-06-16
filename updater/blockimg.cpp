@@ -1267,11 +1267,17 @@ static int PerformCommandDiff(CommandParameters& params) {
             }
 
             if (params.cmdname[0] == 'i') {      // imgdiff
-                ApplyImagePatch(params.buffer.data(), blocks * BLOCKSIZE, &patch_value,
-                    &RangeSinkWrite, &rss, nullptr, nullptr);
+                if (ApplyImagePatch(params.buffer.data(), blocks * BLOCKSIZE, &patch_value,
+                        &RangeSinkWrite, &rss, nullptr, nullptr) != 0) {
+                    fprintf(stderr, "Failed to apply image patch.\n");
+                    return -1;
+                }
             } else {
-                ApplyBSDiffPatch(params.buffer.data(), blocks * BLOCKSIZE, &patch_value, 0,
-                    &RangeSinkWrite, &rss, nullptr);
+                if (ApplyBSDiffPatch(params.buffer.data(), blocks * BLOCKSIZE, &patch_value,
+                        0, &RangeSinkWrite, &rss, nullptr) != 0) {
+                    fprintf(stderr, "Failed to apply bsdiff patch.\n");
+                    return -1;
+                }
             }
 
             // We expect the output of the patcher to fill the tgt ranges exactly.
