@@ -38,17 +38,28 @@ class twrpDU {
 public:
 	twrpDU();
 	uint64_t Get_Folder_Size(const string& Path); // Gets the folder's size using stat
+	uint64_t Get_Folder_Backup_Size(const string& Path); // Gets the folder's backup size using stat
 	void add_absolute_dir(const string& Path);
+	bool check_skip_dirs(const string& path); // also used by TWPartition::Wipe_Data_Without_Wiping_Media_Func
+	bool check_skip_backup(const string& path);
+
+private:
 	void add_relative_dir(const string& Path);
 	bool check_relative_skip_dirs(const string& dir);
 	bool check_absolute_skip_dirs(const string& path);
-	bool check_skip_dirs(const string& path);
 	vector<string> get_absolute_dirs(void);
 	void clear_relative_dir(string dir);
+	int LoadBackupExcludes(void);
+	bool check_skip_backup_dirs(const string& path);
+	bool check_skip_backup_files(const string& path);
+
 private:
 	vector<string> absolutedir;
 	vector<string> relativedir;
+	bool backup_excludes_loaded;
+	vector<string> backup_exclude;
 };
 
 extern twrpDU du;
 #endif
+

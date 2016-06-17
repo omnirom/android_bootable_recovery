@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
 	tar.has_data_media = has_data_media;
 	tar.setdir(Directory);
 	tar.setfn(Tar_Filename);
-	tar.setsize(du.Get_Folder_Size(Directory));
+	tar.setsize(du.Get_Folder_Backup_Size(Directory));
 	tar.use_compression = use_compression;
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	if (userdata_encryption && !use_encryption) {

@@ -972,7 +972,7 @@ bool TWPartition::Get_Size_Via_statfs(bool Display_Error) {
 	Size = (st.f_blocks * st.f_bsize);
 	Used = ((st.f_blocks - st.f_bfree) * st.f_bsize);
 	Free = (st.f_bfree * st.f_bsize);
-	Backup_Size = Used;
+	Backup_Size = du.Get_Folder_Backup_Size(Local_Path); //Backup_Size = Used;
 	return true;
 }
 
@@ -2433,7 +2433,7 @@ bool TWPartition::Update_Size(bool Display_Error) {
 		if (Mount(Display_Error)) {
 			unsigned long long data_media_used, actual_data;
 			Used = du.Get_Folder_Size(Mount_Point);
-			Backup_Size = Used;
+			Backup_Size = du.Get_Folder_Backup_Size(Mount_Point);
 			int bak = (int)(Used / 1048576LLU);
 			int fre = (int)(Free / 1048576LLU);
 			LOGINFO("Data backup size is %iMB, free: %iMB.\n", bak, fre);
@@ -2444,7 +2444,7 @@ bool TWPartition::Update_Size(bool Display_Error) {
 		}
 	} else if (Has_Android_Secure) {
 		if (Mount(Display_Error))
-			Backup_Size = du.Get_Folder_Size(Backup_Path);
+			Backup_Size = du.Get_Folder_Backup_Size(Backup_Path);
 		else {
 			if (!Was_Already_Mounted)
 				UnMount(false);

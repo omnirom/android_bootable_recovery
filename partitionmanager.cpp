@@ -791,7 +791,7 @@ int TWPartitionManager::Run_Backup(void) {
 
 	time(&total_stop);
 	int total_time = (int) difftime(total_stop, total_start);
-	uint64_t actual_backup_size = du.Get_Folder_Size(Full_Backup_Path);
+	uint64_t actual_backup_size = du.Get_Folder_Backup_Size(Full_Backup_Path);
 	actual_backup_size /= (1024LLU * 1024LLU);
 
 	int prev_img_bps, use_compression;

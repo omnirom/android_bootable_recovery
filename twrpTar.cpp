@@ -151,7 +151,7 @@ int twrpTar::createTarFork(ProgressTracking *progress, pid_t &fork_pid) {
 			while ((de = readdir(d)) != NULL) {
 				FileName = tardir + "/" + de->d_name;
 
-				if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName))
+				if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName) || du.check_skip_backup(FileName + (de->d_type == DT_DIR ? "/" : "")))
 					continue;
 				if (de->d_type == DT_DIR) {
 					item_len = strlen(de->d_name);
@@ -166,9 +166,9 @@ int twrpTar::createTarFork(ProgressTracking *progress, pid_t &fork_pid) {
 							_exit(-1);
 						}
 						file_count = (unsigned long long)(ret);
-						regular_size += du.Get_Folder_Size(FileName);
+						regular_size += du.Get_Folder_Backup_Size(FileName);
 					} else {
-						encrypt_size += du.Get_Folder_Size(FileName);
+						encrypt_size += du.Get_Folder_Backup_Size(FileName);
 					}
 				} else if (de->d_type == DT_REG) {
 					stat(FileName.c_str(), &st);
@@ -199,7 +199,7 @@ int twrpTar::createTarFork(ProgressTracking *progress, pid_t &fork_pid) {
 			while ((de = readdir(d)) != NULL) {
 				FileName = tardir + "/" + de->d_name;
 
-				if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName))
+				if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName) || du.check_skip_backup(FileName + (de->d_type == DT_DIR ? "/" : "")))
 					continue;
 				if (de->d_type == DT_DIR) {
 					item_len = strlen(de->d_name);
@@ -634,7 +634,7 @@ int twrpTar::Generate_TarList(string Path, std::vector<TarListStruct> *TarList, 
 	while ((de = readdir(d)) != NULL) {
 		FileName = Path + "/" + de->d_name;
 
-		if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName))
+		if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName) || du.check_skip_backup(FileName + (de->d_type == DT_DIR ? "/" : "")))
 			continue;
 		TarItem.fn = FileName;
 		TarItem.thread_id = *thread_id;
