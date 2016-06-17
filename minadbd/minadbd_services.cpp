@@ -21,11 +21,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "sysdeps.h"
-
 #include "adb.h"
 #include "fdevent.h"
 #include "fuse_adb_provider.h"
+#include "sysdeps.h"
 
 typedef struct stinfo stinfo;
 
@@ -62,7 +61,7 @@ static void sideload_host_service(int sfd, void* data) {
 
 static int create_service_thread(void (*func)(int, void *), void *cookie) {
     int s[2];
-    if(adb_socketpair(s)) {
+    if (adb_socketpair(s)) {
         printf("cannot create service socket pair\n");
         return -1;
     }
