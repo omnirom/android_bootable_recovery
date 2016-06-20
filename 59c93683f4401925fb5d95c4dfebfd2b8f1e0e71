@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5804b501_a2627aa3",
+        "filename": "partitions.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-06-20T21:29:30Z",
+      "side": 1,
+      "message": "bool Display_Error",
+      "range": {
+        "startLine": 138,
+        "startChar": 26,
+        "endLine": 138,
+        "endChar": 30
+      },
+      "revId": "59c93683f4401925fb5d95c4dfebfd2b8f1e0e71",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
