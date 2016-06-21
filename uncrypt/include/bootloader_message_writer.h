@@ -24,6 +24,7 @@
 bool clear_bootloader_message(std::string* err);
 
 bool write_bootloader_message(const std::vector<std::string>& options, std::string* err);
+bool write_wipe_package(const std::string& package_data, std::string* err);
 
 #else
 #include <stdbool.h>
