@@ -25,6 +25,8 @@
 
 #include <fs_mgr.h>
 
+#include <android-base/file.h>
+
 #include "bootloader.h"
 #include "common.h"
 #include "mtdutils/mtdutils.h"
@@ -33,8 +35,8 @@
 
 static int get_bootloader_message_mtd(bootloader_message* out, const Volume* v);
 static int set_bootloader_message_mtd(const bootloader_message* in, const Volume* v);
-static int get_bootloader_message_block(bootloader_message* out, const Volume* v);
-static int set_bootloader_message_block(const bootloader_message* in, const Volume* v);
+static bool read_misc_partition(const Volume* v, size_t offset, size_t size, std::string* out);
+static bool write_misc_partition(const Volume* v, size_t offset, const std::string& in);
 
 int get_bootloader_message(bootloader_message* out) {
     Volume* v = volume_for_path("/misc");
@@ -45,10 +47,32 @@ int get_bootloader_message(bootloader_message* out) {
     if (strcmp(v->fs_type, "mtd") == 0) {
         return get_bootloader_message_mtd(out, v);
     } else if (strcmp(v->fs_type, "emmc") == 0) {
-        return get_bootloader_message_block(out, v);
+        std::string s;
+        if (!read_misc_partition(v, BOOTLOADER_MESSAGE_OFFSET_IN_MISC, sizeof(bootloader_message),
+                                 &s)) {
+            return -1;
+        }
+        memcpy(out, s.data(), s.size());
+        return 0;
     }
-    LOGE("unknown misc partition fs_type \"%s\"\n", v->fs_type);
+    LOGE("Unknown misc partition fs_type \"%s\"\n", v->fs_type);
     return -1;
+}
+
+bool read_wipe_package(size_t size, std::string* out) {
+    Volume* v = volume_for_path("/misc");
+    if (v == nullptr) {
+        LOGE("Cannot load volume /misc!\n");
+        return false;
+    }
+    if (strcmp(v->fs_type, "mtd") == 0) {
+        LOGE("Read wipe package on mtd is not supported.\n");
+        return false;
+    } else if (strcmp(v->fs_type, "emmc") == 0) {
+        return read_misc_partition(v, WIPE_PACKAGE_OFFSET_IN_MISC, size, out);
+    }
+    LOGE("Unknown misc partition fs_type \"%s\"\n", v->fs_type);
+    return false;
 }
 
 int set_bootloader_message(const bootloader_message* in) {
@@ -60,9 +84,11 @@ int set_bootloader_message(const bootloader_message* in) {
     if (strcmp(v->fs_type, "mtd") == 0) {
         return set_bootloader_message_mtd(in, v);
     } else if (strcmp(v->fs_type, "emmc") == 0) {
-        return set_bootloader_message_block(in, v);
+        std::string s(reinterpret_cast<const char*>(in), sizeof(*in));
+        bool success = write_misc_partition(v, BOOTLOADER_MESSAGE_OFFSET_IN_MISC, s);
+        return success ? 0 : -1;
     }
-    LOGE("unknown misc partition fs_type \"%s\"\n", v->fs_type);
+    LOGE("Unknown misc partition fs_type \"%s\"\n", v->fs_type);
     return -1;
 }
 
@@ -166,53 +192,44 @@ static void wait_for_device(const char* fn) {
     }
 }
 
-static int get_bootloader_message_block(bootloader_message* out,
-                                        const Volume* v) {
+static bool read_misc_partition(const Volume* v, size_t offset, size_t size, std::string* out) {
     wait_for_device(v->blk_device);
-    FILE* f = fopen(v->blk_device, "rb");
-    if (f == nullptr) {
-        LOGE("failed to open \"%s\": %s\n", v->blk_device, strerror(errno));
-        return -1;
+    unique_fd fd(open(v->blk_device, O_RDONLY));
+    if (fd.get() == -1) {
+        LOGE("Failed to open \"%s\": %s\n", v->blk_device, strerror(errno));
+        return false;
     }
-    bootloader_message temp;
-    int count = fread(&temp, sizeof(temp), 1, f);
-    if (count != 1) {
-        LOGE("failed to read \"%s\": %s\n", v->blk_device, strerror(errno));
-        return -1;
+    if (lseek(fd.get(), static_cast<off_t>(offset), SEEK_SET) != static_cast<off_t>(offset)) {
+        LOGE("Failed to lseek \"%s\": %s\n", v->blk_device, strerror(errno));
+        return false;
     }
-    if (fclose(f) != 0) {
-        LOGE("failed to close \"%s\": %s\n", v->blk_device, strerror(errno));
-        return -1;
+    out->resize(size);
+    if (!android::base::ReadFully(fd.get(), &(*out)[0], size)) {
+        LOGE("Failed to read \"%s\": %s\n", v->blk_device, strerror(errno));
+        return false;
     }
-    memcpy(out, &temp, sizeof(temp));
-    return 0;
+    return true;
 }
 
-static int set_bootloader_message_block(const bootloader_message* in,
-                                        const Volume* v) {
+static bool write_misc_partition(const Volume* v, size_t offset, const std::string& in) {
     wait_for_device(v->blk_device);
     unique_fd fd(open(v->blk_device, O_WRONLY | O_SYNC));
     if (fd.get() == -1) {
-        LOGE("failed to open \"%s\": %s\n", v->blk_device, strerror(errno));
-        return -1;
+        LOGE("Failed to open \"%s\": %s\n", v->blk_device, strerror(errno));
+        return false;
     }
-
-    size_t written = 0;
-    const uint8_t* start = reinterpret_cast<const uint8_t*>(in);
-    size_t total = sizeof(*in);
-    while (written < total) {
-        ssize_t wrote = TEMP_FAILURE_RETRY(write(fd.get(), start + written, total - written));
-        if (wrote == -1) {
-            LOGE("failed to write %" PRId64 " bytes: %s\n",
-                 static_cast<off64_t>(written), strerror(errno));
-            return -1;
-        }
-        written += wrote;
+    if (lseek(fd.get(), static_cast<off_t>(offset), SEEK_SET) != static_cast<off_t>(offset)) {
+        LOGE("Failed to lseek \"%s\": %s\n", v->blk_device, strerror(errno));
+        return false;
+    }
+    if (!android::base::WriteFully(fd.get(), in.data(), in.size())) {
+        LOGE("Failed to write \"%s\": %s\n", v->blk_device, strerror(errno));
+        return false;
     }
 
     if (fsync(fd.get()) == -1) {
-        LOGE("failed to fsync \"%s\": %s\n", v->blk_device, strerror(errno));
-        return -1;
+        LOGE("Failed to fsync \"%s\": %s\n", v->blk_device, strerror(errno));
+        return false;
     }
-    return 0;
+    return true;
 }

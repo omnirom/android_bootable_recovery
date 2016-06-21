@@ -70,20 +70,27 @@ static int parse_build_number(std::string str) {
     return -1;
 }
 
-// Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
-static void read_source_target_build(ZipArchive* zip, std::vector<std::string>& log_buffer) {
+bool read_metadata_from_package(ZipArchive* zip, std::string* meta_data) {
     const ZipEntry* meta_entry = mzFindZipEntry(zip, METADATA_PATH);
     if (meta_entry == nullptr) {
         LOGE("Failed to find %s in update package.\n", METADATA_PATH);
-        return;
+        return false;
     }
 
-    std::string meta_data(meta_entry->uncompLen, '\0');
-    if (!mzReadZipEntry(zip, meta_entry, &meta_data[0], meta_entry->uncompLen)) {
+    meta_data->resize(meta_entry->uncompLen, '\0');
+    if (!mzReadZipEntry(zip, meta_entry, &(*meta_data)[0], meta_entry->uncompLen)) {
         LOGE("Failed to read metadata in update package.\n");
+        return false;
+    }
+    return true;
+}
+
+// Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
+static void read_source_target_build(ZipArchive* zip, std::vector<std::string>& log_buffer) {
+    std::string meta_data;
+    if (!read_metadata_from_package(zip, &meta_data)) {
         return;
     }
-
     // Examples of the pre-build and post-build strings in metadata:
     // pre-build-incremental=2943039
     // post-build-incremental=2951741
@@ -300,31 +307,16 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
         return INSTALL_CORRUPT;
     }
 
-    // Load keys.
-    std::vector<Certificate> loadedKeys;
-    if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
-        LOGE("Failed to load keys\n");
-        return INSTALL_CORRUPT;
-    }
-    LOGI("%zu key(s) loaded from %s\n", loadedKeys.size(), PUBLIC_KEYS_FILE);
-
     // Verify package.
-    ui->Print("Verifying update package...\n");
-    auto t0 = std::chrono::system_clock::now();
-    int err = verify_file(map.addr, map.length, loadedKeys);
-    std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
-    ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
-    if (err != VERIFY_SUCCESS) {
-        LOGE("signature verification failed\n");
+    if (!verify_package(map.addr, map.length)) {
         log_buffer.push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
-
         sysReleaseMap(&map);
         return INSTALL_CORRUPT;
     }
 
     // Try to open the package.
     ZipArchive zip;
-    err = mzOpenZipArchive(map.addr, map.length, &zip);
+    int err = mzOpenZipArchive(map.addr, map.length, &zip);
     if (err != 0) {
         LOGE("Can't open %s\n(%s)\n", path, err != -1 ? strerror(err) : "bad");
         log_buffer.push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
@@ -386,4 +378,26 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
         fclose(install_log);
     }
     return result;
+}
+
+bool verify_package(const unsigned char* package_data, size_t package_size) {
+    std::vector<Certificate> loadedKeys;
+    if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
+        LOGE("Failed to load keys\n");
+        return false;
+    }
+    LOGI("%zu key(s) loaded from %s\n", loadedKeys.size(), PUBLIC_KEYS_FILE);
+
+    // Verify package.
+    ui->Print("Verifying update package...\n");
+    auto t0 = std::chrono::system_clock::now();
+    int err = verify_file(const_cast<unsigned char*>(package_data), package_size, loadedKeys);
+    std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
+    ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
+    if (err != VERIFY_SUCCESS) {
+        LOGE("Signature verification failed\n");
+        LOGE("error: %d\n", kZipVerificationFailure);
+        return false;
+    }
+    return true;
 }
