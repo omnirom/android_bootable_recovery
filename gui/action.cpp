@@ -792,6 +792,8 @@ int GUIAction::appenddatetobackupname(std::string arg __unused)
 	if (Backup_Name.size() > MAX_BACKUP_NAME_LEN)
 		Backup_Name.resize(MAX_BACKUP_NAME_LEN);
 	DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
+	PageManager::NotifyKey(KEY_END, true);
+	PageManager::NotifyKey(KEY_END, false);
 	operation_end(0);
 	return 0;
 }
