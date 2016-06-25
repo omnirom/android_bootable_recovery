@@ -46,6 +46,7 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
+#include <bootloader_message/bootloader_message.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h> /* for property_list */
 #include <healthd/BatteryMonitor.h>
@@ -55,7 +56,6 @@
 #include <ziparchive/zip_archive.h>
 
 #include "adb_install.h"
-#include "bootloader.h"
 #include "common.h"
 #include "device.h"
 #include "error_code.h"
@@ -85,7 +85,7 @@ static const struct option OPTIONS[] = {
   { "shutdown_after", no_argument, NULL, 'p' },
   { "reason", required_argument, NULL, 'r' },
   { "security", no_argument, NULL, 'e'},
-  { "brick", no_argument, NULL, 0 },
+  { "wipe_ab", no_argument, NULL, 0 },
   { NULL, 0, NULL, 0 },
 };
 
@@ -112,7 +112,7 @@ static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
 // So we should check battery with a slightly lower limitation.
 static const int BATTERY_OK_PERCENTAGE = 20;
 static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
-constexpr const char* RECOVERY_BRICK = "/etc/recovery.brick";
+constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
 
 RecoveryUI* ui = NULL;
 static const char* locale = "en_US";
@@ -301,9 +301,13 @@ static void redirect_stdio(const char* filename) {
 //   - the contents of COMMAND_FILE (one per line)
 static void
 get_args(int *argc, char ***argv) {
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
-    get_bootloader_message(&boot);  // this may fail, leaving a zeroed structure
+    bootloader_message boot = {};
+    std::string err;
+    if (!read_bootloader_message(&boot, &err)) {
+        LOG(ERROR) << err;
+        // If fails, leave a zeroed bootloader_message.
+        memset(&boot, 0, sizeof(boot));
+    }
     stage = strndup(boot.stage, sizeof(boot.stage));
 
     if (boot.command[0] != 0) {
@@ -368,16 +372,20 @@ get_args(int *argc, char ***argv) {
         strlcat(boot.recovery, (*argv)[i], sizeof(boot.recovery));
         strlcat(boot.recovery, "\n", sizeof(boot.recovery));
     }
-    set_bootloader_message(&boot);
+    if (!write_bootloader_message(boot, &err)) {
+        LOG(ERROR) << err;
+    }
 }
 
 static void
 set_sdcard_update_bootloader_message() {
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
+    bootloader_message boot = {};
     strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
     strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
-    set_bootloader_message(&boot);
+    std::string err;
+    if (!write_bootloader_message(boot, &err)) {
+        LOG(ERROR) << err;
+    }
 }
 
 // Read from kernel log into buffer and write out to file.
@@ -528,9 +536,11 @@ finish_recovery() {
     copy_logs();
 
     // Reset to normal system boot so recovery won't cycle indefinitely.
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
-    set_bootloader_message(&boot);
+    bootloader_message boot = {};
+    std::string err;
+    if (!write_bootloader_message(boot, &err)) {
+        LOG(ERROR) << err;
+    }
 
     // Remove the command file, so recovery won't repeat indefinitely.
     if (has_cache) {
@@ -898,15 +908,15 @@ static bool secure_wipe_partition(const std::string& partition) {
     return true;
 }
 
-// Brick the current device, with a secure wipe of all the partitions in
-// RECOVERY_BRICK.
-static bool brick_device() {
+// Wipe the current A/B device, with a secure wipe of all the partitions in
+// RECOVERY_WIPE.
+static bool wipe_ab_device() {
     ui->SetBackground(RecoveryUI::ERASING);
     ui->SetProgressType(RecoveryUI::INDETERMINATE);
 
     std::string partition_list;
-    if (!android::base::ReadFileToString(RECOVERY_BRICK, &partition_list)) {
-        LOG(ERROR) << "failed to read \"" << RECOVERY_BRICK << "\"";
+    if (!android::base::ReadFileToString(RECOVERY_WIPE, &partition_list)) {
+        LOG(ERROR) << "failed to read \"" << RECOVERY_WIPE << "\"";
         return false;
     }
 
@@ -1311,7 +1321,7 @@ static bool is_battery_ok() {
 }
 
 static void set_retry_bootloader_message(int retry_count, int argc, char** argv) {
-    struct bootloader_message boot {};
+    bootloader_message boot = {};
     strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
     strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
 
@@ -1330,7 +1340,10 @@ static void set_retry_bootloader_message(int retry_count, int argc, char** argv)
         snprintf(buffer, sizeof(buffer), "--retry_count=%d\n", retry_count+1);
         strlcat(boot.recovery, buffer, sizeof(boot.recovery));
     }
-    set_bootloader_message(&boot);
+    std::string err;
+    if (!write_bootloader_message(boot, &err)) {
+        LOG(ERROR) << err;
+    }
 }
 
 static ssize_t logbasename(
@@ -1428,7 +1441,7 @@ int main(int argc, char **argv) {
     const char *update_package = NULL;
     bool should_wipe_data = false;
     bool should_wipe_cache = false;
-    bool should_brick = false;
+    bool should_wipe_ab = false;
     bool show_text = false;
     bool sideload = false;
     bool sideload_auto_reboot = false;
@@ -1462,8 +1475,8 @@ int main(int argc, char **argv) {
         case 'r': reason = optarg; break;
         case 'e': security_update = true; break;
         case 0: {
-            if (strcmp(OPTIONS[option_index].name, "brick") == 0) {
-                should_brick = true;
+            if (strcmp(OPTIONS[option_index].name, "wipe_ab") == 0) {
+                should_wipe_ab = true;
                 break;
             }
             break;
@@ -1609,8 +1622,8 @@ int main(int argc, char **argv) {
         if (!wipe_cache(false, device)) {
             status = INSTALL_ERROR;
         }
-    } else if (should_brick) {
-        if (!brick_device()) {
+    } else if (should_wipe_ab) {
+        if (!wipe_ab_device()) {
             status = INSTALL_ERROR;
         }
     } else if (sideload) {
