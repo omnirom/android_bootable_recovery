@@ -21,10 +21,10 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
+#include <bootloader_message/bootloader_message.h>
 #include "gui/twmsg.h"
 
 #include "cutils/properties.h"
-#include "bootloader.h"
 
 #ifdef ANDROID_RB_RESTART
 #include "cutils/android_reboot.h"
