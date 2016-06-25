@@ -36,6 +36,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <bootloader_message/bootloader_message.h>
 #include "twrp-functions.hpp"
 #include "twcommon.h"
 #include "gui/gui.hpp"
@@ -43,7 +44,6 @@
 #include "data.hpp"
 #include "partitions.hpp"
 #include "variables.h"
-#include "bootloader.h"
 #include "cutils/properties.h"
 #include "cutils/android_reboot.h"
 #include <sys/reboot.h>
@@ -505,10 +505,11 @@ void TWFunc::Update_Log_File(void) {
 	// Reset bootloader message
 	TWPartition* Part = PartitionManager.Find_Partition_By_Path("/misc");
 	if (Part != NULL) {
-		struct bootloader_message boot;
-		memset(&boot, 0, sizeof(boot));
-		if (set_bootloader_message(&boot) != 0)
-			LOGERR("Unable to set bootloader message.\n");
+		bootloader_message boot = {};
+		std::string err;
+		if (!write_bootloader_message(boot, &err)) {
+			LOGE("%s\n", err.c_str());
+		}
 	}
 
 	if (PartitionManager.Mount_By_Path("/cache", true)) {
