@@ -21,7 +21,7 @@
 
 class Device {
   public:
-    Device(RecoveryUI* ui) : ui_(ui) { }
+    explicit Device(RecoveryUI* ui) : ui_(ui) { }
     virtual ~Device() { }
 
     // Called to obtain the UI object that should be used to display
