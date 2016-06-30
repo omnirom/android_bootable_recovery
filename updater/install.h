@@ -20,8 +20,8 @@
 void RegisterInstallFunctions();
 
 // uiPrintf function prints msg to screen as well as logs
-void uiPrintf(State* state, const char* format, ...);
+void uiPrintf(State* _Nonnull state, const char* _Nonnull format, ...) __attribute__((__format__(printf, 2, 3)));
 
-static int make_parents(char* name);
+static int make_parents(char* _Nonnull name);
 
 #endif
