@@ -1187,6 +1187,7 @@ int TWPartitionManager::Factory_Reset(void) {
 				ret = false;
 		}
 	}
+	TWFunc::check_and_run_script("/sbin/factoryreset.sh", "Factory Reset Script");
 	return ret;
 }
 
