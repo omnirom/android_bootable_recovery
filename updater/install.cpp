@@ -80,8 +80,7 @@ static void uiPrint(State* state, const std::string& buffer) {
     fprintf(stderr, "%s", buffer.c_str());
 }
 
-__attribute__((__format__(printf, 2, 3))) __nonnull((2))
-void uiPrintf(State* state, const char* format, ...) {
+void uiPrintf(State* _Nonnull state, const char* _Nonnull format, ...) {
     std::string error_msg;
 
     va_list ap;
