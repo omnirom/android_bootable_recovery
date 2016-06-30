@@ -41,7 +41,6 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     adb_install.cpp \
     asn1_decoder.cpp \
-    bootloader.cpp \
     device.cpp \
     fuse_sdcard_provider.cpp \
     install.cpp \
@@ -76,6 +75,7 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_STATIC_LIBRARIES := \
     libbatterymonitor \
+    libbootloader_message \
     libext4_utils_static \
     libsparse_static \
     libminzip \
@@ -152,14 +152,16 @@ LOCAL_SRC_FILES := \
 LOCAL_STATIC_LIBRARIES := libcrypto_utils_static libcrypto_static
 include $(BUILD_STATIC_LIBRARY)
 
-include $(LOCAL_PATH)/minui/Android.mk \
-    $(LOCAL_PATH)/minzip/Android.mk \
+include \
+    $(LOCAL_PATH)/applypatch/Android.mk \
+    $(LOCAL_PATH)/bootloader_message/Android.mk \
+    $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/minadbd/Android.mk \
+    $(LOCAL_PATH)/minui/Android.mk \
+    $(LOCAL_PATH)/minzip/Android.mk \
+    $(LOCAL_PATH)/otafault/Android.mk \
     $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
-    $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/uncrypt/Android.mk \
-    $(LOCAL_PATH)/otafault/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
     $(LOCAL_PATH)/update_verifier/Android.mk \
-    $(LOCAL_PATH)/applypatch/Android.mk
