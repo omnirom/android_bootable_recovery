@@ -103,6 +103,12 @@ static void set_displayed_framebuffer(unsigned n)
     vi.bits_per_pixel = gr_framebuffer[0].pixel_bytes * 8;
     if (ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
         perror("active fb swap failed");
+#ifdef TW_FBIOPAN
+    } else {
+        if (ioctl(fb_fd, FBIOPAN_DISPLAY, &vi) < 0) {
+            perror("pan failed");
+        }
+#endif
     }
     displayed_buffer = n;
 }
@@ -124,15 +130,39 @@ static GRSurface* fbdev_init(minui_backend* backend) {
         }
     }
 
-    fb_fix_screeninfo fi;
-    if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
-        perror("failed to get fb0 info (FBIOGET_FSCREENINFO)");
+    if (ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
+        perror("failed to get fb0 info (FBIOGET_VSCREENINFO)");
         close(fd);
         return NULL;
     }
 
-    if (ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
-        perror("failed to get fb0 info (FBIOGET_VSCREENINFO)");
+#ifdef RECOVERY_FORCE_RGB_565
+    // Changing fb_var_screeninfo can affect fb_fix_screeninfo,
+    // so this needs done before querying for fi.
+    printf("Forcing pixel format: RGB_565\n");
+    vi.blue.offset    = 0;
+    vi.green.offset   = 5;
+    vi.red.offset     = 11;
+    vi.blue.length    = 5;
+    vi.green.length   = 6;
+    vi.red.length     = 5;
+    vi.blue.msb_right = 0;
+    vi.green.msb_right = 0;
+    vi.red.msb_right = 0;
+    vi.transp.offset  = 0;
+    vi.transp.length  = 0;
+    vi.bits_per_pixel = 16;
+
+    if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
+        perror("failed to put force_rgb_565 fb0 info");
+        close(fd);
+        return NULL;
+    }
+#endif
+
+    fb_fix_screeninfo fi;
+    if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
+        perror("failed to get fb0 info (FBIOGET_FSCREENINFO)");
         close(fd);
         return NULL;
     }
@@ -166,22 +196,6 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     }
 
     memset(bits, 0, fi.smem_len);
-
-#ifdef RECOVERY_FORCE_RGB_565
-    printf("Forcing pixel format: RGB_565\n");
-    vi.blue.offset    = 0;
-    vi.green.offset   = 5;
-    vi.red.offset     = 11;
-    vi.blue.length    = 5;
-    vi.green.length   = 6;
-    vi.red.length     = 5;
-    vi.blue.msb_right = 0;
-    vi.green.msb_right = 0;
-    vi.red.msb_right = 0;
-    vi.transp.offset  = 0;
-    vi.transp.length  = 0;
-    vi.bits_per_pixel = 16;
-#endif
 
     gr_framebuffer[0].width = vi.xres;
     gr_framebuffer[0].height = vi.yres;
