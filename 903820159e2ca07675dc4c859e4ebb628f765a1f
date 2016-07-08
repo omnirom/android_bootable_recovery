@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5804b501_eb973d48",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 101
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-08T21:49:17Z",
+      "side": 1,
+      "message": "Shouldn\u0027t we at least return a false here?",
+      "revId": "903820159e2ca07675dc4c859e4ebb628f765a1f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_2bb645ec",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 101
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-08T21:49:17Z",
+      "side": 1,
+      "message": "return false",
+      "revId": "903820159e2ca07675dc4c859e4ebb628f765a1f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_0b9b8978",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 101
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-08T21:49:17Z",
+      "side": 1,
+      "message": "return false",
+      "revId": "903820159e2ca07675dc4c859e4ebb628f765a1f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_cba481b4",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 101
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-08T21:49:17Z",
+      "side": 1,
+      "message": "Shouldn\u0027t we return a false here?",
+      "revId": "903820159e2ca07675dc4c859e4ebb628f765a1f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_aba135a2",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 101
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-08T21:49:17Z",
+      "side": 1,
+      "message": "The \"u\" in uint64_t stands for unsigned. I see no reason why this needs to be set to -1. 0 is more appropriate.",
+      "revId": "903820159e2ca07675dc4c859e4ebb628f765a1f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
