@@ -77,8 +77,8 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
     float density_;
-    // True if we should use the large layout.
-    bool is_large_;
+    // The layout to use.
+    int layout_;
 
     GRSurface* error_icon;
 

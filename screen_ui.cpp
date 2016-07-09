@@ -105,29 +105,41 @@ int ScreenRecoveryUI::PixelsFromDp(int dp) {
 
 // Here's the intended layout:
 
-//          | regular     large
-// ---------+--------------------
-//          |   220dp     366dp
-// icon     |  (200dp)   (200dp)
-//          |    68dp      68dp
-// text     |   (14sp)    (14sp)
-//          |    32dp      32dp
-// progress |    (2dp)     (2dp)
-//          |   194dp     340dp
+//          | portrait    large        landscape      large
+// ---------+-------------------------------------------------
+//      gap |   220dp     366dp            142dp      284dp
+// icon     |                   (200dp)
+//      gap |    68dp      68dp             56dp      112dp
+// text     |                    (14sp)
+//      gap |    32dp      32dp             26dp       52dp
+// progress |                     (2dp)
+//      gap |   194dp     340dp            131dp      262dp
 
 // Note that "baseline" is actually the *top* of each icon (because that's how our drawing
 // routines work), so that's the more useful measurement for calling code.
 
+enum Layout { PORTRAIT = 0, PORTRAIT_LARGE = 1, LANDSCAPE = 2, LANDSCAPE_LARGE = 3, LAYOUT_MAX };
+enum Dimension { PROGRESS = 0, TEXT = 1, ICON = 2, DIMENSION_MAX };
+static constexpr int kLayouts[LAYOUT_MAX][DIMENSION_MAX] = {
+    { 194,  32,  68, }, // PORTRAIT
+    { 340,  32,  68, }, // PORTRAIT_LARGE
+    { 131,  26,  56, }, // LANDSCAPE
+    { 262,  52, 112, }, // LANDSCAPE_LARGE
+};
+
 int ScreenRecoveryUI::GetAnimationBaseline() {
-    return GetTextBaseline() - PixelsFromDp(68) - gr_get_height(loopFrames[0]);
+    return GetTextBaseline() - PixelsFromDp(kLayouts[layout_][ICON]) -
+            gr_get_height(loopFrames[0]);
 }
 
 int ScreenRecoveryUI::GetTextBaseline() {
-    return GetProgressBaseline() - PixelsFromDp(32) - gr_get_height(installing_text);
+    return GetProgressBaseline() - PixelsFromDp(kLayouts[layout_][TEXT]) -
+            gr_get_height(installing_text);
 }
 
 int ScreenRecoveryUI::GetProgressBaseline() {
-    return gr_fb_height() - PixelsFromDp(is_large_ ? 340 : 194) - gr_get_height(progressBarFill);
+    return gr_fb_height() - PixelsFromDp(kLayouts[layout_][PROGRESS]) -
+            gr_get_height(progressBarFill);
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
@@ -439,7 +451,11 @@ void ScreenRecoveryUI::Init() {
     gr_init();
 
     density_ = static_cast<float>(property_get_int32("ro.sf.lcd_density", 160)) / 160.f;
-    is_large_ = gr_fb_height() > PixelsFromDp(800);
+
+    // Are we portrait or landscape?
+    layout_ = (gr_fb_width() > gr_fb_height()) ? LANDSCAPE : PORTRAIT;
+    // Are we the large variant of our base layout?
+    if (gr_fb_height() > PixelsFromDp(800)) ++layout_;
 
     gr_font_size(&char_width_, &char_height_);
     text_rows_ = gr_fb_height() / char_height_;
