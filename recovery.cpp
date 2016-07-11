@@ -89,6 +89,12 @@ static const struct option OPTIONS[] = {
   { NULL, 0, NULL, 0 },
 };
 
+// More bootreasons can be found in "system/core/bootstat/bootstat.cpp".
+static const std::vector<std::string> bootreason_blacklist {
+  "kernel_panic",
+  "Panic",
+};
+
 static const char *CACHE_LOG_DIR = "/cache/recovery";
 static const char *COMMAND_FILE = "/cache/recovery/command";
 static const char *INTENT_FILE = "/cache/recovery/intent";
@@ -1405,6 +1411,30 @@ static void set_retry_bootloader_message(int retry_count, int argc, char** argv)
     }
 }
 
+static bool bootreason_in_blacklist() {
+    char bootreason[PROPERTY_VALUE_MAX];
+    if (property_get("ro.boot.bootreason", bootreason, nullptr) > 0) {
+        for (const auto& str : bootreason_blacklist) {
+            if (strcasecmp(str.c_str(), bootreason) == 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static void log_failure_code(ErrorCode code, const char *update_package) {
+    FILE* install_log = fopen_path(TEMPORARY_INSTALL_FILE, "w");
+    if (install_log != nullptr) {
+        fprintf(install_log, "%s\n", update_package);
+        fprintf(install_log, "0\n");
+        fprintf(install_log, "error: %d\n", code);
+        fclose(install_log);
+    } else {
+        LOGE("failed to open last_install: %s\n", strerror(errno));
+    }
+}
+
 static ssize_t logbasename(
         log_id_t /* logId */,
         char /* prio */,
@@ -1628,15 +1658,12 @@ int main(int argc, char **argv) {
                       BATTERY_OK_PERCENTAGE);
             // Log the error code to last_install when installation skips due to
             // low battery.
-            FILE* install_log = fopen_path(LAST_INSTALL_FILE, "w");
-            if (install_log != nullptr) {
-                fprintf(install_log, "%s\n", update_package);
-                fprintf(install_log, "0\n");
-                fprintf(install_log, "error: %d\n", kLowBattery);
-                fclose(install_log);
-            } else {
-                LOGE("failed to open last_install: %s\n", strerror(errno));
-            }
+            log_failure_code(kLowBattery, update_package);
+            status = INSTALL_SKIPPED;
+        } else if (bootreason_in_blacklist()) {
+            // Skip update-on-reboot when bootreason is kernel_panic or similar
+            ui->Print("bootreason is in the blacklist; skip OTA installation\n");
+            log_failure_code(kBootreasonInBlacklist, update_package);
             status = INSTALL_SKIPPED;
         } else {
             status = install_package(update_package, &should_wipe_cache,
