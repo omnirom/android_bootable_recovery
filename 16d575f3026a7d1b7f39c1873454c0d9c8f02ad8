@@ -1,0 +1,140 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5804b501_516c9ece",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 102
+      },
+      "lineNbr": 475,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-14T20:05:53Z",
+      "side": 1,
+      "message": "Maybe there should be a counter here to break out of this loop after a while?",
+      "revId": "16d575f3026a7d1b7f39c1873454c0d9c8f02ad8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_317112a3",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 102
+      },
+      "lineNbr": 539,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-14T20:05:53Z",
+      "side": 1,
+      "message": "Use https://github.com/TeamWin/Team-Win-Recovery-Project/blob/android-6.0/gui/theme/common/languages/en.xml#L615",
+      "revId": "16d575f3026a7d1b7f39c1873454c0d9c8f02ad8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_f1628ad6",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 102
+      },
+      "lineNbr": 561,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-14T20:05:53Z",
+      "side": 1,
+      "message": "Use https://github.com/TeamWin/Team-Win-Recovery-Project/blob/android-6.0/gui/theme/common/languages/en.xml#L493",
+      "revId": "16d575f3026a7d1b7f39c1873454c0d9c8f02ad8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_116616ed",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 102
+      },
+      "lineNbr": 572,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-14T20:05:53Z",
+      "side": 1,
+      "message": "There\u0027s a translated string for this message that you should use instead. https://github.com/TeamWin/Team-Win-Recovery-Project/blob/android-6.0/gui/theme/common/languages/en.xml#L225",
+      "revId": "16d575f3026a7d1b7f39c1873454c0d9c8f02ad8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_d15f8e10",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 102
+      },
+      "lineNbr": 886,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-14T20:05:53Z",
+      "side": 1,
+      "message": "Probably should use https://github.com/TeamWin/Team-Win-Recovery-Project/blob/android-6.0/gui/theme/common/languages/en.xml#L615",
+      "revId": "16d575f3026a7d1b7f39c1873454c0d9c8f02ad8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_b15c021d",
+        "filename": "partition.cpp",
+        "patchSetId": 102
+      },
+      "lineNbr": 2665,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-14T20:05:53Z",
+      "side": 1,
+      "message": "Does not look like we are suing adbabckup in this function.",
+      "revId": "16d575f3026a7d1b7f39c1873454c0d9c8f02ad8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_919d86c1",
+        "filename": "partition.cpp",
+        "patchSetId": 102
+      },
+      "lineNbr": 2676,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-14T20:05:53Z",
+      "side": 1,
+      "message": "Does not look like we are suing adbabckup in this function.",
+      "revId": "16d575f3026a7d1b7f39c1873454c0d9c8f02ad8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5804b501_71a2fafc",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 102
+      },
+      "lineNbr": 541,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-07-14T20:05:53Z",
+      "side": 1,
+      "message": "I don\u0027t think this variable is being used.",
+      "revId": "16d575f3026a7d1b7f39c1873454c0d9c8f02ad8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
