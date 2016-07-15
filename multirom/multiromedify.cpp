@@ -239,10 +239,23 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
                         break;
                     }
                 }
+
+                // package_extract_file("system.img", "/dev/block/platform/msm_sdcc.1/by-name/system");
+                if(st == 0 && (((EdifyValue*)(*itr))->getText().find("system.img") != NPOS))
+                {
+                    st = 3;
+                }
             }
             else if(st == 1 && (((EdifyValue*)(*itr))->getText().find("/dev/block/") <= 1))
             {
                 st = 2;
+                break;
+            }
+
+            // package_extract_file("system.img", "/dev/block/platform/msm_sdcc.1/by-name/system");
+            else if(st == 3 && (((EdifyValue*)(*itr))->getText().find("/dev/block/") <= 1))
+            {
+                st = 4;
                 break;
             }
         }
@@ -258,6 +271,10 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
             m_name = "ui_print";
             clearArgs();
             addArg(new EdifyValue("\" \""));
+        }
+        else if(st == 4)
+        {
+            res |= OFF_BLOCK_UPDATES;
         }
     }
     else if(m_name == "range_sha1")
