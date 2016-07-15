@@ -1106,6 +1106,13 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	status = TWinstall_zip(file.c_str(), &wipe_cache);
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, verify_status);
 
+	if((hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES) && system_args("busybox umount -d /tmpsystem") != 0)
+		system_args("dev=\"$(losetup | grep 'system\\.img' | grep -o '/.*:')\"; losetup -d \"${dev%%:}\"");
+
+exit:
+	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
+		failsafeCheckPartition("/tmp/mrom_fakesyspart");
+
 	if(restore_script && hacker.restoreState() && hacker.writeToFile("/tmp/"MR_UPDATE_SCRIPT_NAME))
 	{
 		gui_print("Restoring original updater-script\n");
@@ -1121,13 +1128,6 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 		gui_print("Failed to install ZIP!\n");
 	else
 		gui_print("ZIP successfully installed\n");
-
-	if((hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES) && system_args("busybox umount -d /tmpsystem") != 0)
-		system_args("dev=\"$(losetup | grep 'system\\.img' | grep -o '/.*:')\"; losetup -d \"${dev%%:}\"");
-
-exit:
-	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
-		failsafeCheckPartition("/tmp/mrom_fakesyspart");
 
 	restoreBootPartition();
 	restoreMounts();
@@ -1165,6 +1165,13 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 	status = TWinstall_zip(file.c_str(), wipe_cache);
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, verify_status);
 
+	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
+	{
+		if(system_args("busybox umount -d /tmpsystem") != 0)
+			system_args("dev=\"$(losetup | grep 'system\\.img' | grep -o '/.*:')\"; losetup -d \"${dev%%:}\"");
+		failsafeCheckPartition("/tmp/mrom_fakesyspart");
+	}
+
 	if(restore_script && hacker.restoreState() && hacker.writeToFile("/tmp/"MR_UPDATE_SCRIPT_NAME))
 	{
 		gui_print("Restoring original updater-script\n");
@@ -1180,13 +1187,6 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 		gui_print("Failed to install ZIP!\n");
 	else
 		gui_print("ZIP successfully installed\n");
-
-	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
-	{
-		if(system_args("busybox umount -d /tmpsystem") != 0)
-			system_args("dev=\"$(losetup | grep 'system\\.img' | grep -o '/.*:')\"; losetup -d \"${dev%%:}\"");
-		failsafeCheckPartition("/tmp/mrom_fakesyspart");
-	}
 
 	return (status == INSTALL_SUCCESS);
 }

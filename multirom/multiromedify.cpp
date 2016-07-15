@@ -502,7 +502,7 @@ void EdifyHacker::replaceOffendings()
         if(t.compare(HACKER_IDENT_LINE) == 0)
         {
             LOGINFO("EdifyHacker: this updater-script has been already processed, doing nothing.\n");
-            m_processFlags = 0;
+            m_processFlags = 0; // FIXME: potential problem: if the script needs EDIFY_BLOCK_UPDATES tmpsystem.img it wont be created, in this case
             return;
         }
     }
