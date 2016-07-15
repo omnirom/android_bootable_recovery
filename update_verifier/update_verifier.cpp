@@ -160,9 +160,9 @@ int main(int argc, char** argv) {
     if (property_get("ro.boot.veritymode", verity_mode, "") == -1) {
       SLOGE("Failed to get dm-verity mode");
       return -1;
-    } else if (strcmp(verity_mode, "EIO") == 0) {
+    } else if (strcasecmp(verity_mode, "eio") == 0) {
       // We shouldn't see verity in EIO mode if the current slot hasn't booted
-      // successfully before. Therefore, fail the verification when veirtymode=EIO.
+      // successfully before. Therefore, fail the verification when veritymode=eio.
       SLOGE("Found dm-verity in EIO mode, skip verification.");
       return -1;
     } else if (strcmp(verity_mode, "enforcing") != 0) {
