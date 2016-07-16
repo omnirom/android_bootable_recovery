@@ -105,9 +105,12 @@ static bool read_blocks(const std::string& blk_device_prefix, const std::string&
 
 static bool verify_image(const std::string& care_map_name) {
     android::base::unique_fd care_map_fd(TEMP_FAILURE_RETRY(open(care_map_name.c_str(), O_RDONLY)));
+    // If the device is flashed before the current boot, it may not have care_map.txt
+    // in /data/ota_package. To allow the device to continue booting in this situation,
+    // we should print a warning and skip the block verification.
     if (care_map_fd.get() == -1) {
-        SLOGE("Care map %s not found.\n", care_map_name.c_str());
-        return false;
+        SLOGI("Warning: care map %s not found.\n", care_map_name.c_str());
+        return true;
     }
     // Care map file has four lines (two lines if vendor partition is not present):
     // First line has the block device name, e.g./dev/block/.../by-name/system.
