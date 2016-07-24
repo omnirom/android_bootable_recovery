@@ -403,7 +403,7 @@ static void gr_init_font(void)
     gr_font->texture->format = GGL_PIXEL_FORMAT_A_8;
 }
 
-int gr_init(void)
+int gr_init_real(void)
 {
     gglInit(&gr_context);
     GGLContext *gl = gr_context;
@@ -447,6 +447,12 @@ int gr_init(void)
     if (!alloc_ion_mem(fi.line_length * vi.yres))
         allocate_overlay(gr_fb_fd, gr_framebuffer);
 
+    return 0;
+}
+
+int gr_init(void) {
+    gr_init_real();
+    gr_init_real();
     return 0;
 }
 
