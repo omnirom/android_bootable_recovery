@@ -292,7 +292,7 @@ static void get_memory_surface(GGLSurface* ms) {
     ms->format = gr_draw->format;
 }
 
-int gr_init(void)
+int gr_init_real(void)
 {
     gr_draw = NULL;
 
@@ -367,6 +367,12 @@ int gr_init(void)
 #endif
 
     return 0;
+}
+
+int gr_init(void) {
+	gr_init_real();
+	gr_init_real();
+	return 0;
 }
 
 void gr_exit(void)
