@@ -204,7 +204,7 @@ int ev_sync_key_state(ev_set_key_callback set_key_cb, void* data) {
     return 0;
 }
 
-void ev_iterate_available_keys(std::function<void(int)> f) {
+void ev_iterate_available_keys(const std::function<void(int)>& f) {
     // Use unsigned long to match ioctl's parameter type.
     unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)]; // NOLINT
     unsigned long key_bits[BITS_TO_LONGS(KEY_MAX)]; // NOLINT
