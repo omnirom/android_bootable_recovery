@@ -30,7 +30,7 @@ static std::string read_fault_file_name = "";
 static std::string write_fault_file_name = "";
 static std::string fsync_fault_file_name = "";
 
-static bool get_hit_file(const char* cached_path, std::string ffn) {
+static bool get_hit_file(const char* cached_path, const std::string& ffn) {
     return should_hit_cache()
         ? !strncmp(cached_path, OTAIO_CACHE_FNAME, strlen(cached_path))
         : !strncmp(cached_path, ffn.c_str(), strlen(cached_path));
