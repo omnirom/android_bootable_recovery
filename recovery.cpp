@@ -1274,7 +1274,7 @@ static ssize_t logrotate(
     }
 
     std::string name(filename);
-    size_t dot = name.find_last_of(".");
+    size_t dot = name.find_last_of('.');
     std::string sub = name.substr(0, dot);
 
     if (!strstr(LAST_KMSG_FILE, sub.c_str()) &&
