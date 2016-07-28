@@ -111,8 +111,8 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface);
 // given locale.  The image is expected to be a composite of multiple
 // translations of the same text, with special added rows that encode
 // the subimages' size and intended locale in the pixel data.  See
-// development/tools/recovery_l10n for an app that will generate these
-// specialized images from Android resources.
+// bootable/recovery/tools/recovery_l10n for an app that will generate
+// these specialized images from Android resources.
 int res_create_localized_alpha_surface(const char* name, const char* locale,
                                        GRSurface** pSurface);
 
