@@ -139,6 +139,7 @@ public class Main extends Activity {
                     case 1: mStringId = R.string.recovery_erasing; break;
                     case 2: mStringId = R.string.recovery_no_command; break;
                     case 3: mStringId = R.string.recovery_error; break;
+                    case 4: mStringId = R.string.recovery_installing_security; break;
                 }
             }
             @Override public void onNothingSelected(AdapterView parent) { }
