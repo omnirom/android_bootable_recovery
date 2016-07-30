@@ -639,13 +639,19 @@ int GUIAction::copylog(std::string arg __unused)
 	operation_start("Copy Log");
 	if (!simulate)
 	{
-		string dst;
+		string dst, curr_storage;
+		int copy_kernel_log = 0;
+
+		DataManager::GetValue("tw_include_kernel_log", copy_kernel_log);
 		PartitionManager.Mount_Current_Storage(true);
-		dst = DataManager::GetCurrentStoragePath() + "/recovery.log";
+		curr_storage = DataManager::GetCurrentStoragePath();
+		dst = curr_storage + "/recovery.log";
 		TWFunc::copy_file("/tmp/recovery.log", dst.c_str(), 0755);
 		tw_set_default_metadata(dst.c_str());
+		if (copy_kernel_log)
+			TWFunc::copy_kernel_log(curr_storage);
 		sync();
-		gui_msg(Msg("copy_log=Copied recovery log to {1}.")(DataManager::GetCurrentStoragePath()));
+		gui_msg(Msg("copy_log=Copied recovery log to {1}")(dst));
 	} else
 		simulate_progress_bar();
 	operation_end(0);
