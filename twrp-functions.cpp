@@ -1066,4 +1066,15 @@ unsigned long long TWFunc::IOCTL_Get_Block_Size(const char* block_device) {
 	return 0;
 }
 
+void TWFunc::copy_kernel_log(string curr_storage) {
+	std::string kmsg = "/proc/kmsg";
+	std::string kmsgDst = curr_storage + "/kmsg.log";
+	std::string dmesgCmd = "/sbin/dmesg";
+
+	std::string result;
+	Exec_Cmd(dmesgCmd, result);
+	write_file(kmsgDst, result);
+	gui_msg(Msg("copy_kernel_log=Copied kernel log to {1}")(kmsgDst));
+	tw_set_default_metadata(kmsg.c_str());
+}
 #endif // ndef BUILD_TWRPTAR_MAIN
