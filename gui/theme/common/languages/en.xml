@@ -668,5 +668,10 @@
 		<string name="theme_ver_err">Custom theme version does not match TWRP version. Using stock theme.</string>
 		<string name="up_a_level">(Up A Level)</string>
 		<string name="install_reboot">Rebooting in 5 seconds</string>
+		<string name="copylog">Copy Logs to SD Card</string>
+		<string name="copy_logs_complete">Copying Logs Completed</string>
+		<string name="copy_kernel_log">Copied kernel log to {1}</string>
+		<string name="copyloghdr">Copy Logs to SD Card</string>
+		<string name="include_kernel_log">Include Kernel Log</string>
 	</resources>
 </language>
