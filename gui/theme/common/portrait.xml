@@ -3216,6 +3216,45 @@
 			</action>
 		</page>
 
+		<page name="copylog">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@copying_log=Copy Logs to SD Card}</text>
+			</text>
+
+			<checkbox>
+				<placement x="%indent%" y="%row4_y%"/>
+				<text>{@include_kernel_log=Include Kernel Log}</text>
+				<data variable="tw_include_kernel_log" value="1"/>
+			</checkbox>
+
+			<slider>
+				<text>{@copying_log=Copy Logs to SD Card}</text>
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=copylog</action>
+                                        <action function="set">tw_action_text1={@copying_log=Copy Logs to SD Card}</action>
+                                        <action function="set">tw_complete_text1={@copy_log_complete=Logs Copy Completed}</action>
+					<action function="page">action_page</action>
+				</actions>
+			</slider>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<actions>
+					<action function="page">advanced</action>
+				</actions>
+			</action>
+
+		</page>
+
 		<page name="advanced">
 			<template name="page"/>
 
@@ -3227,15 +3266,7 @@
 			<button style="main_button">
 				<placement x="%indent%" y="%row2a_y%"/>
 				<text>{@copy_log_btn=Copy Log}</text>
-				<actions>
-					<action function="set">tw_back=advanced</action>
-					<action function="set">tw_action=copylog</action>
-					<action function="set">tw_text1={@copy_log_confirm=Copy Log to SD Card?}</action>
-					<action function="set">tw_action_text1={@copying_log=Copying Log to SD Card...}</action>
-					<action function="set">tw_complete_text1={@copy_log_complete=Log Copy Complete}</action>
-					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
-					<action function="page">confirm_action</action>
-				</actions>
+				<action function="page">copylog</action>
 			</button>
 
 			<button style="main_button">
