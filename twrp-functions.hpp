@@ -94,6 +94,7 @@ public:
 	static void SetPerformanceMode(bool mode); // support recovery.perf.mode
 	static void Disable_Stock_Recovery_Replace(); // Disable stock ROMs from replacing TWRP with stock recovery
 	static unsigned long long IOCTL_Get_Block_Size(const char* block_device);
+	static void copy_kernel_log(); // Copy Kernel Log to Current Storage (PSTORE/KMSG) 
 
 private:
 	static void Copy_Log(string Source, string Destination);
