@@ -1069,4 +1069,24 @@ unsigned long long TWFunc::IOCTL_Get_Block_Size(const char* block_device) {
 	return 0;
 }
 
+void TWFunc::copy_kernel_log(void) {
+	std::string pstore = "/sys/fs/pstore/console-ramoops";
+	std::string kmsg = "/proc/kmsg";
+
+	LOGINFO("here\n");
+	if (Path_Exists(pstore)) {
+	        copy_file(pstore, "/sdcard/console-ramoops.log", 0755);
+		gui_msg(Msg("copy_kernel_log=Copied kernel log to {1}/console-ramoops.log.")(DataManager::GetCurrentStoragePath()));
+		tw_set_default_metadata(pstore.c_str());
+	}
+	else {
+		if (Path_Exists(kmsg)) {
+			copy_file(kmsg, "/sdcard/kmsg.log", 0755);
+			gui_msg(Msg("copy_kernel_log=Copied kernel log to {1}/kmsg.log.")(DataManager::GetCurrentStoragePath()));
+			tw_set_default_metadata(kmsg.c_str());
+		}
+		else
+			LOGERR("No kernel logs found to copy\n");
+	}
+}
 #endif // ndef BUILD_TWRPTAR_MAIN
