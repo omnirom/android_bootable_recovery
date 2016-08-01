@@ -31,6 +31,8 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_C_INCLUDES += external/stlport/stlport
 endif
 
+LOCAL_C_INCLUDES += external/zlib
+
 LOCAL_SRC_FILES = \
     libtwadbbu.cpp
 
