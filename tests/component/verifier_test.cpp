@@ -95,30 +95,14 @@ class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
             android::base::StringPrintf("%s%s%s%s", DATA_PATH, NATIVE_TEST_PATH,
                                         TESTDATA_PATH, args[0].c_str());
         if (sysMapFile(package.c_str(), &memmap) != 0) {
-            FAIL() << "Failed to mmap " << package << ": " << strerror(errno)
-                   << "\n";
+            FAIL() << "Failed to mmap " << package << ": " << strerror(errno) << "\n";
         }
 
         for (auto it = ++(args.cbegin()); it != args.cend(); ++it) {
-            if (it->substr(it->length() - 3, it->length()) == "256") {
-                if (certs.empty()) {
-                    FAIL() << "May only specify -sha256 after key type\n";
-                }
-                certs.back().hash_len = SHA256_DIGEST_LENGTH;
-            } else {
-                std::string public_key_file = android::base::StringPrintf(
-                    "%s%s%stest_key_%s.txt", DATA_PATH, NATIVE_TEST_PATH,
-                    TESTDATA_PATH, it->c_str());
-                ASSERT_TRUE(load_keys(public_key_file.c_str(), certs));
-                certs.back().hash_len = SHA_DIGEST_LENGTH;
-            }
-        }
-        if (certs.empty()) {
             std::string public_key_file = android::base::StringPrintf(
-                "%s%s%stest_key_e3.txt", DATA_PATH, NATIVE_TEST_PATH,
-                TESTDATA_PATH);
+                    "%s%s%stestkey_%s.txt", DATA_PATH, NATIVE_TEST_PATH,
+                    TESTDATA_PATH, it->c_str());
             ASSERT_TRUE(load_keys(public_key_file.c_str(), certs));
-            certs.back().hash_len = SHA_DIGEST_LENGTH;
         }
     }
 
@@ -143,37 +127,38 @@ TEST_P(VerifierFailureTest, VerifyFailure) {
 
 INSTANTIATE_TEST_CASE_P(SingleKeySuccess, VerifierSuccessTest,
         ::testing::Values(
-            std::vector<std::string>({"otasigned.zip", "e3"}),
-            std::vector<std::string>({"otasigned_f4.zip", "f4"}),
-            std::vector<std::string>({"otasigned_sha256.zip", "e3", "sha256"}),
-            std::vector<std::string>({"otasigned_f4_sha256.zip", "f4", "sha256"}),
-            std::vector<std::string>({"otasigned_ecdsa_sha256.zip", "ec", "sha256"})));
+            std::vector<std::string>({"otasigned_v1.zip", "v1"}),
+            std::vector<std::string>({"otasigned_v2.zip", "v2"}),
+            std::vector<std::string>({"otasigned_v3.zip", "v3"}),
+            std::vector<std::string>({"otasigned_v4.zip", "v4"}),
+            std::vector<std::string>({"otasigned_v5.zip", "v5"})));
 
 INSTANTIATE_TEST_CASE_P(MultiKeySuccess, VerifierSuccessTest,
         ::testing::Values(
-            std::vector<std::string>({"otasigned.zip", "f4", "e3"}),
-            std::vector<std::string>({"otasigned_f4.zip", "ec", "f4"}),
-            std::vector<std::string>({"otasigned_sha256.zip", "ec", "e3", "e3", "sha256"}),
-            std::vector<std::string>({"otasigned_f4_sha256.zip", "ec", "sha256", "e3", "f4", "sha256"}),
-            std::vector<std::string>({"otasigned_ecdsa_sha256.zip", "f4", "sha256", "e3", "ec", "sha256"})));
+            std::vector<std::string>({"otasigned_v1.zip", "v1", "v2"}),
+            std::vector<std::string>({"otasigned_v2.zip", "v5", "v2"}),
+            std::vector<std::string>({"otasigned_v3.zip", "v5", "v1", "v3"}),
+            std::vector<std::string>({"otasigned_v4.zip", "v5", "v1", "v4"}),
+            std::vector<std::string>({"otasigned_v5.zip", "v4", "v1", "v5"})));
 
 INSTANTIATE_TEST_CASE_P(WrongKey, VerifierFailureTest,
         ::testing::Values(
-            std::vector<std::string>({"otasigned.zip", "f4"}),
-            std::vector<std::string>({"otasigned_f4.zip", "e3"}),
-            std::vector<std::string>({"otasigned_ecdsa_sha256.zip", "e3", "sha256"})));
+            std::vector<std::string>({"otasigned_v1.zip", "v2"}),
+            std::vector<std::string>({"otasigned_v2.zip", "v1"}),
+            std::vector<std::string>({"otasigned_v3.zip", "v5"}),
+            std::vector<std::string>({"otasigned_v4.zip", "v5"}),
+            std::vector<std::string>({"otasigned_v5.zip", "v3"})));
 
 INSTANTIATE_TEST_CASE_P(WrongHash, VerifierFailureTest,
         ::testing::Values(
-            std::vector<std::string>({"otasigned.zip", "e3", "sha256"}),
-            std::vector<std::string>({"otasigned_f4.zip", "f4", "sha256"}),
-            std::vector<std::string>({"otasigned_sha256.zip"}),
-            std::vector<std::string>({"otasigned_f4_sha256.zip", "f4"}),
-            std::vector<std::string>({"otasigned_ecdsa_sha256.zip"})));
+            std::vector<std::string>({"otasigned_v1.zip", "v3"}),
+            std::vector<std::string>({"otasigned_v2.zip", "v4"}),
+            std::vector<std::string>({"otasigned_v3.zip", "v1"}),
+            std::vector<std::string>({"otasigned_v4.zip", "v2"})));
 
 INSTANTIATE_TEST_CASE_P(BadPackage, VerifierFailureTest,
         ::testing::Values(
-            std::vector<std::string>({"random.zip"}),
-            std::vector<std::string>({"fake-eocd.zip"}),
-            std::vector<std::string>({"alter-metadata.zip"}),
-            std::vector<std::string>({"alter-footer.zip"})));
+            std::vector<std::string>({"random.zip", "v1"}),
+            std::vector<std::string>({"fake-eocd.zip", "v1"}),
+            std::vector<std::string>({"alter-metadata.zip", "v1"}),
+            std::vector<std::string>({"alter-footer.zip", "v1"})));
