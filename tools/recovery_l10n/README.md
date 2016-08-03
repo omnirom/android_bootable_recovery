@@ -25,6 +25,8 @@
     *   "pngcrush -c 0 ..." converts "text-out.png" into a 1-channel image,
         which is accepted by Recovery. This also compresses the image file by
         ~60%.
+    *   zopflipng could further compress the png files by ~10%, more details
+        in https://github.com/google/zopfli/blob/master/README.zopflipng
     *   If you're using other png compression tools, make sure the final text
         image works by running graphic tests under the recovery mode.
 
