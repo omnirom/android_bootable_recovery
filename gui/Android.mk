@@ -110,6 +110,7 @@ ifeq ($(TW_CUSTOM_THEME),)
             TW_THEME := landscape_hdpi
         endif
     endif
+
 ifeq ($(TWRP_NEW_THEME),true)
     TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/theme/$(TW_THEME)
     TWRP_RES := $(commands_recovery_local_path)/gui/theme/common/fonts

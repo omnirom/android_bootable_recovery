@@ -58,8 +58,6 @@ extern "C" {
 #include "objects.hpp"
 #include "../tw_atomic.hpp"
 
-void curtainClose(void);
-
 GUIAction::mapFunc GUIAction::mf;
 std::set<string> GUIAction::setActionsRunningInCallerThread;
 static string zip_queue[10];
@@ -284,7 +282,7 @@ GUIAction::GUIAction(xml_node<>* node)
 	}
 }
 
-int GUIAction::NotifyTouch(TOUCH_STATE state __unused, int x __unused, int y __unused)
+int GUIAction::NotifyTouch(TOUCH_STATE state, int x __unused, int y __unused)
 {
 	if (state == TOUCH_RELEASE)
 		doActions();
@@ -521,8 +519,6 @@ void GUIAction::operation_end(const int operation_status)
 
 int GUIAction::reboot(std::string arg)
 {
-	//curtainClose(); this sometimes causes a crash
-
 	sync();
 	DataManager::SetValue("tw_gui_done", 1);
 	DataManager::SetValue("tw_reboot_arg", arg);
@@ -792,6 +788,8 @@ int GUIAction::appenddatetobackupname(std::string arg __unused)
 	if (Backup_Name.size() > MAX_BACKUP_NAME_LEN)
 		Backup_Name.resize(MAX_BACKUP_NAME_LEN);
 	DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
+	PageManager::NotifyKey(KEY_END, true);
+	PageManager::NotifyKey(KEY_END, false);
 	operation_end(0);
 	return 0;
 }
@@ -1180,9 +1178,8 @@ int GUIAction::nandroid(std::string arg)
 			DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
 			string auto_gen = gui_lookup("auto_generate", "(Auto Generate)");
 			if (Backup_Name == auto_gen || Backup_Name == gui_lookup("curr_date", "(Current Date)") || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0) {
-				ret = PartitionManager.Run_Backup();
-			}
-			else {
+				ret = PartitionManager.Run_Backup(false);
+			} else {
 				operation_end(1);
 				return -1;
 			}
@@ -1728,12 +1725,16 @@ int GUIAction::flashimage(std::string arg __unused)
 {
 	int op_status = 0;
 
+	PartitionSettings part_settings;
 	operation_start("Flash Image");
-	string path, filename, full_filename;
-	DataManager::GetValue("tw_zip_location", path);
-	DataManager::GetValue("tw_file", filename);
-	full_filename = path + "/" + filename;
-	if (PartitionManager.Flash_Image(full_filename))
+	DataManager::GetValue("tw_zip_location", part_settings.Restore_Name);
+	DataManager::GetValue("tw_file", part_settings.Backup_FileName);
+	unsigned long long total_bytes = TWFunc::Get_File_Size(part_settings.Restore_Name + "/" + part_settings.Backup_FileName);
+	ProgressTracking progress(total_bytes);
+	part_settings.progress = &progress;
+	part_settings.adbbackup = false;
+	part_settings.PM_Method = PM_RESTORE;
+	if (PartitionManager.Flash_Image(&part_settings))
 		op_status = 0; // success
 	else
 		op_status = 1; // fail
