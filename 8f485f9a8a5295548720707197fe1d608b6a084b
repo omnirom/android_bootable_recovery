@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3801c1f3_814bfe64",
+        "filename": "gui/theme/common/languages/en.xml",
+        "patchSetId": 6
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-08-04T14:31:02Z",
+      "side": 1,
+      "message": "We should add a version\u003d\"2\" tag so that translators will know that the original text has changed if they use the scripts/language_helper.py script to compare languages.",
+      "revId": "8f485f9a8a5295548720707197fe1d608b6a084b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
