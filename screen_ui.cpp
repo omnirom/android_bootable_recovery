@@ -31,6 +31,7 @@
 
 #include <vector>
 
+#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <android-base/stringprintf.h>
 #include <cutils/properties.h>
@@ -417,14 +418,14 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
 void ScreenRecoveryUI::LoadBitmap(const char* filename, GRSurface** surface) {
     int result = res_create_display_surface(filename, surface);
     if (result < 0) {
-        LOGE("couldn't load bitmap %s (error %d)\n", filename, result);
+        LOG(ERROR) << "couldn't load bitmap " << filename << " (error " << result << ")";
     }
 }
 
 void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, GRSurface** surface) {
     int result = res_create_localized_alpha_surface(filename, locale, surface);
     if (result < 0) {
-        LOGE("couldn't load bitmap %s (error %d)\n", filename, result);
+        LOG(ERROR) << "couldn't load bitmap " << filename << " (error " << result << ")";
     }
 }
 

@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <memory>
 
+#include <android-base/logging.h>
 #include <openssl/bn.h>
 #include <openssl/ecdsa.h>
 #include <openssl/obj_mac.h>
@@ -131,24 +132,24 @@ int verify_file(unsigned char* addr, size_t length,
 #define FOOTER_SIZE 6
 
     if (length < FOOTER_SIZE) {
-        LOGE("not big enough to contain footer\n");
+        LOG(ERROR) << "not big enough to contain footer";
         return VERIFY_FAILURE;
     }
 
     unsigned char* footer = addr + length - FOOTER_SIZE;
 
     if (footer[2] != 0xff || footer[3] != 0xff) {
-        LOGE("footer is wrong\n");
+        LOG(ERROR) << "footer is wrong";
         return VERIFY_FAILURE;
     }
 
     size_t comment_size = footer[4] + (footer[5] << 8);
     size_t signature_start = footer[0] + (footer[1] << 8);
-    LOGI("comment is %zu bytes; signature %zu bytes from end\n",
-         comment_size, signature_start);
+    LOG(INFO) << "comment is " << comment_size << " bytes; signature is " << signature_start
+              << " bytes from end";
 
     if (signature_start <= FOOTER_SIZE) {
-        LOGE("Signature start is in the footer");
+        LOG(ERROR) << "Signature start is in the footer";
         return VERIFY_FAILURE;
     }
 
@@ -159,7 +160,7 @@ int verify_file(unsigned char* addr, size_t length,
     size_t eocd_size = comment_size + EOCD_HEADER_SIZE;
 
     if (length < eocd_size) {
-        LOGE("not big enough to contain EOCD\n");
+        LOG(ERROR) << "not big enough to contain EOCD";
         return VERIFY_FAILURE;
     }
 
@@ -175,7 +176,7 @@ int verify_file(unsigned char* addr, size_t length,
     // magic number $50 $4b $05 $06.
     if (eocd[0] != 0x50 || eocd[1] != 0x4b ||
         eocd[2] != 0x05 || eocd[3] != 0x06) {
-        LOGE("signature length doesn't match EOCD marker\n");
+        LOG(ERROR) << "signature length doesn't match EOCD marker";
         return VERIFY_FAILURE;
     }
 
@@ -186,7 +187,7 @@ int verify_file(unsigned char* addr, size_t length,
             // the real one, minzip will find the later (wrong) one,
             // which could be exploitable.  Fail verification if
             // this sequence occurs anywhere after the real one.
-            LOGE("EOCD marker occurs after start of EOCD\n");
+            LOG(ERROR) << "EOCD marker occurs after start of EOCD";
             return VERIFY_FAILURE;
         }
     }
@@ -235,12 +236,11 @@ int verify_file(unsigned char* addr, size_t length,
     uint8_t* signature = eocd + eocd_size - signature_start;
     size_t signature_size = signature_start - FOOTER_SIZE;
 
-    LOGI("signature (offset: 0x%zx, length: %zu): %s\n",
-            length - signature_start, signature_size,
-            print_hex(signature, signature_size).c_str());
+    LOG(INFO) << "signature (offset: " << std::hex << (length - signature_start) << ", length: "
+              << signature_size << "): " << print_hex(signature, signature_size);
 
     if (!read_pkcs7(signature, signature_size, &sig_der, &sig_der_length)) {
-        LOGE("Could not find signature DER block\n");
+        LOG(ERROR) << "Could not find signature DER block";
         return VERIFY_FAILURE;
     }
 
@@ -271,38 +271,38 @@ int verify_file(unsigned char* addr, size_t length,
         if (key.key_type == Certificate::KEY_TYPE_RSA) {
             if (!RSA_verify(hash_nid, hash, key.hash_len, sig_der,
                             sig_der_length, key.rsa.get())) {
-                LOGI("failed to verify against RSA key %zu\n", i);
+                LOG(INFO) << "failed to verify against RSA key " << i;
                 continue;
             }
 
-            LOGI("whole-file signature verified against RSA key %zu\n", i);
+            LOG(INFO) << "whole-file signature verified against RSA key " << i;
             free(sig_der);
             return VERIFY_SUCCESS;
         } else if (key.key_type == Certificate::KEY_TYPE_EC
                 && key.hash_len == SHA256_DIGEST_LENGTH) {
             if (!ECDSA_verify(0, hash, key.hash_len, sig_der,
                               sig_der_length, key.ec.get())) {
-                LOGI("failed to verify against EC key %zu\n", i);
+                LOG(INFO) << "failed to verify against EC key " << i;
                 continue;
             }
 
-            LOGI("whole-file signature verified against EC key %zu\n", i);
+            LOG(INFO) << "whole-file signature verified against EC key " << i;
             free(sig_der);
             return VERIFY_SUCCESS;
         } else {
-            LOGI("Unknown key type %d\n", key.key_type);
+            LOG(INFO) << "Unknown key type " << key.key_type;
         }
         i++;
     }
 
     if (need_sha1) {
-        LOGI("SHA-1 digest: %s\n", print_hex(sha1, SHA_DIGEST_LENGTH).c_str());
+        LOG(INFO) << "SHA-1 digest: " << print_hex(sha1, SHA_DIGEST_LENGTH);
     }
     if (need_sha256) {
-        LOGI("SHA-256 digest: %s\n", print_hex(sha256, SHA256_DIGEST_LENGTH).c_str());
+        LOG(INFO) << "SHA-256 digest: " << print_hex(sha256, SHA256_DIGEST_LENGTH);
     }
     free(sig_der);
-    LOGE("failed to verify whole-file signature\n");
+    LOG(ERROR) << "failed to verify whole-file signature";
     return VERIFY_FAILURE;
 }
 
@@ -323,7 +323,7 @@ std::unique_ptr<RSA, RSADeleter> parse_rsa_key(FILE* file, uint32_t exponent) {
     }
 
     if (key_len_words > 8192 / 32) {
-        LOGE("key length (%d) too large\n", key_len_words);
+        LOG(ERROR) << "key length (" << key_len_words << ") too large";
         return nullptr;
     }
 
@@ -479,7 +479,7 @@ std::unique_ptr<EC_KEY, ECKEYDeleter> parse_ec_key(FILE* file) {
 bool load_keys(const char* filename, std::vector<Certificate>& certs) {
     std::unique_ptr<FILE, decltype(&fclose)> f(fopen(filename, "r"), fclose);
     if (!f) {
-        LOGE("opening %s: %s\n", filename, strerror(errno));
+        PLOG(ERROR) << "error opening " << filename;
         return false;
     }
 
@@ -529,14 +529,14 @@ bool load_keys(const char* filename, std::vector<Certificate>& certs) {
               return false;
             }
 
-            LOGI("read key e=%d hash=%d\n", exponent, cert.hash_len);
+            LOG(INFO) << "read key e=" << exponent << " hash=" << cert.hash_len;
         } else if (cert.key_type == Certificate::KEY_TYPE_EC) {
             cert.ec = parse_ec_key(f.get());
             if (!cert.ec) {
               return false;
             }
         } else {
-            LOGE("Unknown key type %d\n", cert.key_type);
+            LOG(ERROR) << "Unknown key type " << cert.key_type;
             return false;
         }
 
@@ -548,7 +548,7 @@ bool load_keys(const char* filename, std::vector<Certificate>& certs) {
         } else if (ch == EOF) {
             break;
         } else {
-            LOGE("unexpected character between keys\n");
+            LOG(ERROR) << "unexpected character between keys";
             return false;
         }
     }
