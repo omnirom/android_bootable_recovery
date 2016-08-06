@@ -30,6 +30,7 @@
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <android-base/logging.h>
 
 #include "common.h"
 #include "error_code.h"
@@ -64,7 +65,7 @@ static int parse_build_number(const std::string& str) {
         }
     }
 
-    LOGE("Failed to parse build number in %s.\n", str.c_str());
+    LOG(ERROR) << "Failed to parse build number in " << str;
     return -1;
 }
 
@@ -72,13 +73,13 @@ static int parse_build_number(const std::string& str) {
 static void read_source_target_build(ZipArchive* zip, std::vector<std::string>& log_buffer) {
     const ZipEntry* meta_entry = mzFindZipEntry(zip, METADATA_PATH);
     if (meta_entry == nullptr) {
-        LOGE("Failed to find %s in update package.\n", METADATA_PATH);
+        LOG(ERROR) << "Failed to find " << METADATA_PATH << " in update package";
         return;
     }
 
     std::string meta_data(meta_entry->uncompLen, '\0');
     if (!mzReadZipEntry(zip, meta_entry, &meta_data[0], meta_entry->uncompLen)) {
-        LOGE("Failed to read metadata in update package.\n");
+        LOG(ERROR) << "Failed to read metadata in update package";
         return;
     }
 
@@ -122,8 +123,8 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
     unlink(binary);
     int fd = creat(binary, 0755);
     if (fd < 0) {
+        PLOG(ERROR) << "Can't make " << binary;
         mzCloseZipArchive(zip);
-        LOGE("Can't make %s\n", binary);
         return INSTALL_ERROR;
     }
     bool ok = mzExtractZipEntryToFile(zip, binary_entry, fd);
@@ -131,7 +132,7 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
     mzCloseZipArchive(zip);
 
     if (!ok) {
-        LOGE("Can't copy %s\n", ASSUMED_UPDATE_BINARY_NAME);
+        LOG(ERROR) << "Can't copy " << ASSUMED_UPDATE_BINARY_NAME;
         return INSTALL_ERROR;
     }
 
@@ -252,7 +253,7 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
             // last_install later.
             log_buffer.push_back(std::string(strtok(NULL, "\n")));
         } else {
-            LOGE("unknown command [%s]\n", command);
+            LOG(ERROR) << "unknown command [" << command << "]";
         }
     }
     fclose(from_child);
@@ -263,7 +264,7 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
         return INSTALL_RETRY;
     }
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        LOGE("Error in %s\n(Status %d)\n", path, WEXITSTATUS(status));
+        LOG(ERROR) << "Error in " << path << " (Status " << WEXITSTATUS(status) << ")";
         return INSTALL_ERROR;
     }
 
@@ -279,7 +280,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     // Give verification half the progress bar...
     ui->SetProgressType(RecoveryUI::DETERMINATE);
     ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
-    LOGI("Update location: %s\n", path);
+    LOG(INFO) << "Update location: " << path;
 
     // Map the update package into memory.
     ui->Print("Opening update package...\n");
@@ -294,27 +295,28 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
 
     MemMapping map;
     if (sysMapFile(path, &map) != 0) {
-        LOGE("failed to map file\n");
+        LOG(ERROR) << "failed to map file";
         return INSTALL_CORRUPT;
     }
 
     // Load keys.
     std::vector<Certificate> loadedKeys;
     if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
-        LOGE("Failed to load keys\n");
+        LOG(ERROR) << "Failed to load keys";
         sysReleaseMap(&map);
         return INSTALL_CORRUPT;
     }
-    LOGI("%zu key(s) loaded from %s\n", loadedKeys.size(), PUBLIC_KEYS_FILE);
+    LOG(INFO) << loadedKeys.size() << " key(s) loaded from " << PUBLIC_KEYS_FILE;
 
     // Verify package.
     ui->Print("Verifying update package...\n");
+
     auto t0 = std::chrono::system_clock::now();
     int err = verify_file(map.addr, map.length, loadedKeys);
     std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
     ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
     if (err != VERIFY_SUCCESS) {
-        LOGE("signature verification failed\n");
+        LOG(ERROR) << "signature verification failed";
         log_buffer.push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
 
         sysReleaseMap(&map);
@@ -325,7 +327,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     ZipArchive zip;
     err = mzOpenZipArchive(map.addr, map.length, &zip);
     if (err != 0) {
-        LOGE("Can't open %s\n(%s)\n", path, err != -1 ? strerror(err) : "bad");
+        LOG(ERROR) << "Can't open " << path;
         log_buffer.push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
 
         sysReleaseMap(&map);
@@ -359,12 +361,12 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
         fputs(path, install_log);
         fputc('\n', install_log);
     } else {
-        LOGE("failed to open last_install: %s\n", strerror(errno));
+        PLOG(ERROR) << "failed to open last_install";
     }
     int result;
     std::vector<std::string> log_buffer;
     if (setup_install_mounts() != 0) {
-        LOGE("failed to set up expected mounts for install; aborting\n");
+        LOG(ERROR) << "failed to set up expected mounts for install; aborting";
         result = INSTALL_ERROR;
     } else {
         result = really_install_package(path, wipe_cache, needs_mount, log_buffer, retry_count);
