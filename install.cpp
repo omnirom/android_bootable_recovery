@@ -34,6 +34,7 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <cutils/properties.h>
+#include <android-base/logging.h>
 
 #include "common.h"
 #include "error_code.h"
@@ -70,20 +71,20 @@ static int parse_build_number(const std::string& str) {
         }
     }
 
-    LOGE("Failed to parse build number in %s.\n", str.c_str());
+    LOG(ERROR) << "Failed to parse build number in " << str;
     return -1;
 }
 
 bool read_metadata_from_package(ZipArchive* zip, std::string* meta_data) {
     const ZipEntry* meta_entry = mzFindZipEntry(zip, METADATA_PATH);
     if (meta_entry == nullptr) {
-        LOGE("Failed to find %s in update package.\n", METADATA_PATH);
+        LOG(ERROR) << "Failed to find " << METADATA_PATH << " in update package";
         return false;
     }
 
     meta_data->resize(meta_entry->uncompLen, '\0');
     if (!mzReadZipEntry(zip, meta_entry, &(*meta_data)[0], meta_entry->uncompLen)) {
-        LOGE("Failed to read metadata in update package.\n");
+        LOG(ERROR) << "Failed to read metadata in update package";
         return false;
     }
     return true;
@@ -148,8 +149,7 @@ static int check_newer_ab_build(ZipArchive* zip)
     property_get("ro.product.device", value, "");
     const std::string& pkg_device = metadata["pre-device"];
     if (pkg_device != value || pkg_device.empty()) {
-        LOGE("Package is for product %s but expected %s\n",
-             pkg_device.c_str(), value);
+        LOG(ERROR) << "Package is for product " << pkg_device << " but expected " << value;
         return INSTALL_ERROR;
     }
 
@@ -158,12 +158,12 @@ static int check_newer_ab_build(ZipArchive* zip)
     property_get("ro.serialno", value, "");
     const std::string& pkg_serial_no = metadata["serialno"];
     if (!pkg_serial_no.empty() && pkg_serial_no != value) {
-        LOGE("Package is for serial %s\n", pkg_serial_no.c_str());
+        LOG(ERROR) << "Package is for serial " << pkg_serial_no;
         return INSTALL_ERROR;
     }
 
     if (metadata["ota-type"] != "AB") {
-        LOGE("Package is not A/B\n");
+        LOG(ERROR) << "Package is not A/B";
         return INSTALL_ERROR;
     }
 
@@ -171,16 +171,15 @@ static int check_newer_ab_build(ZipArchive* zip)
     property_get("ro.build.version.incremental", value, "");
     const std::string& pkg_pre_build = metadata["pre-build-incremental"];
     if (!pkg_pre_build.empty() && pkg_pre_build != value) {
-        LOGE("Package is for source build %s but expected %s\n",
-             pkg_pre_build.c_str(), value);
+        LOG(ERROR) << "Package is for source build " << pkg_pre_build << " but expected " << value;
         return INSTALL_ERROR;
     }
     property_get("ro.build.fingerprint", value, "");
     const std::string& pkg_pre_build_fingerprint = metadata["pre-build"];
     if (!pkg_pre_build_fingerprint.empty() &&
         pkg_pre_build_fingerprint != value) {
-        LOGE("Package is for source build %s but expected %s\n",
-             pkg_pre_build_fingerprint.c_str(), value);
+        LOG(ERROR) << "Package is for source build " << pkg_pre_build_fingerprint
+                   << " but expected " << value;
         return INSTALL_ERROR;
     }
 
@@ -195,15 +194,13 @@ static int check_newer_ab_build(ZipArchive* zip)
                                  &pkg_post_timespampt) ||
         pkg_post_timespampt < build_timestampt) {
         if (metadata["ota-downgrade"] != "yes") {
-            LOGE("Update package is older than the current build, expected a "
-                 "build newer than timestamp %" PRIu64 " but package has "
-                 "timestamp %" PRIu64 " and downgrade not allowed.\n",
-                 build_timestampt, pkg_post_timespampt);
+            LOG(ERROR) << "Update package is older than the current build, expected a build "
+                       "newer than timestamp " << build_timestampt << " but package has "
+                       "timestamp " << pkg_post_timespampt << " and downgrade not allowed.";
             return INSTALL_ERROR;
         }
         if (pkg_pre_build_fingerprint.empty()) {
-            LOGE("Downgrade package must have a pre-build version set, not "
-                 "allowed.\n");
+            LOG(ERROR) << "Downgrade package must have a pre-build version set, not allowed.";
             return INSTALL_ERROR;
         }
     }
@@ -225,20 +222,20 @@ update_binary_command(const char* path, ZipArchive* zip, int retry_count,
     const ZipEntry* properties_entry =
             mzFindZipEntry(zip, AB_OTA_PAYLOAD_PROPERTIES);
     if (!properties_entry) {
-        LOGE("Can't find %s\n", AB_OTA_PAYLOAD_PROPERTIES);
+        LOG(ERROR) << "Can't find " << AB_OTA_PAYLOAD_PROPERTIES;
         return INSTALL_CORRUPT;
     }
     std::vector<unsigned char> payload_properties(
             mzGetZipEntryUncompLen(properties_entry));
     if (!mzExtractZipEntryToBuffer(zip, properties_entry,
                                    payload_properties.data())) {
-        LOGE("Can't extract %s\n", AB_OTA_PAYLOAD_PROPERTIES);
+        LOG(ERROR) << "Can't extract " << AB_OTA_PAYLOAD_PROPERTIES;
         return INSTALL_CORRUPT;
     }
 
     const ZipEntry* payload_entry = mzFindZipEntry(zip, AB_OTA_PAYLOAD);
     if (!payload_entry) {
-        LOGE("Can't find %s\n", AB_OTA_PAYLOAD);
+        LOG(ERROR) << "Can't find " << AB_OTA_PAYLOAD;
         return INSTALL_CORRUPT;
     }
     long payload_offset = mzGetZipEntryOffset(payload_entry);
@@ -270,14 +267,14 @@ update_binary_command(const char* path, ZipArchive* zip, int retry_count,
     unlink(binary);
     int fd = creat(binary, 0755);
     if (fd < 0) {
-        LOGE("Can't make %s\n", binary);
+        PLOG(ERROR) << "Can't make " << binary;
         return INSTALL_ERROR;
     }
     bool ok = mzExtractZipEntryToFile(zip, binary_entry, fd);
     close(fd);
 
     if (!ok) {
-        LOGE("Can't copy %s\n", ASSUMED_UPDATE_BINARY_NAME);
+        LOG(ERROR) << "Can't copy " << ASSUMED_UPDATE_BINARY_NAME;
         return INSTALL_ERROR;
     }
 
@@ -423,7 +420,7 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
             // last_install later.
             log_buffer.push_back(std::string(strtok(NULL, "\n")));
         } else {
-            LOGE("unknown command [%s]\n", command);
+            LOG(ERROR) << "unknown command [" << command << "]";
         }
     }
     fclose(from_child);
@@ -434,7 +431,7 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
         return INSTALL_RETRY;
     }
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        LOGE("Error in %s\n(Status %d)\n", path, WEXITSTATUS(status));
+        LOG(ERROR) << "Error in " << path << " (Status " << WEXITSTATUS(status) << ")";
         return INSTALL_ERROR;
     }
 
@@ -450,7 +447,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     // Give verification half the progress bar...
     ui->SetProgressType(RecoveryUI::DETERMINATE);
     ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
-    LOGI("Update location: %s\n", path);
+    LOG(INFO) << "Update location: " << path;
 
     // Map the update package into memory.
     ui->Print("Opening update package...\n");
@@ -465,7 +462,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
 
     MemMapping map;
     if (sysMapFile(path, &map) != 0) {
-        LOGE("failed to map file\n");
+        LOG(ERROR) << "failed to map file";
         return INSTALL_CORRUPT;
     }
 
@@ -480,7 +477,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     ZipArchive zip;
     int err = mzOpenZipArchive(map.addr, map.length, &zip);
     if (err != 0) {
-        LOGE("Can't open %s\n(%s)\n", path, err != -1 ? strerror(err) : "bad");
+        LOG(ERROR) << "Can't open " << path;
         log_buffer.push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
 
         sysReleaseMap(&map);
@@ -514,12 +511,12 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
         fputs(path, install_log);
         fputc('\n', install_log);
     } else {
-        LOGE("failed to open last_install: %s\n", strerror(errno));
+        PLOG(ERROR) << "failed to open last_install";
     }
     int result;
     std::vector<std::string> log_buffer;
     if (setup_install_mounts() != 0) {
-        LOGE("failed to set up expected mounts for install; aborting\n");
+        LOG(ERROR) << "failed to set up expected mounts for install; aborting";
         result = INSTALL_ERROR;
     } else {
         result = really_install_package(path, wipe_cache, needs_mount, log_buffer, retry_count);
@@ -545,10 +542,10 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
 bool verify_package(const unsigned char* package_data, size_t package_size) {
     std::vector<Certificate> loadedKeys;
     if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
-        LOGE("Failed to load keys\n");
+        LOG(ERROR) << "Failed to load keys";
         return false;
     }
-    LOGI("%zu key(s) loaded from %s\n", loadedKeys.size(), PUBLIC_KEYS_FILE);
+    LOG(INFO) << loadedKeys.size() << " key(s) loaded from " << PUBLIC_KEYS_FILE;
 
     // Verify package.
     ui->Print("Verifying update package...\n");
@@ -557,8 +554,8 @@ bool verify_package(const unsigned char* package_data, size_t package_size) {
     std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
     ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
     if (err != VERIFY_SUCCESS) {
-        LOGE("Signature verification failed\n");
-        LOGE("error: %d\n", kZipVerificationFailure);
+        LOG(ERROR) << "Signature verification failed";
+        LOG(ERROR) << "error: " << kZipVerificationFailure;
         return false;
     }
     return true;
