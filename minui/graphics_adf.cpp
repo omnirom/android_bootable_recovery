@@ -26,11 +26,13 @@
 #include <sys/mman.h>
 
 #include <adf/adf.h>
+#include <sync/sync.h>
 
 #include "graphics.h"
 
 struct adf_surface_pdata {
     GRSurface base;
+    int fence_fd;
     int fd;
     __u32 offset;
     __u32 pitch;
@@ -55,6 +57,7 @@ static void adf_blank(minui_backend *backend, bool blank);
 static int adf_surface_init(adf_pdata *pdata, drm_mode_modeinfo *mode, adf_surface_pdata *surf) {
     memset(surf, 0, sizeof(*surf));
 
+    surf->fence_fd = -1;
     surf->fd = adf_interface_simple_buffer_alloc(pdata->intf_fd, mode->hdisplay,
             mode->vdisplay, pdata->format, &surf->offset, &surf->pitch);
     if (surf->fd < 0)
@@ -194,6 +197,23 @@ static GRSurface* adf_init(minui_backend *backend)
     return ret;
 }
 
+static void adf_sync(adf_surface_pdata *surf)
+{
+    unsigned int warningTimeout = 3000;
+
+    if (surf == NULL)
+        return;
+
+    if (surf->fence_fd >= 0){
+        int err = sync_wait(surf->fence_fd, warningTimeout);
+        if (err < 0)
+            perror("adf sync fence wait error\n");
+
+        close(surf->fence_fd);
+        surf->fence_fd = -1;
+    }
+}
+
 static GRSurface* adf_flip(minui_backend *backend)
 {
     adf_pdata *pdata = (adf_pdata *)backend;
@@ -203,9 +223,10 @@ static GRSurface* adf_flip(minui_backend *backend)
             surf->base.width, surf->base.height, pdata->format, surf->fd,
             surf->offset, surf->pitch, -1);
     if (fence_fd >= 0)
-        close(fence_fd);
+        surf->fence_fd = fence_fd;
 
     pdata->current_surface = (pdata->current_surface + 1) % pdata->n_surfaces;
+    adf_sync(&pdata->surfaces[pdata->current_surface]);
     return &pdata->surfaces[pdata->current_surface].base;
 }
 
@@ -219,6 +240,7 @@ static void adf_blank(minui_backend *backend, bool blank)
 static void adf_surface_destroy(adf_surface_pdata *surf)
 {
     munmap(surf->base.data, surf->pitch * surf->base.height);
+    close(surf->fence_fd);
     close(surf->fd);
 }
 
