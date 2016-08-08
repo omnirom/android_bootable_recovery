@@ -48,8 +48,8 @@ LOCAL_STATIC_LIBRARIES := \
     libotafault \
     libbase \
     libverifier \
-    libcrypto_utils_static \
-    libcrypto_static \
+    libcrypto_utils \
+    libcrypto \
     libminui \
     libminzip \
     libcutils \
