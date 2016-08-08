@@ -33,7 +33,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES += \
     libotafault \
     libbase \
-    libcrypto_static \
+    libcrypto \
     libbz \
     libz
 include $(BUILD_STATIC_LIBRARY)
@@ -48,7 +48,7 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/include \
     bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-LOCAL_STATIC_LIBRARIES += libcrypto_static libbz libz
+LOCAL_STATIC_LIBRARIES += libcrypto libbz libz
 include $(BUILD_STATIC_LIBRARY)
 
 # libimgpatch (host static library)
@@ -62,7 +62,7 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/include \
     bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-LOCAL_STATIC_LIBRARIES += libcrypto_static libbz libz
+LOCAL_STATIC_LIBRARIES += libcrypto libbz libz
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 # applypatch (executable)
@@ -78,7 +78,7 @@ LOCAL_STATIC_LIBRARIES += \
     libedify \
     libotafault \
     libminzip \
-    libcrypto_static \
+    libcrypto \
     libbz
 LOCAL_SHARED_LIBRARIES += libz libcutils libc
 include $(BUILD_EXECUTABLE)
