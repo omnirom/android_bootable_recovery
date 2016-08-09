@@ -480,14 +480,14 @@ int TWPartitionManager::Check_Backup_Name(bool Display_Error) {
 	return 0;
 }
 
-bool TWPartitionManager::Make_MD5(bool generate_md5, string Backup_Folder, string Backup_Filename)
+bool TWPartitionManager::Make_MD5(PartitionSettings *part_settings)
 {
 	string command;
-	string Full_File = Backup_Folder + "/" + Backup_Filename;
+	string Full_File = part_settings->Full_Backup_Path + part_settings->Backup_FileName;
 	string result;
 	twrpDigest md5sum;
 
-	if (!generate_md5)
+	if (!part_settings->generate_md5)
 		return true;
 
 	TWFunc::GUI_Operation_Text(TW_GENERATE_MD5_TEXT, gui_parse_text("{@generating_md51}"));
@@ -566,7 +566,7 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 					sync();
 					sync();
 					if (!part_settings->adbbackup) {
-						if (!Make_MD5(part_settings->generate_md5, part_settings->Backup_Folder, (*subpart)->Backup_FileName)) {
+						if (!Make_MD5(part_settings)) {
 							TWFunc::SetPerformanceMode(false);
 							return false;
 						}
@@ -584,11 +584,11 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 
 		}
 
-		if (!part_settings->adbbackup) {
-			md5Success = Make_MD5(part_settings->generate_md5, part_settings->Backup_Folder, part_settings->Part->Backup_FileName);
-		}
-		else 
+		if (part_settings->adbbackup) {
 			md5Success = true;
+		}
+		else
+			md5Success = Make_MD5(part_settings);
 		TWFunc::SetPerformanceMode(false);
 
 		return md5Success;
