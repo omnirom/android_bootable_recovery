@@ -172,6 +172,12 @@ LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
+tw_git_revision := $(shell git -C $(LOCAL_PATH) rev-parse --short=8 HEAD 2>/dev/null)
+ifeq ($(shell git -C $(LOCAL_PATH) diff --quiet; echo $$?),1)
+    tw_git_revision := $(tw_git_revision)-dirty
+endif
+LOCAL_CFLAGS += -DTW_GIT_REVISION='"$(tw_git_revision)"'
+
 #TWRP Build Flags
 ifeq ($(TW_EXCLUDE_MTP),)
     LOCAL_SHARED_LIBRARIES += libtwrpmtp
