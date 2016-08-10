@@ -296,29 +296,31 @@ int gr_init(void)
 {
     gr_draw = NULL;
 
+#ifdef MSM_BSP
     gr_backend = open_overlay();
     if (gr_backend) {
         gr_draw = gr_backend->init(gr_backend);
-        if (!gr_draw) {
+        if (!gr_draw)
             gr_backend->exit(gr_backend);
-        } else
+        else
             printf("Using overlay graphics.\n");
     }
+#endif
 
 #ifdef HAS_ADF
     if (!gr_draw) {
         gr_backend = open_adf();
         if (gr_backend) {
             gr_draw = gr_backend->init(gr_backend);
-            if (!gr_draw) {
+            if (!gr_draw)
                 gr_backend->exit(gr_backend);
-            } else
+            else
                 printf("Using adf graphics.\n");
         }
     }
 #else
 #ifdef MSM_BSP
-	printf("Skipping adf graphics because TW_TARGET_USES_QCOM_BSP := true\n");
+    printf("Skipping adf graphics because TW_TARGET_USES_QCOM_BSP := true\n");
 #else
     printf("Skipping adf graphics -- not present in build tree\n");
 #endif
@@ -338,9 +340,9 @@ int gr_init(void)
     if (!gr_draw) {
         gr_backend = open_fbdev();
         gr_draw = gr_backend->init(gr_backend);
-        if (gr_draw == NULL) {
+        if (gr_draw == NULL)
             return -1;
-        } else
+        else
             printf("Using fbdev graphics.\n");
     }
 
