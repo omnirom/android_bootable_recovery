@@ -248,7 +248,7 @@ void ScreenRecoveryUI::DrawHorizontalRule(int* y) {
 }
 
 void ScreenRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) {
-    gr_text(x, *y, line, bold);
+    gr_text(gr_sys_font(), x, *y, line, bold);
     *y += char_height_ + 4;
 }
 
@@ -304,10 +304,10 @@ void ScreenRecoveryUI::draw_screen_locked() {
                     gr_fill(0, y - 2, gr_fb_width(), y + char_height_ + 2);
                     // Bold white text for the selected item.
                     SetColor(MENU_SEL_FG);
-                    gr_text(4, y, menu_[i], true);
+                    gr_text(gr_sys_font(), 4, y, menu_[i], true);
                     SetColor(MENU);
                 } else {
-                    gr_text(4, y, menu_[i], false);
+                    gr_text(gr_sys_font(), 4, y, menu_[i], false);
                 }
                 y += char_height_ + 4;
             }
@@ -323,7 +323,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
         for (int ty = gr_fb_height() - char_height_;
              ty >= y && count < text_rows_;
              ty -= char_height_, ++count) {
-            gr_text(0, ty, text_[row], false);
+            gr_text(gr_sys_font(), 0, ty, text_[row], false);
             --row;
             if (row < 0) row = text_rows_ - 1;
         }
@@ -442,7 +442,7 @@ void ScreenRecoveryUI::Init() {
     density_ = static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f;
     is_large_ = gr_fb_height() > PixelsFromDp(800);
 
-    gr_font_size(&char_width_, &char_height_);
+    gr_font_size(gr_sys_font(), &char_width_, &char_height_);
     text_rows_ = gr_fb_height() / char_height_;
     text_cols_ = gr_fb_width() / char_width_;
 

@@ -177,7 +177,7 @@ void WearRecoveryUI::draw_screen_locked()
             // items don't fit on the screen.
             if (menu_items > menu_end - menu_start) {
                 sprintf(cur_selection_str, "Current item: %d/%d", menu_sel + 1, menu_items);
-                gr_text(x+4, y, cur_selection_str, 1);
+                gr_text(gr_sys_font(), x+4, y, cur_selection_str, 1);
                 y += char_height_+4;
             }
 
@@ -192,10 +192,10 @@ void WearRecoveryUI::draw_screen_locked()
                     gr_fill(x, y-2, gr_fb_width()-x, y+char_height_+2);
                     // white text of selected item
                     SetColor(MENU_SEL_FG);
-                    if (menu[i][0]) gr_text(x+4, y, menu[i], 1);
+                    if (menu[i][0]) gr_text(gr_sys_font(), x+4, y, menu[i], 1);
                     SetColor(MENU);
-                } else {
-                    if (menu[i][0]) gr_text(x+4, y, menu[i], 0);
+                } else if (menu[i][0]) {
+                    gr_text(gr_sys_font(), x+4, y, menu[i], 0);
                 }
                 y += char_height_+4;
             }
@@ -216,7 +216,7 @@ void WearRecoveryUI::draw_screen_locked()
         for (int ty = gr_fb_height() - char_height_ - outer_height;
              ty > y+2 && count < text_rows;
              ty -= char_height_, ++count) {
-            gr_text(x+4, ty, text[row], 0);
+            gr_text(gr_sys_font(), x+4, ty, text[row], 0);
             --row;
             if (row < 0) row = text_rows-1;
         }
@@ -285,7 +285,7 @@ void WearRecoveryUI::Init()
 {
     gr_init();
 
-    gr_font_size(&char_width_, &char_height_);
+    gr_font_size(gr_sys_font(), &char_width_, &char_height_);
 
     text_col = text_row = 0;
     text_rows = (gr_fb_height()) / char_height_;
