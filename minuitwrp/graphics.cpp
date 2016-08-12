@@ -297,12 +297,14 @@ int gr_init(void)
     gr_draw = NULL;
 
     gr_backend = open_overlay();
-    if (gr_backend) {
+    if (gr_backend == NULL)
+        printf("Skipping overlay graphics\n");
+    else {
         gr_draw = gr_backend->init(gr_backend);
-        if (!gr_draw) {
+        if (!gr_draw)
             gr_backend->exit(gr_backend);
-        } else
-            printf("Using overlay graphics.\n");
+        else
+            printf("Using overlay graphics\n");
     }
 
 #ifdef HAS_ADF
@@ -310,17 +312,17 @@ int gr_init(void)
         gr_backend = open_adf();
         if (gr_backend) {
             gr_draw = gr_backend->init(gr_backend);
-            if (!gr_draw) {
+            if (!gr_draw)
                 gr_backend->exit(gr_backend);
-            } else
-                printf("Using adf graphics.\n");
+            else
+                printf("Using adf graphics\n");
         }
     }
 #else
 #ifdef MSM_BSP
-	printf("Skipping adf graphics because TW_TARGET_USES_QCOM_BSP := true\n");
+    printf("Skipping adf graphics (because TW_TARGET_USES_QCOM_BSP := true)\n");
 #else
-    printf("Skipping adf graphics -- not present in build tree\n");
+    printf("Skipping adf graphics (not present in build tree)\n");
 #endif
 #endif
 
@@ -329,19 +331,19 @@ int gr_init(void)
         gr_backend = open_drm();
         gr_draw = gr_backend->init(gr_backend);
         if (gr_draw)
-            printf("Using drm graphics.\n");
+            printf("Using drm graphics\n");
     }
 #else
-    printf("Skipping drm graphics -- not present in build tree\n");
+    printf("Skipping drm graphics (not present in build tree)\n");
 #endif
 
     if (!gr_draw) {
         gr_backend = open_fbdev();
         gr_draw = gr_backend->init(gr_backend);
-        if (gr_draw == NULL) {
+        if (gr_draw == NULL)
             return -1;
-        } else
-            printf("Using fbdev graphics.\n");
+        else
+            printf("Using fbdev graphics\n");
     }
 
     overscan_offset_x = gr_draw->width * overscan_percent / 100;
