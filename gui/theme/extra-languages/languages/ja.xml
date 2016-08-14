@@ -6,7 +6,8 @@
 		<resource filename="NotoSansCJKjp-Regular.ttf" name="font_l" scale="80" type="fontoverride"/>
 		<resource filename="NotoSansCJKjp-Regular.ttf" name="font_m" scale="85" type="fontoverride"/>
 		<resource filename="NotoSansCJKjp-Regular.ttf" name="font_s" scale="90" type="fontoverride"/>
-		<resource filename="NotoSansCJKjp-Regular.ttf" name="fixed" scale="90" type="fontoverride"/>
+		<resource filename="NotoSansMonoCJKjp-Regular.ttf" name="fixed" scale="90" type="fontoverride"/>
+
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">Systemイメージ</string>
@@ -662,5 +663,9 @@
 		<string name="theme_ver_err">カスタムテーマのバージョンが TWRP のバージョンと一致しません。標準のテーマを使用します。</string>
 		<string name="up_a_level">(上の階層へ)</string>
 		<string name="install_reboot">5秒後に再起動します</string>
+		<string name="adbbackup_error">ADB バックアップでエラーが起きました。終了しています..."</string>
+		<string name="adbbackup_control_error">ADB コントロールチャンネルに書き込めません</string>
+		<string name="twrp_adbbu_option">TWRP ADB バックアップを有効化するには--twrpオプションが必要です</string>
+		<string name="partition_not_found">パス: {1} がパーティションリストにありません</string>
 	</resources>
 </language>
