@@ -49,7 +49,7 @@
         <string name="advanced_btn">Προηγμένες</string>
         <string name="reboot_btn">Επανεκκίνηση</string>
         <string name="files_btn">Αρχεία</string>
-        <string name="copy_log_btn">Αντιγρ. αρχείου καταγραφής</string>
+        <string name="copy_log_btn">Αντιγρ. αρχ. καταγραφής</string>
         <string name="select_type_hdr">Επιλέξτε τύπο</string>
         <string name="install_zip_hdr">Εγκατάσταση Zip</string>
         <string name="install_zip_btn">Εγκατάσταση Zip</string>
@@ -156,15 +156,15 @@
         <string name="part_size">Μέγεθος: %tw_partition_size%MB</string>
         <string name="part_used">Χρησιμοποιούνται: %tw_partition_used%MB</string>
         <string name="part_free">Ελεύθερα: %tw_partition_free%MB</string>
-        <string name="part_backup_size">Μέγεθος του αντιγράφου ασφαλείας: %tw_partition_backup_size% MB</string>
-        <string name="resize_btn">Αλλάξτε το μέγεθος του Αρχείων Συστήματος</string>
+        <string name="part_backup_size">Μέγεθος αντιγράφου ασφαλείας: %tw_partition_backup_size% MB</string>
+        <string name="resize_btn">Αλλαγή μεγέθους του Αρχείου Συστήματος</string>
         <string name="resize_btn_s">Αλλαγή μεγέθους</string>
         <string name="resize_confirm">Αλλαγή μεγέθους %tw_partition_name%;</string>
         <string name="resizing">Αλλαγή μεγέθους...</string>
         <string name="resize_complete">Η αλλαγή μεγέθους ολοκληρώθηκε</string>
         <string name="swipe_resize">Σύρετε για αλλαγή μεγέθους</string>
         <string name="swipe_resize_s">   Αλλαγή μεγέθους</string>
-        <string name="repair_btn">Επιδιόρθ. Αρχ. Συστήματος</string>
+        <string name="repair_btn">Επιδιόρθωση Αρχ. Συστήμ.</string>
         <string name="repair_btn_s">Επιδιόρθωση</string>
         <string name="repair_confirm">Επιδιόρθωση %tw_partition_name%;</string>
         <string name="repairing">Επιδιόρθωση...</string>
@@ -360,7 +360,7 @@
         <string name="file_manager_btn">Διαχείρ. αρχείων</string>
         <string name="language_hdr">Γλώσσα</string>
         <string name="terminal_btn">Τερματικό</string>
-        <string name="reload_theme_btn">Εκ νέου φόρτ. θέματ.</string>
+        <string name="reload_theme_btn">Επαναφόρτ. θέματ.</string>
         <string name="dumlock_btn">HTC Dumlock</string>
         <string name="inject_twrp_btn">Εισαγωγή TWRP</string>
         <string name="inject_twrp_confirm">Επανεισαγωγή TWRP;</string>
@@ -487,7 +487,7 @@
         <string name="avg_backup_fs">Μέσος ρυθμός αντιγρ. ασφ. αρχείων συστήματος: {1} MB/δευτερ.</string>
         <string name="avg_backup_img">Μέσος ρυθμός αντιγρ. ασφ. εικονικών μονάδων: {1} MB/δευτερ.</string>
         <string name="total_backed_size">[{1} MB ΣΥΝΟΛΙΚΑ ΑΝΤΙΓΡΑΦΗΚΑΝ]</string>
-        <string name="backup_completed">[ΔΗΜΙΟΥΡΓΙΑ ΑΝΤΙΓΡ. ΑΣΦ. ΟΛΟΚΛΗΡΩΘΗΚΕ ΣΕ {1} ΔΕΥΤΕΡΟΛΕΠΤΑ]</string>
+        <string name="backup_completed">[Η ΔΗΜΙΟΥΡΓΙΑ ΑΝΤΙΓΡ. ΑΣΦ. ΟΛΟΚΛΗΡΩΘΗΚΕ ΣΕ {1} ΔΕΥΤΕΡΟΛΕΠΤΑ]</string>
         <string name="restore_started">[ΕΠΑΝΑΦΟΡΑ ΞΕΚΙΝΗΣΕ]</string>
         <string name="restore_folder">Επαναφορά φακέλου: '{1}'</string>
         <string name="restore_part_done">[{1} ολοκληρώθηκαν ({2} δευτερόλεπτα)]</string>
@@ -521,7 +521,7 @@
         <string name="done">Έγινε.</string>
         <string name="start_partition_sd">Διαχώριση κάρτας SD...</string>
         <string name="partition_sd_locate">Δεν μπορεί να εντοπιστεί η συσκευή για διαχωρισμό.</string>
-        <string name="ext_swap_size">EXT + Αλλαγή μεγέθους είναι μεγαλύτερο από το μέγεθος της κάρτας sd.</string>
+        <string name="ext_swap_size">EXT + Η αλλαγή μεγέθους είναι μεγαλύτερη από το μέγεθος της κάρτας sd.</string>
         <string name="remove_part_table">Κατάργηση πίνακα τομέων...</string>
         <string name="unable_rm_part">Δεν είναι δυνατή η κατάργηση του πίνακα τομέων.</string>
         <string name="create_part">Δημιουργία {1} τομέα...</string>
