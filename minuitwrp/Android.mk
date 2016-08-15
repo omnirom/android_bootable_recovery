@@ -137,6 +137,9 @@ endif
 ifeq ($(TW_SCREEN_BLANK_ON_BOOT), true)
     LOCAL_CFLAGS += -DTW_SCREEN_BLANK_ON_BOOT
 endif
+ifeq ($(TW_NO_SCREEN_BLANK), true)
+    LOCAL_CFLAGS += -DTW_NO_SCREEN_BLANK
+endif
 ifeq ($(TW_FBIOPAN), true)
     LOCAL_CFLAGS += -DTW_FBIOPAN
 endif
