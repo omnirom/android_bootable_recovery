@@ -176,7 +176,7 @@ static int vk_init(struct ev *e)
     }
 #else
 #ifndef TW_INPUT_BLACKLIST
-    // Blacklist these "input" devices
+    // Blacklist these "input" devices, use TW_INPUT_BLACKLIST := "accelerometer\x0atest1\x0atest2" using the \x0a as a separator between input devices
     if (strcmp(e->deviceName, "bma250") == 0 || strcmp(e->deviceName, "bma150") == 0)
     {
         printf("blacklisting %s input device\n", e->deviceName);
@@ -277,7 +277,7 @@ static int vk_init(struct ev *e)
 
 // Check for EV_REL (REL_X and REL_Y) and, because touchscreens can have those too,
 // check also for EV_KEY (BTN_LEFT and BTN_RIGHT)
-static void check_mouse(int fd)
+static void check_mouse(int fd, const char* deviceName)
 {
 	if(has_mouse)
 		return;
@@ -297,6 +297,7 @@ static void check_mouse(int fd)
 	if(!test_bit(BTN_LEFT, bit[EV_KEY]) || !test_bit(BTN_RIGHT, bit[EV_KEY]))
 		return;
 
+	printf("Found mouse '%s'\n", deviceName);
 	has_mouse = 1;
 }
 
@@ -326,9 +327,10 @@ int ev_init(void)
             evs[ev_count].fd = &ev_fds[ev_count];
 
             /* Load virtualkeys if there are any */
-			vk_init(&evs[ev_count]);
+            vk_init(&evs[ev_count]);
 
-            check_mouse(fd);
+            if (!evs[ev_count].ignored)
+                check_mouse(fd, evs[ev_count].deviceName);
 
             ev_count++;
             if(ev_count == MAX_DEVICES) break;
