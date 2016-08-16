@@ -124,29 +124,29 @@ bool target_has_overlay(char *version)
 
 minui_backend* open_overlay() {
     fb_fix_screeninfo fi;
-    int fd;
-
-    fd = open("/dev/graphics/fb0", O_RDWR);
-    if (fd < 0) {
-        perror("open_overlay cannot open fb0");
-        return NULL;
-    }
-
-    if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
-        perror("failed to get fb0 info");
-        close(fd);
-        return NULL;
-    }
 
     if (target_has_overlay(fi.id)) {
 #ifdef MSM_BSP
+        int fd;
+
+        fd = open("/dev/graphics/fb0", O_RDWR);
+        if (fd < 0) {
+            perror("open_overlay cannot open fb0");
+            return NULL;
+        }
+
+        if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
+            perror("failed to get fb0 info");
+            close(fd);
+            return NULL;
+        }
+
         close(fd);
         return &my_backend;
 #else
         printf("Overlay graphics may work (%s), but not enabled. Use TW_TARGET_USES_QCOM_BSP := true to enable.\n", fi.id);
 #endif
     }
-    close(fd);
     return NULL;
 }
 
