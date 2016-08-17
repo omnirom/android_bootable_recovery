@@ -1014,45 +1014,50 @@ static bool wipe_ab_device(size_t wipe_package_size) {
 }
 
 static void choose_recovery_file(Device* device) {
-    if (!has_cache) {
-        ui->Print("No /cache partition found.\n");
-        return;
-    }
-
     // "Back" + KEEP_LOG_COUNT * 2 + terminating nullptr entry
     char* entries[1 + KEEP_LOG_COUNT * 2 + 1];
     memset(entries, 0, sizeof(entries));
 
     unsigned int n = 0;
 
-    // Add LAST_LOG_FILE + LAST_LOG_FILE.x
-    // Add LAST_KMSG_FILE + LAST_KMSG_FILE.x
-    for (int i = 0; i < KEEP_LOG_COUNT; i++) {
-        char* log_file;
-        int ret;
-        ret = (i == 0) ? asprintf(&log_file, "%s", LAST_LOG_FILE) :
-                asprintf(&log_file, "%s.%d", LAST_LOG_FILE, i);
-        if (ret == -1) {
-            // memory allocation failure - return early. Should never happen.
-            return;
-        }
-        if ((ensure_path_mounted(log_file) != 0) || (access(log_file, R_OK) == -1)) {
-            free(log_file);
-        } else {
-            entries[n++] = log_file;
-        }
+    if (has_cache) {
+        // Add LAST_LOG_FILE + LAST_LOG_FILE.x
+        // Add LAST_KMSG_FILE + LAST_KMSG_FILE.x
+        for (int i = 0; i < KEEP_LOG_COUNT; i++) {
+            char* log_file;
+            int ret;
+            ret = (i == 0) ? asprintf(&log_file, "%s", LAST_LOG_FILE) :
+                    asprintf(&log_file, "%s.%d", LAST_LOG_FILE, i);
+            if (ret == -1) {
+                // memory allocation failure - return early. Should never happen.
+                return;
+            }
+            if ((ensure_path_mounted(log_file) != 0) || (access(log_file, R_OK) == -1)) {
+                free(log_file);
+            } else {
+                entries[n++] = log_file;
+            }
 
-        char* kmsg_file;
-        ret = (i == 0) ? asprintf(&kmsg_file, "%s", LAST_KMSG_FILE) :
-                asprintf(&kmsg_file, "%s.%d", LAST_KMSG_FILE, i);
-        if (ret == -1) {
-            // memory allocation failure - return early. Should never happen.
-            return;
+            char* kmsg_file;
+            ret = (i == 0) ? asprintf(&kmsg_file, "%s", LAST_KMSG_FILE) :
+                    asprintf(&kmsg_file, "%s.%d", LAST_KMSG_FILE, i);
+            if (ret == -1) {
+                // memory allocation failure - return early. Should never happen.
+                return;
+            }
+            if ((ensure_path_mounted(kmsg_file) != 0) || (access(kmsg_file, R_OK) == -1)) {
+                free(kmsg_file);
+            } else {
+                entries[n++] = kmsg_file;
+            }
         }
-        if ((ensure_path_mounted(kmsg_file) != 0) || (access(kmsg_file, R_OK) == -1)) {
-            free(kmsg_file);
-        } else {
-            entries[n++] = kmsg_file;
+    } else {
+        // If cache partition is not found, view /tmp/recovery.log instead.
+        ui->Print("No /cache partition found.\n");
+        if (access(TEMPORARY_LOG_FILE, R_OK) == -1) {
+            return;
+        } else{
+            entries[n++] = strdup(TEMPORARY_LOG_FILE);
         }
     }
 
