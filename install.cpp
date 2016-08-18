@@ -302,6 +302,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     std::vector<Certificate> loadedKeys;
     if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
         LOGE("Failed to load keys\n");
+        sysReleaseMap(&map);
         return INSTALL_CORRUPT;
     }
     LOGI("%zu key(s) loaded from %s\n", loadedKeys.size(), PUBLIC_KEYS_FILE);
