@@ -1440,8 +1440,8 @@
 
 			<object type="checkbox">
 				<placement x="%col1_x%" y="%row3_text_y%" />
-				<text>Skip MD5 generation during backup.</text>
-				<data variable="tw_skip_md5_generate" />
+				<text>Skip Digest generation during backup.</text>
+				<data variable="tw_skip_digest_generate" />
 			</object>
 
                         <object type="checkbox">
@@ -1937,8 +1937,8 @@
 
 			<object type="checkbox">
 				<placement x="%col1_x%" y="%backup_button_row1%" />
-				<text>Enable MD5 verification of backup.</text>
-				<data variable="tw_skip_md5_check" />
+				<text>Enable Digest verification of backup.</text>
+				<data variable="tw_skip_digest_check" />
 			</object>
 
 			<object type="slider">
@@ -2349,14 +2349,14 @@
 
 			<object type="checkbox">
 				<placement x="%col1_x%" y="%row2_text_y%" />
-				<text>Skip MD5 generation during backup.</text>
-				<data variable="tw_skip_md5_generate" />
+				<text>Skip Digest generation during backup.</text>
+				<data variable="tw_skip_digest_generate" />
 			</object>
 
 			<object type="checkbox">
 				<placement x="%col1_x%" y="%row3_text_y%" />
-				<text>Enable MD5 verification of backup files.</text>
-				<data variable="tw_skip_md5_check" />
+				<text>Enable Digest verification of backup files.</text>
+				<data variable="tw_skip_digest_check" />
 			</object>
 
 			<object type="checkbox">
