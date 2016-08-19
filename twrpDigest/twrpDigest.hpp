@@ -16,37 +16,26 @@
         along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-extern "C" {
-	#include "digest/md5.h"
-}
-
-/* verify_md5digest return codes */
-enum {
-	MD5_MATCH_FAIL = -2, // -2: md5 did not match
-	MD5_NOT_FOUND,       // -1: no md5 file found
-	MD5_OK,              //  0: md5 matches
-	MD5_FILE_UNREADABLE  //  1: md5 file unreadable
-};
-
-using namespace std;
+#ifndef __TWRPDIGEST_H
+#define __TWRPDIGEST_H
 
 class twrpDigest
 {
 public:
-	void setfn(const string& fn);
-	int computeMD5(void);
-	int verify_md5digest(void);
-	int write_md5digest(void);
-	int updateMD5stream(unsigned char* stream, int len);
-	void finalizeMD5stream(void);
-	string createMD5string(void);
-	void initMD5(void);
+	virtual ~twrpDigest() {};
+	twrpDigest();
+	void set_filename(std::string& filename);
+	std::string hexify(uint8_t* hash, int len);
+	bool read_file(void);
+	void check_digest_file(void);
+	virtual bool update_stream(unsigned char* stream, int len) = 0;
+	virtual std::string create_digest_string(void) = 0;
+	virtual std::string return_digest_string(void) = 0;
+	virtual bool verify_digest(std::string digest) = 0;
 
-private:
-	int read_md5digest(void);
-	struct MD5Context md5c;
-	string md5fn;
-	string line;
-	unsigned char md5sum[MD5LENGTH];
-	string md5string;
+protected:
+	std::string digest_filename;
+	twrpDigest *digest;
 };
+
+#endif //__TWRPDIGEST_H
