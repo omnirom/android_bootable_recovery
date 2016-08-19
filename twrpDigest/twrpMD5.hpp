@@ -17,28 +17,22 @@
 */
 
 extern "C" {
-	#include "digest/md5.h"
+	#include "digest/md5/md5.h"
 }
 
-using namespace std;
-
-class twrpDigest
-{
+class twrpMD5: public twrpDigest {
 public:
-	void setfn(const string& fn);
-	int computeMD5(void);
-	int verify_md5digest(void);
-	int write_md5digest(void);
-	int updateMD5stream(unsigned char* stream, int len);
-	void finalizeMD5stream(void);
-	string createMD5string(void);
-	void initMD5(void);
+	~twrpMD5() {};
+	void init_digest(void);
+	bool update_stream(unsigned char* stream, int len);
+	void finalize_stream(void);
+	std::string create_digest_string(void);
+	std::string return_digest_string(void);
+	bool verify_digest(std::string digest);
 
 private:
-	int read_md5digest(void);
 	struct MD5Context md5c;
-	string md5fn;
-	string line;
+	std::string md5string;
+	std::string md5verify;
 	unsigned char md5sum[MD5LENGTH];
-	string md5string;
 };
