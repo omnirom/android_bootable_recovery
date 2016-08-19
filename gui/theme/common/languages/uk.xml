@@ -192,7 +192,7 @@
 		<string name="storage">Сховище:</string>
 		<string name="enc_enabled">увімкнено</string>
 		<string name="enable_backup_comp_chk">Увімкнути стискання</string>
-		<string name="skip_md5_backup_chk">Пропустити генерацію MD5 під час Резервного Копіювання</string>
+		<string name="skip_digest_backup_chk">Пропустити генерацію Digest під час Резервного Копіювання</string>
 		<string name="disable_backup_space_chk">Вимкнути перевірку Вільного місця</string>
 		<string name="refresh_sizes_btn">Оновити розміри</string>
 		<string name="swipe_backup">Потягніть для Резервного копіювання</string>
@@ -222,7 +222,7 @@
 		<string name="swipe_delete_s">   Видалити</string>
 		<string name="restore_backup_date">Резервну копію зроблено %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Виберіть розділ для відновлення:</string>
-		<string name="restore_enable_md5_chk">Увімкнути перевірку MD5 для файлів резервних копій</string>
+		<string name="restore_enable_digest_chk">Увімкнути перевірку Digest для файлів резервних копій</string>
 		<string name="restore_complete">Відновлення завершено</string>
 		<string name="swipe_restore">Потягніть щоб відновити</string>
 		<string name="swipe_restore_s">   Відновити</string>
