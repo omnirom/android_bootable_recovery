@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<recovery>
+	<pages>
+		<page name="devicespecificpage">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@advanced_devicespecific=Devicespecific}</text>
+			</text>
+
+			<template name="tabs_devicespecific"/>
+
+			<button style="main_button">
+				<placement x="%center_x%" y="%row8_y%"/>
+				<text>{@devicespecific_btn=File Manager}</text>
+				<action function="page">filemanagerlist</action>
+			</button>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+	</pages>
+</recovery>
+
+		
