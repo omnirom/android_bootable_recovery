@@ -3,6 +3,10 @@
 <language>
 	<display>English</display>
 
+	<include>
+		<xmlfile name="/twres/devicelanguages/en.xml"/>
+	</include>
+
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
 		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
