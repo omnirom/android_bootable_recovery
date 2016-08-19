@@ -39,7 +39,6 @@
 #include "data.hpp"
 #include "twrp-functions.hpp"
 #include "fixContexts.hpp"
-#include "twrpDigest.hpp"
 #include "twrpDU.hpp"
 #include "set_metadata.h"
 #include "tw_atomic.hpp"
@@ -52,6 +51,10 @@
 #include "mtp/twrpMtp.hpp"
 #include "mtp/MtpMessage.hpp"
 #endif
+
+#include "twrpDigest/twrpDigest.hpp"
+#include "twrpDigest/twrpMD5.hpp"
+#include "twrpDigest/twrpSHA2.hpp"
 
 extern "C" {
 	#include "cutils/properties.h"
@@ -480,27 +483,39 @@ int TWPartitionManager::Check_Backup_Name(bool Display_Error) {
 	return 0;
 }
 
-bool TWPartitionManager::Make_MD5(PartitionSettings *part_settings)
+bool TWPartitionManager::Make_Digest(PartitionSettings *part_settings)
 {
 	string command;
 	string Full_File = part_settings->Full_Backup_Path + part_settings->Backup_FileName;
 	string result;
-	twrpDigest md5sum;
+	int use_sha2;
+	twrpDigest *digest;
 
-	if (!part_settings->generate_md5)
+	DataManager::GetValue(TW_USE_SHA2, use_sha2);
+	if (use_sha2) {
+		digest = new twrpSHA2();
+	}
+	else  {
+		digest = new twrpMD5();
+	}
+
+	if (!part_settings->generate_digest)
 		return true;
 
-	TWFunc::GUI_Operation_Text(TW_GENERATE_MD5_TEXT, gui_parse_text("{@generating_md51}"));
-	gui_msg("generating_md52= * Generating md5...");
+	TWFunc::GUI_Operation_Text(TW_GENERATE_DIGEST_TEXT, gui_parse_text("{@generating_digest1}"));
+	gui_msg("generating_digest2= * Generating digest...");
 	if (TWFunc::Path_Exists(Full_File)) {
-		md5sum.setfn(Full_File);
-		if (md5sum.computeMD5() == 0)
-			if (md5sum.write_md5digest() == 0)
-				gui_msg("md5_created= * MD5 Created.");
+		digest->setfn(Full_File);
+		if (digest->computeDigest() == 0) {
+			if (digest->write_digest() == 0) {
+				tw_set_default_metadata(Full_File.c_str());
+				gui_msg("digest_created= * Digest Created.");
+			}
 			else
 				return -1;
+		}
 		else
-			gui_err("md5_error= * MD5 Error!");
+			gui_err("digest_error= * Digest Error!");
 	} else {
 		char filename[512];
 		int index = 0;
@@ -508,16 +523,17 @@ bool TWPartitionManager::Make_MD5(PartitionSettings *part_settings)
 		sprintf(filename, "%s%03i", Full_File.c_str(), index);
 		strfn = filename;
 		while (index < 1000) {
-			md5sum.setfn(filename);
+			digest->setfn(filename);
 			if (TWFunc::Path_Exists(filename)) {
-				if (md5sum.computeMD5() == 0) {
-					if (md5sum.write_md5digest() != 0)
+				if (digest->computeDigest() == 0) {
+					if (digest->write_digest() != 0)
 					{
-						gui_err("md5_error= * MD5 Error!");
+						gui_err("digest_error= * Digest Error!");
 						return false;
 					}
+					tw_set_default_metadata(filename);
 				} else {
-					gui_err("md5_compute_error= * Error computing MD5.");
+					gui_err("digest_compute_error= * Error computing Digest.");
 					return false;
 				}
 			}
@@ -529,8 +545,9 @@ bool TWPartitionManager::Make_MD5(PartitionSettings *part_settings)
 			LOGERR("Backup file: '%s' not found!\n", filename);
 			return false;
 		}
-		gui_msg("md5_created= * MD5 Created.");
+		gui_msg("digest_created= * Digest Created.");
 	}
+	delete digest;
 	return true;
 }
 
@@ -550,12 +567,12 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 
 	part_settings->Backup_FileName = part_settings->Part->Backup_Name + "." +  part_settings->Part->Current_File_System + ".win";
 	if (part_settings->Part->Backup(part_settings, &tar_fork_pid)) {
-		bool md5Success = false;
+		bool digestSuccess = false;
 		if (part_settings->adbbackup) {
-			md5Success = true;
+			digestSuccess = true;
 		}
 		else
-			md5Success = Make_MD5(part_settings);
+			digestSuccess = Make_Digest(part_settings);
 
 		TWFunc::SetPerformanceMode(false);
 		if (part_settings->Part->Has_SubPartition) {
@@ -576,7 +593,7 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 					sync();
 					sync();
 					if (!part_settings->adbbackup) {
-						if (!Make_MD5(part_settings)) {
+						if (!Make_Digest(part_settings)) {
 							TWFunc::SetPerformanceMode(false);
 							return false;
 						}
@@ -595,7 +612,7 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 
 		}
 
-		return md5Success;
+		return digestSuccess;
 	} else {
 		Clean_Backup_Folder(part_settings->Backup_Folder);
 		TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
@@ -610,6 +627,13 @@ void TWPartitionManager::Clean_Backup_Folder(string Backup_Folder) {
 	DIR *d = opendir(Backup_Folder.c_str());
 	struct dirent *p;
 	int r;
+	vector<string> ext;
+
+	//extensions we should delete when cleaning
+	ext.push_back("win");
+	ext.push_back("md5");
+	ext.push_back("sha2");
+	ext.push_back("info");
 
 	gui_msg("backup_clean=Backup Failed. Cleaning Backup Folder.");
 
@@ -625,10 +649,12 @@ void TWPartitionManager::Clean_Backup_Folder(string Backup_Folder) {
 		string path = Backup_Folder + p->d_name;
 
 		size_t dot = path.find_last_of(".") + 1;
-		if (path.substr(dot) == "win" || path.substr(dot) == "md5" || path.substr(dot) == "info") {
-			r = unlink(path.c_str());
-			if (r != 0) {
-				LOGINFO("Unable to unlink '%s: %s'\n", path.c_str(), strerror(errno));
+		for (vector<string>::const_iterator i = ext.begin(); i != ext.end(); ++i) {
+			if (path.substr(dot) == *i) {
+				r = unlink(path.c_str());
+				if (r != 0) {
+					LOGINFO("Unable to unlink '%s: %s'\n", path.c_str(), strerror(errno));
+				}
 			}
 		}
 	}
@@ -664,7 +690,7 @@ int TWPartitionManager::Cancel_Backup() {
 
 int TWPartitionManager::Run_Backup(bool adbbackup) {
 	PartitionSettings part_settings;
-	int check, partition_count = 0, disable_free_space_check = 0, do_md5 = 0;
+	int check, partition_count = 0, disable_free_space_check = 0, do_digest = 0;
 	int gui_adb_backup;
 	string Backup_Name, Backup_List, backup_path;
 	unsigned long long total_bytes = 0, free_space = 0, subpart_size;
@@ -698,11 +724,11 @@ int TWPartitionManager::Run_Backup(bool adbbackup) {
 		return false;
 
 
-	DataManager::GetValue(TW_SKIP_MD5_GENERATE_VAR, do_md5);
-	if (do_md5 == 0)
-		part_settings.generate_md5 = true;
+	DataManager::GetValue(TW_SKIP_DIGEST_GENERATE_VAR, do_digest);
+	if (do_digest == 0)
+		part_settings.generate_digest = true;
 	else
-		part_settings.generate_md5 = false;
+		part_settings.generate_digest = false;
 
 	DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, part_settings.Backup_Folder);
 	DataManager::GetValue(TW_BACKUP_NAME, part_settings.Backup_Name);
@@ -916,7 +942,7 @@ bool TWPartitionManager::Restore_Partition(PartitionSettings *part_settings) {
 
 int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 	PartitionSettings part_settings;
-	int check_md5, check, partition_count = 0;
+	int check_digest, check, partition_count = 0;
 	TWPartition* restore_part = NULL;
 
 	time_t rStart, rStop;
@@ -937,13 +963,13 @@ int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 	if (!Mount_Current_Storage(true))
 		return false;
 
-	DataManager::GetValue(TW_SKIP_MD5_CHECK_VAR, check_md5);
-	if (check_md5 > 0) {
-		// Check MD5 files first before restoring to ensure that all of them match before starting a restore
-		TWFunc::GUI_Operation_Text(TW_VERIFY_MD5_TEXT, gui_parse_text("{@verifying_md5}"));
-		gui_msg("verifying_md5=Verifying MD5");
+	DataManager::GetValue(TW_SKIP_DIGEST_CHECK_VAR, check_digest);
+	if (check_digest > 0) {
+		// Check Digest files first before restoring to ensure that all of them match before starting a restore
+		TWFunc::GUI_Operation_Text(TW_VERIFY_DIGEST_TEXT, gui_parse_text("{@verifying_digest}"));
+		gui_msg("verifying_digest=Verifying Digest");
 	} else {
-		gui_msg("skip_md5=Skipping MD5 check based on user setting.");
+		gui_msg("skip_digest=Skipping Digest check based on user setting.");
 	}
 	gui_msg("calc_restore=Calculating restore details...");
 	DataManager::GetValue("tw_restore_selected", Restore_List);
@@ -960,7 +986,7 @@ int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 					return false;
 				}
 
-				if (check_md5 > 0 && !part_settings.Part->Check_MD5(&part_settings))
+				if (check_digest > 0 && !part_settings.Part->Check_Digest(&part_settings))
 					return false;
 				part_settings.partition_count++;
 				part_settings.total_restore_size += part_settings.Part->Get_Restore_Size(&part_settings);
@@ -972,7 +998,7 @@ int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 						part_settings.Backup_FileName = (*subpart)->Backup_Name + "." +  (*subpart)->Current_File_System + ".win";
 						part_settings.Part = *subpart;
 						if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == parentPart->Mount_Point) {
-							if (check_md5 > 0 && !(*subpart)->Check_MD5(&part_settings))
+							if (check_digest > 0 && !(*subpart)->Check_Digest(&part_settings))
 								return false;
 							part_settings.total_restore_size += (*subpart)->Get_Restore_Size(&part_settings);
 						}
