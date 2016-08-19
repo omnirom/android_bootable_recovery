@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<recovery>
+	<pages>
+		<page name="devicespecificpage">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@advanced_devicespecific=Devicespecific}</text>
+			</text>
+
+			<template name="tabs_devicespecific"/>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+	</pages>
+</recovery>
+
+		
