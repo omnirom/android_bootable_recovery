@@ -197,7 +197,7 @@
         <string name="enc_disabled">απενεργοποιημένο - ορίσετε έναν κωδικό για να ενεργοποιήσετε</string>
         <string name="enc_enabled">ενεργοποιημένο</string>
         <string name="enable_backup_comp_chk">Ενεργοποιήσετε τη συμπίεση</string>
-        <string name="skip_md5_backup_chk">Παράλ. δημιουργ. MD5 κατά την δημ. αντιγρ. ασφ.</string>
+        <string name="skip_digest_backup_chk" version="2">Παράλ. δημιουργ. Digest κατά την δημ. αντιγρ. ασφ.</string>
         <string name="disable_backup_space_chk">Απενεργοποίηση Ελέγχου Ελεύθερου Χώρου</string>
         <string name="refresh_sizes_btn">Ανανέωση Μεγεθών</string>
         <string name="swipe_backup">Σύρετε για δημιουργ. Αντιγρ. Ασφαλ.</string>
@@ -230,7 +230,7 @@
         <string name="restore_try_decrypt_s">Προσπάθεια αποκρυπτογράφησης</string>
         <string name="restore_backup_date">Το Αντίγραφο ασφαλείας δημιουργήθηκε στο %tw_restore_file_date%</string>
         <string name="restore_sel_part">Επιλέξτε Τομείς για Επαναφορά:</string>
-        <string name="restore_enable_md5_chk">Ενεργ. την επαλήθευση MD5 στα αντίγρ. ασφαλ.</string>
+        <string name="restore_enable_digest_chk" version="2">Ενεργ. την επαλήθευση Digest στα αντίγρ. ασφαλ.</string>
         <string name="restore_complete">Η Eπαναφορά ολοκληρώθηκε</string>
         <string name="swipe_restore">Σύρετε για Eπαναφορά</string>
         <string name="swipe_restore_s">   Επαναφορά</string>
@@ -467,11 +467,11 @@
         <string name="mtp_crash">MTP συνετρίβη, δεν αρχίζει το MTP κατά την εκκίνηση.</string>
         <string name="decrypt_success">Αποκρυπτογραφήθηκε με επιτυχία με τον προεπιλεγμένο κωδικό.</string>
         <string name="unable_to_decrypt">Δεν είναι δυνατή η αποκρυπτογράφηση με τον προεπιλεγμένο κωδικός. Ίσως χρειαστεί να εκτελέσετε εκκαθάριση δεδομένων.</string>
-        <string name="generating_md51">Δημιουργία MD5</string>
-        <string name="generating_md52"> * Δημιουργία md5...</string>
-        <string name="md5_created"> * MD5 δημιουργήθηκε.</string>
-        <string name="md5_error"> * Σφάλμα MD5!</string>
-        <string name="md5_compute_error"> * Σφάλμα υπολογισμού MD5.</string>
+        <string name="generating_digest1" version="2">Δημιουργία Digest</string>
+        <string name="generating_digest2" version="2"> * Δημιουργία Digest...</string>
+        <string name="digest_created" version="2"> * Digest δημιουργήθηκε.</string>
+        <string name="digest_error" version="2"> * Σφάλμα Digest!</string>
+        <string name="digest_compute_error" version="2"> * Σφάλμα υπολογισμού Digest.</string>
         <string name="current_date">(Τρέχουσα ημερομηνία)</string>
         <string name="auto_generate">(Αυτόματη δημιουργία)</string>
         <string name="unable_to_locate_partition">Δεν μπορεί να εντοπιστεί ο '{1}' τομέας για υπολογισμούς αντ. ασφαλ.</string>
@@ -491,8 +491,8 @@
         <string name="restore_started">[ΕΠΑΝΑΦΟΡΑ ΞΕΚΙΗΣΕ]</string>
         <string name="restore_folder">Επαναφορά φακέλου: '{1}'</string>
         <string name="restore_part_done">[{1} ολοκληρώθηκαν ({2} δευτερόλεπτα)]</string>
-        <string name="verifying_md5">Επαλήθευση MD5</string>
-        <string name="skip_md5">Παράλειψη ελέγχου MD5 βάση τις ρυθμίσεις χρήστη.</string>
+        <string name="verifying_digest" version="2">Επαλήθευση Digest</string>
+        <string name="skip_digest" version="2">Παράλειψη ελέγχου Digest βάση τις ρυθμίσεις χρήστη.</string>
         <string name="calc_restore">Υπολογισμός λεπτομερειών επαναφοράς...</string>
         <string name="restore_read_only">Δεν είναι δυνατό να επαναφέρετε {1} -- τοποθέτηση μόνο για ανάγνωση.</string>
         <string name="restore_unable_locate">Δεν εντοπίζετε το διαμέρισμα «{1}» για αποκατάσταση.</string>
@@ -550,9 +550,9 @@
         <string name="cannot_resize">Δεν μπορεί να αλλαχθεί το μέγεθος {1}.</string>
         <string name="repair_resize">Επιδιόρθωση {1} πριν την αλλαγή μεγέθους.</string>
         <string name="unable_resize">Δεν είναι δυνατή η αλλαγή μεγέθους {1}.</string>
-        <string name="no_md5_found">Δεν βρέθηκε MD5 αρχείο για το '{1}'. Παρακαλώ απεπηλέξτε την επαλήθευση MD5 για επαναφορά.</string>
-        <string name="md5_fail_match">Το MD5 απέτυχε να ταυτίσει με το '{1}'.</string>
-        <string name="md5_matched">MD5 matched for '{1}'.</string>
+        <string name="no_digest_found" version="2">Δεν βρέθηκε Digest αρχείο για το '{1}'. Παρακαλώ απεπηλέξτε την επαλήθευση Digest για επαναφορά.</string>
+        <string name="digest_fail_match" version="2">Το Digest απέτυχε να ταυτίσει με το '{1}'.</string>
+        <string name="digest_matched" version="2">Digest matched for '{1}'.</string>
         <string name="fail_decrypt_tar">Αποτυχία αποκρυπτογράφησης του αρχείου tar '{1}'</string>
         <string name="format_data_msg">Ίσως χρειαστεί να επανεκκινήσετε στο recovery για να ξαναχρησιμοποιήσετε το /data.</string>
         <string name="format_data_err">Αδύνατη η διαμόρφωση για να καταργήσετε την κρυπτογράφηση.</string>
@@ -573,7 +573,7 @@
         <string name="backup_folder_set">Φάκελος αντιγρ. ασφ. ορίστηκε το '{1}'</string>
         <string name="locate_backup_err">Δεν μπόρεσενα εντοπιστεί το αντιγρ. ασφ. '{1}'</string>
         <string name="set_restore_opt">Ρύθμιση επιλογών επαναφοράς: '{1}':</string>
-        <string name="md5_check_skip">Η παράλειψη ελέγχου MD5 είναι ενεργή</string>
+        <string name="digest_check_skip" version="2">Η παράλειψη ελέγχου Digest είναι ενεργή</string>
         <string name="ors_encrypt_restore_err">Δεν μπορεί να χρησιμοποιηθεί το OpenRecoveryScript για να επαναφέρετε ένα κρυπτογραφημένο αντίγραφο ασφαλείας.</string>
         <string name="mounting">Προσάρτηση</string>
         <string name="unmounting">Αποπροσάρτηση</string>
@@ -594,7 +594,7 @@
         <string name="installing_zip">Εγκατάσταση αρχείου zip '{1}'</string>
         <string name="select_backup_opt">Ρύθμιση της δημιουργίας αντιγράφων ασφαλείας:</string>
         <string name="compression_on">Η συμπίεση είναι ενεργή</string>
-        <string name="md5_off">Η δημιουργία MD5 είναι απενεργοποιημένη</string>
+        <string name="digest_off" version="2">Η δημιουργία Digest είναι απενεργοποιημένη</string>
         <string name="backup_fail">Η δημιουργία Αντίγραφου Ασφαλείας απέτυχε</string>
         <string name="backup_clean">Η δημιουργία Αντίγρ. Ασφαλ. απέτυχε. Εκκαθάριση φακέλου.</string>
         <string name="running_recovery_commands">Εκτέλεση Eντολών Recovery</string>
@@ -602,15 +602,15 @@
         <string name="running_ors">Εκτέλεση OpenRecoveryScript</string>
         <string name="ors_complete">OpenRecoveryScript Ολοκληρώθηκε</string>
         <string name="no_updater_binary">Δεν βρέθηκε το '{1}' στο αρχείο zip.</string>
-        <string name="check_for_md5">Έλεγχος για MD5 αρχείο...</string>
+        <string name="check_for_digest" version="2">Έλεγχος για Digest αρχείο...</string>
         <string name="fail_sysmap">Αποτυχία αντιστ. αρχείου '{1}'</string>
         <string name="verify_zip_sig">Επαλήθευση υπογραφής zip...</string>
         <string name="verify_zip_fail">Η επαλήθευση της υπογραφής zip απέτυχε!</string>
         <string name="verify_zip_done">Η επαλήθευση της υπογραφής zip ολοκληρώθηκε.</string>
         <string name="zip_corrupt">Το αρχείο zip είναι κατεστραμμένο!</string>
-        <string name="no_md5">Παράλειψη ελέγχου MD5: δεν βρέθηκε αρχείο MD5</string>
-        <string name="md5_fail">Τα MD5 δεν ταυτίζονται</string>
-        <string name="md5_match">Τα MD5 ταυτίζονται</string>
+        <string name="no_digest" version="2">Παράλειψη ελέγχου Digest: δεν βρέθηκε αρχείο Digest</string>
+        <string name="digest_fail" version="2">Τα Digest δεν ταυτίζονται</string>
+        <string name="digest_match" version="2">Τα Digest ταυτίζονται</string>
         <string name="pid_signal">{1} διαδικασία τερματίστηκε με σήμα: {2}</string>
         <string name="pid_error">{1} διαδικασία τερματίστηκε με ΣΦΑΛΜΑ: {2}</string>
         <string name="install_dumlock">Εγκατάσταση HTC Dumlock στο σύστημα...</string>

@@ -181,14 +181,14 @@
 		<string name="su_installing">Installerar SuperSU</string>
 		<string name="sel_storage_list">Välj lagring</string>
 		<string name="ok_btn">OK</string>
-		<string name="generating_md51">Genererar MD5</string>
-		<string name="generating_md52"> * Genererar MD5...</string>
-		<string name="md5_created"> * MD5 skapad.</string>
-		<string name="md5_error"> * MD5-fel!</string>
+		<string name="generating_digest1" version="2">Genererar Digest</string>
+		<string name="generating_digest2" version="2"> * Genererar Digest...</string>
+		<string name="digest_created" version="2"> * Digest skapad.</string>
+		<string name="digest_error" version="2"> * Digest-fel!</string>
 		<string name="current_date">(Dagens datum)</string>
 		<string name="auto_generate">(Auto-generera)</string>
 		<string name="available_space"> * Tillgängligt utrymme: {1}MB</string>
-		<string name="verifying_md5">Verifierar MD5</string>
+		<string name="verifying_digest" version="2">Verifierar Digest</string>
 		<string name="update_part_details_done">...klar</string>
 		<string name="done">Klar.</string>
 		<string name="create_part">Skapar {1} partition...</string>
