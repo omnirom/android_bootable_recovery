@@ -41,7 +41,9 @@
 #include "partitions.hpp"
 #include "data.hpp"
 #include "twrp-functions.hpp"
-#include "twrpDigest.hpp"
+#include "twrpDigest/twrpDigest.hpp"
+#include "twrpDigest/twrpMD5.hpp"
+#include "twrpDigest/twrpSHA.hpp"
 #include "twrpTar.hpp"
 #include "twrpDU.hpp"
 #include "infomanager.hpp"
@@ -1612,48 +1614,83 @@ bool TWPartition::Backup(PartitionSettings *part_settings, pid_t *tar_fork_pid) 
 	return false;
 }
 
-bool TWPartition::Check_Restore_File_MD5(const string& Filename) {
-	twrpDigest md5sum;
-
-	md5sum.setfn(Filename);
-	switch (md5sum.verify_md5digest()) {
-	case MD5_OK:
-		gui_msg(Msg("md5_matched=MD5 matched for '{1}'.")(Filename));
-		return true;
-	case MD5_FILE_UNREADABLE:
-	case MD5_NOT_FOUND:
-		gui_msg(Msg(msg::kError, "no_md5_found=No md5 file found for '{1}'. Please unselect Enable MD5 verification to restore.")(Filename));
-		break;
-	case MD5_MATCH_FAIL:
-		gui_msg(Msg(msg::kError, "md5_fail_match=MD5 failed to match on '{1}'.")(Filename));
-		break;
-	}
-	return false;
-}
-
-bool TWPartition::Check_MD5(PartitionSettings *part_settings) {
-	string Full_Filename;
+bool TWPartition::Check_Digest(PartitionSettings* part_settings) {
+	string Full_Filename, digestfile;
 	char split_filename[512];
 	int index = 0;
+	int use_sha2;
+	twrpDigest *digest;
+
+	DataManager::GetValue(TW_USE_SHA2, use_sha2);
+        if (use_sha2) {
+		twrpSHA *sha256 = new twrpSHA256();
+		digest = sha256;
+        }
+        else  {
+                digest = new twrpMD5();
+        }
 
 	sync();
 
+	memset(split_filename, 0, sizeof(split_filename));
 	Full_Filename = part_settings->Backup_Folder + "/" + Backup_FileName;
 	if (!TWFunc::Path_Exists(Full_Filename)) {
 		// This is a split archive, we presume
-		memset(split_filename, 0, sizeof(split_filename));
+		sprintf(split_filename, "%s%03i", Full_Filename.c_str(), index);
+		LOGINFO("split_filename: %s\n", split_filename);
+		digestfile = split_filename;
+		if (use_sha2)
+			digestfile += ".sha2";
+		else
+			digestfile += ".md5";
+		if (!TWFunc::Path_Exists(digestfile)) {
+			gui_msg(Msg(msg::kError, "no_digest_found=No digest file found for '{1}'. Please unselect Enable Digest verification to restore.")(split_filename));
+			return false;
+		}
+		string file_to_check = split_filename;
+		digest->set_filename(file_to_check);
 		while (index < 1000) {
-			sprintf(split_filename, "%s%03i", Full_Filename.c_str(), index);
-			if (!TWFunc::Path_Exists(split_filename))
-				break;
-			LOGINFO("split_filename: %s\n", split_filename);
-			if (!Check_Restore_File_MD5(split_filename))
+			string digest_str = digest->return_digest_string();
+			if (use_sha2)
+				LOGINFO("SHA2 Digest: %s\n", digest_str.c_str());
+			else
+				LOGINFO("MD5 Digest: %s\n", digest_str.c_str());
+
+			if (TWFunc::Path_Exists(split_filename) && digest->verify_digest(digest_str) != 0) {
+				gui_msg(Msg(msg::kError, "digest_fail_match=Digest failed to match on '{1}'.")(split_filename));
 				return false;
+			}
 			index++;
+			sprintf(split_filename, "%s%03i", Full_Filename.c_str(), index);
+			digest->set_filename(file_to_check);
 		}
 		return true;
+	} else {
+		// Single file archive
+		if (use_sha2) {
+			digestfile = Full_Filename + ".sha2";
+		}
+		else
+			digestfile = Full_Filename + ".md5";
+		if (!TWFunc::Path_Exists(digestfile)) {
+			gui_msg(Msg(msg::kError, "no_digest_found=No digest file found for '{1}'. Please unselect Enable Digest verification to restore.")(split_filename));
+			return false;
+		}
+		string digest_str;
+		TWFunc::read_file(digestfile, digest_str);
+		digest->set_filename(Full_Filename);
+		if (digest->verify_digest(digest_str) != 0) {
+			gui_msg(Msg(msg::kError, "digest_fail_match=Digest failed to match on '{1}'.")(split_filename));
+			return false;
+		} else {
+			if (use_sha2)
+				LOGINFO("SHA2 Digest: %s\n", digest_str.c_str());
+			else
+				LOGINFO("MD5 Digest: %s\n", digest_str.c_str());
+			return true;
+		}
 	}
-	return Check_Restore_File_MD5(Full_Filename); // Single file archive
+	return false;
 }
 
 bool TWPartition::Restore(PartitionSettings *part_settings) {
