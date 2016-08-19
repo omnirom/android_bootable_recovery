@@ -215,7 +215,8 @@
 		<string name="enc_disabled">disabled - set a password to enable</string>
 		<string name="enc_enabled">enabled</string>
 		<string name="enable_backup_comp_chk">Enable compression</string>
-		<string name="skip_md5_backup_chk">Skip MD5 generation during backup</string>
+		<string name="disable_backup_space_chk" version="2">Disable free space check before backup</string>
+		<string name="skip_digest_backup_chk" version="2">Skip Digest generation during backup</string>
 		<string name="disable_backup_space_chk" version="2">Disable free space check before backup</string>
 		<string name="current_boot_slot">Current Slot: %tw_active_slot%</string>
 		<string name="boot_slot_a">Slot A</string>
@@ -253,7 +254,7 @@
 		<string name="restore_try_decrypt_s">Trying Decryption</string>
 		<string name="restore_backup_date">Backup made on %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Select Partitions to Restore:</string>
-		<string name="restore_enable_md5_chk">Enable MD5 Verification of Backup Files</string>
+		<string name="restore_enable_digest_chk" version="2">Enable Digest Verification of Backup Files</string>
 		<string name="restore_complete">Restore Complete</string>
 		<string name="swipe_restore">Swipe to Restore</string>
 		<string name="swipe_restore_s">   Restore</string>
@@ -495,12 +496,12 @@
 		<string name="mtp_crash">MTP Crashed, not starting MTP on boot.</string>
 		<string name="decrypt_success">Successfully decrypted with default password.</string>
 		<string name="unable_to_decrypt">Unable to decrypt with default password. You may need to perform a Format Data.</string>
-		<string name="generating_md51">Generating MD5</string>
-		<!-- Message displayed during a backup if we are generating an MD5, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_md52"> * Generating md5...</string>
-		<string name="md5_created"> * MD5 Created.</string>
-		<string name="md5_error"> * MD5 Error!</string>
-		<string name="md5_compute_error"> * Error computing MD5.</string>
+		<string name="generating_digest1" version="2">Generating Digest</string>
+		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
+		<string name="generating_digest2" version="2"> * Generating digest...</string>
+		<string name="digest_created" version="2"> * Digest Created.</string>
+		<string name="digest_error" version="2"> * Digest Error!</string>
+		<string name="digest_compute_error" version="2"> * Error computing Digest.</string>
 		<string name="current_date">(Current Date)</string>
 		<string name="auto_generate">(Auto Generate)</string>
 		<string name="unable_to_locate_partition">Unable to locate '{1}' partition for backup calculations.</string>
@@ -521,8 +522,8 @@
 		<string name="restore_folder">Restore folder: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} done ({2} seconds)]</string>
-		<string name="verifying_md5">Verifying MD5</string>
-		<string name="skip_md5">Skipping MD5 check based on user setting.</string>
+		<string name="verifying_digest" version="2">Verifying Digest</string>
+		<string name="skip_digest" version="2">Skipping Digest check based on user setting.</string>
 		<string name="calc_restore">Calculating restore details...</string>
 		<string name="restore_read_only">Cannot restore {1} -- mounted read only.</string>
 		<string name="restore_unable_locate">Unable to locate '{1}' partition for restoring.</string>
@@ -585,9 +586,9 @@
 		<string name="cannot_resize">Cannot resize {1}.</string>
 		<string name="repair_resize">Repairing {1} before resizing.</string>
 		<string name="unable_resize">Unable to resize {1}.</string>
-		<string name="no_md5_found">No md5 file found for '{1}'. Please unselect Enable MD5 verification to restore.</string>
-		<string name="md5_fail_match">MD5 failed to match on '{1}'.</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="no_digest_found" version="2">No digest file found for '{1}'. Please unselect Enable Digest verification to restore.</string>
+		<string name="digest_fail_match" version="2">Digest failed to match on '{1}'.</string>
+		<string name="digest_matched" version="2">Digest matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Failed to decrypt tar file '{1}'</string>
 		<string name="format_data_msg">You may need to reboot recovery to be able to use /data again.</string>
 		<string name="format_data_err">Unable to format to remove encryption.</string>
@@ -609,7 +610,7 @@
 		<string name="backup_folder_set">Backup folder set to '{1}'</string>
 		<string name="locate_backup_err">Unable to locate backup '{1}'</string>
 		<string name="set_restore_opt">Setting restore options: '{1}':</string>
-		<string name="md5_check_skip">MD5 check skip is on</string>
+		<string name="digest_check_skip" version="2">Digest check skip is on</string>
 		<string name="ors_encrypt_restore_err">Unable to use OpenRecoveryScript to restore an encrypted backup.</string>
 		<string name="mounting">Mounting</string>
 		<string name="unmounting">Unmounting</string>
@@ -630,23 +631,23 @@
 		<string name="installing_zip">Installing zip file '{1}'</string>
 		<string name="select_backup_opt">Setting backup options:</string>
 		<string name="compression_on">Compression is on</string>
-		<string name="md5_off">MD5 Generation is off</string>
+		<string name="digest_off" version="2">Digest Generation is off</string>
 		<string name="backup_fail">Backup Failed</string>
 		<string name="backup_clean">Backup Failed. Cleaning Backup Folder.</string>
 		<string name="running_recovery_commands">Running Recovery Commands</string>
 		<string name="recovery_commands_complete">Recovery Commands Complete</string>
 		<string name="running_ors">Running OpenRecoveryScript</string>
 		<string name="ors_complete">OpenRecoveryScript Complete</string>
+		<string name="check_for_digest" version="2">Checking for Digest file...</string>
 		<string name="invalid_zip_format">Invalid zip file format!</string>
-		<string name="check_for_md5">Checking for MD5 file...</string>
 		<string name="fail_sysmap">Failed to map file '{1}'</string>
 		<string name="verify_zip_sig">Verifying zip signature...</string>
 		<string name="verify_zip_fail">Zip signature verification failed!</string>
 		<string name="verify_zip_done">Zip signature verified successfully.</string>
 		<string name="zip_corrupt">Zip file is corrupt!</string>
-		<string name="no_md5">Skipping MD5 check: no MD5 file found</string>
-		<string name="md5_fail">MD5 does not match</string>
-		<string name="md5_match">MD5 matched</string>
+		<string name="no_digest" version="2">Skipping Digest check: no Digest file found</string>
+		<string name="digest_fail" version="2">Digest does not match</string>
+		<string name="digest_match" version="2">Digest matched</string>
 		<string name="pid_signal">{1} process ended with signal: {2}</string>
 		<string name="pid_error">{1} process ended with ERROR: {2}</string>
 		<string name="install_dumlock">Installing HTC Dumlock to system...</string>
@@ -691,6 +692,7 @@
 		<string name="partition_not_found">path: {1} not found in partititon list</string>
 		<string name="copy_kernel_log">Copied kernel log to {1}</string>
 		<string name="include_kernel_log">Include Kernel Log</string>
+		<string name="sha2_chk">Use SHA2 for hashing</string>
 		<string name="unable_set_boot_slot">Error changing bootloader boot slot to {1}</string>
 	</resources>
 </language>
