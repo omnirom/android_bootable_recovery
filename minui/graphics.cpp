@@ -545,3 +545,9 @@ void gr_fb_blank(bool blank)
 {
     gr_backend->blank(gr_backend, blank);
 }
+
+void gr_set_font(__attribute__ ((unused))const char* name) {
+	//this cm function is made to change font. Don't care, just init the font:
+	gr_init_font();
+	return;
+}
