@@ -206,7 +206,7 @@
 		<string name="enc_disabled">禁用的 - 设置密码以启用</string>
 		<string name="enc_enabled">启用</string>
 		<string name="enable_backup_comp_chk">启用压缩</string>
-		<string name="skip_md5_backup_chk">备份时跳过生成 MD5 校验</string>
+		<string name="skip_digest_backup_chk">备份时跳过生成 Digest 校验</string>
 		<string name="disable_backup_space_chk">禁用剩余空间检测</string>
 		<string name="refresh_sizes_btn">刷新分区大小</string>
 		<string name="swipe_backup">滑动确认备份</string>
@@ -239,7 +239,7 @@
 		<string name="restore_try_decrypt_s">尝试解密</string>
 		<string name="restore_backup_date">备份包日期：%tw_restore_file_date%</string>
 		<string name="restore_sel_part">选择还原分区：</string>
-		<string name="restore_enable_md5_chk">打开备份文件的 MD5 验证</string>
+		<string name="restore_enable_digest_chk">打开备份文件的 Digest 验证</string>
 		<string name="restore_complete">还原完毕</string>
 		<string name="swipe_restore">滑动确认还原</string>
 		<string name="swipe_restore_s">   还原</string>
@@ -480,12 +480,12 @@
 		<string name="mtp_crash">MTP 崩溃，启动的时候不启动 MTP。</string>
 		<string name="decrypt_success">使用默认密码成功解密。</string>
 		<string name="unable_to_decrypt">无法使用默认密码来解密。你可能需要执行格式化 Data 分区。</string>
-		<string name="generating_md51">正在生成 MD5</string>
-		<!-- Message displayed during a backup if we are generating an MD5, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_md52"> * 正在生成 MD5…</string>
-		<string name="md5_created"> * MD5 已生成。</string>
-		<string name="md5_error"> * MD5 错误！</string>
-		<string name="md5_compute_error"> * 计算 MD5 错误。</string>
+		<string name="generating_digest1">正在生成 Digest</string>
+		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
+		<string name="generating_digest2"> * 正在生成 Digest…</string>
+		<string name="digest_created"> * Digest 已生成。</string>
+		<string name="digest_error"> * Digest 错误！</string>
+		<string name="digest_compute_error"> * 计算 Digest 错误。</string>
 		<string name="current_date">(当前日期)</string>
 		<string name="auto_generate">(自动生成)</string>
 		<string name="unable_to_locate_partition">无法找到 '{1}' 分区。</string>
@@ -506,8 +506,8 @@
 		<string name="restore_folder">还原目录：'{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} 完成 ({2} 秒)]</string>
-		<string name="verifying_md5">正在校验 MD5</string>
-		<string name="skip_md5">正在跳过 MD5 检测基于用户设置。</string>
+		<string name="verifying_digest">正在校验 Digest</string>
+		<string name="skip_digest">正在跳过 Digest 检测基于用户设置。</string>
 		<string name="calc_restore">正在计算还原详情…</string>
 		<string name="restore_read_only">不能还原{1} -- 只读挂载。</string>
 		<string name="restore_unable_locate">无法找到 '{1}' 分区。</string>
@@ -569,9 +569,9 @@
 		<string name="cannot_resize">无法更改 {1} 大小。</string>
 		<string name="repair_resize">在更改大小之前修复 {1}。</string>
 		<string name="unable_resize">无法修改 {1} 大小。</string>
-		<string name="no_md5_found">无法为 '{1}' 找到 MD5 校验文件。请取消允许 MD5 校验选项。</string>
-		<string name="md5_fail_match">MD5 校验失败 '{1}'。</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="no_digest_found">无法为 '{1}' 找到 Digest 校验文件。请取消允许 Digest 校验选项。</string>
+		<string name="digest_fail_match">Digest 校验失败 '{1}'。</string>
+		<string name="digest_matched">Digest matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">解密 tar 文件 '{1}' 失败</string>
 		<string name="format_data_msg">你可能需要重启 recovery 才能使用/data。</string>
 		<string name="format_data_err">无法格式化并删除加密。</string>
@@ -592,7 +592,7 @@
 		<string name="backup_folder_set">备份文件夹设置为 '{1}'</string>
 		<string name="locate_backup_err">无法打开备份 '{1}'</string>
 		<string name="set_restore_opt">设置还原选项：'{1}'：</string>
-		<string name="md5_check_skip">跳过 MD5 校验已打开</string>
+		<string name="digest_check_skip">跳过 Digest 校验已打开</string>
 		<string name="ors_encrypt_restore_err">无法使用 ORS 脚本恢复加密备份。</string>
 		<string name="mounting">正在挂载</string>
 		<string name="unmounting">正在卸载</string>
@@ -613,7 +613,7 @@
 		<string name="installing_zip">正在安装刷机包 '{1}'</string>
 		<string name="select_backup_opt">设置备份选项：</string>
 		<string name="compression_on">压缩选项开</string>
-		<string name="md5_off">关闭生成 MD5</string>
+		<string name="digest_off">关闭生成 Digest</string>
 		<string name="backup_fail">备份失败</string>
 		<string name="backup_complete">备份完毕！</string>
 		<string name="running_recovery_commands">运行 Recovery 命令中</string>
@@ -621,15 +621,15 @@
 		<string name="running_ors">运行 ORS 脚本</string>
 		<string name="ors_complete">运行 ORS 脚本完毕</string>
 		<string name="no_updater_binary">刷机包中无法找到 '{1}'。</string>
-		<string name="check_for_md5">检查 MD5 文件…</string>
+		<string name="check_for_digest">检查 Digest 文件…</string>
 		<string name="fail_sysmap">映射文件 '{1}' 失败</string>
 		<string name="verify_zip_sig">刷机包签名校验…</string>
 		<string name="verify_zip_fail">刷机包签名校验失败！</string>
 		<string name="verify_zip_done">刷机包签名校验成功。</string>
 		<string name="zip_corrupt">刷机包已损坏！</string>
-		<string name="no_md5">跳过 MD5 校验：无法找到 MD5 文件</string>
-		<string name="md5_fail">MD5 不匹配</string>
-		<string name="md5_match">MD5 匹配</string>
+		<string name="no_digest">跳过 Digest 校验：无法找到 Digest 文件</string>
+		<string name="digest_fail">Digest 不匹配</string>
+		<string name="digest_match">Digest 匹配</string>
 		<string name="pid_signal">{1} 过程结束，信号：{2}</string>
 		<string name="pid_error">{1} 过程结束，错误：{2}</string>
 		<string name="install_dumlock">安装 HTC Dumlock 到系统…</string>
