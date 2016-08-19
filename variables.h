@@ -46,7 +46,7 @@
 #define TW_BACKUP_ANDSEC_SIZE       "tw_backup_andsec_size"
 #define TW_BACKUP_SDEXT_SIZE        "tw_backup_sdext_size"
 #define TW_STORAGE_FREE_SIZE        "tw_storage_free_size"
-#define TW_GENERATE_MD5_TEXT        "tw_generate_md5_text"
+#define TW_GENERATE_DIGEST_TEXT     "tw_generate_digest_text"
 
 #define TW_RESTORE_TEXT             "tw_restore_text"
 #define TW_RESTORE_SYSTEM_VAR       "tw_restore_system"
@@ -60,7 +60,7 @@
 #define TW_RESTORE_AVG_FILE_RATE    "tw_restore_avg_file_rate"
 #define TW_RESTORE_AVG_FILE_COMP_RATE    "tw_restore_avg_file_comp_rate"
 #define TW_RESTORE_FILE_DATE        "tw_restore_file_date"
-#define TW_VERIFY_MD5_TEXT          "tw_verify_md5_text"
+#define TW_VERIFY_DIGEST_TEXT       "tw_verify_digest_text"
 #define TW_UPDATE_SYSTEM_DETAILS_TEXT "tw_update_system_details_text"
 
 #define TW_VERSION_VAR              "tw_version"
@@ -68,10 +68,10 @@
 #define TW_ZIP_LOCATION_VAR         "tw_zip_location"
 #define TW_ZIP_INTERNAL_VAR         "tw_zip_internal"
 #define TW_ZIP_EXTERNAL_VAR         "tw_zip_external"
-#define TW_FORCE_MD5_CHECK_VAR      "tw_force_md5_check"
-#define TW_SKIP_MD5_CHECK_VAR       "tw_skip_md5_check"
-#define TW_SKIP_MD5_GENERATE_VAR    "tw_skip_md5_generate"
 #define TW_DISABLE_FREE_SPACE_VAR   "tw_disable_free_space"
+#define TW_FORCE_DIGEST_CHECK_VAR   "tw_force_digest_check"
+#define TW_SKIP_DIGEST_CHECK_VAR    "tw_skip_digest_check"
+#define TW_SKIP_DIGEST_GENERATE_VAR "tw_skip_digest_generate"
 #define TW_SIGNED_ZIP_VERIFY_VAR    "tw_signed_zip_verify"
 #define TW_INSTALL_REBOOT_VAR       "tw_install_reboot"
 #define TW_TIME_ZONE_VAR            "tw_time_zone"
@@ -137,6 +137,8 @@
 #define TW_CRYPTO_PASSWORD          "tw_crypto_password"
 #define TW_SDEXT_DISABLE_EXT4       "tw_sdext_disable_ext4"
 #define TW_MILITARY_TIME            "tw_military_time"
+#define TW_USE_SHA2                 "tw_use_sha2"
+#define TW_NO_SHA2                  "tw_no_sha2"
 
 // Also used:
 //   tw_boot_is_mountable
