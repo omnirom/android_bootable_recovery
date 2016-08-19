@@ -215,7 +215,7 @@
 		<string name="enc_disabled">letiltva - állítson be jelszót az engedélyezéshez</string>
 		<string name="enc_enabled">engedélyezve</string>
 		<string name="enable_backup_comp_chk">Tömörítés engedélyezése</string>
-		<string name="skip_md5_backup_chk">Mentés közbeni MD5 generálás kihagyása</string>
+		<string name="skip_digest_backup_chk" version="2">Mentés közbeni Digest generálás kihagyása</string>
 		<string name="disable_backup_space_chk" version="2">Szabad hely ellenőrzésének letiltása</string>
 		<string name="current_boot_slot">Jelenlegi Slot: %tw_active_slot%</string>
 		<string name="boot_slot_a">Slot A</string>
@@ -253,7 +253,7 @@
 		<string name="restore_try_decrypt_s">Dekódolás megpróbálása</string>
 		<string name="restore_backup_date">Biztonsági mentés ideje: %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Válassza ki a visszaállítandó partíciókat:</string>
-		<string name="restore_enable_md5_chk">A biztonsági mentési fájlok MD5 ellenőrzésének engedélyezése</string>
+		<string name="restore_enable_digest_chk" version="3">A biztonsági mentési fájlok Digest ellenőrzésének engedélyezése</string>
 		<string name="restore_complete">Mentés helyreállítása kész</string>
 		<string name="swipe_restore">Csúsztasson a visszaállításhoz</string>
 		<string name="swipe_restore_s">   Visszaállítás</string>
@@ -494,12 +494,12 @@
 		<string name="mtp_crash">MTP összeomlott, MTP nem indul bootoláskor.</string>
 		<string name="decrypt_success">Sikeresen visszafejtve az alapértelmezett jelszóval.</string>
 		<string name="unable_to_decrypt">Visszafejtés sikertelen az alapértelmezett jelszóval. Szükség lehet az adatok formázására.</string>
-		<string name="generating_md51">MD5 generálása</string>
-		<!-- Message displayed during a backup if we are generating an MD5, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_md52"> * MD5 generálása...</string>
-		<string name="md5_created"> * MD5 létrehozva.</string>
-		<string name="md5_error"> * MD5 hiba!</string>
-		<string name="md5_compute_error"> * MD5 számítási hiba.</string>
+		<string name="generating_digest1" version="3">Digest generálása</string>
+		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
+		<string name="generating_digest2" version="3"> * Digest generálása...</string>
+		<string name="digest_created" version="3"> * Digest létrehozva.</string>
+		<string name="digest_error" version="3"> * Digest hiba!</string>
+		<string name="digest_compute_error" version="3"> * Digest számítási hiba.</string>
 		<string name="current_date">(Aktuális dátum)</string>
 		<string name="auto_generate">(Automatikus létrehozás)</string>
 		<string name="unable_to_locate_partition">'{1}' partíció nem található a biztonsági mentési számításokhoz.</string>
@@ -520,8 +520,8 @@
 		<string name="restore_folder">Mappa visszaállítása: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} kész ({2} másodperc)]</string>
-		<string name="verifying_md5">MD5 ellenőrzése</string>
-		<string name="skip_md5">MD5 ellenőrzés átugrása felhasználói beállítás alapján.</string>
+		<string name="verifying_digest" version="3">Digest ellenőrzése</string>
+		<string name="skip_digest" version="3">Digest ellenőrzés átugrása felhasználói beállítás alapján.</string>
 		<string name="calc_restore">Visszaállítási részletek számítása...</string>
 		<string name="restore_read_only">{1} nem állítható vissza -- csak olvashatóként csatolva.</string>
 		<string name="restore_unable_locate">Nem található a(z) '{1}' partíció a visszaállításhoz.</string>
@@ -584,9 +584,9 @@
 		<string name="cannot_resize">{1} átméretezése sikertelen.</string>
 		<string name="repair_resize">{1} javítása az átméretezés előtt.</string>
 		<string name="unable_resize">Nem lehet átméretezni: {1}.</string>
-		<string name="no_md5_found">Nem található MD5 fájl ehhez: '{1}'. Kérjük, a visszaállításhoz szüntesse meg a kijelölést: \"MD5 ellenőrzés engedélyezése\".</string>
-		<string name="md5_fail_match">MD5 nem egyezik ezzel: '{1}'.</string>
-		<string name="md5_matched">MD5 egyezik ezzel: '{1}'.</string>
+		<string name="no_digest_found" version="2">Nem található Digest fájl ehhez: '{1}'. Kérjük, a visszaállításhoz szüntesse meg a kijelölést: \"MD5 ellenőrzés engedélyezése\".</string>
+		<string name="digest_fail_match" version="2">Digest nem egyezik ezzel: '{1}'.</string>
+		<string name="digest_matched" version="2">Digest egyezik ezzel: '{1}'.</string>
 		<string name="fail_decrypt_tar">Nem sikerült visszafejteni a(z) '{1}' tar fájlt</string>
 		<string name="format_data_msg">Lehet, hogy a recovery-be kell újraindítania ahhoz, hogy képes legyen használni az /adat partíciót.</string>
 		<string name="format_data_err">Nem sikerült formázni a titkosítás eltávolításához.</string>
@@ -608,7 +608,7 @@
 		<string name="backup_folder_set">Biztonsági mentés mappája beállítva erre: '{1}'</string>
 		<string name="locate_backup_err">Nem található a(z) '{1}' biztonsági mentés</string>
 		<string name="set_restore_opt">Visszaállítási beállítások beállítása: '{1}':</string>
-		<string name="md5_check_skip">MD5 ellenőrzés kihagyása bekapcsolva</string>
+		<string name="digest_check_skip" version="2">Digest ellenőrzés kihagyása bekapcsolva</string>
 		<string name="ors_encrypt_restore_err">Nem sikerült az OpenRecoveryScript futtatása egy titkosított biztonsági mentés visszaállításához.</string>
 		<string name="mounting">Csatolás</string>
 		<string name="unmounting">Leválasztás</string>
@@ -629,7 +629,7 @@
 		<string name="installing_zip">'{1}' zip fájl telepítése</string>
 		<string name="select_backup_opt">Biztonsági mentési beállítások:</string>
 		<string name="compression_on">Tömörítés bekapcsolva</string>
-		<string name="md5_off">MD5 generálás kikapcsolva</string>
+		<string name="digest_off" version="3">Digest generálás kikapcsolva</string>
 		<string name="backup_fail">Biztonsági mentés készítése sikertelen</string>
 		<string name="backup_clean">Biztonsági mentés nem sikerült. Mentési mappa tisztítása.</string>
 		<string name="running_recovery_commands">Recovery parancsok futtatása</string>
@@ -637,15 +637,15 @@
 		<string name="running_ors">OpenRecoveryScript futtatása</string>
 		<string name="ors_complete">OpenRecoveryScript kész</string>
 		<string name="invalid_zip_format">Érvénytelen zip fájlformátum!</string>
-		<string name="check_for_md5">MD5 fájl ellenőrzése...</string>
+		<string name="check_for_digest" version="2">Digest fájl ellenőrzése...</string>
 		<string name="fail_sysmap">'{1}' fájl feltérképezése sikertelen</string>
 		<string name="verify_zip_sig">Zip aláírás ellenőrzése...</string>
 		<string name="verify_zip_fail">Zip aláírás ellenőrzése nem sikerült!</string>
 		<string name="verify_zip_done">Zip aláírás ellenőrzése sikeres.</string>
 		<string name="zip_corrupt">Zip fájl sérült!</string>
-		<string name="no_md5">MD5 ellenőrzés kihagyása: nem található MD5 fájl</string>
-		<string name="md5_fail">MD5 nem egyezik meg</string>
-		<string name="md5_match">MD5 egyezik</string>
+		<string name="no_digest" version="3">Digest ellenőrzés kihagyása: nem található Digest fájl</string>
+		<string name="digest_fail" version="3">Digest nem egyezik meg</string>
+		<string name="digest_match" version="3">Digest egyezik</string>
 		<string name="pid_signal">{1} folyamat véget ért a következő jellel: {2}</string>
 		<string name="pid_error">{1} folyamat véget ért a következő HIBÁVAL: {2}</string>
 		<string name="install_dumlock">HTC Dumlock telepítése a rendszerbe...</string>
