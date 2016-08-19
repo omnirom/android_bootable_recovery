@@ -207,7 +207,7 @@
 		<string name="enc_disabled">wyłączone - ustaw hasło, aby włączyć</string>
 		<string name="enc_enabled">włączone</string>
 		<string name="enable_backup_comp_chk">Włącz kompresję</string>
-		<string name="skip_md5_backup_chk">Pomiń generowanie MD5 kopii zapasowej</string>
+		<string name="skip_digest_backup_chk" version="2">Pomiń generowanie Digest kopii zapasowej</string>
 		<string name="disable_backup_space_chk">Wyłącz sprawdzanie wolnego miejsca</string>
 		<string name="refresh_sizes_btn">Odśwież rozmiary</string>
 		<string name="swipe_backup">Przesuń, aby wykonać kopię</string>
@@ -240,7 +240,7 @@
 		<string name="restore_try_decrypt_s">Spróbuj rozszyfrować</string>
 		<string name="restore_backup_date">Kopia zapasowa utworzona %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Wybierz partycje do przywrócenia:</string>
-		<string name="restore_enable_md5_chk">Włącz weryfikację MD5 kopii zapasowych</string>
+		<string name="restore_enable_digest_chk" version="2">Włącz weryfikację Digest kopii zapasowych</string>
 		<string name="restore_complete">Przywracanie zakończone</string>
 		<string name="swipe_restore">Przesuń, aby przywrócić</string>
 		<string name="swipe_restore_s">   Przywróć</string>
@@ -481,12 +481,12 @@
 		<string name="mtp_crash">MTP uległo awarii, wyłączczam MTP przy starcie.</string>
 		<string name="decrypt_success">Pomyślnie rozszyfrowano z domyślnym hasłem.</string>
 		<string name="unable_to_decrypt">Nie można odszyfrować z domyślnym hasłem. Może trzeba będzie wykonać Format Data.</string>
-		<string name="generating_md51">Generowanie MD5</string>
-		<!-- Message displayed during a backup if we are generating an MD5, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_md52"> * Generowanie md5...</string>
-		<string name="md5_created"> * MD5 utworzone.</string>
-		<string name="md5_error"> * Błąd MD5!</string>
-		<string name="md5_compute_error"> * Błąd przetwarzania MD5.</string>
+		<string name="generating_digest1" version="2">Generowanie Digest</string>
+		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
+		<string name="generating_digest2" version="2"> * Generowanie Digest...</string>
+		<string name="digest_created" version="2"> * Digest utworzone.</string>
+		<string name="digest_error" version="2"> * Błąd Digest!</string>
+		<string name="digest_compute_error" version="2"> * Błąd przetwarzania Digest.</string>
 		<string name="current_date">(Obecna data)</string>
 		<string name="auto_generate">(Generuj automatycznie)</string>
 		<string name="unable_to_locate_partition">Nie można zlokalizować partycji '{1}' do obliczenia kopii zapasowej.</string>
@@ -507,8 +507,8 @@
 		<string name="restore_folder">Folder przywracania: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} zakończono ({2} sekund)]</string>
-		<string name="verifying_md5">Weryfikowanie MD5</string>
-		<string name="skip_md5">Pomijanie sprawdzania MD5 włączone przez użytkownika.</string>
+		<string name="verifying_digest" version="2">Weryfikowanie Digest</string>
+		<string name="skip_digest" version="2">Pomijanie sprawdzania Digest włączone przez użytkownika.</string>
 		<string name="calc_restore">Obliczanie danych przywracania...</string>
 		<string name="restore_read_only">Nie można przywrócić {1} -- zamontowane tylko do odczytu.</string>
 		<string name="restore_unable_locate">Nie można zlokalizować partycji '{1}' do przywrócenia.</string>
@@ -570,9 +570,9 @@
 		<string name="cannot_resize">Nie można zmienić rozmiaru {1}.</string>
 		<string name="repair_resize">Naprawianie {1} przed zmianą rozmiaru.</string>
 		<string name="unable_resize">Nie można zmienić rozmiaru {1}.</string>
-		<string name="no_md5_found">Nie znaleziono pliku MD5 '{1}'. Proszę wyłączyć weryfikację MD5, aby przywrócić.</string>
-		<string name="md5_fail_match">MD5 nie pasuje do '{1}'.</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="no_digest_found" version="2">Nie znaleziono pliku Digest '{1}'. Proszę wyłączyć weryfikację Digest, aby przywrócić.</string>
+		<string name="digest_fail_match" version="2">Digest nie pasuje do '{1}'.</string>
+		<string name="digest_matched" version="2">Digest matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Nie udało się odszyfrować pliku tar '{1}'</string>
 		<string name="format_data_msg">Może być konieczne ponowne uruchomienie recovery, aby móc ponownie użyć /date.</string>
 		<string name="format_data_err">Nie można sformatować, aby usunąć szyfrowanie.</string>
@@ -593,7 +593,7 @@
 		<string name="backup_folder_set">'{1}' ustawiony jako folder kopii zapasowych</string>
 		<string name="locate_backup_err">Nie udało się zlokalizować kopii '{1}'</string>
 		<string name="set_restore_opt">Ustawienia przywracania: '{1}':</string>
-		<string name="md5_check_skip">Sprawdzanie MD5 jest włączone</string>
+		<string name="digest_check_skip" version="2">Sprawdzanie Digest jest włączone</string>
 		<string name="ors_encrypt_restore_err">Nie można użyć OpenRecoveryScript do przywrócenia zaszyfrowanej kopii zapasowej.</string>
 		<string name="mounting">Montowanie</string>
 		<string name="unmounting">Odmontowywanie</string>
@@ -614,7 +614,7 @@
 		<string name="installing_zip">Instalowanie pliku zip '{1}'</string>
 		<string name="select_backup_opt">Ustawienia kopii zapasowych:</string>
 		<string name="compression_on">Kompresja jest włączona</string>
-		<string name="md5_off">Generowanie MD5 jest wyłączone</string>
+		<string name="digest_off" version="2">Generowanie Digest jest wyłączone</string>
 		<string name="backup_fail">Niepowodzenie wykonywania kopii zapasowej</string>
 		<string name="backup_clean">Niepowodzenie wykonywania kopii zapasowej. Oczyszczanie folderu kopii zapasowej.</string>
 		<string name="running_recovery_commands">Wykonywanie komend trybu odzyskiwania</string>
@@ -622,15 +622,15 @@
 		<string name="running_ors">Wykonywanie Skryptu OpenRecovery</string>
 		<string name="ors_complete">Ukończono Skrypt OpenRecovery</string>
 		<string name="no_updater_binary">Nie można znaleźć '{1}' w pliku zip.</string>
-		<string name="check_for_md5">Sprawdzanie pliku MD5...</string>
+		<string name="check_for_digest" version="2">Sprawdzanie pliku Digest...</string>
 		<string name="fail_sysmap">Nieudane mapowanie pliku '{1}'</string>
 		<string name="verify_zip_sig">Weryfikowanie sygnatury pliku zip...</string>
 		<string name="verify_zip_fail">Niewłaściwa sygnatura pliku zip!</string>
 		<string name="verify_zip_done">Sygnatura pliku zip zweryfikowana pomyślnie.</string>
 		<string name="zip_corrupt">Plik zip uszkodzony!</string>
-		<string name="no_md5">Pomijanie sprawdzania MD5: brak pliku MD5</string>
-		<string name="md5_fail">MD5 niezgodne</string>
-		<string name="md5_match">MD5 zgodne</string>
+		<string name="no_digest" version="2">Pomijanie sprawdzania Digest: brak pliku Digest</string>
+		<string name="digest_fail" version="2">Digest niezgodne</string>
+		<string name="digest_match" version="2">Digest zgodne</string>
 		<string name="pid_signal">Proces {1} zakończony z sygnałem: {2}</string>
 		<string name="pid_error">Proces {1} zakończony z błędem: {2}</string>
 		<string name="install_dumlock">Instalowanie HTC Dumlock do systemu...</string>
