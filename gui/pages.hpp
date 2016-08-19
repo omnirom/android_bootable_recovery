@@ -99,6 +99,7 @@ public:
 public:
 	int Load(LoadingContext& ctx, const std::string& filename);
 	int LoadLanguage(char* languageFile, ZipArchive* package);
+	int LoadLanguage(char* languageFile, ZipArchive* package, char* languageFile2);
 	void MakeEmergencyConsoleIfNeeded();
 
 	Page* FindPage(std::string name);
