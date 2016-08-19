@@ -41,7 +41,7 @@
 #include "partitions.hpp"
 #include "data.hpp"
 #include "twrp-functions.hpp"
-#include "twrpDigest.hpp"
+#include "twrpDigest/twrpDigest.hpp"
 #include "twrpTar.hpp"
 #include "twrpDU.hpp"
 #include "infomanager.hpp"
@@ -1612,11 +1612,23 @@ bool TWPartition::Backup(PartitionSettings *part_settings, pid_t *tar_fork_pid) 
 	return false;
 }
 
-bool TWPartition::Check_MD5(PartitionSettings *part_settings) {
-	string Full_Filename, md5file;
+bool TWPartition::Check_Digest(PartitionSettings* part_settings) {
+	string Full_Filename, digestfile;
 	char split_filename[512];
 	int index = 0;
-	twrpDigest md5sum;
+	int use_sha2;
+	twrpDigest digest;
+	TWRP_Digest_Type digest_type;
+
+	DataManager::GetValue(TW_USE_SHA2, use_sha2);
+        if (use_sha2) {
+		digest_type = DIGEST_SHA2;
+                digest.set_type(digest_type);
+        }
+        else  {
+		digest_type = DIGEST_MD5;
+                digest.set_type(digest_type);
+        }
 
 	sync();
 
@@ -1626,33 +1638,40 @@ bool TWPartition::Check_MD5(PartitionSettings *part_settings) {
 		// This is a split archive, we presume
 		sprintf(split_filename, "%s%03i", Full_Filename.c_str(), index);
 		LOGINFO("split_filename: %s\n", split_filename);
-		md5file = split_filename;
-		md5file += ".md5";
-		if (!TWFunc::Path_Exists(md5file)) {
-			gui_msg(Msg(msg::kError, "no_md5_found=No md5 file found for '{1}'. Please unselect Enable MD5 verification to restore.")(split_filename));
+		digestfile = split_filename;
+		if (use_sha2)
+			digestfile += ".sha2";
+		else
+			digestfile += ".md5";
+		if (!TWFunc::Path_Exists(digestfile)) {
+			gui_msg(Msg(msg::kError, "no_digest_found=No digest file found for '{1}'. Please unselect Enable Digest verification to restore.")(split_filename));
 			return false;
 		}
-		md5sum.setfn(split_filename);
+		digest.init_digest(split_filename);
 		while (index < 1000) {
-			if (TWFunc::Path_Exists(split_filename) && md5sum.verify_md5digest() != 0) {
-				gui_msg(Msg(msg::kError, "md5_fail_match=MD5 failed to match on '{1}'.")(split_filename));
+			if (TWFunc::Path_Exists(split_filename) && digest.verify_digest() != 0) {
+				gui_msg(Msg(msg::kError, "digest_fail_match=Digest failed to match on '{1}'.")(split_filename));
 				return false;
 			}
 			index++;
 			sprintf(split_filename, "%s%03i", Full_Filename.c_str(), index);
-			md5sum.setfn(split_filename);
+			digest.init_digest(split_filename);
 		}
 		return true;
 	} else {
 		// Single file archive
-		md5file = Full_Filename + ".md5";
-		if (!TWFunc::Path_Exists(md5file)) {
-			gui_msg(Msg(msg::kError, "no_md5_found=No md5 file found for '{1}'. Please unselect Enable MD5 verification to restore.")(md5file));
+		if (use_sha2) {
+			digestfile = Full_Filename + ".sha2";
+		}
+		else
+			digestfile = Full_Filename + ".md5";
+		if (!TWFunc::Path_Exists(digestfile)) {
+			gui_msg(Msg(msg::kError, "no_digest_found=No digest file found for '{1}'. Please unselect Enable Digest verification to restore.")(split_filename));
 			return false;
 		}
-		md5sum.setfn(Full_Filename);
-		if (md5sum.verify_md5digest() != 0) {
-			gui_msg(Msg(msg::kError, "md5_fail_match=MD5 failed to match on '{1}'.")(split_filename));
+		digest.init_digest(Full_Filename);
+		if (digest.verify_digest() != 0) {
+			gui_msg(Msg(msg::kError, "digest_fail_match=Digest failed to match on '{1}'.")(split_filename));
 			return false;
 		} else
 			return true;
