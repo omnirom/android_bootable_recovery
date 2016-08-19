@@ -199,7 +199,7 @@
 		<string name="enc_disabled">desativado - definir uma senha para habilitar</string>
 		<string name="enc_enabled">ativado</string>
 		<string name="enable_backup_comp_chk">Habilitar a compactação</string>
-		<string name="skip_md5_backup_chk">Geração de Skip MD5 durante a cópia de segurança</string>
+		<string name="skip_digest_backup_chk" version="2">Geração de Skip Digest durante a cópia de segurança</string>
 		<string name="disable_backup_space_chk">Desativar a verificação de espaço livre</string>
 		<string name="refresh_sizes_btn">Atualizar os tamanhos</string>
 		<string name="swipe_backup">Deslize para a Cópia de Segurança</string>
@@ -232,7 +232,7 @@
 		<string name="restore_try_decrypt_s">Tentando a descriptografia</string>
 		<string name="restore_backup_date">Cópia de Segurança feita em %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Selecione partições a restaurar:</string>
-		<string name="restore_enable_md5_chk">Habilitar verificação de MD5 dos arquivos de Cópia de Segurança</string>
+		<string name="restore_enable_digest_chk" version="2">Habilitar verificação de Digest dos arquivos de Cópia de Segurança</string>
 		<string name="restore_complete">Restauração completa</string>
 		<string name="swipe_restore">Deslize para restaurar</string>
 		<string name="swipe_restore_s">   Restauração</string>
@@ -458,11 +458,11 @@
 		<string name="mtp_crash">MTP caiu, não começando MTP na inicialização.</string>
 		<string name="decrypt_success">Com êxito descriptografada com a senha padrão.</string>
 		<string name="unable_to_decrypt">Não é possível descriptografar com senha padrão. Você pode precisar executar um formato de dados.</string>
-		<string name="generating_md51">Gerar o MD5</string>
-		<string name="generating_md52"> * Gerar o md5...</string>
-		<string name="md5_created"> * MD5 criado.</string>
-		<string name="md5_error"> * MD5 erro!</string>
-		<string name="md5_compute_error"> * Erro MD5 de computação.</string>
+		<string name="generating_digest1" version="2">Gerar o Digest</string>
+		<string name="generating_digest2" version="2"> * Gerar o Digest...</string>
+		<string name="digest_created" version="2"> * Digest criado.</string>
+		<string name="digest_error" version="2"> * Digest erro!</string>
+		<string name="digest_compute_error" version="2"> * Erro Digest de computação.</string>
 		<string name="current_date">(Data atual)</string>
 		<string name="auto_generate">(Auto gerar)</string>
 		<string name="unable_to_locate_partition">Não é possível localizar a partição \'{1}\' para cálculos de cópia de segurança.</string>
@@ -481,8 +481,8 @@
 		<string name="backup_completed">[CÓPIA DE SEGURANÇA CONCLUÍDO EM {1} SEGUNDOS]</string>
 		<string name="restore_started">[RESTAURAÇÃO COMEÇADA]</string>
 		<string name="restore_folder">Restaurar a pasta: \'{1}\'</string>
-		<string name="verifying_md5">Verificando o MD5</string>
-		<string name="skip_md5">Saltando de verificação MD5 com base na configuração de usuário.</string>
+		<string name="verifying_digest" version="2">Verificando o Digest</string>
+		<string name="skip_digest" version="2">Saltando de verificação Digest com base na configuração de usuário.</string>
 		<string name="calc_restore">Cálculo de restauração de detalhes...</string>
 		<string name="restore_read_only">Não é possível restaurar {1}..--montada somente leitura.</string>
 		<string name="restore_unable_locate">Não é possível localizar a partição \'{1}\' para restaurar.</string>
@@ -540,9 +540,9 @@
 		<string name="cannot_resize">Não é possível redimensionar {1}.</string>
 		<string name="repair_resize">Reparação de {1} antes de redimensionamento.</string>
 		<string name="unable_resize">Não é possível redimensionar {1}.</string>
-		<string name="no_md5_found">Nenhum arquivo md5 foi encontrado para \'{1}\'. Por favor, cancelar a seleção de verificação MD5 habilitar para restaurar.</string>
-		<string name="md5_fail_match">MD5 não conseguiram corresponder na \'{1}\'.</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="no_digest_found" version="2">Nenhum arquivo Digest foi encontrado para \'{1}\'. Por favor, cancelar a seleção de verificação Digest habilitar para restaurar.</string>
+		<string name="digest_fail_match" version="2">Digest não conseguiram corresponder na \'{1}\'.</string>
+		<string name="digest_matched" version="2">Digest matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Falha ao descriptografar arquivo tar \'{1}\'</string>
 		<string name="format_data_msg">Você pode precisar reiniciar recuperação para ser capaz de usar /data novamente.</string>
 		<string name="format_data_err">Não é possível formatar para remover a criptografia.</string>
@@ -563,7 +563,7 @@
 		<string name="backup_folder_set">Pasta da cópia de segurança definida como \'{1}\'</string>
 		<string name="locate_backup_err">Não é possível localizar a cópia de segurança \'{1}\'</string>
 		<string name="set_restore_opt">Definir opções de restauração: \'{1}\':</string>
-		<string name="md5_check_skip">Ignorar verificação de MD5 é na</string>
+		<string name="digest_check_skip" version="2">Ignorar verificação de Digest é na</string>
 		<string name="ors_encrypt_restore_err">Não é possível usar OpenRecoveryScript para restaurar uma cópia de segurança criptografada.</string>
 		<string name="mounting">Montando</string>
 		<string name="unmounting">Desmontando</string>
@@ -584,7 +584,7 @@
 		<string name="installing_zip">Instalando o arquivo zip \'{1}\'</string>
 		<string name="select_backup_opt">Definir opções da cópia de segurança:</string>
 		<string name="compression_on">Compressão é na</string>
-		<string name="md5_off">Geração de MD5 está fora</string>
+		<string name="digest_off" version="2">Geração de Digest está fora</string>
 		<string name="backup_fail">Cópia de segurança falhou</string>
 		<string name="backup_clean">Falha de backup. Limpar a pasta de Backup.</string>
 		<string name="running_recovery_commands">Executando comandos de recuperação</string>
@@ -592,15 +592,15 @@
 		<string name="running_ors">OpenRecoveryScript em execução</string>
 		<string name="ors_complete">OpenRecoveryScript completa</string>
 		<string name="no_updater_binary">Não foi possível encontrar \'{1}\' no arquivo zip.</string>
-		<string name="check_for_md5">Verificação de arquivo MD5...</string>
+		<string name="check_for_digest" version="2">Verificação de arquivo Digest...</string>
 		<string name="fail_sysmap">Falha ao mapear o arquivo \'{1}\'</string>
 		<string name="verify_zip_sig">Verificar a assinatura do zip...</string>
 		<string name="verify_zip_fail">Falha de verificação de assinatura do arquivo zip!</string>
 		<string name="verify_zip_done">Assinatura zip é verificada com êxito.</string>
 		<string name="zip_corrupt">O arquivo zip está corrompido!</string>
-		<string name="no_md5">Saltando de verificação MD5: nenhum arquivo MD5 encontrado</string>
-		<string name="md5_fail">Não coincide com MD5</string>
-		<string name="md5_match">Correspondência de MD5</string>
+		<string name="no_digest" version="2">Saltando de verificação Digest: nenhum arquivo Digest encontrado</string>
+		<string name="digest_fail" version="2">Não coincide com Digest</string>
+		<string name="digest_match" version="2">Correspondência de Digest</string>
 		<string name="pid_signal">{1} processo terminou com sinal: {2}</string>
 		<string name="pid_error">{1} processo terminou com erro: {2}</string>
 		<string name="install_dumlock">Instalação HTC Dumlock sistema...</string>

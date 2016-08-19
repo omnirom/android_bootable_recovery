@@ -2025,8 +2025,8 @@
 				<listitem name="{@enable_backup_comp_chk=Enable compression}">
 					<data variable="tw_use_compression"/>
 				</listitem>
-				<listitem name="{@skip_md5_backup_chk=Skip MD5 generation during backup}">
-					<data variable="tw_skip_md5_generate"/>
+				<listitem name="{@skip_digest_backup_chk=Skip Digest generation during backup}">
+					<data variable="tw_skip_digest_generate"/>
 				</listitem>
 				<listitem name="{@disable_backup_space_chk=Disable free space check before backup}">
 					<data variable="tw_disable_free_space"/>
@@ -2214,8 +2214,8 @@
 				<listitem name="{@enable_backup_comp_chk=Enable compression}">
 					<data variable="tw_use_compression"/>
 				</listitem>
-				<listitem name="{@skip_md5_backup_chk=Skip MD5 generation during backup}">
-					<data variable="tw_skip_md5_generate"/>
+				<listitem name="{@skip_digest_backup_chk=Skip Digest generation during backup}">
+					<data variable="tw_skip_digest_generate"/>
 				</listitem>
 				<listitem name="{@disable_backup_space_chk=Disable free space check before backup}">
 					<data variable="tw_disable_free_space"/>
@@ -2807,8 +2807,8 @@
 
 			<listbox style="scrolllist">
 				<placement x="%col1_x_left%" y="%row2_header_y%" w="%content_width%" h="%partitionlist_wipe_height%"/>
-				<listitem name="{@restore_enable_md5_chk=Enable MD5 Verification of Backup Files}">
-					<data variable="tw_skip_md5_check"/>
+				<listitem name="{@restore_enable_digest_chk=Enable Digest Verification of Backup Files}">
+					<data variable="tw_skip_digest_check"/>
 				</listitem>
 			</listbox>
 
@@ -2972,8 +2972,8 @@
 
 			<listbox style="listbox_options">
 				<placement x="%col1_x_right%" y="%row4a_y%" w="%content_half_width%" h="80"/>
-				<listitem name="{@restore_enable_md5_chk=Enable MD5 Verification of Backup Files}">
-					<data variable="tw_skip_md5_check"/>
+				<listitem name="{@restore_enable_digest_chk=Enable Digest Verification of Backup Files}">
+					<data variable="tw_skip_digest_check"/>
 				</listitem>
 			</listbox>
 
@@ -3584,11 +3584,11 @@
 				<listitem name="{@disable_backup_space_chk=Disable free space check before backup}">
 					<data variable="tw_disable_free_space"/>
 				</listitem>
-				<listitem name="{@skip_md5_backup_chk=Skip MD5 generation during backup}">
-					<data variable="tw_skip_md5_generate"/>
+				<listitem name="{@skip_digest_backup_chk=Skip Digest generation during backup}">
+					<data variable="tw_skip_digest_generate"/>
 				</listitem>
-				<listitem name="{@restore_enable_md5_chk=Enable MD5 verification of backup files}">
-					<data variable="tw_skip_md5_check"/>
+				<listitem name="{@restore_enable_digest_chk=Enable Digest verification of backup files}">
+					<data variable="tw_skip_digest_check"/>
 				</listitem>
 				<listitem name="{@use24clock_chk=Use 24-hour clock}">
 					<data variable="tw_military_time"/>
