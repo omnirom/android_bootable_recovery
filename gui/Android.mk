@@ -116,6 +116,8 @@ ifeq ($(TWRP_NEW_THEME),true)
     TWRP_RES := $(commands_recovery_local_path)/gui/theme/common/fonts
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/languages
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/$(word 1,$(subst _, ,$(TW_THEME))).xml
+    TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/devicespecific.xml
+    TWRP_RES += $(TW_DEVICESPECIFIC_PATH)
 ifeq ($(TW_EXTRA_LANGUAGES),true)
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/fonts
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/languages
