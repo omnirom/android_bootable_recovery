@@ -1307,6 +1307,10 @@ void PageManager::LoadLanguage(string filename) {
 	else
 		actual_filename = TWRES "languages/" + filename + ".xml";
 	char* xmlFile = PageManager::LoadFileToBuffer(actual_filename, NULL);
+#ifdef TW_INCLUDE_DEVICESPECIFIC_LANGUAGE
+	actual_filename = TWRES "devicelanguages/" + filename + ".xml";
+	char* xmlFile = PageManager::LoadFileToBuffer(actual_filename, NULL);
+#endif
 	if (xmlFile == NULL)
 		LOGERR("Unable to load '%s'\n", actual_filename.c_str());
 	else {
