@@ -51,12 +51,8 @@ LOCAL_SRC_FILES := \
     fixContexts.cpp \
     twrpTar.cpp \
     exclude.cpp \
-    twrpDigest.cpp \
-    digest/md5.c \
     find_file.cpp \
-    infomanager.cpp
-
-LOCAL_SRC_FILES += \
+    infomanager.cpp \
     data.cpp \
     partition.cpp \
     partitionmanager.cpp \
@@ -112,9 +108,11 @@ LOCAL_C_INCLUDES += \
     system/core/libsparse \
     external/zlib
 
-LOCAL_C_INCLUDES += bionic external/openssl/include
+LOCAL_C_INCLUDES += bionic
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-    LOCAL_C_INCLUDES += external/stlport/stlport
+    LOCAL_C_INCLUDES += external/stlport/stlport external/openssl/include
+else
+    LOCAL_C_INCLUDES += external/boringssl/include
 endif
 
 LOCAL_STATIC_LIBRARIES :=
@@ -122,7 +120,7 @@ LOCAL_SHARED_LIBRARIES :=
 
 LOCAL_STATIC_LIBRARIES += libguitwrp
 LOCAL_SHARED_LIBRARIES += libaosprecovery libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libtwadbbu libbootloader_message
-LOCAL_SHARED_LIBRARIES += libcrecovery
+LOCAL_SHARED_LIBRARIES += libcrecovery libtwadbbu libtwrpdigest
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libstlport
@@ -159,10 +157,8 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
         #LOCAL_STATIC_LIBRARIES += liblz4
     endif
 endif
-
 LOCAL_C_INCLUDES += external/libselinux/include
 LOCAL_SHARED_LIBRARIES += libselinux
-LOCAL_CFLAGS += -g
 ifneq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_CFLAGS += -DUSE_EXT4
     LOCAL_C_INCLUDES += system/extras/ext4_utils
@@ -679,6 +675,7 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/simg2img/Android.mk \
     $(commands_recovery_local_path)/adbbu/Android.mk \
     $(commands_recovery_local_path)/libpixelflinger/Android.mk \
+    $(commands_recovery_local_path)/twrpDigest/Android.mk \
     $(commands_recovery_local_path)/attr/Android.mk
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
