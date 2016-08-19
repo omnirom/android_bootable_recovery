@@ -82,11 +82,9 @@ int ev_wait(int timeout);
 int ev_get_input(int fd, uint32_t epevents, input_event* ev);
 void ev_dispatch();
 int ev_get_epollfd();
-
 //
 // Resources
 //
-
 // res_create_*_surface() functions return 0 if no error, else
 // negative.
 //
@@ -96,7 +94,6 @@ int ev_get_epollfd();
 // color (with gr_text() or gr_texticon()).
 //
 // All these functions load PNG images from "/res/images/${name}.png".
-
 // Load a single display surface from a PNG image.
 int res_create_display_surface(const char* name, GRSurface** pSurface);
 
