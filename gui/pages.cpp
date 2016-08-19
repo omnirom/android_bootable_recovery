@@ -849,6 +849,52 @@ int PageSet::LoadLanguage(char* languageFile, ZipArchive* package)
 	return ret;
 }
 
+int PageSet::LoadLanguage(char* languageFile, ZipArchive* package, char* languageFile2)
+{
+	xml_document<> lang;
+	xml_node<>* parent;
+	xml_node<>* child;
+	std::string resource_source;
+	int ret = 0;
+
+	if (languageFile) {
+		printf("parsing languageFile\n");
+		lang.parse<0>(languageFile);
+		printf("parsing languageFile done\n");
+		printf("parsing Devices languageFile\n");
+		lang.parse<0>(languageFile2);
+		printf("parsing Devices languageFile done\n");
+	} else {
+		return -1;
+	}
+
+	parent = lang.first_node("language");
+	if (!parent) {
+		LOGERR("Unable to locate language node in language file.\n");
+		lang.clear();
+		return -1;
+	}
+
+	child = parent->first_node("display");
+	if (child) {
+		DataManager::SetValue("tw_language_display", child->value());
+		resource_source = child->value();
+	} else {
+		LOGERR("language file does not have a display value set\n");
+		DataManager::SetValue("tw_language_display", "Not Set");
+		resource_source = languageFile;
+	}
+
+	child = parent->first_node("resources");
+	if (child)
+		mResources->LoadResources(child, package, resource_source);
+	else
+		ret = -1;
+	DataManager::SetValue("tw_backup_name", gui_lookup("auto_generate", "(Auto Generate)"));
+	lang.clear();
+	return ret;
+}
+
 int PageSet::LoadDetails(LoadingContext& ctx, xml_node<>* root)
 {
 	xml_node<>* child = root->first_node("details");
@@ -1307,11 +1353,21 @@ void PageManager::LoadLanguage(string filename) {
 	else
 		actual_filename = TWRES "languages/" + filename + ".xml";
 	char* xmlFile = PageManager::LoadFileToBuffer(actual_filename, NULL);
+	if (TWFunc::Path_Exists(TWRES "devicelanguages/" + filename + ".xml"))
+	actual_filename = TWRES "devicelanguages/" + filename + ".xml";
+	char* xmlFile2 = PageManager::LoadFileToBuffer(actual_filename, NULL);
+	else
 	if (xmlFile == NULL)
 		LOGERR("Unable to load '%s'\n", actual_filename.c_str());
 	else {
+		if (xmlFile2 == NULL)
 		mCurrentSet->LoadLanguage(xmlFile, NULL);
 		free(xmlFile);
+		else {
+		mCurrentSet->LoadLanguage(xmlFile, NULL, xmlFile2);
+		free(xmlFile);
+		free(xmlFile2);
+		}
 	}
 	PartitionManager.Translate_Partition_Display_Names();
 }

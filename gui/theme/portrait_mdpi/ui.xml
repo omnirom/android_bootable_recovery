@@ -530,6 +530,25 @@
 			</button>
 		</template>
 
+		<template name="tabs_devicespecific">
+		<condition var1="tw_show_devicespecific" var2="1"/>
+			<fill color="%accent_color%">
+				<placement x="0" y="row1_y" w="%screen_width%" h="tab_height"/>
+			</fill>
+
+			<button style="tab">
+				<placement x="0" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
+				<text>{@tab_advanced_general=General}</text>
+				<action function="page">advanced</action>
+			</button>
+
+			<button style="tab">
+				<placement x="%tab3_col2_x%" y="%row1_y%" w="%tab3_width%" h="%tab_height%"/>
+				<text>{@tab_advanced_device_specific=Device-Specific}</text>
+				<action function="page">devicespecificpage</action>
+			</button>
+		</template>
+
 		<template name="console">
 			<console>
 				<placement x="%indent%" y="%row2_y%" w="%content_width%" h="%console_height%"/>

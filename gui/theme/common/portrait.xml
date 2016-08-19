@@ -3224,6 +3224,8 @@
 				<text>{@advanced_hdr=Advanced}</text>
 			</text>
 
+			<template name="tabs_devicespecific"/>
+
 			<button style="main_button">
 				<placement x="%indent%" y="%row2a_y%"/>
 				<text>{@copy_log_btn=Copy Log}</text>
