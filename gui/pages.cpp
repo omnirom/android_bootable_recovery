@@ -51,8 +51,10 @@ extern "C" {
 #include "objects.hpp"
 #include "blanktimer.hpp"
 
+// version 3 updates the language files to digest from md5 because of internal
+// variable changes. It will be language updater's discretion to update translations.
 // version 2 requires theme to handle power button as action togglebacklight
-#define TW_THEME_VERSION 2
+#define TW_THEME_VERSION 3
 
 #define TW_THEME_VER_ERR -2
 
