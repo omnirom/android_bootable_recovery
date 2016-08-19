@@ -178,7 +178,6 @@ int TWFunc::Wait_For_Child_Timeout(pid_t pid, int *status, const string& Child_N
 }
 
 bool TWFunc::Path_Exists(string Path) {
-	// Check to see if the Path exists
 	struct stat st;
 	if (stat(Path.c_str(), &st) != 0)
 		return false;
