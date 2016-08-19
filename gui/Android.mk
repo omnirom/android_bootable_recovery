@@ -116,6 +116,9 @@ ifeq ($(TWRP_NEW_THEME),true)
     TWRP_RES := $(commands_recovery_local_path)/gui/theme/common/fonts
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/languages
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/$(word 1,$(subst _, ,$(TW_THEME))).xml
+ifeq ($(TW_DEVICESPECIFIC_RES_PATH),)
+    TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/devicespecific.xml
+endif
 ifeq ($(TW_EXTRA_LANGUAGES),true)
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/fonts
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/languages
@@ -171,6 +174,9 @@ $(TWRP_RES_GEN):
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 	cp -fr $(TWRP_RES) $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 	cp -fr $(TWRP_THEME_LOC)/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
+ifneq ($(TW_DEVICESPECIFIC_RES_PATH),)
+	mv $(TW_DEVICESPECIFIC_RES_PATH) $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)/devicespecific.xml
+endif
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/
 ifneq ($(TW_USE_TOOLBOX), true)
 	ln -sf $(TWRP_SH_TARGET) $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
