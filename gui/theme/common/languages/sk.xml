@@ -199,7 +199,7 @@
 		<string name="enc_disabled">zakázané - pre povolenie zadajte heslo</string>
 		<string name="enc_enabled">povolené</string>
 		<string name="enable_backup_comp_chk">Povoliť kompresiu</string>
-		<string name="skip_md5_backup_chk">Vynechať generovanie MD5 počas zálohy</string>
+		<string name="skip_digest_backup_chk" version="2">Vynechať generovanie Digest počas zálohy</string>
 		<string name="disable_backup_space_chk">Nekontrolovať voľné miesto</string>
 		<string name="refresh_sizes_btn">Obnoviť veľkosti</string>
 		<string name="swipe_backup">Potiahnite pre zálohu</string>
@@ -232,7 +232,7 @@
 		<string name="restore_try_decrypt_s">Pokus o dešifrovanie</string>
 		<string name="restore_backup_date">Záloha vytvorená %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Vybrať partície pre obnovu:</string>
-		<string name="restore_enable_md5_chk">Povoliť kontrolu MD5 na zálohovaných súboroch</string>
+		<string name="restore_enable_digest_chk" version="2">Povoliť kontrolu Digest na zálohovaných súboroch</string>
 		<string name="restore_complete">Obnova dokončená</string>
 		<string name="swipe_restore">Potiahnite pre obnovu</string>
 		<string name="swipe_restore_s">   Obnoviť</string>
@@ -458,11 +458,11 @@
 		<string name="mtp_crash">MTP zlyhalo, MTP nebude spustené pri štarte.</string>
 		<string name="decrypt_success">Úspešne dešifrované s prednastaveným heslom.</string>
 		<string name="unable_to_decrypt">Nemožno dešifrovať s prednastaveným heslom. Možno budete musieť naformátovať partíciu Data.</string>
-		<string name="generating_md51">Generuje sa MD5</string>
-		<string name="generating_md52"> *Generuje sa Md5...</string>
-		<string name="md5_created"> *MD5 vygenerované.</string>
-		<string name="md5_error"> * chyba MD5!</string>
-		<string name="md5_compute_error"> * chyba pri výpočte MD5.</string>
+		<string name="generating_digest1" version="2">Generuje sa Digest</string>
+		<string name="generating_digest2" version="2"> *Generuje sa Md5...</string>
+		<string name="digest_created" version="2"> *Digest vygenerované.</string>
+		<string name="digest_error" version="2"> * chyba Digest!</string>
+		<string name="digest_compute_error" version="2"> * chyba pri výpočte Digest.</string>
 		<string name="current_date">(Aktuálny dátum)</string>
 		<string name="auto_generate">(Generovať automaticky)</string>
 		<string name="unable_to_locate_partition">Nemožno nájsť partíciu \'{1}\' pre výpočet zálohy.</string>
@@ -481,8 +481,8 @@
 		<string name="backup_completed">[ZÁLOHA DOKONČENÁ ZA {1} SEKÚND]</string>
 		<string name="restore_started">[ZAČIATOK OBNOVY]</string>
 		<string name="restore_folder">Obnoviť adresár: \'{1}\'</string>
-		<string name="verifying_md5">Kontrolovanie MD5</string>
-		<string name="skip_md5">Vynechanie kontroly MD5 na základe užívateľského nastavenia.</string>
+		<string name="verifying_digest" version="2">Kontrolovanie Digest</string>
+		<string name="skip_digest" version="2">Vynechanie kontroly Digest na základe užívateľského nastavenia.</string>
 		<string name="calc_restore">Výpočet detailov obnovy...</string>
 		<string name="restore_read_only">Nie je možné obnoviť {1} -- pripojené len na čítanie.</string>
 		<string name="restore_unable_locate">Nie je možné nájsť partíciu \'{1}\' pre obnovu.</string>
@@ -540,9 +540,9 @@
 		<string name="cannot_resize">Nie je možné zväčšiť {1}.</string>
 		<string name="repair_resize">Opravovanie {1} pred zväčšením.</string>
 		<string name="unable_resize">Nie je možné zväčšiť {1}.</string>
-		<string name="no_md5_found">Súbor MD5 sa nenašiel pre \'{1}\'. Prosím zvoľte Vypnúť kontrolu MD5 počas obnovy.</string>
-		<string name="md5_fail_match">MD5 nezodpovedá súboru \'{1}\'.</string>
-		<string name="md5_matched">MD5 sa zhoduje pre '{1}'.</string>
+		<string name="no_digest_found" version="2">Súbor Digest sa nenašiel pre \'{1}\'. Prosím zvoľte Vypnúť kontrolu MD5 počas obnovy.</string>
+		<string name="digest_fail_match" version="2">Digest nezodpovedá súboru \'{1}\'.</string>
+		<string name="digest_matched" version="2">Digest sa zhoduje pre '{1}'.</string>
 		<string name="fail_decrypt_tar">Nie je možné dešifrovať súbor tar \'{1}\'</string>
 		<string name="format_data_msg">Mali by ste reštartovať recovery aby ste mohli znova používať /data.</string>
 		<string name="format_data_err">Nie je možné formátovať pre zrušenie šifrovania.</string>
@@ -563,7 +563,7 @@
 		<string name="backup_folder_set">Adresár záloh nastavený na: \'{1}\'</string>
 		<string name="locate_backup_err">Zálohu \'{1}\' nie je možné nájsť</string>
 		<string name="set_restore_opt">Nastavenie možností obnovy: \'{1}\':</string>
-		<string name="md5_check_skip">Vynechanie kontroly MD5 zapnuté</string>
+		<string name="digest_check_skip" version="2">Vynechanie kontroly Digest zapnuté</string>
 		<string name="ors_encrypt_restore_err">Nie je možné použiť OpenRecoveryScript pre obnovu zašifrovanej zálohy.</string>
 		<string name="mounting">Pripájanie</string>
 		<string name="unmounting">Odpájanie</string>
@@ -584,7 +584,7 @@
 		<string name="installing_zip">Inštalácia zip súboru \'{1}\'</string>
 		<string name="select_backup_opt">Nastavenie možností zálohy:</string>
 		<string name="compression_on">Kompresia zapnutá</string>
-		<string name="md5_off">Generovanie MD5 vypnuté</string>
+		<string name="digest_off" version="2">Generovanie Digest vypnuté</string>
 		<string name="backup_fail">Zálohovanie zlyhalo</string>
 		<string name="backup_clean">Zálohovanie zlyhalo. Čistenie adresára záloh.</string>
 		<string name="running_recovery_commands">Spúšťanie príkazov recovery</string>
@@ -592,15 +592,15 @@
 		<string name="running_ors">Spúšťanie OpenRecoveryScript</string>
 		<string name="ors_complete">OpenRecoveryScript dokončený</string>
 		<string name="no_updater_binary">Nie je možné nájsť \'{1}\' v súbore zip.</string>
-		<string name="check_for_md5">Kontrola MD5 súboru...</string>
+		<string name="check_for_digest" version="2">Kontrola Digest súboru...</string>
 		<string name="fail_sysmap">Nie je možné namapovať súbor \'{1}\'</string>
 		<string name="verify_zip_sig">Overovanie podpisu zip súboru...</string>
 		<string name="verify_zip_fail">Overenie podpisu zip súboru zlyhalo!</string>
 		<string name="verify_zip_done">Podpis súboru zip úspešne overený.</string>
 		<string name="zip_corrupt">Súbor zip je poškodený!</string>
-		<string name="no_md5">Vynechanie kontroly MD5: súbor s MD5 nenájdený</string>
-		<string name="md5_fail">MD5 sa nezhoduje</string>
-		<string name="md5_match">MD5 sa zhoduje</string>
+		<string name="no_digest" version="2">Vynechanie kontroly Digest: súbor s MD5 nenájdený</string>
+		<string name="digest_fail" version="2">Digest sa nezhoduje</string>
+		<string name="digest_match" version="2">Digest sa zhoduje</string>
 		<string name="pid_signal">Proces {1} skončil so signálom: {2}</string>
 		<string name="pid_error">Proces {1} skončil s CHYBOU: {2}</string>
 		<string name="install_dumlock">Inštalovanie HTC Dumlock do systému...</string>

@@ -207,7 +207,7 @@
 		<string name="enc_disabled">uitgeschakeld - stel een wachtwoord in om in te schakelen</string>
 		<string name="enc_enabled">ingeschakeld</string>
 		<string name="enable_backup_comp_chk">Compressie inschakelen</string>
-		<string name="skip_md5_backup_chk">MD5 generatie tijdens back-up overslaan</string>
+		<string name="skip_digest_backup_chk" version="2">Digest generatie tijdens back-up overslaan</string>
 		<string name="disable_backup_space_chk">Vrije ruimte controle uitschakelen</string>
 		<string name="refresh_sizes_btn">Grootte vernieuwen</string>
 		<string name="swipe_backup">Veeg voor back-up</string>
@@ -240,7 +240,7 @@
 		<string name="restore_try_decrypt_s">Decodering proberen</string>
 		<string name="restore_backup_date">Back-up gemaakt op %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Selecteer partities om te herstellen:</string>
-		<string name="restore_enable_md5_chk">MD5 controle van back-up bestanden Inschakelen</string>
+		<string name="restore_enable_digest_chk" version="2">Digest controle van back-up bestanden Inschakelen</string>
 		<string name="restore_complete">Herstellen voltooid</string>
 		<string name="swipe_restore">Veeg om te herstellen</string>
 		<string name="swipe_restore_s">   Herstellen</string>
@@ -481,12 +481,12 @@
 		<string name="mtp_crash">MTP crashte, MTP niet starten tijdens boot.</string>
 		<string name="decrypt_success">Succesvol gedecodeerd met standaardwachtwoord.</string>
 		<string name="unable_to_decrypt">Kan niet decoderen met het standaardwachtwoord. U zal wellicht een Data format moeten uitvoeren.</string>
-		<string name="generating_md51">MD5 genereren</string>
-		<!-- Message displayed during a backup if we are generating an MD5, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_md52"> * md5 genereren...</string>
-		<string name="md5_created"> * MD5 gemaakt.</string>
-		<string name="md5_error"> * MD5 fout!</string>
-		<string name="md5_compute_error"> * Fout tijdens het genereren van de MD5.</string>
+		<string name="generating_digest1" version="2">Digest genereren</string>
+		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
+		<string name="generating_digest2" version="2"> * Digest genereren...</string>
+		<string name="digest_created" version="2"> * Digest gemaakt.</string>
+		<string name="digest_error" version="2"> * Digest fout!</string>
+		<string name="digest_compute_error" version="2"> * Fout tijdens het genereren van de Digest.</string>
 		<string name="current_date">(Huidige datum)</string>
 		<string name="auto_generate">(Automatisch genereren)</string>
 		<string name="unable_to_locate_partition">Kan partitie \'{1}\' niet vinden voor back-up berekeningen.</string>
@@ -507,8 +507,8 @@
 		<string name="restore_folder">Herstel map: \'{1}\'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} gereed ({2} seconden)]</string>
-		<string name="verifying_md5">MD5 Controleren</string>
-		<string name="skip_md5">MD5 controle op basis van gebruikersinstelling overslaan.</string>
+		<string name="verifying_digest" version="2">Digest Controleren</string>
+		<string name="skip_digest" version="2">Digest controle op basis van gebruikersinstelling overslaan.</string>
 		<string name="calc_restore">Herstel details berekenen...</string>
 		<string name="restore_read_only">Kan {1} niet herstellen -- Als alleen lezen gekoppeld.</string>
 		<string name="restore_unable_locate">Kan \'{1}\' niet vinden voor herstellen.</string>
@@ -570,9 +570,9 @@
 		<string name="cannot_resize">Kan het formaat van {1} niet wijzigen.</string>
 		<string name="repair_resize">Herstellen van {1} vóór het vergroten/verkleinen.</string>
 		<string name="unable_resize">Kan de grootte van {1} niet wijzigen.</string>
-		<string name="no_md5_found">Geen md5 bestand gevonden voor \'{1}\'. Gelieve MD5 controle inschakelen uitzetten om te herstellen.</string>
-		<string name="md5_fail_match">MD5 vergelijken mislukt op \'{1}\'.</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="no_digest_found" version="2">Geen Digest bestand gevonden voor \'{1}\'. Gelieve Digest controle inschakelen uitzetten om te herstellen.</string>
+		<string name="digest_fail_match" version="2">Digest vergelijken mislukt op \'{1}\'.</string>
+		<string name="digest_matched" version="2">Digest matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Het decoderen van tar bestand \'{1}\' is mislukt</string>
 		<string name="format_data_msg">U zou in recovery moeten herstarten om /data opnieuw te kunnen gebruiken.</string>
 		<string name="format_data_err">Kan niet formatteren om encryptie te verwijderen.</string>
@@ -593,7 +593,7 @@
 		<string name="backup_folder_set">Back-up map ingesteld op \'{1}\'</string>
 		<string name="locate_backup_err">Kan de back-up niet vinden \'{1}\'</string>
 		<string name="set_restore_opt">Opties voor terugzetten instellen: \'{1}\':</string>
-		<string name="md5_check_skip">MD5 controle overslaan staat aan</string>
+		<string name="digest_check_skip" version="2">Digest controle overslaan staat aan</string>
 		<string name="ors_encrypt_restore_err">Kan OpenRecoveryScript niet gebruiken om een versleutelde back-up te herstellen.</string>
 		<string name="mounting">Koppelen</string>
 		<string name="unmounting">Ontkoppelen</string>
@@ -614,7 +614,7 @@
 		<string name="installing_zip">Installeren van zip-bestand \'{1}\'</string>
 		<string name="select_backup_opt">Back-up opties instellen:</string>
 		<string name="compression_on">Compressie staat aan</string>
-		<string name="md5_off">MD5 Generatie is uitgeschakeld</string>
+		<string name="digest_off" version="2">Digest Generatie is uitgeschakeld</string>
 		<string name="backup_fail">Back-up mislukt</string>
 		<string name="backup_clean">Back-up mislukt. Back-up map schoonmaken.</string>
 		<string name="running_recovery_commands">Herstel commando\'s uitvoeren</string>
@@ -622,15 +622,15 @@
 		<string name="running_ors">OpenRecoveryScript is bezig</string>
 		<string name="ors_complete">OpenRecoveryScript is voltooid</string>
 		<string name="no_updater_binary">Kan \'{1}\' niet vinden in het zip-bestand.</string>
-		<string name="check_for_md5">Controle voor een MD5 bestand...</string>
+		<string name="check_for_digest" version="2">Controle voor een Digest bestand...</string>
 		<string name="fail_sysmap">Toewijzen van bestand \'{1}\' is mislukt</string>
 		<string name="verify_zip_sig">Zip handtekening controleren...</string>
 		<string name="verify_zip_fail">Zip handtekeningverificatie is mislukt!</string>
 		<string name="verify_zip_done">De handtekening van de zip met succes geverifieerd.</string>
 		<string name="zip_corrupt">Zip-bestand is beschadigd!</string>
-		<string name="no_md5">MD5 controle overslaan: geen MD5 bestand gevonden</string>
-		<string name="md5_fail">MD5 komt niet overeen</string>
-		<string name="md5_match">MD5 komt overeen</string>
+		<string name="no_digest" version="2">Digest controle overslaan: geen Digest bestand gevonden</string>
+		<string name="digest_fail" version="2">Digest komt niet overeen</string>
+		<string name="digest_match" version="2">Digest komt overeen</string>
 		<string name="pid_signal">{1} proces eindigde met signaal: {2}</string>
 		<string name="pid_error">{1} proces beëindigd met fout: {2}</string>
 		<string name="install_dumlock">HTC Dumlock installeren op het systeem...</string>

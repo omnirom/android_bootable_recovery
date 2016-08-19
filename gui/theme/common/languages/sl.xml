@@ -199,7 +199,7 @@
 		<string name="enc_disabled">onemogočeno - nastavite geslo za omogočanje</string>
 		<string name="enc_enabled">omogočeno</string>
 		<string name="enable_backup_comp_chk">Omogoči stiskanje</string>
-		<string name="skip_md5_backup_chk">Preskoči ustvarjanje razpršila MD5 med varnostnim kopiranjem</string>
+		<string name="skip_digest_backup_chk" version="2">Preskoči ustvarjanje razpršila Digest med varnostnim kopiranjem</string>
 		<string name="disable_backup_space_chk">Onemogoči preverjanje nezasedenega prostora</string>
 		<string name="refresh_sizes_btn">Osveži velikosti</string>
 		<string name="swipe_backup">Povlecite za var. kopiranje</string>
@@ -232,7 +232,7 @@
 		<string name="restore_try_decrypt_s">Poizkušanje odšifriranja</string>
 		<string name="restore_backup_date">Varnostna kopija ustvarjena %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Izberite razdelke za obnovitev:</string>
-		<string name="restore_enable_md5_chk">Omogoči preverjanje razpršila MD5 varnostnih kopij</string>
+		<string name="restore_enable_digest_chk" version="2">Omogoči preverjanje razpršila Digest varnostnih kopij</string>
 		<string name="restore_complete">Obnavljanje končano</string>
 		<string name="swipe_restore">Povlecite za obnovitev</string>
 		<string name="swipe_restore_s">   Obnovi</string>
@@ -458,11 +458,11 @@
 		<string name="mtp_crash">MTP se je sesul, MTP se ob zagonu ne bo začel.</string>
 		<string name="decrypt_success">Uspešno odšifrirano s privzetim geslom.</string>
 		<string name="unable_to_decrypt">Odšifriranje s privzetim geslom ni mogoče.  Morda boste moral sformatirati podatke.</string>
-		<string name="generating_md51">Ustvarjanje razpršila MD5</string>
-		<string name="generating_md52"> * Ustvarjanje razpršila MD5 …</string>
-		<string name="md5_created"> * Razpršilo MD5 ustvarjeno.</string>
-		<string name="md5_error"> * Napaka razpršila MD5!</string>
-		<string name="md5_compute_error"> * Napaka pri računanju razpršila MD5.</string>
+		<string name="generating_digest1" version="2">Ustvarjanje razpršila Digest</string>
+		<string name="generating_digest2" version="2"> * Ustvarjanje razpršila Digest …</string>
+		<string name="digest_created" version="2"> * Razpršilo Digest ustvarjeno.</string>
+		<string name="digest_error" version="2"> * Napaka razpršila Digest!</string>
+		<string name="digest_compute_error" version="2"> * Napaka pri računanju razpršila Digest.</string>
 		<string name="current_date">(trenutni datum)</string>
 		<string name="auto_generate">(samodejno ustvari)</string>
 		<string name="unable_to_locate_partition">Razdelka \'{1}\' za računanje varnostnih kopij ni mogoče najti.</string>
@@ -481,8 +481,8 @@
 		<string name="backup_completed">[VARNOSTNO KOPIRANJE KONČANO V {1} S]</string>
 		<string name="restore_started">[OBNOVITEV SE JE ZAČELA]</string>
 		<string name="restore_folder">Mapa obnovitve: \'{1}\'</string>
-		<string name="verifying_md5">Preverjanje razpršila MD5</string>
-		<string name="skip_md5">Preskakovanje preverjanja razpršila MD5 glede na uporabniško nastavitev.</string>
+		<string name="verifying_digest" version="2">Preverjanje razpršila Digest</string>
+		<string name="skip_digest" version="2">Preskakovanje preverjanja razpršila Digest glede na uporabniško nastavitev.</string>
 		<string name="calc_restore">Računanje podrobnosti obnovitve …</string>
 		<string name="restore_read_only">{1} ni mogoče obnoviti -- priklopljen je samo za branje.</string>
 		<string name="restore_unable_locate">Razdelka \'{1}\' za obnovitev ni mogoče najti.</string>
@@ -540,9 +540,9 @@
 		<string name="cannot_resize">Velikosti {1} ni mogoče spremeniti.</string>
 		<string name="repair_resize">Popravljanje {1} pred spremembo velikosti.</string>
 		<string name="unable_resize">Velikosti {1} ni mogoče spremeniti.</string>
-		<string name="no_md5_found">Za \'{1}\' ni bilo najdene datoteke MD5.  Odstranite izbiro \'Omogoči preverjanje razpršila MD5\' za obnovitev.</string>
-		<string name="md5_fail_match">Ujemanje razpršila MD5 na \'{1}\' je spodletelo.</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="no_digest_found" version="2">Za \'{1}\' ni bilo najdene datoteke Digest.  Odstranite izbiro \'Omogoči preverjanje razpršila Digest\' za obnovitev.</string>
+		<string name="digest_fail_match" version="2">Ujemanje razpršila Digest na \'{1}\' je spodletelo.</string>
+		<string name="digest_matched" version="2">Digest matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Odšifriranje datoteke TAR \'{1}\' je spodletelo</string>
 		<string name="format_data_msg">Za ponovno uporabo /data boste morda morali ponovno zagnati obnovitev.</string>
 		<string name="format_data_err">Formatiranje za odstranitev šifriranja ni mogoče.</string>
@@ -563,7 +563,7 @@
 		<string name="backup_folder_set">Mapa varnostnega kopiranja nastavljena na \'{1}\'</string>
 		<string name="locate_backup_err">Varnostne kopije \'{1}\' ni mogoče najti</string>
 		<string name="set_restore_opt">Nastavljanje možnosti za varnostno kopiranje: \'{1}\':</string>
-		<string name="md5_check_skip">Preskak. preverjanja raz. MD5 je vkl.</string>
+		<string name="digest_check_skip" version="2">Preskak. preverjanja raz. Digest je vkl.</string>
 		<string name="ors_encrypt_restore_err">OpenRecoveryScript ni mogoče uporabiti za obnavljanje šifriranih varnostnih kopij.</string>
 		<string name="mounting">Priklapljanje</string>
 		<string name="unmounting">Odklapljanje</string>
@@ -584,7 +584,7 @@
 		<string name="installing_zip">Nameščanje datoteke ZIP \'{1}\'</string>
 		<string name="select_backup_opt">Nastavljanje možnosti varnostnega kopiranja:</string>
 		<string name="compression_on">Stiskanje je vklopljeno</string>
-		<string name="md5_off">Ustvarjanje razpršila MD5 je izklopljeno</string>
+		<string name="digest_off" version="2">Ustvarjanje razpršila Digest je izklopljeno</string>
 		<string name="backup_fail">Var. kop. je spodletelo</string>
 		<string name="backup_clean">Varnostno kopiranje je spodletelo. Čiščenje mape varnostnega kopiranja.</string>
 		<string name="running_recovery_commands">Izvajanje ukazov za obnovitev</string>
@@ -592,15 +592,15 @@
 		<string name="running_ors">Izvajanje OpenRecoveryScript</string>
 		<string name="ors_complete">OpenRecoveryScript končan</string>
 		<string name="no_updater_binary">V datoteki ZIP ni bilo mogoče najti \'{1}\'</string>
-		<string name="check_for_md5">Preverjanje za datoteko razpršila MD5 …</string>
+		<string name="check_for_digest" version="2">Preverjanje za datoteko razpršila Digest …</string>
 		<string name="fail_sysmap">Preslikava datoteke \'{1}\' je spodletela</string>
 		<string name="verify_zip_sig">Preverjanje podpisa ZIP</string>
 		<string name="verify_zip_fail">Preverjanje podpisa ZIP je spodletelo!</string>
 		<string name="verify_zip_done">Preverjanje podpisa ZIP je bilo uspešno!</string>
 		<string name="zip_corrupt">Datoteka ZIP je poškodovana!</string>
-		<string name="no_md5">Preskakovanje preverjanja razpršila MD5: datoteka MD5 ni bila najdena</string>
-		<string name="md5_fail">MD5 se ne ujema</string>
-		<string name="md5_match">MD5 se ujema</string>
+		<string name="no_digest" version="2">Preskakovanje preverjanja razpršila Digest: datoteka Digest ni bila najdena</string>
+		<string name="digest_fail" version="2">Digest se ne ujema</string>
+		<string name="digest_match" version="2">Digest se ujema</string>
 		<string name="pid_signal">{1} opravilo se je končalo s signalom: {2}</string>
 		<string name="pid_error">{1} opravilo se je končalo z NAPAKO: {2}</string>
 		<string name="install_dumlock">Nameščanje HTC Dumlocka na sistem …</string>
