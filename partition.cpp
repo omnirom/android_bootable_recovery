@@ -41,7 +41,9 @@
 #include "partitions.hpp"
 #include "data.hpp"
 #include "twrp-functions.hpp"
-#include "twrpDigest.hpp"
+#include "twrpDigest/twrpDigest.hpp"
+#include "twrpDigest/twrpMD5.hpp"
+#include "twrpDigest/twrpSHA.hpp"
 #include "twrpTar.hpp"
 #include "exclude.hpp"
 #include "infomanager.hpp"
@@ -1657,32 +1659,69 @@ bool TWPartition::Backup(PartitionSettings *part_settings, pid_t *tar_fork_pid) 
 	return false;
 }
 
-bool TWPartition::Check_Restore_File_MD5(const string& Filename) {
-	twrpDigest md5sum;
+bool TWPartition::Check_Restore_File_Digest(const string& Filename) {
+	twrpDigest *digest;
+	string digestfile = Filename, file_name = Filename;
+	string digest_str;
+	bool use_sha2 = false;
 
-	md5sum.setfn(Filename);
-	switch (md5sum.verify_md5digest()) {
-	case MD5_OK:
-		gui_msg(Msg("md5_matched=MD5 matched for '{1}'.")(Filename));
-		return true;
-	case MD5_FILE_UNREADABLE:
-	case MD5_NOT_FOUND:
-		gui_msg(Msg(msg::kError, "no_md5_found=No md5 file found for '{1}'. Please unselect Enable MD5 verification to restore.")(Filename));
-		break;
-	case MD5_MATCH_FAIL:
-		gui_msg(Msg(msg::kError, "md5_fail_match=MD5 failed to match on '{1}'.")(Filename));
-		break;
+#ifndef TW_NO_SHA2_LIBRARY
+
+	digestfile += ".sha2";
+	if (TWFunc::Path_Exists(digestfile)) {
+		digest = new twrpSHA256();
+		use_sha2 = true;
 	}
+	else {
+		digest = new twrpMD5();
+		digestfile = Filename + ".md5";
+
+	}
+#else
+	digest = new twrpMD5();
+	digestfile = Filename + ".md5";
+
+#endif
+
+	if (!TWFunc::Path_Exists(digestfile)) {
+		gui_msg(Msg(msg::kError, "no_digest_found=No digest file found for '{1}'. Please unselect Enable Digest verification to restore.")(Filename));
+		delete digest;
+		return false;
+	}
+
+
+	if (TWFunc::read_file(digestfile, digest_str) != 0) {
+		gui_msg("digest_error=Digest Error!");
+		delete digest;
+		return false;
+	}
+
+	if (!TWFunc::stream_file_to_digest(file_name, digest)) {
+		delete digest;
+		return false;
+	}
+	string digest_check = digest->return_digest_string();
+	if (digest_check == digest_str) {
+		if (use_sha2)
+			LOGINFO("SHA2 Digest: %s  %s\n", digest_str.c_str(), TWFunc::Get_Filename(Filename).c_str());
+		else
+			LOGINFO("MD5 Digest: %s  %s\n", digest_str.c_str(), TWFunc::Get_Filename(Filename).c_str());
+		delete digest;
+		return true;
+	}
+
+	gui_msg(Msg(msg::kError, "digest_fail_match=Digest failed to match on '{1}'.")(Filename));
+	delete digest;
 	return false;
+
 }
 
-bool TWPartition::Check_MD5(PartitionSettings *part_settings) {
+bool TWPartition::Check_Digest(PartitionSettings* part_settings) {
 	string Full_Filename;
 	char split_filename[512];
 	int index = 0;
 
 	sync();
-
 	Full_Filename = part_settings->Backup_Folder + "/" + Backup_FileName;
 	if (!TWFunc::Path_Exists(Full_Filename)) {
 		// This is a split archive, we presume
@@ -1692,13 +1731,13 @@ bool TWPartition::Check_MD5(PartitionSettings *part_settings) {
 			if (!TWFunc::Path_Exists(split_filename))
 				break;
 			LOGINFO("split_filename: %s\n", split_filename);
-			if (!Check_Restore_File_MD5(split_filename))
+			if (!Check_Restore_File_Digest(split_filename))
 				return false;
 			index++;
 		}
 		return true;
 	}
-	return Check_Restore_File_MD5(Full_Filename); // Single file archive
+	return Check_Restore_File_Digest(Full_Filename); // Single file archive
 }
 
 bool TWPartition::Restore(PartitionSettings *part_settings) {
