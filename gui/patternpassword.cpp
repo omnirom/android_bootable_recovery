@@ -232,9 +232,12 @@ void GUIPatternPassword::Resize(size_t n) {
 
 static int pow(int x, int i)
 {
-	while(i-- > 1)
-		x *= x;
-	return x;
+	int result = 1;
+	if (i<0)
+		return 0;
+	while(i-- > 0)
+		result *= x;
+	return result;
 }
 
 static bool IsInCircle(int x, int y, int ox, int oy, int r)
