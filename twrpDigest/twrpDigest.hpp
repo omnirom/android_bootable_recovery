@@ -16,29 +16,24 @@
         along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-extern "C" {
-	#include "digest/md5.h"
-}
-
 using namespace std;
 
 class twrpDigest
 {
 public:
+	virtual ~twrpDigest() {};
 	void setfn(const string& fn);
-	int computeMD5(void);
-	int verify_md5digest(void);
-	int write_md5digest(void);
-	int updateMD5stream(unsigned char* stream, int len);
-	void finalizeMD5stream(void);
-	string createMD5string(void);
-	void initMD5(void);
+	virtual int computeDigest(void) = 0;
+	virtual int verify_digest(void) = 0;
+	virtual int write_digest(void) = 0;
+	virtual int read_digest(void) = 0;
+	virtual int updateStream(unsigned char* stream, int len) = 0;
+	virtual void finalizeStream(void) = 0;
+	virtual string createDigestString(void) = 0;
 
-private:
-	int read_md5digest(void);
-	struct MD5Context md5c;
-	string md5fn;
-	string line;
-	unsigned char md5sum[MD5LENGTH];
-	string md5string;
+protected:
+	int write_file(string fn, string& line);
+	bool Path_Exists(string Path);
+	int read_file(string fn, string& results);
+	string digestfn;
 };
