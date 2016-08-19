@@ -40,7 +40,8 @@
 #include "variables.h"
 #include "data.hpp"
 #include "partitions.hpp"
-#include "twrpDigest.hpp"
+#include "twrpDigest/twrpDigest.hpp"
+#include "twrpDigest/twrpMD5.hpp"
 #include "twrp-functions.hpp"
 #include "gui/gui.hpp"
 #include "gui/pages.hpp"
@@ -293,11 +294,16 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 
 	gui_msg(Msg("installing_zip=Installing zip file '{1}'")(path));
 	if (strlen(path) < 9 || strncmp(path, "/sideload", 9) != 0) {
-		gui_msg("check_for_md5=Checking for MD5 file...");
-		twrpDigest md5sum;
-		md5sum.setfn(path);
-		int md5_return = md5sum.verify_md5digest();
-		if (md5_return == -2) { // md5 did not match
+		gui_msg("check_for_digest=Checking for Digest file...");
+		twrpMD5 digest;
+		string digest_str;
+		string digest_file = path;
+		digest_file += ".md5";
+		string strpath = path;
+		TWFunc::read_file(digest_file, digest_str);
+		digest.set_filename(strpath);
+		string digest_return = digest.return_digest_string();
+		if (digest_return != digest_str) { // md5 did not match
 			LOGERR("Aborting zip install\n");
 			return INSTALL_CORRUPT;
 		}
