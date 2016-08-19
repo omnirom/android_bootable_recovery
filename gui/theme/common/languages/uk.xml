@@ -3,16 +3,13 @@
 
 <language>
 	<display>Українська</display>
-	
 	<!-- Translated by Bukwaezhka and Jemmini, 2016 -->
-
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
 		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="90" />
 		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="90" />
 		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="90" />
 		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
-
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System Image</string>
@@ -32,10 +29,7 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
 		<string name="adopted_storage">Adopted Storage</string>
-
 		<!-- GUI XML strings -->
-
-		
 		<string name="cpu_temp">Процесор: %tw_cpu_temp% &#xB0;C</string>
 		<string name="battery_pct">Батарея: %tw_battery%</string>
 		<string name="sort_by_name">Сортувати за назвою</string>
@@ -153,7 +147,6 @@
 		<string name="format_data_wtc2">резервні копії та медіафайли. Скасування цього неможливе.</string>
 		<string name="format_data_undo">Скасування цього неможливе.</string>
 		<string name="format_data_complete">Форматування Data завершено</string>
-		
 				<!-- Translator note: the word "yes" must remain English! -->
 		<string name="yes_continue">Введіть yes щоб продовжити. Натисніть Назад щоб скасувати.</string>
 		<string name="part_opt_hdr">Параметри розділу %tw_partition_name%</string>
@@ -210,7 +203,7 @@
 		<string name="enc_disabled">вимкнено - встановіть пароль</string>
 		<string name="enc_enabled">увімкнено</string>
 		<string name="enable_backup_comp_chk">Увімкнути стискання</string>
-		<string name="skip_md5_backup_chk">Пропустити генерацію MD5 під час Резервного Копіювання</string>
+		<string name="skip_digest_backup_chk" version="2">Пропустити генерацію Digest під час Резервного Копіювання</string>
 		<string name="disable_backup_space_chk">Вимкнути перевірку вільного місця</string>
 		<string name="refresh_sizes_btn">Оновити розміри</string>
 		<string name="swipe_backup">Резервувати</string>
@@ -243,7 +236,7 @@
 		<string name="restore_try_decrypt_s">Спроба дешифрувати</string>
 		<string name="restore_backup_date">Резервна копія створена: %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Виберіть розділ для відновлення:</string>
-		<string name="restore_enable_md5_chk">Увімкнути перевірку MD5 для файлів резервних копій</string>
+		<string name="restore_enable_digest_chk" version="2">Увімкнути перевірку Digest для файлів резервних копій</string>
 		<string name="restore_complete">Відновлення завершено</string>
 		<string name="swipe_restore">Відновити</string>
 		<string name="swipe_restore_s">   Відновлення</string>
@@ -388,8 +381,6 @@
 		<string name="part_sd_undo">Це буде неможливо скасувати!</string>
 		<string name="part_sd_ext_sz">EXT розмір:</string>
 		<string name="part_sd_swap_sz">Swap розмір:</string>
-		
-		
 		<string name="file_system">Файлова система:</string>
 		<string name="swipe_part_sd">Розмітити</string>
 		<string name="swipe_part_sd_s">Розмітка</string>
@@ -483,12 +474,12 @@
 		<string name="mtp_crash">Збій MTP: MTP не запущений при завантаженні.</string>
 		<string name="decrypt_success">Розшифровка виконана успішно з паролем за замовчуванням.</string>
 		<string name="unable_to_decrypt">Неможливо розшифрувати з паролем за замовчуванням. Можливо буде потрібно форматувати Data.</string>
-		<string name="generating_md51">Генерація MD5</string>
-		<!-- Message displayed during a backup if we are generating an MD5, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_md52"> * Генерація MD5...</string>
-		<string name="md5_created"> * MD5 сгенеровано.</string>
-		<string name="md5_error"> * MD5 Помилка!</string>
-		<string name="md5_compute_error"> * Помилка розрахунку MD5.</string>
+		<string name="generating_digest1" version="2">Генерація Digest</string>
+		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
+		<string name="generating_digest2" version="2"> * Генерація Digest...</string>
+		<string name="digest_created" version="2"> * Digest сгенеровано.</string>
+		<string name="digest_error" version="2"> * Digest Помилка!</string>
+		<string name="digest_compute_error" version="2"> * Помилка розрахунку Digest.</string>
 		<string name="current_date">(Поточна дата)</string>
 		<string name="auto_generate">(автогенерація)</string>
 		<string name="unable_to_locate_partition">Не вдається знайти '{1}' розділ для розрахунку копіювання.</string>
@@ -509,8 +500,8 @@
 		<string name="restore_folder">Папка відновлення: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} завершено за {2} секунд(и)]</string>
-		<string name="verifying_md5">Перевірка MD5</string>
-		<string name="skip_md5">Пропуск перевірки MD5 згідно системним налаштуванням.</string>
+		<string name="verifying_digest" version="2">Перевірка Digest</string>
+		<string name="skip_digest" version="2">Пропуск перевірки Digest згідно системним налаштуванням.</string>
 		<string name="calc_restore">Розрахування інформації о відновленні...</string>
 		<string name="restore_read_only">Неможливо відновити {1} -- змонтовано тільки для читання.</string>
 		<string name="restore_unable_locate">Невдається знайти розділ '{1}' для відновлення.</string>
@@ -572,8 +563,8 @@
 		<string name="cannot_resize">Не вдалось розмітити {1}.</string>
 		<string name="repair_resize">Відновлення {1} перед розміткою.</string>
 		<string name="unable_resize">Не вдалось розмітити {1}.</string>
-		<string name="no_md5_found">Відсутній файл md5 для '{1}'. Будь ласка зніміть вибір з перевірки MD5 при відновленні.</string>
-		<string name="md5_fail_match">MD5 не співпадає для '{1}'.</string>
+		<string name="no_digest_found" version="2">Відсутній файл md5 для '{1}'. Будь ласка зніміть вибір з перевірки Digest при відновленні.</string>
+		<string name="digest_fail_match" version="2">Digest не співпадає для '{1}'.</string>
 		<string name="fail_decrypt_tar">Не вдалось розшифрувати tar-файл '{1}'</string>
 		<string name="format_data_msg">Можливо вам доведеться перезавантажити рекавері, щоб мати можливість доступу до /data знову.</string>
 		<string name="format_data_err">Неможливо відформатувати, щоб видалити шифрування.</string>
@@ -594,7 +585,7 @@
 		<string name="backup_folder_set">Для резервного копіювавння встановлена папка '{1}'</string>
 		<string name="locate_backup_err">Не вдається знайти резервну копію '{1}'</string>
 		<string name="set_restore_opt">Установки опцій відновлення: '{1}':</string>
-		<string name="md5_check_skip">Пропуск перевірки MD5 увімкнено</string>
+		<string name="digest_check_skip" version="2">Пропуск перевірки Digest увімкнено</string>
 		<string name="ors_encrypt_restore_err">Не вдалось використати OpenRecoveryScript для відновлення зашифрованої резервної копії.</string>
 		<string name="mounting">Монтування</string>
 		<string name="unmounting">Розмонтування</string>
@@ -615,7 +606,7 @@
 		<string name="installing_zip">Встановлення zip файлу '{1}'</string>
 		<string name="select_backup_opt">Налаштування резервного копіювання:</string>
 		<string name="compression_on">Стискання увімкнено</string>
-		<string name="md5_off">Генерація MD5 вимкнена</string>
+		<string name="digest_off" version="2">Генерація Digest вимкнена</string>
 		<string name="backup_fail">Помилка резервного копіювання</string>
 		<string name="backup_clean">Помилка резервного копіювання. Очистка папки резервного копіювання.</string>
 		<string name="running_recovery_commands">Запуск команд Recovery</string>
@@ -623,15 +614,14 @@
 		<string name="running_ors">Виконання OpenRecoveryScript</string>
 		<string name="ors_complete">OpenRecoveryScript виконано</string>
 		<string name="no_updater_binary">Не вдається знайти '{1}' у zip файлі.</string>
-		<string name="check_for_md5">Перевіка MD5 файлу...</string>
-
+		<string name="check_for_digest" version="2">Перевіка Digest файлу...</string>
 		<string name="verify_zip_sig">Перевірка підпису zip...</string>
 		<string name="verify_zip_fail">Підпис Zip не пройшов перевірку!</string>
 		<string name="verify_zip_done">Підпис Zip успішно перевірено.</string>
 		<string name="zip_corrupt">Zip файл пошкоджено!</string>
-		<string name="no_md5">Пропуск перевірки MD5: не знайдено MD5 файл</string>
-		<string name="md5_fail">MD5 не співпадає</string>
-		<string name="md5_match">MD5 співпадає</string>
+		<string name="no_digest" version="2">Пропуск перевірки Digest: не знайдено MD5 файл</string>
+		<string name="digest_fail" version="2">Digest не співпадає</string>
+		<string name="digest_match" version="2">Digest співпадає</string>
 		<string name="pid_signal">{1} процес завершився з кодом: {2}</string>
 		<string name="pid_error">{1} процес завершився з ПОМИЛКОЮ: {2}</string>
 		<string name="install_dumlock">Встановлення HTC Dumlock у систему...</string>
@@ -676,6 +666,5 @@
 		<string name="partition_not_found">шлях: {1} не знайдено у списку розділів</string>
 		<string name="copy_kernel_log">Копіювання kernel log у {1}</string>
 		<string name="include_kernel_log">Увімкнути Kernel Log</string>
-		
 	</resources>
 </language>
