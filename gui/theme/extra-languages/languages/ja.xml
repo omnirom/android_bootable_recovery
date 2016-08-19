@@ -202,7 +202,7 @@
 		<string name="enc_disabled">無効 - パスワード設定で有効化します</string>
 		<string name="enc_enabled">有効</string>
 		<string name="enable_backup_comp_chk">圧縮する</string>
-		<string name="skip_md5_backup_chk">バックアップ時に MD5 を生成しない</string>
+		<string name="skip_digest_backup_chk">バックアップ時に Digest を生成しない</string>
 		<string name="disable_backup_space_chk">空き容量のチェックを無効化する</string>
 		<string name="refresh_sizes_btn">サイズの更新</string>
 		<string name="swipe_backup">スワイプでバックアップ</string>
@@ -235,7 +235,7 @@
 		<string name="restore_try_decrypt_s">復号の試行中</string>
 		<string name="restore_backup_date">%tw_restore_file_date% に作成されたバックアップ</string>
 		<string name="restore_sel_part">リストアするパーティションの選択:</string>
-		<string name="restore_enable_md5_chk">バックアップファイルの MD5 検証を有効化する</string>
+		<string name="restore_enable_digest_chk">バックアップファイルの Digest 検証を有効化する</string>
 		<string name="restore_complete">リストアしました</string>
 		<string name="swipe_restore">スワイプでリストア</string>
 		<string name="swipe_restore_s">   リストア</string>
@@ -475,12 +475,12 @@
 		<string name="mtp_crash">MTP がクラッシュしました。起動時に開始しません。</string>
 		<string name="decrypt_success">デフォルトのパスワードで復号しました。</string>
 		<string name="unable_to_decrypt">デフォルトのパスワードで復号できません。data の初期化が必要です。</string>
-		<string name="generating_md51">MD5 の生成中</string>
-		<!-- Message displayed during a backup if we are generating an MD5, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_md52"> * MD5 の生成中...</string>
-		<string name="md5_created"> * MD5 を生成しました。</string>
-		<string name="md5_error"> * MD5 エラー!</string>
-		<string name="md5_compute_error"> * MD5の計算エラーが起きました。</string>
+		<string name="generating_digest1">Digest の生成中</string>
+		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
+		<string name="generating_digest2"> * Digest の生成中...</string>
+		<string name="digest_created"> * Digest を生成しました。</string>
+		<string name="digest_error"> * Digest エラー!</string>
+		<string name="digest_compute_error"> * Digestの計算エラーが起きました。</string>
 		<string name="current_date">(現在の日付)</string>
 		<string name="auto_generate">(自動生成)</string>
 		<string name="unable_to_locate_partition">バックアップの計算で \'{1}\' パーティションが見つかりません。</string>
@@ -501,8 +501,8 @@
 		<string name="restore_folder">リストアフォルダ: \'{1}\'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} 完了 ({2} 秒)]</string>
-		<string name="verifying_md5">MD5 の検証中</string>
-		<string name="skip_md5">ユーザー設定に基づき MD5 の検証をスキップします。</string>
+		<string name="verifying_digest">Digest の検証中</string>
+		<string name="skip_digest">ユーザー設定に基づき Digest の検証をスキップします。</string>
 		<string name="calc_restore">リストアの詳細を計算中...</string>
 		<string name="restore_read_only">{1} をリストアできません -- 読み取り専用でマウントされています。</string>
 		<string name="restore_unable_locate">リストアする \'{1}\' パーティションが見つかりません。</string>
@@ -564,9 +564,9 @@
 		<string name="cannot_resize">{1} をリサイズできません。</string>
 		<string name="repair_resize">リサイズの前に {1} を修復しています。</string>
 		<string name="unable_resize">{1} をリサイズできません。</string>
-		<string name="no_md5_found">\'{1}\' の MD5 ファイルが見つかりません。リストアするには MD5 の検証を無効化してください。</string>
-		<string name="md5_fail_match">\'{1}\' で MD5 が一致しません。</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="no_digest_found">\'{1}\' の Digest ファイルが見つかりません。リストアするには Digest の検証を無効化してください。</string>
+		<string name="digest_fail_match">\'{1}\' で Digest が一致しません。</string>
+		<string name="digest_matched">Digest matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">tar ファイル '{1}' を復号できませんでした</string>
 		<string name="format_data_msg">/data を再度使用するにはリカバリを再起動してください。</string>
 		<string name="format_data_err">暗号化を解除するための初期化ができません。</string>
@@ -587,7 +587,7 @@
 		<string name="backup_folder_set">バックアップフォルダを '{1}' に設定しました</string>
 		<string name="locate_backup_err">バックアップ \'{1}\' が見つかりません</string>
 		<string name="set_restore_opt">リストアオプションの設定中: \'{1}\':</string>
-		<string name="md5_check_skip">MD5 チェックのスキップが有効です</string>
+		<string name="digest_check_skip">Digest チェックのスキップが有効です</string>
 		<string name="ors_encrypt_restore_err">OpenRecoveryScript を使用して暗号化されたバックアップをリストアできません。</string>
 		<string name="mounting">マウント中</string>
 		<string name="unmounting">マウント解除中</string>
@@ -608,7 +608,7 @@
 		<string name="installing_zip">ZIP ファイル \'{1}\' をインストール中</string>
 		<string name="select_backup_opt">バックアップオプションの設定中:</string>
 		<string name="compression_on">圧縮は有効です</string>
-		<string name="md5_off">MD5 生成は無効です</string>
+		<string name="digest_off">Digest 生成は無効です</string>
 		<string name="backup_fail">バックアップに失敗しました</string>
 		<string name="backup_clean">バックアップに失敗しました。バックアップフォルダを掃除中です。</string>
 		<string name="running_recovery_commands">リカバリコマンドの実行中</string>
@@ -616,15 +616,15 @@
 		<string name="running_ors">OpenRecoveryScript の実行中</string>
 		<string name="ors_complete">OpenRecoveryScript を実行しました</string>
 		<string name="no_updater_binary">ZIP ファイルの中で \'{1}\' が見つかりませんでした。</string>
-		<string name="check_for_md5">MD5 ファイルをチェック中...</string>
+		<string name="check_for_digest">Digest ファイルをチェック中...</string>
 		<string name="fail_sysmap">ファイル \'{1}\' のマップに失敗しました</string>
 		<string name="verify_zip_sig">ZIP の署名を検証中...</string>
 		<string name="verify_zip_fail">ZIP の署名の検証に失敗しました!</string>
 		<string name="verify_zip_done">ZIP の署名の検証に成功しました。</string>
 		<string name="zip_corrupt">ZIP ファイルが破損しています!</string>
-		<string name="no_md5">MD5 チェックをスキップ中: MD5 ファイルが見つかりません</string>
-		<string name="md5_fail">MD5 が一致しません</string>
-		<string name="md5_match">MD5 が一致しました</string>
+		<string name="no_digest">Digest チェックをスキップ中: Digest ファイルが見つかりません</string>
+		<string name="digest_fail">Digest が一致しません</string>
+		<string name="digest_match">Digest が一致しました</string>
 		<string name="pid_signal">{1} プロセスはこのシグナルで終了しました: {2}</string>
 		<string name="pid_error">{1} プロセスはこのエラーで終了しました: {2}</string>
 		<string name="install_dumlock">HTC Dumlock を system にインストール中...</string>

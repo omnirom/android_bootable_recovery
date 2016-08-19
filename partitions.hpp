@@ -47,6 +47,7 @@ struct PartitionSettings {                                                      
 	std::string Backup_Folder;                                                // Path to restore folder
 	bool adbbackup;                                                           // tell the system we are backing up over adb
 	bool adb_compression;                                                     // 0 == uncompressed, 1 == compressed
+	bool generate_digest;                                                      // tell system to create digest for partitions
 	bool generate_md5;                                                        // tell system to create md5 for partitions
 	uint64_t total_restore_size;                                              // Total size of restored backup
 	uint64_t img_bytes_remaining;                                             // remaining img/emmc bytes to backup for progress indicator
@@ -90,7 +91,6 @@ public:
 	bool Can_Resize();                                                        // Checks to see if we have everything needed to be able to resize the current file system
 	bool Resize();                                                            // Resizes the current file system
 	bool Backup(PartitionSettings *part_settings, pid_t *tar_fork_pid);       // Backs up the partition to the folder specified
-	bool Check_MD5(PartitionSettings *part_settings);                         // Checks MD5 of a backup
 	bool Restore(PartitionSettings *part_settings);                           // Restores the partition using the backup folder provided
 	unsigned long long Get_Restore_Size(PartitionSettings *part_settings);    // Returns the overall restore size of the backup
 	string Backup_Method_By_Name();                                           // Returns a string of the backup method for human readable output
@@ -302,7 +302,6 @@ public:
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
 	void Setup_Android_Secure_Location(TWPartition* Part);                    // Sets up .android_secure if needed
-	bool Make_MD5(struct PartitionSettings *part_settings);                   // Generates an MD5 after a backup is made
 	bool Backup_Partition(struct PartitionSettings *part_settings);           // Backup the partitions based on type
 	void Output_Partition(TWPartition* Part);                                 // Outputs partition details to the log
 	TWPartition* Find_Partition_By_MTP_Storage_ID(unsigned int Storage_ID);   // Returns a pointer to a partition based on MTP Storage ID
