@@ -194,7 +194,7 @@
         <string name="enc_disabled">désactivé - définir un mot de passe pour activer</string>
         <string name="enc_enabled">activé</string>
         <string name="enable_backup_comp_chk">Activer la compression</string>
-        <string name="skip_md5_backup_chk">Ne pas générer de MD5 pendant la sauvegarde</string>
+        <string name="skip_digest_backup_chk" version="2">Ne pas générer de Digest pendant la sauvegarde</string>
         <string name="disable_backup_space_chk">Désactiver la vérification de l'espace libre</string>
         <string name="refresh_sizes_btn">Actualiser l'espace disponible</string>
         <string name="swipe_backup">Glisser pour Sauvegarder</string>
@@ -228,7 +228,7 @@
         <string name="restore_try_decrypt_s">Tentative de décryptage</string>
         <string name="restore_backup_date">Sauvegarde effectuée sur %tw_restore_file_date%</string>
         <string name="restore_sel_part">Sélectionner les Partitions à restaurer :</string>
-        <string name="restore_enable_md5_chk">Activer la vérification MD5 des fichiers de sauvegarde</string>
+        <string name="restore_enable_digest_chk" version="2">Activer la vérification Digest des fichiers de sauvegarde</string>
         <string name="restore_completed">Restauration terminée</string>
         <string name="swipe_restore">Glisser pour Restaurer</string>
         <string name="swipe_restore_s">Restaurer</string>
@@ -468,12 +468,12 @@
         <string name="rebooting">Redémarrage...</string>
         <string name="decrypt_success">Décryption réussie avec le mot de passe par défaut.</string>
         <string name="unable_to_decrypt">Incapable de décrypter avec le mot de passe par défaut. Vous devrez peut-être formater la partition Données.</string>
-        <string name="generating_md51">Génération du MD5</string>
-        <string name="generating_md52">* Génération du MD5...</string>
-        <string name="md5_created">* MD5 créé.</string>
-        <string name="md5_error">* Erreur MD5 !</string>
-        <string name="md5_compute_error">* Erreur dans le calcul du MD5.</string>
-        <string name="md5_created">* MD5 créé.</string>
+        <string name="generating_digest1" version="2">Génération du Digest</string>
+        <string name="generating_digest2" version="2">* Génération du Digest...</string>
+        <string name="digest_created" version="2">* Digest créé.</string>
+        <string name="digest_error" version="2">* Erreur Digest !</string>
+        <string name="digest_compute_error" version="2">* Erreur dans le calcul du Digest.</string>
+        <string name="digest_created" version="2">* Digest créé.</string>
         <string name="current_date">(Date du jour)</string>
         <string name="auto_generate">(Génération automatisée)</string>
         <string name="unable_to_locate_partition">Impossible de localiser la partition '{1}' pour le calcul de la sauvegarde.</string>
@@ -493,8 +493,8 @@
         <string name="restore_started">[RESTAURATION COMMENCÉE]</string>
         <string name="restore_folder">Restauration du dossier: '{1}'</string>
         <string name="restore_part_done">[{1} complété ({2} secondes)]</string>
-        <string name="verifying_md5">Vérification du MD5</string>
-        <string name="skip_md5">Omission de la vérification des MD5 selon le réglage utilisateur.</string>
+        <string name="verifying_digest" version="2">Vérification du Digest</string>
+        <string name="skip_digest" version="2">Omission de la vérification des Digest selon le réglage utilisateur.</string>
         <string name="calc_restore">Calcul des détails de la restauration...</string>
         <string name="restore_read_only">Impossible de restaurer {1} -- monté en lecture seule.</string>
         <string name="restore_unable_locate">Impossible de localiser la partition '{1}' pour la restauration.</string>
@@ -552,9 +552,9 @@
         <string name="cannot_resize">Incapable de redimensionner {1}.</string>
         <string name="repair_resize">Réparation de {1} avant de redimensionner.</string>
         <string name="unable_resize">Incapable de redimensionner {1}.</string>
-        <string name="no_md5_found">Pas de fichier md5 trouvé pour '{1}'. Veuillez désactiver la vérification MD5 pour effectuer la restauration.</string>
-        <string name="md5_fail_match">Le MD5 ne correspond pas pour '{1}'.</string>
-        <string name="md5_matched">Le MD5 correspond pour '{1}'.</string>
+        <string name="no_digest_found" version="2">Pas de fichier Digest trouvé pour '{1}'. Veuillez désactiver la vérification Digest pour effectuer la restauration.</string>
+        <string name="digest_fail_match" version="2">Le Digest ne corresponds pas pour '{1}'.</string>
+        <string name="digest_matched" version="2">Le Digest correspond pour '{1}'.</string>
         <string name="restoring">Restauration en cours</string>
         <string name="format_data_msg">Vous aurez peut-être à redémarrer pour pouvoir utiliser /data à nouveau.</string>
         <string name="format_data_err">Incapable de formater pour enlever l'encryption.</string>
@@ -574,7 +574,7 @@
         <string name="backup_folder">Dossier de sauvegarde à '{1}'</string>
         <string name="locate_backup_err">Impossible de localiser la sauvegarde '{1}'</string>
         <string name="set_restore_opt">Définition des options de restauration: '{1}':</string>
-        <string name="md5_check_skip">La vérification MD5 est omise</string>
+        <string name="digest_check_skip" version="2">La vérification Digest est omise</string>
         <string name="ors_encrypt_restore_err">Impossible d'utiliser OpenRecoveryScript pour restaurer une sauvegarde chiffrée.</string>
         <string name="mounting">Montage</string>
         <string name="unmounting">Démontage</string>
@@ -595,7 +595,7 @@
         <string name="installing_zip">Installation du fichier zip '{1}'</string>
         <string name="select_backup_opt">Définition des options de sauvegarde:</string>
         <string name="compression_on">Compression activée</string>
-        <string name="md5_off">La génération de MD5 est désactivée</string>
+        <string name="digest_off" version="2">La génération de Digest est désactivée</string>
         <string name="backup_fail">Échec de la sauvegarde</string>
         <string name="backup_complete">Sauvegarde terminée!</string>
         <string name="running_recovery_commands">Exécution des commandes de récupération</string>
@@ -603,15 +603,15 @@
         <string name="running_ors">OpenRecoveryScript en cours d'exécution</string>
         <string name="ors_complete">OpenRecoveryScript complété</string>
         <string name="no_updater_binary">'{1}' introuvable dans le fichier zip.</string>
-        <string name="check_for_md5">Vérification des fichiers MD5...</string>
+        <string name="check_for_digest" version="2">Vérification des fichiers Digest...</string>
         <string name="fail_sysmap">Impossible de mapper le fichier '{1}'</string>
         <string name="verify_zip_sig">Vérification de la signature du zip...</string>
         <string name="verify_zip_fail">Échec de la vérification des signatures du zip!</string>
         <string name="verify_zip_done">Signature du zip vérifiée correctement.</string>
         <string name="zip_corrupt">Le fichier zip est corrompu!</string>
-        <string name="no_md5">Pas de vérification MD5: aucun fichier MD5 trouvé</string>
-        <string name="md5_fail">Le MD5 ne correspond pas</string>
-        <string name="md5_match">Le MD5 correspond</string>
+        <string name="no_digest" version="2">Pas de vérification Digest: aucun fichier Digest trouvé</string>
+        <string name="digest_fail" version="2">Le Digest ne correspond pas</string>
+        <string name="digest_match" version="2">Le Digest correspond</string>
         <string name="pid_signal">Le processus {1} s'est terminé avec le signal: {2}</string>
         <string name="pid_error">Le processus {1} s'est terminé avec ERREUR: {2}</string>
         <string name="install_dumlock">Installation de HTC Dumlock...</string>
