@@ -57,6 +57,10 @@ extern "C" {
 	#include "set_metadata.h"
 }
 
+#ifndef TWHTCD_PATH
+	#define TWHTCD_PATH
+#endif
+
 /* Execute a command */
 int TWFunc::Exec_Cmd(const string& cmd, string &result) {
 	FILE* exec;
@@ -143,7 +147,6 @@ int TWFunc::Wait_For_Child(pid_t pid, int *status, string Child_Name) {
 }
 
 bool TWFunc::Path_Exists(string Path) {
-	// Check to see if the Path exists
 	struct stat st;
 	if (stat(Path.c_str(), &st) != 0)
 		return false;

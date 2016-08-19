@@ -51,7 +51,7 @@ struct PartitionSettings {                                                      
 	std::string Backup_FileName;                                               // Name of the file to restore
 	bool adbbackup;                                                            // tell the system we are backing up over adb
 	bool adb_compression;                                                      // 0 == uncompressed, 1 == compressed
-	bool generate_md5;                                                         // tell system to create md5 for partitions
+	bool generate_digest;                                                      // tell system to create digest for partitions
 	uint64_t total_restore_size;                                               // Total size of restored backup
 	uint64_t img_bytes_remaining;                                              // remaining img/emmc bytes to backup for progress indicator
 	uint64_t file_bytes_remaining;                                             // remaining file bytes to backup for progress indicator
@@ -94,7 +94,7 @@ public:
 	bool Can_Resize();                                                        // Checks to see if we have everything needed to be able to resize the current file system
 	bool Resize();                                                            // Resizes the current file system
 	bool Backup(PartitionSettings *part_settings, pid_t *tar_fork_pid);       // Backs up the partition to the folder specified
-	bool Check_MD5(string restore_folder);                                    // Checks MD5 of a backup
+	bool Check_Digest(string restore_folder);                                 // Checks Digest of a backup
 	bool Restore(PartitionSettings *part_settings);                           // Restores the partition using the backup folder provided
 	unsigned long long Get_Restore_Size(PartitionSettings *part_settings);// Returns the overall restore size of the backup
 	string Backup_Method_By_Name();                                           // Returns a string of the backup method for human readable output
@@ -287,15 +287,15 @@ public:
 	void Decrypt_Adopted();                                                   // Attempt to identy and decrypt any adopted storage partitions
 	void Remove_Partition_By_Path(string Path);                               // Removes / erases a partition entry from the partition list
 
-	bool Flash_Image(PartitionSettings *part_settings);                        // Flashes an image to a selected partition from the partition list
-	bool Restore_Partition(struct PartitionSettings *part_settings);                  // Restore the partitions based on type
+	bool Flash_Image(PartitionSettings *part_settings);                       // Flashes an image to a selected partition from the partition list
+	bool Restore_Partition(struct PartitionSettings *part_settings);          // Restore the partitions based on type
 	TWAtomicInt stop_backup;
 
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
 	void Setup_Android_Secure_Location(TWPartition* Part);                    // Sets up .android_secure if needed
-	bool Make_MD5(struct PartitionSettings *part_settings); // Generates an MD5 after a backup is made
-	bool Backup_Partition(struct PartitionSettings *part_settings);                  // Backup the partitions based on type
+	bool Make_Digest(struct PartitionSettings *part_settings);                // Generates an Digest after a backup is made
+	bool Backup_Partition(struct PartitionSettings *part_settings);           // Backup the partitions based on type
 	void Output_Partition(TWPartition* Part);                                 // Outputs partition details to the log
 	TWPartition* Find_Partition_By_MTP_Storage_ID(unsigned int Storage_ID);   // Returns a pointer to a partition based on MTP Storage ID
 	bool Add_Remove_MTP_Storage(TWPartition* Part, int message_type);         // Adds or removes an MTP Storage partition
