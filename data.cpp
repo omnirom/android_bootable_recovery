@@ -557,6 +557,13 @@ void DataManager::SetDefaultValues()
 	mConst.SetValue(TW_SHOW_DUMLOCK, "0");
 #endif
 
+#ifdef TW_INCLUDE_DEVICESPECIFIC
+	printf("TW_INCLUDE_DEVICESPECIFIC := true\n");
+	mConst.SetValue(TW_SHOW_DEVICESPECIFIC, "1");
+#else
+	mConst.SetValue(TW_SHOW_DEVICESPECIFIC, "0");
+#endif
+
 	str = GetCurrentStoragePath();
 	mPersist.SetValue(TW_ZIP_LOCATION_VAR, str);
 	str += "/TWRP/BACKUPS/";
