@@ -35,9 +35,8 @@
 
 #include "twadbstream.h"
 #include "twrpback.hpp"
-#include "../variables.h"
-#include "../twcommon.h"
-#include "../twrpDigest.hpp"
+#include "../twrpDigest/twrpDigest.hpp"
+#include "../twrpDigest/twrpMD5.hpp"
 
 twrpback::twrpback(void) {
 	read_fd = 0;
@@ -95,7 +94,7 @@ void twrpback::close_restore_fds() {
 }
 
 int twrpback::backup(std::string command) {
-	twrpDigest adb_md5;
+	twrpMD5 adb_md5;
 	bool breakloop = false;
 	int bytes = 0, errctr = 0;
 	char result[MAX_ADB_READ];
@@ -266,7 +265,7 @@ int twrpback::backup(std::string command) {
 					totalbytes += bytes;
 					char *writeresult = new char [bytes];
 					memcpy(writeresult, result, bytes);
-					if (adb_md5.updateMD5stream((unsigned char *) writeresult, bytes) == -1)
+					if (adb_md5.updateStream((unsigned char *) writeresult, bytes) == -1)
 						adblogwrite("failed to update md5 stream\n");
 					if (fwrite(writeresult, 1, bytes, adbd_fp) != bytes) {
 						adblogwrite("Error writing backup data to adbd\n");
@@ -287,7 +286,7 @@ int twrpback::backup(std::string command) {
 						close_backup_fds();
 						return -1;
 					}
-					if (adb_md5.updateMD5stream((unsigned char *) padding, sizeof(padding)) == -1)
+					if (adb_md5.updateStream((unsigned char *) padding, sizeof(padding)) == -1)
 						adblogwrite("failed to update md5 stream\n");
 					fflush(adbd_fp);
 					totalbytes = 0;
@@ -296,9 +295,9 @@ int twrpback::backup(std::string command) {
 				AdbBackupFileTrailer md5trailer;
 
 				memset(&md5trailer, 0, sizeof(md5trailer));
-				adb_md5.finalizeMD5stream();
+				adb_md5.finalizeStream();
 
-				std::string md5string = adb_md5.createMD5string();
+				std::string md5string = adb_md5.createDigestString();
 
 				strncpy(md5trailer.start_of_trailer, TWRP, sizeof(md5trailer.start_of_trailer));
 				strncpy(md5trailer.type, MD5TRAILER, sizeof(md5trailer.type));
@@ -347,7 +346,7 @@ int twrpback::backup(std::string command) {
 				char *writeresult = new char [bytes];
 				memcpy(writeresult, result, bytes);
 
-				if (adb_md5.updateMD5stream((unsigned char *) writeresult, bytes) == -1)
+				if (adb_md5.updateStream((unsigned char *) writeresult, bytes) == -1)
 					adblogwrite("failed to update md5 stream\n");
 
 				totalbytes += bytes;
@@ -396,7 +395,7 @@ int twrpback::backup(std::string command) {
 }
 
 int twrpback::restore(void) {
-	twrpDigest adb_md5;
+	twrpMD5 adb_md5;
 	char cmd[MAX_ADB_READ];
 	char result[MAX_ADB_READ];
 	struct AdbBackupControlType structcmd;
@@ -704,14 +703,14 @@ int twrpback::restore(void) {
 									return -1;
 								}
 								adblogwrite("md5 finalize stream\n");
-								adb_md5.finalizeMD5stream();
+								adb_md5.finalizeStream();
 
 								AdbBackupFileTrailer md5;
 
 								memset(&md5, 0, sizeof(md5));
 								strncpy(md5.start_of_trailer, TWRP, sizeof(md5.start_of_trailer));
 								strncpy(md5.type, TWMD5, sizeof(md5.type));
-								std::string md5string = adb_md5.createMD5string();
+								std::string md5string = adb_md5.createDigestString();
 								strncpy(md5.md5, md5string.c_str(), sizeof(md5.md5));
 
 								adblogwrite("Sending MD5Check\n");
@@ -726,7 +725,7 @@ int twrpback::restore(void) {
 								break;
 							}
 						}
-						if (adb_md5.updateMD5stream((unsigned char*)result, sizeof(result)) == -1)
+						if (adb_md5.updateStream((unsigned char*)result, sizeof(result)) == -1)
 							adblogwrite("failed to update md5 stream\n");
 						dataChunkBytes += readbytes;
 
