@@ -143,7 +143,6 @@ int TWFunc::Wait_For_Child(pid_t pid, int *status, string Child_Name) {
 }
 
 bool TWFunc::Path_Exists(string Path) {
-	// Check to see if the Path exists
 	struct stat st;
 	if (stat(Path.c_str(), &st) != 0)
 		return false;
@@ -1088,4 +1087,15 @@ void TWFunc::copy_kernel_log(string curr_storage) {
 	gui_msg(Msg("copy_kernel_log=Copied kernel log to {1}")(dmesgDst));
 	tw_set_default_metadata(dmesgDst.c_str());
 }
+
+bool TWFunc::isNumber(string strtocheck) {
+	int num = 0;
+	std::istringstream iss(strtocheck);
+
+	if (!(iss >> num).fail())
+		return true;
+	else
+		return false;
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN
