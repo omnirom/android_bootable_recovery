@@ -45,12 +45,8 @@ LOCAL_SRC_FILES := \
     fixContexts.cpp \
     twrpTar.cpp \
     twrpDU.cpp \
-    twrpDigest.cpp \
-    digest/md5.c \
     find_file.cpp \
-    infomanager.cpp
-
-LOCAL_SRC_FILES += \
+    infomanager.cpp \
     data.cpp \
     partition.cpp \
     partitionmanager.cpp \
@@ -113,7 +109,7 @@ LOCAL_SHARED_LIBRARIES :=
 
 LOCAL_STATIC_LIBRARIES += libguitwrp
 LOCAL_SHARED_LIBRARIES += libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libaosprecovery libtwadbbu
-LOCAL_SHARED_LIBRARIES += libcrecovery
+LOCAL_SHARED_LIBRARIES += libcrecovery libtwrpdigest
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libstlport
@@ -151,7 +147,7 @@ endif # HAVE_SELINUX
 ifeq ($(TWHAVE_SELINUX), true)
     LOCAL_C_INCLUDES += external/libselinux/include
     LOCAL_SHARED_LIBRARIES += libselinux
-    LOCAL_CFLAGS += -DHAVE_SELINUX -g
+    LOCAL_CFLAGS += -DHAVE_SELINUX 
     ifneq ($(TARGET_USERIMAGES_USE_EXT4), true)
         LOCAL_CFLAGS += -DUSE_EXT4
         LOCAL_C_INCLUDES += system/extras/ext4_utils
@@ -596,6 +592,7 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/toybox/Android.mk \
     $(commands_recovery_local_path)/simg2img/Android.mk \
     $(commands_recovery_local_path)/adbbu/Android.mk \
+    $(commands_recovery_local_path)/twrpDigest/Android.mk \
     $(commands_recovery_local_path)/libpixelflinger/Android.mk
 
 ifeq ($(TW_INCLUDE_CRYPTO), true)
