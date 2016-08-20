@@ -313,6 +313,7 @@ protected:
 	int cancelzip(std::string arg);
 	int queueclear(std::string arg);
 	int sleep(std::string arg);
+	int sleepcounter(std::string arg);
 	int appenddatetobackupname(std::string arg);
 	int generatebackupname(std::string arg);
 	int checkpartitionlist(std::string arg);
