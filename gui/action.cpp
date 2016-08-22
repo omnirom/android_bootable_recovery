@@ -563,6 +563,9 @@ int GUIAction::reload(std::string arg __unused)
 int GUIAction::readBackup(std::string arg __unused)
 {
 	string Restore_Name;
+	int gui_adb_backup;
+
+	LOGINFO("GUIAction::readBackup\n");
 	DataManager::GetValue("tw_restore", Restore_Name);
 	PartitionManager.Set_Restore_Files(Restore_Name);
 	return 0;
@@ -1198,8 +1201,20 @@ int GUIAction::nandroid(std::string arg)
 			DataManager::SetValue(TW_BACKUP_NAME, auto_gen);
 		} else if (arg == "restore") {
 			string Restore_Name;
+			int gui_adb_backup;
+
 			DataManager::GetValue("tw_restore", Restore_Name);
-			ret = PartitionManager.Run_Restore(Restore_Name);
+			DataManager::GetValue("tw_enable_adb_backup", gui_adb_backup);
+			if (gui_adb_backup) {
+				int adb_fd = open(Restore_Name.c_str(), O_RDONLY);
+				stringstream str;
+				str << adb_fd;
+				string cmd = "/sbin/bu --twrp restore " + str.str();
+				TWFunc::Exec_Cmd(cmd);
+				close(adb_fd);
+			}
+			else
+				ret = PartitionManager.Run_Restore(Restore_Name);
 		} else {
 			operation_end(1);
 			return -1;
