@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3801c1f3_4af98be3",
+        "filename": "gui/patternpassword.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-08-22T17:05:30Z",
+      "side": 1,
+      "message": "seems like this should be declared unsigned so the function isn\u0027t mistakenly used for pow(x,-1) and similar. for example, this returns the wrong result for pow(1,-1) which is 1. sigh, the troubles of writing personal implementations of standard functions... maybe casting cmath\u0027s double pow would be safest.",
+      "range": {
+        "startLine": 233,
+        "startChar": 22,
+        "endLine": 233,
+        "endChar": 25
+      },
+      "revId": "61c7c5c67e5dde7eb3ec288247cceb9be29a47a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
