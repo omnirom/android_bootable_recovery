@@ -30,6 +30,7 @@ extern "C" {
 #include "objects.hpp"
 #include "../data.hpp"
 #include "../twrp-functions.hpp"
+#include "../adbbu/libtwadbbu.hpp"
 
 int GUIFileSelector::mSortOrder = 0;
 
@@ -39,7 +40,7 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 	xml_node<>* child;
 
 	mFolderIcon = mFileIcon = NULL;
-	mShowFolders = mShowFiles = mShowNavFolders = 1;
+	mShowFolders = mShowFiles = mShowNavFolders, mShowAdbBuFiles = 1;
 	mUpdate = 0;
 	mPathVar = "cwd";
 	updateFileList = false;
@@ -59,6 +60,9 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 		attr = child->first_attribute("nav");
 		if (attr)
 			mShowNavFolders = atoi(attr->value());
+		attr = child->first_attribute("adbbackup");
+		if (attr)
+			mShowAdbBuFiles = atoi(attr->value());
 	}
 
 	// Handle the path variable
@@ -223,6 +227,7 @@ int GUIFileSelector::GetFileList(const std::string folder)
 	// Clear all data
 	mFolderList.clear();
 	mFileList.clear();
+	mAdbBuList.clear();
 
 	d = opendir(folder.c_str());
 	if (d == NULL) {
@@ -269,6 +274,12 @@ int GUIFileSelector::GetFileList(const std::string folder)
 			if (mShowNavFolders || (data.fileName != "." && data.fileName != ".."))
 				mFolderList.push_back(data);
 		} else if (data.fileType == DT_REG || data.fileType == DT_LNK || data.fileType == DT_BLK) {
+			if (mShowAdbBuFiles) {
+				std::string adbfile = path;
+				if (twadbbu::Check_ADB_Backup_File(adbfile)) {
+					mFolderList.push_back(data);
+				}
+			}
 			if (mExtn.empty() || (data.fileName.length() > mExtn.length() && data.fileName.substr(data.fileName.length() - mExtn.length()) == mExtn)) {
 				mFileList.push_back(data);
 			}
