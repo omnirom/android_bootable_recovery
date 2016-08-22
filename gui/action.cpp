@@ -562,6 +562,7 @@ int GUIAction::reload(std::string arg __unused)
 
 int GUIAction::readBackup(std::string arg __unused)
 {
+	LOGINFO("GUIAction::readBackup\n");
 	string Restore_Name;
 	DataManager::GetValue("tw_restore", Restore_Name);
 	PartitionManager.Set_Restore_Files(Restore_Name);
