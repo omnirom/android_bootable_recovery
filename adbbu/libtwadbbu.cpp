@@ -33,6 +33,35 @@
 #include "twadbstream.h"
 #include "libtwadbbu.hpp"
 
+bool twadbbu::Check_ADB_Backup_File(std::string fname) {
+	struct AdbBackupStreamHeader adbbuhdr;
+	uint32_t crc, adbbuhdrcrc;
+	unsigned char buf[512];
+	int bytes;
+
+	int fd = open(fname.c_str(), O_RDONLY);
+	if (fd < 0) {
+		printf("Unable to open %s for reading.\n", fname.c_str());
+		close(fd);
+		return false; 
+	}
+	bytes = read(fd, &buf, sizeof(buf));
+	close(fd);
+
+	memset(&adbbuhdr, 0, sizeof(adbbuhdr));
+	memcpy(&adbbuhdr, buf, sizeof(adbbuhdr));
+	adbbuhdrcrc = adbbuhdr.crc;
+	memset(&adbbuhdr.crc, 0, sizeof(adbbuhdr.crc));
+	crc = crc32(0L, Z_NULL, 0);
+	crc = crc32(crc, (const unsigned char*) &adbbuhdr, sizeof(adbbuhdr));
+
+	if (crc == adbbuhdrcrc) 
+		return true;
+	else 
+		return false;
+}
+
+
 bool twadbbu::Write_ADB_Stream_Header(uint64_t partition_count) {
 	struct AdbBackupStreamHeader twhdr;
 	int adb_control_bu_fd;
