@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3801c1f3_0a9823c1",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1085,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-08-22T15:24:40Z",
+      "side": 1,
+      "message": "The GUI says that the kernel log has been copied to /data/media/0/kmsg.log however the code actually just runs dmesg and the results of the dmesg output get dumped to the recovery log. Either the GUI message is wrong or the code isn\u0027t doing what you expected.",
+      "revId": "29db0f211d38d24006a9613417f51f810e69da15",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
