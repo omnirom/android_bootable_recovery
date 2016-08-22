@@ -15,10 +15,7 @@
 */
 
 #include <fstream>
-
 #include "../orscmd/orscmd.h"
-#include "../variables.h"
-#include "../twcommon.h"
 
 class twrpback {
 public:
@@ -29,8 +26,8 @@ public:
 	int backup(std::string command);                                         // adb backup stream
 	int restore(void);                                                       // adb restore stream
 	void adblogwrite(std::string writemsg);                                  // adb debugging log function
-	void close_backup_fds();                                                 // close backup resources
-	void close_restore_fds();                                                // close restore resources
+	void createFifos(void);                                                  // create fifos needed for adb backup
+	void closeFifos(void);                                                   // close created fifos 
 
 private:
 	int read_fd;                                                             // ors input fd
@@ -46,4 +43,6 @@ private:
 	char operation[512];                                                     // operation to send to ors
 	std::ofstream adblogfile;                                                // adb stream log file
 	void adbloginit(void);                                                   // setup adb log stream file
+	void close_backup_fds();                                                 // close backup resources
+	void close_restore_fds();                                                // close restore resources
 };
