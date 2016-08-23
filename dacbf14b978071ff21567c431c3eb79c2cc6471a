@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3801c1f3_2a299f35",
+        "filename": "gui/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2016-08-23T19:50:33Z",
+      "side": 1,
+      "message": "Probably delete the comment, also",
+      "revId": "dacbf14b978071ff21567c431c3eb79c2cc6471a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
