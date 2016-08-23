@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3801c1f3_2a12bf0b",
+        "filename": "gui/action.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 651,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-08-23T18:44:33Z",
+      "side": 1,
+      "message": "should pass the destination directory here for consistency.",
+      "revId": "a6a46cf1a97acc64eb9fe696e5437934350798dc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_0af703d0",
+        "filename": "gui/theme/common/landscape.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 3154,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-08-23T18:44:33Z",
+      "side": 1,
+      "message": "This uses different strings than the old functionality, is this intentional?",
+      "revId": "a6a46cf1a97acc64eb9fe696e5437934350798dc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_8a2af32b",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1072,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-08-23T18:44:33Z",
+      "side": 1,
+      "message": "would be nicer to get this as parameter",
+      "revId": "a6a46cf1a97acc64eb9fe696e5437934350798dc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_ca00fbb3",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1077,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-08-23T18:44:33Z",
+      "side": 1,
+      "message": "Isn\u0027t this the log from the *previous* kernel run, similar to /proc/last_kmsg?",
+      "revId": "a6a46cf1a97acc64eb9fe696e5437934350798dc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_aafdafad",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1083,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-08-23T18:44:33Z",
+      "side": 1,
+      "message": "Do we need to check the existence of /proc/kmsg if we just run dmesg anyway?",
+      "revId": "a6a46cf1a97acc64eb9fe696e5437934350798dc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_eaf3b7df",
+        "filename": "twrp-functions.hpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-08-23T18:44:33Z",
+      "side": 1,
+      "message": "trailing whitespace",
+      "revId": "a6a46cf1a97acc64eb9fe696e5437934350798dc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
