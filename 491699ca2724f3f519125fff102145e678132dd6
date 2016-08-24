@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3801c1f3_caf23bcc",
+        "filename": "gui/theme/common/languages/en.xml",
+        "patchSetId": 4
+      },
+      "lineNbr": 485,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-08-24T00:47:28Z",
+      "side": 1,
+      "message": "Fix typo",
+      "revId": "491699ca2724f3f519125fff102145e678132dd6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
