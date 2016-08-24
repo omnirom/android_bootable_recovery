@@ -361,7 +361,6 @@ LOCAL_ADDITIONAL_DEPENDENCIES += \
     teamwin \
     toolbox_symlinks \
     twrp \
-    unpigz_symlink \
     fsck.fat \
     fatlabel \
     mkfs.fat \
