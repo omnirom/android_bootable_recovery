@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3801c1f3_0ad02320",
+        "filename": "gui/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-08-24T07:18:58Z",
+      "side": 0,
+      "message": "This never gets used.",
+      "revId": "b6a1605190c1d017103afc138d2672665a605910",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_2abbdfdd",
+        "filename": "gui/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-08-24T07:18:58Z",
+      "side": 0,
+      "message": "Why does this exist? sh is already symlinked (via /bin/sh in busybox-full.links), and always has been.",
+      "revId": "b6a1605190c1d017103afc138d2672665a605910",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
