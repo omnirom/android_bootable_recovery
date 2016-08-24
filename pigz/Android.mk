@@ -12,29 +12,25 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 					external/zlib
 LOCAL_SHARED_LIBRARIES += libz libc
 
+LOCAL_ADDITIONAL_DEPENDENCIES := pigz_symlinks
+
 include $(BUILD_EXECUTABLE)
 
-PIGZ_TOOLS := unpigz
-SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(PIGZ_TOOLS))
-$(SYMLINKS): PIGZ_BINARY := $(LOCAL_MODULE)
-$(SYMLINKS): $(LOCAL_INSTALLED_MODULE)
-	@echo "Symlink: $@ -> $(PIGZ_BINARY)"
-	@mkdir -p $(dir $@)
-	@rm -rf $@
-	$(hide) ln -sf $(PIGZ_BINARY) $@
+# Symlinks for pigz utilities
+include $(CLEAR_VARS)
+
+PIGZ_TOOLS := gunzip gzip unpigz
+
+pigz_symlinks:
+	@mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin
+	@echo "Generate pigz symlinks:" $(PIGZ_TOOLS)
+	$(hide) $(foreach t,$(PIGZ_TOOLS),ln -sf pigz $(TARGET_RECOVERY_ROOT_OUT)/sbin/$(t);)
 
 ifneq (,$(filter $(PLATFORM_SDK_VERSION),16 17 18))
-ALL_DEFAULT_INSTALLED_MODULES += $(SYMLINKS)
+ALL_DEFAULT_INSTALLED_MODULES += pigz_symlinks
 
 # We need this so that the installed files could be picked up based on the
 # local module name
 ALL_MODULES.$(LOCAL_MODULE).INSTALLED := \
-	$(ALL_MODULES.$(LOCAL_MODULE).INSTALLED) $(SYMLINKS)
+	$(ALL_MODULES.$(LOCAL_MODULE).INSTALLED) pigz_symlinks
 endif
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := unpigz_symlink
-LOCAL_MODULE_TAGS := optional
-LOCAL_ADDITIONAL_DEPENDENCIES := $(SYMLINKS)
-include $(BUILD_PHONY_PACKAGE)
-SYMLINKS :=
