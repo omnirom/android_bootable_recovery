@@ -343,6 +343,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     fatlabel \
     mkfs.fat \
     permissive.sh \
+    pigz_symlinks \
     simg2img_twrp
 
 ifneq ($(TARGET_ARCH), arm64)
@@ -493,6 +494,15 @@ endif
 include $(BUILD_PHONY_PACKAGE)
 RECOVERY_BUSYBOX_SYMLINKS :=
 endif # !TW_USE_TOOLBOX
+
+# Symlinks for pigz utilities
+include $(CLEAR_VARS)
+
+pigz_symlinks:
+	@mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin
+	@echo -e ${CL_CYN}"Generate pigz links:"${CL_RST} gunzip gzip
+	$(hide) ln -sf pigz $(TARGET_RECOVERY_ROOT_OUT)/sbin/gzip
+	$(hide) ln -sf unpigz $(TARGET_RECOVERY_ROOT_OUT)/sbin/gunzip
 
 # All the APIs for testing
 include $(CLEAR_VARS)
