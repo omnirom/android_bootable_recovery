@@ -19,11 +19,8 @@
 
 #include <unistd.h>
 
+#include "error_code.h"
 #include "yydefs.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define MAX_STRING_LEN 1024
 
@@ -43,6 +40,17 @@ typedef struct {
     // Should be NULL initially, will be either NULL or a malloc'd
     // pointer after Evaluate() returns.
     char* errmsg;
+
+    // error code indicates the type of failure (e.g. failure to update system image)
+    // during the OTA process.
+    ErrorCode error_code = kNoError;
+
+    // cause code provides more detailed reason of an OTA failure (e.g. fsync error)
+    // in addition to the error code.
+    CauseCode cause_code = kNoCause;
+
+    bool is_retry = false;
+
 } State;
 
 #define VAL_STRING  1  // data will be NULL-terminated; size doesn't count null
@@ -59,7 +67,7 @@ typedef Value* (*Function)(const char* name, State* state,
 
 struct Expr {
     Function fn;
-    char* name;
+    const char* name;
     int argc;
     Expr** argv;
     int start, end;
@@ -156,7 +164,13 @@ Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]);
 
 // Use printf-style arguments to compose an error message to put into
 // *state.  Returns NULL.
-Value* ErrorAbort(State* state, const char* format, ...) __attribute__((format(printf, 2, 3)));
+Value* ErrorAbort(State* state, const char* format, ...)
+    __attribute__((format(printf, 2, 3), deprecated));
+
+// ErrorAbort has an optional (but recommended) argument 'cause_code'. If the cause code
+// is set, it will be logged into last_install and provides reason of OTA failures.
+Value* ErrorAbort(State* state, CauseCode cause_code, const char* format, ...)
+    __attribute__((format(printf, 3, 4)));
 
 // Wrap a string into a Value, taking ownership of the string.
 Value* StringValue(char* str);
@@ -165,9 +179,5 @@ Value* StringValue(char* str);
 void FreeValue(Value* v);
 
 int parse_string(const char* str, Expr** root, int* error_count);
-
-#ifdef __cplusplus
-}  // extern "C"
-#endif
 
 #endif  // _EXPRESSION_H

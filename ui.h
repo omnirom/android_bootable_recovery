@@ -39,6 +39,7 @@ class RecoveryUI {
     // Set the overall recovery state ("background image").
     enum Icon { NONE, INSTALLING_UPDATE, ERASING, NO_COMMAND, ERROR };
     virtual void SetBackground(Icon icon) = 0;
+    virtual void SetSystemUpdateText(bool security_update) = 0;
 
     // --- progress indicator ---
     enum ProgressType { EMPTY, INDETERMINATE, DETERMINATE };
@@ -62,8 +63,10 @@ class RecoveryUI {
     virtual bool WasTextEverVisible() = 0;
 
     // Write a message to the on-screen log (shown if the user has
-    // toggled on the text display).
+    // toggled on the text display). Print() will also dump the message
+    // to stdout / log file, while PrintOnScreenOnly() not.
     virtual void Print(const char* fmt, ...) __printflike(2, 3) = 0;
+    virtual void PrintOnScreenOnly(const char* fmt, ...) __printflike(2, 3) = 0;
 
     virtual void ShowFile(const char* filename) = 0;
 

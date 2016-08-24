@@ -22,6 +22,7 @@
 #include <sstream>
 #include <cctype>
 #include <cutils/properties.h>
+#include <unistd.h>
 
 #include "variables.h"
 #include "data.hpp"

@@ -19,21 +19,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define TRACE_TAG TRACE_ADB
-
 #include "sysdeps.h"
 
 #include "adb.h"
 #include "adb_auth.h"
 #include "transport.h"
 
-int adb_main(int is_daemon, int server_port)
-{
-    atexit(usb_cleanup);
-
+int adb_server_main(int is_daemon, int server_port, int /* reply_fd */) {
     adb_device_banner = "sideload";
 
-    // No SIGCHLD. Let the service subproc handle its children.
     signal(SIGPIPE, SIG_IGN);
 
     // We can't require authentication for sideloading. http://b/22025550.
@@ -42,7 +36,7 @@ int adb_main(int is_daemon, int server_port)
     init_transport_registration();
     usb_init();
 
-    D("Event loop starting\n");
+    VLOG(ADB) << "Event loop starting";
     fdevent_loop();
 
     return 0;

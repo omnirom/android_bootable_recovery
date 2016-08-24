@@ -28,8 +28,6 @@
 #include <stdio.h>
 
 #include "twcommon.h"
-#include "mincrypt/rsa.h"
-#include "mincrypt/sha.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
 #include "minzip/SysUtil.h"

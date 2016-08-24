@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/input.h>
@@ -30,22 +31,17 @@
 
 #include <vector>
 
-#include "base/strings.h"
-#include "cutils/properties.h"
+#include <android-base/strings.h>
+#include <android-base/stringprintf.h>
+#include <cutils/properties.h>
+
 #include "common.h"
 #include "device.h"
 #include "minui/minui.h"
 #include "screen_ui.h"
 #include "ui.h"
-extern "C" {
-#include "minuitwrp/minui.h"
-int twgr_text(int x, int y, const char *s);
-#include "gui/gui.h"
-}
-#include "data.hpp"
 
-static int char_width;
-static int char_height;
+#define TEXT_INDENT     4
 
 // Return the current time as a double (including fractions of a second).
 static double now() {
@@ -56,9 +52,9 @@ static double now() {
 
 ScreenRecoveryUI::ScreenRecoveryUI() :
     currentIcon(NONE),
-    installingFrame(0),
     locale(nullptr),
-    rtl_locale(false),
+    intro_done(false),
+    current_frame(0),
     progressBarType(EMPTY),
     progressScopeStart(0),
     progressScopeSize(0),
@@ -77,83 +73,114 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     menu_items(0),
     menu_sel(0),
     file_viewer_text_(nullptr),
-    animation_fps(20),
-    installing_frames(-1),
+    intro_frames(0),
+    loop_frames(0),
+    animation_fps(30), // TODO: there's currently no way to infer this.
     stage(-1),
-    max_stage(-1) {
+    max_stage(-1),
+    updateMutex(PTHREAD_MUTEX_INITIALIZER),
+    rtl_locale(false) {
+}
 
-    for (int i = 0; i < 5; i++) {
-        backgroundIcon[i] = nullptr;
+GRSurface* ScreenRecoveryUI::GetCurrentFrame() {
+    if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
+        return intro_done ? loopFrames[current_frame] : introFrames[current_frame];
     }
-    pthread_mutex_init(&updateMutex, nullptr);
+    return error_icon;
+}
+
+GRSurface* ScreenRecoveryUI::GetCurrentText() {
+    switch (currentIcon) {
+        case ERASING: return erasing_text;
+        case ERROR: return error_text;
+        case INSTALLING_UPDATE: return installing_text;
+        case NO_COMMAND: return no_command_text;
+        case NONE: abort();
+    }
+}
+
+int ScreenRecoveryUI::PixelsFromDp(int dp) {
+    return dp * density_;
+}
+
+// Here's the intended layout:
+
+//          | regular     large
+// ---------+--------------------
+//          |   220dp     366dp
+// icon     |  (200dp)   (200dp)
+//          |    68dp      68dp
+// text     |   (14sp)    (14sp)
+//          |    32dp      32dp
+// progress |    (2dp)     (2dp)
+//          |   194dp     340dp
+
+// Note that "baseline" is actually the *top* of each icon (because that's how our drawing
+// routines work), so that's the more useful measurement for calling code.
+
+int ScreenRecoveryUI::GetAnimationBaseline() {
+    return GetTextBaseline() - PixelsFromDp(68) - gr_get_height(loopFrames[0]);
+}
+
+int ScreenRecoveryUI::GetTextBaseline() {
+    return GetProgressBaseline() - PixelsFromDp(32) - gr_get_height(installing_text);
+}
+
+int ScreenRecoveryUI::GetProgressBaseline() {
+    return gr_fb_height() - PixelsFromDp(is_large_ ? 340 : 194) - gr_get_height(progressBarFill);
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
 // Should only be called with updateMutex locked.
-void ScreenRecoveryUI::draw_background_locked(Icon icon) {
+void ScreenRecoveryUI::draw_background_locked() {
     pagesIdentical = false;
     gr_color(0, 0, 0, 255);
     gr_clear();
 
-    if (icon) {
-        GRSurface* surface = backgroundIcon[icon];
-        if (icon == INSTALLING_UPDATE || icon == ERASING) {
-            surface = installation[installingFrame];
-        }
-        GRSurface* text_surface = backgroundText[icon];
-
-        int iconWidth = gr_get_width(surface);
-        int iconHeight = gr_get_height(surface);
-        int textWidth = gr_get_width(text_surface);
-        int textHeight = gr_get_height(text_surface);
-        int stageHeight = gr_get_height(stageMarkerEmpty);
-
-        int sh = (max_stage >= 0) ? stageHeight : 0;
-
-        iconX = (gr_fb_width() - iconWidth) / 2;
-        iconY = (gr_fb_height() - (iconHeight+textHeight+40+sh)) / 2;
-
-        int textX = (gr_fb_width() - textWidth) / 2;
-        int textY = ((gr_fb_height() - (iconHeight+textHeight+40+sh)) / 2) + iconHeight + 40;
-
-        gr_blit(surface, 0, 0, iconWidth, iconHeight, iconX, iconY);
-        if (stageHeight > 0) {
-            int sw = gr_get_width(stageMarkerEmpty);
+    if (currentIcon != NONE) {
+        if (max_stage != -1) {
+            int stage_height = gr_get_height(stageMarkerEmpty);
+            int stage_width = gr_get_width(stageMarkerEmpty);
             int x = (gr_fb_width() - max_stage * gr_get_width(stageMarkerEmpty)) / 2;
-            int y = iconY + iconHeight + 20;
+            int y = gr_fb_height() - stage_height;
             for (int i = 0; i < max_stage; ++i) {
-                gr_blit((i < stage) ? stageMarkerFill : stageMarkerEmpty,
-                        0, 0, sw, stageHeight, x, y);
-                x += sw;
+                GRSurface* stage_surface = (i < stage) ? stageMarkerFill : stageMarkerEmpty;
+                gr_blit(stage_surface, 0, 0, stage_width, stage_height, x, y);
+                x += stage_width;
             }
         }
 
+        GRSurface* text_surface = GetCurrentText();
+        int text_x = (gr_fb_width() - gr_get_width(text_surface)) / 2;
+        int text_y = GetTextBaseline();
         gr_color(255, 255, 255, 255);
-        gr_texticon(textX, textY, text_surface);
+        gr_texticon(text_x, text_y, text_surface);
     }
 }
 
-// Draw the progress bar (if any) on the screen.  Does not flip pages.
+// Draws the animation and progress bar (if any) on the screen.
+// Does not flip pages.
 // Should only be called with updateMutex locked.
-void ScreenRecoveryUI::draw_progress_locked() {
-    if (currentIcon == ERROR) return;
-
-    if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
-        GRSurface* icon = installation[installingFrame];
-        gr_blit(icon, 0, 0, gr_get_width(icon), gr_get_height(icon), iconX, iconY);
+void ScreenRecoveryUI::draw_foreground_locked() {
+    if (currentIcon != NONE) {
+        GRSurface* frame = GetCurrentFrame();
+        int frame_width = gr_get_width(frame);
+        int frame_height = gr_get_height(frame);
+        int frame_x = (gr_fb_width() - frame_width) / 2;
+        int frame_y = GetAnimationBaseline();
+        gr_blit(frame, 0, 0, frame_width, frame_height, frame_x, frame_y);
     }
 
     if (progressBarType != EMPTY) {
-        int iconHeight = gr_get_height(backgroundIcon[INSTALLING_UPDATE]);
         int width = gr_get_width(progressBarEmpty);
         int height = gr_get_height(progressBarEmpty);
 
-        int dx = (gr_fb_width() - width)/2;
-        int dy = (3*gr_fb_height() + iconHeight - 2*height)/4;
+        int progress_x = (gr_fb_width() - width)/2;
+        int progress_y = GetProgressBaseline();
 
         // Erase behind the progress bar (in case this was a progress-only update)
         gr_color(0, 0, 0, 255);
-        gr_fill(dx, dy, width, height);
+        gr_fill(progress_x, progress_y, width, height);
 
         if (progressBarType == DETERMINATE) {
             float p = progressScopeStart + progress * progressScopeSize;
@@ -162,18 +189,20 @@ void ScreenRecoveryUI::draw_progress_locked() {
             if (rtl_locale) {
                 // Fill the progress bar from right to left.
                 if (pos > 0) {
-                    gr_blit(progressBarFill, width-pos, 0, pos, height, dx+width-pos, dy);
+                    gr_blit(progressBarFill, width-pos, 0, pos, height,
+                            progress_x+width-pos, progress_y);
                 }
                 if (pos < width-1) {
-                    gr_blit(progressBarEmpty, 0, 0, width-pos, height, dx, dy);
+                    gr_blit(progressBarEmpty, 0, 0, width-pos, height, progress_x, progress_y);
                 }
             } else {
                 // Fill the progress bar from left to right.
                 if (pos > 0) {
-                    gr_blit(progressBarFill, 0, 0, pos, height, dx, dy);
+                    gr_blit(progressBarFill, 0, 0, pos, height, progress_x, progress_y);
                 }
                 if (pos < width-1) {
-                    gr_blit(progressBarEmpty, pos, 0, width-pos, height, dx+pos, dy);
+                    gr_blit(progressBarEmpty, pos, 0, width-pos, height,
+                            progress_x+pos, progress_y);
                 }
             }
         }
@@ -217,14 +246,14 @@ void ScreenRecoveryUI::DrawHorizontalRule(int* y) {
     *y += 4;
 }
 
-void ScreenRecoveryUI::DrawTextLine(int* y, const char* line, bool bold) {
-    gr_text(4, *y, line, bold);
-    *y += char_height + 4;
+void ScreenRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) {
+    gr_text(x, *y, line, bold);
+    *y += char_height_ + 4;
 }
 
-void ScreenRecoveryUI::DrawTextLines(int* y, const char* const* lines) {
+void ScreenRecoveryUI::DrawTextLines(int x, int* y, const char* const* lines) {
     for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
-        DrawTextLine(y, lines[i], false);
+        DrawTextLine(x, y, lines[i], false);
     }
 }
 
@@ -243,8 +272,8 @@ static const char* LONG_PRESS_HELP[] = {
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_screen_locked() {
     if (!show_text) {
-        draw_background_locked(currentIcon);
-        draw_progress_locked();
+        draw_background_locked();
+        draw_foreground_locked();
     } else {
         gr_color(0, 0, 0, 255);
         gr_clear();
@@ -255,14 +284,14 @@ void ScreenRecoveryUI::draw_screen_locked() {
             property_get("ro.bootimage.build.fingerprint", recovery_fingerprint, "");
 
             SetColor(INFO);
-            DrawTextLine(&y, "Android Recovery", true);
+            DrawTextLine(TEXT_INDENT, &y, "Android Recovery", true);
             for (auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
-                DrawTextLine(&y, chunk.c_str(), false);
+                DrawTextLine(TEXT_INDENT, &y, chunk.c_str(), false);
             }
-            DrawTextLines(&y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
+            DrawTextLines(TEXT_INDENT, &y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
 
             SetColor(HEADER);
-            DrawTextLines(&y, menu_headers_);
+            DrawTextLines(TEXT_INDENT, &y, menu_headers_);
 
             SetColor(MENU);
             DrawHorizontalRule(&y);
@@ -271,7 +300,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
                 if (i == menu_sel) {
                     // Draw the highlight bar.
                     SetColor(IsLongPress() ? MENU_SEL_BG_ACTIVE : MENU_SEL_BG);
-                    gr_fill(0, y - 2, gr_fb_width(), y + char_height + 2);
+                    gr_fill(0, y - 2, gr_fb_width(), y + char_height_ + 2);
                     // Bold white text for the selected item.
                     SetColor(MENU_SEL_FG);
                     gr_text(4, y, menu_[i], true);
@@ -279,7 +308,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
                 } else {
                     gr_text(4, y, menu_[i], false);
                 }
-                y += char_height + 4;
+                y += char_height_ + 4;
             }
             DrawHorizontalRule(&y);
         }
@@ -290,9 +319,9 @@ void ScreenRecoveryUI::draw_screen_locked() {
         SetColor(LOG);
         int row = (text_top_ + text_rows_ - 1) % text_rows_;
         size_t count = 0;
-        for (int ty = gr_fb_height() - char_height;
+        for (int ty = gr_fb_height() - char_height_;
              ty >= y && count < text_rows_;
-             ty -= char_height, ++count) {
+             ty -= char_height_, ++count) {
             gr_text(0, ty, text_[row], false);
             --row;
             if (row < 0) row = text_rows_ - 1;
@@ -309,13 +338,12 @@ void ScreenRecoveryUI::update_screen_locked() {
 
 // Updates only the progress bar, if possible, otherwise redraws the screen.
 // Should only be called with updateMutex locked.
-
 void ScreenRecoveryUI::update_progress_locked() {
     if (show_text || !pagesIdentical) {
         draw_screen_locked();    // Must redraw the whole screen
         pagesIdentical = true;
     } else {
-        draw_progress_locked();  // Draw only the progress bar and overlays
+        draw_foreground_locked();  // Draw only the progress bar and overlays
     }
     gr_flip();
 }
@@ -332,14 +360,23 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
         double start = now();
         pthread_mutex_lock(&updateMutex);
 
-        int redraw = 0;
+        bool redraw = false;
 
         // update the installation animation, if active
         // skip this if we have a text overlay (too expensive to update)
-        if ((currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) &&
-            installing_frames > 0 && !show_text) {
-            installingFrame = (installingFrame + 1) % installing_frames;
-            redraw = 1;
+        if ((currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) && !show_text) {
+            if (!intro_done) {
+                if (current_frame == intro_frames - 1) {
+                    intro_done = true;
+                    current_frame = 0;
+                } else {
+                    ++current_frame;
+                }
+            } else {
+                current_frame = (current_frame + 1) % loop_frames;
+            }
+
+            redraw = true;
         }
 
         // move the progress bar forward on timed intervals, if configured
@@ -350,7 +387,7 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
             if (p > 1.0) p = 1.0;
             if (p > progress) {
                 progress = p;
-                redraw = 1;
+                redraw = true;
             }
         }
 
@@ -368,21 +405,14 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
 void ScreenRecoveryUI::LoadBitmap(const char* filename, GRSurface** surface) {
     int result = res_create_display_surface(filename, surface);
     if (result < 0) {
-        LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
-    }
-}
-
-void ScreenRecoveryUI::LoadBitmapArray(const char* filename, int* frames, GRSurface*** surface) {
-    int result = res_create_multi_display_surface(filename, frames, surface);
-    if (result < 0) {
-        LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
+        LOGE("couldn't load bitmap %s (error %d)\n", filename, result);
     }
 }
 
 void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, GRSurface** surface) {
     int result = res_create_localized_alpha_surface(filename, locale, surface);
     if (result < 0) {
-        LOGE("missing bitmap %s\n(Code %d)\n", filename, result);
+        LOGE("couldn't load bitmap %s (error %d)\n", filename, result);
     }
 }
 
@@ -395,12 +425,25 @@ static char** Alloc2d(size_t rows, size_t cols) {
     return result;
 }
 
+// Choose the right background string to display during update.
+void ScreenRecoveryUI::SetSystemUpdateText(bool security_update) {
+    if (security_update) {
+        LoadLocalizedBitmap("installing_security_text", &installing_text);
+    } else {
+        LoadLocalizedBitmap("installing_text", &installing_text);
+    }
+    Redraw();
+}
+
 void ScreenRecoveryUI::Init() {
     gr_init();
 
-    gr_font_size(&char_width, &char_height);
-    text_rows_ = gr_fb_height() / char_height;
-    text_cols_ = gr_fb_width() / char_width;
+    density_ = static_cast<float>(property_get_int32("ro.sf.lcd_density", 160)) / 160.f;
+    is_large_ = gr_fb_height() > PixelsFromDp(800);
+
+    gr_font_size(&char_width_, &char_height_);
+    text_rows_ = gr_fb_height() / char_height_;
+    text_cols_ = gr_fb_width() / char_width_;
 
     text_ = Alloc2d(text_rows_, text_cols_ + 1);
     file_viewer_text_ = Alloc2d(text_rows_, text_cols_ + 1);
@@ -409,31 +452,64 @@ void ScreenRecoveryUI::Init() {
     text_col_ = text_row_ = 0;
     text_top_ = 1;
 
-    backgroundIcon[NONE] = nullptr;
-    LoadBitmapArray("icon_installing", &installing_frames, &installation);
-    backgroundIcon[INSTALLING_UPDATE] = installing_frames ? installation[0] : nullptr;
-    backgroundIcon[ERASING] = backgroundIcon[INSTALLING_UPDATE];
-    LoadBitmap("icon_error", &backgroundIcon[ERROR]);
-    backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
+    LoadBitmap("icon_error", &error_icon);
 
     LoadBitmap("progress_empty", &progressBarEmpty);
     LoadBitmap("progress_fill", &progressBarFill);
+
     LoadBitmap("stage_empty", &stageMarkerEmpty);
     LoadBitmap("stage_fill", &stageMarkerFill);
 
-    LoadLocalizedBitmap("installing_text", &backgroundText[INSTALLING_UPDATE]);
-    LoadLocalizedBitmap("erasing_text", &backgroundText[ERASING]);
-    LoadLocalizedBitmap("no_command_text", &backgroundText[NO_COMMAND]);
-    LoadLocalizedBitmap("error_text", &backgroundText[ERROR]);
+    // Background text for "installing_update" could be "installing update"
+    // or "installing security update". It will be set after UI init according
+    // to commands in BCB.
+    installing_text = nullptr;
+    LoadLocalizedBitmap("erasing_text", &erasing_text);
+    LoadLocalizedBitmap("no_command_text", &no_command_text);
+    LoadLocalizedBitmap("error_text", &error_text);
+
+    LoadAnimation();
 
     pthread_create(&progress_thread_, nullptr, ProgressThreadStartRoutine, this);
 
     RecoveryUI::Init();
 }
 
+void ScreenRecoveryUI::LoadAnimation() {
+    // How many frames of intro and loop do we have?
+    std::unique_ptr<DIR, decltype(&closedir)> dir(opendir("/res/images"), closedir);
+    dirent* de;
+    while ((de = readdir(dir.get())) != nullptr) {
+        int value;
+        if (sscanf(de->d_name, "intro%d", &value) == 1 && intro_frames < (value + 1)) {
+            intro_frames = value + 1;
+        } else if (sscanf(de->d_name, "loop%d", &value) == 1 && loop_frames < (value + 1)) {
+            loop_frames = value + 1;
+        }
+    }
+
+    // It's okay to not have an intro.
+    if (intro_frames == 0) intro_done = true;
+    // But you must have an animation.
+    if (loop_frames == 0) abort();
+
+    introFrames = new GRSurface*[intro_frames];
+    for (int i = 0; i < intro_frames; ++i) {
+        // TODO: remember the names above, so we don't have to hard-code the number of 0s.
+        LoadBitmap(android::base::StringPrintf("intro%05d", i).c_str(), &introFrames[i]);
+    }
+
+    loopFrames = new GRSurface*[loop_frames];
+    for (int i = 0; i < loop_frames; ++i) {
+        LoadBitmap(android::base::StringPrintf("loop%05d", i).c_str(), &loopFrames[i]);
+    }
+}
+
 void ScreenRecoveryUI::SetLocale(const char* new_locale) {
-    if (new_locale) {
-        this->locale = new_locale;
+    this->locale = new_locale;
+    this->rtl_locale = false;
+
+    if (locale) {
         char* lang = strdup(locale);
         for (char* p = lang; *p; ++p) {
             if (*p == '_') {
@@ -442,8 +518,7 @@ void ScreenRecoveryUI::SetLocale(const char* new_locale) {
             }
         }
 
-        // A bit cheesy: keep an explicit list of supported languages
-        // that are RTL.
+        // A bit cheesy: keep an explicit list of supported RTL languages.
         if (strcmp(lang, "ar") == 0 ||   // Arabic
             strcmp(lang, "fa") == 0 ||   // Persian (Farsi)
             strcmp(lang, "he") == 0 ||   // Hebrew (new language code)
@@ -452,8 +527,6 @@ void ScreenRecoveryUI::SetLocale(const char* new_locale) {
             rtl_locale = true;
         }
         free(lang);
-    } else {
-        new_locale = nullptr;
     }
 }
 
@@ -513,21 +586,17 @@ void ScreenRecoveryUI::SetStage(int current, int max) {
     pthread_mutex_unlock(&updateMutex);
 }
 
-void ScreenRecoveryUI::Print(const char *fmt, ...) {
-    char buf[256];
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(buf, 256, fmt, ap);
-    va_end(ap);
+void ScreenRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) {
+    std::string str;
+    android::base::StringAppendV(&str, fmt, ap);
 
-	gui_print("%s", buf);
-	return;
-
-    fputs(buf, stdout);
+    if (copy_to_stdout) {
+        fputs(str.c_str(), stdout);
+    }
 
     pthread_mutex_lock(&updateMutex);
     if (text_rows_ > 0 && text_cols_ > 0) {
-        for (const char* ptr = buf; *ptr != '\0'; ++ptr) {
+        for (const char* ptr = str.c_str(); *ptr != '\0'; ++ptr) {
             if (*ptr == '\n' || text_col_ >= text_cols_) {
                 text_[text_row_][text_col_] = '\0';
                 text_col_ = 0;
@@ -540,6 +609,20 @@ void ScreenRecoveryUI::Print(const char *fmt, ...) {
         update_screen_locked();
     }
     pthread_mutex_unlock(&updateMutex);
+}
+
+void ScreenRecoveryUI::Print(const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    PrintV(fmt, true, ap);
+    va_end(ap);
+}
+
+void ScreenRecoveryUI::PrintOnScreenOnly(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    PrintV(fmt, false, ap);
+    va_end(ap);
 }
 
 void ScreenRecoveryUI::PutChar(char ch) {
@@ -576,7 +659,7 @@ void ScreenRecoveryUI::ShowFile(FILE* fp) {
     bool show_prompt = false;
     while (true) {
         if (show_prompt) {
-            Print("--(%d%% of %d bytes)--",
+            PrintOnScreenOnly("--(%d%% of %d bytes)--",
                   static_cast<int>(100 * (double(ftell(fp)) / double(sb.st_size))),
                   static_cast<int>(sb.st_size));
             Redraw();

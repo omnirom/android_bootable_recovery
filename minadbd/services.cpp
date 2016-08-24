@@ -23,7 +23,6 @@
 
 #include "sysdeps.h"
 
-#define  TRACE_TAG  TRACE_SERVICES
 #include "adb.h"
 #include "fdevent.h"
 #include "fuse_adb_provider.h"
@@ -36,21 +35,21 @@ struct stinfo {
     void *cookie;
 };
 
-void* service_bootstrap_func(void* x) {
+void service_bootstrap_func(void* x) {
     stinfo* sti = reinterpret_cast<stinfo*>(x);
     sti->func(sti->fd, sti->cookie);
     free(sti);
-    return 0;
 }
 
 static void sideload_host_service(int sfd, void* data) {
-    const char* args = reinterpret_cast<const char*>(data);
+    char* args = reinterpret_cast<char*>(data);
     int file_size;
     int block_size;
     if (sscanf(args, "%d:%d", &file_size, &block_size) != 2) {
         printf("bad sideload-host arguments: %s\n", args);
         exit(1);
     }
+    free(args);
 
     printf("sideload-host file size %d block size %d\n", file_size, block_size);
 
@@ -61,8 +60,7 @@ static void sideload_host_service(int sfd, void* data) {
     exit(result == 0 ? 0 : 1);
 }
 
-static int create_service_thread(void (*func)(int, void *), void *cookie)
-{
+static int create_service_thread(void (*func)(int, void *), void *cookie) {
     int s[2];
     if(adb_socketpair(s)) {
         printf("cannot create service socket pair\n");
@@ -75,8 +73,7 @@ static int create_service_thread(void (*func)(int, void *), void *cookie)
     sti->cookie = cookie;
     sti->fd = s[1];
 
-    adb_thread_t t;
-    if (adb_thread_create( &t, service_bootstrap_func, sti)){
+    if (!adb_thread_create(service_bootstrap_func, sti)) {
         free(sti);
         adb_close(s[0]);
         adb_close(s[1]);
@@ -84,11 +81,11 @@ static int create_service_thread(void (*func)(int, void *), void *cookie)
         return -1;
     }
 
-    D("service thread started, %d:%d\n",s[0], s[1]);
+    VLOG(SERVICES) << "service thread started, " << s[0] << ":" << s[1];
     return s[0];
 }
 
-int service_to_fd(const char* name) {
+int service_to_fd(const char* name, const atransport* transport) {
     int ret = -1;
 
     if (!strncmp(name, "sideload:", 9)) {
@@ -97,7 +94,8 @@ int service_to_fd(const char* name) {
         // sideload-host).
         exit(3);
     } else if (!strncmp(name, "sideload-host:", 14)) {
-        ret = create_service_thread(sideload_host_service, (void*)(name + 14));
+        char* arg = strdup(name + 14);
+        ret = create_service_thread(sideload_host_service, arg);
     }
     if (ret >= 0) {
         close_on_exec(ret);

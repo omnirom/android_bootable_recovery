@@ -18,20 +18,17 @@
 #define _APPLYPATCH_H
 
 #include <sys/stat.h>
-#include "mincrypt/sha.h"
+
+#include <vector>
+
+#include "openssl/sha.h"
 #include "edify/expr.h"
 
-typedef struct _Patch {
-  uint8_t sha1[SHA_DIGEST_SIZE];
-  const char* patch_filename;
-} Patch;
-
-typedef struct _FileContents {
-  uint8_t sha1[SHA_DIGEST_SIZE];
-  unsigned char* data;
-  ssize_t size;
+struct FileContents {
+  uint8_t sha1[SHA_DIGEST_LENGTH];
+  std::vector<unsigned char> data;
   struct stat st;
-} FileContents;
+};
 
 // When there isn't enough room on the target filesystem to hold the
 // patched version of the file, we copy the original here and delete
@@ -48,6 +45,8 @@ size_t FreeSpaceForFile(const char* filename);
 int CacheSizeCheck(size_t bytes);
 int ParseSha1(const char* str, uint8_t* digest);
 
+int applypatch_flash(const char* source_filename, const char* target_filename,
+                     const char* target_sha1_str, size_t target_size);
 int applypatch(const char* source_filename,
                const char* target_filename,
                const char* target_sha1_str,
@@ -66,22 +65,22 @@ void FreeFileContents(FileContents* file);
 int FindMatchingPatch(uint8_t* sha1, char* const * const patch_sha1_str,
                       int num_patches);
 
-// bsdiff.c
+// bsdiff.cpp
 void ShowBSDiffLicense();
 int ApplyBSDiffPatch(const unsigned char* old_data, ssize_t old_size,
                      const Value* patch, ssize_t patch_offset,
                      SinkFn sink, void* token, SHA_CTX* ctx);
 int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
                         const Value* patch, ssize_t patch_offset,
-                        unsigned char** new_data, ssize_t* new_size);
+                        std::vector<unsigned char>* new_data);
 
-// imgpatch.c
+// imgpatch.cpp
 int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                     const Value* patch,
                     SinkFn sink, void* token, SHA_CTX* ctx,
                     const Value* bonus_data);
 
-// freecache.c
+// freecache.cpp
 int MakeFreeSpaceOnCache(size_t bytes_needed);
 
 #endif

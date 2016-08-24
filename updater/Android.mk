@@ -1,11 +1,23 @@
 # Copyright 2009 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 LOCAL_PATH := $(call my-dir)
 
 updater_src_files := \
-	install.c \
-	blockimg.c \
-	updater.c
+	install.cpp \
+	blockimg.cpp \
+	updater.cpp
 
 #
 # Build a statically-linked binary to include in OTA packages
@@ -17,7 +29,11 @@ include $(CLEAR_VARS)
 # needed only for OTA packages.)
 LOCAL_MODULE_TAGS := eng
 
+LOCAL_CLANG := true
+
 LOCAL_SRC_FILES := $(updater_src_files)
+
+LOCAL_STATIC_LIBRARIES += libfec libfec_rs libext4_utils_static libsquashfs_utils libcrypto_static
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
 LOCAL_CFLAGS += -DUSE_EXT4
@@ -44,10 +60,12 @@ endif
 endif
 
 LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UPDATER_LIBS) $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS)
-LOCAL_STATIC_LIBRARIES += libapplypatch libedify libmtdutils libminzip libz
+LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libedify libmtdutils libminzip libz
 LOCAL_STATIC_LIBRARIES += libflashutils libmmcutils libbmlutils
 LOCAL_STATIC_LIBRARIES += libmincrypttwrp libbz
-LOCAL_STATIC_LIBRARIES += libcutils liblog libstdc++ libc
+LOCAL_STATIC_LIBRARIES += libcutils liblog libc
+LOCAL_STATIC_LIBRARIES += libselinux
+
 LOCAL_STATIC_LIBRARIES += libselinux
 tune2fs_static_libraries := \
  libext2_com_err \

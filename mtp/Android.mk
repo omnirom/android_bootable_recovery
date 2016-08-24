@@ -32,7 +32,7 @@ LOCAL_SRC_FILES = \
     twrpMtp.cpp \
     mtp_MtpDatabase.cpp \
     node.cpp
-LOCAL_SHARED_LIBRARIES += libz libc libusbhost libstdc++ libdl libcutils libutils libaosprecovery
+LOCAL_SHARED_LIBRARIES += libz libc libusbhost libstdc++ libdl libcutils libutils libaosprecovery libselinux
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libstlport

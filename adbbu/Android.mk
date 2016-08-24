@@ -5,7 +5,7 @@ LOCAL_SRC_FILES:= \
 	twrpback.cpp \
 	../twrpDigest.cpp \
 	../digest/md5.c
-LOCAL_SHARED_LIBRARIES += libstdc++ libz
+LOCAL_SHARED_LIBRARIES += libstdc++ libz libselinux
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_C_INCLUDES += external/stlport/stlport
     LOCAL_SHARED_LIBRARIES += libstlport

@@ -28,9 +28,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef ANDROID_RB_RESTART
+#include <cutils/properties.h>
 #include <cutils/android_reboot.h>
-#endif
 
 #include "common.h"
 #include "roots.h"
@@ -175,11 +174,10 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
             break;
 
           case RecoveryUI::REBOOT:
-#ifdef ANDROID_RB_RESTART
             if (reboot_enabled) {
-                android_reboot(ANDROID_RB_RESTART, 0, 0);
+                property_set(ANDROID_RB_PROPERTY, "reboot,");
+                while (true) { pause(); }
             }
-#endif
             break;
 
           case RecoveryUI::ENQUEUE:

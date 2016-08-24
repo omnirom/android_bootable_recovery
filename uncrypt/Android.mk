@@ -15,13 +15,30 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
+LOCAL_CLANG := true
+LOCAL_SRC_FILES := bootloader_message_writer.cpp
+LOCAL_MODULE := libbootloader_message_writer
+LOCAL_STATIC_LIBRARIES := libbase libfs_mgr
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/..
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+
+LOCAL_CLANG := true
 
 LOCAL_C_INCLUDES += $(commands_recovery_local_path)
 
 LOCAL_SRC_FILES := uncrypt.cpp
 LOCAL_MODULE_TAGS := optional
+
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/..
+
 LOCAL_MODULE := uncrypt
 
-LOCAL_STATIC_LIBRARIES := libbase liblog libfs_mgr libcutils
+LOCAL_STATIC_LIBRARIES := libbootloader_message_writer libbase \
+                          liblog libfs_mgr libcutils \
+
+LOCAL_INIT_RC := uncrypt.rc
 
 include $(BUILD_EXECUTABLE)

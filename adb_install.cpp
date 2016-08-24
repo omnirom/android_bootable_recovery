@@ -31,6 +31,7 @@
 #include "adb_install.h"
 #include "minadbd/fuse_adb_provider.h"
 #include "fuse_sideload.h"
+#include "verifier.h"
 
 static RecoveryUI* ui = NULL;
 
@@ -106,7 +107,7 @@ apply_from_adb(const char* install_file, pid_t* child_pid) {
     // FUSE_SIDELOAD_HOST_PATHNAME will start to exist once the host
     // connects and starts serving a package.  Poll for its
     // appearance.  (Note that inotify doesn't work with FUSE.)
-    int result;
+    int result = INSTALL_ERROR;
     int status;
     bool waited = false;
     struct stat st;
