@@ -63,5 +63,5 @@ int run_adb_fuse(int sfd, uint64_t file_size, uint32_t block_size) {
     vtab.read_block = read_block_adb;
     vtab.close = close_adb;
 
-    return run_fuse_sideload(&vtab, &ad, file_size, block_size);
+    return run_old_fuse_sideload(&vtab, &ad, file_size, block_size);
 }

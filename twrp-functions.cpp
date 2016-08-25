@@ -51,10 +51,10 @@
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	#include "openaes/inc/oaes_lib.h"
 #endif
+#include "set_metadata.h"
 
 extern "C" {
 	#include "libcrecovery/common.h"
-	#include "set_metadata.h"
 }
 
 /* Execute a command */

@@ -50,8 +50,8 @@ extern "C" {
 #include "../twinstall.h"
 #include "cutils/properties.h"
 #include "../adb_install.h"
-#include "../set_metadata.h"
 };
+#include "../set_metadata.h"
 #include "../minuitwrp/minui.h"
 
 #include "rapidxml.hpp"

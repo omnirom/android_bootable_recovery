@@ -31,7 +31,11 @@
 #include "adb_install.h"
 #include "minadbd/fuse_adb_provider.h"
 #include "fuse_sideload.h"
+#ifdef USE_OLD_VERIFIER
+#include "oldverifier/verifier.h"
+#else
 #include "verifier.h"
+#endif
 
 static RecoveryUI* ui = NULL;
 

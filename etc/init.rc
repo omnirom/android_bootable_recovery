@@ -1,5 +1,6 @@
 import /init.recovery.logd.rc
 import /init.recovery.usb.rc
+import /init.recovery.service.rc
 import /init.recovery.${ro.hardware}.rc
 
 on early-init
@@ -108,9 +109,6 @@ service ueventd /sbin/ueventd
 service healthd /sbin/healthd -r
     critical
     seclabel u:r:healthd:s0
-
-service recovery /sbin/recovery
-    seclabel u:r:recovery:s0
 
 service adbd /sbin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
     disabled

@@ -32,7 +32,11 @@
 #include "mtdutils/mtdutils.h"
 #include "minzip/SysUtil.h"
 #include "minzip/Zip.h"
+#ifdef USE_OLD_VERIFIER
+#include "oldverifier/verifier.h"
+#else
 #include "verifier.h"
+#endif
 #include "variables.h"
 #include "data.hpp"
 #include "partitions.hpp"
@@ -40,9 +44,9 @@
 #include "twrp-functions.hpp"
 #include "gui/gui.hpp"
 #include "gui/pages.hpp"
+#include "legacy_property_service.h"
 extern "C" {
 	#include "gui/gui.h"
-	#include "legacy_property_service.h"
 }
 
 static const char* properties_path = "/dev/__properties__";

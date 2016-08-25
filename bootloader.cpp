@@ -32,7 +32,7 @@ extern "C" {
 #include "common.h"
 #include "mtdutils/mtdutils.h"
 //#include "roots.h"
-#include "unique_fd.h"
+//#include "unique_fd.h"
 
 // fake Volume struct that allows us to use the AOSP code easily
 struct Volume
@@ -232,33 +232,36 @@ static int get_bootloader_message_block(bootloader_message* out,
 static int set_bootloader_message_block(const bootloader_message* in,
                                         const Volume* v) {
     wait_for_device(v->blk_device);
-    unique_fd fd(open(v->blk_device, O_WRONLY | O_SYNC));
-    if (fd.get() == -1) {
+    int fd = open(v->blk_device, O_WRONLY | O_SYNC);
+    if (fd == -1) {
         LOGE("failed to open \"%s\": %s\n", v->blk_device, strerror(errno));
         return -1;
     }
 
 #ifdef BOARD_RECOVERY_BLDRMSG_OFFSET
-    lseek(fd.get(), BOARD_RECOVERY_BLDRMSG_OFFSET, SEEK_SET);
+    lseek(fd, BOARD_RECOVERY_BLDRMSG_OFFSET, SEEK_SET);
 #endif
 
     size_t written = 0;
     const uint8_t* start = reinterpret_cast<const uint8_t*>(in);
     size_t total = sizeof(*in);
     while (written < total) {
-        ssize_t wrote = TEMP_FAILURE_RETRY(write(fd.get(), start + written, total - written));
+        ssize_t wrote = TEMP_FAILURE_RETRY(write(fd, start + written, total - written));
         if (wrote == -1) {
-            LOGE("failed to write %" PRId64 " bytes: %s\n",
-                 static_cast<off64_t>(written), strerror(errno));
+            LOGE("failed to write some bytes: %s\n",
+                 strerror(errno));
+            close(fd);
             return -1;
         }
         written += wrote;
     }
 
-    if (fsync(fd.get()) == -1) {
+    if (fsync(fd) == -1) {
         LOGE("failed to fsync \"%s\": %s\n", v->blk_device, strerror(errno));
+        close(fd);
         return -1;
     }
+    close(fd);
     return 0;
 }
 

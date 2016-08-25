@@ -34,8 +34,8 @@
 
 extern "C" {
 #include "gui/gui.h"
-#include "set_metadata.h"
 }
+#include "set_metadata.h"
 #include "gui/gui.hpp"
 #include "gui/pages.hpp"
 #include "gui/objects.hpp"
