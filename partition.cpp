@@ -836,7 +836,7 @@ void TWPartition::Setup_AndSec(void) {
 	Backup_Path = Symlink_Mount_Point;
 	Make_Dir("/and-sec", true);
 	Recreate_AndSec_Folder();
-	Mount_Storage_Retry();
+	Mount_Storage_Retry(true);
 }
 
 void TWPartition::Setup_Data_Media() {
@@ -900,16 +900,17 @@ void TWPartition::Find_Real_Block_Device(string& Block, bool Display_Error) {
 	}
 }
 
-void TWPartition::Mount_Storage_Retry(void) {
+bool TWPartition::Mount_Storage_Retry(bool Display_Error) {
 	// On some devices, storage doesn't want to mount right away, retry and sleep
-	if (!Mount(true)) {
+	if (!Mount(Display_Error)) {
 		int retry_count = 5;
 		while (retry_count > 0 && !Mount(false)) {
 			usleep(500000);
 			retry_count--;
 		}
-		Mount(true);
+		return Mount(Display_Error);
 	}
+	return true;
 }
 
 bool TWPartition::Find_MTD_Block_Device(string MTD_Name) {
@@ -2806,7 +2807,7 @@ int TWPartition::Decrypt_Adopted() {
 			Is_Decrypted = true;
 			Is_Encrypted = true;
 			Find_Actual_Block_Device();
-			if (!Mount(false)) {
+			if (!Mount_Storage_Retry(false)) {
 				LOGERR("Failed to mount decrypted adopted storage device\n");
 				Is_Decrypted = false;
 				Is_Encrypted = false;
