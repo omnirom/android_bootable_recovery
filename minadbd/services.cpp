@@ -73,7 +73,12 @@ static int create_service_thread(void (*func)(int, void *), void *cookie) {
     sti->cookie = cookie;
     sti->fd = s[1];
 
+#if PLATFORM_SDK_VERSION == 23
+    adb_thread_t t;
+    if (adb_thread_create( &t, (adb_thread_func_t)service_bootstrap_func, sti)){
+#else
     if (!adb_thread_create(service_bootstrap_func, sti)) {
+#endif
         free(sti);
         adb_close(s[0]);
         adb_close(s[1]);
@@ -81,7 +86,7 @@ static int create_service_thread(void (*func)(int, void *), void *cookie) {
         return -1;
     }
 
-    VLOG(SERVICES) << "service thread started, " << s[0] << ":" << s[1];
+    //VLOG(SERVICES) << "service thread started, " << s[0] << ":" << s[1];
     return s[0];
 }
 
@@ -102,3 +107,10 @@ int service_to_fd(const char* name, const atransport* transport) {
     }
     return ret;
 }
+
+#if PLATFORM_SDK_VERSION == 23
+int service_to_fd(const char* name) {
+    atransport transport;
+    return service_to_fd(name, &transport);
+}
+#endif

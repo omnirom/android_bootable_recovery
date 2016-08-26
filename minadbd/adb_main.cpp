@@ -36,7 +36,7 @@ int adb_server_main(int is_daemon, int server_port, int /* reply_fd */) {
     init_transport_registration();
     usb_init();
 
-    VLOG(ADB) << "Event loop starting";
+    //VLOG(ADB) << "Event loop starting";
     fdevent_loop();
 
     return 0;

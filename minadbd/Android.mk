@@ -7,6 +7,7 @@ minadbd_cflags := \
     -Wno-unused-parameter \
     -Wno-missing-field-initializers \
     -DADB_HOST=0 \
+    -DPLATFORM_SDK_VERSION=$(PLATFORM_SDK_VERSION)
 
 include $(CLEAR_VARS)
 

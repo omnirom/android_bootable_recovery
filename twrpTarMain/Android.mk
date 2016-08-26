@@ -14,12 +14,10 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS:= -g -c -W -DBUILD_TWRPTAR_MAIN
 
 LOCAL_C_INCLUDES += bionic
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-    LOCAL_C_INCLUDES += external/stlport/stlport bionic/libstdc++/include
-endif
 
 LOCAL_STATIC_LIBRARIES := libc libtar_static
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
+    LOCAL_C_INCLUDES += external/stlport/stlport bionic/libstdc++/include
     LOCAL_STATIC_LIBRARIES += libstlport_static
 endif
 LOCAL_STATIC_LIBRARIES += libstdc++
@@ -59,8 +57,13 @@ LOCAL_SRC_FILES:= \
 	../gui/twmsg.cpp
 LOCAL_CFLAGS:= -g -c -W -DBUILD_TWRPTAR_MAIN
 
-LOCAL_C_INCLUDES += bionic external/stlport/stlport
-LOCAL_SHARED_LIBRARIES := libc libtar libstlport libstdc++
+LOCAL_C_INCLUDES += bionic
+LOCAL_SHARED_LIBRARIES := libc libtar
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
+    LOCAL_C_INCLUDES += external/stlport/stlport bionic/libstdc++/include
+    LOCAL_SHARED_LIBRARIES += libstlport_static
+endif
+LOCAL_SHARED_LIBRARIES += libstdc++
 
 ifeq ($(TWHAVE_SELINUX), true)
     LOCAL_C_INCLUDES += external/libselinux/include

@@ -119,7 +119,10 @@ LOCAL_SHARED_LIBRARIES += libaosprecovery libz libc libcutils libstdc++ libtar l
 LOCAL_SHARED_LIBRARIES += libcrecovery
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-    LOCAL_SHARED_LIBRARIES += libstlport libmincrypttwrp
+    LOCAL_SHARED_LIBRARIES += libstlport
+endif
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
+    LOCAL_SHARED_LIBRARIES += libmincrypttwrp
     LOCAL_C_INCLUDES += $(LOCAL_PATH)/libmincrypt/includes
     LOCAL_CFLAGS += -DUSE_OLD_VERIFIER
 else
@@ -563,12 +566,18 @@ LOCAL_CFLAGS := -std=gnu++0x
 LOCAL_SRC_FILES := adb_install.cpp asn1_decoder.cpp bootloader.cpp legacy_property_service.cpp set_metadata.cpp tw_atomic.cpp
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload libselinux
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-    LOCAL_SHARED_LIBRARIES += libstdc++ libstlport libmincrypttwrp
-    LOCAL_C_INCLUDES := bionic external/stlport/stlport $(LOCAL_PATH)/libmincrypt/includes
+    LOCAL_SHARED_LIBRARIES += libstdc++ libstlport
+    LOCAL_C_INCLUDES := bionic external/stlport/stlport
+else
+    LOCAL_SHARED_LIBRARIES += libc++
+endif
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
+    LOCAL_SHARED_LIBRARIES += libmincrypttwrp
+    LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
     LOCAL_SRC_FILES += oldverifier/verifier.cpp
     LOCAL_CFLAGS += -DUSE_OLD_VERIFIER
 else
-    LOCAL_SHARED_LIBRARIES += libc++ libcrypto
+    LOCAL_SHARED_LIBRARIES += libcrypto
     LOCAL_SRC_FILES += verifier.cpp
 endif
 
@@ -638,7 +647,7 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/adbbu/Android.mk \
     $(commands_recovery_local_path)/libpixelflinger/Android.mk
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     include $(commands_recovery_local_path)/libmincrypt/Android.mk
 endif
 

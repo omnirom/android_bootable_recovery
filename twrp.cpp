@@ -59,6 +59,8 @@ extern "C" {
 struct selabel_handle *selinux_handle;
 #endif
 
+extern int adb_server_main(int is_daemon, int server_port, int /* reply_fd */);
+
 TWPartitionManager PartitionManager;
 int Log_Offset;
 bool datamedia;
