@@ -122,7 +122,7 @@ void* WearSwipeDetector::touch_thread(void* cookie) {
     return NULL;
 }
 
-#define test_bit(bit, array)    (array[bit/8] & (1<<(bit%8)))
+#define test_bit(bit, array)    ((array)[(bit)/8] & (1<<((bit)%8)))
 
 int WearSwipeDetector::openDevice(const char *device) {
     int fd = open(device, O_RDONLY);
