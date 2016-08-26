@@ -54,8 +54,8 @@ static const float DEFAULT_FILES_PROGRESS_FRACTION = 0.4;
 static const float DEFAULT_IMAGE_PROGRESS_FRACTION = 0.1;
 
 // This function parses and returns the build.version.incremental
-static int parse_build_number(std::string str) {
-    size_t pos = str.find("=");
+static int parse_build_number(const std::string& str) {
+    size_t pos = str.find('=');
     if (pos != std::string::npos) {
         std::string num_string = android::base::Trim(str.substr(pos+1));
         int build_number;
