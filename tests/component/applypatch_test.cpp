@@ -65,7 +65,7 @@ static bool file_cmp(std::string& f1, std::string& f2) {
     return c1 == c2;
 }
 
-static std::string from_testdata_base(const std::string fname) {
+static std::string from_testdata_base(const std::string& fname) {
     return android::base::StringPrintf("%s%s%s/%s",
             &DATA_PATH[0],
             &NATIVE_TEST_PATH[0],
