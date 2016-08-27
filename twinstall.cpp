@@ -255,6 +255,8 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 			*wipe_cache = 1;
 		} else if (strcmp(command, "clear_display") == 0) {
 			// Do nothing, not supported by TWRP
+		} else if (strcmp(command, "log") == 0) {
+			printf("%s\n", strtok(NULL, "\n"));
 		} else {
 			LOGERR("unknown command [%s]\n", command);
 		}
@@ -330,12 +332,18 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 		sysReleaseMap(&map);
 		return INSTALL_CORRUPT;
 	}
+	time_t start, stop;
+	time(&start);
 	ret_val = Run_Update_Binary(path, &Zip, wipe_cache);
+	time(&stop);
+	int total_time = (int) difftime(stop, start);
 	if (ret_val == INSTALL_CORRUPT) {
 		// If no updater binary is found, check for ui.xml
 		ret_val = Install_Theme(path, &Zip);
 		if (ret_val == INSTALL_CORRUPT)
 			gui_msg(Msg(msg::kError, "no_updater_binary=Could not find '{1}' in the zip file.")(ASSUMED_UPDATE_BINARY_NAME));
+	} else {
+		LOGINFO("Install took %i second(s).\n", total_time);
 	}
 	sysReleaseMap(&map);
 	return ret_val;
