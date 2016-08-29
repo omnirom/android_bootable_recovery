@@ -33,7 +33,7 @@
 #include "minzip/SysUtil.h"
 #include "minzip/Zip.h"
 #ifdef USE_OLD_VERIFIER
-#include "oldverifier/verifier.h"
+#include "verifier24/verifier.h"
 #else
 #include "verifier.h"
 #endif

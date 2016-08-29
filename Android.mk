@@ -574,7 +574,7 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libmincrypttwrp
     LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
-    LOCAL_SRC_FILES += oldverifier/verifier.cpp
+    LOCAL_SRC_FILES += verifier24/verifier.cpp
     LOCAL_CFLAGS += -DUSE_OLD_VERIFIER
 else
     LOCAL_SHARED_LIBRARIES += libcrypto

@@ -32,7 +32,7 @@
 #include "minadbd/fuse_adb_provider.h"
 #include "fuse_sideload.h"
 #ifdef USE_OLD_VERIFIER
-#include "oldverifier/verifier.h"
+#include "verifier24/verifier.h"
 #else
 #include "verifier.h"
 #endif
