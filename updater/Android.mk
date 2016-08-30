@@ -55,7 +55,7 @@ LOCAL_STATIC_LIBRARIES = \
     libz
 endif
 ifneq ($(wildcard external/lz4/Android.mk),)
-    LOCAL_STATIC_LIBRARIES += liblz4-static
+    LOCAL_STATIC_LIBRARIES += liblz4
 endif
 endif
 
