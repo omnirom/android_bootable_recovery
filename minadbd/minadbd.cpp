@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "minadbd.h"
+
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
@@ -23,7 +25,7 @@
 #include "adb_auth.h"
 #include "transport.h"
 
-int adb_server_main(int is_daemon, int server_port, int /* reply_fd */) {
+int minadbd_main() {
     adb_device_banner = "sideload";
 
     signal(SIGPIPE, SIG_IGN);
