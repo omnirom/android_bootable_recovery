@@ -34,7 +34,7 @@ LOCAL_SRC_FILES := applypatch.cpp bspatch.cpp freecache.cpp imgpatch.cpp utils.c
 LOCAL_MODULE := libapplypatch
 LOCAL_MODULE_TAGS := eng
 LOCAL_C_INCLUDES += bootable/recovery
-LOCAL_STATIC_LIBRARIES += libbase libotafault libmtdutils libmincrypttwrp libbz libz
+LOCAL_STATIC_LIBRARIES += libbase libotafault libmtdutils libcrypto_static libbz libz
 
 include $(BUILD_STATIC_LIBRARY)
 

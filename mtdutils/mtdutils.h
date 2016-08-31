@@ -19,6 +19,10 @@
 
 #include <sys/types.h>  // for size_t, etc.
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct MtdPartition MtdPartition;
 
 int mtd_scan_partitions(void);
@@ -57,5 +61,9 @@ struct MtdPartition {
     unsigned int erase_size;
     char *name;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MTDUTILS_H_
