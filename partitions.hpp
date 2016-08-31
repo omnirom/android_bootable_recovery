@@ -60,8 +60,8 @@ struct PartitionSettings {                                                      
 	uint64_t img_bytes;                                                        // total image bytes of all emmc partitions
 	uint64_t file_bytes;                                                       // total file bytes of all file based partitions
 	int partition_count;                                                       // Number of partitions to restore
-	ProgressTracking *progress;
-	enum PartitionManager_Op PM_Method;                                        //Current operation of backup or restore
+	ProgressTracking *progress;                                                // Keep track of progress in GUI	
+	enum PartitionManager_Op PM_Method;                                        // Current operation of backup or restore
 };
 
 enum Backup_Method_enum {
@@ -94,7 +94,7 @@ public:
 	bool Can_Resize();                                                        // Checks to see if we have everything needed to be able to resize the current file system
 	bool Resize();                                                            // Resizes the current file system
 	bool Backup(PartitionSettings *part_settings, pid_t *tar_fork_pid);       // Backs up the partition to the folder specified
-	bool Check_MD5(string restore_folder);                                    // Checks MD5 of a backup
+	bool Check_MD5(PartitionSettings *part_settings);                         // Checks MD5 of a backup
 	bool Restore(PartitionSettings *part_settings);                           // Restores the partition using the backup folder provided
 	unsigned long long Get_Restore_Size(PartitionSettings *part_settings);// Returns the overall restore size of the backup
 	string Backup_Method_By_Name();                                           // Returns a string of the backup method for human readable output
