@@ -1612,7 +1612,7 @@ bool TWPartition::Backup(PartitionSettings *part_settings, pid_t *tar_fork_pid) 
 	return false;
 }
 
-bool TWPartition::Check_MD5(string restore_folder) {
+bool TWPartition::Check_MD5(PartitionSettings *part_settings) {
 	string Full_Filename, md5file;
 	char split_filename[512];
 	int index = 0;
@@ -1621,7 +1621,7 @@ bool TWPartition::Check_MD5(string restore_folder) {
 	sync();
 
 	memset(split_filename, 0, sizeof(split_filename));
-	Full_Filename = restore_folder + "/" + Backup_FileName;
+	Full_Filename = part_settings->Restore_Name + "/" + part_settings->Backup_FileName;
 	if (!TWFunc::Path_Exists(Full_Filename)) {
 		// This is a split archive, we presume
 		sprintf(split_filename, "%s%03i", Full_Filename.c_str(), index);
@@ -1647,7 +1647,7 @@ bool TWPartition::Check_MD5(string restore_folder) {
 		// Single file archive
 		md5file = Full_Filename + ".md5";
 		if (!TWFunc::Path_Exists(md5file)) {
-			gui_msg(Msg(msg::kError, "no_md5_found=No md5 file found for '{1}'. Please unselect Enable MD5 verification to restore.")(split_filename));
+			gui_msg(Msg(msg::kError, "no_md5_found=No md5 file found for '{1}'. Please unselect Enable MD5 verification to restore.")(md5file));
 			return false;
 		}
 		md5sum.setfn(Full_Filename);
