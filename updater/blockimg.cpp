@@ -151,6 +151,10 @@ static int read_all(int fd, uint8_t* data, size_t size) {
             failure_type = kFreadFailure;
             fprintf(stderr, "read failed: %s\n", strerror(errno));
             return -1;
+        } else if (r == 0) {
+            failure_type = kFreadFailure;
+            fprintf(stderr, "read reached unexpected EOF.\n");
+            return -1;
         }
         so_far += r;
     }
