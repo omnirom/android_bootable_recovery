@@ -898,6 +898,7 @@ bool TWPartitionManager::Restore_Partition(PartitionSettings *part_settings) {
 		for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
 			part_settings->Part = *subpart;
 			if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == parentPart->Mount_Point) {
+				part_settings->Backup_FileName = (*subpart)->Backup_Name + "." +  (*subpart)->Current_File_System + ".win";
 				part_settings->Part = (*subpart);
 				if (!(*subpart)->Restore(part_settings)) {
 					TWFunc::SetPerformanceMode(false);
@@ -968,7 +969,7 @@ int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 					std::vector<TWPartition*>::iterator subpart;
 
 					for (subpart = Partitions.begin(); subpart != Partitions.end(); subpart++) {
-						part_settings.Backup_FileName = parentPart->Backup_Name + "." +  parentPart->Current_File_System + ".win";
+						part_settings.Backup_FileName = (*subpart)->Backup_Name + "." +  (*subpart)->Current_File_System + ".win";
 						part_settings.Part = *subpart;
 						if ((*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == parentPart->Mount_Point) {
 							if (check_md5 > 0 && !(*subpart)->Check_MD5(&part_settings))
