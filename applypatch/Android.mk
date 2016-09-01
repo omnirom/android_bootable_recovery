@@ -80,7 +80,7 @@ LOCAL_STATIC_LIBRARIES += \
     libminzip \
     libcrypto \
     libbz
-LOCAL_SHARED_LIBRARIES += libz libcutils libc
+LOCAL_SHARED_LIBRARIES += libbase libz libcutils libc
 include $(BUILD_EXECUTABLE)
 
 # imgdiff (host static executable)

@@ -46,7 +46,6 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_STATIC_LIBRARIES := \
     libapplypatch \
     libotafault \
-    libbase \
     libverifier \
     libcrypto_utils \
     libcrypto \
@@ -55,7 +54,9 @@ LOCAL_STATIC_LIBRARIES := \
     libcutils \
     libbz \
     libz \
-    libc
+    libc \
+    libbase \
+    liblog
 
 testdata_out_path := $(TARGET_OUT_DATA_NATIVE_TESTS)/recovery
 testdata_files := $(call find-subdir-files, testdata/*)

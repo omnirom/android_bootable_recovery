@@ -35,19 +35,17 @@
 
 #include <string.h>
 
+#include <android-base/logging.h>
 #include <hardware/boot_control.h>
-
-#define LOG_TAG       "update_verifier"
-#include <log/log.h>
 
 int main(int argc, char** argv) {
   for (int i = 1; i < argc; i++) {
-    SLOGI("Started with arg %d: %s\n", i, argv[i]);
+    LOG(INFO) << "Started with arg " << i << ": " << argv[i];
   }
 
   const hw_module_t* hw_module;
   if (hw_get_module("bootctrl", &hw_module) != 0) {
-    SLOGE("Error getting bootctrl module.\n");
+    LOG(ERROR) << "Error getting bootctrl module.";
     return -1;
   }
 
@@ -57,7 +55,7 @@ int main(int argc, char** argv) {
 
   unsigned current_slot = module->getCurrentSlot(module);
   int is_successful= module->isSlotMarkedSuccessful(module, current_slot);
-  SLOGI("Booting slot %u: isSlotMarkedSuccessful=%d\n", current_slot, is_successful);
+  LOG(INFO) << "Booting slot " << current_slot << ": isSlotMarkedSuccessful=" << is_successful;
 
   if (is_successful == 0) {
     // The current slot has not booted successfully.
@@ -70,12 +68,12 @@ int main(int argc, char** argv) {
 
     int ret = module->markBootSuccessful(module);
     if (ret != 0) {
-      SLOGE("Error marking booted successfully: %s\n", strerror(-ret));
+      LOG(ERROR) << "Error marking booted successfully: " << strerror(-ret);
       return -1;
     }
-    SLOGI("Marked slot %u as booted successfully.\n", current_slot);
+    LOG(INFO) << "Marked slot " << current_slot << " as booted successfully.";
   }
 
-  SLOGI("Leaving update_verifier.\n");
+  LOG(INFO) << "Leaving update_verifier.";
   return 0;
 }

@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define LOG_TAG "minzip"
-#include "Log.h"
+#include <android-base/logging.h>
+
 #include "Hash.h"
 
 /* table load factor, i.e. how full can it get before we resize */
@@ -220,8 +220,7 @@ void* mzHashTableLookup(HashTable* pHashTable, unsigned int itemHash, void* item
             {
                 if (!resizeHash(pHashTable, pHashTable->tableSize * 2)) {
                     /* don't really have a way to indicate failure */
-                    LOGE("Dalvik hash resize failure\n");
-                    abort();
+                    LOG(FATAL) << "Hash resize failure";
                 }
                 /* note "pEntry" is now invalid */
             }
@@ -373,7 +372,7 @@ void mzHashTableProbeCount(HashTable* pHashTable, HashCalcFunc calcFunc,
         totalProbe += count;
     }
 
-    LOGV("Probe: min=%d max=%d, total=%d in %d (%d), avg=%.3f\n",
-        minProbe, maxProbe, totalProbe, numEntries, pHashTable->tableSize,
-        (float) totalProbe / (float) numEntries);
+    LOG(VERBOSE) << "Probe: min=" << minProbe << ", max=" << maxProbe << ", total="
+                 << totalProbe <<" in " << numEntries << " (" << pHashTable->tableSize
+                 << "), avg=" << (float) totalProbe / (float) numEntries;
 }

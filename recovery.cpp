@@ -41,6 +41,7 @@
 #include <adb.h>
 #include <android/log.h> /* Android Log Priority Tags */
 #include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
@@ -48,7 +49,6 @@
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
 #include <healthd/BatteryMonitor.h>
-#include <log/logger.h> /* Android Log packet format */
 #include <private/android_logger.h> /* private pmsg functions */
 #include <selinux/label.h>
 #include <selinux/selinux.h>
@@ -183,7 +183,7 @@ static const int MAX_ARGS = 100;
 // open a given path, mounting partitions as necessary
 FILE* fopen_path(const char *path, const char *mode) {
     if (ensure_path_mounted(path) != 0) {
-        LOGE("Can't mount %s\n", path);
+        LOG(ERROR) << "Can't mount " << path;
         return NULL;
     }
 
@@ -198,7 +198,9 @@ FILE* fopen_path(const char *path, const char *mode) {
 // close a file, log an error if the error indicator is set
 static void check_and_fclose(FILE *fp, const char *name) {
     fflush(fp);
-    if (ferror(fp)) LOGE("Error in %s\n(%s)\n", name, strerror(errno));
+    if (ferror(fp)) {
+        PLOG(ERROR) << "Error in " << name;
+    }
     fclose(fp);
 }
 
@@ -210,7 +212,7 @@ bool is_ro_debuggable() {
 static void redirect_stdio(const char* filename) {
     int pipefd[2];
     if (pipe(pipefd) == -1) {
-        LOGE("pipe failed: %s\n", strerror(errno));
+        PLOG(ERROR) << "pipe failed";
 
         // Fall back to traditional logging mode without timestamps.
         // If these fail, there's not really anywhere to complain...
@@ -222,7 +224,7 @@ static void redirect_stdio(const char* filename) {
 
     pid_t pid = fork();
     if (pid == -1) {
-        LOGE("fork failed: %s\n", strerror(errno));
+        PLOG(ERROR) << "fork failed";
 
         // Fall back to traditional logging mode without timestamps.
         // If these fail, there's not really anywhere to complain...
@@ -241,14 +243,14 @@ static void redirect_stdio(const char* filename) {
         // Child logger to actually write to the log file.
         FILE* log_fp = fopen(filename, "a");
         if (log_fp == nullptr) {
-            LOGE("fopen \"%s\" failed: %s\n", filename, strerror(errno));
+            PLOG(ERROR) << "fopen \"" << filename << "\" failed";
             close(pipefd[0]);
             _exit(1);
         }
 
         FILE* pipe_fp = fdopen(pipefd[0], "r");
         if (pipe_fp == nullptr) {
-            LOGE("fdopen failed: %s\n", strerror(errno));
+            PLOG(ERROR) << "fdopen failed";
             check_and_fclose(log_fp, filename);
             close(pipefd[0]);
             _exit(1);
@@ -268,7 +270,7 @@ static void redirect_stdio(const char* filename) {
             fflush(log_fp);
         }
 
-        LOGE("getline failed: %s\n", strerror(errno));
+        PLOG(ERROR) << "getline failed";
 
         free(line);
         check_and_fclose(log_fp, filename);
@@ -283,10 +285,10 @@ static void redirect_stdio(const char* filename) {
         setbuf(stderr, nullptr);
 
         if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
-            LOGE("dup2 stdout failed: %s\n", strerror(errno));
+            PLOG(ERROR) << "dup2 stdout failed";
         }
         if (dup2(pipefd[1], STDERR_FILENO) == -1) {
-            LOGE("dup2 stderr failed: %s\n", strerror(errno));
+            PLOG(ERROR) << "dup2 stderr failed";
         }
 
         close(pipefd[1]);
@@ -305,11 +307,13 @@ get_args(int *argc, char ***argv) {
     stage = strndup(boot.stage, sizeof(boot.stage));
 
     if (boot.command[0] != 0 && boot.command[0] != 255) {
-        LOGI("Boot command: %.*s\n", (int)sizeof(boot.command), boot.command);
+        std::string boot_command = std::string(boot.command, sizeof(boot.command));
+        LOG(INFO) << "Boot command: " << boot_command;
     }
 
     if (boot.status[0] != 0 && boot.status[0] != 255) {
-        LOGI("Boot status: %.*s\n", (int)sizeof(boot.status), boot.status);
+        std::string boot_status = std::string(boot.status, sizeof(boot.status));
+        LOG(INFO) << "Boot status: " << boot_status;
     }
 
     // --- if arguments weren't supplied, look in the bootloader control block
@@ -323,9 +327,10 @@ get_args(int *argc, char ***argv) {
                 if ((arg = strtok(NULL, "\n")) == NULL) break;
                 (*argv)[*argc] = strdup(arg);
             }
-            LOGI("Got arguments from boot message\n");
+            LOG(INFO) << "Got arguments from boot message";
         } else if (boot.recovery[0] != 0 && boot.recovery[0] != 255) {
-            LOGE("Bad boot message\n\"%.20s\"\n", boot.recovery);
+            std::string boot_recovery = std::string(boot.recovery, 20);
+            LOG(ERROR) << "Bad boot message\n" << "\"" <<boot_recovery << "\"";
         }
     }
 
@@ -350,7 +355,7 @@ get_args(int *argc, char ***argv) {
             }
 
             check_and_fclose(fp, COMMAND_FILE);
-            LOGI("Got arguments from %s\n", COMMAND_FILE);
+            LOG(INFO) << "Got arguments from " << COMMAND_FILE;
         }
     }
 
@@ -379,14 +384,14 @@ set_sdcard_update_bootloader_message() {
 static void save_kernel_log(const char* destination) {
     int klog_buf_len = klogctl(KLOG_SIZE_BUFFER, 0, 0);
     if (klog_buf_len <= 0) {
-        LOGE("Error getting klog size: %s\n", strerror(errno));
+        PLOG(ERROR) << "Error getting klog size";
         return;
     }
 
     std::string buffer(klog_buf_len, 0);
     int n = klogctl(KLOG_READ_ALL, &buffer[0], klog_buf_len);
     if (n == -1) {
-        LOGE("Error in reading klog: %s\n", strerror(errno));
+        PLOG(ERROR) << "Error in reading klog";
         return;
     }
     buffer.resize(n);
@@ -411,7 +416,7 @@ static off_t tmplog_offset = 0;
 static void copy_log_file(const char* source, const char* destination, bool append) {
     FILE* dest_fp = fopen_path(destination, append ? "a" : "w");
     if (dest_fp == nullptr) {
-        LOGE("Can't open %s\n", destination);
+        PLOG(ERROR) << "Can't open " << destination;
     } else {
         FILE* source_fp = fopen(source, "r");
         if (source_fp != nullptr) {
@@ -509,7 +514,7 @@ finish_recovery() {
         size_t len = strlen(locale);
         __pmsg_write(LOCALE_FILE, locale, len);
         if (has_cache) {
-            LOGI("Saving locale \"%s\"\n", locale);
+            LOG(INFO) << "Saving locale \"" << locale << "\"";
             FILE* fp = fopen_path(LOCALE_FILE, "w");
             if (fp != NULL) {
                 fwrite(locale, 1, len, fp);
@@ -530,7 +535,7 @@ finish_recovery() {
     // Remove the command file, so recovery won't repeat indefinitely.
     if (has_cache) {
         if (ensure_path_mounted(COMMAND_FILE) != 0 || (unlink(COMMAND_FILE) && errno != ENOENT)) {
-            LOGW("Can't unlink %s\n", COMMAND_FILE);
+            LOG(WARNING) << "Can't unlink " << COMMAND_FILE;
         }
         ensure_path_unmounted(CACHE_ROOT);
     }
@@ -670,7 +675,7 @@ get_menu_selection(const char* const * headers, const char* const * items,
             if (ui->WasTextEverVisible()) {
                 continue;
             } else {
-                LOGI("timed out waiting for key input; rebooting.\n");
+                LOG(INFO) << "timed out waiting for key input; rebooting.";
                 ui->EndMenu();
                 return 0; // XXX fixme
             }
@@ -711,7 +716,7 @@ static char* browse_directory(const char* path, Device* device) {
 
     DIR* d = opendir(path);
     if (d == NULL) {
-        LOGE("error opening %s: %s\n", path, strerror(errno));
+        PLOG(ERROR) << "error opening " << path;
         return NULL;
     }
 
@@ -856,13 +861,13 @@ static bool wipe_cache(bool should_confirm, Device* device) {
 static bool secure_wipe_partition(const std::string& partition) {
     android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(partition.c_str(), O_WRONLY)));
     if (fd == -1) {
-        LOGE("failed to open \"%s\": %s\n", partition.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to open \"" << partition << "\"";
         return false;
     }
 
     uint64_t range[2] = {0, 0};
     if (ioctl(fd, BLKGETSIZE64, &range[1]) == -1 || range[1] == 0) {
-        LOGE("failed to get partition size: %s\n", strerror(errno));
+        PLOG(ERROR) << "failed to get partition size";
         return false;
     }
     printf("Secure-wiping \"%s\" from %" PRIu64 " to %" PRIu64 ".\n",
@@ -901,7 +906,7 @@ static bool brick_device() {
 
     std::string partition_list;
     if (!android::base::ReadFileToString(RECOVERY_BRICK, &partition_list)) {
-        LOGE("failed to read \"%s\".\n", RECOVERY_BRICK);
+        LOG(ERROR) << "failed to read \"" << RECOVERY_BRICK << "\"";
         return false;
     }
 
@@ -1064,7 +1069,7 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
                 sleep(1);
                 continue;
             } else {
-                LOGE("Timed out waiting for the fuse-provided package.\n");
+                LOG(ERROR) << "Timed out waiting for the fuse-provided package.";
                 result = INSTALL_ERROR;
                 kill(child, SIGKILL);
                 break;
@@ -1086,7 +1091,7 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
     }
 
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        LOGE("Error exit from the fuse process: %d\n", WEXITSTATUS(status));
+        LOG(ERROR) << "Error exit from the fuse process: " << WEXITSTATUS(status);
     }
 
     ensure_path_unmounted(SDCARD_ROOT);
@@ -1242,6 +1247,18 @@ ui_print(const char* format, ...) {
     }
 }
 
+static constexpr char log_characters[] = "VDIWEF";
+
+void UiLogger(android::base::LogId id, android::base::LogSeverity severity,
+               const char* tag, const char* file, unsigned int line,
+               const char* message) {
+    if (severity >= android::base::ERROR && gCurrentUI != NULL) {
+        gCurrentUI->Print("E:%s\n", message);
+    } else {
+        fprintf(stdout, "%c:%s\n", log_characters[severity], message);
+    }
+}
+
 static bool is_battery_ok() {
     struct healthd_config healthd_config = {
             .batteryStatusPath = android::String8(android::String8::kEmptyString),
@@ -1370,6 +1387,10 @@ static ssize_t logrotate(
 }
 
 int main(int argc, char **argv) {
+    // We don't have logcat yet under recovery; so we'll print error on screen and
+    // log to stdout (which is redirected to recovery.log) as we used to do.
+    android::base::InitLogging(argv, &UiLogger);
+
     // Take last pmsg contents and rewrite it to the current pmsg session.
     static const char filter[] = "recovery/";
     // Do we need to rotate?
@@ -1451,7 +1472,7 @@ int main(int argc, char **argv) {
             break;
         }
         case '?':
-            LOGE("Invalid command argument\n");
+            LOG(ERROR) << "Invalid command argument";
             continue;
         }
     }
@@ -1543,7 +1564,7 @@ int main(int argc, char **argv) {
                 fprintf(install_log, "error: %d\n", kLowBattery);
                 fclose(install_log);
             } else {
-                LOGE("failed to open last_install: %s\n", strerror(errno));
+                PLOG(ERROR) << "failed to open last_install";
             }
             status = INSTALL_SKIPPED;
         } else {
