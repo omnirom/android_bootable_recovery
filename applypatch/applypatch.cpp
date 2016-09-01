@@ -336,6 +336,9 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
                     printf("verify read error %s at %zu: %s\n",
                            partition, p, strerror(errno));
                     return -1;
+                } else if (read_count == 0) {
+                    printf("verify read reached unexpected EOF, %s at %zu\n", partition, p);
+                    return -1;
                 }
                 if (static_cast<size_t>(read_count) < to_read) {
                     printf("short verify read %s at %zu: %zd %zu %s\n",
