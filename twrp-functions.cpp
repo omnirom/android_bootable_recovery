@@ -648,6 +648,20 @@ unsigned int TWFunc::Get_D_Type_From_Stat(string Path) {
 	return DT_UNKNOWN;
 }
 
+int TWFunc::read_file_firstline(string fn, string& results) {
+	ifstream file;
+	file.open(fn.c_str(), ios::in);
+
+	if (file.is_open()) {
+		getline(file, results);
+		file.close();
+		return 0;
+	}
+
+	LOGINFO("Cannot find file %s\n", fn.c_str());
+	return -1;
+}
+
 int TWFunc::read_file(string fn, string& results) {
 	ifstream file;
 	file.open(fn.c_str(), ios::in);
