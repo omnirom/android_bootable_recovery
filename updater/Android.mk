@@ -37,7 +37,6 @@ LOCAL_STATIC_LIBRARIES += \
     libcrypto_utils \
     libcrypto \
     libapplypatch \
-    libbase \
     libotafault \
     libedify \
     libminzip \
@@ -46,7 +45,9 @@ LOCAL_STATIC_LIBRARIES += \
     libbz \
     libcutils \
     liblog \
-    libselinux
+    libselinux \
+    libbase \
+    liblog
 
 tune2fs_static_libraries := \
     libext2_com_err \

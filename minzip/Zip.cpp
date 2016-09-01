@@ -14,17 +14,17 @@
 #include <sys/stat.h>   // for S_ISLNK()
 #include <unistd.h>
 
-#define LOG_TAG "minzip"
-#include "Zip.h"
-#include "Bits.h"
-#include "Log.h"
-#include "DirUtil.h"
+#include <string>
 
-#undef NDEBUG   // do this after including Log.h
+#include <android-base/logging.h>
+#include <android-base/stringprintf.h>
 #include <assert.h>
-
 #include <selinux/label.h>
 #include <selinux/selinux.h>
+
+#include "Zip.h"
+#include "Bits.h"
+#include "DirUtil.h"
 
 #define SORT_ENTRIES 1
 
@@ -154,8 +154,9 @@ static void addEntryToHashTable(HashTable* pHash, ZipEntry* pEntry)
     found = (const ZipEntry*)mzHashTableLookup(pHash,
                 itemHash, pEntry, hashcmpZipEntry, true);
     if (found != pEntry) {
-        LOGW("WARNING: duplicate entry '%.*s' in Zip\n",
-            found->fileNameLen, found->fileName);
+        LOG(WARNING) << "WARNING: duplicate entry '" << std::string(found->fileName,
+                     found->fileNameLen) << "' in Zip";
+
         /* keep going */
     }
 }
@@ -164,7 +165,7 @@ static int validFilename(const char *fileName, unsigned int fileNameLen)
 {
     // Forbid super long filenames.
     if (fileNameLen >= PATH_MAX) {
-        LOGW("Filename too long (%d chatacters)\n", fileNameLen);
+        LOG(WARNING) << "Filename too long (" << fileNameLen << " chatacters)";
         return 0;
     }
 
@@ -172,7 +173,8 @@ static int validFilename(const char *fileName, unsigned int fileNameLen)
     unsigned int i;
     for (i = 0; i < fileNameLen; ++i) {
         if (fileName[i] < 32 || fileName[i] >= 127) {
-            LOGW("Filename contains invalid character '\%03o'\n", fileName[i]);
+            LOG(WARNING) << android::base::StringPrintf(
+                    "Filename contains invalid character '\%02x'\n", fileName[i]);
             return 0;
         }
     }
@@ -201,10 +203,10 @@ static bool parseZipArchive(ZipArchive* pArchive)
      */
     val = get4LE(pArchive->addr);
     if (val == ENDSIG) {
-        LOGW("Found Zip archive, but it looks empty\n");
+        LOG(WARNING) << "Found Zip archive, but it looks empty";
         goto bail;
     } else if (val != LOCSIG) {
-        LOGW("Not a Zip archive (found 0x%08x)\n", val);
+        LOG(WARNING) << android::base::StringPrintf("Not a Zip archive (found 0x%08x)\n", val);
         goto bail;
     }
 
@@ -220,7 +222,7 @@ static bool parseZipArchive(ZipArchive* pArchive)
         ptr--;
     }
     if (ptr < (const unsigned char*) pArchive->addr) {
-        LOGW("Could not find end-of-central-directory in Zip\n");
+        LOG(WARNING) << "Could not find end-of-central-directory in Zip";
         goto bail;
     }
 
@@ -232,10 +234,10 @@ static bool parseZipArchive(ZipArchive* pArchive)
     numEntries = get2LE(ptr + ENDSUB);
     cdOffset = get4LE(ptr + ENDOFF);
 
-    LOGVV("numEntries=%d cdOffset=%d\n", numEntries, cdOffset);
+    LOG(VERBOSE) << "numEntries=" << numEntries << " cdOffset=" << cdOffset;
     if (numEntries == 0 || cdOffset >= pArchive->length) {
-        LOGW("Invalid entries=%d offset=%d (len=%zd)\n",
-            numEntries, cdOffset, pArchive->length);
+        LOG(WARNING) << "Invalid entries=" << numEntries << " offset=" << cdOffset
+                     << " (len=" << pArchive->length << ")";
         goto bail;
     }
 
@@ -256,11 +258,11 @@ static bool parseZipArchive(ZipArchive* pArchive)
         const char *fileName;
 
         if (ptr + CENHDR > (const unsigned char*)pArchive->addr + pArchive->length) {
-            LOGW("Ran off the end (at %d)\n", i);
+            LOG(WARNING) << "Ran off the end (at " << i << ")";
             goto bail;
         }
         if (get4LE(ptr) != CENSIG) {
-            LOGW("Missed a central dir sig (at %d)\n", i);
+            LOG(WARNING) << "Missed a central dir sig (at " << i << ")";
             goto bail;
         }
 
@@ -270,11 +272,11 @@ static bool parseZipArchive(ZipArchive* pArchive)
         commentLen = get2LE(ptr + CENCOM);
         fileName = (const char*)ptr + CENHDR;
         if (fileName + fileNameLen > (const char*)pArchive->addr + pArchive->length) {
-            LOGW("Filename ran off the end (at %d)\n", i);
+            LOG(WARNING) << "Filename ran off the end (at " << i << ")";
             goto bail;
         }
         if (!validFilename(fileName, fileNameLen)) {
-            LOGW("Invalid filename (at %d)\n", i);
+            LOG(WARNING) << "Invalid filename (at " << i << ")";
             goto bail;
         }
 
@@ -345,7 +347,8 @@ static bool parseZipArchive(ZipArchive* pArchive)
         if ((pEntry->versionMadeBy & 0xff00) != 0 &&
                 (pEntry->versionMadeBy & 0xff00) != CENVEM_UNIX)
         {
-            LOGW("Incompatible \"version made by\": 0x%02x (at %d)\n",
+            LOG(WARNING) << android::base::StringPrintf(
+                    "Incompatible \"version made by\": 0x%02x (at %d)\n",
                     pEntry->versionMadeBy >> 8, i);
             goto bail;
         }
@@ -355,26 +358,27 @@ static bool parseZipArchive(ZipArchive* pArchive)
         // overflow. This is needed because localHdrOffset is untrusted.
         if (!safe_add((uintptr_t *)&localHdr, (uintptr_t)pArchive->addr,
             (uintptr_t)localHdrOffset)) {
-            LOGW("Integer overflow adding in parseZipArchive\n");
+            LOG(WARNING) << "Integer overflow adding in parseZipArchive";
             goto bail;
         }
         if ((uintptr_t)localHdr + LOCHDR >
             (uintptr_t)pArchive->addr + pArchive->length) {
-            LOGW("Bad offset to local header: %d (at %d)\n", localHdrOffset, i);
+            LOG(WARNING) << "Bad offset to local header: " << localHdrOffset
+                         << " (at " << i << ")";
             goto bail;
         }
         if (get4LE(localHdr) != LOCSIG) {
-            LOGW("Missed a local header sig (at %d)\n", i);
+            LOG(WARNING) << "Missed a local header sig (at " << i << ")";
             goto bail;
         }
         pEntry->offset = localHdrOffset + LOCHDR
             + get2LE(localHdr + LOCNAM) + get2LE(localHdr + LOCEXT);
         if (!safe_add(NULL, pEntry->offset, pEntry->compLen)) {
-            LOGW("Integer overflow adding in parseZipArchive\n");
+            LOG(WARNING) << "Integer overflow adding in parseZipArchive";
             goto bail;
         }
         if ((size_t)pEntry->offset + pEntry->compLen > pArchive->length) {
-            LOGW("Data ran off the end (at %d)\n", i);
+            LOG(WARNING) << "Data ran off the end (at " << i << ")";
             goto bail;
         }
 
@@ -432,7 +436,8 @@ int mzOpenZipArchive(unsigned char* addr, size_t length, ZipArchive* pArchive)
 
     if (length < ENDHDR) {
         err = -1;
-        LOGW("Archive %p is too small to be zip (%zd)\n", pArchive, length);
+        LOG(WARNING) << "Archive " << pArchive << " is too small to be zip ("
+                     << length << ")";
         goto bail;
     }
 
@@ -441,7 +446,7 @@ int mzOpenZipArchive(unsigned char* addr, size_t length, ZipArchive* pArchive)
 
     if (!parseZipArchive(pArchive)) {
         err = -1;
-        LOGW("Parsing archive %p failed\n", pArchive);
+        LOG(WARNING) << "Parsing archive " << pArchive << " failed";
         goto bail;
     }
 
@@ -460,7 +465,7 @@ bail:
  */
 void mzCloseZipArchive(ZipArchive* pArchive)
 {
-    LOGV("Closing archive %p\n", pArchive);
+    LOG(VERBOSE) << "Closing archive " << pArchive;
 
     free(pArchive->pEntries);
 
@@ -534,10 +539,10 @@ static bool processDeflatedEntry(const ZipArchive *pArchive,
     zerr = inflateInit2(&zstream, -MAX_WBITS);
     if (zerr != Z_OK) {
         if (zerr == Z_VERSION_ERROR) {
-            LOGE("Installed zlib is not compatible with linked version (%s)\n",
-                ZLIB_VERSION);
+            LOG(ERROR) << "Installed zlib is not compatible with linked version ("
+                       << ZLIB_VERSION << ")";
         } else {
-            LOGE("Call to inflateInit2 failed (zerr=%d)\n", zerr);
+            LOG(ERROR) << "Call to inflateInit2 failed (zerr=" << zerr << ")";
         }
         goto bail;
     }
@@ -549,7 +554,7 @@ static bool processDeflatedEntry(const ZipArchive *pArchive,
         /* uncompress the data */
         zerr = inflate(&zstream, Z_NO_FLUSH);
         if (zerr != Z_OK && zerr != Z_STREAM_END) {
-            LOGW("zlib inflate call failed (zerr=%d)\n", zerr);
+            LOG(WARNING) << "zlib inflate call failed (zerr=" << zerr << ")";
             goto z_bail;
         }
 
@@ -558,10 +563,10 @@ static bool processDeflatedEntry(const ZipArchive *pArchive,
             (zerr == Z_STREAM_END && zstream.avail_out != sizeof(procBuf)))
         {
             long procSize = zstream.next_out - procBuf;
-            LOGVV("+++ processing %d bytes\n", (int) procSize);
+            LOG(VERBOSE) << "+++ processing " << procSize << " bytes";
             bool ret = processFunction(procBuf, procSize, cookie);
             if (!ret) {
-                LOGW("Process function elected to fail (in inflate)\n");
+                LOG(WARNING) << "Process function elected to fail (in inflate)";
                 goto z_bail;
             }
 
@@ -582,7 +587,8 @@ z_bail:
 bail:
     if (totalOut != pEntry->uncompLen) {
         if (success) {       // error already shown?
-            LOGW("Size mismatch on inflated file (%lu vs %u)\n", totalOut, pEntry->uncompLen);
+            LOG(WARNING) << "Size mismatch on inflated file (" << totalOut << " vs "
+                         << pEntry->uncompLen << ")";
         }
         return false;
     }
@@ -613,8 +619,8 @@ bool mzProcessZipEntryContents(const ZipArchive *pArchive,
         ret = processDeflatedEntry(pArchive, pEntry, processFunction, cookie);
         break;
     default:
-        LOGE("Unsupported compression type %d for entry '%s'\n",
-                pEntry->compression, pEntry->fileName);
+        LOG(ERROR) << "Unsupported compression type " << pEntry->compression
+                   << " for entry '" << pEntry->fileName << "'";
         break;
     }
 
@@ -653,7 +659,7 @@ bool mzReadZipEntry(const ZipArchive* pArchive, const ZipEntry* pEntry,
     ret = mzProcessZipEntryContents(pArchive, pEntry, copyProcessFunction,
             (void *)&args);
     if (!ret) {
-        LOGE("Can't extract entry to buffer.\n");
+        LOG(ERROR) << "Can't extract entry to buffer";
         return false;
     }
     return true;
@@ -670,15 +676,15 @@ static bool writeProcessFunction(const unsigned char *data, int dataLen,
     while (true) {
         ssize_t n = TEMP_FAILURE_RETRY(write(fd, data+soFar, dataLen-soFar));
         if (n <= 0) {
-            LOGE("Error writing %zd bytes from zip file from %p: %s\n",
-                 dataLen-soFar, data+soFar, strerror(errno));
+            PLOG(ERROR) << "Error writing " << dataLen-soFar << " bytes from zip file from "
+                        << data+soFar;
             return false;
         } else if (n > 0) {
             soFar += n;
             if (soFar == dataLen) return true;
             if (soFar > dataLen) {
-                LOGE("write overrun?  (%zd bytes instead of %d)\n",
-                     soFar, dataLen);
+                LOG(ERROR) << "write overrun?  (" << soFar << " bytes instead of "
+                           << dataLen << ")";
                 return false;
             }
         }
@@ -694,7 +700,7 @@ bool mzExtractZipEntryToFile(const ZipArchive *pArchive,
     bool ret = mzProcessZipEntryContents(pArchive, pEntry, writeProcessFunction,
                                          (void*)(intptr_t)fd);
     if (!ret) {
-        LOGE("Can't extract entry to file.\n");
+        LOG(ERROR) << "Can't extract entry to file.";
         return false;
     }
     return true;
@@ -730,7 +736,7 @@ bool mzExtractZipEntryToBuffer(const ZipArchive *pArchive,
     bool ret = mzProcessZipEntryContents(pArchive, pEntry,
         bufferProcessFunction, (void*)&bec);
     if (!ret || bec.len != 0) {
-        LOGE("Can't extract entry to memory buffer.\n");
+        LOG(ERROR) << "Can't extract entry to memory buffer.";
         return false;
     }
     return true;
@@ -824,11 +830,11 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
                         struct selabel_handle *sehnd)
 {
     if (zipDir[0] == '/') {
-        LOGE("mzExtractRecursive(): zipDir must be a relative path.\n");
+        LOG(ERROR) << "mzExtractRecursive(): zipDir must be a relative path.";
         return false;
     }
     if (targetDir[0] != '/') {
-        LOGE("mzExtractRecursive(): targetDir must be an absolute path.\n");
+        LOG(ERROR) << "mzExtractRecursive(): targetDir must be an absolute path.\n";
         return false;
     }
 
@@ -838,7 +844,7 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
     zipDirLen = strlen(zipDir);
     zpath = (char *)malloc(zipDirLen + 2);
     if (zpath == NULL) {
-        LOGE("Can't allocate %d bytes for zip path\n", zipDirLen + 2);
+        LOG(ERROR) << "Can't allocate " << (zipDirLen + 2) << " bytes for zip path";
         return false;
     }
     /* If zipDir is empty, we'll extract the entire zip file.
@@ -917,8 +923,8 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
          */
         const char *targetFile = targetEntryPath(&helper, pEntry);
         if (targetFile == NULL) {
-            LOGE("Can't assemble target path for \"%.*s\"\n",
-                    pEntry->fileNameLen, pEntry->fileName);
+            LOG(ERROR) << "Can't assemble target path for \"" << std::string(pEntry->fileName,
+                       pEntry->fileNameLen) << "\"";
             ok = false;
             break;
         }
@@ -942,8 +948,7 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
             int ret = dirCreateHierarchy(
                     targetFile, UNZIP_DIRMODE, timestamp, true, sehnd);
             if (ret != 0) {
-                LOGE("Can't create containing directory for \"%s\": %s\n",
-                        targetFile, strerror(errno));
+                PLOG(ERROR) << "Can't create containing directory for \"" << targetFile << "\"";
                 ok = false;
                 break;
             }
@@ -957,8 +962,8 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
              * warn about this for now and preserve older behavior.
              */
             if (mzIsZipEntrySymlink(pEntry)) {
-                LOGE("Symlink entry \"%.*s\" will be output as a regular file.",
-                     pEntry->fileNameLen, pEntry->fileName);
+                LOG(ERROR) << "Symlink entry \"" << std::string(pEntry->fileName,
+                           pEntry->fileNameLen) << "\" will be output as a regular file.";
             }
 
             char *secontext = NULL;
@@ -977,8 +982,7 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
             }
 
             if (fd < 0) {
-                LOGE("Can't create target file \"%s\": %s\n",
-                        targetFile, strerror(errno));
+                PLOG(ERROR) << "Can't create target file \"" << targetFile << "\"";
                 ok = false;
                 break;
             }
@@ -991,25 +995,25 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
                 ok = false;
             }
             if (!ok) {
-                LOGE("Error extracting \"%s\"\n", targetFile);
+                LOG(ERROR) << "Error extracting \"" << targetFile << "\"";
                 ok = false;
                 break;
             }
 
             if (timestamp != NULL && utime(targetFile, timestamp)) {
-                LOGE("Error touching \"%s\"\n", targetFile);
+                LOG(ERROR) << "Error touching \"" << targetFile << "\"";
                 ok = false;
                 break;
             }
 
-            LOGV("Extracted file \"%s\"\n", targetFile);
+            LOG(VERBOSE) <<"Extracted file \"" << targetFile << "\"";
             ++extractCount;
         }
 
         if (callback != NULL) callback(targetFile, cookie);
     }
 
-    LOGV("Extracted %d file(s)\n", extractCount);
+    LOG(VERBOSE) << "Extracted " << extractCount << " file(s)";
 
     free(helper.buf);
     free(zpath);
