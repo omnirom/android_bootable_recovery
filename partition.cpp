@@ -2219,22 +2219,27 @@ void TWPartition::Recreate_Media_Folder(void) {
 	} else if (!TWFunc::Path_Exists("/data/media")) {
 		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
 		LOGINFO("Recreating /data/media folder.\n");
-		mkdir("/data/media", 0770);
+		mkdir("/data/media", 0775);
 		string Internal_path = DataManager::GetStrValue("tw_internal_path");
 		if (!Internal_path.empty()) {
 			LOGINFO("Recreating %s folder.\n", Internal_path.c_str());
-			mkdir(Internal_path.c_str(), 0770);
+			mkdir(Internal_path.c_str(), 0775);
 		}
+
+		// Internal Media always has same permissions
+		// Disregard possibly acquired permissions and always use defaults instead
+		chown("/data/media", 1023, 1023);
+
 #ifdef TW_INTERNAL_STORAGE_PATH
-		mkdir(EXPAND(TW_INTERNAL_STORAGE_PATH), 0770);
+		mkdir(EXPAND(TW_INTERNAL_STORAGE_PATH), 0775);
+		chown(EXPAND(TW_INTERNAL_STORAGE_PATH), 1023, 1023);
 #endif
+
 #ifdef HAVE_SELINUX
-		// Afterwards, we will try to set the
-		// default metadata that we were hopefully able to get during
-		// early boot.
-		tw_set_default_metadata("/data/media");
+		setfilecon("/data/media", "u:object_r:media_rw_data_file:s0");
 		if (!Internal_path.empty())
-			tw_set_default_metadata(Internal_path.c_str());
+			setfilecon(EXPAND(TW_INTERNAL_STORAGE_PATH), "u:object_r:media_rw_data_file:s0");
+		
 #endif
 		// Toggle mount to ensure that "internal sdcard" gets mounted
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
