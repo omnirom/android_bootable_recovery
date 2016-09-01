@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "recovery-persist"
-
 //
 // Strictly to deal with reboot into system after OTA after /data
 // mounts to pull the last pmsg file data and place it
@@ -40,10 +38,9 @@
 
 #include <string>
 
-#include <android/log.h> /* Android Log Priority Tags */
 #include <android-base/file.h>
-#include <log/log.h>
-#include <log/logger.h> /* Android Log packet format */
+#include <android-base/logging.h>
+
 #include <private/android_logger.h> /* private pmsg functions */
 
 static const char *LAST_LOG_FILE = "/data/misc/recovery/last_log";
@@ -57,14 +54,16 @@ static const int KEEP_LOG_COUNT = 10;
 // close a file, log an error if the error indicator is set
 static void check_and_fclose(FILE *fp, const char *name) {
     fflush(fp);
-    if (ferror(fp)) SLOGE("%s %s", name, strerror(errno));
+    if (ferror(fp)) {
+        PLOG(ERROR) << "Error in " << name;
+    }
     fclose(fp);
 }
 
 static void copy_file(const char* source, const char* destination) {
     FILE* dest_fp = fopen(destination, "w");
     if (dest_fp == nullptr) {
-        SLOGE("%s %s", destination, strerror(errno));
+        PLOG(ERROR) << "Can't open " << destination;
     } else {
         FILE* source_fp = fopen(source, "r");
         if (source_fp != nullptr) {
@@ -157,7 +156,7 @@ int main(int argc, char **argv) {
     static const char mounts_file[] = "/proc/mounts";
     FILE *fp = fopen(mounts_file, "r");
     if (!fp) {
-        SLOGV("%s %s", mounts_file, strerror(errno));
+        PLOG(ERROR) << "failed to open " << mounts_file;
     } else {
         char *line = NULL;
         size_t len = 0;

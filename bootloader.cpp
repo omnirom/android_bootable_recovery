@@ -25,10 +25,11 @@
 
 #include <fs_mgr.h>
 
-#include "bootloader.h"
-#include "common.h"
-#include "roots.h"
+#include <android-base/logging.h>
 #include <android-base/unique_fd.h>
+
+#include "bootloader.h"
+#include "roots.h"
 
 static int get_bootloader_message_block(bootloader_message* out, const Volume* v);
 static int set_bootloader_message_block(const bootloader_message* in, const Volume* v);
@@ -36,26 +37,26 @@ static int set_bootloader_message_block(const bootloader_message* in, const Volu
 int get_bootloader_message(bootloader_message* out) {
     Volume* v = volume_for_path("/misc");
     if (v == nullptr) {
-        LOGE("Cannot load volume /misc!\n");
+        LOG(ERROR) << "Cannot load volume /misc!";
         return -1;
     }
     if (strcmp(v->fs_type, "emmc") == 0) {
         return get_bootloader_message_block(out, v);
     }
-    LOGE("unknown misc partition fs_type \"%s\"\n", v->fs_type);
+    LOG(ERROR) << "unknown misc partition fs_type \"" << v->fs_type << "\"";
     return -1;
 }
 
 int set_bootloader_message(const bootloader_message* in) {
     Volume* v = volume_for_path("/misc");
     if (v == nullptr) {
-        LOGE("Cannot load volume /misc!\n");
+        LOG(ERROR) << "Cannot load volume /misc!";
         return -1;
     }
     if (strcmp(v->fs_type, "emmc") == 0) {
         return set_bootloader_message_block(in, v);
     }
-    LOGE("unknown misc partition fs_type \"%s\"\n", v->fs_type);
+    LOG(ERROR) << "unknown misc partition fs_type \"" << v->fs_type << "\"";
     return -1;
 }
 
@@ -86,17 +87,17 @@ static int get_bootloader_message_block(bootloader_message* out,
     wait_for_device(v->blk_device);
     FILE* f = fopen(v->blk_device, "rb");
     if (f == nullptr) {
-        LOGE("failed to open \"%s\": %s\n", v->blk_device, strerror(errno));
+        PLOG(ERROR) << "failed to open \"" << v->blk_device << "\"";
         return -1;
     }
     bootloader_message temp;
     int count = fread(&temp, sizeof(temp), 1, f);
     if (count != 1) {
-        LOGE("failed to read \"%s\": %s\n", v->blk_device, strerror(errno));
+        PLOG(ERROR) << "failed to read \"" << v->blk_device << "\"";
         return -1;
     }
     if (fclose(f) != 0) {
-        LOGE("failed to close \"%s\": %s\n", v->blk_device, strerror(errno));
+        PLOG(ERROR) << "failed to close \"" << v->blk_device << "\"";
         return -1;
     }
     memcpy(out, &temp, sizeof(temp));
@@ -108,7 +109,7 @@ static int set_bootloader_message_block(const bootloader_message* in,
     wait_for_device(v->blk_device);
     android::base::unique_fd fd(open(v->blk_device, O_WRONLY | O_SYNC));
     if (fd == -1) {
-        LOGE("failed to open \"%s\": %s\n", v->blk_device, strerror(errno));
+        PLOG(ERROR) << "failed to open \"" << v->blk_device << "\"";
         return -1;
     }
 
@@ -118,15 +119,15 @@ static int set_bootloader_message_block(const bootloader_message* in,
     while (written < total) {
         ssize_t wrote = TEMP_FAILURE_RETRY(write(fd, start + written, total - written));
         if (wrote == -1) {
-            LOGE("failed to write %" PRId64 " bytes: %s\n",
-                 static_cast<off64_t>(written), strerror(errno));
+            PLOG(ERROR) << "failed to write " << total << " bytes, " << written
+                        << " bytes written";
             return -1;
         }
         written += wrote;
     }
 
     if (fsync(fd) == -1) {
-        LOGE("failed to fsync \"%s\": %s\n", v->blk_device, strerror(errno));
+        PLOG(ERROR) << "failed to fsync \"" << v->blk_device << "\"";
         return -1;
     }
     return 0;

@@ -145,7 +145,7 @@ LOCAL_SRC_FILES := \
     asn1_decoder.cpp \
     verifier.cpp \
     ui.cpp
-LOCAL_STATIC_LIBRARIES := libcrypto_utils libcrypto
+LOCAL_STATIC_LIBRARIES := libcrypto_utils libcrypto libbase
 include $(BUILD_STATIC_LIBRARY)
 
 include $(LOCAL_PATH)/minui/Android.mk \

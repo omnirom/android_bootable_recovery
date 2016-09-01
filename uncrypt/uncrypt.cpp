@@ -116,9 +116,6 @@
 #include <cutils/sockets.h>
 #include <fs_mgr.h>
 
-#define LOG_TAG "uncrypt"
-#include <log/log.h>
-
 #define WINDOW_SIZE 5
 
 // uncrypt provides three services: SETUP_BCB, CLEAR_BCB and UNCRYPT.
@@ -139,11 +136,11 @@ static struct fstab* fstab = nullptr;
 
 static int write_at_offset(unsigned char* buffer, size_t size, int wfd, off64_t offset) {
     if (TEMP_FAILURE_RETRY(lseek64(wfd, offset, SEEK_SET)) == -1) {
-        ALOGE("error seeking to offset %" PRId64 ": %s", offset, strerror(errno));
+        PLOG(ERROR) << "error seeking to offset " << offset;
         return -1;
     }
     if (!android::base::WriteFully(wfd, buffer, size)) {
-        ALOGE("error writing offset %" PRId64 ": %s", offset, strerror(errno));
+        PLOG(ERROR) << "error writing offset " << offset;
         return -1;
     }
     return 0;
@@ -167,13 +164,13 @@ static struct fstab* read_fstab() {
     // The fstab path is always "/fstab.${ro.hardware}".
     char fstab_path[PATH_MAX+1] = "/fstab.";
     if (!property_get("ro.hardware", fstab_path+strlen(fstab_path), "")) {
-        ALOGE("failed to get ro.hardware");
+        LOG(ERROR) << "failed to get ro.hardware";
         return NULL;
     }
 
     fstab = fs_mgr_read_fstab(fstab_path);
     if (!fstab) {
-        ALOGE("failed to read %s", fstab_path);
+        LOG(ERROR) << "failed to read " << fstab_path;
         return NULL;
     }
 
@@ -219,7 +216,7 @@ static bool find_uncrypt_package(const std::string& uncrypt_path_file, std::stri
     CHECK(package_name != nullptr);
     std::string uncrypt_path;
     if (!android::base::ReadFileToString(uncrypt_path_file, &uncrypt_path)) {
-        ALOGE("failed to open \"%s\": %s", uncrypt_path_file.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to open \"" << uncrypt_path_file << "\"";
         return false;
     }
 
@@ -232,33 +229,33 @@ static int produce_block_map(const char* path, const char* map_file, const char*
                              bool encrypted, int socket) {
     std::string err;
     if (!android::base::RemoveFileIfExists(map_file, &err)) {
-        ALOGE("failed to remove the existing map file %s: %s", map_file, err.c_str());
+        LOG(ERROR) << "failed to remove the existing map file " << map_file << ": " << err;
         return -1;
     }
     std::string tmp_map_file = std::string(map_file) + ".tmp";
     android::base::unique_fd mapfd(open(tmp_map_file.c_str(),
                                         O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR));
     if (mapfd == -1) {
-        ALOGE("failed to open %s: %s\n", tmp_map_file.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to open " << tmp_map_file;
         return -1;
     }
 
     // Make sure we can write to the socket.
     if (!write_status_to_socket(0, socket)) {
-        ALOGE("failed to write to socket %d\n", socket);
+        LOG(ERROR) << "failed to write to socket " << socket;
         return -1;
     }
 
     struct stat sb;
     if (stat(path, &sb) != 0) {
-        ALOGE("failed to stat %s", path);
+        LOG(ERROR) << "failed to stat " << path;
         return -1;
     }
 
-    ALOGI(" block size: %ld bytes", static_cast<long>(sb.st_blksize));
+    LOG(INFO) << " block size: " << sb.st_blksize << " bytes";
 
     int blocks = ((sb.st_size-1) / sb.st_blksize) + 1;
-    ALOGI("  file size: %" PRId64 " bytes, %d blocks", sb.st_size, blocks);
+    LOG(INFO) << "  file size: " << sb.st_size << " bytes, " << blocks << " blocks";
 
     std::vector<int> ranges;
 
@@ -266,7 +263,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
                        blk_dev, static_cast<int64_t>(sb.st_size),
                        static_cast<int64_t>(sb.st_blksize));
     if (!android::base::WriteStringToFd(s, mapfd)) {
-        ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to write " << tmp_map_file;
         return -1;
     }
 
@@ -279,7 +276,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 
     android::base::unique_fd fd(open(path, O_RDONLY));
     if (fd == -1) {
-        ALOGE("failed to open %s for reading: %s", path, strerror(errno));
+        PLOG(ERROR) << "failed to open " << path << " for reading";
         return -1;
     }
 
@@ -287,7 +284,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     if (encrypted) {
         wfd.reset(open(blk_dev, O_WRONLY));
         if (wfd == -1) {
-            ALOGE("failed to open fd for writing: %s", strerror(errno));
+            PLOG(ERROR) << "failed to open " << blk_dev << " for writing";
             return -1;
         }
     }
@@ -306,7 +303,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
             // write out head buffer
             int block = head_block;
             if (ioctl(fd, FIBMAP, &block) != 0) {
-                ALOGE("failed to find block %d", head_block);
+                LOG(ERROR) << "failed to find block " << head_block;
                 return -1;
             }
             add_block_to_ranges(ranges, block);
@@ -325,7 +322,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
             size_t to_read = static_cast<size_t>(
                     std::min(static_cast<off64_t>(sb.st_blksize), sb.st_size - pos));
             if (!android::base::ReadFully(fd, buffers[tail].data(), to_read)) {
-                ALOGE("failed to read: %s", strerror(errno));
+                PLOG(ERROR) << "failed to read " << path;
                 return -1;
             }
             pos += to_read;
@@ -342,7 +339,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         // write out head buffer
         int block = head_block;
         if (ioctl(fd, FIBMAP, &block) != 0) {
-            ALOGE("failed to find block %d", head_block);
+            LOG(ERROR) << "failed to find block " << head_block;
             return -1;
         }
         add_block_to_ranges(ranges, block);
@@ -358,39 +355,39 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 
     if (!android::base::WriteStringToFd(
             android::base::StringPrintf("%zu\n", ranges.size() / 2), mapfd)) {
-        ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to write " << tmp_map_file;
         return -1;
     }
     for (size_t i = 0; i < ranges.size(); i += 2) {
         if (!android::base::WriteStringToFd(
                 android::base::StringPrintf("%d %d\n", ranges[i], ranges[i+1]), mapfd)) {
-            ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
+            PLOG(ERROR) << "failed to write " << tmp_map_file;
             return -1;
         }
     }
 
     if (fsync(mapfd) == -1) {
-        ALOGE("failed to fsync \"%s\": %s", tmp_map_file.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to fsync \"" << tmp_map_file << "\"";
         return -1;
     }
     if (close(mapfd.release()) == -1) {
-        ALOGE("failed to close %s: %s", tmp_map_file.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to close " << tmp_map_file;
         return -1;
     }
 
     if (encrypted) {
         if (fsync(wfd) == -1) {
-            ALOGE("failed to fsync \"%s\": %s", blk_dev, strerror(errno));
+            PLOG(ERROR) << "failed to fsync \"" << blk_dev << "\"";
             return -1;
         }
         if (close(wfd.release()) == -1) {
-            ALOGE("failed to close %s: %s", blk_dev, strerror(errno));
+            PLOG(ERROR) << "failed to close " << blk_dev;
             return -1;
         }
     }
 
     if (rename(tmp_map_file.c_str(), map_file) == -1) {
-        ALOGE("failed to rename %s to %s: %s", tmp_map_file.c_str(), map_file, strerror(errno));
+        PLOG(ERROR) << "failed to rename " << tmp_map_file << " to " << map_file;
         return -1;
     }
     // Sync dir to make rename() result written to disk.
@@ -398,28 +395,28 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     std::string dir_name = dirname(&file_name[0]);
     android::base::unique_fd dfd(open(dir_name.c_str(), O_RDONLY | O_DIRECTORY));
     if (dfd == -1) {
-        ALOGE("failed to open dir %s: %s", dir_name.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to open dir " << dir_name;
         return -1;
     }
     if (fsync(dfd) == -1) {
-        ALOGE("failed to fsync %s: %s", dir_name.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to fsync " << dir_name;
         return -1;
     }
     if (close(dfd.release()) == -1) {
-        ALOGE("failed to close %s: %s", dir_name.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to close " << dir_name;
         return -1;
     }
     return 0;
 }
 
 static int uncrypt(const char* input_path, const char* map_file, const int socket) {
-    ALOGI("update package is \"%s\"", input_path);
+    LOG(INFO) << "update package is \"" << input_path << "\"";
 
     // Turn the name of the file we're supposed to convert into an
     // absolute path, so we can find what filesystem it's on.
     char path[PATH_MAX+1];
     if (realpath(input_path, path) == NULL) {
-        ALOGE("failed to convert \"%s\" to absolute path: %s", input_path, strerror(errno));
+        PLOG(ERROR) << "failed to convert \"" << input_path << "\" to absolute path";
         return 1;
     }
 
@@ -427,15 +424,15 @@ static int uncrypt(const char* input_path, const char* map_file, const int socke
     bool encrypted;
     const char* blk_dev = find_block_device(path, &encryptable, &encrypted);
     if (blk_dev == NULL) {
-        ALOGE("failed to find block device for %s", path);
+        LOG(ERROR) << "failed to find block device for " << path;
         return 1;
     }
 
     // If the filesystem it's on isn't encrypted, we only produce the
     // block map, we don't rewrite the file contents (it would be
     // pointless to do so).
-    ALOGI("encryptable: %s", encryptable ? "yes" : "no");
-    ALOGI("  encrypted: %s", encrypted ? "yes" : "no");
+    LOG(INFO) << "encryptable: " << (encryptable ? "yes" : "no");
+    LOG(INFO) << "  encrypted: " << (encrypted ? "yes" : "no");
 
     // Recovery supports installing packages from 3 paths: /cache,
     // /data, and /sdcard.  (On a particular device, other locations
@@ -445,7 +442,7 @@ static int uncrypt(const char* input_path, const char* map_file, const int socke
     // can read the package without mounting the partition.  On /cache
     // and /sdcard we leave the file alone.
     if (strncmp(path, "/data/", 6) == 0) {
-        ALOGI("writing block map %s", map_file);
+        LOG(INFO) << "writing block map " << map_file;
         if (produce_block_map(path, map_file, blk_dev, encrypted, socket) != 0) {
             return 1;
         }
@@ -476,7 +473,7 @@ static bool uncrypt_wrapper(const char* input_path, const char* map_file, const 
 static bool clear_bcb(const int socket) {
     std::string err;
     if (!clear_bootloader_message(&err)) {
-        ALOGE("failed to clear bootloader message: %s", err.c_str());
+        LOG(ERROR) << "failed to clear bootloader message: " << err;
         write_status_to_socket(-1, socket);
         return false;
     }
@@ -488,7 +485,7 @@ static bool setup_bcb(const int socket) {
     // c5. receive message length
     int length;
     if (!android::base::ReadFully(socket, &length, 4)) {
-        ALOGE("failed to read the length: %s", strerror(errno));
+        PLOG(ERROR) << "failed to read the length";
         return false;
     }
     length = ntohl(length);
@@ -497,15 +494,15 @@ static bool setup_bcb(const int socket) {
     std::string content;
     content.resize(length);
     if (!android::base::ReadFully(socket, &content[0], length)) {
-        ALOGE("failed to read the length: %s", strerror(errno));
+        PLOG(ERROR) << "failed to read the length";
         return false;
     }
-    ALOGI("  received command: [%s] (%zu)", content.c_str(), content.size());
+    LOG(INFO) << "  received command: [" << content << "] (" << content.size() << ")";
 
     // c8. setup the bcb command
     std::string err;
     if (!write_bootloader_message({content}, &err)) {
-        ALOGE("failed to set bootloader message: %s", err.c_str());
+        LOG(ERROR) << "failed to set bootloader message: " << err;
         write_status_to_socket(-1, socket);
         return false;
     }
@@ -549,19 +546,19 @@ int main(int argc, char** argv) {
     // will use the socket to communicate with its caller.
     android::base::unique_fd service_socket(android_get_control_socket(UNCRYPT_SOCKET.c_str()));
     if (service_socket == -1) {
-        ALOGE("failed to open socket \"%s\": %s", UNCRYPT_SOCKET.c_str(), strerror(errno));
+        PLOG(ERROR) << "failed to open socket \"" << UNCRYPT_SOCKET << "\"";
         return 1;
     }
     fcntl(service_socket, F_SETFD, FD_CLOEXEC);
 
     if (listen(service_socket, 1) == -1) {
-        ALOGE("failed to listen on socket %d: %s", service_socket.get(), strerror(errno));
+        PLOG(ERROR) << "failed to listen on socket " << service_socket.get();
         return 1;
     }
 
     android::base::unique_fd socket_fd(accept4(service_socket, nullptr, nullptr, SOCK_CLOEXEC));
     if (socket_fd == -1) {
-        ALOGE("failed to accept on socket %d: %s", service_socket.get(), strerror(errno));
+        PLOG(ERROR) << "failed to accept on socket " << service_socket.get();
         return 1;
     }
 
@@ -577,7 +574,7 @@ int main(int argc, char** argv) {
             success = clear_bcb(socket_fd);
             break;
         default:  // Should never happen.
-            ALOGE("Invalid uncrypt action code: %d", action);
+            LOG(ERROR) << "Invalid uncrypt action code: " << action;
             return 1;
     }
 
@@ -586,9 +583,9 @@ int main(int argc, char** argv) {
     // destroyed.
     int code;
     if (android::base::ReadFully(socket_fd, &code, 4)) {
-        ALOGI("  received %d, exiting now", code);
+        LOG(INFO) << "  received " << code << ", exiting now";
     } else {
-        ALOGE("failed to read the code: %s", strerror(errno));
+        PLOG(ERROR) << "failed to read the code";
     }
     return success ? 0 : 1;
 }
