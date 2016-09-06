@@ -1,5 +1,5 @@
 /*
-	Copyright 2016 TeamWin
+	Copyright 2003 to 2017 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -51,7 +51,6 @@
 #include "gui/gui.hpp"
 #include "gui/pages.hpp"
 #include "orscmd/orscmd.h"
-#include "adbbu/libtwadbbu.hpp"
 #include "twinstall.h"
 extern "C" {
 	#include "gui/gui.h"
@@ -292,15 +291,6 @@ int OpenRecoveryScript::run_script_file(void) {
 					ret_val = 1;
 				else
 					gui_msg("done=Done.");
-			} else if (strncmp(command, "adbbackup", 9) == 0) {
-				ret_val = Backup_ADB_Command(value);
-				if (ret_val == 1) {
-					twadbbu::Write_TWERROR();
-					gui_err("adbbackup_error=Error with ADB Backup. Quitting...");
-				}
-			} else if (strcmp(command, "adbrestore") == 0) {
-				LOGINFO("running adb restore\n");
-				ret_val = Restore_ADB_Backup();
 			} else if (strcmp(command, "remountrw") == 0) {
 				ret_val = remountrw();
 			} else if (strcmp(command, "mount") == 0) {
@@ -509,72 +499,6 @@ int OpenRecoveryScript::Install_Command(string Zip) {
 	return ret_val;
 }
 
-int OpenRecoveryScript::Backup_ADB_Command(std::string Options) {
-	std::vector<std::string> args;
-	std::string Backup_List;
-	bool adbbackup = true, ret = false;
-	std::string rmopt = "--";
-
-	std::replace(Options.begin(), Options.end(), ':', ' ');
-	args = TWFunc::Split_String(Options, " ");
-
-	DataManager::SetValue(TW_USE_COMPRESSION_VAR, 0);
-	DataManager::SetValue(TW_SKIP_DIGEST_GENERATE_VAR, 0);
-
-	if (args[1].compare("--twrp") != 0) {
-		gui_err("twrp_adbbu_option=--twrp option is required to enable twrp adb backup");
-		sleep(2);
-		return 1;
-	}
-
-	for (unsigned i = 2; i < args.size(); i++) {
-		int compress;
-
-		std::string::size_type size = args[i].find(rmopt);
-		if (size != std::string::npos)
-			args[i].erase(size, rmopt.length());
-
-		if (args[i].compare("compress") == 0) {
-			gui_msg("compression_on=Compression is on");
-			DataManager::SetValue(TW_USE_COMPRESSION_VAR, 1);
-			continue;
-		}
-		DataManager::GetValue(TW_USE_COMPRESSION_VAR, compress);
-		gui_print("%s\n", args[i].c_str());
-		std::string path;
-		path = "/" + args[i];
-		TWPartition* part = PartitionManager.Find_Partition_By_Path(path);
-		if (part) {
-			Backup_List += path;
-			Backup_List += ";";
-		}
-		else {
-			gui_msg(Msg(msg::kError, "partition_not_found=path: {1} not found in partition list")(path));
-			return 1;
-		}
-	}
-
-	if (Backup_List.empty()) {
-		DataManager::GetValue("tw_backup_list", Backup_List);
-		if (Backup_List.empty()) {
-			gui_err("no_partition_selected=No partitions selected for backup.");
-			return 1;
-		}
-	}
-	else
-		DataManager::SetValue("tw_backup_list", Backup_List);
-
-	ret = PartitionManager.Run_Backup(adbbackup);
-	DataManager::SetValue(TW_BACKUP_NAME, gui_lookup("auto_generate", "(Auto Generate)"));
-	if (!ret) {
-		gui_err("backup_fail=Backup failed");
-		return 1;
-	}
-	gui_msg("backup_complete=Backup Complete");
-	sleep(2); //give time for user to see messages on console
-	return 0;
-}
-
 string OpenRecoveryScript::Locate_Zip_File(string Zip, string Storage_Root) {
 	string Path = TWFunc::Get_Path(Zip);
 	string File = TWFunc::Get_Filename(Zip);
@@ -740,191 +664,6 @@ void OpenRecoveryScript::Run_CLI_Command(const char* command) {
 	// let the GUI close the output fd and restart the command listener
 	call_after_cli_command();
 	LOGINFO("Done reading ORS command from command line\n");
-}
-
-int OpenRecoveryScript::Restore_ADB_Backup(void) {
-	bool breakloop = false;
-	int partition_count = 0;
-	std::string Restore_Name;
-	struct AdbBackupFileTrailer adbmd5;
-	struct PartitionSettings part_settings;
-	int adb_control_twrp_fd;
-	int adb_control_bu_fd, ret = 0;
-	char cmd[512];
-
-	part_settings.total_restore_size = 0;
-
-	PartitionManager.Mount_All_Storage();
-	DataManager::SetValue(TW_SKIP_DIGEST_CHECK_VAR, 0);
-
-	LOGINFO("opening TW_ADB_BU_CONTROL\n");
-	adb_control_bu_fd = open(TW_ADB_BU_CONTROL, O_WRONLY | O_NONBLOCK);
-	if (adb_control_bu_fd < 0) {
-		LOGERR("Error opening TW_ADB_BU_CONTROL\n");
-		return -1;
-	}
-	LOGINFO("opening TW_ADB_TWRP_CONTROL\n");
-	adb_control_twrp_fd = open(TW_ADB_TWRP_CONTROL, O_RDONLY | O_NONBLOCK);
-	if (adb_control_twrp_fd < 0) {
-		LOGERR("Error opening TW_ADB_TWRP_CONTROL\n");
-		close(adb_control_bu_fd);
-		return -1;
-	}
-
-	memset(&adbmd5, 0, sizeof(adbmd5));
-
-	while (!breakloop) {
-		memset(&cmd, 0, sizeof(cmd));
-		if (read(adb_control_twrp_fd, cmd, sizeof(cmd)) > 0) {
-			struct AdbBackupControlType cmdstruct;
-
-			memset(&cmdstruct, 0, sizeof(cmdstruct));
-			memcpy(&cmdstruct, cmd, sizeof(cmdstruct));
-			std::string cmdstr(cmdstruct.type);
-			std::string cmdtype = cmdstr.substr(0, sizeof(cmdstruct.type) - 1);
-			if (cmdstr.substr(0, sizeof(cmdstruct.type) - 1) == TWSTREAMHDR) {
-				struct AdbBackupStreamHeader twhdr;
-				memcpy(&twhdr, cmd, sizeof(cmd));
-				LOGINFO("ADB Partition count: %" PRIu64 "\n", twhdr.partition_count);
-				LOGINFO("ADB version: %" PRIu64 "\n", twhdr.version);
-				if (twhdr.version != ADB_BACKUP_VERSION) {
-					LOGERR("Incompatible adb backup version!\n");
-					breakloop = false;
-					break;
-				}
-				partition_count = twhdr.partition_count;
-			}
-			else if (cmdtype == MD5TRAILER) {
-				LOGINFO("Restoring MD5TRAILER\n");
-				memcpy(&adbmd5, cmd, sizeof(cmd));
-			}
-			else if (cmdtype == TWMD5) {
-				struct AdbBackupFileTrailer md5check;
-				LOGINFO("Restoring TWMD5\n");
-
-				memset(&md5check, 0, sizeof(md5check));
-				memcpy(&md5check, cmd, sizeof(cmd));
-				if (strcmp(md5check.md5, adbmd5.md5) != 0) {
-					LOGERR("md5 doesn't match!\n");
-					LOGERR("file md5: %s\n", adbmd5.md5);
-					LOGERR("check md5: %s\n", md5check.md5);
-					breakloop = true;
-					ret = 1;
-					break;
-				}
-				else {
-					LOGINFO("adbrestore md5 matches\n");
-					LOGINFO("adbmd5.md5: %s\n", adbmd5.md5);
-					LOGINFO("md5check.md5: %s\n", md5check.md5);
-				}
-			}
-			else if (cmdtype == TWENDADB) {
-				LOGINFO("received TWENDADB\n");
-				breakloop = true;
-				break;
-			}
-			else {
-				struct twfilehdr twimghdr;
-				memcpy(&twimghdr, cmd, sizeof(cmd));
-				std::string cmdstr(twimghdr.type);
-				Restore_Name = twimghdr.name;
-				part_settings.total_restore_size = twimghdr.size;
-				if (cmdtype == TWIMG) {
-					LOGINFO("ADB Type: %s\n", twimghdr.type);
-					LOGINFO("ADB Restore_Name: %s\n", Restore_Name.c_str());
-					LOGINFO("ADB Restore_size: %" PRIu64 "\n", part_settings.total_restore_size);
-					string compression = (twimghdr.compressed == 1) ? "compressed" : "uncompressed";
-					LOGINFO("ADB compression: %s\n", compression.c_str());
-					std::string Backup_FileName;
-					std::size_t pos = Restore_Name.find_last_of("/");
-					std::string path = "/" + Restore_Name.substr(pos, Restore_Name.size());
-					pos = path.find_first_of(".");
-					path = path.substr(0, pos);
-					if (path.substr(0,1).compare("//")) {
-						path = path.substr(1, path.size());
-					}
-
-					pos = Restore_Name.find_last_of("/");
-					Backup_FileName = Restore_Name.substr(pos + 1, Restore_Name.size());
-					part_settings.Part = PartitionManager.Find_Partition_By_Path(path);
-					part_settings.Backup_Folder = path;
-					part_settings.partition_count = partition_count;
-					part_settings.adbbackup = true;
-					part_settings.adb_compression = twimghdr.compressed;
-					part_settings.PM_Method = PM_RESTORE;
-					ProgressTracking progress(part_settings.total_restore_size);
-					part_settings.progress = &progress;
-					if (!PartitionManager.Restore_Partition(&part_settings)) {
-						LOGERR("ADB Restore failed.\n");
-						close(adb_control_twrp_fd);
-						close(adb_control_bu_fd);
-						return 1;
-					}
-				}
-				else if (cmdtype == TWFN) {
-					LOGINFO("ADB Type: %s\n", twimghdr.type);
-					LOGINFO("ADB Restore_Name: %s\n", Restore_Name.c_str());
-					LOGINFO("ADB Restore_size: %" PRIi64 "\n", part_settings.total_restore_size);
-					string compression = (twimghdr.compressed == 1) ? "compressed" : "uncompressed";
-					LOGINFO("ADB compression: %s\n", compression.c_str());
-					std::string Backup_FileName;
-					std::size_t pos = Restore_Name.find_last_of("/");
-					std::string path = "/" + Restore_Name.substr(pos, Restore_Name.size());
-					pos = path.find_first_of(".");
-					path = path.substr(0, pos);
-					if (path.substr(0,1).compare("//")) {
-						path = path.substr(1, path.size());
-					}
-
-					pos = Restore_Name.find_last_of("/");
-					Backup_FileName = Restore_Name.substr(pos + 1, Restore_Name.size());
-					pos = Restore_Name.find_last_of("/");
-					part_settings.Part = PartitionManager.Find_Partition_By_Path(path);
-
-					if (path.compare("/system") == 0) {
-						if (part_settings.Part->Is_Read_Only()) {
-							struct AdbBackupControlType twerror;
-							strncpy(twerror.start_of_header, TWRP, sizeof(twerror.start_of_header));
-							strncpy(twerror.type, TWERROR, sizeof(twerror.type));
-							memset(twerror.space, 0, sizeof(twerror.space));
-							twerror.crc = crc32(0L, Z_NULL, 0);
-							twerror.crc = crc32(twerror.crc, (const unsigned char*) &twerror, sizeof(twerror));
-							if (write(adb_control_bu_fd, &twerror, sizeof(twerror)) < 0) {
-								LOGERR("Cannot write to ADB_CONTROL_BU_FD: %s\n", strerror(errno));
-							}
-							gui_msg(Msg(msg::kError, "restore_read_only=Cannot restore {1} -- mounted read only.")(part_settings.Part->Backup_Display_Name));
-							close(adb_control_twrp_fd);
-							close(adb_control_bu_fd);
-							return 1;
-
-						}
-					}
-					part_settings.partition_count = partition_count;
-					part_settings.adbbackup = true;
-					part_settings.adb_compression = twimghdr.compressed;
-					part_settings.Part->Set_Backup_FileName(part_settings.Part->Get_Backup_Name() + "." + part_settings.Part->Current_File_System + ".win");
-					part_settings.total_restore_size += part_settings.Part->Get_Restore_Size(&part_settings);
-					part_settings.PM_Method = PM_RESTORE;
-					ProgressTracking progress(part_settings.total_restore_size);
-					part_settings.progress = &progress;
-					if (!PartitionManager.Restore_Partition(&part_settings)) {
-						LOGERR("ADB Restore failed.\n");
-						close(adb_control_twrp_fd);
-						close(adb_control_bu_fd);
-						return 1;
-					}
-				}
-			}
-		}
-	}
-	close(adb_control_twrp_fd);
-	close(adb_control_bu_fd);
-	gui_msg("restore_complete=Restore Complete");
-
-	if (!twadbbu::Write_TWENDADB())
-		ret = 1;
-	sleep(2); //give time for user to see messages on console
-	return ret;
 }
 
 int OpenRecoveryScript::remountrw(void)
