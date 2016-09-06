@@ -95,6 +95,7 @@ public:
 	static void Disable_Stock_Recovery_Replace(); // Disable stock ROMs from replacing TWRP with stock recovery
 	static unsigned long long IOCTL_Get_Block_Size(const char* block_device);
 	static void copy_kernel_log(string curr_storage); // Copy Kernel Log to Current Storage (PSTORE/KMSG)
+	static void stream_adb_backup(string &Restore_Name);
 
 private:
 	static void Copy_Log(string Source, string Destination);

@@ -1709,6 +1709,7 @@ string TWPartition::Get_Restore_File_System(PartitionSettings *part_settings) {
 	string Restore_File_System;
 
 	// Parse backup filename to extract the file system before wiping
+	LOGINFO("Get_Restore_File_System::Backup_FileName: %s\n", Backup_FileName.c_str());
 	first_period = Backup_FileName.find(".");
 	if (first_period == string::npos) {
 		LOGERR("Unable to find file system (first period).\n");
@@ -2218,6 +2219,7 @@ bool TWPartition::Backup_Image(PartitionSettings *part_settings) {
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
 
 	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
+	LOGINFO("Backup_Image::Backup_FileName: %s\n", Backup_FileName.c_str());
 
 	if (part_settings->adbbackup) {
 		Full_FileName = TW_ADB_BACKUP;
@@ -2344,7 +2346,7 @@ bool TWPartition::Backup_Dump_Image(PartitionSettings *part_settings) {
 	if (part_settings->progress)
 		part_settings->progress->SetPartitionSize(Backup_Size);
 
-	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
+	LOGINFO("Backup_Dump_Image::Backup_FileName: %s\n", Backup_FileName.c_str());
 	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 
 	Command = "dump_image " + MTD_Name + " '" + Full_FileName + "'";
@@ -2374,6 +2376,7 @@ unsigned long long TWPartition::Get_Restore_Size(PartitionSettings *part_setting
 		}
 	}
 
+	LOGINFO("Get_Restore_Size::Backup_FileName: %s\n", Backup_FileName.c_str());
 	string Full_FileName, Restore_File_System = Get_Restore_File_System(part_settings);
 
 	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
@@ -2425,6 +2428,7 @@ bool TWPartition::Restore_Tar(PartitionSettings *part_settings) {
 	if (!ReMount_RW(true))
 		return false;
 
+	LOGINFO("Restore_Tar\n");
 	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 	twrpTar tar;
 	tar.part_settings = part_settings;
