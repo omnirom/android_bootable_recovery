@@ -82,6 +82,7 @@
 		<string name="file">文件：</string>
 		<string name="zip_sig_chk">Zip 文件签名校验</string>
 		<string name="inject_twrp_chk">安装完成后注入 TWRP</string>
+		<string name="install_reboot_chk">安装完成后重启</string>
 		<string name="options_hdr">选项</string>
 		<string name="confirm_flash_hdr">确认刷入</string>
 		<string name="zip_queue">列表：</string>
@@ -662,9 +663,14 @@
 		<string name="backup_name_len">备份名称太长。</string>
 		<string name="backup_name_invalid">备份名称中 '{1}' 中包含无效字符：'{1}'</string>
 		<string name="no_real_sdcard">设备没有真正的 SD 卡！中止！</string>
-		<string name="cancel_sideload">取消ADB sideload…</string>
+		<string name="cancel_sideload">取消 ADB sideload…</string>
 		<string name="change_fs_err">更换文件系统出错。</string>
 		<string name="theme_ver_err">自定义主题不兼容 TWRP 版本。请使用官方主题。</string>
 		<string name="up_a_level">(返回上级目录)</string>
+		<string name="install_reboot" version="2">%tw_sleep% 秒后重启</string>
+		<string name="adbbackup_error">ADB 备份错误，正在退出…</string>
+		<string name="adbbackup_control_error">无法写入 ADB 控制通道</string>
+		<string name="twrp_adbbu_option">--必须启用 TWRP 选项 TWRP ADB 备份</string>
+		<string name="partition_not_found">在分区表里找不到不到路径</string>
 	</resources>
 </language>
