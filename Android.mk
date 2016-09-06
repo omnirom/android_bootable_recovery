@@ -60,7 +60,8 @@ LOCAL_SRC_FILES := \
     twinstall.cpp \
     twrp-functions.cpp \
     openrecoveryscript.cpp \
-    tarWrite.c
+    tarWrite.c \
+    twrpAdbBuFifo.cpp
 
 ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)
   LOCAL_SRC_FILES += $(TARGET_RECOVERY_REBOOT_SRC)
