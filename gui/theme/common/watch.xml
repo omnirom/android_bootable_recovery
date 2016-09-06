@@ -2784,6 +2784,7 @@
 			</text>
 
 			<listbox style="scrolllist">
+				<condition var1="tw_enable_adb_backup" op="=" var2="0"/>
 				<placement x="%col1_x_left%" y="%row2_header_y%" w="%content_width%" h="%partitionlist_wipe_height%"/>
 				<listitem name="{@restore_enable_digest_chk=Enable Digest Verification of Backup Files}">
 					<data variable="tw_skip_digest_check"/>
