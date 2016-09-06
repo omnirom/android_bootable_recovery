@@ -14,23 +14,25 @@
 		along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <fstream>
+#ifndef _TWRPBACK_HPP
+#define _TWRPBACK_HPP
 
+#include <fstream>
 #include "../orscmd/orscmd.h"
-#include "../variables.h"
-#include "../twcommon.h"
 
 class twrpback {
 public:
 	int adbd_fd;                                                             // adbd data stream
-
 	twrpback(void);
 	virtual ~twrpback(void);
 	int backup(std::string command);                                         // adb backup stream
 	int restore(void);                                                       // adb restore stream
 	void adblogwrite(std::string writemsg);                                  // adb debugging log function
-	void close_backup_fds();                                                 // close backup resources
-	void close_restore_fds();                                                // close restore resources
+	void createFifos(void);                                                  // create fifos needed for adb backup
+	void closeFifos(void);                                                   // close created fifos 
+	void streamFileForTWRP(void);
+	void setStreamFileName(std::string fn);
+	void threadStream(void);
 
 private:
 	int read_fd;                                                             // ors input fd
@@ -45,5 +47,12 @@ private:
 	char cmd[512];                                                           // store result of commands
 	char operation[512];                                                     // operation to send to ors
 	std::ofstream adblogfile;                                                // adb stream log file
+	std::string streamFn;
+	typedef void (twrpback::*ThreadPtr)(void);
+	typedef void* (*PThreadPtr)(void *);
 	void adbloginit(void);                                                   // setup adb log stream file
+	void close_backup_fds();                                                 // close backup resources
+	void close_restore_fds();                                                // close restore resources
 };
+
+#endif // _TWRPBACK_HPP

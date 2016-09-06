@@ -439,6 +439,10 @@ static void ors_command_read()
 	int read_ret = read(ors_read_fd, &command, sizeof(command));
 
 	if (read_ret > 0) {
+		int gui_adb_backup;
+
+		DataManager::GetValue("tw_enable_adb_backup", gui_adb_backup);
+
 		command[1022] = '\n';
 		command[1023] = '\0';
 		LOGINFO("Command '%s' received\n", command);
@@ -451,7 +455,7 @@ static void ors_command_read()
 			unlink(ORS_OUTPUT_FILE);
 			return;
 		}
-		if (DataManager::GetIntValue("tw_busy") != 0) {
+		if (!gui_adb_backup || !DataManager::GetIntValue("tw_busy") != 0) {
 			fputs("Failed, operation in progress\n", orsout);
 			LOGINFO("Command cannot be performed, operation in progress.\n");
 			fclose(orsout);

@@ -27,11 +27,114 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <string>
+#include <vector>
 #include <fstream>
 #include <sstream>
 
 #include "twadbstream.h"
 #include "libtwadbbu.hpp"
+
+bool twadbbu::Check_ADB_Backup_File(std::string fname) {
+	struct AdbBackupStreamHeader adbbuhdr;
+	uint32_t crc, adbbuhdrcrc;
+	unsigned char buf[MAX_ADB_READ];
+	int bytes;
+
+	int fd = open(fname.c_str(), O_RDONLY);
+	if (fd < 0) {
+		printf("Unable to open %s for reading.\n", fname.c_str());
+		close(fd);
+		return false;
+	}
+	bytes = read(fd, &buf, sizeof(buf));
+	close(fd);
+
+	memset(&adbbuhdr, 0, sizeof(adbbuhdr));
+	memcpy(&adbbuhdr, buf, sizeof(adbbuhdr));
+	adbbuhdrcrc = adbbuhdr.crc;
+	memset(&adbbuhdr.crc, 0, sizeof(adbbuhdr.crc));
+	crc = crc32(0L, Z_NULL, 0);
+	crc = crc32(crc, (const unsigned char*) &adbbuhdr, sizeof(adbbuhdr));
+
+	if (crc == adbbuhdrcrc)
+		return true;
+	else
+		return false;
+}
+
+std::vector<std::string> twadbbu::Get_ADB_Backup_Partitions(std::string fname) {
+	bool breakloop = false;
+	unsigned char buf[MAX_ADB_READ];
+	struct AdbBackupControlType structcmd;
+	std::vector<std::string> adb_partitions;
+
+	int fd = open(fname.c_str(), O_RDONLY);
+	if (fd < 0) {
+		printf("Unable to open %s for reading.\n", fname.c_str());
+		close(fd);
+		return std::vector<std::string>();
+	}
+
+	while (!breakloop) {
+		std::string cmdstr;
+		int readbytes;
+		if ((readbytes = read(fd, &buf, sizeof(buf)))) {
+			memcpy(&structcmd, buf, sizeof(buf));
+			cmdstr = structcmd.type;
+			std::string cmdtype = cmdstr.substr(0, sizeof(structcmd.type) - 1);
+			if (cmdtype == TWENDADB) {
+				struct AdbBackupControlType endadb;
+				uint32_t crc, endadbcrc;
+
+				memset(&endadb, 0, sizeof(endadb));
+				memcpy(&endadb, buf, sizeof(buf));
+				endadbcrc = endadb.crc;
+				memset(&endadb.crc, 0, sizeof(endadb.crc));
+				crc = crc32(0L, Z_NULL, 0);
+				crc = crc32(crc, (const unsigned char*) &endadb, sizeof(endadb));
+
+				if (crc == endadbcrc) {
+					breakloop = true;
+				}
+				else {
+					printf("ADB TWENDADB crc header doesn't match\n");
+					close(fd);
+					return std::vector<std::string>();
+				}
+			}
+			else if (cmdtype == TWIMG || cmdtype == TWFN) {
+				struct twfilehdr twfilehdr;
+				uint32_t crc, twfilehdrcrc;
+
+				memset(&twfilehdr, 0, sizeof(twfilehdr));
+				memcpy(&twfilehdr, buf, sizeof(buf));
+				twfilehdrcrc = twfilehdr.crc;
+				memset(&twfilehdr.crc, 0, sizeof(twfilehdr.crc));
+
+				crc = crc32(0L, Z_NULL, 0);
+				crc = crc32(crc, (const unsigned char*) &twfilehdr, sizeof(twfilehdr));
+				if (crc == twfilehdrcrc) {
+					std::string hdrname = twfilehdr.name;
+					std::size_t pos = hdrname.find_last_of("/");
+                                        std::string path = "/" + hdrname.substr(pos, hdrname.size());
+                                        pos = path.find_first_of(".");
+                                        path = path.substr(0, pos);
+					if (path.substr(0,1).compare("//")) {
+						path = path.substr(1, path.size());
+					}
+					adb_partitions.push_back(path);	
+				}
+				else {
+					printf("ADB crc header doesn't match\n");
+					close(fd);
+					return std::vector<std::string>();
+				}
+			}
+		}
+	}
+	close(fd);
+	return adb_partitions; 
+}
 
 bool twadbbu::Write_ADB_Stream_Header(uint64_t partition_count) {
 	struct AdbBackupStreamHeader twhdr;
