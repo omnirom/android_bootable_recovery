@@ -1069,4 +1069,10 @@ unsigned long long TWFunc::IOCTL_Get_Block_Size(const char* block_device) {
 	return 0;
 }
 
+void TWFunc::stream_adb_backup(string &Restore_Name) {
+	string cmd = "/sbin/bu --twrp stream " + Restore_Name;
+	LOGINFO("cmd: %s\n", cmd.c_str());
+	TWFunc::Exec_Cmd(cmd);
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN

@@ -118,8 +118,11 @@ ActionThread::~ActionThread()
 
 void ActionThread::threadActions(GUIAction *act)
 {
+	int gui_adb_backup;
+
+	DataManager::GetValue("tw_enable_adb_backup", gui_adb_backup);
 	pthread_mutex_lock(&m_act_lock);
-	if (m_thread_running) {
+	if (!gui_adb_backup && m_thread_running) {
 		pthread_mutex_unlock(&m_act_lock);
 		LOGERR("Another threaded action is already running -- not running %u actions starting with '%s'\n",
 				act->mActions.size(), act->mActions[0].mFunction.c_str());
@@ -563,6 +566,7 @@ int GUIAction::reload(std::string arg __unused)
 int GUIAction::readBackup(std::string arg __unused)
 {
 	string Restore_Name;
+
 	DataManager::GetValue("tw_restore", Restore_Name);
 	PartitionManager.Set_Restore_Files(Restore_Name);
 	return 0;
@@ -1198,8 +1202,17 @@ int GUIAction::nandroid(std::string arg)
 			DataManager::SetValue(TW_BACKUP_NAME, auto_gen);
 		} else if (arg == "restore") {
 			string Restore_Name;
+			int gui_adb_backup;
+
 			DataManager::GetValue("tw_restore", Restore_Name);
-			ret = PartitionManager.Run_Restore(Restore_Name);
+			DataManager::GetValue("tw_enable_adb_backup", gui_adb_backup);
+			if (gui_adb_backup) {
+				DataManager::SetValue("tw_operation_state", 1);
+				TWFunc::stream_adb_backup(Restore_Name);
+				DataManager::SetValue("tw_enable_adb_backup", 0);
+			}
+			else
+				ret = PartitionManager.Run_Restore(Restore_Name);
 		} else {
 			operation_end(1);
 			return -1;
