@@ -46,6 +46,7 @@ extern "C" {
 #include "openrecoveryscript.hpp"
 #include "variables.h"
 #include "twrpDU.hpp"
+#include "twrpAdbFifo.hpp"
 #ifdef TW_USE_NEW_MINADBD
 #include "adb.h"
 #else
@@ -334,6 +335,8 @@ int main(int argc, char **argv) {
 #else
 	PartitionManager.Disable_MTP();
 #endif
+	twrpAdbFifo *adbfifo = new twrpAdbFifo();
+	adbfifo->start();
 
 #ifndef TW_OEM_BUILD
 	// Check if system has never been changed
@@ -387,6 +390,7 @@ int main(int argc, char **argv) {
 #endif
 
 	// Reboot
+	delete adbfifo;
 	TWFunc::Update_Intent_File(Reboot_Value);
 	TWFunc::Update_Log_File();
 	gui_msg(Msg("rebooting=Rebooting..."));
