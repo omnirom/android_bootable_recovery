@@ -2409,7 +2409,6 @@ bool TWPartition::Backup_Dump_Image(PartitionSettings *part_settings) {
 	if (part_settings->progress)
 		part_settings->progress->SetPartitionSize(Backup_Size);
 
-	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
 	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 
 	Command = "dump_image " + MTD_Name + " '" + Full_FileName + "'";
