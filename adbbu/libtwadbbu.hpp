@@ -13,6 +13,8 @@
 		You should have received a copy of the GNU General Public License
 		along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef _LIBTWADBBU_HPP
+#define _LIBTWADBBU_HPP
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +28,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <string>
+#include <vector>
 #include <fstream>
 #include <sstream>
 
@@ -34,6 +37,8 @@
 
 class twadbbu {
 public:
+	static bool Check_ADB_Backup_File(std::string fname);                                          //Check if file is ADB Backup file
+	static std::vector<std::string> Get_ADB_Backup_Files(std::string fname);                       //List ADB Files in String Vector
 	static bool Write_ADB_Stream_Header(uint64_t partition_count);                                 //Write ADB Stream Header to stream
 	static bool Write_ADB_Stream_Trailer();                                                        //Write ADB Stream Trailer to stream
 	static bool Write_TWFN(std::string Backup_FileName, uint64_t file_size, bool use_compression); //Write a tar image to stream
@@ -42,3 +47,5 @@ public:
 	static bool Write_TWERROR();                                                                   //Write error message occurred to stream
 	static bool Write_TWENDADB();                                                                  //Write ADB End-Of-Stream command to stream
 };
+
+#endif //__LIBTWADBBU_HPP

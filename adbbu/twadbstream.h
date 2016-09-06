@@ -16,12 +16,18 @@
 #ifndef __TWADBSTREAM_H
 #define __TWADBSTREAM_H
 
+#define TWRPARG "--twrp"
+#define TWRP_BACKUP_ARG "backup"
+#define TWRP_RESTORE_ARG "restore"
+#define TWRP_STREAM_ARG "stream"
 #define TW_ADB_BACKUP "/tmp/twadbbackup"		//FIFO for adb backup
 #define TW_ADB_RESTORE "/tmp/twadbrestore"		//FIFO for adb restore
 #define TW_ADB_BU_CONTROL "/tmp/twadbbucontrol"		//FIFO for sending control from TWRP to ADB Backup
 #define TW_ADB_TWRP_CONTROL "/tmp/twadbtwrpcontrol"	//FIFO for sending control from ADB Backup to TWRP
 #define TWRP "TWRP"					//Magic Value
 #define ADB_BU_MAX_ERROR 20				//Max amount of errors for while loops
+#define ADB_BACKUP_OP "adbbackup"
+#define ADB_RESTORE_OP "adbrestore"
 
 //ADB Backup Control Commands
 #define TWSTREAMHDR "twstreamheader"			//TWRP Parititon Count Control
