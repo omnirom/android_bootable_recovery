@@ -1079,4 +1079,11 @@ void TWFunc::copy_kernel_log(string curr_storage) {
 	gui_msg(Msg("copy_kernel_log=Copied kernel log to {1}")(dmesgDst));
 	tw_set_default_metadata(dmesgDst.c_str());
 }
+
+void TWFunc::stream_adb_backup(string &Restore_Name) {
+	string cmd = "/sbin/bu --twrp stream " + Restore_Name;
+	LOGINFO("cmd: %s\n", cmd.c_str());
+	TWFunc::Exec_Cmd(cmd);
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN

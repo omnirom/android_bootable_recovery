@@ -590,6 +590,7 @@ protected:
 protected:
 	std::vector<FileData> mFolderList;
 	std::vector<FileData> mFileList;
+	std::vector<FileData> mAdbBuList;
 	std::string mPathVar; // current path displayed, saved in the data manager
 	std::string mPathDefault; // default value for the path if none is set in mPathVar
 	std::string mExtn; // used for filtering the file list, for example, *.zip
@@ -597,6 +598,7 @@ protected:
 	std::string mSortVariable; // data manager variable used to change the sorting of files
 	std::string mSelection; // set when the user selects an item without the full path like selecting /path/to/foo would just be set to foo
 	int mShowFolders, mShowFiles; // indicates if the list should show folders and/or files
+	int mShowAdbBuFiles; // Show ADB Backup Files
 	int mShowNavFolders; // indicates if the list should include the "up a level" item and allow you to traverse folders (nav folders are disabled for the restore list, for instance)
 	static int mSortOrder; // must be static because it is used by the static function fileSort
 	ImageResource* mFolderIcon;
