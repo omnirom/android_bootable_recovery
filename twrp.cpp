@@ -45,6 +45,7 @@ extern "C" {
 #include "partitions.hpp"
 #include "openrecoveryscript.hpp"
 #include "variables.h"
+#include "twrpAdbBuFifo.hpp"
 #ifdef TW_USE_NEW_MINADBD
 #include "minadbd/minadbd.h"
 #else
@@ -330,6 +331,7 @@ int main(int argc, char **argv) {
 	// Check if system has never been changed
 	TWPartition* sys = PartitionManager.Find_Partition_By_Path("/system");
 	TWPartition* ven = PartitionManager.Find_Partition_By_Path("/vendor");
+
 	if (sys) {
 		if ((DataManager::GetIntValue("tw_mount_system_ro") == 0 && sys->Check_Lifetime_Writes() == 0) || DataManager::GetIntValue("tw_mount_system_ro") == 2) {
 			if (DataManager::GetIntValue("tw_never_show_system_ro_page") == 0) {
@@ -351,6 +353,9 @@ int main(int argc, char **argv) {
 		}
 	}
 #endif
+	twrpAdbBuFifo *adb_bu_fifo = new twrpAdbBuFifo();
+	adb_bu_fifo->threadAdbBuFifo();
+
 	// Launch the main GUI
 	gui_start();
 
@@ -379,6 +384,7 @@ int main(int argc, char **argv) {
 
 	// Reboot
 	TWFunc::Update_Intent_File(Send_Intent);
+	delete adb_bu_fifo;
 	TWFunc::Update_Log_File();
 	gui_msg(Msg("rebooting=Rebooting..."));
 	string Reboot_Arg;
