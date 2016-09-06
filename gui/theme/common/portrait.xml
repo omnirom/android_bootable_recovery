@@ -2148,7 +2148,7 @@
 			<fileselector>
 				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
 				<text>{@restore_sel_pack_fs=Select Package to Restore:}</text>
-				<filter folders="1" files="0" nav="0"/>
+				<filter folders="1" files="0" nav="0" adbbackup="1"/>
 				<path name="tw_backups_folder"/>
 				<data name="tw_restore" default=""/>
 				<selection name="tw_restore_name"/>
