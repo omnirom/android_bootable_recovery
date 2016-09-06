@@ -1,5 +1,5 @@
 /*
-	Copyright 2012 bigbiff/Dees_Troy TeamWin
+	Copyright 2012 - 2017 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -40,8 +40,6 @@ public:
 	static int Run_OpenRecoveryScript_Action();                                    // Actually runs the ORS scripts for the GUI action
 	static void Call_After_CLI_Command(VoidFunction fn) { call_after_cli_command = fn; }
 	static void Run_CLI_Command(const char* command);                              // Runs a command for orscmd (twrp binary)
-	static int Backup_ADB_Command(string Options);                                 // Runs adbbackup
-	static int Restore_ADB_Backup();                                               // Restore adb backup through ors
 	static int remountrw();                                                        // Remount system and vendor rw
 };
 
