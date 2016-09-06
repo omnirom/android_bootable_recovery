@@ -1,0 +1,242 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3801c1f3_7077969a",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "prefer to declare variables where they are used first.",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_d048aa64",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "output strerror(errno) too\n(also in all other places where it makes sense)",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_b0451e4b",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "why first read into a different buffer and then copy?",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_907222a9",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "can be shortened to return (crd \u003d\u003d adbbuhdrcrc)",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_506c9ace",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "wrong size",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_30710ea3",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "insecure: expecting null byte in untrusted input. should ensure null byte at expected position.",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_106612ed",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "wrong size again. also memset before memcpy is pointless.",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_f06286d6",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "I\u0027m sure I\u0027ve seen this code elsewhere already. Make a function...",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_d05f8a10",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "same comments as above apply to this block...",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_305a2e2d",
+        "filename": "gui/action.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "see other comment - why do we need this hack? GUI should not have any special handling of ADB backup.",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_103f32b1",
+        "filename": "gui/action.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1209,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "This block should be in the backend, not in the GUI.",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_5055bafa",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "This looks like a horrible hack. Why is it needed?",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_7050b60c",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 593,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "why do we need a separate list for these?",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3801c1f3_f03ba6c0",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1120,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2016-09-06T18:00:43Z",
+      "side": 1,
+      "message": "wrong indentation",
+      "revId": "137cc529399a9e8384a7a95bbde8579f5517c3a2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
