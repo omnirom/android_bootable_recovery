@@ -666,7 +666,11 @@
 		<string name="cancel_sideload">ADB Sideload wird abgebrochen...</string>
 		<string name="change_fs_err">Fehler beim Ändern des Dateisystems.</string>
 		<string name="theme_ver_err">Theme-Version inkompatibel zu TWRP-Version. Standard-Theme wird verwendet.</string>
-		<string name="install_reboot">Neustart in 5 Sekunden</string>
 		<string name="up_a_level">(Übergeordneter Ordner)</string>
+		<string name="install_reboot" version="2">Neustart in %tw_sleep% Sekunde(n)</string>
+		<string name="adbbackup_error">Fehler bei ADB Backup. Breche ab..."</string>
+		<string name="adbbackup_control_error">Schreiben auf ADB Control Channel nicht möglich</string>
+		<string name="twrp_adbbu_option">--twrp Option wird benötigt, um TWRP ADB Backup zu aktivieren</string>
+		<string name="partition_not_found">Pfad: {1} nicht in Partitionsliste gefunden</string>
 	</resources>
 </language>
