@@ -35,6 +35,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cctype>
 #include <algorithm>
 #include "twrp-functions.hpp"
 #include "twcommon.h"
@@ -819,6 +820,10 @@ void TWFunc::Auto_Generate_Backup_Name() {
 		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
 		return;
 	}
+	else {
+		//remove periods from build display so it doesn't confuse the extension code
+		propvalue.erase(remove(propvalue.begin(), propvalue.end(), '.'), propvalue.end());
+	}
 	string Backup_Name = Get_Current_Date();
 	Backup_Name += "_" + propvalue;
 	if (Backup_Name.size() > MAX_BACKUP_NAME_LEN)
@@ -1085,4 +1090,10 @@ void TWFunc::copy_kernel_log(string curr_storage) {
 	gui_msg(Msg("copy_kernel_log=Copied kernel log to {1}")(dmesgDst));
 	tw_set_default_metadata(dmesgDst.c_str());
 }
+
+void TWFunc::stream_adb_backup(string &Restore_Name) {
+	string cmd = "/sbin/bu --twrp stream " + Restore_Name;
+	TWFunc::Exec_Cmd(cmd);
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN

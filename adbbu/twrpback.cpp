@@ -29,14 +29,17 @@
 #include <ctype.h>
 #include <semaphore.h>
 #include <string>
-#include <fstream>
 #include <sstream>
+#include <fstream>
 #include <algorithm>
+#include <utils/threads.h>
+#include <pthread.h>
 
 #include "twadbstream.h"
 #include "twrpback.hpp"
 #include "../twrpDigest/twrpDigest.hpp"
 #include "../twrpDigest/twrpMD5.hpp"
+#include "../twrpAdbBuFifo.hpp"
 
 twrpback::twrpback(void) {
 	read_fd = 0;
@@ -48,11 +51,40 @@ twrpback::twrpback(void) {
 	adb_write_fd = 0;
 	ors_fd = 0;
 	firstPart = true;
+	createFifos();
 	adbloginit();
 }
 
 twrpback::~twrpback(void) {
 	adblogfile.close();
+	closeFifos();
+}
+
+void twrpback::createFifos(void) {
+        if (mkfifo(TW_ADB_BU_CONTROL, 0666) < 0) {
+                std::stringstream str;
+                str << strerror(errno);
+                adblogwrite("Unable to create TW_ADB_BU_CONTROL fifo: " + str.str() + "\n");
+        }
+        if (mkfifo(TW_ADB_TWRP_CONTROL, 0666) < 0) {
+                std::stringstream str;
+                str << strerror(errno);
+                adblogwrite("Unable to create TW_ADB_TWRP_CONTROL fifo: " + str.str() + "\n");
+                unlink(TW_ADB_BU_CONTROL);
+        }
+}
+
+void twrpback::closeFifos(void) {
+        if (unlink(TW_ADB_BU_CONTROL) < 0) {
+                std::stringstream str;
+                str << strerror(errno);
+                adblogwrite("Unable to remove TW_ADB_BU_CONTROL: " + str.str());
+        }
+        if (unlink(TW_ADB_TWRP_CONTROL) < 0) {
+                std::stringstream str;
+                str << strerror(errno);
+                adblogwrite("Unable to remove TW_ADB_TWRP_CONTROL: " + str.str());
+	}
 }
 
 void twrpback::adbloginit(void) {
@@ -120,30 +152,25 @@ int twrpback::backup(std::string command) {
 		return -1;
 	}
 
-	adblogwrite("opening ORS_INPUT_FILE\n");
-	write_fd = open(ORS_INPUT_FILE, O_WRONLY);
+	adblogwrite("opening TW_ADB_FIFO\n");
+	write_fd = open(TW_ADB_FIFO, O_WRONLY);
 	while (write_fd < 0) {
-		write_fd = open(ORS_INPUT_FILE, O_WRONLY);
+		write_fd = open(TW_ADB_FIFO, O_WRONLY);
 		usleep(10000);
 		errctr++;
 		if (errctr > ADB_BU_MAX_ERROR) {
-			adblogwrite("Unable to open ORS_INPUT_FILE\n");
+			adblogwrite("Unable to open TW_ADB_FIFO\n");
 			close_backup_fds();
 			return -1;
 		}
 	}
 
-	sprintf(operation, "adbbackup %s", command.c_str());
-	if (write(write_fd, operation, sizeof(operation)) != sizeof(operation)) {
-		adblogwrite("Unable to write to ORS_INPUT_FILE\n");
-		close_backup_fds();
-		return -1;
-	}
 
-	adblogwrite("opening ORS_OUTPUT_FILE\n");
-	ors_fd = open(ORS_OUTPUT_FILE, O_RDONLY);
-	if (ors_fd < 0) {
-		adblogwrite("Unable to open ORS_OUTPUT_FILE\n");
+	sprintf(operation, "%s %s", ADB_BACKUP_OP, command.c_str());
+	std::string op(operation);
+	adblogwrite(op + "\n");
+	if (write(write_fd, operation, sizeof(operation)) != sizeof(operation)) {
+		adblogwrite("Unable to write to TW_ADB_FIFO\n");
 		close_backup_fds();
 		return -1;
 	}
@@ -423,31 +450,22 @@ int twrpback::restore(void) {
 		return -1;
 	}
 
-	adblogwrite("opening ORS_INPUT_FILE\n");
-	write_fd = open(ORS_INPUT_FILE, O_WRONLY);
+	adblogwrite("opening TW_ADB_FIFO\n");
+	write_fd = open(TW_ADB_FIFO, O_WRONLY);
 
 	while (write_fd < 0) {
-		write_fd = open(ORS_INPUT_FILE, O_WRONLY);
+		write_fd = open(TW_ADB_FIFO, O_WRONLY);
 		errctr++;
 		if (errctr > ADB_BU_MAX_ERROR) {
-			adblogwrite("Unable to open ORS_INPUT_FILE\n");
+			adblogwrite("Unable to open TW_ADB_FIFO\n");
 			close_restore_fds();
 			return -1;
 		}
 	}
 
-	sprintf(operation, "adbrestore");
+	sprintf(operation, ADB_RESTORE_OP);
 	if (write(write_fd, operation, sizeof(operation)) != sizeof(operation)) {
-		adblogwrite("Unable to write to ORS_INPUT_FILE\n");
-		close_restore_fds();
-		return -1;
-	}
-
-	ors_fd = open(ORS_OUTPUT_FILE, O_RDONLY);
-	if (ors_fd < 0) {
-		std::stringstream str;
-		str << strerror(errno);
-		adblogwrite("Unable to write to ORS_OUTPUT_FILE: " + str.str() + "\n");
+		adblogwrite("Unable to write to TW_ADB_FIFO\n");
 		close_restore_fds();
 		return -1;
 	}
@@ -755,68 +773,25 @@ int twrpback::restore(void) {
 	return 0;
 }
 
-int main(int argc, char **argv) {
-	int index;
-	int ret = 0, pos = 0;
-	std::string command;
-	twrpback tw;
+void twrpback::streamFileForTWRP(void) {
+	adblogwrite("streamFileForTwrp" + streamFn + "\n");
+}
 
-	tw.adblogwrite("Starting adb backup and restore\n");
-	if (mkfifo(TW_ADB_BU_CONTROL, 0666) < 0) {
-		std::stringstream str;
-		str << strerror(errno);
-		tw.adblogwrite("Unable to create TW_ADB_BU_CONTROL fifo: " + str.str() + "\n");
-		unlink(TW_ADB_BU_CONTROL);
-		return -1;
+void twrpback::setStreamFileName(std::string fn) {
+	streamFn = fn;
+	adbd_fd = open(fn.c_str(), O_RDONLY);
+	if (adbd_fd < 0) {
+		adblogwrite("Unable to open adb_fd\n");
+		close(adbd_fd);
+		return;
 	}
-	if (mkfifo(TW_ADB_TWRP_CONTROL, 0666) < 0) {
-		std::stringstream str;
-		str << strerror(errno);
-		tw.adblogwrite("Unable to create TW_ADB_TWRP_CONTROL fifo: " + str.str() + "\n");
-		unlink(TW_ADB_TWRP_CONTROL);
-		unlink(TW_ADB_BU_CONTROL);
-		return -1;
-	}
+	restore();
+}
 
-	command = argv[1];
-	for (index = 2; index < argc; index++) {
-		command = command + " " + argv[index];
-	}
-
-	pos = command.find("backup");
-	if (pos < 0) {
-		pos = command.find("restore");
-	}
-	command.erase(0, pos);
-	command.erase(std::remove(command.begin(), command.end(), '\''), command.end());
-	tw.adblogwrite("command: " + command + "\n");
-
-	if (command.substr(0, sizeof("backup") - 1) == "backup") {
-		tw.adblogwrite("Starting adb backup\n");
-		if (isdigit(*argv[1]))
-			tw.adbd_fd = atoi(argv[1]);
-		else
-			tw.adbd_fd = 1;
-		ret = tw.backup(command);
-	}
-	else if (command.substr(0, sizeof("restore") - 1) == "restore") {
-		tw.adblogwrite("Starting adb restore\n");
-		if (isdigit(*argv[1]))
-			tw.adbd_fd = atoi(argv[1]);
-		else
-			tw.adbd_fd = 0;
-		ret = tw.restore();
-	}
-	if (ret == 0)
-		tw.adblogwrite("Adb backup/restore completed\n");
-	else
-		tw.adblogwrite("Adb backup/restore failed\n");
-
-	if (unlink(TW_ADB_BU_CONTROL) < 0) {
-		std::stringstream str;
-		str << strerror(errno);
-		tw.adblogwrite("Unable to remove TW_ADB_BU_CONTROL: " + str.str());
-	}
-	unlink(TW_ADB_TWRP_CONTROL);
-	return ret;
+void twrpback::threadStream(void) {
+	pthread_t thread;
+	ThreadPtr streamPtr = &twrpback::streamFileForTWRP;
+	PThreadPtr p = *(PThreadPtr*)&streamPtr;
+	pthread_create(&thread, NULL, p, this);
+	pthread_join(thread, NULL);
 }
