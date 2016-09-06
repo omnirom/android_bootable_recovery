@@ -1,5 +1,5 @@
 /*
-	Copyright 2014 to 2016 TeamWin
+	Copyright 2014 to 2017 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify

@@ -1,10 +1,35 @@
 LOCAL_PATH:= $(call my-dir)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libtwadbbu
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS = -fno-strict-aliasing -D_LARGFILE_SOURCE
+LOCAL_C_INCLUDES += bionic external/zlib
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
+    LOCAL_C_INCLUDES += external/stlport/stlport
+endif
+
+LOCAL_SRC_FILES = \
+        libtwadbbu.cpp \
+        twrpback.cpp
+
+LOCAL_SHARED_LIBRARIES += libz libc libstdc++ libtwrpdigest
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
+    LOCAL_SHARED_LIBRARIES += libstlport
+else
+    LOCAL_SHARED_LIBRARIES += libc++
+endif
+
+include $(BUILD_SHARED_LIBRARY)
+
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:= \
-	twrpback.cpp
+        adbbumain.cpp
 
-LOCAL_SHARED_LIBRARIES += libstdc++ libz libtwrpdigest
+LOCAL_SHARED_LIBRARIES += libstdc++ libz libtwadbbu
+
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_C_INCLUDES += external/stlport/stlport
     LOCAL_SHARED_LIBRARIES += libstlport
@@ -21,21 +46,3 @@ LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 include $(BUILD_EXECUTABLE)
 
-include $(CLEAR_VARS)
-LOCAL_MODULE := libtwadbbu
-LOCAL_MODULE_TAGS := optional
-LOCAL_CFLAGS = -D_FILE_OFFSET_BITS=64 -fno-strict-aliasing
-LOCAL_C_INCLUDES += bionic external/zlib
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-    LOCAL_C_INCLUDES += external/stlport/stlport
-    LOCAL_SHARED_LIBRARIES += libstlport
-else
-    LOCAL_SHARED_LIBRARIES += libc++
-endif
-
-LOCAL_SRC_FILES = \
-    libtwadbbu.cpp
-
-LOCAL_SHARED_LIBRARIES += libz libc libstdc++
-
-include $(BUILD_SHARED_LIBRARY)
