@@ -451,7 +451,7 @@ static void ors_command_read()
 			unlink(ORS_OUTPUT_FILE);
 			return;
 		}
-		if (DataManager::GetIntValue("tw_busy") != 0) {
+		if (!DataManager::GetIntValue("tw_busy") != 0) {
 			fputs("Failed, operation in progress\n", orsout);
 			LOGINFO("Command cannot be performed, operation in progress.\n");
 			fclose(orsout);
@@ -459,14 +459,6 @@ static void ors_command_read()
 			if (strlen(command) == 11 && strncmp(command, "dumpstrings", 11) == 0) {
 				gui_set_FILE(orsout);
 				PageManager::GetResources()->DumpStrings();
-				ors_command_done();
-			//check to see if we should show backup page for parsing adbbackup partitions
-			} else if (strlen(command) == 23 && strncmp(command, "adbbackup", 9) == 0) {
-				gui_set_FILE(orsout);
-				DataManager::SetValue("tw_action", "twcmd");
-				DataManager::SetValue("tw_action_param", command);
-				DataManager::SetValue("tw_enable_adb_backup", 1);
-				gui_changePage("backup");
 				ors_command_done();
 			} else {
 				// mirror output messages
