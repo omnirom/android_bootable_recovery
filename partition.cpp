@@ -1660,6 +1660,7 @@ bool TWPartition::Restore(PartitionSettings *part_settings) {
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, gui_parse_text("{@restoring_hdr}"));
 	LOGINFO("Restore filename is: %s/%s\n", part_settings->Backup_Folder.c_str(), Backup_FileName.c_str());
 
+	LOGINFO("Restore");
 	string Restore_File_System = Get_Restore_File_System(part_settings);
 
 	if (Is_File_System(Restore_File_System))
@@ -2248,7 +2249,7 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(destfn.c_str())(strerror(errno)));
 		goto exit;
 	}
-	
+
 	LOGINFO("Reading '%s', writing '%s'\n", srcfn.c_str(), destfn.c_str());
 
 	if (part_settings->adbbackup) {
@@ -2347,6 +2348,7 @@ unsigned long long TWPartition::Get_Restore_Size(PartitionSettings *part_setting
 	}
 
 	string Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
+	LOGINFO("Get_Restore_Size\n");
 	string Restore_File_System = Get_Restore_File_System(part_settings);
 
 	if (Is_Image(Restore_File_System)) {
@@ -2374,6 +2376,7 @@ unsigned long long TWPartition::Get_Restore_Size(PartitionSettings *part_setting
 bool TWPartition::Restore_Tar(PartitionSettings *part_settings) {
 	string Full_FileName;
 	bool ret = false;
+	LOGINFO("Restore_Tar\n");
 	string Restore_File_System = Get_Restore_File_System(part_settings);
 
 	if (Has_Android_Secure) {
@@ -2442,6 +2445,7 @@ bool TWPartition::Restore_Tar(PartitionSettings *part_settings) {
 
 bool TWPartition::Restore_Image(PartitionSettings *part_settings) {
 	string Full_FileName;
+	LOGINFO("Restore_Image\n");
 	string Restore_File_System = Get_Restore_File_System(part_settings);
 
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, gui_parse_text("{@restoring_hdr}"));
