@@ -746,10 +746,6 @@ int TWPartitionManager::Run_Backup(bool adbbackup) {
 	part_settings.file_bytes = 0;
 	part_settings.PM_Method = PM_BACKUP;
 
-	DataManager::GetValue("tw_enable_adb_backup", gui_adb_backup);
-	if (gui_adb_backup == true)
-		adbbackup = true;
-
 	part_settings.adbbackup = adbbackup;
 	time(&total_start);
 
@@ -948,7 +944,6 @@ bool TWPartitionManager::Restore_Partition(PartitionSettings *part_settings) {
 
 	time(&Start);
 
-
 	if (!part_settings->Part->Restore(part_settings)) {
 		TWFunc::SetPerformanceMode(false);
 		return false;
@@ -1090,92 +1085,105 @@ void TWPartitionManager::Set_Restore_Files(string Restore_Name) {
 	bool get_date = true, check_encryption = true;
 
 	DataManager::SetValue("tw_restore_encrypted", 0);
-
-	DIR* d;
-	d = opendir(Restore_Name.c_str());
-	if (d == NULL)
-	{
-		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Restore_Name)(strerror(errno)));
-		return;
+	if (twadbbu::Check_ADB_Backup_File(Restore_Name)) {
+		vector<string> adb_files;
+		adb_files = twadbbu::Get_ADB_Backup_Files(Restore_Name);
+		for (unsigned int i = 0; i < adb_files.size(); ++i) {
+			string adb_restore_file = adb_files.at(i);
+			std::size_t pos = adb_restore_file.find_first_of(".");
+			std::string path = "/" + adb_restore_file.substr(0, pos);
+			Restore_List = path + ";";
+			TWPartition* Part = Find_Partition_By_Path(path);
+			Part->Backup_FileName = TWFunc::Get_Filename(adb_restore_file);
+		}
+		DataManager::SetValue("tw_enable_adb_backup", 1);
 	}
-
-	struct dirent* de;
-	while ((de = readdir(d)) != NULL)
-	{
-		// Strip off three components
-		char str[256];
-		char* label;
-		char* fstype = NULL;
-		char* extn = NULL;
-		char* ptr;
-
-		strcpy(str, de->d_name);
-		if (strlen(str) <= 2)
-			continue;
-
-		if (get_date) {
-			char file_path[255];
-			struct stat st;
-
-			strcpy(file_path, Restore_Name.c_str());
-			strcat(file_path, "/");
-			strcat(file_path, str);
-			stat(file_path, &st);
-			string backup_date = ctime((const time_t*)(&st.st_mtime));
-			DataManager::SetValue(TW_RESTORE_FILE_DATE, backup_date);
-			get_date = false;
-		}
-
-		label = str;
-		ptr = label;
-		while (*ptr && *ptr != '.')	 ptr++;
-		if (*ptr == '.')
+	else {
+		DIR* d;
+		d = opendir(Restore_Name.c_str());
+		if (d == NULL)
 		{
-			*ptr = 0x00;
-			ptr++;
-			fstype = ptr;
+			gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Restore_Name)(strerror(errno)));
+			return;
 		}
-		while (*ptr && *ptr != '.')	 ptr++;
-		if (*ptr == '.')
+
+		struct dirent* de;
+		while ((de = readdir(d)) != NULL)
 		{
-			*ptr = 0x00;
-			ptr++;
-			extn = ptr;
-		}
+			// Strip off three components
+			char str[256];
+			char* label;
+			char* fstype = NULL;
+			char* extn = NULL;
+			char* ptr;
 
-		if (fstype == NULL || extn == NULL || strcmp(fstype, "log") == 0) continue;
-		int extnlength = strlen(extn);
-		if (extnlength != 3 && extnlength != 6) continue;
-		if (extnlength >= 3 && strncmp(extn, "win", 3) != 0) continue;
-		//if (extnlength == 6 && strncmp(extn, "win000", 6) != 0) continue;
+			strcpy(str, de->d_name);
+			if (strlen(str) <= 2)
+				continue;
 
-		if (check_encryption) {
-			string filename = Restore_Name + "/";
-			filename += de->d_name;
-			if (TWFunc::Get_File_Type(filename) == 2) {
-				LOGINFO("'%s' is encrypted\n", filename.c_str());
-				DataManager::SetValue("tw_restore_encrypted", 1);
+			if (get_date) {
+				char file_path[255];
+				struct stat st;
+
+				strcpy(file_path, Restore_Name.c_str());
+				strcat(file_path, "/");
+				strcat(file_path, str);
+				stat(file_path, &st);
+				string backup_date = ctime((const time_t*)(&st.st_mtime));
+				DataManager::SetValue(TW_RESTORE_FILE_DATE, backup_date);
+				get_date = false;
 			}
-		}
-		if (extnlength == 6 && strncmp(extn, "win000", 6) != 0) continue;
 
-		TWPartition* Part = Find_Partition_By_Path(label);
-		if (Part == NULL)
-		{
-			gui_msg(Msg(msg::kError, "unable_locate_part_backup_name=Unable to locate partition by backup name: '{1}'")(label));
-			continue;
-		}
+			label = str;
+			ptr = label;
+			while (*ptr && *ptr != '.')	 ptr++;
+			if (*ptr == '.')
+			{
+				*ptr = 0x00;
+				ptr++;
+				fstype = ptr;
+			}
+			while (*ptr && *ptr != '.')	 ptr++;
+			if (*ptr == '.')
+			{
+				*ptr = 0x00;
+				ptr++;
+				extn = ptr;
+			}
 
-		Part->Backup_FileName = de->d_name;
-		if (strlen(extn) > 3) {
-			Part->Backup_FileName.resize(Part->Backup_FileName.size() - strlen(extn) + 3);
-		}
+			if (fstype == NULL || extn == NULL || strcmp(fstype, "log") == 0) continue;
+			int extnlength = strlen(extn);
+			if (extnlength != 3 && extnlength != 6) continue;
+			if (extnlength >= 3 && strncmp(extn, "win", 3) != 0) continue;
+			//if (extnlength == 6 && strncmp(extn, "win000", 6) != 0) continue;
 
-		if (!Part->Is_SubPartition)
-			Restore_List += Part->Backup_Path + ";";
+			if (check_encryption) {
+				string filename = Restore_Name + "/";
+				filename += de->d_name;
+				if (TWFunc::Get_File_Type(filename) == 2) {
+					LOGINFO("'%s' is encrypted\n", filename.c_str());
+					DataManager::SetValue("tw_restore_encrypted", 1);
+				}
+			}
+			if (extnlength == 6 && strncmp(extn, "win000", 6) != 0) continue;
+
+			TWPartition* Part = Find_Partition_By_Path(label);
+			if (Part == NULL)
+			{
+				gui_msg(Msg(msg::kError, "unable_locate_part_backup_name=Unable to locate partition by backup name: '{1}'")(label));
+				continue;
+			}
+
+			Part->Backup_FileName = de->d_name;
+			if (strlen(extn) > 3) {
+				Part->Backup_FileName.resize(Part->Backup_FileName.size() - strlen(extn) + 3);
+			}
+
+			if (!Part->Is_SubPartition)
+				Restore_List += Part->Backup_Path + ";";
+		}
+		closedir(d);
 	}
-	closedir(d);
-
 	// Set the final value
 	DataManager::SetValue("tw_restore_list", Restore_List);
 	DataManager::SetValue("tw_restore_selected", Restore_List);
