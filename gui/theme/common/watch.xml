@@ -2551,7 +2551,7 @@
 			<fileselector>
 				<placement x="%indent%" y="%row2_header_y%" w="%content_width%" h="%fileselector_install_height%"/>
 				<text>%tw_storage_display_name%</text>
-				<filter folders="1" files="0" nav="0"/>
+				<filter folders="1" files="1" nav="0" extn=".ab"/>
 				<path name="tw_backups_folder"/>
 				<data name="tw_restore" default=""/>
 				<selection name="tw_restore_name"/>
@@ -2807,6 +2807,7 @@
 			</text>
 
 			<listbox style="scrolllist">
+				<condition var1="tw_enable_adb_backup" op="=" var2="0"/>
 				<placement x="%col1_x_left%" y="%row2_header_y%" w="%content_width%" h="%partitionlist_wipe_height%"/>
 				<listitem name="{@restore_enable_digest_chk=Enable Digest Verification of Backup Files}">
 					<data variable="tw_skip_digest_check"/>

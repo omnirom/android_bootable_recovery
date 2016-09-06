@@ -566,6 +566,7 @@ int GUIAction::reload(std::string arg __unused)
 int GUIAction::readBackup(std::string arg __unused)
 {
 	string Restore_Name;
+
 	DataManager::GetValue("tw_restore", Restore_Name);
 	PartitionManager.Set_Restore_Files(Restore_Name);
 	return 0;
@@ -1192,6 +1193,18 @@ int GUIAction::nandroid(std::string arg)
 			string auto_gen = gui_lookup("auto_generate", "(Auto Generate)");
 			if (Backup_Name == auto_gen || Backup_Name == gui_lookup("curr_date", "(Current Date)") || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0) {
 				ret = PartitionManager.Run_Backup(false);
+				DataManager::SetValue("tw_encrypt_backup", 0); // reset value so we don't encrypt every subsequent backup
+				if (!PartitionManager.stop_backup.get_value()) {
+					if (ret == false)
+						ret = 1; // 1 for failure
+					else
+						ret = 0; // 0 for success
+					DataManager::SetValue("tw_cancel_backup", 0);
+				} else {
+					DataManager::SetValue("tw_cancel_backup", 1);
+					gui_msg("backup_cancel=Backup Cancelled");
+					ret = 0;
+				}
 			} else {
 				operation_end(1);
 				return -1;
@@ -1199,24 +1212,27 @@ int GUIAction::nandroid(std::string arg)
 			DataManager::SetValue(TW_BACKUP_NAME, auto_gen);
 		} else if (arg == "restore") {
 			string Restore_Name;
+			int gui_adb_backup;
+
 			DataManager::GetValue("tw_restore", Restore_Name);
-			ret = PartitionManager.Run_Restore(Restore_Name);
+			DataManager::GetValue("tw_enable_adb_backup", gui_adb_backup);
+			if (gui_adb_backup) {
+				DataManager::SetValue("tw_operation_state", 1);
+				if (TWFunc::stream_adb_backup(Restore_Name) == 0)
+					ret = 0; // success
+				else
+					ret = 1; // failure
+				DataManager::SetValue("tw_enable_adb_backup", 0);
+				ret = 0; // assume success???
+			} else {
+				if (PartitionManager.Run_Restore(Restore_Name))
+					ret = 0; // success
+				else
+					ret = 1; // failure
+			}
 		} else {
-			operation_end(1);
+			operation_end(1); // invalid arg specified, fail
 			return -1;
-		}
-		DataManager::SetValue("tw_encrypt_backup", 0);
-		if (!PartitionManager.stop_backup.get_value()) {
-			if (ret == false)
-				ret = 1; // 1 for failure
-			else
-				ret = 0; // 0 for success
-			DataManager::SetValue("tw_cancel_backup", 0);
-		}
-		else {
-			DataManager::SetValue("tw_cancel_backup", 1);
-			gui_msg("backup_cancel=Backup Cancelled");
-			ret = 0;
 		}
 		operation_end(ret);
 		return ret;
