@@ -45,6 +45,7 @@ extern "C" {
 #include "partitions.hpp"
 #include "openrecoveryscript.hpp"
 #include "variables.h"
+#include "twrpAdbFifo.hpp"
 #ifdef TW_USE_NEW_MINADBD
 #include "adb.h"
 #else
@@ -367,6 +368,9 @@ int main(int argc, char **argv) {
 		}
 	}
 #endif
+	twrpAdbFifo *adbfifo = new twrpAdbFifo();
+	adbfifo->threadAdbFifo();
+
 	// Launch the main GUI
 	gui_start();
 
@@ -395,6 +399,7 @@ int main(int argc, char **argv) {
 
 	// Reboot
 	TWFunc::Update_Intent_File(Send_Intent);
+	delete adbfifo;
 	TWFunc::Update_Log_File();
 	gui_msg(Msg("rebooting=Rebooting..."));
 	string Reboot_Arg;
