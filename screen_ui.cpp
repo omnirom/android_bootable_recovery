@@ -513,8 +513,6 @@ void ScreenRecoveryUI::LoadAnimation() {
     intro_frames = intro_frame_names.size();
     loop_frames = loop_frame_names.size();
 
-    LOGD("Recovery animation intro_frames: %d, loop_frames: %d\n", intro_frames, loop_frames);
-
     // It's okay to not have an intro.
     if (intro_frames == 0) intro_done = true;
     // But you must have an animation.
