@@ -2614,7 +2614,7 @@ int GUIAction::system_image_upgrader(std::string arg __unused)
 	if(TWFunc::Path_Exists(UBUNTU_COMMAND_FILE))
 	{
 		gui_print("\n");
-		res = TWFunc::Exec_Cmd_Show_Output("system-image-upgrader "UBUNTU_COMMAND_FILE);
+		res = TWFunc::Exec_Cmd_Show_Output("system-image-upgrader " UBUNTU_COMMAND_FILE);
 		gui_print("\n");
 
 		if(res != 0)
@@ -2624,7 +2624,7 @@ int GUIAction::system_image_upgrader(std::string arg __unused)
 		}
 		DataManager::SetValue("system-image-upgrader-res", res);
 	} else
-		gui_print("Could not find system-image-upgrader command file: "UBUNTU_COMMAND_FILE"\n");
+		gui_print("Could not find system-image-upgrader command file: " UBUNTU_COMMAND_FILE"\n");
 
 	DataManager::SetValue("tw_page_done", 1);
 	operation_end(res);
