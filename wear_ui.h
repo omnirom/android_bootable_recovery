@@ -54,6 +54,8 @@ class WearRecoveryUI : public ScreenRecoveryUI {
 
     void InitTextParams() override;
 
+    void update_progress_locked() override;
+
     void PrintV(const char*, bool, va_list) override;
 
   private:
@@ -74,8 +76,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
     void draw_screen_locked() override;
     void draw_progress_locked();
 
-    static void* progress_thread(void* cookie);
-    void progress_loop();
     void PutChar(char);
     void ClearText();
 };
