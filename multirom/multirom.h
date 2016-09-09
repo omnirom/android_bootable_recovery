@@ -116,9 +116,6 @@ public:
 		int auto_boot_seconds;
 		int auto_boot_type;
 		std::string auto_boot_rom;
-#ifdef MR_ALLOW_NKK71_NOKEXEC_WORKAROUND
-		int allow_nkk71_nokexec;
-#endif
 		int colors;
 		int brightness;
 		int enable_adb;
@@ -135,9 +132,6 @@ public:
 	static bool folderExists();
 	static std::string getRomsPath();
 	static std::string getPath();
-#ifdef MR_ALLOW_NKK71_NOKEXEC_WORKAROUND
-	static void nokexec_restore_primary_and_cleanup();
-#endif
 	static int getType(std::string name);
 	static std::string listRoms(uint32_t mask = MASK_ALL, bool with_bootimg_only = false);
 	static void setInstaller(MROMInstaller *i);

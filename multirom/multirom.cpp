@@ -75,9 +75,6 @@ MultiROM::config::config()
 	auto_boot_seconds = 5;
 	auto_boot_rom = INTERNAL_NAME;
 	auto_boot_type = 0;
-#ifdef MR_ALLOW_NKK71_NOKEXEC_WORKAROUND
-	allow_nkk71_nokexec = 0;
-#endif
 	colors = 0;
 	brightness = 40;
 	hide_internal = 0;
@@ -104,49 +101,6 @@ std::string MultiROM::getPath()
 {
 	return m_path;
 }
-
-#ifdef MR_ALLOW_NKK71_NOKEXEC_WORKAROUND
-void MultiROM::nokexec_restore_primary_and_cleanup()
-{
-	if(m_path.empty() && !folderExists())
-		return;
-
-	char path_primary_bootimg[256];
-	struct bootimg img;
-	TWPartition *boot = PartitionManager.Find_Partition_By_Path("/boot");
-
-	sprintf(path_primary_bootimg, "%s/%s", m_path.c_str(), "primary_boot.img");
-
-	// check if previous was secondary
-	if (libbootimg_init_load(&img, boot->Actual_Block_Device.c_str(), LIBBOOTIMG_LOAD_ALL) < 0)
-	{
-		gui_print("nkk71: Could not open boot image (%s)!\n", boot->Actual_Block_Device.c_str());
-	}
-	else
-	{
-		// check for secondary tag
-		if (img.hdr.name[BOOT_NAME_SIZE-1] == 0x71)
-		{
-			// primary slot is a secondary boot.img, so restore real primary
-			if (access(path_primary_bootimg, R_OK) == 0)
-			{
-				//copy_file(path_primary_bootimg, boot->Actual_Block_Device.c_str());
-				gui_print("MultiROM NO_KEXEC restore primary_boot.img\n");
-				if (boot->Flash_Image(path_primary_bootimg))
-					gui_print("... successful.\n");
-				else
-					gui_print("... FAILED.\n");
-			}
-			else
-				gui_print("nkk71: ERROR: couldnt find real primary to restore\n");
-		}
-		libbootimg_destroy(&img);
-	}
-
-	// cleanup
-	if (access(path_primary_bootimg, R_OK) == 0) remove(path_primary_bootimg);
-}
-#endif //MR_ALLOW_NKK71_NOKEXEC_WORKAROUND
 
 void MultiROM::findPath()
 {
@@ -689,10 +643,6 @@ MultiROM::config MultiROM::loadConfig()
 				cfg.auto_boot_rom = val;
 			else if(name == "auto_boot_type")
 				cfg.auto_boot_type = atoi(val.c_str());
-#ifdef MR_ALLOW_NKK71_NOKEXEC_WORKAROUND
-			else if(name == "allow_nkk71_nokexec")
-				cfg.allow_nkk71_nokexec = atoi(val.c_str());
-#endif
 			else if(name == "colors_v2")
 				cfg.colors = atoi(val.c_str());
 			else if(name == "brightness")
@@ -729,9 +679,6 @@ void MultiROM::saveConfig(const MultiROM::config& cfg)
 	fprintf(f, "auto_boot_seconds=%d\n", cfg.auto_boot_seconds);
 	fprintf(f, "auto_boot_rom=%s\n", cfg.auto_boot_rom.c_str());
 	fprintf(f, "auto_boot_type=%d\n", cfg.auto_boot_type);
-#ifdef MR_ALLOW_NKK71_NOKEXEC_WORKAROUND
-	fprintf(f, "allow_nkk71_nokexec=%d\n", cfg.allow_nkk71_nokexec);
-#endif
 	fprintf(f, "colors_v2=%d\n", cfg.colors);
 	fprintf(f, "brightness=%d\n", cfg.brightness);
 	fprintf(f, "enable_adb=%d\n", cfg.enable_adb);

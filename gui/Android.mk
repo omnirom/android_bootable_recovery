@@ -74,10 +74,6 @@ endif
 #MultiROM
 ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
     LOCAL_CFLAGS += -DTARGET_RECOVERY_IS_MULTIROM
-
-    ifeq ($(MR_ALLOW_NKK71_NOKEXEC_WORKAROUND),true)
-        LOCAL_CFLAGS += -DMR_ALLOW_NKK71_NOKEXEC_WORKAROUND
-    endif
 endif
 
 LOCAL_C_INCLUDES += bionic system/core/libpixelflinger/include
