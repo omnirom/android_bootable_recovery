@@ -2768,7 +2768,7 @@ void MultiROM::executeCacheScripts()
 	struct dirent *dt;
 	struct stat info;
 	struct script_t  {
-		unsigned long mtime;
+		time_t mtime; // unsigned long mtime;
 		std::string name;
 		int type;
 	} script;
