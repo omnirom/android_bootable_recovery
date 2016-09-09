@@ -128,7 +128,7 @@ int TWFunc::Exec_Cmd_Show_Output(const string& cmd) {
 		memset(buffer, 0, sizeof(buffer));
 		if (fgets(buffer, 128, exec) != NULL) {
 			buffer[128] = '\n';
-			buffer[129] = NULL;
+			buffer[129] = '\x0';
 			gui_print(buffer);
 		}
 	}
