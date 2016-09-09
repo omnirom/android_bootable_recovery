@@ -184,55 +184,10 @@ void WearRecoveryUI::draw_screen_locked()
     }
 }
 
-// Keeps the progress bar updated, even when the process is otherwise busy.
-void* WearRecoveryUI::progress_thread(void *cookie) {
-    self->progress_loop();
-    return NULL;
-}
-
-void WearRecoveryUI::progress_loop() {
-    double interval = 1.0 / animation_fps;
-    for (;;) {
-        double start = now();
-        pthread_mutex_lock(&updateMutex);
-        bool redraw = false;
-
-        if ((currentIcon == INSTALLING_UPDATE || currentIcon == ERASING)
-                                                            && !show_text) {
-            if (!intro_done) {
-                if (current_frame >= intro_frames - 1) {
-                    intro_done = true;
-                    current_frame = 0;
-                } else {
-                    current_frame++;
-                }
-            } else {
-                current_frame = (current_frame + 1) % loop_frames;
-            }
-            redraw = true;
-        }
-
-        // move the progress bar forward on timed intervals, if configured
-        int duration = progressScopeDuration;
-        if (progressBarType == DETERMINATE && duration > 0) {
-            double elapsed = now() - progressScopeTime;
-            float p = 1.0 * elapsed / duration;
-            if (p > 1.0) p = 1.0;
-            if (p > progress) {
-                progress = p;
-                redraw = true;
-            }
-        }
-
-        if (redraw) update_screen_locked();
-
-        pthread_mutex_unlock(&updateMutex);
-        double end = now();
-        // minimum of 20ms delay between frames
-        double delay = interval - (end-start);
-        if (delay < 0.02) delay = 0.02;
-        usleep((long)(delay * 1000000));
-    }
+// TODO merge drawing routines with screen_ui
+void WearRecoveryUI::update_progress_locked() {
+    draw_screen_locked();
+    gr_flip();
 }
 
 void WearRecoveryUI::InitTextParams() {
@@ -253,9 +208,6 @@ void WearRecoveryUI::Init() {
     backgroundIcon[ERASING] = backgroundIcon[INSTALLING_UPDATE];
     LoadBitmap("icon_error", &backgroundIcon[ERROR]);
     backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
-
-    pthread_create(&progress_t, NULL, progress_thread, NULL);
-
 }
 
 void WearRecoveryUI::SetStage(int current, int max)
