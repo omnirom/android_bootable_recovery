@@ -380,33 +380,41 @@ unsigned int gr_get_height(GRSurface* surface) {
     return surface->height;
 }
 
-int gr_init_font(const char* name, GRFont* dest) {
-    int res = res_create_alpha_surface(name, &(dest->texture));
+int gr_init_font(const char* name, GRFont** dest) {
+    GRFont* font = reinterpret_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
+    if (font == nullptr) {
+        return -1;
+    }
+
+    int res = res_create_alpha_surface(name, &(font->texture));
     if (res < 0) {
+        free(font);
         return res;
     }
 
     // The font image should be a 96x2 array of character images.  The
     // columns are the printable ASCII characters 0x20 - 0x7f.  The
     // top row is regular text; the bottom row is bold.
-    dest->char_width = dest->texture->width / 96;
-    dest->char_height = dest->texture->height / 2;
+    font->char_width = font->texture->width / 96;
+    font->char_height = font->texture->height / 2;
+
+    *dest = font;
 
     return 0;
 }
 
 static void gr_init_font(void)
 {
-    gr_font = reinterpret_cast<GRFont*>(calloc(sizeof(*gr_font), 1));
-
-    int res = gr_init_font("font", gr_font);
+    int res = gr_init_font("font", &gr_font);
     if (res == 0) {
         return;
     }
 
     printf("failed to read font: res=%d\n", res);
 
+
     // fall back to the compiled-in font.
+    gr_font = reinterpret_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
     gr_font->texture = reinterpret_cast<GRSurface*>(malloc(sizeof(*gr_font->texture)));
     gr_font->texture->width = font.width;
     gr_font->texture->height = font.height;
