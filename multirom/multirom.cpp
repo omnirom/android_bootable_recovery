@@ -1723,8 +1723,9 @@ bool MultiROM::extractBootForROM(std::string base)
 	system("rm -r /tmp/boot");
 	system("mkdir /tmp/boot");
 
+	struct stat stat_buffer;
 	int rd_cmpr = decompressRamdisk((base + "/boot/initrd.img").c_str(), "/tmp/boot");
-	if(rd_cmpr == -1 || access("/tmp/boot/init", F_OK) < 0)
+	if(rd_cmpr == -1 || lstat("/tmp/boot/init", &stat_buffer) < 0)
 	{
 		gui_print("Failed to extract ramdisk!\n");
 		return false;
