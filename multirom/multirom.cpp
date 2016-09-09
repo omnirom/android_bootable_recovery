@@ -2227,26 +2227,18 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 		path.replace(0, 5, REALDATA);
 
 	bool res = false;
-	unsigned long long total_restore_size = 0;
 
-	DataManager::SetProgress(0.0);
+	PartitionManager.Set_Restore_Files(path); // Restore_Name is the same as path
 
-	TWPartition *sys_part = PartitionManager.Find_Partition_By_Path("/system");
-	TWPartition *data_part = PartitionManager.Find_Partition_By_Path("/data");
-	if(sys_part && data_part)
-	{
-		total_restore_size += sys_part->Get_Restore_Size(path);
-		total_restore_size += data_part->Get_Restore_Size(path);
-		ProgressTracking progress(total_restore_size);
+	DataManager::SetValue(TW_SKIP_MD5_CHECK_VAR, 0);
 
-		PartitionManager.Set_Restore_Files(path);
-		res = PartitionManager.Restore_Partition(sys_part, path, &progress) &&
-				(!has_data || PartitionManager.Restore_Partition(data_part, path, &progress));
-	}
+	// tw_restore_selected (aka Restore_List) used by Run_Restore has the format = '/boot;/cache;/system;/data;/recovery;'
+	if (!has_data)
+		DataManager::SetValue("tw_restore_selected", "/system;");
 	else
-	{
-		gui_print("Failed to find /system and /data partition!");
-	}
+		DataManager::SetValue("tw_restore_selected", "/system;/data;");
+
+	res = PartitionManager.Run_Restore(path);
 
 	restoreMounts();
 	return res;
