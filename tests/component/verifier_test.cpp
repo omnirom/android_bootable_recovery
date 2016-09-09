@@ -29,10 +29,11 @@
 #include <openssl/sha.h>
 
 #include <android-base/stringprintf.h>
+#include <ziparchive/zip_archive.h>
 
 #include "common.h"
 #include "common/test_constants.h"
-#include "minzip/SysUtil.h"
+#include "otautil/SysUtil.h"
 #include "ui.h"
 #include "verifier.h"
 

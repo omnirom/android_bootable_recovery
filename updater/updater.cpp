@@ -21,14 +21,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <string>
+
 #include <android-base/strings.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
+#include <ziparchive/zip_archive.h>
 
 #include "config.h"
 #include "edify/expr.h"
-#include "minzip/SysUtil.h"
-#include "minzip/Zip.h"
+#include "otautil/DirUtil.h"
+#include "otautil/SysUtil.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"
 
@@ -82,28 +85,35 @@ int main(int argc, char** argv) {
         printf("failed to map package %s\n", argv[3]);
         return 3;
     }
-    ZipArchive za;
-    int err;
-    err = mzOpenZipArchive(map.addr, map.length, &za);
-    if (err != 0) {
+    ZipArchiveHandle za;
+    int open_err = OpenArchiveFromMemory(map.addr, map.length, argv[3], &za);
+    if (open_err != 0) {
         printf("failed to open package %s: %s\n",
-               argv[3], strerror(err));
+               argv[3], ErrorCodeString(open_err));
+        CloseArchive(za);
         return 3;
     }
-    ota_io_init(&za);
+    ota_io_init(za);
 
-    const ZipEntry* script_entry = mzFindZipEntry(&za, SCRIPT_NAME);
-    if (script_entry == NULL) {
-        printf("failed to find %s in %s\n", SCRIPT_NAME, package_filename);
+    ZipString script_name(SCRIPT_NAME);
+    ZipEntry script_entry;
+    int find_err = FindEntry(za, script_name, &script_entry);
+    if (find_err != 0) {
+        printf("failed to find %s in %s: %s\n", SCRIPT_NAME, package_filename,
+               ErrorCodeString(find_err));
+        CloseArchive(za);
         return 4;
     }
 
-    char* script = reinterpret_cast<char*>(malloc(script_entry->uncompLen+1));
-    if (!mzReadZipEntry(&za, script_entry, script, script_entry->uncompLen)) {
-        printf("failed to read script from package\n");
+    std::string script;
+    script.resize(script_entry.uncompressed_length);
+    int extract_err = ExtractToMemory(za, &script_entry, reinterpret_cast<uint8_t*>(&script[0]),
+                                      script_entry.uncompressed_length);
+    if (extract_err != 0) {
+        printf("failed to read script from package: %s\n", ErrorCodeString(extract_err));
+        CloseArchive(za);
         return 5;
     }
-    script[script_entry->uncompLen] = '\0';
 
     // Configure edify's functions.
 
@@ -116,9 +126,10 @@ int main(int argc, char** argv) {
 
     Expr* root;
     int error_count = 0;
-    int error = parse_string(script, &root, &error_count);
+    int error = parse_string(script.c_str(), &root, &error_count);
     if (error != 0 || error_count > 0) {
         printf("%d parse errors\n", error_count);
+        CloseArchive(za);
         return 6;
     }
 
@@ -136,7 +147,7 @@ int main(int argc, char** argv) {
 
     UpdaterInfo updater_info;
     updater_info.cmd_pipe = cmd_pipe;
-    updater_info.package_zip = &za;
+    updater_info.package_zip = za;
     updater_info.version = atoi(version);
     updater_info.package_zip_addr = map.addr;
     updater_info.package_zip_len = map.length;
@@ -187,16 +198,18 @@ int main(int argc, char** argv) {
             }
         }
 
+        if (updater_info.package_zip) {
+            CloseArchive(updater_info.package_zip);
+        }
         return 7;
     } else {
         fprintf(cmd_pipe, "ui_print script succeeded: result was [%s]\n", result.c_str());
     }
 
     if (updater_info.package_zip) {
-        mzCloseZipArchive(updater_info.package_zip);
+        CloseArchive(updater_info.package_zip);
     }
     sysReleaseMap(&map);
-    free(script);
 
     return 0;
 }

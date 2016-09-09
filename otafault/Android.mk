@@ -17,7 +17,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 otafault_static_libs := \
-    libminzip \
+    libziparchive \
     libz \
     libselinux \
     libbase \

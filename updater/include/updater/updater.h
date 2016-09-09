@@ -18,11 +18,11 @@
 #define _UPDATER_UPDATER_H_
 
 #include <stdio.h>
-#include "minzip/Zip.h"
+#include <ziparchive/zip_archive.h>
 
 typedef struct {
     FILE* cmd_pipe;
-    ZipArchive* package_zip;
+    ZipArchiveHandle package_zip;
     int version;
 
     uint8_t* package_zip_addr;

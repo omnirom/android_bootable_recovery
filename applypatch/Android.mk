@@ -80,7 +80,6 @@ LOCAL_STATIC_LIBRARIES += \
     libbase \
     libedify \
     libotafault \
-    libminzip \
     libcrypto \
     libbz
 LOCAL_SHARED_LIBRARIES += libbase libz libcutils libc

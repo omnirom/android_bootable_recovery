@@ -33,6 +33,7 @@
 #include <sys/xattr.h>
 #include <time.h>
 #include <unistd.h>
+#include <utime.h>
 
 #include <memory>
 #include <string>
@@ -48,14 +49,16 @@
 #include <openssl/sha.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
+#include <ziparchive/zip_archive.h>
 
 #include "applypatch/applypatch.h"
 #include "bootloader.h"
 #include "edify/expr.h"
 #include "error_code.h"
-#include "minzip/DirUtil.h"
 #include "mounts.h"
 #include "ota_io.h"
+#include "otautil/DirUtil.h"
+#include "otautil/ZipUtil.h"
 #include "print_sha1.h"
 #include "tune2fs.h"
 #include "updater/updater.h"
@@ -465,14 +468,13 @@ Value* PackageExtractDirFn(const char* name, State* state,
     char* dest_path;
     if (ReadArgs(state, argv, 2, &zip_path, &dest_path) < 0) return NULL;
 
-    ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
+    ZipArchiveHandle za = ((UpdaterInfo*)(state->cookie))->package_zip;
 
     // To create a consistent system image, never use the clock for timestamps.
     struct utimbuf timestamp = { 1217592000, 1217592000 };  // 8/1/2008 default
 
-    bool success = mzExtractRecursive(za, zip_path, dest_path,
-                                      &timestamp,
-                                      NULL, NULL, sehandle);
+    bool success = ExtractPackageRecursive(za, zip_path, dest_path, &timestamp, sehandle);
+
     free(zip_path);
     free(dest_path);
     return StringValue(success ? "t" : "");
@@ -495,14 +497,15 @@ Value* PackageExtractFileFn(const char* name, State* state,
     if (argc == 2) {
         // The two-argument version extracts to a file.
 
-        ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
+        ZipArchiveHandle za = ((UpdaterInfo*)(state->cookie))->package_zip;
 
         char* zip_path;
         char* dest_path;
         if (ReadArgs(state, argv, 2, &zip_path, &dest_path) < 0) return NULL;
 
-        const ZipEntry* entry = mzFindZipEntry(za, zip_path);
-        if (entry == NULL) {
+        ZipString zip_string_path(zip_path);
+        ZipEntry entry;
+        if (FindEntry(za, zip_string_path, &entry) != 0) {
             printf("%s: no %s in package\n", name, zip_path);
             goto done2;
         }
@@ -514,7 +517,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
                 printf("%s: can't open %s for write: %s\n", name, dest_path, strerror(errno));
                 goto done2;
             }
-            success = mzExtractZipEntryToFile(za, entry, fd);
+            success = ExtractEntryToFile(za, &entry, fd);
             if (ota_fsync(fd) == -1) {
                 printf("fsync of \"%s\" failed: %s\n", dest_path, strerror(errno));
                 success = false;
@@ -538,16 +541,21 @@ Value* PackageExtractFileFn(const char* name, State* state,
 
         Value* v = new Value(VAL_INVALID, "");
 
-        ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
-        const ZipEntry* entry = mzFindZipEntry(za, zip_path);
-        if (entry == NULL) {
+        ZipArchiveHandle za = ((UpdaterInfo*)(state->cookie))->package_zip;
+        ZipString zip_string_path(zip_path);
+        ZipEntry entry;
+        if (FindEntry(za, zip_string_path, &entry) != 0) {
             printf("%s: no %s in package\n", name, zip_path);
             goto done1;
         }
 
-        v->data.resize(mzGetZipEntryUncompLen(entry));
-        success = mzExtractZipEntryToBuffer(za, entry,
-                reinterpret_cast<unsigned char *>(&v->data[0]));
+        v->data.resize(entry.uncompressed_length);
+        if (ExtractToMemory(za, &entry, reinterpret_cast<uint8_t*>(&v->data[0]),
+                            v->data.size()) != 0) {
+            printf("%s: faled to extract %zu bytes to memory\n", name, v->data.size());
+        } else {
+            success = true;
+        }
 
       done1:
         free(zip_path);
