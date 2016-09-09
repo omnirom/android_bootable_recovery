@@ -134,6 +134,7 @@
 // devices, on which /cache partitions always exist.
 static const std::string CACHE_BLOCK_MAP = "/cache/recovery/block.map";
 static const std::string UNCRYPT_PATH_FILE = "/cache/recovery/uncrypt_file";
+static const std::string UNCRYPT_STATUS = "/cache/recovery/uncrypt_status";
 static const std::string UNCRYPT_SOCKET = "uncrypt";
 
 static struct fstab* fstab = nullptr;
@@ -466,12 +467,32 @@ static bool uncrypt_wrapper(const char* input_path, const char* map_file, const 
         input_path = package.c_str();
     }
     CHECK(map_file != nullptr);
+
+#define UNCRYPT_TIME_HOLDER 0x7FFFFFFF
+    // Intialize the uncrypt time cost to a huge number so that we can tell from
+    // the statistics if an uncrypt fails to finish.
+    if (!android::base::WriteStringToFile(android::base::StringPrintf(
+            "uncrypt_time: %d\n", UNCRYPT_TIME_HOLDER), UNCRYPT_STATUS)) {
+        PLOG(WARNING) << "failed to write to " << UNCRYPT_STATUS;
+    }
+
+    auto start = std::chrono::system_clock::now();
     int status = uncrypt(input_path, map_file, socket);
     if (status != 0) {
         write_status_to_socket(-1, socket);
         return false;
     }
+
+    std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
+    int count = static_cast<int>(duration.count());
+    // Overwrite the uncrypt_time if uncrypt finishes successfully.
+    if (!android::base::WriteStringToFile(
+            android::base::StringPrintf("uncrypt_time: %d\n", count), UNCRYPT_STATUS)) {
+        PLOG(WARNING) << "failed to write to " << UNCRYPT_STATUS;
+    }
+
     write_status_to_socket(100, socket);
+
     return true;
 }
 
