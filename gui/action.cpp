@@ -63,8 +63,6 @@ extern "C" {
 #include "../multirom/mrominstaller.h"
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
-void curtainClose(void);
-
 GUIAction::mapFunc GUIAction::mf;
 std::set<string> GUIAction::setActionsRunningInCallerThread;
 static string zip_queue[10];
@@ -187,6 +185,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(cancelzip);
 		ADD_ACTION(queueclear);
 		ADD_ACTION(sleep);
+		ADD_ACTION(sleepcounter);
 		ADD_ACTION(appenddatetobackupname);
 		ADD_ACTION(generatebackupname);
 		ADD_ACTION(checkpartitionlist);
@@ -329,7 +328,7 @@ GUIAction::GUIAction(xml_node<>* node)
 	}
 }
 
-int GUIAction::NotifyTouch(TOUCH_STATE state __unused, int x __unused, int y __unused)
+int GUIAction::NotifyTouch(TOUCH_STATE state, int x __unused, int y __unused)
 {
 	if (state == TOUCH_RELEASE)
 		doActions();
@@ -566,8 +565,6 @@ void GUIAction::operation_end(const int operation_status)
 
 int GUIAction::reboot(std::string arg)
 {
-	//curtainClose(); this sometimes causes a crash
-
 	sync();
 	DataManager::SetValue("tw_gui_done", 1);
 	DataManager::SetValue("tw_reboot_arg", arg);
@@ -833,6 +830,23 @@ int GUIAction::sleep(std::string arg)
 	return 0;
 }
 
+int GUIAction::sleepcounter(std::string arg)
+{
+	operation_start("SleepCounter");
+	// Ensure user notices countdown in case it needs to be cancelled
+	blankTimer.resetTimerAndUnblank();
+	int total = atoi(arg.c_str());
+	for (int t = total; t > 0; t--) {
+		int progress = (int)(((float)(total-t)/(float)total)*100.0);
+		DataManager::SetValue("ui_progress", progress);
+		::sleep(1);
+		DataManager::SetValue("tw_sleep", t-1);
+	}
+	DataManager::SetValue("ui_progress", 100);
+	operation_end(0);
+	return 0;
+}
+
 int GUIAction::appenddatetobackupname(std::string arg __unused)
 {
 	operation_start("AppendDateToBackupName");
@@ -842,6 +856,8 @@ int GUIAction::appenddatetobackupname(std::string arg __unused)
 	if (Backup_Name.size() > MAX_BACKUP_NAME_LEN)
 		Backup_Name.resize(MAX_BACKUP_NAME_LEN);
 	DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
+	PageManager::NotifyKey(KEY_END, true);
+	PageManager::NotifyKey(KEY_END, false);
 	operation_end(0);
 	return 0;
 }
@@ -1083,12 +1099,6 @@ int GUIAction::flash(std::string arg)
 
 	reinject_after_flash();
 	PartitionManager.Update_System_Details();
-	if (DataManager::GetIntValue("tw_install_reboot") > 0 && ret_val == 0) {
-		gui_msg("install_reboot=Rebooting in 5 seconds");
-		usleep(5000000);
-		TWFunc::tw_reboot(rb_system);
-		usleep(5000000); // another sleep while we wait for the reboot to occur
-	}
 	operation_end(ret_val);
 	// This needs to be after the operation_end call so we change pages before we change variables that we display on the screen
 	DataManager::SetValue(TW_ZIP_QUEUE_COUNT, zip_queue_index);
@@ -1237,9 +1247,8 @@ int GUIAction::nandroid(std::string arg)
 			DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
 			string auto_gen = gui_lookup("auto_generate", "(Auto Generate)");
 			if (Backup_Name == auto_gen || Backup_Name == gui_lookup("curr_date", "(Current Date)") || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0) {
-				ret = PartitionManager.Run_Backup();
-			}
-			else {
+				ret = PartitionManager.Run_Backup(false);
+			} else {
 				operation_end(1);
 				return -1;
 			}
@@ -1786,12 +1795,16 @@ int GUIAction::flashimage(std::string arg __unused)
 {
 	int op_status = 0;
 
+	PartitionSettings part_settings;
 	operation_start("Flash Image");
-	string path, filename, full_filename;
-	DataManager::GetValue("tw_zip_location", path);
-	DataManager::GetValue("tw_file", filename);
-	full_filename = path + "/" + filename;
-	if (PartitionManager.Flash_Image(full_filename))
+	DataManager::GetValue("tw_zip_location", part_settings.Restore_Name);
+	DataManager::GetValue("tw_file", part_settings.Backup_FileName);
+	unsigned long long total_bytes = TWFunc::Get_File_Size(part_settings.Restore_Name + "/" + part_settings.Backup_FileName);
+	ProgressTracking progress(total_bytes);
+	part_settings.progress = &progress;
+	part_settings.adbbackup = false;
+	part_settings.PM_Method = PM_RESTORE;
+	if (PartitionManager.Flash_Image(&part_settings))
 		op_status = 0; // success
 	else
 		op_status = 1; // fail

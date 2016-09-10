@@ -29,6 +29,8 @@ extern "C" {
 #include <vector>
 #include "twrpDU.hpp"
 #include "progresstracking.hpp"
+#include "partitions.hpp"
+#include "twrp-functions.hpp"
 
 using namespace std;
 
@@ -42,17 +44,19 @@ struct thread_data_struct {
 	unsigned thread_id;
 };
 
+
 class twrpTar {
 public:
 	twrpTar();
 	virtual ~twrpTar();
-	int createTarFork(ProgressTracking *progress, pid_t &fork_pid);
-	int extractTarFork(ProgressTracking *progress);
+	int createTarFork(pid_t *tar_fork_pid);
+	int extractTarFork();
 	void setfn(string fn);
 	void setdir(string dir);
 	void setsize(unsigned long long backup_size);
 	void setpassword(string pass);
 	unsigned long long get_size();
+	void Set_Archive_Type(Archive_Type archive_type);
 
 public:
 	int use_encryption;
@@ -64,6 +68,7 @@ public:
 	int progress_pipe_fd;
 	string partition_name;
 	string backup_folder;
+	PartitionSettings *part_settings;
 
 private:
 	int extract();
@@ -80,16 +85,17 @@ private:
 	static void* createList(void *cookie);
 	static void* extractMulti(void *cookie);
 	int tarList(std::vector<TarListStruct> *TarList, unsigned thread_id);
-	unsigned long long uncompressedSize(string filename, int *archive_type);
+	unsigned long long uncompressedSize(string filename);
 	static void Signal_Kill(int signum);
 
-	int Archive_Current_Type;
+	enum Archive_Type current_archive_type;
 	unsigned long long Archive_Current_Size;
 	unsigned long long Total_Backup_Size;
 	bool include_root_dir;
 	TAR *t;
 	tartype_t tar_type; // Only used in createTar() but variable must persist while the tar is open
 	int fd;
+	int input_fd;                                                                   // this stores the fd for libtar to write to
 	pid_t pigz_pid;
 	pid_t oaes_pid;
 	unsigned long long file_count;
@@ -100,5 +106,7 @@ private:
 	string password;
 
 	std::vector<TarListStruct> *ItemList;
+	int output_fd;                                                                  // this stores the output fd that gzip will read from
+	int adb_control_twrp_fd, adb_control_bu_fd;                                     // fds for twrp to twrp bu and bu to twrp control fifos
 	unsigned thread_id;
 };

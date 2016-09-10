@@ -40,6 +40,9 @@ public:
 	static int Run_OpenRecoveryScript_Action();                                    // Actually runs the ORS scripts for the GUI action
 	static void Call_After_CLI_Command(VoidFunction fn) { call_after_cli_command = fn; }
 	static void Run_CLI_Command(const char* command);                              // Runs a command for orscmd (twrp binary)
+	static int Backup_ADB_Command(string Options);                                 // Runs adbbackup
+	static int Restore_ADB_Backup();                                               // Restore adb backup through ors
+	static int remountrw();                                                        // Remount system and vendor rw
 };
 
 #endif // _OPENRECOVERYSCRIPT_HPP

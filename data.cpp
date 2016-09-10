@@ -676,9 +676,10 @@ void DataManager::SetDefaultValues()
 	mConst.SetValue(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE);
 	mData.SetValue(TW_BACKUP_NAME, "(Auto Generate)");
 
-	mPersist.SetValue(TW_REBOOT_AFTER_FLASH_VAR, "0");
+	mPersist.SetValue(TW_INSTALL_REBOOT_VAR, "0");
 	mPersist.SetValue(TW_SIGNED_ZIP_VERIFY_VAR, "0");
 	mPersist.SetValue(TW_FORCE_MD5_CHECK_VAR, "0");
+	mPersist.SetValue(TW_DISABLE_FREE_SPACE_VAR, "0");
 	mPersist.SetValue(TW_USE_COMPRESSION_VAR, "0");
 	mPersist.SetValue(TW_TIME_ZONE_VAR, "CST6CDT,M3.2.0,M11.1.0");
 	mPersist.SetValue(TW_GUI_SORT_ORDER, "1");
@@ -715,6 +716,8 @@ void DataManager::SetDefaultValues()
 #endif
 	mData.SetValue("tw_gui_done", "0");
 	mData.SetValue("tw_encrypt_backup", "0");
+	mData.SetValue("tw_sleep_total", "5");
+	mData.SetValue("tw_sleep", "5");
 
 	// Brightness handling
 	string findbright;

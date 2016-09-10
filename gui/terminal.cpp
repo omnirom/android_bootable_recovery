@@ -425,8 +425,6 @@ public:
 	bool inputChar(int ch)
 	{
 		debug_printf("inputChar: %d\n", ch);
-		if (ch == 13)
-			ch = 10;
 		initPty();	// reinit just in case it died before
 		// encode the char as UTF-8 and send it to the pty
 		std::string c;

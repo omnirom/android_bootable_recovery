@@ -249,6 +249,7 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     }
 
     /* check if we can use double buffering */
+#ifndef RECOVERY_GRAPHICS_FORCE_SINGLE_BUFFER
     if (vi.yres * fi.line_length * 2 <= fi.smem_len) {
         double_buffered = true;
         printf("double buffered\n");
@@ -258,6 +259,10 @@ static GRSurface* fbdev_init(minui_backend* backend) {
             gr_framebuffer[0].height * gr_framebuffer[0].row_bytes;
 
     } else {
+#else
+    {
+        printf("RECOVERY_GRAPHICS_FORCE_SINGLE_BUFFER := true\n");
+#endif
         double_buffered = false;
         printf("single buffered\n");
     }

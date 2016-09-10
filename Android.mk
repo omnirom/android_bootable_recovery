@@ -109,7 +109,8 @@ LOCAL_C_INCLUDES += \
     system/vold \
     system/extras/ext4_utils \
     system/core/adb \
-    system/core/libsparse
+    system/core/libsparse \
+    external/zlib
 
 LOCAL_C_INCLUDES += bionic external/openssl/include $(LOCAL_PATH)/libmincrypt/includes
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
@@ -120,7 +121,7 @@ LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES :=
 
 LOCAL_STATIC_LIBRARIES += libguitwrp
-LOCAL_SHARED_LIBRARIES += libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libaosprecovery
+LOCAL_SHARED_LIBRARIES += libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libaosprecovery libtwadbbu
 LOCAL_SHARED_LIBRARIES += libcrecovery
 
 #MultiROM
@@ -189,6 +190,12 @@ LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 #endif
 
 LOCAL_C_INCLUDES += system/extras/ext4_utils
+
+tw_git_revision := $(shell git -C $(LOCAL_PATH) rev-parse --short=8 HEAD 2>/dev/null)
+ifeq ($(shell git -C $(LOCAL_PATH) diff --quiet; echo $$?),1)
+    tw_git_revision := $(tw_git_revision)-dirty
+endif
+LOCAL_CFLAGS += -DTW_GIT_REVISION='"$(tw_git_revision)"'
 
 #TWRP Build Flags
 ifeq ($(TW_EXCLUDE_MTP),)
@@ -487,7 +494,7 @@ endif
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
 LOCAL_CFLAGS += -DTWHTCD_PATH=\"$(TWHTCD_PATH)\"
 ifeq ($(TW_INCLUDE_NTFS_3G),true)
-ifeq ($(shell test $(CM_PLATFORM_SDK_VERSION) -ge 4; echo $$?),0)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
     LOCAL_ADDITIONAL_DEPENDENCIES += \
         mount.ntfs \
         fsck.ntfs \
@@ -661,6 +668,7 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/etc/Android.mk \
     $(commands_recovery_local_path)/toybox/Android.mk \
     $(commands_recovery_local_path)/simg2img/Android.mk \
+    $(commands_recovery_local_path)/adbbu/Android.mk \
     $(commands_recovery_local_path)/libpixelflinger/Android.mk
 
 #MultiROM
