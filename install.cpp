@@ -27,10 +27,11 @@
 #include <string>
 #include <vector>
 
+#include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
-#include <android-base/logging.h>
 
 #include "common.h"
 #include "error_code.h"
@@ -47,6 +48,7 @@ extern RecoveryUI* ui;
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
 #define PUBLIC_KEYS_FILE "/res/keys"
 static constexpr const char* METADATA_PATH = "META-INF/com/android/metadata";
+static constexpr const char* UNCRYPT_STATUS = "/cache/recovery/uncrypt_status";
 
 // Default allocation of progress bar segments to operations
 static const int VERIFICATION_PROGRESS_TIME = 60;
@@ -384,6 +386,16 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
             fprintf(install_log, "%s\n", s.c_str());
         }
 
+        if (ensure_path_mounted(UNCRYPT_STATUS) != 0) {
+            LOG(WARNING) << "Can't mount " << UNCRYPT_STATUS;
+        } else {
+            std::string uncrypt_status;
+            if (!android::base::ReadFileToString(UNCRYPT_STATUS, &uncrypt_status)) {
+                PLOG(WARNING) << "failed to read uncrypt status";
+            } else {
+                fprintf(install_log, "%s\n", android::base::Trim(uncrypt_status).c_str());
+            }
+        }
         fclose(install_log);
     }
     return result;
