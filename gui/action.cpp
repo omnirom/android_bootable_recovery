@@ -1739,9 +1739,11 @@ int GUIAction::flashimage(std::string arg __unused)
 
 	PartitionSettings part_settings;
 	operation_start("Flash Image");
-	DataManager::GetValue("tw_zip_location", part_settings.Restore_Name);
-	DataManager::GetValue("tw_file", part_settings.Backup_FileName);
-	unsigned long long total_bytes = TWFunc::Get_File_Size(part_settings.Restore_Name + "/" + part_settings.Backup_FileName);
+	string path, filename;
+	DataManager::GetValue("tw_zip_location", path);
+	DataManager::GetValue("tw_file", filename);
+	part_settings.Backup_Folder = path + "/" + filename;
+	unsigned long long total_bytes = TWFunc::Get_File_Size(part_settings.Backup_Folder);
 	ProgressTracking progress(total_bytes);
 	part_settings.progress = &progress;
 	part_settings.adbbackup = false;
