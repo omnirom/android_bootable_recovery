@@ -1621,7 +1621,7 @@ bool TWPartition::Check_MD5(PartitionSettings *part_settings) {
 	sync();
 
 	memset(split_filename, 0, sizeof(split_filename));
-	Full_Filename = part_settings->Restore_Name + "/" + part_settings->Backup_FileName;
+	Full_Filename = part_settings->Backup_Folder + "/" + Backup_FileName;
 	if (!TWFunc::Path_Exists(Full_Filename)) {
 		// This is a split archive, we presume
 		sprintf(split_filename, "%s%03i", Full_Filename.c_str(), index);
@@ -1662,7 +1662,7 @@ bool TWPartition::Check_MD5(PartitionSettings *part_settings) {
 
 bool TWPartition::Restore(PartitionSettings *part_settings) {
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, gui_parse_text("{@restoring_hdr}"));
-	LOGINFO("Restore filename is: %s/%s\n", part_settings->Restore_Name.c_str(), part_settings->Backup_FileName.c_str());
+	LOGINFO("Restore filename is: %s%s\n", part_settings->Backup_Folder.c_str(), Backup_FileName.c_str());
 
 	string Restore_File_System = Get_Restore_File_System(part_settings);
 
@@ -1680,12 +1680,12 @@ string TWPartition::Get_Restore_File_System(PartitionSettings *part_settings) {
 	string Restore_File_System;
 
 	// Parse backup filename to extract the file system before wiping
-	first_period = part_settings->Backup_FileName.find(".");
+	first_period = Backup_FileName.find(".");
 	if (first_period == string::npos) {
 		LOGERR("Unable to find file system (first period).\n");
 		return string();
 	}
-	Restore_File_System = part_settings->Backup_FileName.substr(first_period + 1, part_settings->Backup_FileName.size() - first_period - 1);
+	Restore_File_System = Backup_FileName.substr(first_period + 1, Backup_FileName.size() - first_period - 1);
 	second_period = Restore_File_System.find(".");
 	if (second_period == string::npos) {
 		LOGERR("Unable to find file system (second period).\n");
@@ -2167,14 +2167,14 @@ bool TWPartition::Backup_Tar(PartitionSettings *part_settings, pid_t *tar_fork_p
 #endif
 
 	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
-	Full_FileName = part_settings->Full_Backup_Path + Backup_FileName;
+	Full_FileName = part_settings->Backup_Folder + Backup_FileName;
 	tar.has_data_media = Has_Data_Media;
 	tar.part_settings = part_settings;
 	tar.setdir(Backup_Path);
 	tar.setfn(Full_FileName);
 	tar.setsize(Backup_Size);
 	tar.partition_name = Backup_Name;
-	tar.backup_folder = part_settings->Full_Backup_Path;
+	tar.backup_folder = part_settings->Backup_Folder;
 	if (tar.createTarFork(tar_fork_pid) != 0)
 		return false;
 	return true;
@@ -2191,10 +2191,10 @@ bool TWPartition::Backup_Image(PartitionSettings *part_settings) {
 
 	if (part_settings->adbbackup) {
 		Full_FileName = TW_ADB_BACKUP;
-		adb_file_name  = part_settings->Full_Backup_Path + "/" + Backup_FileName;
+		adb_file_name  = part_settings->Backup_Folder + "/" + Backup_FileName;
 	}
 	else
-		Full_FileName = part_settings->Full_Backup_Path + "/" + Backup_FileName;
+		Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 
 	part_settings->total_restore_size = Backup_Size;
 
@@ -2227,14 +2227,14 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 		if (part_settings->adbbackup)
 			destfn = TW_ADB_BACKUP;
 		else
-			destfn = part_settings->Full_Backup_Path + part_settings->Backup_FileName;
+			destfn = part_settings->Backup_Folder + Backup_FileName;
 	}
 	else {
 		destfn = Actual_Block_Device;
 		if (part_settings->adbbackup) {
 			srcfn = TW_ADB_RESTORE;
 		} else {
-			srcfn = part_settings->Restore_Name + "/" + part_settings->Backup_FileName;
+			srcfn = part_settings->Backup_Folder + "/" + Backup_FileName;
 			Remain = TWFunc::Get_File_Size(srcfn);
 		}
 	}
@@ -2315,7 +2315,7 @@ bool TWPartition::Backup_Dump_Image(PartitionSettings *part_settings) {
 		part_settings->progress->SetPartitionSize(Backup_Size);
 
 	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
-	Full_FileName = part_settings->Full_Backup_Path + "/" + Backup_FileName;
+	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 
 	Command = "dump_image " + MTD_Name + " '" + Full_FileName + "'";
 
@@ -2335,7 +2335,7 @@ bool TWPartition::Backup_Dump_Image(PartitionSettings *part_settings) {
 
 unsigned long long TWPartition::Get_Restore_Size(PartitionSettings *part_settings) {
 	if (!part_settings->adbbackup) {
-		InfoManager restore_info(part_settings->Restore_Name + "/" + Backup_Name + ".info");
+		InfoManager restore_info(part_settings->Backup_Folder + "/" + Backup_Name + ".info");
 		if (restore_info.LoadValues() == 0) {
 			if (restore_info.GetValue("backup_size", Restore_Size) == 0) {
 				LOGINFO("Read info file, restore size is %llu\n", Restore_Size);
@@ -2346,7 +2346,7 @@ unsigned long long TWPartition::Get_Restore_Size(PartitionSettings *part_setting
 
 	string Full_FileName, Restore_File_System = Get_Restore_File_System(part_settings);
 
-	Full_FileName = part_settings->Restore_Name + "/" + Backup_FileName;
+	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 	if (Is_Image(Restore_File_System)) {
 		Restore_Size = TWFunc::Get_File_Size(Full_FileName);
 		return Restore_Size;
@@ -2363,7 +2363,7 @@ unsigned long long TWPartition::Get_Restore_Size(PartitionSettings *part_setting
 		tar.setpassword(Password);
 #endif
 	tar.partition_name = Backup_Name;
-	tar.backup_folder = part_settings->Restore_Name;
+	tar.backup_folder = part_settings->Backup_Folder;
 	tar.part_settings = part_settings;
 	Restore_Size = tar.get_size();
 	return Restore_Size;
@@ -2395,7 +2395,7 @@ bool TWPartition::Restore_Tar(PartitionSettings *part_settings) {
 	if (!ReMount_RW(true))
 		return false;
 
-	Full_FileName = part_settings->Restore_Name + "/" + part_settings->Backup_FileName;
+	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 	twrpTar tar;
 	tar.part_settings = part_settings;
 	tar.setdir(Backup_Path);
@@ -2448,7 +2448,7 @@ bool TWPartition::Restore_Image(PartitionSettings *part_settings) {
 	if (part_settings->adbbackup)
 		Full_FileName = TW_ADB_RESTORE;
 	else
-		Full_FileName = part_settings->Full_Backup_Path + part_settings->Backup_FileName;
+		Full_FileName = part_settings->Backup_Folder + Backup_FileName;
 
 	if (Restore_File_System == "emmc") {
 		if (!part_settings->adbbackup)
@@ -2607,9 +2607,12 @@ uint64_t TWPartition::Get_Max_FileSize() {
 bool TWPartition::Flash_Image(PartitionSettings *part_settings) {
 	string Restore_File_System, full_filename;
 
-	full_filename = part_settings->Restore_Name + "/" + part_settings->Backup_FileName;
+	if (part_settings->Part != NULL)
+		full_filename = part_settings->Backup_Folder + "/" + Backup_FileName;
+	else
+		full_filename = part_settings->Backup_Folder; // Flash image action from GUI
 
-	LOGINFO("Image filename is: %s\n", part_settings->Backup_FileName.c_str());
+	LOGINFO("Image filename is: %s\n", Backup_FileName.c_str());
 
 	if (Backup_Method == BM_FILES) {
 		LOGERR("Cannot flash images to file systems\n");
@@ -2625,7 +2628,7 @@ bool TWPartition::Flash_Image(PartitionSettings *part_settings) {
 		unsigned long long image_size = TWFunc::Get_File_Size(full_filename);
 		if (image_size > Size) {
 			LOGINFO("Size (%llu bytes) of image '%s' is larger than target device '%s' (%llu bytes)\n",
-				image_size, part_settings->Backup_FileName.c_str(), Actual_Block_Device.c_str(), Size);
+				image_size, Backup_FileName.c_str(), Actual_Block_Device.c_str(), Size);
 			gui_err("img_size_err=Size of image is larger than target device");
 			return false;
 		}

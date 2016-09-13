@@ -44,11 +44,7 @@ class TWPartition;
 
 struct PartitionSettings {                                                         // Settings for backup session
 	TWPartition* Part;                                                         // Partition to pass to the partition backup loop
-	std::string Backup_Folder;                                                 // Backup folder to put backup into
-	std::string Full_Backup_Path;                                              // Path to the current backup storage setting
-	std::string Backup_Name;                                                   // Name of partition
-	std::string Restore_Name;                                                  // Path to restore folder
-	std::string Backup_FileName;                                               // Name of the file to restore
+	std::string Backup_Folder;                                                 // Path to restore folder
 	bool adbbackup;                                                            // tell the system we are backing up over adb
 	bool adb_compression;                                                      // 0 == uncompressed, 1 == compressed
 	bool generate_md5;                                                         // tell system to create md5 for partitions
