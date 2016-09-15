@@ -23,7 +23,15 @@ LOCAL_CFLAGS := $(minadbd_cflags)
 LOCAL_CONLY_FLAGS := -Wimplicit-function-declaration
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/.. system/core/adb
 LOCAL_WHOLE_STATIC_LIBRARIES := libadbd
-LOCAL_SHARED_LIBRARIES := libbase liblog libcutils libc libcrypto
+LOCAL_SHARED_LIBRARIES := libbase liblog libcutils libc
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
+    LOCAL_C_INCLUDES += $(LOCAL_PATH)/libmincrypt/includes
+    LOCAL_SHARED_LIBRARIES += libmincrypttwrp
+    LOCAL_CFLAGS += -DUSE_MINCRYPT
+else
+    LOCAL_SHARED_LIBRARIES += libcrypto
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 
