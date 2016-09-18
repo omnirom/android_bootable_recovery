@@ -162,6 +162,11 @@ int main(int argc, char **argv) {
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 	DataManager::SetValue(TW_MROM_REC_VERSION_VAR, MultiROM::getRecoveryVersion());
 	printf("MultiROM Recovery version: %s\n", DataManager::GetStrValue(TW_MROM_REC_VERSION_VAR).c_str());
+
+#ifdef MR_NO_KEXEC
+	MultiROM::nokexec_restore_primary_and_cleanup();
+#endif
+
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
 	// Load up all the resources

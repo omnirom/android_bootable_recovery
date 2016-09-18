@@ -1955,6 +1955,14 @@ int GUIAction::multirom_settings(std::string arg __unused)
 	DataManager::SetValue("tw_multirom_current", cfg.current_rom);
 	DataManager::SetValue("tw_multirom_auto_boot_rom", cfg.auto_boot_rom);
 	DataManager::SetValue("tw_multirom_auto_boot_type", (cfg.auto_boot_type & MROM_AUTOBOOT_LAST));
+#ifdef MR_NO_KEXEC
+	DataManager::SetValue("tw_multirom_no_kexec", cfg.no_kexec & 0x3F);
+	DataManager::SetValue("tw_multirom_no_kexec_internal", (cfg.no_kexec & 0x40) ? 1 : 0);
+	DataManager::SetValue("tw_multirom_no_kexec_restore", (cfg.no_kexec & 0x80) ? 1 : 0);
+#else
+	DataManager::SetValue("tw_multirom_no_kexec_na", 1);  //no-kexec workaround is disabled in this build
+	DataManager::SetValue("tw_multirom_no_kexec", 0);
+#endif
 	DataManager::SetValue("tw_multirom_colors", cfg.colors);
 	DataManager::SetValue("tw_multirom_brightness", cfg.brightness);
 	DataManager::SetValue("tw_multirom_enable_adb", cfg.enable_adb);
@@ -1989,6 +1997,14 @@ int GUIAction::multirom_settings_save(std::string arg __unused)
 			break;
 	}
 	cfg.auto_boot_rom = DataManager::GetStrValue("tw_multirom_auto_boot_rom");
+#ifdef MR_NO_KEXEC
+	cfg.no_kexec = DataManager::GetIntValue("tw_multirom_no_kexec");
+	if (cfg.no_kexec != 0)
+	{
+		cfg.no_kexec += (DataManager::GetIntValue("tw_multirom_no_kexec_internal") == 1) ? 0x40 : 0;
+		cfg.no_kexec += (DataManager::GetIntValue("tw_multirom_no_kexec_restore") == 1) ? 0x80 : 0;
+	}
+#endif
 	cfg.colors = DataManager::GetIntValue("tw_multirom_colors");
 	cfg.brightness = DataManager::GetIntValue("tw_multirom_brightness");
 	cfg.enable_adb = DataManager::GetIntValue("tw_multirom_enable_adb");

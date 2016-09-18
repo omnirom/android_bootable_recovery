@@ -118,6 +118,9 @@ public:
 		int auto_boot_seconds;
 		int auto_boot_type;
 		std::string auto_boot_rom;
+#ifdef MR_NO_KEXEC
+		int no_kexec;
+#endif
 		int colors;
 		int brightness;
 		int enable_adb;
@@ -134,6 +137,9 @@ public:
 	static bool folderExists();
 	static std::string getRomsPath();
 	static std::string getPath();
+#ifdef MR_NO_KEXEC
+	static void nokexec_restore_primary_and_cleanup();
+#endif
 	static int getType(std::string name);
 	static std::string listRoms(uint32_t mask = MASK_ALL, bool with_bootimg_only = false);
 	static void setInstaller(MROMInstaller *i);

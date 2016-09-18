@@ -359,6 +359,26 @@ ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
 #TODO
 LOCAL_CFLAGS += -DTW_DEFAULT_ROTATION=0
 
+    MR_NO_KEXEC_MK_OPTIONS := true 1 allowed 2 enabled 3 ui_confirm 4 ui_choice 5 forced
+    ifneq (,$(filter $(MR_NO_KEXEC), $(MR_NO_KEXEC_MK_OPTIONS)))
+        ifneq (,$(filter $(MR_NO_KEXEC), true 1 allowed))
+            # NO_KEXEC_DISABLED    =  0x00,   // no-kexec workaround disabled
+            LOCAL_CFLAGS += -DMR_NO_KEXEC=0x00
+        else ifneq (,$(filter $(MR_NO_KEXEC), 2 enabled))
+            # NO_KEXEC_ALLOWED     =  0x01,   // "Use no-kexec only when needed"
+            LOCAL_CFLAGS += -DMR_NO_KEXEC=0x01
+        else ifneq (,$(filter $(MR_NO_KEXEC), 3 ui_confirm))
+            # NO_KEXEC_CONFIRM     =  0x02,   // "..... but also ask for confirmation"
+            LOCAL_CFLAGS += -DMR_NO_KEXEC=0x02
+        else ifneq (,$(filter $(MR_NO_KEXEC), 4 ui_choice))
+            # NO_KEXEC_CHOICE      =  0x04,   // "Ask whether to kexec or use no-kexec"
+            LOCAL_CFLAGS += -DMR_NO_KEXEC=0x04
+        else ifneq (,$(filter $(MR_NO_KEXEC), 5 forced))
+            # NO_KEXEC_FORCED      =  0x08,   // "Always force using no-kexec workaround"
+            LOCAL_CFLAGS += -DMR_NO_KEXEC=0x08
+        endif
+    endif
+
     ifneq ($(MR_RD_ADDR),)
         LOCAL_CFLAGS += -DMR_RD_ADDR=$(MR_RD_ADDR)
     endif

@@ -74,6 +74,11 @@ endif
 #MultiROM
 ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
     LOCAL_CFLAGS += -DTARGET_RECOVERY_IS_MULTIROM
+
+    MR_NO_KEXEC_MK_OPTIONS := true 1 allowed 2 enabled 3 ui_confirm 4 ui_choice 5 forced
+    ifneq (,$(filter $(MR_NO_KEXEC), $(MR_NO_KEXEC_MK_OPTIONS)))
+        LOCAL_CFLAGS += -DMR_NO_KEXEC
+    endif
 endif
 
 LOCAL_C_INCLUDES += bionic system/core/libpixelflinger/include
