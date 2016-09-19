@@ -35,29 +35,29 @@ struct PartitionList {
 	unsigned int selected;
 };
 
-enum PartitionManager_Op {                                                         // PartitionManager Restore Mode for Raw_Read_Write()
+enum PartitionManager_Op {                                                        // PartitionManager Restore Mode for Raw_Read_Write()
 	PM_BACKUP = 0,
 	PM_RESTORE = 1,
 };
 
 class TWPartition;
 
-struct PartitionSettings {                                                         // Settings for backup session
-	TWPartition* Part;                                                         // Partition to pass to the partition backup loop
-	std::string Backup_Folder;                                                 // Path to restore folder
-	bool adbbackup;                                                            // tell the system we are backing up over adb
-	bool adb_compression;                                                      // 0 == uncompressed, 1 == compressed
-	bool generate_md5;                                                         // tell system to create md5 for partitions
-	uint64_t total_restore_size;                                               // Total size of restored backup
-	uint64_t img_bytes_remaining;                                              // remaining img/emmc bytes to backup for progress indicator
-	uint64_t file_bytes_remaining;                                             // remaining file bytes to backup for progress indicator
-	uint64_t img_time;                                                         // used to calculate how fast we backup images
-	uint64_t file_time;                                                        // used to calculate how fast we backup files
-	uint64_t img_bytes;                                                        // total image bytes of all emmc partitions
-	uint64_t file_bytes;                                                       // total file bytes of all file based partitions
-	int partition_count;                                                       // Number of partitions to restore
-	ProgressTracking *progress;                                                // Keep track of progress in GUI	
-	enum PartitionManager_Op PM_Method;                                        // Current operation of backup or restore
+struct PartitionSettings {                                                        // Settings for backup session
+	TWPartition* Part;                                                        // Partition to pass to the partition backup loop
+	std::string Backup_Folder;                                                // Path to restore folder
+	bool adbbackup;                                                           // tell the system we are backing up over adb
+	bool adb_compression;                                                     // 0 == uncompressed, 1 == compressed
+	bool generate_md5;                                                        // tell system to create md5 for partitions
+	uint64_t total_restore_size;                                              // Total size of restored backup
+	uint64_t img_bytes_remaining;                                             // remaining img/emmc bytes to backup for progress indicator
+	uint64_t file_bytes_remaining;                                            // remaining file bytes to backup for progress indicator
+	uint64_t img_time;                                                        // used to calculate how fast we backup images
+	uint64_t file_time;                                                       // used to calculate how fast we backup files
+	uint64_t img_bytes;                                                       // total image bytes of all emmc partitions
+	uint64_t file_bytes;                                                      // total file bytes of all file based partitions
+	int partition_count;                                                      // Number of partitions to restore
+	ProgressTracking *progress;                                               // Keep track of progress in GUI
+	enum PartitionManager_Op PM_Method;                                       // Current operation of backup or restore
 };
 
 enum Backup_Method_enum {
@@ -92,7 +92,7 @@ public:
 	bool Backup(PartitionSettings *part_settings, pid_t *tar_fork_pid);       // Backs up the partition to the folder specified
 	bool Check_MD5(PartitionSettings *part_settings);                         // Checks MD5 of a backup
 	bool Restore(PartitionSettings *part_settings);                           // Restores the partition using the backup folder provided
-	unsigned long long Get_Restore_Size(PartitionSettings *part_settings);// Returns the overall restore size of the backup
+	unsigned long long Get_Restore_Size(PartitionSettings *part_settings);    // Returns the overall restore size of the backup
 	string Backup_Method_By_Name();                                           // Returns a string of the backup method for human readable output
 	bool Decrypt(string Password);                                            // Decrypts the partition, return 0 for failure and -1 for success
 	bool Wipe_Encryption();                                                   // Ignores wipe commands for /data/media devices and formats the original block device
@@ -283,15 +283,15 @@ public:
 	void Decrypt_Adopted();                                                   // Attempt to identy and decrypt any adopted storage partitions
 	void Remove_Partition_By_Path(string Path);                               // Removes / erases a partition entry from the partition list
 
-	bool Flash_Image(PartitionSettings *part_settings);                        // Flashes an image to a selected partition from the partition list
-	bool Restore_Partition(struct PartitionSettings *part_settings);                  // Restore the partitions based on type
+	bool Flash_Image(string& path, string& filename);                         // Flashes an image to a selected partition from the partition list
+	bool Restore_Partition(struct PartitionSettings *part_settings);          // Restore the partitions based on type
 	TWAtomicInt stop_backup;
 
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
 	void Setup_Android_Secure_Location(TWPartition* Part);                    // Sets up .android_secure if needed
-	bool Make_MD5(struct PartitionSettings *part_settings); // Generates an MD5 after a backup is made
-	bool Backup_Partition(struct PartitionSettings *part_settings);                  // Backup the partitions based on type
+	bool Make_MD5(struct PartitionSettings *part_settings);                   // Generates an MD5 after a backup is made
+	bool Backup_Partition(struct PartitionSettings *part_settings);           // Backup the partitions based on type
 	void Output_Partition(TWPartition* Part);                                 // Outputs partition details to the log
 	TWPartition* Find_Partition_By_MTP_Storage_ID(unsigned int Storage_ID);   // Returns a pointer to a partition based on MTP Storage ID
 	bool Add_Remove_MTP_Storage(TWPartition* Part, int message_type);         // Adds or removes an MTP Storage partition
