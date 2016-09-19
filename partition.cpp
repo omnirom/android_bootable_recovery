@@ -1662,7 +1662,7 @@ bool TWPartition::Check_MD5(PartitionSettings *part_settings) {
 
 bool TWPartition::Restore(PartitionSettings *part_settings) {
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Display_Name, gui_parse_text("{@restoring_hdr}"));
-	LOGINFO("Restore filename is: %s%s\n", part_settings->Backup_Folder.c_str(), Backup_FileName.c_str());
+	LOGINFO("Restore filename is: %s/%s\n", part_settings->Backup_Folder.c_str(), Backup_FileName.c_str());
 
 	string Restore_File_System = Get_Restore_File_System(part_settings);
 
@@ -2167,7 +2167,7 @@ bool TWPartition::Backup_Tar(PartitionSettings *part_settings, pid_t *tar_fork_p
 #endif
 
 	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
-	Full_FileName = part_settings->Backup_Folder + Backup_FileName;
+	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 	tar.has_data_media = Has_Data_Media;
 	tar.part_settings = part_settings;
 	tar.setdir(Backup_Path);
@@ -2227,7 +2227,7 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 		if (part_settings->adbbackup)
 			destfn = TW_ADB_BACKUP;
 		else
-			destfn = part_settings->Backup_Folder + Backup_FileName;
+			destfn = part_settings->Backup_Folder + "/" + Backup_FileName;
 	}
 	else {
 		destfn = Actual_Block_Device;
@@ -2448,7 +2448,7 @@ bool TWPartition::Restore_Image(PartitionSettings *part_settings) {
 	if (part_settings->adbbackup)
 		Full_FileName = TW_ADB_RESTORE;
 	else
-		Full_FileName = part_settings->Backup_Folder + Backup_FileName;
+		Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 
 	if (Restore_File_System == "emmc") {
 		if (!part_settings->adbbackup)
@@ -2607,10 +2607,7 @@ uint64_t TWPartition::Get_Max_FileSize() {
 bool TWPartition::Flash_Image(PartitionSettings *part_settings) {
 	string Restore_File_System, full_filename;
 
-	if (part_settings->Part != NULL)
-		full_filename = part_settings->Backup_Folder + "/" + Backup_FileName;
-	else
-		full_filename = part_settings->Backup_Folder; // Flash image action from GUI
+	full_filename = part_settings->Backup_Folder + "/" + Backup_FileName;
 
 	LOGINFO("Image filename is: %s\n", Backup_FileName.c_str());
 
