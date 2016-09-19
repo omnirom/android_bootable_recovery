@@ -2248,13 +2248,13 @@ bool TWPartitionManager::Remove_MTP_Storage(unsigned int Storage_ID) {
 	return false;
 }
 
-bool TWPartitionManager::Flash_Image(PartitionSettings *part_settings) {
+bool TWPartitionManager::Flash_Image(string& path, string& filename) {
 	int check, partition_count = 0;
 	TWPartition* flash_part = NULL;
 	string Flash_List, flash_path, full_filename;
 	size_t start_pos = 0, end_pos = 0;
 
-	full_filename = part_settings->Backup_Folder;
+	full_filename = path + "/" + filename;
 
 	gui_msg("image_flash_start=[IMAGE FLASH STARTED]");
 	gui_msg(Msg("img_to_flash=Image to flash: '{1}'")(full_filename));
@@ -2268,6 +2268,14 @@ bool TWPartitionManager::Flash_Image(PartitionSettings *part_settings) {
 			return false;
 		}
 	}
+
+	PartitionSettings part_settings;
+	part_settings.Backup_Folder = path + "/";
+	unsigned long long total_bytes = TWFunc::Get_File_Size(full_filename);
+	ProgressTracking progress(total_bytes);
+	part_settings.progress = &progress;
+	part_settings.adbbackup = false;
+	part_settings.PM_Method = PM_RESTORE;
 
 	gui_msg("calc_restore=Calculating restore details...");
 	DataManager::GetValue("tw_flash_partition", Flash_List);
@@ -2298,7 +2306,8 @@ bool TWPartitionManager::Flash_Image(PartitionSettings *part_settings) {
 
 	DataManager::SetProgress(0.0);
 	if (flash_part) {
-		if (!flash_part->Flash_Image(part_settings))
+		flash_part->Backup_FileName = filename;
+		if (!flash_part->Flash_Image(&part_settings))
 			return false;
 	} else {
 		gui_err("invalid_flash=Invalid flash partition specified.");

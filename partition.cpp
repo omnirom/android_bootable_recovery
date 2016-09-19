@@ -2607,10 +2607,7 @@ uint64_t TWPartition::Get_Max_FileSize() {
 bool TWPartition::Flash_Image(PartitionSettings *part_settings) {
 	string Restore_File_System, full_filename;
 
-	if (part_settings->Part != NULL)
-		full_filename = part_settings->Backup_Folder + "/" + Backup_FileName;
-	else
-		full_filename = part_settings->Backup_Folder; // Flash image action from GUI
+	full_filename = part_settings->Backup_Folder + "/" + Backup_FileName;
 
 	LOGINFO("Image filename is: %s\n", Backup_FileName.c_str());
 
