@@ -28,6 +28,7 @@
 #include "../variables.h"
 #include "../openrecoveryscript.hpp"
 #include "../fuse_sideload.h"
+#include "../gui/blanktimer.hpp"
 #include "multiromedify.h"
 
 extern "C" {
@@ -1090,6 +1091,9 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	if(!prepareZIP(file, &hacker, restore_script))  // may change file var
 		return false;
 
+	// unblank here so we can see some progress (kinda optional)
+	blankTimer.resetTimerAndUnblank();
+
 	if(!changeMounts(rom))
 	{
 		gui_print("Failed to change mountpoints!\n");
@@ -1113,6 +1117,10 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 			goto exit;
 	}
 
+	// unblank here is necessary; if we don't bring the screen back up and the zip has an AROMA
+	// Installer, it will take over the screen and buttons and we won't be able to manually wake the screen
+	blankTimer.resetTimerAndUnblank();
+
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, 0);
 	status = TWinstall_zip(file.c_str(), &wipe_cache);
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, verify_status);
@@ -1121,6 +1129,8 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 		system_args("dev=\"$(losetup | grep 'system\\.img' | grep -o '/.*:')\"; losetup -d \"${dev%%:}\"");
 
 exit:
+	// not really needed blankTimer.resetTimerAndUnblank();
+
 	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
 		failsafeCheckPartition("/tmp/mrom_fakesyspart");
 
@@ -1130,6 +1140,8 @@ exit:
 		if(system_args("cd /tmp && zip \"%s\" %s", file.c_str(), MR_UPDATE_SCRIPT_NAME) != 0)
 			LOGERR("Failed to restore original updater-script, THIS ZIP IS NOW UNUSEABLE FOR NON-MULTIROM FLASHING\n");
 	}
+
+	// not really needed blankTimer.resetTimerAndUnblank();
 
 	system("rm -r " MR_UPDATE_SCRIPT_PATH);
 	if(file == "/tmp/mr_update.zip")
@@ -1171,6 +1183,8 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 		if(!createFakeSystemImg())
 			return false;
 	}
+
+	blankTimer.resetTimerAndUnblank(); // same as above (about AROMA Installer)
 
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, 0);
 	status = TWinstall_zip(file.c_str(), wipe_cache);
