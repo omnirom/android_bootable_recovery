@@ -140,8 +140,7 @@ void MultiROM::nokexec_restore_primary_and_cleanup()
 
 				PartitionSettings part_settings;
 				part_settings.Part = boot; //PartitionManager.Find_Partition_By_Path("/boot");
-				part_settings.Restore_Name = m_path;
-				part_settings.Backup_FileName = "primary_boot.img";
+				part_settings.Backup_Folder = m_path + "/" + "primary_boot.img";
 				part_settings.adbbackup = false;
 				part_settings.adb_compression = false;
 				part_settings.partition_count = 1;
