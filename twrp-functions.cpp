@@ -714,6 +714,22 @@ int TWFunc::read_file(string fn, uint64_t& results) {
 	return -1;
 }
 
+int TWFunc::view_text_file(string fn) {
+        std::vector<string> lines;
+	if (TWFunc::read_file(fn, lines) == 0 && lines.size() > 0) {
+		int index, line_count = lines.size();
+      		std::string line;
+		for (index = 0; index < line_count; index++) {
+			line = lines.at(index);
+			gui_msg(Msg(msg::kHighlight, "lines_of_text_file={1}")(line));
+		}
+	        return 0;
+        } else {
+		gui_msg(Msg(msg::kError, "empty_text_file=Empty text file '{1}'")(fn));
+		return 1;
+        }
+}
+
 int TWFunc::write_file(string fn, string& line) {
 	FILE *file;
 	file = fopen(fn.c_str(), "w");

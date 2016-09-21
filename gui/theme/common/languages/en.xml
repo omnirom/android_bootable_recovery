@@ -435,6 +435,7 @@
 		<string name="fm_set_perms_hdr">Set Permissions</string>
 		<string name="fm_perms">Permissions:</string>
 		<string name="fm_complete">File Operation Complete</string>
+		<string name="fm_view_text_file_btn">View Text File</string>
 		<string name="decrypt_data_hdr">Decrypt Data</string>
 		<string name="decrypt_data_enter_pass">Enter Password.</string>
 		<string name="decrypt_data_failed">Password failed, please try again!</string>
@@ -672,5 +673,7 @@
 		<string name="adbbackup_control_error">Cannot write to adb control channel</string>
 		<string name="twrp_adbbu_option">--twrp option is required to enable twrp adb backup</string>
 		<string name="partition_not_found">path: {1} not found in partititon list</string>
+		<string name="empty_text_file">Empty text file '{1}'</string>
+		<string name="lines_of_text_file">{1}</string>
 	</resources>
 </language>

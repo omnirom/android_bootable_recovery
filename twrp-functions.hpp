@@ -76,6 +76,7 @@ public:
 	static int removeDir(const string path, bool removeParent); //recursively remove a directory
 	static int copy_file(string src, string dst, int mode); //copy file from src to dst with mode permissions
 	static unsigned int Get_D_Type_From_Stat(string Path);                      // Returns a dirent dt_type value using stat instead of dirent
+	static int view_text_file(string fn); //view text file
 	static int read_file(string fn, vector<string>& results); //read from file
 	static int read_file(string fn, string& results); //read from file
 	static int read_file(string fn, uint64_t& results); //read from file
