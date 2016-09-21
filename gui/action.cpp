@@ -198,6 +198,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(checkpartitionlifetimewrites);
 		ADD_ACTION(mountsystemtoggle);
 		ADD_ACTION(setlanguage);
+		ADD_ACTION(viewtextfile);
 
 		// remember actions that run in the caller thread
 		for (mapFunc::const_iterator it = mf.begin(); it != mf.end(); ++it)
@@ -1862,6 +1863,18 @@ int GUIAction::setlanguage(std::string arg __unused)
 	operation_start("Set Language");
 	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
 	PageManager::RequestReload();
+	op_status = 0; // success
+
+	operation_end(op_status);
+	return 0;
+}
+
+int GUIAction::viewtextfile(std::string arg __unused)
+{
+	int op_status = 0;
+
+	operation_start("View Text File");
+	TWFunc::view_text_file(arg);
 	op_status = 0; // success
 
 	operation_end(op_status);

@@ -3656,6 +3656,13 @@
 			</text>
 
 			<button style="main_button_half_height">
+				<condition var1="tw_fm_isfolder" var2="0" />
+				<placement x="%indent%" y="%row12a_y%"/>
+				<text>{@fm_view_text_file_btn=View Text File}</text>
+				<action function="page">textfileviewer</action>
+			</button>
+
+			<button style="main_button_half_height">
 				<condition var1="tw_fm_isfolder" var2="0"/>
 				<placement x="%indent%" y="%row15a_y%"/>
 				<text>{@fm_copy_file_btn=Copy File}</text>
@@ -3762,6 +3769,31 @@
 				<action function="page">filemanagerlist</action>
 			</action>
 		</page>
+
+		<page name="textfileviewer">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>%tw_filename1%</text>
+			</text>
+
+			<template name="console"/>
+
+			<object type="action">
+				<action function="viewtextfile">%tw_filename1%</action>
+			</object>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">filemanageroptions</action>
+			</action>
+                </page>
 
 		<page name="choosedestinationfolder">
 			<template name="page"/>
