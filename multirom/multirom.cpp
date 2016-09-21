@@ -24,7 +24,11 @@
 #include "../minzip/SysUtil.h"
 #include "../minzip/Zip.h"
 #include "multirom_Zip.h"
+#ifdef USE_OLD_VERIFIER
+#include "../verifier24/verifier.h"
+#else
 #include "../verifier.h"
+#endif
 #include "../variables.h"
 #include "../openrecoveryscript.hpp"
 #include "../fuse_sideload.h"

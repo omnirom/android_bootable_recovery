@@ -49,7 +49,7 @@ std::string MROMInstaller::open(const std::string& file)
 	MemMapping map;
 	if (sysMapFile(file.c_str(), &map) != 0) {
 		LOGERR("Failed to sysMapFile '%s'\n", file.c_str());
-		return false;
+		return ("Failed to sysMapFile '" + file + "'!");
 	}
 
 	if (mzOpenZipArchive(map.addr, map.length, &zip) != 0)
