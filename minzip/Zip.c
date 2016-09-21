@@ -198,10 +198,10 @@ static bool parseZipArchive(ZipArchive* pArchive)
      */
     val = get4LE(pArchive->addr);
     if (val == ENDSIG) {
-        LOGI("Found Zip archive, but it looks empty\n");
+        LOGW("Found Zip archive, but it looks empty\n");
         goto bail;
     } else if (val != LOCSIG) {
-        LOGV("Not a Zip archive (found 0x%08x)\n", val);
+        LOGW("Not a Zip archive (found 0x%08x)\n", val);
         goto bail;
     }
 
@@ -217,7 +217,7 @@ static bool parseZipArchive(ZipArchive* pArchive)
         ptr--;
     }
     if (ptr < (const unsigned char*) pArchive->addr) {
-        LOGI("Could not find end-of-central-directory in Zip\n");
+        LOGW("Could not find end-of-central-directory in Zip\n");
         goto bail;
     }
 
@@ -431,7 +431,7 @@ int mzOpenZipArchive(unsigned char* addr, size_t length, ZipArchive* pArchive)
 
     if (length < ENDHDR) {
         err = -1;
-        LOGV("File '%s' too small to be zip (%zd)\n", fileName, map.length);
+        LOGW("Archive %p is too small to be zip (%zd)\n", pArchive, length);
         goto bail;
     }
 
@@ -440,7 +440,7 @@ int mzOpenZipArchive(unsigned char* addr, size_t length, ZipArchive* pArchive)
 
     if (!parseZipArchive(pArchive)) {
         err = -1;
-        LOGV("Parsing '%s' failed\n", fileName);
+        LOGW("Parsing archive %p failed\n", pArchive);
         goto bail;
     }
 
@@ -508,7 +508,6 @@ static bool processDeflatedEntry(const ZipArchive *pArchive,
     void *cookie)
 {
     long result = -1;
-    unsigned char readBuf[32 * 1024];
     unsigned char procBuf[32 * 1024];
     z_stream zstream;
     int zerr;
@@ -551,7 +550,7 @@ static bool processDeflatedEntry(const ZipArchive *pArchive,
         /* uncompress the data */
         zerr = inflate(&zstream, Z_NO_FLUSH);
         if (zerr != Z_OK && zerr != Z_STREAM_END) {
-            LOGD("zlib inflate call failed (zerr=%d)\n", zerr);
+            LOGW("zlib inflate call failed (zerr=%d)\n", zerr);
             goto z_bail;
         }
 
@@ -605,7 +604,6 @@ bool mzProcessZipEntryContents(const ZipArchive *pArchive,
     void *cookie)
 {
     bool ret = false;
-    off_t oldOff;
 
     switch (pEntry->compression) {
     case STORED:
@@ -621,13 +619,6 @@ bool mzProcessZipEntryContents(const ZipArchive *pArchive,
     }
 
     return ret;
-}
-
-static bool crcProcessFunction(const unsigned char *data, int dataLen,
-        void *crc)
-{
-    *(unsigned long *)crc = crc32(*(unsigned long *)crc, data, dataLen);
-    return true;
 }
 
 typedef struct {
@@ -1012,7 +1003,7 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
         if (callback != NULL) callback(targetFile, cookie);
     }
 
-    LOGD("Extracted %d file(s)\n", extractCount);
+    LOGV("Extracted %d file(s)\n", extractCount);
 
     free(helper.buf);
     free(zpath);

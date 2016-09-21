@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="recovery_installing" msgid="2013591905463558223">"S\'està instal·lant una actualització del sistema"</string>
+    <string name="recovery_erasing" msgid="7334826894904037088">"S\'està esborrant"</string>
+    <string name="recovery_no_command" msgid="4465476568623024327">"No hi ha cap ordre"</string>
+    <string name="recovery_error" msgid="5748178989622716736">"S\'ha produït un error"</string>
+    <string name="recovery_installing_security" msgid="9184031299717114342">"S\'està instal·lant una actualització de seguretat"</string>
+</resources>

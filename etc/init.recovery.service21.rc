@@ -1,0 +1,4 @@
+on boot
+
+# For starting recovery on 4.4 and older
+service recovery /sbin/recovery

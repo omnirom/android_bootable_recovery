@@ -17,10 +17,6 @@
 #ifndef __FUSE_SIDELOAD_H
 #define __FUSE_SIDELOAD_H
 
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-
 // define the filenames created by the sideload FUSE filesystem
 #define FUSE_SIDELOAD_HOST_MOUNTPOINT "/sideload"
 #define FUSE_SIDELOAD_HOST_FILENAME "package.zip"
@@ -39,6 +35,13 @@ struct provider_vtab {
 int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
                       uint64_t file_size, uint32_t block_size);
 
-__END_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+int run_old_fuse_sideload(struct provider_vtab* vtab, void* cookie,
+                      uint64_t file_size, uint32_t block_size);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

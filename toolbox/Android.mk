@@ -2,9 +2,13 @@ TWRP_TOOLBOX_PATH := $(call my-dir)
 LOCAL_PATH := system/core/toolbox
 include $(CLEAR_VARS)
 
-OUR_TOOLS := \
-    start \
-    stop \
+OUR_TOOLS :=
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
+    OUR_TOOLS := \
+        start \
+        stop
+endif
     
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     OUR_TOOLS += \
@@ -224,8 +228,15 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
         ../../../$(TWRP_TOOLBOX_PATH)/setprop.c
     OUR_TOOLS += getprop setprop
     ifneq ($(TW_USE_TOOLBOX), true)
-        LOCAL_SRC_FILES += ls.c
+        LOCAL_SRC_FILES += ../../../$(TWRP_TOOLBOX_PATH)/ls.c
     endif
+endif
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
+    # Rule for making start and stop in N trees
+    LOCAL_SRC_FILES += \
+        ../../../$(TWRP_TOOLBOX_PATH)/start.c \
+        ../../../$(TWRP_TOOLBOX_PATH)/stop.c
+    OUR_TOOLS += start stop
 endif
 
 LOCAL_MODULE := toolbox_recovery

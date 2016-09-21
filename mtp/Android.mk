@@ -9,6 +9,9 @@ LOCAL_CFLAGS = -D_FILE_OFFSET_BITS=64 -DMTP_DEVICE -DMTP_HOST -fno-strict-aliasi
 LOCAL_C_INCLUDES += $(LOCAL_PATH) bionic frameworks/base/include system/core/include bionic/libc/private/
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_C_INCLUDES += external/stlport/stlport
+    LOCAL_SHARED_LIBRARIES += libstlport
+else
+    LOCAL_SHARED_LIBRARIES += libc++
 endif
 
 LOCAL_SRC_FILES = \
@@ -32,13 +35,7 @@ LOCAL_SRC_FILES = \
     twrpMtp.cpp \
     mtp_MtpDatabase.cpp \
     node.cpp
-LOCAL_SHARED_LIBRARIES += libz libc libusbhost libstdc++ libdl libcutils libutils libaosprecovery
-
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-    LOCAL_SHARED_LIBRARIES += libstlport
-else
-    LOCAL_SHARED_LIBRARIES += libc++
-endif
+LOCAL_SHARED_LIBRARIES += libz libc libusbhost libstdc++ libdl libcutils libutils libaosprecovery libselinux
 
 ifneq ($(TW_MTP_DEVICE),)
 	LOCAL_CFLAGS += -DUSB_MTP_DEVICE=$(TW_MTP_DEVICE)

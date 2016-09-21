@@ -13,6 +13,7 @@
 # limitations under the License.
 
 LOCAL_PATH := $(call my-dir)
+
 include $(CLEAR_VARS)
 
 BOARD_RECOVERY_DEFINES := BOARD_BML_BOOT BOARD_BML_RECOVERY
@@ -23,47 +24,55 @@ $(foreach board_define,$(BOARD_RECOVERY_DEFINES), \
   ) \
   )
 
-LOCAL_SRC_FILES := applypatch.c bspatch.c freecache.c imgpatch.c utils.c
-LOCAL_MODULE := libapplypatch
-LOCAL_MODULE_TAGS := eng
 LOCAL_C_INCLUDES += \
     external/bzip2 \
     external/zlib \
     $(commands_recovery_local_path)
-LOCAL_STATIC_LIBRARIES += libmtdutils libmincrypttwrp libbz libz
+
+LOCAL_CLANG := true
+LOCAL_SRC_FILES := applypatch.cpp bspatch.cpp freecache.cpp imgpatch.cpp utils.cpp
+LOCAL_MODULE := libapplypatch
+LOCAL_MODULE_TAGS := eng
+LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_STATIC_LIBRARIES += libbase libotafault libmtdutils libcrypto_static libbz libz
 
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := main.c
+ifeq ($(HOST_OS),linux)
+include $(CLEAR_VARS)
+
+LOCAL_CLANG := true
+LOCAL_SRC_FILES := bspatch.cpp imgpatch.cpp utils.cpp
+LOCAL_MODULE := libimgpatch
+LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+LOCAL_STATIC_LIBRARIES += libcrypto_static libbz libz
+
+include $(BUILD_HOST_STATIC_LIBRARY)
+endif  # HOST_OS == linux
+
+include $(CLEAR_VARS)
+
+LOCAL_CLANG := true
+LOCAL_SRC_FILES := main.cpp
 LOCAL_MODULE := applypatch
-LOCAL_MODULE_TAGS := optional
-LOCAL_C_INCLUDES += $(commands_recovery_local_path)
-LOCAL_STATIC_LIBRARIES += libapplypatch libmtdutils libmincrypttwrp libbz
-LOCAL_SHARED_LIBRARIES += libz libcutils libstdc++ libc
+LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libmtdutils libcrypto_static libbz \
+                          libedify \
+
+LOCAL_SHARED_LIBRARIES += libz libcutils libc
 
 include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := main.c
-LOCAL_MODULE := applypatch_static
-LOCAL_FORCE_STATIC_EXECUTABLE := true
-LOCAL_MODULE_TAGS := optional eng
-LOCAL_C_INCLUDES += $(commands_recovery_local_path)
-LOCAL_STATIC_LIBRARIES += libapplypatch libmtdutils libmincrypttwrp libbz
-LOCAL_STATIC_LIBRARIES += libz libcutils libstdc++ libc
-
-include $(BUILD_EXECUTABLE)
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := imgdiff.c utils.c bsdiff.c
+LOCAL_CLANG := true
+LOCAL_SRC_FILES := imgdiff.cpp utils.cpp bsdiff.cpp
 LOCAL_MODULE := imgdiff
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_C_INCLUDES += external/zlib external/bzip2
 LOCAL_STATIC_LIBRARIES += libz libbz
-LOCAL_MODULE_TAGS := eng
 
 include $(BUILD_HOST_EXECUTABLE)

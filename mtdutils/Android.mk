@@ -14,7 +14,7 @@ endif
 
 LOCAL_MODULE := libmtdutils
 LOCAL_STATIC_LIBRARIES := libcutils libc
-LOCAL_FORCE_STATIC_EXECUTABLE := true
+LOCAL_CLANG := true
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -31,6 +31,7 @@ endif
 
 LOCAL_MODULE := libmtdutils
 LOCAL_SHARED_LIBRARIES := libcutils libc
+LOCAL_CLANG := true
 
 include $(BUILD_SHARED_LIBRARY)
 

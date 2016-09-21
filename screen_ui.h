@@ -34,6 +34,7 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     // overall recovery state ("background image")
     void SetBackground(Icon icon);
+    void SetSystemUpdateText(bool security_update);
 
     // progress indicator
     void SetProgressType(ProgressType type);
@@ -49,6 +50,7 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     // printing messages
     void Print(const char* fmt, ...) __printflike(2, 3);
+    void PrintOnScreenOnly(const char* fmt, ...) __printflike(2, 3);
     void ShowFile(const char* filename);
 
     // menu display
@@ -66,16 +68,28 @@ class ScreenRecoveryUI : public RecoveryUI {
     };
     void SetColor(UIElement e);
 
-  private:
+  protected:
     Icon currentIcon;
-    int installingFrame;
-    const char* locale;
-    bool rtl_locale;
 
-    pthread_mutex_t updateMutex;
-    GRSurface* backgroundIcon[5];
-    GRSurface* backgroundText[5];
-    GRSurface** installation;
+    const char* locale;
+    bool intro_done;
+    int current_frame;
+
+    // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
+    float density_;
+    // True if we should use the large layout.
+    bool is_large_;
+
+    GRSurface* error_icon;
+
+    GRSurface* erasing_text;
+    GRSurface* error_text;
+    GRSurface* installing_text;
+    GRSurface* no_command_text;
+
+    GRSurface** introFrames;
+    GRSurface** loopFrames;
+
     GRSurface* progressBarEmpty;
     GRSurface* progressBarFill;
     GRSurface* stageMarkerEmpty;
@@ -108,33 +122,49 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     pthread_t progress_thread_;
 
-    int animation_fps;
-    int installing_frames;
+    // Number of intro frames and loop frames in the animation.
+    int intro_frames;
+    int loop_frames;
 
-    int iconX, iconY;
+    // Number of frames per sec (default: 30) for both parts of the animation.
+    int animation_fps;
 
     int stage, max_stage;
 
-    void draw_background_locked(Icon icon);
-    void draw_progress_locked();
+    int char_width_;
+    int char_height_;
+    pthread_mutex_t updateMutex;
+    bool rtl_locale;
+
+    void draw_background_locked();
+    void draw_foreground_locked();
     void draw_screen_locked();
     void update_screen_locked();
     void update_progress_locked();
+
+    GRSurface* GetCurrentFrame();
+    GRSurface* GetCurrentText();
 
     static void* ProgressThreadStartRoutine(void* data);
     void ProgressThreadLoop();
 
     void ShowFile(FILE*);
+    void PrintV(const char*, bool, va_list);
     void PutChar(char);
     void ClearText();
 
-    void DrawHorizontalRule(int* y);
-    void DrawTextLine(int* y, const char* line, bool bold);
-    void DrawTextLines(int* y, const char* const* lines);
-
+    void LoadAnimation();
     void LoadBitmap(const char* filename, GRSurface** surface);
-    void LoadBitmapArray(const char* filename, int* frames, GRSurface*** surface);
     void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
+
+    int PixelsFromDp(int dp);
+    int GetAnimationBaseline();
+    int GetProgressBaseline();
+    int GetTextBaseline();
+
+    void DrawHorizontalRule(int* y);
+    void DrawTextLine(int x, int* y, const char* line, bool bold);
+    void DrawTextLines(int x, int* y, const char* const* lines);
 };
 
 #endif  // RECOVERY_UI_H

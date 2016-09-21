@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="recovery_installing" msgid="2013591905463558223">"سسٹم اپ ڈیٹ انسٹال ہو رہی ہے"</string>
+    <string name="recovery_erasing" msgid="7334826894904037088">"صاف ہو رہا ہے"</string>
+    <string name="recovery_no_command" msgid="4465476568623024327">"کوئی کمانڈ نہیں ہے"</string>
+    <string name="recovery_error" msgid="5748178989622716736">"خرابی!"</string>
+    <string name="recovery_installing_security" msgid="9184031299717114342">"سیکیورٹی اپ ڈیٹ انسٹال ہو رہی ہے"</string>
+</resources>

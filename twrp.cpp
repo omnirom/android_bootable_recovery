@@ -24,9 +24,7 @@
 #include "gui/twmsg.h"
 
 #include "cutils/properties.h"
-extern "C" {
 #include "bootloader.h"
-}
 
 #ifdef ANDROID_RB_RESTART
 #include "cutils/android_reboot.h"
@@ -36,8 +34,8 @@ extern "C" {
 
 extern "C" {
 #include "gui/gui.h"
-#include "set_metadata.h"
 }
+#include "set_metadata.h"
 #include "gui/gui.hpp"
 #include "gui/pages.hpp"
 #include "gui/objects.hpp"
@@ -64,6 +62,8 @@ struct selabel_handle *selinux_handle;
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 #include "multirom/multirom.h"
 #endif //TARGET_RECOVERY_IS_MULTIROM
+
+extern int adb_server_main(int is_daemon, int server_port, int /* reply_fd */);
 
 TWPartitionManager PartitionManager;
 int Log_Offset;
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 	if (argc == 3 && strcmp(argv[1], "--adbd") == 0) {
 		property_set("ctl.stop", "adbd");
 #ifdef TW_USE_NEW_MINADBD
-		adb_main(0, DEFAULT_ADB_PORT);
+		adb_server_main(0, DEFAULT_ADB_PORT, -1);
 #else
 		adb_main(argv[2]);
 #endif

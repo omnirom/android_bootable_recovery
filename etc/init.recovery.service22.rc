@@ -1,0 +1,5 @@
+on boot
+
+# For starting recovery on 5.0 and newer
+service recovery /sbin/recovery
+    seclabel u:r:recovery:s0

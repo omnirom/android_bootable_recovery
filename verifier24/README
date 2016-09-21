@@ -1,0 +1,2 @@
+This is older code from Android 5.1 Marshmallow (SDK ver 24) and older
+that still used mincrypt instead of libcrypto.

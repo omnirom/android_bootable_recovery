@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="recovery_installing" msgid="2013591905463558223">"முறைமைப் புதுப்பிப்பை நிறுவுகிறது"</string>
+    <string name="recovery_erasing" msgid="7334826894904037088">"அழிக்கிறது"</string>
+    <string name="recovery_no_command" msgid="4465476568623024327">"கட்டளை இல்லை"</string>
+    <string name="recovery_error" msgid="5748178989622716736">"பிழை!"</string>
+    <string name="recovery_installing_security" msgid="9184031299717114342">"பாதுகாப்புப் புதுப்பிப்பை நிறுவுகிறது"</string>
+</resources>

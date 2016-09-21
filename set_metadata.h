@@ -28,18 +28,10 @@
 #ifndef _RECOVERY_SET_CONTEXTS_H
 #define _RECOVERY_SET_CONTEXTS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <sys/stat.h>
 #include "selinux/selinux.h"
 
 int tw_get_default_metadata(const char* filename);
 int tw_set_default_metadata(const char* filename);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif //_RECOVERY_SET_CONTEXTS_H

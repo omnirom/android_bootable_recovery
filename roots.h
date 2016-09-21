@@ -19,10 +19,6 @@
 
 #include "common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct fstab_rec Volume;
 
 // Load and parse volume data from /etc/recovery.fstab.
@@ -35,7 +31,10 @@ Volume* volume_for_path(const char* path);
 // success (volume is mounted).
 int ensure_path_mounted(const char* path);
 
-// Make sure that the volume 'path' is on is mounted.  Returns 0 on
+// Similar to ensure_path_mounted, but allows one to specify the mount_point.
+int ensure_path_mounted_at(const char* path, const char* mount_point);
+
+// Make sure that the volume 'path' is on is unmounted.  Returns 0 on
 // success (volume is unmounted);
 int ensure_path_unmounted(const char* path);
 
@@ -44,12 +43,14 @@ int ensure_path_unmounted(const char* path);
 // it is mounted.
 int format_volume(const char* volume);
 
+// Reformat the given volume (must be the mount point only, eg
+// "/cache"), no paths permitted.  Attempts to unmount the volume if
+// it is mounted.
+// Copies 'directory' to root of the newly formatted volume
+int format_volume(const char* volume, const char* directory);
+
 // Ensure that all and only the volumes that packages expect to find
 // mounted (/tmp and /cache) are mounted.  Returns 0 on success.
 int setup_install_mounts();
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // RECOVERY_ROOTS_H_

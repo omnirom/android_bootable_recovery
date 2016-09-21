@@ -28,13 +28,15 @@
 #include <stdio.h>
 
 #include "twcommon.h"
-#include "mincrypt/rsa.h"
-#include "mincrypt/sha.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
 #include "minzip/SysUtil.h"
 #include "minzip/Zip.h"
+#ifdef USE_OLD_VERIFIER
+#include "verifier24/verifier.h"
+#else
 #include "verifier.h"
+#endif
 #include "variables.h"
 #include "data.hpp"
 #include "partitions.hpp"
@@ -42,9 +44,9 @@
 #include "twrp-functions.hpp"
 #include "gui/gui.hpp"
 #include "gui/pages.hpp"
+#include "legacy_property_service.h"
 extern "C" {
 	#include "gui/gui.h"
-	#include "legacy_property_service.h"
 }
 
 static const char* properties_path = "/dev/__properties__";
@@ -253,6 +255,8 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 			*wipe_cache = 1;
 		} else if (strcmp(command, "clear_display") == 0) {
 			// Do nothing, not supported by TWRP
+		} else if (strcmp(command, "log") == 0) {
+			printf("%s\n", strtok(NULL, "\n"));
 		} else {
 			LOGERR("unknown command [%s]\n", command);
 		}
@@ -328,12 +332,18 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 		sysReleaseMap(&map);
 		return INSTALL_CORRUPT;
 	}
+	time_t start, stop;
+	time(&start);
 	ret_val = Run_Update_Binary(path, &Zip, wipe_cache);
+	time(&stop);
+	int total_time = (int) difftime(stop, start);
 	if (ret_val == INSTALL_CORRUPT) {
 		// If no updater binary is found, check for ui.xml
 		ret_val = Install_Theme(path, &Zip);
 		if (ret_val == INSTALL_CORRUPT)
 			gui_msg(Msg(msg::kError, "no_updater_binary=Could not find '{1}' in the zip file.")(ASSUMED_UPDATE_BINARY_NAME));
+	} else {
+		LOGINFO("Install took %i second(s).\n", total_time);
 	}
 	sysReleaseMap(&map);
 	return ret_val;

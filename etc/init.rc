@@ -1,5 +1,6 @@
 import /init.recovery.logd.rc
 import /init.recovery.usb.rc
+import /init.recovery.service.rc
 import /init.recovery.${ro.hardware}.rc
 
 on early-init
@@ -9,6 +10,9 @@ on early-init
     # Set the security context for the init process.
     # This should occur before anything else (e.g. ueventd) is started.
     setcon u:r:init:s0
+
+    # Set the security context of /postinstall if present.
+    restorecon /postinstall
 
     start ueventd
     start healthd
@@ -20,6 +24,7 @@ service set_permissive /sbin/permissive.sh
 on init
     export PATH /sbin:/system/bin
     export LD_LIBRARY_PATH .:/sbin
+
     export ANDROID_ROOT /system
     export ANDROID_DATA /data
     export EXTERNAL_STORAGE /sdcard
@@ -77,6 +82,11 @@ on late-init
     # Load properties, pre-Android 6.0
     trigger load_all_props_action
 
+    # Load properties from /system/ + /factory after fs mount. Place
+    # this in another action so that the load will be scheduled after the prior
+    # issued fs triggers have completed.
+    trigger load_system_props_action
+
     # Load properties, Android 6.0+
     trigger load_system_props_action
 
@@ -99,8 +109,6 @@ service ueventd /sbin/ueventd
 service healthd /sbin/healthd -r
     critical
     seclabel u:r:healthd:s0
-
-service recovery /sbin/recovery
 
 service adbd /sbin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
     disabled
