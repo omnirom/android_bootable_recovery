@@ -144,13 +144,13 @@ void tar_dev_free(struct tar_dev *tdp);
  *    realname = path of file to append
  *    savename = name to save the file under in the archive
  */
-int tar_append_file(TAR *t, const char *realname, const char *savename);
+int tar_append_file(TAR *t, const char *realname, const char *savename, char *error_message);
 
 /* write EOF indicator */
 int tar_append_eof(TAR *t);
 
 /* add file contents to a tarchive */
-int tar_append_regfile(TAR *t, const char *realname);
+int tar_append_regfile(TAR *t, const char *realname, char *error_message);
 
 /* Appends in-memory file contents to a tarchive.
  * Arguments:
@@ -245,7 +245,7 @@ void th_finish(TAR *t);
 /***** extract.c ***********************************************************/
 
 /* sequentially extract next file from t */
-int tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *progress_fd);
+int tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *progress_fd, const int *error_fd);
 
 /* extract different file types */
 int tar_extract_dir(TAR *t, const char *realname);
@@ -256,7 +256,7 @@ int tar_extract_blockdev(TAR *t, const char *realname);
 int tar_extract_fifo(TAR *t, const char *realname);
 
 /* for regfiles, we need to extract the content blocks as well */
-int tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd);
+int tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd, const int *error_fd);
 int tar_skip_regfile(TAR *t);
 
 /* extract regfile to buffer */
@@ -317,13 +317,27 @@ void int_to_oct_ex(int64_t num, char *oct, size_t octlen);
 
 /* extract groups of files */
 int tar_extract_glob(TAR *t, char *globname, char *prefix);
-int tar_extract_all(TAR *t, char *prefix, const int *progress_fd);
+int tar_extract_all(TAR *t, char *prefix, const int *progress_fd, const int *error_fd);
 
 /* add a whole tree of files */
 int tar_append_tree(TAR *t, char *realdir, char *savedir);
 
 /* find an entry */
 int tar_find(TAR *t, char *searchstr);
+
+enum progress_message_type {
+	PM_SIZE_UPDATE = 0,
+	PM_COUNT_UPDATE = 1,
+	PM_OVERALL_FILE_COUNT = 2,
+	PM_OVERALL_SIZE = 3,
+	PM_ERROR = 4,
+};
+
+struct progress_message_struct {
+	enum progress_message_type message_type;
+	size_t message_len;
+	unsigned long long data;
+};
 
 #ifdef __cplusplus
 }

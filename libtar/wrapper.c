@@ -45,7 +45,7 @@ tar_extract_glob(TAR *t, char *globname, char *prefix)
 			snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
 		else
 			strlcpy(buf, filename, sizeof(buf));
-		if (tar_extract_file(t, buf, prefix, &fd) != 0)
+		if (tar_extract_file(t, buf, prefix, &fd, &fd) != 0)
 			return -1;
 	}
 
@@ -54,7 +54,7 @@ tar_extract_glob(TAR *t, char *globname, char *prefix)
 
 
 int
-tar_extract_all(TAR *t, char *prefix, const int *progress_fd)
+tar_extract_all(TAR *t, char *prefix, const int *progress_fd, const int *error_fd)
 {
 	char *filename;
 	char buf[MAXPATHLEN];
@@ -81,7 +81,7 @@ tar_extract_all(TAR *t, char *prefix, const int *progress_fd)
 		printf("    tar_extract_all(): calling tar_extract_file(t, "
 		       "\"%s\")\n", buf);
 #endif
-		if (tar_extract_file(t, buf, prefix, progress_fd) != 0)
+		if (tar_extract_file(t, buf, prefix, progress_fd, error_fd) != 0)
 			return -1;
 	}
 
@@ -103,7 +103,7 @@ tar_append_tree(TAR *t, char *realdir, char *savedir)
 	       t, realdir, (savedir ? savedir : "[NULL]"));
 #endif
 
-	if (tar_append_file(t, realdir, savedir) != 0)
+	if (tar_append_file(t, realdir, savedir, NULL) != 0)
 		return -1;
 
 #ifdef DEBUG
@@ -141,7 +141,7 @@ tar_append_tree(TAR *t, char *realdir, char *savedir)
 		}
 
 		if (tar_append_file(t, realpath,
-				    (savedir ? savepath : NULL)) != 0)
+				    (savedir ? savepath : NULL), NULL) != 0)
 			return -1;
 	}
 

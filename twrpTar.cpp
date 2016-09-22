@@ -104,7 +104,7 @@ void twrpTar::Set_Archive_Type(Archive_Type archive_type) {
 int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 	int status = 0;
 	pid_t rc_pid;
-	int progress_pipe[2], ret;
+	int progress_pipe[2], error_pipe[2], ret;
 	char cmd[512];
 
 	file_count = 0;
@@ -117,6 +117,11 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 
 	if (pipe(progress_pipe) < 0) {
 		LOGINFO("Error creating progress tracking pipe\n");
+		gui_err("backup_error=Error creating backup.");
+		return -1;
+	}
+	if (pipe(error_pipe) < 0) {
+		LOGINFO("Error creating error message pipe\n");
 		gui_err("backup_error=Error creating backup.");
 		return -1;
 	}
@@ -134,6 +139,8 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 		signal(SIGUSR2, twrpTar::Signal_Kill);
 		close(progress_pipe[0]);
 		progress_pipe_fd = progress_pipe[1];
+		close(error_pipe[0]);
+		error_pipe_fd = error_pipe[1];
 
 		if (use_encryption || userdata_encryption) {
 			LOGINFO("Using encryption\n");
@@ -257,10 +264,14 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 			}
 
 			// Send file count to parent
-			write(progress_pipe_fd, &file_count, sizeof(file_count));
+			progress_message_struct message;
+			message.message_type = PM_OVERALL_FILE_COUNT;
+			message.data = file_count;
+			write(progress_pipe_fd, &message, sizeof(message));
 			// Send backup size to parent
 			total_size = regular_size + encrypt_size;
-			write(progress_pipe_fd, &total_size, sizeof(total_size));
+			message.message_type = PM_OVERALL_SIZE;
+			write(progress_pipe_fd, &message, sizeof(message));
 
 			if (userdata_encryption) {
 				// Create a backup of unencrypted data
@@ -271,6 +282,7 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 				reg.use_compression = use_compression;
 				reg.split_archives = 1;
 				reg.progress_pipe_fd = progress_pipe_fd;
+				reg.error_pipe_fd = error_pipe_fd;
 				reg.part_settings = part_settings;
 				LOGINFO("Creating unencrypted backup...\n");
 				if (createList((void*)&reg) != 0) {
@@ -315,6 +327,7 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 				enc[i].use_compression = use_compression;
 				enc[i].split_archives = 1;
 				enc[i].progress_pipe_fd = progress_pipe_fd;
+				enc[i].error_pipe_fd = error_pipe_fd;
 				enc[i].part_settings = part_settings;
 				LOGINFO("Start encryption thread %i\n", i);
 				ret = pthread_create(&enc_thread[i], &tattr, createList, (void*)&enc[i]);
@@ -390,6 +403,7 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 			reg.use_compression = use_compression;
 			reg.setsize(Total_Backup_Size);
 			reg.progress_pipe_fd = progress_pipe_fd;
+			reg.error_pipe_fd = error_pipe_fd;
 			reg.part_settings = part_settings;
 			if (Total_Backup_Size > MAX_ARCHIVE_SIZE && !part_settings->adbbackup) {
 				gui_msg("split_backup=Breaking backup file into multiple archives...");
@@ -398,8 +412,13 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 				reg.split_archives = 0;
 			}
 			LOGINFO("Creating backup...\n");
-			write(progress_pipe_fd, &file_count, sizeof(file_count));
-			write(progress_pipe_fd, &Total_Backup_Size, sizeof(Total_Backup_Size));
+			progress_message_struct message;
+			message.message_type = PM_OVERALL_FILE_COUNT;
+			message.data = file_count;
+			write(progress_pipe_fd, &message, sizeof(message));
+			message.message_type = PM_OVERALL_SIZE;
+			message.data = Total_Backup_Size;
+			write(progress_pipe_fd, &message, sizeof(message));
 			if (createList((void*)&reg) != 0) {
 				gui_err("backup_error=Error creating backup.");
 				close(progress_pipe[1]);
@@ -410,34 +429,45 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 		}
 	} else {
 		// Parent side
-		unsigned long long fs, size_backup = 0, files_backup = 0, file_count = 0;
-		int first_data = 0;
+		progress_message_struct progress_message;
+		unsigned long long total_size = 1, size_backup = 0, files_backup = 0, file_count = 1;
 
 		// Parent closes output side
 		close(progress_pipe[1]);
+		close(error_pipe[1]);
 
 		// Read progress data from children
-		while (read(progress_pipe[0], &fs, sizeof(fs)) > 0) {
-			if (first_data == 0) {
-				// First incoming data is the file count
-				file_count = fs;
-				if (file_count == 0) file_count = 1; // prevent division by 0 below
-				first_data = 1;
-			} else if (first_data == 1) {
-				// Second incoming data is total size
-				first_data = 2;
-				part_settings->progress->SetSizeCount(fs, file_count);
-			} else {
-				if (fs > 0) {
-					size_backup += fs;
-					part_settings->progress->UpdateSize(size_backup);
-				} else { // fs == 0 increments the file counter
-					files_backup++;
-					part_settings->progress->UpdateSizeCount(size_backup, files_backup);
+		while (read(progress_pipe[0], &progress_message, sizeof(progress_message)) == sizeof(progress_message)) {
+			if (progress_message.message_type == PM_SIZE_UPDATE) {
+				LOGINFO("size update %llu\n", progress_message.data);
+				size_backup += progress_message.data;
+				part_settings->progress->UpdateSize(size_backup);
+			} else if (progress_message.message_type == PM_COUNT_UPDATE) {
+				LOGINFO("file count update\n");
+				files_backup++;
+				part_settings->progress->UpdateSizeCount(size_backup, files_backup);
+			} else if (progress_message.message_type == PM_OVERALL_SIZE) {
+				total_size = progress_message.data;
+				if (total_size == 0) total_size = 1; // prevent division by 0
+				part_settings->progress->SetSizeCount(total_size, file_count);
+			} else if (progress_message.message_type == PM_OVERALL_FILE_COUNT) {
+				file_count = progress_message.data;
+				if (file_count == 0) file_count = 1; // prevent division by 0
+				part_settings->progress->SetSizeCount(total_size, file_count);
+			} else if (progress_message.message_type == PM_ERROR) {
+				LOGINFO("Error message received of length %i\n", progress_message.message_len);
+				char error_message[PATH_MAX * 2];
+				if (read(error_pipe[0], &error_message, progress_message.message_len) == progress_message.message_len) {
+					LOGERR("%s", error_message);
+				} else {
+					LOGERR("Internal error, see recovery log\n");
 				}
+			} else {
+				LOGERR("Unknown progress pipe message type: %i\n", progress_message.message_type);
 			}
 		}
 		close(progress_pipe[0]);
+		close(error_pipe[0]);
 #ifndef BUILD_TWRPTAR_MAIN
 		DataManager::SetValue("tw_file_progress", "");
 		DataManager::SetValue("tw_size_progress", "");
@@ -468,10 +498,15 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 int twrpTar::extractTarFork() {
 	int status = 0;
 	pid_t rc_pid, tar_fork_pid;
-	int progress_pipe[2], ret;
+	int progress_pipe[2], error_pipe[2], ret;
 
 	if (pipe(progress_pipe) < 0) {
 		LOGINFO("Error creating progress tracking pipe\n");
+		gui_err("restore_error=Error during restore process.");
+		return -1;
+	}
+	if (pipe(error_pipe) < 0) {
+		LOGINFO("Error creating error message pipe\n");
 		gui_err("restore_error=Error during restore process.");
 		return -1;
 	}
@@ -482,7 +517,9 @@ int twrpTar::extractTarFork() {
 		if (tar_fork_pid == 0) // child process
 		{
 			close(progress_pipe[0]);
+			close(error_pipe[0]);
 			progress_pipe_fd = progress_pipe[1];
+			error_pipe_fd = error_pipe[1];
 			if (TWFunc::Path_Exists(tarfn) || part_settings->adbbackup) {
 				LOGINFO("Single archive\n");
 				if (extract() != 0)
@@ -515,6 +552,7 @@ int twrpTar::extractTarFork() {
 					tars[0].basefn = basefn;
 					tars[0].thread_id = 0;
 					tars[0].progress_pipe_fd = progress_pipe_fd;
+					tars[0].error_pipe_fd = error_pipe_fd;
 					tars[0].part_settings = part_settings;
 					if (extractMulti((void*)&tars[0]) != 0) {
 						LOGINFO("Error extracting split archive.\n");
@@ -557,6 +595,7 @@ int twrpTar::extractTarFork() {
 						tars[i].setpassword(password);
 						tars[i].thread_id = i;
 						tars[i].progress_pipe_fd = progress_pipe_fd;
+						tars[i].error_pipe_fd = error_pipe_fd;
 						tars[i].part_settings = part_settings;
 						LOGINFO("Creating extract thread ID %i\n", i);
 						ret = pthread_create(&tar_thread[i], &tattr, extractMulti, (void*)&tars[i]);
@@ -611,17 +650,33 @@ int twrpTar::extractTarFork() {
 		}
 		else // parent process
 		{
+			progress_message_struct progress_message;
 			unsigned long long fs, size_backup = 0;
+			int read_size = 0;
 
 			// Parent closes output side
 			close(progress_pipe[1]);
+			close(error_pipe[1]);
 
 			// Read progress data from children
-			while (read(progress_pipe[0], &fs, sizeof(fs)) > 0) {
-				size_backup += fs;
-				part_settings->progress->UpdateSize(size_backup);
+			while ((read_size = read(progress_pipe[0], &progress_message, sizeof(progress_message))) == sizeof(progress_message)) {
+				if (progress_message.message_type == PM_SIZE_UPDATE) {
+					size_backup += progress_message.data;
+					part_settings->progress->UpdateSize(size_backup);
+				} else if (progress_message.message_type == PM_ERROR) {
+					LOGINFO("Error message received of length %i\n", progress_message.message_len);
+					char error_message[PATH_MAX * 2];
+					if (read(error_pipe[0], &error_message, progress_message.message_len) == progress_message.message_len) {
+						LOGERR("%s", error_message);
+					} else {
+						LOGERR("Internal error, see recovery log\n");
+					}
+				} else {
+					LOGERR("Unknown message type %i\n", progress_message.message_type);
+				}
 			}
 			close(progress_pipe[0]);
+			close(error_pipe[0]);
 			part_settings->progress->UpdateDisplayDetails(true);
 
 			if (TWFunc::Wait_For_Child(tar_fork_pid, &status, "extractTarFork()") != 0)
@@ -688,7 +743,7 @@ int twrpTar::extractTar() {
 	char* charRootDir = (char*) tardir.c_str();
 	if (openTar() == -1)
 		return -1;
-	if (tar_extract_all(t, charRootDir, &progress_pipe_fd) != 0) {
+	if (tar_extract_all(t, charRootDir, &progress_pipe_fd, &error_pipe_fd) != 0) {
 		LOGINFO("Unable to extract tar archive '%s'\n", tarfn.c_str());
 		gui_err("restore_error=Error during restore process.");
 		return -1;
@@ -805,8 +860,9 @@ int twrpTar::tarList(std::vector<TarListStruct> *TarList, unsigned thread_id) {
 					Archive_Current_Size = 0;
 				}
 				Archive_Current_Size += fs;
-				fs = 0; // Sending a 0 size to the pipe tells it to increment the file counter
-				write(progress_pipe_fd, &fs, sizeof(fs));
+				progress_message_struct message;
+				message.message_type = PM_COUNT_UPDATE;
+				write(progress_pipe_fd, &message, sizeof(message));
 			}
 			LOGINFO("addFile '%s' including root: %i\n", buf, include_root_dir);
 			if (addFile(buf, include_root_dir) != 0) {
@@ -867,8 +923,11 @@ int twrpTar::addFilesToExistingTar(vector <string> files, string fn) {
 		return -1;
 	for (unsigned int i = 0; i < files.size(); ++i) {
 		char* file = (char*) files.at(i).c_str();
-		if (tar_append_file(t, file, file) == -1)
+		char error_message[PATH_MAX * 2] = {"\n"};
+		if (tar_append_file(t, file, file, (char*)&error_message) == -1) {
+			sendError((char*)&error_message);
 			return -1;
+		}
 	}
 	if (tar_append_eof(t) == -1)
 		return -1;
@@ -1353,16 +1412,32 @@ string twrpTar::Strip_Root_Dir(string Path) {
 	return temp;
 }
 
+void twrpTar::sendError(char* error_message) {
+	if (error_message[0] != '\n') {
+		progress_message_struct message;
+		message.message_type = PM_ERROR;
+		message.message_len = strlen(error_message);
+		write(progress_pipe_fd, &message, sizeof(message));
+		write(error_pipe_fd, &error_message, message.message_len);
+	}
+}
+
 int twrpTar::addFile(string fn, bool include_root) {
 	char* charTarFile = (char*) fn.c_str();
+	char error_message[PATH_MAX * 2];
+	error_message[0] = '\n';
 	if (include_root) {
-		if (tar_append_file(t, charTarFile, NULL) == -1)
+		if (tar_append_file(t, charTarFile, NULL, (char*)&error_message) == -1) {
+			sendError((char*)&error_message);
 			return -1;
+		}
 	} else {
 		string temp = Strip_Root_Dir(fn);
 		char* charTarPath = (char*) temp.c_str();
-		if (tar_append_file(t, charTarFile, charTarPath) == -1)
+		if (tar_append_file(t, charTarFile, charTarPath, (char*)&error_message) == -1) {
+			sendError((char*)&error_message);
 			return -1;
+		}
 	}
 	return 0;
 }

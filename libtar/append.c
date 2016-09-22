@@ -60,7 +60,7 @@ tar_dev_free(tar_dev_t *tdp)
 
 /* appends a file to the tar archive */
 int
-tar_append_file(TAR *t, const char *realname, const char *savename)
+tar_append_file(TAR *t, const char *realname, const char *savename, char *error_message)
 {
 	struct stat s;
 	int i;
@@ -80,6 +80,7 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 #ifdef DEBUG
 		perror("lstat()");
 #endif
+		if (error_message != NULL) sprintf(error_message, "lstat '%s' (%s)", realname, strerror(errno));
 		return -1;
 	}
 
@@ -139,10 +140,14 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 		td = (tar_dev_t *)calloc(1, sizeof(tar_dev_t));
 		td->td_dev = s.st_dev;
 		td->td_h = libtar_hash_new(256, (libtar_hashfunc_t)ino_hash);
-		if (td->td_h == NULL)
+		if (td->td_h == NULL) {
+			if (error_message != NULL) sprintf(error_message, "E:'%s'", realname);
 			return -1;
-		if (libtar_hash_add(t->h, td) == -1)
+		}
+		if (libtar_hash_add(t->h, td) == -1) {
+			if (error_message != NULL) sprintf(error_message, "E:'%s'", realname);
 			return -1;
+		}
 	}
 	libtar_hashptr_reset(&hp);
 	if (libtar_hash_getkey(td->td_h, &hp, &(s.st_ino),
@@ -164,8 +169,10 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 		       s.st_ino, realname);
 #endif
 		ti = (tar_ino_t *)calloc(1, sizeof(tar_ino_t));
-		if (ti == NULL)
+		if (ti == NULL) {
+			if (error_message != NULL) sprintf(error_message, "calloc() '%s'", realname);
 			return -1;
+		}
 		ti->ti_ino = s.st_ino;
 		snprintf(ti->ti_name, sizeof(ti->ti_name), "%s",
 			 savename ? savename : realname);
@@ -176,8 +183,10 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 	if (TH_ISSYM(t))
 	{
 		i = readlink(realname, path, sizeof(path));
-		if (i == -1)
+		if (i == -1) {
+			if (error_message != NULL) sprintf(error_message, "readlink '%s' (%s)", realname, strerror(errno));
 			return -1;
+		}
 		if (i >= MAXPATHLEN)
 			i = MAXPATHLEN - 1;
 		path[i] = '\0';
@@ -201,6 +210,7 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 #ifdef DEBUG
 		printf("t->fd = %d\n", t->fd);
 #endif
+		if (error_message != NULL) sprintf(error_message, "th_write '%s' (%s)", realname, strerror(errno));
 		return -1;
 	}
 #ifdef DEBUG
@@ -208,7 +218,7 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 #endif
 
 	/* if it's a regular file, write the contents as well */
-	if (TH_ISREG(t) && tar_append_regfile(t, realname) != 0)
+	if (TH_ISREG(t) && tar_append_regfile(t, realname, error_message) != 0)
 		return -1;
 
 	return 0;
@@ -240,7 +250,7 @@ tar_append_eof(TAR *t)
 
 /* add file contents to a tarchive */
 int
-tar_append_regfile(TAR *t, const char *realname)
+tar_append_regfile(TAR *t, const char *realname, char* error_message)
 {
 	char block[T_BLOCKSIZE];
 	int filefd;
@@ -258,6 +268,7 @@ tar_append_regfile(TAR *t, const char *realname)
 #ifdef DEBUG
 		perror("open()");
 #endif
+		if (error_message != NULL) sprintf(error_message, "open '%s' (%s)", realname, strerror(errno));
 		return -1;
 	}
 
@@ -267,6 +278,7 @@ tar_append_regfile(TAR *t, const char *realname)
 		j = read(filefd, &block, T_BLOCKSIZE);
 		if (j != T_BLOCKSIZE)
 		{
+			if (error_message != NULL) sprintf(error_message, "read '%s' (%s)", realname, strerror(errno));
 			if (j != -1)
 				errno = EINVAL;
 			goto fail;
@@ -278,11 +290,15 @@ tar_append_regfile(TAR *t, const char *realname)
 	if (i > 0)
 	{
 		j = read(filefd, &block, i);
-		if (j == -1)
+		if (j == -1) {
+			if (error_message != NULL) sprintf(error_message, "read '%s' (%s)", realname, strerror(errno));
 			goto fail;
+		}
 		memset(&(block[i]), 0, T_BLOCKSIZE - i);
-		if (tar_block_write(t, &block) == -1)
+		if (tar_block_write(t, &block) == -1) {
+			if (error_message != NULL) sprintf(error_message, "tar_block_write '%s' (%s)", realname, strerror(errno));
 			goto fail;
+		}
 	}
 
 	/* success! */

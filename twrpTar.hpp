@@ -44,7 +44,6 @@ struct thread_data_struct {
 	unsigned thread_id;
 };
 
-
 class twrpTar {
 public:
 	twrpTar();
@@ -66,6 +65,7 @@ public:
 	int has_data_media;
 	string backup_name;
 	int progress_pipe_fd;
+	int error_pipe_fd;
 	string partition_name;
 	string backup_folder;
 	PartitionSettings *part_settings;
@@ -74,6 +74,7 @@ private:
 	int extract();
 	int addFilesToExistingTar(vector <string> files, string tarFile);
 	int createTar();
+	void sendError(char* error_message);
 	int addFile(string fn, bool include_root);
 	int entryExists(string entry);
 	int closeTar();

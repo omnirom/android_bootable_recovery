@@ -97,10 +97,28 @@ tar_set_file_perms(TAR *t, const char *realname)
 	return 0;
 }
 
+void
+tar_extract_error(const char *prefix, const char *realname, const int err_num, const int *progress_fd, const int *error_fd)
+{
+	struct progress_message_struct message;
+	char error_message[PATH_MAX * 2];
+
+	if (*progress_fd == 0 || *error_fd == 0)
+		return;
+
+	if (err_num)
+		sprintf(error_message, "%s '%s' (%s)", prefix, realname, strerror(err_num));
+	else
+		sprintf(error_message, "%s '%s'", prefix, realname);
+	message.message_type = PM_ERROR;
+	message.message_len = strlen(error_message);
+	write(*progress_fd, &message, sizeof(struct progress_message_struct));
+	write(*error_fd, &error_message, message.message_len);
+}
 
 /* switchboard */
 int
-tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *progress_fd)
+tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *progress_fd, const int *error_fd)
 {
 	int i;
 #ifdef LIBTAR_FILE_HASH
@@ -117,6 +135,7 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 		if (lstat(realname, &s) == 0 || errno != ENOENT)
 		{
 			errno = EEXIST;
+			tar_extract_error("Already exists", realname, errno, progress_fd, error_fd);
 			return -1;
 		}
 	}
@@ -138,7 +157,7 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 	else if (TH_ISFIFO(t))
 		i = tar_extract_fifo(t, realname);
 	else /* if (TH_ISREG(t)) */
-		i = tar_extract_regfile(t, realname, progress_fd);
+		i = tar_extract_regfile(t, realname, progress_fd, error_fd);
 
 	if (i != 0) {
 		fprintf(stderr, "tar_extract_file(): failed to extract %s !!!\n", realname);
@@ -148,6 +167,7 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 	i = tar_set_file_perms(t, realname);
 	if (i != 0) {
 		fprintf(stderr, "tar_extract_file(): failed to set permissions on %s !!!\n", realname);
+		tar_extract_error("Permissions", realname, errno, progress_fd, error_fd);
 		return i;
 	}
 
@@ -157,8 +177,10 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 #ifdef DEBUG
 		printf("tar_extract_file(): restoring SELinux context %s to file %s\n", t->th_buf.selinux_context, realname);
 #endif
-		if (lsetfilecon(realname, t->th_buf.selinux_context) < 0)
+		if (lsetfilecon(realname, t->th_buf.selinux_context) < 0) {
 			fprintf(stderr, "tar_extract_file(): failed to restore SELinux context %s to file %s !!!\n", t->th_buf.selinux_context, realname);
+			tar_extract_error("Contexts", realname, errno, progress_fd, error_fd);
+		}
 	}
 #endif
 
@@ -167,16 +189,20 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 	pathname_len = strlen(pn) + 1;
 	realname_len = strlen(realname) + 1;
 	lnp = (char *)calloc(1, pathname_len + realname_len);
-	if (lnp == NULL)
+	if (lnp == NULL) {
+		tar_extract_error("calloc() ", realname, errno, progress_fd, error_fd);
 		return -1;
+	}
 	strcpy(&lnp[0], pn);
 	strcpy(&lnp[pathname_len], realname);
 #ifdef DEBUG
 	printf("tar_extract_file(): calling libtar_hash_add(): key=\"%s\", "
 	       "value=\"%s\"\n", pn, realname);
 #endif
-	if (libtar_hash_add(t->h, lnp) != 0)
+	if (libtar_hash_add(t->h, lnp) != 0) {
+		tar_extract_error("libtar_hash_add() ", realname, errno, progress_fd, error_fd);
 		return -1;
+	}
 	free(lnp);
 #endif
 
@@ -186,7 +212,7 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 
 /* extract regular file */
 int
-tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
+tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd, const int *error_fd)
 {
 	int64_t size, i;
 	ssize_t k;
@@ -202,6 +228,7 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 	if (!TH_ISREG(t))
 	{
 		errno = EINVAL;
+		tar_extract_error("Invalid type ", realname, errno, progress_fd, error_fd);
 		return -1;
 	}
 
@@ -209,8 +236,10 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 	filename = (realname ? realname : pn);
 	size = th_get_size(t);
 
-	if (mkdirhier(dirname(filename)) == -1)
+	if (mkdirhier(dirname(filename)) == -1) {
+		tar_extract_error("mkdirhier() ", realname, errno, progress_fd, error_fd);
 		return -1;
+	}
 
 	printf("  ==> extracting: %s (file size %lld bytes)\n",
 			filename, size);
@@ -225,6 +254,7 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 #ifdef DEBUG
 		perror("open()");
 #endif
+		tar_extract_error("open() ", realname, errno, progress_fd, error_fd);
 		return -1;
 	}
 
@@ -234,6 +264,7 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 		k = tar_block_read(t, buf);
 		if (k != T_BLOCKSIZE)
 		{
+			tar_extract_error("tar_block_read() ", realname, errno, progress_fd, error_fd);
 			if (k != -1)
 				errno = EINVAL;
 			close(fdout);
@@ -244,19 +275,26 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 		if (write(fdout, buf,
 			  ((i > T_BLOCKSIZE) ? T_BLOCKSIZE : i)) == -1)
 		{
+			tar_extract_error("write() ", realname, errno, progress_fd, error_fd);
 			close(fdout);
 			return -1;
 		}
 		else
 		{
-			if (*progress_fd != 0)
-				write(*progress_fd, &progress_size, sizeof(progress_size));
+			if (*progress_fd != 0) {
+				struct progress_message_struct message;
+				message.message_type = PM_SIZE_UPDATE;
+				message.data = progress_size;
+				write(*progress_fd, &message, sizeof(struct progress_message_struct));
+			}
 		}
 	}
 
 	/* close output file */
-	if (close(fdout) == -1)
+	if (close(fdout) == -1) {
+		tar_extract_error("close() ", realname, errno, progress_fd, error_fd);
 		return -1;
+	}
 
 #ifdef DEBUG
 	printf("### done extracting %s\n", filename);

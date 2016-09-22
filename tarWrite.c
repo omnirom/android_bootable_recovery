@@ -83,8 +83,10 @@ ssize_t write_libtar_buffer(int fd, const void *buffer, size_t size) {
 			buffer_loc = 0;
 			return -1;
 		} else {
-			unsigned long long fs = (unsigned long long)(buffer_loc);
-			write(prog_pipe, &fs, sizeof(fs));
+			struct progress_message_struct message;
+			message.message_type = PM_SIZE_UPDATE;
+			message.data = (unsigned long long)(buffer_size);
+			write(prog_pipe, &message, sizeof(message));
 			buffer_loc = 0;
 			return size;
 		}
@@ -108,6 +110,9 @@ void init_libtar_no_buffer(int pipe_fd) {
 }
 
 ssize_t write_libtar_no_buffer(int fd, const void *buffer, size_t size) {
-	write(prog_pipe, &progress_size, sizeof(progress_size));
+	struct progress_message_struct message;
+	message.message_type = PM_SIZE_UPDATE;
+	message.data = progress_size;
+	write(prog_pipe, &message, sizeof(message));
 	return write(fd, buffer, size);
 }
