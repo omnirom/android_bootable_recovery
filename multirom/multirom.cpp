@@ -3369,7 +3369,8 @@ std::string MultiROM::getRecoveryVersion()
 	hdr.name[BOOT_NAME_SIZE-1] = 0; // to be sure
 
 	if (strncmp((char*)hdr.name, "mrom", 4) != 0 ||
-		strlen((char*)hdr.name) != sizeof("mromYYYYMMDD-PP")-1)
+		(strlen((char*)hdr.name) != sizeof("mromYYYYMMDD-PP")-1 &&
+		strlen((char*)hdr.name) != sizeof("mromYYYYMMDD")-1))
 	{
 		return std::string();
 	}
