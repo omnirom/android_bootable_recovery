@@ -30,7 +30,7 @@
 #include "common.h"
 #include "device.h"
 #include "wear_ui.h"
-#include "cutils/properties.h"
+#include "android-base/properties.h"
 #include "android-base/strings.h"
 #include "android-base/stringprintf.h"
 
@@ -119,8 +119,8 @@ void WearRecoveryUI::draw_screen_locked()
         int y = outer_height;
         int x = outer_width;
         if (show_menu) {
-            char recovery_fingerprint[PROPERTY_VALUE_MAX];
-            property_get("ro.bootimage.build.fingerprint", recovery_fingerprint, "");
+            std::string recovery_fingerprint =
+                    android::base::GetProperty("ro.bootimage.build.fingerprint", "");
             SetColor(HEADER);
             DrawTextLine(x + 4, &y, "Android Recovery", true);
             for (auto& chunk: android::base::Split(recovery_fingerprint, ":")) {

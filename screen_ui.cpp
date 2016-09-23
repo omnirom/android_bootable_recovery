@@ -32,9 +32,9 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <android-base/stringprintf.h>
-#include <cutils/properties.h>
 
 #include "common.h"
 #include "device.h"
@@ -293,8 +293,8 @@ void ScreenRecoveryUI::draw_screen_locked() {
 
         int y = 0;
         if (show_menu) {
-            char recovery_fingerprint[PROPERTY_VALUE_MAX];
-            property_get("ro.bootimage.build.fingerprint", recovery_fingerprint, "");
+            std::string recovery_fingerprint =
+                    android::base::GetProperty("ro.bootimage.build.fingerprint", "");
 
             SetColor(INFO);
             DrawTextLine(TEXT_INDENT, &y, "Android Recovery", true);
@@ -460,7 +460,7 @@ void ScreenRecoveryUI::Init() {
     RecoveryUI::Init();
     InitTextParams();
 
-    density_ = static_cast<float>(property_get_int32("ro.sf.lcd_density", 160)) / 160.f;
+    density_ = static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f;
 
     // Are we portrait or landscape?
     layout_ = (gr_fb_width() > gr_fb_height()) ? LANDSCAPE : PORTRAIT;

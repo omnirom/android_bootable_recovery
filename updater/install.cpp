@@ -37,6 +37,7 @@
 #include <vector>
 
 #include <android-base/parseint.h>
+#include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <android-base/stringprintf.h>
 #include <selinux/label.h>
@@ -46,7 +47,6 @@
 #include "applypatch/applypatch.h"
 #include "cutils/android_reboot.h"
 #include "cutils/misc.h"
-#include "cutils/properties.h"
 #include "edify/expr.h"
 #include "error_code.h"
 #include "minzip/DirUtil.h"
@@ -906,11 +906,10 @@ Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* key = Evaluate(state, argv[0]);
     if (key == NULL) return NULL;
 
-    char value[PROPERTY_VALUE_MAX];
-    property_get(key, value, "");
+    std::string value = android::base::GetProperty(key, "");
     free(key);
 
-    return StringValue(strdup(value));
+    return StringValue(strdup(value.c_str()));
 }
 
 
@@ -1301,9 +1300,8 @@ Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* property;
     if (ReadArgs(state, argv, 2, &filename, &property) < 0) return NULL;
 
-    char buffer[80];
-
     // zero out the 'command' field of the bootloader message.
+    char buffer[80];
     memset(buffer, 0, sizeof(((struct bootloader_message*)0)->command));
     FILE* f = ota_fopen(filename, "r+b");
     fseek(f, offsetof(struct bootloader_message, command), SEEK_SET);
@@ -1311,12 +1309,9 @@ Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
     ota_fclose(f);
     free(filename);
 
-    strcpy(buffer, "reboot,");
-    if (property != NULL) {
-        strncat(buffer, property, sizeof(buffer)-10);
-    }
-
-    property_set(ANDROID_RB_PROPERTY, buffer);
+    std::string reboot_cmd = "reboot,";
+    if (property != nullptr) reboot_cmd += property;
+    android::base::SetProperty(ANDROID_RB_PROPERTY, reboot_cmd);
 
     sleep(5);
     free(property);
