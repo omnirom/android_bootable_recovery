@@ -476,6 +476,77 @@ bool EdifyHacker::add(char c)
     return true;
 }
 
+
+/*
+ * void Move_to_End_Of_Command(std::list<EdifyElement*>::iterator& itr)
+ * 
+ *
+ * Helper function for 'applyOffendingMask' (in particular block_image_update - OFF_BLOCK_UPDATES)
+ * 
+ * We don't want the shell commands to be inserted "in between" two or more consecutive consecutive. newline isn't enough, we need to wait for semicolon
+ * otherwise the command will get inserted after newline but before the rest of [any possible other] commands. Example: in CM14's block_image_update:
+ * 
+ *     block_image_update("/dev/block/platform/msm_sdcc.1/by-name/system", package_extract_file("system.transfer.list"), "system.new.dat", "system.patch.dat") ||
+ *       abort("E1001: Failed to update system image.");
+ *
+ * Normally the copy back from "fake system" would be inserted before EOL (after || above), instead, we want the full block_image_update(...) || abort(...); to
+ * complete and then if all is good, copy the system files to MultiROM's system directory.
+ *
+ * I'm sure there's a better/nicer way of doing this, but it works
+ */
+void Move_to_End_Of_Command(std::list<EdifyElement*>::iterator& itr)
+{
+    bool found_semicolon = false;
+    int rollback = 0;  // guess that's the easiest way to fast-forward to where we were with a std::list
+
+    // we're currently on EDF_NEWLINE or at least should be according to the calling function... double check for that??
+
+    // step 1: check backwards: (a) not more than EDF_FUNC and (b) EDF_VALUE == ;
+    while((*itr)->getType() != EDF_FUNC)
+    {
+        if((*itr)->getType() == EDF_VALUE)
+        {
+            if(((EdifyValue*)(*itr))->getText() == ";")
+            {
+                found_semicolon = true;
+                break;
+            }
+        }
+        --itr;
+        ++rollback;
+    }
+
+    // step 2: go back to original position
+    while(rollback > 0)
+    {
+        ++itr;
+        --rollback;
+    }
+
+    // step 3: if we haven't found a semicolon then run forward till we find one
+    while(!found_semicolon)
+    {
+        if((*itr)->getType() == EDF_VALUE)
+        {
+            if(((EdifyValue*)(*itr))->getText() == ";")
+            {
+                found_semicolon = true;
+                break;
+            }
+        }
+        ++itr;
+    }
+
+    // step 4: if we've found the semicolon, but are not on EDF_NEWLINE, run forward till EDF_NEWLINE
+    if(found_semicolon && !((*itr)->getType() == EDF_NEWLINE))
+    {
+        while((*itr)->getType() != EDF_NEWLINE)
+        {
+            ++itr;
+        }
+    }
+}
+
 void EdifyHacker::applyOffendingMask(std::list<EdifyElement*>::iterator& itr, int mask)
 {
     TWPartition *sys = NULL;
@@ -491,6 +562,8 @@ void EdifyHacker::applyOffendingMask(std::list<EdifyElement*>::iterator& itr, in
 
     if((mask & OFF_BLOCK_UPDATES) && (sys = PartitionManager.Find_Original_Partition_By_Path("/system")))
     {
+        Move_to_End_Of_Command(itr);
+
         m_processFlags |= (EDIFY_BLOCK_UPDATES | EDIFY_CHANGED);
         itr = m_elements.insert(++itr, new EdifyValue("# Following line was added by MultiROM\n"
             "run_program(\"/sbin/sh\", \"-c\", \""
