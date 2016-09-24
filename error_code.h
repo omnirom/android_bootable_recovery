@@ -46,7 +46,7 @@ enum CauseCode {
 
 enum UncryptErrorCode {
     kUncryptNoError = -1,
-    kUncryptErrorHolder = 50,
+    kUncryptErrorPlaceholder = 50,
     kUncryptTimeoutError = 100,
     kUncryptFileRemoveError,
     kUncryptFileOpenError,
