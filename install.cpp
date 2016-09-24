@@ -532,7 +532,7 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
         std::string uncrypt_status;
         if (!android::base::ReadFileToString(UNCRYPT_STATUS, &uncrypt_status)) {
             LOGW("failed to read uncrypt status: %s\n", strerror(errno));
-        } else if (!android::base::StartsWith(uncrypt_status, "uncrypt_time:")) {
+        } else if (!android::base::StartsWith(uncrypt_status, "uncrypt_")) {
             LOGW("corrupted uncrypt_status: %s: %s\n", uncrypt_status.c_str(), strerror(errno));
         } else {
             log_buffer.push_back(android::base::Trim(uncrypt_status));
