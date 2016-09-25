@@ -41,7 +41,7 @@ void print_usage(void) {
 	printf("  get variable\n");
 	printf("  decrypt password\n");
 	printf("  remountrw\n");
-	printf("\nSee more documentation at http://teamw.in/openrecoveryscript\n");
+	printf("\nSee more documentation at http://twrp.me/openrecoveryscript\n");
 }
 
 int main(int argc, char **argv) {
