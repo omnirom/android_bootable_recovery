@@ -1302,7 +1302,7 @@ not implemented
 				<placement x="%indent%" y="%row4_input_y%" w="%content_width%" h="%input_height%"/>
 				<text>%tw_multirom_int_display_name%</text>
 				<data name="tw_multirom_int_display_name" />
-				<restrict minlen="1" maxlen="26" disable=" " />
+				<restrict minlen="1" maxlen="26" />
 				<action function="page">multirom_settings</action>
 			</input>
 
