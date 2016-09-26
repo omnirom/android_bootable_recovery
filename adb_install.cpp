@@ -26,12 +26,13 @@
 #include <fcntl.h>
 
 #include "ui.h"
-#include "cutils/properties.h"
 #include "install.h"
 #include "common.h"
 #include "adb_install.h"
 #include "minadbd/fuse_adb_provider.h"
 #include "fuse_sideload.h"
+
+#include <android-base/properties.h>
 
 static void set_usb_driver(RecoveryUI* ui, bool enabled) {
     int fd = open("/sys/class/android_usb/android0/enable", O_WRONLY);
@@ -49,7 +50,7 @@ static void set_usb_driver(RecoveryUI* ui, bool enabled) {
 
 static void stop_adbd(RecoveryUI* ui) {
     ui->Print("Stopping adbd...\n");
-    property_set("ctl.stop", "adbd");
+    android::base::SetProperty("ctl.stop", "adbd");
     set_usb_driver(ui, false);
 }
 
@@ -57,7 +58,7 @@ static void maybe_restart_adbd(RecoveryUI* ui) {
     if (is_ro_debuggable()) {
         ui->Print("Restarting adbd...\n");
         set_usb_driver(ui, true);
-        property_set("ctl.start", "adbd");
+        android::base::SetProperty("ctl.start", "adbd");
     }
 }
 

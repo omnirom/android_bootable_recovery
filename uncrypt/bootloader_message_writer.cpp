@@ -17,12 +17,12 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
-#include <sys/system_properties.h>
 
 #include <string>
 #include <vector>
 
 #include <android-base/file.h>
+#include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
 #include <fs_mgr.h>
@@ -30,14 +30,13 @@
 #include "bootloader.h"
 
 static struct fstab* read_fstab(std::string* err) {
-  // The fstab path is always "/fstab.${ro.hardware}".
-  std::string fstab_path = "/fstab.";
-  char value[PROP_VALUE_MAX];
-  if (__system_property_get("ro.hardware", value) == 0) {
+  std::string ro_hardware = android::base::GetProperty("ro.hardware", "");
+  if (ro_hardware.empty()) {
     *err = "failed to get ro.hardware";
     return nullptr;
   }
-  fstab_path += value;
+  // The fstab path is always "/fstab.${ro.hardware}".
+  std::string fstab_path = "/fstab." + ro_hardware;
   struct fstab* fstab = fs_mgr_read_fstab(fstab_path.c_str());
   if (fstab == nullptr) {
     *err = "failed to read " + fstab_path;
