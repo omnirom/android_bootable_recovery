@@ -1557,15 +1557,19 @@ int main(int argc, char **argv) {
                       BATTERY_OK_PERCENTAGE);
             // Log the error code to last_install when installation skips due to
             // low battery.
-            FILE* install_log = fopen_path(LAST_INSTALL_FILE, "w");
-            if (install_log != nullptr) {
-                fprintf(install_log, "%s\n", update_package);
-                fprintf(install_log, "0\n");
-                fprintf(install_log, "error: %d\n", kLowBattery);
-                fclose(install_log);
-            } else {
-                PLOG(ERROR) << "failed to open last_install";
+            std::vector<std::string> log_buffer = {
+                update_package,
+                "0",  // install result
+                "error: " + std::to_string(kLowBattery),
+            };
+            std::string log_content = android::base::Join(log_buffer, "\n");
+            if (!android::base::WriteStringToFile(log_content, LAST_INSTALL_FILE)) {
+                PLOG(ERROR) << "failed to write " << LAST_INSTALL_FILE;
             }
+
+            // Also write the info into last_log.
+            LOG(INFO) << log_content;
+
             status = INSTALL_SKIPPED;
         } else {
             status = install_package(update_package, &should_wipe_cache,
