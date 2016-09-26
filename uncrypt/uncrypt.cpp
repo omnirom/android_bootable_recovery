@@ -107,12 +107,12 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <bootloader_message_writer.h>
 #include <cutils/android_reboot.h>
-#include <cutils/properties.h>
 #include <cutils/sockets.h>
 #include <fs_mgr.h>
 
@@ -163,13 +163,15 @@ static struct fstab* read_fstab() {
     fstab = NULL;
 
     // The fstab path is always "/fstab.${ro.hardware}".
-    char fstab_path[PATH_MAX+1] = "/fstab.";
-    if (!property_get("ro.hardware", fstab_path+strlen(fstab_path), "")) {
+    std::string ro_hardware = android::base::GetProperty("ro.hardware", "");
+    if (ro_hardware.empty()) {
         LOG(ERROR) << "failed to get ro.hardware";
         return NULL;
     }
 
-    fstab = fs_mgr_read_fstab(fstab_path);
+    std::string fstab_path = "/fstab." + ro_hardware;
+
+    fstab = fs_mgr_read_fstab(fstab_path.c_str());
     if (!fstab) {
         LOG(ERROR) << "failed to read " << fstab_path;
         return NULL;
@@ -194,9 +196,7 @@ static const char* find_block_device(const char* path, bool* encryptable, bool* 
             *encryptable = false;
             if (fs_mgr_is_encryptable(v) || fs_mgr_is_file_encrypted(v)) {
                 *encryptable = true;
-                char buffer[PROPERTY_VALUE_MAX+1];
-                if (property_get("ro.crypto.state", buffer, "") &&
-                    strcmp(buffer, "encrypted") == 0) {
+                if (android::base::GetProperty("ro.crypto.state", "") == "encrypted") {
                     *encrypted = true;
                 }
             }

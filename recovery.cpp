@@ -43,11 +43,12 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
+#include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <cutils/android_reboot.h>
-#include <cutils/properties.h>
+#include <cutils/properties.h> /* for property_list */
 #include <healthd/BatteryMonitor.h>
 #include <private/android_logger.h> /* private pmsg functions */
 #include <selinux/label.h>
@@ -205,8 +206,7 @@ static void check_and_fclose(FILE *fp, const char *name) {
 }
 
 bool is_ro_debuggable() {
-    char value[PROPERTY_VALUE_MAX+1];
-    return (property_get("ro.debuggable", value, NULL) == 1 && value[0] == '1');
+    return android::base::GetBoolProperty("ro.debuggable", false);
 }
 
 static void redirect_stdio(const char* filename) {
@@ -1182,15 +1182,12 @@ prompt_and_wait(Device* device, int status) {
                 break;
 
             case Device::MOUNT_SYSTEM:
-                char system_root_image[PROPERTY_VALUE_MAX];
-                property_get("ro.build.system_root_image", system_root_image, "");
-
                 // For a system image built with the root directory (i.e.
                 // system_root_image == "true"), we mount it to /system_root, and symlink /system
                 // to /system_root/system to make adb shell work (the symlink is created through
                 // the build system).
                 // Bug: 22855115
-                if (strcmp(system_root_image, "true") == 0) {
+                if (android::base::GetBoolProperty("ro.build.system_root_image", false)) {
                     if (ensure_path_mounted_at("/", "/system_root") != -1) {
                         ui->Print("Mounted /system.\n");
                     }
@@ -1584,8 +1581,7 @@ int main(int argc, char **argv) {
                     ui->Print("Retry attempt %d\n", retry_count);
 
                     // Reboot and retry the update
-                    int ret = property_set(ANDROID_RB_PROPERTY, "reboot,recovery");
-                    if (ret < 0) {
+                    if (!android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,recovery")) {
                         ui->Print("Reboot failed\n");
                     } else {
                         while (true) {
@@ -1665,17 +1661,17 @@ int main(int argc, char **argv) {
     switch (after) {
         case Device::SHUTDOWN:
             ui->Print("Shutting down...\n");
-            property_set(ANDROID_RB_PROPERTY, "shutdown,");
+            android::base::SetProperty(ANDROID_RB_PROPERTY, "shutdown,");
             break;
 
         case Device::REBOOT_BOOTLOADER:
             ui->Print("Rebooting to bootloader...\n");
-            property_set(ANDROID_RB_PROPERTY, "reboot,bootloader");
+            android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,bootloader");
             break;
 
         default:
             ui->Print("Rebooting...\n");
-            property_set(ANDROID_RB_PROPERTY, "reboot,");
+            android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,");
             break;
     }
     while (true) {
