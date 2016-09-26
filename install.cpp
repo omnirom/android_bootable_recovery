@@ -517,13 +517,6 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
     modified_flash = true;
     auto start = std::chrono::system_clock::now();
 
-    FILE* install_log = fopen_path(install_file, "w");
-    if (install_log) {
-        fputs(path, install_log);
-        fputc('\n', install_log);
-    } else {
-        PLOG(ERROR) << "failed to open last_install";
-    }
     int result;
     std::vector<std::string> log_buffer;
     if (setup_install_mounts() != 0) {
@@ -532,33 +525,40 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
     } else {
         result = really_install_package(path, wipe_cache, needs_mount, log_buffer, retry_count);
     }
-    if (install_log != nullptr) {
-        fputc(result == INSTALL_SUCCESS ? '1' : '0', install_log);
-        fputc('\n', install_log);
-        std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
-        int count = static_cast<int>(duration.count());
-        // Report the time spent to apply OTA update in seconds.
-        fprintf(install_log, "time_total: %d\n", count);
-        fprintf(install_log, "retry: %d\n", retry_count);
 
-        for (const auto& s : log_buffer) {
-            fprintf(install_log, "%s\n", s.c_str());
-        }
+    // Measure the time spent to apply OTA update in seconds.
+    std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
+    int time_total = static_cast<int>(duration.count());
 
-        if (ensure_path_mounted(UNCRYPT_STATUS) != 0) {
-            LOG(WARNING) << "Can't mount " << UNCRYPT_STATUS;
+    if (ensure_path_mounted(UNCRYPT_STATUS) != 0) {
+        LOG(WARNING) << "Can't mount " << UNCRYPT_STATUS;
+    } else {
+        std::string uncrypt_status;
+        if (!android::base::ReadFileToString(UNCRYPT_STATUS, &uncrypt_status)) {
+            PLOG(WARNING) << "failed to read uncrypt status";
+        } else if (!android::base::StartsWith(uncrypt_status, "uncrypt_time:")) {
+            PLOG(WARNING) << "corrupted uncrypt_status: " << uncrypt_status;
         } else {
-            std::string uncrypt_status;
-            if (!android::base::ReadFileToString(UNCRYPT_STATUS, &uncrypt_status)) {
-                PLOG(WARNING) << "failed to read uncrypt status";
-            } else if (!android::base::StartsWith(uncrypt_status, "uncrypt_time:")) {
-                PLOG(WARNING) << "corrupted uncrypt_status: " << uncrypt_status;
-            } else {
-                fprintf(install_log, "%s\n", android::base::Trim(uncrypt_status).c_str());
-            }
+            log_buffer.push_back(android::base::Trim(uncrypt_status));
         }
-        fclose(install_log);
     }
+
+    // The first two lines need to be the package name and install result.
+    std::vector<std::string> log_header = {
+        path,
+        result == INSTALL_SUCCESS ? "1" : "0",
+        "time_total: " + std::to_string(time_total),
+        "retry: " + std::to_string(retry_count),
+    };
+    std::string log_content = android::base::Join(log_header, "\n") + "\n" +
+            android::base::Join(log_buffer, "\n");
+    if (!android::base::WriteStringToFile(log_content, install_file)) {
+        PLOG(ERROR) << "failed to write " << install_file;
+    }
+
+    // Write a copy into last_log.
+    LOG(INFO) << log_content;
+
     return result;
 }
 
