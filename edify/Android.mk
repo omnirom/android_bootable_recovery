@@ -16,6 +16,7 @@ LOCAL_SRC_FILES := \
 		$(edify_src_files) \
 		main.cpp
 
+LOCAL_CFLAGS := -Werror
 LOCAL_CPPFLAGS := -g -O0
 LOCAL_MODULE := edify
 LOCAL_YACCFLAGS := -v
@@ -34,6 +35,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(edify_src_files)
 
+LOCAL_CFLAGS := -Werror
 LOCAL_CPPFLAGS := -Wno-unused-parameter
 LOCAL_CPPFLAGS += -Wno-deprecated-register
 LOCAL_MODULE := libedify
