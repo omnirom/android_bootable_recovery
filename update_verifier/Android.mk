@@ -23,5 +23,6 @@ LOCAL_MODULE := update_verifier
 LOCAL_SHARED_LIBRARIES := libbase libcutils libhardware liblog
 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
+LOCAL_CFLAGS := -Werror
 
 include $(BUILD_EXECUTABLE)

@@ -318,12 +318,12 @@ get_args(int *argc, char ***argv) {
     }
     stage = strndup(boot.stage, sizeof(boot.stage));
 
-    if (boot.command[0] != 0 && boot.command[0] != 255) {
+    if (boot.command[0] != 0) {
         std::string boot_command = std::string(boot.command, sizeof(boot.command));
         LOG(INFO) << "Boot command: " << boot_command;
     }
 
-    if (boot.status[0] != 0 && boot.status[0] != 255) {
+    if (boot.status[0] != 0) {
         std::string boot_status = std::string(boot.status, sizeof(boot.status));
         LOG(INFO) << "Boot status: " << boot_status;
     }
@@ -340,7 +340,7 @@ get_args(int *argc, char ***argv) {
                 (*argv)[*argc] = strdup(arg);
             }
             LOG(INFO) << "Got arguments from boot message";
-        } else if (boot.recovery[0] != 0 && boot.recovery[0] != 255) {
+        } else if (boot.recovery[0] != 0) {
             std::string boot_recovery = std::string(boot.recovery, 20);
             LOG(ERROR) << "Bad boot message\n" << "\"" <<boot_recovery << "\"";
         }

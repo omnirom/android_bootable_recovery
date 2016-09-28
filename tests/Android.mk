@@ -19,6 +19,7 @@ LOCAL_PATH := $(call my-dir)
 # Unit tests
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
+LOCAL_CFLAGS := -Werror
 LOCAL_MODULE := recovery_unit_test
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_STATIC_LIBRARIES := \
@@ -35,7 +36,7 @@ include $(BUILD_NATIVE_TEST)
 # Component tests
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
-LOCAL_CFLAGS += -Wno-unused-parameter
+LOCAL_CFLAGS += -Wno-unused-parameter -Werror
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_MODULE := recovery_component_test
 LOCAL_C_INCLUDES := bootable/recovery
