@@ -457,22 +457,23 @@ static int uncrypt(const char* input_path, const char* map_file, const int socke
     return 0;
 }
 
-static bool uncrypt_wrapper(const char* input_path, const char* map_file, const int socket) {
-    // Initialize the uncrypt error to kUncryptErrorHolder.
+static void log_uncrypt_error_code(UncryptErrorCode error_code) {
     if (!android::base::WriteStringToFile(android::base::StringPrintf(
-            "uncrypt_error: %d\n", kUncryptErrorHolder), UNCRYPT_STATUS)) {
+            "uncrypt_error: %d\n", error_code), UNCRYPT_STATUS)) {
         PLOG(WARNING) << "failed to write to " << UNCRYPT_STATUS;
     }
+}
+
+static bool uncrypt_wrapper(const char* input_path, const char* map_file, const int socket) {
+    // Initialize the uncrypt error to kUncryptErrorPlaceholder.
+    log_uncrypt_error_code(kUncryptErrorPlaceholder);
 
     std::string package;
     if (input_path == nullptr) {
         if (!find_uncrypt_package(UNCRYPT_PATH_FILE, &package)) {
             write_status_to_socket(-1, socket);
             // Overwrite the error message.
-            if (!android::base::WriteStringToFile(android::base::StringPrintf(
-                    "uncrypt_error: %d\n", kUncryptPackageMissingError), UNCRYPT_STATUS)) {
-                PLOG(WARNING) << "failed to write to " << UNCRYPT_STATUS;
-            }
+            log_uncrypt_error_code(kUncryptPackageMissingError);
             return false;
         }
         input_path = package.c_str();
@@ -591,10 +592,7 @@ int main(int argc, char** argv) {
     }
 
     if ((fstab = read_fstab()) == nullptr) {
-        if (!android::base::WriteStringToFile(android::base::StringPrintf(
-                "uncrypt_error: %d\n", kUncryptFstabReadError), UNCRYPT_STATUS)) {
-            PLOG(WARNING) << "failed to write to " << UNCRYPT_STATUS;
-        }
+        log_uncrypt_error_code(kUncryptFstabReadError);
         return 1;
     }
 
@@ -614,30 +612,21 @@ int main(int argc, char** argv) {
     android::base::unique_fd service_socket(android_get_control_socket(UNCRYPT_SOCKET.c_str()));
     if (service_socket == -1) {
         PLOG(ERROR) << "failed to open socket \"" << UNCRYPT_SOCKET << "\"";
-        if (!android::base::WriteStringToFile(android::base::StringPrintf(
-                "uncrypt_error: %d\n", kUncryptSocketOpenError), UNCRYPT_STATUS)) {
-            PLOG(WARNING) << "failed to write to " << UNCRYPT_STATUS;
-        }
+        log_uncrypt_error_code(kUncryptSocketOpenError);
         return 1;
     }
     fcntl(service_socket, F_SETFD, FD_CLOEXEC);
 
     if (listen(service_socket, 1) == -1) {
         PLOG(ERROR) << "failed to listen on socket " << service_socket.get();
-        if (!android::base::WriteStringToFile(android::base::StringPrintf(
-                "uncrypt_error: %d\n", kUncryptSocketListenError), UNCRYPT_STATUS)) {
-            PLOG(WARNING) << "failed to write to " << UNCRYPT_STATUS;
-        }
+        log_uncrypt_error_code(kUncryptSocketListenError);
         return 1;
     }
 
     android::base::unique_fd socket_fd(accept4(service_socket, nullptr, nullptr, SOCK_CLOEXEC));
     if (socket_fd == -1) {
         PLOG(ERROR) << "failed to accept on socket " << service_socket.get();
-        if (!android::base::WriteStringToFile(android::base::StringPrintf(
-                "uncrypt_error: %d\n", kUncryptSocketAcceptError), UNCRYPT_STATUS)) {
-            PLOG(WARNING) << "failed to write to " << UNCRYPT_STATUS;
-        }
+        log_uncrypt_error_code(kUncryptSocketAcceptError);
         return 1;
     }
 
