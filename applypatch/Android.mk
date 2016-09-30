@@ -36,6 +36,7 @@ LOCAL_STATIC_LIBRARIES += \
     libcrypto \
     libbz \
     libz
+LOCAL_CFLAGS := -Werror
 include $(BUILD_STATIC_LIBRARY)
 
 # libimgpatch (static library)
@@ -49,6 +50,7 @@ LOCAL_C_INCLUDES += \
     bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES += libcrypto libbz libz
+LOCAL_CFLAGS := -Werror
 include $(BUILD_STATIC_LIBRARY)
 
 # libimgpatch (host static library)
@@ -63,6 +65,7 @@ LOCAL_C_INCLUDES += \
     bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES += libcrypto libbz libz
+LOCAL_CFLAGS := -Werror
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 # applypatch (executable)
@@ -81,6 +84,7 @@ LOCAL_STATIC_LIBRARIES += \
     libcrypto \
     libbz
 LOCAL_SHARED_LIBRARIES += libbase libz libcutils libc
+LOCAL_CFLAGS := -Werror
 include $(BUILD_EXECUTABLE)
 
 # imgdiff (host static executable)
@@ -95,5 +99,6 @@ LOCAL_STATIC_LIBRARIES += \
     libdivsufsort64 \
     libdivsufsort \
     libz
+LOCAL_CFLAGS := -Werror
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 include $(BUILD_HOST_EXECUTABLE)
