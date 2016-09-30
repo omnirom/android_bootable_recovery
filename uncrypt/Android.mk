@@ -17,16 +17,15 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_CLANG := true
-
 LOCAL_SRC_FILES := uncrypt.cpp
-
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/..
-
 LOCAL_MODULE := uncrypt
-
-LOCAL_STATIC_LIBRARIES := libbootloader_message libbase \
-                          liblog libfs_mgr libcutils \
-
+LOCAL_STATIC_LIBRARIES := libbootloader_message \
+                          libbase \
+                          liblog \
+                          libfs_mgr \
+                          libcutils
+LOCAL_CFLAGS := -Werror
 LOCAL_INIT_RC := uncrypt.rc
 
 include $(BUILD_EXECUTABLE)

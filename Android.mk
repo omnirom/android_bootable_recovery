@@ -65,7 +65,7 @@ endif
 RECOVERY_API_VERSION := 3
 RECOVERY_FSTAB_VERSION := 2
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
-LOCAL_CFLAGS += -Wno-unused-parameter
+LOCAL_CFLAGS += -Wno-unused-parameter -Werror
 LOCAL_CLANG := true
 
 LOCAL_C_INCLUDES += \
@@ -150,6 +150,7 @@ LOCAL_SRC_FILES := \
     verifier.cpp \
     ui.cpp
 LOCAL_STATIC_LIBRARIES := libcrypto_utils libcrypto libbase
+LOCAL_CFLAGS := -Werror
 include $(BUILD_STATIC_LIBRARY)
 
 include \
