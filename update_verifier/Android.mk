@@ -20,5 +20,6 @@ LOCAL_CLANG := true
 LOCAL_SRC_FILES := update_verifier.cpp
 LOCAL_MODULE := update_verifier
 LOCAL_SHARED_LIBRARIES := libhardware libbase
+LOCAL_CFLAGS := -Werror
 
 include $(BUILD_EXECUTABLE)

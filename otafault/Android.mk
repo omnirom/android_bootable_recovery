@@ -23,6 +23,7 @@ otafault_static_libs := \
     libbase \
     liblog
 
+LOCAL_CFLAGS := -Werror
 LOCAL_SRC_FILES := config.cpp ota_io.cpp
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libotafault
@@ -41,6 +42,7 @@ LOCAL_SRC_FILES := config.cpp ota_io.cpp test.cpp
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := otafault_test
 LOCAL_STATIC_LIBRARIES := $(otafault_static_libs)
+LOCAL_CFLAGS := -Werror
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
