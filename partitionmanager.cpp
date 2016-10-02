@@ -424,7 +424,7 @@ TWPartition* TWPartitionManager::Find_Partition_By_Path(string Path) {
 	string Local_Path = TWFunc::Get_Root_Path(Path);
 
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path))
+		if ((*iter)->Mount_Point == Local_Path || (*iter)->Symlink_Mount_Point == Local_Path)
 			return (*iter);
 	}
 	return NULL;
