@@ -161,6 +161,8 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		Setup_Settings_Storage_Partition(settings_partition);
 	}
 #ifdef TW_INCLUDE_CRYPTO
+	DecryptionGuard guard;
+
 	TWPartition* Decrypt_Data = Find_Partition_By_Path("/data");
 	if (Decrypt_Data && Decrypt_Data->Is_Encrypted && !Decrypt_Data->Is_Decrypted) {
 		int password_type = cryptfs_get_password_type();
@@ -1455,17 +1457,12 @@ void TWPartitionManager::Update_System_Details(void) {
 
 int TWPartitionManager::Decrypt_Device(string Password) {
 #ifdef TW_INCLUDE_CRYPTO
+	DecryptionGuard guard;
+
 	int ret_val, password_len;
 	char crypto_state[PROPERTY_VALUE_MAX], crypto_blkdev[PROPERTY_VALUE_MAX], cPassword[255];
 	size_t result;
 	std::vector<TWPartition*>::iterator iter;
-
-	// Mount any partitions that need to be mounted for decrypt
-	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Mount_To_Decrypt) {
-			(*iter)->Mount(true);
-		}
-	}
 
 	property_get("ro.crypto.state", crypto_state, "error");
 	if (strcmp(crypto_state, "error") == 0) {
@@ -1476,13 +1473,6 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 
 	strcpy(cPassword, Password.c_str());
 	int pwret = cryptfs_check_passwd(cPassword);
-
-	// Unmount any partitions that were needed for decrypt
-	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Mount_To_Decrypt) {
-			(*iter)->UnMount(false);
-		}
-	}
 
 	if (pwret != 0) {
 		gui_err("fail_decrypt=Failed to decrypt data.");
@@ -2370,6 +2360,8 @@ void TWPartitionManager::Translate_Partition_Display_Names() {
 
 void TWPartitionManager::Decrypt_Adopted() {
 #ifdef TW_INCLUDE_CRYPTO
+	DecryptionGuard guard;
+
 	if (!Mount_By_Path("/data", false)) {
 		LOGERR("Cannot decrypt adopted storage because /data will not mount\n");
 		return;
@@ -2461,5 +2453,51 @@ void TWPartitionManager::Remove_Partition_By_Path(string Path) {
 			Partitions.erase(iter);
 			return;
 		}
+	}
+}
+
+void TWPartitionManager::Prepare_Decryption() {
+	std::vector<TWPartition*>::iterator iter;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); ++iter)
+	{
+		if ((*iter)->Mount_To_Decrypt) {
+			LOGINFO("Mounting '%s' for decryption\n", (*iter)->Mount_Point.c_str());
+			(*iter)->Mount(true);
+		}
+	}
+}
+
+void TWPartitionManager::Finish_Decryption() {
+	std::vector<TWPartition*>::iterator iter;
+
+        for (iter = Partitions.begin(); iter != Partitions.end(); ++iter)
+        {
+                if ((*iter)->Mount_To_Decrypt) {
+			LOGINFO("Unmounting '%s' after decryption\n", (*iter)->Mount_Point.c_str());
+                        (*iter)->UnMount(false);
+                }
+        }
+}
+
+DecryptionGuard::DecryptionGuard() : Flag(false) {
+	Prepare();
+}
+
+DecryptionGuard::~DecryptionGuard() {
+	Finish();
+}
+
+void DecryptionGuard::Prepare() {
+	if (!Flag) {
+		PartitionManager.Prepare_Decryption();
+		Flag = true;
+	}
+}
+
+void DecryptionGuard::Finish() {
+	if (Flag) {
+		PartitionManager.Finish_Decryption();
+		Flag = false;
 	}
 }

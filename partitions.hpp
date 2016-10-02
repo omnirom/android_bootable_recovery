@@ -282,6 +282,8 @@ public:
 	void Translate_Partition_Display_Names();                                 // Updates display names based on translations
 	void Decrypt_Adopted();                                                   // Attempt to identy and decrypt any adopted storage partitions
 	void Remove_Partition_By_Path(string Path);                               // Removes / erases a partition entry from the partition list
+	void Prepare_Decryption();                                                // Mount any partitions required for decryption
+	void Finish_Decryption();                                                 // Unmount any partitions that were used for decryption
 
 	bool Flash_Image(PartitionSettings *part_settings);                        // Flashes an image to a selected partition from the partition list
 	bool Restore_Partition(struct PartitionSettings *part_settings);                  // Restore the partitions based on type
@@ -305,6 +307,18 @@ private:
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions
+};
+
+class DecryptionGuard
+{
+	bool Flag;
+
+public:
+	DecryptionGuard();
+	~DecryptionGuard();
+
+	void Prepare();
+	void Finish();
 };
 
 extern TWPartitionManager PartitionManager;

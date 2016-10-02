@@ -479,6 +479,8 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 	UnMount(false);
 
 #ifdef TW_INCLUDE_CRYPTO
+	DecryptionGuard guard;
+
 	if (datamedia)
 		Setup_Data_Media();
 	Can_Be_Encrypted = true;
@@ -1724,6 +1726,8 @@ bool TWPartition::Wipe_Encryption() {
 	Has_Data_Media = false;
 	Decrypted_Block_Device = "";
 #ifdef TW_INCLUDE_CRYPTO
+	DecryptionGuard guard;
+
 	if (Is_Decrypted) {
 		if (!UnMount(true))
 			return false;
@@ -1731,6 +1735,8 @@ bool TWPartition::Wipe_Encryption() {
 			LOGERR("Error deleting crypto block device, continuing anyway.\n");
 		}
 	}
+
+	guard.Finish();
 #endif
 	Is_Decrypted = false;
 	Is_Encrypted = false;
@@ -2740,6 +2746,8 @@ int TWPartition::Check_Lifetime_Writes() {
 
 int TWPartition::Decrypt_Adopted() {
 #ifdef TW_INCLUDE_CRYPTO
+	DecryptionGuard guard;
+
 	int ret = 1;
 	Is_Adopted_Storage = false;
 	string Adopted_Key_File = "";
@@ -2856,6 +2864,8 @@ exit:
 
 void TWPartition::Revert_Adopted() {
 #ifdef TW_INCLUDE_CRYPTO
+	DecryptionGuard guard;
+
 	if (!Adopted_GUID.empty()) {
 		PartitionManager.Remove_MTP_Storage(Mount_Point);
 		UnMount(false);
