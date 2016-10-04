@@ -44,7 +44,6 @@
 #include <string>
 
 #include <android/log.h> /* Android Log Priority Tags */
-#include <log/logger.h> /* Android Log packet format */
 #include <private/android_logger.h> /* private pmsg functions */
 
 static const char LAST_KMSG_FILE[] = "recovery/last_kmsg";
