@@ -41,11 +41,13 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_MODULE := recovery_component_test
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SRC_FILES := \
+    component/edify_test.cpp \
     component/verifier_test.cpp \
     component/applypatch_test.cpp
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_STATIC_LIBRARIES := \
     libapplypatch \
+    libedify \
     libotafault \
     libverifier \
     libcrypto_utils \
