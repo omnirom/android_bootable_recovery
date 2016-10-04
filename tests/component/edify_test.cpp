@@ -1,0 +1,156 @@
+/*
+ * Copyright (C) 2009 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <string>
+
+#include <gtest/gtest.h>
+
+#include "edify/expr.h"
+
+static void expect(const char* expr_str, const char* expected) {
+    Expr* e;
+    int error_count;
+    EXPECT_EQ(parse_string(expr_str, &e, &error_count), 0);
+
+    State state;
+    state.cookie = nullptr;
+    state.errmsg = nullptr;
+    state.script = strdup(expr_str);
+
+    char* result = Evaluate(&state, e);
+
+    if (expected == nullptr) {
+        EXPECT_EQ(result, nullptr);
+    } else {
+        EXPECT_STREQ(result, expected);
+    }
+
+    free(state.errmsg);
+    free(state.script);
+    free(result);
+}
+
+class EdifyTest : public ::testing::Test {
+  protected:
+    virtual void SetUp() {
+        RegisterBuiltins();
+        FinishRegistration();
+    }
+};
+
+TEST_F(EdifyTest, parsing) {
+    expect("a", "a");
+    expect("\"a\"", "a");
+    expect("\"\\x61\"", "a");
+    expect("# this is a comment\n"
+           "  a\n"
+           "   \n",
+           "a");
+}
+
+TEST_F(EdifyTest, sequence) {
+    // sequence operator
+    expect("a; b; c", "c");
+}
+
+TEST_F(EdifyTest, concat) {
+    // string concat operator
+    expect("a + b", "ab");
+    expect("a + \n \"b\"", "ab");
+    expect("a + b +\nc\n", "abc");
+
+    // string concat function
+    expect("concat(a, b)", "ab");
+    expect("concat(a,\n \"b\")", "ab");
+    expect("concat(a + b,\nc,\"d\")", "abcd");
+    expect("\"concat\"(a + b,\nc,\"d\")", "abcd");
+}
+
+TEST_F(EdifyTest, logical) {
+    // logical and
+    expect("a && b", "b");
+    expect("a && \"\"", "");
+    expect("\"\" && b", "");
+    expect("\"\" && \"\"", "");
+    expect("\"\" && abort()", "");   // test short-circuiting
+    expect("t && abort()", nullptr);
+
+    // logical or
+    expect("a || b", "a");
+    expect("a || \"\"", "a");
+    expect("\"\" || b", "b");
+    expect("\"\" || \"\"", "");
+    expect("a || abort()", "a");     // test short-circuiting
+    expect("\"\" || abort()", NULL);
+
+    // logical not
+    expect("!a", "");
+    expect("! \"\"", "t");
+    expect("!!a", "t");
+}
+
+TEST_F(EdifyTest, precedence) {
+    // precedence
+    expect("\"\" == \"\" && b", "b");
+    expect("a + b == ab", "t");
+    expect("ab == a + b", "t");
+    expect("a + (b == ab)", "a");
+    expect("(ab == a) + b", "b");
+}
+
+TEST_F(EdifyTest, substring) {
+    // substring function
+    expect("is_substring(cad, abracadabra)", "t");
+    expect("is_substring(abrac, abracadabra)", "t");
+    expect("is_substring(dabra, abracadabra)", "t");
+    expect("is_substring(cad, abracxadabra)", "");
+    expect("is_substring(abrac, axbracadabra)", "");
+    expect("is_substring(dabra, abracadabrxa)", "");
+}
+
+TEST_F(EdifyTest, ifelse) {
+    // ifelse function
+    expect("ifelse(t, yes, no)", "yes");
+    expect("ifelse(!t, yes, no)", "no");
+    expect("ifelse(t, yes, abort())", "yes");
+    expect("ifelse(!t, abort(), no)", "no");
+}
+
+TEST_F(EdifyTest, if_statement) {
+    // if "statements"
+    expect("if t then yes else no endif", "yes");
+    expect("if \"\" then yes else no endif", "no");
+    expect("if \"\" then yes endif", "");
+    expect("if \"\"; t then yes endif", "yes");
+}
+
+TEST_F(EdifyTest, comparison) {
+    // numeric comparisons
+    expect("less_than_int(3, 14)", "t");
+    expect("less_than_int(14, 3)", "");
+    expect("less_than_int(x, 3)", "");
+    expect("less_than_int(3, x)", "");
+    expect("greater_than_int(3, 14)", "");
+    expect("greater_than_int(14, 3)", "t");
+    expect("greater_than_int(x, 3)", "");
+    expect("greater_than_int(3, x)", "");
+}
+
+TEST_F(EdifyTest, big_string) {
+    // big string
+    expect(std::string(8192, 's').c_str(), std::string(8192, 's').c_str());
+}
+
