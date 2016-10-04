@@ -18,6 +18,7 @@
 #define _EXPRESSION_H
 
 #include <unistd.h>
+#include <string>
 
 #include "error_code.h"
 #include "yydefs.h"
@@ -26,20 +27,20 @@
 
 typedef struct Expr Expr;
 
-typedef struct {
+struct State {
+    State(const std::string& script, void* cookie);
+
+    // The source of the original script.
+    const std::string& script;
+
     // Optional pointer to app-specific data; the core of edify never
     // uses this value.
     void* cookie;
 
-    // The source of the original script.  Must be NULL-terminated,
-    // and in writable memory (Evaluate may make temporary changes to
-    // it but will restore it when done).
-    char* script;
-
     // The error message (if any) returned if the evaluation aborts.
-    // Should be NULL initially, will be either NULL or a malloc'd
-    // pointer after Evaluate() returns.
-    char* errmsg;
+    // Should be empty initially, will be either empty or a string that
+    // Evaluate() returns.
+    std::string errmsg;
 
     // error code indicates the type of failure (e.g. failure to update system image)
     // during the OTA process.
@@ -50,8 +51,7 @@ typedef struct {
     CauseCode cause_code = kNoCause;
 
     bool is_retry = false;
-
-} State;
+};
 
 #define VAL_STRING  1  // data will be NULL-terminated; size doesn't count null
 #define VAL_BLOB    2
