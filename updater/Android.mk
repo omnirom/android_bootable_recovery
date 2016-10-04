@@ -35,6 +35,11 @@ LOCAL_SRC_FILES := $(updater_src_files)
 
 LOCAL_STATIC_LIBRARIES += libfec libfec_rs libsquashfs_utils libcrypto_static
 
+ifneq ($(WITH_CRYPTO_UTILS),)
+     LOCAL_C_INCLUDES += system/core/libcrypto_utils/include
+     LOCAL_STATIC_LIBRARIES += libcrypto_utils_static
+endif
+
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
 LOCAL_CFLAGS += -DUSE_EXT4
 LOCAL_CFLAGS += -Wno-unused-parameter
