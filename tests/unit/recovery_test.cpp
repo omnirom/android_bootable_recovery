@@ -21,7 +21,6 @@
 
 #include <android/log.h>
 #include <gtest/gtest.h>
-#include <log/logger.h>
 #include <private/android_logger.h>
 
 static const char myFilename[] = "/data/misc/recovery/inject.txt";
