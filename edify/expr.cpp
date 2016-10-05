@@ -107,8 +107,7 @@ Value* ConcatFn(const char* name, State* state, int argc, Expr* argv[]) {
 
 Value* IfElseFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 2 && argc != 3) {
-        free(state->errmsg);
-        state->errmsg = strdup("ifelse expects 2 or 3 arguments");
+        state->errmsg = "ifelse expects 2 or 3 arguments";
         return NULL;
     }
     char* cond = Evaluate(state, argv[0]);
@@ -134,11 +133,10 @@ Value* AbortFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc > 0) {
         msg = Evaluate(state, argv[0]);
     }
-    free(state->errmsg);
     if (msg) {
         state->errmsg = msg;
     } else {
-        state->errmsg = strdup("called abort()");
+        state->errmsg = "called abort()";
     }
     return NULL;
 }
@@ -153,15 +151,8 @@ Value* AssertFn(const char* name, State* state, int argc, Expr* argv[]) {
         int b = BooleanString(v);
         free(v);
         if (!b) {
-            int prefix_len;
             int len = argv[i]->end - argv[i]->start;
-            char* err_src = reinterpret_cast<char*>(malloc(len + 20));
-            strcpy(err_src, "assert failed: ");
-            prefix_len = strlen(err_src);
-            memcpy(err_src + prefix_len, state->script + argv[i]->start, len);
-            err_src[prefix_len + len] = '\0';
-            free(state->errmsg);
-            state->errmsg = err_src;
+            state->errmsg = "assert failed: " + state->script.substr(argv[i]->start, len);
             return NULL;
         }
     }
@@ -279,8 +270,7 @@ Value* SequenceFn(const char* name, State* state, int argc, Expr* argv[]) {
 
 Value* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 2) {
-        free(state->errmsg);
-        state->errmsg = strdup("less_than_int expects 2 arguments");
+        state->errmsg = "less_than_int expects 2 arguments";
         return NULL;
     }
 
@@ -314,8 +304,7 @@ Value* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
 Value* GreaterThanIntFn(const char* name, State* state,
                         int argc, Expr* argv[]) {
     if (argc != 2) {
-        free(state->errmsg);
-        state->errmsg = strdup("greater_than_int expects 2 arguments");
+        state->errmsg = "greater_than_int expects 2 arguments";
         return NULL;
     }
 
@@ -499,20 +488,12 @@ Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]) {
     return args;
 }
 
-static void ErrorAbortV(State* state, const char* format, va_list ap) {
-    std::string buffer;
-    android::base::StringAppendV(&buffer, format, ap);
-    free(state->errmsg);
-    state->errmsg = strdup(buffer.c_str());
-    return;
-}
-
 // Use printf-style arguments to compose an error message to put into
 // *state.  Returns nullptr.
 Value* ErrorAbort(State* state, const char* format, ...) {
     va_list ap;
     va_start(ap, format);
-    ErrorAbortV(state, format, ap);
+    android::base::StringAppendV(&state->errmsg, format, ap);
     va_end(ap);
     return nullptr;
 }
@@ -520,8 +501,14 @@ Value* ErrorAbort(State* state, const char* format, ...) {
 Value* ErrorAbort(State* state, CauseCode cause_code, const char* format, ...) {
     va_list ap;
     va_start(ap, format);
-    ErrorAbortV(state, format, ap);
+    android::base::StringAppendV(&state->errmsg, format, ap);
     va_end(ap);
     state->cause_code = cause_code;
     return nullptr;
 }
+
+State::State(const std::string& script, void* cookie) :
+    script(script),
+    cookie(cookie) {
+}
+

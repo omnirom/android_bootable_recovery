@@ -24,21 +24,20 @@
  * makes the tool less useful. We should either extend the tool or remove it.
  */
 
+#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
+#include <string>
+
+#include <android-base/file.h>
 
 #include "expr.h"
-#include "parser.h"
 
-void ExprDump(int depth, Expr* n, char* script) {
+static void ExprDump(int depth, const Expr* n, const std::string& script) {
     printf("%*s", depth*2, "");
-    char temp = script[n->end];
-    script[n->end] = '\0';
     printf("%s %p (%d-%d) \"%s\"\n",
            n->name == NULL ? "(NULL)" : n->name, n->fn, n->start, n->end,
-           script+n->start);
-    script[n->end] = temp;
+           script.substr(n->start, n->end - n->start).c_str());
     for (int i = 0; i < n->argc; ++i) {
         ExprDump(depth+1, n->argv[i], script);
     }
@@ -53,34 +52,25 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    FILE* f = fopen(argv[1], "r");
-    if (f == NULL) {
-        printf("%s: %s: No such file or directory\n", argv[0], argv[1]);
+    std::string buffer;
+    if (!android::base::ReadFileToString(argv[1], &buffer)) {
+        printf("%s: failed to read %s: %s\n", argv[0], argv[1], strerror(errno));
         return 1;
     }
-    char buffer[8192];
-    int size = fread(buffer, 1, 8191, f);
-    fclose(f);
-    buffer[size] = '\0';
 
     Expr* root;
     int error_count = 0;
-    int error = parse_string(buffer, &root, &error_count);
+    int error = parse_string(buffer.data(), &root, &error_count);
     printf("parse returned %d; %d errors encountered\n", error, error_count);
     if (error == 0 || error_count > 0) {
 
         ExprDump(0, root, buffer);
 
-        State state;
-        state.cookie = NULL;
-        state.script = buffer;
-        state.errmsg = NULL;
-
+        State state(buffer, nullptr);
         char* result = Evaluate(&state, root);
         if (result == NULL) {
             printf("result was NULL, message is: %s\n",
-                   (state.errmsg == NULL ? "(NULL)" : state.errmsg));
-            free(state.errmsg);
+                   (state.errmsg.empty() ? "(NULL)" : state.errmsg.c_str()));
         } else {
             printf("result is [%s]\n", result);
         }

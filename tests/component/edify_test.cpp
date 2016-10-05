@@ -25,10 +25,7 @@ static void expect(const char* expr_str, const char* expected) {
     int error_count;
     EXPECT_EQ(parse_string(expr_str, &e, &error_count), 0);
 
-    State state;
-    state.cookie = nullptr;
-    state.errmsg = nullptr;
-    state.script = strdup(expr_str);
+    State state(expr_str, nullptr);
 
     char* result = Evaluate(&state, e);
 
@@ -38,8 +35,6 @@ static void expect(const char* expr_str, const char* expected) {
         EXPECT_STREQ(result, expected);
     }
 
-    free(state.errmsg);
-    free(state.script);
     free(result);
 }
 
