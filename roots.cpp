@@ -27,12 +27,12 @@
 #include <fcntl.h>
 
 #include <android-base/logging.h>
-
+#include <ext4_utils/make_ext4fs.h>
+#include <ext4_utils/wipe.h>
 #include <fs_mgr.h>
+
 #include "common.h"
-#include "make_ext4fs.h"
 #include "mounts.h"
-#include "wipe.h"
 #include "cryptfs.h"
 
 static struct fstab *fstab = NULL;
