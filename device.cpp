@@ -16,6 +16,29 @@
 
 #include "device.h"
 
+#if defined(AB_OTA_UPDATER)
+
+static const char* MENU_ITEMS[] = {
+    "Reboot system now",
+    "Reboot to bootloader",
+    "Wipe data/factory reset",
+    "Mount /system",
+    "Run graphics test",
+    "Power off",
+    NULL,
+};
+
+static const Device::BuiltinAction MENU_ACTIONS[] = {
+    Device::REBOOT,
+    Device::REBOOT_BOOTLOADER,
+    Device::WIPE_DATA,
+    Device::MOUNT_SYSTEM,
+    Device::RUN_GRAPHICS_TEST,
+    Device::SHUTDOWN,
+};
+
+#else
+
 static const char* MENU_ITEMS[] = {
     "Reboot system now",
     "Reboot to bootloader",
@@ -27,27 +50,30 @@ static const char* MENU_ITEMS[] = {
     "View recovery logs",
     "Run graphics test",
     "Power off",
-    NULL
+    NULL,
 };
+
+static const Device::BuiltinAction MENU_ACTIONS[] = {
+    Device::REBOOT,
+    Device::REBOOT_BOOTLOADER,
+    Device::APPLY_ADB_SIDELOAD,
+    Device::APPLY_SDCARD,
+    Device::WIPE_DATA,
+    Device::WIPE_CACHE,
+    Device::MOUNT_SYSTEM,
+    Device::VIEW_RECOVERY_LOGS,
+    Device::RUN_GRAPHICS_TEST,
+    Device::SHUTDOWN,
+};
+
+#endif
 
 const char* const* Device::GetMenuItems() {
   return MENU_ITEMS;
 }
 
 Device::BuiltinAction Device::InvokeMenuItem(int menu_position) {
-  switch (menu_position) {
-    case 0: return REBOOT;
-    case 1: return REBOOT_BOOTLOADER;
-    case 2: return APPLY_ADB_SIDELOAD;
-    case 3: return APPLY_SDCARD;
-    case 4: return WIPE_DATA;
-    case 5: return WIPE_CACHE;
-    case 6: return MOUNT_SYSTEM;
-    case 7: return VIEW_RECOVERY_LOGS;
-    case 8: return RUN_GRAPHICS_TEST;
-    case 9: return SHUTDOWN;
-    default: return NO_ACTION;
-  }
+  return menu_position < 0 ? NO_ACTION : MENU_ACTIONS[menu_position];
 }
 
 int Device::HandleMenuKey(int key, int visible) {
