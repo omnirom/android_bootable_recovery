@@ -2,7 +2,6 @@ import /init.recovery.${ro.hardware}.rc
 
 on early-init
     start ueventd
-    start healthd
 
 on init
     export PATH /sbin:/system/bin
