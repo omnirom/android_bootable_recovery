@@ -40,6 +40,8 @@
 #include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <android-base/stringprintf.h>
+#include <ext4_utils/make_ext4fs.h>
+#include <ext4_utils/wipe.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
 
@@ -56,9 +58,6 @@
 #include "updater.h"
 #include "install.h"
 #include "tune2fs.h"
-
-#include "make_ext4fs.h"
-#include "wipe.h"
 
 // Send over the buffer to recovery though the command pipe.
 static void uiPrint(State* state, const std::string& buffer) {
