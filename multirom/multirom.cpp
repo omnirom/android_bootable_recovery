@@ -116,22 +116,26 @@ void MultiROM::nokexec_restore_primary_and_cleanup()
 	if(m_path.empty() && !folderExists())
 		return;
 
-	char path_primary_bootimg[256];
-	struct bootimg img;
 	TWPartition *boot = PartitionManager.Find_Partition_By_Path("/boot");
 
-	sprintf(path_primary_bootimg, "%s/%s", m_path.c_str(), "primary_boot.img");
+	if(!boot)
+		return;
 
 	// check if previous was secondary
-	if (libbootimg_init_load(&img, boot->Actual_Block_Device.c_str(), LIBBOOTIMG_LOAD_ALL) < 0)
+	struct boot_img_hdr hdr;
+
+	if (libbootimg_load_header(&hdr, boot->Actual_Block_Device.c_str()) < 0)
 	{
 		gui_print("MultiROM NO_KEXEC: ERROR: Could not open boot image (%s)!\n", boot->Actual_Block_Device.c_str());
 	}
 	else
 	{
 		// check for secondary tag
-		if (img.hdr.name[BOOT_NAME_SIZE-1] == 0x71)
+		if (hdr.name[BOOT_NAME_SIZE-1] == 0x71)
 		{
+			char path_primary_bootimg[256];
+			sprintf(path_primary_bootimg, "%s/%s", m_path.c_str(), "primary_boot.img");
+
 			// primary slot is a secondary boot.img, so restore real primary
 			if (access(path_primary_bootimg, R_OK) == 0)
 			{
@@ -139,16 +143,23 @@ void MultiROM::nokexec_restore_primary_and_cleanup()
 				//copy_file(path_primary_bootimg, boot->Actual_Block_Device.c_str());
 /*
 				PartitionSettings part_settings;
-				part_settings.Part = boot; //PartitionManager.Find_Partition_By_Path("/boot");
-				part_settings.Backup_Folder = m_path + "/" + "primary_boot.img";
+				part_settings.Part = NULL;
+				part_settings.Backup_Folder = m_path + "/";
 				part_settings.adbbackup = false;
 				part_settings.adb_compression = false;
 				part_settings.partition_count = 1;
 				part_settings.progress = NULL;
 				part_settings.PM_Method = PM_RESTORE;
 
+				boot->Backup_FileName = "primary_boot.img";
+
 				if (boot->Flash_Image(&part_settings))
+				{
 					gui_print("... successful.\n");
+
+					// cleanup
+					remove(path_primary_bootimg);
+				}
 				else
 					gui_print("... FAILED.\n");
 */
@@ -165,18 +176,19 @@ void MultiROM::nokexec_restore_primary_and_cleanup()
 				boot->Backup_FileName = "primary_boot.img";
 
 				if (boot->Raw_Read_Write(&part_settings))
+				{
 					gui_print("... successful.\n");
+
+					// cleanup
+					remove(path_primary_bootimg);
+				}
 				else
 					gui_print("... FAILED.\n");
 			}
 			else
 				gui_print("MultiROM NO_KEXEC: ERROR: couldn’t find real primary to restore\n");
 		}
-		libbootimg_destroy(&img);
 	}
-
-	// cleanup
-	if (access(path_primary_bootimg, R_OK) == 0) remove(path_primary_bootimg);
 }
 #endif //MR_NO_KEXEC
 
