@@ -62,7 +62,6 @@ LOCAL_STATIC_LIBRARIES += \
     $(tune2fs_static_libraries)
 
 LOCAL_CFLAGS += -Wno-unused-parameter -Werror
-LOCAL_C_INCLUDES += system/extras/ext4_utils
 LOCAL_STATIC_LIBRARIES += \
     libsparse_static \
     libz
