@@ -70,7 +70,6 @@ LOCAL_CLANG := true
 
 LOCAL_C_INCLUDES += \
     system/vold \
-    system/extras/ext4_utils \
     system/core/adb \
 
 LOCAL_STATIC_LIBRARIES := \
@@ -97,9 +96,6 @@ LOCAL_STATIC_LIBRARIES := \
     libc
 
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
-
-LOCAL_C_INCLUDES += system/extras/ext4_utils
-LOCAL_STATIC_LIBRARIES += libext4_utils_static libz
 
 ifeq ($(AB_OTA_UPDATER),true)
     LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
