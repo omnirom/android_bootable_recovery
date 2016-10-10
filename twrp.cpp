@@ -326,6 +326,13 @@ int main(int argc, char **argv) {
 		}
 	}
 
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+#ifdef MR_NO_KEXEC
+	// if /data in encrypted, the previous call would have done nothing, so check after decryption again
+	MultiROM::nokexec_restore_primary_and_cleanup();
+#endif
+#endif //TARGET_RECOVERY_IS_MULTIROM
+
 	// Read the settings file
 #ifdef TW_HAS_MTP
 	// We unmount partitions sometimes during early boot which may override
