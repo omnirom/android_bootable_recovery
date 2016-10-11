@@ -41,25 +41,41 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_MODULE := recovery_component_test
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SRC_FILES := \
+    component/applypatch_test.cpp \
     component/edify_test.cpp \
-    component/verifier_test.cpp \
-    component/applypatch_test.cpp
+    component/updater_test.cpp \
+    component/verifier_test.cpp
 LOCAL_FORCE_STATIC_EXECUTABLE := true
+
+tune2fs_static_libraries := \
+    libext2_com_err \
+    libext2_blkid \
+    libext2_quota \
+    libext2_uuid_static \
+    libext2_e2p \
+    libext2fs
+
 LOCAL_STATIC_LIBRARIES := \
     libapplypatch \
     libedify \
     libotafault \
+    libupdater \
     libverifier \
-    libcrypto_utils \
-    libcrypto \
     libminui \
     libminzip \
+    libmounts \
+    liblog \
+    libselinux \
+    libext4_utils_static \
+    libsparse_static \
+    libcrypto_utils \
+    libcrypto \
     libcutils \
     libbz \
     libz \
-    libc \
     libbase \
-    liblog
+    libtune2fs \
+    $(tune2fs_static_libraries)
 
 testdata_out_path := $(TARGET_OUT_DATA_NATIVE_TESTS)/recovery
 testdata_files := $(call find-subdir-files, testdata/*)
