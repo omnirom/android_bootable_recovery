@@ -14,41 +14,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# updater (static executable)
-# ===============================
-# Build a statically-linked binary to include in OTA packages.
-include $(CLEAR_VARS)
-
-updater_src_files := \
-    install.cpp \
-    blockimg.cpp \
-    updater.cpp
-
-LOCAL_CLANG := true
-LOCAL_SRC_FILES := $(updater_src_files)
-
-LOCAL_STATIC_LIBRARIES += \
-    $(TARGET_RECOVERY_UPDATER_LIBS) \
-    $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS) \
-    libfec \
-    libfec_rs \
-    libext4_utils_static \
-    libsquashfs_utils \
-    libcrypto_utils \
-    libcrypto \
-    libapplypatch \
-    libotafault \
-    libedify \
-    libminzip \
-    libmounts \
-    libz \
-    libbz \
-    libcutils \
-    liblog \
-    libselinux \
-    libbase \
-    liblog
-
 tune2fs_static_libraries := \
     libext2_com_err \
     libext2_blkid \
@@ -57,17 +22,77 @@ tune2fs_static_libraries := \
     libext2_e2p \
     libext2fs
 
-LOCAL_STATIC_LIBRARIES += \
+updater_common_static_libraries := \
+    libapplypatch \
+    libedify \
+    libminzip \
+    libmounts \
+    libotafault \
+    libext4_utils_static \
+    libfec \
+    libfec_rs \
+    liblog \
+    libselinux \
+    libsparse_static \
+    libsquashfs_utils \
+    libbz \
+    libz \
+    libbase \
+    libcrypto \
+    libcrypto_utils \
+    libcutils \
     libtune2fs \
     $(tune2fs_static_libraries)
 
-LOCAL_CFLAGS += -Wno-unused-parameter -Werror
-LOCAL_STATIC_LIBRARIES += \
-    libsparse_static \
-    libz
+# libupdater (static library)
+# ===============================
+include $(CLEAR_VARS)
 
-LOCAL_C_INCLUDES += external/e2fsprogs/misc
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
+LOCAL_MODULE := libupdater
+
+LOCAL_SRC_FILES := \
+    install.cpp \
+    blockimg.cpp
+
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/.. \
+    $(LOCAL_PATH)/include \
+    external/e2fsprogs/misc
+
+LOCAL_CFLAGS := \
+    -Wno-unused-parameter \
+    -Werror
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/include
+
+LOCAL_STATIC_LIBRARIES := \
+    $(updater_common_static_libraries)
+
+include $(BUILD_STATIC_LIBRARY)
+
+# updater (static executable)
+# ===============================
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := updater
+
+LOCAL_SRC_FILES := \
+    updater.cpp
+
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/.. \
+    $(LOCAL_PATH)/include
+
+LOCAL_CFLAGS := \
+    -Wno-unused-parameter \
+    -Werror
+
+LOCAL_STATIC_LIBRARIES := \
+    libupdater \
+    $(TARGET_RECOVERY_UPDATER_LIBS) \
+    $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS) \
+    $(updater_common_static_libraries)
 
 # Each library in TARGET_RECOVERY_UPDATER_LIBS should have a function
 # named "Register_<libname>()".  Here we emit a little C function that
@@ -107,8 +132,6 @@ LOCAL_C_INCLUDES += $(dir $(inc))
 
 inc :=
 inc_dep_file :=
-
-LOCAL_MODULE := updater
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 

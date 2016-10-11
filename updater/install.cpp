@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "updater/install.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -40,24 +42,22 @@
 #include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <android-base/stringprintf.h>
+#include <cutils/android_reboot.h>
 #include <ext4_utils/make_ext4fs.h>
 #include <ext4_utils/wipe.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
 
-#include "bootloader.h"
 #include "applypatch/applypatch.h"
-#include "cutils/android_reboot.h"
-#include "cutils/misc.h"
+#include "bootloader.h"
 #include "edify/expr.h"
 #include "error_code.h"
 #include "minzip/DirUtil.h"
 #include "mounts.h"
 #include "openssl/sha.h"
 #include "ota_io.h"
-#include "updater.h"
-#include "install.h"
 #include "tune2fs.h"
+#include "updater/updater.h"
 
 // Send over the buffer to recovery though the command pipe.
 static void uiPrint(State* state, const std::string& buffer) {
@@ -88,6 +88,27 @@ void uiPrintf(State* _Nonnull state, const char* _Nonnull format, ...) {
     va_end(ap);
 
     uiPrint(state, error_msg);
+}
+
+// Create all parent directories of name, if necessary.
+static int make_parents(char* name) {
+    char* p;
+    for (p = name + (strlen(name)-1); p > name; --p) {
+        if (*p != '/') continue;
+        *p = '\0';
+        if (make_parents(name) < 0) return -1;
+        int result = mkdir(name, 0700);
+        if (result == 0) printf("created [%s]\n", name);
+        *p = '/';
+        if (result == 0 || errno == EEXIST) {
+            // successfully created or already existed; we're done
+            return 0;
+        } else {
+            printf("failed to mkdir %s: %s\n", name, strerror(errno));
+            return -1;
+        }
+    }
+    return 0;
 }
 
 // Take a sha-1 digest and return it as a newly-allocated hex string.
@@ -567,27 +588,6 @@ Value* PackageExtractFileFn(const char* name, State* state,
         }
         return v;
     }
-}
-
-// Create all parent directories of name, if necessary.
-static int make_parents(char* name) {
-    char* p;
-    for (p = name + (strlen(name)-1); p > name; --p) {
-        if (*p != '/') continue;
-        *p = '\0';
-        if (make_parents(name) < 0) return -1;
-        int result = mkdir(name, 0700);
-        if (result == 0) printf("created [%s]\n", name);
-        *p = '/';
-        if (result == 0 || errno == EEXIST) {
-            // successfully created or already existed; we're done
-            return 0;
-        } else {
-            printf("failed to mkdir %s: %s\n", name, strerror(errno));
-            return -1;
-        }
-    }
-    return 0;
 }
 
 // symlink target src1 src2 ...
