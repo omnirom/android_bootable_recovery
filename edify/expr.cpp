@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#include <string.h>
-#include <stdbool.h>
+#include "expr.h"
+
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <string>
+#include <unordered_map>
 
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
-
-#include "expr.h"
 
 // Functions should:
 //
@@ -319,61 +319,22 @@ Value* Literal(const char* name, State* state, int argc, Expr* argv[]) {
     return StringValue(strdup(name));
 }
 
-Expr* Build(Function fn, YYLTYPE loc, int count, ...) {
-    va_list v;
-    va_start(v, count);
-    Expr* e = reinterpret_cast<Expr*>(malloc(sizeof(Expr)));
-    e->fn = fn;
-    e->name = "(operator)";
-    e->argc = count;
-    e->argv = reinterpret_cast<Expr**>(malloc(count * sizeof(Expr*)));
-    int i;
-    for (i = 0; i < count; ++i) {
-        e->argv[i] = va_arg(v, Expr*);
-    }
-    va_end(v);
-    e->start = loc.start;
-    e->end = loc.end;
-    return e;
-}
-
 // -----------------------------------------------------------------
 //   the function table
 // -----------------------------------------------------------------
 
-static int fn_entries = 0;
-static int fn_size = 0;
-NamedFunction* fn_table = NULL;
+static std::unordered_map<std::string, Function> fn_table;
 
-void RegisterFunction(const char* name, Function fn) {
-    if (fn_entries >= fn_size) {
-        fn_size = fn_size*2 + 1;
-        fn_table = reinterpret_cast<NamedFunction*>(realloc(fn_table, fn_size * sizeof(NamedFunction)));
+void RegisterFunction(const std::string& name, Function fn) {
+    fn_table[name] = fn;
+}
+
+Function FindFunction(const std::string& name) {
+    if (fn_table.find(name) == fn_table.end()) {
+        return nullptr;
+    } else {
+        return fn_table[name];
     }
-    fn_table[fn_entries].name = name;
-    fn_table[fn_entries].fn = fn;
-    ++fn_entries;
-}
-
-static int fn_entry_compare(const void* a, const void* b) {
-    const char* na = ((const NamedFunction*)a)->name;
-    const char* nb = ((const NamedFunction*)b)->name;
-    return strcmp(na, nb);
-}
-
-void FinishRegistration() {
-    qsort(fn_table, fn_entries, sizeof(NamedFunction), fn_entry_compare);
-}
-
-Function FindFunction(const char* name) {
-    NamedFunction key;
-    key.name = name;
-    NamedFunction* nf = reinterpret_cast<NamedFunction*>(bsearch(&key, fn_table, fn_entries,
-            sizeof(NamedFunction), fn_entry_compare));
-    if (nf == NULL) {
-        return NULL;
-    }
-    return nf->fn;
 }
 
 void RegisterBuiltins() {

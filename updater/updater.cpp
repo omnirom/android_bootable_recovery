@@ -111,7 +111,6 @@ int main(int argc, char** argv) {
     RegisterInstallFunctions();
     RegisterBlockImageFunctions();
     RegisterDeviceExtensions();
-    FinishRegistration();
 
     // Parse the script.
 
