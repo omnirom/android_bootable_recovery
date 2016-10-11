@@ -45,12 +45,12 @@
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
 #include "error_code.h"
-#include "install.h"
+#include "updater/install.h"
 #include "openssl/sha.h"
 #include "minzip/Hash.h"
 #include "ota_io.h"
 #include "print_sha1.h"
-#include "updater.h"
+#include "updater/updater.h"
 
 #define BLOCKSIZE 4096
 
