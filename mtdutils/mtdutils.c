@@ -187,6 +187,23 @@ mtd_find_partition_by_name(const char *name)
 }
 
 int
+mtd_get_index_by_name(const char *name)
+{
+    if (g_mtd_state.partitions != NULL) {
+        int i;
+        for (i=0; i < g_mtd_state.partitions_allocd; i++) {
+            MtdPartition *p = &g_mtd_state.partitions[i];
+            if (p->device_index >= 0 && p->name !=NULL) {
+                  if (strcmp(p->name, name) == 0) {
+                      return p->device_index;
+                  }
+            }
+        }
+    }
+    return -1;
+}
+
+int
 mtd_mount_partition(const MtdPartition *partition, const char *mount_point,
         const char *filesystem, int read_only)
 {
@@ -625,7 +642,7 @@ int cmd_mtd_restore_raw_partition(const char *partition_name, const char *filena
         printf("error opening %s", filename);
         return -1;
     }
-    
+
     MtdWriteContext* ctx = mtd_write_partition(mtd);
     if (ctx == NULL) {
         printf("error writing %s", partition_name);
