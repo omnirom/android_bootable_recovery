@@ -24,6 +24,7 @@ typedef struct MtdPartition MtdPartition;
 int mtd_scan_partitions(void);
 
 const MtdPartition *mtd_find_partition_by_name(const char *name);
+int mtd_get_index_by_name(const char *name);
 
 /* mount_point is like "/system"
  * filesystem is like "yaffs2"
