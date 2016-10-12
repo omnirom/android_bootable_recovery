@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 
+#include <string>
 #include <vector>
 
 #include "openssl/sha.h"
@@ -52,19 +53,16 @@ int applypatch(const char* source_filename,
                const char* target_filename,
                const char* target_sha1_str,
                size_t target_size,
-               int num_patches,
-               char** const patch_sha1_str,
+               const std::vector<std::string>& patch_sha1_str,
                Value** patch_data,
                Value* bonus_data);
 int applypatch_check(const char* filename,
-                     int num_patches,
-                     char** const patch_sha1_str);
+                     const std::vector<std::string>& patch_sha1_str);
 
 int LoadFileContents(const char* filename, FileContents* file);
 int SaveFileContents(const char* filename, const FileContents* file);
 void FreeFileContents(FileContents* file);
-int FindMatchingPatch(uint8_t* sha1, char* const * const patch_sha1_str,
-                      int num_patches);
+int FindMatchingPatch(uint8_t* sha1, const std::vector<std::string>& patch_sha1_str);
 
 // bsdiff.cpp
 void ShowBSDiffLicense();

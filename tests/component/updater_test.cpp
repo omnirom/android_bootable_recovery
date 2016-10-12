@@ -32,12 +32,13 @@ static void expect(const char* expected, const char* expr_str, CauseCode cause_c
 
     State state(expr_str, nullptr);
 
-    char* result = Evaluate(&state, e);
+    std::string result;
+    bool status = Evaluate(&state, e, &result);
 
     if (expected == nullptr) {
-        EXPECT_EQ(nullptr, result);
+        EXPECT_FALSE(status);
     } else {
-        EXPECT_STREQ(expected, result);
+        EXPECT_STREQ(expected, result.c_str());
     }
 
     // Error code is set in updater/updater.cpp only, by parsing State.errmsg.
@@ -46,7 +47,6 @@ static void expect(const char* expected, const char* expr_str, CauseCode cause_c
     // Cause code should always be available.
     EXPECT_EQ(cause_code, state.cause_code);
 
-    free(result);
 }
 
 class UpdaterTest : public ::testing::Test {

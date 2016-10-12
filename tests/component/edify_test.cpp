@@ -28,15 +28,15 @@ static void expect(const char* expr_str, const char* expected) {
 
     State state(expr_str, nullptr);
 
-    char* result = Evaluate(&state, e);
+    std::string result;
+    bool status = Evaluate(&state, e, &result);
 
     if (expected == nullptr) {
-        EXPECT_EQ(nullptr, result);
+        EXPECT_FALSE(status);
     } else {
-        EXPECT_STREQ(expected, result);
+        EXPECT_STREQ(expected, result.c_str());
     }
 
-    free(result);
 }
 
 class EdifyTest : public ::testing::Test {
