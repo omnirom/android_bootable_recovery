@@ -1220,7 +1220,7 @@ bool TWPartition::Mount(bool Display_Error) {
 			libubi_close(libubi);
 			return false;
 	}
-	
+
 	if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sbin/exfat-fuse")) {
 		string cmd = "/sbin/exfat-fuse -o big_writes,max_read=131072,max_write=131072 " + Actual_Block_Device + " " + Mount_Point;
 		LOGINFO("cmd: %s\n", cmd.c_str());
@@ -1887,7 +1887,7 @@ void TWPartition::Check_FS_Type() {
 	const char* type;
 	blkid_probe pr;
 
-	if (Fstab_File_System == "yaffs2" || Fstab_File_System == "mtd" || Fstab_File_System == "bml" || Ignore_Blkid)
+	if (Fstab_File_System == "yaffs2" || Fstab_File_System == "mtd" || Fstab_File_System == "bml" || Fstab_File_System == "ubifs" || Ignore_Blkid)
 		return; // Running blkid on some mtd devices causes a massive crash or needs to be skipped
 
 	Find_Actual_Block_Device();
@@ -2098,6 +2098,9 @@ bool TWPartition::Wipe_RMRF() {
 	gui_msg(Msg("remove_all=Removing all files under '{1}'")(Mount_Point));
 	TWFunc::removeDir(Mount_Point, true);
 	Recreate_AndSec_Folder();
+	if (Current_File_System == "ubifs")
+		UnMount(true);
+		
 	return true;
 }
 
