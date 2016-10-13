@@ -1214,9 +1214,8 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
   }
 }
 
-static void
-print_property(const char *key, const char *name, void *cookie) {
-    printf("%s=%s\n", key, name);
+static void print_property(const char* key, const char* name, void* /* cookie */) {
+  printf("%s=%s\n", key, name);
 }
 
 static std::string load_locale_from_cache() {
@@ -1250,14 +1249,14 @@ void ui_print(const char* format, ...) {
 
 static constexpr char log_characters[] = "VDIWEF";
 
-void UiLogger(android::base::LogId id, android::base::LogSeverity severity,
-               const char* tag, const char* file, unsigned int line,
-               const char* message) {
-    if (severity >= android::base::ERROR && ui != nullptr) {
-        ui->Print("E:%s\n", message);
-    } else {
-        fprintf(stdout, "%c:%s\n", log_characters[severity], message);
-    }
+void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity,
+              const char* /* tag */, const char* /* file */, unsigned int /* line */,
+              const char* message) {
+  if (severity >= android::base::ERROR && ui != nullptr) {
+    ui->Print("E:%s\n", message);
+  } else {
+    fprintf(stdout, "%c:%s\n", log_characters[severity], message);
+  }
 }
 
 static bool is_battery_ok() {
