@@ -2098,9 +2098,10 @@ bool TWPartition::Wipe_RMRF() {
 	gui_msg(Msg("remove_all=Removing all files under '{1}'")(Mount_Point));
 	TWFunc::removeDir(Mount_Point, true);
 	Recreate_AndSec_Folder();
+
 	if (Current_File_System == "ubifs")
 		UnMount(true);
-		
+
 	return true;
 }
 
