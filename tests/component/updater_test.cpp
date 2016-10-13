@@ -54,7 +54,6 @@ class UpdaterTest : public ::testing::Test {
     virtual void SetUp() {
         RegisterBuiltins();
         RegisterInstallFunctions();
-        FinishRegistration();
     }
 };
 
