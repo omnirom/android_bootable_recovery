@@ -1152,7 +1152,7 @@ bool TWPartition::Mount(bool Display_Error) {
 		struct ubi_dev_info dev_info;
 		struct ubi_attach_request req;
 		int err;
-		char value[32] = {0}
+		char value[32] = {0};
 
 		mtd_scan_partitions();
 		int mtdn = mtd_get_index_by_name(MTD_Name.c_str());
@@ -1184,7 +1184,7 @@ bool TWPartition::Mount(bool Display_Error) {
 		req.dev_num = UBI_DEV_NUM_AUTO;
 		req.mtd_num = mtdn;
 		req.vid_hdr_offset = 0;
-		req.mtd_dev_mode = NULL;
+		//req.mtd_dev_mode = NULL;
 
 		// Make sure the partitions are not already mounted before mounting
 		ubi_detach_mtd(libubi, DEFAULT_CTRL_DEV, mtdn);
@@ -1192,7 +1192,7 @@ bool TWPartition::Mount(bool Display_Error) {
 		err = ubi_attach(libubi, DEFAULT_CTRL_DEV, &req);
 		if (err) {
 			LOGE("cannot attach mtd%d", mtdn);
-			goto out_ubi_close
+			goto out_ubi_close;
 		}
 
 		// Show info about the newly mounted UBI partition
