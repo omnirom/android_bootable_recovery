@@ -22,17 +22,18 @@
 
 static void expect(const char* expr_str, const char* expected) {
     Expr* e;
-    int error_count;
-    EXPECT_EQ(parse_string(expr_str, &e, &error_count), 0);
+    int error_count = 0;
+    EXPECT_EQ(0, parse_string(expr_str, &e, &error_count));
+    EXPECT_EQ(0, error_count);
 
     State state(expr_str, nullptr);
 
     char* result = Evaluate(&state, e);
 
     if (expected == nullptr) {
-        EXPECT_EQ(result, nullptr);
+        EXPECT_EQ(nullptr, result);
     } else {
-        EXPECT_STREQ(result, expected);
+        EXPECT_STREQ(expected, result);
     }
 
     free(result);
@@ -42,7 +43,6 @@ class EdifyTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
         RegisterBuiltins();
-        FinishRegistration();
     }
 };
 
@@ -149,3 +149,21 @@ TEST_F(EdifyTest, big_string) {
     expect(std::string(8192, 's').c_str(), std::string(8192, 's').c_str());
 }
 
+TEST_F(EdifyTest, unknown_function) {
+    // unknown function
+    const char* script1 = "unknown_function()";
+    Expr* expr;
+    int error_count = 0;
+    EXPECT_EQ(1, parse_string(script1, &expr, &error_count));
+    EXPECT_EQ(1, error_count);
+
+    const char* script2 = "abc; unknown_function()";
+    error_count = 0;
+    EXPECT_EQ(1, parse_string(script2, &expr, &error_count));
+    EXPECT_EQ(1, error_count);
+
+    const char* script3 = "unknown_function1() || yes";
+    error_count = 0;
+    EXPECT_EQ(1, parse_string(script3, &expr, &error_count));
+    EXPECT_EQ(1, error_count);
+}
