@@ -33,6 +33,25 @@ struct yy_buffer_state;
 void yy_switch_to_buffer(struct yy_buffer_state* new_buffer);
 struct yy_buffer_state* yy_scan_string(const char* yystr);
 
+// Convenience function for building expressions with a fixed number
+// of arguments.
+static Expr* Build(Function fn, YYLTYPE loc, size_t count, ...) {
+    va_list v;
+    va_start(v, count);
+    Expr* e = static_cast<Expr*>(malloc(sizeof(Expr)));
+    e->fn = fn;
+    e->name = "(operator)";
+    e->argc = count;
+    e->argv = static_cast<Expr**>(malloc(count * sizeof(Expr*)));
+    for (size_t i = 0; i < count; ++i) {
+        e->argv[i] = va_arg(v, Expr*);
+    }
+    va_end(v);
+    e->start = loc.start;
+    e->end = loc.end;
+    return e;
+}
+
 %}
 
 %locations
@@ -70,7 +89,7 @@ input:  expr           { *root = $1; }
 ;
 
 expr:  STRING {
-    $$ = reinterpret_cast<Expr*>(malloc(sizeof(Expr)));
+    $$ = static_cast<Expr*>(malloc(sizeof(Expr)));
     $$->fn = Literal;
     $$->name = $1;
     $$->argc = 0;
@@ -91,9 +110,9 @@ expr:  STRING {
 |  IF expr THEN expr ENDIF           { $$ = Build(IfElseFn, @$, 2, $2, $4); }
 |  IF expr THEN expr ELSE expr ENDIF { $$ = Build(IfElseFn, @$, 3, $2, $4, $6); }
 | STRING '(' arglist ')' {
-    $$ = reinterpret_cast<Expr*>(malloc(sizeof(Expr)));
+    $$ = static_cast<Expr*>(malloc(sizeof(Expr)));
     $$->fn = FindFunction($1);
-    if ($$->fn == NULL) {
+    if ($$->fn == nullptr) {
         char buffer[256];
         snprintf(buffer, sizeof(buffer), "unknown function \"%s\"", $1);
         yyerror(root, error_count, buffer);
@@ -113,12 +132,12 @@ arglist:    /* empty */ {
 }
 | expr {
     $$.argc = 1;
-    $$.argv = reinterpret_cast<Expr**>(malloc(sizeof(Expr*)));
+    $$.argv = static_cast<Expr**>(malloc(sizeof(Expr*)));
     $$.argv[0] = $1;
 }
 | arglist ',' expr {
     $$.argc = $1.argc + 1;
-    $$.argv = reinterpret_cast<Expr**>(realloc($$.argv, $$.argc * sizeof(Expr*)));
+    $$.argv = static_cast<Expr**>(realloc($$.argv, $$.argc * sizeof(Expr*)));
     $$.argv[$$.argc-1] = $3;
 }
 ;

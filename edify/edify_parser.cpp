@@ -45,7 +45,6 @@ static void ExprDump(int depth, const Expr* n, const std::string& script) {
 
 int main(int argc, char** argv) {
     RegisterBuiltins();
-    FinishRegistration();
 
     if (argc != 2) {
         printf("Usage: %s <edify script>\n", argv[0]);
