@@ -21,11 +21,6 @@
 #include <string>
 
 #include "error_code.h"
-#include "yydefs.h"
-
-#define MAX_STRING_LEN 1024
-
-typedef struct Expr Expr;
 
 struct State {
     State(const std::string& script, void* cookie);
@@ -56,14 +51,15 @@ struct State {
 #define VAL_STRING  1  // data will be NULL-terminated; size doesn't count null
 #define VAL_BLOB    2
 
-typedef struct {
+struct Value {
     int type;
     ssize_t size;
     char* data;
-} Value;
+};
 
-typedef Value* (*Function)(const char* name, State* state,
-                           int argc, Expr* argv[]);
+struct Expr;
+
+using Function = Value* (*)(const char* name, State* state, int argc, Expr* argv[]);
 
 struct Expr {
     Function fn;
@@ -100,43 +96,21 @@ Value* EqualityFn(const char* name, State* state, int argc, Expr* argv[]);
 Value* InequalityFn(const char* name, State* state, int argc, Expr* argv[]);
 Value* SequenceFn(const char* name, State* state, int argc, Expr* argv[]);
 
-// Convenience function for building expressions with a fixed number
-// of arguments.
-Expr* Build(Function fn, YYLTYPE loc, int count, ...);
-
 // Global builtins, registered by RegisterBuiltins().
 Value* IfElseFn(const char* name, State* state, int argc, Expr* argv[]);
 Value* AssertFn(const char* name, State* state, int argc, Expr* argv[]);
 Value* AbortFn(const char* name, State* state, int argc, Expr* argv[]);
 
-
-// For setting and getting the global error string (when returning
-// NULL from a function).
-void SetError(const char* message);  // makes a copy
-const char* GetError();              // retains ownership
-void ClearError();
-
-
-typedef struct {
-  const char* name;
-  Function fn;
-} NamedFunction;
-
 // Register a new function.  The same Function may be registered under
 // multiple names, but a given name should only be used once.
-void RegisterFunction(const char* name, Function fn);
+void RegisterFunction(const std::string& name, Function fn);
 
 // Register all the builtins.
 void RegisterBuiltins();
 
-// Call this after all calls to RegisterFunction() but before parsing
-// any scripts to finish building the function table.
-void FinishRegistration();
-
 // Find the Function for a given name; return NULL if no such function
 // exists.
-Function FindFunction(const char* name);
-
+Function FindFunction(const std::string& name);
 
 // --- convenience functions for use in functions ---
 
