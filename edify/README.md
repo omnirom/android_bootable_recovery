@@ -1,3 +1,6 @@
+edify
+=====
+
 Update scripts (from donut onwards) are written in a new little
 scripting language ("edify") that is superficially somewhat similar to
 the old one ("amend").  This is a brief overview of the new language.
