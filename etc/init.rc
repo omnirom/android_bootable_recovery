@@ -5,7 +5,6 @@ on early-init
     restorecon /postinstall
 
     start ueventd
-    start healthd
 
 on init
     export ANDROID_ROOT /system
