@@ -18,9 +18,9 @@
 #define RECOVERY_INSTALL_H_
 
 #include <string>
+#include <ziparchive/zip_archive.h>
 
 #include "common.h"
-#include "minzip/Zip.h"
 
 enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE, INSTALL_SKIPPED,
         INSTALL_RETRY };
@@ -36,6 +36,6 @@ bool verify_package(const unsigned char* package_data, size_t package_size);
 
 // Read meta data file of the package, write its content in the string pointed by meta_data.
 // Return true if succeed, otherwise return false.
-bool read_metadata_from_package(ZipArchive* zip, std::string* meta_data);
+bool read_metadata_from_package(ZipArchiveHandle zip, std::string* meta_data);
 
 #endif  // RECOVERY_INSTALL_H_

@@ -33,21 +33,21 @@
 #include <unistd.h>
 #include <fec/io.h>
 
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
+#include <ziparchive/zip_archive.h>
 
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
 #include "error_code.h"
 #include "updater/install.h"
 #include "openssl/sha.h"
-#include "minzip/Hash.h"
 #include "ota_io.h"
 #include "print_sha1.h"
 #include "updater/updater.h"
@@ -71,7 +71,7 @@ struct RangeSet {
 
 static CauseCode failure_type = kNoCause;
 static bool is_retry = false;
-static std::map<std::string, RangeSet> stash_map;
+static std::unordered_map<std::string, RangeSet> stash_map;
 
 static void parse_range(const std::string& range_text, RangeSet& rs) {
 
@@ -300,8 +300,8 @@ static ssize_t RangeSinkWrite(const uint8_t* data, ssize_t size, void* token) {
 // rss and signals the condition again.
 
 struct NewThreadInfo {
-    ZipArchive* za;
-    const ZipEntry* entry;
+    ZipArchiveHandle za;
+    ZipEntry entry;
 
     RangeSinkState* rss;
 
@@ -309,7 +309,7 @@ struct NewThreadInfo {
     pthread_cond_t cv;
 };
 
-static bool receive_new_data(const unsigned char* data, int size, void* cookie) {
+static bool receive_new_data(const uint8_t* data, size_t size, void* cookie) {
     NewThreadInfo* nti = reinterpret_cast<NewThreadInfo*>(cookie);
 
     while (size > 0) {
@@ -342,7 +342,7 @@ static bool receive_new_data(const unsigned char* data, int size, void* cookie) 
 
 static void* unzip_new_data(void* cookie) {
     NewThreadInfo* nti = (NewThreadInfo*) cookie;
-    mzProcessZipEntryContents(nti->za, nti->entry, receive_new_data, nti);
+    ProcessZipEntryContents(nti->za, &nti->entry, receive_new_data, nti);
     return nullptr;
 }
 
@@ -1351,28 +1351,6 @@ struct Command {
     CommandFunction f;
 };
 
-// CompareCommands and CompareCommandNames are for the hash table
-
-static int CompareCommands(const void* c1, const void* c2) {
-    return strcmp(((const Command*) c1)->name, ((const Command*) c2)->name);
-}
-
-static int CompareCommandNames(const void* c1, const void* c2) {
-    return strcmp(((const Command*) c1)->name, (const char*) c2);
-}
-
-// HashString is used to hash command names for the hash table
-
-static unsigned int HashString(const char *s) {
-    unsigned int hash = 0;
-    if (s) {
-        while (*s) {
-            hash = hash * 33 + *s++;
-        }
-    }
-    return hash;
-}
-
 // args:
 //    - block device (or file) to modify in-place
 //    - transfer list (blob)
@@ -1429,21 +1407,23 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     }
 
     FILE* cmd_pipe = ui->cmd_pipe;
-    ZipArchive* za = ui->package_zip;
+    ZipArchiveHandle za = ui->package_zip;
 
     if (cmd_pipe == nullptr || za == nullptr) {
         return StringValue("");
     }
 
-    const ZipEntry* patch_entry = mzFindZipEntry(za, patch_data_fn->data.c_str());
-    if (patch_entry == nullptr) {
+    ZipString path_data(patch_data_fn->data.c_str());
+    ZipEntry patch_entry;
+    if (FindEntry(za, path_data, &patch_entry) != 0) {
         fprintf(stderr, "%s(): no file \"%s\" in package", name, patch_data_fn->data.c_str());
         return StringValue("");
     }
 
-    params.patch_start = ui->package_zip_addr + mzGetZipEntryOffset(patch_entry);
-    const ZipEntry* new_entry = mzFindZipEntry(za, new_data_fn->data.c_str());
-    if (new_entry == nullptr) {
+    params.patch_start = ui->package_zip_addr + patch_entry.offset;
+    ZipString new_data(new_data_fn->data.c_str());
+    ZipEntry new_entry;
+    if (FindEntry(za, new_data, &new_entry) != 0) {
         fprintf(stderr, "%s(): no file \"%s\" in package", name, new_data_fn->data.c_str());
         return StringValue("");
     }
@@ -1526,13 +1506,15 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         start += 2;
     }
 
-    // Build a hash table of the available commands
-    HashTable* cmdht = mzHashTableCreate(cmdcount, nullptr);
-    std::unique_ptr<HashTable, decltype(&mzHashTableFree)> cmdht_holder(cmdht, mzHashTableFree);
-
+    // Build a map of the available commands
+    std::unordered_map<std::string, const Command*> cmd_map;
     for (size_t i = 0; i < cmdcount; ++i) {
-        unsigned int cmdhash = HashString(commands[i].name);
-        mzHashTableLookup(cmdht, cmdhash, (void*) &commands[i], CompareCommands, true);
+        if (cmd_map.find(commands[i].name) != cmd_map.end()) {
+            fprintf(stderr, "Error: command [%s] already exists in the cmd map.\n",
+                    commands[i].name);
+            return StringValue(strdup(""));
+        }
+        cmd_map[commands[i].name] = &commands[i];
     }
 
     int rc = -1;
@@ -1549,15 +1531,12 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         params.cmdname = params.tokens[params.cpos++].c_str();
         params.cmdline = line_str.c_str();
 
-        unsigned int cmdhash = HashString(params.cmdname);
-        const Command* cmd = reinterpret_cast<const Command*>(mzHashTableLookup(cmdht, cmdhash,
-                const_cast<char*>(params.cmdname), CompareCommandNames,
-                false));
-
-        if (cmd == nullptr) {
+        if (cmd_map.find(params.cmdname) == cmd_map.end()) {
             fprintf(stderr, "unexpected command [%s]\n", params.cmdname);
             goto pbiudone;
         }
+
+        const Command* cmd = cmd_map[params.cmdname];
 
         if (cmd->f != nullptr && cmd->f(params) == -1) {
             fprintf(stderr, "failed to execute command [%s]\n", line_str.c_str());
