@@ -88,7 +88,7 @@ static bool read_misc_partition(void* p, size_t size, size_t offset, std::string
   if (!wait_for_device(misc_blk_device, err)) {
     return false;
   }
-  android::base::unique_fd fd(open(misc_blk_device.c_str(), O_WRONLY | O_SYNC));
+  android::base::unique_fd fd(open(misc_blk_device.c_str(), O_RDONLY));
   if (fd.get() == -1) {
     *err = android::base::StringPrintf("failed to open %s: %s", misc_blk_device.c_str(),
                                        strerror(errno));
