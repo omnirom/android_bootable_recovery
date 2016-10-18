@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <string>
 #include <vector>
 
 #include "zlib.h"
@@ -35,10 +36,10 @@
 int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                     const unsigned char* patch_data, ssize_t patch_size,
                     SinkFn sink, void* token) {
-  Value patch = {VAL_BLOB, patch_size,
-      reinterpret_cast<char*>(const_cast<unsigned char*>(patch_data))};
-  return ApplyImagePatch(
-      old_data, old_size, &patch, sink, token, nullptr, nullptr);
+    Value patch(VAL_BLOB, std::string(
+            reinterpret_cast<const char*>(patch_data), patch_size));
+
+    return ApplyImagePatch(old_data, old_size, &patch, sink, token, nullptr, nullptr);
 }
 
 /*
@@ -51,9 +52,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                     const Value* patch,
                     SinkFn sink, void* token, SHA_CTX* ctx,
                     const Value* bonus_data) {
-    ssize_t pos = 12;
-    char* header = patch->data;
-    if (patch->size < 12) {
+    if (patch->data.size() < 12) {
         printf("patch too short to contain header\n");
         return -1;
     }
@@ -61,6 +60,8 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
     // IMGDIFF2 uses CHUNK_NORMAL, CHUNK_DEFLATE, and CHUNK_RAW.
     // (IMGDIFF1, which is no longer supported, used CHUNK_NORMAL and
     // CHUNK_GZIP.)
+    size_t pos = 12;
+    const char* header = &patch->data[0];
     if (memcmp(header, "IMGDIFF2", 8) != 0) {
         printf("corrupt patch file header (magic number)\n");
         return -1;
@@ -68,20 +69,19 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
 
     int num_chunks = Read4(header+8);
 
-    int i;
-    for (i = 0; i < num_chunks; ++i) {
+    for (int i = 0; i < num_chunks; ++i) {
         // each chunk's header record starts with 4 bytes.
-        if (pos + 4 > patch->size) {
+        if (pos + 4 > patch->data.size()) {
             printf("failed to read chunk %d record\n", i);
             return -1;
         }
-        int type = Read4(patch->data + pos);
+        int type = Read4(&patch->data[pos]);
         pos += 4;
 
         if (type == CHUNK_NORMAL) {
-            char* normal_header = patch->data + pos;
+            const char* normal_header = &patch->data[pos];
             pos += 24;
-            if (pos > patch->size) {
+            if (pos > patch->data.size()) {
                 printf("failed to read chunk %d normal header data\n", i);
                 return -1;
             }
@@ -97,21 +97,21 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
             ApplyBSDiffPatch(old_data + src_start, src_len,
                              patch, patch_offset, sink, token, ctx);
         } else if (type == CHUNK_RAW) {
-            char* raw_header = patch->data + pos;
+            const char* raw_header = &patch->data[pos];
             pos += 4;
-            if (pos > patch->size) {
+            if (pos > patch->data.size()) {
                 printf("failed to read chunk %d raw header data\n", i);
                 return -1;
             }
 
             ssize_t data_len = Read4(raw_header);
 
-            if (pos + data_len > patch->size) {
+            if (pos + data_len > patch->data.size()) {
                 printf("failed to read chunk %d raw data\n", i);
                 return -1;
             }
-            if (ctx) SHA1_Update(ctx, patch->data + pos, data_len);
-            if (sink((unsigned char*)patch->data + pos,
+            if (ctx) SHA1_Update(ctx, &patch->data[pos], data_len);
+            if (sink(reinterpret_cast<const unsigned char*>(&patch->data[pos]),
                      data_len, token) != data_len) {
                 printf("failed to write chunk %d raw data\n", i);
                 return -1;
@@ -119,9 +119,9 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
             pos += data_len;
         } else if (type == CHUNK_DEFLATE) {
             // deflate chunks have an additional 60 bytes in their chunk header.
-            char* deflate_header = patch->data + pos;
+            const char* deflate_header = &patch->data[pos];
             pos += 60;
-            if (pos > patch->size) {
+            if (pos > patch->data.size()) {
                 printf("failed to read chunk %d deflate header data\n", i);
                 return -1;
             }
@@ -149,7 +149,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
             // the patch was constructed with bonus data.  The
             // deflation will come up 'bonus_size' bytes short; these
             // must be appended from the bonus_data value.
-            size_t bonus_size = (i == 1 && bonus_data != NULL) ? bonus_data->size : 0;
+            size_t bonus_size = (i == 1 && bonus_data != NULL) ? bonus_data->data.size() : 0;
 
             std::vector<unsigned char> expanded_source(expanded_len);
 
@@ -189,7 +189,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
 
                 if (bonus_size) {
                     memcpy(expanded_source.data() + (expanded_len - bonus_size),
-                           bonus_data->data, bonus_size);
+                           &bonus_data->data[0], bonus_size);
                 }
             }
 
