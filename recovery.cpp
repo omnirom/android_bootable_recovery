@@ -52,6 +52,7 @@
 #include <private/android_logger.h> /* private pmsg functions */
 #include <selinux/label.h>
 #include <selinux/selinux.h>
+#include <ziparchive/zip_archive.h>
 
 #include "adb_install.h"
 #include "bootloader.h"
@@ -63,7 +64,7 @@
 #include "install.h"
 #include "minadbd/minadbd.h"
 #include "minui/minui.h"
-#include "minzip/DirUtil.h"
+#include "otautil/DirUtil.h"
 #include "roots.h"
 #include "ui.h"
 #include "screen_ui.h"

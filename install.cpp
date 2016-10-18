@@ -32,13 +32,13 @@
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <ziparchive/zip_archive.h>
 
 #include "common.h"
 #include "error_code.h"
 #include "install.h"
 #include "minui/minui.h"
-#include "minzip/SysUtil.h"
-#include "minzip/Zip.h"
+#include "otautil/SysUtil.h"
 #include "roots.h"
 #include "ui.h"
 #include "verifier.h"
@@ -72,15 +72,17 @@ static int parse_build_number(const std::string& str) {
 }
 
 // Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
-static void read_source_target_build(ZipArchive* zip, std::vector<std::string>& log_buffer) {
-    const ZipEntry* meta_entry = mzFindZipEntry(zip, METADATA_PATH);
-    if (meta_entry == nullptr) {
+static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::string>& log_buffer) {
+    ZipString metadata_path(METADATA_PATH);
+    ZipEntry meta_entry;
+    if (FindEntry(zip, metadata_path, &meta_entry) != 0) {
         LOG(ERROR) << "Failed to find " << METADATA_PATH << " in update package";
         return;
     }
 
-    std::string meta_data(meta_entry->uncompLen, '\0');
-    if (!mzReadZipEntry(zip, meta_entry, &meta_data[0], meta_entry->uncompLen)) {
+    std::string meta_data(meta_entry.uncompressed_length, '\0');
+    if (ExtractToMemory(zip, &meta_entry, reinterpret_cast<uint8_t*>(&meta_data[0]),
+                        meta_entry.uncompressed_length) != 0) {
         LOG(ERROR) << "Failed to read metadata in update package";
         return;
     }
@@ -109,15 +111,14 @@ static void read_source_target_build(ZipArchive* zip, std::vector<std::string>& 
 
 // If the package contains an update binary, extract it and run it.
 static int
-try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
+try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
                   std::vector<std::string>& log_buffer, int retry_count)
 {
     read_source_target_build(zip, log_buffer);
 
-    const ZipEntry* binary_entry =
-            mzFindZipEntry(zip, ASSUMED_UPDATE_BINARY_NAME);
-    if (binary_entry == NULL) {
-        mzCloseZipArchive(zip);
+    ZipString binary_name(ASSUMED_UPDATE_BINARY_NAME);
+    ZipEntry binary_entry;
+    if (FindEntry(zip, binary_name, &binary_entry) != 0) {
         return INSTALL_CORRUPT;
     }
 
@@ -126,15 +127,14 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
     int fd = creat(binary, 0755);
     if (fd < 0) {
         PLOG(ERROR) << "Can't make " << binary;
-        mzCloseZipArchive(zip);
         return INSTALL_ERROR;
     }
-    bool ok = mzExtractZipEntryToFile(zip, binary_entry, fd);
+    int error = ExtractEntryToFile(zip, &binary_entry, fd);
     close(fd);
-    mzCloseZipArchive(zip);
 
-    if (!ok) {
-        LOG(ERROR) << "Can't copy " << ASSUMED_UPDATE_BINARY_NAME;
+    if (error != 0) {
+        LOG(ERROR) << "Can't copy " << ASSUMED_UPDATE_BINARY_NAME
+                   << " : " << ErrorCodeString(error);
         return INSTALL_ERROR;
     }
 
@@ -326,13 +326,14 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     }
 
     // Try to open the package.
-    ZipArchive zip;
-    err = mzOpenZipArchive(map.addr, map.length, &zip);
+    ZipArchiveHandle zip;
+    err = OpenArchiveFromMemory(map.addr, map.length, path, &zip);
     if (err != 0) {
-        LOG(ERROR) << "Can't open " << path;
+        LOG(ERROR) << "Can't open " << path << " : " << ErrorCodeString(err);
         log_buffer.push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
 
         sysReleaseMap(&map);
+        CloseArchive(zip);
         return INSTALL_CORRUPT;
     }
 
@@ -342,12 +343,12 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
         ui->Print("Retry attempt: %d\n", retry_count);
     }
     ui->SetEnableReboot(false);
-    int result = try_update_binary(path, &zip, wipe_cache, log_buffer, retry_count);
+    int result = try_update_binary(path, zip, wipe_cache, log_buffer, retry_count);
     ui->SetEnableReboot(true);
     ui->Print("\n");
 
     sysReleaseMap(&map);
-
+    CloseArchive(zip);
     return result;
 }
 

@@ -77,7 +77,8 @@ LOCAL_STATIC_LIBRARIES := \
     libbatterymonitor \
     libext4_utils_static \
     libsparse_static \
-    libminzip \
+    libziparchive \
+    libotautil \
     libmounts \
     libz \
     libminadbd \
@@ -150,7 +151,7 @@ LOCAL_CFLAGS := -Werror
 include $(BUILD_STATIC_LIBRARY)
 
 include $(LOCAL_PATH)/minui/Android.mk \
-    $(LOCAL_PATH)/minzip/Android.mk \
+    $(LOCAL_PATH)/otautil/Android.mk \
     $(LOCAL_PATH)/minadbd/Android.mk \
     $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
