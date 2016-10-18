@@ -77,7 +77,8 @@ LOCAL_STATIC_LIBRARIES := \
     libbootloader_message \
     libext4_utils_static \
     libsparse_static \
-    libminzip \
+    libziparchive \
+    libotautil \
     libmounts \
     libz \
     libminadbd \
@@ -155,8 +156,8 @@ include \
     $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/minadbd/Android.mk \
     $(LOCAL_PATH)/minui/Android.mk \
-    $(LOCAL_PATH)/minzip/Android.mk \
     $(LOCAL_PATH)/otafault/Android.mk \
+    $(LOCAL_PATH)/otautil/Android.mk \
     $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/uncrypt/Android.mk \

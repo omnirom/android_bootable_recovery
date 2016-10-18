@@ -53,6 +53,7 @@
 #include <private/android_logger.h> /* private pmsg functions */
 #include <selinux/label.h>
 #include <selinux/selinux.h>
+#include <ziparchive/zip_archive.h>
 
 #include "adb_install.h"
 #include "common.h"
@@ -63,8 +64,7 @@
 #include "install.h"
 #include "minadbd/minadbd.h"
 #include "minui/minui.h"
-#include "minzip/DirUtil.h"
-#include "minzip/Zip.h"
+#include "otautil/DirUtil.h"
 #include "roots.h"
 #include "ui.h"
 #include "screen_ui.h"
@@ -936,19 +936,19 @@ static bool check_wipe_package(size_t wipe_package_size) {
     }
 
     // Extract metadata
-    ZipArchive zip;
-    int err = mzOpenZipArchive(reinterpret_cast<unsigned char*>(&wipe_package[0]),
-                               wipe_package.size(), &zip);
+    ZipArchiveHandle zip;
+    int err = OpenArchiveFromMemory(reinterpret_cast<void*>(&wipe_package[0]),
+                                    wipe_package.size(), "wipe_package", &zip);
     if (err != 0) {
-        LOG(ERROR) << "Can't open wipe package";
+        LOG(ERROR) << "Can't open wipe package : " << ErrorCodeString(err);
         return false;
     }
     std::string metadata;
     if (!read_metadata_from_package(&zip, &metadata)) {
-        mzCloseZipArchive(&zip);
+        CloseArchive(zip);
         return false;
     }
-    mzCloseZipArchive(&zip);
+    CloseArchive(zip);
 
     // Check metadata
     std::vector<std::string> lines = android::base::Split(metadata, "\n");

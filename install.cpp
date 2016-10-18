@@ -36,14 +36,13 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <cutils/properties.h>
-#include <android-base/logging.h>
+#include <ziparchive/zip_archive.h>
 
 #include "common.h"
 #include "error_code.h"
 #include "install.h"
 #include "minui/minui.h"
-#include "minzip/SysUtil.h"
-#include "minzip/Zip.h"
+#include "otautil/SysUtil.h"
 #include "roots.h"
 #include "ui.h"
 #include "verifier.h"
@@ -78,15 +77,21 @@ static int parse_build_number(const std::string& str) {
     return -1;
 }
 
-bool read_metadata_from_package(ZipArchive* zip, std::string* meta_data) {
-    const ZipEntry* meta_entry = mzFindZipEntry(zip, METADATA_PATH);
-    if (meta_entry == nullptr) {
+bool read_metadata_from_package(ZipArchiveHandle zip, std::string* meta_data) {
+    ZipString metadata_path(METADATA_PATH);
+    ZipEntry meta_entry;
+    if (meta_data == nullptr) {
+        LOG(ERROR) << "string* meta_data can't be nullptr";
+        return false;
+    }
+    if (FindEntry(zip, metadata_path, &meta_entry) != 0) {
         LOG(ERROR) << "Failed to find " << METADATA_PATH << " in update package";
         return false;
     }
 
-    meta_data->resize(meta_entry->uncompLen, '\0');
-    if (!mzReadZipEntry(zip, meta_entry, &(*meta_data)[0], meta_entry->uncompLen)) {
+    meta_data->resize(meta_entry.uncompressed_length, '\0');
+    if (ExtractToMemory(zip, &meta_entry, reinterpret_cast<uint8_t*>(&(*meta_data)[0]),
+                        meta_entry.uncompressed_length) != 0) {
         LOG(ERROR) << "Failed to read metadata in update package";
         return false;
     }
@@ -94,7 +99,7 @@ bool read_metadata_from_package(ZipArchive* zip, std::string* meta_data) {
 }
 
 // Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
-static void read_source_target_build(ZipArchive* zip, std::vector<std::string>& log_buffer) {
+static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::string>& log_buffer) {
     std::string meta_data;
     if (!read_metadata_from_package(zip, &meta_data)) {
         return;
@@ -126,7 +131,7 @@ static void read_source_target_build(ZipArchive* zip, std::vector<std::string>& 
 // is the file descriptor the child process should use to report back the
 // progress of the update.
 static int
-update_binary_command(const char* path, ZipArchive* zip, int retry_count,
+update_binary_command(const char* path, ZipArchiveHandle zip, int retry_count,
                       int status_fd, std::vector<std::string>* cmd);
 
 #ifdef AB_OTA_UPDATER
@@ -134,7 +139,7 @@ update_binary_command(const char* path, ZipArchive* zip, int retry_count,
 // Parses the metadata of the OTA package in |zip| and checks whether we are
 // allowed to accept this A/B package. Downgrading is not allowed unless
 // explicitly enabled in the package and only for incremental packages.
-static int check_newer_ab_build(ZipArchive* zip)
+static int check_newer_ab_build(ZipArchiveHandle zip)
 {
     std::string metadata_str;
     if (!read_metadata_from_package(zip, &metadata_str)) {
@@ -212,7 +217,7 @@ static int check_newer_ab_build(ZipArchive* zip)
 }
 
 static int
-update_binary_command(const char* path, ZipArchive* zip, int retry_count,
+update_binary_command(const char* path, ZipArchiveHandle zip, int retry_count,
                       int status_fd, std::vector<std::string>* cmd)
 {
     int ret = check_newer_ab_build(zip);
@@ -222,26 +227,27 @@ update_binary_command(const char* path, ZipArchive* zip, int retry_count,
 
     // For A/B updates we extract the payload properties to a buffer and obtain
     // the RAW payload offset in the zip file.
-    const ZipEntry* properties_entry =
-            mzFindZipEntry(zip, AB_OTA_PAYLOAD_PROPERTIES);
-    if (!properties_entry) {
+    ZipString property_name(AB_OTA_PAYLOAD_PROPERTIES);
+    ZipEntry properties_entry;
+    if (FindEntry(zip, property_name, &properties_entry) != 0) {
         LOG(ERROR) << "Can't find " << AB_OTA_PAYLOAD_PROPERTIES;
         return INSTALL_CORRUPT;
     }
-    std::vector<unsigned char> payload_properties(
-            mzGetZipEntryUncompLen(properties_entry));
-    if (!mzExtractZipEntryToBuffer(zip, properties_entry,
-                                   payload_properties.data())) {
+    std::vector<uint8_t> payload_properties(
+            properties_entry.uncompressed_length);
+    if (ExtractToMemory(zip, &properties_entry, payload_properties.data(),
+                        properties_entry.uncompressed_length) != 0) {
         LOG(ERROR) << "Can't extract " << AB_OTA_PAYLOAD_PROPERTIES;
         return INSTALL_CORRUPT;
     }
 
-    const ZipEntry* payload_entry = mzFindZipEntry(zip, AB_OTA_PAYLOAD);
-    if (!payload_entry) {
+    ZipString payload_name(AB_OTA_PAYLOAD);
+    ZipEntry payload_entry;
+    if (FindEntry(zip, payload_name, &payload_entry) != 0) {
         LOG(ERROR) << "Can't find " << AB_OTA_PAYLOAD;
         return INSTALL_CORRUPT;
     }
-    long payload_offset = mzGetZipEntryOffset(payload_entry);
+    long payload_offset = payload_entry.offset;
     *cmd = {
         "/sbin/update_engine_sideload",
         android::base::StringPrintf("--payload=file://%s", path),
@@ -256,13 +262,13 @@ update_binary_command(const char* path, ZipArchive* zip, int retry_count,
 #else  // !AB_OTA_UPDATER
 
 static int
-update_binary_command(const char* path, ZipArchive* zip, int retry_count,
+update_binary_command(const char* path, ZipArchiveHandle zip, int retry_count,
                       int status_fd, std::vector<std::string>* cmd)
 {
     // On traditional updates we extract the update binary from the package.
-    const ZipEntry* binary_entry =
-            mzFindZipEntry(zip, ASSUMED_UPDATE_BINARY_NAME);
-    if (binary_entry == NULL) {
+    ZipString binary_name(ASSUMED_UPDATE_BINARY_NAME);
+    ZipEntry binary_entry;
+    if (FindEntry(zip, binary_name, &binary_entry) != 0) {
         return INSTALL_CORRUPT;
     }
 
@@ -273,11 +279,12 @@ update_binary_command(const char* path, ZipArchive* zip, int retry_count,
         PLOG(ERROR) << "Can't make " << binary;
         return INSTALL_ERROR;
     }
-    bool ok = mzExtractZipEntryToFile(zip, binary_entry, fd);
+    int error = ExtractEntryToFile(zip, &binary_entry, fd);
     close(fd);
 
-    if (!ok) {
-        LOG(ERROR) << "Can't copy " << ASSUMED_UPDATE_BINARY_NAME;
+    if (error != 0) {
+        LOG(ERROR) << "Can't copy " << ASSUMED_UPDATE_BINARY_NAME
+                   << " : " << ErrorCodeString(error);
         return INSTALL_ERROR;
     }
 
@@ -295,7 +302,7 @@ update_binary_command(const char* path, ZipArchive* zip, int retry_count,
 
 // If the package contains an update binary, extract it and run it.
 static int
-try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
+try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
                   std::vector<std::string>& log_buffer, int retry_count)
 {
     read_source_target_build(zip, log_buffer);
@@ -305,7 +312,6 @@ try_update_binary(const char* path, ZipArchive* zip, bool* wipe_cache,
 
     std::vector<std::string> args;
     int ret = update_binary_command(path, zip, retry_count, pipefd[1], &args);
-    mzCloseZipArchive(zip);
     if (ret) {
         close(pipefd[0]);
         close(pipefd[1]);
@@ -485,13 +491,14 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     }
 
     // Try to open the package.
-    ZipArchive zip;
-    int err = mzOpenZipArchive(map.addr, map.length, &zip);
+    ZipArchiveHandle zip;
+    int err = OpenArchiveFromMemory(map.addr, map.length, path, &zip);
     if (err != 0) {
-        LOG(ERROR) << "Can't open " << path;
+        LOG(ERROR) << "Can't open " << path << " : " << ErrorCodeString(err);
         log_buffer.push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
 
         sysReleaseMap(&map);
+        CloseArchive(zip);
         return INSTALL_CORRUPT;
     }
 
@@ -501,12 +508,12 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
         ui->Print("Retry attempt: %d\n", retry_count);
     }
     ui->SetEnableReboot(false);
-    int result = try_update_binary(path, &zip, wipe_cache, log_buffer, retry_count);
+    int result = try_update_binary(path, zip, wipe_cache, log_buffer, retry_count);
     ui->SetEnableReboot(true);
     ui->Print("\n");
 
     sysReleaseMap(&map);
-
+    CloseArchive(zip);
     return result;
 }
 
