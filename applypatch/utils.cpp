@@ -38,22 +38,22 @@ void Write8(int64_t value, FILE* f) {
   fputc((value >> 56) & 0xff, f);
 }
 
-int Read2(void* pv) {
-    unsigned char* p = reinterpret_cast<unsigned char*>(pv);
+int Read2(const void* pv) {
+    const unsigned char* p = reinterpret_cast<const unsigned char*>(pv);
     return (int)(((unsigned int)p[1] << 8) |
                  (unsigned int)p[0]);
 }
 
-int Read4(void* pv) {
-    unsigned char* p = reinterpret_cast<unsigned char*>(pv);
+int Read4(const void* pv) {
+    const unsigned char* p = reinterpret_cast<const unsigned char*>(pv);
     return (int)(((unsigned int)p[3] << 24) |
                  ((unsigned int)p[2] << 16) |
                  ((unsigned int)p[1] << 8) |
                  (unsigned int)p[0]);
 }
 
-int64_t Read8(void* pv) {
-    unsigned char* p = reinterpret_cast<unsigned char*>(pv);
+int64_t Read8(const void* pv) {
+    const unsigned char* p = reinterpret_cast<const unsigned char*>(pv);
     return (int64_t)(((uint64_t)p[7] << 56) |
                        ((uint64_t)p[6] << 48) |
                        ((uint64_t)p[5] << 40) |

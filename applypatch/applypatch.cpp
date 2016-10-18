@@ -408,11 +408,10 @@ int ParseSha1(const char* str, uint8_t* digest) {
 // Search an array of sha1 strings for one matching the given sha1.
 // Return the index of the match on success, or -1 if no match is
 // found.
-int FindMatchingPatch(uint8_t* sha1, char* const * const patch_sha1_str,
-                      int num_patches) {
-    uint8_t patch_sha1[SHA_DIGEST_LENGTH];
-    for (int i = 0; i < num_patches; ++i) {
-        if (ParseSha1(patch_sha1_str[i], patch_sha1) == 0 &&
+int FindMatchingPatch(uint8_t* sha1, const std::vector<std::string>& patch_sha1_str) {
+    for (size_t i = 0; i < patch_sha1_str.size(); ++i) {
+        uint8_t patch_sha1[SHA_DIGEST_LENGTH];
+        if (ParseSha1(patch_sha1_str[i].c_str(), patch_sha1) == 0 &&
             memcmp(patch_sha1, sha1, SHA_DIGEST_LENGTH) == 0) {
             return i;
         }
@@ -423,8 +422,7 @@ int FindMatchingPatch(uint8_t* sha1, char* const * const patch_sha1_str,
 // Returns 0 if the contents of the file (argv[2]) or the cached file
 // match any of the sha1's on the command line (argv[3:]).  Returns
 // nonzero otherwise.
-int applypatch_check(const char* filename, int num_patches,
-                     char** const patch_sha1_str) {
+int applypatch_check(const char* filename, const std::vector<std::string>& patch_sha1_str) {
     FileContents file;
 
     // It's okay to specify no sha1s; the check will pass if the
@@ -432,8 +430,7 @@ int applypatch_check(const char* filename, int num_patches,
     // partitions, where the filename encodes the sha1s; no need to
     // check them twice.)
     if (LoadFileContents(filename, &file) != 0 ||
-        (num_patches > 0 &&
-         FindMatchingPatch(file.sha1, patch_sha1_str, num_patches) < 0)) {
+        FindMatchingPatch(file.sha1, patch_sha1_str) < 0) {
         printf("file \"%s\" doesn't have any of expected "
                "sha1 sums; checking cache\n", filename);
 
@@ -448,7 +445,7 @@ int applypatch_check(const char* filename, int num_patches,
             return 1;
         }
 
-        if (FindMatchingPatch(file.sha1, patch_sha1_str, num_patches) < 0) {
+        if (FindMatchingPatch(file.sha1, patch_sha1_str) < 0) {
             printf("cache bits don't match any sha1 for \"%s\"\n", filename);
             return 1;
         }
@@ -532,8 +529,7 @@ int applypatch(const char* source_filename,
                const char* target_filename,
                const char* target_sha1_str,
                size_t target_size,
-               int num_patches,
-               char** const patch_sha1_str,
+               const std::vector<std::string>& patch_sha1_str,
                Value** patch_data,
                Value* bonus_data) {
     printf("patch %s: ", source_filename);
@@ -573,7 +569,7 @@ int applypatch(const char* source_filename,
     }
 
     if (!source_file.data.empty()) {
-        int to_use = FindMatchingPatch(source_file.sha1, patch_sha1_str, num_patches);
+        int to_use = FindMatchingPatch(source_file.sha1, patch_sha1_str);
         if (to_use >= 0) {
             source_patch_value = patch_data[to_use];
         }
@@ -589,7 +585,7 @@ int applypatch(const char* source_filename,
             return 1;
         }
 
-        int to_use = FindMatchingPatch(copy_file.sha1, patch_sha1_str, num_patches);
+        int to_use = FindMatchingPatch(copy_file.sha1, patch_sha1_str);
         if (to_use >= 0) {
             copy_patch_value = patch_data[to_use];
         }
@@ -701,8 +697,8 @@ static int GenerateTarget(FileContents* source_file,
         printf("patch is not a blob\n");
         return 1;
     }
-    char* header = patch->data;
-    ssize_t header_bytes_read = patch->size;
+    const char* header = &patch->data[0];
+    size_t header_bytes_read = patch->data.size();
     bool use_bsdiff = false;
     if (header_bytes_read >= 8 && memcmp(header, "BSDIFF40", 8) == 0) {
         use_bsdiff = true;

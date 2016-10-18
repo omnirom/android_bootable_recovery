@@ -1216,7 +1216,7 @@ static int PerformCommandDiff(CommandParameters& params) {
 
     size_t len;
     if (!android::base::ParseUint(params.tokens[params.cpos++].c_str(), &len)) {
-        fprintf(stderr, "invalid patch offset\n");
+        fprintf(stderr, "invalid patch len\n");
         return -1;
     }
 
@@ -1248,10 +1248,8 @@ static int PerformCommandDiff(CommandParameters& params) {
         if (status == 0) {
             fprintf(stderr, "patching %zu blocks to %zu\n", blocks, tgt.size);
 
-            Value patch_value;
-            patch_value.type = VAL_BLOB;
-            patch_value.size = len;
-            patch_value.data = (char*) (params.patch_start + offset);
+            Value patch_value(VAL_BLOB,
+                    std::string(reinterpret_cast<const char*>(params.patch_start + offset), len));
 
             RangeSinkState rss(tgt);
             rss.fd = params.fd;
@@ -1398,64 +1396,62 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     Value* patch_data_fn = nullptr;
     if (ReadValueArgs(state, argv, 4, &blockdev_filename, &transfer_list_value,
             &new_data_fn, &patch_data_fn) < 0) {
-        return StringValue(strdup(""));
+        return StringValue("");
     }
-    std::unique_ptr<Value, decltype(&FreeValue)> blockdev_filename_holder(blockdev_filename,
-            FreeValue);
-    std::unique_ptr<Value, decltype(&FreeValue)> transfer_list_value_holder(transfer_list_value,
-            FreeValue);
-    std::unique_ptr<Value, decltype(&FreeValue)> new_data_fn_holder(new_data_fn, FreeValue);
-    std::unique_ptr<Value, decltype(&FreeValue)> patch_data_fn_holder(patch_data_fn, FreeValue);
+    std::unique_ptr<Value> blockdev_filename_holder(blockdev_filename);
+    std::unique_ptr<Value> transfer_list_value_holder(transfer_list_value);
+    std::unique_ptr<Value> new_data_fn_holder(new_data_fn);
+    std::unique_ptr<Value> patch_data_fn_holder(patch_data_fn);
 
     if (blockdev_filename->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string",
                    name);
-        return StringValue(strdup(""));
+        return StringValue("");
     }
     if (transfer_list_value->type != VAL_BLOB) {
         ErrorAbort(state, kArgsParsingFailure, "transfer_list argument to %s must be blob", name);
-        return StringValue(strdup(""));
+        return StringValue("");
     }
     if (new_data_fn->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "new_data_fn argument to %s must be string", name);
-        return StringValue(strdup(""));
+        return StringValue("");
     }
     if (patch_data_fn->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "patch_data_fn argument to %s must be string",
                    name);
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     UpdaterInfo* ui = reinterpret_cast<UpdaterInfo*>(state->cookie);
 
     if (ui == nullptr) {
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     FILE* cmd_pipe = ui->cmd_pipe;
     ZipArchive* za = ui->package_zip;
 
     if (cmd_pipe == nullptr || za == nullptr) {
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
-    const ZipEntry* patch_entry = mzFindZipEntry(za, patch_data_fn->data);
+    const ZipEntry* patch_entry = mzFindZipEntry(za, patch_data_fn->data.c_str());
     if (patch_entry == nullptr) {
-        fprintf(stderr, "%s(): no file \"%s\" in package", name, patch_data_fn->data);
-        return StringValue(strdup(""));
+        fprintf(stderr, "%s(): no file \"%s\" in package", name, patch_data_fn->data.c_str());
+        return StringValue("");
     }
 
     params.patch_start = ui->package_zip_addr + mzGetZipEntryOffset(patch_entry);
-    const ZipEntry* new_entry = mzFindZipEntry(za, new_data_fn->data);
+    const ZipEntry* new_entry = mzFindZipEntry(za, new_data_fn->data.c_str());
     if (new_entry == nullptr) {
-        fprintf(stderr, "%s(): no file \"%s\" in package", name, new_data_fn->data);
-        return StringValue(strdup(""));
+        fprintf(stderr, "%s(): no file \"%s\" in package", name, new_data_fn->data.c_str());
+        return StringValue("");
     }
 
-    params.fd.reset(TEMP_FAILURE_RETRY(ota_open(blockdev_filename->data, O_RDWR)));
+    params.fd.reset(TEMP_FAILURE_RETRY(ota_open(blockdev_filename->data.c_str(), O_RDWR)));
     if (params.fd == -1) {
-        fprintf(stderr, "open \"%s\" failed: %s\n", blockdev_filename->data, strerror(errno));
-        return StringValue(strdup(""));
+        fprintf(stderr, "open \"%s\" failed: %s\n", blockdev_filename->data.c_str(), strerror(errno));
+        return StringValue("");
     }
 
     if (params.canwrite) {
@@ -1471,24 +1467,21 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         int error = pthread_create(&params.thread, &attr, unzip_new_data, &params.nti);
         if (error != 0) {
             fprintf(stderr, "pthread_create failed: %s\n", strerror(error));
-            return StringValue(strdup(""));
+            return StringValue("");
         }
     }
 
-    // Copy all the lines in transfer_list_value into std::string for
-    // processing.
-    const std::string transfer_list(transfer_list_value->data, transfer_list_value->size);
-    std::vector<std::string> lines = android::base::Split(transfer_list, "\n");
+    std::vector<std::string> lines = android::base::Split(transfer_list_value->data, "\n");
     if (lines.size() < 2) {
         ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zd]\n",
                    lines.size());
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     // First line in transfer list is the version number
     if (!android::base::ParseInt(lines[0].c_str(), &params.version, 1, 4)) {
         fprintf(stderr, "unexpected transfer list version [%s]\n", lines[0].c_str());
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     fprintf(stderr, "blockimg version is %d\n", params.version);
@@ -1497,11 +1490,11 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     int total_blocks;
     if (!android::base::ParseInt(lines[1].c_str(), &total_blocks, 0)) {
         ErrorAbort(state, kArgsParsingFailure, "unexpected block count [%s]\n", lines[1].c_str());
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     if (total_blocks == 0) {
-        return StringValue(strdup("t"));
+        return StringValue("t");
     }
 
     size_t start = 2;
@@ -1509,7 +1502,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         if (lines.size() < 4) {
             ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]\n",
                        lines.size());
-            return StringValue(strdup(""));
+            return StringValue("");
         }
 
         // Third line is how many stash entries are needed simultaneously
@@ -1520,12 +1513,12 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         if (!android::base::ParseInt(lines[3].c_str(), &stash_max_blocks, 0)) {
             ErrorAbort(state, kArgsParsingFailure, "unexpected maximum stash blocks [%s]\n",
                        lines[3].c_str());
-            return StringValue(strdup(""));
+            return StringValue("");
         }
 
-        int res = CreateStash(state, stash_max_blocks, blockdev_filename->data, params.stashbase);
+        int res = CreateStash(state, stash_max_blocks, blockdev_filename->data.c_str(), params.stashbase);
         if (res == -1) {
-            return StringValue(strdup(""));
+            return StringValue("");
         }
 
         params.createdstash = res;
@@ -1589,7 +1582,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         fprintf(stderr, "stashed %zu blocks\n", params.stashed);
         fprintf(stderr, "max alloc needed was %zu\n", params.buffer.size());
 
-        const char* partition = strrchr(blockdev_filename->data, '/');
+        const char* partition = strrchr(blockdev_filename->data.c_str(), '/');
         if (partition != nullptr && *(partition+1) != 0) {
             fprintf(cmd_pipe, "log bytes_written_%s: %zu\n", partition + 1,
                     params.written * BLOCKSIZE);
@@ -1623,7 +1616,7 @@ pbiudone:
         state->cause_code = failure_type;
     }
 
-    return StringValue(rc == 0 ? strdup("t") : strdup(""));
+    return StringValue(rc == 0 ? "t" : "");
 }
 
 // The transfer list is a text file containing commands to
@@ -1721,27 +1714,26 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
     Value* ranges;
 
     if (ReadValueArgs(state, argv, 2, &blockdev_filename, &ranges) < 0) {
-        return StringValue(strdup(""));
+        return StringValue("");
     }
-    std::unique_ptr<Value, decltype(&FreeValue)> ranges_holder(ranges, FreeValue);
-    std::unique_ptr<Value, decltype(&FreeValue)> blockdev_filename_holder(blockdev_filename,
-            FreeValue);
+    std::unique_ptr<Value> ranges_holder(ranges);
+    std::unique_ptr<Value> blockdev_filename_holder(blockdev_filename);
 
     if (blockdev_filename->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string",
                    name);
-        return StringValue(strdup(""));
+        return StringValue("");
     }
     if (ranges->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
-    android::base::unique_fd fd(ota_open(blockdev_filename->data, O_RDWR));
+    android::base::unique_fd fd(ota_open(blockdev_filename->data.c_str(), O_RDWR));
     if (fd == -1) {
-        ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s", blockdev_filename->data,
-                   strerror(errno));
-        return StringValue(strdup(""));
+        ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s",
+                   blockdev_filename->data.c_str(), strerror(errno));
+        return StringValue("");
     }
 
     RangeSet rs;
@@ -1753,16 +1745,16 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
     std::vector<uint8_t> buffer(BLOCKSIZE);
     for (size_t i = 0; i < rs.count; ++i) {
         if (!check_lseek(fd, (off64_t)rs.pos[i*2] * BLOCKSIZE, SEEK_SET)) {
-            ErrorAbort(state, kLseekFailure, "failed to seek %s: %s", blockdev_filename->data,
-                       strerror(errno));
-            return StringValue(strdup(""));
+            ErrorAbort(state, kLseekFailure, "failed to seek %s: %s",
+                       blockdev_filename->data.c_str(), strerror(errno));
+            return StringValue("");
         }
 
         for (size_t j = rs.pos[i*2]; j < rs.pos[i*2+1]; ++j) {
             if (read_all(fd, buffer, BLOCKSIZE) == -1) {
-                ErrorAbort(state, kFreadFailure, "failed to read %s: %s", blockdev_filename->data,
-                        strerror(errno));
-                return StringValue(strdup(""));
+                ErrorAbort(state, kFreadFailure, "failed to read %s: %s",
+                           blockdev_filename->data.c_str(), strerror(errno));
+                return StringValue("");
             }
 
             SHA1_Update(&ctx, buffer.data(), BLOCKSIZE);
@@ -1771,7 +1763,7 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
     uint8_t digest[SHA_DIGEST_LENGTH];
     SHA1_Final(digest, &ctx);
 
-    return StringValue(strdup(print_sha1(digest).c_str()));
+    return StringValue(print_sha1(digest));
 }
 
 // This function checks if a device has been remounted R/W prior to an incremental
@@ -1785,27 +1777,27 @@ Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[])
     if (ReadValueArgs(state, argv, 1, &arg_filename) < 0) {
         return nullptr;
     }
-    std::unique_ptr<Value, decltype(&FreeValue)> filename(arg_filename, FreeValue);
+    std::unique_ptr<Value> filename(arg_filename);
 
     if (filename->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
-    android::base::unique_fd fd(ota_open(arg_filename->data, O_RDONLY));
+    android::base::unique_fd fd(ota_open(arg_filename->data.c_str(), O_RDONLY));
     if (fd == -1) {
-        ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s", arg_filename->data,
+        ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s", arg_filename->data.c_str(),
                    strerror(errno));
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     RangeSet blk0 {1 /*count*/, 1/*size*/, std::vector<size_t> {0, 1}/*position*/};
     std::vector<uint8_t> block0_buffer(BLOCKSIZE);
 
     if (ReadBlocks(blk0, block0_buffer, fd) == -1) {
-        ErrorAbort(state, kFreadFailure, "failed to read %s: %s", arg_filename->data,
+        ErrorAbort(state, kFreadFailure, "failed to read %s: %s", arg_filename->data.c_str(),
                 strerror(errno));
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     // https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout
@@ -1823,7 +1815,7 @@ Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[])
         uiPrintf(state, "Last remount happened on %s", ctime(&mount_time));
     }
 
-    return StringValue(strdup("t"));
+    return StringValue("t");
 }
 
 
@@ -1835,40 +1827,40 @@ Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[
         return NULL;
     }
 
-    std::unique_ptr<Value, decltype(&FreeValue)> filename(arg_filename, FreeValue);
-    std::unique_ptr<Value, decltype(&FreeValue)> ranges(arg_ranges, FreeValue);
+    std::unique_ptr<Value> filename(arg_filename);
+    std::unique_ptr<Value> ranges(arg_ranges);
 
     if (filename->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
-        return StringValue(strdup(""));
+        return StringValue("");
     }
     if (ranges->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     // Output notice to log when recover is attempted
-    fprintf(stderr, "%s image corrupted, attempting to recover...\n", filename->data);
+    fprintf(stderr, "%s image corrupted, attempting to recover...\n", filename->data.c_str());
 
     // When opened with O_RDWR, libfec rewrites corrupted blocks when they are read
-    fec::io fh(filename->data, O_RDWR);
+    fec::io fh(filename->data.c_str(), O_RDWR);
 
     if (!fh) {
-        ErrorAbort(state, kLibfecFailure, "fec_open \"%s\" failed: %s", filename->data,
+        ErrorAbort(state, kLibfecFailure, "fec_open \"%s\" failed: %s", filename->data.c_str(),
                    strerror(errno));
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     if (!fh.has_ecc() || !fh.has_verity()) {
         ErrorAbort(state, kLibfecFailure, "unable to use metadata to correct errors");
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     fec_status status;
 
     if (!fh.get_status(status)) {
         ErrorAbort(state, kLibfecFailure, "failed to read FEC status");
-        return StringValue(strdup(""));
+        return StringValue("");
     }
 
     RangeSet rs;
@@ -1885,8 +1877,8 @@ Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[
 
             if (fh.pread(buffer, BLOCKSIZE, (off64_t)j * BLOCKSIZE) != BLOCKSIZE) {
                 ErrorAbort(state, kLibfecFailure, "failed to recover %s (block %zu): %s",
-                           filename->data, j, strerror(errno));
-                return StringValue(strdup(""));
+                           filename->data.c_str(), j, strerror(errno));
+                return StringValue("");
             }
 
             // If we want to be able to recover from a situation where rewriting a corrected
@@ -1901,8 +1893,8 @@ Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[
             //     read and check if the errors field value has increased.
         }
     }
-    fprintf(stderr, "...%s image recovered successfully.\n", filename->data);
-    return StringValue(strdup("t"));
+    fprintf(stderr, "...%s image recovered successfully.\n", filename->data.c_str());
+    return StringValue("t");
 }
 
 void RegisterBlockImageFunctions() {

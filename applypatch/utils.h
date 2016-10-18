@@ -24,8 +24,8 @@
 
 void Write4(int value, FILE* f);
 void Write8(int64_t value, FILE* f);
-int Read2(void* p);
-int Read4(void* p);
-int64_t Read8(void* p);
+int Read2(const void* p);
+int Read4(const void* p);
+int64_t Read8(const void* p);
 
 #endif //  _BUILD_TOOLS_APPLYPATCH_UTILS_H

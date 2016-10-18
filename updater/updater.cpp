@@ -152,13 +152,14 @@ int main(int argc, char** argv) {
         }
     }
 
-    char* result = Evaluate(&state, root);
+    std::string result;
+    bool status = Evaluate(&state, root, &result);
 
     if (have_eio_error) {
         fprintf(cmd_pipe, "retry_update\n");
     }
 
-    if (result == NULL) {
+    if (!status) {
         if (state.errmsg.empty()) {
             printf("script aborted (no error message)\n");
             fprintf(cmd_pipe, "ui_print script aborted (no error message)\n");
@@ -189,8 +190,7 @@ int main(int argc, char** argv) {
 
         return 7;
     } else {
-        fprintf(cmd_pipe, "ui_print script succeeded: result was [%s]\n", result);
-        free(result);
+        fprintf(cmd_pipe, "ui_print script succeeded: result was [%s]\n", result.c_str());
     }
 
     if (updater_info.package_zip) {
