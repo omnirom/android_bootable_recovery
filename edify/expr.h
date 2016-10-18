@@ -128,30 +128,7 @@ bool ReadArgs(State* state, int argc, Expr* argv[], std::vector<std::string>* ar
 // Evaluate the expressions in argv, and put the results of Value* in
 // args. If any expression evaluate to nullptr, free the rest and return
 // false. Return true on success.
-bool ReadValueArgs(State* state, int argc, Expr* argv[],
-                   std::vector<std::unique_ptr<Value>>* args);
-
-// Evaluate the expressions in argv, giving 'count' char* (the ... is
-// zero or more char** to put them in).  If any expression evaluates
-// to NULL, free the rest and return -1.  Return 0 on success.
-int ReadArgs(State* state, Expr* argv[], int count, ...);
-
-// Evaluate the expressions in argv, giving 'count' Value* (the ... is
-// zero or more Value** to put them in).  If any expression evaluates
-// to NULL, free the rest and return -1.  Return 0 on success.
-int ReadValueArgs(State* state, Expr* argv[], int count, ...);
-
-// Evaluate the expressions in argv, returning an array of char*
-// results.  If any evaluate to NULL, free the rest and return NULL.
-// The caller is responsible for freeing the returned array and the
-// strings it contains.
-char** ReadVarArgs(State* state, int argc, Expr* argv[]);
-
-// Evaluate the expressions in argv, returning an array of Value*
-// results.  If any evaluate to NULL, free the rest and return NULL.
-// The caller is responsible for freeing the returned array and the
-// Values it contains.
-Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]);
+bool ReadValueArgs(State* state, int argc, Expr* argv[], std::vector<std::unique_ptr<Value>>* args);
 
 // Use printf-style arguments to compose an error message to put into
 // *state.  Returns NULL.
