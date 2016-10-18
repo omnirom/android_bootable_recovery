@@ -64,7 +64,7 @@ void ShowBSDiffLicense() {
         );
 }
 
-static off_t offtin(u_char *buf)
+static off_t offtin(const u_char *buf)
 {
     off_t y;
 
@@ -130,7 +130,7 @@ int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
     // from oldfile to x bytes from the diff block; copy y bytes from the
     // extra block; seek forwards in oldfile by z bytes".
 
-    unsigned char* header = (unsigned char*) patch->data + patch_offset;
+    const unsigned char* header = reinterpret_cast<const unsigned char*>(&patch->data[patch_offset]);
     if (memcmp(header, "BSDIFF40", 8) != 0) {
         printf("corrupt bsdiff patch file header (magic number)\n");
         return 1;
@@ -149,7 +149,7 @@ int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
     int bzerr;
 
     bz_stream cstream;
-    cstream.next_in = patch->data + patch_offset + 32;
+    cstream.next_in = const_cast<char*>(&patch->data[patch_offset + 32]);
     cstream.avail_in = ctrl_len;
     cstream.bzalloc = NULL;
     cstream.bzfree = NULL;
@@ -159,7 +159,7 @@ int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
     }
 
     bz_stream dstream;
-    dstream.next_in = patch->data + patch_offset + 32 + ctrl_len;
+    dstream.next_in = const_cast<char*>(&patch->data[patch_offset + 32 + ctrl_len]);
     dstream.avail_in = data_len;
     dstream.bzalloc = NULL;
     dstream.bzfree = NULL;
@@ -169,8 +169,8 @@ int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
     }
 
     bz_stream estream;
-    estream.next_in = patch->data + patch_offset + 32 + ctrl_len + data_len;
-    estream.avail_in = patch->size - (patch_offset + 32 + ctrl_len + data_len);
+    estream.next_in = const_cast<char*>(&patch->data[patch_offset + 32 + ctrl_len + data_len]);
+    estream.avail_in = patch->data.size() - (patch_offset + 32 + ctrl_len + data_len);
     estream.bzalloc = NULL;
     estream.bzfree = NULL;
     estream.opaque = NULL;

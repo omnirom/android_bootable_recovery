@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "applypatch/applypatch.h"
@@ -30,7 +31,12 @@ static int CheckMode(int argc, char** argv) {
     if (argc < 3) {
         return 2;
     }
-    return applypatch_check(argv[2], argc-3, argv+3);
+    std::vector<std::string> sha1;
+    for (int i = 3; i < argc; i++) {
+        sha1.push_back(argv[i]);
+    }
+
+    return applypatch_check(argv[2], sha1);
 }
 
 static int SpaceMode(int argc, char** argv) {
@@ -49,11 +55,13 @@ static int SpaceMode(int argc, char** argv) {
 // Parse arguments (which should be of the form "<sha1>:<filename>"
 // into the new parallel arrays *sha1s and *files.Returns true on
 // success.
-static bool ParsePatchArgs(int argc, char** argv, std::vector<char*>* sha1s,
+static bool ParsePatchArgs(int argc, char** argv, std::vector<std::string>* sha1s,
                            std::vector<FileContents>* files) {
-    uint8_t digest[SHA_DIGEST_LENGTH];
-
+    if (sha1s == nullptr) {
+        return false;
+    }
     for (int i = 0; i < argc; ++i) {
+        uint8_t digest[SHA_DIGEST_LENGTH];
         char* colon = strchr(argv[i], ':');
         if (colon == nullptr) {
             printf("no ':' in patch argument \"%s\"\n", argv[i]);
@@ -83,18 +91,15 @@ static int FlashMode(const char* src_filename, const char* tgt_filename,
 
 static int PatchMode(int argc, char** argv) {
     FileContents bonusFc;
-    Value bonusValue;
-    Value* bonus = nullptr;
+    Value bonus(VAL_INVALID, "");
 
     if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
         if (LoadFileContents(argv[2], &bonusFc) != 0) {
             printf("failed to load bonus file %s\n", argv[2]);
             return 1;
         }
-        bonus = &bonusValue;
-        bonus->type = VAL_BLOB;
-        bonus->size = bonusFc.data.size();
-        bonus->data = reinterpret_cast<char*>(bonusFc.data.data());
+        bonus.type = VAL_BLOB;
+        bonus.data = reinterpret_cast<const char*>(bonusFc.data.data());
         argc -= 2;
         argv += 2;
     }
@@ -112,29 +117,26 @@ static int PatchMode(int argc, char** argv) {
 
     // If no <src-sha1>:<patch> is provided, it is in flash mode.
     if (argc == 5) {
-        if (bonus != nullptr) {
+        if (bonus.type != VAL_INVALID) {
             printf("bonus file not supported in flash mode\n");
             return 1;
         }
         return FlashMode(argv[1], argv[2], argv[3], target_size);
     }
-    std::vector<char*> sha1s;
+    std::vector<std::string> sha1s;
     std::vector<FileContents> files;
     if (!ParsePatchArgs(argc-5, argv+5, &sha1s, &files)) {
         printf("failed to parse patch args\n");
         return 1;
     }
-    std::vector<Value> patches(files.size());
-    std::vector<Value*> patch_ptrs(files.size());
+    std::vector<Value> patches;
+    std::vector<Value*> patch_ptrs;
     for (size_t i = 0; i < files.size(); ++i) {
-        patches[i].type = VAL_BLOB;
-        patches[i].size = files[i].data.size();
-        patches[i].data = reinterpret_cast<char*>(files[i].data.data());
-        patch_ptrs[i] = &patches[i];
+        patches.push_back(Value(VAL_BLOB, reinterpret_cast<const char*>(files[i].data.data())));
+        patch_ptrs.push_back(&patches[i]);
     }
     return applypatch(argv[1], argv[2], argv[3], target_size,
-                      patch_ptrs.size(), sha1s.data(),
-                      patch_ptrs.data(), bonus);
+                      sha1s, patch_ptrs.data(), &bonus);
 }
 
 // This program applies binary patches to files in a way that is safe

@@ -66,12 +66,12 @@ int main(int argc, char** argv) {
         ExprDump(0, root, buffer);
 
         State state(buffer, nullptr);
-        char* result = Evaluate(&state, root);
-        if (result == NULL) {
+        std::string result;
+        if (!Evaluate(&state, root, &result)) {
             printf("result was NULL, message is: %s\n",
                    (state.errmsg.empty() ? "(NULL)" : state.errmsg.c_str()));
         } else {
-            printf("result is [%s]\n", result);
+            printf("result is [%s]\n", result.c_str());
         }
     }
     return 0;
