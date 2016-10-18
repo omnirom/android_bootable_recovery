@@ -116,7 +116,7 @@ static int make_parents(char* name) {
 //
 //    fs_type="ext4"   partition_type="EMMC"    location=device
 Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = NULL;
+    char* result = nullptr;
     if (argc != 4 && argc != 5) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 4-5 args, got %d", name, argc);
     }
@@ -197,7 +197,7 @@ done:
 
 // is_mounted(mount_point)
 Value* IsMountedFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = NULL;
+    char* result = nullptr;
     if (argc != 1) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
     }
@@ -227,7 +227,7 @@ done:
 
 
 Value* UnmountFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = NULL;
+    char* result = nullptr;
     if (argc != 1) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
     }
@@ -284,7 +284,7 @@ static int exec_cmd(const char* path, char* const argv[]) {
 //    if fs_size > 0, that is the size to use
 //    if fs_size < 0, then reserve that many bytes at the end of the partition (not for "f2fs")
 Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = NULL;
+    char* result = nullptr;
     if (argc != 5) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 5 args, got %d", name, argc);
     }
@@ -358,7 +358,7 @@ done:
 }
 
 Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = NULL;
+    char* result = nullptr;
     if (argc != 2) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
     }
@@ -397,15 +397,10 @@ done:
 }
 
 Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char** paths = reinterpret_cast<char**>(malloc(argc * sizeof(char*)));
+    std::vector<std::string> paths;
     for (int i = 0; i < argc; ++i) {
-        paths[i] = Evaluate(state, argv[i]);
-        if (paths[i] == NULL) {
-            for (int j = 0; j < i; ++j) {
-                free(paths[j]);
-            }
-            free(paths);
-            return NULL;
+        if (!Evaluate(state, argv[i], &paths[i])) {
+            return nullptr;
         }
     }
 
@@ -413,15 +408,12 @@ Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     int success = 0;
     for (int i = 0; i < argc; ++i) {
-        if ((recursive ? dirUnlinkHierarchy(paths[i]) : unlink(paths[i])) == 0)
+        if ((recursive ? dirUnlinkHierarchy(paths[i].c_str()) : unlink(paths[i].c_str())) == 0) {
             ++success;
-        free(paths[i]);
+        }
     }
-    free(paths);
 
-    char buffer[10];
-    sprintf(buffer, "%d", success);
-    return StringValue(strdup(buffer));
+    return StringValue(android::base::StringPrintf("%d", success));
 }
 
 
@@ -483,7 +475,7 @@ Value* PackageExtractDirFn(const char* name, State* state,
                                       NULL, NULL, sehandle);
     free(zip_path);
     free(dest_path);
-    return StringValue(strdup(success ? "t" : ""));
+    return StringValue(success ? "t" : "");
 }
 
 
@@ -536,7 +528,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
       done2:
         free(zip_path);
         free(dest_path);
-        return StringValue(strdup(success ? "t" : ""));
+        return StringValue(success ? "t" : "");
     } else {
         // The one-argument version returns the contents of the file
         // as the result.
@@ -544,10 +536,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
         char* zip_path;
         if (ReadArgs(state, argv, 1, &zip_path) < 0) return NULL;
 
-        Value* v = reinterpret_cast<Value*>(malloc(sizeof(Value)));
-        v->type = VAL_BLOB;
-        v->size = -1;
-        v->data = NULL;
+        Value* v = new Value(VAL_INVALID, "");
 
         ZipArchive* za = ((UpdaterInfo*)(state->cookie))->package_zip;
         const ZipEntry* entry = mzFindZipEntry(za, zip_path);
@@ -556,23 +545,16 @@ Value* PackageExtractFileFn(const char* name, State* state,
             goto done1;
         }
 
-        v->size = mzGetZipEntryUncompLen(entry);
-        v->data = reinterpret_cast<char*>(malloc(v->size));
-        if (v->data == NULL) {
-            printf("%s: failed to allocate %zd bytes for %s\n",
-                    name, v->size, zip_path);
-            goto done1;
-        }
-
+        v->data.resize(mzGetZipEntryUncompLen(entry));
         success = mzExtractZipEntryToBuffer(za, entry,
-                                            (unsigned char *)v->data);
+                reinterpret_cast<unsigned char *>(&v->data[0]));
 
       done1:
         free(zip_path);
         if (!success) {
-            free(v->data);
-            v->data = NULL;
-            v->size = -1;
+            v->data.clear();
+        } else {
+            v->type = VAL_BLOB;
         }
         return v;
     }
@@ -584,13 +566,13 @@ Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc == 0) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1+ args, got %d", name, argc);
     }
-    char* target;
-    target = Evaluate(state, argv[0]);
-    if (target == NULL) return NULL;
+    std::string target;
+    if (!Evaluate(state, argv[0], &target)) {
+        return nullptr;
+    }
 
     char** srcs = ReadVarArgs(state, argc-1, argv+1);
     if (srcs == NULL) {
-        free(target);
         return NULL;
     }
 
@@ -606,12 +588,12 @@ Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
         }
         if (make_parents(srcs[i])) {
             printf("%s: failed to symlink %s to %s: making parents failed\n",
-                    name, srcs[i], target);
+                    name, srcs[i], target.c_str());
             ++bad;
         }
-        if (symlink(target, srcs[i]) < 0) {
+        if (symlink(target.c_str(), srcs[i]) < 0) {
             printf("%s: failed to symlink %s to %s: %s\n",
-                    name, srcs[i], target, strerror(errno));
+                    name, srcs[i], target.c_str(), strerror(errno));
             ++bad;
         }
         free(srcs[i]);
@@ -620,7 +602,7 @@ Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (bad) {
         return ErrorAbort(state, kSymlinkFailure, "%s: some symlinks failed", name);
     }
-    return StringValue(strdup(""));
+    return StringValue("");
 }
 
 struct perm_parsed_args {
@@ -883,20 +865,20 @@ done:
         return ErrorAbort(state, kSetMetadataFailure, "%s: some changes failed", name);
     }
 
-    return StringValue(strdup(""));
+    return StringValue("");
 }
 
 Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 1) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
     }
-    char* key = Evaluate(state, argv[0]);
-    if (key == NULL) return NULL;
-
+    std::string key;
+    if (!Evaluate(state, argv[0], &key)) {
+        return nullptr;
+    }
     std::string value = android::base::GetProperty(key, "");
-    free(key);
 
-    return StringValue(strdup(value.c_str()));
+    return StringValue(value);
 }
 
 
@@ -1015,7 +997,7 @@ Value* ApplyPatchSpaceFn(const char* name, State* state,
         return nullptr;
     }
 
-    return StringValue(strdup(CacheSizeCheck(bytes) ? "" : "t"));
+    return StringValue(CacheSizeCheck(bytes) ? "" : "t");
 }
 
 // apply_patch(file, size, init_sha1, tgt_sha1, patch)
@@ -1047,17 +1029,16 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     int patchcount = (argc-4) / 2;
-    std::unique_ptr<Value*, decltype(&free)> arg_values(ReadValueVarArgs(state, argc-4, argv+4),
-                                                        free);
+    std::unique_ptr<Value*> arg_values(ReadValueVarArgs(state, argc-4, argv+4));
     if (!arg_values) {
         return nullptr;
     }
-    std::vector<std::unique_ptr<Value, decltype(&FreeValue)>> patch_shas;
-    std::vector<std::unique_ptr<Value, decltype(&FreeValue)>> patches;
+    std::vector<std::unique_ptr<Value>> patch_shas;
+    std::vector<std::unique_ptr<Value>> patches;
     // Protect values by unique_ptrs first to get rid of memory leak.
     for (int i = 0; i < patchcount * 2; i += 2) {
-        patch_shas.emplace_back(arg_values.get()[i], FreeValue);
-        patches.emplace_back(arg_values.get()[i+1], FreeValue);
+        patch_shas.emplace_back(arg_values.get()[i]);
+        patches.emplace_back(arg_values.get()[i+1]);
     }
 
     for (int i = 0; i < patchcount; ++i) {
@@ -1071,7 +1052,7 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
         }
     }
 
-    std::vector<char*> patch_sha_str;
+    std::vector<std::string> patch_sha_str;
     std::vector<Value*> patch_ptrs;
     for (int i = 0; i < patchcount; ++i) {
         patch_sha_str.push_back(patch_shas[i]->data);
@@ -1080,9 +1061,9 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     int result = applypatch(source_filename, target_filename,
                             target_sha1, target_size,
-                            patchcount, patch_sha_str.data(), patch_ptrs.data(), NULL);
+                            patch_sha_str, patch_ptrs.data(), NULL);
 
-    return StringValue(strdup(result == 0 ? "t" : ""));
+    return StringValue(result == 0 ? "t" : "");
 }
 
 // apply_patch_check(file, [sha1_1, ...])
@@ -1095,21 +1076,17 @@ Value* ApplyPatchCheckFn(const char* name, State* state,
 
     char* filename;
     if (ReadArgs(state, argv, 1, &filename) < 0) {
-        return NULL;
+        return nullptr;
     }
 
-    int patchcount = argc-1;
-    char** sha1s = ReadVarArgs(state, argc-1, argv+1);
-
-    int result = applypatch_check(filename, patchcount, sha1s);
-
-    int i;
-    for (i = 0; i < patchcount; ++i) {
-        free(sha1s[i]);
+    std::vector<std::string> sha1s;
+    if (!ReadArgs(state, argc-1, argv+1, &sha1s)) {
+        return nullptr;
     }
-    free(sha1s);
 
-    return StringValue(strdup(result == 0 ? "t" : ""));
+    int result = applypatch_check(filename, sha1s);
+
+    return StringValue(result == 0 ? "t" : "");
 }
 
 // This is the updater side handler for ui_print() in edify script. Contents
@@ -1129,7 +1106,7 @@ Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     buffer += "\n";
     uiPrint(state, buffer);
-    return StringValue(strdup(buffer.c_str()));
+    return StringValue(buffer);
 }
 
 Value* WipeCacheFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -1137,7 +1114,7 @@ Value* WipeCacheFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects no args, got %d", name, argc);
     }
     fprintf(((UpdaterInfo*)(state->cookie))->cmd_pipe, "wipe_cache\n");
-    return StringValue(strdup("t"));
+    return StringValue("t");
 }
 
 Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -1180,10 +1157,7 @@ Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
     free(args);
     free(args2);
 
-    char buffer[20];
-    sprintf(buffer, "%d", status);
-
-    return StringValue(strdup(buffer));
+    return StringValue(android::base::StringPrintf("%d", status));
 }
 
 // sha1_check(data)
@@ -1199,32 +1173,32 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects at least 1 arg", name);
     }
 
-    std::unique_ptr<Value*, decltype(&free)> arg_values(ReadValueVarArgs(state, argc, argv), free);
+    std::unique_ptr<Value*> arg_values(ReadValueVarArgs(state, argc, argv));
     if (arg_values == nullptr) {
         return nullptr;
     }
-    std::vector<std::unique_ptr<Value, decltype(&FreeValue)>> args;
+    std::vector<std::unique_ptr<Value>> args;
     for (int i = 0; i < argc; ++i) {
-        args.emplace_back(arg_values.get()[i], FreeValue);
+        args.emplace_back(arg_values.get()[i]);
     }
 
-    if (args[0]->size < 0) {
-        return StringValue(strdup(""));
+    if (args[0]->type == VAL_INVALID) {
+        return StringValue("");
     }
     uint8_t digest[SHA_DIGEST_LENGTH];
-    SHA1(reinterpret_cast<uint8_t*>(args[0]->data), args[0]->size, digest);
+    SHA1(reinterpret_cast<const uint8_t*>(args[0]->data.c_str()), args[0]->data.size(), digest);
 
     if (argc == 1) {
-        return StringValue(strdup(print_sha1(digest).c_str()));
+        return StringValue(print_sha1(digest));
     }
 
     for (int i = 1; i < argc; ++i) {
         uint8_t arg_digest[SHA_DIGEST_LENGTH];
         if (args[i]->type != VAL_STRING) {
             printf("%s(): arg %d is not a string; skipping", name, i);
-        } else if (ParseSha1(args[i]->data, arg_digest) != 0) {
+        } else if (ParseSha1(args[i]->data.c_str(), arg_digest) != 0) {
             // Warn about bad args and skip them.
-            printf("%s(): error parsing \"%s\" as sha-1; skipping", name, args[i]->data);
+            printf("%s(): error parsing \"%s\" as sha-1; skipping", name, args[i]->data.c_str());
         } else if (memcmp(digest, arg_digest, SHA_DIGEST_LENGTH) == 0) {
             // Found a match.
             return args[i].release();
@@ -1232,7 +1206,7 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     // Didn't match any of the hex strings; return false.
-    return StringValue(strdup(""));
+    return StringValue("");
 }
 
 // Read a local file and return its contents (the Value* returned
@@ -1244,21 +1218,12 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
     char* filename;
     if (ReadArgs(state, argv, 1, &filename) < 0) return NULL;
 
-    Value* v = static_cast<Value*>(malloc(sizeof(Value)));
-    if (v == nullptr) {
-        return nullptr;
-    }
-    v->type = VAL_BLOB;
-    v->size = -1;
-    v->data = nullptr;
+    Value* v = new Value(VAL_INVALID, "");
 
     FileContents fc;
     if (LoadFileContents(filename, &fc) == 0) {
-        v->data = static_cast<char*>(malloc(fc.data.size()));
-        if (v->data != nullptr) {
-            memcpy(v->data, fc.data.data(), fc.data.size());
-            v->size = fc.data.size();
-        }
+        v->type = VAL_BLOB;
+        v->data = std::string(fc.data.begin(), fc.data.end());
     }
     free(filename);
     return v;
@@ -1326,16 +1291,19 @@ Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
     // package installation.
     FILE* f = ota_fopen(filename, "r+b");
     fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
-    int to_write = strlen(stagestr)+1;
-    int max_size = sizeof(((struct bootloader_message*)0)->stage);
+    size_t to_write = strlen(stagestr) + 1;
+    size_t max_size = sizeof(((struct bootloader_message*)0)->stage);
     if (to_write > max_size) {
         to_write = max_size;
-        stagestr[max_size-1] = 0;
+        stagestr[max_size - 1] = 0;
     }
-    ota_fwrite(stagestr, to_write, 1, f);
+    size_t status = ota_fwrite(stagestr, to_write, 1, f);
     ota_fclose(f);
 
     free(stagestr);
+    if (status != to_write) {
+        return StringValue("");
+    }
     return StringValue(filename);
 }
 
@@ -1352,11 +1320,14 @@ Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
     char buffer[sizeof(((struct bootloader_message*)0)->stage)];
     FILE* f = ota_fopen(filename, "rb");
     fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
-    ota_fread(buffer, sizeof(buffer), 1, f);
+    size_t status = ota_fread(buffer, sizeof(buffer), 1, f);
     ota_fclose(f);
-    buffer[sizeof(buffer)-1] = '\0';
+    if (status != sizeof(buffer)) {
+        return StringValue("");
+    }
 
-    return StringValue(strdup(buffer));
+    buffer[sizeof(buffer)-1] = '\0';
+    return StringValue(buffer);
 }
 
 Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -1378,7 +1349,7 @@ Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[])
 
     ota_close(fd);
 
-    return StringValue(strdup(success ? "t" : ""));
+    return StringValue(success ? "t" : "");
 }
 
 Value* EnableRebootFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -1387,7 +1358,7 @@ Value* EnableRebootFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
     UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
     fprintf(ui->cmd_pipe, "enable_reboot\n");
-    return StringValue(strdup("t"));
+    return StringValue("t");
 }
 
 Value* Tune2FsFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -1418,7 +1389,7 @@ Value* Tune2FsFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, kTune2FsFailure, "%s() returned error code %d",
                           name, result);
     }
-    return StringValue(strdup("t"));
+    return StringValue("t");
 }
 
 void RegisterInstallFunctions() {

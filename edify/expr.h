@@ -48,13 +48,19 @@ struct State {
     bool is_retry = false;
 };
 
-#define VAL_STRING  1  // data will be NULL-terminated; size doesn't count null
-#define VAL_BLOB    2
+enum ValueType {
+    VAL_INVALID = -1,
+    VAL_STRING = 1,
+    VAL_BLOB = 2,
+};
 
 struct Value {
-    int type;
-    ssize_t size;
-    char* data;
+    ValueType type;
+    std::string data;
+
+    Value(ValueType type, const std::string& str) :
+        type(type),
+        data(str) {}
 };
 
 struct Expr;
@@ -75,11 +81,11 @@ struct Expr {
 Value* EvaluateValue(State* state, Expr* expr);
 
 // Take one of the Expr*s passed to the function as an argument,
-// evaluate it, assert that it is a string, and return the resulting
-// char*.  The caller takes ownership of the returned char*.  This is
-// a convenience function for older functions that want to deal only
-// with strings.
-char* Evaluate(State* state, Expr* expr);
+// evaluate it, assert that it is a string, and update the result
+// parameter. This function returns true if the evaluation succeeds.
+// This is a convenience function for older functions that want to
+// deal only with strings.
+bool Evaluate(State* state, Expr* expr, std::string* result);
 
 // Glue to make an Expr out of a literal.
 Value* Literal(const char* name, State* state, int argc, Expr* argv[]);
@@ -114,6 +120,17 @@ Function FindFunction(const std::string& name);
 
 // --- convenience functions for use in functions ---
 
+// Evaluate the expressions in argv, and put the results of strings in
+// args. If any expression evaluates to nullptr, free the rest and return
+// false. Return true on success.
+bool ReadArgs(State* state, int argc, Expr* argv[], std::vector<std::string>* args);
+
+// Evaluate the expressions in argv, and put the results of Value* in
+// args. If any expression evaluate to nullptr, free the rest and return
+// false. Return true on success.
+bool ReadValueArgs(State* state, int argc, Expr* argv[],
+                   std::vector<std::unique_ptr<Value>>* args);
+
 // Evaluate the expressions in argv, giving 'count' char* (the ... is
 // zero or more char** to put them in).  If any expression evaluates
 // to NULL, free the rest and return -1.  Return 0 on success.
@@ -146,11 +163,10 @@ Value* ErrorAbort(State* state, const char* format, ...)
 Value* ErrorAbort(State* state, CauseCode cause_code, const char* format, ...)
     __attribute__((format(printf, 3, 4)));
 
-// Wrap a string into a Value, taking ownership of the string.
-Value* StringValue(char* str);
+// Copying the string into a Value.
+Value* StringValue(const char* str);
 
-// Free a Value object.
-void FreeValue(Value* v);
+Value* StringValue(const std::string& str);
 
 int parse_string(const char* str, Expr** root, int* error_count);
 
