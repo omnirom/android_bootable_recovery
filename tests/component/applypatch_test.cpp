@@ -200,6 +200,11 @@ std::vector<Value*> ApplyPatchFullTest::patches;
 TemporaryFile* ApplyPatchFullTest::output_f;
 std::string ApplyPatchFullTest::output_loc;
 
+TEST_F(ApplyPatchTest, CheckModeSkip) {
+    std::vector<std::string> sha1s;
+    ASSERT_EQ(0, applypatch_check(&old_file[0], sha1s));
+}
+
 TEST_F(ApplyPatchTest, CheckModeSingle) {
     std::vector<std::string> sha1s = { old_sha1 };
     ASSERT_EQ(0, applypatch_check(&old_file[0], sha1s));
