@@ -71,22 +71,33 @@ static int parse_build_number(const std::string& str) {
     return -1;
 }
 
-// Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
-static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::string>& log_buffer) {
+bool read_metadata_from_package(ZipArchiveHandle zip, std::string* meta_data) {
     ZipString metadata_path(METADATA_PATH);
     ZipEntry meta_entry;
+    if (meta_data == nullptr) {
+        LOG(ERROR) << "string* meta_data can't be nullptr";
+        return false;
+    }
     if (FindEntry(zip, metadata_path, &meta_entry) != 0) {
         LOG(ERROR) << "Failed to find " << METADATA_PATH << " in update package";
-        return;
+        return false;
     }
 
-    std::string meta_data(meta_entry.uncompressed_length, '\0');
-    if (ExtractToMemory(zip, &meta_entry, reinterpret_cast<uint8_t*>(&meta_data[0]),
+    meta_data->resize(meta_entry.uncompressed_length, '\0');
+    if (ExtractToMemory(zip, &meta_entry, reinterpret_cast<uint8_t*>(&(*meta_data)[0]),
                         meta_entry.uncompressed_length) != 0) {
         LOG(ERROR) << "Failed to read metadata in update package";
+        return false;
+    }
+    return true;
+}
+
+// Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
+static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::string>& log_buffer) {
+    std::string meta_data;
+    if (!read_metadata_from_package(zip, &meta_data)) {
         return;
     }
-
     // Examples of the pre-build and post-build strings in metadata:
     // pre-build-incremental=2943039
     // post-build-incremental=2951741
@@ -301,33 +312,16 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
         return INSTALL_CORRUPT;
     }
 
-    // Load keys.
-    std::vector<Certificate> loadedKeys;
-    if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
-        LOG(ERROR) << "Failed to load keys";
-        sysReleaseMap(&map);
-        return INSTALL_CORRUPT;
-    }
-    LOG(INFO) << loadedKeys.size() << " key(s) loaded from " << PUBLIC_KEYS_FILE;
-
     // Verify package.
-    ui->Print("Verifying update package...\n");
-
-    auto t0 = std::chrono::system_clock::now();
-    int err = verify_file(map.addr, map.length, loadedKeys);
-    std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
-    ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
-    if (err != VERIFY_SUCCESS) {
-        LOG(ERROR) << "signature verification failed";
+    if (!verify_package(map.addr, map.length)) {
         log_buffer.push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
-
         sysReleaseMap(&map);
         return INSTALL_CORRUPT;
     }
 
     // Try to open the package.
     ZipArchiveHandle zip;
-    err = OpenArchiveFromMemory(map.addr, map.length, path, &zip);
+    int err = OpenArchiveFromMemory(map.addr, map.length, path, &zip);
     if (err != 0) {
         LOG(ERROR) << "Can't open " << path << " : " << ErrorCodeString(err);
         log_buffer.push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
@@ -402,4 +396,26 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
     LOG(INFO) << log_content;
 
     return result;
+}
+
+bool verify_package(const unsigned char* package_data, size_t package_size) {
+    std::vector<Certificate> loadedKeys;
+    if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
+        LOG(ERROR) << "Failed to load keys";
+        return false;
+    }
+    LOG(INFO) << loadedKeys.size() << " key(s) loaded from " << PUBLIC_KEYS_FILE;
+
+    // Verify package.
+    ui->Print("Verifying update package...\n");
+    auto t0 = std::chrono::system_clock::now();
+    int err = verify_file(const_cast<unsigned char*>(package_data), package_size, loadedKeys);
+    std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
+    ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
+    if (err != VERIFY_SUCCESS) {
+        LOG(ERROR) << "Signature verification failed";
+        LOG(ERROR) << "error: " << kZipVerificationFailure;
+        return false;
+    }
+    return true;
 }

@@ -528,11 +528,28 @@ static bool setup_bcb(const int socket) {
         return false;
     }
     LOG(INFO) << "  received command: [" << content << "] (" << content.size() << ")";
+    std::vector<std::string> options = android::base::Split(content, "\n");
+    std::string wipe_package;
+    for (auto& option : options) {
+        if (android::base::StartsWith(option, "--wipe_package=")) {
+            std::string path = option.substr(strlen("--wipe_package="));
+            if (!android::base::ReadFileToString(path, &wipe_package)) {
+                PLOG(ERROR) << "failed to read " << path;
+                return false;
+            }
+            option = android::base::StringPrintf("--wipe_package_size=%zu", wipe_package.size());
+        }
+    }
 
     // c8. setup the bcb command
     std::string err;
-    if (!write_bootloader_message({content}, &err)) {
+    if (!write_bootloader_message(options, &err)) {
         LOG(ERROR) << "failed to set bootloader message: " << err;
+        write_status_to_socket(-1, socket);
+        return false;
+    }
+    if (!wipe_package.empty() && !write_wipe_package(wipe_package, &err)) {
+        PLOG(ERROR) << "failed to set wipe package: " << err;
         write_status_to_socket(-1, socket);
         return false;
     }
