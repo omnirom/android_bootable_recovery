@@ -430,7 +430,7 @@ int applypatch_check(const char* filename, const std::vector<std::string>& patch
     // partitions, where the filename encodes the sha1s; no need to
     // check them twice.)
     if (LoadFileContents(filename, &file) != 0 ||
-        FindMatchingPatch(file.sha1, patch_sha1_str) < 0) {
+        (patch_sha1_str.size() > 0 && FindMatchingPatch(file.sha1, patch_sha1_str) < 0)) {
         printf("file \"%s\" doesn't have any of expected "
                "sha1 sums; checking cache\n", filename);
 
