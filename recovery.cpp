@@ -372,25 +372,20 @@ get_args(int *argc, char ***argv) {
 
     // --> write the arguments we have back into the bootloader control block
     // always boot into recovery after this (until finish_recovery() is called)
-    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
-    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
-    int i;
-    for (i = 1; i < *argc; ++i) {
-        strlcat(boot.recovery, (*argv)[i], sizeof(boot.recovery));
-        strlcat(boot.recovery, "\n", sizeof(boot.recovery));
+    std::vector<std::string> options;
+    for (int i = 1; i < *argc; ++i) {
+        options.push_back((*argv)[i]);
     }
-    if (!write_bootloader_message(boot, &err)) {
+    if (!write_bootloader_message(options, &err)) {
         LOG(ERROR) << err;
     }
 }
 
 static void
 set_sdcard_update_bootloader_message() {
-    bootloader_message boot = {};
-    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
-    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
+    std::vector<std::string> options;
     std::string err;
-    if (!write_bootloader_message(boot, &err)) {
+    if (!write_bootloader_message(options, &err)) {
         LOG(ERROR) << err;
     }
 }
@@ -543,9 +538,8 @@ finish_recovery() {
     copy_logs();
 
     // Reset to normal system boot so recovery won't cycle indefinitely.
-    bootloader_message boot = {};
     std::string err;
-    if (!write_bootloader_message(boot, &err)) {
+    if (!clear_bootloader_message(&err)) {
         LOG(ERROR) << err;
     }
 
@@ -1392,27 +1386,17 @@ static bool is_battery_ok() {
 }
 
 static void set_retry_bootloader_message(int retry_count, int argc, char** argv) {
-    bootloader_message boot = {};
-    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
-    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
-
+    std::vector<std::string> options;
     for (int i = 1; i < argc; ++i) {
         if (strstr(argv[i], "retry_count") == nullptr) {
-            strlcat(boot.recovery, argv[i], sizeof(boot.recovery));
-            strlcat(boot.recovery, "\n", sizeof(boot.recovery));
+            options.push_back(argv[i]);
         }
     }
 
-    // Initialize counter to 1 if it's not in BCB, otherwise increment it by 1.
-    if (retry_count == 0) {
-        strlcat(boot.recovery, "--retry_count=1\n", sizeof(boot.recovery));
-    } else {
-        char buffer[20];
-        snprintf(buffer, sizeof(buffer), "--retry_count=%d\n", retry_count+1);
-        strlcat(boot.recovery, buffer, sizeof(boot.recovery));
-    }
+    // Increment the retry counter by 1.
+    options.push_back(android::base::StringPrintf("--retry_count=%d", retry_count+1));
     std::string err;
-    if (!write_bootloader_message(boot, &err)) {
+    if (!write_bootloader_message(options, &err)) {
         LOG(ERROR) << err;
     }
 }
