@@ -572,6 +572,7 @@
 		<string name="unable_resize">Impossibile ridimensionare {1}.</string>
 		<string name="no_md5_found">Nessun MD5 trovato per '{1}'. Deseleziona "Abilita verifica MD5" per procedere con il ripristino.</string>
 		<string name="md5_fail_match">Il valore MD5 non corrisponde per '{1}'.</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Decriptazione fallita per il file Tar '{1}'</string>
 		<string name="format_data_msg">Potresti dover riavviare la Recovery per accedere nuovamente a Data.</string>
 		<string name="format_data_err">Impossibile formattare al fine di rimuovere la crittografia.</string>

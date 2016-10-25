@@ -296,9 +296,18 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 		gui_msg("check_for_md5=Checking for MD5 file...");
 		twrpDigest md5sum;
 		md5sum.setfn(path);
-		int md5_return = md5sum.verify_md5digest();
-		if (md5_return == -2) { // md5 did not match
-			LOGERR("Aborting zip install\n");
+		switch (md5sum.verify_md5digest()) {
+		case MD5_OK:
+			gui_msg(Msg("md5_matched=MD5 matched for '{1}'.")(path));
+			break;
+		case MD5_NOT_FOUND:
+			gui_msg("no_md5=Skipping MD5 check: no MD5 file found");
+			break;
+		case MD5_FILE_UNREADABLE:
+			LOGERR("Skipping MD5 check: MD5 file unreadable\n");
+			break;
+		case MD5_MATCH_FAIL: // md5 did not match
+			LOGERR("Aborting zip install: MD5 verification failed\n");
 			return INSTALL_CORRUPT;
 		}
 	}

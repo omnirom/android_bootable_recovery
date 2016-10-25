@@ -572,6 +572,7 @@
 		<string name="unable_resize">Größe von {1} kann nicht geändert werden.</string>
 		<string name="no_md5_found">Keine MD5-Datei für '{1}' gefunden. Bitte MD5-Prüfung für Wiederherstellung deaktivieren.</string>
 		<string name="md5_fail_match">MD5-Prüfung für '{1}' fehlgeschlagen.</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">TAR-Datei '{1}' konnte nicht entschlüsselt werden.</string>
 		<string name="format_data_msg">Ein Neustart von TWRP kann notwendig sein, damit /data wieder verwendet werden kann.</string>
 		<string name="format_data_err">Formatierung zum Entfernen der Verschlüsselung kann nicht durchgeführt werden.</string>
