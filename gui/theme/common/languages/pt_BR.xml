@@ -542,6 +542,7 @@
 		<string name="unable_resize">Não é possível redimensionar {1}.</string>
 		<string name="no_md5_found">Nenhum arquivo md5 foi encontrado para \'{1}\'. Por favor, cancelar a seleção de verificação MD5 habilitar para restaurar.</string>
 		<string name="md5_fail_match">MD5 não conseguiram corresponder na \'{1}\'.</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Falha ao descriptografar arquivo tar \'{1}\'</string>
 		<string name="format_data_msg">Você pode precisar reiniciar recuperação para ser capaz de usar /data novamente.</string>
 		<string name="format_data_err">Não é possível formatar para remover a criptografia.</string>

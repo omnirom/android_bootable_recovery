@@ -552,6 +552,7 @@
         <string name="unable_resize">Δεν είναι δυνατή η αλλαγή μεγέθους {1}.</string>
         <string name="no_md5_found">Δεν βρέθηκε MD5 αρχείο για το '{1}'. Παρακαλώ απεπηλέξτε την επαλήθευση MD5 για επαναφορά.</string>
         <string name="md5_fail_match">Το MD5 απέτυχε να ταυτίσει με το '{1}'.</string>
+        <string name="md5_matched">MD5 matched for '{1}'.</string>
         <string name="fail_decrypt_tar">Αποτυχία αποκρυπτογράφησης του αρχείου tar '{1}'</string>
         <string name="format_data_msg">Ίσως χρειαστεί να επανεκκινήσετε στο recovery για να ξαναχρησιμοποιήσετε το /data.</string>
         <string name="format_data_err">Αδύνατη η διαμόρφωση για να καταργήσετε την κρυπτογράφηση.</string>

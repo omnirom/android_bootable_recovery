@@ -91,7 +91,7 @@ int twrpDigest::computeMD5(void) {
 	initMD5();
 	file = fopen(md5fn.c_str(), "rb");
 	if (file == NULL)
-		return -1;
+		return MD5_NOT_FOUND;
 	while ((len = fread(buf, 1, sizeof(buf), file)) > 0) {
 		MD5Update(&md5c, buf, len);
 	}
@@ -128,23 +128,13 @@ int twrpDigest::read_md5digest(void) {
 		i++;
 	}
 
-	if (!foundMd5File) {
-		gui_msg("no_md5=Skipping MD5 check: no MD5 file found");
-		return -1;
-	} else if (TWFunc::read_file(md5file, line) != 0) {
-		LOGERR("Skipping MD5 check: MD5 file unreadable %s\n", strerror(errno));
-		return 1;
-	}
+	if (!foundMd5File)
+		return MD5_NOT_FOUND;
+	if (TWFunc::read_file(md5file, line) != 0)
+		return MD5_FILE_UNREADABLE;
 
 	return 0;
 }
-
-/* verify_md5digest return codes:
-	-2: md5 did not match
-	-1: no md5 file found
-	 0: md5 matches
-	 1: md5 file unreadable
-*/
 
 int twrpDigest::verify_md5digest(void) {
 	string buf;
@@ -164,11 +154,8 @@ int twrpDigest::verify_md5digest(void) {
 		snprintf(hex, 3, "%02x", md5sum[i]);
 		md5str += hex;
 	}
-	if (tokens.at(0) != md5str) {
-		gui_err("md5_fail=MD5 does not match");
-		return -2;
-	}
+	if (tokens.at(0) != md5str)
+		return MD5_MATCH_FAIL;
 
-	gui_msg("md5_match=MD5 matched");
-	return 0;
+	return MD5_OK;
 }
