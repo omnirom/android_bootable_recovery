@@ -445,7 +445,7 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 		part_settings->progress->UpdateDisplayDetails(true);
 
 		if (!part_settings->adbbackup) {
-			InfoManager backup_info(backup_folder + partition_name + ".info");
+			InfoManager backup_info(backup_folder + "/" + partition_name + ".info");
 			backup_info.SetValue("backup_size", size_backup);
 			if (use_compression && use_encryption)
 				backup_info.SetValue("backup_type", COMPRESSED_ENCRYPTED);
