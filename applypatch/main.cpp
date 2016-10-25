@@ -99,7 +99,7 @@ static int PatchMode(int argc, char** argv) {
             return 1;
         }
         bonus.type = VAL_BLOB;
-        bonus.data = reinterpret_cast<const char*>(bonusFc.data.data());
+        bonus.data = std::string(bonusFc.data.cbegin(), bonusFc.data.cend());
         argc -= 2;
         argv += 2;
     }
@@ -132,7 +132,8 @@ static int PatchMode(int argc, char** argv) {
     std::vector<Value> patches;
     std::vector<Value*> patch_ptrs;
     for (size_t i = 0; i < files.size(); ++i) {
-        patches.push_back(Value(VAL_BLOB, reinterpret_cast<const char*>(files[i].data.data())));
+        patches.push_back(Value(VAL_BLOB,
+                                std::string(files[i].data.cbegin(), files[i].data.cend())));
         patch_ptrs.push_back(&patches[i]);
     }
     return applypatch(argv[1], argv[2], argv[3], target_size,
