@@ -572,6 +572,7 @@
 		<string name="unable_resize">Kan de grootte van {1} niet wijzigen.</string>
 		<string name="no_md5_found">Geen md5 bestand gevonden voor \'{1}\'. Gelieve MD5 controle inschakelen uitzetten om te herstellen.</string>
 		<string name="md5_fail_match">MD5 vergelijken mislukt op \'{1}\'.</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Het decoderen van tar bestand \'{1}\' is mislukt</string>
 		<string name="format_data_msg">U zou in recovery moeten herstarten om /data opnieuw te kunnen gebruiken.</string>
 		<string name="format_data_err">Kan niet formatteren om encryptie te verwijderen.</string>
