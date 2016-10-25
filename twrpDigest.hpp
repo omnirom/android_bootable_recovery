@@ -20,6 +20,14 @@ extern "C" {
 	#include "digest/md5.h"
 }
 
+/* verify_md5digest return codes */
+enum {
+	MD5_MATCH_FAIL = -2, // -2: md5 did not match
+	MD5_NOT_FOUND,       // -1: no md5 file found
+	MD5_OK,              //  0: md5 matches
+	MD5_FILE_UNREADABLE  //  1: md5 file unreadable
+};
+
 using namespace std;
 
 class twrpDigest

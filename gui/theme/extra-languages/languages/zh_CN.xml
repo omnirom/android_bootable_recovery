@@ -571,6 +571,7 @@
 		<string name="unable_resize">无法修改 {1} 大小。</string>
 		<string name="no_md5_found">无法为 '{1}' 找到 MD5 校验文件。请取消允许 MD5 校验选项。</string>
 		<string name="md5_fail_match">MD5 校验失败 '{1}'。</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">解密 tar 文件 '{1}' 失败</string>
 		<string name="format_data_msg">你可能需要重启 recovery 才能使用/data。</string>
 		<string name="format_data_err">无法格式化并删除加密。</string>

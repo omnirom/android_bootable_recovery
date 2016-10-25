@@ -553,7 +553,8 @@
         <string name="repair_resize">Réparation de {1} avant de redimensionner.</string>
         <string name="unable_resize">Incapable de redimensionner {1}.</string>
         <string name="no_md5_found">Pas de fichier md5 trouvé pour '{1}'. Veuillez désactiver la vérification MD5 pour effectuer la restauration.</string>
-        <string name="md5_fail_match">Le MD5 ne corresponds pas pour '{1}'.</string>
+        <string name="md5_fail_match">Le MD5 ne correspond pas pour '{1}'.</string>
+        <string name="md5_matched">Le MD5 correspond pour '{1}'.</string>
         <string name="restoring">Restauration en cours</string>
         <string name="format_data_msg">Vous aurez peut-être à redémarrer pour pouvoir utiliser /data à nouveau.</string>
         <string name="format_data_err">Incapable de formater pour enlever l'encryption.</string>
