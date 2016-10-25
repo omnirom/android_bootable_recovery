@@ -572,6 +572,7 @@
 		<string name="unable_resize">Unable to resize {1}.</string>
 		<string name="no_md5_found">No md5 file found for '{1}'. Please unselect Enable MD5 verification to restore.</string>
 		<string name="md5_fail_match">MD5 failed to match on '{1}'.</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Failed to decrypt tar file '{1}'</string>
 		<string name="format_data_msg">You may need to reboot recovery to be able to use /data again.</string>
 		<string name="format_data_err">Unable to format to remove encryption.</string>

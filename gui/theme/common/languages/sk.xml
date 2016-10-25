@@ -542,6 +542,7 @@
 		<string name="unable_resize">Nemožno natiahnuť {1}.</string>
 		<string name="no_md5_found">Súbor MD5 sa nenašiel pre \'{1}\'. Prosím zvoľte Vypnúť kontrolu MD5 počas obnovy.</string>
 		<string name="md5_fail_match">MD5 nezodpovedá súboru \'{1}\'.</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Nemožno dešifrovať súbor tar \'{1}\'</string>
 		<string name="format_data_msg">Mali by ste reštartovať recovery aby ste mohli znova používať /data.</string>
 		<string name="format_data_err">Nemožno formátovať pre zrušenie šifrovania.</string>
