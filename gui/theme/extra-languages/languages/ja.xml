@@ -566,6 +566,7 @@
 		<string name="unable_resize">{1} をリサイズできません。</string>
 		<string name="no_md5_found">\'{1}\' の MD5 ファイルが見つかりません。リストアするには MD5 の検証を無効化してください。</string>
 		<string name="md5_fail_match">\'{1}\' で MD5 が一致しません。</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">tar ファイル '{1}' を復号できませんでした</string>
 		<string name="format_data_msg">/data を再度使用するにはリカバリを再起動してください。</string>
 		<string name="format_data_err">暗号化を解除するための初期化ができません。</string>
