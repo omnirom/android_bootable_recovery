@@ -69,8 +69,6 @@
 #include "ui.h"
 #include "screen_ui.h"
 
-struct selabel_handle *sehandle;
-
 static const struct option OPTIONS[] = {
   { "update_package", required_argument, NULL, 'u' },
   { "retry_count", required_argument, NULL, 'n' },
@@ -119,14 +117,17 @@ static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
 // So we should check battery with a slightly lower limitation.
 static const int BATTERY_OK_PERCENTAGE = 20;
 static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
-constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
+static constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
+static constexpr const char* DEFAULT_LOCALE = "en_US";
 
-RecoveryUI* ui = NULL;
-static const char* locale = "en_US";
-char* stage = NULL;
-char* reason = NULL;
-bool modified_flash = false;
+static std::string locale;
+static const char* stage = nullptr;
+static const char* reason = nullptr;
 static bool has_cache = false;
+
+RecoveryUI* ui = nullptr;
+bool modified_flash = false;
+struct selabel_handle* sehandle;
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -206,6 +207,9 @@ FILE* fopen_path(const char *path, const char *mode) {
 // close a file, log an error if the error indicator is set
 static void check_and_fclose(FILE *fp, const char *name) {
     fflush(fp);
+    if (fsync(fileno(fp)) == -1) {
+        PLOG(ERROR) << "Failed to fsync " << name;
+    }
     if (ferror(fp)) {
         PLOG(ERROR) << "Error in " << name;
     }
@@ -515,24 +519,18 @@ static void copy_logs() {
 // clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read). This function is
 // idempotent: call it as many times as you like.
-static void
-finish_recovery() {
+static void finish_recovery() {
     // Save the locale to cache, so if recovery is next started up
     // without a --locale argument (eg, directly from the bootloader)
     // it will use the last-known locale.
-    if (locale != NULL) {
-        size_t len = strlen(locale);
-        __pmsg_write(LOCALE_FILE, locale, len);
-        if (has_cache) {
-            LOG(INFO) << "Saving locale \"" << locale << "\"";
-            FILE* fp = fopen_path(LOCALE_FILE, "w");
-            if (fp != NULL) {
-                fwrite(locale, 1, len, fp);
-                fflush(fp);
-                fsync(fileno(fp));
-                check_and_fclose(fp, LOCALE_FILE);
-            }
+    if (!locale.empty() && has_cache) {
+        LOG(INFO) << "Saving locale \"" << locale << "\"";
+
+        FILE* fp = fopen_path(LOCALE_FILE, "w");
+        if (!android::base::WriteStringToFd(locale, fileno(fp))) {
+            PLOG(ERROR) << "Failed to save locale to " << LOCALE_FILE;
         }
+        check_and_fclose(fp, LOCALE_FILE);
     }
 
     copy_logs();
@@ -1282,40 +1280,32 @@ print_property(const char *key, const char *name, void *cookie) {
     printf("%s=%s\n", key, name);
 }
 
-static void
-load_locale_from_cache() {
-    FILE* fp = fopen_path(LOCALE_FILE, "r");
-    char buffer[80];
-    if (fp != NULL) {
-        fgets(buffer, sizeof(buffer), fp);
-        int j = 0;
-        unsigned int i;
-        for (i = 0; i < sizeof(buffer) && buffer[i]; ++i) {
-            if (!isspace(buffer[i])) {
-                buffer[j++] = buffer[i];
-            }
-        }
-        buffer[j] = 0;
-        locale = strdup(buffer);
-        check_and_fclose(fp, LOCALE_FILE);
+static std::string load_locale_from_cache() {
+    if (ensure_path_mounted(LOCALE_FILE) != 0) {
+        LOG(ERROR) << "Can't mount " << LOCALE_FILE;
+        return "";
     }
+
+    std::string content;
+    if (!android::base::ReadFileToString(LOCALE_FILE, &content)) {
+        PLOG(ERROR) << "Can't read " << LOCALE_FILE;
+        return "";
+    }
+
+    return android::base::Trim(content);
 }
 
-static RecoveryUI* gCurrentUI = NULL;
-
-void
-ui_print(const char* format, ...) {
-    char buffer[256];
-
+void ui_print(const char* format, ...) {
+    std::string buffer;
     va_list ap;
     va_start(ap, format);
-    vsnprintf(buffer, sizeof(buffer), format, ap);
+    android::base::StringAppendV(&buffer, format, ap);
     va_end(ap);
 
-    if (gCurrentUI != NULL) {
-        gCurrentUI->Print("%s", buffer);
+    if (ui != nullptr) {
+        ui->Print("%s", buffer.c_str());
     } else {
-        fputs(buffer, stdout);
+        fputs(buffer.c_str(), stdout);
     }
 }
 
@@ -1324,8 +1314,8 @@ static constexpr char log_characters[] = "VDIWEF";
 void UiLogger(android::base::LogId id, android::base::LogSeverity severity,
                const char* tag, const char* file, unsigned int line,
                const char* message) {
-    if (severity >= android::base::ERROR && gCurrentUI != NULL) {
-        gCurrentUI->Print("E:%s\n", message);
+    if (severity >= android::base::ERROR && ui != nullptr) {
+        ui->Print("E:%s\n", message);
     } else {
         fprintf(stdout, "%c:%s\n", log_characters[severity], message);
     }
@@ -1421,7 +1411,7 @@ static void log_failure_code(ErrorCode code, const char *update_package) {
     };
     std::string log_content = android::base::Join(log_buffer, "\n");
     if (!android::base::WriteStringToFile(log_content, TEMPORARY_INSTALL_FILE)) {
-      PLOG(ERROR) << "failed to write " << TEMPORARY_INSTALL_FILE;
+        PLOG(ERROR) << "failed to write " << TEMPORARY_INSTALL_FILE;
     }
 
     // Also write the info into last_log.
@@ -1573,18 +1563,24 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (locale == nullptr && has_cache) {
-        load_locale_from_cache();
+    if (locale.empty()) {
+        if (has_cache) {
+            locale = load_locale_from_cache();
+        }
+
+        if (locale.empty()) {
+            locale = DEFAULT_LOCALE;
+        }
     }
-    printf("locale is [%s]\n", locale);
+
+    printf("locale is [%s]\n", locale.c_str());
     printf("stage is [%s]\n", stage);
     printf("reason is [%s]\n", reason);
 
     Device* device = make_device();
     ui = device->GetUI();
-    gCurrentUI = ui;
 
-    ui->SetLocale(locale);
+    ui->SetLocale(locale.c_str());
     ui->Init();
     // Set background string to "installing security update" for security update,
     // otherwise set it to "installing system update".
@@ -1599,7 +1595,7 @@ int main(int argc, char **argv) {
     if (show_text) ui->ShowText(true);
 
     struct selinux_opt seopts[] = {
-      { SELABEL_OPT_PATH, "/file_contexts" }
+        { SELABEL_OPT_PATH, "/file_contexts" }
     };
 
     sehandle = selabel_open(SELABEL_CTX_FILE, seopts, 1);
@@ -1771,7 +1767,7 @@ int main(int argc, char **argv) {
             break;
     }
     while (true) {
-      pause();
+        pause();
     }
     // Should be unreachable.
     return EXIT_SUCCESS;
