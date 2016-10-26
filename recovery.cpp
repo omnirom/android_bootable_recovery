@@ -90,6 +90,12 @@ static const struct option OPTIONS[] = {
   { NULL, 0, NULL, 0 },
 };
 
+// More bootreasons can be found in "system/core/bootstat/bootstat.cpp".
+static const std::vector<std::string> bootreason_blacklist {
+  "kernel_panic",
+  "Panic",
+};
+
 static const char *CACHE_LOG_DIR = "/cache/recovery";
 static const char *COMMAND_FILE = "/cache/recovery/command";
 static const char *LOG_FILE = "/cache/recovery/log";
@@ -1395,6 +1401,33 @@ static void set_retry_bootloader_message(int retry_count, int argc, char** argv)
     }
 }
 
+static bool bootreason_in_blacklist() {
+    char bootreason[PROPERTY_VALUE_MAX];
+    if (property_get("ro.boot.bootreason", bootreason, nullptr) > 0) {
+        for (const auto& str : bootreason_blacklist) {
+            if (strcasecmp(str.c_str(), bootreason) == 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static void log_failure_code(ErrorCode code, const char *update_package) {
+    std::vector<std::string> log_buffer = {
+        update_package,
+        "0",  // install result
+        "error: " + std::to_string(code),
+    };
+    std::string log_content = android::base::Join(log_buffer, "\n");
+    if (!android::base::WriteStringToFile(log_content, TEMPORARY_INSTALL_FILE)) {
+      PLOG(ERROR) << "failed to write " << TEMPORARY_INSTALL_FILE;
+    }
+
+    // Also write the info into last_log.
+    LOG(INFO) << log_content;
+}
+
 static ssize_t logbasename(
         log_id_t /* logId */,
         char /* prio */,
@@ -1620,19 +1653,12 @@ int main(int argc, char **argv) {
                       BATTERY_OK_PERCENTAGE);
             // Log the error code to last_install when installation skips due to
             // low battery.
-            std::vector<std::string> log_buffer = {
-                update_package,
-                "0",  // install result
-                "error: " + std::to_string(kLowBattery),
-            };
-            std::string log_content = android::base::Join(log_buffer, "\n");
-            if (!android::base::WriteStringToFile(log_content, LAST_INSTALL_FILE)) {
-                PLOG(ERROR) << "failed to write " << LAST_INSTALL_FILE;
-            }
-
-            // Also write the info into last_log.
-            LOG(INFO) << log_content;
-
+            log_failure_code(kLowBattery, update_package);
+            status = INSTALL_SKIPPED;
+        } else if (bootreason_in_blacklist()) {
+            // Skip update-on-reboot when bootreason is kernel_panic or similar
+            ui->Print("bootreason is in the blacklist; skip OTA installation\n");
+            log_failure_code(kBootreasonInBlacklist, update_package);
             status = INSTALL_SKIPPED;
         } else {
             status = install_package(update_package, &should_wipe_cache,
