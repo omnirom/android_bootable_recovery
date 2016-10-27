@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-#include "verifier.h"
-
 #include <errno.h>
+#include <malloc.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include <algorithm>
@@ -33,6 +31,9 @@
 #include "common.h"
 #include "print_sha1.h"
 #include "ui.h"
+#include "verifier.h"
+
+extern RecoveryUI* ui;
 
 static constexpr size_t MiB = 1024 * 1024;
 

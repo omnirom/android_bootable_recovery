@@ -20,9 +20,10 @@
 #include <string>
 #include <ziparchive/zip_archive.h>
 
+#include "common.h"
+
 enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE, INSTALL_SKIPPED,
         INSTALL_RETRY };
-
 // Install the package specified by root_path.  If INSTALL_SUCCESS is
 // returned and *wipe_cache is true on exit, caller should wipe the
 // cache partition.
