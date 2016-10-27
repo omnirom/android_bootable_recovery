@@ -43,6 +43,8 @@
 #include "ui.h"
 #include "verifier.h"
 
+extern RecoveryUI* ui;
+
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
 #define PUBLIC_KEYS_FILE "/res/keys"
 static constexpr const char* METADATA_PATH = "META-INF/com/android/metadata";
