@@ -2752,7 +2752,16 @@ int TWPartition::Decrypt_Adopted() {
 	char type_guid[80];
 	char part_guid[80];
 
-	if (gpt_disk_get_partition_info(fd, 2, type_guid, part_guid) == 0) {
+	// Look at partitions type guid until we reach the end or find the adopted partition
+	int p_adopted_num = 1;
+	while ( gpt_disk_get_partition_info(fd, p_adopted_num, type_guid, part_guid) == 0) {
+		if (strcmp(type_guid, TWGptAndroidExpand) == 0) {
+			break;
+		}
+		p_adopted_num += 1;
+	}
+
+	if (gpt_disk_get_partition_info(fd, p_adopted_num, type_guid, part_guid) == 0) {
 		LOGINFO("type: '%s'\n", type_guid);
 		LOGINFO("part: '%s'\n", part_guid);
 		Adopted_GUID = part_guid;
