@@ -183,6 +183,9 @@ bool write_bootloader_message(const bootloader_message& boot, std::string* err);
 bool write_bootloader_message(const std::vector<std::string>& options, std::string* err);
 bool clear_bootloader_message(std::string* err);
 
+// Writes the reboot-bootloader reboot reason to the bootloader_message.
+bool write_reboot_bootloader(std::string* err);
+
 bool read_wipe_package(std::string* package_data, size_t size, std::string* err);
 bool write_wipe_package(const std::string& package_data, std::string* err);
 
@@ -192,6 +195,7 @@ bool write_wipe_package(const std::string& package_data, std::string* err);
 
 // C Interface.
 bool write_bootloader_message(const char* options);
+bool write_reboot_bootloader(void);
 
 #endif  // ifdef __cplusplus
 
