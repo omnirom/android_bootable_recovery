@@ -23,9 +23,10 @@
 #include <string>
 #include <vector>
 
+#include <openssl/sha.h>
+
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
-#include "openssl/sha.h"
 
 static int CheckMode(int argc, char** argv) {
     if (argc < 3) {
@@ -129,15 +130,13 @@ static int PatchMode(int argc, char** argv) {
         printf("failed to parse patch args\n");
         return 1;
     }
-    std::vector<Value> patches;
-    std::vector<Value*> patch_ptrs;
+
+    std::vector<std::unique_ptr<Value>> patches;
     for (size_t i = 0; i < files.size(); ++i) {
-        patches.push_back(Value(VAL_BLOB,
-                                std::string(files[i].data.cbegin(), files[i].data.cend())));
-        patch_ptrs.push_back(&patches[i]);
+        patches.push_back(std::make_unique<Value>(
+                VAL_BLOB, std::string(files[i].data.cbegin(), files[i].data.cend())));
     }
-    return applypatch(argv[1], argv[2], argv[3], target_size,
-                      sha1s, patch_ptrs.data(), &bonus);
+    return applypatch(argv[1], argv[2], argv[3], target_size, sha1s, patches, &bonus);
 }
 
 // This program applies binary patches to files in a way that is safe
