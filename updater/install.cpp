@@ -1061,15 +1061,13 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     std::vector<std::string> patch_sha_str;
-    std::vector<Value*> patch_ptrs;
     for (int i = 0; i < patchcount; ++i) {
         patch_sha_str.push_back(patch_shas[i]->data);
-        patch_ptrs.push_back(patches[i].get());
     }
 
     int result = applypatch(source_filename, target_filename,
                             target_sha1, target_size,
-                            patch_sha_str, patch_ptrs.data(), NULL);
+                            patch_sha_str, patches, NULL);
 
     return StringValue(result == 0 ? "t" : "");
 }
