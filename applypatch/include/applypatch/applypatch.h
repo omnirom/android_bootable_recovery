@@ -20,10 +20,12 @@
 #include <stdint.h>
 #include <sys/stat.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "openssl/sha.h"
+#include <openssl/sha.h>
+
 #include "edify/expr.h"
 
 struct FileContents {
@@ -41,27 +43,26 @@ struct FileContents {
 
 typedef ssize_t (*SinkFn)(const unsigned char*, ssize_t, void*);
 
-// applypatch.c
+// applypatch.cpp
 int ShowLicenses();
 size_t FreeSpaceForFile(const char* filename);
 int CacheSizeCheck(size_t bytes);
 int ParseSha1(const char* str, uint8_t* digest);
 
-int applypatch_flash(const char* source_filename, const char* target_filename,
-                     const char* target_sha1_str, size_t target_size);
 int applypatch(const char* source_filename,
                const char* target_filename,
                const char* target_sha1_str,
                size_t target_size,
                const std::vector<std::string>& patch_sha1_str,
-               Value** patch_data,
-               Value* bonus_data);
+               const std::vector<std::unique_ptr<Value>>& patch_data,
+               const Value* bonus_data);
 int applypatch_check(const char* filename,
                      const std::vector<std::string>& patch_sha1_str);
+int applypatch_flash(const char* source_filename, const char* target_filename,
+                     const char* target_sha1_str, size_t target_size);
 
 int LoadFileContents(const char* filename, FileContents* file);
 int SaveFileContents(const char* filename, const FileContents* file);
-void FreeFileContents(FileContents* file);
 int FindMatchingPatch(uint8_t* sha1, const std::vector<std::string>& patch_sha1_str);
 
 // bsdiff.cpp

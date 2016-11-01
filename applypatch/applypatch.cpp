@@ -530,8 +530,8 @@ int applypatch(const char* source_filename,
                const char* target_sha1_str,
                size_t target_size,
                const std::vector<std::string>& patch_sha1_str,
-               Value** patch_data,
-               Value* bonus_data) {
+               const std::vector<std::unique_ptr<Value>>& patch_data,
+               const Value* bonus_data) {
     printf("patch %s: ", source_filename);
 
     if (target_filename[0] == '-' && target_filename[1] == '\0') {
@@ -546,8 +546,8 @@ int applypatch(const char* source_filename,
 
     FileContents copy_file;
     FileContents source_file;
-    const Value* source_patch_value = NULL;
-    const Value* copy_patch_value = NULL;
+    const Value* source_patch_value = nullptr;
+    const Value* copy_patch_value = nullptr;
 
     // We try to load the target file into the source_file object.
     if (LoadFileContents(target_filename, &source_file) == 0) {
@@ -571,11 +571,11 @@ int applypatch(const char* source_filename,
     if (!source_file.data.empty()) {
         int to_use = FindMatchingPatch(source_file.sha1, patch_sha1_str);
         if (to_use >= 0) {
-            source_patch_value = patch_data[to_use];
+            source_patch_value = patch_data[to_use].get();
         }
     }
 
-    if (source_patch_value == NULL) {
+    if (source_patch_value == nullptr) {
         source_file.data.clear();
         printf("source file is bad; trying copy\n");
 
@@ -587,10 +587,10 @@ int applypatch(const char* source_filename,
 
         int to_use = FindMatchingPatch(copy_file.sha1, patch_sha1_str);
         if (to_use >= 0) {
-            copy_patch_value = patch_data[to_use];
+            copy_patch_value = patch_data[to_use].get();
         }
 
-        if (copy_patch_value == NULL) {
+        if (copy_patch_value == nullptr) {
             // fail.
             printf("copy file doesn't match source SHA-1s either\n");
             return 1;
