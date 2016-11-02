@@ -40,6 +40,7 @@
 #include <vector>
 
 #include <android-base/parseint.h>
+#include <android-base/parsedouble.h>
 #include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <android-base/stringprintf.h>
@@ -119,58 +120,50 @@ static int make_parents(char* name) {
 //
 //    fs_type="ext4"   partition_type="EMMC"    location=device
 Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = nullptr;
     if (argc != 4 && argc != 5) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 4-5 args, got %d", name, argc);
     }
-    char* fs_type;
-    char* partition_type;
-    char* location;
-    char* mount_point;
-    char* mount_options;
-    bool has_mount_options;
+
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argc, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    }
+    const std::string& fs_type = args[0];
+    const std::string& partition_type = args[1];
+    const std::string& location = args[2];
+    const std::string& mount_point = args[3];
+    std::string mount_options;
+
     if (argc == 5) {
-        has_mount_options = true;
-        if (ReadArgs(state, argv, 5, &fs_type, &partition_type,
-                 &location, &mount_point, &mount_options) < 0) {
-            return NULL;
-        }
-    } else {
-        has_mount_options = false;
-        if (ReadArgs(state, argv, 4, &fs_type, &partition_type,
-                 &location, &mount_point) < 0) {
-            return NULL;
-        }
+        mount_options = args[4];
     }
 
-    if (strlen(fs_type) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "fs_type argument to %s() can't be empty", name);
-        goto done;
+    if (fs_type.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure, "fs_type argument to %s() can't be empty",
+                          name);
     }
-    if (strlen(partition_type) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "partition_type argument to %s() can't be empty",
-                   name);
-        goto done;
+    if (partition_type.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure, "partition_type argument to %s() can't be empty",
+                          name);
     }
-    if (strlen(location) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "location argument to %s() can't be empty", name);
-        goto done;
+    if (location.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure, "location argument to %s() can't be empty",
+                          name);
     }
-    if (strlen(mount_point) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "mount_point argument to %s() can't be empty",
-                   name);
-        goto done;
+    if (mount_point.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure, "mount_point argument to %s() can't be empty",
+                          name);
     }
 
     {
         char *secontext = NULL;
 
         if (sehandle) {
-            selabel_lookup(sehandle, &secontext, mount_point, 0755);
+            selabel_lookup(sehandle, &secontext, mount_point.c_str(), 0755);
             setfscreatecon(secontext);
         }
 
-        mkdir(mount_point, 0755);
+        mkdir(mount_point.c_str(), 0755);
 
         if (secontext) {
             freecon(secontext);
@@ -178,90 +171,71 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
         }
     }
 
-    if (mount(location, mount_point, fs_type,
-              MS_NOATIME | MS_NODEV | MS_NODIRATIME,
-              has_mount_options ? mount_options : "") < 0) {
+    if (mount(location.c_str(), mount_point.c_str(), fs_type.c_str(),
+              MS_NOATIME | MS_NODEV | MS_NODIRATIME, mount_options.c_str()) < 0) {
         uiPrintf(state, "%s: failed to mount %s at %s: %s\n",
-                 name, location, mount_point, strerror(errno));
-        result = strdup("");
-    } else {
-        result = mount_point;
+                 name, location.c_str(), mount_point.c_str(), strerror(errno));
+        return StringValue("");
     }
 
-done:
-    free(fs_type);
-    free(partition_type);
-    free(location);
-    if (result != mount_point) free(mount_point);
-    if (has_mount_options) free(mount_options);
-    return StringValue(result);
+    return StringValue(mount_point);
 }
 
 
 // is_mounted(mount_point)
 Value* IsMountedFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = nullptr;
     if (argc != 1) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
     }
-    char* mount_point;
-    if (ReadArgs(state, argv, 1, &mount_point) < 0) {
-        return NULL;
+
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argc, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
-    if (strlen(mount_point) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "mount_point argument to unmount() can't be empty");
-        goto done;
+    const std::string& mount_point = args[0];
+    if (mount_point.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure,
+                          "mount_point argument to unmount() can't be empty");
     }
 
     scan_mounted_volumes();
-    {
-        MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point);
-        if (vol == NULL) {
-            result = strdup("");
-        } else {
-            result = mount_point;
-        }
+    MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point.c_str());
+    if (vol == nullptr) {
+        return StringValue("");
     }
 
-done:
-    if (result != mount_point) free(mount_point);
-    return StringValue(result);
+    return StringValue(mount_point);
 }
 
 
 Value* UnmountFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = nullptr;
     if (argc != 1) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
     }
-    char* mount_point;
-    if (ReadArgs(state, argv, 1, &mount_point) < 0) {
-        return NULL;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argc, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
-    if (strlen(mount_point) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "mount_point argument to unmount() can't be empty");
-        goto done;
+    const std::string& mount_point = args[0];
+    if (mount_point.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure,
+                          "mount_point argument to unmount() can't be empty");
     }
 
     scan_mounted_volumes();
-    {
-        MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point);
-        if (vol == NULL) {
-            uiPrintf(state, "unmount of %s failed; no such volume\n", mount_point);
-            result = strdup("");
-        } else {
-            int ret = unmount_mounted_volume(vol);
-            if (ret != 0) {
-                uiPrintf(state, "unmount of %s failed (%d): %s\n",
-                         mount_point, ret, strerror(errno));
-            }
-            result = mount_point;
+    MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point.c_str());
+    if (vol == nullptr) {
+        uiPrintf(state, "unmount of %s failed; no such volume\n", mount_point.c_str());
+        return nullptr;
+    } else {
+        int ret = unmount_mounted_volume(vol);
+        if (ret != 0) {
+            uiPrintf(state, "unmount of %s failed (%d): %s\n",
+                     mount_point.c_str(), ret, strerror(errno));
         }
     }
 
-done:
-    if (result != mount_point) free(mount_point);
-    return StringValue(result);
+    return StringValue(mount_point);
 }
 
 static int exec_cmd(const char* path, char* const argv[]) {
@@ -287,116 +261,108 @@ static int exec_cmd(const char* path, char* const argv[]) {
 //    if fs_size > 0, that is the size to use
 //    if fs_size < 0, then reserve that many bytes at the end of the partition (not for "f2fs")
 Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = nullptr;
     if (argc != 5) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 5 args, got %d", name, argc);
     }
-    char* fs_type;
-    char* partition_type;
-    char* location;
-    char* fs_size;
-    char* mount_point;
 
-    if (ReadArgs(state, argv, 5, &fs_type, &partition_type, &location, &fs_size, &mount_point) < 0) {
-        return NULL;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argc, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
+    const std::string& fs_type = args[0];
+    const std::string& partition_type = args[1];
+    const std::string& location = args[2];
+    const std::string& fs_size = args[3];
+    const std::string& mount_point = args[4];
 
-    if (strlen(fs_type) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "fs_type argument to %s() can't be empty", name);
-        goto done;
+    if (fs_type.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure, "fs_type argument to %s() can't be empty",
+                          name);
     }
-    if (strlen(partition_type) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "partition_type argument to %s() can't be empty",
-                   name);
-        goto done;
+    if (partition_type.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure,
+                          "partition_type argument to %s() can't be empty", name);
     }
-    if (strlen(location) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "location argument to %s() can't be empty", name);
-        goto done;
+    if (location.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure, "location argument to %s() can't be empty",
+                          name);
     }
-
-    if (strlen(mount_point) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "mount_point argument to %s() can't be empty",
-                   name);
-        goto done;
+    if (mount_point.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure,
+                          "mount_point argument to %s() can't be empty", name);
     }
 
-    if (strcmp(fs_type, "ext4") == 0) {
-        int status = make_ext4fs(location, atoll(fs_size), mount_point, sehandle);
+    int64_t size;
+    if (!android::base::ParseInt(fs_size.c_str(), &size)) {
+        return ErrorAbort(state, kArgsParsingFailure,
+                          "%s: failed to parse int in %s\n", name, fs_size.c_str());
+    }
+
+    if (fs_type == "ext4") {
+        int status = make_ext4fs(location.c_str(), size, mount_point.c_str(), sehandle);
         if (status != 0) {
             printf("%s: make_ext4fs failed (%d) on %s",
-                    name, status, location);
-            result = strdup("");
-            goto done;
+                    name, status, location.c_str());
+            return StringValue("");
         }
-        result = location;
-    } else if (strcmp(fs_type, "f2fs") == 0) {
-        char *num_sectors;
-        if (asprintf(&num_sectors, "%lld", atoll(fs_size) / 512) <= 0) {
-            printf("format_volume: failed to create %s command for %s\n", fs_type, location);
-            result = strdup("");
-            goto done;
+        return StringValue(location);
+    } else if (fs_type == "f2fs") {
+        if (size < 0) {
+            printf("fs_size can't be negative for f2fs: %s", fs_size.c_str());
+            return StringValue("");
         }
+        std::string num_sectors = std::to_string(size / 512);
+
         const char *f2fs_path = "/sbin/mkfs.f2fs";
-        const char* const f2fs_argv[] = {"mkfs.f2fs", "-t", "-d1", location, num_sectors, NULL};
+        const char* const f2fs_argv[] = {"mkfs.f2fs", "-t", "-d1", location.c_str(),
+                num_sectors.c_str(), nullptr};
         int status = exec_cmd(f2fs_path, (char* const*)f2fs_argv);
-        free(num_sectors);
         if (status != 0) {
             printf("%s: mkfs.f2fs failed (%d) on %s",
-                    name, status, location);
-            result = strdup("");
-            goto done;
+                    name, status, location.c_str());
+            return StringValue("");
         }
-        result = location;
+        return StringValue(location);
     } else {
         printf("%s: unsupported fs_type \"%s\" partition_type \"%s\"",
-                name, fs_type, partition_type);
+                name, fs_type.c_str(), partition_type.c_str());
     }
 
-done:
-    free(fs_type);
-    free(partition_type);
-    if (result != location) free(location);
-    return StringValue(result);
+    return nullptr;
 }
 
 Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = nullptr;
     if (argc != 2) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
     }
 
-    char* src_name;
-    char* dst_name;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argc, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    }
+    const std::string& src_name = args[0];
+    std::string& dst_name = args[1];
 
-    if (ReadArgs(state, argv, 2, &src_name, &dst_name) < 0) {
-        return NULL;
+    if (src_name.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure, "src_name argument to %s() can't be empty",
+                          name);
     }
-    if (strlen(src_name) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "src_name argument to %s() can't be empty", name);
-        goto done;
+    if (dst_name.empty()) {
+        return ErrorAbort(state, kArgsParsingFailure, "dst_name argument to %s() can't be empty",
+                          name);
     }
-    if (strlen(dst_name) == 0) {
-        ErrorAbort(state, kArgsParsingFailure, "dst_name argument to %s() can't be empty", name);
-        goto done;
-    }
-    if (make_parents(dst_name) != 0) {
-        ErrorAbort(state, kFileRenameFailure, "Creating parent of %s failed, error %s",
-          dst_name, strerror(errno));
-    } else if (access(dst_name, F_OK) == 0 && access(src_name, F_OK) != 0) {
+    if (make_parents(&dst_name[0]) != 0) {
+        return ErrorAbort(state, kFileRenameFailure, "Creating parent of %s failed, error %s",
+                          dst_name.c_str(), strerror(errno));
+    } else if (access(dst_name.c_str(), F_OK) == 0 && access(src_name.c_str(), F_OK) != 0) {
         // File was already moved
-        result = dst_name;
-    } else if (rename(src_name, dst_name) != 0) {
-        ErrorAbort(state, kFileRenameFailure, "Rename of %s to %s failed, error %s",
-          src_name, dst_name, strerror(errno));
-    } else {
-        result = dst_name;
+        return StringValue(dst_name);
+    } else if (rename(src_name.c_str(), dst_name.c_str()) != 0) {
+        return ErrorAbort(state, kFileRenameFailure, "Rename of %s to %s failed, error %s",
+                          src_name.c_str(), dst_name.c_str(), strerror(errno));
     }
 
-done:
-    free(src_name);
-    if (result != dst_name) free(dst_name);
-    return StringValue(result);
+    return StringValue(dst_name);
 }
 
 Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -424,20 +390,28 @@ Value* ShowProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 2) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
     }
-    char* frac_str;
-    char* sec_str;
-    if (ReadArgs(state, argv, 2, &frac_str, &sec_str) < 0) {
-        return NULL;
-    }
 
-    double frac = strtod(frac_str, NULL);
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argc, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    }
+    const std::string& frac_str = args[0];
+    const std::string& sec_str = args[1];
+
+    double frac;
+    if (!android::base::ParseDouble(frac_str.c_str(), &frac)) {
+        return ErrorAbort(state, kArgsParsingFailure,
+                          "%s: failed to parse double in %s\n", name, frac_str.c_str());
+    }
     int sec;
-    android::base::ParseInt(sec_str, &sec);
+    if (!android::base::ParseInt(sec_str.c_str(), &sec)) {
+        return ErrorAbort(state, kArgsParsingFailure,
+                          "%s: failed to parse int in %s\n", name, sec_str.c_str());
+    }
 
     UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
     fprintf(ui->cmd_pipe, "progress %f %d\n", frac, sec);
 
-    free(sec_str);
     return StringValue(frac_str);
 }
 
@@ -445,12 +419,18 @@ Value* SetProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 1) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
     }
-    char* frac_str;
-    if (ReadArgs(state, argv, 1, &frac_str) < 0) {
-        return NULL;
-    }
 
-    double frac = strtod(frac_str, NULL);
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 1, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    }
+    const std::string& frac_str = args[0];
+
+    double frac;
+    if (!android::base::ParseDouble(frac_str.c_str(), &frac)) {
+        return ErrorAbort(state, kArgsParsingFailure,
+                          "%s: failed to parse double in %s\n", name, frac_str.c_str());
+    }
 
     UpdaterInfo* ui = (UpdaterInfo*)(state->cookie);
     fprintf(ui->cmd_pipe, "set_progress %f\n", frac);
@@ -464,9 +444,13 @@ Value* PackageExtractDirFn(const char* name, State* state,
     if (argc != 2) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
     }
-    char* zip_path;
-    char* dest_path;
-    if (ReadArgs(state, argv, 2, &zip_path, &dest_path) < 0) return NULL;
+
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 2, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    }
+    const std::string& zip_path = args[0];
+    const std::string& dest_path = args[1];
 
     ZipArchiveHandle za = ((UpdaterInfo*)(state->cookie))->package_zip;
 
@@ -475,8 +459,6 @@ Value* PackageExtractDirFn(const char* name, State* state,
 
     bool success = ExtractPackageRecursive(za, zip_path, dest_path, &timestamp, sehandle);
 
-    free(zip_path);
-    free(dest_path);
     return StringValue(success ? "t" : "");
 }
 
@@ -499,54 +481,57 @@ Value* PackageExtractFileFn(const char* name, State* state,
 
         ZipArchiveHandle za = ((UpdaterInfo*)(state->cookie))->package_zip;
 
-        char* zip_path;
-        char* dest_path;
-        if (ReadArgs(state, argv, 2, &zip_path, &dest_path) < 0) return NULL;
+        std::vector<std::string> args;
+        if (!ReadArgs(state, 2, argv, &args)) {
+            return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %d args", name,
+                              argc);
+        }
+        const std::string& zip_path = args[0];
+        const std::string& dest_path = args[1];
 
-        ZipString zip_string_path(zip_path);
+        ZipString zip_string_path(zip_path.c_str());
         ZipEntry entry;
         if (FindEntry(za, zip_string_path, &entry) != 0) {
-            printf("%s: no %s in package\n", name, zip_path);
-            goto done2;
+            printf("%s: no %s in package\n", name, zip_path.c_str());
+            return StringValue("");
         }
 
-        {
-            int fd = TEMP_FAILURE_RETRY(ota_open(dest_path, O_WRONLY | O_CREAT | O_TRUNC,
-                  S_IRUSR | S_IWUSR));
-            if (fd == -1) {
-                printf("%s: can't open %s for write: %s\n", name, dest_path, strerror(errno));
-                goto done2;
-            }
-            success = ExtractEntryToFile(za, &entry, fd);
-            if (ota_fsync(fd) == -1) {
-                printf("fsync of \"%s\" failed: %s\n", dest_path, strerror(errno));
-                success = false;
-            }
-            if (ota_close(fd) == -1) {
-                printf("close of \"%s\" failed: %s\n", dest_path, strerror(errno));
-                success = false;
-            }
+        int fd = TEMP_FAILURE_RETRY(ota_open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
+              S_IRUSR | S_IWUSR));
+        if (fd == -1) {
+            printf("%s: can't open %s for write: %s\n", name, dest_path.c_str(), strerror(errno));
+            return StringValue("");
+        }
+        success = ExtractEntryToFile(za, &entry, fd);
+        if (ota_fsync(fd) == -1) {
+            printf("fsync of \"%s\" failed: %s\n", dest_path.c_str(), strerror(errno));
+            success = false;
+        }
+        if (ota_close(fd) == -1) {
+            printf("close of \"%s\" failed: %s\n", dest_path.c_str(), strerror(errno));
+            success = false;
         }
 
-      done2:
-        free(zip_path);
-        free(dest_path);
         return StringValue(success ? "t" : "");
     } else {
         // The one-argument version returns the contents of the file
         // as the result.
 
-        char* zip_path;
-        if (ReadArgs(state, argv, 1, &zip_path) < 0) return NULL;
+        std::vector<std::string> args;
+        if (!ReadArgs(state, 1, argv, &args)) {
+            return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %d args", name,
+                              argc);
+        }
+        const std::string& zip_path = args[0];
 
         Value* v = new Value(VAL_INVALID, "");
 
         ZipArchiveHandle za = ((UpdaterInfo*)(state->cookie))->package_zip;
-        ZipString zip_string_path(zip_path);
+        ZipString zip_string_path(zip_path.c_str());
         ZipEntry entry;
         if (FindEntry(za, zip_string_path, &entry) != 0) {
-            printf("%s: no %s in package\n", name, zip_path);
-            goto done1;
+            printf("%s: no %s in package\n", name, zip_path.c_str());
+            return v;
         }
 
         v->data.resize(entry.uncompressed_length);
@@ -557,8 +542,6 @@ Value* PackageExtractFileFn(const char* name, State* state,
             success = true;
         }
 
-      done1:
-        free(zip_path);
         if (!success) {
             v->data.clear();
         } else {
@@ -579,34 +562,31 @@ Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
         return nullptr;
     }
 
-    char** srcs = ReadVarArgs(state, argc-1, argv+1);
-    if (srcs == NULL) {
-        return NULL;
+    std::vector<std::string> srcs;
+    if (!ReadArgs(state, argc-1, argv+1, &srcs)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
 
     int bad = 0;
-    int i;
-    for (i = 0; i < argc-1; ++i) {
-        if (unlink(srcs[i]) < 0) {
+    for (int i = 0; i < argc-1; ++i) {
+        if (unlink(srcs[i].c_str()) < 0) {
             if (errno != ENOENT) {
                 printf("%s: failed to remove %s: %s\n",
-                        name, srcs[i], strerror(errno));
+                        name, srcs[i].c_str(), strerror(errno));
                 ++bad;
             }
         }
-        if (make_parents(srcs[i])) {
+        if (make_parents(&srcs[i][0])) {
             printf("%s: failed to symlink %s to %s: making parents failed\n",
-                    name, srcs[i], target.c_str());
+                    name, srcs[i].c_str(), target.c_str());
             ++bad;
         }
-        if (symlink(target.c_str(), srcs[i]) < 0) {
+        if (symlink(target.c_str(), srcs[i].c_str()) < 0) {
             printf("%s: failed to symlink %s to %s: %s\n",
-                    name, srcs[i], target.c_str(), strerror(errno));
+                    name, srcs[i].c_str(), target.c_str(), strerror(errno));
             ++bad;
         }
-        free(srcs[i]);
     }
-    free(srcs);
     if (bad) {
         return ErrorAbort(state, kSymlinkFailure, "%s: some symlinks failed", name);
     }
@@ -625,12 +605,13 @@ struct perm_parsed_args {
     bool has_dmode;
     mode_t dmode;
     bool has_selabel;
-    char* selabel;
+    const char* selabel;
     bool has_capabilities;
     uint64_t capabilities;
 };
 
-static struct perm_parsed_args ParsePermArgs(State * state, int argc, char** args) {
+static struct perm_parsed_args ParsePermArgs(State * state, int argc,
+                                             const std::vector<std::string>& args) {
     int i;
     struct perm_parsed_args parsed;
     int bad = 0;
@@ -639,84 +620,84 @@ static struct perm_parsed_args ParsePermArgs(State * state, int argc, char** arg
     memset(&parsed, 0, sizeof(parsed));
 
     for (i = 1; i < argc; i += 2) {
-        if (strcmp("uid", args[i]) == 0) {
+        if (args[i] == "uid") {
             int64_t uid;
-            if (sscanf(args[i+1], "%" SCNd64, &uid) == 1) {
+            if (sscanf(args[i+1].c_str(), "%" SCNd64, &uid) == 1) {
                 parsed.uid = uid;
                 parsed.has_uid = true;
             } else {
-                uiPrintf(state, "ParsePermArgs: invalid UID \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid UID \"%s\"\n", args[i + 1].c_str());
                 bad++;
             }
             continue;
         }
-        if (strcmp("gid", args[i]) == 0) {
+        if (args[i] == "gid") {
             int64_t gid;
-            if (sscanf(args[i+1], "%" SCNd64, &gid) == 1) {
+            if (sscanf(args[i+1].c_str(), "%" SCNd64, &gid) == 1) {
                 parsed.gid = gid;
                 parsed.has_gid = true;
             } else {
-                uiPrintf(state, "ParsePermArgs: invalid GID \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid GID \"%s\"\n", args[i + 1].c_str());
                 bad++;
             }
             continue;
         }
-        if (strcmp("mode", args[i]) == 0) {
+        if (args[i] == "mode") {
             int32_t mode;
-            if (sscanf(args[i+1], "%" SCNi32, &mode) == 1) {
+            if (sscanf(args[i+1].c_str(), "%" SCNi32, &mode) == 1) {
                 parsed.mode = mode;
                 parsed.has_mode = true;
             } else {
-                uiPrintf(state, "ParsePermArgs: invalid mode \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid mode \"%s\"\n", args[i + 1].c_str());
                 bad++;
             }
             continue;
         }
-        if (strcmp("dmode", args[i]) == 0) {
+        if (args[i] == "dmode") {
             int32_t mode;
-            if (sscanf(args[i+1], "%" SCNi32, &mode) == 1) {
+            if (sscanf(args[i+1].c_str(), "%" SCNi32, &mode) == 1) {
                 parsed.dmode = mode;
                 parsed.has_dmode = true;
             } else {
-                uiPrintf(state, "ParsePermArgs: invalid dmode \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid dmode \"%s\"\n", args[i + 1].c_str());
                 bad++;
             }
             continue;
         }
-        if (strcmp("fmode", args[i]) == 0) {
+        if (args[i] == "fmode") {
             int32_t mode;
-            if (sscanf(args[i+1], "%" SCNi32, &mode) == 1) {
+            if (sscanf(args[i+1].c_str(), "%" SCNi32, &mode) == 1) {
                 parsed.fmode = mode;
                 parsed.has_fmode = true;
             } else {
-                uiPrintf(state, "ParsePermArgs: invalid fmode \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid fmode \"%s\"\n", args[i + 1].c_str());
                 bad++;
             }
             continue;
         }
-        if (strcmp("capabilities", args[i]) == 0) {
+        if (args[i] == "capabilities") {
             int64_t capabilities;
-            if (sscanf(args[i+1], "%" SCNi64, &capabilities) == 1) {
+            if (sscanf(args[i+1].c_str(), "%" SCNi64, &capabilities) == 1) {
                 parsed.capabilities = capabilities;
                 parsed.has_capabilities = true;
             } else {
-                uiPrintf(state, "ParsePermArgs: invalid capabilities \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid capabilities \"%s\"\n", args[i + 1].c_str());
                 bad++;
             }
             continue;
         }
-        if (strcmp("selabel", args[i]) == 0) {
-            if (args[i+1][0] != '\0') {
-                parsed.selabel = args[i+1];
+        if (args[i] == "selabel") {
+            if (!args[i+1].empty()) {
+                parsed.selabel = args[i+1].c_str();
                 parsed.has_selabel = true;
             } else {
-                uiPrintf(state, "ParsePermArgs: invalid selabel \"%s\"\n", args[i + 1]);
+                uiPrintf(state, "ParsePermArgs: invalid selabel \"%s\"\n", args[i + 1].c_str());
                 bad++;
             }
             continue;
         }
         if (max_warnings != 0) {
-            printf("ParsedPermArgs: unknown key \"%s\", ignoring\n", args[i]);
+            printf("ParsedPermArgs: unknown key \"%s\", ignoring\n", args[i].c_str());
             max_warnings--;
             if (max_warnings == 0) {
                 printf("ParsedPermArgs: suppressing further warnings\n");
@@ -825,48 +806,34 @@ static int do_SetMetadataRecursive(const char* filename, const struct stat *stat
 }
 
 static Value* SetMetadataFn(const char* name, State* state, int argc, Expr* argv[]) {
-    int bad = 0;
-    struct stat sb;
-    Value* result = NULL;
-
-    bool recursive = (strcmp(name, "set_metadata_recursive") == 0);
-
     if ((argc % 2) != 1) {
         return ErrorAbort(state, kArgsParsingFailure,
                           "%s() expects an odd number of arguments, got %d", name, argc);
     }
 
-    char** args = ReadVarArgs(state, argc, argv);
-    if (args == NULL) return NULL;
-
-    if (lstat(args[0], &sb) == -1) {
-        result = ErrorAbort(state, kSetMetadataFailure, "%s: Error on lstat of \"%s\": %s",
-                            name, args[0], strerror(errno));
-        goto done;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argc, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
 
-    {
-        struct perm_parsed_args parsed = ParsePermArgs(state, argc, args);
-
-        if (recursive) {
-            recursive_parsed_args = parsed;
-            recursive_state = state;
-            bad += nftw(args[0], do_SetMetadataRecursive, 30, FTW_CHDIR | FTW_DEPTH | FTW_PHYS);
-            memset(&recursive_parsed_args, 0, sizeof(recursive_parsed_args));
-            recursive_state = NULL;
-        } else {
-            bad += ApplyParsedPerms(state, args[0], &sb, parsed);
-        }
+    struct stat sb;
+    if (lstat(args[0].c_str(), &sb) == -1) {
+        return ErrorAbort(state, kSetMetadataFailure, "%s: Error on lstat of \"%s\": %s",
+                          name, args[0].c_str(), strerror(errno));
     }
 
-done:
-    for (int i = 0; i < argc; ++i) {
-        free(args[i]);
-    }
-    free(args);
+    struct perm_parsed_args parsed = ParsePermArgs(state, argc, args);
+    int bad = 0;
+    bool recursive = (strcmp(name, "set_metadata_recursive") == 0);
 
-    if (result != NULL) {
-        return result;
+    if (recursive) {
+        recursive_parsed_args = parsed;
+        recursive_state = state;
+        bad += nftw(args[0].c_str(), do_SetMetadataRecursive, 30, FTW_CHDIR | FTW_DEPTH | FTW_PHYS);
+        memset(&recursive_parsed_args, 0, sizeof(recursive_parsed_args));
+        recursive_state = NULL;
+    } else {
+        bad += ApplyParsedPerms(state, args[0].c_str(), &sb, parsed);
     }
 
     if (bad > 0) {
@@ -896,113 +863,80 @@ Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 //   per line. # comment lines,blank lines, lines without '=' ignored),
 //   and returns the value for 'key' (or "" if it isn't defined).
 Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* result = NULL;
-    char* buffer = NULL;
-    char* filename;
-    char* key;
-    if (ReadArgs(state, argv, 2, &filename, &key) < 0) {
-        return NULL;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 2, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
+    const std::string& filename = args[0];
+    const std::string& key = args[1];
 
     struct stat st;
-    if (stat(filename, &st) < 0) {
-        ErrorAbort(state, kFileGetPropFailure, "%s: failed to stat \"%s\": %s", name, filename,
-                   strerror(errno));
-        goto done;
+    if (stat(filename.c_str(), &st) < 0) {
+        return ErrorAbort(state, kFileGetPropFailure, "%s: failed to stat \"%s\": %s", name,
+                          filename.c_str(), strerror(errno));
     }
 
 #define MAX_FILE_GETPROP_SIZE    65536
 
     if (st.st_size > MAX_FILE_GETPROP_SIZE) {
-        ErrorAbort(state, kFileGetPropFailure, "%s too large for %s (max %d)", filename, name,
-                   MAX_FILE_GETPROP_SIZE);
-        goto done;
+        return ErrorAbort(state, kFileGetPropFailure, "%s too large for %s (max %d)",
+                          filename.c_str(), name, MAX_FILE_GETPROP_SIZE);
     }
 
-    buffer = reinterpret_cast<char*>(malloc(st.st_size+1));
-    if (buffer == NULL) {
-        ErrorAbort(state, kFileGetPropFailure, "%s: failed to alloc %zu bytes", name,
-                   static_cast<size_t>(st.st_size+1));
-        goto done;
+    std::string buffer(st.st_size, '\0');
+    FILE* f = ota_fopen(filename.c_str(), "rb");
+    if (f == nullptr) {
+        return ErrorAbort(state, kFileOpenFailure, "%s: failed to open %s: %s", name,
+                          filename.c_str(), strerror(errno));
     }
 
-    FILE* f;
-    f = ota_fopen(filename, "rb");
-    if (f == NULL) {
-        ErrorAbort(state, kFileOpenFailure, "%s: failed to open %s: %s", name, filename,
-                   strerror(errno));
-        goto done;
-    }
-
-    if (ota_fread(buffer, 1, st.st_size, f) != static_cast<size_t>(st.st_size)) {
+    if (ota_fread(&buffer[0], 1, st.st_size, f) != static_cast<size_t>(st.st_size)) {
         ErrorAbort(state, kFreadFailure, "%s: failed to read %zu bytes from %s",
-                   name, static_cast<size_t>(st.st_size), filename);
+                   name, static_cast<size_t>(st.st_size), filename.c_str());
         ota_fclose(f);
-        goto done;
+        return nullptr;
     }
-    buffer[st.st_size] = '\0';
 
     ota_fclose(f);
 
-    char* line;
-    line = strtok(buffer, "\n");
-    do {
-        // skip whitespace at start of line
-        while (*line && isspace(*line)) ++line;
+    std::vector<std::string> lines = android::base::Split(buffer, "\n");
+    for (size_t i = 0; i < lines.size(); i++) {
+        std::string line = android::base::Trim(lines[i]);
 
         // comment or blank line: skip to next line
-        if (*line == '\0' || *line == '#') continue;
-
-        char* equal = strchr(line, '=');
-        if (equal == NULL) {
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        size_t equal_pos = line.find('=');
+        if (equal_pos == std::string::npos) {
             continue;
         }
 
         // trim whitespace between key and '='
-        char* key_end = equal-1;
-        while (key_end > line && isspace(*key_end)) --key_end;
-        key_end[1] = '\0';
+        std::string str = android::base::Trim(line.substr(0, equal_pos - 1));
 
         // not the key we're looking for
-        if (strcmp(key, line) != 0) continue;
+        if (key != str) continue;
 
-        // skip whitespace after the '=' to the start of the value
-        char* val_start = equal+1;
-        while(*val_start && isspace(*val_start)) ++val_start;
+        return StringValue(android::base::Trim(line.substr(equal_pos + 1)));
+    }
 
-        // trim trailing whitespace
-        char* val_end = val_start + strlen(val_start)-1;
-        while (val_end > val_start && isspace(*val_end)) --val_end;
-        val_end[1] = '\0';
-
-        result = strdup(val_start);
-        break;
-
-    } while ((line = strtok(NULL, "\n")));
-
-    if (result == NULL) result = strdup("");
-
-  done:
-    free(filename);
-    free(key);
-    free(buffer);
-    return StringValue(result);
+    return StringValue("");
 }
 
 // apply_patch_space(bytes)
 Value* ApplyPatchSpaceFn(const char* name, State* state,
                          int argc, Expr* argv[]) {
-    char* bytes_str;
-    if (ReadArgs(state, argv, 1, &bytes_str) < 0) {
-        return NULL;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 1, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
+    const std::string& bytes_str = args[0];
 
     size_t bytes;
-    if (!android::base::ParseUint(bytes_str, &bytes)) {
-        ErrorAbort(state, kArgsParsingFailure, "%s(): can't parse \"%s\" as byte count\n\n",
-                   name, bytes_str);
-        free(bytes_str);
-        return nullptr;
+    if (!android::base::ParseUint(bytes_str.c_str(), &bytes)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s(): can't parse \"%s\" as byte count\n\n",
+                          name, bytes_str.c_str());
     }
 
     return StringValue(CacheSizeCheck(bytes) ? "" : "t");
@@ -1013,61 +947,51 @@ Value* ApplyPatchSpaceFn(const char* name, State* state,
 Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc < 6 || (argc % 2) == 1) {
         return ErrorAbort(state, kArgsParsingFailure, "%s(): expected at least 6 args and an "
-                                 "even number, got %d", name, argc);
+                          "even number, got %d", name, argc);
     }
 
-    char* source_filename;
-    char* target_filename;
-    char* target_sha1;
-    char* target_size_str;
-    if (ReadArgs(state, argv, 4, &source_filename, &target_filename,
-                 &target_sha1, &target_size_str) < 0) {
-        return NULL;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 4, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
+    const std::string& source_filename = args[0];
+    const std::string& target_filename = args[1];
+    const std::string& target_sha1 = args[2];
+    const std::string& target_size_str = args[3];
 
     size_t target_size;
-    if (!android::base::ParseUint(target_size_str, &target_size)) {
-        ErrorAbort(state, kArgsParsingFailure, "%s(): can't parse \"%s\" as byte count",
-                   name, target_size_str);
-        free(source_filename);
-        free(target_filename);
-        free(target_sha1);
-        free(target_size_str);
-        return nullptr;
+    if (!android::base::ParseUint(target_size_str.c_str(), &target_size)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s(): can't parse \"%s\" as byte count",
+                          name, target_size_str.c_str());
     }
 
     int patchcount = (argc-4) / 2;
-    std::unique_ptr<Value*> arg_values(ReadValueVarArgs(state, argc-4, argv+4));
-    if (!arg_values) {
+    std::vector<std::unique_ptr<Value>> arg_values;
+    if (!ReadValueArgs(state, argc-4, argv+4, &arg_values)) {
         return nullptr;
-    }
-    std::vector<std::unique_ptr<Value>> patch_shas;
-    std::vector<std::unique_ptr<Value>> patches;
-    // Protect values by unique_ptrs first to get rid of memory leak.
-    for (int i = 0; i < patchcount * 2; i += 2) {
-        patch_shas.emplace_back(arg_values.get()[i]);
-        patches.emplace_back(arg_values.get()[i+1]);
     }
 
     for (int i = 0; i < patchcount; ++i) {
-        if (patch_shas[i]->type != VAL_STRING) {
-            ErrorAbort(state, kArgsParsingFailure, "%s(): sha-1 #%d is not string", name, i);
-            return nullptr;
+        if (arg_values[i * 2]->type != VAL_STRING) {
+            return ErrorAbort(state, kArgsParsingFailure, "%s(): sha-1 #%d is not string", name,
+                              i * 2);
         }
-        if (patches[i]->type != VAL_BLOB) {
-            ErrorAbort(state, kArgsParsingFailure, "%s(): patch #%d is not blob", name, i);
-            return nullptr;
+        if (arg_values[i * 2 + 1]->type != VAL_BLOB) {
+            return ErrorAbort(state, kArgsParsingFailure, "%s(): patch #%d is not blob", name,
+                              i * 2 + 1);
         }
     }
 
     std::vector<std::string> patch_sha_str;
+    std::vector<std::unique_ptr<Value>> patches;
     for (int i = 0; i < patchcount; ++i) {
-        patch_sha_str.push_back(patch_shas[i]->data);
+        patch_sha_str.push_back(arg_values[i * 2]->data);
+        patches.push_back(std::move(arg_values[i * 2 + 1]));
     }
 
-    int result = applypatch(source_filename, target_filename,
-                            target_sha1, target_size,
-                            patch_sha_str, patches, NULL);
+    int result = applypatch(source_filename.c_str(), target_filename.c_str(),
+                            target_sha1.c_str(), target_size,
+                            patch_sha_str, patches, nullptr);
 
     return StringValue(result == 0 ? "t" : "");
 }
@@ -1080,17 +1004,17 @@ Value* ApplyPatchCheckFn(const char* name, State* state,
                           name, argc);
     }
 
-    char* filename;
-    if (ReadArgs(state, argv, 1, &filename) < 0) {
-        return nullptr;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 1, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
+    const std::string& filename = args[0];
 
     std::vector<std::string> sha1s;
-    if (!ReadArgs(state, argc-1, argv+1, &sha1s)) {
-        return nullptr;
+    if (!ReadArgs(state, argc - 1, argv + 1, &sha1s)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
-
-    int result = applypatch_check(filename, sha1s);
+    int result = applypatch_check(filename.c_str(), sha1s);
 
     return StringValue(result == 0 ? "t" : "");
 }
@@ -1098,19 +1022,12 @@ Value* ApplyPatchCheckFn(const char* name, State* state,
 // This is the updater side handler for ui_print() in edify script. Contents
 // will be sent over to the recovery side for on-screen display.
 Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char** args = ReadVarArgs(state, argc, argv);
-    if (args == NULL) {
-        return NULL;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argc, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
 
-    std::string buffer;
-    for (int i = 0; i < argc; ++i) {
-        buffer += args[i];
-        free(args[i]);
-    }
-    free(args);
-
-    buffer += "\n";
+    std::string buffer = android::base::Join(args, "") + "\n";
     uiPrint(state, buffer);
     return StringValue(buffer);
 }
@@ -1127,14 +1044,17 @@ Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc < 1) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects at least 1 arg", name);
     }
-    char** args = ReadVarArgs(state, argc, argv);
-    if (args == NULL) {
-        return NULL;
+
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argc, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
 
-    char** args2 = reinterpret_cast<char**>(malloc(sizeof(char*) * (argc+1)));
-    memcpy(args2, args, sizeof(char*) * argc);
-    args2[argc] = NULL;
+    char* args2[argc+1];
+    for (int i = 0; i < argc; i++) {
+        args2[i] = &args[i][0];
+    }
+    args2[argc] = nullptr;
 
     printf("about to run program [%s] with %d args\n", args2[0], argc);
 
@@ -1156,13 +1076,6 @@ Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
                 WTERMSIG(status));
     }
 
-    int i;
-    for (i = 0; i < argc; ++i) {
-        free(args[i]);
-    }
-    free(args);
-    free(args2);
-
     return StringValue(android::base::StringPrintf("%d", status));
 }
 
@@ -1179,13 +1092,9 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects at least 1 arg", name);
     }
 
-    std::unique_ptr<Value*> arg_values(ReadValueVarArgs(state, argc, argv));
-    if (arg_values == nullptr) {
-        return nullptr;
-    }
     std::vector<std::unique_ptr<Value>> args;
-    for (int i = 0; i < argc; ++i) {
-        args.emplace_back(arg_values.get()[i]);
+    if (!ReadValueArgs(state, argc, argv, &args)) {
+        return nullptr;
     }
 
     if (args[0]->type == VAL_INVALID) {
@@ -1221,17 +1130,20 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 1) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
     }
-    char* filename;
-    if (ReadArgs(state, argv, 1, &filename) < 0) return NULL;
+
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 1, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    }
+    const std::string& filename = args[0];
 
     Value* v = new Value(VAL_INVALID, "");
 
     FileContents fc;
-    if (LoadFileContents(filename, &fc) == 0) {
+    if (LoadFileContents(filename.c_str(), &fc) == 0) {
         v->type = VAL_BLOB;
         v->data = std::string(fc.data.begin(), fc.data.end());
     }
-    free(filename);
     return v;
 }
 
@@ -1249,27 +1161,27 @@ Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
     }
 
-    char* filename;
-    char* property;
-    if (ReadArgs(state, argv, 2, &filename, &property) < 0) return NULL;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 2, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    }
+    const std::string& filename = args[0];
+    const std::string& property = args[1];
 
     // zero out the 'command' field of the bootloader message.
     char buffer[80];
     memset(buffer, 0, sizeof(((struct bootloader_message*)0)->command));
-    FILE* f = ota_fopen(filename, "r+b");
+    FILE* f = ota_fopen(filename.c_str(), "r+b");
     fseek(f, offsetof(struct bootloader_message, command), SEEK_SET);
     ota_fwrite(buffer, sizeof(((struct bootloader_message*)0)->command), 1, f);
     ota_fclose(f);
-    free(filename);
 
     std::string reboot_cmd = "reboot,";
-    if (property != nullptr) reboot_cmd += property;
+    reboot_cmd += property;
     android::base::SetProperty(ANDROID_RB_PROPERTY, reboot_cmd);
 
     sleep(5);
-    free(property);
-    ErrorAbort(state, kRebootFailure, "%s() failed to reboot", name);
-    return NULL;
+    return ErrorAbort(state, kRebootFailure, "%s() failed to reboot", name);
 }
 
 // Store a string value somewhere that future invocations of recovery
@@ -1287,26 +1199,28 @@ Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
     }
 
-    char* filename;
-    char* stagestr;
-    if (ReadArgs(state, argv, 2, &filename, &stagestr) < 0) return NULL;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 2, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    }
+    const std::string& filename = args[0];
+    std::string& stagestr = args[1];
 
     // Store this value in the misc partition, immediately after the
     // bootloader message that the main recovery uses to save its
     // arguments in case of the device restarting midway through
     // package installation.
-    FILE* f = ota_fopen(filename, "r+b");
+    FILE* f = ota_fopen(filename.c_str(), "r+b");
     fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
-    size_t to_write = strlen(stagestr) + 1;
+    size_t to_write = stagestr.size();
     size_t max_size = sizeof(((struct bootloader_message*)0)->stage);
     if (to_write > max_size) {
         to_write = max_size;
-        stagestr[max_size - 1] = 0;
+        stagestr = stagestr.substr(0, max_size-1);
     }
-    size_t status = ota_fwrite(stagestr, to_write, 1, f);
+    size_t status = ota_fwrite(stagestr.c_str(), to_write, 1, f);
     ota_fclose(f);
 
-    free(stagestr);
     if (status != to_write) {
         return StringValue("");
     }
@@ -1320,11 +1234,14 @@ Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
     }
 
-    char* filename;
-    if (ReadArgs(state, argv, 1, &filename) < 0) return NULL;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 1, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    }
+    const std::string& filename = args[0];
 
     char buffer[sizeof(((struct bootloader_message*)0)->stage)];
-    FILE* f = ota_fopen(filename, "rb");
+    FILE* f = ota_fopen(filename.c_str(), "rb");
     fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
     size_t status = ota_fread(buffer, sizeof(buffer), 1, f);
     ota_fclose(f);
@@ -1341,21 +1258,25 @@ Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[])
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
     }
 
-    char* filename;
-    char* len_str;
-    if (ReadArgs(state, argv, 2, &filename, &len_str) < 0) return NULL;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 2, argv, &args)) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    }
+    const std::string& filename = args[0];
+    const std::string& len_str = args[1];
 
     size_t len;
-    android::base::ParseUint(len_str, &len);
-    int fd = ota_open(filename, O_WRONLY, 0644);
-    int success = wipe_block_device(fd, len);
-
-    free(filename);
-    free(len_str);
+    if (!android::base::ParseUint(len_str.c_str(), &len)) {
+        return nullptr;
+    }
+    int fd = ota_open(filename.c_str(), O_WRONLY, 0644);
+    // The wipe_block_device function in ext4_utils returns 0 on success and 1
+    // for failure.
+    int status = wipe_block_device(fd, len);
 
     ota_close(fd);
 
-    return StringValue(success ? "t" : "");
+    return StringValue((status == 0) ? "t" : "");
 }
 
 Value* EnableRebootFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -1372,28 +1293,27 @@ Value* Tune2FsFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects args, got %d", name, argc);
     }
 
-    char** args = ReadVarArgs(state, argc, argv);
-    if (args == NULL) {
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argc, argv, &args)) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() could not read args", name);
     }
 
-    char** args2 = reinterpret_cast<char**>(malloc(sizeof(char*) * (argc+1)));
+    char* args2[argc+1];
     // Tune2fs expects the program name as its args[0]
-    args2[0] = strdup(name);
-    for (int i = 0; i < argc; ++i) {
-       args2[i + 1] = args[i];
+    args2[0] = const_cast<char*>(name);
+    if (args2[0] == nullptr) {
+        return nullptr;
     }
-    int result = tune2fs_main(argc + 1, args2);
     for (int i = 0; i < argc; ++i) {
-        free(args[i]);
+       args2[i + 1] = &args[i][0];
     }
-    free(args);
 
-    free(args2[0]);
-    free(args2);
+    // tune2fs changes the file system parameters on an ext2 file system; it
+    // returns 0 on success.
+    int result = tune2fs_main(argc + 1, args2);
+
     if (result != 0) {
-        return ErrorAbort(state, kTune2FsFailure, "%s() returned error code %d",
-                          name, result);
+        return ErrorAbort(state, kTune2FsFailure, "%s() returned error code %d", name, result);
     }
     return StringValue("t");
 }
