@@ -254,31 +254,25 @@ Value* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
         return nullptr;
     }
 
-    char* left;
-    char* right;
-    if (ReadArgs(state, argv, 2, &left, &right) < 0) return nullptr;
-
-    bool result = false;
-    char* end;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 2, argv, &args)) {
+        return nullptr;
+    }
 
     // Parse up to at least long long or 64-bit integers.
-    int64_t l_int = static_cast<int64_t>(strtoll(left, &end, 10));
-    if (left[0] == '\0' || *end != '\0') {
-        goto done;
+    int64_t l_int;
+    if (!android::base::ParseInt(args[0].c_str(), &l_int)) {
+        state->errmsg = "failed to parse int in " + args[0];
+        return nullptr;
     }
 
     int64_t r_int;
-    r_int = static_cast<int64_t>(strtoll(right, &end, 10));
-    if (right[0] == '\0' || *end != '\0') {
-        goto done;
+    if (!android::base::ParseInt(args[1].c_str(), &r_int)) {
+        state->errmsg = "failed to parse int in " + args[1];
+        return nullptr;
     }
 
-    result = l_int < r_int;
-
-  done:
-    free(left);
-    free(right);
-    return StringValue(result ? "t" : "");
+    return StringValue(l_int < r_int ? "t" : "");
 }
 
 Value* GreaterThanIntFn(const char* name, State* state,
@@ -370,99 +364,6 @@ bool ReadValueArgs(State* state, int argc, Expr* argv[],
         args->push_back(std::move(v));
     }
     return true;
-}
-
-// Evaluate the expressions in argv, giving 'count' char* (the ... is
-// zero or more char** to put them in).  If any expression evaluates
-// to NULL, free the rest and return -1.  Return 0 on success.
-int ReadArgs(State* state, Expr* argv[], int count, ...) {
-    char** args = reinterpret_cast<char**>(malloc(count * sizeof(char*)));
-    va_list v;
-    va_start(v, count);
-    int i;
-    for (i = 0; i < count; ++i) {
-        std::string str;
-        if (!Evaluate(state, argv[i], &str) ||
-                (args[i] = strdup(str.c_str())) == nullptr) {
-            va_end(v);
-            int j;
-            for (j = 0; j < i; ++j) {
-                free(args[j]);
-            }
-            free(args);
-            return -1;
-        }
-        *(va_arg(v, char**)) = args[i];
-    }
-    va_end(v);
-    free(args);
-    return 0;
-}
-
-// Evaluate the expressions in argv, giving 'count' Value* (the ... is
-// zero or more Value** to put them in).  If any expression evaluates
-// to NULL, free the rest and return -1.  Return 0 on success.
-int ReadValueArgs(State* state, Expr* argv[], int count, ...) {
-    Value** args = new Value*[count];
-    va_list v;
-    va_start(v, count);
-    for (int i = 0; i < count; ++i) {
-        args[i] = EvaluateValue(state, argv[i]);
-        if (args[i] == NULL) {
-            va_end(v);
-            int j;
-            for (j = 0; j < i; ++j) {
-                delete args[j];
-            }
-            delete[] args;
-            return -1;
-        }
-        *(va_arg(v, Value**)) = args[i];
-    }
-    va_end(v);
-    delete[] args;
-    return 0;
-}
-
-// Evaluate the expressions in argv, returning an array of char*
-// results.  If any evaluate to NULL, free the rest and return NULL.
-// The caller is responsible for freeing the returned array and the
-// strings it contains.
-char** ReadVarArgs(State* state, int argc, Expr* argv[]) {
-    char** args = (char**)malloc(argc * sizeof(char*));
-    for (int i = 0; i < argc; ++i) {
-        std::string str;
-        if (!Evaluate(state, argv[i], &str) ||
-                (args[i] = strdup(str.c_str())) == nullptr) {
-            for (int j = 0; j < i; ++j) {
-                free(args[j]);
-            }
-            free(args);
-            return NULL;
-        }
-    }
-    return args;
-}
-
-// Evaluate the expressions in argv, returning an array of Value*
-// results.  If any evaluate to NULL, free the rest and return NULL.
-// The caller is responsible for freeing the returned array and the
-// Values it contains.
-Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]) {
-    Value** args = new Value*[argc];
-    int i = 0;
-    for (i = 0; i < argc; ++i) {
-        args[i] = EvaluateValue(state, argv[i]);
-        if (args[i] == NULL) {
-            int j;
-            for (j = 0; j < i; ++j) {
-                delete args[j];
-            }
-            delete[] args;
-            return NULL;
-        }
-    }
-    return args;
 }
 
 // Use printf-style arguments to compose an error message to put into
