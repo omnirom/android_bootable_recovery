@@ -1368,18 +1368,15 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         fprintf(stderr, "This update is a retry.\n");
     }
 
-    Value* blockdev_filename = nullptr;
-    Value* transfer_list_value = nullptr;
-    Value* new_data_fn = nullptr;
-    Value* patch_data_fn = nullptr;
-    if (ReadValueArgs(state, argv, 4, &blockdev_filename, &transfer_list_value,
-            &new_data_fn, &patch_data_fn) < 0) {
-        return StringValue("");
+    std::vector<std::unique_ptr<Value>> args;
+    if (!ReadValueArgs(state, 4, argv, &args)) {
+        return nullptr;
     }
-    std::unique_ptr<Value> blockdev_filename_holder(blockdev_filename);
-    std::unique_ptr<Value> transfer_list_value_holder(transfer_list_value);
-    std::unique_ptr<Value> new_data_fn_holder(new_data_fn);
-    std::unique_ptr<Value> patch_data_fn_holder(patch_data_fn);
+
+    const Value* blockdev_filename = args[0].get();
+    const Value* transfer_list_value = args[1].get();
+    const Value* new_data_fn = args[2].get();
+    const Value* patch_data_fn = args[3].get();
 
     if (blockdev_filename->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string",
@@ -1689,14 +1686,13 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
 }
 
 Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[]) {
-    Value* blockdev_filename;
-    Value* ranges;
-
-    if (ReadValueArgs(state, argv, 2, &blockdev_filename, &ranges) < 0) {
-        return StringValue("");
+    std::vector<std::unique_ptr<Value>> args;
+    if (!ReadValueArgs(state, 2, argv, &args)) {
+        return nullptr;
     }
-    std::unique_ptr<Value> ranges_holder(ranges);
-    std::unique_ptr<Value> blockdev_filename_holder(blockdev_filename);
+
+    const Value* blockdev_filename = args[0].get();
+    const Value* ranges = args[1].get();
 
     if (blockdev_filename->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string",
@@ -1751,14 +1747,14 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
 // if executes successfully and an empty string otherwise.
 
 Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[]) {
-    Value* arg_filename;
-
-    if (ReadValueArgs(state, argv, 1, &arg_filename) < 0) {
+    std::vector<std::unique_ptr<Value>> args;
+    if (!ReadValueArgs(state, 1, argv, &args)) {
         return nullptr;
     }
-    std::unique_ptr<Value> filename(arg_filename);
 
-    if (filename->type != VAL_STRING) {
+    const Value* arg_filename = args[0].get();
+
+    if (arg_filename->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
         return StringValue("");
     }
@@ -1799,15 +1795,13 @@ Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[])
 
 
 Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[]) {
-    Value* arg_filename;
-    Value* arg_ranges;
-
-    if (ReadValueArgs(state, argv, 2, &arg_filename, &arg_ranges) < 0) {
-        return NULL;
+    std::vector<std::unique_ptr<Value>> args;
+    if (!ReadValueArgs(state, 2, argv, &args)) {
+        return nullptr;
     }
 
-    std::unique_ptr<Value> filename(arg_filename);
-    std::unique_ptr<Value> ranges(arg_ranges);
+    const Value* filename = args[0].get();
+    const Value* ranges = args[1].get();
 
     if (filename->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
