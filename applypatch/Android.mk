@@ -68,21 +68,41 @@ LOCAL_STATIC_LIBRARIES += libcrypto libbz libz
 LOCAL_CFLAGS := -Werror
 include $(BUILD_HOST_STATIC_LIBRARY)
 
-# applypatch (executable)
+# libapplypatch_modes (static library)
 # ===============================
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
-LOCAL_SRC_FILES := main.cpp
+LOCAL_SRC_FILES := \
+    applypatch_modes.cpp
+LOCAL_MODULE := libapplypatch_modes
+LOCAL_C_INCLUDES := bootable/recovery
+LOCAL_STATIC_LIBRARIES := \
+    libapplypatch \
+    libbase \
+    libedify \
+    libcrypto
+LOCAL_CFLAGS := -Werror
+include $(BUILD_STATIC_LIBRARY)
+
+# applypatch (target executable)
+# ===============================
+include $(CLEAR_VARS)
+LOCAL_CLANG := true
+LOCAL_SRC_FILES := applypatch_main.cpp
 LOCAL_MODULE := applypatch
-LOCAL_C_INCLUDES += bootable/recovery
-LOCAL_STATIC_LIBRARIES += \
+LOCAL_C_INCLUDES := bootable/recovery
+LOCAL_STATIC_LIBRARIES := \
+    libapplypatch_modes \
     libapplypatch \
     libbase \
     libedify \
     libotafault \
     libcrypto \
     libbz
-LOCAL_SHARED_LIBRARIES += libbase libz libcutils libc
+LOCAL_SHARED_LIBRARIES := \
+    libbase \
+    libz \
+    libcutils
 LOCAL_CFLAGS := -Werror
 include $(BUILD_EXECUTABLE)
 
