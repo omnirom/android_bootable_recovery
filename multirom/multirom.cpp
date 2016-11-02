@@ -1306,11 +1306,19 @@ bool MultiROM::prepareZIP(std::string& file, EdifyHacker *hacker, bool& restore_
 	script_entry = mzFindZipEntry(&zip, MR_UPDATE_SCRIPT_NAME);
 	if(!script_entry)
 	{
-		gui_print("Failed to find entry " MR_UPDATE_SCRIPT_NAME " in ZIP file %s!\n", file.c_str());
-		goto exit;
+		gui_print("No entry for " MR_UPDATE_SCRIPT_NAME " in ZIP file %s!\n", file.c_str());
+		// could/should be a dummy file, like for certain gapps zip files where
+		// the 'update-binary' is the shell script, but missing the 'updater-script'
+		// file which usually just says '#this is a dummy file'
+		script_data = strdup("# This is a dummy file\n");
+		if (!script_data)
+		{
+			gui_print("Failed to make dummy text script_data!\n");
+			goto exit;
+		}
+		script_len = strlen(script_data);
 	}
-
-	if (read_data(&zip, script_entry, &script_data, &script_len) < 0)
+	else if (read_data(&zip, script_entry, &script_data, &script_len) < 0)
 	{
 		gui_print("Failed to read updater-script entry from %s!\n", file.c_str());
 		goto exit;
