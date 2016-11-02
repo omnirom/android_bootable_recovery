@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "applypatch_modes.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,12 +25,14 @@
 #include <string>
 #include <vector>
 
+#include <android-base/parseint.h>
+#include <android-base/strings.h>
 #include <openssl/sha.h>
 
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
 
-static int CheckMode(int argc, char** argv) {
+static int CheckMode(int argc, const char** argv) {
     if (argc < 3) {
         return 2;
     }
@@ -40,44 +44,42 @@ static int CheckMode(int argc, char** argv) {
     return applypatch_check(argv[2], sha1);
 }
 
-static int SpaceMode(int argc, char** argv) {
+static int SpaceMode(int argc, const char** argv) {
     if (argc != 3) {
         return 2;
     }
-    char* endptr;
-    size_t bytes = strtol(argv[2], &endptr, 10);
-    if (bytes == 0 && endptr == argv[2]) {
+
+    size_t bytes;
+    if (!android::base::ParseUint(argv[2], &bytes) || bytes == 0) {
         printf("can't parse \"%s\" as byte count\n\n", argv[2]);
         return 1;
     }
     return CacheSizeCheck(bytes);
 }
 
-// Parse arguments (which should be of the form "<sha1>:<filename>"
-// into the new parallel arrays *sha1s and *files.Returns true on
-// success.
-static bool ParsePatchArgs(int argc, char** argv, std::vector<std::string>* sha1s,
+// Parse arguments (which should be of the form "<sha1>:<filename>" into the
+// new parallel arrays *sha1s and *files. Returns true on success.
+static bool ParsePatchArgs(int argc, const char** argv, std::vector<std::string>* sha1s,
                            std::vector<FileContents>* files) {
     if (sha1s == nullptr) {
         return false;
     }
     for (int i = 0; i < argc; ++i) {
-        uint8_t digest[SHA_DIGEST_LENGTH];
-        char* colon = strchr(argv[i], ':');
-        if (colon == nullptr) {
-            printf("no ':' in patch argument \"%s\"\n", argv[i]);
+        std::vector<std::string> pieces = android::base::Split(argv[i], ":");
+        if (pieces.size() != 2) {
+            printf("failed to parse patch argument \"%s\"\n", argv[i]);
             return false;
         }
-        *colon = '\0';
-        ++colon;
-        if (ParseSha1(argv[i], digest) != 0) {
+
+        uint8_t digest[SHA_DIGEST_LENGTH];
+        if (ParseSha1(pieces[0].c_str(), digest) != 0) {
             printf("failed to parse sha1 \"%s\"\n", argv[i]);
             return false;
         }
 
-        sha1s->push_back(argv[i]);
+        sha1s->push_back(pieces[0]);
         FileContents fc;
-        if (LoadFileContents(colon, &fc) != 0) {
+        if (LoadFileContents(pieces[1].c_str(), &fc) != 0) {
             return false;
         }
         files->push_back(std::move(fc));
@@ -90,7 +92,7 @@ static int FlashMode(const char* src_filename, const char* tgt_filename,
     return applypatch_flash(src_filename, tgt_filename, tgt_sha1, tgt_size);
 }
 
-static int PatchMode(int argc, char** argv) {
+static int PatchMode(int argc, const char** argv) {
     FileContents bonusFc;
     Value bonus(VAL_INVALID, "");
 
@@ -109,9 +111,8 @@ static int PatchMode(int argc, char** argv) {
         return 2;
     }
 
-    char* endptr;
-    size_t target_size = strtol(argv[4], &endptr, 10);
-    if (target_size == 0 && endptr == argv[4]) {
+    size_t target_size;
+    if (!android::base::ParseUint(argv[4], &target_size) || target_size == 0) {
         printf("can't parse \"%s\" as byte count\n\n", argv[4]);
         return 1;
     }
@@ -124,6 +125,7 @@ static int PatchMode(int argc, char** argv) {
         }
         return FlashMode(argv[1], argv[2], argv[3], target_size);
     }
+
     std::vector<std::string> sha1s;
     std::vector<FileContents> files;
     if (!ParsePatchArgs(argc-5, argv+5, &sha1s, &files)) {
@@ -139,8 +141,8 @@ static int PatchMode(int argc, char** argv) {
     return applypatch(argv[1], argv[2], argv[3], target_size, sha1s, patches, &bonus);
 }
 
-// This program applies binary patches to files in a way that is safe
-// (the original file is not touched until we have the desired
+// This program (applypatch) applies binary patches to files in a way that
+// is safe (the original file is not touched until we have the desired
 // replacement for it) and idempotent (it's okay to run this program
 // multiple times).
 //
@@ -166,7 +168,7 @@ static int PatchMode(int argc, char** argv) {
 // to read the source data.  See the comments for the
 // LoadPartitionContents() function for the format of such a filename.
 
-int main(int argc, char** argv) {
+int applypatch_modes(int argc, const char** argv) {
     if (argc < 2) {
       usage:
         printf(
