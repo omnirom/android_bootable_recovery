@@ -43,7 +43,7 @@ include $(BUILD_NATIVE_TEST)
 # Component tests
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
-LOCAL_CFLAGS += -Wno-unused-parameter -Werror
+LOCAL_CFLAGS := -Werror
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_MODULE := recovery_component_test
 LOCAL_C_INCLUDES := bootable/recovery
@@ -63,6 +63,7 @@ tune2fs_static_libraries := \
     libext2fs
 
 LOCAL_STATIC_LIBRARIES := \
+    libapplypatch_modes \
     libapplypatch \
     libedify \
     libotafault \
