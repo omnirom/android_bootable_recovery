@@ -141,10 +141,10 @@ void MultiROM::nokexec_restore_primary_and_cleanup()
 			{
 				gui_print("MultiROM NO_KEXEC: restore primary_boot.img\n");
 				//copy_file(path_primary_bootimg, boot->Actual_Block_Device.c_str());
-/*
+
 				PartitionSettings part_settings;
 				part_settings.Part = NULL;
-				part_settings.Backup_Folder = m_path + "/";
+				part_settings.Backup_Folder = m_path;
 				part_settings.adbbackup = false;
 				part_settings.adb_compression = false;
 				part_settings.partition_count = 1;
@@ -154,28 +154,6 @@ void MultiROM::nokexec_restore_primary_and_cleanup()
 				boot->Backup_FileName = "primary_boot.img";
 
 				if (boot->Flash_Image(&part_settings))
-				{
-					gui_print("... successful.\n");
-
-					// cleanup
-					remove(path_primary_bootimg);
-				}
-				else
-					gui_print("... FAILED.\n");
-*/
-				// use TWPartition::Raw_Read_Write until Flash_Image is fixed
-				PartitionSettings part_settings;
-				part_settings.Part = NULL;
-				part_settings.Backup_Folder = m_path + "/";
-				part_settings.adbbackup = false;
-				part_settings.adb_compression = false;
-				part_settings.partition_count = 1;
-				part_settings.progress = NULL;
-				part_settings.PM_Method = PM_RESTORE;
-
-				boot->Backup_FileName = "primary_boot.img";
-
-				if (boot->Raw_Read_Write(&part_settings))
 				{
 					gui_print("... successful.\n");
 
