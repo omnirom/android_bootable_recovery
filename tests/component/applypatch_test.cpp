@@ -37,9 +37,6 @@
 #include "common/test_constants.h"
 #include "print_sha1.h"
 
-static const std::string DATA_PATH = getenv("ANDROID_DATA");
-static const std::string TESTDATA_PATH = "/recovery/testdata";
-
 static void sha1sum(const std::string& fname, std::string* sha1, size_t* fsize = nullptr) {
   ASSERT_NE(nullptr, sha1);
 
@@ -70,10 +67,6 @@ static bool file_cmp(const std::string& f1, const std::string& f2) {
   std::string c2;
   android::base::ReadFileToString(f2, &c2);
   return c1 == c2;
-}
-
-static std::string from_testdata_base(const std::string& fname) {
-  return DATA_PATH + NATIVE_TEST_PATH + TESTDATA_PATH + "/" + fname;
 }
 
 class ApplyPatchTest : public ::testing::Test {

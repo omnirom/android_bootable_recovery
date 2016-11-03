@@ -37,9 +37,6 @@
 #include "ui.h"
 #include "verifier.h"
 
-static const char* DATA_PATH = getenv("ANDROID_DATA");
-static const char* TESTDATA_PATH = "/recovery/testdata/";
-
 RecoveryUI* ui = NULL;
 
 class MockUI : public RecoveryUI {
@@ -92,17 +89,13 @@ class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
 
     virtual void SetUp() {
         std::vector<std::string> args = GetParam();
-        std::string package =
-            android::base::StringPrintf("%s%s%s%s", DATA_PATH, NATIVE_TEST_PATH,
-                                        TESTDATA_PATH, args[0].c_str());
+        std::string package = from_testdata_base(args[0]);
         if (sysMapFile(package.c_str(), &memmap) != 0) {
             FAIL() << "Failed to mmap " << package << ": " << strerror(errno) << "\n";
         }
 
         for (auto it = ++(args.cbegin()); it != args.cend(); ++it) {
-            std::string public_key_file = android::base::StringPrintf(
-                    "%s%s%stestkey_%s.txt", DATA_PATH, NATIVE_TEST_PATH,
-                    TESTDATA_PATH, it->c_str());
+            std::string public_key_file = from_testdata_base("testkey_" + *it + ".txt");
             ASSERT_TRUE(load_keys(public_key_file.c_str(), certs));
         }
     }

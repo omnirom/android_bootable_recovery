@@ -87,7 +87,8 @@ LOCAL_STATIC_LIBRARIES := \
 
 testdata_files := $(call find-subdir-files, testdata/*)
 
-testdata_out_path := $(TARGET_OUT_DATA_NATIVE_TESTS)/recovery
+# The testdata files that will go to $OUT/data/nativetest/recovery.
+testdata_out_path := $(TARGET_OUT_DATA)/nativetest/recovery
 GEN := $(addprefix $(testdata_out_path)/, $(testdata_files))
 $(GEN): PRIVATE_PATH := $(LOCAL_PATH)
 $(GEN): PRIVATE_CUSTOM_TOOL = cp $< $@
@@ -95,14 +96,16 @@ $(GEN): $(testdata_out_path)/% : $(LOCAL_PATH)/%
 	$(transform-generated-source)
 LOCAL_GENERATED_SOURCES += $(GEN)
 
-ifdef TARGET_2ND_ARCH
-testdata_out_path_2nd_arch := $($(TARGET_2ND_ARCH_VAR_PREFIX)TARGET_OUT_DATA_NATIVE_TESTS)/recovery
-GEN_2ND_ARCH := $(addprefix $(testdata_out_path_2nd_arch)/, $(testdata_files))
-$(GEN_2ND_ARCH): PRIVATE_PATH := $(LOCAL_PATH)
-$(GEN_2ND_ARCH): PRIVATE_CUSTOM_TOOL = cp $< $@
-$(GEN_2ND_ARCH): $(testdata_out_path_2nd_arch)/% : $(LOCAL_PATH)/%
+# A copy of the testdata to be packed into continuous_native_tests.zip.
+testdata_continuous_zip_prefix := \
+    $(call intermediates-dir-for,PACKAGING,recovery_component_test)/DATA
+testdata_continuous_zip_path := $(testdata_continuous_zip_prefix)/nativetest/recovery
+GEN := $(addprefix $(testdata_continuous_zip_path)/, $(testdata_files))
+$(GEN): PRIVATE_PATH := $(LOCAL_PATH)
+$(GEN): PRIVATE_CUSTOM_TOOL = cp $< $@
+$(GEN): $(testdata_continuous_zip_path)/% : $(LOCAL_PATH)/%
 	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN_2ND_ARCH)
-endif # TARGET_2ND_ARCH
+LOCAL_GENERATED_SOURCES += $(GEN)
+LOCAL_PICKUP_FILES := $(testdata_continuous_zip_prefix)
 
 include $(BUILD_NATIVE_TEST)
