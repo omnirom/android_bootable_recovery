@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef _OTA_TEST_CONSTANTS_H
 #define _OTA_TEST_CONSTANTS_H
 
-#if defined(__LP64__)
-#define NATIVE_TEST_PATH "/nativetest64"
-#else
-#define NATIVE_TEST_PATH "/nativetest"
-#endif
+#include <stdlib.h>
 
-#endif
+static const char* data_root = getenv("ANDROID_DATA");
+
+static std::string from_testdata_base(const std::string& fname) {
+  return std::string(data_root) + "/nativetest/recovery/testdata/" + fname;
+}
+
+#endif  // _OTA_TEST_CONSTANTS_H
