@@ -695,6 +695,7 @@ int OpenRecoveryScript::Run_OpenRecoveryScript_Action() {
 			op_status = 0;
 		}
 	}
+#ifndef TW_NO_CACHE_COMMANDS
 	// Check for the ORS file in /cache and attempt to run those commands.
 	if (OpenRecoveryScript::check_for_script_file()) {
 		gui_msg("running_ors=Running OpenRecoveryScript");
@@ -703,6 +704,7 @@ int OpenRecoveryScript::Run_OpenRecoveryScript_Action() {
 			op_status = 0;
 		}
 	}
+#endif
 	if (reboot) {
 		// Disable stock recovery reflashing
 		TWFunc::Disable_Stock_Recovery_Replace();
