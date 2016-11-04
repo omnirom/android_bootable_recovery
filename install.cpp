@@ -47,8 +47,6 @@
 #include "ui.h"
 #include "verifier.h"
 
-extern RecoveryUI* ui;
-
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
 static constexpr const char* AB_OTA_PAYLOAD_PROPERTIES = "payload_properties.txt";
 static constexpr const char* AB_OTA_PAYLOAD = "payload.bin";
