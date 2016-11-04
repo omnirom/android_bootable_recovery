@@ -180,3 +180,32 @@ TEST_F(UpdaterTest, delete) {
                         "\", \"/doesntexist2\")");
     expect("1", script3.c_str(), kNoCause);
 }
+
+TEST_F(UpdaterTest, rename) {
+    // rename() expects two arguments.
+    expect(nullptr, "rename()", kArgsParsingFailure);
+    expect(nullptr, "rename(\"arg1\")", kArgsParsingFailure);
+    expect(nullptr, "rename(\"arg1\", \"arg2\", \"arg3\")", kArgsParsingFailure);
+
+    // src_name or dst_name cannot be empty.
+    expect(nullptr, "rename(\"\", \"arg2\")", kArgsParsingFailure);
+    expect(nullptr, "rename(\"arg1\", \"\")", kArgsParsingFailure);
+
+    // File doesn't exist (both of src and dst).
+    expect(nullptr, "rename(\"/doesntexist\", \"/doesntexisteither\")" , kFileRenameFailure);
+
+    // Can't create parent directory.
+    TemporaryFile temp_file1;
+    ASSERT_TRUE(android::base::WriteStringToFile("abc", temp_file1.path));
+    std::string script1("rename(\"" + std::string(temp_file1.path) + "\", \"/proc/0/file1\")");
+    expect(nullptr, script1.c_str(), kFileRenameFailure);
+
+    // Rename.
+    TemporaryFile temp_file2;
+    std::string script2("rename(\"" + std::string(temp_file1.path) + "\", \"" +
+                        std::string(temp_file2.path) + "\")");
+    expect(temp_file2.path, script2.c_str(), kNoCause);
+
+    // Already renamed.
+    expect(temp_file2.path, script2.c_str(), kNoCause);
+}
