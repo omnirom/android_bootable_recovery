@@ -66,7 +66,7 @@
 
 // Send over the buffer to recovery though the command pipe.
 static void uiPrint(State* state, const std::string& buffer) {
-    UpdaterInfo* ui = reinterpret_cast<UpdaterInfo*>(state->cookie);
+    UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
 
     // "line1\nline2\n" will be split into 3 tokens: "line1", "line2" and "".
     // So skip sending empty strings to UI.
@@ -117,6 +117,7 @@ static int make_parents(char* name) {
 }
 
 // mount(fs_type, partition_type, location, mount_point)
+// mount(fs_type, partition_type, location, mount_point, mount_options)
 //
 //    fs_type="ext4"   partition_type="EMMC"    location=device
 Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
@@ -252,7 +253,6 @@ static int exec_cmd(const char* path, char* const argv[]) {
     return WEXITSTATUS(status);
 }
 
-
 // format(fs_type, partition_type, location, fs_size, mount_point)
 //
 //    fs_type="ext4"   partition_type="EMMC"    location=device    fs_size=<bytes> mount_point=<location>
@@ -301,14 +301,13 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (fs_type == "ext4") {
         int status = make_ext4fs(location.c_str(), size, mount_point.c_str(), sehandle);
         if (status != 0) {
-            printf("%s: make_ext4fs failed (%d) on %s",
-                    name, status, location.c_str());
+            printf("%s: make_ext4fs failed (%d) on %s", name, status, location.c_str());
             return StringValue("");
         }
         return StringValue(location);
     } else if (fs_type == "f2fs") {
         if (size < 0) {
-            printf("fs_size can't be negative for f2fs: %s", fs_size.c_str());
+            printf("%s: fs_size can't be negative for f2fs: %s", name, fs_size.c_str());
             return StringValue("");
         }
         std::string num_sectors = std::to_string(size / 512);
@@ -318,8 +317,7 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
                 num_sectors.c_str(), nullptr};
         int status = exec_cmd(f2fs_path, (char* const*)f2fs_argv);
         if (status != 0) {
-            printf("%s: mkfs.f2fs failed (%d) on %s",
-                    name, status, location.c_str());
+            printf("%s: mkfs.f2fs failed (%d) on %s", name, status, location.c_str());
             return StringValue("");
         }
         return StringValue(location);
@@ -365,8 +363,14 @@ Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
     return StringValue(dst_name);
 }
 
+// delete([filename, ...])
+//   Deletes all the filenames listed. Returns the number of files successfully deleted.
+//
+// delete_recursive([dirname, ...])
+//   Recursively deletes dirnames and all their contents. Returns the number of directories
+//   successfully deleted.
 Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
-    std::vector<std::string> paths;
+    std::vector<std::string> paths(argc);
     for (int i = 0; i < argc; ++i) {
         if (!Evaluate(state, argv[i], &paths[i])) {
             return nullptr;
@@ -382,7 +386,7 @@ Value* DeleteFn(const char* name, State* state, int argc, Expr* argv[]) {
         }
     }
 
-    return StringValue(android::base::StringPrintf("%d", success));
+    return StringValue(std::to_string(success));
 }
 
 
