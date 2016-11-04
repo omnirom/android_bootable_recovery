@@ -17,7 +17,7 @@
 #ifndef RECOVERY_ROOTS_H_
 #define RECOVERY_ROOTS_H_
 
-#include "common.h"
+typedef struct fstab_rec Volume;
 
 // Load and parse volume data from /etc/recovery.fstab.
 void load_volume_table();
