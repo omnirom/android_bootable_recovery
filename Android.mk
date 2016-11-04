@@ -46,6 +46,7 @@ LOCAL_SRC_FILES := \
     install.cpp \
     recovery.cpp \
     roots.cpp \
+    rotate_logs.cpp \
     screen_ui.cpp \
     ui.cpp \
     verifier.cpp \
@@ -119,7 +120,9 @@ include $(BUILD_EXECUTABLE)
 # recovery-persist (system partition dynamic executable run after /data mounts)
 # ===============================
 include $(CLEAR_VARS)
-LOCAL_SRC_FILES := recovery-persist.cpp
+LOCAL_SRC_FILES := \
+    recovery-persist.cpp \
+    rotate_logs.cpp
 LOCAL_MODULE := recovery-persist
 LOCAL_SHARED_LIBRARIES := liblog libbase
 LOCAL_CFLAGS := -Werror
@@ -129,9 +132,11 @@ include $(BUILD_EXECUTABLE)
 # recovery-refresh (system partition dynamic executable run at init)
 # ===============================
 include $(CLEAR_VARS)
-LOCAL_SRC_FILES := recovery-refresh.cpp
+LOCAL_SRC_FILES := \
+    recovery-refresh.cpp \
+    rotate_logs.cpp
 LOCAL_MODULE := recovery-refresh
-LOCAL_SHARED_LIBRARIES := liblog
+LOCAL_SHARED_LIBRARIES := liblog libbase
 LOCAL_CFLAGS := -Werror
 LOCAL_INIT_RC := recovery-refresh.rc
 include $(BUILD_EXECUTABLE)
