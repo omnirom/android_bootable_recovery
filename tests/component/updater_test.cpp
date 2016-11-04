@@ -16,7 +16,9 @@
 
 #include <string>
 
+#include <android-base/file.h>
 #include <android-base/properties.h>
+#include <android-base/test_utils.h>
 #include <gtest/gtest.h>
 
 #include "edify/expr.h"
@@ -96,4 +98,52 @@ TEST_F(UpdaterTest, sha1_check) {
 
     // sha1_check() expects at least one argument.
     expect(nullptr, "sha1_check()", kArgsParsingFailure);
+}
+
+TEST_F(UpdaterTest, file_getprop) {
+    // file_getprop() expects two arguments.
+    expect(nullptr, "file_getprop()", kArgsParsingFailure);
+    expect(nullptr, "file_getprop(\"arg1\")", kArgsParsingFailure);
+    expect(nullptr, "file_getprop(\"arg1\", \"arg2\", \"arg3\")", kArgsParsingFailure);
+
+    // File doesn't exist.
+    expect(nullptr, "file_getprop(\"/doesntexist\", \"key1\")", kFileGetPropFailure);
+
+    // Reject too large files (current limit = 65536).
+    TemporaryFile temp_file1;
+    std::string buffer(65540, '\0');
+    ASSERT_TRUE(android::base::WriteStringToFile(buffer, temp_file1.path));
+
+    // Read some keys.
+    TemporaryFile temp_file2;
+    std::string content("ro.product.name=tardis\n"
+                        "# comment\n\n\n"
+                        "ro.product.model\n"
+                        "ro.product.board =  magic \n");
+    ASSERT_TRUE(android::base::WriteStringToFile(content, temp_file2.path));
+
+    std::string script1("file_getprop(\"" + std::string(temp_file2.path) +
+                       "\", \"ro.product.name\")");
+    expect("tardis", script1.c_str(), kNoCause);
+
+    std::string script2("file_getprop(\"" + std::string(temp_file2.path) +
+                       "\", \"ro.product.board\")");
+    expect("magic", script2.c_str(), kNoCause);
+
+    // No match.
+    std::string script3("file_getprop(\"" + std::string(temp_file2.path) +
+                       "\", \"ro.product.wrong\")");
+    expect("", script3.c_str(), kNoCause);
+
+    std::string script4("file_getprop(\"" + std::string(temp_file2.path) +
+                       "\", \"ro.product.name=\")");
+    expect("", script4.c_str(), kNoCause);
+
+    std::string script5("file_getprop(\"" + std::string(temp_file2.path) +
+                       "\", \"ro.product.nam\")");
+    expect("", script5.c_str(), kNoCause);
+
+    std::string script6("file_getprop(\"" + std::string(temp_file2.path) +
+                       "\", \"ro.product.model\")");
+    expect("", script6.c_str(), kNoCause);
 }
