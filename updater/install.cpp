@@ -860,9 +860,13 @@ Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 // file_getprop(file, key)
 //
 //   interprets 'file' as a getprop-style file (key=value pairs, one
-//   per line. # comment lines,blank lines, lines without '=' ignored),
+//   per line. # comment lines, blank lines, lines without '=' ignored),
 //   and returns the value for 'key' (or "" if it isn't defined).
 Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
+    if (argc != 2) {
+        return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+    }
+
     std::vector<std::string> args;
     if (!ReadArgs(state, 2, argv, &args)) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
@@ -876,11 +880,10 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
                           filename.c_str(), strerror(errno));
     }
 
-#define MAX_FILE_GETPROP_SIZE    65536
-
+    constexpr off_t MAX_FILE_GETPROP_SIZE = 65536;
     if (st.st_size > MAX_FILE_GETPROP_SIZE) {
-        return ErrorAbort(state, kFileGetPropFailure, "%s too large for %s (max %d)",
-                          filename.c_str(), name, MAX_FILE_GETPROP_SIZE);
+        return ErrorAbort(state, kFileGetPropFailure, "%s too large for %s (max %lld)",
+                          filename.c_str(), name, static_cast<long long>(MAX_FILE_GETPROP_SIZE));
     }
 
     std::string buffer(st.st_size, '\0');
@@ -913,7 +916,7 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
         }
 
         // trim whitespace between key and '='
-        std::string str = android::base::Trim(line.substr(0, equal_pos - 1));
+        std::string str = android::base::Trim(line.substr(0, equal_pos));
 
         // not the key we're looking for
         if (key != str) continue;
