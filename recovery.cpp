@@ -66,8 +66,9 @@
 #include "minui/minui.h"
 #include "otautil/DirUtil.h"
 #include "roots.h"
-#include "ui.h"
+#include "rotate_logs.h"
 #include "screen_ui.h"
+#include "ui.h"
 
 static const struct option OPTIONS[] = {
   { "update_package", required_argument, NULL, 'u' },
@@ -108,7 +109,6 @@ static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
-static const int KEEP_LOG_COUNT = 10;
 // We will try to apply the update package 5 times at most in case of an I/O error.
 static const int EIO_RETRY_COUNT = 4;
 static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
@@ -451,37 +451,6 @@ static void copy_log_file(const char* source, const char* destination, bool appe
     }
 }
 
-// Rename last_log -> last_log.1 -> last_log.2 -> ... -> last_log.$max.
-// Similarly rename last_kmsg -> last_kmsg.1 -> ... -> last_kmsg.$max.
-// Overwrite any existing last_log.$max and last_kmsg.$max.
-static void rotate_logs(int max) {
-    // Logs should only be rotated once.
-    static bool rotated = false;
-    if (rotated) {
-        return;
-    }
-    rotated = true;
-    ensure_path_mounted(LAST_LOG_FILE);
-    ensure_path_mounted(LAST_KMSG_FILE);
-
-    for (int i = max-1; i >= 0; --i) {
-        std::string old_log = android::base::StringPrintf("%s", LAST_LOG_FILE);
-        if (i > 0) {
-          old_log += "." + std::to_string(i);
-        }
-        std::string new_log = android::base::StringPrintf("%s.%d", LAST_LOG_FILE, i+1);
-        // Ignore errors if old_log doesn't exist.
-        rename(old_log.c_str(), new_log.c_str());
-
-        std::string old_kmsg = android::base::StringPrintf("%s", LAST_KMSG_FILE);
-        if (i > 0) {
-          old_kmsg += "." + std::to_string(i);
-        }
-        std::string new_kmsg = android::base::StringPrintf("%s.%d", LAST_KMSG_FILE, i+1);
-        rename(old_kmsg.c_str(), new_kmsg.c_str());
-    }
-}
-
 static void copy_logs() {
     // We only rotate and record the log of the current session if there are
     // actual attempts to modify the flash, such as wipes, installs from BCB
@@ -500,7 +469,9 @@ static void copy_logs() {
         return;
     }
 
-    rotate_logs(KEEP_LOG_COUNT);
+    ensure_path_mounted(LAST_LOG_FILE);
+    ensure_path_mounted(LAST_KMSG_FILE);
+    rotate_logs(LAST_LOG_FILE, LAST_KMSG_FILE);
 
     // Copy logs to cache so the system can find out what happened.
     copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
@@ -1418,56 +1389,6 @@ static void log_failure_code(ErrorCode code, const char *update_package) {
     LOG(INFO) << log_content;
 }
 
-static ssize_t logbasename(
-        log_id_t /* logId */,
-        char /* prio */,
-        const char *filename,
-        const char * /* buf */, size_t len,
-        void *arg) {
-    if (strstr(LAST_KMSG_FILE, filename) ||
-            strstr(LAST_LOG_FILE, filename)) {
-        bool *doRotate = reinterpret_cast<bool *>(arg);
-        *doRotate = true;
-    }
-    return len;
-}
-
-static ssize_t logrotate(
-        log_id_t logId,
-        char prio,
-        const char *filename,
-        const char *buf, size_t len,
-        void *arg) {
-    bool *doRotate = reinterpret_cast<bool *>(arg);
-    if (!*doRotate) {
-        return __android_log_pmsg_file_write(logId, prio, filename, buf, len);
-    }
-
-    std::string name(filename);
-    size_t dot = name.find_last_of('.');
-    std::string sub = name.substr(0, dot);
-
-    if (!strstr(LAST_KMSG_FILE, sub.c_str()) &&
-                !strstr(LAST_LOG_FILE, sub.c_str())) {
-        return __android_log_pmsg_file_write(logId, prio, filename, buf, len);
-    }
-
-    // filename rotation
-    if (dot == std::string::npos) {
-        name += ".1";
-    } else {
-        std::string number = name.substr(dot + 1);
-        if (!isdigit(number.data()[0])) {
-            name += ".1";
-        } else {
-            auto i = std::stoull(number);
-            name = sub + "." + std::to_string(i + 1);
-        }
-    }
-
-    return __android_log_pmsg_file_write(logId, prio, name.c_str(), buf, len);
-}
-
 int main(int argc, char **argv) {
     // We don't have logcat yet under recovery; so we'll print error on screen and
     // log to stdout (which is redirected to recovery.log) as we used to do.
@@ -1477,6 +1398,7 @@ int main(int argc, char **argv) {
     static const char filter[] = "recovery/";
     // Do we need to rotate?
     bool doRotate = false;
+
     __android_log_pmsg_file_read(
         LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter,
         logbasename, &doRotate);
