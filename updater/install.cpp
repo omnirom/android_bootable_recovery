@@ -293,7 +293,7 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
     }
 
     int64_t size;
-    if (!android::base::ParseInt(fs_size.c_str(), &size)) {
+    if (!android::base::ParseInt(fs_size, &size)) {
         return ErrorAbort(state, kArgsParsingFailure,
                           "%s: failed to parse int in %s\n", name, fs_size.c_str());
     }
@@ -329,6 +329,9 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
     return nullptr;
 }
 
+// rename(src_name, dst_name)
+//   Renames src_name to dst_name. It automatically creates the necessary directories for dst_name.
+//   Example: rename("system/app/Hangouts/Hangouts.apk", "system/priv-app/Hangouts/Hangouts.apk")
 Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc != 2) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
