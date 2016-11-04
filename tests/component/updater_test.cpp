@@ -147,3 +147,36 @@ TEST_F(UpdaterTest, file_getprop) {
                        "\", \"ro.product.model\")");
     expect("", script6.c_str(), kNoCause);
 }
+
+TEST_F(UpdaterTest, delete) {
+    // Delete none.
+    expect("0", "delete()", kNoCause);
+    expect("0", "delete(\"/doesntexist\")", kNoCause);
+    expect("0", "delete(\"/doesntexist1\", \"/doesntexist2\")", kNoCause);
+    expect("0", "delete(\"/doesntexist1\", \"/doesntexist2\", \"/doesntexist3\")", kNoCause);
+
+    // Delete one file.
+    TemporaryFile temp_file1;
+    ASSERT_TRUE(android::base::WriteStringToFile("abc", temp_file1.path));
+    std::string script1("delete(\"" + std::string(temp_file1.path) + "\")");
+    expect("1", script1.c_str(), kNoCause);
+
+    // Delete two files.
+    TemporaryFile temp_file2;
+    ASSERT_TRUE(android::base::WriteStringToFile("abc", temp_file2.path));
+    TemporaryFile temp_file3;
+    ASSERT_TRUE(android::base::WriteStringToFile("abc", temp_file3.path));
+    std::string script2("delete(\"" + std::string(temp_file2.path) + "\", \"" +
+                        std::string(temp_file3.path) + "\")");
+    expect("2", script2.c_str(), kNoCause);
+
+    // Delete already deleted files.
+    expect("0", script2.c_str(), kNoCause);
+
+    // Delete one out of three.
+    TemporaryFile temp_file4;
+    ASSERT_TRUE(android::base::WriteStringToFile("abc", temp_file4.path));
+    std::string script3("delete(\"/doesntexist1\", \"" + std::string(temp_file4.path) +
+                        "\", \"/doesntexist2\")");
+    expect("1", script3.c_str(), kNoCause);
+}
