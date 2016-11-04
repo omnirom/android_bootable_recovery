@@ -327,6 +327,9 @@ endif
 ifneq ($(TW_NO_LEGACY_PROPS),)
 	LOCAL_CFLAGS += -DTW_NO_LEGACY_PROPS
 endif
+ifneq ($(TW_NO_CACHE_COMMANDS),)
+	LOCAL_CFLAGS += -DTW_NO_CACHE_COMMANDS
+endif
 ifneq ($(wildcard bionic/libc/include/sys/capability.h),)
     LOCAL_CFLAGS += -DHAVE_CAPABILITIES
 endif
