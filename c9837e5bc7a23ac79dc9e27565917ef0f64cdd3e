@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d8098520_cec0fc82",
+        "filename": "twinstall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-11-05T19:15:43Z",
+      "side": 1,
+      "message": "One minor nitpick. I would like to see something in recovery.log logging successful checking of the MD5.",
+      "revId": "c9837e5bc7a23ac79dc9e27565917ef0f64cdd3e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
