@@ -70,6 +70,8 @@ std::vector<language_struct> Language_List;
 
 int tw_x_offset = 0;
 int tw_y_offset = 0;
+int tw_w_offset = 0;
+int tw_h_offset = 0;
 
 // Helper routine to convert a string to a color declaration
 int ConvertStrToColor(std::string str, COLOR* color)
@@ -894,16 +896,17 @@ int PageSet::LoadDetails(LoadingContext& ctx, xml_node<>* root)
 				}
 #endif
 				if (width != 0 && height != 0) {
-					float scale_w = ((float)gr_fb_width() - ((float)offx * 2.0)) / (float)width;
-					float scale_h = ((float)gr_fb_height() - ((float)offy * 2.0)) / (float)height;
+					float scale_w = (((float)gr_fb_width() + (float)tw_w_offset) - ((float)offx * 2.0)) / (float)width;
+					float scale_h = (((float)gr_fb_height() + (float)tw_h_offset) - ((float)offy * 2.0)) / (float)height;
 #ifdef TW_ROUND_SCREEN
-					float scale_off_w = (float)gr_fb_width() / (float)width;
-					float scale_off_h = (float)gr_fb_height() / (float)height;
+					float scale_off_w = ((float)gr_fb_width() + (float)tw_w_offset) / (float)width;
+					float scale_off_h = ((float)gr_fb_height() + (float)tw_h_offset) / (float)height;
 					tw_x_offset = offx * scale_off_w;
 					tw_y_offset = offy * scale_off_h;
 #endif
 					if (scale_w != 1 || scale_h != 1) {
-						LOGINFO("Scaling theme width %fx and height %fx, offsets x: %i y: %i\n", scale_w, scale_h, tw_x_offset, tw_y_offset);
+						LOGINFO("Scaling theme width %fx and height %fx, offsets x: %i y: %i w: %i h: %i\n",
+							scale_w, scale_h, tw_x_offset, tw_y_offset, tw_w_offset, tw_h_offset);
 						set_scale_values(scale_w, scale_h);
 					}
 				}
@@ -1014,6 +1017,16 @@ int PageSet::LoadVariables(xml_node<>* vars)
 			}
 			if (strcmp(name->value(), "tw_y_offset") == 0) {
 				tw_y_offset = atoi(value->value());
+				child = child->next_sibling("variable");
+				continue;
+			}
+			if (strcmp(name->value(), "tw_w_offset") == 0) {
+				tw_w_offset = atoi(value->value());
+				child = child->next_sibling("variable");
+				continue;
+			}
+			if (strcmp(name->value(), "tw_h_offset") == 0) {
+				tw_h_offset = atoi(value->value());
 				child = child->next_sibling("variable");
 				continue;
 			}
@@ -1339,6 +1352,8 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		LOGINFO("Load XML directly\n");
 		tw_x_offset = TW_X_OFFSET;
 		tw_y_offset = TW_Y_OFFSET;
+		tw_w_offset = TW_W_OFFSET;
+		tw_h_offset = TW_H_OFFSET;
 		if (name != "splash") {
 			LoadLanguageList(NULL);
 			languageFile = LoadFileToBuffer(TWRES "languages/en.xml", NULL);
@@ -1350,6 +1365,8 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 		LOGINFO("Loading zip theme\n");
 		tw_x_offset = 0;
 		tw_y_offset = 0;
+		tw_w_offset = 0;
+		tw_h_offset = 0;
 		if (!TWFunc::Path_Exists(package))
 			return -1;
 		if (sysMapFile(package.c_str(), &map) != 0) {
