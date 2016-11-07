@@ -27,3 +27,16 @@ Running the tests
     # Or 64-bit device
     adb shell /data/nativetest64/recovery_unit_test/recovery_unit_test
     adb shell /data/nativetest64/recovery_component_test/recovery_component_test
+
+Running the manual tests
+------------------------
+
+`recovery-refresh` and `recovery-persist` executables exist only on systems without
+/cache partition. And we need to follow special steps to run tests for them.
+
+- Execute the test on an A/B device first. The test should fail but it will log
+  some contents to pmsg.
+
+- Reboot the device immediately and run the test again. The test should save the
+  contents of pmsg buffer into /data/misc/recovery/inject.txt. Test will pass if
+  this file has expected contents.
