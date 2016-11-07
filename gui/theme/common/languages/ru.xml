@@ -573,6 +573,7 @@
 		<string name="unable_resize">Не удается изменить размер {1}.</string>
 		<string name="no_md5_found">Отсутствует файл md5 для '{1}'. Пожалуйста отмените выбор проверки MD5 при восстановлении.</string>
 		<string name="md5_fail_match">MD5 не соответствует для '{1}'.</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Не удается расшифровать tar-файл '{1}'</string>
 		<string name="format_data_msg">Вам, возможно, потребуется перезагрузись рекавери, чтобы иметь возможность использовать /data снова.</string>
 		<string name="format_data_err">Невозможно отформатировать и удалить шифрование.</string>

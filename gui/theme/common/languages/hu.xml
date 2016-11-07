@@ -572,6 +572,7 @@
 		<string name="unable_resize">Nem lehet átméretezni: {1}.</string>
 		<string name="no_md5_found">Nem található MD5 fájl ehhez: \'{1}\'. Kérjük, a visszaállításhoz szüntesse meg a kijelölést: \"MD5 ellenőrzés engedélyezése\".</string>
 		<string name="md5_fail_match">MD5 nem egyezik ezzel: \'{1}\'.</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Nem sikerült visszafejteni a(z) \'{1}\' tar fájlt</string>
 		<string name="format_data_msg">Lehet, hogy a recovery-be kell újraindítania ahhoz, hogy képes legyen használni az /adat partíciót.</string>
 		<string name="format_data_err">Nem sikerült formázni a titkosítás eltávolításához.</string>

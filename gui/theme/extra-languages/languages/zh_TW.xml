@@ -571,6 +571,7 @@
 		<string name="unable_resize">無法調整{1}大小。</string>
 		<string name="no_md5_found">未找到'{1}'MD5校驗檔案，請取消“啟用MD5校驗備份檔案”選項。</string>
 		<string name="md5_fail_match">'{1}' MD5校驗失敗。</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">無法解密tar檔案：'{1}'</string>
 		<string name="format_data_msg">您可能需要重啟recovery才能使用/data。</string>
 		<string name="format_data_err">無法格式化並刪除加密。</string>

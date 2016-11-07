@@ -542,6 +542,7 @@
 		<string name="unable_resize">Velikosti {1} ni mogoče spremeniti.</string>
 		<string name="no_md5_found">Za \'{1}\' ni bilo najdene datoteke MD5.  Odstranite izbiro \'Omogoči preverjanje razpršila MD5\' za obnovitev.</string>
 		<string name="md5_fail_match">Ujemanje razpršila MD5 na \'{1}\' je spodletelo.</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Odšifriranje datoteke TAR \'{1}\' je spodletelo</string>
 		<string name="format_data_msg">Za ponovno uporabo /data boste morda morali ponovno zagnati obnovitev.</string>
 		<string name="format_data_err">Formatiranje za odstranitev šifriranja ni mogoče.</string>
