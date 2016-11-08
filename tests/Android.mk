@@ -18,7 +18,6 @@ LOCAL_PATH := $(call my-dir)
 
 # Unit tests
 include $(CLEAR_VARS)
-LOCAL_CLANG := true
 LOCAL_CFLAGS := -Werror
 LOCAL_MODULE := recovery_unit_test
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
@@ -32,17 +31,19 @@ LOCAL_STATIC_LIBRARIES := \
     libselinux \
     libbase
 
-LOCAL_SRC_FILES := unit/asn1_decoder_test.cpp
-LOCAL_SRC_FILES += unit/recovery_test.cpp
-LOCAL_SRC_FILES += unit/locale_test.cpp
-LOCAL_SRC_FILES += unit/zip_test.cpp
+LOCAL_SRC_FILES := \
+    unit/asn1_decoder_test.cpp \
+    unit/locale_test.cpp \
+    unit/recovery_test.cpp \
+    unit/sysutil_test.cpp \
+    unit/zip_test.cpp
+
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SHARED_LIBRARIES := liblog
 include $(BUILD_NATIVE_TEST)
 
 # Component tests
 include $(CLEAR_VARS)
-LOCAL_CLANG := true
 LOCAL_CFLAGS := -Werror
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_MODULE := recovery_component_test
