@@ -43,27 +43,33 @@ twrpDU::twrpDU() {
 	add_absolute_dir("/data/data/com.google.android.music/files");
 }
 
-void twrpDU::add_relative_dir(const string& dir) {
-	relativedir.push_back(dir);
+void twrpDU::add_relative_dir(const string& dir, const bool Skip_Recursive) {
+	skipitem_struct item;
+	item.Path = dir;
+	item.Skip_Recursive = Skip_Recursive;
+	relativedir.push_back(item);
 }
 
 void twrpDU::clear_relative_dir(string dir) {
-	vector<string>::iterator iter = relativedir.begin();
+	vector<skipitem_struct>::iterator iter = relativedir.begin();
 	while (iter != relativedir.end()) {
-		if (*iter == dir)
+		if ((*iter).Path == dir)
 			iter = relativedir.erase(iter);
 		else
 			iter++;
 	}
 }
 
-void twrpDU::add_absolute_dir(const string& dir) {
-	absolutedir.push_back(TWFunc::Remove_Trailing_Slashes(dir));
+void twrpDU::add_absolute_dir(const string& dir, const bool Skip_Recursive) {
+	skipitem_struct item;
+	item.Path = TWFunc::Remove_Trailing_Slashes(dir);
+	item.Skip_Recursive = Skip_Recursive;
+	absolutedir.push_back(item);
 }
 
-vector<string> twrpDU::get_absolute_dirs(void) {
+/*vector<skipitem_struct> twrpDU::get_absolute_dirs(void) {
 	return absolutedir;
-}
+}*/
 
 uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 	DIR* d;
@@ -71,6 +77,7 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 	struct stat st;
 	uint64_t dusize = 0;
 	string FullPath;
+	bool Skip, Skip_Recursive;
 
 	d = opendir(Path.c_str());
 	if (d == NULL) {
@@ -83,12 +90,13 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 		FullPath += de->d_name;
 		if (lstat(FullPath.c_str(), &st)) {
 			gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(FullPath)(strerror(errno)));
-			LOGINFO("Real error: Unable to stat '%s'\n", FullPath.c_str());
+			LOGINFO("Real error: Unable to stat '%s': %s\n", FullPath.c_str(), strerror(errno));
 			continue;
 		}
-		if ((st.st_mode & S_IFDIR) && !check_skip_dirs(FullPath) && de->d_type != DT_SOCK) {
+		Skip = check_skip_dirs(FullPath, Skip_Recursive);
+		if ((st.st_mode & S_IFDIR) && !Skip_Recursive && de->d_type != DT_SOCK) {
 			dusize += Get_Folder_Size(FullPath);
-		} else if (st.st_mode & S_IFREG) {
+		} else if (!Skip && st.st_mode & S_IFREG) {
 			dusize += (uint64_t)(st.st_size);
 		}
 	}
@@ -96,20 +104,37 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 	return dusize;
 }
 
-bool twrpDU::check_relative_skip_dirs(const string& dir) {
-	return std::find(relativedir.begin(), relativedir.end(), dir) != relativedir.end();
+bool twrpDU::check_relative_skip_dirs(const string& dir, bool& Skip_Recursive) {
+	vector<skipitem_struct>::iterator iter = relativedir.begin();
+	while (iter != relativedir.end()) {
+		if ((*iter).Path == dir) {
+			Skip_Recursive = (*iter).Skip_Recursive;
+			return true;
+		}
+		iter++;
+	}
+	return false; //std::find(relativedir.begin(), relativedir.end(), dir) != relativedir.end();
 }
 
-bool twrpDU::check_absolute_skip_dirs(const string& path) {
-	return std::find(absolutedir.begin(), absolutedir.end(), path) != absolutedir.end();
+bool twrpDU::check_absolute_skip_dirs(const string& dir, bool& Skip_Recursive) {
+	vector<skipitem_struct>::iterator iter = absolutedir.begin();
+	while (iter != absolutedir.end()) {
+		if ((*iter).Path == dir) {
+			Skip_Recursive = (*iter).Skip_Recursive;
+			return true;
+		}
+		iter++;
+	}
+	return false; //return std::find(absolutedir.begin(), absolutedir.end(), path) != absolutedir.end();
 }
 
-bool twrpDU::check_skip_dirs(const string& path) {
+bool twrpDU::check_skip_dirs(const string& path, bool& Skip_Recursive) {
+	Skip_Recursive = false;
 	string normalized = TWFunc::Remove_Trailing_Slashes(path);
 	size_t slashIdx = normalized.find_last_of('/');
 	if(slashIdx != std::string::npos && slashIdx+1 < normalized.size()) {
-		if(check_relative_skip_dirs(normalized.substr(slashIdx+1)))
+		if(check_relative_skip_dirs(normalized.substr(slashIdx+1), Skip_Recursive))
 			return true;
 	}
-	return check_absolute_skip_dirs(normalized);
+	return check_absolute_skip_dirs(normalized, Skip_Recursive);
 }

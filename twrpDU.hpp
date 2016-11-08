@@ -38,16 +38,20 @@ class twrpDU {
 public:
 	twrpDU();
 	uint64_t Get_Folder_Size(const string& Path); // Gets the folder's size using stat
-	void add_absolute_dir(const string& Path);
-	void add_relative_dir(const string& Path);
-	bool check_relative_skip_dirs(const string& dir);
-	bool check_absolute_skip_dirs(const string& path);
-	bool check_skip_dirs(const string& path);
-	vector<string> get_absolute_dirs(void);
+	void add_absolute_dir(const string& Path, const bool Skip_Recursive = true);
+	void add_relative_dir(const string& Path, const bool Skip_Recursive = true);
+	bool check_relative_skip_dirs(const string& dir, bool& Skip_Recursive);
+	bool check_absolute_skip_dirs(const string& dir, bool& Skip_Recursive);
+	bool check_skip_dirs(const string& path, bool& Skip_Recursive);
+	//vector<skipitem_struct> get_absolute_dirs(void);
 	void clear_relative_dir(string dir);
 private:
-	vector<string> absolutedir;
-	vector<string> relativedir;
+	struct skipitem_struct {
+		string Path;
+		bool Skip_Recursive;
+	};
+	vector<skipitem_struct> absolutedir;
+	vector<skipitem_struct> relativedir;
 };
 
 extern twrpDU du;
