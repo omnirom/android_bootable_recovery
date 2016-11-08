@@ -34,11 +34,22 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_SRC_FILES := \
     unit/asn1_decoder_test.cpp \
     unit/locale_test.cpp \
-    unit/recovery_test.cpp \
     unit/sysutil_test.cpp \
     unit/zip_test.cpp
 
 LOCAL_C_INCLUDES := bootable/recovery
+LOCAL_SHARED_LIBRARIES := liblog
+include $(BUILD_NATIVE_TEST)
+
+# Manual tests
+include $(CLEAR_VARS)
+LOCAL_CLANG := true
+LOCAL_CFLAGS := -Werror
+LOCAL_MODULE := recovery_manual_test
+LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+LOCAL_STATIC_LIBRARIES := libbase
+
+LOCAL_SRC_FILES := manual/recovery_test.cpp
 LOCAL_SHARED_LIBRARIES := liblog
 include $(BUILD_NATIVE_TEST)
 
