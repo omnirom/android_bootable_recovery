@@ -58,6 +58,9 @@ extern "C" {
 #ifdef TW_INCLUDE_CRYPTO
 	#include "crypto/lollipop/cryptfs.h"
 	#include "gpt/gpt.h"
+	#ifdef TW_INCLUDE_FBE
+		#include "crypto/ext4crypt/Ext4Crypt.h"
+	#endif
 #else
 	#define CRYPT_FOOTER_OFFSET 0x4000
 #endif
@@ -202,6 +205,7 @@ TWPartition::TWPartition() {
 	Can_Be_Encrypted = false;
 	Is_Encrypted = false;
 	Is_Decrypted = false;
+	Is_FBE = false;
 	Mount_To_Decrypt = false;
 	Decrypted_Block_Device = "";
 	Display_Name = "";
@@ -496,9 +500,11 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			if (cryptfs_check_footer() == 0) {
 				Is_Encrypted = true;
 				Is_Decrypted = false;
+				Is_FBE = false;
 				Can_Be_Mounted = false;
 				Current_File_System = "emmc";
 				Setup_Image(Display_Error);
+				DataManager::SetValue(TW_IS_FBE, 0);
 				DataManager::SetValue(TW_IS_ENCRYPTED, 1);
 				DataManager::SetValue(TW_CRYPTO_PWTYPE, cryptfs_get_password_type());
 				DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
@@ -510,9 +516,47 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			LOGERR("Primary block device '%s' for mount point '%s' is not present!\n", Primary_Block_Device.c_str(), Mount_Point.c_str());
 		}
 	} else {
-		// Filesystem is not encrypted and the mount succeeded, so return to
-		// the original unmounted state
-		UnMount(false);
+		if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
+			LOGINFO("File Based Encryption is present\n");
+#ifdef TW_INCLUDE_FBE
+			du.add_absolute_dir(Mount_Point + "/convert_fbe");
+			du.add_absolute_dir(Mount_Point + "/unencrypted");
+			//du.add_absolute_dir(Mount_Point + "/system/users"); // we WILL need to retain some of this if multiple users are present or we just need to delete more folders for the extra users somewhere else
+			du.add_absolute_dir(Mount_Point + "/misc/vold/user_keys");
+			du.add_absolute_dir(Mount_Point + "/system_ce");
+			du.add_absolute_dir(Mount_Point + "/system_de");
+			du.add_absolute_dir(Mount_Point + "/misc_ce");
+			du.add_absolute_dir(Mount_Point + "/misc_de");
+			du.add_absolute_dir(Mount_Point + "/system/gatekeeper.password.key");
+			du.add_absolute_dir(Mount_Point + "/system/gatekeeper.pattern.key");
+			du.add_absolute_dir(Mount_Point + "/system/locksettings.db");
+			//du.add_absolute_dir(Mount_Point + "/system/locksettings.db-shm"); // don't seem to need this one, but the other 2 are needed
+			du.add_absolute_dir(Mount_Point + "/system/locksettings.db-wal");
+			du.add_absolute_dir(Mount_Point + "/user_de");
+			du.add_absolute_dir(Mount_Point + "/misc/profiles/cur");
+			du.add_absolute_dir(Mount_Point + "/misc/gatekeeper");
+			du.add_absolute_dir(Mount_Point + "/drm/kek.dat");
+			//du.add_absolute_dir(Mount_Point + "/");
+			if (Decrypt_DE()) {
+				property_set("ro.crypto.state", "encrypted");
+				Is_Encrypted = true;
+				Is_Decrypted = false;
+				Is_FBE = true;
+				DataManager::SetValue(TW_IS_FBE, 1);
+				DataManager::SetValue(TW_IS_ENCRYPTED, 1);
+				string filename;
+				DataManager::SetValue(TW_CRYPTO_PWTYPE, Get_Password_Type(0, filename));
+				DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
+				DataManager::SetValue("tw_crypto_display", "");
+			}
+#else
+			LOGERR("FBE found but FBE support not present in TWRP\n");
+#endif
+		} else {
+			// Filesystem is not encrypted and the mount succeeded, so return to
+			// the original unmounted state
+			UnMount(false);
+		}
 	}
 	if (datamedia && (!Is_Encrypted || (Is_Encrypted && Is_Decrypted))) {
 		Setup_Data_Media();
@@ -1789,6 +1833,9 @@ bool TWPartition::Wipe_Encryption() {
 #ifndef TW_OEM_BUILD
 		gui_msg("format_data_msg=You may need to reboot recovery to be able to use /data again.");
 #endif
+		// TODO: DO NOT MERGE THIS CODE!!!!
+		LOGERR("touching convert_fbe\n");
+		TWFunc::Exec_Cmd("touch /data/convert_fbe");
 		return true;
 	} else {
 		Has_Data_Media = Save_Data_Media;
@@ -2537,6 +2584,10 @@ void TWPartition::Recreate_Media_Folder(void) {
 	string Command;
 	string Media_Path = Mount_Point + "/media";
 
+	if (Is_FBE) {
+		LOGINFO("Not recreating media folder on FBE\n");
+		return;
+	}
 	if (!Mount(true)) {
 		gui_msg(Msg(msg::kError, "recreate_folder_err=Unable to recreate {1} folder.")(Media_Path));
 	} else if (!TWFunc::Path_Exists(Media_Path)) {
