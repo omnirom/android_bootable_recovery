@@ -208,4 +208,26 @@ TEST_F(UpdaterTest, rename) {
 
     // Already renamed.
     expect(temp_file2.path, script2.c_str(), kNoCause);
+
+    // Parents create successfully.
+    TemporaryFile temp_file3;
+    TemporaryDir td;
+    std::string temp_dir = std::string(td.path) + "/aaa/bbb/a.txt";
+    std::string script3("rename(\"" + std::string(temp_file3.path) + "\", \"" +
+                        temp_dir + "\")");
+    expect(temp_dir.c_str(), script3.c_str(), kNoCause);
+}
+
+TEST_F(UpdaterTest, symlink) {
+    // symlink expects 1+ argument.
+    expect(nullptr, "symlink()", kArgsParsingFailure);
+
+    // symlink should fail if src is an empty string.
+    TemporaryFile temp_file1;
+    std::string script1("symlink(\"" + std::string(temp_file1.path) + "\", \"\")");
+    expect(nullptr, script1.c_str(), kSymlinkFailure);
+
+    // symlink failed to remove old src.
+    std::string script2("symlink(\"" + std::string(temp_file1.path) + "\", \"/proc\")");
+    expect(nullptr, script2.c_str(), kSymlinkFailure);
 }
