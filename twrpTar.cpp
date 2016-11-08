@@ -168,7 +168,9 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 			while ((de = readdir(d)) != NULL) {
 				FileName = tardir + "/" + de->d_name;
 
-				if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName))
+				bool Skip, Skip_Recursive;
+				Skip = du.check_skip_dirs(FileName, Skip_Recursive);
+				if (de->d_type == DT_BLK || de->d_type == DT_CHR || Skip_Recursive)
 					continue;
 				if (de->d_type == DT_DIR) {
 					item_len = strlen(de->d_name);
@@ -187,7 +189,7 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 					} else {
 						encrypt_size += du.Get_Folder_Size(FileName);
 					}
-				} else if (de->d_type == DT_REG) {
+				} else if (!Skip && de->d_type == DT_REG) {
 					stat(FileName.c_str(), &st);
 					encrypt_size += (unsigned long long)(st.st_size);
 				}
@@ -216,7 +218,9 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 			while ((de = readdir(d)) != NULL) {
 				FileName = tardir + "/" + de->d_name;
 
-				if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName))
+				bool Skip, Skip_Recursive;
+				Skip = du.check_skip_dirs(FileName, Skip_Recursive);
+				if (de->d_type == DT_BLK || de->d_type == DT_CHR || Skip_Recursive)
 					continue;
 				if (de->d_type == DT_DIR) {
 					item_len = strlen(de->d_name);
@@ -234,7 +238,7 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 						}
 						file_count += (unsigned long long)(ret);
 					}
-				} else if (de->d_type == DT_REG || de->d_type == DT_LNK) {
+				} else if (!Skip && (de->d_type == DT_REG || de->d_type == DT_LNK)) {
 					stat(FileName.c_str(), &st);
 					if (de->d_type == DT_REG)
 						Archive_Current_Size += (unsigned long long)(st.st_size);
@@ -657,18 +661,24 @@ int twrpTar::Generate_TarList(string Path, std::vector<TarListStruct> *TarList, 
 	while ((de = readdir(d)) != NULL) {
 		FileName = Path + "/" + de->d_name;
 
-		if (de->d_type == DT_BLK || de->d_type == DT_CHR || du.check_skip_dirs(FileName))
+		bool Skip, Skip_Recursive;
+		Skip = du.check_skip_dirs(FileName, Skip_Recursive);
+		if (de->d_type == DT_BLK || de->d_type == DT_CHR || Skip_Recursive)
 			continue;
 		TarItem.fn = FileName;
 		TarItem.thread_id = *thread_id;
 		if (de->d_type == DT_DIR) {
-			TarList->push_back(TarItem);
+			if (!Skip) {
+				LOGINFO("Adding dir '%s'\n", FileName.c_str());
+				TarList->push_back(TarItem);
+			}
 			ret = Generate_TarList(FileName, TarList, Target_Size, thread_id);
 			if (ret < 0)
 				return -1;
 			file_count += ret;
-		} else if (de->d_type == DT_REG || de->d_type == DT_LNK) {
+		} else if (!Skip && (de->d_type == DT_REG || de->d_type == DT_LNK)) {
 			stat(FileName.c_str(), &st);
+			LOGINFO("Adding file/link '%s'\n", FileName.c_str());
 			TarList->push_back(TarItem);
 			if (de->d_type == DT_REG) {
 				file_count++;
