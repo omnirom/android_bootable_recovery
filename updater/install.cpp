@@ -95,25 +95,33 @@ void uiPrintf(State* _Nonnull state, const char* _Nonnull format, ...) {
     uiPrint(state, error_msg);
 }
 
+static bool is_dir(const std::string& dirpath) {
+  struct stat st;
+  return stat(dirpath.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
+}
+
 // Create all parent directories of name, if necessary.
-static int make_parents(char* name) {
-    char* p;
-    for (p = name + (strlen(name)-1); p > name; --p) {
-        if (*p != '/') continue;
-        *p = '\0';
-        if (make_parents(name) < 0) return -1;
-        int result = mkdir(name, 0700);
-        if (result == 0) printf("created [%s]\n", name);
-        *p = '/';
-        if (result == 0 || errno == EEXIST) {
-            // successfully created or already existed; we're done
-            return 0;
-        } else {
-            printf("failed to mkdir %s: %s\n", name, strerror(errno));
-            return -1;
+static bool make_parents(const std::string& name) {
+    size_t prev_end = 0;
+    while (prev_end < name.size()) {
+        size_t next_end = name.find('/', prev_end + 1);
+        if (next_end == std::string::npos) {
+            break;
         }
+        std::string dir_path = name.substr(0, next_end);
+        if (!is_dir(dir_path)) {
+            int result = mkdir(dir_path.c_str(), 0700);
+            if (result != 0) {
+                printf("failed to mkdir %s when make parents for %s: %s\n", dir_path.c_str(),
+                       name.c_str(), strerror(errno));
+                return false;
+            }
+
+            printf("created [%s]\n", dir_path.c_str());
+        }
+        prev_end = next_end;
     }
-    return 0;
+    return true;
 }
 
 // mount(fs_type, partition_type, location, mount_point)
@@ -342,7 +350,7 @@ Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
     const std::string& src_name = args[0];
-    std::string& dst_name = args[1];
+    const std::string& dst_name = args[1];
 
     if (src_name.empty()) {
         return ErrorAbort(state, kArgsParsingFailure, "src_name argument to %s() can't be empty",
@@ -352,7 +360,7 @@ Value* RenameFn(const char* name, State* state, int argc, Expr* argv[]) {
         return ErrorAbort(state, kArgsParsingFailure, "dst_name argument to %s() can't be empty",
                           name);
     }
-    if (make_parents(&dst_name[0]) != 0) {
+    if (!make_parents(dst_name)) {
         return ErrorAbort(state, kFileRenameFailure, "Creating parent of %s failed, error %s",
                           dst_name.c_str(), strerror(errno));
     } else if (access(dst_name.c_str(), F_OK) == 0 && access(src_name.c_str(), F_OK) != 0) {
@@ -583,7 +591,7 @@ Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
                 ++bad;
             }
         }
-        if (make_parents(&srcs[i][0])) {
+        if (!make_parents(srcs[i])) {
             printf("%s: failed to symlink %s to %s: making parents failed\n",
                     name, srcs[i].c_str(), target.c_str());
             ++bad;
