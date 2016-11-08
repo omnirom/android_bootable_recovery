@@ -1,33 +1,40 @@
 /*
  * Copyright 2006 The Android Open Source Project
  *
- * System utilities.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-#ifndef _MINZIP_SYSUTIL
-#define _MINZIP_SYSUTIL
 
-#include <stdio.h>
+#ifndef _OTAUTIL_SYSUTIL
+#define _OTAUTIL_SYSUTIL
+
 #include <sys/types.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <vector>
 
-typedef struct MappedRange {
-    void* addr;
-    size_t length;
-} MappedRange;
+struct MappedRange {
+  void* addr;
+  size_t length;
+};
 
 /*
  * Use this to keep track of mapped segments.
  */
-typedef struct MemMapping {
-    unsigned char* addr;           /* start of data */
-    size_t         length;         /* length of data */
+struct MemMapping {
+  unsigned char* addr; /* start of data */
+  size_t length;       /* length of data */
 
-    int            range_count;
-    MappedRange*   ranges;
-} MemMapping;
+  std::vector<MappedRange> ranges;
+};
 
 /*
  * Map a file into a private, read-only memory segment.  If 'fn'
@@ -45,8 +52,4 @@ int sysMapFile(const char* fn, MemMapping* pMap);
  */
 void sysReleaseMap(MemMapping* pMap);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /*_MINZIP_SYSUTIL*/
+#endif  // _OTAUTIL_SYSUTIL
