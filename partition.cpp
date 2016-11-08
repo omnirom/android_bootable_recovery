@@ -778,6 +778,8 @@ bool TWPartition::Is_Image(string File_System) {
 }
 
 bool TWPartition::Make_Dir(string Path, bool Display_Error) {
+	if (TWFunc::Get_D_Type_From_Stat(Path) != S_IFDIR)
+		unlink(Path.c_str());
 	if (!TWFunc::Path_Exists(Path)) {
 		if (mkdir(Path.c_str(), 0777) == -1) {
 			if (Display_Error)
