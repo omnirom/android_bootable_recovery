@@ -189,7 +189,7 @@ unsigned char* ReadZip(const char* filename,
   }
 
   size_t sz = static_cast<size_t>(st.st_size);
-  unsigned char* img = reinterpret_cast<unsigned char*>(malloc(sz));
+  unsigned char* img = static_cast<unsigned char*>(malloc(sz));
   FILE* f = fopen(filename, "rb");
   if (fread(img, 1, sz, f) != sz) {
     printf("failed to read \"%s\" %s\n", filename, strerror(errno));
@@ -216,7 +216,7 @@ unsigned char* ReadZip(const char* filename,
   int cdcount = Read2(img+i+8);
   int cdoffset = Read4(img+i+16);
 
-  ZipFileEntry* temp_entries = reinterpret_cast<ZipFileEntry*>(malloc(
+  ZipFileEntry* temp_entries = static_cast<ZipFileEntry*>(malloc(
       cdcount * sizeof(ZipFileEntry)));
   int entrycount = 0;
 
@@ -234,7 +234,7 @@ unsigned char* ReadZip(const char* filename,
     int mlen = Read2(cd+32);   // file comment len
     int hoffset = Read4(cd+42);   // local header offset
 
-    char* filename = reinterpret_cast<char*>(malloc(nlen+1));
+    char* filename = static_cast<char*>(malloc(nlen+1));
     memcpy(filename, cd+46, nlen);
     filename[nlen] = '\0';
 
@@ -283,7 +283,7 @@ unsigned char* ReadZip(const char* filename,
 #endif
 
   *num_chunks = 0;
-  *chunks = reinterpret_cast<ImageChunk*>(malloc((entrycount*2+2) * sizeof(ImageChunk)));
+  *chunks = static_cast<ImageChunk*>(malloc((entrycount*2+2) * sizeof(ImageChunk)));
   ImageChunk* curr = *chunks;
 
   if (include_pseudo_chunk) {
@@ -308,7 +308,7 @@ unsigned char* ReadZip(const char* filename,
       curr->filename = temp_entries[nextentry].filename;
 
       curr->len = temp_entries[nextentry].uncomp_len;
-      curr->data = reinterpret_cast<unsigned char*>(malloc(curr->len));
+      curr->data = static_cast<unsigned char*>(malloc(curr->len));
 
       z_stream strm;
       strm.zalloc = Z_NULL;
@@ -378,7 +378,7 @@ unsigned char* ReadImage(const char* filename,
   }
 
   size_t sz = static_cast<size_t>(st.st_size);
-  unsigned char* img = reinterpret_cast<unsigned char*>(malloc(sz + 4));
+  unsigned char* img = static_cast<unsigned char*>(malloc(sz + 4));
   FILE* f = fopen(filename, "rb");
   if (fread(img, 1, sz, f) != sz) {
     printf("failed to read \"%s\" %s\n", filename, strerror(errno));
@@ -408,7 +408,7 @@ unsigned char* ReadImage(const char* filename,
       size_t chunk_offset = pos;
 
       *num_chunks += 3;
-      *chunks = reinterpret_cast<ImageChunk*>(realloc(*chunks,
+      *chunks = static_cast<ImageChunk*>(realloc(*chunks,
           *num_chunks * sizeof(ImageChunk)));
       ImageChunk* curr = *chunks + (*num_chunks-3);
 
@@ -431,7 +431,7 @@ unsigned char* ReadImage(const char* filename,
 
       size_t allocated = 32768;
       curr->len = 0;
-      curr->data = reinterpret_cast<unsigned char*>(malloc(allocated));
+      curr->data = static_cast<unsigned char*>(malloc(allocated));
       curr->start = pos;
       curr->deflate_data = p;
 
@@ -459,7 +459,7 @@ unsigned char* ReadImage(const char* filename,
         curr->len = allocated - strm.avail_out;
         if (strm.avail_out == 0) {
           allocated *= 2;
-          curr->data = reinterpret_cast<unsigned char*>(realloc(curr->data, allocated));
+          curr->data = static_cast<unsigned char*>(realloc(curr->data, allocated));
         }
       } while (ret != Z_STREAM_END);
 
@@ -502,7 +502,7 @@ unsigned char* ReadImage(const char* filename,
       // Reallocate the list for every chunk; we expect the number of
       // chunks to be small (5 for typical boot and recovery images).
       ++*num_chunks;
-      *chunks = reinterpret_cast<ImageChunk*>(realloc(*chunks, *num_chunks * sizeof(ImageChunk)));
+      *chunks = static_cast<ImageChunk*>(realloc(*chunks, *num_chunks * sizeof(ImageChunk)));
       ImageChunk* curr = *chunks + (*num_chunks-1);
       curr->start = pos;
 
@@ -585,7 +585,7 @@ int ReconstructDeflateChunk(ImageChunk* chunk) {
     return -1;
   }
 
-  unsigned char* out = reinterpret_cast<unsigned char*>(malloc(BUFFER_SIZE));
+  unsigned char* out = static_cast<unsigned char*>(malloc(BUFFER_SIZE));
 
   // We only check two combinations of encoder parameters:  level 6
   // (the default) and level 9 (the maximum).
@@ -646,7 +646,7 @@ unsigned char* MakePatch(ImageChunk* src, ImageChunk* tgt, size_t* size) {
 
   size_t sz = static_cast<size_t>(st.st_size);
   // TODO: Memory leak on error return.
-  unsigned char* data = reinterpret_cast<unsigned char*>(malloc(sz));
+  unsigned char* data = static_cast<unsigned char*>(malloc(sz));
 
   if (tgt->type == CHUNK_NORMAL && tgt->len <= sz) {
     unlink(ptemp);
@@ -813,7 +813,7 @@ int main(int argc, char** argv) {
       return 1;
     }
     bonus_size = st.st_size;
-    bonus_data = reinterpret_cast<unsigned char*>(malloc(bonus_size));
+    bonus_data = static_cast<unsigned char*>(malloc(bonus_size));
     FILE* f = fopen(argv[2], "rb");
     if (f == NULL) {
       printf("failed to open bonus file %s: %s\n", argv[2], strerror(errno));
@@ -959,9 +959,9 @@ int main(int argc, char** argv) {
   DumpChunks(src_chunks, num_src_chunks);
 
   printf("Construct patches for %d chunks...\n", num_tgt_chunks);
-  unsigned char** patch_data = reinterpret_cast<unsigned char**>(malloc(
+  unsigned char** patch_data = static_cast<unsigned char**>(malloc(
       num_tgt_chunks * sizeof(unsigned char*)));
-  size_t* patch_size = reinterpret_cast<size_t*>(malloc(num_tgt_chunks * sizeof(size_t)));
+  size_t* patch_size = static_cast<size_t*>(malloc(num_tgt_chunks * sizeof(size_t)));
   for (i = 0; i < num_tgt_chunks; ++i) {
     if (zip_mode) {
       ImageChunk* src;
@@ -975,7 +975,7 @@ int main(int argc, char** argv) {
     } else {
       if (i == 1 && bonus_data) {
         printf("  using %zu bytes of bonus data for chunk %d\n", bonus_size, i);
-        src_chunks[i].data = reinterpret_cast<unsigned char*>(realloc(src_chunks[i].data,
+        src_chunks[i].data = static_cast<unsigned char*>(realloc(src_chunks[i].data,
             src_chunks[i].len + bonus_size));
         memcpy(src_chunks[i].data+src_chunks[i].len, bonus_data, bonus_size);
         src_chunks[i].len += bonus_size;

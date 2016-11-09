@@ -37,7 +37,7 @@
 
 static GRSurface* malloc_surface(size_t data_size) {
     size_t size = sizeof(GRSurface) + data_size + SURFACE_DATA_ALIGNMENT;
-    unsigned char* temp = reinterpret_cast<unsigned char*>(malloc(size));
+    unsigned char* temp = static_cast<unsigned char*>(malloc(size));
     if (temp == NULL) return NULL;
     GRSurface* surface = reinterpret_cast<GRSurface*>(temp);
     surface->data = temp + sizeof(GRSurface) +
@@ -221,7 +221,7 @@ int res_create_display_surface(const char* name, GRSurface** pSurface) {
     png_set_bgr(png_ptr);
 #endif
 
-    p_row = reinterpret_cast<unsigned char*>(malloc(width * 4));
+    p_row = static_cast<unsigned char*>(malloc(width * 4));
     for (y = 0; y < height; ++y) {
         png_read_row(png_ptr, p_row, NULL);
         transform_rgb_to_draw(p_row, surface->data + y * surface->row_bytes, channels, width);
@@ -281,7 +281,7 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
         goto exit;
     }
 
-    surface = reinterpret_cast<GRSurface**>(calloc(*frames, sizeof(GRSurface*)));
+    surface = static_cast<GRSurface**>(calloc(*frames, sizeof(GRSurface*)));
     if (surface == NULL) {
         result = -8;
         goto exit;
@@ -298,7 +298,7 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
     png_set_bgr(png_ptr);
 #endif
 
-    p_row = reinterpret_cast<unsigned char*>(malloc(width * 4));
+    p_row = static_cast<unsigned char*>(malloc(width * 4));
     for (y = 0; y < height; ++y) {
         png_read_row(png_ptr, p_row, NULL);
         int frame = y % *frames;
