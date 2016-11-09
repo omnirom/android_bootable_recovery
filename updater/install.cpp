@@ -566,8 +566,9 @@ Value* PackageExtractFileFn(const char* name, State* state,
     }
 }
 
-// symlink target src1 src2 ...
-//    unlinks any previously existing src1, src2, etc before creating symlinks.
+// symlink(target, [src1, src2, ...])
+//   Creates all sources as symlinks to target. It unlinks any previously existing src1, src2, etc
+//   before creating symlinks.
 Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
     if (argc == 0) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1+ args, got %d", name, argc);
@@ -579,33 +580,29 @@ Value* SymlinkFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     std::vector<std::string> srcs;
     if (!ReadArgs(state, argc-1, argv+1, &srcs)) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+        return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)",
+                          name);
     }
 
-    int bad = 0;
-    for (int i = 0; i < argc-1; ++i) {
-        if (unlink(srcs[i].c_str()) < 0) {
-            if (errno != ENOENT) {
-                printf("%s: failed to remove %s: %s\n",
-                        name, srcs[i].c_str(), strerror(errno));
-                ++bad;
-            }
-        }
-        if (!make_parents(srcs[i])) {
+    size_t bad = 0;
+    for (const auto& src : srcs) {
+        if (unlink(src.c_str()) == -1 && errno != ENOENT) {
+            printf("%s: failed to remove %s: %s\n", name, src.c_str(), strerror(errno));
+            ++bad;
+        } else if (!make_parents(src)) {
             printf("%s: failed to symlink %s to %s: making parents failed\n",
-                    name, srcs[i].c_str(), target.c_str());
+                    name, src.c_str(), target.c_str());
             ++bad;
-        }
-        if (symlink(target.c_str(), srcs[i].c_str()) < 0) {
+        } else if (symlink(target.c_str(), src.c_str()) == -1) {
             printf("%s: failed to symlink %s to %s: %s\n",
-                    name, srcs[i].c_str(), target.c_str(), strerror(errno));
+                    name, src.c_str(), target.c_str(), strerror(errno));
             ++bad;
         }
     }
-    if (bad) {
-        return ErrorAbort(state, kSymlinkFailure, "%s: some symlinks failed", name);
+    if (bad != 0) {
+        return ErrorAbort(state, kSymlinkFailure, "%s: Failed to create %zu symlink(s)", name, bad);
     }
-    return StringValue("");
+    return StringValue("t");
 }
 
 struct perm_parsed_args {
