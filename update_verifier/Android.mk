@@ -18,8 +18,15 @@ include $(CLEAR_VARS)
 
 LOCAL_CLANG := true
 LOCAL_SRC_FILES := update_verifier.cpp
+
 LOCAL_MODULE := update_verifier
-LOCAL_SHARED_LIBRARIES := libhardware libbase
+LOCAL_SHARED_LIBRARIES := \
+    libbase \
+    libcutils \
+    libhardware \
+    liblog
+
 LOCAL_CFLAGS := -Werror
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
 
 include $(BUILD_EXECUTABLE)
