@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <string>
 
 #include <android-base/file.h>
@@ -212,10 +216,15 @@ TEST_F(UpdaterTest, rename) {
     // Parents create successfully.
     TemporaryFile temp_file3;
     TemporaryDir td;
-    std::string temp_dir = std::string(td.path) + "/aaa/bbb/a.txt";
-    std::string script3("rename(\"" + std::string(temp_file3.path) + "\", \"" +
-                        temp_dir + "\")");
-    expect(temp_dir.c_str(), script3.c_str(), kNoCause);
+    std::string temp_dir(td.path);
+    std::string dst_file = temp_dir + "/aaa/bbb/a.txt";
+    std::string script3("rename(\"" + std::string(temp_file3.path) + "\", \"" + dst_file + "\")");
+    expect(dst_file.c_str(), script3.c_str(), kNoCause);
+
+    // Clean up the temp files under td.
+    ASSERT_EQ(0, unlink(dst_file.c_str()));
+    ASSERT_EQ(0, rmdir((temp_dir + "/aaa/bbb").c_str()));
+    ASSERT_EQ(0, rmdir((temp_dir + "/aaa").c_str()));
 }
 
 TEST_F(UpdaterTest, symlink) {
@@ -227,7 +236,31 @@ TEST_F(UpdaterTest, symlink) {
     std::string script1("symlink(\"" + std::string(temp_file1.path) + "\", \"\")");
     expect(nullptr, script1.c_str(), kSymlinkFailure);
 
-    // symlink failed to remove old src.
-    std::string script2("symlink(\"" + std::string(temp_file1.path) + "\", \"/proc\")");
+    std::string script2("symlink(\"" + std::string(temp_file1.path) + "\", \"src1\", \"\")");
     expect(nullptr, script2.c_str(), kSymlinkFailure);
+
+    // symlink failed to remove old src.
+    std::string script3("symlink(\"" + std::string(temp_file1.path) + "\", \"/proc\")");
+    expect(nullptr, script3.c_str(), kSymlinkFailure);
+
+    // symlink can create symlinks.
+    TemporaryFile temp_file;
+    std::string content = "magicvalue";
+    ASSERT_TRUE(android::base::WriteStringToFile(content, temp_file.path));
+
+    TemporaryDir td;
+    std::string src1 = std::string(td.path) + "/symlink1";
+    std::string src2 = std::string(td.path) + "/symlink2";
+    std::string script4("symlink(\"" + std::string(temp_file.path) + "\", \"" +
+                        src1 + "\", \"" + src2 + "\")");
+    expect("t", script4.c_str(), kNoCause);
+
+    // Verify the created symlinks.
+    struct stat sb;
+    ASSERT_TRUE(lstat(src1.c_str(), &sb) == 0 && S_ISLNK(sb.st_mode));
+    ASSERT_TRUE(lstat(src2.c_str(), &sb) == 0 && S_ISLNK(sb.st_mode));
+
+    // Clean up the leftovers.
+    ASSERT_EQ(0, unlink(src1.c_str()));
+    ASSERT_EQ(0, unlink(src2.c_str()));
 }
