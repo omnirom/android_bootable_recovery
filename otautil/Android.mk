@@ -20,15 +20,9 @@ LOCAL_SRC_FILES := \
     DirUtil.cpp \
     ZipUtil.cpp
 
-LOCAL_C_INCLUDES := \
-    external/zlib \
-    external/safe-iop/include
-
 LOCAL_STATIC_LIBRARIES := libselinux libbase
 
 LOCAL_MODULE := libotautil
-
-LOCAL_CLANG := true
 
 LOCAL_CFLAGS += -Werror -Wall
 
