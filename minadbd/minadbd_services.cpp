@@ -66,7 +66,7 @@ static int create_service_thread(void (*func)(int, void *), void *cookie) {
         return -1;
     }
 
-    stinfo* sti = reinterpret_cast<stinfo*>(malloc(sizeof(stinfo)));
+    stinfo* sti = static_cast<stinfo*>(malloc(sizeof(stinfo)));
     if(sti == 0) fatal("cannot allocate stinfo");
     sti->func = func;
     sti->cookie = cookie;
