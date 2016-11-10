@@ -163,6 +163,19 @@ bool write_bootloader_message(const std::vector<std::string>& options, std::stri
   return write_bootloader_message(boot, err);
 }
 
+bool write_reboot_bootloader(std::string* err) {
+  bootloader_message boot;
+  if (!read_bootloader_message(&boot, err)) {
+    return false;
+  }
+  if (boot.command[0] != '\0') {
+    *err = "Bootloader command pending.";
+    return false;
+  }
+  strlcpy(boot.command, "bootonce-bootloader", sizeof(boot.command));
+  return write_bootloader_message(boot, err);
+}
+
 bool read_wipe_package(std::string* package_data, size_t size, std::string* err) {
   package_data->resize(size);
   return read_misc_partition(&(*package_data)[0], size, WIPE_PACKAGE_OFFSET_IN_MISC, err);
@@ -171,6 +184,11 @@ bool read_wipe_package(std::string* package_data, size_t size, std::string* err)
 bool write_wipe_package(const std::string& package_data, std::string* err) {
   return write_misc_partition(package_data.data(), package_data.size(),
                               WIPE_PACKAGE_OFFSET_IN_MISC, err);
+}
+
+extern "C" bool write_reboot_bootloader(void) {
+  std::string err;
+  return write_reboot_bootloader(&err);
 }
 
 extern "C" bool write_bootloader_message(const char* options) {
