@@ -572,6 +572,7 @@
 		<string name="unable_resize">Nie można zmienić rozmiaru {1}.</string>
 		<string name="no_md5_found">Nie znaleziono pliku MD5 '{1}'. Proszę wyłączyć weryfikację MD5, aby przywrócić.</string>
 		<string name="md5_fail_match">MD5 nie pasuje do '{1}'.</string>
+		<string name="md5_matched">MD5 matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Nie udało się odszyfrować pliku tar '{1}'</string>
 		<string name="format_data_msg">Może być konieczne ponowne uruchomienie recovery, aby móc ponownie użyć /date.</string>
 		<string name="format_data_err">Nie można sformatować, aby usunąć szyfrowanie.</string>
