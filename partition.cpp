@@ -2340,6 +2340,12 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 	if (part_settings->progress)
 		part_settings->progress->UpdateDisplayDetails(true);
 	fsync(dest_fd);
+
+	if (!part_settings->adbbackup && part_settings->PM_Method == PM_BACKUP) {
+		tw_set_default_metadata(destfn.c_str());
+		LOGINFO("Restored default metadata for %s\n", destfn.c_str());
+	}
+
 	ret = true;
 exit:
 	if (src_fd >= 0)
