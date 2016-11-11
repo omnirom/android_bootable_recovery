@@ -2298,7 +2298,7 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(destfn.c_str())(strerror(errno)));
 		goto exit;
 	}
-	
+
 	LOGINFO("Reading '%s', writing '%s'\n", srcfn.c_str(), destfn.c_str());
 
 	if (part_settings->adbbackup) {
@@ -2340,6 +2340,11 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 	if (part_settings->progress)
 		part_settings->progress->UpdateDisplayDetails(true);
 	fsync(dest_fd);
+	if (!part_settings->adbbackup && part_settings->PM_Method == PM_BACKUP) {
+		tw_set_default_metadata(destfn.c_str());
+		LOGINFO("Metadata set for %s\n", destfn.c_str());
+	}
+
 	ret = true;
 exit:
 	if (src_fd >= 0)
