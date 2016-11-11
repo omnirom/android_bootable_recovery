@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d8098520_84ac23a1",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2253,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-11-11T23:35:31Z",
+      "side": 1,
+      "message": "Would you mind getting rid of this whitespace in this patchset?",
+      "revId": "098c5af74abf1d3ee315948d68f64552dc7897ac",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
