@@ -465,12 +465,16 @@ bool MultiROM::restorecon(std::string name)
 	std::string seapp_contexts = file_contexts + "/boot/seapp_contexts";
 	file_contexts += "/boot/file_contexts";
 
+	if(access(file_contexts.c_str(), R_OK) < 0)
+		file_contexts += ".bin";
+
 	if(access(file_contexts.c_str(), R_OK) >= 0)
 	{
 		gui_print("Using ROM's file_contexts\n");
 		rename("/file_contexts", "/file_contexts.orig");
+		rename("/file_contexts.bin", "/file_contexts.bin.orig");
 		rename("/seapp_contexts", "/seapp_contexts.orig");
-		system_args("cp -a \"%s\" /file_contexts", file_contexts.c_str());
+		system_args("cp -a \"%s\" /%s", file_contexts.c_str(), file_contexts.substr(file_contexts.find_last_of('/')+1).c_str());
 		system_args("cp -a \"%s\" /seapp_contexts", seapp_contexts.c_str());
 		replaced_contexts = true;
 	}
@@ -481,8 +485,42 @@ bool MultiROM::restorecon(std::string name)
 	static const char * const parts[] = { "/system", "/data", "/cache", NULL };
 	for(int i = 0; parts[i]; ++i)
 	{
-		gui_print("Running restorecon on ROM's %s\n", parts[i]);
-		system_args("restorecon -RFDv %s", parts[i]);
+		gui_print("MultiROM: Running restorecon on ROM's %s\n", parts[i]);
+		#define ENV "PATH='/system/bin:/system/xbin' LD_LIBRARY_PATH='/system/lib64:/system/lib'"
+		int res = system_args("PART=%s; "
+		                      ""
+		                      "RC=$(" ENV " which restorecon); ERR=$?; "
+		                      ""
+		                      "run_restorecon() { "
+		                      "    if [ $1 == 0 ]; then "
+		                      "        BB=$(readlink $(which restorecon)); "
+		                      "    else "
+		                      "        BB=$(" ENV " readlink $RC); "
+		                      "    fi; "
+		                      ""
+		                      "    echo \"MultiROM: restorecon mode=$1 PART='$PART' RC='$RC'($ERR) BB='$BB'\"; "
+		                      ""
+		                      "    if [ \"$BB\" == \"busybox\" ]; then "
+		                      "        echo \"MultiROM: restorecon is busybox based don't use -D flag\"; "
+		                      "        if [ $1 == 0 ]; then restorecon -RFv $PART; else " ENV " restorecon -RFv $PART; fi; "
+		                      "    else "
+		                      "        echo \"MultiROM: restorecon is not busybox based use -D flag\"; "
+		                      "        if [ $1 == 0 ]; then restorecon -RFDv $PART; else " ENV " restorecon -RFDv $PART; fi; "
+		                      "    fi; "
+		                      "}; "
+		                      ""
+		                      "if [ $ERR != 0 ] || [ \"$RC\" == \"\" ]; then "
+		                      "    run_restorecon 0; "
+		                      "else "
+		                      "    run_restorecon 1; "
+		                      "fi; ", parts[i]);
+
+		if (res == 0)
+			gui_print("...successful\n");
+		else
+			gui_print("...result=%d, this may be an error\n"
+			          "   or just a non-fatal warning, you\n"
+			          "   should check the recovery.log\n", res);
 	}
 
 	// SuperSU moves the real app_process into _original
@@ -494,8 +532,9 @@ bool MultiROM::restorecon(std::string name)
 	res = true;
 exit:
 	if(replaced_contexts) {
-		rename("/file_contexts.orig", "/file_contexts");
-		rename("/seapp_contexts.orig", "/seapp_contexts");
+		if(access("/file_contexts.orig", R_OK) >= 0) rename("/file_contexts.orig", "/file_contexts"); else remove("/file_contexts");
+		if(access("/file_contexts.bin.orig", R_OK) >= 0) rename("/file_contexts.bin.orig", "/file_contexts.bin"); else remove("/file_contexts.bin");
+		if(access("/seapp_contexts.orig", R_OK) >= 0) rename("/seapp_contexts.orig", "/seapp_contexts"); else remove("/seapp_contexts");
 	}
 	return res;
 }
@@ -1831,7 +1870,7 @@ bool MultiROM::extractBootForROM(std::string base)
 	static const char *cp_f[] = {
 		"*.rc", "default.prop", "init", "main_init", "fstab.*",
 		// Since Android 4.3 - for SELinux
-		"file_contexts", "property_contexts", "seapp_contexts", "sepolicy",
+		"file_contexts", "file_contexts.bin", "property_contexts", "seapp_contexts", "sepolicy",
 		NULL
 	};
 
