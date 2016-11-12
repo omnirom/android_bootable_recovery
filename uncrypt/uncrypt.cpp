@@ -210,6 +210,11 @@ static const char* find_block_device(const char* path, bool* encryptable, bool* 
 }
 
 static bool write_status_to_socket(int status, int socket) {
+    // If socket equals -1, uncrypt is in debug mode without socket communication.
+    // Skip writing and return success.
+    if (socket == -1) {
+        return true;
+    }
     int status_out = htonl(status);
     return android::base::WriteFully(socket, &status_out, sizeof(int));
 }
@@ -567,7 +572,7 @@ static void usage(const char* exename) {
 }
 
 int main(int argc, char** argv) {
-    enum { UNCRYPT, SETUP_BCB, CLEAR_BCB } action;
+    enum { UNCRYPT, SETUP_BCB, CLEAR_BCB, UNCRYPT_DEBUG } action;
     const char* input_path = nullptr;
     const char* map_file = CACHE_BLOCK_MAP.c_str();
 
@@ -580,7 +585,7 @@ int main(int argc, char** argv) {
     } else if (argc == 3) {
         input_path = argv[1];
         map_file = argv[2];
-        action = UNCRYPT;
+        action = UNCRYPT_DEBUG;
     } else {
         usage(argv[0]);
         return 2;
@@ -589,6 +594,17 @@ int main(int argc, char** argv) {
     if ((fstab = read_fstab()) == nullptr) {
         log_uncrypt_error_code(kUncryptFstabReadError);
         return 1;
+    }
+
+    if (action == UNCRYPT_DEBUG) {
+        LOG(INFO) << "uncrypt called in debug mode, skip socket communication\n";
+        bool success = uncrypt_wrapper(input_path, map_file, -1);
+        if (success) {
+            LOG(INFO) << "uncrypt succeeded\n";
+        } else{
+            LOG(INFO) << "uncrypt failed\n";
+        }
+        return success ? 0 : 1;
     }
 
     // c3. The socket is created by init when starting the service. uncrypt
