@@ -284,6 +284,7 @@ ALL_TOOLS := \
     mktemp \
     modinfo \
     more \
+    mount \
     mountpoint \
     mv \
     netstat \
