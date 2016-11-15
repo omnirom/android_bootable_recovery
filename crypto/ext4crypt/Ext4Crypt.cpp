@@ -581,6 +581,7 @@ bool Decrypt_User(const userid_t user_id, const std::string& Password) {
 	}
     std::string filename;
     bool Default_Password = (Password == "!");
+    printf("Default_Password %i\n", Default_Password);
     if (Get_Password_Type(user_id, filename) == 0 && !Default_Password) {
 		printf("Unknown password type\n");
 		return false;

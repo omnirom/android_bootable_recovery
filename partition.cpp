@@ -235,6 +235,7 @@ TWPartition::TWPartition() {
 	Mount_Read_Only = false;
 	Is_Adopted_Storage = false;
 	Adopted_GUID = "";
+	Is_AB = false;
 }
 
 TWPartition::~TWPartition(void) {
@@ -539,8 +540,21 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			du.add_absolute_dir(Mount_Point + "/drm/kek.dat", false);
 			du.add_absolute_dir(Mount_Point + "/misc/user/0", false);
 			du.add_absolute_dir(Mount_Point + "/data", false);
+			du.add_absolute_dir(Mount_Point + "/local", false);
+			du.add_absolute_dir(Mount_Point + "/app", false);
+			du.add_absolute_dir(Mount_Point + "/property", false);
+			du.add_absolute_dir(Mount_Point + "/dalvik-cache", false);
+			du.add_absolute_dir(Mount_Point + "/drm", false);
+			du.add_absolute_dir(Mount_Point + "/mediadrm", false);
+			du.add_absolute_dir(Mount_Point + "/backup", false);
+			du.add_absolute_dir(Mount_Point + "/cache", false);
+			du.add_absolute_dir(Mount_Point + "/dpm", false);
+			du.add_absolute_dir(Mount_Point + "/nfc", false);
 			//du.add_absolute_dir(Mount_Point + "/");
-			if (Decrypt_DE()) {
+			int retry_count = 3;
+			while (!Decrypt_DE() && retry_count--)
+				usleep(2000);
+			if (retry_count > 0) {
 				property_set("ro.crypto.state", "encrypted");
 				Is_Encrypted = true;
 				Is_Decrypted = false;
@@ -931,13 +945,14 @@ void TWPartition::Find_Real_Block_Device(string& Block, bool Display_Error) {
 
 	strcpy(device, Block.c_str());
 	memset(realDevice, 0, sizeof(realDevice));
-	while (readlink(device, realDevice, sizeof(realDevice)) > 0)
+	int count = 10;
+	while (readlink(device, realDevice, sizeof(realDevice)) > 0 && count--)
 	{
 		strcpy(device, realDevice);
 		memset(realDevice, 0, sizeof(realDevice));
 	}
 
-	if (device[0] != '/') {
+	if (device[0] != '/' || count == 0) {
 		if (Display_Error)
 			LOGERR("Invalid symlink path '%s' found on block device '%s'\n", device, Block.c_str());
 		else
@@ -1769,7 +1784,7 @@ bool TWPartition::Wipe_Encryption() {
 	Has_Data_Media = false;
 	Decrypted_Block_Device = "";
 #ifdef TW_INCLUDE_CRYPTO
-	if (Is_Decrypted) {
+	if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
 		if (!UnMount(true))
 			return false;
 		if (delete_crypto_blk_dev((char*)("userdata")) != 0) {
@@ -1779,6 +1794,7 @@ bool TWPartition::Wipe_Encryption() {
 #endif
 	Is_Decrypted = false;
 	Is_Encrypted = false;
+	Decrypted_Block_Device = "";
 	Find_Actual_Block_Device();
 	if (Crypto_Key_Location == "footer") {
 		int newlen, fd;
@@ -1837,8 +1853,8 @@ bool TWPartition::Wipe_Encryption() {
 		gui_msg("format_data_msg=You may need to reboot recovery to be able to use /data again.");
 #endif
 		// TODO: DO NOT MERGE THIS CODE!!!!
-		LOGERR("touching convert_fbe\n");
-		TWFunc::Exec_Cmd("touch /data/convert_fbe");
+		//LOGERR("touching convert_fbe\n");
+		//TWFunc::Exec_Cmd("touch /data/convert_fbe");
 		return true;
 	} else {
 		Has_Data_Media = Save_Data_Media;
@@ -2529,6 +2545,7 @@ bool TWPartition::Update_Size(bool Display_Error) {
 	if (!Can_Be_Mounted && !Is_Encrypted)
 		return false;
 
+	Find_Actual_Block_Device();
 	Was_Already_Mounted = Is_Mounted();
 	if (Removable || Is_Encrypted) {
 		if (!Mount(false))
@@ -2575,15 +2592,21 @@ bool TWPartition::Update_Size(bool Display_Error) {
 void TWPartition::Find_Actual_Block_Device(void) {
 	if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
 		Actual_Block_Device = Decrypted_Block_Device;
-		if (TWFunc::Path_Exists(Decrypted_Block_Device))
+		if (TWFunc::Path_Exists(Decrypted_Block_Device)) {
 			Is_Present = true;
+			return;
+		}
+	} else if (TWFunc::Path_Exists(Primary_Block_Device + PartitionManager.Get_Active_Slot_Suffix())) {
+		Actual_Block_Device = Primary_Block_Device + PartitionManager.Get_Active_Slot_Suffix();
+		Is_Present = true;
+		Is_AB = true;
+		return;
 	} else if (TWFunc::Path_Exists(Primary_Block_Device)) {
 		Is_Present = true;
 		Actual_Block_Device = Primary_Block_Device;
 		return;
 	}
-	if (Is_Decrypted) {
-	} else if (!Alternate_Block_Device.empty() && TWFunc::Path_Exists(Alternate_Block_Device)) {
+	if (!Alternate_Block_Device.empty() && TWFunc::Path_Exists(Alternate_Block_Device)) {
 		Actual_Block_Device = Alternate_Block_Device;
 		Is_Present = true;
 	} else {
