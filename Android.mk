@@ -294,7 +294,13 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         TW_INCLUDE_CRYPTO_FBE := true
 		LOCAL_CFLAGS += -DTW_INCLUDE_FBE
 		LOCAL_SHARED_LIBRARIES += libe4crypt
+		LOCAL_ADDITIONAL_DEPENDENCIES += libe4crypt
 	endif
+endif
+ifeq ($(AB_OTA_UPDATER), true)
+    LOCAL_CFLAGS += -DAB_OTA_UPDATER
+    LOCAL_SHARED_LIBRARIES += libhardware
+    LOCAL_ADDITIONAL_DEPENDENCIES += libhardware
 endif
 ifeq ($(TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID), true)
     LOCAL_CFLAGS += -DTW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
@@ -347,7 +353,7 @@ else
     LOCAL_CFLAGS += -DTW_DEFAULT_LANGUAGE=en
 endif
 
-LOCAL_ADDITIONAL_DEPENDENCIES := \
+LOCAL_ADDITIONAL_DEPENDENCIES += \
     dump_image \
     erase_image \
     flash_image \

@@ -58,6 +58,11 @@ extern "C" {
 	#include "gui/gui.h"
 }
 
+#ifdef AB_OTA_UPDATER
+#include <hardware/hardware.h>
+#include <hardware/boot_control.h>
+#endif
+
 #ifdef TW_INCLUDE_CRYPTO
 	#include "crypto/lollipop/cryptfs.h"
 	#include "gui/rapidxml.hpp"
@@ -73,6 +78,13 @@ TWPartitionManager::TWPartitionManager(void) {
 	mtp_was_enabled = false;
 	mtp_write_fd = -1;
 	stop_backup.set_value(0);
+	char slot_suffix[PROPERTY_VALUE_MAX];
+	property_get("ro.boot.slot_suffix", slot_suffix, "_a");
+	Active_Slot_Display = "";
+	if (strcmp(slot_suffix, "_a") == 0)
+		Set_Active_Slot("A");
+	else
+		Set_Active_Slot("B");
 }
 
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
@@ -196,6 +208,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 #endif
 	Update_System_Details();
 	UnMount_Main_Partitions();
+	DataManager::SetValue("tw_active_slot", Get_Active_Slot_Display());
 	return true;
 }
 
@@ -304,6 +317,10 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Can_Flash_Img ");
 	if (Part->Is_Adopted_Storage)
 		printf("Is_Adopted_Storage ");
+	if (Part->Is_FBE)
+		printf("Is_FBE ");
+	if (Part->Is_AB)
+		printf("Is_AB ");
 	printf("\n");
 	if (!Part->SubPartition_Of.empty())
 		printf("   SubPartition_Of: %s\n", Part->SubPartition_Of.c_str());
@@ -311,6 +328,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("   Symlink_Path: %s\n", Part->Symlink_Path.c_str());
 	if (!Part->Symlink_Mount_Point.empty())
 		printf("   Symlink_Mount_Point: %s\n", Part->Symlink_Mount_Point.c_str());
+	if (!Part->Actual_Block_Device.empty())
+		printf("   Actual_Block_Device: %s\n", Part->Actual_Block_Device.c_str());
 	if (!Part->Primary_Block_Device.empty())
 		printf("   Primary_Block_Device: %s\n", Part->Primary_Block_Device.c_str());
 	if (!Part->Alternate_Block_Device.empty())
@@ -372,7 +391,7 @@ int TWPartitionManager::Mount_By_Path(string Path, bool Display_Error) {
 	}
 	if (found) {
 		return ret;
-	} else if (Display_Error) {
+	} else if (Display_Error && Local_Path != "/cache") {
 		gui_msg(Msg(msg::kError, "unable_find_part_path=Unable to find partition for path '{1}'")(Local_Path));
 	} else {
 		LOGINFO("Mount: Unable to find partition for path '%s'\n", Local_Path.c_str());
@@ -1475,6 +1494,8 @@ void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
 		if (!Block_Device.empty()) {
 			dat->Decrypted_Block_Device = Block_Device;
 			gui_msg(Msg("decrypt_success_dev=Data successfully decrypted, new block device: '{1}'")(Block_Device));
+		} else {
+			gui_msg("decrypt_success_nodev=Data successfully decrypted");
 		}
 		dat->Setup_File_System(false);
 		dat->Current_File_System = dat->Fstab_File_System; // Needed if we're ignoring blkid because encrypted devices start out as emmc
@@ -1518,6 +1539,9 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 
 	if (DataManager::GetIntValue(TW_IS_FBE)) {
 #ifdef TW_INCLUDE_FBE
+		if (!Mount_By_Path("/data", true)) // /data has to be mounted for FBE
+			return -1;
+		usleep(2000); // A small sleep is needed after mounting /data to ensure reliable decrypt... maybe because of DE?
 		int user_id = DataManager::GetIntValue("tw_decrypt_user_id");
 		LOGINFO("Decrypting FBE for user %i\n", user_id);
 		if (Decrypt_User(user_id, Password)) {
@@ -2505,4 +2529,47 @@ void TWPartitionManager::Remove_Partition_By_Path(string Path) {
 			return;
 		}
 	}
+}
+
+void TWPartitionManager::Set_Active_Slot(const string& Slot) {
+	if (Slot != "A" && Slot != "B") {
+		LOGERR("Set_Active_Slot invalid slot '%s'\n", Slot.c_str());
+		return;
+	}
+	if (Active_Slot_Display == Slot)
+		return;
+	LOGINFO("Setting active slot %s\n", Slot.c_str());
+#ifdef AB_OTA_UPDATER
+	if (!Active_Slot_Display.empty()) {
+		const hw_module_t *hw_module;
+		boot_control_module_t *module;
+		int ret;
+		ret = hw_get_module("bootctrl", &hw_module);
+		if (ret != 0) {
+			LOGERR("Error getting bootctrl module.\n");
+		} else {
+			module = (boot_control_module_t*) hw_module;
+			module->init(module);
+			int slot_number = 0;
+			if (Slot == "B")
+				slot_number = 1;
+			if (module->setActiveBootSlot(module, slot_number))
+				gui_msg(Msg(msg::kError, "unable_set_boot_slot=Error changing bootloader boot slot to {1}")(Slot));
+		}
+		DataManager::SetValue("tw_active_slot", Slot); // Doing this outside of this if block may result in a seg fault because the DataManager may not be ready yet
+	}
+#else
+	LOGERR("Boot slot feature not present\n");
+#endif
+	Active_Slot_Display = Slot;
+	if (Fstab_Processed())
+		Update_System_Details();
+}
+string TWPartitionManager::Get_Active_Slot_Suffix() {
+	if (Active_Slot_Display == "A")
+		return "_a";
+	return "_b";
+}
+string TWPartitionManager::Get_Active_Slot_Display() {
+	return Active_Slot_Display;
 }
