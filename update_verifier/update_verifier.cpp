@@ -45,7 +45,12 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <cutils/properties.h>
-#include <hardware/boot_control.h>
+#include <android/hardware/boot/1.0/IBootControl.h>
+
+using android::sp;
+using android::hardware::boot::V1_0::IBootControl;
+using android::hardware::boot::V1_0::BoolResult;
+using android::hardware::boot::V1_0::CommandResult;
 
 constexpr auto CARE_MAP_FILE = "/data/ota_package/care_map.txt";
 constexpr int BLOCKSIZE = 4096;
@@ -142,21 +147,18 @@ int main(int argc, char** argv) {
     LOG(INFO) << "Started with arg " << i << ": " << argv[i];
   }
 
-  const hw_module_t* hw_module;
-  if (hw_get_module("bootctrl", &hw_module) != 0) {
+  sp<IBootControl> module = IBootControl::getService("bootctrl");
+  if (module == nullptr) {
     LOG(ERROR) << "Error getting bootctrl module.";
     return -1;
   }
 
-  boot_control_module_t* module = reinterpret_cast<boot_control_module_t*>(
-      const_cast<hw_module_t*>(hw_module));
-  module->init(module);
+  uint32_t current_slot = module->getCurrentSlot();
+  BoolResult is_successful = module->isSlotMarkedSuccessful(current_slot);
+  LOG(INFO) << "Booting slot " << current_slot << ": isSlotMarkedSuccessful="
+            << static_cast<int32_t>(is_successful);
 
-  unsigned current_slot = module->getCurrentSlot(module);
-  int is_successful= module->isSlotMarkedSuccessful(module, current_slot);
-  LOG(INFO) << "Booting slot " << current_slot << ": isSlotMarkedSuccessful=" << is_successful;
-
-  if (is_successful == 0) {
+  if (is_successful == BoolResult::FALSE) {
     // The current slot has not booted successfully.
     char verity_mode[PROPERTY_VALUE_MAX];
     if (property_get("ro.boot.veritymode", verity_mode, "") == -1) {
@@ -175,9 +177,10 @@ int main(int argc, char** argv) {
       return -1;
     }
 
-    int ret = module->markBootSuccessful(module);
-    if (ret != 0) {
-      LOG(ERROR) << "Error marking booted successfully: " << strerror(-ret);
+    CommandResult cr;
+    module->markBootSuccessful([&cr](CommandResult result) { cr = result; });
+    if (!cr.success) {
+      LOG(ERROR) << "Error marking booted successfully: " << cr.errMsg;
       return -1;
     }
     LOG(INFO) << "Marked slot " << current_slot << " as booted successfully.";
