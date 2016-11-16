@@ -308,7 +308,7 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
     }
     free(p_row);
 
-    *pSurface = reinterpret_cast<GRSurface**>(surface);
+    *pSurface = surface;
 
 exit:
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
@@ -436,7 +436,7 @@ int res_create_localized_alpha_surface(const char* name,
                 memcpy(surface->data + i*w, row.data(), w);
             }
 
-            *pSurface = reinterpret_cast<GRSurface*>(surface);
+            *pSurface = surface;
             break;
         } else {
             int i;
