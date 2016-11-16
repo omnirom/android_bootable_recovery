@@ -404,7 +404,7 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 endif
 ifneq ($(TW_EXCLUDE_SUPERSU), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += \
-        install-recovery.sh 99SuperSUDaemon Superuser.apk
+        install-recovery.sh install-supersu.sh 99SuperSUDaemon Superuser.apk
     ifeq ($(TARGET_ARCH), arm)
         LOCAL_ADDITIONAL_DEPENDENCIES += \
             chattr.pie libsupol.so suarm supolicy
