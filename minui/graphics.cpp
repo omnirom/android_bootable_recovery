@@ -298,14 +298,14 @@ static void gr_init_font(void)
 
 
     // fall back to the compiled-in font.
-    gr_font = reinterpret_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
-    gr_font->texture = reinterpret_cast<GRSurface*>(malloc(sizeof(*gr_font->texture)));
+    gr_font = static_cast<GRFont*>(calloc(sizeof(*gr_font), 1));
+    gr_font->texture = static_cast<GRSurface*>(malloc(sizeof(*gr_font->texture)));
     gr_font->texture->width = font.width;
     gr_font->texture->height = font.height;
     gr_font->texture->row_bytes = font.width;
     gr_font->texture->pixel_bytes = 1;
 
-    unsigned char* bits = reinterpret_cast<unsigned char*>(malloc(font.width * font.height));
+    unsigned char* bits = static_cast<unsigned char*>(malloc(font.width * font.height));
     gr_font->texture->data = reinterpret_cast<unsigned char*>(bits);
 
     unsigned char data;

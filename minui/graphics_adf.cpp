@@ -68,9 +68,9 @@ static int adf_surface_init(adf_pdata *pdata, drm_mode_modeinfo *mode, adf_surfa
     surf->base.row_bytes = surf->pitch;
     surf->base.pixel_bytes = (pdata->format == DRM_FORMAT_RGB565) ? 2 : 4;
 
-    surf->base.data = reinterpret_cast<uint8_t*>(mmap(NULL,
-                                                      surf->pitch * surf->base.height, PROT_WRITE,
-                                                      MAP_SHARED, surf->fd, surf->offset));
+    surf->base.data = static_cast<uint8_t*>(mmap(NULL,
+                                                 surf->pitch * surf->base.height, PROT_WRITE,
+                                                 MAP_SHARED, surf->fd, surf->offset));
     if (surf->base.data == MAP_FAILED) {
         close(surf->fd);
         return -errno;
@@ -259,7 +259,7 @@ static void adf_exit(minui_backend *backend)
 
 minui_backend *open_adf()
 {
-    adf_pdata* pdata = reinterpret_cast<adf_pdata*>(calloc(1, sizeof(*pdata)));
+    adf_pdata* pdata = static_cast<adf_pdata*>(calloc(1, sizeof(*pdata)));
     if (!pdata) {
         perror("allocating adf backend failed");
         return NULL;

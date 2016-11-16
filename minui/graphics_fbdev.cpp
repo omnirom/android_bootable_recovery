@@ -133,7 +133,7 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     gr_framebuffer[0].height = vi.yres;
     gr_framebuffer[0].row_bytes = fi.line_length;
     gr_framebuffer[0].pixel_bytes = vi.bits_per_pixel / 8;
-    gr_framebuffer[0].data = reinterpret_cast<uint8_t*>(bits);
+    gr_framebuffer[0].data = static_cast<uint8_t*>(bits);
     memset(gr_framebuffer[0].data, 0, gr_framebuffer[0].height * gr_framebuffer[0].row_bytes);
 
     /* check if we can use double buffering */
