@@ -19,6 +19,15 @@
 
 #include <stdlib.h>
 
+// Zip entries in ziptest_valid.zip.
+static const std::string kATxtContents("abcdefghabcdefgh\n");
+static const std::string kBTxtContents("abcdefgh\n");
+
+// echo -n -e "abcdefghabcdefgh\n" | sha1sum
+static const std::string kATxtSha1Sum("32c96a03dc8cd20097940f351bca6261ee5a1643");
+// echo -n -e "abcdefgh\n" | sha1sum
+static const std::string kBTxtSha1Sum("e414af7161c9554089f4106d6f1797ef14a73666");
+
 static const char* data_root = getenv("ANDROID_DATA");
 
 static std::string from_testdata_base(const std::string& fname) {

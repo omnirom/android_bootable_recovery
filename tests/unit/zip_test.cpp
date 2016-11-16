@@ -30,9 +30,6 @@
 
 #include "common/test_constants.h"
 
-static const std::string kATxtContents("abcdefghabcdefgh\n");
-static const std::string kBTxtContents("abcdefgh\n");
-
 TEST(ZipTest, ExtractPackageRecursive) {
   std::string zip_path = from_testdata_base("ziptest_valid.zip");
   ZipArchiveHandle handle;
