@@ -306,7 +306,7 @@ static void gr_init_font(void)
     gr_font->texture->pixel_bytes = 1;
 
     unsigned char* bits = static_cast<unsigned char*>(malloc(font.width * font.height));
-    gr_font->texture->data = reinterpret_cast<unsigned char*>(bits);
+    gr_font->texture->data = bits;
 
     unsigned char data;
     unsigned char* in = font.rundata;
