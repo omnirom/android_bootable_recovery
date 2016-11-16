@@ -24,35 +24,40 @@
 #include <android-base/properties.h>
 #include <android-base/test_utils.h>
 #include <gtest/gtest.h>
+#include <ziparchive/zip_archive.h>
 
+#include "common/test_constants.h"
 #include "edify/expr.h"
 #include "error_code.h"
 #include "updater/install.h"
+#include "updater/updater.h"
 
 struct selabel_handle *sehandle = nullptr;
 
-static void expect(const char* expected, const char* expr_str, CauseCode cause_code) {
-    Expr* e;
-    int error_count;
-    EXPECT_EQ(parse_string(expr_str, &e, &error_count), 0);
+static void expect(const char* expected, const char* expr_str, CauseCode cause_code,
+                   UpdaterInfo* info = nullptr) {
+  Expr* e;
+  int error_count = 0;
+  ASSERT_EQ(0, parse_string(expr_str, &e, &error_count));
+  ASSERT_EQ(0, error_count);
 
-    State state(expr_str, nullptr);
+  State state(expr_str, info);
 
-    std::string result;
-    bool status = Evaluate(&state, e, &result);
+  std::string result;
+  bool status = Evaluate(&state, e, &result);
 
-    if (expected == nullptr) {
-        EXPECT_FALSE(status);
-    } else {
-        EXPECT_STREQ(expected, result.c_str());
-    }
+  if (expected == nullptr) {
+    ASSERT_FALSE(status);
+  } else {
+    ASSERT_TRUE(status);
+    ASSERT_STREQ(expected, result.c_str());
+  }
 
-    // Error code is set in updater/updater.cpp only, by parsing State.errmsg.
-    EXPECT_EQ(kNoError, state.error_code);
+  // Error code is set in updater/updater.cpp only, by parsing State.errmsg.
+  ASSERT_EQ(kNoError, state.error_code);
 
-    // Cause code should always be available.
-    EXPECT_EQ(cause_code, state.cause_code);
-
+  // Cause code should always be available.
+  ASSERT_EQ(cause_code, state.cause_code);
 }
 
 class UpdaterTest : public ::testing::Test {
@@ -263,4 +268,57 @@ TEST_F(UpdaterTest, symlink) {
     // Clean up the leftovers.
     ASSERT_EQ(0, unlink(src1.c_str()));
     ASSERT_EQ(0, unlink(src2.c_str()));
+}
+
+// TODO: Test extracting to block device.
+TEST_F(UpdaterTest, package_extract_file) {
+  // package_extract_file expects 1 or 2 arguments.
+  expect(nullptr, "package_extract_file()", kArgsParsingFailure);
+  expect(nullptr, "package_extract_file(\"arg1\", \"arg2\", \"arg3\")", kArgsParsingFailure);
+
+  std::string zip_path = from_testdata_base("ziptest_valid.zip");
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchive(zip_path.c_str(), &handle));
+
+  // Need to set up the ziphandle.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+
+  // Two-argument version.
+  TemporaryFile temp_file1;
+  std::string script("package_extract_file(\"a.txt\", \"" + std::string(temp_file1.path) + "\")");
+  expect("t", script.c_str(), kNoCause, &updater_info);
+
+  // Verify the extracted entry.
+  std::string data;
+  ASSERT_TRUE(android::base::ReadFileToString(temp_file1.path, &data));
+  ASSERT_EQ(kATxtContents, data);
+
+  // Now extract another entry to the same location, which should overwrite.
+  script = "package_extract_file(\"b.txt\", \"" + std::string(temp_file1.path) + "\")";
+  expect("t", script.c_str(), kNoCause, &updater_info);
+
+  ASSERT_TRUE(android::base::ReadFileToString(temp_file1.path, &data));
+  ASSERT_EQ(kBTxtContents, data);
+
+  // Missing zip entry. The two-argument version doesn't abort.
+  script = "package_extract_file(\"doesntexist\", \"" + std::string(temp_file1.path) + "\")";
+  expect("", script.c_str(), kNoCause, &updater_info);
+
+  // Extract to /dev/full should fail.
+  script = "package_extract_file(\"a.txt\", \"/dev/full\")";
+  expect("", script.c_str(), kNoCause, &updater_info);
+
+  // One-argument version.
+  script = "sha1_check(package_extract_file(\"a.txt\"))";
+  expect(kATxtSha1Sum.c_str(), script.c_str(), kNoCause, &updater_info);
+
+  script = "sha1_check(package_extract_file(\"b.txt\"))";
+  expect(kBTxtSha1Sum.c_str(), script.c_str(), kNoCause, &updater_info);
+
+  // Missing entry. The one-argument version aborts the evaluation.
+  script = "package_extract_file(\"doesntexist\")";
+  expect(nullptr, script.c_str(), kPackageExtractFileFailure, &updater_info);
+
+  CloseArchive(handle);
 }

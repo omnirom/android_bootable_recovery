@@ -477,93 +477,86 @@ Value* PackageExtractDirFn(const char* name, State* state,
     return StringValue(success ? "t" : "");
 }
 
+// package_extract_file(package_file[, dest_file])
+//   Extracts a single package_file from the update package and writes it to dest_file,
+//   overwriting existing files if necessary. Without the dest_file argument, returns the
+//   contents of the package file as a binary blob.
+Value* PackageExtractFileFn(const char* name, State* state, int argc, Expr* argv[]) {
+  if (argc < 1 || argc > 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 or 2 args, got %d", name, argc);
+  }
 
-// package_extract_file(package_path, destination_path)
-//   or
-// package_extract_file(package_path)
-//   to return the entire contents of the file as the result of this
-//   function (the char* returned is actually a FileContents*).
-Value* PackageExtractFileFn(const char* name, State* state,
-                           int argc, Expr* argv[]) {
-    if (argc < 1 || argc > 2) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 or 2 args, got %d",
-                          name, argc);
+  if (argc == 2) {
+    // The two-argument version extracts to a file.
+
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 2, argv, &args)) {
+      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %d args", name, argc);
     }
-    bool success = false;
+    const std::string& zip_path = args[0];
+    const std::string& dest_path = args[1];
 
-    if (argc == 2) {
-        // The two-argument version extracts to a file.
-
-        ZipArchiveHandle za = ((UpdaterInfo*)(state->cookie))->package_zip;
-
-        std::vector<std::string> args;
-        if (!ReadArgs(state, 2, argv, &args)) {
-            return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %d args", name,
-                              argc);
-        }
-        const std::string& zip_path = args[0];
-        const std::string& dest_path = args[1];
-
-        ZipString zip_string_path(zip_path.c_str());
-        ZipEntry entry;
-        if (FindEntry(za, zip_string_path, &entry) != 0) {
-            printf("%s: no %s in package\n", name, zip_path.c_str());
-            return StringValue("");
-        }
-
-        int fd = TEMP_FAILURE_RETRY(ota_open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
-              S_IRUSR | S_IWUSR));
-        if (fd == -1) {
-            printf("%s: can't open %s for write: %s\n", name, dest_path.c_str(), strerror(errno));
-            return StringValue("");
-        }
-        success = ExtractEntryToFile(za, &entry, fd);
-        if (ota_fsync(fd) == -1) {
-            printf("fsync of \"%s\" failed: %s\n", dest_path.c_str(), strerror(errno));
-            success = false;
-        }
-        if (ota_close(fd) == -1) {
-            printf("close of \"%s\" failed: %s\n", dest_path.c_str(), strerror(errno));
-            success = false;
-        }
-
-        return StringValue(success ? "t" : "");
-    } else {
-        // The one-argument version returns the contents of the file
-        // as the result.
-
-        std::vector<std::string> args;
-        if (!ReadArgs(state, 1, argv, &args)) {
-            return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %d args", name,
-                              argc);
-        }
-        const std::string& zip_path = args[0];
-
-        Value* v = new Value(VAL_INVALID, "");
-
-        ZipArchiveHandle za = ((UpdaterInfo*)(state->cookie))->package_zip;
-        ZipString zip_string_path(zip_path.c_str());
-        ZipEntry entry;
-        if (FindEntry(za, zip_string_path, &entry) != 0) {
-            printf("%s: no %s in package\n", name, zip_path.c_str());
-            return v;
-        }
-
-        v->data.resize(entry.uncompressed_length);
-        if (ExtractToMemory(za, &entry, reinterpret_cast<uint8_t*>(&v->data[0]),
-                            v->data.size()) != 0) {
-            printf("%s: faled to extract %zu bytes to memory\n", name, v->data.size());
-        } else {
-            success = true;
-        }
-
-        if (!success) {
-            v->data.clear();
-        } else {
-            v->type = VAL_BLOB;
-        }
-        return v;
+    ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
+    ZipString zip_string_path(zip_path.c_str());
+    ZipEntry entry;
+    if (FindEntry(za, zip_string_path, &entry) != 0) {
+      printf("%s: no %s in package\n", name, zip_path.c_str());
+      return StringValue("");
     }
+
+    int fd = TEMP_FAILURE_RETRY(
+        ota_open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR));
+    if (fd == -1) {
+      printf("%s: can't open %s for write: %s\n", name, dest_path.c_str(), strerror(errno));
+      return StringValue("");
+    }
+
+    bool success = true;
+    int32_t ret = ExtractEntryToFile(za, &entry, fd);
+    if (ret != 0) {
+      printf("%s: Failed to extract entry \"%s\" (%u bytes) to \"%s\": %s\n", name,
+             zip_path.c_str(), entry.uncompressed_length, dest_path.c_str(), ErrorCodeString(ret));
+      success = false;
+    }
+    if (ota_fsync(fd) == -1) {
+      printf("fsync of \"%s\" failed: %s\n", dest_path.c_str(), strerror(errno));
+      success = false;
+    }
+    if (ota_close(fd) == -1) {
+      printf("close of \"%s\" failed: %s\n", dest_path.c_str(), strerror(errno));
+      success = false;
+    }
+
+    return StringValue(success ? "t" : "");
+  } else {
+    // The one-argument version returns the contents of the file as the result.
+
+    std::vector<std::string> args;
+    if (!ReadArgs(state, 1, argv, &args)) {
+      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %d args", name, argc);
+    }
+    const std::string& zip_path = args[0];
+
+    ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
+    ZipString zip_string_path(zip_path.c_str());
+    ZipEntry entry;
+    if (FindEntry(za, zip_string_path, &entry) != 0) {
+      return ErrorAbort(state, kPackageExtractFileFailure, "%s(): no %s in package", name,
+                        zip_path.c_str());
+    }
+
+    std::string buffer;
+    buffer.resize(entry.uncompressed_length);
+
+    int32_t ret = ExtractToMemory(za, &entry, reinterpret_cast<uint8_t*>(&buffer[0]), buffer.size());
+    if (ret != 0) {
+      return ErrorAbort(state, kPackageExtractFileFailure,
+                        "%s: Failed to extract entry \"%s\" (%zu bytes) to memory: %s", name,
+                        zip_path.c_str(), buffer.size(), ErrorCodeString(ret));
+    }
+
+    return new Value(VAL_BLOB, buffer);
+  }
 }
 
 // symlink(target, [src1, src2, ...])
