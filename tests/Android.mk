@@ -92,6 +92,8 @@ LOCAL_STATIC_LIBRARIES := \
     libcrypto \
     libcutils \
     libbz \
+    libziparchive \
+    libutils \
     libz \
     libbase \
     libtune2fs \
