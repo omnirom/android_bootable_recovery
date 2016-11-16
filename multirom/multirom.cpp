@@ -294,7 +294,7 @@ bool MultiROM::setRomsPath(std::string loc)
 		return true;
 	}
 	*/
-	
+
 	// legacy 'loc' style for easier merges
 	loc = partition->Actual_Block_Device + " (" + partition->Current_File_System + ")";
 
@@ -1418,6 +1418,7 @@ exit:
 	return false;
 }
 
+int gui_changeOverlay(std::string newPage);
 bool MultiROM::injectBoot(std::string img_path, bool only_if_older)
 {
 	int tr_my_ver = getTrampolineVersion();
@@ -1427,11 +1428,17 @@ bool MultiROM::injectBoot(std::string img_path, bool only_if_older)
 		return false;
 	}
 
+	bool res;
 	if(tr_my_ver < 17)
-		return injectBootDeprecated(img_path, only_if_older);
+		res = injectBootDeprecated(img_path, only_if_older);
+	else
+		res = (system_args("\"%s/trampoline\" --inject=\"%s\" --mrom_dir=\"%s\" %s",
+		                   m_path.c_str(), img_path.c_str(), m_path.c_str(), only_if_older ? "" : "-f") == 0);
 
-	return system_args("\"%s/trampoline\" --inject=\"%s\" --mrom_dir=\"%s\" %s",
-		m_path.c_str(), img_path.c_str(), m_path.c_str(), only_if_older ? "" : "-f") == 0;
+	if(!res)
+		gui_changeOverlay("multirom_injection_failed");
+
+	return res;
 }
 
 bool MultiROM::injectBootDeprecated(std::string img_path, bool only_if_older)
