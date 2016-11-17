@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "applypatch/applypatch.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
@@ -27,16 +29,18 @@
 
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include <openssl/sha.h>
 
-#include "openssl/sha.h"
-#include "applypatch/applypatch.h"
 #include "edify/expr.h"
 #include "ota_io.h"
 #include "print_sha1.h"
 
-static int LoadPartitionContents(const char* filename, FileContents* file);
+static int LoadPartitionContents(const std::string& filename, FileContents* file);
 static ssize_t FileSink(const unsigned char* data, ssize_t len, void* token);
 static int GenerateTarget(FileContents* source_file,
                           const Value* source_patch_value,
@@ -48,39 +52,34 @@ static int GenerateTarget(FileContents* source_file,
                           size_t target_size,
                           const Value* bonus_data);
 
-// Read a file into memory; store the file contents and associated
-// metadata in *file.
-//
+// Read a file into memory; store the file contents and associated metadata in *file.
 // Return 0 on success.
 int LoadFileContents(const char* filename, FileContents* file) {
-    // A special 'filename' beginning with "EMMC:" means to
-    // load the contents of a partition.
-    if (strncmp(filename, "EMMC:", 5) == 0) {
-        return LoadPartitionContents(filename, file);
-    }
+  // A special 'filename' beginning with "EMMC:" means to load the contents of a partition.
+  if (strncmp(filename, "EMMC:", 5) == 0) {
+    return LoadPartitionContents(filename, file);
+  }
 
-    if (stat(filename, &file->st) != 0) {
-        printf("failed to stat \"%s\": %s\n", filename, strerror(errno));
-        return -1;
-    }
+  if (stat(filename, &file->st) == -1) {
+    printf("failed to stat \"%s\": %s\n", filename, strerror(errno));
+    return -1;
+  }
 
-    std::vector<unsigned char> data(file->st.st_size);
-    FILE* f = ota_fopen(filename, "rb");
-    if (f == NULL) {
-        printf("failed to open \"%s\": %s\n", filename, strerror(errno));
-        return -1;
-    }
+  std::vector<unsigned char> data(file->st.st_size);
+  std::unique_ptr<FILE, decltype(&ota_fclose)> f(ota_fopen(filename, "rb"), ota_fclose);
+  if (!f) {
+    printf("failed to open \"%s\": %s\n", filename, strerror(errno));
+    return -1;
+  }
 
-    size_t bytes_read = ota_fread(data.data(), 1, data.size(), f);
-    if (bytes_read != data.size()) {
-        printf("short read of \"%s\" (%zu bytes of %zu)\n", filename, bytes_read, data.size());
-        ota_fclose(f);
-        return -1;
-    }
-    ota_fclose(f);
-    file->data = std::move(data);
-    SHA1(file->data.data(), file->data.size(), file->sha1);
-    return 0;
+  size_t bytes_read = ota_fread(data.data(), 1, data.size(), f.get());
+  if (bytes_read != data.size()) {
+    printf("short read of \"%s\" (%zu bytes of %zu)\n", filename, bytes_read, data.size());
+    return -1;
+  }
+  file->data = std::move(data);
+  SHA1(file->data.data(), file->data.size(), file->sha1);
+  return 0;
 }
 
 // Load the contents of an EMMC partition into the provided
@@ -97,114 +96,98 @@ int LoadFileContents(const char* filename, FileContents* file) {
 // "end-of-file" marker), so the caller must specify the possible
 // lengths and the hash of the data, and we'll do the load expecting
 // to find one of those hashes.
-static int LoadPartitionContents(const char* filename, FileContents* file) {
-    std::string copy(filename);
-    std::vector<std::string> pieces = android::base::Split(copy, ":");
-    if (pieces.size() < 4 || pieces.size() % 2 != 0) {
-        printf("LoadPartitionContents called with bad filename (%s)\n", filename);
+static int LoadPartitionContents(const std::string& filename, FileContents* file) {
+  std::vector<std::string> pieces = android::base::Split(filename, ":");
+  if (pieces.size() < 4 || pieces.size() % 2 != 0 || pieces[0] != "EMMC") {
+    printf("LoadPartitionContents called with bad filename \"%s\"\n", filename.c_str());
+    return -1;
+  }
+
+  size_t pair_count = (pieces.size() - 2) / 2;  // # of (size, sha1) pairs in filename
+  std::vector<std::pair<size_t, std::string>> pairs;
+  for (size_t i = 0; i < pair_count; ++i) {
+    size_t size;
+    if (!android::base::ParseUint(pieces[i * 2 + 2], &size) || size == 0) {
+      printf("LoadPartitionContents called with bad size \"%s\"\n", pieces[i * 2 + 2].c_str());
+      return -1;
+    }
+    pairs.push_back({ size, pieces[i * 2 + 3] });
+  }
+
+  // Sort the pairs array so that they are in order of increasing size.
+  std::sort(pairs.begin(), pairs.end());
+
+  const char* partition = pieces[1].c_str();
+  std::unique_ptr<FILE, decltype(&ota_fclose)> dev(ota_fopen(partition, "rb"), ota_fclose);
+  if (!dev) {
+    printf("failed to open emmc partition \"%s\": %s\n", partition, strerror(errno));
+    return -1;
+  }
+
+  SHA_CTX sha_ctx;
+  SHA1_Init(&sha_ctx);
+
+  // Allocate enough memory to hold the largest size.
+  std::vector<unsigned char> buffer(pairs[pair_count - 1].first);
+  unsigned char* buffer_ptr = buffer.data();
+  size_t buffer_size = 0;  // # bytes read so far
+  bool found = false;
+
+  for (const auto& pair : pairs) {
+    size_t current_size = pair.first;
+    const std::string& current_sha1 = pair.second;
+
+    // Read enough additional bytes to get us up to the next size. (Again,
+    // we're trying the possibilities in order of increasing size).
+    size_t next = current_size - buffer_size;
+    if (next > 0) {
+      size_t read = ota_fread(buffer_ptr, 1, next, dev.get());
+      if (next != read) {
+        printf("short read (%zu bytes of %zu) for partition \"%s\"\n", read, next, partition);
         return -1;
+      }
+      SHA1_Update(&sha_ctx, buffer_ptr, read);
+      buffer_size += read;
+      buffer_ptr += read;
     }
 
-    if (pieces[0] != "EMMC") {
-        printf("LoadPartitionContents called with bad filename (%s)\n", filename);
-        return -1;
-    }
-    const char* partition = pieces[1].c_str();
+    // Duplicate the SHA context and finalize the duplicate so we can
+    // check it against this pair's expected hash.
+    SHA_CTX temp_ctx;
+    memcpy(&temp_ctx, &sha_ctx, sizeof(SHA_CTX));
+    uint8_t sha_so_far[SHA_DIGEST_LENGTH];
+    SHA1_Final(sha_so_far, &temp_ctx);
 
-    size_t pairs = (pieces.size() - 2) / 2;    // # of (size, sha1) pairs in filename
-    std::vector<size_t> index(pairs);
-    std::vector<size_t> size(pairs);
-    std::vector<std::string> sha1sum(pairs);
-
-    for (size_t i = 0; i < pairs; ++i) {
-        size[i] = strtol(pieces[i*2+2].c_str(), NULL, 10);
-        if (size[i] == 0) {
-            printf("LoadPartitionContents called with bad size (%s)\n", filename);
-            return -1;
-        }
-        sha1sum[i] = pieces[i*2+3].c_str();
-        index[i] = i;
-    }
-
-    // Sort the index[] array so it indexes the pairs in order of increasing size.
-    sort(index.begin(), index.end(),
-        [&](const size_t& i, const size_t& j) {
-            return (size[i] < size[j]);
-        }
-    );
-
-    FILE* dev = ota_fopen(partition, "rb");
-    if (dev == NULL) {
-        printf("failed to open emmc partition \"%s\": %s\n", partition, strerror(errno));
-        return -1;
-    }
-
-    SHA_CTX sha_ctx;
-    SHA1_Init(&sha_ctx);
     uint8_t parsed_sha[SHA_DIGEST_LENGTH];
-
-    // Allocate enough memory to hold the largest size.
-    std::vector<unsigned char> data(size[index[pairs-1]]);
-    char* p = reinterpret_cast<char*>(data.data());
-    size_t data_size = 0;                // # bytes read so far
-    bool found = false;
-
-    for (size_t i = 0; i < pairs; ++i) {
-        // Read enough additional bytes to get us up to the next size. (Again,
-        // we're trying the possibilities in order of increasing size).
-        size_t next = size[index[i]] - data_size;
-        if (next > 0) {
-            size_t read = ota_fread(p, 1, next, dev);
-            if (next != read) {
-                printf("short read (%zu bytes of %zu) for partition \"%s\"\n",
-                       read, next, partition);
-                return -1;
-            }
-            SHA1_Update(&sha_ctx, p, read);
-            data_size += read;
-            p += read;
-        }
-
-        // Duplicate the SHA context and finalize the duplicate so we can
-        // check it against this pair's expected hash.
-        SHA_CTX temp_ctx;
-        memcpy(&temp_ctx, &sha_ctx, sizeof(SHA_CTX));
-        uint8_t sha_so_far[SHA_DIGEST_LENGTH];
-        SHA1_Final(sha_so_far, &temp_ctx);
-
-        if (ParseSha1(sha1sum[index[i]].c_str(), parsed_sha) != 0) {
-            printf("failed to parse sha1 %s in %s\n", sha1sum[index[i]].c_str(), filename);
-            return -1;
-        }
-
-        if (memcmp(sha_so_far, parsed_sha, SHA_DIGEST_LENGTH) == 0) {
-            // we have a match.  stop reading the partition; we'll return
-            // the data we've read so far.
-            printf("partition read matched size %zu sha %s\n",
-                   size[index[i]], sha1sum[index[i]].c_str());
-            found = true;
-            break;
-        }
+    if (ParseSha1(current_sha1.c_str(), parsed_sha) != 0) {
+      printf("failed to parse SHA-1 %s in %s\n", current_sha1.c_str(), filename.c_str());
+      return -1;
     }
 
-    ota_fclose(dev);
-
-    if (!found) {
-        // Ran off the end of the list of (size,sha1) pairs without finding a match.
-        printf("contents of partition \"%s\" didn't match %s\n", partition, filename);
-        return -1;
+    if (memcmp(sha_so_far, parsed_sha, SHA_DIGEST_LENGTH) == 0) {
+      // We have a match. Stop reading the partition; we'll return the data we've read so far.
+      printf("partition read matched size %zu SHA-1 %s\n", current_size, current_sha1.c_str());
+      found = true;
+      break;
     }
+  }
 
-    SHA1_Final(file->sha1, &sha_ctx);
+  if (!found) {
+    // Ran off the end of the list of (size, sha1) pairs without finding a match.
+    printf("contents of partition \"%s\" didn't match %s\n", partition, filename.c_str());
+    return -1;
+  }
 
-    data.resize(data_size);
-    file->data = std::move(data);
-    // Fake some stat() info.
-    file->st.st_mode = 0644;
-    file->st.st_uid = 0;
-    file->st.st_gid = 0;
+  SHA1_Final(file->sha1, &sha_ctx);
 
-    return 0;
+  buffer.resize(buffer_size);
+  file->data = std::move(buffer);
+  // Fake some stat() info.
+  file->st.st_mode = 0644;
+  file->st.st_uid = 0;
+  file->st.st_gid = 0;
+
+  return 0;
 }
 
 
@@ -250,131 +233,124 @@ int SaveFileContents(const char* filename, const FileContents* file) {
 // might contain multiple colons, but WriteToPartition() only uses the first
 // two and ignores the rest. Return 0 on success.
 int WriteToPartition(const unsigned char* data, size_t len, const char* target) {
-    std::string copy(target);
-    std::vector<std::string> pieces = android::base::Split(copy, ":");
+  std::vector<std::string> pieces = android::base::Split(std::string(target), ":");
 
-    if (pieces.size() < 2) {
-        printf("WriteToPartition called with bad target (%s)\n", target);
+  if (pieces.size() < 2 || pieces[0] != "EMMC") {
+    printf("WriteToPartition called with bad target (%s)\n", target);
+    return -1;
+  }
+
+  const char* partition = pieces[1].c_str();
+
+  size_t start = 0;
+  bool success = false;
+  int fd = ota_open(partition, O_RDWR | O_SYNC);
+  if (fd < 0) {
+    printf("failed to open %s: %s\n", partition, strerror(errno));
+    return -1;
+  }
+
+  for (size_t attempt = 0; attempt < 2; ++attempt) {
+    if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1) {
+      printf("failed seek on %s: %s\n", partition, strerror(errno));
+      return -1;
+    }
+    while (start < len) {
+      size_t to_write = len - start;
+      if (to_write > 1 << 20) to_write = 1 << 20;
+
+      ssize_t written = TEMP_FAILURE_RETRY(ota_write(fd, data + start, to_write));
+      if (written == -1) {
+        printf("failed write writing to %s: %s\n", partition, strerror(errno));
         return -1;
+      }
+      start += written;
     }
 
-    if (pieces[0] != "EMMC") {
-        printf("WriteToPartition called with bad target (%s)\n", target);
-        return -1;
+    if (ota_fsync(fd) != 0) {
+      printf("failed to sync to %s (%s)\n", partition, strerror(errno));
+      return -1;
     }
-    const char* partition = pieces[1].c_str();
-
-    size_t start = 0;
-    bool success = false;
-    int fd = ota_open(partition, O_RDWR | O_SYNC);
-    if (fd < 0) {
-        printf("failed to open %s: %s\n", partition, strerror(errno));
-        return -1;
-    }
-
-    for (size_t attempt = 0; attempt < 2; ++attempt) {
-        if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1) {
-            printf("failed seek on %s: %s\n", partition, strerror(errno));
-            return -1;
-        }
-        while (start < len) {
-            size_t to_write = len - start;
-            if (to_write > 1<<20) to_write = 1<<20;
-
-            ssize_t written = TEMP_FAILURE_RETRY(ota_write(fd, data+start, to_write));
-            if (written == -1) {
-                printf("failed write writing to %s: %s\n", partition, strerror(errno));
-                return -1;
-            }
-            start += written;
-        }
-        if (ota_fsync(fd) != 0) {
-            printf("failed to sync to %s (%s)\n", partition, strerror(errno));
-            return -1;
-        }
-        if (ota_close(fd) != 0) {
-            printf("failed to close %s (%s)\n", partition, strerror(errno));
-            return -1;
-        }
-        fd = ota_open(partition, O_RDONLY);
-        if (fd < 0) {
-            printf("failed to reopen %s for verify (%s)\n", partition, strerror(errno));
-            return -1;
-        }
-
-        // Drop caches so our subsequent verification read
-        // won't just be reading the cache.
-        sync();
-        int dc = ota_open("/proc/sys/vm/drop_caches", O_WRONLY);
-        if (TEMP_FAILURE_RETRY(ota_write(dc, "3\n", 2)) == -1) {
-            printf("write to /proc/sys/vm/drop_caches failed: %s\n", strerror(errno));
-        } else {
-            printf("  caches dropped\n");
-        }
-        ota_close(dc);
-        sleep(1);
-
-        // verify
-        if (TEMP_FAILURE_RETRY(lseek(fd, 0, SEEK_SET)) == -1) {
-            printf("failed to seek back to beginning of %s: %s\n",
-                   partition, strerror(errno));
-            return -1;
-        }
-        unsigned char buffer[4096];
-        start = len;
-        for (size_t p = 0; p < len; p += sizeof(buffer)) {
-            size_t to_read = len - p;
-            if (to_read > sizeof(buffer)) {
-                to_read = sizeof(buffer);
-            }
-
-            size_t so_far = 0;
-            while (so_far < to_read) {
-                ssize_t read_count =
-                    TEMP_FAILURE_RETRY(ota_read(fd, buffer+so_far, to_read-so_far));
-                if (read_count == -1) {
-                    printf("verify read error %s at %zu: %s\n",
-                           partition, p, strerror(errno));
-                    return -1;
-                } else if (read_count == 0) {
-                    printf("verify read reached unexpected EOF, %s at %zu\n", partition, p);
-                    return -1;
-                }
-                if (static_cast<size_t>(read_count) < to_read) {
-                    printf("short verify read %s at %zu: %zd %zu %s\n",
-                           partition, p, read_count, to_read, strerror(errno));
-                }
-                so_far += read_count;
-            }
-
-            if (memcmp(buffer, data+p, to_read) != 0) {
-                printf("verification failed starting at %zu\n", p);
-                start = p;
-                break;
-            }
-        }
-
-        if (start == len) {
-            printf("verification read succeeded (attempt %zu)\n", attempt+1);
-            success = true;
-            break;
-        }
-    }
-
-    if (!success) {
-        printf("failed to verify after all attempts\n");
-        return -1;
-    }
-
     if (ota_close(fd) != 0) {
-        printf("error closing %s (%s)\n", partition, strerror(errno));
-        return -1;
+      printf("failed to close %s (%s)\n", partition, strerror(errno));
+      return -1;
     }
+
+    fd = ota_open(partition, O_RDONLY);
+    if (fd < 0) {
+      printf("failed to reopen %s for verify (%s)\n", partition, strerror(errno));
+      return -1;
+    }
+
+    // Drop caches so our subsequent verification read won't just be reading the cache.
     sync();
+    int dc = ota_open("/proc/sys/vm/drop_caches", O_WRONLY);
+    if (TEMP_FAILURE_RETRY(ota_write(dc, "3\n", 2)) == -1) {
+      printf("write to /proc/sys/vm/drop_caches failed: %s\n", strerror(errno));
+    } else {
+      printf("  caches dropped\n");
+    }
+    ota_close(dc);
+    sleep(1);
 
-    return 0;
+    // verify
+    if (TEMP_FAILURE_RETRY(lseek(fd, 0, SEEK_SET)) == -1) {
+      printf("failed to seek back to beginning of %s: %s\n", partition, strerror(errno));
+      return -1;
+    }
+
+    unsigned char buffer[4096];
+    start = len;
+    for (size_t p = 0; p < len; p += sizeof(buffer)) {
+      size_t to_read = len - p;
+      if (to_read > sizeof(buffer)) {
+        to_read = sizeof(buffer);
+      }
+
+      size_t so_far = 0;
+      while (so_far < to_read) {
+        ssize_t read_count = TEMP_FAILURE_RETRY(ota_read(fd, buffer + so_far, to_read - so_far));
+        if (read_count == -1) {
+          printf("verify read error %s at %zu: %s\n", partition, p, strerror(errno));
+          return -1;
+        } else if (read_count == 0) {
+          printf("verify read reached unexpected EOF, %s at %zu\n", partition, p);
+          return -1;
+        }
+        if (static_cast<size_t>(read_count) < to_read) {
+          printf("short verify read %s at %zu: %zd %zu %s\n", partition, p, read_count, to_read,
+                 strerror(errno));
+        }
+        so_far += read_count;
+      }
+
+      if (memcmp(buffer, data + p, to_read) != 0) {
+        printf("verification failed starting at %zu\n", p);
+        start = p;
+        break;
+      }
+    }
+
+    if (start == len) {
+      printf("verification read succeeded (attempt %zu)\n", attempt + 1);
+      success = true;
+      break;
+    }
+  }
+
+  if (!success) {
+    printf("failed to verify after all attempts\n");
+    return -1;
+  }
+
+  if (ota_close(fd) != 0) {
+    printf("error closing %s (%s)\n", partition, strerror(errno));
+    return -1;
+  }
+  sync();
+
+  return 0;
 }
-
 
 // Take a string 'str' of 40 hex digits and parse it into the 20
 // byte array 'digest'.  'str' may contain only the digest or be of
@@ -409,48 +385,46 @@ int ParseSha1(const char* str, uint8_t* digest) {
 // Return the index of the match on success, or -1 if no match is
 // found.
 int FindMatchingPatch(uint8_t* sha1, const std::vector<std::string>& patch_sha1_str) {
-    for (size_t i = 0; i < patch_sha1_str.size(); ++i) {
-        uint8_t patch_sha1[SHA_DIGEST_LENGTH];
-        if (ParseSha1(patch_sha1_str[i].c_str(), patch_sha1) == 0 &&
-            memcmp(patch_sha1, sha1, SHA_DIGEST_LENGTH) == 0) {
-            return i;
-        }
+  for (size_t i = 0; i < patch_sha1_str.size(); ++i) {
+    uint8_t patch_sha1[SHA_DIGEST_LENGTH];
+    if (ParseSha1(patch_sha1_str[i].c_str(), patch_sha1) == 0 &&
+        memcmp(patch_sha1, sha1, SHA_DIGEST_LENGTH) == 0) {
+      return i;
     }
-    return -1;
+  }
+  return -1;
 }
 
 // Returns 0 if the contents of the file (argv[2]) or the cached file
 // match any of the sha1's on the command line (argv[3:]).  Returns
 // nonzero otherwise.
 int applypatch_check(const char* filename, const std::vector<std::string>& patch_sha1_str) {
-    FileContents file;
+  FileContents file;
 
-    // It's okay to specify no sha1s; the check will pass if the
-    // LoadFileContents is successful.  (Useful for reading
-    // partitions, where the filename encodes the sha1s; no need to
-    // check them twice.)
-    if (LoadFileContents(filename, &file) != 0 ||
-        (patch_sha1_str.size() > 0 && FindMatchingPatch(file.sha1, patch_sha1_str) < 0)) {
-        printf("file \"%s\" doesn't have any of expected "
-               "sha1 sums; checking cache\n", filename);
+  // It's okay to specify no sha1s; the check will pass if the
+  // LoadFileContents is successful.  (Useful for reading
+  // partitions, where the filename encodes the sha1s; no need to
+  // check them twice.)
+  if (LoadFileContents(filename, &file) != 0 ||
+      (!patch_sha1_str.empty() && FindMatchingPatch(file.sha1, patch_sha1_str) < 0)) {
+    printf("file \"%s\" doesn't have any of expected sha1 sums; checking cache\n", filename);
 
-        // If the source file is missing or corrupted, it might be because
-        // we were killed in the middle of patching it.  A copy of it
-        // should have been made in CACHE_TEMP_SOURCE.  If that file
-        // exists and matches the sha1 we're looking for, the check still
-        // passes.
-
-        if (LoadFileContents(CACHE_TEMP_SOURCE, &file) != 0) {
-            printf("failed to load cache file\n");
-            return 1;
-        }
-
-        if (FindMatchingPatch(file.sha1, patch_sha1_str) < 0) {
-            printf("cache bits don't match any sha1 for \"%s\"\n", filename);
-            return 1;
-        }
+    // If the source file is missing or corrupted, it might be because
+    // we were killed in the middle of patching it.  A copy of it
+    // should have been made in CACHE_TEMP_SOURCE.  If that file
+    // exists and matches the sha1 we're looking for, the check still
+    // passes.
+    if (LoadFileContents(CACHE_TEMP_SOURCE, &file) != 0) {
+      printf("failed to load cache file\n");
+      return 1;
     }
-    return 0;
+
+    if (FindMatchingPatch(file.sha1, patch_sha1_str) < 0) {
+      printf("cache bits don't match any sha1 for \"%s\"\n", filename);
+      return 1;
+    }
+  }
+  return 0;
 }
 
 int ShowLicenses() {
@@ -544,10 +518,8 @@ int applypatch(const char* source_filename,
         return 1;
     }
 
-    FileContents copy_file;
     FileContents source_file;
     const Value* source_patch_value = nullptr;
-    const Value* copy_patch_value = nullptr;
 
     // We try to load the target file into the source_file object.
     if (LoadFileContents(target_filename, &source_file) == 0) {
@@ -575,6 +547,8 @@ int applypatch(const char* source_filename,
         }
     }
 
+    FileContents copy_file;
+    const Value* copy_patch_value = nullptr;
     if (source_patch_value == nullptr) {
         source_file.data.clear();
         printf("source file is bad; trying copy\n");
@@ -620,7 +594,6 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
         return 1;
     }
 
-    FileContents source_file;
     std::string target_str(target_filename);
 
     std::vector<std::string> pieces = android::base::Split(target_str, ":");
@@ -633,12 +606,13 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
     pieces.push_back(std::to_string(target_size));
     pieces.push_back(target_sha1_str);
     std::string fullname = android::base::Join(pieces, ':');
-    if (LoadPartitionContents(fullname.c_str(), &source_file) == 0 &&
+    FileContents source_file;
+    if (LoadPartitionContents(fullname, &source_file) == 0 &&
         memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) == 0) {
-        // The early-exit case: the image was already applied, this partition
-        // has the desired hash, nothing for us to do.
-        printf("already %s\n", short_sha1(target_sha1).c_str());
-        return 0;
+      // The early-exit case: the image was already applied, this partition
+      // has the desired hash, nothing for us to do.
+      printf("already %s\n", short_sha1(target_sha1).c_str());
+      return 0;
     }
 
     if (LoadFileContents(source_filename, &source_file) == 0) {
