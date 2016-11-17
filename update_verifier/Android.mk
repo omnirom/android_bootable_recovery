@@ -24,7 +24,10 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     libcutils \
     libhardware \
-    liblog
+    liblog \
+    libutils \
+    libhidl \
+    android.hardware.boot@1.0
 
 LOCAL_CFLAGS := -Werror
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
