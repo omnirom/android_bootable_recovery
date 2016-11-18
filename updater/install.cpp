@@ -39,11 +39,12 @@
 #include <string>
 #include <vector>
 
-#include <android-base/parseint.h>
+#include <android-base/file.h>
 #include <android-base/parsedouble.h>
+#include <android-base/parseint.h>
 #include <android-base/properties.h>
-#include <android-base/strings.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 #include <cutils/android_reboot.h>
 #include <ext4_utils/make_ext4fs.h>
 #include <ext4_utils/wipe.h>
@@ -861,7 +862,6 @@ Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
     return StringValue(value);
 }
 
-
 // file_getprop(file, key)
 //
 //   interprets 'file' as a getprop-style file (key=value pairs, one
@@ -1155,6 +1155,33 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
     return v;
 }
 
+// write_value(value, filename)
+//   Writes 'value' to 'filename'.
+//   Example: write_value("960000", "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq")
+Value* WriteValueFn(const char* name, State* state, int argc, Expr* argv[]) {
+  if (argc != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+  }
+
+  std::vector<std::string> args;
+  if (!ReadArgs(state, 2, argv, &args)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
+  }
+
+  const std::string& filename = args[1];
+  if (filename.empty()) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Filename cannot be empty", name);
+  }
+
+  const std::string& value = args[0];
+  if (!android::base::WriteStringToFile(value, filename)) {
+    printf("%s: Failed to write to \"%s\": %s\n", name, filename.c_str(), strerror(errno));
+    return StringValue("");
+  } else {
+    return StringValue("t");
+  }
+}
+
 // Immediately reboot the device.  Recovery is not finished normally,
 // so if you reboot into recovery it will re-start applying the
 // current package (because nothing has cleared the copy of the
@@ -1363,6 +1390,7 @@ void RegisterInstallFunctions() {
     RegisterFunction("read_file", ReadFileFn);
     RegisterFunction("sha1_check", Sha1CheckFn);
     RegisterFunction("rename", RenameFn);
+    RegisterFunction("write_value", WriteValueFn);
 
     RegisterFunction("wipe_cache", WipeCacheFn);
 
