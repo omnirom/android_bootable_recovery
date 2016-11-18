@@ -322,3 +322,36 @@ TEST_F(UpdaterTest, package_extract_file) {
 
   CloseArchive(handle);
 }
+
+TEST_F(UpdaterTest, write_value) {
+  // write_value() expects two arguments.
+  expect(nullptr, "write_value()", kArgsParsingFailure);
+  expect(nullptr, "write_value(\"arg1\")", kArgsParsingFailure);
+  expect(nullptr, "write_value(\"arg1\", \"arg2\", \"arg3\")", kArgsParsingFailure);
+
+  // filename cannot be empty.
+  expect(nullptr, "write_value(\"value\", \"\")", kArgsParsingFailure);
+
+  // Write some value to file.
+  TemporaryFile temp_file;
+  std::string value = "magicvalue";
+  std::string script("write_value(\"" + value + "\", \"" + std::string(temp_file.path) + "\")");
+  expect("t", script.c_str(), kNoCause);
+
+  // Verify the content.
+  std::string content;
+  ASSERT_TRUE(android::base::ReadFileToString(temp_file.path, &content));
+  ASSERT_EQ(value, content);
+
+  // Allow writing empty string.
+  script = "write_value(\"\", \"" + std::string(temp_file.path) + "\")";
+  expect("t", script.c_str(), kNoCause);
+
+  // Verify the content.
+  ASSERT_TRUE(android::base::ReadFileToString(temp_file.path, &content));
+  ASSERT_EQ("", content);
+
+  // It should fail gracefully when write fails.
+  script = "write_value(\"value\", \"/proc/0/file1\")";
+  expect("", script.c_str(), kNoCause);
+}
