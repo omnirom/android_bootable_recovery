@@ -194,62 +194,59 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
 // Save the contents of the given FileContents object under the given
 // filename.  Return 0 on success.
 int SaveFileContents(const char* filename, const FileContents* file) {
-    int fd = ota_open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR);
-    if (fd < 0) {
-        printf("failed to open \"%s\" for write: %s\n", filename, strerror(errno));
-        return -1;
-    }
+  unique_fd fd(ota_open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR));
+  if (fd == -1) {
+    printf("failed to open \"%s\" for write: %s\n", filename, strerror(errno));
+    return -1;
+  }
 
-    ssize_t bytes_written = FileSink(file->data.data(), file->data.size(), &fd);
-    if (bytes_written != static_cast<ssize_t>(file->data.size())) {
-        printf("short write of \"%s\" (%zd bytes of %zu) (%s)\n",
-               filename, bytes_written, file->data.size(), strerror(errno));
-        ota_close(fd);
-        return -1;
-    }
-    if (ota_fsync(fd) != 0) {
-        printf("fsync of \"%s\" failed: %s\n", filename, strerror(errno));
-        return -1;
-    }
-    if (ota_close(fd) != 0) {
-        printf("close of \"%s\" failed: %s\n", filename, strerror(errno));
-        return -1;
-    }
+  ssize_t bytes_written = FileSink(file->data.data(), file->data.size(), &fd);
+  if (bytes_written != static_cast<ssize_t>(file->data.size())) {
+    printf("short write of \"%s\" (%zd bytes of %zu): %s\n", filename, bytes_written,
+           file->data.size(), strerror(errno));
+    return -1;
+  }
+  if (ota_fsync(fd) != 0) {
+    printf("fsync of \"%s\" failed: %s\n", filename, strerror(errno));
+    return -1;
+  }
+  if (ota_close(fd) != 0) {
+    printf("close of \"%s\" failed: %s\n", filename, strerror(errno));
+    return -1;
+  }
 
-    if (chmod(filename, file->st.st_mode) != 0) {
-        printf("chmod of \"%s\" failed: %s\n", filename, strerror(errno));
-        return -1;
-    }
-    if (chown(filename, file->st.st_uid, file->st.st_gid) != 0) {
-        printf("chown of \"%s\" failed: %s\n", filename, strerror(errno));
-        return -1;
-    }
+  if (chmod(filename, file->st.st_mode) != 0) {
+    printf("chmod of \"%s\" failed: %s\n", filename, strerror(errno));
+    return -1;
+  }
+  if (chown(filename, file->st.st_uid, file->st.st_gid) != 0) {
+    printf("chown of \"%s\" failed: %s\n", filename, strerror(errno));
+    return -1;
+  }
 
-    return 0;
+  return 0;
 }
 
 // Write a memory buffer to 'target' partition, a string of the form
 // "EMMC:<partition_device>[:...]". The target name
 // might contain multiple colons, but WriteToPartition() only uses the first
 // two and ignores the rest. Return 0 on success.
-int WriteToPartition(const unsigned char* data, size_t len, const char* target) {
-  std::vector<std::string> pieces = android::base::Split(std::string(target), ":");
-
+int WriteToPartition(const unsigned char* data, size_t len, const std::string& target) {
+  std::vector<std::string> pieces = android::base::Split(target, ":");
   if (pieces.size() < 2 || pieces[0] != "EMMC") {
-    printf("WriteToPartition called with bad target (%s)\n", target);
+    printf("WriteToPartition called with bad target (%s)\n", target.c_str());
     return -1;
   }
 
   const char* partition = pieces[1].c_str();
-
-  size_t start = 0;
-  bool success = false;
-  int fd = ota_open(partition, O_RDWR | O_SYNC);
-  if (fd < 0) {
+  unique_fd fd(ota_open(partition, O_RDWR));
+  if (fd == -1) {
     printf("failed to open %s: %s\n", partition, strerror(errno));
     return -1;
   }
 
+  size_t start = 0;
+  bool success = false;
   for (size_t attempt = 0; attempt < 2; ++attempt) {
     if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1) {
       printf("failed seek on %s: %s\n", partition, strerror(errno));
@@ -268,23 +265,23 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
     }
 
     if (ota_fsync(fd) != 0) {
-      printf("failed to sync to %s (%s)\n", partition, strerror(errno));
+      printf("failed to sync to %s: %s\n", partition, strerror(errno));
       return -1;
     }
     if (ota_close(fd) != 0) {
-      printf("failed to close %s (%s)\n", partition, strerror(errno));
+      printf("failed to close %s: %s\n", partition, strerror(errno));
       return -1;
     }
 
-    fd = ota_open(partition, O_RDONLY);
-    if (fd < 0) {
-      printf("failed to reopen %s for verify (%s)\n", partition, strerror(errno));
+    fd.reset(ota_open(partition, O_RDONLY));
+    if (fd == -1) {
+      printf("failed to reopen %s for verify: %s\n", partition, strerror(errno));
       return -1;
     }
 
     // Drop caches so our subsequent verification read won't just be reading the cache.
     sync();
-    int dc = ota_open("/proc/sys/vm/drop_caches", O_WRONLY);
+    unique_fd dc(ota_open("/proc/sys/vm/drop_caches", O_WRONLY));
     if (TEMP_FAILURE_RETRY(ota_write(dc, "3\n", 2)) == -1) {
       printf("write to /proc/sys/vm/drop_caches failed: %s\n", strerror(errno));
     } else {
@@ -293,7 +290,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
     ota_close(dc);
     sleep(1);
 
-    // verify
+    // Verify.
     if (TEMP_FAILURE_RETRY(lseek(fd, 0, SEEK_SET)) == -1) {
       printf("failed to seek back to beginning of %s: %s\n", partition, strerror(errno));
       return -1;
@@ -318,8 +315,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
           return -1;
         }
         if (static_cast<size_t>(read_count) < to_read) {
-          printf("short verify read %s at %zu: %zd %zu %s\n", partition, p, read_count, to_read,
-                 strerror(errno));
+          printf("short verify read %s at %zu: %zd %zu\n", partition, p, read_count, to_read);
         }
         so_far += read_count;
       }
@@ -343,8 +339,8 @@ int WriteToPartition(const unsigned char* data, size_t len, const char* target) 
     return -1;
   }
 
-  if (ota_close(fd) != 0) {
-    printf("error closing %s (%s)\n", partition, strerror(errno));
+  if (ota_close(fd) == -1) {
+    printf("error closing %s: %s\n", partition, strerror(errno));
     return -1;
   }
   sync();
@@ -586,50 +582,49 @@ int applypatch(const char* source_filename,
  */
 int applypatch_flash(const char* source_filename, const char* target_filename,
                      const char* target_sha1_str, size_t target_size) {
-    printf("flash %s: ", target_filename);
+  printf("flash %s: ", target_filename);
 
-    uint8_t target_sha1[SHA_DIGEST_LENGTH];
-    if (ParseSha1(target_sha1_str, target_sha1) != 0) {
-        printf("failed to parse tgt-sha1 \"%s\"\n", target_sha1_str);
-        return 1;
-    }
+  uint8_t target_sha1[SHA_DIGEST_LENGTH];
+  if (ParseSha1(target_sha1_str, target_sha1) != 0) {
+    printf("failed to parse tgt-sha1 \"%s\"\n", target_sha1_str);
+    return 1;
+  }
 
-    std::string target_str(target_filename);
+  std::string target_str(target_filename);
+  std::vector<std::string> pieces = android::base::Split(target_str, ":");
+  if (pieces.size() != 2 || pieces[0] != "EMMC") {
+    printf("invalid target name \"%s\"", target_filename);
+    return 1;
+  }
 
-    std::vector<std::string> pieces = android::base::Split(target_str, ":");
-    if (pieces.size() != 2 || pieces[0] != "EMMC") {
-        printf("invalid target name \"%s\"", target_filename);
-        return 1;
-    }
-
-    // Load the target into the source_file object to see if already applied.
-    pieces.push_back(std::to_string(target_size));
-    pieces.push_back(target_sha1_str);
-    std::string fullname = android::base::Join(pieces, ':');
-    FileContents source_file;
-    if (LoadPartitionContents(fullname, &source_file) == 0 &&
-        memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) == 0) {
-      // The early-exit case: the image was already applied, this partition
-      // has the desired hash, nothing for us to do.
-      printf("already %s\n", short_sha1(target_sha1).c_str());
-      return 0;
-    }
-
-    if (LoadFileContents(source_filename, &source_file) == 0) {
-        if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
-            // The source doesn't have desired checksum.
-            printf("source \"%s\" doesn't have expected sha1 sum\n", source_filename);
-            printf("expected: %s, found: %s\n", short_sha1(target_sha1).c_str(),
-                    short_sha1(source_file.sha1).c_str());
-            return 1;
-        }
-    }
-
-    if (WriteToPartition(source_file.data.data(), target_size, target_filename) != 0) {
-        printf("write of copied data to %s failed\n", target_filename);
-        return 1;
-    }
+  // Load the target into the source_file object to see if already applied.
+  pieces.push_back(std::to_string(target_size));
+  pieces.push_back(target_sha1_str);
+  std::string fullname = android::base::Join(pieces, ':');
+  FileContents source_file;
+  if (LoadPartitionContents(fullname, &source_file) == 0 &&
+      memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) == 0) {
+    // The early-exit case: the image was already applied, this partition
+    // has the desired hash, nothing for us to do.
+    printf("already %s\n", short_sha1(target_sha1).c_str());
     return 0;
+  }
+
+  if (LoadFileContents(source_filename, &source_file) == 0) {
+    if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
+      // The source doesn't have desired checksum.
+      printf("source \"%s\" doesn't have expected sha1 sum\n", source_filename);
+      printf("expected: %s, found: %s\n", short_sha1(target_sha1).c_str(),
+             short_sha1(source_file.sha1).c_str());
+      return 1;
+    }
+  }
+
+  if (WriteToPartition(source_file.data.data(), target_size, target_filename) != 0) {
+    printf("write of copied data to %s failed\n", target_filename);
+    return 1;
+  }
+  return 0;
 }
 
 static int GenerateTarget(FileContents* source_file,
@@ -641,221 +636,214 @@ static int GenerateTarget(FileContents* source_file,
                           const uint8_t target_sha1[SHA_DIGEST_LENGTH],
                           size_t target_size,
                           const Value* bonus_data) {
-    int retry = 1;
-    SHA_CTX ctx;
-    std::string memory_sink_str;
-    FileContents* source_to_use;
-    int made_copy = 0;
+  // assume that target_filename (eg "/system/app/Foo.apk") is located
+  // on the same filesystem as its top-level directory ("/system").
+  // We need something that exists for calling statfs().
+  std::string target_fs = target_filename;
+  auto slash_pos = target_fs.find('/', 1);
+  if (slash_pos != std::string::npos) {
+    target_fs.resize(slash_pos);
+  }
 
-    bool target_is_partition = (strncmp(target_filename, "EMMC:", 5) == 0);
-    const std::string tmp_target_filename = std::string(target_filename) + ".patch";
+  FileContents* source_to_use;
+  const Value* patch;
+  if (source_patch_value != nullptr) {
+    source_to_use = source_file;
+    patch = source_patch_value;
+  } else {
+    source_to_use = copy_file;
+    patch = copy_patch_value;
+  }
 
-    // assume that target_filename (eg "/system/app/Foo.apk") is located
-    // on the same filesystem as its top-level directory ("/system").
-    // We need something that exists for calling statfs().
-    std::string target_fs = target_filename;
-    auto slash_pos = target_fs.find('/', 1);
-    if (slash_pos != std::string::npos) {
-        target_fs.resize(slash_pos);
-    }
+  if (patch->type != VAL_BLOB) {
+    printf("patch is not a blob\n");
+    return 1;
+  }
 
-    const Value* patch;
-    if (source_patch_value != NULL) {
-        source_to_use = source_file;
-        patch = source_patch_value;
-    } else {
-        source_to_use = copy_file;
-        patch = copy_patch_value;
-    }
-    if (patch->type != VAL_BLOB) {
-        printf("patch is not a blob\n");
-        return 1;
-    }
-    const char* header = &patch->data[0];
-    size_t header_bytes_read = patch->data.size();
-    bool use_bsdiff = false;
-    if (header_bytes_read >= 8 && memcmp(header, "BSDIFF40", 8) == 0) {
-        use_bsdiff = true;
-    } else if (header_bytes_read >= 8 && memcmp(header, "IMGDIFF2", 8) == 0) {
-        use_bsdiff = false;
-    } else {
-        printf("Unknown patch file format\n");
-        return 1;
-    }
+  const char* header = &patch->data[0];
+  size_t header_bytes_read = patch->data.size();
+  bool use_bsdiff = false;
+  if (header_bytes_read >= 8 && memcmp(header, "BSDIFF40", 8) == 0) {
+    use_bsdiff = true;
+  } else if (header_bytes_read >= 8 && memcmp(header, "IMGDIFF2", 8) == 0) {
+    use_bsdiff = false;
+  } else {
+    printf("Unknown patch file format\n");
+    return 1;
+  }
 
-    do {
-        // Is there enough room in the target filesystem to hold the patched
-        // file?
+  bool target_is_partition = (strncmp(target_filename, "EMMC:", 5) == 0);
+  const std::string tmp_target_filename = std::string(target_filename) + ".patch";
 
-        if (target_is_partition) {
-            // If the target is a partition, we're actually going to
-            // write the output to /tmp and then copy it to the
-            // partition.  statfs() always returns 0 blocks free for
-            // /tmp, so instead we'll just assume that /tmp has enough
-            // space to hold the file.
-
-            // We still write the original source to cache, in case
-            // the partition write is interrupted.
-            if (MakeFreeSpaceOnCache(source_file->data.size()) < 0) {
-                printf("not enough free space on /cache\n");
-                return 1;
-            }
-            if (SaveFileContents(CACHE_TEMP_SOURCE, source_file) < 0) {
-                printf("failed to back up source file\n");
-                return 1;
-            }
-            made_copy = 1;
-            retry = 0;
-        } else {
-            int enough_space = 0;
-            if (retry > 0) {
-                size_t free_space = FreeSpaceForFile(target_fs.c_str());
-                enough_space =
-                    (free_space > (256 << 10)) &&          // 256k (two-block) minimum
-                    (free_space > (target_size * 3 / 2));  // 50% margin of error
-                if (!enough_space) {
-                    printf("target %zu bytes; free space %zu bytes; retry %d; enough %d\n",
-                           target_size, free_space, retry, enough_space);
-                }
-            }
-
-            if (!enough_space) {
-                retry = 0;
-            }
-
-            if (!enough_space && source_patch_value != NULL) {
-                // Using the original source, but not enough free space.  First
-                // copy the source file to cache, then delete it from the original
-                // location.
-
-                if (strncmp(source_filename, "EMMC:", 5) == 0) {
-                    // It's impossible to free space on the target filesystem by
-                    // deleting the source if the source is a partition.  If
-                    // we're ever in a state where we need to do this, fail.
-                    printf("not enough free space for target but source is partition\n");
-                    return 1;
-                }
-
-                if (MakeFreeSpaceOnCache(source_file->data.size()) < 0) {
-                    printf("not enough free space on /cache\n");
-                    return 1;
-                }
-
-                if (SaveFileContents(CACHE_TEMP_SOURCE, source_file) < 0) {
-                    printf("failed to back up source file\n");
-                    return 1;
-                }
-                made_copy = 1;
-                unlink(source_filename);
-
-                size_t free_space = FreeSpaceForFile(target_fs.c_str());
-                printf("(now %zu bytes free for target) ", free_space);
-            }
-        }
-
-
-        SinkFn sink = NULL;
-        void* token = NULL;
-        int output_fd = -1;
-        if (target_is_partition) {
-            // We store the decoded output in memory.
-            sink = MemorySink;
-            token = &memory_sink_str;
-        } else {
-            // We write the decoded output to "<tgt-file>.patch".
-            output_fd = ota_open(tmp_target_filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC,
-                                 S_IRUSR | S_IWUSR);
-            if (output_fd < 0) {
-                printf("failed to open output file %s: %s\n", tmp_target_filename.c_str(),
-                       strerror(errno));
-                return 1;
-            }
-            sink = FileSink;
-            token = &output_fd;
-        }
-
-
-        SHA1_Init(&ctx);
-
-        int result;
-        if (use_bsdiff) {
-            result = ApplyBSDiffPatch(source_to_use->data.data(), source_to_use->data.size(),
-                                      patch, 0, sink, token, &ctx);
-        } else {
-            result = ApplyImagePatch(source_to_use->data.data(), source_to_use->data.size(),
-                                     patch, sink, token, &ctx, bonus_data);
-        }
-
-        if (!target_is_partition) {
-            if (ota_fsync(output_fd) != 0) {
-                printf("failed to fsync file \"%s\" (%s)\n", tmp_target_filename.c_str(),
-                       strerror(errno));
-                result = 1;
-            }
-            if (ota_close(output_fd) != 0) {
-                printf("failed to close file \"%s\" (%s)\n", tmp_target_filename.c_str(),
-                       strerror(errno));
-                result = 1;
-            }
-        }
-
-        if (result != 0) {
-            if (retry == 0) {
-                printf("applying patch failed\n");
-                return result != 0;
-            } else {
-                printf("applying patch failed; retrying\n");
-            }
-            if (!target_is_partition) {
-                unlink(tmp_target_filename.c_str());
-            }
-        } else {
-            // succeeded; no need to retry
-            break;
-        }
-    } while (retry-- > 0);
-
-    uint8_t current_target_sha1[SHA_DIGEST_LENGTH];
-    SHA1_Final(current_target_sha1, &ctx);
-    if (memcmp(current_target_sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
-        printf("patch did not produce expected sha1\n");
-        return 1;
-    } else {
-        printf("now %s\n", short_sha1(target_sha1).c_str());
-    }
+  int retry = 1;
+  bool made_copy = false;
+  SHA_CTX ctx;
+  std::string memory_sink_str;  // Don't need to reserve space.
+  do {
+    // Is there enough room in the target filesystem to hold the patched file?
 
     if (target_is_partition) {
-        // Copy the temp file to the partition.
-        if (WriteToPartition(reinterpret_cast<const unsigned char*>(memory_sink_str.c_str()),
-                             memory_sink_str.size(), target_filename) != 0) {
-            printf("write of patched data to %s failed\n", target_filename);
-            return 1;
-        }
+      // If the target is a partition, we're actually going to
+      // write the output to /tmp and then copy it to the
+      // partition.  statfs() always returns 0 blocks free for
+      // /tmp, so instead we'll just assume that /tmp has enough
+      // space to hold the file.
+
+      // We still write the original source to cache, in case
+      // the partition write is interrupted.
+      if (MakeFreeSpaceOnCache(source_file->data.size()) < 0) {
+        printf("not enough free space on /cache\n");
+        return 1;
+      }
+      if (SaveFileContents(CACHE_TEMP_SOURCE, source_file) < 0) {
+        printf("failed to back up source file\n");
+        return 1;
+      }
+      made_copy = true;
+      retry = 0;
     } else {
-        // Give the .patch file the same owner, group, and mode of the
-        // original source file.
-        if (chmod(tmp_target_filename.c_str(), source_to_use->st.st_mode) != 0) {
-            printf("chmod of \"%s\" failed: %s\n", tmp_target_filename.c_str(), strerror(errno));
-            return 1;
+      bool enough_space = false;
+      if (retry > 0) {
+        size_t free_space = FreeSpaceForFile(target_fs.c_str());
+        enough_space = (free_space > (256 << 10)) &&          // 256k (two-block) minimum
+                       (free_space > (target_size * 3 / 2));  // 50% margin of error
+        if (!enough_space) {
+          printf("target %zu bytes; free space %zu bytes; retry %d; enough %d\n", target_size,
+                 free_space, retry, enough_space);
         }
-        if (chown(tmp_target_filename.c_str(), source_to_use->st.st_uid, source_to_use->st.st_gid) != 0) {
-            printf("chown of \"%s\" failed: %s\n", tmp_target_filename.c_str(), strerror(errno));
-            return 1;
+      }
+
+      if (!enough_space) {
+        retry = 0;
+      }
+
+      if (!enough_space && source_patch_value != nullptr) {
+        // Using the original source, but not enough free space.  First
+        // copy the source file to cache, then delete it from the original
+        // location.
+
+        if (strncmp(source_filename, "EMMC:", 5) == 0) {
+          // It's impossible to free space on the target filesystem by
+          // deleting the source if the source is a partition.  If
+          // we're ever in a state where we need to do this, fail.
+          printf("not enough free space for target but source is partition\n");
+          return 1;
         }
 
-        // Finally, rename the .patch file to replace the target file.
-        if (rename(tmp_target_filename.c_str(), target_filename) != 0) {
-            printf("rename of .patch to \"%s\" failed: %s\n", target_filename, strerror(errno));
-            return 1;
+        if (MakeFreeSpaceOnCache(source_file->data.size()) < 0) {
+          printf("not enough free space on /cache\n");
+          return 1;
         }
+
+        if (SaveFileContents(CACHE_TEMP_SOURCE, source_file) < 0) {
+          printf("failed to back up source file\n");
+          return 1;
+        }
+        made_copy = true;
+        unlink(source_filename);
+
+        size_t free_space = FreeSpaceForFile(target_fs.c_str());
+        printf("(now %zu bytes free for target) ", free_space);
+      }
     }
 
-    // If this run of applypatch created the copy, and we're here, we
-    // can delete it.
-    if (made_copy) {
-        unlink(CACHE_TEMP_SOURCE);
+    SinkFn sink = nullptr;
+    void* token = nullptr;
+    unique_fd output_fd;
+    if (target_is_partition) {
+      // We store the decoded output in memory.
+      sink = MemorySink;
+      token = &memory_sink_str;
+    } else {
+      // We write the decoded output to "<tgt-file>.patch".
+      output_fd.reset(ota_open(tmp_target_filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC,
+                               S_IRUSR | S_IWUSR));
+      if (output_fd == -1) {
+        printf("failed to open output file %s: %s\n", tmp_target_filename.c_str(), strerror(errno));
+        return 1;
+      }
+      sink = FileSink;
+      token = &output_fd;
     }
 
-    // Success!
-    return 0;
+    SHA1_Init(&ctx);
+
+    int result;
+    if (use_bsdiff) {
+      result = ApplyBSDiffPatch(source_to_use->data.data(), source_to_use->data.size(), patch, 0,
+                                sink, token, &ctx);
+    } else {
+      result = ApplyImagePatch(source_to_use->data.data(), source_to_use->data.size(), patch, sink,
+                               token, &ctx, bonus_data);
+    }
+
+    if (!target_is_partition) {
+      if (ota_fsync(output_fd) != 0) {
+        printf("failed to fsync file \"%s\": %s\n", tmp_target_filename.c_str(), strerror(errno));
+        result = 1;
+      }
+      if (ota_close(output_fd) != 0) {
+        printf("failed to close file \"%s\": %s\n", tmp_target_filename.c_str(), strerror(errno));
+        result = 1;
+      }
+    }
+
+    if (result != 0) {
+      if (retry == 0) {
+        printf("applying patch failed\n");
+        return 1;
+      } else {
+        printf("applying patch failed; retrying\n");
+      }
+      if (!target_is_partition) {
+        unlink(tmp_target_filename.c_str());
+      }
+    } else {
+      // succeeded; no need to retry
+      break;
+    }
+  } while (retry-- > 0);
+
+  uint8_t current_target_sha1[SHA_DIGEST_LENGTH];
+  SHA1_Final(current_target_sha1, &ctx);
+  if (memcmp(current_target_sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
+    printf("patch did not produce expected sha1\n");
+    return 1;
+  } else {
+    printf("now %s\n", short_sha1(target_sha1).c_str());
+  }
+
+  if (target_is_partition) {
+    // Copy the temp file to the partition.
+    if (WriteToPartition(reinterpret_cast<const unsigned char*>(memory_sink_str.c_str()),
+                         memory_sink_str.size(), target_filename) != 0) {
+      printf("write of patched data to %s failed\n", target_filename);
+      return 1;
+    }
+  } else {
+    // Give the .patch file the same owner, group, and mode of the original source file.
+    if (chmod(tmp_target_filename.c_str(), source_to_use->st.st_mode) != 0) {
+      printf("chmod of \"%s\" failed: %s\n", tmp_target_filename.c_str(), strerror(errno));
+      return 1;
+    }
+    if (chown(tmp_target_filename.c_str(), source_to_use->st.st_uid,
+              source_to_use->st.st_gid) != 0) {
+      printf("chown of \"%s\" failed: %s\n", tmp_target_filename.c_str(), strerror(errno));
+      return 1;
+    }
+
+    // Finally, rename the .patch file to replace the target file.
+    if (rename(tmp_target_filename.c_str(), target_filename) != 0) {
+      printf("rename of .patch to \"%s\" failed: %s\n", target_filename, strerror(errno));
+      return 1;
+    }
+  }
+
+  // If this run of applypatch created the copy, and we're here, we can delete it.
+  if (made_copy) {
+    unlink(CACHE_TEMP_SOURCE);
+  }
+
+  // Success!
+  return 0;
 }
