@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+#include <android-base/unique_fd.h>
+
 #define OTAIO_CACHE_FNAME "/cache/saved.file"
 
 void ota_set_fault_files();
@@ -49,5 +51,13 @@ size_t ota_fwrite(const void* ptr, size_t size, size_t count, FILE* stream);
 ssize_t ota_write(int fd, const void* buf, size_t nbyte);
 
 int ota_fsync(int fd);
+
+struct OtaCloser {
+  static void Close(int fd) {
+    ota_close(fd);
+  }
+};
+
+using unique_fd = android::base::unique_fd_impl<OtaCloser>;
 
 #endif
