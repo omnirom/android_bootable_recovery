@@ -1196,31 +1196,35 @@ Value* WriteValueFn(const char* name, State* state, int argc, Expr* argv[]) {
 // partition, or "" (empty string) to boot from the regular boot
 // partition.
 Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc != 2) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
-    }
+  if (argc != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+  }
 
-    std::vector<std::string> args;
-    if (!ReadArgs(state, 2, argv, &args)) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-    }
-    const std::string& filename = args[0];
-    const std::string& property = args[1];
+  std::vector<std::string> args;
+  if (!ReadArgs(state, 2, argv, &args)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
+  }
+  const std::string& filename = args[0];
+  const std::string& property = args[1];
 
-    // zero out the 'command' field of the bootloader message.
-    char buffer[80];
-    memset(buffer, 0, sizeof(((struct bootloader_message*)0)->command));
-    FILE* f = ota_fopen(filename.c_str(), "r+b");
-    fseek(f, offsetof(struct bootloader_message, command), SEEK_SET);
-    ota_fwrite(buffer, sizeof(((struct bootloader_message*)0)->command), 1, f);
-    ota_fclose(f);
+  // Zero out the 'command' field of the bootloader message. Leave the rest intact.
+  bootloader_message boot;
+  std::string err;
+  if (!read_bootloader_message_from(&boot, filename, &err)) {
+    printf("%s(): Failed to read from \"%s\": %s", name, filename.c_str(), err.c_str());
+    return StringValue("");
+  }
+  memset(boot.command, 0, sizeof(boot.command));
+  if (!write_bootloader_message_to(boot, filename, &err)) {
+    printf("%s(): Failed to write to \"%s\": %s", name, filename.c_str(), err.c_str());
+    return StringValue("");
+  }
 
-    std::string reboot_cmd = "reboot,";
-    reboot_cmd += property;
-    android::base::SetProperty(ANDROID_RB_PROPERTY, reboot_cmd);
+  const std::string reboot_cmd = "reboot," + property;
+  android::base::SetProperty(ANDROID_RB_PROPERTY, reboot_cmd);
 
-    sleep(5);
-    return ErrorAbort(state, kRebootFailure, "%s() failed to reboot", name);
+  sleep(5);
+  return ErrorAbort(state, kRebootFailure, "%s() failed to reboot", name);
 }
 
 // Store a string value somewhere that future invocations of recovery
@@ -1234,62 +1238,57 @@ Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
 // second argument is the string to store; it should not exceed 31
 // bytes.
 Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc != 2) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
-    }
+  if (argc != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+  }
 
-    std::vector<std::string> args;
-    if (!ReadArgs(state, 2, argv, &args)) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-    }
-    const std::string& filename = args[0];
-    std::string& stagestr = args[1];
+  std::vector<std::string> args;
+  if (!ReadArgs(state, 2, argv, &args)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+  }
+  const std::string& filename = args[0];
+  const std::string& stagestr = args[1];
 
-    // Store this value in the misc partition, immediately after the
-    // bootloader message that the main recovery uses to save its
-    // arguments in case of the device restarting midway through
-    // package installation.
-    FILE* f = ota_fopen(filename.c_str(), "r+b");
-    fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
-    size_t to_write = stagestr.size();
-    size_t max_size = sizeof(((struct bootloader_message*)0)->stage);
-    if (to_write > max_size) {
-        to_write = max_size;
-        stagestr = stagestr.substr(0, max_size-1);
-    }
-    size_t status = ota_fwrite(stagestr.c_str(), to_write, 1, f);
-    ota_fclose(f);
+  // Store this value in the misc partition, immediately after the
+  // bootloader message that the main recovery uses to save its
+  // arguments in case of the device restarting midway through
+  // package installation.
+  bootloader_message boot;
+  std::string err;
+  if (!read_bootloader_message_from(&boot, filename, &err)) {
+    printf("%s(): Failed to read from \"%s\": %s", name, filename.c_str(), err.c_str());
+    return StringValue("");
+  }
+  strlcpy(boot.stage, stagestr.c_str(), sizeof(boot.stage));
+  if (!write_bootloader_message_to(boot, filename, &err)) {
+    printf("%s(): Failed to write to \"%s\": %s", name, filename.c_str(), err.c_str());
+    return StringValue("");
+  }
 
-    if (status != to_write) {
-        return StringValue("");
-    }
-    return StringValue(filename);
+  return StringValue(filename);
 }
 
 // Return the value most recently saved with SetStageFn.  The argument
 // is the block device for the misc partition.
 Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc != 1) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
-    }
+  if (argc != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
+  }
 
-    std::vector<std::string> args;
-    if (!ReadArgs(state, 1, argv, &args)) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-    }
-    const std::string& filename = args[0];
+  std::vector<std::string> args;
+  if (!ReadArgs(state, 1, argv, &args)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+  }
+  const std::string& filename = args[0];
 
-    char buffer[sizeof(((struct bootloader_message*)0)->stage)];
-    FILE* f = ota_fopen(filename.c_str(), "rb");
-    fseek(f, offsetof(struct bootloader_message, stage), SEEK_SET);
-    size_t status = ota_fread(buffer, sizeof(buffer), 1, f);
-    ota_fclose(f);
-    if (status != sizeof(buffer)) {
-        return StringValue("");
-    }
+  bootloader_message boot;
+  std::string err;
+  if (!read_bootloader_message_from(&boot, filename, &err)) {
+    printf("%s(): Failed to read from \"%s\": %s", name, filename.c_str(), err.c_str());
+    return StringValue("");
+  }
 
-    buffer[sizeof(buffer)-1] = '\0';
-    return StringValue(buffer);
+  return StringValue(boot.stage);
 }
 
 Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[]) {
