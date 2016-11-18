@@ -22,6 +22,8 @@
 // Zip entries in ziptest_valid.zip.
 static const std::string kATxtContents("abcdefghabcdefgh\n");
 static const std::string kBTxtContents("abcdefgh\n");
+static const std::string kCTxtContents("abcdefghabcdefgh\n");
+static const std::string kDTxtContents("abcdefgh\n");
 
 // echo -n -e "abcdefghabcdefgh\n" | sha1sum
 static const std::string kATxtSha1Sum("32c96a03dc8cd20097940f351bca6261ee5a1643");
