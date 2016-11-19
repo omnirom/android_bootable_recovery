@@ -128,7 +128,6 @@ static bool write_misc_partition(const void* p, size_t size, size_t offset, std:
                                        strerror(errno));
     return false;
   }
-
   // TODO: O_SYNC and fsync duplicates each other?
   if (fsync(fd.get()) == -1) {
     *err = android::base::StringPrintf("failed to fsync %s: %s", misc_blk_device.c_str(),
