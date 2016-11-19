@@ -1,0 +1,140 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_b8487563",
+        "filename": "partition.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1625,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-11-19T00:33:09Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "cd564bfd2a5ebf85581dcbef3d6be7591b4fc501",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_9845b94b",
+        "filename": "partition.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1628,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-11-19T00:33:09Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "cd564bfd2a5ebf85581dcbef3d6be7591b4fc501",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_7872ddab",
+        "filename": "partition.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1644,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-11-19T00:33:09Z",
+      "side": 1,
+      "message": "look at porting jcadduno\u0027s function",
+      "revId": "cd564bfd2a5ebf85581dcbef3d6be7591b4fc501",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_5877219a",
+        "filename": "partition.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1668,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-11-19T00:33:09Z",
+      "side": 1,
+      "message": "look at porting jcadduno\u0027s function",
+      "revId": "cd564bfd2a5ebf85581dcbef3d6be7591b4fc501",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_386c65ce",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 635,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-11-19T00:33:09Z",
+      "side": 1,
+      "message": "can we make this DRY somewhere?",
+      "revId": "cd564bfd2a5ebf85581dcbef3d6be7591b4fc501",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_1871a9a2",
+        "filename": "twrpDigest/Android.mk",
+        "patchSetId": 13
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-11-19T00:33:09Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "cd564bfd2a5ebf85581dcbef3d6be7591b4fc501",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_5850410c",
+        "filename": "twrpDigest/twrpDigest.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-11-19T00:33:09Z",
+      "side": 1,
+      "message": "need to remove debug",
+      "revId": "cd564bfd2a5ebf85581dcbef3d6be7591b4fc501",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_f865cde0",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-11-19T00:33:09Z",
+      "side": 1,
+      "message": "remove this, not needed",
+      "revId": "cd564bfd2a5ebf85581dcbef3d6be7591b4fc501",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
