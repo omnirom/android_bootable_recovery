@@ -27,12 +27,14 @@ updater_common_static_libraries := \
     libedify \
     libziparchive \
     libotautil \
+    libbootloader_message \
     libutils \
     libmounts \
     libotafault \
     libext4_utils_static \
     libfec \
     libfec_rs \
+    libfs_mgr \
     liblog \
     libselinux \
     libsparse_static \

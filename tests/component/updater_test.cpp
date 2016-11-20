@@ -23,6 +23,7 @@
 #include <android-base/file.h>
 #include <android-base/properties.h>
 #include <android-base/test_utils.h>
+#include <bootloader_message/bootloader_message.h>
 #include <gtest/gtest.h>
 #include <ziparchive/zip_archive.h>
 
@@ -449,5 +450,63 @@ TEST_F(UpdaterTest, write_value) {
 
   // It should fail gracefully when write fails.
   script = "write_value(\"value\", \"/proc/0/file1\")";
+  expect("", script.c_str(), kNoCause);
+}
+
+TEST_F(UpdaterTest, get_stage) {
+  // get_stage() expects one argument.
+  expect(nullptr, "get_stage()", kArgsParsingFailure);
+  expect(nullptr, "get_stage(\"arg1\", \"arg2\")", kArgsParsingFailure);
+  expect(nullptr, "get_stage(\"arg1\", \"arg2\", \"arg3\")", kArgsParsingFailure);
+
+  // Set up a local file as BCB.
+  TemporaryFile tf;
+  std::string temp_file(tf.path);
+  bootloader_message boot;
+  strlcpy(boot.stage, "2/3", sizeof(boot.stage));
+  std::string err;
+  ASSERT_TRUE(write_bootloader_message_to(boot, temp_file, &err));
+
+  // Can read the stage value.
+  std::string script("get_stage(\"" + temp_file + "\")");
+  expect("2/3", script.c_str(), kNoCause);
+
+  // Bad BCB path.
+  script = "get_stage(\"doesntexist\")";
+  expect("", script.c_str(), kNoCause);
+}
+
+TEST_F(UpdaterTest, set_stage) {
+  // set_stage() expects two arguments.
+  expect(nullptr, "set_stage()", kArgsParsingFailure);
+  expect(nullptr, "set_stage(\"arg1\")", kArgsParsingFailure);
+  expect(nullptr, "set_stage(\"arg1\", \"arg2\", \"arg3\")", kArgsParsingFailure);
+
+  // Set up a local file as BCB.
+  TemporaryFile tf;
+  std::string temp_file(tf.path);
+  bootloader_message boot;
+  strlcpy(boot.command, "command", sizeof(boot.command));
+  strlcpy(boot.stage, "2/3", sizeof(boot.stage));
+  std::string err;
+  ASSERT_TRUE(write_bootloader_message_to(boot, temp_file, &err));
+
+  // Write with set_stage().
+  std::string script("set_stage(\"" + temp_file + "\", \"1/3\")");
+  expect(tf.path, script.c_str(), kNoCause);
+
+  // Verify.
+  bootloader_message boot_verify;
+  ASSERT_TRUE(read_bootloader_message_from(&boot_verify, temp_file, &err));
+
+  // Stage should be updated, with command part untouched.
+  ASSERT_STREQ("1/3", boot_verify.stage);
+  ASSERT_STREQ(boot.command, boot_verify.command);
+
+  // Bad BCB path.
+  script = "set_stage(\"doesntexist\", \"1/3\")";
+  expect("", script.c_str(), kNoCause);
+
+  script = "set_stage(\"/dev/full\", \"1/3\")";
   expect("", script.c_str(), kNoCause);
 }
