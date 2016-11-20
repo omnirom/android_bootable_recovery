@@ -17,6 +17,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -24,6 +25,8 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <limits>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -32,6 +35,7 @@
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <cutils/properties.h>
 #include <ziparchive/zip_archive.h>
 
 #include "common.h"
@@ -44,6 +48,8 @@
 #include "verifier.h"
 
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
+static constexpr const char* AB_OTA_PAYLOAD_PROPERTIES = "payload_properties.txt";
+static constexpr const char* AB_OTA_PAYLOAD = "payload.bin";
 #define PUBLIC_KEYS_FILE "/res/keys"
 static constexpr const char* METADATA_PATH = "META-INF/com/android/metadata";
 static constexpr const char* UNCRYPT_STATUS = "/cache/recovery/uncrypt_status";
@@ -118,13 +124,146 @@ static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::stri
     }
 }
 
-// If the package contains an update binary, extract it and run it.
+// Extract the update binary from the open zip archive |zip| located at |path|
+// and store into |cmd| the command line that should be called. The |status_fd|
+// is the file descriptor the child process should use to report back the
+// progress of the update.
 static int
-try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
-                  std::vector<std::string>& log_buffer, int retry_count)
-{
-    read_source_target_build(zip, log_buffer);
+update_binary_command(const char* path, ZipArchiveHandle zip, int retry_count,
+                      int status_fd, std::vector<std::string>* cmd);
 
+#ifdef AB_OTA_UPDATER
+
+// Parses the metadata of the OTA package in |zip| and checks whether we are
+// allowed to accept this A/B package. Downgrading is not allowed unless
+// explicitly enabled in the package and only for incremental packages.
+static int check_newer_ab_build(ZipArchiveHandle zip)
+{
+    std::string metadata_str;
+    if (!read_metadata_from_package(zip, &metadata_str)) {
+        return INSTALL_CORRUPT;
+    }
+    std::map<std::string, std::string> metadata;
+    for (const std::string& line : android::base::Split(metadata_str, "\n")) {
+        size_t eq = line.find('=');
+        if (eq != std::string::npos) {
+            metadata[line.substr(0, eq)] = line.substr(eq + 1);
+        }
+    }
+    char value[PROPERTY_VALUE_MAX];
+
+    property_get("ro.product.device", value, "");
+    const std::string& pkg_device = metadata["pre-device"];
+    if (pkg_device != value || pkg_device.empty()) {
+        LOG(ERROR) << "Package is for product " << pkg_device << " but expected " << value;
+        return INSTALL_ERROR;
+    }
+
+    // We allow the package to not have any serialno, but if it has a non-empty
+    // value it should match.
+    property_get("ro.serialno", value, "");
+    const std::string& pkg_serial_no = metadata["serialno"];
+    if (!pkg_serial_no.empty() && pkg_serial_no != value) {
+        LOG(ERROR) << "Package is for serial " << pkg_serial_no;
+        return INSTALL_ERROR;
+    }
+
+    if (metadata["ota-type"] != "AB") {
+        LOG(ERROR) << "Package is not A/B";
+        return INSTALL_ERROR;
+    }
+
+    // Incremental updates should match the current build.
+    property_get("ro.build.version.incremental", value, "");
+    const std::string& pkg_pre_build = metadata["pre-build-incremental"];
+    if (!pkg_pre_build.empty() && pkg_pre_build != value) {
+        LOG(ERROR) << "Package is for source build " << pkg_pre_build << " but expected " << value;
+        return INSTALL_ERROR;
+    }
+    property_get("ro.build.fingerprint", value, "");
+    const std::string& pkg_pre_build_fingerprint = metadata["pre-build"];
+    if (!pkg_pre_build_fingerprint.empty() &&
+        pkg_pre_build_fingerprint != value) {
+        LOG(ERROR) << "Package is for source build " << pkg_pre_build_fingerprint
+                   << " but expected " << value;
+        return INSTALL_ERROR;
+    }
+
+    // Check for downgrade version.
+    int64_t build_timestamp = property_get_int64(
+            "ro.build.date.utc", std::numeric_limits<int64_t>::max());
+    int64_t pkg_post_timestamp = 0;
+    // We allow to full update to the same version we are running, in case there
+    // is a problem with the current copy of that version.
+    if (metadata["post-timestamp"].empty() ||
+        !android::base::ParseInt(metadata["post-timestamp"].c_str(),
+                                 &pkg_post_timestamp) ||
+        pkg_post_timestamp < build_timestamp) {
+        if (metadata["ota-downgrade"] != "yes") {
+            LOG(ERROR) << "Update package is older than the current build, expected a build "
+                       "newer than timestamp " << build_timestamp << " but package has "
+                       "timestamp " << pkg_post_timestamp << " and downgrade not allowed.";
+            return INSTALL_ERROR;
+        }
+        if (pkg_pre_build_fingerprint.empty()) {
+            LOG(ERROR) << "Downgrade package must have a pre-build version set, not allowed.";
+            return INSTALL_ERROR;
+        }
+    }
+
+    return 0;
+}
+
+static int
+update_binary_command(const char* path, ZipArchiveHandle zip, int retry_count,
+                      int status_fd, std::vector<std::string>* cmd)
+{
+    int ret = check_newer_ab_build(zip);
+    if (ret) {
+        return ret;
+    }
+
+    // For A/B updates we extract the payload properties to a buffer and obtain
+    // the RAW payload offset in the zip file.
+    ZipString property_name(AB_OTA_PAYLOAD_PROPERTIES);
+    ZipEntry properties_entry;
+    if (FindEntry(zip, property_name, &properties_entry) != 0) {
+        LOG(ERROR) << "Can't find " << AB_OTA_PAYLOAD_PROPERTIES;
+        return INSTALL_CORRUPT;
+    }
+    std::vector<uint8_t> payload_properties(
+            properties_entry.uncompressed_length);
+    if (ExtractToMemory(zip, &properties_entry, payload_properties.data(),
+                        properties_entry.uncompressed_length) != 0) {
+        LOG(ERROR) << "Can't extract " << AB_OTA_PAYLOAD_PROPERTIES;
+        return INSTALL_CORRUPT;
+    }
+
+    ZipString payload_name(AB_OTA_PAYLOAD);
+    ZipEntry payload_entry;
+    if (FindEntry(zip, payload_name, &payload_entry) != 0) {
+        LOG(ERROR) << "Can't find " << AB_OTA_PAYLOAD;
+        return INSTALL_CORRUPT;
+    }
+    long payload_offset = payload_entry.offset;
+    *cmd = {
+        "/sbin/update_engine_sideload",
+        android::base::StringPrintf("--payload=file://%s", path),
+        android::base::StringPrintf("--offset=%ld", payload_offset),
+        "--headers=" + std::string(payload_properties.begin(),
+                                   payload_properties.end()),
+        android::base::StringPrintf("--status_fd=%d", status_fd),
+    };
+    return 0;
+}
+
+#else  // !AB_OTA_UPDATER
+
+static int
+update_binary_command(const char* path, ZipArchiveHandle zip, int retry_count,
+                      int status_fd, std::vector<std::string>* cmd)
+{
+    // On traditional updates we extract the update binary from the package.
     ZipString binary_name(ASSUMED_UPDATE_BINARY_NAME);
     ZipEntry binary_entry;
     if (FindEntry(zip, binary_name, &binary_entry) != 0) {
@@ -147,8 +286,35 @@ try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
         return INSTALL_ERROR;
     }
 
+    *cmd = {
+        binary,
+        EXPAND(RECOVERY_API_VERSION),   // defined in Android.mk
+        std::to_string(status_fd),
+        path,
+    };
+    if (retry_count > 0)
+        cmd->push_back("retry");
+    return 0;
+}
+#endif  // !AB_OTA_UPDATER
+
+// If the package contains an update binary, extract it and run it.
+static int
+try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
+                  std::vector<std::string>& log_buffer, int retry_count)
+{
+    read_source_target_build(zip, log_buffer);
+
     int pipefd[2];
     pipe(pipefd);
+
+    std::vector<std::string> args;
+    int ret = update_binary_command(path, zip, retry_count, pipefd[1], &args);
+    if (ret) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return ret;
+    }
 
     // When executing the update binary contained in the package, the
     // arguments passed are:
@@ -199,22 +365,19 @@ try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
     //   update attempt.
     //
 
-    const char* args[6];
-    args[0] = binary;
-    args[1] = EXPAND(RECOVERY_API_VERSION);   // defined in Android.mk
-    char temp[16];
-    snprintf(temp, sizeof(temp), "%d", pipefd[1]);
-    args[2] = temp;
-    args[3] = path;
-    args[4] = retry_count > 0 ? "retry" : NULL;
-    args[5] = NULL;
+    // Convert the vector to a NULL-terminated char* array suitable for execv.
+    const char* chr_args[args.size() + 1];
+    chr_args[args.size()] = NULL;
+    for (size_t i = 0; i < args.size(); i++) {
+        chr_args[i] = args[i].c_str();
+    }
 
     pid_t pid = fork();
     if (pid == 0) {
         umask(022);
         close(pipefd[0]);
-        execv(binary, const_cast<char**>(args));
-        fprintf(stdout, "E:Can't run %s (%s)\n", binary, strerror(errno));
+        execv(chr_args[0], const_cast<char**>(chr_args));
+        fprintf(stdout, "E:Can't run %s (%s)\n", chr_args[0], strerror(errno));
         _exit(-1);
     }
     close(pipefd[1]);

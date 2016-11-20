@@ -16,36 +16,15 @@
 
 #include "device.h"
 
-#if defined(AB_OTA_UPDATER)
-
-static const char* MENU_ITEMS[] = {
-    "Reboot system now",
-    "Reboot to bootloader",
-    "Wipe data/factory reset",
-    "Mount /system",
-    "Run graphics test",
-    "Power off",
-    NULL,
-};
-
-static const Device::BuiltinAction MENU_ACTIONS[] = {
-    Device::REBOOT,
-    Device::REBOOT_BOOTLOADER,
-    Device::WIPE_DATA,
-    Device::MOUNT_SYSTEM,
-    Device::RUN_GRAPHICS_TEST,
-    Device::SHUTDOWN,
-};
-
-#else
-
 static const char* MENU_ITEMS[] = {
     "Reboot system now",
     "Reboot to bootloader",
     "Apply update from ADB",
     "Apply update from SD card",
     "Wipe data/factory reset",
+#ifndef AB_OTA_UPDATER
     "Wipe cache partition",
+#endif  // !AB_OTA_UPDATER
     "Mount /system",
     "View recovery logs",
     "Run graphics test",
@@ -59,14 +38,19 @@ static const Device::BuiltinAction MENU_ACTIONS[] = {
     Device::APPLY_ADB_SIDELOAD,
     Device::APPLY_SDCARD,
     Device::WIPE_DATA,
+#ifndef AB_OTA_UPDATER
     Device::WIPE_CACHE,
+#endif  // !AB_OTA_UPDATER
     Device::MOUNT_SYSTEM,
     Device::VIEW_RECOVERY_LOGS,
     Device::RUN_GRAPHICS_TEST,
     Device::SHUTDOWN,
 };
 
-#endif
+static_assert(sizeof(MENU_ITEMS) / sizeof(MENU_ITEMS[0]) ==
+              sizeof(MENU_ACTIONS) / sizeof(MENU_ACTIONS[0]) + 1,
+              "MENU_ITEMS and MENU_ACTIONS should have the same length, "
+              "except for the extra NULL entry in MENU_ITEMS.");
 
 const char* const* Device::GetMenuItems() {
   return MENU_ITEMS;
