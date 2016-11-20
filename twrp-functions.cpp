@@ -505,10 +505,14 @@ void TWFunc::Update_Log_File(void) {
 	// Reset bootloader message
 	TWPartition* Part = PartitionManager.Find_Partition_By_Path("/misc");
 	if (Part != NULL) {
-		struct bootloader_message boot;
-		memset(&boot, 0, sizeof(boot));
-		if (set_bootloader_message(&boot) != 0)
-			LOGERR("Unable to set bootloader message.\n");
+		string err;
+		if (!clear_bootloader_message(&err)) {
+			if (err == "no misc device set") {
+				LOGINFO("%s\n", err.c_str());
+			} else {
+				LOGERR("%s\n", err.c_str());
+			}
+		}
 	}
 
 	if (PartitionManager.Mount_By_Path("/cache", true)) {

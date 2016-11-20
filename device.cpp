@@ -22,32 +22,42 @@ static const char* MENU_ITEMS[] = {
     "Apply update from ADB",
     "Apply update from SD card",
     "Wipe data/factory reset",
+#ifndef AB_OTA_UPDATER
     "Wipe cache partition",
+#endif  // !AB_OTA_UPDATER
     "Mount /system",
     "View recovery logs",
     "Run graphics test",
     "Power off",
-    NULL
+    NULL,
 };
+
+static const Device::BuiltinAction MENU_ACTIONS[] = {
+    Device::REBOOT,
+    Device::REBOOT_BOOTLOADER,
+    Device::APPLY_ADB_SIDELOAD,
+    Device::APPLY_SDCARD,
+    Device::WIPE_DATA,
+#ifndef AB_OTA_UPDATER
+    Device::WIPE_CACHE,
+#endif  // !AB_OTA_UPDATER
+    Device::MOUNT_SYSTEM,
+    Device::VIEW_RECOVERY_LOGS,
+    Device::RUN_GRAPHICS_TEST,
+    Device::SHUTDOWN,
+};
+
+static_assert(sizeof(MENU_ITEMS) / sizeof(MENU_ITEMS[0]) ==
+              sizeof(MENU_ACTIONS) / sizeof(MENU_ACTIONS[0]) + 1,
+              "MENU_ITEMS and MENU_ACTIONS should have the same length, "
+              "except for the extra NULL entry in MENU_ITEMS.");
 
 const char* const* Device::GetMenuItems() {
   return MENU_ITEMS;
 }
 
 Device::BuiltinAction Device::InvokeMenuItem(int menu_position) {
-  switch (menu_position) {
-    case 0: return REBOOT;
-    case 1: return REBOOT_BOOTLOADER;
-    case 2: return APPLY_ADB_SIDELOAD;
-    case 3: return APPLY_SDCARD;
-    case 4: return WIPE_DATA;
-    case 5: return WIPE_CACHE;
-    case 6: return MOUNT_SYSTEM;
-    case 7: return VIEW_RECOVERY_LOGS;
-    case 8: return RUN_GRAPHICS_TEST;
-    case 9: return SHUTDOWN;
-    default: return NO_ACTION;
-  }
+  return menu_position < 0 ? NO_ACTION : MENU_ACTIONS[menu_position];
 }
 
 int Device::HandleMenuKey(int key, int visible) {

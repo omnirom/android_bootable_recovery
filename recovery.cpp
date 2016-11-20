@@ -19,7 +19,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <inttypes.h>
 #include <limits.h>
+#include <linux/fs.h>
 #include <linux/input.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -33,12 +35,16 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <string>
+#include <vector>
 
 #include <adb.h>
 #include <android/log.h> /* Android Log Priority Tags */
 #include <android-base/file.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
+#include <bootloader_message/bootloader_message.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
 #include <log/logger.h> /* Android Log packet format */
@@ -47,7 +53,6 @@
 #include <healthd/BatteryMonitor.h>
 
 #include "adb_install.h"
-#include "bootloader.h"
 #include "common.h"
 #include "device.h"
 #include "error_code.h"
@@ -56,8 +61,10 @@
 #include "install.h"
 #include "minui/minui.h"
 #include "minzip/DirUtil.h"
+#include "minzip/Zip.h"
 #include "roots.h"
 #include "ui.h"
+#include "unique_fd.h"
 #include "screen_ui.h"
 
 struct selabel_handle *sehandle;
@@ -77,7 +84,15 @@ static const struct option OPTIONS[] = {
   { "shutdown_after", no_argument, NULL, 'p' },
   { "reason", required_argument, NULL, 'r' },
   { "security", no_argument, NULL, 'e'},
+  { "wipe_ab", no_argument, NULL, 0 },
+  { "wipe_package_size", required_argument, NULL, 0 },
   { NULL, 0, NULL, 0 },
+};
+
+// More bootreasons can be found in "system/core/bootstat/bootstat.cpp".
+static const std::vector<std::string> bootreason_blacklist {
+  "kernel_panic",
+  "Panic",
 };
 
 static const char *CACHE_LOG_DIR = "/cache/recovery";
@@ -104,6 +119,7 @@ static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
 // So we should check battery with a slightly lower limitation.
 static const int BATTERY_OK_PERCENTAGE = 20;
 static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
+constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
 
 RecoveryUI* ui = NULL;
 static const char* locale = "en_US";
@@ -293,9 +309,13 @@ static void redirect_stdio(const char* filename) {
 //   - the contents of COMMAND_FILE (one per line)
 static void
 get_args(int *argc, char ***argv) {
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
-    get_bootloader_message(&boot);  // this may fail, leaving a zeroed structure
+    bootloader_message boot = {};
+    std::string err;
+    if (!read_bootloader_message(&boot, &err)) {
+        LOGE("%s\n", err.c_str());
+        // If fails, leave a zeroed bootloader_message.
+        memset(&boot, 0, sizeof(boot));
+    }
     stage = strndup(boot.stage, sizeof(boot.stage));
 
     if (boot.command[0] != 0 && boot.command[0] != 255) {
@@ -357,16 +377,20 @@ get_args(int *argc, char ***argv) {
         strlcat(boot.recovery, (*argv)[i], sizeof(boot.recovery));
         strlcat(boot.recovery, "\n", sizeof(boot.recovery));
     }
-    set_bootloader_message(&boot);
+    if (!write_bootloader_message(boot, &err)) {
+        LOGE("%s\n", err.c_str());
+    }
 }
 
 static void
 set_sdcard_update_bootloader_message() {
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
+    bootloader_message boot = {};
     strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
     strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
-    set_bootloader_message(&boot);
+    std::string err;
+    if (!write_bootloader_message(boot, &err)) {
+        LOGE("%s\n", err.c_str());
+    }
 }
 
 // Read from kernel log into buffer and write out to file.
@@ -527,9 +551,11 @@ finish_recovery(const char *send_intent) {
     copy_logs();
 
     // Reset to normal system boot so recovery won't cycle indefinitely.
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
-    set_bootloader_message(&boot);
+    bootloader_message boot = {};
+    std::string err;
+    if (!write_bootloader_message(boot, &err)) {
+        LOGE("%s\n", err.c_str());
+    }
 
     // Remove the command file, so recovery won't repeat indefinitely.
     if (has_cache) {
@@ -854,46 +880,184 @@ static bool wipe_cache(bool should_confirm, Device* device) {
     return success;
 }
 
-static void choose_recovery_file(Device* device) {
-    if (!has_cache) {
-        ui->Print("No /cache partition found.\n");
-        return;
+// Secure-wipe a given partition. It uses BLKSECDISCARD, if supported.
+// Otherwise, it goes with BLKDISCARD (if device supports BLKDISCARDZEROES) or
+// BLKZEROOUT.
+static bool secure_wipe_partition(const std::string& partition) {
+    unique_fd fd(TEMP_FAILURE_RETRY(open(partition.c_str(), O_WRONLY)));
+    if (fd.get() == -1) {
+        LOGE("failed to open \"%s\": %s\n", partition.c_str(), strerror(errno));
+        return false;
     }
 
+    uint64_t range[2] = {0, 0};
+    if (ioctl(fd.get(), BLKGETSIZE64, &range[1]) == -1 || range[1] == 0) {
+        LOGE("failed to get partition size: %s\n", strerror(errno));
+        return false;
+    }
+    printf("Secure-wiping \"%s\" from %" PRIu64 " to %" PRIu64 ".\n",
+           partition.c_str(), range[0], range[1]);
+
+    printf("Trying BLKSECDISCARD...\t");
+    if (ioctl(fd.get(), BLKSECDISCARD, &range) == -1) {
+        printf("failed: %s\n", strerror(errno));
+
+        // Use BLKDISCARD if it zeroes out blocks, otherwise use BLKZEROOUT.
+        unsigned int zeroes;
+        if (ioctl(fd.get(), BLKDISCARDZEROES, &zeroes) == 0 && zeroes != 0) {
+            printf("Trying BLKDISCARD...\t");
+            if (ioctl(fd.get(), BLKDISCARD, &range) == -1) {
+                printf("failed: %s\n", strerror(errno));
+                return false;
+            }
+        } else {
+            printf("Trying BLKZEROOUT...\t");
+            if (ioctl(fd.get(), BLKZEROOUT, &range) == -1) {
+                printf("failed: %s\n", strerror(errno));
+                return false;
+            }
+        }
+    }
+
+    printf("done\n");
+    return true;
+}
+
+// Check if the wipe package matches expectation:
+// 1. verify the package.
+// 2. check metadata (ota-type, pre-device and serial number if having one).
+static bool check_wipe_package(size_t wipe_package_size) {
+    if (wipe_package_size == 0) {
+        LOGE("wipe_package_size is zero.\n");
+        return false;
+    }
+    std::string wipe_package;
+    std::string err_str;
+    if (!read_wipe_package(&wipe_package, wipe_package_size, &err_str)) {
+        LOGE("Failed to read wipe package: %s\n", err_str.c_str());
+        return false;
+    }
+    if (!verify_package(reinterpret_cast<const unsigned char*>(wipe_package.data()),
+                        wipe_package.size())) {
+        LOGE("Failed to verify package.\n");
+        return false;
+    }
+
+    // Extract metadata
+    ZipArchive zip;
+    int err = mzOpenZipArchive(reinterpret_cast<unsigned char*>(&wipe_package[0]),
+                               wipe_package.size(), &zip);
+    if (err != 0) {
+        LOGE("Can't open wipe package: %s\n", err != -1 ? strerror(err) : "bad");
+        return false;
+    }
+    std::string metadata;
+    if (!read_metadata_from_package(&zip, &metadata)) {
+        mzCloseZipArchive(&zip);
+        return false;
+    }
+    mzCloseZipArchive(&zip);
+
+    // Check metadata
+    std::vector<std::string> lines = android::base::Split(metadata, "\n");
+    bool ota_type_matched = false;
+    bool device_type_matched = false;
+    bool has_serial_number = false;
+    bool serial_number_matched = false;
+    for (const auto& line : lines) {
+        if (line == "ota-type=BRICK") {
+            ota_type_matched = true;
+        } else if (android::base::StartsWith(line, "pre-device=")) {
+            std::string device_type = line.substr(strlen("pre-device="));
+            char real_device_type[PROPERTY_VALUE_MAX];
+            property_get("ro.build.product", real_device_type, "");
+            device_type_matched = (device_type == real_device_type);
+        } else if (android::base::StartsWith(line, "serialno=")) {
+            std::string serial_no = line.substr(strlen("serialno="));
+            char real_serial_no[PROPERTY_VALUE_MAX];
+            property_get("ro.serialno", real_serial_no, "");
+            has_serial_number = true;
+            serial_number_matched = (serial_no == real_serial_no);
+        }
+    }
+    return ota_type_matched && device_type_matched && (!has_serial_number || serial_number_matched);
+}
+
+// Wipe the current A/B device, with a secure wipe of all the partitions in
+// RECOVERY_WIPE.
+static bool wipe_ab_device(size_t wipe_package_size) {
+    ui->SetBackground(RecoveryUI::ERASING);
+    ui->SetProgressType(RecoveryUI::INDETERMINATE);
+
+    if (!check_wipe_package(wipe_package_size)) {
+        LOGE("Failed to verify wipe package\n");
+        return false;
+    }
+    std::string partition_list;
+    if (!android::base::ReadFileToString(RECOVERY_WIPE, &partition_list)) {
+        LOGE("failed to read \"%s\".\n", RECOVERY_WIPE);
+        return false;
+    }
+
+    std::vector<std::string> lines = android::base::Split(partition_list, "\n");
+    for (const std::string& line : lines) {
+        std::string partition = android::base::Trim(line);
+        // Ignore '#' comment or empty lines.
+        if (android::base::StartsWith(partition, "#") || partition.empty()) {
+            continue;
+        }
+
+        // Proceed anyway even if it fails to wipe some partition.
+        secure_wipe_partition(partition);
+    }
+    return true;
+}
+
+static void choose_recovery_file(Device* device) {
     // "Back" + KEEP_LOG_COUNT * 2 + terminating nullptr entry
     char* entries[1 + KEEP_LOG_COUNT * 2 + 1];
     memset(entries, 0, sizeof(entries));
 
     unsigned int n = 0;
 
-    // Add LAST_LOG_FILE + LAST_LOG_FILE.x
-    // Add LAST_KMSG_FILE + LAST_KMSG_FILE.x
-    for (int i = 0; i < KEEP_LOG_COUNT; i++) {
-        char* log_file;
-        int ret;
-        ret = (i == 0) ? asprintf(&log_file, "%s", LAST_LOG_FILE) :
-                asprintf(&log_file, "%s.%d", LAST_LOG_FILE, i);
-        if (ret == -1) {
-            // memory allocation failure - return early. Should never happen.
-            return;
-        }
-        if ((ensure_path_mounted(log_file) != 0) || (access(log_file, R_OK) == -1)) {
-            free(log_file);
-        } else {
-            entries[n++] = log_file;
-        }
+    if (has_cache) {
+        // Add LAST_LOG_FILE + LAST_LOG_FILE.x
+        // Add LAST_KMSG_FILE + LAST_KMSG_FILE.x
+        for (int i = 0; i < KEEP_LOG_COUNT; i++) {
+            char* log_file;
+            int ret;
+            ret = (i == 0) ? asprintf(&log_file, "%s", LAST_LOG_FILE) :
+                    asprintf(&log_file, "%s.%d", LAST_LOG_FILE, i);
+            if (ret == -1) {
+                // memory allocation failure - return early. Should never happen.
+                return;
+            }
+            if ((ensure_path_mounted(log_file) != 0) || (access(log_file, R_OK) == -1)) {
+                free(log_file);
+            } else {
+                entries[n++] = log_file;
+            }
 
-        char* kmsg_file;
-        ret = (i == 0) ? asprintf(&kmsg_file, "%s", LAST_KMSG_FILE) :
-                asprintf(&kmsg_file, "%s.%d", LAST_KMSG_FILE, i);
-        if (ret == -1) {
-            // memory allocation failure - return early. Should never happen.
-            return;
+            char* kmsg_file;
+            ret = (i == 0) ? asprintf(&kmsg_file, "%s", LAST_KMSG_FILE) :
+                    asprintf(&kmsg_file, "%s.%d", LAST_KMSG_FILE, i);
+            if (ret == -1) {
+                // memory allocation failure - return early. Should never happen.
+                return;
+            }
+            if ((ensure_path_mounted(kmsg_file) != 0) || (access(kmsg_file, R_OK) == -1)) {
+                free(kmsg_file);
+            } else {
+                entries[n++] = kmsg_file;
+            }
         }
-        if ((ensure_path_mounted(kmsg_file) != 0) || (access(kmsg_file, R_OK) == -1)) {
-            free(kmsg_file);
-        } else {
-            entries[n++] = kmsg_file;
+    } else {
+        // If cache partition is not found, view /tmp/recovery.log instead.
+        ui->Print("No /cache partition found.\n");
+        if (access(TEMPORARY_LOG_FILE, R_OK) == -1) {
+            return;
+        } else{
+            entries[n++] = strdup(TEMPORARY_LOG_FILE);
         }
     }
 
@@ -1227,7 +1391,7 @@ static bool is_battery_ok() {
 }
 
 static void set_retry_bootloader_message(int retry_count, int argc, char** argv) {
-    struct bootloader_message boot {};
+    bootloader_message boot = {};
     strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
     strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
 
@@ -1246,7 +1410,34 @@ static void set_retry_bootloader_message(int retry_count, int argc, char** argv)
         snprintf(buffer, sizeof(buffer), "--retry_count=%d\n", retry_count+1);
         strlcat(boot.recovery, buffer, sizeof(boot.recovery));
     }
-    set_bootloader_message(&boot);
+    std::string err;
+    if (!write_bootloader_message(boot, &err)) {
+        LOGE("%s\n", err.c_str());
+    }
+}
+
+static bool bootreason_in_blacklist() {
+    char bootreason[PROPERTY_VALUE_MAX];
+    if (property_get("ro.boot.bootreason", bootreason, nullptr) > 0) {
+        for (const auto& str : bootreason_blacklist) {
+            if (strcasecmp(str.c_str(), bootreason) == 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static void log_failure_code(ErrorCode code, const char *update_package) {
+    FILE* install_log = fopen_path(TEMPORARY_INSTALL_FILE, "w");
+    if (install_log != nullptr) {
+        fprintf(install_log, "%s\n", update_package);
+        fprintf(install_log, "0\n");
+        fprintf(install_log, "error: %d\n", code);
+        fclose(install_log);
+    } else {
+        LOGE("failed to open last_install: %s\n", strerror(errno));
+    }
 }
 
 static ssize_t logbasename(
@@ -1341,6 +1532,8 @@ int main(int argc, char **argv) {
     const char *update_package = NULL;
     bool should_wipe_data = false;
     bool should_wipe_cache = false;
+    bool should_wipe_ab = false;
+    size_t wipe_package_size = 0;
     bool show_text = false;
     bool sideload = false;
     bool sideload_auto_reboot = false;
@@ -1350,7 +1543,8 @@ int main(int argc, char **argv) {
     bool security_update = false;
 
     int arg;
-    while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
+    int option_index;
+    while ((arg = getopt_long(argc, argv, "", OPTIONS, &option_index)) != -1) {
         switch (arg) {
         case 'i': send_intent = optarg; break;
         case 'n': android::base::ParseInt(optarg, &retry_count, 0); break;
@@ -1373,6 +1567,16 @@ int main(int argc, char **argv) {
         case 'p': shutdown_after = true; break;
         case 'r': reason = optarg; break;
         case 'e': security_update = true; break;
+        case 0: {
+            if (strcmp(OPTIONS[option_index].name, "wipe_ab") == 0) {
+                should_wipe_ab = true;
+                break;
+            } else if (strcmp(OPTIONS[option_index].name, "wipe_package_size") == 0) {
+                android::base::ParseUint(optarg, &wipe_package_size);
+                break;
+            }
+            break;
+        }
         case '?':
             LOGE("Invalid command argument\n");
             continue;
@@ -1459,15 +1663,12 @@ int main(int argc, char **argv) {
                       BATTERY_OK_PERCENTAGE);
             // Log the error code to last_install when installation skips due to
             // low battery.
-            FILE* install_log = fopen_path(LAST_INSTALL_FILE, "w");
-            if (install_log != nullptr) {
-                fprintf(install_log, "%s\n", update_package);
-                fprintf(install_log, "0\n");
-                fprintf(install_log, "error: %d\n", kLowBattery);
-                fclose(install_log);
-            } else {
-                LOGE("failed to open last_install: %s\n", strerror(errno));
-            }
+            log_failure_code(kLowBattery, update_package);
+            status = INSTALL_SKIPPED;
+        } else if (bootreason_in_blacklist()) {
+            // Skip update-on-reboot when bootreason is kernel_panic or similar
+            ui->Print("bootreason is in the blacklist; skip OTA installation\n");
+            log_failure_code(kBootreasonInBlacklist, update_package);
             status = INSTALL_SKIPPED;
         } else {
             status = install_package(update_package, &should_wipe_cache,
@@ -1509,6 +1710,10 @@ int main(int argc, char **argv) {
         }
     } else if (should_wipe_cache) {
         if (!wipe_cache(false, device)) {
+            status = INSTALL_ERROR;
+        }
+    } else if (should_wipe_ab) {
+        if (!wipe_ab_device(wipe_package_size)) {
             status = INSTALL_ERROR;
         }
     } else if (sideload) {

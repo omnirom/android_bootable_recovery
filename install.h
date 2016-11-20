@@ -17,12 +17,10 @@
 #ifndef RECOVERY_INSTALL_H_
 #define RECOVERY_INSTALL_H_
 
-#include "common.h"
-#include "mincrypt/rsa.h"
+#include <string>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "common.h"
+#include "minzip/Zip.h"
 
 enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE, INSTALL_SKIPPED,
         INSTALL_RETRY };
@@ -32,10 +30,12 @@ enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE, INSTALL_SK
 int install_package(const char* root_path, bool* wipe_cache, const char* install_file,
                     bool needs_mount, int retry_count);
 
-RSAPublicKey* load_keys(const char* filename, int* numKeys);
+// Verify the package by ota keys. Return true if the package is verified successfully,
+// otherwise return false.
+bool verify_package(const unsigned char* package_data, size_t package_size);
 
-#ifdef __cplusplus
-}
-#endif
+// Read meta data file of the package, write its content in the string pointed by meta_data.
+// Return true if succeed, otherwise return false.
+bool read_metadata_from_package(ZipArchive* zip, std::string* meta_data);
 
 #endif  // RECOVERY_INSTALL_H_

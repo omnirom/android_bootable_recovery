@@ -24,7 +24,7 @@
 #include "gui/twmsg.h"
 
 #include "cutils/properties.h"
-#include "bootloader.h"
+#include "bootloader_message/bootloader_message.h"
 
 #ifdef ANDROID_RB_RESTART
 #include "cutils/android_reboot.h"
@@ -178,9 +178,8 @@ int main(int argc, char **argv) {
 
 	PartitionManager.Mount_By_Path("/cache", true);
 
-	string Reboot_Value;
-	bool Shutdown = false;
-
+	bool Shutdown = false, Sideload = false;
+	string Send_Intent = "";
 	{
 		TWPartition* misc = PartitionManager.Find_Partition_By_Path("/misc");
 		if (misc != NULL) {
@@ -228,6 +227,7 @@ int main(int argc, char **argv) {
 					if (!OpenRecoveryScript::Insert_ORS_Command("wipe cache\n"))
 						break;
 				}
+				// Other 'w' items are wipe_ab and wipe_package_size which are related to bricking the device remotely. We will not bother to suppor these as having TWRP probably makes "bricking" the device in this manner useless
 			} else if (*argptr == 'n') {
 				DataManager::SetValue(TW_BACKUP_NAME, gui_parse_text("{@auto_generate}"));
 				if (!OpenRecoveryScript::Insert_ORS_Command("backup BSDCAE\n"))
@@ -235,12 +235,21 @@ int main(int argc, char **argv) {
 			} else if (*argptr == 'p') {
 				Shutdown = true;
 			} else if (*argptr == 's') {
-				ptr = argptr;
-				index2 = 0;
-				while (*ptr != '=' && *ptr != '\n')
-					ptr++;
-				if (*ptr) {
-					Reboot_Value = *ptr;
+				if (strncmp(argptr, "send_intent", strlen("send_intent") == 0)) {
+					ptr = argptr + strlen("send_intent") + 1;
+					Send_Intent = *ptr;
+				} else if (strncmp(argptr, "security", strlen("security") == 0)) {
+					LOGINFO("Security update\n");
+				} else if (strncmp(argptr, "sideload", strlen("sideload") == 0)) {
+					if (!OpenRecoveryScript::Insert_ORS_Command("sideload\n"))
+						break;
+				} else if (strncmp(argptr, "stages", strlen("stages") == 0)) {
+					LOGINFO("ignoring stages command\n");
+				}
+			} else if (*argptr == 'r') {
+				if (strncmp(argptr, "reason", strlen("reason") == 0)) {
+					ptr = argptr + strlen("reason") + 1;
+					gui_print("%s\n", ptr);
 				}
 			}
 		}
@@ -387,7 +396,7 @@ int main(int argc, char **argv) {
 #endif
 
 	// Reboot
-	TWFunc::Update_Intent_File(Reboot_Value);
+	TWFunc::Update_Intent_File(Send_Intent);
 	TWFunc::Update_Log_File();
 	gui_msg(Msg("rebooting=Rebooting..."));
 	string Reboot_Arg;

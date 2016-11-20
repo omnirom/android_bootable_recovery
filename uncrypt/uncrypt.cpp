@@ -109,7 +109,7 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
-#include <bootloader_message_writer.h>
+#include <bootloader_message/bootloader_message.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
 #include <cutils/sockets.h>
@@ -503,11 +503,28 @@ static bool setup_bcb(const int socket) {
         return false;
     }
     ALOGI("  received command: [%s] (%zu)", content.c_str(), content.size());
+    std::vector<std::string> options = android::base::Split(content, "\n");
+    std::string wipe_package;
+    for (auto& option : options) {
+        if (android::base::StartsWith(option, "--wipe_package=")) {
+            std::string path = option.substr(strlen("--wipe_package="));
+            if (!android::base::ReadFileToString(path, &wipe_package)) {
+                ALOGE("failed to read %s: %s", path.c_str(), strerror(errno));
+                return false;
+            }
+            option = android::base::StringPrintf("--wipe_package_size=%zu", wipe_package.size());
+        }
+    }
 
     // c8. setup the bcb command
     std::string err;
-    if (!write_bootloader_message({content}, &err)) {
+    if (!write_bootloader_message(options, &err)) {
         ALOGE("failed to set bootloader message: %s", err.c_str());
+        write_status_to_socket(-1, socket);
+        return false;
+    }
+    if (!wipe_package.empty() && !write_wipe_package(wipe_package, &err)) {
+        ALOGE("failed to set wipe package: %s", err.c_str());
         write_status_to_socket(-1, socket);
         return false;
     }
