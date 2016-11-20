@@ -179,15 +179,33 @@ static_assert(sizeof(struct bootloader_control) ==
 #include <string>
 #include <vector>
 
+// Read bootloader message into boot. Error message will be set in err.
 bool read_bootloader_message(bootloader_message* boot, std::string* err);
+
+// Read bootloader message from the specified misc device into boot.
+bool read_bootloader_message_from(bootloader_message* boot, const std::string& misc_blk_device,
+                                  std::string* err);
+
+// Write bootloader message to BCB.
 bool write_bootloader_message(const bootloader_message& boot, std::string* err);
+
+// Write bootloader message to the specified BCB device.
+bool write_bootloader_message_to(const bootloader_message& boot,
+                                 const std::string& misc_blk_device, std::string* err);
+
+// Write bootloader message (boots into recovery with the options) to BCB.
 bool write_bootloader_message(const std::vector<std::string>& options, std::string* err);
+
+// Clear BCB.
 bool clear_bootloader_message(std::string* err);
 
 // Writes the reboot-bootloader reboot reason to the bootloader_message.
 bool write_reboot_bootloader(std::string* err);
 
+// Read the wipe package from BCB (from offset WIPE_PACKAGE_OFFSET_IN_MISC).
 bool read_wipe_package(std::string* package_data, size_t size, std::string* err);
+
+// Write the wipe package into BCB (to offset WIPE_PACKAGE_OFFSET_IN_MISC).
 bool write_wipe_package(const std::string& package_data, std::string* err);
 
 #else
