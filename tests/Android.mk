@@ -80,10 +80,12 @@ LOCAL_STATIC_LIBRARIES := \
     libedify \
     libotafault \
     libupdater \
+    libbootloader_message \
     libverifier \
     libminui \
     libotautil \
     libmounts \
+    libfs_mgr \
     liblog \
     libselinux \
     libext4_utils_static \

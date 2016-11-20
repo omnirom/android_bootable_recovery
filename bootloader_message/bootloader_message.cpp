@@ -80,26 +80,23 @@ static bool wait_for_device(const std::string& blk_device, std::string* err) {
   return ret == 0;
 }
 
-static bool read_misc_partition(void* p, size_t size, size_t offset, std::string* err) {
-  std::string misc_blk_device = get_misc_blk_device(err);
-  if (misc_blk_device.empty()) {
-    return false;
-  }
+static bool read_misc_partition(void* p, size_t size, const std::string& misc_blk_device,
+                                size_t offset, std::string* err) {
   if (!wait_for_device(misc_blk_device, err)) {
     return false;
   }
   android::base::unique_fd fd(open(misc_blk_device.c_str(), O_RDONLY));
-  if (fd.get() == -1) {
+  if (fd == -1) {
     *err = android::base::StringPrintf("failed to open %s: %s", misc_blk_device.c_str(),
                                        strerror(errno));
     return false;
   }
-  if (lseek(fd.get(), static_cast<off_t>(offset), SEEK_SET) != static_cast<off_t>(offset)) {
+  if (lseek(fd, static_cast<off_t>(offset), SEEK_SET) != static_cast<off_t>(offset)) {
     *err = android::base::StringPrintf("failed to lseek %s: %s", misc_blk_device.c_str(),
                                        strerror(errno));
     return false;
   }
-  if (!android::base::ReadFully(fd.get(), p, size)) {
+  if (!android::base::ReadFully(fd, p, size)) {
     *err = android::base::StringPrintf("failed to read %s: %s", misc_blk_device.c_str(),
                                        strerror(errno));
     return false;
@@ -107,29 +104,25 @@ static bool read_misc_partition(void* p, size_t size, size_t offset, std::string
   return true;
 }
 
-static bool write_misc_partition(const void* p, size_t size, size_t offset, std::string* err) {
-  std::string misc_blk_device = get_misc_blk_device(err);
-  if (misc_blk_device.empty()) {
-    return false;
-  }
-  android::base::unique_fd fd(open(misc_blk_device.c_str(), O_WRONLY | O_SYNC));
-  if (fd.get() == -1) {
+static bool write_misc_partition(const void* p, size_t size, const std::string& misc_blk_device,
+                                 size_t offset, std::string* err) {
+  android::base::unique_fd fd(open(misc_blk_device.c_str(), O_WRONLY));
+  if (fd == -1) {
     *err = android::base::StringPrintf("failed to open %s: %s", misc_blk_device.c_str(),
                                        strerror(errno));
     return false;
   }
-  if (lseek(fd.get(), static_cast<off_t>(offset), SEEK_SET) != static_cast<off_t>(offset)) {
+  if (lseek(fd, static_cast<off_t>(offset), SEEK_SET) != static_cast<off_t>(offset)) {
     *err = android::base::StringPrintf("failed to lseek %s: %s", misc_blk_device.c_str(),
                                        strerror(errno));
     return false;
   }
-  if (!android::base::WriteFully(fd.get(), p, size)) {
+  if (!android::base::WriteFully(fd, p, size)) {
     *err = android::base::StringPrintf("failed to write %s: %s", misc_blk_device.c_str(),
                                        strerror(errno));
     return false;
   }
-  // TODO: O_SYNC and fsync duplicates each other?
-  if (fsync(fd.get()) == -1) {
+  if (fsync(fd) == -1) {
     *err = android::base::StringPrintf("failed to fsync %s: %s", misc_blk_device.c_str(),
                                        strerror(errno));
     return false;
@@ -137,12 +130,32 @@ static bool write_misc_partition(const void* p, size_t size, size_t offset, std:
   return true;
 }
 
+bool read_bootloader_message_from(bootloader_message* boot, const std::string& misc_blk_device,
+                                  std::string* err) {
+  return read_misc_partition(boot, sizeof(*boot), misc_blk_device,
+                             BOOTLOADER_MESSAGE_OFFSET_IN_MISC, err);
+}
+
 bool read_bootloader_message(bootloader_message* boot, std::string* err) {
-  return read_misc_partition(boot, sizeof(*boot), BOOTLOADER_MESSAGE_OFFSET_IN_MISC, err);
+  std::string misc_blk_device = get_misc_blk_device(err);
+  if (misc_blk_device.empty()) {
+    return false;
+  }
+  return read_bootloader_message_from(boot, misc_blk_device, err);
+}
+
+bool write_bootloader_message_to(const bootloader_message& boot, const std::string& misc_blk_device,
+                                 std::string* err) {
+  return write_misc_partition(&boot, sizeof(boot), misc_blk_device,
+                              BOOTLOADER_MESSAGE_OFFSET_IN_MISC, err);
 }
 
 bool write_bootloader_message(const bootloader_message& boot, std::string* err) {
-  return write_misc_partition(&boot, sizeof(boot), BOOTLOADER_MESSAGE_OFFSET_IN_MISC, err);
+  std::string misc_blk_device = get_misc_blk_device(err);
+  if (misc_blk_device.empty()) {
+    return false;
+  }
+  return write_bootloader_message_to(boot, misc_blk_device, err);
 }
 
 bool clear_bootloader_message(std::string* err) {
@@ -177,12 +190,21 @@ bool write_reboot_bootloader(std::string* err) {
 }
 
 bool read_wipe_package(std::string* package_data, size_t size, std::string* err) {
+  std::string misc_blk_device = get_misc_blk_device(err);
+  if (misc_blk_device.empty()) {
+    return false;
+  }
   package_data->resize(size);
-  return read_misc_partition(&(*package_data)[0], size, WIPE_PACKAGE_OFFSET_IN_MISC, err);
+  return read_misc_partition(&(*package_data)[0], size, misc_blk_device,
+                             WIPE_PACKAGE_OFFSET_IN_MISC, err);
 }
 
 bool write_wipe_package(const std::string& package_data, std::string* err) {
-  return write_misc_partition(package_data.data(), package_data.size(),
+  std::string misc_blk_device = get_misc_blk_device(err);
+  if (misc_blk_device.empty()) {
+    return false;
+  }
+  return write_misc_partition(package_data.data(), package_data.size(), misc_blk_device,
                               WIPE_PACKAGE_OFFSET_IN_MISC, err);
 }
 
