@@ -102,6 +102,9 @@ LOCAL_CLANG := true
 LOCAL_C_INCLUDES += \
     system/vold \
     system/extras/ext4_utils \
+    system/core/libcutils \
+    system/core/fs_mgr/include \
+    system/core/include	\
     system/core/adb \
     system/core/libsparse \
     external/zlib
@@ -114,7 +117,7 @@ endif
 LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES :=
 
-LOCAL_STATIC_LIBRARIES += libguitwrp
+LOCAL_STATIC_LIBRARIES += libguitwrp libbootloader_message libfs_mgr
 LOCAL_SHARED_LIBRARIES += libaosprecovery libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libtwadbbu
 LOCAL_SHARED_LIBRARIES += libcrecovery
 
@@ -563,7 +566,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng optional
 LOCAL_CFLAGS := -std=gnu++0x
-LOCAL_SRC_FILES := adb_install.cpp asn1_decoder.cpp bootloader.cpp legacy_property_service.cpp set_metadata.cpp tw_atomic.cpp
+LOCAL_SRC_FILES := adb_install.cpp asn1_decoder.cpp legacy_property_service.cpp set_metadata.cpp tw_atomic.cpp
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload libselinux
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libstdc++ libstlport
@@ -596,6 +599,7 @@ LOCAL_SRC_FILES := \
     asn1_decoder.cpp \
     verifier.cpp \
     ui.cpp
+LOCAL_C_INCLUDES := system/core/fs_mgr/include
 LOCAL_STATIC_LIBRARIES := libcrypto
 include $(BUILD_STATIC_LIBRARY)
 
@@ -606,7 +610,8 @@ include $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/otafault/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
     $(LOCAL_PATH)/update_verifier/Android.mk \
-    $(LOCAL_PATH)/applypatch/Android.mk
+    $(LOCAL_PATH)/applypatch/Android.mk \
+    $(LOCAL_PATH)/bootloader_message/Android.mk
 
 ifeq ($(wildcard system/core/uncrypt/Android.mk),)
     include $(commands_recovery_local_path)/uncrypt/Android.mk

@@ -39,6 +39,7 @@
 #include <android-base/file.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
+#include <bootloader_message/bootloader_message.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h>
 #include <log/logger.h> /* Android Log packet format */
@@ -47,7 +48,6 @@
 #include <healthd/BatteryMonitor.h>
 
 #include "adb_install.h"
-#include "bootloader.h"
 #include "common.h"
 #include "device.h"
 #include "error_code.h"
@@ -293,9 +293,13 @@ static void redirect_stdio(const char* filename) {
 //   - the contents of COMMAND_FILE (one per line)
 static void
 get_args(int *argc, char ***argv) {
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
-    get_bootloader_message(&boot);  // this may fail, leaving a zeroed structure
+    bootloader_message boot = {};
+    std::string err;
+    if (!read_bootloader_message(&boot, &err)) {
+        LOGE("%s\n", err.c_str());
+        // If fails, leave a zeroed bootloader_message.
+        memset(&boot, 0, sizeof(boot));
+    }
     stage = strndup(boot.stage, sizeof(boot.stage));
 
     if (boot.command[0] != 0 && boot.command[0] != 255) {
@@ -357,16 +361,20 @@ get_args(int *argc, char ***argv) {
         strlcat(boot.recovery, (*argv)[i], sizeof(boot.recovery));
         strlcat(boot.recovery, "\n", sizeof(boot.recovery));
     }
-    set_bootloader_message(&boot);
+    if (!write_bootloader_message(boot, &err)) {
+        LOGE("%s\n", err.c_str());
+    }
 }
 
 static void
 set_sdcard_update_bootloader_message() {
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
+    bootloader_message boot = {};
     strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
     strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
-    set_bootloader_message(&boot);
+    std::string err;
+    if (!write_bootloader_message(boot, &err)) {
+        LOGE("%s\n", err.c_str());
+    }
 }
 
 // Read from kernel log into buffer and write out to file.
@@ -527,9 +535,11 @@ finish_recovery(const char *send_intent) {
     copy_logs();
 
     // Reset to normal system boot so recovery won't cycle indefinitely.
-    struct bootloader_message boot;
-    memset(&boot, 0, sizeof(boot));
-    set_bootloader_message(&boot);
+    bootloader_message boot = {};
+    std::string err;
+    if (!write_bootloader_message(boot, &err)) {
+        LOGE("%s\n", err.c_str());
+    }
 
     // Remove the command file, so recovery won't repeat indefinitely.
     if (has_cache) {
@@ -1227,7 +1237,7 @@ static bool is_battery_ok() {
 }
 
 static void set_retry_bootloader_message(int retry_count, int argc, char** argv) {
-    struct bootloader_message boot {};
+    bootloader_message boot = {};
     strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
     strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
 
@@ -1246,7 +1256,10 @@ static void set_retry_bootloader_message(int retry_count, int argc, char** argv)
         snprintf(buffer, sizeof(buffer), "--retry_count=%d\n", retry_count+1);
         strlcat(boot.recovery, buffer, sizeof(boot.recovery));
     }
-    set_bootloader_message(&boot);
+    std::string err;
+    if (!write_bootloader_message(boot, &err)) {
+        LOGE("%s\n", err.c_str());
+    }
 }
 
 static ssize_t logbasename(
