@@ -373,6 +373,14 @@ try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
     }
 
     pid_t pid = fork();
+
+    if (pid == -1) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        PLOG(ERROR) << "Failed to fork update binary";
+        return INSTALL_ERROR;
+    }
+
     if (pid == 0) {
         umask(022);
         close(pipefd[0]);
