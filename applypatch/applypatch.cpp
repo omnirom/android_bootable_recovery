@@ -210,7 +210,7 @@ int SaveFileContents(const char* filename, const FileContents* file) {
     printf("fsync of \"%s\" failed: %s\n", filename, strerror(errno));
     return -1;
   }
-  if (ota_close(fd) != 0) {
+  if (ota_close(fd.release()) != 0) {
     printf("close of \"%s\" failed: %s\n", filename, strerror(errno));
     return -1;
   }
@@ -268,7 +268,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const std::string& t
       printf("failed to sync to %s: %s\n", partition, strerror(errno));
       return -1;
     }
-    if (ota_close(fd) != 0) {
+    if (ota_close(fd.release()) != 0) {
       printf("failed to close %s: %s\n", partition, strerror(errno));
       return -1;
     }
@@ -287,7 +287,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const std::string& t
     } else {
       printf("  caches dropped\n");
     }
-    ota_close(dc);
+    ota_close(dc.release());
     sleep(1);
 
     // Verify.
@@ -339,7 +339,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const std::string& t
     return -1;
   }
 
-  if (ota_close(fd) == -1) {
+  if (ota_close(fd.release()) == -1) {
     printf("error closing %s: %s\n", partition, strerror(errno));
     return -1;
   }
@@ -782,7 +782,7 @@ static int GenerateTarget(FileContents* source_file,
         printf("failed to fsync file \"%s\": %s\n", tmp_target_filename.c_str(), strerror(errno));
         result = 1;
       }
-      if (ota_close(output_fd) != 0) {
+      if (ota_close(output_fd.release()) != 0) {
         printf("failed to close file \"%s\": %s\n", tmp_target_filename.c_str(), strerror(errno));
         result = 1;
       }
