@@ -33,6 +33,7 @@
 void
 th_print(TAR *t)
 {
+return;
 	puts("\nPrinting tar header:");
 	printf("  name     = \"%.100s\"\n", t->th_buf.name);
 	printf("  mode     = \"%.8s\"\n", t->th_buf.mode);

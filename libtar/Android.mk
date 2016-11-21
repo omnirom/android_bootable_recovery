@@ -17,6 +17,10 @@ ifeq ($(TWHAVE_SELINUX), true)
 	LOCAL_CFLAGS += -DHAVE_SELINUX
 endif
 
+LOCAL_SHARED_LIBRARIES += libext4_utils
+LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
+LOCAL_C_INCLUDES += system/extras/ext4_utils
+
 include $(BUILD_SHARED_LIBRARY)
 
 # Build static library
@@ -35,5 +39,9 @@ ifeq ($(TWHAVE_SELINUX), true)
 	LOCAL_STATIC_LIBRARIES += libselinux
 	LOCAL_CFLAGS += -DHAVE_SELINUX
 endif
+
+LOCAL_SHARED_LIBRARIES += libext4_utils
+LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
+LOCAL_C_INCLUDES += system/extras/ext4_utils
 
 include $(BUILD_STATIC_LIBRARY)

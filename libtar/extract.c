@@ -32,6 +32,12 @@
 # include "selinux/selinux.h"
 #endif
 
+#ifdef HAVE_EXT4_CRYPT
+# include "ext4_crypt.h"
+#endif
+
+#define DEBUG 1
+
 const unsigned long long progress_size = (unsigned long long)(T_BLOCKSIZE);
 
 static int
@@ -124,6 +130,7 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 	if (TH_ISDIR(t))
 	{
 		i = tar_extract_dir(t, realname);
+		printf("done with tar_extract_dir\n");
 		if (i == 1)
 			i = 0;
 	}
@@ -506,6 +513,31 @@ tar_extract_dir(TAR *t, const char *realname)
 			return -1;
 		}
 	}
+
+#ifdef HAVE_EXT4_CRYPT
+	if(t->th_buf.e4crypt_policy != NULL)
+	{
+#if 1//def DEBUG
+		printf("tar_extract_file(): restoring EXT4 crypt policy %s to dir %s\n", t->th_buf.e4crypt_policy, realname);
+#endif
+		// Must convert hex to binary
+		const char* ptr = t->th_buf.e4crypt_policy;
+		char binary_policy[EXT4_KEY_DESCRIPTOR_SIZE];
+		size_t count = 0;
+		for (count = 0; count < EXT4_KEY_DESCRIPTOR_SIZE; count++)
+		{
+		    sscanf(ptr, "%2hhx", &binary_policy[count]);
+            ptr += 2;
+		}
+		if (!e4crypt_policy_set(realname, binary_policy, EXT4_KEY_DESCRIPTOR_SIZE))
+		{
+			fprintf(stderr, "tar_extract_file(): failed to restore EXT4 crypt policy %s to dir %s !!!\n", t->th_buf.e4crypt_policy);
+			//return -1;
+		}
+		else
+			sleep(1);
+	}
+#endif
 
 	return 0;
 }

@@ -540,7 +540,7 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			du.add_absolute_dir(Mount_Point + "/drm/kek.dat", false);
 			du.add_absolute_dir(Mount_Point + "/misc/user/0", false);
 			du.add_absolute_dir(Mount_Point + "/data", false);
-			du.add_absolute_dir(Mount_Point + "/local", false);
+			//du.add_absolute_dir(Mount_Point + "/local", false);
 			du.add_absolute_dir(Mount_Point + "/app", false);
 			du.add_absolute_dir(Mount_Point + "/property", false);
 			du.add_absolute_dir(Mount_Point + "/dalvik-cache", false);

@@ -45,10 +45,12 @@ tar_extract_glob(TAR *t, char *globname, char *prefix)
 			snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
 		else
 			strlcpy(buf, filename, sizeof(buf));
-		if (tar_extract_file(t, buf, prefix, &fd) != 0)
+		if (tar_extract_file(t, buf, prefix, &fd) != 0) {
+			printf("tar_extract_file error\n");
 			return -1;
+		}
 	}
-
+printf("i = %i\n", i);
 	return (i == 1 ? 0 : -1);
 }
 
