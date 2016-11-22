@@ -934,8 +934,11 @@ bool MultiROM::changeMounts(std::string name)
 	system("mv /etc/recovery.fstab /etc/recovery.fstab.bak");
 
 	// This shim prevents everything from mounting anything as read-only
+	// and also disallow mounting/unmounting of /system /data /cache
 	system("mv /sbin/mount /sbin/mount_real");
 	system("cp -a /sbin/mount_shim.sh /sbin/mount");
+	system("mv /sbin/umount /sbin/umount_real");
+	system("cp -a /sbin/umount_shim.sh /sbin/umount");
 
 	return true;
 }
@@ -957,6 +960,7 @@ void MultiROM::restoreMounts()
 	//system("mv /sbin/umount.bak /sbin/umount");
 	system("mv /etc/recovery.fstab.bak /etc/recovery.fstab");
 	system("if [ -e /sbin/mount_real ]; then mv /sbin/mount_real /sbin/mount; fi;");
+	system("if [ -e /sbin/umount_real ]; then mv /sbin/umount_real /sbin/umount; fi;");
 
 	// various versions of 'systemless root' and/or installer scripts keep the unmount, but keep the loop device, so get rid of it first
 	system("sync;"

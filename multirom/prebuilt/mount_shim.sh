@@ -3,6 +3,7 @@ REAL_MOUNT="/sbin/busybox mount"
 OPTS=""
 
 next_are_opts=false
+allow_mount=true
 
 remove_ro() {
     OIFS=$IFS
@@ -27,6 +28,9 @@ remove_ro() {
 
 for arg in "$@"; do
     case $arg in
+        /system | /data | /cache)
+            allow_mount=false
+            ;;
         -r)
             OPTS="${OPTS} -w"
             ;;
@@ -44,5 +48,9 @@ for arg in "$@"; do
     esac
 done
 
-$REAL_MOUNT $OPTS
-return $?
+if $allow_mount; then
+    $REAL_MOUNT $OPTS
+    return $?
+else
+    return 0
+fi
