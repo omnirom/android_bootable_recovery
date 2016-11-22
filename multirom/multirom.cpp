@@ -853,7 +853,15 @@ bool MultiROM::changeMounts(std::string name)
 		return false;
 	}
 
-	data->UnMount(true);
+	if(!data->UnMount(true))
+	{
+		gui_print("Failed to unmount real data partition, cancelling!\n");
+		m_path.clear();
+		PartitionManager.Pop_Context();
+		PartitionManager.Update_System_Details();
+		TWFunc::Toggle_MTP(mtp_was_enabled);
+		return false;
+	}
 
 	realdata = data;
 	realdata->Display_Name = "Realdata";
