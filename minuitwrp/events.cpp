@@ -177,7 +177,7 @@ static int vk_init(struct ev *e)
 #else
 #ifndef TW_INPUT_BLACKLIST
     // Blacklist these "input" devices, use TW_INPUT_BLACKLIST := "accelerometer\x0atest1\x0atest2" using the \x0a as a separator between input devices
-    if (strcmp(e->deviceName, "bma250") == 0 || strcmp(e->deviceName, "bma150") == 0)
+    if (strcmp(e->deviceName, "bma250") == 0 || strcmp(e->deviceName, "bma150") == 0 || strcmp(e->deviceName, "light_sensor") == 0 || strcmp(e->deviceName, "mma8452") == 0)
     {
         printf("blacklisting %s input device\n", e->deviceName);
         e->ignored = 1;

@@ -35,7 +35,7 @@ int device_flash_type()
 
 char* get_default_filesystem()
 {
-    return device_flash_type() == MMC ? "ext3" : "yaffs2";
+    return device_flash_type() == MMC ? "ext3" : "ubifs";
 }
 
 int get_flash_type(const char* partitionType) {
