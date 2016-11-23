@@ -82,6 +82,7 @@
 		<string name="file">文件：</string>
 		<string name="zip_sig_chk">Zip 文件签名校验</string>
 		<string name="inject_twrp_chk">安装完成后注入 TWRP</string>
+		<string name="install_reboot_chk">完成安装後重启</string>
 		<string name="options_hdr">选项</string>
 		<string name="confirm_flash_hdr">确认刷入</string>
 		<string name="zip_queue">列表：</string>
@@ -666,5 +667,6 @@
 		<string name="change_fs_err">更换文件系统出错。</string>
 		<string name="theme_ver_err">自定义主题不兼容 TWRP 版本。请使用官方主题。</string>
 		<string name="up_a_level">(返回上级目录)</string>
+		<string name="install_reboot">将会在5秒內重啟</string>
 	</resources>
 </language>
