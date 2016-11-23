@@ -2781,15 +2781,51 @@ bool MultiROM::fakeBootPartition(const char *fakeImg)
 		system_args("dd if=\"%s\" of=\"%s\"", m_boot_dev.c_str(), fakeImg);
 		gui_print("Current boot sector was used as base for fake boot.img!\n");
 	}
+	else
+	{
+		#ifdef BOARD_BOOTIMAGE_PARTITION_SIZE
+			LOGINFO("Truncating fake boot.img to %d bytes\n", BOARD_BOOTIMAGE_PARTITION_SIZE);
+			truncate(fakeImg, BOARD_BOOTIMAGE_PARTITION_SIZE);
+		#endif
+	}
 
 	system_args("echo '%s' > /tmp/mrom_fakebootpart", m_boot_dev.c_str());
 	system_args("mv \"%s\" \"%s-orig\"", m_boot_dev.c_str(), m_boot_dev.c_str());
+	#ifndef BOARD_BOOTIMAGE_PARTITION_SIZE
 	system_args("ln -s \"%s\" \"%s\"", fakeImg, m_boot_dev.c_str());
 
-#ifdef BOARD_BOOTIMAGE_PARTITION_SIZE
-	LOGINFO("Truncating fake boot.img to %d bytes\n", BOARD_BOOTIMAGE_PARTITION_SIZE);
-	truncate(fakeImg, BOARD_BOOTIMAGE_PARTITION_SIZE);
-#endif
+	#else
+
+	#define BOOTIMG_LOOP_MINOR 222   // just chose 222 randomly
+	int major = 7;                   // MAJOR = grep loop /proc/devices
+	int minor = BOOTIMG_LOOP_MINOR;  // MINOR = non-existent /dev/block/loopN
+
+	std::string tmp;
+	if(TWFunc::Exec_Cmd("grep loop /proc/devices", tmp) != 0)
+	{
+		major = 0;
+		LOGERR("Failed to find MAJOR number for loop device driver\n");
+	}
+	else
+	{
+		tmp.erase(tmp.find("loop", 4));
+		TWFunc::trim(tmp);
+		major = atoi(tmp.c_str());
+	}
+
+	// create a new loop block device and setup loop
+	if(major && minor && (system_args("mknod \"%s\" b %d %d && losetup \"%s\" \"%s\"", m_boot_dev.c_str(), major, minor, m_boot_dev.c_str(), fakeImg) == 0))
+	{
+		gui_print("Created loop block device for boot.img!\n");
+	}
+	else
+	{
+		gui_print("Failed to create loop block device, falling back to normal symlink!\n");
+		system_args("ln -s \"%s\" \"%s\"", fakeImg, m_boot_dev.c_str());
+	}
+
+	#endif
+
 	return true;
 }
 
@@ -2809,6 +2845,15 @@ void MultiROM::restoreBootPartition()
 		return;
 	}
 
+#ifdef BOARD_BOOTIMAGE_PARTITION_SIZE
+	int minor = BOOTIMG_LOOP_MINOR;  // MINOR = non-existent /dev/block/loopN
+	std::string loob_block_device = "/dev/block/loop" + TWFunc::to_string(BOOTIMG_LOOP_MINOR);
+	if(access(loob_block_device.c_str(), R_OK) == 0)
+	{
+		system_args("losetup -d \"%s\"", m_boot_dev.c_str()); // release loop device if it's there
+		system_args("rm \"%s\"", loob_block_device.c_str());  // delete /dev/block/loopN
+	}
+#endif
 	system_args("rm \"%s\"", m_boot_dev.c_str());
 	system_args("mv \"%s\"-orig \"%s\"", m_boot_dev.c_str(), m_boot_dev.c_str());
 	remove("/tmp/mrom_fakebootpart");
