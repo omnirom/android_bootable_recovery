@@ -1098,11 +1098,67 @@ bool MultiROM::createFakeSystemImg()
 		return false;
 	}
 
+	// Note: losetup -f is not always reliable, it should give the next available free loop
+	//       device, but it actually gives the next available number, even if it doesn't exist
+	#define LOSETUP_F "LOOP_DEV=$(losetup -f); if [ $? = 0 ] && [ -e $LOOP_DEV ]; then echo $LOOP_DEV; true; else false; fi;"
+
+	// First check for existence of any free loop device
 	std::string loop_device;
-	if(TWFunc::Exec_Cmd("losetup -f", loop_device) < 0)
+	if(TWFunc::Exec_Cmd(LOSETUP_F, loop_device) != 0)
 	{
 		system_args("rm \"%s/system.img\"", sysimg.c_str());
 		LOGERR("Failed to find free loop device\n");
+		return false;
+	}
+
+	// systemless SuperSU uses loop0 or loop1 only, perhaps other mods as well, so let's skip those
+	// we could actually set this to a/the highest number and let it use the last available loop device
+	// or alternatively create our own loop device like the boot.img commit
+	#define NUM_OF_LOOP_DEVICE_TO_SKIP   2
+
+	std::string skipped_loop_device[NUM_OF_LOOP_DEVICE_TO_SKIP];
+	int i = 0;
+
+	// Now try and skip N loop devices
+	int fd = creat("/tmp/skip_dummy", 0644);
+	if(fd < 0)
+	{
+		gui_print("Failed to create dummy file for loop device skips file (%s)!\n", strerror(errno));
+	}
+	else
+	{
+		close(fd);
+
+		do
+		{
+			if(TWFunc::Exec_Cmd(LOSETUP_F, skipped_loop_device[i]) != 0)
+			{
+				LOGINFO("No more free loop devices at %d\n", i);
+				skipped_loop_device[i].clear();
+				if(i > 0) // release previous loop device
+				{
+					system_args("losetup -d \"%s\"", skipped_loop_device[i-1].c_str());
+					skipped_loop_device[i-1].clear();
+				}
+				break;
+			}
+			else
+			{
+				TWFunc::trim(skipped_loop_device[i]);
+				LOGINFO("Skipping loop device %s\n", skipped_loop_device[i].c_str());
+				system_args("losetup \"%s\" /tmp/skip_dummy", skipped_loop_device[i].c_str());
+			}
+		} while(++i < NUM_OF_LOOP_DEVICE_TO_SKIP);
+		system_args("rm /tmp/skip_dummy");
+	}
+
+	// And back to the original code (the below will not fail because we tested above)
+	loop_device.clear();
+	if(TWFunc::Exec_Cmd(LOSETUP_F, loop_device) != 0)
+	{
+		system_args("rm \"%s/system.img\"", sysimg.c_str());
+		LOGERR("Failed to find free loop device\n");
+		i = NUM_OF_LOOP_DEVICE_TO_SKIP; while(i--) if(!skipped_loop_device[i].empty()) system_args("losetup -d \"%s\"", skipped_loop_device[i].c_str());
 		return false;
 	}
 
@@ -1112,8 +1168,12 @@ bool MultiROM::createFakeSystemImg()
 	{
 		system_args("rm \"%s/system.img\"", sysimg.c_str());
 		LOGERR("Failed to setup loop device!\n");
+		i = NUM_OF_LOOP_DEVICE_TO_SKIP; while(i--) if(!skipped_loop_device[i].empty()) system_args("losetup -d \"%s\"", skipped_loop_device[i].c_str());
 		return false;
 	}
+
+	// Finally release skipped loop devices
+	i = NUM_OF_LOOP_DEVICE_TO_SKIP; while(i--) if(!skipped_loop_device[i].empty()) system_args("losetup -d \"%s\"", skipped_loop_device[i].c_str());
 
 	if(system_args("mv \"%s\" \"%s-orig\" && ln -s \"%s\" \"%s\"",
 		sys->Actual_Block_Device.c_str(), sys->Actual_Block_Device.c_str(), loop_device.c_str(), sys->Actual_Block_Device.c_str()) != 0)
