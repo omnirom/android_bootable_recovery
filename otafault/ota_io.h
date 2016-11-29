@@ -40,10 +40,6 @@ int ota_open(const char* path, int oflags, mode_t mode);
 
 FILE* ota_fopen(const char* filename, const char* mode);
 
-int ota_close(int fd);
-
-int ota_fclose(FILE* fh);
-
 size_t ota_fread(void* ptr, size_t size, size_t nitems, FILE* stream);
 
 ssize_t ota_read(int fd, void* buf, size_t nbyte);
@@ -55,15 +51,19 @@ ssize_t ota_write(int fd, const void* buf, size_t nbyte);
 int ota_fsync(int fd);
 
 struct OtaCloser {
-  static void Close(int fd) {
-    ota_close(fd);
-  }
+  static void Close(int);
 };
 
 using unique_fd = android::base::unique_fd_impl<OtaCloser>;
 
 int ota_close(unique_fd& fd);
 
-int ota_fclose(std::unique_ptr<FILE, int (*)(FILE*)>& fh);
+struct OtaFcloser {
+  void operator()(FILE*);
+};
+
+using unique_file = std::unique_ptr<FILE, OtaFcloser>;
+
+int ota_fclose(unique_file& fh);
 
 #endif

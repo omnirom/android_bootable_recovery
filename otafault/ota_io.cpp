@@ -70,23 +70,31 @@ FILE* ota_fopen(const char* path, const char* mode) {
     return fh;
 }
 
-int ota_close(int fd) {
+static int __ota_close(int fd) {
     // descriptors can be reused, so make sure not to leave them in the cache
     filename_cache.erase(fd);
     return close(fd);
 }
 
-int ota_close(unique_fd& fd) {
-    return ota_close(fd.release());
+void OtaCloser::Close(int fd) {
+    __ota_close(fd);
 }
 
-int ota_fclose(FILE* fh) {
-    filename_cache.erase((intptr_t)fh);
+int ota_close(unique_fd& fd) {
+    return __ota_close(fd.release());
+}
+
+static int __ota_fclose(FILE* fh) {
+    filename_cache.erase(reinterpret_cast<intptr_t>(fh));
     return fclose(fh);
 }
 
-int ota_fclose(std::unique_ptr<FILE, int (*)(FILE*)>& fh) {
-    return ota_fclose(fh.release());
+void OtaFcloser::operator()(FILE* f) {
+    __ota_fclose(f);
+};
+
+int ota_fclose(unique_file& fh) {
+  return __ota_fclose(fh.release());
 }
 
 size_t ota_fread(void* ptr, size_t size, size_t nitems, FILE* stream) {
