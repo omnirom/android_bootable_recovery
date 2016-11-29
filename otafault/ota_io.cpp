@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <map>
+#include "ota_io.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -22,8 +22,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <map>
+#include <memory>
+
 #include "config.h"
-#include "ota_io.h"
 
 static std::map<intptr_t, const char*> filename_cache;
 static std::string read_fault_file_name = "";
@@ -74,9 +76,17 @@ int ota_close(int fd) {
     return close(fd);
 }
 
+int ota_close(unique_fd& fd) {
+    return ota_close(fd.release());
+}
+
 int ota_fclose(FILE* fh) {
     filename_cache.erase((intptr_t)fh);
     return fclose(fh);
+}
+
+int ota_fclose(std::unique_ptr<FILE, int (*)(FILE*)>& fh) {
+    return ota_fclose(fh.release());
 }
 
 size_t ota_fread(void* ptr, size_t size, size_t nitems, FILE* stream) {
