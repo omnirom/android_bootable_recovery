@@ -66,7 +66,7 @@ int LoadFileContents(const char* filename, FileContents* file) {
   }
 
   std::vector<unsigned char> data(file->st.st_size);
-  std::unique_ptr<FILE, int (*)(FILE*)> f(ota_fopen(filename, "rb"), ota_fclose);
+  unique_file f(ota_fopen(filename, "rb"));
   if (!f) {
     printf("failed to open \"%s\": %s\n", filename, strerror(errno));
     return -1;
@@ -118,7 +118,7 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
   std::sort(pairs.begin(), pairs.end());
 
   const char* partition = pieces[1].c_str();
-  std::unique_ptr<FILE, int (*)(FILE*)> dev(ota_fopen(partition, "rb"), ota_fclose);
+  unique_file dev(ota_fopen(partition, "rb"));
   if (!dev) {
     printf("failed to open emmc partition \"%s\": %s\n", partition, strerror(errno));
     return -1;

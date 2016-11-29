@@ -509,8 +509,8 @@ Value* PackageExtractFileFn(const char* name, State* state, int argc, Expr* argv
       return StringValue("");
     }
 
-    int fd = TEMP_FAILURE_RETRY(
-        ota_open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR));
+    unique_fd fd(TEMP_FAILURE_RETRY(
+        ota_open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
     if (fd == -1) {
       printf("%s: can't open %s for write: %s\n", name, dest_path.c_str(), strerror(errno));
       return StringValue("");
@@ -872,68 +872,67 @@ Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 //   per line. # comment lines, blank lines, lines without '=' ignored),
 //   and returns the value for 'key' (or "" if it isn't defined).
 Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc != 2) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+  if (argc != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+  }
+
+  std::vector<std::string> args;
+  if (!ReadArgs(state, 2, argv, &args)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+  }
+  const std::string& filename = args[0];
+  const std::string& key = args[1];
+
+  struct stat st;
+  if (stat(filename.c_str(), &st) < 0) {
+    return ErrorAbort(state, kFileGetPropFailure, "%s: failed to stat \"%s\": %s", name,
+                      filename.c_str(), strerror(errno));
+  }
+
+  constexpr off_t MAX_FILE_GETPROP_SIZE = 65536;
+  if (st.st_size > MAX_FILE_GETPROP_SIZE) {
+    return ErrorAbort(state, kFileGetPropFailure, "%s too large for %s (max %lld)",
+                      filename.c_str(), name, static_cast<long long>(MAX_FILE_GETPROP_SIZE));
+  }
+
+  std::string buffer(st.st_size, '\0');
+  unique_file f(ota_fopen(filename.c_str(), "rb"));
+  if (f == nullptr) {
+    return ErrorAbort(state, kFileOpenFailure, "%s: failed to open %s: %s", name, filename.c_str(),
+                      strerror(errno));
+  }
+
+  if (ota_fread(&buffer[0], 1, st.st_size, f.get()) != static_cast<size_t>(st.st_size)) {
+    ErrorAbort(state, kFreadFailure, "%s: failed to read %zu bytes from %s", name,
+               static_cast<size_t>(st.st_size), filename.c_str());
+    return nullptr;
+  }
+
+  ota_fclose(f);
+
+  std::vector<std::string> lines = android::base::Split(buffer, "\n");
+  for (size_t i = 0; i < lines.size(); i++) {
+    std::string line = android::base::Trim(lines[i]);
+
+    // comment or blank line: skip to next line
+    if (line.empty() || line[0] == '#') {
+      continue;
+    }
+    size_t equal_pos = line.find('=');
+    if (equal_pos == std::string::npos) {
+      continue;
     }
 
-    std::vector<std::string> args;
-    if (!ReadArgs(state, 2, argv, &args)) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-    }
-    const std::string& filename = args[0];
-    const std::string& key = args[1];
+    // trim whitespace between key and '='
+    std::string str = android::base::Trim(line.substr(0, equal_pos));
 
-    struct stat st;
-    if (stat(filename.c_str(), &st) < 0) {
-        return ErrorAbort(state, kFileGetPropFailure, "%s: failed to stat \"%s\": %s", name,
-                          filename.c_str(), strerror(errno));
-    }
+    // not the key we're looking for
+    if (key != str) continue;
 
-    constexpr off_t MAX_FILE_GETPROP_SIZE = 65536;
-    if (st.st_size > MAX_FILE_GETPROP_SIZE) {
-        return ErrorAbort(state, kFileGetPropFailure, "%s too large for %s (max %lld)",
-                          filename.c_str(), name, static_cast<long long>(MAX_FILE_GETPROP_SIZE));
-    }
+    return StringValue(android::base::Trim(line.substr(equal_pos + 1)));
+  }
 
-    std::string buffer(st.st_size, '\0');
-    FILE* f = ota_fopen(filename.c_str(), "rb");
-    if (f == nullptr) {
-        return ErrorAbort(state, kFileOpenFailure, "%s: failed to open %s: %s", name,
-                          filename.c_str(), strerror(errno));
-    }
-
-    if (ota_fread(&buffer[0], 1, st.st_size, f) != static_cast<size_t>(st.st_size)) {
-        ErrorAbort(state, kFreadFailure, "%s: failed to read %zu bytes from %s",
-                   name, static_cast<size_t>(st.st_size), filename.c_str());
-        ota_fclose(f);
-        return nullptr;
-    }
-
-    ota_fclose(f);
-
-    std::vector<std::string> lines = android::base::Split(buffer, "\n");
-    for (size_t i = 0; i < lines.size(); i++) {
-        std::string line = android::base::Trim(lines[i]);
-
-        // comment or blank line: skip to next line
-        if (line.empty() || line[0] == '#') {
-            continue;
-        }
-        size_t equal_pos = line.find('=');
-        if (equal_pos == std::string::npos) {
-            continue;
-        }
-
-        // trim whitespace between key and '='
-        std::string str = android::base::Trim(line.substr(0, equal_pos));
-
-        // not the key we're looking for
-        if (key != str) continue;
-
-        return StringValue(android::base::Trim(line.substr(equal_pos + 1)));
-    }
-
-    return StringValue("");
+  return StringValue("");
 }
 
 // apply_patch_space(bytes)
@@ -1292,29 +1291,26 @@ Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
 }
 
 Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc != 2) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
-    }
+  if (argc != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+  }
 
-    std::vector<std::string> args;
-    if (!ReadArgs(state, 2, argv, &args)) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-    }
-    const std::string& filename = args[0];
-    const std::string& len_str = args[1];
+  std::vector<std::string> args;
+  if (!ReadArgs(state, 2, argv, &args)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+  }
+  const std::string& filename = args[0];
+  const std::string& len_str = args[1];
 
-    size_t len;
-    if (!android::base::ParseUint(len_str.c_str(), &len)) {
-        return nullptr;
-    }
-    int fd = ota_open(filename.c_str(), O_WRONLY, 0644);
-    // The wipe_block_device function in ext4_utils returns 0 on success and 1
-    // for failure.
-    int status = wipe_block_device(fd, len);
-
-    ota_close(fd);
-
-    return StringValue((status == 0) ? "t" : "");
+  size_t len;
+  if (!android::base::ParseUint(len_str.c_str(), &len)) {
+    return nullptr;
+  }
+  unique_fd fd(ota_open(filename.c_str(), O_WRONLY, 0644));
+  // The wipe_block_device function in ext4_utils returns 0 on success and 1
+  // for failure.
+  int status = wipe_block_device(fd, len);
+  return StringValue((status == 0) ? "t" : "");
 }
 
 Value* EnableRebootFn(const char* name, State* state, int argc, Expr* argv[]) {
