@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+#include <memory>
+
 #include <android-base/unique_fd.h>
 
 #define OTAIO_CACHE_FNAME "/cache/saved.file"
@@ -59,5 +61,9 @@ struct OtaCloser {
 };
 
 using unique_fd = android::base::unique_fd_impl<OtaCloser>;
+
+int ota_close(unique_fd& fd);
+
+int ota_fclose(std::unique_ptr<FILE, int (*)(FILE*)>& fh);
 
 #endif

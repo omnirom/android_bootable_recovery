@@ -66,7 +66,7 @@ int LoadFileContents(const char* filename, FileContents* file) {
   }
 
   std::vector<unsigned char> data(file->st.st_size);
-  std::unique_ptr<FILE, decltype(&ota_fclose)> f(ota_fopen(filename, "rb"), ota_fclose);
+  std::unique_ptr<FILE, int (*)(FILE*)> f(ota_fopen(filename, "rb"), ota_fclose);
   if (!f) {
     printf("failed to open \"%s\": %s\n", filename, strerror(errno));
     return -1;
@@ -118,7 +118,7 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
   std::sort(pairs.begin(), pairs.end());
 
   const char* partition = pieces[1].c_str();
-  std::unique_ptr<FILE, decltype(&ota_fclose)> dev(ota_fopen(partition, "rb"), ota_fclose);
+  std::unique_ptr<FILE, int (*)(FILE*)> dev(ota_fopen(partition, "rb"), ota_fclose);
   if (!dev) {
     printf("failed to open emmc partition \"%s\": %s\n", partition, strerror(errno));
     return -1;
@@ -210,7 +210,7 @@ int SaveFileContents(const char* filename, const FileContents* file) {
     printf("fsync of \"%s\" failed: %s\n", filename, strerror(errno));
     return -1;
   }
-  if (ota_close(fd.release()) != 0) {
+  if (ota_close(fd) != 0) {
     printf("close of \"%s\" failed: %s\n", filename, strerror(errno));
     return -1;
   }
@@ -268,7 +268,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const std::string& t
       printf("failed to sync to %s: %s\n", partition, strerror(errno));
       return -1;
     }
-    if (ota_close(fd.release()) != 0) {
+    if (ota_close(fd) != 0) {
       printf("failed to close %s: %s\n", partition, strerror(errno));
       return -1;
     }
@@ -287,7 +287,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const std::string& t
     } else {
       printf("  caches dropped\n");
     }
-    ota_close(dc.release());
+    ota_close(dc);
     sleep(1);
 
     // Verify.
@@ -339,7 +339,7 @@ int WriteToPartition(const unsigned char* data, size_t len, const std::string& t
     return -1;
   }
 
-  if (ota_close(fd.release()) == -1) {
+  if (ota_close(fd) == -1) {
     printf("error closing %s: %s\n", partition, strerror(errno));
     return -1;
   }
@@ -782,7 +782,7 @@ static int GenerateTarget(FileContents* source_file,
         printf("failed to fsync file \"%s\": %s\n", tmp_target_filename.c_str(), strerror(errno));
         result = 1;
       }
-      if (ota_close(output_fd.release()) != 0) {
+      if (ota_close(output_fd) != 0) {
         printf("failed to close file \"%s\": %s\n", tmp_target_filename.c_str(), strerror(errno));
         result = 1;
       }
