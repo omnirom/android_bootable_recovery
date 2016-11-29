@@ -204,10 +204,11 @@ void WearRecoveryUI::InitTextParams() {
 void WearRecoveryUI::Init() {
     ScreenRecoveryUI::Init();
 
-    LoadBitmap("icon_installing", &backgroundIcon[INSTALLING_UPDATE]);
-    backgroundIcon[ERASING] = backgroundIcon[INSTALLING_UPDATE];
     LoadBitmap("icon_error", &backgroundIcon[ERROR]);
     backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
+
+    // This leaves backgroundIcon[INSTALLING_UPDATE] and backgroundIcon[ERASING]
+    // as NULL which is fine since draw_background_locked() doesn't use them.
 }
 
 void WearRecoveryUI::SetStage(int current, int max)
