@@ -224,6 +224,7 @@ unsigned char* ReadZip(const char* filename,
   for (i = 0; i < cdcount; ++i) {
     if (!(cd[0] == 0x50 && cd[1] == 0x4b && cd[2] == 0x01 && cd[3] == 0x02)) {
       printf("bad central directory entry %d\n", i);
+      free(temp_entries);
       return NULL;
     }
 
@@ -1061,6 +1062,9 @@ int main(int argc, char** argv) {
       fwrite(patch_data[i], 1, patch_size[i], f);
     }
   }
+
+  free(patch_data);
+  free(patch_size);
 
   fclose(f);
 
