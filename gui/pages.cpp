@@ -32,6 +32,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include "../twrp-functions.hpp"
 #include "../partitions.hpp"
 

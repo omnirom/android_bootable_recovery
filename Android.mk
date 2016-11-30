@@ -44,7 +44,7 @@ LOCAL_SRC_FILES := \
     twrp.cpp \
     fixContexts.cpp \
     twrpTar.cpp \
-    twrpDU.cpp \
+    exclude.cpp \
     twrpDigest.cpp \
     digest/md5.c \
     find_file.cpp \

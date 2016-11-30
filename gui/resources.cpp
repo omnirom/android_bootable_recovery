@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <fcntl.h>
 
 #include "../minzip/Zip.h"
 extern "C" {

@@ -45,7 +45,6 @@ extern "C" {
 #include "partitions.hpp"
 #include "openrecoveryscript.hpp"
 #include "variables.h"
-#include "twrpDU.hpp"
 #ifdef TW_USE_NEW_MINADBD
 #include "adb.h"
 #else
@@ -64,7 +63,6 @@ extern int adb_server_main(int is_daemon, int server_port, int /* reply_fd */);
 TWPartitionManager PartitionManager;
 int Log_Offset;
 bool datamedia;
-twrpDU du;
 
 static void Print_Prop(const char *key, const char *name, void *cookie) {
 	printf("%s=%s\n", key, name);
@@ -235,19 +233,19 @@ int main(int argc, char **argv) {
 			} else if (*argptr == 'p') {
 				Shutdown = true;
 			} else if (*argptr == 's') {
-				if (strncmp(argptr, "send_intent", strlen("send_intent") == 0)) {
+				if (strncmp(argptr, "send_intent", strlen("send_intent")) == 0) {
 					ptr = argptr + strlen("send_intent") + 1;
 					Send_Intent = *ptr;
-				} else if (strncmp(argptr, "security", strlen("security") == 0)) {
+				} else if (strncmp(argptr, "security", strlen("security")) == 0) {
 					LOGINFO("Security update\n");
-				} else if (strncmp(argptr, "sideload", strlen("sideload") == 0)) {
+				} else if (strncmp(argptr, "sideload", strlen("sideload")) == 0) {
 					if (!OpenRecoveryScript::Insert_ORS_Command("sideload\n"))
 						break;
-				} else if (strncmp(argptr, "stages", strlen("stages") == 0)) {
+				} else if (strncmp(argptr, "stages", strlen("stages")) == 0) {
 					LOGINFO("ignoring stages command\n");
 				}
 			} else if (*argptr == 'r') {
-				if (strncmp(argptr, "reason", strlen("reason") == 0)) {
+				if (strncmp(argptr, "reason", strlen("reason")) == 0) {
 					ptr = argptr + strlen("reason") + 1;
 					gui_print("%s\n", ptr);
 				}

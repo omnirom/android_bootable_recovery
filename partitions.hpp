@@ -21,7 +21,7 @@
 
 #include <vector>
 #include <string>
-#include "twrpDU.hpp"
+#include "exclude.hpp"
 #include "tw_atomic.hpp"
 #include "progresstracking.hpp"
 
@@ -215,6 +215,8 @@ private:
 	bool Can_Flash_Img;                                                       // Indicates if this partition can have images flashed to it via the GUI
 	bool Mount_Read_Only;                                                     // Only mount this partition as read-only
 	bool Is_Adopted_Storage;                                                  // Indicates that this partition is for adopted storage (android_expand)
+	TWExclude backup_exclusions;
+	TWExclude wipe_exclusions;
 
 friend class TWPartitionManager;
 friend class DataManager;

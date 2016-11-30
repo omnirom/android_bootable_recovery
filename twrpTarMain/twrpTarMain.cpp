@@ -19,13 +19,11 @@
 
 #include "../twrp-functions.hpp"
 #include "../twrpTar.hpp"
-#include "../twrpDU.hpp"
+#include "../exclude.hpp"
 #include "../progresstracking.hpp"
 #include "../gui/gui.hpp"
 #include "../gui/twmsg.h"
 #include <string.h>
-
-twrpDU du;
 
 void gui_msg(const char* text)
 {
@@ -166,11 +164,14 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	TWExclude exclude;
+	exclude.add_absolute_dir("/data/media");
 	tar.has_data_media = has_data_media;
 	tar.setdir(Directory);
 	tar.setfn(Tar_Filename);
-	tar.setsize(du.Get_Folder_Size(Directory));
+	tar.setsize(exclude.Get_Folder_Size(Directory));
 	tar.use_compression = use_compression;
+	tar.backup_exclusions = &exclude;
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	if (userdata_encryption && !use_encryption) {
 		printf("userdata encryption set without encryption option\n");
@@ -186,14 +187,14 @@ int main(int argc, char **argv) {
 	}
 #endif
 	if (action == 1) {
-		if (tar.createTarFork(&progress, tar_fork_pid) != 0) {
+		if (tar.createTarFork(&tar_fork_pid) != 0) {
 			sync();
 			return -1;
 		}
 		sync();
 		printf("\n\ntar created successfully.\n");
 	} else if (action == 2) {
-		if (tar.extractTarFork(&progress) != 0) {
+		if (tar.extractTarFork() != 0) {
 			sync();
 			return -1;
 		}
