@@ -320,6 +320,10 @@ unsigned char* ReadZip(const char* filename,
       // -15 means we are decoding a 'raw' deflate stream; zlib will
       // not expect zlib headers.
       int ret = inflateInit2(&strm, -15);
+      if (ret < 0) {
+        printf("failed to initialize inflate: %d\n", ret);
+        return NULL;
+      }
 
       strm.avail_out = curr->len;
       strm.next_out = curr->data;
@@ -445,6 +449,10 @@ unsigned char* ReadImage(const char* filename,
       // -15 means we are decoding a 'raw' deflate stream; zlib will
       // not expect zlib headers.
       int ret = inflateInit2(&strm, -15);
+      if (ret < 0) {
+        printf("failed to initialize inflate: %d\n", ret);
+        return NULL;
+      }
 
       do {
         strm.avail_out = allocated - curr->len;
@@ -552,10 +560,18 @@ int TryReconstruction(ImageChunk* chunk, unsigned char* out) {
   int ret;
   ret = deflateInit2(&strm, chunk->level, chunk->method, chunk->windowBits,
                      chunk->memLevel, chunk->strategy);
+  if (ret < 0) {
+    printf("failed to initialize deflate: %d\n", ret);
+    return -1;
+  }
   do {
     strm.avail_out = BUFFER_SIZE;
     strm.next_out = out;
     ret = deflate(&strm, Z_FINISH);
+    if (ret < 0) {
+      printf("failed to deflate: %d\n", ret);
+      return -1;
+    }
     size_t have = BUFFER_SIZE - strm.avail_out;
 
     if (memcmp(out, chunk->deflate_data+p, have) != 0) {
