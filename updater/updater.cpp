@@ -105,7 +105,8 @@ int main(int argc, char** argv) {
         return 4;
     }
 
-    std::string script(script_entry.uncompressed_length, '\0');
+    std::string script;
+    script.resize(script_entry.uncompressed_length);
     int extract_err = ExtractToMemory(za, &script_entry, reinterpret_cast<uint8_t*>(&script[0]),
                                       script_entry.uncompressed_length);
     if (extract_err != 0) {
@@ -209,5 +210,6 @@ int main(int argc, char** argv) {
         CloseArchive(updater_info.package_zip);
     }
     sysReleaseMap(&map);
+
     return 0;
 }
