@@ -34,6 +34,9 @@ LOCAL_CLANG := true
 LOCAL_SRC_FILES := $(updater_src_files)
 
 LOCAL_STATIC_LIBRARIES += libfec libfec_rs libsquashfs_utils libcrypto_static
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
+LOCAL_STATIC_LIBRARIES += libcrypto_utils_static
+endif
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
 LOCAL_CFLAGS += -DUSE_EXT4
