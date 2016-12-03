@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_49e511d9",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1630,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2016-12-03T18:22:21Z",
+      "side": 1,
+      "message": "How will this work with restoring backups that use the other digest algorithm?",
+      "revId": "689814e8a8adda0fdc2b624ddb66b52e26c0f51e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_29ead5aa",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1645,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2016-12-03T18:22:21Z",
+      "side": 1,
+      "message": "Where is the error handling when reading the file fails?",
+      "revId": "689814e8a8adda0fdc2b624ddb66b52e26c0f51e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
