@@ -186,9 +186,6 @@ struct selabel_handle* sehandle;
  * 9. main() calls reboot() to boot main system
  */
 
-static const int MAX_ARG_LENGTH = 4096;
-static const int MAX_ARGS = 100;
-
 // open a given path, mounting partitions as necessary
 FILE* fopen_path(const char *path, const char *mode) {
     if (ensure_path_mounted(path) != 0) {
@@ -310,79 +307,68 @@ static void redirect_stdio(const char* filename) {
 //   - the actual command line
 //   - the bootloader control block (one per line, after "recovery")
 //   - the contents of COMMAND_FILE (one per line)
-static void
-get_args(int *argc, char ***argv) {
-    bootloader_message boot = {};
-    std::string err;
-    if (!read_bootloader_message(&boot, &err)) {
-        LOG(ERROR) << err;
-        // If fails, leave a zeroed bootloader_message.
-        memset(&boot, 0, sizeof(boot));
-    }
-    stage = strndup(boot.stage, sizeof(boot.stage));
+static std::vector<std::string> get_args(const int argc, char** const argv) {
+  CHECK_GT(argc, 0);
 
-    if (boot.command[0] != 0) {
-        std::string boot_command = std::string(boot.command, sizeof(boot.command));
-        LOG(INFO) << "Boot command: " << boot_command;
-    }
+  bootloader_message boot = {};
+  std::string err;
+  if (!read_bootloader_message(&boot, &err)) {
+    LOG(ERROR) << err;
+    // If fails, leave a zeroed bootloader_message.
+    boot = {};
+  }
+  stage = strndup(boot.stage, sizeof(boot.stage));
 
-    if (boot.status[0] != 0) {
-        std::string boot_status = std::string(boot.status, sizeof(boot.status));
-        LOG(INFO) << "Boot status: " << boot_status;
-    }
+  if (boot.command[0] != 0) {
+    std::string boot_command = std::string(boot.command, sizeof(boot.command));
+    LOG(INFO) << "Boot command: " << boot_command;
+  }
 
-    // --- if arguments weren't supplied, look in the bootloader control block
-    if (*argc <= 1) {
-        boot.recovery[sizeof(boot.recovery) - 1] = '\0';  // Ensure termination
-        const char *arg = strtok(boot.recovery, "\n");
-        if (arg != NULL && !strcmp(arg, "recovery")) {
-            *argv = (char **) malloc(sizeof(char *) * MAX_ARGS);
-            (*argv)[0] = strdup(arg);
-            for (*argc = 1; *argc < MAX_ARGS; ++*argc) {
-                if ((arg = strtok(NULL, "\n")) == NULL) break;
-                (*argv)[*argc] = strdup(arg);
-            }
-            LOG(INFO) << "Got arguments from boot message";
-        } else if (boot.recovery[0] != 0) {
-            std::string boot_recovery = std::string(boot.recovery, 20);
-            LOG(ERROR) << "Bad boot message\n" << "\"" <<boot_recovery << "\"";
-        }
-    }
+  if (boot.status[0] != 0) {
+    std::string boot_status = std::string(boot.status, sizeof(boot.status));
+    LOG(INFO) << "Boot status: " << boot_status;
+  }
 
-    // --- if that doesn't work, try the command file (if we have /cache).
-    if (*argc <= 1 && has_cache) {
-        FILE *fp = fopen_path(COMMAND_FILE, "r");
-        if (fp != NULL) {
-            char *token;
-            char *argv0 = (*argv)[0];
-            *argv = (char **) malloc(sizeof(char *) * MAX_ARGS);
-            (*argv)[0] = argv0;  // use the same program name
+  std::vector<std::string> args(argv, argv + argc);
 
-            char buf[MAX_ARG_LENGTH];
-            for (*argc = 1; *argc < MAX_ARGS; ++*argc) {
-                if (!fgets(buf, sizeof(buf), fp)) break;
-                token = strtok(buf, "\r\n");
-                if (token != NULL) {
-                    (*argv)[*argc] = strdup(token);  // Strip newline.
-                } else {
-                    --*argc;
-                }
-            }
+  // --- if arguments weren't supplied, look in the bootloader control block
+  if (argc == 1) {
+    boot.recovery[sizeof(boot.recovery) - 1] = '\0';  // Ensure termination
+    std::string boot_recovery(boot.recovery);
+    std::vector<std::string> tokens = android::base::Split(boot_recovery, "\n");
+    if (!tokens.empty() && tokens[0] == "recovery") {
+      for (auto it = tokens.begin() + 1; it != tokens.end(); it++) {
+        // Skip empty and '\0'-filled tokens.
+        if (!it->empty() && (*it)[0] != '\0') args.push_back(std::move(*it));
+      }
+      LOG(INFO) << "Got " << args.size() << " arguments from boot message";
+    } else if (boot.recovery[0] != 0) {
+      LOG(ERROR) << "Bad boot message: \"" << boot_recovery << "\"";
+    }
+  }
 
-            check_and_fclose(fp, COMMAND_FILE);
-            LOG(INFO) << "Got arguments from " << COMMAND_FILE;
-        }
+  // --- if that doesn't work, try the command file (if we have /cache).
+  if (argc == 1 && has_cache) {
+    std::string content;
+    if (android::base::ReadFileToString(COMMAND_FILE, &content)) {
+      std::vector<std::string> tokens = android::base::Split(content, "\n");
+      for (auto it = tokens.begin() + 1; it != tokens.end(); it++) {
+        // Skip empty and '\0'-filled tokens.
+        if (!it->empty() && (*it)[0] != '\0') args.push_back(std::move(*it));
+      }
+      LOG(INFO) << "Got " << args.size() << " arguments from " << COMMAND_FILE;
     }
+  }
 
-    // --> write the arguments we have back into the bootloader control block
-    // always boot into recovery after this (until finish_recovery() is called)
-    std::vector<std::string> options;
-    for (int i = 1; i < *argc; ++i) {
-        options.push_back((*argv)[i]);
-    }
-    if (!write_bootloader_message(options, &err)) {
-        LOG(ERROR) << err;
-    }
+  // Write the arguments (excluding the filename in args[0]) back into the
+  // bootloader control block. So the device will always boot into recovery to
+  // finish the pending work, until finish_recovery() is called.
+  std::vector<std::string> options(args.cbegin() + 1, args.cend());
+  if (!write_bootloader_message(options, &err)) {
+    LOG(ERROR) << err;
+  }
+
+  return args;
 }
 
 static void
@@ -1430,7 +1416,10 @@ int main(int argc, char **argv) {
     load_volume_table();
     has_cache = volume_for_path(CACHE_ROOT) != nullptr;
 
-    get_args(&argc, &argv);
+    std::vector<std::string> args = get_args(argc, argv);
+    std::vector<char*> args_to_parse(args.size());
+    std::transform(args.cbegin(), args.cend(), args_to_parse.begin(),
+                   [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
 
     const char *update_package = NULL;
     bool should_wipe_data = false;
@@ -1447,7 +1436,8 @@ int main(int argc, char **argv) {
 
     int arg;
     int option_index;
-    while ((arg = getopt_long(argc, argv, "", OPTIONS, &option_index)) != -1) {
+    while ((arg = getopt_long(args_to_parse.size(), args_to_parse.data(), "", OPTIONS,
+                              &option_index)) != -1) {
         switch (arg) {
         case 'n': android::base::ParseInt(optarg, &retry_count, 0); break;
         case 'u': update_package = optarg; break;
@@ -1529,8 +1519,8 @@ int main(int argc, char **argv) {
     device->StartRecovery();
 
     printf("Command:");
-    for (arg = 0; arg < argc; arg++) {
-        printf(" \"%s\"", argv[arg]);
+    for (const auto& arg : args) {
+        printf(" \"%s\"", arg.c_str());
     }
     printf("\n");
 
