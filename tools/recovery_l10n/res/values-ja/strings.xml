@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="recovery_installing" msgid="2013591905463558223">"システム アップデートをインストールしています"</string>
+    <string name="recovery_erasing" msgid="7334826894904037088">"消去しています"</string>
+    <string name="recovery_no_command" msgid="4465476568623024327">"コマンドが指定されていません"</string>
+    <string name="recovery_error" msgid="5748178989622716736">"エラーが発生しました。"</string>
+    <string name="recovery_installing_security" msgid="9184031299717114342">"セキュリティ アップデートをインストールしています"</string>
+</resources>

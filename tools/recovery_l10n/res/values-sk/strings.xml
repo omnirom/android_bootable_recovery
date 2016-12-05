@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="recovery_installing" msgid="2013591905463558223">"Inštaluje sa aktualizácia systému"</string>
+    <string name="recovery_erasing" msgid="7334826894904037088">"Prebieha vymazávanie"</string>
+    <string name="recovery_no_command" msgid="4465476568623024327">"Žiadny príkaz"</string>
+    <string name="recovery_error" msgid="5748178989622716736">"Chyba!"</string>
+    <string name="recovery_installing_security" msgid="9184031299717114342">"Inštaluje sa bezpečnostná aktualizácia"</string>
+</resources>

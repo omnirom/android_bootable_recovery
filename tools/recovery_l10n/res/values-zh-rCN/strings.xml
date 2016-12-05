@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="recovery_installing" msgid="2013591905463558223">"正在安装系统更新"</string>
+    <string name="recovery_erasing" msgid="7334826894904037088">"正在清空"</string>
+    <string name="recovery_no_command" msgid="4465476568623024327">"无命令"</string>
+    <string name="recovery_error" msgid="5748178989622716736">"出错了！"</string>
+    <string name="recovery_installing_security" msgid="9184031299717114342">"正在安装安全更新"</string>
+</resources>

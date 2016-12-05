@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="recovery_installing" msgid="2013591905463558223">"സിസ്റ്റം അപ്‌ഡേറ്റ് ഇൻസ്റ്റാൾ ചെയ്യുന്നു"</string>
+    <string name="recovery_erasing" msgid="7334826894904037088">"മായ്‌ക്കുന്നു"</string>
+    <string name="recovery_no_command" msgid="4465476568623024327">"കമാൻഡ് ഒന്നുമില്ല"</string>
+    <string name="recovery_error" msgid="5748178989622716736">"പിശക്!"</string>
+    <string name="recovery_installing_security" msgid="9184031299717114342">"സുരക്ഷാ അപ്ഡേറ്റ് ഇൻസ്റ്റാൾ ചെയ്യുന്നു"</string>
+</resources>
