@@ -621,7 +621,7 @@
 		<string name="recovery_commands_complete">Recovery Commands Complete</string>
 		<string name="running_ors">Running OpenRecoveryScript</string>
 		<string name="ors_complete">OpenRecoveryScript Complete</string>
-		<string name="no_updater_binary">Could not find '{1}' in the zip file.</string>
+		<string name="invalid_zip_format">Invalid zip file format!</string>
 		<string name="check_for_md5">Checking for MD5 file...</string>
 		<string name="fail_sysmap">Failed to map file '{1}'</string>
 		<string name="verify_zip_sig">Verifying zip signature...</string>
