@@ -820,6 +820,13 @@ void DataManager::SetDefaultValues()
 
 	mData.SetValue("tw_has_adopted_storage", "0");
 
+#ifdef AB_OTA_UPDATER
+	LOGINFO("AB_OTA_UPDATER := true\n");
+	mConst.SetValue("tw_has_boot_slots", "1");
+#else
+	mConst.SetValue("tw_has_boot_slots", "0");
+#endif
+
 	pthread_mutex_unlock(&m_valuesLock);
 }
 

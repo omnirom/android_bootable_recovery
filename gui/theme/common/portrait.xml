@@ -1699,6 +1699,44 @@
 				<data variable="tw_disable_free_space"/>
 			</checkbox>
 
+			<text style="text_m">
+				<condition var1="tw_has_boot_slots" var2="1"/>
+				<placement x="%center_x%" y="%row17_y%" placement="5"/>
+				<text>{@current_boot_slot=Current Slot: %tw_active_slot%}</text>
+			</text>
+
+			<button style="main_button">
+				<condition var1="tw_has_boot_slots" var2="1"/>
+				<placement x="%indent%" y="%row19_y%"/>
+				<text>{@boot_slot_a=Slot A}</text>
+				<actions>
+					<action function="set">tw_back=backup_options</action>
+					<action function="set">tw_action=setbootslot</action>
+					<action function="set">tw_action_param=A</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_action_text1={@changing_boot_slot=Changing Boot Slot}</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1={@changing_boot_slot_complete=Change Boot Slot Complete}</action>
+					<action function="page">action_page</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<condition var1="tw_has_boot_slots" var2="1"/>
+				<placement x="%center_x%" y="%row19_y%"/>
+				<text>{@boot_slot_b=Slot B}</text>
+				<actions>
+					<action function="set">tw_back=backup_options</action>
+					<action function="set">tw_action=setbootslot</action>
+					<action function="set">tw_action_param=B</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_action_text1={@changing_boot_slot=Changing Boot Slot}</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1={@changing_boot_slot_complete=Change Boot Slot Complete}</action>
+					<action function="page">action_page</action>
+				</actions>
+			</button>
+
 			<action>
 				<touch key="home"/>
 				<action function="page">main</action>
@@ -2776,6 +2814,44 @@
 					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
 					<action function="page">rebootcheck</action>
+				</actions>
+			</button>
+
+			<text style="text_m">
+				<condition var1="tw_has_boot_slots" var2="1"/>
+				<placement x="%center_x%" y="%row17_y%" placement="5"/>
+				<text>{@current_boot_slot=Current Slot: %tw_active_slot%}</text>
+			</text>
+
+			<button style="main_button">
+				<condition var1="tw_has_boot_slots" var2="1"/>
+				<placement x="%indent%" y="%row19_y%"/>
+				<text>{@boot_slot_a=Slot A}</text>
+				<actions>
+					<action function="set">tw_back=reboot</action>
+					<action function="set">tw_action=setbootslot</action>
+					<action function="set">tw_action_param=A</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_action_text1={@changing_boot_slot=Changing Boot Slot}</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1={@changing_boot_slot_complete=Change Boot Slot Complete}</action>
+					<action function="page">action_page</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<condition var1="tw_has_boot_slots" var2="1"/>
+				<placement x="%center_x%" y="%row19_y%"/>
+				<text>{@boot_slot_b=Slot B}</text>
+				<actions>
+					<action function="set">tw_back=reboot</action>
+					<action function="set">tw_action=setbootslot</action>
+					<action function="set">tw_action_param=B</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_action_text1={@changing_boot_slot=Changing Boot Slot}</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1={@changing_boot_slot_complete=Change Boot Slot Complete}</action>
+					<action function="page">action_page</action>
 				</actions>
 			</button>
 
