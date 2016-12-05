@@ -231,6 +231,7 @@ TWPartition::TWPartition() {
 	Mount_Read_Only = false;
 	Is_Adopted_Storage = false;
 	Adopted_GUID = "";
+	Is_AB = false;
 }
 
 TWPartition::~TWPartition(void) {
@@ -1727,7 +1728,7 @@ bool TWPartition::Wipe_Encryption() {
 	Has_Data_Media = false;
 	Decrypted_Block_Device = "";
 #ifdef TW_INCLUDE_CRYPTO
-	if (Is_Decrypted) {
+	if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
 		if (!UnMount(true))
 			return false;
 		if (delete_crypto_blk_dev((char*)("userdata")) != 0) {
@@ -2477,6 +2478,7 @@ bool TWPartition::Update_Size(bool Display_Error) {
 	if (!Can_Be_Mounted && !Is_Encrypted)
 		return false;
 
+	Find_Actual_Block_Device();
 	Was_Already_Mounted = Is_Mounted();
 	if (Removable || Is_Encrypted) {
 		if (!Mount(false))
@@ -2523,15 +2525,21 @@ bool TWPartition::Update_Size(bool Display_Error) {
 void TWPartition::Find_Actual_Block_Device(void) {
 	if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
 		Actual_Block_Device = Decrypted_Block_Device;
-		if (TWFunc::Path_Exists(Decrypted_Block_Device))
+		if (TWFunc::Path_Exists(Decrypted_Block_Device)) {
 			Is_Present = true;
+			return;
+		}
+	} else if (TWFunc::Path_Exists(Primary_Block_Device + PartitionManager.Get_Active_Slot_Suffix())) {
+		Actual_Block_Device = Primary_Block_Device + PartitionManager.Get_Active_Slot_Suffix();
+		Is_Present = true;
+		Is_AB = true;
+		return;
 	} else if (TWFunc::Path_Exists(Primary_Block_Device)) {
 		Is_Present = true;
 		Actual_Block_Device = Primary_Block_Device;
 		return;
 	}
-	if (Is_Decrypted) {
-	} else if (!Alternate_Block_Device.empty() && TWFunc::Path_Exists(Alternate_Block_Device)) {
+	if (!Alternate_Block_Device.empty() && TWFunc::Path_Exists(Alternate_Block_Device)) {
 		Actual_Block_Device = Alternate_Block_Device;
 		Is_Present = true;
 	} else {
