@@ -198,6 +198,7 @@ unsigned char* ReadZip(const char* filename,
   if (fread(img, 1, sz, f) != sz) {
     printf("failed to read \"%s\" %s\n", filename, strerror(errno));
     fclose(f);
+    free(img);
     return NULL;
   }
   fclose(f);
