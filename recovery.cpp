@@ -597,13 +597,13 @@ static bool erase_volume(const char* volume) {
         d = opendir(CACHE_LOG_DIR);
         if (d) {
             char path[PATH_MAX];
-            strcpy(path, CACHE_LOG_DIR);
-            strcat(path, "/");
+            strlcpy(path, CACHE_LOG_DIR, PATH_MAX);
+            strlcat(path, "/", PATH_MAX);
             int path_len = strlen(path);
             while ((de = readdir(d)) != NULL) {
                 if (strncmp(de->d_name, "last_", 5) == 0 || strcmp(de->d_name, "log") == 0) {
                     saved_log_file* p = (saved_log_file*) malloc(sizeof(saved_log_file));
-                    strcpy(path+path_len, de->d_name);
+                    strlcpy(path+path_len, de->d_name, PATH_MAX-path_len);
                     p->name = strdup(path);
                     if (stat(path, &(p->st)) == 0) {
                         // truncate files to 512kb
