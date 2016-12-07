@@ -42,7 +42,7 @@ struct Volume
 static Volume misc;
 
 void set_misc_device(const char* type, const char* name) {
-    strlcpy(misc.fs_type, type, sizeof(misc.fs_type));
+    strncpy(misc.fs_type, type, sizeof(misc.fs_type));
     if (strlen(name) >= sizeof(misc.blk_device)) {
         LOGE("New device name of '%s' is too large for bootloader.cpp\n", name);
     } else {
@@ -317,12 +317,12 @@ get_args(int *argc, char ***argv) {
 
     // --> write the arguments we have back into the bootloader control block
     // always boot into recovery after this (until finish_recovery() is called)
-    strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
-    strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
+    strcpy(boot.command, "boot-recovery");
+    strcpy(boot.recovery, "recovery\n");
     int i;
     for (i = 1; i < *argc; ++i) {
-        strlcat(boot.recovery, (*argv)[i], sizeof(boot.recovery));
-        strlcat(boot.recovery, "\n", sizeof(boot.recovery));
+        strcat(boot.recovery, (*argv)[i]);
+        strcat(boot.recovery, "\n");
     }
     set_bootloader_message(&boot);
 }
