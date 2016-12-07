@@ -540,6 +540,7 @@
 		<string name="fail_decrypt">Failed to decrypt data.</string>
 		<string name="no_crypto_support">No crypto support was compiled into this build.</string>
 		<string name="decrypt_success_dev">Data successfully decrypted, new block device: '{1}'</string>
+		<string name="decrypt_success_nodev">Data successfully decrypted</string>
 		<string name="done">Done.</string>
 		<string name="start_partition_sd">Partitioning SD Card...</string>
 		<string name="partition_sd_locate">Unable to locate device to partition.</string>

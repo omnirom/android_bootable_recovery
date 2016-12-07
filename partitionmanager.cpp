@@ -62,6 +62,9 @@ extern "C" {
 	#include "crypto/lollipop/cryptfs.h"
 	#include "gui/rapidxml.hpp"
 	#include "gui/pages.hpp"
+	#ifdef TW_INCLUDE_FBE
+		#include "crypto/ext4crypt/Decrypt.h"
+	#endif
 #endif
 
 #ifdef AB_OTA_UPDATER
@@ -177,17 +180,28 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 #ifdef TW_INCLUDE_CRYPTO
 	TWPartition* Decrypt_Data = Find_Partition_By_Path("/data");
 	if (Decrypt_Data && Decrypt_Data->Is_Encrypted && !Decrypt_Data->Is_Decrypted) {
-		int password_type = cryptfs_get_password_type();
-		if (password_type == CRYPT_TYPE_DEFAULT) {
-			LOGINFO("Device is encrypted with the default password, attempting to decrypt.\n");
-			if (Decrypt_Device("default_password") == 0) {
-				gui_msg("decrypt_success=Successfully decrypted with default password.");
-				DataManager::SetValue(TW_IS_ENCRYPTED, 0);
-			} else {
-				gui_err("unable_to_decrypt=Unable to decrypt with default password.");
+		if (Decrypt_Data->Is_FBE) {
+			if (DataManager::GetIntValue(TW_CRYPTO_PWTYPE) == 0) {
+				if (Decrypt_Device("!") == 0) {
+					gui_msg("decrypt_success=Successfully decrypted with default password.");
+					DataManager::SetValue(TW_IS_ENCRYPTED, 0);
+				} else {
+					gui_err("unable_to_decrypt=Unable to decrypt with default password.");
+				}
 			}
 		} else {
-			DataManager::SetValue("TW_CRYPTO_TYPE", password_type);
+			int password_type = cryptfs_get_password_type();
+			if (password_type == CRYPT_TYPE_DEFAULT) {
+				LOGINFO("Device is encrypted with the default password, attempting to decrypt.\n");
+				if (Decrypt_Device("default_password") == 0) {
+					gui_msg("decrypt_success=Successfully decrypted with default password.");
+					DataManager::SetValue(TW_IS_ENCRYPTED, 0);
+				} else {
+					gui_err("unable_to_decrypt=Unable to decrypt with default password.");
+				}
+			} else {
+				DataManager::SetValue("TW_CRYPTO_TYPE", password_type);
+			}
 		}
 	}
 	if (Decrypt_Data && (!Decrypt_Data->Is_Encrypted || Decrypt_Data->Is_Decrypted) && Decrypt_Data->Mount(false)) {
@@ -1473,6 +1487,36 @@ void TWPartitionManager::Update_System_Details(void) {
 	return;
 }
 
+void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
+	TWPartition* dat = Find_Partition_By_Path("/data");
+	if (dat != NULL) {
+		DataManager::SetValue(TW_IS_DECRYPTED, 1);
+		dat->Is_Decrypted = true;
+		if (!Block_Device.empty()) {
+			dat->Decrypted_Block_Device = Block_Device;
+			gui_msg(Msg("decrypt_success_dev=Data successfully decrypted, new block device: '{1}'")(Block_Device));
+		} else {
+			gui_msg("decrypt_success_nodev=Data successfully decrypted");
+		}
+		dat->Setup_File_System(false);
+		dat->Current_File_System = dat->Fstab_File_System; // Needed if we're ignoring blkid because encrypted devices start out as emmc
+
+		// Sleep for a bit so that the device will be ready
+		sleep(1);
+		if (dat->Has_Data_Media && dat->Mount(false) && TWFunc::Path_Exists("/data/media/0")) {
+			dat->Storage_Path = "/data/media/0";
+			dat->Symlink_Path = dat->Storage_Path;
+			DataManager::SetValue("tw_storage_path", "/data/media/0");
+			DataManager::SetValue("tw_settings_path", "/data/media/0");
+			dat->UnMount(false);
+			Output_Partition(dat);
+		}
+		Update_System_Details();
+		UnMount_Main_Partitions();
+	} else
+		LOGERR("Unable to locate data partition.\n");
+}
+
 int TWPartitionManager::Decrypt_Device(string Password) {
 #ifdef TW_INCLUDE_CRYPTO
 	int ret_val, password_len;
@@ -1494,6 +1538,25 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 		sleep(1);
 	}
 
+	if (DataManager::GetIntValue(TW_IS_FBE)) {
+#ifdef TW_INCLUDE_FBE
+		if (!Mount_By_Path("/data", true)) // /data has to be mounted for FBE
+			return -1;
+		int retry_count = 10;
+		while (!TWFunc::Path_Exists("/data/system/users/gatekeeper.password.key") && --retry_count)
+			usleep(2000); // A small sleep is needed after mounting /data to ensure reliable decrypt... maybe because of DE?
+		int user_id = DataManager::GetIntValue("tw_decrypt_user_id");
+		LOGINFO("Decrypting FBE for user %i\n", user_id);
+		if (Decrypt_User(user_id, Password)) {
+			Post_Decrypt("");
+			return 0;
+		}
+#else
+		LOGERR("FBE support is not present\n");
+#endif
+		return -1;
+	}
+
 	strcpy(cPassword, Password.c_str());
 	int pwret = cryptfs_check_passwd(cPassword);
 
@@ -1513,29 +1576,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	if (strcmp(crypto_blkdev, "error") == 0) {
 		LOGERR("Error retrieving decrypted data block device.\n");
 	} else {
-		TWPartition* dat = Find_Partition_By_Path("/data");
-		if (dat != NULL) {
-			DataManager::SetValue(TW_IS_DECRYPTED, 1);
-			dat->Is_Decrypted = true;
-			dat->Decrypted_Block_Device = crypto_blkdev;
-			dat->Setup_File_System(false);
-			dat->Current_File_System = dat->Fstab_File_System; // Needed if we're ignoring blkid because encrypted devices start out as emmc
-			gui_msg(Msg("decrypt_success_dev=Data successfully decrypted, new block device: '{1}'")(crypto_blkdev));
-
-			// Sleep for a bit so that the device will be ready
-			sleep(1);
-			if (dat->Has_Data_Media && dat->Mount(false) && TWFunc::Path_Exists("/data/media/0")) {
-				dat->Storage_Path = "/data/media/0";
-				dat->Symlink_Path = dat->Storage_Path;
-				DataManager::SetValue("tw_storage_path", "/data/media/0");
-				DataManager::SetValue("tw_settings_path", "/data/media/0");
-				dat->UnMount(false);
-				Output_Partition(dat);
-			}
-			Update_System_Details();
-			UnMount_Main_Partitions();
-		} else
-			LOGERR("Unable to locate data partition.\n");
+		Post_Decrypt(crypto_blkdev);
 	}
 	return 0;
 #else

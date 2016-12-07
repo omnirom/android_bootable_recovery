@@ -58,6 +58,10 @@ extern "C" {
 #ifdef TW_INCLUDE_CRYPTO
 	#include "crypto/lollipop/cryptfs.h"
 	#include "gpt/gpt.h"
+	#ifdef TW_INCLUDE_FBE
+		#include "crypto/ext4crypt/Decrypt.h"
+		//#include "crypto/ext4crypt/Ext4Crypt.h"
+	#endif
 #else
 	#define CRYPT_FOOTER_OFFSET 0x4000
 #endif
@@ -204,6 +208,7 @@ TWPartition::TWPartition() {
 	Can_Be_Encrypted = false;
 	Is_Encrypted = false;
 	Is_Decrypted = false;
+	Is_FBE = false;
 	Mount_To_Decrypt = false;
 	Decrypted_Block_Device = "";
 	Display_Name = "";
@@ -474,6 +479,11 @@ void TWPartition::Partition_Post_Processing(bool Display_Error) {
 		Setup_Cache_Partition(Display_Error);
 }
 
+void TWPartition::ExcludeAll(const string& path) {
+	backup_exclusions.add_absolute_dir(path);
+	wipe_exclusions.add_absolute_dir(path);
+}
+
 void TWPartition::Setup_Data_Partition(bool Display_Error) {
 	if (Mount_Point != "/data")
 		return;
@@ -491,6 +501,8 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 		DataManager::SetValue(TW_IS_DECRYPTED, 1);
 		Is_Encrypted = true;
 		Is_Decrypted = true;
+		Is_FBE = false;
+		DataManager::SetValue(TW_IS_FBE, 0);
 		Decrypted_Block_Device = crypto_blkdev;
 		LOGINFO("Data already decrypted, new block device: '%s'\n", crypto_blkdev);
 	} else if (!Mount(false)) {
@@ -513,9 +525,49 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			LOGERR("Primary block device '%s' for mount point '%s' is not present!\n", Primary_Block_Device.c_str(), Mount_Point.c_str());
 		}
 	} else {
-		// Filesystem is not encrypted and the mount succeeded, so return to
-		// the original unmounted state
-		UnMount(false);
+		if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
+			LOGINFO("File Based Encryption is present\n");
+#ifdef TW_INCLUDE_FBE
+			ExcludeAll(Mount_Point + "/convert_fbe");
+			ExcludeAll(Mount_Point + "/unencrypted");
+			//ExcludeAll(Mount_Point + "/system/users/0"); // we WILL need to retain some of this if multiple users are present or we just need to delete more folders for the extra users somewhere else
+			ExcludeAll(Mount_Point + "/misc/vold/user_keys");
+			ExcludeAll(Mount_Point + "/system_ce");
+			ExcludeAll(Mount_Point + "/system_de");
+			ExcludeAll(Mount_Point + "/misc_ce");
+			ExcludeAll(Mount_Point + "/misc_de");
+			ExcludeAll(Mount_Point + "/system/gatekeeper.password.key");
+			ExcludeAll(Mount_Point + "/system/gatekeeper.pattern.key");
+			ExcludeAll(Mount_Point + "/system/locksettings.db");
+			//ExcludeAll(Mount_Point + "/system/locksettings.db-shm"); // don't seem to need this one, but the other 2 are needed
+			ExcludeAll(Mount_Point + "/system/locksettings.db-wal");
+			ExcludeAll(Mount_Point + "/user_de");
+			//ExcludeAll(Mount_Point + "/misc/profiles/cur/0"); // might be important later
+			ExcludeAll(Mount_Point + "/misc/gatekeeper");
+			ExcludeAll(Mount_Point + "/drm/kek.dat");
+			int retry_count = 3;
+			while (!Decrypt_DE() && --retry_count)
+				usleep(2000);
+			if (retry_count > 0) {
+				property_set("ro.crypto.state", "encrypted");
+				Is_Encrypted = true;
+				Is_Decrypted = false;
+				Is_FBE = true;
+				DataManager::SetValue(TW_IS_FBE, 1);
+				DataManager::SetValue(TW_IS_ENCRYPTED, 1);
+				string filename;
+				DataManager::SetValue(TW_CRYPTO_PWTYPE, Get_Password_Type(0, filename));
+				DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
+				DataManager::SetValue("tw_crypto_display", "");
+			}
+#else
+			LOGERR("FBE found but FBE support not present in TWRP\n");
+#endif
+		} else {
+			// Filesystem is not encrypted and the mount succeeded, so return to
+			// the original unmounted state
+			UnMount(false);
+		}
 	}
 	if (datamedia && (!Is_Encrypted || (Is_Encrypted && Is_Decrypted))) {
 		Setup_Data_Media();
@@ -2555,6 +2607,10 @@ void TWPartition::Recreate_Media_Folder(void) {
 	string Command;
 	string Media_Path = Mount_Point + "/media";
 
+	if (Is_FBE) {
+		LOGINFO("Not recreating media folder on FBE\n");
+		return;
+	}
 	if (!Mount(true)) {
 		gui_msg(Msg(msg::kError, "recreate_folder_err=Unable to recreate {1} folder.")(Media_Path));
 	} else if (!TWFunc::Path_Exists(Media_Path)) {
