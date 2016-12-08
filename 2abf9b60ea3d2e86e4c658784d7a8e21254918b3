@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_84d55020",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 274,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2016-12-08T17:39:22Z",
+      "side": 1,
+      "message": "Probably unneeded.  I\u0027d keep the log for the ignored command though.",
+      "revId": "2abf9b60ea3d2e86e4c658784d7a8e21254918b3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_64da3450",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2016-12-08T17:39:22Z",
+      "side": 1,
+      "message": "Unneeded",
+      "revId": "2abf9b60ea3d2e86e4c658784d7a8e21254918b3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_44df383e",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 290,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2016-12-08T17:39:22Z",
+      "side": 1,
+      "message": "Should not be indented",
+      "revId": "2abf9b60ea3d2e86e4c658784d7a8e21254918b3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_04e940e4",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2016-12-08T17:39:22Z",
+      "side": 1,
+      "message": "Maybe \n--*argc;\nto match code style of for loop",
+      "revId": "2abf9b60ea3d2e86e4c658784d7a8e21254918b3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_e4e52408",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 294,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2016-12-08T17:39:22Z",
+      "side": 1,
+      "message": "Probably doesn\u0027t need to be a warning.",
+      "revId": "2abf9b60ea3d2e86e4c658784d7a8e21254918b3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_c4f228cc",
+        "filename": "bootloader.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 1001369
+      },
+      "writtenOn": "2016-12-08T17:39:22Z",
+      "side": 1,
+      "message": "Unneeded",
+      "revId": "2abf9b60ea3d2e86e4c658784d7a8e21254918b3",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
