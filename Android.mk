@@ -548,7 +548,6 @@ LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload libm
 ifneq ($(BOARD_RECOVERY_BLDRMSG_OFFSET),)
     LOCAL_CFLAGS += -DBOARD_RECOVERY_BLDRMSG_OFFSET=$(BOARD_RECOVERY_BLDRMSG_OFFSET)
 endif
-
 # ignore bootloader's factory reset command even when written to /misc
 ifeq ($(TW_IGNORE_BOOTLOADER_FACTORY_RESET), true)
     LOCAL_CFLAGS += -DTW_IGNORE_BOOTLOADER_FACTORY_RESET
