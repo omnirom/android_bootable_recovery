@@ -350,9 +350,12 @@ static std::vector<std::string> get_args(const int argc, char** const argv) {
   // --- if that doesn't work, try the command file (if we have /cache).
   if (argc == 1 && has_cache) {
     std::string content;
-    if (android::base::ReadFileToString(COMMAND_FILE, &content)) {
+    if (ensure_path_mounted(COMMAND_FILE) == 0 &&
+        android::base::ReadFileToString(COMMAND_FILE, &content)) {
       std::vector<std::string> tokens = android::base::Split(content, "\n");
-      for (auto it = tokens.begin() + 1; it != tokens.end(); it++) {
+      // All the arguments in COMMAND_FILE are needed (unlike the BCB message,
+      // COMMAND_FILE doesn't use filename as the first argument).
+      for (auto it = tokens.begin(); it != tokens.end(); it++) {
         // Skip empty and '\0'-filled tokens.
         if (!it->empty() && (*it)[0] != '\0') args.push_back(std::move(*it));
       }
