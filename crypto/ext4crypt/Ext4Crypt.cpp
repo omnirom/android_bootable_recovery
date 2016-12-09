@@ -80,6 +80,8 @@ bool s_global_de_initialized = false;
 // Some users are ephemeral, don't try to wipe their keys from disk
 std::set<userid_t> s_ephemeral_users;
 
+// Store main DE raw ref / policy
+std::string de_raw_ref;
 // Map user ids to key references
 std::map<userid_t, std::string> s_de_key_raw_refs;
 std::map<userid_t, std::string> s_ce_key_raw_refs;
@@ -290,7 +292,7 @@ static bool path_exists(const std::string& path) {
     return access(path.c_str(), F_OK) == 0;
 }
 
-static bool lookup_key_ref(const std::map<userid_t, std::string>& key_map, userid_t user_id,
+bool lookup_key_ref(const std::map<userid_t, std::string>& key_map, userid_t user_id,
                            std::string* raw_ref) {
     auto refi = key_map.find(user_id);
     if (refi == key_map.end()) {
@@ -379,6 +381,7 @@ bool e4crypt_initialize_global_de() {
     }
 
     s_global_de_initialized = true;
+    de_raw_ref = device_key_ref;
     return true;
 }
 

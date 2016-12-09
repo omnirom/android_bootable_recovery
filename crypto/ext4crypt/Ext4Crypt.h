@@ -19,6 +19,7 @@
 
 #include <cutils/multiuser.h>
 
+#include <map>
 #include <string>
 
 __BEGIN_DECLS
@@ -39,5 +40,8 @@ bool e4crypt_unlock_user_key(userid_t user_id, int serial, const char* token, co
 
 bool e4crypt_prepare_user_storage(const char* volume_uuid, userid_t user_id, int serial, int flags);
 //bool e4crypt_destroy_user_storage(const char* volume_uuid, userid_t user_id, int flags);
+
+bool lookup_key_ref(const std::map<userid_t, std::string>& key_map, userid_t user_id,
+                           std::string* raw_ref);
 
 __END_DECLS
