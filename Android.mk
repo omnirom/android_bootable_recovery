@@ -40,6 +40,12 @@ TWHTCD_PATH := $(TWRES_PATH)htcd/
 
 TARGET_RECOVERY_GUI := true
 
+ifneq ($(TW_DEVICE_VERSION),)
+    LOCAL_CFLAGS += -DTW_DEVICE_VERSION='"-$(TW_DEVICE_VERSION)"'
+else
+    LOCAL_CFLAGS += -DTW_DEVICE_VERSION='"-0"'
+endif
+
 LOCAL_SRC_FILES := \
     twrp.cpp \
     fixContexts.cpp \
@@ -164,7 +170,7 @@ endif # HAVE_SELINUX
 ifeq ($(TWHAVE_SELINUX), true)
     LOCAL_C_INCLUDES += external/libselinux/include
     LOCAL_SHARED_LIBRARIES += libselinux
-    LOCAL_CFLAGS += -DHAVE_SELINUX -g
+    LOCAL_CFLAGS += -DHAVE_SELINUX
     ifneq ($(TARGET_USERIMAGES_USE_EXT4), true)
         LOCAL_CFLAGS += -DUSE_EXT4
         LOCAL_C_INCLUDES += system/extras/ext4_utils
