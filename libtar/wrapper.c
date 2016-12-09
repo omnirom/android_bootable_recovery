@@ -48,7 +48,6 @@ tar_extract_glob(TAR *t, char *globname, char *prefix)
 		if (tar_extract_file(t, buf, prefix, &fd) != 0)
 			return -1;
 	}
-
 	return (i == 1 ? 0 : -1);
 }
 

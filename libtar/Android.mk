@@ -17,6 +17,12 @@ ifeq ($(TWHAVE_SELINUX), true)
 	LOCAL_CFLAGS += -DHAVE_SELINUX
 endif
 
+ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
+    LOCAL_SHARED_LIBRARIES += libe4crypt
+    LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
+    LOCAL_C_INCLUDES += bootable/recovery/crypto/ext4crypt
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 # Build static library
@@ -34,6 +40,12 @@ ifeq ($(TWHAVE_SELINUX), true)
 	LOCAL_C_INCLUDES += external/libselinux/include
 	LOCAL_STATIC_LIBRARIES += libselinux
 	LOCAL_CFLAGS += -DHAVE_SELINUX
+endif
+
+ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
+    LOCAL_SHARED_LIBRARIES += libe4crypt
+    LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
+    LOCAL_C_INCLUDES += bootable/recovery/crypto/ext4crypt
 endif
 
 include $(BUILD_STATIC_LIBRARY)
