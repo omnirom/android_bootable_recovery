@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_243c3c2b",
+        "filename": "crypto/ext4crypt/Decrypt.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2016-12-09T22:38:40Z",
+      "side": 1,
+      "message": "Should be CE and not DE in s_de_key_raw_refs",
+      "revId": "1581780d15deb8fbda929c881c1ac1d962300b80",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
