@@ -25,6 +25,10 @@
 #define SELINUX_TAG "RHT.security.selinux="
 #define SELINUX_TAG_LEN 21
 
+// Used to identify e4crypt_policy in extended ('x')
+#define E4CRYPT_TAG "TWRP.security.e4crypt="
+#define E4CRYPT_TAG_LEN 22
+
 /* read a header block */
 /* FIXME: the return value of this function should match the return value
 	  of tar_block_read(), which is a macro which references a prototype
@@ -118,6 +122,11 @@ th_read(TAR *t)
 #ifdef HAVE_SELINUX
 	if (t->th_buf.selinux_context != NULL)
 		free(t->th_buf.selinux_context);
+#endif
+#ifdef HAVE_EXT4_CRYPT
+	if (t->th_buf.e4crypt_policy != NULL) {
+		free(t->th_buf.e4crypt_policy);
+	}
 #endif
 
 	memset(&(t->th_buf), 0, sizeof(struct tar_header));
@@ -268,6 +277,57 @@ th_read(TAR *t)
 					t->th_buf.selinux_context = strndup(start, end-start);
 #ifdef DEBUG
 					printf("    th_read(): SELinux context xattr detected: %s\n", t->th_buf.selinux_context);
+#endif
+				}
+			}
+		}
+
+		i = th_read_internal(t);
+		if (i != T_BLOCKSIZE)
+		{
+			if (i != -1)
+				errno = EINVAL;
+			return -1;
+		}
+	}
+#endif
+
+#ifdef HAVE_EXT4_CRYPT
+	if(TH_ISPOLHEADER(t))
+	{
+		sz = th_get_size(t);
+
+		if(sz >= T_BLOCKSIZE) // Not supported
+		{
+#ifdef DEBUG
+			printf("    th_read(): Policy header is too long!\n");
+#endif
+		}
+		else
+		{
+			char buf[T_BLOCKSIZE];
+			i = tar_block_read(t, buf);
+			if (i != T_BLOCKSIZE)
+			{
+				if (i != -1)
+					errno = EINVAL;
+				return -1;
+			}
+
+			// To be sure
+			buf[T_BLOCKSIZE-1] = 0;
+
+			int len = strlen(buf);
+			char *start = strstr(buf, E4CRYPT_TAG);
+			if(start && start+E4CRYPT_TAG_LEN < buf+len)
+			{
+				start += E4CRYPT_TAG_LEN;
+				char *end = strchr(start, '\n');
+				if(end)
+				{
+				    t->th_buf.e4crypt_policy = strndup(start, end-start);
+#ifdef DEBUG
+				    printf("    th_read(): E4Crypt policy detected: %s\n", t->th_buf.e4crypt_policy);
 #endif
 				}
 			}
@@ -443,6 +503,59 @@ th_write(TAR *t)
 
 		memset(buf, 0, T_BLOCKSIZE);
 		snprintf(buf, T_BLOCKSIZE, "%d "SELINUX_TAG"%s\n", (int)sz, t->th_buf.selinux_context);
+		i = tar_block_write(t, &buf);
+		if (i != T_BLOCKSIZE)
+		{
+			if (i != -1)
+				errno = EINVAL;
+			return -1;
+		}
+
+		/* reset type and size to original values */
+		t->th_buf.typeflag = type2;
+		th_set_size(t, sz2);
+	}
+#endif
+
+#ifdef HAVE_EXT4_CRYPT
+	if((t->options & TAR_STORE_EXT4_POL) && t->th_buf.e4crypt_policy != NULL)
+	{
+#ifdef DEBUG
+		printf("th_write(): using e4crypt_policy %s\n",
+		       t->th_buf.e4crypt_policy);
+#endif
+		/* save old size and type */
+		type2 = t->th_buf.typeflag;
+		sz2 = th_get_size(t);
+
+		/* write out initial header block with fake size and type */
+		t->th_buf.typeflag = TH_POL_TYPE;
+
+		/* setup size - EXT header has format "*size of this whole tag as ascii numbers* *space* *content* *newline* */
+		//                                                       size   newline
+		sz = E4CRYPT_TAG_LEN + EXT4_KEY_DESCRIPTOR_HEX + 3  +    1;
+
+		if(sz >= 100) // another ascci digit for size
+			++sz;
+
+		if(sz >= T_BLOCKSIZE) // impossible
+		{
+			errno = EINVAL;
+			return -1;
+		}
+
+		th_set_size(t, sz);
+		th_finish(t);
+		i = tar_block_write(t, &(t->th_buf));
+		if (i != T_BLOCKSIZE)
+		{
+			if (i != -1)
+				errno = EINVAL;
+			return -1;
+		}
+
+		memset(buf, 0, T_BLOCKSIZE);
+		snprintf(buf, T_BLOCKSIZE, "%d "E4CRYPT_TAG"%s\n", (int)sz, t->th_buf.e4crypt_policy);
 		i = tar_block_write(t, &buf);
 		if (i != T_BLOCKSIZE)
 		{

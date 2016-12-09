@@ -17,10 +17,12 @@
 #include "Decrypt.h"
 #include "Ext4Crypt.h"
 
+#include <map>
 #include <string>
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -31,6 +33,66 @@
 #include "HashPassword.h"
 
 #include <android-base/file.h>
+
+// Store main DE raw ref / policy
+extern std::string de_raw_ref;
+extern std::map<userid_t, std::string> s_de_key_raw_refs;
+extern std::map<userid_t, std::string> s_ce_key_raw_refs;
+
+static bool lookup_ref_key_internal(std::map<userid_t, std::string>& key_map, const char* policy, userid_t* user_id) {
+    for (std::map<userid_t, std::string>::iterator it=key_map.begin(); it!=key_map.end(); ++it) {
+        if (strncmp(it->second.c_str(), policy, it->second.size()) == 0) {
+            *user_id = it->first;
+            return true;
+        }
+    }
+    return false;
+}
+
+extern "C" bool lookup_ref_key(const char* policy, char* policy_type) {
+    userid_t user_id = 0;
+    if (strncmp(de_raw_ref.c_str(), policy, de_raw_ref.size()) == 0) {
+        strcpy(policy_type, "1DK");
+        return true;
+    }
+    if (!lookup_ref_key_internal(s_de_key_raw_refs, policy, &user_id)) {
+        if (!lookup_ref_key_internal(s_ce_key_raw_refs, policy, &user_id)) {
+            return false;
+		} else
+		    sprintf(policy_type, "1CE%d", user_id);
+    } else
+        sprintf(policy_type, "1DE%d", user_id);
+    return true;
+}
+
+extern "C" bool lookup_ref_tar(const char* policy_type, char* policy) {
+    if (strncmp(policy_type, "1", 1) != 0) {
+        printf("Unexpected version %c\n", policy_type);
+        return false;
+    }
+    const char* ptr = policy_type + 1; // skip past the version number
+    if (strncmp(ptr, "DK", 2) == 0) {
+        strncpy(policy, de_raw_ref.data(), de_raw_ref.size());
+        return true;
+    }
+    userid_t user_id = atoi(ptr + 2);
+    std::string raw_ref;
+    if (*ptr == 'D') {
+        if (lookup_key_ref(s_de_key_raw_refs, user_id, &raw_ref)) {
+            strncpy(policy, raw_ref.data(), raw_ref.size());
+        } else
+            return false;
+    } else if (*ptr == 'C') {
+        if (lookup_key_ref(s_ce_key_raw_refs, user_id, &raw_ref)) {
+            strncpy(policy, raw_ref.data(), raw_ref.size());
+        } else
+            return false;
+    } else {
+        printf("unknown policy type '%s'\n", policy_type);
+        return false;
+    }
+    return true;
+}
 
 int gatekeeper_device_initialize(gatekeeper_device_t **dev) {
 	int ret;

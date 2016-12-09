@@ -19,6 +19,7 @@
 
 #include <cutils/multiuser.h>
 
+#include <map>
 #include <string>
 
 __BEGIN_DECLS
