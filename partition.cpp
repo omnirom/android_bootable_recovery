@@ -60,7 +60,6 @@ extern "C" {
 	#include "gpt/gpt.h"
 	#ifdef TW_INCLUDE_FBE
 		#include "crypto/ext4crypt/Decrypt.h"
-		//#include "crypto/ext4crypt/Ext4Crypt.h"
 	#endif
 #else
 	#define CRYPT_FOOTER_OFFSET 0x4000
@@ -532,16 +531,16 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			ExcludeAll(Mount_Point + "/unencrypted");
 			//ExcludeAll(Mount_Point + "/system/users/0"); // we WILL need to retain some of this if multiple users are present or we just need to delete more folders for the extra users somewhere else
 			ExcludeAll(Mount_Point + "/misc/vold/user_keys");
-			ExcludeAll(Mount_Point + "/system_ce");
-			ExcludeAll(Mount_Point + "/system_de");
-			ExcludeAll(Mount_Point + "/misc_ce");
-			ExcludeAll(Mount_Point + "/misc_de");
+			//ExcludeAll(Mount_Point + "/system_ce");
+			//ExcludeAll(Mount_Point + "/system_de");
+			//ExcludeAll(Mount_Point + "/misc_ce");
+			//ExcludeAll(Mount_Point + "/misc_de");
 			ExcludeAll(Mount_Point + "/system/gatekeeper.password.key");
 			ExcludeAll(Mount_Point + "/system/gatekeeper.pattern.key");
 			ExcludeAll(Mount_Point + "/system/locksettings.db");
 			//ExcludeAll(Mount_Point + "/system/locksettings.db-shm"); // don't seem to need this one, but the other 2 are needed
 			ExcludeAll(Mount_Point + "/system/locksettings.db-wal");
-			ExcludeAll(Mount_Point + "/user_de");
+			//ExcludeAll(Mount_Point + "/user_de");
 			//ExcludeAll(Mount_Point + "/misc/profiles/cur/0"); // might be important later
 			ExcludeAll(Mount_Point + "/misc/gatekeeper");
 			ExcludeAll(Mount_Point + "/drm/kek.dat");
@@ -916,12 +915,9 @@ void TWPartition::Setup_Data_Media() {
 		DataManager::SetValue("tw_has_internal", 1);
 		DataManager::SetValue("tw_has_data_media", 1);
 		backup_exclusions.add_absolute_dir("/data/data/com.google.android.music/files");
-		backup_exclusions.add_absolute_dir(Mount_Point + "/misc/vold");
-		wipe_exclusions.add_absolute_dir(Mount_Point + "/misc/vold");
-		backup_exclusions.add_absolute_dir(Mount_Point + "/.layout_version");
-		wipe_exclusions.add_absolute_dir(Mount_Point + "/.layout_version");
-		backup_exclusions.add_absolute_dir(Mount_Point + "/system/storage.xml");
-		wipe_exclusions.add_absolute_dir(Mount_Point + "/system/storage.xml");
+		ExcludeAll(Mount_Point + "/misc/vold");
+		ExcludeAll(Mount_Point + "/.layout_version");
+		ExcludeAll(Mount_Point + "/system/storage.xml");
 	} else {
 		if (Mount(true) && TWFunc::Path_Exists(Mount_Point + "/media/0")) {
 			Storage_Path = Mount_Point + "/media/0";
@@ -929,8 +925,7 @@ void TWPartition::Setup_Data_Media() {
 			UnMount(true);
 		}
 	}
-	backup_exclusions.add_absolute_dir(Mount_Point + "/media");
-	wipe_exclusions.add_absolute_dir(Mount_Point + "/media");
+	ExcludeAll(Mount_Point + "/media");
 }
 
 void TWPartition::Find_Real_Block_Device(string& Block, bool Display_Error) {
@@ -2180,7 +2175,7 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media_Func(const string& parent __unu
 				rmdir(dir.c_str());
 			} else if (de->d_type == DT_REG || de->d_type == DT_LNK || de->d_type == DT_FIFO || de->d_type == DT_SOCK) {
 				if (!unlink(dir.c_str()))
-					LOGINFO("Unable to unlink '%s'\n", dir.c_str());
+					LOGINFO("Unable to unlink '%s': %s\n", dir.c_str(), strerror(errno));
 			}
 		}
 		closedir(d);
