@@ -60,7 +60,6 @@ extern "C" {
 	#include "gpt/gpt.h"
 	#ifdef TW_INCLUDE_FBE
 		#include "crypto/ext4crypt/Decrypt.h"
-		//#include "crypto/ext4crypt/Ext4Crypt.h"
 	#endif
 #else
 	#define CRYPT_FOOTER_OFFSET 0x4000
@@ -2181,10 +2180,14 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media_Func(const string& parent __unu
 					closedir(d);
 					return false;
 				}
-				rmdir(dir.c_str());
+				if (Is_FBE && dir == "/data/data/") {
+					LOGINFO("Skipping delete of '%s' because of FBE\n", dir.c_str()); // For some reason backup/restore of /data/data doesn't work right with FBE so we'll just retain the old dir
+				} else {
+					rmdir(dir.c_str());
+				}
 			} else if (de->d_type == DT_REG || de->d_type == DT_LNK || de->d_type == DT_FIFO || de->d_type == DT_SOCK) {
 				if (!unlink(dir.c_str()))
-					LOGINFO("Unable to unlink '%s'\n", dir.c_str());
+					LOGINFO("Unable to unlink '%s': %s\n", dir.c_str(), strerror(errno));
 			}
 		}
 		closedir(d);
