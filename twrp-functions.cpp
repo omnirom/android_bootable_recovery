@@ -498,8 +498,14 @@ void TWFunc::Update_Log_File(void) {
 		chown("/cache/recovery/log", 1000, 1000);
 		chmod("/cache/recovery/log", 0600);
 		chmod("/cache/recovery/last_log", 0640);
+	} else if (PartitionManager.Mount_By_Path("/data", false) && TWFunc::Path_Exists("/data/cache/recovery/.")) {
+		Copy_Log(TMP_LOG_FILE, "/data/cache/recovery/log");
+		copy_file("/data/cache/recovery/log", "/data/cache/recovery/last_log", 600);
+		chown("/data/cache/recovery/log", 1000, 1000);
+		chmod("/data/cache/recovery/log", 0600);
+		chmod("/data/cache/recovery/last_log", 0640);
 	} else {
-		LOGINFO("Failed to mount /cache for TWFunc::Update_Log_File\n");
+		LOGINFO("Failed to mount /cache or find /data/cache for TWFunc::Update_Log_File\n");
 	}
 
 	// Reset bootloader message
@@ -515,7 +521,7 @@ void TWFunc::Update_Log_File(void) {
 		}
 	}
 
-	if (PartitionManager.Mount_By_Path("/cache", true)) {
+	if (PartitionManager.Mount_By_Path("/cache", false)) {
 		if (unlink("/cache/recovery/command") && errno != ENOENT) {
 			LOGINFO("Can't unlink %s\n", "/cache/recovery/command");
 		}
