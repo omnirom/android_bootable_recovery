@@ -44,7 +44,7 @@ LOCAL_SRC_FILES := \
     twrp.cpp \
     fixContexts.cpp \
     twrpTar.cpp \
-    twrpDU.cpp \
+    exclude.cpp \
     twrpDigest.cpp \
     digest/md5.c \
     find_file.cpp \
@@ -124,7 +124,7 @@ LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES :=
 
 LOCAL_STATIC_LIBRARIES += libguitwrp
-LOCAL_SHARED_LIBRARIES += libaosprecovery libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libtwadbbu
+LOCAL_SHARED_LIBRARIES += libaosprecovery libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libtwadbbu libbootloader_message
 LOCAL_SHARED_LIBRARIES += libcrecovery
 
 #MultiROM
@@ -192,6 +192,10 @@ ifeq ($(TWHAVE_SELINUX), true)
             LOCAL_STATIC_LIBRARIES += liblz4
         endif
     endif
+endif
+
+ifeq ($(AB_OTA_UPDATER),true)
+    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
 endif
 
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
@@ -428,6 +432,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := \
     mkfs.fat \
     permissive.sh \
     simg2img_twrp \
+    libbootloader_message \
     init.recovery.service.rc
 
 #MultiROM
@@ -560,6 +565,9 @@ include $(CLEAR_VARS)
 # Create busybox symlinks... gzip and gunzip are excluded because those need to link to pigz instead
 BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
 exclude := tune2fs mke2fs mkdosfs mkfs.vfat gzip gunzip
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
+    exclude += sh
+endif
 
 # Having /sbin/modprobe present on 32 bit devices with can cause a massive
 # performance problem if the kernel has CONFIG_MODULES=y
@@ -661,7 +669,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng optional
 LOCAL_CFLAGS := -std=gnu++0x
-LOCAL_SRC_FILES := adb_install.cpp asn1_decoder.cpp bootloader.cpp legacy_property_service.cpp set_metadata.cpp tw_atomic.cpp
+LOCAL_SRC_FILES := adb_install.cpp asn1_decoder.cpp legacy_property_service.cpp set_metadata.cpp tw_atomic.cpp
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload libselinux
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libstdc++ libstlport
@@ -702,6 +710,7 @@ include $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/otafault/Android.mk \
+    $(LOCAL_PATH)/bootloader_message/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
     $(LOCAL_PATH)/update_verifier/Android.mk \
     $(LOCAL_PATH)/applypatch/Android.mk

@@ -1,5 +1,5 @@
 /*
-        Copyright 2013 TeamWin
+        Copyright 2013 to 2016 TeamWin
         This file is part of TWRP/TeamWin Recovery Project.
 
         TWRP is free software: you can redistribute it and/or modify
@@ -16,39 +16,28 @@
         along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TWRPDU_HPP
-#define TWRPDU_HPP
+#ifndef TWEXCLUDE_HPP
+#define TWEXCLUDE_HPP
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <fstream>
 #include <string>
 #include <vector>
-#include "twcommon.h"
 
 using namespace std;
 
-class twrpDU {
+class TWExclude {
 
 public:
-	twrpDU();
+	TWExclude();
 	uint64_t Get_Folder_Size(const string& Path); // Gets the folder's size using stat
 	void add_absolute_dir(const string& Path);
 	void add_relative_dir(const string& Path);
 	bool check_relative_skip_dirs(const string& dir);
 	bool check_absolute_skip_dirs(const string& path);
 	bool check_skip_dirs(const string& path);
-	vector<string> get_absolute_dirs(void);
 	void clear_relative_dir(string dir);
 private:
 	vector<string> absolutedir;
 	vector<string> relativedir;
 };
 
-extern twrpDU du;
 #endif

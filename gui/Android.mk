@@ -197,7 +197,9 @@ $(TWRP_RES_GEN):
 	cp -fr $(TWRP_THEME_LOC)/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/
 ifneq ($(TW_USE_TOOLBOX), true)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
 	ln -sf $(TWRP_SH_TARGET) $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
+endif
 endif
 	ln -sf /sbin/pigz $(TARGET_RECOVERY_ROOT_OUT)/sbin/gzip
 	ln -sf /sbin/unpigz $(TARGET_RECOVERY_ROOT_OUT)/sbin/gunzip

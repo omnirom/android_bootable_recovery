@@ -364,8 +364,8 @@
 		<string name="set_language_btn">Set Language</string>
 		<string name="advanced_hdr">Advanced</string>
 		<string name="copy_log_confirm">Copy Log to SD Card?</string>
-		<string name="copying_log">Copying Log to SD Card...</string>
-		<string name="copy_log_complete">Log Copy Complete</string>
+		<string name="copying_log" version="2">Copying Logs to SD Card...</string>
+		<string name="copy_log_complete" version="2">Logs Copy Complete</string>
 		<string name="fix_context_btn">Fix Contexts</string>
 		<string name="part_sd_btn">Partition SD Card</string>
 		<string name="part_sd_s_btn">SD Card</string>
@@ -673,5 +673,7 @@
 		<string name="adbbackup_control_error">Cannot write to adb control channel</string>
 		<string name="twrp_adbbu_option">--twrp option is required to enable twrp adb backup</string>
 		<string name="partition_not_found">path: {1} not found in partititon list</string>
+		<string name="copy_kernel_log">Copied kernel log to {1}</string>
+		<string name="include_kernel_log">Include Kernel Log</string>
 	</resources>
 </language>

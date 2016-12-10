@@ -120,6 +120,7 @@ public:
 #endif
 #endif //TARGET_RECOVERY_IS_MULTIROM
 	static unsigned long long IOCTL_Get_Block_Size(const char* block_device);
+	static void copy_kernel_log(string curr_storage); // Copy Kernel Log to Current Storage (PSTORE/KMSG)
 
 private:
 	static void Copy_Log(string Source, string Destination);

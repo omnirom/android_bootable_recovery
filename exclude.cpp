@@ -1,5 +1,5 @@
 /*
-		Copyright 2013 TeamWin
+		Copyright 2013 to 2016 TeamWin
 		This file is part of TWRP/TeamWin Recovery Project.
 
 		TWRP is free software: you can redistribute it and/or modify
@@ -21,33 +21,30 @@ extern "C" {
 }
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <string.h>
+#include <dirent.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <fstream>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include "twrpDU.hpp"
+#include "exclude.hpp"
 #include "twrp-functions.hpp"
 #include "gui/gui.hpp"
+#include "twcommon.h"
 
 using namespace std;
 
 extern bool datamedia;
 
-twrpDU::twrpDU() {
+TWExclude::TWExclude() {
 	add_relative_dir(".");
 	add_relative_dir("..");
 	add_relative_dir("lost+found");
-	add_absolute_dir("/data/data/com.google.android.music/files");
 }
 
-void twrpDU::add_relative_dir(const string& dir) {
+void TWExclude::add_relative_dir(const string& dir) {
 	relativedir.push_back(dir);
 }
 
-void twrpDU::clear_relative_dir(string dir) {
+void TWExclude::clear_relative_dir(string dir) {
 	vector<string>::iterator iter = relativedir.begin();
 	while (iter != relativedir.end()) {
 		if (*iter == dir)
@@ -57,15 +54,11 @@ void twrpDU::clear_relative_dir(string dir) {
 	}
 }
 
-void twrpDU::add_absolute_dir(const string& dir) {
+void TWExclude::add_absolute_dir(const string& dir) {
 	absolutedir.push_back(TWFunc::Remove_Trailing_Slashes(dir));
 }
 
-vector<string> twrpDU::get_absolute_dirs(void) {
-	return absolutedir;
-}
-
-uint64_t twrpDU::Get_Folder_Size(const string& Path) {
+uint64_t TWExclude::Get_Folder_Size(const string& Path) {
 	DIR* d;
 	struct dirent* de;
 	struct stat st;
@@ -96,15 +89,15 @@ uint64_t twrpDU::Get_Folder_Size(const string& Path) {
 	return dusize;
 }
 
-bool twrpDU::check_relative_skip_dirs(const string& dir) {
+bool TWExclude::check_relative_skip_dirs(const string& dir) {
 	return std::find(relativedir.begin(), relativedir.end(), dir) != relativedir.end();
 }
 
-bool twrpDU::check_absolute_skip_dirs(const string& path) {
+bool TWExclude::check_absolute_skip_dirs(const string& path) {
 	return std::find(absolutedir.begin(), absolutedir.end(), path) != absolutedir.end();
 }
 
-bool twrpDU::check_skip_dirs(const string& path) {
+bool TWExclude::check_skip_dirs(const string& path) {
 	string normalized = TWFunc::Remove_Trailing_Slashes(path);
 	size_t slashIdx = normalized.find_last_of('/');
 	if(slashIdx != std::string::npos && slashIdx+1 < normalized.size()) {
