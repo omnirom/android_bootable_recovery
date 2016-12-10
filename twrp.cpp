@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
 	{ // Check to ensure SELinux can be supported by the kernel
 		char *contexts = NULL;
 
-		if (PartitionManager.Mount_By_Path("/cache", true) && TWFunc::Path_Exists("/cache/recovery")) {
+		if (PartitionManager.Mount_By_Path("/cache", false) && TWFunc::Path_Exists("/cache/recovery")) {
 			lgetfilecon("/cache/recovery", &contexts);
 			if (!contexts) {
 				lsetfilecon("/cache/recovery", "test");
@@ -174,7 +174,7 @@ int main(int argc, char **argv) {
 	gui_warn("no_selinux=No SELinux support (no libselinux).");
 #endif
 
-	PartitionManager.Mount_By_Path("/cache", true);
+	PartitionManager.Mount_By_Path("/cache", false);
 
 	bool Shutdown = false, Sideload = false;
 	string Send_Intent = "";

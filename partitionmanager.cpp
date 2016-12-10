@@ -1237,26 +1237,26 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 	if (!Mount_By_Path("/data", true))
 		return false;
 
-	if (!Mount_By_Path("/cache", true))
-		return false;
-
 	dir.push_back("/data/dalvik-cache");
-	dir.push_back("/cache/dalvik-cache");
-	dir.push_back("/cache/dc");
-	gui_msg("wiping_dalvik=Wiping Dalvik Cache Directories...");
-	for (unsigned i = 0; i < dir.size(); ++i) {
-		if (stat(dir.at(i).c_str(), &st) == 0) {
-			TWFunc::removeDir(dir.at(i), false);
-			gui_msg(Msg("cleaned=Cleaned: {1}...")(dir.at(i)));
-		}
+	if (Mount_By_Path("/cache", false)) {
+		dir.push_back("/cache/dalvik-cache");
+		dir.push_back("/cache/dc");
 	}
+
 	TWPartition* sdext = Find_Partition_By_Path("/sd-ext");
 	if (sdext && sdext->Is_Present && sdext->Mount(false))
 	{
 		if (stat("/sd-ext/dalvik-cache", &st) == 0)
 		{
-			TWFunc::removeDir("/sd-ext/dalvik-cache", false);
-			gui_msg(Msg("cleaned=Cleaned: {1}...")("/sd-ext/dalvik-cache"));
+			dir.push_back("/sd-ext/dalvik-cache");
+		}
+	}
+
+	gui_msg("wiping_dalvik=Wiping Dalvik Cache Directories...");
+	for (unsigned i = 0; i < dir.size(); ++i) {
+		if (stat(dir.at(i).c_str(), &st) == 0) {
+			TWFunc::removeDir(dir.at(i), false);
+			gui_msg(Msg("cleaned=Cleaned: {1}...")(dir.at(i)));
 		}
 	}
 	gui_msg("dalvik_done=-- Dalvik Cache Directories Wipe Complete!");
