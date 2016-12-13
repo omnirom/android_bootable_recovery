@@ -1,6 +1,7 @@
 BasedOnStyle: Google
 AllowShortBlocksOnASingleLine: false
-AllowShortFunctionsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: true
 
 ColumnLimit: 100
 CommentPragmas: NOLINT:.*
