@@ -512,117 +512,107 @@ static void finish_recovery() {
     sync();  // For good measure.
 }
 
-typedef struct _saved_log_file {
-    char* name;
-    struct stat st;
-    unsigned char* data;
-    struct _saved_log_file* next;
-} saved_log_file;
+struct saved_log_file {
+  std::string name;
+  struct stat sb;
+  std::string data;
+};
 
 static bool erase_volume(const char* volume) {
-    bool is_cache = (strcmp(volume, CACHE_ROOT) == 0);
-    bool is_data = (strcmp(volume, DATA_ROOT) == 0);
+  bool is_cache = (strcmp(volume, CACHE_ROOT) == 0);
+  bool is_data = (strcmp(volume, DATA_ROOT) == 0);
 
-    ui->SetBackground(RecoveryUI::ERASING);
-    ui->SetProgressType(RecoveryUI::INDETERMINATE);
+  ui->SetBackground(RecoveryUI::ERASING);
+  ui->SetProgressType(RecoveryUI::INDETERMINATE);
 
-    saved_log_file* head = NULL;
+  std::vector<saved_log_file> log_files;
 
-    if (is_cache) {
-        // If we're reformatting /cache, we load any past logs
-        // (i.e. "/cache/recovery/last_*") and the current log
-        // ("/cache/recovery/log") into memory, so we can restore them after
-        // the reformat.
+  if (is_cache) {
+    // If we're reformatting /cache, we load any past logs
+    // (i.e. "/cache/recovery/last_*") and the current log
+    // ("/cache/recovery/log") into memory, so we can restore them after
+    // the reformat.
 
-        ensure_path_mounted(volume);
+    ensure_path_mounted(volume);
 
-        DIR* d;
-        struct dirent* de;
-        d = opendir(CACHE_LOG_DIR);
-        if (d) {
-            char path[PATH_MAX];
-            strcpy(path, CACHE_LOG_DIR);
-            strcat(path, "/");
-            int path_len = strlen(path);
-            while ((de = readdir(d)) != NULL) {
-                if (strncmp(de->d_name, "last_", 5) == 0 || strcmp(de->d_name, "log") == 0) {
-                    saved_log_file* p = (saved_log_file*) malloc(sizeof(saved_log_file));
-                    strcpy(path+path_len, de->d_name);
-                    p->name = strdup(path);
-                    if (stat(path, &(p->st)) == 0) {
-                        // truncate files to 512kb
-                        if (p->st.st_size > (1 << 19)) {
-                            p->st.st_size = 1 << 19;
-                        }
-                        p->data = (unsigned char*) malloc(p->st.st_size);
-                        FILE* f = fopen(path, "rb");
-                        fread(p->data, 1, p->st.st_size, f);
-                        fclose(f);
-                        p->next = head;
-                        head = p;
-                    } else {
-                        free(p);
-                    }
-                }
+    struct dirent* de;
+    std::unique_ptr<DIR, decltype(&closedir)> d(opendir(CACHE_LOG_DIR), closedir);
+    if (d) {
+      while ((de = readdir(d.get())) != nullptr) {
+        if (strncmp(de->d_name, "last_", 5) == 0 || strcmp(de->d_name, "log") == 0) {
+          std::string path = android::base::StringPrintf("%s/%s", CACHE_LOG_DIR, de->d_name);
+
+          struct stat sb;
+          if (stat(path.c_str(), &sb) == 0) {
+            // truncate files to 512kb
+            if (sb.st_size > (1 << 19)) {
+              sb.st_size = 1 << 19;
             }
-            closedir(d);
-        } else {
-            if (errno != ENOENT) {
-                printf("opendir failed: %s\n", strerror(errno));
-            }
+
+            std::string data(sb.st_size, '\0');
+            FILE* f = fopen(path.c_str(), "rb");
+            fread(&data[0], 1, data.size(), f);
+            fclose(f);
+
+            log_files.emplace_back(saved_log_file{ path, sb, data });
+          }
         }
-    }
-
-    ui->Print("Formatting %s...\n", volume);
-
-    ensure_path_unmounted(volume);
-
-    int result;
-
-    if (is_data && reason && strcmp(reason, "convert_fbe") == 0) {
-        // Create convert_fbe breadcrumb file to signal to init
-        // to convert to file based encryption, not full disk encryption
-        if (mkdir(CONVERT_FBE_DIR, 0700) != 0) {
-            ui->Print("Failed to make convert_fbe dir %s\n", strerror(errno));
-            return true;
-        }
-        FILE* f = fopen(CONVERT_FBE_FILE, "wb");
-        if (!f) {
-            ui->Print("Failed to convert to file encryption %s\n", strerror(errno));
-            return true;
-        }
-        fclose(f);
-        result = format_volume(volume, CONVERT_FBE_DIR);
-        remove(CONVERT_FBE_FILE);
-        rmdir(CONVERT_FBE_DIR);
+      }
     } else {
-        result = format_volume(volume);
+      if (errno != ENOENT) {
+        PLOG(ERROR) << "Failed to opendir " << CACHE_LOG_DIR;
+      }
     }
+  }
 
-    if (is_cache) {
-        while (head) {
-            FILE* f = fopen_path(head->name, "wb");
-            if (f) {
-                fwrite(head->data, 1, head->st.st_size, f);
-                fclose(f);
-                chmod(head->name, head->st.st_mode);
-                chown(head->name, head->st.st_uid, head->st.st_gid);
-            }
-            free(head->name);
-            free(head->data);
-            saved_log_file* temp = head->next;
-            free(head);
-            head = temp;
+  ui->Print("Formatting %s...\n", volume);
+
+  ensure_path_unmounted(volume);
+
+  int result;
+
+  if (is_data && reason && strcmp(reason, "convert_fbe") == 0) {
+    // Create convert_fbe breadcrumb file to signal to init
+    // to convert to file based encryption, not full disk encryption
+    if (mkdir(CONVERT_FBE_DIR, 0700) != 0) {
+      ui->Print("Failed to make convert_fbe dir %s\n", strerror(errno));
+      return true;
+    }
+    FILE* f = fopen(CONVERT_FBE_FILE, "wb");
+    if (!f) {
+      ui->Print("Failed to convert to file encryption %s\n", strerror(errno));
+      return true;
+    }
+    fclose(f);
+    result = format_volume(volume, CONVERT_FBE_DIR);
+    remove(CONVERT_FBE_FILE);
+    rmdir(CONVERT_FBE_DIR);
+  } else {
+    result = format_volume(volume);
+  }
+
+  if (is_cache) {
+    // Re-create the log dir and write back the log entries.
+    if (ensure_path_mounted(CACHE_LOG_DIR) == 0 &&
+        dirCreateHierarchy(CACHE_LOG_DIR, 0777, nullptr, false, sehandle) == 0) {
+      for (const auto& log : log_files) {
+        if (!android::base::WriteStringToFile(log.data, log.name, log.sb.st_mode, log.sb.st_uid,
+                                              log.sb.st_gid)) {
+          PLOG(ERROR) << "Failed to write to " << log.name;
         }
-
-        // Any part of the log we'd copied to cache is now gone.
-        // Reset the pointer so we copy from the beginning of the temp
-        // log.
-        tmplog_offset = 0;
-        copy_logs();
+      }
+    } else {
+      PLOG(ERROR) << "Failed to mount / create " << CACHE_LOG_DIR;
     }
 
-    return (result == 0);
+    // Any part of the log we'd copied to cache is now gone.
+    // Reset the pointer so we copy from the beginning of the temp
+    // log.
+    tmplog_offset = 0;
+    copy_logs();
+  }
+
+  return (result == 0);
 }
 
 static int
