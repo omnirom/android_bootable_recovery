@@ -2481,24 +2481,25 @@ int GUIAction::multirom_swap_calc_space(std::string arg __unused)
 			int_data_size = p->GetSizeBackup();
 	}
 
+	TWExclude twe;
 	switch(type)
 	{
 		case MROM_SWAP_WITH_SECONDARY:
-			needed = int_size + du.Get_Folder_Size(MultiROM::getRomsPath() + swap_rom + "/data");
+			needed = int_size + twe.Get_Folder_Size(MultiROM::getRomsPath() + swap_rom + "/data");
 			break;
 		case MROM_SWAP_COPY_SECONDARY:
 		{
-			uint64_t sec_data_size = du.Get_Folder_Size(MultiROM::getRomsPath() + swap_rom + "/data");
+			uint64_t sec_data_size = twe.Get_Folder_Size(MultiROM::getRomsPath() + swap_rom + "/data");
 			if(sec_data_size > int_data_size)
 				needed = sec_data_size - int_data_size + 50*1024*1024;
 			break;
 		}
 		case MROM_SWAP_COPY_INTERNAL:
 		case MROM_SWAP_MOVE_INTERNAL:
-			needed = du.Get_Folder_Size(MultiROM::getRomsPath() + swap_rom + "/data");
+			needed = twe.Get_Folder_Size(MultiROM::getRomsPath() + swap_rom + "/data");
 			break;
 		case MROM_SWAP_DUPLICATE:
-			needed = du.Get_Folder_Size(MultiROM::getRomsPath() + swap_rom);
+			needed = twe.Get_Folder_Size(MultiROM::getRomsPath() + swap_rom);
 			break;
 	}
 

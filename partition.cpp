@@ -2668,7 +2668,7 @@ bool TWPartition::Update_Size(bool Display_Error) {
 
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 	if(!Bind_Of.empty()) {
-		Used = du.Get_Folder_Size(Actual_Block_Device);
+		Used = backup_exclusions.Get_Folder_Size(Actual_Block_Device);
 		Backup_Size = Used;
 	}
 #endif //TARGET_RECOVERY_IS_MULTIROM
