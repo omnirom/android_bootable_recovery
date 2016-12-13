@@ -164,13 +164,7 @@ bool clear_bootloader_message(std::string* err) {
 }
 
 bool write_bootloader_message(const std::vector<std::string>& options, std::string* err) {
-  bootloader_message boot;
-  if (!read_bootloader_message(&boot, err)) {
-    return false;
-  }
-  // Zero out the entire fields.
-  memset(boot.command, 0, sizeof(boot.command));
-  memset(boot.recovery, 0, sizeof(boot.recovery));
+  bootloader_message boot = {};
   strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
   strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
   for (const auto& s : options) {
