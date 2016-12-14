@@ -29,7 +29,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   public:
     ScreenRecoveryUI();
 
-    void Init();
+    bool Init() override;
     void SetLocale(const char* locale);
 
     // overall recovery state ("background image")
@@ -137,7 +137,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     pthread_mutex_t updateMutex;
     bool rtl_locale;
 
-    virtual void InitTextParams();
+    virtual bool InitTextParams();
 
     virtual void draw_background_locked();
     virtual void draw_foreground_locked();
