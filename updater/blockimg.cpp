@@ -1358,7 +1358,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     CommandParameters params = {};
     params.canwrite = !dryrun;
 
-    LOG(INFO) << "performing " << dryrun ? "verification" : "update";
+    LOG(INFO) << "performing " << (dryrun ? "verification" : "update");
     if (state->is_retry) {
         is_retry = true;
         LOG(INFO) << "This update is a retry.";
