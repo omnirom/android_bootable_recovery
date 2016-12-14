@@ -62,8 +62,10 @@ LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SRC_FILES := \
     component/applypatch_test.cpp \
     component/edify_test.cpp \
+    component/uncrypt_test.cpp \
     component/updater_test.cpp \
     component/verifier_test.cpp
+
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
 tune2fs_static_libraries := \
