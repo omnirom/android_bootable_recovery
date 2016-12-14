@@ -190,8 +190,10 @@ void WearRecoveryUI::update_progress_locked() {
     gr_flip();
 }
 
-void WearRecoveryUI::InitTextParams() {
-    ScreenRecoveryUI::InitTextParams();
+bool WearRecoveryUI::InitTextParams() {
+    if (!ScreenRecoveryUI::InitTextParams()) {
+        return false;
+    }
 
     text_cols_ = (gr_fb_width() - (outer_width * 2)) / char_width_;
 
@@ -199,15 +201,19 @@ void WearRecoveryUI::InitTextParams() {
     if (text_cols_ > kMaxCols) text_cols_ = kMaxCols;
 
     visible_text_rows = (gr_fb_height() - (outer_height * 2)) / char_height_;
+    return true;
 }
 
-void WearRecoveryUI::Init() {
-    ScreenRecoveryUI::Init();
+bool WearRecoveryUI::Init() {
+    if (!ScreenRecoveryUI::Init()) {
+        return false;
+    }
 
     LoadBitmap("icon_installing", &backgroundIcon[INSTALLING_UPDATE]);
     backgroundIcon[ERASING] = backgroundIcon[INSTALLING_UPDATE];
     LoadBitmap("icon_error", &backgroundIcon[ERROR]);
     backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
+    return true;
 }
 
 void WearRecoveryUI::SetStage(int current, int max)

@@ -80,12 +80,13 @@ static void* InputThreadLoop(void*) {
     return nullptr;
 }
 
-void RecoveryUI::Init() {
+bool RecoveryUI::Init() {
     ev_init(InputCallback, this);
 
     ev_iterate_available_keys(std::bind(&RecoveryUI::OnKeyDetected, this, std::placeholders::_1));
 
     pthread_create(&input_thread_, nullptr, InputThreadLoop, nullptr);
+    return true;
 }
 
 int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {

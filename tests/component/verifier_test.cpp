@@ -40,7 +40,7 @@
 RecoveryUI* ui = NULL;
 
 class MockUI : public RecoveryUI {
-    void Init() { }
+    bool Init() { return true; }
     void SetStage(int, int) { }
     void SetLocale(const char*) { }
     void SetBackground(Icon /*icon*/) { }
