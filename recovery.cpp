@@ -68,6 +68,7 @@
 #include "roots.h"
 #include "rotate_logs.h"
 #include "screen_ui.h"
+#include "stub_ui.h"
 #include "ui.h"
 
 static const struct option OPTIONS[] = {
@@ -1471,8 +1472,11 @@ int main(int argc, char **argv) {
     Device* device = make_device();
     ui = device->GetUI();
 
+    if (!ui->Init()) {
+      printf("Failed to initialize UI, use stub UI instead.");
+      ui = new StubRecoveryUI();
+    }
     ui->SetLocale(locale.c_str());
-    ui->Init();
     // Set background string to "installing security update" for security update,
     // otherwise set it to "installing system update".
     ui->SetSystemUpdateText(security_update);

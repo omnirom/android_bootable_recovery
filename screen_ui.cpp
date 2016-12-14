@@ -448,17 +448,22 @@ void ScreenRecoveryUI::SetSystemUpdateText(bool security_update) {
     Redraw();
 }
 
-void ScreenRecoveryUI::InitTextParams() {
-    gr_init();
+bool ScreenRecoveryUI::InitTextParams() {
+    if (gr_init() < 0) {
+      return false;
+    }
 
     gr_font_size(gr_sys_font(), &char_width_, &char_height_);
     text_rows_ = gr_fb_height() / char_height_;
     text_cols_ = gr_fb_width() / char_width_;
+    return true;
 }
 
-void ScreenRecoveryUI::Init() {
+bool ScreenRecoveryUI::Init() {
     RecoveryUI::Init();
-    InitTextParams();
+    if (!InitTextParams()) {
+      return false;
+    }
 
     density_ = static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f;
 
@@ -493,6 +498,8 @@ void ScreenRecoveryUI::Init() {
     LoadAnimation();
 
     pthread_create(&progress_thread_, nullptr, ProgressThreadStartRoutine, this);
+
+    return true;
 }
 
 void ScreenRecoveryUI::LoadAnimation() {
