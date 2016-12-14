@@ -28,8 +28,8 @@ class RecoveryUI {
 
     virtual ~RecoveryUI() { }
 
-    // Initialize the object; called before anything else.
-    virtual void Init();
+    // Initialize the object; called before anything else. Returns true on success.
+    virtual bool Init();
     // Show a stage indicator.  Call immediately after Init().
     virtual void SetStage(int current, int max) = 0;
 
