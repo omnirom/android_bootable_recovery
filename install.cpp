@@ -335,15 +335,6 @@ try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
     //            progress bar within the segment defined by the most
     //            recent progress command.
     //
-    //        firmware <"hboot"|"radio"> <filename>
-    //            arrange to install the contents of <filename> in the
-    //            given partition on reboot.
-    //
-    //            (API v2: <filename> may start with "PACKAGE:" to
-    //            indicate taking a file from the OTA package.)
-    //
-    //            (API v3: this command no longer exists.)
-    //
     //        ui_print <string>
     //            display <string> on the screen.
     //
