@@ -169,21 +169,7 @@ struct selabel_handle* sehandle;
  *    -- after this, rebooting will (try to) restart the main system --
  * 7. ** if install failed **
  *    7a. prompt_and_wait() shows an error icon and waits for the user
- *    7b; the user reboots (pulling the battery, etc) into the main system
- * 8. main() calls maybe_install_firmware_update()
- *    ** if the update contained radio/hboot firmware **:
- *    8a. m_i_f_u() writes BCB with "boot-recovery" and "--wipe_cache"
- *        -- after this, rebooting will reformat cache & restart main system --
- *    8b. m_i_f_u() writes firmware image into raw cache partition
- *    8c. m_i_f_u() writes BCB with "update-radio/hboot" and "--wipe_cache"
- *        -- after this, rebooting will attempt to reinstall firmware --
- *    8d. bootloader tries to flash firmware
- *    8e. bootloader writes BCB with "boot-recovery" (keeping "--wipe_cache")
- *        -- after this, rebooting will reformat cache & restart main system --
- *    8f. erase_volume() reformats /cache
- *    8g. finish_recovery() erases BCB
- *        -- after this, rebooting will (try to) restart the main system --
- * 9. main() calls reboot() to boot main system
+ *    7b. the user reboots (pulling the battery, etc) into the main system
  */
 
 // open a given path, mounting partitions as necessary
