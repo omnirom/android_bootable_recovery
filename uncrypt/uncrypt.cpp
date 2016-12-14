@@ -530,7 +530,7 @@ static bool setup_bcb(const int socket) {
     std::string content;
     content.resize(length);
     if (!android::base::ReadFully(socket, &content[0], length)) {
-        PLOG(ERROR) << "failed to read the length";
+        PLOG(ERROR) << "failed to read the message";
         return false;
     }
     LOG(INFO) << "  received command: [" << content << "] (" << content.size() << ")";
