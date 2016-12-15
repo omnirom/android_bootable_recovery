@@ -137,3 +137,29 @@ TEST_F(BootloaderMessageTest, write_bootloader_message_options_long) {
   ASSERT_EQ(std::string(sizeof(boot.reserved), '\0'),
             std::string(boot.reserved, sizeof(boot.reserved)));
 }
+
+TEST_F(BootloaderMessageTest, update_bootloader_message) {
+  // Inject some bytes into boot, which should be not overwritten later.
+  bootloader_message boot;
+  strlcpy(boot.recovery, "random message", sizeof(boot.recovery));
+  strlcpy(boot.reserved, "reserved bytes", sizeof(boot.reserved));
+  std::string err;
+  ASSERT_TRUE(write_bootloader_message(boot, &err)) << "Failed to write BCB: " << err;
+
+  // Update the BCB message.
+  std::vector<std::string> options = { "option1", "option2" };
+  ASSERT_TRUE(update_bootloader_message(options, &err)) << "Failed to update BCB: " << err;
+
+  bootloader_message boot_verify;
+  ASSERT_TRUE(read_bootloader_message(&boot_verify, &err)) << "Failed to read BCB: " << err;
+
+  // Verify that command and recovery fields should be set.
+  ASSERT_EQ("boot-recovery", std::string(boot_verify.command));
+  std::string expected = "recovery\n" + android::base::Join(options, "\n") + "\n";
+  ASSERT_EQ(expected, std::string(boot_verify.recovery));
+
+  // The rest should be intact.
+  ASSERT_EQ(std::string(boot.status), std::string(boot_verify.status));
+  ASSERT_EQ(std::string(boot.stage), std::string(boot_verify.stage));
+  ASSERT_EQ(std::string(boot.reserved), std::string(boot_verify.reserved));
+}
