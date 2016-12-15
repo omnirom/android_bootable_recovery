@@ -354,20 +354,21 @@ static std::vector<std::string> get_args(const int argc, char** const argv) {
   // bootloader control block. So the device will always boot into recovery to
   // finish the pending work, until finish_recovery() is called.
   std::vector<std::string> options(args.cbegin() + 1, args.cend());
-  if (!write_bootloader_message(options, &err)) {
-    LOG(ERROR) << err;
+  if (!update_bootloader_message(options, &err)) {
+    LOG(ERROR) << "Failed to set BCB message: " << err;
   }
 
   return args;
 }
 
-static void
-set_sdcard_update_bootloader_message() {
-    std::vector<std::string> options;
-    std::string err;
-    if (!write_bootloader_message(options, &err)) {
-        LOG(ERROR) << err;
-    }
+// Set the BCB to reboot back into recovery (it won't resume the install from
+// sdcard though).
+static void set_sdcard_update_bootloader_message() {
+  std::vector<std::string> options;
+  std::string err;
+  if (!update_bootloader_message(options, &err)) {
+    LOG(ERROR) << "Failed to set BCB message: " << err;
+  }
 }
 
 // Read from kernel log into buffer and write out to file.
@@ -485,7 +486,7 @@ static void finish_recovery() {
     // Reset to normal system boot so recovery won't cycle indefinitely.
     std::string err;
     if (!clear_bootloader_message(&err)) {
-        LOG(ERROR) << err;
+        LOG(ERROR) << "Failed to clear BCB message: " << err;
     }
 
     // Remove the command file, so recovery won't repeat indefinitely.
@@ -1323,7 +1324,7 @@ static void set_retry_bootloader_message(int retry_count, int argc, char** argv)
     // Increment the retry counter by 1.
     options.push_back(android::base::StringPrintf("--retry_count=%d", retry_count+1));
     std::string err;
-    if (!write_bootloader_message(options, &err)) {
+    if (!update_bootloader_message(options, &err)) {
         LOG(ERROR) << err;
     }
 }
