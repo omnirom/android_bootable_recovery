@@ -36,7 +36,7 @@
 #endif
 
 #ifdef HAVE_EXT4_CRYPT
-# include "ext4crypt_tar.h"
+# include "../crypto/ext4crypt/ext4crypt_tar.h"
 #endif
 
 struct tar_dev

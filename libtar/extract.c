@@ -33,7 +33,7 @@
 #endif
 
 #ifdef HAVE_EXT4_CRYPT
-# include "ext4crypt_tar.h"
+# include "../crypto/ext4crypt/ext4crypt_tar.h"
 #endif
 
 const unsigned long long progress_size = (unsigned long long)(T_BLOCKSIZE);
