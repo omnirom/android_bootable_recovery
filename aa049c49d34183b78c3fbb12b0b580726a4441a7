@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_6f932d5a",
+        "filename": "partition.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1723,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2016-12-16T01:02:45Z",
+      "side": 1,
+      "message": "Restore cleanup of this function",
+      "revId": "aa049c49d34183b78c3fbb12b0b580726a4441a7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
