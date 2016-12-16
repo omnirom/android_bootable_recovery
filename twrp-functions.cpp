@@ -788,7 +788,10 @@ string TWFunc::System_Property_Get(string Prop_Name) {
 	string propvalue;
 	if (!PartitionManager.Mount_By_Path("/system", true))
 		return propvalue;
-	if (TWFunc::read_file("/system/build.prop", buildprop) != 0) {
+	string prop_file = "/system/build.prop";
+	if (!TWFunc::Path_Exists(prop_file))
+		prop_file = "/system/system/build.prop"; // for devices with system as a root file system (e.g. Pixel)
+	if (TWFunc::read_file(prop_file, buildprop) != 0) {
 		LOGINFO("Unable to open /system/build.prop for getting '%s'.\n", Prop_Name.c_str());
 		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
 		if (!mount_state)
