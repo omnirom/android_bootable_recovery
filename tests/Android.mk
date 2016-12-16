@@ -61,6 +61,7 @@ LOCAL_MODULE := recovery_component_test
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SRC_FILES := \
     component/applypatch_test.cpp \
+    component/bootloader_message_test.cpp \
     component/edify_test.cpp \
     component/uncrypt_test.cpp \
     component/updater_test.cpp \
