@@ -157,8 +157,4 @@
 			<size name="tw_gui_pattern_grid_size" default="3"/>
 		</style>
 	</styles>
-
-	<include>
-		<xmlfile name="portrait.xml"/>
-	</include>
 </recovery>

@@ -11,6 +11,8 @@
 
 	<include>
 		<xmlfile name="styles.xml"/>
+		<xmlfile name="portrait.xml"/>
+		<xmlfile name="multirom.xml"/>
 	</include>
 
 	<resources>

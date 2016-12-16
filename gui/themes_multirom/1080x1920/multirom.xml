@@ -1449,7 +1449,7 @@ not implemented
 			<text style="text_m">
 				<placement x="%center_x%" y="%row12_y%" placement="5"/>
 				<text>data partition, in which case you should reboot to TWRP</text>
-            </text>
+			</text>
 
 			<text style="text_m">
 				<placement x="%center_x%" y="%row13_y%" placement="5"/>
