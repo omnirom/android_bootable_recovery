@@ -19,7 +19,7 @@ endif
 ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
     LOCAL_SHARED_LIBRARIES += libe4crypt
     LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
-    LOCAL_C_INCLUDES += bootable/recovery/crypto/ext4crypt
+    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../crypto/ext4crypt
 endif
 
 include $(BUILD_SHARED_LIBRARY)
@@ -43,7 +43,7 @@ endif
 ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
     LOCAL_SHARED_LIBRARIES += libe4crypt
     LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
-    LOCAL_C_INCLUDES += bootable/recovery/crypto/ext4crypt
+    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../crypto/ext4crypt
 endif
 
 include $(BUILD_STATIC_LIBRARY)
