@@ -114,6 +114,13 @@
 		<string name="rebooting">Rebooting...</string>
 		<string name="swipe_reboot">Swipe to Reboot</string>
 		<string name="swipe_reboot_s">   Reboot</string>
+		<string name="reboot_install_app_hdr">Install TWRP App?</string>
+		<string name="reboot_install_app1">Would you like to install the Official TWRP App?</string>
+		<string name="reboot_install_app2">The app can check for new TWRP versions.</string>
+		<string name="reboot_install_app_prompt_install">Prompt to install TWRP app if not installed</string>
+		<string name="reboot_install_app_system">Install as a System App</string>
+		<string name="reboot_installing_app">Installing App...</string>
+		<string name="swipe_to_install_app">Swipe to Install TWRP App</string>
 		<string name="swipe_flash">Swipe to confirm Flash</string>
 		<string name="confirm_action">Confirm Action</string>
 		<string name="back_cancel">Press back button to cancel.</string>
