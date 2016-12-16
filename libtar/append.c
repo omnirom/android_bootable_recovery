@@ -20,6 +20,7 @@
 #include <time.h>
 #include <sys/param.h>
 #include <sys/types.h>
+#include <stdbool.h>
 
 #ifdef STDC_HEADERS
 # include <stdlib.h>
@@ -32,6 +33,10 @@
 
 #ifdef HAVE_SELINUX
 # include "selinux/selinux.h"
+#endif
+
+#ifdef HAVE_EXT4_CRYPT
+# include "ext4crypt_tar.h"
 #endif
 
 struct tar_dev
@@ -119,6 +124,33 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 			perror("Failed to get selinux context");
 #endif
 		}
+	}
+#endif
+
+#ifdef HAVE_EXT4_CRYPT
+	if (TH_ISDIR(t) && t->options & TAR_STORE_EXT4_POL)
+	{
+		if (t->th_buf.e4crypt_policy != NULL)
+		{
+			free(t->th_buf.e4crypt_policy);
+			t->th_buf.e4crypt_policy = NULL;
+		}
+
+		char e4crypt_policy[EXT4_KEY_DESCRIPTOR_SIZE];
+		if (e4crypt_policy_get(realname, e4crypt_policy, EXT4_KEY_DESCRIPTOR_SIZE, 0))
+		{
+			char tar_policy[EXT4_KEY_DESCRIPTOR_SIZE];
+			memset(tar_policy, 0, sizeof(tar_policy));
+			char policy_hex[EXT4_KEY_DESCRIPTOR_HEX];
+			policy_to_hex(e4crypt_policy, policy_hex);
+			if (lookup_ref_key(e4crypt_policy, &tar_policy)) {
+				printf("found policy '%s' - '%s' - '%s'\n", realname, tar_policy, policy_hex);
+				t->th_buf.e4crypt_policy = strdup(tar_policy);
+			} else {
+				printf("failed to lookup tar policy for '%s' - '%s'\n", realname, policy_hex);
+				return -1;
+			}
+		} // else no policy found, but this is not an error as not all dirs will have a policy
 	}
 #endif
 

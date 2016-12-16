@@ -398,6 +398,7 @@ protected:
 #endif //TARGET_RECOVERY_IS_MULTIROM
 	int setlanguage(std::string arg);
 	int twcmd(std::string arg);
+	int setbootslot(std::string arg);
 
 	int simulate;
 };

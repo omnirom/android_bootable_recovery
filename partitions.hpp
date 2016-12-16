@@ -155,7 +155,7 @@ private:
 	bool Is_File_System(string File_System);                                  // Checks to see if the file system given is considered a file system
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
 	void Setup_File_System(bool Display_Error);                               // Sets defaults for a file system partition
-	void Setup_Image(bool Display_Error);                                     // Sets defaults for an image partition
+	void Setup_Image();                                                       // Sets defaults for an image partition
 	void Setup_AndSec(void);                                                  // Sets up .android_secure settings
 	void Find_Real_Block_Device(string& Block_Device, bool Display_Error);    // Checks the block device given and follows symlinks until it gets to the real block device
 	unsigned long long IOCTL_Get_Block_Size();                                // Finds the partition size using ioctl
@@ -188,6 +188,7 @@ private:
 	bool Is_Sparse_Image(const string& Filename);                             // Determines if a file is in sparse image format
 	bool Flash_Sparse_Image(const string& Filename);                          // Flashes a sparse image using simg2img
 	bool Flash_Image_FI(const string& Filename, ProgressTracking *progress);  // Flashes an image to the partition using flash_image for mtd nand
+	void ExcludeAll(const string& path);                                      // Adds an exclusion for path to both the backup and wipe exclusion lists
 
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 private:
@@ -224,6 +225,7 @@ private:
 	bool Can_Be_Encrypted;                                                    // This partition might be encrypted, affects error handling, can only be true if crypto support is compiled in
 	bool Is_Encrypted;                                                        // This partition is thought to be encrypted -- it wouldn't mount for some reason, only avialble with crypto support
 	bool Is_Decrypted;                                                        // This partition has successfully been decrypted
+	bool Is_FBE;                                                              // File Based Encryption is present
 	bool Mount_To_Decrypt;                                                    // Mount this partition during decrypt (/vendor, /firmware, etc in case we need proprietary libs or firmware files)
 	string Display_Name;                                                      // Display name for the GUI
 	string Backup_Name;                                                       // Backup name -- used for backup filenames
@@ -245,8 +247,9 @@ private:
 	bool Can_Flash_Img;                                                       // Indicates if this partition can have images flashed to it via the GUI
 	bool Mount_Read_Only;                                                     // Only mount this partition as read-only
 	bool Is_Adopted_Storage;                                                  // Indicates that this partition is for adopted storage (android_expand)
-	TWExclude backup_exclusions;
-	TWExclude wipe_exclusions;
+	bool SlotSelect;                                                          // Partition has A/B slots
+	TWExclude backup_exclusions;                                              // Exclusions for file based backups
+	TWExclude wipe_exclusions;                                                // Exclusions for file based wipes (data/media devices only)
 
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 private:
@@ -343,6 +346,9 @@ public:
 	bool Flash_Image(string& path, string& filename);                         // Flashes an image to a selected partition from the partition list
 	bool Restore_Partition(struct PartitionSettings *part_settings);          // Restore the partitions based on type
 	TWAtomicInt stop_backup;
+	void Set_Active_Slot(const string& Slot);                                 // Sets the active slot to A or B
+	string Get_Active_Slot_Suffix();                                          // Returns active slot _a or _b
+	string Get_Active_Slot_Display();                                         // Returns active slot A or B for display purposes
 
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
@@ -354,6 +360,7 @@ private:
 	bool Add_Remove_MTP_Storage(TWPartition* Part, int message_type);         // Adds or removes an MTP Storage partition
 	TWPartition* Find_Next_Storage(string Path, bool Exclude_Data_Media);
 	int Open_Lun_File(string Partition_Path, string Lun_File);
+	void Post_Decrypt(const string& Block_Device);                            // Completes various post-decrypt tasks
 	pid_t mtppid;
 	bool mtp_was_enabled;
 	int mtp_write_fd;
@@ -362,6 +369,7 @@ private:
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions
+	string Active_Slot_Display;                                               // Current Active Slot (A or B) for display purposes
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 	std::list< std::vector<TWPartition*> > Contexts;
 #endif //TARGET_RECOVERY_IS_MULTIROM

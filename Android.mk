@@ -196,6 +196,8 @@ endif
 
 ifeq ($(AB_OTA_UPDATER),true)
     LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
+    LOCAL_SHARED_LIBRARIES += libhardware
+    LOCAL_ADDITIONAL_DEPENDENCIES += libhardware
 endif
 
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
@@ -313,6 +315,11 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO
     LOCAL_SHARED_LIBRARIES += libcryptfslollipop libgpt_twrp
     LOCAL_C_INCLUDES += external/boringssl/src/include
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
+        TW_INCLUDE_CRYPTO_FBE := true
+        LOCAL_CFLAGS += -DTW_INCLUDE_FBE
+        LOCAL_SHARED_LIBRARIES += libe4crypt
+    endif
 endif
 ifeq ($(TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID), true)
     LOCAL_CFLAGS += -DTW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
@@ -417,7 +424,7 @@ LOCAL_CFLAGS += -DTW_DEFAULT_ROTATION=0
     endif
 endif
 
-LOCAL_ADDITIONAL_DEPENDENCIES := \
+LOCAL_ADDITIONAL_DEPENDENCIES += \
     dump_image \
     erase_image \
     flash_image \
@@ -669,22 +676,26 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng optional
 LOCAL_CFLAGS := -std=gnu++0x
-LOCAL_SRC_FILES := adb_install.cpp asn1_decoder.cpp legacy_property_service.cpp set_metadata.cpp tw_atomic.cpp
-LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload libselinux
+LOCAL_SRC_FILES := adb_install.cpp asn1_decoder.cpp legacy_property_service.cpp set_metadata.cpp tw_atomic.cpp installcommand.cpp
+LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload libselinux libminzip
+LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libstdc++ libstlport
-    LOCAL_C_INCLUDES := bionic external/stlport/stlport
+    LOCAL_C_INCLUDES += bionic external/stlport/stlport
 else
     LOCAL_SHARED_LIBRARIES += libc++
 endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libmincrypttwrp
-    LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
+    LOCAL_C_INCLUDES += $(LOCAL_PATH)/libmincrypt/includes
     LOCAL_SRC_FILES += verifier24/verifier.cpp
     LOCAL_CFLAGS += -DUSE_OLD_VERIFIER
 else
-    LOCAL_SHARED_LIBRARIES += libcrypto
+    LOCAL_SHARED_LIBRARIES += libcrypto libbase
     LOCAL_SRC_FILES += verifier.cpp
+endif
+ifeq ($(AB_OTA_UPDATER),true)
+    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
 endif
 
 ifneq ($(BOARD_RECOVERY_BLDRMSG_OFFSET),)
@@ -768,6 +779,9 @@ endif
 ifeq ($(TW_INCLUDE_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/lollipop/Android.mk
     include $(commands_recovery_local_path)/crypto/scrypt/Android.mk
+    ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
+        include $(commands_recovery_local_path)/crypto/ext4crypt/Android.mk
+    endif
     include $(commands_recovery_local_path)/gpt/Android.mk
 endif
 ifeq ($(BUILD_ID), GINGERBREAD)

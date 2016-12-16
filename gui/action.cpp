@@ -273,6 +273,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(system_image_upgrader);
 #endif //TARGET_RECOVERY_IS_MULTIROM
 		ADD_ACTION(twcmd);
+		ADD_ACTION(setbootslot);
 	}
 
 	// First, get the action
@@ -2720,5 +2721,17 @@ int GUIAction::setlanguage(std::string arg __unused)
 	op_status = 0; // success
 
 	operation_end(op_status);
+	return 0;
+}
+
+int GUIAction::setbootslot(std::string arg)
+{
+	operation_start("Set Boot Slot");
+	if (!simulate)
+	{
+		PartitionManager.Set_Active_Slot(arg);
+	} else
+		simulate_progress_bar();
+	operation_end(0);
 	return 0;
 }
