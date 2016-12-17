@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_8f66894f",
+        "filename": "Android.mk",
+        "patchSetId": 5
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2016-12-17T11:18:48Z",
+      "side": 1,
+      "message": "Environment variables are visible in makefiles anyway, so this could be rewritten without calling the shell.",
+      "revId": "c6f6857a5bfd2edc84d2ab674cf749cf7683b30a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_6f6b2d19",
+        "filename": "orscmd/Android.mk",
+        "patchSetId": 5
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2016-12-17T11:18:48Z",
+      "side": 1,
+      "message": "also here we don\u0027t need the shell",
+      "revId": "c6f6857a5bfd2edc84d2ab674cf749cf7683b30a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
