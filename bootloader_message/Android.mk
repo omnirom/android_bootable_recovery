@@ -37,5 +37,9 @@ else
     LOCAL_SHARED_LIBRARIES += libc++
 endif
 LOCAL_CFLAGS := -DEXCLUDE_FS_MGR
+# ignore bootloader's factory reset command even when written to /misc
+ifeq ($(TW_IGNORE_MISC_WIPE_DATA), true)
+    LOCAL_CFLAGS += -DIGNORE_MISC_WIPE_DATA
+endif
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 include $(BUILD_SHARED_LIBRARY)
