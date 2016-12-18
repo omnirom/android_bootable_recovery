@@ -404,6 +404,86 @@ TEST(ImgdiffTest, image_mode_spurious_magic) {
   ASSERT_EQ(tgt, patched);
 }
 
+TEST(ImgdiffTest, image_mode_short_input1) {
+  // src: "abcdefgh" + '0x1f8b0b'.
+  const std::vector<char> src_data = { 'a', 'b', 'c',    'd',    'e',   'f',
+                                       'g', 'h', '\x1f', '\x8b', '\x08' };
+  const std::string src(src_data.cbegin(), src_data.cend());
+  TemporaryFile src_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(src, src_file.path));
+
+  // tgt: "abcdefgxyz".
+  const std::vector<char> tgt_data = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'x', 'y', 'z' };
+  const std::string tgt(tgt_data.cbegin(), tgt_data.cend());
+  TemporaryFile tgt_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(tgt, tgt_file.path));
+
+  TemporaryFile patch_file;
+  std::vector<const char*> args = {
+    "imgdiff", src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  // Verify.
+  std::string patch;
+  ASSERT_TRUE(android::base::ReadFileToString(patch_file.path, &patch));
+
+  // Expect one CHUNK_RAW (header) entry.
+  size_t num_normal;
+  size_t num_raw;
+  size_t num_deflate;
+  verify_patch_header(patch, &num_normal, &num_raw, &num_deflate);
+  ASSERT_EQ(0U, num_normal);
+  ASSERT_EQ(0U, num_deflate);
+  ASSERT_EQ(1U, num_raw);
+
+  std::string patched;
+  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
+                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
+                               MemorySink, &patched));
+  ASSERT_EQ(tgt, patched);
+}
+
+TEST(ImgdiffTest, image_mode_short_input2) {
+  // src: "abcdefgh" + '0x1f8b0b00'.
+  const std::vector<char> src_data = { 'a', 'b', 'c',    'd',    'e',    'f',
+                                       'g', 'h', '\x1f', '\x8b', '\x08', '\x00' };
+  const std::string src(src_data.cbegin(), src_data.cend());
+  TemporaryFile src_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(src, src_file.path));
+
+  // tgt: "abcdefgxyz".
+  const std::vector<char> tgt_data = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'x', 'y', 'z' };
+  const std::string tgt(tgt_data.cbegin(), tgt_data.cend());
+  TemporaryFile tgt_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(tgt, tgt_file.path));
+
+  TemporaryFile patch_file;
+  std::vector<const char*> args = {
+    "imgdiff", src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  // Verify.
+  std::string patch;
+  ASSERT_TRUE(android::base::ReadFileToString(patch_file.path, &patch));
+
+  // Expect one CHUNK_RAW (header) entry.
+  size_t num_normal;
+  size_t num_raw;
+  size_t num_deflate;
+  verify_patch_header(patch, &num_normal, &num_raw, &num_deflate);
+  ASSERT_EQ(0U, num_normal);
+  ASSERT_EQ(0U, num_deflate);
+  ASSERT_EQ(1U, num_raw);
+
+  std::string patched;
+  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
+                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
+                               MemorySink, &patched));
+  ASSERT_EQ(tgt, patched);
+}
+
 TEST(ImgdiffTest, image_mode_single_entry_long) {
   // src: "abcdefgh" + '0x1f8b0b00' + some bytes.
   const std::vector<char> src_data = { 'a',    'b',    'c',    'd',    'e',    'f',    'g',
