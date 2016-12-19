@@ -155,4 +155,5 @@ INSTANTIATE_TEST_CASE_P(BadPackage, VerifierFailureTest,
             std::vector<std::string>({"random.zip", "v1"}),
             std::vector<std::string>({"fake-eocd.zip", "v1"}),
             std::vector<std::string>({"alter-metadata.zip", "v1"}),
-            std::vector<std::string>({"alter-footer.zip", "v1"})));
+            std::vector<std::string>({"alter-footer.zip", "v1"}),
+            std::vector<std::string>({"signature-boundary.zip", "v1"})));
