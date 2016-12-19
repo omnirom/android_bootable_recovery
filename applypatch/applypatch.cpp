@@ -332,6 +332,17 @@ int WriteToPartition(const unsigned char* data, size_t len, const std::string& t
       success = true;
       break;
     }
+
+    if (ota_close(fd) != 0) {
+      printf("failed to close %s: %s\n", partition, strerror(errno));
+      return -1;
+    }
+
+    fd.reset(ota_open(partition, O_RDWR));
+    if (fd == -1) {
+      printf("failed to reopen %s for retry write && verify: %s\n", partition, strerror(errno));
+      return -1;
+    }
   }
 
   if (!success) {
