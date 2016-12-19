@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_ea096b30",
+        "filename": "bootloader_message/bootloader_message.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 290,
+      "author": {
+        "id": 1001827
+      },
+      "writtenOn": "2016-12-19T10:58:47Z",
+      "side": 1,
+      "message": "wrong",
+      "revId": "d48dd184e4fd6d5a46d2b1d53dd2897e961da3d2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_ca16af4c",
+        "filename": "bootloader_message/bootloader_message.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 294,
+      "author": {
+        "id": 1001827
+      },
+      "writtenOn": "2016-12-19T10:58:47Z",
+      "side": 1,
+      "message": "they use printf now here..",
+      "revId": "d48dd184e4fd6d5a46d2b1d53dd2897e961da3d2",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
