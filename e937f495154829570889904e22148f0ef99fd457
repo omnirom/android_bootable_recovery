@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_6afe7b00",
+        "filename": "bootloader_message/bootloader_message.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 294,
+      "author": {
+        "id": 1001827
+      },
+      "writtenOn": "2016-12-19T08:05:51Z",
+      "side": 1,
+      "message": "It seems instead of LOGI they use printf now?",
+      "revId": "e937f495154829570889904e22148f0ef99fd457",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
