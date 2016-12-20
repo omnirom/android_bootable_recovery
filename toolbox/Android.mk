@@ -50,26 +50,29 @@ ifeq ($(TW_USE_TOOLBOX), true)
             du \
 
         OUR_TOOLS := \
-            df \
             iftop \
             ioctl \
-            ionice \
             log \
-            ls \
-            lsof \
-            mount \
             nandread \
             newfs_msdos \
             ps \
             prlimit \
-            renice \
             sendevent \
             start \
             stop \
             top \
-            uptime \
-            watchprops \
 
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 25; echo $$?),0)
+            OUR_TOOLS += \
+                df \
+                ionice \
+                ls \
+                lsof \
+                mount \
+                renice \
+                uptime \
+                watchprops
+        endif
     else
         ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22))
             OUR_TOOLS += \
@@ -217,7 +220,7 @@ ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22 23))
     LOCAL_WHOLE_STATIC_LIBRARIES := $(patsubst %,libtoolbox_%,$(BSD_TOOLS))
 endif
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
+ifneq (,$(filter $(PLATFORM_SDK_VERSION), 23 24))
     # Rule to make getprop and setprop in M trees where toybox normally
     # provides these tools. Toybox does not allow for easy dynamic
     # configuration, so we would have to include the entire toybox binary
