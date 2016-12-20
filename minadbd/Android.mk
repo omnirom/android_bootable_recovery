@@ -30,7 +30,7 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libmincrypttwrp
     LOCAL_CFLAGS += -DUSE_MINCRYPT
 else
-    LOCAL_SHARED_LIBRARIES += libcrypto
+    LOCAL_SHARED_LIBRARIES += libcrypto libcrypto_utils
 endif
 
 include $(BUILD_SHARED_LIBRARY)
