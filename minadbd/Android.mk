@@ -31,6 +31,7 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     LOCAL_CFLAGS += -DUSE_MINCRYPT
 else
     LOCAL_SHARED_LIBRARIES += libcrypto
+    LOCAL_WHOLE_STATIC_LIBRARIES += libcrypto_utils_static
 endif
 
 include $(BUILD_SHARED_LIBRARY)
