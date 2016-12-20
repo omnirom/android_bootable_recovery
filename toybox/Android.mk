@@ -94,7 +94,6 @@ LOCAL_SRC_FILES := \
     toys/other/freeramdisk.c \
     toys/other/fsfreeze.c \
     toys/other/help.c \
-    toys/other/ifconfig.c \
     toys/other/inotifyd.c \
     toys/other/insmod.c \
     toys/other/losetup.c \
@@ -106,7 +105,6 @@ LOCAL_SRC_FILES := \
     toys/other/modinfo.c \
     toys/other/mountpoint.c \
     toys/other/nbd_client.c \
-    toys/other/netcat.c \
     toys/other/partprobe.c \
     toys/other/pivot_root.c \
     toys/other/pmap.c \
@@ -115,13 +113,11 @@ LOCAL_SRC_FILES := \
     toys/other/readlink.c \
     toys/other/realpath.c \
     toys/other/rev.c \
-    toys/other/rfkill.c \
     toys/other/rmmod.c \
     toys/other/setsid.c \
     toys/other/stat.c \
     toys/other/swapoff.c \
     toys/other/swapon.c \
-    toys/other/switch_root.c \
     toys/other/sysctl.c \
     toys/other/tac.c \
     toys/other/taskset.c \
@@ -134,13 +130,9 @@ LOCAL_SRC_FILES := \
     toys/other/yes.c \
     toys/pending/dd.c \
     toys/pending/expr.c \
-    toys/pending/hwclock.c \
     toys/pending/more.c \
-    toys/pending/pgrep.c \
-    toys/pending/netstat.c \
     toys/pending/route.c \
     toys/pending/tar.c \
-    toys/pending/top.c \
     toys/pending/tr.c \
     toys/pending/traceroute.c \
     toys/posix/basename.c \
@@ -196,7 +188,77 @@ LOCAL_SRC_FILES := \
     toys/posix/uname.c \
     toys/posix/uniq.c \
     toys/posix/wc.c \
-    toys/posix/xargs.c \
+    toys/posix/xargs.c
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 24; echo $$?),0)
+# there are some conflicts here with AOSP-7.1 and CM-14.1
+# the following items have been removed for compatibility
+# ifconfig, netcat, netstat, rfkill, switch_root
+LOCAL_STATIC_LIBRARIES := libcrypto_static
+
+LOCAL_C_INCLUDES += \
+    external/boringssl/include \
+    bionic/libc/dns/include
+
+LOCAL_SRC_FILES += \
+    lib/linestack.c \
+    lib/password.c \
+    toys/other/flock.c \
+    toys/other/hwclock.c \
+    toys/other/ionice.c \
+    toys/other/lspci.c \
+    toys/other/readahead.c \
+    toys/other/reset.c \
+    toys/other/uptime.c \
+    toys/other/xxd.c \
+    toys/pending/arp.c \
+    toys/pending/diff.c \
+    toys/pending/ftpget.c \
+    toys/pending/lsof.c \
+    toys/pending/telnet.c \
+    toys/pending/test.c \
+    toys/pending/watch.c \
+    toys/pending/xzcat.c \
+    toys/posix/ps.c \
+    toys/posix/ulimit.c
+
+# Account for master branch changes pulld into CM14.1
+ifneq ($(CM_BUILD),)
+LOCAL_SRC_FILES += \
+    toys/android/log.c \
+    toys/android/sendevent.c \
+    toys/android/start.c \
+    toys/net/ifconfig.c \
+    toys/net/netcat.c \
+    toys/net/netstat.c \
+    toys/net/rfkill.c \
+    toys/net/tunctl.c \
+    toys/other/setfattr.c \
+    toys/pending/chrt.c \
+    toys/pending/fdisk.c \
+    toys/pending/getfattr.c \
+    toys/pending/host.c \
+    toys/pending/resize.c \
+    toys/posix/file.c
+else
+LOCAL_SRC_FILES += \
+    toys/other/ifconfig.c \
+    toys/other/netcat.c \
+    toys/other/rfkill.c \
+    toys/other/switch_root.c \
+    toys/pending/netstat.c
+endif
+else
+LOCAL_SRC_FILES += \
+    toys/other/ifconfig.c \
+    toys/other/netcat.c \
+    toys/other/rfkill.c \
+    toys/other/switch_root.c \
+    toys/pending/hwclock.c \
+    toys/pending/netstat.c \
+    toys/pending/pgrep.c \
+    toys/pending/top.c
+endif
 
 LOCAL_CFLAGS += \
     -std=c99 \
@@ -344,7 +406,82 @@ ALL_TOOLS := \
     which \
     whoami \
     xargs \
-    yes \
+    yes
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 24; echo $$?),0)
+ALL_TOOLS += \
+    arp \
+    base64 \
+    chattr \
+    dd \
+    df \
+    diff \
+    du \
+    egrep \
+    fgrep \
+    flock \
+    freeramdisk \
+    fsfreeze \
+    fstype \
+    ftpget \
+    ftpput \
+    grep \
+    help \
+    install \
+    ionice \
+    iorenice \
+    iotop \
+    killall \
+    ls \
+    lsattr \
+    lsof \
+    lspci \
+    makedevs \
+    mkfifo \
+    mount \
+    nbd-client \
+    nc \
+    netcat \
+    nproc \
+    partprobe \
+    pivot_root \
+    ps \
+    pwdx \
+    readahead \
+    renice \
+    reset \
+    rev \
+    rfkill \
+    sha224sum \
+    sha256sum \
+    sha384sum \
+    sha512sum \
+    telnet \
+    test \
+    top \
+    traceroute \
+    traceroute6 \
+    tty \
+    tunctl \
+    ulimit \
+    uptime \
+    vconfig \
+    watch \
+    xxd \
+    xzcat
+# Account for master branch changes pulld into CM14.1
+ifneq ($(CM_BUILD),)
+ALL_TOOLS += \
+    chrt \
+    fdisk \
+    file \
+    getfattr \
+    host \
+    log \
+    resize \
+    setfattr
+endif
+endif
 
 # Install the symlinks.
 LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(ALL_TOOLS),ln -sf toybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/$(t);)
