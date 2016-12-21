@@ -68,7 +68,7 @@
 		<string name="install_select_file_hdr">Выбор файла</string>
 		<string name="file_selector_folders_hdr">Папки</string>
 		<string name="select_file_from_storage">Текущий накопитель: %tw_storage_display_name% (%tw_storage_free_size% МБ)</string>
-		<string name="adb_sideload_btn">ADB sideload</string>
+		<string name="adb_sideload_btn">ADB Sideload</string>
 		<string name="install_hdr">Установка</string>
 		<string name="select_storage_hdr">Выберите накопитель</string>
 		<string name="select_storage_btn">Выбор накопителя</string>
@@ -106,7 +106,7 @@
 		<string name="image_flashed">Прошивка образа завершена</string>
 		<string name="wipe_cache_dalvik_confirm">Очистить Cache &amp; Dalvik?</string>
 		<string name="wiping_cache_dalvik">Очистка Cache &amp; Dalvik...</string>
-		<string name="wipe_cache_dalvik_complete">Cache &amp; Dalvik очистка завершена</string>
+		<string name="wipe_cache_dalvik_complete">Очистка Cache &amp; Dalvik завершена</string>
 		<string name="swipe_wipe">Свайп для очистки</string>
 		<string name="swipe_wipe_s">   Очистка</string>
 		<string name="no_os1">Система не установлена! Вы уверены,</string>
@@ -115,6 +115,13 @@
 		<string name="rebooting">Перезагрузка...</string>
 		<string name="swipe_reboot">Свайп для перезагрузки</string>
 		<string name="swipe_reboot_s">   Перезагрузка</string>
+		<string name="reboot_install_app_hdr">Установить TWRP App?</string>
+		<string name="reboot_install_app1">Вы хотите установить официальное приложение TWRP?</string>
+		<string name="reboot_install_app2">Оно позволит вам проверять наличие новой версии TWRP.</string>
+		<string name="reboot_install_app_prompt_install">Предлагать установку TWRP App при его отсутствии</string>
+		<string name="reboot_install_app_system">Установить как системное приложение</string>
+		<string name="reboot_installing_app">Установка TWRP приложения...</string>
+		<string name="swipe_to_install_app">Свайп для установки TWRP App</string>
 		<string name="swipe_flash">Свайп для прошивки</string>
 		<string name="confirm_action">Подтвердить действие</string>
 		<string name="back_cancel">Нажмите назад для отмены.</string>
@@ -210,6 +217,11 @@
 		<string name="enable_backup_comp_chk">Использовать сжатие</string>
 		<string name="skip_md5_backup_chk">Пропустить вычисление MD5</string>
 		<string name="disable_backup_space_chk">Отключить проверку свободного места</string>
+		<string name="current_boot_slot">Текущий слот: %tw_active_slot%</string>
+		<string name="boot_slot_a">Слот A</string>
+		<string name="boot_slot_b">Слот B</string>
+		<string name="changing_boot_slot">Изменение слота загрузки</string>
+		<string name="changing_boot_slot_complete">Изменение слота загрузки завершено</string>
 		<string name="refresh_sizes_btn">Обновить размеры</string>
 		<string name="swipe_backup">Свайп для начала</string>
 		<string name="append_date_btn">Добавить дату</string>
@@ -370,7 +382,7 @@
 		<string name="fix_context_btn">Исправить контекст</string>
 		<string name="part_sd_btn">Разметка SD-карты</string>
 		<string name="part_sd_s_btn">Разм-ка SD</string>
-		<string name="file_manager_btn">Файл. менеджер</string>
+		<string name="file_manager_btn">Проводник</string>
 		<string name="language_hdr">Язык</string>
 		<string name="terminal_btn">Терминал</string>
 		<string name="reload_theme_btn">Перезагрузить тему</string>
@@ -535,7 +547,8 @@
 		<string name="unable_to_mount_storage">Не удается смонтировать накопитель</string>
 		<string name="fail_decrypt">Не удается расшифровать data.</string>
 		<string name="no_crypto_support">Шифрование не добавлено в эту сборку, пинайте разработчика.</string>
-		<string name="decrypt_success_dev">Data успешно расшифрован, новое блочное устройство: '{1}'</string>
+		<string name="decrypt_success_dev">Раздел Data успешно расшифрован, новое блочное устройство: '{1}'</string>
+		<string name="decrypt_success_nodev">Раздел Data успешно расшифрован</string>
 		<string name="done">Готово.</string>
 		<string name="start_partition_sd">Разметка SD-карты...</string>
 		<string name="partition_sd_locate">Не удалось найти устройство для разметки.</string>
@@ -572,8 +585,8 @@
 		<string name="repair_resize">Восстановление {1} перед изменением размера.</string>
 		<string name="unable_resize">Не удается изменить размер {1}.</string>
 		<string name="no_md5_found">Отсутствует файл md5 для '{1}'. Пожалуйста отмените выбор проверки MD5 при восстановлении.</string>
-		<string name="md5_fail_match">MD5 не соответствует для '{1}'.</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="md5_fail_match">MD5 не соответствует '{1}'.</string>
+		<string name="md5_matched">MD5 соответствует '{1}'.</string>
 		<string name="fail_decrypt_tar">Не удается расшифровать tar-файл '{1}'</string>
 		<string name="format_data_msg">Вам, возможно, потребуется перезагрузись рекавери, чтобы иметь возможность использовать /data снова.</string>
 		<string name="format_data_err">Невозможно отформатировать и удалить шифрование.</string>
@@ -622,7 +635,7 @@
 		<string name="recovery_commands_complete">Команды рекавери завершены</string>
 		<string name="running_ors">Выполнение OpenRecoveryScript</string>
 		<string name="ors_complete">OpenRecoveryScript выполнен</string>
-		<string name="no_updater_binary">'{1}' не найден в zip файле.</string>
+		<string name="invalid_zip_format">Неверный формат zip файла!</string>
 		<string name="check_for_md5">Проверка MD5-файлов...</string>
 		<string name="fail_sysmap">Не удалось отобразить в память файл '{1}'</string>
 		<string name="verify_zip_sig">Проверка подписи zip...</string>
@@ -664,11 +677,18 @@
 		<string name="curr_date">(Текущая дата)</string>
 		<string name="backup_name_len">Имя резервной копии слишком длинное.</string>
 		<string name="backup_name_invalid">Имя резервной копии '{1}' содержит недопустимые символы: '{1}'</string>
-		<string name="no_real_sdcard">В этом устройстве отсутствует реальная SD-карта! Отмена!</string>
+		<string name="no_real_sdcard">Отмена, т.к. в устройстве отсутствует реальная SD-карта!</string>
 		<string name="cancel_sideload">Отмена ADB Sideload...</string>
 		<string name="change_fs_err">Ошибка при изменении файловой системы.</string>
 		<string name="theme_ver_err">Версия темы не соответствует версии TWRP. Используется тема по умолчанию.</string>
-		<string name="install_reboot">Устройство будет перезагружено через 5 секунд.</string>
 		<string name="up_a_level">(в родительский каталог)</string>
+		<string name="install_reboot" version="2">Устройство будет перезагружено через %tw_sleep% сек.</string>
+		<string name="adbbackup_error">Ошибка резервного копирования по ADB. Выход..."</string>
+		<string name="adbbackup_control_error">Невозможно записать в канал управления ADB.</string>
+		<string name="twrp_adbbu_option">-- эта опция позволяет делать резервное копирование по adb</string>
+		<string name="partition_not_found">путь: {1} отсутсвует в списке разделов.</string>
+		<string name="copy_kernel_log">Kernel Log скопирован в {1}</string>
+		<string name="include_kernel_log">Добавить Kernel Log</string>
+		<string name="unable_set_boot_slot">Ошибка смены слота загрузки bootloader на {1}</string>
 	</resources>
 </language>
