@@ -87,6 +87,7 @@ static const struct option OPTIONS[] = {
   { "security", no_argument, NULL, 'e'},
   { "wipe_ab", no_argument, NULL, 0 },
   { "wipe_package_size", required_argument, NULL, 0 },
+  { "prompt_and_wipe_data", no_argument, NULL, 0 },
   { NULL, 0, NULL, 0 },
 };
 
@@ -138,6 +139,8 @@ struct selabel_handle* sehandle;
  * The arguments which may be supplied in the recovery.command file:
  *   --update_package=path - verify install an OTA package file
  *   --wipe_data - erase user data (and cache), then reboot
+ *   --prompt_and_wipe_data - prompt the user that data is corrupt,
+ *       with their consent erase user data (and cache), then reboot
  *   --wipe_cache - wipe cache (but not user data), then reboot
  *   --set_encrypted_filesystem=on|off - enables / diasables encrypted fs
  *   --just_exit - do nothing; exit and reboot
@@ -765,12 +768,12 @@ static bool yes_no(Device* device, const char* question1, const char* question2)
     return (chosen_item == 1);
 }
 
-// Return true on success.
-static bool wipe_data(int should_confirm, Device* device) {
-    if (should_confirm && !yes_no(device, "Wipe all user data?", "  THIS CAN NOT BE UNDONE!")) {
-        return false;
-    }
+static bool ask_to_wipe_data(Device* device) {
+    return yes_no(device, "Wipe all user data?", "  THIS CAN NOT BE UNDONE!");
+}
 
+// Return true on success.
+static bool wipe_data(Device* device) {
     modified_flash = true;
 
     ui->Print("\n-- Wiping data...\n");
@@ -781,6 +784,28 @@ static bool wipe_data(int should_confirm, Device* device) {
         device->PostWipeData();
     ui->Print("Data wipe %s.\n", success ? "complete" : "failed");
     return success;
+}
+
+static bool prompt_and_wipe_data(Device* device) {
+    const char* const headers[] = {
+        "Boot halted, user data is corrupt",
+        "Wipe all user data to recover",
+        NULL
+    };
+    const char* const items[] = {
+        "Retry boot",
+        "Wipe user data",
+        NULL
+    };
+    for (;;) {
+        int chosen_item = get_menu_selection(headers, items, 1, 0, device);
+        if (chosen_item != 1) {
+            return true; // Just reboot, no wipe; not a failure, user asked for it
+        }
+        if (ask_to_wipe_data(device)) {
+            return wipe_data(device);
+        }
+    }
 }
 
 // Return true on success.
@@ -1147,8 +1172,14 @@ prompt_and_wait(Device* device, int status) {
                 return chosen_action;
 
             case Device::WIPE_DATA:
-                wipe_data(ui->IsTextVisible(), device);
-                if (!ui->IsTextVisible()) return Device::NO_ACTION;
+                if (ui->IsTextVisible()) {
+                    if (ask_to_wipe_data(device)) {
+                        wipe_data(device);
+                    }
+                } else {
+                    wipe_data(device);
+                    return Device::NO_ACTION;
+                }
                 break;
 
             case Device::WIPE_CACHE:
@@ -1404,6 +1435,7 @@ int main(int argc, char **argv) {
 
     const char *update_package = NULL;
     bool should_wipe_data = false;
+    bool should_prompt_and_wipe_data = false;
     bool should_wipe_cache = false;
     bool should_wipe_ab = false;
     size_t wipe_package_size = 0;
@@ -1441,12 +1473,13 @@ int main(int argc, char **argv) {
         case 'r': reason = optarg; break;
         case 'e': security_update = true; break;
         case 0: {
-            if (strcmp(OPTIONS[option_index].name, "wipe_ab") == 0) {
+            std::string option = OPTIONS[option_index].name;
+            if (option == "wipe_ab") {
                 should_wipe_ab = true;
-                break;
-            } else if (strcmp(OPTIONS[option_index].name, "wipe_package_size") == 0) {
+            } else if (option == "wipe_package_size") {
                 android::base::ParseUint(optarg, &wipe_package_size);
-                break;
+            } else if (option == "prompt_and_wipe_data") {
+                should_prompt_and_wipe_data = true;
             }
             break;
         }
@@ -1566,9 +1599,16 @@ int main(int argc, char **argv) {
             }
         }
     } else if (should_wipe_data) {
-        if (!wipe_data(false, device)) {
+        if (!wipe_data(device)) {
             status = INSTALL_ERROR;
         }
+    } else if (should_prompt_and_wipe_data) {
+        ui->ShowText(true);
+        ui->SetBackground(RecoveryUI::ERROR);
+        if (!prompt_and_wipe_data(device)) {
+            status = INSTALL_ERROR;
+        }
+        ui->ShowText(false);
     } else if (should_wipe_cache) {
         if (!wipe_cache(false, device)) {
             status = INSTALL_ERROR;
