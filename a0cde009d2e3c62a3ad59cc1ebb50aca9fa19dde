@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "78209991_8a1437a3",
+        "filename": "minadbd/Android.mk",
+        "patchSetId": 6
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1000235
+      },
+      "writtenOn": "2016-12-22T05:33:30Z",
+      "side": 1,
+      "message": "I can remove this line and stack my patch on top of 20879",
+      "parentUuid": "78209991_2a3c032b",
+      "range": {
+        "startLine": 33,
+        "startChar": 39,
+        "endLine": 33,
+        "endChar": 55
+      },
+      "revId": "a0cde009d2e3c62a3ad59cc1ebb50aca9fa19dde",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_4a373f49",
         "filename": "updater/Android.mk",
         "patchSetId": 6
