@@ -96,7 +96,7 @@ int TWFunc::Exec_Cmd(const string& cmd) {
 }
 
 // Returns "file.name" from a full /path/to/file.name
-string TWFunc::Get_Filename(string Path) {
+string TWFunc::Get_Filename(const string& Path) {
 	size_t pos = Path.find_last_of("/");
 	if (pos != string::npos) {
 		string Filename;
@@ -107,7 +107,7 @@ string TWFunc::Get_Filename(string Path) {
 }
 
 // Returns "/path/to/" from a full /path/to/file.name
-string TWFunc::Get_Path(string Path) {
+string TWFunc::Get_Path(const string& Path) {
 	size_t pos = Path.find_last_of("/");
 	if (pos != string::npos) {
 		string Pathonly;
@@ -355,7 +355,7 @@ int32_t TWFunc::timespec_diff_ms(timespec& start, timespec& end)
 #ifndef BUILD_TWRPTAR_MAIN
 
 // Returns "/path" from a full /path/to/file.name
-string TWFunc::Get_Root_Path(string Path) {
+string TWFunc::Get_Root_Path(const string& Path) {
 	string Local_Path = Path;
 
 	// Make sure that we have a leading slash
@@ -724,7 +724,7 @@ int TWFunc::read_file(string fn, uint64_t& results) {
 	return -1;
 }
 
-int TWFunc::write_file(string fn, string& line) {
+int TWFunc::write_file(const string& fn, const string& line) {
 	FILE *file;
 	file = fopen(fn.c_str(), "w");
 	if (file != NULL) {
