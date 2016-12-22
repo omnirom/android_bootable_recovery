@@ -30,6 +30,7 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
 		<string name="adopted_storage">Adopted Storage</string>
+		<string name="autostorage">Storage</string>
 
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>

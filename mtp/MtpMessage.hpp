@@ -25,8 +25,8 @@
 struct mtpmsg {
 	int message_type; // 1 is add, 2 is remove, see above
 	unsigned int storage_id;
-	const char* display;
-	const char* path;
+	char display[1024];
+	char path[1024];
 	uint64_t maxFileSize;
 };
 
