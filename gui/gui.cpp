@@ -33,7 +33,11 @@
 #include <sys/mount.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdlib.h>
+
+#include <sys/poll.h>
+#include <sys/socket.h>
+#include <linux/types.h>
+#include <linux/netlink.h>
 
 extern "C"
 {
@@ -78,6 +82,11 @@ int gGuiRunning = 0;
 
 int g_pty_fd = -1;  // set by terminal on init
 void terminal_pty_read();
+
+int uevent_fd = -1;
+struct pollfd uevent_pfd;
+
+int select_fd = 0;
 
 static int gRecorder = -1;
 
@@ -393,9 +402,18 @@ void InputHandler::handleDrag()
 	}
 }
 
+void set_select_fd() {
+	select_fd = ors_read_fd + 1;
+	if (g_pty_fd >= select_fd)
+		select_fd = g_pty_fd + 1;
+	if (uevent_fd >= select_fd)
+		select_fd = uevent_fd + 1;
+}
+
 static void setup_ors_command()
 {
 	ors_read_fd = -1;
+	set_select_fd();
 
 	unlink(ORS_INPUT_FILE);
 	if (mkfifo(ORS_INPUT_FILE, 06660) != 0) {
@@ -415,6 +433,7 @@ static void setup_ors_command()
 		unlink(ORS_INPUT_FILE);
 		unlink(ORS_OUTPUT_FILE);
 	}
+	set_select_fd();
 }
 
 // callback called after a CLI command was executed
@@ -446,6 +465,7 @@ static void ors_command_read()
 		if (!orsout) {
 			close(ors_read_fd);
 			ors_read_fd = -1;
+			set_select_fd();
 			LOGINFO("Unable to fopen %s\n", ORS_OUTPUT_FILE);
 			unlink(ORS_INPUT_FILE);
 			unlink(ORS_OUTPUT_FILE);
@@ -488,6 +508,90 @@ static void ors_command_read()
 				// put all things that need to be done after the command is finished into ors_command_done, not here
 			}
 		}
+	}
+}
+
+static void setup_uevent() {
+	struct sockaddr_nl nls;
+
+	if (uevent_fd >= 0) {
+		LOGINFO("uevent already set up\n");
+		return;
+	}
+
+	// Open hotplug event netlink socket
+	memset(&nls,0,sizeof(struct sockaddr_nl));
+	nls.nl_family = AF_NETLINK;
+	nls.nl_pid = getpid();
+	nls.nl_groups = -1;
+	uevent_pfd.events = POLLIN;
+	uevent_pfd.fd = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_KOBJECT_UEVENT);
+	if (uevent_pfd.fd==-1) {
+		LOGERR("uevent not root\n");
+		return;
+	}
+
+	// Listen to netlink socket
+	if (::bind(uevent_pfd.fd, (struct sockaddr *) &nls, sizeof(struct sockaddr_nl)) < 0) {
+		LOGERR("Bind failed\n");
+		return;
+	}
+	uevent_fd = uevent_pfd.fd;
+	set_select_fd();
+}
+
+static Uevent_Block_Data get_event_block_values(char *buf, int len) {
+	Uevent_Block_Data ret;
+	ret.subsystem = "";
+	char *ptr = buf;
+	const char *end = buf + len;
+
+	buf[len - 1] = '\0';
+	while (ptr < end) {
+		if (strncmp(ptr, "ACTION=", strlen("ACTION=")) == 0) {
+			ptr += strlen("ACTION=");
+			ret.action = ptr;
+		} else if (strncmp(ptr, "SUBSYSTEM=", strlen("SUBSYSTEM=")) == 0) {
+			ptr += strlen("SUBSYSTEM=");
+			ret.subsystem = ptr;
+		} else if (strncmp(ptr, "DEVTYPE=", strlen("DEVTYPE=")) == 0) {
+			ptr += strlen("DEVTYPE=");
+			ret.type = ptr;
+		} else if (strncmp(ptr, "DEVPATH=", strlen("DEVPATH=")) == 0) {
+			ptr += strlen("DEVPATH=");
+			ret.sysfs_path += ptr;
+		} else if (strncmp(ptr, "DEVNAME=", strlen("DEVNAME=")) == 0) {
+			ptr += strlen("DEVNAME=");
+			ret.block_device = "/dev/block/";
+			ret.block_device += ptr;
+		} else if (strncmp(ptr, "MAJOR=", strlen("MAJOR=")) == 0) {
+			ptr += strlen("MAJOR=");
+			ret.major = atoi(ptr);
+		} else if (strncmp(ptr, "MINOR=", strlen("MINOR=")) == 0) {
+			ptr += strlen("MINOR=");
+			ret.minor = atoi(ptr);
+		}
+		ptr += strlen(ptr) + 1;
+	}
+	return ret;
+}
+
+static void read_uevent() {
+	char buf[1024];
+
+	int len = recv(uevent_pfd.fd, buf, sizeof(buf), MSG_DONTWAIT);
+	if (len == -1) {
+		LOGERR("recv error on uevent\n");
+		return;
+	}
+	/*int i = 0; // Print all uevent output for test /debug
+	while (i<len) {
+		printf("%s\n", buf+i);
+		i += strlen(buf+i)+1;
+	}*/
+	Uevent_Block_Data uevent_data = get_event_block_values(buf, len);
+	if (uevent_data.subsystem == "block" && uevent_data.type == "disk") {
+		PartitionManager.Handle_Uevent(uevent_data);
 	}
 }
 
@@ -557,32 +661,34 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 	int input_timeout_ms = 0;
 	int idle_frames = 0;
 
+	setup_uevent();
+
 	for (;;)
 	{
 		loopTimer(input_timeout_ms);
+		FD_ZERO(&fdset);
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 1;
 		if (g_pty_fd > 0) {
-			// TODO: this is not nice, we should have one central select for input, pty, and ors
-			FD_ZERO(&fdset);
 			FD_SET(g_pty_fd, &fdset);
-			timeout.tv_sec = 0;
-			timeout.tv_usec = 1;
-			has_data = select(g_pty_fd+1, &fdset, NULL, NULL, &timeout);
-			if (has_data > 0) {
-				terminal_pty_read();
-			}
+		}
+		if (uevent_fd > 0) {
+			FD_SET(uevent_fd, &fdset);
 		}
 #ifndef TW_OEM_BUILD
 		if (ors_read_fd > 0 && !orsout) { // orsout is non-NULL if a command is still running
-			FD_ZERO(&fdset);
 			FD_SET(ors_read_fd, &fdset);
-			timeout.tv_sec = 0;
-			timeout.tv_usec = 1;
-			has_data = select(ors_read_fd+1, &fdset, NULL, NULL, &timeout);
-			if (has_data > 0) {
-				ors_command_read();
-			}
 		}
 #endif
+		has_data = select(select_fd, &fdset, NULL, NULL, &timeout);
+		if (has_data > 0) {
+			if (g_pty_fd > 0 && FD_ISSET(g_pty_fd, &fdset))
+				terminal_pty_read();
+			if (uevent_fd > 0 && FD_ISSET(uevent_fd, &fdset))
+				read_uevent();
+			if (ors_read_fd > 0 && !orsout && FD_ISSET(ors_read_fd, &fdset))
+				ors_command_read();
+		}
 
 		if (!gForceRender.get_value())
 		{
@@ -642,6 +748,10 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 	if (ors_read_fd > 0)
 		close(ors_read_fd);
 	ors_read_fd = -1;
+	if (uevent_fd > 0)
+		close(uevent_fd);
+	uevent_fd = -1;
+	set_select_fd();
 	gGuiRunning = 0;
 	return 0;
 }

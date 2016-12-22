@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <sys/vfs.h>
 #include <unistd.h>
+#include <map>
 #include <vector>
 #include <dirent.h>
 #include <time.h>
@@ -95,6 +96,35 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 	TWPartition* settings_partition = NULL;
 	TWPartition* andsec_partition = NULL;
 	unsigned int storageid = 1 << 16;	// upper 16 bits are for physical storage device, we pretend to have only one
+	std::map<string, string> twrp_flags;
+	
+	fstabFile = fopen("/etc/twrp.flags", "rt");
+	if (fstabFile != NULL) {
+		while (fgets(fstab_line, sizeof(fstab_line), fstabFile) != NULL) {
+			if (fstab_line[0] != '/')
+				continue;
+
+			size_t line_size = strlen(fstab_line);
+			if (fstab_line[line_size - 1] != '\n')
+				fstab_line[line_size] = '\n';
+			bool found_separator = false;
+			char *ptr = NULL;
+			int index;
+			for (index = 0; index < line_size; index++) {
+				if (fstab_line[index] <= 32) {
+					fstab_line[index] = '\0';
+					found_separator = true;
+				} else if (found_separator) {
+					ptr = fstab_line + index;
+					break;
+				}
+			}
+			string Mount_Point = fstab_line;
+			string Flags = ptr;
+			twrp_flags[Mount_Point] = Flags;
+		}
+		fclose(fstabFile);
+	}			
 
 	fstabFile = fopen(Fstab_Filename.c_str(), "rt");
 	if (fstabFile == NULL) {
@@ -106,11 +136,15 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		if (fstab_line[0] != '/')
 			continue;
 
-		if (fstab_line[strlen(fstab_line) - 1] != '\n')
-			fstab_line[strlen(fstab_line)] = '\n';
+		if (strstr(fstab_line, "swap"))
+			continue; // Skip swap in recovery
+
+		size_t line_size = strlen(fstab_line);
+		if (fstab_line[line_size - 1] != '\n')
+			fstab_line[line_size] = '\n';
 
 		TWPartition* partition = new TWPartition();
-		if (partition->Process_Fstab_Line(fstab_line, Display_Error))
+		if (partition->Process_Fstab_Line(fstab_line, Display_Error, &twrp_flags))
 			Partitions.push_back(partition);
 		else
 			delete partition;
@@ -365,7 +399,7 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 	string back_meth = Part->Backup_Method_By_Name();
 	printf("   Backup_Method: %s\n", back_meth.c_str());
 	if (Part->Mount_Flags || !Part->Mount_Options.empty())
-		printf("   Mount_Options: %s\n", Part->Mount_Options.c_str());
+		printf("   Mount_Flags: %i, Mount_Options: %s\n", Part->Mount_Flags, Part->Mount_Options.c_str());
 	if (Part->MTP_Storage_ID)
 		printf("   MTP_Storage_ID: %i\n", Part->MTP_Storage_ID);
 	printf("\n");
@@ -2434,6 +2468,13 @@ void TWPartitionManager::Translate_Partition_Display_Names() {
 	if (part)
 		part->Backup_Display_Name = gui_lookup("android_secure", "Android Secure");
 
+	std::vector<TWPartition*>::iterator sysfs;
+	for (sysfs = Partitions.begin(); sysfs != Partitions.end(); sysfs++) {
+		if (!(*sysfs)->Sysfs_Entry.empty()) {
+			Translate_Partition((*sysfs)->Mount_Point.c_str(), "autostorage", "Storage", "autostorage", "Storage");
+		}
+	}
+
 	// This updates the text on all of the storage selection buttons in the GUI
 	DataManager::SetBackupFolder();
 }
@@ -2575,4 +2616,34 @@ string TWPartitionManager::Get_Active_Slot_Suffix() {
 }
 string TWPartitionManager::Get_Active_Slot_Display() {
 	return Active_Slot_Display;
+}
+
+void TWPartitionManager::Handle_Uevent(const Uevent_Block_Data& uevent_data) {
+	std::vector<TWPartition*>::iterator iter;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if (!(*iter)->Sysfs_Entry.empty()) {
+			string device;
+			size_t wildcard = (*iter)->Sysfs_Entry.find("*");
+			if (wildcard != string::npos) {
+				device = (*iter)->Sysfs_Entry.substr(0, wildcard);
+			} else {
+				device = (*iter)->Sysfs_Entry;
+			}
+			if (device == uevent_data.sysfs_path.substr(0, device.size())) {
+				// Found a match
+				if (uevent_data.action == "add") {
+					(*iter)->Primary_Block_Device = uevent_data.block_device + "*";
+					(*iter)->Find_Actual_Block_Device();
+					return;
+				} else if (uevent_data.action == "remove") {
+					(*iter)->Is_Present = false;
+					(*iter)->Primary_Block_Device = "";
+					(*iter)->Actual_Block_Device = "";
+					return;
+				}
+			}
+		}
+	}
+	LOGINFO("Found no matching fstab entry for uevent device '%s' - %s\n", uevent_data.sysfs_path.c_str(), uevent_data.action.c_str());
 }

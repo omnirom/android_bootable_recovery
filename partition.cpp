@@ -79,40 +79,47 @@ extern "C" {
 
 using namespace std;
 
+static int auto_index = 0;
+
 extern struct selabel_handle *selinux_handle;
 extern bool datamedia;
 
 struct flag_list {
 	const char *name;
-	unsigned flag;
+	long flag;
 };
 
 const struct flag_list mount_flags[] = {
-	{ "noatime",    MS_NOATIME },
-	{ "noexec",     MS_NOEXEC },
-	{ "nosuid",     MS_NOSUID },
-	{ "nodev",      MS_NODEV },
-	{ "nodiratime", MS_NODIRATIME },
-	{ "ro",         MS_RDONLY },
-	{ "rw",         0 },
-	{ "remount",    MS_REMOUNT },
-	{ "bind",       MS_BIND },
-	{ "rec",        MS_REC },
+	{ "noatime",          MS_NOATIME },
+	{ "noexec",           MS_NOEXEC },
+	{ "nosuid",           MS_NOSUID },
+	{ "nodev",            MS_NODEV },
+	{ "nodiratime",       MS_NODIRATIME },
+	{ "ro",               MS_RDONLY },
+	{ "rw",               0 },
+	{ "remount",          MS_REMOUNT },
+	{ "bind",             MS_BIND },
+	{ "rec",              MS_REC },
 #ifdef MS_UNBINDABLE
-	{ "unbindable", MS_UNBINDABLE },
+	{ "unbindable",       MS_UNBINDABLE },
 #endif
 #ifdef MS_PRIVATE
-	{ "private",    MS_PRIVATE },
+	{ "private",          MS_PRIVATE },
 #endif
 #ifdef MS_SLAVE
-	{ "slave",      MS_SLAVE },
+	{ "slave",            MS_SLAVE },
 #endif
 #ifdef MS_SHARED
-	{ "shared",     MS_SHARED },
+	{ "shared",           MS_SHARED },
 #endif
-	{ "sync",       MS_SYNCHRONOUS },
-	{ "defaults",   0 },
-	{ 0,            0 },
+	{ "sync",             MS_SYNCHRONOUS },
+	{ "defaults",         -1 },
+	{ "barrier=",         0 },
+	{ "data=",            0 },
+	{ "nomblk_io_submit", 0 },
+	{ "noauto_da_alloc",  0 },
+	{ "errors=",          -1 },
+	{ 0,                  0 },
 };
 
 enum TW_FSTAB_FLAGS {
@@ -143,6 +150,12 @@ enum TW_FSTAB_FLAGS {
 	TWFLAG_WIPEDURINGFACTORYRESET,
 	TWFLAG_WIPEINGUI,
 	TWFLAG_SLOTSELECT,
+	TWFLAG_WAIT,
+	TWFLAG_VERIFY,
+	TWFLAG_CHECK,
+	TWFLAG_ALTDEVICE,
+	TWFLAG_NOTRIM,
+	TWFLAG_VOLDMANAGED,
 };
 
 /* Flags without a trailing '=' are considered dual format flags and can be
@@ -177,6 +190,12 @@ const struct flag_list tw_flags[] = {
 	{ "wipeduringfactoryreset", TWFLAG_WIPEDURINGFACTORYRESET },
 	{ "wipeingui",              TWFLAG_WIPEINGUI },
 	{ "slotselect",             TWFLAG_SLOTSELECT },
+	{ "wait",                   TWFLAG_WAIT },
+	{ "verify",                 TWFLAG_VERIFY },
+	{ "check",                  TWFLAG_CHECK },
+	{ "altdevice",              TWFLAG_ALTDEVICE },
+	{ "notrim",                 TWFLAG_NOTRIM },
+	{ "voldmanaged=",           TWFLAG_VOLDMANAGED },
 	{ 0,                        0 },
 };
 
@@ -194,6 +213,8 @@ TWPartition::TWPartition() {
 	Symlink_Mount_Point = "";
 	Mount_Point = "";
 	Backup_Path = "";
+	Wildcard_Block_Device = false;
+	Sysfs_Entry = "";
 	Actual_Block_Device = "";
 	Primary_Block_Device = "";
 	Alternate_Block_Device = "";
@@ -244,12 +265,14 @@ TWPartition::~TWPartition(void) {
 	// Do nothing
 }
 
-bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error) {
+bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error, std::map<string, string> *twrp_flags) {
 	char full_line[MAX_FSTAB_LINE_LENGTH];
 	char twflags[MAX_FSTAB_LINE_LENGTH] = "";
 	char* ptr;
 	int line_len = strlen(fstab_line), index = 0, item_index = 0;
 	bool skip = false;
+	int fstab_version = 1, mount_point_index = 0, fs_index = 1, block_device_index = 2;
+	TWPartition *additional_entry = NULL;
 
 	strlcpy(full_line, fstab_line, sizeof(full_line));
 	for (index = 0; index < line_len; index++) {
@@ -258,26 +281,43 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 		if (!skip && full_line[index] <= 32)
 			full_line[index] = '\0';
 	}
-	Mount_Point = full_line;
-	LOGINFO("Processing '%s'\n", Mount_Point.c_str());
-	Backup_Path = Mount_Point;
-	Storage_Path = Mount_Point;
-	Display_Name = full_line + 1;
-	Backup_Display_Name = Display_Name;
-	Storage_Name = Display_Name;
-	index = Mount_Point.size();
+	if (line_len < 10)
+		return false; // There can't possibly be a valid fstab line that is less than 10 chars
+	if (strncmp(fstab_line, "/dev/", strlen("/dev/")) == 0 || strncmp(fstab_line, "/devices/", strlen("/devices/")) == 0) {
+		fstab_version = 2;
+		block_device_index = 0;
+		mount_point_index = 1;
+		fs_index = 2;
+	}
+
+	index = 0;
 	while (index < line_len) {
 		while (index < line_len && full_line[index] == '\0')
 			index++;
 		if (index >= line_len)
 			continue;
 		ptr = full_line + index;
-		if (item_index == 0) {
+		if (item_index == mount_point_index) {
+			Mount_Point = ptr;
+			if (fstab_version == 2) {
+				additional_entry = PartitionManager.Find_Partition_By_Path(Mount_Point);
+				if (additional_entry) {
+					LOGINFO("Found an additional entry for '%s'\n", Mount_Point.c_str());
+				}
+			}
+			LOGINFO("Processing '%s'\n", Mount_Point.c_str());
+			Backup_Path = Mount_Point;
+			Storage_Path = Mount_Point;
+			Display_Name = ptr + 1;
+			Backup_Display_Name = Display_Name;
+			Storage_Name = Display_Name;
+			item_index++;
+		} else if (item_index == fs_index) {
 			// File System
 			Fstab_File_System = ptr;
 			Current_File_System = ptr;
 			item_index++;
-		} else if (item_index == 1) {
+		} else if (item_index == block_device_index) {
 			// Primary Block Device
 			if (Fstab_File_System == "mtd" || Fstab_File_System == "yaffs2") {
 				MTD_Name = ptr;
@@ -301,8 +341,19 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 				Find_Real_Block_Device(Primary_Block_Device, Display_Error);
 			}
 			item_index++;
-		} else if (item_index > 1) {
-			if (*ptr == '/') {
+		} else if (item_index > 2) {
+			if (fstab_version == 2) {
+				if (item_index == 3) {
+					Process_FS_Flags(ptr);
+					if (additional_entry) {
+						additional_entry->Save_FS_Flags(Fstab_File_System, Mount_Flags, Mount_Options);
+						return false; // We save the extra fs flags in the other partition entry and by returning false, this entry will be deleted
+					}
+				} else {
+					strlcpy(twflags, ptr, sizeof(twflags));
+				}
+				item_index++;
+			} else if (*ptr == '/') { // v2 fstab does not allow alternate block devices
 				// Alternate Block Device
 				Alternate_Block_Device = ptr;
 				Find_Real_Block_Device(Alternate_Block_Device, Display_Error);
@@ -325,7 +376,33 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 			index++;
 	}
 
-	if (!Is_File_System(Fstab_File_System) && !Is_Image(Fstab_File_System)) {
+	if (strncmp(fstab_line, "/devices/", strlen("/devices/")) == 0) {
+		Sysfs_Entry = Primary_Block_Device;
+		Primary_Block_Device = "";
+		Is_Storage = true;
+		Removable = true;
+		Wipe_Available_in_GUI = true;
+		Wildcard_Block_Device = true;
+	}
+	if (Primary_Block_Device.find("*") != string::npos)
+		Wildcard_Block_Device = true;
+
+	if (Mount_Point == "auto") {
+		Mount_Point = "/auto";
+		char autoi[5];
+		sprintf(autoi, "%i", auto_index);
+		Mount_Point += autoi;
+		auto_index++;
+		Setup_File_System(Display_Error);
+		Display_Name = "Storage";
+		Backup_Display_Name = Display_Name;
+		Storage_Name = Display_Name;
+		Can_Be_Backed_Up = false;
+		Wipe_Available_in_GUI = true;
+		Is_Storage = true;
+		Removable = true;
+		Wipe_Available_in_GUI = true;
+	} else if (!Is_File_System(Fstab_File_System) && !Is_Image(Fstab_File_System)) {
 		if (Display_Error)
 			LOGERR("Unknown File System: '%s'\n", Fstab_File_System.c_str());
 		else
@@ -450,7 +527,8 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 		Storage_Name = "";
 		Backup_Display_Name = "";
 
-		Process_TW_Flags(twflags, Display_Error);
+		Process_TW_Flags(twflags, Display_Error, fstab_version);
+		Save_FS_Flags(Fstab_File_System, Mount_Flags, Mount_Options);
 
 		bool has_display_name = !Display_Name.empty();
 		bool has_storage_name = !Storage_Name.empty();
@@ -467,6 +545,21 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 			Backup_Display_Name = Display_Name;
 		if (!has_display_name && has_backup_name)
 			Display_Name = Backup_Display_Name;
+	}
+
+	if (fstab_version == 2 && twrp_flags->size() > 0) {
+		std::map<string, string>::iterator it = twrp_flags->find(Mount_Point);
+		if (it != twrp_flags->end()) {
+			char twrpflags[MAX_FSTAB_LINE_LENGTH] = "";
+			int skip = 0;
+			string Flags = it->second;
+			strcpy(twrpflags, Flags.c_str());
+			if (strlen(twrpflags) > strlen("flags=") && strncmp(twrpflags, "flags=", strlen("flags=")) == 0)
+				skip += strlen("flags=");
+			char* flagptr = twrpflags;
+			flagptr += skip;
+			Process_TW_Flags(flagptr, Display_Error, 1); // Forcing the fstab to ver 1 because this data is coming from the /etc/twrp.flags which should be using the TWRP v1 flags format
+		}
 	}
 	return true;
 }
@@ -604,13 +697,28 @@ void TWPartition::Process_FS_Flags(const char *str) {
 	ptr = strtok_r(options, ",", &savep);
 	while (ptr) {
 		const struct flag_list* mount_flag = mount_flags;
+		char *equals = strstr(ptr, "=");
+		size_t diff = equals - ptr;
 
 		for (; mount_flag->name; mount_flag++) {
 			// mount_flags are never postfixed by '=',
 			// so only match identical strings (including length)
-			if (strcmp(ptr, mount_flag->name) == 0) {
-				Mount_Flags |= mount_flag->flag;
-				break;
+			if (equals && diff > 0) {
+				if (strncmp(ptr, mount_flag->name, diff) == 0) {
+					if (mount_flag->flag < 0)
+						goto skip;
+					if (!Mount_Options.empty())
+						Mount_Options += ",";
+					Mount_Options += ptr;
+					goto skip;
+				}
+			} else {
+				if (strcmp(ptr, mount_flag->name) == 0) {
+					if (mount_flag->flag < 0)
+						goto skip;
+					Mount_Flags |= (unsigned)mount_flag->flag;
+					break;
+				}
 			}
 		}
 
@@ -624,10 +732,18 @@ void TWPartition::Process_FS_Flags(const char *str) {
 		} else {
 			LOGINFO("Unhandled mount flag: '%s'\n", ptr);
 		}
-
+skip:
 		ptr = strtok_r(NULL, ",", &savep);
 	}
 	free(options);
+}
+
+void TWPartition::Save_FS_Flags(const string& local_File_System, int local_Mount_Flags, const string& local_Mount_Options) {
+	partition_fs_flags_struct flags;
+	flags.File_System = local_File_System;
+	flags.Mount_Flags = local_Mount_Flags;
+	flags.Mount_Options = local_Mount_Options;
+	fs_flags.push_back(flags);
 }
 
 void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool val) {
@@ -651,6 +767,11 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 			Can_Encrypt_Backup = val;
 			break;
 		case TWFLAG_DEFAULTS:
+		case TWFLAG_WAIT:
+		case TWFLAG_VERIFY:
+		case TWFLAG_CHECK:
+		case TWFLAG_NOTRIM:
+		case TWFLAG_VOLDMANAGED:
 			// Do nothing
 			break;
 		case TWFLAG_DISPLAY:
@@ -722,6 +843,9 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 		case TWFLAG_SLOTSELECT:
 			SlotSelect = true;
 			break;
+		case TWFLAG_ALTDEVICE:
+			Alternate_Block_Device = str;
+			break;
 		default:
 			// Should not get here
 			LOGINFO("Flag identified for processing, but later unmatched: %i\n", flag);
@@ -729,16 +853,20 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 	}
 }
 
-void TWPartition::Process_TW_Flags(char *flags, bool Display_Error) {
+void TWPartition::Process_TW_Flags(char *flags, bool Display_Error, int fstab_ver) {
 	char separator[2] = {'\n', 0};
 	char *ptr, *savep;
+	char source_separator = ';';
+
+	if (fstab_ver == 2)
+		source_separator = ',';
 
 	// Semicolons within double-quotes are not forbidden, so replace
 	// only the semicolons intended as separators with '\n' for strtok
 	for (unsigned i = 0, skip = 0; i < strlen(flags); i++) {
 		if (flags[i] == '\"')
 			skip = !skip;
-		if (!skip && flags[i] == ';')
+		if (!skip && flags[i] == source_separator)
 			flags[i] = separator[0];
 	}
 
@@ -1875,6 +2003,22 @@ void TWPartition::Check_FS_Type() {
 
 	Current_File_System = type;
 	blkid_free_probe(pr);
+	if (fs_flags.size() > 1) {
+		std::vector<partition_fs_flags_struct>::iterator iter;
+		std::vector<partition_fs_flags_struct>::iterator found = fs_flags.begin();
+
+		for (iter = fs_flags.begin(); iter != fs_flags.end(); iter++) {
+			if (iter->File_System == Current_File_System) {
+				found = iter;
+				break;
+			}
+		}
+		if (Mount_Flags != found->Mount_Flags || Mount_Options != found->Mount_Options) {
+			Mount_Flags = found->Mount_Flags;
+			Mount_Options = found->Mount_Options;
+			LOGINFO("Mount_Flags: %i, Mount_Options: %s\n", Mount_Flags, Mount_Options.c_str());
+		}
+	}
 }
 
 bool TWPartition::Wipe_EXT23(string File_System) {
@@ -2573,7 +2717,61 @@ bool TWPartition::Update_Size(bool Display_Error) {
 }
 
 void TWPartition::Find_Actual_Block_Device(void) {
-	if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
+	if (!Sysfs_Entry.empty() && Primary_Block_Device.empty()) {
+		Is_Present = false;
+		return;
+	}
+	if (Wildcard_Block_Device) {
+		Is_Present = false;
+		size_t last_slash_index = Primary_Block_Device.find_last_of("/");
+		if (last_slash_index == string::npos) {
+			LOGINFO("Error finding / in '%s'\n", Primary_Block_Device.c_str());
+			return;
+		}
+		string Path = Primary_Block_Device.substr(0, last_slash_index);
+		string Block_Name = Primary_Block_Device.substr(last_slash_index + 1);
+		size_t wildcard_index = Block_Name.find("*");
+		if (wildcard_index == string::npos) {
+			LOGINFO("Error finding * in '%s'\n", Block_Name.c_str());
+			return;
+		}
+		Block_Name = Block_Name.substr(0, wildcard_index);
+		DIR* d;
+		d = opendir(Path.c_str());
+		if (d == NULL) {
+			LOGINFO("Error opening '%s'\n", Path.c_str());
+			return;
+		}
+		struct dirent* de;
+		string Found = "";
+		unsigned long long biggest_size = 0;
+		while ((de = readdir(d)) != NULL) {
+			if (de->d_type != DT_BLK || strlen(de->d_name) < Block_Name.size() || strncmp(de->d_name, Block_Name.c_str(), Block_Name.size()) != 0)
+				continue;
+
+			string item = Path + "/";
+			item.append(de->d_name);
+			if (strcmp(de->d_name, Block_Name.c_str()) == 0) {
+				if (Found.empty())
+					Found = item;
+			} else {
+				unsigned long long size = TWFunc::IOCTL_Get_Block_Size(item.c_str());
+				if (size > biggest_size) {
+					Found = item;
+					biggest_size = size;
+				}
+			}
+		}
+		closedir(d);
+		if (!Found.empty()) {
+			if (Found != Actual_Block_Device) {
+				LOGINFO("Using '%s' for %s\n", Found.c_str(), Mount_Point.c_str());
+			}
+			Is_Present = true;
+			Actual_Block_Device = Found;
+			return;
+		}
+	} else if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
 		Actual_Block_Device = Decrypted_Block_Device;
 		if (TWFunc::Path_Exists(Decrypted_Block_Device)) {
 			Is_Present = true;
