@@ -105,7 +105,7 @@ int twrpDigest::write_md5digest(void) {
 	md5file = md5fn + ".md5";
 
 	md5str = createMD5string();
-	TWFunc::write_file(md5file, md5str);
+	TWFunc::write_to_file(md5file, md5str);
 	tw_set_default_metadata(md5file.c_str());
 	LOGINFO("MD5 for %s: %s\n", md5fn.c_str(), md5str.c_str());
 	return 0;

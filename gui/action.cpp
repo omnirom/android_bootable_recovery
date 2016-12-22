@@ -1,4 +1,4 @@
-/*update
+/*
 	Copyright 2013 bigbiff/Dees_Troy TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
