@@ -46,30 +46,32 @@ ifeq ($(TW_USE_TOOLBOX), true)
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
         # These are the only toolbox tools in M. The rest are now in toybox.
         BSD_TOOLS := \
-            dd \
-            du \
+            $(if $(filter $(PLATFORM_SDK_VERSION), 23 24), du)
 
         OUR_TOOLS := \
             iftop \
             ioctl \
-            log \
             nandread \
             newfs_msdos \
-            ps \
             prlimit \
             sendevent \
             start \
             stop \
-            top \
 
-        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 25; echo $$?),0)
+        ifneq (,$(filter $(PLATFORM_SDK_VERSION), 23))
+            BSD_TOOLS += \
+                dd \
+
             OUR_TOOLS += \
                 df \
                 ionice \
+                log \
                 ls \
                 lsof \
                 mount \
+                ps \
                 renice \
+                top \
                 uptime \
                 watchprops
         endif
@@ -220,19 +222,19 @@ ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22 23))
     LOCAL_WHOLE_STATIC_LIBRARIES := $(patsubst %,libtoolbox_%,$(BSD_TOOLS))
 endif
 
-ifneq (,$(filter $(PLATFORM_SDK_VERSION), 23 24))
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
     # Rule to make getprop and setprop in M trees where toybox normally
     # provides these tools. Toybox does not allow for easy dynamic
     # configuration, so we would have to include the entire toybox binary
     # which takes up more space than is necessary so long as we are still
     # including busybox.
+ifneq ($(TW_USE_TOOLBOX), true)
     LOCAL_SRC_FILES += \
         ../../../$(TWRP_TOOLBOX_PATH)/getprop.c \
-        ../../../$(TWRP_TOOLBOX_PATH)/setprop.c
+        ../../../$(TWRP_TOOLBOX_PATH)/setprop.c \
+        ../../../$(TWRP_TOOLBOX_PATH)/ls.c
     OUR_TOOLS += getprop setprop
-    ifneq ($(TW_USE_TOOLBOX), true)
-        LOCAL_SRC_FILES += ../../../$(TWRP_TOOLBOX_PATH)/ls.c
-    endif
+endif
 endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
     # Rule for making start and stop in N trees
