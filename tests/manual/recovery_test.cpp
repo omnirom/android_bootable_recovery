@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -79,7 +78,7 @@ TEST(recovery, persist) {
   std::string buf;
   EXPECT_TRUE(android::base::ReadFileToString(myFilename, &buf));
   EXPECT_EQ(myContent, buf);
-  if (access(myFilename.c_str(), O_RDONLY) == 0) {
+  if (access(myFilename.c_str(), F_OK) == 0) {
     fprintf(stderr, "Removing persistent test data, "
         "check if reconstructed on reboot\n");
   }
