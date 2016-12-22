@@ -33,7 +33,6 @@
 #include <sys/mount.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 extern "C"
 {
@@ -78,6 +77,8 @@ int gGuiRunning = 0;
 
 int g_pty_fd = -1;  // set by terminal on init
 void terminal_pty_read();
+
+int select_fd = 0;
 
 static int gRecorder = -1;
 
@@ -393,9 +394,18 @@ void InputHandler::handleDrag()
 	}
 }
 
+void set_select_fd() {
+	select_fd = ors_read_fd + 1;
+	if (g_pty_fd >= select_fd)
+		select_fd = g_pty_fd + 1;
+	if (PartitionManager.uevent_pfd.fd >= select_fd)
+		select_fd = PartitionManager.uevent_pfd.fd + 1;
+}
+
 static void setup_ors_command()
 {
 	ors_read_fd = -1;
+	set_select_fd();
 
 	unlink(ORS_INPUT_FILE);
 	if (mkfifo(ORS_INPUT_FILE, 06660) != 0) {
@@ -415,6 +425,7 @@ static void setup_ors_command()
 		unlink(ORS_INPUT_FILE);
 		unlink(ORS_OUTPUT_FILE);
 	}
+	set_select_fd();
 }
 
 // callback called after a CLI command was executed
@@ -446,6 +457,7 @@ static void ors_command_read()
 		if (!orsout) {
 			close(ors_read_fd);
 			ors_read_fd = -1;
+			set_select_fd();
 			LOGINFO("Unable to fopen %s\n", ORS_OUTPUT_FILE);
 			unlink(ORS_INPUT_FILE);
 			unlink(ORS_OUTPUT_FILE);
@@ -557,32 +569,34 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 	int input_timeout_ms = 0;
 	int idle_frames = 0;
 
+	PartitionManager.setup_uevent();
+
 	for (;;)
 	{
 		loopTimer(input_timeout_ms);
+		FD_ZERO(&fdset);
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 1;
 		if (g_pty_fd > 0) {
-			// TODO: this is not nice, we should have one central select for input, pty, and ors
-			FD_ZERO(&fdset);
 			FD_SET(g_pty_fd, &fdset);
-			timeout.tv_sec = 0;
-			timeout.tv_usec = 1;
-			has_data = select(g_pty_fd+1, &fdset, NULL, NULL, &timeout);
-			if (has_data > 0) {
-				terminal_pty_read();
-			}
+		}
+		if (PartitionManager.uevent_pfd.fd > 0) {
+			FD_SET(PartitionManager.uevent_pfd.fd, &fdset);
 		}
 #ifndef TW_OEM_BUILD
 		if (ors_read_fd > 0 && !orsout) { // orsout is non-NULL if a command is still running
-			FD_ZERO(&fdset);
 			FD_SET(ors_read_fd, &fdset);
-			timeout.tv_sec = 0;
-			timeout.tv_usec = 1;
-			has_data = select(ors_read_fd+1, &fdset, NULL, NULL, &timeout);
-			if (has_data > 0) {
-				ors_command_read();
-			}
 		}
 #endif
+		has_data = select(select_fd, &fdset, NULL, NULL, &timeout);
+		if (has_data > 0) {
+			if (g_pty_fd > 0 && FD_ISSET(g_pty_fd, &fdset))
+				terminal_pty_read();
+			if (PartitionManager.uevent_pfd.fd > 0 && FD_ISSET(PartitionManager.uevent_pfd.fd, &fdset))
+				PartitionManager.read_uevent();
+			if (ors_read_fd > 0 && !orsout && FD_ISSET(ors_read_fd, &fdset))
+				ors_command_read();
+		}
 
 		if (!gForceRender.get_value())
 		{
@@ -642,6 +656,8 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 	if (ors_read_fd > 0)
 		close(ors_read_fd);
 	ors_read_fd = -1;
+	PartitionManager.close_uevent();
+	set_select_fd();
 	gGuiRunning = 0;
 	return 0;
 }

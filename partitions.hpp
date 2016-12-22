@@ -19,8 +19,10 @@
 #ifndef __TWRP_Partition_Manager
 #define __TWRP_Partition_Manager
 
+#include <map>
 #include <vector>
 #include <string>
+#include <sys/poll.h>
 #include "exclude.hpp"
 #include "tw_atomic.hpp"
 #include "progresstracking.hpp"
@@ -33,6 +35,22 @@ struct PartitionList {
 	std::string Display_Name;
 	std::string Mount_Point;
 	unsigned int selected;
+};
+
+struct Uevent_Block_Data {
+	std::string action;
+	std::string subsystem;
+	std::string block_device;
+	std::string type;
+	std::string sysfs_path;
+	int major;
+	int minor;
+};
+
+struct Flags_Map {
+	std::string File_System;
+	std::string Flags;
+	char* fstab_line;
 };
 
 enum PartitionManager_Op {                                                        // PartitionManager Restore Mode for Raw_Read_Write()
@@ -122,14 +140,15 @@ protected:
 	void Setup_Data_Media();                                                  // Sets up a partition as a /data/media emulated storage partition
 
 private:
-	bool Process_Fstab_Line(const char *fstab_line, bool Display_Error);      // Processes a fstab line
+	bool Process_Fstab_Line(const char *fstab_line, bool Display_Error, std::map<string, Flags_Map> *twrp_flags);      // Processes a fstab line
 	void Setup_Data_Partition(bool Display_Error);                            // Setup data partition after fstab processed
 	void Setup_Cache_Partition(bool Display_Error);                           // Setup cache partition after fstab processed
 	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
 
 	void Apply_TW_Flag(const unsigned flag, const char* str, const bool val); // Apply custom twrp fstab flags
-	void Process_TW_Flags(char *flags, bool Display_Error);                   // Process custom twrp fstab flags
+	void Process_TW_Flags(char *flags, bool Display_Error, int fstab_ver);    // Process custom twrp fstab flags
 	void Process_FS_Flags(const char *str);                                   // Process standard fstab fs flags
+	void Save_FS_Flags(const string& local_File_System, int local_Mount_Flags, const string& local_Mount_Options); // Saves fs flags to a vector in case there are multiple lines in a v2 fstab with different mount flags for different file systems
 	bool Is_File_System(string File_System);                                  // Checks to see if the file system given is considered a file system
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
 	void Setup_File_System(bool Display_Error);                               // Sets defaults for a file system partition
@@ -182,6 +201,8 @@ private:
 	string Symlink_Mount_Point;                                               // /sdcard could be the symlink mount point for /data/media
 	string Mount_Point;                                                       // Mount point for this partition (e.g. /system or /data)
 	string Backup_Path;                                                       // Path for backup
+	bool Wildcard_Block_Device;
+	string Sysfs_Entry;
 	string Primary_Block_Device;                                              // Block device (e.g. /dev/block/mmcblk1p1)
 	string Alternate_Block_Device;                                            // Alternate block device (e.g. /dev/block/mmcblk1)
 	string Decrypted_Block_Device;                                            // Decrypted block device available after decryption
@@ -220,6 +241,14 @@ private:
 	bool SlotSelect;                                                          // Partition has A/B slots
 	TWExclude backup_exclusions;                                              // Exclusions for file based backups
 	TWExclude wipe_exclusions;                                                // Exclusions for file based wipes (data/media devices only)
+
+	struct partition_fs_flags_struct {
+		string File_System;
+		int Mount_Flags;
+		string Mount_Options;
+	};
+
+	std::vector<partition_fs_flags_struct> fs_flags;
 
 friend class TWPartitionManager;
 friend class DataManager;
@@ -295,6 +324,12 @@ public:
 	void Set_Active_Slot(const string& Slot);                                 // Sets the active slot to A or B
 	string Get_Active_Slot_Suffix();                                          // Returns active slot _a or _b
 	string Get_Active_Slot_Display();                                         // Returns active slot A or B for display purposes
+	struct pollfd uevent_pfd;
+	void Handle_Uevent(const Uevent_Block_Data& uevent_data);                 // Handle uevent data
+	void setup_uevent();
+	Uevent_Block_Data get_event_block_values(char *buf, int len);
+	void read_uevent();
+	void close_uevent();
 
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
