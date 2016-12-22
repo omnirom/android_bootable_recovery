@@ -15,7 +15,6 @@
  */
 
 #include <errno.h>
-#include <fcntl.h>
 #include <unistd.h>
 
 #include <memory>
@@ -42,10 +41,10 @@ TEST(ZipTest, ExtractPackageRecursive) {
 
   // Make sure all the files are extracted correctly.
   std::string path(td.path);
-  ASSERT_EQ(0, access((path + "/a.txt").c_str(), O_RDONLY));
-  ASSERT_EQ(0, access((path + "/b.txt").c_str(), O_RDONLY));
-  ASSERT_EQ(0, access((path + "/b/c.txt").c_str(), O_RDONLY));
-  ASSERT_EQ(0, access((path + "/b/d.txt").c_str(), O_RDONLY));
+  ASSERT_EQ(0, access((path + "/a.txt").c_str(), F_OK));
+  ASSERT_EQ(0, access((path + "/b.txt").c_str(), F_OK));
+  ASSERT_EQ(0, access((path + "/b/c.txt").c_str(), F_OK));
+  ASSERT_EQ(0, access((path + "/b/d.txt").c_str(), F_OK));
 
   // The content of the file is the same as expected.
   std::string content1;
@@ -54,7 +53,16 @@ TEST(ZipTest, ExtractPackageRecursive) {
 
   std::string content2;
   ASSERT_TRUE(android::base::ReadFileToString(path + "/b/d.txt", &content2));
-  ASSERT_EQ(kBTxtContents, content2);
+  ASSERT_EQ(kDTxtContents, content2);
+
+  CloseArchive(handle);
+
+  // Clean up.
+  ASSERT_EQ(0, unlink((path + "/a.txt").c_str()));
+  ASSERT_EQ(0, unlink((path + "/b.txt").c_str()));
+  ASSERT_EQ(0, unlink((path + "/b/c.txt").c_str()));
+  ASSERT_EQ(0, unlink((path + "/b/d.txt").c_str()));
+  ASSERT_EQ(0, rmdir((path + "/b").c_str()));
 }
 
 TEST(ZipTest, OpenFromMemory) {
@@ -76,6 +84,7 @@ TEST(ZipTest, OpenFromMemory) {
   ASSERT_NE(-1, tmp_binary.fd);
   ASSERT_EQ(0, ExtractEntryToFile(handle, &binary_entry, tmp_binary.fd));
 
+  CloseArchive(handle);
   sysReleaseMap(&map);
 }
 
