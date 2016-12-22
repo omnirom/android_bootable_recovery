@@ -34,6 +34,7 @@ extern "C" {
 #include "../twcommon.h"
 }
 #include "../minuitwrp/minui.h"
+#include "gui.hpp"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
@@ -83,6 +84,7 @@ public:
 			// and write it to the terminal
 			// this currently works through gui.cpp calling terminal_pty_read below
 			g_pty_fd = fdMaster;
+			set_select_fd();
 			return true;
 		}
 		else {
@@ -174,6 +176,7 @@ public:
 		}
 		close(fdMaster);
 		g_pty_fd = fdMaster = -1;
+		set_select_fd();
 		int status;
 		waitpid(pid, &status, WNOHANG); // avoid zombies but don't hang if the child is still alive and we got here due to some error
 		pid = 0;
