@@ -30,10 +30,8 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libmincrypttwrp
     LOCAL_CFLAGS += -DUSE_MINCRYPT
 else
-    LOCAL_SHARED_LIBRARIES += libcrypto
-ifneq ($(wildcard system/core/libcrypto_utils/Android.mk),)
-    LOCAL_SHARED_LIBRARIES += libcrypto_utils
-endif
+    LOCAL_SHARED_LIBRARIES += libcrypto \
+    $(if $(WITH_CRYPTO_UTILS),libcrypto_utils)
 endif
 
 include $(BUILD_SHARED_LIBRARY)
