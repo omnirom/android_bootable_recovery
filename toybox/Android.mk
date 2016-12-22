@@ -190,8 +190,8 @@ LOCAL_SRC_FILES := \
     toys/posix/wc.c \
     toys/posix/xargs.c
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 24; echo $$?),0)
-# there are some conflicts here with AOSP-7.1 and CM-14.1
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
+# there are some conflicts here with AOSP-7.[01] and CM-14.[01]
 # the following items have been removed for compatibility
 # ifconfig, netcat, netstat, rfkill, switch_root
 LOCAL_STATIC_LIBRARIES := libcrypto_static
@@ -408,7 +408,7 @@ ALL_TOOLS := \
     xargs \
     yes
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 24; echo $$?),0)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
 ALL_TOOLS += \
     arp \
     base64 \
@@ -416,7 +416,6 @@ ALL_TOOLS += \
     dd \
     df \
     diff \
-    du \
     egrep \
     fgrep \
     flock \
@@ -469,6 +468,10 @@ ALL_TOOLS += \
     watch \
     xxd \
     xzcat
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 24; echo $$?),0)
+ALL_TOOLS += \
+    du
+endif
 # Account for master branch changes pulld into CM14.1
 ifneq ($(CM_BUILD),)
 ALL_TOOLS += \
