@@ -19,6 +19,7 @@
 #ifndef __TWRP_Partition_Manager
 #define __TWRP_Partition_Manager
 
+#include <map>
 #include <vector>
 #include <string>
 #include "exclude.hpp"
@@ -122,14 +123,15 @@ protected:
 	void Setup_Data_Media();                                                  // Sets up a partition as a /data/media emulated storage partition
 
 private:
-	bool Process_Fstab_Line(const char *fstab_line, bool Display_Error);      // Processes a fstab line
+	bool Process_Fstab_Line(const char *fstab_line, bool Display_Error, std::map<string, string> *twrp_flags);      // Processes a fstab line
 	void Setup_Data_Partition(bool Display_Error);                            // Setup data partition after fstab processed
 	void Setup_Cache_Partition(bool Display_Error);                           // Setup cache partition after fstab processed
 	void Find_Actual_Block_Device();                                          // Determines the correct block device and stores it in Actual_Block_Device
 
 	void Apply_TW_Flag(const unsigned flag, const char* str, const bool val); // Apply custom twrp fstab flags
-	void Process_TW_Flags(char *flags, bool Display_Error);                   // Process custom twrp fstab flags
+	void Process_TW_Flags(char *flags, bool Display_Error, int fstab_ver);    // Process custom twrp fstab flags
 	void Process_FS_Flags(const char *str);                                   // Process standard fstab fs flags
+	void Save_FS_Flags(const string& local_File_System, int local_Mount_Flags, const string& local_Mount_Options); // Saves fs flags to a vector in case there are multiple lines in a v2 fstab with different mount flags for different file systems
 	bool Is_File_System(string File_System);                                  // Checks to see if the file system given is considered a file system
 	bool Is_Image(string File_System);                                        // Checks to see if the file system given is considered an image
 	void Setup_File_System(bool Display_Error);                               // Sets defaults for a file system partition
@@ -220,6 +222,14 @@ private:
 	bool SlotSelect;                                                          // Partition has A/B slots
 	TWExclude backup_exclusions;                                              // Exclusions for file based backups
 	TWExclude wipe_exclusions;                                                // Exclusions for file based wipes (data/media devices only)
+
+	struct partition_fs_flags_struct {
+		string File_System;
+		int Mount_Flags;
+		string Mount_Options;
+	};
+
+	std::vector<partition_fs_flags_struct> fs_flags;
 
 friend class TWPartitionManager;
 friend class DataManager;
