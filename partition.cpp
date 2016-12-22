@@ -143,6 +143,10 @@ enum TW_FSTAB_FLAGS {
 	TWFLAG_WIPEDURINGFACTORYRESET,
 	TWFLAG_WIPEINGUI,
 	TWFLAG_SLOTSELECT,
+	TWFLAG_WAIT,
+	TWFLAG_VERIFY,
+	TWFLAG_CHECK,
+	TWFLAG_ALTDEVICE,
 };
 
 /* Flags without a trailing '=' are considered dual format flags and can be
@@ -177,6 +181,10 @@ const struct flag_list tw_flags[] = {
 	{ "wipeduringfactoryreset", TWFLAG_WIPEDURINGFACTORYRESET },
 	{ "wipeingui",              TWFLAG_WIPEINGUI },
 	{ "slotselect",             TWFLAG_SLOTSELECT },
+	{ "wait",                   TWFLAG_WAIT },
+	{ "verify",                 TWFLAG_VERIFY },
+	{ "check",                  TWFLAG_CHECK },
+	{ "altdevice",              TWFLAG_ALTDEVICE },
 	{ 0,                        0 },
 };
 
@@ -244,12 +252,14 @@ TWPartition::~TWPartition(void) {
 	// Do nothing
 }
 
-bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error) {
+bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error, std::map<string, string> *twrp_flags) {
 	char full_line[MAX_FSTAB_LINE_LENGTH];
 	char twflags[MAX_FSTAB_LINE_LENGTH] = "";
 	char* ptr;
 	int line_len = strlen(fstab_line), index = 0, item_index = 0;
 	bool skip = false;
+	int fstab_version = 1, mount_point_index = 0, fs_index = 1, block_device_index = 2;
+	TWPartition *additional_entry = NULL;
 
 	strlcpy(full_line, fstab_line, sizeof(full_line));
 	for (index = 0; index < line_len; index++) {
@@ -258,26 +268,43 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 		if (!skip && full_line[index] <= 32)
 			full_line[index] = '\0';
 	}
-	Mount_Point = full_line;
-	LOGINFO("Processing '%s'\n", Mount_Point.c_str());
-	Backup_Path = Mount_Point;
-	Storage_Path = Mount_Point;
-	Display_Name = full_line + 1;
-	Backup_Display_Name = Display_Name;
-	Storage_Name = Display_Name;
-	index = Mount_Point.size();
+	if (line_len < 5)
+		return false; // There can't possibly be a valid fstab line that is less than 5 chars
+	if (strncmp(fstab_line, "/dev/", strlen("/dev/")) == 0) {
+		fstab_version = 2;
+		block_device_index = 0;
+		mount_point_index = 1;
+		fs_index = 2;
+	}
+
+	index = 0;
 	while (index < line_len) {
 		while (index < line_len && full_line[index] == '\0')
 			index++;
 		if (index >= line_len)
 			continue;
 		ptr = full_line + index;
-		if (item_index == 0) {
+		if (item_index == mount_point_index) {
+			Mount_Point = ptr;
+			if (fstab_version == 2) {
+				additional_entry = PartitionManager.Find_Partition_By_Path(Mount_Point);
+				if (additional_entry) {
+					LOGINFO("Found an additional entry for '%s'\n", Mount_Point.c_str());
+				}
+			}
+			LOGINFO("Processing '%s'\n", Mount_Point.c_str());
+			Backup_Path = Mount_Point;
+			Storage_Path = Mount_Point;
+			Display_Name = ptr + 1;
+			Backup_Display_Name = Display_Name;
+			Storage_Name = Display_Name;
+			item_index++;
+		} else if (item_index == fs_index) {
 			// File System
 			Fstab_File_System = ptr;
 			Current_File_System = ptr;
 			item_index++;
-		} else if (item_index == 1) {
+		} else if (item_index == block_device_index) {
 			// Primary Block Device
 			if (Fstab_File_System == "mtd" || Fstab_File_System == "yaffs2") {
 				MTD_Name = ptr;
@@ -301,8 +328,19 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 				Find_Real_Block_Device(Primary_Block_Device, Display_Error);
 			}
 			item_index++;
-		} else if (item_index > 1) {
-			if (*ptr == '/') {
+		} else if (item_index > 2) {
+			if (fstab_version == 2) {
+				if (item_index == 2) {
+					Process_FS_Flags(ptr);
+					if (additional_entry) {
+						additional_entry->Save_FS_Flags(Fstab_File_System, Mount_Flags, Mount_Options);
+						return false; // We save the extra fs flags in the other partition entry and by returning false, this entry will be deleted
+					}
+					item_index++;
+				} else {
+					strlcpy(twflags, ptr, sizeof(twflags));
+				}
+			} else if (*ptr == '/') { // v2 fstab does not allow alternate block devices
 				// Alternate Block Device
 				Alternate_Block_Device = ptr;
 				Find_Real_Block_Device(Alternate_Block_Device, Display_Error);
@@ -450,7 +488,17 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 		Storage_Name = "";
 		Backup_Display_Name = "";
 
-		Process_TW_Flags(twflags, Display_Error);
+		Process_TW_Flags(twflags, Display_Error, fstab_version);
+		if (fstab_version == 2 && twrp_flags->size() > 0) {
+			std::map<string, string>::iterator it = twrp_flags->find(Mount_Point);
+			if (it != twrp_flags->end()) {
+				char twrpflags[MAX_FSTAB_LINE_LENGTH] = "";
+				string Flags = it->second;
+				strcpy(twrpflags, Flags.c_str());
+				Process_TW_Flags(twrpflags, Display_Error, 1); // Forcing the fstab to ver 1 because this data is coming from the /etc/twrp.flags which should be using the TWRP v1 flags format
+			}
+		}
+		Save_FS_Flags(Fstab_File_System, Mount_Flags, Mount_Options);
 
 		bool has_display_name = !Display_Name.empty();
 		bool has_storage_name = !Storage_Name.empty();
@@ -630,6 +678,14 @@ void TWPartition::Process_FS_Flags(const char *str) {
 	free(options);
 }
 
+void TWPartition::Save_FS_Flags(const string& local_File_System, int local_Mount_Flags, const string& local_Mount_Options) {
+	partition_fs_flags_struct flags;
+	flags.File_System = local_File_System;
+	flags.Mount_Flags = local_Mount_Flags;
+	flags.Mount_Options = local_Mount_Options;
+	fs_flags.push_back(flags);
+}
+
 void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool val) {
 	switch (flag) {
 		case TWFLAG_ANDSEC:
@@ -651,6 +707,9 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 			Can_Encrypt_Backup = val;
 			break;
 		case TWFLAG_DEFAULTS:
+		case TWFLAG_WAIT:
+		case TWFLAG_VERIFY:
+		case TWFLAG_CHECK:
 			// Do nothing
 			break;
 		case TWFLAG_DISPLAY:
@@ -722,6 +781,9 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 		case TWFLAG_SLOTSELECT:
 			SlotSelect = true;
 			break;
+		case TWFLAG_ALTDEVICE:
+			Alternate_Block_Device = str;
+			break;
 		default:
 			// Should not get here
 			LOGINFO("Flag identified for processing, but later unmatched: %i\n", flag);
@@ -729,16 +791,20 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 	}
 }
 
-void TWPartition::Process_TW_Flags(char *flags, bool Display_Error) {
+void TWPartition::Process_TW_Flags(char *flags, bool Display_Error, int fstab_ver) {
 	char separator[2] = {'\n', 0};
 	char *ptr, *savep;
+	char source_separator = ';';
+
+	if (fstab_ver == 2)
+		source_separator = ',';
 
 	// Semicolons within double-quotes are not forbidden, so replace
 	// only the semicolons intended as separators with '\n' for strtok
 	for (unsigned i = 0, skip = 0; i < strlen(flags); i++) {
 		if (flags[i] == '\"')
 			skip = !skip;
-		if (!skip && flags[i] == ';')
+		if (!skip && flags[i] == source_separator)
 			flags[i] = separator[0];
 	}
 
@@ -1875,6 +1941,17 @@ void TWPartition::Check_FS_Type() {
 
 	Current_File_System = type;
 	blkid_free_probe(pr);
+	if (fs_flags.size() > 1) {
+		std::vector<partition_fs_flags_struct>::iterator iter;
+
+		for (iter = fs_flags.begin(); iter != fs_flags.end(); iter++) {
+			if (iter->File_System == Current_File_System) {
+				Mount_Flags = iter->Mount_Flags;
+				Mount_Options = iter->Mount_Options;
+				break;
+			}
+		}
+	}
 }
 
 bool TWPartition::Wipe_EXT23(string File_System) {

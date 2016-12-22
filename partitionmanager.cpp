@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <sys/vfs.h>
 #include <unistd.h>
+#include <map>
 #include <vector>
 #include <dirent.h>
 #include <time.h>
@@ -95,6 +96,35 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 	TWPartition* settings_partition = NULL;
 	TWPartition* andsec_partition = NULL;
 	unsigned int storageid = 1 << 16;	// upper 16 bits are for physical storage device, we pretend to have only one
+	std::map<string, string> twrp_flags;
+	
+	fstabFile = fopen("/etc/twrp.flags", "rt");
+	if (fstabFile != NULL) {
+		while (fgets(fstab_line, sizeof(fstab_line), fstabFile) != NULL) {
+			if (fstab_line[0] != '/')
+				continue;
+
+			size_t line_size = strlen(fstab_line);
+			if (fstab_line[line_size - 1] != '\n')
+				fstab_line[line_size] = '\n';
+			bool found_separator = false;
+			char *ptr = NULL;
+			int index;
+			for (index = 0; index < line_size; index++) {
+				if (fstab_line[index] <= 32) {
+					fstab_line[index] = '\0';
+					found_separator = true;
+				} else if (found_separator) {
+					ptr = fstab_line + index;
+					break;
+				}
+			}
+			string Mount_Point = fstab_line;
+			string Flags = ptr;
+			twrp_flags[Mount_Point] = Flags;
+		}
+		fclose(fstabFile);
+	}			
 
 	fstabFile = fopen(Fstab_Filename.c_str(), "rt");
 	if (fstabFile == NULL) {
@@ -106,11 +136,12 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		if (fstab_line[0] != '/')
 			continue;
 
-		if (fstab_line[strlen(fstab_line) - 1] != '\n')
-			fstab_line[strlen(fstab_line)] = '\n';
+		size_t line_size = strlen(fstab_line);
+		if (fstab_line[line_size - 1] != '\n')
+			fstab_line[line_size] = '\n';
 
 		TWPartition* partition = new TWPartition();
-		if (partition->Process_Fstab_Line(fstab_line, Display_Error))
+		if (partition->Process_Fstab_Line(fstab_line, Display_Error, &twrp_flags))
 			Partitions.push_back(partition);
 		else
 			delete partition;
