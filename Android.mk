@@ -302,6 +302,8 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         LOCAL_SHARED_LIBRARIES += libe4crypt
     endif
 endif
+WITH_CRYPTO_UTILS := \
+    $(if $(wildcard system/core/libcrypto_utils/Android.mk),true)
 ifeq ($(TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID), true)
     LOCAL_CFLAGS += -DTW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
 endif
