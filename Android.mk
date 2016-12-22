@@ -349,6 +349,8 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
     LOCAL_CFLAGS += -DTW_USE_NEW_MINADBD
 endif
+TW_USE_TOOLBOX ?= \
+    $(if $(wildcard external/busybox/Android.mk),,true)
 ifneq ($(TW_DEFAULT_LANGUAGE),)
     LOCAL_CFLAGS += -DTW_DEFAULT_LANGUAGE=$(TW_DEFAULT_LANGUAGE)
 else
