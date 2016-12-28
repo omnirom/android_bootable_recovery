@@ -41,27 +41,26 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
+#include <applypatch/applypatch.h>
+#include <openssl/sha.h>
 #include <ziparchive/zip_archive.h>
 
-#include "applypatch/applypatch.h"
 #include "edify/expr.h"
 #include "error_code.h"
 #include "updater/install.h"
-#include "openssl/sha.h"
 #include "ota_io.h"
 #include "print_sha1.h"
 #include "updater/updater.h"
-
-static constexpr size_t BLOCKSIZE = 4096;
 
 // Set this to 0 to interpret 'erase' transfers to mean do a
 // BLKDISCARD ioctl (the normal behavior).  Set to 1 to interpret
 // erase to mean fill the region with zeroes.
 #define DEBUG_ERASE  0
 
-#define STASH_DIRECTORY_BASE "/cache/recovery"
-#define STASH_DIRECTORY_MODE 0700
-#define STASH_FILE_MODE 0600
+static constexpr size_t BLOCKSIZE = 4096;
+static constexpr const char* STASH_DIRECTORY_BASE = "/cache/recovery";
+static constexpr mode_t STASH_DIRECTORY_MODE = 0700;
+static constexpr mode_t STASH_FILE_MODE = 0600;
 
 struct RangeSet {
     size_t count;             // Limit is INT_MAX.
@@ -509,18 +508,18 @@ static void EnumerateStash(const std::string& dirname, StashCallback callback, v
 }
 
 static void UpdateFileSize(const std::string& fn, void* data) {
-    if (fn.empty() || !data) {
-        return;
-    }
+  if (fn.empty() || !data) {
+    return;
+  }
 
-    struct stat sb;
-    if (stat(fn.c_str(), &sb) == -1) {
-        PLOG(ERROR) << "stat \"" << fn << "\" failed";
-        return;
-    }
+  struct stat sb;
+  if (stat(fn.c_str(), &sb) == -1) {
+    PLOG(ERROR) << "stat \"" << fn << "\" failed";
+    return;
+  }
 
-    int* size = reinterpret_cast<int*>(data);
-    *size += sb.st_size;
+  size_t* size = static_cast<size_t*>(data);
+  *size += sb.st_size;
 }
 
 // Deletes the stash directory and all files in it. Assumes that it only
@@ -710,63 +709,67 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
 // hash enough space for the expected amount of blocks we need to store. Returns
 // >0 if we created the directory, zero if it existed already, and <0 of failure.
 
-static int CreateStash(State* state, int maxblocks, const char* blockdev, std::string& base) {
-    if (blockdev == nullptr) {
-        return -1;
+static int CreateStash(State* state, size_t maxblocks, const std::string& blockdev,
+                       std::string& base) {
+  if (blockdev.empty()) {
+    return -1;
+  }
+
+  // Stash directory should be different for each partition to avoid conflicts
+  // when updating multiple partitions at the same time, so we use the hash of
+  // the block device name as the base directory
+  uint8_t digest[SHA_DIGEST_LENGTH];
+  SHA1(reinterpret_cast<const uint8_t*>(blockdev.data()), blockdev.size(), digest);
+  base = print_sha1(digest);
+
+  std::string dirname = GetStashFileName(base, "", "");
+  struct stat sb;
+  int res = stat(dirname.c_str(), &sb);
+  size_t max_stash_size = maxblocks * BLOCKSIZE;
+
+  if (res == -1 && errno != ENOENT) {
+    ErrorAbort(state, kStashCreationFailure, "stat \"%s\" failed: %s\n", dirname.c_str(),
+               strerror(errno));
+    return -1;
+  } else if (res != 0) {
+    LOG(INFO) << "creating stash " << dirname;
+    res = mkdir(dirname.c_str(), STASH_DIRECTORY_MODE);
+
+    if (res != 0) {
+      ErrorAbort(state, kStashCreationFailure, "mkdir \"%s\" failed: %s\n", dirname.c_str(),
+                 strerror(errno));
+      return -1;
     }
 
-    // Stash directory should be different for each partition to avoid conflicts
-    // when updating multiple partitions at the same time, so we use the hash of
-    // the block device name as the base directory
-    uint8_t digest[SHA_DIGEST_LENGTH];
-    SHA1(reinterpret_cast<const uint8_t*>(blockdev), strlen(blockdev), digest);
-    base = print_sha1(digest);
-
-    std::string dirname = GetStashFileName(base, "", "");
-    struct stat sb;
-    int res = stat(dirname.c_str(), &sb);
-
-    if (res == -1 && errno != ENOENT) {
-        ErrorAbort(state, kStashCreationFailure, "stat \"%s\" failed: %s\n",
-                   dirname.c_str(), strerror(errno));
-        return -1;
-    } else if (res != 0) {
-        LOG(INFO) << "creating stash " << dirname;
-        res = mkdir(dirname.c_str(), STASH_DIRECTORY_MODE);
-
-        if (res != 0) {
-            ErrorAbort(state, kStashCreationFailure, "mkdir \"%s\" failed: %s\n",
-                       dirname.c_str(), strerror(errno));
-            return -1;
-        }
-
-        if (CacheSizeCheck(maxblocks * BLOCKSIZE) != 0) {
-            ErrorAbort(state, kStashCreationFailure, "not enough space for stash\n");
-            return -1;
-        }
-
-        return 1;  // Created directory
+    if (CacheSizeCheck(max_stash_size) != 0) {
+      ErrorAbort(state, kStashCreationFailure, "not enough space for stash (%zu needed)\n",
+                 max_stash_size);
+      return -1;
     }
 
-    LOG(INFO) << "using existing stash " << dirname;
+    return 1;  // Created directory
+  }
 
-    // If the directory already exists, calculate the space already allocated to
-    // stash files and check if there's enough for all required blocks. Delete any
-    // partially completed stash files first.
+  LOG(INFO) << "using existing stash " << dirname;
 
-    EnumerateStash(dirname, DeletePartial, nullptr);
-    int size = 0;
-    EnumerateStash(dirname, UpdateFileSize, &size);
+  // If the directory already exists, calculate the space already allocated to
+  // stash files and check if there's enough for all required blocks. Delete any
+  // partially completed stash files first.
 
-    size = maxblocks * BLOCKSIZE - size;
+  EnumerateStash(dirname, DeletePartial, nullptr);
+  size_t existing = 0;
+  EnumerateStash(dirname, UpdateFileSize, &existing);
 
-    if (size > 0 && CacheSizeCheck(size) != 0) {
-        ErrorAbort(state, kStashCreationFailure, "not enough space for stash (%d more needed)\n",
-                   size);
-        return -1;
+  if (max_stash_size > existing) {
+    size_t needed = max_stash_size - existing;
+    if (CacheSizeCheck(needed) != 0) {
+      ErrorAbort(state, kStashCreationFailure, "not enough space for stash (%zu more needed)\n",
+                 needed);
+      return -1;
     }
+  }
 
-    return 0; // Using existing directory
+  return 0;  // Using existing directory
 }
 
 static int SaveStash(CommandParameters& params, const std::string& base,
@@ -1393,8 +1396,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         return StringValue("");
     }
 
-    UpdaterInfo* ui = reinterpret_cast<UpdaterInfo*>(state->cookie);
-
+    UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
     if (ui == nullptr) {
         return StringValue("");
     }
@@ -1452,7 +1454,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     }
 
     // First line in transfer list is the version number
-    if (!android::base::ParseInt(lines[0].c_str(), &params.version, 1, 4)) {
+    if (!android::base::ParseInt(lines[0], &params.version, 1, 4)) {
         LOG(ERROR) << "unexpected transfer list version [" << lines[0] << "]";
         return StringValue("");
     }
@@ -1460,8 +1462,8 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     LOG(INFO) << "blockimg version is " << params.version;
 
     // Second line in transfer list is the total number of blocks we expect to write
-    int total_blocks;
-    if (!android::base::ParseInt(lines[1].c_str(), &total_blocks, 0)) {
+    size_t total_blocks;
+    if (!android::base::ParseUint(lines[1], &total_blocks)) {
         ErrorAbort(state, kArgsParsingFailure, "unexpected block count [%s]\n", lines[1].c_str());
         return StringValue("");
     }
@@ -1473,23 +1475,23 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
     size_t start = 2;
     if (params.version >= 2) {
         if (lines.size() < 4) {
-            ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]\n",
-                       lines.size());
-            return StringValue("");
+          ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]\n",
+                     lines.size());
+          return StringValue("");
         }
 
         // Third line is how many stash entries are needed simultaneously
         LOG(INFO) << "maximum stash entries " << lines[2];
 
         // Fourth line is the maximum number of blocks that will be stashed simultaneously
-        int stash_max_blocks;
-        if (!android::base::ParseInt(lines[3].c_str(), &stash_max_blocks, 0)) {
+        size_t stash_max_blocks;
+        if (!android::base::ParseUint(lines[3], &stash_max_blocks)) {
             ErrorAbort(state, kArgsParsingFailure, "unexpected maximum stash blocks [%s]\n",
                        lines[3].c_str());
             return StringValue("");
         }
 
-        int res = CreateStash(state, stash_max_blocks, blockdev_filename->data.c_str(), params.stashbase);
+        int res = CreateStash(state, stash_max_blocks, blockdev_filename->data, params.stashbase);
         if (res == -1) {
             return StringValue("");
         }
@@ -1514,15 +1516,13 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
 
     // Subsequent lines are all individual transfer commands
     for (auto it = lines.cbegin() + start; it != lines.cend(); it++) {
-        const std::string& line_str(*it);
-        if (line_str.empty()) {
-            continue;
-        }
+        const std::string& line(*it);
+        if (line.empty()) continue;
 
-        params.tokens = android::base::Split(line_str, " ");
+        params.tokens = android::base::Split(line, " ");
         params.cpos = 0;
         params.cmdname = params.tokens[params.cpos++].c_str();
-        params.cmdline = line_str.c_str();
+        params.cmdline = line.c_str();
 
         if (cmd_map.find(params.cmdname) == cmd_map.end()) {
             LOG(ERROR) << "unexpected command [" << params.cmdname << "]";
@@ -1532,7 +1532,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         const Command* cmd = cmd_map[params.cmdname];
 
         if (cmd->f != nullptr && cmd->f(params) == -1) {
-            LOG(ERROR) << "failed to execute command [" << line_str << "]";
+            LOG(ERROR) << "failed to execute command [" << line << "]";
             goto pbiudone;
         }
 
@@ -1542,7 +1542,8 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
                 PLOG(ERROR) << "fsync failed";
                 goto pbiudone;
             }
-            fprintf(cmd_pipe, "set_progress %.4f\n", (double) params.written / total_blocks);
+            fprintf(cmd_pipe, "set_progress %.4f\n",
+                    static_cast<double>(params.written) / total_blocks);
             fflush(cmd_pipe);
         }
     }
@@ -1555,7 +1556,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         LOG(INFO) << "max alloc needed was " << params.buffer.size();
 
         const char* partition = strrchr(blockdev_filename->data.c_str(), '/');
-        if (partition != nullptr && *(partition+1) != 0) {
+        if (partition != nullptr && *(partition + 1) != 0) {
             fprintf(cmd_pipe, "log bytes_written_%s: %zu\n", partition + 1,
                     params.written * BLOCKSIZE);
             fprintf(cmd_pipe, "log bytes_stashed_%s: %zu\n", partition + 1,
