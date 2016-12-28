@@ -64,83 +64,82 @@ static constexpr size_t BLOCKSIZE = 4096;
 #define STASH_FILE_MODE 0600
 
 struct RangeSet {
-    size_t count;             // Limit is INT_MAX.
-    size_t size;
-    std::vector<size_t> pos;  // Actual limit is INT_MAX.
+  size_t count;  // Limit is INT_MAX.
+  size_t size;
+  std::vector<size_t> pos;  // Actual limit is INT_MAX.
 };
 
 static CauseCode failure_type = kNoCause;
 static bool is_retry = false;
 static std::unordered_map<std::string, RangeSet> stash_map;
 
-static void parse_range(const std::string& range_text, RangeSet& rs) {
+static RangeSet parse_range(const std::string& range_text) {
+  RangeSet rs;
 
-    std::vector<std::string> pieces = android::base::Split(range_text, ",");
-    if (pieces.size() < 3) {
-        goto err;
+  std::vector<std::string> pieces = android::base::Split(range_text, ",");
+  if (pieces.size() < 3) {
+    goto err;
+  }
+
+  size_t num;
+  if (!android::base::ParseUint(pieces[0], &num, static_cast<size_t>(INT_MAX))) {
+    goto err;
+  }
+
+  if (num == 0 || num % 2) {
+    goto err;  // must be even
+  } else if (num != pieces.size() - 1) {
+    goto err;
+  }
+
+  rs.pos.resize(num);
+  rs.count = num / 2;
+  rs.size = 0;
+
+  for (size_t i = 0; i < num; i += 2) {
+    if (!android::base::ParseUint(pieces[i + 1], &rs.pos[i], static_cast<size_t>(INT_MAX))) {
+      goto err;
     }
 
-    size_t num;
-    if (!android::base::ParseUint(pieces[0].c_str(), &num, static_cast<size_t>(INT_MAX))) {
-        goto err;
+    if (!android::base::ParseUint(pieces[i + 2], &rs.pos[i + 1], static_cast<size_t>(INT_MAX))) {
+      goto err;
     }
 
-    if (num == 0 || num % 2) {
-        goto err; // must be even
-    } else if (num != pieces.size() - 1) {
-        goto err;
+    if (rs.pos[i] >= rs.pos[i + 1]) {
+      goto err;  // empty or negative range
     }
 
-    rs.pos.resize(num);
-    rs.count = num / 2;
-    rs.size = 0;
-
-    for (size_t i = 0; i < num; i += 2) {
-        if (!android::base::ParseUint(pieces[i+1].c_str(), &rs.pos[i],
-                                      static_cast<size_t>(INT_MAX))) {
-            goto err;
-        }
-
-        if (!android::base::ParseUint(pieces[i+2].c_str(), &rs.pos[i+1],
-                                      static_cast<size_t>(INT_MAX))) {
-            goto err;
-        }
-
-        if (rs.pos[i] >= rs.pos[i+1]) {
-            goto err; // empty or negative range
-        }
-
-        size_t sz = rs.pos[i+1] - rs.pos[i];
-        if (rs.size > SIZE_MAX - sz) {
-            goto err; // overflow
-        }
-
-        rs.size += sz;
+    size_t sz = rs.pos[i + 1] - rs.pos[i];
+    if (rs.size > SIZE_MAX - sz) {
+      goto err;  // overflow
     }
 
-    return;
+    rs.size += sz;
+  }
+
+  return rs;
 
 err:
-    LOG(ERROR) << "failed to parse range '" << range_text << "'";
-    exit(1);
+  LOG(ERROR) << "failed to parse range '" << range_text << "'";
+  exit(1);
 }
 
 static bool range_overlaps(const RangeSet& r1, const RangeSet& r2) {
-    for (size_t i = 0; i < r1.count; ++i) {
-        size_t r1_0 = r1.pos[i * 2];
-        size_t r1_1 = r1.pos[i * 2 + 1];
+  for (size_t i = 0; i < r1.count; ++i) {
+    size_t r1_0 = r1.pos[i * 2];
+    size_t r1_1 = r1.pos[i * 2 + 1];
 
-        for (size_t j = 0; j < r2.count; ++j) {
-            size_t r2_0 = r2.pos[j * 2];
-            size_t r2_1 = r2.pos[j * 2 + 1];
+    for (size_t j = 0; j < r2.count; ++j) {
+      size_t r2_0 = r2.pos[j * 2];
+      size_t r2_1 = r2.pos[j * 2 + 1];
 
-            if (!(r2_0 >= r1_1 || r1_0 >= r2_1)) {
-                return true;
-            }
-        }
+      if (!(r2_0 >= r1_1 || r1_0 >= r2_1)) {
+        return true;
+      }
     }
+  }
 
-    return false;
+  return false;
 }
 
 static int read_all(int fd, uint8_t* data, size_t size) {
@@ -431,11 +430,10 @@ static int LoadSrcTgtVersion1(CommandParameters& params, RangeSet& tgt, size_t& 
     }
 
     // <src_range>
-    RangeSet src;
-    parse_range(params.tokens[params.cpos++], src);
+    RangeSet src = parse_range(params.tokens[params.cpos++]);
 
     // <tgt_range>
-    parse_range(params.tokens[params.cpos++], tgt);
+    tgt = parse_range(params.tokens[params.cpos++]);
 
     allocate(src.size * BLOCKSIZE, buffer);
     int rc = ReadBlocks(src, buffer, fd);
@@ -787,8 +785,7 @@ static int SaveStash(CommandParameters& params, const std::string& base,
         return 0;
     }
 
-    RangeSet src;
-    parse_range(params.tokens[params.cpos++], src);
+    RangeSet src = parse_range(params.tokens[params.cpos++]);
 
     allocate(src.size * BLOCKSIZE, buffer);
     if (ReadBlocks(src, buffer, fd) == -1) {
@@ -872,7 +869,7 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
     }
 
     // <tgt_range>
-    parse_range(params.tokens[params.cpos++], tgt);
+    tgt = parse_range(params.tokens[params.cpos++]);
 
     // <src_block_count>
     const std::string& token = params.tokens[params.cpos++];
@@ -888,8 +885,7 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
         // no source ranges, only stashes
         params.cpos++;
     } else {
-        RangeSet src;
-        parse_range(params.tokens[params.cpos++], src);
+        RangeSet src = parse_range(params.tokens[params.cpos++]);
         int res = ReadBlocks(src, buffer, fd);
 
         if (overlap) {
@@ -905,8 +901,7 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
             return 0;
         }
 
-        RangeSet locs;
-        parse_range(params.tokens[params.cpos++], locs);
+        RangeSet locs = parse_range(params.tokens[params.cpos++]);
         MoveRange(buffer, locs, buffer);
     }
 
@@ -931,8 +926,7 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
             continue;
         }
 
-        RangeSet locs;
-        parse_range(tokens[1], locs);
+        RangeSet locs = parse_range(tokens[1]);
 
         MoveRange(buffer, locs, stash);
     }
@@ -1116,8 +1110,7 @@ static int PerformCommandZero(CommandParameters& params) {
         return -1;
     }
 
-    RangeSet tgt;
-    parse_range(params.tokens[params.cpos++], tgt);
+    RangeSet tgt = parse_range(params.tokens[params.cpos++]);
 
     LOG(INFO) << "  zeroing " << tgt.size << " blocks";
 
@@ -1160,8 +1153,7 @@ static int PerformCommandNew(CommandParameters& params) {
         return -1;
     }
 
-    RangeSet tgt;
-    parse_range(params.tokens[params.cpos++], tgt);
+    RangeSet tgt = parse_range(params.tokens[params.cpos++]);
 
     if (params.canwrite) {
         LOG(INFO) << " writing " << tgt.size << " blocks of new data";
@@ -1316,8 +1308,7 @@ static int PerformCommandErase(CommandParameters& params) {
         return -1;
     }
 
-    RangeSet tgt;
-    parse_range(params.tokens[params.cpos++], tgt);
+    RangeSet tgt = parse_range(params.tokens[params.cpos++]);
 
     if (params.canwrite) {
         LOG(INFO) << " erasing " << tgt.size << " blocks";
@@ -1707,8 +1698,7 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
         return StringValue("");
     }
 
-    RangeSet rs;
-    parse_range(ranges->data, rs);
+    RangeSet rs = parse_range(ranges->data);
 
     SHA_CTX ctx;
     SHA1_Init(&ctx);
@@ -1832,8 +1822,7 @@ Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[
         return StringValue("");
     }
 
-    RangeSet rs;
-    parse_range(ranges->data, rs);
+    RangeSet rs = parse_range(ranges->data);
 
     uint8_t buffer[BLOCKSIZE];
 
