@@ -63,9 +63,8 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
 
 int LoadFileContents(const char* filename, FileContents* file);
 int SaveFileContents(const char* filename, const FileContents* file);
-int FindMatchingPatch(uint8_t* sha1, const std::vector<std::string>& patch_sha1_str);
 
-// bsdiff.cpp
+// bspatch.cpp
 void ShowBSDiffLicense();
 int ApplyBSDiffPatch(const unsigned char* old_data, ssize_t old_size,
                      const Value* patch, ssize_t patch_offset,
