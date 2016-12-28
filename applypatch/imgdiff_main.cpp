@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _APPLYPATCH_IMGPATCH_H
-#define _APPLYPATCH_IMGPATCH_H
+#include "applypatch/imgdiff.h"
 
-#include <sys/types.h>
-
-using SinkFn = ssize_t (*)(const unsigned char*, ssize_t, void*);
-
-int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
-                    const unsigned char* patch_data, ssize_t patch_size,
-                    SinkFn sink, void* token);
-
-#endif  // _APPLYPATCH_IMGPATCH_H
+int main(int argc, char** argv) {
+  return imgdiff(argc, const_cast<const char**>(argv));
+}

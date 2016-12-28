@@ -65,6 +65,7 @@ LOCAL_SRC_FILES := \
     component/applypatch_test.cpp \
     component/bootloader_message_test.cpp \
     component/edify_test.cpp \
+    component/imgdiff_test.cpp \
     component/uncrypt_test.cpp \
     component/updater_test.cpp \
     component/verifier_test.cpp
@@ -83,6 +84,9 @@ LOCAL_STATIC_LIBRARIES := \
     libapplypatch_modes \
     libapplypatch \
     libedify \
+    libimgdiff \
+    libimgpatch \
+    libbsdiff \
     libotafault \
     libupdater \
     libbootloader_message \
@@ -90,6 +94,8 @@ LOCAL_STATIC_LIBRARIES := \
     libminui \
     libotautil \
     libmounts \
+    libdivsufsort \
+    libdivsufsort64 \
     libfs_mgr \
     liblog \
     libselinux \
@@ -130,3 +136,26 @@ LOCAL_GENERATED_SOURCES += $(GEN)
 LOCAL_PICKUP_FILES := $(testdata_continuous_zip_prefix)
 
 include $(BUILD_NATIVE_TEST)
+
+# Host tests
+include $(CLEAR_VARS)
+LOCAL_CFLAGS := -Werror
+LOCAL_MODULE := recovery_host_test
+LOCAL_MODULE_HOST_OS := linux
+LOCAL_C_INCLUDES := bootable/recovery
+LOCAL_SRC_FILES := \
+    component/imgdiff_test.cpp
+LOCAL_STATIC_LIBRARIES := \
+    libimgdiff \
+    libimgpatch \
+    libbsdiff \
+    libziparchive \
+    libbase \
+    libcrypto \
+    libbz \
+    libdivsufsort64 \
+    libdivsufsort \
+    libz
+LOCAL_SHARED_LIBRARIES := \
+    liblog
+include $(BUILD_HOST_NATIVE_TEST)
