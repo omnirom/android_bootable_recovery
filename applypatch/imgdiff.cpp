@@ -121,19 +121,19 @@
  * information that is stored on the system partition.
  */
 
+#include "applypatch/imgdiff.h"
+
 #include <errno.h>
-#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <bsdiff.h>
+#include <zlib.h>
 
-#include "zlib.h"
-#include "imgdiff.h"
 #include "utils.h"
 
 typedef struct {
@@ -374,8 +374,7 @@ unsigned char* ReadZip(const char* filename,
  * return value when done with all the chunks.  Returns NULL on
  * failure.
  */
-unsigned char* ReadImage(const char* filename,
-                         int* num_chunks, ImageChunk** chunks) {
+unsigned char* ReadImage(const char* filename, int* num_chunks, ImageChunk** chunks) {
   struct stat st;
   if (stat(filename, &st) != 0) {
     printf("failed to stat \"%s\": %s\n", filename, strerror(errno));
@@ -403,7 +402,7 @@ unsigned char* ReadImage(const char* filename,
   *chunks = NULL;
 
   while (pos < sz) {
-    unsigned char* p = img+pos;
+    unsigned char* p = img + pos;
 
     if (sz - pos >= 4 &&
         p[0] == 0x1f && p[1] == 0x8b &&
@@ -413,8 +412,7 @@ unsigned char* ReadImage(const char* filename,
       size_t chunk_offset = pos;
 
       *num_chunks += 3;
-      *chunks = static_cast<ImageChunk*>(realloc(*chunks,
-          *num_chunks * sizeof(ImageChunk)));
+      *chunks = static_cast<ImageChunk*>(realloc(*chunks, *num_chunks * sizeof(ImageChunk)));
       ImageChunk* curr = *chunks + (*num_chunks-3);
 
       // create a normal chunk for the header.
@@ -502,8 +500,7 @@ unsigned char* ReadImage(const char* filename,
       // the decompression.
       size_t footer_size = Read4(p-4);
       if (footer_size != curr[-2].len) {
-        printf("Error: footer size %zu != decompressed size %zu\n",
-            footer_size, curr[-2].len);
+        printf("Error: footer size %zu != decompressed size %zu\n", footer_size, curr[-2].len);
         free(img);
         return NULL;
       }
@@ -637,7 +634,11 @@ unsigned char* MakePatch(ImageChunk* src, ImageChunk* tgt, size_t* size) {
     }
   }
 
+#if defined(__ANDROID__)
+  char ptemp[] = "/data/local/tmp/imgdiff-patch-XXXXXX";
+#else
   char ptemp[] = "/tmp/imgdiff-patch-XXXXXX";
+#endif
   int fd = mkstemp(ptemp);
 
   if (fd == -1) {
@@ -793,10 +794,8 @@ void MergeAdjacentNormalChunks(ImageChunk* chunks, int* num_chunks) {
   *num_chunks = out;
 }
 
-ImageChunk* FindChunkByName(const char* name,
-                            ImageChunk* chunks, int num_chunks) {
-  int i;
-  for (i = 0; i < num_chunks; ++i) {
+ImageChunk* FindChunkByName(const char* name, ImageChunk* chunks, int num_chunks) {
+  for (int i = 0; i < num_chunks; ++i) {
     if (chunks[i].type == CHUNK_DEFLATE && chunks[i].filename &&
         strcmp(name, chunks[i].filename) == 0) {
       return chunks+i;
@@ -812,11 +811,11 @@ void DumpChunks(ImageChunk* chunks, int num_chunks) {
     }
 }
 
-int main(int argc, char** argv) {
-  int zip_mode = 0;
+int imgdiff(int argc, const char** argv) {
+  bool zip_mode = false;
 
   if (argc >= 2 && strcmp(argv[1], "-z") == 0) {
-    zip_mode = 1;
+    zip_mode = true;
     --argc;
     ++argv;
   }
@@ -880,12 +879,10 @@ int main(int argc, char** argv) {
     // Verify that the source and target images have the same chunk
     // structure (ie, the same sequence of deflate and normal chunks).
 
-    if (!zip_mode) {
-        // Merge the gzip header and footer in with any adjacent
-        // normal chunks.
-        MergeAdjacentNormalChunks(tgt_chunks, &num_tgt_chunks);
-        MergeAdjacentNormalChunks(src_chunks, &num_src_chunks);
-    }
+    // Merge the gzip header and footer in with any adjacent
+    // normal chunks.
+    MergeAdjacentNormalChunks(tgt_chunks, &num_tgt_chunks);
+    MergeAdjacentNormalChunks(src_chunks, &num_src_chunks);
 
     if (num_src_chunks != num_tgt_chunks) {
       printf("source and target don't have same number of chunks!\n");
@@ -897,8 +894,7 @@ int main(int argc, char** argv) {
     }
     for (i = 0; i < num_src_chunks; ++i) {
       if (src_chunks[i].type != tgt_chunks[i].type) {
-        printf("source and target don't have same chunk "
-                "structure! (chunk %d)\n", i);
+        printf("source and target don't have same chunk structure! (chunk %d)\n", i);
         printf("source chunks:\n");
         DumpChunks(src_chunks, num_src_chunks);
         printf("target chunks:\n");
@@ -983,8 +979,7 @@ int main(int argc, char** argv) {
     if (zip_mode) {
       ImageChunk* src;
       if (tgt_chunks[i].type == CHUNK_DEFLATE &&
-          (src = FindChunkByName(tgt_chunks[i].filename, src_chunks,
-                                 num_src_chunks))) {
+          (src = FindChunkByName(tgt_chunks[i].filename, src_chunks, num_src_chunks))) {
         patch_data[i] = MakePatch(src, tgt_chunks+i, patch_size+i);
       } else {
         patch_data[i] = MakePatch(src_chunks, tgt_chunks+i, patch_size+i);
@@ -1000,8 +995,7 @@ int main(int argc, char** argv) {
 
       patch_data[i] = MakePatch(src_chunks+i, tgt_chunks+i, patch_size+i);
     }
-    printf("patch %3d is %zu bytes (of %zu)\n",
-           i, patch_size[i], tgt_chunks[i].source_len);
+    printf("patch %3d is %zu bytes (of %zu)\n", i, patch_size[i], tgt_chunks[i].source_len);
   }
 
   // Figure out how big the imgdiff file header is going to be, so
