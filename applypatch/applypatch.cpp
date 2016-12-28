@@ -391,7 +391,7 @@ int ParseSha1(const char* str, uint8_t* digest) {
 // Search an array of sha1 strings for one matching the given sha1.
 // Return the index of the match on success, or -1 if no match is
 // found.
-int FindMatchingPatch(uint8_t* sha1, const std::vector<std::string>& patch_sha1_str) {
+static int FindMatchingPatch(uint8_t* sha1, const std::vector<std::string>& patch_sha1_str) {
   for (size_t i = 0; i < patch_sha1_str.size(); ++i) {
     uint8_t patch_sha1[SHA_DIGEST_LENGTH];
     if (ParseSha1(patch_sha1_str[i].c_str(), patch_sha1) == 0 &&
