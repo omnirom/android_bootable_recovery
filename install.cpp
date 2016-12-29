@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "install.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -32,6 +34,7 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/parsedouble.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
@@ -40,7 +43,6 @@
 
 #include "common.h"
 #include "error_code.h"
-#include "install.h"
 #include "minui/minui.h"
 #include "otautil/SysUtil.h"
 #include "roots.h"
@@ -55,10 +57,10 @@ static constexpr const char* METADATA_PATH = "META-INF/com/android/metadata";
 static constexpr const char* UNCRYPT_STATUS = "/cache/recovery/uncrypt_status";
 
 // Default allocation of progress bar segments to operations
-static const int VERIFICATION_PROGRESS_TIME = 60;
-static const float VERIFICATION_PROGRESS_FRACTION = 0.25;
-static const float DEFAULT_FILES_PROGRESS_FRACTION = 0.4;
-static const float DEFAULT_IMAGE_PROGRESS_FRACTION = 0.1;
+static constexpr int VERIFICATION_PROGRESS_TIME = 60;
+static constexpr float VERIFICATION_PROGRESS_FRACTION = 0.25;
+static constexpr float DEFAULT_FILES_PROGRESS_FRACTION = 0.4;
+static constexpr float DEFAULT_IMAGE_PROGRESS_FRACTION = 0.1;
 
 // This function parses and returns the build.version.incremental
 static int parse_build_number(const std::string& str) {
@@ -299,149 +301,168 @@ update_binary_command(const char* path, ZipArchiveHandle zip, int retry_count,
 #endif  // !AB_OTA_UPDATER
 
 // If the package contains an update binary, extract it and run it.
-static int
-try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
-                  std::vector<std::string>& log_buffer, int retry_count)
-{
-    read_source_target_build(zip, log_buffer);
+static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
+                             std::vector<std::string>& log_buffer, int retry_count) {
+  read_source_target_build(zip, log_buffer);
 
-    int pipefd[2];
-    pipe(pipefd);
+  int pipefd[2];
+  pipe(pipefd);
 
-    std::vector<std::string> args;
-    int ret = update_binary_command(path, zip, retry_count, pipefd[1], &args);
-    if (ret) {
-        close(pipefd[0]);
-        close(pipefd[1]);
-        return ret;
-    }
-
-    // When executing the update binary contained in the package, the
-    // arguments passed are:
-    //
-    //   - the version number for this interface
-    //
-    //   - an fd to which the program can write in order to update the
-    //     progress bar.  The program can write single-line commands:
-    //
-    //        progress <frac> <secs>
-    //            fill up the next <frac> part of of the progress bar
-    //            over <secs> seconds.  If <secs> is zero, use
-    //            set_progress commands to manually control the
-    //            progress of this segment of the bar.
-    //
-    //        set_progress <frac>
-    //            <frac> should be between 0.0 and 1.0; sets the
-    //            progress bar within the segment defined by the most
-    //            recent progress command.
-    //
-    //        ui_print <string>
-    //            display <string> on the screen.
-    //
-    //        wipe_cache
-    //            a wipe of cache will be performed following a successful
-    //            installation.
-    //
-    //        clear_display
-    //            turn off the text display.
-    //
-    //        enable_reboot
-    //            packages can explicitly request that they want the user
-    //            to be able to reboot during installation (useful for
-    //            debugging packages that don't exit).
-    //
-    //   - the name of the package zip file.
-    //
-    //   - an optional argument "retry" if this update is a retry of a failed
-    //   update attempt.
-    //
-
-    // Convert the vector to a NULL-terminated char* array suitable for execv.
-    const char* chr_args[args.size() + 1];
-    chr_args[args.size()] = NULL;
-    for (size_t i = 0; i < args.size(); i++) {
-        chr_args[i] = args[i].c_str();
-    }
-
-    pid_t pid = fork();
-
-    if (pid == -1) {
-        close(pipefd[0]);
-        close(pipefd[1]);
-        PLOG(ERROR) << "Failed to fork update binary";
-        return INSTALL_ERROR;
-    }
-
-    if (pid == 0) {
-        umask(022);
-        close(pipefd[0]);
-        execv(chr_args[0], const_cast<char**>(chr_args));
-        fprintf(stdout, "E:Can't run %s (%s)\n", chr_args[0], strerror(errno));
-        _exit(-1);
-    }
+  std::vector<std::string> args;
+  int ret = update_binary_command(path, zip, retry_count, pipefd[1], &args);
+  if (ret) {
+    close(pipefd[0]);
     close(pipefd[1]);
+    return ret;
+  }
 
-    *wipe_cache = false;
-    bool retry_update = false;
+  // When executing the update binary contained in the package, the
+  // arguments passed are:
+  //
+  //   - the version number for this interface
+  //
+  //   - an FD to which the program can write in order to update the
+  //     progress bar.  The program can write single-line commands:
+  //
+  //        progress <frac> <secs>
+  //            fill up the next <frac> part of of the progress bar
+  //            over <secs> seconds.  If <secs> is zero, use
+  //            set_progress commands to manually control the
+  //            progress of this segment of the bar.
+  //
+  //        set_progress <frac>
+  //            <frac> should be between 0.0 and 1.0; sets the
+  //            progress bar within the segment defined by the most
+  //            recent progress command.
+  //
+  //        ui_print <string>
+  //            display <string> on the screen.
+  //
+  //        wipe_cache
+  //            a wipe of cache will be performed following a successful
+  //            installation.
+  //
+  //        clear_display
+  //            turn off the text display.
+  //
+  //        enable_reboot
+  //            packages can explicitly request that they want the user
+  //            to be able to reboot during installation (useful for
+  //            debugging packages that don't exit).
+  //
+  //        retry_update
+  //            updater encounters some issue during the update. It requests
+  //            a reboot to retry the same package automatically.
+  //
+  //        log <string>
+  //            updater requests logging the string (e.g. cause of the
+  //            failure).
+  //
+  //   - the name of the package zip file.
+  //
+  //   - an optional argument "retry" if this update is a retry of a failed
+  //   update attempt.
+  //
 
-    char buffer[1024];
-    FILE* from_child = fdopen(pipefd[0], "r");
-    while (fgets(buffer, sizeof(buffer), from_child) != NULL) {
-        char* command = strtok(buffer, " \n");
-        if (command == NULL) {
-            continue;
-        } else if (strcmp(command, "progress") == 0) {
-            char* fraction_s = strtok(NULL, " \n");
-            char* seconds_s = strtok(NULL, " \n");
+  // Convert the vector to a NULL-terminated char* array suitable for execv.
+  const char* chr_args[args.size() + 1];
+  chr_args[args.size()] = nullptr;
+  for (size_t i = 0; i < args.size(); i++) {
+    chr_args[i] = args[i].c_str();
+  }
 
-            float fraction = strtof(fraction_s, NULL);
-            int seconds = strtol(seconds_s, NULL, 10);
+  pid_t pid = fork();
 
-            ui->ShowProgress(fraction * (1-VERIFICATION_PROGRESS_FRACTION), seconds);
-        } else if (strcmp(command, "set_progress") == 0) {
-            char* fraction_s = strtok(NULL, " \n");
-            float fraction = strtof(fraction_s, NULL);
-            ui->SetProgress(fraction);
-        } else if (strcmp(command, "ui_print") == 0) {
-            char* str = strtok(NULL, "\n");
-            if (str) {
-                ui->PrintOnScreenOnly("%s", str);
-            } else {
-                ui->PrintOnScreenOnly("\n");
-            }
-            fflush(stdout);
-        } else if (strcmp(command, "wipe_cache") == 0) {
-            *wipe_cache = true;
-        } else if (strcmp(command, "clear_display") == 0) {
-            ui->SetBackground(RecoveryUI::NONE);
-        } else if (strcmp(command, "enable_reboot") == 0) {
-            // packages can explicitly request that they want the user
-            // to be able to reboot during installation (useful for
-            // debugging packages that don't exit).
-            ui->SetEnableReboot(true);
-        } else if (strcmp(command, "retry_update") == 0) {
-            retry_update = true;
-        } else if (strcmp(command, "log") == 0) {
-            // Save the logging request from updater and write to
-            // last_install later.
-            log_buffer.push_back(std::string(strtok(NULL, "\n")));
-        } else {
-            LOG(ERROR) << "unknown command [" << command << "]";
-        }
+  if (pid == -1) {
+    close(pipefd[0]);
+    close(pipefd[1]);
+    PLOG(ERROR) << "Failed to fork update binary";
+    return INSTALL_ERROR;
+  }
+
+  if (pid == 0) {
+    umask(022);
+    close(pipefd[0]);
+    execv(chr_args[0], const_cast<char**>(chr_args));
+    PLOG(ERROR) << "Can't run " << chr_args[0];
+    _exit(-1);
+  }
+  close(pipefd[1]);
+
+  *wipe_cache = false;
+  bool retry_update = false;
+
+  char buffer[1024];
+  FILE* from_child = fdopen(pipefd[0], "r");
+  while (fgets(buffer, sizeof(buffer), from_child) != nullptr) {
+    std::string line(buffer);
+    size_t space = line.find_first_of(" \n");
+    std::string command(line.substr(0, space));
+    if (command.empty()) continue;
+
+    // Get rid of the leading and trailing space and/or newline.
+    std::string args = space == std::string::npos ? "" : android::base::Trim(line.substr(space));
+
+    if (command == "progress") {
+      std::vector<std::string> tokens = android::base::Split(args, " ");
+      double fraction;
+      int seconds;
+      if (tokens.size() == 2 && android::base::ParseDouble(tokens[0].c_str(), &fraction) &&
+          android::base::ParseInt(tokens[1], &seconds)) {
+        ui->ShowProgress(fraction * (1 - VERIFICATION_PROGRESS_FRACTION), seconds);
+      } else {
+        LOG(ERROR) << "invalid \"progress\" parameters: " << line;
+      }
+    } else if (command == "set_progress") {
+      std::vector<std::string> tokens = android::base::Split(args, " ");
+      double fraction;
+      if (tokens.size() == 1 && android::base::ParseDouble(tokens[0].c_str(), &fraction)) {
+        ui->SetProgress(fraction);
+      } else {
+        LOG(ERROR) << "invalid \"set_progress\" parameters: " << line;
+      }
+    } else if (command == "ui_print") {
+      if (!args.empty()) {
+        ui->PrintOnScreenOnly("%s", args.c_str());
+      } else {
+        ui->PrintOnScreenOnly("\n");
+      }
+      fflush(stdout);
+    } else if (command == "wipe_cache") {
+      *wipe_cache = true;
+    } else if (command == "clear_display") {
+      ui->SetBackground(RecoveryUI::NONE);
+    } else if (command == "enable_reboot") {
+      // packages can explicitly request that they want the user
+      // to be able to reboot during installation (useful for
+      // debugging packages that don't exit).
+      ui->SetEnableReboot(true);
+    } else if (command == "retry_update") {
+      retry_update = true;
+    } else if (command == "log") {
+      if (!args.empty()) {
+        // Save the logging request from updater and write to last_install later.
+        log_buffer.push_back(args);
+      } else {
+        LOG(ERROR) << "invalid \"log\" parameters: " << line;
+      }
+    } else {
+      LOG(ERROR) << "unknown command [" << command << "]";
     }
-    fclose(from_child);
+  }
+  fclose(from_child);
 
-    int status;
-    waitpid(pid, &status, 0);
-    if (retry_update) {
-        return INSTALL_RETRY;
-    }
-    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        LOG(ERROR) << "Error in " << path << " (Status " << WEXITSTATUS(status) << ")";
-        return INSTALL_ERROR;
-    }
+  int status;
+  waitpid(pid, &status, 0);
+  if (retry_update) {
+    return INSTALL_RETRY;
+  }
+  if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+    LOG(ERROR) << "Error in " << path << " (Status " << WEXITSTATUS(status) << ")";
+    return INSTALL_ERROR;
+  }
 
-    return INSTALL_SUCCESS;
+  return INSTALL_SUCCESS;
 }
 
 static int
