@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_7e3c00de",
+        "filename": "libtar/Android.mk",
+        "patchSetId": 8
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-12-30T09:06:52Z",
+      "side": 1,
+      "message": "you\u0027re adding a shared lib to a static lib",
+      "revId": "79f88bdf8d54a84b7bb727b0c28b2dfcdc3d14d5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
