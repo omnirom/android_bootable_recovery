@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_be56182a",
+        "filename": "libtar/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2016-12-30T09:04:11Z",
+      "side": 1,
+      "message": "LOCAL_C_INCLUDES +\u003d $(LOCAL_PATH)/../crypto/ext4crypt",
+      "range": {
+        "startLine": 22,
+        "startChar": 4,
+        "endLine": 22,
+        "endChar": 59
+      },
+      "revId": "beb1d7d419fca59f8b7bacb94e29393fe5011177",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
