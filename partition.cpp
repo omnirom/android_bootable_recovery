@@ -1739,6 +1739,7 @@ string TWPartition::Get_Restore_File_System(PartitionSettings *part_settings) {
 		return string();
 	}
 	Restore_File_System.resize(second_period);
+	LOGINFO("Restore file system is: '%s'.\n", Restore_File_System.c_str());
 	return Restore_File_System;
 }
 
