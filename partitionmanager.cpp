@@ -589,7 +589,6 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 		else
 			md5Success = Make_MD5(part_settings);
 
-		TWFunc::SetPerformanceMode(false);
 		if (part_settings->Part->Has_SubPartition) {
 			std::vector<TWPartition*>::iterator subpart;
 			TWPartition *parentPart = part_settings->Part;
@@ -626,6 +625,7 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 
 		}
 
+		TWFunc::SetPerformanceMode(false);
 		return md5Success;
 	} else {
 		Clean_Backup_Folder(part_settings->Backup_Folder);
