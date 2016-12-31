@@ -100,8 +100,8 @@ bool TWExclude::check_absolute_skip_dirs(const string& path) {
 bool TWExclude::check_skip_dirs(const string& path) {
 	string normalized = TWFunc::Remove_Trailing_Slashes(path);
 	size_t slashIdx = normalized.find_last_of('/');
-	if(slashIdx != std::string::npos && slashIdx+1 < normalized.size()) {
-		if(check_relative_skip_dirs(normalized.substr(slashIdx+1)))
+	if (slashIdx != std::string::npos && slashIdx+1 < normalized.size()) {
+		if (check_relative_skip_dirs(normalized.substr(slashIdx+1)))
 			return true;
 	}
 	return check_absolute_skip_dirs(normalized);
