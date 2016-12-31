@@ -124,7 +124,7 @@ void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
 
 	file = attr->value();
 
-	if(file.size() >= 4 && file.compare(file.size()-4, 4, ".ttf") == 0)
+	if (file.size() >= 4 && file.compare(file.size()-4, 4, ".ttf") == 0)
 	{
 		int font_size = 0;
 
@@ -144,7 +144,7 @@ void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
 		int dpi = 300;
 
 		attr = node->first_attribute("dpi");
-		if(attr)
+		if (attr)
 			dpi = atoi(attr->value());
 
 		// we can't use TMP_RESOURCE_NAME here because the ttf subsystem is caching the name and scaling needs to reload the font
@@ -166,10 +166,10 @@ void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
 }
 
 void FontResource::DeleteFont() {
-	if(mFont)
+	if (mFont)
 		gr_ttf_freeFont(mFont);
 	mFont = NULL;
-	if(origFont)
+	if (origFont)
 		gr_ttf_freeFont(origFont);
 	origFont = NULL;
 }

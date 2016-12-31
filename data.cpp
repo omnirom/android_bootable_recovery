@@ -253,7 +253,7 @@ int DataManager::LoadValues(const string& filename)
 	pthread_mutex_unlock(&m_valuesLock);
 	string current = GetCurrentStoragePath();
 	TWPartition* Part = PartitionManager.Find_Partition_By_Path(current);
-	if(!Part)
+	if (!Part)
 		Part = PartitionManager.Get_Default_Storage_Partition();
 	if (Part && current != Part->Storage_Path && Part->Mount(false)) {
 		LOGINFO("LoadValues setting storage path to '%s'\n", Part->Storage_Path.c_str());
@@ -536,7 +536,7 @@ void DataManager::SetDefaultValues()
 	mPersist.SetValue("tw_action_vibrate", "160");
 
 	TWPartition *store = PartitionManager.Get_Default_Storage_Partition();
-	if(store)
+	if (store)
 		mPersist.SetValue("tw_storage_path", store->Storage_Path);
 	else
 		mPersist.SetValue("tw_storage_path", "/");
@@ -753,7 +753,7 @@ void DataManager::SetDefaultValues()
 		string maxbrightpath = findbright.insert(findbright.rfind('/') + 1, "max_");
 		if (TWFunc::Path_Exists(maxbrightpath)) {
 			ifstream maxVal(maxbrightpath.c_str());
-			if(maxVal >> maxBrightness) {
+			if (maxVal >> maxBrightness) {
 				LOGINFO("Got max brightness %s from '%s'\n", maxBrightness.c_str(), maxbrightpath.c_str());
 			} else {
 				// Something went wrong, set that to indicate error
@@ -873,38 +873,38 @@ int DataManager::GetMagicValue(const string& varName, string& value)
 	}
 	else if (varName == "tw_cpu_temp")
 	{
-	   int tw_no_cpu_temp;
-	   GetValue("tw_no_cpu_temp", tw_no_cpu_temp);
-	   if (tw_no_cpu_temp == 1) return -1;
+		int tw_no_cpu_temp;
+		GetValue("tw_no_cpu_temp", tw_no_cpu_temp);
+		if (tw_no_cpu_temp == 1) return -1;
 
-	   string cpu_temp_file;
-	   static unsigned long convert_temp = 0;
-	   static time_t cpuSecCheck = 0;
-	   int divisor = 0;
-	   struct timeval curTime;
-	   string results;
+		string cpu_temp_file;
+		static unsigned long convert_temp = 0;
+		static time_t cpuSecCheck = 0;
+		int divisor = 0;
+		struct timeval curTime;
+		string results;
 
-	   gettimeofday(&curTime, NULL);
-	   if (curTime.tv_sec > cpuSecCheck)
-	   {
+		gettimeofday(&curTime, NULL);
+		if (curTime.tv_sec > cpuSecCheck)
+		{
 #ifdef TW_CUSTOM_CPU_TEMP_PATH
-		   cpu_temp_file = EXPAND(TW_CUSTOM_CPU_TEMP_PATH);
-		   if (TWFunc::read_file(cpu_temp_file, results) != 0)
-			return -1;
+			cpu_temp_file = EXPAND(TW_CUSTOM_CPU_TEMP_PATH);
+			if (TWFunc::read_file(cpu_temp_file, results) != 0)
+				return -1;
 #else
-		   cpu_temp_file = "/sys/class/thermal/thermal_zone0/temp";
-		   if (TWFunc::read_file(cpu_temp_file, results) != 0)
-			return -1;
+			cpu_temp_file = "/sys/class/thermal/thermal_zone0/temp";
+			if (TWFunc::read_file(cpu_temp_file, results) != 0)
+				return -1;
 #endif
-		   convert_temp = strtoul(results.c_str(), NULL, 0) / 1000;
-		   if (convert_temp <= 0)
-			convert_temp = strtoul(results.c_str(), NULL, 0);
-		   if (convert_temp >= 150)
-			convert_temp = strtoul(results.c_str(), NULL, 0) / 10;
-		   cpuSecCheck = curTime.tv_sec + 5;
-	   }
-	   value = TWFunc::to_string(convert_temp);
-	   return 0;
+			convert_temp = strtoul(results.c_str(), NULL, 0) / 1000;
+			if (convert_temp <= 0)
+				convert_temp = strtoul(results.c_str(), NULL, 0);
+			if (convert_temp >= 150)
+				convert_temp = strtoul(results.c_str(), NULL, 0) / 10;
+			cpuSecCheck = curTime.tv_sec + 5;
+		}
+		value = TWFunc::to_string(convert_temp);
+		return 0;
 	}
 	else if (varName == "tw_battery")
 	{
@@ -924,7 +924,7 @@ int DataManager::GetMagicValue(const string& varName, string& value)
 #else
 			FILE * cap = fopen("/sys/class/power_supply/battery/capacity","rt");
 #endif
-			if (cap){
+			if (cap) {
 				fgets(cap_s, 4, cap);
 				fclose(cap);
 				lastVal = atoi(cap_s);

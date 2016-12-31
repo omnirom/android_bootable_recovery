@@ -52,15 +52,15 @@ void MouseCursor::LoadData(xml_node<>* node)
 	xml_node<>* child;
 
 	child = FindNode(node, "placement");
-	if(child)
+	if (child)
 		LoadPlacement(child, &mRenderX, &mRenderY, &mRenderW, &mRenderH);
 
 	child = FindNode(node, "background");
-	if(child)
+	if (child)
 	{
 		m_color = LoadAttrColor(child, "color", m_color);
 		m_image = LoadAttrImage(child, "resource");
-		if(m_image)
+		if (m_image)
 		{
 			mRenderW = m_image->GetWidth();
 			mRenderH = m_image->GetHeight();
@@ -68,20 +68,20 @@ void MouseCursor::LoadData(xml_node<>* node)
 	}
 
 	child = FindNode(node, "speed");
-	if(child)
+	if (child)
 	{
 		attr = child->first_attribute("multiplier");
-		if(attr)
+		if (attr)
 			m_speedMultiplier = atof(attr->value());
 	}
 }
 
 int MouseCursor::Render(void)
 {
-	if(!m_present)
+	if (!m_present)
 		return 0;
 
-	if(m_image)
+	if (m_image)
 	{
 		gr_blit(m_image->GetResource(), 0, 0, mRenderW, mRenderH, mRenderX, mRenderY);
 	}
@@ -95,15 +95,15 @@ int MouseCursor::Render(void)
 
 int MouseCursor::Update(void)
 {
-	if(m_present != ev_has_mouse())
+	if (m_present != ev_has_mouse())
 	{
 		m_present = ev_has_mouse();
-		if(m_present)
+		if (m_present)
 			SetRenderPos(m_resX/2, m_resY/2);
 		return 2;
 	}
 
-	if(m_present && m_moved)
+	if (m_present && m_moved)
 	{
 		m_moved = false;
 		return 2;
@@ -113,7 +113,7 @@ int MouseCursor::Update(void)
 
 int MouseCursor::SetRenderPos(int x, int y, int w, int h)
 {
-	if(x == mRenderX && y == mRenderY)
+	if (x == mRenderX && y == mRenderY)
 		m_moved = true;
 
 	return RenderObject::SetRenderPos(x, y, w, h);
@@ -121,7 +121,7 @@ int MouseCursor::SetRenderPos(int x, int y, int w, int h)
 
 void MouseCursor::Move(int deltaX, int deltaY)
 {
-	if(deltaX != 0)
+	if (deltaX != 0)
 	{
 		mRenderX += deltaX*m_speedMultiplier;
 		mRenderX = (std::min)(mRenderX, m_resX);
@@ -130,7 +130,7 @@ void MouseCursor::Move(int deltaX, int deltaY)
 		m_moved = true;
 	}
 
-	if(deltaY != 0)
+	if (deltaY != 0)
 	{
 		mRenderY += deltaY*m_speedMultiplier;
 		mRenderY = (std::min)(mRenderY, m_resY);

@@ -2322,7 +2322,7 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 	while (Remain > 0) {
 		if (Remain < RW_Block_Size)
 			bs = (ssize_t)(Remain);
-		if (read(src_fd,  buffer, bs) != bs) {
+		if (read(src_fd, buffer, bs) != bs) {
 			LOGINFO("Error reading source fd (%s)\n", strerror(errno));
 			goto exit;
 		}
