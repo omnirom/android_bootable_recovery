@@ -362,8 +362,7 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("   Format_Block_Size: %lu\n", Part->Format_Block_Size);
 	if (!Part->MTD_Name.empty())
 		printf("   MTD_Name: %s\n", Part->MTD_Name.c_str());
-	string back_meth = Part->Backup_Method_By_Name();
-	printf("   Backup_Method: %s\n", back_meth.c_str());
+	printf("   Backup_Method: %s\n", Part->Backup_Method_By_Name().c_str());
 	if (Part->Mount_Flags || !Part->Mount_Options.empty())
 		printf("   Mount_Options: %s\n", Part->Mount_Options.c_str());
 	if (Part->MTP_Storage_ID)
@@ -569,7 +568,6 @@ bool TWPartitionManager::Make_MD5(PartitionSettings *part_settings)
 	return true;
 }
 
-
 bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 	time_t start, stop;
 	int use_compression, adb_control_bu_fd;
@@ -730,7 +728,6 @@ int TWPartitionManager::Run_Backup(bool adbbackup) {
 	if (!Mount_Current_Storage(true))
 		return false;
 
-
 	DataManager::GetValue(TW_SKIP_MD5_GENERATE_VAR, do_md5);
 	if (do_md5 == 0)
 		part_settings.generate_md5 = true;
@@ -842,7 +839,6 @@ int TWPartitionManager::Run_Backup(bool adbbackup) {
 		part_settings.Part = Find_Partition_By_Path(backup_path);
 		if (part_settings.Part != NULL) {
 			if (!Backup_Partition(&part_settings))
-
 				return false;
 		} else {
 			gui_msg(Msg(msg::kError, "unable_to_locate_partition=Unable to locate '{1}' partition for backup calculations.")(backup_path));
@@ -919,7 +915,6 @@ bool TWPartitionManager::Restore_Partition(PartitionSettings *part_settings) {
 	TWFunc::SetPerformanceMode(true);
 
 	time(&Start);
-
 
 	if (!part_settings->Part->Restore(part_settings)) {
 		TWFunc::SetPerformanceMode(false);
@@ -2078,13 +2073,13 @@ TWPartition *TWPartitionManager::Get_Default_Storage_Partition()
 {
 	TWPartition *res = NULL;
 	for (std::vector<TWPartition*>::iterator iter = Partitions.begin(); iter != Partitions.end(); ++iter) {
-		if(!(*iter)->Is_Storage)
+		if (!(*iter)->Is_Storage)
 			continue;
 
-		if((*iter)->Is_Settings_Storage)
+		if ((*iter)->Is_Settings_Storage)
 			return *iter;
 
-		if(!res)
+		if (!res)
 			res = *iter;
 	}
 	return res;

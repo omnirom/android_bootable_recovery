@@ -98,7 +98,7 @@ int GUITextBox::NotifyVarChange(const std::string& varName, const std::string& v
 {
 	GUIScrollList::NotifyVarChange(varName, value);
 
-	if(!isConditionTrue() || mIsStatic)
+	if (!isConditionTrue() || mIsStatic)
 		return 0;
 
 	// Check to see if the variable exists in mText

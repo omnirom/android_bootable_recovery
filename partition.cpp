@@ -2230,7 +2230,6 @@ bool TWPartition::Backup_Tar(PartitionSettings *part_settings, pid_t *tar_fork_p
 
 bool TWPartition::Backup_Image(PartitionSettings *part_settings) {
 	string Full_FileName, adb_file_name;
-	int adb_control_bu_fd, compressed;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
@@ -2322,7 +2321,7 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 	while (Remain > 0) {
 		if (Remain < RW_Block_Size)
 			bs = (ssize_t)(Remain);
-		if (read(src_fd,  buffer, bs) != bs) {
+		if (read(src_fd, buffer, bs) != bs) {
 			LOGINFO("Error reading source fd (%s)\n", strerror(errno));
 			goto exit;
 		}
@@ -2331,7 +2330,7 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 			goto exit;
 		}
 		backedup_size += (unsigned long long)(bs);
-		Remain = Remain - (unsigned long long)(bs);
+		Remain -= (unsigned long long)(bs);
 		if (part_settings->progress)
 			part_settings->progress->UpdateSize(backedup_size);
 		if (PartitionManager.Check_Backup_Cancel() != 0)
@@ -2353,8 +2352,6 @@ exit:
 
 bool TWPartition::Backup_Dump_Image(PartitionSettings *part_settings) {
 	string Full_FileName, Command;
-	int use_compression, adb_control_bu_fd;
-	unsigned long long compressed;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
@@ -2392,9 +2389,9 @@ unsigned long long TWPartition::Get_Restore_Size(PartitionSettings *part_setting
 		}
 	}
 
-	string Full_FileName, Restore_File_System = Get_Restore_File_System(part_settings);
+	string Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
+	string Restore_File_System = Get_Restore_File_System(part_settings);
 
-	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 	if (Is_Image(Restore_File_System)) {
 		Restore_Size = TWFunc::Get_File_Size(Full_FileName);
 		return Restore_Size;

@@ -159,7 +159,7 @@ bool GUIObject::UpdateConditions(std::vector<Condition>& conditions, const std::
 	std::vector<Condition>::iterator iter;
 	for (iter = conditions.begin(); iter != conditions.end(); ++iter)
 	{
-		if(varNameEmpty && iter->mCompareOp == "modified")
+		if (varNameEmpty && iter->mCompareOp == "modified")
 		{
 			string val;
 
@@ -172,10 +172,10 @@ bool GUIObject::UpdateConditions(std::vector<Condition>& conditions, const std::
 			iter->mLastVal = val;
 		}
 
-		if(varNameEmpty || iter->mVar1 == varName || iter->mVar2 == varName)
+		if (varNameEmpty || iter->mVar1 == varName || iter->mVar2 == varName)
 			iter->mLastResult = isConditionTrue(&(*iter));
 
-		if(!iter->mLastResult)
+		if (!iter->mLastResult)
 			result = false;
 	}
 	return result;
