@@ -500,7 +500,7 @@ private:
 		uint32_t u8state = 0, u8cp = 0;
 		std::string& s = lines[y].text;
 		unpackedLine.cells.clear();
-		for(size_t i = 0; i < s.size(); ++i) {
+		for (size_t i = 0; i < s.size(); ++i) {
 			uint32_t rc = utf8decode(&u8state, &u8cp, (unsigned char)s[i]);
 			if (rc == UTF8_ACCEPT)
 				unpackedLine.cells.push_back(Cell(u8cp));
@@ -776,7 +776,10 @@ GUITerminal::GUITerminal(xml_node<>* node) : GUIScrollList(node)
 	lastCondition = false;
 
 	if (!node) {
-		mRenderX = 0; mRenderY = 0; mRenderW = gr_fb_width(); mRenderH = gr_fb_height();
+		mRenderX = 0;
+		mRenderY = 0;
+		mRenderW = gr_fb_width();
+		mRenderH = gr_fb_height();
 	}
 
 	engine = &gEngine;
@@ -785,7 +788,7 @@ GUITerminal::GUITerminal(xml_node<>* node) : GUIScrollList(node)
 
 int GUITerminal::Update(void)
 {
-	if(!isConditionTrue()) {
+	if (!isConditionTrue()) {
 		lastCondition = false;
 		return 0;
 	}
@@ -816,7 +819,7 @@ int GUITerminal::Update(void)
 //  Return 0 on success, >0 to ignore remainder of touch, and <0 on error
 int GUITerminal::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return -1;
 
 	// TODO: grab focus correctly

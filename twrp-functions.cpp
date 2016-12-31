@@ -64,7 +64,7 @@ int TWFunc::Exec_Cmd(const string& cmd, string &result) {
 	int ret = 0;
 	exec = __popen(cmd.c_str(), "r");
 	if (!exec) return -1;
-	while(!feof(exec)) {
+	while (!feof(exec)) {
 		if (fgets(buffer, 128, exec) != NULL) {
 			result += buffer;
 		}
@@ -184,15 +184,15 @@ int TWFunc::Try_Decrypting_File(string fn, string password) {
 	size_t _key_data_len = 0;
 
 	// mostly kanged from OpenAES oaes.c
-	for( _j = 0; _j < 32; _j++ )
+	for ( _j = 0; _j < 32; _j++ )
 		_key_data[_j] = _j + 1;
 	_key_data_len = password.size();
-	if( 16 >= _key_data_len )
+	if ( 16 >= _key_data_len )
 		_key_data_len = 16;
-	else if( 24 >= _key_data_len )
+	else if ( 24 >= _key_data_len )
 		_key_data_len = 24;
 	else
-	_key_data_len = 32;
+		_key_data_len = 32;
 	memcpy(_key_data, password.c_str(), password.size());
 
 	ctx = oaes_alloc();
@@ -282,13 +282,13 @@ std::string TWFunc::Remove_Trailing_Slashes(const std::string& path, bool leaveL
 	std::string res;
 	size_t last_idx = 0, idx = 0;
 
-	while(last_idx != std::string::npos)
+	while (last_idx != std::string::npos)
 	{
-		if(last_idx != 0)
+		if (last_idx != 0)
 			res += '/';
 
 		idx = path.find_first_of('/', last_idx);
-		if(idx == std::string::npos) {
+		if (idx == std::string::npos) {
 			res += path.substr(last_idx, idx);
 			break;
 		}
@@ -297,7 +297,7 @@ std::string TWFunc::Remove_Trailing_Slashes(const std::string& path, bool leaveL
 		last_idx = path.find_first_not_of('/', idx);
 	}
 
-	if(leaveLast)
+	if (leaveLast)
 		res += '/';
 	return res;
 }
@@ -318,13 +318,13 @@ vector<string> TWFunc::split_string(const string &in, char del, bool skip_empty)
 	string field;
 	istringstream f(in);
 	if (del == '\n') {
-		while(getline(f, field)) {
+		while (getline(f, field)) {
 			if (field.empty() && skip_empty)
 				continue;
-		res.push_back(field);
+			res.push_back(field);
 		}
 	} else {
-		while(getline(f, field, del)) {
+		while (getline(f, field, del)) {
 			if (field.empty() && skip_empty)
 				continue;
 			res.push_back(field);
@@ -894,44 +894,44 @@ void TWFunc::Fixup_Time_On_Boot()
 	struct dirent *dt;
 	std::string ats_path;
 
-	if(!PartitionManager.Mount_By_Path("/data", false))
+	if (!PartitionManager.Mount_By_Path("/data", false))
 		return;
 
 	// Prefer ats_2, it seems to be the one we want according to logcat on hammerhead
 	// - it is the one for ATS_TOD (time of day?).
 	// However, I never saw a device where the offset differs between ats files.
-	for(size_t i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i)
+	for (size_t i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i)
 	{
 		DIR *d = opendir(paths[i]);
-		if(!d)
+		if (!d)
 			continue;
 
-		while((dt = readdir(d)))
+		while ((dt = readdir(d)))
 		{
-			if(dt->d_type != DT_REG || strncmp(dt->d_name, "ats_", 4) != 0)
+			if (dt->d_type != DT_REG || strncmp(dt->d_name, "ats_", 4) != 0)
 				continue;
 
-			if(ats_path.empty() || strcmp(dt->d_name, "ats_2") == 0)
+			if (ats_path.empty() || strcmp(dt->d_name, "ats_2") == 0)
 				ats_path = std::string(paths[i]).append(dt->d_name);
 		}
 
 		closedir(d);
 	}
 
-	if(ats_path.empty())
+	if (ats_path.empty())
 	{
 		LOGINFO("TWFunc::Fixup_Time: no ats files found, leaving untouched!\n");
 		return;
 	}
 
 	f = fopen(ats_path.c_str(), "r");
-	if(!f)
+	if (!f)
 	{
 		LOGINFO("TWFunc::Fixup_Time: failed to open file %s\n", ats_path.c_str());
 		return;
 	}
 
-	if(fread(&offset, sizeof(offset), 1, f) != 1)
+	if (fread(&offset, sizeof(offset), 1, f) != 1)
 	{
 		LOGINFO("TWFunc::Fixup_Time: failed load uint64 from file %s\n", ats_path.c_str());
 		fclose(f);
@@ -946,7 +946,7 @@ void TWFunc::Fixup_Time_On_Boot()
 	tv.tv_sec += offset/1000;
 	tv.tv_usec += (offset%1000)*1000;
 
-	while(tv.tv_usec >= 1000000)
+	while (tv.tv_usec >= 1000000)
 	{
 		++tv.tv_sec;
 		tv.tv_usec -= 1000000;
@@ -964,13 +964,13 @@ std::vector<std::string> TWFunc::Split_String(const std::string& str, const std:
 	std::vector<std::string> res;
 	size_t idx = 0, idx_last = 0;
 
-	while(idx < str.size())
+	while (idx < str.size())
 	{
 		idx = str.find_first_of(delimiter, idx_last);
-		if(idx == std::string::npos)
+		if (idx == std::string::npos)
 			idx = str.size();
 
-		if(idx-idx_last != 0 || !removeEmpty)
+		if (idx-idx_last != 0 || !removeEmpty)
 			res.push_back(str.substr(idx_last, idx-idx_last));
 
 		idx_last = idx + delimiter.size();
@@ -984,12 +984,12 @@ bool TWFunc::Create_Dir_Recursive(const std::string& path, mode_t mode, uid_t ui
 	std::vector<std::string> parts = Split_String(path, "/");
 	std::string cur_path;
 	struct stat info;
-	for(size_t i = 0; i < parts.size(); ++i)
+	for (size_t i = 0; i < parts.size(); ++i)
 	{
 		cur_path += "/" + parts[i];
-		if(stat(cur_path.c_str(), &info) < 0 || !S_ISDIR(info.st_mode))
+		if (stat(cur_path.c_str(), &info) < 0 || !S_ISDIR(info.st_mode))
 		{
-			if(mkdir(cur_path.c_str(), mode) < 0)
+			if (mkdir(cur_path.c_str(), mode) < 0)
 				return false;
 			chown(cur_path.c_str(), uid, gid);
 		}

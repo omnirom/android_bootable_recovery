@@ -1006,7 +1006,7 @@ int PageSet::LoadVariables(xml_node<>* vars)
 		name = child->first_attribute("name");
 		value = child->first_attribute("value");
 		persist = child->first_attribute("persist");
-		if(name && value)
+		if (name && value)
 		{
 			if (strcmp(name->value(), "tw_x_offset") == 0) {
 				tw_x_offset = atoi(value->value());
@@ -1180,7 +1180,7 @@ char* PageManager::LoadFileToBuffer(std::string filename, ZipArchive* package) {
 		// We can try to load the XML directly...
 		LOGINFO("PageManager::LoadFileToBuffer loading filename: '%s' directly\n", filename.c_str());
 		struct stat st;
-		if(stat(filename.c_str(),&st) != 0) {
+		if (stat(filename.c_str(),&st) != 0) {
 			// This isn't always an error, sometimes we request files that don't exist.
 			return NULL;
 		}
@@ -1454,7 +1454,7 @@ int PageManager::ReloadPackage(std::string name, std::string package)
 	if (iter == mPageSets.end())
 		return -1;
 
-	if(mMouseCursor)
+	if (mMouseCursor)
 		mMouseCursor->ResetData(gr_fb_width(), gr_fb_height());
 
 	PageSet* set = (*iter).second;
@@ -1572,18 +1572,18 @@ int PageManager::IsCurrentPage(Page* page)
 
 int PageManager::Render(void)
 {
-	if(blankTimer.isScreenOff())
+	if (blankTimer.isScreenOff())
 		return 0;
 
 	int res = (mCurrentSet ? mCurrentSet->Render() : -1);
-	if(mMouseCursor)
+	if (mMouseCursor)
 		mMouseCursor->Render();
 	return res;
 }
 
 HardwareKeyboard *PageManager::GetHardwareKeyboard()
 {
-	if(!mHardwareKeyboard)
+	if (!mHardwareKeyboard)
 		mHardwareKeyboard = new HardwareKeyboard();
 	return mHardwareKeyboard;
 }
@@ -1613,14 +1613,14 @@ xml_node<>* PageManager::FindStyle(std::string name)
 
 MouseCursor *PageManager::GetMouseCursor()
 {
-	if(!mMouseCursor)
+	if (!mMouseCursor)
 		mMouseCursor = new MouseCursor(gr_fb_width(), gr_fb_height());
 	return mMouseCursor;
 }
 
 void PageManager::LoadCursorData(xml_node<>* node)
 {
-	if(!mMouseCursor)
+	if (!mMouseCursor)
 		mMouseCursor = new MouseCursor(gr_fb_width(), gr_fb_height());
 
 	mMouseCursor->LoadData(node);
@@ -1628,7 +1628,7 @@ void PageManager::LoadCursorData(xml_node<>* node)
 
 int PageManager::Update(void)
 {
-	if(blankTimer.isScreenOff())
+	if (blankTimer.isScreenOff())
 		return 0;
 
 	if (RunReload())
@@ -1636,10 +1636,10 @@ int PageManager::Update(void)
 
 	int res = (mCurrentSet ? mCurrentSet->Update() : -1);
 
-	if(mMouseCursor)
+	if (mMouseCursor)
 	{
 		int c_res = mMouseCursor->Update();
-		if(c_res > res)
+		if (c_res > res)
 			res = c_res;
 	}
 	return res;
