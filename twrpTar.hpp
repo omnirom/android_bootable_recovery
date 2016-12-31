@@ -44,7 +44,6 @@ struct thread_data_struct {
 	unsigned thread_id;
 };
 
-
 class twrpTar {
 public:
 	twrpTar();
