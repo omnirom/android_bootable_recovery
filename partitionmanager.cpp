@@ -588,7 +588,6 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 		else
 			md5Success = Make_MD5(part_settings);
 
-		TWFunc::SetPerformanceMode(false);
 		if (part_settings->Part->Has_SubPartition) {
 			std::vector<TWPartition*>::iterator subpart;
 			TWPartition *parentPart = part_settings->Part;
@@ -597,10 +596,10 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 				if ((*subpart)->Can_Be_Backed_Up && (*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == parentPart->Mount_Point) {
 					part_settings->Part = *subpart;
 					if (!(*subpart)->Backup(part_settings, &tar_fork_pid)) {
-						TWFunc::SetPerformanceMode(false);
 						Clean_Backup_Folder(part_settings->Backup_Folder);
 						TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
 						tw_set_default_metadata(backup_log.c_str());
+						TWFunc::SetPerformanceMode(false);
 						return false;
 					}
 					sync();
@@ -625,6 +624,7 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 
 		}
 
+		TWFunc::SetPerformanceMode(false);
 		return md5Success;
 	} else {
 		Clean_Backup_Folder(part_settings->Backup_Folder);
