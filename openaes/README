@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------
-OpenAES-0.7.0
+OpenAES-0.10.0
 Nabil S. Al Ramli
 www.nalramli.com
 ---------------------------------------------------------------------------
@@ -70,9 +70,21 @@ nmake
 Usage
 -----
 
-Usage is described in the header file ./inc/oaes_lib.h.
+oaes_lib usage is described in the header file ./inc/oaes_lib.h.
+
+The oaes command line application help manual can be obtained by using the
+--help command line options.
+
+The oaes_setup Windows installer integrates with the Windows shell.  It can be
+used by right clicking a file in Windows Explorer and then selecting a
+subcommand from the OpenAES menu.
 
 Samples
 -------
 
 Samples applications are provided in the /test folder.
+
+Special thanks to:
+------------------
+Pedro A. Hortas
+Yahalom Emet

@@ -22,7 +22,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
 	LOCAL_C_INCLUDES := \
 		$(commands_recovery_local_path)/openaes/src/isaac \
 		$(commands_recovery_local_path)/openaes/inc
-	LOCAL_SRC_FILES = src/oaes_lib.c src/isaac/rand.c src/ftime.c
+	LOCAL_SRC_FILES = src/oaes_base64.c src/oaes_lib.c src/isaac/rand.c
 	LOCAL_SHARED_LIBRARIES = libc
 	include $(BUILD_SHARED_LIBRARY)
 
@@ -33,7 +33,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
 	LOCAL_C_INCLUDES := \
 		$(commands_recovery_local_path)/openaes/src/isaac \
 		$(commands_recovery_local_path)/openaes/inc
-	LOCAL_SRC_FILES = src/oaes_lib.c src/isaac/rand.c src/ftime.c
+	LOCAL_SRC_FILES = src/oaes_base64.c src/oaes_lib.c src/isaac/rand.c
 	LOCAL_STATIC_LIBRARIES = libc
 	include $(BUILD_STATIC_LIBRARY)
 endif

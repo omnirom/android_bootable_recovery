@@ -1,8 +1,37 @@
 ---------------------------------------------------------------------------
-OpenAES-0.7.0
 Nabil S. Al Ramli
 www.nalramli.com
 ---------------------------------------------------------------------------
+
+OpenAES-0.10.0
+-------------
+* oaes_lib: output iv and header separately
+* oaes: implement --iv option
+* oaes: bug-fix: crash when fail to base64-decode key entry
+* oaes_lib: bug-fix: memory leak in oaes_key_gen() if memory allocation fails
+
+OpenAES-0.9.0
+-------------
+* remove static OAES header from encrypted output
+* build: remove dependency on obselete malloc.h
+* oaes_base64: implement base64 algorithm
+* oaes: implement base64-enc and base64-dec commands
+* NOTE: oaes: enc and dec commands have been renamed to aes-enc and aes-dec
+* oaes: mdify --key option to only accept base64-encoded key_data
+* oaes: mdify --key option to enhance security if a longer key_data is entered
+* oaes: prevent overwriting existing files with the --out option
+
+OpenAES-0.8.1
+-------------
+* implement gen-key
+* implement --key-file
+
+OpenAES-0.8.0
+-------------
+* implement multi-threading to improve performance
+* allow the user to enter a key after starting
+* build: add Windows installer Visual Studio 2010 setup project with basic shell integration
+* build: modify oaes_lib to static or shared library
 
 OpenAES-0.7.0
 -------------
