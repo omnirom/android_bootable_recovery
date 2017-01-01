@@ -469,14 +469,14 @@ int main(int argc, char** argv)
     }
     if( OAES_RET_SUCCESS != _rc )
     {
-      fprintf( stderr, "Error: Failed to generate OAES %lu bit key.\n",
+      fprintf( stderr, "Error: Failed to generate OAES %zu bit key.\n",
         _key_data_len );
       oaes_free(&_oaes);
       return EXIT_FAILURE;
     }
     if( OAES_RET_SUCCESS != oaes_key_export(_oaes, _buf, &_buf_len) )
     {
-      fprintf( stderr, "Error: Failed to retrieve key length %lu.\n",
+      fprintf( stderr, "Error: Failed to retrieve key length %zu.\n",
         _key_data_len );
       oaes_free(&_oaes);
       return EXIT_FAILURE;
