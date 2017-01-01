@@ -39,7 +39,7 @@
 #if defined(_WIN32) && !defined(__SYMBIAN32__)
 #include <io.h>
 #else
-__inline static int setmode(int a, int b)
+__inline static int setmode(int a __unused, int b __unused)
 {
   return 0;
 }
