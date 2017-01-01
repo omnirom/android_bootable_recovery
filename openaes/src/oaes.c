@@ -288,7 +288,7 @@ static OAES_RET _do_aes_decrypt(do_block *b)
   _rc = oaes_decrypt( ctx,
     b->in, b->in_len,
     NULL, &(b->out_len),
-    NULL, NULL );
+    NULL, 0 );
   if( OAES_RET_SUCCESS != _rc )
   {
     fprintf(stderr, "Error: Failed to decrypt.\n");
