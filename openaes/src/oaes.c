@@ -788,8 +788,8 @@ int main(int argc, char** argv)
   }
 
   _i = 0;
-  while( _b.in_len =
-    fread(_b.in, sizeof(uint8_t), _read_len, _f_in) )
+  while( (_b.in_len =
+    fread(_b.in, sizeof(uint8_t), _read_len, _f_in)) )
   {
     switch(_op)
     {
