@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_01cc8d66",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-02T10:26:42Z",
+      "side": 1,
+      "message": "I see no reason why these friend declarations are needed.",
+      "revId": "709417360879c95a5457daaa11cceea489e14693",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_e1d87122",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-02T10:26:42Z",
+      "side": 1,
+      "message": "Can we get rid of set_filename and just have a method to update the digest according to the file\u0027s contents? e.g. digest_file(const std::string\u0026 filename).",
+      "revId": "709417360879c95a5457daaa11cceea489e14693",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_c1d575e8",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-02T10:26:42Z",
+      "side": 1,
+      "message": "This doesn\u0027t update a stream, it updates the digest. Actually it has nothing to do with streams, it just adds a block of data to the digest. So just call it update, and make the \"stream\" parameter const. The length should be a size_t.",
+      "revId": "709417360879c95a5457daaa11cceea489e14693",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_a1027976",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-02T10:26:42Z",
+      "side": 1,
+      "message": "It\u0027s totally unclear from the declaration what this method verifies the digest against.",
+      "revId": "709417360879c95a5457daaa11cceea489e14693",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
