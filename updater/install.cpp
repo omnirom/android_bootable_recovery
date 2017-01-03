@@ -46,6 +46,8 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <applypatch/applypatch.h>
+#include <bootloader_message/bootloader_message.h>
 #include <cutils/android_reboot.h>
 #include <ext4_utils/make_ext4fs.h>
 #include <ext4_utils/wipe.h>
@@ -54,8 +56,6 @@
 #include <selinux/selinux.h>
 #include <ziparchive/zip_archive.h>
 
-#include "applypatch/applypatch.h"
-#include "bootloader.h"
 #include "edify/expr.h"
 #include "error_code.h"
 #include "mounts.h"
