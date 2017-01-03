@@ -20,6 +20,8 @@
 #include <pthread.h>
 #include <stdio.h>
 
+#include <string>
+
 #include "ui.h"
 #include "minui/minui.h"
 
@@ -29,8 +31,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   public:
     ScreenRecoveryUI();
 
-    bool Init() override;
-    void SetLocale(const char* locale);
+    bool Init(const std::string& locale) override;
 
     // overall recovery state ("background image")
     void SetBackground(Icon icon);
@@ -70,8 +71,6 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   protected:
     Icon currentIcon;
-
-    const char* locale;
 
     // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
     float density_;
@@ -135,7 +134,6 @@ class ScreenRecoveryUI : public RecoveryUI {
     int char_width_;
     int char_height_;
     pthread_mutex_t updateMutex;
-    bool rtl_locale;
 
     virtual bool InitTextParams();
 

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "wear_ui.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -25,11 +27,11 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <string>
 #include <vector>
 
 #include "common.h"
 #include "device.h"
-#include "wear_ui.h"
 #include "android-base/properties.h"
 #include "android-base/strings.h"
 #include "android-base/stringprintf.h"
@@ -204,51 +206,48 @@ bool WearRecoveryUI::InitTextParams() {
     return true;
 }
 
-bool WearRecoveryUI::Init() {
-    if (!ScreenRecoveryUI::Init()) {
-        return false;
-    }
+bool WearRecoveryUI::Init(const std::string& locale) {
+  if (!ScreenRecoveryUI::Init(locale)) {
+    return false;
+  }
 
-    LoadBitmap("icon_error", &backgroundIcon[ERROR]);
-    backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
+  LoadBitmap("icon_error", &backgroundIcon[ERROR]);
+  backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
 
-    // This leaves backgroundIcon[INSTALLING_UPDATE] and backgroundIcon[ERASING]
-    // as NULL which is fine since draw_background_locked() doesn't use them.
+  // This leaves backgroundIcon[INSTALLING_UPDATE] and backgroundIcon[ERASING]
+  // as NULL which is fine since draw_background_locked() doesn't use them.
 
-    return true;
+  return true;
 }
 
-void WearRecoveryUI::SetStage(int current, int max)
-{
-}
+void WearRecoveryUI::SetStage(int current, int max) {}
 
-void WearRecoveryUI::Print(const char *fmt, ...)
-{
-    char buf[256];
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(buf, 256, fmt, ap);
-    va_end(ap);
+void WearRecoveryUI::Print(const char* fmt, ...) {
+  char buf[256];
+  va_list ap;
+  va_start(ap, fmt);
+  vsnprintf(buf, 256, fmt, ap);
+  va_end(ap);
 
-    fputs(buf, stdout);
+  fputs(buf, stdout);
 
-    // This can get called before ui_init(), so be careful.
-    pthread_mutex_lock(&updateMutex);
-    if (text_rows_ > 0 && text_cols_ > 0) {
-        char *ptr;
-        for (ptr = buf; *ptr != '\0'; ++ptr) {
-            if (*ptr == '\n' || text_col_ >= text_cols_) {
-                text_[text_row_][text_col_] = '\0';
-                text_col_ = 0;
-                text_row_ = (text_row_ + 1) % text_rows_;
-                if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
-            }
-            if (*ptr != '\n') text_[text_row_][text_col_++] = *ptr;
-        }
+  // This can get called before ui_init(), so be careful.
+  pthread_mutex_lock(&updateMutex);
+  if (text_rows_ > 0 && text_cols_ > 0) {
+    char* ptr;
+    for (ptr = buf; *ptr != '\0'; ++ptr) {
+      if (*ptr == '\n' || text_col_ >= text_cols_) {
         text_[text_row_][text_col_] = '\0';
-        update_screen_locked();
+        text_col_ = 0;
+        text_row_ = (text_row_ + 1) % text_rows_;
+        if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
+      }
+      if (*ptr != '\n') text_[text_row_][text_col_++] = *ptr;
     }
-    pthread_mutex_unlock(&updateMutex);
+    text_[text_row_][text_col_] = '\0';
+    update_screen_locked();
+  }
+  pthread_mutex_unlock(&updateMutex);
 }
 
 void WearRecoveryUI::StartMenu(const char* const * headers, const char* const * items,
