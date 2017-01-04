@@ -21,6 +21,8 @@
 #include <pthread.h>
 #include <time.h>
 
+#include <string>
+
 // Abstract class for controlling the user interface during recovery.
 class RecoveryUI {
   public:
@@ -28,13 +30,12 @@ class RecoveryUI {
 
     virtual ~RecoveryUI() { }
 
-    // Initialize the object; called before anything else. Returns true on success.
-    virtual bool Init();
+    // Initialize the object; called before anything else. UI texts will be
+    // initialized according to the given locale. Returns true on success.
+    virtual bool Init(const std::string& locale);
+
     // Show a stage indicator.  Call immediately after Init().
     virtual void SetStage(int current, int max) = 0;
-
-    // After calling Init(), you can tell the UI what locale it is operating in.
-    virtual void SetLocale(const char* locale) = 0;
 
     // Set the overall recovery state ("background image").
     enum Icon { NONE, INSTALLING_UPDATE, ERASING, NO_COMMAND, ERROR };
@@ -122,10 +123,14 @@ class RecoveryUI {
     // statements will be displayed.
     virtual void EndMenu() = 0;
 
-protected:
+  protected:
     void EnqueueKey(int key_code);
 
-private:
+    // The locale that's used to show the rendered texts.
+    std::string locale_;
+    bool rtl_locale_;
+
+  private:
     // Key event input queue
     pthread_mutex_t key_queue_mutex;
     pthread_cond_t key_queue_cond;
@@ -162,6 +167,8 @@ private:
 
     static void* time_key_helper(void* cookie);
     void time_key(int key_code, int count);
+
+    void SetLocale(const std::string&);
 };
 
 #endif  // RECOVERY_UI_H
