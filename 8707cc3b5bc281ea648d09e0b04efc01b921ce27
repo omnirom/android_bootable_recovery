@@ -1,0 +1,401 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_b4dbd9eb",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 397,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "If we move this to just before the select(), we don\u0027t need to call it all the time, especially from outside. The function name is not very helpful anyway.",
+      "range": {
+        "startLine": 397,
+        "startChar": 0,
+        "endLine": 397,
+        "endChar": 1
+      },
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_94e8dd7d",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 572,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "This has nothing to do with the GUI. Is there a better place for this call? E.g. somewhere in twrp.cpp.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_54e2459b",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 659,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "as with setup_uevent, this should probably be elsewhere too.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_34e7c9ab",
+        "filename": "mtp/MtpMessage.hpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "std::string would be nicer here and should work as well.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_14fccd39",
+        "filename": "mtp/mtp_MtpServer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 173,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "The name of a char array is already a compatible char*, this should not be needed. If you change the struct to use std::string, then of course we need to call c_str here.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_d4f5354d",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "a comment would be nice to explain what this is.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_b4f2b961",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "mountflags are unsigned long (see man 2 mount), so a combination of the old and new code is most correct. :)",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_94933d02",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "-1?",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_f4f83147",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "see below, the addition of mount *options* to the list of mount *flags* seems to be a misunderstanding of a bug.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_7498a11d",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "A helper function like TWFunc::StartsWith(fstab_line, \"/dev/\") would make this (and a lot of more code using the same pattern) more readable.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_549da50b",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 708,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "See C++ comment directly above - mount flags never contain \"\u003d\". See also my review comments below, I think this is a workaround for a bug in the code below.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_34a2294a",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 730,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "This seems to be a bug - the old code checked for (!mount_flags[i].name) to identify mount options and added all stuff that is not a mount flag as mount option.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_14872dbe",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 735,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "This didn\u0027t exist originally and it seems to be a misunderstanding - all non-mountflags are mount options.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_f48391ad",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2018,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "If we really want to use a random fs_flags entry here if we don\u0027t find a matching filesystem, I think this warrants a comment.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_d49095f1",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2730,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "combine initialization with declaration above",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_b48d19dc",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2732,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "add strerror(errno)",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_74bf815b",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2736,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "Now we have int found and string Found, both are not a bool which is the only type that I\u0027d intuitively expect for a variable named \"found\". Also this appears to be unused.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_94ba1d6a",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2737,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "unused?",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_54b4857b",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2775,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "I don\u0027t understand when this is the case.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_14ae0d2e",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2024,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "If subpartitions were used for mountable stuff before, this changes behavior for them, or am I wrong?",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_f4aa7117",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2331,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "more code that could be avoided by using std::string.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_34b90974",
+        "filename": "partitions.hpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "this should be a std::string too, then we don\u0027t need the ugly malloc stuff in PartitionManager.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_d4a7754d",
+        "filename": "twrp-functions.hpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 1,
+      "message": "write *to* file, while we are at it...",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}

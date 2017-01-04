@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_74ed418b",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 564,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-04T20:52:51Z",
+      "side": 0,
+      "message": "This is a nicer now, but there are still two select()s - one in minuitwrp and one here. I\u0027d preserve the comment as a reminder that there is still a bit of work to do here.",
+      "revId": "f2e3f0c51c5f94d98ba2e0a5742c89413d1e2f42",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
