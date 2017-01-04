@@ -124,6 +124,7 @@ libimgdiff_cflags := \
 
 libimgdiff_static_libraries := \
     libbsdiff \
+    libbase \
     libz
 
 # libimgdiff (static library)
