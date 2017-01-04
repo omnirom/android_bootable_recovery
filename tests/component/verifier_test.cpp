@@ -40,38 +40,44 @@
 RecoveryUI* ui = NULL;
 
 class MockUI : public RecoveryUI {
-    bool Init() { return true; }
-    void SetStage(int, int) { }
-    void SetLocale(const char*) { }
-    void SetBackground(Icon /*icon*/) { }
-    void SetSystemUpdateText(bool /*security_update*/) { }
+  bool Init(const std::string&) override {
+    return true;
+  }
+  void SetStage(int, int) override {}
+  void SetBackground(Icon /*icon*/) override {}
+  void SetSystemUpdateText(bool /*security_update*/) override {}
 
-    void SetProgressType(ProgressType /*determinate*/) { }
-    void ShowProgress(float /*portion*/, float /*seconds*/) { }
-    void SetProgress(float /*fraction*/) { }
+  void SetProgressType(ProgressType /*determinate*/) override {}
+  void ShowProgress(float /*portion*/, float /*seconds*/) override {}
+  void SetProgress(float /*fraction*/) override {}
 
-    void ShowText(bool /*visible*/) { }
-    bool IsTextVisible() { return false; }
-    bool WasTextEverVisible() { return false; }
-    void Print(const char* fmt, ...) {
-        va_list ap;
-        va_start(ap, fmt);
-        vfprintf(stderr, fmt, ap);
-        va_end(ap);
-    }
-    void PrintOnScreenOnly(const char* fmt, ...) {
-        va_list ap;
-        va_start(ap, fmt);
-        vfprintf(stderr, fmt, ap);
-        va_end(ap);
-    }
-    void ShowFile(const char*) { }
+  void ShowText(bool /*visible*/) override {}
+  bool IsTextVisible() override {
+    return false;
+  }
+  bool WasTextEverVisible() override {
+    return false;
+  }
+  void Print(const char* fmt, ...) override {
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+  }
+  void PrintOnScreenOnly(const char* fmt, ...) override {
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+  }
+  void ShowFile(const char*) override {}
 
-    void StartMenu(const char* const* /*headers*/,
-                   const char* const* /*items*/,
-                   int /*initial_selection*/) { }
-    int SelectMenu(int /*sel*/) { return 0; }
-    void EndMenu() { }
+  void StartMenu(const char* const* /*headers*/, const char* const* /*items*/,
+                 int /*initial_selection*/) override {}
+  int SelectMenu(int /*sel*/) override {
+    return 0;
+  }
+  void EndMenu() override {}
 };
 
 void
