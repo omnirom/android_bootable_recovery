@@ -124,12 +124,16 @@
 #include "applypatch/imgdiff.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <android-base/file.h>
+#include <android-base/unique_fd.h>
 
 #include <bsdiff.h>
 #include <zlib.h>
@@ -382,19 +386,12 @@ unsigned char* ReadImage(const char* filename, int* num_chunks, ImageChunk** chu
   }
 
   size_t sz = static_cast<size_t>(st.st_size);
-  unsigned char* img = static_cast<unsigned char*>(malloc(sz + 4));
-  FILE* f = fopen(filename, "rb");
-  if (fread(img, 1, sz, f) != sz) {
+  unsigned char* img = static_cast<unsigned char*>(malloc(sz));
+  android::base::unique_fd fd(open(filename, O_RDONLY));
+  if (!android::base::ReadFully(fd, img, sz)) {
     printf("failed to read \"%s\" %s\n", filename, strerror(errno));
-    fclose(f);
-    return NULL;
+    return nullptr;
   }
-  fclose(f);
-
-  // append 4 zero bytes to the data so we can always search for the
-  // four-byte string 1f8b0800 starting at any point in the actual
-  // file data, without special-casing the end of the data.
-  memset(img+sz, 0, 4);
 
   size_t pos = 0;
 
@@ -518,10 +515,8 @@ unsigned char* ReadImage(const char* filename, int* num_chunks, ImageChunk** chu
       curr->data = p;
 
       for (curr->len = 0; curr->len < (sz - pos); ++curr->len) {
-        if (p[curr->len] == 0x1f &&
-            p[curr->len+1] == 0x8b &&
-            p[curr->len+2] == 0x08 &&
-            p[curr->len+3] == 0x00) {
+        if (sz - pos >= 4 && p[curr->len] == 0x1f && p[curr->len + 1] == 0x8b &&
+            p[curr->len + 2] == 0x08 && p[curr->len + 3] == 0x00) {
           break;
         }
       }
