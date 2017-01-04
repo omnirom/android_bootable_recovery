@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "ui.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/input.h>
@@ -28,6 +30,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <string>
+
 #include <android-base/properties.h>
 #include <cutils/android_reboot.h>
 
@@ -35,25 +39,25 @@
 #include "roots.h"
 #include "device.h"
 #include "minui/minui.h"
-#include "screen_ui.h"
-#include "ui.h"
 
 #define UI_WAIT_KEY_TIMEOUT_SEC    120
 
 RecoveryUI::RecoveryUI()
-        : key_queue_len(0),
-          key_last_down(-1),
-          key_long_press(false),
-          key_down_count(0),
-          enable_reboot(true),
-          consecutive_power_keys(0),
-          last_key(-1),
-          has_power_key(false),
-          has_up_key(false),
-          has_down_key(false) {
-    pthread_mutex_init(&key_queue_mutex, nullptr);
-    pthread_cond_init(&key_queue_cond, nullptr);
-    memset(key_pressed, 0, sizeof(key_pressed));
+    : locale_(""),
+      rtl_locale_(false),
+      key_queue_len(0),
+      key_last_down(-1),
+      key_long_press(false),
+      key_down_count(0),
+      enable_reboot(true),
+      consecutive_power_keys(0),
+      last_key(-1),
+      has_power_key(false),
+      has_up_key(false),
+      has_down_key(false) {
+  pthread_mutex_init(&key_queue_mutex, nullptr);
+  pthread_cond_init(&key_queue_cond, nullptr);
+  memset(key_pressed, 0, sizeof(key_pressed));
 }
 
 void RecoveryUI::OnKeyDetected(int key_code) {
@@ -80,13 +84,16 @@ static void* InputThreadLoop(void*) {
     return nullptr;
 }
 
-bool RecoveryUI::Init() {
-    ev_init(InputCallback, this);
+bool RecoveryUI::Init(const std::string& locale) {
+  // Set up the locale info.
+  SetLocale(locale);
 
-    ev_iterate_available_keys(std::bind(&RecoveryUI::OnKeyDetected, this, std::placeholders::_1));
+  ev_init(InputCallback, this);
 
-    pthread_create(&input_thread_, nullptr, InputThreadLoop, nullptr);
-    return true;
+  ev_iterate_available_keys(std::bind(&RecoveryUI::OnKeyDetected, this, std::placeholders::_1));
+
+  pthread_create(&input_thread_, nullptr, InputThreadLoop, nullptr);
+  return true;
 }
 
 int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
@@ -337,4 +344,24 @@ void RecoveryUI::SetEnableReboot(bool enabled) {
     pthread_mutex_lock(&key_queue_mutex);
     enable_reboot = enabled;
     pthread_mutex_unlock(&key_queue_mutex);
+}
+
+void RecoveryUI::SetLocale(const std::string& new_locale) {
+  this->locale_ = new_locale;
+  this->rtl_locale_ = false;
+
+  if (!new_locale.empty()) {
+    size_t underscore = new_locale.find('_');
+    // lang has the language prefix prior to '_', or full string if '_' doesn't exist.
+    std::string lang = new_locale.substr(0, underscore);
+
+    // A bit cheesy: keep an explicit list of supported RTL languages.
+    if (lang == "ar" ||  // Arabic
+        lang == "fa" ||  // Persian (Farsi)
+        lang == "he" ||  // Hebrew (new language code)
+        lang == "iw" ||  // Hebrew (old language code)
+        lang == "ur") {  // Urdu
+      rtl_locale_ = true;
+    }
+  }
 }

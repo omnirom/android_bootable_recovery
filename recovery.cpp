@@ -1506,11 +1506,10 @@ int main(int argc, char **argv) {
     Device* device = make_device();
     ui = device->GetUI();
 
-    if (!ui->Init()) {
+    if (!ui->Init(locale)) {
       printf("Failed to initialize UI, use stub UI instead.");
       ui = new StubRecoveryUI();
     }
-    ui->SetLocale(locale.c_str());
     // Set background string to "installing security update" for security update,
     // otherwise set it to "installing system update".
     ui->SetSystemUpdateText(security_update);
