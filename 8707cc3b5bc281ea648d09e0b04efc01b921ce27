@@ -76,6 +76,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_54180584",
+        "filename": "mtp/MtpMessage.hpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-05T16:54:01Z",
+      "side": 1,
+      "message": "It would be nicer, but I have tried multiple times to use std::string and it doesn\u0027t work.",
+      "parentUuid": "78209991_34e7c9ab",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_14fccd39",
         "filename": "mtp/mtp_MtpServer.cpp",
         "patchSetId": 5
@@ -144,6 +162,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_341d8974",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-05T16:54:01Z",
+      "side": 1,
+      "message": "My use of -1 was because there are some flags that I want to ignore within recovery, however, this method is probably not a good approach.",
+      "parentUuid": "78209991_94933d02",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_f4f83147",
         "filename": "partition.cpp",
         "patchSetId": 5
@@ -189,6 +225,24 @@
       "writtenOn": "2017-01-04T20:52:51Z",
       "side": 1,
       "message": "See C++ comment directly above - mount flags never contain \"\u003d\". See also my review comments below, I think this is a workaround for a bug in the code below.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_57036712",
+        "filename": "partition.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 708,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-05T16:54:01Z",
+      "side": 1,
+      "message": "The code comment may have been valid for v1 fstab, but isn\u0027t valid for v2 fstabs. See https://android.googlesource.com/device/lge/bullhead/+/master/fstab.bullhead#6",
+      "parentUuid": "78209991_549da50b",
       "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -348,6 +402,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_3708eb2c",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2024,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-05T16:54:01Z",
+      "side": 1,
+      "message": "Yes, it\u0027s a small change in behavior. The old behavior listed only the main partition and did not list each individual supbartition. The main and subpartitions were mounted all at the same time. Now, both the main and the subpartitions will be listed. Mounting or unmounting the main partition will mount them all, but you can individually mount and unmount the subpartitions. I have decided that this change in behavior is acceptable.",
+      "parentUuid": "78209991_14ae0d2e",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_f4aa7117",
         "filename": "partitionmanager.cpp",
         "patchSetId": 5
@@ -365,6 +437,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_170def3c",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2331,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-05T16:54:01Z",
+      "side": 1,
+      "message": "Could be if using std::string worked, but it doesn\u0027t.",
+      "parentUuid": "78209991_f4aa7117",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_34b90974",
         "filename": "partitions.hpp",
         "patchSetId": 5
@@ -376,6 +466,24 @@
       "writtenOn": "2017-01-04T20:52:51Z",
       "side": 1,
       "message": "this should be a std::string too, then we don\u0027t need the ugly malloc stuff in PartitionManager.",
+      "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_f7095330",
+        "filename": "partitions.hpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-05T16:54:01Z",
+      "side": 1,
+      "message": "Right now we replace whitespace chars with nulls and use pointers. We could switch to std::string but would require a fair amount of work to switch to using substr. It falls into one of those things that I guess we should do someday, but the existing code is well-tested and works well and the gains or improvements are likely negligible. This article may give you an idea of why I\u0027m not in a rush to make this leap: https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/",
+      "parentUuid": "78209991_34b90974",
       "revId": "8707cc3b5bc281ea648d09e0b04efc01b921ce27",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
