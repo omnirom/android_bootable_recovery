@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_eaf84b47",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1944,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-05T16:54:01Z",
+      "side": 1,
+      "message": "we should reset the flags to the first encountered item in the vector if we don\u0027t find a match.",
+      "revId": "94e9a9cc01f9839cabca3af9bdb1fda24f90936b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
