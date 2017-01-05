@@ -298,6 +298,12 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         LOCAL_CFLAGS += -DTW_INCLUDE_FBE
         LOCAL_SHARED_LIBRARIES += libe4crypt
     endif
+    ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),)
+    ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),false)
+        LOCAL_CFLAGS += -DTW_CRYPTO_USE_SYSTEM_VOLD
+        LOCAL_STATIC_LIBRARIES += libvolddecrypt
+    endif
+    endif
 endif
 WITH_CRYPTO_UTILS := \
     $(if $(wildcard system/core/libcrypto_utils/Android.mk),true)
@@ -690,6 +696,11 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/scrypt/Android.mk
     ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
         include $(commands_recovery_local_path)/crypto/ext4crypt/Android.mk
+    endif
+    ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),)
+    ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),false)
+        include $(commands_recovery_local_path)/crypto/vold_decrypt/Android.mk
+    endif
     endif
     include $(commands_recovery_local_path)/gpt/Android.mk
 endif
