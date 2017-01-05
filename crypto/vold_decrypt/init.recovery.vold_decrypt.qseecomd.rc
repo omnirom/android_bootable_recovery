@@ -1,0 +1,14 @@
+on fs
+    # needed to make qseecomd work in recovery
+    chmod 0660 /dev/qseecom
+    chown system drmrpc /dev/qseecom
+    chmod 0664 /dev/ion
+    chown system system /dev/ion
+
+service sys_qseecomd /system/bin/qseecomd
+    user root
+    group root
+    setenv PATH /system/bin
+    setenv LD_LIBRARY_PATH /system/lib64:/system/lib
+    disabled
+    oneshot
