@@ -1,6 +1,7 @@
 import /init.recovery.logd.rc
 import /init.recovery.usb.rc
 import /init.recovery.service.rc
+import /init.recovery.vold_decrypt.rc
 import /init.recovery.${ro.hardware}.rc
 
 on early-init
