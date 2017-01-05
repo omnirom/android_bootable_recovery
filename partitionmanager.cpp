@@ -1560,6 +1560,29 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	strcpy(cPassword, Password.c_str());
 	int pwret = cryptfs_check_passwd(cPassword);
 
+#ifdef TW_CRYPTO_USE_SYSTEM_VOLD
+	if (pwret != 0) {
+		LOGINFO("TW_CRYPTO_USE_SYSTEM_VOLD := true\n");
+		LOGINFO("Attempting to use system's vold for decryption...\n");
+
+		if (PartitionManager.Mount_By_Path("/system", true)) {
+			pwret = -1;
+
+			system(("/init.vold_decrypt.sh '" + Password + "'").c_str());
+
+			char prop_value[PROPERTY_VALUE_MAX];
+			property_get("ro.crypto.fs_crypto_blkdev", prop_value, "error");
+			if (strcmp(prop_value, "error") != 0)
+				pwret = 0;
+
+			if (!PartitionManager.UnMount_By_Path("/system", false)) {
+				// PartitionManager failed to unmount /system, do a lazy unmount
+				TWFunc::Exec_Cmd("umount -l /system");
+			}
+		}
+	}
+#endif // TW_CRYPTO_USE_SYSTEM_VOLD
+
 	// Unmount any partitions that were needed for decrypt
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Mount_To_Decrypt) {

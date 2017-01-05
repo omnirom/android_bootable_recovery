@@ -301,6 +301,9 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         LOCAL_CFLAGS += -DTW_INCLUDE_FBE
         LOCAL_SHARED_LIBRARIES += libe4crypt
     endif
+    ifeq ($(TW_CRYPTO_USE_SYSTEM_VOLD), true)
+        LOCAL_CFLAGS += -DTW_CRYPTO_USE_SYSTEM_VOLD
+    endif
 endif
 ifeq ($(TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID), true)
     LOCAL_CFLAGS += -DTW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
@@ -676,6 +679,9 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/scrypt/Android.mk
     ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
         include $(commands_recovery_local_path)/crypto/ext4crypt/Android.mk
+    endif
+    ifeq ($(TW_CRYPTO_USE_SYSTEM_VOLD), true)
+        include $(commands_recovery_local_path)/crypto/vold_decrypt/Android.mk
     endif
     include $(commands_recovery_local_path)/gpt/Android.mk
 endif
