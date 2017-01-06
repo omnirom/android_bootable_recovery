@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -22,6 +23,8 @@
 
 #include <android-base/file.h>
 #include <android-base/properties.h>
+#include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 #include <android-base/test_utils.h>
 #include <bootloader_message/bootloader_message.h>
 #include <gtest/gtest.h>
@@ -509,4 +512,51 @@ TEST_F(UpdaterTest, set_stage) {
 
   script = "set_stage(\"/dev/full\", \"1/3\")";
   expect("", script.c_str(), kNoCause);
+}
+
+TEST_F(UpdaterTest, set_progress) {
+  // set_progress() expects one argument.
+  expect(nullptr, "set_progress()", kArgsParsingFailure);
+  expect(nullptr, "set_progress(\"arg1\", \"arg2\")", kArgsParsingFailure);
+
+  // Invalid progress argument.
+  expect(nullptr, "set_progress(\"arg1\")", kArgsParsingFailure);
+  expect(nullptr, "set_progress(\"3x+5\")", kArgsParsingFailure);
+  expect(nullptr, "set_progress(\".3.5\")", kArgsParsingFailure);
+
+  TemporaryFile tf;
+  UpdaterInfo updater_info;
+  updater_info.cmd_pipe = fdopen(tf.fd, "w");
+  expect(".52", "set_progress(\".52\")", kNoCause, &updater_info);
+  fflush(updater_info.cmd_pipe);
+
+  std::string cmd;
+  ASSERT_TRUE(android::base::ReadFileToString(tf.path, &cmd));
+  ASSERT_EQ(android::base::StringPrintf("set_progress %f\n", .52), cmd);
+  // recovery-updater protocol expects 2 tokens ("set_progress <frac>").
+  ASSERT_EQ(2U, android::base::Split(cmd, " ").size());
+}
+
+TEST_F(UpdaterTest, show_progress) {
+  // show_progress() expects two arguments.
+  expect(nullptr, "show_progress()", kArgsParsingFailure);
+  expect(nullptr, "show_progress(\"arg1\")", kArgsParsingFailure);
+  expect(nullptr, "show_progress(\"arg1\", \"arg2\", \"arg3\")", kArgsParsingFailure);
+
+  // Invalid progress arguments.
+  expect(nullptr, "show_progress(\"arg1\", \"arg2\")", kArgsParsingFailure);
+  expect(nullptr, "show_progress(\"3x+5\", \"10\")", kArgsParsingFailure);
+  expect(nullptr, "show_progress(\".3\", \"5a\")", kArgsParsingFailure);
+
+  TemporaryFile tf;
+  UpdaterInfo updater_info;
+  updater_info.cmd_pipe = fdopen(tf.fd, "w");
+  expect(".52", "show_progress(\".52\", \"10\")", kNoCause, &updater_info);
+  fflush(updater_info.cmd_pipe);
+
+  std::string cmd;
+  ASSERT_TRUE(android::base::ReadFileToString(tf.path, &cmd));
+  ASSERT_EQ(android::base::StringPrintf("progress %f %d\n", .52, 10), cmd);
+  // recovery-updater protocol expects 3 tokens ("progress <frac> <secs>").
+  ASSERT_EQ(3U, android::base::Split(cmd, " ").size());
 }
