@@ -91,7 +91,6 @@ void DataManager::sanitize_device_id(char* device_id) {
 
 void DataManager::get_device_id(void) {
 	FILE *fp;
-	size_t i;
 	char line[2048];
 	char hardware_id[HWID_MAX] = { 0 };
 	char device_id[DEVID_MAX] = { 0 };
@@ -104,7 +103,7 @@ void DataManager::get_device_id(void) {
 	if (strcmp(model_id, "error") != 0) {
 		LOGINFO("=> product model: '%s'\n", model_id);
 		// Replace spaces with underscores
-		for (i = 0; i < strlen(model_id); i++) {
+		for (size_t i = 0; i < strlen(model_id); i++) {
 			if (model_id[i] == ' ')
 				model_id[i] = '_';
 		}
@@ -880,7 +879,6 @@ int DataManager::GetMagicValue(const string& varName, string& value)
 		string cpu_temp_file;
 		static unsigned long convert_temp = 0;
 		static time_t cpuSecCheck = 0;
-		int divisor = 0;
 		struct timeval curTime;
 		string results;
 
@@ -997,7 +995,7 @@ void DataManager::ReadSettingsFile(void)
 #ifndef TW_OEM_BUILD
 	// Load up the values for TWRP - Sleep to let the card be ready
 	char mkdir_path[255], settings_file[255];
-	int is_enc, has_dual, use_ext, has_data_media, has_ext;
+	int is_enc, has_data_media;
 
 	GetValue(TW_IS_ENCRYPTED, is_enc);
 	GetValue(TW_HAS_DATA_MEDIA, has_data_media);

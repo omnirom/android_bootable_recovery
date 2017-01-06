@@ -99,8 +99,6 @@ int GUIPartitionList::Update(void)
 	GUIScrollList::Update();
 
 	if (updateList) {
-		int listSize = 0;
-
 		// Completely update the list if needed -- Used primarily for
 		// restore as the list for restore will change depending on what
 		// partitions were backed up
