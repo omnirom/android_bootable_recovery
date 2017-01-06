@@ -2908,6 +2908,7 @@ int TWPartition::Decrypt_Adopted() {
 		}
 	}
 exit:
+	close(fd);
 	return ret;
 #else
 	LOGINFO("Decrypt_Adopted: no crypto support\n");
