@@ -604,7 +604,6 @@ int OpenRecoveryScript::Backup_Command(string Options) {
 	char value1[SCRIPT_COMMAND_SIZE];
 	int line_len, i;
 	string Backup_List;
-	bool adbbackup = false;
 
 	strcpy(value1, Options.c_str());
 
@@ -748,13 +747,11 @@ int OpenRecoveryScript::Restore_ADB_Backup(void) {
 	bool breakloop = false;
 	int partition_count = 0;
 	std::string Restore_Name;
-	std::size_t pos = 0;
 	struct AdbBackupFileTrailer adbmd5;
 	struct PartitionSettings part_settings;
-	int adb_control_twrp_fd, adb_write_fd, systemro;
+	int adb_control_twrp_fd;
 	int adb_control_bu_fd, ret = 0;
 	char cmd[512];
-	int orsfd = open(ORS_OUTPUT_FILE, O_WRONLY);
 
 	part_settings.total_restore_size = 0;
 
