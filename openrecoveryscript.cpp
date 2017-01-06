@@ -95,13 +95,13 @@ int OpenRecoveryScript::copy_script_file(string filename) {
 }
 
 int OpenRecoveryScript::run_script_file(void) {
-	FILE *fp = fopen(SCRIPT_FILE_TMP, "r");
 	int ret_val = 0, cindex, line_len, i, remove_nl, install_cmd = 0, sideload = 0;
 	char script_line[SCRIPT_COMMAND_SIZE], command[SCRIPT_COMMAND_SIZE],
 	     value[SCRIPT_COMMAND_SIZE], mount[SCRIPT_COMMAND_SIZE],
 	     value1[SCRIPT_COMMAND_SIZE], value2[SCRIPT_COMMAND_SIZE];
 	char *val_start, *tok;
 
+	FILE *fp = fopen(SCRIPT_FILE_TMP, "r");
 	if (fp != NULL) {
 		DataManager::SetValue(TW_SIMULATE_ACTIONS, 0);
 		DataManager::SetValue("ui_progress", 0); // Reset the progress bar
@@ -757,10 +757,21 @@ int OpenRecoveryScript::Restore_ADB_Backup(void) {
 
 	PartitionManager.Mount_All_Storage();
 	DataManager::SetValue(TW_SKIP_MD5_CHECK_VAR, 0);
+
 	LOGINFO("opening TW_ADB_BU_CONTROL\n");
 	adb_control_bu_fd = open(TW_ADB_BU_CONTROL, O_WRONLY | O_NONBLOCK);
+	if (adb_control_bu_fd < 0) {
+		LOGERR("Error opening TW_ADB_BU_CONTROL\n");
+		return -1;
+	}
 	LOGINFO("opening TW_ADB_TWRP_CONTROL\n");
 	adb_control_twrp_fd = open(TW_ADB_TWRP_CONTROL, O_RDONLY | O_NONBLOCK);
+	if (adb_control_twrp_fd < 0) {
+		LOGERR("Error opening TW_ADB_TWRP_CONTROL\n");
+		close(adb_control_bu_fd);
+		return -1;
+	}
+
 	memset(&adbmd5, 0, sizeof(adbmd5));
 
 	while (!breakloop) {
@@ -846,6 +857,8 @@ int OpenRecoveryScript::Restore_ADB_Backup(void) {
 					part_settings.progress = &progress;
 					if (!PartitionManager.Restore_Partition(&part_settings)) {
 						LOGERR("ADB Restore failed.\n");
+						close(adb_control_twrp_fd);
+						close(adb_control_bu_fd);
 						return 1;
 					}
 				}
@@ -881,6 +894,8 @@ int OpenRecoveryScript::Restore_ADB_Backup(void) {
 								LOGERR("Cannot write to ADB_CONTROL_BU_FD: %s\n", strerror(errno));
 							}
 							gui_msg(Msg(msg::kError, "restore_read_only=Cannot restore {1} -- mounted read only.")(part_settings.Part->Backup_Display_Name));
+							close(adb_control_twrp_fd);
+							close(adb_control_bu_fd);
 							return 1;
 
 						}
@@ -894,12 +909,16 @@ int OpenRecoveryScript::Restore_ADB_Backup(void) {
 					part_settings.progress = &progress;
 					if (!PartitionManager.Restore_Partition(&part_settings)) {
 						LOGERR("ADB Restore failed.\n");
+						close(adb_control_twrp_fd);
+						close(adb_control_bu_fd);
 						return 1;
 					}
 				}
 			}
 		}
 	}
+	close(adb_control_twrp_fd);
+	close(adb_control_bu_fd);
 	gui_msg("restore_complete=Restore Complete");
 
 	if (!twadbbu::Write_TWENDADB())
