@@ -86,7 +86,7 @@ bool clear_bootloader_message(std::string* err);
 bool read_wipe_package(std::string* package_data, size_t size, std::string* err);
 bool write_wipe_package(const std::string& package_data, std::string* err);
 
-void set_misc_device(const char* type, const char* name);
+void set_misc_device(std::string name);
 void get_args(int *argc, char ***argv);
 
 #else
