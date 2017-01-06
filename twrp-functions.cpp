@@ -179,7 +179,7 @@ int TWFunc::Try_Decrypting_File(string fn, string password) {
 	uint8_t *buffer_out = NULL;
 	uint8_t *ptr = NULL;
 	size_t read_len = 0, out_len = 0;
-	int firstbyte = 0, secondbyte = 0, key_len;
+	int firstbyte = 0, secondbyte = 0;
 	size_t _j = 0;
 	size_t _key_data_len = 0;
 
@@ -889,7 +889,6 @@ void TWFunc::Fixup_Time_On_Boot()
 	static const char *paths[] = { "/data/system/time/", "/data/time/"  };
 
 	FILE *f;
-	DIR *d;
 	offset = 0;
 	struct dirent *dt;
 	std::string ats_path;
