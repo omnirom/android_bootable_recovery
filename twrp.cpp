@@ -182,11 +182,9 @@ int main(int argc, char **argv) {
 		TWPartition* misc = PartitionManager.Find_Partition_By_Path("/misc");
 		if (misc != NULL) {
 			if (misc->Current_File_System == "emmc") {
-				set_misc_device("emmc", misc->Actual_Block_Device.c_str());
-			} else if (misc->Current_File_System == "mtd") {
-				set_misc_device("mtd", misc->MTD_Name.c_str());
+				set_misc_device(misc->Actual_Block_Device);
 			} else {
-				LOGERR("Unknown file system for /misc\n");
+				LOGERR("Only emmc /misc is supported\n");
 			}
 		}
 		get_args(&argc, &argv);

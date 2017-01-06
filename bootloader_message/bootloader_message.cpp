@@ -39,7 +39,7 @@
 
 static std::string misc_blkdev;
 
-void set_misc_device(const char* type, const char* name) {
+void set_misc_device(std::string name) {
     misc_blkdev = name;
 }
 
