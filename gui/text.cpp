@@ -114,9 +114,6 @@ int GUIText::Render(void)
 
 	mVarChanged = 0;
 
-	int x = mRenderX, y = mRenderY;
-	int width = gr_ttf_measureEx(mLastValue.c_str(), fontResource);
-
 	if (isHighlighted)
 		gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, mHighlightColor.alpha);
 	else

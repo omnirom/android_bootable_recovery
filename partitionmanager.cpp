@@ -570,7 +570,7 @@ bool TWPartitionManager::Make_MD5(PartitionSettings *part_settings)
 
 bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 	time_t start, stop;
-	int use_compression, adb_control_bu_fd;
+	int use_compression;
 	string backup_log = part_settings->Backup_Folder + "/recovery.log";
 
 	if (part_settings->Part == NULL)
@@ -694,14 +694,14 @@ int TWPartitionManager::Cancel_Backup() {
 
 int TWPartitionManager::Run_Backup(bool adbbackup) {
 	PartitionSettings part_settings;
-	int check, partition_count = 0, disable_free_space_check = 0, do_md5 = 0;
+	int partition_count = 0, disable_free_space_check = 0, do_md5 = 0;
 	int gui_adb_backup;
 	string Backup_Name, Backup_List, backup_path;
-	unsigned long long total_bytes = 0, free_space = 0, subpart_size;
+	unsigned long long total_bytes = 0, free_space = 0;
 	TWPartition* storage = NULL;
 	std::vector<TWPartition*>::iterator subpart;
 	struct tm *t;
-	time_t start, stop, seconds, total_start, total_stop;
+	time_t seconds, total_start, total_stop;
 	size_t start_pos = 0, end_pos = 0;
 	stop_backup.set_value(0);
 	seconds = time(0);
@@ -943,8 +943,7 @@ bool TWPartitionManager::Restore_Partition(PartitionSettings *part_settings) {
 
 int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 	PartitionSettings part_settings;
-	int check_md5, check, partition_count = 0;
-	TWPartition* restore_part = NULL;
+	int check_md5;
 
 	time_t rStart, rStop;
 	time(&rStart);
@@ -1513,9 +1512,7 @@ void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
 
 int TWPartitionManager::Decrypt_Device(string Password) {
 #ifdef TW_INCLUDE_CRYPTO
-	int ret_val, password_len;
 	char crypto_state[PROPERTY_VALUE_MAX], crypto_blkdev[PROPERTY_VALUE_MAX], cPassword[255];
-	size_t result;
 	std::vector<TWPartition*>::iterator iter;
 
 	// Mount any partitions that need to be mounted for decrypt
@@ -1644,7 +1641,7 @@ int TWPartitionManager::Open_Lun_File(string Partition_Path, string Lun_File) {
 }
 
 int TWPartitionManager::usb_storage_enable(void) {
-	int has_dual, has_data_media;
+	int has_data_media;
 	char lun_file[255];
 	bool has_multiple_lun = false;
 
@@ -1757,7 +1754,7 @@ void TWPartitionManager::UnMount_Main_Partitions(void) {
 }
 
 int TWPartitionManager::Partition_SDCard(void) {
-	char mkdir_path[255], temp[255], line[512];
+	char temp[255];
 	string Storage_Path, Command, Device, fat_str, ext_str, start_loc, end_loc, ext_format, sd_path, tmpdevice;
 	int ext, swap, total_size = 0, fat_size;
 
@@ -2304,7 +2301,7 @@ bool TWPartitionManager::Remove_MTP_Storage(unsigned int Storage_ID) {
 }
 
 bool TWPartitionManager::Flash_Image(string& path, string& filename) {
-	int check, partition_count = 0;
+	int partition_count = 0;
 	TWPartition* flash_part = NULL;
 	string Flash_List, flash_path, full_filename;
 	size_t start_pos = 0, end_pos = 0;
@@ -2442,7 +2439,6 @@ void TWPartitionManager::Decrypt_Adopted() {
 	char* xmlFile = PageManager::LoadFileToBuffer("/data/system/storage.xml", NULL);
 	xml_document<> *doc = NULL;
 	xml_node<>* volumes = NULL;
-	xml_node<>* volume = NULL;
 	string Primary_Storage_UUID = "";
 	if (xmlFile != NULL) {
 		LOGINFO("successfully loaded storage.xml\n");
