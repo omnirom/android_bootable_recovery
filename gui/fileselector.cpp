@@ -305,7 +305,6 @@ size_t GUIFileSelector::GetItemCount()
 void GUIFileSelector::RenderItem(size_t itemindex, int yPos, bool selected)
 {
 	size_t folderSize = mShowFolders ? mFolderList.size() : 0;
-	size_t fileSize = mShowFiles ? mFileList.size() : 0;
 
 	ImageResource* icon;
 	std::string text;

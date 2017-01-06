@@ -604,7 +604,6 @@ int OpenRecoveryScript::Backup_Command(string Options) {
 	char value1[SCRIPT_COMMAND_SIZE];
 	int line_len, i;
 	string Backup_List;
-	bool adbbackup = false;
 
 	strcpy(value1, Options.c_str());
 

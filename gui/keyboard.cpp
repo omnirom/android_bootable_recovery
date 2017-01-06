@@ -346,7 +346,6 @@ void GUIKeyboard::DrawKey(Key& key, int keyX, int keyY, int keyW, int keyH)
 		void* fontResource = mLongpressFont->GetResource();
 		gr_color(mLongpressFontColor.red, mLongpressFontColor.green, mLongpressFontColor.blue, mLongpressFontColor.alpha);
 		string text(1, keychar);
-		int textH = mLongpressFont->GetHeight();
 		int textW = gr_ttf_measureEx(text.c_str(), fontResource);
 		int textX = keyX + keyW - longpressOffsetX - textW;
 		int textY = keyY + longpressOffsetY;
