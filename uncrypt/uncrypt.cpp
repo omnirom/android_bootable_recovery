@@ -118,7 +118,8 @@
 
 #include "error_code.h"
 
-#define WINDOW_SIZE 5
+static constexpr int WINDOW_SIZE = 5;
+static constexpr int FIBMAP_RETRY_LIMIT = 3;
 
 // uncrypt provides three services: SETUP_BCB, CLEAR_BCB and UNCRYPT.
 //
@@ -233,6 +234,26 @@ static bool find_uncrypt_package(const std::string& uncrypt_path_file, std::stri
     return true;
 }
 
+static int retry_fibmap(const int fd, const char* name, int* block, const int head_block) {
+    CHECK(block != nullptr);
+    for (size_t i = 0; i < FIBMAP_RETRY_LIMIT; i++) {
+        if (fsync(fd) == -1) {
+            PLOG(ERROR) << "failed to fsync \"" << name << "\"";
+            return kUncryptFileSyncError;
+        }
+        if (ioctl(fd, FIBMAP, block) != 0) {
+            PLOG(ERROR) << "failed to find block " << head_block;
+            return kUncryptIoctlError;
+        }
+        if (*block != 0) {
+            return kUncryptNoError;
+        }
+        sleep(1);
+    }
+    LOG(ERROR) << "fibmap of " << head_block << "always returns 0";
+    return kUncryptIoctlError;
+}
+
 static int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
                              bool encrypted, int socket) {
     std::string err;
@@ -314,6 +335,15 @@ static int produce_block_map(const char* path, const char* map_file, const char*
                 PLOG(ERROR) << "failed to find block " << head_block;
                 return kUncryptIoctlError;
             }
+
+            if (block == 0) {
+                LOG(ERROR) << "failed to find block " << head_block << ", retrying";
+                int error = retry_fibmap(fd, path, &block, head_block);
+                if (error != kUncryptNoError) {
+                    return error;
+                }
+            }
+
             add_block_to_ranges(ranges, block);
             if (encrypted) {
                 if (write_at_offset(buffers[head].data(), sb.st_blksize, wfd,
@@ -350,6 +380,15 @@ static int produce_block_map(const char* path, const char* map_file, const char*
             PLOG(ERROR) << "failed to find block " << head_block;
             return kUncryptIoctlError;
         }
+
+        if (block == 0) {
+            LOG(ERROR) << "failed to find block " << head_block << ", retrying";
+            int error = retry_fibmap(fd, path, &block, head_block);
+            if (error != kUncryptNoError) {
+                return error;
+            }
+        }
+
         add_block_to_ranges(ranges, block);
         if (encrypted) {
             if (write_at_offset(buffers[head].data(), sb.st_blksize, wfd,
