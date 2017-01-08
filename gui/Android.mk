@@ -167,22 +167,11 @@ endif
 TWRP_RES += $(TW_ADDITIONAL_RES)
 
 TWRP_RES_GEN := $(intermediates)/twrp
-ifneq ($(TW_USE_TOOLBOX), true)
-    TWRP_SH_TARGET := /sbin/busybox
-else
-    TWRP_SH_TARGET := /sbin/mksh
-endif
-
 $(TWRP_RES_GEN):
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 	cp -fr $(TWRP_RES) $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 	cp -fr $(TWRP_THEME_LOC)/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/
-ifneq ($(TW_USE_TOOLBOX), true)
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
-	ln -sf $(TWRP_SH_TARGET) $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
-endif
-endif
 
 LOCAL_GENERATED_SOURCES := $(TWRP_RES_GEN)
 LOCAL_SRC_FILES := twrp $(TWRP_RES_GEN)
