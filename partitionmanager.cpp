@@ -362,8 +362,7 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("   Format_Block_Size: %lu\n", Part->Format_Block_Size);
 	if (!Part->MTD_Name.empty())
 		printf("   MTD_Name: %s\n", Part->MTD_Name.c_str());
-	string back_meth = Part->Backup_Method_By_Name();
-	printf("   Backup_Method: %s\n", back_meth.c_str());
+	printf("   Backup_Method: %s\n", Part->Backup_Method_By_Name().c_str());
 	if (Part->Mount_Flags || !Part->Mount_Options.empty())
 		printf("   Mount_Options: %s\n", Part->Mount_Options.c_str());
 	if (Part->MTP_Storage_ID)
@@ -584,9 +583,8 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 
 	if (part_settings->Part->Backup(part_settings, &tar_fork_pid)) {
 		bool md5Success = false;
-		if (part_settings->adbbackup) {
+		if (part_settings->adbbackup)
 			md5Success = true;
-		}
 		else
 			md5Success = Make_MD5(part_settings);
 
