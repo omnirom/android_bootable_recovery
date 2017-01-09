@@ -29,21 +29,23 @@
 #define OTAIO_MAX_FNAME_SIZE 128
 
 static ZipArchiveHandle archive;
+static bool is_retry = false;
 static std::map<std::string, bool> should_inject_cache;
 
 static std::string get_type_path(const char* io_type) {
     return android::base::StringPrintf("%s/%s", OTAIO_BASE_DIR, io_type);
 }
 
-void ota_io_init(ZipArchiveHandle za) {
+void ota_io_init(ZipArchiveHandle za, bool retry) {
     archive = za;
+    is_retry = retry;
     ota_set_fault_files();
 }
 
 bool should_fault_inject(const char* io_type) {
     // archive will be NULL if we used an entry point other
     // than updater/updater.cpp:main
-    if (archive == NULL) {
+    if (archive == nullptr || is_retry) {
         return false;
     }
     const std::string type_path = get_type_path(io_type);

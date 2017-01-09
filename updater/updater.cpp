@@ -100,7 +100,6 @@ int main(int argc, char** argv) {
     CloseArchive(za);
     return 3;
   }
-  ota_io_init(za);
 
   ZipString script_name(SCRIPT_NAME);
   ZipEntry script_entry;
@@ -166,6 +165,7 @@ int main(int argc, char** argv) {
       printf("unexpected argument: %s", argv[4]);
     }
   }
+  ota_io_init(za, state.is_retry);
 
   std::string result;
   bool status = Evaluate(&state, root, &result);

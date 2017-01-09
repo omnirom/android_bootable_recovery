@@ -52,7 +52,7 @@
 /*
  * Initialize libotafault by providing a reference to the OTA package.
  */
-void ota_io_init(ZipArchiveHandle zip);
+void ota_io_init(ZipArchiveHandle zip, bool retry);
 
 /*
  * Return true if a config file is present for the given IO type.
