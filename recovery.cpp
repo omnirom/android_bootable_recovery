@@ -322,7 +322,7 @@ static std::vector<std::string> get_args(const int argc, char** const argv) {
   std::vector<std::string> args(argv, argv + argc);
 
   // --- if arguments weren't supplied, look in the bootloader control block
-  if (argc == 1) {
+  if (args.size() == 1) {
     boot.recovery[sizeof(boot.recovery) - 1] = '\0';  // Ensure termination
     std::string boot_recovery(boot.recovery);
     std::vector<std::string> tokens = android::base::Split(boot_recovery, "\n");
@@ -338,7 +338,7 @@ static std::vector<std::string> get_args(const int argc, char** const argv) {
   }
 
   // --- if that doesn't work, try the command file (if we have /cache).
-  if (argc == 1 && has_cache) {
+  if (args.size() == 1 && has_cache) {
     std::string content;
     if (ensure_path_mounted(COMMAND_FILE) == 0 &&
         android::base::ReadFileToString(COMMAND_FILE, &content)) {
