@@ -21,6 +21,7 @@
 #define __KYAN_LOG_H__
 
 #include <errno.h>
+#include <string.h>
 
 #ifdef ANDROID_XXX
 
