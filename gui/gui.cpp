@@ -488,6 +488,8 @@ static void ors_command_read()
 				// put all things that need to be done after the command is finished into ors_command_done, not here
 			}
 		}
+	} else {
+		LOGINFO("ORS command line read returned an error: %i, %i, %s\n", read_ret, errno, strerror(errno));
 	}
 }
 
