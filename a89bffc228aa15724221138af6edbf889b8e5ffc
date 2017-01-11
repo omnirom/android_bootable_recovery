@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_8d368cac",
+        "filename": "gui/blanktimer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-01-11T21:55:33Z",
+      "side": 1,
+      "message": "Also need run this when TW_NO_SCREEN_TIMEOUT is defined",
+      "range": {
+        "startLine": 134,
+        "startChar": 2,
+        "endLine": 134,
+        "endChar": 37
+      },
+      "revId": "a89bffc228aa15724221138af6edbf889b8e5ffc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
