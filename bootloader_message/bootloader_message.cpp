@@ -284,17 +284,6 @@ get_args(int *argc, char ***argv) {
             (*argv)[0] = strdup(arg);
             for (*argc = 1; *argc < MAX_ARGS; ++*argc) {
                 if ((arg = strtok(NULL, "\n")) == NULL) break;
-
-// if the device does not have an own recovery key combo we just want to open TWRP after
-// walking through the factory reset screen - without actually doing a factory reset
-#ifdef IGNORE_MISC_WIPE_DATA
-                if (!strcmp(arg, "--wipe_data")) {
-                    (*argv)[*argc] = "";
-                    *argc = *argc -1;
-                    printf("Bootloader arg \"%s\" ignored because TWRP was compiled with TW_IGNORE_MISC_WIPE_DATA\n", arg);
-                    continue;
-                }
-#endif
                 (*argv)[*argc] = strdup(arg);
             }
             printf("Got arguments from boot message\n");
