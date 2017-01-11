@@ -1918,7 +1918,7 @@ int GUIAction::checkforapp(std::string arg __unused)
 			string parent_path = "/data/app";
 			DIR *d = opendir("/data/app");
 			struct dirent *p;
-			int len = strlen("me.twrp.twrpapp-");
+			size_t len = strlen("me.twrp.twrpapp-");
 			while ((p = readdir(d))) {
 				if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
 					continue;
@@ -1959,7 +1959,7 @@ int GUIAction::installapp(std::string arg __unused)
 						LOGERR("chown %s error: %s\n", install_path.c_str(), strerror(errno));
 						goto exit;
 					}
-					if (setfilecon(install_path.c_str(), context.c_str()) < 0) {
+					if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
 						LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
 						goto exit;
 					}
@@ -1973,7 +1973,7 @@ int GUIAction::installapp(std::string arg __unused)
 					LOGERR("chown %s error: %s\n", install_path.c_str(), strerror(errno));
 					goto exit;
 				}
-				if (setfilecon(install_path.c_str(), context.c_str()) < 0) {
+				if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
 					LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
 					goto exit;
 				}
@@ -1986,7 +1986,7 @@ int GUIAction::installapp(std::string arg __unused)
 					LOGERR("chown %s error: %s\n", install_path.c_str(), strerror(errno));
 					goto exit;
 				}
-				if (setfilecon(install_path.c_str(), context.c_str()) < 0) {
+				if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
 					LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
 					goto exit;
 				}
@@ -2006,7 +2006,7 @@ int GUIAction::installapp(std::string arg __unused)
 					install_path += "/twrpapp";
 					LOGINFO("Installing app to '%s'\n", install_path.c_str());
 					if (mkdir(install_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0) {
-						if (setfilecon(install_path.c_str(), context.c_str()) < 0) {
+						if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
 							LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
 							goto exit;
 						}
@@ -2015,7 +2015,7 @@ int GUIAction::installapp(std::string arg __unused)
 							LOGERR("Error copying apk file\n");
 							goto exit;
 						}
-						if (setfilecon(install_path.c_str(), context.c_str()) < 0) {
+						if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
 							LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
 							goto exit;
 						}
