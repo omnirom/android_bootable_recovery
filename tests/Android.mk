@@ -99,7 +99,7 @@ LOCAL_STATIC_LIBRARIES := \
     libfs_mgr \
     liblog \
     libselinux \
-    libext4_utils_static \
+    libext4_utils \
     libsparse_static \
     libcrypto_utils \
     libcrypto \
