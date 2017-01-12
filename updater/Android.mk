@@ -31,7 +31,7 @@ updater_common_static_libraries := \
     libutils \
     libmounts \
     libotafault \
-    libext4_utils_static \
+    libext4_utils \
     libfec \
     libfec_rs \
     libfs_mgr \
