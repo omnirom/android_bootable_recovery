@@ -37,7 +37,7 @@ updater_common_static_libraries := \
     libfs_mgr \
     liblog \
     libselinux \
-    libsparse_static \
+    libsparse \
     libsquashfs_utils \
     libbz \
     libz \
