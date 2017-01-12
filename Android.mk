@@ -77,7 +77,7 @@ LOCAL_STATIC_LIBRARIES := \
     libbatterymonitor \
     libbootloader_message \
     libext4_utils \
-    libsparse_static \
+    libsparse \
     libziparchive \
     libotautil \
     libmounts \
