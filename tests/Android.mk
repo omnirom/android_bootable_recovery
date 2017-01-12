@@ -100,7 +100,7 @@ LOCAL_STATIC_LIBRARIES := \
     liblog \
     libselinux \
     libext4_utils \
-    libsparse_static \
+    libsparse \
     libcrypto_utils \
     libcrypto \
     libcutils \
