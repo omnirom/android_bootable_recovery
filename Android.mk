@@ -76,8 +76,8 @@ LOCAL_C_INCLUDES += \
 LOCAL_STATIC_LIBRARIES := \
     libbatterymonitor \
     libbootloader_message \
-    libext4_utils_static \
-    libsparse_static \
+    libext4_utils \
+    libsparse \
     libziparchive \
     libotautil \
     libmounts \
