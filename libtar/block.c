@@ -29,6 +29,10 @@
 #define E4CRYPT_TAG "TWRP.security.e4crypt="
 #define E4CRYPT_TAG_LEN 22
 
+// Used to identify Posix capabilities in extended ('x')
+#define CAPABILITIES_TAG "STEINBORN.capability"
+#define CAPABILITIES_TAG_LEN 20
+
 /* read a header block */
 /* FIXME: the return value of this function should match the return value
 	  of tar_block_read(), which is a macro which references a prototype
@@ -128,6 +132,11 @@ th_read(TAR *t)
 		free(t->th_buf.e4crypt_policy);
 	}
 #endif
+	if (t->th_buf.has_cap_data)
+	{
+		memset(&t->th_buf.cap_data, 0, sizeof(struct vfs_cap_data));
+		t->th_buf.has_cap_data = 0;
+	}
 
 	memset(&(t->th_buf), 0, sizeof(struct tar_header));
 
@@ -343,6 +352,53 @@ th_read(TAR *t)
 	}
 #endif
 
+	// POSIX file capabilities
+	if(TH_ISCAPHEADER(t))
+	{
+		sz = th_get_size(t);
+
+		if(sz >= T_BLOCKSIZE) // Not supported
+		{
+#ifdef DEBUG
+			printf("    th_read(): Capabilities header is too long!\n");
+#endif
+		}
+		else
+		{
+			char buf[T_BLOCKSIZE];
+			i = tar_block_read(t, buf);
+			if (i != T_BLOCKSIZE)
+			{
+				if (i != -1)
+					errno = EINVAL;
+				return -1;
+			}
+
+			// To be sure
+			buf[T_BLOCKSIZE-1] = 0;
+
+			int len = strlen(buf);
+			char *start = strstr(buf, CAPABILITIES_TAG);
+			if(start && start+CAPABILITIES_TAG_LEN < buf+len)
+			{
+				start += CAPABILITIES_TAG_LEN;
+				memcpy(&t->th_buf.cap_data, start, sizeof(struct vfs_cap_data));
+				t->th_buf.has_cap_data = 1;
+#ifdef DEBUG
+				printf("    th_read(): Posix capabilities detected\n");
+#endif
+			}
+		}
+
+		i = th_read_internal(t);
+		if (i != T_BLOCKSIZE)
+		{
+			if (i != -1)
+				errno = EINVAL;
+			return -1;
+		}
+	}
+
 	return 0;
 }
 
@@ -359,7 +415,7 @@ th_write(TAR *t)
 
 #ifdef DEBUG
 	printf("==> th_write(TAR=\"%s\")\n", t->pathname);
-	th_print(t);
+	//th_print(t);
 #endif
 
 	if ((t->options & TAR_GNU) && t->th_buf.gnu_longlink != NULL)
@@ -570,11 +626,60 @@ th_write(TAR *t)
 	}
 #endif
 
+	if((t->options & TAR_STORE_POSIX_CAP) && t->th_buf.has_cap_data)
+	{
+#ifdef DEBUG
+		printf("th_write(): has a posix capability\n");
+#endif
+		/* save old size and type */
+		type2 = t->th_buf.typeflag;
+		sz2 = th_get_size(t);
+
+		/* write out initial header block with fake size and type */
+		t->th_buf.typeflag = TH_CAP_TYPE;
+
+		sz = CAPABILITIES_TAG_LEN + sizeof(struct vfs_cap_data) + 3 + 1;
+
+		if(sz >= 100) // another ascci digit for size
+			++sz;
+
+		if(sz >= T_BLOCKSIZE) // impossible
+		{
+			errno = EINVAL;
+			return -1;
+		}
+
+		th_set_size(t, sz);
+		th_finish(t);
+		i = tar_block_write(t, &(t->th_buf));
+		if (i != T_BLOCKSIZE)
+		{
+			if (i != -1)
+				errno = EINVAL;
+			return -1;
+		}
+
+		memset(buf, 0, T_BLOCKSIZE);
+		snprintf(buf, T_BLOCKSIZE, "%d "CAPABILITIES_TAG, (int)sz);
+		memcpy(buf + CAPABILITIES_TAG_LEN + 3, &t->th_buf.cap_data, sizeof(struct vfs_cap_data));
+		i = tar_block_write(t, &buf);
+		if (i != T_BLOCKSIZE)
+		{
+			if (i != -1)
+				errno = EINVAL;
+			return -1;
+		}
+
+		/* reset type and size to original values */
+		t->th_buf.typeflag = type2;
+		th_set_size(t, sz2);
+	}
+
 	th_finish(t);
 
 #ifdef DEBUG
 	/* print tar header */
-	th_print(t);
+	//th_print(t);
 #endif
 
 	i = tar_block_write(t, &(t->th_buf));
