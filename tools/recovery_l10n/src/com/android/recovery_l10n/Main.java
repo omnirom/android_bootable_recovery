@@ -38,6 +38,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -148,11 +149,28 @@ public class Main extends Activity {
         mText = (TextView) findViewById(R.id.text);
 
         String[] localeNames = getAssets().getLocales();
-        Arrays.sort(localeNames);
+        Arrays.sort(localeNames, new Comparator<String>() {
+        // Override the string comparator so that en is sorted behind en_US.
+        // As a result, en_US will be matched first in recovery.
+            @Override
+            public int compare(String s1, String s2) {
+                if (s1.equals(s2)) {
+                    return 0;
+                } else if (s1.startsWith(s2)) {
+                    return -1;
+                } else if (s2.startsWith(s1)) {
+                    return 1;
+                }
+                return s1.compareTo(s2);
+            }
+        });
+
         ArrayList<Locale> locales = new ArrayList<Locale>();
         for (String localeName : localeNames) {
             Log.i(TAG, "locale = " + localeName);
-            locales.add(Locale.forLanguageTag(localeName));
+            if (!localeName.isEmpty()) {
+                locales.add(Locale.forLanguageTag(localeName));
+            }
         }
 
         final Runnable seq = buildSequence(locales.toArray(new Locale[0]));
