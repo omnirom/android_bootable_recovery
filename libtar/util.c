@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <sys/param.h>
 #include <errno.h>
+#include <linux/capability.h>
 
 #ifdef STDC_HEADERS
 # include <string.h>
@@ -209,4 +210,12 @@ int_to_oct_ex(int64_t num, char *oct, size_t octlen)
 		return;
 	}
 	int_to_oct(num, oct, octlen);
+}
+
+void print_caps(struct vfs_cap_data *cap_data) {
+	printf("     magic_etc=%u \n", cap_data->magic_etc);
+	printf("     data[0].permitted=%u \n", cap_data->data[0].permitted);
+	printf("     data[0].inheritable=%u \n", cap_data->data[0].inheritable);
+	printf("     data[1].permitted=%u \n", cap_data->data[1].permitted);
+	printf("     data[1].inheritable=%u \n", cap_data->data[1].inheritable);
 }
