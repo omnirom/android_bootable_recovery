@@ -55,9 +55,9 @@ extern "C" {
 
 #ifdef TW_INCLUDE_FBE
 #include "crypto/ext4crypt/ext4crypt_tar.h"
-#define TWTAR_FLAGS TAR_GNU | TAR_STORE_SELINUX | TAR_STORE_EXT4_POL
+#define TWTAR_FLAGS TAR_GNU | TAR_STORE_SELINUX | TAR_STORE_POSIX_CAP |TAR_STORE_EXT4_POL
 #else
-#define TWTAR_FLAGS TAR_GNU | TAR_STORE_SELINUX
+#define TWTAR_FLAGS TAR_GNU | TAR_STORE_SELINUX | TAR_STORE_POSIX_CAP
 #endif
 
 using namespace std;
