@@ -248,6 +248,9 @@ int main(int argc, char **argv) {
 				if (strncmp(argptr, "reason", strlen("reason")) == 0) {
 					ptr = argptr + strlen("reason") + 1;
 					gui_print("%s\n", ptr);
+				} else if (strncmp(argptr, "rom_wipe_data", strlen("rom_wipe_data")) == 0) {
+					if (!OpenRecoveryScript::Insert_ORS_Command("wipe data\n"))
+						break;
 				}
 			}
 		}
