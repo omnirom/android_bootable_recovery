@@ -20,6 +20,10 @@
 #include <errno.h>
 #include <utime.h>
 
+#include <sys/capability.h>
+#include <sys/xattr.h>
+#include <linux/xattr.h>
+
 #ifdef STDC_HEADERS
 # include <stdlib.h>
 #endif
@@ -165,6 +169,16 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 			fprintf(stderr, "tar_extract_file(): failed to restore SELinux context %s to file %s !!!\n", t->th_buf.selinux_context, realname);
 	}
 #endif
+
+	if((t->options & TAR_STORE_POSIX_CAP) && t->th_buf.has_cap_data)
+	{
+#if 1 //def DEBUG
+		printf("tar_extract_file(): restoring posix capabilities to file %s\n", realname);
+		print_caps(&t->th_buf.cap_data);
+#endif
+		if (setxattr(realname, XATTR_NAME_CAPS, &t->th_buf.cap_data, sizeof(struct vfs_cap_data), 0) < 0)
+			fprintf(stderr, "tar_extract_file(): failed to restore posix capabilities to file %s !!!\n", realname);
+	}
 
 #ifdef LIBTAR_FILE_HASH
 	pn = th_get_pathname(t);
