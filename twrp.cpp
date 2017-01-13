@@ -108,23 +108,23 @@ int main(int argc, char **argv) {
 	property_set("ro.twrp.version", TW_VERSION_STR);
 
 	time_t StartupTime = time(NULL);
-	printf("Starting TWRP %s-%s on %s (pid %d)\n", TW_VERSION_STR, TW_GIT_REVISION, ctime(&StartupTime), getpid());
+	LOGINFO("Starting TWRP %s-%s on %s (pid %d)\n", TW_VERSION_STR, TW_GIT_REVISION, ctime(&StartupTime), getpid());
 
 	// Load default values to set DataManager constants and handle ifdefs
 	DataManager::SetDefaultValues();
-	printf("Starting the UI...\n");
+	LOGINFO("Starting the UI...\n");
 	gui_init();
-	printf("=> Linking mtab\n");
+	LOGINFO("=> Linking mtab\n");
 	symlink("/proc/mounts", "/etc/mtab");
 	if (TWFunc::Path_Exists("/etc/twrp.fstab")) {
 		if (TWFunc::Path_Exists("/etc/recovery.fstab")) {
-			printf("Renaming regular /etc/recovery.fstab -> /etc/recovery.fstab.bak\n");
+			LOGINFO("Renaming regular /etc/recovery.fstab -> /etc/recovery.fstab.bak\n");
 			rename("/etc/recovery.fstab", "/etc/recovery.fstab.bak");
 		}
-		printf("Moving /etc/twrp.fstab -> /etc/recovery.fstab\n");
+		LOGINFO("Moving /etc/twrp.fstab -> /etc/recovery.fstab\n");
 		rename("/etc/twrp.fstab", "/etc/recovery.fstab");
 	}
-	printf("=> Processing recovery.fstab\n");
+	LOGINFO("=> Processing recovery.fstab\n");
 	if (!PartitionManager.Process_Fstab("/etc/recovery.fstab", 1)) {
 		LOGERR("Failing out of recovery due to problem with recovery.fstab.\n");
 		return -1;
@@ -136,10 +136,10 @@ int main(int argc, char **argv) {
 #ifdef HAVE_SELINUX
 	if (TWFunc::Path_Exists("/prebuilt_file_contexts")) {
 		if (TWFunc::Path_Exists("/file_contexts")) {
-			printf("Renaming regular /file_contexts -> /file_contexts.bak\n");
+			LOGINFO("Renaming regular /file_contexts -> /file_contexts.bak\n");
 			rename("/file_contexts", "/file_contexts.bak");
 		}
-		printf("Moving /prebuilt_file_contexts -> /file_contexts\n");
+		LOGINFO("Moving /prebuilt_file_contexts -> /file_contexts\n");
 		rename("/prebuilt_file_contexts", "/file_contexts");
 	}
 	struct selinux_opt selinux_options[] = {
@@ -147,9 +147,9 @@ int main(int argc, char **argv) {
 	};
 	selinux_handle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
 	if (!selinux_handle)
-		printf("No file contexts for SELinux\n");
+		LOGINFO("No file contexts for SELinux\n");
 	else
-		printf("SELinux contexts loaded from /file_contexts\n");
+		LOGINFO("SELinux contexts loaded from /file_contexts\n");
 	{ // Check to ensure SELinux can be supported by the kernel
 		char *contexts = NULL;
 
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
 		int index, index2, len;
 		char* argptr;
 		char* ptr;
-		printf("Startup Commands: ");
+		LOGINFO("Startup Commands: ");
 		for (index = 1; index < argc; index++) {
 			argptr = argv[index];
 			printf(" '%s'", argv[index]);

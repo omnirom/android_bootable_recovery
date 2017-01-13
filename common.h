@@ -20,25 +20,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include "twcommon.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define LOGE(...) fprintf(stdout, "E:" __VA_ARGS__)
-#define LOGW(...) fprintf(stdout, "W:" __VA_ARGS__)
-#define LOGI(...) fprintf(stdout, "I:" __VA_ARGS__)
-
-#if 0
-#define LOGV(...) fprintf(stdout, "V:" __VA_ARGS__)
-#define LOGD(...) fprintf(stdout, "D:" __VA_ARGS__)
-#else
-#define LOGV(...) do {} while (0)
-#define LOGD(...) do {} while (0)
-#endif
-
-#define STRINGIFY(x) #x
-#define EXPAND(x) STRINGIFY(x)
 
 extern bool modified_flash;
 //typedef struct fstab_rec Volume;

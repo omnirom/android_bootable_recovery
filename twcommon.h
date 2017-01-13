@@ -5,16 +5,7 @@
 extern "C" {
 #endif
 
-#ifndef BUILD_TWRPTAR_MAIN
-#include "gui/gui.h"
-#define LOGERR(...) gui_print_color("error", "E:" __VA_ARGS__)
-#define LOGINFO(...) fprintf(stdout, "I:" __VA_ARGS__)
-#else
-#include <stdio.h>
-#define LOGERR(...) printf("E:" __VA_ARGS__)
-#define LOGINFO(...) printf("I:" __VA_ARGS__)
-#define gui_print(...) printf( __VA_ARGS__ )
-#endif
+#include "twlogging/twlogging.h"
 
 #define STRINGIFY(x) #x
 #define EXPAND(x) STRINGIFY(x)

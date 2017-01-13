@@ -36,6 +36,7 @@
 #include <linux/msm_ion.h>
 #endif
 
+#include "../twcommon.h"
 #include "minui.h"
 #include "graphics.h"
 #include <pixelflinger/pixelflinger.h>
@@ -86,7 +87,7 @@ static int map_mdp_pixel_format()
         return MDP_RGBA_8888;
     else if (gr_framebuffer.format == GGL_PIXEL_FORMAT_RGBX_8888)
         return MDP_RGBA_8888;
-    printf("No known pixel format for map_mdp_pixel_format, defaulting to MDP_RGB_565.\n");
+    LOGW("No known pixel format for map_mdp_pixel_format, defaulting to MDP_RGB_565.\n");
     return MDP_RGB_565;
 }
 #endif // MSM_BSP
@@ -128,12 +129,12 @@ minui_backend* open_overlay() {
 
     fd = open("/dev/graphics/fb0", O_RDWR);
     if (fd < 0) {
-        perror("open_overlay cannot open fb0");
+        LOGE("open_overlay cannot open fb0\n");
         return NULL;
     }
 
     if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
-        perror("failed to get fb0 info");
+        LOGE("failed to get fb0 info\n");
         close(fd);
         return NULL;
     }
@@ -143,7 +144,7 @@ minui_backend* open_overlay() {
         close(fd);
         return &my_backend;
 #else
-        printf("Overlay graphics may work (%s), but not enabled. Use TW_TARGET_USES_QCOM_BSP := true to enable.\n", fi.id);
+        LOGI("Overlay graphics may work (%s), but not enabled. Use TW_TARGET_USES_QCOM_BSP := true to enable.\n", fi.id);
 #endif
     }
     close(fd);
@@ -159,7 +160,7 @@ static void overlay_blank(minui_backend* backend __unused, bool blank)
 
     fd = open(TW_BRIGHTNESS_PATH, O_RDWR);
     if (fd < 0) {
-        perror("cannot open LCD backlight");
+        LOGE("cannot open LCD backlight\n");
         return;
     }
     write(fd, blank ? "000" : brightness, 3);
@@ -168,7 +169,7 @@ static void overlay_blank(minui_backend* backend __unused, bool blank)
 #ifdef TW_SECONDARY_BRIGHTNESS_PATH
     fd = open(TW_SECONDARY_BRIGHTNESS_PATH, O_RDWR);
     if (fd < 0) {
-        perror("cannot open LCD backlight 2");
+        LOGE("cannot open LCD backlight 2\n");
         return;
     }
     write(fd, blank ? "000" : brightness, 3);
@@ -179,7 +180,7 @@ static void overlay_blank(minui_backend* backend __unused, bool blank)
 
     ret = ioctl(fb_fd, FBIOBLANK, blank ? FB_BLANK_POWERDOWN : FB_BLANK_UNBLANK);
     if (ret < 0)
-        perror("ioctl(): blank");
+        LOGE("ioctl(): blank\n");
 #endif
 }
 
@@ -193,14 +194,14 @@ void setDisplaySplit(void) {
         //Format "left right" space as delimiter
         if(fread(split, sizeof(char), 64, fp)) {
             leftSplit = atoi(split);
-            printf("Left Split=%d\n",leftSplit);
+            LOGI("Left Split=%d\n",leftSplit);
             char *rght = strpbrk(split, " ");
             if (rght)
                 rightSplit = atoi(rght + 1);
-            printf("Right Split=%d\n", rightSplit);
+            LOGI("Right Split=%d\n", rightSplit);
         }
     } else {
-        printf("Failed to open mdss_fb_split node\n");
+        LOGWARN("Failed to open mdss_fb_split node\n");
     }
     if (fp)
         fclose(fp);
@@ -230,7 +231,7 @@ int free_ion_mem(void) {
     if (mem_info.ion_fd >= 0) {
         ret = ioctl(mem_info.ion_fd, ION_IOC_FREE, &mem_info.handle_data);
         if (ret < 0)
-            perror("free_mem failed ");
+            LOGE("free_mem failed\n");
     }
 
     if (mem_info.mem_fd >= 0)
@@ -252,7 +253,7 @@ int alloc_ion_mem(unsigned int size)
 
     mem_info.ion_fd = open("/dev/ion", O_RDWR|O_DSYNC);
     if (mem_info.ion_fd < 0) {
-        perror("ERROR: Can't open ion ");
+        LOGE("ERROR: Can't open ion\n");
         return -errno;
     }
 
@@ -269,7 +270,7 @@ int alloc_ion_mem(unsigned int size)
 
     result = ioctl(mem_info.ion_fd, ION_IOC_ALLOC,  &ionAllocData);
     if(result){
-        perror("ION_IOC_ALLOC Failed ");
+        LOGE("ION_IOC_ALLOC Failed\n");
         close(mem_info.ion_fd);
         return result;
     }
@@ -278,7 +279,7 @@ int alloc_ion_mem(unsigned int size)
     mem_info.handle_data.handle = ionAllocData.handle;
     result = ioctl(mem_info.ion_fd, ION_IOC_MAP, &fd_data);
     if (result) {
-        perror("ION_IOC_MAP Failed ");
+        LOGE("ION_IOC_MAP Failed\n");
         free_ion_mem();
         return result;
     }
@@ -287,7 +288,7 @@ int alloc_ion_mem(unsigned int size)
     mem_info.mem_fd = fd_data.fd;
 
     if (!mem_info.mem_buf) {
-        perror("ERROR: mem_buf MAP_FAILED ");
+        LOGE("ERROR: mem_buf MAP_FAILED\n");
         free_ion_mem();
         return -ENOMEM;
     }
@@ -332,7 +333,7 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayL);
             if (ret < 0) {
-                perror("Overlay Set Failed");
+                LOGE("Overlay Set Failed\n");
                 return ret;
             }
             overlayL_id = overlayL.id;
@@ -372,7 +373,7 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayL);
             if (ret < 0) {
-                perror("OverlayL Set Failed");
+                LOGE("OverlayL Set Failed\n");
                 return ret;
             }
             overlayL_id = overlayL.id;
@@ -404,7 +405,7 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayR.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayR);
             if (ret < 0) {
-                perror("OverlayR Set Failed");
+                LOGE("OverlayR Set Failed\n");
                 return ret;
             }
             overlayR_id = overlayR.id;
@@ -422,7 +423,7 @@ int overlay_display_frame(int fd, void* data, size_t size)
 
     if (!isDisplaySplit()) {
         if (overlayL_id == MSMFB_NEW_REQUEST) {
-            perror("display_frame failed, no overlay\n");
+            LOGE("display_frame failed, no overlay\n");
             return -EINVAL;
         }
 
@@ -436,14 +437,14 @@ int overlay_display_frame(int fd, void* data, size_t size)
         ovdataL.data.memory_id = mem_info.mem_fd;
         ret = ioctl(fd, MSMFB_OVERLAY_PLAY, &ovdataL);
         if (ret < 0) {
-            perror("overlay_display_frame failed, overlay play Failed\n");
-            printf("%i, %i, %i, %i\n", ret, fb_fd, fd, errno);
+            LOGE("overlay_display_frame failed, overlay play Failed\n");
+            LOGE("%i, %i, %i, %i\n", ret, fb_fd, fd, errno);
             return ret;
         }
     } else {
 
         if (overlayL_id == MSMFB_NEW_REQUEST) {
-            perror("display_frame failed, no overlayL \n");
+            LOGE("display_frame failed, no overlayL\n");
             return -EINVAL;
         }
 
@@ -457,12 +458,12 @@ int overlay_display_frame(int fd, void* data, size_t size)
         ovdataL.data.memory_id = mem_info.mem_fd;
         ret = ioctl(fd, MSMFB_OVERLAY_PLAY, &ovdataL);
         if (ret < 0) {
-            perror("overlay_display_frame failed, overlayL play Failed\n");
+            LOGE("overlay_display_frame failed, overlayL play Failed\n");
             return ret;
         }
 
         if (overlayR_id == MSMFB_NEW_REQUEST) {
-            perror("display_frame failed, no overlayR \n");
+            LOGE("display_frame failed, no overlayR\n");
             return -EINVAL;
         }
         memset(&ovdataR, 0, sizeof(struct msmfb_overlay_data));
@@ -473,7 +474,7 @@ int overlay_display_frame(int fd, void* data, size_t size)
         ovdataR.data.memory_id = mem_info.mem_fd;
         ret = ioctl(fd, MSMFB_OVERLAY_PLAY, &ovdataR);
         if (ret < 0) {
-            perror("overlay_display_frame failed, overlayR play Failed\n");
+            LOGE("overlay_display_frame failed, overlayR play Failed\n");
             return ret;
         }
     }
@@ -482,7 +483,7 @@ int overlay_display_frame(int fd, void* data, size_t size)
     ext_commit.wait_for_finish = 1;
     ret = ioctl(fd, MSMFB_DISPLAY_COMMIT, &ext_commit);
     if (ret < 0) {
-        perror("overlay_display_frame failed, overlay commit Failed\n!");
+        LOGE("overlay_display_frame failed, overlay commit Failed\n!");
     }
 
     return ret;
@@ -515,7 +516,7 @@ int free_overlay(int fd)
         if (overlayL_id != MSMFB_NEW_REQUEST) {
             ret = ioctl(fd, MSMFB_OVERLAY_UNSET, &overlayL_id);
             if (ret) {
-                perror("Overlay Unset Failed");
+                LOGE("Overlay Unset Failed\n");
                 overlayL_id = MSMFB_NEW_REQUEST;
                 return ret;
             }
@@ -525,14 +526,14 @@ int free_overlay(int fd)
         if (overlayL_id != MSMFB_NEW_REQUEST) {
             ret = ioctl(fd, MSMFB_OVERLAY_UNSET, &overlayL_id);
             if (ret) {
-                perror("OverlayL Unset Failed");
+                LOGE("OverlayL Unset Failed\n");
             }
         }
 
         if (overlayR_id != MSMFB_NEW_REQUEST) {
             ret = ioctl(fd, MSMFB_OVERLAY_UNSET, &overlayR_id);
             if (ret) {
-                perror("OverlayR Unset Failed");
+                LOGE("OverlayR Unset Failed\n");
                 overlayR_id = MSMFB_NEW_REQUEST;
                 return ret;
             }
@@ -543,7 +544,7 @@ int free_overlay(int fd)
     ext_commit.wait_for_finish = 1;
     ret = ioctl(fd, MSMFB_DISPLAY_COMMIT, &ext_commit);
     if (ret < 0) {
-        perror("ERROR: Clear MSMFB_DISPLAY_COMMIT failed!");
+        LOGE("Clear MSMFB_DISPLAY_COMMIT failed!\n");
         overlayL_id = MSMFB_NEW_REQUEST;
         overlayR_id = MSMFB_NEW_REQUEST;
         return ret;
@@ -557,19 +558,19 @@ int free_overlay(int fd)
 static GRSurface* overlay_init(minui_backend* backend) {
     int fd = open("/dev/graphics/fb0", O_RDWR);
     if (fd == -1) {
-        perror("cannot open fb0");
+        LOGE("cannot open fb0\n");
         return NULL;
     }
 
     fb_fix_screeninfo fi;
     if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
-        perror("failed to get fb0 info");
+        LOGE("failed to get fb0 info\n");
         close(fd);
         return NULL;
     }
 
     if (ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
-        perror("failed to get fb0 info");
+        LOGE("failed to get fb0 info\n");
         close(fd);
         return NULL;
     }
@@ -585,15 +586,14 @@ static GRSurface* overlay_init(minui_backend* backend) {
     // If you have a device that actually *needs* another pixel format
     // (ie, BGRX, or 565), patches welcome...
 
-    printf("fb0 reports (possibly inaccurate):\n"
-           "  vi.bits_per_pixel = %d\n"
-           "  vi.red.offset   = %3d   .length = %3d\n"
-           "  vi.green.offset = %3d   .length = %3d\n"
-           "  vi.blue.offset  = %3d   .length = %3d\n",
-           vi.bits_per_pixel,
-           vi.red.offset, vi.red.length,
-           vi.green.offset, vi.green.length,
-           vi.blue.offset, vi.blue.length);
+    LOGI("fb0 reports (possibly inaccurate):\n");
+    LOGI("  vi.bits_per_pixel = %d\n", vi.bits_per_pixel);
+         "  vi.red.offset   = %3d   .length = %3d\n",
+         vi.red.offset, vi.red.length);
+    LOGI("  vi.green.offset = %3d   .length = %3d\n",
+         vi.green.offset, vi.green.length);
+    LOGI("  vi.blue.offset  = %3d   .length = %3d\n",
+         vi.blue.offset, vi.blue.length);
 
     gr_framebuffer.width = vi.xres;
     gr_framebuffer.height = vi.yres;
@@ -601,23 +601,23 @@ static GRSurface* overlay_init(minui_backend* backend) {
     gr_framebuffer.pixel_bytes = vi.bits_per_pixel / 8;
     //gr_framebuffer.data = reinterpret_cast<uint8_t*>(bits);
     if (vi.bits_per_pixel == 16) {
-        printf("setting GGL_PIXEL_FORMAT_RGB_565\n");
+        LOGI("setting GGL_PIXEL_FORMAT_RGB_565\n");
         gr_framebuffer.format = GGL_PIXEL_FORMAT_RGB_565;
     } else if (vi.red.offset == 8 || vi.red.offset == 16) {
-        printf("setting GGL_PIXEL_FORMAT_BGRA_8888\n");
+        LOGI("setting GGL_PIXEL_FORMAT_BGRA_8888\n");
         gr_framebuffer.format = GGL_PIXEL_FORMAT_BGRA_8888;
     } else if (vi.red.offset == 0) {
-        printf("setting GGL_PIXEL_FORMAT_RGBA_8888\n");
+        LOGI("setting GGL_PIXEL_FORMAT_RGBA_8888\n");
         gr_framebuffer.format = GGL_PIXEL_FORMAT_RGBA_8888;
     } else if (vi.red.offset == 24) {
-        printf("setting GGL_PIXEL_FORMAT_RGBX_8888\n");
+        LOGI("setting GGL_PIXEL_FORMAT_RGBX_8888\n");
         gr_framebuffer.format = GGL_PIXEL_FORMAT_RGBX_8888;
     } else {
         if (vi.red.length == 8) {
-            printf("No valid pixel format detected, trying GGL_PIXEL_FORMAT_RGBX_8888\n");
+            LOGI("No valid pixel format detected, trying GGL_PIXEL_FORMAT_RGBX_8888\n");
             gr_framebuffer.format = GGL_PIXEL_FORMAT_RGBX_8888;
         } else {
-            printf("No valid pixel format detected, trying GGL_PIXEL_FORMAT_RGB_565\n");
+            LOGI("No valid pixel format detected, trying GGL_PIXEL_FORMAT_RGB_565\n");
             gr_framebuffer.format = GGL_PIXEL_FORMAT_RGB_565;
         }
     }
@@ -626,7 +626,7 @@ static GRSurface* overlay_init(minui_backend* backend) {
 
     gr_framebuffer.data = reinterpret_cast<uint8_t*>(calloc(frame_size, 1));
     if (gr_framebuffer.data == NULL) {
-        perror("failed to calloc framebuffer");
+        LOGE("failed to calloc framebuffer\n");
         close(fd);
         return NULL;
     }
@@ -634,7 +634,7 @@ static GRSurface* overlay_init(minui_backend* backend) {
     gr_draw = &gr_framebuffer;
     fb_fd = fd;
 
-    printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
+    LOGI("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
 
     overlay_blank(backend, true);
     overlay_blank(backend, false);

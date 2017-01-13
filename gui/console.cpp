@@ -93,9 +93,12 @@ extern "C" void gui_print(const char *fmt, ...)
 	vsnprintf(buf, GUI_CONSOLE_BUFFER_SIZE, fmt, ap);
 	va_end(ap);
 
+	print_time_prefix(stdout);
 	fputs(buf, stdout);
+	fflush(stdout);
+
 	if (ors_file) {
-		fprintf(ors_file, "%s", buf);
+		fputs(buf, ors_file);
 		fflush(ors_file);
 	}
 
@@ -112,9 +115,12 @@ extern "C" void gui_print_color(const char *color, const char *fmt, ...)
 	vsnprintf(buf, GUI_CONSOLE_BUFFER_SIZE, fmt, ap);
 	va_end(ap);
 
+	print_time_prefix(stdout);
 	fputs(buf, stdout);
+	fflush(stdout);
+
 	if (ors_file) {
-		fprintf(ors_file, "%s", buf);
+		fputs(buf, ors_file);
 		fflush(ors_file);
 	}
 
