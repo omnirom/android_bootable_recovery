@@ -2462,7 +2462,7 @@ bool TWPartition::Restore_Tar(PartitionSettings *part_settings) {
 		ret = true;
 #ifdef HAVE_CAPABILITIES
 	// Restore capabilities to the run-as binary
-	if (Mount_Point == "/system" && Mount(true) && TWFunc::Path_Exists("/system/bin/run-as")) {
+	/*if (Mount_Point == "/system" && Mount(true) && TWFunc::Path_Exists("/system/bin/run-as")) {
 		struct vfs_cap_data cap_data;
 		uint64_t capabilities = (1 << CAP_SETUID) | (1 << CAP_SETGID);
 
@@ -2477,7 +2477,7 @@ bool TWPartition::Restore_Tar(PartitionSettings *part_settings) {
 		} else {
 			LOGINFO("Reset capabilities of /system/bin/run-as binary successful.\n");
 		}
-	}
+	}*/
 #endif
 	if (Mount_Read_Only || Mount_Flags & MS_RDONLY)
 		// Remount as read only when restoration is complete
