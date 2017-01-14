@@ -15,15 +15,13 @@
  */
 
 #include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
+#include <linux/input.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/epoll.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
-
-#include <linux/input.h>
 
 #include "minui/minui.h"
 
@@ -34,9 +32,8 @@
 #define BITS_TO_LONGS(x) (((x) + BITS_PER_LONG - 1) / BITS_PER_LONG)
 
 struct fd_info {
-    int fd;
-    ev_callback cb;
-    void* data;
+  int fd;
+  ev_callback cb;
 };
 
 static int g_epoll_fd;
@@ -53,89 +50,87 @@ static bool test_bit(size_t bit, unsigned long* array) { // NOLINT
     return (array[bit/BITS_PER_LONG] & (1UL << (bit % BITS_PER_LONG))) != 0;
 }
 
-int ev_init(ev_callback input_cb, void* data) {
-    bool epollctlfail = false;
+int ev_init(ev_callback input_cb) {
+  bool epollctlfail = false;
 
-    g_epoll_fd = epoll_create(MAX_DEVICES + MAX_MISC_FDS);
-    if (g_epoll_fd == -1) {
-        return -1;
+  g_epoll_fd = epoll_create(MAX_DEVICES + MAX_MISC_FDS);
+  if (g_epoll_fd == -1) {
+    return -1;
+  }
+
+  DIR* dir = opendir("/dev/input");
+  if (dir != NULL) {
+    dirent* de;
+    while ((de = readdir(dir))) {
+      // Use unsigned long to match ioctl's parameter type.
+      unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];  // NOLINT
+
+      //            fprintf(stderr,"/dev/input/%s\n", de->d_name);
+      if (strncmp(de->d_name, "event", 5)) continue;
+      int fd = openat(dirfd(dir), de->d_name, O_RDONLY);
+      if (fd == -1) continue;
+
+      // Read the evbits of the input device.
+      if (ioctl(fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits) == -1) {
+        close(fd);
+        continue;
+      }
+
+      // We assume that only EV_KEY, EV_REL, and EV_SW event types are ever needed.
+      if (!test_bit(EV_KEY, ev_bits) && !test_bit(EV_REL, ev_bits) && !test_bit(EV_SW, ev_bits)) {
+        close(fd);
+        continue;
+      }
+
+      epoll_event ev;
+      ev.events = EPOLLIN | EPOLLWAKEUP;
+      ev.data.ptr = &ev_fdinfo[ev_count];
+      if (epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+        close(fd);
+        epollctlfail = true;
+        continue;
+      }
+
+      ev_fdinfo[ev_count].fd = fd;
+      ev_fdinfo[ev_count].cb = std::move(input_cb);
+      ev_count++;
+      ev_dev_count++;
+      if (ev_dev_count == MAX_DEVICES) break;
     }
 
-    DIR* dir = opendir("/dev/input");
-    if (dir != NULL) {
-        dirent* de;
-        while ((de = readdir(dir))) {
-            // Use unsigned long to match ioctl's parameter type.
-            unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)]; // NOLINT
+    closedir(dir);
+  }
 
-//            fprintf(stderr,"/dev/input/%s\n", de->d_name);
-            if (strncmp(de->d_name, "event", 5)) continue;
-            int fd = openat(dirfd(dir), de->d_name, O_RDONLY);
-            if (fd == -1) continue;
+  if (epollctlfail && !ev_count) {
+    close(g_epoll_fd);
+    g_epoll_fd = -1;
+    return -1;
+  }
 
-            // Read the evbits of the input device.
-            if (ioctl(fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits) == -1) {
-                close(fd);
-                continue;
-            }
-
-            // We assume that only EV_KEY, EV_REL, and EV_SW event types are ever needed.
-            if (!test_bit(EV_KEY, ev_bits) && !test_bit(EV_REL, ev_bits) && !test_bit(EV_SW, ev_bits)) {
-                close(fd);
-                continue;
-            }
-
-            epoll_event ev;
-            ev.events = EPOLLIN | EPOLLWAKEUP;
-            ev.data.ptr = &ev_fdinfo[ev_count];
-            if (epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
-                close(fd);
-                epollctlfail = true;
-                continue;
-            }
-
-            ev_fdinfo[ev_count].fd = fd;
-            ev_fdinfo[ev_count].cb = input_cb;
-            ev_fdinfo[ev_count].data = data;
-            ev_count++;
-            ev_dev_count++;
-            if (ev_dev_count == MAX_DEVICES) break;
-        }
-
-        closedir(dir);
-    }
-
-    if (epollctlfail && !ev_count) {
-        close(g_epoll_fd);
-        g_epoll_fd = -1;
-        return -1;
-    }
-
-    return 0;
+  return 0;
 }
 
 int ev_get_epollfd(void) {
     return g_epoll_fd;
 }
 
-int ev_add_fd(int fd, ev_callback cb, void* data) {
-    if (ev_misc_count == MAX_MISC_FDS || cb == NULL) {
-        return -1;
-    }
+int ev_add_fd(int fd, ev_callback cb) {
+  if (ev_misc_count == MAX_MISC_FDS || cb == NULL) {
+    return -1;
+  }
 
-    epoll_event ev;
-    ev.events = EPOLLIN | EPOLLWAKEUP;
-    ev.data.ptr = (void *)&ev_fdinfo[ev_count];
-    int ret = epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev);
-    if (!ret) {
-        ev_fdinfo[ev_count].fd = fd;
-        ev_fdinfo[ev_count].cb = cb;
-        ev_fdinfo[ev_count].data = data;
-        ev_count++;
-        ev_misc_count++;
-    }
+  epoll_event ev;
+  ev.events = EPOLLIN | EPOLLWAKEUP;
+  ev.data.ptr = static_cast<void*>(&ev_fdinfo[ev_count]);
+  int ret = epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev);
+  if (!ret) {
+    ev_fdinfo[ev_count].fd = fd;
+    ev_fdinfo[ev_count].cb = std::move(cb);
+    ev_count++;
+    ev_misc_count++;
+  }
 
-    return ret;
+  return ret;
 }
 
 void ev_exit(void) {
@@ -156,13 +151,13 @@ int ev_wait(int timeout) {
 }
 
 void ev_dispatch(void) {
-    for (int n = 0; n < npolledevents; n++) {
-        fd_info* fdi = reinterpret_cast<fd_info*>(polledevents[n].data.ptr);
-        ev_callback cb = fdi->cb;
-        if (cb) {
-            cb(fdi->fd, polledevents[n].events, fdi->data);
-        }
+  for (int n = 0; n < npolledevents; n++) {
+    fd_info* fdi = static_cast<fd_info*>(polledevents[n].data.ptr);
+    const ev_callback& cb = fdi->cb;
+    if (cb) {
+      cb(fdi->fd, polledevents[n].events);
     }
+  }
 }
 
 int ev_get_input(int fd, uint32_t epevents, input_event* ev) {
@@ -175,33 +170,33 @@ int ev_get_input(int fd, uint32_t epevents, input_event* ev) {
     return -1;
 }
 
-int ev_sync_key_state(ev_set_key_callback set_key_cb, void* data) {
-    // Use unsigned long to match ioctl's parameter type.
-    unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)]; // NOLINT
-    unsigned long key_bits[BITS_TO_LONGS(KEY_MAX)]; // NOLINT
+int ev_sync_key_state(const ev_set_key_callback& set_key_cb) {
+  // Use unsigned long to match ioctl's parameter type.
+  unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];    // NOLINT
+  unsigned long key_bits[BITS_TO_LONGS(KEY_MAX)];  // NOLINT
 
-    for (size_t i = 0; i < ev_dev_count; ++i) {
-        memset(ev_bits, 0, sizeof(ev_bits));
-        memset(key_bits, 0, sizeof(key_bits));
+  for (size_t i = 0; i < ev_dev_count; ++i) {
+    memset(ev_bits, 0, sizeof(ev_bits));
+    memset(key_bits, 0, sizeof(key_bits));
 
-        if (ioctl(ev_fdinfo[i].fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits) == -1) {
-            continue;
-        }
-        if (!test_bit(EV_KEY, ev_bits)) {
-            continue;
-        }
-        if (ioctl(ev_fdinfo[i].fd, EVIOCGKEY(sizeof(key_bits)), key_bits) == -1) {
-            continue;
-        }
-
-        for (int code = 0; code <= KEY_MAX; code++) {
-            if (test_bit(code, key_bits)) {
-                set_key_cb(code, 1, data);
-            }
-        }
+    if (ioctl(ev_fdinfo[i].fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits) == -1) {
+      continue;
+    }
+    if (!test_bit(EV_KEY, ev_bits)) {
+      continue;
+    }
+    if (ioctl(ev_fdinfo[i].fd, EVIOCGKEY(sizeof(key_bits)), key_bits) == -1) {
+      continue;
     }
 
-    return 0;
+    for (int code = 0; code <= KEY_MAX; code++) {
+      if (test_bit(code, key_bits)) {
+        set_key_cb(code, 1);
+      }
+    }
+  }
+
+  return 0;
 }
 
 void ev_iterate_available_keys(const std::function<void(int)>& f) {
