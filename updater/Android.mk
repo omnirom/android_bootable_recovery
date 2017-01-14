@@ -45,6 +45,10 @@ ifneq ($(wildcard external/lz4/Android.mk),)
 endif
 endif
 
+ifeq ($(WITH_CRYPTO_UTILS), true)
+    LOCAL_STATIC_LIBRARIES += libcrypto_utils_static
+endif
+
 LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UPDATER_LIBS) $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS)
 LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libedify libmtdutils libminzip libz
 LOCAL_STATIC_LIBRARIES += libflashutils libmmcutils libbmlutils

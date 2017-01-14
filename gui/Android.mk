@@ -67,6 +67,12 @@ endif
 ifneq ($(TW_Y_OFFSET),)
     LOCAL_CFLAGS += -DTW_Y_OFFSET=$(TW_Y_OFFSET)
 endif
+ifneq ($(TW_W_OFFSET),)
+    LOCAL_CFLAGS += -DTW_W_OFFSET=$(TW_W_OFFSET)
+endif
+ifneq ($(TW_H_OFFSET),)
+    LOCAL_CFLAGS += -DTW_H_OFFSET=$(TW_H_OFFSET)
+endif
 ifeq ($(TW_ROUND_SCREEN), true)
     LOCAL_CFLAGS += -DTW_ROUND_SCREEN
 endif
