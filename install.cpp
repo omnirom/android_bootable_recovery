@@ -36,9 +36,9 @@
 #include <android-base/logging.h>
 #include <android-base/parsedouble.h>
 #include <android-base/parseint.h>
+#include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
-#include <cutils/properties.h>
 #include <ziparchive/zip_archive.h>
 
 #include "common.h"
@@ -139,81 +139,79 @@ update_binary_command(const char* path, ZipArchiveHandle zip, int retry_count,
 // Parses the metadata of the OTA package in |zip| and checks whether we are
 // allowed to accept this A/B package. Downgrading is not allowed unless
 // explicitly enabled in the package and only for incremental packages.
-static int check_newer_ab_build(ZipArchiveHandle zip)
-{
-    std::string metadata_str;
-    if (!read_metadata_from_package(zip, &metadata_str)) {
-        return INSTALL_CORRUPT;
+static int check_newer_ab_build(ZipArchiveHandle zip) {
+  std::string metadata_str;
+  if (!read_metadata_from_package(zip, &metadata_str)) {
+    return INSTALL_CORRUPT;
+  }
+  std::map<std::string, std::string> metadata;
+  for (const std::string& line : android::base::Split(metadata_str, "\n")) {
+    size_t eq = line.find('=');
+    if (eq != std::string::npos) {
+      metadata[line.substr(0, eq)] = line.substr(eq + 1);
     }
-    std::map<std::string, std::string> metadata;
-    for (const std::string& line : android::base::Split(metadata_str, "\n")) {
-        size_t eq = line.find('=');
-        if (eq != std::string::npos) {
-            metadata[line.substr(0, eq)] = line.substr(eq + 1);
-        }
-    }
-    char value[PROPERTY_VALUE_MAX];
+  }
 
-    property_get("ro.product.device", value, "");
-    const std::string& pkg_device = metadata["pre-device"];
-    if (pkg_device != value || pkg_device.empty()) {
-        LOG(ERROR) << "Package is for product " << pkg_device << " but expected " << value;
-        return INSTALL_ERROR;
-    }
+  std::string value = android::base::GetProperty("ro.product.device", "");
+  const std::string& pkg_device = metadata["pre-device"];
+  if (pkg_device != value || pkg_device.empty()) {
+    LOG(ERROR) << "Package is for product " << pkg_device << " but expected " << value;
+    return INSTALL_ERROR;
+  }
 
-    // We allow the package to not have any serialno, but if it has a non-empty
-    // value it should match.
-    property_get("ro.serialno", value, "");
-    const std::string& pkg_serial_no = metadata["serialno"];
-    if (!pkg_serial_no.empty() && pkg_serial_no != value) {
-        LOG(ERROR) << "Package is for serial " << pkg_serial_no;
-        return INSTALL_ERROR;
-    }
+  // We allow the package to not have any serialno, but if it has a non-empty
+  // value it should match.
+  value = android::base::GetProperty("ro.serialno", "");
+  const std::string& pkg_serial_no = metadata["serialno"];
+  if (!pkg_serial_no.empty() && pkg_serial_no != value) {
+    LOG(ERROR) << "Package is for serial " << pkg_serial_no;
+    return INSTALL_ERROR;
+  }
 
-    if (metadata["ota-type"] != "AB") {
-        LOG(ERROR) << "Package is not A/B";
-        return INSTALL_ERROR;
-    }
+  if (metadata["ota-type"] != "AB") {
+    LOG(ERROR) << "Package is not A/B";
+    return INSTALL_ERROR;
+  }
 
-    // Incremental updates should match the current build.
-    property_get("ro.build.version.incremental", value, "");
-    const std::string& pkg_pre_build = metadata["pre-build-incremental"];
-    if (!pkg_pre_build.empty() && pkg_pre_build != value) {
-        LOG(ERROR) << "Package is for source build " << pkg_pre_build << " but expected " << value;
-        return INSTALL_ERROR;
-    }
-    property_get("ro.build.fingerprint", value, "");
-    const std::string& pkg_pre_build_fingerprint = metadata["pre-build"];
-    if (!pkg_pre_build_fingerprint.empty() &&
-        pkg_pre_build_fingerprint != value) {
-        LOG(ERROR) << "Package is for source build " << pkg_pre_build_fingerprint
-                   << " but expected " << value;
-        return INSTALL_ERROR;
-    }
+  // Incremental updates should match the current build.
+  value = android::base::GetProperty("ro.build.version.incremental", "");
+  const std::string& pkg_pre_build = metadata["pre-build-incremental"];
+  if (!pkg_pre_build.empty() && pkg_pre_build != value) {
+    LOG(ERROR) << "Package is for source build " << pkg_pre_build << " but expected " << value;
+    return INSTALL_ERROR;
+  }
 
-    // Check for downgrade version.
-    int64_t build_timestamp = property_get_int64(
-            "ro.build.date.utc", std::numeric_limits<int64_t>::max());
-    int64_t pkg_post_timestamp = 0;
-    // We allow to full update to the same version we are running, in case there
-    // is a problem with the current copy of that version.
-    if (metadata["post-timestamp"].empty() ||
-        !android::base::ParseInt(metadata["post-timestamp"].c_str(),
-                                 &pkg_post_timestamp) ||
-        pkg_post_timestamp < build_timestamp) {
-        if (metadata["ota-downgrade"] != "yes") {
-            LOG(ERROR) << "Update package is older than the current build, expected a build "
-                       "newer than timestamp " << build_timestamp << " but package has "
-                       "timestamp " << pkg_post_timestamp << " and downgrade not allowed.";
-            return INSTALL_ERROR;
-        }
-        if (pkg_pre_build_fingerprint.empty()) {
-            LOG(ERROR) << "Downgrade package must have a pre-build version set, not allowed.";
-            return INSTALL_ERROR;
-        }
-    }
+  value = android::base::GetProperty("ro.build.fingerprint", "");
+  const std::string& pkg_pre_build_fingerprint = metadata["pre-build"];
+  if (!pkg_pre_build_fingerprint.empty() && pkg_pre_build_fingerprint != value) {
+    LOG(ERROR) << "Package is for source build " << pkg_pre_build_fingerprint << " but expected "
+               << value;
+    return INSTALL_ERROR;
+  }
 
-    return 0;
+  // Check for downgrade version.
+  int64_t build_timestamp =
+      android::base::GetIntProperty("ro.build.date.utc", std::numeric_limits<int64_t>::max());
+  int64_t pkg_post_timestamp = 0;
+  // We allow to full update to the same version we are running, in case there
+  // is a problem with the current copy of that version.
+  if (metadata["post-timestamp"].empty() ||
+      !android::base::ParseInt(metadata["post-timestamp"].c_str(), &pkg_post_timestamp) ||
+      pkg_post_timestamp < build_timestamp) {
+    if (metadata["ota-downgrade"] != "yes") {
+      LOG(ERROR) << "Update package is older than the current build, expected a build "
+                    "newer than timestamp "
+                 << build_timestamp << " but package has timestamp " << pkg_post_timestamp
+                 << " and downgrade not allowed.";
+      return INSTALL_ERROR;
+    }
+    if (pkg_pre_build_fingerprint.empty()) {
+      LOG(ERROR) << "Downgrade package must have a pre-build version set, not allowed.";
+      return INSTALL_ERROR;
+    }
+  }
+
+  return 0;
 }
 
 static int
