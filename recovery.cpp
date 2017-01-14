@@ -892,8 +892,8 @@ static bool check_wipe_package(size_t wipe_package_size) {
 
     // Extract metadata
     ZipArchiveHandle zip;
-    int err = OpenArchiveFromMemory(reinterpret_cast<void*>(&wipe_package[0]),
-                                    wipe_package.size(), "wipe_package", &zip);
+    int err = OpenArchiveFromMemory(static_cast<void*>(&wipe_package[0]), wipe_package.size(),
+                                    "wipe_package", &zip);
     if (err != 0) {
         LOG(ERROR) << "Can't open wipe package : " << ErrorCodeString(err);
         return false;
@@ -916,13 +916,11 @@ static bool check_wipe_package(size_t wipe_package_size) {
             ota_type_matched = true;
         } else if (android::base::StartsWith(line, "pre-device=")) {
             std::string device_type = line.substr(strlen("pre-device="));
-            char real_device_type[PROPERTY_VALUE_MAX];
-            property_get("ro.build.product", real_device_type, "");
+            std::string real_device_type = android::base::GetProperty("ro.build.product", "");
             device_type_matched = (device_type == real_device_type);
         } else if (android::base::StartsWith(line, "serialno=")) {
             std::string serial_no = line.substr(strlen("serialno="));
-            char real_serial_no[PROPERTY_VALUE_MAX];
-            property_get("ro.serialno", real_serial_no, "");
+            std::string real_serial_no = android::base::GetProperty("ro.serialno", "");
             has_serial_number = true;
             serial_number_matched = (serial_no == real_serial_no);
         }
@@ -1361,15 +1359,15 @@ static void set_retry_bootloader_message(int retry_count, int argc, char** argv)
 }
 
 static bool bootreason_in_blacklist() {
-    char bootreason[PROPERTY_VALUE_MAX];
-    if (property_get("ro.boot.bootreason", bootreason, nullptr) > 0) {
-        for (const auto& str : bootreason_blacklist) {
-            if (strcasecmp(str.c_str(), bootreason) == 0) {
-                return true;
-            }
-        }
+  std::string bootreason = android::base::GetProperty("ro.boot.bootreason", "");
+  if (!bootreason.empty()) {
+    for (const auto& str : bootreason_blacklist) {
+      if (strcasecmp(str.c_str(), bootreason.c_str()) == 0) {
+        return true;
+      }
     }
-    return false;
+  }
+  return false;
 }
 
 static void log_failure_code(ErrorCode code, const char *update_package) {
