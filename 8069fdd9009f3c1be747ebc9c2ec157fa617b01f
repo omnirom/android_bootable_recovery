@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_c8ba32b4",
+        "filename": "gui/action.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 940,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T19:40:54Z",
+      "side": 1,
+      "message": "If we can\u0027t include the file that defines this UID/GID, then at least copy the single definition here and use it. Or at the very least add a comment what 1015 is.",
+      "revId": "8069fdd9009f3c1be747ebc9c2ec157fa617b01f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
