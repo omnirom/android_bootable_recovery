@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_c8ec72bc",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2344,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T20:05:51Z",
+      "side": 1,
+      "message": "strange indentation here.",
+      "revId": "90fe2b38256e290fca8f6b0345eee7f3911e0691",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_a82db6fe",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2346,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T20:05:51Z",
+      "side": 1,
+      "message": "\"set for\"?",
+      "revId": "90fe2b38256e290fca8f6b0345eee7f3911e0691",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
