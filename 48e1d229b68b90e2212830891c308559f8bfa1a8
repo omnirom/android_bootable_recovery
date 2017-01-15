@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_e8d84e22",
+        "filename": "crypto/vold_decrypt/init.vold_decrypt.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T19:55:43Z",
+      "side": 1,
+      "message": "Do we really have to search the whole /system partition here?",
+      "revId": "48e1d229b68b90e2212830891c308559f8bfa1a8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_a8025676",
+        "filename": "crypto/vold_decrypt/init.vold_decrypt.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T19:55:43Z",
+      "side": 1,
+      "message": "Can we ensure 100% that /firmware is not a partition that could be somehow unintentionally wiped by this (e.g. if any of the previous operations in this script failed)?",
+      "revId": "48e1d229b68b90e2212830891c308559f8bfa1a8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_88079a87",
+        "filename": "crypto/vold_decrypt/init.vold_decrypt.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T19:55:43Z",
+      "side": 1,
+      "message": "same here, if /vendor happens to be a mounted partition, this might be dangerous.",
+      "revId": "48e1d229b68b90e2212830891c308559f8bfa1a8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_08ccaa66",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1579,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T19:55:43Z",
+      "side": 1,
+      "message": "Is this expected? Should this be logged?",
+      "revId": "48e1d229b68b90e2212830891c308559f8bfa1a8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
