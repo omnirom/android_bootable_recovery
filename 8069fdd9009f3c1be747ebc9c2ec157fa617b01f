@@ -16,6 +16,24 @@
       "revId": "8069fdd9009f3c1be747ebc9c2ec157fa617b01f",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_48eaa2ab",
+        "filename": "gui/action.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 940,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-01-15T19:45:12Z",
+      "side": 1,
+      "message": "Very reasonable request. I\u0027ll ensure system/core/include/private/android_filesystem_config.h is included and then change 1015 to AID_SDCARD_RW.",
+      "parentUuid": "78209991_c8ba32b4",
+      "revId": "8069fdd9009f3c1be747ebc9c2ec157fa617b01f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
