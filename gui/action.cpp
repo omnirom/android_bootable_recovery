@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <dirent.h>
-#include <pwd.h>
+#include <private/android_filesystem_config.h>
 
 #include <string>
 #include <sstream>
@@ -938,14 +938,8 @@ int GUIAction::screenshot(std::string arg __unused)
 	time_t tm;
 	char path[256];
 	int path_len;
-	uid_t uid = -1;
-	gid_t gid = -1;
-
-	struct passwd *pwd = getpwnam("media_rw");
-	if (pwd) {
-		uid = pwd->pw_uid;
-		gid = pwd->pw_gid;
-	}
+	uid_t uid = AID_MEDIA_RW;
+	gid_t gid = AID_MEDIA_RW;
 
 	const std::string storage = DataManager::GetCurrentStoragePath();
 	if (PartitionManager.Is_Mounted_By_Path(storage)) {
