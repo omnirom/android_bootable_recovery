@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_28f6468b",
+        "filename": "gui/gui.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T20:02:51Z",
+      "side": 1,
+      "message": "why?",
+      "revId": "bc91de79059cbc985ff7b39179d8b9e336a390ff",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_4801826f",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 596,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T20:02:51Z",
+      "side": 1,
+      "message": "unused",
+      "revId": "bc91de79059cbc985ff7b39179d8b9e336a390ff",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
