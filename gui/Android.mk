@@ -98,6 +98,9 @@ TWRP_NEW_THEME := true
 
 ifeq ($(TW_CUSTOM_THEME),)
     ifeq ($(TW_THEME),)
+        ifeq ($(DEVICE_RESOLUTION),)
+            DEVICE_RESOLUTION := $(TARGET_SCREEN_WIDTH)x$(TARGET_SCREEN_HEIGHT)
+        endif
         # This converts the old DEVICE_RESOLUTION flag to the new TW_THEME flag
         PORTRAIT_MDPI := 320x480 480x800 480x854 540x960
         PORTRAIT_HDPI := 720x1280 800x1280 1080x1920 1200x1920 1440x2560 1600x2560
