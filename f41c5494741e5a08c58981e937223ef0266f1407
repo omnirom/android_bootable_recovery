@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_4874e2ca",
+        "filename": "mtp/MtpServer.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-01-15T23:57:13Z",
+      "side": 1,
+      "message": "Remove - bigbiff and Dees_Troy mtp database conversion to C++\nplease",
+      "revId": "f41c5494741e5a08c58981e937223ef0266f1407",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
