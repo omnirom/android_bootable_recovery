@@ -2,6 +2,40 @@
   "comments": [
     {
       "key": {
+        "uuid": "78209991_88b55acb",
+        "filename": "gui/action.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1876,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T19:31:24Z",
+      "side": 1,
+      "message": "For an action called \"setbacklight\" I\u0027d expect to pass some parameter to specify whether to turn the backlight on or off. Maybe you can find a more appropriate name for this action?",
+      "revId": "a89bffc228aa15724221138af6edbf889b8e5ffc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_c8a35298",
+        "filename": "gui/blanktimer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-01-15T19:31:24Z",
+      "side": 1,
+      "message": "copy of lines 68 to 71, better extract to a function instead.",
+      "revId": "a89bffc228aa15724221138af6edbf889b8e5ffc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_8d368cac",
         "filename": "gui/blanktimer.cpp",
         "patchSetId": 2
