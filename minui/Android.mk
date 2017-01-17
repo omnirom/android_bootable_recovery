@@ -1,3 +1,17 @@
+# Copyright (C) 2007 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -9,15 +23,17 @@ LOCAL_SRC_FILES := \
     graphics_fbdev.cpp \
     resources.cpp \
 
-LOCAL_WHOLE_STATIC_LIBRARIES += libadf
-LOCAL_WHOLE_STATIC_LIBRARIES += libdrm
-LOCAL_WHOLE_STATIC_LIBRARIES += libsync_recovery
-LOCAL_STATIC_LIBRARIES += libpng
+LOCAL_WHOLE_STATIC_LIBRARIES := \
+    libadf \
+    libdrm \
+    libsync_recovery
+
+LOCAL_STATIC_LIBRARIES := libpng
 LOCAL_CFLAGS := -Werror
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
 LOCAL_MODULE := libminui
-
-LOCAL_CLANG := true
 
 # This used to compare against values in double-quotes (which are just
 # ordinary characters in this context).  Strip double-quotes from the
@@ -43,9 +59,10 @@ include $(BUILD_STATIC_LIBRARY)
 
 # Used by OEMs for factory test images.
 include $(CLEAR_VARS)
-LOCAL_CLANG := true
 LOCAL_MODULE := libminui
 LOCAL_WHOLE_STATIC_LIBRARIES += libminui
 LOCAL_SHARED_LIBRARIES := libpng
 LOCAL_CFLAGS := -Werror
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 include $(BUILD_SHARED_LIBRARY)

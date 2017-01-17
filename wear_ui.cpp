@@ -30,11 +30,13 @@
 #include <string>
 #include <vector>
 
+#include <android-base/properties.h>
+#include <android-base/strings.h>
+#include <android-base/stringprintf.h>
+#include <minui/minui.h>
+
 #include "common.h"
 #include "device.h"
-#include "android-base/properties.h"
-#include "android-base/strings.h"
-#include "android-base/stringprintf.h"
 
 // There's only (at most) one of these objects, and global callbacks
 // (for pthread_create, and the input event system) need to find it,
