@@ -16,7 +16,6 @@
 
 #include <drm_fourcc.h>
 #include <fcntl.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +27,7 @@
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
-#include "minui.h"
+#include "minui/minui.h"
 #include "graphics.h"
 
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*(A)))
