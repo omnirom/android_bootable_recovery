@@ -31,7 +31,7 @@
 #include <vector>
 #include <png.h>
 
-#include "minui.h"
+#include "minui/minui.h"
 
 #define SURFACE_DATA_ALIGNMENT 8
 

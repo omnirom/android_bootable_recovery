@@ -17,7 +17,7 @@
 #ifndef _GRAPHICS_H_
 #define _GRAPHICS_H_
 
-#include "minui.h"
+#include "minui/minui.h"
 
 // TODO: lose the function pointers.
 struct minui_backend {
