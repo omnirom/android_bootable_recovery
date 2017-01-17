@@ -151,7 +151,11 @@ LOCAL_SRC_FILES := \
     asn1_decoder.cpp \
     verifier.cpp \
     ui.cpp
-LOCAL_STATIC_LIBRARIES := libcrypto_utils libcrypto libbase
+LOCAL_STATIC_LIBRARIES := \
+    libminui \
+    libcrypto_utils \
+    libcrypto \
+    libbase
 LOCAL_CFLAGS := -Werror
 include $(BUILD_STATIC_LIBRARY)
 

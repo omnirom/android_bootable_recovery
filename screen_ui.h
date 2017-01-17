@@ -23,7 +23,9 @@
 #include <string>
 
 #include "ui.h"
-#include "minui/minui.h"
+
+// From minui/minui.h.
+struct GRSurface;
 
 // Implementation of RecoveryUI appropriate for devices with a screen
 // (shows an icon + a progress bar, text logging, menu, etc.)

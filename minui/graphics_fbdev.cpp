@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -30,7 +29,7 @@
 #include <linux/fb.h>
 #include <linux/kd.h>
 
-#include "minui.h"
+#include "minui/minui.h"
 #include "graphics.h"
 
 static GRSurface* fbdev_init(minui_backend*);

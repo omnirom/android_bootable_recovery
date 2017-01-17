@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include <stdbool.h>
+#include "graphics.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -32,8 +33,7 @@
 #include <time.h>
 
 #include "font_10x18.h"
-#include "minui.h"
-#include "graphics.h"
+#include "minui/minui.h"
 
 static GRFont* gr_font = NULL;
 static minui_backend* gr_backend = NULL;
