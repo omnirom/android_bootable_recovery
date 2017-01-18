@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_06bb7a22",
+        "filename": "partition.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-01-18T21:20:00Z",
+      "side": 1,
+      "message": "these are mount options, not mount flags.",
+      "revId": "c2237a65c40774f16ba4b6b8e80df78b2df31727",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_c6846266",
+        "filename": "partition.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 703,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-01-18T21:20:00Z",
+      "side": 1,
+      "message": "Convert this to a \"for\" loop, then you don\u0027t need the ugly goto either.",
+      "revId": "c2237a65c40774f16ba4b6b8e80df78b2df31727",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_e6b75e32",
+        "filename": "partition.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 709,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-01-18T21:20:00Z",
+      "side": 1,
+      "message": "These are not mount flags, they are mount options.",
+      "revId": "c2237a65c40774f16ba4b6b8e80df78b2df31727",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_a689667d",
+        "filename": "partition.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 726,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-01-18T21:20:00Z",
+      "side": 1,
+      "message": "Mount options do not have to contain an equals sign.\n\nThe old code for handling flags was much cleaner, it just had a tiny bug. I\u0027d prefer to revert to the original code and fix the negation.",
+      "revId": "c2237a65c40774f16ba4b6b8e80df78b2df31727",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
