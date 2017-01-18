@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_03becca9",
+        "filename": "Android.mk",
+        "patchSetId": 8
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-18T15:44:02Z",
+      "side": 1,
+      "message": "You used 2 different names for the flag. In the ifeq it\u0027s TWRP_ and in the LOCAL_CFLAGS you used TW_",
+      "revId": "0bc6117a0e73bbaabde050f6e2aa3fb1be8bc898",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_e3bab0b3",
+        "filename": "orscmd/Android.mk",
+        "patchSetId": 8
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-18T15:44:02Z",
+      "side": 1,
+      "message": "You used 2 different names for the flag. In the ifeq it\u0027s TWRP_ and in the LOCAL_CFLAGS you used TW_",
+      "revId": "0bc6117a0e73bbaabde050f6e2aa3fb1be8bc898",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
