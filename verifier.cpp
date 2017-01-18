@@ -148,8 +148,8 @@ int verify_file(unsigned char* addr, size_t length,
               << " bytes from end";
 
     if (signature_start > comment_size) {
-        LOGE("signature start: %zu is larger than comment size: %zu\n", signature_start,
-             comment_size);
+        LOG(ERROR) << "signature start: " << signature_start << " is larger than comment size: "
+                   << comment_size;
         return VERIFY_FAILURE;
     }
 
