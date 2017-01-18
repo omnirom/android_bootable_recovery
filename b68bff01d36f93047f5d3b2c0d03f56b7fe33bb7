@@ -34,6 +34,24 @@
       "revId": "b68bff01d36f93047f5d3b2c0d03f56b7fe33bb7",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_866c2ad0",
+        "filename": "gui/Android.mk",
+        "patchSetId": 6
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-18T20:03:20Z",
+      "side": 0,
+      "message": "Seems to be something related to rapidxml and libstlport:\nIn file included from external/stlport/stlport/new:26:0,\n                 from bootable/recovery/gui/rapidxml.hpp:15,\n                 from bootable/recovery/gui/gui.cpp:45:\nexternal/stlport/stlport/stl/_new.h:47:50: fatal error: libstdc++/include/new: No such file or directory",
+      "parentUuid": "78209991_06493a66",
+      "revId": "b68bff01d36f93047f5d3b2c0d03f56b7fe33bb7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
