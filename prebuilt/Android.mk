@@ -15,23 +15,27 @@ RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dump_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/flash_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/erase_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/bu
-ifneq ($(TW_USE_TOOLBOX), true)
-	RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/busybox
-	ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
-		RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
-	endif
+
+ifneq ($(TOOLBOX_TWRP_TOOLS),)
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toolbox
+endif
+ifneq ($(TW_USE_TOYBOX), true)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/busybox
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
+    endif
 else
-	RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
-	RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
-	ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
-	    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
-	    ifneq ($(wildcard external/zip/Android.mk),)
-                RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
-	    endif
-	    ifneq ($(wildcard external/unzip/Android.mk),)
-                RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
-	    endif
-	endif
+    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
+    endif
+    ifneq ($(wildcard external/zip/Android.mk),)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
+    endif
+    ifneq ($(wildcard external/unzip/Android.mk),)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
+    endif
 endif
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/pigz
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/fsck.fat
@@ -126,7 +130,6 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libmincrypttwrp.so
 endif
-RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toolbox
 ifneq ($(TW_OEM_BUILD),true)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/twrp
 else
