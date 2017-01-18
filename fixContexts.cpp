@@ -25,16 +25,13 @@
 #include "fixContexts.hpp"
 #include "twrp-functions.hpp"
 #include "twcommon.h"
-#ifdef HAVE_SELINUX
-#include "selinux/selinux.h"
-#include "selinux/label.h"
-#include "selinux/android.h"
-#include "selinux/label.h"
-#endif
+#include <selinux/selinux.h>
+#include <selinux/label.h>
+#include <selinux/android.h>
+#include <selinux/label.h>
 
 using namespace std;
 
-#ifdef HAVE_SELINUX
 struct selabel_handle *sehandle;
 struct selinux_opt selinux_options[] = {
 	{ SELABEL_OPT_PATH, "/file_contexts" }
@@ -146,18 +143,3 @@ int fixContexts::fixDataMediaContexts(string Mount_Point) {
 	selabel_close(sehandle);
 	return 0;
 }
-
-#else
-
-int fixContexts::restorecon(string entry __unused, struct stat *sb __unused) {
-	return -1;
-}
-
-int fixContexts::fixContextsRecursively(string name __unused, int level __unused) {
-	return -1;
-}
-
-int fixContexts::fixDataMediaContexts(string Mount_Point __unused) {
-	return -1;
-}
-#endif

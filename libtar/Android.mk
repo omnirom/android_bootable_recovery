@@ -10,11 +10,8 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) \
                     external/zlib
 LOCAL_SHARED_LIBRARIES += libz libc
 
-ifeq ($(TWHAVE_SELINUX), true)
-    LOCAL_C_INCLUDES += external/libselinux/include
-    LOCAL_SHARED_LIBRARIES += libselinux
-    LOCAL_CFLAGS += -DHAVE_SELINUX
-endif
+LOCAL_C_INCLUDES += external/libselinux/include
+LOCAL_SHARED_LIBRARIES += libselinux
 
 ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
     LOCAL_SHARED_LIBRARIES += libe4crypt
@@ -34,11 +31,8 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) \
                     external/zlib
 LOCAL_STATIC_LIBRARIES += libz libc
 
-ifeq ($(TWHAVE_SELINUX), true)
-    LOCAL_C_INCLUDES += external/libselinux/include
-    LOCAL_STATIC_LIBRARIES += libselinux
-    LOCAL_CFLAGS += -DHAVE_SELINUX
-endif
+LOCAL_C_INCLUDES += external/libselinux/include
+LOCAL_STATIC_LIBRARIES += libselinux
 
 ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
     LOCAL_SHARED_LIBRARIES += libe4crypt

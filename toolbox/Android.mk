@@ -18,28 +18,26 @@ endif
 
 # If busybox does not have SELinux support, provide these tools with toolbox.
 # Note that RECOVERY_BUSYBOX_TOOLS will be empty if TW_USE_TOOLBOX == true.
-ifeq ($(TWHAVE_SELINUX), true)
-    TOOLS_FOR_SELINUX := \
-        ls
+TOOLS_FOR_SELINUX := \
+    ls
 
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-        TOOLS_FOR_SELINUX += \
-            load_policy \
-            getenforce \
-            chcon \
-            restorecon \
-            runcon \
-            getsebool \
-            setsebool
-    endif
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
+    TOOLS_FOR_SELINUX += \
+        load_policy \
+        getenforce \
+        chcon \
+        restorecon \
+        runcon \
+        getsebool \
+        setsebool
+endif
 
-    OUR_TOOLS += $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(TOOLS_FOR_SELINUX))
+OUR_TOOLS += $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(TOOLS_FOR_SELINUX))
 
-    # toolbox setenforce is used during init, so it needs to be included here
-    # symlink is omitted at the very end if busybox already provides this
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-       OUR_TOOLS += setenforce
-    endif
+# toolbox setenforce is used during init, so it needs to be included here
+# symlink is omitted at the very end if busybox already provides this
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
+   OUR_TOOLS += setenforce
 endif
 
 ifeq ($(TW_USE_TOOLBOX), true)
@@ -153,9 +151,6 @@ ifeq ($(TW_USE_TOOLBOX), true)
             vmstat \
             watchprops \
             wipe
-        ifneq ($(TWHAVE_SELINUX), true)
-            OUR_TOOLS += ls
-        endif
     endif
 endif
 
@@ -209,9 +204,7 @@ else
         liblog
 endif
 
-ifeq ($(TWHAVE_SELINUX), true)
-    LOCAL_SHARED_LIBRARIES += libselinux
-endif
+LOCAL_SHARED_LIBRARIES += libselinux
 
 ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22 23))
     # libusbhost is only used by lsusb, and that isn't usually included in toolbox.
@@ -265,13 +258,11 @@ $(TOOLS_H): $(LOCAL_PATH)/Android.mk
 $(TOOLS_H):
 	$(transform-generated-source)
 
-ifeq ($(TWHAVE_SELINUX), true)
-    # toolbox setenforce is used during init in non-symlink form, so it was
-    # required to be included as part of the suite above. if busybox already
-    # provides setenforce, we can omit the toolbox symlink
-    TEMP_TOOLS := $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(ALL_TOOLS))
-    ALL_TOOLS := $(TEMP_TOOLS)
-endif
+# toolbox setenforce is used during init in non-symlink form, so it was
+# required to be included as part of the suite above. if busybox already
+# provides setenforce, we can omit the toolbox symlink
+TEMP_TOOLS := $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(ALL_TOOLS))
+ALL_TOOLS := $(TEMP_TOOLS)
 
 # Make /sbin/toolbox launchers for each tool
 SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(ALL_TOOLS))

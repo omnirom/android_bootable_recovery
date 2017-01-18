@@ -123,10 +123,8 @@ th_read(TAR *t)
 		free(t->th_buf.gnu_longname);
 	if (t->th_buf.gnu_longlink != NULL)
 		free(t->th_buf.gnu_longlink);
-#ifdef HAVE_SELINUX
 	if (t->th_buf.selinux_context != NULL)
 		free(t->th_buf.selinux_context);
-#endif
 #ifdef HAVE_EXT4_CRYPT
 	if (t->th_buf.e4crypt_policy != NULL) {
 		free(t->th_buf.e4crypt_policy);
@@ -287,7 +285,7 @@ th_read(TAR *t)
 				printf("    th_read(): Posix capabilities detected\n");
 #endif
 			} // end posix capabilities
-#ifdef HAVE_SELINUX // selinux contexts
+			// selinux contexts
 			start = strstr(buf, SELINUX_TAG);
 			if(start && start+SELINUX_TAG_LEN < buf+len)
 			{
@@ -300,8 +298,7 @@ th_read(TAR *t)
 					printf("    th_read(): SELinux context xattr detected: %s\n", t->th_buf.selinux_context);
 #endif
 				}
-			}
-#endif // HAVE_SELINUX
+			} // end selinux contexts
 #ifdef HAVE_EXT4_CRYPT
 			start = strstr(buf, E4CRYPT_TAG);
 			if(start && start+E4CRYPT_TAG_LEN < buf+len)
@@ -496,7 +493,7 @@ th_write(TAR *t)
 
 	memset(buf, 0, T_BLOCKSIZE);
 	ptr = buf;
-#ifdef HAVE_SELINUX
+
 	if((t->options & TAR_STORE_SELINUX) && t->th_buf.selinux_context != NULL)
 	{
 #ifdef DEBUG
@@ -514,7 +511,6 @@ th_write(TAR *t)
 		snprintf(ptr, T_BLOCKSIZE, "%d "SELINUX_TAG"%s\n", (int)sz, t->th_buf.selinux_context);
 		ptr += sz;
 	}
-#endif
 
 #ifdef HAVE_EXT4_CRYPT
 	if((t->options & TAR_STORE_EXT4_POL) && t->th_buf.e4crypt_policy != NULL)
