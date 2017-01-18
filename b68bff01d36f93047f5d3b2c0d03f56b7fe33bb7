@@ -16,6 +16,24 @@
       "revId": "b68bff01d36f93047f5d3b2c0d03f56b7fe33bb7",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_06493a66",
+        "filename": "gui/Android.mk",
+        "patchSetId": 6
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-01-18T19:49:49Z",
+      "side": 0,
+      "message": "Weird, sounds like a header include is not written correctly somewhere in /gui.",
+      "parentUuid": "78209991_463f32b0",
+      "revId": "b68bff01d36f93047f5d3b2c0d03f56b7fe33bb7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
