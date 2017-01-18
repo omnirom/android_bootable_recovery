@@ -1914,7 +1914,8 @@ int GUIAction::checkforapp(std::string arg __unused)
 				DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed
 				goto exit;
 			}
-		} else if (PartitionManager.Mount_By_Path("/data", false)) {
+		}
+		if (PartitionManager.Mount_By_Path("/data", false)) {
 			string parent_path = "/data/app";
 			DIR *d = opendir("/data/app");
 			struct dirent *p;
