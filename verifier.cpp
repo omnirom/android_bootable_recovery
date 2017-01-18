@@ -146,6 +146,12 @@ int verify_file(unsigned char* addr, size_t length,
     LOGI("comment is %zu bytes; signature %zu bytes from end\n",
          comment_size, signature_start);
 
+    if (signature_start > comment_size) {
+        LOGE("signature start: %zu is larger than comment size: %zu\n", signature_start,
+             comment_size);
+        return VERIFY_FAILURE;
+    }
+
     if (signature_start <= FOOTER_SIZE) {
         LOGE("Signature start is in the footer");
         return VERIFY_FAILURE;
