@@ -51,7 +51,9 @@ extern "C" {
 #include "objects.hpp"
 #include "blanktimer.hpp"
 
-#define TW_THEME_VERSION 1
+// version 2 requires theme to handle power button as action togglebacklight
+#define TW_THEME_VERSION 2
+
 #define TW_THEME_VER_ERR -2
 
 extern int gGuiRunning;
