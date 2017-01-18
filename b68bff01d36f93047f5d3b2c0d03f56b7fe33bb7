@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_463f32b0",
+        "filename": "gui/Android.mk",
+        "patchSetId": 6
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-01-18T19:47:25Z",
+      "side": 0,
+      "message": "Removing bionic from the includes results in a failure to compile in Omni 4.4 (PLATFORM_SDK_VERSION 19). Restoring bionic to the list allows it to compile in 4.4. Seems to work fine as-is in other trees.",
+      "revId": "b68bff01d36f93047f5d3b2c0d03f56b7fe33bb7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
