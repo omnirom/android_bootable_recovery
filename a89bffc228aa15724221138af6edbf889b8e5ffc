@@ -36,6 +36,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_e3ef50e5",
+        "filename": "gui/blanktimer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-01-18T02:52:01Z",
+      "side": 1,
+      "message": "It was necessary to move ChangeOverlay(\"lock\") out of this function, as the power button should still trigger the lock screen even if a device has TW_NO_SCREEN_TIMEOUT set. At this point, I don\u0027t really consider just 3 lines of repeated code worth extracting. Of course, I\u0027ll listen to further input, but this is my thought right now.",
+      "parentUuid": "78209991_c8a35298",
+      "revId": "a89bffc228aa15724221138af6edbf889b8e5ffc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_8d368cac",
         "filename": "gui/blanktimer.cpp",
         "patchSetId": 2
