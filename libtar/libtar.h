@@ -68,9 +68,7 @@ struct tar_header
 	char padding[12];
 	char *gnu_longname;
 	char *gnu_longlink;
-#ifdef HAVE_SELINUX
 	char *selinux_context;
-#endif
 #ifdef HAVE_EXT4_CRYPT
 	char *e4crypt_policy;
 #endif

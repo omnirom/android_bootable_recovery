@@ -32,9 +32,7 @@
 # include <unistd.h>
 #endif
 
-#ifdef HAVE_SELINUX
-# include "selinux/selinux.h"
-#endif
+#include <selinux/selinux.h>
 
 #ifdef HAVE_EXT4_CRYPT
 # include "ext4crypt_tar.h"
@@ -159,7 +157,6 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 		return i;
 	}
 
-#ifdef HAVE_SELINUX
 	if((t->options & TAR_STORE_SELINUX) && t->th_buf.selinux_context != NULL)
 	{
 #ifdef DEBUG
@@ -168,7 +165,6 @@ tar_extract_file(TAR *t, const char *realname, const char *prefix, const int *pr
 		if (lsetfilecon(realname, t->th_buf.selinux_context) < 0)
 			fprintf(stderr, "tar_extract_file(): failed to restore SELinux context %s to file %s !!!\n", t->th_buf.selinux_context, realname);
 	}
-#endif
 
 	if((t->options & TAR_STORE_POSIX_CAP) && t->th_buf.has_cap_data)
 	{
