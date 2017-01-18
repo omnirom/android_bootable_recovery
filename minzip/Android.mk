@@ -12,11 +12,8 @@ LOCAL_C_INCLUDES := \
 	external/zlib \
 	external/safe-iop/include
 
-ifeq ($(TWHAVE_SELINUX),true)
 LOCAL_C_INCLUDES += external/libselinux/include
 LOCAL_SHARED_LIBRARIES += libselinux
-LOCAL_CFLAGS += -DHAVE_SELINUX
-endif
 
 LOCAL_CFLAGS += -DPLATFORM_SDK_VERSION=$(PLATFORM_SDK_VERSION)
 
@@ -44,11 +41,8 @@ LOCAL_C_INCLUDES += \
 	external/zlib \
 	external/safe-iop/include
 
-ifeq ($(TWHAVE_SELINUX),true)
 LOCAL_C_INCLUDES += external/libselinux/include
 LOCAL_STATIC_LIBRARIES += libselinux
-LOCAL_CFLAGS += -DHAVE_SELINUX
-endif
 
 LOCAL_CFLAGS += -DPLATFORM_SDK_VERSION=$(PLATFORM_SDK_VERSION)
 

@@ -153,25 +153,16 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
         #LOCAL_STATIC_LIBRARIES += liblz4
     endif
 endif
-ifneq ($(wildcard external/libselinux/Android.mk),)
-    TWHAVE_SELINUX := true
-endif
-ifeq ($(TWHAVE_SELINUX), true)
-  #LOCAL_C_INCLUDES += external/libselinux/include
-  #LOCAL_STATIC_LIBRARIES += libselinux
-  #LOCAL_CFLAGS += -DHAVE_SELINUX -g
-endif # HAVE_SELINUX
-ifeq ($(TWHAVE_SELINUX), true)
-    LOCAL_C_INCLUDES += external/libselinux/include
-    LOCAL_SHARED_LIBRARIES += libselinux
-    LOCAL_CFLAGS += -DHAVE_SELINUX -g
-    ifneq ($(TARGET_USERIMAGES_USE_EXT4), true)
-        LOCAL_CFLAGS += -DUSE_EXT4
-        LOCAL_C_INCLUDES += system/extras/ext4_utils
-        LOCAL_SHARED_LIBRARIES += libext4_utils
-        ifneq ($(wildcard external/lz4/Android.mk),)
-            LOCAL_STATIC_LIBRARIES += liblz4
-        endif
+
+LOCAL_C_INCLUDES += external/libselinux/include
+LOCAL_SHARED_LIBRARIES += libselinux
+LOCAL_CFLAGS += -g
+ifneq ($(TARGET_USERIMAGES_USE_EXT4), true)
+    LOCAL_CFLAGS += -DUSE_EXT4
+    LOCAL_C_INCLUDES += system/extras/ext4_utils
+    LOCAL_SHARED_LIBRARIES += libext4_utils
+    ifneq ($(wildcard external/lz4/Android.mk),)
+        LOCAL_STATIC_LIBRARIES += liblz4
     endif
 endif
 
@@ -508,10 +499,8 @@ endif
 
 # If busybox does not have restorecon, assume it does not have SELinux support.
 # Then, let toolbox provide 'ls' so -Z is available to list SELinux contexts.
-ifeq ($(TWHAVE_SELINUX), true)
-	ifeq ($(filter restorecon, $(notdir $(BUSYBOX_LINKS))),)
-		exclude += ls
-	endif
+ifeq ($(filter restorecon, $(notdir $(BUSYBOX_LINKS))),)
+    exclude += ls
 endif
 
 RECOVERY_BUSYBOX_TOOLS := $(filter-out $(exclude), $(notdir $(BUSYBOX_LINKS)))

@@ -53,10 +53,8 @@ extern "C" {
 }
 #endif
 
-#ifdef HAVE_SELINUX
-#include "selinux/label.h"
+#include <selinux/label.h>
 struct selabel_handle *selinux_handle;
-#endif
 
 extern int adb_server_main(int is_daemon, int server_port, int /* reply_fd */);
 
@@ -133,7 +131,6 @@ int main(int argc, char **argv) {
 	// Load up all the resources
 	gui_loadResources();
 
-#ifdef HAVE_SELINUX
 	if (TWFunc::Path_Exists("/prebuilt_file_contexts")) {
 		if (TWFunc::Path_Exists("/file_contexts")) {
 			printf("Renaming regular /file_contexts -> /file_contexts.bak\n");
@@ -170,9 +167,6 @@ int main(int argc, char **argv) {
 			gui_msg("full_selinux=Full SELinux support is present.");
 		}
 	}
-#else
-	gui_warn("no_selinux=No SELinux support (no libselinux).");
-#endif
 
 	PartitionManager.Mount_By_Path("/cache", false);
 

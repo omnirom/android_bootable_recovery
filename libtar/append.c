@@ -31,9 +31,7 @@
 # include <unistd.h>
 #endif
 
-#ifdef HAVE_SELINUX
-# include "selinux/selinux.h"
-#endif
+#include <selinux/selinux.h>
 
 #ifdef HAVE_EXT4_CRYPT
 # include "ext4crypt_tar.h"
@@ -101,7 +99,6 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 #endif
 	th_set_path(t, (savename ? savename : realname));
 
-#ifdef HAVE_SELINUX
 	/* get selinux context */
 	if (t->options & TAR_STORE_SELINUX)
 	{
@@ -125,7 +122,6 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 #endif
 		}
 	}
-#endif
 
 #ifdef HAVE_EXT4_CRYPT
 	if (TH_ISDIR(t) && t->options & TAR_STORE_EXT4_POL)

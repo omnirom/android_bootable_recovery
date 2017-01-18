@@ -119,10 +119,8 @@ th_read(TAR *t)
 		free(t->th_buf.gnu_longname);
 	if (t->th_buf.gnu_longlink != NULL)
 		free(t->th_buf.gnu_longlink);
-#ifdef HAVE_SELINUX
 	if (t->th_buf.selinux_context != NULL)
 		free(t->th_buf.selinux_context);
-#endif
 #ifdef HAVE_EXT4_CRYPT
 	if (t->th_buf.e4crypt_policy != NULL) {
 		free(t->th_buf.e4crypt_policy);
@@ -241,7 +239,6 @@ th_read(TAR *t)
 		}
 	}
 
-#ifdef HAVE_SELINUX
 	if(TH_ISEXTHEADER(t))
 	{
 		sz = th_get_size(t);
@@ -290,7 +287,6 @@ th_read(TAR *t)
 			return -1;
 		}
 	}
-#endif
 
 #ifdef HAVE_EXT4_CRYPT
 	if(TH_ISPOLHEADER(t))
@@ -464,7 +460,6 @@ th_write(TAR *t)
 		th_set_size(t, sz2);
 	}
 
-#ifdef HAVE_SELINUX
 	if((t->options & TAR_STORE_SELINUX) && t->th_buf.selinux_context != NULL)
 	{
 #ifdef DEBUG
@@ -515,7 +510,6 @@ th_write(TAR *t)
 		t->th_buf.typeflag = type2;
 		th_set_size(t, sz2);
 	}
-#endif
 
 #ifdef HAVE_EXT4_CRYPT
 	if((t->options & TAR_STORE_EXT4_POL) && t->th_buf.e4crypt_policy != NULL)
