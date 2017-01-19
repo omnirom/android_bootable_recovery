@@ -35,7 +35,9 @@ LOCAL_STATIC_LIBRARIES := \
     libcrypto \
     libbz \
     libz
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := \
+    -DZLIB_CONST \
+    -Werror
 include $(BUILD_STATIC_LIBRARY)
 
 # libimgpatch (static library)
@@ -54,7 +56,9 @@ LOCAL_STATIC_LIBRARIES := \
     libcrypto \
     libbz \
     libz
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := \
+    -DZLIB_CONST \
+    -Werror
 include $(BUILD_STATIC_LIBRARY)
 
 # libimgpatch (host static library)
@@ -74,7 +78,9 @@ LOCAL_STATIC_LIBRARIES := \
     libcrypto \
     libbz \
     libz
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := \
+    -DZLIB_CONST \
+    -Werror
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 # libapplypatch_modes (static library)
