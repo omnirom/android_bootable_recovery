@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_a63606ac",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-01-19T00:12:59Z",
+      "side": 1,
+      "message": "A digest has nothing to do with a filename. It may be used for hashing the contents of a file, but then the file name should be passed explicitly to the methods that actually need it.",
+      "revId": "717d0f8e9175b1d25729565f82daf216065c6491",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_064ffa3c",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-01-19T00:12:59Z",
+      "side": 1,
+      "message": "even with the comments it\u0027s unclear what the difference between return_digest_string and create_digest_string is.",
+      "revId": "717d0f8e9175b1d25729565f82daf216065c6491",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_4645f21a",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-01-19T00:12:59Z",
+      "side": 1,
+      "message": "rename to init()",
+      "revId": "717d0f8e9175b1d25729565f82daf216065c6491",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_2642f613",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-01-19T00:12:59Z",
+      "side": 1,
+      "message": "do we always have to finalize explicitly before calling create_digest_string? if yes, why? if not, remove this.",
+      "revId": "717d0f8e9175b1d25729565f82daf216065c6491",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_6640ee0c",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-01-19T00:12:59Z",
+      "side": 1,
+      "message": "File name is not part of the state of a digest.",
+      "revId": "717d0f8e9175b1d25729565f82daf216065c6491",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_863b0a95",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-01-19T00:12:59Z",
+      "side": 1,
+      "message": "As I said earlier, the digest algorithms should not inherit from the driver class. Storing a pointer to \"this\" doesn\u0027t make sense either way.",
+      "revId": "717d0f8e9175b1d25729565f82daf216065c6491",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
