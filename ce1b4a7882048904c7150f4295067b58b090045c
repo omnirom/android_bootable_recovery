@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_2698b678",
+        "filename": "orscmd/orscmd.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1001507
+      },
+      "writtenOn": "2017-01-19T11:07:34Z",
+      "side": 1,
+      "message": "Maybe we should separate the \"errors\", since ENOATTR / ENODATA aren\u0027t really errors, just no xattrs are set on said file.\nAnd there\u0027s also ENOTSUP if the filesystem does not even support extended attrs.",
+      "revId": "ce1b4a7882048904c7150f4295067b58b090045c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
