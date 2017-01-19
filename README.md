@@ -40,3 +40,10 @@ Running the manual tests
 - Reboot the device immediately and run the test again. The test should save the
   contents of pmsg buffer into /data/misc/recovery/inject.txt. Test will pass if
   this file has expected contents.
+
+`ResourceTest` validates whether the png files are qualified as background text
+image under recovery.
+
+    1. `adb sync data` to make sure the test-dir has the images to test.
+    2. The test will automatically pickup and verify all `_text.png` files in
+       the test dir.

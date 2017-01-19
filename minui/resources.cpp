@@ -374,7 +374,9 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
 // This function tests if a locale string stored in PNG (prefix) matches
 // the locale string provided by the system (locale).
 bool matches_locale(const char* prefix, const char* locale) {
-    if (locale == NULL) return false;
+    if (locale == nullptr) {
+        return false;
+    }
 
     // Return true if the whole string of prefix matches the top part of
     // locale. For instance, prefix == "en" matches locale == "en_US";
