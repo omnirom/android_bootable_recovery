@@ -142,6 +142,41 @@ int TWFunc::Wait_For_Child(pid_t pid, int *status, string Child_Name) {
 	return 0;
 }
 
+int TWFunc::Wait_For_Child_Timeout(pid_t pid, int *status, const string& Child_Name, int timeout) {
+	pid_t retpid = waitpid(pid, status, WNOHANG);
+	for (; retpid == 0 && timeout; --timeout) {
+		sleep(1);
+		retpid = waitpid(pid, status, WNOHANG);
+	}
+	if (retpid == 0 && timeout == 0) {
+		LOGERR("%s took too long, killing process\n", Child_Name.c_str());
+		kill(pid, SIGKILL);
+		int died = 0;
+		for (timeout = 5; retpid == 0 && timeout; --timeout) {
+			sleep(1);
+			retpid = waitpid(pid, status, WNOHANG);
+		}
+		if (retpid)
+			LOGINFO("Child process killed successfully\n");
+		else
+			LOGINFO("Child process took too long to kill, may be a zombie process\n");
+		return -1;
+	} else if (retpid < 0) {
+		LOGERR("%s Unexpected error %d\n", Child_Name.c_str(), errno);
+		return -1;
+	} else if (!WIFEXITED(*status)) {
+		LOGERR("Abnormal termination of child %s\n", Child_Name.c_str());
+		return -1;
+	} else {
+		*status = WEXITSTATUS(*status);
+
+		// WEXITSTATUS shifts >> 8 , so sign extend it again to account for negative rc
+		int const msk = 8 * sizeof(int) - 8;
+		*status = (*status << msk) >> msk;
+	}
+	return 0;
+}
+
 bool TWFunc::Path_Exists(string Path) {
 	// Check to see if the Path exists
 	struct stat st;
