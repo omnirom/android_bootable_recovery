@@ -615,12 +615,12 @@ int ReconstructDeflateChunk(ImageChunk* chunk) {
 }
 
 /*
- * Given source and target chunks, compute a bsdiff patch between them
- * by running bsdiff in a subprocess.  Return the patch data, placing
- * its length in *size.  Return NULL on failure.  We expect the bsdiff
- * program to be in the path.
+ * Given source and target chunks, compute a bsdiff patch between them.
+ * Return the patch data, placing its length in *size. Return NULL on failure.
+ * |bsdiff_cache| can be used to cache the suffix array if the same |src| chunk
+ * is used repeatedly, pass nullptr if not needed.
  */
-unsigned char* MakePatch(ImageChunk* src, ImageChunk* tgt, size_t* size) {
+unsigned char* MakePatch(ImageChunk* src, ImageChunk* tgt, size_t* size, saidx_t** bsdiff_cache) {
   if (tgt->type == CHUNK_NORMAL) {
     if (tgt->len <= 160) {
       tgt->type = CHUNK_RAW;
@@ -644,7 +644,7 @@ unsigned char* MakePatch(ImageChunk* src, ImageChunk* tgt, size_t* size) {
   close(fd); // temporary file is created and we don't need its file
              // descriptor
 
-  int r = bsdiff::bsdiff(src->data, src->len, tgt->data, tgt->len, ptemp);
+  int r = bsdiff::bsdiff(src->data, src->len, tgt->data, tgt->len, ptemp, bsdiff_cache);
   if (r != 0) {
     printf("bsdiff() failed: %d\n", r);
     return NULL;
@@ -970,28 +970,31 @@ int imgdiff(int argc, const char** argv) {
   unsigned char** patch_data = static_cast<unsigned char**>(malloc(
       num_tgt_chunks * sizeof(unsigned char*)));
   size_t* patch_size = static_cast<size_t*>(malloc(num_tgt_chunks * sizeof(size_t)));
+  saidx_t* bsdiff_cache = nullptr;
   for (i = 0; i < num_tgt_chunks; ++i) {
     if (zip_mode) {
       ImageChunk* src;
       if (tgt_chunks[i].type == CHUNK_DEFLATE &&
           (src = FindChunkByName(tgt_chunks[i].filename, src_chunks, num_src_chunks))) {
-        patch_data[i] = MakePatch(src, tgt_chunks+i, patch_size+i);
+        patch_data[i] = MakePatch(src, tgt_chunks + i, patch_size + i, nullptr);
       } else {
-        patch_data[i] = MakePatch(src_chunks, tgt_chunks+i, patch_size+i);
+        patch_data[i] = MakePatch(src_chunks, tgt_chunks + i, patch_size + i, &bsdiff_cache);
       }
     } else {
       if (i == 1 && bonus_data) {
         printf("  using %zu bytes of bonus data for chunk %d\n", bonus_size, i);
-        src_chunks[i].data = static_cast<unsigned char*>(realloc(src_chunks[i].data,
-            src_chunks[i].len + bonus_size));
-        memcpy(src_chunks[i].data+src_chunks[i].len, bonus_data, bonus_size);
+        src_chunks[i].data =
+            static_cast<unsigned char*>(realloc(src_chunks[i].data, src_chunks[i].len + bonus_size));
+        memcpy(src_chunks[i].data + src_chunks[i].len, bonus_data, bonus_size);
         src_chunks[i].len += bonus_size;
-     }
+      }
 
-      patch_data[i] = MakePatch(src_chunks+i, tgt_chunks+i, patch_size+i);
+      patch_data[i] = MakePatch(src_chunks + i, tgt_chunks + i, patch_size + i, nullptr);
     }
     printf("patch %3d is %zu bytes (of %zu)\n", i, patch_size[i], tgt_chunks[i].source_len);
   }
+  free(bsdiff_cache);
+  free(src_chunks);
 
   // Figure out how big the imgdiff file header is going to be, so
   // that we can correctly compute the offset of each bsdiff patch
@@ -1068,6 +1071,7 @@ int imgdiff(int argc, const char** argv) {
     }
   }
 
+  free(tgt_chunks);
   free(patch_data);
   free(patch_size);
 

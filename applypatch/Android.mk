@@ -124,6 +124,8 @@ libimgdiff_cflags := \
 
 libimgdiff_static_libraries := \
     libbsdiff \
+    libdivsufsort \
+    libdivsufsort64 \
     libbase \
     libz
 
@@ -166,7 +168,5 @@ LOCAL_CFLAGS := -Werror
 LOCAL_STATIC_LIBRARIES := \
     libimgdiff \
     $(libimgdiff_static_libraries) \
-    libbz \
-    libdivsufsort \
-    libdivsufsort64
+    libbz
 include $(BUILD_HOST_EXECUTABLE)
