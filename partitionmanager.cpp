@@ -1513,7 +1513,7 @@ void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
 
 int TWPartitionManager::Decrypt_Device(string Password) {
 #ifdef TW_INCLUDE_CRYPTO
-	char crypto_state[PROPERTY_VALUE_MAX], crypto_blkdev[PROPERTY_VALUE_MAX], cPassword[255];
+	char crypto_state[PROPERTY_VALUE_MAX], crypto_blkdev[PROPERTY_VALUE_MAX];
 	std::vector<TWPartition*>::iterator iter;
 
 	// Mount any partitions that need to be mounted for decrypt
@@ -1549,8 +1549,25 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 		return -1;
 	}
 
-	strcpy(cPassword, Password.c_str());
-	int pwret = cryptfs_check_passwd(cPassword);
+	int pwret = -1;
+	pid_t pid = fork();
+	if (pid < 0) {
+		LOGERR("fork failed\n");
+		return -1;
+	} else if (pid == 0) {
+		// Child process
+		char cPassword[255];
+		strcpy(cPassword, Password.c_str());
+		int ret = cryptfs_check_passwd(cPassword);
+		exit(ret);
+	} else {
+		// Parent
+		int status;
+		if (TWFunc::Wait_For_Child_Timeout(pid, &status, "Decrypt", 30))
+			pwret = -1;
+		else
+			pwret = WEXITSTATUS(status) ? -1 : 0;
+	}
 
 	// Unmount any partitions that were needed for decrypt
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
