@@ -237,22 +237,22 @@
 			</button>
 		</page>
 
-                <page name="copylog">
-                        <template name="page"/>
+		<page name="copylog">
+			<template name="page"/>
 
-                        <checkbox>
+			<checkbox>
 				<placement x="%indent%" y="%row1_y%"/>
-                                <text>{@include_kernel_log=Include Kernel Log}</text>
-                                <data variable="tw_include_kernel_log" value="1"/>
-                        </checkbox>
+				<text>{@include_kernel_log=Include Kernel Log}</text>
+				<data variable="tw_include_kernel_log" value="1"/>
+			</checkbox>
 
 			<slider>
 				<text>{@swipe_confirm=   Confirm}</text>
 				<actions>
-                                        <action function="set">tw_back=main3</action>
-                                        <action function="set">tw_action=copylog</action>
-                                        <action function="set">tw_action_text1={@copying_log=Copy Logs to SD Card}</action>
-                                        <action function="set">tw_complete_text1={@copy_log_complete=Logs Copy Completed}</action>
+					<action function="set">tw_back=main3</action>
+					<action function="set">tw_action=copylog</action>
+					<action function="set">tw_action_text1={@copying_log=Copy Logs to SD Card}</action>
+					<action function="set">tw_complete_text1={@copy_log_complete=Logs Copy Completed}</action>
 					<action function="page">action_page</action>
 				</actions>
 			</slider>
@@ -266,7 +266,7 @@
 				<touch key="home"/>
 				<action function="page">main</action>
 			</action>
-                </page>
+		</page>
 
 		<page name="main3">
 			<template name="page"/>
@@ -549,9 +549,9 @@
 			</checkbox>
 
 			<checkbox>
-				<placement x="%indent%" y="%row4_y%" />
+				<placement x="%indent%" y="%row4_y%"/>
 				<text>{@install_reboot_chk=Reboot after installation is complete}</text>
-				<data variable="tw_install_reboot" />
+				<data variable="tw_install_reboot"/>
 			</checkbox>
 
 			<button>

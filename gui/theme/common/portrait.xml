@@ -3410,8 +3410,8 @@
 				<actions>
 					<action function="set">tw_back=advanced</action>
 					<action function="set">tw_action=copylog</action>
-                                        <action function="set">tw_action_text1={@copying_log=Copy Logs to SD Card}</action>
-                                        <action function="set">tw_complete_text1={@copy_log_complete=Logs Copy Completed}</action>
+					<action function="set">tw_action_text1={@copying_log=Copy Logs to SD Card}</action>
+					<action function="set">tw_complete_text1={@copy_log_complete=Logs Copy Completed}</action>
 					<action function="page">action_page</action>
 				</actions>
 			</slider>
@@ -3427,7 +3427,6 @@
 					<action function="page">advanced</action>
 				</actions>
 			</action>
-
 		</page>
 
 		<page name="advanced">
