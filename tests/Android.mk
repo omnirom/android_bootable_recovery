@@ -49,10 +49,34 @@ LOCAL_CLANG := true
 LOCAL_CFLAGS := -Werror
 LOCAL_MODULE := recovery_manual_test
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
-LOCAL_STATIC_LIBRARIES := libbase
+LOCAL_STATIC_LIBRARIES := \
+    libminui \
+    libbase
 
 LOCAL_SRC_FILES := manual/recovery_test.cpp
-LOCAL_SHARED_LIBRARIES := liblog
+LOCAL_SHARED_LIBRARIES := \
+    liblog \
+    libpng
+
+resource_files := $(call find-files-in-subdirs, bootable/recovery, \
+    "*_text.png", \
+    res-mdpi/images \
+    res-hdpi/images \
+    res-xhdpi/images \
+    res-xxhdpi/images \
+    res-xxxhdpi/images \
+    )
+
+# The resource image files that will go to $OUT/data/nativetest/recovery.
+testimage_out_path := $(TARGET_OUT_DATA)/nativetest/recovery
+GEN := $(addprefix $(testimage_out_path)/, $(resource_files))
+
+$(GEN): PRIVATE_PATH := $(LOCAL_PATH)
+$(GEN): PRIVATE_CUSTOM_TOOL = cp $< $@
+$(GEN): $(testimage_out_path)/% : bootable/recovery/%
+	$(transform-generated-source)
+LOCAL_GENERATED_SOURCES += $(GEN)
+
 include $(BUILD_NATIVE_TEST)
 
 # Component tests
