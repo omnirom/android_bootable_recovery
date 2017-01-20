@@ -6,13 +6,13 @@ LOCAL_SRC_FILES := \
     graphics.cpp \
     graphics_drm.cpp \
     graphics_fbdev.cpp \
-    resources.cpp \
-    graphics_overlay.cpp
+    resources.cpp
 
 LOCAL_C_INCLUDES := external/libcxx/include external/libpng
 
 ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
   LOCAL_CFLAGS += -DMSM_BSP
+  LOCAL_SRC_FILES += graphics_overlay.cpp
   ifeq ($(TARGET_PREBUILT_KERNEL),)
     LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
     LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include

@@ -477,6 +477,7 @@ int gr_init(void)
     gr_init_font();
     gr_draw = NULL;
 
+#ifdef MSM_BSP
     gr_backend = open_overlay();
     if (gr_backend) {
         gr_draw = gr_backend->init(gr_backend);
@@ -485,9 +486,10 @@ int gr_init(void)
         } else
             printf("Using overlay graphics.\n");
     }
+#endif
 
 #ifndef MSM_BSP
-    if (!gr_draw) {
+    if (!gr_backend || !gr_draw) {
         gr_backend = open_adf();
         if (gr_backend) {
             gr_draw = gr_backend->init(gr_backend);
@@ -501,14 +503,14 @@ int gr_init(void)
 	printf("Skipping adf graphics because TW_TARGET_USES_QCOM_BSP := true\n");
 #endif
 
-    if (!gr_draw) {
+    if (!gr_backend || !gr_draw) {
         gr_backend = open_drm();
         gr_draw = gr_backend->init(gr_backend);
         if (gr_draw)
             printf("Using drm graphics.\n");
     }
 
-    if (!gr_draw) {
+    if (!gr_backend || !gr_draw) {
         gr_backend = open_fbdev();
         gr_draw = gr_backend->init(gr_backend);
         if (gr_draw == NULL) {
