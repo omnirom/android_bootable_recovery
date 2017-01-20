@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
     LOG(INFO) << "Started with arg " << i << ": " << argv[i];
   }
 
-  sp<IBootControl> module = IBootControl::getService("bootctrl");
+  sp<IBootControl> module = IBootControl::getService();
   if (module == nullptr) {
     LOG(ERROR) << "Error getting bootctrl module.";
     return -1;
