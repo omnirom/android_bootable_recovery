@@ -1,3 +1,21 @@
+/*
+	Copyright 2017 TeamWin
+	This file is part of TWRP/TeamWin Recovery Project.
+
+	TWRP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	TWRP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 // hardwarekeyboard.cpp - HardwareKeyboard object
 
 #include <stdarg.h>
@@ -19,6 +37,7 @@ extern "C" {
 #include "../common.h"
 }
 
+#include "../twcommon.h"
 #include "objects.hpp"
 #include <linux/input.h>
 
@@ -343,7 +362,7 @@ static int KeyCodeToChar(int key_code, bool shiftkey, bool ctrlkey)
 
 #ifdef _EVENT_LOGGING
 		default:
-			LOGE("Unmapped keycode: %i\n", key_code);
+			LOGERR("Unmapped keycode: %i\n", key_code);
 			break;
 #endif
 	}
@@ -366,7 +385,7 @@ bool HardwareKeyboard::IsKeyDown(int key_code)
 int HardwareKeyboard::KeyDown(int key_code)
 {
 #ifdef _EVENT_LOGGING
-	LOGE("HardwareKeyboard::KeyDown %i\n", key_code);
+	LOGERR("HardwareKeyboard::KeyDown %i\n", key_code);
 #endif
 	key_code = TranslateKeyCode(key_code);
 	mPressedKeys.insert(key_code);
@@ -392,7 +411,7 @@ int HardwareKeyboard::KeyDown(int key_code)
 int HardwareKeyboard::KeyUp(int key_code)
 {
 #ifdef _EVENT_LOGGING
-	LOGE("HardwareKeyboard::KeyUp %i\n", key_code);
+	LOGERR("HardwareKeyboard::KeyUp %i\n", key_code);
 #endif
 	key_code = TranslateKeyCode(key_code);
 	std::set<int>::iterator itr = mPressedKeys.find(key_code);
@@ -406,7 +425,7 @@ int HardwareKeyboard::KeyUp(int key_code)
 int HardwareKeyboard::KeyRepeat()
 {
 #ifdef _EVENT_LOGGING
-	LOGE("HardwareKeyboard::KeyRepeat: %i\n", mLastKeyChar);
+	LOGERR("HardwareKeyboard::KeyRepeat: %i\n", mLastKeyChar);
 #endif
 	if (mLastKeyChar)
 		PageManager::NotifyCharInput(mLastKeyChar);

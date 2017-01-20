@@ -1,3 +1,21 @@
+/*
+	Copyright 2017 TeamWin
+	This file is part of TWRP/TeamWin Recovery Project.
+
+	TWRP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	TWRP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 // object.cpp - GUIObject base class
 
 #include <stdio.h>
@@ -159,7 +177,7 @@ bool GUIObject::UpdateConditions(std::vector<Condition>& conditions, const std::
 	std::vector<Condition>::iterator iter;
 	for (iter = conditions.begin(); iter != conditions.end(); ++iter)
 	{
-		if(varNameEmpty && iter->mCompareOp == "modified")
+		if (varNameEmpty && iter->mCompareOp == "modified")
 		{
 			string val;
 
@@ -172,10 +190,10 @@ bool GUIObject::UpdateConditions(std::vector<Condition>& conditions, const std::
 			iter->mLastVal = val;
 		}
 
-		if(varNameEmpty || iter->mVar1 == varName || iter->mVar2 == varName)
+		if (varNameEmpty || iter->mVar1 == varName || iter->mVar2 == varName)
 			iter->mLastResult = isConditionTrue(&(*iter));
 
-		if(!iter->mLastResult)
+		if (!iter->mLastResult)
 			result = false;
 	}
 	return result;

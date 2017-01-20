@@ -6,7 +6,7 @@
 		<title>Backup Naowz</title>
 		<description>Default basic theme</description>
 		<preview>preview.png</preview>
-		<themeversion>1</themeversion>
+		<themeversion>2</themeversion>
 	</details>
 
 	<include>
@@ -336,7 +336,7 @@
 
 			<action>
 				<touch key="power"/>
-				<action function="overlay">lock</action>
+				<action function="togglebacklight"/>
 			</action>
 
 			<action>

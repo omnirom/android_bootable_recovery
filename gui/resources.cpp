@@ -1,3 +1,21 @@
+/*
+	Copyright 2017 TeamWin
+	This file is part of TWRP/TeamWin Recovery Project.
+
+	TWRP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	TWRP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 // resource.cpp - Source to manage GUI resources
 
 #include <stdarg.h>
@@ -124,7 +142,7 @@ void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
 
 	file = attr->value();
 
-	if(file.size() >= 4 && file.compare(file.size()-4, 4, ".ttf") == 0)
+	if (file.size() >= 4 && file.compare(file.size()-4, 4, ".ttf") == 0)
 	{
 		int font_size = 0;
 
@@ -144,7 +162,7 @@ void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
 		int dpi = 300;
 
 		attr = node->first_attribute("dpi");
-		if(attr)
+		if (attr)
 			dpi = atoi(attr->value());
 
 		// we can't use TMP_RESOURCE_NAME here because the ttf subsystem is caching the name and scaling needs to reload the font
@@ -166,10 +184,10 @@ void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
 }
 
 void FontResource::DeleteFont() {
-	if(mFont)
+	if (mFont)
 		gr_ttf_freeFont(mFont);
 	mFont = NULL;
-	if(origFont)
+	if (origFont)
 		gr_ttf_freeFont(origFont);
 	origFont = NULL;
 }

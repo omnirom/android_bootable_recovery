@@ -15,6 +15,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <linux/capability.h>
 #include "tar.h"
 
 #include "libtar_listhash.h"
@@ -43,7 +44,7 @@ extern "C"
 
 /* extended metadata for next file - used to store selinux_context */
 #define TH_EXT_TYPE		'x'
-#define TH_POL_TYPE		'p'
+#define TH_POL_TYPE_DO_NOT_USE		'p'
 
 /* our version of the tar header structure */
 struct tar_header
@@ -67,12 +68,12 @@ struct tar_header
 	char padding[12];
 	char *gnu_longname;
 	char *gnu_longlink;
-#ifdef HAVE_SELINUX
 	char *selinux_context;
-#endif
 #ifdef HAVE_EXT4_CRYPT
 	char *e4crypt_policy;
 #endif
+	int has_cap_data;
+	struct vfs_cap_data cap_data;
 };
 
 
@@ -118,6 +119,7 @@ TAR;
 #define TAR_STORE_SELINUX	128	/* store selinux context */
 #define TAR_USE_NUMERIC_ID	256	/* favor numeric owner over names */
 #define TAR_STORE_EXT4_POL	512	/* store ext4 crypto policy */
+#define TAR_STORE_POSIX_CAP	1024	/* store posix file capabilities */
 
 /* this is obsolete - it's here for backwards-compatibility only */
 #define TAR_IGNORE_MAGIC	0
@@ -214,7 +216,7 @@ int th_write(TAR *t);
 #define TH_ISLONGNAME(t)	((t)->th_buf.typeflag == GNU_LONGNAME_TYPE)
 #define TH_ISLONGLINK(t)	((t)->th_buf.typeflag == GNU_LONGLINK_TYPE)
 #define TH_ISEXTHEADER(t)	((t)->th_buf.typeflag == TH_EXT_TYPE)
-#define TH_ISPOLHEADER(t)	((t)->th_buf.typeflag == TH_POL_TYPE)
+#define TH_ISPOLHEADER(t)	((t)->th_buf.typeflag == TH_POL_TYPE_DO_NOT_USE)
 
 /* decode tar header info */
 #define th_get_crc(t) oct_to_int((t)->th_buf.chksum, sizeof((t)->th_buf.chksum))
@@ -322,6 +324,9 @@ void int_to_oct(int64_t num, char *oct, size_t octlen);
 
 /* integer to string-octal conversion, or binary as necessary */
 void int_to_oct_ex(int64_t num, char *oct, size_t octlen);
+
+/* prints posix file capabilities */
+void print_caps(struct vfs_cap_data *cap_data);
 
 
 /***** wrapper.c **********************************************************/

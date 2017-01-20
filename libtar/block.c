@@ -29,6 +29,10 @@
 #define E4CRYPT_TAG "TWRP.security.e4crypt="
 #define E4CRYPT_TAG_LEN 22
 
+// Used to identify Posix capabilities in extended ('x')
+#define CAPABILITIES_TAG "SCHILY.xattr.security.capability="
+#define CAPABILITIES_TAG_LEN 33
+
 /* read a header block */
 /* FIXME: the return value of this function should match the return value
 	  of tar_block_read(), which is a macro which references a prototype
@@ -119,15 +123,18 @@ th_read(TAR *t)
 		free(t->th_buf.gnu_longname);
 	if (t->th_buf.gnu_longlink != NULL)
 		free(t->th_buf.gnu_longlink);
-#ifdef HAVE_SELINUX
 	if (t->th_buf.selinux_context != NULL)
 		free(t->th_buf.selinux_context);
-#endif
 #ifdef HAVE_EXT4_CRYPT
 	if (t->th_buf.e4crypt_policy != NULL) {
 		free(t->th_buf.e4crypt_policy);
 	}
 #endif
+	if (t->th_buf.has_cap_data)
+	{
+		memset(&t->th_buf.cap_data, 0, sizeof(struct vfs_cap_data));
+		t->th_buf.has_cap_data = 0;
+	}
 
 	memset(&(t->th_buf), 0, sizeof(struct tar_header));
 
@@ -241,8 +248,8 @@ th_read(TAR *t)
 		}
 	}
 
-#ifdef HAVE_SELINUX
-	if(TH_ISEXTHEADER(t))
+	// Extended headers (selinux contexts, posix file capabilities, ext4 encryption policies)
+	while(TH_ISEXTHEADER(t) || TH_ISPOLHEADER(t))
 	{
 		sz = th_get_size(t);
 
@@ -267,7 +274,19 @@ th_read(TAR *t)
 			buf[T_BLOCKSIZE-1] = 0;
 
 			int len = strlen(buf);
-			char *start = strstr(buf, SELINUX_TAG);
+			// posix capabilities
+			char *start = strstr(buf, CAPABILITIES_TAG);
+			if(start && start+CAPABILITIES_TAG_LEN < buf+len)
+			{
+				start += CAPABILITIES_TAG_LEN;
+				memcpy(&t->th_buf.cap_data, start, sizeof(struct vfs_cap_data));
+				t->th_buf.has_cap_data = 1;
+#ifdef DEBUG
+				printf("    th_read(): Posix capabilities detected\n");
+#endif
+			} // end posix capabilities
+			// selinux contexts
+			start = strstr(buf, SELINUX_TAG);
 			if(start && start+SELINUX_TAG_LEN < buf+len)
 			{
 				start += SELINUX_TAG_LEN;
@@ -279,46 +298,9 @@ th_read(TAR *t)
 					printf("    th_read(): SELinux context xattr detected: %s\n", t->th_buf.selinux_context);
 #endif
 				}
-			}
-		}
-
-		i = th_read_internal(t);
-		if (i != T_BLOCKSIZE)
-		{
-			if (i != -1)
-				errno = EINVAL;
-			return -1;
-		}
-	}
-#endif
-
+			} // end selinux contexts
 #ifdef HAVE_EXT4_CRYPT
-	if(TH_ISPOLHEADER(t))
-	{
-		sz = th_get_size(t);
-
-		if(sz >= T_BLOCKSIZE) // Not supported
-		{
-#ifdef DEBUG
-			printf("    th_read(): Policy header is too long!\n");
-#endif
-		}
-		else
-		{
-			char buf[T_BLOCKSIZE];
-			i = tar_block_read(t, buf);
-			if (i != T_BLOCKSIZE)
-			{
-				if (i != -1)
-					errno = EINVAL;
-				return -1;
-			}
-
-			// To be sure
-			buf[T_BLOCKSIZE-1] = 0;
-
-			int len = strlen(buf);
-			char *start = strstr(buf, E4CRYPT_TAG);
+			start = strstr(buf, E4CRYPT_TAG);
 			if(start && start+E4CRYPT_TAG_LEN < buf+len)
 			{
 				start += E4CRYPT_TAG_LEN;
@@ -331,6 +313,7 @@ th_read(TAR *t)
 #endif
 				}
 			}
+#endif // HAVE_EXT4_CRYPT
 		}
 
 		i = th_read_internal(t);
@@ -341,11 +324,55 @@ th_read(TAR *t)
 			return -1;
 		}
 	}
-#endif
 
 	return 0;
 }
 
+/* write an extended block */
+static int
+th_write_extended(TAR *t, char* buf, uint64_t sz)
+{
+	char type2;
+	uint64_t sz2;
+	int i;
+
+	/* save old size and type */
+	type2 = t->th_buf.typeflag;
+	sz2 = th_get_size(t);
+
+	/* write out initial header block with fake size and type */
+	t->th_buf.typeflag = TH_EXT_TYPE;
+
+	if(sz >= T_BLOCKSIZE) // impossible
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	th_set_size(t, sz);
+	th_finish(t);
+	i = tar_block_write(t, &(t->th_buf));
+	if (i != T_BLOCKSIZE)
+	{
+		if (i != -1)
+			errno = EINVAL;
+		return -1;
+	}
+
+	i = tar_block_write(t, buf);
+	if (i != T_BLOCKSIZE)
+	{
+		if (i != -1)
+			errno = EINVAL;
+		return -1;
+	}
+
+	/* reset type and size to original values */
+	t->th_buf.typeflag = type2;
+	th_set_size(t, sz2);
+	memset(buf, 0, T_BLOCKSIZE);
+	return 0;
+}
 
 /* write a header block */
 int
@@ -353,7 +380,7 @@ th_write(TAR *t)
 {
 	int i, j;
 	char type2;
-	uint64_t sz, sz2;
+	uint64_t sz, sz2, total_sz = 0;
 	char *ptr;
 	char buf[T_BLOCKSIZE];
 
@@ -464,20 +491,15 @@ th_write(TAR *t)
 		th_set_size(t, sz2);
 	}
 
-#ifdef HAVE_SELINUX
+	memset(buf, 0, T_BLOCKSIZE);
+	ptr = buf;
+
 	if((t->options & TAR_STORE_SELINUX) && t->th_buf.selinux_context != NULL)
 	{
 #ifdef DEBUG
 		printf("th_write(): using selinux_context (\"%s\")\n",
 		       t->th_buf.selinux_context);
 #endif
-		/* save old size and type */
-		type2 = t->th_buf.typeflag;
-		sz2 = th_get_size(t);
-
-		/* write out initial header block with fake size and type */
-		t->th_buf.typeflag = TH_EXT_TYPE;
-
 		/* setup size - EXT header has format "*size of this whole tag as ascii numbers* *space* *content* *newline* */
 		//                                                       size   newline
 		sz = SELINUX_TAG_LEN + strlen(t->th_buf.selinux_context) + 3  +    1;
@@ -485,37 +507,10 @@ th_write(TAR *t)
 		if(sz >= 100) // another ascci digit for size
 			++sz;
 
-		if(sz >= T_BLOCKSIZE) // impossible
-		{
-			errno = EINVAL;
-			return -1;
-		}
-
-		th_set_size(t, sz);
-		th_finish(t);
-		i = tar_block_write(t, &(t->th_buf));
-		if (i != T_BLOCKSIZE)
-		{
-			if (i != -1)
-				errno = EINVAL;
-			return -1;
-		}
-
-		memset(buf, 0, T_BLOCKSIZE);
-		snprintf(buf, T_BLOCKSIZE, "%d "SELINUX_TAG"%s\n", (int)sz, t->th_buf.selinux_context);
-		i = tar_block_write(t, &buf);
-		if (i != T_BLOCKSIZE)
-		{
-			if (i != -1)
-				errno = EINVAL;
-			return -1;
-		}
-
-		/* reset type and size to original values */
-		t->th_buf.typeflag = type2;
-		th_set_size(t, sz2);
+		total_sz += sz;
+		snprintf(ptr, T_BLOCKSIZE, "%d "SELINUX_TAG"%s\n", (int)sz, t->th_buf.selinux_context);
+		ptr += sz;
 	}
-#endif
 
 #ifdef HAVE_EXT4_CRYPT
 	if((t->options & TAR_STORE_EXT4_POL) && t->th_buf.e4crypt_policy != NULL)
@@ -524,13 +519,6 @@ th_write(TAR *t)
 		printf("th_write(): using e4crypt_policy %s\n",
 		       t->th_buf.e4crypt_policy);
 #endif
-		/* save old size and type */
-		type2 = t->th_buf.typeflag;
-		sz2 = th_get_size(t);
-
-		/* write out initial header block with fake size and type */
-		t->th_buf.typeflag = TH_POL_TYPE;
-
 		/* setup size - EXT header has format "*size of this whole tag as ascii numbers* *space* *content* *newline* */
 		//                                                       size   newline
 		sz = E4CRYPT_TAG_LEN + EXT4_KEY_DESCRIPTOR_HEX + 3  +    1;
@@ -538,37 +526,51 @@ th_write(TAR *t)
 		if(sz >= 100) // another ascci digit for size
 			++sz;
 
-		if(sz >= T_BLOCKSIZE) // impossible
+		if (total_sz + sz >= T_BLOCKSIZE)
 		{
-			errno = EINVAL;
-			return -1;
+			if (th_write_extended(t, &buf, total_sz))
+				return -1;
+			ptr = buf;
+			total_sz = sz;
 		}
+		else
+			total_sz += sz;
 
-		th_set_size(t, sz);
-		th_finish(t);
-		i = tar_block_write(t, &(t->th_buf));
-		if (i != T_BLOCKSIZE)
-		{
-			if (i != -1)
-				errno = EINVAL;
-			return -1;
-		}
-
-		memset(buf, 0, T_BLOCKSIZE);
-		snprintf(buf, T_BLOCKSIZE, "%d "E4CRYPT_TAG"%s\n", (int)sz, t->th_buf.e4crypt_policy);
-		i = tar_block_write(t, &buf);
-		if (i != T_BLOCKSIZE)
-		{
-			if (i != -1)
-				errno = EINVAL;
-			return -1;
-		}
-
-		/* reset type and size to original values */
-		t->th_buf.typeflag = type2;
-		th_set_size(t, sz2);
+		snprintf(ptr, T_BLOCKSIZE, "%d "E4CRYPT_TAG"%s", (int)sz, t->th_buf.e4crypt_policy);
+		char *nlptr = ptr + sz - 1;
+		*nlptr = '\n';
+		ptr += sz;
 	}
 #endif
+
+	if((t->options & TAR_STORE_POSIX_CAP) && t->th_buf.has_cap_data)
+	{
+#ifdef DEBUG
+		printf("th_write(): has a posix capability\n");
+#endif
+		sz = CAPABILITIES_TAG_LEN + sizeof(struct vfs_cap_data) + 3 + 1;
+
+		if(sz >= 100) // another ascci digit for size
+			++sz;
+
+		if (total_sz + sz >= T_BLOCKSIZE)
+		{
+			if (th_write_extended(t, &buf, total_sz))
+				return -1;
+			ptr = buf;
+			total_sz = sz;
+		}
+		else
+			total_sz += sz;
+
+		snprintf(ptr, T_BLOCKSIZE, "%d "CAPABILITIES_TAG, (int)sz);
+		memcpy(ptr + CAPABILITIES_TAG_LEN + 3, &t->th_buf.cap_data, sizeof(struct vfs_cap_data));
+		char *nlptr = ptr + sz - 1;
+		*nlptr = '\n';
+		ptr += sz;
+	}
+	if (total_sz > 0 && th_write_extended(t, &buf, total_sz)) // write any outstanding tar extended header
+		return -1;
 
 	th_finish(t);
 

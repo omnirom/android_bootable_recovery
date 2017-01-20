@@ -79,7 +79,7 @@ GUIPartitionList::~GUIPartitionList()
 
 int GUIPartitionList::Update(void)
 {
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	// Check for changes in mount points if the list type is mount and update the list and render if needed
@@ -99,10 +99,8 @@ int GUIPartitionList::Update(void)
 	GUIScrollList::Update();
 
 	if (updateList) {
-		int listSize = 0;
-
-		// Completely update the list if needed -- Used primarily for 
-		// restore as the list for restore will change depending on what 
+		// Completely update the list if needed -- Used primarily for
+		// restore as the list for restore will change depending on what
 		// partitions were backed up
 		mList.clear();
 		PartitionManager.Get_Partition_List(ListType, &mList);
@@ -126,7 +124,7 @@ int GUIPartitionList::NotifyVarChange(const std::string& varName, const std::str
 {
 	GUIScrollList::NotifyVarChange(varName, value);
 
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	if (varName == mVariable && !mUpdate)

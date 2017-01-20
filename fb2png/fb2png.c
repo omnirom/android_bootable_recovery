@@ -17,13 +17,15 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/fb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <linux/fb.h>
-#include <errno.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "log.h"
 #include "fb2png.h"

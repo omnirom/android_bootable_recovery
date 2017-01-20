@@ -162,7 +162,7 @@ GUIFileSelector::~GUIFileSelector()
 
 int GUIFileSelector::Update(void)
 {
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	GUIScrollList::Update();
@@ -190,7 +190,7 @@ int GUIFileSelector::NotifyVarChange(const std::string& varName, const std::stri
 {
 	GUIScrollList::NotifyVarChange(varName, value);
 
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	if (varName.empty()) {
@@ -362,7 +362,6 @@ size_t GUIFileSelector::GetItemCount()
 void GUIFileSelector::RenderItem(size_t itemindex, int yPos, bool selected)
 {
 	size_t folderSize = mShowFolders ? mFolderList.size() : 0;
-	size_t fileSize = mShowFiles ? mFileList.size() : 0;
 
 	ImageResource* icon;
 	std::string text;

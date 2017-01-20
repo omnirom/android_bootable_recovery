@@ -137,7 +137,7 @@ GUIListBox::~GUIListBox()
 
 int GUIListBox::Update(void)
 {
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 	GUIScrollList::Update();
@@ -154,7 +154,7 @@ int GUIListBox::NotifyVarChange(const std::string& varName, const std::string& v
 {
 	GUIScrollList::NotifyVarChange(varName, value);
 
-	if(!isConditionTrue())
+	if (!isConditionTrue())
 		return 0;
 
 #ifdef TARGET_RECOVERY_IS_MULTIROM

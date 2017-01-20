@@ -65,10 +65,8 @@ extern "C" {
 	#define CRYPT_FOOTER_OFFSET 0x4000
 #endif
 }
-#ifdef HAVE_SELINUX
-#include "selinux/selinux.h"
+#include <selinux/selinux.h>
 #include <selinux/label.h>
-#endif
 #ifdef HAVE_CAPABILITIES
 #include <sys/capability.h>
 #include <sys/xattr.h>
@@ -912,8 +910,6 @@ bool TWPartition::Make_Dir(string Path, bool Display_Error) {
 }
 
 void TWPartition::Setup_File_System(bool Display_Error) {
-	struct statfs st;
-
 	Can_Be_Mounted = true;
 	Can_Be_Wiped = true;
 
@@ -1037,7 +1033,6 @@ bool TWPartition::Find_MTD_Block_Device(string MTD_Name) {
 	{
 		char device[32], label[32];
 		unsigned long size = 0;
-		char* fstype = NULL;
 		int deviceId;
 
 		sscanf(line, "%s %lx %*s %*c%s", device, &size, label);
@@ -1189,7 +1184,6 @@ bool TWPartition::Find_Partition_Size(void) {
 	{
 		unsigned long major, minor, blocks;
 		char device[512];
-		char tmpString[64];
 
 		if (strlen(line) < 7 || line[0] == 'm')	 continue;
 		sscanf(line + 1, "%lu %lu %lu %s", &major, &minor, &blocks, device);
@@ -1882,6 +1876,7 @@ string TWPartition::Get_Restore_File_System(PartitionSettings *part_settings) {
 		return string();
 	}
 	Restore_File_System.resize(second_period);
+	LOGINFO("Restore file system is: '%s'.\n", Restore_File_System.c_str());
 	return Restore_File_System;
 }
 
@@ -2074,7 +2069,7 @@ bool TWPartition::Wipe_EXT4() {
 	if (!UnMount(true))
 		return false;
 
-#if defined(HAVE_SELINUX) && defined(USE_EXT4)
+#if defined(USE_EXT4)
 	int ret;
 	char *secontext = NULL;
 
@@ -2403,7 +2398,6 @@ bool TWPartition::Backup_Tar(PartitionSettings *part_settings, pid_t *tar_fork_p
 
 bool TWPartition::Backup_Image(PartitionSettings *part_settings) {
 	string Full_FileName, adb_file_name;
-	int adb_control_bu_fd, compressed;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
@@ -2495,7 +2489,7 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 	while (Remain > 0) {
 		if (Remain < RW_Block_Size)
 			bs = (ssize_t)(Remain);
-		if (read(src_fd,  buffer, bs) != bs) {
+		if (read(src_fd, buffer, bs) != bs) {
 			LOGINFO("Error reading source fd (%s)\n", strerror(errno));
 			goto exit;
 		}
@@ -2504,7 +2498,7 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 			goto exit;
 		}
 		backedup_size += (unsigned long long)(bs);
-		Remain = Remain - (unsigned long long)(bs);
+		Remain -= (unsigned long long)(bs);
 		if (part_settings->progress)
 			part_settings->progress->UpdateSize(backedup_size);
 		if (PartitionManager.Check_Backup_Cancel() != 0)
@@ -2513,6 +2507,12 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 	if (part_settings->progress)
 		part_settings->progress->UpdateDisplayDetails(true);
 	fsync(dest_fd);
+
+	if (!part_settings->adbbackup && part_settings->PM_Method == PM_BACKUP) {
+		tw_set_default_metadata(destfn.c_str());
+		LOGINFO("Restored default metadata for %s\n", destfn.c_str());
+	}
+
 	ret = true;
 exit:
 	if (src_fd >= 0)
@@ -2526,8 +2526,6 @@ exit:
 
 bool TWPartition::Backup_Dump_Image(PartitionSettings *part_settings) {
 	string Full_FileName, Command;
-	int use_compression, adb_control_bu_fd;
-	unsigned long long compressed;
 
 	TWFunc::GUI_Operation_Text(TW_BACKUP_TEXT, Display_Name, gui_parse_text("{@backing}"));
 	gui_msg(Msg("backing_up=Backing up {1}...")(Backup_Display_Name));
@@ -2565,9 +2563,9 @@ unsigned long long TWPartition::Get_Restore_Size(PartitionSettings *part_setting
 		}
 	}
 
-	string Full_FileName, Restore_File_System = Get_Restore_File_System(part_settings);
+	string Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
+	string Restore_File_System = Get_Restore_File_System(part_settings);
 
-	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 	if (Is_Image(Restore_File_System)) {
 		Restore_Size = TWFunc::Get_File_Size(Full_FileName);
 		return Restore_Size;
@@ -2727,7 +2725,6 @@ bool TWPartition::Update_Size(bool Display_Error) {
 
 	if (Has_Data_Media) {
 		if (Mount(Display_Error)) {
-			unsigned long long data_media_used, actual_data;
 			Used = backup_exclusions.Get_Folder_Size(Mount_Point);
 			Backup_Size = Used;
 			int bak = (int)(Used / 1048576LLU);
@@ -2800,14 +2797,14 @@ void TWPartition::Recreate_Media_Folder(void) {
 #ifdef TW_INTERNAL_STORAGE_PATH
 		mkdir(EXPAND(TW_INTERNAL_STORAGE_PATH), 0770);
 #endif
-#ifdef HAVE_SELINUX
+
 		// Afterwards, we will try to set the
 		// default metadata that we were hopefully able to get during
 		// early boot.
 		tw_set_default_metadata(Media_Path.c_str());
 		if (!Internal_path.empty())
 			tw_set_default_metadata(Internal_path.c_str());
-#endif
+
 		// Toggle mount to ensure that "internal sdcard" gets mounted
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
 		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
@@ -2833,7 +2830,6 @@ uint64_t TWPartition::Get_Max_FileSize() {
 	const uint64_t constGB = (uint64_t) 1024 * 1024 * 1024;
 	const uint64_t constTB = (uint64_t) constGB * 1024;
 	const uint64_t constPB = (uint64_t) constTB * 1024;
-	const uint64_t constEB = (uint64_t) constPB * 1024;
 	if (Current_File_System == "ext4")
 		maxFileSize = 16 * constTB; //16 TB
 	else if (Current_File_System == "vfat")
@@ -2882,7 +2878,6 @@ bool TWPartition::Flash_Image(PartitionSettings *part_settings) {
 					return Flash_Sparse_Image(full_filename);
 				}
 			}
-			unsigned long long file_size = (unsigned long long)(TWFunc::Get_File_Size(full_filename));
 			return Raw_Read_Write(part_settings);
 		} else if (Backup_Method == BM_FLASH_UTILS) {
 			return Flash_Image_FI(full_filename, NULL);
@@ -3091,6 +3086,7 @@ int TWPartition::Decrypt_Adopted() {
 		}
 	}
 exit:
+	close(fd);
 	return ret;
 #else
 	LOGINFO("Decrypt_Adopted: no crypto support\n");

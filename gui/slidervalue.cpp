@@ -1,3 +1,21 @@
+/*
+	Copyright 2017 TeamWin
+	This file is part of TWRP/TeamWin Recovery Project.
+
+	TWRP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	TWRP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 // slidervalue.cpp - GUISliderValue object
 
 #include <stdarg.h>
@@ -62,7 +80,7 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 	}
 
 	mLabel = new GUIText(node);
-	if(mLabel->Render() < 0)
+	if (mLabel->Render() < 0)
 	{
 		delete mLabel;
 		mLabel = NULL;
@@ -156,7 +174,7 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 
 	mFontHeight = mFont->GetHeight();
 
-	if(mShowCurr)
+	if (mShowCurr)
 	{
 		int maxLen = std::max(strlen(mMinStr.c_str()), strlen(mMaxStr.c_str()));
 		mValueStr = new char[maxLen+1];
@@ -182,10 +200,10 @@ GUISliderValue::~GUISliderValue()
 
 void GUISliderValue::loadValue(bool force)
 {
-	if(!mVariable.empty())
+	if (!mVariable.empty())
 	{
 		int value = DataManager::GetIntValue(mVariable);
-		if(mValue == value && !force)
+		if (mValue == value && !force)
 			return;
 
 		mValue = value;
@@ -208,7 +226,7 @@ int GUISliderValue::SetRenderPos(int x, int y, int w, int h)
 	}
 
 	mRenderH = mSliderH;
-	if(mShowCurr)
+	if (mShowCurr)
 		mRenderH += mFontHeight;
 
 	if (mLabel)
@@ -230,7 +248,7 @@ int GUISliderValue::SetRenderPos(int x, int y, int w, int h)
 	mActionW = mRenderW;
 	mActionH = mRenderH;
 
-	if(mBackgroundImage && mBackgroundImage->GetResource())
+	if (mBackgroundImage && mBackgroundImage->GetResource())
 	{
 		mLineW = mBackgroundImage->GetWidth();
 		mLineH = mBackgroundImage->GetHeight();
@@ -260,7 +278,7 @@ int GUISliderValue::Render(void)
 		return 0;
 	}
 
-	if(mLabel)
+	if (mLabel)
 	{
 		int w, h;
 		mLabel->GetCurrentBounds(w, h);
@@ -270,12 +288,12 @@ int GUISliderValue::Render(void)
 			mLabel->SetRenderPos(textX, mRenderY);
 		}
 		int res = mLabel->Render();
-		if(res < 0)
+		if (res < 0)
 			return res;
 	}
 
 	// line
-	if(mBackgroundImage && mBackgroundImage->GetResource())
+	if (mBackgroundImage && mBackgroundImage->GetResource())
 	{
 		gr_blit(mBackgroundImage->GetResource(), 0, 0, mLineW, mLineH, mLineX, mLineY);
 	}
@@ -288,10 +306,10 @@ int GUISliderValue::Render(void)
 	// slider
 	uint32_t sliderX = mLineX + (mValuePct*(mLineW - mSliderW))/100;
 
-	if(mHandleImage && mHandleImage->GetResource())
+	if (mHandleImage && mHandleImage->GetResource())
 	{
 		gr_surface s = mHandleImage->GetResource();
-		if(mDragging && mHandleHoverImage && mHandleHoverImage->GetResource())
+		if (mDragging && mHandleHoverImage && mHandleHoverImage->GetResource())
 			s = mHandleHoverImage->GetResource();
 		gr_blit(s, 0, 0, mSliderW, mSliderH, sliderX, mLineY + (mLineH/2 - mSliderH/2));
 	}
@@ -302,16 +320,16 @@ int GUISliderValue::Render(void)
 	}
 
 	void *fontResource = NULL;
-	if(mFont) fontResource = mFont->GetResource();
+	if (mFont) fontResource = mFont->GetResource();
 	gr_color(mTextColor.red, mTextColor.green, mTextColor.blue, mTextColor.alpha);
-	if(mShowRange)
+	if (mShowRange)
 	{
 		int rangeY = (mLineY - mLineH/2) - mFontHeight/2;
 		gr_textEx_scaleW(mRenderX + mPadding/2, rangeY, mMinStr.c_str(), fontResource, mRenderW, TOP_LEFT, 0);
 		gr_textEx_scaleW(mLineX + mLineW + mPadding/2, rangeY, mMaxStr.c_str(), fontResource, mRenderW, TOP_LEFT, 0);
 	}
 
-	if(mValueStr && mShowCurr)
+	if (mValueStr && mShowCurr)
 	{
 		sprintf(mValueStr, "%d", mValue);
 		int textW = measureText(mValueStr);
@@ -329,7 +347,7 @@ int GUISliderValue::Update(void)
 	if (!mRendered)
 		return 2;
 
-	if(mLabel)
+	if (mLabel)
 		return mLabel->Update();
 	return 0;
 }
@@ -406,7 +424,7 @@ int GUISliderValue::NotifyVarChange(const std::string& varName, const std::strin
 		mLabel->NotifyVarChange(varName, value);
 	if (varName == mVariable) {
 		int newVal = atoi(value.c_str());
-		if(newVal != mValue) {
+		if (newVal != mValue) {
 			mValue = newVal;
 			mValuePct = pctFromValue(mValue);
 			mRendered = false;

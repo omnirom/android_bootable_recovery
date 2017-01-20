@@ -81,7 +81,7 @@ uint64_t TWExclude::Get_Folder_Size(const string& Path) {
 		}
 		if ((st.st_mode & S_IFDIR) && !check_skip_dirs(FullPath) && de->d_type != DT_SOCK) {
 			dusize += Get_Folder_Size(FullPath);
-		} else if (st.st_mode & S_IFREG) {
+		} else if (st.st_mode & S_IFREG || st.st_mode & S_IFLNK) {
 			dusize += (uint64_t)(st.st_size);
 		}
 	}
@@ -100,8 +100,8 @@ bool TWExclude::check_absolute_skip_dirs(const string& path) {
 bool TWExclude::check_skip_dirs(const string& path) {
 	string normalized = TWFunc::Remove_Trailing_Slashes(path);
 	size_t slashIdx = normalized.find_last_of('/');
-	if(slashIdx != std::string::npos && slashIdx+1 < normalized.size()) {
-		if(check_relative_skip_dirs(normalized.substr(slashIdx+1)))
+	if (slashIdx != std::string::npos && slashIdx+1 < normalized.size()) {
+		if (check_relative_skip_dirs(normalized.substr(slashIdx+1)))
 			return true;
 	}
 	return check_absolute_skip_dirs(normalized);

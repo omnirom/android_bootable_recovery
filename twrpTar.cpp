@@ -55,9 +55,9 @@ extern "C" {
 
 #ifdef TW_INCLUDE_FBE
 #include "crypto/ext4crypt/ext4crypt_tar.h"
-#define TWTAR_FLAGS TAR_GNU | TAR_STORE_SELINUX | TAR_STORE_EXT4_POL
+#define TWTAR_FLAGS TAR_GNU | TAR_STORE_SELINUX | TAR_STORE_POSIX_CAP |TAR_STORE_EXT4_POL
 #else
-#define TWTAR_FLAGS TAR_GNU | TAR_STORE_SELINUX
+#define TWTAR_FLAGS TAR_GNU | TAR_STORE_SELINUX | TAR_STORE_POSIX_CAP
 #endif
 
 using namespace std;
@@ -114,9 +114,7 @@ void twrpTar::Set_Archive_Type(Archive_Type archive_type) {
 
 int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 	int status = 0;
-	pid_t rc_pid;
-	int progress_pipe[2], ret;
-	char cmd[512];
+	int progress_pipe[2];
 
 	file_count = 0;
 	if (backup_exclusions == NULL) {
@@ -484,8 +482,8 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 
 int twrpTar::extractTarFork() {
 	int status = 0;
-	pid_t rc_pid, tar_fork_pid;
-	int progress_pipe[2], ret;
+	pid_t tar_fork_pid;
+	int progress_pipe[2];
 
 	if (pipe(progress_pipe) < 0) {
 		LOGINFO("Error creating progress tracking pipe\n");
@@ -661,7 +659,6 @@ int twrpTar::Generate_TarList(string Path, std::vector<TarListStruct> *TarList, 
 	struct stat st;
 	string FileName;
 	struct TarListStruct TarItem;
-	string::size_type i;
 	int ret, file_count;
 	file_count = 0;
 
@@ -770,7 +767,6 @@ int twrpTar::tarList(std::vector<TarListStruct> *TarList, unsigned thread_id) {
 	int list_size = TarList->size(), i = 0, archive_count = 0;
 	string temp;
 	char actual_filename[PATH_MAX];
-	char *ptr;
 	unsigned long long fs;
 
 	if (split_archives) {
@@ -987,7 +983,7 @@ int twrpTar::createTar() {
 				fd = pipes[1];
 				init_libtar_no_buffer(progress_pipe_fd);
 				tar_type.writefunc = write_tar_no_buffer;
-				if(tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+				if (tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 					close(fd);
 					LOGINFO("tar_fdopen failed\n");
 					gui_err("backup_error=Error creating backup.");
@@ -1047,7 +1043,7 @@ int twrpTar::createTar() {
 			fd = pigzfd[1];   // copy parent output
 			init_libtar_no_buffer(progress_pipe_fd);
 			tar_type.writefunc = write_tar_no_buffer;
-			if(tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+			if (tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 				close(fd);
 				LOGINFO("tar_fdopen failed\n");
 				gui_err("backup_error=Error creating backup.");
@@ -1097,7 +1093,7 @@ int twrpTar::createTar() {
 			fd = oaesfd[1];   // copy parent output
 			init_libtar_no_buffer(progress_pipe_fd);
 			tar_type.writefunc = write_tar_no_buffer;
-			if(tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+			if (tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 				close(fd);
 				LOGINFO("tar_fdopen failed\n");
 				gui_err("backup_error=Error creating backup.");
@@ -1220,7 +1216,7 @@ int twrpTar::openTar() {
 				close(pipes[1]);
 				close(pipes[3]);
 				fd = pipes[2];
-				if(tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+				if (tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 					close(fd);
 					LOGINFO("tar_fdopen failed\n");
 					gui_err("restore_error=Error during restore process.");
@@ -1270,7 +1266,7 @@ int twrpTar::openTar() {
 			// Parent
 			close(oaesfd[1]); // close parent output
 			fd = oaesfd[0];   // copy parent input
-			if(tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+			if (tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 				close(fd);
 				LOGINFO("tar_fdopen failed\n");
 				gui_err("restore_error=Error during restore process.");
@@ -1536,7 +1532,7 @@ unsigned long long twrpTar::uncompressedSize(string filename) {
 			*/
 			split = TWFunc::split_string(result, ' ', true);
 			if (split.size() > 4)
-			total_size = atoi(split[5].c_str());
+				total_size = atoi(split[5].c_str());
 		}
 	} else if (current_archive_type == COMPRESSED_ENCRYPTED) {
 		// File is encrypted and may be compressed
@@ -1562,7 +1558,7 @@ unsigned long long twrpTar::uncompressedSize(string filename) {
 				*/
 				split = TWFunc::split_string(result, ' ', true);
 				if (split.size() > 4)
-				total_size = atoi(split[5].c_str());
+					total_size = atoi(split[5].c_str());
 			}
 		} else {
 			total_size = TWFunc::Get_File_Size(filename);
