@@ -160,7 +160,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size, const Value
         strm.zfree = Z_NULL;
         strm.opaque = Z_NULL;
         strm.avail_in = src_len;
-        strm.next_in = const_cast<unsigned char*>(old_data + src_start);
+        strm.next_in = old_data + src_start;
         strm.avail_out = expanded_len;
         strm.next_out = expanded_source.data();
 
