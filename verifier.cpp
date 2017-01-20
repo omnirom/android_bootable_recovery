@@ -155,6 +155,13 @@ int verify_file(const char* path, const Certificate* pKeys, unsigned int numKeys
     LOGI("comment is %d bytes; signature %d bytes from end\n",
          comment_size, signature_start);
 
+    if (signature_start > comment_size) {
+        LOGE("signature start: %zu is larger than comment size: %zu\n", signature_start,
+             comment_size);
+        fclose(f);
+        return VERIFY_FAILURE;
+    }
+
     if (signature_start <= FOOTER_SIZE) {
         LOGE("Signature start is in the footer");
         fclose(f);
