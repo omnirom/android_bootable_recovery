@@ -76,7 +76,6 @@ static void uiPrint(State* state, const std::string& buffer) {
   for (auto& line : lines) {
     if (!line.empty()) {
       fprintf(ui->cmd_pipe, "ui_print %s\n", line.c_str());
-      fprintf(ui->cmd_pipe, "ui_print\n");
     }
   }
 

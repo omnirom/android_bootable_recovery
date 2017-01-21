@@ -191,7 +191,6 @@ int main(int argc, char** argv) {
         }
         fprintf(cmd_pipe, "ui_print %s\n", line.c_str());
       }
-      fprintf(cmd_pipe, "ui_print\n");
     }
 
     if (state.error_code != kNoError) {
