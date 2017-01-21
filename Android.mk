@@ -596,9 +596,7 @@ endif
 #         has made recovery based restorecon unreliable for secondary ROMs
 #         so instead opt for using the secondary ROM's own restorecon
 #ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
-#	ifeq ($(TWHAVE_SELINUX), true)
-#		exclude += restorecon
-#	endif
+#	exclude += restorecon
 #endif
 
 # If busybox does not have restorecon, assume it does not have SELinux support.

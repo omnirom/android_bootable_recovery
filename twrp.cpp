@@ -113,10 +113,10 @@ int main(int argc, char **argv) {
 	printf("Starting TWRP %s-%s on %s (pid %d)\n", TW_VERSION_STR, TW_GIT_REVISION, ctime(&StartupTime), getpid());
 
 #ifdef TARGET_RECOVERY_IS_MULTIROM
-#ifdef HAVE_SELINUX
 	printf("Setting SELinux to permissive\n");
 	TWFunc::write_file("/sys/fs/selinux/enforce", "0");
 
+	// TODO: file_contexts.bin
 	TWFunc::write_file("/file_contexts",
         "\n\n# MultiROM folders\n"
         "/data/media/multirom(/.*)?          <<none>>\n"
@@ -126,7 +126,6 @@ int main(int argc, char **argv) {
         "/sdcard/multirom(/.*)?              <<none>>\n"
         "/mnt/mrom(/.*)?                     <<none>>\n",
         "ae");
-#endif
 
 	// MultiROM _might_ have crashed the recovery while the boot device was redirected.
 	// It would be bad to let that as is.

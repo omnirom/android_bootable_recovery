@@ -42,9 +42,7 @@ enum Archive_Type {
 };
 
 #ifdef TARGET_RECOVERY_IS_MULTIROM
-#ifdef HAVE_SELINUX
 struct selabel_handle;
-#endif
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
 // Partition class
@@ -115,9 +113,7 @@ public:
 	static void stringReplace(std::string& str, char before, char after);
 	static void trim(std::string& str);
 	static int64_t getFreeSpace(const std::string& path);
-#ifdef HAVE_SELINUX
 	static bool restorecon(const std::string& path, struct selabel_handle *sh);
-#endif
 #endif //TARGET_RECOVERY_IS_MULTIROM
 	static unsigned long long IOCTL_Get_Block_Size(const char* block_device);
 	static void copy_kernel_log(string curr_storage); // Copy Kernel Log to Current Storage (PSTORE/KMSG)

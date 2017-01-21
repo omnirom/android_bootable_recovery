@@ -62,12 +62,10 @@ extern "C" {
 
     #include "gui/objects.hpp"
 
-    #ifdef HAVE_SELINUX
-        #include <selinux/selinux.h>
-        #include <selinux/label.h>
-        #include <selinux/android.h>
-        #include <selinux/label.h>
-    #endif
+	#include <selinux/selinux.h>
+	#include <selinux/label.h>
+	#include <selinux/android.h>
+	#include <selinux/label.h>
 
     extern "C" {
         #include "minuitwrp/minui.h"
@@ -1343,7 +1341,6 @@ int64_t TWFunc::getFreeSpace(const std::string& path)
 	return int64_t(buf.f_bsize) * int64_t(buf.f_bavail);
 }
 
-#ifdef HAVE_SELINUX
 bool TWFunc::restorecon(const std::string& path, struct selabel_handle *sh)
 {
 	struct stat info;
@@ -1366,7 +1363,6 @@ bool TWFunc::restorecon(const std::string& path, struct selabel_handle *sh)
 	freecon(newcontext);
 	return true;
 }
-#endif
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
 unsigned long long TWFunc::IOCTL_Get_Block_Size(const char* block_device) {

@@ -2253,7 +2253,6 @@ bool TWPartition::Wipe_F2FS() {
 			return false;
 		}
 #ifdef TARGET_RECOVERY_IS_MULTIROM
-#ifdef HAVE_SELINUX
 		char *secontext = NULL;
 		if (!selinux_handle || selabel_lookup(selinux_handle, &secontext, Mount_Point.c_str(), S_IFDIR) < 0) {
 			LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
@@ -2262,7 +2261,6 @@ bool TWPartition::Wipe_F2FS() {
 			TWFunc::restorecon(Mount_Point, selinux_handle);
 			UnMount(false);
 		}
-#endif
 #endif //TARGET_RECOVERY_IS_MULTIROM
 		return true;
 	} else {
