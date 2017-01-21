@@ -1328,6 +1328,13 @@ static int decrypt_master_key(char *passwd, unsigned char *decrypted_master_key,
     return ret;
 }
 
+static int mount_multiple_fs(const char* crypto_blkdev, const char* mount_point)
+{
+  if (mount(crypto_blkdev, mount_point, "ext4", 0, NULL) == 0)
+    return 0;
+  return mount(crypto_blkdev, mount_point, "f2fs", 0, NULL);
+}
+
 static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
                                    char *passwd, char *mount_point, char *label)
 {
@@ -1426,7 +1433,7 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
      * the footer, not the key. */
     sprintf(tmp_mount_point, "%s/tmp_mnt", mount_point);
     mkdir(tmp_mount_point, 0755);
-    if (mount(crypto_blkdev, tmp_mount_point, file_system, 0, NULL) != 0) {
+    if (mount(crypto_blkdev, tmp_mount_point, file_system, 0, NULL) != 0 && mount_multiple_fs(crypto_blkdev, tmp_mount_point) != 0) {
       printf("Error temp mounting decrypted block device '%s'\n", crypto_blkdev);
       delete_crypto_blk_dev(label);
       rc = 1;
