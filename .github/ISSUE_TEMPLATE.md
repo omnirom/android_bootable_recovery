@@ -1,0 +1,4 @@
+- [ ] I have read the [FAQ](https://twrp.me/FAQ/)
+- [ ] I have searched that my issue isn't already present into opened/recently closed issues
+- [ ] I have check that my twrp release is [official](https://twrp.me/Devices/) and up to date
+- [ ] I have join recovery.log / dmesg / step to reproduces to my issue
