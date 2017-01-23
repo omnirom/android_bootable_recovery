@@ -8,6 +8,9 @@
 
     *   For example, we can use Nexus 5 to generate the text images under
         res-xxhdpi.
+    *   We can set up the maximum width of the final png image in res/layout/main.xml
+        Currently, the image width is 1200px for xxxhdpi, 900px for xxhdpi and
+        480px for xhdpi/hdpi/mdpi.
     *   When using the emulator, make sure the NDK version matches the current
         repository. Otherwise, the app may not work properly.
 
