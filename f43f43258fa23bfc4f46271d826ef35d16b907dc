@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_299ac762",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1001490
+      },
+      "writtenOn": "2017-01-24T16:30:13Z",
+      "side": 1,
+      "message": "trees",
+      "range": {
+        "startLine": 14,
+        "startChar": 25,
+        "endLine": 14,
+        "endChar": 30
+      },
+      "revId": "f43f43258fa23bfc4f46271d826ef35d16b907dc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_09a70ba8",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1001490
+      },
+      "writtenOn": "2017-01-24T16:30:13Z",
+      "side": 1,
+      "message": "This is pointless to add to a commit message.",
+      "range": {
+        "startLine": 20,
+        "startChar": 0,
+        "endLine": 20,
+        "endChar": 54
+      },
+      "revId": "f43f43258fa23bfc4f46271d826ef35d16b907dc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
