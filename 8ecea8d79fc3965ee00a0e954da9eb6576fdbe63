@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_c9a7d3bb",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1001507
+      },
+      "writtenOn": "2017-01-24T12:53:19Z",
+      "side": 1,
+      "message": "int const msk \u003d 8 * sizeof(int) - (sizeof(int) * 4 - 8);",
+      "revId": "8ecea8d79fc3965ee00a0e954da9eb6576fdbe63",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
