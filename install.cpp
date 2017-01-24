@@ -420,11 +420,7 @@ static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_
         LOG(ERROR) << "invalid \"set_progress\" parameters: " << line;
       }
     } else if (command == "ui_print") {
-      if (!args.empty()) {
-        ui->PrintOnScreenOnly("%s", args.c_str());
-      } else {
-        ui->PrintOnScreenOnly("\n");
-      }
+      ui->PrintOnScreenOnly("%s\n", args.c_str());
       fflush(stdout);
     } else if (command == "wipe_cache") {
       *wipe_cache = true;
