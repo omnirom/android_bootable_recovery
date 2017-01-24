@@ -28,7 +28,6 @@
  *
  * The current slot will be marked as having booted successfully if the
  * verifier reaches the end after the verification.
- *
  */
 
 #include <errno.h>
@@ -42,9 +41,9 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
+#include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
-#include <cutils/properties.h>
 #include <android/hardware/boot/1.0/IBootControl.h>
 
 using android::sp;
@@ -56,54 +55,53 @@ constexpr auto CARE_MAP_FILE = "/data/ota_package/care_map.txt";
 constexpr int BLOCKSIZE = 4096;
 
 static bool read_blocks(const std::string& blk_device_prefix, const std::string& range_str) {
-    char slot_suffix[PROPERTY_VALUE_MAX];
-    property_get("ro.boot.slot_suffix", slot_suffix, "");
-    std::string blk_device = blk_device_prefix + std::string(slot_suffix);
-    android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(blk_device.c_str(), O_RDONLY)));
-    if (fd.get() == -1) {
-        PLOG(ERROR) << "Error reading partition " << blk_device;
-        return false;
+  std::string slot_suffix = android::base::GetProperty("ro.boot.slot_suffix", "");
+  std::string blk_device = blk_device_prefix + slot_suffix;
+  android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(blk_device.c_str(), O_RDONLY)));
+  if (fd.get() == -1) {
+    PLOG(ERROR) << "Error reading partition " << blk_device;
+    return false;
+  }
+
+  // For block range string, first integer 'count' equals 2 * total number of valid ranges,
+  // followed by 'count' number comma separated integers. Every two integers reprensent a
+  // block range with the first number included in range but second number not included.
+  // For example '4,64536,65343,74149,74150' represents: [64536,65343) and [74149,74150).
+  std::vector<std::string> ranges = android::base::Split(range_str, ",");
+  size_t range_count;
+  bool status = android::base::ParseUint(ranges[0], &range_count);
+  if (!status || (range_count == 0) || (range_count % 2 != 0) ||
+      (range_count != ranges.size() - 1)) {
+    LOG(ERROR) << "Error in parsing range string.";
+    return false;
+  }
+
+  size_t blk_count = 0;
+  for (size_t i = 1; i < ranges.size(); i += 2) {
+    unsigned int range_start, range_end;
+    bool parse_status = android::base::ParseUint(ranges[i], &range_start);
+    parse_status = parse_status && android::base::ParseUint(ranges[i + 1], &range_end);
+    if (!parse_status || range_start >= range_end) {
+      LOG(ERROR) << "Invalid range pair " << ranges[i] << ", " << ranges[i + 1];
+      return false;
     }
 
-    // For block range string, first integer 'count' equals 2 * total number of valid ranges,
-    // followed by 'count' number comma separated integers. Every two integers reprensent a
-    // block range with the first number included in range but second number not included.
-    // For example '4,64536,65343,74149,74150' represents: [64536,65343) and [74149,74150).
-    std::vector<std::string> ranges = android::base::Split(range_str, ",");
-    size_t range_count;
-    bool status = android::base::ParseUint(ranges[0].c_str(), &range_count);
-    if (!status || (range_count == 0) || (range_count % 2 != 0) ||
-            (range_count != ranges.size()-1)) {
-        LOG(ERROR) << "Error in parsing range string.";
-        return false;
+    if (lseek64(fd.get(), static_cast<off64_t>(range_start) * BLOCKSIZE, SEEK_SET) == -1) {
+      PLOG(ERROR) << "lseek to " << range_start << " failed";
+      return false;
     }
 
-    size_t blk_count = 0;
-    for (size_t i = 1; i < ranges.size(); i += 2) {
-        unsigned int range_start, range_end;
-        bool parse_status = android::base::ParseUint(ranges[i].c_str(), &range_start);
-        parse_status = parse_status && android::base::ParseUint(ranges[i+1].c_str(), &range_end);
-        if (!parse_status || range_start >= range_end) {
-            LOG(ERROR) << "Invalid range pair " << ranges[i] << ", " << ranges[i+1];
-            return false;
-        }
-
-        if (lseek64(fd.get(), static_cast<off64_t>(range_start) * BLOCKSIZE, SEEK_SET) == -1) {
-            PLOG(ERROR) << "lseek to " << range_start << " failed";
-            return false;
-        }
-
-        size_t size = (range_end - range_start) * BLOCKSIZE;
-        std::vector<uint8_t> buf(size);
-        if (!android::base::ReadFully(fd.get(), buf.data(), size)) {
-            PLOG(ERROR) << "Failed to read blocks " << range_start << " to " << range_end;
-            return false;
-        }
-        blk_count += (range_end - range_start);
+    size_t size = (range_end - range_start) * BLOCKSIZE;
+    std::vector<uint8_t> buf(size);
+    if (!android::base::ReadFully(fd.get(), buf.data(), size)) {
+      PLOG(ERROR) << "Failed to read blocks " << range_start << " to " << range_end;
+      return false;
     }
+    blk_count += (range_end - range_start);
+  }
 
-    LOG(INFO) << "Finished reading " << blk_count << " blocks on " << blk_device;
-    return true;
+  LOG(INFO) << "Finished reading " << blk_count << " blocks on " << blk_device;
+  return true;
 }
 
 static bool verify_image(const std::string& care_map_name) {
@@ -160,16 +158,16 @@ int main(int argc, char** argv) {
 
   if (is_successful == BoolResult::FALSE) {
     // The current slot has not booted successfully.
-    char verity_mode[PROPERTY_VALUE_MAX];
-    if (property_get("ro.boot.veritymode", verity_mode, "") == -1) {
+    std::string verity_mode = android::base::GetProperty("ro.boot.veritymode", "");
+    if (verity_mode.empty()) {
       LOG(ERROR) << "Failed to get dm-verity mode.";
       return -1;
-    } else if (strcasecmp(verity_mode, "eio") == 0) {
+    } else if (android::base::EqualsIgnoreCase(verity_mode, "eio")) {
       // We shouldn't see verity in EIO mode if the current slot hasn't booted
       // successfully before. Therefore, fail the verification when veritymode=eio.
       LOG(ERROR) << "Found dm-verity in EIO mode, skip verification.";
       return -1;
-    } else if (strcmp(verity_mode, "enforcing") != 0) {
+    } else if (verity_mode != "enforcing") {
       LOG(ERROR) << "Unexpected dm-verity mode : " << verity_mode << ", expecting enforcing.";
       return -1;
     } else if (!verify_image(CARE_MAP_FILE)) {
