@@ -215,7 +215,12 @@ int format_volume(const char* volume, const char* directory) {
         }
         int result;
         if (strcmp(v->fs_type, "ext4") == 0) {
-            result = make_ext4fs_directory(v->blk_device, length, volume, sehandle, directory);
+            if (v->erase_blk_size != 0 && v->logical_blk_size != 0) {
+                result = make_ext4fs_directory_align(v->blk_device, length, volume, sehandle,
+                        directory, v->erase_blk_size, v->logical_blk_size);
+            } else {
+                result = make_ext4fs_directory(v->blk_device, length, volume, sehandle, directory);
+            }
         } else {   /* Has to be f2fs because we checked earlier. */
             if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0 && length < 0) {
                 LOG(ERROR) << "format_volume: crypt footer + negative length (" << length
