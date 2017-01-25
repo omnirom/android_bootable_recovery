@@ -158,8 +158,6 @@ class RecoveryUI {
     pthread_t input_thread_;
 
     void OnKeyDetected(int key_code);
-
-    static int InputCallback(int fd, uint32_t epevents, void* data);
     int OnInputEvent(int fd, uint32_t epevents);
     void ProcessKey(int key_code, int updown);
 
