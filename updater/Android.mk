@@ -35,14 +35,11 @@ LOCAL_SRC_FILES := $(updater_src_files)
 
 LOCAL_STATIC_LIBRARIES += libfec libfec_rs libsquashfs_utils libcrypto_static
 
-ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
-LOCAL_CFLAGS += -DUSE_EXT4
 LOCAL_CFLAGS += -Wno-unused-parameter
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 LOCAL_STATIC_LIBRARIES += libext4_utils_static libsparse_static
 ifneq ($(wildcard external/lz4/Android.mk),)
     LOCAL_STATIC_LIBRARIES += liblz4
-endif
 endif
 
 ifeq ($(WITH_CRYPTO_UTILS), true)
