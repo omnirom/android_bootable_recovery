@@ -34,11 +34,11 @@
 
 #include <android-base/properties.h>
 #include <cutils/android_reboot.h>
+#include <minui/minui.h>
 
 #include "common.h"
 #include "roots.h"
 #include "device.h"
-#include "minui/minui.h"
 
 #define UI_WAIT_KEY_TIMEOUT_SEC    120
 
@@ -70,10 +70,6 @@ void RecoveryUI::OnKeyDetected(int key_code) {
     }
 }
 
-int RecoveryUI::InputCallback(int fd, uint32_t epevents, void* data) {
-    return reinterpret_cast<RecoveryUI*>(data)->OnInputEvent(fd, epevents);
-}
-
 // Reads input events, handles special hot keys, and adds to the key queue.
 static void* InputThreadLoop(void*) {
     while (true) {
@@ -88,7 +84,7 @@ bool RecoveryUI::Init(const std::string& locale) {
   // Set up the locale info.
   SetLocale(locale);
 
-  ev_init(InputCallback, this);
+  ev_init(std::bind(&RecoveryUI::OnInputEvent, this, std::placeholders::_1, std::placeholders::_2));
 
   ev_iterate_available_keys(std::bind(&RecoveryUI::OnKeyDetected, this, std::placeholders::_1));
 
