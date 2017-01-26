@@ -100,7 +100,7 @@ tune2fs_static_libraries := \
     libext2_com_err \
     libext2_blkid \
     libext2_quota \
-    libext2_uuid_static \
+    libext2_uuid \
     libext2_e2p \
     libext2fs
 
