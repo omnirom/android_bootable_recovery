@@ -592,6 +592,8 @@ void MultiROM::deinitBackup()
 	DataManager::SetValue("multirom_do_backup", 0);
 	DataManager::SetValue("multirom_rom_name_title", 0);
 
+	DataManager::SetValue("tw_backup_name", DataManager::GetStrValue("tw_main_backup_name"));
+
 	if(hadInternalStorage)
 	{
 		TWPartition *data = PartitionManager.Find_Partition_By_Path("/data");

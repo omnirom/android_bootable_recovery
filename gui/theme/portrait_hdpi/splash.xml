@@ -11,6 +11,7 @@
 	<resources>
 		<font name="font_l" filename="RobotoCondensed-Regular.ttf" size="52"/>
 		<image name="splashlogo" filename="splashlogo" retainaspect="1"/>
+		<image name="splashlogo_mr" filename="splashlogo_mr" retainaspect="1"/>
 		<image name="splashteamwin" filename="splashteamwin" retainaspect="1"/>
 	</resources>
 
@@ -31,7 +32,13 @@
 			</fill>
 
 			<image>
+				<condition var1="tw_is_multirom" var2="0"/>
 				<image resource="splashlogo"/>
+				<placement x="540" y="456" placement="4"/>
+			</image>
+			<image>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<image resource="splashlogo_mr"/>
 				<placement x="540" y="456" placement="4"/>
 			</image>
 
@@ -41,9 +48,24 @@
 			</image>
 
 			<text color="%header_color%">
+				<condition var1="tw_is_multirom" var2="0"/>
 				<font resource="font_l"/>
 				<placement x="540" y="1590" placement="5"/>
 				<text>Recovery Project %tw_version%</text>
+			</text>
+
+			<text color="%header_color%">
+				<condition var1="tw_is_multirom" var2="1"/>
+				<font resource="font_l"/>
+				<placement x="540" y="1590" placement="5"/>
+				<text>MultiROM TWRP %tw_version%</text>
+			</text>
+
+			<text color="%header_color%">
+				<condition var1="tw_is_multirom" var2="1"/>
+				<font resource="font_l"/>
+				<placement x="540" y="1640" placement="5"/>
+				<text>%tw_mrom_rec_version%</text>
 			</text>
 		</page>
 	</pages>

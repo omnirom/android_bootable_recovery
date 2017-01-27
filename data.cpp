@@ -848,6 +848,10 @@ void DataManager::SetDefaultValues()
 #endif
 
 	mPersist.SetValue(TW_AUTO_INJECT_MROM, "1");
+
+	mConst.SetValue("tw_is_multirom", "1");
+#else
+	mConst.SetValue("tw_is_multirom", "0");
 #endif //TARGET_RECOVERY_IS_MULTIROM
 	mPersist.SetValue("tw_mount_system_ro", "2");
 	mPersist.SetValue("tw_never_show_system_ro_page", "0");

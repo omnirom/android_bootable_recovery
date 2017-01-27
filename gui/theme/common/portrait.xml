@@ -32,6 +32,11 @@
 			<image checked="checkbox_true" unchecked="checkbox_false"/>
 		</style>
 
+		<style name="radio">
+			<font resource="font_m" color="%text_color%"/>
+			<image checked="radio_true" unchecked="radio_false"/>
+		</style>
+
 		<style name="main_button">
 			<highlight color="%highlight_color%"/>
 			<font resource="font_l" color="%text_button_color%"/>
@@ -166,15 +171,36 @@
 		<page name="main2">
 			<template name="page"/>
 
+			<button>
+				<conditions>
+					<condition var1="tw_is_multirom" var2="1"/>
+					<condition var1="tw_busy" var2="0"/>
+				</conditions>
+				<placement x="%screen_width%" y="0" placement="1" />
+				<image resource="logo_mr"/>
+				<action function="multirom"/>
+			</button>
+
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@twrp_header=Team Win Recovery Project}</text>
 			</text>
 
 			<text style="text_m">
+			  <conditions>
+				<condition var1="tw_is_multirom" var2="0"/>
 				<condition var1="tw_no_cpu_temp" var2="0"/>
+			  </conditions>
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
 				<text>%tw_version%</text>
+			</text>
+			<text style="text_m">
+			  <conditions>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<condition var1="tw_no_cpu_temp" var2="0"/>
+			  </conditions>
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>%tw_version% (%tw_mrom_rec_version%)</text>
 			</text>
 
 			<button style="main_button">
@@ -386,9 +412,16 @@
 			</checkbox>
 
 			<checkbox>
+				<condition var1="tw_is_multirom" var2="0"/>
 				<placement x="%indent%" y="%row13a_y%"/>
 				<text>{@install_reboot_chk=Reboot after installation is complete}</text>
 				<data variable="tw_install_reboot"/>
+			</checkbox>
+			<checkbox>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<placement x="%indent%" y="%row13a_y%"/>
+				<text>Inject MultiROM after installation</text>
+				<data variable="tw_auto_inject_mrom"/>
 			</checkbox>
 
 			<checkbox>
@@ -476,6 +509,22 @@
 			</text>
 
 			<template name="console"/>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_is_multirom" var2="1"/>
+				<placement x="%indent%" y="%row18a_y%"/>
+				<text>Inject boot sector</text>
+				<actions>
+					<action function="set">tw_back=main2</action>
+					<action function="set">tw_action=multirom_inject_curr_boot</action>
+					<action function="set">tw_text1=Inject current boot partition?</action>
+					<action function="set">tw_action_text1=Injecting...</action>
+					<action function="set">tw_complete_text1=Boot partition injected.</action>
+					<action function="set">tw_slider_text=Swipe to Confirm</action>
+					<action function="set">tw_show_reboot=0</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
@@ -879,8 +928,16 @@
 			<action>
 				<touch key="home"/>
 				<actions>
+					<condition var1="tw_is_multirom" var2="0"/>
 					<action function="set">tw_clear_destination=main2</action>
 					<action function="page">clear_vars</action>
+				</actions>
+			</action>
+			<action>
+				<touch key="home"/>
+				<actions>
+					<condition var1="tw_is_multirom" var2="1"/>
+					<action function="multirom_exit_backup">main</action>
 				</actions>
 			</action>
 
@@ -1547,6 +1604,15 @@
 				<text>{@backup_hdr=Backup}</text>
 			</text>
 
+			<text style="text_l">
+				<conditions>
+					<condition var1="tw_is_multirom" var2="1"/>
+					<condition var1="multirom_rom_name_title" var2="1" />
+				</conditions>
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@backup_hdr=Backup} secondary ROM</text>
+			</text>
+
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
 				<text>{@storage_hdr=Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
@@ -1645,12 +1711,32 @@
 
 			<action>
 				<touch key="home"/>
+			  <actions>
+				<condition var1="tw_is_multirom" var2="0"/>
 				<action function="page">main</action>
+			  </actions>
+			</action>
+			<action>
+				<touch key="home"/>
+			  <actions>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<action function="multirom_exit_backup">main</action>
+			  </actions>
 			</action>
 
 			<action>
 				<touch key="back"/>
+			  <actions>
+				<condition var1="tw_is_multirom" var2="0"/>
 				<action function="page">main</action>
+			  </actions>
+			</action>
+			<action>
+				<touch key="back"/>
+			  <actions>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<action function="multirom_exit_backup">multirom_manage</action>
+			  </actions>
 			</action>
 		</page>
 
@@ -1660,6 +1746,15 @@
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@backup_hdr=Backup}</text>
+			</text>
+
+			<text style="text_l">
+				<conditions>
+					<condition var1="tw_is_multirom" var2="1"/>
+					<condition var1="multirom_rom_name_title" var2="1" />
+				</conditions>
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@backup_hdr=Backup} secondary ROM</text>
 			</text>
 
 			<text style="text_m">
@@ -1761,7 +1856,17 @@
 
 			<action>
 				<touch key="home"/>
+			  <actions>
+				<condition var1="tw_is_multirom" var2="0"/>
 				<action function="page">main</action>
+			  </actions>
+			</action>
+			<action>
+				<touch key="home"/>
+			  <actions>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<action function="multirom_exit_backup">main</action>
+			  </actions>
 			</action>
 
 			<action>
@@ -1787,6 +1892,15 @@
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@backup_hdr=Backup}</text>
+			</text>
+
+			<text style="text_l">
+				<conditions>
+					<condition var1="tw_is_multirom" var2="1"/>
+					<condition var1="multirom_rom_name_title" var2="1" />
+				</conditions>
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@backup_hdr=Backup} secondary ROM</text>
 			</text>
 
 			<text style="text_m">
@@ -1883,8 +1997,17 @@
 			<action>
 				<touch key="home"/>
 				<actions>
+					<condition var1="tw_is_multirom" var2="0"/>
 					<action function="set">tw_backup_name={@auto_generate=(Auto Generate)}</action>
 					<action function="page">main</action>
+				</actions>
+			</action>
+			<action>
+				<touch key="home"/>
+				<actions>
+					<condition var1="tw_is_multirom" var2="1"/>
+					<action function="set">tw_backup_name={@auto_generate=(Auto Generate)}</action>
+					<action function="multirom_exit_backup">main</action>
 				</actions>
 			</action>
 
@@ -1903,6 +2026,15 @@
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@backup_hdr=Backup}</text>
+			</text>
+
+			<text style="text_l">
+				<conditions>
+					<condition var1="tw_is_multirom" var2="1"/>
+					<condition var1="multirom_rom_name_title" var2="1" />
+				</conditions>
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@backup_hdr=Backup} secondary ROM</text>
 			</text>
 
 			<text style="text_m">
@@ -1996,7 +2128,17 @@
 
 			<action>
 				<touch key="home"/>
+			  <actions>
+				<condition var1="tw_is_multirom" var2="0"/>
 				<action function="page">main</action>
+			  </actions>
+			</action>
+			<action>
+				<touch key="home"/>
+			  <actions>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<action function="multirom_exit_backup">main</action>
+			  </actions>
 			</action>
 
 			<action>
@@ -2011,6 +2153,15 @@
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@backup_hdr=Backup}</text>
+			</text>
+
+			<text style="text_l">
+				<conditions>
+					<condition var1="tw_is_multirom" var2="1"/>
+					<condition var1="multirom_rom_name_title" var2="1" />
+				</conditions>
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@backup_hdr=Backup} secondary ROM</text>
 			</text>
 
 			<text style="text_m">
@@ -2093,7 +2244,17 @@
 
 			<action>
 				<touch key="home"/>
+			  <actions>
+				<condition var1="tw_is_multirom" var2="0"/>
 				<action function="page">main</action>
+			  </actions>
+			</action>
+			<action>
+				<touch key="home"/>
+			  <actions>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<action function="multirom_exit_backup">main</action>
+			  </actions>
 			</action>
 
 			<action>
@@ -3064,6 +3225,7 @@
 					<data variable="tw_signed_zip_verify"/>
 				</listitem>
 				<listitem name="{@install_reboot_chk=Reboot after installation is complete}">
+					<condition var1="tw_is_multirom" var2="0"/>
 					<data variable="tw_install_reboot"/>
 				</listitem>
 				<listitem name="{@use_rmrf_chk=Use rm -rf instead of formatting}">
@@ -4621,6 +4783,13 @@
 				<data variable="tw_wipe_cache"/>
 			</checkbox>
 
+			<checkbox>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<placement x="%indent%" y="%row5_y%"/>
+				<text>Inject MultiROM after installation</text>
+				<data variable="tw_auto_inject_mrom"/>
+			</checkbox>
+
 			<slider>
 				<text>{@swipe_to_sideload=Swipe to Start Sideload}</text>
 				<actions>
@@ -4816,10 +4985,25 @@
 			<button>
 				<placement x="%center_x%" y="%navbar_btn_y%" placement="4"/>
 				<image resource="home"/>
+			  <conditions>
+				<condition var1="tw_is_multirom" var2="0"/>
 				<condition var1="tw_busy" var2="0"/>
+			  </conditions>
 				<actions>
 					<action function="overlay"/>
 					<action function="key">home</action>
+				</actions>
+			</button>
+			<button>
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="home"/>
+			  <conditions>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<condition var1="tw_busy" var2="0"/>
+			  </conditions>
+				<actions>
+					<action function="overlay"/>
+					<action function="multirom_exit_backup">main</action>
 				</actions>
 			</button>
 
@@ -4931,4 +5115,8 @@
 			</action>
 		</page>
 	</pages>
+
+	<include>
+		<xmlfile name="portrait_multirom.xml"/>
+	</include>
 </recovery>

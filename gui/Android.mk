@@ -101,20 +101,6 @@ LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 
 ifeq ($(TW_CUSTOM_THEME),)
-ifeq ($(TARGET_RECOVERY_IS_MULTIROM),true)
-    MR_THEME := $(DEVICE_RESOLUTION)
-    ifeq ($(filter-out 1440x2560 720x1280,$(MR_THEME)),)
-        MR_THEME := 1080x1920
-    endif
-
-    TW_CUSTOM_THEME := $(commands_recovery_local_path)/gui/themes_multirom/$(MR_THEME)
-    ifeq ($(wildcard $(TW_CUSTOM_THEME)/ui.xml),)
-        $(error MultiROM Theme for resolution $(MR_THEME) is not available!)
-    endif
-endif
-endif
-
-ifeq ($(TW_CUSTOM_THEME),)
     ifeq ($(TW_THEME),)
         ifeq ($(DEVICE_RESOLUTION),)
             DEVICE_RESOLUTION := $(TARGET_SCREEN_WIDTH)x$(TARGET_SCREEN_HEIGHT)
@@ -142,6 +128,9 @@ TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/theme/$(TW_THEME)
 TWRP_RES := $(commands_recovery_local_path)/gui/theme/common/fonts
 TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/languages
 TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/$(word 1,$(subst _, ,$(TW_THEME))).xml
+ifeq ($(TARGET_RECOVERY_IS_MULTIROM),true)
+    TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/$(word 1,$(subst _, ,$(TW_THEME)))_multirom.xml
+endif
 ifeq ($(TW_EXTRA_LANGUAGES),true)
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/fonts
     TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/languages

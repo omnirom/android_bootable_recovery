@@ -24,6 +24,7 @@
 		<font name="keylabel-longpress" filename="RobotoCondensed-Regular.ttf" size="32"/>
 
 		<image name="logo" filename="logo" retainaspect="1"/>
+		<image name="logo_mr" filename="logo_mr" retainaspect="1"/>
 		<image name="main_button" filename="main_button"/>
 		<image name="main_button_half_height" filename="main_button_half_height"/>
 		<image name="main_button_half_height_full_width" filename="main_button_half_height_full_width"/>
@@ -93,6 +94,7 @@
 		<variable name="tab_height" value="96"/>
 		<variable name="tab_indicator_height" value="6"/>
 		<variable name="tab_y" value="304"/>
+		<variable name="tab2_width" value="540"/>
 		<variable name="tab3_width" value="360"/>
 		<variable name="tab4_width" value="270"/>
 		<variable name="tab5_width" value="216"/>
@@ -202,6 +204,9 @@
 		<variable name="partitionlist_backup_height" value="768"/>
 		<variable name="listbox_timezone_height" value="756"/>
 		<variable name="listbox_settings_height" value="960"/>
+		<variable name="listbox_settings_mr_height" value="672"/>
+		<variable name="listbox_romselect_mr_height" value="586"/>
+		<variable name="listbox_swapselect_mr_height" value="480"/>
 		<variable name="fastscroll_w" value="24"/>
 		<variable name="fastscroll_linew" value="2"/>
 		<variable name="fastscroll_rectw" value="24"/>
@@ -261,10 +266,22 @@
 			</fill>
 
 			<text color="%text_color%">
+			  <conditions>
+				<condition var1="tw_is_multirom" var2="0"/>
 				<condition var1="tw_no_cpu_temp" var2="1"/>
+			  </conditions>
 				<font resource="font_m"/>
 				<placement x="%indent%" y="%row1_header_y%"/>
 				<text>%tw_version%</text>
+			</text>
+			<text color="%text_color%">
+			  <conditions>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<condition var1="tw_no_cpu_temp" var2="1"/>
+			  </conditions>
+				<font resource="font_m"/>
+				<placement x="%indent%" y="%row1_header_y%"/>
+				<text>%tw_mrom_rec_version% %tw_version%</text>
 			</text>
 
 			<text color="%text_color%">
@@ -527,6 +544,24 @@
 				<placement x="%tab5_centered_col5_x%" y="%tab_y%" placement="4"/>
 				<image resource="tab_language"/>
 				<action function="page">settings_language</action>
+			</button>
+		</template>
+
+		<template name="tabs_multirom_settings">
+			<fill color="%accent_color%">
+				<placement x="0" y="row1_y" w="%screen_width%" h="tab_height"/>
+			</fill>
+
+			<button style="tab">
+				<placement x="0" y="%row1_y%" w="%tab2_width%" h="%tab_height%"/>
+				<text>BOOT MENU</text>
+				<action function="page">multirom_settings</action>
+			</button>
+
+			<button style="tab">
+				<placement x="%center_x%" y="%row1_y%" w="%tab2_width%" h="%tab_height%"/>
+				<text>AUTO BOOT</text>
+				<action function="page">multirom_settings_autoboot</action>
 			</button>
 		</template>
 

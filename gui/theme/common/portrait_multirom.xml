@@ -202,7 +202,7 @@
 				<text>Delete</text>
 				<font resource="font_m" color="%text_fail_color%"/>
 				<actions>
-					<action function="set">tw_back=multirom_list</action>
+					<action function="set">tw_back=multirom_manage</action>
 					<action function="set">tw_action=multirom_delete</action>
 					<action function="set">tw_text1=Delete ROM "%tw_multirom_rom_name%"?</action>
 					<action function="set">tw_action_text1=Deleting ROM...</action>
@@ -250,6 +250,7 @@
 				<placement x="%center_x%" y="%row5a_y%"/>
 				<text>Backup</text>
 				<actions>
+					<action function="set">tw_main_backup_name=%tw_backup_name%</action>
 					<action function="set">tw_backup_name=%tw_multirom_rom_name%</action>
 					<action function="set">tw_back=multirom_manage</action>
 					<action function="set">tw_action=multirom_backup_rom</action>
@@ -268,7 +269,7 @@
 				<text>Add Boot.img</text>
 				<actions>
 					<action function="set">tw_multirom_add_bootimg=1</action>
-					<action function="set">tw_back=multirom_list</action>
+					<action function="set">tw_back=multirom_manage</action>
 					<action function="set">tw_action=multirom_inject</action>
 					<action function="set">tw_text1=Add/replace boot.img</action>
 					<action function="set">tw_text3=to rom %tw_multirom_rom%?</action>
@@ -285,7 +286,7 @@
 				<placement x="%indent%" y="%row8a_y%"/>
 				<text>Remove Boot.img</text>
 				<actions>
-					<action function="set">tw_back=multirom_list</action>
+					<action function="set">tw_back=multirom_manage</action>
 					<action function="set">tw_action=multirom_rm_bootimg</action>
 					<action function="set">tw_text1=Remove boot.img from ROM:</action>
 					<action function="set">tw_text2=%tw_multirom_rom_name%</action>
