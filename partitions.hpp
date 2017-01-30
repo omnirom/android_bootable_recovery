@@ -218,6 +218,7 @@ private:
 	bool Mount_Read_Only;                                                     // Only mount this partition as read-only
 	bool Is_Adopted_Storage;                                                  // Indicates that this partition is for adopted storage (android_expand)
 	bool SlotSelect;                                                          // Partition has A/B slots
+	bool DontMount;								  // The partition should not be mounted automatically
 	TWExclude backup_exclusions;                                              // Exclusions for file based backups
 	TWExclude wipe_exclusions;                                                // Exclusions for file based wipes (data/media devices only)
 
