@@ -130,6 +130,13 @@ class RecoveryUI {
     std::string locale_;
     bool rtl_locale_;
 
+    // The normal and dimmed brightness percentages (default: 50 and 25, which means 50% and 25%
+    // of the max_brightness). Because the absolute values may vary across devices. These two
+    // values can be configured via subclassing. Setting brightness_normal_ to 0 to disable
+    // screensaver.
+    unsigned int brightness_normal_;
+    unsigned int brightness_dimmed_;
+
   private:
     // Key event input queue
     pthread_mutex_t key_queue_mutex;
@@ -167,6 +174,14 @@ class RecoveryUI {
     void time_key(int key_code, int count);
 
     void SetLocale(const std::string&);
+
+    enum class ScreensaverState { DISABLED, NORMAL, DIMMED, OFF };
+    ScreensaverState screensaver_state_;
+    // The following two contain the absolute values computed from brightness_normal_ and
+    // brightness_dimmed_ respectively.
+    unsigned int brightness_normal_value_;
+    unsigned int brightness_dimmed_value_;
+    bool InitScreensaver();
 };
 
 #endif  // RECOVERY_UI_H
