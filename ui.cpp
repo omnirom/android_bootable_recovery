@@ -100,7 +100,7 @@ bool RecoveryUI::InitScreensaver() {
   // we don't have a good way to query the default value.
   std::string content;
   if (!android::base::ReadFileToString(MAX_BRIGHTNESS_FILE, &content)) {
-    LOG(WARNING) << "Failed to read max brightness: " << content;
+    PLOG(WARNING) << "Failed to read max brightness";
     return false;
   }
 
