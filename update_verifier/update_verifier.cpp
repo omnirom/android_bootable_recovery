@@ -30,6 +30,7 @@
  * verifier reaches the end after the verification.
  */
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -52,14 +53,71 @@ using android::hardware::boot::V1_0::BoolResult;
 using android::hardware::boot::V1_0::CommandResult;
 
 constexpr auto CARE_MAP_FILE = "/data/ota_package/care_map.txt";
+constexpr auto DM_PATH_PREFIX = "/sys/block/";
+constexpr auto DM_PATH_SUFFIX = "/dm/name";
+constexpr auto DEV_PATH = "/dev/block/";
 constexpr int BLOCKSIZE = 4096;
 
-static bool read_blocks(const std::string& blk_device_prefix, const std::string& range_str) {
-  std::string slot_suffix = android::base::GetProperty("ro.boot.slot_suffix", "");
-  std::string blk_device = blk_device_prefix + slot_suffix;
-  android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(blk_device.c_str(), O_RDONLY)));
+// Find directories in format of "/sys/block/dm-X".
+static int dm_name_filter(const dirent* de) {
+  if (android::base::StartsWith(de->d_name, "dm-")) {
+    return 1;
+  }
+  return 0;
+}
+
+static bool read_blocks(const std::string& blk_device, const std::string& range_str) {
+  // Parse the partition in the end of the block_device string.
+  // Here is one example: "/dev/block/bootdevice/by-name/system"
+  std::string partition;
+  if (android::base::EndsWith(blk_device, "system")) {
+    partition = "system";
+  } else if (android::base::EndsWith(blk_device, "vendor")) {
+    partition = "vendor";
+  } else {
+    LOG(ERROR) << "Failed to parse partition string in " << blk_device;
+    return false;
+  }
+
+  // Iterate the content of "/sys/block/dm-X/dm/name". If it matches "system"
+  // (or "vendor"), then dm-X is a dm-wrapped system/vendor partition.
+  // Afterwards, update_verifier will read every block on the care_map_file of
+  // "/dev/block/dm-X" to ensure the partition's integrity.
+  dirent** namelist;
+  int n = scandir(DM_PATH_PREFIX, &namelist, dm_name_filter, alphasort);
+  if (n == -1) {
+    PLOG(ERROR) << "Failed to scan dir " << DM_PATH_PREFIX;
+    return false;
+  }
+  if (n == 0) {
+    LOG(ERROR) << "dm block device not found for " << partition;
+    return false;
+  }
+
+  std::string dm_block_device;
+  while (n--) {
+    std::string path = DM_PATH_PREFIX + std::string(namelist[n]->d_name) + DM_PATH_SUFFIX;
+    std::string content;
+    if (!android::base::ReadFileToString(path, &content)) {
+      PLOG(WARNING) << "Failed to read " << path;
+    } else if (android::base::Trim(content) == partition) {
+      dm_block_device = DEV_PATH + std::string(namelist[n]->d_name);
+      while (n--) {
+        free(namelist[n]);
+      }
+      break;
+    }
+    free(namelist[n]);
+  }
+  free(namelist);
+
+  if (dm_block_device.empty()) {
+    LOG(ERROR) << "Failed to find dm block device for " << partition;
+    return false;
+  }
+  android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(dm_block_device.c_str(), O_RDONLY)));
   if (fd.get() == -1) {
-    PLOG(ERROR) << "Error reading partition " << blk_device;
+    PLOG(ERROR) << "Error reading " << dm_block_device << " for partition " << partition;
     return false;
   }
 
@@ -100,7 +158,7 @@ static bool read_blocks(const std::string& blk_device_prefix, const std::string&
     blk_count += (range_end - range_start);
   }
 
-  LOG(INFO) << "Finished reading " << blk_count << " blocks on " << blk_device;
+  LOG(INFO) << "Finished reading " << blk_count << " blocks on " << dm_block_device;
   return true;
 }
 
