@@ -67,7 +67,6 @@ twrpTar::twrpTar(void) {
 	userdata_encryption = 0;
 	use_compression = 0;
 	split_archives = 0;
-	has_data_media = 0;
 	pigz_pid = 0;
 	oaes_pid = 0;
 	Total_Backup_Size = 0;
