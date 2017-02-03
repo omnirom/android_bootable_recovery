@@ -382,7 +382,11 @@ static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_
     umask(022);
     close(pipefd[0]);
     execv(chr_args[0], const_cast<char**>(chr_args));
-    PLOG(ERROR) << "Can't run " << chr_args[0];
+    // Bug: 34769056
+    // We shouldn't use LOG/PLOG in the forked process, since they may cause
+    // the child process to hang. This deadlock results from an improperly
+    // copied mutex in the ui functions.
+    fprintf(stdout, "E:Can't run %s (%s)\n", chr_args[0], strerror(errno));
     _exit(-1);
   }
   close(pipefd[1]);
