@@ -23,15 +23,31 @@
 // Used to identify selinux_context in extended ('x')
 // metadata. From RedHat implementation.
 #define SELINUX_TAG "RHT.security.selinux="
-#define SELINUX_TAG_LEN 21
+#define SELINUX_TAG_LEN strlen(SELINUX_TAG)
 
 // Used to identify e4crypt_policy in extended ('x')
 #define E4CRYPT_TAG "TWRP.security.e4crypt="
-#define E4CRYPT_TAG_LEN 22
+#define E4CRYPT_TAG_LEN strlen(E4CRYPT_TAG)
 
 // Used to identify Posix capabilities in extended ('x')
 #define CAPABILITIES_TAG "SCHILY.xattr.security.capability="
-#define CAPABILITIES_TAG_LEN 33
+#define CAPABILITIES_TAG_LEN strlen(CAPABILITIES_TAG)
+
+// Used to identify Android user.default xattr in extended ('x')
+#define ANDROID_USER_DEFAULT_TAG "ANDROID.user.default"
+#define ANDROID_USER_DEFAULT_TAG_LEN strlen(ANDROID_USER_DEFAULT_TAG)
+
+// Used to identify Android user.inode_cache xattr in extended ('x')
+#define ANDROID_USER_CACHE_TAG "ANDROID.user.inode_cache"
+#define ANDROID_USER_CACHE_TAG_LEN strlen(ANDROID_USER_CACHE_TAG)
+
+// Used to identify Android user.inode_code_cache xattr in extended ('x')
+#define ANDROID_USER_CODE_CACHE_TAG "ANDROID.user.inode_code_cache"
+#define ANDROID_USER_CODE_CACHE_TAG_LEN strlen(ANDROID_USER_CODE_CACHE_TAG)
+
+// Used to identify Android user.inodes xattr in extended ('x')
+#define ANDROID_USER_INODES_TAG "ANDROID.user.inodes"
+#define ANDROID_USER_INODES_TAG_LEN strlen(ANDROID_USER_INODES_TAG)
 
 /* read a header block */
 /* FIXME: the return value of this function should match the return value
@@ -135,6 +151,11 @@ th_read(TAR *t)
 		memset(&t->th_buf.cap_data, 0, sizeof(struct vfs_cap_data));
 		t->th_buf.has_cap_data = 0;
 	}
+	t->th_buf.has_user_default = 0;
+	t->th_buf.has_user_cache = 0;
+	t->th_buf.has_user_code_cache = 0;
+	if (t->th_buf.user_inodes)
+		free(t->th_buf.user_inodes);
 
 	memset(&(t->th_buf), 0, sizeof(struct tar_header));
 
@@ -276,7 +297,7 @@ th_read(TAR *t)
 			int len = strlen(buf);
 			// posix capabilities
 			char *start = strstr(buf, CAPABILITIES_TAG);
-			if(start && start+CAPABILITIES_TAG_LEN < buf+len)
+			if (start && start+CAPABILITIES_TAG_LEN < buf+len)
 			{
 				start += CAPABILITIES_TAG_LEN;
 				memcpy(&t->th_buf.cap_data, start, sizeof(struct vfs_cap_data));
@@ -287,7 +308,7 @@ th_read(TAR *t)
 			} // end posix capabilities
 			// selinux contexts
 			start = strstr(buf, SELINUX_TAG);
-			if(start && start+SELINUX_TAG_LEN < buf+len)
+			if (start && start+SELINUX_TAG_LEN < buf+len)
 			{
 				start += SELINUX_TAG_LEN;
 				char *end = strchr(start, '\n');
@@ -299,9 +320,36 @@ th_read(TAR *t)
 #endif
 				}
 			} // end selinux contexts
+			// android user.default xattr
+			start = strstr(buf, ANDROID_USER_DEFAULT_TAG);
+			if (start)
+			{
+				t->th_buf.has_user_default = 1;
+#ifdef DEBUG
+				printf("    th_read(): android user.default xattr detected\n");
+#endif
+			} // end android user.default xattr
+			// android user.inode_cache xattr
+			start = strstr(buf, ANDROID_USER_CACHE_TAG);
+			if (start)
+			{
+				t->th_buf.has_user_cache = 1;
+#ifdef DEBUG
+				printf("    th_read(): android user.inode_cache xattr detected\n");
+#endif
+			} // end android user.inode_cache xattr
+			// android user.inode_code_cache xattr
+			/*start = strstr(buf, ANDROID_USER_CODE_CACHE_TAG);
+			if (start)
+			{
+				t->th_buf.has_user_code_cache = 1;
+#ifdef DEBUG
+				printf("    th_read(): android user.inode_code_cache xattr detected\n");
+#endif
+			} // end android user.inode_code_cache xattr
 #ifdef HAVE_EXT4_CRYPT
 			start = strstr(buf, E4CRYPT_TAG);
-			if(start && start+E4CRYPT_TAG_LEN < buf+len)
+			if (start && start+E4CRYPT_TAG_LEN < buf+len)
 			{
 				start += E4CRYPT_TAG_LEN;
 				char *end = strchr(start, '\n');
@@ -312,8 +360,21 @@ th_read(TAR *t)
 				    printf("    th_read(): E4Crypt policy detected: %s\n", t->th_buf.e4crypt_policy);
 #endif
 				}
-			}
-#endif // HAVE_EXT4_CRYPT
+			}*/
+			// android user.inodes folder list
+			start = strstr(buf, ANDROID_USER_INODES_TAG);
+			if (start && start+ANDROID_USER_INODES_TAG_LEN < buf+len)
+			{
+				start += ANDROID_USER_INODES_TAG_LEN;
+				char *end = strchr(start, '\n');
+				if(end)
+				{
+					t->th_buf.user_inodes = strndup(start, end-start);
+#ifdef DEBUG
+					printf("    th_read(): android user.inodes xattr detected: %s\n", t->th_buf.user_inodes);
+#endif
+				}
+			} // end android user.inodes folder list
 		}
 
 		i = th_read_internal(t);
@@ -568,6 +629,98 @@ th_write(TAR *t)
 		char *nlptr = ptr + sz - 1;
 		*nlptr = '\n';
 		ptr += sz;
+	}
+	if (t->options & TAR_STORE_ANDROID_USER_XATTR)
+	{
+		if (t->th_buf.has_user_default) {
+#ifdef DEBUG
+			printf("th_write(): has android user.default xattr\n");
+#endif
+			sz = ANDROID_USER_DEFAULT_TAG_LEN + 3 + 1;
+
+			if (total_sz + sz >= T_BLOCKSIZE)
+			{
+				if (th_write_extended(t, &buf, total_sz))
+					return -1;
+				ptr = buf;
+				total_sz = sz;
+			}
+			else
+				total_sz += sz;
+
+			snprintf(ptr, T_BLOCKSIZE, "%d "ANDROID_USER_DEFAULT_TAG, (int)sz);
+			char *nlptr = ptr + sz - 1;
+			*nlptr = '\n';
+			ptr += sz;
+		}
+		/*if (t->th_buf.has_user_cache) {
+#ifdef DEBUG
+			printf("th_write(): has android user.inode_cache xattr\n");
+#endif
+			sz = ANDROID_USER_CACHE_TAG_LEN + 3 + 1;
+
+			if (total_sz + sz >= T_BLOCKSIZE)
+			{
+				if (th_write_extended(t, &buf, total_sz))
+					return -1;
+				ptr = buf;
+				total_sz = sz;
+			}
+			else
+				total_sz += sz;
+
+			snprintf(ptr, T_BLOCKSIZE, "%d "ANDROID_USER_CACHE_TAG, (int)sz);
+			char *nlptr = ptr + sz - 1;
+			*nlptr = '\n';
+			ptr += sz;
+		}
+		if (t->th_buf.has_user_code_cache) {
+#ifdef DEBUG
+			printf("th_write(): has android user.inode_code_cache xattr\n");
+#endif
+			sz = ANDROID_USER_CODE_CACHE_TAG_LEN + 3 + 1;
+
+			if (total_sz + sz >= T_BLOCKSIZE)
+			{
+				if (th_write_extended(t, &buf, total_sz))
+					return -1;
+				ptr = buf;
+				total_sz = sz;
+			}
+			else
+				total_sz += sz;
+
+			snprintf(ptr, T_BLOCKSIZE, "%d "ANDROID_USER_CODE_CACHE_TAG, (int)sz);
+			char *nlptr = ptr + sz - 1;
+			*nlptr = '\n';
+			ptr += sz;
+		}*/
+		if (t->th_buf.user_inodes) {
+#if 1 //def DEBUG
+			printf("th_write(): has android user.inodes xattrs (\"%s\")\n",
+				   t->th_buf.user_inodes);
+#endif
+			/* setup size - EXT header has format "*size of this whole tag as ascii numbers* *space* *content* *newline* */
+			//                                                       size   newline
+			sz = ANDROID_USER_INODES_TAG_LEN + strlen(t->th_buf.user_inodes) + 3  +    1;
+
+			if(sz >= 100) // another ascci digit for size
+				++sz;
+
+			if (total_sz + sz >= T_BLOCKSIZE)
+			{
+				if (th_write_extended(t, &buf, total_sz))
+					return -1;
+				ptr = buf;
+				total_sz = sz;
+			}
+			else
+				total_sz += sz;
+
+			total_sz += sz;
+			snprintf(ptr, T_BLOCKSIZE, "%d "ANDROID_USER_INODES_TAG"%s\n", (int)sz, t->th_buf.user_inodes);
+			ptr += sz;
+		}
 	}
 	if (total_sz > 0 && th_write_extended(t, &buf, total_sz)) // write any outstanding tar extended header
 		return -1;
