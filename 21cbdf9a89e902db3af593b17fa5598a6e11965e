@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_dde9cd12",
+        "filename": "partition.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 1668,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-02-03T05:10:12Z",
+      "side": 1,
+      "message": "Seems like you should just check for either extension, sha2 or md5 instead of depending on the user to remember which digest they were using at the time of making the backup.",
+      "revId": "21cbdf9a89e902db3af593b17fa5598a6e11965e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
