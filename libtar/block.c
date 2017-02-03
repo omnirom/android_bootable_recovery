@@ -33,6 +33,10 @@
 #define CAPABILITIES_TAG "SCHILY.xattr.security.capability="
 #define CAPABILITIES_TAG_LEN 33
 
+// Used to identify Android user.default xattr in extended ('x')
+#define ANDROID_USER_DEFAULT_TAG "ANDROID.user.default"
+#define ANDROID_USER_DEFAULT_TAG_LEN 20
+
 /* read a header block */
 /* FIXME: the return value of this function should match the return value
 	  of tar_block_read(), which is a macro which references a prototype
@@ -135,6 +139,7 @@ th_read(TAR *t)
 		memset(&t->th_buf.cap_data, 0, sizeof(struct vfs_cap_data));
 		t->th_buf.has_cap_data = 0;
 	}
+	t->th_buf.has_user_default = 0;
 
 	memset(&(t->th_buf), 0, sizeof(struct tar_header));
 
@@ -298,6 +303,15 @@ th_read(TAR *t)
 					printf("    th_read(): SELinux context xattr detected: %s\n", t->th_buf.selinux_context);
 #endif
 				}
+			} // end selinux contexts
+			// android user.default xattr
+			start = strstr(buf, ANDROID_USER_DEFAULT_TAG);
+			if(start)
+			{
+				t->th_buf.has_user_default = 1;
+#ifdef DEBUG
+				printf("    th_read(): android user.default xattr detected\n");
+#endif
 			} // end selinux contexts
 #ifdef HAVE_EXT4_CRYPT
 			start = strstr(buf, E4CRYPT_TAG);
@@ -565,6 +579,28 @@ th_write(TAR *t)
 
 		snprintf(ptr, T_BLOCKSIZE, "%d "CAPABILITIES_TAG, (int)sz);
 		memcpy(ptr + CAPABILITIES_TAG_LEN + 3, &t->th_buf.cap_data, sizeof(struct vfs_cap_data));
+		char *nlptr = ptr + sz - 1;
+		*nlptr = '\n';
+		ptr += sz;
+	}
+	if((t->options & TAR_STORE_USER_DEFAULT) && t->th_buf.has_user_default)
+	{
+#ifdef DEBUG
+		printf("th_write(): has a android user.default xattr\n");
+#endif
+		sz = ANDROID_USER_DEFAULT_TAG_LEN + 3 + 1;
+
+		if (total_sz + sz >= T_BLOCKSIZE)
+		{
+			if (th_write_extended(t, &buf, total_sz))
+				return -1;
+			ptr = buf;
+			total_sz = sz;
+		}
+		else
+			total_sz += sz;
+
+		snprintf(ptr, T_BLOCKSIZE, "%d "ANDROID_USER_DEFAULT_TAG, (int)sz);
 		char *nlptr = ptr + sz - 1;
 		*nlptr = '\n';
 		ptr += sz;

@@ -521,6 +521,15 @@ tar_extract_dir(TAR *t, const char *realname)
 		}
 	}
 
+	if((t->options & TAR_STORE_USER_DEFAULT) && t->th_buf.has_user_default)
+	{
+#if 1 //def DEBUG
+		printf("tar_extract_file(): restoring android user.default xattr to %s\n", realname);
+#endif
+		if (setxattr(realname, "user.default", NULL, 0, 0) < 0)
+			fprintf(stderr, "tar_extract_file(): failed to restore android user.default to file %s !!!\n", realname);
+	}
+
 #ifdef HAVE_EXT4_CRYPT
 	if(t->th_buf.e4crypt_policy != NULL)
 	{

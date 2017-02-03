@@ -172,6 +172,18 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 		}
 	}
 
+	/* get android user.default xattr */
+	if (TH_ISDIR(t) && t->options & TAR_STORE_USER_DEFAULT)
+	{
+		if (getxattr(realname, "user.default", NULL, 0) >= 0)
+		{
+			t->th_buf.has_user_default = 1;
+#if 1 //def DEBUG
+			printf("storing xattr user.default\n");
+#endif
+		}
+	}
+
 	/* check if it's a hardlink */
 #ifdef DEBUG
 	puts("tar_append_file(): checking inode cache for hardlink...");

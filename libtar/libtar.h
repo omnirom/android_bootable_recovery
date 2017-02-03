@@ -74,6 +74,7 @@ struct tar_header
 #endif
 	int has_cap_data;
 	struct vfs_cap_data cap_data;
+	int has_user_default;
 };
 
 
@@ -120,6 +121,7 @@ TAR;
 #define TAR_USE_NUMERIC_ID	256	/* favor numeric owner over names */
 #define TAR_STORE_EXT4_POL	512	/* store ext4 crypto policy */
 #define TAR_STORE_POSIX_CAP	1024	/* store posix file capabilities */
+#define TAR_STORE_USER_DEFAULT	2048	/* store android user.default xattr */
 
 /* this is obsolete - it's here for backwards-compatibility only */
 #define TAR_IGNORE_MAGIC	0
