@@ -247,7 +247,7 @@ static int exec_cmd(const char* path, char* const argv[]) {
   pid_t child;
   if ((child = vfork()) == 0) {
     execv(path, argv);
-    _exit(-1);
+    _exit(EXIT_FAILURE);
   }
 
   int status;
@@ -1072,7 +1072,7 @@ Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
   if (child == 0) {
     execv(args2[0], args2);
     PLOG(ERROR) << "run_program: execv failed";
-    _exit(1);
+    _exit(EXIT_FAILURE);
   }
 
   int status;

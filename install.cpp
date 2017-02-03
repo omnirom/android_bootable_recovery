@@ -387,7 +387,7 @@ static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_
     // the child process to hang. This deadlock results from an improperly
     // copied mutex in the ui functions.
     fprintf(stdout, "E:Can't run %s (%s)\n", chr_args[0], strerror(errno));
-    _exit(-1);
+    _exit(EXIT_FAILURE);
   }
   close(pipefd[1]);
 
