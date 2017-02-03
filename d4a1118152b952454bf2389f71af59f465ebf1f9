@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_5dd5bd41",
+        "filename": "gui/Android.mk",
+        "patchSetId": 6
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-03T06:13:27Z",
+      "side": 1,
+      "message": "damnit!",
+      "range": {
+        "startLine": 107,
+        "startChar": 19,
+        "endLine": 107,
+        "endChar": 24
+      },
+      "revId": "d4a1118152b952454bf2389f71af59f465ebf1f9",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
