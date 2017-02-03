@@ -243,7 +243,7 @@ static void redirect_stdio(const char* filename) {
         if (log_fp == nullptr) {
             PLOG(ERROR) << "fopen \"" << filename << "\" failed";
             close(pipefd[0]);
-            _exit(1);
+            _exit(EXIT_FAILURE);
         }
 
         FILE* pipe_fp = fdopen(pipefd[0], "r");
@@ -251,7 +251,7 @@ static void redirect_stdio(const char* filename) {
             PLOG(ERROR) << "fdopen failed";
             check_and_fclose(log_fp, filename);
             close(pipefd[0]);
-            _exit(1);
+            _exit(EXIT_FAILURE);
         }
 
         char* line = nullptr;
@@ -273,7 +273,7 @@ static void redirect_stdio(const char* filename) {
         free(line);
         check_and_fclose(log_fp, filename);
         close(pipefd[0]);
-        _exit(1);
+        _exit(EXIT_FAILURE);
     } else {
         // Redirect stdout/stderr to the logger process.
         // Close the unused read end.
