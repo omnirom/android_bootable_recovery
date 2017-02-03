@@ -120,7 +120,7 @@ static RangeSet parse_range(const std::string& range_text) {
 
 err:
   LOG(ERROR) << "failed to parse range '" << range_text << "'";
-  exit(1);
+  exit(EXIT_FAILURE);
 }
 
 static bool range_overlaps(const RangeSet& r1, const RangeSet& r2) {
