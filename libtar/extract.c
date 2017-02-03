@@ -469,6 +469,55 @@ tar_extract_blockdev(TAR *t, const char *realname)
 	return 0;
 }
 
+int get_path_inode(const char* path, ino_t *inode) {
+    struct stat buf;
+    memset(&buf, 0, sizeof(buf));
+    if (stat(path, &buf) != 0) {
+        printf("failed to stat %s\n", path);
+        return -1;
+    } else {
+        *inode = buf.st_ino;
+        return 0;
+    }
+}
+
+/**
+ * Write the inode of a specific child file into the given xattr on the
+ * parent directory. This allows you to find the child later, even if its
+ * name is encrypted.
+ */
+int write_path_inode(const char* parent, const char* name, const char* inode_xattr) {
+    ino_t inode = 0;
+    uint64_t inode_raw = 0;
+    char path[PATH_MAX];
+    sprintf(path, "%s/%s", parent, name);
+
+    if (mkdirhier(path) == -1) {
+		printf("failed to mkdirhier for %s\n", path);
+		return -1;
+	}
+
+    if (get_path_inode(path, &inode) != 0) {
+        return -1;
+    }
+
+    // Check to see if already set correctly
+    if (getxattr(parent, inode_xattr, &inode_raw, sizeof(inode_raw)) == sizeof(inode_raw)) {
+        if (inode_raw == inode) {
+            // Already set correctly; skip writing
+            return 0;
+        }
+    }
+
+    inode_raw = inode;
+    printf("setting %s to %s pointing to %s\n", inode_xattr, parent, path);
+    if (setxattr(parent, inode_xattr, &inode_raw, sizeof(inode_raw), 0) != 0 && errno != EOPNOTSUPP) {
+		printf("Failed to write xattr %s at %s (%s)\n", inode_xattr, parent, strerror(errno));
+        return -1;
+    } else {
+        return 0;
+    }
+}
 
 /* directory */
 int
@@ -518,6 +567,31 @@ tar_extract_dir(TAR *t, const char *realname)
 			perror("mkdir()");
 #endif
 			return -1;
+		}
+	}
+
+	if((t->options & TAR_STORE_ANDROID_USER_XATTR))
+	{
+		if (t->th_buf.has_user_default) {
+#if 1 //def DEBUG
+			printf("tar_extract_file(): restoring android user.default xattr to %s\n", realname);
+#endif
+			if (setxattr(realname, "user.default", NULL, 0, 0) < 0)
+				fprintf(stderr, "tar_extract_file(): failed to restore android user.default to file %s !!!\n", realname);
+		}
+		if (t->th_buf.has_user_cache) {
+#if 1 //def DEBUG
+			printf("tar_extract_file(): restoring android user.inode_cache xattr to %s\n", realname);
+#endif
+			if (write_path_inode(realname, "cache", "user.inode_cache"))
+				return -1;
+		}
+		if (t->th_buf.has_user_code_cache) {
+#if 1 //def DEBUG
+			printf("tar_extract_file(): restoring android user.inode_code_cache xattr to %s\n", realname);
+#endif
+			if (write_path_inode(realname, "code_cache", "user.inode_code_cache"))
+				return -1;
 		}
 	}
 
