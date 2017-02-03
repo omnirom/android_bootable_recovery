@@ -78,7 +78,7 @@ int apply_from_adb(RecoveryUI* ui, bool* wipe_cache, const char* install_file) {
     pid_t child;
     if ((child = fork()) == 0) {
         execl("/sbin/recovery", "recovery", "--adbd", NULL);
-        _exit(-1);
+        _exit(EXIT_FAILURE);
     }
 
     // FUSE_SIDELOAD_HOST_PATHNAME will start to exist once the host

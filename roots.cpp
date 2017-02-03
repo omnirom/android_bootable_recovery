@@ -163,7 +163,7 @@ static int exec_cmd(const char* path, char* const argv[]) {
     pid_t child;
     if ((child = vfork()) == 0) {
         execv(path, argv);
-        _exit(-1);
+        _exit(EXIT_FAILURE);
     }
     waitpid(child, &status, 0);
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
