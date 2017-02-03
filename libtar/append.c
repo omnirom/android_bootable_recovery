@@ -40,6 +40,7 @@
 #ifdef HAVE_EXT4_CRYPT
 # include "ext4crypt_tar.h"
 #endif
+#include "android_utils.h"
 
 struct tar_dev
 {
@@ -168,6 +169,32 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 			t->th_buf.has_cap_data = 1;
 #if 1 //def DEBUG
 			print_caps(&t->th_buf.cap_data);
+#endif
+		}
+	}
+
+	/* get android user.default xattr */
+	if (TH_ISDIR(t) && t->options & TAR_STORE_ANDROID_USER_XATTR)
+	{
+		if (getxattr(realname, "user.default", NULL, 0) >= 0)
+		{
+			t->th_buf.has_user_default = 1;
+#if 1 //def DEBUG
+			printf("storing xattr user.default\n");
+#endif
+		}
+		if (getxattr(realname, "user.inode_cache", NULL, 0) >= 0)
+		{
+			t->th_buf.has_user_cache = 1;
+#if 1 //def DEBUG
+			printf("storing xattr user.inode_cache\n");
+#endif
+		}
+		if (getxattr(realname, "user.inode_code_cache", NULL, 0) >= 0)
+		{
+			t->th_buf.has_user_code_cache = 1;
+#if 1 //def DEBUG
+			printf("storing xattr user.inode_code_cache\n");
 #endif
 		}
 	}
