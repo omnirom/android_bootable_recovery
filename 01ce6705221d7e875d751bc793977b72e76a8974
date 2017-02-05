@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "78209991_f82db78f",
+        "filename": "libtar/block.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-02-05T16:10:15Z",
+      "side": 1,
+      "message": "I wonder if we should use a single ANDROID.user.inode tag and store all of the inode dir names as separated values in case Google adds more of these xattrs in the future...",
+      "revId": "01ce6705221d7e875d751bc793977b72e76a8974",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_9ded958e",
         "filename": "libtar/block.c",
         "patchSetId": 2
