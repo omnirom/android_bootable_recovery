@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_183cf3b8",
+        "filename": "libtar/block.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-05T17:02:07Z",
+      "side": 1,
+      "message": "IMHO a bad idea (we should keep storing each xattr separately), but you could fix the copy/pasted comments. And the manually precalculated lengths of the names should really go away ASAP.",
+      "parentUuid": "78209991_f82db78f",
+      "revId": "01ce6705221d7e875d751bc793977b72e76a8974",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_9ded958e",
         "filename": "libtar/block.c",
         "patchSetId": 2
@@ -172,6 +190,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_d8455b4a",
+        "filename": "libtar/extract.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 493,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-05T17:02:07Z",
+      "side": 1,
+      "message": "much more important is the potential buffer overflow here - use snprintf or similar. Or admit that this code should not be part of libtar at all, put it into TWRP and call it via a callback function pointer from libtar.",
+      "parentUuid": "78209991_9dc6b51a",
+      "revId": "01ce6705221d7e875d751bc793977b72e76a8974",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_5dd01dca",
         "filename": "libtar/extract.c",
         "patchSetId": 2
@@ -200,6 +236,24 @@
       "writtenOn": "2017-02-05T05:33:22Z",
       "side": 1,
       "message": "// go back 2 ur C++ land u slash commenter, ah shame they are being used all over in previous commits already",
+      "revId": "01ce6705221d7e875d751bc793977b72e76a8974",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_f8481764",
+        "filename": "libtar/extract.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 504,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-05T17:02:07Z",
+      "side": 1,
+      "message": "This code is adapted from AOSP, also // comments are perfectly legal in C99.",
+      "parentUuid": "78209991_3dd561ba",
       "revId": "01ce6705221d7e875d751bc793977b72e76a8974",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
