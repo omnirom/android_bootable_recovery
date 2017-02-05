@@ -1912,19 +1912,21 @@ int GUIAction::checkforapp(std::string arg __unused)
 		if (PartitionManager.Mount_By_Path("/data", false)) {
 			string parent_path = "/data/app";
 			DIR *d = opendir("/data/app");
-			struct dirent *p;
-			size_t len = strlen("me.twrp.twrpapp-");
-			while ((p = readdir(d))) {
-				if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
-					continue;
-				if (p->d_type == DT_DIR && strlen(p->d_name) >= len && strncmp(p->d_name, "me.twrp.twrpapp-", len) == 0) {
-					LOGINFO("App found at %s/%s\n", parent_path.c_str(), p->d_name);
-					closedir(d);
-					DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed
-					goto exit;
+			if (d != NULL) {
+				struct dirent *p;
+				size_t len = strlen("me.twrp.twrpapp-");
+				while ((p = readdir(d))) {
+					if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+						continue;
+					if (p->d_type == DT_DIR && strlen(p->d_name) >= len && strncmp(p->d_name, "me.twrp.twrpapp-", len) == 0) {
+						LOGINFO("App found at %s/%s\n", parent_path.c_str(), p->d_name);
+						closedir(d);
+						DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed
+						goto exit;
+					}
 				}
+				closedir(d);
 			}
-			closedir(d);
 		}
 	} else
 		simulate_progress_bar();
