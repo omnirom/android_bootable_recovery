@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_38820f05",
+        "filename": "libtar/block.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-02-06T19:04:22Z",
+      "side": 1,
+      "message": "Any special reason you think storing a folder list is a bad idea?",
+      "parentUuid": "78209991_183cf3b8",
+      "revId": "01ce6705221d7e875d751bc793977b72e76a8974",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_9ded958e",
         "filename": "libtar/block.c",
         "patchSetId": 2
