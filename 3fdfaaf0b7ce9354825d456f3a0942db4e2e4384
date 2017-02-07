@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_7dfcf96c",
+        "filename": "Android.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 1000173
+      },
+      "writtenOn": "2017-02-07T19:47:58Z",
+      "side": 1,
+      "message": "This looks like a bad merge, these includes/libraries are duplicated right above",
+      "revId": "3fdfaaf0b7ce9354825d456f3a0942db4e2e4384",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
