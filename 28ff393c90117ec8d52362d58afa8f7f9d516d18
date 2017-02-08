@@ -37,6 +37,41 @@
     },
     {
       "key": {
+        "uuid": "78209991_6c1e8811",
+        "filename": "partition.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 1663,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "Yes, because the actual class depends on the existing digest file. For deleting stuff at the end, one usually uses std::unique_ptr (or auto_ptr), but both might not exist in ancient STLPort... But with proper ordering of things, one can minimize the block where the digest object needs to exist.",
+      "parentUuid": "78209991_ec585800",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_4c1bcc1e",
+        "filename": "partition.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 1694,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "The old error handling here was better, this is a regression.",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_0c4cb444",
         "filename": "partition.cpp",
         "patchSetId": 34
@@ -158,6 +193,40 @@
     },
     {
       "key": {
+        "uuid": "78209991_ac24a05e",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 775,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "not a new bug, but the name of the variable is wrong, it\u0027s actually skip_digest.",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_8c29e437",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 1013,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "Also not a new bug: check_digest is initialized with skip_digest, but then used as if it really was check_digest. This looks wrong.",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_cc5d9cef",
         "filename": "twrp-functions.cpp",
         "patchSetId": 34
@@ -228,6 +297,23 @@
     },
     {
       "key": {
+        "uuid": "78209991_4ce62c15",
+        "filename": "twrpDigest/twrpDigest.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "Do we really need all these headers?",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_4c698c8a",
         "filename": "twrpDigest/twrpDigest.cpp",
         "patchSetId": 34
@@ -263,6 +349,109 @@
     },
     {
       "key": {
+        "uuid": "78209991_cc2fdc3b",
+        "filename": "twrpDigest/twrpDigest.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "1024 bytes is very small, performance may be better with 4k, 16k or even 64k buffer.",
+      "parentUuid": "78209991_4cf4ecc8",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_ec2a982c",
+        "filename": "twrpDigest/twrpDigest.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "Combine initialization with the declaration.",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_6ce9e8e3",
+        "filename": "twrpDigest/twrpDigest.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "Missing error handling if read failed.",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_0c15d4e6",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "unclear how error are reported from this function. I guess false for failure, and then?",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_ecd5f81e",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "can update() fail? what does the return value mean?",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_2c18901f",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "using (void) is considered bad style in C++.",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_6c6c489d",
         "filename": "twrpDigest/twrpDigest.hpp",
         "patchSetId": 34
@@ -292,6 +481,126 @@
       "side": 1,
       "message": "Thanks for the catch, will fix on next submit.",
       "parentUuid": "78209991_6c6c489d",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_ccda3c4e",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "It\u0027s also unclear what file is used here. If it simply compares the computed digest with the string, the whole method is redundant and can be replaced with \"\u003d\u003d\".",
+      "parentUuid": "78209991_2c01b0b5",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_acdf003d",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "even if currently not used, this should probably be public so that the same instance can be reused to calculate multiple digests.",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_8ce4440e",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "comment doesn\u0027t match prototype, I guess it processes \"len\" bytes.",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_ccc11c5c",
+        "filename": "twrpDigest/twrpMD5.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "wait, so your derived class happily does something completely unrelated to the method name?",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_2cf3f0d1",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "why virtual inheritance?",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_0cf034c1",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "why does this ctor exist?",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_ecbcd8d8",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1001798
+      },
+      "writtenOn": "2017-02-08T18:54:21Z",
+      "side": 1,
+      "message": "why do we need this member?",
       "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
