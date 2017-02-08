@@ -16,6 +16,24 @@
       "revId": "e1a11463bd006283b79df7d7f0ac4d4aee7e810e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_ac0dc0f0",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 146,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-08T17:48:50Z",
+      "side": 0,
+      "message": "Comment is superfluous with the code.",
+      "parentUuid": "78209991_ac5260da",
+      "revId": "e1a11463bd006283b79df7d7f0ac4d4aee7e810e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
