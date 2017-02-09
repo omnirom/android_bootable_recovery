@@ -67,8 +67,9 @@ static int adf_surface_init(adf_pdata* pdata, drm_mode_modeinfo* mode, adf_surfa
   surf->base.data = static_cast<uint8_t*>(mmap(nullptr, surf->pitch * surf->base.height, PROT_WRITE,
                                                MAP_SHARED, surf->fd, surf->offset));
   if (surf->base.data == MAP_FAILED) {
+    int saved_errno = errno;
     close(surf->fd);
-    return -errno;
+    return -saved_errno;
   }
 
   return 0;
