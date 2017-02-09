@@ -21,6 +21,7 @@
 
 #include <string>
 #include <vector>
+#include <pthread.h>
 
 using namespace std;
 
@@ -40,6 +41,14 @@ enum Archive_Type {
 	ENCRYPTED,
 	COMPRESSED_ENCRYPTED
 };
+
+#ifndef BUILD_TWRPTAR_MAIN
+#include "tw_atomic.hpp"
+struct timeout_thread_cookie_struct {
+	TWAtomicInt* thread_status;
+	void* cookie;
+};
+#endif //ndef BUILD_TWRPTAR_MAIN
 
 // Partition class
 class TWFunc
@@ -95,6 +104,9 @@ public:
 	static void Disable_Stock_Recovery_Replace(); // Disable stock ROMs from replacing TWRP with stock recovery
 	static unsigned long long IOCTL_Get_Block_Size(const char* block_device);
 	static void copy_kernel_log(string curr_storage); // Copy Kernel Log to Current Storage (PSTORE/KMSG)
+	static void Setup_Thread_Exit_Handler();                                                                // Sets up an exit handler for a timeout thread
+	static bool Setup_PThread_Attr(pthread_attr_t* tattr, int detachstate);                                 // Sets up a pthread_attr_t using our typical default values
+	static int Timeout_Thread(void *(*start_routine) (void *), int timeout_secs, const char* thread_name, void* cookie);  // Runs start_routine and kills the thread if it does not complete in timeout_secs. start_routine must expect a cookie of timeout_thread_cookie_struct
 
 private:
 	static void Copy_Log(string Source, string Destination);
@@ -102,6 +114,8 @@ private:
 };
 
 extern int Log_Offset;
+
+void thread_exit_handler(int sig);
 #else
 };
 #endif // ndef BUILD_TWRPTAR_MAIN

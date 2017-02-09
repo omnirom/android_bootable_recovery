@@ -40,6 +40,7 @@ extern "C" {
 #include <sys/ioctl.h>
 #include <zlib.h>
 #include <semaphore.h>
+#include <pthread.h>
 #include "twrpTar.hpp"
 #include "twcommon.h"
 #include "variables.h"

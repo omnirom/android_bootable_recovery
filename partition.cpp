@@ -542,10 +542,9 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			//ExcludeAll(Mount_Point + "/misc/profiles/cur/0"); // might be important later
 			ExcludeAll(Mount_Point + "/misc/gatekeeper");
 			ExcludeAll(Mount_Point + "/drm/kek.dat");
-			int retry_count = 3;
-			while (!Decrypt_DE() && --retry_count)
-				usleep(2000);
-			if (retry_count > 0) {
+			if (TWFunc::Timeout_Thread(Thread_Decrypt_DE, 4, "Decrypt DE", NULL)) {
+				LOGINFO("DE thread returned an error.\n");
+			} else {
 				property_set("ro.crypto.state", "encrypted");
 				Is_Encrypted = true;
 				Is_Decrypted = false;
@@ -576,6 +575,22 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 		Recreate_Media_Folder();
 	}
 #endif
+}
+
+void* TWPartition::Thread_Decrypt_DE(void *cookie) {
+	TWFunc::Setup_Thread_Exit_Handler();
+
+	timeout_thread_cookie_struct* full_cookie = (timeout_thread_cookie_struct*) cookie;
+	TWAtomicInt* thread_status = full_cookie->thread_status;
+	int retry_count = 3;
+
+	while (!Decrypt_DE() && --retry_count)
+		usleep(2000);
+
+	thread_status->set_value(0);
+	if (retry_count)
+		return (void*)0;
+	return (void*)-1;
 }
 
 void TWPartition::Setup_Cache_Partition(bool Display_Error __unused) {

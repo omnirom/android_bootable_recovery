@@ -47,6 +47,7 @@
 #include "cutils/properties.h"
 #include "cutils/android_reboot.h"
 #include <sys/reboot.h>
+#include <pthread.h>
 #endif // ndef BUILD_TWRPTAR_MAIN
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	#include "openaes/inc/oaes_lib.h"
@@ -1087,5 +1088,70 @@ void TWFunc::copy_kernel_log(string curr_storage) {
 	write_file(dmesgDst, result);
 	gui_msg(Msg("copy_kernel_log=Copied kernel log to {1}")(dmesgDst));
 	tw_set_default_metadata(dmesgDst.c_str());
+}
+
+void thread_timeout_exit_handler(int sig) {
+	LOGINFO("thread killed, signal is %d \n", sig);
+	pthread_exit((void*)-1);
+}
+
+void TWFunc::Setup_Thread_Exit_Handler() {
+	struct sigaction actions;
+	memset(&actions, 0, sizeof(actions));
+	sigemptyset(&actions.sa_mask);
+	actions.sa_flags = 0;
+	actions.sa_handler = thread_timeout_exit_handler;
+	if (sigaction(SIGUSR1,&actions,NULL))
+		LOGERR("Error setting sigaction %s\n", strerror(errno));
+}
+
+bool TWFunc::Setup_PThread_Attr(pthread_attr_t* tattr, int detachstate) {
+	bool ret = true;
+	if (pthread_attr_init(tattr)) {
+		LOGINFO("Unable to pthread_attr_init\n");
+		return false;
+	}
+	if (pthread_attr_setdetachstate(tattr, PTHREAD_CREATE_JOINABLE)) {
+		LOGINFO("Error setting pthread_attr_setdetachstate\n");
+		pthread_attr_destroy(tattr);
+		return false;
+	}
+	if (pthread_attr_setscope(tattr, PTHREAD_SCOPE_SYSTEM)) {
+		LOGINFO("Error setting pthread_attr_setscope\n");
+		pthread_attr_destroy(tattr);
+		return false;
+	}
+	return true;
+}
+
+int TWFunc::Timeout_Thread(void *(*start_routine) (void *), int timeout_secs, const char* thread_name, void* cookie) {
+	if (timeout_secs < 2)
+		timeout_secs = 2;
+	void *thread_return;
+	pthread_t thread_id;
+	pthread_attr_t tattr;
+	bool has_tattr = Setup_PThread_Attr(&tattr, PTHREAD_CREATE_JOINABLE);
+	TWAtomicInt thread_status;
+	thread_status.set_value(1);
+	timeout_thread_cookie_struct full_cookie;
+	full_cookie.thread_status = &thread_status;
+	full_cookie.cookie = cookie;
+	if (!has_tattr || pthread_create(&thread_id, &tattr, start_routine, (void*)&full_cookie)) {
+		LOGINFO("Unable to create thread %s! Continuing in same thread.\n", thread_name);
+		thread_return = start_routine((void*)&full_cookie);
+	}
+	if (has_tattr && pthread_attr_destroy(&tattr)) {
+		LOGINFO("Failed to pthread_attr_destroy\n");
+	}
+	while (thread_status.get_value() && timeout_secs--)
+		sleep(1);
+	if (thread_status.get_value()) {
+		if (pthread_kill(thread_id, SIGUSR1) != 0)
+			LOGERR("Error killing %s: (%s)", thread_name, strerror(errno));
+	}
+	if (pthread_join(thread_id, &thread_return)) {
+		LOGINFO("Error joining %s\n", thread_name);
+	}
+	return (int)(intptr_t)thread_return;
 }
 #endif // ndef BUILD_TWRPTAR_MAIN
