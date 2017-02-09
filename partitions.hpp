@@ -167,6 +167,7 @@ private:
 	bool Flash_Sparse_Image(const string& Filename);                          // Flashes a sparse image using simg2img
 	bool Flash_Image_FI(const string& Filename, ProgressTracking *progress);  // Flashes an image to the partition using flash_image for mtd nand
 	void ExcludeAll(const string& path);                                      // Adds an exclusion for path to both the backup and wipe exclusion lists
+	static void* Thread_Decrypt_DE(void* cookie);                             // Used to run the decrypt DE process in a pthread
 
 private:
 	bool Can_Be_Mounted;                                                      // Indicates that the partition can be mounted
@@ -308,6 +309,8 @@ private:
 	TWPartition* Find_Next_Storage(string Path, bool Exclude_Data_Media);
 	int Open_Lun_File(string Partition_Path, string Lun_File);
 	void Post_Decrypt(const string& Block_Device);                            // Completes various post-decrypt tasks
+	static void* Thread_Decrypt_User(void *cookie);                           // Used to run the decrypt user process in a pthread
+	static void* Thread_Decrypt_FDE(void *cookie);                            // Used to run the decrypt FDE process in a pthread
 	pid_t mtppid;
 	bool mtp_was_enabled;
 	int mtp_write_fd;

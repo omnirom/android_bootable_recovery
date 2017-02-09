@@ -1511,6 +1511,40 @@ void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
 		LOGERR("Unable to locate data partition.\n");
 }
 
+void* TWPartitionManager::Thread_Decrypt_User(void *cookie) {
+#if defined(TW_INCLUDE_CRYPTO) && defined(TW_INCLUDE_FBE)
+	TWFunc::Setup_Thread_Exit_Handler();
+
+	timeout_thread_cookie_struct* full_cookie = (timeout_thread_cookie_struct*) cookie;
+	TWAtomicInt* thread_status = full_cookie->thread_status;
+	int user_id = DataManager::GetIntValue("tw_decrypt_user_id");
+	LOGINFO("Decrypting FBE for user %i\n", user_id);
+
+	bool ret = Decrypt_User(user_id, (char*)full_cookie->cookie);
+
+	thread_status->set_value(0);
+	if (ret)
+		return (void*)0;
+#endif
+	return (void*)-1;
+}
+
+void* TWPartitionManager::Thread_Decrypt_FDE(void *cookie) {
+#ifdef TW_INCLUDE_CRYPTO
+	TWFunc::Setup_Thread_Exit_Handler();
+
+	timeout_thread_cookie_struct* full_cookie = (timeout_thread_cookie_struct*) cookie;
+	TWAtomicInt* thread_status = full_cookie->thread_status;
+
+	int ret = cryptfs_check_passwd((char*)full_cookie->cookie);
+
+	thread_status->set_value(0);
+	if (!ret)
+		return (void*)0;
+#endif
+	return (void*)-1;
+}
+
 int TWPartitionManager::Decrypt_Device(string Password) {
 #ifdef TW_INCLUDE_CRYPTO
 	char crypto_state[PROPERTY_VALUE_MAX], crypto_blkdev[PROPERTY_VALUE_MAX], cPassword[255];
@@ -1530,6 +1564,8 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 		sleep(1);
 	}
 
+	strcpy(cPassword, Password.c_str());
+
 	if (DataManager::GetIntValue(TW_IS_FBE)) {
 #ifdef TW_INCLUDE_FBE
 		if (!Mount_By_Path("/data", true)) // /data has to be mounted for FBE
@@ -1537,9 +1573,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 		int retry_count = 10;
 		while (!TWFunc::Path_Exists("/data/system/users/gatekeeper.password.key") && --retry_count)
 			usleep(2000); // A small sleep is needed after mounting /data to ensure reliable decrypt... maybe because of DE?
-		int user_id = DataManager::GetIntValue("tw_decrypt_user_id");
-		LOGINFO("Decrypting FBE for user %i\n", user_id);
-		if (Decrypt_User(user_id, Password)) {
+		if (TWFunc::Timeout_Thread(Thread_Decrypt_User, 5, "Decrypt User", (void*)&cPassword) == 0) {
 			Post_Decrypt("");
 			return 0;
 		}
@@ -1549,8 +1583,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 		return -1;
 	}
 
-	strcpy(cPassword, Password.c_str());
-	int pwret = cryptfs_check_passwd(cPassword);
+	int pwret = TWFunc::Timeout_Thread(Thread_Decrypt_FDE, 15, "Decrypt FDE", (void*)&cPassword);
 
 	// Unmount any partitions that were needed for decrypt
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
