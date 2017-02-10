@@ -19,6 +19,7 @@
 		<string name="recovery">Recovery</string>
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
+		<string name="data_backup">Data (escl. archivio)</string>
 		<string name="sdcard">SDCard</string>
 		<string name="internal">Archivio interno</string>
 		<string name="microsd">Micro SD</string>
@@ -114,6 +115,13 @@
 		<string name="rebooting">Riavvio...</string>
 		<string name="swipe_reboot">Scorri per riavviare</string>
 		<string name="swipe_reboot_s">   Riavvia</string>
+		<string name="reboot_install_app_hdr">Installazione app di TWRP</string>
+		<string name="reboot_install_app1">Ti piacerebbe installare l'app ufficiale di TWRP?</string>
+		<string name="reboot_install_app2">L'app può verificare nuove versioni di TWRP.</string>
+		<string name="reboot_install_app_prompt_install">Chiedi di installare l'app TWRP se non è installata</string>
+		<string name="reboot_install_app_system">Installa come app di Sistema</string>
+		<string name="reboot_installing_app">Installazione dell'app...</string>
+		<string name="swipe_to_install_app">Scorri per installare l'app</string>
 		<string name="swipe_flash">Scorri per installare</string>
 		<string name="confirm_action">Conferma l'azione</string>
 		<string name="back_cancel">Premi indietro per annullare.</string>
@@ -208,7 +216,12 @@
 		<string name="enc_enabled">abilitata</string>
 		<string name="enable_backup_comp_chk">Abilita compressione</string>
 		<string name="skip_md5_backup_chk">Salta la generazione di MD5 durante il backup</string>
-		<string name="disable_backup_space_chk">Disabilita controllo dello spazio libero</string>
+		<string name="disable_backup_space_chk" version="2">Disabilita controllo dello spazio libero prima del backup</string>
+		<string name="current_boot_slot">Slot attuale: %tw_active_slot%</string>
+		<string name="boot_slot_a">Slot A</string>
+		<string name="boot_slot_b">Slot B</string>
+		<string name="changing_boot_slot">Cambiamento Slot d'avvio</string>
+		<string name="changing_boot_slot_complete">Cambiamento Slot d'avvio completato</string>
 		<string name="refresh_sizes_btn">Aggiorna dimensioni</string>
 		<string name="swipe_backup">Scorri per eseguire il backup</string>
 		<string name="append_date_btn">Includi la data</string>
@@ -364,8 +377,8 @@
 		<string name="set_language_btn">Imposta lingua</string>
 		<string name="advanced_hdr">Avanzate</string>
 		<string name="copy_log_confirm">Copiare il log su scheda SD?</string>
-		<string name="copying_log">Copia del log in corso...</string>
-		<string name="copy_log_complete">Copia del log completata</string>
+		<string name="copying_log" version="2">Copia i log nella scheda SD...</string>
+		<string name="copy_log_complete" version="2">Copia dei log completata</string>
 		<string name="fix_context_btn">Ripara contesti</string>
 		<string name="part_sd_btn">Partiziona SD</string>
 		<string name="part_sd_s_btn">Scheda SD</string>
@@ -535,6 +548,7 @@
 		<string name="fail_decrypt">Decriptazione dei dati fallita.</string>
 		<string name="no_crypto_support">In questa build non è stato integrato alcun supporto per la crittografia.</string>
 		<string name="decrypt_success_dev">Dati decriptati con successo. Nuovo dispositivo di memoria: '{1}'</string>
+		<string name="decrypt_success_nodev">Dati decriptati con successo</string>
 		<string name="done">Fatto.</string>
 		<string name="start_partition_sd">Partizionamento scheda SD in corso...</string>
 		<string name="partition_sd_locate">Impossibile localizzare il dispositivo da partizionare.</string>
@@ -572,7 +586,7 @@
 		<string name="unable_resize">Impossibile ridimensionare {1}.</string>
 		<string name="no_md5_found">Nessun MD5 trovato per '{1}'. Deseleziona "Abilita verifica MD5" per procedere con il ripristino.</string>
 		<string name="md5_fail_match">Il valore MD5 non corrisponde per '{1}'.</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="md5_matched">MD5 trovato per '{1}'.</string>
 		<string name="fail_decrypt_tar">Decriptazione fallita per il file Tar '{1}'</string>
 		<string name="format_data_msg">Potresti dover riavviare la Recovery per accedere nuovamente a Data.</string>
 		<string name="format_data_err">Impossibile formattare al fine di rimuovere la crittografia.</string>
@@ -582,6 +596,7 @@
 		<string name="remove_all">Eliminazione di tutti i file in '{1}'...</string>
 		<string name="wiping_data">Pulizia di Data tralasciando /data/media...</string>
 		<string name="backing_up">Backup di {1} in corso...</string>
+		<string name="backup_storage_warning">Backup di {1} esso non include nessun file dell'archivio interno come foto o download.</string>
 		<string name="backing">Backup in corso...</string>
 		<string name="backup_size">La dimensione del backup di '{1}' è 0 byte.</string>
 		<string name="datamedia_fs_restore">ATTENZIONE: Il backup di Data è stato fatto mentre il filesystem era {1}! Il dispositivo potrebbe non avviarsi finché non reimposti il filesystem {1}.</string>
@@ -621,7 +636,7 @@
 		<string name="recovery_commands_complete">Esecuzione dei comandi completata</string>
 		<string name="running_ors">Esecuzione di OpenRecoveryScript...</string>
 		<string name="ors_complete">Esecuzione di OpenRecoveryScript completata</string>
-		<string name="no_updater_binary">Impossibile trovare '{1}' nel file Zip.</string>
+		<string name="invalid_zip_format">File zip non valido!</string>
 		<string name="check_for_md5">Controllo sull'MD5 in corso...</string>
 		<string name="fail_sysmap">Impossibile mappare '{1}'</string>
 		<string name="verify_zip_sig">Verifica della firma dello Zip in corso...</string>
@@ -668,6 +683,13 @@
 		<string name="change_fs_err">Errore nella modifica del filesystem.</string>
 		<string name="theme_ver_err">La versione del tema personalizzato non corrisponde alla versione di TWRP. Sarà utilizzato il tema predefinito.</string>
 		<string name="up_a_level">(Livello superiore)</string>
-		<string name="install_reboot">Riavvio in 5 secondi</string>
+		<string name="install_reboot" version="2">Riavvio in %tw_sleep% secondo(i)</string>
+		<string name="adbbackup_error">Errore con ADB Backup. Abbandono..."</string>
+		<string name="adbbackup_control_error">Impossibile scrivere nel canale di controllo adb</string>
+		<string name="twrp_adbbu_option">--twrp opzione richiesta per abilitare twrp adb backup</string>
+		<string name="partition_not_found">percorso: {1} non trovato nella lista delle partizioni</string>
+		<string name="copy_kernel_log">Log del kernel copiato in {1}</string>
+		<string name="include_kernel_log">Includi Log del Kernel</string>
+		<string name="unable_set_boot_slot">Errore nel cambio slot d'avvio del bootloader in {1}</string>
 	</resources>
 </language>
