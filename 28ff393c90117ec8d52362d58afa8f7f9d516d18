@@ -55,6 +55,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_8cb684ea",
+        "filename": "partition.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 1663,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-11T00:47:26Z",
+      "side": 1,
+      "message": "I will move it down then into the corresponding functions I will create.",
+      "parentUuid": "78209991_6c1e8811",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_4c1bcc1e",
         "filename": "partition.cpp",
         "patchSetId": 34
@@ -256,6 +274,24 @@
       "side": 1,
       "message": "will remove.",
       "parentUuid": "78209991_cc5d9cef",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_afd01254",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 1097,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-11T00:47:26Z",
+      "side": 1,
+      "message": "Removing this will not work if the function fails to find a number.",
+      "parentUuid": "78209991_8c12040a",
       "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
