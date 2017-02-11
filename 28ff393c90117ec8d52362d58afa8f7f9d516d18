@@ -298,6 +298,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_2fc40295",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 1097,
+      "author": {
+        "id": 1001858
+      },
+      "writtenOn": "2017-02-11T03:53:03Z",
+      "side": 1,
+      "message": "If the if returns false, the function would continue to the \u0027return false\u0027, even without the else.  I\u0027m not sure how the else would be necessary.",
+      "parentUuid": "78209991_afd01254",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_8c57a4cb",
         "filename": "twrpDigest/Android.mk",
         "patchSetId": 34
