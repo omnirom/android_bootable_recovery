@@ -73,6 +73,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_6fcafaa6",
+        "filename": "partition.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 1663,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-11T19:36:59Z",
+      "side": 1,
+      "message": "I decided to keep the pointer and combine into one function on next commit.",
+      "parentUuid": "78209991_ec585800",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_4c1bcc1e",
         "filename": "partition.cpp",
         "patchSetId": 34
@@ -644,6 +662,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_0f6386aa",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-11T19:36:59Z",
+      "side": 1,
+      "message": "So we can set the filename to check on creation of the object.",
+      "parentUuid": "78209991_0cf034c1",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_ecbcd8d8",
         "filename": "twrpDigest/twrpMD5.hpp",
         "patchSetId": 34
@@ -655,6 +691,24 @@
       "writtenOn": "2017-02-08T18:54:21Z",
       "side": 1,
       "message": "why do we need this member?",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_ef03aac2",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-11T19:36:59Z",
+      "side": 1,
+      "message": "to store the name of the file?",
+      "parentUuid": "78209991_ecbcd8d8",
       "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
