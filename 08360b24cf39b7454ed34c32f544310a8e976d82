@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_0f4ca644",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 36
+      },
+      "lineNbr": 522,
+      "author": {
+        "id": 1001858
+      },
+      "writtenOn": "2017-02-11T15:00:08Z",
+      "side": 1,
+      "message": "Declare this up here:\n  string digest_str;\nThen you could move\n  digest_str \u003d\ninto the if/else statements\nthen you could move the LOGINFO components from the next if/else into the first if/else, eliminating the need for a 2nd if/else with the same test.",
+      "revId": "08360b24cf39b7454ed34c32f544310a8e976d82",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
