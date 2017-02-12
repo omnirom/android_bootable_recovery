@@ -577,6 +577,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_2fd9a224",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-12T14:15:58Z",
+      "side": 1,
+      "message": "The function will compute the digest and return true if the passed in digest is correct.",
+      "parentUuid": "78209991_ccda3c4e",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_acdf003d",
         "filename": "twrpDigest/twrpDigest.hpp",
         "patchSetId": 34
