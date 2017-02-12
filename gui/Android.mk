@@ -108,7 +108,7 @@ define TW_CUSTOM_THEME_WARNING_MSG
 
 ****************************************************************************
   Could not find ui.xml for TW_CUSTOM_THEME: $(TW_CUSTOM_THEME)
-  Expected to find cutom theme's ui.xml at:
+  Expected to find custom theme's ui.xml at:
     $(TWRP_THEME_LOC)/ui.xml
   Please fix this or set TW_THEME to one of the following:
     $(notdir $(wildcard $(commands_recovery_local_path)/gui/theme/*_*))
