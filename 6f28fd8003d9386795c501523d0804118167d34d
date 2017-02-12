@@ -1,0 +1,174 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_6fd55ab9",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:43:31Z",
+      "side": 1,
+      "message": "with no more init here, this will create incompatible md5sums in the backup file.",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_0f514662",
+        "filename": "twinstall.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 322,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:43:31Z",
+      "side": 1,
+      "message": "prefer to declare variables at their first use together with initialization.",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_cfc6ae1b",
+        "filename": "twinstall.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 330,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:43:31Z",
+      "side": 1,
+      "message": "since this is hardcoded for MD5, it should probably use more specific messages.",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_efc16a04",
+        "filename": "twinstall.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:43:31Z",
+      "side": 1,
+      "message": "now missing the difference between \"file doesn\u0027t exist\" and \"file not readable\".",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_cf6b4e17",
+        "filename": "twrpDigest/twrpMD5.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:43:31Z",
+      "side": 1,
+      "message": "return_digest_string should return the calculated digest string, not read a file. If you override a common base class, then all overrides should have the behavior defined in the base class interface.\n\nThis breaks streaming usage.",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_2f540253",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:43:31Z",
+      "side": 1,
+      "message": "files and their names have nothing to do with a digest algorithm, this should not be here.",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_af601232",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:43:31Z",
+      "side": 1,
+      "message": "this should be local inside return_digest_string",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_8f655643",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:43:31Z",
+      "side": 1,
+      "message": "why do we need this?",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_6f5afa84",
+        "filename": "twrpDigest/twrpSHA.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:43:31Z",
+      "side": 1,
+      "message": "files and their names are totally unrelated to digest algorithms, this should not be here.",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_4f573e5a",
+        "filename": "twrpDigest/twrpSHA.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:43:31Z",
+      "side": 1,
+      "message": "\"sha256\" is a digest algorithm - it doesn\u0027t make any sense as a name for a uint8_t member variable.",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
