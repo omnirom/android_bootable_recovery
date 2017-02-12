@@ -263,6 +263,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_ef2deafd",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 1013,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-12T14:28:34Z",
+      "side": 1,
+      "message": "I believe this is correct because this is checking whether the user wants to generate a digest on backup.",
+      "parentUuid": "78209991_8c29e437",
+      "revId": "28ff393c90117ec8d52362d58afa8f7f9d516d18",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_cc5d9cef",
         "filename": "twrp-functions.cpp",
         "patchSetId": 34
