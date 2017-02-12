@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_2fdf62db",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 551,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:49:58Z",
+      "side": 1,
+      "message": "typo",
+      "revId": "d1d3cb6ef02e339ec296936e3a9249c0d91efbd4",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_0fdca6e2",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 599,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:49:58Z",
+      "side": 1,
+      "message": "missing translation",
+      "revId": "d1d3cb6ef02e339ec296936e3a9249c0d91efbd4",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_efe84a7e",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 639,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-12T22:49:58Z",
+      "side": 1,
+      "message": "missing translation",
+      "revId": "d1d3cb6ef02e339ec296936e3a9249c0d91efbd4",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
