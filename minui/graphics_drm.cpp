@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "graphics_drm.h"
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,25 +28,13 @@
 #include <xf86drmMode.h>
 
 #include "minui/minui.h"
-#include "graphics.h"
 
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*(A)))
 
-struct drm_surface {
-  GRSurface base;
-  uint32_t fb_id;
-  uint32_t handle;
-};
+MinuiBackendDrm::MinuiBackendDrm()
+    : GRSurfaceDrms(), main_monitor_crtc(nullptr), main_monitor_connector(nullptr), drm_fd(-1) {}
 
-static drm_surface *drm_surfaces[2];
-static int current_buffer;
-
-static drmModeCrtc *main_monitor_crtc;
-static drmModeConnector *main_monitor_connector;
-
-static int drm_fd = -1;
-
-static void drm_disable_crtc(int drm_fd, drmModeCrtc *crtc) {
+void MinuiBackendDrm::DrmDisableCrtc(int drm_fd, drmModeCrtc* crtc) {
   if (crtc) {
     drmModeSetCrtc(drm_fd, crtc->crtc_id,
                    0,         // fb_id
@@ -55,7 +45,7 @@ static void drm_disable_crtc(int drm_fd, drmModeCrtc *crtc) {
   }
 }
 
-static void drm_enable_crtc(int drm_fd, drmModeCrtc* crtc, struct drm_surface* surface) {
+void MinuiBackendDrm::DrmEnableCrtc(int drm_fd, drmModeCrtc* crtc, GRSurfaceDrm* surface) {
   int32_t ret = drmModeSetCrtc(drm_fd, crtc->crtc_id, surface->fb_id, 0, 0,  // x,y
                                &main_monitor_connector->connector_id,
                                1,  // connector_count
@@ -66,19 +56,19 @@ static void drm_enable_crtc(int drm_fd, drmModeCrtc* crtc, struct drm_surface* s
   }
 }
 
-static void drm_blank(minui_backend* backend __unused, bool blank) {
+void MinuiBackendDrm::Blank(bool blank) {
   if (blank) {
-    drm_disable_crtc(drm_fd, main_monitor_crtc);
+    DrmDisableCrtc(drm_fd, main_monitor_crtc);
   } else {
-    drm_enable_crtc(drm_fd, main_monitor_crtc, drm_surfaces[current_buffer]);
+    DrmEnableCrtc(drm_fd, main_monitor_crtc, GRSurfaceDrms[current_buffer]);
   }
 }
 
-static void drm_destroy_surface(struct drm_surface *surface) {
+void MinuiBackendDrm::DrmDestroySurface(GRSurfaceDrm* surface) {
   if (!surface) return;
 
-  if (surface->base.data) {
-    munmap(surface->base.data, surface->base.row_bytes * surface->base.height);
+  if (surface->data) {
+    munmap(surface->data, surface->row_bytes * surface->height);
   }
 
   if (surface->fb_id) {
@@ -98,7 +88,7 @@ static void drm_destroy_surface(struct drm_surface *surface) {
     }
   }
 
-  free(surface);
+  delete surface;
 }
 
 static int drm_format_to_bpp(uint32_t format) {
@@ -118,12 +108,9 @@ static int drm_format_to_bpp(uint32_t format) {
   }
 }
 
-static drm_surface *drm_create_surface(int width, int height) {
-  drm_surface* surface = static_cast<drm_surface*>(calloc(1, sizeof(*surface)));
-  if (!surface) {
-    printf("Can't allocate memory\n");
-    return nullptr;
-  }
+GRSurfaceDrm* MinuiBackendDrm::DrmCreateSurface(int width, int height) {
+  GRSurfaceDrm* surface = new GRSurfaceDrm;
+  *surface = {};
 
   uint32_t format;
 #if defined(RECOVERY_ABGR)
@@ -145,7 +132,7 @@ static drm_surface *drm_create_surface(int width, int height) {
   int ret = drmIoctl(drm_fd, DRM_IOCTL_MODE_CREATE_DUMB, &create_dumb);
   if (ret) {
     printf("DRM_IOCTL_MODE_CREATE_DUMB failed ret=%d\n", ret);
-    drm_destroy_surface(surface);
+    DrmDestroySurface(surface);
     return nullptr;
   }
   surface->handle = create_dumb.handle;
@@ -160,7 +147,7 @@ static drm_surface *drm_create_surface(int width, int height) {
       drmModeAddFB2(drm_fd, width, height, format, handles, pitches, offsets, &(surface->fb_id), 0);
   if (ret) {
     printf("drmModeAddFB2 failed ret=%d\n", ret);
-    drm_destroy_surface(surface);
+    DrmDestroySurface(surface);
     return nullptr;
   }
 
@@ -169,20 +156,20 @@ static drm_surface *drm_create_surface(int width, int height) {
   ret = drmIoctl(drm_fd, DRM_IOCTL_MODE_MAP_DUMB, &map_dumb);
   if (ret) {
     printf("DRM_IOCTL_MODE_MAP_DUMB failed ret=%d\n", ret);
-    drm_destroy_surface(surface);
+    DrmDestroySurface(surface);
     return nullptr;
   }
 
-  surface->base.height = height;
-  surface->base.width = width;
-  surface->base.row_bytes = create_dumb.pitch;
-  surface->base.pixel_bytes = create_dumb.bpp / 8;
-  surface->base.data =
-      static_cast<unsigned char*>(mmap(nullptr, surface->base.height * surface->base.row_bytes,
-                                       PROT_READ | PROT_WRITE, MAP_SHARED, drm_fd, map_dumb.offset));
-  if (surface->base.data == MAP_FAILED) {
+  surface->height = height;
+  surface->width = width;
+  surface->row_bytes = create_dumb.pitch;
+  surface->pixel_bytes = create_dumb.bpp / 8;
+  surface->data = static_cast<unsigned char*>(mmap(nullptr, surface->height * surface->row_bytes,
+                                                   PROT_READ | PROT_WRITE, MAP_SHARED, drm_fd,
+                                                   map_dumb.offset));
+  if (surface->data == MAP_FAILED) {
     perror("mmap() failed");
-    drm_destroy_surface(surface);
+    DrmDestroySurface(surface);
     return nullptr;
   }
 
@@ -256,7 +243,8 @@ static drmModeConnector* find_first_connected_connector(int fd, drmModeRes* reso
   return nullptr;
 }
 
-static drmModeConnector* find_main_monitor(int fd, drmModeRes* resources, uint32_t* mode_index) {
+drmModeConnector* MinuiBackendDrm::FindMainMonitor(int fd, drmModeRes* resources,
+                                                   uint32_t* mode_index) {
   /* Look for LVDS/eDP/DSI connectors. Those are the main screens. */
   static constexpr unsigned kConnectorPriority[] = {
     DRM_MODE_CONNECTOR_LVDS,
@@ -290,18 +278,18 @@ static drmModeConnector* find_main_monitor(int fd, drmModeRes* resources, uint32
   return main_monitor_connector;
 }
 
-static void disable_non_main_crtcs(int fd, drmModeRes* resources, drmModeCrtc* main_crtc) {
+void MinuiBackendDrm::DisableNonMainCrtcs(int fd, drmModeRes* resources, drmModeCrtc* main_crtc) {
   for (int i = 0; i < resources->count_connectors; i++) {
     drmModeConnector* connector = drmModeGetConnector(fd, resources->connectors[i]);
     drmModeCrtc* crtc = find_crtc_for_connector(fd, resources, connector);
     if (crtc->crtc_id != main_crtc->crtc_id) {
-      drm_disable_crtc(fd, crtc);
+      DrmDisableCrtc(fd, crtc);
     }
     drmModeFreeCrtc(crtc);
   }
 }
 
-static GRSurface* drm_init(minui_backend* backend __unused) {
+GRSurface* MinuiBackendDrm::Init() {
   drmModeRes* res = nullptr;
 
   /* Consider DRM devices in order. */
@@ -344,7 +332,7 @@ static GRSurface* drm_init(minui_backend* backend __unused) {
   }
 
   uint32_t selected_mode;
-  main_monitor_connector = find_main_monitor(drm_fd, res, &selected_mode);
+  main_monitor_connector = FindMainMonitor(drm_fd, res, &selected_mode);
 
   if (!main_monitor_connector) {
     printf("main_monitor_connector not found\n");
@@ -362,7 +350,7 @@ static GRSurface* drm_init(minui_backend* backend __unused) {
     return nullptr;
   }
 
-  disable_non_main_crtcs(drm_fd, res, main_monitor_crtc);
+  DisableNonMainCrtcs(drm_fd, res, main_monitor_crtc);
 
   main_monitor_crtc->mode = main_monitor_connector->modes[selected_mode];
 
@@ -371,51 +359,37 @@ static GRSurface* drm_init(minui_backend* backend __unused) {
 
   drmModeFreeResources(res);
 
-  drm_surfaces[0] = drm_create_surface(width, height);
-  drm_surfaces[1] = drm_create_surface(width, height);
-  if (!drm_surfaces[0] || !drm_surfaces[1]) {
-    drm_destroy_surface(drm_surfaces[0]);
-    drm_destroy_surface(drm_surfaces[1]);
-    drmModeFreeResources(res);
-    close(drm_fd);
+  GRSurfaceDrms[0] = DrmCreateSurface(width, height);
+  GRSurfaceDrms[1] = DrmCreateSurface(width, height);
+  if (!GRSurfaceDrms[0] || !GRSurfaceDrms[1]) {
+    // GRSurfaceDrms and drm_fd should be freed in d'tor.
     return nullptr;
   }
 
   current_buffer = 0;
 
-  drm_enable_crtc(drm_fd, main_monitor_crtc, drm_surfaces[1]);
+  DrmEnableCrtc(drm_fd, main_monitor_crtc, GRSurfaceDrms[1]);
 
-  return &(drm_surfaces[0]->base);
+  return GRSurfaceDrms[0];
 }
 
-static GRSurface* drm_flip(minui_backend* backend __unused) {
-  int ret = drmModePageFlip(drm_fd, main_monitor_crtc->crtc_id, drm_surfaces[current_buffer]->fb_id,
-                            0, nullptr);
+GRSurface* MinuiBackendDrm::Flip() {
+  int ret = drmModePageFlip(drm_fd, main_monitor_crtc->crtc_id,
+                            GRSurfaceDrms[current_buffer]->fb_id, 0, nullptr);
   if (ret < 0) {
     printf("drmModePageFlip failed ret=%d\n", ret);
     return nullptr;
   }
   current_buffer = 1 - current_buffer;
-  return &(drm_surfaces[current_buffer]->base);
+  return GRSurfaceDrms[current_buffer];
 }
 
-static void drm_exit(minui_backend* backend __unused) {
-  drm_disable_crtc(drm_fd, main_monitor_crtc);
-  drm_destroy_surface(drm_surfaces[0]);
-  drm_destroy_surface(drm_surfaces[1]);
+MinuiBackendDrm::~MinuiBackendDrm() {
+  DrmDisableCrtc(drm_fd, main_monitor_crtc);
+  DrmDestroySurface(GRSurfaceDrms[0]);
+  DrmDestroySurface(GRSurfaceDrms[1]);
   drmModeFreeCrtc(main_monitor_crtc);
   drmModeFreeConnector(main_monitor_connector);
   close(drm_fd);
   drm_fd = -1;
-}
-
-static minui_backend drm_backend = {
-  .init = drm_init,
-  .flip = drm_flip,
-  .blank = drm_blank,
-  .exit = drm_exit,
-};
-
-minui_backend* open_drm() {
-  return &drm_backend;
 }
