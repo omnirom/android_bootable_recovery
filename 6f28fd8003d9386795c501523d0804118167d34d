@@ -53,6 +53,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_4ff97e48",
+        "filename": "twinstall.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 330,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-13T02:03:11Z",
+      "side": 1,
+      "message": "What do you mean by more specific?",
+      "parentUuid": "78209991_cfc6ae1b",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_efc16a04",
         "filename": "twinstall.cpp",
         "patchSetId": 44
@@ -64,6 +82,24 @@
       "writtenOn": "2017-02-12T22:43:31Z",
       "side": 1,
       "message": "now missing the difference between \"file doesn\u0027t exist\" and \"file not readable\".",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_2ff64259",
+        "filename": "twinstall.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-13T02:03:11Z",
+      "side": 1,
+      "message": "The check for the existence is above?",
+      "parentUuid": "78209991_efc16a04",
       "revId": "6f28fd8003d9386795c501523d0804118167d34d",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -104,6 +140,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_0ff38668",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-13T02:03:11Z",
+      "side": 1,
+      "message": "This is setting the file to create a digest upon.",
+      "parentUuid": "78209991_2f540253",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_af601232",
         "filename": "twrpDigest/twrpMD5.hpp",
         "patchSetId": 44
@@ -138,6 +192,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_ef93aa00",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-13T02:03:11Z",
+      "side": 1,
+      "message": "To store the calculated md5sum before hexifying.",
+      "parentUuid": "78209991_8f655643",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_6f5afa84",
         "filename": "twrpDigest/twrpSHA.hpp",
         "patchSetId": 44
@@ -149,6 +221,24 @@
       "writtenOn": "2017-02-12T22:43:31Z",
       "side": 1,
       "message": "files and their names are totally unrelated to digest algorithms, this should not be here.",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_cf98ee1f",
+        "filename": "twrpDigest/twrpSHA.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-13T02:03:11Z",
+      "side": 1,
+      "message": "This sets the filename to create the digest upon.",
+      "parentUuid": "78209991_6f5afa84",
       "revId": "6f28fd8003d9386795c501523d0804118167d34d",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
