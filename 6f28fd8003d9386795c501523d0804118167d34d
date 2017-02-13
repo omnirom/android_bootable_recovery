@@ -71,6 +71,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_0f80268f",
+        "filename": "twinstall.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 330,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-13T19:52:17Z",
+      "side": 1,
+      "message": "Messages that explictly say MD5. Either via insertion variable or a separate set of messages.",
+      "parentUuid": "78209991_4ff97e48",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_efc16a04",
         "filename": "twinstall.cpp",
         "patchSetId": 44
@@ -100,6 +118,24 @@
       "side": 1,
       "message": "The check for the existence is above?",
       "parentUuid": "78209991_efc16a04",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_ef4ccaa6",
+        "filename": "twinstall.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-13T19:52:17Z",
+      "side": 1,
+      "message": "right, I missed that.",
+      "parentUuid": "78209991_2ff64259",
       "revId": "6f28fd8003d9386795c501523d0804118167d34d",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -158,6 +194,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_cf510e3a",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-13T19:52:17Z",
+      "side": 1,
+      "message": "The file name should only be passed to the function that updates the digest according to a file\u0027s contents. Not in the constructor and not stored in the class.",
+      "parentUuid": "78209991_0ff38668",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_af601232",
         "filename": "twrpDigest/twrpMD5.hpp",
         "patchSetId": 44
@@ -204,6 +258,24 @@
       "side": 1,
       "message": "To store the calculated md5sum before hexifying.",
       "parentUuid": "78209991_8f655643",
+      "revId": "6f28fd8003d9386795c501523d0804118167d34d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_af46d280",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-13T19:52:17Z",
+      "side": 1,
+      "message": "should be a local variable then.",
+      "parentUuid": "78209991_ef93aa00",
       "revId": "6f28fd8003d9386795c501523d0804118167d34d",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
