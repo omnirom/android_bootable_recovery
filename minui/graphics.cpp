@@ -20,11 +20,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <memory>
+
 #include "font_10x18.h"
+#include "graphics_adf.h"
+#include "graphics_drm.h"
+#include "graphics_fbdev.h"
 #include "minui/minui.h"
 
 static GRFont* gr_font = NULL;
-static minui_backend* gr_backend = NULL;
+static MinuiBackend* gr_backend = nullptr;
 
 static int overscan_percent = OVERSCAN_PERCENT;
 static int overscan_offset_x = 0;
@@ -308,59 +313,52 @@ static void gr_init_font(void)
 }
 
 void gr_flip() {
-    gr_draw = gr_backend->flip(gr_backend);
+  gr_draw = gr_backend->Flip();
 }
 
-int gr_init(void)
-{
-    gr_init_font();
+int gr_init() {
+  gr_init_font();
 
-    gr_backend = open_adf();
-    if (gr_backend) {
-        gr_draw = gr_backend->init(gr_backend);
-        if (!gr_draw) {
-            gr_backend->exit(gr_backend);
-        }
-    }
+  auto backend = std::unique_ptr<MinuiBackend>{ std::make_unique<MinuiBackendAdf>() };
+  gr_draw = backend->Init();
 
-    if (!gr_draw) {
-        gr_backend = open_drm();
-        gr_draw = gr_backend->init(gr_backend);
-    }
+  if (!gr_draw) {
+    backend = std::make_unique<MinuiBackendDrm>();
+    gr_draw = backend->Init();
+  }
 
-    if (!gr_draw) {
-        gr_backend = open_fbdev();
-        gr_draw = gr_backend->init(gr_backend);
-        if (gr_draw == NULL) {
-            return -1;
-        }
-    }
+  if (!gr_draw) {
+    backend = std::make_unique<MinuiBackendFbdev>();
+    gr_draw = backend->Init();
+  }
 
-    overscan_offset_x = gr_draw->width * overscan_percent / 100;
-    overscan_offset_y = gr_draw->height * overscan_percent / 100;
+  if (!gr_draw) {
+    return -1;
+  }
 
-    gr_flip();
-    gr_flip();
+  gr_backend = backend.release();
 
-    return 0;
+  overscan_offset_x = gr_draw->width * overscan_percent / 100;
+  overscan_offset_y = gr_draw->height * overscan_percent / 100;
+
+  gr_flip();
+  gr_flip();
+
+  return 0;
 }
 
-void gr_exit(void)
-{
-    gr_backend->exit(gr_backend);
+void gr_exit() {
+  delete gr_backend;
 }
 
-int gr_fb_width(void)
-{
-    return gr_draw->width - 2*overscan_offset_x;
+int gr_fb_width() {
+  return gr_draw->width - 2 * overscan_offset_x;
 }
 
-int gr_fb_height(void)
-{
-    return gr_draw->height - 2*overscan_offset_y;
+int gr_fb_height() {
+  return gr_draw->height - 2 * overscan_offset_y;
 }
 
-void gr_fb_blank(bool blank)
-{
-    gr_backend->blank(gr_backend, blank);
+void gr_fb_blank(bool blank) {
+  gr_backend->Blank(blank);
 }

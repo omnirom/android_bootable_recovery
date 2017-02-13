@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef _GRAPHICS_H_
-#define _GRAPHICS_H_
+#ifndef _GRAPHICS_FBDEV_H_
+#define _GRAPHICS_FBDEV_H_
 
+#include <linux/fb.h>
+
+#include "graphics.h"
 #include "minui/minui.h"
 
-class MinuiBackend {
+class MinuiBackendFbdev : public MinuiBackend {
  public:
-  // Initializes the backend and returns a GRSurface* to draw into.
-  virtual GRSurface* Init() = 0;
+  GRSurface* Init() override;
+  GRSurface* Flip() override;
+  void Blank(bool) override;
+  ~MinuiBackendFbdev() override;
+  MinuiBackendFbdev();
 
-  // Causes the current drawing surface (returned by the most recent call to Flip() or Init()) to
-  // be displayed, and returns a new drawing surface.
-  virtual GRSurface* Flip() = 0;
+ private:
+  void SetDisplayedFramebuffer(unsigned n);
 
-  // Blank (or unblank) the screen.
-  virtual void Blank(bool) = 0;
-
-  // Device cleanup when drawing is done.
-  virtual ~MinuiBackend() {};
+  GRSurface gr_framebuffer[2];
+  bool double_buffered;
+  GRSurface* gr_draw;
+  int displayed_buffer;
+  fb_var_screeninfo vi;
+  int fb_fd;
 };
 
-#endif  // _GRAPHICS_H_
+#endif  // _GRAPHICS_FBDEV_H_
