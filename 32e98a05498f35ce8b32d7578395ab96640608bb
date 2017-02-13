@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_4f285e97",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-13T20:49:47Z",
+      "side": 1,
+      "message": "Yeah, I don\u0027t need it so I will remove it.",
+      "parentUuid": "78209991_ef372af9",
+      "revId": "32e98a05498f35ce8b32d7578395ab96640608bb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_0f570629",
         "filename": "twrpDigest/twrpMD5.cpp",
         "patchSetId": 45
@@ -64,6 +82,24 @@
       "writtenOn": "2017-02-13T20:02:20Z",
       "side": 1,
       "message": "You can\u0027t store a sha256 digest in a single byte, you need an array. And it should not be part of the class, it should be a local variable.",
+      "revId": "32e98a05498f35ce8b32d7578395ab96640608bb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_8f467678",
+        "filename": "twrpDigest/twrpSHA.hpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-13T20:49:47Z",
+      "side": 1,
+      "message": "The calculation is stored in a uint8 variable for the mathematical calculations. Then it gets converted to a hex string via hexify. I also need to keep it for computation between update and finalize.",
+      "parentUuid": "78209991_6f60baff",
       "revId": "32e98a05498f35ce8b32d7578395ab96640608bb",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
