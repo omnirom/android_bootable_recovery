@@ -106,6 +106,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_0f326603",
+        "filename": "twrpDigest/twrpSHA.hpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-13T20:57:24Z",
+      "side": 1,
+      "message": "Then make finalize() return a std::vector\u003cuint8_t\u003e.\nAnd as long as you don\u0027t understand the severe buffer overflow bug here, you should not +1 this.",
+      "parentUuid": "78209991_8f467678",
+      "revId": "32e98a05498f35ce8b32d7578395ab96640608bb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_4f5dfe48",
         "filename": "twrpDigest/twrpSHA.hpp",
         "patchSetId": 45
