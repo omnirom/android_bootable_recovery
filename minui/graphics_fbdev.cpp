@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "graphics_fbdev.h"
+
 #include <fcntl.h>
 #include <linux/fb.h>
 #include <stdio.h>
@@ -25,40 +27,15 @@
 #include <unistd.h>
 
 #include "minui/minui.h"
-#include "graphics.h"
 
-static GRSurface* fbdev_init(minui_backend*);
-static GRSurface* fbdev_flip(minui_backend*);
-static void fbdev_blank(minui_backend*, bool);
-static void fbdev_exit(minui_backend*);
+MinuiBackendFbdev::MinuiBackendFbdev() : gr_draw(nullptr), fb_fd(-1) {}
 
-static GRSurface gr_framebuffer[2];
-static bool double_buffered;
-static GRSurface* gr_draw = nullptr;
-static int displayed_buffer;
-
-static fb_var_screeninfo vi;
-static int fb_fd = -1;
-
-static minui_backend my_backend = {
-  .init = fbdev_init,
-  .flip = fbdev_flip,
-  .blank = fbdev_blank,
-  .exit = fbdev_exit,
-};
-
-minui_backend* open_fbdev() {
-  return &my_backend;
-}
-
-static void fbdev_blank(minui_backend* backend __unused, bool blank) {
+void MinuiBackendFbdev::Blank(bool blank) {
   int ret = ioctl(fb_fd, FBIOBLANK, blank ? FB_BLANK_POWERDOWN : FB_BLANK_UNBLANK);
-  if (ret < 0) {
-    perror("ioctl(): blank");
-  }
+  if (ret < 0) perror("ioctl(): blank");
 }
 
-static void set_displayed_framebuffer(unsigned n) {
+void MinuiBackendFbdev::SetDisplayedFramebuffer(unsigned n) {
   if (n > 1 || !double_buffered) return;
 
   vi.yres_virtual = gr_framebuffer[0].height * 2;
@@ -70,7 +47,7 @@ static void set_displayed_framebuffer(unsigned n) {
   displayed_buffer = n;
 }
 
-static GRSurface* fbdev_init(minui_backend* backend) {
+GRSurface* MinuiBackendFbdev::Init() {
   int fd = open("/dev/graphics/fb0", O_RDWR);
   if (fd == -1) {
     perror("cannot open fb0");
@@ -154,23 +131,23 @@ static GRSurface* fbdev_init(minui_backend* backend) {
 
   memset(gr_draw->data, 0, gr_draw->height * gr_draw->row_bytes);
   fb_fd = fd;
-  set_displayed_framebuffer(0);
+  SetDisplayedFramebuffer(0);
 
   printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
 
-  fbdev_blank(backend, true);
-  fbdev_blank(backend, false);
+  Blank(true);
+  Blank(false);
 
   return gr_draw;
 }
 
-static GRSurface* fbdev_flip(minui_backend* backend __unused) {
+GRSurface* MinuiBackendFbdev::Flip() {
   if (double_buffered) {
     // Change gr_draw to point to the buffer currently displayed,
     // then flip the driver so we're displaying the other buffer
     // instead.
     gr_draw = gr_framebuffer + displayed_buffer;
-    set_displayed_framebuffer(1 - displayed_buffer);
+    SetDisplayedFramebuffer(1 - displayed_buffer);
   } else {
     // Copy from the in-memory surface to the framebuffer.
     memcpy(gr_framebuffer[0].data, gr_draw->data, gr_draw->height * gr_draw->row_bytes);
@@ -178,7 +155,7 @@ static GRSurface* fbdev_flip(minui_backend* backend __unused) {
   return gr_draw;
 }
 
-static void fbdev_exit(minui_backend* backend __unused) {
+MinuiBackendFbdev::~MinuiBackendFbdev() {
   close(fb_fd);
   fb_fd = -1;
 

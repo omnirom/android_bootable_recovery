@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "graphics_adf.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -24,49 +26,27 @@
 #include <adf/adf.h>
 #include <sync/sync.h>
 
-#include "graphics.h"
+#include "minui/minui.h"
 
-struct adf_surface_pdata {
-  GRSurface base;
-  int fence_fd;
-  int fd;
-  __u32 offset;
-  __u32 pitch;
-};
+MinuiBackendAdf::MinuiBackendAdf() : intf_fd(-1), dev(), n_surfaces(0), surfaces() {}
 
-struct adf_pdata {
-  minui_backend base;
-  int intf_fd;
-  adf_id_t eng_id;
-  __u32 format;
-
-  adf_device dev;
-
-  unsigned int current_surface;
-  unsigned int n_surfaces;
-  adf_surface_pdata surfaces[2];
-};
-
-static GRSurface* adf_flip(minui_backend* backend);
-static void adf_blank(minui_backend* backend, bool blank);
-
-static int adf_surface_init(adf_pdata* pdata, drm_mode_modeinfo* mode, adf_surface_pdata* surf) {
+int MinuiBackendAdf::SurfaceInit(const drm_mode_modeinfo* mode, GRSurfaceAdf* surf) {
   *surf = {};
   surf->fence_fd = -1;
-  surf->fd = adf_interface_simple_buffer_alloc(pdata->intf_fd, mode->hdisplay, mode->vdisplay,
-                                               pdata->format, &surf->offset, &surf->pitch);
+  surf->fd = adf_interface_simple_buffer_alloc(intf_fd, mode->hdisplay, mode->vdisplay, format,
+                                               &surf->offset, &surf->pitch);
   if (surf->fd < 0) {
     return surf->fd;
   }
 
-  surf->base.width = mode->hdisplay;
-  surf->base.height = mode->vdisplay;
-  surf->base.row_bytes = surf->pitch;
-  surf->base.pixel_bytes = (pdata->format == DRM_FORMAT_RGB565) ? 2 : 4;
+  surf->width = mode->hdisplay;
+  surf->height = mode->vdisplay;
+  surf->row_bytes = surf->pitch;
+  surf->pixel_bytes = (format == DRM_FORMAT_RGB565) ? 2 : 4;
 
-  surf->base.data = static_cast<uint8_t*>(mmap(nullptr, surf->pitch * surf->base.height, PROT_WRITE,
-                                               MAP_SHARED, surf->fd, surf->offset));
-  if (surf->base.data == MAP_FAILED) {
+  surf->data = static_cast<uint8_t*>(
+      mmap(nullptr, surf->pitch * surf->height, PROT_WRITE, MAP_SHARED, surf->fd, surf->offset));
+  if (surf->data == MAP_FAILED) {
     int saved_errno = errno;
     close(surf->fd);
     return -saved_errno;
@@ -75,26 +55,26 @@ static int adf_surface_init(adf_pdata* pdata, drm_mode_modeinfo* mode, adf_surfa
   return 0;
 }
 
-static int adf_interface_init(adf_pdata* pdata) {
+int MinuiBackendAdf::InterfaceInit() {
   adf_interface_data intf_data;
-  int err = adf_get_interface_data(pdata->intf_fd, &intf_data);
+  int err = adf_get_interface_data(intf_fd, &intf_data);
   if (err < 0) return err;
 
   int ret = 0;
-  err = adf_surface_init(pdata, &intf_data.current_mode, &pdata->surfaces[0]);
+  err = SurfaceInit(&intf_data.current_mode, &surfaces[0]);
   if (err < 0) {
     fprintf(stderr, "allocating surface 0 failed: %s\n", strerror(-err));
     ret = err;
     goto done;
   }
 
-  err = adf_surface_init(pdata, &intf_data.current_mode, &pdata->surfaces[1]);
+  err = SurfaceInit(&intf_data.current_mode, &surfaces[1]);
   if (err < 0) {
     fprintf(stderr, "allocating surface 1 failed: %s\n", strerror(-err));
-    pdata->surfaces[1] = {};
-    pdata->n_surfaces = 1;
+    surfaces[1] = {};
+    n_surfaces = 1;
   } else {
-    pdata->n_surfaces = 2;
+    n_surfaces = 2;
   }
 
 done:
@@ -102,37 +82,35 @@ done:
   return ret;
 }
 
-static int adf_device_init(adf_pdata* pdata, adf_device* dev) {
+int MinuiBackendAdf::DeviceInit(adf_device* dev) {
   adf_id_t intf_id;
-  int err = adf_find_simple_post_configuration(dev, &pdata->format, 1, &intf_id, &pdata->eng_id);
+  int err = adf_find_simple_post_configuration(dev, &format, 1, &intf_id, &eng_id);
   if (err < 0) return err;
 
-  err = adf_device_attach(dev, pdata->eng_id, intf_id);
+  err = adf_device_attach(dev, eng_id, intf_id);
   if (err < 0 && err != -EALREADY) return err;
 
-  pdata->intf_fd = adf_interface_open(dev, intf_id, O_RDWR);
-  if (pdata->intf_fd < 0) return pdata->intf_fd;
+  intf_fd = adf_interface_open(dev, intf_id, O_RDWR);
+  if (intf_fd < 0) return intf_fd;
 
-  err = adf_interface_init(pdata);
+  err = InterfaceInit();
   if (err < 0) {
-    close(pdata->intf_fd);
-    pdata->intf_fd = -1;
+    close(intf_fd);
+    intf_fd = -1;
   }
 
   return err;
 }
 
-static GRSurface* adf_init(minui_backend* backend) {
-  adf_pdata* pdata = reinterpret_cast<adf_pdata*>(backend);
-
+GRSurface* MinuiBackendAdf::Init() {
 #if defined(RECOVERY_ABGR)
-  pdata->format = DRM_FORMAT_ABGR8888;
+  format = DRM_FORMAT_ABGR8888;
 #elif defined(RECOVERY_BGRA)
-  pdata->format = DRM_FORMAT_BGRA8888;
+  format = DRM_FORMAT_BGRA8888;
 #elif defined(RECOVERY_RGBX)
-  pdata->format = DRM_FORMAT_RGBX8888;
+  format = DRM_FORMAT_RGBX8888;
 #else
-  pdata->format = DRM_FORMAT_RGB565;
+  format = DRM_FORMAT_RGB565;
 #endif
 
   adf_id_t* dev_ids = nullptr;
@@ -144,35 +122,35 @@ static GRSurface* adf_init(minui_backend* backend) {
     return nullptr;
   }
 
-  pdata->intf_fd = -1;
+  intf_fd = -1;
 
-  for (ssize_t i = 0; i < n_dev_ids && pdata->intf_fd < 0; i++) {
-    int err = adf_device_open(dev_ids[i], O_RDWR, &pdata->dev);
+  for (ssize_t i = 0; i < n_dev_ids && intf_fd < 0; i++) {
+    int err = adf_device_open(dev_ids[i], O_RDWR, &dev);
     if (err < 0) {
       fprintf(stderr, "opening adf device %u failed: %s\n", dev_ids[i], strerror(-err));
       continue;
     }
 
-    err = adf_device_init(pdata, &pdata->dev);
+    err = DeviceInit(&dev);
     if (err < 0) {
       fprintf(stderr, "initializing adf device %u failed: %s\n", dev_ids[i], strerror(-err));
-      adf_device_close(&pdata->dev);
+      adf_device_close(&dev);
     }
   }
 
   free(dev_ids);
 
-  if (pdata->intf_fd < 0) return nullptr;
+  if (intf_fd < 0) return nullptr;
 
-  GRSurface* ret = adf_flip(backend);
+  GRSurface* ret = Flip();
 
-  adf_blank(backend, true);
-  adf_blank(backend, false);
+  Blank(true);
+  Blank(false);
 
   return ret;
 }
 
-static void adf_sync(adf_surface_pdata* surf) {
+void MinuiBackendAdf::Sync(GRSurfaceAdf* surf) {
   static constexpr unsigned int warningTimeout = 3000;
 
   if (surf == nullptr) return;
@@ -188,52 +166,32 @@ static void adf_sync(adf_surface_pdata* surf) {
   }
 }
 
-static GRSurface* adf_flip(minui_backend* backend) {
-  adf_pdata* pdata = reinterpret_cast<adf_pdata*>(backend);
-  adf_surface_pdata* surf = &pdata->surfaces[pdata->current_surface];
+GRSurface* MinuiBackendAdf::Flip() {
+  GRSurfaceAdf* surf = &surfaces[current_surface];
 
-  int fence_fd =
-      adf_interface_simple_post(pdata->intf_fd, pdata->eng_id, surf->base.width, surf->base.height,
-                                pdata->format, surf->fd, surf->offset, surf->pitch, -1);
+  int fence_fd = adf_interface_simple_post(intf_fd, eng_id, surf->width, surf->height, format,
+                                           surf->fd, surf->offset, surf->pitch, -1);
   if (fence_fd >= 0) surf->fence_fd = fence_fd;
 
-  pdata->current_surface = (pdata->current_surface + 1) % pdata->n_surfaces;
-  adf_sync(&pdata->surfaces[pdata->current_surface]);
-  return &pdata->surfaces[pdata->current_surface].base;
+  current_surface = (current_surface + 1) % n_surfaces;
+  Sync(&surfaces[current_surface]);
+  return &surfaces[current_surface];
 }
 
-static void adf_blank(minui_backend* backend, bool blank) {
-  adf_pdata* pdata = reinterpret_cast<adf_pdata*>(backend);
-  adf_interface_blank(pdata->intf_fd, blank ? DRM_MODE_DPMS_OFF : DRM_MODE_DPMS_ON);
+void MinuiBackendAdf::Blank(bool blank) {
+  adf_interface_blank(intf_fd, blank ? DRM_MODE_DPMS_OFF : DRM_MODE_DPMS_ON);
 }
 
-static void adf_surface_destroy(adf_surface_pdata* surf) {
-  munmap(surf->base.data, surf->pitch * surf->base.height);
+void MinuiBackendAdf::SurfaceDestroy(GRSurfaceAdf* surf) {
+  munmap(surf->data, surf->pitch * surf->height);
   close(surf->fence_fd);
   close(surf->fd);
 }
 
-static void adf_exit(minui_backend* backend) {
-  adf_pdata* pdata = reinterpret_cast<adf_pdata*>(backend);
-  adf_device_close(&pdata->dev);
-  for (unsigned int i = 0; i < pdata->n_surfaces; i++) {
-    adf_surface_destroy(&pdata->surfaces[i]);
+MinuiBackendAdf::~MinuiBackendAdf() {
+  adf_device_close(&dev);
+  for (unsigned int i = 0; i < n_surfaces; i++) {
+    SurfaceDestroy(&surfaces[i]);
   }
-  if (pdata->intf_fd >= 0) close(pdata->intf_fd);
-  free(pdata);
-}
-
-minui_backend* open_adf() {
-  adf_pdata* pdata = static_cast<adf_pdata*>(calloc(1, sizeof(*pdata)));
-  if (!pdata) {
-    perror("allocating adf backend failed");
-    return nullptr;
-  }
-
-  pdata->base.init = adf_init;
-  pdata->base.flip = adf_flip;
-  pdata->base.blank = adf_blank;
-  pdata->base.exit = adf_exit;
-
-  return &pdata->base;
+  if (intf_fd >= 0) close(intf_fd);
 }
