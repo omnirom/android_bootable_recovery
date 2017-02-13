@@ -365,8 +365,9 @@ int OpenRecoveryScript::run_script_file(void) {
 				}
 			} else if (strcmp(command, "print") == 0) {
 				gui_print("%s\n", value);
-			} else if (strcmp(command, "sideload") == 0) {
+			} else if (strncmp(command, "sideload", strlen("sideload")) == 0) {
 				// ADB Sideload
+				bool sideload_auto_reboot = !strcmp(command, "sideload-auto-reboot");
 				DataManager::SetValue("tw_action_text2", gui_parse_text("{@sideload}"));
 				install_cmd = -1;
 
@@ -386,7 +387,6 @@ int OpenRecoveryScript::run_script_file(void) {
 				} else {
 					ret_val = 1; // failure
 				}
-				sideload = 1; // Causes device to go to the home screen afterwards
 				if (sideload_child_pid != 0) {
 					LOGINFO("Signaling child sideload process to exit.\n");
 					struct stat st;
@@ -399,6 +399,10 @@ int OpenRecoveryScript::run_script_file(void) {
 				}
 				property_set("ctl.start", "adbd");
 				gui_msg("done=Done.");
+				if (sideload_auto_reboot)
+					TWFunc::tw_reboot(rb_system);
+				else
+					sideload = 1; // Causes device to go to the home screen afterwards
 			} else if (strcmp(command, "fixperms") == 0 || strcmp(command, "fixpermissions") == 0 || strcmp(command, "fixcontexts") == 0) {
 				ret_val = PartitionManager.Fix_Contexts();
 				if (ret_val != 0)
