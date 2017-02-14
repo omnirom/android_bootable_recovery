@@ -374,6 +374,7 @@ int OpenRecoveryScript::run_script_file(void) {
 				int wipe_cache = 0;
 				string result;
 				pid_t sideload_child_pid;
+				TWFunc::Toggle_MTP(false);
 
 				gui_msg("start_sideload=Starting ADB sideload feature...");
 				ret_val = apply_from_adb("/", &sideload_child_pid);
