@@ -1013,6 +1013,30 @@ int TWFunc::Set_Brightness(std::string brightness_value)
 	return result;
 }
 
+bool TWFunc::Start_MTP(void) {
+#ifdef TW_HAS_MTP
+	char crash_prop_val[PROPERTY_VALUE_MAX];
+
+	property_get("twrp.crash_counter", crash_prop_val, "0");
+	int crash_counter = atoi(crash_prop_val);
+
+	if (DataManager::GetIntValue("tw_mtp_enabled")
+			&& crash_counter == 0
+			&& (!DataManager::GetIntValue(TW_IS_ENCRYPTED)
+				|| DataManager::GetIntValue(TW_IS_DECRYPTED))) {
+		LOGINFO("Enabling MTP during startup\n");
+		if (PartitionManager.Enable_MTP()) {
+			gui_msg("mtp_enabled=MTP Enabled");
+			return true;
+		}
+	}
+
+	if (crash_counter <= 1)
+		PartitionManager.Disable_MTP();
+#endif
+	return false;
+}
+
 bool TWFunc::Toggle_MTP(bool enable) {
 #ifdef TW_HAS_MTP
 	static int was_enabled = false;
