@@ -34,7 +34,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <chrono>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -656,108 +658,69 @@ get_menu_selection(const char* const * headers, const char* const * items,
     return chosen_item;
 }
 
-static int compare_string(const void* a, const void* b) {
-    return strcmp(*(const char**)a, *(const char**)b);
-}
+// Returns the selected filename, or an empty string.
+static std::string browse_directory(const std::string& path, Device* device) {
+  ensure_path_mounted(path.c_str());
 
-// Returns a malloc'd path, or NULL.
-static char* browse_directory(const char* path, Device* device) {
-    ensure_path_mounted(path);
+  std::unique_ptr<DIR, decltype(&closedir)> d(opendir(path.c_str()), closedir);
+  if (!d) {
+    PLOG(ERROR) << "error opening " << path;
+    return "";
+  }
 
-    DIR* d = opendir(path);
-    if (d == NULL) {
-        PLOG(ERROR) << "error opening " << path;
-        return NULL;
+  std::vector<std::string> dirs;
+  std::vector<std::string> zips = { "../" };  // "../" is always the first entry.
+
+  dirent* de;
+  while ((de = readdir(d.get())) != nullptr) {
+    std::string name(de->d_name);
+
+    if (de->d_type == DT_DIR) {
+      // Skip "." and ".." entries.
+      if (name == "." || name == "..") continue;
+      dirs.push_back(name + "/");
+    } else if (de->d_type == DT_REG && android::base::EndsWithIgnoreCase(name, ".zip")) {
+      zips.push_back(name);
+    }
+  }
+
+  std::sort(dirs.begin(), dirs.end());
+  std::sort(zips.begin(), zips.end());
+
+  // Append dirs to the zips list.
+  zips.insert(zips.end(), dirs.begin(), dirs.end());
+
+  const char* entries[zips.size() + 1];
+  entries[zips.size()] = nullptr;
+  for (size_t i = 0; i < zips.size(); i++) {
+    entries[i] = zips[i].c_str();
+  }
+
+  const char* headers[] = { "Choose a package to install:", path.c_str(), nullptr };
+
+  int chosen_item = 0;
+  while (true) {
+    chosen_item = get_menu_selection(headers, entries, 1, chosen_item, device);
+
+    const std::string& item = zips[chosen_item];
+    if (chosen_item == 0) {
+      // Go up but continue browsing (if the caller is browse_directory).
+      return "";
     }
 
-    int d_size = 0;
-    int d_alloc = 10;
-    char** dirs = (char**)malloc(d_alloc * sizeof(char*));
-    int z_size = 1;
-    int z_alloc = 10;
-    char** zips = (char**)malloc(z_alloc * sizeof(char*));
-    zips[0] = strdup("../");
-
-    struct dirent* de;
-    while ((de = readdir(d)) != NULL) {
-        int name_len = strlen(de->d_name);
-
-        if (de->d_type == DT_DIR) {
-            // skip "." and ".." entries
-            if (name_len == 1 && de->d_name[0] == '.') continue;
-            if (name_len == 2 && de->d_name[0] == '.' &&
-                de->d_name[1] == '.') continue;
-
-            if (d_size >= d_alloc) {
-                d_alloc *= 2;
-                dirs = (char**)realloc(dirs, d_alloc * sizeof(char*));
-            }
-            dirs[d_size] = (char*)malloc(name_len + 2);
-            strcpy(dirs[d_size], de->d_name);
-            dirs[d_size][name_len] = '/';
-            dirs[d_size][name_len+1] = '\0';
-            ++d_size;
-        } else if (de->d_type == DT_REG &&
-                   name_len >= 4 &&
-                   strncasecmp(de->d_name + (name_len-4), ".zip", 4) == 0) {
-            if (z_size >= z_alloc) {
-                z_alloc *= 2;
-                zips = (char**)realloc(zips, z_alloc * sizeof(char*));
-            }
-            zips[z_size++] = strdup(de->d_name);
-        }
+    std::string new_path = path + "/" + item;
+    if (new_path.back() == '/') {
+      // Recurse down into a subdirectory.
+      new_path.pop_back();
+      std::string result = browse_directory(new_path, device);
+      if (!result.empty()) return result;
+    } else {
+      // Selected a zip file: return the path to the caller.
+      return new_path;
     }
-    closedir(d);
+  }
 
-    qsort(dirs, d_size, sizeof(char*), compare_string);
-    qsort(zips, z_size, sizeof(char*), compare_string);
-
-    // append dirs to the zips list
-    if (d_size + z_size + 1 > z_alloc) {
-        z_alloc = d_size + z_size + 1;
-        zips = (char**)realloc(zips, z_alloc * sizeof(char*));
-    }
-    memcpy(zips + z_size, dirs, d_size * sizeof(char*));
-    free(dirs);
-    z_size += d_size;
-    zips[z_size] = NULL;
-
-    const char* headers[] = { "Choose a package to install:", path, NULL };
-
-    char* result;
-    int chosen_item = 0;
-    while (true) {
-        chosen_item = get_menu_selection(headers, zips, 1, chosen_item, device);
-
-        char* item = zips[chosen_item];
-        int item_len = strlen(item);
-        if (chosen_item == 0) {          // item 0 is always "../"
-            // go up but continue browsing (if the caller is update_directory)
-            result = NULL;
-            break;
-        }
-
-        char new_path[PATH_MAX];
-        strlcpy(new_path, path, PATH_MAX);
-        strlcat(new_path, "/", PATH_MAX);
-        strlcat(new_path, item, PATH_MAX);
-
-        if (item[item_len-1] == '/') {
-            // recurse down into a subdirectory
-            new_path[strlen(new_path)-1] = '\0';  // truncate the trailing '/'
-            result = browse_directory(new_path, device);
-            if (result) break;
-        } else {
-            // selected a zip file: return the malloc'd path to the caller.
-            result = strdup(new_path);
-            break;
-        }
-    }
-
-    for (int i = 0; i < z_size; ++i) free(zips[i]);
-    free(zips);
-
-    return result;
+  // Unreachable.
 }
 
 static bool yes_no(Device* device, const char* question1, const char* question2) {
@@ -1065,14 +1028,14 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
         return INSTALL_ERROR;
     }
 
-    char* path = browse_directory(SDCARD_ROOT, device);
-    if (path == NULL) {
+    std::string path = browse_directory(SDCARD_ROOT, device);
+    if (path.empty()) {
         ui->Print("\n-- No package file selected.\n");
         ensure_path_unmounted(SDCARD_ROOT);
         return INSTALL_ERROR;
     }
 
-    ui->Print("\n-- Install %s ...\n", path);
+    ui->Print("\n-- Install %s ...\n", path.c_str());
     set_sdcard_update_bootloader_message();
 
     // We used to use fuse in a thread as opposed to a process. Since accessing
@@ -1080,7 +1043,7 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
     // to deadlock when a page fault occurs. (Bug: 26313124)
     pid_t child;
     if ((child = fork()) == 0) {
-        bool status = start_sdcard_fuse(path);
+        bool status = start_sdcard_fuse(path.c_str());
 
         _exit(status ? EXIT_SUCCESS : EXIT_FAILURE);
     }
