@@ -13,12 +13,13 @@
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System-Image</string>
-		<string name="vendor">Anbieter</string>
-		<string name="vendor_image">Anbieter-Image</string>
+		<string name="vendor">Vendor</string>
+		<string name="vendor_image">Vendor-Image</string>
 		<string name="boot">Boot</string>
 		<string name="recovery">Recovery</string>
 		<string name="cache">Cache</string>
-		<string name="data">Daten</string>
+		<string name="data">Data</string>
+		<string name="data_backup">Data (ohne /data/media)</string>
 		<string name="sdcard">SD-Karte</string>
 		<string name="internal">Interner Speicher</string>
 		<string name="microsd">Micro SD-Karte</string>
@@ -114,6 +115,13 @@
 		<string name="rebooting">Neustart...</string>
 		<string name="swipe_reboot">Neustart bestätigen</string>
 		<string name="swipe_reboot_s">Neustart</string>
+		<string name="reboot_install_app_hdr">TWRP App installieren?</string>
+		<string name="reboot_install_app1">Soll die offizielle TWRP App installiert werden?</string>
+		<string name="reboot_install_app2">Die App kann nach neuen TWRP-Versionen suchen.</string>
+		<string name="reboot_install_app_prompt_install">Fragen, ob TWRP App installiert werden soll</string>
+		<string name="reboot_install_app_system">Als System-App installieren</string>
+		<string name="reboot_installing_app">Installiere App...</string>
+		<string name="swipe_to_install_app">TWRP App installieren</string>
 		<string name="swipe_flash">Installation bestätigen</string>
 		<string name="confirm_action">Aktion bestätigen</string>
 		<string name="back_cancel">Zurück-Taste drücken, um den Vorgang abzubrechen.</string>
@@ -145,12 +153,12 @@
 		<string name="format_data_ptr2">Sicherungen, Bilder, Videos, sowie Medien und</string>
 		<string name="format_data_ptr3">entfernt die Verschlüsselung des internen Speichers.</string>
 		<string name="format_data_adopted">Betrifft auch die eingegliederte Storage-Partition.</string>
-		<string name="format_data_lcp1">Formatieren der Daten-Partition löscht alle Apps, Backups, Bilder, Videos, sowie Medien und</string>
+		<string name="format_data_lcp1">Formatieren der Daten-Partition löscht alle Apps, Sicherungen, Bilder, Videos, sowie Medien und</string>
 		<string name="format_data_lcp2">entfernt die Verschlüsselung des internen Speichers.</string>
 		<string name="format_data_wtc1">Formatieren der Daten-Partition löscht alle Apps,</string>
-		<string name="format_data_wtc2">Sicherungen und Medien. Dies kann nicht rückgängig gemacht werden.</string>
+		<string name="format_data_wtc2">Sicherungen und Medien. Endgültig!</string>
 		<string name="format_data_undo">Dies kann nicht rückgängig gemacht werden.</string>
-		<string name="format_data_complete">Formatieren der Daten-Partition abgeschlossen</string>
+		<string name="format_data_complete">Formatierung der Daten-Partition abgeschlossen</string>
 		<!-- Translator note: the word "yes" must remain English! -->
 		<string name="yes_continue">"yes" eingeben um fortzufahren. Zurück drücken um abzubrechen.</string>
 		<string name="part_opt_hdr">Optionen für %tw_partition_name%-Partition</string>
@@ -209,6 +217,11 @@
 		<string name="enable_backup_comp_chk">Komprimierung aktivieren</string>
 		<string name="skip_md5_backup_chk">MD5-Erstellung für die Sicherung überspringen</string>
 		<string name="disable_backup_space_chk">Prüfung auf freien Speicher deaktivieren</string>
+		<string name="current_boot_slot">Aktiver Slot: %tw_active_slot%</string>
+		<string name="boot_slot_a">Slot A</string>
+		<string name="boot_slot_b">Slot B</string>
+		<string name="changing_boot_slot">Wechsle Boot Slot</string>
+		<string name="changing_boot_slot_complete">Boot Slot gewechselt</string>
 		<string name="refresh_sizes_btn">Größen aktualisieren</string>
 		<string name="swipe_backup">Sicherung erstellen</string>
 		<string name="append_date_btn">Datum anhängen</string>
@@ -534,7 +547,8 @@
 		<string name="unable_to_mount_storage">Kann Speicher nicht einhängen</string>
 		<string name="fail_decrypt">Entschlüsselung der Daten-Partition fehlgeschlagen.</string>
 		<string name="no_crypto_support">In diese Version wurde keine Krypto-Unterstützung eingebunden.</string>
-		<string name="decrypt_success_dev">Erfolgreich mit Standardpasswort entschlüsselt.</string>
+		<string name="decrypt_success_dev">Erfolgreich entschlüsselt, neues Blockgerät: '{1}'</string>
+		<string name="decrypt_success_nodev">Erfolgreich entschlüsseltd</string>
 		<string name="done">Abgeschlossen.</string>
 		<string name="start_partition_sd">Partitioniere SD Karte...</string>
 		<string name="partition_sd_locate">Zu partitionierendes Gerät nicht gefunden.</string>
@@ -582,6 +596,7 @@
 		<string name="remove_all">Entferne alle Dateien unter '{1}'</string>
 		<string name="wiping_data">Lösche Daten, aber verschone internen Speicher...</string>
 		<string name="backing_up">Sichere {1}...</string>
+		<string name="backup_storage_warning">Backups of {1} do not include any files in internal storage such as pictures or downloads.</string>
 		<string name="backing">Sichere</string>
 		<string name="backup_size">Sicherung von '{1}' hat 0 Byte.</string>
 		<string name="datamedia_fs_restore">WARNUNG: Diese Sicherung wurde mit dem Dateisystem {1} erstellt! Es kann sein, dass wieder zu {1} gewechselt werden muss, damit das Gerät nach der Wiederherstellung auch startet.</string>
@@ -621,7 +636,7 @@
 		<string name="recovery_commands_complete">Recovery-Befehle ausgeführt</string>
 		<string name="running_ors">Führe OpenRecoveryScript aus</string>
 		<string name="ors_complete">OpenRecoveryScript ausgeführt</string>
-		<string name="no_updater_binary">'{1}' konnte in der ZIP nicht gefunden werden.</string>
+		<string name="invalid_zip_format">Invalid zip file format!</string>
 		<string name="check_for_md5">Suche nach MD5-Datei...</string>
 		<string name="fail_sysmap">'{1}' kann nicht zugeordnet werden</string>
 		<string name="verify_zip_sig">Überprüfe ZIP-Signatur...</string>
@@ -667,7 +682,14 @@
 		<string name="cancel_sideload">ADB Sideload wird abgebrochen...</string>
 		<string name="change_fs_err">Fehler beim Ändern des Dateisystems.</string>
 		<string name="theme_ver_err">Theme-Version inkompatibel zu TWRP-Version. Standard-Theme wird verwendet.</string>
-		<string name="install_reboot">Neustart in 5 Sekunden</string>
 		<string name="up_a_level">(Übergeordneter Ordner)</string>
+		<string name="install_reboot"version="2">Neustart in %tw_sleep% Sekunden</string>
+		<string name="adbbackup_error">Fehler während ADB Backup. Abbruch..."</string>
+		<string name="adbbackup_control_error">Kein Zugriff auf ADB Control Channel</string>
+		<string name="twrp_adbbu_option">--twrp option wird für ADB Backup benötigt</string>
+		<string name="partition_not_found">Pfad: {1} wurde nicht in Partitionsliste gefunden</string>
+		<string name="copy_kernel_log">Kernel-Log wurde nach {1} kopiert</string>
+		<string name="include_kernel_log">Zusätzlich Kernel-Log kopieren</string>
+		<string name="unable_set_boot_slot">Fehler während Wechsel zu Slot {1}</string>
 	</resources>
 </language>
