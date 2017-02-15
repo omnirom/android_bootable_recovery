@@ -323,8 +323,6 @@ int main(int argc, char **argv) {
 		DataManager::SetValue("tw_mtp_enabled", 0);
 		PartitionManager.Disable_MTP();
 	}
-#else
-	PartitionManager.Disable_MTP();
 #endif
 
 #ifndef TW_OEM_BUILD
