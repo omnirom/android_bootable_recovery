@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_e22aa12c",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-15T01:03:28Z",
+      "side": 1,
+      "message": "This may not actually be necessary here, as reboot should be the default behavior when sideload !\u003d 1. See Run_OpenRecoveryScript_Action().",
+      "range": {
+        "startLine": 403,
+        "startChar": 5,
+        "endLine": 403,
+        "endChar": 34
+      },
+      "revId": "60349fd9da5debbc54e7951185b7e7adc62b670e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
