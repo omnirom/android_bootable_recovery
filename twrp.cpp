@@ -289,13 +289,6 @@ int main(int argc, char **argv) {
 	}
 
 	// Read the settings file
-#ifdef TW_HAS_MTP
-	// We unmount partitions sometimes during early boot which may override
-	// the default of MTP being enabled by auto toggling MTP off. This
-	// will force it back to enabled then get overridden by the settings
-	// file, assuming that an entry for tw_mtp_enabled is set.
-	DataManager::SetValue("tw_mtp_enabled", 1);
-#endif
 	DataManager::ReadSettingsFile();
 	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
 	GUIConsole::Translate_Now();
