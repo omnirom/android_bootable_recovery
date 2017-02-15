@@ -124,6 +124,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_42f4b5c8",
+        "filename": "twrpDigest/twrpSHA.hpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-15T00:40:40Z",
+      "side": 1,
+      "message": "Sorry for the derp, I converted to an array.",
+      "parentUuid": "78209991_0f326603",
+      "revId": "32e98a05498f35ce8b32d7578395ab96640608bb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_4f5dfe48",
         "filename": "twrpDigest/twrpSHA.hpp",
         "patchSetId": 45
