@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2017 TeamWin
  * Copyright (C) 2010 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (C) 2014 TeamWin - bigbiff and Dees_Troy mtp database conversion to C++
  */
 
 #ifndef _MTP_DEBUG_H
@@ -29,9 +29,9 @@ extern "C" {
 #endif
 void mtpdebug(const char *fmt, ...);
 
-#define MTPI(...) fprintf(stdout, __VA_ARGS__)
-#define MTPD(...) mtpdebug(__VA_ARGS__)
-#define MTPE(...) fprintf(stdout, "E:" __VA_ARGS__)
+#define MTPI(...) fprintf(stdout, "I:[MTP] " __VA_ARGS__)
+#define MTPD(...) mtpdebug("D:[MTP] " __VA_ARGS__)
+#define MTPE(...) fprintf(stdout, "E:[MTP] " __VA_ARGS__)
 
 #ifdef __cplusplus
 }
