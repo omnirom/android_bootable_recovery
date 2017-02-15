@@ -1127,6 +1127,7 @@
 			<template name="console"/>
 
 			<button style="main_button_half_height">
+				<condition var1="tw_navless_reboot" op="!=" var2="1"/>
 				<placement x="%col1_x_left%" y="%row13_y%"/>
 				<text>{@back_btn=Back}</text>
 				<actions>
@@ -1136,6 +1137,7 @@
 			</button>
 
 			<button style="main_button_half_height">
+				<condition var1="tw_navless_reboot" op="!=" var2="1"/>
 				<placement x="%col1_x_right%" y="%row13_y%"/>
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
@@ -1145,6 +1147,7 @@
 			</button>
 
 			<action>
+				<condition var1="tw_navless_reboot" op="!=" var2="1"/>
 				<touch key="home"/>
 				<actions>
 					<action function="set">tw_clear_destination=main2</action>
@@ -1153,6 +1156,7 @@
 			</action>
 
 			<action>
+				<condition var1="tw_navless_reboot" op="!=" var2="1"/>
 				<touch key="back"/>
 				<actions>
 					<action function="set">tw_clear_destination=%tw_back%</action>
