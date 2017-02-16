@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_05148741",
+        "filename": "etc/init.recovery.usb.rc",
+        "patchSetId": 2
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-02-16T16:14:49Z",
+      "side": 1,
+      "message": "If you are going to set the functions to just adb, then the idProduct should also be set to D002 to match. Windows does not gracefully handle changes to functions unless idProduct also changes at the same time.",
+      "revId": "61a4785eace24a8689eaf2cddb18aa56459acf47",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
