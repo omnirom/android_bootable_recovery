@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_851f775c",
+        "filename": "partition.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 1701,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-02-16T16:41:34Z",
+      "side": 1,
+      "message": "Unnecessary else block",
+      "revId": "88a16fd2d48e94b8cde4a9b61f8a082d88389310",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_65345bda",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 530,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-02-16T16:41:34Z",
+      "side": 1,
+      "message": "delete digest before returning",
+      "revId": "88a16fd2d48e94b8cde4a9b61f8a082d88389310",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_45315fe7",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 538,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-02-16T16:41:34Z",
+      "side": 1,
+      "message": "delete digest before returning",
+      "revId": "88a16fd2d48e94b8cde4a9b61f8a082d88389310",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_252e638c",
+        "filename": "partitions.hpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-02-16T16:41:34Z",
+      "side": 1,
+      "message": "Change MD5 -\u003e Digest in the comment and fix white space",
+      "revId": "88a16fd2d48e94b8cde4a9b61f8a082d88389310",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_c550cf0e",
+        "filename": "twrpDigest/Android.mk",
+        "patchSetId": 47
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-02-16T16:41:34Z",
+      "side": 1,
+      "message": "We usually stick to using spaces in make files. IIRC, make files sometimes treat spaces and tabs differently.",
+      "revId": "88a16fd2d48e94b8cde4a9b61f8a082d88389310",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
