@@ -33,6 +33,7 @@ LOCAL_STATIC_LIBRARIES := \
     libotafault \
     libbase \
     libcrypto \
+    libbspatch \
     libbz \
     libz
 LOCAL_CFLAGS := \
@@ -54,6 +55,7 @@ LOCAL_C_INCLUDES := \
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
     libcrypto \
+    libbspatch \
     libbz \
     libz
 LOCAL_CFLAGS := \
@@ -76,6 +78,7 @@ LOCAL_C_INCLUDES := \
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
     libcrypto \
+    libbspatch \
     libbz \
     libz
 LOCAL_CFLAGS := \
@@ -111,6 +114,7 @@ LOCAL_STATIC_LIBRARIES := \
     libedify \
     libotafault \
     libcrypto \
+    libbspatch \
     libbz
 LOCAL_SHARED_LIBRARIES := \
     libbase \

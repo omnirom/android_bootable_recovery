@@ -24,6 +24,7 @@ tune2fs_static_libraries := \
 
 updater_common_static_libraries := \
     libapplypatch \
+    libbspatch \
     libedify \
     libziparchive \
     libotautil \
