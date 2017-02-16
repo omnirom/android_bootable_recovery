@@ -303,26 +303,8 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef TW_HAS_MTP
-	// Enable MTP?
-	char mtp_crash_check[PROPERTY_VALUE_MAX];
-	property_get("mtp.crash_check", mtp_crash_check, "0");
-	if (strcmp(mtp_crash_check, "0") == 0) {
-		property_set("mtp.crash_check", "1");
-		if (DataManager::GetIntValue("tw_mtp_enabled") == 1 && ((DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0 && DataManager::GetIntValue(TW_IS_DECRYPTED) != 0) || DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0)) {
-			LOGINFO("Enabling MTP during startup\n");
-			if (!PartitionManager.Enable_MTP())
-				PartitionManager.Disable_MTP();
-			else
-				gui_msg("mtp_enabled=MTP Enabled");
-		} else {
-			PartitionManager.Disable_MTP();
-		}
-		property_set("mtp.crash_check", "0");
-	} else {
-		gui_warn("mtp_crash=MTP Crashed, not starting MTP on boot.");
-		DataManager::SetValue("tw_mtp_enabled", 0);
-		PartitionManager.Disable_MTP();
-	}
+	if (TWFunc::Start_MTP())
+		gui_msg("mtp_enabled=MTP Enabled");
 #endif
 
 #ifndef TW_OEM_BUILD
