@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_a55273da",
+        "filename": "twrp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 305,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-16T21:39:16Z",
+      "side": 1,
+      "message": "It would probably look saner if this was wrapped in ifdef TW_HAS_MTP. I\u0027ll make this change real quick.",
+      "range": {
+        "startLine": 305,
+        "startChar": 1,
+        "endLine": 305,
+        "endChar": 21
+      },
+      "revId": "d766bca4c7115230e50cce85996f979f432d62b0",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
