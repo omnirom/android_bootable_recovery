@@ -193,6 +193,9 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size, const Value
 
       // Next, apply the bsdiff patch (in memory) to the uncompressed data.
       std::vector<unsigned char> uncompressed_target_data;
+      // TODO(senj): Remove the only usage of ApplyBSDiffPatchMem here,
+      // replace it with ApplyBSDiffPatch with a custom sink function that
+      // wraps the given sink function to stream output to save memory.
       if (ApplyBSDiffPatchMem(expanded_source.data(), expanded_len, patch, patch_offset,
                               &uncompressed_target_data) != 0) {
         return -1;
