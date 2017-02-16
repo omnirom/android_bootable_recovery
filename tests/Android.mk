@@ -111,6 +111,7 @@ LOCAL_STATIC_LIBRARIES := \
     libimgdiff \
     libimgpatch \
     libbsdiff \
+    libbspatch \
     libotafault \
     libupdater \
     libbootloader_message \
@@ -173,6 +174,7 @@ LOCAL_STATIC_LIBRARIES := \
     libimgdiff \
     libimgpatch \
     libbsdiff \
+    libbspatch \
     libziparchive \
     libbase \
     libcrypto \
