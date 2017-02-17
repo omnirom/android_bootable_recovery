@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_457f1f0f",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-02-17T04:28:41Z",
+      "side": 1,
+      "message": "If we\u0027re going to reboot no matter what, would it make more sense to just call TWFunc::tw_reboot here. Then, we wouldn\u0027t need to make all of the theme changes to hide the home and back buttons.\n\nIf we still want to change the theme, then perhaps the variable used should be a little more generic: tw_sideload_reboot -\u003e tw_action_complete_hide_nav_buttons\n\nor something... in case we want hide the nav buttons on the action page for a different reason.",
+      "revId": "06fdc3005ac3a4830c98d7c3574d4fbace08f40f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
