@@ -16,6 +16,24 @@
       "revId": "06fdc3005ac3a4830c98d7c3574d4fbace08f40f",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_e5898b25",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-17T04:41:56Z",
+      "side": 1,
+      "message": "This was actually the way I first approached the problem, restart here. It\u0027ll scare users who see red text flash about failure to copy logs and one other minor inconvenience that I can\u0027t recall off the top of my head. Ultimately, I much prefer this approach as TWRP will cleanly finish its operations before reboot occurs. I hope you\u0027ll agree.\n\nI really didn\u0027t need to create a variable sideload_auto_reboot here and push this conditional to the bottom of the sideload routine. I\u0027ll move it up.\n\nI agree, a more generic \"hide the buttons\" variable is appropriate. I can create a new patch set.",
+      "parentUuid": "78209991_457f1f0f",
+      "revId": "06fdc3005ac3a4830c98d7c3574d4fbace08f40f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
