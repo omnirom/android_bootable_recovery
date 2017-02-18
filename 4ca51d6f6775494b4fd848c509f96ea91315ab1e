@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_e0029977",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-18T22:07:59Z",
+      "side": 1,
+      "message": "malformed. remove ? in middle",
+      "range": {
+        "startLine": 1,
+        "startChar": 19,
+        "endLine": 1,
+        "endChar": 20
+      },
+      "revId": "4ca51d6f6775494b4fd848c509f96ea91315ab1e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
