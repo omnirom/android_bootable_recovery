@@ -34,7 +34,7 @@
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
-		<string name="cpu_temp">CPU: %tw_cpu_temp% &#xB0;C</string>
+		<string name="cpu_temp">CPU: %tw_cpu_temp% °C</string>
 		<string name="battery_pct">Batteria: %tw_battery%</string>
 		<string name="sort_by_name">Ordina per Nome</string>
 		<string name="sort_by_date">Ordina per Data</string>
@@ -684,7 +684,7 @@
 		<string name="theme_ver_err">La versione del tema personalizzato non corrisponde alla versione di TWRP. Sarà utilizzato il tema predefinito.</string>
 		<string name="up_a_level">(Livello superiore)</string>
 		<string name="install_reboot" version="2">Riavvio in %tw_sleep% secondo(i)</string>
-		<string name="adbbackup_error">Errore con ADB Backup. Abbandono..."</string>
+		<string name="adbbackup_error">Errore con ADB Backup. Abbandono...</string>
 		<string name="adbbackup_control_error">Impossibile scrivere nel canale di controllo adb</string>
 		<string name="twrp_adbbu_option">--twrp opzione richiesta per abilitare twrp adb backup</string>
 		<string name="partition_not_found">percorso: {1} non trovato nella lista delle partizioni</string>
