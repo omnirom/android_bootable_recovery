@@ -1,0 +1,61 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_c0e0bdcc",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 557,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-18T21:35:57Z",
+      "side": 1,
+      "message": "needs translation",
+      "revId": "d3b0b938f2f319eacf2c25fe883f011994d7118f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_a0e5c1db",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 589,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-18T21:35:57Z",
+      "side": 1,
+      "message": "needs translation",
+      "revId": "d3b0b938f2f319eacf2c25fe883f011994d7118f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_80eac5a8",
+        "filename": "gui/theme/common/languages/pl.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 687,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-18T21:35:57Z",
+      "side": 1,
+      "message": "Remove trailing quote. See https://gerrit.omnirom.org/21979",
+      "range": {
+        "startLine": 687,
+        "startChar": 80,
+        "endLine": 687,
+        "endChar": 81
+      },
+      "revId": "d3b0b938f2f319eacf2c25fe883f011994d7118f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
