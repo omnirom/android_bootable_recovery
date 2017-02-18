@@ -1,15 +1,12 @@
-<?xml version="1.0"?>
-
+<?xml version="1.0" encoding="utf-8"?>
 <language>
 	<display>English</display>
-
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
-		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
-
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_l" scale="100" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_m" scale="100" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_s" scale="100" type="fontoverride"/>
+		<resource filename="DroidSansMono.ttf" name="fixed" scale="100" type="fontoverride"/>
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System Image</string>
@@ -30,11 +27,10 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
 		<string name="adopted_storage">Adopted Storage</string>
-
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
-		<string name="cpu_temp">CPU: %tw_cpu_temp% &#xB0;C</string>
+		<string name="cpu_temp">CPU: %tw_cpu_temp% °C</string>
 		<string name="battery_pct">Battery: %tw_battery%</string>
 		<string name="sort_by_name">Sort by Name</string>
 		<string name="sort_by_date">Sort by Date</string>
@@ -49,7 +45,6 @@
 		<string name="tab_screen">SCREEN</string>
 		<string name="tab_vibration">VIBRATION</string>
 		<string name="tab_language">LANGUAGE</string>
-
 		<string name="install_btn">Install</string>
 		<string name="wipe_btn">Wipe</string>
 		<string name="backup_btn">Backup</string>
@@ -485,7 +480,6 @@
 		<string name="su_installing">Installing SuperSU</string>
 		<string name="sel_storage_list">Select Storage</string>
 		<string name="ok_btn">OK</string>
-
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel does not have support for reading SELinux contexts.</string>
 		<string name="full_selinux">Full SELinux support is present.</string>
@@ -684,7 +678,7 @@
 		<string name="theme_ver_err">Custom theme version does not match TWRP version. Using stock theme.</string>
 		<string name="up_a_level">(Up A Level)</string>
 		<string name="install_reboot" version="2">Rebooting in %tw_sleep% second(s)</string>
-		<string name="adbbackup_error">Error with ADB Backup. Quitting..."</string>
+		<string name="adbbackup_error">Error with ADB Backup. Quitting...</string>
 		<string name="adbbackup_control_error">Cannot write to adb control channel</string>
 		<string name="twrp_adbbu_option">--twrp option is required to enable twrp adb backup</string>
 		<string name="partition_not_found">path: {1} not found in partititon list</string>
