@@ -1,15 +1,12 @@
-<?xml version="1.0"?>
-
+<?xml version="1.0" encoding="utf-8"?>
 <language>
 	<display>Polish</display>
-
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
-		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
-
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_l" scale="100" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_m" scale="100" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_s" scale="100" type="fontoverride"/>
+		<resource filename="DroidSansMono.ttf" name="fixed" scale="100" type="fontoverride"/>
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">Obraz Systemu</string>
@@ -19,6 +16,7 @@
 		<string name="recovery">Recovery</string>
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
+		<string name="data_backup">Data (wyłączając pamięć)</string>
 		<string name="sdcard">Karta SD</string>
 		<string name="internal">Pamięć Wewnętrzna</string>
 		<string name="microsd">Karta MicroSD</string>
@@ -29,11 +27,10 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
 		<string name="adopted_storage">Adopted Storage</string>
-
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Projekt Team Win Recovery</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
-		<string name="cpu_temp">CPU: %tw_cpu_temp% &#xB0;C</string>
+		<string name="cpu_temp">CPU: %tw_cpu_temp% °C</string>
 		<string name="battery_pct">Bateria: %tw_battery%</string>
 		<string name="sort_by_name">Sortuj wg nazwy</string>
 		<string name="sort_by_date">Sortuj wg daty</string>
@@ -48,7 +45,6 @@
 		<string name="tab_screen">EKRAN</string>
 		<string name="tab_vibration">WIBRACJE</string>
 		<string name="tab_language">JĘZYK</string>
-
 		<string name="install_btn">Instaluj</string>
 		<string name="wipe_btn">Wyczyść</string>
 		<string name="backup_btn">Kopia</string>
@@ -87,7 +83,7 @@
 		<string name="confirm_flash_hdr">Potwierdź instalację</string>
 		<string name="zip_queue">Kolejka:</string>
 		<string name="options">Opcje:</string>
-		<string name="swipe_confirm">   Potwierdź</string>
+		<string name="swipe_confirm">Potwierdź</string>
 		<string name="zip_add_btn">Dodaj więcej plików</string>
 		<string name="zip_clear_btn">Wyczyść kolejkę plików</string>
 		<string name="install_zip_count_hdr">Zainstaluj plik %tw_zip_index% z %tw_zip_queue_count%</string>
@@ -107,13 +103,20 @@
 		<string name="wiping_cache_dalvik">Czyszczenie Cache &amp; Dalvik...</string>
 		<string name="wipe_cache_dalvik_complete">Czyszczenie Cache &amp; Dalvik zakończone</string>
 		<string name="swipe_wipe">Przesuń, aby wyczyścić</string>
-		<string name="swipe_wipe_s">   Wyczyść</string>
+		<string name="swipe_wipe_s">Wyczyść</string>
 		<string name="no_os1">Brak zainstalowanego systemu! Jesteś</string>
 		<string name="no_osrb">pewien, że chcesz uruchomić urządzenie?</string>
 		<string name="no_ospo">pewien, że chcesz wyłączyć?</string>
 		<string name="rebooting">Restartowanie...</string>
 		<string name="swipe_reboot">Przesuń, aby zrestartować</string>
-		<string name="swipe_reboot_s">   Zrestartuj</string>
+		<string name="swipe_reboot_s">Zrestartuj</string>
+		<string name="reboot_install_app_hdr">Zainstalować Aplikację TWRP?</string>
+		<string name="reboot_install_app1">Czy chcesz zainstalować oficjalną aplikację TWRP?</string>
+		<string name="reboot_install_app2">Aplikacja może sprawdzić czy są nowe wersje TWRP.</string>
+		<string name="reboot_install_app_prompt_install">Monit o zainstalowanie aplikacji TWRP jeśli nie jest zainstalowana</string>
+		<string name="reboot_install_app_system">Zainstaluj jako Aplikację Systemową</string>
+		<string name="reboot_installing_app">Instalowanie Aplikacji...</string>
+		<string name="swipe_to_install_app">Przesuń aby zainstalować</string>
 		<string name="swipe_flash">Przesuń, aby zainstalować</string>
 		<string name="confirm_action">Potwierdź czynność</string>
 		<string name="back_cancel">Naciśnij wstecz, aby anulować.</string>
@@ -131,7 +134,7 @@
 		<string name="wipe_enc_confirm">Usunąć szyfrowanie Data?</string>
 		<string name="formatting_data">Formatowanie Data...</string>
 		<string name="swipe_format_data">Przesuń, aby sformatować Data</string>
-		<string name="swipe_format_data_s">   Sformatuj Data</string>
+		<string name="swipe_format_data_s">Sformatuj Data</string>
 		<string name="factory_reset_complete">Przywracanie ustawień fabrycznych zakończone</string>
 		<string name="sel_part_hdr">Wybierz partycje</string>
 		<string name="wipe_sel_confirm">Sformatować wybrane partycje?</string>
@@ -173,14 +176,14 @@
 		<string name="resizing">Zmienianie rozmiaru...</string>
 		<string name="resize_complete">Zmienianie rozmiaru zakończone</string>
 		<string name="swipe_resize">Przesuń, aby zmienić rozmiar</string>
-		<string name="swipe_resize_s">   Zmień rozmiar</string>
+		<string name="swipe_resize_s">Zmień rozmiar</string>
 		<string name="repair_btn">Napraw system plików</string>
 		<string name="repair_btn_s">Napraw</string>
 		<string name="repair_confirm">Naprawić %tw_partition_name%?</string>
 		<string name="repairing">Naprawianie...</string>
 		<string name="repair_complete">Naprawianie zakończone</string>
 		<string name="swipe_repair">Przesuń, aby naprawić</string>
-		<string name="swipe_repair_s">   Napraw</string>
+		<string name="swipe_repair_s">Napraw</string>
 		<string name="change_fs_btn">Zmień system plików</string>
 		<string name="change_fs_btn_s">Zmień</string>
 		<string name="change_fs_for_hdr">Zmień system plików na: %tw_partition_name%</string>
@@ -191,7 +194,7 @@
 		<string name="formatting">Formatowanie...</string>
 		<string name="format_complete">Formatowanie zakończone</string>
 		<string name="swipe_change_fs">Przesuń, aby zmienić</string>
-		<string name="swipe_change_s">   Zmień</string>
+		<string name="swipe_change_s">Zmień</string>
 		<string name="back_btn">Wstecz</string>
 		<string name="wipe_enc_btn">Usuń szyfrowanie</string>
 		<string name="swipe_factory_reset">Przesuń, aby wykonać</string>
@@ -208,7 +211,12 @@
 		<string name="enc_enabled">włączone</string>
 		<string name="enable_backup_comp_chk">Włącz kompresję</string>
 		<string name="skip_md5_backup_chk">Pomiń generowanie MD5 kopii zapasowej</string>
-		<string name="disable_backup_space_chk">Wyłącz sprawdzanie wolnego miejsca</string>
+		<string name="disable_backup_space_chk" version="2">Wyłącz sprawdzanie wolnego miejsca</string>
+		<string name="current_boot_slot">Aktualny Slot: %tw_active_slot%</string>
+		<string name="boot_slot_a">Slot A</string>
+		<string name="boot_slot_b">Slot B</string>
+		<string name="changing_boot_slot">Zmień Slot Bootowania</string>
+		<string name="changing_boot_slot_complete">Zmienianie Slotu Bootowania Zakończone</string>
 		<string name="refresh_sizes_btn">Odśwież rozmiary</string>
 		<string name="swipe_backup">Przesuń, aby wykonać kopię</string>
 		<string name="append_date_btn">Dodaj datę</string>
@@ -235,7 +243,7 @@
 		<string name="deleting_backup">Usuwanie kopii zapasowej...</string>
 		<string name="backup_deleted">Usuwanie kopii zapasowej zakończone</string>
 		<string name="swipe_delete">Przesuń, aby usunąć</string>
-		<string name="swipe_delete_s">   Usuń</string>
+		<string name="swipe_delete_s">Usuń</string>
 		<string name="restore_try_decrypt">Kopia zapasowa zaszyfrowana - próbuję rozszyfrować</string>
 		<string name="restore_try_decrypt_s">Spróbuj rozszyfrować</string>
 		<string name="restore_backup_date">Kopia zapasowa utworzona %tw_restore_file_date%</string>
@@ -243,14 +251,14 @@
 		<string name="restore_enable_md5_chk">Włącz weryfikację MD5 kopii zapasowych</string>
 		<string name="restore_complete">Przywracanie zakończone</string>
 		<string name="swipe_restore">Przesuń, aby przywrócić</string>
-		<string name="swipe_restore_s">   Przywróć</string>
+		<string name="swipe_restore_s">Przywróć</string>
 		<string name="rename_backup_hdr">Zmień nazwę kopii zapasowej</string>
 		<string name="rename_backup_confirm">Zmienić nazwę kopii zapasowej?</string>
 		<string name="rename_backup_confirm2">To nieodwracalne!</string>
 		<string name="renaming_backup">Zmienianie nazwy kopii zapasowej...</string>
 		<string name="rename_backup_complete">Zmienianie nazwy kopii zapasowej zakończone</string>
 		<string name="swipe_to_rename">Przesuń, aby zmienić nazwę</string>
-		<string name="swipe_rename">   Zmień nazwę</string>
+		<string name="swipe_rename">Zmień nazwę</string>
 		<string name="confirm_hdr">Potwierdź</string>
 		<string name="mount_hdr">Zamontuj</string>
 		<string name="mount_sel_part">Wybierz partycje do zamontowania:</string>
@@ -364,8 +372,8 @@
 		<string name="set_language_btn">Wybierz język</string>
 		<string name="advanced_hdr">Zaawansowane</string>
 		<string name="copy_log_confirm">Skopiować log na kartę SD?</string>
-		<string name="copying_log">Kopiowanie pliku log na kartę SD...</string>
-		<string name="copy_log_complete">Kopiowanie pliku log zakończone</string>
+		<string name="copying_log" version="2">Kopiowanie pliku log na kartę SD...</string>
+		<string name="copy_log_complete" version="2">Kopiowanie pliku log zakończone</string>
 		<string name="fix_context_btn">Uprawnienia</string>
 		<string name="part_sd_btn">Partycjonowanie</string>
 		<string name="part_sd_s_btn">Karta SD</string>
@@ -407,7 +415,7 @@
 		<string name="dumlock_installing">Instalowanie HTC Dumlock...</string>
 		<string name="dumlock_install_complete">Instalowanie HTC Dumlock zakończone</string>
 		<string name="swipe_to_unlock">Przesuń, aby odblokować</string>
-		<string name="swipe_unlock">   Odblokuj</string>
+		<string name="swipe_unlock">Odblokuj</string>
 		<string name="fm_hdr">Menedżer Plików</string>
 		<string name="fm_sel_file">Wybierz plik lub folder</string>
 		<string name="fm_type_folder">Folder</string>
@@ -449,7 +457,7 @@
 		<string name="sideload_wipe_dalvik_chk">Wyczyść Dalvik Cache</string>
 		<string name="sideload_wipe_cache_chk">Wyczyść Cache</string>
 		<string name="swipe_to_sideload">Przesuń, aby włączyć Sideload</string>
-		<string name="swipe_sideload">   Włącz</string>
+		<string name="swipe_sideload">Włącz</string>
 		<string name="sideload_confirm">ADB Sideload</string>
 		<string name="sideload_usage">Użycie: adb sideload nazwapliku.zip</string>
 		<string name="sideload_complete">ADB Sideload zakończone</string>
@@ -458,7 +466,7 @@
 		<string name="fix_contexts_note2">Naprawa uprawnień SELinux może spowodować</string>
 		<string name="fix_contexts_note3">problemy z włączeniem urządzenia.</string>
 		<string name="swipe_to_fix_contexts">Przesuń, aby naprawić</string>
-		<string name="swipe_fix_contexts">   Napraw uprawnienia</string>
+		<string name="swipe_fix_contexts">Napraw uprawnienia</string>
 		<string name="fixing_contexts">Naprawianie uprawnień...</string>
 		<string name="fix_contexts_complete">Naprawianie uprawnień zakończone</string>
 		<string name="reboot_hdr">Restart</string>
@@ -468,11 +476,10 @@
 		<string name="su_note3">To zrootuje twoje urządzenie.</string>
 		<string name="su_cancel">Nie instaluj</string>
 		<string name="swipe_su_to_install">Przesuń, aby zainstalować</string>
-		<string name="swipe_su_install">   Instaluj</string>
+		<string name="swipe_su_install">Instaluj</string>
 		<string name="su_installing">Instalowanie SuperSU</string>
 		<string name="sel_storage_list">Wybierz pamięć</string>
 		<string name="ok_btn">OK</string>
-
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel nie posiada obsługi odczytu uprawnień SELinux.</string>
 		<string name="full_selinux">Pełna obsługa SELinux jest dostępna.</string>
@@ -483,21 +490,21 @@
 		<string name="unable_to_decrypt">Nie można odszyfrować z domyślnym hasłem. Może trzeba będzie wykonać Format Data.</string>
 		<string name="generating_md51">Generowanie MD5</string>
 		<!-- Message displayed during a backup if we are generating an MD5, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_md52"> * Generowanie md5...</string>
-		<string name="md5_created"> * MD5 utworzone.</string>
-		<string name="md5_error"> * Błąd MD5!</string>
-		<string name="md5_compute_error"> * Błąd przetwarzania MD5.</string>
+		<string name="generating_md52">* Generowanie md5...</string>
+		<string name="md5_created">* MD5 utworzone.</string>
+		<string name="md5_error">* Błąd MD5!</string>
+		<string name="md5_compute_error">* Błąd przetwarzania MD5.</string>
 		<string name="current_date">(Obecna data)</string>
 		<string name="auto_generate">(Generuj automatycznie)</string>
 		<string name="unable_to_locate_partition">Nie można zlokalizować partycji '{1}' do obliczenia kopii zapasowej.</string>
 		<string name="no_partition_selected">Nie wybrano partycji do utworzenia kopii zapasowych.</string>
-		<string name="total_partitions_backup"> * Łączna liczba partycji do tworzenia kopii zapasowych: {1}</string>
-		<string name="total_backup_size"> * Łączna wielkość wszystkich danych: {1}MB</string>
-		<string name="available_space"> * Dostępne miejsce: {1}MB</string>
+		<string name="total_partitions_backup">* Łączna liczba partycji do tworzenia kopii zapasowych: {1}</string>
+		<string name="total_backup_size">* Łączna wielkość wszystkich danych: {1}MB</string>
+		<string name="available_space">* Dostępne miejsce: {1}MB</string>
 		<string name="unable_locate_storage">Nie można zlokalizować urządzenia magazynującego.</string>
 		<string name="no_space">Zbyt mało wolnego miejsca w pamięci urządzenia.</string>
 		<string name="backup_started">[KOPIA ROZPOCZĘTA]</string>
-		<string name="backup_folder"> * Folder kopii zapasowej: {1}</string>
+		<string name="backup_folder">* Folder kopii zapasowej: {1}</string>
 		<string name="fail_backup_folder">Nie udało się utworzyć folderu kopii zapasowej.</string>
 		<string name="avg_backup_fs">Średnie tempo tworzenia kopii zapasowych systemu plików: {1} MB/sek</string>
 		<string name="avg_backup_img">Średnie tempo tworzenia kopii zapasowych obrazu dysku: {1} MB/sek</string>
@@ -535,12 +542,13 @@
 		<string name="fail_decrypt">Niepowodzenie rozszyfrowywania danych.</string>
 		<string name="no_crypto_support">Brak obsługi crypto w tej kompilacji.</string>
 		<string name="decrypt_success_dev">Dane pomyślnie rozszyfrowane, nowe urządzenie blokowe: '{1}'</string>
+		<string name="decrypt_success_nodev">Dane pomyślnie rozszyfrowane</string>
 		<string name="done">Ukończono.</string>
 		<string name="start_partition_sd">Partycjonowanie Karty SD...</string>
 		<string name="partition_sd_locate">Nie można zlokalizować urządzenia do partycjonowania.</string>
 		<string name="ext_swap_size">Rozmiar EXT + Swap jest większy niż rozmiar Karty SD.</string>
 		<string name="remove_part_table">Usuwanie tablicy partycji...</string>
-		<string name="unable_rm_part">Unable to remove partition table.</string>
+		<string name="unable_rm_part">Nie można usunąć tablicy partycji.</string>
 		<string name="create_part">Tworzenie {1} partycji...</string>
 		<string name="unable_to_create_part">Nie można utworzyć {1} partycji.</string>
 		<string name="format_sdext_as">Formatowanie SD-EXT jako {1}...</string>
@@ -572,7 +580,7 @@
 		<string name="unable_resize">Nie można zmienić rozmiaru {1}.</string>
 		<string name="no_md5_found">Nie znaleziono pliku MD5 '{1}'. Proszę wyłączyć weryfikację MD5, aby przywrócić.</string>
 		<string name="md5_fail_match">MD5 nie pasuje do '{1}'.</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="md5_matched">MD5 pasuje do '{1}'.</string>
 		<string name="fail_decrypt_tar">Nie udało się odszyfrować pliku tar '{1}'</string>
 		<string name="format_data_msg">Może być konieczne ponowne uruchomienie recovery, aby móc ponownie użyć /date.</string>
 		<string name="format_data_err">Nie można sformatować, aby usunąć szyfrowanie.</string>
@@ -582,6 +590,7 @@
 		<string name="remove_all">Usuwanie wszystkich plików w '{1}'</string>
 		<string name="wiping_data">Czyszczenie Data bez /data/media ...</string>
 		<string name="backing_up">Tworzenie kopii zapasowej {1}...</string>
+		<string name="backup_storage_warning">Kopia zapasowa {1} nie zawiera żadnych plików z pamięci wewnętrznej, takich jak zdjęcia lub pobrane pliki.</string>
 		<string name="backing">Tworzenie kopii zapasowej</string>
 		<string name="backup_size">Rozmiar kopii zapasowej '{1}' to 0 bajtów.</string>
 		<string name="datamedia_fs_restore">UWAGA: Ta kopia /data została wykonana w sytemie plików {1}! Kopia może się nie uruchomić jeśli nie wrócisz do {1}.</string>
@@ -621,7 +630,7 @@
 		<string name="recovery_commands_complete">Ukończono komendy trybu odzyskiwania</string>
 		<string name="running_ors">Wykonywanie Skryptu OpenRecovery</string>
 		<string name="ors_complete">Ukończono Skrypt OpenRecovery</string>
-		<string name="no_updater_binary">Nie można znaleźć '{1}' w pliku zip.</string>
+		<string name="invalid_zip_format">Nieprawidłowy format pliku zip</string>
 		<string name="check_for_md5">Sprawdzanie pliku MD5...</string>
 		<string name="fail_sysmap">Nieudane mapowanie pliku '{1}'</string>
 		<string name="verify_zip_sig">Weryfikowanie sygnatury pliku zip...</string>
@@ -668,6 +677,13 @@
 		<string name="change_fs_err">Niepowodzenie zmiany systemu plików.</string>
 		<string name="theme_ver_err">Wersja niestandardowego motywu nie zgadza się z wersją TWRP. Użyto domyślnego motywu.</string>
 		<string name="up_a_level">(Cofnij)</string>
-		<string name="install_reboot">Ponowne uruchomienie za 5 sekund</string>
+		<string name="install_reboot" version="2">Ponowne uruchomienie za %tw_sleep% sekund</string>
+		<string name="adbbackup_error">Błąd kopii zapasowej  ADB. Anulowanie..."</string>
+		<string name="adbbackup_control_error">Nie można zapisać do adb kanału kontrolnego</string>
+		<string name="twrp_adbbu_option">--opcja twrp jest wymagana, aby umożliwić twrp adb backup</string>
+		<string name="partition_not_found">path: {1} not found in partititon list</string>
+		<string name="copy_kernel_log">Kopiuj log kernela do {1}</string>
+		<string name="include_kernel_log">Załącz Log Kernela</string>
+		<string name="unable_set_boot_slot">Błąd zmiany slotu bootowania bootloadera na {1}</string>
 	</resources>
 </language>
