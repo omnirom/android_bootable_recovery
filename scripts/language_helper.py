@@ -25,12 +25,12 @@ def toprettyxml(xdoc, encoding):
     return unistr.encode(encoding, 'xmlcharrefreplace')
 
 HELP = """
-  language_helper.py   -o file.xml    other language to compre to English
+  language_helper.py   -o file.xml    other language to compare to English
                      [ -f file.xml ]  output file (defaults to new.xml)
                        -h             help info
 """
 
-enfile = "../gui/theme/common/languages/en.xml"
+enfile = "en.xml"
 otherfile = ""
 outfile = "new.xml"
 
