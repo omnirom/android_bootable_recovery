@@ -16,6 +16,29 @@
       "revId": "7ebf5744da797c794c3c22bd1515861cd949548f",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_40ccad67",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 687,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-18T21:41:18Z",
+      "side": 1,
+      "message": "Remove trailing quote. See https://gerrit.omnirom.org/21979",
+      "range": {
+        "startLine": 687,
+        "startChar": 70,
+        "endLine": 687,
+        "endChar": 71
+      },
+      "revId": "7ebf5744da797c794c3c22bd1515861cd949548f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
