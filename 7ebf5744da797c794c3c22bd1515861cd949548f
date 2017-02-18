@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_00a4759f",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 686,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-18T21:05:37Z",
+      "side": 1,
+      "message": "space before version",
+      "revId": "7ebf5744da797c794c3c22bd1515861cd949548f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
