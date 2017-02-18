@@ -548,7 +548,7 @@
 		<string name="fail_decrypt">Entschlüsselung der Daten-Partition fehlgeschlagen.</string>
 		<string name="no_crypto_support">In diese Version wurde keine Krypto-Unterstützung eingebunden.</string>
 		<string name="decrypt_success_dev">Erfolgreich entschlüsselt, neues Blockgerät: '{1}'</string>
-		<string name="decrypt_success_nodev">Erfolgreich entschlüsseltd</string>
+		<string name="decrypt_success_nodev">Erfolgreich entschlüsselt</string>
 		<string name="done">Abgeschlossen.</string>
 		<string name="start_partition_sd">Partitioniere SD Karte...</string>
 		<string name="partition_sd_locate">Zu partitionierendes Gerät nicht gefunden.</string>
@@ -596,7 +596,7 @@
 		<string name="remove_all">Entferne alle Dateien unter '{1}'</string>
 		<string name="wiping_data">Lösche Daten, aber verschone internen Speicher...</string>
 		<string name="backing_up">Sichere {1}...</string>
-		<string name="backup_storage_warning">Backups of {1} do not include any files in internal storage such as pictures or downloads.</string>
+		<string name="backup_storage_warning">Eine Sicherungen der {1}-Partition umfasst nicht die Dateien auf dem internen Speicher. Bilder, Videos, Backups, Downloads etc. sind nicht Bestandteil der Sicherung!</string>
 		<string name="backing">Sichere</string>
 		<string name="backup_size">Sicherung von '{1}' hat 0 Byte.</string>
 		<string name="datamedia_fs_restore">WARNUNG: Diese Sicherung wurde mit dem Dateisystem {1} erstellt! Es kann sein, dass wieder zu {1} gewechselt werden muss, damit das Gerät nach der Wiederherstellung auch startet.</string>
@@ -636,7 +636,7 @@
 		<string name="recovery_commands_complete">Recovery-Befehle ausgeführt</string>
 		<string name="running_ors">Führe OpenRecoveryScript aus</string>
 		<string name="ors_complete">OpenRecoveryScript ausgeführt</string>
-		<string name="invalid_zip_format">Invalid zip file format!</string>
+		<string name="invalid_zip_format">ZIP-Format ungültig!</string>
 		<string name="check_for_md5">Suche nach MD5-Datei...</string>
 		<string name="fail_sysmap">'{1}' kann nicht zugeordnet werden</string>
 		<string name="verify_zip_sig">Überprüfe ZIP-Signatur...</string>
