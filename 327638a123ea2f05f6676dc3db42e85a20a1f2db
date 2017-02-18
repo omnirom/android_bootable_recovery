@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_601e8911",
+        "filename": "twrp.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 306,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-18T03:50:02Z",
+      "side": 1,
+      "message": "Actually, this log line doesn\u0027t belong here. Should be moved back inside Start_MTP() function.",
+      "revId": "327638a123ea2f05f6676dc3db42e85a20a1f2db",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
