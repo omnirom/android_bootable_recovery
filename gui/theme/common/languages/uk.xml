@@ -3,7 +3,6 @@
 
 <language>
 	<display>Українська</display>
-	
 	<!-- Translated by Bukwaezhka and Jemmini, 2016 -->
 
 	<resources>
@@ -35,8 +34,8 @@
 
 		<!-- GUI XML strings -->
 
-		
-		<string name="cpu_temp">Процесор: %tw_cpu_temp% &#xB0;C</string>
+
+		<string name="cpu_temp">Процесор: %tw_cpu_temp% °C</string>
 		<string name="battery_pct">Батарея: %tw_battery%</string>
 		<string name="sort_by_name">Сортувати за назвою</string>
 		<string name="sort_by_date">Сортувати по даті</string>
@@ -153,8 +152,8 @@
 		<string name="format_data_wtc2">резервні копії та медіафайли. Скасування цього неможливе.</string>
 		<string name="format_data_undo">Скасування цього неможливе.</string>
 		<string name="format_data_complete">Форматування Data завершено</string>
-		
-				<!-- Translator note: the word "yes" must remain English! -->
+
+		<!-- Translator note: the word "yes" must remain English! -->
 		<string name="yes_continue">Введіть yes щоб продовжити. Натисніть Назад щоб скасувати.</string>
 		<string name="part_opt_hdr">Параметри розділу %tw_partition_name%</string>
 		<string name="sel_act_hdr">Оберіть дію</string>
@@ -388,8 +387,8 @@
 		<string name="part_sd_undo">Це буде неможливо скасувати!</string>
 		<string name="part_sd_ext_sz">EXT розмір:</string>
 		<string name="part_sd_swap_sz">Swap розмір:</string>
-		
-		
+
+
 		<string name="file_system">Файлова система:</string>
 		<string name="swipe_part_sd">Розмітити</string>
 		<string name="swipe_part_sd_s">Розмітка</string>
@@ -670,12 +669,11 @@
 		<string name="theme_ver_err">Версія теми не збігається з версією TWRP. Використовується тема за замовченням.</string>
 		<string name="install_reboot">Пристрій буде перезавантажений через 5 секунд.</string>
 		<string name="up_a_level">(на рівень уверх)</string>
-		<string name="adbbackup_error">Помилка ADB копіювання. Вихід..."</string>
+		<string name="adbbackup_error">Помилка ADB копіювання. Вихід...</string>
 		<string name="adbbackup_control_error">Не вдається запис у adb канал контролю</string>
 		<string name="twrp_adbbu_option">--опція twrp потребує увімкнення adb копіювання</string>
 		<string name="partition_not_found">шлях: {1} не знайдено у списку розділів</string>
 		<string name="copy_kernel_log">Копіювання kernel log у {1}</string>
 		<string name="include_kernel_log">Увімкнути Kernel Log</string>
-		
 	</resources>
 </language>
