@@ -19,6 +19,7 @@
 		<string name="recovery">Recovery</string>
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
+		<string name="data_backup">Data (wyłączając pamięć)</string>
 		<string name="sdcard">Karta SD</string>
 		<string name="internal">Pamięć Wewnętrzna</string>
 		<string name="microsd">Karta MicroSD</string>
@@ -114,6 +115,13 @@
 		<string name="rebooting">Restartowanie...</string>
 		<string name="swipe_reboot">Przesuń, aby zrestartować</string>
 		<string name="swipe_reboot_s">   Zrestartuj</string>
+		<string name="reboot_install_app_hdr">Zainstalować Aplikację TWRP?</string>
+		<string name="reboot_install_app1">Czy chcesz zainstalować oficjalną aplikację TWRP?</string>
+		<string name="reboot_install_app2">Aplikacja może sprawdzić czy są nowe wersje TWRP.</string>
+		<string name="reboot_install_app_prompt_install">Monit o zainstalowanie aplikacji TWRP jeśli nie jest zainstalowana</string>
+		<string name="reboot_install_app_system">Zainstaluj jako Aplikację Systemową</string>
+		<string name="reboot_installing_app">Instalowanie Aplikacji...</string>
+		<string name="swipe_to_install_app">Przesuń aby zainstalować</string>
 		<string name="swipe_flash">Przesuń, aby zainstalować</string>
 		<string name="confirm_action">Potwierdź czynność</string>
 		<string name="back_cancel">Naciśnij wstecz, aby anulować.</string>
@@ -208,7 +216,12 @@
 		<string name="enc_enabled">włączone</string>
 		<string name="enable_backup_comp_chk">Włącz kompresję</string>
 		<string name="skip_md5_backup_chk">Pomiń generowanie MD5 kopii zapasowej</string>
-		<string name="disable_backup_space_chk">Wyłącz sprawdzanie wolnego miejsca</string>
+		<string name="disable_backup_space_chk" version="2">Wyłącz sprawdzanie wolnego miejsca</string>
+		<string name="current_boot_slot">Aktualny Slot: %tw_active_slot%</string>
+		<string name="boot_slot_a">Slot A</string>
+		<string name="boot_slot_b">Slot B</string>
+		<string name="changing_boot_slot">Zmień Slot Bootowania</string>
+		<string name="changing_boot_slot_complete">Zmienianie Slotu Bootowania Zakończone</string>
 		<string name="refresh_sizes_btn">Odśwież rozmiary</string>
 		<string name="swipe_backup">Przesuń, aby wykonać kopię</string>
 		<string name="append_date_btn">Dodaj datę</string>
@@ -364,8 +377,8 @@
 		<string name="set_language_btn">Wybierz język</string>
 		<string name="advanced_hdr">Zaawansowane</string>
 		<string name="copy_log_confirm">Skopiować log na kartę SD?</string>
-		<string name="copying_log">Kopiowanie pliku log na kartę SD...</string>
-		<string name="copy_log_complete">Kopiowanie pliku log zakończone</string>
+		<string name="copying_log" version="2">Kopiowanie pliku log na kartę SD...</string>
+		<string name="copy_log_complete" version="2">Kopiowanie pliku log zakończone</string>
 		<string name="fix_context_btn">Uprawnienia</string>
 		<string name="part_sd_btn">Partycjonowanie</string>
 		<string name="part_sd_s_btn">Karta SD</string>
@@ -535,6 +548,7 @@
 		<string name="fail_decrypt">Niepowodzenie rozszyfrowywania danych.</string>
 		<string name="no_crypto_support">Brak obsługi crypto w tej kompilacji.</string>
 		<string name="decrypt_success_dev">Dane pomyślnie rozszyfrowane, nowe urządzenie blokowe: '{1}'</string>
+		<string name="decrypt_success_nodev">Dane pomyślnie rozszyfrowane</string>
 		<string name="done">Ukończono.</string>
 		<string name="start_partition_sd">Partycjonowanie Karty SD...</string>
 		<string name="partition_sd_locate">Nie można zlokalizować urządzenia do partycjonowania.</string>
@@ -582,6 +596,7 @@
 		<string name="remove_all">Usuwanie wszystkich plików w '{1}'</string>
 		<string name="wiping_data">Czyszczenie Data bez /data/media ...</string>
 		<string name="backing_up">Tworzenie kopii zapasowej {1}...</string>
+		<string name="backup_storage_warning">Kopia zapasowa {1} nie zawiera żadnych plików z pamięci wewnętrznej, takich jak zdjęcia lub pobrane pliki.</string>
 		<string name="backing">Tworzenie kopii zapasowej</string>
 		<string name="backup_size">Rozmiar kopii zapasowej '{1}' to 0 bajtów.</string>
 		<string name="datamedia_fs_restore">UWAGA: Ta kopia /data została wykonana w sytemie plików {1}! Kopia może się nie uruchomić jeśli nie wrócisz do {1}.</string>
@@ -621,7 +636,7 @@
 		<string name="recovery_commands_complete">Ukończono komendy trybu odzyskiwania</string>
 		<string name="running_ors">Wykonywanie Skryptu OpenRecovery</string>
 		<string name="ors_complete">Ukończono Skrypt OpenRecovery</string>
-		<string name="no_updater_binary">Nie można znaleźć '{1}' w pliku zip.</string>
+		<string name="invalid_zip_format">Nieprawidłowy format pliku zip</string>
 		<string name="check_for_md5">Sprawdzanie pliku MD5...</string>
 		<string name="fail_sysmap">Nieudane mapowanie pliku '{1}'</string>
 		<string name="verify_zip_sig">Weryfikowanie sygnatury pliku zip...</string>
@@ -668,6 +683,13 @@
 		<string name="change_fs_err">Niepowodzenie zmiany systemu plików.</string>
 		<string name="theme_ver_err">Wersja niestandardowego motywu nie zgadza się z wersją TWRP. Użyto domyślnego motywu.</string>
 		<string name="up_a_level">(Cofnij)</string>
-		<string name="install_reboot">Ponowne uruchomienie za 5 sekund</string>
+		<string name="install_reboot" version="2">Ponowne uruchomienie za %tw_sleep% sekund</string>
+	        <string name="adbbackup_error">Błąd kopii zapasowej  ADB. Anulowanie..."</string>
+		<string name="adbbackup_control_error">Nie można zapisać do adb kanału kontrolnego</string>
+		<string name="twrp_adbbu_option">--opcja twrp jest wymagana, aby umożliwić twrp adb backup</string>
+		<string name="partition_not_found">path: {1} not found in partititon list</string>
+		<string name="copy_kernel_log">Kopiuj log kernela do {1}</string>
+		<string name="include_kernel_log">Załącz Log Kernela</string>
+		<string name="unable_set_boot_slot">Błąd zmiany slotu bootowania bootloadera na {1}</string>
 	</resources>
 </language>
