@@ -34,7 +34,7 @@
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
-		<string name="cpu_temp">CPU: %tw_cpu_temp% &#xB0;C</string>
+		<string name="cpu_temp">CPU: %tw_cpu_temp% °C</string>
 		<string name="battery_pct">Akku: %tw_battery%</string>
 		<string name="sort_by_name">Nach Namen sortieren</string>
 		<string name="sort_by_date">Nach Datum sortieren</string>
@@ -684,7 +684,7 @@
 		<string name="theme_ver_err">Theme-Version inkompatibel zu TWRP-Version. Standard-Theme wird verwendet.</string>
 		<string name="up_a_level">(Übergeordneter Ordner)</string>
 		<string name="install_reboot"version="2">Neustart in %tw_sleep% Sekunden</string>
-		<string name="adbbackup_error">Fehler während ADB Backup. Abbruch..."</string>
+		<string name="adbbackup_error">Fehler während ADB Backup. Abbruch...</string>
 		<string name="adbbackup_control_error">Kein Zugriff auf ADB Control Channel</string>
 		<string name="twrp_adbbu_option">--twrp option wird für ADB Backup benötigt</string>
 		<string name="partition_not_found">Pfad: {1} wurde nicht in Partitionsliste gefunden</string>

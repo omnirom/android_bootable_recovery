@@ -34,7 +34,7 @@
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
-		<string name="cpu_temp">CPU: %tw_cpu_temp% &#xB0;C</string>
+		<string name="cpu_temp">CPU: %tw_cpu_temp% °C</string>
 		<string name="battery_pct">Battery: %tw_battery%</string>
 		<string name="sort_by_name">Sort by Name</string>
 		<string name="sort_by_date">Sort by Date</string>
@@ -684,7 +684,7 @@
 		<string name="theme_ver_err">Custom theme version does not match TWRP version. Using stock theme.</string>
 		<string name="up_a_level">(Up A Level)</string>
 		<string name="install_reboot" version="2">Rebooting in %tw_sleep% second(s)</string>
-		<string name="adbbackup_error">Error with ADB Backup. Quitting..."</string>
+		<string name="adbbackup_error">Error with ADB Backup. Quitting...</string>
 		<string name="adbbackup_control_error">Cannot write to adb control channel</string>
 		<string name="twrp_adbbu_option">--twrp option is required to enable twrp adb backup</string>
 		<string name="partition_not_found">path: {1} not found in partititon list</string>

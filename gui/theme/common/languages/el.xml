@@ -25,7 +25,7 @@
         <string name="adopted_storage">Εγκεκριμένος Αποθ. Χώρος</string>
         <string name="twrp_header">Team Win Recovery Project</string>
         <string name="twrp_watch_header">TWRP %tw_version%</string>
-        <string name="cpu_temp">CPU: %tw_cpu_temp% &#xB0;C</string>
+        <string name="cpu_temp">CPU: %tw_cpu_temp% °C</string>
         <string name="battery_pct">Μπαταρία: %tw_battery%</string>
         <string name="sort_by_name">Ταξινόμηση κατά όνομα</string>
         <string name="sort_by_date">Ταξινόμηση κατά ημερομηνία</string>

@@ -1,14 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0"?>
+
 <language>
 	<display>Русский</display>
 	<!-- Translated by Jemmini; modified by agur4ik, SevenMaxs, S-trace 2017 -->
 
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
-		<resource filename="RobotoCondensed-Regular.ttf" name="font_l" scale="90" type="fontoverride"/>
-		<resource filename="RobotoCondensed-Regular.ttf" name="font_m" scale="90" type="fontoverride"/>
-		<resource filename="RobotoCondensed-Regular.ttf" name="font_s" scale="90" type="fontoverride"/>
-		<resource filename="DroidSansMono.ttf" name="fixed" scale="100" type="fontoverride"/>
+		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="90" />
+		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="90" />
+		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="90" />
+		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
+
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System Image</string>
@@ -29,6 +31,7 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
 		<string name="adopted_storage">Adopted Storage</string>
+
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
@@ -482,6 +485,7 @@
 		<string name="su_installing">Установка SuperSU</string>
 		<string name="sel_storage_list">Выберите накопитель</string>
 		<string name="ok_btn">OK</string>
+
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Чтение SELinux-контекста не поддерживается ядром.</string>
 		<string name="full_selinux">Присутствует полная поддержка SELinux.</string>
