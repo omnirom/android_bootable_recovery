@@ -1,15 +1,14 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <language>
 	<display>Deutsch</display>
 
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
-		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
-
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_l" scale="100" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_m" scale="100" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_s" scale="100" type="fontoverride"/>
+		<resource filename="DroidSansMono.ttf" name="fixed" scale="100" type="fontoverride"/>
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System-Image</string>
@@ -30,11 +29,10 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Eingegliederte Daten-Partition</string>
 		<string name="adopted_storage">Eingegliederte Storage-Partition</string>
-
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
-		<string name="cpu_temp">CPU: %tw_cpu_temp% &#xB0;C</string>
+		<string name="cpu_temp">CPU: %tw_cpu_temp% °C</string>
 		<string name="battery_pct">Akku: %tw_battery%</string>
 		<string name="sort_by_name">Nach Namen sortieren</string>
 		<string name="sort_by_date">Nach Datum sortieren</string>
@@ -49,7 +47,6 @@
 		<string name="tab_screen">BILDSCHIRM</string>
 		<string name="tab_vibration">VIBRATION</string>
 		<string name="tab_language">SPRACHE</string>
-
 		<string name="install_btn">Installieren</string>
 		<string name="wipe_btn">Löschen</string>
 		<string name="backup_btn">Sichern</string>
@@ -160,7 +157,7 @@
 		<string name="format_data_undo">Dies kann nicht rückgängig gemacht werden.</string>
 		<string name="format_data_complete">Formatierung der Daten-Partition abgeschlossen</string>
 		<!-- Translator note: the word "yes" must remain English! -->
-		<string name="yes_continue">"yes" eingeben um fortzufahren. Zurück drücken um abzubrechen.</string>
+		<string name="yes_continue">&quot;yes&quot; eingeben um fortzufahren. Zurück drücken um abzubrechen.</string>
 		<string name="part_opt_hdr">Optionen für %tw_partition_name%-Partition</string>
 		<string name="sel_act_hdr">Aktion auswählen</string>
 		<string name="file_sys_opt">Dateisystem-Optionen</string>
@@ -216,7 +213,7 @@
 		<string name="enc_enabled">aktiviert</string>
 		<string name="enable_backup_comp_chk">Komprimierung aktivieren</string>
 		<string name="skip_md5_backup_chk">MD5-Erstellung für die Sicherung überspringen</string>
-		<string name="disable_backup_space_chk">Prüfung auf freien Speicher deaktivieren</string>
+		<string name="disable_backup_space_chk" version="2">Prüfung auf freien Speicher deaktivieren</string>
 		<string name="current_boot_slot">Aktiver Slot: %tw_active_slot%</string>
 		<string name="boot_slot_a">Slot A</string>
 		<string name="boot_slot_b">Slot B</string>
@@ -275,7 +272,7 @@
 		<string name="mount_usb_storage_btn">USB-Speicher einhängen</string>
 		<string name="usb_storage_hdr">USB-Speicher</string>
 		<string name="usb_stor_mnt1">USB-Speicher eingehängt</string>
-		<string name="usb_stor_mnt2">Funktion "USB-Speicher auswerfen" auf Computer</string>
+		<string name="usb_stor_mnt2">Funktion &quot;USB-Speicher auswerfen&quot; auf Computer</string>
 		<string name="usb_stor_mnt3">ausführen, bevor die Verbindung getrennt wird!</string>
 		<string name="unmount_btn">Auswerfen</string>
 		<string name="rb_system_btn">System</string>
@@ -377,8 +374,8 @@
 		<string name="set_language_btn">Sprache einstellen</string>
 		<string name="advanced_hdr">Erweitert</string>
 		<string name="copy_log_confirm">Log auf SD-Karte kopieren?</string>
-		<string name="copying_log">Kopiere Log auf SD-Karte...</string>
-		<string name="copy_log_complete">Log erfolgreich kopiert</string>
+		<string name="copying_log" version="2">Kopiere Log auf SD-Karte...</string>
+		<string name="copy_log_complete" version="2">Log erfolgreich kopiert</string>
 		<string name="fix_context_btn">SELinux Kontexte</string>
 		<string name="part_sd_btn">SD-Karte partitionieren</string>
 		<string name="part_sd_s_btn">SD-Karte</string>
@@ -485,7 +482,6 @@
 		<string name="su_installing">Installiere SuperSU</string>
 		<string name="sel_storage_list">Speicher auswählen</string>
 		<string name="ok_btn">OK</string>
-
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Dieser Kernel hat keine Leseunterstützung für SELinux-Kontexte.</string>
 		<string name="full_selinux">Volle SELinux-Unterstützung ist vorhanden.</string>
@@ -539,7 +535,7 @@
 		<string name="wiping_dalvik">Dalvik Cache-Verzeichnisse bereinigen...</string>
 		<string name="cleaned">Bereinigt: {1}...</string>
 		<string name="dalvik_done">-- Dalvik Cache-Verzeichnisse bereinigt!</string>
-		<string name="no_andsec">Keine "Android Secure"-Partitionen gefunden.</string>
+		<string name="no_andsec">Keine &quot;Android Secure&quot;-Partitionen gefunden.</string>
 		<string name="unable_to_locate">{1} nicht gefunden.</string>
 		<string name="wiping_datamedia">Lösche internen Speicher -- /data/media...</string>
 		<string name="unable_to_mount">Kann {1} nicht einhängen</string>
@@ -548,7 +544,7 @@
 		<string name="fail_decrypt">Entschlüsselung der Daten-Partition fehlgeschlagen.</string>
 		<string name="no_crypto_support">In diese Version wurde keine Krypto-Unterstützung eingebunden.</string>
 		<string name="decrypt_success_dev">Erfolgreich entschlüsselt, neues Blockgerät: '{1}'</string>
-		<string name="decrypt_success_nodev">Erfolgreich entschlüsseltd</string>
+		<string name="decrypt_success_nodev">Erfolgreich entschlüsselt</string>
 		<string name="done">Abgeschlossen.</string>
 		<string name="start_partition_sd">Partitioniere SD Karte...</string>
 		<string name="partition_sd_locate">Zu partitionierendes Gerät nicht gefunden.</string>
@@ -596,7 +592,7 @@
 		<string name="remove_all">Entferne alle Dateien unter '{1}'</string>
 		<string name="wiping_data">Lösche Daten, aber verschone internen Speicher...</string>
 		<string name="backing_up">Sichere {1}...</string>
-		<string name="backup_storage_warning">Backups of {1} do not include any files in internal storage such as pictures or downloads.</string>
+		<string name="backup_storage_warning">Eine Sicherungen der {1}-Partition umfasst nicht die Dateien auf dem internen Speicher. Bilder, Videos, Backups, Downloads etc. sind nicht Bestandteil der Sicherung!</string>
 		<string name="backing">Sichere</string>
 		<string name="backup_size">Sicherung von '{1}' hat 0 Byte.</string>
 		<string name="datamedia_fs_restore">WARNUNG: Diese Sicherung wurde mit dem Dateisystem {1} erstellt! Es kann sein, dass wieder zu {1} gewechselt werden muss, damit das Gerät nach der Wiederherstellung auch startet.</string>
@@ -636,7 +632,7 @@
 		<string name="recovery_commands_complete">Recovery-Befehle ausgeführt</string>
 		<string name="running_ors">Führe OpenRecoveryScript aus</string>
 		<string name="ors_complete">OpenRecoveryScript ausgeführt</string>
-		<string name="invalid_zip_format">Invalid zip file format!</string>
+		<string name="invalid_zip_format">ZIP-Format ungültig!</string>
 		<string name="check_for_md5">Suche nach MD5-Datei...</string>
 		<string name="fail_sysmap">'{1}' kann nicht zugeordnet werden</string>
 		<string name="verify_zip_sig">Überprüfe ZIP-Signatur...</string>
@@ -683,8 +679,8 @@
 		<string name="change_fs_err">Fehler beim Ändern des Dateisystems.</string>
 		<string name="theme_ver_err">Theme-Version inkompatibel zu TWRP-Version. Standard-Theme wird verwendet.</string>
 		<string name="up_a_level">(Übergeordneter Ordner)</string>
-		<string name="install_reboot"version="2">Neustart in %tw_sleep% Sekunden</string>
-		<string name="adbbackup_error">Fehler während ADB Backup. Abbruch..."</string>
+		<string name="install_reboot" version="2">Neustart in %tw_sleep% Sekunden</string>
+		<string name="adbbackup_error">Fehler während ADB Backup. Abbruch...</string>
 		<string name="adbbackup_control_error">Kein Zugriff auf ADB Control Channel</string>
 		<string name="twrp_adbbu_option">--twrp option wird für ADB Backup benötigt</string>
 		<string name="partition_not_found">Pfad: {1} wurde nicht in Partitionsliste gefunden</string>
