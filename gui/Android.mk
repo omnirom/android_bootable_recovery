@@ -1,35 +1,34 @@
 LOCAL_PATH := $(call my-dir)
+
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS := -fno-strict-aliasing
-
 LOCAL_SRC_FILES := \
-    gui.cpp \
-    resources.cpp \
-    pages.cpp \
-    text.cpp \
-    image.cpp \
     action.cpp \
-    console.cpp \
-    fill.cpp \
+    animation.cpp \
+    blanktimer.cpp \
     button.cpp \
     checkbox.cpp \
+    console.cpp \
     fileselector.cpp \
-    progressbar.cpp \
-    animation.cpp \
+    fill.cpp \
+    gui.cpp \
+    image.cpp \
+    input.cpp \
+    keyboard.cpp \
+    listbox.cpp \
+    mousecursor.cpp \
     object.cpp \
+    pages.cpp \
+    partitionlist.cpp \
+    patternpassword.cpp \
+    progressbar.cpp \
+    resources.cpp \
+    scrolllist.cpp \
     slider.cpp \
     slidervalue.cpp \
-    listbox.cpp \
-    keyboard.cpp \
-    input.cpp \
-    blanktimer.cpp \
-    partitionlist.cpp \
-    mousecursor.cpp \
-    scrolllist.cpp \
-    patternpassword.cpp \
-    textbox.cpp \
     terminal.cpp \
+    text.cpp \
+    textbox.cpp \
     twmsg.cpp
 
 ifneq ($(TWRP_CUSTOM_KEYBOARD),)
@@ -38,8 +37,26 @@ else
     LOCAL_SRC_FILES += hardwarekeyboard.cpp
 endif
 
-LOCAL_SHARED_LIBRARIES += libminuitwrp libc libstdc++ libminzip libaosprecovery libselinux
-LOCAL_MODULE := libguitwrp
+LOCAL_SHARED_LIBRARIES := \
+    libaosprecovery \
+    libc \
+    libminuitwrp \
+    libminzip \
+    libselinux \
+    libstdc++
+
+LOCAL_C_INCLUDES := \
+    bionic \
+    system/core/include \
+    system/core/libpixelflinger/include
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
+    LOCAL_C_INCLUDES += external/stlport/stlport
+endif
+
+LOCAL_CFLAGS := \
+    -DTWRES=\"$(TWRES_PATH)\" \
+    -fno-strict-aliasing
 
 #TWRP_EVENT_LOGGING := true
 ifeq ($(TWRP_EVENT_LOGGING), true)
@@ -48,7 +65,6 @@ endif
 ifneq ($(TW_USE_KEY_CODE_TOUCH_SYNC),)
     LOCAL_CFLAGS += -DTW_USE_KEY_CODE_TOUCH_SYNC=$(TW_USE_KEY_CODE_TOUCH_SYNC)
 endif
-
 ifneq ($(TW_NO_SCREEN_BLANK),)
     LOCAL_CFLAGS += -DTW_NO_SCREEN_BLANK
 endif
@@ -74,25 +90,12 @@ ifeq ($(TW_ROUND_SCREEN), true)
     LOCAL_CFLAGS += -DTW_ROUND_SCREEN
 endif
 
-LOCAL_C_INCLUDES += \
-    bionic \
-    system/core/include \
-    system/core/libpixelflinger/include
-
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-    LOCAL_C_INCLUDES += external/stlport/stlport
-endif
-
-LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
+LOCAL_MODULE := libguitwrp
 
 include $(BUILD_STATIC_LIBRARY)
 
 # Transfer in the resources for the device
 include $(CLEAR_VARS)
-LOCAL_MODULE := twrp
-LOCAL_MODULE_TAGS := eng
-LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 
 # The extra blank line before *** is intentional to ensure it ends up on its own line
 define TW_THEME_WARNING_MSG
@@ -115,11 +118,14 @@ define TW_CUSTOM_THEME_WARNING_MSG
 ****************************************************************************
 endef
 
-TWRP_RES := $(commands_recovery_local_path)/gui/theme/common/fonts
-TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/languages
+TWRP_RES := \
+    $(commands_recovery_local_path)/gui/theme/common/fonts \
+    $(commands_recovery_local_path)/gui/theme/common/languages
+
 ifeq ($(TW_EXTRA_LANGUAGES),true)
-    TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/fonts
-    TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/languages
+    TWRP_RES += \
+        $(commands_recovery_local_path)/gui/theme/extra-languages/fonts \
+        $(commands_recovery_local_path)/gui/theme/extra-languages/languages
 endif
 
 ifeq ($(TW_CUSTOM_THEME),)
@@ -185,5 +191,14 @@ $(TWRP_RES_GEN):
 	cp -fr $(TWRP_THEME_LOC)/* $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 
 LOCAL_GENERATED_SOURCES := $(TWRP_RES_GEN)
-LOCAL_SRC_FILES := twrp $(TWRP_RES_GEN)
+
+LOCAL_SRC_FILES := \
+    $(TWRP_RES_GEN) \
+    twrp
+
+LOCAL_MODULE := twrp
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
+
 include $(BUILD_PREBUILT)
