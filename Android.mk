@@ -366,6 +366,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += \
     mkfs.fat \
     permissive.sh \
     simg2img_twrp \
+    twrpbu \
     libbootloader_message \
     init.recovery.service.rc
 
