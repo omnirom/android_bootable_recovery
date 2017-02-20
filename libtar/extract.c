@@ -37,6 +37,7 @@
 #ifdef HAVE_EXT4_CRYPT
 # include "ext4crypt_tar.h"
 #endif
+#include "android_utils.h"
 
 const unsigned long long progress_size = (unsigned long long)(T_BLOCKSIZE);
 
@@ -469,7 +470,6 @@ tar_extract_blockdev(TAR *t, const char *realname)
 	return 0;
 }
 
-
 /* directory */
 int
 tar_extract_dir(TAR *t, const char *realname)
@@ -518,6 +518,33 @@ tar_extract_dir(TAR *t, const char *realname)
 			perror("mkdir()");
 #endif
 			return -1;
+		}
+	}
+
+	if (t->options & TAR_STORE_ANDROID_USER_XATTR)
+	{
+		if (t->th_buf.has_user_default) {
+#if 1 //def DEBUG
+			printf("tar_extract_file(): restoring android user.default xattr to %s\n", realname);
+#endif
+			if (setxattr(realname, "user.default", NULL, 0, 0) < 0) {
+				fprintf(stderr, "tar_extract_file(): failed to restore android user.default to file %s !!!\n", realname);
+				return -1;
+			}
+		}
+		if (t->th_buf.has_user_cache) {
+#if 1 //def DEBUG
+			printf("tar_extract_file(): restoring android user.inode_cache xattr to %s\n", realname);
+#endif
+			if (write_path_inode(realname, "cache", "user.inode_cache"))
+				return -1;
+		}
+		if (t->th_buf.has_user_code_cache) {
+#if 1 //def DEBUG
+			printf("tar_extract_file(): restoring android user.inode_code_cache xattr to %s\n", realname);
+#endif
+			if (write_path_inode(realname, "code_cache", "user.inode_code_cache"))
+				return -1;
 		}
 	}
 
