@@ -520,6 +520,8 @@
 				</actions>
 			</action>
 
+			<action function="set">tw_cancel_param=</action>
+
 			<action>
 				<conditions>
 					<condition var1="tw_install_reboot" var2="1"/>
@@ -527,18 +529,21 @@
 					<condition var1="tw_reboot_system" var2="1"/>
 				</conditions>
 				<actions>
+					<action function="set">tw_sleep_reboot=1</action>
 					<action function="set">tw_sleep=%tw_sleep_total%</action>
-					<action function="page">flash_sleep_and_reboot</action>
+					<action function="set">tw_complete_text1={@install_zip_hdr=Install Zip}</action>
+					<action function="set">tw_cancel_param=flash_done</action>
+					<action function="page">sleep_and_reboot</action>
 				</actions>
 			</action>
 		</page>
 
-		<page name="flash_sleep_and_reboot">
+		<page name="sleep_and_reboot">
 			<template name="page"/>
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>{@install_zip_hdr=Install Zip}</text>
+				<text>%tw_complete_text1%</text>
 			</text>
 
 			<text style="text_m">
@@ -548,22 +553,32 @@
 
 			<template name="console"/>
 
-			<template name="progress_bar"/>
-
 			<button style="main_button_half_height">
 				<condition var1="tw_sleep" op="&gt;" var2="0"/>
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@cancel_btn=Cancel}</text>
-				<actions>
-					<action function="set">tw_install_reboot=0</action>
-					<action function="page">flash_done</action>
-				</actions>
+
+				<action>
+					<condition var1="tw_cancel_param" var2="flash_done"/>
+					<actions>
+						<action function="set">tw_install_reboot=0</action>
+						<action function="set">tw_sleep_reboot=0</action>
+						<action function="page">%tw_cancel_param%</action>
+					</actions>
+				</action>
+				<action>
+					<condition var1="tw_cancel_param" op="!=" var2="flash_done"/>
+					<actions>
+						<action function="set">tw_sleep_reboot=0</action>
+						<action function="page">%tw_cancel_param%</action>
+					</actions>
+				</action>
 			</button>
 
 			<action>
 				<conditions>
 					<condition var1="tw_sleep" var2="tw_sleep_total"/>
-					<condition var1="tw_install_reboot" var2="1"/>
+					<condition var1="tw_sleep_reboot" var2="1"/>
 				</conditions>
 				<action function="sleepcounter">%tw_sleep_total%</action>
 			</action>
@@ -571,7 +586,7 @@
 			<action>
 				<conditions>
 					<condition var1="tw_sleep" var2="0"/>
-					<condition var1="tw_install_reboot" var2="1"/>
+					<condition var1="tw_sleep_reboot" var2="1"/>
 				</conditions>
 				<actions>
 					<action function="sleep">50000</action>
@@ -774,9 +789,26 @@
 			</button>
 
 			<action>
-				<condition var1="tw_operation_state" var2="1"/>
+				<conditions>
+					<condition var1="tw_operation_state" var2="1"/>
+					<condition var1="tw_sleep_reboot" op="!=" var2="1"/>
+				</conditions>
 				<actions>
 					<action function="page">action_complete</action>
+				</actions>
+			</action>
+
+			<action>
+				<conditions>
+					<condition var1="tw_operation_state" var2="1"/>
+					<condition var1="tw_sleep_reboot" var2="1"/>
+				</conditions>
+				<actions>
+					<action function="set">tw_sleep_reboot=1</action>
+					<action function="set">tw_sleep=%tw_sleep_total%</action>
+					<action function="set">tw_complete_text1=%tw_action_text1%</action>
+					<action function="set">tw_cancel_param=action_complete</action>
+					<action function="page">sleep_and_reboot</action>
 				</actions>
 			</action>
 
@@ -859,7 +891,6 @@
 			<template name="console"/>
 
 			<button style="main_button_half_height">
-				<condition var1="tw_navless_reboot" op="!=" var2="1"/>
 				<placement x="%indent%" y="%row21a_y%"/>
 				<text>{@back_btn=Back}</text>
 				<actions>
@@ -869,7 +900,6 @@
 			</button>
 
 			<button style="main_button_half_height">
-				<condition var1="tw_navless_reboot" op="!=" var2="1"/>
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
@@ -879,7 +909,6 @@
 			</button>
 
 			<action>
-				<condition var1="tw_navless_reboot" op="!=" var2="1"/>
 				<touch key="home"/>
 				<actions>
 					<action function="set">tw_clear_destination=main2</action>
@@ -887,8 +916,9 @@
 				</actions>
 			</action>
 
+			<action function="set">tw_cancel_param=</action>
+
 			<action>
-				<condition var1="tw_navless_reboot" op="!=" var2="1"/>
 				<touch key="back"/>
 				<actions>
 					<action function="set">tw_clear_destination=%tw_back%</action>

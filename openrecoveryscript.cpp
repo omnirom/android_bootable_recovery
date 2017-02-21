@@ -369,7 +369,7 @@ int OpenRecoveryScript::run_script_file(void) {
 			} else if (strncmp(command, "sideload", strlen("sideload")) == 0) {
 				// ADB Sideload
 				if (!strcmp(command, "sideload_auto_reboot"))
-					DataManager::SetValue("tw_navless_reboot", "1");
+					DataManager::SetValue("tw_sleep_reboot", "1");
 				else
 					force_home = true;
 

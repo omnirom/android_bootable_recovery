@@ -677,7 +677,9 @@ void DataManager::SetDefaultValues()
 	mConst.SetValue(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE);
 	mData.SetValue(TW_BACKUP_NAME, "(Auto Generate)");
 
-	mPersist.SetValue(TW_INSTALL_REBOOT_VAR, "0");
+	mPersist.SetValue(TW_INSTALL_REBOOT_VAR, "0"); // User configurable
+	mPersist.SetValue(TW_SLEEP_REBOOT_VAR, "0");   // Non-configurable, for internal use
+
 	mPersist.SetValue(TW_SIGNED_ZIP_VERIFY_VAR, "0");
 	mPersist.SetValue(TW_FORCE_MD5_CHECK_VAR, "0");
 	mPersist.SetValue(TW_DISABLE_FREE_SPACE_VAR, "0");
@@ -835,8 +837,6 @@ void DataManager::SetDefaultValues()
 	mPersist.SetValue("tw_app_install_system", "1");
 	mData.SetValue("tw_app_install_status", "0"); // 0 = no status, 1 = not installed, 2 = already installed
 #endif
-
-	mData.SetValue("tw_navless_reboot", "0");
 
 	pthread_mutex_unlock(&m_valuesLock);
 }

@@ -53,8 +53,7 @@ extern "C" {
 
 /* Version History:
  * 2 - Theme handles power button as action togglebacklight
- * 3 - Introduce tw_navless_reboot for ORS actions which automatically reboot
- *     the device on completion
+ * 3 - Generalize 'sleep_and_reboot' page
  */
 #define TW_THEME_VERSION 3
 
