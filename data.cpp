@@ -677,7 +677,9 @@ void DataManager::SetDefaultValues()
 	mConst.SetValue(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE);
 	mData.SetValue(TW_BACKUP_NAME, "(Auto Generate)");
 
-	mPersist.SetValue(TW_INSTALL_REBOOT_VAR, "0");
+	mPersist.SetValue(TW_INSTALL_REBOOT_VAR, "0"); // User configurable
+	mPersist.SetValue(TW_SLEEP_REBOOT_VAR, "0");   // For internal use only
+
 	mPersist.SetValue(TW_SIGNED_ZIP_VERIFY_VAR, "0");
 	mPersist.SetValue(TW_FORCE_MD5_CHECK_VAR, "0");
 	mPersist.SetValue(TW_DISABLE_FREE_SPACE_VAR, "0");
@@ -717,7 +719,7 @@ void DataManager::SetDefaultValues()
 #endif
 	mData.SetValue("tw_gui_done", "0");
 	mData.SetValue("tw_encrypt_backup", "0");
-	mData.SetValue("tw_sleep_total", "5");
+	mConst.SetValue("tw_sleep_total", "5");
 	mData.SetValue("tw_sleep", "5");
 
 	// Brightness handling
