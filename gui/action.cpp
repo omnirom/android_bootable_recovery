@@ -792,16 +792,27 @@ int GUIAction::sleep(std::string arg)
 int GUIAction::sleepcounter(std::string arg)
 {
 	operation_start("SleepCounter");
+
 	// Ensure user notices countdown in case it needs to be cancelled
 	blankTimer.resetTimerAndUnblank();
+
 	int total = atoi(arg.c_str());
 	for (int t = total; t > 0; t--) {
+		if (!DataManager::GetIntValue(TW_SLEEP_REBOOT_VAR)) {
+			operation_end(0);
+			return 0;
+		}
 		int progress = (int)(((float)(total-t)/(float)total)*100.0);
 		DataManager::SetValue("ui_progress", progress);
 		::sleep(1);
 		DataManager::SetValue("tw_sleep", t-1);
 	}
 	DataManager::SetValue("ui_progress", 100);
+
+	// Give the UI enough time to update the progress and remove the cancel button
+	usleep(100000);
+	DataManager::SetValue("tw_sleep", -1);
+
 	operation_end(0);
 	return 0;
 }
