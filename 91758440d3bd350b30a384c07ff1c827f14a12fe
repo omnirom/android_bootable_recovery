@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_bbc1745c",
+        "filename": "Android.mk",
+        "patchSetId": 53
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 0,
+      "message": "Is this specific to this commit, or does it belong in a separate commit?",
+      "revId": "91758440d3bd350b30a384c07ff1c827f14a12fe",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_dbbc30d9",
+        "filename": "Android.mk",
+        "patchSetId": 53
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 0,
+      "message": "This belongs in a separate commit",
+      "revId": "91758440d3bd350b30a384c07ff1c827f14a12fe",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_5b738012",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 0,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "91758440d3bd350b30a384c07ff1c827f14a12fe",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_1b7d08dd",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 0,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "91758440d3bd350b30a384c07ff1c827f14a12fe",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}

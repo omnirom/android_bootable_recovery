@@ -2,6 +2,518 @@
   "comments": [
     {
       "key": {
+        "uuid": "78209991_9bb6b8f3",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_7bbbdcdc",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_5bd02021",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 446,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_3bcd648c",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 459,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_1bcaa873",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_fbc6cc6c",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 542,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_dba790bb",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 573,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_bbacd4a0",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 604,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_9bb118f6",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 638,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_7bb63ced",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 691,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_5b9b8077",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_3b98c478",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 729,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_1ba508ae",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 748,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_fba12ca1",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 762,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_db8e7035",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 769,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_bb93b458",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 812,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_fb792cf0",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1668,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "this is odd. just two lines above you set use_sha2\u003dfalse, then you assume this file extension to begin with? don\u0027t set the extension until the path has been checked.",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_bb6bb417",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1669,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "if (TWFunc::Path_Exists(digestfile + \".sha2\")) {",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_9b60f832",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1671,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "and set digestfile\u0027s new complete name",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_db667050",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1673,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "if (TWFunc::Path_Exists(digestfile + \".md5\")) {",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_7b651c40",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1677,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "else throw error",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_5b5a6084",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1679,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "see suggested \"else\" above",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_dbc1d004",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 533,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Lots of repeated code. Maybe wait until after this if/else. (Yes, the log lines would still need their own if/else, then... hence the \u0027maybe\u0027)",
+      "range": {
+        "startLine": 528,
+        "startChar": 0,
+        "endLine": 533,
+        "endChar": 3
+      },
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_3b57a45b",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 536,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "Doesn\u0027t match code formatting throughout rest of twrp",
+      "range": {
+        "startLine": 535,
+        "startChar": 1,
+        "endLine": 536,
+        "endChar": 8
+      },
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_bbc6141a",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 554,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "code formatting",
+      "range": {
+        "startLine": 553,
+        "startChar": 1,
+        "endLine": 554,
+        "endChar": 7
+      },
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_9bcb5823",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 589,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "code formatting",
+      "range": {
+        "startLine": 588,
+        "startChar": 3,
+        "endLine": 589,
+        "endChar": 7
+      },
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_7bd07cca",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 621,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "why adding bracing for if?",
+      "range": {
+        "startLine": 620,
+        "startChar": 2,
+        "endLine": 621,
+        "endChar": 6
+      },
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_5bd5c0b8",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 701,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "bracing not needed",
+      "range": {
+        "startLine": 701,
+        "startChar": 15,
+        "endLine": 701,
+        "endChar": 17
+      },
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_9b88f827",
         "filename": "twinstall.cpp",
         "patchSetId": 53
@@ -48,6 +560,24 @@
       "writtenOn": "2017-02-20T18:53:58Z",
       "side": 1,
       "message": "wtf?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_bb84d4db",
+        "filename": "twinstall.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T00:26:02Z",
+      "side": 1,
+      "message": "you can never be too safe",
+      "parentUuid": "78209991_7b8d1c35",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
