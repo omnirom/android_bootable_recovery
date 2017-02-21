@@ -1,14 +1,14 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <language>
 	<display>Deutsch</display>
 
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
-		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_l" scale="100" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_m" scale="100" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_s" scale="100" type="fontoverride"/>
+		<resource filename="DroidSansMono.ttf" name="fixed" scale="100" type="fontoverride"/>
 
 		<!-- Partition display names -->
 		<string name="system">System</string>
@@ -34,7 +34,7 @@
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
-		<string name="cpu_temp">CPU: %tw_cpu_temp% &#xB0;C</string>
+		<string name="cpu_temp">CPU: %tw_cpu_temp% °C</string>
 		<string name="battery_pct">Akku: %tw_battery%</string>
 		<string name="sort_by_name">Nach Namen sortieren</string>
 		<string name="sort_by_date">Nach Datum sortieren</string>
@@ -305,7 +305,7 @@
 		<string name="settings_gen_hdr">Allgemein</string>
 		<string name="settings_gen_s_hdr">Allgemein</string>
 		<string name="settings_gen_btn">Allgemein</string>
-		<string name="use_rmrf_chk">rekursiv löschen anstatt formatieren</string>
+		<string name="use_rmrf_chk">Rekursiv löschen anstatt formatieren</string>
 		<string name="use24clock_chk">24-Stunden-Format</string>
 		<string name="rev_navbar_chk">Navigationsleiste umkehren</string>
 		<string name="simact_chk">Benutzeraktionen für Design-Test simulieren</string>
@@ -683,7 +683,7 @@
 		<string name="change_fs_err">Fehler beim Ändern des Dateisystems.</string>
 		<string name="theme_ver_err">Theme-Version inkompatibel zu TWRP-Version. Standard-Theme wird verwendet.</string>
 		<string name="up_a_level">(Übergeordneter Ordner)</string>
-		<string name="install_reboot"version="2">Neustart in %tw_sleep% Sekunden</string>
+		<string name="install_reboot" version="2">Neustart in %tw_sleep% Sekunden</string>
 		<string name="adbbackup_error">Fehler während ADB Backup. Abbruch..."</string>
 		<string name="adbbackup_control_error">Kein Zugriff auf ADB Control Channel</string>
 		<string name="twrp_adbbu_option">--twrp option wird für ADB Backup benötigt</string>
