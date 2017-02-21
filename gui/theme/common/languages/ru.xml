@@ -1,16 +1,14 @@
-<?xml version="1.0"?>
-
+<?xml version="1.0" encoding="utf-8"?>
 <language>
 	<display>Русский</display>
-	<!-- Translated by Jemmini; modified by agur4ik, SevenMaxs, S-trace 2016 -->
+	<!-- Translated by Jemmini; modified by agur4ik, SevenMaxs, S-trace 2017 -->
 
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
-		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="90" />
-		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="90" />
-		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="90" />
-		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
-
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_l" scale="90" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_m" scale="90" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_s" scale="90" type="fontoverride"/>
+		<resource filename="DroidSansMono.ttf" name="fixed" scale="100" type="fontoverride"/>
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System Image</string>
@@ -20,6 +18,7 @@
 		<string name="recovery">Recovery</string>
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
+		<string name="data_backup">Data (искл. Storage)</string>
 		<string name="sdcard">SDcard</string>
 		<string name="internal">Память устройства</string>
 		<string name="microsd">Micro SDCard</string>
@@ -30,11 +29,10 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
 		<string name="adopted_storage">Adopted Storage</string>
-
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
-		<string name="cpu_temp">ЦП: %tw_cpu_temp% &#xB0;C</string>
+		<string name="cpu_temp">ЦП: %tw_cpu_temp% °C</string>
 		<string name="battery_pct">Батарея: %tw_battery%</string>
 		<string name="sort_by_name">Сорт.по имени</string>
 		<string name="sort_by_date">Сорт.по дате</string>
@@ -49,7 +47,6 @@
 		<string name="tab_screen">ЭКРАН</string>
 		<string name="tab_vibration">ВИБРАЦИЯ</string>
 		<string name="tab_language">ЯЗЫК</string>
-
 		<string name="install_btn">Установка</string>
 		<string name="wipe_btn">Очистка</string>
 		<string name="backup_btn">Резервное коп-ние</string>
@@ -216,7 +213,7 @@
 		<string name="enc_enabled">включено</string>
 		<string name="enable_backup_comp_chk">Использовать сжатие</string>
 		<string name="skip_md5_backup_chk">Пропустить вычисление MD5</string>
-		<string name="disable_backup_space_chk">Отключить проверку свободного места</string>
+		<string name="disable_backup_space_chk" version="2">Отключить проверку свободного места</string>
 		<string name="current_boot_slot">Текущий слот: %tw_active_slot%</string>
 		<string name="boot_slot_a">Слот A</string>
 		<string name="boot_slot_b">Слот B</string>
@@ -322,7 +319,7 @@
 		<string name="time_zone_hdr">Часовой пояс</string>
 		<string name="sel_tz_list">Выбор часового пояса:</string>
 		<!-- Translator note: if it does not make sense to translate the locations or if it makes more sense,
-				feel free to change the location listed or drop the location entirely and just call it UTC -6 -->
+			 feel free to change the location listed or drop the location entirely and just call it UTC -6 -->
 		<string name="utcm11">(UTC -11) о. Мидуэй, Самоа</string>
 		<string name="utcm10">(UTC -10) Гавайи</string>
 		<string name="utcm9">(UTC -9) Аляска</string>
@@ -377,8 +374,8 @@
 		<string name="set_language_btn">Установить язык</string>
 		<string name="advanced_hdr">Дополнительно</string>
 		<string name="copy_log_confirm">Копировать лог на SD?</string>
-		<string name="copying_log">Копирование лога на SD...</string>
-		<string name="copy_log_complete">Копирование лога завершено</string>
+		<string name="copying_log" version="2">Копирование лога на SD...</string>
+		<string name="copy_log_complete" version="2">Копирование лога завершено.</string>
 		<string name="fix_context_btn">Исправить контекст</string>
 		<string name="part_sd_btn">Разметка SD-карты</string>
 		<string name="part_sd_s_btn">Разм-ка SD</string>
@@ -485,7 +482,6 @@
 		<string name="su_installing">Установка SuperSU</string>
 		<string name="sel_storage_list">Выберите накопитель</string>
 		<string name="ok_btn">OK</string>
-
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Чтение SELinux-контекста не поддерживается ядром.</string>
 		<string name="full_selinux">Присутствует полная поддержка SELinux.</string>
@@ -596,6 +592,7 @@
 		<string name="remove_all">Удаление всех файлов в '{1}'</string>
 		<string name="wiping_data">Очистка /data без очистки /data/media ...</string>
 		<string name="backing_up">Резервное копирование {1}...</string>
+		<string name="backup_storage_warning">Резервное копирование {1}, за исключением файлов во внутренней памяти, таких как фотографии или загрузки.</string>
 		<string name="backing">Резервное копирование</string>
 		<string name="backup_size">Размер файла резервной копии для '{1}' 0 байт.</string>
 		<string name="datamedia_fs_restore">ВНИМАНИЕ: Эта резервная копия /data была создана с файловой системы {1}! Резервная копия может не загрузиться, если вы не измените обратно на {1}.</string>
@@ -683,7 +680,7 @@
 		<string name="theme_ver_err">Версия темы не соответствует версии TWRP. Используется тема по умолчанию.</string>
 		<string name="up_a_level">(в родительский каталог)</string>
 		<string name="install_reboot" version="2">Устройство будет перезагружено через %tw_sleep% сек.</string>
-		<string name="adbbackup_error">Ошибка резервного копирования по ADB. Выход..."</string>
+		<string name="adbbackup_error">Ошибка резервного копирования по ADB. Выход...</string>
 		<string name="adbbackup_control_error">Невозможно записать в канал управления ADB.</string>
 		<string name="twrp_adbbu_option">-- эта опция позволяет делать резервное копирование по adb</string>
 		<string name="partition_not_found">путь: {1} отсутсвует в списке разделов.</string>
