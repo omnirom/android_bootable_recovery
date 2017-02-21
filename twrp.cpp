@@ -297,6 +297,10 @@ int main(int argc, char **argv) {
 	if (crash_counter == 0)
 		TWFunc::Fixup_Time_On_Boot();
 
+	// Ensure tw_sleep_reboot is reset in case 'adb reboot' was called
+	// instead of allowing Finish_TWRP() to clean-up previously.
+	DataManager::SetValue(TW_SLEEP_REBOOT_VAR, "0");
+
 	// Run any outstanding OpenRecoveryScript
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
