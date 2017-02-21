@@ -1,3 +1,4 @@
+
 LOCAL_PATH := $(call my-dir)
 
 RELINK := $(LOCAL_PATH)/relink.sh
@@ -210,6 +211,7 @@ ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
         RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT_SBIN)/mkfs.f2fs
     else
         RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mkfs.f2fs
+        RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libf2fs.so
     endif
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/fsck.f2fs
 endif
