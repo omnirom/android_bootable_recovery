@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_dbe8b07e",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_9bb6b8f3",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_7bbbdcdc",
         "filename": "adbbu/twrpback.cpp",
         "patchSetId": 53
@@ -30,6 +48,24 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_bbedf48d",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_7bbbdcdc",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_9be23899",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 446,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_5bd02021",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_3bcd648c",
         "filename": "adbbu/twrpback.cpp",
         "patchSetId": 53
@@ -64,6 +118,24 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_7be75caa",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 459,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_3bcd648c",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -87,6 +159,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_5bfca03a",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_1bcaa873",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_fbc6cc6c",
         "filename": "adbbu/twrpback.cpp",
         "patchSetId": 53
@@ -98,6 +188,24 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_3bf9e449",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 542,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_fbc6cc6c",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -121,6 +229,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_1bf62859",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 573,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_dba790bb",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_bbacd4a0",
         "filename": "adbbu/twrpback.cpp",
         "patchSetId": 53
@@ -132,6 +258,24 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_fbf24c62",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 604,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_bbacd4a0",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -155,6 +299,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_db931001",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 638,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_9bb118f6",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_7bb63ced",
         "filename": "adbbu/twrpback.cpp",
         "patchSetId": 53
@@ -166,6 +328,24 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_bb98541e",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 691,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_7bb63ced",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -189,6 +369,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_9b9d980f",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_5b9b8077",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_3b98c478",
         "filename": "adbbu/twrpback.cpp",
         "patchSetId": 53
@@ -200,6 +398,24 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_7ba2bc4a",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 729,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_3b98c478",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -223,6 +439,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_5b8700bd",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 748,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_1ba508ae",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_fba12ca1",
         "filename": "adbbu/twrpback.cpp",
         "patchSetId": 53
@@ -234,6 +468,24 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_3b8444b6",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 762,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_fba12ca1",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -257,6 +509,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_1b9188f3",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 769,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_db8e7035",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_bb93b458",
         "filename": "adbbu/twrpback.cpp",
         "patchSetId": 53
@@ -268,6 +538,24 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "Does this have anything to do with this commit?",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_fb8dacda",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 812,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Cleanup code for this commit.",
+      "parentUuid": "78209991_bb93b458",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -291,6 +579,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_9bb4787d",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1668,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "I set it to a default. Then I check for sha2 first.",
+      "parentUuid": "78209991_fb792cf0",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_bb6bb417",
         "filename": "partition.cpp",
         "patchSetId": 53
@@ -302,6 +608,24 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "if (TWFunc::Path_Exists(digestfile + \".sha2\")) {",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_7bb99c72",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1669,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Less readable imo.",
+      "parentUuid": "78209991_bb6bb417",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -342,6 +666,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_5baee02e",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1673,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "If it\u0027s not sha2 it\u0027s md5. No need to check.",
+      "parentUuid": "78209991_db667050",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_7b651c40",
         "filename": "partition.cpp",
         "patchSetId": 53
@@ -359,6 +701,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_3bab241e",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1677,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "It\u0027s one or the other. Path_Exists below will set hour if digestfile is not found.\n\nI don\u0027t see the benefit in the reorder.",
+      "parentUuid": "78209991_7b651c40",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_5b5a6084",
         "filename": "partition.cpp",
         "patchSetId": 53
@@ -370,6 +730,24 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "see suggested \"else\" above",
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_1ba8681d",
+        "filename": "partition.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1679,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "What benefit?",
+      "parentUuid": "78209991_5b5a6084",
       "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
@@ -422,6 +800,30 @@
     },
     {
       "key": {
+        "uuid": "78209991_fba48c4a",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 536,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "Check update PS.",
+      "parentUuid": "78209991_3b57a45b",
+      "range": {
+        "startLine": 535,
+        "startChar": 1,
+        "endLine": 536,
+        "endChar": 8
+      },
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_bbc6141a",
         "filename": "partitionmanager.cpp",
         "patchSetId": 53
@@ -456,6 +858,30 @@
       "writtenOn": "2017-02-21T00:26:02Z",
       "side": 1,
       "message": "code formatting",
+      "range": {
+        "startLine": 588,
+        "startChar": 3,
+        "endLine": 589,
+        "endChar": 7
+      },
+      "revId": "06f26d72ea7cbd0cef0edecf999239539c6ec29e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_db65501d",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 589,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T00:59:59Z",
+      "side": 1,
+      "message": "what\u0027s the issue?",
+      "parentUuid": "78209991_9bcb5823",
       "range": {
         "startLine": 588,
         "startChar": 3,
