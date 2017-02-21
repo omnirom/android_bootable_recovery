@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_16495f66",
+        "filename": "etc/init.recovery.logd.rc",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T19:20:58Z",
+      "side": 1,
+      "message": "u:object_r:logd_exec:s0",
+      "revId": "13cf5f2c738bc0e41da2980e07a9ac1cac62947c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_f645c349",
+        "filename": "etc/init.recovery.logd.rc",
+        "patchSetId": 1
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T19:20:58Z",
+      "side": 1,
+      "message": "u:object_r:logd_exec:s0",
+      "revId": "13cf5f2c738bc0e41da2980e07a9ac1cac62947c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
