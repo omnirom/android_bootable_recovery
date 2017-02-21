@@ -796,6 +796,8 @@ int GUIAction::sleepcounter(std::string arg)
 	blankTimer.resetTimerAndUnblank();
 	int total = atoi(arg.c_str());
 	for (int t = total; t > 0; t--) {
+		if (!DataManager::GetIntValue(TW_SLEEP_REBOOT_VAR))
+			break;
 		int progress = (int)(((float)(total-t)/(float)total)*100.0);
 		DataManager::SetValue("ui_progress", progress);
 		::sleep(1);
