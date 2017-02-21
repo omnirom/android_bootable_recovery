@@ -139,6 +139,23 @@
       "revId": "91758440d3bd350b30a384c07ff1c827f14a12fe",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_1b5aa851",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 57
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1000817
+      },
+      "writtenOn": "2017-02-21T02:45:31Z",
+      "side": 0,
+      "message": "Is it really that hard to give theme writers a little message about what changed?",
+      "revId": "91758440d3bd350b30a384c07ff1c827f14a12fe",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
