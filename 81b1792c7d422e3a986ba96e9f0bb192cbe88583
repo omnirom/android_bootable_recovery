@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_761f735d",
+        "filename": "crypto/vold_decrypt/vold_decrypt.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1001507
+      },
+      "writtenOn": "2017-02-21T16:05:07Z",
+      "side": 1,
+      "message": "The code isn\u0027t derived from any source, I wrote it, and licensed it under TWRP\u0027s standard license.\n\nThe convert_key_to_hex_ascii (and only that function) is based on https://github.com/omnirom/android_bootable_recovery/blob/android-7.1/crypto/lollipop/cryptfs.c#L888\nas mentioned in the code.",
+      "parentUuid": "78209991_16171f4a",
+      "revId": "81b1792c7d422e3a986ba96e9f0bb192cbe88583",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_360a1b25",
         "filename": "partitionmanager.cpp",
         "patchSetId": 5
