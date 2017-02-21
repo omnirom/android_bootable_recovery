@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_16171f4a",
+        "filename": "crypto/vold_decrypt/vold_decrypt.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T15:07:20Z",
+      "side": 1,
+      "message": "Is the code you derived from BSD?",
+      "revId": "81b1792c7d422e3a986ba96e9f0bb192cbe88583",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_360a1b25",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1558,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-02-21T15:07:20Z",
+      "side": 1,
+      "message": "I would be curious to see if this works on samsung devices. Note to self.",
+      "revId": "81b1792c7d422e3a986ba96e9f0bb192cbe88583",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
