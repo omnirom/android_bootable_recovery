@@ -74,6 +74,7 @@
 #define TW_DISABLE_FREE_SPACE_VAR   "tw_disable_free_space"
 #define TW_SIGNED_ZIP_VERIFY_VAR    "tw_signed_zip_verify"
 #define TW_INSTALL_REBOOT_VAR       "tw_install_reboot"
+#define TW_SLEEP_REBOOT_VAR         "tw_sleep_reboot"
 #define TW_TIME_ZONE_VAR            "tw_time_zone"
 #define TW_RM_RF_VAR                "tw_rm_rf"
 
