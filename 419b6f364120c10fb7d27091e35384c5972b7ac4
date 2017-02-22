@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_16183f1f",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 305,
+      "author": {
+        "id": 1001913
+      },
+      "writtenOn": "2017-02-22T16:06:46Z",
+      "side": 1,
+      "message": "rekursiv -\u003e Rekursiv",
+      "range": {
+        "startLine": 305,
+        "startChar": 30,
+        "endLine": 305,
+        "endChar": 31
+      },
+      "revId": "419b6f364120c10fb7d27091e35384c5972b7ac4",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
