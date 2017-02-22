@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_b6086be0",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 58
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-22T08:53:55Z",
+      "side": 1,
+      "message": "Please don\u0027t delete the old theme version history, just add to it.\nAlso, the main reason for theme v3 should not be the strings but the changed names of the internal variables.",
+      "revId": "458f58bd19f50e7648b0f667e869a23cae7e075e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_f66263a4",
+        "filename": "twinstall.cpp",
+        "patchSetId": 58
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-22T08:53:55Z",
+      "side": 1,
+      "message": "memory leak still not fixed",
+      "revId": "458f58bd19f50e7648b0f667e869a23cae7e075e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78209991_d603e7c2",
+        "filename": "twinstall.cpp",
+        "patchSetId": 58
+      },
+      "lineNbr": 338,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-22T08:53:55Z",
+      "side": 1,
+      "message": "no error message, no handling of errno (here or inside stream_file_to_digest)",
+      "revId": "458f58bd19f50e7648b0f667e869a23cae7e075e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
