@@ -412,7 +412,9 @@ ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
     endif
 endif
 ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += openaes openaes_license
+    LOCAL_ADDITIONAL_DEPENDENCIES += \
+        openaes \
+        openaes_license
 endif
 ifeq ($(TW_INCLUDE_DUMLOCK), true)
     LOCAL_ADDITIONAL_DEPENDENCIES += \
@@ -669,7 +671,6 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/libcrecovery/Android.mk \
     $(commands_recovery_local_path)/libblkid/Android.mk \
     $(commands_recovery_local_path)/minuitwrp/Android.mk \
-    $(commands_recovery_local_path)/openaes/Android.mk \
     $(commands_recovery_local_path)/toolbox/Android.mk \
     $(commands_recovery_local_path)/twrpTarMain/Android.mk \
     $(commands_recovery_local_path)/mtp/Android.mk \
@@ -685,7 +686,9 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     include $(commands_recovery_local_path)/libmincrypt/Android.mk
 endif
-
+ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
+    include $(commands_recovery_local_path)/openaes/Android.mk \
+endif
 ifeq ($(TW_INCLUDE_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/lollipop/Android.mk
     include $(commands_recovery_local_path)/crypto/scrypt/Android.mk

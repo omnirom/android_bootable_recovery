@@ -1,39 +1,61 @@
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
+
+# Executable
 include $(CLEAR_VARS)
 
-ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
-	# Build shared binary
-	LOCAL_SRC_FILES:= src/oaes.c
-	LOCAL_C_INCLUDES := \
-		$(commands_recovery_local_path)/openaes/src/isaac \
-		$(commands_recovery_local_path)/openaes/inc
-	LOCAL_CFLAGS:= -g -c -W
-	LOCAL_MODULE:=openaes
-	LOCAL_MODULE_TAGS:= eng
-	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
-	LOCAL_SHARED_LIBRARIES = libopenaes libc
-	include $(BUILD_EXECUTABLE)
+LOCAL_SRC_FILES := src/oaes.c
 
-	# Build shared library
-	include $(CLEAR_VARS)
-	LOCAL_MODULE := libopenaes
-	LOCAL_MODULE_TAGS := eng
-	LOCAL_C_INCLUDES := \
-		$(commands_recovery_local_path)/openaes/src/isaac \
-		$(commands_recovery_local_path)/openaes/inc
-	LOCAL_SRC_FILES = src/oaes_lib.c src/isaac/rand.c src/ftime.c
-	LOCAL_SHARED_LIBRARIES = libc
-	include $(BUILD_SHARED_LIBRARY)
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/inc \
+    $(LOCAL_PATH)/src/isaac
 
-	# Build static library
-	include $(CLEAR_VARS)
-	LOCAL_MODULE := libopenaes_static
-	LOCAL_MODULE_TAGS := eng
-	LOCAL_C_INCLUDES := \
-		$(commands_recovery_local_path)/openaes/src/isaac \
-		$(commands_recovery_local_path)/openaes/inc
-	LOCAL_SRC_FILES = src/oaes_lib.c src/isaac/rand.c src/ftime.c
-	LOCAL_STATIC_LIBRARIES = libc
-	include $(BUILD_STATIC_LIBRARY)
-endif
+LOCAL_CFLAGS := -g -c -W
+
+LOCAL_SHARED_LIBRARIES := \
+    libopenaes \
+    libc
+
+LOCAL_MODULE := openaes
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+
+include $(BUILD_EXECUTABLE)
+
+# Shared library
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+    src/ftime.c \
+    src/isaac/rand.c \
+    src/oaes_lib.c
+
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/inc \
+    $(LOCAL_PATH)/src/isaac
+
+LOCAL_SHARED_LIBRARIES := libc
+
+LOCAL_MODULE := libopenaes
+LOCAL_MODULE_TAGS := optional
+
+include $(BUILD_SHARED_LIBRARY)
+
+# Static library
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+    src/ftime.c \
+    src/isaac/rand.c \
+    src/oaes_lib.c
+
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/inc \
+    $(LOCAL_PATH)/src/isaac
+
+LOCAL_STATIC_LIBRARIES := libc
+
+LOCAL_MODULE := libopenaes_static
+LOCAL_MODULE_TAGS := optional
+
+include $(BUILD_STATIC_LIBRARY)
