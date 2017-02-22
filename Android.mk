@@ -665,7 +665,6 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/bmlutils/Android.mk \
     $(commands_recovery_local_path)/prebuilt/Android.mk \
     $(commands_recovery_local_path)/mtdutils/Android.mk \
-    $(commands_recovery_local_path)/flashutils/Android.mk \
     $(commands_recovery_local_path)/pigz/Android.mk \
     $(commands_recovery_local_path)/libtar/Android.mk \
     $(commands_recovery_local_path)/libcrecovery/Android.mk \
@@ -683,6 +682,9 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/libpixelflinger/Android.mk \
     $(commands_recovery_local_path)/attr/Android.mk
 
+ifneq ($(TARGET_SIMULATOR),true)
+    include $(commands_recovery_local_path)/flashutils/Android.mk
+endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     include $(commands_recovery_local_path)/libmincrypt/Android.mk
 endif
