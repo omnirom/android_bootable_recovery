@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -189,7 +188,7 @@ int twrpback::backup(std::string command) {
 				writedata = false;
 				adblogwrite("Recieved TWENDADB\n");
 				memcpy(&endadb, cmd, sizeof(cmd));
-				stringstream str;
+				std::stringstream str;
 				str << totalbytes;
 				adblogwrite(str.str() + " total bytes written\n");
 				breakloop = true;
@@ -199,7 +198,7 @@ int twrpback::backup(std::string command) {
 				writedata = false;
 				adblogwrite("Writing TWSTREAMHDR\n");
 				if (fwrite(cmd, 1, sizeof(cmd), adbd_fp) != sizeof(cmd)) {
-					stringstream str;
+					std::stringstream str;
 					str << strerror(errno);
 					adblogwrite("Error writing TWSTREAMHDR to adbd" + str.str() + "\n");
 					close_backup_fds();
@@ -446,7 +445,7 @@ int twrpback::restore(void) {
 
 	ors_fd = open(ORS_OUTPUT_FILE, O_RDONLY);
 	if (ors_fd < 0) {
-		stringstream str;
+		std::stringstream str;
 		str << strerror(errno);
 		adblogwrite("Unable to write to ORS_OUTPUT_FILE: " + str.str() + "\n");
 		close_restore_fds();
@@ -459,7 +458,7 @@ int twrpback::restore(void) {
 	adblogwrite("opening TW_ADB_BU_CONTROL\n");
 	adb_control_bu_fd = open(TW_ADB_BU_CONTROL, O_RDONLY | O_NONBLOCK);
 	if (adb_control_bu_fd < 0) {
-		stringstream str;
+		std::stringstream str;
 		str << strerror(errno);
 		adblogwrite("Unable to open TW_ADB_BU_CONTROL for writing. " + str.str() + "\n");
 		close_restore_fds();
@@ -469,7 +468,7 @@ int twrpback::restore(void) {
 	adblogwrite("opening TW_ADB_TWRP_CONTROL\n");
 	adb_control_twrp_fd = open(TW_ADB_TWRP_CONTROL, O_WRONLY | O_NONBLOCK);
 	if (adb_control_twrp_fd < 0) {
-		stringstream str;
+		std::stringstream str;
 		str << strerror(errno);
 		adblogwrite("Unable to open TW_ADB_TWRP_CONTROL for writing. " + str.str() + ". Retrying...\n");
 		while (adb_control_twrp_fd < 0) {
@@ -542,7 +541,7 @@ int twrpback::restore(void) {
 					if (crc == endadbcrc) {
 						adblogwrite("Sending TWENDADB\n");
 						if (write(adb_control_twrp_fd, &endadb, sizeof(endadb)) < 1) {
-							stringstream str;
+							std::stringstream str;
 							str << strerror(errno);
 							adblogwrite("Cannot write to ADB_CONTROL_READ_FD: " + str.str() + "\n");
 							close_restore_fds();
@@ -573,7 +572,7 @@ int twrpback::restore(void) {
 					if (crc == cnthdrcrc) {
 						adblogwrite("Restoring TWSTREAMHDR\n");
 						if (write(adb_control_twrp_fd, result, sizeof(result)) < 0) {
-							stringstream str;
+							std::stringstream str;
 							str << strerror(errno);
 							adblogwrite("Cannot write to adb_control_twrp_fd: " + str.str() + "\n");
 							close_restore_fds();
@@ -604,7 +603,7 @@ int twrpback::restore(void) {
 					crc = crc32(crc, (const unsigned char*) &twimghdr, sizeof(twimghdr));
 					if (crc == twimghdrcrc) {
 						if (write(adb_control_twrp_fd, result, sizeof(result)) < 1) {
-							stringstream str;
+							std::stringstream str;
 							str << strerror(errno);
 							adblogwrite("Cannot write to adb_control_twrp_fd: " + str.str() + "\n");
 							close_restore_fds();
@@ -638,7 +637,7 @@ int twrpback::restore(void) {
 
 					if (crc == twfilehdrcrc) {
 						if (write(adb_control_twrp_fd, result, sizeof(result)) < 1) {
-							stringstream str;
+							std::stringstream str;
 							str << strerror(errno);
 							adblogwrite("Cannot write to adb_control_twrp_fd: " + str.str() + "\n");
 							close_restore_fds();
@@ -691,7 +690,7 @@ int twrpback::restore(void) {
 								crc = crc32(crc, (const unsigned char*) &md5tr, sizeof(md5tr));
 								if (crc == md5trcrc) {
 									if (write(adb_control_twrp_fd, result, sizeof(result)) < 1) {
-										stringstream str;
+										std::stringstream str;
 										str << strerror(errno);
 										adblogwrite("Cannot write to adb_control_twrp_fd: " + str.str() + "\n");
 										close_restore_fds();
@@ -716,7 +715,7 @@ int twrpback::restore(void) {
 
 								adblogwrite("Sending MD5Check\n");
 								if (write(adb_control_twrp_fd, &md5, sizeof(md5)) < 1) {
-									stringstream str;
+									std::stringstream str;
 									str << strerror(errno);
 									adblogwrite("Cannot write to adb_control_twrp_fd: " + str.str() + "\n");
 									close_restore_fds();
@@ -731,7 +730,7 @@ int twrpback::restore(void) {
 						dataChunkBytes += readbytes;
 
 						if (write(adb_write_fd, result, sizeof(result)) < 0) {
-							stringstream str;
+							std::stringstream str;
 							str << strerror(errno);
 							adblogwrite("Cannot write to adb_write_fd\n" + str.str() + ". Retrying.\n");
 							while(write(adb_write_fd, result, sizeof(result)) < 0) {
@@ -750,7 +749,7 @@ int twrpback::restore(void) {
 		}
 	}
 
-	stringstream str;
+	std::stringstream str;
 	str << totalbytes;
 	adblogwrite(str.str() + " bytes restored from adbbackup\n");
 	return 0;
@@ -764,14 +763,14 @@ int main(int argc, char **argv) {
 
 	tw.adblogwrite("Starting adb backup and restore\n");
 	if (mkfifo(TW_ADB_BU_CONTROL, 0666) < 0) {
-		stringstream str;
+		std::stringstream str;
 		str << strerror(errno);
 		tw.adblogwrite("Unable to create TW_ADB_BU_CONTROL fifo: " + str.str() + "\n");
 		unlink(TW_ADB_BU_CONTROL);
 		return -1;
 	}
 	if (mkfifo(TW_ADB_TWRP_CONTROL, 0666) < 0) {
-		stringstream str;
+		std::stringstream str;
 		str << strerror(errno);
 		tw.adblogwrite("Unable to create TW_ADB_TWRP_CONTROL fifo: " + str.str() + "\n");
 		unlink(TW_ADB_TWRP_CONTROL);
@@ -814,7 +813,7 @@ int main(int argc, char **argv) {
 		tw.adblogwrite("Adb backup/restore failed\n");
 
 	if (unlink(TW_ADB_BU_CONTROL) < 0) {
-		stringstream str;
+		std::stringstream str;
 		str << strerror(errno);
 		tw.adblogwrite("Unable to remove TW_ADB_BU_CONTROL: " + str.str());
 	}
