@@ -661,7 +661,6 @@ endif
 include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/htcdumlock/Android.mk \
     $(commands_recovery_local_path)/gui/Android.mk \
-    $(commands_recovery_local_path)/mmcutils/Android.mk \
     $(commands_recovery_local_path)/bmlutils/Android.mk \
     $(commands_recovery_local_path)/prebuilt/Android.mk \
     $(commands_recovery_local_path)/mtdutils/Android.mk \
@@ -683,7 +682,8 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/attr/Android.mk
 
 ifneq ($(TARGET_SIMULATOR),true)
-    include $(commands_recovery_local_path)/flashutils/Android.mk
+    include $(commands_recovery_local_path)/flashutils/Android.mk \
+        $(commands_recovery_local_path)/mmcutils/Android.mk
 endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     include $(commands_recovery_local_path)/libmincrypt/Android.mk
