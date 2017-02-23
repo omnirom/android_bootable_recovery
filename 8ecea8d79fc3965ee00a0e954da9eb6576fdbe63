@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "78209991_b1775599",
+        "filename": "twrp-functions.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 173,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-23T20:00:16Z",
+      "side": 1,
+      "message": "I don\u0027t understand what this code is good for. Wait_For_Child_Timeout should not call WEXITSTATUS at all since  Wait_For_Child doesn\u0027t either. If the caller is interested in the exit status, the caller should call WEXITSTATUS.",
+      "revId": "8ecea8d79fc3965ee00a0e954da9eb6576fdbe63",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_c9a7d3bb",
         "filename": "twrp-functions.cpp",
         "patchSetId": 2
