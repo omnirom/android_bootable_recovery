@@ -58,11 +58,6 @@ extern "C" {
 
 extern int gGuiRunning;
 
-// From console.cpp
-extern size_t last_message_count;
-extern std::vector<std::string> gConsole;
-extern std::vector<std::string> gConsoleColor;
-
 std::map<std::string, PageSet*> PageManager::mPageSets;
 PageSet* PageManager::mCurrentSet;
 MouseCursor *PageManager::mMouseCursor = NULL;
@@ -1541,9 +1536,7 @@ int PageManager::RunReload() {
 	}
 
 	// This makes the console re-translate
-	last_message_count = 0;
-	gConsole.clear();
-	gConsoleColor.clear();
+	GUIConsole::Clear_For_Retranslation();
 
 	return ret_val;
 }
