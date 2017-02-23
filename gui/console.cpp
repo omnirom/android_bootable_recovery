@@ -23,15 +23,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include <sys/reboot.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdlib.h>
+#include <pthread.h>
 
 #include <string>
 
@@ -47,15 +41,30 @@ extern "C" {
 
 #define GUI_CONSOLE_BUFFER_SIZE 512
 
-size_t last_message_count = 0;
-std::vector<Message> gMessages;
+static pthread_mutex_t console_lock;
+static size_t last_message_count = 0;
+static std::vector<Message> gMessages;
 
-std::vector<std::string> gConsole;
-std::vector<std::string> gConsoleColor;
-static FILE* ors_file;
+static std::vector<std::string> gConsole;
+static std::vector<std::string> gConsoleColor;
+static FILE* ors_file = NULL;
 
-extern "C" void __gui_print(const char *color, char *buf)
+struct InitMutex
 {
+	InitMutex() { pthread_mutex_init(&console_lock, NULL); }
+} initMutex;
+
+static void internal_gui_print(const char *color, char *buf)
+{
+	// make sure to flush any outstanding messages first to preserve order of outputs
+	GUIConsole::Translate_Now();
+
+	fputs(buf, stdout);
+	if (ors_file) {
+		fprintf(ors_file, "%s", buf);
+		fflush(ors_file);
+	}
+
 	char *start, *next;
 
 	if (buf[0] == '\n' && strlen(buf) < 2) {
@@ -63,6 +72,7 @@ extern "C" void __gui_print(const char *color, char *buf)
 		return;
 	}
 
+	pthread_mutex_lock(&console_lock);
 	for (start = next = buf; *next != '\0';)
 	{
 		if (*next == '\n')
@@ -82,6 +92,7 @@ extern "C" void __gui_print(const char *color, char *buf)
 		gConsole.push_back(start);
 		gConsoleColor.push_back(color);
 	}
+	pthread_mutex_unlock(&console_lock);
 }
 
 extern "C" void gui_print(const char *fmt, ...)
@@ -93,14 +104,7 @@ extern "C" void gui_print(const char *fmt, ...)
 	vsnprintf(buf, GUI_CONSOLE_BUFFER_SIZE, fmt, ap);
 	va_end(ap);
 
-	fputs(buf, stdout);
-	if (ors_file) {
-		fprintf(ors_file, "%s", buf);
-		fflush(ors_file);
-	}
-
-	__gui_print("normal", buf);
-	return;
+	internal_gui_print("normal", buf);
 }
 
 extern "C" void gui_print_color(const char *color, const char *fmt, ...)
@@ -112,14 +116,7 @@ extern "C" void gui_print_color(const char *color, const char *fmt, ...)
 	vsnprintf(buf, GUI_CONSOLE_BUFFER_SIZE, fmt, ap);
 	va_end(ap);
 
-	fputs(buf, stdout);
-	if (ors_file) {
-		fprintf(ors_file, "%s", buf);
-		fflush(ors_file);
-	}
-
-	__gui_print(color, buf);
-	return;
+	internal_gui_print(color, buf);
 }
 
 extern "C" void gui_set_FILE(FILE* f)
@@ -168,13 +165,20 @@ void gui_msg(Message msg)
 		fprintf(ors_file, "%s", output.c_str());
 		fflush(ors_file);
 	}
+	pthread_mutex_lock(&console_lock);
 	gMessages.push_back(msg);
+	pthread_mutex_unlock(&console_lock);
 }
 
-void GUIConsole::Translate_Now() {
+void GUIConsole::Translate_Now()
+{
+	pthread_mutex_lock(&console_lock);
 	size_t message_count = gMessages.size();
 	if (message_count <= last_message_count)
+	{
+		pthread_mutex_unlock(&console_lock);
 		return;
+	}
 
 	for (size_t m = last_message_count; m < message_count; m++) {
 		std::string message = gMessages[m];
@@ -189,6 +193,16 @@ void GUIConsole::Translate_Now() {
 		gConsoleColor.push_back(color);
 	}
 	last_message_count = message_count;
+	pthread_mutex_unlock(&console_lock);
+}
+
+void GUIConsole::Clear_For_Retranslation()
+{
+	pthread_mutex_lock(&console_lock);
+	last_message_count = 0;
+	gConsole.clear();
+	gConsoleColor.clear();
+	pthread_mutex_unlock(&console_lock);
 }
 
 GUIConsole::GUIConsole(xml_node<>* node) : GUIScrollList(node)
@@ -256,7 +270,9 @@ int GUIConsole::RenderSlideout(void)
 int GUIConsole::RenderConsole(void)
 {
 	Translate_Now();
+	pthread_mutex_lock(&console_lock);
 	AddLines(&gConsole, &gConsoleColor, &mLastCount, &rConsole, &rConsoleColor);
+	pthread_mutex_unlock(&console_lock);
 	GUIScrollList::Render();
 
 	// if last line is fully visible, keep tracking the last line when new lines are added
@@ -307,7 +323,10 @@ int GUIConsole::Update(void)
 		scrollToEnd = true;
 	}
 
-	if (AddLines(&gConsole, &gConsoleColor, &mLastCount, &rConsole, &rConsoleColor)) {
+	pthread_mutex_lock(&console_lock);
+	bool addedNewText = AddLines(&gConsole, &gConsoleColor, &mLastCount, &rConsole, &rConsoleColor);
+	pthread_mutex_unlock(&console_lock);
+	if (addedNewText) {
 		// someone added new text
 		// at least the scrollbar must be updated, even if the new lines are currently not visible
 		mUpdate = 1;
