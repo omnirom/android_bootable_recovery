@@ -746,7 +746,9 @@ public:
 	virtual size_t GetItemCount();
 	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
 	virtual void NotifySelect(size_t item_selected);
+
 	static void Translate_Now();
+	static void Clear_For_Retranslation();
 protected:
 	enum SlideoutState
 	{
