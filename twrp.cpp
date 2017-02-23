@@ -308,7 +308,6 @@ int main(int argc, char **argv) {
 	property_get("mtp.crash_check", mtp_crash_check, "0");
 	if (strcmp(mtp_crash_check, "0") == 0) {
 		property_set("mtp.crash_check", "1");
-		property_set("sys.usb.config", "adb"); // At first boot, should be adb-only
 		if (DataManager::GetIntValue("tw_mtp_enabled") == 1 && ((DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0 && DataManager::GetIntValue(TW_IS_DECRYPTED) != 0) || DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0)) {
 			LOGINFO("Enabling MTP during startup\n");
 			if (!PartitionManager.Enable_MTP())
