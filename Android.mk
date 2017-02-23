@@ -673,7 +673,6 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/twrpTarMain/Android.mk \
     $(commands_recovery_local_path)/mtp/Android.mk \
     $(commands_recovery_local_path)/minzip/Android.mk \
-    $(commands_recovery_local_path)/dosfstools/Android.mk \
     $(commands_recovery_local_path)/etc/Android.mk \
     $(commands_recovery_local_path)/toybox/Android.mk \
     $(commands_recovery_local_path)/simg2img/Android.mk \
@@ -683,7 +682,8 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
 
 ifneq ($(TARGET_SIMULATOR),true)
     include $(commands_recovery_local_path)/flashutils/Android.mk \
-        $(commands_recovery_local_path)/mmcutils/Android.mk
+        $(commands_recovery_local_path)/mmcutils/Android.mk \
+        $(commands_recovery_local_path)/dosfstools/Android.mk
 endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     include $(commands_recovery_local_path)/libmincrypt/Android.mk
