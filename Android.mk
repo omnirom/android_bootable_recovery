@@ -184,6 +184,10 @@ ifeq ($(AB_OTA_UPDATER),true)
     LOCAL_ADDITIONAL_DEPENDENCIES += libhardware
 endif
 
+ifeq ($(shell test $(LINEAGE_PLATFORM_SDK_VERSION) -ge 6; echo $$?),0)
+    TARGET_CRYPTFS_HW_PATH := vendor/qcom/opensource/cryptfs_hw
+endif
+
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 
 #ifeq ($(TARGET_RECOVERY_UI_LIB),)
@@ -484,7 +488,7 @@ else
 endif
 endif
 ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
-ifeq ($(shell test $(CM_PLATFORM_SDK_VERSION) -ge 3; echo $$?),0)
+ifeq ($(shell test $(LINEAGE_PLATFORM_SDK_VERSION) -ge 3; echo $$?),0)
     LOCAL_ADDITIONAL_DEPENDENCIES += \
         fsck.f2fs \
         mkfs.f2fs
