@@ -185,6 +185,10 @@ ifeq ($(AB_OTA_UPDATER),true)
     LOCAL_ADDITIONAL_DEPENDENCIES += libhardware
 endif
 
+ifeq ($(TARGET_HW_DISK_ENCRYPTION),true)
+    TARGET_CRYPTFS_HW_PATH ?= vendor/qcom/opensource/cryptfs_hw
+endif
+
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 
 #ifeq ($(TARGET_RECOVERY_UI_LIB),)
