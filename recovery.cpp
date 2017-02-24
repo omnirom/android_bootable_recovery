@@ -607,54 +607,55 @@ static bool erase_volume(const char* volume) {
   return (result == 0);
 }
 
-static int
-get_menu_selection(const char* const * headers, const char* const * items,
-                   int menu_only, int initial_selection, Device* device) {
-    // throw away keys pressed previously, so user doesn't
-    // accidentally trigger menu items.
-    ui->FlushKeys();
+// Display a menu with the specified 'headers' and 'items'. Device specific HandleMenuKey() may
+// return a positive number beyond the given range. Caller sets 'menu_only' to true to ensure only
+// a menu item gets selected. 'initial_selection' controls the initial cursor location.
+static int get_menu_selection(const char* const* headers, const char* const* items, bool menu_only,
+                              int initial_selection, Device* device) {
+  // Throw away keys pressed previously, so user doesn't accidentally trigger menu items.
+  ui->FlushKeys();
 
-    ui->StartMenu(headers, items, initial_selection);
-    int selected = initial_selection;
-    int chosen_item = -1;
+  ui->StartMenu(headers, items, initial_selection);
+  int selected = initial_selection;
+  int chosen_item = -1;
 
-    while (chosen_item < 0) {
-        int key = ui->WaitKey();
-        int visible = ui->IsTextVisible();
+  while (chosen_item < 0) {
+    int key = ui->WaitKey();
 
-        if (key == -1) {   // ui_wait_key() timed out
-            if (ui->WasTextEverVisible()) {
-                continue;
-            } else {
-                LOG(INFO) << "timed out waiting for key input; rebooting.";
-                ui->EndMenu();
-                return 0; // XXX fixme
-            }
-        }
-
-        int action = device->HandleMenuKey(key, visible);
-
-        if (action < 0) {
-            switch (action) {
-                case Device::kHighlightUp:
-                    selected = ui->SelectMenu(--selected);
-                    break;
-                case Device::kHighlightDown:
-                    selected = ui->SelectMenu(++selected);
-                    break;
-                case Device::kInvokeItem:
-                    chosen_item = selected;
-                    break;
-                case Device::kNoAction:
-                    break;
-            }
-        } else if (!menu_only) {
-            chosen_item = action;
-        }
+    if (key == -1) {  // ui_wait_key() timed out
+      if (ui->WasTextEverVisible()) {
+        continue;
+      } else {
+        LOG(INFO) << "timed out waiting for key input; rebooting.";
+        ui->EndMenu();
+        return 0;  // XXX fixme
+      }
     }
 
-    ui->EndMenu();
-    return chosen_item;
+    bool visible = ui->IsTextVisible();
+    int action = device->HandleMenuKey(key, visible);
+
+    if (action < 0) {
+      switch (action) {
+        case Device::kHighlightUp:
+          selected = ui->SelectMenu(--selected);
+          break;
+        case Device::kHighlightDown:
+          selected = ui->SelectMenu(++selected);
+          break;
+        case Device::kInvokeItem:
+          chosen_item = selected;
+          break;
+        case Device::kNoAction:
+          break;
+      }
+    } else if (!menu_only) {
+      chosen_item = action;
+    }
+  }
+
+  ui->EndMenu();
+  return chosen_item;
 }
 
 // Returns the selected filename, or an empty string.
@@ -699,7 +700,7 @@ static std::string browse_directory(const std::string& path, Device* device) {
 
   int chosen_item = 0;
   while (true) {
-    chosen_item = get_menu_selection(headers, entries, 1, chosen_item, device);
+    chosen_item = get_menu_selection(headers, entries, true, chosen_item, device);
 
     const std::string& item = zips[chosen_item];
     if (chosen_item == 0) {
@@ -726,7 +727,7 @@ static bool yes_no(Device* device, const char* question1, const char* question2)
     const char* headers[] = { question1, question2, NULL };
     const char* items[] = { " No", " Yes", NULL };
 
-    int chosen_item = get_menu_selection(headers, items, 1, 0, device);
+    int chosen_item = get_menu_selection(headers, items, true, 0, device);
     return (chosen_item == 1);
 }
 
@@ -749,25 +750,25 @@ static bool wipe_data(Device* device) {
 }
 
 static bool prompt_and_wipe_data(Device* device) {
-    const char* const headers[] = {
-        "Boot halted, user data is corrupt",
-        "Wipe all user data to recover",
-        NULL
-    };
-    const char* const items[] = {
-        "Retry boot",
-        "Wipe user data",
-        NULL
-    };
-    for (;;) {
-        int chosen_item = get_menu_selection(headers, items, 1, 0, device);
-        if (chosen_item != 1) {
-            return true; // Just reboot, no wipe; not a failure, user asked for it
-        }
-        if (ask_to_wipe_data(device)) {
-            return wipe_data(device);
-        }
+  const char* const headers[] = {
+    "Boot halted, user data is corrupt",
+    "Wipe all user data to recover",
+    NULL
+  };
+  const char* const items[] = {
+    "Retry boot",
+    "Wipe user data",
+    NULL
+  };
+  for (;;) {
+    int chosen_item = get_menu_selection(headers, items, true, 0, device);
+    if (chosen_item != 1) {
+      return true;  // Just reboot, no wipe; not a failure, user asked for it
     }
+    if (ask_to_wipe_data(device)) {
+      return wipe_data(device);
+    }
+  }
 }
 
 // Return true on success.
@@ -961,7 +962,7 @@ static void choose_recovery_file(Device* device) {
 
   int chosen_item = 0;
   while (true) {
-    chosen_item = get_menu_selection(headers, menu_entries.data(), 1, chosen_item, device);
+    chosen_item = get_menu_selection(headers, menu_entries.data(), true, chosen_item, device);
     if (entries[chosen_item] == "Back") break;
 
     ui->ShowFile(entries[chosen_item].c_str());
@@ -1110,7 +1111,7 @@ prompt_and_wait(Device* device, int status) {
         }
         ui->SetProgressType(RecoveryUI::EMPTY);
 
-        int chosen_item = get_menu_selection(nullptr, device->GetMenuItems(), 0, 0, device);
+        int chosen_item = get_menu_selection(nullptr, device->GetMenuItems(), false, 0, device);
 
         // device-specific code may take some action here.  It may
         // return one of the core actions handled in the switch

@@ -60,7 +60,7 @@ Device::BuiltinAction Device::InvokeMenuItem(int menu_position) {
   return menu_position < 0 ? NO_ACTION : MENU_ACTIONS[menu_position];
 }
 
-int Device::HandleMenuKey(int key, int visible) {
+int Device::HandleMenuKey(int key, bool visible) {
   if (!visible) {
     return kNoAction;
   }
