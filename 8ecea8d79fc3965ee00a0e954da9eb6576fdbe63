@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "78209991_311b4520",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1565,
+      "author": {
+        "id": 1001507
+      },
+      "writtenOn": "2017-02-24T13:29:13Z",
+      "side": 1,
+      "message": "The caller is reading status directly back into pwret, I was simply attempting for pwret to retain the original exit code.\nThough this may not be needed as it\u0027s only checked against !\u003d0, this change could be considered \"cosmetic\" perhaps and unnecessary?",
+      "revId": "8ecea8d79fc3965ee00a0e954da9eb6576fdbe63",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_b1775599",
         "filename": "twrp-functions.cpp",
         "patchSetId": 2
