@@ -961,7 +961,6 @@ static void choose_recovery_file(Device* device) {
         }
     } else {
         // If cache partition is not found, view /tmp/recovery.log instead.
-        ui->Print("No /cache partition found.\n");
         if (access(TEMPORARY_LOG_FILE, R_OK) == -1) {
             return;
         } else{
