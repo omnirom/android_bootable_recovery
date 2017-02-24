@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "78209991_31c10537",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1565,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-02-24T21:00:49Z",
+      "side": 1,
+      "message": "Add a temporary variable here and use WEXITSTATUS, then remove the weird code in Wait_For_Child_Timeout.",
+      "parentUuid": "78209991_311b4520",
+      "revId": "8ecea8d79fc3965ee00a0e954da9eb6576fdbe63",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "78209991_b1775599",
         "filename": "twrp-functions.cpp",
         "patchSetId": 2
