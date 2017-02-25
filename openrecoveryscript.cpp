@@ -684,11 +684,10 @@ int OpenRecoveryScript::Run_OpenRecoveryScript_Action() {
 	// Check for the SCRIPT_FILE_TMP first as these are AOSP recovery commands
 	// that we converted to ORS commands during boot in recovery.cpp.
 	// Run those first.
-	int reboot = 0;
 	if (TWFunc::Path_Exists(SCRIPT_FILE_TMP)) {
 		gui_msg("running_recovery_commands=Running Recovery Commands");
 		if (OpenRecoveryScript::run_script_file() == 0) {
-			reboot = 1;
+			DataManager::SetValue(TW_SLEEP_REBOOT_VAR, "1");
 			op_status = 0;
 		}
 	}
@@ -696,16 +695,14 @@ int OpenRecoveryScript::Run_OpenRecoveryScript_Action() {
 	if (OpenRecoveryScript::check_for_script_file()) {
 		gui_msg("running_ors=Running OpenRecoveryScript");
 		if (OpenRecoveryScript::run_script_file() == 0) {
-			reboot = 1;
+			DataManager::SetValue(TW_SLEEP_REBOOT_VAR, "1");
 			op_status = 0;
 		}
 	}
-	if (reboot) {
-		TWFunc::TW_Reboot();
-		usleep(5000000); // Sleep for 5 seconds to allow reboot to occur
-	} else {
+
+	if (!DataManager::GetIntValue(TW_SLEEP_REBOOT_VAR))
 		DataManager::SetValue("tw_page_done", 1);
-	}
+
 	return op_status;
 }
 
