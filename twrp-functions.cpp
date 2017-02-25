@@ -537,7 +537,7 @@ void TWFunc::Update_Intent_File(string Intent) {
 }
 
 // reboot: Reboot the system. Return -1 on error, no return on success
-int TWFunc::tw_reboot(RebootCommand command)
+int TWFunc::TW_Reboot(RebootCommand command)
 {
 	DataManager::Flush();
 	Update_Log_File();
@@ -591,6 +591,50 @@ int TWFunc::tw_reboot(RebootCommand command)
 			return -1;
 	}
 	return -1;
+}
+
+void TWFunc::Finish_TWRP(std::string Intent) {
+#ifndef TW_OEM_BUILD
+	// Disable flashing of stock recovery
+	TWFunc::Disable_Stock_Recovery_Replace();
+
+	// Check for su to see if the device is rooted or not
+	if (DataManager::GetIntValue("tw_mount_system_ro") == 0 && PartitionManager.Mount_By_Path("/system", false)) {
+		// read /system/build.prop to get sdk version and do not offer to root if running M or higher (sdk version 23 == M)
+		string sdkverstr = TWFunc::System_Property_Get("ro.build.version.sdk");
+		int sdkver = 23;
+		if (!sdkverstr.empty()) {
+			sdkver = atoi(sdkverstr.c_str());
+		}
+		if (TWFunc::Path_Exists("/supersu/su") && TWFunc::Path_Exists("/system/bin") && !TWFunc::Path_Exists("/system/bin/su") && !TWFunc::Path_Exists("/system/xbin/su") && !TWFunc::Path_Exists("/system/bin/.ext/.su") && sdkver < 23) {
+			// Device doesn't have su installed
+			DataManager::SetValue("tw_busy", 1);
+			if (gui_startPage("installsu", 1, 1) != 0) {
+				LOGERR("Failed to start SuperSU install page.\n");
+			}
+		}
+		sync();
+		PartitionManager.UnMount_By_Path("/system", false);
+	}
+#endif
+
+	Update_Intent_File(Intent);
+	Update_Log_File();
+
+	// Reboot
+	gui_msg(Msg("rebooting=Rebooting..."));
+	std::string Reboot_Arg;
+	DataManager::GetValue("tw_reboot_arg", Reboot_Arg);
+	if (Reboot_Arg == "recovery")
+		TWFunc::TW_Reboot(rb_recovery);
+	else if (Reboot_Arg == "poweroff")
+		TWFunc::TW_Reboot(rb_poweroff);
+	else if (Reboot_Arg == "bootloader")
+		TWFunc::TW_Reboot(rb_bootloader);
+	else if (Reboot_Arg == "download")
+		TWFunc::TW_Reboot(rb_download);
+	else
+		TWFunc::TW_Reboot(rb_system);
 }
 
 void TWFunc::check_and_run_script(const char* script_file, const char* display_name)
