@@ -499,7 +499,7 @@
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
-					<action function="set">tw_back=main2</action>
+					<action function="set">tw_back=main</action>
 					<action function="page">reboot_system_routine</action>
 				</actions>
 			</button>
@@ -514,10 +514,7 @@
 
 			<action>
 				<touch key="home"/>
-				<actions>
-					<action function="set">tw_clear_destination=main2</action>
-					<action function="page">clear_vars</action>
-				</actions>
+				<action function="page">main</action>
 			</action>
 
 			<action>
@@ -581,7 +578,7 @@
 				</conditions>
 				<actions>
 					<action function="sleep">50000</action>
-					<action function="set">tw_back=main2</action>
+					<action function="set">tw_back=main</action>
 					<action function="page">reboot_system_routine</action>
 				</actions>
 			</action>
@@ -652,10 +649,7 @@
 
 			<action>
 				<touch key="home"/>
-				<actions>
-					<action function="set">tw_clear_destination=main2</action>
-					<action function="page">clear_vars</action>
-				</actions>
+				<action function="page">main</action>
 			</action>
 		</page>
 
@@ -877,17 +871,14 @@
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
-					<action function="set">tw_back=main2</action>
+					<action function="set">tw_back=main</action>
 					<action function="page">reboot_system_routine</action>
 				</actions>
 			</button>
 
 			<action>
 				<touch key="home"/>
-				<actions>
-					<action function="set">tw_clear_destination=main2</action>
-					<action function="page">clear_vars</action>
-				</actions>
+				<action function="page">main</action>
 			</action>
 
 			<action>
