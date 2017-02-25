@@ -537,8 +537,25 @@ void TWFunc::Update_Intent_File(string Intent) {
 }
 
 // reboot: Reboot the system. Return -1 on error, no return on success
-int TWFunc::tw_reboot(RebootCommand command)
-{
+int TWFunc::TW_Reboot(void) {
+#ifndef TW_OEM_BUILD
+	// Disable flashing of stock recovery
+	Disable_Stock_Recovery_Replace();
+#endif
+
+	RebootCommand command = rb_system;
+	std::string Reboot_Arg = DataManager::GetStrValue("tw_reboot_arg");
+	if (Reboot_Arg == "recovery")
+		command = rb_recovery;
+	else if (Reboot_Arg == "poweroff")
+		command = rb_poweroff;
+	else if (Reboot_Arg == "bootloader")
+		command = rb_bootloader;
+	else if (Reboot_Arg == "download")
+		command = rb_download;
+
+	gui_msg("rebooting=Rebooting...");
+
 	DataManager::Flush();
 	Update_Log_File();
 	// Always force a sync before we reboot
