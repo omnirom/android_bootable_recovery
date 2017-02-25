@@ -577,7 +577,6 @@
 					<condition var1="tw_sleep_reboot" var2="1"/>
 				</conditions>
 				<actions>
-					<action function="sleep">50000</action>
 					<action function="set">tw_back=main</action>
 					<action function="page">reboot_system_routine</action>
 				</actions>
