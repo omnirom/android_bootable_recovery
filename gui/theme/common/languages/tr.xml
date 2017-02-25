@@ -441,14 +441,6 @@
 		<string name="sideload_usage">Kullanım: adb sideload dosyaadı.zip</string>
 		<string name="sideload_complete">ADB Sideload Tamamlandı</string>
 		<string name="reboot_hdr">Yeniden Başlat</string>
-		<string name="su_hdr">SuperSU Denetimi</string>
-		<string name="su_note1">Cihazınız rootlanmamış görünüyor.</string>
-		<string name="su_note2">SuperSU şimdi yüklensin mi?</string>
-		<string name="su_note3">Bu işlem cihazınızı rootlayacaktır.</string>
-		<string name="su_cancel">Yükleme</string>
-		<string name="swipe_su_to_install">Yüklemek için Kaydır</string>
-		<string name="swipe_su_install">   Yükle</string>
-		<string name="su_installing">SuperSU Yükleniyor</string>
 		<string name="sel_storage_list">Depolama Seç</string>
 		<string name="ok_btn">Tamam</string>
 		<string name="no_kernel_selinux">Kernel SELinux içeriklerini okuma desteğine sahip değil.</string>
