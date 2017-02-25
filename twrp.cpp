@@ -230,6 +230,9 @@ int main(int argc, char **argv) {
 					Send_Intent = *ptr;
 				} else if (strncmp(argptr, "security", strlen("security")) == 0) {
 					LOGINFO("Security update\n");
+				} else if (strncmp(argptr, "sideload_auto_reboot", strlen("sideload_auto_reboot")) == 0) {
+					if (!OpenRecoveryScript::Insert_ORS_Command("sideload_auto_reboot\n"))
+						break;
 				} else if (strncmp(argptr, "sideload", strlen("sideload")) == 0) {
 					if (!OpenRecoveryScript::Insert_ORS_Command("sideload\n"))
 						break;
