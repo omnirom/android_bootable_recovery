@@ -441,14 +441,7 @@
 		<string name="sideload_usage">Uso: adb sideload filename.zip</string>
 		<string name="sideload_complete">ADB Sideload completa</string>
 		<string name="reboot_hdr">Reiniciar</string>
-		<string name="su_hdr">Seleção de Super Usuário</string>
-		<string name="su_note1">Seu dispositivo não aparece para ser enraizado.</string>
-		<string name="su_note2">Instalar Super Usuário agora?</string>
-		<string name="su_note3">Isto enraizará seu dispositivo.</string>
-		<string name="su_cancel">Não instale</string>
-		<string name="swipe_su_to_install">Deslize para instalar</string>
-		<string name="swipe_su_install">   Instalar</string>
-		<string name="su_installing">Instalação Super Usuário</string>
+		<string name="install_cancel">Não instale</string>
 		<string name="sel_storage_list">Selecionar armazenamento</string>
 		<string name="ok_btn">OK</string>
 		<string name="no_kernel_selinux">Kernel não tem suporte para leitura de contextos do SELinux.</string>
