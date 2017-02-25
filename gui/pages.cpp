@@ -56,6 +56,7 @@ extern "C" {
  * 3 - Create generalized sleep_and_reboot page
  *     Replace several main2 page jumps with main
  *     Do not nest sleep action inside sleepcounter action
+ *     Use sleep_and_reboot page for ORS
  */
 #define TW_THEME_VERSION 3
 
