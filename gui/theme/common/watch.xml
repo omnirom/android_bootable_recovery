@@ -726,7 +726,7 @@
 				<placement x="%col1_x_right%" y="%row13_y%"/>
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
-					<action function="set">tw_back=main2</action>
+					<action function="set">tw_back=main</action>
 					<action function="page">reboot_system_routine</action>
 				</actions>
 			</button>
@@ -741,10 +741,7 @@
 
 			<action>
 				<touch key="home"/>
-				<actions>
-					<action function="set">tw_clear_destination=main2</action>
-					<action function="page">clear_vars</action>
-				</actions>
+				<action function="page">main</action>
 			</action>
 
 			<action>
@@ -804,7 +801,7 @@
 				</conditions>
 				<actions>
 					<action function="sleep">50000</action>
-					<action function="set">tw_back=main2</action>
+					<action function="set">tw_back=main</action>
 					<action function="page">reboot_system_routine</action>
 				</actions>
 			</action>
@@ -916,10 +913,7 @@
 
 			<action>
 				<touch key="home"/>
-				<actions>
-					<action function="set">tw_clear_destination=main2</action>
-					<action function="page">clear_vars</action>
-				</actions>
+				<action function="page">main</action>
 			</action>
 		</page>
 
@@ -947,7 +941,7 @@
 
 		<page name="reboot_system_routine">
 			<action>
-				<action function="set">tw_back=main2</action>
+				<action function="set">tw_back=main</action>
 				<action function="set">tw_action=reboot</action>
 				<action function="set">tw_action_param=system</action>
 				<action function="set">tw_has_action2=0</action>
@@ -1144,17 +1138,14 @@
 				<placement x="%col1_x_right%" y="%row13_y%"/>
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
-					<action function="set">tw_back=main2</action>
+					<action function="set">tw_back=main</action>
 					<action function="page">reboot_system_routine</action>
 				</actions>
 			</button>
 
 			<action>
 				<touch key="home"/>
-				<actions>
-					<action function="set">tw_clear_destination=main2</action>
-					<action function="page">clear_vars</action>
-				</actions>
+				<action function="page">main</action>
 			</action>
 
 			<action>
