@@ -475,14 +475,7 @@
 		<string name="fixing_contexts">Korrigiere Kontexte...</string>
 		<string name="fix_contexts_complete">Korrektur der Kontexte abgeschlossen</string>
 		<string name="reboot_hdr">Neustart</string>
-		<string name="su_hdr">SuperSU-Check</string>
-		<string name="su_note1">Anscheinend besteht kein Root-Zugriff auf das Gerät.</string>
-		<string name="su_note2">SuperSU jetzt installieren?</string>
-		<string name="su_note3">Dies wird Root-Zugriff auf dem Gerät einrichten.</string>
-		<string name="su_cancel">Nicht installieren</string>
-		<string name="swipe_su_to_install">Installation starten</string>
-		<string name="swipe_su_install">Installieren</string>
-		<string name="su_installing">Installiere SuperSU</string>
+		<string name="install_cancel">Nicht installieren</string>
 		<string name="sel_storage_list">Speicher auswählen</string>
 		<string name="ok_btn">OK</string>
 

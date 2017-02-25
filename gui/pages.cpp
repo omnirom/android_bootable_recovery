@@ -56,6 +56,7 @@ extern "C" {
  * 3 - Create generalized sleep_and_reboot page
  *     Do not nest sleep action inside sleepcounter action
  *     Use sleep_and_reboot page for ORS
+ *     Remove SuperSU
  */
 #define TW_THEME_VERSION 3
 
