@@ -95,7 +95,8 @@ int OpenRecoveryScript::copy_script_file(string filename) {
 }
 
 int OpenRecoveryScript::run_script_file(void) {
-	int ret_val = 0, cindex, line_len, i, remove_nl, install_cmd = 0, sideload = 0;
+	int ret_val = 0, cindex, line_len, i, remove_nl, install_cmd = 0;
+	bool force_home = false;
 	char script_line[SCRIPT_COMMAND_SIZE], command[SCRIPT_COMMAND_SIZE],
 	     value[SCRIPT_COMMAND_SIZE], mount[SCRIPT_COMMAND_SIZE],
 	     value1[SCRIPT_COMMAND_SIZE], value2[SCRIPT_COMMAND_SIZE];
@@ -365,8 +366,11 @@ int OpenRecoveryScript::run_script_file(void) {
 				}
 			} else if (strcmp(command, "print") == 0) {
 				gui_print("%s\n", value);
-			} else if (strcmp(command, "sideload") == 0) {
+			} else if (strncmp(command, "sideload", strlen("sideload")) == 0) {
 				// ADB Sideload
+				if (strcmp(command, "sideload_auto_reboot") != 0)
+					force_home = true;
+
 				DataManager::SetValue("tw_action_text2", gui_parse_text("{@sideload}"));
 				install_cmd = -1;
 
@@ -386,7 +390,6 @@ int OpenRecoveryScript::run_script_file(void) {
 				} else {
 					ret_val = 1; // failure
 				}
-				sideload = 1; // Causes device to go to the home screen afterwards
 				if (sideload_child_pid != 0) {
 					LOGINFO("Signaling child sideload process to exit.\n");
 					struct stat st;
@@ -436,8 +439,11 @@ int OpenRecoveryScript::run_script_file(void) {
 		}
 		gui_msg("done=Done.");
 	}
-	if (sideload)
-		ret_val = 1; // Forces booting to the home page after sideload
+
+	// Go to home screen on completion
+	if (force_home)
+		ret_val = 1;
+
 	return ret_val;
 }
 
