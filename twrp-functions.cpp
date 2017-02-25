@@ -537,7 +537,7 @@ void TWFunc::Update_Intent_File(string Intent) {
 }
 
 // reboot: Reboot the system. Return -1 on error, no return on success
-int TWFunc::tw_reboot(RebootCommand command)
+int TWFunc::TW_Reboot(RebootCommand command)
 {
 	DataManager::Flush();
 	Update_Log_File();
@@ -591,6 +591,31 @@ int TWFunc::tw_reboot(RebootCommand command)
 			return -1;
 	}
 	return -1;
+}
+
+void TWFunc::Finish_TWRP(std::string Intent) {
+#ifndef TW_OEM_BUILD
+	// Disable flashing of stock recovery
+	TWFunc::Disable_Stock_Recovery_Replace();
+#endif
+
+	Update_Intent_File(Intent);
+	Update_Log_File();
+
+	// Reboot
+	gui_msg(Msg("rebooting=Rebooting..."));
+	std::string Reboot_Arg;
+	DataManager::GetValue("tw_reboot_arg", Reboot_Arg);
+	if (Reboot_Arg == "recovery")
+		TWFunc::TW_Reboot(rb_recovery);
+	else if (Reboot_Arg == "poweroff")
+		TWFunc::TW_Reboot(rb_poweroff);
+	else if (Reboot_Arg == "bootloader")
+		TWFunc::TW_Reboot(rb_bootloader);
+	else if (Reboot_Arg == "download")
+		TWFunc::TW_Reboot(rb_download);
+	else
+		TWFunc::TW_Reboot(rb_system);
 }
 
 void TWFunc::check_and_run_script(const char* script_file, const char* display_name)

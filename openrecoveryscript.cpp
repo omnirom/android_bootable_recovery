@@ -346,16 +346,8 @@ int OpenRecoveryScript::run_script_file(void) {
 					ret_val = 1;
 				}
 			} else if (strcmp(command, "reboot") == 0) {
-				if (strlen(value) && strcmp(value, "recovery") == 0)
-					TWFunc::tw_reboot(rb_recovery);
-				else if (strlen(value) && strcmp(value, "poweroff") == 0)
-					TWFunc::tw_reboot(rb_poweroff);
-				else if (strlen(value) && strcmp(value, "bootloader") == 0)
-					TWFunc::tw_reboot(rb_bootloader);
-				else if (strlen(value) && strcmp(value, "download") == 0)
-					TWFunc::tw_reboot(rb_download);
-				else
-					TWFunc::tw_reboot(rb_system);
+				DataManager::SetValue("tw_reboot_arg", value);
+				TWFunc::Finish_TWRP("");
 			} else if (strcmp(command, "cmd") == 0) {
 				DataManager::SetValue("tw_action_text2", gui_parse_text("{@running_command}"));
 				if (cindex != 0) {
@@ -703,10 +695,7 @@ int OpenRecoveryScript::Run_OpenRecoveryScript_Action() {
 		}
 	}
 	if (reboot) {
-		// Disable stock recovery reflashing
-		TWFunc::Disable_Stock_Recovery_Replace();
-		usleep(2000000); // Sleep for 2 seconds before rebooting
-		TWFunc::tw_reboot(rb_system);
+		TWFunc::Finish_TWRP("");
 		usleep(5000000); // Sleep for 5 seconds to allow reboot to occur
 	} else {
 		DataManager::SetValue("tw_page_done", 1);
