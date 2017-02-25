@@ -358,8 +358,6 @@ int main(int argc, char **argv) {
 	gui_start();
 
 #ifndef TW_OEM_BUILD
-	// Disable flashing of stock recovery
-	TWFunc::Disable_Stock_Recovery_Replace();
 	// Check for su to see if the device is rooted or not
 	if (DataManager::GetIntValue("tw_mount_system_ro") == 0 && PartitionManager.Mount_By_Path("/system", false)) {
 		// read /system/build.prop to get sdk version and do not offer to root if running M or higher (sdk version 23 == M)
@@ -380,22 +378,7 @@ int main(int argc, char **argv) {
 	}
 #endif
 
-	// Reboot
-	TWFunc::Update_Intent_File(Send_Intent);
-	TWFunc::Update_Log_File();
-	gui_msg(Msg("rebooting=Rebooting..."));
-	string Reboot_Arg;
-	DataManager::GetValue("tw_reboot_arg", Reboot_Arg);
-	if (Reboot_Arg == "recovery")
-		TWFunc::tw_reboot(rb_recovery);
-	else if (Reboot_Arg == "poweroff")
-		TWFunc::tw_reboot(rb_poweroff);
-	else if (Reboot_Arg == "bootloader")
-		TWFunc::tw_reboot(rb_bootloader);
-	else if (Reboot_Arg == "download")
-		TWFunc::tw_reboot(rb_download);
-	else
-		TWFunc::tw_reboot(rb_system);
+	TWFunc::Finish_TWRP(Send_Intent);
 
 	return 0;
 }
