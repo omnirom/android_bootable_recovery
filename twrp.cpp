@@ -303,7 +303,15 @@ int main(int argc, char **argv) {
 
 	// Run any outstanding OpenRecoveryScript
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
+		DataManager::SetValue("tw_cancel_param", "ors");
 		OpenRecoveryScript::Run_OpenRecoveryScript();
+
+		if (DataManager::GetIntValue(TW_SLEEP_REBOOT_VAR)) {
+			TWFunc::Finish_TWRP(Send_Intent);
+			// Do not kill the UI too quickly
+			::sleep(1);
+			return 0;
+		}
 	}
 
 #ifdef TW_HAS_MTP
