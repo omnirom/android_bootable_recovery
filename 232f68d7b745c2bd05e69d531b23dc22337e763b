@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_b1c6351a",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1001332
+      },
+      "writtenOn": "2017-02-25T15:24:29Z",
+      "side": 1,
+      "message": "Not sure this will fly better than https://gerrit.omnirom.org/#/c/20888 (see Ethan\u0027s comments).",
+      "range": {
+        "startLine": 181,
+        "startChar": 0,
+        "endLine": 183,
+        "endChar": 5
+      },
+      "revId": "232f68d7b745c2bd05e69d531b23dc22337e763b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
