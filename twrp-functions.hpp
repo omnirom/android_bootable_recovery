@@ -72,7 +72,9 @@ public:
 	static void GUI_Operation_Text(string Read_Value, string Partition_Name, string Default_Text); // Same as above but includes partition name
 	static void Update_Log_File(void);                                          // Writes the log to last_log
 	static void Update_Intent_File(string Intent);                              // Updates intent file
-	static int tw_reboot(RebootCommand command);                                // Prepares the device for rebooting
+	static RebootCommand Get_RebootCommand(void);                               // Resolves the data variable tw_reboot_arg into its associated RebootCommand
+	static int TW_Reboot(void);                                                 // Prepares the device for reboot
+	static int Reboot(RebootCommand command);                                   // Performs reboot
 	static void check_and_run_script(const char* script_file, const char* display_name); // checks for the existence of a script, chmods it to 755, then runs it
 	static int removeDir(const string path, bool removeParent); //recursively remove a directory
 	static int copy_file(string src, string dst, int mode); //copy file from src to dst with mode permissions

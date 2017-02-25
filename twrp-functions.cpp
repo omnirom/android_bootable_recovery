@@ -571,20 +571,64 @@ void TWFunc::Update_Intent_File(string Intent) {
 	}
 }
 
-// reboot: Reboot the system. Return -1 on error, no return on success
-int TWFunc::tw_reboot(RebootCommand command)
-{
+RebootCommand TWFunc::Get_RebootCommand(void) {
+	std::string Reboot_Arg = DataManager::GetStrValue("tw_reboot_arg");
+	if (Reboot_Arg == "recovery")
+		return rb_recovery;
+	else if (Reboot_Arg == "poweroff")
+		return rb_poweroff;
+	else if (Reboot_Arg == "bootloader")
+		return rb_bootloader;
+	else if (Reboot_Arg == "download")
+		return rb_download;
+	else
+		return rb_system;
+}
+
+int TWFunc::TW_Reboot(void) {
+#ifndef TW_OEM_BUILD
+	// Disable flashing of stock recovery
+	Disable_Stock_Recovery_Replace();
+#endif
+
+	gui_msg("rebooting=Rebooting...");
+
 	DataManager::Flush();
 	Update_Log_File();
 	// Always force a sync before we reboot
 	sync();
 
+	RebootCommand command = Get_RebootCommand();
 	switch (command) {
 		case rb_current:
 		case rb_system:
 			Update_Intent_File("s");
 			sync();
 			check_and_run_script("/sbin/rebootsystem.sh", "reboot system");
+			break;
+		case rb_recovery:
+			check_and_run_script("/sbin/rebootrecovery.sh", "reboot recovery");
+			break;
+		case rb_bootloader:
+			check_and_run_script("/sbin/rebootbootloader.sh", "reboot bootloader");
+			break;
+		case rb_poweroff:
+			check_and_run_script("/sbin/poweroff.sh", "power off");
+			break;
+		case rb_download:
+			check_and_run_script("/sbin/rebootdownload.sh", "reboot download");
+			break;
+		default:
+			break;
+	}
+
+	return Reboot(command);
+}
+
+int TWFunc::Reboot(RebootCommand command) {
+	switch (command) {
+		case rb_current:
+		case rb_system:
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,");
 #elif defined(ANDROID_RB_RESTART)
@@ -593,21 +637,18 @@ int TWFunc::tw_reboot(RebootCommand command)
 			return reboot(RB_AUTOBOOT);
 #endif
 		case rb_recovery:
-			check_and_run_script("/sbin/rebootrecovery.sh", "reboot recovery");
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,recovery");
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "recovery");
 #endif
 		case rb_bootloader:
-			check_and_run_script("/sbin/rebootbootloader.sh", "reboot bootloader");
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,bootloader");
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "bootloader");
 #endif
 		case rb_poweroff:
-			check_and_run_script("/sbin/poweroff.sh", "power off");
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "shutdown,");
 #elif defined(ANDROID_RB_POWEROFF)
@@ -616,21 +657,20 @@ int TWFunc::tw_reboot(RebootCommand command)
 			return reboot(RB_POWER_OFF);
 #endif
 		case rb_download:
-			check_and_run_script("/sbin/rebootdownload.sh", "reboot download");
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,download");
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "download");
 #endif
 		default:
-			return -1;
+			break;
 	}
 	return -1;
 }
 
 void TWFunc::check_and_run_script(const char* script_file, const char* display_name)
 {
-	// Check for and run startup script if script exists
+	// Check for and run script if script exists
 	struct stat st;
 	if (stat(script_file, &st) == 0) {
 		gui_msg(Msg("run_script=Running {1} script...")(display_name));
