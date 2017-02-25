@@ -462,14 +462,7 @@
 		<string name="fixing_contexts">Naprawianie uprawnień...</string>
 		<string name="fix_contexts_complete">Naprawianie uprawnień zakończone</string>
 		<string name="reboot_hdr">Restart</string>
-		<string name="su_hdr">Sprawdzanie SuperSU</string>
-		<string name="su_note1">Twoje urządzenie nie jest zrootowane.</string>
-		<string name="su_note2">Zainstalować SuperSU teraz?</string>
-		<string name="su_note3">To zrootuje twoje urządzenie.</string>
-		<string name="su_cancel">Nie instaluj</string>
-		<string name="swipe_su_to_install">Przesuń, aby zainstalować</string>
-		<string name="swipe_su_install">   Instaluj</string>
-		<string name="su_installing">Instalowanie SuperSU</string>
+		<string name="install_cancel">Nie instaluj</string>
 		<string name="sel_storage_list">Wybierz pamięć</string>
 		<string name="ok_btn">OK</string>
 
