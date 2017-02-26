@@ -56,6 +56,7 @@ extern "C" {
  * 3 - Create generalized sleep_and_reboot page and use for ORS
  *     Remove SuperSU
  *     Remove HTC Dumlock
+ *     Move TWRP app install to Advanced page
  */
 #define TW_THEME_VERSION 3
 

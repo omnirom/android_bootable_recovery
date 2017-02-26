@@ -347,6 +347,11 @@ ifneq ($(TW_DEFAULT_LANGUAGE),)
 else
     LOCAL_CFLAGS += -DTW_DEFAULT_LANGUAGE=en
 endif
+ifeq ($(TW_EXCLUDE_APP), true)
+    LOCAL_CFLAGS += -DTW_EXCLUDE_APP
+else
+    LOCAL_ADDITIONAL_DEPENDENCIES += me.twrp.twrpapp.apk
+endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
     dump_image \
