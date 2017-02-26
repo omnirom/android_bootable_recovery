@@ -54,6 +54,7 @@ extern "C" {
 /* Version History:
  * 2 - Theme handles power button as action togglebacklight
  * 3 - Create generalized sleep_and_reboot page
+ *     Do not nest sleep action inside sleepcounter action
  */
 #define TW_THEME_VERSION 3
 
