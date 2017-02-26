@@ -1570,7 +1570,7 @@
 
 			<button style="tab">
 				<conditions>
-					<condition var1="tw_include_encrypted_backup" var2="1"/>
+					<condition var1="tw_include_encrypted_backup" var2="999"/>
 					<condition var1="tw_encrypt_backup" var2="0"/>
 					<condition var1="tw_enable_adb_backup" op="!=" var2="1"/>
 				</conditions>
@@ -1585,7 +1585,7 @@
 
 			<button style="tab">
 				<conditions>
-					<condition var1="tw_include_encrypted_backup" var2="1"/>
+					<condition var1="tw_include_encrypted_backup" var2="999"/>
 					<condition var1="tw_encrypt_backup" var2="1"/>
 					<condition var1="tw_enable_adb_backup" op="!=" var2="1"/>
 				</conditions>
@@ -1685,7 +1685,7 @@
 
 			<button style="tab">
 				<conditions>
-					<condition var1="tw_include_encrypted_backup" var2="1"/>
+					<condition var1="tw_include_encrypted_backup" var2="999"/>
 					<condition var1="tw_encrypt_backup" var2="0"/>
 					<condition var1="tw_enable_adb_backup" op="!=" var2="1"/>
 				</conditions>
@@ -1700,7 +1700,7 @@
 
 			<button style="tab">
 				<conditions>
-					<condition var1="tw_include_encrypted_backup" var2="1"/>
+					<condition var1="tw_include_encrypted_backup" var2="999"/>
 					<condition var1="tw_encrypt_backup" var2="1"/>
 					<condition var1="tw_enable_adb_backup" op="!=" var2="1"/>
 				</conditions>
@@ -1812,7 +1812,7 @@
 
 			<button style="tab">
 				<conditions>
-					<condition var1="tw_include_encrypted_backup" var2="1"/>
+					<condition var1="tw_include_encrypted_backup" var2="999"/>
 					<condition var1="tw_encrypt_backup" var2="0"/>
 					<condition var1="tw_enable_adb_backup" op="!=" var2="1"/>
 				</conditions>
@@ -1827,7 +1827,7 @@
 
 			<button style="tab">
 				<conditions>
-					<condition var1="tw_include_encrypted_backup" var2="1"/>
+					<condition var1="tw_include_encrypted_backup" var2="999"/>
 					<condition var1="tw_encrypt_backup" var2="1"/>
 					<condition var1="tw_enable_adb_backup" op="!=" var2="1"/>
 				</conditions>
