@@ -347,6 +347,9 @@ ifneq ($(TW_DEFAULT_LANGUAGE),)
 else
     LOCAL_CFLAGS += -DTW_DEFAULT_LANGUAGE=en
 endif
+ifeq ($(TW_NO_TWRP_APP), true)
+    LOCAL_CFLAGS += -DEXCLUDE_TWRP_APP
+endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
     dump_image \

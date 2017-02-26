@@ -73,6 +73,11 @@ endif
 ifeq ($(TW_ROUND_SCREEN), true)
     LOCAL_CFLAGS += -DTW_ROUND_SCREEN
 endif
+ifeq ($(TW_NO_TWRP_APP), true)
+    LOCAL_CFLAGS += -DEXCLUDE_TWRP_APP
+else
+    LOCAL_ADDITIONAL_DEPENDENCIES += me.twrp.twrpapp.apk
+endif
 
 LOCAL_C_INCLUDES += \
     bionic \
