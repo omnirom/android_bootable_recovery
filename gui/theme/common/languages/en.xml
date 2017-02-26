@@ -115,13 +115,20 @@
 		<string name="rebooting">Rebooting...</string>
 		<string name="swipe_reboot">Swipe to Reboot</string>
 		<string name="swipe_reboot_s">   Reboot</string>
-		<string name="reboot_install_app_hdr">Install TWRP App?</string>
-		<string name="reboot_install_app1">Would you like to install the Official TWRP App?</string>
-		<string name="reboot_install_app2">The app can check for new TWRP versions.</string>
-		<string name="reboot_install_app_prompt_install">Prompt to install TWRP app if not installed</string>
-		<string name="reboot_install_app_system">Install as a System App</string>
-		<string name="reboot_installing_app">Installing App...</string>
-		<string name="swipe_to_install_app">Swipe to Install TWRP App</string>
+		<string name="twrp_app">TWRP App</string>
+		<string name="twrp_app_hdr">Install TWRP app</string>
+		<string name="twrp_app1">Would you like to install the official TWRP app?</string>
+		<string name="twrp_app2">The app can check for new TWRP versions.</string>
+		<string name="app_install_system_ro">Cannot install as system app to read-only /system</string>
+		<string name="twrp_app_sdk_error">SDK version too low for TWRP app ({1} &lt; 14)</string>
+		<string name="twrp_app_sdk_unknown">Unable to read SDK version from build prop</string>
+		<string name="app_found">App already installed at {1}</string>
+		<string name="twrp_app_install_fail">TWRP app installation failed; see log for details.</string>
+		<string name="twrp_app_install_complete">TWRP app installation complete.</string>
+		<string name="install_app_system">Install as a system app</string>
+		<string name="installing_app">Installing app...</string>
+		<string name="install_app_complete">App install complete</string>
+		<string name="swipe_to_install_app" version="2">Swipe to install app</string>
 		<string name="swipe_flash">Swipe to confirm Flash</string>
 		<string name="confirm_action">Confirm Action</string>
 		<string name="back_cancel">Press back button to cancel.</string>

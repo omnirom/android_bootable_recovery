@@ -826,9 +826,16 @@ void DataManager::SetDefaultValues()
 	mConst.SetValue("tw_oem_build", "1");
 #else
 	mConst.SetValue("tw_oem_build", "0");
-	mPersist.SetValue("tw_app_prompt", "1");
+#endif
+
+#if defined(TW_OEM_BUILD) && !defined(TW_EXCLUDE_APP)
+	mConst.SetValue("tw_exclude_app", "0");
+	mPersist.SetValue("tw_app_install_system", "0");
+#elif !defined(TW_EXCLUDE_APP)
+	mConst.SetValue("tw_exclude_app", "0");
 	mPersist.SetValue("tw_app_install_system", "1");
-	mData.SetValue("tw_app_install_status", "0"); // 0 = no status, 1 = not installed, 2 = already installed
+#else
+	mConst.SetValue("tw_exclude_app", "1");
 #endif
 
 	pthread_mutex_unlock(&m_valuesLock);
