@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78209991_d9e557db",
+        "filename": "Android.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 1001922
+      },
+      "writtenOn": "2017-02-28T16:09:42Z",
+      "side": 1,
+      "message": "cryptfs_hw in LineageOS 13.0 has been moved too. Build failed with this commit.\nI think, CM_PLATFORM_SDK_VERSION -ge 6 would be correct.",
+      "revId": "ebaadeffd5f23f26484167738f34e35176b4473a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
