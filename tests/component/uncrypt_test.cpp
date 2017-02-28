@@ -29,6 +29,8 @@
 #include <bootloader_message/bootloader_message.h>
 #include <gtest/gtest.h>
 
+#include "common/component_test_util.h"
+
 static const std::string UNCRYPT_SOCKET = "/dev/socket/uncrypt";
 static const std::string INIT_SVC_SETUP_BCB = "init.svc.setup-bcb";
 static const std::string INIT_SVC_CLEAR_BCB = "init.svc.clear-bcb";
@@ -37,7 +39,9 @@ static constexpr int SOCKET_CONNECTION_MAX_RETRY = 30;
 
 class UncryptTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  UncryptTest() : has_misc(true) {}
+
+  virtual void SetUp() override {
     ASSERT_TRUE(android::base::SetProperty("ctl.stop", "setup-bcb"));
     ASSERT_TRUE(android::base::SetProperty("ctl.stop", "clear-bcb"));
     ASSERT_TRUE(android::base::SetProperty("ctl.stop", "uncrypt"));
@@ -57,10 +61,19 @@ class UncryptTest : public ::testing::Test {
     }
 
     ASSERT_TRUE(success) << "uncrypt service is not available.";
+
+    has_misc = parse_misc();
   }
+
+  bool has_misc;
 };
 
 TEST_F(UncryptTest, setup_bcb) {
+  if (!has_misc) {
+    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
+    return;
+  }
+
   // Trigger the setup-bcb service.
   ASSERT_TRUE(android::base::SetProperty("ctl.start", "setup-bcb"));
 
@@ -126,6 +139,11 @@ TEST_F(UncryptTest, setup_bcb) {
 }
 
 TEST_F(UncryptTest, clear_bcb) {
+  if (!has_misc) {
+    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
+    return;
+  }
+
   // Trigger the clear-bcb service.
   ASSERT_TRUE(android::base::SetProperty("ctl.start", "clear-bcb"));
 
