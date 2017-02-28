@@ -19,6 +19,7 @@
 		<string name="recovery">Recovery</string>
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
+		<string name="data_backup">Data（不包含存儲）</string>
 		<string name="sdcard">SDCard</string>
 		<string name="internal">內置存儲</string>
 		<string name="microsd">SD 卡</string>
@@ -595,6 +596,7 @@
 		<string name="remove_all">移除 '{1}' 下的所有檔案</string>
 		<string name="wiping_data">正在清除 Data 分区，跳過清除/data/media…</string>
 		<string name="backing_up">正在備份 {1}…</string>
+		<string name="backup_storage_warning">備份的 {1} 分區不包含內置存儲上的任何檔案，例如照片或下載的檔案等等。</string>
 		<string name="backing">正在備份</string>
 		<string name="backup_size">'{1}' 的備份檔案大小為 0 位元組。</string>
 		<string name="datamedia_fs_restore">警告：此/data備份檔案系統為 {1}！除非把檔案系統格式設置為 {1} 否則可能無法啟動。</string>
