@@ -14,23 +14,38 @@
  * limitations under the License.
  */
 
+#include <string>
+#include <vector>
+
 #include <android-base/strings.h>
 #include <bootloader_message/bootloader_message.h>
 #include <gtest/gtest.h>
 
-#include <string>
-#include <vector>
+#include "common/component_test_util.h"
 
 class BootloaderMessageTest : public ::testing::Test {
  protected:
+  BootloaderMessageTest() : has_misc(true) {}
+
+  virtual void SetUp() override {
+    has_misc = parse_misc();
+  }
+
   virtual void TearDown() override {
     // Clear the BCB.
     std::string err;
     ASSERT_TRUE(clear_bootloader_message(&err)) << "Failed to clear BCB: " << err;
   }
+
+  bool has_misc;
 };
 
 TEST_F(BootloaderMessageTest, clear_bootloader_message) {
+  if (!has_misc) {
+    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
+    return;
+  }
+
   // Clear the BCB.
   std::string err;
   ASSERT_TRUE(clear_bootloader_message(&err)) << "Failed to clear BCB: " << err;
@@ -45,6 +60,11 @@ TEST_F(BootloaderMessageTest, clear_bootloader_message) {
 }
 
 TEST_F(BootloaderMessageTest, read_and_write_bootloader_message) {
+  if (!has_misc) {
+    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
+    return;
+  }
+
   // Write the BCB.
   bootloader_message boot = {};
   strlcpy(boot.command, "command", sizeof(boot.command));
@@ -63,6 +83,11 @@ TEST_F(BootloaderMessageTest, read_and_write_bootloader_message) {
 }
 
 TEST_F(BootloaderMessageTest, write_bootloader_message_options) {
+  if (!has_misc) {
+    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
+    return;
+  }
+
   // Write the options to BCB.
   std::vector<std::string> options = { "option1", "option2" };
   std::string err;
@@ -88,6 +113,11 @@ TEST_F(BootloaderMessageTest, write_bootloader_message_options) {
 }
 
 TEST_F(BootloaderMessageTest, write_bootloader_message_options_empty) {
+  if (!has_misc) {
+    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
+    return;
+  }
+
   // Write empty vector.
   std::vector<std::string> options;
   std::string err;
@@ -109,6 +139,11 @@ TEST_F(BootloaderMessageTest, write_bootloader_message_options_empty) {
 }
 
 TEST_F(BootloaderMessageTest, write_bootloader_message_options_long) {
+  if (!has_misc) {
+    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
+    return;
+  }
+
   // Write super long message.
   std::vector<std::string> options;
   for (int i = 0; i < 100; i++) {
@@ -139,6 +174,11 @@ TEST_F(BootloaderMessageTest, write_bootloader_message_options_long) {
 }
 
 TEST_F(BootloaderMessageTest, update_bootloader_message) {
+  if (!has_misc) {
+    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
+    return;
+  }
+
   // Inject some bytes into boot, which should be not overwritten later.
   bootloader_message boot;
   strlcpy(boot.recovery, "random message", sizeof(boot.recovery));
