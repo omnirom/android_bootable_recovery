@@ -17,6 +17,7 @@
 		<string name="recovery">Recuperação</string>
 		<string name="cache">Cache</string>
 		<string name="data">Dados</string>
+		<string name="data_backup">Dados (apag. armazenamento)</string>
 		<string name="sdcard">SDCard</string>
 		<string name="internal">Armazenamento interno</string>
 		<string name="microsd">Micro SDCard</string>
@@ -107,6 +108,13 @@
 		<string name="rebooting">Reiniciando...</string>
 		<string name="swipe_reboot">Deslize para reiniciar</string>
 		<string name="swipe_reboot_s">   Reiniciar</string>
+		<string name="reboot_install_app_hdr">Instalar aplicativo do TWRP?</string>
+		<string name="reboot_install_app1">Você gostaria de intalar of aplicativo oficial do TWRP?</string>
+		<string name="reboot_install_app2">O aplicativo buscará por novas versões do TWRP.</string>
+		<string name="reboot_install_app_prompt_install">Pergunte para instalar o aplicativo do TWRP se não instalado</string>
+		<string name="reboot_install_app_system">Instalar como aplicativo do Sistema</string>
+		<string name="reboot_installing_app">Instalando aplicativo...</string>
+		<string name="swipe_to_install_app">Deslize para intalar o aplicativo do TWRP</string>
 		<string name="swipe_flash">Deslize para confirmar Flash</string>
 		<string name="confirm_action">Confirmar a ação</string>
 		<string name="back_cancel">Pressione o botão voltar para cancelar.</string>
@@ -354,8 +362,8 @@
 		<string name="set_language_btn">Definir idioma</string>
 		<string name="advanced_hdr">Avançado</string>
 		<string name="copy_log_confirm">Copiar o Log para o cartão SD?</string>
-		<string name="copying_log">Copiar o Log para o cartão SD...</string>
-		<string name="copy_log_complete">Cópia de registro completo</string>
+		<string name="copying_log" version="2">Copiando o Log para o cartão SD...</string>
+		<string name="copy_log_complete" version="2">Cópia de Log completo</string>
 		<string name="part_sd_btn">Cartão SD de partição</string>
 		<string name="part_sd_s_btn">Cartão SD</string>
 		<string name="file_manager_btn">Gerenciador de Arquivos</string>
@@ -508,6 +516,7 @@
 		<string name="fail_decrypt">Falha ao descriptografar os dados.</string>
 		<string name="no_crypto_support">Não há suporte para criptografia compilada para esta compilação.</string>
 		<string name="decrypt_success_dev">Dados descriptografados com sucesso, o novo dispositivo de bloco: \'{1}\'</string>
+		<string name="decrypt_success_nodev">Dados descriptografados com sucesso</string>
 		<string name="done">Concluído.</string>
 		<string name="start_partition_sd">Particionando o cartão SD...</string>
 		<string name="partition_sd_locate">Não é possível localizar o dispositivo para a partição.</string>
@@ -552,6 +561,7 @@
 		<string name="remove_all">Remover todos os arquivos em \'{1}\'</string>
 		<string name="wiping_data">Limpando os dados sem limpar /data/media...</string>
 		<string name="backing_up">Cópia de Segurança de {1}...</string>
+		<string name="backup_storage_warning">Cópias de segurança de {1} não incluem qualquer arquivos no armazenamento interno como fotos ou downloads.</string>
 		<string name="backing">Fazendo cópia de segurança</string>
 		<string name="backup_size">Tamanho do arquivo de cópia de segurança para \'{1}\' é 0 bytes.</string>
 		<string name="datamedia_fs_restore">Aviso: Essa cópia de segurança /data foi feita com o sistema de arquivos de {1}! A cópia de segurança não pode arrancar a menos que você muda de volta para {1}.</string>
@@ -591,7 +601,7 @@
 		<string name="recovery_commands_complete">Comandos de recuperação completa</string>
 		<string name="running_ors">OpenRecoveryScript em execução</string>
 		<string name="ors_complete">OpenRecoveryScript completa</string>
-		<string name="no_updater_binary">Não foi possível encontrar \'{1}\' no arquivo zip.</string>
+		<string name="invalid_zip_format">Formato de arquivo zip inválido</string>
 		<string name="check_for_md5">Verificação de arquivo MD5...</string>
 		<string name="fail_sysmap">Falha ao mapear o arquivo \'{1}\'</string>
 		<string name="verify_zip_sig">Verificar a assinatura do zip...</string>
@@ -636,5 +646,11 @@
 		<string name="cancel_sideload">Cancelamento de sideload ADB...</string>
 		<string name="change_fs_err">Sistema de arquivo erro em mudança.</string>
 		<string name="theme_ver_err">Versão personalizada do tema não coincide com a versão TWRP. Usando o tema conservado em estoque.</string>
+		<string name="up_a_level">(Um nível acima)</string>
+		<string name="install_reboot" version="2">Reiniciando em %tw_sleep% segundo(s)</string>
+		<string name="adbbackup_error">Erro no Backup via ADB. Saindo..."</string>
+		<string name="adbbackup_control_error">Impossível escrever para o interface de controle do ADB</string>
+		<string name="twrp_adbbu_option">--twrp option é requerida para habilitar o backup via ADB</string>
+		<string name="partition_not_found">caminho: {1} não encontrado na lista de partições</string>
 	</resources>
 </language>
