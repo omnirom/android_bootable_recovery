@@ -19,9 +19,14 @@
  * update. It gets invoked by init, and will only perform the verification if
  * it's the first boot post an A/B OTA update.
  *
- * It relies on dm-verity to capture any corruption on the partitions being
- * verified. dm-verity must be in enforcing mode, so that it will reboot the
- * device on dm-verity failures. When that happens, the bootloader should
+ * Update_verifier relies on dm-verity to capture any corruption on the partitions
+ * being verified. And its behavior varies depending on the dm-verity mode.
+ * Upon detection of failures:
+ *   enforcing mode: dm-verity reboots the device
+ *   eio mode: dm-verity fails the read and update_verifier reboots the device
+ *   other mode: not supported and update_verifier reboots the device
+ *
+ * After a predefined number of failing boot attempts, the bootloader should
  * mark the slot as unbootable and stops trying. Other dm-verity modes (
  * for example, veritymode=EIO) are not accepted and simply lead to a
  * verification failure.
@@ -35,6 +40,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <string>
 #include <vector>
@@ -46,6 +52,7 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <android/hardware/boot/1.0/IBootControl.h>
+#include <cutils/android_reboot.h>
 
 using android::sp;
 using android::hardware::boot::V1_0::IBootControl;
@@ -66,18 +73,9 @@ static int dm_name_filter(const dirent* de) {
   return 0;
 }
 
-static bool read_blocks(const std::string& blk_device, const std::string& range_str) {
-  // Parse the partition in the end of the block_device string.
-  // Here is one example: "/dev/block/bootdevice/by-name/system"
-  std::string partition;
-  if (android::base::EndsWith(blk_device, "system")) {
-    partition = "system";
-  } else if (android::base::EndsWith(blk_device, "vendor")) {
-    partition = "vendor";
-  } else {
-    LOG(ERROR) << "Failed to parse partition string in " << blk_device;
-    return false;
-  }
+static bool read_blocks(const std::string& partition, const std::string& range_str) {
+  CHECK(partition == "system" || partition == "vendor")
+      << "partition name should be system or vendor" << partition;
 
   // Iterate the content of "/sys/block/dm-X/dm/name". If it matches "system"
   // (or "vendor"), then dm-X is a dm-wrapped system/vendor partition.
@@ -172,7 +170,7 @@ static bool verify_image(const std::string& care_map_name) {
         return true;
     }
     // Care map file has four lines (two lines if vendor partition is not present):
-    // First line has the block device name, e.g./dev/block/.../by-name/system.
+    // First line has the block partition name (system/vendor).
     // Second line holds all ranges of blocks to verify.
     // The next two lines have the same format but for vendor partition.
     std::string file_content;
@@ -198,6 +196,14 @@ static bool verify_image(const std::string& care_map_name) {
     return true;
 }
 
+static int reboot_device() {
+  if (android_reboot(ANDROID_RB_RESTART2, 0, nullptr) == -1) {
+    LOG(ERROR) << "Failed to reboot.";
+    return -1;
+  }
+  while (true) pause();
+}
+
 int main(int argc, char** argv) {
   for (int i = 1; i < argc; i++) {
     LOG(INFO) << "Started with arg " << i << ": " << argv[i];
@@ -206,7 +212,7 @@ int main(int argc, char** argv) {
   sp<IBootControl> module = IBootControl::getService();
   if (module == nullptr) {
     LOG(ERROR) << "Error getting bootctrl module.";
-    return -1;
+    return reboot_device();
   }
 
   uint32_t current_slot = module->getCurrentSlot();
@@ -221,18 +227,19 @@ int main(int argc, char** argv) {
     std::string verity_mode = android::base::GetProperty("ro.boot.veritymode", "");
     if (verity_mode.empty()) {
       LOG(ERROR) << "Failed to get dm-verity mode.";
-      return -1;
+      return reboot_device();
     } else if (android::base::EqualsIgnoreCase(verity_mode, "eio")) {
-      // We shouldn't see verity in EIO mode if the current slot hasn't booted
-      // successfully before. Therefore, fail the verification when veritymode=eio.
-      LOG(ERROR) << "Found dm-verity in EIO mode, skip verification.";
-      return -1;
+      // We shouldn't see verity in EIO mode if the current slot hasn't booted successfully before.
+      // Continue the verification until we fail to read some blocks.
+      LOG(WARNING) << "Found dm-verity in EIO mode.";
     } else if (verity_mode != "enforcing") {
       LOG(ERROR) << "Unexpected dm-verity mode : " << verity_mode << ", expecting enforcing.";
-      return -1;
-    } else if (!verify_image(CARE_MAP_FILE)) {
+      return reboot_device();
+    }
+
+    if (!verify_image(CARE_MAP_FILE)) {
       LOG(ERROR) << "Failed to verify all blocks in care map file.";
-      return -1;
+      return reboot_device();
     }
 #else
     LOG(WARNING) << "dm-verity not enabled; marking without verification.";
@@ -242,7 +249,7 @@ int main(int argc, char** argv) {
     module->markBootSuccessful([&cr](CommandResult result) { cr = result; });
     if (!cr.success) {
       LOG(ERROR) << "Error marking booted successfully: " << cr.errMsg;
-      return -1;
+      return reboot_device();
     }
     LOG(INFO) << "Marked slot " << current_slot << " as booted successfully.";
   }
