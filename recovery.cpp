@@ -972,8 +972,9 @@ static void choose_recovery_file(Device* device) {
 
     const char* headers[] = { "Select file to view", nullptr };
 
+    int chosen_item = 0;
     while (true) {
-        int chosen_item = get_menu_selection(headers, entries, 1, 0, device);
+        chosen_item = get_menu_selection(headers, entries, 1, chosen_item, device);
         if (strcmp(entries[chosen_item], "Back") == 0) break;
 
         ui->ShowFile(entries[chosen_item]);
