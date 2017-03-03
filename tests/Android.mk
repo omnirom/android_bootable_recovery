@@ -90,6 +90,7 @@ LOCAL_SRC_FILES := \
     component/bootloader_message_test.cpp \
     component/edify_test.cpp \
     component/imgdiff_test.cpp \
+    component/sideload_test.cpp \
     component/uncrypt_test.cpp \
     component/updater_test.cpp \
     component/verifier_test.cpp
