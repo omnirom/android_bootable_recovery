@@ -33,8 +33,10 @@ class BootloaderMessageTest : public ::testing::Test {
 
   virtual void TearDown() override {
     // Clear the BCB.
-    std::string err;
-    ASSERT_TRUE(clear_bootloader_message(&err)) << "Failed to clear BCB: " << err;
+    if (has_misc) {
+      std::string err;
+      ASSERT_TRUE(clear_bootloader_message(&err)) << "Failed to clear BCB: " << err;
+    }
   }
 
   bool has_misc;
