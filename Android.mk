@@ -377,7 +377,11 @@ ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
 
     LOCAL_CFLAGS += -DTARGET_DEVICE="\"$(TARGET_DEVICE)\""
 
-    LOCAL_CFLAGS += -DMR_REC_VERSION="\"$(MR_REC_VERSION)\""
+    ifneq ($(MR_REC_VERSION),)
+        LOCAL_CFLAGS += -DMR_REC_VERSION="\"$(MR_REC_VERSION)\""
+    else
+        LOCAL_CFLAGS += -DMR_REC_VERSION="\"$(shell date -u +%Y%m%d)\""
+    endif
 
 #TODO
 LOCAL_CFLAGS += -DTW_DEFAULT_ROTATION=0

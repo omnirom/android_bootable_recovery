@@ -828,20 +828,23 @@ void DataManager::SetDefaultValues()
 
 #ifdef TW_MROM_REC_VERSION_STR
 	// mrom build version needed by splash (parse it just like in multirom.cpp)
-	if(strlen(TW_MROM_REC_VERSION_STR) == sizeof("YYYYMMDD-PP")-1)
+	if (strlen(TW_MROM_REC_VERSION_STR) == sizeof("YYYYMMDD-PP")-1 ||
+		strlen(TW_MROM_REC_VERSION_STR) == sizeof("YYYYMMDD")-1)
 	{
-		int patch = atoi(TW_MROM_REC_VERSION_STR+sizeof("YYYYMMDD-")-1);
+		int patch;
 		std::string res(TW_MROM_REC_VERSION_STR, sizeof("YYYYMMDD")-1);
 
 		res.insert(6, "-");
 		res.insert(4, "-");
 
-		if(patch > 0)
+		if (strlen(TW_MROM_REC_VERSION_STR) == sizeof("YYYYMMDD-PP")-1 &&
+		    (patch = atoi(TW_MROM_REC_VERSION_STR+sizeof("YYYYMMDD-")-1)) > 0)
 		{
 			char buff[5];
 			snprintf(buff, sizeof(buff), " p%d", patch);
 			res += buff;
 		}
+
 		//res.insert(0, "_"); //we dont want that forced in the xml
 		SetValue(TW_MROM_REC_VERSION_VAR, res);
 	}
