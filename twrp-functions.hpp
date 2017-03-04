@@ -59,6 +59,7 @@ public:
 	static int Exec_Cmd_Show_Output(const string& cmd);
 #endif //TARGET_RECOVERY_IS_MULTIROM
 	static int Wait_For_Child(pid_t pid, int *status, string Child_Name);       // Waits for pid to exit and checks exit status
+	static int Wait_For_Child_Timeout(pid_t pid, int *status, const string& Child_Name, int timeout); // Waits for a pid to exit until the timeout is hit. If timeout is hit, kill the chilld.
 	static bool Path_Exists(string Path);                                       // Returns true if the path exists
 	static Archive_Type Get_File_Type(string fn);                               // Determines file type, 0 for unknown, 1 for gzip, 2 for OAES encrypted
 	static int Try_Decrypting_File(string fn, string password); // -1 for some error, 0 for failed to decrypt, 1 for decrypted, 3 for decrypted and found gzip format

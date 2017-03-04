@@ -332,13 +332,6 @@ int main(int argc, char **argv) {
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
 	// Read the settings file
-#ifdef TW_HAS_MTP
-	// We unmount partitions sometimes during early boot which may override
-	// the default of MTP being enabled by auto toggling MTP off. This
-	// will force it back to enabled then get overridden by the settings
-	// file, assuming that an entry for tw_mtp_enabled is set.
-	DataManager::SetValue("tw_mtp_enabled", 1);
-#endif
 	DataManager::ReadSettingsFile();
 	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
 	GUIConsole::Translate_Now();
@@ -369,28 +362,26 @@ int main(int argc, char **argv) {
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
 #ifdef TW_HAS_MTP
-	// Enable MTP?
 	char mtp_crash_check[PROPERTY_VALUE_MAX];
 	property_get("mtp.crash_check", mtp_crash_check, "0");
-	if (strcmp(mtp_crash_check, "0") == 0) {
+	if (DataManager::GetIntValue("tw_mtp_enabled")
+			&& !strcmp(mtp_crash_check, "0") && !crash_counter
+			&& (!DataManager::GetIntValue(TW_IS_ENCRYPTED) || DataManager::GetIntValue(TW_IS_DECRYPTED))) {
 		property_set("mtp.crash_check", "1");
-		if (DataManager::GetIntValue("tw_mtp_enabled") == 1 && ((DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0 && DataManager::GetIntValue(TW_IS_DECRYPTED) != 0) || DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0)) {
-			LOGINFO("Enabling MTP during startup\n");
-			if (!PartitionManager.Enable_MTP())
-				PartitionManager.Disable_MTP();
-			else
-				gui_msg("mtp_enabled=MTP Enabled");
-		} else {
+		LOGINFO("Starting MTP\n");
+		if (!PartitionManager.Enable_MTP())
 			PartitionManager.Disable_MTP();
-		}
+		else
+			gui_msg("mtp_enabled=MTP Enabled");
 		property_set("mtp.crash_check", "0");
-	} else {
+	} else if (strcmp(mtp_crash_check, "0")) {
 		gui_warn("mtp_crash=MTP Crashed, not starting MTP on boot.");
 		DataManager::SetValue("tw_mtp_enabled", 0);
 		PartitionManager.Disable_MTP();
+	} else if (crash_counter == 1) {
+		LOGINFO("TWRP crashed; disabling MTP as a precaution.\n");
+		PartitionManager.Disable_MTP();
 	}
-#else
-	PartitionManager.Disable_MTP();
 #endif
 
 #ifndef TW_OEM_BUILD

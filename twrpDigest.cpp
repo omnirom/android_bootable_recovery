@@ -154,7 +154,7 @@ int twrpDigest::verify_md5digest(void) {
 		snprintf(hex, 3, "%02x", md5sum[i]);
 		md5str += hex;
 	}
-	if (tokens.at(0) != md5str)
+	if (tokens.empty() || tokens.at(0) != md5str)
 		return MD5_MATCH_FAIL;
 
 	return MD5_OK;
