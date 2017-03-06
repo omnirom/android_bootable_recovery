@@ -1892,7 +1892,7 @@ int GUIAction::checkforapp(std::string arg __unused)
 				LOGINFO("Unable to read sdk version from build prop\n");
 			else
 				LOGINFO("SDK version too low for TWRP app (%i < 14)\n", sdkver);
-			DataManager::SetValue("tw_app_install_status", 1); // 0 = no status, 1 = not installed, 2 = already installed
+			DataManager::SetValue("tw_app_install_status", 1); // 0 = no status, 1 = not installed, 2 = already installed or do not install
 			goto exit;
 		}
 		if (PartitionManager.Mount_By_Path("/system", false)) {
@@ -1905,7 +1905,7 @@ int GUIAction::checkforapp(std::string arg __unused)
 			install_path += "/twrpapp";
 			if (TWFunc::Path_Exists(install_path)) {
 				LOGINFO("App found at '%s'\n", install_path.c_str());
-				DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed
+				DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed or do not install
 				goto exit;
 			}
 		}
@@ -1920,11 +1920,14 @@ int GUIAction::checkforapp(std::string arg __unused)
 						continue;
 					closedir(d);
 					LOGINFO("App found at '%s/%s'\n", parent_path, p->d_name);
-					DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed
+					DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed or do not install
 					goto exit;
 				}
 				closedir(d);
 			}
+		} else {
+			LOGINFO("Data partition cannot be mounted during app check\n");
+			DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed or do not install
 		}
 	} else
 		simulate_progress_bar();
