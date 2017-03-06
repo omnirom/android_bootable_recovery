@@ -1470,8 +1470,9 @@ struct Command {
 //    - new data stream (filename within package.zip)
 //    - patch stream (filename within package.zip, must be uncompressed)
 
-static Value* PerformBlockImageUpdate(const char* name, State* state, int /* argc */, Expr* argv[],
-        const Command* commands, size_t cmdcount, bool dryrun) {
+static Value* PerformBlockImageUpdate(const char* name, State* state,
+                                      const std::vector<std::unique_ptr<Expr>>& argv,
+                                      const Command* commands, size_t cmdcount, bool dryrun) {
     CommandParameters params = {};
     params.canwrite = !dryrun;
 
@@ -1480,9 +1481,14 @@ static Value* PerformBlockImageUpdate(const char* name, State* state, int /* arg
         is_retry = true;
         LOG(INFO) << "This update is a retry.";
     }
+    if (argv.size() != 4) {
+        ErrorAbort(state, kArgsParsingFailure, "block_image_update expects 4 arguments, got %zu",
+                   argv.size());
+        return StringValue("");
+    }
 
     std::vector<std::unique_ptr<Value>> args;
-    if (!ReadValueArgs(state, 4, argv, &args)) {
+    if (!ReadValueArgs(state, argv, &args)) {
         return nullptr;
     }
 
@@ -1762,7 +1768,8 @@ pbiudone:
 // command has already been completed and verify the integrity of
 // the source data.
 
-Value* BlockImageVerifyFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* BlockImageVerifyFn(const char* name, State* state,
+                          const std::vector<std::unique_ptr<Expr>>& argv) {
     // Commands which are not tested are set to nullptr to skip them completely
     const Command commands[] = {
         { "bsdiff",     PerformCommandDiff  },
@@ -1776,11 +1783,12 @@ Value* BlockImageVerifyFn(const char* name, State* state, int argc, Expr* argv[]
     };
 
     // Perform a dry run without writing to test if an update can proceed
-    return PerformBlockImageUpdate(name, state, argc, argv, commands,
+    return PerformBlockImageUpdate(name, state, argv, commands,
                 sizeof(commands) / sizeof(commands[0]), true);
 }
 
-Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* BlockImageUpdateFn(const char* name, State* state,
+                          const std::vector<std::unique_ptr<Expr>>& argv) {
     const Command commands[] = {
         { "bsdiff",     PerformCommandDiff  },
         { "erase",      PerformCommandErase },
@@ -1792,13 +1800,19 @@ Value* BlockImageUpdateFn(const char* name, State* state, int argc, Expr* argv[]
         { "zero",       PerformCommandZero  }
     };
 
-    return PerformBlockImageUpdate(name, state, argc, argv, commands,
+    return PerformBlockImageUpdate(name, state, argv, commands,
                 sizeof(commands) / sizeof(commands[0]), false);
 }
 
-Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[]) {
+Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    if (argv.size() != 2) {
+        ErrorAbort(state, kArgsParsingFailure, "range_sha1 expects 2 arguments, got %zu",
+                   argv.size());
+        return StringValue("");
+    }
+
     std::vector<std::unique_ptr<Value>> args;
-    if (!ReadValueArgs(state, 2, argv, &args)) {
+    if (!ReadValueArgs(state, argv, &args)) {
         return nullptr;
     }
 
@@ -1856,9 +1870,16 @@ Value* RangeSha1Fn(const char* name, State* state, int /* argc */, Expr* argv[])
 // 1st block of each partition and check for mounting time/count. It return string "t"
 // if executes successfully and an empty string otherwise.
 
-Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* CheckFirstBlockFn(const char* name, State* state,
+                         const std::vector<std::unique_ptr<Expr>>& argv) {
+     if (argv.size() != 1) {
+        ErrorAbort(state, kArgsParsingFailure, "check_first_block expects 1 argument, got %zu",
+                   argv.size());
+        return StringValue("");
+    }
+
     std::vector<std::unique_ptr<Value>> args;
-    if (!ReadValueArgs(state, 1, argv, &args)) {
+    if (!ReadValueArgs(state, argv, &args)) {
         return nullptr;
     }
 
@@ -1904,9 +1925,16 @@ Value* CheckFirstBlockFn(const char* name, State* state, int argc, Expr* argv[])
 }
 
 
-Value* BlockImageRecoverFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* BlockImageRecoverFn(const char* name, State* state,
+                           const std::vector<std::unique_ptr<Expr>>& argv) {
+    if (argv.size() != 2) {
+        ErrorAbort(state, kArgsParsingFailure, "block_image_recover expects 2 arguments, got %zu",
+                   argv.size());
+        return StringValue("");
+    }
+
     std::vector<std::unique_ptr<Value>> args;
-    if (!ReadValueArgs(state, 2, argv, &args)) {
+    if (!ReadValueArgs(state, argv, &args)) {
         return nullptr;
     }
 
