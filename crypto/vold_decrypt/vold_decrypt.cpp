@@ -215,11 +215,11 @@ void set_needed_props(void) {
 }
 
 string vdc_cryptfs_cmd(string log_name) {
-	string cmd;
+	string cmd = "LD_LIBRARY_PATH=/system/lib64:/system/lib /system/bin/vdc cryptfs";
 
-	cmd = "LD_LIBRARY_PATH=/system/lib64:/system/lib /system/bin/vdc cryptfs";
-
-#ifdef TW_CRYPTO_SYSTEM_VOLD_DEBUG
+#ifndef TW_CRYPTO_SYSTEM_VOLD_DEBUG
+	(void)log_name; // do nothing, but get rid of compiler warning in non debug builds
+#else
 	if (has_timeout && has_strace)
 		cmd = "/sbin/strace -q -tt -ff -v -y -s 1000 -o /tmp/strace_vdc_" + log_name + " /sbin/timeout -t 30 -s KILL env " + cmd;
 	else if (has_strace)
@@ -552,7 +552,6 @@ int vold_decrypt(string Password)
 #ifdef TW_CRYPTO_SYSTEM_VOLD_DEBUG
 	if (pid_strace > 0) {
 		LOGDECRYPT_KMSG("Stopping strace_init (pid=%d)\n", pid_strace);
-		int died = 0;
 		int timeout;
 		int status;
 		pid_t retpid = waitpid(pid_strace, &status, WNOHANG);
