@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d83ee5b8_10bbc4dd",
+        "filename": "twinstall.cpp",
+        "patchSetId": 63
+      },
+      "lineNbr": 329,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-03-06T17:13:09Z",
+      "side": 1,
+      "message": "memory leak of twrpDigest *digest \u003d new twrpMD5(); here",
+      "revId": "c506981e591981a8483d9e47ffa5690d467084ad",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d83ee5b8_f0cf2084",
+        "filename": "twinstall.cpp",
+        "patchSetId": 63
+      },
+      "lineNbr": 333,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-03-06T17:13:09Z",
+      "side": 1,
+      "message": "another twrpDigest *digest \u003d new twrpMD5(); memory leak",
+      "revId": "c506981e591981a8483d9e47ffa5690d467084ad",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d83ee5b8_d0cc1c92",
+        "filename": "twinstall.cpp",
+        "patchSetId": 63
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-03-06T17:13:09Z",
+      "side": 1,
+      "message": "Ideally you should declare twrpDigest *digest \u003d new twrpMD5(); here when you are about to use it to help reduce the possibilities of memory leaks.",
+      "revId": "c506981e591981a8483d9e47ffa5690d467084ad",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
