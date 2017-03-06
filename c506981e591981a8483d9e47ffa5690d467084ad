@@ -2,6 +2,40 @@
   "comments": [
     {
       "key": {
+        "uuid": "d83ee5b8_70a7b0bd",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 63
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-03-06T17:26:13Z",
+      "side": 1,
+      "message": "If the only changes are due to a version change in the translation strings, then we don\u0027t need to bump this. The theme version should only change if we\u0027ve done something that will cause real usability issues if the theme version doesn\u0027t match.",
+      "revId": "c506981e591981a8483d9e47ffa5690d467084ad",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d83ee5b8_90c6946c",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 63
+      },
+      "lineNbr": 706,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-03-06T17:26:13Z",
+      "side": 1,
+      "message": "minor white space issue here",
+      "revId": "c506981e591981a8483d9e47ffa5690d467084ad",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d83ee5b8_10bbc4dd",
         "filename": "twinstall.cpp",
         "patchSetId": 63
