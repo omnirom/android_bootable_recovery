@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "d83ee5b8_1013c4b8",
+        "filename": "gui/pages.cpp",
+        "patchSetId": 63
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-03-07T00:33:38Z",
+      "side": 1,
+      "message": "This was done in response to _that\u0027s suggestion. I will defer to your architecture decision and revert.",
+      "parentUuid": "d83ee5b8_70a7b0bd",
+      "revId": "c506981e591981a8483d9e47ffa5690d467084ad",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d83ee5b8_90c6946c",
         "filename": "partitionmanager.cpp",
         "patchSetId": 63
