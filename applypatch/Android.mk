@@ -136,6 +136,9 @@ libimgdiff_static_libraries := \
     libbsdiff \
     libdivsufsort \
     libdivsufsort64 \
+    libziparchive \
+    libutils \
+    liblog \
     libbase \
     libz
 
