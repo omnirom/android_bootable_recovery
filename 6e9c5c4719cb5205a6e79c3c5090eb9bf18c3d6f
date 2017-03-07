@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d83ee5b8_b0f5184e",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 4
+      },
+      "lineNbr": 595,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-03-07T18:55:44Z",
+      "side": 1,
+      "message": "\"Eine Sicherung\"",
+      "revId": "6e9c5c4719cb5205a6e79c3c5090eb9bf18c3d6f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
