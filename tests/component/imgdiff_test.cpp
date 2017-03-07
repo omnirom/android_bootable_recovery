@@ -236,6 +236,62 @@ TEST(ImgdiffTest, zip_mode_smoke_compressed) {
   ASSERT_EQ(tgt, patched);
 }
 
+TEST(ImgdiffTest, zip_mode_smoke_trailer_zeros) {
+  // Construct src and tgt zip files.
+  TemporaryFile src_file;
+  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  ZipWriter src_writer(src_file_ptr);
+  ASSERT_EQ(0, src_writer.StartEntry("file1.txt", ZipWriter::kCompress));
+  const std::string src_content("abcdefg");
+  ASSERT_EQ(0, src_writer.WriteBytes(src_content.data(), src_content.size()));
+  ASSERT_EQ(0, src_writer.FinishEntry());
+  ASSERT_EQ(0, src_writer.Finish());
+  ASSERT_EQ(0, fclose(src_file_ptr));
+
+  TemporaryFile tgt_file;
+  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  ZipWriter tgt_writer(tgt_file_ptr);
+  ASSERT_EQ(0, tgt_writer.StartEntry("file1.txt", ZipWriter::kCompress));
+  const std::string tgt_content("abcdefgxyz");
+  ASSERT_EQ(0, tgt_writer.WriteBytes(tgt_content.data(), tgt_content.size()));
+  ASSERT_EQ(0, tgt_writer.FinishEntry());
+  ASSERT_EQ(0, tgt_writer.Finish());
+  // Add trailing zeros to the target zip file.
+  std::vector<uint8_t> zeros(10);
+  ASSERT_EQ(zeros.size(), fwrite(zeros.data(), sizeof(uint8_t), zeros.size(), tgt_file_ptr));
+  ASSERT_EQ(0, fclose(tgt_file_ptr));
+
+  // Compute patch.
+  TemporaryFile patch_file;
+  std::vector<const char*> args = {
+    "imgdiff", "-z", src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  // Verify.
+  std::string tgt;
+  ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
+  std::string src;
+  ASSERT_TRUE(android::base::ReadFileToString(src_file.path, &src));
+  std::string patch;
+  ASSERT_TRUE(android::base::ReadFileToString(patch_file.path, &patch));
+
+  // Expect three entries: CHUNK_RAW (header) + CHUNK_DEFLATE (data) + CHUNK_RAW (footer).
+  size_t num_normal;
+  size_t num_raw;
+  size_t num_deflate;
+  verify_patch_header(patch, &num_normal, &num_raw, &num_deflate);
+  ASSERT_EQ(0U, num_normal);
+  ASSERT_EQ(1U, num_deflate);
+  ASSERT_EQ(2U, num_raw);
+
+  std::string patched;
+  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
+                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
+                               MemorySink, &patched));
+  ASSERT_EQ(tgt, patched);
+}
+
 TEST(ImgdiffTest, image_mode_simple) {
   // src: "abcdefgh" + gzipped "xyz" (echo -n "xyz" | gzip -f | hd).
   const std::vector<char> src_data = { 'a',    'b',    'c',    'd',    'e',    'f',    'g',

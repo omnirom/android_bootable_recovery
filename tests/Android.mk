@@ -177,6 +177,7 @@ LOCAL_STATIC_LIBRARIES := \
     libbsdiff \
     libbspatch \
     libziparchive \
+    libutils \
     libbase \
     libcrypto \
     libbz \
