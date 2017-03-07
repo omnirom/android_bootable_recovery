@@ -18,13 +18,14 @@
 #include <vector>
 
 #include <android-base/file.h>
+#include <android-base/memory.h>
 #include <android-base/test_utils.h>
 #include <applypatch/imgdiff.h>
 #include <applypatch/imgpatch.h>
 #include <gtest/gtest.h>
 #include <ziparchive/zip_writer.h>
 
-#include "applypatch/utils.h"
+using android::base::get_unaligned;
 
 static ssize_t MemorySink(const unsigned char* data, ssize_t len, void* token) {
   std::string* s = static_cast<std::string*>(token);
@@ -41,7 +42,7 @@ static void verify_patch_header(const std::string& patch, size_t* num_normal, si
   ASSERT_GE(size, 12U);
   ASSERT_EQ("IMGDIFF2", std::string(data, 8));
 
-  const int num_chunks = Read4(data + 8);
+  const int num_chunks = get_unaligned<int32_t>(data + 8);
   ASSERT_GE(num_chunks, 0);
 
   size_t normal = 0;
@@ -51,7 +52,7 @@ static void verify_patch_header(const std::string& patch, size_t* num_normal, si
   size_t pos = 12;
   for (int i = 0; i < num_chunks; ++i) {
     ASSERT_LE(pos + 4, size);
-    int type = Read4(data + pos);
+    int type = get_unaligned<int32_t>(data + pos);
     pos += 4;
     if (type == CHUNK_NORMAL) {
       pos += 24;
@@ -59,7 +60,7 @@ static void verify_patch_header(const std::string& patch, size_t* num_normal, si
       normal++;
     } else if (type == CHUNK_RAW) {
       ASSERT_LE(pos + 4, size);
-      ssize_t data_len = Read4(data + pos);
+      ssize_t data_len = get_unaligned<int32_t>(data + pos);
       ASSERT_GT(data_len, 0);
       pos += 4 + data_len;
       ASSERT_LE(pos, size);
