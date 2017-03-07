@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include <string>
+
 #define STRINGIFY(x) #x
 #define EXPAND(x) STRINGIFY(x)
 
