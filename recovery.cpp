@@ -83,7 +83,6 @@ static const struct option OPTIONS[] = {
   { "sideload_auto_reboot", no_argument, NULL, 'a' },
   { "just_exit", no_argument, NULL, 'x' },
   { "locale", required_argument, NULL, 'l' },
-  { "stages", required_argument, NULL, 'g' },
   { "shutdown_after", no_argument, NULL, 'p' },
   { "reason", required_argument, NULL, 'r' },
   { "security", no_argument, NULL, 'e'},
@@ -129,7 +128,7 @@ static bool has_cache = false;
 
 RecoveryUI* ui = nullptr;
 bool modified_flash = false;
-const char* stage = nullptr;
+std::string stage;
 const char* reason = nullptr;
 struct selabel_handle* sehandle;
 
@@ -309,7 +308,7 @@ static std::vector<std::string> get_args(const int argc, char** const argv) {
     // If fails, leave a zeroed bootloader_message.
     boot = {};
   }
-  stage = strndup(boot.stage, sizeof(boot.stage));
+  stage = std::string(boot.stage);
 
   if (boot.command[0] != 0) {
     std::string boot_command = std::string(boot.command, sizeof(boot.command));
@@ -1418,14 +1417,6 @@ int main(int argc, char **argv) {
         case 'a': sideload = true; sideload_auto_reboot = true; break;
         case 'x': just_exit = true; break;
         case 'l': locale = optarg; break;
-        case 'g': {
-            if (stage == NULL || *stage == '\0') {
-                char buffer[20] = "1/";
-                strncat(buffer, optarg, sizeof(buffer)-3);
-                stage = strdup(buffer);
-            }
-            break;
-        }
         case 'p': shutdown_after = true; break;
         case 'r': reason = optarg; break;
         case 'e': security_update = true; break;
@@ -1457,7 +1448,7 @@ int main(int argc, char **argv) {
     }
 
     printf("locale is [%s]\n", locale.c_str());
-    printf("stage is [%s]\n", stage);
+    printf("stage is [%s]\n", stage.c_str());
     printf("reason is [%s]\n", reason);
 
     Device* device = make_device();
@@ -1472,7 +1463,7 @@ int main(int argc, char **argv) {
     ui->SetSystemUpdateText(security_update);
 
     int st_cur, st_max;
-    if (stage != NULL && sscanf(stage, "%d/%d", &st_cur, &st_max) == 2) {
+    if (!stage.empty() && sscanf(stage.c_str(), "%d/%d", &st_cur, &st_max) == 2) {
         ui->SetStage(st_cur, st_max);
     }
 
