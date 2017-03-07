@@ -922,67 +922,51 @@ static bool wipe_ab_device(size_t wipe_package_size) {
 }
 
 static void choose_recovery_file(Device* device) {
-    // "Back" + KEEP_LOG_COUNT * 2 + terminating nullptr entry
-    char* entries[1 + KEEP_LOG_COUNT * 2 + 1];
-    memset(entries, 0, sizeof(entries));
-
-    unsigned int n = 0;
-
-    if (has_cache) {
-        // Add LAST_LOG_FILE + LAST_LOG_FILE.x
-        // Add LAST_KMSG_FILE + LAST_KMSG_FILE.x
-        for (int i = 0; i < KEEP_LOG_COUNT; i++) {
-            char* log_file;
-            int ret;
-            ret = (i == 0) ? asprintf(&log_file, "%s", LAST_LOG_FILE) :
-                    asprintf(&log_file, "%s.%d", LAST_LOG_FILE, i);
-            if (ret == -1) {
-                // memory allocation failure - return early. Should never happen.
-                return;
-            }
-            if ((ensure_path_mounted(log_file) != 0) || (access(log_file, R_OK) == -1)) {
-                free(log_file);
-            } else {
-                entries[n++] = log_file;
-            }
-
-            char* kmsg_file;
-            ret = (i == 0) ? asprintf(&kmsg_file, "%s", LAST_KMSG_FILE) :
-                    asprintf(&kmsg_file, "%s.%d", LAST_KMSG_FILE, i);
-            if (ret == -1) {
-                // memory allocation failure - return early. Should never happen.
-                return;
-            }
-            if ((ensure_path_mounted(kmsg_file) != 0) || (access(kmsg_file, R_OK) == -1)) {
-                free(kmsg_file);
-            } else {
-                entries[n++] = kmsg_file;
-            }
+  std::vector<std::string> entries;
+  if (has_cache) {
+    for (int i = 0; i < KEEP_LOG_COUNT; i++) {
+      auto add_to_entries = [&](const char* filename) {
+        std::string log_file(filename);
+        if (i > 0) {
+          log_file += "." + std::to_string(i);
         }
+
+        if (ensure_path_mounted(log_file.c_str()) == 0 && access(log_file.c_str(), R_OK) == 0) {
+          entries.push_back(std::move(log_file));
+        }
+      };
+
+      // Add LAST_LOG_FILE + LAST_LOG_FILE.x
+      add_to_entries(LAST_LOG_FILE);
+
+      // Add LAST_KMSG_FILE + LAST_KMSG_FILE.x
+      add_to_entries(LAST_KMSG_FILE);
+    }
+  } else {
+    // If cache partition is not found, view /tmp/recovery.log instead.
+    if (access(TEMPORARY_LOG_FILE, R_OK) == -1) {
+      return;
     } else {
-        // If cache partition is not found, view /tmp/recovery.log instead.
-        if (access(TEMPORARY_LOG_FILE, R_OK) == -1) {
-            return;
-        } else{
-            entries[n++] = strdup(TEMPORARY_LOG_FILE);
-        }
+      entries.push_back(TEMPORARY_LOG_FILE);
     }
+  }
 
-    entries[n++] = strdup("Back");
+  entries.push_back("Back");
 
-    const char* headers[] = { "Select file to view", nullptr };
+  std::vector<const char*> menu_entries(entries.size());
+  std::transform(entries.cbegin(), entries.cend(), menu_entries.begin(),
+                 [](const std::string& entry) { return entry.c_str(); });
+  menu_entries.push_back(nullptr);
 
-    int chosen_item = 0;
-    while (true) {
-        chosen_item = get_menu_selection(headers, entries, 1, chosen_item, device);
-        if (strcmp(entries[chosen_item], "Back") == 0) break;
+  const char* headers[] = { "Select file to view", nullptr };
 
-        ui->ShowFile(entries[chosen_item]);
-    }
+  int chosen_item = 0;
+  while (true) {
+    chosen_item = get_menu_selection(headers, menu_entries.data(), 1, chosen_item, device);
+    if (entries[chosen_item] == "Back") break;
 
-    for (size_t i = 0; i < (sizeof(entries) / sizeof(*entries)); i++) {
-        free(entries[i]);
-    }
+    ui->ShowFile(entries[chosen_item].c_str());
+  }
 }
 
 static void run_graphics_test(Device* device) {
