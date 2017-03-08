@@ -609,26 +609,26 @@ static bool erase_volume(const char* volume) {
 
 // Display a menu with the specified 'headers' and 'items'. Device specific HandleMenuKey() may
 // return a positive number beyond the given range. Caller sets 'menu_only' to true to ensure only
-// a menu item gets selected. 'initial_selection' controls the initial cursor location.
+// a menu item gets selected. 'initial_selection' controls the initial cursor location. Returns the
+// (non-negative) chosen item number, or -1 if timed out waiting for input.
 static int get_menu_selection(const char* const* headers, const char* const* items, bool menu_only,
                               int initial_selection, Device* device) {
   // Throw away keys pressed previously, so user doesn't accidentally trigger menu items.
   ui->FlushKeys();
 
   ui->StartMenu(headers, items, initial_selection);
+
   int selected = initial_selection;
   int chosen_item = -1;
-
   while (chosen_item < 0) {
     int key = ui->WaitKey();
-
-    if (key == -1) {  // ui_wait_key() timed out
+    if (key == -1) {  // WaitKey() timed out.
       if (ui->WasTextEverVisible()) {
         continue;
       } else {
-        LOG(INFO) << "timed out waiting for key input; rebooting.";
+        LOG(INFO) << "Timed out waiting for key input; rebooting.";
         ui->EndMenu();
-        return 0;  // XXX fixme
+        return -1;
       }
     }
 
@@ -1091,114 +1091,109 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
     return result;
 }
 
-// Return REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER.  Returning NO_ACTION
-// means to take the default, which is to reboot or shutdown depending
-// on if the --shutdown_after flag was passed to recovery.
-static Device::BuiltinAction
-prompt_and_wait(Device* device, int status) {
-    for (;;) {
-        finish_recovery();
-        switch (status) {
-            case INSTALL_SUCCESS:
-            case INSTALL_NONE:
-                ui->SetBackground(RecoveryUI::NO_COMMAND);
-                break;
+// Returns REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER. Returning NO_ACTION means to take the default,
+// which is to reboot or shutdown depending on if the --shutdown_after flag was passed to recovery.
+static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
+  for (;;) {
+    finish_recovery();
+    switch (status) {
+      case INSTALL_SUCCESS:
+      case INSTALL_NONE:
+        ui->SetBackground(RecoveryUI::NO_COMMAND);
+        break;
 
-            case INSTALL_ERROR:
-            case INSTALL_CORRUPT:
-                ui->SetBackground(RecoveryUI::ERROR);
-                break;
-        }
-        ui->SetProgressType(RecoveryUI::EMPTY);
-
-        int chosen_item = get_menu_selection(nullptr, device->GetMenuItems(), false, 0, device);
-
-        // device-specific code may take some action here.  It may
-        // return one of the core actions handled in the switch
-        // statement below.
-        Device::BuiltinAction chosen_action = device->InvokeMenuItem(chosen_item);
-
-        bool should_wipe_cache = false;
-        switch (chosen_action) {
-            case Device::NO_ACTION:
-                break;
-
-            case Device::REBOOT:
-            case Device::SHUTDOWN:
-            case Device::REBOOT_BOOTLOADER:
-                return chosen_action;
-
-            case Device::WIPE_DATA:
-                if (ui->IsTextVisible()) {
-                    if (ask_to_wipe_data(device)) {
-                        wipe_data(device);
-                    }
-                } else {
-                    wipe_data(device);
-                    return Device::NO_ACTION;
-                }
-                break;
-
-            case Device::WIPE_CACHE:
-                wipe_cache(ui->IsTextVisible(), device);
-                if (!ui->IsTextVisible()) return Device::NO_ACTION;
-                break;
-
-            case Device::APPLY_ADB_SIDELOAD:
-            case Device::APPLY_SDCARD:
-                {
-                    bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
-                    if (adb) {
-                        status = apply_from_adb(ui, &should_wipe_cache, TEMPORARY_INSTALL_FILE);
-                    } else {
-                        status = apply_from_sdcard(device, &should_wipe_cache);
-                    }
-
-                    if (status == INSTALL_SUCCESS && should_wipe_cache) {
-                        if (!wipe_cache(false, device)) {
-                            status = INSTALL_ERROR;
-                        }
-                    }
-
-                    if (status != INSTALL_SUCCESS) {
-                        ui->SetBackground(RecoveryUI::ERROR);
-                        ui->Print("Installation aborted.\n");
-                        copy_logs();
-                    } else if (!ui->IsTextVisible()) {
-                        return Device::NO_ACTION;  // reboot if logs aren't visible
-                    } else {
-                        ui->Print("\nInstall from %s complete.\n", adb ? "ADB" : "SD card");
-                    }
-                }
-                break;
-
-            case Device::VIEW_RECOVERY_LOGS:
-                choose_recovery_file(device);
-                break;
-
-            case Device::RUN_GRAPHICS_TEST:
-                run_graphics_test();
-                break;
-
-            case Device::MOUNT_SYSTEM:
-                // For a system image built with the root directory (i.e.
-                // system_root_image == "true"), we mount it to /system_root, and symlink /system
-                // to /system_root/system to make adb shell work (the symlink is created through
-                // the build system).
-                // Bug: 22855115
-                if (android::base::GetBoolProperty("ro.build.system_root_image", false)) {
-                    if (ensure_path_mounted_at("/", "/system_root") != -1) {
-                        ui->Print("Mounted /system.\n");
-                    }
-                } else {
-                    if (ensure_path_mounted("/system") != -1) {
-                        ui->Print("Mounted /system.\n");
-                    }
-                }
-
-                break;
-        }
+      case INSTALL_ERROR:
+      case INSTALL_CORRUPT:
+        ui->SetBackground(RecoveryUI::ERROR);
+        break;
     }
+    ui->SetProgressType(RecoveryUI::EMPTY);
+
+    int chosen_item = get_menu_selection(nullptr, device->GetMenuItems(), false, 0, device);
+
+    // Device-specific code may take some action here. It may return one of the core actions
+    // handled in the switch statement below.
+    Device::BuiltinAction chosen_action =
+        (chosen_item == -1) ? Device::REBOOT : device->InvokeMenuItem(chosen_item);
+
+    bool should_wipe_cache = false;
+    switch (chosen_action) {
+      case Device::NO_ACTION:
+        break;
+
+      case Device::REBOOT:
+      case Device::SHUTDOWN:
+      case Device::REBOOT_BOOTLOADER:
+        return chosen_action;
+
+      case Device::WIPE_DATA:
+        if (ui->IsTextVisible()) {
+          if (ask_to_wipe_data(device)) {
+            wipe_data(device);
+          }
+        } else {
+          wipe_data(device);
+          return Device::NO_ACTION;
+        }
+        break;
+
+      case Device::WIPE_CACHE:
+        wipe_cache(ui->IsTextVisible(), device);
+        if (!ui->IsTextVisible()) return Device::NO_ACTION;
+        break;
+
+      case Device::APPLY_ADB_SIDELOAD:
+      case Device::APPLY_SDCARD:
+        {
+          bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
+          if (adb) {
+            status = apply_from_adb(ui, &should_wipe_cache, TEMPORARY_INSTALL_FILE);
+          } else {
+            status = apply_from_sdcard(device, &should_wipe_cache);
+          }
+
+          if (status == INSTALL_SUCCESS && should_wipe_cache) {
+            if (!wipe_cache(false, device)) {
+              status = INSTALL_ERROR;
+            }
+          }
+
+          if (status != INSTALL_SUCCESS) {
+            ui->SetBackground(RecoveryUI::ERROR);
+            ui->Print("Installation aborted.\n");
+            copy_logs();
+          } else if (!ui->IsTextVisible()) {
+            return Device::NO_ACTION;  // reboot if logs aren't visible
+          } else {
+            ui->Print("\nInstall from %s complete.\n", adb ? "ADB" : "SD card");
+          }
+        }
+        break;
+
+      case Device::VIEW_RECOVERY_LOGS:
+        choose_recovery_file(device);
+        break;
+
+      case Device::RUN_GRAPHICS_TEST:
+        run_graphics_test();
+        break;
+
+      case Device::MOUNT_SYSTEM:
+        // For a system image built with the root directory (i.e. system_root_image == "true"), we
+        // mount it to /system_root, and symlink /system to /system_root/system to make adb shell
+        // work (the symlink is created through the build system). (Bug: 22855115)
+        if (android::base::GetBoolProperty("ro.build.system_root_image", false)) {
+          if (ensure_path_mounted_at("/", "/system_root") != -1) {
+            ui->Print("Mounted /system.\n");
+          }
+        } else {
+          if (ensure_path_mounted("/system") != -1) {
+            ui->Print("Mounted /system.\n");
+          }
+        }
+        break;
+    }
+  }
 }
 
 static void
