@@ -451,6 +451,7 @@
 		<string name="decrypt_data_failed_pattern">Шаблон неверный, попробуйте снова!</string>
 		<string name="decrypt_data_enter_pattern">Введите шаблон.</string>
 		<string name="decrypt_data_trying">Попытка расшифровки</string>
+		<string name="decrypt_data_vold_os_missing">Отсутствуют файлы, необходимые для дешифрования vold: {1}</string>
 		<string name="term_hdr">Команда терминала</string>
 		<string name="term_s_hdr">Терминал</string>
 		<string name="term_kill_btn">УБИТЬ</string>
