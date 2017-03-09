@@ -454,6 +454,7 @@
 		<string name="decrypt_data_failed_pattern">Pattern failed, please try again!</string>
 		<string name="decrypt_data_enter_pattern">Enter Pattern.</string>
 		<string name="decrypt_data_trying">Trying Decryption</string>
+		<string name="decrypt_data_vold_os_missing">Missing files needed for vold decrypt: {1}</string>
 		<string name="term_hdr">Terminal Command</string>
 		<string name="term_s_hdr">Terminal</string>
 		<string name="term_kill_btn">KILL</string>

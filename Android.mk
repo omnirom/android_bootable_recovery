@@ -317,6 +317,12 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         LOCAL_CFLAGS += -DTW_INCLUDE_FBE
         LOCAL_SHARED_LIBRARIES += libe4crypt
     endif
+    ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),)
+    ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),false)
+        LOCAL_CFLAGS += -DTW_CRYPTO_USE_SYSTEM_VOLD
+        LOCAL_STATIC_LIBRARIES += libvolddecrypt
+    endif
+    endif
 endif
 WITH_CRYPTO_UTILS := \
     $(if $(wildcard system/core/libcrypto_utils/Android.mk),true)
@@ -570,7 +576,7 @@ endif
 endif
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
-    LOCAL_ADDITIONAL_DEPENDENCIES += file_contexts_symlink
+    LOCAL_ADDITIONAL_DEPENDENCIES += file_contexts_text
 endif
 
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
@@ -582,11 +588,11 @@ include $(BUILD_EXECUTABLE)
 # Symlink for file_contexts
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := file_contexts_symlink
+LOCAL_MODULE := file_contexts_text
 LOCAL_MODULE_TAGS := optional
+LOCAL_REQUIRED_MODULES := file_contexts.bin
 LOCAL_POST_INSTALL_CMD := \
-    $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin && \
-    ln -sf /file_contexts.bin $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
+    $(hide) cp -f $(OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
 
 include $(BUILD_PHONY_PACKAGE)
 
@@ -595,9 +601,6 @@ include $(CLEAR_VARS)
 # Create busybox symlinks... gzip and gunzip are excluded because those need to link to pigz instead
 BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
 exclude := tune2fs mke2fs mkdosfs mkfs.vfat gzip gunzip
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
-    exclude += sh
-endif
 
 # Having /sbin/modprobe present on 32 bit devices with can cause a massive
 # performance problem if the kernel has CONFIG_MODULES=y
@@ -797,6 +800,11 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/scrypt/Android.mk
     ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
         include $(commands_recovery_local_path)/crypto/ext4crypt/Android.mk
+    endif
+    ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),)
+    ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),false)
+        include $(commands_recovery_local_path)/crypto/vold_decrypt/Android.mk
+    endif
     endif
     include $(commands_recovery_local_path)/gpt/Android.mk
 endif
