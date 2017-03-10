@@ -454,6 +454,7 @@
 		<string name="decrypt_data_failed_pattern">图案错误，请重试！</string>
 		<string name="decrypt_data_enter_pattern">绘制解锁图案</string>
 		<string name="decrypt_data_trying">正在尝试解密</string>
+		<string name="decrypt_data_vold_os_missing">缺少 vold 解密所需的文件：{1}</string>
 		<string name="term_hdr">终端命令</string>
 		<string name="term_s_hdr">终端</string>
 		<string name="term_kill_btn">终止</string>
