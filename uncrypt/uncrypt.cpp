@@ -163,20 +163,9 @@ static void add_block_to_ranges(std::vector<int>& ranges, int new_block) {
 }
 
 static struct fstab* read_fstab() {
-    fstab = NULL;
-
-    // The fstab path is always "/fstab.${ro.hardware}".
-    std::string ro_hardware = android::base::GetProperty("ro.hardware", "");
-    if (ro_hardware.empty()) {
-        LOG(ERROR) << "failed to get ro.hardware";
-        return NULL;
-    }
-
-    std::string fstab_path = "/fstab." + ro_hardware;
-
-    fstab = fs_mgr_read_fstab(fstab_path.c_str());
+    fstab = fs_mgr_read_fstab_default();
     if (!fstab) {
-        LOG(ERROR) << "failed to read " << fstab_path;
+        LOG(ERROR) << "failed to read default fstab";
         return NULL;
     }
 
