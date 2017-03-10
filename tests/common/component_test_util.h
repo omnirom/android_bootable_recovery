@@ -24,21 +24,14 @@
 
 // Check if the /misc entry exists in the fstab.
 static bool parse_misc() {
-  // The fstab path is "/fstab.${ro.hardware}".
-  std::string ro_hardware = android::base::GetProperty("ro.hardware", "");
-  if (ro_hardware.empty()) {
-    GTEST_LOG_(INFO) << "Failed to get ro.hardware.";
+  std::unique_ptr<fstab, decltype(&fs_mgr_free_fstab)> fstab(fs_mgr_read_fstab_default(),
+                                                             fs_mgr_free_fstab);
+  if (!fstab) {
+    GTEST_LOG_(INFO) << "Failed to read default fstab";
     return false;
   }
 
-  std::string fstab_path = "/fstab." + ro_hardware;
-  fstab* fstab = fs_mgr_read_fstab(fstab_path.c_str());
-  if (fstab == nullptr) {
-    GTEST_LOG_(INFO) << "Failed to read " << fstab_path;
-    return false;
-  }
-
-  fstab_rec* record = fs_mgr_get_entry_for_mount_point(fstab, "/misc");
+  fstab_rec* record = fs_mgr_get_entry_for_mount_point(fstab.get(), "/misc");
   if (record == nullptr) {
     GTEST_LOG_(INFO) << "Failed to find /misc in fstab.";
     return false;

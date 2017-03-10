@@ -44,7 +44,7 @@ void load_volume_table()
     int i;
     int ret;
 
-    fstab = fs_mgr_read_fstab("/etc/recovery.fstab");
+    fstab = fs_mgr_read_fstab_with_dt("/etc/recovery.fstab");
     if (!fstab) {
         LOG(ERROR) << "failed to read /etc/recovery.fstab";
         return;
