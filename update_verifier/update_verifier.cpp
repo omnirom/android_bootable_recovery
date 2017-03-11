@@ -216,6 +216,8 @@ int main(int argc, char** argv) {
 
   if (is_successful == BoolResult::FALSE) {
     // The current slot has not booted successfully.
+
+#ifdef PRODUCT_SUPPORTS_VERITY
     std::string verity_mode = android::base::GetProperty("ro.boot.veritymode", "");
     if (verity_mode.empty()) {
       LOG(ERROR) << "Failed to get dm-verity mode.";
@@ -232,6 +234,9 @@ int main(int argc, char** argv) {
       LOG(ERROR) << "Failed to verify all blocks in care map file.";
       return -1;
     }
+#else
+    LOG(WARNING) << "dm-verity not enabled; marking without verification.";
+#endif
 
     CommandResult cr;
     module->markBootSuccessful([&cr](CommandResult result) { cr = result; });
