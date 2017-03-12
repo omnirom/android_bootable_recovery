@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="abc_action_bar_home_description">转到主屏幕</string>
+    <string name="abc_action_bar_home_description_format">%1$s：%2$s</string>
+    <string name="abc_action_bar_home_subtitle_description_format">%1$s - %2$s：%3$s</string>
+    <string name="abc_action_bar_up_description">转到上一层级</string>
+    <string name="abc_action_menu_overflow_description">更多选项</string>
+    <string name="abc_action_mode_done">完成</string>
+    <string name="abc_activity_chooser_view_see_all">查看全部</string>
+    <string name="abc_activitychooserview_choose_application">选择应用</string>
+    <string name="abc_capital_off">关闭</string>
+    <string name="abc_capital_on">开启</string>
+    <string name="abc_search_hint">搜索…</string>
+    <string name="abc_searchview_description_clear">清除查询</string>
+    <string name="abc_searchview_description_query">搜索查询</string>
+    <string name="abc_searchview_description_search">搜索</string>
+    <string name="abc_searchview_description_submit">提交查询</string>
+    <string name="abc_searchview_description_voice">语音搜索</string>
+    <string name="abc_shareactionprovider_share_with">分享方式</string>
+    <string name="abc_shareactionprovider_share_with_application">通过%s分享</string>
+    <string name="abc_toolbar_collapse_description">收起</string>
+    <string name="search_menu_title">搜索</string>
+    <string name="status_bar_notification_info_overflow">999+</string>
+    <string name="about">关于</string>
+    <string name="accept">接受</string>
+    <string name="app_name">TWRP 应用</string>
+    <string name="backing_up_wait">正在备份</string>
+    <string name="backup_fail">备份失败</string>
+    <string name="backup_success">备份成功</string>
+    <string name="backupimage_boot_button">备份 Boot</string>
+    <string name="backupimage_default_filename">recovery.img</string>
+    <string name="backupimage_filename_label">文件名：</string>
+    <string name="backupimage_recovery_button">备份 Recovery</string>
+    <string name="backupimage_root_error">需要 Root 访问权限</string>
+    <string name="backupimage_scan_error">无法获取 Recovery 分区所在位置</string>
+    <string name="boot">Boot</string>
+    <string name="cancel_button_label">取消</string>
+    <string name="check_agree_toast">请选中我同意复选框继续或按返回键退出。</string>
+    <string name="choose_button_label">选择</string>
+    <string name="data_availability_message">"显示在过去 7 天内数据连接测试成功的比例。
+
+数据连接测试通过下载少量数据（每月不超过 3MB）来检查智能手机是否能够连接到互联网。
+
+在省电模式下操作手机，得到的值可能不准确。"</string>
+    <string name="device_download_image_title">选择要下载的镜像</string>
+    <string name="device_selected_text">当前设备：</string>
+    <string name="device_variants_title">选择设备型号</string>
+    <string name="devices_title">选择设备</string>
+    <string name="dialog_backup_message">"您确定要备份“%2$s”到 %1$s 吗？"</string>
+    <string name="dialog_backup_title">确认备份</string>
+    <string name="dialog_cancel">取消</string>
+    <string name="dialog_download_message">您将被重定向到下载页面。</string>
+    <string name="dialog_download_title">下载确认</string>
+    <string name="dialog_flash_message">您确定要刷入 %1$s 至 %2$s？</string>
+    <string name="dialog_flash_title">确认刷入</string>
+    <string name="dialog_okay">确定</string>
+    <string name="download_speed_message">"显示在过去 7 天内通过各种移动网络类型记录的最大下载速度。
+
+当您使用任意其他应用时，我们将会测试数据发送到您的手机的速度。我们的网速测试不使用任何额外的移动数据。
+
+记录的网速取决于您在手机上做什么。它们代表着您能体验到的最大速度。
+
+显示的值来自对您使用的数据的评估，并每 15 分钟更新一次。"</string>
+    <string name="download_twrp_button">下载 TWRP</string>
+    <string name="drawer_close">关闭导航抽屉</string>
+    <string name="drawer_open">打开导航抽屉</string>
+    <string name="enable_insight_core">启用网络统计</string>
+    <string name="err_device_not_rooted">设备未 Root</string>
+    <string name="err_failed_to_fetch">无法从服务器获取数据</string>
+    <string name="err_failed_to_fetch_version">无法从服务器获取最新版本</string>
+    <string name="err_grant_storage_perms">请授予存储权限</string>
+    <string name="err_locate_recovery_partition">无法定位 Recovery 分区</string>
+    <string name="err_locate_target_partition">无法定位目标分区</string>
+    <string name="err_no_browser">未找到可处理 URL 的网页浏览器</string>
+    <string name="err_no_update_filename">错误：未发现文件名</string>
+    <string name="err_select_1_file">请仅选择 1 个文件</string>
+    <string name="err_select_file">请首先选择一个文件</string>
+    <string name="err_slotselect_device">有 A/B 分区的设备禁止刷入镜像 - 将来会更新</string>
+    <string name="err_unknown_flash_type">未知刷入类型</string>
+    <string name="error_retry">重试</string>
+    <string name="file_to_flash_label_text">当前要刷入设备的文件：</string>
+    <string name="flash_boot_button">刷入 Boot 分区</string>
+    <string name="flash_fail">刷入失败！</string>
+    <string name="flash_no_file_selected">无要刷入的文件</string>
+    <string name="flash_recovery_button">刷入 Recovery 分区</string>
+    <string name="flash_success">已成功刷入！</string>
+    <string name="flashing_wait">正在刷入</string>
+    <string name="folder_selected_text">已选择的文件夹：</string>
+    <string name="graph_data_availability">数据可用性</string>
+    <string name="graph_download_speed">下载速度</string>
+    <string name="graph_not_enough_data">无足够的数据。</string>
+    <string name="graph_strength">信号强度</string>
+    <string name="graph_strength_bad">很差</string>
+    <string name="graph_strength_excellent">优秀</string>
+    <string name="graph_strength_fair">一般</string>
+    <string name="graph_strength_good">良好</string>
+    <string name="graph_strength_poor">较差</string>
+    <string name="graph_title">网络统计</string>
+    <string name="home_network_statistics">网络统计</string>
+    <string name="home_reboot">重启</string>
+    <string name="home_twrp_backup">备份当前 Recovery</string>
+    <string name="home_twrp_flash">刷入 TWRP</string>
+    <string name="i_agree_checkbox">我同意</string>
+    <string name="imprint_legal_information"><u>关于 &amp; 法律信息</u></string>
+    <string name="label_parent_directory">父级目录</string>
+    <string name="latest_version_text">所选设备最新下载的版本：</string>
+    <string name="new_version_do_not_notify">不再通知我</string>
+    <string name="new_version_download_now">立即下载</string>
+    <string name="new_version_title">新版本可用！</string>
+    <string name="no_device_selected_text">未选择设备</string>
+    <string name="no_sim">未找到 SIM 卡</string>
+    <string name="ok_button">确定</string>
+    <string name="open_source_software">开源软件</string>
+    <string name="reboot_confirm">您确定要重启吗？</string>
+    <string name="reboot_confirm_title">重启确认</string>
+    <string name="reboot_error">需要 ROOT 访问权限</string>
+    <string name="reboot_recovery_button">重启至 Recovery</string>
+    <string name="reboot_system_button">重启系统</string>
+    <string name="reboot_title">重启</string>
+    <string name="recovery">Recovery</string>
+    <string name="reset_last_version_button">重置最新版本（调试）</string>
+    <string name="search_devices">搜索设备…</string>
+    <string name="select_device_button">选择设备</string>
+    <string name="select_file_button">选择要刷入的文件…</string>
+    <string name="select_folder_button">选择文件夹</string>
+    <string name="select_storage_dialog_header">选择存储位置</string>
+    <string name="settings_allow_flashing_boot_checkbox">允许刷入 Boot 分区</string>
+    <string name="settings_allow_flashing_boot_text">TWRP 不应该被刷入 Boot 分区。如果您需要刷入 Boot 分区，请选中该复选框。</string>
+    <string name="settings_allow_root_checkbox">以 Root 权限运行</string>
+    <string name="settings_allow_root_text">本应用可在非 Root 下运行，但是大多数功能都需要 Root 权限。</string>
+    <string name="settings_title">设置</string>
+    <string name="settings_update_interval_1day">1 天</string>
+    <string name="settings_update_interval_1min">1 分钟（调试）</string>
+    <string name="settings_update_interval_2days">2 天</string>
+    <string name="settings_update_interval_3days">3 天</string>
+    <string name="settings_update_interval_4days">4 天</string>
+    <string name="settings_update_interval_5days">5 天</string>
+    <string name="settings_update_interval_6days">6 天</string>
+    <string name="settings_update_interval_7days">7 天</string>
+    <string name="settings_update_interval_button">更新检查间隔：%1$s</string>
+    <string name="settings_update_interval_none">无（禁用）</string>
+    <string name="signals_strength_message">"显示在过去 7 天内您使用手机时在不同信号强度级别（优秀，良好，一般，较差和很差）连接的时间比例。
+
+每次进入应用时都会刷新记录。"</string>
+    <string name="technology_share_message">"显示在过去 7 天内您使用手机时连接到不同移动网络类型（2G、3G 和 4G）的时间比例。
+
+每次进入应用时都会刷新记录。"</string>
+    <string name="terms_amp_conditions">条款及条件</string>
+    <string name="terms_and_conditions">条款及条件</string>
+    <string name="terms_and_conditions_agreement">检查您是否同意 <u>条款及条件</u></string>
+    <string name="twrp_agreement">我同意 Team Win LLC 或本应用的其他开发人员不对我使用本应用负任何责任。我已了解使用本应用可能导致设备变砖。</string>
+</resources>

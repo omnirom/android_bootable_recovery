@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="settings_update_intervals">
+        <item>无（禁用）</item>
+        <item>1 天</item>
+        <item>2 天</item>
+        <item>3 天</item>
+        <item>4 天</item>
+        <item>5 天</item>
+        <item>6 天</item>
+        <item>7 天</item>
+    </string-array>
+    <string-array name="settings_update_intervals_debug">
+        <item>1 分钟（调试）</item>
+        <item>无（禁用）</item>
+        <item>1 天</item>
+        <item>2 天</item>
+        <item>3 天</item>
+        <item>4 天</item>
+        <item>5 天</item>
+        <item>6 天</item>
+        <item>7 天</item>
+    </string-array>
+</resources>
