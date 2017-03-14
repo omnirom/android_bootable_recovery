@@ -389,6 +389,7 @@ public:
 		lines.clear();
 		setY(0);
 		unpackLine(0);
+		linewrap = false;
 		++updateCounter;
 	}
 
@@ -465,6 +466,7 @@ public:
 	{
 		x = min(width, max(x, 0));
 		cursorX = x;
+		linewrap = false;
 		++updateCounter;
 	}
 
@@ -473,6 +475,7 @@ public:
 		//y = min(height, max(y, 0));
 		y = max(y, 0);
 		cursorY = y;
+		linewrap = false;
 		while (lines.size() <= (size_t) y)
 			lines.push_back(Line());
 		++updateCounter;
@@ -581,21 +584,20 @@ private:
 
 	void processChar(CodePoint cp)
 	{
+		if (linewrap) {
+			down();
+			setX(0);
+		}
 		ensureUnpacked(cursorY);
 		// extend unpackedLine if needed, write ch into cell
 		if (unpackedLine.cells.size() <= (size_t)cursorX)
 			unpackedLine.cells.resize(cursorX+1);
 		unpackedLine.cells[cursorX].cp = cp;
 
-		right();
+		right(); // also bumps updateCounter
+
 		if (cursorX >= width)
-		{
-			// TODO: configurable line wrapping
-			// TODO: don't go down immediately but only on next char?
-			down();
-			setX(0);
-		}
-		// TODO: update all GUI objects that display this terminal engine
+			linewrap = true;
 	}
 
 	void processEsc(CodePoint cp)
@@ -744,6 +746,7 @@ private:
 
 private:
 	int cursorX, cursorY; // 0-based, char based. TODO: decide how to handle scrollback
+	bool linewrap; // true to put next character into next line
 	int width, height; // window size in chars
 	std::vector<Line> lines; // the text buffer
 	UnpackedLine unpackedLine; // current line for editing
