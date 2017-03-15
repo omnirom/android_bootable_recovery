@@ -229,6 +229,14 @@ int main(int argc, char **argv) {
 	}
 	LOGINFO("Backup of TWRP ramdisk done.\n");
 #endif
+/*
+	Run AOSP Commands here, prior to checking for encryption.
+	This allows for factory reset commands (especially ones issued for remote wiping)
+	to wipe the device without stopping at the decryption prompt.
+	Otherwise, there's an opportunity for an intruder or thief to access the data in TWRP.
+*/
+	if (TWFunc::Path_Exists(SCRIPT_FILE_TMP))
+		OpenRecoveryScript::Run_OpenRecoveryScript();
 
 	// Offer to decrypt if the device is encrypted
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
@@ -266,7 +274,7 @@ int main(int argc, char **argv) {
 	// Run any outstanding OpenRecoveryScript
 	std::string cacheDir = TWFunc::get_cache_dir();
 	std::string orsFile = cacheDir + "/recovery/openrecoveryscript";
-	if ((DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 || SkipDecryption) && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(orsFile))) {
+	if ((DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 || SkipDecryption) && TWFunc::Path_Exists(orsFile)) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
 	}
 
