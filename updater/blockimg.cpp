@@ -66,21 +66,6 @@ struct RangeSet {
   size_t count;  // Limit is INT_MAX.
   size_t size;
   std::vector<size_t> pos;  // Actual limit is INT_MAX.
-
-  // Get the block number for the ith(starting from 0) block in the range set.
-  int get_block(size_t idx) const {
-    if (idx >= size) {
-      LOG(ERROR) << "index: " << idx << " is greater than range set size: " << size;
-      return -1;
-    }
-    for (size_t i = 0; i < pos.size(); i += 2) {
-      if (idx < pos[i + 1] - pos[i]) {
-        return pos[i] + idx;
-      }
-      idx -= (pos[i + 1] - pos[i]);
-    }
-    return -1;
-  }
 };
 
 static CauseCode failure_type = kNoCause;
@@ -456,117 +441,6 @@ static int LoadSrcTgtVersion1(CommandParameters& params, RangeSet& tgt, size_t& 
     return rc;
 }
 
-// Print the hash in hex for corrupted source blocks (excluding the stashed blocks which is
-// handled separately).
-static void PrintHashForCorruptedSourceBlocks(const CommandParameters& params,
-                                              const std::vector<uint8_t>& buffer) {
-  LOG(INFO) << "unexpected contents of source blocks in cmd:\n" << params.cmdline;
-  if (params.version < 3) {
-    // TODO handle version 1,2
-    LOG(WARNING) << "version number " << params.version << " is not supported to print hashes";
-    return;
-  }
-
-  CHECK(params.tokens[0] == "move" || params.tokens[0] == "bsdiff" ||
-        params.tokens[0] == "imgdiff");
-
-  size_t pos = 0;
-  // Command example:
-  // move <onehash> <tgt_range> <src_blk_count> <src_range> [<loc_range> <stashed_blocks>]
-  // bsdiff <offset> <len> <src_hash> <tgt_hash> <tgt_range> <src_blk_count> <src_range>
-  //        [<loc_range> <stashed_blocks>]
-  if (params.tokens[0] == "move") {
-    // src_range for move starts at the 4th position.
-    if (params.tokens.size() < 5) {
-      LOG(ERROR) << "failed to parse source range in cmd:\n" << params.cmdline;
-      return;
-    }
-    pos = 4;
-  } else {
-    // src_range for diff starts at the 7th position.
-    if (params.tokens.size() < 8) {
-      LOG(ERROR) << "failed to parse source range in cmd:\n" << params.cmdline;
-      return;
-    }
-    pos = 7;
-  }
-
-  // Source blocks in stash only, no work to do.
-  if (params.tokens[pos] == "-") {
-    return;
-  }
-
-  RangeSet src = parse_range(params.tokens[pos++]);
-
-  RangeSet locs;
-  // If there's no stashed blocks, content in the buffer is consecutive and has the same
-  // order as the source blocks.
-  if (pos == params.tokens.size()) {
-    locs.count = 1;
-    locs.size = src.size;
-    locs.pos = { 0, src.size };
-  } else {
-    // Otherwise, the next token is the offset of the source blocks in the target range.
-    // Example: for the tokens <4,63946,63947,63948,63979> <4,6,7,8,39> <stashed_blocks>;
-    // We want to print SHA-1 for the data in buffer[6], buffer[8], buffer[9] ... buffer[38];
-    // this corresponds to the 32 src blocks #63946, #63948, #63949 ... #63978.
-    locs = parse_range(params.tokens[pos++]);
-    CHECK_EQ(src.size, locs.size);
-    CHECK_EQ(locs.pos.size() % 2, static_cast<size_t>(0));
-  }
-
-  LOG(INFO) << "printing hash in hex for " << src.size << " source blocks";
-  for (size_t i = 0; i < src.size; i++) {
-    int block_num = src.get_block(i);
-    CHECK_NE(block_num, -1);
-    int buffer_index = locs.get_block(i);
-    CHECK_NE(buffer_index, -1);
-    CHECK_LE((buffer_index + 1) * BLOCKSIZE, buffer.size());
-
-    uint8_t digest[SHA_DIGEST_LENGTH];
-    SHA1(buffer.data() + buffer_index * BLOCKSIZE, BLOCKSIZE, digest);
-    std::string hexdigest = print_sha1(digest);
-    LOG(INFO) << "  block number: " << block_num << ", SHA-1: " << hexdigest;
-  }
-}
-
-// If the calculated hash for the whole stash doesn't match the stash id, print the SHA-1
-// in hex for each block.
-static void PrintHashForCorruptedStashedBlocks(const std::string& id,
-                                               const std::vector<uint8_t>& buffer,
-                                               const RangeSet& src) {
-  LOG(INFO) << "printing hash in hex for stash_id: " << id;
-  CHECK_EQ(src.size * BLOCKSIZE, buffer.size());
-
-  for (size_t i = 0; i < src.size; i++) {
-    int block_num = src.get_block(i);
-    CHECK_NE(block_num, -1);
-
-    uint8_t digest[SHA_DIGEST_LENGTH];
-    SHA1(buffer.data() + i * BLOCKSIZE, BLOCKSIZE, digest);
-    std::string hexdigest = print_sha1(digest);
-    LOG(INFO) << "  block number: " << block_num << ", SHA-1: " << hexdigest;
-  }
-}
-
-// If the stash file doesn't exist, read the source blocks this stash contains and print the
-// SHA-1 for these blocks.
-static void PrintHashForMissingStashedBlocks(const std::string& id, int fd) {
-  if (stash_map.find(id) == stash_map.end()) {
-    LOG(ERROR) << "No stash saved for id: " << id;
-    return;
-  }
-
-  LOG(INFO) << "print hash in hex for source blocks in missing stash: " << id;
-  const RangeSet& src = stash_map[id];
-  std::vector<uint8_t> buffer(src.size * BLOCKSIZE);
-  if (ReadBlocks(src, buffer, fd) == -1) {
-      LOG(ERROR) << "failed to read source blocks for stash: " << id;
-      return;
-  }
-  PrintHashForCorruptedStashedBlocks(id, buffer, src);
-}
-
 static int VerifyBlocks(const std::string& expected, const std::vector<uint8_t>& buffer,
         const size_t blocks, bool printerror) {
     uint8_t digest[SHA_DIGEST_LENGTH];
@@ -699,7 +573,6 @@ static int LoadStash(CommandParameters& params, const std::string& base, const s
             }
             if (VerifyBlocks(id, buffer, src.size, true) != 0) {
                 LOG(ERROR) << "failed to verify loaded source blocks in stash map.";
-                PrintHashForCorruptedStashedBlocks(id, buffer, src);
                 return -1;
             }
             return 0;
@@ -724,7 +597,6 @@ static int LoadStash(CommandParameters& params, const std::string& base, const s
     if (res == -1) {
         if (errno != ENOENT || printnoent) {
             PLOG(ERROR) << "stat \"" << fn << "\" failed";
-            PrintHashForMissingStashedBlocks(id, params.fd);
         }
         return -1;
     }
@@ -752,13 +624,6 @@ static int LoadStash(CommandParameters& params, const std::string& base, const s
 
     if (verify && VerifyBlocks(id, buffer, *blocks, true) != 0) {
         LOG(ERROR) << "unexpected contents in " << fn;
-        if (stash_map.find(id) == stash_map.end()) {
-            LOG(ERROR) << "failed to find source blocks number for stash " << id
-                       << " when executing command: " << params.cmdname;
-        } else {
-            const RangeSet& src = stash_map[id];
-            PrintHashForCorruptedStashedBlocks(id, buffer, src);
-        }
         DeleteFile(fn, nullptr);
         return -1;
     }
@@ -930,7 +795,6 @@ static int SaveStash(CommandParameters& params, const std::string& base,
         return -1;
     }
     blocks = src.size;
-    stash_map[id] = src;
 
     if (usehash && VerifyBlocks(id, buffer, blocks, true) != 0) {
         // Source blocks have unexpected contents. If we actually need this
@@ -941,8 +805,9 @@ static int SaveStash(CommandParameters& params, const std::string& base,
         return 0;
     }
 
-    // In verify mode, we don't need to stash any blocks.
+    // In verify mode, save source range_set instead of stashing blocks.
     if (!params.canwrite && usehash) {
+        stash_map[id] = src;
         return 0;
     }
 
@@ -1161,8 +1026,6 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
 
     // Valid source data not available, update cannot be resumed
     LOG(ERROR) << "partition has unexpected contents";
-    PrintHashForCorruptedSourceBlocks(params, params.buffer);
-
     params.isunresumable = true;
 
     return -1;
@@ -1231,7 +1094,7 @@ static int PerformCommandFree(CommandParameters& params) {
 
     const std::string& id = params.tokens[params.cpos++];
 
-    if (stash_map.find(id) != stash_map.end()) {
+    if (!params.canwrite && stash_map.find(id) != stash_map.end()) {
         stash_map.erase(id);
         return 0;
     }
