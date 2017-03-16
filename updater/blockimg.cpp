@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <fec/io.h>
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -473,88 +474,54 @@ static std::string GetStashFileName(const std::string& base, const std::string& 
     return fn;
 }
 
-typedef void (*StashCallback)(const std::string&, void*);
+// Does a best effort enumeration of stash files. Ignores possible non-file items in the stash
+// directory and continues despite of errors. Calls the 'callback' function for each file.
+static void EnumerateStash(const std::string& dirname,
+                           const std::function<void(const std::string&)>& callback) {
+  if (dirname.empty()) return;
 
-// Does a best effort enumeration of stash files. Ignores possible non-file
-// items in the stash directory and continues despite of errors. Calls the
-// 'callback' function for each file and passes 'data' to the function as a
-// parameter.
+  std::unique_ptr<DIR, decltype(&closedir)> directory(opendir(dirname.c_str()), closedir);
 
-static void EnumerateStash(const std::string& dirname, StashCallback callback, void* data) {
-    if (dirname.empty() || callback == nullptr) {
-        return;
+  if (directory == nullptr) {
+    if (errno != ENOENT) {
+      PLOG(ERROR) << "opendir \"" << dirname << "\" failed";
     }
-
-    std::unique_ptr<DIR, int(*)(DIR*)> directory(opendir(dirname.c_str()), closedir);
-
-    if (directory == nullptr) {
-        if (errno != ENOENT) {
-            PLOG(ERROR) << "opendir \"" << dirname << "\" failed";
-        }
-        return;
-    }
-
-    struct dirent* item;
-    while ((item = readdir(directory.get())) != nullptr) {
-        if (item->d_type != DT_REG) {
-            continue;
-        }
-
-        std::string fn = dirname + "/" + std::string(item->d_name);
-        callback(fn, data);
-    }
-}
-
-static void UpdateFileSize(const std::string& fn, void* data) {
-  if (fn.empty() || !data) {
     return;
   }
 
-  struct stat sb;
-  if (stat(fn.c_str(), &sb) == -1) {
-    PLOG(ERROR) << "stat \"" << fn << "\" failed";
-    return;
+  dirent* item;
+  while ((item = readdir(directory.get())) != nullptr) {
+    if (item->d_type != DT_REG) continue;
+    callback(dirname + "/" + item->d_name);
   }
-
-  size_t* size = static_cast<size_t*>(data);
-  *size += sb.st_size;
 }
 
 // Deletes the stash directory and all files in it. Assumes that it only
 // contains files. There is nothing we can do about unlikely, but possible
 // errors, so they are merely logged.
+static void DeleteFile(const std::string& fn) {
+  if (fn.empty()) return;
 
-static void DeleteFile(const std::string& fn, void* /* data */) {
-    if (!fn.empty()) {
-        LOG(INFO) << "deleting " << fn;
+  LOG(INFO) << "deleting " << fn;
 
-        if (unlink(fn.c_str()) == -1 && errno != ENOENT) {
-            PLOG(ERROR) << "unlink \"" << fn << "\" failed";
-        }
-    }
-}
-
-static void DeletePartial(const std::string& fn, void* data) {
-    if (android::base::EndsWith(fn, ".partial")) {
-        DeleteFile(fn, data);
-    }
+  if (unlink(fn.c_str()) == -1 && errno != ENOENT) {
+    PLOG(ERROR) << "unlink \"" << fn << "\" failed";
+  }
 }
 
 static void DeleteStash(const std::string& base) {
-    if (base.empty()) {
-        return;
+  if (base.empty()) return;
+
+  LOG(INFO) << "deleting stash " << base;
+
+  std::string dirname = GetStashFileName(base, "", "");
+  EnumerateStash(dirname, DeleteFile);
+
+  if (rmdir(dirname.c_str()) == -1) {
+    if (errno != ENOENT && errno != ENOTDIR) {
+      PLOG(ERROR) << "rmdir \"" << dirname << "\" failed";
     }
-
-    LOG(INFO) << "deleting stash " << base;
-
-    std::string dirname = GetStashFileName(base, "", "");
-    EnumerateStash(dirname, DeleteFile, nullptr);
-
-    if (rmdir(dirname.c_str()) == -1) {
-        if (errno != ENOENT && errno != ENOTDIR) {
-            PLOG(ERROR) << "rmdir \"" << dirname << "\" failed";
-        }
-    }
+  }
 }
 
 static int LoadStash(CommandParameters& params, const std::string& base, const std::string& id,
@@ -624,7 +591,7 @@ static int LoadStash(CommandParameters& params, const std::string& base, const s
 
     if (verify && VerifyBlocks(id, buffer, *blocks, true) != 0) {
         LOG(ERROR) << "unexpected contents in " << fn;
-        DeleteFile(fn, nullptr);
+        DeleteFile(fn);
         return -1;
     }
 
@@ -750,13 +717,24 @@ static int CreateStash(State* state, size_t maxblocks, const std::string& blockd
 
   LOG(INFO) << "using existing stash " << dirname;
 
-  // If the directory already exists, calculate the space already allocated to
-  // stash files and check if there's enough for all required blocks. Delete any
-  // partially completed stash files first.
+  // If the directory already exists, calculate the space already allocated to stash files and check
+  // if there's enough for all required blocks. Delete any partially completed stash files first.
+  EnumerateStash(dirname, [](const std::string& fn) {
+    if (android::base::EndsWith(fn, ".partial")) {
+      DeleteFile(fn);
+    }
+  });
 
-  EnumerateStash(dirname, DeletePartial, nullptr);
   size_t existing = 0;
-  EnumerateStash(dirname, UpdateFileSize, &existing);
+  EnumerateStash(dirname, [&existing](const std::string& fn) {
+    if (fn.empty()) return;
+    struct stat sb;
+    if (stat(fn.c_str(), &sb) == -1) {
+      PLOG(ERROR) << "stat \"" << fn << "\" failed";
+      return;
+    }
+    existing += static_cast<size_t>(sb.st_size);
+  });
 
   if (max_stash_size > existing) {
     size_t needed = max_stash_size - existing;
@@ -817,14 +795,13 @@ static int SaveStash(CommandParameters& params, const std::string& base,
 }
 
 static int FreeStash(const std::string& base, const std::string& id) {
-    if (base.empty() || id.empty()) {
-        return -1;
-    }
+  if (base.empty() || id.empty()) {
+    return -1;
+  }
 
-    std::string fn = GetStashFileName(base, id, "");
-    DeleteFile(fn, nullptr);
+  DeleteFile(GetStashFileName(base, id, ""));
 
-    return 0;
+  return 0;
 }
 
 static void MoveRange(std::vector<uint8_t>& dest, const RangeSet& locs,
