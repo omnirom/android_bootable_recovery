@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <functional>
 #include <algorithm>
 #include <memory>
 
@@ -108,201 +109,193 @@ static bool read_pkcs7(uint8_t* pkcs7_der, size_t pkcs7_der_len, uint8_t** sig_d
     return *sig_der != NULL;
 }
 
-// Look for an RSA signature embedded in the .ZIP file comment given
-// the path to the zip.  Verify it matches one of the given public
-// keys.
-//
-// Return VERIFY_SUCCESS, VERIFY_FAILURE (if any error is encountered
-// or no key matches the signature).
+/*
+ * Looks for an RSA signature embedded in the .ZIP file comment given the path to the zip. Verifies
+ * that it matches one of the given public keys. A callback function can be optionally provided for
+ * posting the progress.
+ *
+ * Returns VERIFY_SUCCESS or VERIFY_FAILURE (if any error is encountered or no key matches the
+ * signature).
+ */
+int verify_file(unsigned char* addr, size_t length, const std::vector<Certificate>& keys,
+                const std::function<void(float)>& set_progress) {
+  if (set_progress) {
+    set_progress(0.0);
+  }
 
-int verify_file(unsigned char* addr, size_t length,
-                const std::vector<Certificate>& keys) {
-    ui->SetProgress(0.0);
-
-    // An archive with a whole-file signature will end in six bytes:
-    //
-    //   (2-byte signature start) $ff $ff (2-byte comment size)
-    //
-    // (As far as the ZIP format is concerned, these are part of the
-    // archive comment.)  We start by reading this footer, this tells
-    // us how far back from the end we have to start reading to find
-    // the whole comment.
+  // An archive with a whole-file signature will end in six bytes:
+  //
+  //   (2-byte signature start) $ff $ff (2-byte comment size)
+  //
+  // (As far as the ZIP format is concerned, these are part of the archive comment.) We start by
+  // reading this footer, this tells us how far back from the end we have to start reading to find
+  // the whole comment.
 
 #define FOOTER_SIZE 6
 
-    if (length < FOOTER_SIZE) {
-        LOG(ERROR) << "not big enough to contain footer";
-        return VERIFY_FAILURE;
-    }
+  if (length < FOOTER_SIZE) {
+    LOG(ERROR) << "not big enough to contain footer";
+    return VERIFY_FAILURE;
+  }
 
-    unsigned char* footer = addr + length - FOOTER_SIZE;
+  unsigned char* footer = addr + length - FOOTER_SIZE;
 
-    if (footer[2] != 0xff || footer[3] != 0xff) {
-        LOG(ERROR) << "footer is wrong";
-        return VERIFY_FAILURE;
-    }
+  if (footer[2] != 0xff || footer[3] != 0xff) {
+    LOG(ERROR) << "footer is wrong";
+    return VERIFY_FAILURE;
+  }
 
-    size_t comment_size = footer[4] + (footer[5] << 8);
-    size_t signature_start = footer[0] + (footer[1] << 8);
-    LOG(INFO) << "comment is " << comment_size << " bytes; signature is " << signature_start
-              << " bytes from end";
+  size_t comment_size = footer[4] + (footer[5] << 8);
+  size_t signature_start = footer[0] + (footer[1] << 8);
+  LOG(INFO) << "comment is " << comment_size << " bytes; signature is " << signature_start
+            << " bytes from end";
 
-    if (signature_start <= FOOTER_SIZE) {
-        LOG(ERROR) << "Signature start is in the footer";
-        return VERIFY_FAILURE;
-    }
+  if (signature_start <= FOOTER_SIZE) {
+    LOG(ERROR) << "Signature start is in the footer";
+    return VERIFY_FAILURE;
+  }
 
 #define EOCD_HEADER_SIZE 22
 
-    // The end-of-central-directory record is 22 bytes plus any
-    // comment length.
-    size_t eocd_size = comment_size + EOCD_HEADER_SIZE;
+  // The end-of-central-directory record is 22 bytes plus any comment length.
+  size_t eocd_size = comment_size + EOCD_HEADER_SIZE;
 
-    if (length < eocd_size) {
-        LOG(ERROR) << "not big enough to contain EOCD";
-        return VERIFY_FAILURE;
-    }
-
-    // Determine how much of the file is covered by the signature.
-    // This is everything except the signature data and length, which
-    // includes all of the EOCD except for the comment length field (2
-    // bytes) and the comment data.
-    size_t signed_len = length - eocd_size + EOCD_HEADER_SIZE - 2;
-
-    unsigned char* eocd = addr + length - eocd_size;
-
-    // If this is really is the EOCD record, it will begin with the
-    // magic number $50 $4b $05 $06.
-    if (eocd[0] != 0x50 || eocd[1] != 0x4b ||
-        eocd[2] != 0x05 || eocd[3] != 0x06) {
-        LOG(ERROR) << "signature length doesn't match EOCD marker";
-        return VERIFY_FAILURE;
-    }
-
-    for (size_t i = 4; i < eocd_size-3; ++i) {
-        if (eocd[i  ] == 0x50 && eocd[i+1] == 0x4b &&
-            eocd[i+2] == 0x05 && eocd[i+3] == 0x06) {
-            // if the sequence $50 $4b $05 $06 appears anywhere after
-            // the real one, libziparchive will find the later (wrong) one,
-            // which could be exploitable.  Fail verification if
-            // this sequence occurs anywhere after the real one.
-            LOG(ERROR) << "EOCD marker occurs after start of EOCD";
-            return VERIFY_FAILURE;
-        }
-    }
-
-    bool need_sha1 = false;
-    bool need_sha256 = false;
-    for (const auto& key : keys) {
-        switch (key.hash_len) {
-            case SHA_DIGEST_LENGTH: need_sha1 = true; break;
-            case SHA256_DIGEST_LENGTH: need_sha256 = true; break;
-        }
-    }
-
-    SHA_CTX sha1_ctx;
-    SHA256_CTX sha256_ctx;
-    SHA1_Init(&sha1_ctx);
-    SHA256_Init(&sha256_ctx);
-
-    double frac = -1.0;
-    size_t so_far = 0;
-    while (so_far < signed_len) {
-        // On a Nexus 5X, experiment showed 16MiB beat 1MiB by 6% faster for a
-        // 1196MiB full OTA and 60% for an 89MiB incremental OTA.
-        // http://b/28135231.
-        size_t size = std::min(signed_len - so_far, 16 * MiB);
-
-        if (need_sha1) SHA1_Update(&sha1_ctx, addr + so_far, size);
-        if (need_sha256) SHA256_Update(&sha256_ctx, addr + so_far, size);
-        so_far += size;
-
-        double f = so_far / (double)signed_len;
-        if (f > frac + 0.02 || size == so_far) {
-            ui->SetProgress(f);
-            frac = f;
-        }
-    }
-
-    uint8_t sha1[SHA_DIGEST_LENGTH];
-    SHA1_Final(sha1, &sha1_ctx);
-    uint8_t sha256[SHA256_DIGEST_LENGTH];
-    SHA256_Final(sha256, &sha256_ctx);
-
-    uint8_t* sig_der = nullptr;
-    size_t sig_der_length = 0;
-
-    uint8_t* signature = eocd + eocd_size - signature_start;
-    size_t signature_size = signature_start - FOOTER_SIZE;
-
-    LOG(INFO) << "signature (offset: " << std::hex << (length - signature_start) << ", length: "
-              << signature_size << "): " << print_hex(signature, signature_size);
-
-    if (!read_pkcs7(signature, signature_size, &sig_der, &sig_der_length)) {
-        LOG(ERROR) << "Could not find signature DER block";
-        return VERIFY_FAILURE;
-    }
-
-    /*
-     * Check to make sure at least one of the keys matches the signature. Since
-     * any key can match, we need to try each before determining a verification
-     * failure has happened.
-     */
-    size_t i = 0;
-    for (const auto& key : keys) {
-        const uint8_t* hash;
-        int hash_nid;
-        switch (key.hash_len) {
-            case SHA_DIGEST_LENGTH:
-                hash = sha1;
-                hash_nid = NID_sha1;
-                break;
-            case SHA256_DIGEST_LENGTH:
-                hash = sha256;
-                hash_nid = NID_sha256;
-                break;
-            default:
-                continue;
-        }
-
-        // The 6 bytes is the "(signature_start) $ff $ff (comment_size)" that
-        // the signing tool appends after the signature itself.
-        if (key.key_type == Certificate::KEY_TYPE_RSA) {
-            if (!RSA_verify(hash_nid, hash, key.hash_len, sig_der,
-                            sig_der_length, key.rsa.get())) {
-                LOG(INFO) << "failed to verify against RSA key " << i;
-                continue;
-            }
-
-            LOG(INFO) << "whole-file signature verified against RSA key " << i;
-            free(sig_der);
-            return VERIFY_SUCCESS;
-        } else if (key.key_type == Certificate::KEY_TYPE_EC
-                && key.hash_len == SHA256_DIGEST_LENGTH) {
-            if (!ECDSA_verify(0, hash, key.hash_len, sig_der,
-                              sig_der_length, key.ec.get())) {
-                LOG(INFO) << "failed to verify against EC key " << i;
-                continue;
-            }
-
-            LOG(INFO) << "whole-file signature verified against EC key " << i;
-            free(sig_der);
-            return VERIFY_SUCCESS;
-        } else {
-            LOG(INFO) << "Unknown key type " << key.key_type;
-        }
-        i++;
-    }
-
-    if (need_sha1) {
-        LOG(INFO) << "SHA-1 digest: " << print_hex(sha1, SHA_DIGEST_LENGTH);
-    }
-    if (need_sha256) {
-        LOG(INFO) << "SHA-256 digest: " << print_hex(sha256, SHA256_DIGEST_LENGTH);
-    }
-    free(sig_der);
-    LOG(ERROR) << "failed to verify whole-file signature";
+  if (length < eocd_size) {
+    LOG(ERROR) << "not big enough to contain EOCD";
     return VERIFY_FAILURE;
+  }
+
+  // Determine how much of the file is covered by the signature. This is everything except the
+  // signature data and length, which includes all of the EOCD except for the comment length field
+  // (2 bytes) and the comment data.
+  size_t signed_len = length - eocd_size + EOCD_HEADER_SIZE - 2;
+
+  unsigned char* eocd = addr + length - eocd_size;
+
+  // If this is really is the EOCD record, it will begin with the magic number $50 $4b $05 $06.
+  if (eocd[0] != 0x50 || eocd[1] != 0x4b || eocd[2] != 0x05 || eocd[3] != 0x06) {
+    LOG(ERROR) << "signature length doesn't match EOCD marker";
+    return VERIFY_FAILURE;
+  }
+
+  for (size_t i = 4; i < eocd_size-3; ++i) {
+    if (eocd[i  ] == 0x50 && eocd[i+1] == 0x4b && eocd[i+2] == 0x05 && eocd[i+3] == 0x06) {
+      // If the sequence $50 $4b $05 $06 appears anywhere after the real one, libziparchive will
+      // find the later (wrong) one, which could be exploitable. Fail the verification if this
+      // sequence occurs anywhere after the real one.
+      LOG(ERROR) << "EOCD marker occurs after start of EOCD";
+      return VERIFY_FAILURE;
+    }
+  }
+
+  bool need_sha1 = false;
+  bool need_sha256 = false;
+  for (const auto& key : keys) {
+    switch (key.hash_len) {
+      case SHA_DIGEST_LENGTH: need_sha1 = true; break;
+      case SHA256_DIGEST_LENGTH: need_sha256 = true; break;
+    }
+  }
+
+  SHA_CTX sha1_ctx;
+  SHA256_CTX sha256_ctx;
+  SHA1_Init(&sha1_ctx);
+  SHA256_Init(&sha256_ctx);
+
+  double frac = -1.0;
+  size_t so_far = 0;
+  while (so_far < signed_len) {
+    // On a Nexus 5X, experiment showed 16MiB beat 1MiB by 6% faster for a
+    // 1196MiB full OTA and 60% for an 89MiB incremental OTA.
+    // http://b/28135231.
+    size_t size = std::min(signed_len - so_far, 16 * MiB);
+
+    if (need_sha1) SHA1_Update(&sha1_ctx, addr + so_far, size);
+    if (need_sha256) SHA256_Update(&sha256_ctx, addr + so_far, size);
+    so_far += size;
+
+    if (set_progress) {
+      double f = so_far / (double)signed_len;
+      if (f > frac + 0.02 || size == so_far) {
+        set_progress(f);
+        frac = f;
+      }
+    }
+  }
+
+  uint8_t sha1[SHA_DIGEST_LENGTH];
+  SHA1_Final(sha1, &sha1_ctx);
+  uint8_t sha256[SHA256_DIGEST_LENGTH];
+  SHA256_Final(sha256, &sha256_ctx);
+
+  uint8_t* sig_der = nullptr;
+  size_t sig_der_length = 0;
+
+  uint8_t* signature = eocd + eocd_size - signature_start;
+  size_t signature_size = signature_start - FOOTER_SIZE;
+
+  LOG(INFO) << "signature (offset: " << std::hex << (length - signature_start) << ", length: "
+            << signature_size << "): " << print_hex(signature, signature_size);
+
+  if (!read_pkcs7(signature, signature_size, &sig_der, &sig_der_length)) {
+    LOG(ERROR) << "Could not find signature DER block";
+    return VERIFY_FAILURE;
+  }
+
+  // Check to make sure at least one of the keys matches the signature. Since any key can match,
+  // we need to try each before determining a verification failure has happened.
+  size_t i = 0;
+  for (const auto& key : keys) {
+    const uint8_t* hash;
+    int hash_nid;
+    switch (key.hash_len) {
+      case SHA_DIGEST_LENGTH:
+        hash = sha1;
+        hash_nid = NID_sha1;
+        break;
+      case SHA256_DIGEST_LENGTH:
+        hash = sha256;
+        hash_nid = NID_sha256;
+        break;
+      default:
+        continue;
+    }
+
+    // The 6 bytes is the "(signature_start) $ff $ff (comment_size)" that the signing tool appends
+    // after the signature itself.
+    if (key.key_type == Certificate::KEY_TYPE_RSA) {
+      if (!RSA_verify(hash_nid, hash, key.hash_len, sig_der, sig_der_length, key.rsa.get())) {
+        LOG(INFO) << "failed to verify against RSA key " << i;
+        continue;
+      }
+
+      LOG(INFO) << "whole-file signature verified against RSA key " << i;
+      free(sig_der);
+      return VERIFY_SUCCESS;
+    } else if (key.key_type == Certificate::KEY_TYPE_EC && key.hash_len == SHA256_DIGEST_LENGTH) {
+      if (!ECDSA_verify(0, hash, key.hash_len, sig_der, sig_der_length, key.ec.get())) {
+        LOG(INFO) << "failed to verify against EC key " << i;
+        continue;
+      }
+
+      LOG(INFO) << "whole-file signature verified against EC key " << i;
+      free(sig_der);
+      return VERIFY_SUCCESS;
+    } else {
+      LOG(INFO) << "Unknown key type " << key.key_type;
+    }
+    i++;
+  }
+
+  if (need_sha1) {
+    LOG(INFO) << "SHA-1 digest: " << print_hex(sha1, SHA_DIGEST_LENGTH);
+  }
+  if (need_sha256) {
+    LOG(INFO) << "SHA-256 digest: " << print_hex(sha256, SHA256_DIGEST_LENGTH);
+  }
+  free(sig_der);
+  LOG(ERROR) << "failed to verify whole-file signature";
+  return VERIFY_FAILURE;
 }
 
 std::unique_ptr<RSA, RSADeleter> parse_rsa_key(FILE* file, uint32_t exponent) {

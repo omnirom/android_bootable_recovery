@@ -17,6 +17,7 @@
 #ifndef _RECOVERY_VERIFIER_H
 #define _RECOVERY_VERIFIER_H
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -58,13 +59,14 @@ struct Certificate {
     std::unique_ptr<EC_KEY, ECKEYDeleter> ec;
 };
 
-/* addr and length define a an update package file that has been
- * loaded (or mmap'ed, or whatever) into memory.  Verify that the file
- * is signed and the signature matches one of the given keys.  Return
- * one of the constants below.
+/*
+ * 'addr' and 'length' define an update package file that has been loaded (or mmap'ed, or
+ * whatever) into memory. Verifies that the file is signed and the signature matches one of the
+ * given keys. It optionally accepts a callback function for posting the progress to. Returns one
+ * of the constants of VERIFY_SUCCESS and VERIFY_FAILURE.
  */
-int verify_file(unsigned char* addr, size_t length,
-                const std::vector<Certificate>& keys);
+int verify_file(unsigned char* addr, size_t length, const std::vector<Certificate>& keys,
+                const std::function<void(float)>& set_progress = nullptr);
 
 bool load_keys(const char* filename, std::vector<Certificate>& certs);
 
