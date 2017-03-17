@@ -54,7 +54,7 @@ using namespace std;
 
 string                                  DataManager::mBackingFile;
 int                                     DataManager::mInitialized = 0;
-InfoManager                             DataManager::mPersist;  // Data that that is not constant and will be saved to the settings file
+InfoManager                             DataManager::mPersist;  // Data that is not constant and will be saved to the settings file
 InfoManager                             DataManager::mData;     // Data that is not constant and will not be saved to settings file
 InfoManager                             DataManager::mConst;    // Data that is constant and will not be saved to settings file
 
@@ -835,6 +835,9 @@ void DataManager::SetDefaultValues()
 	mPersist.SetValue("tw_app_install_system", "1");
 	mData.SetValue("tw_app_install_status", "0"); // 0 = no status, 1 = not installed, 2 = already installed
 #endif
+	mPersist.SetValue("tw_can_exclude_dalvik", "0");
+	mPersist.SetValue("tw_exclude_dalvik", "0");
+	mPersist.SetValue("tw_dalvik_root_path", TW_DALVIK_ROOT_PATH); // Set by build flag
 
 	pthread_mutex_unlock(&m_valuesLock);
 }

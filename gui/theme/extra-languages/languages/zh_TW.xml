@@ -691,5 +691,6 @@
 		<string name="copy_kernel_log">已導出內核日誌至 {1}</string>
 		<string name="include_kernel_log">包含內核日誌</string>
 		<string name="unable_set_boot_slot">更改 bootloader 啟動分區至 {1} 錯誤</string>
+        <string name="exclude_dalvik_cache_from_backup">從備份中排除dalvik</string>
 	</resources>
 </language>

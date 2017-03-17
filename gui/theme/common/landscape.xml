@@ -1686,6 +1686,28 @@
 				<data variable="tw_disable_free_space"/>
 			</checkbox>
 
+			<button style="checkbox">
+				<conditions>
+					<condition var1="tw_can_exclude_dalvik" var2="1"/>
+					<condition var1="tw_exclude_dalvik" var2="0"/>
+				</conditions>
+				<placement x="%indent%" y="%row10a_y%" textplacement="6"/>
+				<text>{@exclude_dalvik_cache_from_backup=Exclude dalvik-cache from backup}</text>
+				<image resource="checkbox_false"/>
+				<action function="set">tw_exclude_dalvik=1</action>
+			</button>
+
+			<button style="checkbox">
+				<conditions>
+					<condition var1="tw_can_exclude_dalvik" var2="1"/>
+					<condition var1="tw_exclude_dalvik" var2="1"/>
+				</conditions>
+				<placement x="%indent%" y="%row10a_y%" textplacement="6"/>
+				<text>{@exclude_dalvik_cache_from_backup=Exclude dalvik-cache from backup}</text>
+				<image resource="checkbox_true"/>
+				<action function="set">tw_exclude_dalvik=0</action>
+			</button>
+
 			<button style="main_button_half_width">
 				<condition var1="tw_enable_adb_backup" op="!=" var2="1"/>
 				<placement x="%col1_x_left%" y="%row15a_y%"/>

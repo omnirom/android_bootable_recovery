@@ -195,6 +195,11 @@ endif
 LOCAL_CFLAGS += -DTW_GIT_REVISION='"$(tw_git_revision)"'
 
 #TWRP Build Flags
+ifneq ($(TW_DALVIK_ROOT_PATH),)
+    LOCAL_CFLAGS += -DTW_DALVIK_ROOT_PATH=\"$(TW_DALVIK_ROOT_PATH)\"
+else
+    LOCAL_CFLAGS += -DTW_DALVIK_ROOT_PATH=\"/data\"
+endif
 ifeq ($(TW_EXCLUDE_MTP),)
     LOCAL_SHARED_LIBRARIES += libtwrpmtp
     LOCAL_CFLAGS += -DTW_HAS_MTP

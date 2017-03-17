@@ -914,6 +914,10 @@ void TWPartition::Setup_Data_Media() {
 		ExcludeAll(Mount_Point + "/misc/vold");
 		ExcludeAll(Mount_Point + "/.layout_version");
 		ExcludeAll(Mount_Point + "/system/storage.xml");
+		if (DataManager::GetIntValue("tw_exclude_dalvik"))
+			backup_exclusions.add_absolute_dir("/data/dalvik-cache");
+		else
+			backup_exclusions.clear_absolute_dir("/data/dalvik-cache");
 	} else {
 		if (Mount(true) && TWFunc::Path_Exists(Mount_Point + "/media/0")) {
 			Storage_Path = Mount_Point + "/media/0";
@@ -1438,6 +1442,9 @@ bool TWPartition::Wipe(string New_File_System) {
 		}
 		if (Is_Storage && Mount(false))
 			PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
+
+		if (Mount_Point == DataManager::GetStrValue("tw_dalvik_root_path"))
+			DataManager::SetValue("tw_exclude_dalvik", 0);
 	}
 
 	return wiped;
@@ -2541,6 +2548,23 @@ bool TWPartition::Update_Size(bool Display_Error) {
 			if (!Was_Already_Mounted)
 				UnMount(false);
 			return false;
+		}
+	}
+
+	int exclude_dalvik;
+	string dalvik_cache_path, dc_path;
+	if (Mount_Point == DataManager::GetStrValue("tw_dalvik_root_path")) {
+		exclude_dalvik = DataManager::GetIntValue("tw_exclude_dalvik");
+		dalvik_cache_path = Mount_Point + "/dalvik-cache";
+		dc_path = Mount_Point + "/dc";
+		if (exclude_dalvik) {
+			backup_exclusions.add_absolute_dir(dalvik_cache_path);
+			if (Mount_Point == "/cache")
+				backup_exclusions.add_absolute_dir(dc_path);
+		} else {
+			backup_exclusions.clear_absolute_dir(dalvik_cache_path);
+			if (Mount_Point == "/cache")
+				backup_exclusions.clear_absolute_dir(dc_path);
 		}
 	}
 

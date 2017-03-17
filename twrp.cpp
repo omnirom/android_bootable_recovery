@@ -292,6 +292,7 @@ int main(int argc, char **argv) {
 	DataManager::ReadSettingsFile();
 	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
 	GUIConsole::Translate_Now();
+	PartitionManager.Setup_Dalvik_Excl();
 
 	// Fixup the RTC clock on devices which require it
 	if (crash_counter == 0)

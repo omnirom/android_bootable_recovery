@@ -636,5 +636,6 @@
 		<string name="cancel_sideload">Cancelamento de sideload ADB...</string>
 		<string name="change_fs_err">Sistema de arquivo erro em mudança.</string>
 		<string name="theme_ver_err">Versão personalizada do tema não coincide com a versão TWRP. Usando o tema conservado em estoque.</string>
+        <string name="exclude_dalvik_cache_from_backup">Excluir dalvik-cache do backup</string>
 	</resources>
 </language>

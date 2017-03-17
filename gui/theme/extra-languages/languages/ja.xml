@@ -663,5 +663,6 @@
 		<string name="theme_ver_err">カスタムテーマのバージョンが TWRP のバージョンと一致しません。標準のテーマを使用します。</string>
 		<string name="up_a_level">(上の階層へ)</string>
 		<string name="install_reboot">5秒後に再起動します</string>
+        <string name="exclude_dalvik_cache_from_backup">バックアップからdalvikを除外する</string>
 	</resources>
 </language>
