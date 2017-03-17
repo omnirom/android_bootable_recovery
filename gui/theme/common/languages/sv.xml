@@ -200,5 +200,6 @@
 		<string name="config_twrp">Konfigurerar TWRP...</string>
 		<string name="auto_gen">(Auto-generera)</string>
 		<string name="curr_date">(Dagens datum)</string>
+        <string name="exclude_dalvik_cache_from_backup">Uteslut dalvik-cache från backup</string>
 	</resources>
 </language>

@@ -296,6 +296,7 @@ public:
 	void Set_Active_Slot(const string& Slot);                                 // Sets the active slot to A or B
 	string Get_Active_Slot_Suffix();                                          // Returns active slot _a or _b
 	string Get_Active_Slot_Display();                                         // Returns active slot A or B for display purposes
+	void Setup_Dalvik_Excl();                                                      // Used to determine if option to skip dalvik-cache from backup will be available
 
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
@@ -313,6 +314,7 @@ private:
 	int mtp_write_fd;
 	pid_t tar_fork_pid;                                                       // PID of twrpTar fork
 	Backup_Method_enum Backup_Method;                                         // Method used for backup
+	bool Check_Partition_For_Dalvik(string& path, bool& can_exclude_dalvik, bool& dalvik_exists);
 
 private:
 	std::vector<TWPartition*> Partitions;                                     // Vector list of all partitions
