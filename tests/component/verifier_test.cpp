@@ -22,93 +22,34 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <memory>
 #include <string>
 #include <vector>
 
-#include <openssl/sha.h>
-
+#include <android-base/file.h>
 #include <android-base/stringprintf.h>
-#include <ziparchive/zip_archive.h>
+#include <android-base/test_utils.h>
 
-#include "common.h"
 #include "common/test_constants.h"
 #include "otautil/SysUtil.h"
-#include "ui.h"
 #include "verifier.h"
 
-RecoveryUI* ui = NULL;
-
-class MockUI : public RecoveryUI {
-  bool Init(const std::string&) override {
-    return true;
-  }
-  void SetStage(int, int) override {}
-  void SetBackground(Icon /*icon*/) override {}
-  void SetSystemUpdateText(bool /*security_update*/) override {}
-
-  void SetProgressType(ProgressType /*determinate*/) override {}
-  void ShowProgress(float /*portion*/, float /*seconds*/) override {}
-  void SetProgress(float /*fraction*/) override {}
-
-  void ShowText(bool /*visible*/) override {}
-  bool IsTextVisible() override {
-    return false;
-  }
-  bool WasTextEverVisible() override {
-    return false;
-  }
-  void Print(const char* fmt, ...) override {
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
-  }
-  void PrintOnScreenOnly(const char* fmt, ...) override {
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
-  }
-  void ShowFile(const char*) override {}
-
-  void StartMenu(const char* const* /*headers*/, const char* const* /*items*/,
-                 int /*initial_selection*/) override {}
-  int SelectMenu(int /*sel*/) override {
-    return 0;
-  }
-  void EndMenu() override {}
-};
-
-void
-ui_print(const char* format, ...) {
-    va_list ap;
-    va_start(ap, format);
-    vfprintf(stdout, format, ap);
-    va_end(ap);
-}
-
 class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
-  public:
-    MemMapping memmap;
-    std::vector<Certificate> certs;
-
-    virtual void SetUp() {
-        std::vector<std::string> args = GetParam();
-        std::string package = from_testdata_base(args[0]);
-        if (sysMapFile(package.c_str(), &memmap) != 0) {
-            FAIL() << "Failed to mmap " << package << ": " << strerror(errno) << "\n";
-        }
-
-        for (auto it = ++(args.cbegin()); it != args.cend(); ++it) {
-            std::string public_key_file = from_testdata_base("testkey_" + *it + ".txt");
-            ASSERT_TRUE(load_keys(public_key_file.c_str(), certs));
-        }
+ protected:
+  void SetUp() override {
+    std::vector<std::string> args = GetParam();
+    std::string package = from_testdata_base(args[0]);
+    if (sysMapFile(package.c_str(), &memmap) != 0) {
+      FAIL() << "Failed to mmap " << package << ": " << strerror(errno) << "\n";
     }
 
-    static void SetUpTestCase() {
-        ui = new MockUI();
+    for (auto it = ++args.cbegin(); it != args.cend(); ++it) {
+      std::string public_key_file = from_testdata_base("testkey_" + *it + ".txt");
+      ASSERT_TRUE(load_keys(public_key_file.c_str(), certs));
     }
+  }
+
+  MemMapping memmap;
+  std::vector<Certificate> certs;
 };
 
 class VerifierSuccessTest : public VerifierTest {
@@ -118,48 +59,48 @@ class VerifierFailureTest : public VerifierTest {
 };
 
 TEST_P(VerifierSuccessTest, VerifySucceed) {
-    ASSERT_EQ(verify_file(memmap.addr, memmap.length, certs), VERIFY_SUCCESS);
+  ASSERT_EQ(verify_file(memmap.addr, memmap.length, certs, nullptr), VERIFY_SUCCESS);
 }
 
 TEST_P(VerifierFailureTest, VerifyFailure) {
-    ASSERT_EQ(verify_file(memmap.addr, memmap.length, certs), VERIFY_FAILURE);
+  ASSERT_EQ(verify_file(memmap.addr, memmap.length, certs, nullptr), VERIFY_FAILURE);
 }
 
 INSTANTIATE_TEST_CASE_P(SingleKeySuccess, VerifierSuccessTest,
-        ::testing::Values(
-            std::vector<std::string>({"otasigned_v1.zip", "v1"}),
-            std::vector<std::string>({"otasigned_v2.zip", "v2"}),
-            std::vector<std::string>({"otasigned_v3.zip", "v3"}),
-            std::vector<std::string>({"otasigned_v4.zip", "v4"}),
-            std::vector<std::string>({"otasigned_v5.zip", "v5"})));
+    ::testing::Values(
+      std::vector<std::string>({"otasigned_v1.zip", "v1"}),
+      std::vector<std::string>({"otasigned_v2.zip", "v2"}),
+      std::vector<std::string>({"otasigned_v3.zip", "v3"}),
+      std::vector<std::string>({"otasigned_v4.zip", "v4"}),
+      std::vector<std::string>({"otasigned_v5.zip", "v5"})));
 
 INSTANTIATE_TEST_CASE_P(MultiKeySuccess, VerifierSuccessTest,
-        ::testing::Values(
-            std::vector<std::string>({"otasigned_v1.zip", "v1", "v2"}),
-            std::vector<std::string>({"otasigned_v2.zip", "v5", "v2"}),
-            std::vector<std::string>({"otasigned_v3.zip", "v5", "v1", "v3"}),
-            std::vector<std::string>({"otasigned_v4.zip", "v5", "v1", "v4"}),
-            std::vector<std::string>({"otasigned_v5.zip", "v4", "v1", "v5"})));
+    ::testing::Values(
+      std::vector<std::string>({"otasigned_v1.zip", "v1", "v2"}),
+      std::vector<std::string>({"otasigned_v2.zip", "v5", "v2"}),
+      std::vector<std::string>({"otasigned_v3.zip", "v5", "v1", "v3"}),
+      std::vector<std::string>({"otasigned_v4.zip", "v5", "v1", "v4"}),
+      std::vector<std::string>({"otasigned_v5.zip", "v4", "v1", "v5"})));
 
 INSTANTIATE_TEST_CASE_P(WrongKey, VerifierFailureTest,
-        ::testing::Values(
-            std::vector<std::string>({"otasigned_v1.zip", "v2"}),
-            std::vector<std::string>({"otasigned_v2.zip", "v1"}),
-            std::vector<std::string>({"otasigned_v3.zip", "v5"}),
-            std::vector<std::string>({"otasigned_v4.zip", "v5"}),
-            std::vector<std::string>({"otasigned_v5.zip", "v3"})));
+    ::testing::Values(
+      std::vector<std::string>({"otasigned_v1.zip", "v2"}),
+      std::vector<std::string>({"otasigned_v2.zip", "v1"}),
+      std::vector<std::string>({"otasigned_v3.zip", "v5"}),
+      std::vector<std::string>({"otasigned_v4.zip", "v5"}),
+      std::vector<std::string>({"otasigned_v5.zip", "v3"})));
 
 INSTANTIATE_TEST_CASE_P(WrongHash, VerifierFailureTest,
-        ::testing::Values(
-            std::vector<std::string>({"otasigned_v1.zip", "v3"}),
-            std::vector<std::string>({"otasigned_v2.zip", "v4"}),
-            std::vector<std::string>({"otasigned_v3.zip", "v1"}),
-            std::vector<std::string>({"otasigned_v4.zip", "v2"})));
+    ::testing::Values(
+      std::vector<std::string>({"otasigned_v1.zip", "v3"}),
+      std::vector<std::string>({"otasigned_v2.zip", "v4"}),
+      std::vector<std::string>({"otasigned_v3.zip", "v1"}),
+      std::vector<std::string>({"otasigned_v4.zip", "v2"})));
 
 INSTANTIATE_TEST_CASE_P(BadPackage, VerifierFailureTest,
-        ::testing::Values(
-            std::vector<std::string>({"random.zip", "v1"}),
-            std::vector<std::string>({"fake-eocd.zip", "v1"}),
-            std::vector<std::string>({"alter-metadata.zip", "v1"}),
-            std::vector<std::string>({"alter-footer.zip", "v1"}),
-            std::vector<std::string>({"signature-boundary.zip", "v1"})));
+    ::testing::Values(
+      std::vector<std::string>({"random.zip", "v1"}),
+      std::vector<std::string>({"fake-eocd.zip", "v1"}),
+      std::vector<std::string>({"alter-metadata.zip", "v1"}),
+      std::vector<std::string>({"alter-footer.zip", "v1"}),
+      std::vector<std::string>({"signature-boundary.zip", "v1"})));
