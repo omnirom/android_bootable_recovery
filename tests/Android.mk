@@ -81,7 +81,10 @@ include $(BUILD_NATIVE_TEST)
 
 # Component tests
 include $(CLEAR_VARS)
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := \
+    -Werror \
+    -D_FILE_OFFSET_BITS=64
+
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_MODULE := recovery_component_test
 LOCAL_C_INCLUDES := bootable/recovery
@@ -136,6 +139,10 @@ LOCAL_STATIC_LIBRARIES := \
     libz \
     libbase \
     libtune2fs \
+    libfec \
+    libfec_rs \
+    libsquashfs_utils \
+    libcutils \
     $(tune2fs_static_libraries)
 
 testdata_files := $(call find-subdir-files, testdata/*)
