@@ -30,6 +30,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <functional>
 #include <string>
 
 #include <android-base/file.h>
