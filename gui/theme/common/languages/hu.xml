@@ -691,5 +691,6 @@
 		<string name="copy_kernel_log">Kernel log másolva: {1}</string>
 		<string name="include_kernel_log">Emellett Kernel Log másolása</string>
 		<string name="unable_set_boot_slot">Hiba a boot slot váltása során erre: {1}</string>
+        <string name="exclude_dalvik_cache_from_backup">Kizárás dalvik másolatból</string>
 	</resources>
 </language>

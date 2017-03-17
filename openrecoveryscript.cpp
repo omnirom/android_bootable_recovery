@@ -646,6 +646,8 @@ int OpenRecoveryScript::Backup_Command(string Options) {
 		} else if (Options.substr(i, 1) == "M" || Options.substr(i, 1) == "m") {
 			DataManager::SetValue(TW_SKIP_MD5_GENERATE_VAR, 1);
 			gui_msg("md5_off=MD5 Generation is off");
+		} else if (Options.substr(i, 1) == "X" || Options.substr(i, 1) == "x") {
+			DataManager::SetValue("tw_exclude_dalvik", 1);
 		}
 	}
 	DataManager::SetValue("tw_backup_list", Backup_List);

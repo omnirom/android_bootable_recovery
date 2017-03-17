@@ -546,5 +546,6 @@
 		<string name="wiping_data">/data/media temizlenmeden data temizleniyor ...</string>
 		<string name="backing_up">{1} yedekleniyor...</string>
 		<string name="backup_cancel">Yedekleme İptal Edildi</string>
+        <string name="exclude_dalvik_cache_from_backup">dalvik'i yedekten çıkar</string>
 	</resources>
 </language>

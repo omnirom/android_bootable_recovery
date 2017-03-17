@@ -636,5 +636,6 @@
 		<string name="cancel_sideload">Preklicevanje stranskega nalaganja ADB …</string>
 		<string name="change_fs_err">Napaka pri spreminjanju datotečnega sistema.</string>
 		<string name="theme_ver_err">Različica teme po meri se ne ujema z različico TWRP-ja.  Uporabljena bo tovarniška tema.</string>
+        <string name="exclude_dalvik_cache_from_backup">Izključi Dalvik iz varnostne kopije</string>
 	</resources>
 </language>
