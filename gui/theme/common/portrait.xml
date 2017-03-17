@@ -1721,6 +1721,12 @@
 				<data variable="tw_disable_free_space"/>
 			</checkbox>
 
+			<checkbox>
+				<placement x="%indent%" y="%row8_y%"/>
+				<text>{@exclude_dalvik_cache_from_backup=Exclude dalvik-cache from backup}</text>
+				<data variable="tw_exclude_dalvik"/>
+			</checkbox>
+
 			<text style="text_m">
 				<condition var1="tw_has_boot_slots" var2="1"/>
 				<placement x="%center_x%" y="%row17_y%" placement="5"/>

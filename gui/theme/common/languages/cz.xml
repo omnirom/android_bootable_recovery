@@ -636,5 +636,6 @@
 		<string name="cancel_sideload">Ruším ADB sideload...</string>
 		<string name="change_fs_err">Chyba při změně souborového systému.</string>
 		<string name="theme_ver_err">Téma vlastní verze nesedí s verzí TWRP. Použije se tuctové téma.</string>
+		<string name="exclude_dalvik_cache_from_backup">Vyloučit dalvik-cache ze zálohy</string>
 	</resources>
 </language>

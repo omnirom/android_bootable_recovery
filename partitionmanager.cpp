@@ -92,6 +92,73 @@ TWPartitionManager::TWPartitionManager(void) {
 #endif
 }
 
+bool TWPartitionManager::Check_Partition_For_Dalvik(string& path, bool& can_exclude_dalvik, bool& dalvik_exists) {
+	LOGINFO("Checking '%s' for dalvik-cache...\n", path.c_str());
+	TWPartition* Part = Find_Partition_By_Path(path);
+	if (Part == NULL) {
+		LOGINFO("'%s' not found!\n", path.c_str());
+		path = DataManager::GetStrValue("tw_dalvik_root_path"); // reset to default
+		dalvik_exists = false;
+		return can_exclude_dalvik;
+	}
+	if (Part->Backup_Method == BM_FILES) {
+		can_exclude_dalvik = true; // Backup_Tar is used for backup process, so dalvik-cache can be excluded
+		bool Was_Mounted = Part->Is_Mounted();
+		if (Part->Mount(false)) {
+			if (TWFunc::Path_Exists(Part->Mount_Point + "/dalvik-cache")) {
+				dalvik_exists = true;
+				path = Part->Mount_Point;
+			} else {
+				dalvik_exists = false;
+			}
+			if (!Was_Mounted) Part->UnMount(false);
+		} else {
+			dalvik_exists = false;
+		}
+	} else {
+		can_exclude_dalvik = false; // dalvik-cache can not be excluded
+		dalvik_exists = false;
+	}
+	LOGINFO("[can_exclude_dalvik=%s, dalvik_exists=%s]\n", can_exclude_dalvik ? "true" : "false", dalvik_exists ? "true" : "false");
+	return can_exclude_dalvik;
+}
+
+void TWPartitionManager::Setup_Dalvik_Excl() {
+	// Possible root paths for dalvik-cache are '/data', '/cache' and '/sd-ext'.
+	vector<string> root_paths = {"/sd-ext", "/cache", "/data"};
+	// First check the default root path for dalvik-cache
+	string default_dalvik_root_path = DataManager::GetStrValue("tw_dalvik_root_path");
+	string dalvik_root_path = default_dalvik_root_path;
+	LOGINFO("default_dalvik_root_path = '%s'\n", DataManager::GetStrValue("tw_dalvik_root_path").c_str());
+	bool can_exclude_dalvik = false, dalvik_exists = true;
+	Check_Partition_For_Dalvik(dalvik_root_path, can_exclude_dalvik, dalvik_exists);
+	if (!can_exclude_dalvik // If Backup_Tar is not used
+	 || !dalvik_exists) {   // Or dalvik-cache was not found
+	 	// Move on and check the other possible paths
+		for (int i = 0; i < (int)root_paths.size(); i++) {
+			if (root_paths[i] == default_dalvik_root_path)
+				continue; // already checked default path
+			dalvik_root_path = root_paths[i];
+			if (Check_Partition_For_Dalvik(dalvik_root_path, can_exclude_dalvik, dalvik_exists) && dalvik_exists)
+				break; // found dalvik-cache
+		}
+	}
+	// Set data values according to above checks
+	if (can_exclude_dalvik) {
+		DataManager::SetValue("tw_can_exclude_dalvik", 1); // Option to exclude dalvik-cache from backup will be available to users
+		if (dalvik_exists) {
+			DataManager::SetValue("tw_dalvik_root_path", dalvik_root_path); // Set the path we found
+		} else {
+			DataManager::SetValue("tw_dalvik_root_path", default_dalvik_root_path);
+			DataManager::SetValue("tw_exclude_dalvik", 0); // dalvik-cache doesn't exist (wiped or fresh install), so there is nothing to exclude
+		}
+		LOGINFO("dalvik_root_path = '%s'\n", DataManager::GetStrValue("tw_dalvik_root_path").c_str());
+	} else {
+		DataManager::SetValue("tw_can_exclude_dalvik", 0); // Option to exclude dalvik-cache from backup will be hidden from users
+		DataManager::SetValue("tw_exclude_dalvik", 0);
+	}
+}
+
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
 	FILE *fstabFile;
 	char fstab_line[MAX_FSTAB_LINE_LENGTH];
@@ -1256,6 +1323,7 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 			gui_msg(Msg("cleaned=Cleaned: {1}...")(dir.at(i)));
 		}
 	}
+	DataManager::SetValue("tw_exclude_dalvik", 0); // Dalvik-cache wiped - nothing there to exclude
 	gui_msg("dalvik_done=-- Dalvik Cache Directories Wipe Complete!");
 	return true;
 }
@@ -1967,7 +2035,11 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 	} else if (ListType == "backup") {
 		char backup_size[255];
 		unsigned long long Backup_Size;
+		int can_exclude_dalvik = DataManager::GetIntValue("tw_can_exclude_dalvik");
+		string dalvik_root_path = DataManager::GetStrValue("tw_dalvik_root_path");
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+			if (can_exclude_dalvik && (*iter)->Mount_Point == dalvik_root_path)
+				(*iter)->Update_Size(true);
 			if ((*iter)->Can_Be_Backed_Up && !(*iter)->Is_SubPartition && (*iter)->Is_Present) {
 				struct PartitionList part;
 				Backup_Size = (*iter)->Backup_Size;

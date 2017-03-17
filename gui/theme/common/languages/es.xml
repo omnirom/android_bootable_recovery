@@ -651,5 +651,6 @@
 		<string name="theme_ver_err">Tema personalizado no coincide con la versión de TWRP. Usando tema stock.</string>
 		<string name="up_a_level">(Subir Un Nivel)</string>
 		<string name="install_reboot">Reiniciando en 5 segundos</string>
+        <string name="exclude_dalvik_cache_from_backup">Excluir dalvik-cache de la copia de seguridad</string>
 	</resources>
 </language>

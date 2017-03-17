@@ -647,5 +647,6 @@
         <string name="no_real_sdcard">Cet appareil n'a pas une vraie carte SD! Abandon!</string>
         <string name="cancel_sideload">Annulation du transfert par ADB...</string>
         <string name="change_fs_err">Erreur lors du changement du système de fichier.</string>
+        <string name="exclude_dalvik_cache_from_backup">Exclure dalvik-cache de la sauvegarde</string>
     </resources>
 </language>
