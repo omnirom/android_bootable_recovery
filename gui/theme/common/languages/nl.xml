@@ -669,5 +669,6 @@
 		<string name="theme_ver_err">Aangepaste thema versie komt niet overeen met TWRP versie. Stock thema gebruiken.</string>
 		<string name="up_a_level">(Niveau omhoog)</string>
 		<string name="install_reboot">Herstarten in 5 seconden</string>
+        <string name="exclude_dalvik_cache_from_backup">Uitsluiten dalvik-cache van een backup</string>
 	</resources>
 </language>

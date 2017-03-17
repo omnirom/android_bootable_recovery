@@ -71,6 +71,7 @@ void usage() {
 	printf(" -d    target directory\n");
 	printf(" -t    output file\n");
 	printf(" -m    skip media subfolder (has data media)\n");
+	printf(" -s    skip dalvik cache\n");
 	printf(" -z    compress backup (/sbin/pigz must be present)\n");
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	printf(" -e    encrypt/decrypt backup followed by password (/sbin/openaes must be present)\n");
@@ -84,7 +85,7 @@ void usage() {
 int main(int argc, char **argv) {
 	twrpTar tar;
 	int use_encryption = 0, userdata_encryption = 0, has_data_media = 0, use_compression = 0, include_root = 0;
-	int i, action = 0;
+	int i, skip_dalvik, action = 0;
 	unsigned j;
 	string Directory, Tar_Filename;
 	ProgressTracking progress(1);
@@ -147,7 +148,11 @@ int main(int argc, char **argv) {
 			if (action == 2)
 				printf("NOTE: %s option not needed when extracting.\n", argv[i]);
 			has_data_media = 1;
-		} else if (strcmp(argv[i], "-z") == 0) {
+		} else if (strcmp(argv[i], "-s") == 0) {
+			if (action == 2)
+				printf("NOTE: %s option not needed when extracting.\n", argv[i]);
+			skip_dalvik = 1;
+		}  else if (strcmp(argv[i], "-z") == 0) {
 			if (action == 2)
 				printf("NOTE: %s option not needed when extracting.\n", argv[i]);
 			use_compression = 1;
@@ -166,6 +171,12 @@ int main(int argc, char **argv) {
 
 	TWExclude exclude;
 	exclude.add_absolute_dir("/data/media");
+	if (skip_dalvik) {
+		exclude.add_absolute_dir("/data/dalvik-cache");
+		exclude.add_absolute_dir("/sd-ext/dalvik-cache");
+		exclude.add_absolute_dir("/cache/dalvik-cache");
+		exclude.add_absolute_dir("/cache/dc");
+	}
 	tar.has_data_media = has_data_media;
 	tar.setdir(Directory);
 	tar.setfn(Tar_Filename);

@@ -25,6 +25,7 @@ extern "C" {
 #include <errno.h>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "exclude.hpp"
 #include "twrp-functions.hpp"
 #include "gui/gui.hpp"
@@ -41,24 +42,32 @@ TWExclude::TWExclude() {
 }
 
 void TWExclude::add_relative_dir(const string& dir) {
-	relativedir.push_back(dir);
+	if (!check_relative_skip_dirs(dir))
+		relativedir.push_back(dir);
 }
 
 void TWExclude::clear_relative_dir(string dir) {
-	vector<string>::iterator iter = relativedir.begin();
-	while (iter != relativedir.end()) {
-		if (*iter == dir)
-			iter = relativedir.erase(iter);
-		else
-			iter++;
-	}
+	relativedir.erase(remove_if(relativedir.begin(), relativedir.end(),
+			  [dir](const string& str){return str.find(dir) != string::npos;}),
+			  relativedir.end());
 }
 
 void TWExclude::add_absolute_dir(const string& dir) {
-	absolutedir.push_back(TWFunc::Remove_Trailing_Slashes(dir));
+	string normalized_dir = TWFunc::Remove_Trailing_Slashes(dir);
+	if (!check_absolute_skip_dirs(normalized_dir))
+		absolutedir.push_back(TWFunc::Remove_Trailing_Slashes(normalized_dir));
+}
+
+void TWExclude::clear_absolute_dir(string dir) {
+	absolutedir.erase(remove_if(absolutedir.begin(), absolutedir.end(),
+			  [dir](const string& str){return str.find(dir) != string::npos;}),
+			  absolutedir.end());
 }
 
 uint64_t TWExclude::Get_Folder_Size(const string& Path) {
+	if (!TWFunc::Path_Exists(Path))
+		return 0;
+		
 	DIR* d;
 	struct dirent* de;
 	struct stat st;
