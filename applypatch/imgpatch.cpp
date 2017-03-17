@@ -31,10 +31,17 @@
 
 #include <applypatch/applypatch.h>
 #include <applypatch/imgdiff.h>
+#include <android-base/memory.h>
 #include <openssl/sha.h>
 #include <zlib.h>
 
-#include "utils.h"
+static inline int64_t Read8(const void *address) {
+  return android::base::get_unaligned<int64_t>(address);
+}
+
+static inline int32_t Read4(const void *address) {
+  return android::base::get_unaligned<int32_t>(address);
+}
 
 int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                     const unsigned char* patch_data, ssize_t patch_size,
@@ -86,9 +93,9 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size, const Value
         return -1;
       }
 
-      size_t src_start = Read8(normal_header);
-      size_t src_len = Read8(normal_header + 8);
-      size_t patch_offset = Read8(normal_header + 16);
+      size_t src_start = static_cast<size_t>(Read8(normal_header));
+      size_t src_len = static_cast<size_t>(Read8(normal_header + 8));
+      size_t patch_offset = static_cast<size_t>(Read8(normal_header + 16));
 
       if (src_start + src_len > static_cast<size_t>(old_size)) {
         printf("source data too short\n");
@@ -125,11 +132,11 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size, const Value
         return -1;
       }
 
-      size_t src_start = Read8(deflate_header);
-      size_t src_len = Read8(deflate_header + 8);
-      size_t patch_offset = Read8(deflate_header + 16);
-      size_t expanded_len = Read8(deflate_header + 24);
-      size_t target_len = Read8(deflate_header + 32);
+      size_t src_start = static_cast<size_t>(Read8(deflate_header));
+      size_t src_len = static_cast<size_t>(Read8(deflate_header + 8));
+      size_t patch_offset = static_cast<size_t>(Read8(deflate_header + 16));
+      size_t expanded_len = static_cast<size_t>(Read8(deflate_header + 24));
+      size_t target_len = static_cast<size_t>(Read8(deflate_header + 32));
       int level = Read4(deflate_header + 40);
       int method = Read4(deflate_header + 44);
       int windowBits = Read4(deflate_header + 48);
