@@ -21,8 +21,7 @@ LOCAL_SRC_FILES := \
     applypatch.cpp \
     bspatch.cpp \
     freecache.cpp \
-    imgpatch.cpp \
-    utils.cpp
+    imgpatch.cpp
 LOCAL_MODULE := libapplypatch
 LOCAL_MODULE_TAGS := eng
 LOCAL_C_INCLUDES := \
@@ -46,8 +45,7 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     bspatch.cpp \
-    imgpatch.cpp \
-    utils.cpp
+    imgpatch.cpp
 LOCAL_MODULE := libimgpatch
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/include \
@@ -56,6 +54,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
     libcrypto \
     libbspatch \
+    libbase \
     libbz \
     libz
 LOCAL_CFLAGS := \
@@ -68,8 +67,7 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     bspatch.cpp \
-    imgpatch.cpp \
-    utils.cpp
+    imgpatch.cpp
 LOCAL_MODULE := libimgpatch
 LOCAL_MODULE_HOST_OS := linux
 LOCAL_C_INCLUDES := \
@@ -79,6 +77,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
     libcrypto \
     libbspatch \
+    libbase \
     libbz \
     libz
 LOCAL_CFLAGS := \
@@ -123,9 +122,7 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_CFLAGS := -Werror
 include $(BUILD_EXECUTABLE)
 
-libimgdiff_src_files := \
-    imgdiff.cpp \
-    utils.cpp
+libimgdiff_src_files := imgdiff.cpp
 
 # libbsdiff is compiled with -D_FILE_OFFSET_BITS=64.
 libimgdiff_cflags := \

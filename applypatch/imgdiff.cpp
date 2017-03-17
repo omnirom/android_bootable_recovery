@@ -145,11 +145,21 @@
 #include <bsdiff.h>
 #include <zlib.h>
 
-#include "utils.h"
-
 using android::base::get_unaligned;
 
 static constexpr auto BUFFER_SIZE = 0x8000;
+
+// If we use this function to write the offset and length (type size_t), their values should not
+// exceed 2^63; because the signed bit will be casted away.
+static inline bool Write8(int fd, int64_t value) {
+  return android::base::WriteFully(fd, &value, sizeof(int64_t));
+}
+
+// Similarly, the value should not exceed 2^31 if we are casting from size_t (e.g. target chunk
+// size).
+static inline bool Write4(int fd, int32_t value) {
+  return android::base::WriteFully(fd, &value, sizeof(int32_t));
+}
 
 class ImageChunk {
  public:
@@ -163,11 +173,12 @@ class ImageChunk {
         start_(start),
         input_file_ptr_(file_content),
         raw_data_len_(raw_data_len),
-        entry_name_(""),
         compress_level_(6),
         source_start_(0),
         source_len_(0),
-        source_uncompressed_len_(0) {}
+        source_uncompressed_len_(0) {
+    CHECK(file_content != nullptr) << "input file container can't be nullptr";
+  }
 
   int GetType() const {
     return type_;
@@ -199,7 +210,8 @@ class ImageChunk {
   }
 
   size_t GetHeaderSize(size_t patch_size) const;
-  size_t WriteHeaderToFile(FILE* f, const std::vector<uint8_t> patch, size_t offset);
+  // Return the offset of the next patch into the patch data.
+  size_t WriteHeaderToFd(int fd, const std::vector<uint8_t>& patch, size_t offset);
 
   /*
    * Cause a gzip chunk to be treated as a normal chunk (ie, as a blob
@@ -222,9 +234,9 @@ class ImageChunk {
   void MergeAdjacentNormal(const ImageChunk& other);
 
  private:
-  int type_;                                   // CHUNK_NORMAL, CHUNK_DEFLATE, CHUNK_RAW
-  size_t start_;                               // offset of chunk in the original input file
-  const std::vector<uint8_t>* input_file_ptr_; // pointer to the full content of original input file
+  int type_;                                    // CHUNK_NORMAL, CHUNK_DEFLATE, CHUNK_RAW
+  size_t start_;                                // offset of chunk in the original input file
+  const std::vector<uint8_t>* input_file_ptr_;  // ptr to the full content of original input file
   size_t raw_data_len_;
 
   // --- for CHUNK_DEFLATE chunks only: ---
@@ -280,11 +292,11 @@ void ImageChunk::SetSourceInfo(const ImageChunk& src) {
 }
 
 void ImageChunk::SetEntryName(std::string entryname) {
-  entry_name_ = entryname;
+  entry_name_ = std::move(entryname);
 }
 
 void ImageChunk::SetUncompressedData(std::vector<uint8_t> data) {
-  uncompressed_data_ = data;
+  uncompressed_data_ = std::move(data);
 }
 
 bool ImageChunk::SetBonusData(const std::vector<uint8_t>& bonus_data) {
@@ -295,7 +307,7 @@ bool ImageChunk::SetBonusData(const std::vector<uint8_t>& bonus_data) {
   return true;
 }
 
-// Convert CHUNK_NORMAL & CHUNK_DEFLATE to CHUNK_RAW if the terget size is
+// Convert CHUNK_NORMAL & CHUNK_DEFLATE to CHUNK_RAW if the target size is
 // smaller. Also take the header size into account during size comparison.
 bool ImageChunk::ChangeChunkToRaw(size_t patch_size) {
   if (type_ == CHUNK_RAW) {
@@ -310,6 +322,7 @@ bool ImageChunk::ChangeChunkToRaw(size_t patch_size) {
 void ImageChunk::ChangeDeflateChunkToNormal() {
   if (type_ != CHUNK_DEFLATE) return;
   type_ = CHUNK_NORMAL;
+  entry_name_.clear();
   uncompressed_data_.clear();
 }
 
@@ -317,7 +330,7 @@ void ImageChunk::ChangeDeflateChunkToNormal() {
 // header_type    4 bytes
 // CHUNK_NORMAL   8*3 = 24 bytes
 // CHUNK_DEFLATE  8*5 + 4*5 = 60 bytes
-// CHUNK_RAW      4 bytes
+// CHUNK_RAW      4 bytes + patch_size
 size_t ImageChunk::GetHeaderSize(size_t patch_size) const {
   switch (type_) {
     case CHUNK_NORMAL:
@@ -327,43 +340,43 @@ size_t ImageChunk::GetHeaderSize(size_t patch_size) const {
     case CHUNK_RAW:
       return 4 + 4 + patch_size;
     default:
-      printf("unexpected chunk type: %d\n", type_);  // should not reach here.
-      CHECK(false);
+      CHECK(false) << "unexpected chunk type: " << type_;  // Should not reach here.
       return 0;
   }
 }
 
-size_t ImageChunk::WriteHeaderToFile(FILE* f, const std::vector<uint8_t> patch, size_t offset) {
-  Write4(type_, f);
+size_t ImageChunk::WriteHeaderToFd(int fd, const std::vector<uint8_t>& patch, size_t offset) {
+  Write4(fd, type_);
   switch (type_) {
     case CHUNK_NORMAL:
       printf("normal   (%10zu, %10zu)  %10zu\n", start_, raw_data_len_, patch.size());
-      Write8(source_start_, f);
-      Write8(source_len_, f);
-      Write8(offset, f);
+      Write8(fd, static_cast<int64_t>(source_start_));
+      Write8(fd, static_cast<int64_t>(source_len_));
+      Write8(fd, static_cast<int64_t>(offset));
       return offset + patch.size();
     case CHUNK_DEFLATE:
       printf("deflate  (%10zu, %10zu)  %10zu  %s\n", start_, raw_data_len_, patch.size(),
              entry_name_.c_str());
-      Write8(source_start_, f);
-      Write8(source_len_, f);
-      Write8(offset, f);
-      Write8(source_uncompressed_len_, f);
-      Write8(uncompressed_data_.size(), f);
-      Write4(compress_level_, f);
-      Write4(METHOD, f);
-      Write4(WINDOWBITS, f);
-      Write4(MEMLEVEL, f);
-      Write4(STRATEGY, f);
+      Write8(fd, static_cast<int64_t>(source_start_));
+      Write8(fd, static_cast<int64_t>(source_len_));
+      Write8(fd, static_cast<int64_t>(offset));
+      Write8(fd, static_cast<int64_t>(source_uncompressed_len_));
+      Write8(fd, static_cast<int64_t>(uncompressed_data_.size()));
+      Write4(fd, compress_level_);
+      Write4(fd, METHOD);
+      Write4(fd, WINDOWBITS);
+      Write4(fd, MEMLEVEL);
+      Write4(fd, STRATEGY);
       return offset + patch.size();
     case CHUNK_RAW:
       printf("raw      (%10zu, %10zu)\n", start_, raw_data_len_);
-      Write4(patch.size(), f);
-      fwrite(patch.data(), 1, patch.size(), f);
+      Write4(fd, static_cast<int32_t>(patch.size()));
+      if (!android::base::WriteFully(fd, patch.data(), patch.size())) {
+        CHECK(false) << "failed to write " << patch.size() <<" bytes patch";
+      }
       return offset;
     default:
-      printf("unexpected chunk type: %d\n", type_);
-      CHECK(false);
+      CHECK(false) << "unexpected chunk type: " << type_;
       return offset;
   }
 }
@@ -480,20 +493,21 @@ static bool GetZipFileSize(const std::vector<uint8_t>& zip_file, size_t* input_f
 
 static bool ReadZip(const char* filename, std::vector<ImageChunk>* chunks,
                     std::vector<uint8_t>* zip_file, bool include_pseudo_chunk) {
-  CHECK(zip_file != nullptr);
+  CHECK(chunks != nullptr && zip_file != nullptr);
+
+  android::base::unique_fd fd(open(filename, O_RDONLY));
+  if (fd == -1) {
+    printf("failed to open \"%s\" %s\n", filename, strerror(errno));
+    return false;
+  }
   struct stat st;
-  if (stat(filename, &st) != 0) {
+  if (fstat(fd, &st) != 0) {
     printf("failed to stat \"%s\": %s\n", filename, strerror(errno));
     return false;
   }
 
   size_t sz = static_cast<size_t>(st.st_size);
   zip_file->resize(sz);
-  android::base::unique_fd fd(open(filename, O_RDONLY));
-  if (fd == -1) {
-    printf("failed to open \"%s\" %s\n", filename, strerror(errno));
-    return false;
-  }
   if (!android::base::ReadFully(fd, zip_file->data(), sz)) {
     printf("failed to read \"%s\" %s\n", filename, strerror(errno));
     return false;
@@ -596,20 +610,21 @@ static bool ReadZip(const char* filename, std::vector<ImageChunk>* chunks,
 // Read the given file and break it up into chunks, and putting the data in to a vector.
 static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
                       std::vector<uint8_t>* img) {
-  CHECK(img != nullptr);
+  CHECK(chunks != nullptr && img != nullptr);
+
+  android::base::unique_fd fd(open(filename, O_RDONLY));
+  if (fd == -1) {
+    printf("failed to open \"%s\" %s\n", filename, strerror(errno));
+    return false;
+  }
   struct stat st;
-  if (stat(filename, &st) != 0) {
+  if (fstat(fd, &st) != 0) {
     printf("failed to stat \"%s\": %s\n", filename, strerror(errno));
     return false;
   }
 
   size_t sz = static_cast<size_t>(st.st_size);
   img->resize(sz);
-  android::base::unique_fd fd(open(filename, O_RDONLY));
-  if (fd == -1) {
-    printf("failed to open \"%s\" %s\n", filename, strerror(errno));
-    return false;
-  }
   if (!android::base::ReadFully(fd, img->data(), sz)) {
     printf("failed to read \"%s\" %s\n", filename, strerror(errno));
     return false;
@@ -618,9 +633,8 @@ static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
   size_t pos = 0;
 
   while (pos < sz) {
-    if (sz - pos >= 4 && img->at(pos) == 0x1f && img->at(pos + 1) == 0x8b &&
-        img->at(pos + 2) == 0x08 &&  // deflate compression
-        img->at(pos + 3) == 0x00) {  // no header flags
+    // 0x00 no header flags, 0x08 deflate compression, 0x1f8b gzip magic number
+    if (sz - pos >= 4 && get_unaligned<uint32_t>(img->data() + pos) == 0x00088b1f) {
       // 'pos' is the offset of the start of a gzip chunk.
       size_t chunk_offset = pos;
 
@@ -695,7 +709,7 @@ static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
       // the uncompressed data.  Double-check to make sure that it
       // matches the size of the data we got when we actually did
       // the decompression.
-      size_t footer_size = Read4(img->data() + pos - 4);
+      size_t footer_size = get_unaligned<uint32_t>(img->data() + pos - 4);
       if (footer_size != body.DataLengthForPatch()) {
         printf("Error: footer size %zu != decompressed size %zu\n", footer_size,
                body.GetRawDataLength());
@@ -708,9 +722,8 @@ static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
       // Scan forward until we find a gzip header.
       size_t data_len = 0;
       while (data_len + pos < sz) {
-        if (data_len + pos + 4 <= sz && img->at(pos + data_len) == 0x1f &&
-            img->at(pos + data_len + 1) == 0x8b && img->at(pos + data_len + 2) == 0x08 &&
-            img->at(pos + data_len + 3) == 0x00) {
+        if (data_len + pos + 4 <= sz &&
+            get_unaligned<uint32_t>(img->data() + pos + data_len) == 0x00088b1f) {
           break;
         }
         data_len++;
@@ -759,25 +772,25 @@ static bool MakePatch(const ImageChunk* src, ImageChunk* tgt, std::vector<uint8_
     return false;
   }
 
+  android::base::unique_fd patch_fd(open(ptemp, O_RDONLY));
+  if (patch_fd == -1) {
+    printf("failed to open %s: %s\n", ptemp, strerror(errno));
+    return false;
+  }
   struct stat st;
-  if (stat(ptemp, &st) != 0) {
+  if (fstat(patch_fd, &st) != 0) {
     printf("failed to stat patch file %s: %s\n", ptemp, strerror(errno));
     return false;
   }
 
   size_t sz = static_cast<size_t>(st.st_size);
+  // Change the chunk type to raw if the patch takes less space that way.
   if (tgt->ChangeChunkToRaw(sz)) {
     unlink(ptemp);
     size_t patch_size = tgt->DataLengthForPatch();
     patch_data->resize(patch_size);
     std::copy(tgt->DataForPatch(), tgt->DataForPatch() + patch_size, patch_data->begin());
     return true;
-  }
-
-  android::base::unique_fd patch_fd(open(ptemp, O_RDONLY));
-  if (patch_fd == -1) {
-    printf("failed to open %s: %s\n", ptemp, strerror(errno));
-    return false;
   }
   patch_data->resize(sz);
   if (!android::base::ReadFully(patch_fd, patch_data->data(), sz)) {
@@ -845,18 +858,19 @@ int imgdiff(int argc, const char** argv) {
 
   std::vector<uint8_t> bonus_data;
   if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
-    struct stat st;
-    if (stat(argv[2], &st) != 0) {
-      printf("failed to stat bonus file %s: %s\n", argv[2], strerror(errno));
-      return 1;
-    }
-    size_t bonus_size = st.st_size;
-    bonus_data.resize(bonus_size);
     android::base::unique_fd fd(open(argv[2], O_RDONLY));
     if (fd == -1) {
       printf("failed to open bonus file %s: %s\n", argv[2], strerror(errno));
       return 1;
     }
+    struct stat st;
+    if (fstat(fd, &st) != 0) {
+      printf("failed to stat bonus file %s: %s\n", argv[2], strerror(errno));
+      return 1;
+    }
+
+    size_t bonus_size = st.st_size;
+    bonus_data.resize(bonus_size);
     if (!android::base::ReadFully(fd, bonus_data.data(), bonus_size)) {
       printf("failed to read bonus file %s: %s\n", argv[2], strerror(errno));
       return 1;
@@ -999,9 +1013,15 @@ int imgdiff(int argc, const char** argv) {
       ImageChunk* src;
       if (tgt_chunks[i].GetType() == CHUNK_DEFLATE &&
           (src = FindChunkByName(tgt_chunks[i].GetEntryName(), src_chunks))) {
-        MakePatch(src, &tgt_chunks[i], &patch_data[i], nullptr);
+        if (!MakePatch(src, &tgt_chunks[i], &patch_data[i], nullptr)) {
+          printf("Failed to generate patch for target chunk %zu: ", i);
+          return 1;
+        }
       } else {
-        MakePatch(&src_chunks[0], &tgt_chunks[i], &patch_data[i], &bsdiff_cache);
+        if (!MakePatch(&src_chunks[0], &tgt_chunks[i], &patch_data[i], &bsdiff_cache)) {
+          printf("Failed to generate patch for target chunk %zu: ", i);
+          return 1;
+        }
       }
     } else {
       if (i == 1 && !bonus_data.empty()) {
@@ -1009,7 +1029,10 @@ int imgdiff(int argc, const char** argv) {
         src_chunks[i].SetBonusData(bonus_data);
       }
 
-      MakePatch(&src_chunks[i], &tgt_chunks[i], &patch_data[i], nullptr);
+      if (!MakePatch(&src_chunks[i], &tgt_chunks[i], &patch_data[i], nullptr)) {
+        printf("Failed to generate patch for target chunk %zu: ", i);
+        return 1;
+      }
     }
     printf("patch %3zu is %zu bytes (of %zu)\n", i, patch_data[i].size(),
            src_chunks[i].GetRawDataLength());
@@ -1030,28 +1053,32 @@ int imgdiff(int argc, const char** argv) {
 
   size_t offset = total_header_size;
 
-  FILE* f = fopen(argv[3], "wb");
-  if (f == nullptr) {
+  android::base::unique_fd patch_fd(open(argv[3], O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
+  if (patch_fd == -1) {
     printf("failed to open \"%s\": %s\n", argv[3], strerror(errno));
+    return 1;
   }
 
   // Write out the headers.
-
-  fwrite("IMGDIFF2", 1, 8, f);
-  Write4(static_cast<int32_t>(tgt_chunks.size()), f);
+  if (!android::base::WriteStringToFd("IMGDIFF2", patch_fd)) {
+    printf("failed to write \"IMGDIFF2\" to \"%s\": %s\n", argv[3], strerror(errno));
+    return 1;
+  }
+  Write4(patch_fd, static_cast<int32_t>(tgt_chunks.size()));
   for (size_t i = 0; i < tgt_chunks.size(); ++i) {
     printf("chunk %zu: ", i);
-    offset = tgt_chunks[i].WriteHeaderToFile(f, patch_data[i], offset);
+    offset = tgt_chunks[i].WriteHeaderToFd(patch_fd, patch_data[i], offset);
   }
 
   // Append each chunk's bsdiff patch, in order.
   for (size_t i = 0; i < tgt_chunks.size(); ++i) {
     if (tgt_chunks[i].GetType() != CHUNK_RAW) {
-      fwrite(patch_data[i].data(), 1, patch_data[i].size(), f);
+      if (!android::base::WriteFully(patch_fd, patch_data[i].data(), patch_data[i].size())) {
+        CHECK(false) << "failed to write " << patch_data[i].size() << " bytes patch for chunk "
+                     << i;
+      }
     }
   }
-
-  fclose(f);
 
   return 0;
 }
