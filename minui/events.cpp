@@ -24,6 +24,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include <functional>
+
 #include "minui/minui.h"
 
 #define MAX_DEVICES 16
