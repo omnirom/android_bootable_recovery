@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <functional>
 #include <limits>
 #include <map>
 #include <string>
@@ -578,23 +579,24 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
 }
 
 bool verify_package(const unsigned char* package_data, size_t package_size) {
-    std::vector<Certificate> loadedKeys;
-    if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
-        LOG(ERROR) << "Failed to load keys";
-        return false;
-    }
-    LOG(INFO) << loadedKeys.size() << " key(s) loaded from " << PUBLIC_KEYS_FILE;
+  std::vector<Certificate> loadedKeys;
+  if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
+    LOG(ERROR) << "Failed to load keys";
+    return false;
+  }
+  LOG(INFO) << loadedKeys.size() << " key(s) loaded from " << PUBLIC_KEYS_FILE;
 
-    // Verify package.
-    ui->Print("Verifying update package...\n");
-    auto t0 = std::chrono::system_clock::now();
-    int err = verify_file(const_cast<unsigned char*>(package_data), package_size, loadedKeys);
-    std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
-    ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
-    if (err != VERIFY_SUCCESS) {
-        LOG(ERROR) << "Signature verification failed";
-        LOG(ERROR) << "error: " << kZipVerificationFailure;
-        return false;
-    }
-    return true;
+  // Verify package.
+  ui->Print("Verifying update package...\n");
+  auto t0 = std::chrono::system_clock::now();
+  int err = verify_file(const_cast<unsigned char*>(package_data), package_size, loadedKeys,
+                        std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
+  std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
+  ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
+  if (err != VERIFY_SUCCESS) {
+    LOG(ERROR) << "Signature verification failed";
+    LOG(ERROR) << "error: " << kZipVerificationFailure;
+    return false;
+  }
+  return true;
 }
