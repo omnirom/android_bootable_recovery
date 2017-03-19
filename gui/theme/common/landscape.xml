@@ -711,6 +711,7 @@
 				<action function="set">tw_action_text1=</action>
 				<action function="set">tw_action_text2=</action>
 				<action function="set">tw_action_param=</action>
+				<action function="set">tw_reboot_param=</action>
 				<action function="set">tw_has_action2=0</action>
 				<action function="set">tw_action2=</action>
 				<action function="set">tw_action2_param=</action>
