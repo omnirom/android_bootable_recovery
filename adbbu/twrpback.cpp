@@ -514,7 +514,6 @@ int twrpback::restore(void) {
 				return -1;
 			}
 		}
-
 		//If we should read from the adb stream, write commands and data to TWRP
 		if (read_from_adb) {
 			std::string cmdstr;
@@ -547,6 +546,7 @@ int twrpback::restore(void) {
 							close_restore_fds();
 							return -1;
 						}
+						read_from_adb = false;
 					}
 					else {
 						adblogwrite("ADB TWENDADB crc header doesn't match\n");
@@ -728,7 +728,7 @@ int twrpback::restore(void) {
 						if (adb_md5.updateMD5stream((unsigned char*)result, sizeof(result)) == -1)
 							adblogwrite("failed to update md5 stream\n");
 						dataChunkBytes += readbytes;
-
+						
 						if (write(adb_write_fd, result, sizeof(result)) < 0) {
 							std::stringstream str;
 							str << strerror(errno);
@@ -818,5 +818,6 @@ int main(int argc, char **argv) {
 		tw.adblogwrite("Unable to remove TW_ADB_BU_CONTROL: " + str.str());
 	}
 	unlink(TW_ADB_TWRP_CONTROL);
+	tw.adblogwrite("returning to console\n");
 	return ret;
 }
