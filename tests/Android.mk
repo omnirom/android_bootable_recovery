@@ -120,7 +120,6 @@ LOCAL_STATIC_LIBRARIES := \
     libupdater \
     libbootloader_message \
     libverifier \
-    libminui \
     libotautil \
     libmounts \
     libdivsufsort \
