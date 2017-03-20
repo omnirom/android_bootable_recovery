@@ -2947,3 +2947,11 @@ void TWPartition::Revert_Adopted() {
 	LOGINFO("Revert_Adopted: no crypto support\n");
 #endif
 }
+
+void TWPartition::Set_Backup_FileName(string fname) {
+	Backup_FileName = fname;
+}
+
+string TWPartition::Get_Backup_Name() {
+	return Backup_Name;
+}

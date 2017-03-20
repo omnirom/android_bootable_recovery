@@ -1463,7 +1463,7 @@ int twrpTar::entryExists(string entry) {
 }
 
 unsigned long long twrpTar::get_size() {
-	if (TWFunc::Path_Exists(tarfn) && !part_settings->adbbackup) {
+	if (part_settings->adbbackup || TWFunc::Path_Exists(tarfn)) {
 		LOGINFO("Single archive\n");
 		return uncompressedSize(tarfn);
 	} else {
