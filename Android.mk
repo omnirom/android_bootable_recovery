@@ -144,15 +144,12 @@ include $(BUILD_EXECUTABLE)
 # libverifier (static library)
 # ===============================
 include $(CLEAR_VARS)
-LOCAL_CLANG := true
 LOCAL_MODULE := libverifier
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := \
     asn1_decoder.cpp \
-    verifier.cpp \
-    ui.cpp
+    verifier.cpp
 LOCAL_STATIC_LIBRARIES := \
-    libminui \
     libcrypto_utils \
     libcrypto \
     libbase
