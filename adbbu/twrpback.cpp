@@ -547,6 +547,8 @@ int twrpback::restore(void) {
 							close_restore_fds();
 							return -1;
 						}
+						adblogwrite("Sent TWENDADB\n");
+						continue;
 					}
 					else {
 						adblogwrite("ADB TWENDADB crc header doesn't match\n");
