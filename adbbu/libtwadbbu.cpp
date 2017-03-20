@@ -79,6 +79,7 @@ bool twadbbu::Write_ADB_Stream_Trailer() {
 		close(adb_control_bu_fd);
 		return false;
 	}
+	sleep(10);
 	close(adb_control_bu_fd);
 	return true;
 }
