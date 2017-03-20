@@ -21,8 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <functional>
 #include <algorithm>
+#include <functional>
 #include <memory>
 
 #include <android-base/logging.h>
@@ -31,9 +31,7 @@
 #include <openssl/obj_mac.h>
 
 #include "asn1_decoder.h"
-#include "common.h"
 #include "print_sha1.h"
-#include "ui.h"
 
 static constexpr size_t MiB = 1024 * 1024;
 
