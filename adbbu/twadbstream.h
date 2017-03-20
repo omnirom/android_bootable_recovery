@@ -21,7 +21,7 @@
 #define TW_ADB_BU_CONTROL "/tmp/twadbbucontrol"		//FIFO for sending control from TWRP to ADB Backup
 #define TW_ADB_TWRP_CONTROL "/tmp/twadbtwrpcontrol"	//FIFO for sending control from ADB Backup to TWRP
 #define TWRP "TWRP"					//Magic Value
-#define ADB_BU_MAX_ERROR 10				//Max amount of errors for while loops
+#define ADB_BU_MAX_ERROR 20				//Max amount of errors for while loops
 
 //ADB Backup Control Commands
 #define TWSTREAMHDR "twstreamheader"			//TWRP Parititon Count Control
