@@ -514,7 +514,6 @@ int twrpback::restore(void) {
 				return -1;
 			}
 		}
-
 		//If we should read from the adb stream, write commands and data to TWRP
 		if (read_from_adb) {
 			std::string cmdstr;
@@ -547,6 +546,7 @@ int twrpback::restore(void) {
 							close_restore_fds();
 							return -1;
 						}
+						read_from_adb = false;
 					}
 					else {
 						adblogwrite("ADB TWENDADB crc header doesn't match\n");
