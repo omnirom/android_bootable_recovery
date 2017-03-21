@@ -39,7 +39,7 @@ TEST_F(Asn1DecoderTest, Empty_Failure) {
     EXPECT_EQ(NULL, asn1_set_get(ctx));
     EXPECT_FALSE(asn1_sequence_next(ctx));
 
-    uint8_t* junk;
+    const uint8_t* junk;
     size_t length;
     EXPECT_FALSE(asn1_oid_get(ctx, &junk, &length));
     EXPECT_FALSE(asn1_octet_string_get(ctx, &junk, &length));
@@ -68,7 +68,7 @@ TEST_F(Asn1DecoderTest, ConstructedGet_TooSmallForChild_Failure) {
     asn1_context_t* ptr = asn1_constructed_get(ctx);
     ASSERT_NE((asn1_context_t*)NULL, ptr);
     EXPECT_EQ(5, asn1_constructed_type(ptr));
-    uint8_t* oid;
+    const uint8_t* oid;
     size_t length;
     EXPECT_FALSE(asn1_oid_get(ptr, &oid, &length));
     asn1_context_free(ptr);
@@ -81,7 +81,7 @@ TEST_F(Asn1DecoderTest, ConstructedGet_Success) {
     asn1_context_t* ptr = asn1_constructed_get(ctx);
     ASSERT_NE((asn1_context_t*)NULL, ptr);
     EXPECT_EQ(5, asn1_constructed_type(ptr));
-    uint8_t* oid;
+    const uint8_t* oid;
     size_t length;
     ASSERT_TRUE(asn1_oid_get(ptr, &oid, &length));
     EXPECT_EQ(1U, length);
@@ -103,7 +103,7 @@ TEST_F(Asn1DecoderTest, ConstructedSkipAll_Success) {
                             0x06, 0x01, 0xA5, };
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
     ASSERT_TRUE(asn1_constructed_skip_all(ctx));
-    uint8_t* oid;
+    const uint8_t* oid;
     size_t length;
     ASSERT_TRUE(asn1_oid_get(ctx, &oid, &length));
     EXPECT_EQ(1U, length);
@@ -123,7 +123,7 @@ TEST_F(Asn1DecoderTest, SequenceGet_TooSmallForChild_Failure) {
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
     asn1_context_t* ptr = asn1_sequence_get(ctx);
     ASSERT_NE((asn1_context_t*)NULL, ptr);
-    uint8_t* oid;
+    const uint8_t* oid;
     size_t length;
     EXPECT_FALSE(asn1_oid_get(ptr, &oid, &length));
     asn1_context_free(ptr);
@@ -135,7 +135,7 @@ TEST_F(Asn1DecoderTest, SequenceGet_Success) {
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
     asn1_context_t* ptr = asn1_sequence_get(ctx);
     ASSERT_NE((asn1_context_t*)NULL, ptr);
-    uint8_t* oid;
+    const uint8_t* oid;
     size_t length;
     ASSERT_TRUE(asn1_oid_get(ptr, &oid, &length));
     EXPECT_EQ(1U, length);
@@ -156,7 +156,7 @@ TEST_F(Asn1DecoderTest, SetGet_TooSmallForChild_Failure) {
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
     asn1_context_t* ptr = asn1_set_get(ctx);
     ASSERT_NE((asn1_context_t*)NULL, ptr);
-    uint8_t* oid;
+    const uint8_t* oid;
     size_t length;
     EXPECT_FALSE(asn1_oid_get(ptr, &oid, &length));
     asn1_context_free(ptr);
@@ -168,7 +168,7 @@ TEST_F(Asn1DecoderTest, SetGet_Success) {
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
     asn1_context_t* ptr = asn1_set_get(ctx);
     ASSERT_NE((asn1_context_t*)NULL, ptr);
-    uint8_t* oid;
+    const uint8_t* oid;
     size_t length;
     ASSERT_TRUE(asn1_oid_get(ptr, &oid, &length));
     EXPECT_EQ(1U, length);
@@ -180,7 +180,7 @@ TEST_F(Asn1DecoderTest, SetGet_Success) {
 TEST_F(Asn1DecoderTest, OidGet_LengthZero_Failure) {
     uint8_t data[] = { 0x06, 0x00, 0x01, };
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
-    uint8_t* oid;
+    const uint8_t* oid;
     size_t length;
     EXPECT_FALSE(asn1_oid_get(ctx, &oid, &length));
     asn1_context_free(ctx);
@@ -189,7 +189,7 @@ TEST_F(Asn1DecoderTest, OidGet_LengthZero_Failure) {
 TEST_F(Asn1DecoderTest, OidGet_TooSmall_Failure) {
     uint8_t data[] = { 0x06, 0x01, };
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
-    uint8_t* oid;
+    const uint8_t* oid;
     size_t length;
     EXPECT_FALSE(asn1_oid_get(ctx, &oid, &length));
     asn1_context_free(ctx);
@@ -198,7 +198,7 @@ TEST_F(Asn1DecoderTest, OidGet_TooSmall_Failure) {
 TEST_F(Asn1DecoderTest, OidGet_Success) {
     uint8_t data[] = { 0x06, 0x01, 0x99, };
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
-    uint8_t* oid;
+    const uint8_t* oid;
     size_t length;
     ASSERT_TRUE(asn1_oid_get(ctx, &oid, &length));
     EXPECT_EQ(1U, length);
@@ -209,7 +209,7 @@ TEST_F(Asn1DecoderTest, OidGet_Success) {
 TEST_F(Asn1DecoderTest, OctetStringGet_LengthZero_Failure) {
     uint8_t data[] = { 0x04, 0x00, 0x55, };
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
-    uint8_t* string;
+    const uint8_t* string;
     size_t length;
     ASSERT_FALSE(asn1_octet_string_get(ctx, &string, &length));
     asn1_context_free(ctx);
@@ -218,7 +218,7 @@ TEST_F(Asn1DecoderTest, OctetStringGet_LengthZero_Failure) {
 TEST_F(Asn1DecoderTest, OctetStringGet_TooSmall_Failure) {
     uint8_t data[] = { 0x04, 0x01, };
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
-    uint8_t* string;
+    const uint8_t* string;
     size_t length;
     ASSERT_FALSE(asn1_octet_string_get(ctx, &string, &length));
     asn1_context_free(ctx);
@@ -227,7 +227,7 @@ TEST_F(Asn1DecoderTest, OctetStringGet_TooSmall_Failure) {
 TEST_F(Asn1DecoderTest, OctetStringGet_Success) {
     uint8_t data[] = { 0x04, 0x01, 0xAA, };
     asn1_context_t* ctx = asn1_context_new(data, sizeof(data));
-    uint8_t* string;
+    const uint8_t* string;
     size_t length;
     ASSERT_TRUE(asn1_octet_string_get(ctx, &string, &length));
     EXPECT_EQ(1U, length);
