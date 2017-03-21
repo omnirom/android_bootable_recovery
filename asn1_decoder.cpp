@@ -22,9 +22,9 @@
 
 
 typedef struct asn1_context {
-    size_t length;
-    uint8_t* p;
-    int app_type;
+  size_t length;
+  const uint8_t* p;
+  int app_type;
 } asn1_context_t;
 
 
@@ -38,7 +38,7 @@ static const int kTagSequence = 0x30;
 static const int kTagSet = 0x31;
 static const int kTagConstructed = 0xA0;
 
-asn1_context_t* asn1_context_new(uint8_t* buffer, size_t length) {
+asn1_context_t* asn1_context_new(const uint8_t* buffer, size_t length) {
     asn1_context_t* ctx = (asn1_context_t*) calloc(1, sizeof(asn1_context_t));
     if (ctx == NULL) {
         return NULL;
@@ -168,7 +168,7 @@ bool asn1_sequence_next(asn1_context_t* ctx) {
     return true;
 }
 
-bool asn1_oid_get(asn1_context_t* ctx, uint8_t** oid, size_t* length) {
+bool asn1_oid_get(asn1_context_t* ctx, const uint8_t** oid, size_t* length) {
     if (get_byte(ctx) != kTagOid) {
         return false;
     }
@@ -179,7 +179,7 @@ bool asn1_oid_get(asn1_context_t* ctx, uint8_t** oid, size_t* length) {
     return true;
 }
 
-bool asn1_octet_string_get(asn1_context_t* ctx, uint8_t** octet_string, size_t* length) {
+bool asn1_octet_string_get(asn1_context_t* ctx, const uint8_t** octet_string, size_t* length) {
     if (get_byte(ctx) != kTagOctetString) {
         return false;
     }

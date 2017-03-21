@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <vector>
 
 #include <android-base/logging.h>
 #include <openssl/bn.h>
@@ -60,51 +61,53 @@ static constexpr size_t MiB = 1024 * 1024;
  *             SEQUENCE (SignatureAlgorithmIdentifier)
  *             OCTET STRING (SignatureValue)
  */
-static bool read_pkcs7(uint8_t* pkcs7_der, size_t pkcs7_der_len, uint8_t** sig_der,
-        size_t* sig_der_length) {
-    asn1_context_t* ctx = asn1_context_new(pkcs7_der, pkcs7_der_len);
-    if (ctx == NULL) {
-        return false;
-    }
+static bool read_pkcs7(const uint8_t* pkcs7_der, size_t pkcs7_der_len,
+                       std::vector<uint8_t>* sig_der) {
+  CHECK(sig_der != nullptr);
+  sig_der->clear();
 
-    asn1_context_t* pkcs7_seq = asn1_sequence_get(ctx);
-    if (pkcs7_seq != NULL && asn1_sequence_next(pkcs7_seq)) {
-        asn1_context_t *signed_data_app = asn1_constructed_get(pkcs7_seq);
-        if (signed_data_app != NULL) {
-            asn1_context_t* signed_data_seq = asn1_sequence_get(signed_data_app);
-            if (signed_data_seq != NULL
-                    && asn1_sequence_next(signed_data_seq)
-                    && asn1_sequence_next(signed_data_seq)
-                    && asn1_sequence_next(signed_data_seq)
-                    && asn1_constructed_skip_all(signed_data_seq)) {
-                asn1_context_t *sig_set = asn1_set_get(signed_data_seq);
-                if (sig_set != NULL) {
-                    asn1_context_t* sig_seq = asn1_sequence_get(sig_set);
-                    if (sig_seq != NULL
-                            && asn1_sequence_next(sig_seq)
-                            && asn1_sequence_next(sig_seq)
-                            && asn1_sequence_next(sig_seq)
-                            && asn1_sequence_next(sig_seq)) {
-                        uint8_t* sig_der_ptr;
-                        if (asn1_octet_string_get(sig_seq, &sig_der_ptr, sig_der_length)) {
-                            *sig_der = (uint8_t*) malloc(*sig_der_length);
-                            if (*sig_der != NULL) {
-                                memcpy(*sig_der, sig_der_ptr, *sig_der_length);
-                            }
-                        }
-                        asn1_context_free(sig_seq);
-                    }
-                    asn1_context_free(sig_set);
-                }
-                asn1_context_free(signed_data_seq);
+  asn1_context_t* ctx = asn1_context_new(pkcs7_der, pkcs7_der_len);
+  if (ctx == NULL) {
+    return false;
+  }
+
+  asn1_context_t* pkcs7_seq = asn1_sequence_get(ctx);
+  if (pkcs7_seq != NULL && asn1_sequence_next(pkcs7_seq)) {
+    asn1_context_t *signed_data_app = asn1_constructed_get(pkcs7_seq);
+    if (signed_data_app != NULL) {
+      asn1_context_t* signed_data_seq = asn1_sequence_get(signed_data_app);
+      if (signed_data_seq != NULL
+          && asn1_sequence_next(signed_data_seq)
+          && asn1_sequence_next(signed_data_seq)
+          && asn1_sequence_next(signed_data_seq)
+          && asn1_constructed_skip_all(signed_data_seq)) {
+        asn1_context_t *sig_set = asn1_set_get(signed_data_seq);
+        if (sig_set != NULL) {
+          asn1_context_t* sig_seq = asn1_sequence_get(sig_set);
+          if (sig_seq != NULL
+              && asn1_sequence_next(sig_seq)
+              && asn1_sequence_next(sig_seq)
+              && asn1_sequence_next(sig_seq)
+              && asn1_sequence_next(sig_seq)) {
+            const uint8_t* sig_der_ptr;
+            size_t sig_der_length;
+            if (asn1_octet_string_get(sig_seq, &sig_der_ptr, &sig_der_length)) {
+              sig_der->resize(sig_der_length);
+              std::copy(sig_der_ptr, sig_der_ptr + sig_der_length, sig_der->begin());
             }
-            asn1_context_free(signed_data_app);
+            asn1_context_free(sig_seq);
+          }
+          asn1_context_free(sig_set);
         }
-        asn1_context_free(pkcs7_seq);
+        asn1_context_free(signed_data_seq);
+      }
+      asn1_context_free(signed_data_app);
     }
-    asn1_context_free(ctx);
+    asn1_context_free(pkcs7_seq);
+  }
+  asn1_context_free(ctx);
 
-    return *sig_der != NULL;
+  return !sig_der->empty();
 }
 
 /*
@@ -115,7 +118,7 @@ static bool read_pkcs7(uint8_t* pkcs7_der, size_t pkcs7_der_len, uint8_t** sig_d
  * Returns VERIFY_SUCCESS or VERIFY_FAILURE (if any error is encountered or no key matches the
  * signature).
  */
-int verify_file(unsigned char* addr, size_t length, const std::vector<Certificate>& keys,
+int verify_file(const unsigned char* addr, size_t length, const std::vector<Certificate>& keys,
                 const std::function<void(float)>& set_progress) {
   if (set_progress) {
     set_progress(0.0);
@@ -136,7 +139,7 @@ int verify_file(unsigned char* addr, size_t length, const std::vector<Certificat
     return VERIFY_FAILURE;
   }
 
-  unsigned char* footer = addr + length - FOOTER_SIZE;
+  const unsigned char* footer = addr + length - FOOTER_SIZE;
 
   if (footer[2] != 0xff || footer[3] != 0xff) {
     LOG(ERROR) << "footer is wrong";
@@ -174,7 +177,7 @@ int verify_file(unsigned char* addr, size_t length, const std::vector<Certificat
   // (2 bytes) and the comment data.
   size_t signed_len = length - eocd_size + EOCD_HEADER_SIZE - 2;
 
-  unsigned char* eocd = addr + length - eocd_size;
+  const unsigned char* eocd = addr + length - eocd_size;
 
   // If this is really is the EOCD record, it will begin with the magic number $50 $4b $05 $06.
   if (eocd[0] != 0x50 || eocd[1] != 0x4b || eocd[2] != 0x05 || eocd[3] != 0x06) {
@@ -183,7 +186,7 @@ int verify_file(unsigned char* addr, size_t length, const std::vector<Certificat
   }
 
   for (size_t i = 4; i < eocd_size-3; ++i) {
-    if (eocd[i  ] == 0x50 && eocd[i+1] == 0x4b && eocd[i+2] == 0x05 && eocd[i+3] == 0x06) {
+    if (eocd[i] == 0x50 && eocd[i+1] == 0x4b && eocd[i+2] == 0x05 && eocd[i+3] == 0x06) {
       // If the sequence $50 $4b $05 $06 appears anywhere after the real one, libziparchive will
       // find the later (wrong) one, which could be exploitable. Fail the verification if this
       // sequence occurs anywhere after the real one.
@@ -232,16 +235,14 @@ int verify_file(unsigned char* addr, size_t length, const std::vector<Certificat
   uint8_t sha256[SHA256_DIGEST_LENGTH];
   SHA256_Final(sha256, &sha256_ctx);
 
-  uint8_t* sig_der = nullptr;
-  size_t sig_der_length = 0;
-
-  uint8_t* signature = eocd + eocd_size - signature_start;
+  const uint8_t* signature = eocd + eocd_size - signature_start;
   size_t signature_size = signature_start - FOOTER_SIZE;
 
   LOG(INFO) << "signature (offset: " << std::hex << (length - signature_start) << ", length: "
             << signature_size << "): " << print_hex(signature, signature_size);
 
-  if (!read_pkcs7(signature, signature_size, &sig_der, &sig_der_length)) {
+  std::vector<uint8_t> sig_der;
+  if (!read_pkcs7(signature, signature_size, &sig_der)) {
     LOG(ERROR) << "Could not find signature DER block";
     return VERIFY_FAILURE;
   }
@@ -268,22 +269,21 @@ int verify_file(unsigned char* addr, size_t length, const std::vector<Certificat
     // The 6 bytes is the "(signature_start) $ff $ff (comment_size)" that the signing tool appends
     // after the signature itself.
     if (key.key_type == Certificate::KEY_TYPE_RSA) {
-      if (!RSA_verify(hash_nid, hash, key.hash_len, sig_der, sig_der_length, key.rsa.get())) {
+      if (!RSA_verify(hash_nid, hash, key.hash_len, sig_der.data(), sig_der.size(),
+                      key.rsa.get())) {
         LOG(INFO) << "failed to verify against RSA key " << i;
         continue;
       }
 
       LOG(INFO) << "whole-file signature verified against RSA key " << i;
-      free(sig_der);
       return VERIFY_SUCCESS;
     } else if (key.key_type == Certificate::KEY_TYPE_EC && key.hash_len == SHA256_DIGEST_LENGTH) {
-      if (!ECDSA_verify(0, hash, key.hash_len, sig_der, sig_der_length, key.ec.get())) {
+      if (!ECDSA_verify(0, hash, key.hash_len, sig_der.data(), sig_der.size(), key.ec.get())) {
         LOG(INFO) << "failed to verify against EC key " << i;
         continue;
       }
 
       LOG(INFO) << "whole-file signature verified against EC key " << i;
-      free(sig_der);
       return VERIFY_SUCCESS;
     } else {
       LOG(INFO) << "Unknown key type " << key.key_type;
@@ -297,7 +297,6 @@ int verify_file(unsigned char* addr, size_t length, const std::vector<Certificat
   if (need_sha256) {
     LOG(INFO) << "SHA-256 digest: " << print_hex(sha256, SHA256_DIGEST_LENGTH);
   }
-  free(sig_der);
   LOG(ERROR) << "failed to verify whole-file signature";
   return VERIFY_FAILURE;
 }
