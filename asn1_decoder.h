@@ -22,7 +22,7 @@
 
 typedef struct asn1_context asn1_context_t;
 
-asn1_context_t* asn1_context_new(uint8_t* buffer, size_t length);
+asn1_context_t* asn1_context_new(const uint8_t* buffer, size_t length);
 void asn1_context_free(asn1_context_t* ctx);
 asn1_context_t* asn1_constructed_get(asn1_context_t* ctx);
 bool asn1_constructed_skip_all(asn1_context_t* ctx);
@@ -30,7 +30,7 @@ int asn1_constructed_type(asn1_context_t* ctx);
 asn1_context_t* asn1_sequence_get(asn1_context_t* ctx);
 asn1_context_t* asn1_set_get(asn1_context_t* ctx);
 bool asn1_sequence_next(asn1_context_t* seq);
-bool asn1_oid_get(asn1_context_t* ctx, uint8_t** oid, size_t* length);
-bool asn1_octet_string_get(asn1_context_t* ctx, uint8_t** octet_string, size_t* length);
+bool asn1_oid_get(asn1_context_t* ctx, const uint8_t** oid, size_t* length);
+bool asn1_octet_string_get(asn1_context_t* ctx, const uint8_t** octet_string, size_t* length);
 
 #endif /* ASN1_DECODER_H_ */
