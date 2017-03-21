@@ -65,7 +65,7 @@ struct Certificate {
  * given keys. It optionally accepts a callback function for posting the progress to. Returns one
  * of the constants of VERIFY_SUCCESS and VERIFY_FAILURE.
  */
-int verify_file(unsigned char* addr, size_t length, const std::vector<Certificate>& keys,
+int verify_file(const unsigned char* addr, size_t length, const std::vector<Certificate>& keys,
                 const std::function<void(float)>& set_progress = nullptr);
 
 bool load_keys(const char* filename, std::vector<Certificate>& certs);
