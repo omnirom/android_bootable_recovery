@@ -110,21 +110,11 @@ LOCAL_STATIC_LIBRARIES := \
 # any subsidiary static libraries required for your registered
 # extension libs.
 
-inc := $(call intermediates-dir-for,PACKAGING,updater_extensions)/register.inc
-
-# Encode the value of TARGET_RECOVERY_UPDATER_LIBS into the filename of the dependency.
-# So if TARGET_RECOVERY_UPDATER_LIBS is changed, a new dependency file will be generated.
-# Note that we have to remove any existing depency files before creating new one,
-# so no obsolete dependecy file gets used if you switch back to an old value.
-inc_dep_file := $(inc).dep.$(subst $(space),-,$(sort $(TARGET_RECOVERY_UPDATER_LIBS)))
-$(inc_dep_file): stem := $(inc).dep
-$(inc_dep_file) :
-	$(hide) mkdir -p $(dir $@)
-	$(hide) rm -f $(stem).*
-	$(hide) touch $@
+LOCAL_MODULE_CLASS := EXECUTABLES
+inc := $(call local-generated-sources-dir)/register.inc
 
 $(inc) : libs := $(TARGET_RECOVERY_UPDATER_LIBS)
-$(inc) : $(inc_dep_file)
+$(inc) :
 	$(hide) mkdir -p $(dir $@)
 	$(hide) echo "" > $@
 	$(hide) $(foreach lib,$(libs),echo "extern void Register_$(lib)(void);" >> $@;)
@@ -132,11 +122,9 @@ $(inc) : $(inc_dep_file)
 	$(hide) $(foreach lib,$(libs),echo "  Register_$(lib)();" >> $@;)
 	$(hide) echo "}" >> $@
 
-$(call intermediates-dir-for,EXECUTABLES,updater,,,$(TARGET_PREFER_32_BIT))/updater.o : $(inc)
-LOCAL_C_INCLUDES += $(dir $(inc))
+LOCAL_GENERATED_SOURCES := $(inc)
 
 inc :=
-inc_dep_file :=
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
