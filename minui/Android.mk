@@ -28,7 +28,10 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
     libdrm \
     libsync_recovery
 
-LOCAL_STATIC_LIBRARIES := libpng
+LOCAL_STATIC_LIBRARIES := \
+    libpng \
+    libbase
+
 LOCAL_CFLAGS := -Werror
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
@@ -61,7 +64,10 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := libminui
 LOCAL_WHOLE_STATIC_LIBRARIES += libminui
-LOCAL_SHARED_LIBRARIES := libpng
+LOCAL_SHARED_LIBRARIES := \
+    libpng \
+    libbase
+
 LOCAL_CFLAGS := -Werror
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
