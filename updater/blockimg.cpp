@@ -44,6 +44,7 @@
 #include <android-base/unique_fd.h>
 #include <applypatch/applypatch.h>
 #include <openssl/sha.h>
+#include <private/android_filesystem_config.h>
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
@@ -772,6 +773,11 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
         return -1;
     }
 
+    if (fchown(fd, AID_SYSTEM, AID_SYSTEM) != 0) {  // system user
+        PLOG(ERROR) << "failed to chown \"" << fn << "\"";
+        return -1;
+    }
+
     if (write_all(fd, buffer, blocks * BLOCKSIZE) == -1) {
         return -1;
     }
@@ -837,6 +843,12 @@ static int CreateStash(State* state, size_t maxblocks, const std::string& blockd
 
     if (res != 0) {
       ErrorAbort(state, kStashCreationFailure, "mkdir \"%s\" failed: %s\n", dirname.c_str(),
+                 strerror(errno));
+      return -1;
+    }
+
+    if (chown(dirname.c_str(), AID_SYSTEM, AID_SYSTEM) != 0) {  // system user
+      ErrorAbort(state, kStashCreationFailure, "chown \"%s\" failed: %s\n", dirname.c_str(),
                  strerror(errno));
       return -1;
     }
