@@ -66,48 +66,50 @@ static bool read_pkcs7(const uint8_t* pkcs7_der, size_t pkcs7_der_len,
   CHECK(sig_der != nullptr);
   sig_der->clear();
 
-  asn1_context_t* ctx = asn1_context_new(pkcs7_der, pkcs7_der_len);
-  if (ctx == NULL) {
+  asn1_context ctx(pkcs7_der, pkcs7_der_len);
+
+  std::unique_ptr<asn1_context> pkcs7_seq(ctx.asn1_sequence_get());
+  if (pkcs7_seq == nullptr || !pkcs7_seq->asn1_sequence_next()) {
     return false;
   }
 
-  asn1_context_t* pkcs7_seq = asn1_sequence_get(ctx);
-  if (pkcs7_seq != NULL && asn1_sequence_next(pkcs7_seq)) {
-    asn1_context_t *signed_data_app = asn1_constructed_get(pkcs7_seq);
-    if (signed_data_app != NULL) {
-      asn1_context_t* signed_data_seq = asn1_sequence_get(signed_data_app);
-      if (signed_data_seq != NULL
-          && asn1_sequence_next(signed_data_seq)
-          && asn1_sequence_next(signed_data_seq)
-          && asn1_sequence_next(signed_data_seq)
-          && asn1_constructed_skip_all(signed_data_seq)) {
-        asn1_context_t *sig_set = asn1_set_get(signed_data_seq);
-        if (sig_set != NULL) {
-          asn1_context_t* sig_seq = asn1_sequence_get(sig_set);
-          if (sig_seq != NULL
-              && asn1_sequence_next(sig_seq)
-              && asn1_sequence_next(sig_seq)
-              && asn1_sequence_next(sig_seq)
-              && asn1_sequence_next(sig_seq)) {
-            const uint8_t* sig_der_ptr;
-            size_t sig_der_length;
-            if (asn1_octet_string_get(sig_seq, &sig_der_ptr, &sig_der_length)) {
-              sig_der->resize(sig_der_length);
-              std::copy(sig_der_ptr, sig_der_ptr + sig_der_length, sig_der->begin());
-            }
-            asn1_context_free(sig_seq);
-          }
-          asn1_context_free(sig_set);
-        }
-        asn1_context_free(signed_data_seq);
-      }
-      asn1_context_free(signed_data_app);
-    }
-    asn1_context_free(pkcs7_seq);
+  std::unique_ptr<asn1_context> signed_data_app(pkcs7_seq->asn1_constructed_get());
+  if (signed_data_app == nullptr) {
+    return false;
   }
-  asn1_context_free(ctx);
 
-  return !sig_der->empty();
+  std::unique_ptr<asn1_context> signed_data_seq(signed_data_app->asn1_sequence_get());
+  if (signed_data_seq == nullptr ||
+      !signed_data_seq->asn1_sequence_next() ||
+      !signed_data_seq->asn1_sequence_next() ||
+      !signed_data_seq->asn1_sequence_next() ||
+      !signed_data_seq->asn1_constructed_skip_all()) {
+    return false;
+  }
+
+  std::unique_ptr<asn1_context> sig_set(signed_data_seq->asn1_set_get());
+  if (sig_set == nullptr) {
+    return false;
+  }
+
+  std::unique_ptr<asn1_context> sig_seq(sig_set->asn1_sequence_get());
+  if (sig_seq == nullptr ||
+      !sig_seq->asn1_sequence_next() ||
+      !sig_seq->asn1_sequence_next() ||
+      !sig_seq->asn1_sequence_next() ||
+      !sig_seq->asn1_sequence_next()) {
+    return false;
+  }
+
+  const uint8_t* sig_der_ptr;
+  size_t sig_der_length;
+  if (!sig_seq->asn1_octet_string_get(&sig_der_ptr, &sig_der_length)) {
+    return false;
+  }
+
+  sig_der->resize(sig_der_length);
+  std::copy(sig_der_ptr, sig_der_ptr + sig_der_length, sig_der->begin());
+  return true;
 }
 
 /*
