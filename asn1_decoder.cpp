@@ -19,14 +19,14 @@
 #include <stdint.h>
 
 int asn1_context::peek_byte() const {
-  if (length_ <= 0) {
+  if (length_ == 0) {
     return -1;
   }
   return *p_;
 }
 
 int asn1_context::get_byte() {
-  if (length_ <= 0) {
+  if (length_ == 0) {
     return -1;
   }
 
