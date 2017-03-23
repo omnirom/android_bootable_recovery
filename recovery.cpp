@@ -53,6 +53,7 @@
 #include <cutils/properties.h> /* for property_list */
 #include <healthd/BatteryMonitor.h>
 #include <private/android_logger.h> /* private pmsg functions */
+#include <private/android_filesystem_config.h>  /* for AID_SYSTEM */
 #include <selinux/label.h>
 #include <selinux/selinux.h>
 #include <ziparchive/zip_archive.h>
@@ -460,9 +461,9 @@ static void copy_logs() {
     copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, false);
     save_kernel_log(LAST_KMSG_FILE);
     chmod(LOG_FILE, 0600);
-    chown(LOG_FILE, 1000, 1000);   // system user
+    chown(LOG_FILE, AID_SYSTEM, AID_SYSTEM);
     chmod(LAST_KMSG_FILE, 0600);
-    chown(LAST_KMSG_FILE, 1000, 1000);   // system user
+    chown(LAST_KMSG_FILE, AID_SYSTEM, AID_SYSTEM);
     chmod(LAST_LOG_FILE, 0640);
     chmod(LAST_INSTALL_FILE, 0644);
     sync();
