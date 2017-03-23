@@ -691,7 +691,7 @@ Value* ApplyPatchCheckFn(const char* name, State* state, const std::vector<std::
   const std::string& filename = args[0];
 
   std::vector<std::string> sha1s;
-  if (!ReadArgs(state, argv, &sha1s, 1, argv.size() - 1)) {
+  if (argv.size() > 1 && !ReadArgs(state, argv, &sha1s, 1, argv.size() - 1)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   int result = applypatch_check(filename.c_str(), sha1s);
