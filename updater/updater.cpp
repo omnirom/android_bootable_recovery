@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
 
   // Parse the script.
 
-  Expr* root;
+  std::unique_ptr<Expr> root;
   int error_count = 0;
   int error = parse_string(script.c_str(), &root, &error_count);
   if (error != 0 || error_count > 0) {

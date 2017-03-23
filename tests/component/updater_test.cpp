@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -46,7 +47,7 @@ struct selabel_handle *sehandle = nullptr;
 
 static void expect(const char* expected, const char* expr_str, CauseCode cause_code,
                    UpdaterInfo* info = nullptr) {
-  Expr* e;
+  std::unique_ptr<Expr> e;
   int error_count = 0;
   ASSERT_EQ(0, parse_string(expr_str, &e, &error_count));
   ASSERT_EQ(0, error_count);
