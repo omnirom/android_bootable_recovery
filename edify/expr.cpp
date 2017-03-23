@@ -357,7 +357,7 @@ bool ReadArgs(State* state, const std::vector<std::unique_ptr<Expr>>& argv,
     if (args == nullptr) {
         return false;
     }
-    if (len == 0 || start + len > argv.size()) {
+    if (start + len > argv.size()) {
         return false;
     }
     for (size_t i = start; i < start + len; ++i) {
