@@ -126,15 +126,16 @@ static bool make_parents(const std::string& name) {
 
 // mount(fs_type, partition_type, location, mount_point)
 // mount(fs_type, partition_type, location, mount_point, mount_options)
-//
+
 //    fs_type="ext4"   partition_type="EMMC"    location=device
-Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 4 && argc != 5) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 4-5 args, got %d", name, argc);
+Value* MountFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 4 && argv.size() != 5) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 4-5 args, got %zu", name,
+                      argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, argc, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& fs_type = args[0];
@@ -143,7 +144,7 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
   const std::string& mount_point = args[3];
   std::string mount_options;
 
-  if (argc == 5) {
+  if (argv.size() == 5) {
     mount_options = args[4];
   }
 
@@ -188,15 +189,14 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
   return StringValue(mount_point);
 }
 
-
 // is_mounted(mount_point)
-Value* IsMountedFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
+Value* IsMountedFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, argc, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& mount_point = args[0];
@@ -214,12 +214,12 @@ Value* IsMountedFn(const char* name, State* state, int argc, Expr* argv[]) {
   return StringValue(mount_point);
 }
 
-Value* UnmountFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
+Value* UnmountFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
   }
   std::vector<std::string> args;
-  if (!ReadArgs(state, argc, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& mount_point = args[0];
@@ -265,13 +265,14 @@ static int exec_cmd(const char* path, char* const argv[]) {
 //    if fs_size == 0, then make fs uses the entire partition.
 //    if fs_size > 0, that is the size to use
 //    if fs_size < 0, then reserve that many bytes at the end of the partition (not for "f2fs")
-Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 5) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 5 args, got %d", name, argc);
+Value* FormatFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 5) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 5 args, got %zu", name,
+                      argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, argc, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& fs_type = args[0];
@@ -332,13 +333,15 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
   return nullptr;
 }
 
-Value* ShowProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+Value* ShowProgressFn(const char* name, State* state,
+                      const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %zu", name,
+                      argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, argc, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& frac_str = args[0];
@@ -361,13 +364,13 @@ Value* ShowProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
   return StringValue(frac_str);
 }
 
-Value* SetProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
+Value* SetProgressFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, 1, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& frac_str = args[0];
@@ -390,13 +393,15 @@ Value* SetProgressFn(const char* name, State* state, int argc, Expr* argv[]) {
 //   Example: package_extract_dir("system", "/system")
 //
 //   Note: package_dir needs to be a relative path; dest_dir needs to be an absolute path.
-Value* PackageExtractDirFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+Value* PackageExtractDirFn(const char* name, State* state,
+                           const std::vector<std::unique_ptr<Expr>>&argv) {
+  if (argv.size() != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %zu", name,
+                      argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, 2, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& zip_path = args[0];
@@ -416,17 +421,20 @@ Value* PackageExtractDirFn(const char* name, State* state, int argc, Expr* argv[
 //   Extracts a single package_file from the update package and writes it to dest_file,
 //   overwriting existing files if necessary. Without the dest_file argument, returns the
 //   contents of the package file as a binary blob.
-Value* PackageExtractFileFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc < 1 || argc > 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 or 2 args, got %d", name, argc);
+Value* PackageExtractFileFn(const char* name, State* state,
+                            const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() < 1 || argv.size() > 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 or 2 args, got %zu", name,
+                      argv.size());
   }
 
-  if (argc == 2) {
+  if (argv.size() == 2) {
     // The two-argument version extracts to a file.
 
     std::vector<std::string> args;
-    if (!ReadArgs(state, 2, argv, &args)) {
-      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %d args", name, argc);
+    if (!ReadArgs(state, argv, &args)) {
+      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %zu args", name,
+                        argv.size());
     }
     const std::string& zip_path = args[0];
     const std::string& dest_path = args[1];
@@ -468,8 +476,9 @@ Value* PackageExtractFileFn(const char* name, State* state, int argc, Expr* argv
     // The one-argument version returns the contents of the file as the result.
 
     std::vector<std::string> args;
-    if (!ReadArgs(state, 1, argv, &args)) {
-      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %d args", name, argc);
+    if (!ReadArgs(state, argv, &args)) {
+      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %zu args", name,
+                        argv.size());
     }
     const std::string& zip_path = args[0];
 
@@ -495,9 +504,9 @@ Value* PackageExtractFileFn(const char* name, State* state, int argc, Expr* argv
   }
 }
 
-Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
+Value* GetPropFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
   }
   std::string key;
   if (!Evaluate(state, argv[0], &key)) {
@@ -513,13 +522,14 @@ Value* GetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 //   interprets 'file' as a getprop-style file (key=value pairs, one
 //   per line. # comment lines, blank lines, lines without '=' ignored),
 //   and returns the value for 'key' (or "" if it isn't defined).
-Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+Value* FileGetPropFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %zu", name,
+                      argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, 2, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& filename = args[0];
@@ -578,9 +588,13 @@ Value* FileGetPropFn(const char* name, State* state, int argc, Expr* argv[]) {
 }
 
 // apply_patch_space(bytes)
-Value* ApplyPatchSpaceFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* ApplyPatchSpaceFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 args, got %zu", name,
+                      argv.size());
+  }
   std::vector<std::string> args;
-  if (!ReadArgs(state, 1, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& bytes_str = args[0];
@@ -606,14 +620,14 @@ Value* ApplyPatchSpaceFn(const char* name, State* state, int argc, Expr* argv[])
 //   state. If the process is interrupted during patching, the target file may be in an intermediate
 //   state; a copy exists in the cache partition so restarting the update can successfully update
 //   the file.
-Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc < 6 || (argc % 2) == 1) {
+Value* ApplyPatchFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    if (argv.size() < 6 || (argv.size() % 2) == 1) {
         return ErrorAbort(state, kArgsParsingFailure, "%s(): expected at least 6 args and an "
-                          "even number, got %d", name, argc);
+                          "even number, got %zu", name, argv.size());
     }
 
     std::vector<std::string> args;
-    if (!ReadArgs(state, 4, argv, &args)) {
+    if (!ReadArgs(state, argv, &args, 0, 4)) {
         return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
     }
     const std::string& source_filename = args[0];
@@ -627,9 +641,9 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
                           name, target_size_str.c_str());
     }
 
-    int patchcount = (argc-4) / 2;
+    int patchcount = (argv.size()-4) / 2;
     std::vector<std::unique_ptr<Value>> arg_values;
-    if (!ReadValueArgs(state, argc-4, argv+4, &arg_values)) {
+    if (!ReadValueArgs(state, argv, &arg_values, 4, argv.size() - 4)) {
         return nullptr;
     }
 
@@ -664,20 +678,20 @@ Value* ApplyPatchFn(const char* name, State* state, int argc, Expr* argv[]) {
 //   specified as 40 hex digits. This function differs from sha1_check(read_file(filename),
 //   sha1 [, ...]) in that it knows to check the cache partition copy, so apply_patch_check() will
 //   succeed even if the file was corrupted by an interrupted apply_patch() update.
-Value* ApplyPatchCheckFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc < 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s(): expected at least 1 arg, got %d", name,
-                      argc);
+Value* ApplyPatchCheckFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() < 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): expected at least 1 arg, got %zu", name,
+                      argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, 1, argv, &args)) {
+  if (!ReadArgs(state, argv, &args, 0, 1)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& filename = args[0];
 
   std::vector<std::string> sha1s;
-  if (!ReadArgs(state, argc - 1, argv + 1, &sha1s)) {
+  if (!ReadArgs(state, argv, &sha1s, 1, argv.size() - 1)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   int result = applypatch_check(filename.c_str(), sha1s);
@@ -687,9 +701,9 @@ Value* ApplyPatchCheckFn(const char* name, State* state, int argc, Expr* argv[])
 
 // This is the updater side handler for ui_print() in edify script. Contents
 // will be sent over to the recovery side for on-screen display.
-Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
+Value* UIPrintFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
   std::vector<std::string> args;
-  if (!ReadArgs(state, argc, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
 
@@ -698,31 +712,32 @@ Value* UIPrintFn(const char* name, State* state, int argc, Expr* argv[]) {
   return StringValue(buffer);
 }
 
-Value* WipeCacheFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 0) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects no args, got %d", name, argc);
+Value* WipeCacheFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (!argv.empty()) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects no args, got %zu", name,
+                      argv.size());
   }
   fprintf(static_cast<UpdaterInfo*>(state->cookie)->cmd_pipe, "wipe_cache\n");
   return StringValue("t");
 }
 
-Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc < 1) {
+Value* RunProgramFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() < 1) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects at least 1 arg", name);
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, argc, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
 
-  char* args2[argc + 1];
-  for (int i = 0; i < argc; i++) {
+  char* args2[argv.size() + 1];
+  for (size_t i = 0; i < argv.size(); i++) {
     args2[i] = &args[i][0];
   }
-  args2[argc] = nullptr;
+  args2[argv.size()] = nullptr;
 
-  LOG(INFO) << "about to run program [" << args2[0] << "] with " << argc << " args";
+  LOG(INFO) << "about to run program [" << args2[0] << "] with " << argv.size() << " args";
 
   pid_t child = fork();
   if (child == 0) {
@@ -752,13 +767,13 @@ Value* RunProgramFn(const char* name, State* state, int argc, Expr* argv[]) {
 //    returns the sha1 of the file if it matches any of the hex
 //    strings passed, or "" if it does not equal any of them.
 //
-Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc < 1) {
+Value* Sha1CheckFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() < 1) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects at least 1 arg", name);
   }
 
   std::vector<std::unique_ptr<Value>> args;
-  if (!ReadValueArgs(state, argc, argv, &args)) {
+  if (!ReadValueArgs(state, argv, &args)) {
     return nullptr;
   }
 
@@ -768,11 +783,11 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
   uint8_t digest[SHA_DIGEST_LENGTH];
   SHA1(reinterpret_cast<const uint8_t*>(args[0]->data.c_str()), args[0]->data.size(), digest);
 
-  if (argc == 1) {
+  if (argv.size() == 1) {
     return StringValue(print_sha1(digest));
   }
 
-  for (int i = 1; i < argc; ++i) {
+  for (size_t i = 1; i < argv.size(); ++i) {
     uint8_t arg_digest[SHA_DIGEST_LENGTH];
     if (args[i]->type != VAL_STRING) {
       LOG(ERROR) << name << "(): arg " << i << " is not a string; skipping";
@@ -791,13 +806,13 @@ Value* Sha1CheckFn(const char* name, State* state, int argc, Expr* argv[]) {
 
 // Read a local file and return its contents (the Value* returned
 // is actually a FileContents*).
-Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
+Value* ReadFileFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, 1, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& filename = args[0];
@@ -815,13 +830,14 @@ Value* ReadFileFn(const char* name, State* state, int argc, Expr* argv[]) {
 // write_value(value, filename)
 //   Writes 'value' to 'filename'.
 //   Example: write_value("960000", "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq")
-Value* WriteValueFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+Value* WriteValueFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %zu", name,
+                      argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, 2, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
 
@@ -848,13 +864,14 @@ Value* WriteValueFn(const char* name, State* state, int argc, Expr* argv[]) {
 // property.  It can be "recovery" to boot from the recovery
 // partition, or "" (empty string) to boot from the regular boot
 // partition.
-Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+Value* RebootNowFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %zu", name,
+                      argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, 2, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
   const std::string& filename = args[0];
@@ -890,13 +907,14 @@ Value* RebootNowFn(const char* name, State* state, int argc, Expr* argv[]) {
 // ("/misc" in the fstab), which is where this value is stored.  The
 // second argument is the string to store; it should not exceed 31
 // bytes.
-Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+Value* SetStageFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %zu", name,
+                      argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, 2, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& filename = args[0];
@@ -923,13 +941,13 @@ Value* SetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
 
 // Return the value most recently saved with SetStageFn.  The argument
 // is the block device for the misc partition.
-Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %d", name, argc);
+Value* GetStageFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, 1, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& filename = args[0];
@@ -944,13 +962,14 @@ Value* GetStageFn(const char* name, State* state, int argc, Expr* argv[]) {
   return StringValue(boot.stage);
 }
 
-Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %d", name, argc);
+Value* WipeBlockDeviceFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %zu", name,
+                      argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, 2, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
   const std::string& filename = args[0];
@@ -967,38 +986,39 @@ Value* WipeBlockDeviceFn(const char* name, State* state, int argc, Expr* argv[])
   return StringValue((status == 0) ? "t" : "");
 }
 
-Value* EnableRebootFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc != 0) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects no args, got %d", name, argc);
+Value* EnableRebootFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (!argv.empty()) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects no args, got %zu", name,
+                      argv.size());
   }
   UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
   fprintf(ui->cmd_pipe, "enable_reboot\n");
   return StringValue("t");
 }
 
-Value* Tune2FsFn(const char* name, State* state, int argc, Expr* argv[]) {
-  if (argc == 0) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects args, got %d", name, argc);
+Value* Tune2FsFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.empty()) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects args, got %zu", name, argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, argc, argv, &args)) {
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() could not read args", name);
   }
 
-  char* args2[argc + 1];
+  char* args2[argv.size() + 1];
   // Tune2fs expects the program name as its args[0]
   args2[0] = const_cast<char*>(name);
   if (args2[0] == nullptr) {
     return nullptr;
   }
-  for (int i = 0; i < argc; ++i) {
+  for (size_t i = 0; i < argv.size(); ++i) {
     args2[i + 1] = &args[i][0];
   }
 
   // tune2fs changes the file system parameters on an ext2 file system; it
   // returns 0 on success.
-  int result = tune2fs_main(argc + 1, args2);
+  int result = tune2fs_main(argv.size() + 1, args2);
   if (result != 0) {
     return ErrorAbort(state, kTune2FsFailure, "%s() returned error code %d", name, result);
   }
