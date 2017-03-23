@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -21,7 +22,7 @@
 #include "edify/expr.h"
 
 static void expect(const char* expr_str, const char* expected) {
-    Expr* e;
+    std::unique_ptr<Expr> e;
     int error_count = 0;
     EXPECT_EQ(0, parse_string(expr_str, &e, &error_count));
     EXPECT_EQ(0, error_count);
@@ -152,7 +153,7 @@ TEST_F(EdifyTest, big_string) {
 TEST_F(EdifyTest, unknown_function) {
     // unknown function
     const char* script1 = "unknown_function()";
-    Expr* expr;
+    std::unique_ptr<Expr> expr;
     int error_count = 0;
     EXPECT_EQ(1, parse_string(script1, &expr, &error_count));
     EXPECT_EQ(1, error_count);

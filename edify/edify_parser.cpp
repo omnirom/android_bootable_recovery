@@ -27,18 +27,19 @@
 #include <errno.h>
 #include <stdio.h>
 
+#include <memory>
 #include <string>
 
 #include <android-base/file.h>
 
 #include "expr.h"
 
-static void ExprDump(int depth, const Expr* n, const std::string& script) {
+static void ExprDump(int depth, const std::unique_ptr<Expr>& n, const std::string& script) {
     printf("%*s", depth*2, "");
     printf("%s %p (%d-%d) \"%s\"\n",
-           n->name == NULL ? "(NULL)" : n->name, n->fn, n->start, n->end,
+           n->name.c_str(), n->fn, n->start, n->end,
            script.substr(n->start, n->end - n->start).c_str());
-    for (int i = 0; i < n->argc; ++i) {
+    for (size_t i = 0; i < n->argv.size(); ++i) {
         ExprDump(depth+1, n->argv[i], script);
     }
 }
@@ -57,7 +58,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    Expr* root;
+    std::unique_ptr<Expr> root;
     int error_count = 0;
     int error = parse_string(buffer.data(), &root, &error_count);
     printf("parse returned %d; %d errors encountered\n", error, error_count);
