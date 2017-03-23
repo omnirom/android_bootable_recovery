@@ -752,13 +752,15 @@ static bool wipe_data(Device* device) {
 
 static bool prompt_and_wipe_data(Device* device) {
   const char* const headers[] = {
-    "Boot halted, user data is corrupt",
-    "Wipe all user data to recover",
+    "Can't load Android system. Your data may be corrupt.",
+    "If you continue to get this message, you may need to",
+    "perform a factory data reset and erase all user data",
+    "stored on this device.",
     NULL
   };
   const char* const items[] = {
-    "Retry boot",
-    "Wipe user data",
+    "Try again",
+    "Factory data reset",
     NULL
   };
   for (;;) {
