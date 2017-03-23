@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
         // Parse the error code in abort message.
         // Example: "E30: This package is for bullhead devices."
         if (!line.empty() && line[0] == 'E') {
-          if (sscanf(line.c_str(), "E%u: ", &state.error_code) != 1) {
+          if (sscanf(line.c_str(), "E%d: ", &state.error_code) != 1) {
             LOG(ERROR) << "Failed to parse error code: [" << line << "]";
           }
         }
