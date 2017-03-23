@@ -1220,9 +1220,7 @@ static int PerformCommandFree(CommandParameters& params) {
 
     const std::string& id = params.tokens[params.cpos++];
 
-    if (stash_map.find(id) != stash_map.end()) {
-        stash_map.erase(id);
-    }
+    stash_map.erase(id);
 
     if (params.createdstash || params.canwrite) {
         return FreeStash(params.stashbase, id);
