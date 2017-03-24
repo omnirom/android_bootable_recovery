@@ -356,7 +356,7 @@ static bool receive_new_data(const uint8_t* data, size_t size, void* cookie) {
 }
 
 static void* unzip_new_data(void* cookie) {
-    NewThreadInfo* nti = (NewThreadInfo*) cookie;
+    NewThreadInfo* nti = static_cast<NewThreadInfo*>(cookie);
     ProcessZipEntryContents(nti->za, &nti->entry, receive_new_data, nti);
     return nullptr;
 }

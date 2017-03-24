@@ -118,7 +118,7 @@ void WearSwipeDetector::run() {
 }
 
 void* WearSwipeDetector::touch_thread(void* cookie) {
-    ((WearSwipeDetector*)cookie)->run();
+    (static_cast<WearSwipeDetector*>(cookie))->run();
     return NULL;
 }
 
