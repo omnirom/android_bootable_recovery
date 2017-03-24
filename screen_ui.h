@@ -160,14 +160,14 @@ class ScreenRecoveryUI : public RecoveryUI {
     void LoadBitmap(const char* filename, GRSurface** surface);
     void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
 
-    int PixelsFromDp(int dp);
+    int PixelsFromDp(int dp) const;
     virtual int GetAnimationBaseline();
     virtual int GetProgressBaseline();
     virtual int GetTextBaseline();
 
     void DrawHorizontalRule(int* y);
-    void DrawTextLine(int x, int* y, const char* line, bool bold);
-    void DrawTextLines(int x, int* y, const char* const* lines);
+    void DrawTextLine(int x, int* y, const char* line, bool bold) const;
+    void DrawTextLines(int x, int* y, const char* const* lines) const;
 };
 
 #endif  // RECOVERY_UI_H
