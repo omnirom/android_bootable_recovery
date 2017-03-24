@@ -1202,6 +1202,17 @@ void TWPartition::Setup_Data_Media() {
 		ExcludeAll(Mount_Point + "/.layout_version");
 		ExcludeAll(Mount_Point + "/system/storage.xml");
 	} else {
+		int i;
+		string path;
+		for (i = 2; i <= 9; i++) {
+			path = "/sdcard" + TWFunc::to_string(i);
+			if (!TWFunc::Path_Exists(path)) {
+				Make_Dir(path, false);
+				Symlink_Mount_Point = path;
+				LOGINFO("'%s' data/media emulated storage symlinked to %s.\n", Mount_Point.c_str(), Symlink_Mount_Point.c_str());
+				break;
+			}
+		}
 		if (Mount(true) && TWFunc::Path_Exists(Mount_Point + "/media/0")) {
 			Storage_Path = Mount_Point + "/media/0";
 			Symlink_Path = Storage_Path;
@@ -3344,7 +3355,14 @@ int TWPartition::Decrypt_Adopted() {
 	char type_guid[80];
 	char part_guid[80];
 
-	if (gpt_disk_get_partition_info(fd, 2, type_guid, part_guid) == 0) {
+	uint32_t p_num;
+	size_t last_digit = Primary_Block_Device.find_last_not_of("0123456789");
+	if ((last_digit != string::npos) && (last_digit != Primary_Block_Device.length()-1))
+		p_num = atoi(Primary_Block_Device.substr(last_digit + 1).c_str()) + 1;
+	else
+		p_num = 2;
+
+	if (gpt_disk_get_partition_info(fd, p_num, type_guid, part_guid) == 0) {
 		LOGINFO("type: '%s'\n", type_guid);
 		LOGINFO("part: '%s'\n", part_guid);
 		Adopted_GUID = part_guid;
@@ -3360,16 +3378,22 @@ int TWPartition::Decrypt_Adopted() {
 				 * to disable USB Mass Storage whenever adopted storage
 				 * is present.
 				 */
-				LOGINFO("Detected adopted storage, disabling USB mass storage mode\n");
-				DataManager::SetValue("tw_has_usb_storage", 0);
+				if (p_num == 2) {
+					// TODO: Properly detect mixed vs fully adopted storage. Maybe this
+					// should be moved to partitionmanager instead, and disable after
+					// checking all partitions. Also the presence of adopted storage does
+					// not necessarily mean it's being used as Internal Storage
+					LOGINFO("Detected adopted storage, disabling USB mass storage mode\n");
+					DataManager::SetValue("tw_has_usb_storage", 0);
+				}
 			}
 		}
 	}
 
 	if (Is_Adopted_Storage) {
-		string Adopted_Block_Device = Alternate_Block_Device + "p2";
+		string Adopted_Block_Device = Alternate_Block_Device + "p" + TWFunc::to_string(p_num);
 		if (!TWFunc::Path_Exists(Adopted_Block_Device)) {
-			Adopted_Block_Device = Alternate_Block_Device + "2";
+			Adopted_Block_Device = Alternate_Block_Device + TWFunc::to_string(p_num);
 			if (!TWFunc::Path_Exists(Adopted_Block_Device)) {
 				LOGINFO("Adopted block device does not exist\n");
 				goto exit;
