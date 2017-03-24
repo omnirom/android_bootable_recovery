@@ -791,47 +791,45 @@ static bool wipe_cache(bool should_confirm, Device* device) {
     return success;
 }
 
-// Secure-wipe a given partition. It uses BLKSECDISCARD, if supported.
-// Otherwise, it goes with BLKDISCARD (if device supports BLKDISCARDZEROES) or
-// BLKZEROOUT.
+// Secure-wipe a given partition. It uses BLKSECDISCARD, if supported. Otherwise, it goes with
+// BLKDISCARD (if device supports BLKDISCARDZEROES) or BLKZEROOUT.
 static bool secure_wipe_partition(const std::string& partition) {
-    android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(partition.c_str(), O_WRONLY)));
-    if (fd == -1) {
-        PLOG(ERROR) << "failed to open \"" << partition << "\"";
+  android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(partition.c_str(), O_WRONLY)));
+  if (fd == -1) {
+    PLOG(ERROR) << "Failed to open \"" << partition << "\"";
+    return false;
+  }
+
+  uint64_t range[2] = { 0, 0 };
+  if (ioctl(fd, BLKGETSIZE64, &range[1]) == -1 || range[1] == 0) {
+    PLOG(ERROR) << "Failed to get partition size";
+    return false;
+  }
+  LOG(INFO) << "Secure-wiping \"" << partition << "\" from " << range[0] << " to " << range[1];
+
+  LOG(INFO) << "  Trying BLKSECDISCARD...";
+  if (ioctl(fd, BLKSECDISCARD, &range) == -1) {
+    PLOG(WARNING) << "  Failed";
+
+    // Use BLKDISCARD if it zeroes out blocks, otherwise use BLKZEROOUT.
+    unsigned int zeroes;
+    if (ioctl(fd, BLKDISCARDZEROES, &zeroes) == 0 && zeroes != 0) {
+      LOG(INFO) << "  Trying BLKDISCARD...";
+      if (ioctl(fd, BLKDISCARD, &range) == -1) {
+        PLOG(ERROR) << "  Failed";
         return false;
-    }
-
-    uint64_t range[2] = {0, 0};
-    if (ioctl(fd, BLKGETSIZE64, &range[1]) == -1 || range[1] == 0) {
-        PLOG(ERROR) << "failed to get partition size";
+      }
+    } else {
+      LOG(INFO) << "  Trying BLKZEROOUT...";
+      if (ioctl(fd, BLKZEROOUT, &range) == -1) {
+        PLOG(ERROR) << "  Failed";
         return false;
+      }
     }
-    printf("Secure-wiping \"%s\" from %" PRIu64 " to %" PRIu64 ".\n",
-           partition.c_str(), range[0], range[1]);
+  }
 
-    printf("Trying BLKSECDISCARD...\t");
-    if (ioctl(fd, BLKSECDISCARD, &range) == -1) {
-        printf("failed: %s\n", strerror(errno));
-
-        // Use BLKDISCARD if it zeroes out blocks, otherwise use BLKZEROOUT.
-        unsigned int zeroes;
-        if (ioctl(fd, BLKDISCARDZEROES, &zeroes) == 0 && zeroes != 0) {
-            printf("Trying BLKDISCARD...\t");
-            if (ioctl(fd, BLKDISCARD, &range) == -1) {
-                printf("failed: %s\n", strerror(errno));
-                return false;
-            }
-        } else {
-            printf("Trying BLKZEROOUT...\t");
-            if (ioctl(fd, BLKZEROOUT, &range) == -1) {
-                printf("failed: %s\n", strerror(errno));
-                return false;
-            }
-        }
-    }
-
-    printf("done\n");
-    return true;
+  LOG(INFO) << "  Done";
+  return true;
 }
 
 // Check if the wipe package matches expectation:
@@ -863,7 +861,7 @@ static bool check_wipe_package(size_t wipe_package_size) {
         return false;
     }
     std::string metadata;
-    if (!read_metadata_from_package(&zip, &metadata)) {
+    if (!read_metadata_from_package(zip, &metadata)) {
         CloseArchive(zip);
         return false;
     }
