@@ -429,46 +429,11 @@ struct CommandParameters {
     uint8_t* patch_start;
 };
 
-// Do a source/target load for move/bsdiff/imgdiff in version 1.
-// We expect to parse the remainder of the parameter tokens as:
-//
-//    <src_range> <tgt_range>
-//
-// The source range is loaded into the provided buffer, reallocating
-// it to make it larger if necessary.
-
-static int LoadSrcTgtVersion1(CommandParameters& params, RangeSet& tgt, size_t& src_blocks,
-        std::vector<uint8_t>& buffer, int fd) {
-
-    if (params.cpos + 1 >= params.tokens.size()) {
-        LOG(ERROR) << "invalid parameters";
-        return -1;
-    }
-
-    // <src_range>
-    RangeSet src = parse_range(params.tokens[params.cpos++]);
-
-    // <tgt_range>
-    tgt = parse_range(params.tokens[params.cpos++]);
-
-    allocate(src.size * BLOCKSIZE, buffer);
-    int rc = ReadBlocks(src, buffer, fd);
-    src_blocks = src.size;
-
-    return rc;
-}
-
 // Print the hash in hex for corrupted source blocks (excluding the stashed blocks which is
 // handled separately).
 static void PrintHashForCorruptedSourceBlocks(const CommandParameters& params,
                                               const std::vector<uint8_t>& buffer) {
   LOG(INFO) << "unexpected contents of source blocks in cmd:\n" << params.cmdline;
-  if (params.version < 3) {
-    // TODO handle version 1,2
-    LOG(WARNING) << "version number " << params.version << " is not supported to print hashes";
-    return;
-  }
-
   CHECK(params.tokens[0] == "move" || params.tokens[0] == "bsdiff" ||
         params.tokens[0] == "imgdiff");
 
@@ -896,49 +861,46 @@ static int CreateStash(State* state, size_t maxblocks, const std::string& blockd
 }
 
 static int SaveStash(CommandParameters& params, const std::string& base,
-        std::vector<uint8_t>& buffer, int fd, bool usehash) {
+                     std::vector<uint8_t>& buffer, int fd) {
+  // <stash_id> <src_range>
+  if (params.cpos + 1 >= params.tokens.size()) {
+    LOG(ERROR) << "missing id and/or src range fields in stash command";
+    return -1;
+  }
 
-    // <stash_id> <src_range>
-    if (params.cpos + 1 >= params.tokens.size()) {
-        LOG(ERROR) << "missing id and/or src range fields in stash command";
-        return -1;
-    }
-    const std::string& id = params.tokens[params.cpos++];
+  const std::string& id = params.tokens[params.cpos++];
+  size_t blocks = 0;
+  if (LoadStash(params, base, id, true, &blocks, buffer, false) == 0) {
+    // Stash file already exists and has expected contents. Do not read from source again, as the
+    // source may have been already overwritten during a previous attempt.
+    return 0;
+  }
 
-    size_t blocks = 0;
-    if (usehash && LoadStash(params, base, id, true, &blocks, buffer, false) == 0) {
-        // Stash file already exists and has expected contents. Do not
-        // read from source again, as the source may have been already
-        // overwritten during a previous attempt.
-        return 0;
-    }
+  RangeSet src = parse_range(params.tokens[params.cpos++]);
 
-    RangeSet src = parse_range(params.tokens[params.cpos++]);
+  allocate(src.size * BLOCKSIZE, buffer);
+  if (ReadBlocks(src, buffer, fd) == -1) {
+    return -1;
+  }
+  blocks = src.size;
+  stash_map[id] = src;
 
-    allocate(src.size * BLOCKSIZE, buffer);
-    if (ReadBlocks(src, buffer, fd) == -1) {
-        return -1;
-    }
-    blocks = src.size;
-    stash_map[id] = src;
+  if (VerifyBlocks(id, buffer, blocks, true) != 0) {
+    // Source blocks have unexpected contents. If we actually need this data later, this is an
+    // unrecoverable error. However, the command that uses the data may have already completed
+    // previously, so the possible failure will occur during source block verification.
+    LOG(ERROR) << "failed to load source blocks for stash " << id;
+    return 0;
+  }
 
-    if (usehash && VerifyBlocks(id, buffer, blocks, true) != 0) {
-        // Source blocks have unexpected contents. If we actually need this
-        // data later, this is an unrecoverable error. However, the command
-        // that uses the data may have already completed previously, so the
-        // possible failure will occur during source block verification.
-        LOG(ERROR) << "failed to load source blocks for stash " << id;
-        return 0;
-    }
+  // In verify mode, we don't need to stash any blocks.
+  if (!params.canwrite) {
+    return 0;
+  }
 
-    // In verify mode, we don't need to stash any blocks.
-    if (!params.canwrite && usehash) {
-        return 0;
-    }
-
-    LOG(INFO) << "stashing " << blocks << " blocks to " << id;
-    params.stashed += blocks;
-    return WriteStash(base, id, blocks, buffer, false, nullptr);
+  LOG(INFO) << "stashing " << blocks << " blocks to " << id;
+  params.stashed += blocks;
+  return WriteStash(base, id, blocks, buffer, false, nullptr);
 }
 
 static int FreeStash(const std::string& base, const std::string& id) {
@@ -1061,26 +1023,35 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
     return 0;
 }
 
-// Do a source/target load for move/bsdiff/imgdiff in version 3.
-//
-// Parameters are the same as for LoadSrcTgtVersion2, except for 'onehash', which
-// tells the function whether to expect separate source and targe block hashes, or
-// if they are both the same and only one hash should be expected, and
-// 'isunresumable', which receives a non-zero value if block verification fails in
-// a way that the update cannot be resumed anymore.
-//
-// If the function is unable to load the necessary blocks or their contents don't
-// match the hashes, the return value is -1 and the command should be aborted.
-//
-// If the return value is 1, the command has already been completed according to
-// the contents of the target blocks, and should not be performed again.
-//
-// If the return value is 0, source blocks have expected content and the command
-// can be performed.
-
+/**
+ * Do a source/target load for move/bsdiff/imgdiff in version 3.
+ *
+ * We expect to parse the remainder of the parameter tokens as one of:
+ *
+ *    <tgt_range> <src_block_count> <src_range>
+ *        (loads data from source image only)
+ *
+ *    <tgt_range> <src_block_count> - <[stash_id:stash_range] ...>
+ *        (loads data from stashes only)
+ *
+ *    <tgt_range> <src_block_count> <src_range> <src_loc> <[stash_id:stash_range] ...>
+ *        (loads data from both source image and stashes)
+ *
+ * Parameters are the same as for LoadSrcTgtVersion2, except for 'onehash', which tells the function
+ * whether to expect separate source and targe block hashes, or if they are both the same and only
+ * one hash should be expected, and 'isunresumable', which receives a non-zero value if block
+ * verification fails in a way that the update cannot be resumed anymore.
+ *
+ * If the function is unable to load the necessary blocks or their contents don't match the hashes,
+ * the return value is -1 and the command should be aborted.
+ *
+ * If the return value is 1, the command has already been completed according to the contents of the
+ * target blocks, and should not be performed again.
+ *
+ * If the return value is 0, source blocks have expected content and the command can be performed.
+ */
 static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& src_blocks,
-        bool onehash, bool& overlap) {
-
+                              bool onehash, bool& overlap) {
     if (params.cpos >= params.tokens.size()) {
         LOG(ERROR) << "missing source hash";
         return -1;
@@ -1099,8 +1070,8 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
         tgthash = params.tokens[params.cpos++];
     }
 
-    if (LoadSrcTgtVersion2(params, tgt, src_blocks, params.buffer, params.fd,
-                           params.stashbase, &overlap) == -1) {
+    if (LoadSrcTgtVersion2(params, tgt, src_blocks, params.buffer, params.fd, params.stashbase,
+                           &overlap) == -1) {
         return -1;
     }
 
@@ -1111,7 +1082,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
     }
 
     if (VerifyBlocks(tgthash, tgtbuffer, tgt.size, false) == 0) {
-        // Target blocks already have expected content, command should be skipped
+        // Target blocks already have expected content, command should be skipped.
         return 1;
     }
 
@@ -1130,13 +1101,13 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
             }
 
             params.stashed += src_blocks;
-            // Can be deleted when the write has completed
+            // Can be deleted when the write has completed.
             if (!stash_exists) {
                 params.freestash = srchash;
             }
         }
 
-        // Source blocks have expected content, command can proceed
+        // Source blocks have expected content, command can proceed.
         return 0;
     }
 
@@ -1148,7 +1119,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
         return 0;
     }
 
-    // Valid source data not available, update cannot be resumed
+    // Valid source data not available, update cannot be resumed.
     LOG(ERROR) << "partition has unexpected contents";
     PrintHashForCorruptedSourceBlocks(params, params.buffer);
 
@@ -1158,57 +1129,46 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
 }
 
 static int PerformCommandMove(CommandParameters& params) {
-    size_t blocks = 0;
-    bool overlap = false;
-    int status = 0;
-    RangeSet tgt;
+  size_t blocks = 0;
+  bool overlap = false;
+  RangeSet tgt;
+  int status = LoadSrcTgtVersion3(params, tgt, blocks, true, overlap);
 
-    if (params.version == 1) {
-        status = LoadSrcTgtVersion1(params, tgt, blocks, params.buffer, params.fd);
-    } else if (params.version == 2) {
-        status = LoadSrcTgtVersion2(params, tgt, blocks, params.buffer, params.fd,
-                params.stashbase, nullptr);
-    } else if (params.version >= 3) {
-        status = LoadSrcTgtVersion3(params, tgt, blocks, true, overlap);
-    }
+  if (status == -1) {
+    LOG(ERROR) << "failed to read blocks for move";
+    return -1;
+  }
 
-    if (status == -1) {
-        LOG(ERROR) << "failed to read blocks for move";
-        return -1;
-    }
+  if (status == 0) {
+    params.foundwrites = true;
+  } else if (params.foundwrites) {
+    LOG(WARNING) << "warning: commands executed out of order [" << params.cmdname << "]";
+  }
 
+  if (params.canwrite) {
     if (status == 0) {
-        params.foundwrites = true;
-    } else if (params.foundwrites) {
-        LOG(WARNING) << "warning: commands executed out of order [" << params.cmdname << "]";
+      LOG(INFO) << "  moving " << blocks << " blocks";
+
+      if (WriteBlocks(tgt, params.buffer, params.fd) == -1) {
+        return -1;
+      }
+    } else {
+      LOG(INFO) << "skipping " << blocks << " already moved blocks";
     }
+  }
 
-    if (params.canwrite) {
-        if (status == 0) {
-            LOG(INFO) << "  moving " << blocks << " blocks";
+  if (!params.freestash.empty()) {
+    FreeStash(params.stashbase, params.freestash);
+    params.freestash.clear();
+  }
 
-            if (WriteBlocks(tgt, params.buffer, params.fd) == -1) {
-                return -1;
-            }
-        } else {
-            LOG(INFO) << "skipping " << blocks << " already moved blocks";
-        }
+  params.written += tgt.size;
 
-    }
-
-    if (!params.freestash.empty()) {
-        FreeStash(params.stashbase, params.freestash);
-        params.freestash.clear();
-    }
-
-    params.written += tgt.size;
-
-    return 0;
+  return 0;
 }
 
 static int PerformCommandStash(CommandParameters& params) {
-    return SaveStash(params, params.stashbase, params.buffer, params.fd,
-            (params.version >= 3));
+  return SaveStash(params, params.stashbase, params.buffer, params.fd);
 }
 
 static int PerformCommandFree(CommandParameters& params) {
@@ -1337,15 +1297,7 @@ static int PerformCommandDiff(CommandParameters& params) {
     RangeSet tgt;
     size_t blocks = 0;
     bool overlap = false;
-    int status = 0;
-    if (params.version == 1) {
-        status = LoadSrcTgtVersion1(params, tgt, blocks, params.buffer, params.fd);
-    } else if (params.version == 2) {
-        status = LoadSrcTgtVersion2(params, tgt, blocks, params.buffer, params.fd,
-                params.stashbase, nullptr);
-    } else if (params.version >= 3) {
-        status = LoadSrcTgtVersion3(params, tgt, blocks, false, overlap);
-    }
+    int status = LoadSrcTgtVersion3(params, tgt, blocks, false, overlap);
 
     if (status == -1) {
         LOG(ERROR) << "failed to read blocks for diff";
@@ -1471,301 +1423,281 @@ struct Command {
 static Value* PerformBlockImageUpdate(const char* name, State* state,
                                       const std::vector<std::unique_ptr<Expr>>& argv,
                                       const Command* commands, size_t cmdcount, bool dryrun) {
-    CommandParameters params = {};
-    params.canwrite = !dryrun;
+  CommandParameters params = {};
+  params.canwrite = !dryrun;
 
-    LOG(INFO) << "performing " << (dryrun ? "verification" : "update");
-    if (state->is_retry) {
-        is_retry = true;
-        LOG(INFO) << "This update is a retry.";
+  LOG(INFO) << "performing " << (dryrun ? "verification" : "update");
+  if (state->is_retry) {
+    is_retry = true;
+    LOG(INFO) << "This update is a retry.";
+  }
+  if (argv.size() != 4) {
+    ErrorAbort(state, kArgsParsingFailure, "block_image_update expects 4 arguments, got %zu",
+               argv.size());
+    return StringValue("");
+  }
+
+  std::vector<std::unique_ptr<Value>> args;
+  if (!ReadValueArgs(state, argv, &args)) {
+    return nullptr;
+  }
+
+  const Value* blockdev_filename = args[0].get();
+  const Value* transfer_list_value = args[1].get();
+  const Value* new_data_fn = args[2].get();
+  const Value* patch_data_fn = args[3].get();
+
+  if (blockdev_filename->type != VAL_STRING) {
+    ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string", name);
+    return StringValue("");
+  }
+  if (transfer_list_value->type != VAL_BLOB) {
+    ErrorAbort(state, kArgsParsingFailure, "transfer_list argument to %s must be blob", name);
+    return StringValue("");
+  }
+  if (new_data_fn->type != VAL_STRING) {
+    ErrorAbort(state, kArgsParsingFailure, "new_data_fn argument to %s must be string", name);
+    return StringValue("");
+  }
+  if (patch_data_fn->type != VAL_STRING) {
+    ErrorAbort(state, kArgsParsingFailure, "patch_data_fn argument to %s must be string", name);
+    return StringValue("");
+  }
+
+  UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
+  if (ui == nullptr) {
+    return StringValue("");
+  }
+
+  FILE* cmd_pipe = ui->cmd_pipe;
+  ZipArchiveHandle za = ui->package_zip;
+
+  if (cmd_pipe == nullptr || za == nullptr) {
+    return StringValue("");
+  }
+
+  ZipString path_data(patch_data_fn->data.c_str());
+  ZipEntry patch_entry;
+  if (FindEntry(za, path_data, &patch_entry) != 0) {
+    LOG(ERROR) << name << "(): no file \"" << patch_data_fn->data << "\" in package";
+    return StringValue("");
+  }
+
+  params.patch_start = ui->package_zip_addr + patch_entry.offset;
+  ZipString new_data(new_data_fn->data.c_str());
+  ZipEntry new_entry;
+  if (FindEntry(za, new_data, &new_entry) != 0) {
+    LOG(ERROR) << name << "(): no file \"" << new_data_fn->data << "\" in package";
+    return StringValue("");
+  }
+
+  params.fd.reset(TEMP_FAILURE_RETRY(ota_open(blockdev_filename->data.c_str(), O_RDWR)));
+  if (params.fd == -1) {
+    PLOG(ERROR) << "open \"" << blockdev_filename->data << "\" failed";
+    return StringValue("");
+  }
+
+  if (params.canwrite) {
+    params.nti.za = za;
+    params.nti.entry = new_entry;
+
+    pthread_mutex_init(&params.nti.mu, nullptr);
+    pthread_cond_init(&params.nti.cv, nullptr);
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+    int error = pthread_create(&params.thread, &attr, unzip_new_data, &params.nti);
+    if (error != 0) {
+      PLOG(ERROR) << "pthread_create failed";
+      return StringValue("");
     }
-    if (argv.size() != 4) {
-        ErrorAbort(state, kArgsParsingFailure, "block_image_update expects 4 arguments, got %zu",
-                   argv.size());
-        return StringValue("");
+  }
+
+  std::vector<std::string> lines = android::base::Split(transfer_list_value->data, "\n");
+  if (lines.size() < 2) {
+    ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zd]\n",
+               lines.size());
+    return StringValue("");
+  }
+
+  // First line in transfer list is the version number.
+  if (!android::base::ParseInt(lines[0], &params.version, 3, 4)) {
+    LOG(ERROR) << "unexpected transfer list version [" << lines[0] << "]";
+    return StringValue("");
+  }
+
+  LOG(INFO) << "blockimg version is " << params.version;
+
+  // Second line in transfer list is the total number of blocks we expect to write.
+  size_t total_blocks;
+  if (!android::base::ParseUint(lines[1], &total_blocks)) {
+    ErrorAbort(state, kArgsParsingFailure, "unexpected block count [%s]\n", lines[1].c_str());
+    return StringValue("");
+  }
+
+  if (total_blocks == 0) {
+    return StringValue("t");
+  }
+
+  size_t start = 2;
+  if (lines.size() < 4) {
+    ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]\n",
+               lines.size());
+    return StringValue("");
+  }
+
+  // Third line is how many stash entries are needed simultaneously.
+  LOG(INFO) << "maximum stash entries " << lines[2];
+
+  // Fourth line is the maximum number of blocks that will be stashed simultaneously
+  size_t stash_max_blocks;
+  if (!android::base::ParseUint(lines[3], &stash_max_blocks)) {
+    ErrorAbort(state, kArgsParsingFailure, "unexpected maximum stash blocks [%s]\n",
+               lines[3].c_str());
+    return StringValue("");
+  }
+
+  int res = CreateStash(state, stash_max_blocks, blockdev_filename->data, params.stashbase);
+  if (res == -1) {
+    return StringValue("");
+  }
+
+  params.createdstash = res;
+
+  start += 2;
+
+  // Build a map of the available commands
+  std::unordered_map<std::string, const Command*> cmd_map;
+  for (size_t i = 0; i < cmdcount; ++i) {
+    if (cmd_map.find(commands[i].name) != cmd_map.end()) {
+      LOG(ERROR) << "Error: command [" << commands[i].name << "] already exists in the cmd map.";
+      return StringValue(strdup(""));
+    }
+    cmd_map[commands[i].name] = &commands[i];
+  }
+
+  int rc = -1;
+
+  // Subsequent lines are all individual transfer commands
+  for (auto it = lines.cbegin() + start; it != lines.cend(); it++) {
+    const std::string& line(*it);
+    if (line.empty()) continue;
+
+    params.tokens = android::base::Split(line, " ");
+    params.cpos = 0;
+    params.cmdname = params.tokens[params.cpos++].c_str();
+    params.cmdline = line.c_str();
+
+    if (cmd_map.find(params.cmdname) == cmd_map.end()) {
+      LOG(ERROR) << "unexpected command [" << params.cmdname << "]";
+      goto pbiudone;
     }
 
-    std::vector<std::unique_ptr<Value>> args;
-    if (!ReadValueArgs(state, argv, &args)) {
-        return nullptr;
-    }
+    const Command* cmd = cmd_map[params.cmdname];
 
-    const Value* blockdev_filename = args[0].get();
-    const Value* transfer_list_value = args[1].get();
-    const Value* new_data_fn = args[2].get();
-    const Value* patch_data_fn = args[3].get();
-
-    if (blockdev_filename->type != VAL_STRING) {
-        ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string",
-                   name);
-        return StringValue("");
-    }
-    if (transfer_list_value->type != VAL_BLOB) {
-        ErrorAbort(state, kArgsParsingFailure, "transfer_list argument to %s must be blob", name);
-        return StringValue("");
-    }
-    if (new_data_fn->type != VAL_STRING) {
-        ErrorAbort(state, kArgsParsingFailure, "new_data_fn argument to %s must be string", name);
-        return StringValue("");
-    }
-    if (patch_data_fn->type != VAL_STRING) {
-        ErrorAbort(state, kArgsParsingFailure, "patch_data_fn argument to %s must be string",
-                   name);
-        return StringValue("");
-    }
-
-    UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
-    if (ui == nullptr) {
-        return StringValue("");
-    }
-
-    FILE* cmd_pipe = ui->cmd_pipe;
-    ZipArchiveHandle za = ui->package_zip;
-
-    if (cmd_pipe == nullptr || za == nullptr) {
-        return StringValue("");
-    }
-
-    ZipString path_data(patch_data_fn->data.c_str());
-    ZipEntry patch_entry;
-    if (FindEntry(za, path_data, &patch_entry) != 0) {
-        LOG(ERROR) << name << "(): no file \"" << patch_data_fn->data << "\" in package";
-        return StringValue("");
-    }
-
-    params.patch_start = ui->package_zip_addr + patch_entry.offset;
-    ZipString new_data(new_data_fn->data.c_str());
-    ZipEntry new_entry;
-    if (FindEntry(za, new_data, &new_entry) != 0) {
-        LOG(ERROR) << name << "(): no file \"" << new_data_fn->data << "\" in package";
-        return StringValue("");
-    }
-
-    params.fd.reset(TEMP_FAILURE_RETRY(ota_open(blockdev_filename->data.c_str(), O_RDWR)));
-    if (params.fd == -1) {
-        PLOG(ERROR) << "open \"" << blockdev_filename->data << "\" failed";
-        return StringValue("");
-    }
-
-    if (params.canwrite) {
-        params.nti.za = za;
-        params.nti.entry = new_entry;
-
-        pthread_mutex_init(&params.nti.mu, nullptr);
-        pthread_cond_init(&params.nti.cv, nullptr);
-        pthread_attr_t attr;
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-        int error = pthread_create(&params.thread, &attr, unzip_new_data, &params.nti);
-        if (error != 0) {
-            PLOG(ERROR) << "pthread_create failed";
-            return StringValue("");
-        }
-    }
-
-    std::vector<std::string> lines = android::base::Split(transfer_list_value->data, "\n");
-    if (lines.size() < 2) {
-        ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zd]\n",
-                   lines.size());
-        return StringValue("");
-    }
-
-    // First line in transfer list is the version number
-    if (!android::base::ParseInt(lines[0], &params.version, 1, 4)) {
-        LOG(ERROR) << "unexpected transfer list version [" << lines[0] << "]";
-        return StringValue("");
-    }
-
-    LOG(INFO) << "blockimg version is " << params.version;
-
-    // Second line in transfer list is the total number of blocks we expect to write
-    size_t total_blocks;
-    if (!android::base::ParseUint(lines[1], &total_blocks)) {
-        ErrorAbort(state, kArgsParsingFailure, "unexpected block count [%s]\n", lines[1].c_str());
-        return StringValue("");
-    }
-
-    if (total_blocks == 0) {
-        return StringValue("t");
-    }
-
-    size_t start = 2;
-    if (params.version >= 2) {
-        if (lines.size() < 4) {
-          ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]\n",
-                     lines.size());
-          return StringValue("");
-        }
-
-        // Third line is how many stash entries are needed simultaneously
-        LOG(INFO) << "maximum stash entries " << lines[2];
-
-        // Fourth line is the maximum number of blocks that will be stashed simultaneously
-        size_t stash_max_blocks;
-        if (!android::base::ParseUint(lines[3], &stash_max_blocks)) {
-            ErrorAbort(state, kArgsParsingFailure, "unexpected maximum stash blocks [%s]\n",
-                       lines[3].c_str());
-            return StringValue("");
-        }
-
-        int res = CreateStash(state, stash_max_blocks, blockdev_filename->data, params.stashbase);
-        if (res == -1) {
-            return StringValue("");
-        }
-
-        params.createdstash = res;
-
-        start += 2;
-    }
-
-    // Build a map of the available commands
-    std::unordered_map<std::string, const Command*> cmd_map;
-    for (size_t i = 0; i < cmdcount; ++i) {
-        if (cmd_map.find(commands[i].name) != cmd_map.end()) {
-            LOG(ERROR) << "Error: command [" << commands[i].name
-                       << "] already exists in the cmd map.";
-            return StringValue(strdup(""));
-        }
-        cmd_map[commands[i].name] = &commands[i];
-    }
-
-    int rc = -1;
-
-    // Subsequent lines are all individual transfer commands
-    for (auto it = lines.cbegin() + start; it != lines.cend(); it++) {
-        const std::string& line(*it);
-        if (line.empty()) continue;
-
-        params.tokens = android::base::Split(line, " ");
-        params.cpos = 0;
-        params.cmdname = params.tokens[params.cpos++].c_str();
-        params.cmdline = line.c_str();
-
-        if (cmd_map.find(params.cmdname) == cmd_map.end()) {
-            LOG(ERROR) << "unexpected command [" << params.cmdname << "]";
-            goto pbiudone;
-        }
-
-        const Command* cmd = cmd_map[params.cmdname];
-
-        if (cmd->f != nullptr && cmd->f(params) == -1) {
-            LOG(ERROR) << "failed to execute command [" << line << "]";
-            goto pbiudone;
-        }
-
-        if (params.canwrite) {
-            if (ota_fsync(params.fd) == -1) {
-                failure_type = kFsyncFailure;
-                PLOG(ERROR) << "fsync failed";
-                goto pbiudone;
-            }
-            fprintf(cmd_pipe, "set_progress %.4f\n",
-                    static_cast<double>(params.written) / total_blocks);
-            fflush(cmd_pipe);
-        }
+    if (cmd->f != nullptr && cmd->f(params) == -1) {
+      LOG(ERROR) << "failed to execute command [" << line << "]";
+      goto pbiudone;
     }
 
     if (params.canwrite) {
-        pthread_join(params.thread, nullptr);
-
-        LOG(INFO) << "wrote " << params.written << " blocks; expected " << total_blocks;
-        LOG(INFO) << "stashed " << params.stashed << " blocks";
-        LOG(INFO) << "max alloc needed was " << params.buffer.size();
-
-        const char* partition = strrchr(blockdev_filename->data.c_str(), '/');
-        if (partition != nullptr && *(partition + 1) != 0) {
-            fprintf(cmd_pipe, "log bytes_written_%s: %zu\n", partition + 1,
-                    params.written * BLOCKSIZE);
-            fprintf(cmd_pipe, "log bytes_stashed_%s: %zu\n", partition + 1,
-                    params.stashed * BLOCKSIZE);
-            fflush(cmd_pipe);
-        }
-        // Delete stash only after successfully completing the update, as it
-        // may contain blocks needed to complete the update later.
-        DeleteStash(params.stashbase);
-    } else {
-        LOG(INFO) << "verified partition contents; update may be resumed";
-    }
-
-    rc = 0;
-
-pbiudone:
-    if (ota_fsync(params.fd) == -1) {
+      if (ota_fsync(params.fd) == -1) {
         failure_type = kFsyncFailure;
         PLOG(ERROR) << "fsync failed";
+        goto pbiudone;
+      }
+      fprintf(cmd_pipe, "set_progress %.4f\n", static_cast<double>(params.written) / total_blocks);
+      fflush(cmd_pipe);
     }
-    // params.fd will be automatically closed because it's a unique_fd.
+  }
 
-    // Only delete the stash if the update cannot be resumed, or it's
-    // a verification run and we created the stash.
-    if (params.isunresumable || (!params.canwrite && params.createdstash)) {
-        DeleteStash(params.stashbase);
+  if (params.canwrite) {
+    pthread_join(params.thread, nullptr);
+
+    LOG(INFO) << "wrote " << params.written << " blocks; expected " << total_blocks;
+    LOG(INFO) << "stashed " << params.stashed << " blocks";
+    LOG(INFO) << "max alloc needed was " << params.buffer.size();
+
+    const char* partition = strrchr(blockdev_filename->data.c_str(), '/');
+    if (partition != nullptr && *(partition + 1) != 0) {
+      fprintf(cmd_pipe, "log bytes_written_%s: %zu\n", partition + 1, params.written * BLOCKSIZE);
+      fprintf(cmd_pipe, "log bytes_stashed_%s: %zu\n", partition + 1, params.stashed * BLOCKSIZE);
+      fflush(cmd_pipe);
     }
+    // Delete stash only after successfully completing the update, as it may contain blocks needed
+    // to complete the update later.
+    DeleteStash(params.stashbase);
+  } else {
+    LOG(INFO) << "verified partition contents; update may be resumed";
+  }
 
-    if (failure_type != kNoCause && state->cause_code == kNoCause) {
-        state->cause_code = failure_type;
-    }
+  rc = 0;
 
-    return StringValue(rc == 0 ? "t" : "");
+pbiudone:
+  if (ota_fsync(params.fd) == -1) {
+    failure_type = kFsyncFailure;
+    PLOG(ERROR) << "fsync failed";
+  }
+  // params.fd will be automatically closed because it's a unique_fd.
+
+  // Only delete the stash if the update cannot be resumed, or it's a verification run and we
+  // created the stash.
+  if (params.isunresumable || (!params.canwrite && params.createdstash)) {
+    DeleteStash(params.stashbase);
+  }
+
+  if (failure_type != kNoCause && state->cause_code == kNoCause) {
+    state->cause_code = failure_type;
+  }
+
+  return StringValue(rc == 0 ? "t" : "");
 }
 
-// The transfer list is a text file containing commands to
-// transfer data from one place to another on the target
-// partition.  We parse it and execute the commands in order:
-//
-//    zero [rangeset]
-//      - fill the indicated blocks with zeros
-//
-//    new [rangeset]
-//      - fill the blocks with data read from the new_data file
-//
-//    erase [rangeset]
-//      - mark the given blocks as empty
-//
-//    move <...>
-//    bsdiff <patchstart> <patchlen> <...>
-//    imgdiff <patchstart> <patchlen> <...>
-//      - read the source blocks, apply a patch (or not in the
-//        case of move), write result to target blocks.  bsdiff or
-//        imgdiff specifies the type of patch; move means no patch
-//        at all.
-//
-//        The format of <...> differs between versions 1 and 2;
-//        see the LoadSrcTgtVersion{1,2}() functions for a
-//        description of what's expected.
-//
-//    stash <stash_id> <src_range>
-//      - (version 2+ only) load the given source range and stash
-//        the data in the given slot of the stash table.
-//
-//    free <stash_id>
-//      - (version 3+ only) free the given stash data.
-//
-// The creator of the transfer list will guarantee that no block
-// is read (ie, used as the source for a patch or move) after it
-// has been written.
-//
-// In version 2, the creator will guarantee that a given stash is
-// loaded (with a stash command) before it's used in a
-// move/bsdiff/imgdiff command.
-//
-// Within one command the source and target ranges may overlap so
-// in general we need to read the entire source into memory before
-// writing anything to the target blocks.
-//
-// All the patch data is concatenated into one patch_data file in
-// the update package.  It must be stored uncompressed because we
-// memory-map it in directly from the archive.  (Since patches are
-// already compressed, we lose very little by not compressing
-// their concatenation.)
-//
-// In version 3, commands that read data from the partition (i.e.
-// move/bsdiff/imgdiff/stash) have one or more additional hashes
-// before the range parameters, which are used to check if the
-// command has already been completed and verify the integrity of
-// the source data.
-
+/**
+ * The transfer list is a text file containing commands to transfer data from one place to another
+ * on the target partition. We parse it and execute the commands in order:
+ *
+ *    zero [rangeset]
+ *      - Fill the indicated blocks with zeros.
+ *
+ *    new [rangeset]
+ *      - Fill the blocks with data read from the new_data file.
+ *
+ *    erase [rangeset]
+ *      - Mark the given blocks as empty.
+ *
+ *    move <...>
+ *    bsdiff <patchstart> <patchlen> <...>
+ *    imgdiff <patchstart> <patchlen> <...>
+ *      - Read the source blocks, apply a patch (or not in the case of move), write result to target
+ *      blocks.  bsdiff or imgdiff specifies the type of patch; move means no patch at all.
+ *
+ *        See the comments in LoadSrcTgtVersion3() for a description of the <...> format.
+ *
+ *    stash <stash_id> <src_range>
+ *      - Load the given source range and stash the data in the given slot of the stash table.
+ *
+ *    free <stash_id>
+ *      - Free the given stash data.
+ *
+ * The creator of the transfer list will guarantee that no block is read (ie, used as the source for
+ * a patch or move) after it has been written.
+ *
+ * The creator will guarantee that a given stash is loaded (with a stash command) before it's used
+ * in a move/bsdiff/imgdiff command.
+ *
+ * Within one command the source and target ranges may overlap so in general we need to read the
+ * entire source into memory before writing anything to the target blocks.
+ *
+ * All the patch data is concatenated into one patch_data file in the update package. It must be
+ * stored uncompressed because we memory-map it in directly from the archive. (Since patches are
+ * already compressed, we lose very little by not compressing their concatenation.)
+ *
+ * Commands that read data from the partition (i.e. move/bsdiff/imgdiff/stash) have one or more
+ * additional hashes before the range parameters, which are used to check if the command has already
+ * been completed and verify the integrity of the source data.
+ */
 Value* BlockImageVerifyFn(const char* name, State* state,
                           const std::vector<std::unique_ptr<Expr>>& argv) {
     // Commands which are not tested are set to nullptr to skip them completely
