@@ -376,7 +376,7 @@ std::unique_ptr<RSA, RSADeleter> parse_rsa_key(FILE* file, uint32_t exponent) {
 }
 
 struct BNDeleter {
-  void operator()(BIGNUM* bn) {
+  void operator()(BIGNUM* bn) const {
     BN_free(bn);
   }
 };

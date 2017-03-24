@@ -26,13 +26,13 @@
 #include <openssl/sha.h>
 
 struct RSADeleter {
-  void operator()(RSA* rsa) {
+  void operator()(RSA* rsa) const {
     RSA_free(rsa);
   }
 };
 
 struct ECKEYDeleter {
-  void operator()(EC_KEY* ec_key) {
+  void operator()(EC_KEY* ec_key) const {
     EC_KEY_free(ec_key);
   }
 };
