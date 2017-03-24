@@ -240,7 +240,7 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
 }
 
 void* RecoveryUI::time_key_helper(void* cookie) {
-    key_timer_t* info = (key_timer_t*) cookie;
+    key_timer_t* info = static_cast<key_timer_t*>(cookie);
     info->ui->time_key(info->key_code, info->count);
     delete info;
     return nullptr;
