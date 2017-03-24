@@ -59,7 +59,7 @@ using unique_fd = android::base::unique_fd_impl<OtaCloser>;
 int ota_close(unique_fd& fd);
 
 struct OtaFcloser {
-  void operator()(FILE*);
+  void operator()(FILE*) const;
 };
 
 using unique_file = std::unique_ptr<FILE, OtaFcloser>;

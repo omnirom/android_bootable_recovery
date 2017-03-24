@@ -98,7 +98,7 @@ GRSurface* ScreenRecoveryUI::GetCurrentText() {
     }
 }
 
-int ScreenRecoveryUI::PixelsFromDp(int dp) {
+int ScreenRecoveryUI::PixelsFromDp(int dp) const {
     return dp * density_;
 }
 
@@ -256,12 +256,12 @@ void ScreenRecoveryUI::DrawHorizontalRule(int* y) {
     *y += 4;
 }
 
-void ScreenRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) {
+void ScreenRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) const {
     gr_text(gr_sys_font(), x, *y, line, bold);
     *y += char_height_ + 4;
 }
 
-void ScreenRecoveryUI::DrawTextLines(int x, int* y, const char* const* lines) {
+void ScreenRecoveryUI::DrawTextLines(int x, int* y, const char* const* lines) const {
     for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
         DrawTextLine(x, y, lines[i], false);
     }

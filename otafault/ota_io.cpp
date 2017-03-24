@@ -89,7 +89,7 @@ static int __ota_fclose(FILE* fh) {
     return fclose(fh);
 }
 
-void OtaFcloser::operator()(FILE* f) {
+void OtaFcloser::operator()(FILE* f) const {
     __ota_fclose(f);
 };
 
