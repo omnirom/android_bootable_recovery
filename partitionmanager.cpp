@@ -1506,9 +1506,9 @@ void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
 			DataManager::SetValue("tw_storage_path", "/data/media/0");
 			DataManager::SetValue("tw_settings_path", "/data/media/0");
 			dat->UnMount(false);
-			Output_Partition(dat);
 		}
 		Update_System_Details();
+		Output_Partition(dat);
 		UnMount_Main_Partitions();
 	} else
 		LOGERR("Unable to locate data partition.\n");
@@ -1704,8 +1704,12 @@ int TWPartitionManager::usb_storage_enable(void) {
 			Mount2 = Find_Next_Storage(Mount1->Mount_Point, true);
 			if (Mount2 && Mount2->Mount_Point != Mount1->Mount_Point) {
 				Open_Lun_File(Mount2->Mount_Point, lun_file);
+			// Mimic single lun code: Mount CurrentStoragePath if it's not /data
+			} else if (TWFunc::Get_Root_Path(DataManager::GetCurrentStoragePath()) != "/data") {
+				Open_Lun_File(DataManager::GetCurrentStoragePath(), lun_file);
 			}
-		} else {
+		// Mimic single lun code: Mount CurrentStoragePath if it's not /data
+		} else if (TWFunc::Get_Root_Path(DataManager::GetCurrentStoragePath()) != "/data" && !Open_Lun_File(DataManager::GetCurrentStoragePath(), lun_file)) {
 			gui_err("unable_locate_storage=Unable to locate storage device.");
 			goto error_handle;
 		}
@@ -2505,7 +2509,7 @@ void TWPartitionManager::Decrypt_Adopted() {
 
 							if (strcasecmp(GUID.c_str(), guid->value()) == 0) {
 								xml_attribute<>* attr = volume->first_attribute("nickname");
-								if (attr) {
+								if (attr && attr->value() && strlen(attr->value()) > 0) {
 									(*adopt)->Storage_Name = attr->value();
 									(*adopt)->Display_Name = (*adopt)->Storage_Name;
 									(*adopt)->Backup_Display_Name = (*adopt)->Storage_Name;
@@ -2524,7 +2528,6 @@ void TWPartitionManager::Decrypt_Adopted() {
 										Dat->Mount(false);
 										(*adopt)->UnMount(false);
 										(*adopt)->Mount(false);
-										Output_Partition((*adopt));
 									}
 								}
 								break;
@@ -2533,6 +2536,8 @@ void TWPartitionManager::Decrypt_Adopted() {
 						volume = volume->next_sibling("volume");
 					}
 				}
+				Update_System_Details();
+				Output_Partition((*adopt));
 			}
 		}
 	}
