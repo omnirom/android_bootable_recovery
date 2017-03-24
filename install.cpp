@@ -546,17 +546,21 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
     std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
     int time_total = static_cast<int>(duration.count());
 
-    if (ensure_path_mounted(UNCRYPT_STATUS) != 0) {
+    bool has_cache = volume_for_path("/cache") != nullptr;
+    // Skip logging the uncrypt_status on devices without /cache.
+    if (has_cache) {
+      if (ensure_path_mounted(UNCRYPT_STATUS) != 0) {
         LOG(WARNING) << "Can't mount " << UNCRYPT_STATUS;
-    } else {
+      } else {
         std::string uncrypt_status;
         if (!android::base::ReadFileToString(UNCRYPT_STATUS, &uncrypt_status)) {
-            PLOG(WARNING) << "failed to read uncrypt status";
+          PLOG(WARNING) << "failed to read uncrypt status";
         } else if (!android::base::StartsWith(uncrypt_status, "uncrypt_")) {
-            PLOG(WARNING) << "corrupted uncrypt_status: " << uncrypt_status;
+          LOG(WARNING) << "corrupted uncrypt_status: " << uncrypt_status;
         } else {
-            log_buffer.push_back(android::base::Trim(uncrypt_status));
+          log_buffer.push_back(android::base::Trim(uncrypt_status));
         }
+      }
     }
 
     // The first two lines need to be the package name and install result.
