@@ -2505,7 +2505,7 @@ void TWPartitionManager::Decrypt_Adopted() {
 
 							if (strcasecmp(GUID.c_str(), guid->value()) == 0) {
 								xml_attribute<>* attr = volume->first_attribute("nickname");
-								if (attr) {
+								if (attr && attr->value() && strlen(attr->value()) > 0) {
 									(*adopt)->Storage_Name = attr->value();
 									(*adopt)->Display_Name = (*adopt)->Storage_Name;
 									(*adopt)->Backup_Display_Name = (*adopt)->Storage_Name;
