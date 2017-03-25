@@ -616,8 +616,8 @@ static void DeleteStash(const std::string& base) {
   }
 }
 
-static int LoadStash(CommandParameters& params, const std::string& base, const std::string& id,
-        bool verify, size_t* blocks, std::vector<uint8_t>& buffer, bool printnoent) {
+static int LoadStash(CommandParameters& params, const std::string& id, bool verify, size_t* blocks,
+                     std::vector<uint8_t>& buffer, bool printnoent) {
     // In verify mode, if source range_set was saved for the given hash,
     // check contents in the source blocks first. If the check fails,
     // search for the stashed files on /cache as usual.
@@ -639,17 +639,13 @@ static int LoadStash(CommandParameters& params, const std::string& base, const s
         }
     }
 
-    if (base.empty()) {
-        return -1;
-    }
-
     size_t blockcount = 0;
 
     if (!blocks) {
         blocks = &blockcount;
     }
 
-    std::string fn = GetStashFileName(base, id, "");
+    std::string fn = GetStashFileName(params.stashbase, id, "");
 
     struct stat sb;
     int res = stat(fn.c_str(), &sb);
@@ -700,7 +696,7 @@ static int LoadStash(CommandParameters& params, const std::string& base, const s
 }
 
 static int WriteStash(const std::string& base, const std::string& id, int blocks,
-        std::vector<uint8_t>& buffer, bool checkspace, bool *exists) {
+                      std::vector<uint8_t>& buffer, bool checkspace, bool *exists) {
     if (base.empty()) {
         return -1;
     }
@@ -860,49 +856,6 @@ static int CreateStash(State* state, size_t maxblocks, const std::string& blockd
   return 0;  // Using existing directory
 }
 
-static int SaveStash(CommandParameters& params, const std::string& base,
-                     std::vector<uint8_t>& buffer, int fd) {
-  // <stash_id> <src_range>
-  if (params.cpos + 1 >= params.tokens.size()) {
-    LOG(ERROR) << "missing id and/or src range fields in stash command";
-    return -1;
-  }
-
-  const std::string& id = params.tokens[params.cpos++];
-  size_t blocks = 0;
-  if (LoadStash(params, base, id, true, &blocks, buffer, false) == 0) {
-    // Stash file already exists and has expected contents. Do not read from source again, as the
-    // source may have been already overwritten during a previous attempt.
-    return 0;
-  }
-
-  RangeSet src = parse_range(params.tokens[params.cpos++]);
-
-  allocate(src.size * BLOCKSIZE, buffer);
-  if (ReadBlocks(src, buffer, fd) == -1) {
-    return -1;
-  }
-  blocks = src.size;
-  stash_map[id] = src;
-
-  if (VerifyBlocks(id, buffer, blocks, true) != 0) {
-    // Source blocks have unexpected contents. If we actually need this data later, this is an
-    // unrecoverable error. However, the command that uses the data may have already completed
-    // previously, so the possible failure will occur during source block verification.
-    LOG(ERROR) << "failed to load source blocks for stash " << id;
-    return 0;
-  }
-
-  // In verify mode, we don't need to stash any blocks.
-  if (!params.canwrite) {
-    return 0;
-  }
-
-  LOG(INFO) << "stashing " << blocks << " blocks to " << id;
-  params.stashed += blocks;
-  return WriteStash(base, id, blocks, buffer, false, nullptr);
-}
-
 static int FreeStash(const std::string& base, const std::string& id) {
   if (base.empty() || id.empty()) {
     return -1;
@@ -942,13 +895,12 @@ static void MoveRange(std::vector<uint8_t>& dest, const RangeSet& locs,
 //    <tgt_range> <src_block_count> <src_range> <src_loc> <[stash_id:stash_range] ...>
 //        (loads data from both source image and stashes)
 //
-// On return, buffer is filled with the loaded source data (rearranged
-// and combined with stashed data as necessary).  buffer may be
-// reallocated if needed to accommodate the source data.  *tgt is the
-// target RangeSet.  Any stashes required are loaded using LoadStash.
+// On return, params.buffer is filled with the loaded source data (rearranged and combined with
+// stashed data as necessary). buffer may be reallocated if needed to accommodate the source data.
+// *tgt is the target RangeSet. Any stashes required are loaded using LoadStash.
 
 static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& src_blocks,
-        std::vector<uint8_t>& buffer, int fd, const std::string& stashbase, bool* overlap) {
+                              bool* overlap) {
 
     // At least it needs to provide three parameters: <tgt_range>,
     // <src_block_count> and "-"/<src_range>.
@@ -967,7 +919,7 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
         return -1;
     }
 
-    allocate(src_blocks * BLOCKSIZE, buffer);
+    allocate(src_blocks * BLOCKSIZE, params.buffer);
 
     // "-" or <src_range> [<src_loc>]
     if (params.tokens[params.cpos] == "-") {
@@ -975,7 +927,7 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
         params.cpos++;
     } else {
         RangeSet src = parse_range(params.tokens[params.cpos++]);
-        int res = ReadBlocks(src, buffer, fd);
+        int res = ReadBlocks(src, params.buffer, params.fd);
 
         if (overlap) {
             *overlap = range_overlaps(src, tgt);
@@ -991,7 +943,7 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
         }
 
         RangeSet locs = parse_range(params.tokens[params.cpos++]);
-        MoveRange(buffer, locs, buffer);
+        MoveRange(params.buffer, locs, params.buffer);
     }
 
     // <[stash_id:stash_range]>
@@ -1006,7 +958,7 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
         }
 
         std::vector<uint8_t> stash;
-        int res = LoadStash(params, stashbase, tokens[0], false, nullptr, stash, true);
+        int res = LoadStash(params, tokens[0], false, nullptr, stash, true);
 
         if (res == -1) {
             // These source blocks will fail verification if used later, but we
@@ -1017,7 +969,7 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
 
         RangeSet locs = parse_range(tokens[1]);
 
-        MoveRange(buffer, locs, stash);
+        MoveRange(params.buffer, locs, stash);
     }
 
     return 0;
@@ -1070,8 +1022,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
         tgthash = params.tokens[params.cpos++];
     }
 
-    if (LoadSrcTgtVersion2(params, tgt, src_blocks, params.buffer, params.fd, params.stashbase,
-                           &overlap) == -1) {
+    if (LoadSrcTgtVersion2(params, tgt, src_blocks, &overlap) == -1) {
         return -1;
     }
 
@@ -1111,8 +1062,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& 
         return 0;
     }
 
-    if (overlap && LoadStash(params, params.stashbase, srchash, true, nullptr, params.buffer,
-                             true) == 0) {
+    if (overlap && LoadStash(params, srchash, true, nullptr, params.buffer, true) == 0) {
         // Overlapping source blocks were previously stashed, command can proceed.
         // We are recovering from an interrupted command, so we don't know if the
         // stash can safely be deleted after this command.
@@ -1168,25 +1118,62 @@ static int PerformCommandMove(CommandParameters& params) {
 }
 
 static int PerformCommandStash(CommandParameters& params) {
-  return SaveStash(params, params.stashbase, params.buffer, params.fd);
+  // <stash_id> <src_range>
+  if (params.cpos + 1 >= params.tokens.size()) {
+    LOG(ERROR) << "missing id and/or src range fields in stash command";
+    return -1;
+  }
+
+  const std::string& id = params.tokens[params.cpos++];
+  size_t blocks = 0;
+  if (LoadStash(params, id, true, &blocks, params.buffer, false) == 0) {
+    // Stash file already exists and has expected contents. Do not read from source again, as the
+    // source may have been already overwritten during a previous attempt.
+    return 0;
+  }
+
+  RangeSet src = parse_range(params.tokens[params.cpos++]);
+
+  allocate(src.size * BLOCKSIZE, params.buffer);
+  if (ReadBlocks(src, params.buffer, params.fd) == -1) {
+    return -1;
+  }
+  blocks = src.size;
+  stash_map[id] = src;
+
+  if (VerifyBlocks(id, params.buffer, blocks, true) != 0) {
+    // Source blocks have unexpected contents. If we actually need this data later, this is an
+    // unrecoverable error. However, the command that uses the data may have already completed
+    // previously, so the possible failure will occur during source block verification.
+    LOG(ERROR) << "failed to load source blocks for stash " << id;
+    return 0;
+  }
+
+  // In verify mode, we don't need to stash any blocks.
+  if (!params.canwrite) {
+    return 0;
+  }
+
+  LOG(INFO) << "stashing " << blocks << " blocks to " << id;
+  params.stashed += blocks;
+  return WriteStash(params.stashbase, id, blocks, params.buffer, false, nullptr);
 }
 
 static int PerformCommandFree(CommandParameters& params) {
-    // <stash_id>
-    if (params.cpos >= params.tokens.size()) {
-        LOG(ERROR) << "missing stash id in free command";
-        return -1;
-    }
+  // <stash_id>
+  if (params.cpos >= params.tokens.size()) {
+    LOG(ERROR) << "missing stash id in free command";
+    return -1;
+  }
 
-    const std::string& id = params.tokens[params.cpos++];
+  const std::string& id = params.tokens[params.cpos++];
+  stash_map.erase(id);
 
-    stash_map.erase(id);
+  if (params.createdstash || params.canwrite) {
+    return FreeStash(params.stashbase, id);
+  }
 
-    if (params.createdstash || params.canwrite) {
-        return FreeStash(params.stashbase, id);
-    }
-
-    return 0;
+  return 0;
 }
 
 static int PerformCommandZero(CommandParameters& params) {
