@@ -19,7 +19,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
-#include <unistd.h>
 
 #include <string>
 #include <vector>
@@ -31,13 +30,8 @@
 #include <fs_mgr.h>
 
 static std::string get_misc_blk_device(std::string* err) {
-  std::unique_ptr<fstab, decltype(&fs_mgr_free_fstab)> fstab(nullptr, fs_mgr_free_fstab);
-  // Use different fstab paths for normal boot and recovery boot, respectively
-  if (access("/sbin/recovery", F_OK) == 0) {
-    fstab.reset(fs_mgr_read_fstab_with_dt("/etc/recovery.fstab"));
-  } else {
-    fstab.reset(fs_mgr_read_fstab_default());
-  }
+  std::unique_ptr<fstab, decltype(&fs_mgr_free_fstab)> fstab(fs_mgr_read_fstab_default(),
+                                                             fs_mgr_free_fstab);
   if (!fstab) {
     *err = "failed to read default fstab";
     return "";
