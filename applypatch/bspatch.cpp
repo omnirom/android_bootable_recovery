@@ -60,8 +60,8 @@ void ShowBSDiffLicense() {
         );
 }
 
-int ApplyBSDiffPatch(const unsigned char* old_data, ssize_t old_size, const Value* patch,
-                     ssize_t patch_offset, SinkFn sink, void* token, SHA_CTX* ctx) {
+int ApplyBSDiffPatch(const unsigned char* old_data, size_t old_size, const Value* patch,
+                     size_t patch_offset, SinkFn sink, void* token, SHA_CTX* ctx) {
   auto sha_sink = [&](const uint8_t* data, size_t len) {
     len = sink(data, len, token);
     if (ctx) SHA1_Update(ctx, data, len);
@@ -72,8 +72,8 @@ int ApplyBSDiffPatch(const unsigned char* old_data, ssize_t old_size, const Valu
                          patch->data.size(), sha_sink);
 }
 
-int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size, const Value* patch,
-                        ssize_t patch_offset, std::vector<unsigned char>* new_data) {
+int ApplyBSDiffPatchMem(const unsigned char* old_data, size_t old_size, const Value* patch,
+                        size_t patch_offset, std::vector<unsigned char>* new_data) {
   auto vector_sink = [new_data](const uint8_t* data, size_t len) {
     new_data->insert(new_data->end(), data, data + len);
     return len;

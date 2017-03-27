@@ -27,7 +27,7 @@
 
 using android::base::get_unaligned;
 
-static ssize_t MemorySink(const unsigned char* data, ssize_t len, void* token) {
+static size_t MemorySink(const unsigned char* data, size_t len, void* token) {
   std::string* s = static_cast<std::string*>(token);
   s->append(reinterpret_cast<const char*>(data), len);
   return len;
