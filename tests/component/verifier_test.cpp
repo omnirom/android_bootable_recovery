@@ -33,6 +33,8 @@
 #include "otautil/SysUtil.h"
 #include "verifier.h"
 
+using namespace std::string_literals;
+
 class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
  protected:
   void SetUp() override {
@@ -115,6 +117,21 @@ TEST(VerifierTest, load_keys_invalid_keys) {
   ASSERT_FALSE(load_keys(key_file5.path, certs));
 }
 
+TEST(VerifierTest, BadPackage_SignatureStartOutOfBounds) {
+  std::string testkey_v3;
+  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("testkey_v3.txt"), &testkey_v3));
+
+  TemporaryFile key_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(testkey_v3, key_file.path));
+  std::vector<Certificate> certs;
+  ASSERT_TRUE(load_keys(key_file.path, certs));
+
+  // Signature start is 65535 (0xffff) while comment size is 0 (Bug: 31914369).
+  std::string package = "\x50\x4b\x05\x06"s + std::string(12, '\0') + "\xff\xff\xff\xff\x00\x00"s;
+  ASSERT_EQ(VERIFY_FAILURE, verify_file(reinterpret_cast<const unsigned char*>(package.data()),
+                                        package.size(), certs));
+}
+
 TEST_P(VerifierSuccessTest, VerifySucceed) {
   ASSERT_EQ(verify_file(memmap.addr, memmap.length, certs, nullptr), VERIFY_SUCCESS);
 }
@@ -159,5 +176,4 @@ INSTANTIATE_TEST_CASE_P(BadPackage, VerifierFailureTest,
       std::vector<std::string>({"random.zip", "v1"}),
       std::vector<std::string>({"fake-eocd.zip", "v1"}),
       std::vector<std::string>({"alter-metadata.zip", "v1"}),
-      std::vector<std::string>({"alter-footer.zip", "v1"}),
-      std::vector<std::string>({"signature-boundary.zip", "v1"})));
+      std::vector<std::string>({"alter-footer.zip", "v1"})));
