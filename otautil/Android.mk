@@ -18,12 +18,16 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     SysUtil.cpp \
     DirUtil.cpp \
-    ZipUtil.cpp
+    ZipUtil.cpp \
+    ThermalUtil.cpp
 
-LOCAL_STATIC_LIBRARIES := libselinux libbase
+LOCAL_STATIC_LIBRARIES := \
+    libselinux \
+    libbase
 
 LOCAL_MODULE := libotautil
-
-LOCAL_CFLAGS += -Werror -Wall
+LOCAL_CFLAGS := \
+    -Werror \
+    -Wall
 
 include $(BUILD_STATIC_LIBRARY)
