@@ -24,9 +24,9 @@
 #include <sys/types.h>
 
 #include <bspatch.h>
+#include <openssl/sha.h>
 
 #include "applypatch/applypatch.h"
-#include "openssl/sha.h"
 
 void ShowBSDiffLicense() {
     puts("The bsdiff library used herein is:\n"
@@ -61,9 +61,9 @@ void ShowBSDiffLicense() {
 }
 
 int ApplyBSDiffPatch(const unsigned char* old_data, size_t old_size, const Value* patch,
-                     size_t patch_offset, SinkFn sink, void* token, SHA_CTX* ctx) {
-  auto sha_sink = [&](const uint8_t* data, size_t len) {
-    len = sink(data, len, token);
+                     size_t patch_offset, SinkFn sink, SHA_CTX* ctx) {
+  auto sha_sink = [&sink, &ctx](const uint8_t* data, size_t len) {
+    len = sink(data, len);
     if (ctx) SHA1_Update(ctx, data, len);
     return len;
   };
