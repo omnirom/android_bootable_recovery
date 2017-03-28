@@ -20,6 +20,7 @@
 #include <sys/types.h>
 
 #include <functional>
+#include <string>
 
 //
 // Graphics.
@@ -93,7 +94,7 @@ int ev_get_epollfd();
 // Resources
 //
 
-bool matches_locale(const char* prefix, const char* locale);
+bool matches_locale(const std::string& prefix, const std::string& locale);
 
 // res_create_*_surface() functions return 0 if no error, else
 // negative.
