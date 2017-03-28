@@ -26,11 +26,15 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <chrono>
+#include <condition_variable>
 #include <functional>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <android-base/file.h>
@@ -46,9 +50,12 @@
 #include "error_code.h"
 #include "minui/minui.h"
 #include "otautil/SysUtil.h"
+#include "otautil/ThermalUtil.h"
 #include "roots.h"
 #include "ui.h"
 #include "verifier.h"
+
+using namespace std::chrono_literals;
 
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
 static constexpr const char* AB_OTA_PAYLOAD_PROPERTIES = "payload_properties.txt";
@@ -62,6 +69,8 @@ static constexpr int VERIFICATION_PROGRESS_TIME = 60;
 static constexpr float VERIFICATION_PROGRESS_FRACTION = 0.25;
 static constexpr float DEFAULT_FILES_PROGRESS_FRACTION = 0.4;
 static constexpr float DEFAULT_IMAGE_PROGRESS_FRACTION = 0.1;
+
+static std::condition_variable finish_log_temperature;
 
 // This function parses and returns the build.version.incremental
 static int parse_build_number(const std::string& str) {
@@ -299,9 +308,19 @@ update_binary_command(const char* path, ZipArchiveHandle zip, int retry_count,
 }
 #endif  // !AB_OTA_UPDATER
 
+static void log_max_temperature(int* max_temperature) {
+  CHECK(max_temperature != nullptr);
+  std::mutex mtx;
+  std::unique_lock<std::mutex> lck(mtx);
+  while (finish_log_temperature.wait_for(lck, 20s) == std::cv_status::timeout) {
+    *max_temperature = std::max(*max_temperature, GetMaxValueFromThermalZone());
+  }
+}
+
 // If the package contains an update binary, extract it and run it.
 static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
-                             std::vector<std::string>& log_buffer, int retry_count) {
+                             std::vector<std::string>& log_buffer, int retry_count,
+                             int* max_temperature) {
   read_source_target_build(zip, log_buffer);
 
   int pipefd[2];
@@ -392,6 +411,8 @@ static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_
   }
   close(pipefd[1]);
 
+  std::thread temperature_logger(log_max_temperature, max_temperature);
+
   *wipe_cache = false;
   bool retry_update = false;
 
@@ -453,6 +474,10 @@ static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_
 
   int status;
   waitpid(pid, &status, 0);
+
+  finish_log_temperature.notify_one();
+  temperature_logger.join();
+
   if (retry_update) {
     return INSTALL_RETRY;
   }
@@ -466,7 +491,7 @@ static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_
 
 static int
 really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
-                       std::vector<std::string>& log_buffer, int retry_count)
+                       std::vector<std::string>& log_buffer, int retry_count, int* max_temperature)
 {
     ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
     ui->Print("Finding update package...\n");
@@ -517,7 +542,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
         ui->Print("Retry attempt: %d\n", retry_count);
     }
     ui->SetEnableReboot(false);
-    int result = try_update_binary(path, zip, wipe_cache, log_buffer, retry_count);
+    int result = try_update_binary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature);
     ui->SetEnableReboot(true);
     ui->Print("\n");
 
@@ -533,13 +558,17 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
     modified_flash = true;
     auto start = std::chrono::system_clock::now();
 
+    int start_temperature = GetMaxValueFromThermalZone();
+    int max_temperature = start_temperature;
+
     int result;
     std::vector<std::string> log_buffer;
     if (setup_install_mounts() != 0) {
         LOG(ERROR) << "failed to set up expected mounts for install; aborting";
         result = INSTALL_ERROR;
     } else {
-        result = really_install_package(path, wipe_cache, needs_mount, log_buffer, retry_count);
+        result = really_install_package(path, wipe_cache, needs_mount, log_buffer, retry_count,
+                                        &max_temperature);
     }
 
     // Measure the time spent to apply OTA update in seconds.
@@ -570,8 +599,21 @@ install_package(const char* path, bool* wipe_cache, const char* install_file,
         "time_total: " + std::to_string(time_total),
         "retry: " + std::to_string(retry_count),
     };
+
+    int end_temperature = GetMaxValueFromThermalZone();
+    max_temperature = std::max(end_temperature, max_temperature);
+    if (start_temperature > 0) {
+      log_buffer.push_back("temperature_start: " + std::to_string(start_temperature));
+    }
+    if (end_temperature > 0) {
+      log_buffer.push_back("temperature_end: " + std::to_string(end_temperature));
+    }
+    if (max_temperature > 0) {
+      log_buffer.push_back("temperature_max: " + std::to_string(max_temperature));
+    }
+
     std::string log_content = android::base::Join(log_header, "\n") + "\n" +
-            android::base::Join(log_buffer, "\n");
+            android::base::Join(log_buffer, "\n") + "\n";
     if (!android::base::WriteStringToFile(log_content, install_file)) {
         PLOG(ERROR) << "failed to write " << install_file;
     }
