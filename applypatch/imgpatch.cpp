@@ -44,10 +44,10 @@ static inline int32_t Read4(const void *address) {
 }
 
 int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const unsigned char* patch_data,
-                    size_t patch_size, SinkFn sink, void* token) {
+                    size_t patch_size, SinkFn sink) {
   Value patch(VAL_BLOB, std::string(reinterpret_cast<const char*>(patch_data), patch_size));
 
-  return ApplyImagePatch(old_data, old_size, &patch, sink, token, nullptr, nullptr);
+  return ApplyImagePatch(old_data, old_size, &patch, sink, nullptr, nullptr);
 }
 
 /*
@@ -57,7 +57,7 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const unsign
  * Return 0 on success.
  */
 int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value* patch, SinkFn sink,
-                    void* token, SHA_CTX* ctx, const Value* bonus_data) {
+                    SHA_CTX* ctx, const Value* bonus_data) {
   if (patch->data.size() < 12) {
     printf("patch too short to contain header\n");
     return -1;
@@ -100,7 +100,7 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value*
         printf("source data too short\n");
         return -1;
       }
-      ApplyBSDiffPatch(old_data + src_start, src_len, patch, patch_offset, sink, token, ctx);
+      ApplyBSDiffPatch(old_data + src_start, src_len, patch, patch_offset, sink, ctx);
     } else if (type == CHUNK_RAW) {
       const char* raw_header = &patch->data[pos];
       pos += 4;
@@ -116,8 +116,7 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value*
         return -1;
       }
       if (ctx) SHA1_Update(ctx, &patch->data[pos], data_len);
-      if (sink(reinterpret_cast<const unsigned char*>(&patch->data[pos]), data_len, token) !=
-          data_len) {
+      if (sink(reinterpret_cast<const unsigned char*>(&patch->data[pos]), data_len) != data_len) {
         printf("failed to write chunk %d raw data\n", i);
         return -1;
       }
@@ -241,7 +240,7 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value*
           ret = deflate(&strm, Z_FINISH);
           size_t have = temp_data.size() - strm.avail_out;
 
-          if (sink(temp_data.data(), have, token) != have) {
+          if (sink(temp_data.data(), have) != have) {
             printf("failed to write %zd compressed bytes to output\n", have);
             return -1;
           }
