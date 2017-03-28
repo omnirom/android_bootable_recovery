@@ -25,8 +25,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <regex>
+#include <string>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <png.h>
 
 #include "minui/minui.h"
@@ -371,16 +374,26 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
 
 // This function tests if a locale string stored in PNG (prefix) matches
 // the locale string provided by the system (locale).
-bool matches_locale(const char* prefix, const char* locale) {
-    if (locale == nullptr) {
-        return false;
-    }
+bool matches_locale(const std::string& prefix, const std::string& locale) {
+  // According to the BCP 47 format, A locale string may consists of:
+  // language-{extlang}-{script}-{region}-{variant}
+  // The locale headers in PNG mostly consist of language-{region} except for sr-Latn, and some
+  // android's system locale can have the format language-{script}-{region}.
 
-    // Return true if the whole string of prefix matches the top part of
-    // locale. For instance, prefix == "en" matches locale == "en_US";
-    // and prefix == "zh_CN" matches locale == "zh_CN_#Hans".
+  // Return true if the whole string of prefix matches the top part of locale. Otherwise try to
+  // match the locale string without the {script} section.
+  // For instance, prefix == "en" matches locale == "en-US", prefix == "sr-Latn" matches locale
+  // == "sr-Latn-BA", and prefix == "zh-CN" matches locale == "zh-Hans-CN".
+  if (android::base::StartsWith(locale, prefix.c_str())) {
+    return true;
+  }
 
-    return (strncmp(prefix, locale, strlen(prefix)) == 0);
+  size_t separator = prefix.find('-');
+  if (separator == std::string::npos) {
+    return false;
+  }
+  std::regex loc_regex(prefix.substr(0, separator) + "-[A-Za-z]*" + prefix.substr(separator));
+  return std::regex_match(locale, loc_regex);
 }
 
 int res_create_localized_alpha_surface(const char* name,
