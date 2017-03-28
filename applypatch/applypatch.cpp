@@ -42,7 +42,7 @@
 #include "print_sha1.h"
 
 static int LoadPartitionContents(const std::string& filename, FileContents* file);
-static ssize_t FileSink(const unsigned char* data, ssize_t len, void* token);
+static size_t FileSink(const unsigned char* data, size_t len, void* token);
 static int GenerateTarget(const FileContents& source_file, const std::unique_ptr<Value>& patch,
                           const std::string& target_filename,
                           const uint8_t target_sha1[SHA_DIGEST_LENGTH], const Value* bonus_data);
@@ -194,8 +194,8 @@ int SaveFileContents(const char* filename, const FileContents* file) {
     return -1;
   }
 
-  ssize_t bytes_written = FileSink(file->data.data(), file->data.size(), &fd);
-  if (bytes_written != static_cast<ssize_t>(file->data.size())) {
+  size_t bytes_written = FileSink(file->data.data(), file->data.size(), &fd);
+  if (bytes_written != file->data.size()) {
     printf("short write of \"%s\" (%zd bytes of %zu): %s\n", filename, bytes_written,
            file->data.size(), strerror(errno));
     return -1;
@@ -433,25 +433,24 @@ int ShowLicenses() {
     return 0;
 }
 
-ssize_t FileSink(const unsigned char* data, ssize_t len, void* token) {
-    int fd = *static_cast<int*>(token);
-    ssize_t done = 0;
-    ssize_t wrote;
-    while (done < len) {
-        wrote = TEMP_FAILURE_RETRY(ota_write(fd, data+done, len-done));
-        if (wrote == -1) {
-            printf("error writing %zd bytes: %s\n", (len-done), strerror(errno));
-            return done;
-        }
-        done += wrote;
+static size_t FileSink(const unsigned char* data, size_t len, void* token) {
+  int fd = *static_cast<int*>(token);
+  size_t done = 0;
+  while (done < len) {
+    ssize_t wrote = TEMP_FAILURE_RETRY(ota_write(fd, data + done, len - done));
+    if (wrote == -1) {
+      printf("error writing %zd bytes: %s\n", (len - done), strerror(errno));
+      return done;
     }
-    return done;
+    done += wrote;
+  }
+  return done;
 }
 
-ssize_t MemorySink(const unsigned char* data, ssize_t len, void* token) {
-    std::string* s = static_cast<std::string*>(token);
-    s->append(reinterpret_cast<const char*>(data), len);
-    return len;
+size_t MemorySink(const unsigned char* data, size_t len, void* token) {
+  std::string* s = static_cast<std::string*>(token);
+  s->append(reinterpret_cast<const char*>(data), len);
+  return len;
 }
 
 // Return the amount of free space (in bytes) on the filesystem
