@@ -19,9 +19,11 @@
 
 #include <sys/types.h>
 
-using SinkFn = size_t (*)(const unsigned char*, size_t, void*);
+#include <functional>
+
+using SinkFn = std::function<size_t(const unsigned char*, size_t)>;
 
 int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const unsigned char* patch_data,
-                    size_t patch_size, SinkFn sink, void* token);
+                    size_t patch_size, SinkFn sink);
 
 #endif  // _APPLYPATCH_IMGPATCH_H

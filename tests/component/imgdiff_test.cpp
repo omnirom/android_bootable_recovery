@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
+
 #include <string>
 #include <vector>
 
@@ -26,12 +28,6 @@
 #include <ziparchive/zip_writer.h>
 
 using android::base::get_unaligned;
-
-static size_t MemorySink(const unsigned char* data, size_t len, void* token) {
-  std::string* s = static_cast<std::string*>(token);
-  s->append(reinterpret_cast<const char*>(data), len);
-  return len;
-}
 
 // Sanity check for the given imgdiff patch header.
 static void verify_patch_header(const std::string& patch, size_t* num_normal, size_t* num_raw,
@@ -79,6 +75,18 @@ static void verify_patch_header(const std::string& patch, size_t* num_normal, si
   if (num_deflate != nullptr) *num_deflate = deflate;
 }
 
+static void verify_patched_image(const std::string& src, const std::string& patch,
+                                 const std::string& tgt) {
+  std::string patched;
+  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
+                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
+                               [&patched](const unsigned char* data, size_t len) {
+                                 patched.append(reinterpret_cast<const char*>(data), len);
+                                 return len;
+                               }));
+  ASSERT_EQ(tgt, patched);
+}
+
 TEST(ImgdiffTest, invalid_args) {
   // Insufficient inputs.
   ASSERT_EQ(2, imgdiff(1, (const char* []){ "imgdiff" }));
@@ -124,11 +132,7 @@ TEST(ImgdiffTest, image_mode_smoke) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(1U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, zip_mode_smoke_store) {
@@ -177,11 +181,7 @@ TEST(ImgdiffTest, zip_mode_smoke_store) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(1U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, zip_mode_smoke_compressed) {
@@ -230,11 +230,7 @@ TEST(ImgdiffTest, zip_mode_smoke_compressed) {
   ASSERT_EQ(1U, num_deflate);
   ASSERT_EQ(2U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, zip_mode_smoke_trailer_zeros) {
@@ -286,11 +282,7 @@ TEST(ImgdiffTest, zip_mode_smoke_trailer_zeros) {
   ASSERT_EQ(1U, num_deflate);
   ASSERT_EQ(2U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_simple) {
@@ -333,11 +325,7 @@ TEST(ImgdiffTest, image_mode_simple) {
   ASSERT_EQ(1U, num_deflate);
   ASSERT_EQ(2U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_different_num_chunks) {
@@ -413,11 +401,7 @@ TEST(ImgdiffTest, image_mode_merge_chunks) {
   ASSERT_EQ(1U, num_deflate);
   ASSERT_EQ(2U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_spurious_magic) {
@@ -454,11 +438,7 @@ TEST(ImgdiffTest, image_mode_spurious_magic) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(1U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_short_input1) {
@@ -494,11 +474,7 @@ TEST(ImgdiffTest, image_mode_short_input1) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(1U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_short_input2) {
@@ -534,11 +510,7 @@ TEST(ImgdiffTest, image_mode_short_input2) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(1U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_single_entry_long) {
@@ -577,9 +549,5 @@ TEST(ImgdiffTest, image_mode_single_entry_long) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(0U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }

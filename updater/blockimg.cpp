@@ -240,9 +240,7 @@ struct RangeSinkState {
     size_t p_remain;
 };
 
-static size_t RangeSinkWrite(const uint8_t* data, size_t size, void* token) {
-  RangeSinkState* rss = static_cast<RangeSinkState*>(token);
-
+static size_t RangeSinkWrite(const uint8_t* data, size_t size, RangeSinkState* rss) {
   if (rss->p_remain == 0) {
     LOG(ERROR) << "range sink write overrun";
     return 0;
@@ -1258,92 +1256,95 @@ static int PerformCommandNew(CommandParameters& params) {
 }
 
 static int PerformCommandDiff(CommandParameters& params) {
+  // <offset> <length>
+  if (params.cpos + 1 >= params.tokens.size()) {
+    LOG(ERROR) << "missing patch offset or length for " << params.cmdname;
+    return -1;
+  }
 
-    // <offset> <length>
-    if (params.cpos + 1 >= params.tokens.size()) {
-        LOG(ERROR) << "missing patch offset or length for " << params.cmdname;
-        return -1;
-    }
+  size_t offset;
+  if (!android::base::ParseUint(params.tokens[params.cpos++], &offset)) {
+    LOG(ERROR) << "invalid patch offset";
+    return -1;
+  }
 
-    size_t offset;
-    if (!android::base::ParseUint(params.tokens[params.cpos++], &offset)) {
-        LOG(ERROR) << "invalid patch offset";
-        return -1;
-    }
+  size_t len;
+  if (!android::base::ParseUint(params.tokens[params.cpos++], &len)) {
+    LOG(ERROR) << "invalid patch len";
+    return -1;
+  }
 
-    size_t len;
-    if (!android::base::ParseUint(params.tokens[params.cpos++], &len)) {
-        LOG(ERROR) << "invalid patch len";
-        return -1;
-    }
+  RangeSet tgt;
+  size_t blocks = 0;
+  bool overlap = false;
+  int status = LoadSrcTgtVersion3(params, tgt, &blocks, false, &overlap);
 
-    RangeSet tgt;
-    size_t blocks = 0;
-    bool overlap = false;
-    int status = LoadSrcTgtVersion3(params, tgt, &blocks, false, &overlap);
+  if (status == -1) {
+    LOG(ERROR) << "failed to read blocks for diff";
+    return -1;
+  }
 
-    if (status == -1) {
-        LOG(ERROR) << "failed to read blocks for diff";
-        return -1;
-    }
+  if (status == 0) {
+    params.foundwrites = true;
+  } else if (params.foundwrites) {
+    LOG(WARNING) << "warning: commands executed out of order [" << params.cmdname << "]";
+  }
 
+  if (params.canwrite) {
     if (status == 0) {
-        params.foundwrites = true;
-    } else if (params.foundwrites) {
-        LOG(WARNING) << "warning: commands executed out of order [" << params.cmdname << "]";
-    }
+      LOG(INFO) << "patching " << blocks << " blocks to " << tgt.size;
+      Value patch_value(
+          VAL_BLOB, std::string(reinterpret_cast<const char*>(params.patch_start + offset), len));
+      RangeSinkState rss(tgt);
+      rss.fd = params.fd;
+      rss.p_block = 0;
+      rss.p_remain = (tgt.pos[1] - tgt.pos[0]) * BLOCKSIZE;
 
-    if (params.canwrite) {
-        if (status == 0) {
-            LOG(INFO) << "patching " << blocks << " blocks to " << tgt.size;
-            Value patch_value(VAL_BLOB,
-                    std::string(reinterpret_cast<const char*>(params.patch_start + offset), len));
-            RangeSinkState rss(tgt);
-            rss.fd = params.fd;
-            rss.p_block = 0;
-            rss.p_remain = (tgt.pos[1] - tgt.pos[0]) * BLOCKSIZE;
+      off64_t offset = static_cast<off64_t>(tgt.pos[0]) * BLOCKSIZE;
+      if (!discard_blocks(params.fd, offset, rss.p_remain)) {
+        return -1;
+      }
 
-            off64_t offset = static_cast<off64_t>(tgt.pos[0]) * BLOCKSIZE;
-            if (!discard_blocks(params.fd, offset, rss.p_remain)) {
-                return -1;
-            }
+      if (!check_lseek(params.fd, offset, SEEK_SET)) {
+        return -1;
+      }
 
-            if (!check_lseek(params.fd, offset, SEEK_SET)) {
-                return -1;
-            }
-
-            if (params.cmdname[0] == 'i') {      // imgdiff
-                if (ApplyImagePatch(params.buffer.data(), blocks * BLOCKSIZE, &patch_value,
-                        &RangeSinkWrite, &rss, nullptr, nullptr) != 0) {
-                    LOG(ERROR) << "Failed to apply image patch.";
-                    return -1;
-                }
-            } else {
-                if (ApplyBSDiffPatch(params.buffer.data(), blocks * BLOCKSIZE, &patch_value,
-                        0, &RangeSinkWrite, &rss, nullptr) != 0) {
-                    LOG(ERROR) << "Failed to apply bsdiff patch.";
-                    return -1;
-                }
-            }
-
-            // We expect the output of the patcher to fill the tgt ranges exactly.
-            if (rss.p_block != tgt.count || rss.p_remain != 0) {
-                LOG(ERROR) << "range sink underrun?";
-            }
-        } else {
-            LOG(INFO) << "skipping " << blocks << " blocks already patched to " << tgt.size
-                      << " [" << params.cmdline << "]";
+      if (params.cmdname[0] == 'i') {  // imgdiff
+        if (ApplyImagePatch(
+                params.buffer.data(), blocks * BLOCKSIZE, &patch_value,
+                std::bind(&RangeSinkWrite, std::placeholders::_1, std::placeholders::_2, &rss),
+                nullptr, nullptr) != 0) {
+          LOG(ERROR) << "Failed to apply image patch.";
+          return -1;
         }
+      } else {
+        if (ApplyBSDiffPatch(
+                params.buffer.data(), blocks * BLOCKSIZE, &patch_value, 0,
+                std::bind(&RangeSinkWrite, std::placeholders::_1, std::placeholders::_2, &rss),
+                nullptr) != 0) {
+          LOG(ERROR) << "Failed to apply bsdiff patch.";
+          return -1;
+        }
+      }
+
+      // We expect the output of the patcher to fill the tgt ranges exactly.
+      if (rss.p_block != tgt.count || rss.p_remain != 0) {
+        LOG(ERROR) << "range sink underrun?";
+      }
+    } else {
+      LOG(INFO) << "skipping " << blocks << " blocks already patched to " << tgt.size << " ["
+                << params.cmdline << "]";
     }
+  }
 
-    if (!params.freestash.empty()) {
-        FreeStash(params.stashbase, params.freestash);
-        params.freestash.clear();
-    }
+  if (!params.freestash.empty()) {
+    FreeStash(params.stashbase, params.freestash);
+    params.freestash.clear();
+  }
 
-    params.written += tgt.size;
+  params.written += tgt.size;
 
-    return 0;
+  return 0;
 }
 
 static int PerformCommandErase(CommandParameters& params) {
