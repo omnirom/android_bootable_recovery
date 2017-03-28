@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
@@ -42,7 +43,7 @@
 #include "print_sha1.h"
 
 static int LoadPartitionContents(const std::string& filename, FileContents* file);
-static size_t FileSink(const unsigned char* data, size_t len, void* token);
+static size_t FileSink(const unsigned char* data, size_t len, int fd);
 static int GenerateTarget(const FileContents& source_file, const std::unique_ptr<Value>& patch,
                           const std::string& target_filename,
                           const uint8_t target_sha1[SHA_DIGEST_LENGTH], const Value* bonus_data);
@@ -194,7 +195,7 @@ int SaveFileContents(const char* filename, const FileContents* file) {
     return -1;
   }
 
-  size_t bytes_written = FileSink(file->data.data(), file->data.size(), &fd);
+  size_t bytes_written = FileSink(file->data.data(), file->data.size(), fd);
   if (bytes_written != file->data.size()) {
     printf("short write of \"%s\" (%zd bytes of %zu): %s\n", filename, bytes_written,
            file->data.size(), strerror(errno));
@@ -433,8 +434,7 @@ int ShowLicenses() {
     return 0;
 }
 
-static size_t FileSink(const unsigned char* data, size_t len, void* token) {
-  int fd = *static_cast<int*>(token);
+static size_t FileSink(const unsigned char* data, size_t len, int fd) {
   size_t done = 0;
   while (done < len) {
     ssize_t wrote = TEMP_FAILURE_RETRY(ota_write(fd, data + done, len - done));
@@ -445,12 +445,6 @@ static size_t FileSink(const unsigned char* data, size_t len, void* token) {
     done += wrote;
   }
   return done;
-}
-
-size_t MemorySink(const unsigned char* data, size_t len, void* token) {
-  std::string* s = static_cast<std::string*>(token);
-  s->append(reinterpret_cast<const char*>(data), len);
-  return len;
 }
 
 // Return the amount of free space (in bytes) on the filesystem
@@ -646,9 +640,11 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
   }
 
   // We store the decoded output in memory.
-  SinkFn sink = MemorySink;
   std::string memory_sink_str;  // Don't need to reserve space.
-  void* token = &memory_sink_str;
+  SinkFn sink = [&memory_sink_str](const unsigned char* data, size_t len) {
+    memory_sink_str.append(reinterpret_cast<const char*>(data), len);
+    return len;
+  };
 
   SHA_CTX ctx;
   SHA1_Init(&ctx);
@@ -656,10 +652,10 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
   int result;
   if (use_bsdiff) {
     result = ApplyBSDiffPatch(source_file.data.data(), source_file.data.size(), patch.get(), 0,
-                              sink, token, &ctx);
+                              sink, &ctx);
   } else {
     result = ApplyImagePatch(source_file.data.data(), source_file.data.size(), patch.get(), sink,
-                             token, &ctx, bonus_data);
+                             &ctx, bonus_data);
   }
 
   if (result != 0) {
