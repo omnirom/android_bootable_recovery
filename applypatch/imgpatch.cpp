@@ -43,9 +43,8 @@ static inline int32_t Read4(const void *address) {
   return android::base::get_unaligned<int32_t>(address);
 }
 
-int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
-                    const unsigned char* patch_data, ssize_t patch_size,
-                    SinkFn sink, void* token) {
+int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const unsigned char* patch_data,
+                    size_t patch_size, SinkFn sink, void* token) {
   Value patch(VAL_BLOB, std::string(reinterpret_cast<const char*>(patch_data), patch_size));
 
   return ApplyImagePatch(old_data, old_size, &patch, sink, token, nullptr, nullptr);
@@ -57,8 +56,8 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
  * file, and update the SHA context with the output data as well.
  * Return 0 on success.
  */
-int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size, const Value* patch,
-                    SinkFn sink, void* token, SHA_CTX* ctx, const Value* bonus_data) {
+int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value* patch, SinkFn sink,
+                    void* token, SHA_CTX* ctx, const Value* bonus_data) {
   if (patch->data.size() < 12) {
     printf("patch too short to contain header\n");
     return -1;
@@ -97,7 +96,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size, const Value
       size_t src_len = static_cast<size_t>(Read8(normal_header + 8));
       size_t patch_offset = static_cast<size_t>(Read8(normal_header + 16));
 
-      if (src_start + src_len > static_cast<size_t>(old_size)) {
+      if (src_start + src_len > old_size) {
         printf("source data too short\n");
         return -1;
       }
@@ -110,7 +109,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size, const Value
         return -1;
       }
 
-      ssize_t data_len = Read4(raw_header);
+      size_t data_len = static_cast<size_t>(Read4(raw_header));
 
       if (pos + data_len > patch->data.size()) {
         printf("failed to read chunk %d raw data\n", i);
@@ -143,7 +142,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size, const Value
       int memLevel = Read4(deflate_header + 52);
       int strategy = Read4(deflate_header + 56);
 
-      if (src_start + src_len > static_cast<size_t>(old_size)) {
+      if (src_start + src_len > old_size) {
         printf("source data too short\n");
         return -1;
       }
@@ -240,7 +239,7 @@ int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size, const Value
           strm.avail_out = temp_data.size();
           strm.next_out = temp_data.data();
           ret = deflate(&strm, Z_FINISH);
-          ssize_t have = temp_data.size() - strm.avail_out;
+          size_t have = temp_data.size() - strm.avail_out;
 
           if (sink(temp_data.data(), have, token) != have) {
             printf("failed to write %zd compressed bytes to output\n", have);

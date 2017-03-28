@@ -19,10 +19,9 @@
 
 #include <sys/types.h>
 
-using SinkFn = ssize_t (*)(const unsigned char*, ssize_t, void*);
+using SinkFn = size_t (*)(const unsigned char*, size_t, void*);
 
-int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
-                    const unsigned char* patch_data, ssize_t patch_size,
-                    SinkFn sink, void* token);
+int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const unsigned char* patch_data,
+                    size_t patch_size, SinkFn sink, void* token);
 
 #endif  // _APPLYPATCH_IMGPATCH_H
