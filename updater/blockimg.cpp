@@ -240,57 +240,56 @@ struct RangeSinkState {
     size_t p_remain;
 };
 
-static ssize_t RangeSinkWrite(const uint8_t* data, ssize_t size, void* token) {
-    RangeSinkState* rss = reinterpret_cast<RangeSinkState*>(token);
+static size_t RangeSinkWrite(const uint8_t* data, size_t size, void* token) {
+  RangeSinkState* rss = static_cast<RangeSinkState*>(token);
+
+  if (rss->p_remain == 0) {
+    LOG(ERROR) << "range sink write overrun";
+    return 0;
+  }
+
+  size_t written = 0;
+  while (size > 0) {
+    size_t write_now = size;
+
+    if (rss->p_remain < write_now) {
+      write_now = rss->p_remain;
+    }
+
+    if (write_all(rss->fd, data, write_now) == -1) {
+      break;
+    }
+
+    data += write_now;
+    size -= write_now;
+
+    rss->p_remain -= write_now;
+    written += write_now;
 
     if (rss->p_remain == 0) {
-        LOG(ERROR) << "range sink write overrun";
-        return 0;
+      // Move to the next block.
+      ++rss->p_block;
+      if (rss->p_block < rss->tgt.count) {
+        rss->p_remain =
+            (rss->tgt.pos[rss->p_block * 2 + 1] - rss->tgt.pos[rss->p_block * 2]) * BLOCKSIZE;
+
+        off64_t offset = static_cast<off64_t>(rss->tgt.pos[rss->p_block * 2]) * BLOCKSIZE;
+        if (!discard_blocks(rss->fd, offset, rss->p_remain)) {
+          break;
+        }
+
+        if (!check_lseek(rss->fd, offset, SEEK_SET)) {
+          break;
+        }
+
+      } else {
+        // We can't write any more; return how many bytes have been written so far.
+        break;
+      }
     }
+  }
 
-    ssize_t written = 0;
-    while (size > 0) {
-        size_t write_now = size;
-
-        if (rss->p_remain < write_now) {
-            write_now = rss->p_remain;
-        }
-
-        if (write_all(rss->fd, data, write_now) == -1) {
-            break;
-        }
-
-        data += write_now;
-        size -= write_now;
-
-        rss->p_remain -= write_now;
-        written += write_now;
-
-        if (rss->p_remain == 0) {
-            // move to the next block
-            ++rss->p_block;
-            if (rss->p_block < rss->tgt.count) {
-                rss->p_remain = (rss->tgt.pos[rss->p_block * 2 + 1] -
-                                 rss->tgt.pos[rss->p_block * 2]) * BLOCKSIZE;
-
-                off64_t offset = static_cast<off64_t>(rss->tgt.pos[rss->p_block*2]) * BLOCKSIZE;
-                if (!discard_blocks(rss->fd, offset, rss->p_remain)) {
-                    break;
-                }
-
-                if (!check_lseek(rss->fd, offset, SEEK_SET)) {
-                    break;
-                }
-
-            } else {
-                // we can't write any more; return how many bytes have
-                // been written so far.
-                break;
-            }
-        }
-    }
-
-    return written;
+  return written;
 }
 
 // All of the data for all the 'new' transfers is contained in one
@@ -338,7 +337,7 @@ static bool receive_new_data(const uint8_t* data, size_t size, void* cookie) {
 
         // At this point nti->rss is set, and we own it.  The main
         // thread is waiting for it to disappear from nti.
-        ssize_t written = RangeSinkWrite(data, size, nti->rss);
+        size_t written = RangeSinkWrite(data, size, nti->rss);
         data += written;
         size -= written;
 
