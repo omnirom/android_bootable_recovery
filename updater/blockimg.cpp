@@ -696,7 +696,7 @@ static int LoadStash(CommandParameters& params, const std::string& id, bool veri
 }
 
 static int WriteStash(const std::string& base, const std::string& id, int blocks,
-                      std::vector<uint8_t>& buffer, bool checkspace, bool *exists) {
+                      std::vector<uint8_t>& buffer, bool checkspace, bool* exists) {
     if (base.empty()) {
         return -1;
     }
@@ -883,96 +883,81 @@ static void MoveRange(std::vector<uint8_t>& dest, const RangeSet& locs,
     }
 }
 
-// Do a source/target load for move/bsdiff/imgdiff in version 2.
-// We expect to parse the remainder of the parameter tokens as one of:
-//
-//    <tgt_range> <src_block_count> <src_range>
-//        (loads data from source image only)
-//
-//    <tgt_range> <src_block_count> - <[stash_id:stash_range] ...>
-//        (loads data from stashes only)
-//
-//    <tgt_range> <src_block_count> <src_range> <src_loc> <[stash_id:stash_range] ...>
-//        (loads data from both source image and stashes)
-//
-// On return, params.buffer is filled with the loaded source data (rearranged and combined with
-// stashed data as necessary). buffer may be reallocated if needed to accommodate the source data.
-// *tgt is the target RangeSet. Any stashes required are loaded using LoadStash.
+/**
+ * We expect to parse the remainder of the parameter tokens as one of:
+ *
+ *    <src_block_count> <src_range>
+ *        (loads data from source image only)
+ *
+ *    <src_block_count> - <[stash_id:stash_range] ...>
+ *        (loads data from stashes only)
+ *
+ *    <src_block_count> <src_range> <src_loc> <[stash_id:stash_range] ...>
+ *        (loads data from both source image and stashes)
+ *
+ * On return, params.buffer is filled with the loaded source data (rearranged and combined with
+ * stashed data as necessary). buffer may be reallocated if needed to accommodate the source data.
+ * tgt is the target RangeSet for detecting overlaps. Any stashes required are loaded using
+ * LoadStash.
+ */
+static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size_t* src_blocks,
+                            bool* overlap) {
+  CHECK(src_blocks != nullptr);
+  CHECK(overlap != nullptr);
 
-static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& src_blocks,
-                              bool* overlap) {
+  // <src_block_count>
+  const std::string& token = params.tokens[params.cpos++];
+  if (!android::base::ParseUint(token, src_blocks)) {
+    LOG(ERROR) << "invalid src_block_count \"" << token << "\"";
+    return -1;
+  }
 
-    // At least it needs to provide three parameters: <tgt_range>,
-    // <src_block_count> and "-"/<src_range>.
-    if (params.cpos + 2 >= params.tokens.size()) {
-        LOG(ERROR) << "invalid parameters";
-        return -1;
+  allocate(*src_blocks * BLOCKSIZE, params.buffer);
+
+  // "-" or <src_range> [<src_loc>]
+  if (params.tokens[params.cpos] == "-") {
+    // no source ranges, only stashes
+    params.cpos++;
+  } else {
+    RangeSet src = parse_range(params.tokens[params.cpos++]);
+    *overlap = range_overlaps(src, tgt);
+
+    if (ReadBlocks(src, params.buffer, params.fd) == -1) {
+      return -1;
     }
 
-    // <tgt_range>
-    tgt = parse_range(params.tokens[params.cpos++]);
-
-    // <src_block_count>
-    const std::string& token = params.tokens[params.cpos++];
-    if (!android::base::ParseUint(token.c_str(), &src_blocks)) {
-        LOG(ERROR) << "invalid src_block_count \"" << token << "\"";
-        return -1;
+    if (params.cpos >= params.tokens.size()) {
+      // no stashes, only source range
+      return 0;
     }
 
-    allocate(src_blocks * BLOCKSIZE, params.buffer);
+    RangeSet locs = parse_range(params.tokens[params.cpos++]);
+    MoveRange(params.buffer, locs, params.buffer);
+  }
 
-    // "-" or <src_range> [<src_loc>]
-    if (params.tokens[params.cpos] == "-") {
-        // no source ranges, only stashes
-        params.cpos++;
-    } else {
-        RangeSet src = parse_range(params.tokens[params.cpos++]);
-        int res = ReadBlocks(src, params.buffer, params.fd);
-
-        if (overlap) {
-            *overlap = range_overlaps(src, tgt);
-        }
-
-        if (res == -1) {
-            return -1;
-        }
-
-        if (params.cpos >= params.tokens.size()) {
-            // no stashes, only source range
-            return 0;
-        }
-
-        RangeSet locs = parse_range(params.tokens[params.cpos++]);
-        MoveRange(params.buffer, locs, params.buffer);
+  // <[stash_id:stash_range]>
+  while (params.cpos < params.tokens.size()) {
+    // Each word is a an index into the stash table, a colon, and then a RangeSet describing where
+    // in the source block that stashed data should go.
+    std::vector<std::string> tokens = android::base::Split(params.tokens[params.cpos++], ":");
+    if (tokens.size() != 2) {
+      LOG(ERROR) << "invalid parameter";
+      return -1;
     }
 
-    // <[stash_id:stash_range]>
-    while (params.cpos < params.tokens.size()) {
-        // Each word is a an index into the stash table, a colon, and
-        // then a rangeset describing where in the source block that
-        // stashed data should go.
-        std::vector<std::string> tokens = android::base::Split(params.tokens[params.cpos++], ":");
-        if (tokens.size() != 2) {
-            LOG(ERROR) << "invalid parameter";
-            return -1;
-        }
-
-        std::vector<uint8_t> stash;
-        int res = LoadStash(params, tokens[0], false, nullptr, stash, true);
-
-        if (res == -1) {
-            // These source blocks will fail verification if used later, but we
-            // will let the caller decide if this is a fatal failure
-            LOG(ERROR) << "failed to load stash " << tokens[0];
-            continue;
-        }
-
-        RangeSet locs = parse_range(tokens[1]);
-
-        MoveRange(params.buffer, locs, stash);
+    std::vector<uint8_t> stash;
+    if (LoadStash(params, tokens[0], false, nullptr, stash, true) == -1) {
+      // These source blocks will fail verification if used later, but we
+      // will let the caller decide if this is a fatal failure
+      LOG(ERROR) << "failed to load stash " << tokens[0];
+      continue;
     }
 
-    return 0;
+    RangeSet locs = parse_range(tokens[1]);
+    MoveRange(params.buffer, locs, stash);
+  }
+
+  return 0;
 }
 
 /**
@@ -989,9 +974,8 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
  *    <tgt_range> <src_block_count> <src_range> <src_loc> <[stash_id:stash_range] ...>
  *        (loads data from both source image and stashes)
  *
- * Parameters are the same as for LoadSrcTgtVersion2, except for 'onehash', which tells the function
- * whether to expect separate source and targe block hashes, or if they are both the same and only
- * one hash should be expected, and 'isunresumable', which receives a non-zero value if block
+ * 'onehash' tells whether to expect separate source and targe block hashes, or if they are both the
+ * same and only one hash should be expected. params.isunresumable will be set to true if block
  * verification fails in a way that the update cannot be resumed anymore.
  *
  * If the function is unable to load the necessary blocks or their contents don't match the hashes,
@@ -1002,87 +986,100 @@ static int LoadSrcTgtVersion2(CommandParameters& params, RangeSet& tgt, size_t& 
  *
  * If the return value is 0, source blocks have expected content and the command can be performed.
  */
-static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t& src_blocks,
-                              bool onehash, bool& overlap) {
-    if (params.cpos >= params.tokens.size()) {
-        LOG(ERROR) << "missing source hash";
-        return -1;
-    }
+static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t* src_blocks,
+                              bool onehash, bool* overlap) {
+  CHECK(src_blocks != nullptr);
+  CHECK(overlap != nullptr);
 
-    std::string srchash = params.tokens[params.cpos++];
-    std::string tgthash;
-
-    if (onehash) {
-        tgthash = srchash;
-    } else {
-        if (params.cpos >= params.tokens.size()) {
-            LOG(ERROR) << "missing target hash";
-            return -1;
-        }
-        tgthash = params.tokens[params.cpos++];
-    }
-
-    if (LoadSrcTgtVersion2(params, tgt, src_blocks, &overlap) == -1) {
-        return -1;
-    }
-
-    std::vector<uint8_t> tgtbuffer(tgt.size * BLOCKSIZE);
-
-    if (ReadBlocks(tgt, tgtbuffer, params.fd) == -1) {
-        return -1;
-    }
-
-    if (VerifyBlocks(tgthash, tgtbuffer, tgt.size, false) == 0) {
-        // Target blocks already have expected content, command should be skipped.
-        return 1;
-    }
-
-    if (VerifyBlocks(srchash, params.buffer, src_blocks, true) == 0) {
-        // If source and target blocks overlap, stash the source blocks so we can
-        // resume from possible write errors. In verify mode, we can skip stashing
-        // because the source blocks won't be overwritten.
-        if (overlap && params.canwrite) {
-            LOG(INFO) << "stashing " << src_blocks << " overlapping blocks to " << srchash;
-
-            bool stash_exists = false;
-            if (WriteStash(params.stashbase, srchash, src_blocks, params.buffer, true,
-                           &stash_exists) != 0) {
-                LOG(ERROR) << "failed to stash overlapping source blocks";
-                return -1;
-            }
-
-            params.stashed += src_blocks;
-            // Can be deleted when the write has completed.
-            if (!stash_exists) {
-                params.freestash = srchash;
-            }
-        }
-
-        // Source blocks have expected content, command can proceed.
-        return 0;
-    }
-
-    if (overlap && LoadStash(params, srchash, true, nullptr, params.buffer, true) == 0) {
-        // Overlapping source blocks were previously stashed, command can proceed.
-        // We are recovering from an interrupted command, so we don't know if the
-        // stash can safely be deleted after this command.
-        return 0;
-    }
-
-    // Valid source data not available, update cannot be resumed.
-    LOG(ERROR) << "partition has unexpected contents";
-    PrintHashForCorruptedSourceBlocks(params, params.buffer);
-
-    params.isunresumable = true;
-
+  if (params.cpos >= params.tokens.size()) {
+    LOG(ERROR) << "missing source hash";
     return -1;
+  }
+
+  std::string srchash = params.tokens[params.cpos++];
+  std::string tgthash;
+
+  if (onehash) {
+    tgthash = srchash;
+  } else {
+    if (params.cpos >= params.tokens.size()) {
+      LOG(ERROR) << "missing target hash";
+      return -1;
+    }
+    tgthash = params.tokens[params.cpos++];
+  }
+
+  // At least it needs to provide three parameters: <tgt_range>, <src_block_count> and
+  // "-"/<src_range>.
+  if (params.cpos + 2 >= params.tokens.size()) {
+    LOG(ERROR) << "invalid parameters";
+    return -1;
+  }
+
+  // <tgt_range>
+  tgt = parse_range(params.tokens[params.cpos++]);
+
+  std::vector<uint8_t> tgtbuffer(tgt.size * BLOCKSIZE);
+  if (ReadBlocks(tgt, tgtbuffer, params.fd) == -1) {
+    return -1;
+  }
+
+  // Return now if target blocks already have expected content.
+  if (VerifyBlocks(tgthash, tgtbuffer, tgt.size, false) == 0) {
+    return 1;
+  }
+
+  // Load source blocks.
+  if (LoadSourceBlocks(params, tgt, src_blocks, overlap) == -1) {
+    return -1;
+  }
+
+  if (VerifyBlocks(srchash, params.buffer, *src_blocks, true) == 0) {
+    // If source and target blocks overlap, stash the source blocks so we can
+    // resume from possible write errors. In verify mode, we can skip stashing
+    // because the source blocks won't be overwritten.
+    if (*overlap && params.canwrite) {
+      LOG(INFO) << "stashing " << *src_blocks << " overlapping blocks to " << srchash;
+
+      bool stash_exists = false;
+      if (WriteStash(params.stashbase, srchash, *src_blocks, params.buffer, true,
+                     &stash_exists) != 0) {
+        LOG(ERROR) << "failed to stash overlapping source blocks";
+        return -1;
+      }
+
+      params.stashed += *src_blocks;
+      // Can be deleted when the write has completed.
+      if (!stash_exists) {
+        params.freestash = srchash;
+      }
+    }
+
+    // Source blocks have expected content, command can proceed.
+    return 0;
+  }
+
+  if (*overlap && LoadStash(params, srchash, true, nullptr, params.buffer, true) == 0) {
+    // Overlapping source blocks were previously stashed, command can proceed. We are recovering
+    // from an interrupted command, so we don't know if the stash can safely be deleted after this
+    // command.
+    return 0;
+  }
+
+  // Valid source data not available, update cannot be resumed.
+  LOG(ERROR) << "partition has unexpected contents";
+  PrintHashForCorruptedSourceBlocks(params, params.buffer);
+
+  params.isunresumable = true;
+
+  return -1;
 }
 
 static int PerformCommandMove(CommandParameters& params) {
   size_t blocks = 0;
   bool overlap = false;
   RangeSet tgt;
-  int status = LoadSrcTgtVersion3(params, tgt, blocks, true, overlap);
+  int status = LoadSrcTgtVersion3(params, tgt, &blocks, true, &overlap);
 
   if (status == -1) {
     LOG(ERROR) << "failed to read blocks for move";
@@ -1270,13 +1267,13 @@ static int PerformCommandDiff(CommandParameters& params) {
     }
 
     size_t offset;
-    if (!android::base::ParseUint(params.tokens[params.cpos++].c_str(), &offset)) {
+    if (!android::base::ParseUint(params.tokens[params.cpos++], &offset)) {
         LOG(ERROR) << "invalid patch offset";
         return -1;
     }
 
     size_t len;
-    if (!android::base::ParseUint(params.tokens[params.cpos++].c_str(), &len)) {
+    if (!android::base::ParseUint(params.tokens[params.cpos++], &len)) {
         LOG(ERROR) << "invalid patch len";
         return -1;
     }
@@ -1284,7 +1281,7 @@ static int PerformCommandDiff(CommandParameters& params) {
     RangeSet tgt;
     size_t blocks = 0;
     bool overlap = false;
-    int status = LoadSrcTgtVersion3(params, tgt, blocks, false, overlap);
+    int status = LoadSrcTgtVersion3(params, tgt, &blocks, false, &overlap);
 
     if (status == -1) {
         LOG(ERROR) << "failed to read blocks for diff";
@@ -1871,7 +1868,7 @@ Value* BlockImageRecoverFn(const char* name, State* state,
     LOG(INFO) << filename->data << " image corrupted, attempting to recover...";
 
     // When opened with O_RDWR, libfec rewrites corrupted blocks when they are read
-    fec::io fh(filename->data.c_str(), O_RDWR);
+    fec::io fh(filename->data, O_RDWR);
 
     if (!fh) {
         ErrorAbort(state, kLibfecFailure, "fec_open \"%s\" failed: %s", filename->data.c_str(),
