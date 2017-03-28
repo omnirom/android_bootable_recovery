@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -41,7 +42,7 @@ struct FileContents {
 // and use it as the source instead.
 #define CACHE_TEMP_SOURCE "/cache/saved.file"
 
-typedef ssize_t (*SinkFn)(const unsigned char*, ssize_t, void*);
+using SinkFn = std::function<size_t(const unsigned char*, size_t)>;
 
 // applypatch.cpp
 int ShowLicenses();
@@ -66,18 +67,14 @@ int SaveFileContents(const char* filename, const FileContents* file);
 
 // bspatch.cpp
 void ShowBSDiffLicense();
-int ApplyBSDiffPatch(const unsigned char* old_data, ssize_t old_size,
-                     const Value* patch, ssize_t patch_offset,
-                     SinkFn sink, void* token, SHA_CTX* ctx);
-int ApplyBSDiffPatchMem(const unsigned char* old_data, ssize_t old_size,
-                        const Value* patch, ssize_t patch_offset,
-                        std::vector<unsigned char>* new_data);
+int ApplyBSDiffPatch(const unsigned char* old_data, size_t old_size, const Value* patch,
+                     size_t patch_offset, SinkFn sink, SHA_CTX* ctx);
+int ApplyBSDiffPatchMem(const unsigned char* old_data, size_t old_size, const Value* patch,
+                        size_t patch_offset, std::vector<unsigned char>* new_data);
 
 // imgpatch.cpp
-int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
-                    const Value* patch,
-                    SinkFn sink, void* token, SHA_CTX* ctx,
-                    const Value* bonus_data);
+int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value* patch, SinkFn sink,
+                    SHA_CTX* ctx, const Value* bonus_data);
 
 // freecache.cpp
 int MakeFreeSpaceOnCache(size_t bytes_needed);
