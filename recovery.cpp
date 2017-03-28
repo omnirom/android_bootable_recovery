@@ -122,7 +122,7 @@ static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
 static const int BATTERY_OK_PERCENTAGE = 20;
 static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
 static constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
-static constexpr const char* DEFAULT_LOCALE = "en_US";
+static constexpr const char* DEFAULT_LOCALE = "en-US";
 
 static std::string locale;
 static bool has_cache = false;
