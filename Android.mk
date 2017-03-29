@@ -29,9 +29,11 @@ include $(BUILD_STATIC_LIBRARY)
 # ===============================
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := mounts.cpp
-LOCAL_CLANG := true
-LOCAL_CFLAGS := -Wall -Wno-unused-parameter -Werror
+LOCAL_CFLAGS := \
+    -Wall \
+    -Werror
 LOCAL_MODULE := libmounts
+LOCAL_STATIC_LIBRARIES := libbase
 include $(BUILD_STATIC_LIBRARY)
 
 # recovery (static executable)
