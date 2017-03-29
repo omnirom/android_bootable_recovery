@@ -177,6 +177,51 @@ TEST(VerifierTest, BadPackage_SignatureStartOutOfBounds) {
                                         package.size(), certs));
 }
 
+TEST(VerifierTest, BadPackage_AlteredFooter) {
+  std::string testkey_v3;
+  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("testkey_v3.txt"), &testkey_v3));
+  TemporaryFile key_file1;
+  ASSERT_TRUE(android::base::WriteStringToFile(testkey_v3, key_file1.path));
+  std::vector<Certificate> certs;
+  ASSERT_TRUE(load_keys(key_file1.path, certs));
+
+  std::string package;
+  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("otasigned_v3.zip"), &package));
+  ASSERT_EQ(std::string("\xc0\x06\xff\xff\xd2\x06", 6), package.substr(package.size() - 6, 6));
+
+  // Alter the footer.
+  package[package.size() - 5] = '\x05';
+  ASSERT_EQ(VERIFY_FAILURE,
+            verify_file(reinterpret_cast<const unsigned char*>(package.data()), package.size(),
+                        certs));
+}
+
+TEST(VerifierTest, BadPackage_AlteredContent) {
+  std::string testkey_v3;
+  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("testkey_v3.txt"), &testkey_v3));
+  TemporaryFile key_file1;
+  ASSERT_TRUE(android::base::WriteStringToFile(testkey_v3, key_file1.path));
+  std::vector<Certificate> certs;
+  ASSERT_TRUE(load_keys(key_file1.path, certs));
+
+  std::string package;
+  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("otasigned_v3.zip"), &package));
+  ASSERT_GT(package.size(), static_cast<size_t>(100));
+
+  // Alter the content.
+  std::string altered1(package);
+  altered1[50] += 1;
+  ASSERT_EQ(VERIFY_FAILURE,
+            verify_file(reinterpret_cast<const unsigned char*>(altered1.data()), altered1.size(),
+                        certs));
+
+  std::string altered2(package);
+  altered2[10] += 1;
+  ASSERT_EQ(VERIFY_FAILURE,
+            verify_file(reinterpret_cast<const unsigned char*>(altered2.data()), altered2.size(),
+                        certs));
+}
+
 TEST_P(VerifierSuccessTest, VerifySucceed) {
   ASSERT_EQ(verify_file(memmap.addr, memmap.length, certs, nullptr), VERIFY_SUCCESS);
 }
