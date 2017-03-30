@@ -29,6 +29,7 @@ include $(CLEAR_VARS)
 
 LOCAL_CLANG := true
 LOCAL_MODULE := minadbd_test
+LOCAL_COMPATIBILITY_SUITE := device-tests
 LOCAL_SRC_FILES := fuse_adb_provider_test.cpp
 LOCAL_CFLAGS := $(minadbd_cflags)
 LOCAL_C_INCLUDES := $(LOCAL_PATH) system/core/adb
