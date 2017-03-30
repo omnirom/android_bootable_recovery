@@ -21,7 +21,6 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS := -Werror
 LOCAL_MODULE := recovery_unit_test
 LOCAL_COMPATIBILITY_SUITE := device-tests
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_STATIC_LIBRARIES := \
     libverifier \
     libminui \
@@ -46,10 +45,8 @@ include $(BUILD_NATIVE_TEST)
 
 # Manual tests
 include $(CLEAR_VARS)
-LOCAL_CLANG := true
 LOCAL_CFLAGS := -Werror
 LOCAL_MODULE := recovery_manual_test
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_STATIC_LIBRARIES := \
     libminui \
     libbase
@@ -86,7 +83,6 @@ LOCAL_CFLAGS := \
     -Werror \
     -D_FILE_OFFSET_BITS=64
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_MODULE := recovery_component_test
 LOCAL_COMPATIBILITY_SUITE := device-tests
 LOCAL_C_INCLUDES := bootable/recovery
