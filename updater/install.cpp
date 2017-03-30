@@ -181,8 +181,8 @@ Value* MountFn(const char* name, State* state, const std::vector<std::unique_ptr
 
   if (mount(location.c_str(), mount_point.c_str(), fs_type.c_str(),
             MS_NOATIME | MS_NODEV | MS_NODIRATIME, mount_options.c_str()) < 0) {
-    uiPrintf(state, "%s: failed to mount %s at %s: %s\n", name, location.c_str(),
-             mount_point.c_str(), strerror(errno));
+    uiPrintf(state, "%s: Failed to mount %s at %s: %s", name, location.c_str(), mount_point.c_str(),
+             strerror(errno));
     return StringValue("");
   }
 
@@ -231,12 +231,12 @@ Value* UnmountFn(const char* name, State* state, const std::vector<std::unique_p
   scan_mounted_volumes();
   MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point.c_str());
   if (vol == nullptr) {
-    uiPrintf(state, "unmount of %s failed; no such volume\n", mount_point.c_str());
+    uiPrintf(state, "Failed to unmount %s: No such volume", mount_point.c_str());
     return nullptr;
   } else {
     int ret = unmount_mounted_volume(vol);
     if (ret != 0) {
-      uiPrintf(state, "unmount of %s failed (%d): %s\n", mount_point.c_str(), ret, strerror(errno));
+      uiPrintf(state, "Failed to unmount %s: %s", mount_point.c_str(), strerror(errno));
     }
   }
 
@@ -699,15 +699,15 @@ Value* ApplyPatchCheckFn(const char* name, State* state, const std::vector<std::
   return StringValue(result == 0 ? "t" : "");
 }
 
-// This is the updater side handler for ui_print() in edify script. Contents
-// will be sent over to the recovery side for on-screen display.
+// This is the updater side handler for ui_print() in edify script. Contents will be sent over to
+// the recovery side for on-screen display.
 Value* UIPrintFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
   std::vector<std::string> args;
   if (!ReadArgs(state, argv, &args)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
 
-  std::string buffer = android::base::Join(args, "") + "\n";
+  std::string buffer = android::base::Join(args, "");
   uiPrint(state, buffer);
   return StringValue(buffer);
 }
