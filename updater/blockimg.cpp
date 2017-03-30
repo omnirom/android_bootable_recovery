@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <linux/fs.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -1831,7 +1832,7 @@ Value* CheckFirstBlockFn(const char* name, State* state,
     uint16_t mount_count = *reinterpret_cast<uint16_t*>(&block0_buffer[0x400+0x34]);
 
     if (mount_count > 0) {
-        uiPrintf(state, "Device was remounted R/W %d times\n", mount_count);
+        uiPrintf(state, "Device was remounted R/W %" PRIu16 " times", mount_count);
         uiPrintf(state, "Last remount happened on %s", ctime(&mount_time));
     }
 
