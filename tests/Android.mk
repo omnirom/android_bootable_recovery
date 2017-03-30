@@ -20,6 +20,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_CFLAGS := -Werror
 LOCAL_MODULE := recovery_unit_test
+LOCAL_COMPATIBILITY_SUITE := device-tests
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_STATIC_LIBRARIES := \
     libverifier \
@@ -87,6 +88,7 @@ LOCAL_CFLAGS := \
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_MODULE := recovery_component_test
+LOCAL_COMPATIBILITY_SUITE := device-tests
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SRC_FILES := \
     component/applypatch_test.cpp \
