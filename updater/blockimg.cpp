@@ -50,9 +50,10 @@
 
 #include "edify/expr.h"
 #include "error_code.h"
-#include "updater/install.h"
 #include "ota_io.h"
 #include "print_sha1.h"
+#include "updater/install.h"
+#include "updater/rangeset.h"
 #include "updater/updater.h"
 
 // Set this to 0 to interpret 'erase' transfers to mean do a
@@ -65,99 +66,9 @@ static constexpr const char* STASH_DIRECTORY_BASE = "/cache/recovery";
 static constexpr mode_t STASH_DIRECTORY_MODE = 0700;
 static constexpr mode_t STASH_FILE_MODE = 0600;
 
-struct RangeSet {
-  size_t count;  // Limit is INT_MAX.
-  size_t size;
-  std::vector<size_t> pos;  // Actual limit is INT_MAX.
-
-  // Get the block number for the ith(starting from 0) block in the range set.
-  int get_block(size_t idx) const {
-    if (idx >= size) {
-      LOG(ERROR) << "index: " << idx << " is greater than range set size: " << size;
-      return -1;
-    }
-    for (size_t i = 0; i < pos.size(); i += 2) {
-      if (idx < pos[i + 1] - pos[i]) {
-        return pos[i] + idx;
-      }
-      idx -= (pos[i + 1] - pos[i]);
-    }
-    return -1;
-  }
-};
-
 static CauseCode failure_type = kNoCause;
 static bool is_retry = false;
 static std::unordered_map<std::string, RangeSet> stash_map;
-
-static RangeSet parse_range(const std::string& range_text) {
-  RangeSet rs;
-
-  std::vector<std::string> pieces = android::base::Split(range_text, ",");
-  if (pieces.size() < 3) {
-    goto err;
-  }
-
-  size_t num;
-  if (!android::base::ParseUint(pieces[0], &num, static_cast<size_t>(INT_MAX))) {
-    goto err;
-  }
-
-  if (num == 0 || num % 2) {
-    goto err;  // must be even
-  } else if (num != pieces.size() - 1) {
-    goto err;
-  }
-
-  rs.pos.resize(num);
-  rs.count = num / 2;
-  rs.size = 0;
-
-  for (size_t i = 0; i < num; i += 2) {
-    if (!android::base::ParseUint(pieces[i + 1], &rs.pos[i], static_cast<size_t>(INT_MAX))) {
-      goto err;
-    }
-
-    if (!android::base::ParseUint(pieces[i + 2], &rs.pos[i + 1], static_cast<size_t>(INT_MAX))) {
-      goto err;
-    }
-
-    if (rs.pos[i] >= rs.pos[i + 1]) {
-      goto err;  // empty or negative range
-    }
-
-    size_t sz = rs.pos[i + 1] - rs.pos[i];
-    if (rs.size > SIZE_MAX - sz) {
-      goto err;  // overflow
-    }
-
-    rs.size += sz;
-  }
-
-  return rs;
-
-err:
-  LOG(ERROR) << "failed to parse range '" << range_text << "'";
-  exit(EXIT_FAILURE);
-}
-
-static bool range_overlaps(const RangeSet& r1, const RangeSet& r2) {
-  for (size_t i = 0; i < r1.count; ++i) {
-    size_t r1_0 = r1.pos[i * 2];
-    size_t r1_1 = r1.pos[i * 2 + 1];
-
-    for (size_t j = 0; j < r2.count; ++j) {
-      size_t r2_0 = r2.pos[j * 2];
-      size_t r2_1 = r2.pos[j * 2 + 1];
-
-      if (!(r2_0 >= r1_1 || r1_0 >= r2_1)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
 
 static int read_all(int fd, uint8_t* data, size_t size) {
     size_t so_far = 0;
@@ -469,7 +380,7 @@ static void PrintHashForCorruptedSourceBlocks(const CommandParameters& params,
     return;
   }
 
-  RangeSet src = parse_range(params.tokens[pos++]);
+  RangeSet src = RangeSet::Parse(params.tokens[pos++]);
 
   RangeSet locs;
   // If there's no stashed blocks, content in the buffer is consecutive and has the same
@@ -483,17 +394,15 @@ static void PrintHashForCorruptedSourceBlocks(const CommandParameters& params,
     // Example: for the tokens <4,63946,63947,63948,63979> <4,6,7,8,39> <stashed_blocks>;
     // We want to print SHA-1 for the data in buffer[6], buffer[8], buffer[9] ... buffer[38];
     // this corresponds to the 32 src blocks #63946, #63948, #63949 ... #63978.
-    locs = parse_range(params.tokens[pos++]);
+    locs = RangeSet::Parse(params.tokens[pos++]);
     CHECK_EQ(src.size, locs.size);
     CHECK_EQ(locs.pos.size() % 2, static_cast<size_t>(0));
   }
 
   LOG(INFO) << "printing hash in hex for " << src.size << " source blocks";
   for (size_t i = 0; i < src.size; i++) {
-    int block_num = src.get_block(i);
-    CHECK_NE(block_num, -1);
-    int buffer_index = locs.get_block(i);
-    CHECK_NE(buffer_index, -1);
+    size_t block_num = src.GetBlockNumber(i);
+    size_t buffer_index = locs.GetBlockNumber(i);
     CHECK_LE((buffer_index + 1) * BLOCKSIZE, buffer.size());
 
     uint8_t digest[SHA_DIGEST_LENGTH];
@@ -512,8 +421,7 @@ static void PrintHashForCorruptedStashedBlocks(const std::string& id,
   CHECK_EQ(src.size * BLOCKSIZE, buffer.size());
 
   for (size_t i = 0; i < src.size; i++) {
-    int block_num = src.get_block(i);
-    CHECK_NE(block_num, -1);
+    size_t block_num = src.GetBlockNumber(i);
 
     uint8_t digest[SHA_DIGEST_LENGTH];
     SHA1(buffer.data() + i * BLOCKSIZE, BLOCKSIZE, digest);
@@ -925,8 +833,8 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
     // no source ranges, only stashes
     params.cpos++;
   } else {
-    RangeSet src = parse_range(params.tokens[params.cpos++]);
-    *overlap = range_overlaps(src, tgt);
+    RangeSet src = RangeSet::Parse(params.tokens[params.cpos++]);
+    *overlap = src.Overlaps(tgt);
 
     if (ReadBlocks(src, params.buffer, params.fd) == -1) {
       return -1;
@@ -937,7 +845,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
       return 0;
     }
 
-    RangeSet locs = parse_range(params.tokens[params.cpos++]);
+    RangeSet locs = RangeSet::Parse(params.tokens[params.cpos++]);
     MoveRange(params.buffer, locs, params.buffer);
   }
 
@@ -959,7 +867,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
       continue;
     }
 
-    RangeSet locs = parse_range(tokens[1]);
+    RangeSet locs = RangeSet::Parse(tokens[1]);
     MoveRange(params.buffer, locs, stash);
   }
 
@@ -1023,7 +931,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t* 
   }
 
   // <tgt_range>
-  tgt = parse_range(params.tokens[params.cpos++]);
+  tgt = RangeSet::Parse(params.tokens[params.cpos++]);
 
   std::vector<uint8_t> tgtbuffer(tgt.size * BLOCKSIZE);
   if (ReadBlocks(tgt, tgtbuffer, params.fd) == -1) {
@@ -1135,7 +1043,7 @@ static int PerformCommandStash(CommandParameters& params) {
     return 0;
   }
 
-  RangeSet src = parse_range(params.tokens[params.cpos++]);
+  RangeSet src = RangeSet::Parse(params.tokens[params.cpos++]);
 
   allocate(src.size * BLOCKSIZE, params.buffer);
   if (ReadBlocks(src, params.buffer, params.fd) == -1) {
@@ -1186,7 +1094,7 @@ static int PerformCommandZero(CommandParameters& params) {
         return -1;
     }
 
-    RangeSet tgt = parse_range(params.tokens[params.cpos++]);
+    RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
 
     LOG(INFO) << "  zeroing " << tgt.size << " blocks";
 
@@ -1228,7 +1136,7 @@ static int PerformCommandNew(CommandParameters& params) {
     return -1;
   }
 
-  RangeSet tgt = parse_range(params.tokens[params.cpos++]);
+  RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
 
   if (params.canwrite) {
     LOG(INFO) << " writing " << tgt.size << " blocks of new data";
@@ -1351,7 +1259,7 @@ static int PerformCommandErase(CommandParameters& params) {
         return -1;
     }
 
-    RangeSet tgt = parse_range(params.tokens[params.cpos++]);
+    RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
 
     if (params.canwrite) {
         LOG(INFO) << " erasing " << tgt.size << " blocks";
@@ -1733,7 +1641,7 @@ Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique
         return StringValue("");
     }
 
-    RangeSet rs = parse_range(ranges->data);
+    RangeSet rs = RangeSet::Parse(ranges->data);
 
     SHA_CTX ctx;
     SHA1_Init(&ctx);
@@ -1871,7 +1779,7 @@ Value* BlockImageRecoverFn(const char* name, State* state,
         return StringValue("");
     }
 
-    RangeSet rs = parse_range(ranges->data);
+    RangeSet rs = RangeSet::Parse(ranges->data);
 
     uint8_t buffer[BLOCKSIZE];
 
