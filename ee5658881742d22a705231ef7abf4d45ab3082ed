@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9828ed82_831e4c72",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 736,
+      "author": {
+        "id": 1001507
+      },
+      "writtenOn": "2017-03-31T16:27:12Z",
+      "side": 1,
+      "message": "Didn\u0027t you want to fix the potential endless loop here, as discussed on IRC\n(Cannot write to adb_write_fd Broken pipe. Retrying.)",
+      "revId": "ee5658881742d22a705231ef7abf4d45ab3082ed",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
