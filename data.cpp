@@ -487,7 +487,10 @@ void DataManager::SetBackupFolder()
 	LOGINFO("Backup folder set to '%s'\n", str.c_str());
 	SetValue(TW_BACKUPS_FOLDER_VAR, str, 0);
 	if (partition != NULL) {
-		SetValue("tw_storage_display_name", partition->Storage_Name);
+		if (partition->Use_FS_Label_As_Display())
+			SetValue("tw_storage_display_name", partition->File_System_Label);
+		else
+			SetValue("tw_storage_display_name", partition->Storage_Name);
 		char free_space[255];
 		sprintf(free_space, "%llu", partition->Free / 1024 / 1024);
 		SetValue("tw_storage_free_size", free_space);

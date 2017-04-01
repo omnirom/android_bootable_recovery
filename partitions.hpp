@@ -108,7 +108,10 @@ public:
 	void Partition_Post_Processing(bool Display_Error);                       // Apply partition specific settings after fstab processed
 
 public:
-	string Current_File_System;                                               // Current file system
+	string Current_File_System;                                               // Current file system type
+	string File_System_Label;                                                 // Current file system label
+	bool Has_File_System_Label;                                               // Indicates fs label was read using blkid
+	bool Use_FS_Label_As_Display();                                           // Display File_System_Label in the GUI instead of Display_Name
 	string Actual_Block_Device;                                               // Actual block device (one of primary, alternate, or decrypted)
 	string Backup_Display_Name;                                               // Name displayed in the partition list for backup selection
 	string MTD_Name;                                                          // Name of the partition for MTD devices

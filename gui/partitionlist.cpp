@@ -236,6 +236,7 @@ void GUIPartitionList::NotifySelect(size_t item_selected)
 					update_size = true;
 				if (!Part->Mount(true)) {
 					// Do Nothing
+//					PartitionManager.Update_Partition_Display_Names();
 				} else if (update_size && !Part->Update_Size(true)) {
 					// Do Nothing
 				} else {
@@ -243,11 +244,19 @@ void GUIPartitionList::NotifySelect(size_t item_selected)
 						mList.at(i).selected = 0;
 
 					if (update_size) {
+//						PartitionManager.Update_Partition_Display_Names();
 						char free_space[255];
 						sprintf(free_space, "%llu", Part->Free / 1024 / 1024);
-						mList.at(item_selected).Display_Name = Part->Storage_Name + " (";
+						if (Part->Use_FS_Label_As_Display())
+							mList.at(item_selected).Display_Name = Part->File_System_Label;
+						else
+							mList.at(item_selected).Display_Name = Part->Storage_Name;
+						mList.at(item_selected).Display_Name += " (";
 						mList.at(item_selected).Display_Name += free_space;
 						mList.at(item_selected).Display_Name += "MB)";
+
+//						// This updates the text on all of the storage selection buttons in the GUI
+//						DataManager::SetBackupFolder();
 					}
 					mList.at(item_selected).selected = 1;
 					mUpdate = 1;

@@ -223,6 +223,8 @@ TWPartition::TWPartition() {
 	Is_Settings_Storage = false;
 	Storage_Path = "";
 	Current_File_System = "";
+	File_System_Label = "";
+	Has_File_System_Label = false;
 	Fstab_File_System = "";
 	Mount_Flags = 0;
 	Mount_Options = "";
@@ -823,6 +825,14 @@ bool TWPartition::Is_File_System(string File_System) {
 		return true;
 	else
 		return false;
+}
+
+bool TWPartition::Use_FS_Label_As_Display() {
+	if (Removable && Is_Present && Has_File_System_Label)
+		return true;
+	else
+		return false;
+
 }
 
 bool TWPartition::Is_Image(string File_System) {
@@ -1846,6 +1856,7 @@ bool TWPartition::Wipe_Encryption() {
 
 void TWPartition::Check_FS_Type() {
 	const char* type;
+	const char* label;
 	blkid_probe pr;
 
 	if (Fstab_File_System == "yaffs2" || Fstab_File_System == "mtd" || Fstab_File_System == "bml" || Ignore_Blkid)
@@ -1866,6 +1877,14 @@ void TWPartition::Check_FS_Type() {
 		blkid_free_probe(pr);
 		LOGINFO("can't find filesystem on device %s\n", Actual_Block_Device.c_str());
 		return;
+	}
+
+	if (blkid_probe_lookup_value(pr, "LABEL", &label, NULL) == 0) {
+		File_System_Label = label;
+		Has_File_System_Label = true;
+	} else {
+		File_System_Label = "";
+		Has_File_System_Label = false;
 	}
 
 	Current_File_System = type;

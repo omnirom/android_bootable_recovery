@@ -343,6 +343,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("   Crypto_Key_Location: %s\n", Part->Crypto_Key_Location.c_str());
 	if (Part->Length != 0)
 		printf("   Length: %i\n", Part->Length);
+	if (!Part->File_System_Label.empty())
+		printf("   File_System_Label: %s\n", Part->File_System_Label.c_str());
 	if (!Part->Display_Name.empty())
 		printf("   Display_Name: %s\n", Part->Display_Name.c_str());
 	if (!Part->Storage_Name.empty())
@@ -1936,11 +1938,15 @@ int TWPartitionManager::Partition_SDCard(void) {
 
 void TWPartitionManager::Get_Partition_List(string ListType, std::vector<PartitionList> *Partition_List) {
 	std::vector<TWPartition*>::iterator iter;
+//	PartitionManager.Update_Partition_Display_Names();
 	if (ListType == "mount") {
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 			if ((*iter)->Can_Be_Mounted && !(*iter)->Is_SubPartition) {
 				struct PartitionList part;
-				part.Display_Name = (*iter)->Display_Name;
+				if ((*iter)->Use_FS_Label_As_Display())
+					part.Display_Name = (*iter)->File_System_Label;
+				else
+					part.Display_Name = (*iter)->Display_Name;
 				part.Mount_Point = (*iter)->Mount_Point;
 				part.selected = (*iter)->Is_Mounted();
 				Partition_List->push_back(part);
@@ -1953,7 +1959,11 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 			if ((*iter)->Is_Storage) {
 				struct PartitionList part;
 				sprintf(free_space, "%llu", (*iter)->Free / 1024 / 1024);
-				part.Display_Name = (*iter)->Storage_Name + " (";
+				if ((*iter)->Use_FS_Label_As_Display())
+					part.Display_Name = (*iter)->File_System_Label;
+				else
+					part.Display_Name = (*iter)->Storage_Name;
+				part.Display_Name += " (";
 				part.Display_Name += free_space;
 				part.Display_Name += "MB)";
 				part.Mount_Point = (*iter)->Storage_Path;
@@ -1980,7 +1990,8 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 					}
 				}
 				sprintf(backup_size, "%llu", Backup_Size / 1024 / 1024);
-				part.Display_Name = (*iter)->Backup_Display_Name + " (";
+				part.Display_Name = (*iter)->Backup_Display_Name;
+				part.Display_Name += " (";
 				part.Display_Name += backup_size;
 				part.Display_Name += "MB)";
 				part.Mount_Point = (*iter)->Backup_Path;
@@ -2024,7 +2035,10 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 			if ((*iter)->Wipe_Available_in_GUI && !(*iter)->Is_SubPartition) {
 				struct PartitionList part;
-				part.Display_Name = (*iter)->Display_Name;
+				if ((*iter)->Use_FS_Label_As_Display())
+					part.Display_Name = (*iter)->File_System_Label;
+				else
+					part.Display_Name = (*iter)->Display_Name;
 				part.Mount_Point = (*iter)->Mount_Point;
 				part.selected = 0;
 				Partition_List->push_back(part);
@@ -2038,7 +2052,11 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 			}
 			if ((*iter)->Has_Data_Media) {
 				struct PartitionList datamedia;
-				datamedia.Display_Name = (*iter)->Storage_Name;
+// how about here?
+//				if ((*iter)->Use_FS_Label_As_Display())
+//					datamedia.Display_Name = (*iter)->File_System_Label;
+//				else
+					datamedia.Display_Name = (*iter)->Storage_Name;
 				datamedia.Mount_Point = "INTERNAL";
 				datamedia.selected = 0;
 				Partition_List->push_back(datamedia);
