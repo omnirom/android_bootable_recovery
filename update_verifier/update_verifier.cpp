@@ -74,9 +74,10 @@ static int dm_name_filter(const dirent* de) {
 }
 
 static bool read_blocks(const std::string& partition, const std::string& range_str) {
-  CHECK(partition == "system" || partition == "vendor")
-      << "partition name should be system or vendor" << partition;
-
+  if (partition != "system" && partition != "vendor") {
+    LOG(ERROR) << "partition name must be system or vendor: " << partition;
+    return false;
+  }
   // Iterate the content of "/sys/block/dm-X/dm/name". If it matches "system"
   // (or "vendor"), then dm-X is a dm-wrapped system/vendor partition.
   // Afterwards, update_verifier will read every block on the care_map_file of
