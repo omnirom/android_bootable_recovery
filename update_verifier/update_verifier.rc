@@ -2,10 +2,10 @@ service update_verifier_nonencrypted /system/bin/update_verifier nonencrypted
     user root
     class cache
     priority -20
-    ioprio rt 1
+    ioprio rt 0
 
 service update_verifier /system/bin/update_verifier ${vold.decrypt}
     user root
     class cache
     priority -20
-    ioprio rt 1
+    ioprio rt 0
