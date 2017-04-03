@@ -1317,10 +1317,10 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     return nullptr;
   }
 
-  const Value* blockdev_filename = args[0].get();
-  const Value* transfer_list_value = args[1].get();
-  const Value* new_data_fn = args[2].get();
-  const Value* patch_data_fn = args[3].get();
+  const std::unique_ptr<Value>& blockdev_filename = args[0];
+  const std::unique_ptr<Value>& transfer_list_value = args[1];
+  const std::unique_ptr<Value>& new_data_fn = args[2];
+  const std::unique_ptr<Value>& patch_data_fn = args[3];
 
   if (blockdev_filename->type != VAL_STRING) {
     ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string", name);
@@ -1610,64 +1610,62 @@ Value* BlockImageUpdateFn(const char* name, State* state,
 }
 
 Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
-    if (argv.size() != 2) {
-        ErrorAbort(state, kArgsParsingFailure, "range_sha1 expects 2 arguments, got %zu",
-                   argv.size());
+  if (argv.size() != 2) {
+    ErrorAbort(state, kArgsParsingFailure, "range_sha1 expects 2 arguments, got %zu", argv.size());
+    return StringValue("");
+  }
+
+  std::vector<std::unique_ptr<Value>> args;
+  if (!ReadValueArgs(state, argv, &args)) {
+    return nullptr;
+  }
+
+  const std::unique_ptr<Value>& blockdev_filename = args[0];
+  const std::unique_ptr<Value>& ranges = args[1];
+
+  if (blockdev_filename->type != VAL_STRING) {
+    ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string", name);
+    return StringValue("");
+  }
+  if (ranges->type != VAL_STRING) {
+    ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
+    return StringValue("");
+  }
+
+  android::base::unique_fd fd(ota_open(blockdev_filename->data.c_str(), O_RDWR));
+  if (fd == -1) {
+    ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s", blockdev_filename->data.c_str(),
+               strerror(errno));
+    return StringValue("");
+  }
+
+  RangeSet rs = RangeSet::Parse(ranges->data);
+
+  SHA_CTX ctx;
+  SHA1_Init(&ctx);
+
+  std::vector<uint8_t> buffer(BLOCKSIZE);
+  for (size_t i = 0; i < rs.count; ++i) {
+    if (!check_lseek(fd, (off64_t)rs.pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
+      ErrorAbort(state, kLseekFailure, "failed to seek %s: %s", blockdev_filename->data.c_str(),
+                 strerror(errno));
+      return StringValue("");
+    }
+
+    for (size_t j = rs.pos[i * 2]; j < rs.pos[i * 2 + 1]; ++j) {
+      if (read_all(fd, buffer, BLOCKSIZE) == -1) {
+        ErrorAbort(state, kFreadFailure, "failed to read %s: %s", blockdev_filename->data.c_str(),
+                   strerror(errno));
         return StringValue("");
+      }
+
+      SHA1_Update(&ctx, buffer.data(), BLOCKSIZE);
     }
+  }
+  uint8_t digest[SHA_DIGEST_LENGTH];
+  SHA1_Final(digest, &ctx);
 
-    std::vector<std::unique_ptr<Value>> args;
-    if (!ReadValueArgs(state, argv, &args)) {
-        return nullptr;
-    }
-
-    const Value* blockdev_filename = args[0].get();
-    const Value* ranges = args[1].get();
-
-    if (blockdev_filename->type != VAL_STRING) {
-        ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string",
-                   name);
-        return StringValue("");
-    }
-    if (ranges->type != VAL_STRING) {
-        ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
-        return StringValue("");
-    }
-
-    android::base::unique_fd fd(ota_open(blockdev_filename->data.c_str(), O_RDWR));
-    if (fd == -1) {
-        ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s",
-                   blockdev_filename->data.c_str(), strerror(errno));
-        return StringValue("");
-    }
-
-    RangeSet rs = RangeSet::Parse(ranges->data);
-
-    SHA_CTX ctx;
-    SHA1_Init(&ctx);
-
-    std::vector<uint8_t> buffer(BLOCKSIZE);
-    for (size_t i = 0; i < rs.count; ++i) {
-        if (!check_lseek(fd, (off64_t)rs.pos[i*2] * BLOCKSIZE, SEEK_SET)) {
-            ErrorAbort(state, kLseekFailure, "failed to seek %s: %s",
-                       blockdev_filename->data.c_str(), strerror(errno));
-            return StringValue("");
-        }
-
-        for (size_t j = rs.pos[i*2]; j < rs.pos[i*2+1]; ++j) {
-            if (read_all(fd, buffer, BLOCKSIZE) == -1) {
-                ErrorAbort(state, kFreadFailure, "failed to read %s: %s",
-                           blockdev_filename->data.c_str(), strerror(errno));
-                return StringValue("");
-            }
-
-            SHA1_Update(&ctx, buffer.data(), BLOCKSIZE);
-        }
-    }
-    uint8_t digest[SHA_DIGEST_LENGTH];
-    SHA1_Final(digest, &ctx);
-
-    return StringValue(print_sha1(digest));
+  return StringValue(print_sha1(digest));
 }
 
 // This function checks if a device has been remounted R/W prior to an incremental
@@ -1677,145 +1675,144 @@ Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique
 
 Value* CheckFirstBlockFn(const char* name, State* state,
                          const std::vector<std::unique_ptr<Expr>>& argv) {
-     if (argv.size() != 1) {
-        ErrorAbort(state, kArgsParsingFailure, "check_first_block expects 1 argument, got %zu",
-                   argv.size());
-        return StringValue("");
-    }
+  if (argv.size() != 1) {
+    ErrorAbort(state, kArgsParsingFailure, "check_first_block expects 1 argument, got %zu",
+               argv.size());
+    return StringValue("");
+  }
 
-    std::vector<std::unique_ptr<Value>> args;
-    if (!ReadValueArgs(state, argv, &args)) {
-        return nullptr;
-    }
+  std::vector<std::unique_ptr<Value>> args;
+  if (!ReadValueArgs(state, argv, &args)) {
+    return nullptr;
+  }
 
-    const Value* arg_filename = args[0].get();
+  const std::unique_ptr<Value>& arg_filename = args[0];
 
-    if (arg_filename->type != VAL_STRING) {
-        ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
-        return StringValue("");
-    }
+  if (arg_filename->type != VAL_STRING) {
+    ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
+    return StringValue("");
+  }
 
-    android::base::unique_fd fd(ota_open(arg_filename->data.c_str(), O_RDONLY));
-    if (fd == -1) {
-        ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s", arg_filename->data.c_str(),
-                   strerror(errno));
-        return StringValue("");
-    }
+  android::base::unique_fd fd(ota_open(arg_filename->data.c_str(), O_RDONLY));
+  if (fd == -1) {
+    ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s", arg_filename->data.c_str(),
+               strerror(errno));
+    return StringValue("");
+  }
 
-    RangeSet blk0 {1 /*count*/, 1/*size*/, std::vector<size_t> {0, 1}/*position*/};
-    std::vector<uint8_t> block0_buffer(BLOCKSIZE);
+  RangeSet blk0{ 1 /*count*/, 1 /*size*/, std::vector<size_t>{ 0, 1 } /*position*/ };
+  std::vector<uint8_t> block0_buffer(BLOCKSIZE);
 
-    if (ReadBlocks(blk0, block0_buffer, fd) == -1) {
-        ErrorAbort(state, kFreadFailure, "failed to read %s: %s", arg_filename->data.c_str(),
-                strerror(errno));
-        return StringValue("");
-    }
+  if (ReadBlocks(blk0, block0_buffer, fd) == -1) {
+    ErrorAbort(state, kFreadFailure, "failed to read %s: %s", arg_filename->data.c_str(),
+               strerror(errno));
+    return StringValue("");
+  }
 
-    // https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout
-    // Super block starts from block 0, offset 0x400
-    //   0x2C: len32 Mount time
-    //   0x30: len32 Write time
-    //   0x34: len16 Number of mounts since the last fsck
-    //   0x38: len16 Magic signature 0xEF53
+  // https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout
+  // Super block starts from block 0, offset 0x400
+  //   0x2C: len32 Mount time
+  //   0x30: len32 Write time
+  //   0x34: len16 Number of mounts since the last fsck
+  //   0x38: len16 Magic signature 0xEF53
 
-    time_t mount_time = *reinterpret_cast<uint32_t*>(&block0_buffer[0x400+0x2C]);
-    uint16_t mount_count = *reinterpret_cast<uint16_t*>(&block0_buffer[0x400+0x34]);
+  time_t mount_time = *reinterpret_cast<uint32_t*>(&block0_buffer[0x400 + 0x2C]);
+  uint16_t mount_count = *reinterpret_cast<uint16_t*>(&block0_buffer[0x400 + 0x34]);
 
-    if (mount_count > 0) {
-        uiPrintf(state, "Device was remounted R/W %" PRIu16 " times", mount_count);
-        uiPrintf(state, "Last remount happened on %s", ctime(&mount_time));
-    }
+  if (mount_count > 0) {
+    uiPrintf(state, "Device was remounted R/W %" PRIu16 " times", mount_count);
+    uiPrintf(state, "Last remount happened on %s", ctime(&mount_time));
+  }
 
-    return StringValue("t");
+  return StringValue("t");
 }
-
 
 Value* BlockImageRecoverFn(const char* name, State* state,
                            const std::vector<std::unique_ptr<Expr>>& argv) {
-    if (argv.size() != 2) {
-        ErrorAbort(state, kArgsParsingFailure, "block_image_recover expects 2 arguments, got %zu",
-                   argv.size());
+  if (argv.size() != 2) {
+    ErrorAbort(state, kArgsParsingFailure, "block_image_recover expects 2 arguments, got %zu",
+               argv.size());
+    return StringValue("");
+  }
+
+  std::vector<std::unique_ptr<Value>> args;
+  if (!ReadValueArgs(state, argv, &args)) {
+    return nullptr;
+  }
+
+  const std::unique_ptr<Value>& filename = args[0];
+  const std::unique_ptr<Value>& ranges = args[1];
+
+  if (filename->type != VAL_STRING) {
+    ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
+    return StringValue("");
+  }
+  if (ranges->type != VAL_STRING) {
+    ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
+    return StringValue("");
+  }
+
+  // Output notice to log when recover is attempted
+  LOG(INFO) << filename->data << " image corrupted, attempting to recover...";
+
+  // When opened with O_RDWR, libfec rewrites corrupted blocks when they are read
+  fec::io fh(filename->data, O_RDWR);
+
+  if (!fh) {
+    ErrorAbort(state, kLibfecFailure, "fec_open \"%s\" failed: %s", filename->data.c_str(),
+               strerror(errno));
+    return StringValue("");
+  }
+
+  if (!fh.has_ecc() || !fh.has_verity()) {
+    ErrorAbort(state, kLibfecFailure, "unable to use metadata to correct errors");
+    return StringValue("");
+  }
+
+  fec_status status;
+
+  if (!fh.get_status(status)) {
+    ErrorAbort(state, kLibfecFailure, "failed to read FEC status");
+    return StringValue("");
+  }
+
+  RangeSet rs = RangeSet::Parse(ranges->data);
+
+  uint8_t buffer[BLOCKSIZE];
+
+  for (size_t i = 0; i < rs.count; ++i) {
+    for (size_t j = rs.pos[i * 2]; j < rs.pos[i * 2 + 1]; ++j) {
+      // Stay within the data area, libfec validates and corrects metadata
+      if (status.data_size <= (uint64_t)j * BLOCKSIZE) {
+        continue;
+      }
+
+      if (fh.pread(buffer, BLOCKSIZE, (off64_t)j * BLOCKSIZE) != BLOCKSIZE) {
+        ErrorAbort(state, kLibfecFailure, "failed to recover %s (block %zu): %s",
+                   filename->data.c_str(), j, strerror(errno));
         return StringValue("");
+      }
+
+      // If we want to be able to recover from a situation where rewriting a corrected
+      // block doesn't guarantee the same data will be returned when re-read later, we
+      // can save a copy of corrected blocks to /cache. Note:
+      //
+      //  1. Maximum space required from /cache is the same as the maximum number of
+      //     corrupted blocks we can correct. For RS(255, 253) and a 2 GiB partition,
+      //     this would be ~16 MiB, for example.
+      //
+      //  2. To find out if this block was corrupted, call fec_get_status after each
+      //     read and check if the errors field value has increased.
     }
-
-    std::vector<std::unique_ptr<Value>> args;
-    if (!ReadValueArgs(state, argv, &args)) {
-        return nullptr;
-    }
-
-    const Value* filename = args[0].get();
-    const Value* ranges = args[1].get();
-
-    if (filename->type != VAL_STRING) {
-        ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
-        return StringValue("");
-    }
-    if (ranges->type != VAL_STRING) {
-        ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
-        return StringValue("");
-    }
-
-    // Output notice to log when recover is attempted
-    LOG(INFO) << filename->data << " image corrupted, attempting to recover...";
-
-    // When opened with O_RDWR, libfec rewrites corrupted blocks when they are read
-    fec::io fh(filename->data, O_RDWR);
-
-    if (!fh) {
-        ErrorAbort(state, kLibfecFailure, "fec_open \"%s\" failed: %s", filename->data.c_str(),
-                   strerror(errno));
-        return StringValue("");
-    }
-
-    if (!fh.has_ecc() || !fh.has_verity()) {
-        ErrorAbort(state, kLibfecFailure, "unable to use metadata to correct errors");
-        return StringValue("");
-    }
-
-    fec_status status;
-
-    if (!fh.get_status(status)) {
-        ErrorAbort(state, kLibfecFailure, "failed to read FEC status");
-        return StringValue("");
-    }
-
-    RangeSet rs = RangeSet::Parse(ranges->data);
-
-    uint8_t buffer[BLOCKSIZE];
-
-    for (size_t i = 0; i < rs.count; ++i) {
-        for (size_t j = rs.pos[i * 2]; j < rs.pos[i * 2 + 1]; ++j) {
-            // Stay within the data area, libfec validates and corrects metadata
-            if (status.data_size <= (uint64_t)j * BLOCKSIZE) {
-                continue;
-            }
-
-            if (fh.pread(buffer, BLOCKSIZE, (off64_t)j * BLOCKSIZE) != BLOCKSIZE) {
-                ErrorAbort(state, kLibfecFailure, "failed to recover %s (block %zu): %s",
-                           filename->data.c_str(), j, strerror(errno));
-                return StringValue("");
-            }
-
-            // If we want to be able to recover from a situation where rewriting a corrected
-            // block doesn't guarantee the same data will be returned when re-read later, we
-            // can save a copy of corrected blocks to /cache. Note:
-            //
-            //  1. Maximum space required from /cache is the same as the maximum number of
-            //     corrupted blocks we can correct. For RS(255, 253) and a 2 GiB partition,
-            //     this would be ~16 MiB, for example.
-            //
-            //  2. To find out if this block was corrupted, call fec_get_status after each
-            //     read and check if the errors field value has increased.
-        }
-    }
-    LOG(INFO) << "..." << filename->data << " image recovered successfully.";
-    return StringValue("t");
+  }
+  LOG(INFO) << "..." << filename->data << " image recovered successfully.";
+  return StringValue("t");
 }
 
 void RegisterBlockImageFunctions() {
-    RegisterFunction("block_image_verify", BlockImageVerifyFn);
-    RegisterFunction("block_image_update", BlockImageUpdateFn);
-    RegisterFunction("block_image_recover", BlockImageRecoverFn);
-    RegisterFunction("check_first_block", CheckFirstBlockFn);
-    RegisterFunction("range_sha1", RangeSha1Fn);
+  RegisterFunction("block_image_verify", BlockImageVerifyFn);
+  RegisterFunction("block_image_update", BlockImageUpdateFn);
+  RegisterFunction("block_image_recover", BlockImageRecoverFn);
+  RegisterFunction("check_first_block", CheckFirstBlockFn);
+  RegisterFunction("range_sha1", RangeSha1Fn);
 }
