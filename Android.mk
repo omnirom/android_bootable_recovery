@@ -160,6 +160,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 include \
     $(LOCAL_PATH)/applypatch/Android.mk \
+    $(LOCAL_PATH)/boot_control/Android.mk \
     $(LOCAL_PATH)/bootloader_message/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/minadbd/Android.mk \

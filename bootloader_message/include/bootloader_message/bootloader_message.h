@@ -180,6 +180,11 @@ static_assert(sizeof(struct bootloader_control) ==
 #include <string>
 #include <vector>
 
+// Return the block device name for the bootloader message partition and waits
+// for the device for up to 10 seconds. In case of error returns the empty
+// string.
+std::string get_bootloader_message_blk_device(std::string* err);
+
 // Read bootloader message into boot. Error message will be set in err.
 bool read_bootloader_message(bootloader_message* boot, std::string* err);
 
