@@ -167,7 +167,7 @@ static bool verify_image(const std::string& care_map_name) {
     // in /data/ota_package. To allow the device to continue booting in this situation,
     // we should print a warning and skip the block verification.
     if (care_map_fd.get() == -1) {
-        LOG(WARNING) << "Warning: care map " << care_map_name << " not found.";
+        PLOG(WARNING) << "Failed to open " << care_map_name;
         return true;
     }
     // Care map file has four lines (two lines if vendor partition is not present):
